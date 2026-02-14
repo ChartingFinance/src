@@ -1,0 +1,154 @@
+<html>
+    <head>
+        <!-- Google Tag Manager -->
+        <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+            new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+            j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+            'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+            })(window,document,'script','dataLayer','GTM-WRSW7SKN');</script>
+        <!-- End Google Tag Manager -->
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="description" content="Charting financial simulations for saving, investment, retirement, and knowledge">
+        <meta name="robots" content="follow, index, max-snippet:-1, max-video-preview:-1, max-image-preview:large"/>
+        <title>📈 Charting Financial Models and Projecting for Saving, Investing, Retiring, and Knowledge</title>
+        <script src="js/globals.js"></script>
+        <link rel="stylesheet" href="index.css">
+    </head>
+    <body>
+        <script>
+            var activeTaxTable = null;
+        </script>
+        <nav>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="rules.html">Rules</a></li>
+                <li><u>Globals</u></li>
+                <li><a href="disclaimer.html">Disclaimer</a></li>
+                <li><a href="about.html">About</a></li>
+            </ul>
+        </nav>
+        <div style="padding: 20px">
+            <h1>Global Values for Simulation</h1>
+            <br />
+            <h2>User Information</h2>
+            <p>Your age is used to calculate Social Security eligibility and Required Minimum Distribution amounts</p>
+            <div>
+                <div style="float: left; width: 200px">
+                    <label for="startAge">Start Age</label><br />
+                    <input id="startAge" type="number" value="30" step="1" onchange="startAge_onChange()" />
+                </div>
+                <div style="float: left; width: 200px">
+                    <label for="retirementAge">Retirement Age</label><br />
+                    <input id="retirementAge" type="number" value="67" step="1" onchange="retirementAge_onChange()" />
+                </div>    
+                <div>
+                    <label for="finishAge">Finish Age</label><br />
+                    <input id="finishAge" type="number" value="100" step="1" onchange="finishAge_onChange()" />
+                </div>            
+            </div>
+            <br />
+            <br />
+            <h2>Annual Inflation Rate</h2>
+            <p>The government began tracking inflation back in 1913. Over that time cumulative inflation has averaged 3.1%. <a href="https://inflationdata.com/Inflation/Inflation_Rate/Long_Term_Inflation.asp">Reference</a></p>
+            <label for="inflationRate">Default Inflation Rate</label><br />
+            <input id="inflationRate" type="number" value="3.1" step="0.01" onchange="inflationRate_onChange()" />
+            <br />
+            <br />
+            <h2>Taxes</h2>
+            <p>Federal Income Tax -- First up is 2024 based on IRS tables. <a href="https://www.irs.gov/filing/federal-income-tax-rates-and-brackets" target="_blank">Income</a> and <a href="https://www.irs.gov/taxtopics/tc409" target="_blank">Capital Gains</a>.</p>
+            <div>
+                <div style="float: left; width: 200px">
+                    <label for="taxYear">Tax Year</label><br />
+                    <select id="taxYear" onchange="taxYear_onChange()">
+                        <option selected>2025</option>
+                    </select>
+                </div>    
+                <div>
+                    <label for="filingAs">Filing As</label><br />
+                    <select id="filingAs" onchange="filingAs_onChange()">
+                        <option value="Single">Single</option>
+                        <!--option value="HoH">Head of Household</option-->
+                        <option value="MFJ">Married Filing Jointly</option>
+                        <!--option value="MFS">Married Filing Separately</option-->
+                    </select>
+                </div>
+            </div>
+            <br />
+            <br />
+            <br />
+            <p>Federal Income Tax -- Property Tax Deduction</p>
+            <div>
+                <div style="float: left; width: 200px">
+                    <label for="propertyTaxRate">Property Tax Rate</label><br />
+                    <input type="number" id="propertyTaxRate" value="1.0" step="0.01" onchange="propertyTaxRate_onChange()" />
+                </div>    
+                <div>
+                    <label for="propertyTaxDeductionMax">Property Tax Deduction Max</label><br />
+                    <input type="number" id="propertyTaxDeductionMax" value="10000.0" step="1.0" onchange="propertyTaxDeductionMax_onChange()" />
+                </div>
+            </div>
+            <br /><br /><br /><br />
+            <div>
+                <button onclick="reset()">Reset to Defaults</button>
+            </div>
+        </div>
+        <script>
+            function inflationRate_onChange() {
+                let inputElement = document.getElementById('inflationRate')
+                let divBy100 = global_divBy100(inputElement.value);
+                global_setInflationRate(divBy100);
+            }
+
+            function taxYear_onChange() {
+                let selectElement = document.getElementById('taxYear');
+                global_setTaxYear(selectElement.value);
+            }
+
+            function filingAs_onChange() {
+                let selectElement = document.getElementById('filingAs');
+                global_setFilingAs(selectElement.value);
+            }
+
+            function propertyTaxRate_onChange() {
+                let inputElement = document.getElementById('propertyTaxRate');
+                let divBy100 = global_divBy100(inputElement.value);
+                global_setPropertyTaxRate(divBy100);
+            }
+
+            function propertyTaxDeductionMax_onChange() {
+                let inputElement = document.getElementById('propertyTaxDeductionMax');
+                global_setPropertyTaxDeductionMax(parseInt(inputElement.value));
+            }
+
+            function startAge_onChange() {
+                let inputElement = document.getElementById('startAge');
+                global_setUserStartAge(parseInt(inputElement.value));
+            }
+
+            function reset() {
+                global_reset();
+                valuesToElements();
+            }
+
+            function valuesToElements() {
+                document.getElementById('inflationRate').value = global_multBy100(global_inflationRate);
+                document.getElementById('taxYear').value = global_taxYear;
+                document.getElementById('filingAs').value = global_filingAs;
+                document.getElementById('propertyTaxRate').value = global_multBy100(global_propertyTaxRate);
+                document.getElementById('propertyTaxDeductionMax').value = global_propertyTaxDeductionMax;
+                document.getElementById('startAge').value = global_user_startAge;
+                document.getElementById('retirementAge').value = global_user_retirementAge;
+                document.getElementById('finishAge').value = global_user_finishAge;
+            }
+
+            global_initialize();
+
+            valuesToElements();
+
+        </script>
+    </body>
+    <footer>
+        <p>© Copyright 2025 Charting Finance, LLC</p>
+    </footer>
+</html>

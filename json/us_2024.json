@@ -1,0 +1,35 @@
+{
+    "year": 2024,
+    "income": {
+        "url": "https://www.irs.gov/newsroom/irs-provides-tax-inflation-adjustments-for-tax-year-2024",
+        "tables": [
+            { 
+                "filingType": "single",
+                "taxRows": [
+                    {"rate": 0.10, "fromAmount": 0, "toAmount": 1160000},
+                    {"rate": 0.12, "fromAmount": 1160100, "toAmount": 4715000},
+                    {"rate": 0.22, "fromAmount": 4715100, "toAmount": 10052500},
+                    {"rate": 0.24, "fromAmount": 10052600, "toAmount": 19195000},
+                    {"rate": 0.32, "fromAmount": 19195100, "toAmount": 24372500},
+                    {"rate": 0.35, "fromAmount": 24372600, "toAmount": 60935000},
+                    {"rate": 0.37, "fromAmount": 60935100, "toAmount": -1 }
+                ]
+            },
+            {
+                "filingType": "married",
+                "taxRows": [
+                    {"rate": 0.10, "fromAmount": 0, "toAmount": 2320000},
+                    {"rate": 0.12, "fromAmount": 2320100, "toAmount": 9430000},
+                    {"rate": 0.22, "fromAmount": 9430100, "toAmount": 20105000},
+                    {"rate": 0.24, "fromAmount": 20105100, "toAmount": 38390000},
+                    {"rate": 0.32, "fromAmount": 38390100, "toAmount": 48745000},
+                    {"rate": 0.35, "fromAmount": 48745100, "toAmount": 73120000},
+                    {"rate": 0.37, "fromAmount": 73120100, "toAmount": -1}
+                ]
+            }
+        ]
+    },
+    "capitalGains": {
+        "url": "https://www.irs.gov/taxtopics/tc409"
+    }
+}

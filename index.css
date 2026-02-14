@@ -1,0 +1,759 @@
+/* ═══════════════════════════════════════════════════════════════
+   Tidewater Design System
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+    --cream: #faf6f0;
+    --cream-dark: #f0ebe3;
+    --parchment: #f5f0e8;
+    --ink: #2a2520;
+    --ink-light: #5a554d;
+    --ink-faint: #9a958d;
+    --ink-ghost: #c8c3bb;
+    --sage: #5a7a64;
+    --sage-light: #e8f0ea;
+    --sage-bg: rgba(90,122,100,0.08);
+    --terracotta: #c4654a;
+    --terracotta-light: #f5e8e4;
+    --terracotta-bg: rgba(196,101,74,0.08);
+    --ocean: #4a6e8a;
+    --ocean-light: #e4ecf2;
+    --gold: #b8963e;
+    --gold-light: #f8f2e0;
+    --rule: #ddd6ca;
+    --rule-dark: #c8c0b2;
+    --shadow: rgba(42,37,32,0.06);
+    --shadow-md: rgba(42,37,32,0.1);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    background: var(--cream);
+    color: var(--ink);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    line-height: 1.65;
+    min-height: 100vh;
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 9999;
+}
+
+/* ─── Header ─── */
+
+.header {
+    padding: 32px 48px 28px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    border-bottom: 2px solid var(--ink);
+}
+
+.brand {
+    display: flex;
+    flex-direction: column;
+}
+
+.brand-name {
+    font-family: 'Fraunces', serif;
+    font-size: 36px;
+    font-weight: 300;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    color: var(--ink);
+}
+
+.brand-tagline {
+    font-size: 12px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-top: 6px;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* ─── Buttons ─── */
+
+.btn-paper {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 10px 24px;
+    border: 1.5px solid var(--ink);
+    background: transparent;
+    color: var(--ink);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    letter-spacing: 0.02em;
+}
+
+.btn-paper:hover {
+    background: var(--ink);
+    color: var(--cream);
+}
+
+.btn-paper.primary {
+    background: var(--ink);
+    color: var(--cream);
+}
+
+.btn-paper.primary:hover {
+    background: var(--ink-light);
+}
+
+.btn-paper.small {
+    font-size: 11px;
+    padding: 6px 14px;
+}
+
+.btn-float-add {
+    position: absolute;
+    bottom: 16px;
+    right: 16px;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: none;
+    background: var(--ink);
+    color: var(--cream);
+    font-size: 24px;
+    font-weight: 300;
+    line-height: 1;
+    cursor: pointer;
+    z-index: 10;
+    box-shadow: 0 4px 12px var(--shadow-md);
+    transition: all 0.3s ease;
+}
+
+.btn-float-add:hover {
+    background: var(--sage);
+    transform: scale(1.1);
+}
+
+/* ─── Settings Row ─── */
+
+.settings-row {
+    padding: 16px 48px;
+    display: flex;
+    gap: 32px;
+    border-bottom: 1px solid var(--rule);
+    background: var(--parchment);
+}
+
+.setting-group {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.setting-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--ink-faint);
+}
+
+.setting-value {
+    font-family: 'Fraunces', serif;
+    font-size: 15px;
+    font-weight: 400;
+    color: var(--ink);
+}
+
+/* ─── Ledger Summary ─── */
+
+.ledger-summary {
+    padding: 40px 48px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    position: relative;
+}
+
+.ledger-summary::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 48px;
+    right: 48px;
+    height: 1px;
+    background: var(--rule);
+}
+
+.ledger-column {
+    padding: 0 24px;
+    border-right: 1px solid var(--rule);
+}
+
+.ledger-column:first-child { padding-left: 0; }
+.ledger-column:last-child { border-right: none; padding-right: 0; }
+
+.ledger-chapter {
+    font-family: 'Fraunces', serif;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 16px;
+}
+
+.ledger-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 6px 0;
+    border-bottom: 1px dotted var(--ink-ghost);
+}
+
+.ledger-row:last-child {
+    border-bottom: none;
+    padding-top: 12px;
+    margin-top: 4px;
+    border-top: 2px solid var(--ink);
+}
+
+.ledger-item-label {
+    font-size: 13px;
+    color: var(--ink-light);
+}
+
+.ledger-item-value {
+    font-family: 'Fraunces', serif;
+    font-size: 15px;
+    font-weight: 400;
+}
+
+.ledger-item-value.total {
+    font-size: 22px;
+    font-weight: 600;
+}
+
+.val-positive { color: var(--sage); }
+.val-negative { color: var(--terracotta); }
+.val-neutral { color: var(--ink); }
+
+/* ─── Main Content Grid ─── */
+
+.main-content {
+    padding: 40px 48px;
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 48px;
+}
+
+/* ─── Chart Section ─── */
+
+.chart-section {
+    position: relative;
+}
+
+.section-heading {
+    font-family: 'Fraunces', serif;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.section-heading::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--rule);
+}
+
+.chart-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--rule);
+}
+
+.chart-tab {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 10px 20px;
+    border: none;
+    background: none;
+    color: var(--ink-faint);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: all 0.2s;
+}
+
+.chart-tab:hover { color: var(--ink-light); }
+
+.chart-tab.active {
+    color: var(--ink);
+    border-bottom-color: var(--ink);
+}
+
+.chart-frame {
+    background: white;
+    border: 1px solid var(--rule);
+    box-shadow: 0 2px 20px var(--shadow), 0 0 0 1px var(--rule);
+    padding: 32px;
+    position: relative;
+    min-height: 380px;
+}
+
+.chart-frame::before,
+.chart-frame::after {
+    content: '';
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border-color: var(--ink-ghost);
+    border-style: solid;
+}
+
+.chart-frame::before {
+    top: 8px;
+    left: 8px;
+    border-width: 1px 0 0 1px;
+}
+
+.chart-frame::after {
+    bottom: 8px;
+    right: 8px;
+    border-width: 0 1px 1px 0;
+}
+
+/* ─── Assets Column ─── */
+
+.assets-column {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    min-height: 0;
+}
+
+.assets-container {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-content: flex-start;
+}
+
+/* ─── Flourish ─── */
+
+.flourish {
+    text-align: center;
+    padding: 8px 0;
+    color: var(--ink-ghost);
+    font-family: 'Fraunces', serif;
+    font-size: 18px;
+    font-style: italic;
+}
+
+/* ─── Badges ─── */
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-radius: 2px;
+}
+
+.badge-sage { background: var(--sage-light); color: var(--sage); }
+.badge-terracotta { background: var(--terracotta-light); color: var(--terracotta); }
+.badge-gold { background: var(--gold-light); color: var(--gold); }
+
+/* ─── Footer ─── */
+
+.footer {
+    padding: 20px 48px;
+    border-top: 2px solid var(--ink);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.footer-left {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+}
+
+.footer-right {
+    display: flex;
+    gap: 24px;
+    font-size: 11px;
+    color: var(--ink-ghost);
+    letter-spacing: 0.05em;
+}
+
+.footer-right a {
+    color: var(--ink-ghost);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.footer-right a:hover {
+    color: var(--ink);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Functional Styles — Popups, Forms, Cards, Simulator
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── Popup Overlays ─── */
+
+.popup {
+    display: none;
+    position: fixed;
+    z-index: 100;
+    inset: 0;
+    background: rgba(42,37,32,0.5);
+    overflow: auto;
+}
+
+.popup-content {
+    background: var(--cream);
+    margin: 6% auto;
+    padding: 32px;
+    border: 1px solid var(--rule);
+    max-width: 860px;
+    box-shadow: 0 20px 60px var(--shadow-md);
+    position: relative;
+}
+
+.closeBtn {
+    position: absolute;
+    top: 16px;
+    right: 20px;
+    font-size: 24px;
+    color: var(--ink-faint);
+    cursor: pointer;
+    background: none;
+    border: none;
+    font-weight: bold;
+    line-height: 1;
+}
+
+.closeBtn:hover { color: var(--ink); }
+
+/* ─── Create Asset Form (in popup) ─── */
+
+.form-title {
+    font-family: 'Fraunces', serif;
+    font-size: 20px;
+    font-weight: 400;
+    margin-bottom: 4px;
+}
+
+.form-subtitle {
+    font-size: 12px;
+    color: var(--ink-faint);
+    margin-bottom: 24px;
+}
+
+.form-fields {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+}
+
+.form-field label {
+    display: block;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink-faint);
+    margin-bottom: 8px;
+}
+
+.form-field input,
+.form-field select {
+    width: 100%;
+    padding: 10px 14px;
+    font-family: 'Fraunces', serif;
+    font-size: 15px;
+    color: var(--ink);
+    border: 1px solid var(--rule);
+    background: var(--cream);
+    outline: none;
+    transition: all 0.2s;
+    border-radius: 0;
+}
+
+.form-field input:focus,
+.form-field select:focus {
+    border-color: var(--sage);
+    box-shadow: 0 0 0 3px var(--sage-bg);
+}
+
+.form-field input::placeholder {
+    color: var(--ink-ghost);
+    font-style: italic;
+}
+
+/* ─── Compact Asset Cards (from html.js) ─── */
+
+.assets-container > .asset {
+    width: 110px;
+    padding: 12px 8px;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    background: var(--cream);
+    text-align: center;
+    cursor: pointer;
+    position: relative;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    white-space: normal;
+}
+
+.assets-container > .asset:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.asset.selected-card-chart {
+    border-color: var(--card-color);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--card-color) 25%, transparent);
+}
+
+.asset-card-icon {
+    font-size: 28px;
+    line-height: 1;
+    margin-bottom: 6px;
+}
+
+.asset-card-name {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.asset-card-value {
+    font-family: 'Fraunces', serif;
+    font-size: 13px;
+    color: var(--ink-faint);
+    margin-top: 2px;
+}
+
+.asset-action-btn {
+    position: absolute;
+    font-size: 10px;
+    width: 18px;
+    height: 18px;
+    line-height: 18px;
+    text-align: center;
+    border-radius: 50%;
+    cursor: pointer;
+    background: var(--ink-ghost);
+    color: var(--ink);
+    font-family: 'DM Sans', sans-serif;
+    opacity: 0;
+    transition: opacity 0.2s, background 0.2s, color 0.2s;
+}
+
+.asset:hover .asset-action-btn { opacity: 1; }
+
+.asset-action-btn.edit      { top: 4px; left: 4px; }
+.asset-action-btn.transfers { top: 4px; right: 4px; }
+.asset-action-btn.remove    { bottom: 4px; right: 4px; }
+
+.asset-action-btn.remove:hover    { background: var(--terracotta); color: white; }
+.asset-action-btn.transfers:hover { background: var(--sage); color: white; }
+.asset-action-btn.edit:hover      { background: var(--ink); color: var(--cream); }
+
+/* ─── Selected Assets Highlight ─── */
+
+.selected-assets {
+    border: 2px solid var(--sage);
+    border-radius: 2px;
+}
+
+/* ─── Scrollable Containers ─── */
+
+.scrollable-x {
+    overflow-x: auto;
+    white-space: nowrap;
+    padding: 12px;
+}
+
+.scrollable-x > .asset {
+    display: inline-block;
+    vertical-align: top;
+    width: 110px;
+    padding: 12px 8px;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    background: var(--cream);
+    text-align: center;
+    cursor: pointer;
+    position: relative;
+    white-space: normal;
+    margin-right: 8px;
+}
+
+.scrollable-y {
+    overflow-y: auto;
+    max-height: 400px;
+    padding: 12px;
+}
+
+/* ─── Fund Transfer Cards ─── */
+
+.fund-transfer {
+    background: white;
+    padding: 16px;
+    border: 1px solid var(--rule);
+    margin-bottom: 8px;
+    max-width: 300px;
+}
+
+.fund-transfer label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-faint);
+}
+
+.fund-transfer input {
+    font-family: 'Fraunces', serif;
+    font-size: 14px;
+    color: var(--ink);
+    border: 1px solid var(--rule);
+    border-radius: 0;
+    padding: 4px 8px;
+    background: var(--cream);
+}
+
+/* ─── Hidden Rollup Forms ─── */
+
+.rollup { display: none; }
+
+/* ─── Utility Classes ─── */
+
+.width-full { width: 100%; }
+.invisible { visibility: hidden; }
+
+/* ─── Simulator Section ─── */
+
+.simulator-section {
+    padding: 40px 48px;
+    border-top: 1px solid var(--rule);
+    background: var(--parchment);
+}
+
+.simulator-grid {
+    display: grid;
+    grid-template-columns: 220px 1fr 280px;
+    gap: 24px;
+}
+
+.simulator-section h3 {
+    font-family: 'Fraunces', serif;
+    font-size: 16px;
+    font-weight: 400;
+    margin-bottom: 12px;
+}
+
+.simulator-section textarea {
+    width: 100%;
+    height: 300px;
+    border: 1px solid var(--rule);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    padding: 12px;
+    background: white;
+    color: var(--ink);
+    outline: none;
+    resize: vertical;
+}
+
+.simulator-section textarea:focus {
+    border-color: var(--sage);
+}
+
+/* ─── Spreadsheet ─── */
+
+.spreadsheet-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+}
+
+.spreadsheet-table th,
+.spreadsheet-table td {
+    padding: 4px 8px;
+    border: 1px solid var(--rule);
+    text-align: right;
+    white-space: nowrap;
+}
+
+.spreadsheet-table th {
+    background: var(--parchment);
+    font-weight: 500;
+    text-transform: uppercase;
+    font-size: 10px;
+    letter-spacing: 0.05em;
+    color: var(--ink-light);
+    position: sticky;
+    top: 0;
+}
+
+.spreadsheet-date-col { text-align: left; }
+.spreadsheet-asset-header { text-align: center; }
+.spreadsheet-metric-header { text-align: center; }
+.spreadsheet-negative { color: var(--terracotta); }
+
+/* ─── Responsive ─── */
+
+@media (max-width: 1000px) {
+    .main-content { grid-template-columns: 1fr; }
+    .ledger-summary { grid-template-columns: 1fr; }
+    .ledger-column { border-right: none; border-bottom: 1px solid var(--rule); padding: 16px 0; }
+    .form-fields { grid-template-columns: repeat(2, 1fr); }
+    .simulator-grid { grid-template-columns: 1fr; }
+    .header, .settings-row, .ledger-summary, .main-content, .form-section-warm, .footer, .simulator-section {
+        padding-left: 24px;
+        padding-right: 24px;
+    }
+    .header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+    .header-actions {
+        flex-wrap: wrap;
+    }
+}

@@ -1,0 +1,92 @@
+/**
+ * results.js
+ *
+ * Lightweight result types returned by monthly calculations.
+ * Cleaned up from model.js — same semantics, modern syntax.
+ */
+
+import { Currency } from './currency.js';
+
+export class AssetAppreciationResult {
+  constructor(principal = Currency.zero(), earnings = Currency.zero()) {
+    this.principal = principal instanceof Currency ? principal.copy() : new Currency(principal);
+    this.earnings  = earnings instanceof Currency ? earnings.copy() : new Currency(earnings);
+  }
+}
+
+export class MortgageResult {
+  constructor(principal = Currency.zero(), interest = Currency.zero(), escrow = Currency.zero()) {
+    this.principal = principal instanceof Currency ? principal.copy() : new Currency(principal);
+    this.interest  = interest instanceof Currency ? interest.copy() : new Currency(interest);
+    this.escrow    = escrow instanceof Currency ? escrow.copy() : new Currency(escrow);
+  }
+
+  payment() {
+    return new Currency(this.principal.amount + this.interest.amount + this.escrow.amount);
+  }
+}
+
+export class IncomeResult {
+  constructor(selfIncome = Currency.zero(), employedIncome = Currency.zero()) {
+    this.selfIncome    = selfIncome instanceof Currency ? selfIncome.copy() : new Currency(selfIncome);
+    this.employedIncome = employedIncome instanceof Currency ? employedIncome.copy() : new Currency(employedIncome);
+  }
+}
+
+export class ExpenseResult {
+  constructor(expense = Currency.zero(), nextExpense = Currency.zero()) {
+    this.expense     = expense instanceof Currency ? expense.copy() : new Currency(expense);
+    this.nextExpense = nextExpense instanceof Currency ? nextExpense.copy() : new Currency(nextExpense);
+  }
+}
+
+export class InterestResult {
+  constructor(income = Currency.zero()) {
+    this.income = income instanceof Currency ? income.copy() : new Currency(income);
+  }
+}
+
+export class WithholdingResult {
+  constructor(medicare = Currency.zero(), socialSecurity = Currency.zero(), income = Currency.zero()) {
+    this.medicare       = medicare instanceof Currency ? medicare.copy() : new Currency(medicare);
+    this.socialSecurity = socialSecurity instanceof Currency ? socialSecurity.copy() : new Currency(socialSecurity);
+    this.income         = income instanceof Currency ? income.copy() : new Currency(income);
+  }
+
+  fica() {
+    return new Currency(this.medicare.amount + this.socialSecurity.amount);
+  }
+
+  total() {
+    return this.fica().add(this.income);
+  }
+
+  flipSigns() {
+    this.medicare.flipSign();
+    this.socialSecurity.flipSign();
+    this.income.flipSign();
+  }
+}
+
+export class FundTransferResult {
+  constructor(fromAssetChange = Currency.zero(), toAssetChange = Currency.zero()) {
+    this.fromAssetChange = fromAssetChange instanceof Currency ? fromAssetChange.copy() : new Currency(fromAssetChange);
+    this.toAssetChange   = toAssetChange instanceof Currency ? toAssetChange.copy() : new Currency(toAssetChange);
+  }
+}
+
+export class CapitalGainsResult {
+  constructor(shortTerm = Currency.zero(), longTerm = Currency.zero()) {
+    this.shortTerm = shortTerm instanceof Currency ? shortTerm.copy() : new Currency(shortTerm);
+    this.longTerm  = longTerm instanceof Currency ? longTerm.copy() : new Currency(longTerm);
+  }
+
+  total() {
+    return this.shortTerm.plus(this.longTerm);
+  }
+
+  flipSigns() {
+    this.shortTerm.flipSign();
+    this.longTerm.flipSign();
+  }
+}
