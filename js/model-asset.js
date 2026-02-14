@@ -58,7 +58,7 @@ export const Metric = Object.freeze({
 const METRIC_NAMES = Object.values(Metric);
 
 // Metrics that should NOT be zeroed on monthly snapshot
-const KEEP_ON_SNAPSHOT = new Set([Metric.VALUE, Metric.ACCUMULATED]);
+const KEEP_ON_SNAPSHOT = new Set([Metric.ACCUMULATED]);
 
 
 export class ModelAsset {

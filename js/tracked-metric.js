@@ -53,18 +53,22 @@ export class TrackedMetric {
 
   /** Add an amount to the current accumulator */
   add(amount) {
+
     if (amount instanceof Currency) {
       this.current.add(amount);
     }
     return this.current.copy();
+
   }
 
   /** Subtract from the current accumulator */
   subtract(amount) {
+
     if (amount instanceof Currency) {
       this.current.subtract(amount);
     }
     return this.current.copy();
+
   }
 
   /** Direct access to the accumulated value */
@@ -84,10 +88,8 @@ export class TrackedMetric {
   /** Build an array of display values for this metric, aligned to the given monthsSpan */
   buildDisplayHistory(monthsSpan) {
     this.displayHistory = [];
-    for (let ii = monthsSpan.offsetMonths; ii < this.history.length; ii += monthsSpan.combineMonths) {
-      for (let jj = 0; jj < monthsSpan.combineMonths && ii+jj < this.history.length; jj++) {
-        this.displayHistory.push(this.history[ii+jj]);
-      }
+    for (let ii = monthsSpan.offsetMonths; ii < this.history.length; ii += monthsSpan.combineMonths) {      
+        this.displayHistory.push(this.history[ii]);      
     }
     return this.displayHistory;
   }

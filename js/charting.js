@@ -541,7 +541,7 @@ export function charting_buildFromPortfolio(portfolio, buildNewDataSet) {
   else {
 
     setModelAssetColorIds(portfolio.modelAssets);
-    charting_jsonMetricChartData = charting_buildPortfolioMetric(portfolio, "earning", buildNewDataSet);
+    charting_jsonMetricChartData = charting_buildPortfolioMetric(portfolio, "value", buildNewDataSet);
     //charting_jsonEarningsChartData = charting_buildFromPortfolioMetric(portfolio, "earning", buildNewDataSet);
     //charting_jsonCashFlowChartData = charting_buildFromPortfolioMetric(portfolio, "cashFlow", buildNewDataSet);
     charting_jsonSpreeadsheetData = charting_buildDisplaySpreadsheetFromPortfolio(portfolio, buildNewDataSet);

@@ -1,5 +1,6 @@
 import { InstrumentType, InstrumentMeta } from './instrument.js';
 import { util_buildStoryArcKey, storyNamesKey, util_YYYYmmToDisplay, util_escapedJSONStringify } from './util.js';
+import { findByName } from './asset-queries.js';
 
 const htmlPlus = '➕';
 const htmlMinus = '➖';
