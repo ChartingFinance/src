@@ -296,10 +296,13 @@ body::before {
     border: none;
     background: none;
     color: var(--ink-faint);
-    cursor: pointer;
+    cursor: default;
     border-bottom: 2px solid transparent;
     margin-bottom: -1px;
     transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
 }
 
 .chart-tab:hover { color: var(--ink-light); }
@@ -307,6 +310,27 @@ body::before {
 .chart-tab.active {
     color: var(--ink);
     border-bottom-color: var(--ink);
+}
+
+.tab-label {
+    cursor: pointer;
+}
+
+.metric-select {
+    width: 16px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: transparent;
+    cursor: pointer;
+    outline: none;
+}
+
+.metric-select option {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    color: var(--ink);
+    text-transform: none;
 }
 
 .chart-frame {

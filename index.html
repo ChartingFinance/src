@@ -272,20 +272,20 @@
         <div class="chart-section">
             <div class="section-heading">Projection</div>
             <div class="chart-tabs">
-                <div class="chart-tab active" id="tab1" onclick="tab1_click()">Metric View</div>
-                <div class="chart-tab" id="tab2" onclick="tab2_click()">Earnings View</div>
+                <div class="chart-tab active" id="tab1"><span class="tab-label" onclick="tab1_click()">Value</span><select id="metric1Select" class="metric-select"></select></div>
+                <div class="chart-tab" id="tab2"><span class="tab-label" onclick="tab2_click()">Earning</span><select id="metric2Select" class="metric-select"></select></div>
                 <div class="chart-tab" id="tab3" onclick="tab3_click()">Growth View</div>
                 <div class="chart-tab" id="tab4" onclick="tab4_click()">Spreadsheet</div>
             </div>
             <div class="chart-frame">
                 <div style="width: 100%">
-                    <canvas id="chartMetricCanvas"></canvas>
+                    <canvas id="chartMetric1Canvas"></canvas>
                 </div>
                 <div style="width: 100%; display: none">
-                    <canvas id="chartEarningsCanvas"></canvas>
+                    <canvas id="chartMetric2Canvas"></canvas>
                 </div>
                 <div style="width: 100%; display: none">
-                    <canvas id="chartCashFlowCanvas"></canvas>
+                    <canvas id="chartRollupCanvas"></canvas>
                 </div>
                 <div style="width: 100%; display: none; overflow-x: auto;">
                     <div id="spreadsheetElement"></div>

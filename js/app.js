@@ -9,6 +9,7 @@
 // Core types
 import { DateInt } from './date-int.js';
 import { findByName } from './asset-queries.js';
+import { Metric, MetricLabel } from './model-asset.js';
 
 // HTML builder functions
 import {
@@ -38,12 +39,11 @@ import {
 import {
     charting_getHighlightDisplayName,
     charting_setHighlightDisplayName,
-    charting_jsonMetricChartData,
-    charting_jsonEarningsChartData,
-    charting_jsonCashFlowChartData,
-    charting_jsonEarningsChartDataIndividual,
+    charting_jsonMetric1ChartData,
+    charting_jsonMetric2ChartData,
+    charting_jsonRollupChartData,
     charting_buildFromPortfolio,
-    charting_buildFromModelAsset,
+    charting_buildPortfolioMetric,
 } from './charting.js';
 
 // Logger
@@ -82,9 +82,9 @@ const assetsSimulatorElement = document.getElementById('assetsSimulator');
 const assetsSummaryElement = document.getElementById('rollup1');
 const assetsSimulatorSummaryElement = document.getElementById('rollup2');
 
-const chartMetricCanvas = document.getElementById('chartMetricCanvas');
-const chartEarningsCanvas = document.getElementById('chartEarningsCanvas');
-const chartCashFlowCanvas = document.getElementById('chartCashFlowCanvas');
+const chartMetric1Canvas = document.getElementById('chartMetric1Canvas');
+const chartMetric2Canvas = document.getElementById('chartMetric2Canvas');
+const chartRollupCanvas = document.getElementById('chartRollupCanvas');
 const spreadsheetElement = document.getElementById('spreadsheetElement');
 const chartEarningsCanvasIndividual = document.getElementById('chartEarningsCanvasIndividual');
 
@@ -99,11 +99,51 @@ let activeAssetsElement = assetsContainerElement;
 let activeSummaryElement = assetsSummaryElement;
 let activeStoryArc = null;
 let activeStoryName = null;
-let activeMetricCanvas = null;
-let activeEarningsCanvas = null;
-let activeCashFlowCanvas = null;
+let activeMetric1Canvas = null;
+let activeMetric2Canvas = null;
+let activeRollupCanvas = null;
 let activeEarningsCanvasIndividual = null;
 let editingCard = null;
+let activeMetric1Name = Metric.VALUE;
+let activeMetric2Name = Metric.EARNING;
+let activePortfolio = null;
+
+const metric1Select = document.getElementById('metric1Select');
+const metric2Select = document.getElementById('metric2Select');
+
+// ─── Metric Select Setup ─────────────────────────────────────
+
+function populateMetricSelects() {
+    const options = Object.values(Metric).map(m =>
+        '<option value="' + m + '">' + MetricLabel[m] + '</option>'
+    ).join('');
+    metric1Select.innerHTML = options;
+    metric2Select.innerHTML = options;
+    metric1Select.value = activeMetric1Name;
+    metric2Select.value = activeMetric2Name;
+    tab1.querySelector('.tab-label').textContent = MetricLabel[activeMetric1Name];
+    tab2.querySelector('.tab-label').textContent = MetricLabel[activeMetric2Name];
+}
+
+metric1Select.addEventListener('click', function(ev) { ev.stopPropagation(); });
+metric1Select.addEventListener('change', function() {
+    activeMetric1Name = metric1Select.value;
+    tab1.querySelector('.tab-label').textContent = MetricLabel[activeMetric1Name];
+    if (!activePortfolio) return;
+    const chartData = charting_buildPortfolioMetric(activePortfolio, activeMetric1Name, true);
+    if (activeMetric1Canvas != null) activeMetric1Canvas.destroy();
+    activeMetric1Canvas = new Chart(chartMetric1Canvas, chartData);
+});
+
+metric2Select.addEventListener('click', function(ev) { ev.stopPropagation(); });
+metric2Select.addEventListener('change', function() {
+    activeMetric2Name = metric2Select.value;
+    tab2.querySelector('.tab-label').textContent = MetricLabel[activeMetric2Name];
+    if (!activePortfolio) return;
+    const chartData = charting_buildPortfolioMetric(activePortfolio, activeMetric2Name, true);
+    if (activeMetric2Canvas != null) activeMetric2Canvas.destroy();
+    activeMetric2Canvas = new Chart(chartMetric2Canvas, chartData);
+});
 
 // ─── Initial Setup Functions ─────────────────────────────────
 
@@ -323,66 +363,66 @@ async function savePortfolioViaMCP() {
 function tab1_click() {
     if (tab2.classList.contains('active')) {
         tab2.classList.remove('active');
-        chartEarningsCanvas.parentElement.style.display = 'none';
+        chartMetric2Canvas.parentElement.style.display = 'none';
     }
     else if (tab3.classList.contains('active')) {
         tab3.classList.remove('active');
-        chartCashFlowCanvas.parentElement.style.display = 'none';
+        chartRollupCanvas.parentElement.style.display = 'none';
     }
     else if (tab4.classList.contains('active')) {
         tab4.classList.remove('active');
         spreadsheetElement.parentElement.style.display = 'none';
     }
     tab1.classList.add('active');
-    chartMetricCanvas.parentElement.style.display = '';
+    chartMetric1Canvas.parentElement.style.display = '';
 }
 
 function tab2_click() {
     if (tab1.classList.contains('active')) {
         tab1.classList.remove('active');
-        chartMetricCanvas.parentElement.style.display = 'none';
+        chartMetric1Canvas.parentElement.style.display = 'none';
     }
     else if (tab3.classList.contains('active')) {
         tab3.classList.remove('active');
-        chartCashFlowCanvas.parentElement.style.display = 'none';
+        chartRollupCanvas.parentElement.style.display = 'none';
     }
     else if (tab4.classList.contains('active')) {
         tab4.classList.remove('active');
         spreadsheetElement.parentElement.style.display = 'none';
     }
     tab2.classList.add('active');
-    chartEarningsCanvas.parentElement.style.display = '';
+    chartMetric2Canvas.parentElement.style.display = '';
 }
 
 function tab3_click() {
     if (tab1.classList.contains('active')) {
         tab1.classList.remove('active');
-        chartMetricCanvas.parentElement.style.display = 'none';
+        chartMetric1Canvas.parentElement.style.display = 'none';
     }
     else if (tab2.classList.contains('active')) {
         tab2.classList.remove('active');
-        chartEarningsCanvas.parentElement.style.display = 'none';
+        chartMetric2Canvas.parentElement.style.display = 'none';
     }
     else if (tab4.classList.contains('active')) {
         tab4.classList.remove('active');
         spreadsheetElement.parentElement.style.display = 'none';
     }
     tab3.classList.add('active');
-    chartCashFlowCanvas.parentElement.style.display = '';
+    chartRollupCanvas.parentElement.style.display = '';
 }
 
 function tab4_click() {
     if (tab1.classList.contains('active')) {
         tab1.classList.remove('active');
-        chartMetricCanvas.parentElement.style.display = 'none';
+        chartMetric1Canvas.parentElement.style.display = 'none';
     }
     else if (tab2.classList.contains('active')) {
         tab2.classList.remove('active');
-        chartEarningsCanvas.parentElement.style.display = 'none';
+        chartMetric2Canvas.parentElement.style.display = 'none';
     }
     else if (tab3.classList.contains('active')) {
         tab3.classList.remove('active');
-        chartCashFlowCanvas.parentElement.style.display = 'none';
+        chartRollupCanvas.parentElement.style.display = 'none';
     }
     tab4.classList.add('active');
     spreadsheetElement.parentElement.style.display = '';
@@ -445,13 +485,14 @@ function ensureHighlightDisplayName() {
 function updateCharts() {
     let modelAssets = membrane_htmlElementsToAssetModels(activeAssetsElement);
     let portfolio = new Portfolio(modelAssets);
+    activePortfolio = portfolio;
     chronometer_run(document.getElementById(activeSummaryElement), portfolio);
     portfolio.buildChartingDisplayData();
     ensureHighlightDisplayName();
-    charting_buildFromPortfolio(portfolio, false);
-    activeMetricCanvas.update();
-    activeEarningsCanvas.update();
-    activeCashFlowCanvas.update();
+    charting_buildFromPortfolio(portfolio, false, activeMetric1Name, activeMetric2Name);
+    activeMetric1Canvas.update();
+    activeMetric2Canvas.update();
+    //activeRollupCanvas.update();
 }
 
 function calculate(target) {
@@ -483,8 +524,11 @@ function calculate(target) {
     // if there is a highlightDisplayName, make sure it's selected
     ensureHighlightDisplayName();
 
+    // store portfolio for metric select change handlers
+    activePortfolio = portfolio;
+
     // build the chart configs (must happen before innerCalculate creates Chart instances)
-    charting_buildFromPortfolio(portfolio, true);
+    charting_buildFromPortfolio(portfolio, true, activeMetric1Name, activeMetric2Name);
 
     innerCalculate(portfolio);
 
@@ -596,19 +640,19 @@ function buildSpreadsheetHTML(portfolio) {
 }
 
 function innerCalculate(portfolio) {
-    if (activeMetricCanvas != null)
-        activeMetricCanvas.destroy();
-    if (activeEarningsCanvas != null)
-        activeEarningsCanvas.destroy();
-    if (activeCashFlowCanvas != null)
-        activeCashFlowCanvas.destroy();
+    if (activeMetric1Canvas != null)
+        activeMetric1Canvas.destroy();
+    if (activeMetric2Canvas != null)
+        activeMetric2Canvas.destroy();
+    if (activeRollupCanvas != null)
+        activeRollupCanvas.destroy();
 
-    if (charting_jsonMetricChartData != null)
-        activeMetricCanvas = new Chart(chartMetricCanvas, charting_jsonMetricChartData);
-    if (charting_jsonEarningsChartData != null)
-        activeEarningsCanvas = new Chart(chartEarningsCanvas, charting_jsonEarningsChartData);
-    if (charting_jsonCashFlowChartData != null)
-        activeCashFlowCanvas = new Chart(chartCashFlowCanvas, charting_jsonCashFlowChartData);
+    if (charting_jsonMetric1ChartData != null)
+        activeMetric1Canvas = new Chart(chartMetric1Canvas, charting_jsonMetric1ChartData);
+    if (charting_jsonMetric2ChartData != null)
+        activeMetric2Canvas = new Chart(chartMetric2Canvas, charting_jsonMetric2ChartData);
+    if (charting_jsonRollupChartData != null)
+        activeRollupCanvas = new Chart(chartRollupCanvas, charting_jsonRollupChartData);
 
     spreadsheetElement.innerHTML = buildSpreadsheetHTML(portfolio);
 }
@@ -744,8 +788,8 @@ function showPopupTransfers(containerElement, currentDisplayName) {
 
     popupFormTransfersElement.style.display = 'block';
 
-    if (charting_jsonEarningsChartDataIndividual != null)
-        activeEarningsCanvasIndividual = new Chart(chartEarningsCanvasIndividual, charting_jsonEarningsChartDataIndividual);
+    if (charting_jsonMetric2ChartConfigIndividual != null)
+        activeEarningsCanvasIndividual = new Chart(chartEarningsCanvasIndividual, charting_jsonMetric2ChartConfigIndividual);
 }
 
 function popupFormTransfers_onSave(ev) {
@@ -852,6 +896,7 @@ window.selectLocalData_changed = selectLocalData_changed;
 function initialize() {
     global_initialize();
     setActiveTaxTable(new TaxTable());
+    populateMetricSelects();
     buildInstrumentOptions();
     initiateActiveData();
     connectAssetSelect();

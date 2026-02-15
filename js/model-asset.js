@@ -57,6 +57,33 @@ export const Metric = Object.freeze({
 
 const METRIC_NAMES = Object.values(Metric);
 
+export const MetricLabel = Object.freeze({
+  [Metric.VALUE]:                   'Value',
+  [Metric.EARNING]:                 'Earning',
+  [Metric.INCOME]:                  'Income',
+  [Metric.AFTER_TAX]:               'After Tax',
+  [Metric.AFTER_EXPENSE]:           'After Expense',
+  [Metric.ACCUMULATED]:             'Accumulated',
+  [Metric.SHORT_TERM_CAPITAL_GAIN]: 'Short Term Capital Gain',
+  [Metric.LONG_TERM_CAPITAL_GAIN]:  'Long Term Capital Gain',
+  [Metric.RMD]:                     'Required Min. Distribution',
+  [Metric.SOCIAL_SECURITY]:         'Social Security',
+  [Metric.MEDICARE]:                'Medicare',
+  [Metric.INCOME_TAX]:              'Income Tax',
+  [Metric.MORTGAGE_PAYMENT]:        'Mortgage Payment',
+  [Metric.MORTGAGE_INTEREST]:       'Mortgage Interest',
+  [Metric.MORTGAGE_PRINCIPAL]:      'Mortgage Principal',
+  [Metric.MORTGAGE_ESCROW]:         'Mortgage Escrow',
+  [Metric.ESTIMATED_TAX]:           'Estimated Tax',
+  [Metric.IRA_CONTRIBUTION]:        'IRA Contribution',
+  [Metric.FOUR_01K_CONTRIBUTION]:   '401K Contribution',
+  [Metric.IRA_DISTRIBUTION]:        'IRA Distribution',
+  [Metric.FOUR_01K_DISTRIBUTION]:   '401K Distribution',
+  [Metric.INTEREST_INCOME]:         'Interest Income',
+  [Metric.CAPITAL_GAINS_TAX]:       'Capital Gains Tax',
+  [Metric.CREDIT]:                  'Credit',
+});
+
 // Metrics that should NOT be zeroed on monthly snapshot
 const KEEP_ON_SNAPSHOT = new Set([Metric.ACCUMULATED]);
 

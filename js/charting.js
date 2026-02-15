@@ -3,6 +3,7 @@ import { DateInt } from './date-int.js';
 import { colorRange, positiveBackgroundColor, negativeBackgroundColor } from './html.js';
 import { logger } from './logger.js';
 import { findByName } from './asset-queries.js';
+import { Metric } from './model-asset.js';
 
 let highlightDisplayName = null;
 
@@ -77,13 +78,12 @@ const lineChartDataSet = {
 
 const flowLineChartExclusions = ['home','mortgage'];
 
-export let charting_jsonMetricChartData = null;
-let charting_jsonMetricChartConfig = null;
-export let charting_jsonEarningsChartData = null;
-export let charting_jsonCashFlowChartData = null;
+export let charting_jsonMetric1ChartData = null;
+export let charting_jsonMetric2ChartData = null;
+export let charting_jsonRollupChartData = null;
 export let charting_jsonSpreeadsheetData = null;
 
-export let charting_jsonEarningsChartDataIndividual = null;
+const chartMetricConfigCache = new Map();
 
 export function charting_buildDisplayLabels(firstDateInt, lastDateInt) {
   let monthsSpan = MonthsSpan.build(firstDateInt, lastDateInt);
@@ -145,7 +145,7 @@ export function setModelAssetColorIds(modelAssets) {
 }
 
 // The reduction keeps the modelAssets positionally in the array. This is so the colorId value is consistent across chart views.
-export function charting_reducedModelAssetsForMetric(modelAssets) {
+export function charting_reducedModelAssetsForMetric(modelAssets, metricName) {
   let results = [];
   for (const modelAsset of modelAssets) {
       //if (assetStackedBarChartExclusions.includes(modelAsset.instrument))
@@ -170,8 +170,10 @@ export function charting_buildPortfolioMetric(portfolio, metricName, buildNewDat
   let chartingMetricConfig = null;
   let chartingMetricData = null;
 
-  if (!buildNewDataSet && charting_jsonMetricChartConfig == null) {
-    logger.log('charting_buildPortfolioMetric - attempting to reuse null charting_jsonMetricChartConfig. Building new data set.');
+  let cachedConfig = chartMetricConfigCache.get(metricName);
+
+  if (!buildNewDataSet && cachedConfig == null) {
+    logger.log('charting_buildPortfolioMetric - attempting to reuse null config for ' + metricName + '. Building new data set.');
     buildNewDataSet = true;
   }
 
@@ -183,7 +185,7 @@ export function charting_buildPortfolioMetric(portfolio, metricName, buildNewDat
     chartingMetricData.labels = labels;
   }
   else {
-    chartingMetricConfig = charting_jsonMetricChartConfig;
+    chartingMetricConfig = cachedConfig;
     chartingMetricData = chartingMetricConfig.data;
   }
 
@@ -220,17 +222,18 @@ export function charting_buildPortfolioMetric(portfolio, metricName, buildNewDat
   }
 
   chartingMetricConfig.data = chartingMetricData;
-  charting_jsonMetricChartConfig = chartingMetricConfig;
+  chartMetricConfigCache.set(metricName, chartingMetricConfig);
   return chartingMetricConfig;
 }
 
-export function charting_buildPredefines(portfolio, predefinedName, buildNewDataSet) {
+/*
+export function charting_buildPortfolioRollup(portfolio, predefinedName, buildNewDataSet) {
 
   let chartingAssetConfig = null;
   let chartingAssetData = null;
 
-  if (!buildNewDataSet && charting_jsonMetricChartData == null) {
-    logger.log('charting_buildPredefines - attempting to reuse null charting_jsonMetricChartData. Building new data set.');
+  if (!buildNewDataSet && charting_jsonMetric1ChartData == null) {
+    logger.log('charting_buildPortfolioRollup - attempting to reuse null charting_jsonMetricRollupData. Building new data set.');
     buildNewDataSet = true;
   }
 
@@ -242,7 +245,7 @@ export function charting_buildPredefines(portfolio, predefinedName, buildNewData
     chartingAssetData.labels = labels;
   }
   else {
-    chartingAssetConfig = charting_jsonMetricChartData;
+    chartingAssetConfig = charting_jsonMetric1ChartData;
     chartingAssetData = chartingAssetConfig.data;
   }
 
@@ -295,6 +298,7 @@ export function charting_reducedModelAssetsForEarnings(modelAssets) {
   }
   return results;
 }
+*/
 
 export function charting_buildDisplayEarningsFromModelAssets(firstDateInt, lastDateInt, modelAssets, buildNewDataSet) {
   if (firstDateInt == null) {
@@ -309,8 +313,10 @@ export function charting_buildDisplayEarningsFromModelAssets(firstDateInt, lastD
   let chartingEarningsConfig = null;
   let chartingEarningsData = null;
 
-  if (!buildNewDataSet && charting_jsonEarningsChartData == null) {
-    logger.log('charting_buildDisplayEarningsFromModelAssets - attempting to reuse null charting_jsonEarningsChartData. Building new data set.');
+  let cachedConfig = chartMetricConfigCache.get('earningsMulti');
+
+  if (!buildNewDataSet && cachedConfig == null) {
+    logger.log('charting_buildDisplayEarningsFromModelAssets - attempting to reuse null config. Building new data set.');
     buildNewDataSet = true;
   }
 
@@ -321,7 +327,7 @@ export function charting_buildDisplayEarningsFromModelAssets(firstDateInt, lastD
     chartingEarningsData.labels = labels;
   }
   else {
-    chartingEarningsConfig = charting_jsonEarningsChartData;
+    chartingEarningsConfig = cachedConfig;
     chartingEarningsData = chartingEarningsConfig.data;
   }
 
@@ -376,8 +382,10 @@ export function charting_buildDisplayEarningsFromModelAsset(firstDateInt, lastDa
   let chartingEarningsConfig = null;
   let chartingEarningsData = null;
 
-  if (!buildNewDataSet && charting_jsonEarningsChartDataIndividual == null) {
-    logger.log('charting_buildDisplayEarningsFromModelAsset - attempting to reuse null charting_jsonEarningsChartDataIndividual. Building new data set.');
+  let cachedConfig = chartMetricConfigCache.get('earningsIndividual');
+
+  if (!buildNewDataSet && cachedConfig == null) {
+    logger.log('charting_buildDisplayEarningsFromModelAsset - attempting to reuse null config. Building new data set.');
     buildNewDataSet = true;
   }
 
@@ -388,7 +396,7 @@ export function charting_buildDisplayEarningsFromModelAsset(firstDateInt, lastDa
     chartingEarningsData.labels = labels;
   }
   else {
-    chartingEarningsConfig = charting_jsonEarningsChartData;
+    chartingEarningsConfig = cachedConfig;
     chartingEarningsData = chartingEarningsConfig.data;
   }
 
@@ -422,12 +430,14 @@ export function charting_buildCashFlowDataSet(modelAssets, label, sign) {
     //else if (flowLineChartExclusions.includes(modelAsset.instrument))
     //  continue;
 
-    for (let ii = 0; ii < modelAsset.displayEarningData.length; ii++) {
+    let displayHistoryData = modelAsset.getMetric(Metric.EARNING).displayHistory;
+
+    for (let ii = 0; ii < displayHistoryData.length; ii++) {
 
       if (firstModelAsset)
         cashFlowDataSet.data.push(0.0);
 
-      let displayData = modelAsset.displayEarningData[ii];
+      let displayData = displayHistoryData[ii];
       if (displayData == null)
         displayData = 0.0;
 
@@ -496,63 +506,76 @@ export function charting_applyTaxesToCashFlowDataSet(cashFlowDataSet, taxDataSet
 
 export function charting_buildDisplayCashFlowFromPortfolio(portfolio) {
 
-  let chartingCashFlowConfig = JSON.parse(JSON.stringify(lineChartConfig));
-  let chartingCashFlowData = JSON.parse(JSON.stringify(lineChartData));
-  chartingCashFlowData.labels = charting_buildDisplayLabels(portfolio.firstDateInt, portfolio.lastDateInt);
-
-  let reducedModelAssets = charting_reducedModelAssetsForEarnings(portfolio.modelAssets);
+  //let reducedModelAssets = charting_reducedModelAssetsForEarnings(portfolio.modelAssets);
+  let reducedModelAssets = portfolio.modelAssets;
 
   let chartingCashFlowDataSet_credits = charting_buildCashFlowDataSet(reducedModelAssets, 'Credits', 1);
   let chartingCashFlowDataSet_debits = charting_buildCashFlowDataSet(reducedModelAssets, 'Debits', -1);
   let chartingCashFlowDataSet_cash = charting_buildCashFlowDataSet(reducedModelAssets, 'Growth', 0);
   //let chartingCashFlowDataSet_fica = charting_buildCashFlowDataSet_fica(portfolio);
-  let chartingCashFlowDataSet_rmds = charting_buildCashFlowDataSet_rmds(portfolio);
-  let chartingCashFlowDataSet_taxes = charting_buildCashFlowDataSet_taxes(portfolio);
+  //let chartingCashFlowDataSet_rmds = charting_buildCashFlowDataSet_rmds(portfolio);
+  //let chartingCashFlowDataSet_taxes = charting_buildCashFlowDataSet_taxes(portfolio);
 
-  charting_applyTaxesToCashFlowDataSet(chartingCashFlowDataSet_cash, chartingCashFlowDataSet_taxes);
+  //charting_applyTaxesToCashFlowDataSet(chartingCashFlowDataSet_cash, chartingCashFlowDataSet_taxes);
 
-  chartingCashFlowData.datasets.push(chartingCashFlowDataSet_credits);
-  chartingCashFlowData.datasets.push(chartingCashFlowDataSet_debits);
-  chartingCashFlowData.datasets.push(chartingCashFlowDataSet_cash);
+  //chartingCashFlowData.datasets.push(chartingCashFlowDataSet_credits);
+  //chartingCashFlowData.datasets.push(chartingCashFlowDataSet_debits);
+  //chartingCashFlowData.datasets.push(chartingCashFlowDataSet_cash);
   //chartingCashFlowData.datasets.push(chartingCashFlowDataSet_fica);
-  chartingCashFlowData.datasets.push(chartingCashFlowDataSet_rmds);
-  chartingCashFlowData.datasets.push(chartingCashFlowDataSet_taxes);
+  //chartingCashFlowData.datasets.push(chartingCashFlowDataSet_rmds);
+  //chartingCashFlowData.datasets.push(chartingCashFlowDataSet_taxes);
 
-  chartingCashFlowConfig.data = chartingCashFlowData;
-  return chartingCashFlowConfig;
+  return null; chartingCashFlowData;
 
 }
 
+export function charting_buildPortfolioRollup(portfolio, predefinedName, buildNewDataSet) {
+
+  let chartingRollupConfig = JSON.parse(JSON.stringify(lineChartConfig));
+  let chartingRollupData = JSON.parse(JSON.stringify(lineChartData));
+  chartingRollupData.labels = charting_buildDisplayLabels(portfolio.firstDateInt, portfolio.lastDateInt);
+
+  if (predefinedName == 'cashFlow') {
+     chartingRollupConfig.data = charting_buildDisplayCashFlowFromPortfolio(portfolio)
+  }
+
+  return chartingRollupConfig;
+
+}
+
+/*
 export function charting_buildDisplaySpreadsheetFromPortfolio(portfolio, buildNewDataSet) {
   // Spreadsheet data is built during portfolio calculation. Here we just return the data structure.
 }
+*/
 
-export function charting_buildFromPortfolio(portfolio, buildNewDataSet) {
+export function charting_buildFromPortfolio(portfolio, buildNewDataSet, metric1Name, metric2Name) {
   if (portfolio == null || portfolio.modelAssets == null || portfolio.modelAssets.length == 0) {
 
-    // TODO: make these configurable for any metric name, and not just assets and earnings. Maybe a map of metricName to chartData?
-    logger.log('charting_buildFromModelAssets - null or zero length array provided');
-    charting_jsonMetricChartData = null;
-    charting_jsonEarningsChartData = null;
-    charting_jsonCashFlowChartData = null;
+    logger.log('charting_buildFromPortfolio - null or zero length array provided');
+    charting_jsonMetric1ChartData = null;
+    charting_jsonMetric2ChartData = null;
+    charting_jsonRollupChartData = null;
     charting_jsonSpreeadsheetData = null;
+    chartMetricConfigCache.clear();
 
   }
   else {
 
     setModelAssetColorIds(portfolio.modelAssets);
-    charting_jsonMetricChartData = charting_buildPortfolioMetric(portfolio, "value", buildNewDataSet);
-    //charting_jsonEarningsChartData = charting_buildFromPortfolioMetric(portfolio, "earning", buildNewDataSet);
-    //charting_jsonCashFlowChartData = charting_buildFromPortfolioMetric(portfolio, "cashFlow", buildNewDataSet);
-    charting_jsonSpreeadsheetData = charting_buildDisplaySpreadsheetFromPortfolio(portfolio, buildNewDataSet);
+    charting_jsonMetric1ChartData = charting_buildPortfolioMetric(portfolio, metric1Name, buildNewDataSet);
+    charting_jsonMetric2ChartData = charting_buildPortfolioMetric(portfolio, metric2Name, buildNewDataSet);
+    charting_jsonRollupChartData = charting_buildPortfolioRollup(portfolio, "cashFlow", buildNewDataSet);
 
   }
 }
 
+/*
 export function charting_buildFromModelAsset(portfolio, modelDisplayName) {
 
     setModelAssetColorIds(portfolio.modelAssets);
     let modelAsset = findByName(portfolio.modelAssets, modelDisplayName);
-    charting_jsonEarningsChartDataIndividual = charting_buildDisplayEarningsFromModelAsset(portfolio.firstDateInt, portfolio.lastDateInt, modelAsset, true);
+    charting_jsonMetric2ChartConfigIndividual = charting_buildDisplayEarningsFromModelAsset(portfolio.firstDateInt, portfolio.lastDateInt, modelAsset, true);
 
 }
+*/
