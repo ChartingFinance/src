@@ -321,7 +321,7 @@ body::before {
     padding: 0;
     border: none;
     background: transparent;
-    color: transparent;
+    color: inherit;
     cursor: pointer;
     outline: none;
 }
