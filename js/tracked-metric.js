@@ -87,11 +87,13 @@ export class TrackedMetric {
 
   /** Build an array of display values for this metric, aligned to the given monthsSpan */
   buildDisplayHistory(monthsSpan) {
+
     this.displayHistory = [];
     for (let ii = monthsSpan.offsetMonths; ii < this.history.length; ii += monthsSpan.combineMonths) {      
         this.displayHistory.push(this.history[ii]);      
     }
     return this.displayHistory;
+    
   }
 }
 

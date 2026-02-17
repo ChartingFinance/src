@@ -523,7 +523,7 @@ export class Portfolio {
         this.monthly.zero();
         
         for (let modelAsset of this.modelAssets) {
-            modelAsset.monthlyChron();
+            modelAsset.monthlyChron(currentDateInt);
         }        
     }
 
@@ -621,40 +621,37 @@ export class Portfolio {
 
     applyFirstDayOfMonth(currentDateInt) {
         
+        // let the model assets know its the first day of the month.
+        for (let modelAsset of this.modelAssets) {
+            modelAsset.applyFirstDayOfMonth(currentDateInt);
+        }
+
         // recognize priority calculations (income, mortgages, taxableEquity, taxDeferredEquity)
         for (let modelAsset of this.modelAssets) {
-            if (modelAsset.inMonth(currentDateInt)) {
-                
-                this.applyFirstDayOfMonthCalculations(modelAsset);                  
 
-            }
+            this.applyFirstDayOfMonthCalculations(modelAsset);                              
+
         }
 
         // calculate fixed taxes like fica and property taxes
-        for (let modelAsset of this.modelAssets) {
-            if (modelAsset.inMonth(currentDateInt)) {
+        for (let modelAsset of this.modelAssets) {       
 
-                this.applyFirstDayOfMonthTaxes(modelAsset);                   
+            this.applyFirstDayOfMonthTaxes(modelAsset);                   
      
-            }
         }
         
         // 401K or ira required minimum distribution
         for (let modelAsset of this.modelAssets) {
-            if (modelAsset.inMonth(currentDateInt)) {
-
-                this.calculateFirstDayOfMonthRMDs(currentDateInt, modelAsset);
+            
+            this.calculateFirstDayOfMonthRMDs(currentDateInt, modelAsset);
         
-            }
         }
 
         // apply credits/debits
         for (let modelAsset of this.modelAssets) {
-            if (modelAsset.inMonth(currentDateInt)) {
                 
-                this.applyFirstDayOfMonthIncomeFundTransfers(modelAsset);                            
+            this.applyFirstDayOfMonthIncomeFundTransfers(modelAsset);                            
                  
-            }
         }
     }
 
@@ -834,42 +831,43 @@ export class Portfolio {
 
         // apply expenses
         for (let modelAsset of this.modelAssets) {
-            if (modelAsset.inMonth(currentDateInt)) {
 
-                this.applyLastDayOfMonthExpenseFundTransfers(modelAsset);
-            }
+            this.applyLastDayOfMonthExpenseFundTransfers(modelAsset);           
+
         }
 
         // ensure RMDs are handled
-        for (let modelAsset of this.modelAssets) {
-            if (modelAsset.inMonth(currentDateInt)) {
+        for (let modelAsset of this.modelAssets) {            
 
-                this.ensureRMDDistributions(modelAsset);
-
-            }
+            this.ensureRMDDistributions(modelAsset);
         }
 
         // recognize asset gains
         // Doing this after applying expenses is pessimistic
         // Maybe an optimistic option to do this prior to expenses?
         for (let modelAsset of this.modelAssets) {
-            if (modelAsset.inMonth(currentDateInt)) {        
-                
-                this.applyLastDayOfMonthCalculations(modelAsset);
-                
-            }
+                  
+            this.applyLastDayOfMonthCalculations(modelAsset);                
+            
         }
-
-        this.applyMonthlyTaxes();
 
         // sale of assets and proceeds transferred to taxable account
         for (let modelAsset of this.modelAssets) {
-            if (modelAsset.finishDateInt.year == currentDateInt.year && modelAsset.finishDateInt.month == currentDateInt.month && currentDateInt.toInt() < this.lastDateInt.toInt()) {
+
+            if (modelAsset.onFinishDate) {
                 
                 this.closeAsset(modelAsset);
             
             }
         }
+
+        for (let modelAsset of this.modelAssets) {
+
+            modelAsset.applyLastDayOfMonth(currentDateInt);
+
+        }
+
+        this.applyMonthlyTaxes();
 
     }
 
@@ -975,7 +973,6 @@ export class Portfolio {
 
     closeAsset(modelAsset) {
 
-        modelAsset.onFinishDate = true;
         if (!InstrumentType.isCapital(modelAsset.instrument)) {
 
             if (InstrumentType.isMortgage(modelAsset.instrument)) {
@@ -1159,15 +1156,8 @@ export class Portfolio {
         
         for (let metric of modelAsset.getMetrics()) {
 
-            let displayName = metric.displayName();
-            let displayData = metric.buildDisplayHistory(monthsSpan);
+            metric.buildDisplayHistory(monthsSpan);            
             
-            if (this[displayName] == null)
-                this[displayName] = displayData;
-            else {                
-                for (let ii = 0; ii < this[displayName].length; ++ii)
-                    this[displayName] [ii] += displayData [ii];            
-            }            
         }    
 
     }

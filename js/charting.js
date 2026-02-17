@@ -82,6 +82,7 @@ export let charting_jsonMetric1ChartData = null;
 export let charting_jsonMetric2ChartData = null;
 export let charting_jsonRollupChartData = null;
 export let charting_jsonSpreeadsheetData = null;
+export let charting_jsonMetricChartConfigIndividual = null; // for individual model asset display, e.g. earnings in fundsTransfer
 
 const chartMetricConfigCache = new Map();
 
@@ -570,12 +571,11 @@ export function charting_buildFromPortfolio(portfolio, buildNewDataSet, metric1N
   }
 }
 
-/*
 export function charting_buildFromModelAsset(portfolio, modelDisplayName) {
 
     setModelAssetColorIds(portfolio.modelAssets);
     let modelAsset = findByName(portfolio.modelAssets, modelDisplayName);
-    charting_jsonMetric2ChartConfigIndividual = charting_buildDisplayEarningsFromModelAsset(portfolio.firstDateInt, portfolio.lastDateInt, modelAsset, true);
+    charting_jsonMetricChartConfigIndividual = charting_buildDisplayEarningsFromModelAsset(portfolio.firstDateInt, portfolio.lastDateInt, modelAsset, true);
 
 }
-*/
+

@@ -29,59 +29,70 @@ const rgb2hex = (rgb) => `#${rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/).slice
 // Single source of truth for every tracked-metric key.
 
 export const Metric = Object.freeze({
-  VALUE:                    'value',
-  EARNING:                  'earning',
-  INCOME:                   'income',
-  AFTER_TAX:                'afterTax',
-  AFTER_EXPENSE:            'afterExpense',
-  ACCUMULATED:              'accumulated',
-  SHORT_TERM_CAPITAL_GAIN:  'shortTermCapitalGain',
-  LONG_TERM_CAPITAL_GAIN:   'longTermCapitalGain',
-  RMD:                      'rmd',
-  SOCIAL_SECURITY:          'socialSecurity',
-  MEDICARE:                 'medicare',
-  INCOME_TAX:               'incomeTax',
-  MORTGAGE_PAYMENT:         'mortgagePayment',
-  MORTGAGE_INTEREST:        'mortgageInterest',
-  MORTGAGE_PRINCIPAL:       'mortgagePrincipal',
-  MORTGAGE_ESCROW:          'mortgageEscrow',
-  ESTIMATED_TAX:            'estimatedTax',
-  IRA_CONTRIBUTION:         'iraContribution',
-  FOUR_01K_CONTRIBUTION:    'four01KContribution',
-  IRA_DISTRIBUTION:         'iraDistribution',
-  FOUR_01K_DISTRIBUTION:    'four01KDistribution',
-  INTEREST_INCOME:          'interestIncome',
-  CAPITAL_GAINS_TAX:        'capitalGainsTax',
-  CREDIT:                   'credit',
+  VALUE:                        'value',
+  GROWTH:                       'growth',
+  DIVIDEND:                     'dividend',
+  INTEREST_INCOME:              'interestIncome',
+  ORDINARY_INCOME:              'ordinaryIncome',
+  WORKING_INCOME:               'workingIncome', // subjct to FICA, Medicare, withholding
+  INCOME:                       'income',
+  EXPENSE:                      'expense',
+  ESTIMATED_TAX:                'estimatedTax',
+  INCOME_TAX:                   'incomeTax',
+  EARNING:                      'earning',  
+  EARNING_ACCUMULATED:          'earningAccumulated',
+  SHORT_TERM_CAPITAL_GAIN:      'shortTermCapitalGain',
+  LONG_TERM_CAPITAL_GAIN:       'longTermCapitalGain',
+  RMD:                          'rmd',
+  SOCIAL_SECURITY:              'socialSecurity',
+  MEDICARE:                     'medicare',
+  MORTGAGE_PAYMENT:             'mortgagePayment',
+  MORTGAGE_INTEREST:            'mortgageInterest',
+  MORTGAGE_PRINCIPAL:           'mortgagePrincipal',
+  MORTGAGE_ESCROW:              'mortgageEscrow',
+  IRA_CONTRIBUTION:             'iraContribution',
+  FOUR_01K_CONTRIBUTION:        'four01KContribution',
+  IRA_DISTRIBUTION:             'iraDistribution',
+  FOUR_01K_DISTRIBUTION:        'four01KDistribution',
+  SHORT_TERM_CAPITAL_GAIN_TAX:  'shortTermCapitalGain',
+  LONG_TERM_CAPITAL_GAIN_TAX:   'longTermCapitalGain',
+  CAPITAL_GAIN_TAX:             'capitalGainTax',
+  CREDIT:                       'credit',
 });
 
 const METRIC_NAMES = Object.values(Metric);
 
 export const MetricLabel = Object.freeze({
-  [Metric.VALUE]:                   'Value',
-  [Metric.EARNING]:                 'Earning',
-  [Metric.INCOME]:                  'Income',
-  [Metric.AFTER_TAX]:               'After Tax',
-  [Metric.AFTER_EXPENSE]:           'After Expense',
-  [Metric.ACCUMULATED]:             'Accumulated',
-  [Metric.SHORT_TERM_CAPITAL_GAIN]: 'Short Term Capital Gain',
-  [Metric.LONG_TERM_CAPITAL_GAIN]:  'Long Term Capital Gain',
-  [Metric.RMD]:                     'Required Min. Distribution',
-  [Metric.SOCIAL_SECURITY]:         'Social Security',
-  [Metric.MEDICARE]:                'Medicare',
-  [Metric.INCOME_TAX]:              'Income Tax',
-  [Metric.MORTGAGE_PAYMENT]:        'Mortgage Payment',
-  [Metric.MORTGAGE_INTEREST]:       'Mortgage Interest',
-  [Metric.MORTGAGE_PRINCIPAL]:      'Mortgage Principal',
-  [Metric.MORTGAGE_ESCROW]:         'Mortgage Escrow',
-  [Metric.ESTIMATED_TAX]:           'Estimated Tax',
-  [Metric.IRA_CONTRIBUTION]:        'IRA Contribution',
-  [Metric.FOUR_01K_CONTRIBUTION]:   '401K Contribution',
-  [Metric.IRA_DISTRIBUTION]:        'IRA Distribution',
-  [Metric.FOUR_01K_DISTRIBUTION]:   '401K Distribution',
-  [Metric.INTEREST_INCOME]:         'Interest Income',
-  [Metric.CAPITAL_GAINS_TAX]:       'Capital Gains Tax',
-  [Metric.CREDIT]:                  'Credit',
+  [Metric.VALUE]:                       'Value',
+  [Metric.GROWTH]:                      'Growth',
+  [Metric.DIVIDEND]:                    'Dividend',
+  [Metric.INTEREST_INCOME]:             'Interest Income',
+  [Metric.ORDINARY_INCOME]:             'Ordinary Income',
+  [Metric.WORKING_INCOME]:              'Working Income',
+  [Metric.INCOME]:                      'Income',
+  [Metric.EXPENSE]:                     'Expense',
+  [Metric.ESTIMATED_TAX]:               'Estimated Tax',
+  [Metric.INCOME_TAX]:                  'Income Tax',
+  [Metric.EARNING]:                     'Earning',
+  [Metric.EARNING_ACCUMULATED]:         'Earning Accumulated',
+  [Metric.SHORT_TERM_CAPITAL_GAIN]:     'Short Term Capital Gain',
+  [Metric.LONG_TERM_CAPITAL_GAIN]:      'Long Term Capital Gain',
+  [Metric.RMD]:                         'Required Min. Distribution',
+  [Metric.SOCIAL_SECURITY]:             'Social Security',
+  [Metric.MEDICARE]:                    'Medicare',
+  [Metric.MORTGAGE_PAYMENT]:            'Mortgage Payment',
+  [Metric.MORTGAGE_INTEREST]:           'Mortgage Interest',
+  [Metric.MORTGAGE_PRINCIPAL]:          'Mortgage Principal',
+  [Metric.MORTGAGE_ESCROW]:             'Mortgage Escrow',
+  [Metric.ESTIMATED_TAX]:               'Estimated Tax',
+  [Metric.IRA_CONTRIBUTION]:            'IRA Contribution',
+  [Metric.FOUR_01K_CONTRIBUTION]:       '401K Contribution',
+  [Metric.IRA_DISTRIBUTION]:            'IRA Distribution',
+  [Metric.FOUR_01K_DISTRIBUTION]:       '401K Distribution',
+  [Metric.SHORT_TERM_CAPITAL_GAIN_TAX]: 'Short Term Capital Gain Tax',
+  [Metric.LONG_TERM_CAPITAL_GAIN_TAX]:  'Long Term Capital Gain Tax',
+  [Metric.CAPITAL_GAIN_TAX]:            'Capital Gains Tax',
+  [Metric.CREDIT]:                      'Credit',
 });
 
 // Metrics that should NOT be zeroed on monthly snapshot
@@ -120,12 +131,16 @@ export class ModelAsset {
     this.basisCurrency   = basisCurrency;
     this.finishDateInt   = finishDateInt;
     this.monthsRemaining = Number.isInteger(monthsRemaining) ? monthsRemaining : 0;
+    this.annualDividendRate = new ARR(0); // TODO: add to constructor and parsing if needed
     this.annualReturnRate = annualReturnRate;
     this.fundTransfers   = fundTransfers;
     this.isSelfEmployed  = isSelfEmployed;
 
     this.colorId       = 0;
-    this.onFinishDate  = false;
+    this.beforeStartDate = false;
+    this.onOrAfterStateDate = false;
+    this.onOrBeforeFinishDate  = false;
+    this.afterFinishDate = false;
     this.isClosed      = false;
 
     // Chronometer state
@@ -215,20 +230,23 @@ export class ModelAsset {
   get valueCurrency()   { return this.metrics.get(Metric.VALUE).current; }
   set valueCurrency(c)  { this.metrics.get(Metric.VALUE).current = c; }
 
-  get earningCurrency()   { return this.metrics.get(Metric.EARNING).current; }
-  set earningCurrency(c)  { this.metrics.get(Metric.EARNING).current = c; }
+  get growthCurrency()   { return this.metrics.get(Metric.GROWTH).current; }
+  set growthCurrency(c)  { this.metrics.get(Metric.GROWTH).current = c; }
+
+  get dividendCurrency()   { return this.metrics.get(Metric.DIVIDEND).current; }
+  set dividendCurrency(c)  { this.metrics.get(Metric.DIVIDEND).current = c; }
 
   get incomeCurrency()    { return this.metrics.get(Metric.INCOME).current; }
   set incomeCurrency(c)   { this.metrics.get(Metric.INCOME).current = c; }
 
-  get afterTaxCurrency()  { return this.metrics.get(Metric.AFTER_TAX).current; }
-  set afterTaxCurrency(c) { this.metrics.get(Metric.AFTER_TAX).current = c; }
+  get earningCurrency()   { return this.metrics.get(Metric.EARNING).current; }
+  set earningCurrency(c)  { this.metrics.get(Metric.EARNING).current = c; }
 
   get creditCurrency()    { return this.metrics.get(Metric.CREDIT).current; }
   set creditCurrency(c)   { this.metrics.get(Metric.CREDIT).current = c; }
 
-  get accumulatedCurrency()    { return this.metrics.get(Metric.ACCUMULATED).current; }
-  set accumulatedCurrency(c)   { this.metrics.get(Metric.ACCUMULATED).current = c; }
+  get accumulatedCurrency()    { return this.metrics.get(Metric.EARNING_ACCUMULATED).current; }
+  set accumulatedCurrency(c)   { this.metrics.get(Metric.EARNING_ACCUMULATED).current = c; }
 
   get rmdCurrency()                 { return this.metrics.get(Metric.RMD).current; }
   get iraDistributionCurrency()     { return this.metrics.get(Metric.IRA_DISTRIBUTION).current; }
@@ -238,22 +256,64 @@ export class ModelAsset {
   get monthlyValues()     { return this.metrics.get(Metric.VALUE).history; }
   get monthlyEarnings()   { return this.metrics.get(Metric.EARNING).history; }
   get monthlyIncomes()    { return this.metrics.get(Metric.INCOME).history; }
-  get monthlyAfterTaxes() { return this.metrics.get(Metric.AFTER_TAX).history; }
 
   // ── Chronometer lifecycle ────────────────────────────────────────
 
   initializeChron() {
-    this.finishCurrency = new Currency(this.startCurrency.amount);
+
+    this.finishCurrency = new Currency(0);
     this.monthsRemainingDynamic = this.monthsRemaining;
-    this.onFinishDate = false;
+    this.beforeStartDate = false;
+    this.onStateDate = false;
+    this.onFinishDate  = false;
+    this.afterFinishDate = false;
     this.isClosed = false;
     this.metrics.initializeAll();
+
   }
 
-  monthlyChron() {
+  handleCurrentDateInt(currentDateInt) {
+
+    // see if we are active or not
+    if (this.inMonth(currentDateInt)) {
+
+      this.beforeStartDate = false;      
+      this.afterFinishDate = false;
+      this.onStartDate = (currentDateInt.toInt() == this.startDateInt.toInt());
+      this.onFinishDate = (currentDateInt.toInt() == this.finishDateInt.toInt());
+
+    } else {
+
+      if (currentDateInt.toInt() < this.startDateInt.toInt()) {
+
+        this.beforeStartDate = true;
+        this.onStartDate = false;
+        this.onFinishDate = false;
+        this.afterFinishDate = false;
+
+      } else if (currentDateInt.toInt() > this.finishDateInt.toInt()) {
+
+        this.beforeStartDate = false;
+        this.onStartDate = false;
+        this.onFinishDate = false;      
+        this.afterFinishDate = true;
+
+      }
+
+      else {
+
+        console.warn(`Unexpected dateInt comparison for asset ${this.displayName}`);
+
+      }
+
+    }
+
+  }
+
+  monthlyChron() {   
 
     // value and accumulated are special: add finishValue and earnings, then snapshot WITHOUT zeroing
-    this.metrics.get(Metric.ACCUMULATED).add(this.earningCurrency);
+    this.metrics.get(Metric.EARNING_ACCUMULATED).add(this.earningCurrency);
 
     // Reconcile credit buffer
     const credit = this.creditCurrency;
@@ -273,7 +333,31 @@ export class ModelAsset {
 
   // ── Monthly calculations ─────────────────────────────────────────
 
+  applyFirstDayOfMonth(currentDateInt) {
+
+    this.handleCurrentDateInt(currentDateInt);
+
+    if (this.beforeStartDate || this.afterFinishDate) {
+
+      this.finishCurrency.zero();
+
+    }
+
+    else if (this.onStartDate) {
+
+      this.finishCurrency = this.startCurrency.copy();
+
+    }
+
+  }
+
+  applyLastDayOfMonth(currentDateInt) {  
+
+
+  }
+
   applyMonthly() {
+
     const { instrument } = this;
     const T = InstrumentType;
 
@@ -325,25 +409,29 @@ export class ModelAsset {
   }
 
   applyMonthlyCapital() {
-    if (this.onFinishDate) {
-      this.earningCurrency = new Currency(this.finishCurrency.amount - this.basisCurrency.amount);
-      this.incomeCurrency  = this.earningCurrency.copy();
-      this.afterTaxCurrency = Currency.zero();
-      return new AssetAppreciationResult(this.finishCurrency.copy(), this.earningCurrency.copy());
+
+    if (this.annualDividendRate.rate != 0.0) {
+
+      this.earningCurrency = new Currency(this.finishCurrency.amount * this.annualDividendRate.asMonthly());
+      this.dividendCurrency = this.earningCurrency.copy();
+
     }
 
-    this.earningCurrency = new Currency(this.finishCurrency.amount * this.annualReturnRate.asMonthly());
-    this.afterTaxCurrency = this.earningCurrency.copy();
-    this.finishCurrency.add(this.earningCurrency);
+    this.growthCurrency = new Currency(this.finishCurrency.amount * this.annualReturnRate.asMonthly());
+    this.finishCurrency.add(this.growthCurrency);
+
     return new AssetAppreciationResult(this.finishCurrency.copy(), this.earningCurrency.copy());
+
   }
 
   applyMonthlyIncomeHoldings() {
+
     this.ensurePositiveStart();
     this.earningCurrency = new Currency(this.finishCurrency.amount * this.annualReturnRate.asMonthly());
     this.incomeCurrency  = this.earningCurrency.copy();
     this.finishCurrency.add(this.earningCurrency);
     return new InterestResult(this.incomeCurrency.copy());
+
   }
 
   applyYearly() {
@@ -355,13 +443,13 @@ export class ModelAsset {
   // ── Credit / Debit (fund transfer interface) ─────────────────────
 
   credit(amount) {
-    if (this.#isFlowInstrument()) return Currency.zero();
+    //if (this.#isFlowInstrument()) return Currency.zero();
     this.creditCurrency.add(amount);
     return this.reconcileCredit();
   }
 
   debit(amount) {
-    if (this.#isFlowInstrument()) return Currency.zero();
+    //if (this.#isFlowInstrument()) return Currency.zero();
     this.creditCurrency.subtract(amount);
     return this.reconcileCredit();
   }
@@ -456,17 +544,18 @@ export class ModelAsset {
   }
 
   close() {
+    
     this.creditCurrency.zero();
     this.finishCurrency.zero();
     this.isClosed = true;
+
   }
 
   // ── Display data (for charting) ──────────────────────────────────
 
   buildDisplayData(monthsSpan, metricName, outputArrayName) {
-    const source = this.metrics.has(metricName)
-      ? this.metrics.get(metricName).history
-      : this[metricName]; // fallback for monthlyValues
+
+    const source = this.metrics.get(metricName).history;
 
     this[outputArrayName] = [];
     for (let i = monthsSpan.offsetMonths; i < source.length; i += monthsSpan.combineMonths) {
@@ -476,6 +565,7 @@ export class ModelAsset {
       }
       this[outputArrayName].push(total);
     }
+    
   }
 
   /** Legacy method kept for backwards compatibility with charting code that expects `displayValueData`. 

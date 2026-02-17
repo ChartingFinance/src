@@ -44,6 +44,8 @@ import {
     charting_jsonRollupChartData,
     charting_buildFromPortfolio,
     charting_buildPortfolioMetric,
+    charting_buildFromModelAsset,
+    charting_jsonMetricChartConfigIndividual,
 } from './charting.js';
 
 // Logger
@@ -788,8 +790,8 @@ function showPopupTransfers(containerElement, currentDisplayName) {
 
     popupFormTransfersElement.style.display = 'block';
 
-    if (charting_jsonMetric2ChartConfigIndividual != null)
-        activeEarningsCanvasIndividual = new Chart(chartEarningsCanvasIndividual, charting_jsonMetric2ChartConfigIndividual);
+    if (charting_jsonMetricChartConfigIndividual != null)
+        activeEarningsCanvasIndividual = new Chart(chartEarningsCanvasIndividual, charting_jsonMetricChartConfigIndividual);
 }
 
 function popupFormTransfers_onSave(ev) {
