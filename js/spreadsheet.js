@@ -1,11 +1,14 @@
 import { DateInt } from './date-int.js';
 
+// these metric keys reference getters on ModelAsset
 export function buildSpreadsheetHTML(portfolio) {
     const metrics = [
         { key: 'monthlyValues',                label: 'Value' },
-        { key: 'monthlyEarnings',              label: 'Earning' },
+        { key: 'monthlyGrowths',               label: 'Growth' },
+        { key: 'monthlyDividends',             label: 'Dividend' },
         { key: 'monthlyIncomes',               label: 'Income' },
-        { key: 'monthlyAfterTaxes',            label: 'After Tax' },
+        { key: 'monthlyTaxes',                 label: 'Taxes' },
+        { key: 'monthlyEarnings',              label: 'Earning' },
         { key: 'monthlyAfterExpenses',         label: 'After Expense' },
         { key: 'monthlyAccumulateds',           label: 'Accumulated' },
         { key: 'monthlyShortTermCapitalGains',  label: 'ST Cap Gain' },

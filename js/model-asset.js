@@ -50,10 +50,12 @@ export const Metric = Object.freeze({
   MORTGAGE_INTEREST:            'mortgageInterest',
   MORTGAGE_PRINCIPAL:           'mortgagePrincipal',
   MORTGAGE_ESCROW:              'mortgageEscrow',
+  TAXABLE_CONTRIBUTION:         'taxableContribution',
   IRA_CONTRIBUTION:             'iraContribution',
   FOUR_01K_CONTRIBUTION:        'four01KContribution',
   IRA_DISTRIBUTION:             'iraDistribution',
   FOUR_01K_DISTRIBUTION:        'four01KDistribution',
+  TAXABLE_DISTRIBUTION:         'taxableDistribution', // these are distributions from taxable accounts as cash
   SHORT_TERM_CAPITAL_GAIN_TAX:  'shortTermCapitalGain',
   LONG_TERM_CAPITAL_GAIN_TAX:   'longTermCapitalGain',
   CAPITAL_GAIN_TAX:             'capitalGainTax',
@@ -85,12 +87,14 @@ export const MetricLabel = Object.freeze({
   [Metric.MORTGAGE_PRINCIPAL]:          'Mortgage Principal',
   [Metric.MORTGAGE_ESCROW]:             'Mortgage Escrow',
   [Metric.ESTIMATED_TAX]:               'Estimated Tax',
+  [Metric.TAXABLE_CONTRIBUTION]:        'Taxable Contribution',
   [Metric.IRA_CONTRIBUTION]:            'IRA Contribution',
   [Metric.FOUR_01K_CONTRIBUTION]:       '401K Contribution',
   [Metric.IRA_DISTRIBUTION]:            'IRA Distribution',
   [Metric.FOUR_01K_DISTRIBUTION]:       '401K Distribution',
-  [Metric.SHORT_TERM_CAPITAL_GAIN_TAX]: 'Short Term Capital Gain Tax',
-  [Metric.LONG_TERM_CAPITAL_GAIN_TAX]:  'Long Term Capital Gain Tax',
+  [Metric.TAXABLE_DISTRIBUTION]:        'Taxable Distribution', // these are distributions from taxable accounts as cash
+  [Metric.SHORT_TERM_CAPITAL_GAIN_TAX]: 'Short Term Capital Gain Tax', // these are distributions from taxable accounts taxed as short term gains
+  [Metric.LONG_TERM_CAPITAL_GAIN_TAX]:  'Long Term Capital Gain Tax',  // these are distriubtions from taxable accounts taxed as long term gains
   [Metric.CAPITAL_GAIN_TAX]:            'Capital Gains Tax',
   [Metric.CREDIT]:                      'Credit',
 });
@@ -239,6 +243,9 @@ export class ModelAsset {
   get incomeCurrency()    { return this.metrics.get(Metric.INCOME).current; }
   set incomeCurrency(c)   { this.metrics.get(Metric.INCOME).current = c; }
 
+  get expenseCurrency()   { return this.metrics.get(Metric.EXPENSE).current; }
+  set expenseCurrency(c)  { this.metrics.get(Metric.EXPENSE).current = c; }
+
   get earningCurrency()   { return this.metrics.get(Metric.EARNING).current; }
   set earningCurrency(c)  { this.metrics.get(Metric.EARNING).current = c; }
 
@@ -254,8 +261,12 @@ export class ModelAsset {
 
   // Shorthand for history arrays (backwards compat with charting code)
   get monthlyValues()     { return this.metrics.get(Metric.VALUE).history; }
-  get monthlyEarnings()   { return this.metrics.get(Metric.EARNING).history; }
+  get monthlyGrowths()    { return this.metrics.get(Metric.GROWTH).history; }
+  get monthlyDividends() { return this.metrics.get(Metric.DIVIDEND).history; }
   get monthlyIncomes()    { return this.metrics.get(Metric.INCOME).history; }
+  get monthlyEarnings()   { return this.metrics.get(Metric.EARNING).history; }
+  get monthlyTaxes()      { return this.metrics.get(Metric.INCOME_TAX).history; }
+
 
   // ── Chronometer lifecycle ────────────────────────────────────────
 
@@ -315,11 +326,13 @@ export class ModelAsset {
     // value and accumulated are special: add finishValue and earnings, then snapshot WITHOUT zeroing
     this.metrics.get(Metric.EARNING_ACCUMULATED).add(this.earningCurrency);
 
+    /* Was thinking of reconciling credit here, but it makes more sense to do it at the end of the month after all monthly changes have been applied, so that the metric history reflects the true "credit" activity rather than an artificial netting of credit against value changes. Keeping this code here as a reminder that credit reconciliation still needs to happen somewhere.
     // Reconcile credit buffer
     const credit = this.creditCurrency;
     if (credit.amount > 0) {
       this.finishCurrency.add(credit);
     }
+    */
 
     this.metrics.get(Metric.VALUE).add(this.finishCurrency);
 
@@ -335,6 +348,8 @@ export class ModelAsset {
 
   applyFirstDayOfMonth(currentDateInt) {
 
+    this.monthlyValueChange = Currency.zero();
+
     this.handleCurrentDateInt(currentDateInt);
 
     if (this.beforeStartDate || this.afterFinishDate) {
@@ -349,10 +364,29 @@ export class ModelAsset {
 
     }
 
+    this.firstDayOfMonthValue = this.finishCurrency.copy();
+
   }
 
   applyLastDayOfMonth(currentDateInt) {  
 
+    // check against the sum of values + credits
+    let lastDayOfMonthValue = this.finishCurrency.copy();
+    let firstDayOfMonthValuePlusMonthlyValueChange = this.firstDayOfMonthValue.copy().add(this.monthlyValueChange);
+    
+    if (lastDayOfMonthValue.toFixed() !== firstDayOfMonthValuePlusMonthlyValueChange.toFixed()) {
+      if (this.onFinishDate) {
+        // we expect onFinishDate that this.finishCurrency will be zero
+        if (this.finishCurrency.amount !== 0) {
+          console.warn(`Value mismatch onFinishDate for ${this.displayName} on ${currentDateInt.toString()}: expected finishCurrency to be zero but got ${this.finishCurrency.toCurrency()}`);
+          debugger;
+        }
+      }
+      else {
+        console.warn(`Value mismatch for ${this.displayName} on ${currentDateInt.toString()}: firstDayOfMonthValue (${this.firstDayOfMonthValue.toCurrency()}) + monthlyValueChange (${this.monthlyValueChange.toCurrency()}) = ${firstDayOfMonthValuePlusMonthlyValueChange.toCurrency()} but lastDayOfMonthValue is ${lastDayOfMonthValue.toCurrency()}`);
+        debugger;
+      }
+    }    
 
   }
 
@@ -371,20 +405,27 @@ export class ModelAsset {
   }
 
   applyMonthlyIncomeSalary() {
+
     this.ensurePositiveStart();
-    this.earningCurrency = new Currency(this.finishCurrency.amount);
     this.incomeCurrency  = new Currency(this.finishCurrency.amount);
+    // growth in income happens yearly
 
     return this.isSelfEmployed
       ? new IncomeResult(this.incomeCurrency.copy(), Currency.zero())
       : new IncomeResult(Currency.zero(), this.incomeCurrency.copy());
+
   }
 
   applyMonthlyExpense() {
+
     this.ensureNegativeStart();
-    this.earningCurrency = new Currency(this.finishCurrency.amount);
-    this.finishCurrency.multiply(1 + this.annualReturnRate.asMonthly());
-    return new ExpenseResult(this.earningCurrency.copy(), this.finishCurrency.copy());
+    this.expenseCurrency = new Currency(this.finishCurrency.amount);
+    this.growthCurrency = new Currency(this.finishCurrency.amount * this.annualReturnRate.asMonthly());
+    this.finishCurrency.add(this.growthCurrency);
+    this.monthlyValueChange.add(this.growthCurrency);
+
+    return new ExpenseResult(this.expenseCurrency.copy(), this.finishCurrency.copy());
+
   }
 
   applyMonthlyMortgage() {
@@ -398,8 +439,9 @@ export class ModelAsset {
     const principal = new Currency(payment - interest.amount);
 
     this.monthsRemainingDynamic--;
-    this.earningCurrency = principal.copy().flipSign();
+    this.growthCurrency = principal.copy().flipSign();
     this.finishCurrency.subtract(principal);
+    this.monthlyValueChange.subtract(principal);
 
     this.addToMetric(Metric.MORTGAGE_PAYMENT, new Currency(payment));
     this.addToMetric(Metric.MORTGAGE_INTEREST, interest);
@@ -412,65 +454,91 @@ export class ModelAsset {
 
     if (this.annualDividendRate.rate != 0.0) {
 
-      this.earningCurrency = new Currency(this.finishCurrency.amount * this.annualDividendRate.asMonthly());
-      this.dividendCurrency = this.earningCurrency.copy();
+      this.dividendCurrency = new Currency(this.finishCurrency.amount * this.annualDividendRate.asMonthly());
+      this.finishCurrency.add(this.dividendCurrency);
+      this.monthlyValueChange.add(this.dividendCurrency);
 
     }
 
     this.growthCurrency = new Currency(this.finishCurrency.amount * this.annualReturnRate.asMonthly());
     this.finishCurrency.add(this.growthCurrency);
+    this.monthlyValueChange.add(this.growthCurrency);
 
-    return new AssetAppreciationResult(this.finishCurrency.copy(), this.earningCurrency.copy());
+    return new AssetAppreciationResult(this.finishCurrency.copy(), this.growthCurrency.copy(), this.dividendCurrency.copy(), Currency.zero());
 
   }
 
   applyMonthlyIncomeHoldings() {
 
     this.ensurePositiveStart();
-    this.earningCurrency = new Currency(this.finishCurrency.amount * this.annualReturnRate.asMonthly());
-    this.incomeCurrency  = this.earningCurrency.copy();
-    this.finishCurrency.add(this.earningCurrency);
+    this.incomeCurrency = new Currency(this.finishCurrency.amount * this.annualReturnRate.asMonthly());
+    this.finishCurrency.add(this.incomeCurrency);
+    this.monthlyValueChange.add(this.incomeCurrency);
+
     return new InterestResult(this.incomeCurrency.copy());
 
   }
 
   applyYearly() {
+
     if (InstrumentType.isMonthlyIncome(this.instrument)) {
       this.finishCurrency = new Currency(this.finishCurrency.amount * (1 + this.annualReturnRate.rate));
     }
+
   }
 
   // ── Credit / Debit (fund transfer interface) ─────────────────────
 
   credit(amount) {
-    //if (this.#isFlowInstrument()) return Currency.zero();
+
+    if (this.#isFlowInstrument()) return Currency.zero();
     this.creditCurrency.add(amount);
+    this.monthlyValueChange.add(amount);
     return this.reconcileCredit();
+
   }
 
   debit(amount) {
-    //if (this.#isFlowInstrument()) return Currency.zero();
+
+    if (this.#isFlowInstrument()) return Currency.zero();
     this.creditCurrency.subtract(amount);
+    this.monthlyValueChange.subtract(amount);
     return this.reconcileCredit();
+
   }
 
   reconcileCredit() {
-    if (this.creditCurrency.amount >= 0) return Currency.zero();
 
-    const toDebit = this.creditCurrency.copy().flipSign();
+    //if (this.creditCurrency.amount >= 0) return Currency.zero();
+
+    let credit = this.creditCurrency.copy();
     this.creditCurrency.zero();
-    this.finishCurrency.subtract(toDebit);
+
+    this.finishCurrency.add(credit);    
 
     const T = InstrumentType;
-    if (T.isTaxableAccount(this.instrument)) {
-      this.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, toDebit);
-    } else if (T.isIRA(this.instrument)) {
-      this.addToMetric(Metric.IRA_DISTRIBUTION, toDebit);
-    } else if (T.is401K(this.instrument)) {
-      this.addToMetric(Metric.FOUR_01K_DISTRIBUTION, toDebit);
+    if (credit.amount > 0) {
+      if (T.isTaxableAccount(this.instrument)) {
+        this.addToMetric(Metric.TAXABLE_CONTRIBUTION, credit);
+      } else if (T.isIRA(this.instrument)) {
+        this.addToMetric(Metric.IRA_CONTRIBUTION, credit);
+      } else if (T.is401K(this.instrument)) {
+        this.addToMetric(Metric.FOUR_01K_CONTRIBUTION, credit);
+      }
+    }
+    if (credit.amount < 0) {    
+      if (T.isTaxableAccount(this.instrument)) {
+        // TODO: need to distinguish between taxable distribution as cash (TAXABLE_DISTRIBUTION) vs taxable distribution as gain (SHORT_TERM_CAPITAL_GAIN_TAX or LONG_TERM_CAPITAL_GAIN_TAX depending on holding period)
+        this.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, credit); // for now just assume all distributions from taxable accounts are long term capital gains, but this is an area for improvement
+      } else if (T.isIRA(this.instrument)) {
+        this.addToMetric(Metric.IRA_DISTRIBUTION, credit);
+      } else if (T.is401K(this.instrument)) {
+        this.addToMetric(Metric.FOUR_01K_DISTRIBUTION, credit);
+      }
     }
 
-    return toDebit;
+    return credit;
+
   }
 
   // ── Fund transfers ───────────────────────────────────────────────
@@ -508,12 +576,14 @@ export class ModelAsset {
   // ── Withholding ──────────────────────────────────────────────────
 
   deductWithholding(withholding) {
+
     this.afterTaxCurrency = this.earningCurrency.copy();
     this.addToMetric(Metric.SOCIAL_SECURITY, withholding.socialSecurity);
     this.addToMetric(Metric.MEDICARE, withholding.medicare);
     this.addToMetric(Metric.INCOME_TAX, withholding.income);
     this.afterTaxCurrency.add(withholding.total());
     return this.afterTaxCurrency.copy();
+
   }
 
   // ── Queries ──────────────────────────────────────────────────────

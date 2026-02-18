@@ -4,6 +4,7 @@ export class logger {
     }
 
     static log(message) {
+        console.log(message);
     }
 }
         
