@@ -544,6 +544,24 @@ body::before {
     font-style: italic;
 }
 
+/* ─── Instrument-Specific Fields ─── */
+
+.instrument-fields {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--rule);
+}
+
+.instrument-fields:empty {
+    display: none;
+}
+
+.instrument-fields-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+}
+
 /* ─── Compact Asset Cards (from html.js) ─── */
 
 .assets-container > .asset {

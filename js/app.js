@@ -14,7 +14,7 @@ import { Metric, MetricLabel } from './model-asset.js';
 // HTML builder functions
 import {
     html_buildInstrumentOptions,
-    html_buildSlotElement,
+    html_buildInstrumentFields,
     html_buildRemovableAssetElement,
     html_applyModelAssetToPopupTransfers,
     html_buildTransferrableAssets,
@@ -92,6 +92,9 @@ const chartMetric2Canvas = document.getElementById('chartMetric2Canvas');
 const chartRollupCanvas = document.getElementById('chartRollupCanvas');
 const spreadsheetElement = document.getElementById('spreadsheetElement');
 const chartEarningsCanvasIndividual = document.getElementById('chartEarningsCanvasIndividual');
+
+const instrumentFieldsCreate = document.getElementById('instrumentFieldsCreate');
+const instrumentFieldsEdit = document.getElementById('instrumentFieldsEdit');
 
 const tab1 = document.getElementById('tab1');
 const tab2 = document.getElementById('tab2');
@@ -180,21 +183,10 @@ function initiateActiveData() {
 
 function connectAssetSelect() {
     logger.log('connectAssetSelect');
-    let instrumentElement = assetElement.querySelector('[name="instrument"]')
-    let slot1Element = assetElement.querySelector('[name="slot1"]');
+    let instrumentElement = assetElement.querySelector('[name="instrument"]');
 
     instrumentElement.addEventListener('change', function(event) {
-        slot1Element.innerHTML = html_buildSlotElement(event.target.value, null);
-    });
-}
-
-function connectAssetsContainerSelects() {
-    logger.log('connectAssetsContainerSelects');
-    assetsContainerElement.addEventListener('change', function(event) {
-        if (event.target.name == 'instrument') {
-            let slot1Element = event.target.parentElement.parentElement.querySelector('[name="slot1"]');
-            slot1Element.innerHTML = html_buildSlotElement(event.target.value, null);
-        }
+        instrumentFieldsCreate.innerHTML = html_buildInstrumentFields(event.target.value, null);
     });
 }
 
@@ -230,13 +222,22 @@ function openEditAssetModal(cardElement) {
     assetEditElement.querySelector('[name="finishDate"]').value = cardElement.querySelector('[name="finishDate"]').value;
     assetEditElement.querySelector('[name="finishValue"]').value = cardElement.querySelector('[name="finishValue"]').value;
     assetEditElement.querySelector('[name="annualReturnRate"]').value = cardElement.querySelector('[name="annualReturnRate"]').value;
-    assetEditElement.querySelector('[name="basisValue"]').value = cardElement.querySelector('[name="basisValue"]').value;
+
+    // Populate instrument-specific fields from the card's model
+    let modelAsset = membrane_htmlElementToAssetModel(cardElement);
+    instrumentFieldsEdit.innerHTML = html_buildInstrumentFields(modelAsset.instrument, modelAsset);
 
     document.getElementById('popupFormEditAsset').style.display = 'block';
 }
 
 function connectEditAsset() {
     logger.log('connectEditAsset');
+
+    // Rebuild instrument-specific fields when instrument changes in edit form
+    assetEditElement.querySelector('[name="instrument"]').addEventListener('change', function(event) {
+        instrumentFieldsEdit.innerHTML = html_buildInstrumentFields(event.target.value, null);
+    });
+
     assetEditElement.addEventListener("submit", function(ev) {
         ev.preventDefault();
 
@@ -249,7 +250,16 @@ function connectEditAsset() {
         editingCard.querySelector('[name="startValue"]').value = assetEditElement.querySelector('[name="startValue"]').value;
         editingCard.querySelector('[name="finishDate"]').value = assetEditElement.querySelector('[name="finishDate"]').value;
         editingCard.querySelector('[name="annualReturnRate"]').value = assetEditElement.querySelector('[name="annualReturnRate"]').value;
-        editingCard.querySelector('[name="basisValue"]').value = assetEditElement.querySelector('[name="basisValue"]').value;
+
+        // Copy instrument-specific fields back to card hidden inputs
+        const editBasis = assetEditElement.querySelector('[name="basisValue"]');
+        const editMonths = assetEditElement.querySelector('[name="monthsRemaining"]');
+        const editDividend = assetEditElement.querySelector('[name="dividendRate"]');
+        const editLongTerm = assetEditElement.querySelector('[name="longTermRate"]');
+        editingCard.querySelector('[name="basisValue"]').value = editBasis ? editBasis.value : '0';
+        editingCard.querySelector('[name="monthsRemaining"]').value = editMonths ? editMonths.value : '0';
+        editingCard.querySelector('[name="dividendRate"]').value = editDividend ? editDividend.value : '0';
+        editingCard.querySelector('[name="longTermRate"]').value = editLongTerm ? editLongTerm.value : '0';
 
         // Close the edit modal
         document.getElementById('popupFormEditAsset').style.display = 'none';
@@ -808,7 +818,6 @@ function initialize() {
     connectAssetSelect();
     connectCreateAsset();
     connectEditAsset();
-    connectAssetsContainerSelects();
     connectAssetsContainerTransfers();
     connectAssetsContainerEdit();
     connectAssetsContainerRemove();

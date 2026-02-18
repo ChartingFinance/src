@@ -24,6 +24,8 @@ const htmlAssetCard =
     <input type="hidden" name="accumulatedValue" value="$ACCUMULATEDVALUE$" />
     <input type="hidden" name="basisValue" value="$BASISVALUE$" />
     <input type="hidden" name="monthsRemaining" value="$MONTHSREMAINING$" />
+    <input type="hidden" name="dividendRate" value="$DIVIDENDRATE$" />
+    <input type="hidden" name="longTermRate" value="$LONGTERMRATE$" />
     <input type="hidden" name="fundTransfers" data-fundtransfers="$FUNDTRANSFERS$" />
 </form>`;
 
@@ -118,51 +120,45 @@ function html_buildAssetHeader(modelAsset) {
     return '';
 }
 
-function html_buildSlotElement(instrument, modelAsset) {
-    
-    let html = htmlInvisibleDisplay;
-    
+function html_buildInstrumentFields(instrument, modelAsset) {
     if (InstrumentType.isMonthsRemainingAble(instrument)) {
-        html = htmlMonthsRemainingDisplay;
-        if (modelAsset)
-            html = html.replace('$MONTHSREMAINING$', modelAsset.monthsRemaining);            
-        else
-            html = html.replace('$MONTHSREMAINING$', '0');
+        const monthsVal = modelAsset ? modelAsset.monthsRemaining : 0;
+        return '<div class="instrument-fields-grid">'
+            + '<div class="form-field">'
+            + '<label>Months Remaining</label>'
+            + '<input type="number" class="width-full" name="monthsRemaining" value="' + monthsVal + '" placeholder="months" />'
+            + '</div>'
+            + '</div>';
     }
-    else if (InstrumentType.isBasisable(instrument)) {
-        html = htmlBasisValueDisplay;
-        if (modelAsset)
-            html = html.replace('$BASISVALUE$', modelAsset.basisCurrency.toHTML());
-        else
-            html = html.replace('$BASISVALUE$', '0');
+    if (InstrumentType.isTaxableAccount(instrument)) {
+        const basisVal = modelAsset ? modelAsset.basisCurrency.toHTML() : '0';
+        const divVal = modelAsset ? modelAsset.annualDividendRate.toHTML() : '0';
+        const ltVal = modelAsset ? modelAsset.longTermCapitalGainRate.toHTML() : '0';
+        return '<div class="instrument-fields-grid">'
+            + '<div class="form-field">'
+            + '<label>Basis Value</label>'
+            + '<input type="number" class="width-full" name="basisValue" value="' + basisVal + '" step="0.01" placeholder="original cost" />'
+            + '</div>'
+            + '<div class="form-field">'
+            + '<label>Dividend Rate %</label>'
+            + '<input type="number" class="width-full" name="dividendRate" value="' + divVal + '" step="0.01" placeholder="annual %" />'
+            + '</div>'
+            + '<div class="form-field">'
+            + '<label>Long-Term Rate %</label>'
+            + '<input type="number" class="width-full" name="longTermRate" value="' + ltVal + '" step="0.01" placeholder="annual %" />'
+            + '</div>'
+            + '</div>';
     }
-
-    return html;
-
-}
-
-function html_handleSlot1(modelAsset, html) {
-
-    if (InstrumentType.isMortgage(modelAsset.instrument) || InstrumentType.isDebt(modelAsset.instrument)) {
-        html = html.replace('$SLOT1$', htmlMonthsRemainingDisplay);
-        html = html.replace('$MONTHSREMAINING$', modelAsset.monthsRemaining);
+    if (InstrumentType.isHome(instrument)) {
+        const basisVal = modelAsset ? modelAsset.basisCurrency.toHTML() : '0';
+        return '<div class="instrument-fields-grid">'
+            + '<div class="form-field">'
+            + '<label>Basis Value</label>'
+            + '<input type="number" class="width-full" name="basisValue" value="' + basisVal + '" step="0.01" placeholder="original cost" />'
+            + '</div>'
+            + '</div>';
     }
-    else if (InstrumentType.isBasisable(modelAsset.instrument)) {
-        html = html.replace('$SLOT1$', htmlBasisValueDisplay);
-        html = html.replace('$BASISVALUE$', modelAsset.basisCurrency.toHTML());
-    }
-    else {
-        html = html.replace('$SLOT1$', htmlSlotHidden);    
-    }
-    return html;
-
-}
-
-function html_handleSlot2(modelAsset, html) {
-
-    html = html.replace('$SLOT2$', htmlSlotHidden);
-    return html;
-
+    return '';
 }
 
 
@@ -198,6 +194,8 @@ function html_buildRemovableAssetElement(modelAssets, modelAsset) {
     html = html.replace('$BASISVALUE$', basisVal);
 
     html = html.replace('$MONTHSREMAINING$', modelAsset.monthsRemaining || '0');
+    html = html.replace('$DIVIDENDRATE$', modelAsset.annualDividendRate ? modelAsset.annualDividendRate.toHTML() : '0');
+    html = html.replace('$LONGTERMRATE$', modelAsset.longTermCapitalGainRate ? modelAsset.longTermCapitalGainRate.toHTML() : '0');
 
     if (modelAsset.fundTransfers)
         html = html.replace('$FUNDTRANSFERS$', util_escapedJSONStringify(modelAsset.fundTransfers));
@@ -299,11 +297,9 @@ function html_setAssetElementFundTransfers(assetsContainerElement, currentDispla
 // Export for ES6 modules
 export {
     html_buildInstrumentOptions,
+    html_buildInstrumentFields,
     html_buildStoryNameOptionsFromLocalStorage,
     html_buildAssetHeader,
-    html_buildSlotElement,
-    html_handleSlot1,
-    html_handleSlot2,
     html_buildRemovableAssetElement,
     html_buildAssetsElement,
     html_applyModelAssetToPopupTransfers,

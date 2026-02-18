@@ -125,6 +125,8 @@ export class ModelAsset {
     finishDateInt,
     monthsRemaining = 0,
     annualReturnRate,
+    annualDividendRate = new ARR(0),
+    longTermCapitalGainRate = new ARR(0),
     fundTransfers = [],
     isSelfEmployed = false,
   }) {
@@ -135,7 +137,8 @@ export class ModelAsset {
     this.basisCurrency   = basisCurrency;
     this.finishDateInt   = finishDateInt;
     this.monthsRemaining = Number.isInteger(monthsRemaining) ? monthsRemaining : 0;
-    this.annualDividendRate = new ARR(0); // TODO: add to constructor and parsing if needed
+    this.annualDividendRate = annualDividendRate;
+    this.longTermCapitalGainRate = longTermCapitalGainRate;
     this.annualReturnRate = annualReturnRate;
     this.fundTransfers   = fundTransfers;
     this.isSelfEmployed  = isSelfEmployed;
@@ -169,6 +172,8 @@ export class ModelAsset {
       finishDateInt:   new DateInt(obj.finishDateInt.year * 100 + obj.finishDateInt.month),
       monthsRemaining: obj.monthsRemaining ?? 0,
       annualReturnRate: new ARR(obj.annualReturnRate.annualReturnRate),
+      annualDividendRate: new ARR(obj.annualDividendRate?.annualReturnRate ?? obj.annualDividendRate?.rate ?? 0),
+      longTermCapitalGainRate: new ARR(obj.longTermCapitalGainRate?.annualReturnRate ?? obj.longTermCapitalGainRate?.rate ?? 0),
       fundTransfers:   (obj.fundTransfers ?? []).map(FundTransfer.fromJSON),
       isSelfEmployed:  obj.isSelfEmployed ?? false,
     });
@@ -198,6 +203,8 @@ export class ModelAsset {
       finishDateInt:   DateInt.parse(vals.finishDate?.value),
       monthsRemaining: parseInt(vals.monthsRemaining?.value, 10) || 0,
       annualReturnRate: ARR.parse(vals.annualReturnRate?.value),
+      annualDividendRate: vals.dividendRate ? ARR.parse(vals.dividendRate.value) : new ARR(0),
+      longTermCapitalGainRate: vals.longTermRate ? ARR.parse(vals.longTermRate.value) : new ARR(0),
       fundTransfers,
     });
 
@@ -667,6 +674,8 @@ export class ModelAsset {
       finishDateInt:   this.finishDateInt,
       monthsRemaining: this.monthsRemaining,
       annualReturnRate: this.annualReturnRate,
+      annualDividendRate: this.annualDividendRate,
+      longTermCapitalGainRate: this.longTermCapitalGainRate,
       fundTransfers:   this.fundTransfers.map(ft => ft.copy()),
       isSelfEmployed:  this.isSelfEmployed,
     });
