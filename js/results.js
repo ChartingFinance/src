@@ -70,10 +70,19 @@ export class WithholdingResult {
   }
 }
 
+export class CreditMemo {
+  constructor(amount = Currency.zero(), note = '') {
+    this.amount = amount instanceof Currency ? amount.copy() : new Currency(amount);
+    this.note = note;
+  }
+}
+
 export class FundTransferResult {
-  constructor(fromAssetChange = Currency.zero(), toAssetChange = Currency.zero()) {
+  constructor(fromAssetChange = Currency.zero(), toAssetChange = Currency.zero(), fromMemo = null, toMemo = null) {
     this.fromAssetChange = fromAssetChange instanceof Currency ? fromAssetChange.copy() : new Currency(fromAssetChange);
     this.toAssetChange   = toAssetChange instanceof Currency ? toAssetChange.copy() : new Currency(toAssetChange);
+    this.fromMemo = fromMemo;
+    this.toMemo = toMemo;
   }
 }
 

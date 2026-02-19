@@ -19,7 +19,7 @@ import { FundTransfer }   from './fund-transfer.js';
 import { MetricSet }      from './tracked-metric.js';
 import {
   IncomeResult, ExpenseResult, MortgageResult,
-  AssetAppreciationResult, InterestResult,
+  AssetAppreciationResult, InterestResult, CreditMemo,
 } from './results.js';
 import { colorRange }    from './html.js';
 
@@ -286,6 +286,7 @@ export class ModelAsset {
     this.onFinishDate  = false;
     this.afterFinishDate = false;
     this.isClosed = false;
+    this.creditMemos = [];
     this.metrics.initializeAll();
 
   }
@@ -496,32 +497,32 @@ export class ModelAsset {
 
   // ── Credit / Debit (fund transfer interface) ─────────────────────
 
-  credit(amount) {
+  credit(amount, note = '') {
 
     if (this.#isFlowInstrument()) return Currency.zero();
     this.creditCurrency.add(amount);
     this.monthlyValueChange.add(amount);
-    return this.reconcileCredit();
+    return this.reconcileCredit(note);
 
   }
 
-  debit(amount) {
+  debit(amount, note = '') {
 
     if (this.#isFlowInstrument()) return Currency.zero();
     this.creditCurrency.subtract(amount);
     this.monthlyValueChange.subtract(amount);
-    return this.reconcileCredit();
+    return this.reconcileCredit(note);
 
   }
 
-  reconcileCredit() {
+  reconcileCredit(note = '') {
 
     //if (this.creditCurrency.amount >= 0) return Currency.zero();
 
     let credit = this.creditCurrency.copy();
     this.creditCurrency.zero();
 
-    this.finishCurrency.add(credit);    
+    this.finishCurrency.add(credit);
 
     const T = InstrumentType;
     if (credit.amount > 0) {
@@ -533,7 +534,7 @@ export class ModelAsset {
         this.addToMetric(Metric.FOUR_01K_CONTRIBUTION, credit);
       }
     }
-    if (credit.amount < 0) {    
+    if (credit.amount < 0) {
       if (T.isTaxableAccount(this.instrument)) {
         // TODO: need to distinguish between taxable distribution as cash (TAXABLE_DISTRIBUTION) vs taxable distribution as gain (SHORT_TERM_CAPITAL_GAIN_TAX or LONG_TERM_CAPITAL_GAIN_TAX depending on holding period)
         this.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, credit); // for now just assume all distributions from taxable accounts are long term capital gains, but this is an area for improvement
@@ -542,6 +543,10 @@ export class ModelAsset {
       } else if (T.is401K(this.instrument)) {
         this.addToMetric(Metric.FOUR_01K_DISTRIBUTION, credit);
       }
+    }
+
+    if (note) {
+      this.creditMemos.push(new CreditMemo(credit, note));
     }
 
     return credit;

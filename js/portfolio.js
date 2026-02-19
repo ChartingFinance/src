@@ -47,7 +47,7 @@ export class FinancialPackage {
             this.iraContribution.amount = maxIRADeduction.amount;
         
         let max401KDeduction = activeTaxTable.four01KContributionLimit(activeUser);
-        if (this.four01KContribution.amount > max401KDeduction)
+        if (this.four01KContribution.amount > max401KDeduction.amount)
             this.four01KContribution.amount = max401KDeduction.amount;
 
         if (this.propertyTaxes.amount > global_propertyTaxDeductionMax)
@@ -128,7 +128,7 @@ export class FinancialPackage {
 
     }
 
-    afterTaxIncome() {
+    earning() {
 
         let income = this.totalIncome();
         let taxes = this.totalTaxes();
@@ -221,7 +221,7 @@ export class FinancialPackage {
         logger.log('rothContribution:            ' + this.rothContribution.toString());
         logger.log('assetAppreciation:           ' + this.assetAppreciation.toString());
         logger.log('mortgagePrincipal:           ' + this.mortgagePrincipal.toString());        
-        logger.log('afterTaxIncome:              ' + this.afterTaxIncome().toString());
+        logger.log('earning:                     ' + this.earning().toString());
         logger.log('effectTaxRate:               ' + this.effectiveTaxRate().toFixed(2));
         logger.log('expenses:                    ' + this.expense.toString());      
     }
@@ -259,7 +259,7 @@ export class FinancialPackage {
         html += '<li>rothContribution:            ' + this.rothContribution.toString() + '</li>';
         html += '<li>assetAppreciation:           ' + this.assetAppreciation.toString() + '</li>';
         html += '<li>mortgagePrincipal:           ' + this.mortgagePrincipal.toString() + '</li>';        
-        html += '<li>afterTaxIncome:              ' + this.afterTaxIncome().toString() + '</li>';
+        html += '<li>earning:                     ' + this.earning().toString() + '</li>';
         html += '<li>effectiveTaxRate:            ' + this.effectiveTaxRate().toFixed(2) + '</li>';
         html += '<li>expenses:                    ' + this.expense.toString() + '</li>'; 
         html += '</ul>';
@@ -359,7 +359,7 @@ export class FinancialPackage {
         html += '<tr><td>Roth Contribution</td><td>' + this.rothContribution.toString() + '</td></tr>';
         html += '<tr><td>Asset Appreciation</td><td>' + this.assetAppreciation.toString() + '</td></tr>';
         html += '<tr><td>Mortgage Principal</td><td>' + this.mortgagePrincipal.toString() + '</td></tr>';
-        html += '<tr><td>After Tax Income</td><td>' + this.afterTaxIncome().toString() + '</td></tr>';
+        html += '<tr><td>Earning</td><td>' + this.earning().toString() + '</td></tr>';
         html += '<tr><td>Effective Tax Rate</td><td>' + this.effectiveTaxRate().toFixed(2) + '%</td></tr>';
         html += '<tr><td>Expenses</td><td>' + this.expense.toString() + '</td></tr>';
         */
@@ -541,49 +541,27 @@ export class Portfolio {
         }
     }
     
-    startValue() {
+    sumAssetCurrency(property) {
 
         let amount = new Currency(0.0);
-
         for (let modelAsset of this.modelAssets) {
-
-            // just assets
             if (InstrumentType.isAsset(modelAsset.instrument))
-                amount.add(modelAsset.startCurrency);
+                amount.add(modelAsset[property]);
         }
-
         return amount;
 
+    }
+
+    startValue() {
+        return this.sumAssetCurrency('startCurrency');
     }
 
     finishValue() {
-
-        let amount = new Currency(0.0);
-
-        for (let modelAsset of this.modelAssets) {
-
-            // just assets
-            if (InstrumentType.isAsset(modelAsset.instrument))
-                amount.add(modelAsset.finishCurrency);
-        }
-
-        return amount;
-
+        return this.sumAssetCurrency('finishCurrency');
     }
 
     accumulatedValue() {
-        
-        let amount = new Currency(0.0);
-
-        for (let modelAsset of this.modelAssets) {
-
-            // just assets
-            if (InstrumentType.isAsset(modelAsset.instrument))
-                amount.add(modelAsset.accumulatedCurrency);
-        }
-
-        return amount;
-
+        return this.sumAssetCurrency('accumulatedCurrency');
     }
     
     applyMonth(currentDateInt) {
@@ -748,7 +726,7 @@ export class Portfolio {
     
         const extraAmount = new Currency(modelAssetIncome.amount + runningIncomeAmount.amount);
         if (extraAmount.amount > 0) {
-            this.creditToFirstExpensableAccount(extraAmount);
+            this.creditToFirstExpensableAccount(extraAmount, `Remaining income from ${modelAsset.displayName}`);
         }
     }
     
@@ -898,12 +876,12 @@ export class Portfolio {
             const extraAmount = new Currency(runningExpenseAmount.amount - modelAssetExpense.amount);
             if (extraAmount.amount > 0) {
                 logger.log(`Portfolio.applyFundTransfersForExpense: ${modelAsset.displayName} expensing ${extraAmount.toString()} from first taxable account`);
-                const assetChange = this.debitFromFirstTaxableAccount(extraAmount);
+                const assetChange = this.debitFromFirstTaxableAccount(extraAmount, `Expense overflow for ${modelAsset.displayName}`);
                 this.applyCapitalGainsToFirstExpensableAccount(assetChange);
             }
         } else {
             logger.log(`Portfolio.applyFundTransfersForExpense: ${modelAsset.displayName} expensing ${modelAssetExpense.toString()} from first taxable account`);
-            const assetChange = this.debitFromFirstTaxableAccount(modelAssetExpense.flipSign());
+            const assetChange = this.debitFromFirstTaxableAccount(modelAssetExpense.flipSign(), `Expense debit for ${modelAsset.displayName}`);
             this.applyCapitalGainsToFirstExpensableAccount(assetChange);
         }
     }
@@ -961,8 +939,9 @@ export class Portfolio {
             else
                 modelAsset.addToMetric(Metric.FOUR_01K_DISTRIBUTION, remains);
 
-            modelAsset.debit(remains);
-            this.creditToFirstExpensableAccount(remains);
+            const rmdNote = `RMD distribution from ${modelAsset.displayName}`;
+            modelAsset.debit(remains, rmdNote);
+            this.creditToFirstExpensableAccount(remains, rmdNote);
 
         }
 
@@ -1056,15 +1035,15 @@ export class Portfolio {
             
             let extraAmount = new Currency(modelAssetValue.amount - runningTransferAmount.amount);
             if (extraAmount.amount > 0) {
-                logger.log('Portfolio.applyAssetCloseFundTransfers: ' + modelAsset.displayName + ' funding ' + extraAmount.toString() + ' to first expensable account');                
-                this.creditToFirstExpensableAccount(extraAmount);
+                logger.log('Portfolio.applyAssetCloseFundTransfers: ' + modelAsset.displayName + ' funding ' + extraAmount.toString() + ' to first expensable account');
+                this.creditToFirstExpensableAccount(extraAmount, `Asset closure proceeds from ${modelAsset.displayName}`);
             }
 
         }
         else {
-            
+
             logger.log('Portfolio.applyAssetCloseFundTransfers: ' + modelAsset.displayName + ' funding ' + modelAssetValue.toString() + ' to first expensable account');
-            this.creditToFirstExpensableAccount(modelAssetValue);            
+            this.creditToFirstExpensableAccount(modelAssetValue, `Asset closure proceeds from ${modelAsset.displayName}`);            
                         
         }
 
@@ -1077,22 +1056,22 @@ export class Portfolio {
         let yearlyIncome = activeTaxTable.calculateYearlyTaxableIncome(yearly);
 
         let incomeTax = activeTaxTable.calculateYearlyIncomeTax(yearlyIncome);
-        let longTermCapitalGainsTax = activeTaxTable.calculateYearlyLongTermCapitalGainsTax(yearlyIncome, yearly.longTermCapitalGains);
+        //let longTermCapitalGainsTax = activeTaxTable.calculateYearlyLongTermCapitalGainsTax(yearlyIncome, yearly.longTermCapitalGains);
         
         incomeTax.divide(12.0).flipSign();
-        longTermCapitalGainsTax.divide(12.0).flipSign();
+        //longTermCapitalGainsTax.divide(12.0).flipSign();
 
         this.monthly.incomeTax.add(incomeTax);
-        this.monthly.longTermCapitalGainsTax.add(longTermCapitalGainsTax);
+        //this.monthly.longTermCapitalGainsTax.add(longTermCapitalGainsTax);
 
         logger.log('monthlyTaxes.fica: ' + this.monthly.fica.toString());
-        this.creditToFirstExpensableAccount(this.monthly.fica);
+        this.creditToFirstExpensableAccount(this.monthly.fica, 'FICA withholding');
 
         logger.log('monthlyTaxes.incomeTax: ' + this.monthly.incomeTax.toString());
-        this.creditToFirstExpensableAccount(this.monthly.incomeTax);
+        this.creditToFirstExpensableAccount(this.monthly.incomeTax, 'Income tax withholding');
 
-        logger.log('monthlyTaxes.longTermCapitalGains: ' + this.monthly.longTermCapitalGainsTax.toString());
-        this.creditToFirstExpensableAccount(longTermCapitalGainsTax);                                  
+        //logger.log('monthlyTaxes.longTermCapitalGains: ' + this.monthly.longTermCapitalGainsTax.toString());
+        //this.creditToFirstExpensableAccount(longTermCapitalGainsTax);                                  
         
     }
 
@@ -1101,6 +1080,7 @@ export class Portfolio {
         // todo: mix short term and long term capital gains
         for (let modelAsset of this.modelAssets) {
             if (InstrumentType.isExpensable(modelAsset.instrument)) {                
+                modelAsset.credit(amount, 'Capital gains');
                 this.monthly.longTermCapitalGains.add(amount);
                 break;
             }
@@ -1108,37 +1088,27 @@ export class Portfolio {
 
     }
 
-    creditToFirstExpensableAccount(amount) {
+    applyToFirstMatchingAccount(predicate, operation, amount, note = '') {
 
         for (let modelAsset of this.modelAssets) {
-            if (InstrumentType.isExpensable(modelAsset.instrument)) {
-                return modelAsset.credit(amount);
-            }
-        }
-        return new FundTransferResult();
-    
-    }
-
-    debitFromFirstExpensableAccount(amount) {
-
-        for (let modelAsset of this.modelAssets) {
-            if (InstrumentType.isExpensable(modelAsset.instrument)) {
-                return modelAsset.debit(amount);
+            if (predicate(modelAsset.instrument)) {
+                return modelAsset[operation](amount, note);
             }
         }
         return new FundTransferResult();
 
     }
 
-    debitFromFirstTaxableAccount(amount) {
+    creditToFirstExpensableAccount(amount, note = '') {
+        return this.applyToFirstMatchingAccount(InstrumentType.isExpensable, 'credit', amount, note);
+    }
 
-        for (let modelAsset of this.modelAssets) {
-            if (InstrumentType.isTaxableAccount(modelAsset.instrument)) {
-                return modelAsset.debit(amount);
-            }
-        }
-        return new FundTransferResult();
+    debitFromFirstExpensableAccount(amount, note = '') {
+        return this.applyToFirstMatchingAccount(InstrumentType.isExpensable, 'debit', amount, note);
+    }
 
+    debitFromFirstTaxableAccount(amount, note = '') {
+        return this.applyToFirstMatchingAccount(InstrumentType.isTaxableAccount, 'debit', amount, note);
     }
 
     applyYear(currentDateInt) {
