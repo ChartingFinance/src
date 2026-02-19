@@ -43,6 +43,7 @@ export const Metric = Object.freeze({
   EARNING_ACCUMULATED:          'earningAccumulated',
   SHORT_TERM_CAPITAL_GAIN:      'shortTermCapitalGain',
   LONG_TERM_CAPITAL_GAIN:       'longTermCapitalGain',
+  CAPITAL_GAIN:                 'capitalGain', // combine short and long term
   RMD:                          'rmd',
   SOCIAL_SECURITY:              'socialSecurity',
   MEDICARE:                     'medicare',
@@ -56,8 +57,8 @@ export const Metric = Object.freeze({
   IRA_DISTRIBUTION:             'iraDistribution',
   FOUR_01K_DISTRIBUTION:        'four01KDistribution',
   TAXABLE_DISTRIBUTION:         'taxableDistribution', // these are distributions from taxable accounts as cash
-  SHORT_TERM_CAPITAL_GAIN_TAX:  'shortTermCapitalGain',
-  LONG_TERM_CAPITAL_GAIN_TAX:   'longTermCapitalGain',
+  SHORT_TERM_CAPITAL_GAIN_TAX:  'shortTermCapitalGainTax',
+  LONG_TERM_CAPITAL_GAIN_TAX:   'longTermCapitalGainTax',
   CAPITAL_GAIN_TAX:             'capitalGainTax',
   CREDIT:                       'credit',
 });
@@ -79,6 +80,7 @@ export const MetricLabel = Object.freeze({
   [Metric.EARNING_ACCUMULATED]:         'Earning Accumulated',
   [Metric.SHORT_TERM_CAPITAL_GAIN]:     'Short Term Capital Gain',
   [Metric.LONG_TERM_CAPITAL_GAIN]:      'Long Term Capital Gain',
+  [Metric.CAPITAL_GAIN]:                'Capital Gain',
   [Metric.RMD]:                         'Required Min. Distribution',
   [Metric.SOCIAL_SECURITY]:             'Social Security',
   [Metric.MEDICARE]:                    'Medicare',
@@ -234,6 +236,23 @@ export class ModelAsset {
    * @returns {Currency} current accumulated value
    */
   addToMetric(metricName, amount) {
+
+    if (metricName == Metric.SHORT_TERM_CAPITAL_GAIN || metricName == Metric.LONG_TERM_CAPITAL_GAIN) {
+      // automatically apply capital gain tax when adding to capital gain metrics
+      this.metrics.get(Metric.CAPITAL_GAIN).add(amount);
+      this.metrics.get(Metric.INCOME).add(amount);
+    }
+
+    if (metricName == Metric.SHORT_TERM_CAPITAL_GAIN_TAX || metricName == Metric.LONG_TERM_CAPITAL_GAIN_TAX) {
+      // automatically apply capital gain tax when adding to capital gain metrics
+      this.metrics.get(Metric.CAPITAL_GAIN_TAX).add(amount);
+      this.metrics.get(Metric.INCOME_TAX).add(amount);
+    }
+
+    if (metricName == Metric.CAPITAL_GAIN || metricName == Metric.CAPITAL_GAIN_TAX) { 
+      debugger;
+    }
+
     return this.metrics.get(metricName).add(amount);
   }
 
@@ -246,6 +265,12 @@ export class ModelAsset {
 
   get dividendCurrency()   { return this.metrics.get(Metric.DIVIDEND).current; }
   set dividendCurrency(c)  { this.metrics.get(Metric.DIVIDEND).current = c; }
+
+  get shortTermCapitalGainCurrency()   { return this.metrics.get(Metric.SHORT_TERM_CAPITAL_GAIN).current; } 
+  set shortTermCapitalGainCurrency(c)  { this.metrics.get(Metric.SHORT_TERM_CAPITAL_GAIN).current = c; }  
+
+  get longTermCapitalGainCurrency()   { return this.metrics.get(Metric.LONG_TERM_CAPITAL_GAIN).current; } 
+  set longTermCapitalGainCurrency(c)  { this.metrics.get(Metric.LONG_TERM_CAPITAL_GAIN).current = c; }  
 
   get incomeCurrency()    { return this.metrics.get(Metric.INCOME).current; }
   set incomeCurrency(c)   { this.metrics.get(Metric.INCOME).current = c; }
@@ -261,6 +286,15 @@ export class ModelAsset {
 
   get accumulatedCurrency()    { return this.metrics.get(Metric.EARNING_ACCUMULATED).current; }
   set accumulatedCurrency(c)   { this.metrics.get(Metric.EARNING_ACCUMULATED).current = c; }
+
+  get shortTermCapitalGainTaxCurrency()   { return this.metrics.get(Metric.SHORT_TERM_CAPITAL_GAIN_TAX).current; } 
+  set shortTermCapitalGainTaxCurrency(c)  { this.metrics.get(Metric.SHORT_TERM_CAPITAL_GAIN_TAX).current = c; }  
+
+  get longTermCapitalGainTaxCurrency()   { return this.metrics.get(Metric.LONG_TERM_CAPITAL_GAIN_TAX).current; } 
+  set longTermCapitalGainTaxCurrency(c)  { this.metrics.get(Metric.LONG_TERM_CAPITAL_GAIN_TAX).current = c; }  
+
+  get incomeTaxCurrency()    { return this.metrics.get(Metric.INCOME_TAX).current; }  
+  set incomeTaxCurrency(c)   { this.metrics.get(Metric.INCOME_TAX).current = c; }
 
   get rmdCurrency()                 { return this.metrics.get(Metric.RMD).current; }
   get iraDistributionCurrency()     { return this.metrics.get(Metric.IRA_DISTRIBUTION).current; }
@@ -292,6 +326,8 @@ export class ModelAsset {
   }
 
   handleCurrentDateInt(currentDateInt) {
+
+    this.currentDateInt = currentDateInt;
 
     // see if we are active or not
     if (this.inMonth(currentDateInt)) {
@@ -546,7 +582,7 @@ export class ModelAsset {
     }
 
     if (note) {
-      this.creditMemos.push(new CreditMemo(credit, note));
+      this.creditMemos.push(new CreditMemo(credit, note, this.currentDateInt));
     }
 
     return credit;
@@ -589,12 +625,12 @@ export class ModelAsset {
 
   deductWithholding(withholding) {
 
-    this.afterTaxCurrency = this.earningCurrency.copy();
+    this.earningCurrency = this.incomeCurrency.copy();
     this.addToMetric(Metric.SOCIAL_SECURITY, withholding.socialSecurity);
     this.addToMetric(Metric.MEDICARE, withholding.medicare);
     this.addToMetric(Metric.INCOME_TAX, withholding.income);
-    this.afterTaxCurrency.add(withholding.total());
-    return this.afterTaxCurrency.copy();
+    this.earningCurrency.add(withholding.total());
+    return this.earningCurrency.copy();
 
   }
 

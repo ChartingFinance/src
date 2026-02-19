@@ -5,6 +5,53 @@ import { logger } from './logger.js';
 import { findByName } from './asset-queries.js';
 import { Metric } from './model-asset.js';
 
+// ── Date marker plugin ────────────────────────────────────────────
+
+const dateMarkerPlugin = {
+    id: 'dateMarkers',
+    afterDraw(chart) {
+        const markers = chart.options?.plugins?.dateMarkers?.markers;
+        if (!markers?.length) return;
+        const { ctx, chartArea: { top, bottom }, scales: { x } } = chart;
+        ctx.save();
+        for (const marker of markers) {
+            const xPos = x.getPixelForValue(marker.index);
+            ctx.beginPath();
+            ctx.setLineDash([4, 4]);
+            ctx.strokeStyle = marker.color;
+            ctx.lineWidth = 1;
+            ctx.moveTo(xPos, top);
+            ctx.lineTo(xPos, bottom);
+            ctx.stroke();
+        }
+        ctx.restore();
+    }
+};
+
+Chart.register(dateMarkerPlugin);
+
+function dateIntToChartIndex(dateInt, firstDateInt, monthsSpan) {
+    const totalMonthsFromStart = DateInt.diffMonths(firstDateInt, dateInt);
+    const adjusted = totalMonthsFromStart - monthsSpan.offsetMonths;
+    if (adjusted < 0) return -1;
+    return Math.round(adjusted / monthsSpan.combineMonths);
+}
+
+function charting_buildDateMarkers(portfolio) {
+    const monthsSpan = MonthsSpan.build(portfolio.firstDateInt, portfolio.lastDateInt);
+    const markers = [];
+    for (const modelAsset of portfolio.modelAssets) {
+        const color = colorRange[modelAsset.colorId];
+        const startIdx = dateIntToChartIndex(modelAsset.startDateInt, portfolio.firstDateInt, monthsSpan);
+        const finishIdx = dateIntToChartIndex(modelAsset.finishDateInt, portfolio.firstDateInt, monthsSpan);
+        if (startIdx >= 0) markers.push({ index: startIdx, color });
+        if (finishIdx >= 0) markers.push({ index: finishIdx, color });
+    }
+    return markers;
+}
+
+// ── Highlight ─────────────────────────────────────────────────────
+
 let highlightDisplayName = null;
 
 export function charting_getHighlightDisplayName() {
@@ -567,6 +614,10 @@ export function charting_buildFromPortfolio(portfolio, buildNewDataSet, metric1N
     charting_jsonMetric1ChartData = charting_buildPortfolioMetric(portfolio, metric1Name, buildNewDataSet);
     charting_jsonMetric2ChartData = charting_buildPortfolioMetric(portfolio, metric2Name, buildNewDataSet);
     charting_jsonRollupChartData = charting_buildPortfolioRollup(portfolio, "cashFlow", buildNewDataSet);
+
+    const markers = charting_buildDateMarkers(portfolio);
+    charting_jsonMetric1ChartData.options.plugins.dateMarkers = { markers };
+    charting_jsonMetric2ChartData.options.plugins.dateMarkers = { markers };
 
   }
 }

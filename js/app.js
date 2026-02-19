@@ -73,6 +73,9 @@ import {
 // Spreadsheet
 import { buildSpreadsheetHTML } from './spreadsheet.js';
 
+// Credit Memos
+import { buildCreditMemosHTML } from './credit-memo-view.js';
+
 // MCP
 import { savePortfolioToFile } from './mcp-client.js';
 
@@ -91,6 +94,7 @@ const chartMetric1Canvas = document.getElementById('chartMetric1Canvas');
 const chartMetric2Canvas = document.getElementById('chartMetric2Canvas');
 const chartRollupCanvas = document.getElementById('chartRollupCanvas');
 const spreadsheetElement = document.getElementById('spreadsheetElement');
+const creditMemosElement = document.getElementById('creditMemosElement');
 const chartEarningsCanvasIndividual = document.getElementById('chartEarningsCanvasIndividual');
 
 const instrumentFieldsCreate = document.getElementById('instrumentFieldsCreate');
@@ -100,6 +104,7 @@ const tab1 = document.getElementById('tab1');
 const tab2 = document.getElementById('tab2');
 const tab3 = document.getElementById('tab3');
 const tab4 = document.getElementById('tab4');
+const tab5 = document.getElementById('tab5'); // use for debugging
 
 // ─── App State ───────────────────────────────────────────────
 
@@ -375,72 +380,48 @@ async function savePortfolioViaMCP() {
 
 // ─── Tab Handling ────────────────────────────────────────────
 
+function hideAllTabs() {
+    const tabs = [
+        { tab: tab1, content: chartMetric1Canvas.parentElement },
+        { tab: tab2, content: chartMetric2Canvas.parentElement },
+        { tab: tab3, content: chartRollupCanvas.parentElement },
+        { tab: tab4, content: spreadsheetElement.parentElement },
+        { tab: tab5, content: creditMemosElement.parentElement },
+    ];
+    for (const { tab, content } of tabs) {
+        tab.classList.remove('active');
+        content.style.display = 'none';
+    }
+}
+
 function tab1_click() {
-    if (tab2.classList.contains('active')) {
-        tab2.classList.remove('active');
-        chartMetric2Canvas.parentElement.style.display = 'none';
-    }
-    else if (tab3.classList.contains('active')) {
-        tab3.classList.remove('active');
-        chartRollupCanvas.parentElement.style.display = 'none';
-    }
-    else if (tab4.classList.contains('active')) {
-        tab4.classList.remove('active');
-        spreadsheetElement.parentElement.style.display = 'none';
-    }
+    hideAllTabs();
     tab1.classList.add('active');
     chartMetric1Canvas.parentElement.style.display = '';
 }
 
 function tab2_click() {
-    if (tab1.classList.contains('active')) {
-        tab1.classList.remove('active');
-        chartMetric1Canvas.parentElement.style.display = 'none';
-    }
-    else if (tab3.classList.contains('active')) {
-        tab3.classList.remove('active');
-        chartRollupCanvas.parentElement.style.display = 'none';
-    }
-    else if (tab4.classList.contains('active')) {
-        tab4.classList.remove('active');
-        spreadsheetElement.parentElement.style.display = 'none';
-    }
+    hideAllTabs();
     tab2.classList.add('active');
     chartMetric2Canvas.parentElement.style.display = '';
 }
 
 function tab3_click() {
-    if (tab1.classList.contains('active')) {
-        tab1.classList.remove('active');
-        chartMetric1Canvas.parentElement.style.display = 'none';
-    }
-    else if (tab2.classList.contains('active')) {
-        tab2.classList.remove('active');
-        chartMetric2Canvas.parentElement.style.display = 'none';
-    }
-    else if (tab4.classList.contains('active')) {
-        tab4.classList.remove('active');
-        spreadsheetElement.parentElement.style.display = 'none';
-    }
+    hideAllTabs();
     tab3.classList.add('active');
     chartRollupCanvas.parentElement.style.display = '';
 }
 
 function tab4_click() {
-    if (tab1.classList.contains('active')) {
-        tab1.classList.remove('active');
-        chartMetric1Canvas.parentElement.style.display = 'none';
-    }
-    else if (tab2.classList.contains('active')) {
-        tab2.classList.remove('active');
-        chartMetric2Canvas.parentElement.style.display = 'none';
-    }
-    else if (tab3.classList.contains('active')) {
-        tab3.classList.remove('active');
-        chartRollupCanvas.parentElement.style.display = 'none';
-    }
+    hideAllTabs();
     tab4.classList.add('active');
     spreadsheetElement.parentElement.style.display = '';
+}
+
+function tab5_click() {
+    hideAllTabs();
+    tab5.classList.add('active');
+    creditMemosElement.parentElement.style.display = '';
 }
 
 // ─── Save and Recall ─────────────────────────────────────────
@@ -571,6 +552,7 @@ function innerCalculate(portfolio) {
         activeRollupCanvas = new Chart(chartRollupCanvas, charting_jsonRollupChartData);
 
     spreadsheetElement.innerHTML = buildSpreadsheetHTML(portfolio);
+    creditMemosElement.innerHTML = buildCreditMemosHTML(portfolio);
 }
 
 function selectLocalData_changed(ev) {
@@ -793,6 +775,7 @@ window.tab1_click = tab1_click;
 window.tab2_click = tab2_click;
 window.tab3_click = tab3_click;
 window.tab4_click = tab4_click;
+window.tab5_click = tab5_click;
 window.aplus_save = aplus_save;
 window.aplus_recall = aplus_recall;
 window.bplus_click = bplus_click;

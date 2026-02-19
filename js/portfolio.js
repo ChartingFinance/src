@@ -60,7 +60,6 @@ export class FinancialPackage {
         let income = this.wageIncome().copy();
         income.add(this.ordinaryIncome());
         income.add(this.nontaxableIncome());
-        income.add(this.longTermCapitalGains);
         return income;
 
     }
@@ -395,7 +394,7 @@ export class FinancialPackage {
     }
 
     addAssetAppreciationResult(assetAppreciationResult) {
-        this.assetAppreciation.add(assetAppreciationResult.earnings);
+        this.assetAppreciation.add(assetAppreciationResult.growth);
     }
 
     addCapitalGainsResult(capitalGainsResult) {
@@ -969,16 +968,24 @@ export class Portfolio {
                     }
                 }
 
+
+                this.monthly.longTermCapitalGains.add(capitalGains);
+                modelAsset.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, capitalGains);
+                
                 let income = this.monthly.totalIncome().copy().multiply(12);
-                this.monthly.longTermCapitalGains.add(capitalGains);                
-                amountToTax.add(activeTaxTable.calculateYearlyLongTermCapitalGainsTax(income, capitalGains));
+                amountToTax.add(activeTaxTable.calculateYearlyLongTermCapitalGainsTax(income, capitalGains));                
                 this.monthly.longTermCapitalGainsTax.add(amountToTax.flipSign());    
+                modelAsset.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN_TAX, amountToTax);
 
             } else {
 
                 this.monthly.shortTermCapitalGains.add(capitalGains);
+                modelAsset.addToMetric(Metric.SHORT_TERM_CAPITAL_GAIN, capitalGains);
+
                 amountToTax.add(activeTaxTable.calculateYearlyIncomeTax(capitalGains));
                 this.monthly.incomeTax.add(amountToTax.flipSign());
+                modelAsset.addToMetric(Metric.SHORT_TERM_CAPITAL_GAIN_TAX, capitalGains);
+
 
             }
 

@@ -71,9 +71,10 @@ export class WithholdingResult {
 }
 
 export class CreditMemo {
-  constructor(amount = Currency.zero(), note = '') {
+  constructor(amount = Currency.zero(), note = '', dateInt = null) {
     this.amount = amount instanceof Currency ? amount.copy() : new Currency(amount);
     this.note = note;
+    this.dateInt = dateInt;
   }
 }
 
