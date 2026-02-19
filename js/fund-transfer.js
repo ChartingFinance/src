@@ -94,7 +94,7 @@ export class FundTransfer {
    */
   execute() {
     if (!this.fromModel || !this.toModel) return new FundTransferResult();
-    if (this.moveOnFinishDate && !this.fromModel.onFinishDate) return new FundTransferResult();
+    if (this.moveOnFinishDate && !(this.fromModel.onFinishDate || this.fromModel.afterFinishDate)) return new FundTransferResult();
 
     const amount = this.calculate();
     const fromChange = this.fromModel.debit(amount);

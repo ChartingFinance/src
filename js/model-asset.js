@@ -359,9 +359,18 @@ export class ModelAsset {
 
     this.handleCurrentDateInt(currentDateInt);
 
-    if (this.beforeStartDate || this.afterFinishDate) {
+    if (this.beforeStartDate) {
 
       this.finishCurrency.zero();
+
+    }
+
+    else if (this.afterFinishDate) {
+
+      if (this.isClosed) {
+        console.assert(this.finishCurrency.amount === 0, `Expected finishCurrency to be zero for closed asset ${this.displayName} but got ${this.finishCurrency.toCurrency()}`);
+      }
+      // if not yet closed, preserve finishCurrency so closeAsset can transfer the balance
 
     }
 
@@ -382,17 +391,8 @@ export class ModelAsset {
     let firstDayOfMonthValuePlusMonthlyValueChange = this.firstDayOfMonthValue.copy().add(this.monthlyValueChange);
     
     if (lastDayOfMonthValue.toFixed() !== firstDayOfMonthValuePlusMonthlyValueChange.toFixed()) {
-      if (this.onFinishDate) {
-        // we expect onFinishDate that this.finishCurrency will be zero
-        if (this.finishCurrency.amount !== 0) {
-          console.warn(`Value mismatch onFinishDate for ${this.displayName} on ${currentDateInt.toString()}: expected finishCurrency to be zero but got ${this.finishCurrency.toCurrency()}`);
-          debugger;
-        }
-      }
-      else {
-        console.warn(`Value mismatch for ${this.displayName} on ${currentDateInt.toString()}: firstDayOfMonthValue (${this.firstDayOfMonthValue.toCurrency()}) + monthlyValueChange (${this.monthlyValueChange.toCurrency()}) = ${firstDayOfMonthValuePlusMonthlyValueChange.toCurrency()} but lastDayOfMonthValue is ${lastDayOfMonthValue.toCurrency()}`);
-        debugger;
-      }
+      console.warn(`Value mismatch for ${this.displayName} on ${currentDateInt.toString()}: firstDayOfMonthValue (${this.firstDayOfMonthValue.toCurrency()}) + monthlyValueChange (${this.monthlyValueChange.toCurrency()}) = ${firstDayOfMonthValuePlusMonthlyValueChange.toCurrency()} but lastDayOfMonthValue is ${lastDayOfMonthValue.toCurrency()}`);
+      debugger;
     }    
 
   }
@@ -624,6 +624,11 @@ export class ModelAsset {
     
     this.creditCurrency.zero();
     this.finishCurrency.zero();
+
+    // since we are closing we won't be tracking value changes anymore
+    this.firstDayOfMonthValue.zero();
+    this.monthlyValueChange.zero();
+
     this.isClosed = true;
 
   }

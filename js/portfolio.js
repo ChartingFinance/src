@@ -620,10 +620,17 @@ export class Portfolio {
     }
 
     applyFirstDayOfMonth(currentDateInt) {
-        
+
         // let the model assets know its the first day of the month.
         for (let modelAsset of this.modelAssets) {
             modelAsset.applyFirstDayOfMonth(currentDateInt);
+        }
+
+        // close assets that are now past their finish date
+        for (let modelAsset of this.modelAssets) {
+            if (modelAsset.afterFinishDate && !modelAsset.isClosed) {
+                this.closeAsset(modelAsset);
+            }
         }
 
         // recognize priority calculations (income, mortgages, taxableEquity, taxDeferredEquity)
@@ -851,16 +858,6 @@ export class Portfolio {
             
         }
 
-        // sale of assets and proceeds transferred to taxable account
-        for (let modelAsset of this.modelAssets) {
-
-            if (modelAsset.onFinishDate) {
-                
-                this.closeAsset(modelAsset);
-            
-            }
-        }
-
         for (let modelAsset of this.modelAssets) {
 
             modelAsset.applyLastDayOfMonth(currentDateInt);
@@ -971,31 +968,19 @@ export class Portfolio {
 
     }
 
-    closeAsset(modelAsset) {
-
-        if (!InstrumentType.isCapital(modelAsset.instrument)) {
-
-            if (InstrumentType.isMortgage(modelAsset.instrument)) {
-                this.applyAssetCloseFundTransfers(modelAsset);    
-                modelAsset.close();
-            }
-
-            return;
-        }            
-    
-        const amountToTransfer = new Currency(modelAsset.finishCurrency.amount);
-        logger.log('close capital asset: ' + modelAsset.displayName + ' valued at ' + amountToTransfer.toString());    
-
-        const capitalGains = new Currency(modelAsset.finishCurrency.amount - modelAsset.basisCurrency.amount);
-        logger.log('close capital asset: ' + modelAsset.displayName + ' capital gains of ' + capitalGains.toString());
-
-        // we need to do the calculations for this transaction since the monthly taxation routine multiplies by 12
-        let amountToTax = new Currency();
+    handleCapitalGains(modelAsset) {
 
         if (!InstrumentType.isTaxFree(modelAsset.instrument)) {
+            
+            const capitalGains = new Currency(modelAsset.finishCurrency.amount - modelAsset.basisCurrency.amount);
+            logger.log('capital gains of ' + capitalGains.toString());
+
+            // we need to do the calculations for this transaction since the monthly taxation routine multiplies by 12
+            let amountToTax = new Currency();
+
             const monthsSpan = MonthsSpan.build(modelAsset.startDateInt, modelAsset.finishDateInt);
             const isLongTerm = monthsSpan.totalMonths > 12;
-        
+
             if (isLongTerm) {
 
                 if (monthsSpan.totalMonths > 24 && InstrumentType.isHome(modelAsset.instrument)) {
@@ -1017,21 +1002,36 @@ export class Portfolio {
                 this.monthly.incomeTax.add(amountToTax.flipSign());
 
             }
+
+            logger.log('Portfolio.closeAsset: ' + modelAsset.displayName + ' generated tax of ' + amountToTax.toString() + ' to deduct from closure');
+            modelAsset.finishCurrency.add(amountToTax);
         }
-        
-        logger.log('Portfolio.closeAsset: ' + modelAsset.displayName + ' generated tax of ' + amountToTax.toString() + ' to deduct from closure');
-        modelAsset.finishCurrency.add(amountToTax);        
-   
-        this.applyAssetCloseFundTransfers(modelAsset);    
+    }
+
+    closeAsset(modelAsset) {
+
+        if (InstrumentType.isMonthlyIncome(modelAsset.instrument) ||
+            InstrumentType.isMonthlyExpense(modelAsset.instrument)) {
+            logger.log('closing ' + modelAsset.displayName + ' with monthly income or expense, skipping fund transfers');
+            modelAsset.close();
+            return;
+        }
+
+        const amountToTransfer = new Currency(modelAsset.finishCurrency.amount);
+        logger.log('close asset: ' + modelAsset.displayName + ' valued at ' + amountToTransfer.toString());    
+    
+        if (InstrumentType.isCapital(modelAsset.instrument)) {
+
+            this.handleCapitalGains(modelAsset);
+
+        }
+ 
+        this.applyAssetCloseFundTransfers(modelAsset);
         modelAsset.close();
 
     }
 
     applyAssetCloseFundTransfers(modelAsset) {
-
-        if (!InstrumentType.isCapital(modelAsset.instrument) && !InstrumentType.isMortgage(modelAsset.instrument)) {
-            return;                     
-        }
 
         let modelAssetValue = modelAsset.finishCurrency.copy();
 
