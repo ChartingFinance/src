@@ -2,7 +2,7 @@ import { Currency } from './currency.js';
 import { InstrumentType } from './instrument.js';
 import { WithholdingResult } from './results.js';
 import { logger } from './logger.js';
-import { global_filingAs, global_inflationRate, global_propertyTaxRate, global_propertyTaxDeductionMax } from './globals.js';
+import { global_filingAs, global_inflationRate, global_propertyTaxRate, global_propertyTaxDeductionMax, global_home_sale_capital_gains_discount } from './globals.js';
 
 export const us_2025_taxtables = {
     "year": 2025,
@@ -348,6 +348,23 @@ export class TaxTable {
 
         return new Currency(tax);
 
+    }
+
+    calculateCapitalGainsTax(capitalGains, holdingMonths, isHome, annualizedIncome) {
+        const isLongTerm = holdingMonths > 12;
+
+        if (isLongTerm) {
+            let taxableGains = capitalGains.copy();
+            if (holdingMonths > 24 && isHome) {
+                taxableGains.amount -= global_home_sale_capital_gains_discount;
+                if (taxableGains.amount < 0) taxableGains.zero();
+            }
+            const tax = this.calculateYearlyLongTermCapitalGainsTax(annualizedIncome, taxableGains);
+            return { isLongTerm: true, tax };
+        } else {
+            const tax = this.calculateYearlyIncomeTax(capitalGains);
+            return { isLongTerm: false, tax };
+        }
     }
 
     calculateMonthlyEstimatedTaxes(modelAsset) {

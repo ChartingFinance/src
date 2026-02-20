@@ -7,7 +7,7 @@ import { logger } from './logger.js';
 import { User } from './user.js';
 import { firstDateInt, lastDateInt } from './asset-queries.js';
 import { activeTaxTable } from './globals.js';
-import { global_propertyTaxRate, global_propertyTaxDeductionMax, global_user_startAge, global_home_sale_capital_gains_discount } from './globals.js';
+import { global_propertyTaxDeductionMax, global_user_startAge } from './globals.js';
 
 export const FINANCIAL_FIELDS = [
     'employedIncome', 'selfIncome', 'socialSecurity', 'assetAppreciation',
@@ -674,7 +674,7 @@ export class Portfolio {
         // assert mortgage happens before income happens before taxDeferredEquity happens before taxableEquity
         if (InstrumentType.isHome(modelAsset.instrument)) {
             // we do have property taxes
-            let propertyTaxes = new Currency(modelAsset.finishCurrency.amount * (global_propertyTaxRate / 12.0));
+            let propertyTaxes = activeTaxTable.calculateMonthlyPropertyTaxDeduction(null, modelAsset);
             this.monthly.propertyTaxes.subtract(propertyTaxes);            
         }
         else if (InstrumentType.isMonthlyIncome(modelAsset.instrument)) {
@@ -947,52 +947,35 @@ export class Portfolio {
     }
 
     handleCapitalGains(modelAsset) {
+        if (InstrumentType.isTaxFree(modelAsset.instrument)) return;
 
-        if (!InstrumentType.isTaxFree(modelAsset.instrument)) {
-            
-            const capitalGains = new Currency(modelAsset.finishCurrency.amount - modelAsset.basisCurrency.amount);
-            logger.log('capital gains of ' + capitalGains.toString());
+        const capitalGains = new Currency(modelAsset.finishCurrency.amount - modelAsset.basisCurrency.amount);
+        logger.log('capital gains of ' + capitalGains.toString());
 
-            // we need to do the calculations for this transaction since the monthly taxation routine multiplies by 12
-            let amountToTax = new Currency();
+        const monthsSpan = MonthsSpan.build(modelAsset.startDateInt, modelAsset.finishDateInt);
+        const annualizedIncome = this.monthly.totalIncome().copy().multiply(12);
+        const isHome = InstrumentType.isHome(modelAsset.instrument);
 
-            const monthsSpan = MonthsSpan.build(modelAsset.startDateInt, modelAsset.finishDateInt);
-            const isLongTerm = monthsSpan.totalMonths > 12;
+        const result = activeTaxTable.calculateCapitalGainsTax(
+            capitalGains, monthsSpan.totalMonths, isHome, annualizedIncome
+        );
 
-            if (isLongTerm) {
+        let amountToTax = result.tax.copy();
 
-                let longTermCapitalGains = capitalGains.copy();
-                if (monthsSpan.totalMonths > 24 && InstrumentType.isHome(modelAsset.instrument)) {
-                    longTermCapitalGains.amount -= global_home_sale_capital_gains_discount;
-                    if (longTermCapitalGains.amount < 0) {
-                        longTermCapitalGains.zero();
-                    }
-                }
-
-
-                this.monthly.longTermCapitalGains.add(capitalGains);
-                modelAsset.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, capitalGains);
-                
-                let income = this.monthly.totalIncome().copy().multiply(12);
-                amountToTax.add(activeTaxTable.calculateYearlyLongTermCapitalGainsTax(income, longTermCapitalGains));                
-                this.monthly.longTermCapitalGainsTax.add(amountToTax.flipSign());    
-                modelAsset.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN_TAX, amountToTax);
-
-            } else {
-
-                this.monthly.shortTermCapitalGains.add(capitalGains);
-                modelAsset.addToMetric(Metric.SHORT_TERM_CAPITAL_GAIN, capitalGains);
-
-                amountToTax.add(activeTaxTable.calculateYearlyIncomeTax(capitalGains));
-                this.monthly.incomeTax.add(amountToTax.flipSign());
-                modelAsset.addToMetric(Metric.SHORT_TERM_CAPITAL_GAIN_TAX, capitalGains);
-
-
-            }
-
-            logger.log('Portfolio.closeAsset: ' + modelAsset.displayName + ' generated tax of ' + amountToTax.toString() + ' to deduct from closure');
-            modelAsset.finishCurrency.add(amountToTax);
+        if (result.isLongTerm) {
+            this.monthly.longTermCapitalGains.add(capitalGains);
+            modelAsset.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, capitalGains);
+            this.monthly.longTermCapitalGainsTax.add(amountToTax.flipSign());
+            modelAsset.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN_TAX, amountToTax);
+        } else {
+            this.monthly.shortTermCapitalGains.add(capitalGains);
+            modelAsset.addToMetric(Metric.SHORT_TERM_CAPITAL_GAIN, capitalGains);
+            this.monthly.incomeTax.add(amountToTax.flipSign());
+            modelAsset.addToMetric(Metric.SHORT_TERM_CAPITAL_GAIN_TAX, capitalGains);
         }
+
+        logger.log('Portfolio.closeAsset: ' + modelAsset.displayName + ' generated tax of ' + amountToTax.toString() + ' to deduct from closure');
+        modelAsset.finishCurrency.add(amountToTax);
     }
 
     closeAsset(modelAsset) {
