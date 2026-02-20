@@ -253,6 +253,11 @@ export class ModelAsset {
       debugger;
     }
 
+    if (metricName == Metric.ORDINARY_INCOME || metricName == Metric.INTEREST_INCOME || metricName == Metric.WORKING_INCOME) {
+      // if adding to ordinary income, also add to income (which is what tax calculations are based on)
+      this.metrics.get(Metric.INCOME).add(amount);
+    }
+
     return this.metrics.get(metricName).add(amount);
   }
 
@@ -327,7 +332,7 @@ export class ModelAsset {
 
   handleCurrentDateInt(currentDateInt) {
 
-    this.currentDateInt = currentDateInt;
+    this.currentDateInt = currentDateInt.copy();
 
     // see if we are active or not
     if (this.inMonth(currentDateInt)) {
@@ -568,16 +573,24 @@ export class ModelAsset {
         this.addToMetric(Metric.IRA_CONTRIBUTION, credit);
       } else if (T.is401K(this.instrument)) {
         this.addToMetric(Metric.FOUR_01K_CONTRIBUTION, credit);
+      } else if (T.isHome(this.instrument)) {
+        this.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, credit);
+      } else if (T.isMortgage(this.instrument)) {
+        this.addToMetric(Metric.MORTGAGE_PRINCIPAL, credit);
       }
     }
     if (credit.amount < 0) {
       if (T.isTaxableAccount(this.instrument)) {
         // TODO: need to distinguish between taxable distribution as cash (TAXABLE_DISTRIBUTION) vs taxable distribution as gain (SHORT_TERM_CAPITAL_GAIN_TAX or LONG_TERM_CAPITAL_GAIN_TAX depending on holding period)
-        this.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, credit); // for now just assume all distributions from taxable accounts are long term capital gains, but this is an area for improvement
+        this.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, credit.copy().flipSign()); // for now just assume all distributions from taxable accounts are long term capital gains, but this is an area for improvement
       } else if (T.isIRA(this.instrument)) {
-        this.addToMetric(Metric.IRA_DISTRIBUTION, credit);
+        this.addToMetric(Metric.IRA_DISTRIBUTION, credit.copy().flipSign());
       } else if (T.is401K(this.instrument)) {
-        this.addToMetric(Metric.FOUR_01K_DISTRIBUTION, credit);
+        this.addToMetric(Metric.FOUR_01K_DISTRIBUTION, credit.copy().flipSign());
+      } else if (T.isHome(this.instrument)) {
+        this.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, credit);
+      } else if (T.isMortgage(this.instrument)) {
+        this.addToMetric(Metric.MORTGAGE_PRINCIPAL, credit);
       }
     }
 

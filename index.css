@@ -172,6 +172,38 @@ body::before {
     color: var(--ink);
 }
 
+input.setting-value,
+select.setting-value {
+    background: transparent;
+    border: none;
+    border-bottom: 1px dashed var(--ink-faint);
+    outline: none;
+    padding: 0 2px;
+    cursor: pointer;
+}
+
+input.setting-value { width: 52px; }
+select.setting-value { width: 72px; appearance: none; }
+input.setting-value#setting-taxYear { width: 56px; }
+
+input.setting-value:hover,
+select.setting-value:hover {
+    border-bottom-color: var(--ink-faint);
+}
+
+input.setting-value:focus,
+select.setting-value:focus {
+    border-bottom-color: var(--sage);
+    cursor: text;
+}
+
+.setting-suffix {
+    font-family: 'Fraunces', serif;
+    font-size: 15px;
+    color: var(--ink);
+    margin-left: -4px;
+}
+
 /* ─── Ledger Summary ─── */
 
 .ledger-summary {

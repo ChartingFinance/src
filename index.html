@@ -160,27 +160,31 @@
     <div class="settings-row">
         <div class="setting-group">
             <span class="setting-label">Inflation</span>
-            <span class="setting-value">3.1%</span>
+            <input type="number" class="setting-value" id="setting-inflationRate" step="0.1" min="0" max="20">
+            <span class="setting-suffix">%</span>
         </div>
         <div class="setting-group">
             <span class="setting-label">Tax Year</span>
-            <span class="setting-value">2025</span>
+            <input type="number" class="setting-value" id="setting-taxYear" step="1" min="2020" max="2040">
         </div>
         <div class="setting-group">
             <span class="setting-label">Filing As</span>
-            <span class="setting-value">Single</span>
+            <select class="setting-value" id="setting-filingAs">
+                <option value="Single">Single</option>
+                <option value="MFJ">MFJ</option>
+            </select>
         </div>
         <div class="setting-group">
             <span class="setting-label">Age</span>
-            <span class="setting-value">30</span>
+            <input type="number" class="setting-value" id="setting-startAge" step="1" min="1" max="120">
         </div>
         <div class="setting-group">
             <span class="setting-label">Retire at</span>
-            <span class="setting-value">67</span>
+            <input type="number" class="setting-value" id="setting-retirementAge" step="1" min="1" max="120">
         </div>
         <div class="setting-group">
             <span class="setting-label">Plan to</span>
-            <span class="setting-value">85</span>
+            <input type="number" class="setting-value" id="setting-finishAge" step="1" min="1" max="120">
         </div>
     </div>
 
@@ -270,7 +274,7 @@
                 <div class="chart-tab" id="tab2"><span class="tab-label" onclick="tab2_click()">Earning</span><select id="metric2Select" class="metric-select"></select></div>
                 <div class="chart-tab" id="tab3" onclick="tab3_click()">Growth View</div>
                 <div class="chart-tab" id="tab4" onclick="tab4_click()">Spreadsheet</div>
-                <div class="chart-tab" style="display: none" id="tab5" onclick="tab5_click()">Credit Memos</div>
+                <div class="chart-tab" id="tab5" onclick="tab5_click()">Credit Memos</div>
             </div>
             <div class="chart-frame">
                 <div style="width: 100%">

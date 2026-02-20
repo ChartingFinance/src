@@ -59,6 +59,26 @@ import { Portfolio } from './portfolio.js';
 import {
     setActiveTaxTable,
     global_initialize,
+    global_inflationRate,
+    global_taxYear,
+    global_filingAs,
+    global_user_startAge,
+    global_user_retirementAge,
+    global_user_finishAge,
+    global_multBy100,
+    global_divBy100,
+    global_setInflationRate,
+    global_getInflationRate,
+    global_setTaxYear,
+    global_getTaxYear,
+    global_setFilingAs,
+    global_getFilingAs,
+    global_setUserStartAge,
+    global_getUserStartAge,
+    global_setUserRetirementAge,
+    global_getUserRetirementAge,
+    global_setUserFinishAge,
+    global_getUserFinishAge,
 } from './globals.js';
 
 // Util
@@ -790,11 +810,59 @@ window.savePortfolioViaMCP = savePortfolioViaMCP;
 window.popupFormTransfers_onSave = popupFormTransfers_onSave;
 window.selectLocalData_changed = selectLocalData_changed;
 
+// ─── Settings Row ─────────────────────────────────────────────
+
+function syncGlobalsToSettings() {
+    document.getElementById('setting-inflationRate').value = global_multBy100(global_inflationRate);
+    document.getElementById('setting-taxYear').value = global_taxYear;
+    document.getElementById('setting-filingAs').value = global_filingAs;
+    document.getElementById('setting-startAge').value = global_user_startAge;
+    document.getElementById('setting-retirementAge').value = global_user_retirementAge;
+    document.getElementById('setting-finishAge').value = global_user_finishAge;
+}
+
+function connectSettings() {
+    document.getElementById('setting-inflationRate').addEventListener('change', function() {
+        global_setInflationRate(global_divBy100(this.value));
+        global_getInflationRate();
+        calculate('assets');
+    });
+    document.getElementById('setting-taxYear').addEventListener('change', function() {
+        global_setTaxYear(parseInt(this.value));
+        global_getTaxYear();
+        setActiveTaxTable(new TaxTable());
+        calculate('assets');
+    });
+    document.getElementById('setting-filingAs').addEventListener('change', function() {
+        global_setFilingAs(this.value);
+        global_getFilingAs();
+        setActiveTaxTable(new TaxTable());
+        calculate('assets');
+    });
+    document.getElementById('setting-startAge').addEventListener('change', function() {
+        global_setUserStartAge(parseInt(this.value));
+        global_getUserStartAge();
+        calculate('assets');
+    });
+    document.getElementById('setting-retirementAge').addEventListener('change', function() {
+        global_setUserRetirementAge(parseInt(this.value));
+        global_getUserRetirementAge();
+        calculate('assets');
+    });
+    document.getElementById('setting-finishAge').addEventListener('change', function() {
+        global_setUserFinishAge(parseInt(this.value));
+        global_getUserFinishAge();
+        calculate('assets');
+    });
+}
+
 // ─── Initialize ──────────────────────────────────────────────
 
 function initialize() {
     global_initialize();
     setActiveTaxTable(new TaxTable());
+    syncGlobalsToSettings();
+    connectSettings();
     populateMetricSelects();
     buildInstrumentOptions();
     initiateActiveData();

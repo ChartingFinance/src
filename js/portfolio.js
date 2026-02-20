@@ -891,7 +891,7 @@ export class Portfolio {
         if (InstrumentType.isTaxableAccount(targetInstrument)) {
             if (fundTransferResult.toAssetChange.amount !== 0) {
                 logger.log(`Portfolio.applyFundTransfersForExpense: ${modelAssetName} expensing ${fundTransfer.toModel.displayName} generated longTermCapitalGains of ${fundTransferResult.toAssetChange.toString()}`);
-                this.monthly.longTermCapitalGains.add(fundTransferResult.toAssetChange);
+                this.monthly.longTermCapitalGains.add(fundTransferResult.toAssetChange);                
             }
         } else if (InstrumentType.isTaxDeferred(targetInstrument)) {
             if (fundTransferResult.toAssetChange.amount !== 0) {
@@ -961,10 +961,11 @@ export class Portfolio {
 
             if (isLongTerm) {
 
+                let longTermCapitalGains = capitalGains.copy();
                 if (monthsSpan.totalMonths > 24 && InstrumentType.isHome(modelAsset.instrument)) {
-                    capitalGains.amount -= global_home_sale_capital_gains_discount;
-                    if (capitalGains.amount < 0) {
-                        capitalGains.zero();
+                    longTermCapitalGains.amount -= global_home_sale_capital_gains_discount;
+                    if (longTermCapitalGains.amount < 0) {
+                        longTermCapitalGains.zero();
                     }
                 }
 
@@ -973,7 +974,7 @@ export class Portfolio {
                 modelAsset.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, capitalGains);
                 
                 let income = this.monthly.totalIncome().copy().multiply(12);
-                amountToTax.add(activeTaxTable.calculateYearlyLongTermCapitalGainsTax(income, capitalGains));                
+                amountToTax.add(activeTaxTable.calculateYearlyLongTermCapitalGainsTax(income, longTermCapitalGains));                
                 this.monthly.longTermCapitalGainsTax.add(amountToTax.flipSign());    
                 modelAsset.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN_TAX, amountToTax);
 
