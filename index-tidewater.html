@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+        new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+        j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+        'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+        })(window,document,'script','dataLayer','GTM-WRSW7SKN');</script>
+    <!-- End Google Tag Manager -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Charting financial simulations for saving, investment, retirement, and knowledge">
+    <meta name="robots" content="follow, index, max-snippet:-1, max-video-preview:-1, max-image-preview:large"/>
+    <title>Tidewater — Charting Financial Models</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="stylesheet" href="index.css">
+    <script type="module" src="js/app.js"></script>
+</head>
+<body>
+
+    <!-- ═══ Popup: Share / Coffee ═══ -->
+    <div id="popupFormShare" class="popup">
+        <div class="popup-content" style="max-width: 500px; text-align: center;">
+            <span class="closeBtn">&times;</span>
+            <h2 style="font-family: 'Fraunces', serif; font-weight: 400; margin-top: 16px;">Buy me a Coffee!</h2>
+            <p style="color: var(--ink-light); margin: 16px 0;">This will help pay for server costs as this project grows.</p>
+            <a href="https://buymeacoffee.com/charting.finance" target="_blank" class="btn-paper primary" style="display: inline-block; text-decoration: none; margin-top: 8px;">Visit my Coffee</a>
+        </div>
+    </div>
+
+    <!-- ═══ Popup: Fund Transfers ═══ -->
+    <div id="popupFormTransfers" class="popup">
+        <div class="popup-content" style="max-width: 900px;">
+            <span class="closeBtn">&times;</span>
+            <div style="display: flex; gap: 32px; margin-top: 12px;">
+                <div style="flex: 1;">
+                    <h3 id="popupFormTransfers-title" style="font-family: 'Fraunces', serif; font-weight: 400; margin-bottom: 16px;"></h3>
+                    <canvas id="chartEarningsCanvasIndividual"></canvas>
+                </div>
+                <div style="flex: 1;">
+                    <h3 style="font-family: 'Fraunces', serif; font-weight: 400; margin-bottom: 16px;">Transferrable Cards</h3>
+                    <div class="scrollable-y"></div>
+                </div>
+            </div>
+            <div style="text-align: center; padding-top: 24px; border-top: 1px solid var(--rule); margin-top: 24px;">
+                <button class="btn-paper primary" onclick="popupFormTransfers_onSave()">Save Transfers</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ Popup: Create Asset ═══ -->
+    <div id="popupFormCreateAsset" class="popup">
+        <div class="popup-content" style="max-width: 700px;">
+            <span class="closeBtn">&times;</span>
+            <div class="form-title">Add New Instrument</div>
+            <div class="form-subtitle">Fill in the details below. Finish value and returns are computed on simulation run.</div>
+            <form id="asset">
+                <div class="form-fields">
+                    <div class="form-field">
+                        <label>Instrument</label>
+                        <select class="width-full" name="instrument"></select>
+                    </div>
+                    <div class="form-field">
+                        <label>Familiar Name</label>
+                        <input type="text" class="width-full" name="displayName" placeholder="familiar name" />
+                    </div>
+                    <div class="form-field">
+                        <label>Start Date</label>
+                        <input type="month" class="width-full" name="startDate" required />
+                    </div>
+                    <div class="form-field">
+                        <label>Start Value</label>
+                        <input type="number" class="width-full" name="startValue" step="0.01" placeholder="dollar amount" required />
+                    </div>
+                    <div class="form-field">
+                        <label>Finish Date</label>
+                        <input type="month" class="width-full" name="finishDate" required />
+                    </div>
+                    <div class="form-field">
+                        <label>Finish Value</label>
+                        <input type="number" class="width-full" name="finishValue" step="0.01" placeholder="computed" disabled />
+                    </div>
+                    <div class="form-field">
+                        <label>Annual Return %</label>
+                        <input type="number" class="width-full" name="annualReturnRate" step="0.01" placeholder="in decimal" required />
+                    </div>
+                </div>
+                <div class="instrument-fields" id="instrumentFieldsCreate"></div>
+                <div style="margin-top: 24px; text-align: right;">
+                    <input type="submit" class="btn-paper primary" value="Create Instrument" style="cursor: pointer;" />
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ═══ Popup: Edit Asset ═══ -->
+    <div id="popupFormEditAsset" class="popup">
+        <div class="popup-content" style="max-width: 700px;">
+            <span class="closeBtn">&times;</span>
+            <div class="form-title">Edit Instrument</div>
+            <div class="form-subtitle">Modify the instrument details below.</div>
+            <form id="assetEdit">
+                <div class="form-fields">
+                    <div class="form-field">
+                        <label>Instrument</label>
+                        <select class="width-full" name="instrument"></select>
+                    </div>
+                    <div class="form-field">
+                        <label>Familiar Name</label>
+                        <input type="text" class="width-full" name="displayName" />
+                    </div>
+                    <div class="form-field">
+                        <label>Start Date</label>
+                        <input type="month" class="width-full" name="startDate" required />
+                    </div>
+                    <div class="form-field">
+                        <label>Start Value</label>
+                        <input type="number" class="width-full" name="startValue" step="0.01" required />
+                    </div>
+                    <div class="form-field">
+                        <label>Finish Date</label>
+                        <input type="month" class="width-full" name="finishDate" required />
+                    </div>
+                    <div class="form-field">
+                        <label>Finish Value</label>
+                        <input type="number" class="width-full" name="finishValue" step="0.01" placeholder="computed" disabled />
+                    </div>
+                    <div class="form-field">
+                        <label>Annual Return %</label>
+                        <input type="number" class="width-full" name="annualReturnRate" step="0.01" required />
+                    </div>
+                </div>
+                <div class="instrument-fields" id="instrumentFieldsEdit"></div>
+                <div style="margin-top: 24px; text-align: right;">
+                    <input type="submit" class="btn-paper primary" value="Save Changes" style="cursor: pointer;" />
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ═══ Header ═══ -->
+    <header class="header">
+        <div class="brand">
+            <div class="brand-name">Tidewater</div>
+            <div class="brand-tagline">Your financial story, one chapter at a time</div>
+        </div>
+        <div class="header-actions">
+            <button class="btn-paper small" onclick="aplus_save()" title="Save current cards to the A slot">A+</button>
+            <button class="btn-paper small" onclick="aplus_recall()" title="Recall cards from the A slot">AR</button>
+            <button class="btn-paper small" onclick="bplus_click()" title="Save current cards to the B slot">B+</button>
+            <button class="btn-paper small" onclick="bplus_recall()" title="Recall cards from the B slot">BR</button>
+            <button class="btn-paper" onclick="shareData()">Share</button>
+            <button class="btn-paper primary" onclick="calculate('assets')">Recalculate</button>
+        </div>
+    </header>
+
+    <!-- ═══ Settings Row ═══ -->
+    <div class="settings-row">
+        <div class="setting-group">
+            <span class="setting-label">Inflation</span>
+            <input type="number" class="setting-value" id="setting-inflationRate" step="0.1" min="0" max="20">
+            <span class="setting-suffix">%</span>
+        </div>
+        <div class="setting-group">
+            <span class="setting-label">Tax Year</span>
+            <input type="number" class="setting-value" id="setting-taxYear" step="1" min="2020" max="2040">
+        </div>
+        <div class="setting-group">
+            <span class="setting-label">Filing As</span>
+            <select class="setting-value" id="setting-filingAs">
+                <option value="Single">Single</option>
+                <option value="MFJ">MFJ</option>
+            </select>
+        </div>
+        <div class="setting-group">
+            <span class="setting-label">Age</span>
+            <input type="number" class="setting-value" id="setting-startAge" step="1" min="1" max="120">
+        </div>
+        <div class="setting-group">
+            <span class="setting-label">Retire at</span>
+            <input type="number" class="setting-value" id="setting-retirementAge" step="1" min="1" max="120">
+        </div>
+        <div class="setting-group">
+            <span class="setting-label">Plan to</span>
+            <input type="number" class="setting-value" id="setting-finishAge" step="1" min="1" max="120">
+        </div>
+    </div>
+
+    <!-- ═══ Ledger Summary ═══ -->
+    <div class="ledger-summary">
+        <div class="ledger-column">
+            <div class="ledger-chapter">Opening</div>
+            <div class="ledger-row">
+                <span class="ledger-item-label">Date</span>
+                <span class="ledger-item-value val-neutral" id="display-startDate">&mdash;</span>
+            </div>
+            <div class="ledger-row">
+                <span class="ledger-item-label">Portfolio Value</span>
+                <span class="ledger-item-value val-neutral" id="display-startValue">$0.00</span>
+            </div>
+            <div class="ledger-row">
+                <span class="ledger-item-label">Starting Position</span>
+                <span class="ledger-item-value total val-neutral" id="display-startTotal">$0.00</span>
+            </div>
+        </div>
+        <div class="ledger-column">
+            <div class="ledger-chapter">Closing</div>
+            <div class="ledger-row">
+                <span class="ledger-item-label">Date</span>
+                <span class="ledger-item-value val-neutral" id="display-finishDate">&mdash;</span>
+            </div>
+            <div class="ledger-row">
+                <span class="ledger-item-label">Portfolio Value</span>
+                <span class="ledger-item-value val-neutral" id="display-finishValue">$0.00</span>
+            </div>
+            <div class="ledger-row">
+                <span class="ledger-item-label">Closing Position</span>
+                <span class="ledger-item-value total val-neutral" id="display-finishTotal">$0.00</span>
+            </div>
+        </div>
+        <div class="ledger-column">
+            <div class="ledger-chapter">Growth</div>
+            <div class="ledger-row">
+                <span class="ledger-item-label">Accumulated</span>
+                <span class="ledger-item-value val-neutral" id="display-accumulated">$0.00</span>
+            </div>
+            <div class="ledger-row">
+                <span class="ledger-item-label">Duration</span>
+                <span class="ledger-item-value val-neutral" id="display-totalMonths">0 months</span>
+            </div>
+            <div class="ledger-row">
+                <span class="ledger-item-label">Compound Annual Growth</span>
+                <span class="ledger-item-value total val-neutral" id="display-annualReturn">0.00%</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden rollup forms (data containers — synced to ledger display by app.js) -->
+    <form class="rollup" id="rollup1">
+        <input type="text" name="instrument" value="All Instruments" />
+        <input type="text" name="displayName" />
+        <input type="month" name="startDate" />
+        <input type="number" name="startValue" step="0.01" />
+        <input type="month" name="finishDate" />
+        <input type="number" name="finishValue" step="0.01" />
+        <input type="number" name="totalMonths" />
+        <input type="number" name="accumulatedValue" step="0.01" />
+        <input type="number" name="annualReturnRate" step="0.01" />
+    </form>
+    <form class="rollup" id="rollup2">
+        <input type="text" name="instrument" value="All Instruments" />
+        <input type="text" name="displayName" />
+        <input type="month" name="startDate" />
+        <input type="number" name="startValue" step="0.01" />
+        <input type="month" name="finishDate" />
+        <input type="number" name="finishValue" step="0.01" />
+        <input type="number" name="totalMonths" />
+        <input type="number" name="accumulatedValue" step="0.01" />
+        <input type="number" name="annualReturnRate" step="0.01" />
+    </form>
+
+    <div class="flourish">&diams;</div>
+
+    <!-- ═══ Main Content ═══ -->
+    <div class="main-content">
+
+        <!-- Chart Section -->
+        <div class="chart-section">
+            <div class="section-heading">Projection</div>
+            <div class="chart-tabs">
+                <div class="chart-tab active" id="tab1"><span class="tab-label" onclick="tab1_click()">Value</span><select id="metric1Select" class="metric-select"></select></div>
+                <div class="chart-tab" id="tab2"><span class="tab-label" onclick="tab2_click()">Earning</span><select id="metric2Select" class="metric-select"></select></div>
+                <div class="chart-tab" id="tab3" onclick="tab3_click()">Growth View</div>
+                <div class="chart-tab" id="tab4" onclick="tab4_click()">Spreadsheet</div>
+                <div class="chart-tab" id="tab5" onclick="tab5_click()">Credit Memos</div>
+            </div>
+            <div class="chart-frame">
+                <div style="width: 100%">
+                    <canvas id="chartMetric1Canvas"></canvas>
+                </div>
+                <div style="width: 100%; display: none">
+                    <canvas id="chartMetric2Canvas"></canvas>
+                </div>
+                <div style="width: 100%; display: none">
+                    <canvas id="chartRollupCanvas"></canvas>
+                </div>
+                <div style="width: 100%; display: none; overflow-x: auto;">
+                    <div id="spreadsheetElement"></div>
+                </div>
+                <div style="width: 100%; display: none; overflow-x: auto;">
+                    <div id="creditMemosElement"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Assets Column -->
+        <div class="assets-column">
+            <div class="section-heading">Your Instruments</div>
+            <div class="assets-container selected-assets" id="assets"></div>
+            <button class="btn-float-add" onclick="openCreateAssetModal()" title="Add a new instrument">+</button>
+        </div>
+
+    </div>
+
+    <!-- ═══ Simulator Toggle ═══ -->
+    <div style="text-align: center; padding: 24px 48px;">
+        <button id="showHideSimulator" class="btn-paper" onclick="clickShowHideSimulator()">Show Simulator</button>
+    </div>
+
+    <!-- ═══ Simulator Section (hidden by default) ═══ -->
+    <div id="middleContainer" class="simulator-section" style="display: none;">
+        <div class="simulator-grid">
+            <div style="text-align: center;">
+                <h3>Goals</h3>
+                <button class="btn-paper" onclick="doMaximize()">Maximize</button>
+                <br /><br />
+                <textarea id="permutations" placeholder="Funding transfer combinations."></textarea>
+            </div>
+            <div>
+                <div style="text-align: center; margin-bottom: 16px;">
+                    <button class="btn-paper primary" onclick="calculate('simulator')" title="Recalculate simulated cards">Recalculate Simulation</button>
+                </div>
+                <div class="scrollable-x" id="assetsSimulator"></div>
+            </div>
+            <div style="text-align: center;">
+                <h3>Simulation Summary</h3>
+                <p style="font-size: 12px; color: var(--ink-faint);">Results appear in the ledger above after simulation runs.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ Footer ═══ -->
+    <footer class="footer">
+        <div class="footer-left">Tidewater &middot; Portfolio Simulator &middot; &copy; 2025 Charting Finance, LLC</div>
+        <div class="footer-right">
+            <a href="rules.html">Rules</a>
+            <a href="globals.html">Globals</a>
+            <a href="disclaimer.html">Disclaimer</a>
+            <a href="about.html">About</a>
+        </div>
+    </footer>
+
+</body>
+</html>

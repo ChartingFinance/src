@@ -8,237 +8,320 @@
         'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
         })(window,document,'script','dataLayer','GTM-WRSW7SKN');</script>
     <!-- End Google Tag Manager -->
+    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Charting financial simulations for saving, investment, retirement, and knowledge">
     <meta name="robots" content="follow, index, max-snippet:-1, max-video-preview:-1, max-image-preview:large"/>
-    <title>Tidewater — Charting Financial Models</title>
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+    <title>Charting Finance — A Financial Story in Models</title>
+    
+    <!-- Modern Fonts & Tailwind -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<link rel="stylesheet" href="index.css">
+    
+    <!-- JS Logic -->
     <script type="module" src="js/app.js"></script>
+
+    <style>
+        /* Modern Fintech Core Styles */
+        body { font-family: 'Poppins', sans-serif; background-color: #fcfcfd; color: #111827; }
+        
+        .glass-card { background: #ffffff; border-radius: 24px; box-shadow: 0 20px 40px -15px rgba(0,0,0,0.05); border: 1px solid rgba(243, 244, 246, 1); }
+        .gradient-text { background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        
+        .fin-input { background: #f3f4f6; border: none; border-radius: 12px; padding: 10px 14px; width: 100%; font-weight: 500; transition: all 0.2s; outline: none; }
+        .fin-input:focus { background: #fff; box-shadow: 0 0 0 2px #d8b4fe; }
+        
+        /* Modernized Buttons */
+        .btn-modern { font-weight: 600; padding: 10px 20px; border-radius: 14px; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; border: 1px solid transparent; }
+        .btn-modern.outline { background: #ffffff; border-color: #e5e7eb; color: #374151; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .btn-modern.outline:hover { background: #f9fafb; border-color: #d1d5db; }
+        .btn-modern.primary { background: #111827; color: #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .btn-modern.primary:hover { background: #000000; transform: scale(1.02); }
+        .btn-modern.small { padding: 6px 12px; font-size: 12px; border-radius: 10px; }
+
+        .metric-select { width: 16px; padding: 0; border: none; background: transparent; color: inherit; cursor: pointer; outline: none; }
+
+        /* Popups (Overrides for Tailwind Modals) */
+        .popup { background: rgba(17, 24, 39, 0.4); backdrop-filter: blur(4px); }
+        
+        /* Chart Tabs active state override for JS */
+        .chart-tab.active { background-color: gray; color: #ffffff; border-radius: 12px; }
+        
+        /* JS Asset Card Selection Override */
+        .asset.selected-card-chart { border-color: var(--card-color); box-shadow: 0 0 0 3px color-mix(in srgb, var(--card-color) 25%, transparent); }
+
+        /* Asset Card Layout */
+        .asset { position: relative; text-align: center; }
+        .asset-card-icon { font-size: 64px; line-height: 1; margin: 4px; padding-left: 8px; padding-right: 8px; }
+        .asset-card-name { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .asset-card-value { font-size: 14px; color: #6b7280; margin-top: 2px; }
+
+        /* Asset Action Buttons — hidden until card is selected */
+        .asset-action-btn { position: absolute; font-size: 16px; width: 22px; height: 22px; padding: 4px; line-height: 20px; text-align: center; border-radius: 50%; cursor: pointer; background: rgba(0,0,0,0.06); color: #374151; opacity: 0; transition: opacity 0.2s, background 0.2s, color 0.2s; }
+        .asset.selected-card-chart .asset-action-btn { opacity: 1; }
+        .asset-action-btn.edit      { top: 4px; left: 4px; }
+        .asset-action-btn.transfers { top: 4px; right: 4px; }
+        .asset-action-btn.remove    { bottom: 4px; right: 4px; }
+        .asset-action-btn:hover { background: #111827; color: #ffffff; }
+
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #d1d5db; }
+    </style>
 </head>
-<body>
+<body class="min-h-screen p-4 sm:p-8 max-w-[1400px] mx-auto">
 
     <!-- ═══ Popup: Share / Coffee ═══ -->
-    <div id="popupFormShare" class="popup">
-        <div class="popup-content" style="max-width: 500px; text-align: center;">
-            <span class="closeBtn">&times;</span>
-            <h2 style="font-family: 'Fraunces', serif; font-weight: 400; margin-top: 16px;">Buy me a Coffee!</h2>
-            <p style="color: var(--ink-light); margin: 16px 0;">This will help pay for server costs as this project grows.</p>
-            <a href="https://buymeacoffee.com/charting.finance" target="_blank" class="btn-paper primary" style="display: inline-block; text-decoration: none; margin-top: 8px;">Visit my Coffee</a>
+    <div id="popupFormShare" class="popup fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+        <div class="popup-content glass-card p-8 w-full max-w-md relative text-center">
+            <button class="closeBtn absolute top-4 right-4 text-gray-400 hover:text-gray-800 text-2xl">&times;</button>
+            <div class="text-4xl mb-4">☕</div>
+            <h2 class="text-2xl font-bold tracking-tight mb-2">Buy me a Coffee!</h2>
+            <p class="text-gray-500 mb-6 text-sm">This will help pay for server costs as this project grows.</p>
+            <a href="https://buymeacoffee.com/charting.finance" target="_blank" class="btn-modern primary w-full text-center">Visit my Coffee</a>
         </div>
     </div>
 
     <!-- ═══ Popup: Fund Transfers ═══ -->
-    <div id="popupFormTransfers" class="popup">
-        <div class="popup-content" style="max-width: 900px;">
-            <span class="closeBtn">&times;</span>
-            <div style="display: flex; gap: 32px; margin-top: 12px;">
-                <div style="flex: 1;">
-                    <h3 id="popupFormTransfers-title" style="font-family: 'Fraunces', serif; font-weight: 400; margin-bottom: 16px;"></h3>
-                    <canvas id="chartEarningsCanvasIndividual"></canvas>
+    <div id="popupFormTransfers" class="popup fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+        <div class="popup-content glass-card p-8 w-full max-w-4xl relative">
+            <button class="closeBtn absolute top-4 right-4 text-gray-400 hover:text-gray-800 text-2xl">&times;</button>
+            <div class="flex flex-col md:flex-row gap-8 mt-4">
+                <div class="flex-1">
+                    <h3 id="popupFormTransfers-title" class="text-lg font-bold mb-4"></h3>
+                    <div class="bg-gray-50 rounded-2xl p-4 border border-gray-100">
+                        <canvas id="chartEarningsCanvasIndividual"></canvas>
+                    </div>
                 </div>
-                <div style="flex: 1;">
-                    <h3 style="font-family: 'Fraunces', serif; font-weight: 400; margin-bottom: 16px;">Transferrable Cards</h3>
-                    <div class="scrollable-y"></div>
+                <div class="flex-1">
+                    <h3 class="text-lg font-bold mb-4 flex items-center gap-2">🔄 Transferrable Cards</h3>
+                    <div class="scrollable-y overflow-y-auto max-h-[400px] pr-2 space-y-3"></div>
                 </div>
             </div>
-            <div style="text-align: center; padding-top: 24px; border-top: 1px solid var(--rule); margin-top: 24px;">
-                <button class="btn-paper primary" onclick="popupFormTransfers_onSave()">Save Transfers</button>
+            <div class="text-center pt-6 mt-6 border-t border-gray-100">
+                <button class="btn-modern primary" onclick="popupFormTransfers_onSave()">Save Transfers</button>
             </div>
         </div>
     </div>
 
     <!-- ═══ Popup: Create Asset ═══ -->
-    <div id="popupFormCreateAsset" class="popup">
-        <div class="popup-content" style="max-width: 700px;">
-            <span class="closeBtn">&times;</span>
-            <div class="form-title">Add New Instrument</div>
-            <div class="form-subtitle">Fill in the details below. Finish value and returns are computed on simulation run.</div>
+    <div id="popupFormCreateAsset" class="popup fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+        <div class="popup-content glass-card p-8 w-full max-w-3xl relative">
+            <button class="closeBtn absolute top-4 right-4 text-gray-400 hover:text-gray-800 text-2xl">&times;</button>
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold flex items-center gap-2">✨ Add New Instrument</h2>
+                <p class="text-gray-500 text-sm mt-1">Finish value and returns are computed on simulation run.</p>
+            </div>
             <form id="asset">
-                <div class="form-fields">
-                    <div class="form-field">
-                        <label>Instrument</label>
-                        <select class="width-full" name="instrument"></select>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Instrument</label>
+                        <select class="fin-input" name="instrument"></select>
                     </div>
-                    <div class="form-field">
-                        <label>Familiar Name</label>
-                        <input type="text" class="width-full" name="displayName" placeholder="familiar name" />
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Familiar Name</label>
+                        <input type="text" class="fin-input" name="displayName" placeholder="e.g. Dream House" />
                     </div>
-                    <div class="form-field">
-                        <label>Start Date</label>
-                        <input type="month" class="width-full" name="startDate" required />
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Start Date</label>
+                        <input type="month" class="fin-input" name="startDate" required />
                     </div>
-                    <div class="form-field">
-                        <label>Start Value</label>
-                        <input type="number" class="width-full" name="startValue" step="0.01" placeholder="dollar amount" required />
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Start Value</label>
+                        <input type="number" class="fin-input" name="startValue" step="0.01" placeholder="$0.00" required />
                     </div>
-                    <div class="form-field">
-                        <label>Finish Date</label>
-                        <input type="month" class="width-full" name="finishDate" required />
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Finish Date</label>
+                        <input type="month" class="fin-input" name="finishDate" required />
                     </div>
-                    <div class="form-field">
-                        <label>Finish Value</label>
-                        <input type="number" class="width-full" name="finishValue" step="0.01" placeholder="computed" disabled />
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Finish Value</label>
+                        <input type="number" class="fin-input bg-gray-100 text-gray-400" name="finishValue" step="0.01" placeholder="Computed automatically" disabled />
                     </div>
-                    <div class="form-field">
-                        <label>Annual Return %</label>
-                        <input type="number" class="width-full" name="annualReturnRate" step="0.01" placeholder="in decimal" required />
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Annual Return %</label>
+                        <input type="number" class="fin-input" name="annualReturnRate" step="0.01" placeholder="e.g. 0.07" required />
                     </div>
                 </div>
-                <div class="instrument-fields" id="instrumentFieldsCreate"></div>
-                <div style="margin-top: 24px; text-align: right;">
-                    <input type="submit" class="btn-paper primary" value="Create Instrument" style="cursor: pointer;" />
+                <div class="instrument-fields mt-6 border-t border-gray-100 pt-6 empty:hidden" id="instrumentFieldsCreate"></div>
+                <div class="mt-8 flex justify-end">
+                    <input type="submit" class="btn-modern primary cursor-pointer" value="Add to Stack 🚀" />
                 </div>
             </form>
         </div>
     </div>
 
     <!-- ═══ Popup: Edit Asset ═══ -->
-    <div id="popupFormEditAsset" class="popup">
-        <div class="popup-content" style="max-width: 700px;">
-            <span class="closeBtn">&times;</span>
-            <div class="form-title">Edit Instrument</div>
-            <div class="form-subtitle">Modify the instrument details below.</div>
+    <div id="popupFormEditAsset" class="popup fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+        <div class="popup-content glass-card p-8 w-full max-w-3xl relative">
+            <button class="closeBtn absolute top-4 right-4 text-gray-400 hover:text-gray-800 text-2xl">&times;</button>
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold flex items-center gap-2">✏️ Edit Instrument</h2>
+                <p class="text-gray-500 text-sm mt-1">Modify the details of your financial instrument below.</p>
+            </div>
             <form id="assetEdit">
-                <div class="form-fields">
-                    <div class="form-field">
-                        <label>Instrument</label>
-                        <select class="width-full" name="instrument"></select>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Instrument</label>
+                        <select class="fin-input" name="instrument"></select>
                     </div>
-                    <div class="form-field">
-                        <label>Familiar Name</label>
-                        <input type="text" class="width-full" name="displayName" />
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Familiar Name</label>
+                        <input type="text" class="fin-input" name="displayName" />
                     </div>
-                    <div class="form-field">
-                        <label>Start Date</label>
-                        <input type="month" class="width-full" name="startDate" required />
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Start Date</label>
+                        <input type="month" class="fin-input" name="startDate" required />
                     </div>
-                    <div class="form-field">
-                        <label>Start Value</label>
-                        <input type="number" class="width-full" name="startValue" step="0.01" required />
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Start Value</label>
+                        <input type="number" class="fin-input" name="startValue" step="0.01" required />
                     </div>
-                    <div class="form-field">
-                        <label>Finish Date</label>
-                        <input type="month" class="width-full" name="finishDate" required />
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Finish Date</label>
+                        <input type="month" class="fin-input" name="finishDate" required />
                     </div>
-                    <div class="form-field">
-                        <label>Finish Value</label>
-                        <input type="number" class="width-full" name="finishValue" step="0.01" placeholder="computed" disabled />
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Finish Value</label>
+                        <input type="number" class="fin-input bg-gray-100 text-gray-400" name="finishValue" step="0.01" disabled />
                     </div>
-                    <div class="form-field">
-                        <label>Annual Return %</label>
-                        <input type="number" class="width-full" name="annualReturnRate" step="0.01" required />
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Annual Return %</label>
+                        <input type="number" class="fin-input" name="annualReturnRate" step="0.01" required />
                     </div>
                 </div>
-                <div class="instrument-fields" id="instrumentFieldsEdit"></div>
-                <div style="margin-top: 24px; text-align: right;">
-                    <input type="submit" class="btn-paper primary" value="Save Changes" style="cursor: pointer;" />
+                <div class="instrument-fields mt-6 border-t border-gray-100 pt-6 empty:hidden" id="instrumentFieldsEdit"></div>
+                <div class="mt-8 flex justify-end">
+                    <input type="submit" class="btn-modern primary cursor-pointer" value="Save Changes ✨" />
                 </div>
             </form>
         </div>
     </div>
 
     <!-- ═══ Header ═══ -->
-    <header class="header">
-        <div class="brand">
-            <div class="brand-name">Tidewater</div>
-            <div class="brand-tagline">Your financial story, one chapter at a time</div>
+    <header class="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4 pb-6 border-b border-gray-200">
+        <div>
+            <h1 class="text-4xl font-bold tracking-tight text-gray-900">Charting <span class="gradient-text">Finance.</span></h1>
+            <div class="text-xs font-semibold text-gray-500 uppercase tracking-widest mt-2">Your financial story, one month at a time</div>
         </div>
-        <div class="header-actions">
-            <button class="btn-paper small" onclick="aplus_save()" title="Save current cards to the A slot">A+</button>
-            <button class="btn-paper small" onclick="aplus_recall()" title="Recall cards from the A slot">AR</button>
-            <button class="btn-paper small" onclick="bplus_click()" title="Save current cards to the B slot">B+</button>
-            <button class="btn-paper small" onclick="bplus_recall()" title="Recall cards from the B slot">BR</button>
-            <button class="btn-paper" onclick="shareData()">Share</button>
-            <button class="btn-paper primary" onclick="calculate('assets')">Recalculate</button>
+        <div class="flex flex-wrap items-center gap-2">
+            <div class="bg-gray-100 p-1 rounded-xl flex gap-1 mr-2">
+                <button class="btn-modern outline small bg-white" onclick="aplus_save()" title="Save current cards to the A slot">A+</button>
+                <button class="btn-modern outline small bg-white" onclick="aplus_recall()" title="Recall cards from the A slot">AR</button>
+            </div>
+            <div class="bg-gray-100 p-1 rounded-xl flex gap-1 mr-2">
+                <button class="btn-modern outline small bg-white" onclick="bplus_click()" title="Save current cards to the B slot">B+</button>
+                <button class="btn-modern outline small bg-white" onclick="bplus_recall()" title="Recall cards from the B slot">BR</button>
+            </div>
+            <button class="btn-modern outline" onclick="shareData()">Share 📤</button>
+            <button class="btn-modern primary" onclick="calculate('assets')">Recalculate ⚡</button>
         </div>
     </header>
 
     <!-- ═══ Settings Row ═══ -->
-    <div class="settings-row">
-        <div class="setting-group">
-            <span class="setting-label">Inflation</span>
-            <input type="number" class="setting-value" id="setting-inflationRate" step="0.1" min="0" max="20">
-            <span class="setting-suffix">%</span>
-        </div>
-        <div class="setting-group">
-            <span class="setting-label">Tax Year</span>
-            <input type="number" class="setting-value" id="setting-taxYear" step="1" min="2020" max="2040">
-        </div>
-        <div class="setting-group">
-            <span class="setting-label">Filing As</span>
-            <select class="setting-value" id="setting-filingAs">
-                <option value="Single">Single</option>
-                <option value="MFJ">MFJ</option>
-            </select>
-        </div>
-        <div class="setting-group">
-            <span class="setting-label">Age</span>
-            <input type="number" class="setting-value" id="setting-startAge" step="1" min="1" max="120">
-        </div>
-        <div class="setting-group">
-            <span class="setting-label">Retire at</span>
-            <input type="number" class="setting-value" id="setting-retirementAge" step="1" min="1" max="120">
-        </div>
-        <div class="setting-group">
-            <span class="setting-label">Plan to</span>
-            <input type="number" class="setting-value" id="setting-finishAge" step="1" min="1" max="120">
+    <div class="glass-card p-6 mb-8">
+        <div class="grid grid-cols-2 md:grid-cols-6 gap-6">
+            <div class="flex flex-col gap-1">
+                <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Inflation</span>
+                <div class="relative">
+                    <input type="number" class="fin-input pr-8" id="setting-inflationRate" step="0.1" min="0" max="20">
+                    <span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold">%</span>
+                </div>
+            </div>
+            <div class="flex flex-col gap-1">
+                <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Tax Year</span>
+                <input type="number" class="fin-input" id="setting-taxYear" step="1" min="2020" max="2040">
+            </div>
+            <div class="flex flex-col gap-1">
+                <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Filing As</span>
+                <select class="fin-input" id="setting-filingAs">
+                    <option value="Single">Single</option>
+                    <option value="MFJ">MFJ</option>
+                </select>
+            </div>
+            <div class="flex flex-col gap-1">
+                <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Current Age</span>
+                <input type="number" class="fin-input" id="setting-startAge" step="1" min="1" max="120">
+            </div>
+            <div class="flex flex-col gap-1">
+                <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Retire At</span>
+                <input type="number" class="fin-input" id="setting-retirementAge" step="1" min="1" max="120">
+            </div>
+            <div class="flex flex-col gap-1">
+                <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Plan To (Age)</span>
+                <input type="number" class="fin-input" id="setting-finishAge" step="1" min="1" max="120">
+            </div>
         </div>
     </div>
 
     <!-- ═══ Ledger Summary ═══ -->
-    <div class="ledger-summary">
-        <div class="ledger-column">
-            <div class="ledger-chapter">Opening</div>
-            <div class="ledger-row">
-                <span class="ledger-item-label">Date</span>
-                <span class="ledger-item-value val-neutral" id="display-startDate">&mdash;</span>
-            </div>
-            <div class="ledger-row">
-                <span class="ledger-item-label">Portfolio Value</span>
-                <span class="ledger-item-value val-neutral" id="display-startValue">$0.00</span>
-            </div>
-            <div class="ledger-row">
-                <span class="ledger-item-label">Starting Position</span>
-                <span class="ledger-item-value total val-neutral" id="display-startTotal">$0.00</span>
-            </div>
-        </div>
-        <div class="ledger-column">
-            <div class="ledger-chapter">Closing</div>
-            <div class="ledger-row">
-                <span class="ledger-item-label">Date</span>
-                <span class="ledger-item-value val-neutral" id="display-finishDate">&mdash;</span>
-            </div>
-            <div class="ledger-row">
-                <span class="ledger-item-label">Portfolio Value</span>
-                <span class="ledger-item-value val-neutral" id="display-finishValue">$0.00</span>
-            </div>
-            <div class="ledger-row">
-                <span class="ledger-item-label">Closing Position</span>
-                <span class="ledger-item-value total val-neutral" id="display-finishTotal">$0.00</span>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        
+        <!-- Opening -->
+        <div class="glass-card p-6 bg-gradient-to-br from-gray-50 to-white">
+            <div class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Opening Chapter</div>
+            <div class="space-y-3">
+                <div class="flex justify-between items-center pb-2 border-b border-gray-100">
+                    <span class="text-sm text-gray-500">Date</span>
+                    <span class="font-semibold text-gray-800" id="display-startDate">&mdash;</span>
+                </div>
+                <div class="flex justify-between items-center pb-2 border-b border-gray-100">
+                    <span class="text-sm text-gray-500">Portfolio Value</span>
+                    <span class="font-semibold text-gray-800" id="display-startValue">$0.00</span>
+                </div>
+                <div class="flex justify-between items-end pt-2">
+                    <span class="text-sm font-medium text-gray-600">Starting Position</span>
+                    <span class="text-2xl font-bold text-gray-900" id="display-startTotal">$0.00</span>
+                </div>
             </div>
         </div>
-        <div class="ledger-column">
-            <div class="ledger-chapter">Growth</div>
-            <div class="ledger-row">
-                <span class="ledger-item-label">Accumulated</span>
-                <span class="ledger-item-value val-neutral" id="display-accumulated">$0.00</span>
-            </div>
-            <div class="ledger-row">
-                <span class="ledger-item-label">Duration</span>
-                <span class="ledger-item-value val-neutral" id="display-totalMonths">0 months</span>
-            </div>
-            <div class="ledger-row">
-                <span class="ledger-item-label">Compound Annual Growth</span>
-                <span class="ledger-item-value total val-neutral" id="display-annualReturn">0.00%</span>
+
+        <!-- Closing -->
+        <div class="glass-card p-6 bg-gradient-to-br from-purple-50 to-white border-purple-100">
+            <div class="text-xs font-bold text-purple-400 uppercase tracking-widest mb-4">Closing Chapter</div>
+            <div class="space-y-3">
+                <div class="flex justify-between items-center pb-2 border-b border-purple-100/50">
+                    <span class="text-sm text-gray-500">Date</span>
+                    <span class="font-semibold text-gray-800" id="display-finishDate">&mdash;</span>
+                </div>
+                <div class="flex justify-between items-center pb-2 border-b border-purple-100/50">
+                    <span class="text-sm text-gray-500">Portfolio Value</span>
+                    <span class="font-semibold text-gray-800" id="display-finishValue">$0.00</span>
+                </div>
+                <div class="flex justify-between items-end pt-2">
+                    <span class="text-sm font-medium text-purple-700">Closing Position</span>
+                    <span class="text-2xl font-bold text-purple-900" id="display-finishTotal">$0.00</span>
+                </div>
             </div>
         </div>
+
+        <!-- Growth -->
+        <div class="glass-card p-6 bg-gradient-to-br from-pink-50 to-white border-pink-100">
+            <div class="text-xs font-bold text-pink-400 uppercase tracking-widest mb-4">Growth Metrics</div>
+            <div class="space-y-3">
+                <div class="flex justify-between items-center pb-2 border-b border-pink-100/50">
+                    <span class="text-sm text-gray-500">Accumulated</span>
+                    <span class="font-semibold text-gray-800" id="display-accumulated">$0.00</span>
+                </div>
+                <div class="flex justify-between items-center pb-2 border-b border-pink-100/50">
+                    <span class="text-sm text-gray-500">Duration</span>
+                    <span class="font-semibold text-gray-800" id="display-totalMonths">0 months</span>
+                </div>
+                <div class="flex justify-between items-end pt-2">
+                    <span class="text-sm font-medium text-pink-700">CAGR</span>
+                    <span class="text-2xl font-bold text-pink-600" id="display-annualReturn">0.00%</span>
+                </div>
+            </div>
+        </div>
+
     </div>
 
-    <!-- Hidden rollup forms (data containers — synced to ledger display by app.js) -->
-    <form class="rollup" id="rollup1">
+    <!-- Hidden rollup forms -->
+    <form class="rollup hidden" id="rollup1">
         <input type="text" name="instrument" value="All Instruments" />
         <input type="text" name="displayName" />
         <input type="month" name="startDate" />
@@ -249,7 +332,7 @@
         <input type="number" name="accumulatedValue" step="0.01" />
         <input type="number" name="annualReturnRate" step="0.01" />
     </form>
-    <form class="rollup" id="rollup2">
+    <form class="rollup hidden" id="rollup2">
         <input type="text" name="instrument" value="All Instruments" />
         <input type="text" name="displayName" />
         <input type="month" name="startDate" />
@@ -261,84 +344,111 @@
         <input type="number" name="annualReturnRate" step="0.01" />
     </form>
 
-    <div class="flourish">&diams;</div>
+    <!-- ═══ Main Content Grid ═══ -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8 lg:h-[650px]">
 
-    <!-- ═══ Main Content ═══ -->
-    <div class="main-content">
+        <!-- Chart Section (Left/Top) -->
+        <div class="lg:col-span-8 flex flex-col gap-4 h-full min-h-0">
+            <h2 class="text-lg font-bold flex items-center gap-2 flex-shrink-0">📊 Projections</h2>
 
-        <!-- Chart Section -->
-        <div class="chart-section">
-            <div class="section-heading">Projection</div>
-            <div class="chart-tabs">
-                <div class="chart-tab active" id="tab1"><span class="tab-label" onclick="tab1_click()">Value</span><select id="metric1Select" class="metric-select"></select></div>
-                <div class="chart-tab" id="tab2"><span class="tab-label" onclick="tab2_click()">Earning</span><select id="metric2Select" class="metric-select"></select></div>
-                <div class="chart-tab" id="tab3" onclick="tab3_click()">Growth View</div>
-                <div class="chart-tab" id="tab4" onclick="tab4_click()">Spreadsheet</div>
-                <div class="chart-tab" id="tab5" onclick="tab5_click()">Credit Memos</div>
-            </div>
-            <div class="chart-frame">
-                <div style="width: 100%">
-                    <canvas id="chartMetric1Canvas"></canvas>
+            <div class="glass-card p-6 flex-grow flex flex-col min-h-0">
+                <!-- Modern Tabs -->
+                <div class="flex flex-wrap gap-2 mb-6 bg-gray-50 p-1 rounded-xl w-max flex-shrink-0">
+                    <button class="chart-tab active px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-900 transition flex items-center gap-1" id="tab1">
+                        <span class="tab-label" onclick="tab1_click()">Value</span> <select id="metric1Select" class="metric-select ml-1"></select>
+                    </button>
+                    <button class="chart-tab px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-900 transition flex items-center gap-1 rounded-xl" id="tab2">
+                        <span class="tab-label" onclick="tab2_click()">Earning</span> <select id="metric2Select" class="metric-select ml-1"></select>
+                    </button>
+                    <button class="chart-tab px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-900 transition rounded-xl" id="tab3" onclick="tab3_click()">Growth View</button>
+                    <button class="chart-tab px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-900 transition rounded-xl" id="tab4" onclick="tab4_click()">Spreadsheet</button>
+                    <button class="chart-tab px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-900 transition rounded-xl" id="tab5" onclick="tab5_click()">Credit Memos</button>
                 </div>
-                <div style="width: 100%; display: none">
-                    <canvas id="chartMetric2Canvas"></canvas>
-                </div>
-                <div style="width: 100%; display: none">
-                    <canvas id="chartRollupCanvas"></canvas>
-                </div>
-                <div style="width: 100%; display: none; overflow-x: auto;">
-                    <div id="spreadsheetElement"></div>
-                </div>
-                <div style="width: 100%; display: none; overflow-x: auto;">
-                    <div id="creditMemosElement"></div>
+
+                <!-- Chart Canvases -->
+                <div class="relative flex-grow min-h-0 w-full overflow-y-auto">
+                    <div style="width: 100%; height: 100%;">
+                        <canvas id="chartMetric1Canvas"></canvas>
+                    </div>
+                    <div style="width: 100%; height: 100%; display: none">
+                        <canvas id="chartMetric2Canvas"></canvas>
+                    </div>
+                    <div style="width: 100%; height: 100%; display: none">
+                        <canvas id="chartRollupCanvas"></canvas>
+                    </div>
+                    <div style="width: 100%; height: 100%; display: none; overflow-x: auto;">
+                        <div id="spreadsheetElement" class="text-sm text-gray-600"></div>
+                    </div>
+                    <div style="width: 100%; height: 100%; display: none; overflow-x: auto;">
+                        <div id="creditMemosElement" class="text-sm text-gray-600"></div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Assets Column -->
-        <div class="assets-column">
-            <div class="section-heading">Your Instruments</div>
-            <div class="assets-container selected-assets" id="assets"></div>
-            <button class="btn-float-add" onclick="openCreateAssetModal()" title="Add a new instrument">+</button>
+        <!-- Assets Column (Right/Bottom) -->
+        <div class="lg:col-span-4 flex flex-col gap-4 h-full min-h-0">
+            <h2 class="text-lg font-bold flex items-center gap-2 flex-shrink-0">💼 Your Portfolio</h2>
+            
+            <div class="glass-card p-6 relative flex flex-col flex-grow min-h-0">
+                <div class="assets-container selected-assets flex flex-col items-center gap-3 overflow-y-auto flex-grow min-h-0 pb-24" id="assets" style="flex: 1;">
+                    <!-- Cards injected here by JS. Will inherit custom override styles from <style> -->
+                </div>
+                
+                <button class="absolute bottom-6 right-6 w-14 h-14 bg-black text-white rounded-full shadow-xl hover:scale-110 transition-transform flex items-center justify-center text-2xl font-light z-10" onclick="openCreateAssetModal()" title="Add a new instrument">
+                    +
+                </button>
+            </div>
         </div>
 
     </div>
 
     <!-- ═══ Simulator Toggle ═══ -->
-    <div style="text-align: center; padding: 24px 48px;">
-        <button id="showHideSimulator" class="btn-paper" onclick="clickShowHideSimulator()">Show Simulator</button>
+    <div class="flex justify-center mb-8">
+        <button id="showHideSimulator" class="btn-modern outline rounded-full px-8 py-3 shadow-sm hover:shadow-md" onclick="clickShowHideSimulator()">
+            🔮 Toggle Simulator
+        </button>
     </div>
 
-    <!-- ═══ Simulator Section (hidden by default) ═══ -->
-    <div id="middleContainer" class="simulator-section" style="display: none;">
-        <div class="simulator-grid">
-            <div style="text-align: center;">
-                <h3>Goals</h3>
-                <button class="btn-paper" onclick="doMaximize()">Maximize</button>
-                <br /><br />
-                <textarea id="permutations" placeholder="Funding transfer combinations."></textarea>
+    <!-- ═══ Simulator Section ═══ -->
+    <div id="middleContainer" class="simulator-section glass-card p-8 mb-8" style="display: none;">
+        <h2 class="text-2xl font-bold mb-6 text-center">Simulation Engine</h2>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            <!-- Goals -->
+            <div class="lg:col-span-3 flex flex-col gap-4">
+                <h3 class="font-semibold text-gray-700">Target Goals</h3>
+                <button class="btn-modern outline w-full" onclick="doMaximize()">✨ Maximize</button>
+                <textarea id="permutations" class="fin-input flex-grow min-h-[200px] text-xs font-mono resize-y" placeholder="Funding transfer combinations..."></textarea>
             </div>
-            <div>
-                <div style="text-align: center; margin-bottom: 16px;">
-                    <button class="btn-paper primary" onclick="calculate('simulator')" title="Recalculate simulated cards">Recalculate Simulation</button>
+            
+            <!-- Sim Results -->
+            <div class="lg:col-span-6 flex flex-col">
+                <div class="flex justify-center mb-4">
+                    <button class="btn-modern primary" onclick="calculate('simulator')" title="Recalculate simulated cards">Recalculate Simulation 🔄</button>
                 </div>
-                <div class="scrollable-x" id="assetsSimulator"></div>
+                <div class="bg-gray-50 rounded-2xl p-4 border border-gray-100 flex-grow scrollable-x overflow-x-auto whitespace-nowrap" id="assetsSimulator">
+                    <!-- Simulated assets -->
+                </div>
             </div>
-            <div style="text-align: center;">
-                <h3>Simulation Summary</h3>
-                <p style="font-size: 12px; color: var(--ink-faint);">Results appear in the ledger above after simulation runs.</p>
+            
+            <!-- Summary -->
+            <div class="lg:col-span-3 flex flex-col justify-center items-center text-center p-6 bg-gradient-to-b from-purple-50 to-transparent rounded-2xl">
+                <div class="text-4xl mb-4">📝</div>
+                <h3 class="font-bold text-gray-800 mb-2">Simulation Summary</h3>
+                <p class="text-sm text-gray-500">Results will appear in the main ledger and charts above after the simulation runs.</p>
             </div>
         </div>
     </div>
 
     <!-- ═══ Footer ═══ -->
-    <footer class="footer">
-        <div class="footer-left">Tidewater &middot; Portfolio Simulator &middot; &copy; 2025 Charting Finance, LLC</div>
-        <div class="footer-right">
-            <a href="rules.html">Rules</a>
-            <a href="globals.html">Globals</a>
-            <a href="disclaimer.html">Disclaimer</a>
-            <a href="about.html">About</a>
+    <footer class="mt-12 py-8 border-t border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4 text-sm font-medium text-gray-400">
+        <div>Charting Finance &middot; Portfolio Simulator &middot; &copy; 2026 Charting Finance, LLC</div>
+        <div class="flex gap-6">
+            <a href="rules.html" class="hover:text-gray-900 transition">Rules</a>
+            <a href="globals.html" class="hover:text-gray-900 transition">Globals</a>
+            <a href="disclaimer.html" class="hover:text-gray-900 transition">Disclaimer</a>
+            <a href="about.html" class="hover:text-gray-900 transition">About</a>
         </div>
     </footer>
 
