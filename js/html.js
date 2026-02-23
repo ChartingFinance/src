@@ -6,7 +6,7 @@ const htmlPlus = '➕';
 const htmlMinus = '➖';
 
 const htmlAssetCard =
-`<form class="asset" style="--card-color: $BACKGROUNDCOLOR$">
+`<form class="asset glass-card p-4" style="--card-color: $BACKGROUNDCOLOR$; border-left: 4px solid $BACKGROUNDCOLOR$">
     <span class="asset-action-btn edit" title="Edit">&#x270E;</span>
     <span class="asset-action-btn transfers" title="Transfers">&#x21C4;</span>
     <div class="asset-card-icon">$EMOJI$</div>
@@ -216,24 +216,26 @@ function html_buildAssetsElement() {
 
 // BEGIN TRANSFER ASSETS
 
-const htmlTransferAsset = 
-`<form class="fund-transfer" style="background-color: $BACKGROUND-COLOR$">
-    <div style="padding: 10px;">
-        <div class="width-full">
-            <label for="toDisplayName">Familiar Name</label><br />
-            <input type="text" class="width-full" name="toDisplayName" value="$TODISPLAYNAME$" readonly />
+const htmlTransferAsset =
+`<form class="fund-transfer glass-card p-4" style="border-left: 4px solid $CARDCOLOR$">
+    <div class="flex items-center gap-3 mb-3">
+        <div class="text-2xl">$EMOJI$</div>
+        <div class="flex-1 min-w-0">
+            <div class="text-sm font-semibold text-gray-800 truncate">$TODISPLAYNAME$</div>
+            <div class="text-xs text-gray-400">$INSTRUMENT$</div>
         </div>
-        <div class="width-full" style="padding-top: 10px;">
-            <div style="float: left; width: 50%">
-                <label for="moveOnFinishDate">Move on Finish</label><br />
-                &nbsp;<input type="checkbox" style="text-align: right" name="moveOnFinishDate" $MOVEONFINISHDATE$ />
-            </div>
-            <div style="float: left; width: 50%; text-align: right;">
-                <label for="moveValue">Move %</label><br />
-                <input type="number" style="width: 75px" name="moveValue" value="$MOVEVALUE$" step="0.1" />
-            </div>
+    </div>
+    <input type="hidden" name="toDisplayName" value="$TODISPLAYNAME$" />
+    <div class="flex items-center gap-4">
+        <label class="flex items-center gap-2 text-xs text-gray-600 cursor-pointer">
+            <input type="checkbox" class="rounded" name="moveOnFinishDate" $MOVEONFINISHDATE$ />
+            Move on Finish
+        </label>
+        <div class="flex items-center gap-2 ml-auto">
+            <label class="text-xs text-gray-600">Move %</label>
+            <input type="number" class="fin-input w-20 text-center text-sm" name="moveValue" value="$MOVEVALUE$" step="0.1" />
         </div>
-    </div>    
+    </div>
 </form>`;
 
 function html_applyModelAssetToPopupTransfers(modelAsset, popupFormsTransfersElement) {
@@ -263,7 +265,14 @@ function html_buildTransferrableAssets(modelAssets, currentDisplayName) {
 function html_buildTransferrableAsset(currentModelAsset, transferrableModelAsset) {
 
     let html = htmlTransferAsset;
-    html = html.replace('$TODISPLAYNAME$', transferrableModelAsset.displayName);
+    html = html.replaceAll('$TODISPLAYNAME$', transferrableModelAsset.displayName);
+
+    const color = colorRange[transferrableModelAsset.colorId] || colorRange[0];
+    html = html.replace('$CARDCOLOR$', color);
+
+    const meta = InstrumentMeta.get(transferrableModelAsset.instrument);
+    html = html.replace('$EMOJI$', meta ? meta.emoji : '');
+    html = html.replace('$INSTRUMENT$', meta ? meta.label : '');
 
     let moveOnFinishDate = '';
     let moveValue = 0;

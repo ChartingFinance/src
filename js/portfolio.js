@@ -1,7 +1,7 @@
 import { Currency } from './currency.js';
 import { InstrumentType } from './instrument.js';
 import { Metric } from './model-asset.js';
-import { FundTransferResult, AssetAppreciationResult, CapitalGainsResult, MortgageResult, IncomeResult, ExpenseResult, InterestResult, WithholdingResult } from './results.js';
+import { FundTransferResult, AssetAppreciationResult, CapitalGainsResult, MortgageResult, IncomeResult, ExpenseResult, InterestResult, WithholdingResult, CreditMemo } from './results.js';
 import { MonthsSpan } from './months-span.js';
 import { logger } from './logger.js';
 import { User } from './user.js';
@@ -510,9 +510,62 @@ export class Portfolio {
         }
     }
 
+    monthlySanityCheck(currentDateInt) {
+        let ficaMemos = 0;
+        let incomeTaxMemos = 0;
+        let transferNet = 0;
+        let capitalGainsMemos = 0;
+        let mortgageInterestMemos = 0;
+        let mortgagePrincipalMemos = 0;
+        let propertyTaxMemos = 0;
+        let dividendMemos = 0;
+        let interestIncomeMemos = 0;
+        let assetGrowthMemos = 0;
+
+        for (const modelAsset of this.modelAssets) {
+            const startIdx = modelAsset.creditMemosCheckedIndex || 0;
+            for (let i = startIdx; i < modelAsset.creditMemos.length; i++) {
+                const memo = modelAsset.creditMemos[i];
+                switch (memo.note) {
+                    case 'FICA withholding':       ficaMemos += memo.amount.amount; break;
+                    case 'Income tax withholding': incomeTaxMemos += memo.amount.amount; break;
+                    case 'Capital gains':          capitalGainsMemos += memo.amount.amount; break;
+                    case 'Mortgage interest':      mortgageInterestMemos += memo.amount.amount; break;
+                    case 'Mortgage principal':      mortgagePrincipalMemos += memo.amount.amount; break;
+                    case 'Property taxes':         propertyTaxMemos += memo.amount.amount; break;
+                    case 'Dividend income':        dividendMemos += memo.amount.amount; break;
+                    case 'Interest income':        interestIncomeMemos += memo.amount.amount; break;
+                    case 'Asset growth':           assetGrowthMemos += memo.amount.amount; break;
+                    default:                       transferNet += memo.amount.amount; break;
+                }
+            }
+            modelAsset.creditMemosCheckedIndex = modelAsset.creditMemos.length;
+        }
+
+        const tolerance = 0.01;
+        const check = (label, memoTotal, packageTotal) => {
+            if (Math.abs(memoTotal - packageTotal) > tolerance) {
+                logger.log(`[SANITY] ${currentDateInt} ${label}: memos=${memoTotal.toFixed(2)}, package=${packageTotal.toFixed(2)}`);
+            }
+        };
+
+        check('FICA', ficaMemos, this.monthly.fica.amount);
+        check('Income tax', incomeTaxMemos, this.monthly.incomeTax.amount);
+        check('Mortgage interest', mortgageInterestMemos, this.monthly.mortgageInterest.amount);
+        check('Mortgage principal', mortgagePrincipalMemos, this.monthly.mortgagePrincipal.amount);
+        check('Property taxes', propertyTaxMemos, this.monthly.propertyTaxes.amount);
+        check('Capital gains', capitalGainsMemos, this.monthly.longTermCapitalGains.amount);
+
+        if (Math.abs(transferNet) > tolerance) {
+            logger.log(`[SANITY] ${currentDateInt} Fund transfers do not net to zero: ${transferNet.toFixed(2)}`);
+        }
+    }
+
     monthlyChron(currentDateInt) {
 
         this.reportMonthly(currentDateInt);
+
+        this.monthlySanityCheck(currentDateInt);
 
         this.monthlyIncomeTaxes.push(this.monthly.incomeTax.toCurrency());
         this.monthlyCapitalGainsTaxes.push(this.monthly.longTermCapitalGainsTax.toCurrency());
@@ -520,10 +573,10 @@ export class Portfolio {
         this.yearly.add(this.monthly);
         this.total.add(this.monthly);
         this.monthly.zero();
-        
+
         for (let modelAsset of this.modelAssets) {
             modelAsset.monthlyChron(currentDateInt);
-        }        
+        }
     }
 
     yearlyChron(currentDateInt) {
@@ -620,7 +673,7 @@ export class Portfolio {
         // calculate fixed taxes like fica and property taxes
         for (let modelAsset of this.modelAssets) {       
 
-            this.applyFirstDayOfMonthTaxes(modelAsset);                   
+            this.applyFirstDayOfMonthTaxes(modelAsset, currentDateInt);
      
         }
         
@@ -669,13 +722,14 @@ export class Portfolio {
         
     }
 
-    applyFirstDayOfMonthTaxes(modelAsset) {
+    applyFirstDayOfMonthTaxes(modelAsset, currentDateInt) {
 
         // assert mortgage happens before income happens before taxDeferredEquity happens before taxableEquity
         if (InstrumentType.isHome(modelAsset.instrument)) {
             // we do have property taxes
             let propertyTaxes = activeTaxTable.calculateMonthlyPropertyTaxDeduction(null, modelAsset);
-            this.monthly.propertyTaxes.subtract(propertyTaxes);            
+            this.monthly.propertyTaxes.subtract(propertyTaxes);
+            modelAsset.creditMemos.push(new CreditMemo(propertyTaxes.copy().flipSign(), 'Property taxes', currentDateInt));
         }
         else if (InstrumentType.isMonthlyIncome(modelAsset.instrument)) {
             if (!InstrumentType.isSocialSecurity(modelAsset.instrument)) {                

@@ -706,28 +706,11 @@ select.setting-value:focus {
 /* ─── Fund Transfer Cards ─── */
 
 .fund-transfer {
-    background: white;
-    padding: 16px;
-    border: 1px solid var(--rule);
-    margin-bottom: 8px;
-    max-width: 300px;
+    transition: box-shadow 0.2s;
 }
 
-.fund-transfer label {
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--ink-faint);
-}
-
-.fund-transfer input {
-    font-family: 'Fraunces', serif;
-    font-size: 14px;
-    color: var(--ink);
-    border: 1px solid var(--rule);
-    border-radius: 0;
-    padding: 4px 8px;
-    background: var(--cream);
+.fund-transfer:hover {
+    box-shadow: 0 8px 24px -8px rgba(0,0,0,0.1);
 }
 
 /* ─── Hidden Rollup Forms ─── */

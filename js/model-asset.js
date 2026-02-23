@@ -326,6 +326,7 @@ export class ModelAsset {
     this.afterFinishDate = false;
     this.isClosed = false;
     this.creditMemos = [];
+    this.creditMemosCheckedIndex = 0;
     this.metrics.initializeAll();
 
   }
@@ -496,6 +497,9 @@ export class ModelAsset {
     this.addToMetric(Metric.MORTGAGE_INTEREST, interest);
     this.addToMetric(Metric.MORTGAGE_PRINCIPAL, principal);
 
+    this.creditMemos.push(new CreditMemo(interest, 'Mortgage interest', this.currentDateInt));
+    this.creditMemos.push(new CreditMemo(principal, 'Mortgage principal', this.currentDateInt));
+
     return new MortgageResult(principal, interest, Currency.zero());
   }
 
@@ -513,6 +517,11 @@ export class ModelAsset {
     this.finishCurrency.add(this.growthCurrency);
     this.monthlyValueChange.add(this.growthCurrency);
 
+    this.creditMemos.push(new CreditMemo(this.growthCurrency, 'Asset growth', this.currentDateInt));
+    if (this.dividendCurrency.amount !== 0) {
+      this.creditMemos.push(new CreditMemo(this.dividendCurrency, 'Dividend income', this.currentDateInt));
+    }
+
     return new AssetAppreciationResult(this.finishCurrency.copy(), this.growthCurrency.copy(), this.dividendCurrency.copy(), Currency.zero());
 
   }
@@ -523,6 +532,8 @@ export class ModelAsset {
     this.incomeCurrency = new Currency(this.finishCurrency.amount * this.annualReturnRate.asMonthly());
     this.finishCurrency.add(this.incomeCurrency);
     this.monthlyValueChange.add(this.incomeCurrency);
+
+    this.creditMemos.push(new CreditMemo(this.incomeCurrency, 'Interest income', this.currentDateInt));
 
     return new InterestResult(this.incomeCurrency.copy());
 

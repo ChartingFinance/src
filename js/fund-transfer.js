@@ -97,11 +97,12 @@ export class FundTransfer {
     if (this.moveOnFinishDate && !(this.fromModel.onFinishDate || this.fromModel.afterFinishDate)) return new FundTransferResult();
 
     const amount = this.calculate();
-    const memo = this.describe(this.fromModel.displayName);
-    const fromChange = this.fromModel.debit(amount, memo);
-    const toChange   = this.toModel.credit(amount, memo);
+    const fromMemo = this.describe(this.fromModel.displayName, amount);
+    const toMemo = this.describe(this.toModel.displayName, amount.copy().flipSign());
+    const fromChange = this.fromModel.debit(amount, fromMemo);
+    const toChange   = this.toModel.credit(amount, toMemo);
 
-    return new FundTransferResult(fromChange, toChange, memo, memo);
+    return new FundTransferResult(fromChange, toChange, fromMemo, toMemo);
   }
 
   // ── Utilities ────────────────────────────────────────────────────
@@ -119,8 +120,8 @@ export class FundTransfer {
   }
 
   /** Human-readable description for logging / debugging */
-  describe(fromName) {
+  describe(fromName, amount) {
     const dir = this.moveOnFinishDate ? '(on finish)' : '(monthly)';
-    return `${fromName} → ${this.toDisplayName} ${dir} ${this.moveValue}%`;
+    return `${fromName} → ${this.toDisplayName} ${dir} ${this.moveValue}% => ${amount.toString()}`;
   }
 }
