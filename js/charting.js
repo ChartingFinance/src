@@ -1,7 +1,7 @@
 import { MonthsSpan } from './months-span.js';
 import { DateInt } from './date-int.js';
 import { colorRange, positiveBackgroundColor, negativeBackgroundColor } from './html.js';
-import { logger } from './logger.js';
+import { logger, LogCategory } from './logger.js';
 import { findByName } from './asset-queries.js';
 import { Metric } from './model-asset.js';
 
@@ -221,7 +221,7 @@ export function charting_buildPortfolioMetric(portfolio, metricName, buildNewDat
   let cachedConfig = chartMetricConfigCache.get(metricName);
 
   if (!buildNewDataSet && cachedConfig == null) {
-    logger.log('charting_buildPortfolioMetric - attempting to reuse null config for ' + metricName + '. Building new data set.');
+    logger.log(LogCategory.CHARTING, 'charting_buildPortfolioMetric - attempting to reuse null config for ' + metricName + '. Building new data set.');
     buildNewDataSet = true;
   }
 
@@ -281,7 +281,7 @@ export function charting_buildPortfolioRollup(portfolio, predefinedName, buildNe
   let chartingAssetData = null;
 
   if (!buildNewDataSet && charting_jsonMetric1ChartData == null) {
-    logger.log('charting_buildPortfolioRollup - attempting to reuse null charting_jsonMetricRollupData. Building new data set.');
+    logger.log(LogCategory.CHARTING, 'charting_buildPortfolioRollup - attempting to reuse null charting_jsonMetricRollupData. Building new data set.');
     buildNewDataSet = true;
   }
 
@@ -350,11 +350,11 @@ export function charting_reducedModelAssetsForEarnings(modelAssets) {
 
 export function charting_buildDisplayEarningsFromModelAssets(firstDateInt, lastDateInt, modelAssets, buildNewDataSet) {
   if (firstDateInt == null) {
-    logger.log('charting_buildDisplayEarningsFromModelAssets - null firstDateInt provided');
+    logger.log(LogCategory.CHARTING, 'charting_buildDisplayEarningsFromModelAssets - null firstDateInt provided');
     return null;
   }
   else if (lastDateInt == null) {
-    logger.log('charting_buildDisplayEarningsFromModelAssets - null lastDateInt provided');
+    logger.log(LogCategory.CHARTING, 'charting_buildDisplayEarningsFromModelAssets - null lastDateInt provided');
     return null;
   }
 
@@ -364,7 +364,7 @@ export function charting_buildDisplayEarningsFromModelAssets(firstDateInt, lastD
   let cachedConfig = chartMetricConfigCache.get('earningsMulti');
 
   if (!buildNewDataSet && cachedConfig == null) {
-    logger.log('charting_buildDisplayEarningsFromModelAssets - attempting to reuse null config. Building new data set.');
+    logger.log(LogCategory.CHARTING, 'charting_buildDisplayEarningsFromModelAssets - attempting to reuse null config. Building new data set.');
     buildNewDataSet = true;
   }
 
@@ -419,11 +419,11 @@ export function charting_buildDisplayEarningsFromModelAssets(firstDateInt, lastD
 
 export function charting_buildDisplayEarningsFromModelAsset(firstDateInt, lastDateInt, modelAsset, buildNewDataSet) {
   if (firstDateInt == null) {
-    logger.log('charting_buildDisplayEarningsFromModelAssets - null firstDateInt provided');
+    logger.log(LogCategory.CHARTING, 'charting_buildDisplayEarningsFromModelAssets - null firstDateInt provided');
     return null;
   }
   else if (lastDateInt == null) {
-    logger.log('charting_buildDisplayEarningsFromModelAssets - null lastDateInt provided');
+    logger.log(LogCategory.CHARTING, 'charting_buildDisplayEarningsFromModelAssets - null lastDateInt provided');
     return null;
   }
 
@@ -433,7 +433,7 @@ export function charting_buildDisplayEarningsFromModelAsset(firstDateInt, lastDa
   let cachedConfig = chartMetricConfigCache.get('earningsIndividual');
 
   if (!buildNewDataSet && cachedConfig == null) {
-    logger.log('charting_buildDisplayEarningsFromModelAsset - attempting to reuse null config. Building new data set.');
+    logger.log(LogCategory.CHARTING, 'charting_buildDisplayEarningsFromModelAsset - attempting to reuse null config. Building new data set.');
     buildNewDataSet = true;
   }
 
@@ -600,7 +600,7 @@ export function charting_buildDisplaySpreadsheetFromPortfolio(portfolio, buildNe
 export function charting_buildFromPortfolio(portfolio, buildNewDataSet, metric1Name, metric2Name) {
   if (portfolio == null || portfolio.modelAssets == null || portfolio.modelAssets.length == 0) {
 
-    logger.log('charting_buildFromPortfolio - null or zero length array provided');
+    logger.log(LogCategory.CHARTING, 'charting_buildFromPortfolio - null or zero length array provided');
     charting_jsonMetric1ChartData = null;
     charting_jsonMetric2ChartData = null;
     charting_jsonRollupChartData = null;

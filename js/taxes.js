@@ -1,7 +1,7 @@
 import { Currency } from './currency.js';
 import { InstrumentType } from './instrument.js';
 import { WithholdingResult } from './results.js';
-import { logger } from './logger.js';
+import { logger, LogCategory } from './logger.js';
 import { global_filingAs, global_inflationRate, global_propertyTaxRate, global_propertyTaxDeductionMax, global_home_sale_capital_gains_discount } from './globals.js';
 
 export const us_2025_taxtables = {
@@ -133,6 +133,7 @@ export class TaxTable {
     }
 
     initializeChron() {
+        
         this.activeTaxTables = JSON.parse(JSON.stringify(us_2025_taxtables));
         if (global_filingAs == 'Single') {
             this.activeIncomeTable = this.activeTaxTables.income.tables[0];
@@ -220,14 +221,14 @@ export class TaxTable {
         result.medicare.add(this.calculateMedicareTax(isSelfEmployed, income));
 
         if (isSelfEmployed && result.fica().amount / income.amount > 0.16) {
-            logger.log('TaxTable.calculateFICATax: ratio over 16%?');
+            logger.log(LogCategory.TAX, 'TaxTable.calculateFICATax: ratio over 16%?');
         }
         else if (result.fica().amount / income.amount > 0.08) {
-            logger.log('TaxTable.calculateFICATax: ratio over 8%?');
+            logger.log(LogCategory.TAX, 'TaxTable.calculateFICATax: ratio over 8%?');
         }
         //else {
         //    let ratio = result.fica().amount / income.amount;
-        //    logger.log('TaxTable.calculateFICATax: ratio is ' + ratio.toString());
+        //    logger.log(LogCategory.TAX, 'TaxTable.calculateFICATax: ratio is ' + ratio.toString());
         //}
 
         return result;
@@ -248,7 +249,7 @@ export class TaxTable {
         }
             
         if (this.yearlySocialSecurityAccumulator.amount + c.amount > maxC.amount) {
-            logger.log('at maximum social security tax');
+            logger.log(LogCategory.TAX, 'at maximum social security tax');
             c.amount = maxC.amount - this.yearlySocialSecurityAccumulator.amount;
         }
 
@@ -403,7 +404,7 @@ export class TaxTable {
                 }
             }
             if (divisor == 0) {
-                logger.log('TaxTable.calculateRMD: could not find divisor for age ' + activeUser.age);
+                logger.log(LogCategory.TAX, 'TaxTable.calculateRMD: could not find divisor for age ' + activeUser.age);
                 return new Currency(0);
             }
 
@@ -451,7 +452,7 @@ export class TaxTable {
 
 
         if (taxableIncome.amount < 0) {
-            logger.log('TaxTable.applyYearlyDeductions: taxable income < 0, setting to 0');
+            logger.log(LogCategory.TAX, 'TaxTable.applyYearlyDeductions: taxable income < 0, setting to 0');
             taxableIncome.zero();
         }
 
@@ -463,21 +464,21 @@ export class TaxTable {
 
         let yearlyFICA = this.calculateYearlyFICATax(yearly);
         if (yearlyFICA.amount != yearly.fica.amount)
-            logger.log('computed yearly FICA != portfolio yearly FICA')
+            logger.log(LogCategory.TAX, 'computed yearly FICA != portfolio yearly FICA')
         else
-            logger.log('computed yearly FICA check PASSED');
+            logger.log(LogCategory.TAX, 'computed yearly FICA check PASSED');
 
         let yearlyTaxableIncome = this.calculateYearlyTaxableIncome(yearly);
         if (yearlyTaxableIncome.amount != (yearly.selfIncome.amount + yearly.employedIncome.amount))
-            logger.log('computed yearly taxable income != portfolio yearly taxable income');
+            logger.log(LogCategory.TAX, 'computed yearly taxable income != portfolio yearly taxable income');
         else
-            logger.log('computed yearly taxable income check PASSED');
+            logger.log(LogCategory.TAX, 'computed yearly taxable income check PASSED');
 
         let yearlyIncomeTax = this.calculateYearlyIncomeTax(yearlyTaxableIncome, new Currency());
         if (yearlyIncomeTax.amount != yearly.incomeTax.amount)
-            logger.log('computed yearly income tax != portfolio yearly income tax');
+            logger.log(LogCategory.TAX, 'computed yearly income tax != portfolio yearly income tax');
         else
-            logger.log('computed yearly income tax check PASSED');
+            logger.log(LogCategory.TAX, 'computed yearly income tax check PASSED');
 
         return new Currency();
 
@@ -520,7 +521,7 @@ export class TaxTable {
         
         let yearlyLongTermCapitalGainsAndQualifiedDividends = new Currency(yearly.longTermCapitalGains.amount + yearly.qualifiedDividends.amount);
         let yearlyLongTermCapitalGainsAndQualifiedDividendsTax = this.calculateYearlyLongTermCapitalGainsTax(yearlyTaxableIncome, yearlyLongTermCapitalGainsAndQualifiedDividends);
-        logger.log('Taxes.applyYear|yearlyLongTermCapitalGainsAndQualifiedDividendsTax: ' + yearlyLongTermCapitalGainsAndQualifiedDividendsTax.toString());
+        logger.log(LogCategory.TAX, 'Taxes.applyYear|yearlyLongTermCapitalGainsAndQualifiedDividendsTax: ' + yearlyLongTermCapitalGainsAndQualifiedDividendsTax.toString());
     }
 
     iraContributionLimit(activeUser) {

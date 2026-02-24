@@ -1,6 +1,6 @@
 import { DateInt } from './date-int.js';
 import { Currency } from './currency.js';
-import { logger } from './logger.js';
+import { logger, LogCategory } from './logger.js';
 import { activeTaxTable } from './globals.js';
 import { firstDateInt, lastDateInt } from './asset-queries.js';
 import { buildSummary } from './summary.js';
@@ -8,12 +8,12 @@ import { buildSummary } from './summary.js';
 export function chronometer_run(summaryContainerElement, portfolio) {
 
     if (portfolio.modelAssets == null || portfolio.modelAssets.length == 0) {
-        logger.log('chronometer_run - no modelAssets');
+        logger.log(LogCategory.GENERAL, 'chronometer_run - no modelAssets');
         return;
     }
 
     if (portfolio.firstDateInt == null || portfolio.lastDateInt == null) {
-        logger.log('chronometer_run - non firstDateInt or lastDateInt');
+        logger.log(LogCategory.GENERAL, 'chronometer_run - non firstDateInt or lastDateInt');
         return;
     }
 
@@ -56,7 +56,7 @@ export function chronometer_run(summaryContainerElement, portfolio) {
 
 export function chronometer_applyMonths(modelAssets) {
     if (modelAssets == null || modelAssets.length == 0) {
-        logger.log('chronometer_applyMonths - no modelAssets');
+        logger.log(LogCategory.GENERAL, 'chronometer_applyMonths - no modelAssets');
         return;
     }
 
@@ -102,10 +102,10 @@ export function chronometer_applyMonth_accumulate(firstDateInt, lastDateInt, cur
 }
 
 export function chronometer_applyTaxesBeforeComputationsThisMonth(currentDateInt, modelAssets, activeUser) {
-    logger.log('chronometer_applyTaxesBeforeComputationsThisMonth');
+    logger.log(LogCategory.TAX, 'chronometer_applyTaxesBeforeComputationsThisMonth');
 
     if (!activeTaxTable) {
-        logger.log('chronometer_applyTaxesBeforeComputationsThisMonth - activeTaxTable not set');
+        logger.log(LogCategory.TAX, 'chronometer_applyTaxesBeforeComputationsThisMonth - activeTaxTable not set');
         return;
     }
 
@@ -120,10 +120,10 @@ export function chronometer_applyTaxesBeforeComputationsThisMonth(currentDateInt
 }
 
 export function chronometer_applyTaxesAfterComputationsThisMonth(currentDateInt, modelAssets, activeUser) {
-    logger.log('chronometer_applyTaxesAfterComputationsThisMonth');
+    logger.log(LogCategory.TAX, 'chronometer_applyTaxesAfterComputationsThisMonth');
 
     if (!activeTaxTable) {
-        logger.log('chronometer_applyTaxesAfterComputationsThisMonth - activeTaxTable not set');
+        logger.log(LogCategory.TAX, 'chronometer_applyTaxesAfterComputationsThisMonth - activeTaxTable not set');
         return;
     }
 

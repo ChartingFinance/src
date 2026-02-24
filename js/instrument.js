@@ -27,20 +27,20 @@ export const Instrument = Object.freeze({
 
 /** Display metadata — keeps UI concerns separate from identity */
 export const InstrumentMeta = new Map([
-  [Instrument.HOME,              { emoji: '🏡',    label: 'House',            sortOrder: 0  }],
-  [Instrument.MORTGAGE,          { emoji: '💸🏡',  label: 'Mortgage',         sortOrder: 1  }],
-  [Instrument.MONTHLY_SALARY,    { emoji: '💲💰',  label: 'Monthly Income',   sortOrder: 2  }],
-  [Instrument.SOCIAL_SECURITY,   { emoji: '💲🏛️',  label: 'Social Security',  sortOrder: 3  }],
-  [Instrument.US_BOND,           { emoji: '🏛️',    label: 'US Treasury',      sortOrder: 4  }],
-  [Instrument.CORP_BOND,         { emoji: '🏛️',    label: 'Corporate Bond',   sortOrder: 5  }],
-  [Instrument.BANK,              { emoji: '🏦',    label: 'Savings',          sortOrder: 6  }],
-  [Instrument.ROTH_IRA,          { emoji: '📈',    label: 'Roth IRA',         sortOrder: 7  }],
+  [Instrument.HOME,              { emoji: '🏡🌳',    label: 'House',            sortOrder: 0  }],
+  [Instrument.MORTGAGE,          { emoji: '🏡💸',  label: 'Mortgage',         sortOrder: 1  }],
+  [Instrument.MONTHLY_SALARY,    { emoji: '🔧💲',  label: 'Monthly Income',   sortOrder: 2  }],
+  [Instrument.SOCIAL_SECURITY,   { emoji: '🏛️💲',  label: 'Social Security',  sortOrder: 3  }],
+  [Instrument.US_BOND,           { emoji: '🏛️💲',    label: 'US Treasury',      sortOrder: 4  }],
+  [Instrument.CORP_BOND,         { emoji: '🏦💲',    label: 'Corporate Bond',   sortOrder: 5  }],
+  [Instrument.BANK,              { emoji: '🏦💲',    label: 'Savings',          sortOrder: 6  }],
+  [Instrument.ROTH_IRA,          { emoji: '📈📈',    label: 'Roth IRA',         sortOrder: 7  }],
   [Instrument.IRA,               { emoji: '⏳📈',  label: 'IRA',              sortOrder: 8  }],
   [Instrument.FOUR_01K,          { emoji: '⏳📈',  label: '401K',             sortOrder: 9  }],
   [Instrument.TAXABLE_EQUITY,    { emoji: '🧾📈',  label: 'Taxable Account',  sortOrder: 10 }],
-  [Instrument.CASH,              { emoji: '💰',    label: 'Cash',             sortOrder: 11 }],
-  [Instrument.DEBT,              { emoji: '💳',    label: 'Debt',             sortOrder: 12 }],
-  [Instrument.MONTHLY_EXPENSE,   { emoji: '💸💰',  label: 'Monthly Expense',  sortOrder: 13 }],
+  [Instrument.CASH,              { emoji: '💰💰',    label: 'Cash',             sortOrder: 11 }],
+  [Instrument.DEBT,              { emoji: '💳💸',    label: 'Debt',             sortOrder: 12 }],
+  [Instrument.MONTHLY_EXPENSE,   { emoji: '💸💸',  label: 'Monthly Expense',  sortOrder: 13 }],
 ]);
 
 // ── Classification Sets ──────────────────────────────────────────────

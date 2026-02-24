@@ -27,6 +27,7 @@ const htmlAssetCard =
     <input type="hidden" name="dividendRate" value="$DIVIDENDRATE$" />
     <input type="hidden" name="longTermRate" value="$LONGTERMRATE$" />
     <input type="hidden" name="fundTransfers" data-fundtransfers="$FUNDTRANSFERS$" />
+    <input type="hidden" name="isSelfEmployed" value="$ISSELFEMPLOYED$" />
 </form>`;
 
 const htmlInvisibleDisplay = `<label class="invisible" for="invisiblePlaceholder">Invisible</label><br class="invisible" />
@@ -121,6 +122,17 @@ function html_buildAssetHeader(modelAsset) {
 }
 
 function html_buildInstrumentFields(instrument, modelAsset) {
+    if (InstrumentType.isMonthlyIncome(instrument)) {
+        const checked = modelAsset && modelAsset.isSelfEmployed ? ' checked' : '';
+        return '<div class="instrument-fields-grid">'
+            + '<div class="form-field">'
+            + '<label class="flex items-center gap-2 cursor-pointer">'
+            + '<input type="checkbox" name="isSelfEmployed"' + checked + ' />'
+            + ' Self-Employed'
+            + '</label>'
+            + '</div>'
+            + '</div>';
+    }
     if (InstrumentType.isMonthsRemainingAble(instrument)) {
         const monthsVal = modelAsset ? modelAsset.monthsRemaining : 0;
         return '<div class="instrument-fields-grid">'
@@ -201,6 +213,8 @@ function html_buildRemovableAssetElement(modelAssets, modelAsset) {
         html = html.replace('$FUNDTRANSFERS$', util_escapedJSONStringify(modelAsset.fundTransfers));
     else
         html = html.replace('$FUNDTRANSFERS$', '');
+
+    html = html.replace('$ISSELFEMPLOYED$', modelAsset.isSelfEmployed ? 'true' : 'false');
 
     // Displayed value — prefer finish value, fall back to start value
     const displayAmount = parseFloat(finishVal) !== 0 ? finishVal : modelAsset.startCurrency.toHTML();

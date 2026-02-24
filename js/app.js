@@ -49,7 +49,7 @@ import {
 } from './charting.js';
 
 // Logger
-import { logger } from './logger.js';
+import { logger, LogCategory } from './logger.js';
 
 // Tax and portfolio
 import { TaxTable } from './taxes.js';
@@ -98,6 +98,9 @@ import { buildCreditMemosHTML } from './credit-memo-view.js';
 
 // MCP
 import { savePortfolioToFile } from './mcp-client.js';
+
+// Debug panel
+import { toggle as toggleDebugPanel } from './debug-panel.js';
 
 // ─── DOM Element References ──────────────────────────────────
 
@@ -186,7 +189,7 @@ function buildInstrumentOptions() {
 }
 
 function initiateActiveData() {
-    logger.log('initiateActiveData');
+    logger.log(LogCategory.INIT, 'initiateActiveData');
 
     let startDateElement = assetElement.querySelector('[name="startDate"]');
     let di = DateInt.today();
@@ -207,7 +210,7 @@ function initiateActiveData() {
 }
 
 function connectAssetSelect() {
-    logger.log('connectAssetSelect');
+    logger.log(LogCategory.INIT, 'connectAssetSelect');
     let instrumentElement = assetElement.querySelector('[name="instrument"]');
 
     instrumentElement.addEventListener('change', function(event) {
@@ -216,7 +219,7 @@ function connectAssetSelect() {
 }
 
 function connectCreateAsset() {
-    logger.log('connectCreateAsset');
+    logger.log(LogCategory.INIT, 'connectCreateAsset');
     assetElement.addEventListener("submit", function(ev) {
         ev.preventDefault();
 
@@ -256,7 +259,7 @@ function openEditAssetModal(cardElement) {
 }
 
 function connectEditAsset() {
-    logger.log('connectEditAsset');
+    logger.log(LogCategory.INIT, 'connectEditAsset');
 
     // Rebuild instrument-specific fields when instrument changes in edit form
     assetEditElement.querySelector('[name="instrument"]').addEventListener('change', function(event) {
@@ -285,6 +288,8 @@ function connectEditAsset() {
         editingCard.querySelector('[name="monthsRemaining"]').value = editMonths ? editMonths.value : '0';
         editingCard.querySelector('[name="dividendRate"]').value = editDividend ? editDividend.value : '0';
         editingCard.querySelector('[name="longTermRate"]').value = editLongTerm ? editLongTerm.value : '0';
+        const editSelfEmployed = assetEditElement.querySelector('[name="isSelfEmployed"]');
+        editingCard.querySelector('[name="isSelfEmployed"]').value = editSelfEmployed ? editSelfEmployed.checked.toString() : 'false';
 
         // Close the edit modal
         document.getElementById('popupFormEditAsset').style.display = 'none';
@@ -295,7 +300,7 @@ function connectEditAsset() {
 }
 
 function connectAssetsContainerEdit() {
-    logger.log('connectAssetsContainerEdit');
+    logger.log(LogCategory.INIT, 'connectAssetsContainerEdit');
     assetsContainerElement.addEventListener('click', function(ev) {
         let editBtn = ev.target.closest('.asset-action-btn.edit');
         if (editBtn) {
@@ -307,7 +312,7 @@ function connectAssetsContainerEdit() {
 }
 
 function connectAssetsContainerTransfers() {
-    logger.log('connectAssetsContainerTransfers');
+    logger.log(LogCategory.INIT, 'connectAssetsContainerTransfers');
     assetsContainerElement.addEventListener('click', assetsContainerElementClickTransfers);
     assetsSimulatorElement.addEventListener('click', assetsContainerElementClickTransfers);
 }
@@ -326,7 +331,7 @@ function assetsContainerElementClickTransfers(ev) {
 }
 
 function connectAssetsContainerRemove() {
-    logger.log('connectUpdateOrRemoveAsset');
+    logger.log(LogCategory.INIT, 'connectUpdateOrRemoveAsset');
     assetsContainerElement.addEventListener('click', function(ev) {
         let removeBtn = ev.target.closest('.asset-action-btn.remove');
         if (removeBtn) {
@@ -363,7 +368,7 @@ function handleMouseEvents(ev) {
     let card = ev.target.closest('.asset');
     if (!card) return;
 
-    logger.log('card.click ' + card.querySelector('input[name="displayName"]').value);
+    logger.log(LogCategory.GENERAL, 'card.click ' + card.querySelector('input[name="displayName"]').value);
 
     // clear previous selection
     let selectedCard = document.querySelector('.asset.selected-card-chart');
@@ -809,6 +814,7 @@ window.doMaximize = doMaximize;
 window.savePortfolioViaMCP = savePortfolioViaMCP;
 window.popupFormTransfers_onSave = popupFormTransfers_onSave;
 window.selectLocalData_changed = selectLocalData_changed;
+window.toggleDebugPanel = toggleDebugPanel;
 
 // ─── Settings Row ─────────────────────────────────────────────
 

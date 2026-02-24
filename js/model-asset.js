@@ -208,6 +208,9 @@ export class ModelAsset {
       annualDividendRate: vals.dividendRate ? ARR.parse(vals.dividendRate.value) : new ARR(0),
       longTermCapitalGainRate: vals.longTermRate ? ARR.parse(vals.longTermRate.value) : new ARR(0),
       fundTransfers,
+      isSelfEmployed: vals.isSelfEmployed?.type === 'checkbox'
+        ? vals.isSelfEmployed.checked
+        : vals.isSelfEmployed?.value === 'true',
     });
 
     // Restore color

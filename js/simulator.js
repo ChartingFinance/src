@@ -3,7 +3,7 @@
 import { InstrumentType, ModelAsset, FundTransfer } from './index.js';
 import { chronometer_run } from './chronometer.js';
 import { setActiveTaxTable } from './globals.js';
-import { logger } from './logger.js';
+import { logger, LogCategory } from './logger.js';
 import { TaxTable } from './taxes.js';
 import { Portfolio } from './portfolio.js';
 
@@ -117,7 +117,7 @@ class Simulator {
     // Method to run multiple test cases
     runTestCases(fundTransferStepping, callback) {
 
-        logger.log('Replicating current assets...');
+        logger.log(LogCategory.GENERAL, 'Replicating current assets...');
         chronometer_run(null, this.portfolio);
         callback(this.portfolio.modelAssets);
         this.bestPortfolio = this.portfolio.copy(); // Copy the current portfolio as the best portfolio

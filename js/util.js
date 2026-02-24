@@ -5,7 +5,7 @@
  * and other helpers. Extracted from util-compat.js (duplicates removed).
  */
 
-import { logger } from './logger.js';
+import { logger, LogCategory } from './logger.js';
 import { findByName } from './asset-queries.js';
 
 // ── Constants ──────────────────────────────────────────────────────────
@@ -21,12 +21,12 @@ export const rgb2hex = (rgb) => `#${rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/
 
 export function util_buildStoryArcKey(storyArc, storyName) {
     if (!storyArc)
-        logger.log('util_buildStoryArcKey - null storyArc');
+        logger.log(LogCategory.STORAGE, 'util_buildStoryArcKey - null storyArc');
     if (!storyName)
-        logger.log('util_buildStoryArcKey - null storyName');
+        logger.log(LogCategory.STORAGE, 'util_buildStoryArcKey - null storyName');
 
     if (storyName == 'default') {
-        logger.log('util_buildStoryArcKey - default passed to function. Did you call util_ensureStoryNames first?');
+        logger.log(LogCategory.STORAGE, 'util_buildStoryArcKey - default passed to function. Did you call util_ensureStoryNames first?');
         storyName = util_YYYYmm();
     }
 
@@ -73,9 +73,9 @@ export function util_ensureStoryNames(storyArc, storyName) {
 
         if (ii > 0) {
             let storyArcNameKey = util_buildStoryArcKey(storyArc, storyName)
-            logger.log('util-ensureStoryNames - copy most recent dataset to ' + storyArcNameKey);
+            logger.log(LogCategory.STORAGE, 'util-ensureStoryNames - copy most recent dataset to ' + storyArcNameKey);
             let previousStoryArcNameKey = util_buildStoryArcKey(storyArc, storyNames[ii -1]);
-            logger.log('util-ensureStoryNames - previous key to use ' + previousStoryArcNameKey);
+            logger.log(LogCategory.STORAGE, 'util-ensureStoryNames - previous key to use ' + previousStoryArcNameKey);
             let previousStoryArcNameData = localStorage.getItem(previousStoryArcNameKey);
             localStorage.setItem(storyArcNameKey, previousStoryArcNameData);
         }
