@@ -107,6 +107,15 @@ export class FinancialPackage {
 
     }
 
+    contributions() {
+
+        let contributions = this.iraContribution.copy();
+        contributions.add(this.four01KContribution);
+        contributions.add(this.rothContribution);
+        return contributions;
+        
+    }
+
     deductions() {
 
         let d = this.iraContribution.copy().flipSign();
@@ -126,6 +135,14 @@ export class FinancialPackage {
         taxes.add(this.estimatedTaxes);
         return taxes;
 
+    }
+
+    expenses() {
+        return this.expense.copy();
+    }
+
+    growth() {
+        return this.assetAppreciation.copy();
     }
 
     earning() {
@@ -189,6 +206,9 @@ export class FinancialPackage {
         result.push(this.totalIncome());
         result.push(this.deductions());
         result.push(this.taxes());
+        result.push(this.expenses());
+        result.push(this.growth());
+        result.push(this.earning());
         return result;
 
     }
@@ -220,7 +240,11 @@ export class FinancialPackage {
         logger.log(category, '  longTermCapitalGainsTax:   ' + this.longTermCapitalGainsTax.toString());
         logger.log(category, '  propertyTaxes:             ' + this.propertyTaxes.toString());
         logger.log(category, '  estimatedTaxes:            ' + this.estimatedTaxes.toString());
-        logger.log(category, 'rothContribution:            ' + this.rothContribution.toString());
+        logger.log(category, 'contributions:               ' + this.contributions().toString());
+        logger.log(category, '  401KContribution:          ' + this.four01KContribution.toString());
+        logger.log(category, '  iraContribution:           ' + this.iraContribution.toString());
+        logger.log(category, '  rothContribution:          ' + this.rothContribution.toString());
+        logger.log(category, 'expenses:                    ' + this.expense.toString());
         logger.log(category, 'assetAppreciation:           ' + this.assetAppreciation.toString());
         logger.log(category, 'mortgagePrincipal:           ' + this.mortgagePrincipal.toString());
         logger.log(category, 'earning:                     ' + this.earning().toString());
@@ -258,7 +282,10 @@ export class FinancialPackage {
         html += '  <li>longTermCapitalGainsTax:   ' + this.longTermCapitalGainsTax.toString() + '</li>';
         html += '  <li>propertyTaxes:             ' + this.propertyTaxes.toString() + '</li>';
         html += '  <li>estimatedTaxes:            ' + this.estimatedTaxes.toString() + '</li></ul>';
-        html += '<li>rothContribution:            ' + this.rothContribution.toString() + '</li>';
+        html += '<li>contributions:               ' + this.contributions().toString() + '<ul>';
+        html += '  <li>401KContribution:          ' + this.four01KContribution.toString() + '</li>';    
+        html += '  <li>iraContribution:           ' + this.iraContribution.toString() + '</li>';    
+        html += '  <li>rothContribution:            ' + this.rothContribution.toString() + '</li>';
         html += '<li>assetAppreciation:           ' + this.assetAppreciation.toString() + '</li>';
         html += '<li>mortgagePrincipal:           ' + this.mortgagePrincipal.toString() + '</li>';        
         html += '<li>earning:                     ' + this.earning().toString() + '</li>';

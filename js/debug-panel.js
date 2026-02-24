@@ -174,7 +174,7 @@ function appendReport(type, dateLabel, pkg) {
     const table = document.createElement('table');
     table.style.width = '100%';
     table.style.borderCollapse = 'collapse';
-    table.style.fontSize = '11px';
+    table.style.fontSize = '14px';
     table.style.marginTop = '4px';
 
     const rows = [
@@ -191,12 +191,20 @@ function appendReport(type, dateLabel, pkg) {
         ['&nbsp;&nbsp;Long-Term Gains', fmt(pkg.longTermCapitalGains)],
         ['&nbsp;&nbsp;Non-Taxable', fmt(pkg.nontaxableIncome())],
         ['Deductions', fmt(pkg.deductions())],
+        ['&nbsp;&nbsp;iraContribution', fmt(pkg.iraContribution)],
+        ['&nbsp;&nbsp;401K Contribution', fmt(pkg.four01KContribution)],
+        ['&nbsp;&nbsp;Mortgage Interest', fmt(pkg.mortgageInterest)],
+        ['&nbsp;&nbsp;Property Taxes', fmt(pkg.propertyTaxes)],
         ['Taxes', fmt(pkg.totalTaxes())],
         ['&nbsp;&nbsp;FICA', fmt(pkg.fica)],
         ['&nbsp;&nbsp;Income Tax', fmt(pkg.incomeTax)],
         ['&nbsp;&nbsp;LT Cap Gains Tax', fmt(pkg.longTermCapitalGainsTax)],
         ['&nbsp;&nbsp;Property Taxes', fmt(pkg.propertyTaxes)],
         ['&nbsp;&nbsp;Estimated Taxes', fmt(pkg.estimatedTaxes)],
+        ['Contributions', fmt(pkg.contributions())],
+        ['&nbsp;&nbsp;Roth Contribution', fmt(pkg.rothContribution)],
+        ['&nbsp;&nbsp;Mortgage Principal', fmt(pkg.mortgagePrincipal)],
+        ['Asset Growth', fmt(pkg.growth())],
         ['Earning', fmt(pkg.earning())],
         ['Effective Tax Rate', pkg.effectiveTaxRate().toFixed(2) + '%'],
         ['Expenses', fmt(pkg.expense)],
