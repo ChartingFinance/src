@@ -707,18 +707,25 @@ export class Portfolio {
      
         }
         
+        // compute net income for income assets (gross - FICA - estimated income tax - pre-tax contributions)
+        for (let modelAsset of this.modelAssets) {
+
+            this.computeNetIncome(modelAsset);
+
+        }
+
         // 401K or ira required minimum distribution
         for (let modelAsset of this.modelAssets) {
-            
+
             this.calculateFirstDayOfMonthRMDs(currentDateInt, modelAsset);
-        
+
         }
 
         // apply credits/debits
         for (let modelAsset of this.modelAssets) {
-                
-            this.applyFirstDayOfMonthIncomeFundTransfers(modelAsset);                            
-                 
+
+            this.applyFirstDayOfMonthIncomeFundTransfers(modelAsset);
+
         }
     }
 
@@ -775,6 +782,51 @@ export class Portfolio {
 
     }
 
+    computeNetIncome(modelAsset) {
+        if (!InstrumentType.isMonthlyIncome(modelAsset.instrument)) {
+            return;
+        }
+
+        let netIncome = modelAsset.incomeCurrency.copy();
+
+        // subtract per-asset FICA (Social Security + Medicare, stored as negative values on model asset)
+        let socialSecurity = modelAsset.getMetric(Metric.SOCIAL_SECURITY).current;
+        let medicare = modelAsset.getMetric(Metric.MEDICARE).current;
+        netIncome.add(socialSecurity); // negative, so add subtracts
+        netIncome.add(medicare);
+
+        // subtract pre-tax 401K contributions (per-asset)
+        let four01KContribution = modelAsset.getMetric(Metric.FOUR_01K_CONTRIBUTION).current;
+        if (four01KContribution.amount > 0) {
+            netIncome.subtract(four01KContribution);
+        }
+
+        // subtract IRA contributions (per-asset, includes both traditional and Roth)
+        // all contributions reduce take-home pay regardless of tax treatment
+        let iraContribution = modelAsset.getMetric(Metric.IRA_CONTRIBUTION).current;
+        if (iraContribution.amount > 0) {
+            netIncome.subtract(iraContribution);
+        }
+
+        // estimate income tax withholding using annualized monthly data
+        // this.monthly now has contributions properly wired:
+        //   iraContribution = traditional IRA only (deductible)
+        //   rothContribution = Roth only (not deductible)
+        //   four01KContribution = traditional 401K (deductible)
+        let yearlyEstimate = this.monthly.copy().multiply(12.0);
+        yearlyEstimate.limitDeductions(this.activeUser);
+        let yearlyTaxableIncome = activeTaxTable.calculateYearlyTaxableIncome(yearlyEstimate);
+        let estimatedMonthlyIncomeTax = activeTaxTable.calculateYearlyIncomeTax(yearlyTaxableIncome);
+        estimatedMonthlyIncomeTax.divide(12.0);
+
+        netIncome.subtract(estimatedMonthlyIncomeTax);
+
+        modelAsset.netIncomeCurrency = netIncome;
+        modelAsset.addToMetric(Metric.NET_INCOME, netIncome);
+
+        logger.log(LogCategory.TRANSFER, `computeNetIncome: ${modelAsset.displayName} gross=${modelAsset.incomeCurrency.toString()} net=${netIncome.toString()}`);
+    }
+
     calculateFirstDayOfMonthRMDs(currentDateInt, modelAsset) {
 
         if (!InstrumentType.isTaxDeferred(modelAsset.instrument))
@@ -792,39 +844,38 @@ export class Portfolio {
         if (!InstrumentType.isMonthlyIncome(modelAsset.instrument)) {
             return;
         }
-    
-        const modelAssetIncome = modelAsset.finishCurrency.copy();
-        let runningIncomeAmount = new Currency(0.0);
-    
+
+        // Use net income (after taxes and pre-tax contributions) as the base for fund transfers
+        const netIncome = modelAsset.netIncomeCurrency.copy();
+        let runningTransferAmount = new Currency(0.0);
+
         if (modelAsset.fundTransfers?.length > 0) {
             for (const fundTransfer of modelAsset.fundTransfers) {
                 fundTransfer.bind(modelAsset, this.modelAssets);
                 const incomeAmount = fundTransfer.calculate();
                 fundTransfer.execute();
-    
+
                 this.handleFundTransferContribution(fundTransfer, incomeAmount);
-                runningIncomeAmount.subtract(incomeAmount);
+                runningTransferAmount.add(incomeAmount);
             }
         }
-    
-        const extraAmount = new Currency(modelAssetIncome.amount + runningIncomeAmount.amount);
-        if (extraAmount.amount > 0) {
-            this.creditToFirstExpensableAccount(extraAmount, `Remaining income from ${modelAsset.displayName}`);
+
+        const remainingIncome = new Currency(netIncome.amount - runningTransferAmount.amount);
+        if (remainingIncome.amount < 0) {
+            logger.log(LogCategory.SANITY, `applyFirstDayOfMonthIncomeFundTransfers: ${modelAsset.displayName} fund transfers (${runningTransferAmount.toString()}) exceed net income (${netIncome.toString()}) by ${remainingIncome.toString()}`);
+        }
+        if (remainingIncome.amount > 0) {
+            this.creditToFirstExpensableAccount(remainingIncome, `Remaining income from ${modelAsset.displayName}`);
         }
     }
     
     handleFundTransferContribution(fundTransfer, incomeAmount) {
         const targetInstrument = fundTransfer.toModel.instrument;
 
-        if (InstrumentType.isTaxDeferred(targetInstrument)) {
-            if (InstrumentType.isIRA(targetInstrument)) {
-                this.monthly.iraContribution.add(incomeAmount);
-            } else if (InstrumentType.is401K(targetInstrument)) {
-                this.monthly.four01KContribution.add(incomeAmount);
-            }
-        } else if (InstrumentType.isTaxFree(targetInstrument)) {
-            this.monthly.rothContribution.add(incomeAmount);
-        } else if (InstrumentType.isMortgage(targetInstrument)) {
+        // 401K, IRA, and Roth contributions are already wired to this.monthly
+        // in calculateFirstDayOfMonthIncomeFour01KContribution and
+        // calculateFirstDayOfMonthIncomeIRAContribution (step 1)
+        if (InstrumentType.isMortgage(targetInstrument)) {
             this.monthly.mortgagePrincipal.add(incomeAmount);
             logger.log(LogCategory.TRANSFER, 'handleFundTransferContribution: ' + fundTransfer.toModel.displayName + ' direct mortgage payment of ' + incomeAmount.toString());
         }
@@ -835,34 +886,41 @@ export class Portfolio {
         if (!InstrumentType.isMonthlyIncome(modelAsset.instrument)) {
             logger.log(LogCategory.TRANSFER, 'Portfolio.calculateFirstDayOfMonthIncomeIRAContribution - not a monthly income model asset');
             return new Currency();
-        }        
-        
+        }
+
         let totalIRAContribution = new Currency(0.0);
+        let traditionalIRAContribution = new Currency(0.0);
+        let rothIRAContribution = new Currency(0.0);
         let totalIRAContributionLimit = activeTaxTable.iraContributionLimit(this.activeUser);
         for (let fundTransfer of modelAsset.fundTransfers) {
             delete fundTransfer.approvedAmount;
             fundTransfer.bind(modelAsset, this.modelAssets);
             if (InstrumentType.isTaxDeferred(fundTransfer.toModel.instrument) && InstrumentType.isIRA(fundTransfer.toModel.instrument)) {
-                let iraContribution = fundTransfer.calculate();            
+                let iraContribution = fundTransfer.calculate();
                 if (this.yearly.iraContribution.amount + this.yearly.rothContribution.amount + iraContribution.amount > totalIRAContributionLimit.amount) {
                     iraContribution = new Currency(totalIRAContributionLimit.amount - this.yearly.iraContribution.amount);
                 }
                 fundTransfer.approvedAmount = iraContribution;
                 totalIRAContribution.add(iraContribution);
+                traditionalIRAContribution.add(iraContribution);
             }
             else if (InstrumentType.isRothIRA(fundTransfer.toModel.instrument)) {
-                let rothContribution = fundTransfer.calculate();            
+                let rothContribution = fundTransfer.calculate();
                 if (this.yearly.iraContribution.amount + this.yearly.rothContribution.amount + rothContribution.amount > totalIRAContributionLimit.amount) {
                     rothContribution = new Currency(totalIRAContributionLimit.amount - this.yearly.rothContribution.amount);
                 }
                 fundTransfer.approvedAmount = rothContribution;
                 totalIRAContribution.add(rothContribution);
+                rothIRAContribution.add(rothContribution);
             }
         }
 
         if (totalIRAContribution.amount == 0) {
             // todo: look for ira or rothIRA and contribute
         }
+
+        this.monthly.iraContribution.add(traditionalIRAContribution);
+        this.monthly.rothContribution.add(rothIRAContribution);
 
         return totalIRAContribution
 
@@ -873,26 +931,28 @@ export class Portfolio {
         if (!InstrumentType.isMonthlyIncome(modelAsset.instrument)) {
             logger.log(LogCategory.TRANSFER, 'Portfolio.calculateFirstDayOfMonthIncomeFour01KContribution - not a monthly income model asset');
             return new Currency();
-        }        
-        
+        }
+
         let totalFour01KContribution = new Currency(0.0);
         let totalFour01KContributionLimit = activeTaxTable.four01KContributionLimit(this.activeUser);
         for (let fundTransfer of modelAsset.fundTransfers) {
             delete fundTransfer.approvedAmount;
             fundTransfer.bind(modelAsset, this.modelAssets);
             if (InstrumentType.isTaxDeferred(fundTransfer.toModel.instrument) && InstrumentType.is401K(fundTransfer.toModel.instrument)) {
-                let four01KContribution = fundTransfer.calculate();            
+                let four01KContribution = fundTransfer.calculate();
                 if (this.yearly.four01KContribution.amount + four01KContribution.amount > totalFour01KContributionLimit.amount) {
                     four01KContribution = new Currency(totalFour01KContributionLimit.amount - this.yearly.four01KContribution.amount);
                 }
                 fundTransfer.approvedAmount = four01KContribution;
                 totalFour01KContribution.add(four01KContribution);
-            }        
+            }
         }
 
         if (totalFour01KContribution.amount == 0) {
             // todo: look for 401K and contribute
         }
+
+        this.monthly.four01KContribution.add(totalFour01KContribution);
 
         return totalFour01KContribution
 

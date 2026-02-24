@@ -61,6 +61,7 @@ export const Metric = Object.freeze({
   LONG_TERM_CAPITAL_GAIN_TAX:   'longTermCapitalGainTax',
   CAPITAL_GAIN_TAX:             'capitalGainTax',
   CREDIT:                       'credit',
+  NET_INCOME:                   'netIncome',
 });
 
 const METRIC_NAMES = Object.values(Metric);
@@ -99,6 +100,7 @@ export const MetricLabel = Object.freeze({
   [Metric.LONG_TERM_CAPITAL_GAIN_TAX]:  'Long Term Capital Gain Tax',  // these are distriubtions from taxable accounts taxed as long term gains
   [Metric.CAPITAL_GAIN_TAX]:            'Capital Gains Tax',
   [Metric.CREDIT]:                      'Credit',
+  [Metric.NET_INCOME]:                  'Net Income',
 });
 
 // Metrics that should NOT be zeroed on monthly snapshot
@@ -291,6 +293,9 @@ export class ModelAsset {
 
   get creditCurrency()    { return this.metrics.get(Metric.CREDIT).current; }
   set creditCurrency(c)   { this.metrics.get(Metric.CREDIT).current = c; }
+
+  get netIncomeCurrency()    { return this.metrics.get(Metric.NET_INCOME).current; }
+  set netIncomeCurrency(c)   { this.metrics.get(Metric.NET_INCOME).current = c; }
 
   get accumulatedCurrency()    { return this.metrics.get(Metric.EARNING_ACCUMULATED).current; }
   set accumulatedCurrency(c)   { this.metrics.get(Metric.EARNING_ACCUMULATED).current = c; }

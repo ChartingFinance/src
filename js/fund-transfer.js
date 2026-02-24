@@ -79,7 +79,12 @@ export class FundTransfer {
     }
 
     const pct = this.moveValue / 100;
-    let amount = new Currency(this.fromModel.finishCurrency.amount * pct);
+    // Use net income when available (income assets after tax computation),
+    // otherwise fall back to finishCurrency (non-income assets, asset closures)
+    const base = this.fromModel.netIncomeCurrency?.amount > 0
+      ? this.fromModel.netIncomeCurrency
+      : this.fromModel.finishCurrency;
+    let amount = new Currency(base.amount * pct);
 
     if (this.approvedAmount && amount.amount > this.approvedAmount.amount) {
       amount = this.approvedAmount.copy();
