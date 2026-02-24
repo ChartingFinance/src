@@ -23,7 +23,6 @@ import {
 
 // Chronometer and summary
 import { chronometer_run } from './chronometer.js';
-import { buildSummary } from './summary.js';
 
 // Membrane (HTML ↔ model conversion)
 import {
@@ -31,7 +30,6 @@ import {
     membrane_htmlElementsToAssetModels,
     membrane_modelAssetsToHTML,
     membrane_rawDataToModelAssets,
-    membrane_jsonObjectsToModelAssets,
     membrane_htmlElementsToFundTransfers,
 } from './membrane.js';
 
@@ -100,7 +98,13 @@ import { buildCreditMemosHTML } from './credit-memo-view.js';
 import { savePortfolioToFile } from './mcp-client.js';
 
 // Debug panel
-import { toggle as toggleDebugPanel } from './debug-panel.js';
+import { toggle as toggleDebugPanel, clearReports as debugPanelClearReports } from './debug-panel.js';
+
+// Debug tab view
+import { buildDebugReportsHTML } from './debug-tab-view.js';
+
+// Simulator popup
+import { openSimulatorPopup } from './simulator-popup.js';
 
 // ─── DOM Element References ──────────────────────────────────
 
@@ -108,16 +112,15 @@ const assetElement = document.getElementById('asset');
 const assetEditElement = document.getElementById('assetEdit');
 
 const assetsContainerElement = document.getElementById('assets');
-const assetsSimulatorElement = document.getElementById('assetsSimulator');
 
 const assetsSummaryElement = document.getElementById('rollup1');
-const assetsSimulatorSummaryElement = document.getElementById('rollup2');
 
 const chartMetric1Canvas = document.getElementById('chartMetric1Canvas');
 const chartMetric2Canvas = document.getElementById('chartMetric2Canvas');
 const chartRollupCanvas = document.getElementById('chartRollupCanvas');
 const spreadsheetElement = document.getElementById('spreadsheetElement');
 const creditMemosElement = document.getElementById('creditMemosElement');
+const debugReportsElement = document.getElementById('debugReportsElement');
 const chartEarningsCanvasIndividual = document.getElementById('chartEarningsCanvasIndividual');
 
 const instrumentFieldsCreate = document.getElementById('instrumentFieldsCreate');
@@ -314,7 +317,6 @@ function connectAssetsContainerEdit() {
 function connectAssetsContainerTransfers() {
     logger.log(LogCategory.INIT, 'connectAssetsContainerTransfers');
     assetsContainerElement.addEventListener('click', assetsContainerElementClickTransfers);
-    assetsSimulatorElement.addEventListener('click', assetsContainerElementClickTransfers);
 }
 
 function assetsContainerElementClickTransfers(ev) {
@@ -412,6 +414,7 @@ function hideAllTabs() {
         { tab: tab3, content: chartRollupCanvas.parentElement },
         { tab: tab4, content: spreadsheetElement.parentElement },
         { tab: tab5, content: creditMemosElement.parentElement },
+        { tab: tab6, content: debugReportsElement.parentElement },
     ];
     for (const { tab, content } of tabs) {
         tab.classList.remove('active');
@@ -449,6 +452,12 @@ function tab5_click() {
     creditMemosElement.parentElement.style.display = '';
 }
 
+function tab6_click() {
+    hideAllTabs();
+    tab6.classList.add('active');
+    debugReportsElement.parentElement.style.display = '';
+}
+
 // ─── Save and Recall ─────────────────────────────────────────
 
 function aplus_save() {
@@ -479,7 +488,6 @@ function bplus_recall() {
 
 function updateActiveAssetsElement(assetsElement, summaryElement) {
     assetsContainerElement.classList.remove('selected-assets');
-    assetsSimulatorElement.classList.remove('selected-assets');
     assetsElement.classList.add('selected-assets');
     activeAssetsElement = assetsElement;
     activeSummaryElement = summaryElement;
@@ -520,10 +528,9 @@ function calculate(target) {
 
     if (target == 'assets')
         updateActiveAssetsElement(assetsContainerElement, assetsSummaryElement);
-    else if (target == 'simulator')
-        updateActiveAssetsElement(assetsSimulatorElement, assetsSimulatorSummaryElement);
 
     let modelAssets = membrane_htmlElementsToAssetModels(activeAssetsElement);
+    debugPanelClearReports();
     let portfolio = new Portfolio(modelAssets, true);
     chronometer_run(activeSummaryElement, portfolio);
 
@@ -532,9 +539,6 @@ function calculate(target) {
 
     // use the updated modelAssets to produce the updated html
     activeAssetsElement.innerHTML = membrane_modelAssetsToHTML(portfolio.modelAssets);
-    if (activeAssetsElement == assetsSimulatorElement) {
-        removeRemoveButtons(activeAssetsElement);
-    }
 
     // hook mouse events
     attachMouseEvents();
@@ -578,6 +582,7 @@ function innerCalculate(portfolio) {
 
     spreadsheetElement.innerHTML = buildSpreadsheetHTML(portfolio);
     creditMemosElement.innerHTML = buildCreditMemosHTML(portfolio);
+    debugReportsElement.innerHTML = buildDebugReportsHTML();
 }
 
 function selectLocalData_changed(ev) {
@@ -600,60 +605,8 @@ function loadLocalData() {
 
 // ─── Simulation ──────────────────────────────────────────────
 
-function clickShowHideSimulator() {
-    let middleContainerElement = document.getElementById('middleContainer');
-    let showHideSimulatorButton = document.getElementById('showHideSimulator');
-
-    if (middleContainerElement.style.display == 'none') {
-        updateActiveAssetsElement(assetsSimulatorElement, assetsSimulatorSummaryElement);
-        middleContainerElement.style.display = '';
-        showHideSimulatorButton.innerHTML = 'Hide Simulator';
-    }
-    else {
-        updateActiveAssetsElement(assetsContainerElement, assetsSummaryElement);
-        middleContainerElement.style.display = 'none';
-        showHideSimulatorButton.innerHTML = 'Show Simulator';
-    }
-}
-
 function doMaximize() {
-    let summaryContainerElement = document.getElementById('rollup2');
-
-    assetsSimulatorElement.innerHTML = assetsContainerElement.innerHTML;
-    removeRemoveButtons(assetsSimulatorElement);
-
-    let modelAssets = membrane_htmlElementsToAssetModels(assetsSimulatorElement);
-
-    if (window.Worker) {
-        let worker = new Worker('js/simulator.js', { type: 'module' });
-        worker.postMessage(modelAssets);
-        worker.onmessage = function(event) {
-            let richMessage = event.data;
-            if (richMessage.action == 'iteration') {
-                let permutationTextBox = document.getElementById('permutations');
-                permutationTextBox.value = richMessage.data;
-            }
-            else if (richMessage.action == 'foundBetter') {
-                let assetModels = membrane_jsonObjectsToModelAssets(richMessage.data);
-                let portfolio = new Portfolio(assetModels, false);
-                chronometer_run(null, portfolio);
-                assetsSimulatorElement.innerHTML = membrane_modelAssetsToHTML(portfolio.modelAssets);
-                buildSummary(summaryContainerElement, portfolio);
-                updateActiveAssetsElement(assetsSimulatorElement, assetsSimulatorSummaryElement);
-                calculate('simulator');
-            }
-        }
-    }
-    else {
-        assetsSimulatorElement.innerHTML = 'Web Workers not supported in this browser.';
-    }
-}
-
-function removeRemoveButtons(containerElement) {
-    let removeButtons = containerElement.querySelectorAll('.remove');
-    for (let ii = 0; ii < removeButtons.length; ii++) {
-        removeButtons[ii].remove();
-    }
+    openSimulatorPopup(assetsContainerElement);
 }
 
 // ─── Popup Functions ─────────────────────────────────────────
@@ -801,6 +754,7 @@ window.tab2_click = tab2_click;
 window.tab3_click = tab3_click;
 window.tab4_click = tab4_click;
 window.tab5_click = tab5_click;
+window.tab6_click = tab6_click;
 window.aplus_save = aplus_save;
 window.aplus_recall = aplus_recall;
 window.bplus_click = bplus_click;
@@ -809,7 +763,6 @@ window.saveData = saveData;
 window.shareData = shareData;
 window.cardSelection = cardSelection;
 window.openCreateAssetModal = openCreateAssetModal;
-window.clickShowHideSimulator = clickShowHideSimulator;
 window.doMaximize = doMaximize;
 window.savePortfolioViaMCP = savePortfolioViaMCP;
 window.popupFormTransfers_onSave = popupFormTransfers_onSave;

@@ -141,6 +141,6 @@ export class FundTransfer {
   /** Human-readable description for logging / debugging */
   describe(fromName, amount) {
     const dir = this.moveOnFinishDate ? '(on finish)' : '(monthly)';
-    return `${fromName} → ${this.toDisplayName} ${dir} ${this.moveValue}% => ${amount.toString()}`;
+    return `${fromName} → ${this.toDisplayName} ${dir} ${this.moveValue}%` + (amount != null ? ` => ${amount.toString()}` : '');
   }
 }

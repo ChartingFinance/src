@@ -5,9 +5,14 @@
  * financial reports. Toggle via the 🐞 button or `window.debugPanel.toggle()`.
  */
 
+import { FinancialPackage } from './portfolio.js';
+
 let panelElement = null;
 let contentElement = null;
 let isVisible = false;
+
+// ── Report accumulator (for tab view) ────────────────────────
+let reportAccumulator = [];
 
 // ── Drag state ───────────────────────────────────────────────
 let isDragging = false;
@@ -146,6 +151,14 @@ function clear() {
     if (contentElement) contentElement.innerHTML = '';
 }
 
+function clearReports() {
+    reportAccumulator = [];
+}
+
+function getReports() {
+    return reportAccumulator;
+}
+
 /**
  * Append a monthly or yearly FinancialPackage report to the panel.
  * @param {'monthly'|'yearly'} type
@@ -154,6 +167,7 @@ function clear() {
  */
 function appendReport(type, dateLabel, pkg) {
     if (!panelElement) createPanel();
+    reportAccumulator.push({ type, dateLabel, pkg: new FinancialPackage().add(pkg) });
 
     const section = document.createElement('details');
     section.style.marginBottom = '8px';
@@ -242,4 +256,4 @@ if (typeof window !== 'undefined') {
     window.debugPanel = { show, hide, toggle, clear, appendReport };
 }
 
-export { show, hide, toggle, clear, appendReport };
+export { show, hide, toggle, clear, appendReport, clearReports, getReports };

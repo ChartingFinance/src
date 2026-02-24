@@ -37,7 +37,7 @@ function dateIntToChartIndex(dateInt, firstDateInt, monthsSpan) {
     return Math.round(adjusted / monthsSpan.combineMonths);
 }
 
-function charting_buildDateMarkers(portfolio) {
+export function charting_buildDateMarkers(portfolio) {
     const monthsSpan = MonthsSpan.build(portfolio.firstDateInt, portfolio.lastDateInt);
     const markers = [];
     for (const modelAsset of portfolio.modelAssets) {

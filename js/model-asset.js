@@ -175,7 +175,7 @@ export class ModelAsset {
       basisCurrency:   new Currency(obj.basisCurrency?.amount ?? 0),
       finishDateInt:   new DateInt(obj.finishDateInt.year * 100 + obj.finishDateInt.month),
       monthsRemaining: obj.monthsRemaining ?? 0,
-      annualReturnRate: new ARR(obj.annualReturnRate.annualReturnRate),
+      annualReturnRate: new ARR(obj.annualReturnRate?.annualReturnRate ?? obj.annualReturnRate?.rate ?? 0),
       annualDividendRate: new ARR(obj.annualDividendRate?.annualReturnRate ?? obj.annualDividendRate?.rate ?? 0),
       longTermCapitalGainRate: new ARR(obj.longTermCapitalGainRate?.annualReturnRate ?? obj.longTermCapitalGainRate?.rate ?? 0),
       fundTransfers:   (obj.fundTransfers ?? []).map(FundTransfer.fromJSON),

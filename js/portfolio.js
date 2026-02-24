@@ -164,17 +164,19 @@ export class FinancialPackage {
 
     earning() {
         let e = this.trueGrossIncome();
-        
+    
         // Add wealth generation
-        e.add(this.shortTermCapitalGains);
-        e.add(this.longTermCapitalGains);
-        e.add(this.growth()); // Asset appreciation
-        
+        e.add(this.growth()); // Asset appreciation captures incremental wealth generation
+    
+        // Note: We DO NOT add shortTermCapitalGains or longTermCapitalGains here.
+        // Selling an asset is a balance sheet transfer (Asset -> Cash). 
+        // The wealth was already captured incrementally via growth().
+    
         // Subtract liabilities and outflows
         e.add(this.totalTaxes()); // Taxes are negative, so add() subtracts
         e.subtract(this.expense);
         e.subtract(this.mortgageInterest);
-        
+    
         return e;
     }
 

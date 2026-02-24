@@ -760,6 +760,123 @@ select.setting-value:focus {
     border-color: var(--sage);
 }
 
+/* ─── Simulator Popup ─── */
+
+.sim-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    background: rgba(0, 0, 0, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sim-modal {
+    width: 85vw;
+    max-width: 1200px;
+    height: 75vh;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px -10px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.sim-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 20px;
+    background: #111827;
+    color: #ffffff;
+}
+
+.sim-title {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: 0.04em;
+}
+
+.sim-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.sim-status {
+    font-size: 12px;
+    font-weight: 500;
+    opacity: 0.8;
+}
+
+.sim-close-btn {
+    background: rgba(255, 255, 255, 0.15);
+    border: none;
+    color: #ffffff;
+    padding: 2px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.sim-close-btn:hover {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+.sim-body {
+    flex: 1;
+    padding: 16px 20px;
+    min-height: 0;
+    display: flex;
+    gap: 16px;
+}
+
+.sim-chart-area {
+    flex: 1;
+    min-width: 0;
+    position: relative;
+}
+
+.sim-chart-area canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.sim-assets-panel {
+    width: 280px;
+    flex-shrink: 0;
+    overflow-y: auto;
+    border-left: 1px solid var(--rule);
+    padding-left: 16px;
+}
+
+.sim-assets-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.sim-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    border-top: 1px solid var(--rule);
+    font-size: 12px;
+    color: var(--ink-faint);
+    font-family: 'DM Sans', sans-serif;
+}
+
+.sim-best-value {
+    font-weight: 600;
+    color: var(--ink);
+}
+
 /* ─── Spreadsheet ─── */
 
 .spreadsheet-table {

@@ -363,6 +363,7 @@
                     <button class="chart-tab px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-900 transition rounded-xl" id="tab3" onclick="tab3_click()">Growth View</button>
                     <button class="chart-tab px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-900 transition rounded-xl" id="tab4" onclick="tab4_click()">Spreadsheet</button>
                     <button class="chart-tab px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-900 transition rounded-xl" id="tab5" onclick="tab5_click()">Credit Memos</button>
+                    <button class="chart-tab px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-900 transition rounded-xl" id="tab6" onclick="tab6_click()">Debug Reports</button>
                 </div>
 
                 <!-- Chart Canvases -->
@@ -381,6 +382,9 @@
                     </div>
                     <div style="width: 100%; height: 100%; display: none; overflow-x: auto;">
                         <div id="creditMemosElement" class="text-sm text-gray-600"></div>
+                    </div>
+                    <div style="width: 100%; height: 100%; display: none; overflow-x: auto;">
+                        <div id="debugReportsElement" class="text-sm text-gray-600"></div>
                     </div>
                 </div>
             </div>
@@ -403,42 +407,11 @@
 
     </div>
 
-    <!-- ═══ Simulator Toggle ═══ -->
+    <!-- ═══ Simulator ═══ -->
     <div class="flex justify-center mb-8">
-        <button id="showHideSimulator" class="btn-modern outline rounded-full px-8 py-3 shadow-sm hover:shadow-md" onclick="clickShowHideSimulator()">
-            🔮 Toggle Simulator
+        <button class="btn-modern outline rounded-full px-8 py-3 shadow-sm hover:shadow-md" onclick="doMaximize()">
+            🔮 Maximize
         </button>
-    </div>
-
-    <!-- ═══ Simulator Section ═══ -->
-    <div id="middleContainer" class="simulator-section glass-card p-8 mb-8" style="display: none;">
-        <h2 class="text-2xl font-bold mb-6 text-center">Simulation Engine</h2>
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            
-            <!-- Goals -->
-            <div class="lg:col-span-3 flex flex-col gap-4">
-                <h3 class="font-semibold text-gray-700">Target Goals</h3>
-                <button class="btn-modern outline w-full" onclick="doMaximize()">✨ Maximize</button>
-                <textarea id="permutations" class="fin-input flex-grow min-h-[200px] text-xs font-mono resize-y" placeholder="Funding transfer combinations..."></textarea>
-            </div>
-            
-            <!-- Sim Results -->
-            <div class="lg:col-span-6 flex flex-col">
-                <div class="flex justify-center mb-4">
-                    <button class="btn-modern primary" onclick="calculate('simulator')" title="Recalculate simulated cards">Recalculate Simulation 🔄</button>
-                </div>
-                <div class="bg-gray-50 rounded-2xl p-4 border border-gray-100 flex-grow scrollable-x overflow-x-auto whitespace-nowrap" id="assetsSimulator">
-                    <!-- Simulated assets -->
-                </div>
-            </div>
-            
-            <!-- Summary -->
-            <div class="lg:col-span-3 flex flex-col justify-center items-center text-center p-6 bg-gradient-to-b from-purple-50 to-transparent rounded-2xl">
-                <div class="text-4xl mb-4">📝</div>
-                <h3 class="font-bold text-gray-800 mb-2">Simulation Summary</h3>
-                <p class="text-sm text-gray-500">Results will appear in the main ledger and charts above after the simulation runs.</p>
-            </div>
-        </div>
     </div>
 
     <!-- ═══ Footer ═══ -->

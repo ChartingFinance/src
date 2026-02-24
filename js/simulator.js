@@ -271,6 +271,12 @@ class Simulator {
         const fitnesses = population.map(chrom => this.evaluateFitness(chrom, callback));
         const bestIdx = fitnesses.indexOf(Math.max(...fitnesses));
         this.setFundTransfersFromChromosome(population[bestIdx]);
+
+        callback({
+            "action": "complete",
+            "data": this.bestPortfolio.modelAssets
+        });
+
         return this.portfolio.finishValue();
     }
 
