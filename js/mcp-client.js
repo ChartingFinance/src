@@ -1,5 +1,5 @@
 // mcp-client.js - Frontend client for MCP integration
-import { membrane_htmlElementsToAssetModels, membrane_rawDataToModelAssets, membrane_modelAssetsToHTML } from './membrane.js';
+import { membrane_rawDataToModelAssets } from './membrane.js';
 import { Portfolio } from './portfolio.js';
 import { chronometer_run } from './chronometer.js';
 
@@ -142,14 +142,13 @@ export class MCPClient {
 // Global instance
 export const mcpClient = new MCPClient();
 
-// Save current portfolio to file
-export async function savePortfolioToFile(filePath, assetsContainerElement) {
+// Save current portfolio to file — receives modelAssets array directly
+export async function savePortfolioToFile(filePath, modelAssets) {
   try {
-    const assetModels = membrane_htmlElementsToAssetModels(assetsContainerElement);
     await mcpClient.saveToFile('filesystem', filePath, {
       version: '1.0',
       savedAt: new Date().toISOString(),
-      assets: assetModels
+      assets: modelAssets
     });
     console.log('Portfolio saved successfully');
     return true;
@@ -159,25 +158,22 @@ export async function savePortfolioToFile(filePath, assetsContainerElement) {
   }
 }
 
-// Load portfolio from file
-export async function loadPortfolioFromFile(filePath, assetsContainerElement, calculateFn) {
+// Load portfolio from file — returns modelAssets array
+export async function loadPortfolioFromFile(filePath) {
   try {
     const data = await mcpClient.loadFromFile('filesystem', filePath);
     const assetModels = membrane_rawDataToModelAssets(data.assets);
-    assetsContainerElement.innerHTML = membrane_modelAssetsToHTML(assetModels);
-    calculateFn('assets');
     console.log('Portfolio loaded successfully');
-    return true;
+    return assetModels;
   } catch (error) {
     console.error('Failed to load portfolio:', error);
-    return false;
+    return null;
   }
 }
 
 // Export financial report via MCP
-export async function exportReport(filePath, assetsContainerElement, activeSummaryElement) {
+export async function exportReport(filePath, modelAssets, activeSummaryElement) {
   try {
-    const modelAssets = membrane_htmlElementsToAssetModels(assetsContainerElement);
     const portfolio = new Portfolio(modelAssets);
     chronometer_run(activeSummaryElement, portfolio);
 

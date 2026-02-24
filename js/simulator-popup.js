@@ -5,7 +5,7 @@
  * Value chart as the GA finds better portfolio configurations.
  */
 
-import { membrane_jsonObjectsToModelAssets, membrane_htmlElementsToAssetModels, membrane_modelAssetsToHTML } from './membrane.js';
+import { membrane_jsonObjectsToModelAssets } from './membrane.js';
 import { chronometer_run } from './chronometer.js';
 import { Portfolio } from './portfolio.js';
 import {
@@ -13,15 +13,14 @@ import {
     charting_buildPortfolioMetric,
     charting_buildDateMarkers,
 } from './charting.js';
+import './components/asset-list.js';
 
 let overlayElement = null;
 let simChart = null;
 let worker = null;
 
-export function openSimulatorPopup(assetsContainerElement) {
+export function openSimulatorPopup(modelAssets) {
     if (overlayElement) return; // already open
-
-    let modelAssets = membrane_htmlElementsToAssetModels(assetsContainerElement);
 
     // Build the modal DOM
     overlayElement = document.createElement('div');
@@ -40,7 +39,7 @@ export function openSimulatorPopup(assetsContainerElement) {
                     <canvas id="simChart"></canvas>
                 </div>
                 <div class="sim-assets-panel">
-                    <div class="sim-assets-container assets-container"></div>
+                    <asset-list class="sim-assets-container assets-container" readonly></asset-list>
                 </div>
             </div>
             <div class="sim-footer">
@@ -74,9 +73,8 @@ export function openSimulatorPopup(assetsContainerElement) {
     simChart = new Chart(canvas, chartConfig);
 
     // Populate initial asset cards
-    const assetsContainer = overlayElement.querySelector('.sim-assets-container');
-    assetsContainer.innerHTML = membrane_modelAssetsToHTML(portfolio.modelAssets);
-    removeRemoveButtons(assetsContainer);
+    const assetListEl = overlayElement.querySelector('asset-list');
+    assetListEl.modelAssets = [...portfolio.modelAssets];
 
     // Launch the Web Worker
     if (!window.Worker) {
@@ -85,7 +83,16 @@ export function openSimulatorPopup(assetsContainerElement) {
     }
 
     worker = new Worker('js/simulator.js', { type: 'module' });
-    worker.postMessage(modelAssets);
+
+    // Serialize to plain JSON objects — ModelAsset instances after chronometer_run
+    // contain circular refs (FundTransfer.fromModel/toModel) and heavy computed data.
+    // The worker reconstructs via ModelAsset.fromJSON().
+    worker.postMessage(JSON.parse(JSON.stringify(modelAssets)));
+
+    worker.onerror = function(err) {
+        console.error('Simulator worker error:', err);
+        updateStatus('Error');
+    };
 
     worker.onmessage = function(event) {
         const msg = event.data;
@@ -115,10 +122,9 @@ export function openSimulatorPopup(assetsContainerElement) {
             simChart.update();
 
             // Update asset cards
-            const ac = overlayElement.querySelector('.sim-assets-container');
-            if (ac) {
-                ac.innerHTML = membrane_modelAssetsToHTML(p.modelAssets);
-                removeRemoveButtons(ac);
+            const al = overlayElement.querySelector('asset-list');
+            if (al) {
+                al.modelAssets = [...p.modelAssets];
             }
 
             // Update best value display
@@ -174,10 +180,4 @@ function updateBestValue(text) {
     if (!overlayElement) return;
     const el = overlayElement.querySelector('.sim-best-value');
     if (el) el.textContent = text;
-}
-
-function removeRemoveButtons(container) {
-    for (const btn of container.querySelectorAll('.remove')) {
-        btn.remove();
-    }
 }

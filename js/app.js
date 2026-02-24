@@ -15,23 +15,22 @@ import { Metric, MetricLabel } from './model-asset.js';
 import {
     html_buildInstrumentOptions,
     html_buildInstrumentFields,
-    html_buildRemovableAssetElement,
     html_applyModelAssetToPopupTransfers,
     html_buildTransferrableAssets,
-    html_setAssetElementFundTransfers,
 } from './html.js';
 
 // Chronometer and summary
 import { chronometer_run } from './chronometer.js';
 
-// Membrane (HTML ↔ model conversion)
+// Membrane (model conversion)
 import {
     membrane_htmlElementToAssetModel,
-    membrane_htmlElementsToAssetModels,
-    membrane_modelAssetsToHTML,
     membrane_rawDataToModelAssets,
     membrane_htmlElementsToFundTransfers,
 } from './membrane.js';
+
+// Asset list Lit component
+import './components/asset-list.js';
 
 // Charting
 import {
@@ -88,11 +87,9 @@ import {
     util_loadFromStorage,
 } from './util.js';
 
-// Spreadsheet
-import { buildSpreadsheetHTML } from './spreadsheet.js';
-
-// Credit Memos
-import { buildCreditMemosHTML } from './credit-memo-view.js';
+// Spreadsheet + Credit Memos (Lit components)
+import './components/spreadsheet-view.js';
+import './components/credit-memo-view.js';
 
 // MCP
 import { savePortfolioToFile } from './mcp-client.js';
@@ -100,8 +97,9 @@ import { savePortfolioToFile } from './mcp-client.js';
 // Debug panel
 import { toggle as toggleDebugPanel, clearReports as debugPanelClearReports } from './debug-panel.js';
 
-// Debug tab view
-import { buildDebugReportsHTML } from './debug-tab-view.js';
+// Debug tab view (Lit component)
+import './components/debug-report-view.js';
+import { getReports } from './debug-panel.js';
 
 // Simulator popup
 import { openSimulatorPopup } from './simulator-popup.js';
@@ -130,7 +128,8 @@ const tab1 = document.getElementById('tab1');
 const tab2 = document.getElementById('tab2');
 const tab3 = document.getElementById('tab3');
 const tab4 = document.getElementById('tab4');
-const tab5 = document.getElementById('tab5'); // use for debugging
+const tab5 = document.getElementById('tab5');
+const tab6 = document.getElementById('tab6');
 
 // ─── App State ───────────────────────────────────────────────
 
@@ -142,7 +141,7 @@ let activeMetric1Canvas = null;
 let activeMetric2Canvas = null;
 let activeRollupCanvas = null;
 let activeEarningsCanvasIndividual = null;
-let editingCard = null;
+let editingModelAsset = null;
 let activeMetric1Name = Metric.VALUE;
 let activeMetric2Name = Metric.EARNING;
 let activePortfolio = null;
@@ -227,7 +226,7 @@ function connectCreateAsset() {
         ev.preventDefault();
 
         let assetModel = membrane_htmlElementToAssetModel(assetElement);
-        assetsContainerElement.innerHTML += html_buildRemovableAssetElement(null, assetModel);
+        assetsContainerElement.modelAssets = [...(assetsContainerElement.modelAssets || []), assetModel];
 
         calculate('assets');
 
@@ -239,23 +238,22 @@ function connectCreateAsset() {
     });
 }
 
-function openEditAssetModal(cardElement) {
-    editingCard = cardElement;
+function openEditAssetModal(modelAsset) {
+    editingModelAsset = modelAsset;
 
     // Populate instrument select options
     let editInstrumentSelect = assetEditElement.querySelector('[name="instrument"]');
-    editInstrumentSelect.innerHTML = html_buildInstrumentOptions(cardElement.querySelector('[name="instrument"]').value);
+    editInstrumentSelect.innerHTML = html_buildInstrumentOptions(modelAsset.instrument);
 
-    // Populate form fields from card's hidden inputs
-    assetEditElement.querySelector('[name="displayName"]').value = cardElement.querySelector('[name="displayName"]').value;
-    assetEditElement.querySelector('[name="startDate"]').value = cardElement.querySelector('[name="startDate"]').value;
-    assetEditElement.querySelector('[name="startValue"]').value = cardElement.querySelector('[name="startValue"]').value;
-    assetEditElement.querySelector('[name="finishDate"]').value = cardElement.querySelector('[name="finishDate"]').value;
-    assetEditElement.querySelector('[name="finishValue"]').value = cardElement.querySelector('[name="finishValue"]').value;
-    assetEditElement.querySelector('[name="annualReturnRate"]').value = cardElement.querySelector('[name="annualReturnRate"]').value;
+    // Populate form fields from modelAsset properties
+    assetEditElement.querySelector('[name="displayName"]').value = modelAsset.displayName;
+    assetEditElement.querySelector('[name="startDate"]').value = modelAsset.startDateInt.toHTML();
+    assetEditElement.querySelector('[name="startValue"]').value = modelAsset.startCurrency.toHTML();
+    assetEditElement.querySelector('[name="finishDate"]').value = modelAsset.finishDateInt.toHTML();
+    assetEditElement.querySelector('[name="finishValue"]').value = modelAsset.finishCurrency ? modelAsset.finishCurrency.toHTML() : '0.0';
+    assetEditElement.querySelector('[name="annualReturnRate"]').value = modelAsset.annualReturnRate.toHTML();
 
-    // Populate instrument-specific fields from the card's model
-    let modelAsset = membrane_htmlElementToAssetModel(cardElement);
+    // Populate instrument-specific fields
     instrumentFieldsEdit.innerHTML = html_buildInstrumentFields(modelAsset.instrument, modelAsset);
 
     document.getElementById('popupFormEditAsset').style.display = 'block';
@@ -272,123 +270,58 @@ function connectEditAsset() {
     assetEditElement.addEventListener("submit", function(ev) {
         ev.preventDefault();
 
-        if (!editingCard) return;
+        if (!editingModelAsset) return;
 
-        // Update the card's hidden inputs with edited values
-        editingCard.querySelector('[name="instrument"]').value = assetEditElement.querySelector('[name="instrument"]').value;
-        editingCard.querySelector('[name="displayName"]').value = assetEditElement.querySelector('[name="displayName"]').value;
-        editingCard.querySelector('[name="startDate"]').value = assetEditElement.querySelector('[name="startDate"]').value;
-        editingCard.querySelector('[name="startValue"]').value = assetEditElement.querySelector('[name="startValue"]').value;
-        editingCard.querySelector('[name="finishDate"]').value = assetEditElement.querySelector('[name="finishDate"]').value;
-        editingCard.querySelector('[name="annualReturnRate"]').value = assetEditElement.querySelector('[name="annualReturnRate"]').value;
-
-        // Copy instrument-specific fields back to card hidden inputs
-        const editBasis = assetEditElement.querySelector('[name="basisValue"]');
-        const editMonths = assetEditElement.querySelector('[name="monthsRemaining"]');
-        const editDividend = assetEditElement.querySelector('[name="dividendRate"]');
-        const editLongTerm = assetEditElement.querySelector('[name="longTermRate"]');
-        editingCard.querySelector('[name="basisValue"]').value = editBasis ? editBasis.value : '0';
-        editingCard.querySelector('[name="monthsRemaining"]').value = editMonths ? editMonths.value : '0';
-        editingCard.querySelector('[name="dividendRate"]').value = editDividend ? editDividend.value : '0';
-        editingCard.querySelector('[name="longTermRate"]').value = editLongTerm ? editLongTerm.value : '0';
-        const editSelfEmployed = assetEditElement.querySelector('[name="isSelfEmployed"]');
-        editingCard.querySelector('[name="isSelfEmployed"]').value = editSelfEmployed ? editSelfEmployed.checked.toString() : 'false';
+        // Update the modelAsset from form values via membrane (reuses existing parsing)
+        let updated = membrane_htmlElementToAssetModel(assetEditElement);
+        // Copy updated properties back to the editing model asset
+        editingModelAsset.instrument = updated.instrument;
+        editingModelAsset.displayName = updated.displayName;
+        editingModelAsset.startDateInt = updated.startDateInt;
+        editingModelAsset.startCurrency = updated.startCurrency;
+        editingModelAsset.finishDateInt = updated.finishDateInt;
+        editingModelAsset.annualReturnRate = updated.annualReturnRate;
+        editingModelAsset.basisCurrency = updated.basisCurrency;
+        editingModelAsset.monthsRemaining = updated.monthsRemaining;
+        editingModelAsset.annualDividendRate = updated.annualDividendRate;
+        editingModelAsset.longTermCapitalGainRate = updated.longTermCapitalGainRate;
+        editingModelAsset.isSelfEmployed = updated.isSelfEmployed;
 
         // Close the edit modal
         document.getElementById('popupFormEditAsset').style.display = 'none';
-        editingCard = null;
+        editingModelAsset = null;
 
         calculate('assets');
     });
 }
 
-function connectAssetsContainerEdit() {
-    logger.log(LogCategory.INIT, 'connectAssetsContainerEdit');
-    assetsContainerElement.addEventListener('click', function(ev) {
-        let editBtn = ev.target.closest('.asset-action-btn.edit');
-        if (editBtn) {
-            ev.preventDefault();
-            let card = editBtn.closest('.asset');
-            if (card) openEditAssetModal(card);
-        }
+function connectAssetListEvents() {
+    logger.log(LogCategory.INIT, 'connectAssetListEvents');
+
+    assetsContainerElement.addEventListener('edit-asset', function(ev) {
+        openEditAssetModal(ev.detail.modelAsset);
     });
-}
 
-function connectAssetsContainerTransfers() {
-    logger.log(LogCategory.INIT, 'connectAssetsContainerTransfers');
-    assetsContainerElement.addEventListener('click', assetsContainerElementClickTransfers);
-}
-
-function assetsContainerElementClickTransfers(ev) {
-    let transfersBtn = ev.target.closest('.asset-action-btn.transfers');
-    if (transfersBtn) {
-        ev.preventDefault();
-        let card = transfersBtn.closest('.asset');
-        if (card) {
-            let containerElement = card.parentElement;
-            let displayName = card.querySelector('input[name="displayName"]').value;
-            showPopupTransfers(containerElement, displayName);
-        }
-    }
-}
-
-function connectAssetsContainerRemove() {
-    logger.log(LogCategory.INIT, 'connectUpdateOrRemoveAsset');
-    assetsContainerElement.addEventListener('click', function(ev) {
-        let removeBtn = ev.target.closest('.asset-action-btn.remove');
-        if (removeBtn) {
-            ev.preventDefault();
-            let card = removeBtn.closest('.asset');
-            if (card) {
-                assetsContainerElement.removeChild(card);
-                calculate('assets');
-            }
-        }
+    assetsContainerElement.addEventListener('show-transfers', function(ev) {
+        showPopupTransfers(ev.detail.modelAsset.displayName);
     });
-}
 
-// ─── Mouse Event Handlers ────────────────────────────────────
+    assetsContainerElement.addEventListener('remove-asset', function(ev) {
+        const ma = ev.detail.modelAsset;
+        assetsContainerElement.modelAssets = assetsContainerElement.modelAssets.filter(a => a !== ma);
+        calculate('assets');
+    });
 
-function clearMouseEvents() {
-    let cards = assetsContainerElement.querySelectorAll('.asset');
-    for (let ii = 0; ii < cards.length; ii++) {
-        cards[ii].removeEventListener('click', handleMouseEvents);
-    }
-}
-
-function attachMouseEvents() {
-    let cards = assetsContainerElement.querySelectorAll('.asset');
-    for (let ii = 0; ii < cards.length; ii++) {
-        cards[ii].addEventListener('click', handleMouseEvents);
-    }
-}
-
-function handleMouseEvents(ev) {
-    // Ignore clicks on action buttons (remove, transfers)
-    if (ev.target.closest('.asset-action-btn')) return;
-
-    let card = ev.target.closest('.asset');
-    if (!card) return;
-
-    logger.log(LogCategory.GENERAL, 'card.click ' + card.querySelector('input[name="displayName"]').value);
-
-    // clear previous selection
-    let selectedCard = document.querySelector('.asset.selected-card-chart');
-    if (selectedCard != null) {
-        selectedCard.classList.remove('selected-card-chart');
-    }
-
-    let clickedDisplayName = card.querySelector('input[name="displayName"]').value;
-
-    if (charting_getHighlightDisplayName() == null || clickedDisplayName != charting_getHighlightDisplayName()) {
-        card.classList.add('selected-card-chart');
-        charting_setHighlightDisplayName(clickedDisplayName);
-    }
-    else {
-        charting_setHighlightDisplayName(null);
-    }
-
-    updateCharts();
+    assetsContainerElement.addEventListener('select-asset', function(ev) {
+        const clickedName = ev.detail.modelAsset.displayName;
+        if (charting_getHighlightDisplayName() == null || clickedName !== charting_getHighlightDisplayName()) {
+            charting_setHighlightDisplayName(clickedName);
+        } else {
+            charting_setHighlightDisplayName(null);
+        }
+        assetsContainerElement.highlightName = charting_getHighlightDisplayName();
+        updateCharts();
+    });
 }
 
 // ─── MCP Functions ───────────────────────────────────────────
@@ -396,7 +329,7 @@ function handleMouseEvents(ev) {
 async function savePortfolioViaMCP() {
     const filename = prompt('Enter filename:', 'portfolio.json');
     if (filename) {
-        const success = await savePortfolioToFile(filename, assetsContainerElement);
+        const success = await savePortfolioToFile(filename, assetsContainerElement.modelAssets || []);
         if (success) {
             alert('Portfolio saved successfully!');
         } else {
@@ -461,26 +394,22 @@ function tab6_click() {
 // ─── Save and Recall ─────────────────────────────────────────
 
 function aplus_save() {
-    let assetModels = membrane_htmlElementsToAssetModels(assetsContainerElement);
-    util_saveLocalAssetModels(activeStoryArc, 'APlus', assetModels);
+    util_saveLocalAssetModels(activeStoryArc, 'APlus', assetsContainerElement.modelAssets || []);
 }
 
 function aplus_recall() {
     let assetModelsRaw = util_loadLocalAssetModels(activeStoryArc, 'APlus');
-    let assetModels = membrane_rawDataToModelAssets(assetModelsRaw);
-    assetsContainerElement.innerHTML = membrane_modelAssetsToHTML(assetModels);
+    assetsContainerElement.modelAssets = membrane_rawDataToModelAssets(assetModelsRaw);
     calculate('assets');
 }
 
 function bplus_click() {
-    let assetModels = membrane_htmlElementsToAssetModels(assetsContainerElement);
-    util_saveLocalAssetModels(activeStoryArc, 'BPlus', assetModels);
+    util_saveLocalAssetModels(activeStoryArc, 'BPlus', assetsContainerElement.modelAssets || []);
 }
 
 function bplus_recall() {
     let assetModelsRaw = util_loadLocalAssetModels(activeStoryArc, 'BPlus');
-    let assetModels = membrane_rawDataToModelAssets(assetModelsRaw);
-    assetsContainerElement.innerHTML = membrane_modelAssetsToHTML(assetModels);
+    assetsContainerElement.modelAssets = membrane_rawDataToModelAssets(assetModelsRaw);
     calculate('assets');
 }
 
@@ -494,34 +423,19 @@ function updateActiveAssetsElement(assetsElement, summaryElement) {
 }
 
 function ensureHighlightDisplayName() {
-    if (charting_getHighlightDisplayName() == null) {
-        let selectedCards = assetsContainerElement.querySelectorAll('.asset.selected-card-chart');
-        if (selectedCards != null) {
-            for (let ii = 0; ii < selectedCards.length; ii++) {
-                selectedCards[ii].classList.remove('selected-card-chart');
-            }
-        }
-    }
-    else {
-        let displayNameInput = assetsContainerElement.querySelector('input[name="displayName"][value="' + charting_getHighlightDisplayName() + '"]');
-        if (displayNameInput != null) {
-            let card = displayNameInput.closest('.asset');
-            if (card) card.classList.add('selected-card-chart');
-        }
-    }
+    assetsContainerElement.highlightName = charting_getHighlightDisplayName();
 }
 
 function updateCharts() {
-    let modelAssets = membrane_htmlElementsToAssetModels(activeAssetsElement);
+    let modelAssets = assetsContainerElement.modelAssets || [];
     let portfolio = new Portfolio(modelAssets);
     activePortfolio = portfolio;
-    chronometer_run(document.getElementById(activeSummaryElement), portfolio);
+    chronometer_run(activeSummaryElement, portfolio);
     portfolio.buildChartingDisplayData();
     ensureHighlightDisplayName();
     charting_buildFromPortfolio(portfolio, false, activeMetric1Name, activeMetric2Name);
     activeMetric1Canvas.update();
     activeMetric2Canvas.update();
-    //activeRollupCanvas.update();
 }
 
 function calculate(target) {
@@ -529,19 +443,13 @@ function calculate(target) {
     if (target == 'assets')
         updateActiveAssetsElement(assetsContainerElement, assetsSummaryElement);
 
-    let modelAssets = membrane_htmlElementsToAssetModels(activeAssetsElement);
+    let modelAssets = assetsContainerElement.modelAssets || [];
     debugPanelClearReports();
     let portfolio = new Portfolio(modelAssets, true);
     chronometer_run(activeSummaryElement, portfolio);
 
-    // unhook mouse events
-    clearMouseEvents();
-
-    // use the updated modelAssets to produce the updated html
-    activeAssetsElement.innerHTML = membrane_modelAssetsToHTML(portfolio.modelAssets);
-
-    // hook mouse events
-    attachMouseEvents();
+    // Update asset cards with calculated values
+    assetsContainerElement.modelAssets = [...portfolio.modelAssets];
 
     // prepare the chart data
     portfolio.buildChartingDisplayData();
@@ -580,9 +488,9 @@ function innerCalculate(portfolio) {
     if (charting_jsonRollupChartData != null)
         activeRollupCanvas = new Chart(chartRollupCanvas, charting_jsonRollupChartData);
 
-    spreadsheetElement.innerHTML = buildSpreadsheetHTML(portfolio);
-    creditMemosElement.innerHTML = buildCreditMemosHTML(portfolio);
-    debugReportsElement.innerHTML = buildDebugReportsHTML();
+    spreadsheetElement.portfolio = portfolio;
+    creditMemosElement.portfolio = portfolio;
+    debugReportsElement.reports = [...getReports()];
 }
 
 function selectLocalData_changed(ev) {
@@ -592,21 +500,19 @@ function selectLocalData_changed(ev) {
 }
 
 function saveLocalData() {
-    let assetModels = membrane_htmlElementsToAssetModels(assetsContainerElement);
-    util_saveLocalAssetModels(activeStoryArc, activeStoryName, assetModels);
+    util_saveLocalAssetModels(activeStoryArc, activeStoryName, assetsContainerElement.modelAssets || []);
 }
 
 function loadLocalData() {
     let assetModelsRaw = util_loadLocalAssetModels(activeStoryArc, activeStoryName);
-    let assetModels = membrane_rawDataToModelAssets(assetModelsRaw);
-    assetsContainerElement.innerHTML = membrane_modelAssetsToHTML(assetModels);
+    assetsContainerElement.modelAssets = membrane_rawDataToModelAssets(assetModelsRaw);
     calculate('assets');
 }
 
 // ─── Simulation ──────────────────────────────────────────────
 
 function doMaximize() {
-    openSimulatorPopup(assetsContainerElement);
+    openSimulatorPopup(assetsContainerElement.modelAssets || []);
 }
 
 // ─── Popup Functions ─────────────────────────────────────────
@@ -646,11 +552,11 @@ function openCreateAssetModal() {
     document.getElementById('popupFormCreateAsset').style.display = 'block';
 }
 
-function showPopupTransfers(containerElement, currentDisplayName) {
+function showPopupTransfers(currentDisplayName) {
     let popupFormTransfersElement = document.getElementById('popupFormTransfers');
     let scrollableYElement = popupFormTransfersElement.querySelector('.scrollable-y');
 
-    let modelAssets = membrane_htmlElementsToAssetModels(containerElement);
+    let modelAssets = assetsContainerElement.modelAssets || [];
     let portfolio = new Portfolio(modelAssets, false);
     chronometer_run(null, portfolio);
     portfolio.buildChartingDisplayData();
@@ -673,7 +579,12 @@ function popupFormTransfers_onSave(ev) {
     let currentDisplayName = popupFormTransfersElement.querySelector('#popupFormTransfers-title').innerHTML;
     let scrollableYElement = popupFormTransfersElement.querySelector('.scrollable-y');
     let fundTransfers = membrane_htmlElementsToFundTransfers(currentDisplayName, scrollableYElement);
-    html_setAssetElementFundTransfers(assetsContainerElement, currentDisplayName, fundTransfers);
+
+    // Update the modelAsset's fund transfers directly
+    let modelAsset = findByName(assetsContainerElement.modelAssets || [], currentDisplayName);
+    if (modelAsset) {
+        modelAsset.fundTransfers = fundTransfers;
+    }
 
     calculate();
     popupFormTransfersElement.style.display = 'none';
@@ -828,9 +739,7 @@ function initialize() {
     connectAssetSelect();
     connectCreateAsset();
     connectEditAsset();
-    connectAssetsContainerTransfers();
-    connectAssetsContainerEdit();
-    connectAssetsContainerRemove();
+    connectAssetListEvents();
     syncRollupToLedger();
 }
 

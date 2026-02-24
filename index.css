@@ -596,7 +596,7 @@ select.setting-value:focus {
 
 /* ─── Compact Asset Cards (from html.js) ─── */
 
-.assets-container > .asset {
+.assets-container .asset {
     width: 110px;
     padding: 12px 8px;
     border: 2px solid transparent;
@@ -609,7 +609,7 @@ select.setting-value:focus {
     white-space: normal;
 }
 
-.assets-container > .asset:hover {
+.assets-container .asset:hover {
     box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 
