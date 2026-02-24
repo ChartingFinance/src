@@ -596,7 +596,7 @@ export class Portfolio {
                     case 'Interest income':        interestIncomeMemos += memo.amount.amount; break;
                     case 'Asset growth':           assetGrowthMemos += memo.amount.amount; break;
                     case 'Expense growth':         assetGrowthMemos += memo.amount.amount; break; // Or create an expenseGrowthMemos variable
-                    case 'Capital gains tax withholding': captialGainsTaxMemos += memo.amount.amount; break;
+                    case 'Capital gains tax withholding': capitalGainsTaxMemos += memo.amount.amount; break;
                     default:                       transferNet += memo.amount.amount; break;
                 }
             }
