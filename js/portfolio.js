@@ -573,6 +573,7 @@ export class Portfolio {
         let incomeTaxMemos = 0;
         let transferNet = 0;
         let capitalGainsMemos = 0;
+        let capitalGainsTaxMemos = 0;
         let mortgageInterestMemos = 0;
         let mortgagePrincipalMemos = 0;
         let propertyTaxMemos = 0;
@@ -589,11 +590,13 @@ export class Portfolio {
                     case 'Income tax withholding': incomeTaxMemos += memo.amount.amount; break;
                     case 'Capital gains':          capitalGainsMemos += memo.amount.amount; break;
                     case 'Mortgage interest':      mortgageInterestMemos += memo.amount.amount; break;
-                    case 'Mortgage principal':      mortgagePrincipalMemos += memo.amount.amount; break;
+                    case 'Mortgage principal':     mortgagePrincipalMemos += memo.amount.amount; break;
                     case 'Property taxes':         propertyTaxMemos += memo.amount.amount; break;
                     case 'Dividend income':        dividendMemos += memo.amount.amount; break;
                     case 'Interest income':        interestIncomeMemos += memo.amount.amount; break;
                     case 'Asset growth':           assetGrowthMemos += memo.amount.amount; break;
+                    case 'Expense growth':         assetGrowthMemos += memo.amount.amount; break; // Or create an expenseGrowthMemos variable
+                    case 'Capital gains tax withholding': captialGainsTaxMemos += memo.amount.amount; break;
                     default:                       transferNet += memo.amount.amount; break;
                 }
             }
@@ -613,6 +616,7 @@ export class Portfolio {
         check('Mortgage principal', mortgagePrincipalMemos, this.monthly.mortgagePrincipal.amount);
         check('Property taxes', propertyTaxMemos, this.monthly.propertyTaxes.amount);
         check('Capital gains', capitalGainsMemos, this.monthly.longTermCapitalGains.amount);
+        check('Capital gains tax', capitalGainsTaxMemos, this.monthly.longTermCapitalGainsTax.amount);
 
         if (Math.abs(transferNet) > tolerance) {
             logger.log(LogCategory.SANITY, `${currentDateInt} Fund transfers do not net to zero: ${transferNet.toFixed(2)}`);
@@ -1129,7 +1133,7 @@ export class Portfolio {
 
     }
 
-    handleCapitalGains(modelAsset) {
+handleCapitalGains(modelAsset) {
         if (InstrumentType.isTaxFree(modelAsset.instrument)) return;
 
         const capitalGains = new Currency(modelAsset.finishCurrency.amount - modelAsset.basisCurrency.amount);
@@ -1148,13 +1152,28 @@ export class Portfolio {
         if (result.isLongTerm) {
             this.monthly.longTermCapitalGains.add(capitalGains);
             modelAsset.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, capitalGains);
+            
+            // FIX: Add the memo so the sanity check can find it
+            modelAsset.creditMemos.push(new CreditMemo(capitalGains.copy(), 'Capital gains', modelAsset.currentDateInt));
+
             this.monthly.longTermCapitalGainsTax.add(amountToTax.flipSign());
             modelAsset.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN_TAX, amountToTax);
+            
+            // FIX: Account for the money leaving the asset to pay tax
+            if (amountToTax.amount !== 0) {
+                modelAsset.creditMemos.push(new CreditMemo(amountToTax.copy(), 'Capital gains tax withholding', modelAsset.currentDateInt));
+            }
         } else {
             this.monthly.shortTermCapitalGains.add(capitalGains);
             modelAsset.addToMetric(Metric.SHORT_TERM_CAPITAL_GAIN, capitalGains);
+            
             this.monthly.incomeTax.add(amountToTax.flipSign());
             modelAsset.addToMetric(Metric.SHORT_TERM_CAPITAL_GAIN_TAX, capitalGains);
+            
+            // Short term is grouped into income tax, so use that memo string to satisfy the sanity check
+            if (amountToTax.amount !== 0) {
+                modelAsset.creditMemos.push(new CreditMemo(amountToTax.copy(), 'Income tax withholding', modelAsset.currentDateInt));
+            }
         }
 
         logger.log(LogCategory.TAX, 'Portfolio.closeAsset: ' + modelAsset.displayName + ' generated tax of ' + amountToTax.toString() + ' to deduct from closure');
@@ -1184,7 +1203,7 @@ export class Portfolio {
 
     }
 
-    applyAssetCloseFundTransfers(modelAsset) {
+applyAssetCloseFundTransfers(modelAsset) {
 
         let modelAssetValue = modelAsset.finishCurrency.copy();
 
@@ -1201,8 +1220,7 @@ export class Portfolio {
                 }
 
                 let transferAmount = fundTransfer.calculate();
-                fundTransfer.execute(); // goes to fundTransfer.toModel.creditCurrency
-                //logger.log(LogCategory.TRANSFER, 'Portfolio.applyAssetCloseFundTransfers: ' + modelAsset.displayName + ' transferred ' + transferAmount.toString() + ' to ' + fundTransfer.toModel.displayName);
+                fundTransfer.execute(); // This correctly handles both the debit and the credit
                 
                 runningTransferAmount.add(transferAmount);
             }
@@ -1210,14 +1228,22 @@ export class Portfolio {
             let extraAmount = new Currency(modelAssetValue.amount - runningTransferAmount.amount);
             if (extraAmount.amount > 0) {
                 logger.log(LogCategory.TRANSFER, 'Portfolio.applyAssetCloseFundTransfers: ' + modelAsset.displayName + ' funding ' + extraAmount.toString() + ' to first expensable account');
-                this.creditToFirstExpensableAccount(extraAmount, `Asset closure proceeds from ${modelAsset.displayName}`);
+                
+                // FIX: Explicitly debit the asset before it closes to generate the negative memo
+                const note = `Asset closure proceeds from ${modelAsset.displayName}`;
+                modelAsset.debit(extraAmount, note, true); // true = skipGain (already handled)
+                this.creditToFirstExpensableAccount(extraAmount, note);
             }
 
         }
         else {
 
             logger.log(LogCategory.TRANSFER, 'Portfolio.applyAssetCloseFundTransfers: ' + modelAsset.displayName + ' funding ' + modelAssetValue.toString() + ' to first expensable account');
-            this.creditToFirstExpensableAccount(modelAssetValue, `Asset closure proceeds from ${modelAsset.displayName}`);            
+            
+            // FIX: Explicitly debit the asset before it closes to generate the negative memo
+            const note = `Asset closure proceeds from ${modelAsset.displayName}`;
+            modelAsset.debit(modelAssetValue, note, true); // true = skipGain (already handled)
+            this.creditToFirstExpensableAccount(modelAssetValue, note);            
                         
         }
 

@@ -474,13 +474,18 @@ export class ModelAsset {
 
   }
 
-  applyMonthlyExpense() {
+applyMonthlyExpense() {
 
     this.ensureNegativeStart();
     this.expenseCurrency = new Currency(this.finishCurrency.amount);
     this.growthCurrency = new Currency(this.finishCurrency.amount * this.annualReturnRate.asMonthly());
     this.finishCurrency.add(this.growthCurrency);
     this.monthlyValueChange.add(this.growthCurrency);
+
+    // FIX: Generate a memo so the expense drift is accounted for
+    if (this.growthCurrency.amount !== 0) {
+      this.creditMemos.push(new CreditMemo(this.growthCurrency.copy(), 'Expense growth', this.currentDateInt));
+    }
 
     return new ExpenseResult(this.expenseCurrency.copy(), this.finishCurrency.copy());
 
@@ -557,17 +562,23 @@ export class ModelAsset {
 
   // ── Credit / Debit (fund transfer interface) ─────────────────────
 
-  // ── Credit / Debit (fund transfer interface) ─────────────────────
-
   credit(amount, note = '', skipGain = false) {
-    if (this.#isFlowInstrument()) return { assetChange: Currency.zero(), realizedGain: Currency.zero() };
+    if (this.#isFlowInstrument()) {
+      // Record the memo to maintain double-entry balance, but don't alter asset value
+      if (note) this.creditMemos.push(new CreditMemo(amount.copy(), note, this.currentDateInt));
+      return { assetChange: Currency.zero(), realizedGain: Currency.zero() };
+    }
     this.creditCurrency.add(amount);
     this.monthlyValueChange.add(amount);
     return this.reconcileCredit(note, skipGain);
   }
 
   debit(amount, note = '', skipGain = false) {
-    if (this.#isFlowInstrument()) return { assetChange: Currency.zero(), realizedGain: Currency.zero() };
+    if (this.#isFlowInstrument()) {
+      // Record the memo (as a negative amount) to maintain balance
+      if (note) this.creditMemos.push(new CreditMemo(amount.copy().flipSign(), note, this.currentDateInt));
+      return { assetChange: Currency.zero(), realizedGain: Currency.zero() };
+    }
     this.creditCurrency.subtract(amount);
     this.monthlyValueChange.subtract(amount);
     return this.reconcileCredit(note, skipGain);
@@ -612,7 +623,13 @@ export class ModelAsset {
     
     if (credit.amount < 0) {
       if (T.isTaxableAccount(this.instrument)) {
-        if (!skipGain) this.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, realizedGain);
+        if (!skipGain) {
+            this.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, realizedGain);
+            // FIX: Push the memo for incremental realized gains
+            if (realizedGain.amount > 0) {
+                this.creditMemos.push(new CreditMemo(realizedGain.copy(), 'Capital gains', this.currentDateInt));
+            }
+        }
       } else if (T.isIRA(this.instrument)) {
         this.addToMetric(Metric.IRA_DISTRIBUTION, credit.copy().flipSign());
       } else if (T.is401K(this.instrument)) {
