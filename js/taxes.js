@@ -495,7 +495,7 @@ export class TaxTable {
     calculateYearlyTaxableIncome(yearly) {
 
         let taxableIncome = new Currency(yearly.selfIncome.amount + yearly.employedIncome.amount);
-        taxableIncome.add(yearly.ordinaryIncome());
+        taxableIncome.add(yearly.irsTaxableGrossIncome());
         return this.applyYearlyDeductions(yearly, taxableIncome);
 
     }

@@ -79,11 +79,12 @@ export class CreditMemo {
 }
 
 export class FundTransferResult {
-  constructor(fromAssetChange = Currency.zero(), toAssetChange = Currency.zero(), fromMemo = null, toMemo = null) {
+  constructor(fromAssetChange = Currency.zero(), toAssetChange = Currency.zero(), fromMemo = null, toMemo = null, realizedGain = Currency.zero()) {
     this.fromAssetChange = fromAssetChange instanceof Currency ? fromAssetChange.copy() : new Currency(fromAssetChange);
     this.toAssetChange   = toAssetChange instanceof Currency ? toAssetChange.copy() : new Currency(toAssetChange);
     this.fromMemo = fromMemo;
     this.toMemo = toMemo;
+    this.realizedGain = realizedGain instanceof Currency ? realizedGain.copy() : new Currency(realizedGain);
   }
 }
 

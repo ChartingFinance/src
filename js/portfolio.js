@@ -56,6 +56,23 @@ export class FinancialPackage {
 
     }
 
+    irsTaxableGrossIncome() {
+        // Only what the IRS taxes (Wages + taxable distributions + taxable gains/interest)
+        let irsIncome = this.wageIncome().copy();
+        irsIncome.add(this.ordinaryIncome());
+        return irsIncome;
+    }
+
+    trueGrossIncome() {
+        let income = this.wageIncome().copy();
+        income.add(this.socialSecurity); // Note: raw SS, not the 85% taxed portion
+        income.add(this.interestIncome);
+        income.add(this.qualifiedDividends);
+        income.add(this.nonQualifiedDividends);
+        // We do NOT add IRA/401k/Roth distributions here!
+        return income;
+    }
+
     totalIncome() {
 
         let income = this.wageIncome().copy();
@@ -113,7 +130,7 @@ export class FinancialPackage {
         contributions.add(this.four01KContribution);
         contributions.add(this.rothContribution);
         return contributions;
-        
+
     }
 
     deductions() {
@@ -146,10 +163,19 @@ export class FinancialPackage {
     }
 
     earning() {
-
-        let income = this.totalIncome();
-        let taxes = this.totalTaxes();
-        return income.add(taxes);
+        let e = this.trueGrossIncome();
+        
+        // Add wealth generation
+        e.add(this.shortTermCapitalGains);
+        e.add(this.longTermCapitalGains);
+        e.add(this.growth()); // Asset appreciation
+        
+        // Subtract liabilities and outflows
+        e.add(this.totalTaxes()); // Taxes are negative, so add() subtracts
+        e.subtract(this.expense);
+        e.subtract(this.mortgageInterest);
+        
+        return e;
     }
 
     effectiveTaxRate() {
@@ -1002,62 +1028,66 @@ export class Portfolio {
     }
 
     applyLastDayOfMonthExpenseFundTransfers(modelAsset) {
-        if (!InstrumentType.isMonthlyExpense(modelAsset.instrument)) {
-            return;
-        }
-    
-        const modelAssetExpense = modelAsset.finishCurrency.copy();
-        let runningExpenseAmount = new Currency(0.0);
-    
-        if (modelAsset.fundTransfers?.length > 0) {
-            for (const fundTransfer of modelAsset.fundTransfers) {
-                fundTransfer.bind(modelAsset, this.modelAssets);
-                const expenseAmount = fundTransfer.calculate();
-                const fundTransferResult = fundTransfer.execute();
-    
-                this.handleFundTransferExpense(fundTransfer, fundTransferResult, modelAsset.displayName);
-                runningExpenseAmount.add(expenseAmount);
-            }
-    
-            const extraAmount = new Currency(runningExpenseAmount.amount - modelAssetExpense.amount);
-            if (extraAmount.amount > 0) {
-                logger.log(LogCategory.TRANSFER, `Portfolio.applyFundTransfersForExpense: ${modelAsset.displayName} expensing ${extraAmount.toString()} from first taxable account`);
-                const assetChange = this.debitFromFirstTaxableAccount(extraAmount, `Expense overflow for ${modelAsset.displayName}`);
-                this.applyCapitalGainsToFirstExpensableAccount(assetChange);
-            }
-        } else {
-            logger.log(LogCategory.TRANSFER, `Portfolio.applyFundTransfersForExpense: ${modelAsset.displayName} expensing ${modelAssetExpense.toString()} from first taxable account`);
-            const assetChange = this.debitFromFirstTaxableAccount(modelAssetExpense.flipSign(), `Expense debit for ${modelAsset.displayName}`);
-            this.applyCapitalGainsToFirstExpensableAccount(assetChange);
-        }
-    }
-    
-    handleFundTransferExpense(fundTransfer, fundTransferResult, modelAssetName) {
-        const targetInstrument = fundTransfer.toModel.instrument;
-        const change = fundTransferResult.toAssetChange;
+         if (!InstrumentType.isMonthlyExpense(modelAsset.instrument)) {
+             return;
+         }
+     
+         const modelAssetExpense = modelAsset.finishCurrency.copy();
+         let runningExpenseAmount = new Currency(0.0);
+     
+         if (modelAsset.fundTransfers?.length > 0) {
+             for (const fundTransfer of modelAsset.fundTransfers) {
+                 fundTransfer.bind(modelAsset, this.modelAssets);
+                 const expenseAmount = fundTransfer.calculate();
+                 const fundTransferResult = fundTransfer.execute();
+     
+                 this.handleFundTransferExpense(fundTransfer, fundTransferResult, modelAsset.displayName);
+                 runningExpenseAmount.add(expenseAmount);
+             }
+     
+             const extraAmount = new Currency(runningExpenseAmount.amount - modelAssetExpense.amount);
+             if (extraAmount.amount > 0) {
+                 logger.log(LogCategory.TRANSFER, `Portfolio.applyFundTransfersForExpense: ${modelAsset.displayName} expensing ${extraAmount.toString()} from first taxable account`);
+                 const result = this.debitFromFirstTaxableAccount(extraAmount, `Expense overflow for ${modelAsset.displayName}`);
+                 if (result && result.realizedGain && result.realizedGain.amount > 0) {
+                     this.monthly.longTermCapitalGains.add(result.realizedGain);
+                 }
+             }
+         } else {
+             logger.log(LogCategory.TRANSFER, `Portfolio.applyFundTransfersForExpense: ${modelAsset.displayName} expensing ${modelAssetExpense.toString()} from first taxable account`);
+             const result = this.debitFromFirstTaxableAccount(modelAssetExpense.copy().flipSign(), `Expense debit for ${modelAsset.displayName}`);
+             if (result && result.realizedGain && result.realizedGain.amount > 0) {
+                 this.monthly.longTermCapitalGains.add(result.realizedGain);
+             }
+         }
+     }
+     
+     handleFundTransferExpense(fundTransfer, fundTransferResult, modelAssetName) {
+         const targetInstrument = fundTransfer.toModel.instrument;
+         const change = fundTransferResult.toAssetChange.copy();
+         const realizedGain = fundTransferResult.realizedGain.copy();
 
-        change.flipSign(); // flip sign because it's an expense
+         change.flipSign(); // flip sign because it's an expense
 
-        if (change.amount === 0) return;
+         if (change.amount === 0) return;
 
-        if (InstrumentType.isTaxableAccount(targetInstrument)) {
-            logger.log(LogCategory.TRANSFER, `Portfolio.applyFundTransfersForExpense: ${modelAssetName} expensing ${fundTransfer.toModel.displayName} generated longTermCapitalGains of ${change.toString()}`);
-            this.monthly.longTermCapitalGains.add(change);
-        } else if (InstrumentType.isTaxDeferred(targetInstrument)) {
-            logger.log(LogCategory.TRANSFER, `Portfolio.applyFundTransfersForExpense: ${modelAssetName} expensing ${fundTransfer.toModel.displayName} generated ordinaryIncome of ${change.toString()}`);
-            if (InstrumentType.isIRA(targetInstrument)) {
-                this.monthly.iraDistribution.add(change);
-            } else if (InstrumentType.is401K(targetInstrument)) {
-                this.monthly.four01KDistribution.add(change);
-            } else {
-                logger.log(LogCategory.TRANSFER, `Portfolio.applyLastDayOfMonthExpenseFundTransfers: unhandled isTaxDeferred ${fundTransfer.toDisplayName}`);
-            }
-        } else if (InstrumentType.isTaxFree(targetInstrument)) {
-            logger.log(LogCategory.TRANSFER, `Portfolio.applyFundTransfersForExpense: ${modelAssetName} expensing ${fundTransfer.toModel.displayName} generated no tax impact`);
-            this.monthly.rothDistribution.add(change);
-        }
-    }
-
+         if (InstrumentType.isTaxableAccount(targetInstrument)) {
+             logger.log(LogCategory.TRANSFER, `Portfolio.applyFundTransfersForExpense: ${modelAssetName} expensing ${fundTransfer.toModel.displayName} generated longTermCapitalGains of ${realizedGain.toString()}`);
+             this.monthly.longTermCapitalGains.add(realizedGain); // Fix: Uses actual gain, not the full withdrawal!
+         } else if (InstrumentType.isTaxDeferred(targetInstrument)) {
+             logger.log(LogCategory.TRANSFER, `Portfolio.applyFundTransfersForExpense: ${modelAssetName} expensing ${fundTransfer.toModel.displayName} generated ordinaryIncome of ${change.toString()}`);
+             if (InstrumentType.isIRA(targetInstrument)) {
+                 this.monthly.iraDistribution.add(change);
+             } else if (InstrumentType.is401K(targetInstrument)) {
+                 this.monthly.four01KDistribution.add(change);
+             } else {
+                 logger.log(LogCategory.TRANSFER, `Portfolio.applyLastDayOfMonthExpenseFundTransfers: unhandled isTaxDeferred ${fundTransfer.toDisplayName}`);
+             }
+         } else if (InstrumentType.isTaxFree(targetInstrument)) {
+             logger.log(LogCategory.TRANSFER, `Portfolio.applyFundTransfersForExpense: ${modelAssetName} expensing ${fundTransfer.toModel.displayName} generated no tax impact`);
+             this.monthly.rothDistribution.add(change);
+         }
+     }
     ensureRMDDistributions(modelAsset) {
 
         if (!InstrumentType.isTaxDeferred(modelAsset.instrument))
@@ -1217,29 +1247,14 @@ export class Portfolio {
         
     }
 
-    applyCapitalGainsToFirstExpensableAccount(amount) {
-
-        // todo: mix short term and long term capital gains
-        for (let modelAsset of this.modelAssets) {
-            if (InstrumentType.isExpensable(modelAsset.instrument)) {                
-                modelAsset.credit(amount, 'Capital gains');
-                this.monthly.longTermCapitalGains.add(amount);
-                break;
-            }
-        }
-
-    }
-
     applyToFirstMatchingAccount(predicate, operation, amount, note = '') {
-
-        for (let modelAsset of this.modelAssets) {
-            if (predicate(modelAsset.instrument)) {
-                return modelAsset[operation](amount, note);
-            }
-        }
-        return new FundTransferResult();
-
-    }
+         for (let modelAsset of this.modelAssets) {
+             if (predicate(modelAsset.instrument)) {
+                 return modelAsset[operation](amount, note);
+             }
+         }
+         return { assetChange: Currency.zero(), realizedGain: Currency.zero() };
+     }
 
     creditToFirstExpensableAccount(amount, note = '') {
         return this.applyToFirstMatchingAccount(InstrumentType.isExpensable, 'credit', amount, note);

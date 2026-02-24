@@ -97,6 +97,10 @@ export class FundTransfer {
    * Execute the transfer: debit source, credit target.
    * @returns {FundTransferResult}
    */
+  /**
+   * Execute the transfer: debit source, credit target.
+   * @returns {FundTransferResult}
+   */
   execute() {
     if (!this.fromModel || !this.toModel) return new FundTransferResult();
     if (this.moveOnFinishDate && !(this.fromModel.onFinishDate || this.fromModel.afterFinishDate)) return new FundTransferResult();
@@ -104,10 +108,20 @@ export class FundTransfer {
     const amount = this.calculate();
     const fromMemo = this.describe(this.fromModel.displayName, amount);
     const toMemo = this.describe(this.toModel.displayName, amount.copy().flipSign());
-    const fromChange = this.fromModel.debit(amount, fromMemo);
-    const toChange   = this.toModel.credit(amount, toMemo);
+    
+    // Skip gain calculation if this is an asset closure (because handleCapitalGains handles it)
+    const skipGain = this.moveOnFinishDate;
+    
+    const fromResult = this.fromModel.debit(amount, fromMemo, skipGain);
+    const toResult   = this.toModel.credit(amount, toMemo, skipGain);
 
-    return new FundTransferResult(fromChange, toChange, fromMemo, toMemo);
+    return new FundTransferResult(
+      fromResult.assetChange, 
+      toResult.assetChange, 
+      fromMemo, 
+      toMemo,
+      toResult.realizedGain
+    );
   }
 
   // ── Utilities ────────────────────────────────────────────────────

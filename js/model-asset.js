@@ -557,34 +557,45 @@ export class ModelAsset {
 
   // ── Credit / Debit (fund transfer interface) ─────────────────────
 
-  credit(amount, note = '') {
+  // ── Credit / Debit (fund transfer interface) ─────────────────────
 
-    if (this.#isFlowInstrument()) return Currency.zero();
+  credit(amount, note = '', skipGain = false) {
+    if (this.#isFlowInstrument()) return { assetChange: Currency.zero(), realizedGain: Currency.zero() };
     this.creditCurrency.add(amount);
     this.monthlyValueChange.add(amount);
-    return this.reconcileCredit(note);
-
+    return this.reconcileCredit(note, skipGain);
   }
 
-  debit(amount, note = '') {
-
-    if (this.#isFlowInstrument()) return Currency.zero();
+  debit(amount, note = '', skipGain = false) {
+    if (this.#isFlowInstrument()) return { assetChange: Currency.zero(), realizedGain: Currency.zero() };
     this.creditCurrency.subtract(amount);
     this.monthlyValueChange.subtract(amount);
-    return this.reconcileCredit(note);
-
+    return this.reconcileCredit(note, skipGain);
   }
 
-  reconcileCredit(note = '') {
-
-    //if (this.creditCurrency.amount >= 0) return Currency.zero();
-
+  reconcileCredit(note = '', skipGain = false) {
     let credit = this.creditCurrency.copy();
     this.creditCurrency.zero();
 
+    // Calculate gain and adjust basis BEFORE changing finishCurrency
+    let realizedGain = new Currency(0);
+    const T = InstrumentType;
+    
+    if (credit.amount < 0 && T.isTaxableAccount(this.instrument)) {
+      const withdrawal = Math.abs(credit.amount);
+      const currentValue = this.finishCurrency.amount;
+      if (currentValue > 0) {
+        const fractionSold = Math.min(withdrawal / currentValue, 1.0);
+        const basisWithdrawn = this.basisCurrency.amount * fractionSold;
+        realizedGain.amount = withdrawal - basisWithdrawn;
+        this.basisCurrency.amount -= basisWithdrawn;
+      }
+    } else if (credit.amount > 0 && T.isTaxableAccount(this.instrument)) {
+      this.basisCurrency.add(credit); // Deposits increase basis
+    }
+
     this.finishCurrency.add(credit);
 
-    const T = InstrumentType;
     if (credit.amount > 0) {
       if (T.isTaxableAccount(this.instrument)) {
         this.addToMetric(Metric.TAXABLE_CONTRIBUTION, credit);
@@ -593,21 +604,21 @@ export class ModelAsset {
       } else if (T.is401K(this.instrument)) {
         this.addToMetric(Metric.FOUR_01K_CONTRIBUTION, credit);
       } else if (T.isHome(this.instrument)) {
-        this.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, credit);
+        if (!skipGain) this.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, credit);
       } else if (T.isMortgage(this.instrument)) {
         this.addToMetric(Metric.MORTGAGE_PRINCIPAL, credit);
       }
     }
+    
     if (credit.amount < 0) {
       if (T.isTaxableAccount(this.instrument)) {
-        // TODO: need to distinguish between taxable distribution as cash (TAXABLE_DISTRIBUTION) vs taxable distribution as gain (SHORT_TERM_CAPITAL_GAIN_TAX or LONG_TERM_CAPITAL_GAIN_TAX depending on holding period)
-        this.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, credit.copy().flipSign()); // for now just assume all distributions from taxable accounts are long term capital gains, but this is an area for improvement
+        if (!skipGain) this.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, realizedGain);
       } else if (T.isIRA(this.instrument)) {
         this.addToMetric(Metric.IRA_DISTRIBUTION, credit.copy().flipSign());
       } else if (T.is401K(this.instrument)) {
         this.addToMetric(Metric.FOUR_01K_DISTRIBUTION, credit.copy().flipSign());
       } else if (T.isHome(this.instrument)) {
-        this.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, credit);
+        if (!skipGain) this.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, credit);
       } else if (T.isMortgage(this.instrument)) {
         this.addToMetric(Metric.MORTGAGE_PRINCIPAL, credit);
       }
@@ -617,8 +628,7 @@ export class ModelAsset {
       this.creditMemos.push(new CreditMemo(credit, note, this.currentDateInt));
     }
 
-    return credit;
-
+    return { assetChange: credit, realizedGain: realizedGain };
   }
 
   // ── Fund transfers ───────────────────────────────────────────────
