@@ -7,30 +7,21 @@
  */
 
 // Core types
-import { DateInt } from './date-int.js';
 import { findByName } from './asset-queries.js';
 import { Metric, MetricLabel } from './model-asset.js';
 
-// HTML builder functions
-import {
-    html_buildInstrumentOptions,
-    html_buildInstrumentFields,
-    html_applyModelAssetToPopupTransfers,
-    html_buildTransferrableAssets,
-} from './html.js';
 
 // Chronometer and summary
 import { chronometer_run } from './chronometer.js';
 
 // Membrane (model conversion)
-import {
-    membrane_htmlElementToAssetModel,
-    membrane_rawDataToModelAssets,
-    membrane_htmlElementsToFundTransfers,
-} from './membrane.js';
+import { membrane_rawDataToModelAssets } from './membrane.js';
 
-// Asset list Lit component
+// Lit components
 import './components/asset-list.js';
+import './components/asset-form-modal.js';
+import './components/transfer-modal.js';
+import './components/portfolio-ledger.js';
 
 // Charting
 import {
@@ -41,8 +32,6 @@ import {
     charting_jsonRollupChartData,
     charting_buildFromPortfolio,
     charting_buildPortfolioMetric,
-    charting_buildFromModelAsset,
-    charting_jsonMetricChartConfigIndividual,
 } from './charting.js';
 
 // Logger
@@ -84,15 +73,11 @@ import {
     util_ensureStoryNames,
     util_saveLocalAssetModels,
     util_loadLocalAssetModels,
-    util_loadFromStorage,
 } from './util.js';
 
 // Spreadsheet + Credit Memos (Lit components)
 import './components/spreadsheet-view.js';
 import './components/credit-memo-view.js';
-
-// MCP
-import { savePortfolioToFile } from './mcp-client.js';
 
 // Debug panel
 import { toggle as toggleDebugPanel, clearReports as debugPanelClearReports } from './debug-panel.js';
@@ -101,17 +86,15 @@ import { toggle as toggleDebugPanel, clearReports as debugPanelClearReports } fr
 import './components/debug-report-view.js';
 import { getReports } from './debug-panel.js';
 
-// Simulator popup
-import { openSimulatorPopup } from './simulator-popup.js';
+// Simulator modal (Lit component)
+import './components/simulator-modal.js';
 
 // ─── DOM Element References ──────────────────────────────────
 
-const assetElement = document.getElementById('asset');
-const assetEditElement = document.getElementById('assetEdit');
-
+const assetFormModal = document.getElementById('assetFormModal');
 const assetsContainerElement = document.getElementById('assets');
 
-const assetsSummaryElement = document.getElementById('rollup1');
+const portfolioLedger = document.getElementById('portfolioLedger');
 
 const chartMetric1Canvas = document.getElementById('chartMetric1Canvas');
 const chartMetric2Canvas = document.getElementById('chartMetric2Canvas');
@@ -119,10 +102,7 @@ const chartRollupCanvas = document.getElementById('chartRollupCanvas');
 const spreadsheetElement = document.getElementById('spreadsheetElement');
 const creditMemosElement = document.getElementById('creditMemosElement');
 const debugReportsElement = document.getElementById('debugReportsElement');
-const chartEarningsCanvasIndividual = document.getElementById('chartEarningsCanvasIndividual');
-
-const instrumentFieldsCreate = document.getElementById('instrumentFieldsCreate');
-const instrumentFieldsEdit = document.getElementById('instrumentFieldsEdit');
+const transferModal = document.getElementById('transferModal');
 
 const tab1 = document.getElementById('tab1');
 const tab2 = document.getElementById('tab2');
@@ -134,13 +114,11 @@ const tab6 = document.getElementById('tab6');
 // ─── App State ───────────────────────────────────────────────
 
 let activeAssetsElement = assetsContainerElement;
-let activeSummaryElement = assetsSummaryElement;
 let activeStoryArc = null;
 let activeStoryName = null;
 let activeMetric1Canvas = null;
 let activeMetric2Canvas = null;
 let activeRollupCanvas = null;
-let activeEarningsCanvasIndividual = null;
 let editingModelAsset = null;
 let activeMetric1Name = Metric.VALUE;
 let activeMetric2Name = Metric.EARNING;
@@ -185,17 +163,8 @@ metric2Select.addEventListener('change', function() {
 
 // ─── Initial Setup Functions ─────────────────────────────────
 
-function buildInstrumentOptions() {
-    let selectElement = assetElement.querySelector('[name="instrument"]');
-    selectElement.innerHTML = html_buildInstrumentOptions(null)
-}
-
 function initiateActiveData() {
     logger.log(LogCategory.INIT, 'initiateActiveData');
-
-    let startDateElement = assetElement.querySelector('[name="startDate"]');
-    let di = DateInt.today();
-    startDateElement.value = di.toHTML();
 
     activeStoryArc = localStorage.getItem('activeStoryArc');
     if (!activeStoryArc)
@@ -211,88 +180,45 @@ function initiateActiveData() {
     loadLocalData();
 }
 
-function connectAssetSelect() {
-    logger.log(LogCategory.INIT, 'connectAssetSelect');
-    let instrumentElement = assetElement.querySelector('[name="instrument"]');
+function connectAssetFormModal() {
+    logger.log(LogCategory.INIT, 'connectAssetFormModal');
 
-    instrumentElement.addEventListener('change', function(event) {
-        instrumentFieldsCreate.innerHTML = html_buildInstrumentFields(event.target.value, null);
+    assetFormModal.addEventListener('save-asset', function(ev) {
+        const { modelAsset: newAsset, mode } = ev.detail;
+
+        if (mode === 'create') {
+            assetsContainerElement.modelAssets = [...(assetsContainerElement.modelAssets || []), newAsset];
+        } else if (mode === 'edit' && editingModelAsset) {
+            // Copy updated properties back to the editing model asset
+            editingModelAsset.instrument = newAsset.instrument;
+            editingModelAsset.displayName = newAsset.displayName;
+            editingModelAsset.startDateInt = newAsset.startDateInt;
+            editingModelAsset.startCurrency = newAsset.startCurrency;
+            editingModelAsset.finishDateInt = newAsset.finishDateInt;
+            editingModelAsset.annualReturnRate = newAsset.annualReturnRate;
+            editingModelAsset.basisCurrency = newAsset.basisCurrency;
+            editingModelAsset.monthsRemaining = newAsset.monthsRemaining;
+            editingModelAsset.annualDividendRate = newAsset.annualDividendRate;
+            editingModelAsset.longTermCapitalGainRate = newAsset.longTermCapitalGainRate;
+            editingModelAsset.isSelfEmployed = newAsset.isSelfEmployed;
+            editingModelAsset = null;
+        }
+
+        calculate('assets');
     });
 }
 
-function connectCreateAsset() {
-    logger.log(LogCategory.INIT, 'connectCreateAsset');
-    assetElement.addEventListener("submit", function(ev) {
-        ev.preventDefault();
-
-        let assetModel = membrane_htmlElementToAssetModel(assetElement);
-        assetsContainerElement.modelAssets = [...(assetsContainerElement.modelAssets || []), assetModel];
-
-        calculate('assets');
-
-        // Close the create asset modal
-        document.getElementById('popupFormCreateAsset').style.display = 'none';
-
-        // Clear the form
-        assetElement.reset();
-    });
+function openCreateAssetModal() {
+    assetFormModal.mode = 'create';
+    assetFormModal.modelAsset = null;
+    assetFormModal.open = true;
 }
 
 function openEditAssetModal(modelAsset) {
     editingModelAsset = modelAsset;
-
-    // Populate instrument select options
-    let editInstrumentSelect = assetEditElement.querySelector('[name="instrument"]');
-    editInstrumentSelect.innerHTML = html_buildInstrumentOptions(modelAsset.instrument);
-
-    // Populate form fields from modelAsset properties
-    assetEditElement.querySelector('[name="displayName"]').value = modelAsset.displayName;
-    assetEditElement.querySelector('[name="startDate"]').value = modelAsset.startDateInt.toHTML();
-    assetEditElement.querySelector('[name="startValue"]').value = modelAsset.startCurrency.toHTML();
-    assetEditElement.querySelector('[name="finishDate"]').value = modelAsset.finishDateInt.toHTML();
-    assetEditElement.querySelector('[name="finishValue"]').value = modelAsset.finishCurrency ? modelAsset.finishCurrency.toHTML() : '0.0';
-    assetEditElement.querySelector('[name="annualReturnRate"]').value = modelAsset.annualReturnRate.toHTML();
-
-    // Populate instrument-specific fields
-    instrumentFieldsEdit.innerHTML = html_buildInstrumentFields(modelAsset.instrument, modelAsset);
-
-    document.getElementById('popupFormEditAsset').style.display = 'block';
-}
-
-function connectEditAsset() {
-    logger.log(LogCategory.INIT, 'connectEditAsset');
-
-    // Rebuild instrument-specific fields when instrument changes in edit form
-    assetEditElement.querySelector('[name="instrument"]').addEventListener('change', function(event) {
-        instrumentFieldsEdit.innerHTML = html_buildInstrumentFields(event.target.value, null);
-    });
-
-    assetEditElement.addEventListener("submit", function(ev) {
-        ev.preventDefault();
-
-        if (!editingModelAsset) return;
-
-        // Update the modelAsset from form values via membrane (reuses existing parsing)
-        let updated = membrane_htmlElementToAssetModel(assetEditElement);
-        // Copy updated properties back to the editing model asset
-        editingModelAsset.instrument = updated.instrument;
-        editingModelAsset.displayName = updated.displayName;
-        editingModelAsset.startDateInt = updated.startDateInt;
-        editingModelAsset.startCurrency = updated.startCurrency;
-        editingModelAsset.finishDateInt = updated.finishDateInt;
-        editingModelAsset.annualReturnRate = updated.annualReturnRate;
-        editingModelAsset.basisCurrency = updated.basisCurrency;
-        editingModelAsset.monthsRemaining = updated.monthsRemaining;
-        editingModelAsset.annualDividendRate = updated.annualDividendRate;
-        editingModelAsset.longTermCapitalGainRate = updated.longTermCapitalGainRate;
-        editingModelAsset.isSelfEmployed = updated.isSelfEmployed;
-
-        // Close the edit modal
-        document.getElementById('popupFormEditAsset').style.display = 'none';
-        editingModelAsset = null;
-
-        calculate('assets');
-    });
+    assetFormModal.mode = 'edit';
+    assetFormModal.modelAsset = modelAsset;
+    assetFormModal.open = true;
 }
 
 function connectAssetListEvents() {
@@ -322,20 +248,6 @@ function connectAssetListEvents() {
         assetsContainerElement.highlightName = charting_getHighlightDisplayName();
         updateCharts();
     });
-}
-
-// ─── MCP Functions ───────────────────────────────────────────
-
-async function savePortfolioViaMCP() {
-    const filename = prompt('Enter filename:', 'portfolio.json');
-    if (filename) {
-        const success = await savePortfolioToFile(filename, assetsContainerElement.modelAssets || []);
-        if (success) {
-            alert('Portfolio saved successfully!');
-        } else {
-            alert('Failed to save portfolio');
-        }
-    }
 }
 
 // ─── Tab Handling ────────────────────────────────────────────
@@ -415,11 +327,10 @@ function bplus_recall() {
 
 // ─── Charting and Calculation ────────────────────────────────
 
-function updateActiveAssetsElement(assetsElement, summaryElement) {
+function updateActiveAssetsElement(assetsElement) {
     assetsContainerElement.classList.remove('selected-assets');
     assetsElement.classList.add('selected-assets');
     activeAssetsElement = assetsElement;
-    activeSummaryElement = summaryElement;
 }
 
 function ensureHighlightDisplayName() {
@@ -430,7 +341,7 @@ function updateCharts() {
     let modelAssets = assetsContainerElement.modelAssets || [];
     let portfolio = new Portfolio(modelAssets);
     activePortfolio = portfolio;
-    chronometer_run(activeSummaryElement, portfolio);
+    chronometer_run(null, portfolio);
     portfolio.buildChartingDisplayData();
     ensureHighlightDisplayName();
     charting_buildFromPortfolio(portfolio, false, activeMetric1Name, activeMetric2Name);
@@ -441,12 +352,12 @@ function updateCharts() {
 function calculate(target) {
 
     if (target == 'assets')
-        updateActiveAssetsElement(assetsContainerElement, assetsSummaryElement);
+        updateActiveAssetsElement(assetsContainerElement);
 
     let modelAssets = assetsContainerElement.modelAssets || [];
     debugPanelClearReports();
     let portfolio = new Portfolio(modelAssets, true);
-    chronometer_run(activeSummaryElement, portfolio);
+    chronometer_run(null, portfolio);
 
     // Update asset cards with calculated values
     assetsContainerElement.modelAssets = [...portfolio.modelAssets];
@@ -469,8 +380,8 @@ function calculate(target) {
         saveLocalData();
     }
 
-    // Sync ledger display
-    syncRollupToLedger();
+    // Update ledger display
+    portfolioLedger.portfolio = portfolio;
 }
 
 function innerCalculate(portfolio) {
@@ -493,12 +404,6 @@ function innerCalculate(portfolio) {
     debugReportsElement.reports = [...getReports()];
 }
 
-function selectLocalData_changed(ev) {
-    const selectElement = document.getElementById('savedDataSets');
-    activeStoryName = selectElement.value;
-    loadLocalData();
-}
-
 function saveLocalData() {
     util_saveLocalAssetModels(activeStoryArc, activeStoryName, assetsContainerElement.modelAssets || []);
 }
@@ -512,82 +417,38 @@ function loadLocalData() {
 // ─── Simulation ──────────────────────────────────────────────
 
 function doMaximize() {
-    openSimulatorPopup(assetsContainerElement.modelAssets || []);
+    let simModal = document.querySelector('simulator-modal');
+    if (!simModal) {
+        simModal = document.createElement('simulator-modal');
+        document.body.appendChild(simModal);
+    }
+    simModal.modelAssets = assetsContainerElement.modelAssets || [];
+    simModal.open = true;
 }
 
 // ─── Popup Functions ─────────────────────────────────────────
 
-const saveLocally = 'Save Locally';
-const shareGlobally = 'Share Globally';
-
-function saveData() {
-    loadPopupList(saveLocally);
-    doPopup(saveLocally);
-}
-
 function shareData() {
-    doPopupShare(shareGlobally);
-}
-
-function cardSelection() {
-    doPopupCardSelection();
-}
-
-function loadPopupList(popupTitle) {
-    let popupDatasets = document.getElementById('popupDatasets');
-    let datasets = util_loadFromStorage(popupTitle);
-    if (datasets && datasets.length > 0) {
-        popupDatasets.innertHTML = '';
-        for (let dataset of datasets) {
-            popupDatasets.innertHTML += '<option>' + dataset.displayName + '</option>';
-        }
-    }
-}
-
-function doPopupShare(popupTitle) {
     document.getElementById('popupFormShare').style.display = 'block';
 }
 
-function openCreateAssetModal() {
-    document.getElementById('popupFormCreateAsset').style.display = 'block';
-}
-
 function showPopupTransfers(currentDisplayName) {
-    let popupFormTransfersElement = document.getElementById('popupFormTransfers');
-    let scrollableYElement = popupFormTransfersElement.querySelector('.scrollable-y');
-
-    let modelAssets = assetsContainerElement.modelAssets || [];
-    let portfolio = new Portfolio(modelAssets, false);
-    chronometer_run(null, portfolio);
-    portfolio.buildChartingDisplayData();
-    charting_buildFromModelAsset(portfolio, currentDisplayName);
-
-    html_applyModelAssetToPopupTransfers(findByName(portfolio.modelAssets, currentDisplayName), popupFormTransfersElement);
-    scrollableYElement.innerHTML = html_buildTransferrableAssets(portfolio.modelAssets, currentDisplayName);
-
-    if (activeEarningsCanvasIndividual != null)
-        activeEarningsCanvasIndividual.destroy();
-
-    popupFormTransfersElement.style.display = 'block';
-
-    if (charting_jsonMetricChartConfigIndividual != null)
-        activeEarningsCanvasIndividual = new Chart(chartEarningsCanvasIndividual, charting_jsonMetricChartConfigIndividual);
+    transferModal.currentDisplayName = currentDisplayName;
+    transferModal.modelAssets = assetsContainerElement.modelAssets || [];
+    transferModal.open = true;
 }
 
-function popupFormTransfers_onSave(ev) {
-    let popupFormTransfersElement = document.getElementById('popupFormTransfers');
-    let currentDisplayName = popupFormTransfersElement.querySelector('#popupFormTransfers-title').innerHTML;
-    let scrollableYElement = popupFormTransfersElement.querySelector('.scrollable-y');
-    let fundTransfers = membrane_htmlElementsToFundTransfers(currentDisplayName, scrollableYElement);
+function connectTransferModal() {
+    logger.log(LogCategory.INIT, 'connectTransferModal');
 
-    // Update the modelAsset's fund transfers directly
-    let modelAsset = findByName(assetsContainerElement.modelAssets || [], currentDisplayName);
-    if (modelAsset) {
-        modelAsset.fundTransfers = fundTransfers;
-    }
-
-    calculate();
-    popupFormTransfersElement.style.display = 'none';
+    transferModal.addEventListener('save-transfers', function(ev) {
+        const { displayName, fundTransfers } = ev.detail;
+        let modelAsset = findByName(assetsContainerElement.modelAssets || [], displayName);
+        if (modelAsset) {
+            modelAsset.fundTransfers = fundTransfers;
+        }
+        calculate();
+    });
 }
 
 // Close buttons
@@ -598,87 +459,25 @@ for (const closeButtonElement of closeButtonElements) {
     });
 }
 
-// ─── Ledger Sync ─────────────────────────────────────────────
+// ─── Button Event Listeners ──────────────────────────────────
 
-function syncRollupToLedger() {
-    const rollup = document.getElementById('rollup1');
-    if (!rollup) return;
+document.getElementById('btn-calculate').addEventListener('click', () => calculate('assets'));
+document.getElementById('btn-aplus-save').addEventListener('click', aplus_save);
+document.getElementById('btn-aplus-recall').addEventListener('click', aplus_recall);
+document.getElementById('btn-bplus-save').addEventListener('click', bplus_click);
+document.getElementById('btn-bplus-recall').addEventListener('click', bplus_recall);
+document.getElementById('btn-share').addEventListener('click', shareData);
+document.getElementById('btn-add-asset').addEventListener('click', openCreateAssetModal);
+document.getElementById('btn-maximize').addEventListener('click', doMaximize);
+document.getElementById('btn-debug').addEventListener('click', toggleDebugPanel);
 
-    const startDate = rollup.querySelector('[name="startDate"]').value;
-    const startValue = rollup.querySelector('[name="startValue"]').value;
-    const finishDate = rollup.querySelector('[name="finishDate"]').value;
-    const finishValue = rollup.querySelector('[name="finishValue"]').value;
-    const accumulated = rollup.querySelector('[name="accumulatedValue"]').value;
-    const totalMonths = rollup.querySelector('[name="totalMonths"]').value;
-    const annualReturn = rollup.querySelector('[name="annualReturnRate"]').value;
-
-    const formatCurrency = (val) => val ? `$${parseFloat(val).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}` : '$0.00';
-
-    const formatDate = (val) => {
-        if (!val) return '\u2014';
-        const [year, month] = val.split('-');
-        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-        return `${monthNames[parseInt(month) - 1]} ${year}`;
-    };
-
-    document.getElementById('display-startDate').textContent = formatDate(startDate);
-    document.getElementById('display-startValue').textContent = formatCurrency(startValue);
-    document.getElementById('display-startTotal').textContent = formatCurrency(startValue);
-    document.getElementById('display-finishDate').textContent = formatDate(finishDate);
-    document.getElementById('display-finishValue').textContent = formatCurrency(finishValue);
-    document.getElementById('display-finishTotal').textContent = formatCurrency(finishValue);
-
-    const accValue = parseFloat(accumulated) || 0;
-    const accFormatted = formatCurrency(Math.abs(accValue));
-    document.getElementById('display-accumulated').textContent = accValue >= 0 ? `+${accFormatted.substring(1)}` : `-${accFormatted.substring(1)}`;
-    document.getElementById('display-totalMonths').textContent = totalMonths ? `${totalMonths} months` : '0 months';
-    document.getElementById('display-annualReturn').textContent = annualReturn ? `${parseFloat(annualReturn).toFixed(2)}%` : '0.00%';
-
-    const displayFinishValue = document.getElementById('display-finishValue');
-    const displayFinishTotal = document.getElementById('display-finishTotal');
-    const displayAccumulated = document.getElementById('display-accumulated');
-    const displayAnnualReturn = document.getElementById('display-annualReturn');
-
-    if (accValue > 0) {
-        displayFinishValue.className = 'ledger-item-value val-positive';
-        displayFinishTotal.className = 'ledger-item-value total val-positive';
-        displayAccumulated.className = 'ledger-item-value val-positive';
-        displayAnnualReturn.className = 'ledger-item-value total val-positive';
-    } else if (accValue < 0) {
-        displayFinishValue.className = 'ledger-item-value val-negative';
-        displayFinishTotal.className = 'ledger-item-value total val-negative';
-        displayAccumulated.className = 'ledger-item-value val-negative';
-        displayAnnualReturn.className = 'ledger-item-value total val-negative';
-    } else {
-        displayFinishValue.className = 'ledger-item-value val-neutral';
-        displayFinishTotal.className = 'ledger-item-value total val-neutral';
-        displayAccumulated.className = 'ledger-item-value val-neutral';
-        displayAnnualReturn.className = 'ledger-item-value total val-neutral';
-    }
-}
-
-// ─── Window Bridge for onclick Handlers ──────────────────────
-
-window.calculate = calculate;
-window.tab1_click = tab1_click;
-window.tab2_click = tab2_click;
-window.tab3_click = tab3_click;
-window.tab4_click = tab4_click;
-window.tab5_click = tab5_click;
-window.tab6_click = tab6_click;
-window.aplus_save = aplus_save;
-window.aplus_recall = aplus_recall;
-window.bplus_click = bplus_click;
-window.bplus_recall = bplus_recall;
-window.saveData = saveData;
-window.shareData = shareData;
-window.cardSelection = cardSelection;
-window.openCreateAssetModal = openCreateAssetModal;
-window.doMaximize = doMaximize;
-window.savePortfolioViaMCP = savePortfolioViaMCP;
-window.popupFormTransfers_onSave = popupFormTransfers_onSave;
-window.selectLocalData_changed = selectLocalData_changed;
-window.toggleDebugPanel = toggleDebugPanel;
+// Tab switching
+tab1.addEventListener('click', tab1_click);
+tab2.addEventListener('click', tab2_click);
+tab3.addEventListener('click', tab3_click);
+tab4.addEventListener('click', tab4_click);
+tab5.addEventListener('click', tab5_click);
+tab6.addEventListener('click', tab6_click);
 
 // ─── Settings Row ─────────────────────────────────────────────
 
@@ -734,13 +533,10 @@ function initialize() {
     syncGlobalsToSettings();
     connectSettings();
     populateMetricSelects();
-    buildInstrumentOptions();
     initiateActiveData();
-    connectAssetSelect();
-    connectCreateAsset();
-    connectEditAsset();
+    connectAssetFormModal();
+    connectTransferModal();
     connectAssetListEvents();
-    syncRollupToLedger();
 }
 
 // Modules are deferred — DOM is ready, no need for DOMContentLoaded
