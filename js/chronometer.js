@@ -4,8 +4,10 @@ import { logger, LogCategory } from './logger.js';
 import { activeTaxTable } from './globals.js';
 import { firstDateInt, lastDateInt } from './asset-queries.js';
 import { buildSummary } from './summary.js';
+import { GraphMapper } from './graph-mapper.js';
+import { HydraulicVisualizer } from './hydraulic-visualizer.js';
 
-export function chronometer_run(summaryContainerElement, portfolio) {
+export async function chronometer_run(summaryContainerElement, portfolio) {
 
     if (portfolio.modelAssets == null || portfolio.modelAssets.length == 0) {
         logger.log(LogCategory.GENERAL, 'chronometer_run - no modelAssets');
@@ -22,10 +24,20 @@ export function chronometer_run(summaryContainerElement, portfolio) {
     activeTaxTable.initializeChron();
     portfolio.initializeChron();
 
+    const visualizer = new HydraulicVisualizer('your-svg-container-id');
+    const graphLayout = GraphMapper.buildGraph(portfolio);
+    visualizer.init(graphLayout);
+
     let currentDateInt = new DateInt(portfolio.firstDateInt.toInt());
     while (currentDateInt.toInt() <= portfolio.lastDateInt.toInt()) {
 
         totalMonths += portfolio.applyMonth(currentDateInt);
+
+        GraphMapper.calculateFlows(portfolio, currentDateInt, graphLayout.edges);
+        visualizer.update(graphLayout, portfolio);
+
+        // Add a slight delay here if you want to watch the animation run in real-time
+        await new Promise(resolve => setTimeout(resolve, 100));
 
         currentDateInt.next();
 
