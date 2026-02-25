@@ -21,6 +21,8 @@ export class GraphMapper {
         ];
         nodes.push(...sinks);
 
+        nodes.push({ id: 'Global_Wealth', label: 'Growth Lake', category: 'WealthLake' });
+
         // 2. Iterate Model Assets to build Nodes and Implicit Edges
         for (const asset of portfolio.modelAssets) {
             

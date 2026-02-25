@@ -79,12 +79,8 @@ import {
 import './components/spreadsheet-view.js';
 import './components/credit-memo-view.js';
 
-// Debug panel
-import { toggle as toggleDebugPanel, clearReports as debugPanelClearReports } from './debug-panel.js';
-
 // Debug tab view (Lit component)
 import './components/debug-report-view.js';
-import { getReports } from './debug-panel.js';
 
 // Simulator modal (Lit component)
 import './components/simulator-modal.js';
@@ -354,8 +350,7 @@ function calculate(target) {
     if (target == 'assets')
         updateActiveAssetsElement(assetsContainerElement);
 
-    let modelAssets = assetsContainerElement.modelAssets || [];
-    debugPanelClearReports();
+    let modelAssets = assetsContainerElement.modelAssets || [];    
     let portfolio = new Portfolio(modelAssets, true);
     chronometer_run(null, portfolio);
 
@@ -401,7 +396,7 @@ function innerCalculate(portfolio) {
 
     spreadsheetElement.portfolio = portfolio;
     creditMemosElement.portfolio = portfolio;
-    debugReportsElement.reports = [...getReports()];
+    debugReportsElement.reports = portfolio.generatedReports;
 }
 
 function saveLocalData() {
@@ -494,7 +489,6 @@ document.getElementById('btn-share').addEventListener('click', shareData);
 document.getElementById('btn-add-asset').addEventListener('click', openCreateAssetModal);
 document.getElementById('btn-visualize').addEventListener('click', doVisualize);
 document.getElementById('btn-maximize').addEventListener('click', doMaximize);
-document.getElementById('btn-debug').addEventListener('click', toggleDebugPanel);
 
 // Tab switching
 tab1.addEventListener('click', tab1_click);

@@ -107,6 +107,8 @@ class SimulatorModal extends LitElement {
         chartConfig.options.plugins.dateMarkers = { markers };
         chartConfig.options.animation = { duration: 300 };
 
+        chartConfig.options.maintainAspectRatio = false;
+        
         this._chart = new Chart(canvas, chartConfig);
         this._displayAssets = [...portfolio.modelAssets];
 

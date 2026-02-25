@@ -4,7 +4,6 @@ import { Metric } from './model-asset.js';
 import { FundTransferResult, AssetAppreciationResult, CapitalGainsResult, MortgageResult, IncomeResult, ExpenseResult, InterestResult, WithholdingResult, CreditMemo } from './results.js';
 import { MonthsSpan } from './months-span.js';
 import { logger, LogCategory } from './logger.js';
-import { appendReport as debugPanelAppendReport } from './debug-panel.js';
 import { User } from './user.js';
 import { firstDateInt, lastDateInt } from './asset-queries.js';
 import { activeTaxTable } from './globals.js';
@@ -488,10 +487,8 @@ export class FinancialPackage {
 export class Portfolio {
     constructor(modelAssets, reports) {
         this.modelAssets = this.sortModelAssets(modelAssets);
-        if (reports)
-            this.reports = reports;
-        else
-            this.reports = false;
+        this.reports = !!reports; 
+        this.generatedReports = []; 
         this.activeUser = new User(global_user_startAge);
 
         this.firstDateInt = firstDateInt(this.modelAssets);
@@ -1338,7 +1335,12 @@ applyAssetCloseFundTransfers(modelAsset) {
             this.monthly.report(LogCategory.MONTHLY);
             logger.log(LogCategory.MONTHLY, ' -------   End Monthly (' + currentDateInt.toString() + ' ) Report  -------');
 
-            debugPanelAppendReport('monthly', currentDateInt.toString(), this.monthly);
+            // NEW: Push directly to internal array
+            this.generatedReports.push({ 
+                type: 'monthly', 
+                dateLabel: currentDateInt.toString(), 
+                pkg: new FinancialPackage().add(this.monthly) 
+            });
 
         }
 
@@ -1352,7 +1354,12 @@ applyAssetCloseFundTransfers(modelAsset) {
             this.yearly.report(LogCategory.YEARLY);
             logger.log(LogCategory.YEARLY, ' -------   End Yearly  (' + currentDateInt.toString() + ' ) Report  -------');
 
-            debugPanelAppendReport('yearly', currentDateInt.toString(), this.yearly);
+            // NEW: Push directly to internal array
+            this.generatedReports.push({ 
+                type: 'yearly', 
+                dateLabel: currentDateInt.toString(), 
+                pkg: new FinancialPackage().add(this.yearly) 
+            });
 
         }
 
