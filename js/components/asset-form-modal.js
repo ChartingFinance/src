@@ -147,10 +147,11 @@ class AssetFormModal extends LitElement {
         if (InstrumentType.isMonthlyIncome(instrument)) {
             const checked = ma && ma.isSelfEmployed;
             return html`
-                <div class="instrument-fields mt-6 border-t border-gray-100 pt-6">
-                    <div class="instrument-fields-grid">
-                        <div class="form-field">
-                            <label class="flex items-center gap-2 cursor-pointer">
+                <div class="mt-6 border-t border-gray-100 pt-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Employment</label>
+                            <label class="flex items-center gap-2 cursor-pointer fin-input">
                                 <input type="checkbox" name="isSelfEmployed" ?checked=${checked} />
                                 Self-Employed
                             </label>
@@ -163,11 +164,11 @@ class AssetFormModal extends LitElement {
         if (InstrumentType.isMonthsRemainingAble(instrument)) {
             const monthsVal = ma ? ma.monthsRemaining : 0;
             return html`
-                <div class="instrument-fields mt-6 border-t border-gray-100 pt-6">
-                    <div class="instrument-fields-grid">
-                        <div class="form-field">
-                            <label>Months Remaining</label>
-                            <input type="number" class="width-full" name="monthsRemaining"
+                <div class="mt-6 border-t border-gray-100 pt-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Months Remaining</label>
+                            <input type="number" class="fin-input" name="monthsRemaining"
                                 .value=${String(monthsVal)} placeholder="months" />
                         </div>
                     </div>
@@ -180,21 +181,21 @@ class AssetFormModal extends LitElement {
             const divVal = ma ? ma.annualDividendRate.toHTML() : '0';
             const ltVal = ma ? ma.longTermCapitalGainRate.toHTML() : '0';
             return html`
-                <div class="instrument-fields mt-6 border-t border-gray-100 pt-6">
-                    <div class="instrument-fields-grid">
-                        <div class="form-field">
-                            <label>Basis Value</label>
-                            <input type="number" class="width-full" name="basisValue"
+                <div class="mt-6 border-t border-gray-100 pt-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Basis Value</label>
+                            <input type="number" class="fin-input" name="basisValue"
                                 .value=${basisVal} step="0.01" placeholder="original cost" />
                         </div>
-                        <div class="form-field">
-                            <label>Dividend Rate %</label>
-                            <input type="number" class="width-full" name="dividendRate"
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Dividend Rate %</label>
+                            <input type="number" class="fin-input" name="dividendRate"
                                 .value=${divVal} step="0.01" placeholder="annual %" />
                         </div>
-                        <div class="form-field">
-                            <label>Long-Term Rate %</label>
-                            <input type="number" class="width-full" name="longTermRate"
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Long-Term Rate %</label>
+                            <input type="number" class="fin-input" name="longTermRate"
                                 .value=${ltVal} step="0.01" placeholder="annual %" />
                         </div>
                     </div>
@@ -206,16 +207,16 @@ class AssetFormModal extends LitElement {
             const basisVal = ma ? ma.basisCurrency.toHTML() : '0';
             const taxRateVal = ma ? ma.annualTaxRate.toHTML() : '0';
             return html`
-                <div class="instrument-fields mt-6 border-t border-gray-100 pt-6">
-                    <div class="instrument-fields-grid">
-                        <div class="form-field">
-                            <label>Basis Value</label>
-                            <input type="number" class="width-full" name="basisValue"
+                <div class="mt-6 border-t border-gray-100 pt-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Basis Value</label>
+                            <input type="number" class="fin-input" name="basisValue"
                                 .value=${basisVal} step="0.01" placeholder="original cost" />
                         </div>
-                        <div class="form-field">
-                            <label>Annual Property Tax %</label>
-                            <input type="number" class="width-full" name="annualTaxRate"
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Annual Property Tax %</label>
+                            <input type="number" class="fin-input" name="annualTaxRate"
                                 .value=${taxRateVal} step="0.01" placeholder="annual %" />
                         </div>
                     </div>
