@@ -204,6 +204,7 @@ class AssetFormModal extends LitElement {
 
         if (InstrumentType.isHome(instrument)) {
             const basisVal = ma ? ma.basisCurrency.toHTML() : '0';
+            const taxRateVal = ma ? ma.annualTaxRate.toHTML() : '0';
             return html`
                 <div class="instrument-fields mt-6 border-t border-gray-100 pt-6">
                     <div class="instrument-fields-grid">
@@ -211,6 +212,11 @@ class AssetFormModal extends LitElement {
                             <label>Basis Value</label>
                             <input type="number" class="width-full" name="basisValue"
                                 .value=${basisVal} step="0.01" placeholder="original cost" />
+                        </div>
+                        <div class="form-field">
+                            <label>Annual Property Tax %</label>
+                            <input type="number" class="width-full" name="annualTaxRate"
+                                .value=${taxRateVal} step="0.01" placeholder="annual %" />
                         </div>
                     </div>
                 </div>

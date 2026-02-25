@@ -85,6 +85,9 @@ import './components/debug-report-view.js';
 // Simulator modal (Lit component)
 import './components/simulator-modal.js';
 
+// Share modal (Lit component)
+import './components/share-modal.js';
+
 // ─── DOM Element References ──────────────────────────────────
 
 const assetFormModal = document.getElementById('assetFormModal');
@@ -99,6 +102,7 @@ const spreadsheetElement = document.getElementById('spreadsheetElement');
 const creditMemosElement = document.getElementById('creditMemosElement');
 const debugReportsElement = document.getElementById('debugReportsElement');
 const transferModal = document.getElementById('transferModal');
+const shareModal = document.getElementById('shareModal');
 
 const tab1 = document.getElementById('tab1');
 const tab2 = document.getElementById('tab2');
@@ -197,6 +201,7 @@ function connectAssetFormModal() {
             editingModelAsset.annualDividendRate = newAsset.annualDividendRate;
             editingModelAsset.longTermCapitalGainRate = newAsset.longTermCapitalGainRate;
             editingModelAsset.isSelfEmployed = newAsset.isSelfEmployed;
+            editingModelAsset.annualTaxRate = newAsset.annualTaxRate;
             editingModelAsset = null;
         }
 
@@ -447,8 +452,22 @@ function doMaximize() {
 
 // ─── Popup Functions ─────────────────────────────────────────
 
-function shareData() {
-    document.getElementById('popupFormShare').style.display = 'block';
+function donateData() {
+    document.getElementById('popupFormDonate').style.display = 'block';
+}
+
+function openShareModal() {
+    shareModal.modelAssets = assetsContainerElement.modelAssets || [];
+    shareModal.portfolioName = activeStoryName || '';
+    shareModal.globalSettings = {
+        inflationRate: global_inflationRate,
+        taxYear: global_taxYear,
+        filingAs: global_filingAs,
+        startAge: global_user_startAge,
+        retirementAge: global_user_retirementAge,
+        finishAge: global_user_finishAge,
+    };
+    shareModal.open = true;
 }
 
 function showPopupTransfers(currentDisplayName) {
@@ -485,7 +504,8 @@ document.getElementById('btn-aplus-save').addEventListener('click', aplus_save);
 document.getElementById('btn-aplus-recall').addEventListener('click', aplus_recall);
 document.getElementById('btn-bplus-save').addEventListener('click', bplus_click);
 document.getElementById('btn-bplus-recall').addEventListener('click', bplus_recall);
-document.getElementById('btn-share').addEventListener('click', shareData);
+document.getElementById('btn-donate').addEventListener('click', donateData);
+document.getElementById('btn-share').addEventListener('click', openShareModal);
 document.getElementById('btn-add-asset').addEventListener('click', openCreateAssetModal);
 document.getElementById('btn-visualize').addEventListener('click', doVisualize);
 document.getElementById('btn-maximize').addEventListener('click', doMaximize);
@@ -546,16 +566,57 @@ function connectSettings() {
 
 // ─── Initialize ──────────────────────────────────────────────
 
+function loadSharedPortfolio() {
+    const params = new URLSearchParams(window.location.search);
+    const compressed = params.get('portfolio');
+    if (!compressed) return false;
+
+    try {
+        const json = LZString.decompressFromEncodedURIComponent(compressed);
+        if (!json) return false;
+        const data = JSON.parse(json);
+
+        // Apply global settings
+        if (data.settings) {
+            global_setInflationRate(data.settings.inflationRate);
+            global_setTaxYear(data.settings.taxYear);
+            global_setFilingAs(data.settings.filingAs);
+            global_setUserStartAge(data.settings.startAge);
+            global_setUserRetirementAge(data.settings.retirementAge);
+            global_setUserFinishAge(data.settings.finishAge);
+            setActiveTaxTable(new TaxTable());
+            syncGlobalsToSettings();
+        }
+
+        // Load assets
+        if (data.modelAssets) {
+            assetsContainerElement.modelAssets = membrane_rawDataToModelAssets(data.modelAssets);
+            calculate('assets');
+        }
+
+        // Clean URL without reloading
+        window.history.replaceState({}, '', window.location.pathname);
+        return true;
+    } catch (e) {
+        console.error('Failed to load shared portfolio:', e);
+        return false;
+    }
+}
+
 function initialize() {
     global_initialize();
     setActiveTaxTable(new TaxTable());
     syncGlobalsToSettings();
     connectSettings();
     populateMetricSelects();
-    initiateActiveData();
     connectAssetFormModal();
     connectTransferModal();
     connectAssetListEvents();
+
+    // Check for shared portfolio in URL first, otherwise load local data
+    if (!loadSharedPortfolio()) {
+        initiateActiveData();
+    }
 }
 
 // Modules are deferred — DOM is ready, no need for DOMContentLoaded

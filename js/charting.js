@@ -208,7 +208,7 @@ export function charting_buildModelAssetMetric(modelAsset, metricName) {
   
   let chartingMetricDataSet = JSON.parse(JSON.stringify(stackedBarChartDataSet));
   chartingMetricDataSet.label = modelAsset.displayName;
-  chartingMetricDataSet.data = modelAsset.getMetric(metricName).displayHistory;
+  chartingMetricDataSet.data = modelAsset.getDisplayHistory(metricName);
   return chartingMetricDataSet;
 
 }
@@ -312,7 +312,7 @@ export function charting_buildPortfolioRollup(portfolio, predefinedName, buildNe
     if (buildNewDataSet) {
       chartingAssetDataSet = JSON.parse(JSON.stringify(stackedBarChartDataSet));
       chartingAssetDataSet.label = modelAsset.displayName;
-      chartingAssetDataSet.data = modelAsset.getMetric(predefinedName).displayHistory;
+      chartingAssetDataSet.data = modelAsset.getDisplayHistory(predefinedName);
     }
     else
       chartingAssetDataSet = chartingAssetData.datasets[dataIndex];
@@ -478,7 +478,7 @@ export function charting_buildCashFlowDataSet(modelAssets, label, sign) {
     //else if (flowLineChartExclusions.includes(modelAsset.instrument))
     //  continue;
 
-    let displayHistoryData = modelAsset.getMetric(Metric.EARNING).displayHistory;
+    let displayHistoryData = modelAsset.getDisplayHistory(Metric.EARNING);
 
     for (let ii = 0; ii < displayHistoryData.length; ii++) {
 

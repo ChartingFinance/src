@@ -36,9 +36,14 @@ export const Metric = Object.freeze({
   ORDINARY_INCOME:              'ordinaryIncome',
   WORKING_INCOME:               'workingIncome', // subjct to FICA, Medicare, withholding
   INCOME:                       'income',
-  EXPENSE:                      'expense',
+  WITHHELD_FICA_TAX:            'withheldFicaTax',
+  ESTIMATED_FICA_TAX:           'estimatedFicaTax',
+  WITHHELD_INCOME_TAX:          'withheldIncomeTax',
+  ESTIMATED_INCOME_TAX:         'estimatedIncomeTax',
   ESTIMATED_TAX:                'estimatedTax',
   INCOME_TAX:                   'incomeTax',
+  NET_INCOME:                   'netIncome',
+  EXPENSE:                      'expense',
   EARNING:                      'earning',  
   EARNING_ACCUMULATED:          'earningAccumulated',
   SHORT_TERM_CAPITAL_GAIN:      'shortTermCapitalGain',
@@ -61,7 +66,6 @@ export const Metric = Object.freeze({
   LONG_TERM_CAPITAL_GAIN_TAX:   'longTermCapitalGainTax',
   CAPITAL_GAIN_TAX:             'capitalGainTax',
   CREDIT:                       'credit',
-  NET_INCOME:                   'netIncome',
 });
 
 const METRIC_NAMES = Object.values(Metric);
@@ -73,10 +77,15 @@ export const MetricLabel = Object.freeze({
   [Metric.INTEREST_INCOME]:             'Interest Income',
   [Metric.ORDINARY_INCOME]:             'Ordinary Income',
   [Metric.WORKING_INCOME]:              'Working Income',
-  [Metric.INCOME]:                      'Income',
-  [Metric.EXPENSE]:                     'Expense',
+  [Metric.INCOME]:                      'Income', // rolls up ordinary, interest, and working income (i.e. everything that is considered income for tax purposes)
+  [Metric.WITHHELD_FICA_TAX]:           'Withheld FICA / Medicare',
+  [Metric.ESTIMATED_FICA_TAX]:          'Estimated FICA / Medicare',
+  [Metric.WITHHELD_INCOME_TAX]:         'Estimated Income Tax',
+  [Metric.ESTIMATED_INCOME_TAX]:        'Withheld Tax',
   [Metric.ESTIMATED_TAX]:               'Estimated Tax',
   [Metric.INCOME_TAX]:                  'Income Tax',
+  [Metric.NET_INCOME]:                  'Net Income', // after withholding and estimated taxes
+  [Metric.EXPENSE]:                     'Expense',  
   [Metric.EARNING]:                     'Earning',
   [Metric.EARNING_ACCUMULATED]:         'Earning Accumulated',
   [Metric.SHORT_TERM_CAPITAL_GAIN]:     'Short Term Capital Gain',
@@ -88,8 +97,7 @@ export const MetricLabel = Object.freeze({
   [Metric.MORTGAGE_PAYMENT]:            'Mortgage Payment',
   [Metric.MORTGAGE_INTEREST]:           'Mortgage Interest',
   [Metric.MORTGAGE_PRINCIPAL]:          'Mortgage Principal',
-  [Metric.MORTGAGE_ESCROW]:             'Mortgage Escrow',
-  [Metric.ESTIMATED_TAX]:               'Estimated Tax',
+  [Metric.MORTGAGE_ESCROW]:             'Mortgage Escrow',  
   [Metric.TAXABLE_CONTRIBUTION]:        'Taxable Contribution',
   [Metric.IRA_CONTRIBUTION]:            'IRA Contribution',
   [Metric.FOUR_01K_CONTRIBUTION]:       '401K Contribution',
@@ -100,14 +108,15 @@ export const MetricLabel = Object.freeze({
   [Metric.LONG_TERM_CAPITAL_GAIN_TAX]:  'Long Term Capital Gain Tax',  // these are distriubtions from taxable accounts taxed as long term gains
   [Metric.CAPITAL_GAIN_TAX]:            'Capital Gains Tax',
   [Metric.CREDIT]:                      'Credit',
-  [Metric.NET_INCOME]:                  'Net Income',
 });
 
 // Metrics that should NOT be zeroed on monthly snapshot
-const KEEP_ON_SNAPSHOT = new Set([Metric.ACCUMULATED]);
+const KEEP_ON_SNAPSHOT = new Set([Metric.EARNING_ACCUMULATED]);
 
 
 export class ModelAsset {
+  #metrics;
+
   /**
    * @param {Object} opts
    * @param {string}        opts.instrument
@@ -133,6 +142,7 @@ export class ModelAsset {
     longTermCapitalGainRate = new ARR(0),
     fundTransfers = [],
     isSelfEmployed = false,
+    annualTaxRate = new ARR(0),
   }) {
     this.instrument      = instrument;
     this.displayName     = displayName;
@@ -146,6 +156,7 @@ export class ModelAsset {
     this.annualReturnRate = annualReturnRate;
     this.fundTransfers   = fundTransfers;
     this.isSelfEmployed  = isSelfEmployed;
+    this.annualTaxRate   = annualTaxRate;
 
     this.colorId       = 0;
     this.beforeStartDate = false;
@@ -157,7 +168,7 @@ export class ModelAsset {
     // Chronometer state
     this.finishCurrency = Currency.zero();
     this.monthsRemainingDynamic = this.monthsRemaining;
-    this.metrics = new MetricSet(METRIC_NAMES);
+    this.#metrics = new MetricSet(METRIC_NAMES);
   }
 
   // ── Factories ────────────────────────────────────────────────────
@@ -180,6 +191,7 @@ export class ModelAsset {
       longTermCapitalGainRate: new ARR(obj.longTermCapitalGainRate?.annualReturnRate ?? obj.longTermCapitalGainRate?.rate ?? 0),
       fundTransfers:   (obj.fundTransfers ?? []).map(FundTransfer.fromJSON),
       isSelfEmployed:  obj.isSelfEmployed ?? false,
+      annualTaxRate:   new ARR(obj.annualTaxRate?.annualReturnRate ?? obj.annualTaxRate?.rate ?? 0),
     });
   }
 
@@ -213,6 +225,7 @@ export class ModelAsset {
       isSelfEmployed: vals.isSelfEmployed?.type === 'checkbox'
         ? vals.isSelfEmployed.checked
         : vals.isSelfEmployed?.value === 'true',
+      annualTaxRate: vals.annualTaxRate ? ARR.parse(vals.annualTaxRate.value) : new ARR(0),
     });
 
     // Restore color
@@ -224,18 +237,11 @@ export class ModelAsset {
     return asset;
   }
 
-  // ── Metric access (replaces 15 identical addMonthlyXxx methods) ──
-
-  getMetrics() {
-    return this.metrics;
-  }
-
-  getMetric(name) {
-    return this.metrics.get(name);
-  }
+  // ── Metric access ───────────────────────────────────────────────
 
   /**
    * Add an amount to any tracked metric.
+   * Handles automatic rollup to aggregate metrics (e.g. capital gains → income).
    * @param {string} metricName
    * @param {Currency} amount
    * @returns {Currency} current accumulated value
@@ -243,83 +249,179 @@ export class ModelAsset {
   addToMetric(metricName, amount) {
 
     if (metricName == Metric.SHORT_TERM_CAPITAL_GAIN || metricName == Metric.LONG_TERM_CAPITAL_GAIN) {
-      // automatically apply capital gain tax when adding to capital gain metrics
-      this.metrics.get(Metric.CAPITAL_GAIN).add(amount);
-      this.metrics.get(Metric.INCOME).add(amount);
+      this.#metrics.get(Metric.CAPITAL_GAIN).add(amount);
+      this.#metrics.get(Metric.INCOME).add(amount);
     }
 
     if (metricName == Metric.SHORT_TERM_CAPITAL_GAIN_TAX || metricName == Metric.LONG_TERM_CAPITAL_GAIN_TAX) {
-      // automatically apply capital gain tax when adding to capital gain metrics
-      this.metrics.get(Metric.CAPITAL_GAIN_TAX).add(amount);
-      this.metrics.get(Metric.INCOME_TAX).add(amount);
-    }
-
-    if (metricName == Metric.CAPITAL_GAIN || metricName == Metric.CAPITAL_GAIN_TAX) { 
-      debugger;
+      this.#metrics.get(Metric.CAPITAL_GAIN_TAX).add(amount);
+      this.#metrics.get(Metric.INCOME_TAX).add(amount);
     }
 
     if (metricName == Metric.ORDINARY_INCOME || metricName == Metric.INTEREST_INCOME || metricName == Metric.WORKING_INCOME) {
-      // if adding to ordinary income, also add to income (which is what tax calculations are based on)
-      this.metrics.get(Metric.INCOME).add(amount);
+      this.#metrics.get(Metric.INCOME).add(amount);
     }
 
-    return this.metrics.get(metricName).add(amount);
+    return this.#metrics.get(metricName).add(amount);
   }
 
-  /** Convenience aliases for the most commonly accessed metrics */
-  get valueCurrency()   { return this.metrics.get(Metric.VALUE).current; }
-  set valueCurrency(c)  { this.metrics.get(Metric.VALUE).current = c; }
+  /** Iterate over all tracked metrics (used by display-data builders). */
+  [Symbol.iterator]() {
+    return this.#metrics[Symbol.iterator]();
+  }
 
-  get growthCurrency()   { return this.metrics.get(Metric.GROWTH).current; }
-  set growthCurrency(c)  { this.metrics.get(Metric.GROWTH).current = c; }
+  /** Get the display-aligned history array for a named metric. */
+  getDisplayHistory(metricName) {
+    return this.#metrics.get(metricName).displayHistory;
+  }
 
-  get dividendCurrency()   { return this.metrics.get(Metric.DIVIDEND).current; }
-  set dividendCurrency(c)  { this.metrics.get(Metric.DIVIDEND).current = c; }
+  /** Build display histories for all metrics at once. */
+  buildAllDisplayHistories(monthsSpan) {
+    for (let metric of this.#metrics) {
+      metric.buildDisplayHistory(monthsSpan);
+    }
+  }
 
-  get shortTermCapitalGainCurrency()   { return this.metrics.get(Metric.SHORT_TERM_CAPITAL_GAIN).current; } 
-  set shortTermCapitalGainCurrency(c)  { this.metrics.get(Metric.SHORT_TERM_CAPITAL_GAIN).current = c; }  
+  // ── Currency get/set properties (current accumulator) ─────────
 
-  get longTermCapitalGainCurrency()   { return this.metrics.get(Metric.LONG_TERM_CAPITAL_GAIN).current; } 
-  set longTermCapitalGainCurrency(c)  { this.metrics.get(Metric.LONG_TERM_CAPITAL_GAIN).current = c; }  
+  get valueCurrency()   { return this.#metrics.get(Metric.VALUE).current; }
+  set valueCurrency(c)  { this.#metrics.get(Metric.VALUE).current = c; }
 
-  get incomeCurrency()    { return this.metrics.get(Metric.INCOME).current; }
-  set incomeCurrency(c)   { this.metrics.get(Metric.INCOME).current = c; }
+  get growthCurrency()   { return this.#metrics.get(Metric.GROWTH).current; }
+  set growthCurrency(c)  { this.#metrics.get(Metric.GROWTH).current = c; }
 
-  get expenseCurrency()   { return this.metrics.get(Metric.EXPENSE).current; }
-  set expenseCurrency(c)  { this.metrics.get(Metric.EXPENSE).current = c; }
+  get dividendCurrency()   { return this.#metrics.get(Metric.DIVIDEND).current; }
+  set dividendCurrency(c)  { this.#metrics.get(Metric.DIVIDEND).current = c; }
 
-  get earningCurrency()   { return this.metrics.get(Metric.EARNING).current; }
-  set earningCurrency(c)  { this.metrics.get(Metric.EARNING).current = c; }
+  get interestIncomeCurrency()   { return this.#metrics.get(Metric.INTEREST_INCOME).current; }
+  set interestIncomeCurrency(c)  { this.#metrics.get(Metric.INTEREST_INCOME).current = c; }
 
-  get creditCurrency()    { return this.metrics.get(Metric.CREDIT).current; }
-  set creditCurrency(c)   { this.metrics.get(Metric.CREDIT).current = c; }
+  get ordinaryIncomeCurrency()   { return this.#metrics.get(Metric.ORDINARY_INCOME).current; }
+  set ordinaryIncomeCurrency(c)  { this.#metrics.get(Metric.ORDINARY_INCOME).current = c; }
 
-  get netIncomeCurrency()    { return this.metrics.get(Metric.NET_INCOME).current; }
-  set netIncomeCurrency(c)   { this.metrics.get(Metric.NET_INCOME).current = c; }
+  get workingIncomeCurrency()   { return this.#metrics.get(Metric.WORKING_INCOME).current; }
+  set workingIncomeCurrency(c)  { this.#metrics.get(Metric.WORKING_INCOME).current = c; }
 
-  get accumulatedCurrency()    { return this.metrics.get(Metric.EARNING_ACCUMULATED).current; }
-  set accumulatedCurrency(c)   { this.metrics.get(Metric.EARNING_ACCUMULATED).current = c; }
+  get incomeCurrency()    { return this.#metrics.get(Metric.INCOME).current; }
+  set incomeCurrency(c)   { this.#metrics.get(Metric.INCOME).current = c; }
 
-  get shortTermCapitalGainTaxCurrency()   { return this.metrics.get(Metric.SHORT_TERM_CAPITAL_GAIN_TAX).current; } 
-  set shortTermCapitalGainTaxCurrency(c)  { this.metrics.get(Metric.SHORT_TERM_CAPITAL_GAIN_TAX).current = c; }  
+  get expenseCurrency()   { return this.#metrics.get(Metric.EXPENSE).current; }
+  set expenseCurrency(c)  { this.#metrics.get(Metric.EXPENSE).current = c; }
 
-  get longTermCapitalGainTaxCurrency()   { return this.metrics.get(Metric.LONG_TERM_CAPITAL_GAIN_TAX).current; } 
-  set longTermCapitalGainTaxCurrency(c)  { this.metrics.get(Metric.LONG_TERM_CAPITAL_GAIN_TAX).current = c; }  
+  get earningCurrency()   { return this.#metrics.get(Metric.EARNING).current; }
+  set earningCurrency(c)  { this.#metrics.get(Metric.EARNING).current = c; }
 
-  get incomeTaxCurrency()    { return this.metrics.get(Metric.INCOME_TAX).current; }  
-  set incomeTaxCurrency(c)   { this.metrics.get(Metric.INCOME_TAX).current = c; }
+  get creditCurrency()    { return this.#metrics.get(Metric.CREDIT).current; }
+  set creditCurrency(c)   { this.#metrics.get(Metric.CREDIT).current = c; }
 
-  get rmdCurrency()                 { return this.metrics.get(Metric.RMD).current; }
-  get iraDistributionCurrency()     { return this.metrics.get(Metric.IRA_DISTRIBUTION).current; }
-  get four01KDistributionCurrency() { return this.metrics.get(Metric.FOUR_01K_DISTRIBUTION).current; }
+  get netIncomeCurrency()    { return this.#metrics.get(Metric.NET_INCOME).current; }
+  set netIncomeCurrency(c)   { this.#metrics.get(Metric.NET_INCOME).current = c; }
 
-  // Shorthand for history arrays (backwards compat with charting code)
-  get monthlyValues()     { return this.metrics.get(Metric.VALUE).history; }
-  get monthlyGrowths()    { return this.metrics.get(Metric.GROWTH).history; }
-  get monthlyDividends() { return this.metrics.get(Metric.DIVIDEND).history; }
-  get monthlyIncomes()    { return this.metrics.get(Metric.INCOME).history; }
-  get monthlyEarnings()   { return this.metrics.get(Metric.EARNING).history; }
-  get monthlyTaxes()      { return this.metrics.get(Metric.INCOME_TAX).history; }
+  get accumulatedCurrency()    { return this.#metrics.get(Metric.EARNING_ACCUMULATED).current; }
+  set accumulatedCurrency(c)   { this.#metrics.get(Metric.EARNING_ACCUMULATED).current = c; }
+
+  get shortTermCapitalGainCurrency()   { return this.#metrics.get(Metric.SHORT_TERM_CAPITAL_GAIN).current; }
+  set shortTermCapitalGainCurrency(c)  { this.#metrics.get(Metric.SHORT_TERM_CAPITAL_GAIN).current = c; }
+
+  get longTermCapitalGainCurrency()   { return this.#metrics.get(Metric.LONG_TERM_CAPITAL_GAIN).current; }
+  set longTermCapitalGainCurrency(c)  { this.#metrics.get(Metric.LONG_TERM_CAPITAL_GAIN).current = c; }
+
+  get capitalGainCurrency()   { return this.#metrics.get(Metric.CAPITAL_GAIN).current; }
+  set capitalGainCurrency(c)  { this.#metrics.get(Metric.CAPITAL_GAIN).current = c; }
+
+  get rmdCurrency()   { return this.#metrics.get(Metric.RMD).current; }
+  set rmdCurrency(c)  { this.#metrics.get(Metric.RMD).current = c; }
+
+  get socialSecurityCurrency()   { return this.#metrics.get(Metric.SOCIAL_SECURITY).current; }
+  set socialSecurityCurrency(c)  { this.#metrics.get(Metric.SOCIAL_SECURITY).current = c; }
+
+  get medicareCurrency()   { return this.#metrics.get(Metric.MEDICARE).current; }
+  set medicareCurrency(c)  { this.#metrics.get(Metric.MEDICARE).current = c; }
+
+  get withheldFicaTaxCurrency()   { return this.#metrics.get(Metric.WITHHELD_FICA_TAX).current; }
+  set withheldFicaTaxCurrency(c)  { this.#metrics.get(Metric.WITHHELD_FICA_TAX).current = c; }
+
+  get estimatedFicaTaxCurrency()   { return this.#metrics.get(Metric.ESTIMATED_FICA_TAX).current; }
+  set estimatedFicaTaxCurrency(c)  { this.#metrics.get(Metric.ESTIMATED_FICA_TAX).current = c; }
+
+  get withheldIncomeTaxCurrency()   { return this.#metrics.get(Metric.WITHHELD_INCOME_TAX).current; }
+  set withheldIncomeTaxCurrency(c)  { this.#metrics.get(Metric.WITHHELD_INCOME_TAX).current = c; }
+
+  get estimatedIncomeTaxCurrency()    { return this.#metrics.get(Metric.ESTIMATED_INCOME_TAX).current; }
+  set estimatedIncomeTaxCurrency(c)   { this.#metrics.get(Metric.ESTIMATED_INCOME_TAX).current = c; }
+
+  get estimatedTaxCurrency()   { return this.#metrics.get(Metric.ESTIMATED_TAX).current; }
+  set estimatedTaxCurrency(c)  { this.#metrics.get(Metric.ESTIMATED_TAX).current = c; }
+
+  get incomeTaxCurrency()    { return this.#metrics.get(Metric.INCOME_TAX).current; }
+  set incomeTaxCurrency(c)   { this.#metrics.get(Metric.INCOME_TAX).current = c; }
+
+  get shortTermCapitalGainTaxCurrency()   { return this.#metrics.get(Metric.SHORT_TERM_CAPITAL_GAIN_TAX).current; }
+  set shortTermCapitalGainTaxCurrency(c)  { this.#metrics.get(Metric.SHORT_TERM_CAPITAL_GAIN_TAX).current = c; }
+
+  get longTermCapitalGainTaxCurrency()   { return this.#metrics.get(Metric.LONG_TERM_CAPITAL_GAIN_TAX).current; }
+  set longTermCapitalGainTaxCurrency(c)  { this.#metrics.get(Metric.LONG_TERM_CAPITAL_GAIN_TAX).current = c; }
+
+  get capitalGainTaxCurrency()   { return this.#metrics.get(Metric.CAPITAL_GAIN_TAX).current; }
+  set capitalGainTaxCurrency(c)  { this.#metrics.get(Metric.CAPITAL_GAIN_TAX).current = c; }
+
+  get mortgagePaymentCurrency()   { return this.#metrics.get(Metric.MORTGAGE_PAYMENT).current; }
+  set mortgagePaymentCurrency(c)  { this.#metrics.get(Metric.MORTGAGE_PAYMENT).current = c; }
+
+  get mortgageInterestCurrency()   { return this.#metrics.get(Metric.MORTGAGE_INTEREST).current; }
+  set mortgageInterestCurrency(c)  { this.#metrics.get(Metric.MORTGAGE_INTEREST).current = c; }
+
+  get mortgagePrincipalCurrency()   { return this.#metrics.get(Metric.MORTGAGE_PRINCIPAL).current; }
+  set mortgagePrincipalCurrency(c)  { this.#metrics.get(Metric.MORTGAGE_PRINCIPAL).current = c; }
+
+  get mortgageEscrowCurrency()   { return this.#metrics.get(Metric.MORTGAGE_ESCROW).current; }
+  set mortgageEscrowCurrency(c)  { this.#metrics.get(Metric.MORTGAGE_ESCROW).current = c; }
+
+  get taxableContributionCurrency()   { return this.#metrics.get(Metric.TAXABLE_CONTRIBUTION).current; }
+  set taxableContributionCurrency(c)  { this.#metrics.get(Metric.TAXABLE_CONTRIBUTION).current = c; }
+
+  get iraContributionCurrency()   { return this.#metrics.get(Metric.IRA_CONTRIBUTION).current; }
+  set iraContributionCurrency(c)  { this.#metrics.get(Metric.IRA_CONTRIBUTION).current = c; }
+
+  get four01KContributionCurrency()   { return this.#metrics.get(Metric.FOUR_01K_CONTRIBUTION).current; }
+  set four01KContributionCurrency(c)  { this.#metrics.get(Metric.FOUR_01K_CONTRIBUTION).current = c; }
+
+  get iraDistributionCurrency()   { return this.#metrics.get(Metric.IRA_DISTRIBUTION).current; }
+  set iraDistributionCurrency(c)  { this.#metrics.get(Metric.IRA_DISTRIBUTION).current = c; }
+
+  get four01KDistributionCurrency()   { return this.#metrics.get(Metric.FOUR_01K_DISTRIBUTION).current; }
+  set four01KDistributionCurrency(c)  { this.#metrics.get(Metric.FOUR_01K_DISTRIBUTION).current = c; }
+
+  get taxableDistributionCurrency()   { return this.#metrics.get(Metric.TAXABLE_DISTRIBUTION).current; }
+  set taxableDistributionCurrency(c)  { this.#metrics.get(Metric.TAXABLE_DISTRIBUTION).current = c; }
+
+  // ── History array getters (for spreadsheet-view and charting) ──
+
+  get monthlyValues()                { return this.#metrics.get(Metric.VALUE).history; }
+  get monthlyGrowths()               { return this.#metrics.get(Metric.GROWTH).history; }
+  get monthlyDividends()             { return this.#metrics.get(Metric.DIVIDEND).history; }
+  get monthlyIncomes()               { return this.#metrics.get(Metric.INCOME).history; }
+  get monthlyEarnings()              { return this.#metrics.get(Metric.EARNING).history; }
+  get monthlyTaxes()                 { return this.#metrics.get(Metric.INCOME_TAX).history; }
+  get monthlyAccumulateds()          { return this.#metrics.get(Metric.EARNING_ACCUMULATED).history; }
+  get monthlyShortTermCapitalGains() { return this.#metrics.get(Metric.SHORT_TERM_CAPITAL_GAIN).history; }
+  get monthlyLongTermCapitalGains()  { return this.#metrics.get(Metric.LONG_TERM_CAPITAL_GAIN).history; }
+  get monthlyRMDs()                  { return this.#metrics.get(Metric.RMD).history; }
+  get monthlySocialSecurities()      { return this.#metrics.get(Metric.SOCIAL_SECURITY).history; }
+  get monthlyMedicares()             { return this.#metrics.get(Metric.MEDICARE).history; }
+  get monthlyIncomeTaxes()           { return this.#metrics.get(Metric.INCOME_TAX).history; }
+  get monthlyMortgagePayments()      { return this.#metrics.get(Metric.MORTGAGE_PAYMENT).history; }
+  get monthlyMortgageInterests()     { return this.#metrics.get(Metric.MORTGAGE_INTEREST).history; }
+  get monthlyMortgagePrincipals()    { return this.#metrics.get(Metric.MORTGAGE_PRINCIPAL).history; }
+  get monthlyMortgageEscrows()       { return this.#metrics.get(Metric.MORTGAGE_ESCROW).history; }
+  get monthlyEstimatedTaxes()        { return this.#metrics.get(Metric.ESTIMATED_INCOME_TAX).history; }
+  get monthlyIRAContributions()      { return this.#metrics.get(Metric.IRA_CONTRIBUTION).history; }
+  get monthlyFour01KContributions()  { return this.#metrics.get(Metric.FOUR_01K_CONTRIBUTION).history; }
+  get monthlyIRADistributions()      { return this.#metrics.get(Metric.IRA_DISTRIBUTION).history; }
+  get monthlyFour01KDistributions()  { return this.#metrics.get(Metric.FOUR_01K_DISTRIBUTION).history; }
+  get monthlyInterestIncomes()       { return this.#metrics.get(Metric.INTEREST_INCOME).history; }
+  get monthlyCapitalGainsTaxes()     { return this.#metrics.get(Metric.CAPITAL_GAIN_TAX).history; }
+  get monthlyCredits()               { return this.#metrics.get(Metric.CREDIT).history; }
 
 
   // ── Chronometer lifecycle ────────────────────────────────────────
@@ -335,7 +437,7 @@ export class ModelAsset {
     this.isClosed = false;
     this.creditMemos = [];
     this.creditMemosCheckedIndex = 0;
-    this.metrics.initializeAll();
+    this.#metrics.initializeAll();
 
   }
 
@@ -382,7 +484,7 @@ export class ModelAsset {
   monthlyChron() {   
 
     // value and accumulated are special: add finishValue and earnings, then snapshot WITHOUT zeroing
-    this.metrics.get(Metric.EARNING_ACCUMULATED).add(this.earningCurrency);
+    this.#metrics.get(Metric.EARNING_ACCUMULATED).add(this.earningCurrency);
 
     /* Was thinking of reconciling credit here, but it makes more sense to do it at the end of the month after all monthly changes have been applied, so that the metric history reflects the true "credit" activity rather than an artificial netting of credit against value changes. Keeping this code here as a reminder that credit reconciliation still needs to happen somewhere.
     // Reconcile credit buffer
@@ -392,10 +494,10 @@ export class ModelAsset {
     }
     */
 
-    this.metrics.get(Metric.VALUE).add(this.finishCurrency);
+    this.#metrics.get(Metric.VALUE).add(this.finishCurrency);
 
     // Snapshot all metrics (zero after, except 'accumulated')
-    this.metrics.snapshotAll(KEEP_ON_SNAPSHOT);
+    this.#metrics.snapshotAll(KEEP_ON_SNAPSHOT);
 
   }
 
@@ -737,7 +839,7 @@ applyMonthlyExpense() {
 
   buildDisplayData(monthsSpan, metricName, outputArrayName) {
 
-    const source = this.metrics.get(metricName).history;
+    const source = this.#metrics.get(metricName).history;
 
     this[outputArrayName] = [];
     for (let i = monthsSpan.offsetMonths; i < source.length; i += monthsSpan.combineMonths) {
@@ -783,6 +885,7 @@ applyMonthlyExpense() {
       longTermCapitalGainRate: this.longTermCapitalGainRate,
       fundTransfers:   this.fundTransfers.map(ft => ft.copy()),
       isSelfEmployed:  this.isSelfEmployed,
+      annualTaxRate:   this.annualTaxRate,
     });
     clone.finishCurrency = this.finishCurrency.copy();
     clone.colorId = this.colorId;

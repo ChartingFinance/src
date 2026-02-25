@@ -710,17 +710,17 @@ export class Portfolio {
 
     applyFirstDayOfMonth(currentDateInt) {
 
-        // let the model assets know its the first day of the month.
-        for (let modelAsset of this.modelAssets) {
-            modelAsset.applyFirstDayOfMonth(currentDateInt);
-        }
-
         // close assets that are now past their finish date
         for (let modelAsset of this.modelAssets) {
             if (modelAsset.afterFinishDate && !modelAsset.isClosed) {
                 this.closeAsset(modelAsset);
             }
         }
+
+        // let the model assets know its the first day of the month.
+        for (let modelAsset of this.modelAssets) {
+            modelAsset.applyFirstDayOfMonth(currentDateInt);
+        }        
 
         // recognize priority calculations (income, mortgages, taxableEquity, taxDeferredEquity)
         for (let modelAsset of this.modelAssets) {
@@ -795,7 +795,9 @@ export class Portfolio {
             // we do have property taxes
             let propertyTaxes = activeTaxTable.calculateMonthlyPropertyTaxDeduction(null, modelAsset);
             this.monthly.propertyTaxes.subtract(propertyTaxes);
-            modelAsset.creditMemos.push(new CreditMemo(propertyTaxes.copy().flipSign(), 'Property taxes', currentDateInt));
+
+            // TODO: If there is a fund transfer for this mortgage, that will handle any credit memo. Otherwise assume the user has rolled costs into expenses
+            //modelAsset.creditMemos.push(new CreditMemo(propertyTaxes.copy().flipSign(), 'Property taxes', currentDateInt));
         }
         else if (InstrumentType.isMonthlyIncome(modelAsset.instrument)) {
             if (!InstrumentType.isSocialSecurity(modelAsset.instrument)) {                
@@ -819,20 +821,20 @@ export class Portfolio {
         let netIncome = modelAsset.incomeCurrency.copy();
 
         // subtract per-asset FICA (Social Security + Medicare, stored as negative values on model asset)
-        let socialSecurity = modelAsset.getMetric(Metric.SOCIAL_SECURITY).current;
-        let medicare = modelAsset.getMetric(Metric.MEDICARE).current;
+        let socialSecurity = modelAsset.socialSecurityCurrency;
+        let medicare = modelAsset.medicareCurrency;
         netIncome.add(socialSecurity); // negative, so add subtracts
         netIncome.add(medicare);
 
         // subtract pre-tax 401K contributions (per-asset)
-        let four01KContribution = modelAsset.getMetric(Metric.FOUR_01K_CONTRIBUTION).current;
+        let four01KContribution = modelAsset.four01KContributionCurrency;
         if (four01KContribution.amount > 0) {
             netIncome.subtract(four01KContribution);
         }
 
         // subtract IRA contributions (per-asset, includes both traditional and Roth)
         // all contributions reduce take-home pay regardless of tax treatment
-        let iraContribution = modelAsset.getMetric(Metric.IRA_CONTRIBUTION).current;
+        let iraContribution = modelAsset.iraContributionCurrency;
         if (iraContribution.amount > 0) {
             netIncome.subtract(iraContribution);
         }
@@ -847,11 +849,12 @@ export class Portfolio {
         let yearlyTaxableIncome = activeTaxTable.calculateYearlyTaxableIncome(yearlyEstimate);
         let estimatedMonthlyIncomeTax = activeTaxTable.calculateYearlyIncomeTax(yearlyTaxableIncome);
         estimatedMonthlyIncomeTax.divide(12.0);
+        modelAsset.estimatedMonthlyIncomeTax = estimatedMonthlyIncomeTax;
+        modelAsset.addToMetric(Metric.ESTIMATED_INCOME_TAX, estimatedMonthlyIncomeTax);
+
 
         netIncome.subtract(estimatedMonthlyIncomeTax);
-
-        modelAsset.netIncomeCurrency = netIncome;
-        modelAsset.addToMetric(Metric.NET_INCOME, netIncome);
+        modelAsset.netIncomeCurrency = netIncome;        
 
         logger.log(LogCategory.TRANSFER, `computeNetIncome: ${modelAsset.displayName} gross=${modelAsset.incomeCurrency.toString()} net=${netIncome.toString()}`);
     }
@@ -1305,13 +1308,7 @@ applyAssetCloseFundTransfers(modelAsset) {
     }
 
     modelMetricsToDisplayData(monthsSpan, modelAsset) {
-        
-        for (let metric of modelAsset.getMetrics()) {
-
-            metric.buildDisplayHistory(monthsSpan);            
-            
-        }    
-
+        modelAsset.buildAllDisplayHistories(monthsSpan);
     }
 
     buildChartingDisplayData() {

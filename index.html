@@ -32,6 +32,9 @@
     }
     </script>
 
+    <!-- Compression for URL sharing -->
+    <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
+
     <!-- JS Logic -->
     <script type="module" src="js/app.js"></script>
 
@@ -102,8 +105,8 @@
 </head>
 <body class="min-h-screen p-4 sm:p-8 max-w-[1400px] mx-auto">
 
-    <!-- ═══ Popup: Share / Coffee ═══ -->
-    <div id="popupFormShare" class="popup fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+    <!-- ═══ Popup: Donate / Coffee ═══ -->
+    <div id="popupFormDonate" class="popup fixed inset-0 z-50 hidden flex items-center justify-center p-4">
         <div class="popup-content glass-card p-8 w-full max-w-md relative text-center">
             <button class="closeBtn absolute top-4 right-4 text-gray-400 hover:text-gray-800 text-2xl">&times;</button>
             <div class="text-4xl mb-4">☕</div>
@@ -131,6 +134,9 @@
     <!-- ═══ Asset Form Modal (Lit component handles both create & edit) ═══ -->
     <asset-form-modal id="assetFormModal"></asset-form-modal>
 
+    <!-- ═══ Share Modal (Lit component) ═══ -->
+    <share-modal id="shareModal"></share-modal>
+
     <!-- ═══ Header ═══ -->
     <header class="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4 pb-6 border-b border-gray-200">
         <div>
@@ -146,6 +152,7 @@
                 <button class="btn-modern outline small bg-white" id="btn-bplus-save" title="Save current cards to the B slot">B+</button>
                 <button class="btn-modern outline small bg-white" id="btn-bplus-recall" title="Recall cards from the B slot">BR</button>
             </div>
+            <button class="btn-modern outline" id="btn-donate">Donate ☕</button>
             <button class="btn-modern outline" id="btn-share">Share 📤</button>
             <button class="btn-modern primary" id="btn-calculate">Recalculate ⚡</button>
         </div>

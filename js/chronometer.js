@@ -24,7 +24,8 @@ export async function chronometer_run(summaryContainerElement, portfolio) {
     portfolio.initializeChron();
 
     let currentDateInt = new DateInt(portfolio.firstDateInt.toInt());
-    while (currentDateInt.toInt() <= portfolio.lastDateInt.toInt()) {
+    let lastDateInt = new DateInt(portfolio.lastDateInt.toInt());
+    while (currentDateInt.toInt() <= lastDateInt.toInt()) {
 
         totalMonths += portfolio.applyMonth(currentDateInt);
         currentDateInt.next();
@@ -75,7 +76,8 @@ export async function chronometer_run_animated(portfolio, visualizerContainerId)
     const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
     let currentDateInt = new DateInt(portfolio.firstDateInt.toInt());
-    while (currentDateInt.toInt() <= portfolio.lastDateInt.toInt()) {
+    let lastDateInt = new DateInt(portfolio.lastDateInt.toInt());
+    while (currentDateInt.toInt() <= lastDateInt.toInt()) {
         
         // Break out of the loop if the popup was closed
         const container = document.getElementById(visualizerContainerId);
