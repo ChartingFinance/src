@@ -37,6 +37,7 @@ export class HydraulicVisualizer {
         this.svg.style.height = '100%';
 
         this._injectDefs();
+        this.nodes = graphLayout.nodes;
         this._calculateLayout(graphLayout.nodes);
 
         // Group to hold pipes (drawn first so they are behind nodes)
@@ -212,19 +213,6 @@ export class HydraulicVisualizer {
         
         // Save references for the update loop
         this.nodesMap.set(node.id, { waterRect, valText });
-    }
-
-    _drawEdge(edge, group) {
-        // Find source and target nodes to get coordinates
-        const srcNode = Array.from(this.nodesMap.keys()).map(k => this._findNodeLayout(k)); // Need to pass nodes array to class or find another way
-        // Let's attach x, y directly to the edge object in the mapper, or search the DOM.
-        // For simplicity, we assume graphLayout.nodes is available in this scope.
-    }
-    
-    // Helper to find layout coords
-    _getCoords(nodeId, nodes) {
-        const n = nodes.find(n => n.id === nodeId);
-        return n ? { x: n.x, y: n.y } : { x: 0, y: 0 };
     }
 
     _drawEdge(edge, group) {

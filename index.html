@@ -114,6 +114,17 @@
         </div>
     </div>
 
+    <!-- ═══ Popup: Visualize ═══ -->
+    <div id="popupFormVisualize" class="popup fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+        <div class="popup-content glass-card p-8 w-full max-w-5xl relative">
+            <button class="closeBtn absolute top-4 right-4 text-gray-400 hover:text-gray-800 text-2xl">&times;</button>
+            <h2 class="text-2xl font-bold tracking-tight mb-4 text-center">Financial Flow</h2>
+            
+            <div id="hydraulic-container" style="width: 100%; height: 600px; background: #1e1e2e; border-radius: 12px; overflow: hidden;"></div>
+            
+        </div>
+    </div>
+
     <!-- ═══ Transfer Modal (Lit component) ═══ -->
     <transfer-modal id="transferModal"></transfer-modal>
 
@@ -240,8 +251,11 @@
 
     </div>
 
-    <!-- ═══ Simulator ═══ -->
-    <div class="flex justify-center mb-8">
+    <!-- ═══ Visualizer and Simulator ═══ -->
+    <div class="flex justify-center mb-8 gap-4">
+        <button class="btn-modern outline rounded-full px-8 py-3 shadow-sm hover:shadow-md" id="btn-visualize">
+            🚰 Visualize
+        </button>
         <button class="btn-modern outline rounded-full px-8 py-3 shadow-sm hover:shadow-md" id="btn-maximize">
             🔮 Maximize
         </button>

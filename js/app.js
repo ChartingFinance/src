@@ -12,7 +12,7 @@ import { Metric, MetricLabel } from './model-asset.js';
 
 
 // Chronometer and summary
-import { chronometer_run } from './chronometer.js';
+import { chronometer_run, chronometer_run_animated } from './chronometer.js';
 
 // Membrane (model conversion)
 import { membrane_rawDataToModelAssets } from './membrane.js';
@@ -414,6 +414,30 @@ function loadLocalData() {
     calculate('assets');
 }
 
+// ─── Visualizer ──────────────────────────────────────────────
+
+let isVisualizing = false;
+
+async function doVisualize() {
+    if (isVisualizing) return;
+    isVisualizing = true;
+
+    const popup = document.getElementById('popupFormVisualize');
+    popup.classList.remove('hidden');
+    popup.style.display = 'flex'; // Force display to override Tailwind hidden
+
+    let modelAssets = assetsContainerElement.modelAssets || [];
+    
+    // Crucial: We create a throwaway copy of the portfolio so the animation 
+    // doesn't pollute your real ledger / charts while it runs!
+    let portfolio = new Portfolio(modelAssets, false);
+
+    // Launch the animation loop
+    await chronometer_run_animated(portfolio, 'hydraulic-container');
+    
+    isVisualizing = false;
+}
+
 // ─── Simulation ──────────────────────────────────────────────
 
 function doMaximize() {
@@ -468,6 +492,7 @@ document.getElementById('btn-bplus-save').addEventListener('click', bplus_click)
 document.getElementById('btn-bplus-recall').addEventListener('click', bplus_recall);
 document.getElementById('btn-share').addEventListener('click', shareData);
 document.getElementById('btn-add-asset').addEventListener('click', openCreateAssetModal);
+document.getElementById('btn-visualize').addEventListener('click', doVisualize);
 document.getElementById('btn-maximize').addEventListener('click', doMaximize);
 document.getElementById('btn-debug').addEventListener('click', toggleDebugPanel);
 

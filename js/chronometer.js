@@ -20,25 +20,13 @@ export async function chronometer_run(summaryContainerElement, portfolio) {
     }
 
     let totalMonths = 0;
-
     activeTaxTable.initializeChron();
     portfolio.initializeChron();
-
-    const visualizer = new HydraulicVisualizer('your-svg-container-id');
-    const graphLayout = GraphMapper.buildGraph(portfolio);
-    visualizer.init(graphLayout);
 
     let currentDateInt = new DateInt(portfolio.firstDateInt.toInt());
     while (currentDateInt.toInt() <= portfolio.lastDateInt.toInt()) {
 
         totalMonths += portfolio.applyMonth(currentDateInt);
-
-        GraphMapper.calculateFlows(portfolio, currentDateInt, graphLayout.edges);
-        visualizer.update(graphLayout, portfolio);
-
-        // Add a slight delay here if you want to watch the animation run in real-time
-        await new Promise(resolve => setTimeout(resolve, 100));
-
         currentDateInt.next();
 
         if (currentDateInt.day == 1) {
@@ -64,6 +52,51 @@ export async function chronometer_run(summaryContainerElement, portfolio) {
     portfolio.finalizeChron();
     activeTaxTable.finalizeChron();
 
+}
+
+export async function chronometer_run_animated(portfolio, visualizerContainerId) {
+    if (portfolio.modelAssets == null || portfolio.modelAssets.length == 0) return;
+
+    let totalMonths = 0;
+    activeTaxTable.initializeChron();
+    portfolio.initializeChron();
+
+    const visualizer = new HydraulicVisualizer(visualizerContainerId);
+    const graphLayout = GraphMapper.buildGraph(portfolio);
+    visualizer.init(graphLayout);
+
+    let currentDateInt = new DateInt(portfolio.firstDateInt.toInt());
+    while (currentDateInt.toInt() <= portfolio.lastDateInt.toInt()) {
+        
+        // Pragmatic check: break the loop early if the user closes the popup!
+        const container = document.getElementById(visualizerContainerId);
+        if (!container || (container.closest('.popup') && container.closest('.popup').style.display === 'none')) {
+            break;
+        }
+
+        totalMonths += portfolio.applyMonth(currentDateInt);
+
+        GraphMapper.calculateFlows(portfolio, currentDateInt, graphLayout.edges);
+        visualizer.update(graphLayout, portfolio);
+
+        await new Promise(resolve => setTimeout(resolve, 80)); // 80ms animation frame
+
+        currentDateInt.next();
+
+        if (currentDateInt.day == 1) {
+            portfolio.monthlyChron(currentDateInt);
+            activeTaxTable.monthlyChron(currentDateInt);
+        }
+        if (currentDateInt.isNewYearsDay()) {
+            portfolio.applyYear(currentDateInt);
+            activeTaxTable.applyYear(portfolio.yearly);
+            portfolio.yearlyChron(currentDateInt);
+            activeTaxTable.yearlyChron(currentDateInt);
+        }
+        portfolio.totalMonths = totalMonths;
+    }
+    portfolio.finalizeChron();
+    activeTaxTable.finalizeChron();
 }
 
 export function chronometer_applyMonths(modelAssets) {
