@@ -44,8 +44,8 @@ export const Metric = Object.freeze({
   INCOME_TAX:                   'incomeTax',
   NET_INCOME:                   'netIncome',
   EXPENSE:                      'expense',
-  EARNING:                      'earning',  
-  EARNING_ACCUMULATED:          'earningAccumulated',
+  CASH_FLOW:                    'cashFlow',
+  CASH_FLOW_ACCUMULATED:        'cashFlowAccumulated',
   SHORT_TERM_CAPITAL_GAIN:      'shortTermCapitalGain',
   LONG_TERM_CAPITAL_GAIN:       'longTermCapitalGain',
   CAPITAL_GAIN:                 'capitalGain', // combine short and long term
@@ -86,8 +86,8 @@ export const MetricLabel = Object.freeze({
   [Metric.INCOME_TAX]:                  'Income Tax',
   [Metric.NET_INCOME]:                  'Net Income', // after withholding and estimated taxes
   [Metric.EXPENSE]:                     'Expense',  
-  [Metric.EARNING]:                     'Earning',
-  [Metric.EARNING_ACCUMULATED]:         'Earning Accumulated',
+  [Metric.CASH_FLOW]:                   'Cash Flow',
+  [Metric.CASH_FLOW_ACCUMULATED]:       'Cash Flow Accumulated',
   [Metric.SHORT_TERM_CAPITAL_GAIN]:     'Short Term Capital Gain',
   [Metric.LONG_TERM_CAPITAL_GAIN]:      'Long Term Capital Gain',
   [Metric.CAPITAL_GAIN]:                'Capital Gain',
@@ -111,7 +111,7 @@ export const MetricLabel = Object.freeze({
 });
 
 // Metrics that should NOT be zeroed on monthly snapshot
-const KEEP_ON_SNAPSHOT = new Set([Metric.EARNING_ACCUMULATED]);
+const KEEP_ON_SNAPSHOT = new Set([Metric.CASH_FLOW_ACCUMULATED]);
 
 
 export class ModelAsset {
@@ -308,8 +308,8 @@ export class ModelAsset {
   get expenseCurrency()   { return this.#metrics.get(Metric.EXPENSE).current; }
   set expenseCurrency(c)  { this.#metrics.get(Metric.EXPENSE).current = c; }
 
-  get earningCurrency()   { return this.#metrics.get(Metric.EARNING).current; }
-  set earningCurrency(c)  { this.#metrics.get(Metric.EARNING).current = c; }
+  get cashFlowCurrency()   { return this.#metrics.get(Metric.CASH_FLOW).current; }
+  set cashFlowCurrency(c)  { this.#metrics.get(Metric.CASH_FLOW).current = c; }
 
   get creditCurrency()    { return this.#metrics.get(Metric.CREDIT).current; }
   set creditCurrency(c)   { this.#metrics.get(Metric.CREDIT).current = c; }
@@ -317,8 +317,8 @@ export class ModelAsset {
   get netIncomeCurrency()    { return this.#metrics.get(Metric.NET_INCOME).current; }
   set netIncomeCurrency(c)   { this.#metrics.get(Metric.NET_INCOME).current = c; }
 
-  get accumulatedCurrency()    { return this.#metrics.get(Metric.EARNING_ACCUMULATED).current; }
-  set accumulatedCurrency(c)   { this.#metrics.get(Metric.EARNING_ACCUMULATED).current = c; }
+  get cashFlowAccumulatedCurrency()    { return this.#metrics.get(Metric.CASH_FLOW_ACCUMULATED).current; }
+  set cashFlowAccumulatedCurrency(c)   { this.#metrics.get(Metric.CASH_FLOW_ACCUMULATED).current = c; }
 
   get shortTermCapitalGainCurrency()   { return this.#metrics.get(Metric.SHORT_TERM_CAPITAL_GAIN).current; }
   set shortTermCapitalGainCurrency(c)  { this.#metrics.get(Metric.SHORT_TERM_CAPITAL_GAIN).current = c; }
@@ -401,9 +401,9 @@ export class ModelAsset {
   get monthlyGrowths()               { return this.#metrics.get(Metric.GROWTH).history; }
   get monthlyDividends()             { return this.#metrics.get(Metric.DIVIDEND).history; }
   get monthlyIncomes()               { return this.#metrics.get(Metric.INCOME).history; }
-  get monthlyEarnings()              { return this.#metrics.get(Metric.EARNING).history; }
+  get monthlyCashFlows()              { return this.#metrics.get(Metric.CASH_FLOW).history; }
   get monthlyTaxes()                 { return this.#metrics.get(Metric.INCOME_TAX).history; }
-  get monthlyAccumulateds()          { return this.#metrics.get(Metric.EARNING_ACCUMULATED).history; }
+  get monthlyCashFlowAccumulateds()   { return this.#metrics.get(Metric.CASH_FLOW_ACCUMULATED).history; }
   get monthlyShortTermCapitalGains() { return this.#metrics.get(Metric.SHORT_TERM_CAPITAL_GAIN).history; }
   get monthlyLongTermCapitalGains()  { return this.#metrics.get(Metric.LONG_TERM_CAPITAL_GAIN).history; }
   get monthlyRMDs()                  { return this.#metrics.get(Metric.RMD).history; }
@@ -483,8 +483,8 @@ export class ModelAsset {
 
   monthlyChron() {   
 
-    // value and accumulated are special: add finishValue and earnings, then snapshot WITHOUT zeroing
-    this.#metrics.get(Metric.EARNING_ACCUMULATED).add(this.earningCurrency);
+    // value and accumulated are special: add finishValue and cash flows, then snapshot WITHOUT zeroing
+    this.#metrics.get(Metric.CASH_FLOW_ACCUMULATED).add(this.cashFlowCurrency);
 
     /* Was thinking of reconciling credit here, but it makes more sense to do it at the end of the month after all monthly changes have been applied, so that the metric history reflects the true "credit" activity rather than an artificial netting of credit against value changes. Keeping this code here as a reminder that credit reconciliation still needs to happen somewhere.
     // Reconcile credit buffer
@@ -548,7 +548,7 @@ export class ModelAsset {
       debugger;
     }    
 
-    this.accumulatedCurrency.add(this.monthlyValueChange);
+    this.cashFlowAccumulatedCurrency.add(this.monthlyValueChange);
 
   }
 
@@ -840,14 +840,14 @@ applyMonthlyExpense() {
     return InstrumentType.sortOrder(this.instrument);
   }
 
-  isPositive() { return this.accumulatedCurrency.amount > 0; }
-  isNegative() { return this.accumulatedCurrency.amount < 0; }
+  isPositive() { return this.cashFlowAccumulatedCurrency.amount > 0; }
+  isNegative() { return this.cashFlowAccumulatedCurrency.amount < 0; }
 
   getFinishCurrencyForRollup() {
     const T = InstrumentType;
     const i = this.instrument;
     if (T.isMortgage(i) || T.isDebt(i) || T.isMonthlyExpense(i) || T.isMonthlyIncome(i)) {
-      return this.accumulatedCurrency;
+      return this.cashFlowAccumulatedCurrency;
     }
     return this.finishCurrency;
   }
@@ -899,8 +899,8 @@ applyMonthlyExpense() {
     }
   }
 
-  monthlyEarningDataToDisplayEarningData(monthsSpan) {
-    this.buildDisplayData(monthsSpan, 'monthlyEarnings', 'displayEarningData');
+  monthlyCashFlowDataToDisplayCashFlowData(monthsSpan) {
+    this.buildDisplayData(monthsSpan, 'monthlyCashFlows', 'displayCashFlowData');
   }
   */
 

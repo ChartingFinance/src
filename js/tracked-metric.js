@@ -80,7 +80,7 @@ export class TrackedMetric {
   toFixed() { return this.current.toFixed(); }
   toCurrency() { return this.current.toCurrency(); }
 
-  /* Build a display name for this metric, e.g. "displayEarnings" for "earning". */
+  /* Build a display name for this metric, e.g. "displayCashFlows" for "cashFlow". */
   displayName() {
     return 'display' + this.name.charAt(0).toUpperCase() + this.name.slice(1) + 's';
   }
@@ -104,7 +104,7 @@ export class TrackedMetric {
  * Usage in ModelAsset:
  *
  *   this.metrics = new MetricSet([
- *     'earning', 'income', 'afterTax', 'afterExpense',
+ *     'cashFlow', 'income', 'afterTax', 'afterExpense',
  *     'shortTermCapitalGain', 'longTermCapitalGain',
  *     'mortgagePayment', 'mortgageInterest', ...
  *   ]);
@@ -116,7 +116,7 @@ export class TrackedMetric {
  *   this.metrics.snapshotAll();
  *
  *   // Access:
- *   this.metrics.get('earning').add(amount);
+ *   this.metrics.get('cashFlow').add(amount);
  */
 export class MetricSet {
   /**

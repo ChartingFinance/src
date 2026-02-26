@@ -121,7 +121,7 @@ let activeMetric2Canvas = null;
 let activeRollupCanvas = null;
 let editingModelAsset = null;
 let activeMetric1Name = Metric.VALUE;
-let activeMetric2Name = Metric.EARNING;
+let activeMetric2Name = Metric.CASH_FLOW;
 let activePortfolio = null;
 
 const metric1Select = document.getElementById('metric1Select');
