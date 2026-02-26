@@ -852,6 +852,15 @@ applyMonthlyExpense() {
     return this.finishCurrency;
   }
 
+  /*
+    Unrealized Gain Ratio of the asset 1 - (basis / currentValue)
+  */
+  getUnrealizedGainRatio() {
+    if (this.finishCurrency.amount <= 0) return 0;
+    const basisRatio = this.basisCurrency.amount / this.finishCurrency.amount;
+    return Math.max(0, 1.0 - basisRatio); // Returns a float between 0.0 and 1.0
+  }
+
   close() {
     
     this.creditCurrency.zero();

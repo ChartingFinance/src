@@ -1009,6 +1009,28 @@ export class Portfolio {
 
     }
 
+    
+    calculateGrossWithdrawalForShortfall(netShortfall, modelAsset) {
+        // 1. Estimate current marginal LTCG bracket based strictly on base income (W-2, etc)
+        const annualizedBaseIncome = this.monthly.income.copy().multiply(12.0);
+        annualizedBaseIncome.limitDeductions(this.activeUser);
+        const taxableIncome = activeTaxTable.calculateYearlyTaxableIncome(annualizedBaseIncome);
+    
+        // Quick heuristic for marginal LTCG rate (0%, 15%, 20%)
+        const ltcgRate = activeTaxTable.getMarginalLTCGRate(taxableIncome); 
+    
+        // 2. Get the asset's gain ratio (g)
+        const gainRatio = modelAsset.getUnrealizedGainRatio();
+    
+        // 3. Apply the Gross-Up Formula: W = X / (1 - (t * g))
+        const denominator = 1.0 - (ltcgRate * gainRatio);
+    
+        // Prevent division by zero or negative bounds
+        if (denominator <= 0) return netShortfall.copy(); 
+    
+        return new Currency(netShortfall.amount / denominator);
+    }
+
     applyLastDayOfMonth(currentDateInt) {
 
         // apply expenses
@@ -1067,40 +1089,69 @@ export class Portfolio {
 
     }
 
-    applyLastDayOfMonthExpenseFundTransfers(modelAsset) {
-         if (!InstrumentType.isMonthlyExpense(modelAsset.instrument)) {
-             return;
-         }
-     
-         const modelAssetExpense = modelAsset.finishCurrency.copy();
-         let runningExpenseAmount = new Currency(0.0);
-     
-         if (modelAsset.fundTransfers?.length > 0) {
-             for (const fundTransfer of modelAsset.fundTransfers) {
-                 fundTransfer.bind(modelAsset, this.modelAssets);
-                 const expenseAmount = fundTransfer.calculate();
-                 const fundTransferResult = fundTransfer.execute();
-     
-                 this.handleFundTransferExpense(fundTransfer, fundTransferResult, modelAsset.displayName);
-                 runningExpenseAmount.add(expenseAmount);
-             }
-     
-             const extraAmount = new Currency(runningExpenseAmount.amount - modelAssetExpense.amount);
-             if (extraAmount.amount > 0) {
-                 logger.log(LogCategory.TRANSFER, `Portfolio.applyFundTransfersForExpense: ${modelAsset.displayName} expensing ${extraAmount.toString()} from first taxable account`);
-                 const result = this.debitFromFirstTaxableAccount(extraAmount, `Expense overflow for ${modelAsset.displayName}`);
-                 if (result && result.realizedGain && result.realizedGain.amount > 0) {
-                     this.monthly.longTermCapitalGains.add(result.realizedGain);
-                 }
-             }
-         } else {
-             logger.log(LogCategory.TRANSFER, `Portfolio.applyFundTransfersForExpense: ${modelAsset.displayName} expensing ${modelAssetExpense.toString()} from first taxable account`);
-             const result = this.debitFromFirstTaxableAccount(modelAssetExpense.copy().flipSign(), `Expense debit for ${modelAsset.displayName}`);
-             if (result && result.realizedGain && result.realizedGain.amount > 0) {
-                 this.monthly.longTermCapitalGains.add(result.realizedGain);
-             }
-         }
-     }
+applyLastDayOfMonthExpenseFundTransfers(modelAsset) {
+        if (!InstrumentType.isMonthlyExpense(modelAsset.instrument)) {
+            return;
+        }
+    
+        const modelAssetExpense = modelAsset.finishCurrency.copy();
+        let runningExpenseAmount = new Currency(0.0);
+    
+        if (modelAsset.fundTransfers?.length > 0) {
+            for (const fundTransfer of modelAsset.fundTransfers) {
+                fundTransfer.bind(modelAsset, this.modelAssets);
+                const expenseAmount = fundTransfer.calculate();
+                const fundTransferResult = fundTransfer.execute();
+    
+                this.handleFundTransferExpense(fundTransfer, fundTransferResult, modelAsset.displayName);
+                runningExpenseAmount.add(expenseAmount);
+            }
+    
+            // =========================================================================
+            // INSERTION POINT 1: Expense Overflow (Partial Shortfall)
+            // Replaces the old "const extraAmount = ..." logic
+            // =========================================================================
+            const netShortfall = new Currency(runningExpenseAmount.amount - modelAssetExpense.amount);
+            if (netShortfall.amount > 0) {
+                logger.log(LogCategory.TRANSFER, `Portfolio.applyFundTransfersForExpense: ${modelAsset.displayName} expensing ${netShortfall.toString()} from taxable account (Grossed Up)`);
+                
+                const targetAsset = this.getFirstTaxableAccount(); 
+                if (targetAsset) {
+                    const grossWithdrawal = this.calculateGrossWithdrawalForShortfall(netShortfall, targetAsset);
+                    const result = targetAsset.debit(grossWithdrawal, `Grossed-up expense overflow for ${modelAsset.displayName}`);
+                    
+                    if (result && result.realizedGain && result.realizedGain.amount > 0) {
+                        this.monthly.longTermCapitalGains.add(result.realizedGain);
+                        
+                        // Isolate tax liability to prevent the death-spiral loop
+                        const taxLiability = new Currency(grossWithdrawal.amount - netShortfall.amount);
+                        this.monthly.estimatedTaxes.add(taxLiability); 
+                    }
+                }
+            }
+        } else {
+            // =========================================================================
+            // INSERTION POINT 2: Full Expense (Total Shortfall)
+            // Replaces the old "this.debitFromFirstTaxableAccount" fallback
+            // =========================================================================
+            const netShortfall = modelAssetExpense.copy().flipSign();
+            logger.log(LogCategory.TRANSFER, `Portfolio.applyFundTransfersForExpense: ${modelAsset.displayName} expensing ${netShortfall.toString()} from taxable account (Grossed Up)`);
+            
+            const targetAsset = this.getFirstTaxableAccount(); 
+            if (targetAsset) {
+                const grossWithdrawal = this.calculateGrossWithdrawalForShortfall(netShortfall, targetAsset);
+                const result = targetAsset.debit(grossWithdrawal, `Grossed-up expense debit for ${modelAsset.displayName}`);
+                
+                if (result && result.realizedGain && result.realizedGain.amount > 0) {
+                    this.monthly.longTermCapitalGains.add(result.realizedGain);
+                    
+                    // Isolate tax liability to prevent the death-spiral loop
+                    const taxLiability = new Currency(grossWithdrawal.amount - netShortfall.amount);
+                    this.monthly.estimatedTaxes.add(taxLiability); 
+                }
+            }
+        }
+    }
      
      handleFundTransferExpense(fundTransfer, fundTransferResult, modelAssetName) {
          const targetInstrument = fundTransfer.toModel.instrument;
@@ -1128,6 +1179,7 @@ export class Portfolio {
              this.monthly.rothDistribution.add(change);
          }
      }
+
     ensureRMDDistributions(modelAsset) {
 
         if (!InstrumentType.isTaxDeferred(modelAsset.instrument))
@@ -1167,7 +1219,7 @@ export class Portfolio {
 
     }
 
-handleCapitalGains(modelAsset) {
+    handleCapitalGains(modelAsset) {
         if (InstrumentType.isTaxFree(modelAsset.instrument)) return;
 
         const capitalGains = new Currency(modelAsset.finishCurrency.amount - modelAsset.basisCurrency.amount);
@@ -1237,7 +1289,7 @@ handleCapitalGains(modelAsset) {
 
     }
 
-applyAssetCloseFundTransfers(modelAsset) {
+    applyAssetCloseFundTransfers(modelAsset) {
 
         let modelAssetValue = modelAsset.finishCurrency.copy();
 
@@ -1316,7 +1368,16 @@ applyAssetCloseFundTransfers(modelAsset) {
              }
          }
          return { assetChange: Currency.zero(), realizedGain: Currency.zero() };
-     }
+    }
+
+    getFirstExpensableAccount() {
+        for (let modelAsset of this.modelAssets) {
+            if (InstrumentType.isExpensableAccount(modelAsset.instrument)) {
+                return modelAsset;
+            }
+        }
+        return null; // Handle case where user is completely out of taxable funds
+    }
 
     creditToFirstExpensableAccount(amount, note = '') {
         return this.applyToFirstMatchingAccount(InstrumentType.isExpensable, 'credit', amount, note);
@@ -1324,6 +1385,20 @@ applyAssetCloseFundTransfers(modelAsset) {
 
     debitFromFirstExpensableAccount(amount, note = '') {
         return this.applyToFirstMatchingAccount(InstrumentType.isExpensable, 'debit', amount, note);
+    }
+
+    // Add this helper to portfolio.js
+    getFirstTaxableAccount() {
+        for (let modelAsset of this.modelAssets) {
+            if (InstrumentType.isTaxableAccount(modelAsset.instrument)) {
+                return modelAsset;
+            }
+        }
+        return null; // Handle case where user is completely out of taxable funds
+    }
+
+    creditToFirstTaxableAccount(amount, note = '') {
+        return this.applyToFirstMatchingAccount(InstrumentType.isTaxableAccount, 'credit', amount, note);
     }
 
     debitFromFirstTaxableAccount(amount, note = '') {
