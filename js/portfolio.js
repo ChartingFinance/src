@@ -629,12 +629,40 @@ export class Portfolio {
         this.monthlyIncomeTaxes.push(this.monthly.incomeTax.toCurrency());
         this.monthlyCapitalGainsTaxes.push(this.monthly.longTermCapitalGainsTax.toCurrency());
 
+        this.computePerAssetEarning();
+
         this.yearly.add(this.monthly);
         this.total.add(this.monthly);
         this.monthly.zero();
 
         for (let modelAsset of this.modelAssets) {
             modelAsset.monthlyChron(currentDateInt);
+        }
+    }
+
+    computePerAssetEarning() {
+        for (let modelAsset of this.modelAssets) {
+            let earning = Currency.zero();
+            const inst = modelAsset.instrument;
+
+            if (InstrumentType.isMonthlyIncome(inst)) {
+                earning = modelAsset.incomeCurrency.copy();
+                earning.add(modelAsset.socialSecurityCurrency);
+                earning.add(modelAsset.medicareCurrency);
+                earning.add(modelAsset.estimatedIncomeTaxCurrency);
+                earning.add(modelAsset.four01KContributionCurrency);
+                earning.add(modelAsset.iraContributionCurrency);
+            } else if (InstrumentType.isCapital(inst)) {
+                earning = modelAsset.growthCurrency.copy();
+            } else if (InstrumentType.isIncomeAccount(inst)) {
+                earning = modelAsset.interestIncomeCurrency.copy();
+            } else if (InstrumentType.isMortgage(inst)) {
+                earning = modelAsset.mortgageInterestCurrency.copy();
+            } else if (InstrumentType.isMonthlyExpense(inst)) {
+                earning = modelAsset.expenseCurrency.copy();
+            }
+
+            modelAsset.earningCurrency = earning;
         }
     }
 
@@ -790,16 +818,7 @@ export class Portfolio {
 
     applyFirstDayOfMonthTaxes(modelAsset, currentDateInt) {
 
-        // assert mortgage happens before income happens before taxDeferredEquity happens before taxableEquity
-        if (InstrumentType.isHome(modelAsset.instrument)) {
-            // we do have property taxes
-            let propertyTaxes = activeTaxTable.calculateMonthlyPropertyTaxDeduction(null, modelAsset);
-            this.monthly.propertyTaxes.subtract(propertyTaxes);
-
-            // TODO: If there is a fund transfer for this mortgage, that will handle any credit memo. Otherwise assume the user has rolled costs into expenses
-            //modelAsset.creditMemos.push(new CreditMemo(propertyTaxes.copy().flipSign(), 'Property taxes', currentDateInt));
-        }
-        else if (InstrumentType.isMonthlyIncome(modelAsset.instrument)) {
+        if (InstrumentType.isMonthlyIncome(modelAsset.instrument)) {
             if (!InstrumentType.isSocialSecurity(modelAsset.instrument)) {                
                 let withholding = activeTaxTable.calculateFICATax(modelAsset.isSelfEmployed, modelAsset.incomeCurrency.copy());
                 activeTaxTable.addYearlySocialSecurity(withholding.socialSecurity);
@@ -1029,6 +1048,21 @@ export class Portfolio {
         if (InstrumentType.isCapital(modelAsset.instrument) || InstrumentType.isIncomeAccount(modelAsset.instrument) || InstrumentType.isMonthlyExpense(modelAsset.instrument)) {
             let result = modelAsset.applyMonthly();
             this.monthly.addResult(result);
+
+            // Compute asset-level tax at portfolio level (centralized)
+            if (InstrumentType.isCapital(modelAsset.instrument) && modelAsset.annualTaxRate.rate !== 0) {
+                const tax = new Currency(modelAsset.finishCurrency.amount * modelAsset.annualTaxRate.asMonthly()).flipSign();
+
+                if (InstrumentType.isHome(modelAsset.instrument)) {
+                    modelAsset.propertyTaxCurrency.add(tax);
+                    modelAsset.creditMemos.push(new CreditMemo(tax, 'Property tax', modelAsset.currentDateInt));
+                    this.monthly.propertyTaxes.add(tax);
+                } else {
+                    modelAsset.estimatedTaxCurrency.add(tax);
+                    modelAsset.creditMemos.push(new CreditMemo(tax, 'Estimated tax', modelAsset.currentDateInt));
+                    this.monthly.estimatedTaxes.add(tax);
+                }
+            }
         }
 
     }

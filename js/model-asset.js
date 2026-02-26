@@ -666,22 +666,7 @@ applyMonthlyExpense() {
 
     }
 
-    // TODO: Is it better to compute tax after growth so as to be more conservative? Or is it just wrong?
-    const tax = Currency.zero();
-    if (this.annualTaxRate.rate !== 0) {
-      tax = new Currency(this.finishCurrency.amount * this.annualTaxRate.asMonthly()).flipSign();
-      if (InstrumentType.isHome(this.instrument)) {
-        this.propertyTaxCurrency.add(tax);
-        this.creditMemos.push(new CreditMemo(tax, 'Property tax', this.currentDateInt));
-      }
-      else {
-        this.estimatedTaxCurrency.add(tax);
-        this.creditMemos.push(new CreditMemo(tax, 'Estimated tax', this.currentDateInt));
-      }
-
-    }
-
-    return new AssetAppreciationResult(this.finishCurrency.copy(), growth, dividend, tax);
+    return new AssetAppreciationResult(this.finishCurrency.copy(), growth, dividend);
 
   }
 
@@ -839,17 +824,6 @@ applyMonthlyExpense() {
   }
 
   // ── Withholding ──────────────────────────────────────────────────
-
-  deductWithholding(withholding) {
-
-    this.earningCurrency = this.incomeCurrency.copy();
-    this.addToMetric(Metric.SOCIAL_SECURITY, withholding.socialSecurity);
-    this.addToMetric(Metric.MEDICARE, withholding.medicare);
-    this.addToMetric(Metric.INCOME_TAX, withholding.income);
-    this.earningCurrency.add(withholding.total());
-    return this.earningCurrency.copy();
-
-  }
 
   // ── Queries ──────────────────────────────────────────────────────
 

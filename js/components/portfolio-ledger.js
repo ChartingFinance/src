@@ -28,9 +28,17 @@ class PortfolioLedger extends LitElement {
         const finishDate = p ? this._formatDate(p.lastDateInt) : '\u2014';
         const startValue = p ? this._formatCurrency(p.startValue().amount) : '$0.00';
         const finishValue = p ? this._formatCurrency(p.finishValue().amount) : '$0.00';
+        const totalEarnings = p ? p.total.earning().amount : 0;
+        const totalExpenses = p ? p.total.expense.amount + p.total.totalTaxes().amount + p.total.mortgageInterest.amount : 0;
         const accumulated = p ? p.accumulatedValue().amount : 0;
-        const totalMonths = p ? p.totalMonths : 0;
         const annualReturn = p ? this._computeCAGR(p) : 0;
+
+        const totalEarningsFormatted = this._formatCurrency(Math.abs(totalEarnings));
+        const totalEarningsDisplay = totalEarnings >= 0
+            ? `+${totalEarningsFormatted.substring(1)}`
+            : `-${totalEarningsFormatted.substring(1)}`;
+
+        const totalExpensesDisplay = this._formatCurrency(Math.abs(totalExpenses));
 
         const accFormatted = this._formatCurrency(Math.abs(accumulated));
         const accDisplay = accumulated >= 0
@@ -71,8 +79,8 @@ class PortfolioLedger extends LitElement {
                             <span class="font-semibold text-gray-800">${finishDate}</span>
                         </div>
                         <div class="flex justify-between items-center pb-2 border-b border-purple-100/50">
-                            <span class="text-sm text-gray-500">Total Value Created</span>
-                            <span class="font-semibold text-gray-800 ledger-item-value ${valClass}">${finishValue}</span>
+                            <span class="text-sm text-gray-500">Total Earnings</span>
+                            <span class="font-semibold text-gray-800 ledger-item-value ${valClass}">${totalEarningsDisplay}</span>
                         </div>
                         <div class="flex justify-between items-end pt-2">
                             <span class="text-sm font-medium text-purple-700">Closing Position</span>
@@ -86,11 +94,11 @@ class PortfolioLedger extends LitElement {
                     <div class="text-xs font-bold text-pink-400 uppercase tracking-widest mb-4">Growth Metrics</div>
                     <div class="space-y-3">
                         <div class="flex justify-between items-center pb-2 border-b border-pink-100/50">
-                            <span class="text-sm text-gray-500">Duration</span>
-                            <span class="font-semibold text-gray-800">${totalMonths} months</span>
+                            <span class="text-sm text-gray-500">Total Expenses</span>
+                            <span class="font-semibold text-gray-800">${totalExpensesDisplay}</span>
                         </div>
                         <div class="flex justify-between items-center pb-2 border-b border-pink-100/50">
-                            <span class="text-sm text-gray-500">Accumulated</span>
+                            <span class="text-sm text-gray-500">Accumulated Value</span>
                             <span class="font-semibold text-gray-800 ledger-item-value ${valClass}">${accDisplay}</span>
                         </div>
                         <div class="flex justify-between items-end pt-2">
@@ -119,9 +127,11 @@ class PortfolioLedger extends LitElement {
     _computeCAGR(portfolio) {
         const sv = portfolio.startValue().amount;
         const fv = portfolio.finishValue().amount;
-        const months = portfolio.totalMonths;
-        if (!sv || !months || sv === 0) return 0;
-        const years = months / 12;
+        const start = portfolio.firstDateInt;
+        const finish = portfolio.lastDateInt;
+        if (!sv || !start || !finish || sv === 0) return 0;
+        const years = (finish.year + (finish.month - 1) / 12) - (start.year + (start.month - 1) / 12);
+        if (years <= 0) return 0;
         return (Math.pow(fv / sv, 1 / years) - 1) * 100;
     }
 }

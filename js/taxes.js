@@ -2,7 +2,7 @@ import { Currency } from './currency.js';
 import { InstrumentType } from './instrument.js';
 import { WithholdingResult } from './results.js';
 import { logger, LogCategory } from './logger.js';
-import { global_filingAs, global_inflationRate, global_propertyTaxRate, global_propertyTaxDeductionMax, global_home_sale_capital_gains_discount } from './globals.js';
+import { global_filingAs, global_inflationRate, global_propertyTaxDeductionMax, global_home_sale_capital_gains_discount } from './globals.js';
 
 export const us_2025_taxtables = {
     "year": 2025,
@@ -383,15 +383,6 @@ export class TaxTable {
         }
         else
             return new Currency(0);
-    }
-
-    calculateMonthlyPropertyTaxDeduction(currentDateInt, modelAsset) {
-        if (InstrumentType.isHome(modelAsset.instrument)) {
-            let oneMonthRate = global_propertyTaxRate / 12.0;
-            let c = new Currency(modelAsset.finishCurrency.amount * oneMonthRate);            
-            return c;
-        }
-        return new Currency(0);
     }
 
     calculateMonthlyRMD(currentDateInt, activeUser, modelAsset) {
