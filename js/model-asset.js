@@ -139,7 +139,7 @@ export class ModelAsset {
     monthsRemaining = 0,
     annualReturnRate,
     annualDividendRate = new ARR(0),
-    longTermCapitalGainRate = new ARR(0),
+    longTermCapitalHoldingPercentage = new ARR(0),
     fundTransfers = [],
     isSelfEmployed = false,
     annualTaxRate = new ARR(0),
@@ -152,7 +152,7 @@ export class ModelAsset {
     this.finishDateInt   = finishDateInt;
     this.monthsRemaining = Number.isInteger(monthsRemaining) ? monthsRemaining : 0;
     this.annualDividendRate = annualDividendRate;
-    this.longTermCapitalGainRate = longTermCapitalGainRate;
+    this.longTermCapitalHoldingPercentage = longTermCapitalHoldingPercentage;
     this.annualReturnRate = annualReturnRate;
     this.fundTransfers   = fundTransfers;
     this.isSelfEmployed  = isSelfEmployed;
@@ -188,7 +188,7 @@ export class ModelAsset {
       monthsRemaining: obj.monthsRemaining ?? 0,
       annualReturnRate: new ARR(obj.annualReturnRate?.annualReturnRate ?? obj.annualReturnRate?.rate ?? 0),
       annualDividendRate: new ARR(obj.annualDividendRate?.annualReturnRate ?? obj.annualDividendRate?.rate ?? 0),
-      longTermCapitalGainRate: new ARR(obj.longTermCapitalGainRate?.annualReturnRate ?? obj.longTermCapitalGainRate?.rate ?? 0),
+      longTermCapitalHoldingPercentage: new ARR(obj.longTermCapitalHoldingPercentage?.annualReturnRate ?? obj.longTermCapitalHoldingPercentage?.rate ?? 0),
       fundTransfers:   (obj.fundTransfers ?? []).map(FundTransfer.fromJSON),
       isSelfEmployed:  obj.isSelfEmployed ?? false,
       annualTaxRate:   new ARR(obj.annualTaxRate?.annualReturnRate ?? obj.annualTaxRate?.rate ?? 0),
@@ -220,7 +220,7 @@ export class ModelAsset {
       monthsRemaining: parseInt(vals.monthsRemaining?.value, 10) || 0,
       annualReturnRate: ARR.parse(vals.annualReturnRate?.value),
       annualDividendRate: vals.dividendRate ? ARR.parse(vals.dividendRate.value) : new ARR(0),
-      longTermCapitalGainRate: vals.longTermRate ? ARR.parse(vals.longTermRate.value) : new ARR(0),
+      longTermCapitalHoldingPercentage: vals.longTermRate ? ARR.parse(vals.longTermRate.value) : new ARR(0),
       fundTransfers,
       isSelfEmployed: vals.isSelfEmployed?.type === 'checkbox'
         ? vals.isSelfEmployed.checked
@@ -548,8 +548,14 @@ export class ModelAsset {
       debugger;
     }    
 
+    this.accumulatedCurrency.add(this.monthlyValueChange);
+
   }
 
+  /*
+    * Apply monthly changes based on instrument type. Returns a result object with details of the changes.
+    * Pattern is to compute the change as a local constant first, and then add to relevent properties
+  */
   applyMonthly() {
 
     const { instrument } = this;
@@ -567,99 +573,149 @@ export class ModelAsset {
   applyMonthlyIncomeSalary() {
 
     this.ensurePositiveStart();
-    this.incomeCurrency  = new Currency(this.finishCurrency.amount);
+
+    const income = this.finishCurrency.copy();
+    if (this.isSelfEmployed) {
+      this.workingIncomeCurrency.add(income);
+    } else {
+      this.ordinaryIncomeCurrency.add(income);
+    }
+    this.incomeCurrency.add(income);
+
     // growth in income happens yearly
 
     return this.isSelfEmployed
-      ? new IncomeResult(this.incomeCurrency.copy(), Currency.zero())
-      : new IncomeResult(Currency.zero(), this.incomeCurrency.copy());
+      ? new IncomeResult(income, Currency.zero())
+      : new IncomeResult(Currency.zero(), income);
 
   }
 
 applyMonthlyExpense() {
 
     this.ensureNegativeStart();
-    this.expenseCurrency = new Currency(this.finishCurrency.amount);
-    this.growthCurrency = new Currency(this.finishCurrency.amount * this.annualReturnRate.asMonthly());
-    this.finishCurrency.add(this.growthCurrency);
-    this.monthlyValueChange.add(this.growthCurrency);
+
+    const expense = this.finishCurrency.copy();
+    this.expenseCurrency.add(expense);
+
+    // expenses grow monthly cause that's how the world works
+    const growth = new Currency(expense.amount * this.annualReturnRate.asMonthly());
+    this.growthCurrency.add(growth);
+    this.finishCurrency.add(growth);
+    this.monthlyValueChange.add(growth);
 
     // FIX: Generate a memo so the expense drift is accounted for
-    if (this.growthCurrency.amount !== 0) {
-      this.creditMemos.push(new CreditMemo(this.growthCurrency.copy(), 'Expense growth', this.currentDateInt));
+    if (growth.amount !== 0) {
+      this.creditMemos.push(new CreditMemo(growth, 'Expense growth', this.currentDateInt));
     }
 
-    return new ExpenseResult(this.expenseCurrency.copy(), this.finishCurrency.copy());
+    return new ExpenseResult(expense, this.finishCurrency.copy());
 
   }
 
   applyMonthlyMortgage() {
+
     this.ensureNegativeStart();
     const rate = this.annualReturnRate.asMonthly();
     const n = this.monthsRemainingDynamic;
 
     const payment   = (this.finishCurrency.amount * rate * Math.pow(1 + rate, n))
                     / (Math.pow(1 + rate, n) - 1);
+
+    const paymentCurrency = new Currency(payment);
     const interest  = new Currency(this.finishCurrency.amount * rate);
     const principal = new Currency(payment - interest.amount);
 
-    this.monthsRemainingDynamic--;
-    this.growthCurrency = principal.copy().flipSign();
+    this.mortgagePaymentCurrency.add(paymentCurrency);
+    this.mortgageInterestCurrency.add(interest);
+    this.mortgagePrincipalCurrency.add(principal);
+
+    this.monthsRemainingDynamic--;    
     this.finishCurrency.subtract(principal);
-    this.monthlyValueChange.subtract(principal);
+    this.growthCurrency.subtract(principal);
+    this.monthlyValueChange.add(principal.copy().flipSign());
 
-    this.addToMetric(Metric.MORTGAGE_PAYMENT, new Currency(payment));
-    this.addToMetric(Metric.MORTGAGE_INTEREST, interest);
-    this.addToMetric(Metric.MORTGAGE_PRINCIPAL, principal);
+    this.creditMemos.push(new CreditMemo(principal.copy().flipSign(), 'Mortgage Principal', this.currentDateInt));   
 
-    this.creditMemos.push(new CreditMemo(interest, 'Mortgage interest', this.currentDateInt));
-    this.creditMemos.push(new CreditMemo(principal, 'Mortgage principal', this.currentDateInt));
+    // TODO: generate memos for principal and interest if there are fund transfers directly. Otherwise assume its from expenses
+    //this.creditMemos.push(new CreditMemo(interest, 'Mortgage interest', this.currentDateInt));
+    //this.creditMemos.push(new CreditMemo(principal, 'Mortgage principal', this.currentDateInt));
 
     return new MortgageResult(principal, interest, Currency.zero());
+
   }
 
   applyMonthlyCapital() {
 
+    const growth = new Currency(this.finishCurrency.amount * this.annualReturnRate.asMonthly());
+
+    this.growthCurrency.add(growth);
+    this.finishCurrency.add(this.growthCurrency); 
+    this.monthlyValueChange.add(this.growthCurrency);
+    this.creditMemos.push(new CreditMemo(this.growthCurrency, 'Asset growth', this.currentDateInt));
+
+    const dividend = Currency.zero();
     if (this.annualDividendRate.rate != 0.0) {
 
-      this.dividendCurrency = new Currency(this.finishCurrency.amount * this.annualDividendRate.asMonthly());
-      this.finishCurrency.add(this.dividendCurrency);
-      this.monthlyValueChange.add(this.dividendCurrency);
+      // add on top of growth
+      dividend = new Currency(this.finishCurrency.amount * this.annualDividendRate.asMonthly());
+      
+      this.dividendCurrency.add(dividend);
+      this.finishCurrency.add(dividend);
+      this.monthlyValueChange.add(dividend);
+      this.creditMemos.push(new CreditMemo(dividend, 'Dividend income', this.currentDateInt));      
 
     }
 
-    this.growthCurrency = new Currency(this.finishCurrency.amount * this.annualReturnRate.asMonthly());
-    this.finishCurrency.add(this.growthCurrency);
-    this.monthlyValueChange.add(this.growthCurrency);
+    // TODO: Is it better to compute tax after growth so as to be more conservative? Or is it just wrong?
+    const tax = Currency.zero();
+    if (this.annualTaxRate.rate !== 0) {
+      tax = new Currency(this.finishCurrency.amount * this.annualTaxRate.asMonthly()).flipSign();
+      if (InstrumentType.isHome(this.instrument)) {
+        this.propertyTaxCurrency.add(tax);
+        this.creditMemos.push(new CreditMemo(tax, 'Property tax', this.currentDateInt));
+      }
+      else {
+        this.estimatedTaxCurrency.add(tax);
+        this.creditMemos.push(new CreditMemo(tax, 'Estimated tax', this.currentDateInt));
+      }
 
-    this.creditMemos.push(new CreditMemo(this.growthCurrency, 'Asset growth', this.currentDateInt));
-    if (this.dividendCurrency.amount !== 0) {
-      this.creditMemos.push(new CreditMemo(this.dividendCurrency, 'Dividend income', this.currentDateInt));
     }
 
-    return new AssetAppreciationResult(this.finishCurrency.copy(), this.growthCurrency.copy(), this.dividendCurrency.copy(), Currency.zero());
+    return new AssetAppreciationResult(this.finishCurrency.copy(), growth, dividend, tax);
 
   }
 
   applyMonthlyIncomeHoldings() {
 
     this.ensurePositiveStart();
-    this.incomeCurrency = new Currency(this.finishCurrency.amount * this.annualReturnRate.asMonthly());
-    this.finishCurrency.add(this.incomeCurrency);
-    this.monthlyValueChange.add(this.incomeCurrency);
+    const income = new Currency(this.finishCurrency.amount * this.annualReturnRate.asMonthly());
 
-    this.creditMemos.push(new CreditMemo(this.incomeCurrency, 'Interest income', this.currentDateInt));
+    this.interestIncomeCurrency.add(income);
+    this.incomeCurrency.add(income);
+    this.finishCurrency.add(income);
+    this.monthlyValueChange.add(income);
 
-    return new InterestResult(this.incomeCurrency.copy());
+    this.creditMemos.push(new CreditMemo(income, 'Interest income', this.currentDateInt));
+
+    return new InterestResult(income);
 
   }
 
   applyYearly() {
 
     if (InstrumentType.isMonthlyIncome(this.instrument)) {
-      this.finishCurrency = new Currency(this.finishCurrency.amount * (1 + this.annualReturnRate.rate));
-    }
+      const growth = new Currency(this.finishCurrency.amount * this.annualReturnRate.rate);
+      this.growthCurrency.add(growth);
+      this.finishCurrency.add(growth);
+      this.monthlyValueChange.add(growth);
+      this.creditMemos.push(new CreditMemo(growth, 'Annual income growth', this.currentDateInt));
 
+      return this.isSelfEmployed
+        ? new IncomeResult(this.growthCurrency.copy(), Currency.zero())
+        : new IncomeResult(Currency.zero(), this.growthCurrency.copy());
+    }   
+    
+    return null;
   }
 
   // ── Credit / Debit (fund transfer interface) ─────────────────────
@@ -882,7 +938,7 @@ applyMonthlyExpense() {
       monthsRemaining: this.monthsRemaining,
       annualReturnRate: this.annualReturnRate,
       annualDividendRate: this.annualDividendRate,
-      longTermCapitalGainRate: this.longTermCapitalGainRate,
+      longTermCapitalHoldingPercentage: this.longTermCapitalHoldingPercentage,
       fundTransfers:   this.fundTransfers.map(ft => ft.copy()),
       isSelfEmployed:  this.isSelfEmployed,
       annualTaxRate:   this.annualTaxRate,

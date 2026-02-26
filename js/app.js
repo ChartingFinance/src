@@ -342,7 +342,7 @@ function updateCharts() {
     let modelAssets = assetsContainerElement.modelAssets || [];
     let portfolio = new Portfolio(modelAssets);
     activePortfolio = portfolio;
-    chronometer_run(null, portfolio);
+    chronometer_run(portfolio);
     portfolio.buildChartingDisplayData();
     ensureHighlightDisplayName();
     charting_buildFromPortfolio(portfolio, false, activeMetric1Name, activeMetric2Name);
@@ -357,7 +357,7 @@ function calculate(target) {
 
     let modelAssets = assetsContainerElement.modelAssets || [];    
     let portfolio = new Portfolio(modelAssets, true);
-    chronometer_run(null, portfolio);
+    chronometer_run(portfolio);
 
     // Update asset cards with calculated values
     assetsContainerElement.modelAssets = [...portfolio.modelAssets];

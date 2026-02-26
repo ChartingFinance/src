@@ -1,13 +1,10 @@
 import { DateInt } from './date-int.js';
-import { Currency } from './currency.js';
 import { logger, LogCategory } from './logger.js';
 import { activeTaxTable } from './globals.js';
-import { firstDateInt, lastDateInt } from './asset-queries.js';
-import { buildSummary } from './summary.js';
 import { GraphMapper } from './graph-mapper.js';
 import { HydraulicVisualizer } from './hydraulic-visualizer.js';
 
-export async function chronometer_run(summaryContainerElement, portfolio) {
+export async function chronometer_run(portfolio) {
 
     if (portfolio.modelAssets == null || portfolio.modelAssets.length == 0) {
         logger.log(LogCategory.GENERAL, 'chronometer_run - no modelAssets');
@@ -44,9 +41,6 @@ export async function chronometer_run(summaryContainerElement, portfolio) {
         }
 
         portfolio.totalMonths = totalMonths;
-
-        if (summaryContainerElement)
-            buildSummary(summaryContainerElement, portfolio);
 
     }
 
@@ -120,78 +114,3 @@ export async function chronometer_run_animated(portfolio, visualizerContainerId)
 
 }
 
-export function chronometer_applyMonths(modelAssets) {
-    if (modelAssets == null || modelAssets.length == 0) {
-        logger.log(LogCategory.GENERAL, 'chronometer_applyMonths - no modelAssets');
-        return;
-    }
-
-    if (activeTaxTable != null)
-        activeTaxTable.initializeChron();
-
-    for (let modelAsset of modelAssets) {
-        modelAsset.initializeChron();
-    }
-
-    const first = firstDateInt(modelAssets);
-    const last = lastDateInt(modelAssets);
-
-    summary_setStartDate(first);
-    summary_setFinishDate(last);
-    let totalMonths = 0;
-
-    let currentDateInt = new DateInt(first.toInt());
-    while (currentDateInt.toInt() <= last.toInt()) {
-        totalMonths += chronometer_applyMonth(first, last, currentDateInt, modelAssets, activeUser);
-        currentDateInt.next();
-    }
-
-    summary_setAccruedMonths(totalMonths);
-    summary_computeCAGR()
-}
-
-export function chronometer_applyMonth_accumulate(firstDateInt, lastDateInt, currentDateInt, modelAsset, activeUser) {
-    let startTotal = new Currency(0.0);
-    let finishTotal = new Currency(0.0);
-    let accumulatedValue = new Currency(0.0);
-
-    if (modelAsset.applyMonth(currentDateInt, activeUser)) {
-        if (firstDateInt.toInt() == currentDateInt.toInt())
-            startTotal.add(modelAsset.startCurrency);
-        if (lastDateInt.toInt() == currentDateInt.toInt())
-            finishTotal.add(modelAsset.finishCurrency);
-        accumulatedValue.add(modelAsset.accumulatedCurrency);
-    }
-
-    let result = { startTotal: startTotal, finishTotal: finishTotal, accumulatedValue: accumulatedValue };
-    return result;
-}
-
-export function chronometer_applyTaxesBeforeComputationsThisMonth(currentDateInt, modelAssets, activeUser) {
-    logger.log(LogCategory.TAX, 'chronometer_applyTaxesBeforeComputationsThisMonth');
-
-    if (!activeTaxTable) {
-        logger.log(LogCategory.TAX, 'chronometer_applyTaxesBeforeComputationsThisMonth - activeTaxTable not set');
-        return;
-    }
-
-    if (currentDateInt.month == 1)
-        activeTaxTable.applyYearlyTaxes(currentDateInt, modelAssets);
-
-    if (activeTaxTable.isEstimatedTaxPaymentDue(currentDateInt))
-        activeTaxTable.payEstimatedTaxes(currentDateInt, modelAssets);
-
-    if (activeTaxTable.isYearlyTaxPaymentDue(currentDateInt))
-        activeTaxTable.payYearlyTaxes(currentDateInt, modelAssets);
-}
-
-export function chronometer_applyTaxesAfterComputationsThisMonth(currentDateInt, modelAssets, activeUser) {
-    logger.log(LogCategory.TAX, 'chronometer_applyTaxesAfterComputationsThisMonth');
-
-    if (!activeTaxTable) {
-        logger.log(LogCategory.TAX, 'chronometer_applyTaxesAfterComputationsThisMonth - activeTaxTable not set');
-        return;
-    }
-
-    activeTaxTable.applyMonthlyTaxes(currentDateInt, modelAssets, activeUser);
-}
