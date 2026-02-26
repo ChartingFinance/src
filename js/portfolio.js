@@ -161,7 +161,7 @@ export class FinancialPackage {
         return this.assetAppreciation.copy();
     }
 
-    earning() {
+    cashFlow() {
         let e = this.trueGrossIncome();
     
         // Add wealth generation
@@ -235,7 +235,7 @@ export class FinancialPackage {
         result.push(this.taxes());
         result.push(this.expenses());
         result.push(this.growth());
-        result.push(this.earning());
+        result.push(this.cashFlow());
         return result;
 
     }
@@ -274,7 +274,7 @@ export class FinancialPackage {
         logger.log(category, 'expenses:                    ' + this.expense.toString());
         logger.log(category, 'assetAppreciation:           ' + this.assetAppreciation.toString());
         logger.log(category, 'mortgagePrincipal:           ' + this.mortgagePrincipal.toString());
-        logger.log(category, 'earning:                     ' + this.earning().toString());
+        logger.log(category, 'cashFlow:                    ' + this.cashFlow().toString());
         logger.log(category, 'effectTaxRate:               ' + this.effectiveTaxRate().toFixed(2));
         logger.log(category, 'expenses:                    ' + this.expense.toString());
     }
@@ -315,7 +315,7 @@ export class FinancialPackage {
         html += '  <li>rothContribution:            ' + this.rothContribution.toString() + '</li>';
         html += '<li>assetAppreciation:           ' + this.assetAppreciation.toString() + '</li>';
         html += '<li>mortgagePrincipal:           ' + this.mortgagePrincipal.toString() + '</li>';        
-        html += '<li>earning:                     ' + this.earning().toString() + '</li>';
+        html += '<li>cashFlow:                    ' + this.cashFlow().toString() + '</li>';
         html += '<li>effectiveTaxRate:            ' + this.effectiveTaxRate().toFixed(2) + '</li>';
         html += '<li>expenses:                    ' + this.expense.toString() + '</li>'; 
         html += '</ul>';
@@ -415,7 +415,7 @@ export class FinancialPackage {
         html += '<tr><td>Roth Contribution</td><td>' + this.rothContribution.toString() + '</td></tr>';
         html += '<tr><td>Asset Appreciation</td><td>' + this.assetAppreciation.toString() + '</td></tr>';
         html += '<tr><td>Mortgage Principal</td><td>' + this.mortgagePrincipal.toString() + '</td></tr>';
-        html += '<tr><td>Earning</td><td>' + this.earning().toString() + '</td></tr>';
+        html += '<tr><td>Cash Flow</td><td>' + this.cashFlow().toString() + '</td></tr>';
         html += '<tr><td>Effective Tax Rate</td><td>' + this.effectiveTaxRate().toFixed(2) + '%</td></tr>';
         html += '<tr><td>Expenses</td><td>' + this.expense.toString() + '</td></tr>';
         */
@@ -629,7 +629,7 @@ export class Portfolio {
         this.monthlyIncomeTaxes.push(this.monthly.incomeTax.toCurrency());
         this.monthlyCapitalGainsTaxes.push(this.monthly.longTermCapitalGainsTax.toCurrency());
 
-        this.computePerAssetEarning();
+        this.computePerAssetCashFlow();
 
         this.yearly.add(this.monthly);
         this.total.add(this.monthly);
@@ -640,29 +640,29 @@ export class Portfolio {
         }
     }
 
-    computePerAssetEarning() {
+    computePerAssetCashFlow() {
         for (let modelAsset of this.modelAssets) {
-            let earning = Currency.zero();
+            let cashFlow = Currency.zero();
             const inst = modelAsset.instrument;
 
             if (InstrumentType.isMonthlyIncome(inst)) {
-                earning = modelAsset.incomeCurrency.copy();
-                earning.add(modelAsset.socialSecurityCurrency);
-                earning.add(modelAsset.medicareCurrency);
-                earning.add(modelAsset.estimatedIncomeTaxCurrency);
-                earning.add(modelAsset.four01KContributionCurrency);
-                earning.add(modelAsset.iraContributionCurrency);
+                cashFlow = modelAsset.incomeCurrency.copy();
+                cashFlow.add(modelAsset.socialSecurityCurrency);
+                cashFlow.add(modelAsset.medicareCurrency);
+                cashFlow.add(modelAsset.estimatedIncomeTaxCurrency);
+                cashFlow.add(modelAsset.four01KContributionCurrency);
+                cashFlow.add(modelAsset.iraContributionCurrency);
             } else if (InstrumentType.isCapital(inst)) {
-                earning = modelAsset.growthCurrency.copy();
+                cashFlow = modelAsset.growthCurrency.copy();
             } else if (InstrumentType.isIncomeAccount(inst)) {
-                earning = modelAsset.interestIncomeCurrency.copy();
+                cashFlow = modelAsset.interestIncomeCurrency.copy();
             } else if (InstrumentType.isMortgage(inst)) {
-                earning = modelAsset.mortgageInterestCurrency.copy();
+                cashFlow = modelAsset.mortgageInterestCurrency.copy();
             } else if (InstrumentType.isMonthlyExpense(inst)) {
-                earning = modelAsset.expenseCurrency.copy();
+                cashFlow = modelAsset.expenseCurrency.copy();
             }
 
-            modelAsset.earningCurrency = earning;
+            modelAsset.cashFlowCurrency = cashFlow;
         }
     }
 
@@ -700,7 +700,7 @@ export class Portfolio {
     }
 
     accumulatedValue() {
-        return this.sumAssetCurrency('accumulatedCurrency');
+        return this.sumAssetCurrency('cashFlowAccumulatedCurrency');
     }
     
     applyMonth(currentDateInt) {
@@ -1346,7 +1346,7 @@ applyAssetCloseFundTransfers(modelAsset) {
     }
 
     buildChartingDisplayData() {
-        // asset and earning data will be handled by charting
+        // asset and cash flow data will be handled by charting
         // portfolio will coelsece cashflow data
 
         let monthsSpan = MonthsSpan.build(this.firstDateInt, this.lastDateInt);
@@ -1420,11 +1420,11 @@ applyAssetCloseFundTransfers(modelAsset) {
         else
             logger.log(LogCategory.SANITY, 'assert summed monthly income == total income is FALSE');
 
-        let assertion2 = this.sumDisplayData('displayEarning');
+        let assertion2 = this.sumDisplayData('displayCashFlow');
         if (assertion2.amount == this.total.ordinaryIncome.amount)
-            logger.log(LogCategory.SANITY, 'assert summed monthly earnings == total taxableIncome is TRUE');
+            logger.log(LogCategory.SANITY, 'assert summed monthly cash flows == total taxableIncome is TRUE');
         else
-            logger.log(LogCategory.SANITY, 'assert summed monthly earnings == total taxableIncome is FALSE');
+            logger.log(LogCategory.SANITY, 'assert summed monthly cash flows == total taxableIncome is FALSE');
 
     }
 

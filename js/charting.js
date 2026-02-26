@@ -129,7 +129,7 @@ export let charting_jsonMetric1ChartData = null;
 export let charting_jsonMetric2ChartData = null;
 export let charting_jsonRollupChartData = null;
 export let charting_jsonSpreeadsheetData = null;
-export let charting_jsonMetricChartConfigIndividual = null; // for individual model asset display, e.g. earnings in fundsTransfer
+export let charting_jsonMetricChartConfigIndividual = null; // for individual model asset display, e.g. cash flow in fundsTransfer
 
 const chartMetricConfigCache = new Map();
 
@@ -335,138 +335,6 @@ export function charting_buildPortfolioRollup(portfolio, predefinedName, buildNe
   return chartingAssetConfig;
 }
 
-// The reduction keeps the modelAssets positionally in the array. This is so the colorId value is consistent across chart views.
-export function charting_reducedModelAssetsForEarnings(modelAssets) {
-  let results = [];
-  for (const modelAsset of modelAssets) {
-      //if (flowLineChartExclusions.includes(modelAsset.instrument))
-      //    results.push(null);
-      //else
-          results.push(modelAsset);
-  }
-  return results;
-}
-*/
-
-export function charting_buildDisplayEarningsFromModelAssets(firstDateInt, lastDateInt, modelAssets, buildNewDataSet) {
-  if (firstDateInt == null) {
-    logger.log(LogCategory.CHARTING, 'charting_buildDisplayEarningsFromModelAssets - null firstDateInt provided');
-    return null;
-  }
-  else if (lastDateInt == null) {
-    logger.log(LogCategory.CHARTING, 'charting_buildDisplayEarningsFromModelAssets - null lastDateInt provided');
-    return null;
-  }
-
-  let chartingEarningsConfig = null;
-  let chartingEarningsData = null;
-
-  let cachedConfig = chartMetricConfigCache.get('earningsMulti');
-
-  if (!buildNewDataSet && cachedConfig == null) {
-    logger.log(LogCategory.CHARTING, 'charting_buildDisplayEarningsFromModelAssets - attempting to reuse null config. Building new data set.');
-    buildNewDataSet = true;
-  }
-
-  if (buildNewDataSet) {
-    chartingEarningsConfig = JSON.parse(JSON.stringify(lineChartConfig));
-    chartingEarningsData = JSON.parse(JSON.stringify(lineChartData));
-    let labels = charting_buildDisplayLabels(firstDateInt, lastDateInt);
-    chartingEarningsData.labels = labels;
-  }
-  else {
-    chartingEarningsConfig = cachedConfig;
-    chartingEarningsData = chartingEarningsConfig.data;
-  }
-
-  let reducedModelAssets = charting_reducedModelAssetsForEarnings(modelAssets);
-  let dataIndex = -1;
-
-  for (const modelAsset of reducedModelAssets) {
-
-    if (modelAsset == null)
-      continue;
-
-    ++dataIndex;
-
-    let chartingEarningsDataSet = null;
-
-    if (buildNewDataSet) {
-      chartingEarningsDataSet = JSON.parse(JSON.stringify(lineChartDataSet));
-      chartingEarningsDataSet.label = modelAsset.displayName;
-      chartingEarningsDataSet.data = modelAsset.displayEarningData;
-    }
-    else
-      chartingEarningsDataSet = chartingEarningsData.datasets[dataIndex];
-
-    if (highlightDisplayName != null) {
-      if (highlightDisplayName == modelAsset.displayName)
-        chartingEarningsDataSet.backgroundColor = colorRange[modelAsset.colorId];
-      else
-        chartingEarningsDataSet.backgroundColor = 'whitesmoke';
-    }
-    else {
-      chartingEarningsDataSet.backgroundColor = colorRange[modelAsset.colorId];
-    }
-
-    if (buildNewDataSet)
-      chartingEarningsData.datasets.push(chartingEarningsDataSet);
-  }
-
-  chartingEarningsConfig.data = chartingEarningsData;
-  return chartingEarningsConfig;
-}
-
-export function charting_buildDisplayEarningsFromModelAsset(firstDateInt, lastDateInt, modelAsset, buildNewDataSet) {
-  if (firstDateInt == null) {
-    logger.log(LogCategory.CHARTING, 'charting_buildDisplayEarningsFromModelAssets - null firstDateInt provided');
-    return null;
-  }
-  else if (lastDateInt == null) {
-    logger.log(LogCategory.CHARTING, 'charting_buildDisplayEarningsFromModelAssets - null lastDateInt provided');
-    return null;
-  }
-
-  let chartingEarningsConfig = null;
-  let chartingEarningsData = null;
-
-  let cachedConfig = chartMetricConfigCache.get('earningsIndividual');
-
-  if (!buildNewDataSet && cachedConfig == null) {
-    logger.log(LogCategory.CHARTING, 'charting_buildDisplayEarningsFromModelAsset - attempting to reuse null config. Building new data set.');
-    buildNewDataSet = true;
-  }
-
-  if (buildNewDataSet) {
-    chartingEarningsConfig = JSON.parse(JSON.stringify(lineChartConfig));
-    chartingEarningsData = JSON.parse(JSON.stringify(lineChartData));
-    let labels = charting_buildDisplayLabels(firstDateInt, lastDateInt);
-    chartingEarningsData.labels = labels;
-  }
-  else {
-    chartingEarningsConfig = cachedConfig;
-    chartingEarningsData = chartingEarningsConfig.data;
-  }
-
-  let chartingEarningsDataSet = null;
-
-  if (buildNewDataSet) {
-    chartingEarningsDataSet = JSON.parse(JSON.stringify(lineChartDataSet));
-    chartingEarningsDataSet.label = modelAsset.displayName;
-    chartingEarningsDataSet.data = modelAsset.displayEarningData;
-  }
-  else
-    chartingEarningsDataSet = chartingEarningsData.datasets[dataIndex];
-
-  chartingEarningsDataSet.backgroundColor = colorRange[modelAsset.colorId];
-
-  if (buildNewDataSet)
-    chartingEarningsData.datasets.push(chartingEarningsDataSet);
-
-  chartingEarningsConfig.data = chartingEarningsData;
-  return chartingEarningsConfig;
-}
-
 export function charting_buildCashFlowDataSet(modelAssets, label, sign) {
   let cashFlowDataSet = JSON.parse(JSON.stringify(lineChartDataSet));
   cashFlowDataSet.label = label;
@@ -478,7 +346,7 @@ export function charting_buildCashFlowDataSet(modelAssets, label, sign) {
     //else if (flowLineChartExclusions.includes(modelAsset.instrument))
     //  continue;
 
-    let displayHistoryData = modelAsset.getDisplayHistory(Metric.EARNING);
+    let displayHistoryData = modelAsset.getDisplayHistory(Metric.CASH_FLOW);
 
     for (let ii = 0; ii < displayHistoryData.length; ii++) {
 
@@ -554,7 +422,7 @@ export function charting_applyTaxesToCashFlowDataSet(cashFlowDataSet, taxDataSet
 
 export function charting_buildDisplayCashFlowFromPortfolio(portfolio) {
 
-  //let reducedModelAssets = charting_reducedModelAssetsForEarnings(portfolio.modelAssets);
+  //let reducedModelAssets = portfolio.modelAssets; // was charting_reducedModelAssetsForEarnings
   let reducedModelAssets = portfolio.modelAssets;
 
   let chartingCashFlowDataSet_credits = charting_buildCashFlowDataSet(reducedModelAssets, 'Credits', 1);
@@ -626,7 +494,17 @@ export function charting_buildFromModelAsset(portfolio, modelDisplayName) {
 
     setModelAssetColorIds(portfolio.modelAssets);
     let modelAsset = findByName(portfolio.modelAssets, modelDisplayName);
-    charting_jsonMetricChartConfigIndividual = charting_buildDisplayEarningsFromModelAsset(portfolio.firstDateInt, portfolio.lastDateInt, modelAsset, true);
+
+    let config = JSON.parse(JSON.stringify(stackedBarChartConfig));
+    let data = JSON.parse(JSON.stringify(stackedBarChartData));
+    data.labels = charting_buildDisplayLabels(portfolio.firstDateInt, portfolio.lastDateInt);
+
+    let dataSet = charting_buildModelAssetMetric(modelAsset, Metric.CASH_FLOW);
+    dataSet.backgroundColor = colorRange[modelAsset.colorId];
+    data.datasets.push(dataSet);
+
+    config.data = data;
+    charting_jsonMetricChartConfigIndividual = config;
 
 }
 

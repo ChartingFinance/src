@@ -62,7 +62,7 @@ this.mortgageInterestCurrency.zero();
 **After** — declare metric names, MetricSet handles lifecycle:
 ```js
 const METRIC_NAMES = [
-  'earning', 'income', 'afterTax', 'mortgageInterest', // ... etc
+  'cashFlow', 'income', 'afterTax', 'mortgageInterest', // ... etc
 ];
 
 // In constructor:
@@ -174,7 +174,7 @@ You don't need to convert everything at once. Here's the recommended order:
 - **Taxes.js**: Not touched — same reason.
 - **HTML templates**: The `html.js` template strings still work because ModelAsset
   exposes the same `.toHTML()` methods on its value types.
-- **Charting**: `monthlyValues`, `monthlyEarnings` etc. are still accessible (via getter aliases).
+- **Charting**: `monthlyValues`, `monthlyCashFlows` etc. are still accessible (via getter aliases).
 
 ---
 

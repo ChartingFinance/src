@@ -28,15 +28,15 @@ class PortfolioLedger extends LitElement {
         const finishDate = p ? this._formatDate(p.lastDateInt) : '\u2014';
         const startValue = p ? this._formatCurrency(p.startValue().amount) : '$0.00';
         const finishValue = p ? this._formatCurrency(p.finishValue().amount) : '$0.00';
-        const totalEarnings = p ? p.total.earning().amount : 0;
+        const totalCashFlow = p ? p.total.cashFlow().amount : 0;
         const totalExpenses = p ? p.total.expense.amount + p.total.totalTaxes().amount + p.total.mortgageInterest.amount : 0;
         const accumulated = p ? p.accumulatedValue().amount : 0;
         const annualReturn = p ? this._computeCAGR(p) : 0;
 
-        const totalEarningsFormatted = this._formatCurrency(Math.abs(totalEarnings));
-        const totalEarningsDisplay = totalEarnings >= 0
-            ? `+${totalEarningsFormatted.substring(1)}`
-            : `-${totalEarningsFormatted.substring(1)}`;
+        const totalCashFlowFormatted = this._formatCurrency(Math.abs(totalCashFlow));
+        const totalCashFlowDisplay = totalCashFlow >= 0
+            ? `+${totalCashFlowFormatted.substring(1)}`
+            : `-${totalCashFlowFormatted.substring(1)}`;
 
         const totalExpensesDisplay = this._formatCurrency(Math.abs(totalExpenses));
 
@@ -79,8 +79,8 @@ class PortfolioLedger extends LitElement {
                             <span class="font-semibold text-gray-800">${finishDate}</span>
                         </div>
                         <div class="flex justify-between items-center pb-2 border-b border-purple-100/50">
-                            <span class="text-sm text-gray-500">Total Earnings</span>
-                            <span class="font-semibold text-gray-800 ledger-item-value ${valClass}">${totalEarningsDisplay}</span>
+                            <span class="text-sm text-gray-500">Total Cash Flow</span>
+                            <span class="font-semibold text-gray-800 ledger-item-value ${valClass}">${totalCashFlowDisplay}</span>
                         </div>
                         <div class="flex justify-between items-end pt-2">
                             <span class="text-sm font-medium text-purple-700">Closing Position</span>

@@ -190,7 +190,7 @@ export async function exportReport(filePath, modelAssets, activeSummaryElement) 
         instrument: asset.instrument,
         startValue: asset.startCurrency.toString(),
         finishValue: asset.finishCurrency.toString(),
-        accumulated: asset.accumulatedCurrency.toString()
+        accumulated: asset.cashFlowAccumulatedCurrency.toString()
       }))
     };
 
