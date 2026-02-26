@@ -177,16 +177,22 @@ class AssetFormModal extends LitElement {
         }
 
         if (InstrumentType.isTaxableAccount(instrument)) {
-            const basisVal = ma ? ma.basisCurrency.toHTML() : '0';
+            const basisVal = ma ? ma.startBasisCurrency.toHTML() : '0';
+            const finishBasisVal = ma ? ma.finishBasisCurrency.toHTML() : '0';
             const divVal = ma ? ma.annualDividendRate.toHTML() : '0';
-            const ltVal = ma ? ma.longTermCapitalGainRate.toHTML() : '0';
+            const ltVal = ma ? ma.longTermCapitalHoldingPercentage.toHTML() : '0';
             return html`
                 <div class="mt-6 border-t border-gray-100 pt-6">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Basis Value</label>
-                            <input type="number" class="fin-input" name="basisValue"
+                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Start Basis</label>
+                            <input type="number" class="fin-input" name="startBasisValue"
                                 .value=${basisVal} step="0.01" placeholder="original cost" />
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Finish Basis</label>
+                            <input type="number" class="fin-input bg-gray-100 text-gray-400"
+                                .value=${finishBasisVal} step="0.01" placeholder="Computed automatically" disabled />
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Dividend Rate %</label>
@@ -204,15 +210,21 @@ class AssetFormModal extends LitElement {
         }
 
         if (InstrumentType.isHome(instrument)) {
-            const basisVal = ma ? ma.basisCurrency.toHTML() : '0';
+            const basisVal = ma ? ma.startBasisCurrency.toHTML() : '0';
+            const finishBasisVal = ma ? ma.finishBasisCurrency.toHTML() : '0';
             const taxRateVal = ma ? ma.annualTaxRate.toHTML() : '0';
             return html`
                 <div class="mt-6 border-t border-gray-100 pt-6">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Basis Value</label>
-                            <input type="number" class="fin-input" name="basisValue"
+                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Start Basis</label>
+                            <input type="number" class="fin-input" name="startBasisValue"
                                 .value=${basisVal} step="0.01" placeholder="original cost" />
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Finish Basis</label>
+                            <input type="number" class="fin-input bg-gray-100 text-gray-400"
+                                .value=${finishBasisVal} step="0.01" placeholder="Computed automatically" disabled />
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Annual Property Tax %</label>

@@ -1232,7 +1232,7 @@ applyLastDayOfMonthExpenseFundTransfers(modelAsset) {
     handleCapitalGains(modelAsset) {
         if (InstrumentType.isTaxFree(modelAsset.instrument)) return;
 
-        const capitalGains = new Currency(modelAsset.finishCurrency.amount - modelAsset.basisCurrency.amount);
+        const capitalGains = new Currency(modelAsset.finishCurrency.amount - modelAsset.finishBasisCurrency.amount);
         logger.log(LogCategory.TAX, 'capital gains of ' + capitalGains.toString());
 
         const monthsSpan = MonthsSpan.build(modelAsset.startDateInt, modelAsset.finishDateInt);

@@ -196,10 +196,10 @@ function connectAssetFormModal() {
             editingModelAsset.startCurrency = newAsset.startCurrency;
             editingModelAsset.finishDateInt = newAsset.finishDateInt;
             editingModelAsset.annualReturnRate = newAsset.annualReturnRate;
-            editingModelAsset.basisCurrency = newAsset.basisCurrency;
+            editingModelAsset.startBasisCurrency = newAsset.startBasisCurrency;
             editingModelAsset.monthsRemaining = newAsset.monthsRemaining;
             editingModelAsset.annualDividendRate = newAsset.annualDividendRate;
-            editingModelAsset.longTermCapitalGainRate = newAsset.longTermCapitalGainRate;
+            editingModelAsset.longTermCapitalHoldingPercentage = newAsset.longTermCapitalHoldingPercentage;
             editingModelAsset.isSelfEmployed = newAsset.isSelfEmployed;
             editingModelAsset.annualTaxRate = newAsset.annualTaxRate;
             editingModelAsset = null;

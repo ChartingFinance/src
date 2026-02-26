@@ -123,7 +123,7 @@ export class ModelAsset {
    * @param {string}        opts.displayName
    * @param {DateInt}        opts.startDateInt
    * @param {Currency}       opts.startCurrency
-   * @param {Currency}       [opts.basisCurrency]
+   * @param {Currency}       [opts.startBasisCurrency]
    * @param {DateInt}        opts.finishDateInt
    * @param {number}         [opts.monthsRemaining]
    * @param {ARR}            opts.annualReturnRate
@@ -134,7 +134,7 @@ export class ModelAsset {
     displayName,
     startDateInt,
     startCurrency,
-    basisCurrency = Currency.zero(),
+    startBasisCurrency = Currency.zero(),
     finishDateInt,
     monthsRemaining = 0,
     annualReturnRate,
@@ -148,7 +148,8 @@ export class ModelAsset {
     this.displayName     = displayName;
     this.startDateInt    = startDateInt;
     this.startCurrency   = startCurrency;
-    this.basisCurrency   = basisCurrency;
+    this.startBasisCurrency = startBasisCurrency;
+    this.finishBasisCurrency = new Currency(startBasisCurrency.amount);
     this.finishDateInt   = finishDateInt;
     this.monthsRemaining = Number.isInteger(monthsRemaining) ? monthsRemaining : 0;
     this.annualDividendRate = annualDividendRate;
@@ -183,7 +184,7 @@ export class ModelAsset {
       displayName:     obj.displayName,
       startDateInt:    new DateInt(obj.startDateInt.year * 100 + obj.startDateInt.month),
       startCurrency:   new Currency(obj.startCurrency.amount),
-      basisCurrency:   new Currency(obj.basisCurrency?.amount ?? 0),
+      startBasisCurrency: new Currency(obj.startBasisCurrency?.amount ?? obj.basisCurrency?.amount ?? 0),
       finishDateInt:   new DateInt(obj.finishDateInt.year * 100 + obj.finishDateInt.month),
       monthsRemaining: obj.monthsRemaining ?? 0,
       annualReturnRate: new ARR(obj.annualReturnRate?.annualReturnRate ?? obj.annualReturnRate?.rate ?? 0),
@@ -215,7 +216,7 @@ export class ModelAsset {
       displayName:     vals.displayName?.value,
       startDateInt:    DateInt.parse(vals.startDate?.value),
       startCurrency:   Currency.parse(vals.startValue?.value),
-      basisCurrency:   Currency.parse(vals.basisValue?.value),
+      startBasisCurrency: Currency.parse(vals.startBasisValue?.value),
       finishDateInt:   DateInt.parse(vals.finishDate?.value),
       monthsRemaining: parseInt(vals.monthsRemaining?.value, 10) || 0,
       annualReturnRate: ARR.parse(vals.annualReturnRate?.value),
@@ -429,6 +430,7 @@ export class ModelAsset {
   initializeChron() {
 
     this.finishCurrency = new Currency(0);
+    this.finishBasisCurrency = new Currency(this.startBasisCurrency.amount);
     this.monthsRemainingDynamic = this.monthsRemaining;
     this.beforeStartDate = false;
     this.onStateDate = false;
@@ -740,12 +742,12 @@ applyMonthlyExpense() {
       const currentValue = this.finishCurrency.amount;
       if (currentValue > 0) {
         const fractionSold = Math.min(withdrawal / currentValue, 1.0);
-        const basisWithdrawn = this.basisCurrency.amount * fractionSold;
+        const basisWithdrawn = this.finishBasisCurrency.amount * fractionSold;
         realizedGain.amount = withdrawal - basisWithdrawn;
-        this.basisCurrency.amount -= basisWithdrawn;
+        this.finishBasisCurrency.amount -= basisWithdrawn;
       }
     } else if (credit.amount > 0 && T.isTaxableAccount(this.instrument)) {
-      this.basisCurrency.add(credit); // Deposits increase basis
+      this.finishBasisCurrency.add(credit); // Deposits increase basis
     }
 
     this.finishCurrency.add(credit);
@@ -857,7 +859,7 @@ applyMonthlyExpense() {
   */
   getUnrealizedGainRatio() {
     if (this.finishCurrency.amount <= 0) return 0;
-    const basisRatio = this.basisCurrency.amount / this.finishCurrency.amount;
+    const basisRatio = this.finishBasisCurrency.amount / this.finishCurrency.amount;
     return Math.max(0, 1.0 - basisRatio); // Returns a float between 0.0 and 1.0
   }
 
@@ -916,7 +918,7 @@ applyMonthlyExpense() {
       displayName:     this.displayName,
       startDateInt:    this.startDateInt,
       startCurrency:   this.startCurrency,
-      basisCurrency:   this.basisCurrency,
+      startBasisCurrency: this.startBasisCurrency.copy(),
       finishDateInt:   this.finishDateInt,
       monthsRemaining: this.monthsRemaining,
       annualReturnRate: this.annualReturnRate,
