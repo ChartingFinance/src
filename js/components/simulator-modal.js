@@ -98,7 +98,7 @@ class SimulatorModal extends LitElement {
 
         // Build initial chart from current portfolio
         const portfolio = new Portfolio(this.modelAssets, false);
-        chronometer_run(null, portfolio);
+        chronometer_run(portfolio);
         portfolio.buildChartingDisplayData();
         setModelAssetColorIds(portfolio.modelAssets);
 

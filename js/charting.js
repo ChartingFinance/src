@@ -481,11 +481,12 @@ export function charting_buildFromPortfolio(portfolio, buildNewDataSet, metric1N
     setModelAssetColorIds(portfolio.modelAssets);
     charting_jsonMetric1ChartData = charting_buildPortfolioMetric(portfolio, metric1Name, buildNewDataSet);
     charting_jsonMetric2ChartData = charting_buildPortfolioMetric(portfolio, metric2Name, buildNewDataSet);
-    charting_jsonRollupChartData = charting_buildPortfolioRollup(portfolio, "cashFlow", buildNewDataSet);
+    charting_jsonRollupChartData = charting_buildPortfolioMetric(portfolio, "cashFlow", buildNewDataSet);
 
     const markers = charting_buildDateMarkers(portfolio);
     charting_jsonMetric1ChartData.options.plugins.dateMarkers = { markers };
     charting_jsonMetric2ChartData.options.plugins.dateMarkers = { markers };
+    charting_jsonRollupChartData.options.plugins.dateMarkers = { markers };
 
   }
 }

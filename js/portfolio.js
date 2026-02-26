@@ -9,6 +9,16 @@ import { firstDateInt, lastDateInt } from './asset-queries.js';
 import { activeTaxTable } from './globals.js';
 import { global_propertyTaxDeductionMax, global_user_startAge } from './globals.js';
 
+/*
+yearlyGrossIncome
+
+yearlyDeductions
+
+yearlyCapitalGains
+
+yearlyWithheldTaxes (This is the sum of all the monthly estimates your engine currently calculates).
+*/
+
 export const FINANCIAL_FIELDS = [
     'employedIncome', 'selfIncome', 'socialSecurity', 'assetAppreciation',
     'expense', 'fica', 'incomeTax', 'estimatedTaxes',
@@ -1359,6 +1369,49 @@ applyLastDayOfMonthExpenseFundTransfers(modelAsset) {
         //logger.log(LogCategory.TAX, 'monthlyTaxes.longTermCapitalGains: ' + this.monthly.longTermCapitalGainsTax.toString());
         //this.creditToFirstExpensableAccount(longTermCapitalGainsTax);                                  
         
+    }
+
+    applyAnnualTaxTrueUp(currentDateInt) {
+        // Only run this once a year (e.g., end of December)
+        if (currentDateInt.month !== 12) return; 
+
+        // 1. Calculate the EXACT tax liability based on the full 365-day reality
+        const actualTaxableIncome = activeTaxTable.calculateYearlyTaxableIncome(
+            this.yearlyGrossIncome.copy().subtract(this.yearlyDeductions)
+        );
+        
+        const actualIncomeTax = activeTaxTable.calculateYearlyIncomeTax(actualTaxableIncome);
+        const actualCapitalGainsTax = activeTaxTable.calculateYearlyLongTermCapitalGainsTax(
+            actualTaxableIncome, 
+            this.yearlyCapitalGains
+        );
+
+        const totalActualTax = actualIncomeTax.copy().add(actualCapitalGainsTax);
+
+        // 2. Compare Actual vs. Withheld
+        const taxDifference = totalActualTax.amount - this.yearlyWithheldTaxes.amount;
+
+        if (taxDifference > 0) {
+            // UNDERPAID: The user owes the IRS a check.
+            // This is a negative cash flow event.
+            logger.log(LogCategory.TAX, `Annual True-Up: User owes ${taxDifference}. Debiting account.`);
+            const taxBill = new Currency(taxDifference);
+            
+            // This might trigger your new Gross-Up Shortfall logic if cashFlow is empty!
+            this.debitFromFirstExpensableAccount(taxBill, 'Annual IRS Tax Bill Due'); 
+            
+        } else if (taxDifference < 0) {
+            // OVERPAID: The user gets a tax refund!
+            // This is a positive cash flow event.
+            const refundAmount = Math.abs(taxDifference);
+            logger.log(LogCategory.TAX, `Annual True-Up: User overpaid. Refunding ${refundAmount}.`);
+            const taxRefund = new Currency(refundAmount);
+            
+            this.creditToFirstExpensableAccount(taxRefund, 'IRS Tax Refund');
+        }
+
+        // 3. Reset the annual accumulators for the next year
+        this.resetAnnualAccumulators();
     }
 
     applyToFirstMatchingAccount(predicate, operation, amount, note = '') {

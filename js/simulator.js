@@ -34,7 +34,7 @@ self.onmessage = function(event) {
 class Simulator {
     constructor(portfolio) {
 
-        chronometer_run(null, portfolio);
+        chronometer_run(portfolio);
 
         this.portfolio = portfolio; // Portfolio object to simulate
         this.bestPortfolio = portfolio.copy(); // Best observed portfolio
@@ -110,7 +110,7 @@ class Simulator {
             "data": "Iteration: " + iteration.toString() + '\n' + this.portfolio.dnaFundTransfers()
         }
         callback(richMessage);
-        chronometer_run(null, this.portfolio);
+        chronometer_run(this.portfolio);
 
     }
 
@@ -118,7 +118,7 @@ class Simulator {
     runTestCases(fundTransferStepping, callback) {
 
         logger.log(LogCategory.GENERAL, 'Replicating current assets...');
-        chronometer_run(null, this.portfolio);
+        chronometer_run(this.portfolio);
         callback(this.portfolio.modelAssets);
         this.bestPortfolio = this.portfolio.copy(); // Copy the current portfolio as the best portfolio
 
@@ -193,7 +193,7 @@ class Simulator {
     // 3. Fitness function
     evaluateFitness(chromosome, callback) {
         this.setFundTransfersFromChromosome(chromosome);
-        chronometer_run(null, this.portfolio);
+        chronometer_run(this.portfolio);
         if (this.portfolio.finishValue().amount > this.bestPortfolio.finishValue().amount) {
             this.bestPortfolio = this.portfolio.copy();
             let richMessage = {
