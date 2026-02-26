@@ -368,6 +368,17 @@ export class TaxTable {
         }
     }
 
+    getMarginalLTCGRate(taxableIncome) {
+        for (const taxRow of this.activeCapitalGainsTable.taxRows) {
+            const upper = taxRow.toAmount === -1 ? Infinity : taxRow.toAmount;
+            if (taxableIncome.amount <= upper)
+                return taxRow.rate;
+        }
+        // Fallback to the last bracket's rate
+        const rows = this.activeCapitalGainsTable.taxRows;
+        return rows[rows.length - 1].rate;
+    }
+
     calculateMonthlyEstimatedTaxes(modelAsset) {
         return new Currency();
     }

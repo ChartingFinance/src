@@ -98,7 +98,7 @@ class TransferModal extends LitElement {
     _getTransferrableAssets() {
         if (!this._portfolio) {
             this._portfolio = new Portfolio(this.modelAssets, false);
-            chronometer_run(null, this._portfolio);
+            chronometer_run(this._portfolio);
             this._portfolio.buildChartingDisplayData();
         }
 
@@ -159,7 +159,7 @@ class TransferModal extends LitElement {
         if (!canvas) return;
 
         this._portfolio = new Portfolio(this.modelAssets, false);
-        chronometer_run(null, this._portfolio);
+        chronometer_run(this._portfolio);
         this._portfolio.buildChartingDisplayData();
         charting_buildFromModelAsset(this._portfolio, this.currentDisplayName);
 

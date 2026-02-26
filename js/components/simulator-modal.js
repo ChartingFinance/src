@@ -134,7 +134,7 @@ class SimulatorModal extends LitElement {
             if (msg.action === 'foundBetter') {
                 const assetModels = membrane_jsonObjectsToModelAssets(msg.data);
                 const p = new Portfolio(assetModels, false);
-                chronometer_run(null, p);
+                chronometer_run(p);
                 p.buildChartingDisplayData();
                 setModelAssetColorIds(p.modelAssets);
 

@@ -1,204 +1,152 @@
-// mcp-client.js - Frontend client for MCP integration
+// mcp-client.js - MCP Server stub for external AI agent integration
+import { ModelAsset } from './model-asset.js';
+import { Currency } from './currency.js';
+import { DateInt } from './date-int.js';
+import { ARR } from './arr.js';
+import { Instrument } from './instrument.js';
 import { membrane_rawDataToModelAssets } from './membrane.js';
 import { Portfolio } from './portfolio.js';
 import { chronometer_run } from './chronometer.js';
 
-export class MCPClient {
-  constructor(baseUrl = 'http://localhost:3000/api/mcp') {
-    this.baseUrl = baseUrl;
+const VALID_INSTRUMENTS = new Set(Object.values(Instrument));
+
+// ── Tool Registry ────────────────────────────────────────────────────
+
+const tools = new Map();
+
+tools.set('add_asset', {
+  description: 'Add a new financial asset to the portfolio',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      instrument:      { type: 'string', enum: Object.values(Instrument), description: 'Asset type' },
+      displayName:     { type: 'string', description: 'User-friendly name' },
+      startDate:       { type: 'string', description: 'Start date in YYYY-MM format' },
+      startValue:      { type: 'number', description: 'Starting dollar value' },
+      finishDate:      { type: 'string', description: 'End date in YYYY-MM format' },
+      annualReturnRate:{ type: 'number', description: 'Annual return as percentage, e.g. 7 for 7%' },
+      basisValue:      { type: 'number', description: 'Cost basis (optional, defaults to 0)' },
+      isSelfEmployed:  { type: 'boolean', description: 'Self-employed income flag (optional)' },
+    },
+    required: ['instrument', 'displayName', 'startDate', 'startValue', 'finishDate', 'annualReturnRate'],
+  },
+  handler(args) {
+    if (!VALID_INSTRUMENTS.has(args.instrument)) {
+      throw new Error(`Invalid instrument: "${args.instrument}". Must be one of: ${[...VALID_INSTRUMENTS].join(', ')}`);
+    }
+
+    const modelAsset = new ModelAsset({
+      instrument:      args.instrument,
+      displayName:     args.displayName,
+      startDateInt:    DateInt.parse(args.startDate),
+      startCurrency:   new Currency(args.startValue),
+      basisCurrency:   new Currency(args.basisValue ?? 0),
+      finishDateInt:   DateInt.parse(args.finishDate),
+      annualReturnRate:new ARR(args.annualReturnRate / 100),
+      isSelfEmployed:  args.isSelfEmployed ?? false,
+    });
+
+    return {
+      modelAsset,
+      summary: `Created ${args.instrument} "${args.displayName}" from ${args.startDate} to ${args.finishDate} with $${args.startValue} at ${args.annualReturnRate}%`,
+    };
+  },
+});
+
+tools.set('export_report', {
+  description: 'Run the simulation and return a portfolio summary report',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      assets: { type: 'array', description: 'Array of raw asset objects (as from JSON)' },
+    },
+    required: ['assets'],
+  },
+  async handler(args) {
+    const modelAssets = membrane_rawDataToModelAssets(args.assets);
+    const portfolio = new Portfolio(modelAssets, false);
+    await chronometer_run(portfolio);
+
+    return {
+      generatedAt: new Date().toISOString(),
+      summary: {
+        startValue:       portfolio.startValue().toString(),
+        finishValue:      portfolio.finishValue().toString(),
+        accumulatedValue: portfolio.accumulatedValue().toString(),
+        totalMonths:      portfolio.totalMonths,
+      },
+      assets: modelAssets.map(asset => ({
+        displayName: asset.displayName,
+        instrument:  asset.instrument,
+        startValue:  asset.startCurrency.toString(),
+        finishValue: asset.finishCurrency.toString(),
+        accumulated: asset.cashFlowAccumulatedCurrency.toString(),
+      })),
+    };
+  },
+});
+
+// ── MCP Server Stub ──────────────────────────────────────────────────
+
+export class MCPServer {
+  listTools() {
+    const result = [];
+    for (const [name, tool] of tools) {
+      result.push({ name, description: tool.description, inputSchema: tool.inputSchema });
+    }
+    return result;
   }
 
-  // Connect to an MCP server
-  async connectServer(serverName, command, args) {
-    try {
-      const response = await fetch(`${this.baseUrl}/connect`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ serverName, command, args })
-      });
+  async handleRequest(request) {
+    const { method, params } = request;
 
-      if (!response.ok) {
-        throw new Error(`Failed to connect: ${response.statusText}`);
+    if (method === 'tools/list') {
+      return { tools: this.listTools() };
+    }
+
+    if (method === 'tools/call') {
+      const { name, arguments: args } = params;
+      const tool = tools.get(name);
+      if (!tool) {
+        return { isError: true, content: [{ type: 'text', text: `Unknown tool: "${name}"` }] };
       }
 
-      return await response.json();
-    } catch (error) {
-      console.error('Error connecting to MCP server:', error);
-      throw error;
-    }
-  }
-
-  // List available servers
-  async listServers() {
-    try {
-      const response = await fetch(`${this.baseUrl}/servers`);
-      if (!response.ok) {
-        throw new Error(`Failed to list servers: ${response.statusText}`);
+      try {
+        const result = await tool.handler(args);
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
+      } catch (err) {
+        return { isError: true, content: [{ type: 'text', text: err.message }] };
       }
-      return await response.json();
-    } catch (error) {
-      console.error('Error listing servers:', error);
-      throw error;
     }
-  }
 
-  // List available tools from a server
-  async listTools(serverName) {
-    try {
-      const response = await fetch(`${this.baseUrl}/${serverName}/tools`);
-      if (!response.ok) {
-        throw new Error(`Failed to list tools: ${response.statusText}`);
-      }
-      return await response.json();
-    } catch (error) {
-      console.error('Error listing tools:', error);
-      throw error;
-    }
-  }
-
-  // Call a tool
-  async callTool(serverName, toolName, args = {}) {
-    try {
-      const response = await fetch(`${this.baseUrl}/${serverName}/call-tool`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          toolName,
-          arguments: args
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to call tool: ${response.statusText}`);
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error('Error calling tool:', error);
-      throw error;
-    }
-  }
-
-  // List available resources
-  async listResources(serverName) {
-    try {
-      const response = await fetch(`${this.baseUrl}/${serverName}/resources`);
-      if (!response.ok) {
-        throw new Error(`Failed to list resources: ${response.statusText}`);
-      }
-      return await response.json();
-    } catch (error) {
-      console.error('Error listing resources:', error);
-      throw error;
-    }
-  }
-
-  // Read a resource
-  async readResource(serverName, uri) {
-    try {
-      const response = await fetch(`${this.baseUrl}/${serverName}/read-resource`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ uri })
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to read resource: ${response.statusText}`);
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error('Error reading resource:', error);
-      throw error;
-    }
-  }
-
-  // Save financial data to file via MCP
-  async saveToFile(serverName, filePath, data) {
-    try {
-      // Using filesystem server's write capability
-      return await this.callTool(serverName, 'write_file', {
-        path: filePath,
-        content: JSON.stringify(data, null, 2)
-      });
-    } catch (error) {
-      console.error('Error saving to file:', error);
-      throw error;
-    }
-  }
-
-  // Load financial data from file via MCP
-  async loadFromFile(serverName, filePath) {
-    try {
-      const result = await this.readResource(serverName, `file://${filePath}`);
-      return JSON.parse(result.contents[0].text);
-    } catch (error) {
-      console.error('Error loading from file:', error);
-      throw error;
-    }
+    return { isError: true, content: [{ type: 'text', text: `Unknown method: "${method}"` }] };
   }
 }
 
 // Global instance
-export const mcpClient = new MCPClient();
+export const mcpServer = new MCPServer();
 
-// Save current portfolio to file — receives modelAssets array directly
-export async function savePortfolioToFile(filePath, modelAssets) {
-  try {
-    await mcpClient.saveToFile('filesystem', filePath, {
-      version: '1.0',
-      savedAt: new Date().toISOString(),
-      assets: modelAssets
-    });
-    console.log('Portfolio saved successfully');
-    return true;
-  } catch (error) {
-    console.error('Failed to save portfolio:', error);
-    return false;
+
+/*
+
+How to test
+
+import { mcpServer } from './js/mcp-client.js';
+
+// List available tools
+await mcpServer.handleRequest({ method: 'tools/list', params: {} });
+
+// Add an asset
+await mcpServer.handleRequest({ method: 'tools/call', params: {
+  name: 'add_asset',
+  arguments: {
+    instrument: 'taxableEquity',
+    displayName: 'Test Portfolio',
+    startDate: '2025-01',
+    startValue: 10000,
+    finishDate: '2035-01',
+    annualReturnRate: 7
   }
-}
+}});
 
-// Load portfolio from file — returns modelAssets array
-export async function loadPortfolioFromFile(filePath) {
-  try {
-    const data = await mcpClient.loadFromFile('filesystem', filePath);
-    const assetModels = membrane_rawDataToModelAssets(data.assets);
-    console.log('Portfolio loaded successfully');
-    return assetModels;
-  } catch (error) {
-    console.error('Failed to load portfolio:', error);
-    return null;
-  }
-}
-
-// Export financial report via MCP
-export async function exportReport(filePath, modelAssets, activeSummaryElement) {
-  try {
-    const portfolio = new Portfolio(modelAssets);
-    chronometer_run(activeSummaryElement, portfolio);
-
-    const report = {
-      generatedAt: new Date().toISOString(),
-      summary: {
-        startValue: portfolio.startValue().toString(),
-        finishValue: portfolio.finishValue().toString(),
-        accumulatedValue: portfolio.accumulatedValue().toString(),
-        totalMonths: portfolio.totalMonths
-      },
-      assets: modelAssets.map(asset => ({
-        displayName: asset.displayName,
-        instrument: asset.instrument,
-        startValue: asset.startCurrency.toString(),
-        finishValue: asset.finishCurrency.toString(),
-        accumulated: asset.cashFlowAccumulatedCurrency.toString()
-      }))
-    };
-
-    await mcpClient.saveToFile('filesystem', filePath, report);
-    console.log('Report exported successfully');
-    return true;
-  } catch (error) {
-    console.error('Failed to export report:', error);
-    return false;
-  }
-}
+*/
