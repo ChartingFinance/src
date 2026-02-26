@@ -378,7 +378,7 @@ export class TaxTable {
 
     calculateMonthlyMortgageDeduction(currentDateInt, modelAsset) {
         if (InstrumentType.isMortgage(modelAsset.instrument)) {
-            let c = new Currency(modelAsset.earningCurrency.amount * -1.0);
+            let c = new Currency(modelAsset.cashFlowCurrency.amount * -1.0);
             return c;
         }
         else

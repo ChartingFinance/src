@@ -72,7 +72,7 @@ class DebugReportView extends LitElement {
                 ['  Mortgage Escrow', this._fmt(pkg.mortgageEscrow)],
                 ['Asset Growth', this._fmt(pkg.growth())],
                 ['Expenses', this._fmt(pkg.expense)],
-                ['Total Earning', this._fmt(pkg.earning())],
+                ['Total Cash Flow', this._fmt(pkg.cashFlow())],
                 ['Effective Tax Rate', pkg.effectiveTaxRate().toFixed(2) + '%'],
             ];
 

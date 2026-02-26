@@ -308,7 +308,7 @@ export class HydraulicVisualizer {
             let displayValue = asset.finishCurrency;
             if (InstrumentType.isMonthlyIncome(asset.instrument)) displayValue = asset.incomeCurrency;
             else if (InstrumentType.isMonthlyExpense(asset.instrument) || InstrumentType.isDebt(asset.instrument) || InstrumentType.isMortgage(asset.instrument)) {
-                displayValue = asset.accumulatedCurrency;
+                displayValue = asset.cashFlowAccumulatedCurrency;
             }
 
             nodeElements.valText.textContent = displayValue.toCurrency();
