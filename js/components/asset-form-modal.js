@@ -15,7 +15,7 @@
  */
 
 import { LitElement, html } from 'lit';
-import { InstrumentType } from '../instrument.js';
+import { Instrument, InstrumentType } from '../instrument.js';
 import { membrane_htmlElementToAssetModel } from '../membrane.js';
 import { DateInt } from '../date-int.js';
 
@@ -61,8 +61,12 @@ class AssetFormModal extends LitElement {
         const startDate = isEdit && ma ? ma.startDateInt.toHTML() : DateInt.today().toHTML();
         const startValue = isEdit && ma ? ma.startCurrency.toHTML() : '';
         const finishDate = isEdit && ma ? ma.finishDateInt.toHTML() : '';
-        const finishValue = isEdit && ma && ma.finishCurrency ? ma.finishCurrency.toHTML() : '0.0';
+        const closed = isEdit && ma && ma.isClosed;
+        const finishValue = closed && ma.closedValue ? ma.closedValue.toHTML()
+            : (isEdit && ma && ma.finishCurrency ? ma.finishCurrency.toHTML() : '0.0');
         const annualReturn = isEdit && ma ? ma.annualReturnRate.toHTML() : '';
+        const closedLabel = closed ? 'text-purple-700' : 'text-gray-500';
+        const closedInput = closed ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-gray-100 text-gray-400';
         const selectedInstrument = this._instrument || (isEdit && ma ? ma.instrument : '');
 
         return html`
@@ -113,13 +117,13 @@ class AssetFormModal extends LitElement {
                                     step="0.01" placeholder="$0.00" required />
                             </div>
                             <div>
-                                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Finish Date</label>
-                                <input type="month" class="fin-input" name="finishDate"
+                                <label class="block text-xs font-semibold ${closedLabel} uppercase tracking-wider mb-1">Finish Date</label>
+                                <input type="month" class="fin-input ${closedInput}" name="finishDate"
                                     .value=${finishDate} required />
                             </div>
                             <div>
-                                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Finish Value</label>
-                                <input type="number" class="fin-input bg-gray-100 text-gray-400" name="finishValue"
+                                <label class="block text-xs font-semibold ${closedLabel} uppercase tracking-wider mb-1">Finish Value</label>
+                                <input type="number" class="fin-input ${closedInput}" name="finishValue"
                                     .value=${finishValue}
                                     step="0.01" placeholder="Computed automatically" disabled />
                             </div>
@@ -130,7 +134,7 @@ class AssetFormModal extends LitElement {
                                     step="0.01" placeholder="e.g. 0.07" required />
                             </div>
                         </div>
-                        ${this._renderInstrumentFields(selectedInstrument, ma)}
+                        ${this._renderInstrumentFields(selectedInstrument, ma, closed)}
                         <div class="mt-8 flex justify-end">
                             <input type="submit" class="btn-modern primary cursor-pointer"
                                 .value=${isEdit ? 'Save Changes ✨' : 'Add to Stack 🚀'} />
@@ -141,10 +145,10 @@ class AssetFormModal extends LitElement {
         `;
     }
 
-    _renderInstrumentFields(instrument, ma) {
+    _renderInstrumentFields(instrument, ma, closed = false) {
         if (!instrument) return html``;
 
-        if (InstrumentType.isMonthlyIncome(instrument)) {
+        if (instrument === Instrument.MONTHLY_SALARY) {
             const checked = ma && ma.isSelfEmployed;
             return html`
                 <div class="mt-6 border-t border-gray-100 pt-6">
@@ -178,7 +182,8 @@ class AssetFormModal extends LitElement {
 
         if (InstrumentType.isTaxableAccount(instrument)) {
             const basisVal = ma ? ma.startBasisCurrency.toHTML() : '0';
-            const finishBasisVal = ma ? ma.finishBasisCurrency.toHTML() : '0';
+            const finishBasisVal = closed && ma.closedBasisValue ? ma.closedBasisValue.toHTML()
+                : (ma ? ma.finishBasisCurrency.toHTML() : '0');
             const divVal = ma ? ma.annualDividendRate.toHTML() : '0';
             const ltVal = ma ? ma.longTermCapitalHoldingPercentage.toHTML() : '0';
             return html`
@@ -190,8 +195,8 @@ class AssetFormModal extends LitElement {
                                 .value=${basisVal} step="0.01" placeholder="original cost" />
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Finish Basis</label>
-                            <input type="number" class="fin-input bg-gray-100 text-gray-400"
+                            <label class="block text-xs font-semibold ${closed ? 'text-purple-700' : 'text-gray-500'} uppercase tracking-wider mb-1">Finish Basis</label>
+                            <input type="number" class="fin-input ${closed ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-gray-100 text-gray-400'}"
                                 .value=${finishBasisVal} step="0.01" placeholder="Computed automatically" disabled />
                         </div>
                         <div>
@@ -211,7 +216,8 @@ class AssetFormModal extends LitElement {
 
         if (InstrumentType.isHome(instrument)) {
             const basisVal = ma ? ma.startBasisCurrency.toHTML() : '0';
-            const finishBasisVal = ma ? ma.finishBasisCurrency.toHTML() : '0';
+            const finishBasisVal = closed && ma.closedBasisValue ? ma.closedBasisValue.toHTML()
+                : (ma ? ma.finishBasisCurrency.toHTML() : '0');
             const taxRateVal = ma ? ma.annualTaxRate.toHTML() : '0';
             return html`
                 <div class="mt-6 border-t border-gray-100 pt-6">
@@ -222,8 +228,8 @@ class AssetFormModal extends LitElement {
                                 .value=${basisVal} step="0.01" placeholder="original cost" />
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Finish Basis</label>
-                            <input type="number" class="fin-input bg-gray-100 text-gray-400"
+                            <label class="block text-xs font-semibold ${closed ? 'text-purple-700' : 'text-gray-500'} uppercase tracking-wider mb-1">Finish Basis</label>
+                            <input type="number" class="fin-input ${closed ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-gray-100 text-gray-400'}"
                                 .value=${finishBasisVal} step="0.01" placeholder="Computed automatically" disabled />
                         </div>
                         <div>

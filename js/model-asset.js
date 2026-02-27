@@ -437,6 +437,8 @@ export class ModelAsset {
     this.onFinishDate  = false;
     this.afterFinishDate = false;
     this.isClosed = false;
+    this.closedValue = null;
+    this.closedBasisValue = null;
     this.creditMemos = [];
     this.creditMemosCheckedIndex = 0;
     this.#metrics.initializeAll();
@@ -655,7 +657,7 @@ applyMonthlyExpense() {
     this.monthlyValueChange.add(this.growthCurrency);
     this.creditMemos.push(new CreditMemo(this.growthCurrency, 'Asset growth', this.currentDateInt));
 
-    const dividend = Currency.zero();
+    let dividend = Currency.zero();
     if (this.annualDividendRate.rate != 0.0) {
 
       // add on top of growth
@@ -864,7 +866,9 @@ applyMonthlyExpense() {
   }
 
   close() {
-    
+
+    // closedValue / closedBasisValue are captured by Portfolio.closeAsset()
+    // before fund transfers drain the asset
     this.creditCurrency.zero();
     this.finishCurrency.zero();
 

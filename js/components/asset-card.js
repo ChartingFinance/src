@@ -50,9 +50,14 @@ class AssetCard extends LitElement {
         const meta = InstrumentMeta.get(ma.instrument);
         const emoji = meta ? meta.emoji : '';
 
-        // Display value: prefer finish value, fall back to start
-        const finishVal = ma.finishCurrency ? ma.finishCurrency.toHTML() : '0.0';
-        const displayAmount = parseFloat(finishVal) !== 0 ? finishVal : ma.startCurrency.toHTML();
+        // Display value: prefer closed value, then finish value, fall back to start
+        let displayAmount;
+        if (ma.isClosed && ma.closedValue) {
+            displayAmount = ma.closedValue.toHTML();
+        } else {
+            const finishVal = ma.finishCurrency ? ma.finishCurrency.toHTML() : '0.0';
+            displayAmount = parseFloat(finishVal) !== 0 ? finishVal : ma.startCurrency.toHTML();
+        }
         const valueDisplay = formatCompactCurrency(displayAmount);
 
         return html`

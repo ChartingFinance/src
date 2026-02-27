@@ -1286,14 +1286,18 @@ applyLastDayOfMonthExpenseFundTransfers(modelAsset) {
         }
 
         const amountToTransfer = new Currency(modelAsset.finishCurrency.amount);
-        logger.log(LogCategory.TRANSFER, 'close asset: ' + modelAsset.displayName + ' valued at ' + amountToTransfer.toString());    
-    
+        logger.log(LogCategory.TRANSFER, 'close asset: ' + modelAsset.displayName + ' valued at ' + amountToTransfer.toString());
+
         if (InstrumentType.isCapital(modelAsset.instrument)) {
 
             this.handleCapitalGains(modelAsset);
 
         }
- 
+
+        // Capture pre-transfer snapshots for display purposes
+        modelAsset.closedValue = modelAsset.finishCurrency.copy();
+        modelAsset.closedBasisValue = modelAsset.finishBasisCurrency.copy();
+
         this.applyAssetCloseFundTransfers(modelAsset);
         modelAsset.close();
 
