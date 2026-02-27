@@ -144,14 +144,6 @@
             <div class="text-xs font-semibold text-gray-500 uppercase tracking-widest mt-2">Your financial story, one month at a time</div>
         </div>
         <div class="flex flex-wrap items-center gap-2">
-            <div class="bg-gray-100 p-1 rounded-xl flex gap-1 mr-2">
-                <button class="btn-modern outline small bg-white" id="btn-aplus-save" title="Save current cards to the A slot">A+</button>
-                <button class="btn-modern outline small bg-white" id="btn-aplus-recall" title="Recall cards from the A slot">AR</button>
-            </div>
-            <div class="bg-gray-100 p-1 rounded-xl flex gap-1 mr-2">
-                <button class="btn-modern outline small bg-white" id="btn-bplus-save" title="Save current cards to the B slot">B+</button>
-                <button class="btn-modern outline small bg-white" id="btn-bplus-recall" title="Recall cards from the B slot">BR</button>
-            </div>
             <button class="btn-modern outline" id="btn-donate">Donate ☕</button>
             <button class="btn-modern outline" id="btn-share">Share 📤</button>
             <button class="btn-modern primary" id="btn-calculate">Recalculate ⚡</button>
@@ -245,7 +237,15 @@
 
         <!-- Assets Column (Right/Bottom) -->
         <div class="lg:col-span-4 flex flex-col gap-4 h-full min-h-0">
-            <h2 class="text-lg font-bold flex items-center gap-2 flex-shrink-0">💼 Your Portfolio</h2>
+            <h2 class="text-lg font-bold flex items-center gap-2 flex-shrink-0">
+                💼 Your Portfolio
+                <select id="scenario-select" class="fin-input text-sm font-medium py-1 px-3 ml-auto rounded-xl">
+                    <option value="default">Default</option>
+                    <option value="Scenario1">Scenario 1</option>
+                    <option value="Scenario2">Scenario 2</option>
+                </select>
+                <button id="btn-scenario-reset" class="btn-modern outline small invisible" title="Reset scenario to Default">&#x21BA;</button>
+            </h2>
             
             <div class="glass-card p-6 relative flex flex-col flex-grow min-h-0">
                 <asset-list class="assets-container selected-assets flex flex-col items-center gap-3 overflow-y-auto flex-grow min-h-0 pb-24" id="assets" style="flex: 1;"></asset-list>

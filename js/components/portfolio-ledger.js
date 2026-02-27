@@ -52,39 +52,39 @@ class PortfolioLedger extends LitElement {
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
 
                 <!-- Opening -->
-                <div class="glass-card p-6 bg-gradient-to-br from-gray-50 to-white">
-                    <div class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Opening Chapter</div>
+                <div class="glass-card p-6 bg-slate-100 border-slate-200">
+                    <div class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Opening Chapter</div>
                     <div class="space-y-3">
-                        <div class="flex justify-between items-center pb-2 border-b border-gray-100">
-                            <span class="text-sm text-gray-500">Start Date</span>
-                            <span class="font-semibold text-gray-800">${startDate}</span>
+                        <div class="flex justify-between items-center pb-2 border-b border-slate-200">
+                            <span class="text-sm text-slate-500">Start Date</span>
+                            <span class="font-semibold text-slate-800">${startDate}</span>
                         </div>
-                        <div class="flex justify-between items-center pb-2 border-b border-gray-100">
-                            <span class="text-sm text-gray-500">Starting Capital</span>
-                            <span class="font-semibold text-gray-800">${startValue}</span>
+                        <div class="flex justify-between items-center pb-2 border-b border-slate-200">
+                            <span class="text-sm text-slate-500">Starting Capital</span>
+                            <span class="font-semibold text-slate-800">${startValue}</span>
                         </div>
                         <div class="flex justify-between items-end pt-2">
-                            <span class="text-sm font-medium text-gray-600">Lifetime Contributions</span>
-                            <span class="text-2xl font-bold text-gray-900">${startValue}</span>
+                            <span class="text-sm font-medium text-slate-600">Lifetime Contributions</span>
+                            <span class="text-2xl font-bold text-slate-900">${startValue}</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Closing -->
-                <div class="glass-card p-6 bg-gradient-to-br from-purple-50 to-white border-purple-100">
-                    <div class="text-xs font-bold text-purple-400 uppercase tracking-widest mb-4">Closing Chapter</div>
+                <div class="glass-card p-6 bg-slate-100 border-slate-200">
+                    <div class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Closing Chapter</div>
                     <div class="space-y-3">
-                        <div class="flex justify-between items-center pb-2 border-b border-purple-100/50">
-                            <span class="text-sm text-gray-500">Finish Date</span>
-                            <span class="font-semibold text-gray-800">${finishDate}</span>
+                        <div class="flex justify-between items-center pb-2 border-b border-slate-200">
+                            <span class="text-sm text-slate-500">Finish Date</span>
+                            <span class="font-semibold text-slate-800">${finishDate}</span>
                         </div>
-                        <div class="flex justify-between items-center pb-2 border-b border-purple-100/50">
-                            <span class="text-sm text-gray-500">Total Cash Flow</span>
-                            <span class="font-semibold text-gray-800 ledger-item-value ${valClass}">${totalCashFlowDisplay}</span>
+                        <div class="flex justify-between items-center pb-2 border-b border-slate-200">
+                            <span class="text-sm text-slate-500">Total Cash Flow</span>
+                            <span class="font-semibold text-slate-800 ledger-item-value ${valClass}">${totalCashFlowDisplay}</span>
                         </div>
                         <div class="flex justify-between items-end pt-2">
-                            <span class="text-sm font-medium text-purple-700">Closing Position</span>
-                            <span class="text-2xl font-bold text-purple-900 ledger-item-value total ${valClass}">${finishValue}</span>
+                            <span class="text-sm font-medium text-slate-600">Closing Position</span>
+                            <span class="text-2xl font-bold text-slate-900 ledger-item-value total ${valClass}">${finishValue}</span>
                         </div>
                     </div>
                 </div>

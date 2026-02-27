@@ -116,6 +116,7 @@ const tab6 = document.getElementById('tab6');
 let activeAssetsElement = assetsContainerElement;
 let activeStoryArc = null;
 let activeStoryName = null;
+let activeScenario = 'default';
 let activeMetric1Canvas = null;
 let activeMetric2Canvas = null;
 let activeRollupCanvas = null;
@@ -175,6 +176,14 @@ function initiateActiveData() {
         activeStoryName = util_YYYYmm();
         util_ensureStoryNames(activeStoryArc, activeStoryName);
     }
+
+    // Restore active scenario
+    const savedScenario = localStorage.getItem('activeScenario');
+    if (savedScenario && (savedScenario === 'Scenario1' || savedScenario === 'Scenario2')) {
+        activeScenario = savedScenario;
+    }
+    document.getElementById('scenario-select').value = activeScenario;
+    updateResetButtonVisibility();
 
     // Get the last working data set
     loadLocalData();
@@ -304,26 +313,38 @@ function tab6_click() {
     debugReportsElement.parentElement.style.display = '';
 }
 
-// ─── Save and Recall ─────────────────────────────────────────
+// ─── Scenarios ───────────────────────────────────────────────
 
-function aplus_save() {
-    util_saveLocalAssetModels(activeStoryArc, 'APlus', assetsContainerElement.modelAssets || []);
+function switchScenario(newScenario) {
+    // Save current work to current slot before switching
+    saveLocalData();
+
+    activeScenario = newScenario;
+    localStorage.setItem('activeScenario', activeScenario);
+
+    // Clone Default into scenario slot if it doesn't exist yet
+    if (activeScenario !== 'default') {
+        const data = util_loadLocalAssetModels(activeStoryArc, activeScenario);
+        if (!data) {
+            const defaultData = util_loadLocalAssetModels(activeStoryArc, activeStoryName);
+            util_saveLocalAssetModels(activeStoryArc, activeScenario, defaultData || []);
+        }
+    }
+
+    loadLocalData();
+    updateResetButtonVisibility();
 }
 
-function aplus_recall() {
-    let assetModelsRaw = util_loadLocalAssetModels(activeStoryArc, 'APlus');
-    assetsContainerElement.modelAssets = membrane_rawDataToModelAssets(assetModelsRaw);
-    calculate('assets');
+function resetScenario() {
+    if (activeScenario === 'default') return;
+    const defaultData = util_loadLocalAssetModels(activeStoryArc, activeStoryName);
+    util_saveLocalAssetModels(activeStoryArc, activeScenario, defaultData || []);
+    loadLocalData();
 }
 
-function bplus_click() {
-    util_saveLocalAssetModels(activeStoryArc, 'BPlus', assetsContainerElement.modelAssets || []);
-}
-
-function bplus_recall() {
-    let assetModelsRaw = util_loadLocalAssetModels(activeStoryArc, 'BPlus');
-    assetsContainerElement.modelAssets = membrane_rawDataToModelAssets(assetModelsRaw);
-    calculate('assets');
+function updateResetButtonVisibility() {
+    const btn = document.getElementById('btn-scenario-reset');
+    btn.classList.toggle('invisible', activeScenario === 'default');
 }
 
 // ─── Charting and Calculation ────────────────────────────────
@@ -405,11 +426,13 @@ function innerCalculate(portfolio) {
 }
 
 function saveLocalData() {
-    util_saveLocalAssetModels(activeStoryArc, activeStoryName, assetsContainerElement.modelAssets || []);
+    const slotName = activeScenario === 'default' ? activeStoryName : activeScenario;
+    util_saveLocalAssetModels(activeStoryArc, slotName, assetsContainerElement.modelAssets || []);
 }
 
 function loadLocalData() {
-    let assetModelsRaw = util_loadLocalAssetModels(activeStoryArc, activeStoryName);
+    const slotName = activeScenario === 'default' ? activeStoryName : activeScenario;
+    let assetModelsRaw = util_loadLocalAssetModels(activeStoryArc, slotName);
     assetsContainerElement.modelAssets = membrane_rawDataToModelAssets(assetModelsRaw);
     calculate('assets');
 }
@@ -500,10 +523,8 @@ for (const closeButtonElement of closeButtonElements) {
 // ─── Button Event Listeners ──────────────────────────────────
 
 document.getElementById('btn-calculate').addEventListener('click', () => calculate('assets'));
-document.getElementById('btn-aplus-save').addEventListener('click', aplus_save);
-document.getElementById('btn-aplus-recall').addEventListener('click', aplus_recall);
-document.getElementById('btn-bplus-save').addEventListener('click', bplus_click);
-document.getElementById('btn-bplus-recall').addEventListener('click', bplus_recall);
+document.getElementById('scenario-select').addEventListener('change', (e) => switchScenario(e.target.value));
+document.getElementById('btn-scenario-reset').addEventListener('click', resetScenario);
 document.getElementById('btn-donate').addEventListener('click', donateData);
 document.getElementById('btn-share').addEventListener('click', openShareModal);
 document.getElementById('btn-add-asset').addEventListener('click', openCreateAssetModal);
