@@ -181,10 +181,10 @@ export class FinancialPackage {
         // Selling an asset is a balance sheet transfer (Asset -> Cash). 
         // The wealth was already captured incrementally via growth().
     
-        // Subtract liabilities and outflows
-        e.add(this.totalTaxes()); // Taxes are negative, so add() subtracts
-        e.subtract(this.expense);
-        e.subtract(this.mortgageInterest);
+        // Subtract liabilities and outflows (all stored as negative values)
+        e.add(this.totalTaxes());
+        e.add(this.expense);
+        e.add(this.mortgageInterest);
     
         return e;
     }

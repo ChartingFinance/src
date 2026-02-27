@@ -937,6 +937,13 @@ applyMonthlyExpense() {
     return clone;
   }
 
+  // ── Serialization ───────────────────────────────────────────────
+
+  toJSON() {
+    const { creditMemos, creditMemosCheckedIndex, ...rest } = this;
+    return rest;
+  }
+
   // ── Private helpers ──────────────────────────────────────────────
 
   #isFlowInstrument() {
