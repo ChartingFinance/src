@@ -1,23 +1,34 @@
 /**
  * fund-transfer.js
  *
- * Extracted from model.js. Represents a percentage-based transfer
- * of funds from one asset to another, either monthly or on finish date.
+ * Represents a percentage-based transfer of funds from one asset to another.
+ * Supports recurring transfers (monthly/quarterly/half-yearly/yearly) and/or
+ * a separate on-close transfer when the source asset reaches its finish date.
  */
 
 import { Currency } from './currency.js';
 import { FundTransferResult } from './results.js';
 
+export const Frequency = Object.freeze({
+  NONE:        'none',
+  MONTHLY:     'monthly',
+  QUARTERLY:   'quarterly',
+  HALF_YEARLY: 'half-yearly',
+  YEARLY:      'yearly',
+});
+
 export class FundTransfer {
   /**
-   * @param {string}  toDisplayName    Target asset's familiar name
-   * @param {boolean} moveOnFinishDate Only transfer when source reaches its finish date
-   * @param {number}  moveValue        Percentage of source value to transfer (0-100)
+   * @param {string} toDisplayName     Target asset's familiar name
+   * @param {string} frequency         Recurring frequency (Frequency enum value)
+   * @param {number} moveValue         Recurring percentage of source value (0-100)
+   * @param {number} closeMoveValue    On-close percentage of source value (0-100)
    */
-  constructor(toDisplayName, moveOnFinishDate = false, moveValue = 0) {
-    this.toDisplayName    = toDisplayName;
-    this.moveOnFinishDate = moveOnFinishDate;
-    this.moveValue        = moveValue;
+  constructor(toDisplayName, frequency = Frequency.NONE, moveValue = 0, closeMoveValue = 0) {
+    this.toDisplayName = toDisplayName;
+    this.frequency     = frequency;
+    this.moveValue     = moveValue;
+    this.closeMoveValue = closeMoveValue;
 
     // Bound at runtime by Portfolio — not serialised
     this.fromModel = null;
@@ -28,17 +39,27 @@ export class FundTransfer {
   // ── Parsing ──────────────────────────────────────────────────────
 
   static fromJSON(obj) {
+    // Backward compat: old format had moveOnFinishDate (boolean) + single moveValue
+    if (obj.moveOnFinishDate !== undefined) {
+      if (obj.moveOnFinishDate) {
+        return new FundTransfer(obj.toDisplayName, Frequency.NONE, 0, obj.moveValue ?? 0);
+      } else {
+        return new FundTransfer(obj.toDisplayName, Frequency.MONTHLY, obj.moveValue ?? 0, 0);
+      }
+    }
     return new FundTransfer(
       obj.toDisplayName,
-      obj.moveOnFinishDate ?? false,
+      obj.frequency ?? Frequency.NONE,
       obj.moveValue ?? 0,
+      obj.closeMoveValue ?? 0,
     );
   }
 
   static fromHTML(formElement) {
     let toDisplayName = null;
-    let moveOnFinishDate = false;
+    let frequency = Frequency.NONE;
     let moveValue = 0;
+    let closeMoveValue = 0;
 
     const elements = formElement.querySelectorAll
       ? formElement.querySelectorAll('input, select')
@@ -46,13 +67,37 @@ export class FundTransfer {
 
     for (const el of elements) {
       switch (el.name) {
-        case 'toDisplayName':    toDisplayName = el.value; break;
-        case 'moveOnFinishDate': moveOnFinishDate = el.checked; break;
-        case 'moveValue':        moveValue = parseInt(el.value, 10) || 0; break;
+        case 'toDisplayName':  toDisplayName = el.value; break;
+        case 'frequency':      frequency = el.value; break;
+        case 'moveValue':      moveValue = parseInt(el.value, 10) || 0; break;
+        case 'closeMoveValue': closeMoveValue = parseInt(el.value, 10) || 0; break;
       }
     }
 
-    return new FundTransfer(toDisplayName, moveOnFinishDate, moveValue);
+    return new FundTransfer(toDisplayName, frequency, moveValue, closeMoveValue);
+  }
+
+  // ── Frequency helpers ──────────────────────────────────────────
+
+  /**
+   * Returns true if this transfer's recurring frequency is active for the given month (1-12).
+   */
+  isActiveForMonth(month) {
+    switch (this.frequency) {
+      case Frequency.MONTHLY:     return true;
+      case Frequency.QUARTERLY:   return month % 3 === 0;   // Mar, Jun, Sep, Dec
+      case Frequency.HALF_YEARLY: return month === 6 || month === 12;
+      case Frequency.YEARLY:      return month === 12;
+      default:                    return false;
+    }
+  }
+
+  get hasRecurring() {
+    return this.frequency !== Frequency.NONE && this.moveValue > 0;
+  }
+
+  get hasClose() {
+    return this.closeMoveValue > 0;
   }
 
   // ── Binding ──────────────────────────────────────────────────────
@@ -71,14 +116,15 @@ export class FundTransfer {
 
   /**
    * Calculate the transfer amount without executing it.
+   * @param {{ useClosePercent?: boolean }} options
    * @returns {Currency}
    */
-  calculate() {
+  calculate({ useClosePercent = false } = {}) {
     if (!this.fromModel || !this.toModel || this.toModel.isClosed) {
       return Currency.zero();
     }
 
-    const pct = this.moveValue / 100;
+    const pct = (useClosePercent ? this.closeMoveValue : this.moveValue) / 100;
     // Use net income when available (income assets after tax computation),
     // otherwise fall back to finishCurrency (non-income assets, asset closures)
     const base = this.fromModel.netIncomeCurrency?.amount > 0
@@ -95,30 +141,23 @@ export class FundTransfer {
 
   /**
    * Execute the transfer: debit source, credit target.
+   * @param {{ skipGain?: boolean }} options
    * @returns {FundTransferResult}
    */
-  /**
-   * Execute the transfer: debit source, credit target.
-   * @returns {FundTransferResult}
-   */
-  execute() {
+  execute({ skipGain = false, useClosePercent = false } = {}) {
     if (!this.fromModel || !this.toModel) return new FundTransferResult();
-    if (this.moveOnFinishDate && !(this.fromModel.onFinishDate || this.fromModel.afterFinishDate)) return new FundTransferResult();
 
-    const amount = this.calculate();
+    const amount = this.calculate({ useClosePercent });
     const fromMemo = this.describe(this.fromModel.displayName, amount);
     const toMemo = this.describe(this.toModel.displayName, amount.copy().flipSign());
-    
-    // Skip gain calculation if this is an asset closure (because handleCapitalGains handles it)
-    const skipGain = this.moveOnFinishDate;
-    
+
     const fromResult = this.fromModel.debit(amount, fromMemo, skipGain);
     const toResult   = this.toModel.credit(amount, toMemo, skipGain);
 
     return new FundTransferResult(
-      fromResult.assetChange, 
-      toResult.assetChange, 
-      fromMemo, 
+      fromResult.assetChange,
+      toResult.assetChange,
+      fromMemo,
       toMemo,
       toResult.realizedGain
     );
@@ -127,20 +166,21 @@ export class FundTransfer {
   // ── Utilities ────────────────────────────────────────────────────
 
   copy() {
-    return new FundTransfer(this.toDisplayName, this.moveOnFinishDate, this.moveValue);
+    return new FundTransfer(this.toDisplayName, this.frequency, this.moveValue, this.closeMoveValue);
   }
 
   toJSON() {
     return {
-      toDisplayName:    this.toDisplayName,
-      moveOnFinishDate: this.moveOnFinishDate,
-      moveValue:        this.moveValue,
+      toDisplayName:  this.toDisplayName,
+      frequency:      this.frequency,
+      moveValue:      this.moveValue,
+      closeMoveValue: this.closeMoveValue,
     };
   }
 
   /** Human-readable description for logging / debugging */
   describe(fromName, amount) {
-    const dir = this.moveOnFinishDate ? '(on finish)' : '(monthly)';
-    return `${fromName} → ${this.toDisplayName} ${dir} ${this.moveValue}%` + (amount != null ? ` => ${amount.toString()}` : '');
+    const dir = this.frequency !== Frequency.NONE ? `(${this.frequency})` : '(on close)';
+    return `${fromName} → ${this.toDisplayName} ${dir}` + (amount != null ? ` => ${amount.toString()}` : '');
   }
 }

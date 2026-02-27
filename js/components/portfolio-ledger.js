@@ -90,20 +90,20 @@ class PortfolioLedger extends LitElement {
                 </div>
 
                 <!-- Growth -->
-                <div class="glass-card p-6 bg-gradient-to-br from-pink-50 to-white border-pink-100">
-                    <div class="text-xs font-bold text-pink-400 uppercase tracking-widest mb-4">Growth Metrics</div>
+                <div class="glass-card p-6 bg-gradient-to-br ${accumulated >= 0 ? 'from-green-50 border-green-100' : 'from-pink-50 border-pink-100'} to-white">
+                    <div class="text-xs font-bold ${accumulated >= 0 ? 'text-green-500' : 'text-pink-400'} uppercase tracking-widest mb-4">Growth Metrics</div>
                     <div class="space-y-3">
-                        <div class="flex justify-between items-center pb-2 border-b border-pink-100/50">
+                        <div class="flex justify-between items-center pb-2 border-b ${accumulated >= 0 ? 'border-green-100/50' : 'border-pink-100/50'}">
                             <span class="text-sm text-gray-500">Total Expenses</span>
                             <span class="font-semibold text-gray-800">${totalExpensesDisplay}</span>
                         </div>
-                        <div class="flex justify-between items-center pb-2 border-b border-pink-100/50">
+                        <div class="flex justify-between items-center pb-2 border-b ${accumulated >= 0 ? 'border-green-100/50' : 'border-pink-100/50'}">
                             <span class="text-sm text-gray-500">Accumulated Value</span>
                             <span class="font-semibold text-gray-800 ledger-item-value ${valClass}">${accDisplay}</span>
                         </div>
                         <div class="flex justify-between items-end pt-2">
-                            <span class="text-sm font-medium text-pink-700">CAGR</span>
-                            <span class="text-2xl font-bold text-pink-600 ledger-item-value total ${valClass}">${annualReturn.toFixed(2)}%</span>
+                            <span class="text-sm font-medium ${accumulated >= 0 ? 'text-green-700' : 'text-pink-700'}">CAGR</span>
+                            <span class="text-2xl font-bold ${accumulated >= 0 ? 'text-green-600' : 'text-pink-600'} ledger-item-value total ${valClass}">${annualReturn.toFixed(2)}%</span>
                         </div>
                     </div>
                 </div>

@@ -4,7 +4,6 @@
 
 :root {
     --cream: #faf6f0;
-    --cream-dark: #f0ebe3;
     --parchment: #f5f0e8;
     --ink: #2a2520;
     --ink-light: #5a554d;
@@ -16,8 +15,6 @@
     --terracotta: #c4654a;
     --terracotta-light: #f5e8e4;
     --terracotta-bg: rgba(196,101,74,0.08);
-    --ocean: #4a6e8a;
-    --ocean-light: #e4ecf2;
     --gold: #b8963e;
     --gold-light: #f8f2e0;
     --rule: #ddd6ca;
@@ -56,90 +53,10 @@ body::before {
     border-bottom: 2px solid var(--ink);
 }
 
-.brand {
-    display: flex;
-    flex-direction: column;
-}
-
-.brand-name {
-    font-family: 'Fraunces', serif;
-    font-size: 36px;
-    font-weight: 300;
-    letter-spacing: -0.02em;
-    line-height: 1;
-    color: var(--ink);
-}
-
-.brand-tagline {
-    font-size: 12px;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: var(--ink-faint);
-    margin-top: 6px;
-}
-
 .header-actions {
     display: flex;
     align-items: center;
     gap: 8px;
-}
-
-/* ─── Buttons ─── */
-
-.btn-paper {
-    font-family: 'DM Sans', sans-serif;
-    font-size: 13px;
-    font-weight: 500;
-    padding: 10px 24px;
-    border: 1.5px solid var(--ink);
-    background: transparent;
-    color: var(--ink);
-    cursor: pointer;
-    transition: all 0.3s ease;
-    letter-spacing: 0.02em;
-}
-
-.btn-paper:hover {
-    background: var(--ink);
-    color: var(--cream);
-}
-
-.btn-paper.primary {
-    background: var(--ink);
-    color: var(--cream);
-}
-
-.btn-paper.primary:hover {
-    background: var(--ink-light);
-}
-
-.btn-paper.small {
-    font-size: 11px;
-    padding: 6px 14px;
-}
-
-.btn-float-add {
-    position: absolute;
-    bottom: 16px;
-    right: 16px;
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    border: none;
-    background: var(--ink);
-    color: var(--cream);
-    font-size: 24px;
-    font-weight: 300;
-    line-height: 1;
-    cursor: pointer;
-    z-index: 10;
-    box-shadow: 0 4px 12px var(--shadow-md);
-    transition: all 0.3s ease;
-}
-
-.btn-float-add:hover {
-    background: var(--sage);
-    transform: scale(1.1);
 }
 
 /* ─── Settings Row ─── */
@@ -195,13 +112,6 @@ input.setting-value:focus,
 select.setting-value:focus {
     border-bottom-color: var(--sage);
     cursor: text;
-}
-
-.setting-suffix {
-    font-family: 'Fraunces', serif;
-    font-size: 15px;
-    color: var(--ink);
-    margin-left: -4px;
 }
 
 /* ─── Ledger Summary ─── */
@@ -443,7 +353,6 @@ select.setting-value:focus {
 }
 
 .badge-sage { background: var(--sage-light); color: var(--sage); }
-.badge-terracotta { background: var(--terracotta-light); color: var(--terracotta); }
 .badge-gold { background: var(--gold-light); color: var(--gold); }
 
 /* ─── Footer ─── */
@@ -454,31 +363,6 @@ select.setting-value:focus {
     display: flex;
     justify-content: space-between;
     align-items: center;
-}
-
-.footer-left {
-    font-size: 11px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--ink-faint);
-}
-
-.footer-right {
-    display: flex;
-    gap: 24px;
-    font-size: 11px;
-    color: var(--ink-ghost);
-    letter-spacing: 0.05em;
-}
-
-.footer-right a {
-    color: var(--ink-ghost);
-    text-decoration: none;
-    transition: color 0.2s;
-}
-
-.footer-right a:hover {
-    color: var(--ink);
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -586,12 +470,6 @@ select.setting-value:focus {
 
 .instrument-fields:empty {
     display: none;
-}
-
-.instrument-fields-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 20px;
 }
 
 /* ─── Compact Asset Cards (from html.js) ─── */
@@ -720,45 +598,6 @@ select.setting-value:focus {
 /* ─── Utility Classes ─── */
 
 .width-full { width: 100%; }
-.invisible { visibility: hidden; }
-
-/* ─── Simulator Section ─── */
-
-.simulator-section {
-    padding: 40px 48px;
-    border-top: 1px solid var(--rule);
-    background: var(--parchment);
-}
-
-.simulator-grid {
-    display: grid;
-    grid-template-columns: 220px 1fr 280px;
-    gap: 24px;
-}
-
-.simulator-section h3 {
-    font-family: 'Fraunces', serif;
-    font-size: 16px;
-    font-weight: 400;
-    margin-bottom: 12px;
-}
-
-.simulator-section textarea {
-    width: 100%;
-    height: 300px;
-    border: 1px solid var(--rule);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 12px;
-    padding: 12px;
-    background: white;
-    color: var(--ink);
-    outline: none;
-    resize: vertical;
-}
-
-.simulator-section textarea:focus {
-    border-color: var(--sage);
-}
 
 /* ─── Simulator Popup ─── */
 
@@ -908,7 +747,6 @@ select.setting-value:focus {
 .spreadsheet-date-col { text-align: left; }
 .spreadsheet-asset-header { text-align: center; }
 .spreadsheet-metric-header { text-align: center; }
-.spreadsheet-negative { color: var(--terracotta); }
 
 /* ─── Responsive ─── */
 
@@ -917,8 +755,7 @@ select.setting-value:focus {
     .ledger-summary { grid-template-columns: 1fr; }
     .ledger-column { border-right: none; border-bottom: 1px solid var(--rule); padding: 16px 0; }
     .form-fields { grid-template-columns: repeat(2, 1fr); }
-    .simulator-grid { grid-template-columns: 1fr; }
-    .header, .settings-row, .ledger-summary, .main-content, .form-section-warm, .footer, .simulator-section {
+    .header, .settings-row, .ledger-summary, .main-content, .footer {
         padding-left: 24px;
         padding-right: 24px;
     }

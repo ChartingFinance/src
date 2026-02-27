@@ -1,58 +1,382 @@
-<html>
-    <head>
-        <!-- Google Tag Manager -->
-        <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-            new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-            j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-            'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-            })(window,document,'script','dataLayer','GTM-WRSW7SKN');</script>
-        <!-- End Google Tag Manager -->
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <meta name="description" content="Charting financial simulations for saving, investment, retirement, and knowledge">
-        <meta name="robots" content="follow, index, max-snippet:-1, max-video-preview:-1, max-image-preview:large"/>
-        <title>📈 Charting Financial Models and Projecting for Saving, Investing, Retiring, and Knowledge</title>
-        <link rel="stylesheet" href="index.css">
-    </head>
-    <body>
-        <nav>
-            <ul>
-                <li><a href="index.html">Home</a></li>
-                <li><u>Rules</u></li>
-                <li><a href="globals.html">Globals</a></li>
-                <li><a href="disclaimer.html">Disclaimer</a></li>
-                <li><a href="about.html">About</a></li>
-            </ul>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+        new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+        j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+        'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+        })(window,document,'script','dataLayer','GTM-WRSW7SKN');</script>
+    <!-- End Google Tag Manager -->
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Charting financial simulations for saving, investment, retirement, and knowledge">
+    <meta name="robots" content="follow, index, max-snippet:-1, max-video-preview:-1, max-image-preview:large"/>
+    <title>Rules — Charting Finance</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #fcfcfd; color: #111827; }
+        .glass-card { background: #ffffff; border-radius: 24px; box-shadow: 0 20px 40px -15px rgba(0,0,0,0.05); border: 1px solid rgba(243, 244, 246, 1); }
+        .gradient-text { background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .rule-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; background: #f3f4f6; color: #6b7280; }
+    </style>
+</head>
+<body class="min-h-screen p-4 sm:p-8 max-w-[1400px] mx-auto">
+
+    <!-- ═══ Header ═══ -->
+    <header class="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4 pb-6 border-b border-gray-200">
+        <div>
+            <a href="index.html" class="no-underline">
+                <h1 class="text-4xl font-bold tracking-tight text-gray-900">Charting <span class="gradient-text">Finance.</span></h1>
+            </a>
+            <div class="text-xs font-semibold text-gray-500 uppercase tracking-widest mt-2">Simulation Rules</div>
+        </div>
+        <nav class="flex gap-6 text-sm font-medium text-gray-400">
+            <a href="index.html" class="hover:text-gray-900 transition">Home</a>
+            <span class="text-gray-900">Rules</span>
+            <a href="globals.html" class="hover:text-gray-900 transition">Globals</a>
+            <a href="disclaimer.html" class="hover:text-gray-900 transition">Disclaimer</a>
+            <a href="about.html" class="hover:text-gray-900 transition">About</a>
         </nav>
-        <h1>The rules applied to a simulation</h1>
-        <h2>Annual Return Rates</h2>
-        <p>Each card can have an annual rate (AR) associated (in decimal format) that is applied monthly for each card type. At this time taxes are not calculated, but sounds like something to do, doesn't it?</p>
-        <ul>
-            <li>Income - credited at the beginning of the month. At the end of each month 1/12 of the AR is applied to the monthly income value (like a raise!).</li>
-            <li>Expenses - debited at the end of the month. After the initial month, at the begining of each month 1/12 of the AR is applied to the monthly expense value (like inflation!).</li>
-            <li>House - monthly appreciation/decpreciation of the home's sell value.</li>
-            <li>Mortgage - basic mortgage calculation, which is why the 'months remaining' appears. Look at your mortgage statement to see how many months you have remaining.</li>
-            <li>Debt - basic debt calculation, with an AR applied monthly, but here you get to decide how many months until you pay it off.</li>
-            <li>Taxable Account - think stock account with short/long term capital gains.</li>
-            <li>Tax Deferred Account - think IRA with rules for withdrawals.</li>
-            <li>Tax Free - think ROTH.</li>
-            <li>US Treasury - bills, notes and bonds.</li>
-            <li>Corporate Bond - corporate debt with higher coupons.</li>
-            <li>Savings - savings accounts or certificates of deposit.</li>
-            <li>Cash - in your wallet, purse, or under the mattress. Unless you're in a deflationary spiral, this is your worst return.</li>
-        </ul>
-        <h2>Tax Rates</h2>
-        <p>The irs.gov website is the source of truth for all tax rates and treatments. 2024 Single and Married Filing Jointly are built in. Here are the IRS publications referenced:</p>
-        <ul>
-            <li><a href="https://www.irs.gov/filing/federal-income-tax-rates-and-brackets">Federal income tax rates and brackets</a></li>
-            <li><a href="https://www.irs.gov/retirement-plans/retirement-plan-faqs-regarding-contributions-are-retirement-plan-contributions-subject-to-withholding-for-fica-medicare-or-federal-income-tax">Retirement plan contributions and taxation</a></li>
-            <li><a href="https://www.irs.gov/taxtopics/tc409" target="_blank">Topic 409 - Capital Gains and Losses</a></li>
-            <li><a href="https://www.irs.gov/taxtopics/tc503" target="_blank">Topic 503 - Deductible Taxes</a></li>
-            <li><a href="https://www.irs.gov/taxtopics/tc505" target="_blank">Topic 505 - Tax Withholding and Estimated Tax</a></li>
-            <li><a href="https://www.irs.gov/publications/p590b" target="_blank">Topic 590-b - Distributions from Individual Retirement Arrangements (IRAs)</a></li>
-            <li><a href="https://www.irs.gov/pub/irs-pdf/i1040gi.pdf?os=wtmbzegmu5hwrefapp&ref=app" target="_blank">Form 1040 instructions with Qualified Dividends and Capital Gains Tax Worksheet [page 36 last I looked]</a></li>
-    </body>
-    <footer>
-        <p>© Copyright 2025 Charting Finance, LLC</p>
+    </header>
+
+    <!-- ═══ Intro ═══ -->
+    <div class="glass-card p-8 sm:p-12 mb-8">
+        <p class="text-gray-600 leading-relaxed">Every asset card in your portfolio follows a set of simulation rules. Below you'll find exactly how each instrument type behaves month-by-month &mdash; so you can build scenarios with confidence, not guesswork.</p>
+    </div>
+
+    <!-- ═══ Instrument Rules ═══ -->
+    <div class="grid gap-6 mb-8">
+
+        <!-- ── Home ── -->
+        <div class="glass-card p-8">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="text-2xl">🏡</span>
+                <h2 class="text-xl font-bold tracking-tight">Home</h2>
+            </div>
+            <p class="text-gray-600 mb-4 leading-relaxed">Your largest asset deserves the sharpest model. The simulator tracks your home's market value month over month, applying your chosen annual return rate as steady appreciation (or depreciation). When it's time to sell, the engine handles the tax math so you don't have to.</p>
+            <div class="space-y-2">
+                <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+                    <span class="rule-chip">Rule 1</span>
+                    <span class="text-sm text-gray-700">Your home's value compounds monthly at <strong>1/12 of the annual return rate</strong>, giving you a realistic appreciation curve over time.</span>
+                </div>
+                <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+                    <span class="rule-chip">Rule 2</span>
+                    <span class="text-sm text-gray-700">Property tax is calculated using the <strong>annual tax rate</strong> you set, deducted monthly, and tracked as a separate expense metric so you can see exactly where your money goes.</span>
+                </div>
+                <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+                    <span class="rule-chip">Rule 3</span>
+                    <span class="text-sm text-gray-700">When you sell, capital gains are computed against your cost basis &mdash; with the <strong>$250K primary residence exclusion</strong> applied automatically if you've owned for 24+ months.</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Mortgage ── -->
+        <div class="glass-card p-8">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="text-2xl">🏦</span>
+                <h2 class="text-xl font-bold tracking-tight">Mortgage</h2>
+            </div>
+            <p class="text-gray-600 mb-4 leading-relaxed">A proper amortization schedule &mdash; not a rough estimate. Enter your remaining balance, rate, and months left (check your statement), and the simulator builds your payment plan down to the penny.</p>
+            <div class="space-y-2">
+                <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+                    <span class="rule-chip">Rule 1</span>
+                    <span class="text-sm text-gray-700">Monthly payments are calculated using the <strong>standard amortization formula</strong>, splitting each payment into principal and interest so you can watch your equity grow.</span>
+                </div>
+                <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+                    <span class="rule-chip">Rule 2</span>
+                    <span class="text-sm text-gray-700">The simulator tracks your <strong>months remaining</strong> and automatically closes the mortgage when the balance reaches zero &mdash; no manual cleanup needed.</span>
+                </div>
+                <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+                    <span class="rule-chip">Rule 3</span>
+                    <span class="text-sm text-gray-700">Mortgage interest is tracked as a <strong>deductible expense</strong>, giving you visibility into one of your largest annual tax write-offs.</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Monthly Salary ── -->
+        <div class="glass-card p-8">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="text-2xl">💰</span>
+                <h2 class="text-xl font-bold tracking-tight">Monthly Salary</h2>
+            </div>
+            <p class="text-gray-600 mb-4 leading-relaxed">Income is the engine of your financial plan. The simulator credits your paycheck on the first of the month and handles withholding, so what flows into your accounts is the real take-home number.</p>
+            <div class="space-y-2">
+                <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+                    <span class="rule-chip">Rule 1</span>
+                    <span class="text-sm text-gray-700">Your gross income is credited on <strong>day 1 of each month</strong>. At year-end, 1/12 of the annual return rate is applied as a raise &mdash; compounding your earning power year over year.</span>
+                </div>
+                <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+                    <span class="rule-chip">Rule 2</span>
+                    <span class="text-sm text-gray-700"><strong>FICA and Medicare</strong> are withheld automatically from each paycheck, so fund transfers downstream reflect your actual net income &mdash; not your gross.</span>
+                </div>
+                <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+                    <span class="rule-chip">Rule 3</span>
+                    <span class="text-sm text-gray-700">Estimated federal income tax withholding is computed from your <strong>filing status and tax bracket</strong>, keeping your simulation aligned with real-world payroll.</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Monthly Expense ── -->
+        <div class="glass-card p-8">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="text-2xl">📉</span>
+                <h2 class="text-xl font-bold tracking-tight">Monthly Expense</h2>
+            </div>
+            <p class="text-gray-600 mb-4 leading-relaxed">Bills don't stay flat &mdash; and neither does your simulation. Expenses grow with inflation so you can stress-test whether your plan holds up in 10, 20, or 30 years.</p>
+            <div class="space-y-2">
+                <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+                    <span class="rule-chip">Rule 1</span>
+                    <span class="text-sm text-gray-700">Expenses are debited at the <strong>end of each month</strong>, after all income and transfers have settled &mdash; mirroring how bills work in real life.</span>
+                </div>
+                <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+                    <span class="rule-chip">Rule 2</span>
+                    <span class="text-sm text-gray-700">Starting from month two, <strong>1/12 of the annual return rate</strong> is applied at the beginning of each month as inflation &mdash; your $500 grocery bill today won't be $500 in a decade.</span>
+                </div>
+                <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+                    <span class="rule-chip">Rule 3</span>
+                    <span class="text-sm text-gray-700">Unlike salary (which compounds yearly), expense inflation compounds <strong>monthly</strong> &mdash; a subtle but meaningful difference over long horizons.</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Retirement ── -->
+        <div class="glass-card p-8">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="flex gap-2 text-2xl">
+                    <span>🏛️</span>
+                    <span>✨</span>
+                </div>
+                <h2 class="text-xl font-bold tracking-tight">Retirement Accounts</h2>
+                <span class="text-xs text-gray-400 font-medium ml-1">401(k) &middot; IRA &middot; Roth</span>
+            </div>
+            <p class="text-gray-600 mb-4 leading-relaxed">Three flavors, one goal. Whether you're deferring taxes now, paying them later, or never &mdash; the simulator enforces IRS contribution limits and withdrawal rules so your projections stay realistic.</p>
+            <div class="space-y-2">
+                <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+                    <span class="rule-chip">Rule 1</span>
+                    <span class="text-sm text-gray-700">Annual contribution limits are enforced: <strong>$23,500 for 401(k)</strong> ($31,000 if 50+) and <strong>$7,000 for IRA/Roth</strong> ($8,000 if 50+). Contributions are sourced from linked income via fund transfers.</span>
+                </div>
+                <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+                    <span class="rule-chip">Rule 2</span>
+                    <span class="text-sm text-gray-700"><strong>Required Minimum Distributions</strong> kick in at age 73 for tax-deferred accounts (IRA, 401k). The simulator uses the IRS Uniform Lifetime Table to calculate your annual RMD automatically.</span>
+                </div>
+                <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+                    <span class="rule-chip">Rule 3</span>
+                    <span class="text-sm text-gray-700">Tax treatment follows real-world rules: <strong>401(k) and IRA withdrawals</strong> are taxed as ordinary income, while <strong>Roth distributions are tax-free</strong> &mdash; a powerful lever in your retirement planning.</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Brokerage Account ── -->
+        <div class="glass-card p-8">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="text-2xl">📊</span>
+                <h2 class="text-xl font-bold tracking-tight">Brokerage Account</h2>
+            </div>
+            <p class="text-gray-600 mb-4 leading-relaxed">Your taxable investment account &mdash; flexible, liquid, and tax-aware. The simulator tracks your cost basis and holding period so capital gains are classified correctly when you withdraw.</p>
+            <div class="space-y-2">
+                <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+                    <span class="rule-chip">Rule 1</span>
+                    <span class="text-sm text-gray-700">Growth compounds monthly at <strong>1/12 of the annual return rate</strong>. Your cost basis is tracked separately, so gains are always measured against what you actually invested.</span>
+                </div>
+                <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+                    <span class="rule-chip">Rule 2</span>
+                    <span class="text-sm text-gray-700">On withdrawal, basis is reduced <strong>proportionally</strong> &mdash; not dollar-for-dollar &mdash; so your realized gain reflects the correct share of appreciation.</span>
+                </div>
+                <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+                    <span class="rule-chip">Rule 3</span>
+                    <span class="text-sm text-gray-700">Capital gains are classified as <strong>long-term (held 12+ months)</strong> or <strong>short-term</strong>, each taxed at their respective rates &mdash; because timing matters.</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Cash ── -->
+        <div class="glass-card p-8">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="text-2xl">💵</span>
+                <h2 class="text-xl font-bold tracking-tight">Cash</h2>
+            </div>
+            <p class="text-gray-600 mb-4 leading-relaxed">In your wallet, your checking account, or under the mattress. Cash is king for liquidity &mdash; but unless you're in a deflationary spiral, it's your worst-performing asset class over time.</p>
+            <div class="space-y-2">
+                <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+                    <span class="rule-chip">Rule 1</span>
+                    <span class="text-sm text-gray-700">If you assign an annual return rate, interest accrues <strong>monthly</strong> and is treated as <strong>ordinary income</strong> for tax purposes.</span>
+                </div>
+                <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+                    <span class="rule-chip">Rule 2</span>
+                    <span class="text-sm text-gray-700">No cost basis is tracked &mdash; every dollar withdrawn is a dollar, making cash the simplest instrument in the simulator.</span>
+                </div>
+                <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+                    <span class="rule-chip">Rule 3</span>
+                    <span class="text-sm text-gray-700">Cash is the <strong>default destination for fund transfers</strong> and acts as your portfolio's liquidity buffer between income and expenses.</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Savings ── -->
+        <div class="glass-card p-8">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="text-2xl">🐖</span>
+                <h2 class="text-xl font-bold tracking-tight">Savings</h2>
+            </div>
+            <p class="text-gray-600 mb-4 leading-relaxed">High-yield savings accounts and certificates of deposit. A safe harbor for your emergency fund or short-term goals, with predictable returns and no market risk.</p>
+            <div class="space-y-2">
+                <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+                    <span class="rule-chip">Rule 1</span>
+                    <span class="text-sm text-gray-700">Interest accrues monthly at <strong>1/12 of the annual return rate</strong> and is classified as <strong>ordinary income</strong>.</span>
+                </div>
+                <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+                    <span class="rule-chip">Rule 2</span>
+                    <span class="text-sm text-gray-700">Behaves identically to cash in terms of tax treatment, but gives you a dedicated card to model <strong>different rates</strong> for different buckets of safe money.</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Debt ── -->
+        <div class="glass-card p-8">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="text-2xl">💳</span>
+                <h2 class="text-xl font-bold tracking-tight">Debt</h2>
+            </div>
+            <p class="text-gray-600 mb-4 leading-relaxed">Credit cards, auto loans, student debt &mdash; anything with a balance and a rate. You set the payoff timeline, and the simulator builds the amortization schedule around it.</p>
+            <div class="space-y-2">
+                <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+                    <span class="rule-chip">Rule 1</span>
+                    <span class="text-sm text-gray-700">Uses the same <strong>amortization formula as a mortgage</strong>, splitting each payment into principal and interest based on your rate and payoff period.</span>
+                </div>
+                <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+                    <span class="rule-chip">Rule 2</span>
+                    <span class="text-sm text-gray-700">You control the <strong>months-to-payoff</strong> &mdash; want to see what happens if you pay off that credit card in 12 months instead of 36? Change one number.</span>
+                </div>
+                <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+                    <span class="rule-chip">Rule 3</span>
+                    <span class="text-sm text-gray-700">The asset automatically <strong>closes when the balance hits zero</strong>, freeing up cash flow for the rest of your portfolio.</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── US Treasury ── -->
+        <div class="glass-card p-8">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="text-2xl">🇺🇸</span>
+                <h2 class="text-xl font-bold tracking-tight">US Treasury</h2>
+            </div>
+            <p class="text-gray-600 mb-4 leading-relaxed">Bills, notes, and bonds backed by the full faith and credit of the United States government. The benchmark for risk-free returns &mdash; and a cornerstone of conservative portfolios.</p>
+            <div class="space-y-2">
+                <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+                    <span class="rule-chip">Rule 1</span>
+                    <span class="text-sm text-gray-700">Interest income accrues monthly via the annual return rate and is taxed as <strong>ordinary income at the federal level</strong>.</span>
+                </div>
+                <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+                    <span class="rule-chip">Rule 2</span>
+                    <span class="text-sm text-gray-700">The principal value stays flat &mdash; <strong>no price appreciation or depreciation</strong> is modeled, keeping the simulation focused on coupon income.</span>
+                </div>
+                <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+                    <span class="rule-chip">Rule 3</span>
+                    <span class="text-sm text-gray-700">Interest income flows into your <strong>annual tax computation</strong>, so you can see how treasuries affect your overall bracket and liability.</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Corporate Bond ── -->
+        <div class="glass-card p-8">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="text-2xl">🏢</span>
+                <h2 class="text-xl font-bold tracking-tight">Corporate Bond</h2>
+            </div>
+            <p class="text-gray-600 mb-4 leading-relaxed">Higher coupons, higher risk. Corporate bonds let you model the yield premium you earn for lending to companies instead of the government &mdash; and the simulator treats the income accordingly.</p>
+            <div class="space-y-2">
+                <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+                    <span class="rule-chip">Rule 1</span>
+                    <span class="text-sm text-gray-700">Interest accrues monthly at <strong>1/12 of the annual return rate</strong>, just like treasuries &mdash; but typically at a higher coupon to reflect credit risk.</span>
+                </div>
+                <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+                    <span class="rule-chip">Rule 2</span>
+                    <span class="text-sm text-gray-700">All coupon income is taxed as <strong>ordinary income</strong> &mdash; no preferential capital gains treatment here.</span>
+                </div>
+                <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+                    <span class="rule-chip">Rule 3</span>
+                    <span class="text-sm text-gray-700">Like treasuries, <strong>no price appreciation</strong> is modeled &mdash; the focus is on predictable income, not speculative gains.</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ═══ Fund Transfers ═══ -->
+    <div class="glass-card p-8 sm:p-12 mb-8">
+        <h2 class="text-2xl font-bold tracking-tight mb-4">Fund Transfers</h2>
+        <p class="text-gray-600 mb-6 leading-relaxed">Money doesn't sit still &mdash; it flows. Fund transfers let you wire a percentage of one asset's value into another on a schedule you control. Pair your salary with your 401(k), your brokerage with your cash reserves, or set up a one-time sweep when an asset closes.</p>
+        <div class="grid sm:grid-cols-2 gap-4">
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">Recurring Transfers</div>
+                <div class="text-sm text-gray-500">Choose a frequency &mdash; monthly, quarterly, half-yearly, or yearly &mdash; and a percentage of the source asset's value to move each period.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">On-Close Transfers</div>
+                <div class="text-sm text-gray-500">When an asset reaches its finish date, a separate close percentage sweeps the remaining value into the target account automatically.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ Tax Rates ═══ -->
+    <div class="glass-card p-8 sm:p-12 mb-8">
+        <h2 class="text-2xl font-bold tracking-tight mb-4">Tax Rates</h2>
+        <p class="text-gray-600 mb-6 leading-relaxed">The IRS is the source of truth &mdash; and so is this simulator. 2024 brackets for Single and Married Filing Jointly are built in. Here are the publications we reference:</p>
+
+        <div class="grid gap-3">
+            <a href="https://www.irs.gov/filing/federal-income-tax-rates-and-brackets" target="_blank"
+               class="flex items-center gap-3 p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition text-gray-700 no-underline group">
+                <span class="text-gray-400 group-hover:text-gray-600">&#8599;</span>
+                Federal income tax rates and brackets
+            </a>
+            <a href="https://www.irs.gov/retirement-plans/retirement-plan-faqs-regarding-contributions-are-retirement-plan-contributions-subject-to-withholding-for-fica-medicare-or-federal-income-tax" target="_blank"
+               class="flex items-center gap-3 p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition text-gray-700 no-underline group">
+                <span class="text-gray-400 group-hover:text-gray-600">&#8599;</span>
+                Retirement plan contributions and taxation
+            </a>
+            <a href="https://www.irs.gov/taxtopics/tc409" target="_blank"
+               class="flex items-center gap-3 p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition text-gray-700 no-underline group">
+                <span class="text-gray-400 group-hover:text-gray-600">&#8599;</span>
+                Topic 409 — Capital Gains and Losses
+            </a>
+            <a href="https://www.irs.gov/taxtopics/tc503" target="_blank"
+               class="flex items-center gap-3 p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition text-gray-700 no-underline group">
+                <span class="text-gray-400 group-hover:text-gray-600">&#8599;</span>
+                Topic 503 — Deductible Taxes
+            </a>
+            <a href="https://www.irs.gov/taxtopics/tc505" target="_blank"
+               class="flex items-center gap-3 p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition text-gray-700 no-underline group">
+                <span class="text-gray-400 group-hover:text-gray-600">&#8599;</span>
+                Topic 505 — Tax Withholding and Estimated Tax
+            </a>
+            <a href="https://www.irs.gov/publications/p590b" target="_blank"
+               class="flex items-center gap-3 p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition text-gray-700 no-underline group">
+                <span class="text-gray-400 group-hover:text-gray-600">&#8599;</span>
+                Topic 590-b — Distributions from Individual Retirement Arrangements (IRAs)
+            </a>
+            <a href="https://www.irs.gov/pub/irs-pdf/i1040gi.pdf?os=wtmbzegmu5hwrefapp&ref=app" target="_blank"
+               class="flex items-center gap-3 p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition text-gray-700 no-underline group">
+                <span class="text-gray-400 group-hover:text-gray-600">&#8599;</span>
+                Form 1040 instructions with Qualified Dividends and Capital Gains Tax Worksheet
+            </a>
+        </div>
+    </div>
+
+    <!-- ═══ Footer ═══ -->
+    <footer class="mt-12 py-8 border-t border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4 text-sm font-medium text-gray-400">
+        <div>Charting Finance &middot; Portfolio Simulator &middot; &copy; 2026 Charting Finance, LLC</div>
+        <div class="flex gap-6 items-center">
+            <span class="text-gray-900">Rules</span>
+            <a href="globals.html" class="hover:text-gray-900 transition">Globals</a>
+            <a href="disclaimer.html" class="hover:text-gray-900 transition">Disclaimer</a>
+            <a href="about.html" class="hover:text-gray-900 transition">About</a>
+        </div>
     </footer>
+
+</body>
 </html>

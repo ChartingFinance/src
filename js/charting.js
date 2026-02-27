@@ -491,7 +491,7 @@ export function charting_buildFromPortfolio(portfolio, buildNewDataSet, metric1N
   }
 }
 
-export function charting_buildFromModelAsset(portfolio, modelDisplayName) {
+export function charting_buildFromModelAsset(portfolio, modelDisplayName, metricName = Metric.CASH_FLOW) {
 
     setModelAssetColorIds(portfolio.modelAssets);
     let modelAsset = findByName(portfolio.modelAssets, modelDisplayName);
@@ -500,7 +500,7 @@ export function charting_buildFromModelAsset(portfolio, modelDisplayName) {
     let data = JSON.parse(JSON.stringify(stackedBarChartData));
     data.labels = charting_buildDisplayLabels(portfolio.firstDateInt, portfolio.lastDateInt);
 
-    let dataSet = charting_buildModelAssetMetric(modelAsset, Metric.CASH_FLOW);
+    let dataSet = charting_buildModelAssetMetric(modelAsset, metricName);
     dataSet.backgroundColor = colorRange[modelAsset.colorId];
     data.datasets.push(dataSet);
 

@@ -763,7 +763,7 @@ export class Portfolio {
         // recognize priority calculations (income, mortgages, taxableEquity, taxDeferredEquity)
         for (let modelAsset of this.modelAssets) {
 
-            this.applyFirstDayOfMonthCalculations(modelAsset);                              
+            this.applyFirstDayOfMonthCalculations(modelAsset, currentDateInt);
 
         }
 
@@ -791,13 +791,13 @@ export class Portfolio {
         // apply credits/debits
         for (let modelAsset of this.modelAssets) {
 
-            this.applyFirstDayOfMonthIncomeFundTransfers(modelAsset);
+            this.applyFirstDayOfMonthIncomeFundTransfers(modelAsset, currentDateInt);
 
         }
     }
 
-    applyFirstDayOfMonthCalculations(modelAsset) {
-        
+    applyFirstDayOfMonthCalculations(modelAsset, currentDateInt) {
+
         // assert mortgage happens before income happens before taxDeferredEquity happens before taxableEquity
         if (InstrumentType.isMonthlyIncome(modelAsset.instrument)) {
 
@@ -811,10 +811,10 @@ export class Portfolio {
             else if (modelAsset.isSelfEmployed)
                 this.monthly.selfIncome.add(taxableIncome);
             else
-                this.monthly.employedIncome.add(taxableIncome);            
+                this.monthly.employedIncome.add(taxableIncome);
 
-            modelAsset.addToMetric(Metric.FOUR_01K_CONTRIBUTION, this.calculateFirstDayOfMonthIncomeFour01KContribution(modelAsset));
-            modelAsset.addToMetric(Metric.IRA_CONTRIBUTION, this.calculateFirstDayOfMonthIncomeIRAContribution(modelAsset));            
+            modelAsset.addToMetric(Metric.FOUR_01K_CONTRIBUTION, this.calculateFirstDayOfMonthIncomeFour01KContribution(modelAsset, currentDateInt));
+            modelAsset.addToMetric(Metric.IRA_CONTRIBUTION, this.calculateFirstDayOfMonthIncomeIRAContribution(modelAsset, currentDateInt));            
 
         }
         else if (InstrumentType.isMortgage(modelAsset.instrument)) {
@@ -901,7 +901,7 @@ export class Portfolio {
 
     }
 
-    applyFirstDayOfMonthIncomeFundTransfers(modelAsset) {
+    applyFirstDayOfMonthIncomeFundTransfers(modelAsset, currentDateInt) {
         if (!InstrumentType.isMonthlyIncome(modelAsset.instrument)) {
             return;
         }
@@ -912,6 +912,7 @@ export class Portfolio {
 
         if (modelAsset.fundTransfers?.length > 0) {
             for (const fundTransfer of modelAsset.fundTransfers) {
+                if (!fundTransfer.isActiveForMonth(currentDateInt.month)) continue;
                 fundTransfer.bind(modelAsset, this.modelAssets);
                 const incomeAmount = fundTransfer.calculate();
                 fundTransfer.execute();
@@ -942,7 +943,7 @@ export class Portfolio {
         }
     }
 
-    calculateFirstDayOfMonthIncomeIRAContribution(modelAsset) {
+    calculateFirstDayOfMonthIncomeIRAContribution(modelAsset, currentDateInt) {
 
         if (!InstrumentType.isMonthlyIncome(modelAsset.instrument)) {
             logger.log(LogCategory.TRANSFER, 'Portfolio.calculateFirstDayOfMonthIncomeIRAContribution - not a monthly income model asset');
@@ -954,6 +955,7 @@ export class Portfolio {
         let rothIRAContribution = new Currency(0.0);
         let totalIRAContributionLimit = activeTaxTable.iraContributionLimit(this.activeUser);
         for (let fundTransfer of modelAsset.fundTransfers) {
+            if (!fundTransfer.isActiveForMonth(currentDateInt.month)) continue;
             delete fundTransfer.approvedAmount;
             fundTransfer.bind(modelAsset, this.modelAssets);
             if (InstrumentType.isTaxDeferred(fundTransfer.toModel.instrument) && InstrumentType.isIRA(fundTransfer.toModel.instrument)) {
@@ -987,7 +989,7 @@ export class Portfolio {
 
     }
 
-    calculateFirstDayOfMonthIncomeFour01KContribution(modelAsset) {
+    calculateFirstDayOfMonthIncomeFour01KContribution(modelAsset, currentDateInt) {
 
         if (!InstrumentType.isMonthlyIncome(modelAsset.instrument)) {
             logger.log(LogCategory.TRANSFER, 'Portfolio.calculateFirstDayOfMonthIncomeFour01KContribution - not a monthly income model asset');
@@ -997,6 +999,7 @@ export class Portfolio {
         let totalFour01KContribution = new Currency(0.0);
         let totalFour01KContributionLimit = activeTaxTable.four01KContributionLimit(this.activeUser);
         for (let fundTransfer of modelAsset.fundTransfers) {
+            if (!fundTransfer.isActiveForMonth(currentDateInt.month)) continue;
             delete fundTransfer.approvedAmount;
             fundTransfer.bind(modelAsset, this.modelAssets);
             if (InstrumentType.isTaxDeferred(fundTransfer.toModel.instrument) && InstrumentType.is401K(fundTransfer.toModel.instrument)) {
@@ -1046,7 +1049,7 @@ export class Portfolio {
         // apply expenses
         for (let modelAsset of this.modelAssets) {
 
-            this.applyLastDayOfMonthExpenseFundTransfers(modelAsset);           
+            this.applyLastDayOfMonthExpenseFundTransfers(modelAsset, currentDateInt);
 
         }
 
@@ -1099,16 +1102,17 @@ export class Portfolio {
 
     }
 
-applyLastDayOfMonthExpenseFundTransfers(modelAsset) {
+applyLastDayOfMonthExpenseFundTransfers(modelAsset, currentDateInt) {
         if (!InstrumentType.isMonthlyExpense(modelAsset.instrument)) {
             return;
         }
-    
+
         const modelAssetExpense = modelAsset.finishCurrency.copy();
         let runningExpenseAmount = new Currency(0.0);
-    
+
         if (modelAsset.fundTransfers?.length > 0) {
             for (const fundTransfer of modelAsset.fundTransfers) {
+                if (!fundTransfer.isActiveForMonth(currentDateInt.month)) continue;
                 fundTransfer.bind(modelAsset, this.modelAssets);
                 const expenseAmount = fundTransfer.calculate();
                 const fundTransferResult = fundTransfer.execute();
@@ -1307,10 +1311,13 @@ applyLastDayOfMonthExpenseFundTransfers(modelAsset) {
 
         let modelAssetValue = modelAsset.finishCurrency.copy();
 
-        if (modelAsset.fundTransfers && modelAsset.fundTransfers.length > 0) {
-        
-            let runningTransferAmount = new Currency(0.0);        
-            for (let fundTransfer of modelAsset.fundTransfers) {
+        // Filter to only transfers that have an on-close percentage
+        const closeTransfers = (modelAsset.fundTransfers || []).filter(ft => ft.hasClose);
+
+        if (closeTransfers.length > 0) {
+
+            let runningTransferAmount = new Currency(0.0);
+            for (let fundTransfer of closeTransfers) {
                 fundTransfer.bind(modelAsset, this.modelAssets);
 
                 // can only send money to an expensable account
@@ -1319,17 +1326,16 @@ applyLastDayOfMonthExpenseFundTransfers(modelAsset) {
                     continue;
                 }
 
-                let transferAmount = fundTransfer.calculate();
-                fundTransfer.execute(); // This correctly handles both the debit and the credit
-                
+                let transferAmount = fundTransfer.calculate({ useClosePercent: true });
+                fundTransfer.execute({ skipGain: true, useClosePercent: true });
+
                 runningTransferAmount.add(transferAmount);
             }
-            
+
             let extraAmount = new Currency(modelAssetValue.amount - runningTransferAmount.amount);
             if (extraAmount.amount > 0) {
                 logger.log(LogCategory.TRANSFER, 'Portfolio.applyAssetCloseFundTransfers: ' + modelAsset.displayName + ' funding ' + extraAmount.toString() + ' to first expensable account');
-                
-                // FIX: Explicitly debit the asset before it closes to generate the negative memo
+
                 const note = `Asset closure proceeds from ${modelAsset.displayName}`;
                 modelAsset.debit(extraAmount, note, true); // true = skipGain (already handled)
                 this.creditToFirstExpensableAccount(extraAmount, note);
@@ -1339,12 +1345,11 @@ applyLastDayOfMonthExpenseFundTransfers(modelAsset) {
         else {
 
             logger.log(LogCategory.TRANSFER, 'Portfolio.applyAssetCloseFundTransfers: ' + modelAsset.displayName + ' funding ' + modelAssetValue.toString() + ' to first expensable account');
-            
-            // FIX: Explicitly debit the asset before it closes to generate the negative memo
+
             const note = `Asset closure proceeds from ${modelAsset.displayName}`;
             modelAsset.debit(modelAssetValue, note, true); // true = skipGain (already handled)
-            this.creditToFirstExpensableAccount(modelAssetValue, note);            
-                        
+            this.creditToFirstExpensableAccount(modelAssetValue, note);
+
         }
 
     }
