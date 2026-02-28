@@ -1411,8 +1411,10 @@ applyLastDayOfMonthExpenseFundTransfers(modelAsset, currentDateInt) {
         // 1. Calculate the EXACT tax liability based on the full 365-day reality
         const actualTaxableIncome = activeTaxTable.calculateYearlyTaxableIncome(
             this.yearlyGrossIncome.copy().subtract(this.yearlyDeductions)
-        );
-        
+        );    
+
+        // TODO: calculate the FICA liability for employedIncome and selfIncome
+
         const actualIncomeTax = activeTaxTable.calculateYearlyIncomeTax(actualTaxableIncome);
         const actualCapitalGainsTax = activeTaxTable.calculateYearlyLongTermCapitalGainsTax(
             actualTaxableIncome, 

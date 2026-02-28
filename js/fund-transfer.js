@@ -160,17 +160,16 @@ export class FundTransfer {
     if (!this.fromModel || !this.toModel) return new FundTransferResult();
 
     const amount = this.calculate({ useClosePercent });
-    const fromMemo = this.describe(this.fromModel.displayName, amount);
-    const toMemo = this.describe(this.toModel.displayName, amount.copy().flipSign());
+    const memo = this.describe();
 
-    const fromResult = this.fromModel.debit(amount, fromMemo, skipGain);
-    const toResult   = this.toModel.credit(amount, toMemo, skipGain);
+    const fromResult = this.fromModel.debit(amount, memo, skipGain);
+    const toResult   = this.toModel.credit(amount, memo, skipGain);
 
     return new FundTransferResult(
       fromResult.assetChange,
       toResult.assetChange,
-      fromMemo,
-      toMemo,
+      memo,
+      memo,
       toResult.realizedGain
     );
   }
@@ -190,9 +189,10 @@ export class FundTransfer {
     };
   }
 
-  /** Human-readable description for logging / debugging */
-  describe(fromName, amount) {
+  /** Human-readable description for credit memo categorization */
+  describe(fromName) {
+    const from = fromName ?? this.fromModel?.displayName ?? '?';
     const dir = this.frequency !== Frequency.NONE ? `(${this.frequency})` : '(on close)';
-    return `${fromName} → ${this.toDisplayName} ${dir}` + (amount != null ? ` => ${amount.toString()}` : '');
+    return `${from} → ${this.toDisplayName} ${dir}`;
   }
 }
