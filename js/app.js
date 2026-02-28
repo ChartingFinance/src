@@ -51,6 +51,7 @@ import {
     global_user_startAge,
     global_user_retirementAge,
     global_user_finishAge,
+    global_backtestYear,
     global_multBy100,
     global_divBy100,
     global_setInflationRate,
@@ -62,9 +63,9 @@ import {
     global_setUserStartAge,
     global_getUserStartAge,
     global_setUserRetirementAge,
-    global_getUserRetirementAge,
     global_setUserFinishAge,
-    global_getUserFinishAge,
+    global_setBacktestYear,
+    global_getBacktestYear,
 } from './globals.js';
 
 // Util
@@ -564,18 +565,17 @@ tab6.addEventListener('click', tab6_click);
 // ─── Settings Row ─────────────────────────────────────────────
 
 function syncGlobalsToSettings() {
-    document.getElementById('setting-inflationRate').value = global_multBy100(global_inflationRate);
+    document.getElementById('setting-startAge').value = global_user_startAge;
     document.getElementById('setting-taxYear').value = global_taxYear;
     document.getElementById('setting-filingAs').value = global_filingAs;
-    document.getElementById('setting-startAge').value = global_user_startAge;
-    document.getElementById('setting-retirementAge').value = global_user_retirementAge;
-    document.getElementById('setting-finishAge').value = global_user_finishAge;
+    document.getElementById('setting-inflationRate').value = global_multBy100(global_inflationRate);
+    document.getElementById('setting-backtestYear').value = global_backtestYear;
 }
 
 function connectSettings() {
-    document.getElementById('setting-inflationRate').addEventListener('change', function() {
-        global_setInflationRate(global_divBy100(this.value));
-        global_getInflationRate();
+    document.getElementById('setting-startAge').addEventListener('change', function() {
+        global_setUserStartAge(parseInt(this.value));
+        global_getUserStartAge();
         calculate('assets');
     });
     document.getElementById('setting-taxYear').addEventListener('change', function() {
@@ -590,19 +590,14 @@ function connectSettings() {
         setActiveTaxTable(new TaxTable());
         calculate('assets');
     });
-    document.getElementById('setting-startAge').addEventListener('change', function() {
-        global_setUserStartAge(parseInt(this.value));
-        global_getUserStartAge();
+    document.getElementById('setting-inflationRate').addEventListener('change', function() {
+        global_setInflationRate(global_divBy100(this.value));
+        global_getInflationRate();
         calculate('assets');
     });
-    document.getElementById('setting-retirementAge').addEventListener('change', function() {
-        global_setUserRetirementAge(parseInt(this.value));
-        global_getUserRetirementAge();
-        calculate('assets');
-    });
-    document.getElementById('setting-finishAge').addEventListener('change', function() {
-        global_setUserFinishAge(parseInt(this.value));
-        global_getUserFinishAge();
+    document.getElementById('setting-backtestYear').addEventListener('change', function() {
+        global_setBacktestYear(this.value);
+        global_getBacktestYear();
         calculate('assets');
     });
 }

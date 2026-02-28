@@ -1,8 +1,58 @@
 import { DateInt } from './date-int.js';
 import { logger, LogCategory } from './logger.js';
-import { activeTaxTable } from './globals.js';
+import { activeTaxTable, global_backtestYear, global_sp500_annual_returns, global_10yr_treasury_rates, global_cpi_annual_inflation } from './globals.js';
+import { Instrument, InstrumentType } from './instrument.js';
 import { GraphMapper } from './graph-mapper.js';
 import { HydraulicVisualizer } from './hydraulic-visualizer.js';
+
+// ── Backtest helpers ──────────────────────────────────────────
+
+function saveOriginalRates(portfolio) {
+    return portfolio.modelAssets.map(a => ({ asset: a, rate: a.annualReturnRate.rate }));
+}
+
+function restoreOriginalRates(saved) {
+    for (const { asset, rate } of saved) {
+        asset.annualReturnRate.rate = rate;
+    }
+}
+
+function applyBacktestRates(portfolio, calendarYear) {
+    const year = parseInt(calendarYear);
+    const sp500 = global_sp500_annual_returns[year];
+    const treasury = global_10yr_treasury_rates[year];
+    const cpi = global_cpi_annual_inflation[year];
+
+    for (const asset of portfolio.modelAssets) {
+        if (sp500 !== undefined) {
+            if (InstrumentType.isTaxableAccount(asset.instrument) ||
+                InstrumentType.isIRA(asset.instrument) ||
+                InstrumentType.isRothIRA(asset.instrument) ||
+                InstrumentType.is401K(asset.instrument)) {
+                asset.annualReturnRate.rate = sp500 / 100;
+            }
+        }
+        if (treasury !== undefined && asset.instrument === Instrument.US_BOND) {
+            asset.annualReturnRate.rate = treasury / 100;
+        }
+        if (cpi !== undefined && InstrumentType.isMonthlyExpense(asset.instrument)) {
+            asset.annualReturnRate.rate = cpi / 100;
+        }
+    }
+}
+
+function applyBacktestForYear(portfolio, simulationYear, backtestStartYear, savedRates) {
+    const dataYear = backtestStartYear + (simulationYear - backtestStartYear);
+    if (global_sp500_annual_returns[dataYear] !== undefined ||
+        global_10yr_treasury_rates[dataYear] !== undefined ||
+        global_cpi_annual_inflation[dataYear] !== undefined) {
+        applyBacktestRates(portfolio, dataYear);
+    } else {
+        restoreOriginalRates(savedRates);
+    }
+}
+
+// ── Main simulation loops ─────────────────────────────────────
 
 export async function chronometer_run(portfolio) {
 
@@ -20,6 +70,14 @@ export async function chronometer_run(portfolio) {
     activeTaxTable.initializeChron();
     portfolio.initializeChron();
 
+    const backtesting = global_backtestYear !== 'current';
+    const savedRates = backtesting ? saveOriginalRates(portfolio) : null;
+    const backtestStartYear = backtesting ? parseInt(global_backtestYear) : 0;
+
+    if (backtesting) {
+        applyBacktestRates(portfolio, backtestStartYear);
+    }
+
     let currentDateInt = new DateInt(portfolio.firstDateInt.toInt());
     let lastDateInt = new DateInt(portfolio.lastDateInt.toInt());
     while (currentDateInt.toInt() <= lastDateInt.toInt()) {
@@ -33,6 +91,10 @@ export async function chronometer_run(portfolio) {
         }
 
         if (currentDateInt.isNewYearsDay()) {
+            if (backtesting) {
+                applyBacktestForYear(portfolio, currentDateInt.year, backtestStartYear, savedRates);
+            }
+
             portfolio.applyYear(currentDateInt);
             activeTaxTable.applyYear(portfolio.yearly);
 
@@ -42,6 +104,10 @@ export async function chronometer_run(portfolio) {
 
         portfolio.totalMonths = totalMonths;
 
+    }
+
+    if (backtesting) {
+        restoreOriginalRates(savedRates);
     }
 
     portfolio.finalizeChron();
@@ -59,9 +125,17 @@ export async function chronometer_run_animated(portfolio, visualizerContainerId)
     activeTaxTable.initializeChron();
     portfolio.initializeChron();
 
+    const backtesting = global_backtestYear !== 'current';
+    const savedRates = backtesting ? saveOriginalRates(portfolio) : null;
+    const backtestStartYear = backtesting ? parseInt(global_backtestYear) : 0;
+
+    if (backtesting) {
+        applyBacktestRates(portfolio, backtestStartYear);
+    }
+
     const visualizer = new HydraulicVisualizer(visualizerContainerId);
     const graphLayout = GraphMapper.buildGraph(portfolio);
-    
+
     // Pass the portfolio to init so tanks scale dynamically
     visualizer.init(graphLayout, portfolio);
 
@@ -72,7 +146,7 @@ export async function chronometer_run_animated(portfolio, visualizerContainerId)
     let currentDateInt = new DateInt(portfolio.firstDateInt.toInt());
     let lastDateInt = new DateInt(portfolio.lastDateInt.toInt());
     while (currentDateInt.toInt() <= lastDateInt.toInt()) {
-        
+
         // Break out of the loop if the popup was closed
         const container = document.getElementById(visualizerContainerId);
         if (!container || (container.closest('.popup') && container.closest('.popup').style.display === 'none')) {
@@ -99,6 +173,10 @@ export async function chronometer_run_animated(portfolio, visualizerContainerId)
         }
 
         if (currentDateInt.isNewYearsDay()) {
+            if (backtesting) {
+                applyBacktestForYear(portfolio, currentDateInt.year, backtestStartYear, savedRates);
+            }
+
             portfolio.applyYear(currentDateInt);
             activeTaxTable.applyYear(portfolio.yearly);
 
@@ -109,8 +187,11 @@ export async function chronometer_run_animated(portfolio, visualizerContainerId)
         portfolio.totalMonths = totalMonths;
     }
 
+    if (backtesting) {
+        restoreOriginalRates(savedRates);
+    }
+
     portfolio.finalizeChron();
     activeTaxTable.finalizeChron();
 
 }
-
