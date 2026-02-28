@@ -157,7 +157,7 @@ export class FinancialPackage {
         let taxes = this.incomeTax.copy();
         taxes.add(this.fica);
         taxes.add(this.longTermCapitalGainsTax);
-        taxes.add(this.propertyTaxes);
+        //taxes.add(this.propertyTaxes);
         taxes.add(this.estimatedTaxes);
         return taxes;
 
@@ -718,9 +718,12 @@ export class Portfolio {
     
     applyMonth(currentDateInt) {
 
+        /*
+        leaving this in to test a specific test data case when selling a house
         if (currentDateInt.year == 2029 && currentDateInt.month == 7) {
             debugger;
         }
+        */
         
         if (currentDateInt.day == 1) {
 
