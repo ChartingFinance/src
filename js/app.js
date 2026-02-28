@@ -146,6 +146,7 @@ metric1Select.addEventListener('click', function(ev) { ev.stopPropagation(); });
 metric1Select.addEventListener('change', function() {
     activeMetric1Name = metric1Select.value;
     tab1.querySelector('.tab-label').textContent = MetricLabel[activeMetric1Name];
+    portfolioLedger.metricName = activeMetric1Name;
     if (!activePortfolio) return;
     const chartData = charting_buildPortfolioMetric(activePortfolio, activeMetric1Name, true);
     if (activeMetric1Canvas != null) activeMetric1Canvas.destroy();
@@ -412,6 +413,7 @@ function calculate(target) {
     }
 
     // Update ledger display
+    portfolioLedger.metricName = activeMetric1Name;
     portfolioLedger.portfolio = portfolio;
 }
 

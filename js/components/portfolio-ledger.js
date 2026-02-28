@@ -7,11 +7,13 @@
  */
 
 import { LitElement, html } from 'lit';
+import { Metric, MetricLabel } from '../model-asset.js';
 
 class PortfolioLedger extends LitElement {
 
     static properties = {
-        portfolio: { type: Object },
+        portfolio:  { type: Object },
+        metricName: { type: String },
     };
 
     createRenderRoot() { return this; }
@@ -19,6 +21,7 @@ class PortfolioLedger extends LitElement {
     constructor() {
         super();
         this.portfolio = null;
+        this.metricName = Metric.VALUE;
     }
 
     render() {
@@ -26,27 +29,14 @@ class PortfolioLedger extends LitElement {
 
         const startDate = p ? this._formatDate(p.firstDateInt) : '\u2014';
         const finishDate = p ? this._formatDate(p.lastDateInt) : '\u2014';
-        const startValue = p ? this._formatCurrency(p.startValue().amount) : '$0.00';
-        const finishValue = p ? this._formatCurrency(p.finishValue().amount) : '$0.00';
-        const totalCashFlow = p ? p.total.cashFlow().amount : 0;
-        const totalExpenses = p ? p.total.expense.amount + p.total.totalTaxes().amount + p.total.mortgageInterest.amount : 0;
-        const accumulated = p ? p.accumulatedValue().amount : 0;
-        const annualReturn = p ? this._computeCAGR(p) : 0;
 
-        const totalCashFlowFormatted = this._formatCurrency(Math.abs(totalCashFlow));
-        const totalCashFlowDisplay = totalCashFlow >= 0
-            ? `+${totalCashFlowFormatted.substring(1)}`
-            : `-${totalCashFlowFormatted.substring(1)}`;
-
-        const totalExpensesDisplay = this._formatCurrency(Math.abs(totalExpenses));
-
-        const accFormatted = this._formatCurrency(Math.abs(accumulated));
-        const accDisplay = accumulated >= 0
-            ? `+${accFormatted.substring(1)}`
-            : `-${accFormatted.substring(1)}`;
-
-        const valClass = accumulated > 0 ? 'val-positive'
-            : accumulated < 0 ? 'val-negative' : 'val-neutral';
+        const metricLabel = MetricLabel[this.metricName] || 'Value';
+        const startMetric = p ? this._computeMetricAtIndex(p, this.metricName, 0) : 0;
+        const finishMetric = p ? this._computeMetricAtIndex(p, this.metricName, -1) : 0;
+        const startMetricDisplay = this._formatCurrency(startMetric);
+        const finishMetricDisplay = this._formatCurrency(finishMetric);
+        const annualReturn = p ? this._computeCAGR(startMetric, finishMetric, p) : 0;
+        const cagrPositive = annualReturn >= 0;
 
         return html`
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -59,13 +49,9 @@ class PortfolioLedger extends LitElement {
                             <span class="text-sm text-slate-500">Start Date</span>
                             <span class="font-semibold text-slate-800">${startDate}</span>
                         </div>
-                        <div class="flex justify-between items-center pb-2 border-b border-slate-200">
-                            <span class="text-sm text-slate-500">Starting Capital</span>
-                            <span class="font-semibold text-slate-800">${startValue}</span>
-                        </div>
-                        <div class="flex justify-between items-end pt-2">
-                            <span class="text-sm font-medium text-slate-600">Lifetime Contributions</span>
-                            <span class="text-2xl font-bold text-slate-900">${startValue}</span>
+                        <div class="flex justify-between items-center pt-2">
+                            <span class="text-sm text-slate-500">Starting ${metricLabel}</span>
+                            <span class="font-semibold text-slate-800">${startMetricDisplay}</span>
                         </div>
                     </div>
                 </div>
@@ -78,33 +64,18 @@ class PortfolioLedger extends LitElement {
                             <span class="text-sm text-slate-500">Finish Date</span>
                             <span class="font-semibold text-slate-800">${finishDate}</span>
                         </div>
-                        <div class="flex justify-between items-center pb-2 border-b border-slate-200">
-                            <span class="text-sm text-slate-500">Total Cash Flow</span>
-                            <span class="font-semibold text-slate-800 ledger-item-value ${valClass}">${totalCashFlowDisplay}</span>
-                        </div>
-                        <div class="flex justify-between items-end pt-2">
-                            <span class="text-sm font-medium text-slate-600">Closing Position</span>
-                            <span class="text-2xl font-bold text-slate-900 ledger-item-value total ${valClass}">${finishValue}</span>
+                        <div class="flex justify-between items-center pt-2">
+                            <span class="text-sm text-slate-500">Finishing ${metricLabel}</span>
+                            <span class="font-semibold text-slate-800">${finishMetricDisplay}</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Growth -->
-                <div class="glass-card p-6 bg-gradient-to-br ${accumulated >= 0 ? 'from-green-50 border-green-100' : 'from-pink-50 border-pink-100'} to-white">
-                    <div class="text-xs font-bold ${accumulated >= 0 ? 'text-green-500' : 'text-pink-400'} uppercase tracking-widest mb-4">Growth Metrics</div>
-                    <div class="space-y-3">
-                        <div class="flex justify-between items-center pb-2 border-b ${accumulated >= 0 ? 'border-green-100/50' : 'border-pink-100/50'}">
-                            <span class="text-sm text-gray-500">Total Expenses</span>
-                            <span class="font-semibold text-gray-800">${totalExpensesDisplay}</span>
-                        </div>
-                        <div class="flex justify-between items-center pb-2 border-b ${accumulated >= 0 ? 'border-green-100/50' : 'border-pink-100/50'}">
-                            <span class="text-sm text-gray-500">Accumulated Value</span>
-                            <span class="font-semibold text-gray-800 ledger-item-value ${valClass}">${accDisplay}</span>
-                        </div>
-                        <div class="flex justify-between items-end pt-2">
-                            <span class="text-sm font-medium ${accumulated >= 0 ? 'text-green-700' : 'text-pink-700'}">CAGR</span>
-                            <span class="text-2xl font-bold ${accumulated >= 0 ? 'text-green-600' : 'text-pink-600'} ledger-item-value total ${valClass}">${annualReturn.toFixed(2)}%</span>
-                        </div>
+                <!-- CAGR -->
+                <div class="glass-card p-6 bg-gradient-to-br ${cagrPositive ? 'from-green-50 border-green-100' : 'from-pink-50 border-pink-100'} to-white">
+                    <div class="flex flex-col items-center justify-center h-full">
+                        <span class="text-4xl font-bold ${cagrPositive ? 'text-green-600' : 'text-pink-600'}">CAGR</span>
+                        <span class="text-4xl font-bold ${cagrPositive ? 'text-green-600' : 'text-pink-600'}">${annualReturn.toFixed(2)}%</span>
                     </div>
                 </div>
 
@@ -124,15 +95,25 @@ class PortfolioLedger extends LitElement {
         return `${monthNames[dateInt.month - 1]} ${dateInt.year}`;
     }
 
-    _computeCAGR(portfolio) {
-        const sv = portfolio.startValue().amount;
-        const fv = portfolio.finishValue().amount;
+    _computeMetricAtIndex(portfolio, metricName, index) {
+        let total = 0;
+        for (const asset of portfolio.modelAssets) {
+            const history = asset.getHistory(metricName);
+            if (history?.length > 0) {
+                const i = index < 0 ? history.length + index : index;
+                total += history[i] ?? 0;
+            }
+        }
+        return total;
+    }
+
+    _computeCAGR(startVal, finishVal, portfolio) {
         const start = portfolio.firstDateInt;
         const finish = portfolio.lastDateInt;
-        if (!sv || !start || !finish || sv === 0) return 0;
+        if (!startVal || startVal === 0 || !start || !finish) return 0;
         const years = (finish.year + (finish.month - 1) / 12) - (start.year + (start.month - 1) / 12);
         if (years <= 0) return 0;
-        return (Math.pow(fv / sv, 1 / years) - 1) * 100;
+        return (Math.pow(finishVal / startVal, 1 / years) - 1) * 100;
     }
 }
 

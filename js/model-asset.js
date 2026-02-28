@@ -274,6 +274,11 @@ export class ModelAsset {
     return this.#metrics[Symbol.iterator]();
   }
 
+  /** Get the raw monthly history array for a named metric. */
+  getHistory(metricName) {
+    return this.#metrics.get(metricName).history;
+  }
+
   /** Get the display-aligned history array for a named metric. */
   getDisplayHistory(metricName) {
     return this.#metrics.get(metricName).displayHistory;
