@@ -179,7 +179,7 @@ function initiateActiveData() {
 
     // Restore active scenario
     const savedScenario = localStorage.getItem('activeScenario');
-    if (savedScenario && (savedScenario === 'Scenario1' || savedScenario === 'Scenario2')) {
+    if (savedScenario && ['Scenario1', 'Scenario2', 'Fittest'].includes(savedScenario)) {
         activeScenario = savedScenario;
     }
     document.getElementById('scenario-select').value = activeScenario;
@@ -322,8 +322,18 @@ function switchScenario(newScenario) {
     activeScenario = newScenario;
     localStorage.setItem('activeScenario', activeScenario);
 
+    // Fittest: if no data exists yet, launch the genetic algorithm
+    if (activeScenario === 'Fittest') {
+        const data = util_loadLocalAssetModels(activeStoryArc, 'Fittest');
+        if (!data) {
+            updateResetButtonVisibility();
+            doMaximize();
+            return;
+        }
+    }
+
     // Clone Default into scenario slot if it doesn't exist yet
-    if (activeScenario !== 'default') {
+    if (activeScenario !== 'default' && activeScenario !== 'Fittest') {
         const data = util_loadLocalAssetModels(activeStoryArc, activeScenario);
         if (!data) {
             const defaultData = util_loadLocalAssetModels(activeStoryArc, activeStoryName);
@@ -344,7 +354,7 @@ function resetScenario() {
 
 function updateResetButtonVisibility() {
     const btn = document.getElementById('btn-scenario-reset');
-    btn.classList.toggle('invisible', activeScenario === 'default');
+    btn.classList.toggle('invisible', activeScenario === 'default' || activeScenario === 'Fittest');
 }
 
 // ─── Charting and Calculation ────────────────────────────────
@@ -468,6 +478,16 @@ function doMaximize() {
     if (!simModal) {
         simModal = document.createElement('simulator-modal');
         document.body.appendChild(simModal);
+
+        simModal.addEventListener('found-fittest', (e) => {
+            util_saveLocalAssetModels(activeStoryArc, 'Fittest', e.detail.modelAssets);
+        });
+
+        simModal.addEventListener('close', () => {
+            if (activeScenario === 'Fittest') {
+                loadLocalData();
+            }
+        });
     }
     simModal.modelAssets = assetsContainerElement.modelAssets || [];
     simModal.open = true;

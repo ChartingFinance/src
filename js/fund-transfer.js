@@ -125,11 +125,23 @@ export class FundTransfer {
     }
 
     const pct = (useClosePercent ? this.closeMoveValue : this.moveValue) / 100;
-    // Use net income when available (income assets after tax computation),
-    // otherwise fall back to finishCurrency (non-income assets, asset closures)
-    const base = this.fromModel.netIncomeCurrency?.amount > 0
-      ? this.fromModel.netIncomeCurrency
-      : this.fromModel.finishCurrency;
+
+    // Determine the base amount for the transfer:
+    // On close: always use finishCurrency (full asset value)
+    // Recurring:
+    //   1. Income assets: use net income (after tax withholding)
+    //   2. Home with property tax escrow: use accumulated property tax (not home value)
+    //   3. All others: use finishCurrency (asset value)
+    let base;
+    if (useClosePercent) {
+      base = this.fromModel.finishCurrency;
+    } else if (this.fromModel.netIncomeCurrency?.amount > 0) {
+      base = this.fromModel.netIncomeCurrency;
+    } else if (this.fromModel.propertyTaxCurrency?.amount < 0) {
+      base = this.fromModel.propertyTaxCurrency;
+    } else {
+      base = this.fromModel.finishCurrency;
+    }
     let amount = new Currency(base.amount * pct);
 
     if (this.approvedAmount && amount.amount > this.approvedAmount.amount) {

@@ -170,6 +170,8 @@ export class ModelAsset {
     // Chronometer state
     this.finishCurrency = Currency.zero();
     this.monthsRemainingDynamic = this.monthsRemaining;
+    this.assessedAnnualPropertyTax = Currency.zero();
+    this.monthlyPropertyTaxEscrow = Currency.zero();
     this.#metrics = new MetricSet(METRIC_NAMES);
   }
 
@@ -448,6 +450,15 @@ export class ModelAsset {
     this.creditMemosCheckedIndex = 0;
     this.#metrics.initializeAll();
 
+    // Seed property tax escrow from start value for the first year
+    if (this.annualTaxRate.rate !== 0) {
+      this.assessedAnnualPropertyTax = new Currency(this.startCurrency.amount * this.annualTaxRate.rate);
+      this.monthlyPropertyTaxEscrow = new Currency(this.assessedAnnualPropertyTax.amount / 12);
+    } else {
+      this.assessedAnnualPropertyTax = Currency.zero();
+      this.monthlyPropertyTaxEscrow = Currency.zero();
+    }
+
   }
 
   handleCurrentDateInt(currentDateInt) {
@@ -518,8 +529,6 @@ export class ModelAsset {
   applyFirstDayOfMonth(currentDateInt) {
 
     this.monthlyValueChange = Currency.zero();
-
-    this.handleCurrentDateInt(currentDateInt);
 
     if (this.beforeStartDate) {
 

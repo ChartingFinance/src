@@ -56,6 +56,7 @@ class SimulatorModal extends LitElement {
                                 @click=${this._close}>&times;</button>
                         </div>
                     </div>
+                    <div class="text-xs text-gray-400 px-4 pt-2">The most recent fittest portfolio will be a selectable scenario. Found by Your Portfolio and above your asset list.</div>
                     <div class="sim-body">
                         <div class="sim-chart-area">
                             <canvas></canvas>
@@ -160,6 +161,11 @@ class SimulatorModal extends LitElement {
                 this._bestValue = 'Best: $' + bestVal.toLocaleString(undefined, {
                     minimumFractionDigits: 0, maximumFractionDigits: 0
                 });
+
+                this.dispatchEvent(new CustomEvent('found-fittest', {
+                    bubbles: true, composed: true,
+                    detail: { modelAssets: msg.data },
+                }));
             }
             else if (msg.action === 'iteration') {
                 const match = msg.data.match(/Generation:\s*(\d+)/);
