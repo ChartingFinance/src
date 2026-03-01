@@ -1,6 +1,6 @@
 import { DateInt } from './date-int.js';
 import { logger, LogCategory } from './logger.js';
-import { activeTaxTable, global_backtestYear, global_sp500_annual_returns, global_10yr_treasury_rates, global_cpi_annual_inflation } from './globals.js';
+import { activeTaxTable, global_backtestYear, global_sp500_annual_returns, global_10yr_treasury_rates, global_cpi_annual_inflation, global_wage_growth_annual } from './globals.js';
 import { Instrument, InstrumentType } from './instrument.js';
 import { GraphMapper } from './graph-mapper.js';
 import { HydraulicVisualizer } from './hydraulic-visualizer.js';
@@ -22,6 +22,7 @@ function applyBacktestRates(portfolio, calendarYear) {
     const sp500 = global_sp500_annual_returns[year];
     const treasury = global_10yr_treasury_rates[year];
     const cpi = global_cpi_annual_inflation[year];
+    const wage = global_wage_growth_annual[year];
 
     for (const asset of portfolio.modelAssets) {
         if (sp500 !== undefined) {
@@ -38,6 +39,9 @@ function applyBacktestRates(portfolio, calendarYear) {
         if (cpi !== undefined && InstrumentType.isMonthlyExpense(asset.instrument)) {
             asset.annualReturnRate.rate = cpi / 100;
         }
+        if (wage !== undefined && InstrumentType.isMonthlyIncome(asset.instrument)) {
+            asset.annualReturnRate.rate = wage / 100;
+        }
     }
 }
 
@@ -45,7 +49,8 @@ function applyBacktestForYear(portfolio, simulationYear, backtestStartYear, simS
     const dataYear = backtestStartYear + (simulationYear - simStartYear);
     if (global_sp500_annual_returns[dataYear] !== undefined ||
         global_10yr_treasury_rates[dataYear] !== undefined ||
-        global_cpi_annual_inflation[dataYear] !== undefined) {
+        global_cpi_annual_inflation[dataYear] !== undefined ||
+        global_wage_growth_annual[dataYear] !== undefined) {
         applyBacktestRates(portfolio, dataYear);
     } else {
         restoreOriginalRates(savedRates);
