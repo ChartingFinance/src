@@ -1457,12 +1457,24 @@ applyLastDayOfMonthExpenseFundTransfers(modelAsset, currentDateInt) {
     }
 
     applyToFirstMatchingAccount(predicate, operation, amount, note = '') {
-         for (let modelAsset of this.modelAssets) {
-             if (predicate(modelAsset.instrument)) {
-                 return modelAsset[operation](amount, note);
-             }
-         }
-         return { assetChange: Currency.zero(), realizedGain: Currency.zero() };
+        // When using the expensable predicate, search in priority order
+        // (liquid/taxable first, tax-advantaged last) instead of display
+        // sort order — avoids draining Roth/IRA before brokerage accounts.
+        if (predicate === InstrumentType.isExpensable) {
+            for (const instrumentKey of InstrumentType.expensablePriority) {
+                const match = this.modelAssets.find(
+                    a => a.instrument === instrumentKey && !a.isClosed
+                );
+                if (match) return match[operation](amount, note);
+            }
+        } else {
+            for (let modelAsset of this.modelAssets) {
+                if (predicate(modelAsset.instrument)) {
+                    return modelAsset[operation](amount, note);
+                }
+            }
+        }
+        return { assetChange: Currency.zero(), realizedGain: Currency.zero() };
     }
 
     getFirstExpensableAccount() {

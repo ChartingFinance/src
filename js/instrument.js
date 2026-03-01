@@ -117,6 +117,17 @@ const LIQUID = new Set([
   Instrument.BANK,
 ]);
 
+// Priority order for implicit debits/credits (taxes, FICA, withholding, etc.).
+// Liquid taxable accounts first, then tax-advantaged as a last resort.
+const EXPENSABLE_PRIORITY = [
+  Instrument.CASH,
+  Instrument.BANK,
+  Instrument.TAXABLE_EQUITY,
+  Instrument.FOUR_01K,
+  Instrument.IRA,
+  Instrument.ROTH_IRA,
+];
+
 const MONTHS_REMAINING_ABLE = new Set([
   Instrument.MORTGAGE,
   Instrument.DEBT,
@@ -166,4 +177,7 @@ export const InstrumentType = Object.freeze({
   all: () => [...InstrumentMeta.entries()]
     .sort((a, b) => a[1].sortOrder - b[1].sortOrder)
     .map(([key, meta]) => ({ key, ...meta })),
+
+  /** Priority order for implicit debits/credits (taxes, withholding, etc.) */
+  expensablePriority: EXPENSABLE_PRIORITY,
 });
