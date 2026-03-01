@@ -367,6 +367,39 @@
         </div>
     </div>
 
+    <!-- ═══ Backtesting ═══ -->
+    <div class="glass-card p-8 sm:p-12 mb-8" style="background: linear-gradient(135deg, #faf5ff 0%, #fdf2f8 100%);">
+        <div class="flex items-center gap-3 mb-4">
+            <span class="text-2xl">🕰️</span>
+            <h2 class="text-2xl font-bold tracking-tight">Historical Backtesting</h2>
+        </div>
+        <p class="text-gray-600 mb-6 leading-relaxed">What if you could run your portfolio through actual market history? Backtesting replaces your user-provided rates with real historical data and advances year by year through the simulation &mdash; so you can see how your plan would have performed from any starting year between 1970 and 2025.</p>
+
+        <div class="grid sm:grid-cols-2 gap-4 mb-6">
+            <div class="p-4 rounded-xl bg-white/70">
+                <div class="font-semibold text-sm mb-1">S&amp;P 500 Annual Returns</div>
+                <div class="text-sm text-gray-500">Applied to equity accounts &mdash; Brokerage, 401(k), IRA, and Roth IRA &mdash; so your investments track actual market performance.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-white/70">
+                <div class="font-semibold text-sm mb-1">10-Year Treasury Rates</div>
+                <div class="text-sm text-gray-500">Applied to US Treasury bonds, reflecting the real yield environment for each historical year.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-white/70">
+                <div class="font-semibold text-sm mb-1">CPI Inflation</div>
+                <div class="text-sm text-gray-500">Applied to monthly expenses, so your cost of living grows at the actual inflation rate &mdash; not a static estimate.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-white/70">
+                <div class="font-semibold text-sm mb-1">Nominal Wage Growth</div>
+                <div class="text-sm text-gray-500">Applied to monthly income, so your salary tracks real historical wage growth year over year.</div>
+            </div>
+        </div>
+
+        <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
+            <span class="rule-chip">Note</span>
+            <span class="text-sm text-gray-700">Historical data covers <strong>1970&ndash;2025</strong>, sourced from <strong>FRED</strong> (Federal Reserve Economic Data). Once the simulation advances past the available historical years, your user-provided rates automatically resume for the remainder of the projection.</span>
+        </div>
+    </div>
+
     <!-- ═══ Footer ═══ -->
     <footer class="mt-12 py-8 border-t border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4 text-sm font-medium text-gray-400">
         <div>Charting Finance &middot; Portfolio Simulator &middot; &copy; 2025-2026 Charting Finance, LLC</div>
