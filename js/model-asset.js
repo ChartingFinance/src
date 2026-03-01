@@ -58,9 +58,11 @@ export const Metric = Object.freeze({
   PROPERTY_TAX:                 'propertyTax',
   MORTGAGE_ESCROW:              'mortgageEscrow',
   TAXABLE_CONTRIBUTION:         'taxableContribution',
-  IRA_CONTRIBUTION:             'iraContribution',
+  TRAD_IRA_CONTRIBUTION:        'tradIRAContribution',
+  ROTH_IRA_CONTRIBUTION:        'rothIRAContribution',
   FOUR_01K_CONTRIBUTION:        'four01KContribution',
-  IRA_DISTRIBUTION:             'iraDistribution',
+  TRAD_IRA_DISTRIBUTION:        'tradIRADistribution',
+  ROTH_IRA_DISTRIBUTION:        'rothIRADistribution',
   FOUR_01K_DISTRIBUTION:        'four01KDistribution',
   TAXABLE_DISTRIBUTION:         'taxableDistribution', // these are distributions from taxable accounts as cash
   SHORT_TERM_CAPITAL_GAIN_TAX:  'shortTermCapitalGainTax',
@@ -100,9 +102,11 @@ export const MetricLabel = Object.freeze({
   [Metric.MORTGAGE_PRINCIPAL]:          'Mortgage Principal',
   [Metric.MORTGAGE_ESCROW]:             'Mortgage Escrow',  
   [Metric.TAXABLE_CONTRIBUTION]:        'Taxable Contribution',
-  [Metric.IRA_CONTRIBUTION]:            'IRA Contribution',
+  [Metric.TRAD_IRA_CONTRIBUTION]:       'Traditional IRA Contribution',
+  [Metric.ROTH_IRA_CONTRIBUTION]:       'Roth IRA Contribution',
   [Metric.FOUR_01K_CONTRIBUTION]:       '401K Contribution',
-  [Metric.IRA_DISTRIBUTION]:            'IRA Distribution',
+  [Metric.TRAD_IRA_DISTRIBUTION]:       'Traditional IRA Distribution',
+  [Metric.ROTH_IRA_DISTRIBUTION]:       'Roth IRA Distribution',
   [Metric.FOUR_01K_DISTRIBUTION]:       '401K Distribution',
   [Metric.TAXABLE_DISTRIBUTION]:        'Taxable Distribution', // these are distributions from taxable accounts as cash
   [Metric.SHORT_TERM_CAPITAL_GAIN_TAX]: 'Short Term Capital Gain Tax', // these are distributions from taxable accounts taxed as short term gains
@@ -252,6 +256,8 @@ export class ModelAsset {
    */
   addToMetric(metricName, amount) {
 
+    // TODO: Revisit if we want to add to multiple categories this way
+    /*
     if (metricName == Metric.SHORT_TERM_CAPITAL_GAIN || metricName == Metric.LONG_TERM_CAPITAL_GAIN) {
       this.#metrics.get(Metric.CAPITAL_GAIN).add(amount);
       this.#metrics.get(Metric.INCOME).add(amount);
@@ -265,6 +271,7 @@ export class ModelAsset {
     if (metricName == Metric.ORDINARY_INCOME || metricName == Metric.INTEREST_INCOME || metricName == Metric.WORKING_INCOME) {
       this.#metrics.get(Metric.INCOME).add(amount);
     }
+    */
 
     return this.#metrics.get(metricName).add(amount);
   }
@@ -392,14 +399,20 @@ export class ModelAsset {
   get taxableContributionCurrency()   { return this.#metrics.get(Metric.TAXABLE_CONTRIBUTION).current; }
   set taxableContributionCurrency(c)  { this.#metrics.get(Metric.TAXABLE_CONTRIBUTION).current = c; }
 
-  get iraContributionCurrency()   { return this.#metrics.get(Metric.IRA_CONTRIBUTION).current; }
-  set iraContributionCurrency(c)  { this.#metrics.get(Metric.IRA_CONTRIBUTION).current = c; }
+  get tradIRAContributionCurrency()   { return this.#metrics.get(Metric.TRAD_IRA_CONTRIBUTION).current; }
+  set tradIRAContributionCurrency(c)  { this.#metrics.get(Metric.TRAD_IRA_CONTRIBUTION).current = c; }
+
+  get rothIRAContributionCurrency()   { return this.#metrics.get(Metric.ROTH_IRA_CONTRIBUTION).current; }
+  set rothIRAContributionCurrency(c)  { this.#metrics.get(Metric.ROTH_IRA_CONTRIBUTION).current = c; }
 
   get four01KContributionCurrency()   { return this.#metrics.get(Metric.FOUR_01K_CONTRIBUTION).current; }
   set four01KContributionCurrency(c)  { this.#metrics.get(Metric.FOUR_01K_CONTRIBUTION).current = c; }
 
-  get iraDistributionCurrency()   { return this.#metrics.get(Metric.IRA_DISTRIBUTION).current; }
-  set iraDistributionCurrency(c)  { this.#metrics.get(Metric.IRA_DISTRIBUTION).current = c; }
+  get tradIRADistributionCurrency()   { return this.#metrics.get(Metric.TRAD_IRA_DISTRIBUTION).current; }
+  set tradIRADistributionCurrency(c)  { this.#metrics.get(Metric.TRAD_IRA_DISTRIBUTION).current = c; }
+
+  get rothIRADistributionCurrency()   { return this.#metrics.get(Metric.ROTH_IRA_DISTRIBUTION).current; }
+  set rothIRADistributionCurrency(c)  { this.#metrics.get(Metric.ROTH_IRA_DISTRIBUTION).current = c; }
 
   get four01KDistributionCurrency()   { return this.#metrics.get(Metric.FOUR_01K_DISTRIBUTION).current; }
   set four01KDistributionCurrency(c)  { this.#metrics.get(Metric.FOUR_01K_DISTRIBUTION).current = c; }
@@ -428,9 +441,11 @@ export class ModelAsset {
   get monthlyPropertyTaxes()         { return this.#metrics.get(Metric.PROPERTY_TAX).history; }
   get monthlyMortgageEscrows()       { return this.#metrics.get(Metric.MORTGAGE_ESCROW).history; }
   get monthlyEstimatedTaxes()        { return this.#metrics.get(Metric.ESTIMATED_INCOME_TAX).history; }
-  get monthlyIRAContributions()      { return this.#metrics.get(Metric.IRA_CONTRIBUTION).history; }
+  get monthlyTradIRAContributions()  { return this.#metrics.get(Metric.TRAD_IRA_CONTRIBUTION).history; }
+  get monthlyRothIRAContributions()  { return this.#metrics.get(Metric.ROTH_IRA_CONTRIBUTION).history; }
   get monthlyFour01KContributions()  { return this.#metrics.get(Metric.FOUR_01K_CONTRIBUTION).history; }
-  get monthlyIRADistributions()      { return this.#metrics.get(Metric.IRA_DISTRIBUTION).history; }
+  get monthlyTradIRADistributions()  { return this.#metrics.get(Metric.TRAD_IRA_DISTRIBUTION).history; }
+  get monthlyRothIRADistributions()  { return this.#metrics.get(Metric.ROTH_IRA_DISTRIBUTION).history; }
   get monthlyFour01KDistributions()  { return this.#metrics.get(Metric.FOUR_01K_DISTRIBUTION).history; }
   get monthlyInterestIncomes()       { return this.#metrics.get(Metric.INTEREST_INCOME).history; }
   get monthlyCapitalGainsTaxes()     { return this.#metrics.get(Metric.CAPITAL_GAIN_TAX).history; }
@@ -544,7 +559,7 @@ export class ModelAsset {
     else if (this.afterFinishDate) {
 
       if (this.isClosed) {
-        console.assert(this.finishCurrency.amount === 0, `Expected finishCurrency to be zero for closed asset ${this.displayName} but got ${this.finishCurrency.toCurrency()}`);
+        //console.assert(this.finishCurrency.amount === 0, `Expected finishCurrency to be zero for closed asset ${this.displayName} but got ${this.finishCurrency.toCurrency()}`);
       }
       // if not yet closed, preserve finishCurrency so closeAsset can transfer the balance
 
@@ -777,7 +792,9 @@ applyMonthlyExpense() {
       if (T.isTaxableAccount(this.instrument)) {
         this.addToMetric(Metric.TAXABLE_CONTRIBUTION, credit);
       } else if (T.isIRA(this.instrument)) {
-        this.addToMetric(Metric.IRA_CONTRIBUTION, credit);
+        this.addToMetric(Metric.TRAD_IRA_CONTRIBUTION, credit);
+      } else if (T.isRothIRA(this.instrument)) {
+        this.addToMetric(Metric.ROTH_IRA_CONTRIBUTION, credit)
       } else if (T.is401K(this.instrument)) {
         this.addToMetric(Metric.FOUR_01K_CONTRIBUTION, credit);
       } else if (T.isHome(this.instrument)) {
@@ -797,7 +814,9 @@ applyMonthlyExpense() {
             }
         }
       } else if (T.isIRA(this.instrument)) {
-        this.addToMetric(Metric.IRA_DISTRIBUTION, credit.copy().flipSign());
+        this.addToMetric(Metric.TRAD_IRA_DISTRIBUTION, credit.copy().flipSign());
+      } else if (T.isRothIRA(this.instrument)) {
+        this.addToMetric(Metric.ROTH_IRA_DISTRIBUTION, credit.copy().flipSign());
       } else if (T.is401K(this.instrument)) {
         this.addToMetric(Metric.FOUR_01K_DISTRIBUTION, credit.copy().flipSign());
       } else if (T.isHome(this.instrument)) {

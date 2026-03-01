@@ -1,7 +1,7 @@
 import { Currency } from './currency.js';
 import { InstrumentType } from './instrument.js';
 import { Metric } from './model-asset.js';
-import { FundTransferResult, AssetAppreciationResult, CapitalGainsResult, MortgageResult, IncomeResult, ExpenseResult, InterestResult, WithholdingResult, CreditMemo } from './results.js';
+import { FundTransferResult, AssetAppreciationResult, CapitalGainsResult, MortgageResult, IncomeResult, ExpenseResult, InterestResult, WithholdingResult, IRAContributionResult, CreditMemo } from './results.js';
 import { MonthsSpan } from './months-span.js';
 import { logger, LogCategory } from './logger.js';
 import { User } from './user.js';
@@ -22,8 +22,8 @@ yearlyWithheldTaxes (This is the sum of all the monthly estimates your engine cu
 export const FINANCIAL_FIELDS = [
     'employedIncome', 'selfIncome', 'socialSecurity', 'assetAppreciation',
     'expense', 'fica', 'incomeTax', 'estimatedTaxes',
-    'iraContribution', 'four01KContribution', 'rothContribution',
-    'iraDistribution', 'four01KDistribution', 'rothDistribution',
+    'tradIRAContribution', 'four01KContribution', 'rothIRAContribution',
+    'tradIRADistribution', 'four01KDistribution', 'rothIRADistribution',
     'mortgageInterest', 'mortgagePrincipal', 'mortgageEscrow', 'propertyTaxes',
     'shortTermCapitalGains', 'longTermCapitalGains',
     'nonQualifiedDividends', 'qualifiedDividends',
@@ -53,8 +53,10 @@ export class FinancialPackage {
     limitDeductions(activeUser) {
 
         let maxIRADeduction = activeTaxTable.iraContributionLimit(activeUser);
-        if (this.iraContribution.amount > maxIRADeduction.amount)
-            this.iraContribution.amount = maxIRADeduction.amount;
+        if (this.tradIRAContribution.amount + this.rothIRAContribution.amount > maxIRADeduction.amount) {
+            // TODO: figure out how to split this up between traditional and roth
+            //this.iraContribution.amount = maxIRADeduction.amount;
+        }
         
         let max401KDeduction = activeTaxTable.four01KContributionLimit(activeUser);
         if (this.four01KContribution.amount > max401KDeduction.amount)
@@ -103,7 +105,7 @@ export class FinancialPackage {
         let income = this.socialSecurity.copy().multiply(0.85); // maximum allowed for social security
         income.add(this.interestIncome);
         income.add(this.shortTermCapitalGains);
-        income.add(this.iraDistribution);
+        income.add(this.tradIRADistribution);
         income.add(this.four01KDistribution);
         income.add(this.nonQualifiedDividends);
         return income;
@@ -112,7 +114,7 @@ export class FinancialPackage {
 
     nontaxableIncome() {
 
-        let income = this.rothDistribution.copy();
+        let income = this.rothIRADistribution.copy();
         income.add(this.qualifiedDividends);
         return income;
 
@@ -135,16 +137,16 @@ export class FinancialPackage {
 
     contributions() {
 
-        let contributions = this.iraContribution.copy();
+        let contributions = this.tradIRAContribution.copy();
         contributions.add(this.four01KContribution);
-        contributions.add(this.rothContribution);
+        contributions.add(this.rothIRAContribution);
         return contributions;
 
     }
 
     deductions() {
 
-        let d = this.iraContribution.copy().flipSign();
+        let d = this.tradIRAContribution.copy().flipSign();
         d.subtract(this.four01KContribution);
         d.add(this.mortgageInterest);
         d.add(this.deductiblePropertyTaxes());
@@ -217,14 +219,14 @@ export class FinancialPackage {
         result.push(this.employedIncome.toCurrency());
         result.push(this.selfIncome.toCurrency());
         result.push(this.socialSecurity.toCurrency());
-        result.push(this.iraDistribution.toCurrency());
+        result.push(this.tradIRADistribution.toCurrency());
         result.push(this.four01KDistribution.toCurrency());
         result.push(this.shortTermCapitalGains.toCurrency());
         result.push(this.interestIncome.toCurrency());
         result.push(this.nonQualifiedDividends.toCurrency());
         result.push(this.longTermCapitalGains.toCurrency());
         result.push(this.qualifiedDividends.toCurrency());
-        result.push(this.rothDistribution.toCurrency());
+        //result.push(this.rothIRADistribution.toCurrency());
         return result;
 
     }
@@ -257,7 +259,7 @@ export class FinancialPackage {
         logger.log(category, '  selfIncome:                ' + this.selfIncome.toString());
         logger.log(category, '  ordinaryIncome:            ' + this.ordinaryIncome().toString());
         logger.log(category, '    socialSecurity (taxed):  ' + this.socialSecurity.toString());
-        logger.log(category, '    iraDistribution:         ' + this.iraDistribution.toString());
+        logger.log(category, '    iraDistribution:         ' + this.tradIRADistribution.toString());
         logger.log(category, '    401KDistribution:        ' + this.four01KDistribution.toString());
         logger.log(category, '    shortTermCapitalGains:   ' + this.shortTermCapitalGains.toString());
         logger.log(category, '    interestIncome:          ' + this.interestIncome.toString());
@@ -265,9 +267,9 @@ export class FinancialPackage {
         logger.log(category, '  longTermCapitalGains:      ' + this.longTermCapitalGains.toString());
         logger.log(category, '  nonTaxableIncome:          ' + this.nontaxableIncome().toString());
         logger.log(category, '    qualifiedDividends       ' + this.qualifiedDividends.toString());
-        logger.log(category, '    rothDistribution:        ' + this.rothDistribution.toString());
+        logger.log(category, '    rothDistribution:        ' + this.rothIRADistribution.toString());
         logger.log(category, 'deductions:                  ' + this.deductions().toString());
-        logger.log(category, '  iraContribution:           ' + this.iraContribution.toString());
+        logger.log(category, '  iraContribution:           ' + this.tradIRAContribution.toString());
         logger.log(category, '  401KContribution:          ' + this.four01KContribution.toString());
         logger.log(category, '  mortgageInterest:          ' + this.mortgageInterest.toString());
         logger.log(category, '  propertyTaxes:             ' + this.deductiblePropertyTaxes().toString());
@@ -279,8 +281,8 @@ export class FinancialPackage {
         logger.log(category, '  estimatedTaxes:            ' + this.estimatedTaxes.toString());
         logger.log(category, 'contributions:               ' + this.contributions().toString());
         logger.log(category, '  401KContribution:          ' + this.four01KContribution.toString());
-        logger.log(category, '  iraContribution:           ' + this.iraContribution.toString());
-        logger.log(category, '  rothContribution:          ' + this.rothContribution.toString());
+        logger.log(category, '  iraContribution:           ' + this.tradIRAContribution.toString());
+        logger.log(category, '  rothContribution:          ' + this.rothIRAContribution.toString());
         logger.log(category, 'expenses:                    ' + this.expense.toString());
         logger.log(category, 'assetAppreciation:           ' + this.assetAppreciation.toString());
         logger.log(category, 'mortgagePrincipal:           ' + this.mortgagePrincipal.toString());
@@ -299,7 +301,7 @@ export class FinancialPackage {
         html += '  <li>selfIncome:                ' + this.selfIncome.toString() + '</li>';
         html += '  <li>ordinaryIncome:            ' + this.ordinaryIncome().toString() + '<ul>';
         html += '    <li>socialSecurity:          ' + this.socialSecurity.toString() + '</li>';
-        html += '    <li>iraDistribution:         ' + this.iraDistribution.toString() + '</li>';
+        html += '    <li>iraDistribution:         ' + this.tradIRADistribution.toString() + '</li>';
         html += '    <li>401KDistribution:        ' + this.four01KDistribution.toString() + '</li>';                       
         html += '    <li>shortTermCapitalGains:   ' + this.shortTermCapitalGains.toString() + '</li>';
         html += '    <li>interestIncome:          ' + this.interestIncome.toString() + '</li>';
@@ -307,9 +309,9 @@ export class FinancialPackage {
         html += '  <li>longTermCapitalGains:      ' + this.longTermCapitalGains.toString() + '</li>';        
         html += '  <li>nonTaxableIncome:          ' + this.nontaxableIncome().toString() + '<ul>';
         html += '    <li>qualifiedDividends       ' + this.qualifiedDividends.toString() + '</li>';
-        html += '    <li>rothDistribution:        ' + this.rothDistribution.toString() + '</li></ul></ul>';
+        html += '    <li>rothDistribution:        ' + this.rothIRADistribution.toString() + '</li></ul></ul>';
         html += '<li>deductions:                  ' + this.deductions().toString() + '<ul>';
-        html += '  <li>iraContribution:           ' + this.iraContribution.toString() + '</li>';
+        html += '  <li>iraContribution:           ' + this.tradIRAContribution.toString() + '</li>';
         html += '  <li>401KContribution:          ' + this.four01KContribution.toString() + '</li>';
         html += '  <li>mortgageInterest:          ' + this.mortgageInterest.toString() + '</li>';
         html += '  <li>propertyTaxes:             ' + this.deductiblePropertyTaxes().toString() + '</li></ul>';
@@ -321,8 +323,8 @@ export class FinancialPackage {
         html += '  <li>estimatedTaxes:            ' + this.estimatedTaxes.toString() + '</li></ul>';
         html += '<li>contributions:               ' + this.contributions().toString() + '<ul>';
         html += '  <li>401KContribution:          ' + this.four01KContribution.toString() + '</li>';    
-        html += '  <li>iraContribution:           ' + this.iraContribution.toString() + '</li>';    
-        html += '  <li>rothContribution:            ' + this.rothContribution.toString() + '</li>';
+        html += '  <li>iraContribution:           ' + this.tradIRAContribution.toString() + '</li>';    
+        html += '  <li>rothContribution:            ' + this.rothIRAContribution.toString() + '</li>';
         html += '<li>assetAppreciation:           ' + this.assetAppreciation.toString() + '</li>';
         html += '<li>mortgagePrincipal:           ' + this.mortgagePrincipal.toString() + '</li>';        
         html += '<li>cashFlow:                    ' + this.cashFlow().toString() + '</li>';
@@ -354,7 +356,7 @@ export class FinancialPackage {
         html += '<tr><td style="padding-left:20px">Self</td><td>' + this.selfIncome.toString() + '<br />';
         html += '<tr><td style="padding-left:20px">Ordinary</td><td>' + this.ordinaryIncome().toString() + '<br />';
         html += '<tr><td style="padding-left:40px">Social Security</td><td>' + this.socialSecurity.toString() + '<br />';
-        html += '<tr><td style="padding-left:40px">IRA Distribution</td><td>' + this.iraDistribution.toString() + '<br />';
+        html += '<tr><td style="padding-left:40px">IRA Distribution</td><td>' + this.tradIRADistribution.toString() + '<br />';
         html += '<tr><td style="padding-left:40px">401K Distribution</td><td>' + this.four01KDistribution.toString() + '<br />';
         html += '<tr><td style="padding-left:40px">Short Term Capital Gains</td><td>' + this.shortTermCapitalGains.toString() + '<br />';
         html += '<tr><td style="padding-left:40px">Interest</td><td>' + this.interestIncome.toString() + '<br />';
@@ -362,7 +364,7 @@ export class FinancialPackage {
         html += '<tr><td style="padding-left:20px">Long Term Capital Gains</td><td>' + this.longTermCapitalGains.toString() + '<br />';
         html += '<tr><td style="padding-left:20px">Non-Taxable</td><td>' + this.nontaxableIncome().toString() + '<br />';
         html += '<tr><td style="padding-left:40px">Qualified Dividends</td><td>' + this.qualifiedDividends.toString() + '<br />';
-        html += '<tr><td style="padding-left:40px">Roth Distribution</td><td>' + this.rothDistribution.toString();
+        html += '<tr><td style="padding-left:40px">Roth Distribution</td><td>' + this.rothIRADistribution.toString();
         html += '</td>';
         */
      
@@ -377,7 +379,7 @@ export class FinancialPackage {
         /*
         let html = '<tr><td colspan="2"><strong>Deductions</strong><br />';
         html += '<tr><td>Total Deductions</td><td>' + this.deductions().toString() + '<br />';
-        html += '<tr><td style="padding-left:20px">IRA Contribution</td><td>' + this.iraContribution.toString() + '<br />';
+        html += '<tr><td style="padding-left:20px">IRA Contribution</td><td>' + this.tradIRAContribution.toString() + '<br />';
         html += '<tr><td style="padding-left:20px">401K Contribution</td><td>' + this.four01KContribution.toString() + '<br />';
         html += '<tr><td style="padding-left:20px">Mortgage Interest</td><td>' + this.mortgageInterest.toString() + '<br />';
         html += '<tr><td style="padding-left:20px">Property Taxes</td><td>' + this.deductiblePropertyTaxes().toString();
@@ -422,7 +424,7 @@ export class FinancialPackage {
         
         /*        
         html += '<tr><td colspan="2"><strong>Other</strong></td></tr>';
-        html += '<tr><td>Roth Contribution</td><td>' + this.rothContribution.toString() + '</td></tr>';
+        html += '<tr><td>Roth Contribution</td><td>' + this.rothIRAContribution.toString() + '</td></tr>';
         html += '<tr><td>Asset Appreciation</td><td>' + this.assetAppreciation.toString() + '</td></tr>';
         html += '<tr><td>Mortgage Principal</td><td>' + this.mortgagePrincipal.toString() + '</td></tr>';
         html += '<tr><td>Cash Flow</td><td>' + this.cashFlow().toString() + '</td></tr>';
@@ -664,7 +666,8 @@ export class Portfolio {
                 cashFlow.add(modelAsset.medicareCurrency);
                 cashFlow.add(modelAsset.estimatedIncomeTaxCurrency);
                 cashFlow.add(modelAsset.four01KContributionCurrency);
-                cashFlow.add(modelAsset.iraContributionCurrency);
+                cashFlow.add(modelAsset.tradIRAContributionCurrency);
+                cashFlow.add(modelAsset.rothIRAContribution);
             } else if (InstrumentType.isCapital(inst)) {
                 cashFlow = modelAsset.growthCurrency.copy();
             } else if (InstrumentType.isIncomeAccount(inst)) {
@@ -832,7 +835,10 @@ export class Portfolio {
                 this.monthly.employedIncome.add(taxableIncome);
 
             modelAsset.addToMetric(Metric.FOUR_01K_CONTRIBUTION, this.calculateFirstDayOfMonthIncomeFour01KContribution(modelAsset, currentDateInt));
-            modelAsset.addToMetric(Metric.IRA_CONTRIBUTION, this.calculateFirstDayOfMonthIncomeIRAContribution(modelAsset, currentDateInt));            
+
+            let iraContributionResult = this.calculateFirstDayOfMonthIncomeIRAContribution(modelAsset, currentDateInt);
+            modelAsset.addToMetric(Metric.TRAD_IRA_CONTRIBUTION, iraContributionResult.tradContribution);
+            modelAsset.addToMetric(Metric.ROTH_IRA_CONTRIBUTION, iraContributionResult.rothContribution);            
 
         }
         else if (InstrumentType.isMortgage(modelAsset.instrument)) {
@@ -882,7 +888,7 @@ export class Portfolio {
 
         // subtract IRA contributions (per-asset, includes both traditional and Roth)
         // all contributions reduce take-home pay regardless of tax treatment
-        let iraContribution = modelAsset.iraContributionCurrency;
+        let iraContribution = modelAsset.tradIRAContributionCurrency;
         if (iraContribution.amount > 0) {
             netIncome.subtract(iraContribution);
         }
@@ -972,7 +978,7 @@ export class Portfolio {
         }
 
         let totalIRAContribution = new Currency(0.0);
-        let traditionalIRAContribution = new Currency(0.0);
+        let tradIRAContribution = new Currency(0.0);
         let rothIRAContribution = new Currency(0.0);
         let totalIRAContributionLimit = activeTaxTable.iraContributionLimit(this.activeUser);
         for (let fundTransfer of modelAsset.fundTransfers) {
@@ -981,33 +987,29 @@ export class Portfolio {
             fundTransfer.bind(modelAsset, this.modelAssets);
             if (!fundTransfer.toModel) continue;
             if (InstrumentType.isTaxDeferred(fundTransfer.toModel.instrument) && InstrumentType.isIRA(fundTransfer.toModel.instrument)) {
-                let iraContribution = fundTransfer.calculate();
-                if (this.yearly.iraContribution.amount + this.yearly.rothContribution.amount + iraContribution.amount > totalIRAContributionLimit.amount) {
-                    iraContribution = new Currency(totalIRAContributionLimit.amount - this.yearly.iraContribution.amount);
+                let contribution = fundTransfer.calculate();
+                if (this.yearly.tradIRAContribution.amount + this.yearly.rothIRAContribution.amount + contribution.amount > totalIRAContributionLimit.amount) {
+                    contribution = new Currency(totalIRAContributionLimit.amount - this.yearly.tradIRAContribution.amount - this.yearly.rothIRAContribution.amount);
                 }
-                fundTransfer.approvedAmount = iraContribution;
-                totalIRAContribution.add(iraContribution);
-                traditionalIRAContribution.add(iraContribution);
+                fundTransfer.approvedAmount = contribution;
+                totalIRAContribution.add(contribution);
+                tradIRAContribution.add(contribution);
             }
             else if (InstrumentType.isRothIRA(fundTransfer.toModel.instrument)) {
-                let rothContribution = fundTransfer.calculate();
-                if (this.yearly.iraContribution.amount + this.yearly.rothContribution.amount + rothContribution.amount > totalIRAContributionLimit.amount) {
-                    rothContribution = new Currency(totalIRAContributionLimit.amount - this.yearly.rothContribution.amount);
+                let contribution = fundTransfer.calculate();
+                if (this.yearly.tradIRAContribution.amount + this.yearly.rothIRAContribution.amount + contribution.amount > totalIRAContributionLimit.amount) {
+                    contribution = new Currency(totalIRAContributionLimit.amount - this.yearly.tradIRAContribution.amount - this.yearly.rothIRAContribution.amount);
                 }
-                fundTransfer.approvedAmount = rothContribution;
-                totalIRAContribution.add(rothContribution);
-                rothIRAContribution.add(rothContribution);
+                fundTransfer.approvedAmount = contribution;
+                totalIRAContribution.add(contribution);
+                rothIRAContribution.add(contribution);
             }
         }
 
-        if (totalIRAContribution.amount == 0) {
-            // todo: look for ira or rothIRA and contribute
-        }
+        this.monthly.tradIRAContribution.add(tradIRAContribution);
+        this.monthly.rothIRAContribution.add(rothIRAContribution);
 
-        this.monthly.iraContribution.add(traditionalIRAContribution);
-        this.monthly.rothContribution.add(rothIRAContribution);
-
-        return totalIRAContribution
+        return new IRAContributionResult(totalIRAContribution, tradIRAContribution, rothIRAContribution);        
 
     }
 
@@ -1210,7 +1212,7 @@ applyLastDayOfMonthExpenseFundTransfers(modelAsset, currentDateInt) {
          } else if (InstrumentType.isTaxDeferred(targetInstrument)) {
              logger.log(LogCategory.TRANSFER, `Portfolio.applyFundTransfersForExpense: ${modelAssetName} expensing ${fundTransfer.toModel.displayName} generated ordinaryIncome of ${change.toString()}`);
              if (InstrumentType.isIRA(targetInstrument)) {
-                 this.monthly.iraDistribution.add(change);
+                 this.monthly.tradIRADistribution.add(change);
              } else if (InstrumentType.is401K(targetInstrument)) {
                  this.monthly.four01KDistribution.add(change);
              } else {
@@ -1218,7 +1220,7 @@ applyLastDayOfMonthExpenseFundTransfers(modelAsset, currentDateInt) {
              }
          } else if (InstrumentType.isTaxFree(targetInstrument)) {
              logger.log(LogCategory.TRANSFER, `Portfolio.applyFundTransfersForExpense: ${modelAssetName} expensing ${fundTransfer.toModel.displayName} generated no tax impact`);
-             this.monthly.rothDistribution.add(change);
+             this.monthly.rothIRADistribution.add(change);
          }
      }
 
@@ -1233,7 +1235,7 @@ applyLastDayOfMonthExpenseFundTransfers(modelAsset, currentDateInt) {
         if (this.activeUser.rmdRequired()) {
             
             if (InstrumentType.isIRA(modelAsset.instrument))
-                distributions = modelAsset.iraDistributionCurrency.copy();
+                distributions = modelAsset.tradIRADistributionCurrency.copy();
             else if (InstrumentType.is401K(modelAsset.instrument))
                 distributions = modelAsset.four01KDistributionCurrency.copy();            
             else
@@ -1246,8 +1248,8 @@ applyLastDayOfMonthExpenseFundTransfers(modelAsset, currentDateInt) {
             let remains = new Currency(rmd.amount - distributions.amount);
 
             if (InstrumentType.isIRA(modelAsset.instrument)) {
-                modelAsset.addToMetric(Metric.IRA_DISTRIBUTION, remains);
-                this.monthly.iraDistribution.add(remains);
+                modelAsset.addToMetric(Metric.TRAD_IRA_DISTRIBUTION, remains);
+                this.monthly.tradIRADistribution.add(remains);
             } else {
                 modelAsset.addToMetric(Metric.FOUR_01K_DISTRIBUTION, remains);
                 this.monthly.four01KDistribution.add(remains);

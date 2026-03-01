@@ -450,7 +450,7 @@ export class TaxTable {
         if (yearly.four01KContribution.amount > 0)
             taxableIncome.subtract(yearly.four01KContribution);
         else
-            taxableIncome.subtract(yearly.iraContribution);
+            taxableIncome.subtract(yearly.tradIRAContribution);
 
 
         if (taxableIncome.amount < 0) {
@@ -495,9 +495,8 @@ export class TaxTable {
     }
 
     calculateYearlyTaxableIncome(yearly) {
-
-        let taxableIncome = new Currency(yearly.selfIncome.amount + yearly.employedIncome.amount);
-        taxableIncome.add(yearly.irsTaxableGrossIncome());
+        
+        let taxableIncome = yearly.irsTaxableGrossIncome();
         return this.applyYearlyDeductions(yearly, taxableIncome);
 
     }
@@ -506,7 +505,7 @@ export class TaxTable {
     calculateYearlyNonFICATaxableIncome(yearly) {
 
         let nonFICATaxableIncome = new Currency(yearly.selfIncome.amount + yearly.employedIncome.amount);
-        nonFICATaxableIncome.add(yearly.iraDistribution);
+        nonFICATaxableIncome.add(yearly.tradIRADistribution);
         nonFICATaxableIncome.add(yearly.shortTermCapitalGains);   
         nonFICATaxableIncome.add(yearly.interest);
         return this.applyYearlyDeductions(yearly, nonFICATaxableIncome);

@@ -70,6 +70,15 @@ export class WithholdingResult {
   }
 }
 
+// tradContribution is for traditionalIRAContribution
+export class IRAContributionResult {
+  constructor(totalContribution = Currency.zero(), tradContribution = Currency.zero(), rothContribution = Currency.zero()) {
+    this.totalContribution   = totalContribution instanceof Currency ? totalContribution.copy() : new Currency(totalContribution);
+    this.tradContribution    = tradContribution instanceof Currency ? tradContribution.copy() : new Currency(tradContribution);
+    this.rothContribution    = rothContribution instanceof Currency ? rothContribution.copy() : new Currency(rothContribution);
+  }
+}
+
 export class CreditMemo {
   constructor(amount = Currency.zero(), note = '', dateInt = null) {
     this.amount = amount instanceof Currency ? amount.copy() : new Currency(amount);
