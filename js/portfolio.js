@@ -934,6 +934,7 @@ export class Portfolio {
             for (const fundTransfer of modelAsset.fundTransfers) {
                 if (!fundTransfer.isActiveForMonth(currentDateInt.month)) continue;
                 fundTransfer.bind(modelAsset, this.modelAssets);
+                if (!fundTransfer.toModel) continue;
                 const incomeAmount = fundTransfer.calculate();
                 fundTransfer.execute();
 
@@ -978,6 +979,7 @@ export class Portfolio {
             if (!fundTransfer.isActiveForMonth(currentDateInt.month)) continue;
             delete fundTransfer.approvedAmount;
             fundTransfer.bind(modelAsset, this.modelAssets);
+            if (!fundTransfer.toModel) continue;
             if (InstrumentType.isTaxDeferred(fundTransfer.toModel.instrument) && InstrumentType.isIRA(fundTransfer.toModel.instrument)) {
                 let iraContribution = fundTransfer.calculate();
                 if (this.yearly.iraContribution.amount + this.yearly.rothContribution.amount + iraContribution.amount > totalIRAContributionLimit.amount) {
@@ -1022,6 +1024,7 @@ export class Portfolio {
             if (!fundTransfer.isActiveForMonth(currentDateInt.month)) continue;
             delete fundTransfer.approvedAmount;
             fundTransfer.bind(modelAsset, this.modelAssets);
+            if (!fundTransfer.toModel) continue;
             if (InstrumentType.isTaxDeferred(fundTransfer.toModel.instrument) && InstrumentType.is401K(fundTransfer.toModel.instrument)) {
                 let four01KContribution = fundTransfer.calculate();
                 if (this.yearly.four01KContribution.amount + four01KContribution.amount > totalFour01KContributionLimit.amount) {
@@ -1133,9 +1136,10 @@ applyLastDayOfMonthExpenseFundTransfers(modelAsset, currentDateInt) {
             for (const fundTransfer of modelAsset.fundTransfers) {
                 if (!fundTransfer.isActiveForMonth(currentDateInt.month)) continue;
                 fundTransfer.bind(modelAsset, this.modelAssets);
+                if (!fundTransfer.toModel) continue;
                 const expenseAmount = fundTransfer.calculate();
                 const fundTransferResult = fundTransfer.execute();
-    
+
                 this.handleFundTransferExpense(fundTransfer, fundTransferResult, modelAsset.displayName);
                 runningExpenseAmount.add(expenseAmount);
             }
@@ -1343,6 +1347,7 @@ applyLastDayOfMonthExpenseFundTransfers(modelAsset, currentDateInt) {
             let runningTransferAmount = new Currency(0.0);
             for (let fundTransfer of closeTransfers) {
                 fundTransfer.bind(modelAsset, this.modelAssets);
+                if (!fundTransfer.toModel) continue;
 
                 // can only send money to an expensable account
                 if (!InstrumentType.isExpensable(fundTransfer.toModel.instrument)) {

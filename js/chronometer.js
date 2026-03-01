@@ -41,8 +41,8 @@ function applyBacktestRates(portfolio, calendarYear) {
     }
 }
 
-function applyBacktestForYear(portfolio, simulationYear, backtestStartYear, savedRates) {
-    const dataYear = backtestStartYear + (simulationYear - backtestStartYear);
+function applyBacktestForYear(portfolio, simulationYear, backtestStartYear, simStartYear, savedRates) {
+    const dataYear = backtestStartYear + (simulationYear - simStartYear);
     if (global_sp500_annual_returns[dataYear] !== undefined ||
         global_10yr_treasury_rates[dataYear] !== undefined ||
         global_cpi_annual_inflation[dataYear] !== undefined) {
@@ -78,6 +78,7 @@ export async function chronometer_run(portfolio) {
         applyBacktestRates(portfolio, backtestStartYear);
     }
 
+    const simStartYear = portfolio.firstDateInt.year;
     let currentDateInt = new DateInt(portfolio.firstDateInt.toInt());
     let lastDateInt = new DateInt(portfolio.lastDateInt.toInt());
     while (currentDateInt.toInt() <= lastDateInt.toInt()) {
@@ -92,7 +93,7 @@ export async function chronometer_run(portfolio) {
 
         if (currentDateInt.isNewYearsDay()) {
             if (backtesting) {
-                applyBacktestForYear(portfolio, currentDateInt.year, backtestStartYear, savedRates);
+                applyBacktestForYear(portfolio, currentDateInt.year, backtestStartYear, simStartYear, savedRates);
             }
 
             portfolio.applyYear(currentDateInt);
@@ -133,6 +134,7 @@ export async function chronometer_run_animated(portfolio, visualizerContainerId)
         applyBacktestRates(portfolio, backtestStartYear);
     }
 
+    const simStartYear = portfolio.firstDateInt.year;
     const visualizer = new HydraulicVisualizer(visualizerContainerId);
     const graphLayout = GraphMapper.buildGraph(portfolio);
 
@@ -174,7 +176,7 @@ export async function chronometer_run_animated(portfolio, visualizerContainerId)
 
         if (currentDateInt.isNewYearsDay()) {
             if (backtesting) {
-                applyBacktestForYear(portfolio, currentDateInt.year, backtestStartYear, savedRates);
+                applyBacktestForYear(portfolio, currentDateInt.year, backtestStartYear, simStartYear, savedRates);
             }
 
             portfolio.applyYear(currentDateInt);

@@ -32,7 +32,17 @@ class AssetList extends LitElement {
 
     render() {
         if (!this.modelAssets || this.modelAssets.length === 0) {
-            return html``;
+            return html`
+                <div class="flex flex-col items-center justify-center gap-4 py-16 text-center">
+                    <div class="text-5xl">🚀</div>
+                    <div class="text-lg font-semibold text-slate-700">Get started in seconds</div>
+                    <div class="text-sm text-slate-400">Load an example portfolio to explore the simulator</div>
+                    <button class="w-48 h-12 bg-black text-white rounded-full shadow-xl hover:scale-105 transition-transform font-medium text-base"
+                        @click=${this._onQuickStart}>
+                        Quick Start
+                    </button>
+                </div>
+            `;
         }
 
         // Ensure colorIds are assigned
@@ -51,6 +61,10 @@ class AssetList extends LitElement {
                 `
             )}
         `;
+    }
+
+    _onQuickStart() {
+        this.dispatchEvent(new CustomEvent('quick-start', { bubbles: true, composed: true }));
     }
 
     _assignColorIds() {
