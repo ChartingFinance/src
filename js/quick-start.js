@@ -15,7 +15,7 @@ const QUICK_START_DATA = [
         finishDateInt: { year: 2036, month: 12 },
         startCurrency: { amount: 6000 },
         startBasisCurrency: { amount: 0 },
-        annualReturnRate: { rate: 0.03 },
+        annualReturnRate: { rate: 0.025 },
         fundTransfers: [
             { toDisplayName: '401K', frequency: 'monthly', moveValue: 10, closeMoveValue: 0 },
             { toDisplayName: 'Roth IRA', frequency: 'monthly', moveValue: 5, closeMoveValue: 0 },
@@ -56,7 +56,7 @@ const QUICK_START_DATA = [
         finishDateInt: { year: 2036, month: 12 },
         startCurrency: { amount: 3000 },
         startBasisCurrency: { amount: 0 },
-        annualReturnRate: { rate: 0.025 },
+        annualReturnRate: { rate: 0.03 },
         fundTransfers: [
             { toDisplayName: 'Brokerage', frequency: 'monthly', moveValue: 100, closeMoveValue: 0 },
         ],

@@ -983,10 +983,10 @@ export class Portfolio {
         let totalIRAContributionLimit = activeTaxTable.iraContributionLimit(this.activeUser);
         for (let fundTransfer of modelAsset.fundTransfers) {
             if (!fundTransfer.isActiveForMonth(currentDateInt.month)) continue;
-            delete fundTransfer.approvedAmount;
             fundTransfer.bind(modelAsset, this.modelAssets);
             if (!fundTransfer.toModel) continue;
             if (InstrumentType.isTaxDeferred(fundTransfer.toModel.instrument) && InstrumentType.isIRA(fundTransfer.toModel.instrument)) {
+                delete fundTransfer.approvedAmount;
                 let contribution = fundTransfer.calculate();
                 if (this.yearly.tradIRAContribution.amount + this.yearly.rothIRAContribution.amount + contribution.amount > totalIRAContributionLimit.amount) {
                     contribution = new Currency(totalIRAContributionLimit.amount - this.yearly.tradIRAContribution.amount - this.yearly.rothIRAContribution.amount);
@@ -996,6 +996,7 @@ export class Portfolio {
                 tradIRAContribution.add(contribution);
             }
             else if (InstrumentType.isRothIRA(fundTransfer.toModel.instrument)) {
+                delete fundTransfer.approvedAmount;
                 let contribution = fundTransfer.calculate();
                 if (this.yearly.tradIRAContribution.amount + this.yearly.rothIRAContribution.amount + contribution.amount > totalIRAContributionLimit.amount) {
                     contribution = new Currency(totalIRAContributionLimit.amount - this.yearly.tradIRAContribution.amount - this.yearly.rothIRAContribution.amount);
@@ -1024,10 +1025,10 @@ export class Portfolio {
         let totalFour01KContributionLimit = activeTaxTable.four01KContributionLimit(this.activeUser);
         for (let fundTransfer of modelAsset.fundTransfers) {
             if (!fundTransfer.isActiveForMonth(currentDateInt.month)) continue;
-            delete fundTransfer.approvedAmount;
             fundTransfer.bind(modelAsset, this.modelAssets);
             if (!fundTransfer.toModel) continue;
             if (InstrumentType.isTaxDeferred(fundTransfer.toModel.instrument) && InstrumentType.is401K(fundTransfer.toModel.instrument)) {
+                delete fundTransfer.approvedAmount;
                 let four01KContribution = fundTransfer.calculate();
                 if (this.yearly.four01KContribution.amount + four01KContribution.amount > totalFour01KContributionLimit.amount) {
                     four01KContribution = new Currency(totalFour01KContributionLimit.amount - this.yearly.four01KContribution.amount);

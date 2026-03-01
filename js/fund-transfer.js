@@ -144,7 +144,10 @@ export class FundTransfer {
     }
     let amount = new Currency(base.amount * pct);
 
-    if (this.approvedAmount && amount.amount > this.approvedAmount.amount) {
+    // approvedAmount is set by pre-tax contribution pre-calculations (401K, IRA)
+    // which determine the correct amount from gross income before net income
+    // is computed. Use it directly — it's the determined amount, not just a cap.
+    if (this.approvedAmount) {
       amount = this.approvedAmount.copy();
     }
 
