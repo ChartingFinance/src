@@ -19,7 +19,7 @@ const QUICK_START_DATA = [
         fundTransfers: [
             { toDisplayName: '401K', frequency: 'monthly', moveValue: 10, closeMoveValue: 0 },
             { toDisplayName: 'Roth IRA', frequency: 'monthly', moveValue: 5, closeMoveValue: 0 },
-            { toDisplayName: 'Brokerage', frequency: 'monthly', moveValue: 10, closeMoveValue: 0 },
+            { toDisplayName: 'Brokerage', frequency: 'monthly', moveValue: 85, closeMoveValue: 0 },
         ],
     },
     {
