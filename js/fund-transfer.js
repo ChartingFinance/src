@@ -7,6 +7,7 @@
  */
 
 import { Currency } from './currency.js';
+import { Instrument, InstrumentType } from './instrument.js';
 import { FundTransferResult } from './results.js';
 
 export const Frequency = Object.freeze({
@@ -25,15 +26,17 @@ export class FundTransfer {
    * @param {number} closeMoveValue    On-close percentage of source value (0-100)
    */
   constructor(toDisplayName, frequency = Frequency.NONE, moveValue = 0, closeMoveValue = 0) {
-    this.toDisplayName = toDisplayName;
-    this.frequency     = frequency;
-    this.moveValue     = moveValue;
+    this.toDisplayName  = toDisplayName;
+    this.frequency      = frequency;
+    this.moveValue      = moveValue;
     this.closeMoveValue = closeMoveValue;
 
     // Bound at runtime by Portfolio — not serialised
-    this.fromModel = null;
-    this.toModel   = null;
-    this.approvedAmount = null;
+    this.fromModel          = null;
+    this.useNetIncome       = false;
+    this.usePropertyTax     = false;
+    this.toModel            = null;
+    this.approvedAmount     = null;
   }
 
   // ── Parsing ──────────────────────────────────────────────────────
@@ -108,8 +111,10 @@ export class FundTransfer {
    * @param {ModelAsset[]} allModels
    */
   bind(fromModel, allModels) {
+    
     this.fromModel = fromModel;
     this.toModel = allModels.find(m => m.displayName === this.toDisplayName) ?? null;
+
   }
 
   // ── Calculation ──────────────────────────────────────────────────
@@ -120,36 +125,35 @@ export class FundTransfer {
    * @returns {Currency}
    */
   calculate({ useClosePercent = false } = {}) {
+    
     if (!this.fromModel || !this.toModel || this.toModel.isClosed) {
       return Currency.zero();
     }
-
-    const pct = (useClosePercent ? this.closeMoveValue : this.moveValue) / 100;
-
-    // Determine the base amount for the transfer:
-    // On close: always use finishCurrency (full asset value)
-    // Recurring:
-    //   1. Income assets: use net income (after tax withholding)
-    //   2. Home with property tax escrow: use accumulated property tax (not home value)
-    //   3. All others: use finishCurrency (asset value)
-    let base;
-    if (useClosePercent) {
-      base = this.fromModel.finishCurrency;
-    } else if (this.fromModel.netIncomeCurrency?.amount > 0) {
-      base = this.fromModel.netIncomeCurrency;
-    } else if (this.fromModel.propertyTaxCurrency?.amount < 0) {
-      base = this.fromModel.propertyTaxCurrency;
-    } else {
-      base = this.fromModel.finishCurrency;
-    }
-    let amount = new Currency(base.amount * pct);
 
     // approvedAmount is set by pre-tax contribution pre-calculations (401K, IRA)
     // which determine the correct amount from gross income before net income
     // is computed. Use it directly — it's the determined amount, not just a cap.
     if (this.approvedAmount) {
-      amount = this.approvedAmount.copy();
+      return this.approvedAmount.copy();
     }
+
+    const pct = (useClosePercent ? this.closeMoveValue : this.moveValue) / 100;
+
+    // Old -- Determine the base amount for the transfer:
+    // New -- introduce flags set by callers (that have context) on where to pull funds from
+    // On close: always use finishCurrency (full asset value)
+    let base;
+    if (useClosePercent) {
+      base = this.fromModel.finishCurrency;
+    } else if (this.useNetIncome) {
+      base = this.fromModel.netIncomeCurrency;
+    } else if (this.usePropertyTax) {
+      base = this.fromModel.propertyTaxCurrency;
+    } else {
+      base = this.fromModel.finishCurrency;
+    }
+
+    let amount = new Currency(base.amount * pct);
 
     return amount;
   }

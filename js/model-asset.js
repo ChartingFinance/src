@@ -468,6 +468,7 @@ export class ModelAsset {
     this.closedBasisValue = null;
     this.creditMemos = [];
     this.creditMemosCheckedIndex = 0;
+    this.monthlyCreditBalance = Currency.zero();
     this.#metrics.initializeAll();
 
     // Seed property tax escrow from start value for the first year
@@ -549,6 +550,7 @@ export class ModelAsset {
   applyFirstDayOfMonth(currentDateInt) {
 
     this.monthlyValueChange = Currency.zero();
+    this.monthlyCreditBalance.zero();
 
     if (this.beforeStartDate) {
 
@@ -618,7 +620,9 @@ export class ModelAsset {
     } else {
       this.ordinaryIncomeCurrency.add(income);
     }
+
     this.incomeCurrency.add(income);
+    this.netIncomeCurrency.add(income);
 
     // growth in income happens yearly
 
@@ -715,6 +719,7 @@ applyMonthlyExpense() {
 
     this.interestIncomeCurrency.add(income);
     this.incomeCurrency.add(income);
+    this.netIncomeCurrency.add(income);
     this.finishCurrency.add(income);
     this.monthlyValueChange.add(income);
 
@@ -749,6 +754,9 @@ applyMonthlyExpense() {
       if (note) this.creditMemos.push(new CreditMemo(amount.copy(), note, this.currentDateInt));
       return { assetChange: Currency.zero(), realizedGain: Currency.zero() };
     }
+    if (InstrumentType.isTaxableAccount(this.instrument)) {
+      this.monthlyCreditBalance.add(amount);
+    }
     this.creditCurrency.add(amount);
     this.monthlyValueChange.add(amount);
     return this.reconcileCredit(note, skipGain);
@@ -760,9 +768,32 @@ applyMonthlyExpense() {
       if (note) this.creditMemos.push(new CreditMemo(amount.copy().flipSign(), note, this.currentDateInt));
       return { assetChange: Currency.zero(), realizedGain: Currency.zero() };
     }
-    this.creditCurrency.subtract(amount);
-    this.monthlyValueChange.subtract(amount);
-    return this.reconcileCredit(note, skipGain);
+
+    // Draw from monthly credit balance first (no capital gains on fresh deposits)
+    let fromCredit = Currency.zero();
+    if (InstrumentType.isTaxableAccount(this.instrument) && this.monthlyCreditBalance.amount > 0) {
+      fromCredit = new Currency(Math.min(amount.amount, this.monthlyCreditBalance.amount));
+      this.monthlyCreditBalance.subtract(fromCredit);
+    }
+
+    const fromVested = new Currency(amount.amount - fromCredit.amount);
+
+    // Withdraw the credit portion directly at cost basis (no gain)
+    if (fromCredit.amount > 0) {
+      this.finishCurrency.subtract(fromCredit);
+      this.finishBasisCurrency.subtract(fromCredit);
+      this.monthlyValueChange.subtract(fromCredit);
+      if (note) this.creditMemos.push(new CreditMemo(fromCredit.copy().flipSign(), note, this.currentDateInt));
+    }
+
+    // Withdraw any remainder through normal reconcile (triggers capital gains)
+    if (fromVested.amount > 0) {
+      this.creditCurrency.subtract(fromVested);
+      this.monthlyValueChange.subtract(fromVested);
+      return this.reconcileCredit(note, skipGain);
+    }
+
+    return { assetChange: amount.copy().flipSign(), realizedGain: Currency.zero() };
   }
 
   reconcileCredit(note = '', skipGain = false) {

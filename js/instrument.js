@@ -13,6 +13,7 @@ export const Instrument = Object.freeze({
   MORTGAGE:            'mortgage',
   MONTHLY_SALARY:      'monthlySalary',
   SOCIAL_SECURITY:     'monthlySocialSecurity',
+  PENSION:             'monthlyPension',
   US_BOND:             'usBond',
   CORP_BOND:           'corpBond',
   BANK:                'bank',
@@ -27,20 +28,21 @@ export const Instrument = Object.freeze({
 
 /** Display metadata — keeps UI concerns separate from identity */
 export const InstrumentMeta = new Map([
-  [Instrument.HOME,              { emoji: '🏡🌳',    label: 'House',            sortOrder: 0  }],
+  [Instrument.HOME,              { emoji: '🏡🌳',  label: 'House',            sortOrder: 0  }],
   [Instrument.MORTGAGE,          { emoji: '🏡💸',  label: 'Mortgage',         sortOrder: 1  }],
   [Instrument.MONTHLY_SALARY,    { emoji: '🔧💲',  label: 'Monthly Income',   sortOrder: 2  }],
   [Instrument.SOCIAL_SECURITY,   { emoji: '🏛️💲',  label: 'Social Security',  sortOrder: 3  }],
-  [Instrument.US_BOND,           { emoji: '🏛️💲',    label: 'US Treasury',      sortOrder: 4  }],
-  [Instrument.CORP_BOND,         { emoji: '🏦💲',    label: 'Corporate Bond',   sortOrder: 5  }],
-  [Instrument.BANK,              { emoji: '🏦💲',    label: 'Savings',          sortOrder: 6  }],
-  [Instrument.ROTH_IRA,          { emoji: '📈📈',    label: 'Roth IRA',         sortOrder: 7  }],
-  [Instrument.IRA,               { emoji: '⏳📈',  label: 'IRA',              sortOrder: 8  }],
-  [Instrument.FOUR_01K,          { emoji: '⏳📈',  label: '401K',             sortOrder: 9  }],
-  [Instrument.TAXABLE_EQUITY,    { emoji: '🧾📈',  label: 'Taxable Account',  sortOrder: 10 }],
-  [Instrument.CASH,              { emoji: '💰💰',    label: 'Cash',             sortOrder: 11 }],
-  [Instrument.DEBT,              { emoji: '💳💸',    label: 'Debt',             sortOrder: 12 }],
-  [Instrument.MONTHLY_EXPENSE,   { emoji: '💸💸',  label: 'Monthly Expense',  sortOrder: 13 }],
+  [Instrument.PENSION,           { emoji: '🕰️💲',  label: 'Pension',          sortOrder: 4  }],
+  [Instrument.US_BOND,           { emoji: '🏛️💲',  label: 'US Treasury',      sortOrder: 5  }],
+  [Instrument.CORP_BOND,         { emoji: '🏦💲',  label: 'Corporate Bond',   sortOrder: 6  }],
+  [Instrument.BANK,              { emoji: '🏦💲',  label: 'Savings',          sortOrder: 7  }],
+  [Instrument.ROTH_IRA,          { emoji: '📈📈',  label: 'Roth IRA',         sortOrder: 8  }],
+  [Instrument.IRA,               { emoji: '⏳📈',  label: 'IRA',              sortOrder: 9  }],
+  [Instrument.FOUR_01K,          { emoji: '⏳📈',  label: '401K',             sortOrder: 10 }],
+  [Instrument.TAXABLE_EQUITY,    { emoji: '🧾📈',  label: 'Taxable Account',  sortOrder: 11 }],
+  [Instrument.CASH,              { emoji: '💰💰',  label: 'Cash',             sortOrder: 12 }],
+  [Instrument.DEBT,              { emoji: '💳💸',  label: 'Debt',             sortOrder: 13 }],
+  [Instrument.MONTHLY_EXPENSE,   { emoji: '💸💸',  label: 'Monthly Expense',  sortOrder: 14 }],
 ]);
 
 // ── Classification Sets ──────────────────────────────────────────────
@@ -49,6 +51,7 @@ export const InstrumentMeta = new Map([
 const MONTHLY_INCOME = new Set([
   Instrument.MONTHLY_SALARY,
   Instrument.SOCIAL_SECURITY,
+  Instrument.PENSION,
 ]);
 
 const MONTHLY_EXPENSE = new Set([
@@ -138,6 +141,10 @@ const BASISABLE = new Set([
   Instrument.HOME,
 ]);
 
+const SELF_EMPLOYABLE = new Set([
+  Instrument.MONTHLY_INCOME,
+]);
+
 // ── Public classifier API ────────────────────────────────────────────
 // Drop-in replacements for the old isXxx() free functions.
 // Usage:  InstrumentType.isCapital(asset.instrument)
@@ -148,8 +155,10 @@ export const InstrumentType = Object.freeze({
   isMortgage:           (v) => MORTGAGE.has(v),
   isDebt:               (v) => DEBT.has(v),
   isMonthlyIncome:      (v) => MONTHLY_INCOME.has(v),
+  isMonthlySalary:      (v) => v === Instrument.MONTHLY_SALARY,
   isMonthlyExpense:     (v) => MONTHLY_EXPENSE.has(v),
   isSocialSecurity:     (v) => v === Instrument.SOCIAL_SECURITY,
+  isPension:            (v) => v == Instrument.PENSION,
   isIRA:                (v) => v === Instrument.IRA,
   isRothIRA:            (v) => v === Instrument.ROTH_IRA,
   is401K:               (v) => v === Instrument.FOUR_01K,
@@ -164,6 +173,7 @@ export const InstrumentType = Object.freeze({
   isSavingsAccount:     (v) => v === Instrument.BANK,
   isMonthsRemainingAble:(v) => MONTHS_REMAINING_ABLE.has(v),
   isBasisable:          (v) => BASISABLE.has(v),
+  isSelfEmployable:     (v) => v === Instrument.MONTHLY_SALARY,
 
   /** True if instrument represents a balance-sheet asset (not income/expense) */
   isAsset: (v) => FUNDABLE.has(v) || v === Instrument.HOME || v === Instrument.MORTGAGE,
