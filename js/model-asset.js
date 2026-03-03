@@ -754,6 +754,11 @@ applyMonthlyExpense() {
       if (note) this.creditMemos.push(new CreditMemo(amount.copy(), note, this.currentDateInt));
       return { assetChange: Currency.zero(), realizedGain: Currency.zero() };
     }
+    // Negative credit on taxable account = withdrawal; route through debit()
+    // so monthlyCreditBalance is drawn first (no capital gains on fresh deposits)
+    if (amount.amount < 0 && InstrumentType.isTaxableAccount(this.instrument)) {
+      return this.debit(amount.copy().flipSign(), note, skipGain);
+    }
     if (InstrumentType.isTaxableAccount(this.instrument)) {
       this.monthlyCreditBalance.add(amount);
     }

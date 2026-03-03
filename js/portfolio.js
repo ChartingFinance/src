@@ -1068,7 +1068,7 @@ export class Portfolio {
 
             if (runningTransferAmount.amount < modelAsset.netIncomeCurrency.amount) {
                 let delta = (modelAsset.netIncomeCurrency.amount - runningTransferAmount.amount);
-                this.creditToFirstTaxableAccount(delta);
+                this.creditToFirstTaxableAccount(delta, `Remaining income from ${modelAsset.displayName}`);
             }
 
         }
