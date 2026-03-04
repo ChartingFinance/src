@@ -69,11 +69,15 @@ export class GraphMapper {
             // 3. Extract Explicit Edges (Fund Transfers)
             if (asset.fundTransfers && asset.fundTransfers.length > 0) {
                 for (const ft of asset.fundTransfers) {
+                    // Expenses and Debt drain from their targets, so the flow of money is reversed
+                    const isPull = InstrumentType.isMonthlyExpense(asset.instrument) || 
+                       InstrumentType.isMortgage(asset.instrument);
+                       
                     edges.push({
-                        source: asset.displayName,
-                        target: ft.toDisplayName,
+                        source: isPull ? ft.toDisplayName : asset.displayName,
+                        target: isPull ? asset.displayName : ft.toDisplayName,
                         type: ft.moveOnFinishDate ? 'ClosureTransfer' : 'MonthlyTransfer',
-                        weight: ft.moveValue // The percentage or amount
+                        weight: ft.moveValue
                     });
                 }
             }
@@ -82,6 +86,8 @@ export class GraphMapper {
         return { nodes, edges };
     }
 
+    static lastYearMonth = 0;
+    static tick = 1;
 
     /**
      * Attaches monthly flow amounts to the structural edges by parsing CreditMemos.
@@ -91,56 +97,74 @@ export class GraphMapper {
      * @returns {Array} The edges array with `.flowAmount` populated
      */
     static calculateFlows(portfolio, currentDateInt, edges) {
-        
-        // 1. Reset all flows to 0 for the new month
+
+        if (this.lastYearMonth != currentDateInt.toInt()) {
+            this.lastYearMonth = currentDateInt.toInt();
+            this.tick = 1;
+        }
+        else
+            ++this.tick;
+
+        // 1. Reset flows ONLY if their tick cycle has completed (exactly 1 month later)
         for (const edge of edges) {
-            edge.flowAmount = 0;
+            if (edge.updateTick === this.tick) {
+                edge.flowAmount = 0;
+            }
         }
 
         // 2. Helper to find and add flow to a specific edge
         const addFlow = (sourceId, targetId, amount) => {
             const edge = edges.find(e => e.source === sourceId && e.target === targetId);
-            if (edge) {
+            if (!edge.updateTick) {
+                edge.updateTick = this.tick;
+            }
+            if (edge && edge.updateTick == this.tick) {
                 edge.flowAmount += Math.abs(amount);
             }
         };
 
-        // 3. Scan the CreditMemos for the current month
+        // 3. Scan the CreditMemos for EXACTLY this tick (matching year AND day)
         for (const asset of portfolio.modelAssets) {
             
-            // Filter memos for exactly this month
             const currentMemos = asset.creditMemos.filter(
-                memo => memo.dateInt && memo.dateInt.toInt() === currentDateInt.toInt()
+                memo => memo.dateInt && 
+                memo.dateInt.toInt() === currentDateInt.toInt()
             );
 
             for (const memo of currentMemos) {
                 const amount = memo.amount.amount;
                 if (amount === 0) continue;
 
-                // Map Tax and Drain Memos to our Sink Nodes
                 if (memo.note === 'FICA withholding') {
                     addFlow(asset.displayName, 'Sink_FICA', amount);
-                } 
+                }
                 else if (memo.note === 'Income tax withholding') {
                     addFlow(asset.displayName, 'Sink_IncomeTax', amount);
-                } 
+                }
                 else if (memo.note === 'Capital gains tax withholding') {
                     addFlow(asset.displayName, 'Sink_CapGainsTax', amount);
-                } 
+                }
                 else if (memo.note === 'Property taxes') {
                     addFlow(asset.displayName, 'Sink_PropertyTax', amount);
-                } 
-                // Map Explicit Fund Transfers
-                // fund-transfer.js writes notes like: "Source → Target (monthly) 10% => $500"
+                }
                 else if (memo.note.includes('→')) {
-                    
-                    // We only want to process the debit side of the transfer so we don't double count
                     if (amount < 0) {
-                        // Extract the Target name from the note string
-                        const match = memo.note.match(/→\s+(.*?)\s+\(/);
-                        if (match && match[1]) {
-                            const targetName = match[1].trim();
-                            addFlow(asset.displayName, targetName, amount);
+                        const match = memo.note.match(/(.*?)\s+→\s+(.*?)\s+\(/);
+            
+                        if (match && match[1] && match[2]) {
+                            const configSource = match[1].trim();
+                            const configTarget = match[2].trim();
+              
+                            const sourceAsset = portfolio.modelAssets.find(a => a.displayName === configSource);
+                            const isPull = sourceAsset && (
+                                InstrumentType.isMonthlyExpense(sourceAsset.instrument) || 
+                                InstrumentType.isMortgage(sourceAsset.instrument)
+                            );
+              
+                            const actualSource = isPull ? configTarget : configSource;
+                            const actualTarget = isPull ? configSource : configTarget;
+
+                            addFlow(actualSource, actualTarget, amount);
                         }
                     }
                 }
