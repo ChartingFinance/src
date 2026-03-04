@@ -16,6 +16,7 @@ import { DateInt }        from './date-int.js';
 import { ARR }            from './arr.js';
 import { InstrumentType } from './instrument.js';
 import { FundTransfer }   from './fund-transfer.js';
+import { logger, LogCategory } from './logger.js';
 import { MetricSet }      from './tracked-metric.js';
 import {
   IncomeResult, ExpenseResult, MortgageResult,
@@ -527,14 +528,6 @@ export class ModelAsset {
     // value and accumulated are special: add finishValue and cash flows, then snapshot WITHOUT zeroing
     this.#metrics.get(Metric.CASH_FLOW_ACCUMULATED).add(this.cashFlowCurrency);
 
-    /* Was thinking of reconciling credit here, but it makes more sense to do it at the end of the month after all monthly changes have been applied, so that the metric history reflects the true "credit" activity rather than an artificial netting of credit against value changes. Keeping this code here as a reminder that credit reconciliation still needs to happen somewhere.
-    // Reconcile credit buffer
-    const credit = this.creditCurrency;
-    if (credit.amount > 0) {
-      this.finishCurrency.add(credit);
-    }
-    */
-
     this.#metrics.get(Metric.VALUE).add(this.finishCurrency);
 
     // Snapshot all metrics (zero after, except 'accumulated')
@@ -749,124 +742,96 @@ applyMonthlyExpense() {
   // ── Credit / Debit (fund transfer interface) ─────────────────────
 
   credit(amount, note = '', skipGain = false) {
-    if (this.#isFlowInstrument()) {
-      // Record the memo to maintain double-entry balance, but don't alter asset value
-      if (note) this.creditMemos.push(new CreditMemo(amount.copy(), note, this.currentDateInt));
-      return { assetChange: Currency.zero(), realizedGain: Currency.zero() };
-    }
-    // Negative credit on taxable account = withdrawal; route through debit()
-    // so monthlyCreditBalance is drawn first (no capital gains on fresh deposits)
-    if (amount.amount < 0 && InstrumentType.isTaxableAccount(this.instrument)) {
-      return this.debit(amount.copy().flipSign(), note, skipGain);
-    }
-    if (InstrumentType.isTaxableAccount(this.instrument)) {
-      this.monthlyCreditBalance.add(amount);
-    }
-    this.creditCurrency.add(amount);
-    this.monthlyValueChange.add(amount);
-    return this.reconcileCredit(note, skipGain);
+    logger.log(LogCategory.TRANSFER,
+      `${this.displayName}.credit(${amount.toString()}, '${note}', skipGain=${skipGain})`);
+    return this.#transact(amount.copy(), note, skipGain);
   }
 
   debit(amount, note = '', skipGain = false) {
+    logger.log(LogCategory.TRANSFER,
+      `${this.displayName}.debit(${amount.toString()}, '${note}', skipGain=${skipGain})`);
+    return this.#transact(amount.copy().flipSign(), note, skipGain);
+  }
+
+  #transact(amount, note, skipGain) {
+    // Flow instruments: memo only, no balance change
     if (this.#isFlowInstrument()) {
-      // Record the memo (as a negative amount) to maintain balance
-      if (note) this.creditMemos.push(new CreditMemo(amount.copy().flipSign(), note, this.currentDateInt));
+      if (note) this.creditMemos.push(new CreditMemo(amount.copy(), note, this.currentDateInt));
       return { assetChange: Currency.zero(), realizedGain: Currency.zero() };
     }
 
-    // Draw from monthly credit balance first (no capital gains on fresh deposits)
-    let fromCredit = Currency.zero();
-    if (InstrumentType.isTaxableAccount(this.instrument) && this.monthlyCreditBalance.amount > 0) {
-      fromCredit = new Currency(Math.min(amount.amount, this.monthlyCreditBalance.amount));
-      this.monthlyCreditBalance.subtract(fromCredit);
-    }
+    const isTaxable = InstrumentType.isTaxableAccount(this.instrument);
+    let realizedGain = Currency.zero();
 
-    const fromVested = new Currency(amount.amount - fromCredit.amount);
+    if (amount.amount >= 0) {
+      // ── DEPOSIT ──
+      if (isTaxable) this.monthlyCreditBalance.add(amount);
+      this.finishCurrency.add(amount);
+      if (isTaxable) this.finishBasisCurrency.add(amount);
+      this.monthlyValueChange.add(amount);
 
-    // Withdraw the credit portion directly at cost basis (no gain)
-    if (fromCredit.amount > 0) {
-      this.finishCurrency.subtract(fromCredit);
-      this.finishBasisCurrency.subtract(fromCredit);
-      this.monthlyValueChange.subtract(fromCredit);
-      if (note) this.creditMemos.push(new CreditMemo(fromCredit.copy().flipSign(), note, this.currentDateInt));
-    }
+    } else {
+      // ── WITHDRAWAL ──
+      const withdrawal = new Currency(Math.abs(amount.amount));
 
-    // Withdraw any remainder through normal reconcile (triggers capital gains)
-    if (fromVested.amount > 0) {
-      this.creditCurrency.subtract(fromVested);
-      this.monthlyValueChange.subtract(fromVested);
-      return this.reconcileCredit(note, skipGain);
-    }
-
-    return { assetChange: amount.copy().flipSign(), realizedGain: Currency.zero() };
-  }
-
-  reconcileCredit(note = '', skipGain = false) {
-    let credit = this.creditCurrency.copy();
-    this.creditCurrency.zero();
-
-    // Calculate gain and adjust basis BEFORE changing finishCurrency
-    let realizedGain = new Currency(0);
-    const T = InstrumentType;
-    
-    if (credit.amount < 0 && T.isTaxableAccount(this.instrument)) {
-      const withdrawal = Math.abs(credit.amount);
-      const currentValue = this.finishCurrency.amount;
-      if (currentValue > 0) {
-        const fractionSold = Math.min(withdrawal / currentValue, 1.0);
-        const basisWithdrawn = this.finishBasisCurrency.amount * fractionSold;
-        realizedGain.amount = withdrawal - basisWithdrawn;
-        this.finishBasisCurrency.amount -= basisWithdrawn;
+      // Draw from fresh deposits first (no capital gains)
+      let fromCredit = Currency.zero();
+      if (isTaxable && this.monthlyCreditBalance.amount > 0) {
+        fromCredit = new Currency(Math.min(withdrawal.amount, this.monthlyCreditBalance.amount));
+        this.monthlyCreditBalance.subtract(fromCredit);
+        this.finishCurrency.subtract(fromCredit);
+        this.finishBasisCurrency.subtract(fromCredit);
+        this.monthlyValueChange.subtract(fromCredit);
       }
-    } else if (credit.amount > 0 && T.isTaxableAccount(this.instrument)) {
-      this.finishBasisCurrency.add(credit); // Deposits increase basis
-    }
 
-    this.finishCurrency.add(credit);
-
-    if (credit.amount > 0) {
-      if (T.isTaxableAccount(this.instrument)) {
-        this.addToMetric(Metric.TAXABLE_CONTRIBUTION, credit);
-      } else if (T.isIRA(this.instrument)) {
-        this.addToMetric(Metric.TRAD_IRA_CONTRIBUTION, credit);
-      } else if (T.isRothIRA(this.instrument)) {
-        this.addToMetric(Metric.ROTH_IRA_CONTRIBUTION, credit)
-      } else if (T.is401K(this.instrument)) {
-        this.addToMetric(Metric.FOUR_01K_CONTRIBUTION, credit);
-      } else if (T.isHome(this.instrument)) {
-        if (!skipGain) this.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, credit);
-      } else if (T.isMortgage(this.instrument)) {
-        this.addToMetric(Metric.MORTGAGE_PRINCIPAL, credit);
-      }
-    }
-    
-    if (credit.amount < 0) {
-      if (T.isTaxableAccount(this.instrument)) {
-        if (!skipGain) {
-            this.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, realizedGain);
-            // FIX: Push the memo for incremental realized gains
-            if (realizedGain.amount > 0) {
-                this.creditMemos.push(new CreditMemo(realizedGain.copy(), 'Capital gains', this.currentDateInt));
-            }
+      // Remainder from vested holdings (fraction-sold, triggers gains)
+      const fromVested = new Currency(withdrawal.amount - fromCredit.amount);
+      if (fromVested.amount > 0) {
+        if (isTaxable && this.finishCurrency.amount > 0) {
+          const fractionSold = Math.min(fromVested.amount / this.finishCurrency.amount, 1.0);
+          const basisWithdrawn = this.finishBasisCurrency.amount * fractionSold;
+          realizedGain = new Currency(fromVested.amount - basisWithdrawn);
+          this.finishBasisCurrency.amount -= basisWithdrawn;
         }
-      } else if (T.isIRA(this.instrument)) {
-        this.addToMetric(Metric.TRAD_IRA_DISTRIBUTION, credit.copy().flipSign());
-      } else if (T.isRothIRA(this.instrument)) {
-        this.addToMetric(Metric.ROTH_IRA_DISTRIBUTION, credit.copy().flipSign());
-      } else if (T.is401K(this.instrument)) {
-        this.addToMetric(Metric.FOUR_01K_DISTRIBUTION, credit.copy().flipSign());
-      } else if (T.isHome(this.instrument)) {
-        if (!skipGain) this.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, credit);
-      } else if (T.isMortgage(this.instrument)) {
-        this.addToMetric(Metric.MORTGAGE_PRINCIPAL, credit);
+        this.finishCurrency.subtract(fromVested);
+        this.monthlyValueChange.subtract(fromVested);
       }
     }
+
+    this.#recordMetric(amount, skipGain, realizedGain);
 
     if (note) {
-      this.creditMemos.push(new CreditMemo(credit, note, this.currentDateInt));
+      this.creditMemos.push(new CreditMemo(amount.copy(), note, this.currentDateInt));
     }
 
-    return { assetChange: credit, realizedGain: realizedGain };
+    return { assetChange: amount.copy(), realizedGain };
+  }
+
+  #recordMetric(amount, skipGain, realizedGain) {
+    const T = InstrumentType;
+    if (amount.amount > 0) {
+      if (T.isTaxableAccount(this.instrument))        this.addToMetric(Metric.TAXABLE_CONTRIBUTION, amount);
+      else if (T.isIRA(this.instrument))               this.addToMetric(Metric.TRAD_IRA_CONTRIBUTION, amount);
+      else if (T.isRothIRA(this.instrument))            this.addToMetric(Metric.ROTH_IRA_CONTRIBUTION, amount);
+      else if (T.is401K(this.instrument))               this.addToMetric(Metric.FOUR_01K_CONTRIBUTION, amount);
+      else if (T.isHome(this.instrument) && !skipGain)  this.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, amount);
+      else if (T.isMortgage(this.instrument))           this.addToMetric(Metric.MORTGAGE_PRINCIPAL, amount);
+    } else if (amount.amount < 0) {
+      const positive = amount.copy().flipSign();
+      if (T.isTaxableAccount(this.instrument)) {
+        if (!skipGain) {
+          this.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, realizedGain);
+          if (realizedGain.amount > 0) {
+            this.creditMemos.push(new CreditMemo(realizedGain.copy(), 'Capital gains', this.currentDateInt));
+          }
+        }
+      }
+      else if (T.isIRA(this.instrument))               this.addToMetric(Metric.TRAD_IRA_DISTRIBUTION, positive);
+      else if (T.isRothIRA(this.instrument))            this.addToMetric(Metric.ROTH_IRA_DISTRIBUTION, positive);
+      else if (T.is401K(this.instrument))               this.addToMetric(Metric.FOUR_01K_DISTRIBUTION, positive);
+      else if (T.isHome(this.instrument) && !skipGain)  this.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, amount);
+      else if (T.isMortgage(this.instrument))           this.addToMetric(Metric.MORTGAGE_PRINCIPAL, amount);
+    }
   }
 
   // ── Fund transfers ───────────────────────────────────────────────
@@ -943,7 +908,6 @@ applyMonthlyExpense() {
 
     // closedValue / closedBasisValue are captured by Portfolio.closeAsset()
     // before fund transfers drain the asset
-    this.creditCurrency.zero();
     this.finishCurrency.zero();
 
     // since we are closing we won't be tracking value changes anymore
