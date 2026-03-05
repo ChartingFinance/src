@@ -582,16 +582,7 @@ export class Portfolio {
         
         else if (currentDateInt.day == 15) {
 
-            // Accumulate monthly property tax escrow for homes
-            for (let modelAsset of this.modelAssets) {
-                if (!modelAsset.inMonth(currentDateInt)) continue;
-                if (InstrumentType.isHome(modelAsset.instrument) && modelAsset.monthlyPropertyTaxEscrow.amount > 0) {
-                    const escrow = modelAsset.monthlyPropertyTaxEscrow.copy().flipSign();
-                    modelAsset.propertyTaxCurrency.add(escrow);
-                    modelAsset.creditMemos.push(new CreditMemo(escrow, 'Property tax escrow', modelAsset.currentDateInt));
-                    this.monthly.propertyTaxes.add(escrow);
-                }
-            }
+            this.applyFifteenthDayOfMonth(currentDateInt);            
 
         }
         
@@ -1099,6 +1090,46 @@ export class Portfolio {
         return new Currency(netShortfall.amount / denominator);
     }
 
+    applyFifteenthDayOfMonth(currentDateInt) {
+
+        // Accumulate monthly property tax escrow for homes
+        for (let modelAsset of this.modelAssets) {
+            if (!modelAsset.inMonth(currentDateInt)) continue;            
+            if (InstrumentType.isHome(modelAsset.instrument)) {
+                this.applyFifteenthDayOfMonthHome(modelAsset, currentDateInt);
+            } 
+        }
+
+    }
+
+    applyFifteenthDayOfMonthHome(modelAsset, currentDateInt) {    
+        
+        if (InstrumentType.isHome(modelAsset.instrument)) {
+
+            if (modelAsset.annualTaxRate.rate != 0) {
+            
+                const escrow = modelAsset.addMonthlyTaxToEscrow();             
+                this.monthly.propertyTaxes.subtract(escrow);
+                modelAsset.creditMemos.push(new CreditMemo(escrow, 'Property tax escrow', modelAsset.currentDateInt));
+            
+
+                // TODO: 
+                if (modelAsset.monthlyTaxEscrow.amount) {
+                    for (const fundTransfer of modelAsset.fundTransfers) {
+                        if (!fundTransfer.isActiveForMonth(currentDateInt.month)) continue;
+                        fundTransfer.bind(modelAsset, this.modelAssets);
+                        if (!fundTransfer.toModel) continue;
+
+                        // do the payment manually
+                        fundTransfer.toModel.debit(escrow);
+                        modelAsset.monthlyTaxEscrow.zero();
+                    }
+                }
+
+            }
+        }
+    }
+
     applyLastDayOfMonth(currentDateInt) {
 
         // apply expenses
@@ -1156,21 +1187,12 @@ export class Portfolio {
     applyLastDayOfMonthExpenseFundTransfers(modelAsset, currentDateInt) {
 
         // Homes have property taxes and expenses are self-explanatory
-        if (InstrumentType.isHome(modelAsset.instrument)) {
-            
-            // should be handled on the 15th
-            
-        } else if (!InstrumentType.isMonthlyExpense(modelAsset.instrument)) {
-
+        if (!InstrumentType.isMonthlyExpense(modelAsset.instrument)) {
             return;
-
         }
 
-        const modelAssetExpense = InstrumentType.isHome(modelAsset.instrument) ?
-            modelAsset.propertyTaxCurrency.copy() :
-            modelAsset.finishCurrency.copy();
+        const modelAssetExpense = modelAsset.finishCurrency.copy();
         let runningExpenseAmount = new Currency(0.0);
-
         if (modelAsset.fundTransfers?.length > 0) {
             
             for (const fundTransfer of modelAsset.fundTransfers) {
@@ -1229,10 +1251,6 @@ export class Portfolio {
             }
         }
 
-        // Reset accumulated property tax after payment so it starts accumulating for the next period
-        if (InstrumentType.isHome(modelAsset.instrument)) {
-            modelAsset.propertyTaxCurrency.zero();
-        }
     }
 
      handleFundTransferExpense(fundTransfer, fundTransferResult, modelAssetName) {

@@ -118,7 +118,7 @@ export class GraphMapper {
             if (!edge.updateTick) {
                 edge.updateTick = this.tick;
             }
-            if (edge && edge.updateTick == this.tick) {
+            if (edge.updateTick == this.tick) {
                 edge.flowAmount += Math.abs(amount);
             }
         };
