@@ -876,13 +876,13 @@ applyMonthlyExpense() {
 
   inMonth(dateInt) {
 
-    if (isClosed) {
+    if (this.isClosed) {
       return false;
     }
     else {
       return dateInt.toInt() >= this.startDateInt.toInt()
           && dateInt.toInt() <= this.finishDateInt.toInt();
-          
+
     }
   }
 
