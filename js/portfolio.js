@@ -1,7 +1,6 @@
 import { Currency } from './utils/currency.js';
 import { InstrumentType } from './instruments/instrument.js';
-import { Metric } from './model-asset.js';
-import { AssetAppreciationResult, CapitalGainsResult, MortgageResult, IncomeResult, ExpenseResult, InterestResult, WithholdingResult, CreditMemo } from './results.js';
+import { AssetAppreciationResult, CapitalGainsResult, MortgageResult, IncomeResult, ExpenseResult, InterestResult, WithholdingResult } from './results.js';
 import { MonthsSpan } from './utils/months-span.js';
 import { logger, LogCategory } from './utils/logger.js';
 import { User } from './user.js';
@@ -12,6 +11,7 @@ import { AccountRouter } from './engines/account-router.js';
 import { RealEstateEngine } from './engines/real-estate-engine.js';
 import { PayrollEngine } from './engines/payroll-engine.js';
 import { ExpenseEngine } from './engines/expense-engine.js';
+import { TaxEngine } from './engines/tax-engine.js';
 
 /*
 yearlyGrossIncome
@@ -439,7 +439,8 @@ export class Portfolio {
             modelAsset.initializeChron();
         }
 
-        this.payroll = new PayrollEngine(this.modelAssets, this.monthly, this.yearly, this.activeUser, this.router);
+        this.taxes = new TaxEngine(this.modelAssets, this.monthly, this.yearly, this.activeUser, this.router);
+        this.payroll = new PayrollEngine(this.modelAssets, this.monthly, this.yearly, this.activeUser, this.router, this.taxes);
         this.expenses = new ExpenseEngine(this.modelAssets, this.monthly, this.activeUser, this.router);
         this.realEstate = new RealEstateEngine(this.modelAssets, this.monthly, this.activeAuser, this.router )
     }
@@ -584,9 +585,7 @@ export class Portfolio {
 
             for (let modelAsset of this.modelAssets) {
                 if (!modelAsset.inMonth(currentDateInt)) continue;
-                if (InstrumentType.isRealEstate(modelAsset.instrument)) {
-                    this.expenses.applyPropertyTaxEscrow(modelAsset, currentDateInt);
-                }
+                this.taxes.applyPropertyTaxEscrow(modelAsset, currentDateInt);
             }
 
         }
@@ -704,56 +703,8 @@ export class Portfolio {
             }
         }
 
-        this.applyMonthlyTaxes();
+        this.taxes.applyMonthlyTaxTrueUp();
 
-    }
-
-    handleCapitalGains(modelAsset) {
-        if (InstrumentType.isTaxFree(modelAsset.instrument)) return;
-
-        const capitalGains = new Currency(modelAsset.finishCurrency.amount - modelAsset.finishBasisCurrency.amount);
-        logger.log(LogCategory.TAX, 'capital gains of ' + capitalGains.toString());
-
-        const monthsSpan = MonthsSpan.build(modelAsset.startDateInt, modelAsset.finishDateInt);
-        const annualizedIncome = this.monthly.totalIncome().copy().multiply(12);
-        const isRealEstate = InstrumentType.isRealEstate(modelAsset.instrument);
-        const isPrimaryHome = isRealEstate && modelAsset.isPrimaryHome;
-
-        const result = activeTaxTable.calculateCapitalGainsTax(
-            capitalGains, monthsSpan.totalMonths, isPrimaryHome, annualizedIncome
-        );
-
-        let amountToTax = result.tax.copy();
-
-        if (result.isLongTerm) {
-            this.monthly.longTermCapitalGains.add(capitalGains);
-            modelAsset.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, capitalGains);
-            
-            // FIX: Add the memo so the sanity check can find it
-            modelAsset.creditMemos.push(new CreditMemo(capitalGains.copy(), 'Capital gains', modelAsset.currentDateInt));
-
-            this.monthly.longTermCapitalGainsTax.add(amountToTax.flipSign());
-            modelAsset.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN_TAX, amountToTax);
-            
-            // FIX: Account for the money leaving the asset to pay tax
-            if (amountToTax.amount !== 0) {
-                modelAsset.creditMemos.push(new CreditMemo(amountToTax.copy(), 'Capital gains tax withholding', modelAsset.currentDateInt));
-            }
-        } else {
-            this.monthly.shortTermCapitalGains.add(capitalGains);
-            modelAsset.addToMetric(Metric.SHORT_TERM_CAPITAL_GAIN, capitalGains);
-            
-            this.monthly.incomeTax.add(amountToTax.flipSign());
-            modelAsset.addToMetric(Metric.SHORT_TERM_CAPITAL_GAIN_TAX, capitalGains);
-            
-            // Short term is grouped into income tax, so use that memo string to satisfy the sanity check
-            if (amountToTax.amount !== 0) {
-                modelAsset.creditMemos.push(new CreditMemo(amountToTax.copy(), 'Income tax withholding', modelAsset.currentDateInt));
-            }
-        }
-
-        logger.log(LogCategory.TAX, 'Portfolio.closeAsset: ' + modelAsset.displayName + ' generated tax of ' + amountToTax.toString() + ' to deduct from closure');
-        modelAsset.finishCurrency.add(amountToTax);
     }
 
     closeAsset(modelAsset) {
@@ -770,7 +721,7 @@ export class Portfolio {
 
         if (InstrumentType.isCapital(modelAsset.instrument)) {
 
-            this.handleCapitalGains(modelAsset);
+            this.taxes.applyCapitalGainsTax(modelAsset);
 
         }
 
@@ -831,77 +782,7 @@ export class Portfolio {
 
     }
 
-    applyMonthlyTaxes() {
 
-        // Compute total tax liability across ALL income (salary + capital gains + dividends + interest)
-        let yearly = this.monthly.copy().multiply(12.0);
-        yearly.limitDeductions(this.activeUser);
-        let yearlyIncome = activeTaxTable.calculateYearlyTaxableIncome(yearly);
-        let totalIncomeTax = activeTaxTable.calculateYearlyIncomeTax(yearlyIncome).divide(12.0).flipSign();
-
-        // What was already withheld from payroll on Day 1? (negative value)
-        const alreadyWithheld = this.monthly.incomeTax.copy();
-
-        // Additional estimated tax = total liability - already withheld
-        // Both values are negative, so if total is more negative, additionalTax is negative (owe more)
-        const additionalTax = new Currency(totalIncomeTax.amount - alreadyWithheld.amount);
-
-        if (additionalTax.amount < 0) {
-            // Additional tax owed beyond payroll withholding (e.g., from capital gains, dividends)
-            this.monthly.incomeTax.add(additionalTax);
-
-            const incomeAsset = this.modelAssets.find(a => InstrumentType.isMonthlyIncome(a.instrument) && !a.isClosed);
-            if (incomeAsset) {
-                incomeAsset.creditMemos.push(new CreditMemo(additionalTax.copy(), 'Income tax withholding', incomeAsset.currentDateInt));
-            }
-        }
-
-    }
-
-    applyAnnualTaxTrueUp(currentDateInt) {
-        // Only run this once a year (e.g., end of December)
-        if (currentDateInt.month !== 12) return; 
-
-        // 1. Calculate the EXACT tax liability based on the full 365-day reality
-        const actualTaxableIncome = activeTaxTable.calculateYearlyTaxableIncome(
-            this.yearlyGrossIncome.copy().subtract(this.yearlyDeductions)
-        );    
-
-        // TODO: calculate the FICA liability for employedIncome and selfIncome
-
-        const actualIncomeTax = activeTaxTable.calculateYearlyIncomeTax(actualTaxableIncome);
-        const actualCapitalGainsTax = activeTaxTable.calculateYearlyLongTermCapitalGainsTax(
-            actualTaxableIncome, 
-            this.yearlyCapitalGains
-        );
-
-        const totalActualTax = actualIncomeTax.copy().add(actualCapitalGainsTax);
-
-        // 2. Compare Actual vs. Withheld
-        const taxDifference = totalActualTax.amount - this.yearlyWithheldTaxes.amount;
-
-        if (taxDifference > 0) {
-            // UNDERPAID: The user owes the IRS a check.
-            // This is a negative cash flow event.
-            logger.log(LogCategory.TAX, `Annual True-Up: User owes ${taxDifference}. Debiting account.`);
-            const taxBill = new Currency(taxDifference);
-            
-            // This might trigger your new Gross-Up Shortfall logic if cashFlow is empty!
-            this.router.debitFromExpensable(taxBill, 'Annual IRS Tax Bill Due'); 
-            
-        } else if (taxDifference < 0) {
-            // OVERPAID: The user gets a tax refund!
-            // This is a positive cash flow event.
-            const refundAmount = Math.abs(taxDifference);
-            logger.log(LogCategory.TAX, `Annual True-Up: User overpaid. Refunding ${refundAmount}.`);
-            const taxRefund = new Currency(refundAmount);
-            
-            this.router.creditToExpensable(taxRefund, 'IRS Tax Refund');
-        }
-
-        // 3. Reset the annual accumulators for the next year
-        this.resetAnnualAccumulators();
-    }
 
     applyYear(currentDateInt) {
 

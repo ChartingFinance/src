@@ -25,37 +25,42 @@ export class GraphMapper {
 
         // 2. Iterate Model Assets to build Nodes and Implicit Edges
         for (const asset of portfolio.modelAssets) {
-            
+
             // Determine the visual category based on InstrumentType
             let category = 'Unknown';
             if (InstrumentType.isMonthlyIncome(asset.instrument)) {
                 category = 'IncomeLake';
-                
-                // Implicit Edge: Income generates FICA and Income Tax withholding
-                if (InstrumentType.isWorkingIncome(asset.instrument)) {
-                    edges.push({ source: asset.displayName, target: 'Sink_FICA', type: 'Tax' });
-                }
-                edges.push({ source: asset.displayName, target: 'Sink_IncomeTax', type: 'Tax' });
-
             } else if (InstrumentType.isMonthlyExpense(asset.instrument)) {
                 category = 'ExpenseDrain';
             } else if (InstrumentType.isMortgage(asset.instrument)) {
                 category = 'DebtDrain';
             } else if (InstrumentType.isRealEstate(asset.instrument)) {
                 category = 'IlliquidAsset';
-                // Implicit Edge: Homes generate Property Tax
-                edges.push({ source: asset.displayName, target: 'Sink_PropertyTax', type: 'Tax' });
+            } else if (InstrumentType.isTaxDeferred(asset.instrument)) {
+                category = 'TaxDeferredReservoir';
+            } else if (InstrumentType.isTaxFree(asset.instrument)) {
+                category = 'TaxFreeReservoir';
+            } else if (InstrumentType.isTaxableAccount(asset.instrument)) {
+                category = 'TaxableReservoir';
             } else if (InstrumentType.isExpensable(asset.instrument)) {
                 category = 'CheckingHub';
-            } else if (InstrumentType.isTaxDeferred(asset.instrument)) { // 401K, IRA
-                category = 'TaxDeferredReservoir';
-                // Implicit Edge: Distributions trigger ordinary income tax
+            }
+
+            // Tax edges — independent of category so nothing gets skipped
+            if (InstrumentType.isWorkingIncome(asset.instrument)) {
+                edges.push({ source: asset.displayName, target: 'Sink_FICA', type: 'Tax' });
+            }
+            if (InstrumentType.isMonthlyIncome(asset.instrument)) {
                 edges.push({ source: asset.displayName, target: 'Sink_IncomeTax', type: 'Tax' });
-            } else if (InstrumentType.isTaxFree(asset.instrument)) { // Roth
-                category = 'TaxFreeReservoir';
-            } else if (InstrumentType.isTaxableAccount(asset.instrument) || InstrumentType.isCapital(asset.instrument)) {
-                category = 'TaxableReservoir';
-                // Implicit Edge: Selling triggers capital gains tax
+            }
+            if (InstrumentType.isRealEstate(asset.instrument)) {
+                edges.push({ source: asset.displayName, target: 'Sink_PropertyTax', type: 'Tax' });
+            }
+            if (InstrumentType.isTaxDeferred(asset.instrument)) {
+                edges.push({ source: asset.displayName, target: 'Sink_IncomeTax', type: 'Tax' });
+            }
+            if (InstrumentType.isBasisable(asset.instrument)) {
+                // Taxable equity and real estate generate capital gains on sale
                 edges.push({ source: asset.displayName, target: 'Sink_CapGainsTax', type: 'Tax' });
             }
 
@@ -67,17 +72,44 @@ export class GraphMapper {
             });
 
             // 3. Extract Explicit Edges (Fund Transfers)
+            let hasMortgageMonthlyEdge = false;
             if (asset.fundTransfers && asset.fundTransfers.length > 0) {
                 for (const ft of asset.fundTransfers) {
                     // Expenses and Debt drain from their targets, so the flow of money is reversed
-                    const isPull = InstrumentType.isMonthlyExpense(asset.instrument) || 
+                    const isPull = InstrumentType.isMonthlyExpense(asset.instrument) ||
                        InstrumentType.isMortgage(asset.instrument);
-                       
+
+                    const isCloseOnly = !ft.hasRecurring && ft.hasClose;
+
+                    // Skip close-only transfers for mortgages — we'll add an implicit monthly edge
+                    if (InstrumentType.isMortgage(asset.instrument) && isCloseOnly) continue;
+
+                    if (InstrumentType.isMortgage(asset.instrument) && ft.hasRecurring) {
+                        hasMortgageMonthlyEdge = true;
+                    }
+
                     edges.push({
                         source: isPull ? ft.toDisplayName : asset.displayName,
                         target: isPull ? asset.displayName : ft.toDisplayName,
-                        type: ft.moveOnFinishDate ? 'ClosureTransfer' : 'MonthlyTransfer',
+                        type: isCloseOnly ? 'ClosureTransfer'
+                            : InstrumentType.isMortgage(asset.instrument) ? 'MortgagePayment'
+                            : 'MonthlyTransfer',
                         weight: ft.moveValue
+                    });
+                }
+            }
+
+            // 3b. Implicit mortgage edge: if no monthly fund transfer, payments come from first taxable
+            if (InstrumentType.isMortgage(asset.instrument) && !hasMortgageMonthlyEdge) {
+                const taxable = portfolio.modelAssets.find(
+                    a => InstrumentType.isTaxableAccount(a.instrument) && !a.isClosed
+                );
+                if (taxable) {
+                    edges.push({
+                        source: taxable.displayName,
+                        target: asset.displayName,
+                        type: 'MortgagePayment',
+                        weight: 0
                     });
                 }
             }
@@ -115,6 +147,7 @@ export class GraphMapper {
         // 2. Helper to find and add flow to a specific edge
         const addFlow = (sourceId, targetId, amount) => {
             const edge = edges.find(e => e.source === sourceId && e.target === targetId);
+            if (!edge) return; // no structural edge for this flow (e.g., delayed capital gains)
             if (!edge.updateTick) {
                 edge.updateTick = this.tick;
             }
@@ -144,7 +177,7 @@ export class GraphMapper {
                 else if (memo.note === 'Capital gains tax withholding') {
                     addFlow(asset.displayName, 'Sink_CapGainsTax', amount);
                 }
-                else if (memo.note === 'Property taxes') {
+                else if (memo.note === 'Property tax' || memo.note === 'Property tax escrow') {
                     addFlow(asset.displayName, 'Sink_PropertyTax', amount);
                 }
                 else if (memo.note.includes('→')) {
@@ -167,6 +200,21 @@ export class GraphMapper {
                             addFlow(actualSource, actualTarget, amount);
                         }
                     }
+                }
+            }
+        }
+
+        // 4. Annotate mortgage edges with principal vs interest for color coding
+        for (const asset of portfolio.modelAssets) {
+            if (!InstrumentType.isMortgage(asset.instrument)) continue;
+
+            const principal = Math.abs(asset.mortgagePrincipalCurrency.amount);
+            const interest = Math.abs(asset.mortgageInterestCurrency.amount);
+
+            // Find all edges targeting this mortgage
+            for (const edge of edges) {
+                if (edge.type === 'MortgagePayment' && edge.target === asset.displayName) {
+                    edge.principalDominant = principal >= interest;
                 }
             }
         }

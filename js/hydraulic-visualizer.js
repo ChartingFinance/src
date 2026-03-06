@@ -295,8 +295,13 @@ export class HydraulicVisualizer {
                 flowAnim.setAttribute('dur', `${speed}s`);
                 let width = Math.min(12, Math.max(4, edge.flowAmount / 1000));
                 flowPath.setAttribute('stroke-width', width);
+
+                // Mortgage edges: red when interest-heavy, green when principal-heavy
+                if (edge.type === 'MortgagePayment') {
+                    flowPath.setAttribute('stroke', edge.principalDominant ? '#43e97b' : '#ff6b6b');
+                }
             } else {
-                flowPath.style.opacity = '0'; 
+                flowPath.style.opacity = '0';
             }
         }
 

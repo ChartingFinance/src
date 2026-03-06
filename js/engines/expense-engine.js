@@ -25,41 +25,16 @@ export class ExpenseEngine {
         this.router = router;
     }
 
-    // ── Day 15: Property Tax ─────────────────────────────────────────
-
-    applyPropertyTaxEscrow(modelAsset, currentDateInt) {
-
-        if (InstrumentType.isRealEstate(modelAsset.instrument)) {
-
-            if (modelAsset.annualTaxRate.rate != 0) {
-
-                const escrow = modelAsset.addMonthlyTaxToEscrow();
-                this.monthly.propertyTaxes.subtract(escrow);
-                modelAsset.creditMemos.push(new CreditMemo(escrow, 'Property tax escrow', modelAsset.currentDateInt));
-
-
-                // TODO:
-                if (modelAsset.monthlyTaxEscrow.amount) {
-                    for (const fundTransfer of modelAsset.fundTransfers) {
-                        if (!fundTransfer.isActiveForMonth(currentDateInt.month)) continue;
-                        fundTransfer.bind(modelAsset, this.modelAssets);
-                        if (!fundTransfer.toModel) continue;
-
-                        // do the payment manually
-                        fundTransfer.toModel.debit(escrow, modelAsset.displayName + ' property tax', true);
-                        modelAsset.monthlyTaxEscrow.zero();
-                    }
-                }
-
-            }
-        }
-    }
-
     // ── Day 30: Expenses ─────────────────────────────────────────────
 
     applyExpenseTransfers(modelAsset, currentDateInt) {
 
-        // Homes have property taxes and expenses are self-explanatory
+        // Mortgage: execute fund transfers to pull payment from funding account
+        if (InstrumentType.isMortgage(modelAsset.instrument)) {
+            this.applyMortgageTransfers(modelAsset, currentDateInt);
+            return;
+        }
+
         if (!InstrumentType.isMonthlyExpense(modelAsset.instrument)) {
             return;
         }
@@ -124,6 +99,42 @@ export class ExpenseEngine {
             }
         }
 
+    }
+
+    applyMortgageTransfers(modelAsset, currentDateInt) {
+
+        // The mortgage payment amount was already computed by MortgageBehavior.applyMonthly()
+        const payment = modelAsset.mortgagePaymentCurrency.copy().flipSign(); // payment is negative, need positive for debit
+        if (payment.amount <= 0) return;
+
+        let funded = false;
+
+        // Try explicit monthly fund transfers first
+        if (modelAsset.fundTransfers?.length) {
+            for (const fundTransfer of modelAsset.fundTransfers) {
+                if (!fundTransfer.isActiveForMonth(currentDateInt.month)) continue;
+                fundTransfer.bind(modelAsset, this.modelAssets);
+                if (!fundTransfer.toModel) continue;
+
+                const memo = fundTransfer.describe();
+                fundTransfer.toModel.debit(payment, memo);
+                funded = true;
+                break; // one funding source per mortgage
+            }
+        }
+
+        // Fallback: auto-debit from first taxable account (e.g., close-only or no fund transfers)
+        if (!funded) {
+            const taxable = this.router.getFirstTaxable();
+            if (taxable) {
+                const memo = `${modelAsset.displayName} → ${taxable.displayName} (mortgage payment)`;
+                taxable.debit(payment, memo);
+            }
+        }
+
+        // Record on the monthly package
+        this.monthly.mortgagePrincipal.add(modelAsset.mortgagePrincipalCurrency);
+        this.monthly.mortgageInterest.add(modelAsset.mortgageInterestCurrency);
     }
 
     handleExpenseGains(fundTransfer, fundTransferResult, modelAssetName) {

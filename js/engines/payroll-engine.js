@@ -12,18 +12,17 @@
 import { Currency } from '../utils/currency.js';
 import { InstrumentType } from '../instruments/instrument.js';
 import { Metric } from '../model-asset.js';
-import { CreditMemo } from '../results.js';
 import { activeTaxTable } from '../globals.js';
-import { logger, LogCategory } from '../utils/logger.js';
 
 export class PayrollEngine {
 
-    constructor(modelAssets, monthly, yearly, activeUser, router) {
+    constructor(modelAssets, monthly, yearly, activeUser, router, taxEngine) {
         this.modelAssets = modelAssets;
         this.monthly = monthly;
         this.yearly = yearly;
         this.activeUser = activeUser;
         this.router = router;
+        this.taxEngine = taxEngine;
     }
 
     applyPreTaxCalculations(modelAsset, currentDateInt) {
@@ -72,12 +71,7 @@ export class PayrollEngine {
                 let withholding = activeTaxTable.calculateFICATax(modelAsset.isSelfEmployed, modelAsset.incomeCurrency.copy());
                 activeTaxTable.addYearlySocialSecurity(withholding.socialSecurity);
 
-                withholding.flipSigns();
-                modelAsset.medicareCurrency.add(withholding.medicare);
-                modelAsset.socialSecurityCurrency.add(withholding.socialSecurity);
-                this.monthly.addWithholdingResult(withholding);
-
-                modelAsset.creditMemos.push(new CreditMemo(withholding.fica(), 'FICA withholding', modelAsset.currentDateInt));
+                this.taxEngine.recordFICAWithholding(modelAsset, withholding);
 
             }
         }
@@ -152,12 +146,7 @@ export class PayrollEngine {
         modelAsset.incomeTaxCurrency = assetTax;
         modelAsset.netIncomeCurrency = netIncome;
 
-        // Record payroll withholding in the monthly package (negative = outflow)
-        const withheldTax = assetTax.copy().flipSign();
-        this.monthly.incomeTax.add(withheldTax);
-        modelAsset.creditMemos.push(new CreditMemo(withheldTax.copy(), 'Income tax withholding', modelAsset.currentDateInt));
-
-        logger.log(LogCategory.TRANSFER, `applyNetIncome: ${modelAsset.displayName} gross=${modelAsset.incomeCurrency.toString()} tax=${assetTax.toString()} (${(proportion * 100).toFixed(1)}%) net=${netIncome.toString()}`);
+        this.taxEngine.recordIncomeTaxWithholding(modelAsset, assetTax);
 
     }
 
