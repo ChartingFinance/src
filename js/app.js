@@ -35,7 +35,7 @@ import {
 } from './charting.js';
 
 // Logger
-import { logger, LogCategory } from './logger.js';
+import { logger, LogCategory } from './utils/logger.js';
 
 // Tax and portfolio
 import { TaxTable } from './taxes.js';
@@ -74,7 +74,7 @@ import {
     util_ensureStoryNames,
     util_saveLocalAssetModels,
     util_loadLocalAssetModels,
-} from './util.js';
+} from './utils/util.js';
 
 // Spreadsheet + Credit Memos (Lit components)
 import './components/spreadsheet-view.js';

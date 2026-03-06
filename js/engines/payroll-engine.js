@@ -9,12 +9,12 @@
  * simulation orchestrator.
  */
 
-import { Currency } from './currency.js';
-import { InstrumentType } from './instrument.js';
-import { Metric } from './model-asset.js';
-import { CreditMemo } from './results.js';
-import { activeTaxTable } from './globals.js';
-import { logger, LogCategory } from './logger.js';
+import { Currency } from '../utils/currency.js';
+import { InstrumentType } from '../instruments/instrument.js';
+import { Metric } from '../model-asset.js';
+import { CreditMemo } from '../results.js';
+import { activeTaxTable } from '../globals.js';
+import { logger, LogCategory } from '../utils/logger.js';
 
 export class PayrollEngine {
 
@@ -33,12 +33,8 @@ export class PayrollEngine {
             let result = modelAsset.applyMonthly();
             this.monthly.addResult(result);
 
-            // manually put the income into the proper monthly results
-            if (InstrumentType.isSocialSecurity(modelAsset.instrument)) {
-                //taxableIncome.multiply(0.85); // maximum allowed for social security // Did this change for tax year 2025?
+            if (InstrumentType.isRetirementIncome(modelAsset.instrument)) {
                 this.monthly.socialSecurity.add(modelAsset.incomeCurrency);
-            } else if (InstrumentType.isPension(modelAsset.instrument)) {
-                this.monthly.pension.add(modelAsset.incomeCurrency);
             } else {
 
                 // it's self-employed or w2-employed
@@ -71,7 +67,7 @@ export class PayrollEngine {
         if (InstrumentType.isMonthlyIncome(modelAsset.instrument)) {
 
             // TODO: make a test for selfEmployed or Employee
-            if (!InstrumentType.isSocialSecurity(modelAsset.instrument) && !InstrumentType.isPension(modelAsset.instrument)) {
+            if (InstrumentType.isWorkingIncome(modelAsset.instrument)) {
 
                 let withholding = activeTaxTable.calculateFICATax(modelAsset.isSelfEmployed, modelAsset.incomeCurrency.copy());
                 activeTaxTable.addYearlySocialSecurity(withholding.socialSecurity);
@@ -90,7 +86,7 @@ export class PayrollEngine {
 
     computeNetIncome(modelAsset) {
 
-        if (!InstrumentType.isMonthlyIncome(modelAsset.instrument)) {
+        if (!InstrumentType.isWorkingIncome(modelAsset.instrument)) {
             return;
         }
 
@@ -160,7 +156,7 @@ export class PayrollEngine {
         let total401KContribution = Currency.zero();
         let totalIRAContribution = Currency.zero();
 
-        if (InstrumentType.isMonthlySalary(modelAsset.instrument)) {
+        if (InstrumentType.isWorkingIncome(modelAsset.instrument)) {
 
             for (let fundTransfer of modelAsset.fundTransfers) {
 
@@ -216,7 +212,7 @@ export class PayrollEngine {
     // The Roth contribution limit requires an account of traditional IRA contribution
     calculateRothIRAContribution(modelAsset) {
 
-        if (InstrumentType.isMonthlySalary(modelAsset.instrument)) {
+        if (InstrumentType.isWorkingIncome(modelAsset.instrument)) {
 
             let contributionLimit = activeTaxTable.iraContributionLimit(this.activeUser);
             let totalContribution = Currency.zero();

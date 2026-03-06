@@ -6,7 +6,7 @@
  *           util_removeModelAssetByDisplayName, util_findModelAssetsByInstrument
  */
 
-import { DateInt } from './date-int.js';
+import { DateInt } from './utils/date-int.js';
 
 /**
  * Find the earliest start date across all assets.

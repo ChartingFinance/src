@@ -6,8 +6,8 @@
  * using expensable priority order (liquid/taxable first) when applicable.
  */
 
-import { Currency } from './currency.js';
-import { InstrumentType } from './instrument.js';
+import { Currency } from '../utils/currency.js';
+import { InstrumentType } from '../instruments/instrument.js';
 
 export class AccountRouter {
 

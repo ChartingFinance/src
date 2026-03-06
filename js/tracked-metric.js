@@ -18,7 +18,7 @@
  * the collection, so initializeChron/monthlyChron become one-liners.
  */
 
-import { Currency } from './currency.js';
+import { Currency } from './utils/currency.js';
 
 export class TrackedMetric {
   /**
@@ -118,6 +118,32 @@ export class TrackedMetric {
  *   // Access:
  *   this.metrics.get('cashFlow').add(amount);
  */
+/**
+ * NullMetric: a no-op stand-in for metrics an instrument doesn't track.
+ * Accepts all the same calls as TrackedMetric but stores nothing.
+ */
+const NULL_CURRENCY = Object.freeze({ amount: 0, add() {}, subtract() {}, copy() { return new Currency(); }, zero() {}, toCurrency() { return 0; }, toFixed() { return '0.00'; }, toHTML() { return '0.00'; }, toString() { return '$0.00'; } });
+const EMPTY_ARRAY = Object.freeze([]);
+const NULL_METRIC = Object.freeze({
+  name: '_null',
+  current: NULL_CURRENCY,
+  history: EMPTY_ARRAY,
+  displayHistory: EMPTY_ARRAY,
+  initialize() {},
+  snapshot() {},
+  snapshotKeep() {},
+  add() { return new Currency(); },
+  subtract() { return new Currency(); },
+  get amount() { return 0; },
+  set amount(_v) {},
+  copy() { return new Currency(); },
+  zero() { return this; },
+  toFixed() { return '0.00'; },
+  toCurrency() { return 0; },
+  displayName() { return '_null'; },
+  buildDisplayHistory() { return EMPTY_ARRAY; },
+});
+
 export class MetricSet {
   /**
    * @param {string[]} names  Metric names to create
@@ -130,11 +156,9 @@ export class MetricSet {
     }
   }
 
-  /** Get a metric by name */
+  /** Get a metric by name. Returns NULL_METRIC for unregistered names. */
   get(name) {
-    const m = this._map.get(name);
-    if (!m) throw new Error(`Unknown metric: "${name}"`);
-    return m;
+    return this._map.get(name) || NULL_METRIC;
   }
 
   /** Check if a metric exists */

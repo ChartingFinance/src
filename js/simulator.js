@@ -3,7 +3,7 @@
 import { InstrumentType, ModelAsset, FundTransfer } from './index.js';
 import { chronometer_run } from './chronometer.js';
 import { setActiveTaxTable } from './globals.js';
-import { logger, LogCategory } from './logger.js';
+import { logger, LogCategory } from './utils/logger.js';
 import { TaxTable } from './taxes.js';
 import { Portfolio } from './portfolio.js';
 

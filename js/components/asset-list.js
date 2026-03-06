@@ -10,7 +10,7 @@
 
 import { LitElement, html } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
-import { colorRange } from '../html.js';
+import { colorRange } from '../utils/html.js';
 import './asset-card.js';
 
 class AssetList extends LitElement {

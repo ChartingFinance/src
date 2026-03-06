@@ -9,7 +9,7 @@ import { ModelAsset } from './model-asset.js';
 
 const QUICK_START_DATA = [
     {
-        instrument: 'monthlySalary',
+        instrument: 'workingIncome',
         displayName: 'Salary',
         startDateInt: { year: 2026, month: 1 },
         finishDateInt: { year: 2036, month: 12 },

@@ -15,9 +15,9 @@
  */
 
 import { LitElement, html } from 'lit';
-import { Instrument, InstrumentType } from '../instrument.js';
+import { Instrument, InstrumentType } from '../instruments/instrument.js';
 import { membrane_htmlElementToAssetModel } from '../membrane.js';
-import { DateInt } from '../date-int.js';
+import { DateInt } from '../utils/date-int.js';
 
 class AssetFormModal extends LitElement {
 
@@ -148,7 +148,7 @@ class AssetFormModal extends LitElement {
     _renderInstrumentFields(instrument, ma, closed = false) {
         if (!instrument) return html``;
 
-        if (instrument === Instrument.MONTHLY_SALARY) {
+        if (instrument === Instrument.WORKING_INCOME) {
             const checked = ma && ma.isSelfEmployed;
             return html`
                 <div class="mt-6 border-t border-gray-100 pt-6">
@@ -214,11 +214,12 @@ class AssetFormModal extends LitElement {
             `;
         }
 
-        if (InstrumentType.isHome(instrument)) {
+        if (InstrumentType.isRealEstate(instrument)) {
             const basisVal = ma ? ma.startBasisCurrency.toHTML() : '0';
             const finishBasisVal = closed && ma.closedBasisValue ? ma.closedBasisValue.toHTML()
                 : (ma ? ma.finishBasisCurrency.toHTML() : '0');
             const taxRateVal = ma ? ma.annualTaxRate.toHTML() : '0';
+            const primaryChecked = ma ? ma.isPrimaryHome : true;
             return html`
                 <div class="mt-6 border-t border-gray-100 pt-6">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -236,6 +237,13 @@ class AssetFormModal extends LitElement {
                             <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Annual Property Tax %</label>
                             <input type="number" class="fin-input" name="annualTaxRate"
                                 .value=${taxRateVal} step="0.01" placeholder="annual %" />
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Residence</label>
+                            <label class="flex items-center gap-2 cursor-pointer fin-input">
+                                <input type="checkbox" name="isPrimaryHome" ?checked=${primaryChecked} />
+                                Primary Home
+                            </label>
                         </div>
                     </div>
                 </div>

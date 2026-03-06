@@ -15,9 +15,9 @@
  */
 
 import { LitElement, html } from 'lit';
-import { InstrumentType, InstrumentMeta } from '../instrument.js';
+import { InstrumentType, InstrumentMeta } from '../instruments/instrument.js';
 import { FundTransfer, Frequency } from '../fund-transfer.js';
-import { colorRange } from '../html.js';
+import { colorRange } from '../utils/html.js';
 import { chronometer_run } from '../chronometer.js';
 import { Portfolio } from '../portfolio.js';
 import { findByName } from '../asset-queries.js';
@@ -111,7 +111,7 @@ class TransferModal extends LitElement {
     _getChartTabs(currentAsset) {
         if (!currentAsset) return [{ label: 'Growth', metric: Metric.CASH_FLOW }];
 
-        if (InstrumentType.isHome(currentAsset.instrument)) {
+        if (InstrumentType.isRealEstate(currentAsset.instrument)) {
             return [
                 { label: 'Growth', metric: Metric.CASH_FLOW },
                 { label: 'Expenses', metric: Metric.PROPERTY_TAX },

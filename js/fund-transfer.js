@@ -6,8 +6,8 @@
  * a separate on-close transfer when the source asset reaches its finish date.
  */
 
-import { Currency } from './currency.js';
-import { Instrument, InstrumentType } from './instrument.js';
+import { Currency } from './utils/currency.js';
+import { Instrument, InstrumentType } from './instruments/instrument.js';
 import { FundTransferResult } from './results.js';
 
 export const Frequency = Object.freeze({

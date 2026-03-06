@@ -1,4 +1,4 @@
-import { InstrumentType } from './instrument.js';
+import { InstrumentType } from './instruments/instrument.js';
 
 export class GraphMapper {
     
@@ -32,7 +32,7 @@ export class GraphMapper {
                 category = 'IncomeLake';
                 
                 // Implicit Edge: Income generates FICA and Income Tax withholding
-                if (!InstrumentType.isSocialSecurity(asset.instrument)) {
+                if (InstrumentType.isWorkingIncome(asset.instrument)) {
                     edges.push({ source: asset.displayName, target: 'Sink_FICA', type: 'Tax' });
                 }
                 edges.push({ source: asset.displayName, target: 'Sink_IncomeTax', type: 'Tax' });
@@ -41,7 +41,7 @@ export class GraphMapper {
                 category = 'ExpenseDrain';
             } else if (InstrumentType.isMortgage(asset.instrument)) {
                 category = 'DebtDrain';
-            } else if (InstrumentType.isHome(asset.instrument)) {
+            } else if (InstrumentType.isRealEstate(asset.instrument)) {
                 category = 'IlliquidAsset';
                 // Implicit Edge: Homes generate Property Tax
                 edges.push({ source: asset.displayName, target: 'Sink_PropertyTax', type: 'Tax' });

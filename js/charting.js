@@ -1,7 +1,7 @@
-import { MonthsSpan } from './months-span.js';
-import { DateInt } from './date-int.js';
-import { colorRange, positiveBackgroundColor, negativeBackgroundColor } from './html.js';
-import { logger, LogCategory } from './logger.js';
+import { MonthsSpan } from './utils/months-span.js';
+import { DateInt } from './utils/date-int.js';
+import { colorRange, positiveBackgroundColor, negativeBackgroundColor } from './utils/html.js';
+import { logger, LogCategory } from './utils/logger.js';
 import { findByName } from './asset-queries.js';
 import { Metric } from './model-asset.js';
 
@@ -94,7 +94,7 @@ const stackedBarChartDataSet = {
     data: null
  };
 
-const assetStackedBarChartExclusions = ['monthlyExpense', 'monthlySalary', 'monthlySocialSecurity'];
+const assetStackedBarChartExclusions = ['monthlyExpense', 'workingIncome', 'retirementIncome'];
 
 const lineChartConfig = {
   type: 'line',
@@ -123,7 +123,7 @@ const lineChartDataSet = {
   data: []
 };
 
-const flowLineChartExclusions = ['home','mortgage'];
+const flowLineChartExclusions = ['realEstate','mortgage'];
 
 export let charting_jsonMetric1ChartData = null;
 export let charting_jsonMetric2ChartData = null;

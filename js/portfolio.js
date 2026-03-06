@@ -1,16 +1,16 @@
-import { Currency } from './currency.js';
-import { InstrumentType } from './instrument.js';
+import { Currency } from './utils/currency.js';
+import { InstrumentType } from './instruments/instrument.js';
 import { Metric } from './model-asset.js';
 import { AssetAppreciationResult, CapitalGainsResult, MortgageResult, IncomeResult, ExpenseResult, InterestResult, WithholdingResult, CreditMemo } from './results.js';
-import { MonthsSpan } from './months-span.js';
-import { logger, LogCategory } from './logger.js';
+import { MonthsSpan } from './utils/months-span.js';
+import { logger, LogCategory } from './utils/logger.js';
 import { User } from './user.js';
 import { firstDateInt, lastDateInt } from './asset-queries.js';
 import { activeTaxTable } from './globals.js';
 import { global_propertyTaxDeductionMax, global_user_startAge } from './globals.js';
-import { AccountRouter } from './account-router.js';
-import { PayrollEngine } from './payroll-engine.js';
-import { ExpenseEngine } from './expense-engine.js';
+import { AccountRouter } from './engines/account-router.js';
+import { PayrollEngine } from './engines/payroll-engine.js';
+import { ExpenseEngine } from './engines/expense-engine.js';
 
 /*
 yearlyGrossIncome
@@ -509,28 +509,7 @@ export class Portfolio {
 
     computePerAssetCashFlow() {
         for (let modelAsset of this.modelAssets) {
-            let cashFlow = Currency.zero();
-            const inst = modelAsset.instrument;
-
-            if (InstrumentType.isMonthlyIncome(inst)) {
-                cashFlow = modelAsset.incomeCurrency.copy();
-                cashFlow.add(modelAsset.socialSecurityCurrency);
-                cashFlow.add(modelAsset.medicareCurrency);
-                cashFlow.add(modelAsset.estimatedIncomeTaxCurrency);
-                cashFlow.add(modelAsset.four01KContributionCurrency);
-                cashFlow.add(modelAsset.tradIRAContributionCurrency);
-                cashFlow.add(modelAsset.rothIRAContribution);
-            } else if (InstrumentType.isCapital(inst)) {
-                cashFlow = modelAsset.growthCurrency.copy();
-            } else if (InstrumentType.isIncomeAccount(inst)) {
-                cashFlow = modelAsset.interestIncomeCurrency.copy();
-            } else if (InstrumentType.isMortgage(inst)) {
-                cashFlow = modelAsset.mortgageInterestCurrency.copy();
-            } else if (InstrumentType.isMonthlyExpense(inst)) {
-                cashFlow = modelAsset.expenseCurrency.copy();
-            }
-
-            modelAsset.cashFlowCurrency = cashFlow;
+            modelAsset.cashFlowCurrency = modelAsset.behavior.computeCashFlow(modelAsset);
         }
     }
 
@@ -592,7 +571,7 @@ export class Portfolio {
 
             for (let modelAsset of this.modelAssets) {
                 if (!modelAsset.inMonth(currentDateInt)) continue;
-                if (InstrumentType.isHome(modelAsset.instrument)) {
+                if (InstrumentType.isRealEstate(modelAsset.instrument)) {
                     this.expenses.applyPropertyTaxEscrow(modelAsset, currentDateInt);
                 }
             }
@@ -662,7 +641,7 @@ export class Portfolio {
 
         for (let modelAsset of this.modelAssets) {
             if (!modelAsset.isClosed) {
-                if (InstrumentType.isMonthlySalary(modelAsset.instrument)) {
+                if (InstrumentType.isWorkingIncome(modelAsset.instrument)) {
                     this.payroll.calculateRothIRAContribution(modelAsset);
                 }
                 this.payroll.calculatePostTaxContributions(modelAsset);
@@ -720,10 +699,11 @@ export class Portfolio {
 
         const monthsSpan = MonthsSpan.build(modelAsset.startDateInt, modelAsset.finishDateInt);
         const annualizedIncome = this.monthly.totalIncome().copy().multiply(12);
-        const isHome = InstrumentType.isHome(modelAsset.instrument);
+        const isRealEstate = InstrumentType.isRealEstate(modelAsset.instrument);
+        const isPrimaryHome = isRealEstate && modelAsset.isPrimaryHome;
 
         const result = activeTaxTable.calculateCapitalGainsTax(
-            capitalGains, monthsSpan.totalMonths, isHome, annualizedIncome
+            capitalGains, monthsSpan.totalMonths, isPrimaryHome, annualizedIncome
         );
 
         let amountToTax = result.tax.copy();

@@ -9,11 +9,10 @@
  */
 
 export const Instrument = Object.freeze({
-  HOME:                'home',
+  REAL_ESTATE:         'realEstate',
   MORTGAGE:            'mortgage',
-  MONTHLY_SALARY:      'monthlySalary',
-  SOCIAL_SECURITY:     'monthlySocialSecurity',
-  PENSION:             'monthlyPension',
+  WORKING_INCOME:      'workingIncome',
+  RETIREMENT_INCOME:   'retirementIncome',
   US_BOND:             'usBond',
   CORP_BOND:           'corpBond',
   BANK:                'bank',
@@ -28,11 +27,10 @@ export const Instrument = Object.freeze({
 
 /** Display metadata — keeps UI concerns separate from identity */
 export const InstrumentMeta = new Map([
-  [Instrument.HOME,              { emoji: '🏡🌳',  label: 'House',            sortOrder: 0  }],
+  [Instrument.REAL_ESTATE,              { emoji: '🏡🌳',  label: 'Real Estate',      sortOrder: 0  }],
   [Instrument.MORTGAGE,          { emoji: '🏡💸',  label: 'Mortgage',         sortOrder: 1  }],
-  [Instrument.MONTHLY_SALARY,    { emoji: '🔧💲',  label: 'Monthly Income',   sortOrder: 2  }],
-  [Instrument.SOCIAL_SECURITY,   { emoji: '🏛️💲',  label: 'Social Security',  sortOrder: 3  }],
-  [Instrument.PENSION,           { emoji: '🕰️💲',  label: 'Pension',          sortOrder: 4  }],
+  [Instrument.WORKING_INCOME,    { emoji: '🔧💲',  label: 'Working Income',   sortOrder: 2  }],
+  [Instrument.RETIREMENT_INCOME, { emoji: '🏛️💲',  label: 'Retirement Income',sortOrder: 3  }],
   [Instrument.US_BOND,           { emoji: '🏛️💲',  label: 'US Treasury',      sortOrder: 5  }],
   [Instrument.CORP_BOND,         { emoji: '🏦💲',  label: 'Corporate Bond',   sortOrder: 6  }],
   [Instrument.BANK,              { emoji: '🏦💲',  label: 'Savings',          sortOrder: 7  }],
@@ -49,9 +47,8 @@ export const InstrumentMeta = new Map([
 // Each replaces a chain of if/else-if string comparisons.
 
 const MONTHLY_INCOME = new Set([
-  Instrument.MONTHLY_SALARY,
-  Instrument.SOCIAL_SECURITY,
-  Instrument.PENSION,
+  Instrument.WORKING_INCOME,
+  Instrument.RETIREMENT_INCOME,
 ]);
 
 const MONTHLY_EXPENSE = new Set([
@@ -90,7 +87,7 @@ const CAPITAL = new Set([
   Instrument.IRA,
   Instrument.FOUR_01K,
   Instrument.ROTH_IRA,
-  Instrument.HOME,
+  Instrument.REAL_ESTATE,
 ]);
 
 const FUNDABLE = new Set([
@@ -138,11 +135,11 @@ const MONTHS_REMAINING_ABLE = new Set([
 
 const BASISABLE = new Set([
   Instrument.TAXABLE_EQUITY,
-  Instrument.HOME,
+  Instrument.REAL_ESTATE,
 ]);
 
 const SELF_EMPLOYABLE = new Set([
-  Instrument.MONTHLY_INCOME,
+  Instrument.WORKING_INCOME,
 ]);
 
 // ── Public classifier API ────────────────────────────────────────────
@@ -151,14 +148,13 @@ const SELF_EMPLOYABLE = new Set([
 
 export const InstrumentType = Object.freeze({
 
-  isHome:               (v) => v === Instrument.HOME,
+  isRealEstate:         (v) => v === Instrument.REAL_ESTATE,
   isMortgage:           (v) => MORTGAGE.has(v),
   isDebt:               (v) => DEBT.has(v),
   isMonthlyIncome:      (v) => MONTHLY_INCOME.has(v),
-  isMonthlySalary:      (v) => v === Instrument.MONTHLY_SALARY,
+  isWorkingIncome:      (v) => v === Instrument.WORKING_INCOME,
+  isRetirementIncome:   (v) => v === Instrument.RETIREMENT_INCOME,
   isMonthlyExpense:     (v) => MONTHLY_EXPENSE.has(v),
-  isSocialSecurity:     (v) => v === Instrument.SOCIAL_SECURITY,
-  isPension:            (v) => v == Instrument.PENSION,
   isIRA:                (v) => v === Instrument.IRA,
   isRothIRA:            (v) => v === Instrument.ROTH_IRA,
   is401K:               (v) => v === Instrument.FOUR_01K,
@@ -173,10 +169,10 @@ export const InstrumentType = Object.freeze({
   isSavingsAccount:     (v) => v === Instrument.BANK,
   isMonthsRemainingAble:(v) => MONTHS_REMAINING_ABLE.has(v),
   isBasisable:          (v) => BASISABLE.has(v),
-  isSelfEmployable:     (v) => v === Instrument.MONTHLY_SALARY,
+  isSelfEmployable:     (v) => v === Instrument.WORKING_INCOME,
 
   /** True if instrument represents a balance-sheet asset (not income/expense) */
-  isAsset: (v) => FUNDABLE.has(v) || v === Instrument.HOME || v === Instrument.MORTGAGE,
+  isAsset: (v) => FUNDABLE.has(v) || v === Instrument.REAL_ESTATE || v === Instrument.MORTGAGE,
 
   /** Metadata helpers */
   displayName: (v) => InstrumentMeta.get(v)?.label ?? v,

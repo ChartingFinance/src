@@ -11,18 +11,17 @@
  *  6. Financial logic (applyMonthly*) kept intact — just cleaner
  */
 
-import { Currency }       from './currency.js';
-import { DateInt }        from './date-int.js';
-import { ARR }            from './arr.js';
-import { InstrumentType } from './instrument.js';
+import { Currency }       from './utils/currency.js';
+import { DateInt }        from './utils/date-int.js';
+import { ARR }            from './utils/arr.js';
+import { InstrumentType } from './instruments/instrument.js';
 import { FundTransfer }   from './fund-transfer.js';
-import { logger, LogCategory } from './logger.js';
+import { logger, LogCategory } from './utils/logger.js';
 import { MetricSet }      from './tracked-metric.js';
-import {
-  IncomeResult, ExpenseResult, MortgageResult,
-  AssetAppreciationResult, InterestResult, CreditMemo,
-} from './results.js';
-import { colorRange }    from './html.js';
+import { CreditMemo } from './results.js';
+import { IncomeResult } from './results.js';
+import { colorRange }    from './utils/html.js';
+import { getBehavior }   from './instruments/instrument-behavior.js';
 
 const rgb2hex = (rgb) => `#${rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/).slice(1).map(n => parseInt(n, 10).toString(16).padStart(2, '0')).join('')}`;
 
@@ -148,6 +147,7 @@ export class ModelAsset {
     longTermCapitalHoldingPercentage = new ARR(0),
     fundTransfers = [],
     isSelfEmployed = false,
+    isPrimaryHome = true,
     annualTaxRate = new ARR(0),
   }) {
     this.instrument      = instrument;
@@ -163,8 +163,10 @@ export class ModelAsset {
     this.annualReturnRate = annualReturnRate;
     this.fundTransfers   = fundTransfers;
     this.isSelfEmployed  = isSelfEmployed;
+    this.isPrimaryHome   = isPrimaryHome;
     this.annualTaxRate   = annualTaxRate;
 
+    this.behavior      = getBehavior(instrument);
     this.colorId       = 0;
     this.beforeStartDate = false;
     this.onOrAfterStateDate = false;
@@ -174,9 +176,9 @@ export class ModelAsset {
 
     // Chronometer state
     this.finishCurrency = Currency.zero();
-    this.monthsRemainingDynamic = this.monthsRemaining;    
+    this.monthsRemainingDynamic = this.monthsRemaining;
     this.monthlyTaxEscrow = Currency.zero();
-    this.#metrics = new MetricSet(METRIC_NAMES);
+    this.#metrics = new MetricSet(this.behavior.relevantMetrics());
   }
 
   // ── Factories ────────────────────────────────────────────────────
@@ -186,8 +188,16 @@ export class ModelAsset {
   }
 
   static fromJSON(obj) {
+    // Migration: rename legacy instrument values
+    const INSTRUMENT_MIGRATION = {
+      'home': 'realEstate',
+      'monthlySalary': 'workingIncome',
+      'monthlySocialSecurity': 'retirementIncome',
+      'monthlyPension': 'retirementIncome',
+    };
+    const instrument = INSTRUMENT_MIGRATION[obj.instrument] ?? obj.instrument;
     return new ModelAsset({
-      instrument:      obj.instrument,
+      instrument,
       displayName:     obj.displayName,
       startDateInt:    new DateInt(obj.startDateInt.year * 100 + obj.startDateInt.month),
       startCurrency:   new Currency(obj.startCurrency.amount),
@@ -199,6 +209,7 @@ export class ModelAsset {
       longTermCapitalHoldingPercentage: new ARR(obj.longTermCapitalHoldingPercentage?.annualReturnRate ?? obj.longTermCapitalHoldingPercentage?.rate ?? 0),
       fundTransfers:   (obj.fundTransfers ?? []).map(FundTransfer.fromJSON),
       isSelfEmployed:  obj.isSelfEmployed ?? false,
+      isPrimaryHome:   obj.isPrimaryHome ?? true,
       annualTaxRate:   new ARR(obj.annualTaxRate?.annualReturnRate ?? obj.annualTaxRate?.rate ?? 0),
     });
   }
@@ -233,6 +244,9 @@ export class ModelAsset {
       isSelfEmployed: vals.isSelfEmployed?.type === 'checkbox'
         ? vals.isSelfEmployed.checked
         : vals.isSelfEmployed?.value === 'true',
+      isPrimaryHome: vals.isPrimaryHome?.type === 'checkbox'
+        ? vals.isPrimaryHome.checked
+        : (vals.isPrimaryHome?.value !== 'false'),
       annualTaxRate: vals.annualTaxRate ? ARR.parse(vals.annualTaxRate.value) : new ARR(0),
     });
 
@@ -586,144 +600,13 @@ export class ModelAsset {
 
   }
 
-  /*
-    * Apply monthly changes based on instrument type. Returns a result object with details of the changes.
-    * Pattern is to compute the change as a local constant first, and then add to relevent properties
-  */
+  /**
+   * Apply monthly changes. Delegates to the instrument's behavior strategy.
+   * Returns a result object (IncomeResult, ExpenseResult, etc.) or null.
+   */
   applyMonthly() {
-
-    if (this.beforeStartDate || this.afterFinishDate)
-      return;
-
-    const { instrument } = this;
-    const T = InstrumentType;
-
-    if (T.isMonthlyIncome(instrument))  return this.applyMonthlyIncomeSalary();
-    if (T.isMonthlyExpense(instrument)) return this.applyMonthlyExpense();
-    if (T.isMortgage(instrument))       return this.applyMonthlyMortgage();
-    if (T.isCapital(instrument))        return this.applyMonthlyCapital();
-    if (T.isIncomeAccount(instrument))  return this.applyMonthlyIncomeHoldings();
-
-    return null;
-  }
-
-  applyMonthlyIncomeSalary() {
-
-    this.ensurePositiveStart();
-
-    const income = this.finishCurrency.copy();
-    if (this.isSelfEmployed) {
-      this.workingIncomeCurrency.add(income);
-    } else {
-      this.ordinaryIncomeCurrency.add(income);
-    }
-
-    this.incomeCurrency.add(income);
-    this.netIncomeCurrency.add(income);
-
-    // growth in income happens yearly
-
-    return this.isSelfEmployed
-      ? new IncomeResult(income, Currency.zero())
-      : new IncomeResult(Currency.zero(), income);
-
-  }
-
-applyMonthlyExpense() {
-
-    this.ensureNegativeStart();
-
-    const expense = this.finishCurrency.copy();
-    this.expenseCurrency.add(expense);
-
-    // expenses grow monthly cause that's how the world works
-    const growth = new Currency(expense.amount * this.annualReturnRate.asMonthly());
-    this.growthCurrency.add(growth);
-    this.finishCurrency.add(growth);
-    this.monthlyValueChange.add(growth);
-
-    // FIX: Generate a memo so the expense drift is accounted for
-    if (growth.amount !== 0) {
-      this.creditMemos.push(new CreditMemo(growth, 'Expense growth', this.currentDateInt));
-    }
-
-    return new ExpenseResult(expense, this.finishCurrency.copy());
-
-  }
-
-  applyMonthlyMortgage() {
-
-    this.ensureNegativeStart();
-    const rate = this.annualReturnRate.asMonthly();
-    const n = this.monthsRemainingDynamic;
-
-    const payment   = (this.finishCurrency.amount * rate * Math.pow(1 + rate, n))
-                    / (Math.pow(1 + rate, n) - 1);
-
-    const paymentCurrency = new Currency(payment);
-    const interest  = new Currency(this.finishCurrency.amount * rate);
-    const principal = new Currency(payment - interest.amount);
-
-    this.mortgagePaymentCurrency.add(paymentCurrency);
-    this.mortgageInterestCurrency.add(interest);
-    this.mortgagePrincipalCurrency.add(principal);
-
-    this.monthsRemainingDynamic--;    
-    this.finishCurrency.subtract(principal);
-    this.growthCurrency.subtract(principal);
-    this.monthlyValueChange.subtract(principal);
-
-    this.creditMemos.push(new CreditMemo(principal.copy().flipSign(), 'Mortgage Principal', this.currentDateInt));   
-
-    // TODO: generate memos for principal and interest if there are fund transfers directly. Otherwise assume its from expenses
-    //this.creditMemos.push(new CreditMemo(interest, 'Mortgage interest', this.currentDateInt));
-    //this.creditMemos.push(new CreditMemo(principal, 'Mortgage principal', this.currentDateInt));
-
-    return new MortgageResult(principal, interest, Currency.zero());
-
-  }
-
-  applyMonthlyCapital() {
-
-    const growth = new Currency(this.finishCurrency.amount * this.annualReturnRate.asMonthly());
-
-    this.growthCurrency.add(growth);
-    this.finishCurrency.add(this.growthCurrency); 
-    this.monthlyValueChange.add(this.growthCurrency);
-    this.creditMemos.push(new CreditMemo(this.growthCurrency, 'Asset growth', this.currentDateInt));
-
-    let dividend = Currency.zero();
-    if (this.annualDividendRate.rate != 0.0) {
-
-      // add on top of growth
-      dividend = new Currency(this.finishCurrency.amount * this.annualDividendRate.asMonthly());
-      
-      this.dividendCurrency.add(dividend);
-      this.finishCurrency.add(dividend);
-      this.monthlyValueChange.add(dividend);
-      this.creditMemos.push(new CreditMemo(dividend, 'Dividend income', this.currentDateInt));      
-
-    }
-
-    return new AssetAppreciationResult(this.finishCurrency.copy(), growth, dividend);
-
-  }
-
-  applyMonthlyIncomeHoldings() {
-
-    this.ensurePositiveStart();
-    const income = new Currency(this.finishCurrency.amount * this.annualReturnRate.asMonthly());
-
-    this.interestIncomeCurrency.add(income);
-    this.incomeCurrency.add(income);
-    this.netIncomeCurrency.add(income);
-    this.finishCurrency.add(income);
-    this.monthlyValueChange.add(income);
-
-    this.creditMemos.push(new CreditMemo(income, 'Interest income', this.currentDateInt));
-
-    return new InterestResult(income);
-
+    if (this.beforeStartDate || this.afterFinishDate) return;
+    return this.behavior.applyMonthly(this);
   }
 
   applyYearly() {
@@ -818,7 +701,7 @@ applyMonthlyExpense() {
       else if (T.isIRA(this.instrument))               this.addToMetric(Metric.TRAD_IRA_CONTRIBUTION, amount);
       else if (T.isRothIRA(this.instrument))            this.addToMetric(Metric.ROTH_IRA_CONTRIBUTION, amount);
       else if (T.is401K(this.instrument))               this.addToMetric(Metric.FOUR_01K_CONTRIBUTION, amount);
-      else if (T.isHome(this.instrument) && !skipGain)  this.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, amount);
+      else if (T.isRealEstate(this.instrument) && !skipGain)  this.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, amount);
       else if (T.isMortgage(this.instrument))           this.addToMetric(Metric.MORTGAGE_PRINCIPAL, amount);
     } else if (amount.amount < 0) {
       const positive = amount.copy().flipSign();
@@ -833,7 +716,7 @@ applyMonthlyExpense() {
       else if (T.isIRA(this.instrument))               this.addToMetric(Metric.TRAD_IRA_DISTRIBUTION, positive);
       else if (T.isRothIRA(this.instrument))            this.addToMetric(Metric.ROTH_IRA_DISTRIBUTION, positive);
       else if (T.is401K(this.instrument))               this.addToMetric(Metric.FOUR_01K_DISTRIBUTION, positive);
-      else if (T.isHome(this.instrument) && !skipGain)  this.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, amount);
+      else if (T.isRealEstate(this.instrument) && !skipGain)  this.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, amount);
       else if (T.isMortgage(this.instrument))           this.addToMetric(Metric.MORTGAGE_PRINCIPAL, amount);
     }
   }
@@ -984,6 +867,7 @@ applyMonthlyExpense() {
       longTermCapitalHoldingPercentage: this.longTermCapitalHoldingPercentage,
       fundTransfers:   this.fundTransfers.map(ft => ft.copy()),
       isSelfEmployed:  this.isSelfEmployed,
+      isPrimaryHome:   this.isPrimaryHome,
       annualTaxRate:   this.annualTaxRate,
     });
     clone.finishCurrency = this.finishCurrency.copy();

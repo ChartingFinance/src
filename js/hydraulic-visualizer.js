@@ -1,5 +1,5 @@
-import { Currency } from './currency.js';
-import { InstrumentType } from './instrument.js';
+import { Currency } from './utils/currency.js';
+import { InstrumentType } from './instruments/instrument.js';
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 

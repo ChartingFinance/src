@@ -1,7 +1,7 @@
-import { DateInt } from './date-int.js';
-import { logger, LogCategory } from './logger.js';
+import { DateInt } from './utils/date-int.js';
+import { logger, LogCategory } from './utils/logger.js';
 import { activeTaxTable, global_backtestYear, global_sp500_annual_returns, global_10yr_treasury_rates, global_cpi_annual_inflation, global_wage_growth_annual } from './globals.js';
-import { Instrument, InstrumentType } from './instrument.js';
+import { Instrument, InstrumentType } from './instruments/instrument.js';
 import { GraphMapper } from './graph-mapper.js';
 import { HydraulicVisualizer } from './hydraulic-visualizer.js';
 

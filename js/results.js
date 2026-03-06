@@ -5,7 +5,7 @@
  * Cleaned up from model.js — same semantics, modern syntax.
  */
 
-import { Currency } from './currency.js';
+import { Currency } from './utils/currency.js';
 
 export class AssetAppreciationResult {
   constructor(principal = Currency.zero(), growth = Currency.zero(), dividend = Currency.zero(), estimatedTax = Currency.zero()) {

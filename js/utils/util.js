@@ -6,7 +6,7 @@
  */
 
 import { logger, LogCategory } from './logger.js';
-import { findByName } from './asset-queries.js';
+import { findByName } from '../asset-queries.js';
 
 // ── Constants ──────────────────────────────────────────────────────────
 

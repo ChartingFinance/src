@@ -7,8 +7,8 @@
  */
 
 import { LitElement, html } from 'lit';
-import { InstrumentMeta } from '../instrument.js';
-import { colorRange } from '../html.js';
+import { InstrumentMeta } from '../instruments/instrument.js';
+import { colorRange } from '../utils/html.js';
 
 function formatCompactCurrency(amount) {
     const num = parseFloat(amount);

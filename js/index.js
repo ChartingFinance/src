@@ -4,14 +4,14 @@
  * import { ModelAsset, Currency, DateInt, InstrumentType } from './model/index.js';
  */
 
-export { Currency }                    from './currency.js';
-export { DateInt }                     from './date-int.js';
-export { ARR }                         from './arr.js';
-export { Instrument, InstrumentType, InstrumentMeta } from './instrument.js';
+export { Currency }                    from './utils/currency.js';
+export { DateInt }                     from './utils/date-int.js';
+export { ARR }                         from './utils/arr.js';
+export { Instrument, InstrumentType, InstrumentMeta } from './instruments/instrument.js';
 export { FundTransfer }                from './fund-transfer.js';
 export { ModelAsset }                  from './model-asset.js';
 export { TrackedMetric, MetricSet }    from './tracked-metric.js';
-export { MonthsSpan }                  from './months-span.js';
+export { MonthsSpan }                  from './utils/months-span.js';
 
 export {
   AssetAppreciationResult,
