@@ -592,6 +592,9 @@ export class ModelAsset {
   */
   applyMonthly() {
 
+    if (this.beforeStartDate || this.afterFinishDate)
+      return;
+
     const { instrument } = this;
     const T = InstrumentType;
 
@@ -668,7 +671,7 @@ applyMonthlyExpense() {
     this.monthsRemainingDynamic--;    
     this.finishCurrency.subtract(principal);
     this.growthCurrency.subtract(principal);
-    this.monthlyValueChange.add(principal.copy().flipSign());
+    this.monthlyValueChange.subtract(principal);
 
     this.creditMemos.push(new CreditMemo(principal.copy().flipSign(), 'Mortgage Principal', this.currentDateInt));   
 
@@ -872,8 +875,15 @@ applyMonthlyExpense() {
   // ── Queries ──────────────────────────────────────────────────────
 
   inMonth(dateInt) {
-    return dateInt.toInt() >= this.startDateInt.toInt()
-        && dateInt.toInt() <= this.finishDateInt.toInt();
+
+    if (isClosed) {
+      return false;
+    }
+    else {
+      return dateInt.toInt() >= this.startDateInt.toInt()
+          && dateInt.toInt() <= this.finishDateInt.toInt();
+          
+    }
   }
 
   isFinishDateInt(d) {

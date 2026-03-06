@@ -18,7 +18,7 @@ export const LogCategory = Object.freeze({
 });
 
 const _enabled = new Set([
-    LogCategory.GENERAL,
+    LogCategory.GENERAL, LogCategory.TRANSFER
 ]);
 
 export class logger {

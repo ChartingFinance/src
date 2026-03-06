@@ -1,13 +1,16 @@
 import { Currency } from './currency.js';
 import { InstrumentType } from './instrument.js';
 import { Metric } from './model-asset.js';
-import { FundTransferResult, AssetAppreciationResult, CapitalGainsResult, MortgageResult, IncomeResult, ExpenseResult, InterestResult, WithholdingResult, IRAContributionResult, CreditMemo } from './results.js';
+import { AssetAppreciationResult, CapitalGainsResult, MortgageResult, IncomeResult, ExpenseResult, InterestResult, WithholdingResult, CreditMemo } from './results.js';
 import { MonthsSpan } from './months-span.js';
 import { logger, LogCategory } from './logger.js';
 import { User } from './user.js';
 import { firstDateInt, lastDateInt } from './asset-queries.js';
 import { activeTaxTable } from './globals.js';
 import { global_propertyTaxDeductionMax, global_user_startAge } from './globals.js';
+import { AccountRouter } from './account-router.js';
+import { PayrollEngine } from './payroll-engine.js';
+import { ExpenseEngine } from './expense-engine.js';
 
 /*
 yearlyGrossIncome
@@ -359,6 +362,8 @@ export class Portfolio {
         this.monthlyCapitalGainsTaxes = [];
 
         this.displayCapitalGainsTaxes = [];
+
+        this.router = new AccountRouter(this.modelAssets);
     }
 
     sortModelAssets(modelAssets) {
@@ -421,6 +426,9 @@ export class Portfolio {
         for (let modelAsset of this.modelAssets) {
             modelAsset.initializeChron();
         }
+
+        this.payroll = new PayrollEngine(this.modelAssets, this.monthly, this.yearly, this.activeUser, this.router);
+        this.expenses = new ExpenseEngine(this.modelAssets, this.monthly, this.activeUser, this.router);
     }
 
     monthlySanityCheck(currentDateInt) {
@@ -582,7 +590,12 @@ export class Portfolio {
         
         else if (currentDateInt.day == 15) {
 
-            this.applyFifteenthDayOfMonth(currentDateInt);            
+            for (let modelAsset of this.modelAssets) {
+                if (!modelAsset.inMonth(currentDateInt)) continue;
+                if (InstrumentType.isHome(modelAsset.instrument)) {
+                    this.expenses.applyPropertyTaxEscrow(modelAsset, currentDateInt);
+                }
+            }
 
         }
         
@@ -622,700 +635,80 @@ export class Portfolio {
         
         // TODO: You can either make contributions or take distributions. Not both.
 
-        // recognize pre-tax calculations
+        // Day 1 payroll pipeline
         for (let modelAsset of this.modelAssets) {
-
             if (!modelAsset.isClosed) {
-                this.applyFirstDayOfMonthPreTaxCalculations(modelAsset, currentDateInt);
+                this.payroll.applyPreTaxCalculations(modelAsset, currentDateInt);
             }
-
         }
 
-        // move money as a result of pre-tax calculations
         for (let modelAsset of this.modelAssets) {
-
             if (!modelAsset.isClosed) {
-                this.applyFirstDayOfMonthPreTaxFundTransfers(modelAsset, currentDateInt);
+                this.payroll.applyPreTaxTransfers(modelAsset);
             }
-
         }
 
-        // 401K or ira required minimum distribution
         for (let modelAsset of this.modelAssets) {
-
             if (!modelAsset.isClosed) {
-                this.calculateFirstDayOfMonthRMDs(currentDateInt, modelAsset);
-                // todo: build this out
-                //this.applyFirstDayOfMonthRMDFundTransfers(modelAsset, currentDateInt);
+                this.payroll.calculateRMDs(currentDateInt, modelAsset);
             }
-
         }
 
-        // compute net income for income assets (gross - FICA - estimated income tax - pre-tax contributions)
         for (let modelAsset of this.modelAssets) {
-        
-            this.computeNetIncome(modelAsset);
-        
+            if (!modelAsset.isClosed) {
+                this.payroll.computeNetIncome(modelAsset);
+            }
         }
 
-        // special post tax calculation for Roth IRA because it's special
         for (let modelAsset of this.modelAssets) {
-
             if (!modelAsset.isClosed) {
                 if (InstrumentType.isMonthlySalary(modelAsset.instrument)) {
-                    this.calculateFirstDayOfMonthPostTaxRothIRAContribution(modelAsset);
+                    this.payroll.calculateRothIRAContribution(modelAsset);
                 }
-                this.calculateFirstDayOfMonthPostTax(modelAsset);                
+                this.payroll.calculatePostTaxContributions(modelAsset);
             }
-
         }
 
         for (let modelAsset of this.modelAssets) {
-
-            if (!modelAsset.isClose) {
-                this.applyFirstDayOfMonthPostTaxFundTransfers(modelAsset);
-            }
-
-        }
-
-    }
-
-    applyFirstDayOfMonthPreTaxCalculations(modelAsset, currentDateInt) {       
-        
-        if (InstrumentType.isMonthlyIncome(modelAsset.instrument)) {
-
-            let result = modelAsset.applyMonthly();
-            this.monthly.addResult(result);
-
-            // manually put the income into the proper monthly results
-            if (InstrumentType.isSocialSecurity(modelAsset.instrument)) {
-                //taxableIncome.multiply(0.85); // maximum allowed for social security // Did this change for tax year 2025?
-                this.monthly.socialSecurity.add(modelAsset.incomeCurrency);
-            } else if (InstrumentType.isPension(modelAsset.instrument)) {
-                this.monthly.pension.add(modelAsset.incomeCurrency);
-            } else {              
-
-                // it's self-employed or w2-employed
-                this.applyFirstDayOfMonthPreTaxWithholding(modelAsset);
-
-                // TODO: Can't do 401K on self income, but can do SEP (which is not an instrument right now)
-                // so just allow this but plan for SEP instrument soon
-                this.calculateFirstDayOfMonthPreTaxContributions(modelAsset);
-
-            }
-
-        }
-        else if (InstrumentType.isMortgage(modelAsset.instrument)) {
-
-            let result = modelAsset.applyMonthly();
-            this.monthly.addResult(result);        
-
-        }
-        else if (InstrumentType.isDebt(modelAsset.instrument)) {
-
-            let result = modelAsset.applyMonthly();
-            this.monthly.addResult(result);
-
-        }
-        
-    }
-
-    applyFirstDayOfMonthPreTaxFundTransfers(modelAsset) {
-
-        if (InstrumentType.isMonthlyIncome(modelAsset.instrument)) {
-
-            if (modelAsset.fundTransfers?.length > 0) {
-
-                let runningTransferAmount = Currency.zero();
-                
-                for (const fundTransfer of modelAsset.fundTransfers) {
-
-                    fundTransfer.bind(modelAsset, this.modelAssets);
-                    if (!fundTransfer.toModel) continue;
-
-                    if (InstrumentType.isTaxDeferred(fundTransfer.toModel.instrument)) {
-                    
-                        // should always be an approved amount?
-                        if (fundTransfer.approvedAmount) {
-                            runningTransferAmount.add(fundTransfer.approvedAmount);
-                        } else {
-                            runningTransferAmount.add(fundTransfer.calculate());
-                        }
-
-                        fundTransfer.execute();
-                    }
-                }
-
-                this.monthly.preTaxContribution.add(runningTransferAmount);
-            }            
-        }
-
-        // no reconcilation at this point since we are pre-tax
-    }
-
-    applyFirstDayOfMonthPreTaxWithholding(modelAsset) {
-
-        if (InstrumentType.isMonthlyIncome(modelAsset.instrument)) {
-
-            // TODO: make a test for selfEmployed or Employee
-            if (!InstrumentType.isSocialSecurity(modelAsset.instrument) && !InstrumentType.isPension(modelAsset.instrument)) {                
-
-                let withholding = activeTaxTable.calculateFICATax(modelAsset.isSelfEmployed, modelAsset.incomeCurrency.copy());
-                activeTaxTable.addYearlySocialSecurity(withholding.socialSecurity);
-
-                withholding.flipSigns();
-                modelAsset.medicareCurrency.add(withholding.medicare);
-                modelAsset.socialSecurityCurrency.add(withholding.socialSecurity);
-                this.monthly.addWithholdingResult(withholding);
-
-                modelAsset.creditMemos.push(new CreditMemo(withholding.fica(), 'FICA withholding', modelAsset.currentDateInt));
-
+            if (!modelAsset.isClosed) {
+                this.payroll.applyPostTaxTransfers(modelAsset);
             }
         }
 
-    }
-
-    computeNetIncome(modelAsset) {        
-
-        if (!InstrumentType.isMonthlyIncome(modelAsset.instrument)) {
-            return;
-        }
-
-        let netIncome = modelAsset.incomeCurrency.copy();
-
-        // subtract per-asset FICA (Social Security + Medicare, stored as negative values on model asset)
-        let socialSecurity = modelAsset.socialSecurityCurrency;
-        let medicare = modelAsset.medicareCurrency;
-        netIncome.add(socialSecurity); // negative, so add subtracts
-        netIncome.add(medicare);
-
-        // subtract pre-tax 401K contributions (per-asset)
-        let four01KContribution = modelAsset.four01KContributionCurrency;
-        if (four01KContribution.amount > 0) {
-            netIncome.subtract(four01KContribution);
-        }
-
-        // subtract traditional IRA contributions (per-asset)
-        let iraContribution = modelAsset.tradIRAContributionCurrency;
-        if (iraContribution.amount > 0) {
-            netIncome.subtract(iraContribution);
-        }
-
-        // estimate income tax withholding using annualized monthly data
-        // this.monthly now has contributions properly wired:
-        //   iraContribution = traditional IRA only (deductible)
-        //   four01KContribution = traditional 401K (deductible)
-        let yearlyEstimate = this.monthly.copy().multiply(12.0);
-        yearlyEstimate.limitDeductions(this.activeUser);
-        let yearlyTaxableIncome = activeTaxTable.calculateYearlyTaxableIncome(yearlyEstimate);
-        let monthlyIncomeTax = activeTaxTable.calculateYearlyIncomeTax(yearlyTaxableIncome).divide(12.0);
-        
-        netIncome.subtract(monthlyIncomeTax);
-        if (modelAsset.isSelfEmployed) {
-            modelAsset.estimatedIncomeTaxCurrency = monthlyIncomeTax;
-        } else {
-            modelAsset.withheldIncomeTaxCurrency = monthlyIncomeTax;
-        }
-
-        modelAsset.incomeTaxCurrency = monthlyIncomeTax;        
-        modelAsset.netIncomeCurrency = netIncome;
-
-        // Record payroll withholding in the monthly package (negative = outflow)
-        const withheldTax = monthlyIncomeTax.copy().flipSign();
-        this.monthly.incomeTax.add(withheldTax);
-        modelAsset.creditMemos.push(new CreditMemo(withheldTax.copy(), 'Income tax withholding', modelAsset.currentDateInt));
-
-        logger.log(LogCategory.TRANSFER, `computeNetIncome: ${modelAsset.displayName} gross=${modelAsset.incomeCurrency.toString()} net=${netIncome.toString()}`);
-
-    }
-
-    calculateFirstDayOfMonthRMDs(currentDateInt, modelAsset) {
-
-        if (!InstrumentType.isTaxDeferred(modelAsset.instrument))
-            return;
-    
-        if (this.activeUser.rmdRequired()) {
-            // if the user is 73 or older, then they must take RMDs
-            let rmd = activeTaxTable.calculateMonthlyRMD(currentDateInt, this.activeUser, modelAsset);
-            modelAsset.addToMetric(Metric.RMD, rmd);
-        }
-
-    }
-
-    applyFirstDayOfMonthIncomeFundTransfers(modelAsset, currentDateInt) {
-        if (!InstrumentType.isMonthlyIncome(modelAsset.instrument)) {
-            return;
-        }
-
-        // Use net income (after taxes and pre-tax contributions) as the base for fund transfers
-        const netIncome = modelAsset.netIncomeCurrency.copy();
-        let runningTransferAmount = new Currency(0.0);
-
-        if (modelAsset.fundTransfers?.length > 0) {
-            for (const fundTransfer of modelAsset.fundTransfers) {
-                if (!fundTransfer.isActiveForMonth(currentDateInt.month)) continue;
-                fundTransfer.bind(modelAsset, this.modelAssets);
-                if (!fundTransfer.toModel) continue;
-                const incomeAmount = fundTransfer.calculate();
-                fundTransfer.execute();
-
-                this.handleFundTransferContribution(fundTransfer, incomeAmount);
-                runningTransferAmount.add(incomeAmount);
-            }
-        }
-
-        const remainingIncome = new Currency(netIncome.amount - runningTransferAmount.amount);
-        if (remainingIncome.amount < 0) {
-            logger.log(LogCategory.SANITY, `applyFirstDayOfMonthIncomeFundTransfers: ${modelAsset.displayName} fund transfers (${runningTransferAmount.toString()}) exceed net income (${netIncome.toString()}) by ${remainingIncome.toString()}`);
-        }
-        if (remainingIncome.amount > 0) {
-            this.creditToFirstExpensableAccount(remainingIncome, `Remaining income from ${modelAsset.displayName}`);
-        }
-    }
-    
-    handleFundTransferContribution(fundTransfer, incomeAmount) {
-        
-        const targetInstrument = fundTransfer.toModel.instrument;
-
-        // 401K and IRA contributions are already wired to this.monthly
-        // in calculateFirstDayOfMonthPreTaxContributions and
-        // Roth contributions are wired to this.monthly
-        // in calculateFirstDayOfMonthPostTaxContributions
-        if (InstrumentType.isMortgage(targetInstrument)) {
-            this.monthly.mortgagePrincipal.add(incomeAmount);
-            logger.log(LogCategory.TRANSFER, 'handleFundTransferContribution: ' + fundTransfer.toModel.displayName + ' direct mortgage payment of ' + incomeAmount.toString());
-        }
-
-    }
-
-    calculateFirstDayOfMonthPreTaxContributions(modelAsset) {
-
-        let total401KContribution = Currency.zero();
-        let totalIRAContribution = Currency.zero();
-
-        if (InstrumentType.isMonthlySalary(modelAsset.instrument)) {                                   
-            
-            for (let fundTransfer of modelAsset.fundTransfers) {
-                
-                fundTransfer.bind(modelAsset, this.modelAssets);
-                if (!fundTransfer.toModel) continue;
-
-                let toModelInstrument = fundTransfer.toModel.instrument;
-                let contribution = Currency.zero();
-
-                if (InstrumentType.isTaxDeferred(toModelInstrument)) {
-
-                    delete fundTransfer.approvedAmount;
-                    fundTransfer.useGrossIncome = true;
-                    contribution = fundTransfer.calculate();
-
-                    if (InstrumentType.is401K(toModelInstrument)) {
-
-                        let contributionLimit = activeTaxTable.four01KContributionLimit(this.activeUser);
-                        if (this.yearly.four01KContribution.amount + this. monthly.four01KContribution.amount + total401KContribution.amount + contribution.amount > contributionLimit.amount) {
-                            contribution = new Currency(contributionLimit.amount - this.yearly.four01KContribution.amount - this.monthly.four01KContribution.amount - total401KContribution.amount);                            
-                        }
-
-                        fundTransfer.fromModel.four01KContributionCurrency.add(contribution);
-                        total401KContribution.add(contribution);
-
-                    }
-
-                    else if (InstrumentType.isIRA(toModelInstrument) && !InstrumentType.isRothIRA(toModelInstrument)) {
-                    
-                        let contributionLimit = activeTaxTable.iraContributionLimit(this.activeUser);                    
-                        if (this.yearly.tradIRAContribution.amount + this. monthly.tradIRAContribution.amount + totalIRAContribution.amount + contribution.amount > contributionLimit.amount) {
-                            contribution = new Currency(totalIRAContributionLimit.amount - this.yearly.tradIRAContribution.amount - this.monthly.tradIRAContribution.amount - totalIRAContribution.amount);
-                        }
-
-                        fundTransfer.fromModel.tradIRAContributionCurrency.add(contribution);
-                        totalIRAContribution.add(contribution);
-
-                    }
-
-                    // Set this because we know this is a tax deferred (pretax) approved amout. Don't want to approve an amount outside this lane!
-                    fundTransfer.approvedAmount = contribution.copy();
-
-                }                           
-            }
-        }
-
-        this.monthly.four01KContribution.add(total401KContribution);
-        this.monthly.tradIRAContribution.add(totalIRAContribution);
-
-    }    
-
-    // Handle the Roth contribution specifically because it is a special case
-    // The Roth contribution limit requires an account of traditional IRA contribution
-    calculateFirstDayOfMonthPostTaxRothIRAContribution(modelAsset) {
-
-        if (InstrumentType.isMonthlySalary(modelAsset.instrument)) {
-
-            let contributionLimit = activeTaxTable.iraContributionLimit(this.activeUser);            
-            let totalContribution = Currency.zero();                        
-            
-            for (let fundTransfer of modelAsset.fundTransfers) {
-                
-                fundTransfer.bind(modelAsset, this.modelAssets);
-                if (!fundTransfer.toModel) continue;
-
-                let toModelInstrument = fundTransfer.toModel.instrument;
-                let contribution = Currency.zero();
-
-                if (InstrumentType.isRothIRA(toModelInstrument)) {
-
-                    delete fundTransfer.approvedAmount;
-                    fundTransfer.useNetIncome = true;
-                    contribution = fundTransfer.calculate();
-
-                    if (this.yearly.tradIRAContribution.amount + this.yearly.rothIRAContribution.amount + 
-                        this.monthly.tradIRAContribution.amount + this.monthly.rothIRAContribution.amount + 
-                        totalContribution.amount + contribution.amount > contributionLimit.amount) {
-                        
-                            contribution = new Currency(contributionLimit.amount - 
-                                this.yearly.tradIRAContribution.amount - this.yearly.rothIRAContribution.amount - 
-                                this.monthly.tradIRAContribution.amount - this.monthly.rothIRAContribution.amount -
-                                totalContribution.amount - contribution.amount);
-                            }
-                            
-                    modelAsset.rothIRAContributionCurrency.add(contribution);
-                    fundTransfer.approvedAmount = contribution.copy();
-
-                    totalContribution.add(contribution);                
-                    this.monthly.rothIRAContribution.add(totalContribution);
-
-                }             
-            }                        
-        }              
-        
-    }
-    
-    calculateFirstDayOfMonthPostTax(modelAsset) {
-
-        if (!InstrumentType.isMonthlyIncome(modelAsset.instrument)) return;
-
-        let totalContribution = Currency.zero();
-
-        for (let fundTransfer of modelAsset.fundTransfers) {
-                
-            fundTransfer.bind(modelAsset, this.modelAssets);
-            if (!fundTransfer.toModel) continue;
-
-            let toModelInstrument = fundTransfer.toModel.instrument;
-            let contribution = Currency.zero();
-
-            if (!InstrumentType.isTaxDeferred(toModelInstrument)) {
-
-                delete fundTransfer.approvedAmount;
-                fundTransfer.useNetIncome = true;
-                contribution = fundTransfer.calculate();
-
-                if (totalContribution.amount + contribution.amount > modelAsset.netIncomeCurrency.amount) {
-                        
-                    contribution = new Currency(modelAsset.netIncomeCurrency.amount - totalContribution.amount); 
-                    fundTransfer.fromModel.rothIRAContributionCurrency.add(contribution);
-                    totalContribution.add(contribution);
-                    fundTransfer.approvedAmount = contribution.copy();        
-                
-                }
-                
-                totalContribution.add(contribution);
-            }
-        }
-
-        console.assert(totalContribution.amount <= modelAsset.netIncomeCurrency.amount,
-            `Post-tax contributions (${totalContribution.amount}) exceed net income (${modelAsset.netIncomeCurrency.amount}) for ${modelAsset.displayName}`);
-
-    }
-
-    applyFirstDayOfMonthPostTaxFundTransfers(modelAsset) {
-
-        if (InstrumentType.isMonthlyIncome(modelAsset.instrument)) {
-
-            let runningTransferAmount = Currency.zero();
-
-            if (modelAsset.fundTransfers?.length > 0) {                
-                
-                for (const fundTransfer of modelAsset.fundTransfers) {
-
-                    fundTransfer.bind(modelAsset, this.modelAssets);
-                    if (!fundTransfer.toModel) continue;
-
-                    // This was handled by pre tax calculations and transfers
-                    if (!InstrumentType.isTaxDeferred(fundTransfer.toModel.instrument)) {
-                    
-                        // should always be an approved amount?
-                        if (fundTransfer.approvedAmount) {
-                            runningTransferAmount.add(fundTransfer.approvedAmount);
-                        } else {
-                            runningTransferAmount.add(fundTransfer.calculate());
-                        }
-
-                        fundTransfer.execute();
-                    }
-
-                }
-            }           
-
-            if (runningTransferAmount.amount < modelAsset.netIncomeCurrency.amount) {
-                let delta = new Currency(modelAsset.netIncomeCurrency.amount - runningTransferAmount.amount);
-                const note = `Remaining income from ${modelAsset.displayName}`;
-                modelAsset.debit(delta, note);
-                this.creditToFirstTaxableAccount(delta, note);
-            }
-
-        }
-
-        // no reconcilation at this point since we are pre-tax
-    }
-
-    calculateGrossWithdrawalForShortfall(netShortfall, modelAsset) {
-        // 1. Estimate current marginal LTCG bracket based strictly on base income (W-2, etc)
-        const yearlyEstimate = this.monthly.copy().multiply(12.0);
-        yearlyEstimate.limitDeductions(this.activeUser);
-        const taxableIncome = activeTaxTable.calculateYearlyTaxableIncome(yearlyEstimate);
-    
-        // Quick heuristic for marginal LTCG rate (0%, 15%, 20%)
-        const ltcgRate = activeTaxTable.getMarginalLTCGRate(taxableIncome); 
-    
-        // 2. Get the asset's gain ratio (g)
-        const gainRatio = modelAsset.getUnrealizedGainRatio();
-    
-        // 3. Apply the Gross-Up Formula: W = X / (1 - (t * g))
-        const denominator = 1.0 - (ltcgRate * gainRatio);
-    
-        // Prevent division by zero or negative bounds
-        if (denominator <= 0) return netShortfall.copy(); 
-    
-        return new Currency(netShortfall.amount / denominator);
-    }
-
-    applyFifteenthDayOfMonth(currentDateInt) {
-
-        // Accumulate monthly property tax escrow for homes
-        for (let modelAsset of this.modelAssets) {
-            if (!modelAsset.inMonth(currentDateInt)) continue;            
-            if (InstrumentType.isHome(modelAsset.instrument)) {
-                this.applyFifteenthDayOfMonthHome(modelAsset, currentDateInt);
-            } 
-        }
-
-    }
-
-    applyFifteenthDayOfMonthHome(modelAsset, currentDateInt) {    
-        
-        if (InstrumentType.isHome(modelAsset.instrument)) {
-
-            if (modelAsset.annualTaxRate.rate != 0) {
-            
-                const escrow = modelAsset.addMonthlyTaxToEscrow();             
-                this.monthly.propertyTaxes.subtract(escrow);
-                modelAsset.creditMemos.push(new CreditMemo(escrow, 'Property tax escrow', modelAsset.currentDateInt));
-            
-
-                // TODO: 
-                if (modelAsset.monthlyTaxEscrow.amount) {
-                    for (const fundTransfer of modelAsset.fundTransfers) {
-                        if (!fundTransfer.isActiveForMonth(currentDateInt.month)) continue;
-                        fundTransfer.bind(modelAsset, this.modelAssets);
-                        if (!fundTransfer.toModel) continue;
-
-                        // do the payment manually
-                        fundTransfer.toModel.debit(escrow);
-                        modelAsset.monthlyTaxEscrow.zero();
-                    }
-                }
-
-            }
-        }
     }
 
     applyLastDayOfMonth(currentDateInt) {
 
         // apply expenses
         for (let modelAsset of this.modelAssets) {
-
-            this.applyLastDayOfMonthExpenseFundTransfers(modelAsset, currentDateInt);
-
+            if (!modelAsset.isClosed) {
+                this.expenses.applyExpenseTransfers(modelAsset, currentDateInt);
+            }
         }
 
         // ensure RMDs are handled
-        for (let modelAsset of this.modelAssets) {            
-
-            this.ensureRMDDistributions(modelAsset);
+        for (let modelAsset of this.modelAssets) {
+            if (!modelAsset.isClosed) {
+                this.expenses.ensureRMDs(modelAsset);
+            }
         }
 
         // recognize asset gains
         // Doing this after applying expenses is pessimistic
         // Maybe an optimistic option to do this prior to expenses?
         for (let modelAsset of this.modelAssets) {
-                  
-            this.applyLastDayOfMonthCalculations(modelAsset);                
-            
+            if (!modelAsset.isClosed) {
+                this.expenses.applyAssetGrowth(modelAsset);
+            }
         }
 
         for (let modelAsset of this.modelAssets) {
-
-            modelAsset.applyLastDayOfMonth(currentDateInt);
-
+            if (!modelAsset.isClosed) {
+                modelAsset.applyLastDayOfMonth(currentDateInt);
+            }
         }
 
         this.applyMonthlyTaxes();
-
-    }
-
-    applyLastDayOfMonthCalculations(modelAsset) {
-
-        if (InstrumentType.isCapital(modelAsset.instrument) || InstrumentType.isIncomeAccount(modelAsset.instrument) || InstrumentType.isMonthlyExpense(modelAsset.instrument)) {
-            let result = modelAsset.applyMonthly();
-            this.monthly.addResult(result);
-
-            /*
-            // TODO: revisit and see if this is the best spot to log capital gains
-            // Compute estimated tax for non-Home capital assets (Home property tax is handled on day 15)
-            if (InstrumentType.isCapital(modelAsset.instrument) && !InstrumentType.isHome(modelAsset.instrument) && modelAsset.annualTaxRate.rate !== 0) {
-                const tax = new Currency(modelAsset.finishCurrency.amount * modelAsset.annualTaxRate.asMonthly()).flipSign();
-                modelAsset.estimatedTaxCurrency.add(tax);
-                modelAsset.creditMemos.push(new CreditMemo(tax, 'Estimated tax', modelAsset.currentDateInt));
-                this.monthly.estimatedTaxes.add(tax);
-            }
-            */
-        }
-
-    }
-
-    applyLastDayOfMonthExpenseFundTransfers(modelAsset, currentDateInt) {
-
-        // Homes have property taxes and expenses are self-explanatory
-        if (!InstrumentType.isMonthlyExpense(modelAsset.instrument)) {
-            return;
-        }
-
-        const modelAssetExpense = modelAsset.finishCurrency.copy();
-        let runningExpenseAmount = new Currency(0.0);
-        if (modelAsset.fundTransfers?.length > 0) {
-            
-            for (const fundTransfer of modelAsset.fundTransfers) {
-                if (!fundTransfer.isActiveForMonth(currentDateInt.month)) continue;
-                fundTransfer.bind(modelAsset, this.modelAssets);
-                if (!fundTransfer.toModel) continue;
-                const expenseAmount = fundTransfer.calculate();
-                const fundTransferResult = fundTransfer.execute();
-
-                this.handleFundTransferExpense(fundTransfer, fundTransferResult, modelAsset.displayName);
-                runningExpenseAmount.add(expenseAmount);
-            }
-    
-            // =========================================================================
-            // INSERTION POINT 1: Expense Overflow (Partial Shortfall)
-            // Replaces the old "const extraAmount = ..." logic
-            // =========================================================================
-            const netShortfall = new Currency(runningExpenseAmount.amount - modelAssetExpense.amount);
-            if (netShortfall.amount > 0) {
-                logger.log(LogCategory.TRANSFER, `Portfolio.applyFundTransfersForExpense: ${modelAsset.displayName} expensing ${netShortfall.toString()} from taxable account (Grossed Up)`);
-                
-                const targetAsset = this.getFirstTaxableAccount(); 
-                if (targetAsset) {
-                    const grossWithdrawal = this.calculateGrossWithdrawalForShortfall(netShortfall, targetAsset);
-                    const result = targetAsset.debit(grossWithdrawal, `Grossed-up expense overflow for ${modelAsset.displayName}`);
-                    
-                    if (result && result.realizedGain && result.realizedGain.amount > 0) {
-                        this.monthly.longTermCapitalGains.add(result.realizedGain);
-                        
-                        // Isolate tax liability to prevent the death-spiral loop
-                        const taxLiability = new Currency(grossWithdrawal.amount - netShortfall.amount);
-                        this.monthly.estimatedTaxes.add(taxLiability); 
-                    }
-                }
-            }
-        } else {
-            // =========================================================================
-            // INSERTION POINT 2: Full Expense (Total Shortfall)
-            // Replaces the old "this.debitFromFirstTaxableAccount" fallback
-            // =========================================================================
-            const netShortfall = modelAssetExpense.copy().flipSign();
-            logger.log(LogCategory.TRANSFER, `Portfolio.applyFundTransfersForExpense: ${modelAsset.displayName} expensing ${netShortfall.toString()} from taxable account (Grossed Up)`);
-            
-            const targetAsset = this.getFirstTaxableAccount(); 
-            if (targetAsset) {
-                const grossWithdrawal = this.calculateGrossWithdrawalForShortfall(netShortfall, targetAsset);
-                const result = targetAsset.debit(grossWithdrawal, `Grossed-up expense debit for ${modelAsset.displayName}`);
-                
-                if (result && result.realizedGain && result.realizedGain.amount > 0) {
-                    this.monthly.longTermCapitalGains.add(result.realizedGain);
-                    
-                    // Isolate tax liability to prevent the death-spiral loop
-                    const taxLiability = new Currency(grossWithdrawal.amount - netShortfall.amount);
-                    this.monthly.estimatedTaxes.add(taxLiability); 
-                }
-            }
-        }
-
-    }
-
-     handleFundTransferExpense(fundTransfer, fundTransferResult, modelAssetName) {
-         const targetInstrument = fundTransfer.toModel.instrument;
-         const change = fundTransferResult.toAssetChange.copy();
-         const realizedGain = fundTransferResult.realizedGain.copy();
-
-         change.flipSign(); // flip sign because it's an expense
-
-         if (change.amount === 0) return;
-
-         if (InstrumentType.isTaxableAccount(targetInstrument)) {
-             logger.log(LogCategory.TRANSFER, `Portfolio.applyFundTransfersForExpense: ${modelAssetName} expensing ${fundTransfer.toModel.displayName} generated longTermCapitalGains of ${realizedGain.toString()}`);
-             this.monthly.longTermCapitalGains.add(realizedGain); // Fix: Uses actual gain, not the full withdrawal!
-         } else if (InstrumentType.isTaxDeferred(targetInstrument)) {
-             logger.log(LogCategory.TRANSFER, `Portfolio.applyFundTransfersForExpense: ${modelAssetName} expensing ${fundTransfer.toModel.displayName} generated ordinaryIncome of ${change.toString()}`);
-             if (InstrumentType.isIRA(targetInstrument)) {
-                 this.monthly.tradIRADistribution.add(change);
-             } else if (InstrumentType.is401K(targetInstrument)) {
-                 this.monthly.four01KDistribution.add(change);
-             } else {
-                 logger.log(LogCategory.TRANSFER, `Portfolio.applyLastDayOfMonthExpenseFundTransfers: unhandled isTaxDeferred ${fundTransfer.toDisplayName}`);
-             }
-         } else if (InstrumentType.isTaxFree(targetInstrument)) {
-             logger.log(LogCategory.TRANSFER, `Portfolio.applyFundTransfersForExpense: ${modelAssetName} expensing ${fundTransfer.toModel.displayName} generated no tax impact`);
-             this.monthly.rothIRADistribution.add(change);
-         }
-     }
-
-    ensureRMDDistributions(modelAsset) {
-
-        if (!InstrumentType.isTaxDeferred(modelAsset.instrument))
-            return;
-
-        let rmd = modelAsset.rmdCurrency.copy();
-        let distributions = new Currency();
-
-        if (this.activeUser.rmdRequired()) {
-            
-            if (InstrumentType.isIRA(modelAsset.instrument))
-                distributions = modelAsset.tradIRADistributionCurrency.copy();
-            else if (InstrumentType.is401K(modelAsset.instrument))
-                distributions = modelAsset.four01KDistributionCurrency.copy();            
-            else
-                logger.log(LogCategory.SANITY, 'Portfolio.ensureRMDDistributions: should not be here!');
-
-        }
-
-        if (rmd.amount > distributions.amount) {
-
-            let remains = new Currency(rmd.amount - distributions.amount);
-
-            if (InstrumentType.isIRA(modelAsset.instrument)) {
-                modelAsset.addToMetric(Metric.TRAD_IRA_DISTRIBUTION, remains);
-                this.monthly.tradIRADistribution.add(remains);
-            } else {
-                modelAsset.addToMetric(Metric.FOUR_01K_DISTRIBUTION, remains);
-                this.monthly.four01KDistribution.add(remains);
-            }
-
-            const rmdNote = `RMD distribution from ${modelAsset.displayName}`;
-            modelAsset.debit(remains, rmdNote);
-            this.creditToFirstExpensableAccount(remains, rmdNote);
-
-        }
 
     }
 
@@ -1425,7 +818,7 @@ export class Portfolio {
 
                 const note = `Asset closure proceeds from ${modelAsset.displayName}`;
                 modelAsset.debit(extraAmount, note, true); // true = skipGain (already handled)
-                this.creditToFirstExpensableAccount(extraAmount, note);
+                this.router.creditToExpensable(extraAmount, note);
             }
 
         }
@@ -1435,7 +828,7 @@ export class Portfolio {
 
             const note = `Asset closure proceeds from ${modelAsset.displayName}`;
             modelAsset.debit(modelAssetValue, note, true); // true = skipGain (already handled)
-            this.creditToFirstExpensableAccount(modelAssetValue, note);
+            this.router.creditToExpensable(modelAssetValue, note);
 
         }
 
@@ -1497,7 +890,7 @@ export class Portfolio {
             const taxBill = new Currency(taxDifference);
             
             // This might trigger your new Gross-Up Shortfall logic if cashFlow is empty!
-            this.debitFromFirstExpensableAccount(taxBill, 'Annual IRS Tax Bill Due'); 
+            this.router.debitFromExpensable(taxBill, 'Annual IRS Tax Bill Due'); 
             
         } else if (taxDifference < 0) {
             // OVERPAID: The user gets a tax refund!
@@ -1506,67 +899,11 @@ export class Portfolio {
             logger.log(LogCategory.TAX, `Annual True-Up: User overpaid. Refunding ${refundAmount}.`);
             const taxRefund = new Currency(refundAmount);
             
-            this.creditToFirstExpensableAccount(taxRefund, 'IRS Tax Refund');
+            this.router.creditToExpensable(taxRefund, 'IRS Tax Refund');
         }
 
         // 3. Reset the annual accumulators for the next year
         this.resetAnnualAccumulators();
-    }
-
-    applyToFirstMatchingAccount(predicate, operation, amount, note = '') {
-        // When using the expensable predicate, search in priority order
-        // (liquid/taxable first, tax-advantaged last) instead of display
-        // sort order — avoids draining Roth/IRA before brokerage accounts.
-        if (predicate === InstrumentType.isExpensable) {
-            for (const instrumentKey of InstrumentType.expensablePriority) {
-                const match = this.modelAssets.find(
-                    a => a.instrument === instrumentKey && !a.isClosed
-                );
-                if (match) return match[operation](amount, note);
-            }
-        } else {
-            for (let modelAsset of this.modelAssets) {
-                if (predicate(modelAsset.instrument)) {
-                    return modelAsset[operation](amount, note);
-                }
-            }
-        }
-        return { assetChange: Currency.zero(), realizedGain: Currency.zero() };
-    }
-
-    getFirstExpensableAccount() {
-        for (let modelAsset of this.modelAssets) {
-            if (InstrumentType.isExpensableAccount(modelAsset.instrument)) {
-                return modelAsset;
-            }
-        }
-        return null; // Handle case where user is completely out of taxable funds
-    }
-
-    creditToFirstExpensableAccount(amount, note = '') {
-        return this.applyToFirstMatchingAccount(InstrumentType.isExpensable, 'credit', amount, note);
-    }
-
-    debitFromFirstExpensableAccount(amount, note = '') {
-        return this.applyToFirstMatchingAccount(InstrumentType.isExpensable, 'debit', amount, note);
-    }
-
-    // Add this helper to portfolio.js
-    getFirstTaxableAccount() {
-        for (let modelAsset of this.modelAssets) {
-            if (InstrumentType.isTaxableAccount(modelAsset.instrument)) {
-                return modelAsset;
-            }
-        }
-        return null; // Handle case where user is completely out of taxable funds
-    }
-
-    creditToFirstTaxableAccount(amount, note = '') {
-        return this.applyToFirstMatchingAccount(InstrumentType.isTaxableAccount, 'credit', amount, note);
-    }
-
-    debitFromFirstTaxableAccount(amount, note = '') {
-        return this.applyToFirstMatchingAccount(InstrumentType.isTaxableAccount, 'debit', amount, note);
     }
 
     applyYear(currentDateInt) {
@@ -1575,16 +912,6 @@ export class Portfolio {
             if (modelAsset.inMonth(currentDateInt)) {
                 if (InstrumentType.isMonthlyIncome(modelAsset.instrument))
                     modelAsset.applyYearly();
-
-                // Reassess property tax annually based on current home value
-                if (InstrumentType.isHome(modelAsset.instrument) && modelAsset.annualTaxRate.rate !== 0) {
-                    modelAsset.assessedAnnualPropertyTax = new Currency(
-                        modelAsset.finishCurrency.amount * modelAsset.annualTaxRate.rate
-                    );
-                    modelAsset.monthlyPropertyTaxEscrow = new Currency(
-                        modelAsset.assessedAnnualPropertyTax.amount / 12
-                    );
-                }
             }
         }
 
