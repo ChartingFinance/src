@@ -887,7 +887,12 @@ applyMonthlyExpense() {
   }
 
   isFinishDateInt(d) {
-    return d && this.finishDateInt.year === d.year && this.finishDateInt.month === d.month;
+    if (this.isClosed) {
+      return false;
+    }
+    else {
+      return d && this.finishDateInt.year === d.year && this.finishDateInt.month === d.month;
+    }
   }
 
   sortIndex() {
