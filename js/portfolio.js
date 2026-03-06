@@ -9,6 +9,7 @@ import { firstDateInt, lastDateInt } from './asset-queries.js';
 import { activeTaxTable } from './globals.js';
 import { global_propertyTaxDeductionMax, global_user_startAge } from './globals.js';
 import { AccountRouter } from './engines/account-router.js';
+import { RealEstateEngine } from './engines/real-estate-engine.js';
 import { PayrollEngine } from './engines/payroll-engine.js';
 import { ExpenseEngine } from './engines/expense-engine.js';
 
@@ -24,7 +25,7 @@ yearlyWithheldTaxes (This is the sum of all the monthly estimates your engine cu
 
 export const FINANCIAL_FIELDS = [
     'employedIncome', 'selfIncome', 'socialSecurity', 'assetAppreciation',
-    'expense', 'fica', 'incomeTax', 'estimatedTaxes',
+    'expense', 'medicare', 'incomeTax', 'estimatedTaxes',
     'preTaxContribution', 'postTaxContribution',
     'tradIRAContribution', 'four01KContribution', 'rothIRAContribution',
     'tradIRADistribution', 'four01KDistribution', 'rothIRADistribution',
@@ -102,6 +103,15 @@ export class FinancialPackage {
         let income = this.employedIncome.copy();
         income.add(this.selfIncome);
         return income;
+        
+    }
+
+    fica() {
+
+        let total = this.medicare.copy();
+        total.add(this.socialSecurity);
+        return total;
+
     }
 
     ordinaryIncome() {
@@ -155,7 +165,7 @@ export class FinancialPackage {
     totalTaxes() {
 
         let taxes = this.incomeTax.copy();
-        taxes.add(this.fica);
+        taxes.add(this.fica());
         taxes.add(this.longTermCapitalGainsTax);
         //taxes.add(this.propertyTaxes);
         taxes.add(this.estimatedTaxes);
@@ -311,6 +321,7 @@ export class FinancialPackage {
 
     addAssetAppreciationResult(assetAppreciationResult) {
         this.assetAppreciation.add(assetAppreciationResult.growth);
+        this.propertyTaxes.add(assetAppreciationResult.tax);
     }
 
     addCapitalGainsResult(capitalGainsResult) {
@@ -338,7 +349,8 @@ export class FinancialPackage {
     }
 
     addWithholdingResult(withholdingResult) { 
-        this.fica.add(withholdingResult.fica());
+        this.medicare.add(withholdingResult.medicare);
+        this.socialSecurity.add(withholdingResult.socialSecurity);
         this.incomeTax.add(withholdingResult.income);        
     }
 }
@@ -429,6 +441,7 @@ export class Portfolio {
 
         this.payroll = new PayrollEngine(this.modelAssets, this.monthly, this.yearly, this.activeUser, this.router);
         this.expenses = new ExpenseEngine(this.modelAssets, this.monthly, this.activeUser, this.router);
+        this.realEstate = new RealEstateEngine(this.modelAssets, this.monthly, this.activeAuser, this.router )
     }
 
     monthlySanityCheck(currentDateInt) {
@@ -618,12 +631,13 @@ export class Portfolio {
         for (let modelAsset of this.modelAssets) {
             if (!modelAsset.isClosed) {
                 this.payroll.applyPreTaxCalculations(modelAsset, currentDateInt);
+                this.realEstate.applyPreTaxCalculations(modelAsset);
             }
         }
 
         for (let modelAsset of this.modelAssets) {
             if (!modelAsset.isClosed) {
-                this.payroll.applyPreTaxTransfers(modelAsset);
+                this.payroll.applyPreTaxTransfers(modelAsset);                
             }
         }
 
@@ -633,9 +647,11 @@ export class Portfolio {
             }
         }
 
+        // Two-phase net income: compute household tax once, then allocate proportionally
+        const { householdTax, totalWorkingIncome } = this.payroll.computeHouseholdIncomeTax();
         for (let modelAsset of this.modelAssets) {
             if (!modelAsset.isClosed) {
-                this.payroll.computeNetIncome(modelAsset);
+                this.payroll.applyNetIncome(modelAsset, householdTax, totalWorkingIncome);
             }
         }
 
@@ -651,6 +667,7 @@ export class Portfolio {
         for (let modelAsset of this.modelAssets) {
             if (!modelAsset.isClosed) {
                 this.payroll.applyPostTaxTransfers(modelAsset);
+                this.realEstate.applyPostTaxTransfers(modelAsset);
             }
         }
 

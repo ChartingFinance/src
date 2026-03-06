@@ -84,7 +84,35 @@ export class PayrollEngine {
 
     }
 
-    computeNetIncome(modelAsset) {
+    /**
+     * Phase 1: Compute the household-level monthly income tax estimate once.
+     * Must be called after all applyPreTaxCalculations have run so this.monthly
+     * reflects the full aggregate across all income assets.
+     *
+     * @returns {{ householdTax: Currency, totalWorkingIncome: Currency }}
+     */
+    computeHouseholdIncomeTax() {
+        let yearlyEstimate = this.monthly.copy().multiply(12.0);
+        yearlyEstimate.limitDeductions(this.activeUser);
+        let yearlyTaxableIncome = activeTaxTable.calculateYearlyTaxableIncome(yearlyEstimate);
+        let householdTax = activeTaxTable.calculateYearlyIncomeTax(yearlyTaxableIncome).divide(12.0);
+
+        // Sum working income across all active assets for proportional allocation
+        let totalWorkingIncome = Currency.zero();
+        for (const asset of this.modelAssets) {
+            if (!asset.isClosed && InstrumentType.isWorkingIncome(asset.instrument)) {
+                totalWorkingIncome.add(asset.incomeCurrency);
+            }
+        }
+
+        return { householdTax, totalWorkingIncome };
+    }
+
+    /**
+     * Phase 2: Apply proportional share of household income tax to one asset,
+     * then compute its net income.
+     */
+    applyNetIncome(modelAsset, householdTax, totalWorkingIncome) {
 
         if (!InstrumentType.isWorkingIncome(modelAsset.instrument)) {
             return;
@@ -93,10 +121,8 @@ export class PayrollEngine {
         let netIncome = modelAsset.incomeCurrency.copy();
 
         // subtract per-asset FICA (Social Security + Medicare, stored as negative values on model asset)
-        let socialSecurity = modelAsset.socialSecurityCurrency;
-        let medicare = modelAsset.medicareCurrency;
-        netIncome.add(socialSecurity); // negative, so add subtracts
-        netIncome.add(medicare);
+        netIncome.add(modelAsset.socialSecurityCurrency);  // negative, so add subtracts
+        netIncome.add(modelAsset.medicareCurrency);
 
         // subtract pre-tax 401K contributions (per-asset)
         let four01KContribution = modelAsset.four01KContributionCurrency;
@@ -110,31 +136,28 @@ export class PayrollEngine {
             netIncome.subtract(iraContribution);
         }
 
-        // estimate income tax withholding using annualized monthly data
-        // this.monthly now has contributions properly wired:
-        //   iraContribution = traditional IRA only (deductible)
-        //   four01KContribution = traditional 401K (deductible)
-        let yearlyEstimate = this.monthly.copy().multiply(12.0);
-        yearlyEstimate.limitDeductions(this.activeUser);
-        let yearlyTaxableIncome = activeTaxTable.calculateYearlyTaxableIncome(yearlyEstimate);
-        let monthlyIncomeTax = activeTaxTable.calculateYearlyIncomeTax(yearlyTaxableIncome).divide(12.0);
+        // Proportional share of household income tax for this asset
+        const proportion = totalWorkingIncome.amount > 0
+            ? modelAsset.incomeCurrency.amount / totalWorkingIncome.amount
+            : 0;
+        const assetTax = new Currency(householdTax.amount * proportion);
 
-        netIncome.subtract(monthlyIncomeTax);
+        netIncome.subtract(assetTax);
         if (modelAsset.isSelfEmployed) {
-            modelAsset.estimatedIncomeTaxCurrency = monthlyIncomeTax;
+            modelAsset.estimatedIncomeTaxCurrency = assetTax;
         } else {
-            modelAsset.withheldIncomeTaxCurrency = monthlyIncomeTax;
+            modelAsset.withheldIncomeTaxCurrency = assetTax;
         }
 
-        modelAsset.incomeTaxCurrency = monthlyIncomeTax;
+        modelAsset.incomeTaxCurrency = assetTax;
         modelAsset.netIncomeCurrency = netIncome;
 
         // Record payroll withholding in the monthly package (negative = outflow)
-        const withheldTax = monthlyIncomeTax.copy().flipSign();
+        const withheldTax = assetTax.copy().flipSign();
         this.monthly.incomeTax.add(withheldTax);
         modelAsset.creditMemos.push(new CreditMemo(withheldTax.copy(), 'Income tax withholding', modelAsset.currentDateInt));
 
-        logger.log(LogCategory.TRANSFER, `computeNetIncome: ${modelAsset.displayName} gross=${modelAsset.incomeCurrency.toString()} net=${netIncome.toString()}`);
+        logger.log(LogCategory.TRANSFER, `applyNetIncome: ${modelAsset.displayName} gross=${modelAsset.incomeCurrency.toString()} tax=${assetTax.toString()} (${(proportion * 100).toFixed(1)}%) net=${netIncome.toString()}`);
 
     }
 

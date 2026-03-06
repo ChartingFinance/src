@@ -258,6 +258,7 @@ const RealEstateBehavior = Object.freeze({
   },
 
   applyMonthly(asset) {
+
     // Real estate appreciates like capital but typically has no dividends
     const growth = new Currency(asset.finishCurrency.amount * asset.annualReturnRate.asMonthly());
 
@@ -266,7 +267,14 @@ const RealEstateBehavior = Object.freeze({
     asset.monthlyValueChange.add(asset.growthCurrency);
     asset.creditMemos.push(new CreditMemo(asset.growthCurrency, 'Asset growth', asset.currentDateInt));
 
-    return new AssetAppreciationResult(asset.finishCurrency.copy(), growth, Currency.zero());
+    const tax = new Currency(asset.finishCurrency.amount * asset.annualTaxRate.asMonthly());
+    tax.flipSign(); // taxes are negative
+
+    asset.propertyTaxCurrency.add(tax);
+    asset.creditMemos.push(new CreditMemo(asset.propertyTaxCurrency, 'Property tax', asset.currentDateInt));
+
+    return new AssetAppreciationResult(asset.finishCurrency.copy(), growth, Currency.zero(), tax);
+
   },
 
   computeCashFlow(asset) {
