@@ -60,8 +60,8 @@ export class TaxEngine {
 
         if (modelAsset.annualTaxRate.rate != 0) {
 
-            const escrow = modelAsset.addMonthlyTaxToEscrow();
-            this.monthly.propertyTaxes.subtract(escrow);
+            const escrow = modelAsset.applyMonthlyTaxEscrow();
+            //this.monthly.propertyTaxes.subtract(escrow);
             modelAsset.creditMemos.push(new CreditMemo(escrow, 'Property tax escrow', modelAsset.currentDateInt));
 
             if (modelAsset.monthlyTaxEscrow.amount) {
@@ -72,7 +72,7 @@ export class TaxEngine {
 
                     // do the payment manually
                     fundTransfer.toModel.debit(escrow, modelAsset.displayName + ' property tax', true);
-                    modelAsset.monthlyTaxEscrow.zero();
+                    modelAsset.clearMonthlyTaxEscrow();
                 }
             }
 

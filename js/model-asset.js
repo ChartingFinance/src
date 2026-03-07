@@ -56,7 +56,6 @@ export const Metric = Object.freeze({
   MORTGAGE_INTEREST:            'mortgageInterest',
   MORTGAGE_PRINCIPAL:           'mortgagePrincipal',
   PROPERTY_TAX:                 'propertyTax',
-  MORTGAGE_ESCROW:              'mortgageEscrow',
   TAXABLE_CONTRIBUTION:         'taxableContribution',
   TRAD_IRA_CONTRIBUTION:        'tradIRAContribution',
   ROTH_IRA_CONTRIBUTION:        'rothIRAContribution',
@@ -99,8 +98,7 @@ export const MetricLabel = Object.freeze({
   [Metric.MEDICARE]:                    'Medicare',
   [Metric.MORTGAGE_PAYMENT]:            'Mortgage Payment',
   [Metric.MORTGAGE_INTEREST]:           'Mortgage Interest',
-  [Metric.MORTGAGE_PRINCIPAL]:          'Mortgage Principal',
-  [Metric.MORTGAGE_ESCROW]:             'Mortgage Escrow',  
+  [Metric.MORTGAGE_PRINCIPAL]:          'Mortgage Principal', 
   [Metric.TAXABLE_CONTRIBUTION]:        'Taxable Contribution',
   [Metric.TRAD_IRA_CONTRIBUTION]:       'Traditional IRA Contribution',
   [Metric.ROTH_IRA_CONTRIBUTION]:       'Roth IRA Contribution',
@@ -177,7 +175,7 @@ export class ModelAsset {
     // Chronometer state
     this.finishCurrency = Currency.zero();
     this.monthsRemainingDynamic = this.monthsRemaining;
-    this.monthlyTaxEscrow = Currency.zero();
+    this.monthlyTaxEscrow = Currency.zero();    
     this.#metrics = new MetricSet(this.behavior.relevantMetrics());
   }
 
@@ -407,9 +405,6 @@ export class ModelAsset {
   get propertyTaxCurrency()   { return this.#metrics.get(Metric.PROPERTY_TAX).current; }
   set propertyTaxCurrency(c)  { this.#metrics.get(Metric.PROPERTY_TAX).current = c; }
 
-  get mortgageEscrowCurrency()   { return this.#metrics.get(Metric.MORTGAGE_ESCROW).current; }
-  set mortgageEscrowCurrency(c)  { this.#metrics.get(Metric.MORTGAGE_ESCROW).current = c; }
-
   get taxableContributionCurrency()   { return this.#metrics.get(Metric.TAXABLE_CONTRIBUTION).current; }
   set taxableContributionCurrency(c)  { this.#metrics.get(Metric.TAXABLE_CONTRIBUTION).current = c; }
 
@@ -453,7 +448,6 @@ export class ModelAsset {
   get monthlyMortgageInterests()     { return this.#metrics.get(Metric.MORTGAGE_INTEREST).history; }
   get monthlyMortgagePrincipals()    { return this.#metrics.get(Metric.MORTGAGE_PRINCIPAL).history; }
   get monthlyPropertyTaxes()         { return this.#metrics.get(Metric.PROPERTY_TAX).history; }
-  get monthlyMortgageEscrows()       { return this.#metrics.get(Metric.MORTGAGE_ESCROW).history; }
   get monthlyEstimatedTaxes()        { return this.#metrics.get(Metric.ESTIMATED_INCOME_TAX).history; }
   get monthlyTradIRAContributions()  { return this.#metrics.get(Metric.TRAD_IRA_CONTRIBUTION).history; }
   get monthlyRothIRAContributions()  { return this.#metrics.get(Metric.ROTH_IRA_CONTRIBUTION).history; }
@@ -546,12 +540,17 @@ export class ModelAsset {
 
   // ── Monthly calculations ─────────────────────────────────────────
 
-  addMonthlyTaxToEscrow() {
+  applyMonthlyTaxEscrow() {
 
-    let amount = new Currency(this.finishCurrency.amount * this.annualTaxRate.asMonthly());
-    this.propertyTaxCurrency.add(amount);
+    let amount = this.propertyTaxCurrency.copy().flipSign();
     this.monthlyTaxEscrow.add(amount);
     return amount;
+
+  }
+
+  clearMonthlyTaxEscrow() {
+
+    this.monthlyTaxEscrow.zero();
 
   }
 

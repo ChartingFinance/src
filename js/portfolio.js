@@ -8,7 +8,6 @@ import { firstDateInt, lastDateInt } from './asset-queries.js';
 import { activeTaxTable } from './globals.js';
 import { global_propertyTaxDeductionMax, global_user_startAge } from './globals.js';
 import { AccountRouter } from './engines/account-router.js';
-import { RealEstateEngine } from './engines/real-estate-engine.js';
 import { PayrollEngine } from './engines/payroll-engine.js';
 import { ExpenseEngine } from './engines/expense-engine.js';
 import { TaxEngine } from './engines/tax-engine.js';
@@ -429,11 +428,13 @@ export class Portfolio {
         this.yearly = new FinancialPackage();
         this.total = new FinancialPackage();
 
+        /*
         this.monthlyPropertyTaxes = [];
         this.monthlyIncomeTaxes = [];
         this.monthlyCapitalGainsTaxes = [];
 
         this.displayCapitalGainsTaxes = [];
+        */
 
         for (let modelAsset of this.modelAssets) {
             modelAsset.initializeChron();
@@ -442,7 +443,6 @@ export class Portfolio {
         this.taxes = new TaxEngine(this.modelAssets, this.monthly, this.yearly, this.activeUser, this.router);
         this.payroll = new PayrollEngine(this.modelAssets, this.monthly, this.yearly, this.activeUser, this.router, this.taxes);
         this.expenses = new ExpenseEngine(this.modelAssets, this.monthly, this.activeUser, this.router);
-        this.realEstate = new RealEstateEngine(this.modelAssets, this.monthly, this.activeAuser, this.router )
     }
 
     monthlySanityCheck(currentDateInt) {
@@ -502,13 +502,13 @@ export class Portfolio {
 
     monthlyChron(currentDateInt) {
 
-        this.reportMonthly(currentDateInt);
+        //this.reportMonthly(currentDateInt);
 
         this.monthlySanityCheck(currentDateInt);
 
-        this.monthlyPropertyTaxes.push(this.monthly.propertyTaxes.toCurrency());
-        this.monthlyIncomeTaxes.push(this.monthly.incomeTax.toCurrency());
-        this.monthlyCapitalGainsTaxes.push(this.monthly.longTermCapitalGainsTax.toCurrency());
+        //this.monthlyPropertyTaxes.push(this.monthly.propertyTaxes.toCurrency());
+        //this.monthlyIncomeTaxes.push(this.monthly.incomeTax.toCurrency());
+        //this.monthlyCapitalGainsTaxes.push(this.monthly.longTermCapitalGainsTax.toCurrency());
 
         this.computePerAssetCashFlow();
 
@@ -630,7 +630,6 @@ export class Portfolio {
         for (let modelAsset of this.modelAssets) {
             if (!modelAsset.isClosed) {
                 this.payroll.applyPreTaxCalculations(modelAsset, currentDateInt);
-                this.realEstate.applyPreTaxCalculations(modelAsset);
             }
         }
 
@@ -666,7 +665,6 @@ export class Portfolio {
         for (let modelAsset of this.modelAssets) {
             if (!modelAsset.isClosed) {
                 this.payroll.applyPostTaxTransfers(modelAsset);
-                this.realEstate.applyPostTaxTransfers(modelAsset);
             }
         }
 
