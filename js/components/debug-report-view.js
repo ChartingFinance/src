@@ -58,7 +58,7 @@ class DebugReportView extends LitElement {
                 ['  Mortgage Interest', this._fmt(pkg.mortgageInterest)],
                 ['  Property Tax (Deductible)', this._fmt(pkg.deductiblePropertyTaxes())],
                 ['Taxes', this._fmt(pkg.totalTaxes())],
-                ['  FICA', this._fmt(pkg.fica)],
+                ['  FICA', this._fmt(pkg.fica())],
                 ['  Income Tax', this._fmt(pkg.incomeTax)],
                 ['  LT Cap Gains Tax', this._fmt(pkg.longTermCapitalGainsTax)],
                 ['  Property Tax (Total)', this._fmt(pkg.propertyTaxes)],

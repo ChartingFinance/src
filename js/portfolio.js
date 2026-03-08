@@ -238,7 +238,7 @@ export class FinancialPackage {
         logger.log(category, '  mortgageInterest:          ' + this.mortgageInterest.toString());
         logger.log(category, '  propertyTaxes:             ' + this.deductiblePropertyTaxes().toString());
         logger.log(category, 'taxes:                       ' + this.totalTaxes().toString());
-        logger.log(category, '  fica:                      ' + this.fica.toString());
+        logger.log(category, '  fica:                      ' + this.fica().toString());
         logger.log(category, '  incomeTax:                 ' + this.incomeTax.toString());
         logger.log(category, '  longTermCapitalGainsTax:   ' + this.longTermCapitalGainsTax.toString());
         logger.log(category, '  propertyTaxes:             ' + this.propertyTaxes.toString());
@@ -280,7 +280,7 @@ export class FinancialPackage {
         html += '  <li>mortgageInterest:          ' + this.mortgageInterest.toString() + '</li>';
         html += '  <li>propertyTaxes:             ' + this.deductiblePropertyTaxes().toString() + '</li></ul>';
         html += '<li>taxes:                       ' + this.totalTaxes().toString() + '<ul>';
-        html += '  <li>fica:                      ' + this.fica.toString() + '</li>';
+        html += '  <li>fica:                      ' + this.fica().toString() + '</li>';
         html += '  <li>incomeTax:                 ' + this.incomeTax.toString() + '</li>';
         html += '  <li>longTermCapitalGainsTax:   ' + this.longTermCapitalGainsTax.toString() + '</li>';
         html += '  <li>propertyTaxes:             ' + this.propertyTaxes.toString() + '</li>';
@@ -487,7 +487,7 @@ export class Portfolio {
             }
         };
 
-        check('FICA', ficaMemos, this.monthly.fica.amount);
+        check('FICA', ficaMemos, this.monthly.fica().amount);
         check('Income tax', incomeTaxMemos, this.monthly.incomeTax.amount);
         check('Mortgage interest', mortgageInterestMemos, this.monthly.mortgageInterest.amount);
         check('Mortgage principal', mortgagePrincipalMemos, this.monthly.mortgagePrincipal.amount);
@@ -502,7 +502,7 @@ export class Portfolio {
 
     monthlyChron(currentDateInt) {
 
-        //this.reportMonthly(currentDateInt);
+        this.reportMonthly(currentDateInt);
 
         this.monthlySanityCheck(currentDateInt);
 

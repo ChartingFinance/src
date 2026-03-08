@@ -132,9 +132,8 @@ export class ExpenseEngine {
             }
         }
 
-        // Record on the monthly package
-        this.monthly.mortgagePrincipal.add(modelAsset.mortgagePrincipalCurrency);
-        this.monthly.mortgageInterest.add(modelAsset.mortgageInterestCurrency);
+        // Principal and interest are already recorded on the monthly package
+        // by addResult(MortgageResult) in payroll-engine day 1.
     }
 
     handleExpenseGains(fundTransfer, fundTransferResult, modelAssetName) {
