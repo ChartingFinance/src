@@ -13,7 +13,7 @@ import { Currency } from '../utils/currency.js';
 import { Instrument } from './instrument.js';
 import {
   IncomeResult, ExpenseResult, MortgageResult,
-  AssetAppreciationResult, InterestResult, CreditMemo,
+  AssetAppreciationResult, InterestResult,
 } from '../results.js';
 
 // ── Metric keys (import-free; matches Metric enum in model-asset.js) ────
@@ -152,7 +152,7 @@ const ExpenseBehavior = Object.freeze({
     asset.monthlyValueChange.add(growth);
 
     if (growth.amount !== 0) {
-      asset.creditMemos.push(new CreditMemo(growth, 'Expense growth', asset.currentDateInt));
+      asset.addCreditMemo(growth, 'Expense growth');
     }
 
     return new ExpenseResult(expense, asset.finishCurrency.copy());
@@ -194,7 +194,8 @@ const MortgageBehavior = Object.freeze({
     asset.growthCurrency.subtract(principal);
     asset.monthlyValueChange.subtract(principal);
 
-    asset.creditMemos.push(new CreditMemo(principal.copy().flipSign(), 'Mortgage Principal', asset.currentDateInt));
+    asset.addCreditMemo(principal.copy().flipSign(), 'Mortgage Principal');
+    asset.addCreditMemo(interest, 'Mortgage Interest');
 
     return new MortgageResult(principal, interest, Currency.zero());
   },
@@ -225,7 +226,7 @@ const CapitalBehavior = Object.freeze({
     asset.growthCurrency.add(growth);
     asset.finishCurrency.add(asset.growthCurrency);
     asset.monthlyValueChange.add(asset.growthCurrency);
-    asset.creditMemos.push(new CreditMemo(asset.growthCurrency, 'Asset growth', asset.currentDateInt));
+    asset.addCreditMemo(asset.growthCurrency, 'Asset growth');
 
     let dividend = Currency.zero();
     if (asset.annualDividendRate.rate != 0.0) {
@@ -234,7 +235,7 @@ const CapitalBehavior = Object.freeze({
       asset.dividendCurrency.add(dividend);
       asset.finishCurrency.add(dividend);
       asset.monthlyValueChange.add(dividend);
-      asset.creditMemos.push(new CreditMemo(dividend, 'Dividend income', asset.currentDateInt));
+      asset.addCreditMemo(dividend, 'Dividend income');
     }
 
     return new AssetAppreciationResult(asset.finishCurrency.copy(), growth, dividend);
@@ -265,13 +266,13 @@ const RealEstateBehavior = Object.freeze({
     asset.growthCurrency.add(growth);
     asset.finishCurrency.add(asset.growthCurrency);
     asset.monthlyValueChange.add(asset.growthCurrency);
-    asset.creditMemos.push(new CreditMemo(asset.growthCurrency, 'Asset growth', asset.currentDateInt));
+    asset.addCreditMemo(asset.growthCurrency, 'Asset growth');
 
     const tax = new Currency(asset.finishCurrency.amount * asset.annualTaxRate.asMonthly());
     tax.flipSign(); // taxes are negative
 
     asset.propertyTaxCurrency.add(tax);
-    asset.creditMemos.push(new CreditMemo(asset.propertyTaxCurrency, 'Property tax', asset.currentDateInt));
+    asset.addCreditMemo(asset.propertyTaxCurrency, 'Property tax');
 
     return new AssetAppreciationResult(asset.finishCurrency.copy(), growth, Currency.zero(), tax);
 
@@ -301,7 +302,7 @@ const IncomeAccountBehavior = Object.freeze({
     asset.finishCurrency.add(income);
     asset.monthlyValueChange.add(income);
 
-    asset.creditMemos.push(new CreditMemo(income, 'Interest income', asset.currentDateInt));
+    asset.addCreditMemo(income, 'Interest income');
 
     return new InterestResult(income);
   },

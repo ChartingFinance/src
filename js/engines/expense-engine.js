@@ -12,7 +12,6 @@
 import { Currency } from '../utils/currency.js';
 import { InstrumentType } from '../instruments/instrument.js';
 import { Metric } from '../model-asset.js';
-import { CreditMemo } from '../results.js';
 import { activeTaxTable } from '../globals.js';
 import { logger, LogCategory } from '../utils/logger.js';
 
@@ -218,7 +217,7 @@ export class ExpenseEngine {
             if (InstrumentType.isCapital(modelAsset.instrument) && !InstrumentType.isRealEstate(modelAsset.instrument) && modelAsset.annualTaxRate.rate !== 0) {
                 const tax = new Currency(modelAsset.finishCurrency.amount * modelAsset.annualTaxRate.asMonthly()).flipSign();
                 modelAsset.estimatedTaxCurrency.add(tax);
-                modelAsset.creditMemos.push(new CreditMemo(tax, 'Estimated tax', modelAsset.currentDateInt));
+                modelAsset.addCreditMemo(tax, 'Estimated tax');
                 this.monthly.estimatedTaxes.add(tax);
             }
             */

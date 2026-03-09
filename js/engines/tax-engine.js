@@ -12,7 +12,6 @@
 import { Currency } from '../utils/currency.js';
 import { InstrumentType } from '../instruments/instrument.js';
 import { Metric } from '../model-asset.js';
-import { CreditMemo } from '../results.js';
 import { MonthsSpan } from '../utils/months-span.js';
 import { activeTaxTable } from '../globals.js';
 import { logger, LogCategory } from '../utils/logger.js';
@@ -36,7 +35,7 @@ export class TaxEngine {
         modelAsset.socialSecurityCurrency.add(withholding.socialSecurity);
         this.monthly.addWithholdingResult(withholding);
 
-        modelAsset.creditMemos.push(new CreditMemo(withholding.fica(), 'FICA withholding', modelAsset.currentDateInt));
+        modelAsset.addCreditMemo(withholding.fica(), 'FICA withholding');
 
     }
 
@@ -46,7 +45,7 @@ export class TaxEngine {
 
         const withheldTax = assetTax.copy().flipSign();
         this.monthly.incomeTax.add(withheldTax);
-        modelAsset.creditMemos.push(new CreditMemo(withheldTax.copy(), 'Income tax withholding', modelAsset.currentDateInt));
+        modelAsset.addCreditMemo(withheldTax.copy(), 'Income tax withholding');
 
         logger.log(LogCategory.TRANSFER, `recordIncomeTaxWithholding: ${modelAsset.displayName} tax=${assetTax.toString()}`);
 
@@ -62,7 +61,7 @@ export class TaxEngine {
 
             const escrow = modelAsset.applyMonthlyTaxEscrow();
             //this.monthly.propertyTaxes.subtract(escrow);
-            modelAsset.creditMemos.push(new CreditMemo(escrow, 'Property tax escrow', modelAsset.currentDateInt));
+            modelAsset.addCreditMemo(escrow, 'Property tax escrow');
 
             if (modelAsset.monthlyTaxEscrow.amount) {
                 for (const fundTransfer of modelAsset.fundTransfers) {
@@ -71,7 +70,7 @@ export class TaxEngine {
                     if (!fundTransfer.toModel) continue;
 
                     // do the payment manually
-                    fundTransfer.toModel.debit(escrow, modelAsset.displayName + ' property tax', true);
+                    fundTransfer.toModel.debit(escrow.flipSign(), modelAsset.displayName + ' property tax', false);
                     modelAsset.clearMonthlyTaxEscrow();
                 }
             }
@@ -102,13 +101,13 @@ export class TaxEngine {
             this.monthly.longTermCapitalGains.add(capitalGains);
             modelAsset.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, capitalGains);
 
-            modelAsset.creditMemos.push(new CreditMemo(capitalGains.copy(), 'Capital gains', modelAsset.currentDateInt));
+            modelAsset.addCreditMemo(capitalGains.copy(), 'Capital gains');
 
             this.monthly.longTermCapitalGainsTax.add(amountToTax.flipSign());
             modelAsset.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN_TAX, amountToTax);
 
             if (amountToTax.amount !== 0) {
-                modelAsset.creditMemos.push(new CreditMemo(amountToTax.copy(), 'Capital gains tax withholding', modelAsset.currentDateInt));
+                modelAsset.addCreditMemo(amountToTax.copy(), 'Capital gains tax withholding');
             }
         } else {
             this.monthly.shortTermCapitalGains.add(capitalGains);
@@ -118,7 +117,7 @@ export class TaxEngine {
             modelAsset.addToMetric(Metric.SHORT_TERM_CAPITAL_GAIN_TAX, capitalGains);
 
             if (amountToTax.amount !== 0) {
-                modelAsset.creditMemos.push(new CreditMemo(amountToTax.copy(), 'Income tax withholding', modelAsset.currentDateInt));
+                modelAsset.addCreditMemo(amountToTax.copy(), 'Income tax withholding');
             }
         }
 
@@ -147,9 +146,9 @@ export class TaxEngine {
             // Additional tax owed beyond payroll withholding (e.g., from capital gains, dividends)
             this.monthly.incomeTax.add(additionalTax);
 
-            const incomeAsset = this.modelAssets.find(a => InstrumentType.isMonthlyIncome(a.instrument) && !a.isClosed);
-            if (incomeAsset) {
-                incomeAsset.creditMemos.push(new CreditMemo(additionalTax.copy(), 'Income tax withholding', incomeAsset.currentDateInt));
+            const liquidAsset = this.modelAssets.find(a => InstrumentType.isLiquid(a.instrument) && !a.isClosed);
+            if (liquidAsset) {
+                liquidAsset.addCreditMemo(additionalTax.copy(), 'Income tax withholding');
             }
         }
 

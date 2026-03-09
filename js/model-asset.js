@@ -114,7 +114,7 @@ export const MetricLabel = Object.freeze({
 });
 
 // Metrics that should NOT be zeroed on monthly snapshot
-const KEEP_ON_SNAPSHOT = new Set([Metric.CASH_FLOW_ACCUMULATED]);
+const KEEP_ON_SNAPSHOT = new Set([Metric.PROPERTY_TAX, Metric.CASH_FLOW_ACCUMULATED]);
 
 
 export class ModelAsset {
@@ -542,9 +542,9 @@ export class ModelAsset {
 
   applyMonthlyTaxEscrow() {
 
-    let amount = this.propertyTaxCurrency.copy().flipSign();
-    this.monthlyTaxEscrow.add(amount);
-    return amount;
+    this.monthlyTaxEscrow.add(this.propertyTaxCurrency);
+    this.propertyTaxCurrency.zero();
+    return this.monthlyTaxEscrow.copy();
 
   }
 
@@ -615,7 +615,7 @@ export class ModelAsset {
       this.growthCurrency.add(growth);
       this.finishCurrency.add(growth);
       this.monthlyValueChange.add(growth);
-      this.creditMemos.push(new CreditMemo(growth, 'Annual income growth', this.currentDateInt));
+      this.addCreditMemo(growth, 'Annual income growth');
 
       return this.isSelfEmployed
         ? new IncomeResult(this.growthCurrency.copy(), Currency.zero())
@@ -623,6 +623,10 @@ export class ModelAsset {
     }   
     
     return null;
+  }
+
+  addCreditMemo(amount, note) {
+    this.creditMemos.push(new CreditMemo(amount, note, this.currentDateInt));
   }
 
   // ── Credit / Debit (fund transfer interface) ─────────────────────
@@ -642,7 +646,7 @@ export class ModelAsset {
   #transact(amount, note, skipGain) {
     // Flow instruments: memo only, no balance change
     if (this.#isFlowInstrument()) {
-      if (note) this.creditMemos.push(new CreditMemo(amount.copy(), note, this.currentDateInt));
+      if (note) this.addCreditMemo(amount.copy(), note);
       return { assetChange: Currency.zero(), realizedGain: Currency.zero() };
     }
 
@@ -687,7 +691,11 @@ export class ModelAsset {
     this.#recordMetric(amount, skipGain, realizedGain);
 
     if (note) {
-      this.creditMemos.push(new CreditMemo(amount.copy(), note, this.currentDateInt));
+      this.addCreditMemo(amount.copy(), note);
+    }
+    else {
+      console.warn('modelAsset.#recordMetric called without a note for ' + amount.toString());
+      debugger;
     }
 
     return { assetChange: amount.copy(), realizedGain };
@@ -708,7 +716,7 @@ export class ModelAsset {
         if (!skipGain) {
           this.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, realizedGain);
           if (realizedGain.amount > 0) {
-            this.creditMemos.push(new CreditMemo(realizedGain.copy(), 'Capital gains', this.currentDateInt));
+            this.addCreditMemo(realizedGain.copy(), 'Capital gains');
           }
         }
       }

@@ -57,6 +57,24 @@ function applyBacktestForYear(portfolio, simulationYear, backtestStartYear, simS
     }
 }
 
+// Conceptual logic for year-end evaluation in chronometer.js
+function evaluateGuytonKlinger(portfolio, expenseInstrument, initialWithdrawalRate) {
+    const totalPortfolioValue = portfolio.getTotalInvestableAssets();
+    const annualWithdrawal = Math.abs(expenseInstrument.getAnnualTarget());
+    
+    const currentWithdrawalRate = annualWithdrawal / totalPortfolioValue;
+    
+    // Check Guardrails (20% threshold)
+    if (currentWithdrawalRate > initialWithdrawalRate * 1.20) {
+        // Market down: Apply 10% pay cut
+        expenseInstrument.withdrawalMultiplier *= 0.90; 
+    } else if (currentWithdrawalRate < initialWithdrawalRate * 0.80) {
+        // Market up: Apply 10% raise
+        expenseInstrument.withdrawalMultiplier *= 1.10;
+    }
+    // Note: Standard GK rules also freeze inflation adjustments following negative years.
+}
+
 // ── Main simulation loops ─────────────────────────────────────
 
 export async function chronometer_run(portfolio) {
