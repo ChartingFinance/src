@@ -126,7 +126,6 @@ const lineChartDataSet = {
 const flowLineChartExclusions = ['realEstate','mortgage'];
 
 export let charting_jsonMetric1ChartData = null;
-export let charting_jsonMetric2ChartData = null;
 export let charting_jsonRollupChartData = null;
 export let charting_jsonSpreeadsheetData = null;
 export let charting_jsonMetricChartConfigIndividual = null; // for individual model asset display, e.g. cash flow in fundsTransfer
@@ -465,12 +464,11 @@ export function charting_buildDisplaySpreadsheetFromPortfolio(portfolio, buildNe
 }
 */
 
-export function charting_buildFromPortfolio(portfolio, buildNewDataSet, metric1Name, metric2Name) {
+export function charting_buildFromPortfolio(portfolio, buildNewDataSet, metric1Name) {
   if (portfolio == null || portfolio.modelAssets == null || portfolio.modelAssets.length == 0) {
 
     logger.log(LogCategory.CHARTING, 'charting_buildFromPortfolio - null or zero length array provided');
     charting_jsonMetric1ChartData = null;
-    charting_jsonMetric2ChartData = null;
     charting_jsonRollupChartData = null;
     charting_jsonSpreeadsheetData = null;
     chartMetricConfigCache.clear();
@@ -480,12 +478,10 @@ export function charting_buildFromPortfolio(portfolio, buildNewDataSet, metric1N
 
     setModelAssetColorIds(portfolio.modelAssets);
     charting_jsonMetric1ChartData = charting_buildPortfolioMetric(portfolio, metric1Name, buildNewDataSet);
-    charting_jsonMetric2ChartData = charting_buildPortfolioMetric(portfolio, metric2Name, buildNewDataSet);
     charting_jsonRollupChartData = charting_buildPortfolioMetric(portfolio, "cashFlow", buildNewDataSet);
 
     const markers = charting_buildDateMarkers(portfolio);
     charting_jsonMetric1ChartData.options.plugins.dateMarkers = { markers };
-    charting_jsonMetric2ChartData.options.plugins.dateMarkers = { markers };
     charting_jsonRollupChartData.options.plugins.dateMarkers = { markers };
 
   }

@@ -29,10 +29,12 @@ import {
     charting_getHighlightDisplayName,
     charting_setHighlightDisplayName,
     charting_jsonMetric1ChartData,
-    charting_jsonMetric2ChartData,
     charting_buildFromPortfolio,
     charting_buildPortfolioMetric,
 } from './charting.js';
+
+// Monte Carlo
+import { runMonteCarlo } from './monte-carlo.js';
 
 // Logger
 import { logger, LogCategory } from './utils/logger.js';
@@ -97,7 +99,6 @@ const assetsContainerElement = document.getElementById('assets');
 const portfolioLedger = document.getElementById('portfolioLedger');
 
 const chartMetric1Canvas = document.getElementById('chartMetric1Canvas');
-const chartMetric2Canvas = document.getElementById('chartMetric2Canvas');
 const spreadsheetElement = document.getElementById('spreadsheetElement');
 const creditMemosElement = document.getElementById('creditMemosElement');
 const debugReportsElement = document.getElementById('debugReportsElement');
@@ -106,6 +107,7 @@ const shareModal = document.getElementById('shareModal');
 
 const tab1 = document.getElementById('tab1');
 const tab2 = document.getElementById('tab2');
+const tab3 = document.getElementById('tab3');
 const tab4 = document.getElementById('tab4');
 const tab5 = document.getElementById('tab5');
 const tab6 = document.getElementById('tab6');
@@ -117,14 +119,14 @@ let activeStoryArc = null;
 let activeStoryName = null;
 let activeScenario = 'default';
 let activeMetric1Canvas = null;
-let activeMetric2Canvas = null;
 let editingModelAsset = null;
 let activeMetric1Name = Metric.VALUE;
-let activeMetric2Name = Metric.CASH_FLOW;
 let activePortfolio = null;
+let monteCarloStale = true;
 
 const metric1Select = document.getElementById('metric1Select');
-const metric2Select = document.getElementById('metric2Select');
+const monteCarloContainer = document.getElementById('monteCarloContainer');
+const guardrailsContainer = document.getElementById('guardrailsContainer');
 
 // ─── Metric Select Setup ─────────────────────────────────────
 
@@ -133,11 +135,8 @@ function populateMetricSelects() {
         '<option value="' + m + '">' + MetricLabel[m] + '</option>'
     ).join('');
     metric1Select.innerHTML = options;
-    metric2Select.innerHTML = options;
     metric1Select.value = activeMetric1Name;
-    metric2Select.value = activeMetric2Name;
     tab1.querySelector('.tab-label').textContent = MetricLabel[activeMetric1Name];
-    tab2.querySelector('.tab-label').textContent = MetricLabel[activeMetric2Name];
 }
 
 metric1Select.addEventListener('click', function(ev) { ev.stopPropagation(); });
@@ -161,15 +160,6 @@ portfolioLedger.addEventListener('ledger-metric1-change', function(e) {
     activeMetric1Canvas = new Chart(chartMetric1Canvas, chartData);
 });
 
-metric2Select.addEventListener('click', function(ev) { ev.stopPropagation(); });
-metric2Select.addEventListener('change', function() {
-    activeMetric2Name = metric2Select.value;
-    tab2.querySelector('.tab-label').textContent = MetricLabel[activeMetric2Name];
-    if (!activePortfolio) return;
-    const chartData = charting_buildPortfolioMetric(activePortfolio, activeMetric2Name, true);
-    if (activeMetric2Canvas != null) activeMetric2Canvas.destroy();
-    activeMetric2Canvas = new Chart(chartMetric2Canvas, chartData);
-});
 
 // ─── Initial Setup Functions ─────────────────────────────────
 
@@ -279,7 +269,8 @@ function connectAssetListEvents() {
 function hideAllTabs() {
     const tabs = [
         { tab: tab1, content: chartMetric1Canvas.parentElement },
-        { tab: tab2, content: chartMetric2Canvas.parentElement },
+        { tab: tab2, content: monteCarloContainer },
+        { tab: tab3, content: guardrailsContainer },
         { tab: tab4, content: spreadsheetElement.parentElement },
         { tab: tab5, content: creditMemosElement.parentElement },
         { tab: tab6, content: debugReportsElement.parentElement },
@@ -299,7 +290,18 @@ function tab1_click() {
 function tab2_click() {
     hideAllTabs();
     tab2.classList.add('active');
-    chartMetric2Canvas.parentElement.style.display = '';
+    monteCarloContainer.style.display = '';
+
+    if (monteCarloStale && activePortfolio) {
+        monteCarloStale = false;
+        runMonteCarlo(activePortfolio.modelAssets, monteCarloContainer, 1000);
+    }
+}
+
+function tab3_click() {
+    hideAllTabs();
+    tab3.classList.add('active');
+    guardrailsContainer.style.display = '';
 }
 
 function tab4_click() {
@@ -383,9 +385,8 @@ function updateCharts() {
     chronometer_run(portfolio);
     portfolio.buildChartingDisplayData();
     ensureHighlightDisplayName();
-    charting_buildFromPortfolio(portfolio, false, activeMetric1Name, activeMetric2Name);
+    charting_buildFromPortfolio(portfolio, false, activeMetric1Name);
     activeMetric1Canvas.update();
-    activeMetric2Canvas.update();
 }
 
 function calculate(target) {
@@ -408,9 +409,10 @@ function calculate(target) {
 
     // store portfolio for metric select change handlers
     activePortfolio = portfolio;
+    monteCarloStale = true;
 
     // build the chart configs (must happen before innerCalculate creates Chart instances)
-    charting_buildFromPortfolio(portfolio, true, activeMetric1Name, activeMetric2Name);
+    charting_buildFromPortfolio(portfolio, true, activeMetric1Name);
 
     innerCalculate(portfolio);
 
@@ -426,12 +428,8 @@ function calculate(target) {
 function innerCalculate(portfolio) {
     if (activeMetric1Canvas != null)
         activeMetric1Canvas.destroy();
-    if (activeMetric2Canvas != null)
-        activeMetric2Canvas.destroy();
     if (charting_jsonMetric1ChartData != null)
         activeMetric1Canvas = new Chart(chartMetric1Canvas, charting_jsonMetric1ChartData);
-    if (charting_jsonMetric2ChartData != null)
-        activeMetric2Canvas = new Chart(chartMetric2Canvas, charting_jsonMetric2ChartData);
     spreadsheetElement.portfolio = portfolio;
     creditMemosElement.portfolio = portfolio;
     debugReportsElement.reports = portfolio.generatedReports;
@@ -556,6 +554,7 @@ document.getElementById('btn-maximize').addEventListener('click', doMaximize);
 // Tab switching
 tab1.addEventListener('click', tab1_click);
 tab2.addEventListener('click', tab2_click);
+tab3.addEventListener('click', tab3_click);
 tab4.addEventListener('click', tab4_click);
 tab5.addEventListener('click', tab5_click);
 tab6.addEventListener('click', tab6_click);

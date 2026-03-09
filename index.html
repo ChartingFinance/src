@@ -254,11 +254,12 @@
                 <!-- Modern Tabs -->
                 <div class="flex flex-wrap gap-2 mb-6 bg-gray-50 p-1 rounded-xl w-max flex-shrink-0">
                     <button class="chart-tab active px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-900 transition flex items-center gap-1" id="tab1">
-                        <span class="tab-label">Value</span> <select id="metric1Select" class="metric-select ml-1"></select>
+                        <span class="text-xs opacity-50" title="Linked to Ledger metric">&#128279;</span> <span class="tab-label">Value</span> <select id="metric1Select" class="metric-select ml-1"></select>
                     </button>
-                    <button class="chart-tab px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-900 transition flex items-center gap-1 rounded-xl" id="tab2">
-                        <span class="tab-label">Cash Flow</span> <select id="metric2Select" class="metric-select ml-1"></select>
+                    <button class="chart-tab px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-900 transition rounded-xl" id="tab2">
+                        Monte Carlo
                     </button>
+                    <button class="chart-tab px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-900 transition rounded-xl" id="tab3">Guardrails</button>
                     <button class="chart-tab px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-900 transition rounded-xl" id="tab4">Spreadsheet</button>
                     <button class="chart-tab px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-900 transition rounded-xl" id="tab5">Credit Memos</button>
                     <button class="chart-tab px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-900 transition rounded-xl" id="tab6">Reports</button>
@@ -269,8 +270,11 @@
                     <div style="width: 100%; height: 100%;">
                         <canvas id="chartMetric1Canvas"></canvas>
                     </div>
-                    <div style="width: 100%; height: 100%; display: none">
-                        <canvas id="chartMetric2Canvas"></canvas>
+                    <div id="monteCarloContainer" style="width: 100%; height: 100%; display: none">
+                        <p style="padding: 24px; font-family: DM Sans, sans-serif; color: #64748b;">Monte Carlo projection coming soon.</p>
+                    </div>
+                    <div id="guardrailsContainer" style="width: 100%; height: 100%; display: none">
+                        <p style="padding: 24px; font-family: DM Sans, sans-serif; color: #64748b;">Guardrails coming soon.</p>
                     </div>
                     <div style="width: 100%; height: 100%; display: none; overflow-x: auto;">
                         <spreadsheet-view id="spreadsheetElement"></spreadsheet-view>

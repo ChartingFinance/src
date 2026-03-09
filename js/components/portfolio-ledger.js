@@ -74,12 +74,15 @@ class PortfolioLedger extends LitElement {
                 <!-- CAGR -->
                 <div class="glass-card p-6 bg-gradient-to-br ${cagrPositive ? 'from-green-50 border-green-100' : 'from-pink-50 border-pink-100'} to-white">
                     <div class="flex flex-col h-full">
-                        <select class="w-full mb-4 px-3 py-2 text-xs font-bold uppercase tracking-widest rounded-lg border border-slate-200 bg-slate-100 text-slate-500 cursor-pointer outline-none"
+                        <div class="flex items-center gap-2 mb-4">
+                        <span class="text-xs opacity-50" title="Linked to Projections metric">&#128279;</span>
+                        <select class="flex-1 px-3 py-2 text-xs font-bold uppercase tracking-widest rounded-lg border border-slate-200 bg-slate-100 text-slate-500 cursor-pointer outline-none"
                             @change=${this._onMetricChange}>
                             ${Object.values(Metric).map(m => html`
                                 <option value=${m} ?selected=${m === this.metricName}>${MetricLabel[m]}</option>
                             `)}
                         </select>
+                        </div>
                         <div class="flex justify-between items-center flex-1">
                             <span class="text-4xl font-bold ${cagrPositive ? 'text-green-600' : 'text-pink-600'}">CAGR</span>
                             <span class="text-4xl font-bold ${cagrPositive ? 'text-green-600' : 'text-pink-600'}">${annualReturn.toFixed(2)}%</span>
