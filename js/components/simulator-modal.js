@@ -4,6 +4,10 @@
  * Lit component that wraps the genetic algorithm simulator popup.
  * Set `modelAssets` and `open` to launch; dispatches 'close' when dismissed.
  * Manages Chart.js instance and Web Worker lifecycle internally.
+ *
+ * Properties:
+ *   mode: 'maximize' | 'guardrails' | 'both'
+ *   guardrailParams: { withdrawalRate, preservation, prosperity, adjustment }
  */
 
 import { LitElement, html } from 'lit';
@@ -17,15 +21,26 @@ import {
 } from '../charting.js';
 import './asset-list.js';
 
+const MODE_LABELS = {
+    maximize:   'Maximize Value',
+    guardrails: 'Optimize Guardrails',
+    both:       'Maximize and Optimize',
+};
+
 class SimulatorModal extends LitElement {
 
     static properties = {
-        open:         { type: Boolean, reflect: true },
-        modelAssets:  { type: Array },
-        _status:      { state: true },
-        _generation:  { state: true },
-        _bestValue:   { state: true },
-        _displayAssets: { state: true },
+        open:             { type: Boolean, reflect: true },
+        modelAssets:      { type: Array },
+        mode:             { type: String },
+        guardrailParams:  { type: Object },
+        _status:          { state: true },
+        _generation:      { state: true },
+        _bestValue:       { state: true },
+        _displayAssets:   { state: true },
+        _selectedMode:    { state: true },
+        _runComplete:     { state: true },
+        _fitnessBalance:  { state: true },
     };
 
     createRenderRoot() { return this; }
@@ -34,10 +49,15 @@ class SimulatorModal extends LitElement {
         super();
         this.open = false;
         this.modelAssets = [];
+        this.mode = 'maximize';
+        this.guardrailParams = null;
         this._status = 'Starting...';
         this._generation = 'Generation 0 / 200';
         this._bestValue = '';
         this._displayAssets = [];
+        this._selectedMode = 'maximize';
+        this._runComplete = false;
+        this._fitnessBalance = 50;
         this._chart = null;
         this._worker = null;
     }
@@ -45,18 +65,50 @@ class SimulatorModal extends LitElement {
     render() {
         if (!this.open) return html``;
 
+        const modeDisabled = !this._runComplete;
+        const showBothWarning = this._selectedMode === 'both';
+
         return html`
             <div class="sim-overlay" @click=${this._onOverlayClick}>
                 <div class="sim-modal" @click=${(e) => e.stopPropagation()}>
                     <div class="sim-header">
                         <span class="sim-title">Simulator</span>
+                        <select class="fin-input text-sm font-medium py-1 px-2 rounded-xl"
+                            .value=${this._selectedMode}
+                            ?disabled=${!this._runComplete}
+                            @change=${this._onModeChange}>
+                            <option value="maximize">Maximize Value</option>
+                            <option value="guardrails" ?disabled=${!this.guardrailParams}>Optimize Guardrails</option>
+                            <option value="both" ?disabled=${!this.guardrailParams}>Maximize and Optimize</option>
+                        </select>
                         <div class="sim-controls">
                             <span class="sim-status">${this._status}</span>
                             <button class="sim-close-btn" title="Close"
                                 @click=${this._close}>&times;</button>
                         </div>
                     </div>
-                    <div class="text-xs text-gray-400 px-4 pt-2">The most recent fittest portfolio will be a selectable scenario. Found by Your Portfolio and above your asset list.</div>
+                    ${showBothWarning && this._runComplete ? html`
+                        <div class="text-xs text-amber-600 px-4 pt-2 font-medium">
+                            This will run both fitness functions sequentially and may take a while.
+                            <button class="btn-modern outline small ml-2" @click=${this._startBothRun}>Run</button>
+                        </div>
+                    ` : html`
+                        <div class="text-xs text-gray-400 px-4 pt-2">
+                            Results saved as "${this._scenarioLabel}" in the portfolio scenario dropdown.
+                        </div>
+                    `}
+                    ${this._showSlider ? html`
+                        <div class="flex items-center gap-3 px-4 pt-2 text-xs">
+                            <span class="text-gray-500 font-semibold whitespace-nowrap">Spending</span>
+                            <input type="range" min="0" max="100" step="5"
+                                .value=${String(this._fitnessBalance)}
+                                class="flex-grow"
+                                style="accent-color: #333;"
+                                @input=${this._onBalanceInput}
+                                @change=${this._onBalanceChange}>
+                            <span class="text-gray-500 font-semibold whitespace-nowrap">Terminal Value</span>
+                        </div>
+                    ` : ''}
                     <div class="sim-body">
                         <div class="sim-chart-area">
                             <canvas></canvas>
@@ -76,9 +128,27 @@ class SimulatorModal extends LitElement {
         `;
     }
 
+    get _showSlider() {
+        return (this._selectedMode === 'guardrails' || this._selectedMode === 'both')
+            && this.guardrailParams;
+    }
+
+    get _scenarioLabel() {
+        if (this._selectedMode === 'maximize') return 'Fittest Value';
+        if (this._selectedMode === 'guardrails') return 'Fittest Guardrail';
+        return 'Fittest Overall';
+    }
+
+    get _scenarioKey() {
+        if (this._selectedMode === 'maximize') return 'FittestValue';
+        if (this._selectedMode === 'guardrails') return 'FittestGuardrail';
+        return 'FittestOverall';
+    }
+
     updated(changed) {
         if (changed.has('open') && this.open) {
-            // Wait one frame for the canvas to be in the DOM
+            this._selectedMode = this.mode;
+            this._runComplete = false;
             requestAnimationFrame(() => this._start());
         }
         if (changed.has('open') && !this.open) {
@@ -92,6 +162,38 @@ class SimulatorModal extends LitElement {
     }
 
     // ── Private ──────────────────────────────────────────────────
+
+    _onModeChange(e) {
+        this._selectedMode = e.target.value;
+        if (this._selectedMode !== 'both') {
+            this._restartWithMode(this._selectedMode);
+        }
+    }
+
+    _startBothRun() {
+        this._restartWithMode('both');
+    }
+
+    _onBalanceInput(e) {
+        this._fitnessBalance = parseInt(e.target.value);
+    }
+
+    _onBalanceChange() {
+        // Re-run with new balance if a run already completed
+        if (this._runComplete) {
+            this._restartWithMode(this._selectedMode);
+        }
+    }
+
+    _restartWithMode(mode) {
+        this._teardown();
+        this._selectedMode = mode;
+        this._runComplete = false;
+        this._status = 'Starting...';
+        this._generation = 'Generation 0 / 200';
+        this._bestValue = '';
+        requestAnimationFrame(() => this._start());
+    }
 
     _start() {
         const canvas = this.querySelector('canvas');
@@ -107,13 +209,11 @@ class SimulatorModal extends LitElement {
         const markers = charting_buildDateMarkers(portfolio);
         chartConfig.options.plugins.dateMarkers = { markers };
         chartConfig.options.animation = { duration: 300 };
-
         chartConfig.options.maintainAspectRatio = false;
-        
+
         this._chart = new Chart(canvas, chartConfig);
         this._displayAssets = [...portfolio.modelAssets];
 
-        // Launch the Web Worker
         if (!window.Worker) {
             this._status = 'Web Workers not supported';
             return;
@@ -121,8 +221,15 @@ class SimulatorModal extends LitElement {
 
         this._worker = new Worker('js/simulator.js', { type: 'module' });
 
-        // Serialize to plain JSON — ModelAsset instances may contain circular refs
-        this._worker.postMessage(JSON.parse(JSON.stringify(this.modelAssets)));
+        const workerMode = this._selectedMode;
+        const workerPayload = {
+            modelAssets: JSON.parse(JSON.stringify(this.modelAssets)),
+            mode: workerMode,
+            guardrailParams: (workerMode === 'guardrails' || workerMode === 'both')
+                ? this.guardrailParams : null,
+            fitnessBalance: this._fitnessBalance,
+        };
+        this._worker.postMessage(workerPayload);
 
         this._worker.onerror = (err) => {
             console.error('Simulator worker error:', err);
@@ -131,17 +238,17 @@ class SimulatorModal extends LitElement {
 
         this._pendingBetter = null;
         this._updateTimer = null;
+        this._bothPhase = (workerMode === 'both') ? 1 : 0;
 
         this._worker.onmessage = (event) => {
             const msg = event.data;
 
             if (msg.action === 'foundBetter') {
-                // Buffer the latest result; only process at most every 500ms
                 this._pendingBetter = msg.data;
 
                 this.dispatchEvent(new CustomEvent('found-fittest', {
                     bubbles: true, composed: true,
-                    detail: { modelAssets: msg.data },
+                    detail: { modelAssets: msg.data, scenarioKey: this._scenarioKey },
                 }));
 
                 if (!this._updateTimer) {
@@ -154,16 +261,23 @@ class SimulatorModal extends LitElement {
             else if (msg.action === 'iteration') {
                 const match = msg.data.match(/Generation:\s*(\d+)/);
                 if (match) {
-                    this._generation = 'Generation ' + (parseInt(match[1]) + 1) + ' / 200';
+                    const gen = parseInt(match[1]) + 1;
+                    const phaseLabel = this._bothPhase === 1 ? ' (Value)' :
+                                       this._bothPhase === 2 ? ' (Guardrails)' : '';
+                    this._generation = `Generation ${gen} / 200${phaseLabel}`;
                 }
             }
+            else if (msg.action === 'phaseComplete') {
+                // 'both' mode: first phase done, second phase starting
+                this._bothPhase = 2;
+                if (this._pendingBetter) this._processPendingBetter();
+                this._status = 'Running phase 2...';
+            }
             else if (msg.action === 'complete') {
-                // Process any remaining buffered result
-                if (this._pendingBetter) {
-                    this._processPendingBetter();
-                }
+                if (this._pendingBetter) this._processPendingBetter();
                 this._status = 'Complete';
                 this._generation = 'Generation 200 / 200';
+                this._runComplete = true;
             }
         };
 
@@ -226,7 +340,10 @@ class SimulatorModal extends LitElement {
 
     _close() {
         this.open = false;
-        this.dispatchEvent(new CustomEvent('close', { bubbles: true, composed: true }));
+        this.dispatchEvent(new CustomEvent('close', {
+            bubbles: true, composed: true,
+            detail: { scenarioKey: this._scenarioKey },
+        }));
     }
 
     _onOverlayClick(ev) {

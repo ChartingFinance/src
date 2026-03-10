@@ -3,52 +3,144 @@
 import { InstrumentType, ModelAsset, FundTransfer } from './index.js';
 import { chronometer_run } from './chronometer.js';
 import { setActiveTaxTable } from './globals.js';
-import { logger, LogCategory } from './utils/logger.js';
 import { TaxTable } from './taxes.js';
 import { Portfolio } from './portfolio.js';
 
 self.onmessage = function(event) {
 
-    //global_initialize();
     setActiveTaxTable(new TaxTable());
 
-    console.log('Received message from main thread:', event.data);
-    let assetModels = event.data.map(obj => ModelAsset.fromJSON(obj));
-    let portfolio = new Portfolio(assetModels, false);
-    let simulator = new Simulator(portfolio);
+    const payload = event.data;
 
-    /*
-    simulator.runTestCases(10, function(assetModels) {
-        console.log('Simulation Update');
-        self.postMessage(assetModels);
-    });
-    */
+    // Support both old format (array) and new format (object with mode)
+    let assetModels, mode, guardrailParams, fitnessBalance;
+    if (Array.isArray(payload)) {
+        assetModels = payload.map(obj => ModelAsset.fromJSON(obj));
+        mode = 'maximize';
+        guardrailParams = null;
+        fitnessBalance = 50;
+    } else {
+        assetModels = payload.modelAssets.map(obj => ModelAsset.fromJSON(obj));
+        mode = payload.mode || 'maximize';
+        guardrailParams = payload.guardrailParams || null;
+        fitnessBalance = payload.fitnessBalance ?? 50;
+    }
 
-    // Run the genetic algorithm
-    simulator.runGeneticAlgorithm(50, 200, 0.15, function(msg) {
-        // Serialize to plain JSON — ModelAsset instances contain behavior
-        // objects with functions that can't be structurally cloned by postMessage
+    console.log('Simulator worker started, mode:', mode, 'balance:', fitnessBalance);
+
+    function postCallback(msg) {
         if (msg.data && typeof msg.data !== 'string') {
             msg = { ...msg, data: JSON.parse(JSON.stringify(msg.data)) };
         }
         self.postMessage(msg);
-    });
+    }
+
+    let portfolio = new Portfolio(assetModels, false);
+    let simulator = new Simulator(portfolio, mode, guardrailParams, fitnessBalance);
+
+    if (mode === 'both') {
+        // Phase 1: Maximize value
+        simulator.fitnessMode = 'maximize';
+        simulator.runGeneticAlgorithm(50, 200, 0.15, postCallback);
+
+        postCallback({ action: 'phaseComplete', data: 'Phase 1 complete' });
+
+        // Phase 2: Optimize guardrails, seeded with best fund transfers from phase 1
+        simulator.fitnessMode = 'guardrails';
+        simulator.bestFitness = -Infinity;
+        simulator.runGeneticAlgorithm(50, 200, 0.15, postCallback);
+    } else {
+        simulator.runGeneticAlgorithm(50, 200, 0.15, postCallback);
+    }
 
 }
 
 class Simulator {
-    constructor(portfolio) {
+    constructor(portfolio, mode = 'maximize', guardrailParams = null, fitnessBalance = 50) {
 
+        this.fitnessMode = mode === 'both' ? 'maximize' : mode;
+        this.guardrailParams = guardrailParams;
+        this.fitnessBalance = fitnessBalance;
+
+        // Run initial simulation (with guardrails if applicable)
+        if (this.guardrailParams && this.fitnessMode === 'guardrails') {
+            portfolio.guardrailsParams = this.guardrailParams;
+        }
         chronometer_run(portfolio);
 
         this.portfolio = portfolio;
+        this._initialPortfolioValue = portfolio.startValue().amount || 1;
         this.bestPortfolio = portfolio.copy();
-        this.bestFitness = portfolio.finishValue().amount;
+        this.bestFitness = this._computeFitness(portfolio);
 
         this.fundTransfers = [];
 
-        this.generateAllFundTransfers(); // Generate fund transfers for all model assets
+        this.generateAllFundTransfers();
 
+    }
+
+    _computeFitness(portfolio) {
+        if (this.fitnessMode === 'guardrails' && this.guardrailParams) {
+            return this._guardrailsFitness(portfolio);
+        }
+        return portfolio.finishValue().amount;
+    }
+
+    /**
+     * Guardrails fitness function — normalized weighted-sum approach.
+     *
+     * Components (each normalized to 0–1):
+     *   1. Terminal value:       endingValue / initialValue
+     *   2. Cash flow stability:  1 - (withdrawalRate stdDev / targetRate)
+     *   3. Event penalty:        1 - (preservationCount / totalYears)
+     *
+     * Hard constraint: portfolio depletion → fitness 0 (immediate culling).
+     */
+    _guardrailsFitness(portfolio) {
+        const endingValue = portfolio.finishValue().amount;
+
+        // Hard constraint: portfolio failed
+        if (endingValue <= 0) return 0;
+
+        const initialValue = this._initialPortfolioValue || 1;
+        const targetRate = (this.guardrailParams.withdrawalRate || 4) / 100;
+        const totalYears = Math.max(portfolio.yearlySnapshots.length, 1);
+
+        // 1. Terminal value — how much portfolio grew/preserved (capped at 3x for normalization)
+        const normalizedTerminal = Math.min(endingValue / initialValue, 3) / 3;
+
+        // 2. Cash flow stability — low withdrawal rate variance is better
+        let normalizedStability = 1;
+        if (portfolio.yearlySnapshots.length > 1) {
+            const rates = portfolio.yearlySnapshots.map(s => s.withdrawalRate);
+            const mean = rates.reduce((a, b) => a + b, 0) / rates.length;
+            const variance = rates.reduce((a, r) => a + (r - mean) ** 2, 0) / rates.length;
+            const stdDev = Math.sqrt(variance);
+            // Normalize: stdDev of 0 = perfect (1.0), stdDev >= targetRate = worst (0.0)
+            normalizedStability = Math.max(0, 1 - (stdDev / targetRate));
+        }
+
+        // 3. Event penalty — fewer preservation cuts is better
+        let preservationCount = 0;
+        for (const evt of portfolio.guardrailEvents) {
+            if (evt.type === 'preservation') preservationCount++;
+        }
+        const normalizedEvents = 1 - (preservationCount / totalYears);
+
+        // Interpolate weights based on fitnessBalance (0 = spending, 100 = terminal value)
+        // At 0:   terminal 0.20, stability 0.50, events 0.30
+        // At 50:  terminal 0.50, stability 0.30, events 0.20
+        // At 100: terminal 0.80, stability 0.10, events 0.10
+        const t = (this.fitnessBalance ?? 50) / 100;
+        const weights = {
+            terminal:  0.20 + t * 0.60,             // 0.20 → 0.80
+            stability: 0.50 - t * 0.40,             // 0.50 → 0.10
+            events:    0.30 - t * 0.20,             // 0.30 → 0.10
+        };
+
+        return (normalizedTerminal * weights.terminal) +
+               (normalizedStability * weights.stability) +
+               (normalizedEvents * weights.events);
     }
 
     generateAllFundTransfers() {
@@ -72,7 +164,6 @@ class Simulator {
 
     generateAssetFundTransfers(anchorAsset) {
 
-        // first version -- only do income and expense assets
         if (!InstrumentType.isMonthlyIncome(anchorAsset.instrument) && !InstrumentType.isMonthlyExpense(anchorAsset.instrument)) return;
 
         for (let modelAsset of this.portfolio.modelAssets) {
@@ -99,7 +190,7 @@ class Simulator {
     updateFundTransfers(index, fundTransferStepping) {
 
         if (index >= this.portfolio.modelAssets.length)
-            return false; // No more fund transfers to update
+            return false;
         else if (!this.portfolio.modelAssets[index].updateFundTransfers(fundTransferStepping))
             return this.updateFundTransfers(index + 1, fundTransferStepping);
         else
@@ -107,65 +198,8 @@ class Simulator {
 
     }
 
-    // Method to run a single test case
-    runTestCase(iteration, callback) {
-
-        let richMessage = {
-            "action": "iteration",
-            "data": "Iteration: " + iteration.toString() + '\n' + this.portfolio.dnaFundTransfers()
-        }
-        callback(richMessage);
-        chronometer_run(this.portfolio);
-
-    }
-
-    // Method to run multiple test cases
-    runTestCases(fundTransferStepping, callback) {
-
-        logger.log(LogCategory.GENERAL, 'Replicating current assets...');
-        chronometer_run(this.portfolio);
-        callback(this.portfolio.modelAssets);
-        this.bestPortfolio = this.portfolio.copy(); // Copy the current portfolio as the best portfolio
-
-        this.portfolio.zeroFundTransfersMoveValues();
-
-        /*
-
-        if (this.fundTransfers?.length > 0) {
-
-            this.portfolio.zeroFundTransfersMoveValues();
-
-            let iteration = 0;
-
-            do {
-
-                this.runTestCase(++iteration, callback);
-                this.evaluateResults(callback);
-
-            }
-            while (this.updateFundTransfers(0, fundTransferStepping));
-
-        }
-        */
-    }
-
-    evaluateResults(callback) {
-
-        if (this.bestPortfolio == null || this.portfolio.finishValue() > this.bestPortfolio.finishValue()) {
-            this.bestPortfolio = this.portfolio.copy();
-            let richMessage = {
-                "action": "foundBetter",
-                "data": this.portfolio.modelAssets
-            }
-            callback(richMessage);
-        }
-
-
-    }
-
     updateFundTransferBindings() {
 
-        // do this because when we use the modelAssets to html transform, it removes the toModel and fromModel references
         for (let modelAsset of this.portfolio.modelAssets) {
             modelAsset.bindFundTransfers(this.portfolio.modelAssets);
         }
@@ -176,7 +210,7 @@ class Simulator {
     generateInitialPopulation(popSize) {
         const population = [];
         for (let i = 0; i < popSize; i++) {
-            const chromosome = this.fundTransfers.map(() => Math.ceil(Math.random() * 100)); // random moveValue [0,100]
+            const chromosome = this.fundTransfers.map(() => Math.ceil(Math.random() * 100));
             population.push(chromosome);
         }
         return population;
@@ -195,11 +229,21 @@ class Simulator {
 
     }
 
-    // 3. Fitness function
+    // 3. Fitness function — delegates to mode-aware _computeFitness
     evaluateFitness(chromosome, callback) {
         this.setFundTransfersFromChromosome(chromosome);
+
+        // Set guardrails params before running if in guardrails mode
+        if (this.fitnessMode === 'guardrails' && this.guardrailParams) {
+            this.portfolio.guardrailsParams = this.guardrailParams;
+            this.portfolio.guardrailEvents = [];
+            this.portfolio.yearlySnapshots = [];
+        } else {
+            this.portfolio.guardrailsParams = null;
+        }
+
         chronometer_run(this.portfolio);
-        const fitness = this.portfolio.finishValue().amount;
+        const fitness = this._computeFitness(this.portfolio);
         if (fitness > this.bestFitness) {
             this.bestFitness = fitness;
             this.bestPortfolio = this.portfolio.copy();
@@ -213,7 +257,6 @@ class Simulator {
 
     // 4. Selection (e.g., top N)
     selectParents(population, fitnesses, numParents) {
-        // Pair chromosomes with fitness, sort, and select top
         return population
             .map((chrom, idx) => ({chrom, fit: fitnesses[idx]}))
             .sort((a, b) => b.fit - a.fit)
@@ -286,7 +329,7 @@ class Simulator {
             "data": this.bestPortfolio.modelAssets
         });
 
-        return this.portfolio.finishValue();
+        return this.bestFitness;
     }
 
 }
