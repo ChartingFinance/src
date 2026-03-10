@@ -185,7 +185,10 @@ class SimulatorModal extends LitElement {
 
                 this.dispatchEvent(new CustomEvent('found-fittest', {
                     bubbles: true, composed: true,
-                    detail: { modelAssets: msg.data },
+                    detail: {
+                        modelAssets: msg.data,
+                        guardrailParams: msg.guardrailParams,
+                    },
                 }));
 
                 if (!this._updateTimer) {

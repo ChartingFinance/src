@@ -6,6 +6,11 @@
 //
 // Guardrails are always active during simulation so withdrawal adjustments
 // are reflected in both cash flow and terminal value outcomes.
+//
+// Chromosome layout:
+//   [...fundTransferMoveValues, withdrawalRate, preservation, prosperity, adjustment]
+//   Fund transfer genes: 0–100 (integer percentages)
+//   Guardrail genes: real-valued within defined ranges
 
 import { InstrumentType, ModelAsset, FundTransfer } from './index.js';
 import { chronometer_run } from './chronometer.js';
@@ -16,6 +21,14 @@ import { Portfolio } from './portfolio.js';
 // Theoretical maximums for normalization (scaling to 0.0–1.0)
 const THEORETICAL_MAX_CASHFLOW = 10_000_000;
 const THEORETICAL_MAX_PORTFOLIO = 50_000_000;
+
+// Guardrail gene ranges: [min, max]
+const GUARDRAIL_RANGES = {
+    withdrawalRate: [1, 10],     // 1% – 10%
+    preservation:   [5, 50],     // 5% – 50%
+    prosperity:     [5, 50],     // 5% – 50%
+    adjustment:     [2, 25],     // 2% – 25%
+};
 
 self.onmessage = function(event) {
 
@@ -51,16 +64,17 @@ self.onmessage = function(event) {
 class Simulator {
     constructor(portfolio, guardrailParams, fitnessBalance) {
 
-        this.guardrailParams = guardrailParams;
+        this.guardrailParams = { ...guardrailParams };
         this.fitnessBalance = fitnessBalance;
 
         // Always run with guardrails so we capture cash flow + event data
-        portfolio.guardrailsParams = guardrailParams;
+        portfolio.guardrailsParams = this.guardrailParams;
         chronometer_run(portfolio);
 
         this.portfolio = portfolio;
         this.bestPortfolio = portfolio.copy();
         this.bestFitness = this.calculateFitness(portfolio);
+        this.bestGuardrailParams = { ...this.guardrailParams };
 
         this.fundTransfers = [];
         this.generateAllFundTransfers();
@@ -69,17 +83,6 @@ class Simulator {
 
     /**
      * Single unified fitness function.
-     *
-     * @param {Portfolio} portfolio — post-simulation portfolio
-     * @returns {number} fitness score (0–1, higher is better)
-     *
-     * Hard constraint: portfolio depletion → 0 (immediate culling).
-     *
-     * Two normalized components weighted by fitnessBalance:
-     *   - Cash flow:      totalLifetimeExpenses / THEORETICAL_MAX_CASHFLOW
-     *   - Terminal value:  endingPortfolioValue / THEORETICAL_MAX_PORTFOLIO
-     *
-     * Penalty: fraction of years with preservation cuts, scaled by 0.1
      */
     calculateFitness(portfolio) {
         const endingValue = portfolio.finishValue().amount;
@@ -112,6 +115,34 @@ class Simulator {
         fitness -= volatilityPenalty;
 
         return Math.max(0, fitness);
+    }
+
+    // ── Chromosome ↔ Guardrail Gene Helpers ─────────────────────
+
+    /** Number of fund transfer genes (everything before the 4 guardrail genes) */
+    get _ftGeneCount() { return this.fundTransfers.length; }
+
+    /** Extract guardrail params from the last 4 genes of a chromosome */
+    _guardrailParamsFromChromosome(chromosome) {
+        const i = this._ftGeneCount;
+        return {
+            withdrawalRate: chromosome[i],
+            preservation:   chromosome[i + 1],
+            prosperity:     chromosome[i + 2],
+            adjustment:     chromosome[i + 3],
+        };
+    }
+
+    /** Generate a random guardrail gene value within its defined range */
+    _randomGuardrailGene(key) {
+        const [min, max] = GUARDRAIL_RANGES[key];
+        return min + Math.random() * (max - min);
+    }
+
+    /** Clamp a guardrail gene to its valid range */
+    _clampGuardrailGene(key, value) {
+        const [min, max] = GUARDRAIL_RANGES[key];
+        return Math.max(min, Math.min(max, value));
     }
 
     // ── Fund Transfer Management ────────────────────────────────
@@ -155,7 +186,14 @@ class Simulator {
     generateInitialPopulation(popSize) {
         const population = [];
         for (let i = 0; i < popSize; i++) {
-            population.push(this.fundTransfers.map(() => Math.ceil(Math.random() * 100)));
+            const chromosome = [
+                ...this.fundTransfers.map(() => Math.ceil(Math.random() * 100)),
+                this._randomGuardrailGene('withdrawalRate'),
+                this._randomGuardrailGene('preservation'),
+                this._randomGuardrailGene('prosperity'),
+                this._randomGuardrailGene('adjustment'),
+            ];
+            population.push(chromosome);
         }
         return population;
     }
@@ -172,8 +210,11 @@ class Simulator {
     evaluateFitness(chromosome, callback) {
         this.setFundTransfersFromChromosome(chromosome);
 
+        // Extract guardrail params from chromosome genes
+        const params = this._guardrailParamsFromChromosome(chromosome);
+
         // Reset guardrail state for fresh simulation
-        this.portfolio.guardrailsParams = this.guardrailParams;
+        this.portfolio.guardrailsParams = params;
         this.portfolio.guardrailEvents = [];
         this.portfolio.yearlySnapshots = [];
 
@@ -183,9 +224,11 @@ class Simulator {
         if (fitness > this.bestFitness) {
             this.bestFitness = fitness;
             this.bestPortfolio = this.portfolio.copy();
+            this.bestGuardrailParams = { ...params };
             callback({
                 "action": "foundBetter",
-                "data": this.bestPortfolio.modelAssets
+                "data": this.bestPortfolio.modelAssets,
+                "guardrailParams": this.bestGuardrailParams,
             });
         }
         return fitness;
@@ -208,9 +251,21 @@ class Simulator {
     }
 
     mutate(chromosome, mutationRate = 0.1) {
-        return chromosome.map(gene =>
-            Math.random() < mutationRate ? Math.random() : gene
-        );
+        const ftCount = this._ftGeneCount;
+        const keys = ['withdrawalRate', 'preservation', 'prosperity', 'adjustment'];
+
+        return chromosome.map((gene, idx) => {
+            if (Math.random() >= mutationRate) return gene;
+
+            if (idx < ftCount) {
+                // Fund transfer gene: random 0–100
+                return Math.random() * 100;
+            } else {
+                // Guardrail gene: random within range, clamped
+                const key = keys[idx - ftCount];
+                return this._randomGuardrailGene(key);
+            }
+        });
     }
 
     runGeneticAlgorithm(popSize = 50, generations = 200, mutationRate = 0.15, callback) {
@@ -255,7 +310,8 @@ class Simulator {
 
         callback({
             "action": "complete",
-            "data": this.bestPortfolio.modelAssets
+            "data": this.bestPortfolio.modelAssets,
+            "guardrailParams": this.bestGuardrailParams,
         });
 
         return this.bestFitness;

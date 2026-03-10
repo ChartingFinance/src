@@ -524,6 +524,17 @@ function _ensureSimModal() {
 
         simModal.addEventListener('found-fittest', (e) => {
             util_saveLocalAssetModels(activeStoryArc, 'Fittest', e.detail.modelAssets);
+
+            // Write optimized guardrail params back to DOM and localStorage
+            const gp = e.detail.guardrailParams;
+            if (gp) {
+                global_setGuardrailWithdrawalRate(gp.withdrawalRate);
+                global_setGuardrailPreservation(gp.preservation);
+                global_setGuardrailProsperity(gp.prosperity);
+                global_setGuardrailAdjustment(gp.adjustment);
+                syncGuardrailsToDOM();
+                guardrailsStale = true;
+            }
         });
 
         simModal.addEventListener('close', () => {
