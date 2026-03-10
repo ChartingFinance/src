@@ -191,7 +191,7 @@ function initiateActiveData() {
 
     // Restore active scenario
     const savedScenario = localStorage.getItem('activeScenario');
-    if (savedScenario && ['Scenario1', 'Scenario2', 'FittestValue', 'FittestGuardrail', 'FittestOverall'].includes(savedScenario)) {
+    if (savedScenario && ['Scenario1', 'Scenario2', 'Fittest'].includes(savedScenario)) {
         activeScenario = savedScenario;
     }
     document.getElementById('scenario-select').value = activeScenario;
@@ -364,8 +364,6 @@ function tab6_click() {
 
 // ─── Scenarios ───────────────────────────────────────────────
 
-const FITTEST_SCENARIOS = new Set(['FittestValue', 'FittestGuardrail', 'FittestOverall']);
-
 function switchScenario(newScenario) {
     // Save current work to current slot before switching
     saveLocalData();
@@ -373,20 +371,18 @@ function switchScenario(newScenario) {
     activeScenario = newScenario;
     localStorage.setItem('activeScenario', activeScenario);
 
-    // Fittest variants: if no data exists yet, launch the appropriate GA mode
-    if (FITTEST_SCENARIOS.has(activeScenario)) {
-        const data = util_loadLocalAssetModels(activeStoryArc, activeScenario);
+    // Fittest: if no data exists yet, launch the genetic algorithm
+    if (activeScenario === 'Fittest') {
+        const data = util_loadLocalAssetModels(activeStoryArc, 'Fittest');
         if (!data) {
             updateResetButtonVisibility();
-            if (activeScenario === 'FittestValue') doMaximize();
-            else if (activeScenario === 'FittestGuardrail') doOptimizeGuardrails();
-            else doMaximize(); // FittestOverall — user selects 'both' from within modal
+            doMaximize();
             return;
         }
     }
 
     // Clone Default into scenario slot if it doesn't exist yet
-    if (activeScenario !== 'default' && !FITTEST_SCENARIOS.has(activeScenario)) {
+    if (activeScenario !== 'default' && activeScenario !== 'Fittest') {
         const data = util_loadLocalAssetModels(activeStoryArc, activeScenario);
         if (!data) {
             const defaultData = util_loadLocalAssetModels(activeStoryArc, activeStoryName);
@@ -407,7 +403,7 @@ function resetScenario() {
 
 function updateResetButtonVisibility() {
     const btn = document.getElementById('btn-scenario-reset');
-    btn.classList.toggle('invisible', activeScenario === 'default' || FITTEST_SCENARIOS.has(activeScenario));
+    btn.classList.toggle('invisible', activeScenario === 'default' || activeScenario === 'Fittest');
 }
 
 // ─── Charting and Calculation ────────────────────────────────
@@ -481,8 +477,8 @@ function innerCalculate(portfolio) {
 }
 
 function saveLocalData() {
-    // Don't overwrite GA-generated fittest scenarios with manual edits
-    if (FITTEST_SCENARIOS.has(activeScenario)) return;
+    // Don't overwrite GA-generated fittest scenario with manual edits
+    if (activeScenario === 'Fittest') return;
     const slotName = activeScenario === 'default' ? activeStoryName : activeScenario;
     util_saveLocalAssetModels(activeStoryArc, slotName, assetsContainerElement.modelAssets || []);
 }
@@ -527,13 +523,11 @@ function _ensureSimModal() {
         document.body.appendChild(simModal);
 
         simModal.addEventListener('found-fittest', (e) => {
-            const key = e.detail.scenarioKey || 'FittestValue';
-            util_saveLocalAssetModels(activeStoryArc, key, e.detail.modelAssets);
+            util_saveLocalAssetModels(activeStoryArc, 'Fittest', e.detail.modelAssets);
         });
 
-        simModal.addEventListener('close', (e) => {
-            const key = e.detail?.scenarioKey;
-            if (key && activeScenario === key) {
+        simModal.addEventListener('close', () => {
+            if (activeScenario === 'Fittest') {
                 loadLocalData();
             }
         });
@@ -541,20 +535,20 @@ function _ensureSimModal() {
     return simModal;
 }
 
-function doMaximize() {
+function _launchSimulator(sliderDefault) {
     const simModal = _ensureSimModal();
     simModal.modelAssets = assetsContainerElement.modelAssets || [];
-    simModal.mode = 'maximize';
     simModal.guardrailParams = getGuardrailsParams();
+    simModal.fitnessBalance = sliderDefault;
     simModal.open = true;
 }
 
+function doMaximize() {
+    _launchSimulator(100); // slider right → terminal value
+}
+
 function doOptimizeGuardrails() {
-    const simModal = _ensureSimModal();
-    simModal.modelAssets = assetsContainerElement.modelAssets || [];
-    simModal.mode = 'guardrails';
-    simModal.guardrailParams = getGuardrailsParams();
-    simModal.open = true;
+    _launchSimulator(0); // slider left → spending
 }
 
 // ─── Popup Functions ─────────────────────────────────────────

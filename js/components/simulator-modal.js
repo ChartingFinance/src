@@ -5,9 +5,9 @@
  * Set `modelAssets` and `open` to launch; dispatches 'close' when dismissed.
  * Manages Chart.js instance and Web Worker lifecycle internally.
  *
- * Properties:
- *   mode: 'maximize' | 'guardrails' | 'both'
- *   guardrailParams: { withdrawalRate, preservation, prosperity, adjustment }
+ * The fitnessBalance slider controls the unified fitness function:
+ *   Left  (0)   = Maximize Spending (cash flow)
+ *   Right (100)  = Maximize Terminal Value
  */
 
 import { LitElement, html } from 'lit';
@@ -21,26 +21,19 @@ import {
 } from '../charting.js';
 import './asset-list.js';
 
-const MODE_LABELS = {
-    maximize:   'Maximize Value',
-    guardrails: 'Optimize Guardrails',
-    both:       'Maximize and Optimize',
-};
-
 class SimulatorModal extends LitElement {
 
     static properties = {
         open:             { type: Boolean, reflect: true },
         modelAssets:      { type: Array },
-        mode:             { type: String },
         guardrailParams:  { type: Object },
+        fitnessBalance:   { type: Number },
         _status:          { state: true },
         _generation:      { state: true },
         _bestValue:       { state: true },
         _displayAssets:   { state: true },
-        _selectedMode:    { state: true },
         _runComplete:     { state: true },
-        _fitnessBalance:  { state: true },
+        _sliderValue:     { state: true },
     };
 
     createRenderRoot() { return this; }
@@ -49,15 +42,14 @@ class SimulatorModal extends LitElement {
         super();
         this.open = false;
         this.modelAssets = [];
-        this.mode = 'maximize';
         this.guardrailParams = null;
+        this.fitnessBalance = 50;
         this._status = 'Starting...';
         this._generation = 'Generation 0 / 200';
         this._bestValue = '';
         this._displayAssets = [];
-        this._selectedMode = 'maximize';
         this._runComplete = false;
-        this._fitnessBalance = 50;
+        this._sliderValue = 50;
         this._chart = null;
         this._worker = null;
     }
@@ -65,50 +57,30 @@ class SimulatorModal extends LitElement {
     render() {
         if (!this.open) return html``;
 
-        const modeDisabled = !this._runComplete;
-        const showBothWarning = this._selectedMode === 'both';
-
         return html`
             <div class="sim-overlay" @click=${this._onOverlayClick}>
                 <div class="sim-modal" @click=${(e) => e.stopPropagation()}>
                     <div class="sim-header">
                         <span class="sim-title">Simulator</span>
-                        <select class="fin-input text-sm font-medium py-1 px-2 rounded-xl"
-                            .value=${this._selectedMode}
-                            ?disabled=${!this._runComplete}
-                            @change=${this._onModeChange}>
-                            <option value="maximize">Maximize Value</option>
-                            <option value="guardrails" ?disabled=${!this.guardrailParams}>Optimize Guardrails</option>
-                            <option value="both" ?disabled=${!this.guardrailParams}>Maximize and Optimize</option>
-                        </select>
                         <div class="sim-controls">
                             <span class="sim-status">${this._status}</span>
                             <button class="sim-close-btn" title="Close"
                                 @click=${this._close}>&times;</button>
                         </div>
                     </div>
-                    ${showBothWarning && this._runComplete ? html`
-                        <div class="text-xs text-amber-600 px-4 pt-2 font-medium">
-                            This will run both fitness functions sequentially and may take a while.
-                            <button class="btn-modern outline small ml-2" @click=${this._startBothRun}>Run</button>
-                        </div>
-                    ` : html`
-                        <div class="text-xs text-gray-400 px-4 pt-2">
-                            Results saved as "${this._scenarioLabel}" in the portfolio scenario dropdown.
-                        </div>
-                    `}
-                    ${this._showSlider ? html`
-                        <div class="flex items-center gap-3 px-4 pt-2 text-xs">
-                            <span class="text-gray-500 font-semibold whitespace-nowrap">Spending</span>
-                            <input type="range" min="0" max="100" step="5"
-                                .value=${String(this._fitnessBalance)}
-                                class="flex-grow"
-                                style="accent-color: #333;"
-                                @input=${this._onBalanceInput}
-                                @change=${this._onBalanceChange}>
-                            <span class="text-gray-500 font-semibold whitespace-nowrap">Terminal Value</span>
-                        </div>
-                    ` : ''}
+                    <div class="text-xs text-gray-400 px-4 pt-2">
+                        Results saved as "Fittest" in the portfolio scenario dropdown.
+                    </div>
+                    <div class="flex items-center gap-3 px-4 pt-2 text-xs">
+                        <span class="text-gray-500 font-semibold whitespace-nowrap">Spending</span>
+                        <input type="range" min="0" max="100" step="5"
+                            .value=${String(this._sliderValue)}
+                            class="flex-grow"
+                            style="accent-color: #333;"
+                            @input=${this._onSliderInput}
+                            @change=${this._onSliderChange}>
+                        <span class="text-gray-500 font-semibold whitespace-nowrap">Terminal Value</span>
+                    </div>
                     <div class="sim-body">
                         <div class="sim-chart-area">
                             <canvas></canvas>
@@ -128,26 +100,9 @@ class SimulatorModal extends LitElement {
         `;
     }
 
-    get _showSlider() {
-        return (this._selectedMode === 'guardrails' || this._selectedMode === 'both')
-            && this.guardrailParams;
-    }
-
-    get _scenarioLabel() {
-        if (this._selectedMode === 'maximize') return 'Fittest Value';
-        if (this._selectedMode === 'guardrails') return 'Fittest Guardrail';
-        return 'Fittest Overall';
-    }
-
-    get _scenarioKey() {
-        if (this._selectedMode === 'maximize') return 'FittestValue';
-        if (this._selectedMode === 'guardrails') return 'FittestGuardrail';
-        return 'FittestOverall';
-    }
-
     updated(changed) {
         if (changed.has('open') && this.open) {
-            this._selectedMode = this.mode;
+            this._sliderValue = this.fitnessBalance;
             this._runComplete = false;
             requestAnimationFrame(() => this._start());
         }
@@ -163,31 +118,18 @@ class SimulatorModal extends LitElement {
 
     // ── Private ──────────────────────────────────────────────────
 
-    _onModeChange(e) {
-        this._selectedMode = e.target.value;
-        if (this._selectedMode !== 'both') {
-            this._restartWithMode(this._selectedMode);
-        }
+    _onSliderInput(e) {
+        this._sliderValue = parseInt(e.target.value);
     }
 
-    _startBothRun() {
-        this._restartWithMode('both');
-    }
-
-    _onBalanceInput(e) {
-        this._fitnessBalance = parseInt(e.target.value);
-    }
-
-    _onBalanceChange() {
-        // Re-run with new balance if a run already completed
+    _onSliderChange() {
         if (this._runComplete) {
-            this._restartWithMode(this._selectedMode);
+            this._restart();
         }
     }
 
-    _restartWithMode(mode) {
+    _restart() {
         this._teardown();
-        this._selectedMode = mode;
         this._runComplete = false;
         this._status = 'Starting...';
         this._generation = 'Generation 0 / 200';
@@ -221,15 +163,11 @@ class SimulatorModal extends LitElement {
 
         this._worker = new Worker('js/simulator.js', { type: 'module' });
 
-        const workerMode = this._selectedMode;
-        const workerPayload = {
+        this._worker.postMessage({
             modelAssets: JSON.parse(JSON.stringify(this.modelAssets)),
-            mode: workerMode,
-            guardrailParams: (workerMode === 'guardrails' || workerMode === 'both')
-                ? this.guardrailParams : null,
-            fitnessBalance: this._fitnessBalance,
-        };
-        this._worker.postMessage(workerPayload);
+            guardrailParams: this.guardrailParams,
+            fitnessBalance: this._sliderValue,
+        });
 
         this._worker.onerror = (err) => {
             console.error('Simulator worker error:', err);
@@ -238,7 +176,6 @@ class SimulatorModal extends LitElement {
 
         this._pendingBetter = null;
         this._updateTimer = null;
-        this._bothPhase = (workerMode === 'both') ? 1 : 0;
 
         this._worker.onmessage = (event) => {
             const msg = event.data;
@@ -248,7 +185,7 @@ class SimulatorModal extends LitElement {
 
                 this.dispatchEvent(new CustomEvent('found-fittest', {
                     bubbles: true, composed: true,
-                    detail: { modelAssets: msg.data, scenarioKey: this._scenarioKey },
+                    detail: { modelAssets: msg.data },
                 }));
 
                 if (!this._updateTimer) {
@@ -261,17 +198,8 @@ class SimulatorModal extends LitElement {
             else if (msg.action === 'iteration') {
                 const match = msg.data.match(/Generation:\s*(\d+)/);
                 if (match) {
-                    const gen = parseInt(match[1]) + 1;
-                    const phaseLabel = this._bothPhase === 1 ? ' (Value)' :
-                                       this._bothPhase === 2 ? ' (Guardrails)' : '';
-                    this._generation = `Generation ${gen} / 200${phaseLabel}`;
+                    this._generation = `Generation ${parseInt(match[1]) + 1} / 200`;
                 }
-            }
-            else if (msg.action === 'phaseComplete') {
-                // 'both' mode: first phase done, second phase starting
-                this._bothPhase = 2;
-                if (this._pendingBetter) this._processPendingBetter();
-                this._status = 'Running phase 2...';
             }
             else if (msg.action === 'complete') {
                 if (this._pendingBetter) this._processPendingBetter();
@@ -340,10 +268,7 @@ class SimulatorModal extends LitElement {
 
     _close() {
         this.open = false;
-        this.dispatchEvent(new CustomEvent('close', {
-            bubbles: true, composed: true,
-            detail: { scenarioKey: this._scenarioKey },
-        }));
+        this.dispatchEvent(new CustomEvent('close', { bubbles: true, composed: true }));
     }
 
     _onOverlayClick(ev) {
