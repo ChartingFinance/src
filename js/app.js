@@ -461,6 +461,18 @@ function calculate(target) {
     monteCarloStale = true;
     guardrailsStale = true;
 
+    // If Monte Carlo or Guardrails tab is active, refresh immediately
+    if (tab2.classList.contains('active')) {
+        monteCarloStale = false;
+        const chartArea = document.getElementById('monteCarloChartArea');
+        const useGuardrails = document.getElementById('monte-carlo-guardrails').checked;
+        runMonteCarlo(portfolio.modelAssets, chartArea, 1000,
+            useGuardrails ? getGuardrailsParams() : null);
+    } else if (tab3.classList.contains('active')) {
+        guardrailsStale = false;
+        runGuardrails(portfolio.modelAssets, guardrailsCanvas, getGuardrailsParams());
+    }
+
     // build the chart configs (must happen before innerCalculate creates Chart instances)
     charting_buildFromPortfolio(portfolio, true, activeMetric1Name);
 
@@ -580,9 +592,7 @@ function doMaximize() {
     _launchSimulator(100); // slider right → terminal value
 }
 
-function doOptimizeGuardrails() {
-    _launchSimulator(0); // slider left → spending
-}
+
 
 // ─── Popup Functions ─────────────────────────────────────────
 
@@ -669,7 +679,6 @@ document.getElementById('btn-share').addEventListener('click', openShareModal);
 document.getElementById('btn-add-asset').addEventListener('click', openCreateAssetModal);
 document.getElementById('btn-visualize').addEventListener('click', doVisualize);
 document.getElementById('btn-maximize').addEventListener('click', doMaximize);
-document.getElementById('btn-optimize-guardrails').addEventListener('click', doOptimizeGuardrails);
 document.getElementById('btn-revert-guardrails').addEventListener('click', () => {
     global_setGuardrailWithdrawalRate(global_default_guardrail_withdrawalRate);
     global_setGuardrailPreservation(global_default_guardrail_preservation);
