@@ -200,7 +200,7 @@ export class PayrollEngine {
 
                         let contributionLimit = activeTaxTable.iraContributionLimit(this.activeUser);
                         if (this.yearly.tradIRAContribution.amount + this. monthly.tradIRAContribution.amount + totalIRAContribution.amount + contribution.amount > contributionLimit.amount) {
-                            contribution = new Currency(totalIRAContributionLimit.amount - this.yearly.tradIRAContribution.amount - this.monthly.tradIRAContribution.amount - totalIRAContribution.amount);
+                            contribution = new Currency(contributionLimit.amount - this.yearly.tradIRAContribution.amount - this.monthly.tradIRAContribution.amount - totalIRAContribution.amount);
                         }
 
                         fundTransfer.fromModel.tradIRAContributionCurrency.add(contribution);

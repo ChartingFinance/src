@@ -25,8 +25,13 @@ self.onmessage = function(event) {
     */
 
     // Run the genetic algorithm
-    simulator.runGeneticAlgorithm(100, 600, 0.1, function(assetModels) {
-        self.postMessage(assetModels);
+    simulator.runGeneticAlgorithm(50, 200, 0.15, function(msg) {
+        // Serialize to plain JSON — ModelAsset instances contain behavior
+        // objects with functions that can't be structurally cloned by postMessage
+        if (msg.data && typeof msg.data !== 'string') {
+            msg = { ...msg, data: JSON.parse(JSON.stringify(msg.data)) };
+        }
+        self.postMessage(msg);
     });
 
 }
@@ -36,11 +41,11 @@ class Simulator {
 
         chronometer_run(portfolio);
 
-        this.portfolio = portfolio; // Portfolio object to simulate
-        this.bestPortfolio = portfolio.copy(); // Best observed portfolio
+        this.portfolio = portfolio;
+        this.bestPortfolio = portfolio.copy();
+        this.bestFitness = portfolio.finishValue().amount;
 
         this.fundTransfers = [];
-        this.bestFundTransfers = null;;
 
         this.generateAllFundTransfers(); // Generate fund transfers for all model assets
 
@@ -194,15 +199,16 @@ class Simulator {
     evaluateFitness(chromosome, callback) {
         this.setFundTransfersFromChromosome(chromosome);
         chronometer_run(this.portfolio);
-        if (this.portfolio.finishValue().amount > this.bestPortfolio.finishValue().amount) {
+        const fitness = this.portfolio.finishValue().amount;
+        if (fitness > this.bestFitness) {
+            this.bestFitness = fitness;
             this.bestPortfolio = this.portfolio.copy();
-            let richMessage = {
+            callback({
                 "action": "foundBetter",
                 "data": this.bestPortfolio.modelAssets
-            }
-            callback(richMessage);
+            });
         }
-        return this.portfolio.finishValue().amount; // or whatever metric you want
+        return fitness;
     }
 
     // 4. Selection (e.g., top N)
@@ -232,24 +238,32 @@ class Simulator {
     }
 
     // 7. Main GA loop
-    runGeneticAlgorithm(popSize = 100, generations = 600, mutationRate = 0.1, callback) {
+    runGeneticAlgorithm(popSize = 50, generations = 200, mutationRate = 0.15, callback) {
         let population = this.generateInitialPopulation(popSize);
+        let bestChromosome = null;
 
         for (let gen = 0; gen < generations; gen++) {
 
-            if (gen % 30 == 0) {
-                // try a new population every 30 generations
-                population = this.generateInitialPopulation(popSize);
+            // Inject diversity every 50 gens, but keep the top performers
+            if (gen > 0 && gen % 50 === 0) {
+                const fitnesses = population.map(chrom => this.evaluateFitness(chrom, callback));
+                const elite = this.selectParents(population, fitnesses, 5);
+                population = this.generateInitialPopulation(popSize - elite.length);
+                population.push(...elite);
             }
 
             // Evaluate fitness
             const fitnesses = population.map(chrom => this.evaluateFitness(chrom, callback));
 
+            // Track best chromosome
+            const genBestIdx = fitnesses.indexOf(Math.max(...fitnesses));
+            bestChromosome = population[genBestIdx];
+
             // Selection
             const parents = this.selectParents(population, fitnesses, Math.floor(popSize / 2));
 
             // Crossover and mutation to create new population
-            let newPopulation = [];
+            let newPopulation = [bestChromosome]; // elitism: always keep the best
             while (newPopulation.length < popSize) {
                 const [parentA, parentB] = [
                     parents[Math.floor(Math.random() * parents.length)],
@@ -266,11 +280,6 @@ class Simulator {
                 "data": "Generation: " + gen.toString() + '\n' + this.portfolio.dnaFundTransfers()
             });
         }
-
-        // Final evaluation
-        const fitnesses = population.map(chrom => this.evaluateFitness(chrom, callback));
-        const bestIdx = fitnesses.indexOf(Math.max(...fitnesses));
-        this.setFundTransfersFromChromosome(population[bestIdx]);
 
         callback({
             "action": "complete",

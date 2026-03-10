@@ -35,7 +35,7 @@ class SimulatorModal extends LitElement {
         this.open = false;
         this.modelAssets = [];
         this._status = 'Starting...';
-        this._generation = 'Generation 0 / 600';
+        this._generation = 'Generation 0 / 200';
         this._bestValue = '';
         this._displayAssets = [];
         this._chart = null;
@@ -129,60 +129,87 @@ class SimulatorModal extends LitElement {
             this._status = 'Error';
         };
 
+        this._pendingBetter = null;
+        this._updateTimer = null;
+
         this._worker.onmessage = (event) => {
             const msg = event.data;
 
             if (msg.action === 'foundBetter') {
-                const assetModels = membrane_jsonObjectsToModelAssets(msg.data);
-                const p = new Portfolio(assetModels, false);
-                chronometer_run(p);
-                p.buildChartingDisplayData();
-                setModelAssetColorIds(p.modelAssets);
-
-                const newConfig = charting_buildPortfolioMetric(p, 'value', true);
-                const newData = newConfig.data;
-
-                // Update chart datasets in-place for smooth animation
-                for (let i = 0; i < newData.datasets.length; i++) {
-                    if (i < this._chart.data.datasets.length) {
-                        this._chart.data.datasets[i].data = newData.datasets[i].data;
-                        this._chart.data.datasets[i].backgroundColor = newData.datasets[i].backgroundColor;
-                    } else {
-                        this._chart.data.datasets.push(newData.datasets[i]);
-                    }
-                }
-                this._chart.data.datasets.length = newData.datasets.length;
-                this._chart.data.labels = newData.labels;
-                this._chart.update();
-
-                this._displayAssets = [...p.modelAssets];
-
-                const bestVal = p.finishValue().amount;
-                this._bestValue = 'Best: $' + bestVal.toLocaleString(undefined, {
-                    minimumFractionDigits: 0, maximumFractionDigits: 0
-                });
+                // Buffer the latest result; only process at most every 500ms
+                this._pendingBetter = msg.data;
 
                 this.dispatchEvent(new CustomEvent('found-fittest', {
                     bubbles: true, composed: true,
                     detail: { modelAssets: msg.data },
                 }));
+
+                if (!this._updateTimer) {
+                    this._updateTimer = setTimeout(() => {
+                        this._processPendingBetter();
+                        this._updateTimer = null;
+                    }, 500);
+                }
             }
             else if (msg.action === 'iteration') {
                 const match = msg.data.match(/Generation:\s*(\d+)/);
                 if (match) {
-                    this._generation = 'Generation ' + (parseInt(match[1]) + 1) + ' / 600';
+                    this._generation = 'Generation ' + (parseInt(match[1]) + 1) + ' / 200';
                 }
             }
             else if (msg.action === 'complete') {
+                // Process any remaining buffered result
+                if (this._pendingBetter) {
+                    this._processPendingBetter();
+                }
                 this._status = 'Complete';
-                this._generation = 'Generation 600 / 600';
+                this._generation = 'Generation 200 / 200';
             }
         };
 
         this._status = 'Running...';
     }
 
+    _processPendingBetter() {
+        if (!this._pendingBetter || !this._chart) return;
+        const data = this._pendingBetter;
+        this._pendingBetter = null;
+
+        const assetModels = membrane_jsonObjectsToModelAssets(data);
+        const p = new Portfolio(assetModels, false);
+        chronometer_run(p);
+        p.buildChartingDisplayData();
+        setModelAssetColorIds(p.modelAssets);
+
+        const newConfig = charting_buildPortfolioMetric(p, 'value', true);
+        const newData = newConfig.data;
+
+        for (let i = 0; i < newData.datasets.length; i++) {
+            if (i < this._chart.data.datasets.length) {
+                this._chart.data.datasets[i].data = newData.datasets[i].data;
+                this._chart.data.datasets[i].backgroundColor = newData.datasets[i].backgroundColor;
+            } else {
+                this._chart.data.datasets.push(newData.datasets[i]);
+            }
+        }
+        this._chart.data.datasets.length = newData.datasets.length;
+        this._chart.data.labels = newData.labels;
+        this._chart.update();
+
+        this._displayAssets = [...p.modelAssets];
+
+        const bestVal = p.finishValue().amount;
+        this._bestValue = 'Best: $' + bestVal.toLocaleString(undefined, {
+            minimumFractionDigits: 0, maximumFractionDigits: 0
+        });
+    }
+
     _teardown() {
+        if (this._updateTimer) {
+            clearTimeout(this._updateTimer);
+            this._updateTimer = null;
+        }
+        this._pendingBetter = null;
         if (this._worker) {
             this._worker.terminate();
             this._worker = null;
@@ -192,7 +219,7 @@ class SimulatorModal extends LitElement {
             this._chart = null;
         }
         this._status = 'Starting...';
-        this._generation = 'Generation 0 / 600';
+        this._generation = 'Generation 0 / 200';
         this._bestValue = '';
         this._displayAssets = [];
     }
