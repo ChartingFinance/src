@@ -424,35 +424,47 @@ export function global_getBacktestYear() {
 
 // ── Guardrails ────────────────────────────────────────────────
 
-export const global_default_guardrail_withdrawalRate = 4;
-export const global_default_guardrail_preservation = 20;
-export const global_default_guardrail_prosperity = 20;
-export const global_default_guardrail_adjustment = 10;
+export const global_default_guardrail_withdrawalRate = 5;
+export const global_default_guardrail_preservation = 15;
+export const global_default_guardrail_prosperity = 15;
+export const global_default_guardrail_adjustment = 15;
 
 export let global_guardrail_withdrawalRate = global_default_guardrail_withdrawalRate;
 export let global_guardrail_preservation = global_default_guardrail_preservation;
 export let global_guardrail_prosperity = global_default_guardrail_prosperity;
 export let global_guardrail_adjustment = global_default_guardrail_adjustment;
 
-export function global_setGuardrailWithdrawalRate(value) { localStorage.setItem('guardrailWithdrawalRate', value.toString()); }
+export function global_setGuardrailWithdrawalRate(value) {
+    localStorage.setItem('guardrailWithdrawalRate', value.toString());
+    global_guardrail_withdrawalRate = parseFloat(value);
+}
 export function global_getGuardrailWithdrawalRate() {
     const v = localStorage.getItem('guardrailWithdrawalRate');
     global_guardrail_withdrawalRate = v != null ? parseFloat(v) : global_default_guardrail_withdrawalRate;
 }
 
-export function global_setGuardrailPreservation(value) { localStorage.setItem('guardrailPreservation', value.toString()); }
+export function global_setGuardrailPreservation(value) {
+    localStorage.setItem('guardrailPreservation', value.toString());
+    global_guardrail_preservation = parseFloat(value);
+}
 export function global_getGuardrailPreservation() {
     const v = localStorage.getItem('guardrailPreservation');
     global_guardrail_preservation = v != null ? parseFloat(v) : global_default_guardrail_preservation;
 }
 
-export function global_setGuardrailProsperity(value) { localStorage.setItem('guardrailProsperity', value.toString()); }
+export function global_setGuardrailProsperity(value) {
+    localStorage.setItem('guardrailProsperity', value.toString());
+    global_guardrail_prosperity = parseFloat(value);
+}
 export function global_getGuardrailProsperity() {
     const v = localStorage.getItem('guardrailProsperity');
     global_guardrail_prosperity = v != null ? parseFloat(v) : global_default_guardrail_prosperity;
 }
 
-export function global_setGuardrailAdjustment(value) { localStorage.setItem('guardrailAdjustment', value.toString()); }
+export function global_setGuardrailAdjustment(value) {
+    localStorage.setItem('guardrailAdjustment', value.toString());
+    global_guardrail_adjustment = parseFloat(value);
+}
 export function global_getGuardrailAdjustment() {
     const v = localStorage.getItem('guardrailAdjustment');
     global_guardrail_adjustment = v != null ? parseFloat(v) : global_default_guardrail_adjustment;

@@ -98,6 +98,17 @@ export function util_loadLocalAssetModels(storyArc, storyName) {
         return null;
 }
 
+export function util_saveLocalGuardrailParams(storyArc, storyName, params) {
+    const key = util_buildStoryArcKey(storyArc, storyName) + '+guardrails';
+    localStorage.setItem(key, JSON.stringify(params));
+}
+
+export function util_loadLocalGuardrailParams(storyArc, storyName) {
+    const key = util_buildStoryArcKey(storyArc, storyName) + '+guardrails';
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : null;
+}
+
 export function util_loadFromStorage(key) {
     let data = localStorage.getItem(key);
     if (data)

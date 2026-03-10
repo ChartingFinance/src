@@ -79,6 +79,10 @@ import {
     global_setGuardrailPreservation,
     global_setGuardrailProsperity,
     global_setGuardrailAdjustment,
+    global_default_guardrail_withdrawalRate,
+    global_default_guardrail_preservation,
+    global_default_guardrail_prosperity,
+    global_default_guardrail_adjustment,
 } from './globals.js';
 
 // Util
@@ -87,6 +91,8 @@ import {
     util_ensureStoryNames,
     util_saveLocalAssetModels,
     util_loadLocalAssetModels,
+    util_saveLocalGuardrailParams,
+    util_loadLocalGuardrailParams,
 } from './utils/util.js';
 
 // Spreadsheet + Credit Memos (Lit components)
@@ -303,11 +309,14 @@ function tab1_click() {
 function tab2_click() {
     hideAllTabs();
     tab2.classList.add('active');
-    monteCarloContainer.style.display = '';
+    monteCarloContainer.style.display = 'flex';
 
     if (monteCarloStale && activePortfolio) {
         monteCarloStale = false;
-        runMonteCarlo(activePortfolio.modelAssets, monteCarloContainer, 1000);
+        const chartArea = document.getElementById('monteCarloChartArea');
+        const useGuardrails = document.getElementById('monte-carlo-guardrails').checked;
+        runMonteCarlo(activePortfolio.modelAssets, chartArea, 1000,
+            useGuardrails ? getGuardrailsParams() : null);
     }
 }
 
@@ -481,12 +490,24 @@ function saveLocalData() {
     if (activeScenario === 'Fittest') return;
     const slotName = activeScenario === 'default' ? activeStoryName : activeScenario;
     util_saveLocalAssetModels(activeStoryArc, slotName, assetsContainerElement.modelAssets || []);
+    util_saveLocalGuardrailParams(activeStoryArc, slotName, getGuardrailsParams());
 }
 
 function loadLocalData() {
     const slotName = activeScenario === 'default' ? activeStoryName : activeScenario;
     let assetModelsRaw = util_loadLocalAssetModels(activeStoryArc, slotName);
     assetsContainerElement.modelAssets = membrane_rawDataToModelAssets(assetModelsRaw);
+
+    // Load per-scenario guardrail params (fall back to globals if none saved)
+    const gp = util_loadLocalGuardrailParams(activeStoryArc, slotName);
+    if (gp) {
+        global_setGuardrailWithdrawalRate(gp.withdrawalRate);
+        global_setGuardrailPreservation(gp.preservation);
+        global_setGuardrailProsperity(gp.prosperity);
+        global_setGuardrailAdjustment(gp.adjustment);
+        syncGuardrailsToDOM();
+    }
+
     calculate('assets');
 }
 
@@ -525,9 +546,10 @@ function _ensureSimModal() {
         simModal.addEventListener('found-fittest', (e) => {
             util_saveLocalAssetModels(activeStoryArc, 'Fittest', e.detail.modelAssets);
 
-            // Write optimized guardrail params back to DOM and localStorage
+            // Save and apply optimized guardrail params
             const gp = e.detail.guardrailParams;
             if (gp) {
+                util_saveLocalGuardrailParams(activeStoryArc, 'Fittest', gp);
                 global_setGuardrailWithdrawalRate(gp.withdrawalRate);
                 global_setGuardrailPreservation(gp.preservation);
                 global_setGuardrailProsperity(gp.prosperity);
@@ -579,6 +601,7 @@ function openShareModal() {
         retirementAge: global_user_retirementAge,
         finishAge: global_user_finishAge,
     };
+    shareModal.guardrailParams = getGuardrailsParams();
     shareModal.open = true;
 }
 
@@ -627,6 +650,15 @@ for (const [id, setter] of Object.entries(guardrailSetters)) {
     });
 }
 
+// Monte Carlo guardrails checkbox — rerun when toggled
+document.getElementById('monte-carlo-guardrails').addEventListener('change', function() {
+    if (activePortfolio) {
+        const chartArea = document.getElementById('monteCarloChartArea');
+        runMonteCarlo(activePortfolio.modelAssets, chartArea, 1000,
+            this.checked ? getGuardrailsParams() : null);
+    }
+});
+
 // ─── Button Event Listeners ──────────────────────────────────
 
 document.getElementById('btn-calculate').addEventListener('click', () => calculate('assets'));
@@ -638,6 +670,14 @@ document.getElementById('btn-add-asset').addEventListener('click', openCreateAss
 document.getElementById('btn-visualize').addEventListener('click', doVisualize);
 document.getElementById('btn-maximize').addEventListener('click', doMaximize);
 document.getElementById('btn-optimize-guardrails').addEventListener('click', doOptimizeGuardrails);
+document.getElementById('btn-revert-guardrails').addEventListener('click', () => {
+    global_setGuardrailWithdrawalRate(global_default_guardrail_withdrawalRate);
+    global_setGuardrailPreservation(global_default_guardrail_preservation);
+    global_setGuardrailProsperity(global_default_guardrail_prosperity);
+    global_setGuardrailAdjustment(global_default_guardrail_adjustment);
+    syncGuardrailsToDOM();
+    refreshGuardrails();
+});
 
 // Tab switching
 tab1.addEventListener('click', tab1_click);
@@ -709,6 +749,16 @@ function loadSharedPortfolio() {
             global_setUserFinishAge(data.settings.finishAge);
             setActiveTaxTable(new TaxTable());
             syncGlobalsToSettings();
+        }
+
+        // Load guardrail params
+        if (data.guardrailParams) {
+            const gp = data.guardrailParams;
+            global_setGuardrailWithdrawalRate(gp.withdrawalRate);
+            global_setGuardrailPreservation(gp.preservation);
+            global_setGuardrailProsperity(gp.prosperity);
+            global_setGuardrailAdjustment(gp.adjustment);
+            syncGuardrailsToDOM();
         }
 
         // Load assets

@@ -67,9 +67,13 @@ function cloneAssets(sourceAssets) {
 
 // ── Single simulation run ────────────────────────────────────────
 
-function runOnce(sourceAssets) {
+function runOnce(sourceAssets, guardrailParams) {
     const assets = cloneAssets(sourceAssets);
     const portfolio = new Portfolio(assets, false);
+
+    if (guardrailParams) {
+        portfolio.guardrailsParams = guardrailParams;
+    }
 
     activeTaxTable.initializeChron();
     portfolio.initializeChron();
@@ -100,6 +104,7 @@ function runOnce(sourceAssets) {
 
         if (currentDateInt.isNewYearsDay()) {
             applyRandomRates(portfolio.modelAssets);
+            portfolio.applyGuardrails(currentDateInt);
             portfolio.applyYear(currentDateInt);
             activeTaxTable.applyYear(portfolio.yearly);
             portfolio.yearlyChron(currentDateInt);
@@ -127,7 +132,7 @@ function percentile(sortedArr, p) {
 
 let monteCarloChart = null;
 
-export function runMonteCarlo(sourceAssets, container, numSimulations = 1000) {
+export function runMonteCarlo(sourceAssets, container, numSimulations = 1000, guardrailParams = null) {
     // Determine number of months from a reference run
     const refAssets = cloneAssets(sourceAssets);
     const refPortfolio = new Portfolio(refAssets, false);
@@ -164,7 +169,7 @@ export function runMonteCarlo(sourceAssets, container, numSimulations = 1000) {
     setTimeout(() => {
         const allRuns = [];
         for (let i = 0; i < numSimulations; i++) {
-            const totals = runOnce(sourceAssets);
+            const totals = runOnce(sourceAssets, guardrailParams);
             while (totals.length < numMonths) totals.push(totals[totals.length - 1] ?? 0);
             if (totals.length > numMonths) totals.length = numMonths;
             allRuns.push(totals);
@@ -215,13 +220,13 @@ export function runMonteCarlo(sourceAssets, container, numSimulations = 1000) {
         basePf.finalizeChron();
         activeTaxTable.finalizeChron();
 
-        renderFanChart(container, labels, bands, bandData, baselineData, numSimulations);
+        renderFanChart(container, labels, bands, bandData, baselineData, numSimulations, !!guardrailParams);
     }, 50);
 }
 
 // ── Chart rendering ──────────────────────────────────────────────
 
-function renderFanChart(container, labels, bands, bandData, baselineData, numSimulations) {
+function renderFanChart(container, labels, bands, bandData, baselineData, numSimulations, withGuardrails) {
     container.innerHTML = '';
 
     const canvas = document.createElement('canvas');
@@ -317,7 +322,7 @@ function renderFanChart(container, labels, bands, bandData, baselineData, numSim
             plugins: {
                 title: {
                     display: true,
-                    text: `Monte Carlo · ${numSimulations.toLocaleString()} simulations · Portfolio Value`,
+                    text: `Monte Carlo · ${numSimulations.toLocaleString()} simulations · Portfolio Value${withGuardrails ? ' · With Guardrails' : ''}`,
                     font: { size: 14, weight: '600' },
                     padding: { bottom: 16 },
                 },

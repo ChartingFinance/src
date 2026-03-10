@@ -23,7 +23,8 @@ class ShareModal extends LitElement {
         open:           { type: Boolean, reflect: true },
         modelAssets:    { type: Array },
         portfolioName:  { type: String },
-        globalSettings: { type: Object },
+        globalSettings:  { type: Object },
+        guardrailParams: { type: Object },
         _name:          { state: true },
         _email:         { state: true },
         _shareUrl:      { state: true },
@@ -38,6 +39,7 @@ class ShareModal extends LitElement {
         this.modelAssets = [];
         this.portfolioName = '';
         this.globalSettings = {};
+        this.guardrailParams = null;
         this._name = '';
         this._email = '';
         this._shareUrl = '';
@@ -77,6 +79,7 @@ class ShareModal extends LitElement {
             name: this._name,
             settings: this.globalSettings,
             modelAssets: cleanAssets,
+            guardrailParams: this.guardrailParams,
         };
 
         const json = JSON.stringify(payload);
