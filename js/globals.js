@@ -422,6 +422,42 @@ export function global_getBacktestYear() {
     global_backtestYear = local;
 }
 
+// ── Guardrails ────────────────────────────────────────────────
+
+export const global_default_guardrail_withdrawalRate = 4;
+export const global_default_guardrail_preservation = 20;
+export const global_default_guardrail_prosperity = 20;
+export const global_default_guardrail_adjustment = 10;
+
+export let global_guardrail_withdrawalRate = global_default_guardrail_withdrawalRate;
+export let global_guardrail_preservation = global_default_guardrail_preservation;
+export let global_guardrail_prosperity = global_default_guardrail_prosperity;
+export let global_guardrail_adjustment = global_default_guardrail_adjustment;
+
+export function global_setGuardrailWithdrawalRate(value) { localStorage.setItem('guardrailWithdrawalRate', value.toString()); }
+export function global_getGuardrailWithdrawalRate() {
+    const v = localStorage.getItem('guardrailWithdrawalRate');
+    global_guardrail_withdrawalRate = v != null ? parseFloat(v) : global_default_guardrail_withdrawalRate;
+}
+
+export function global_setGuardrailPreservation(value) { localStorage.setItem('guardrailPreservation', value.toString()); }
+export function global_getGuardrailPreservation() {
+    const v = localStorage.getItem('guardrailPreservation');
+    global_guardrail_preservation = v != null ? parseFloat(v) : global_default_guardrail_preservation;
+}
+
+export function global_setGuardrailProsperity(value) { localStorage.setItem('guardrailProsperity', value.toString()); }
+export function global_getGuardrailProsperity() {
+    const v = localStorage.getItem('guardrailProsperity');
+    global_guardrail_prosperity = v != null ? parseFloat(v) : global_default_guardrail_prosperity;
+}
+
+export function global_setGuardrailAdjustment(value) { localStorage.setItem('guardrailAdjustment', value.toString()); }
+export function global_getGuardrailAdjustment() {
+    const v = localStorage.getItem('guardrailAdjustment');
+    global_guardrail_adjustment = v != null ? parseFloat(v) : global_default_guardrail_adjustment;
+}
+
 export function global_initialize() {
     global_getInflationRate();
     global_getTaxYear();
@@ -432,4 +468,8 @@ export function global_initialize() {
     global_getUserRetirementAge();
     global_getUserFinishAge();
     global_getBacktestYear();
+    global_getGuardrailWithdrawalRate();
+    global_getGuardrailPreservation();
+    global_getGuardrailProsperity();
+    global_getGuardrailAdjustment();
 }

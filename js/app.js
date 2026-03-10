@@ -36,6 +36,9 @@ import {
 // Monte Carlo
 import { runMonteCarlo } from './monte-carlo.js';
 
+// Guardrails
+import { runGuardrails } from './guardrails.js';
+
 // Logger
 import { logger, LogCategory } from './utils/logger.js';
 
@@ -68,6 +71,14 @@ import {
     global_setUserFinishAge,
     global_setBacktestYear,
     global_getBacktestYear,
+    global_guardrail_withdrawalRate,
+    global_guardrail_preservation,
+    global_guardrail_prosperity,
+    global_guardrail_adjustment,
+    global_setGuardrailWithdrawalRate,
+    global_setGuardrailPreservation,
+    global_setGuardrailProsperity,
+    global_setGuardrailAdjustment,
 } from './globals.js';
 
 // Util
@@ -123,10 +134,12 @@ let editingModelAsset = null;
 let activeMetric1Name = Metric.VALUE;
 let activePortfolio = null;
 let monteCarloStale = true;
+let guardrailsStale = true;
 
 const metric1Select = document.getElementById('metric1Select');
 const monteCarloContainer = document.getElementById('monteCarloContainer');
 const guardrailsContainer = document.getElementById('guardrailsContainer');
+const guardrailsCanvas = document.getElementById('guardrailsCanvas');
 
 // ─── Metric Select Setup ─────────────────────────────────────
 
@@ -298,10 +311,37 @@ function tab2_click() {
     }
 }
 
+function getGuardrailsParams() {
+    return {
+        withdrawalRate: parseFloat(document.getElementById('guardrail-withdrawal-rate').value) || 4,
+        preservation: parseFloat(document.getElementById('guardrail-preservation').value) || 20,
+        prosperity: parseFloat(document.getElementById('guardrail-prosperity').value) || 20,
+        adjustment: parseFloat(document.getElementById('guardrail-adjustment').value) || 10,
+    };
+}
+
+function syncGuardrailsToDOM() {
+    document.getElementById('guardrail-withdrawal-rate').value = global_guardrail_withdrawalRate;
+    document.getElementById('guardrail-preservation').value = global_guardrail_preservation;
+    document.getElementById('guardrail-prosperity').value = global_guardrail_prosperity;
+    document.getElementById('guardrail-adjustment').value = global_guardrail_adjustment;
+}
+
+function refreshGuardrails() {
+    if (activePortfolio) {
+        guardrailsStale = false;
+        runGuardrails(activePortfolio.modelAssets, guardrailsCanvas, getGuardrailsParams());
+    }
+}
+
 function tab3_click() {
     hideAllTabs();
     tab3.classList.add('active');
-    guardrailsContainer.style.display = '';
+    guardrailsContainer.style.display = 'flex';
+
+    if (guardrailsStale) {
+        refreshGuardrails();
+    }
 }
 
 function tab4_click() {
@@ -410,6 +450,7 @@ function calculate(target) {
     // store portfolio for metric select change handlers
     activePortfolio = portfolio;
     monteCarloStale = true;
+    guardrailsStale = true;
 
     // build the chart configs (must happen before innerCalculate creates Chart instances)
     charting_buildFromPortfolio(portfolio, true, activeMetric1Name);
@@ -540,6 +581,24 @@ for (const closeButtonElement of closeButtonElements) {
     });
 }
 
+// ─── Guardrails Input Listeners ──────────────────────────────
+const guardrailSetters = {
+    'guardrail-withdrawal-rate': global_setGuardrailWithdrawalRate,
+    'guardrail-preservation': global_setGuardrailPreservation,
+    'guardrail-prosperity': global_setGuardrailProsperity,
+    'guardrail-adjustment': global_setGuardrailAdjustment,
+};
+for (const [id, setter] of Object.entries(guardrailSetters)) {
+    document.getElementById(id).addEventListener('change', function() {
+        setter(parseFloat(this.value));
+        if (tab3.classList.contains('active')) {
+            refreshGuardrails();
+        } else {
+            guardrailsStale = true;
+        }
+    });
+}
+
 // ─── Button Event Listeners ──────────────────────────────────
 
 document.getElementById('btn-calculate').addEventListener('click', () => calculate('assets'));
@@ -642,6 +701,7 @@ function initialize() {
     global_initialize();
     setActiveTaxTable(new TaxTable());
     syncGlobalsToSettings();
+    syncGuardrailsToDOM();
     connectSettings();
     populateMetricSelects();
     connectAssetFormModal();

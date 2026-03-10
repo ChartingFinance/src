@@ -357,9 +357,14 @@ export class FinancialPackage {
 export class Portfolio {
     constructor(modelAssets, reports) {
         this.modelAssets = this.sortModelAssets(modelAssets);
-        this.reports = !!reports; 
-        this.generatedReports = []; 
+        this.reports = !!reports;
+        this.generatedReports = [];
         this.activeUser = new User(global_user_startAge);
+
+        // Guardrails (Guyton-Klinger) — set before chronometer_run to activate
+        this.guardrailsParams = null; // { withdrawalRate, preservation, prosperity, adjustment }
+        this.guardrailEvents = [];    // [{ year, type, rate, adjustedTo }]
+        this.yearlySnapshots = [];    // [{ year, investableAssets, annualExpense, withdrawalRate }]
 
         this.firstDateInt = firstDateInt(this.modelAssets);
         this.lastDateInt = lastDateInt(this.modelAssets);
@@ -562,6 +567,68 @@ export class Portfolio {
 
     accumulatedValue() {
         return this.sumAssetCurrency('cashFlowAccumulatedCurrency');
+    }
+
+    getTotalInvestableAssets() {
+        let total = new Currency(0);
+        for (const a of this.modelAssets) {
+            if ((InstrumentType.isExpensable(a.instrument) || InstrumentType.isIncomeAccount(a.instrument)) && !a.isClosed) {
+                total.add(a.finishCurrency);
+            }
+        }
+        return total;
+    }
+
+    applyGuardrails(currentDateInt) {
+        if (!this.guardrailsParams) return;
+
+        const investable = this.getTotalInvestableAssets().amount;
+        if (investable <= 0) return;
+
+        const annualExpense = Math.abs(this.yearly.expense.amount);
+        const currentRate = annualExpense / investable;
+        const initialRate = this.guardrailsParams.withdrawalRate / 100;
+        const preservationThreshold = this.guardrailsParams.preservation / 100;
+        const prosperityThreshold = this.guardrailsParams.prosperity / 100;
+        const adjustmentPct = this.guardrailsParams.adjustment / 100;
+
+        this.yearlySnapshots.push({
+            year: currentDateInt.year - 1,
+            investableAssets: investable,
+            annualExpense,
+            withdrawalRate: currentRate,
+        });
+
+        const upperGuardrail = initialRate * (1 + preservationThreshold);
+        const lowerGuardrail = initialRate * (1 - prosperityThreshold);
+
+        if (currentRate > upperGuardrail) {
+            // Preservation: cut expenses
+            for (const a of this.modelAssets) {
+                if (InstrumentType.isMonthlyExpense(a.instrument) && !a.isClosed) {
+                    a.finishCurrency.multiply(1 - adjustmentPct);
+                }
+            }
+            this.guardrailEvents.push({
+                year: currentDateInt.year - 1,
+                type: 'preservation',
+                rate: currentRate,
+                adjustedTo: currentRate * (1 - adjustmentPct),
+            });
+        } else if (currentRate < lowerGuardrail) {
+            // Prosperity: raise expenses
+            for (const a of this.modelAssets) {
+                if (InstrumentType.isMonthlyExpense(a.instrument) && !a.isClosed) {
+                    a.finishCurrency.multiply(1 + adjustmentPct);
+                }
+            }
+            this.guardrailEvents.push({
+                year: currentDateInt.year - 1,
+                type: 'prosperity',
+                rate: currentRate,
+                adjustedTo: currentRate * (1 + adjustmentPct),
+            });
+        }
     }
     
     applyMonth(currentDateInt) {
