@@ -123,6 +123,7 @@ export class TaxEngine {
 
         logger.log(LogCategory.TAX, 'applyCapitalGainsTax: ' + modelAsset.displayName + ' generated tax of ' + amountToTax.toString() + ' to deduct from closure');
         modelAsset.finishCurrency.add(amountToTax);
+        modelAsset.monthlyValueChange.add(amountToTax);
     }
 
     // ── Day 30: Monthly Tax True-Up ───────────────────────────────────

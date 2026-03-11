@@ -13,6 +13,7 @@
 //   Guardrail genes: real-valued within defined ranges
 
 import { InstrumentType, ModelAsset, FundTransfer } from './index.js';
+import { Frequency } from './fund-transfer.js';
 import { chronometer_run } from './chronometer.js';
 import { setActiveTaxTable } from './globals.js';
 import { TaxTable } from './taxes.js';
@@ -157,7 +158,7 @@ class Simulator {
 
     ensureFundTransfer(fromModel, toModel) {
         if (!fromModel.hasFundTransfer(toModel.displayName)) {
-            const fundTransfer = new FundTransfer(toModel.displayName, false, 0.0);
+            const fundTransfer = new FundTransfer(toModel.displayName, Frequency.MONTHLY, 0.0);
             fromModel.fundTransfers.push(fundTransfer);
             this.fundTransfers.push(fundTransfer);
         }

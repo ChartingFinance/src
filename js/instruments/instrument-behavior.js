@@ -146,14 +146,12 @@ const ExpenseBehavior = Object.freeze({
     const expense = asset.finishCurrency.copy();
     asset.expenseCurrency.add(expense);
 
-    const growth = new Currency(expense.amount * asset.annualReturnRate.asMonthly());
-    asset.growthCurrency.add(growth);
-    asset.finishCurrency.add(growth);
-    asset.monthlyValueChange.add(growth);
-    asset.monthlyGrowth.add(growth);
-
-    if (growth.amount !== 0) {
-      asset.addCreditMemo(growth, 'Expense growth');
+    const inflation = new Currency(expense.amount * asset.annualReturnRate.asMonthly());
+    asset.finishCurrency.add(inflation);
+    asset.monthlyValueChange.add(inflation);
+    
+    if (inflation.amount !== 0) {
+      asset.addCreditMemo(inflation, 'Expense inflation');
     }
 
     return new ExpenseResult(expense, asset.finishCurrency.copy());
@@ -191,8 +189,10 @@ const MortgageBehavior = Object.freeze({
     asset.mortgagePrincipalCurrency.add(principal);
 
     asset.monthsRemainingDynamic--;
-    asset.finishCurrency.subtract(principal);
+    asset.finishCurrency.subtract(principal);    
     asset.growthCurrency.subtract(principal);
+
+    // and don't forget our monthlyValueChange tracker
     asset.monthlyValueChange.subtract(principal);
 
     asset.addCreditMemo(principal.copy().flipSign(), 'Mortgage Principal');
@@ -202,7 +202,11 @@ const MortgageBehavior = Object.freeze({
   },
 
   computeCashFlow(asset) {
-    return asset.mortgageInterestCurrency.copy();
+    
+    let cf = asset.mortgageInterestCurrency.copy();
+    cf.add(asset.mortgagePrincipalCurrency);
+    return cf;
+
   },
 });
 
@@ -225,10 +229,9 @@ const CapitalBehavior = Object.freeze({
     const growth = new Currency(asset.finishCurrency.amount * asset.annualReturnRate.asMonthly());
 
     asset.growthCurrency.add(growth);
-    asset.finishCurrency.add(asset.growthCurrency);
-    asset.monthlyValueChange.add(asset.growthCurrency);
-    asset.monthlyGrowth.add(asset.growthCurrency);
-    asset.addCreditMemo(asset.growthCurrency, 'Asset growth');
+    asset.finishCurrency.add(growth);
+    asset.monthlyValueChange.add(growth);
+    asset.addCreditMemo(growth, 'Asset growth');
 
     let dividend = Currency.zero();
     if (asset.annualDividendRate.rate != 0.0) {
@@ -237,7 +240,6 @@ const CapitalBehavior = Object.freeze({
       asset.dividendCurrency.add(dividend);
       asset.finishCurrency.add(dividend);
       asset.monthlyValueChange.add(dividend);
-      asset.monthlyGrowth.add(dividend);
       asset.addCreditMemo(dividend, 'Dividend income');
     }
 
@@ -245,7 +247,16 @@ const CapitalBehavior = Object.freeze({
   },
 
   computeCashFlow(asset) {
-    return asset.growthCurrency.copy();
+
+    let cf = asset.dividendCurrency.copy();
+    cf.add(asset.shortTermCapitalGainCurrency);
+    cf.add(asset.longTermCapitalGainCurrency);
+    cf.add(asset.tradIRADistributionCurrency);
+    cf.add(asset.four01KDistributionCurrency);
+    cf.add(asset.rothIRADistributionCurrency);
+    cf.add(asset.taxableDistributionCurrency);
+    return cf;
+
   },
 });
 
@@ -267,23 +278,22 @@ const RealEstateBehavior = Object.freeze({
     const growth = new Currency(asset.finishCurrency.amount * asset.annualReturnRate.asMonthly());
 
     asset.growthCurrency.add(growth);
-    asset.finishCurrency.add(asset.growthCurrency);
-    asset.monthlyValueChange.add(asset.growthCurrency);
-    asset.monthlyGrowth.add(asset.growthCurrency);
-    asset.addCreditMemo(asset.growthCurrency, 'Asset growth');
+    asset.finishCurrency.add(growth);
+    asset.monthlyValueChange.add(growth);
+    asset.addCreditMemo(growth, 'Asset growth');
 
     const tax = new Currency(asset.finishCurrency.amount * asset.annualTaxRate.asMonthly());
     tax.flipSign(); // taxes are negative
 
     asset.propertyTaxCurrency.add(tax);
-    asset.addCreditMemo(asset.propertyTaxCurrency, 'Property tax');
+    asset.addCreditMemo(tax, 'Property tax');
 
     return new AssetAppreciationResult(asset.finishCurrency.copy(), growth, Currency.zero(), tax);
 
   },
 
   computeCashFlow(asset) {
-    return asset.growthCurrency.copy();
+    return asset.propertyTaxCurrency.copy();
   },
 });
 

@@ -477,9 +477,11 @@ export class ModelAsset {
     this.creditMemos = [];
     this.creditMemosCheckedIndex = 0;
     this.monthlyCreditBalance = Currency.zero();
+    this.monthlyTaxEscrow = Currency.zero();
     this.#metrics.initializeAll();
 
-    this.monthlyTaxEscrow = Currency.zero();
+    // this is to track this.finishCurrency changes through the month with a check on the last day
+    this.monthlyValueChange = Currency.zero();
 
   }
 
@@ -556,8 +558,6 @@ export class ModelAsset {
 
   applyFirstDayOfMonth(currentDateInt) {
 
-    this.monthlyValueChange = Currency.zero();
-    this.monthlyGrowth = Currency.zero();
     this.monthlyCreditBalance.zero();
 
     if (this.beforeStartDate) {
@@ -582,21 +582,17 @@ export class ModelAsset {
     }
 
     this.firstDayOfMonthValue = this.finishCurrency.copy();
+    this.monthlyValueChange.zero();
 
   }
 
   applyLastDayOfMonth(currentDateInt) {  
 
-    // check against the sum of values + credits
-    let lastDayOfMonthValue = this.finishCurrency.copy();
-    let firstDayOfMonthValuePlusMonthlyValueChange = this.firstDayOfMonthValue.copy().add(this.monthlyValueChange);
-    
-    if (lastDayOfMonthValue.toFixed() !== firstDayOfMonthValuePlusMonthlyValueChange.toFixed()) {
-      console.warn(`Value mismatch for ${this.displayName} on ${currentDateInt.toString()}: firstDayOfMonthValue (${this.firstDayOfMonthValue.toCurrency()}) + monthlyValueChange (${this.monthlyValueChange.toCurrency()}) = ${firstDayOfMonthValuePlusMonthlyValueChange.toCurrency()} but lastDayOfMonthValue is ${lastDayOfMonthValue.toCurrency()}`);
+    const expected = this.firstDayOfMonthValue.plus(this.monthlyValueChange);
+    if (expected.toFixed() !== this.finishCurrency.toFixed()) {
+      console.warn('Value mismatch! finishValue: ' + this.finishCurrency.toFixed() + '   expected: ' + expected.toFixed());
       debugger;
-    }    
-
-    this.cashFlowAccumulatedCurrency.add(this.monthlyValueChange.minus(this.monthlyGrowth));
+    }
 
   }
 
@@ -614,10 +610,11 @@ export class ModelAsset {
     if (InstrumentType.isMonthlyIncome(this.instrument)) {
       const growth = new Currency(this.finishCurrency.amount * this.annualReturnRate.rate);
       this.growthCurrency.add(growth);
-      this.finishCurrency.add(growth);
-      this.monthlyValueChange.add(growth);
-      this.monthlyGrowth.add(growth);
+      this.finishCurrency.add(growth);      
       this.addCreditMemo(growth, 'Annual income growth');
+
+      // and don't forget our monthlyValueChange tracker
+      this.monthlyValueChange.add(growth);
 
       return this.isSelfEmployed
         ? new IncomeResult(this.growthCurrency.copy(), Currency.zero())
@@ -656,13 +653,15 @@ export class ModelAsset {
     let realizedGain = Currency.zero();
 
     if (amount.amount >= 0) {
+      
       // ── DEPOSIT ──
       if (isTaxable) this.monthlyCreditBalance.add(amount);
       this.finishCurrency.add(amount);
-      if (isTaxable) this.finishBasisCurrency.add(amount);
       this.monthlyValueChange.add(amount);
-
+      if (isTaxable) this.finishBasisCurrency.add(amount);
+      
     } else {
+      
       // ── WITHDRAWAL ──
       const withdrawal = new Currency(Math.abs(amount.amount));
 
@@ -672,8 +671,8 @@ export class ModelAsset {
         fromCredit = new Currency(Math.min(withdrawal.amount, this.monthlyCreditBalance.amount));
         this.monthlyCreditBalance.subtract(fromCredit);
         this.finishCurrency.subtract(fromCredit);
-        this.finishBasisCurrency.subtract(fromCredit);
         this.monthlyValueChange.subtract(fromCredit);
+        this.finishBasisCurrency.subtract(fromCredit);        
       }
 
       // Remainder from vested holdings (fraction-sold, triggers gains)
@@ -821,7 +820,6 @@ export class ModelAsset {
     // since we are closing we won't be tracking value changes anymore
     this.firstDayOfMonthValue.zero();
     this.monthlyValueChange.zero();
-    this.monthlyGrowth.zero();
 
     this.isClosed = true;
 
