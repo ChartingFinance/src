@@ -94,7 +94,7 @@ export class GraphMapper {
                         type: isCloseOnly ? 'ClosureTransfer'
                             : InstrumentType.isMortgage(asset.instrument) ? 'MortgagePayment'
                             : 'MonthlyTransfer',
-                        weight: ft.moveValue
+                        weight: ft.monthlyMoveValue
                     });
                 }
             }

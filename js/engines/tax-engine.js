@@ -12,18 +12,18 @@
 import { Currency } from '../utils/currency.js';
 import { InstrumentType } from '../instruments/instrument.js';
 import { Metric } from '../model-asset.js';
+import { FundTransfer } from '../fund-transfer.js';
 import { MonthsSpan } from '../utils/months-span.js';
 import { activeTaxTable } from '../globals.js';
 import { logger, LogCategory } from '../utils/logger.js';
 
 export class TaxEngine {
 
-    constructor(modelAssets, monthly, yearly, activeUser, router) {
+    constructor(modelAssets, monthly, yearly, activeUser) {
         this.modelAssets = modelAssets;
         this.monthly = monthly;
         this.yearly = yearly;
         this.activeUser = activeUser;
-        this.router = router;
     }
 
     // ── Day 1: FICA Recording ─────────────────────────────────────────
@@ -64,13 +64,29 @@ export class TaxEngine {
             modelAsset.addCreditMemo(escrow, 'Property tax escrow');
 
             if (modelAsset.monthlyTaxEscrow.amount) {
+                const payment = escrow.flipSign(); // escrow is negative, flip to positive for debit
+
+                // Resolve funding source from explicit fund transfers
+                let fundingSource = null;
                 for (const fundTransfer of modelAsset.fundTransfers) {
                     if (!fundTransfer.isActiveForMonth(currentDateInt.month)) continue;
                     fundTransfer.bind(modelAsset, this.modelAssets);
                     if (!fundTransfer.toModel) continue;
+                    fundingSource = fundTransfer.toModel;
+                    break;
+                }
 
-                    // do the payment manually
-                    fundTransfer.toModel.debit(escrow.flipSign(), modelAsset.displayName + ' property tax', false);
+                // Fallback: first taxable account
+                if (!fundingSource) {
+                    fundingSource = FundTransfer.resolveTaxable(this.modelAssets);
+                }
+
+                // One-sided withdrawal: escrow already adjusted the home's balance.
+                // Only debit the funding source.
+                if (fundingSource) {
+                    const memo = `${modelAsset.displayName} property tax`;
+                    const result = fundingSource.debit(payment, memo);
+                    this.monthly.recordTransfer(fundingSource.instrument, payment, result.realizedGain);
                     modelAsset.clearMonthlyTaxEscrow();
                 }
             }

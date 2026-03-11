@@ -7,7 +7,7 @@ import { User } from './user.js';
 import { firstDateInt, lastDateInt } from './asset-queries.js';
 import { activeTaxTable } from './globals.js';
 import { global_propertyTaxDeductionMax, global_user_startAge } from './globals.js';
-import { AccountRouter } from './engines/account-router.js';
+import { FundTransfer } from './fund-transfer.js';
 import { PayrollEngine } from './engines/payroll-engine.js';
 import { ExpenseEngine } from './engines/expense-engine.js';
 import { TaxEngine } from './engines/tax-engine.js';
@@ -203,6 +203,31 @@ export class FinancialPackage {
 
     }
 
+    /**
+     * Record the tax consequence of a fund movement from the given source instrument.
+     * Centralizes the classification that was previously scattered across engines.
+     *
+     * @param {string} sourceInstrument - instrument key of the account being debited
+     * @param {Currency} amount - positive withdrawal amount
+     * @param {Currency} realizedGain - capital gain from proportional basis (taxable accounts only)
+     */
+    recordTransfer(sourceInstrument, amount, realizedGain) {
+        const T = InstrumentType;
+        if (amount.amount === 0) return;
+
+        if (T.isTaxableAccount(sourceInstrument)) {
+            this.longTermCapitalGains.add(realizedGain);
+        } else if (T.isTaxDeferred(sourceInstrument)) {
+            if (T.isIRA(sourceInstrument)) {
+                this.tradIRADistribution.add(amount);
+            } else if (T.is401K(sourceInstrument)) {
+                this.four01KDistribution.add(amount);
+            }
+        } else if (T.isTaxFree(sourceInstrument)) {
+            this.rothIRADistribution.add(amount);
+        }
+    }
+
     copy() {
 
         let aCopy = new FinancialPackage();
@@ -379,7 +404,6 @@ export class Portfolio {
 
         this.displayCapitalGainsTaxes = [];
 
-        this.router = new AccountRouter(this.modelAssets);
     }
 
     sortModelAssets(modelAssets) {
@@ -409,10 +433,10 @@ export class Portfolio {
 
     }
 
-    zeroFundTransfersMoveValues() {
+    zeroFundTransfersMonthlyMoveValues() {
 
         for (let modelAsset of this.modelAssets) {
-            modelAsset.zeroFundTransfersMoveValues();
+            modelAsset.zeroFundTransfersMonthlyMoveValues();
         }
 
     }
@@ -445,9 +469,9 @@ export class Portfolio {
             modelAsset.initializeChron();
         }
 
-        this.taxes = new TaxEngine(this.modelAssets, this.monthly, this.yearly, this.activeUser, this.router);
-        this.payroll = new PayrollEngine(this.modelAssets, this.monthly, this.yearly, this.activeUser, this.router, this.taxes);
-        this.expenses = new ExpenseEngine(this.modelAssets, this.monthly, this.activeUser, this.router);
+        this.taxes = new TaxEngine(this.modelAssets, this.monthly, this.yearly, this.activeUser);
+        this.payroll = new PayrollEngine(this.modelAssets, this.monthly, this.yearly, this.activeUser, this.taxes);
+        this.expenses = new ExpenseEngine(this.modelAssets, this.monthly, this.activeUser);
     }
 
     monthlySanityCheck(currentDateInt) {
@@ -829,9 +853,10 @@ export class Portfolio {
             if (extraAmount.amount > 0) {
                 logger.log(LogCategory.TRANSFER, 'Portfolio.applyAssetCloseFundTransfers: ' + modelAsset.displayName + ' funding ' + extraAmount.toString() + ' to first expensable account');
 
-                const note = `Asset closure proceeds from ${modelAsset.displayName}`;
-                modelAsset.debit(extraAmount, note, true); // true = skipGain (already handled)
-                this.router.creditToExpensable(extraAmount, note);
+                const target = FundTransfer.resolveExpensable(this.modelAssets);
+                if (target) {
+                    FundTransfer.system(modelAsset, target, extraAmount).execute({ skipGain: true });
+                }
             }
 
         }
@@ -839,9 +864,10 @@ export class Portfolio {
 
             logger.log(LogCategory.TRANSFER, 'Portfolio.applyAssetCloseFundTransfers: ' + modelAsset.displayName + ' funding ' + modelAssetValue.toString() + ' to first expensable account');
 
-            const note = `Asset closure proceeds from ${modelAsset.displayName}`;
-            modelAsset.debit(modelAssetValue, note, true); // true = skipGain (already handled)
-            this.router.creditToExpensable(modelAssetValue, note);
+            const target = FundTransfer.resolveExpensable(this.modelAssets);
+            if (target) {
+                FundTransfer.system(modelAsset, target, modelAssetValue).execute({ skipGain: true });
+            }
 
         }
 

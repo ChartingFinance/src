@@ -201,7 +201,7 @@ class Simulator {
 
     setFundTransfersFromChromosome(chromosome) {
         for (let i = 0; i < this.fundTransfers.length; i++) {
-            this.fundTransfers[i].moveValue = chromosome[i];
+            this.fundTransfers[i].monthlyMoveValue = chromosome[i];
         }
         for (const modelAsset of this.portfolio.modelAssets) {
             modelAsset.stochasticLimit(100);

@@ -12,16 +12,16 @@
 import { Currency } from '../utils/currency.js';
 import { InstrumentType } from '../instruments/instrument.js';
 import { Metric } from '../model-asset.js';
+import { FundTransfer } from '../fund-transfer.js';
 import { activeTaxTable } from '../globals.js';
 
 export class PayrollEngine {
 
-    constructor(modelAssets, monthly, yearly, activeUser, router, taxEngine) {
+    constructor(modelAssets, monthly, yearly, activeUser, taxEngine) {
         this.modelAssets = modelAssets;
         this.monthly = monthly;
         this.yearly = yearly;
         this.activeUser = activeUser;
-        this.router = router;
         this.taxEngine = taxEngine;
     }
 
@@ -367,9 +367,10 @@ export class PayrollEngine {
 
             if (runningTransferAmount.amount < modelAsset.netIncomeCurrency.amount) {
                 let delta = new Currency(modelAsset.netIncomeCurrency.amount - runningTransferAmount.amount);
-                const note = `Remaining income from ${modelAsset.displayName}`;
-                modelAsset.debit(delta, note);
-                this.router.creditToTaxable(delta, note);
+                const target = FundTransfer.resolveTaxable(this.modelAssets);
+                if (target) {
+                    FundTransfer.system(modelAsset, target, delta).execute();
+                }
             }
 
         }

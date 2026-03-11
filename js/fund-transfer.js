@@ -22,14 +22,14 @@ export class FundTransfer {
   /**
    * @param {string} toDisplayName     Target asset's familiar name
    * @param {string} frequency         Recurring frequency (Frequency enum value)
-   * @param {number} moveValue         Recurring percentage of source value (0-100)
+   * @param {number} monthlyMoveValue  Monthly percentage of source value (0-100)
    * @param {number} closeMoveValue    On-close percentage of source value (0-100)
    */
-  constructor(toDisplayName, frequency = Frequency.NONE, moveValue = 0, closeMoveValue = 0) {
-    this.toDisplayName  = toDisplayName;
-    this.frequency      = frequency;
-    this.moveValue      = moveValue;
-    this.closeMoveValue = closeMoveValue;
+  constructor(toDisplayName, frequency = Frequency.NONE, monthlyMoveValue = 0, closeMoveValue = 0) {
+    this.toDisplayName    = toDisplayName;
+    this.frequency        = frequency;
+    this.monthlyMoveValue = monthlyMoveValue;
+    this.closeMoveValue   = closeMoveValue;
 
     // Bound at runtime by Portfolio — not serialised
     this.fromModel          = null;
@@ -42,18 +42,19 @@ export class FundTransfer {
   // ── Parsing ──────────────────────────────────────────────────────
 
   static fromJSON(obj) {
+    const mv = obj.monthlyMoveValue ?? obj.moveValue ?? 0;
     // Backward compat: old format had moveOnFinishDate (boolean) + single moveValue
     if (obj.moveOnFinishDate !== undefined) {
       if (obj.moveOnFinishDate) {
-        return new FundTransfer(obj.toDisplayName, Frequency.NONE, 0, obj.moveValue ?? 0);
+        return new FundTransfer(obj.toDisplayName, Frequency.NONE, 0, mv);
       } else {
-        return new FundTransfer(obj.toDisplayName, Frequency.MONTHLY, obj.moveValue ?? 0, 0);
+        return new FundTransfer(obj.toDisplayName, Frequency.MONTHLY, mv, 0);
       }
     }
     return new FundTransfer(
       obj.toDisplayName,
       obj.frequency ?? Frequency.NONE,
-      obj.moveValue ?? 0,
+      mv,
       obj.closeMoveValue ?? 0,
     );
   }
@@ -61,7 +62,7 @@ export class FundTransfer {
   static fromHTML(formElement) {
     let toDisplayName = null;
     let frequency = Frequency.NONE;
-    let moveValue = 0;
+    let monthlyMoveValue = 0;
     let closeMoveValue = 0;
 
     const elements = formElement.querySelectorAll
@@ -70,14 +71,14 @@ export class FundTransfer {
 
     for (const el of elements) {
       switch (el.name) {
-        case 'toDisplayName':  toDisplayName = el.value; break;
-        case 'frequency':      frequency = el.value; break;
-        case 'moveValue':      moveValue = parseInt(el.value, 10) || 0; break;
-        case 'closeMoveValue': closeMoveValue = parseInt(el.value, 10) || 0; break;
+        case 'toDisplayName':      toDisplayName = el.value; break;
+        case 'frequency':          frequency = el.value; break;
+        case 'monthlyMoveValue':   monthlyMoveValue = parseInt(el.value, 10) || 0; break;
+        case 'closeMoveValue':     closeMoveValue = parseInt(el.value, 10) || 0; break;
       }
     }
 
-    return new FundTransfer(toDisplayName, frequency, moveValue, closeMoveValue);
+    return new FundTransfer(toDisplayName, frequency, monthlyMoveValue, closeMoveValue);
   }
 
   // ── Frequency helpers ──────────────────────────────────────────
@@ -85,22 +86,52 @@ export class FundTransfer {
   /**
    * Returns true if this transfer's recurring frequency is active for the given month (1-12).
    */
-  isActiveForMonth(month) {
-    switch (this.frequency) {
-      case Frequency.MONTHLY:     return true;
-      case Frequency.QUARTERLY:   return month % 3 === 0;   // Mar, Jun, Sep, Dec
-      case Frequency.HALF_YEARLY: return month === 6 || month === 12;
-      case Frequency.YEARLY:      return month === 12;
-      default:                    return false;
-    }
+  isActiveForMonth(_month) {
+    return this.monthlyMoveValue > 0;
   }
 
   get hasRecurring() {
-    return this.frequency !== Frequency.NONE && this.moveValue > 0;
+    return this.monthlyMoveValue > 0;
   }
 
   get hasClose() {
     return this.closeMoveValue > 0;
+  }
+
+  // ── System Factory ─────────────────────────────────────────────
+
+  /**
+   * Create an ephemeral, pre-bound transfer with a fixed Currency amount.
+   * Used by engines for mortgage payments, property tax, etc. so that all
+   * money movement flows through execute() → debit/credit → realizedGain.
+   *
+   * @param {ModelAsset} fromModel  Source asset (debited)
+   * @param {ModelAsset} toModel    Target asset (credited)
+   * @param {Currency}   amount     Fixed amount to transfer
+   * @returns {FundTransfer}
+   */
+  static system(fromModel, toModel, amount) {
+    const ft = new FundTransfer(toModel.displayName, Frequency.NONE, 0, 0);
+    ft.fromModel = fromModel;
+    ft.toModel = toModel;
+    ft.approvedAmount = amount.copy();
+    return ft;
+  }
+
+  // ── Account Resolution ─────────────────────────────────────────
+
+  /** First non-closed taxable account. */
+  static resolveTaxable(modelAssets) {
+    return modelAssets.find(a => InstrumentType.isTaxableAccount(a.instrument) && !a.isClosed) ?? null;
+  }
+
+  /** First non-closed expensable account, following priority order. */
+  static resolveExpensable(modelAssets) {
+    for (const key of InstrumentType.expensablePriority) {
+      const match = modelAssets.find(a => a.instrument === key && !a.isClosed);
+      if (match) return match;
+    }
+    return null;
   }
 
   // ── Binding ──────────────────────────────────────────────────────
@@ -137,7 +168,7 @@ export class FundTransfer {
       return this.approvedAmount.copy();
     }
 
-    const pct = (useClosePercent ? this.closeMoveValue : this.moveValue) / 100;
+    const pct = (useClosePercent ? this.closeMoveValue : this.monthlyMoveValue) / 100;
 
     // Old -- Determine the base amount for the transfer:
     // New -- introduce flags set by callers (that have context) on where to pull funds from
@@ -184,22 +215,22 @@ export class FundTransfer {
   // ── Utilities ────────────────────────────────────────────────────
 
   copy() {
-    return new FundTransfer(this.toDisplayName, this.frequency, this.moveValue, this.closeMoveValue);
+    return new FundTransfer(this.toDisplayName, this.frequency, this.monthlyMoveValue, this.closeMoveValue);
   }
 
   toJSON() {
     return {
-      toDisplayName:  this.toDisplayName,
-      frequency:      this.frequency,
-      moveValue:      this.moveValue,
-      closeMoveValue: this.closeMoveValue,
+      toDisplayName:    this.toDisplayName,
+      frequency:        this.frequency,
+      monthlyMoveValue: this.monthlyMoveValue,
+      closeMoveValue:   this.closeMoveValue,
     };
   }
 
   /** Human-readable description for credit memo categorization */
   describe(fromName) {
     const from = fromName ?? this.fromModel?.displayName ?? '?';
-    const dir = this.frequency !== Frequency.NONE ? `(${this.frequency})` : '(on close)';
+    const dir = this.monthlyMoveValue > 0 ? '(monthly)' : '(on close)';
     return `${from} → ${this.toDisplayName} ${dir}`;
   }
 }

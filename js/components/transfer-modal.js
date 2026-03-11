@@ -147,8 +147,7 @@ class TransferModal extends LitElement {
             );
             return {
                 modelAsset: ma,
-                frequency: existing ? existing.frequency : Frequency.NONE,
-                moveValue: existing ? existing.moveValue : 0,
+                monthlyMoveValue: existing ? existing.monthlyMoveValue : 0,
                 closeMoveValue: existing ? existing.closeMoveValue : 0,
             };
         });
@@ -160,8 +159,6 @@ class TransferModal extends LitElement {
         const meta = InstrumentMeta.get(ma.instrument);
         const emoji = meta ? meta.emoji : '';
         const label = meta ? meta.label : '';
-        const recurringDisabled = ta.frequency === Frequency.NONE;
-
         return html`
             <form class="fund-transfer glass-card p-4" style="border-left: 4px solid ${color}">
                 <div class="flex items-center gap-3 mb-3">
@@ -174,26 +171,10 @@ class TransferModal extends LitElement {
                 </div>
                 <input type="hidden" name="toDisplayName" .value=${ma.displayName} />
                 <div class="flex items-center gap-4 mb-2">
-                    <div class="flex flex-col">
-                        <label class="text-xs text-gray-400 mb-1">Frequency</label>
-                        <select name="frequency" class="fin-input text-xs py-1 px-2"
-                            @change=${this._onFrequencyChange}>
-                            ${Object.entries({
-                                [Frequency.NONE]: 'None',
-                                [Frequency.MONTHLY]: 'Monthly',
-                                [Frequency.QUARTERLY]: 'Quarterly',
-                                [Frequency.HALF_YEARLY]: 'Half-Yearly',
-                                [Frequency.YEARLY]: 'Yearly',
-                            }).map(([val, lbl]) => html`
-                                <option value=${val} ?selected=${ta.frequency === val}>${lbl}</option>
-                            `)}
-                        </select>
-                    </div>
                     <div class="flex flex-col ml-auto">
-                        <label class="text-xs text-gray-400 mb-1">Recurring %</label>
+                        <label class="text-xs text-gray-400 mb-1">Monthly %</label>
                         <input type="number" class="fin-input w-20 text-center text-sm"
-                            name="moveValue" .value=${String(ta.moveValue)} step="0.1"
-                            ?disabled=${recurringDisabled} />
+                            name="monthlyMoveValue" .value=${String(ta.monthlyMoveValue)} step="0.1" />
                     </div>
                 </div>
                 <div class="flex items-center gap-4">
@@ -212,12 +193,6 @@ class TransferModal extends LitElement {
                 </div>
             </form>
         `;
-    }
-
-    _onFrequencyChange(e) {
-        const form = e.target.closest('.fund-transfer');
-        const moveInput = form.querySelector('[name="moveValue"]');
-        moveInput.disabled = e.target.value === Frequency.NONE;
     }
 
     _onCloseCheckChange(e) {
@@ -274,15 +249,14 @@ class TransferModal extends LitElement {
 
         for (const form of forms) {
             const toDisplayName = form.querySelector('[name="toDisplayName"]').value;
-            const frequency = form.querySelector('[name="frequency"]').value;
-            const moveValue = parseInt(form.querySelector('[name="moveValue"]').value, 10) || 0;
+            const monthlyMoveValue = parseInt(form.querySelector('[name="monthlyMoveValue"]').value, 10) || 0;
             const onCloseChecked = form.querySelector('[name="onCloseCheck"]').checked;
             const closeMoveValue = onCloseChecked
                 ? (parseInt(form.querySelector('[name="closeMoveValue"]').value, 10) || 0)
                 : 0;
 
-            if ((frequency !== Frequency.NONE && moveValue > 0) || closeMoveValue > 0) {
-                fundTransfers.push(new FundTransfer(toDisplayName, frequency, moveValue, closeMoveValue));
+            if (monthlyMoveValue > 0 || closeMoveValue > 0) {
+                fundTransfers.push(new FundTransfer(toDisplayName, Frequency.MONTHLY, monthlyMoveValue, closeMoveValue));
             }
         }
 

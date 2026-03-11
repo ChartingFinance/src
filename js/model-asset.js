@@ -739,20 +739,20 @@ export class ModelAsset {
     for (const ft of this.fundTransfers) ft.bind(this, allModels);
   }
 
-  zeroFundTransfersMoveValues() {
-    for (const ft of this.fundTransfers) ft.moveValue = 0;
+  zeroFundTransfersMonthlyMoveValues() {
+    for (const ft of this.fundTransfers) ft.monthlyMoveValue = 0;
   }
 
-  combinedFundTransfersMoveValue() {
-    return this.fundTransfers.reduce((sum, ft) => sum + ft.moveValue, 0);
+  combinedFundTransfersMonthlyMoveValue() {
+    return this.fundTransfers.reduce((sum, ft) => sum + ft.monthlyMoveValue, 0);
   }
 
   stochasticLimit(cap = 100) {
     if (this.fundTransfers.length <= 1) return;
-    const total = this.combinedFundTransfersMoveValue();
+    const total = this.combinedFundTransfersMonthlyMoveValue();
     if (total <= cap) return;
     const scale = cap / total;
-    for (const ft of this.fundTransfers) ft.moveValue *= scale;
+    for (const ft of this.fundTransfers) ft.monthlyMoveValue *= scale;
   }
 
   dnaFundTransfers() {

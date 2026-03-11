@@ -12,16 +12,16 @@
 import { Currency } from '../utils/currency.js';
 import { InstrumentType } from '../instruments/instrument.js';
 import { Metric } from '../model-asset.js';
+import { FundTransfer } from '../fund-transfer.js';
 import { activeTaxTable } from '../globals.js';
 import { logger, LogCategory } from '../utils/logger.js';
 
 export class ExpenseEngine {
 
-    constructor(modelAssets, monthly, activeUser, router) {
+    constructor(modelAssets, monthly, activeUser) {
         this.modelAssets = modelAssets;
         this.monthly = monthly;
         this.activeUser = activeUser;
-        this.router = router;
     }
 
     // ── Day 30: Expenses ─────────────────────────────────────────────
@@ -49,7 +49,8 @@ export class ExpenseEngine {
                 const expenseAmount = fundTransfer.calculate();
                 const fundTransferResult = fundTransfer.execute();
 
-                this.handleExpenseGains(fundTransfer, fundTransferResult, modelAsset.displayName);
+                const withdrawalAmount = fundTransferResult.toAssetChange.copy().flipSign();
+                this.monthly.recordTransfer(fundTransfer.toModel.instrument, withdrawalAmount, fundTransferResult.realizedGain);
                 runningExpenseAmount.add(expenseAmount);
             }
 
@@ -61,14 +62,13 @@ export class ExpenseEngine {
             if (netShortfall.amount > 0) {
                 logger.log(LogCategory.TRANSFER, `ExpenseEngine.applyExpenseTransfers: ${modelAsset.displayName} expensing ${netShortfall.toString()} from taxable account (Grossed Up)`);
 
-                const targetAsset = this.router.getFirstTaxable();
+                const targetAsset = FundTransfer.resolveTaxable(this.modelAssets);
                 if (targetAsset) {
                     const grossWithdrawal = this.calculateGrossWithdrawal(netShortfall, targetAsset);
                     const result = targetAsset.debit(grossWithdrawal, `Grossed-up expense overflow for ${modelAsset.displayName}`);
+                    this.monthly.recordTransfer(targetAsset.instrument, grossWithdrawal, result.realizedGain);
 
                     if (result && result.realizedGain && result.realizedGain.amount > 0) {
-                        this.monthly.longTermCapitalGains.add(result.realizedGain);
-
                         // Isolate tax liability to prevent the death-spiral loop
                         const taxLiability = new Currency(grossWithdrawal.amount - netShortfall.amount);
                         this.monthly.estimatedTaxes.add(taxLiability);
@@ -83,14 +83,13 @@ export class ExpenseEngine {
             const netShortfall = modelAssetExpense.copy().flipSign();
             logger.log(LogCategory.TRANSFER, `ExpenseEngine.applyExpenseTransfers: ${modelAsset.displayName} expensing ${netShortfall.toString()} from taxable account (Grossed Up)`);
 
-            const targetAsset = this.router.getFirstTaxable();
+            const targetAsset = FundTransfer.resolveTaxable(this.modelAssets);
             if (targetAsset) {
                 const grossWithdrawal = this.calculateGrossWithdrawal(netShortfall, targetAsset);
                 const result = targetAsset.debit(grossWithdrawal, `Grossed-up expense debit for ${modelAsset.displayName}`);
+                this.monthly.recordTransfer(targetAsset.instrument, grossWithdrawal, result.realizedGain);
 
                 if (result && result.realizedGain && result.realizedGain.amount > 0) {
-                    this.monthly.longTermCapitalGains.add(result.realizedGain);
-
                     // Isolate tax liability to prevent the death-spiral loop
                     const taxLiability = new Currency(grossWithdrawal.amount - netShortfall.amount);
                     this.monthly.estimatedTaxes.add(taxLiability);
@@ -106,59 +105,29 @@ export class ExpenseEngine {
         const payment = modelAsset.mortgagePaymentCurrency.copy().flipSign(); // payment is negative, need positive for debit
         if (payment.amount <= 0) return;
 
-        let funded = false;
-
-        // Try explicit monthly fund transfers first
+        // Try explicit fund transfers first — resolve the funding source
+        let fundingSource = null;
         if (modelAsset.fundTransfers?.length) {
             for (const fundTransfer of modelAsset.fundTransfers) {
                 if (!fundTransfer.isActiveForMonth(currentDateInt.month)) continue;
                 fundTransfer.bind(modelAsset, this.modelAssets);
                 if (!fundTransfer.toModel) continue;
-
-                const memo = fundTransfer.describe();
-                fundTransfer.toModel.debit(payment, memo);
-                funded = true;
+                fundingSource = fundTransfer.toModel;
                 break; // one funding source per mortgage
             }
         }
 
-        // Fallback: auto-debit from first taxable account (e.g., close-only or no fund transfers)
-        if (!funded) {
-            const taxable = this.router.getFirstTaxable();
-            if (taxable) {
-                const memo = `${modelAsset.displayName} → ${taxable.displayName} (mortgage payment)`;
-                taxable.debit(payment, memo);
-            }
+        // Fallback: first taxable account
+        if (!fundingSource) {
+            fundingSource = FundTransfer.resolveTaxable(this.modelAssets);
         }
 
-        // Principal and interest are already recorded on the monthly package
-        // by addResult(MortgageResult) in payroll-engine day 1.
-    }
-
-    handleExpenseGains(fundTransfer, fundTransferResult, modelAssetName) {
-        const targetInstrument = fundTransfer.toModel.instrument;
-        const change = fundTransferResult.toAssetChange.copy();
-        const realizedGain = fundTransferResult.realizedGain.copy();
-
-        change.flipSign(); // flip sign because it's an expense
-
-        if (change.amount === 0) return;
-
-        if (InstrumentType.isTaxableAccount(targetInstrument)) {
-            logger.log(LogCategory.TRANSFER, `ExpenseEngine.handleExpenseGains: ${modelAssetName} expensing ${fundTransfer.toModel.displayName} generated longTermCapitalGains of ${realizedGain.toString()}`);
-            this.monthly.longTermCapitalGains.add(realizedGain);
-        } else if (InstrumentType.isTaxDeferred(targetInstrument)) {
-            logger.log(LogCategory.TRANSFER, `ExpenseEngine.handleExpenseGains: ${modelAssetName} expensing ${fundTransfer.toModel.displayName} generated ordinaryIncome of ${change.toString()}`);
-            if (InstrumentType.isIRA(targetInstrument)) {
-                this.monthly.tradIRADistribution.add(change);
-            } else if (InstrumentType.is401K(targetInstrument)) {
-                this.monthly.four01KDistribution.add(change);
-            } else {
-                logger.log(LogCategory.TRANSFER, `ExpenseEngine.handleExpenseGains: unhandled isTaxDeferred ${fundTransfer.toDisplayName}`);
-            }
-        } else if (InstrumentType.isTaxFree(targetInstrument)) {
-            logger.log(LogCategory.TRANSFER, `ExpenseEngine.handleExpenseGains: ${modelAssetName} expensing ${fundTransfer.toModel.displayName} generated no tax impact`);
-            this.monthly.rothIRADistribution.add(change);
+        // One-sided withdrawal: MortgageBehavior already reduced the mortgage
+        // balance (principal) and recorded interest. Only debit the funding source.
+        if (fundingSource) {
+            const memo = `${modelAsset.displayName} mortgage payment`;
+            const result = fundingSource.debit(payment, memo);
+            this.monthly.recordTransfer(fundingSource.instrument, payment, result.realizedGain);
         }
     }
 
@@ -196,8 +165,10 @@ export class ExpenseEngine {
             }
 
             const rmdNote = `RMD distribution from ${modelAsset.displayName}`;
-            modelAsset.debit(remains, rmdNote);
-            this.router.creditToExpensable(remains, rmdNote);
+            const target = FundTransfer.resolveExpensable(this.modelAssets);
+            if (target) {
+                FundTransfer.system(modelAsset, target, remains).execute();
+            }
 
         }
 
