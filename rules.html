@@ -367,6 +367,136 @@
         </div>
     </div>
 
+    <!-- ═══ Retirement Income ═══ -->
+        <div class="glass-card p-8">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="text-2xl">🧓</span>
+                <h2 class="text-xl font-bold tracking-tight">Retirement Income</h2>
+                <span class="text-xs text-gray-400 font-medium ml-1">Social Security &middot; Pensions &middot; Annuities</span>
+            </div>
+            <p class="text-gray-600 mb-4 leading-relaxed">The income that kicks in when the paychecks stop. Model Social Security benefits, pension payments, or any recurring income stream that starts at a future date &mdash; so your retirement projections don't pretend you're living on air.</p>
+            <div class="space-y-2">
+                <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+                    <span class="rule-chip">Rule 1</span>
+                    <span class="text-sm text-gray-700">Income is credited <strong>monthly starting on the asset's start date</strong> &mdash; perfect for modeling a Social Security benefit that begins at 62, 67, or 70.</span>
+                </div>
+                <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+                    <span class="rule-chip">Rule 2</span>
+                    <span class="text-sm text-gray-700">An optional annual return rate applies <strong>cost-of-living adjustments (COLA)</strong> at year-end, so your benefit keeps pace with inflation over a 30-year retirement.</span>
+                </div>
+                <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+                    <span class="rule-chip">Rule 3</span>
+                    <span class="text-sm text-gray-700">Retirement income is taxed as <strong>ordinary income</strong> and flows through the same withholding pipeline as salary &mdash; brackets, FICA exemptions, and all.</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ═══ Projections & Analysis ═══ -->
+    <div class="glass-card p-8 sm:p-12 mb-8">
+        <h2 class="text-2xl font-bold tracking-tight mb-4">Projections &amp; Analysis</h2>
+        <p class="text-gray-600 mb-6 leading-relaxed">A single projection is a starting point &mdash; not the whole story. The simulator gives you five ways to interrogate your financial future, from a deterministic baseline to full stochastic analysis and AI-driven optimization.</p>
+        <div class="grid sm:grid-cols-3 gap-4">
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">📈 Value Projections</div>
+                <div class="text-sm text-gray-500">Your deterministic baseline &mdash; a line chart of any metric across every asset, month by month, for the full simulation horizon.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">🎲 Monte Carlo</div>
+                <div class="text-sm text-gray-500">1,000 stochastic simulations with percentile bands. See below for the full story.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">🛡️ Guardrails</div>
+                <div class="text-sm text-gray-500">Dynamic withdrawal rules that adapt spending to market reality. Details below.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">📋 Spreadsheet</div>
+                <div class="text-sm text-gray-500">A detailed monthly data table across all metrics and assets &mdash; for when you want the raw numbers, not the chart.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">🧾 Credit Memos</div>
+                <div class="text-sm text-gray-500">A complete audit trail of every transaction &mdash; every credit, debit, and transfer, with timestamps and descriptions.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">📊 30+ Metrics</div>
+                <div class="text-sm text-gray-500">Track value, growth, income, dividends, capital gains, taxes, RMDs, contributions, distributions, cash flow, and more.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ Monte Carlo ═══ -->
+    <div class="glass-card p-8 sm:p-12 mb-8" style="background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%);">
+        <div class="flex items-center gap-3 mb-4">
+            <span class="text-2xl">🎲</span>
+            <h2 class="text-2xl font-bold tracking-tight">Monte Carlo Simulation</h2>
+        </div>
+        <p class="text-gray-600 mb-6 leading-relaxed">Your financial plan doesn't live in a world of fixed returns &mdash; so why should your projections? Monte Carlo simulation runs your portfolio through <strong>1,000 randomized trials</strong>, each drawing from real historical market data, to show you the range of outcomes your plan might actually produce.</p>
+
+        <div class="grid sm:grid-cols-2 gap-4 mb-6">
+            <div class="p-4 rounded-xl bg-white/70">
+                <div class="font-semibold text-sm mb-1">Correlated Year Sampling</div>
+                <div class="text-sm text-gray-500">Each trial picks a single historical year for all asset classes &mdash; S&amp;P 500, treasury yields, CPI, and wage growth move together, preserving the real-world correlations that matter.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-white/70">
+                <div class="font-semibold text-sm mb-1">Percentile Bands</div>
+                <div class="text-sm text-gray-500">Results are summarized as 10th, 25th, 50th, 75th, and 90th percentile envelopes, with your deterministic baseline overlaid &mdash; so you can see the best case, the worst case, and everything in between.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-white/70">
+                <div class="font-semibold text-sm mb-1">Optional Guardrails</div>
+                <div class="text-sm text-gray-500">Toggle "With Guardrails" to re-run all 1,000 simulations with dynamic withdrawal adjustments active &mdash; and see how adaptive spending changes the shape of your outcomes.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-white/70">
+                <div class="font-semibold text-sm mb-1">Historical Data Foundation</div>
+                <div class="text-sm text-gray-500">Draws from the same FRED dataset as backtesting (1970&ndash;2025), so every random trial is grounded in decades of actual economic history &mdash; not fabricated distributions.</div>
+            </div>
+        </div>
+
+        <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
+            <span class="rule-chip">Why it matters</span>
+            <span class="text-sm text-gray-700">A single projection tells you what happens if everything goes exactly as planned. Monte Carlo tells you <strong>how likely that plan is to survive</strong> &mdash; and what to expect when it doesn't.</span>
+        </div>
+    </div>
+
+    <!-- ═══ Guardrails ═══ -->
+    <div class="glass-card p-8 sm:p-12 mb-8" style="background: linear-gradient(135deg, #fefce8 0%, #fff7ed 100%);">
+        <div class="flex items-center gap-3 mb-4">
+            <span class="text-2xl">🛡️</span>
+            <h2 class="text-2xl font-bold tracking-tight">Guyton-Klinger Guardrails</h2>
+        </div>
+        <p class="text-gray-600 mb-6 leading-relaxed">The 4% rule is a starting point &mdash; not a strategy. Guyton-Klinger guardrails give your retirement withdrawals an <strong>adaptive immune system</strong>: when markets drop, spending tightens automatically; when markets soar, you get a raise. The result is a plan that bends with reality instead of breaking against it.</p>
+
+        <div class="grid sm:grid-cols-2 gap-4 mb-6">
+            <div class="p-4 rounded-xl bg-white/70">
+                <div class="font-semibold text-sm mb-1">Initial Withdrawal Rate</div>
+                <div class="text-sm text-gray-500">Your starting withdrawal as a percentage of portfolio value. This sets the baseline &mdash; guardrails adjust it from here.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-white/70">
+                <div class="font-semibold text-sm mb-1">Preservation Band</div>
+                <div class="text-sm text-gray-500">If your current withdrawal rate drifts <strong>above</strong> the initial rate by this margin, spending is cut &mdash; protecting your portfolio from depletion in down markets.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-white/70">
+                <div class="font-semibold text-sm mb-1">Prosperity Band</div>
+                <div class="text-sm text-gray-500">If your current withdrawal rate drifts <strong>below</strong> the initial rate by this margin, spending increases &mdash; so you actually enjoy the upside when markets deliver.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-white/70">
+                <div class="font-semibold text-sm mb-1">Adjustment Amount</div>
+                <div class="text-sm text-gray-500">The percentage by which withdrawals are raised or lowered when a guardrail is triggered &mdash; controlling how aggressively the system responds.</div>
+            </div>
+        </div>
+
+        <div class="space-y-3">
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
+                <span class="rule-chip">Dual-axis chart</span>
+                <span class="text-sm text-gray-700">The guardrails projection plots <strong>portfolio value and withdrawal amounts</strong> on separate axes, with event markers showing exactly when and why each adjustment fired.</span>
+            </div>
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
+                <span class="rule-chip">Per-scenario</span>
+                <span class="text-sm text-gray-700">Guardrail parameters are <strong>saved per portfolio scenario</strong>, so you can compare conservative vs. aggressive withdrawal strategies side by side.</span>
+            </div>
+        </div>
+    </div>
+
     <!-- ═══ Backtesting ═══ -->
     <div class="glass-card p-8 sm:p-12 mb-8" style="background: linear-gradient(135deg, #faf5ff 0%, #fdf2f8 100%);">
         <div class="flex items-center gap-3 mb-4">
@@ -397,6 +527,63 @@
         <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
             <span class="rule-chip">Note</span>
             <span class="text-sm text-gray-700">Historical data covers <strong>1970&ndash;2025</strong>, sourced from <strong>FRED</strong> (Federal Reserve Economic Data). Once the simulation advances past the available historical years, your user-provided rates automatically resume for the remainder of the projection.</span>
+        </div>
+    </div>
+
+    <!-- ═══ Optimizer ═══ -->
+    <div class="glass-card p-8 sm:p-12 mb-8" style="background: linear-gradient(135deg, #ecfdf5 0%, #eff6ff 100%);">
+        <div class="flex items-center gap-3 mb-4">
+            <span class="text-2xl">🧬</span>
+            <h2 class="text-2xl font-bold tracking-tight">Genetic Algorithm Optimizer</h2>
+        </div>
+        <p class="text-gray-600 mb-6 leading-relaxed">Stop guessing your fund transfer percentages and withdrawal parameters. The optimizer uses a <strong>genetic algorithm</strong> &mdash; inspired by natural selection &mdash; to evolve the best combination of fund allocations and guardrail settings for your specific portfolio. In 200 generations, it explores thousands of possibilities you'd never test by hand.</p>
+
+        <div class="grid sm:grid-cols-2 gap-4 mb-6">
+            <div class="p-4 rounded-xl bg-white/70">
+                <div class="font-semibold text-sm mb-1">Fitness Balance Slider</div>
+                <div class="text-sm text-gray-500">Dial between <strong>maximizing lifetime spending</strong> and <strong>maximizing terminal portfolio value</strong>. Slide left to prioritize cash flow in retirement; slide right to preserve wealth for heirs.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-white/70">
+                <div class="font-semibold text-sm mb-1">Evolvable Guardrail Genes</div>
+                <div class="text-sm text-gray-500">The optimizer doesn't just tune fund transfers &mdash; it also evolves your guardrail parameters (withdrawal rate, preservation, prosperity, adjustment) to find the sweet spot.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-white/70">
+                <div class="font-semibold text-sm mb-1">Real-Time Feedback</div>
+                <div class="text-sm text-gray-500">Watch the best fitness score improve generation by generation, with live previews of the fittest chromosome's fund transfer allocations and guardrail values.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-white/70">
+                <div class="font-semibold text-sm mb-1">"Fittest" Scenario</div>
+                <div class="text-sm text-gray-500">When optimization completes, the winning solution is saved to a dedicated <strong>Fittest scenario</strong> &mdash; ready to compare against your hand-tuned portfolios.</div>
+            </div>
+        </div>
+
+        <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
+            <span class="rule-chip">How it works</span>
+            <span class="text-sm text-gray-700">A population of 50 candidate portfolios competes over <strong>200 generations</strong>. Each candidate runs a full simulation with guardrails active. The fittest survive, crossover, and mutate &mdash; converging on an allocation that balances cash flow, portfolio survival, and withdrawal stability.</span>
+        </div>
+    </div>
+
+    <!-- ═══ Scenarios & Sharing ═══ -->
+    <div class="glass-card p-8 sm:p-12 mb-8">
+        <h2 class="text-2xl font-bold tracking-tight mb-4">Scenarios &amp; Sharing</h2>
+        <p class="text-gray-600 mb-6 leading-relaxed">One plan is never enough. The simulator lets you build multiple scenarios &mdash; different retirement dates, different allocation strategies, different assumptions &mdash; and compare them instantly. When you're ready, share your entire portfolio with a single link.</p>
+        <div class="grid sm:grid-cols-2 gap-4">
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">Multiple Scenarios</div>
+                <div class="text-sm text-gray-500">Create parallel scenarios with different assumptions &mdash; each with its own assets, fund transfers, and guardrail parameters &mdash; and switch between them with a dropdown.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">Instant Sharing</div>
+                <div class="text-sm text-gray-500">Compress your entire portfolio into a URL and share it via email. The recipient loads your exact scenario &mdash; assets, transfers, settings, and guardrails &mdash; in one click.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">Auto-Persistence</div>
+                <div class="text-sm text-gray-500">Every change is automatically saved to your browser's local storage. Close the tab, come back tomorrow &mdash; your portfolio is exactly where you left it.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">Portfolio Ledger</div>
+                <div class="text-sm text-gray-500">A real-time summary showing opening value, closing value, and <strong>CAGR</strong> (Compound Annual Growth Rate) across any metric &mdash; so you can benchmark performance at a glance.</div>
+            </div>
         </div>
     </div>
 
