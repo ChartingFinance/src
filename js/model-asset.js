@@ -557,6 +557,7 @@ export class ModelAsset {
   applyFirstDayOfMonth(currentDateInt) {
 
     this.monthlyValueChange = Currency.zero();
+    this.monthlyGrowth = Currency.zero();
     this.monthlyCreditBalance.zero();
 
     if (this.beforeStartDate) {
@@ -595,7 +596,7 @@ export class ModelAsset {
       debugger;
     }    
 
-    this.cashFlowAccumulatedCurrency.add(this.monthlyValueChange);
+    this.cashFlowAccumulatedCurrency.add(this.monthlyValueChange.minus(this.monthlyGrowth));
 
   }
 
@@ -615,6 +616,7 @@ export class ModelAsset {
       this.growthCurrency.add(growth);
       this.finishCurrency.add(growth);
       this.monthlyValueChange.add(growth);
+      this.monthlyGrowth.add(growth);
       this.addCreditMemo(growth, 'Annual income growth');
 
       return this.isSelfEmployed
@@ -819,6 +821,7 @@ export class ModelAsset {
     // since we are closing we won't be tracking value changes anymore
     this.firstDayOfMonthValue.zero();
     this.monthlyValueChange.zero();
+    this.monthlyGrowth.zero();
 
     this.isClosed = true;
 

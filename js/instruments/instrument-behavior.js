@@ -150,6 +150,7 @@ const ExpenseBehavior = Object.freeze({
     asset.growthCurrency.add(growth);
     asset.finishCurrency.add(growth);
     asset.monthlyValueChange.add(growth);
+    asset.monthlyGrowth.add(growth);
 
     if (growth.amount !== 0) {
       asset.addCreditMemo(growth, 'Expense growth');
@@ -226,6 +227,7 @@ const CapitalBehavior = Object.freeze({
     asset.growthCurrency.add(growth);
     asset.finishCurrency.add(asset.growthCurrency);
     asset.monthlyValueChange.add(asset.growthCurrency);
+    asset.monthlyGrowth.add(asset.growthCurrency);
     asset.addCreditMemo(asset.growthCurrency, 'Asset growth');
 
     let dividend = Currency.zero();
@@ -235,6 +237,7 @@ const CapitalBehavior = Object.freeze({
       asset.dividendCurrency.add(dividend);
       asset.finishCurrency.add(dividend);
       asset.monthlyValueChange.add(dividend);
+      asset.monthlyGrowth.add(dividend);
       asset.addCreditMemo(dividend, 'Dividend income');
     }
 
@@ -266,6 +269,7 @@ const RealEstateBehavior = Object.freeze({
     asset.growthCurrency.add(growth);
     asset.finishCurrency.add(asset.growthCurrency);
     asset.monthlyValueChange.add(asset.growthCurrency);
+    asset.monthlyGrowth.add(asset.growthCurrency);
     asset.addCreditMemo(asset.growthCurrency, 'Asset growth');
 
     const tax = new Currency(asset.finishCurrency.amount * asset.annualTaxRate.asMonthly());

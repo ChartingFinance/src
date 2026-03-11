@@ -18,24 +18,27 @@ import {
     global_wage_growth_annual,
 } from './globals.js';
 
-// ── Historical rate pools ────────────────────────────────────────
+// ── Historical year pool (correlated sampling) ──────────────────
 
-const sp500Pool = Object.values(global_sp500_annual_returns);
-const treasuryPool = Object.values(global_10yr_treasury_rates);
-const cpiPool = Object.values(global_cpi_annual_inflation);
-const wagePool = Object.values(global_wage_growth_annual);
+// Build array of years present in all four datasets so we sample
+// a single historical year and preserve cross-asset correlation.
+const historicalYears = Object.keys(global_sp500_annual_returns)
+    .filter(y => y in global_10yr_treasury_rates &&
+                 y in global_cpi_annual_inflation &&
+                 y in global_wage_growth_annual);
 
-function pickRandom(arr) {
-    return arr[Math.floor(Math.random() * arr.length)];
+function pickRandomYear() {
+    return historicalYears[Math.floor(Math.random() * historicalYears.length)];
 }
 
 // ── Apply random rates for one year ──────────────────────────────
 
 function applyRandomRates(modelAssets) {
-    const sp500 = pickRandom(sp500Pool);
-    const treasury = pickRandom(treasuryPool);
-    const cpi = pickRandom(cpiPool);
-    const wage = pickRandom(wagePool);
+    const year = pickRandomYear();
+    const sp500 = global_sp500_annual_returns[year];
+    const treasury = global_10yr_treasury_rates[year];
+    const cpi = global_cpi_annual_inflation[year];
+    const wage = global_wage_growth_annual[year];
 
     for (const asset of modelAssets) {
         if (InstrumentType.isTaxableAccount(asset.instrument) ||
