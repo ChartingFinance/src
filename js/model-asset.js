@@ -55,6 +55,7 @@ export const Metric = Object.freeze({
   MORTGAGE_PAYMENT:             'mortgagePayment',
   MORTGAGE_INTEREST:            'mortgageInterest',
   MORTGAGE_PRINCIPAL:           'mortgagePrincipal',
+  MORTGAGE_ESCROW:              'mortgageEscrow',
   PROPERTY_TAX:                 'propertyTax',
   TAXABLE_CONTRIBUTION:         'taxableContribution',
   TRAD_IRA_CONTRIBUTION:        'tradIRAContribution',
@@ -98,7 +99,8 @@ export const MetricLabel = Object.freeze({
   [Metric.MEDICARE]:                    'Medicare',
   [Metric.MORTGAGE_PAYMENT]:            'Mortgage Payment',
   [Metric.MORTGAGE_INTEREST]:           'Mortgage Interest',
-  [Metric.MORTGAGE_PRINCIPAL]:          'Mortgage Principal', 
+  [Metric.MORTGAGE_PRINCIPAL]:          'Mortgage Principal',
+  [Metric.MORTGAGE_ESCROW]:             'Mortgage Escrow', 
   [Metric.TAXABLE_CONTRIBUTION]:        'Taxable Contribution',
   [Metric.TRAD_IRA_CONTRIBUTION]:       'Traditional IRA Contribution',
   [Metric.ROTH_IRA_CONTRIBUTION]:       'Roth IRA Contribution',
@@ -112,6 +114,39 @@ export const MetricLabel = Object.freeze({
   [Metric.CAPITAL_GAIN_TAX]:            'Capital Gains Tax',
   [Metric.CREDIT]:                      'Credit',
 });
+
+// A mapping of Child Metric -> Array of Parent Metrics
+export const MetricRollups = {
+    // --- FOUNDATIONAL INCOME TO ORDINARY INCOME ---
+    [Metric.TRAD_IRA_DISTRIBUTION]:       [Metric.ORDINARY_INCOME],
+    [Metric.FOUR_01K_DISTRIBUTION]:       [Metric.ORDINARY_INCOME],
+    [Metric.WORKING_INCOME]:              [Metric.ORDINARY_INCOME],
+    [Metric.INTEREST_INCOME]:             [Metric.ORDINARY_INCOME],
+    [Metric.SOCIAL_SECURITY]:             [Metric.ORDINARY_INCOME], 
+    [Metric.SHORT_TERM_CAPITAL_GAIN]:     [Metric.ORDINARY_INCOME], // Taxed at ordinary rates
+
+    // --- FOUNDATIONAL GAINS TO CAPITAL GAINS ---
+    [Metric.LONG_TERM_CAPITAL_GAIN]:      [Metric.CAPITAL_GAIN],
+
+    // --- MASTER COMBINATIONS TO TOTAL INCOME ---
+    [Metric.ORDINARY_INCOME]:             [Metric.INCOME],
+    [Metric.CAPITAL_GAIN]:                [Metric.INCOME],
+    [Metric.ROTH_IRA_DISTRIBUTION]:       [Metric.INCOME], // Non-taxable, but still cash flow income
+    [Metric.DIVIDEND]:                    [Metric.INCOME],
+
+    // --- TAX ROLLUPS ---
+    [Metric.WITHHELD_INCOME_TAX]:         [Metric.INCOME_TAX],
+    [Metric.ESTIMATED_INCOME_TAX]:        [Metric.INCOME_TAX],
+    [Metric.SHORT_TERM_CAPITAL_GAIN_TAX]: [Metric.INCOME_TAX],
+    [Metric.LONG_TERM_CAPITAL_GAIN_TAX]:  [Metric.CAPITAL_GAIN_TAX],
+    
+    // --- EXPENSE & DEBT ROLLUPS ---
+    [Metric.MORTGAGE_INTEREST]:           [Metric.MORTGAGE_PAYMENT],
+    [Metric.MORTGAGE_PRINCIPAL]:          [Metric.MORTGAGE_PAYMENT],
+    [Metric.MORTGAGE_ESCROW]:             [Metric.MORTGAGE_PAYMENT],
+    [Metric.MORTGAGE_PAYMENT]:            [Metric.EXPENSE],
+    [Metric.PROPERTY_TAX]:                [Metric.EXPENSE],
+};
 
 // Metrics that should NOT be zeroed on monthly snapshot
 const KEEP_ON_SNAPSHOT = new Set([Metric.PROPERTY_TAX, Metric.CASH_FLOW_ACCUMULATED]);
@@ -267,25 +302,19 @@ export class ModelAsset {
    * @returns {Currency} current accumulated value
    */
   addToMetric(metricName, amount) {
+ 
+    // 1. Add to the target metric
+    let result = this.#metrics.get(metricName).current.add(amount);
 
-    // TODO: Revisit if we want to add to multiple categories this way
-    /*
-    if (metricName == Metric.SHORT_TERM_CAPITAL_GAIN || metricName == Metric.LONG_TERM_CAPITAL_GAIN) {
-      this.#metrics.get(Metric.CAPITAL_GAIN).add(amount);
-      this.#metrics.get(Metric.INCOME).add(amount);
+    // 2. Automatically ripple up to parent metrics (if any exist)
+    const parentMetrics = MetricRollups[metricName];
+    if (parentMetrics) {
+        for (const parentName of parentMetrics) {
+            this.addToMetric(parentName, amount); // Recursive call
+        }
     }
 
-    if (metricName == Metric.SHORT_TERM_CAPITAL_GAIN_TAX || metricName == Metric.LONG_TERM_CAPITAL_GAIN_TAX) {
-      this.#metrics.get(Metric.CAPITAL_GAIN_TAX).add(amount);
-      this.#metrics.get(Metric.INCOME_TAX).add(amount);
-    }
-
-    if (metricName == Metric.ORDINARY_INCOME || metricName == Metric.INTEREST_INCOME || metricName == Metric.WORKING_INCOME) {
-      this.#metrics.get(Metric.INCOME).add(amount);
-    }
-    */
-
-    return this.#metrics.get(metricName).add(amount);
+    return result;
   }
 
   /** Iterate over all tracked metrics (used by display-data builders). */
