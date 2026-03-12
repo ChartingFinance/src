@@ -131,7 +131,7 @@ class AssetFormModal extends LitElement {
                                 <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Annual Return %</label>
                                 <input type="number" class="fin-input" name="annualReturnRate"
                                     .value=${annualReturn}
-                                    step="0.01" placeholder="e.g. 0.07" required />
+                                    step="1" placeholder="e.g. 50 == 50%" required />
                             </div>
                         </div>
                         ${this._renderInstrumentFields(selectedInstrument, ma, closed)}
