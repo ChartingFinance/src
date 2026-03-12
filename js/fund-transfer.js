@@ -18,6 +18,28 @@ export const Frequency = Object.freeze({
   YEARLY:      'yearly',
 });
 
+/**
+ * This is to handle one-sided debits or credits. For example, a tax payment. Here we simply
+ * debit the toModel without crediting the fromModel since there is not credit for a tax payment--
+ * other than continuing to possess the asset.
+ */
+export class FundTransferOneSided {
+
+  constructor(fundTransfer, amount) {
+    this.fromModel = fundTransfer?.fromModel ?? null;
+    this.toModel = fundTransfer?.toModel ?? null;
+
+    if (!amount) debugger;
+
+    this.amount = amount;
+    
+    if (fundTransfer) {
+      this.amount = new Currency(amount.amount * (fundTransfer.monthlyMoveValue / 100));
+    }
+  }
+
+}
+
 export class FundTransfer {
   /**
    * @param {string} toDisplayName     Target asset's familiar name
@@ -198,7 +220,7 @@ export class FundTransfer {
     if (!this.fromModel || !this.toModel) return new FundTransferResult();
 
     const amount = this.calculate({ useClosePercent });
-    const memo = this.describe();
+    const memo = this.describe(null, useClosePercent);
 
     const fromResult = this.fromModel.debit(amount, memo, skipGain);
     const toResult   = this.toModel.credit(amount, memo, skipGain);
@@ -228,9 +250,9 @@ export class FundTransfer {
   }
 
   /** Human-readable description for credit memo categorization */
-  describe(fromName) {
+  describe(fromName, onClose = false) {
     const from = fromName ?? this.fromModel?.displayName ?? '?';
-    const dir = this.monthlyMoveValue > 0 ? '(monthly)' : '(on close)';
+    const dir = onClose ? '(on close)' : '(monthly)';
     return `${from} → ${this.toDisplayName} ${dir}`;
   }
 }

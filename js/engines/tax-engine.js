@@ -12,7 +12,7 @@
 import { Currency } from '../utils/currency.js';
 import { InstrumentType } from '../instruments/instrument.js';
 import { Metric } from '../model-asset.js';
-import { FundTransfer } from '../fund-transfer.js';
+import { FundTransferOneSided, FundTransfer } from '../fund-transfer.js';
 import { MonthsSpan } from '../utils/months-span.js';
 import { activeTaxTable } from '../globals.js';
 import { logger, LogCategory } from '../utils/logger.js';
@@ -61,34 +61,55 @@ export class TaxEngine {
 
             const escrow = modelAsset.applyMonthlyTaxEscrow();
             //this.monthly.propertyTaxes.subtract(escrow);
-            modelAsset.addCreditMemo(escrow, 'Property tax escrow');
+            modelAsset.addCreditMemo(escrow, 'Property tax escrow');            
 
             if (modelAsset.monthlyTaxEscrow.amount) {
-                const payment = escrow.flipSign(); // escrow is negative, flip to positive for debit
 
-                // Resolve funding source from explicit fund transfers
-                let fundingSource = null;
+                let preFlights = [];
+                const payment = escrow.flipSign(); // escrow is negative, flip to positive for debit
+                let remaining = payment.copy();
+
                 for (const fundTransfer of modelAsset.fundTransfers) {
+
+                    // so we don't blow up
                     if (!fundTransfer.isActiveForMonth(currentDateInt.month)) continue;
                     fundTransfer.bind(modelAsset, this.modelAssets);
                     if (!fundTransfer.toModel) continue;
-                    fundingSource = fundTransfer.toModel;
-                    break;
+                    if (remaining.amount == 0) break;
+                    
+                    // passed the tests so load into the array
+                    let preFlight = new FundTransferOneSided(fundTransfer, payment);
+                    remaining.subtract(preFlight.amount);
+                    if (remaining.amount < 0) {
+                        // last minute patch
+                        preFlight.amount.add(remaining);
+                        remaining.zero();
+                    }                    
+                    preFlights.push(preFlight);
+
                 }
 
                 // Fallback: first taxable account
-                if (!fundingSource) {
-                    fundingSource = FundTransfer.resolveTaxable(this.modelAssets);
+                if (remaining.amount > 0) {
+                    let fundingSource = FundTransfer.resolveTaxable(this.modelAssets);
+                    if (fundingSource) {
+                        let preFlight = new FundTransferOneSided(null, remaining);
+                        preFlight.fromModel = modelAsset;
+                        preFlight.toModel = fundingSource;
+                        preFlights.push(preFlight);
+                    }
                 }
 
                 // One-sided withdrawal: escrow already adjusted the home's balance.
-                // Only debit the funding source.
-                if (fundingSource) {
+                // Only debit the funding source (toModel).
+                for (const oneSided of preFlights) {                
                     const memo = `${modelAsset.displayName} property tax`;
-                    const result = fundingSource.debit(payment, memo);
-                    this.monthly.recordTransfer(fundingSource.instrument, payment, result.realizedGain);
-                    modelAsset.clearMonthlyTaxEscrow();
+                    const result = oneSided.toModel.debit(oneSided.amount, memo);
+                    this.monthly.recordTransfer(oneSided.toModel.instrument, oneSided.amount, result.realizedGain);                    
                 }
+
+                modelAsset.clearMonthlyTaxEscrow();
+
             }
 
         }

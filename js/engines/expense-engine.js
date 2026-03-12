@@ -12,7 +12,7 @@
 import { Currency } from '../utils/currency.js';
 import { InstrumentType } from '../instruments/instrument.js';
 import { Metric } from '../model-asset.js';
-import { FundTransfer } from '../fund-transfer.js';
+import { FundTransferOneSided, FundTransfer } from '../fund-transfer.js';
 import { activeTaxTable } from '../globals.js';
 import { logger, LogCategory } from '../utils/logger.js';
 
@@ -105,30 +105,51 @@ export class ExpenseEngine {
         const payment = modelAsset.mortgagePaymentCurrency.copy().flipSign(); // payment is negative, need positive for debit
         if (payment.amount <= 0) return;
 
-        // Try explicit fund transfers first — resolve the funding source
-        let fundingSource = null;
+        let preFlights = [];
+        let remaining = payment.copy();
+
+        // Try explicit fund transfers first
         if (modelAsset.fundTransfers?.length) {
             for (const fundTransfer of modelAsset.fundTransfers) {
+
+                // so we don't blow up
                 if (!fundTransfer.isActiveForMonth(currentDateInt.month)) continue;
                 fundTransfer.bind(modelAsset, this.modelAssets);
                 if (!fundTransfer.toModel) continue;
-                fundingSource = fundTransfer.toModel;
-                break; // one funding source per mortgage
+                if (remaining.amount == 0) break;
+                                    
+                // passed the tests so load into the array
+                let preFlight = new FundTransferOneSided(fundTransfer, payment);
+                remaining.subtract(preFlight.amount);
+                if (remaining.amount < 0) {
+                    // last minute patch
+                    preFlight.amount.add(remaining);
+                    remaining.zero();
+                }                    
+                preFlights.push(preFlight);
+
             }
         }
 
         // Fallback: first taxable account
-        if (!fundingSource) {
-            fundingSource = FundTransfer.resolveTaxable(this.modelAssets);
+        if (remaining.amount > 0) {
+            let fundingSource = FundTransfer.resolveTaxable(this.modelAssets);
+            if (fundingSource) {
+                let preFlight = new FundTransferOneSided(null, remaining);
+                preFlight.fromModel = modelAsset;
+                preFlight.toModel = fundingSource;
+                preFlights.push(preFlight);
+            }
         }
 
         // One-sided withdrawal: MortgageBehavior already reduced the mortgage
         // balance (principal) and recorded interest. Only debit the funding source.
-        if (fundingSource) {
+        for (const oneSided of preFlights) {                
             const memo = `${modelAsset.displayName} mortgage payment`;
-            const result = fundingSource.debit(payment, memo);
-            this.monthly.recordTransfer(fundingSource.instrument, payment, result.realizedGain);
+            const result = oneSided.toModel.debit(oneSided.amount, memo);
+            this.monthly.recordTransfer(oneSided.toModel.instrument, oneSided.amount, result.realizedGain);                    
         }
+
     }
 
     // ── Day 30: RMDs ─────────────────────────────────────────────────
