@@ -17,11 +17,12 @@ export class GraphMapper {
             { id: 'Sink_FICA', label: 'FICA / Medicare', category: 'TaxDrain' },
             { id: 'Sink_IncomeTax', label: 'Income Tax', category: 'TaxDrain' },
             { id: 'Sink_CapGainsTax', label: 'Capital Gains Tax', category: 'TaxDrain' },
-            { id: 'Sink_PropertyTax', label: 'Property Tax', category: 'TaxDrain' }
+            { id: 'Sink_PropertyTax', label: 'Property Tax', category: 'TaxDrain' },
+            { id: 'Sink_MortgageInterest', label: 'Mortgage Interest', category: 'DebtDrain' }
         ];
         nodes.push(...sinks);
 
-        nodes.push({ id: 'Global_Wealth', label: 'Growth Lake', category: 'WealthLake' });
+        nodes.push({ id: 'Global_Wealth', label: 'Wealth', category: 'WealthLake' });
 
         // 2. Iterate Model Assets to build Nodes and Implicit Edges
         for (const asset of portfolio.modelAssets) {
@@ -86,6 +87,12 @@ export class GraphMapper {
 
                     if (InstrumentType.isMortgage(asset.instrument) && ft.hasRecurring) {
                         hasMortgageMonthlyEdge = true;
+                        // Interest drain: funding source → Sink_MortgageInterest
+                        edges.push({
+                            source: ft.toDisplayName,
+                            target: 'Sink_MortgageInterest',
+                            type: 'MortgageInterest'
+                        });
                     }
 
                     edges.push({
@@ -110,6 +117,11 @@ export class GraphMapper {
                         target: asset.displayName,
                         type: 'MortgagePayment',
                         weight: 0
+                    });
+                    edges.push({
+                        source: taxable.displayName,
+                        target: 'Sink_MortgageInterest',
+                        type: 'MortgageInterest'
                     });
                 }
             }
@@ -204,17 +216,23 @@ export class GraphMapper {
             }
         }
 
-        // 4. Annotate mortgage edges with principal vs interest for color coding
+        // 4. Split mortgage flows into principal (→ Mortgage) and interest (→ Sink)
         for (const asset of portfolio.modelAssets) {
             if (!InstrumentType.isMortgage(asset.instrument)) continue;
 
             const principal = Math.abs(asset.mortgagePrincipalCurrency.amount);
             const interest = Math.abs(asset.mortgageInterestCurrency.amount);
 
-            // Find all edges targeting this mortgage
             for (const edge of edges) {
                 if (edge.type === 'MortgagePayment' && edge.target === asset.displayName) {
-                    edge.principalDominant = principal >= interest;
+                    // Replace total payment with just the principal portion
+                    edge.flowAmount = principal;
+                    edge.principalDominant = true;
+                }
+                if (edge.type === 'MortgageInterest' && edge.target === 'Sink_MortgageInterest') {
+                    // Route interest to the drain
+                    edge.flowAmount = interest;
+                    if (!edge.updateTick) edge.updateTick = this.tick;
                 }
             }
         }

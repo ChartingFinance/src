@@ -144,10 +144,10 @@ export class ExpenseEngine {
 
         // One-sided withdrawal: MortgageBehavior already reduced the mortgage
         // balance (principal) and recorded interest. Only debit the funding source.
-        for (const oneSided of preFlights) {                
-            const memo = `${modelAsset.displayName} mortgage payment`;
+        for (const oneSided of preFlights) {
+            const memo = `${modelAsset.displayName} → ${oneSided.toModel.displayName} (monthly)`;
             const result = oneSided.toModel.debit(oneSided.amount, memo);
-            this.monthly.recordTransfer(oneSided.toModel.instrument, oneSided.amount, result.realizedGain);                    
+            this.monthly.recordTransfer(oneSided.toModel.instrument, oneSided.amount, result.realizedGain);
         }
 
     }

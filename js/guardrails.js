@@ -128,17 +128,23 @@ function renderChart(canvas, labels, portfolioValues, withdrawalSteps, events, s
 
     const fmt = (v) => '$' + Math.round(v).toLocaleString();
 
-    // Build event annotation points — use label strings for category axis positioning
-    const preservationPoints = [];
-    const prosperityPoints = [];
+    // Build sparse arrays for event markers — same length as labels so indices align
+    const preservationData = new Array(labels.length).fill(null);
+    const prosperityData = new Array(labels.length).fill(null);
+    let hasPreservation = false;
+    let hasProsperity = false;
 
     for (const evt of events) {
-        // The guardrail fired for `evt.year`, adjustment applies starting Jan of evt.year+1
         const targetLabel = `Jan ${evt.year + 1}`;
         const monthIdx = labels.indexOf(targetLabel);
         if (monthIdx >= 0 && monthIdx < labels.length) {
-            const arr = evt.type === 'preservation' ? preservationPoints : prosperityPoints;
-            arr.push({ x: labels[monthIdx], y: withdrawalSteps[monthIdx] });
+            if (evt.type === 'preservation') {
+                preservationData[monthIdx] = withdrawalSteps[monthIdx];
+                hasPreservation = true;
+            } else {
+                prosperityData[monthIdx] = withdrawalSteps[monthIdx];
+                hasProsperity = true;
+            }
         }
     }
 
@@ -173,26 +179,26 @@ function renderChart(canvas, labels, portfolioValues, withdrawalSteps, events, s
                     stepped: 'before',
                     order: 1,
                 },
-                // Preservation events (markers)
-                ...(preservationPoints.length > 0 ? [{
+                // Preservation events (markers — line dataset with sparse data, no connecting line)
+                ...(hasPreservation ? [{
                     label: 'Preservation Cut',
-                    data: preservationPoints.map(p => ({ x: p.x, y: p.y })),
+                    data: preservationData,
                     yAxisID: 'yWithdrawal',
-                    type: 'scatter',
-                    pointRadius: 8,
+                    showLine: false,
+                    pointRadius: preservationData.map(v => v !== null ? 8 : 0),
                     pointStyle: 'triangle',
                     pointRotation: 180,
                     backgroundColor: 'rgba(239, 68, 68, 0.9)',
                     borderColor: 'rgba(239, 68, 68, 1)',
                     order: 0,
                 }] : []),
-                // Prosperity events (markers)
-                ...(prosperityPoints.length > 0 ? [{
+                // Prosperity events (markers — line dataset with sparse data, no connecting line)
+                ...(hasProsperity ? [{
                     label: 'Prosperity Raise',
-                    data: prosperityPoints.map(p => ({ x: p.x, y: p.y })),
+                    data: prosperityData,
+                    showLine: false,
                     yAxisID: 'yWithdrawal',
-                    type: 'scatter',
-                    pointRadius: 8,
+                    pointRadius: prosperityData.map(v => v !== null ? 8 : 0),
                     pointStyle: 'triangle',
                     backgroundColor: 'rgba(34, 197, 94, 0.9)',
                     borderColor: 'rgba(34, 197, 94, 1)',

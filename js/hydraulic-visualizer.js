@@ -113,21 +113,21 @@ export class HydraulicVisualizer {
             n.y = getPipeY(n.x) - 160; // Consistently 160px above the pipe
         });
 
-        // Spread Taxes below the pipe (left half)
-        const taxSpacing = 400 / Math.max(1, drainsBelow.length + 1);
+        // Spread Taxes/Drains below the pipe
+        const drainSpacing = 700 / Math.max(1, drainsBelow.length + 1);
         drainsBelow.forEach((n, i) => {
-            n.x = 150 + (i + 1) * taxSpacing;
+            n.x = 80 + (i + 1) * drainSpacing;
             n.y = getPipeY(n.x) + 140; // Consistently 140px below the pipe
         });
 
-        // Spread Expenses below the pipe (right half)
+        // Spread Expenses below the pipe (right side)
         const expSpacing = 200 / Math.max(1, expense.length + 1);
         expense.forEach((n, i) => {
-            n.x = 550 + (i + 1) * expSpacing;
-            n.y = getPipeY(n.x) + 140; 
+            n.x = 650 + (i + 1) * expSpacing;
+            n.y = getPipeY(n.x) + 140;
         });
 
-        // Growth Lake placed precisely at the exit of the pipe
+        // Wealth placed precisely at the exit of the pipe
         wealth.forEach((n, i) => { n.x = 850; n.y = 600; });
     }
 
@@ -296,9 +296,13 @@ export class HydraulicVisualizer {
                 let width = Math.min(12, Math.max(4, edge.flowAmount / 1000));
                 flowPath.setAttribute('stroke-width', width);
 
-                // Mortgage edges: red when interest-heavy, green when principal-heavy
+                // Mortgage principal: always green (balance reduction)
                 if (edge.type === 'MortgagePayment') {
-                    flowPath.setAttribute('stroke', edge.principalDominant ? '#43e97b' : '#ff6b6b');
+                    flowPath.setAttribute('stroke', '#43e97b');
+                }
+                // Mortgage interest: always red (money leaving the system)
+                if (edge.type === 'MortgageInterest') {
+                    flowPath.setAttribute('stroke', '#ff6b6b');
                 }
             } else {
                 flowPath.style.opacity = '0';
@@ -327,7 +331,7 @@ export class HydraulicVisualizer {
             }
         }
 
-        // 3. Update Growth Lake
+        // 3. Update Wealth
         const wealthElements = this.nodesMap.get('Global_Wealth');
         if (wealthElements) {
             const accValue = portfolio.accumulatedValue().amount;

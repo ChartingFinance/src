@@ -250,7 +250,7 @@
         <div class="lg:col-span-8 flex flex-col gap-4 h-full min-h-0">
             <h2 class="text-lg font-bold flex items-center gap-2 flex-shrink-0">📊 Projections</h2>
 
-            <div class="glass-card p-6 flex-grow flex flex-col min-h-0">
+            <div class="glass-card p-6 flex-grow flex flex-col min-h-0 relative">
                 <!-- Modern Tabs -->
                 <div class="flex flex-wrap gap-2 mb-6 bg-gray-50 p-1 rounded-xl w-max flex-shrink-0">
                     <button class="chart-tab active px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-900 transition flex items-center gap-1" id="tab1">
@@ -329,6 +329,10 @@
                         <debug-report-view id="debugReportsElement"></debug-report-view>
                     </div>
                 </div>
+
+                <button class="fab-action absolute bottom-6 right-6 w-12 h-12 bg-black text-white rounded-full shadow-xl hover:scale-110 transition-transform flex items-center justify-center text-lg z-10" id="btn-projections-action" title="Projections action">
+                    ⚡
+                </button>
             </div>
         </div>
 
@@ -348,6 +352,9 @@
             <div class="glass-card p-6 relative flex flex-col flex-grow min-h-0">
                 <asset-list class="assets-container selected-assets flex flex-col items-center gap-3 overflow-y-auto flex-grow min-h-0 pb-24" id="assets" style="flex: 1;"></asset-list>
                 
+                <button class="fab-action absolute bottom-20 right-6 w-12 h-12 bg-black text-white rounded-full shadow-xl hover:scale-110 transition-transform flex items-center justify-center text-lg z-10" id="btn-portfolio-action" title="Portfolio action">
+                    ⚡
+                </button>
                 <button class="absolute bottom-6 right-6 w-14 h-14 bg-black text-white rounded-full shadow-xl hover:scale-110 transition-transform flex items-center justify-center text-2xl font-light z-10" id="btn-add-asset" title="Add a new instrument">
                     +
                 </button>
@@ -367,6 +374,14 @@
     </div>
 
     <!-- ═══ Footer ═══ -->
+    <!-- FAB Action Popup -->
+    <div id="fab-action-popup" class="popup fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+        <div class="popup-content glass-card p-8 w-full max-w-sm relative text-center">
+            <button class="absolute top-4 right-4 text-gray-400 hover:text-gray-900 text-xl cursor-pointer" id="fab-popup-close">&times;</button>
+            <p id="fab-popup-message" class="text-lg font-medium text-gray-700"></p>
+        </div>
+    </div>
+
     <footer class="mt-12 py-8 border-t border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4 text-sm font-medium text-gray-400">
         <div>Charting Finance &middot; Portfolio Simulator &middot; &copy; 2025-2026 Charting Finance, LLC</div>
         <div class="flex gap-6 items-center">

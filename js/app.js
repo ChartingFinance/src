@@ -677,6 +677,24 @@ document.getElementById('btn-scenario-reset').addEventListener('click', resetSce
 document.getElementById('btn-donate').addEventListener('click', donateData);
 document.getElementById('btn-share').addEventListener('click', openShareModal);
 document.getElementById('btn-add-asset').addEventListener('click', openCreateAssetModal);
+
+// ─── FAB Action Buttons ─────────────────────────────────────
+const fabPopup = document.getElementById('fab-action-popup');
+const fabPopupMessage = document.getElementById('fab-popup-message');
+function openFabPopup(source) {
+    fabPopupMessage.textContent = `Launched from: ${source}`;
+    fabPopup.classList.remove('hidden');
+}
+function closeFabPopup() { fabPopup.classList.add('hidden'); }
+document.getElementById('btn-projections-action').addEventListener('click', () => {
+    const activeTab = document.querySelector('.chart-tab.active');
+    const tabName = activeTab ? activeTab.textContent.trim() : 'unknown';
+    openFabPopup(`Projections (${tabName})`);
+});
+document.getElementById('btn-portfolio-action').addEventListener('click', () => openFabPopup('Portfolio'));
+document.getElementById('fab-popup-close').addEventListener('click', closeFabPopup);
+fabPopup.addEventListener('click', (e) => { if (e.target === fabPopup) closeFabPopup(); });
+
 document.getElementById('btn-visualize').addEventListener('click', doVisualize);
 document.getElementById('btn-maximize').addEventListener('click', doMaximize);
 document.getElementById('btn-revert-guardrails').addEventListener('click', () => {
