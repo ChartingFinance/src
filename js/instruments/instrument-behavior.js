@@ -40,8 +40,9 @@ const M = {
   LONG_TERM_CAPITAL_GAIN:      'longTermCapitalGain',
   CAPITAL_GAIN:                'capitalGain',
   RMD:                         'rmd',
-  SOCIAL_SECURITY:             'socialSecurity',
-  MEDICARE:                    'medicare',
+  SOCIAL_SECURITY_TAX:         'socialSecurityTax',
+  SOCIAL_SECURITY_INCOME:      'socialSecurityIncome',
+  MEDICARE_TAX:                'medicareTax',
   MORTGAGE_PAYMENT:            'mortgagePayment',
   MORTGAGE_INTEREST:           'mortgageInterest',
   MORTGAGE_PRINCIPAL:          'mortgagePrincipal',
@@ -72,7 +73,7 @@ const WorkingIncomeBehavior = Object.freeze({
     return [
       ...COMMON_METRICS,
       M.INCOME, M.WORKING_INCOME, M.ORDINARY_INCOME, M.NET_INCOME, M.GROWTH,
-      M.SOCIAL_SECURITY, M.MEDICARE,
+      M.SOCIAL_SECURITY_TAX, M.MEDICARE_TAX,
       M.WITHHELD_FICA_TAX, M.ESTIMATED_FICA_TAX,
       M.WITHHELD_INCOME_TAX, M.ESTIMATED_INCOME_TAX, M.ESTIMATED_TAX, M.INCOME_TAX,
       M.FOUR_01K_CONTRIBUTION, M.TRAD_IRA_CONTRIBUTION, M.ROTH_IRA_CONTRIBUTION,
@@ -99,8 +100,8 @@ const WorkingIncomeBehavior = Object.freeze({
 
   computeCashFlow(asset) {
     const cf = asset.incomeCurrency.copy();
-    cf.add(asset.socialSecurityCurrency);
-    cf.add(asset.medicareCurrency);
+    cf.add(asset.socialSecurityTaxCurrency);
+    cf.add(asset.medicareTaxCurrency);
     cf.add(asset.estimatedIncomeTaxCurrency);
     cf.add(asset.four01KContributionCurrency);
     cf.add(asset.tradIRAContributionCurrency);
@@ -115,6 +116,7 @@ const RetirementIncomeBehavior = Object.freeze({
     return [
       ...COMMON_METRICS,
       M.INCOME, M.ORDINARY_INCOME, M.NET_INCOME, M.GROWTH,
+      M.SOCIAL_SECURITY_INCOME,
     ];
   },
 

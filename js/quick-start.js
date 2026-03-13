@@ -13,13 +13,12 @@ const QUICK_START_DATA = [
         displayName: 'Salary',
         startDateInt: { year: 2026, month: 1 },
         finishDateInt: { year: 2036, month: 12 },
-        startCurrency: { amount: 6000 },
-        startBasisCurrency: { amount: 0 },
+        startCurrency: { amount: 6500 },
         annualReturnRate: { rate: 0.025 },
         fundTransfers: [
-            { toDisplayName: '401K', frequency: 'monthly', monthlyMoveValue: 10, closeMoveValue: 0 },
-            { toDisplayName: 'Roth IRA', frequency: 'monthly', monthlyMoveValue: 5, closeMoveValue: 0 },
-            { toDisplayName: 'Brokerage', frequency: 'monthly', monthlyMoveValue: 85, closeMoveValue: 0 },
+            { toDisplayName: '401K', frequency: 'monthly', monthlyMoveValue: 5, closeMoveValue: 0 },
+            { toDisplayName: 'Roth IRA', frequency: 'monthly', monthlyMoveValue: 2, closeMoveValue: 0 },
+            { toDisplayName: 'Brokerage', frequency: 'monthly', monthlyMoveValue: 93, closeMoveValue: 0 },
         ],
     },
     {
@@ -28,7 +27,6 @@ const QUICK_START_DATA = [
         startDateInt: { year: 2026, month: 1 },
         finishDateInt: { year: 2036, month: 12 },
         startCurrency: { amount: 50000 },
-        startBasisCurrency: { amount: 50000 },
         annualReturnRate: { rate: 0.09 },
     },
     {
@@ -37,7 +35,6 @@ const QUICK_START_DATA = [
         startDateInt: { year: 2026, month: 1 },
         finishDateInt: { year: 2036, month: 12 },
         startCurrency: { amount: 25000 },
-        startBasisCurrency: { amount: 20000 },
         annualReturnRate: { rate: 0.09 },
     },
     {
@@ -58,14 +55,16 @@ const QUICK_START_DATA = [
         startBasisCurrency: { amount: 400000 },
         annualReturnRate: { rate: 0.03 },
         annualTaxRate: { rate: 0.012 },
+        fundTransfers: [
+            { toDisplayName: 'Brokerage', frequency: 'monthly', monthlyMoveValue: 100, closeMoveValue: 0 },
+        ],
     },
     {
         instrument: 'mortgage',
         displayName: 'Mortgage',
         startDateInt: { year: 2026, month: 1 },
         finishDateInt: { year: 2036, month: 12 },
-        startCurrency: { amount: 320000 },
-        startBasisCurrency: { amount: 0 },
+        startCurrency: { amount: -320000 },
         annualReturnRate: { rate: 0.065 },
         monthsRemaining: 360,
         fundTransfers: [
@@ -77,8 +76,7 @@ const QUICK_START_DATA = [
         displayName: 'Living Expenses',
         startDateInt: { year: 2026, month: 1 },
         finishDateInt: { year: 2036, month: 12 },
-        startCurrency: { amount: 3000 },
-        startBasisCurrency: { amount: 0 },
+        startCurrency: { amount: -3000 },
         annualReturnRate: { rate: 0.03 },
         fundTransfers: [
             { toDisplayName: 'Brokerage', frequency: 'monthly', monthlyMoveValue: 100, closeMoveValue: 0 },

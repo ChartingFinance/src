@@ -42,7 +42,7 @@ class DebugReportView extends LitElement {
                 ['  Employed', this._fmt(pkg.employedIncome)],
                 ['  Self', this._fmt(pkg.selfIncome)],
                 ['  Ordinary', this._fmt(pkg.ordinaryIncome())],
-                ['    Social Security', this._fmt(pkg.socialSecurity)],
+                ['    Social Security', this._fmt(pkg.socialSecurityIncome)],
                 ['    IRA Distribution', this._fmt(pkg.tradIRADistribution)],
                 ['    401K Distribution', this._fmt(pkg.four01KDistribution)],
                 ['    Short-Term Gains', this._fmt(pkg.shortTermCapitalGains)],

@@ -31,8 +31,8 @@ export class TaxEngine {
     recordFICAWithholding(modelAsset, withholding) {
 
         withholding.flipSigns();
-        modelAsset.medicareCurrency.add(withholding.medicare);
-        modelAsset.socialSecurityCurrency.add(withholding.socialSecurity);
+        modelAsset.medicareTaxCurrency.add(withholding.medicareTax);
+        modelAsset.socialSecurityTaxCurrency.add(withholding.socialSecurityTax);
         this.monthly.addWithholdingResult(withholding);
 
         modelAsset.addCreditMemo(withholding.fica(), 'FICA withholding');

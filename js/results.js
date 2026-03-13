@@ -49,14 +49,14 @@ export class InterestResult {
 }
 
 export class WithholdingResult {
-  constructor(medicare = Currency.zero(), socialSecurity = Currency.zero(), income = Currency.zero()) {
-    this.medicare       = medicare instanceof Currency ? medicare.copy() : new Currency(medicare);
-    this.socialSecurity = socialSecurity instanceof Currency ? socialSecurity.copy() : new Currency(socialSecurity);
-    this.income         = income instanceof Currency ? income.copy() : new Currency(income);
+  constructor(medicareTax = Currency.zero(), socialSecurityTax = Currency.zero(), income = Currency.zero()) {
+    this.medicareTax       = medicareTax instanceof Currency ? medicareTax.copy() : new Currency(medicareTax);
+    this.socialSecurityTax = socialSecurityTax instanceof Currency ? socialSecurityTax.copy() : new Currency(socialSecurityTax);
+    this.income            = income instanceof Currency ? income.copy() : new Currency(income);
   }
 
   fica() {
-    return new Currency(this.medicare.amount + this.socialSecurity.amount);
+    return new Currency(this.medicareTax.amount + this.socialSecurityTax.amount);
   }
 
   total() {
@@ -64,8 +64,8 @@ export class WithholdingResult {
   }
 
   flipSigns() {
-    this.medicare.flipSign();
-    this.socialSecurity.flipSign();
+    this.medicareTax.flipSign();
+    this.socialSecurityTax.flipSign();
     this.income.flipSign();
   }
 }

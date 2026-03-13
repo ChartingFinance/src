@@ -217,8 +217,8 @@ export class TaxTable {
     calculateFICATax(isSelfEmployed, income) {
 
         let result = new WithholdingResult(new Currency(), new Currency(), new Currency());
-        result.socialSecurity.add(this.calculateSocialSecurityTax(isSelfEmployed, income));
-        result.medicare.add(this.calculateMedicareTax(isSelfEmployed, income));
+        result.socialSecurityTax.add(this.calculateSocialSecurityTax(isSelfEmployed, income));
+        result.medicareTax.add(this.calculateMedicareTax(isSelfEmployed, income));
 
         if (isSelfEmployed && result.fica().amount / income.amount > 0.16) {
             logger.log(LogCategory.TAX, 'TaxTable.calculateFICATax: ratio over 16%?');

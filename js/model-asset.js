@@ -50,8 +50,9 @@ export const Metric = Object.freeze({
   LONG_TERM_CAPITAL_GAIN:       'longTermCapitalGain',
   CAPITAL_GAIN:                 'capitalGain', // combine short and long term
   RMD:                          'rmd',
-  SOCIAL_SECURITY:              'socialSecurity',
-  MEDICARE:                     'medicare',
+  SOCIAL_SECURITY_TAX:          'socialSecurityTax',
+  SOCIAL_SECURITY_INCOME:       'socialSecurityIncome',
+  MEDICARE_TAX:                 'medicareTax',
   MORTGAGE_PAYMENT:             'mortgagePayment',
   MORTGAGE_INTEREST:            'mortgageInterest',
   MORTGAGE_PRINCIPAL:           'mortgagePrincipal',
@@ -95,8 +96,9 @@ export const MetricLabel = Object.freeze({
   [Metric.LONG_TERM_CAPITAL_GAIN]:      'Long Term Capital Gain',
   [Metric.CAPITAL_GAIN]:                'Capital Gain',
   [Metric.RMD]:                         'Required Min. Distribution',
-  [Metric.SOCIAL_SECURITY]:             'Social Security',
-  [Metric.MEDICARE]:                    'Medicare',
+  [Metric.SOCIAL_SECURITY_TAX]:         'Social Security Tax',
+  [Metric.SOCIAL_SECURITY_INCOME]:      'Social Security Income',
+  [Metric.MEDICARE_TAX]:                    'Medicare Tax',
   [Metric.MORTGAGE_PAYMENT]:            'Mortgage Payment',
   [Metric.MORTGAGE_INTEREST]:           'Mortgage Interest',
   [Metric.MORTGAGE_PRINCIPAL]:          'Mortgage Principal',
@@ -122,7 +124,7 @@ export const MetricRollups = {
     [Metric.FOUR_01K_DISTRIBUTION]:       [Metric.ORDINARY_INCOME],
     [Metric.WORKING_INCOME]:              [Metric.ORDINARY_INCOME],
     [Metric.INTEREST_INCOME]:             [Metric.ORDINARY_INCOME],
-    [Metric.SOCIAL_SECURITY]:             [Metric.ORDINARY_INCOME], 
+    [Metric.SOCIAL_SECURITY_INCOME]:      [Metric.ORDINARY_INCOME], 
     [Metric.SHORT_TERM_CAPITAL_GAIN]:     [Metric.ORDINARY_INCOME], // Taxed at ordinary rates
 
     // --- FOUNDATIONAL GAINS TO CAPITAL GAINS ---
@@ -133,6 +135,10 @@ export const MetricRollups = {
     [Metric.CAPITAL_GAIN]:                [Metric.INCOME],
     [Metric.ROTH_IRA_DISTRIBUTION]:       [Metric.INCOME], // Non-taxable, but still cash flow income
     [Metric.DIVIDEND]:                    [Metric.INCOME],
+
+    [Metric.MEDICARE_TAX]:                [Metric.WITHHELD_FICA_TAX],
+    [Metric.SOCIAL_SECURITY_TAX]:         [Metric.WITHHELD_FICA_TAX],
+    [Metric.WITHHELD_FICA_TAX]:           [Metric.WITHHELD_INCOME_TAX],
 
     // --- TAX ROLLUPS ---
     [Metric.WITHHELD_INCOME_TAX]:         [Metric.INCOME_TAX],
@@ -389,11 +395,14 @@ export class ModelAsset {
   get rmdCurrency()   { return this.#metrics.get(Metric.RMD).current; }
   set rmdCurrency(c)  { this.#metrics.get(Metric.RMD).current = c; }
 
-  get socialSecurityCurrency()   { return this.#metrics.get(Metric.SOCIAL_SECURITY).current; }
-  set socialSecurityCurrency(c)  { this.#metrics.get(Metric.SOCIAL_SECURITY).current = c; }
+  get socialSecurityTaxCurrency()   { return this.#metrics.get(Metric.SOCIAL_SECURITY_TAX).current; }
+  set socialSecurityTaxCurrency(c)  { this.#metrics.get(Metric.SOCIAL_SECURITY_TAX).current = c; }
 
-  get medicareCurrency()   { return this.#metrics.get(Metric.MEDICARE).current; }
-  set medicareCurrency(c)  { this.#metrics.get(Metric.MEDICARE).current = c; }
+  get socialSecurityIncomeCurrency()   { return this.#metrics.get(Metric.SOCIAL_SECURITY_INCOME).current; }
+  set socialSecurityIncomeCurrency(c)  { this.#metrics.get(Metric.SOCIAL_SECURITY_INCOME).current = c; }
+
+  get medicareTaxCurrency()   { return this.#metrics.get(Metric.MEDICARE_TAX).current; }
+  set medicareTaxCurrency(c)  { this.#metrics.get(Metric.MEDICARE_TAX).current = c; }
 
   get withheldFicaTaxCurrency()   { return this.#metrics.get(Metric.WITHHELD_FICA_TAX).current; }
   set withheldFicaTaxCurrency(c)  { this.#metrics.get(Metric.WITHHELD_FICA_TAX).current = c; }
@@ -470,8 +479,9 @@ export class ModelAsset {
   get monthlyShortTermCapitalGains() { return this.#metrics.get(Metric.SHORT_TERM_CAPITAL_GAIN).history; }
   get monthlyLongTermCapitalGains()  { return this.#metrics.get(Metric.LONG_TERM_CAPITAL_GAIN).history; }
   get monthlyRMDs()                  { return this.#metrics.get(Metric.RMD).history; }
-  get monthlySocialSecurities()      { return this.#metrics.get(Metric.SOCIAL_SECURITY).history; }
-  get monthlyMedicares()             { return this.#metrics.get(Metric.MEDICARE).history; }
+  get monthlySocialSecurityTaxes()   { return this.#metrics.get(Metric.SOCIAL_SECURITY_TAX).history; }
+  get monthlySocialSecurityIncomes() { return this.#metrics.get(Metric.SOCIAL_SECURITY_INCOME).history; }
+  get monthlyMedicareTaxes()         { return this.#metrics.get(Metric.MEDICARE_TAX).history; }
   get monthlyIncomeTaxes()           { return this.#metrics.get(Metric.INCOME_TAX).history; }
   get monthlyMortgagePayments()      { return this.#metrics.get(Metric.MORTGAGE_PAYMENT).history; }
   get monthlyMortgageInterests()     { return this.#metrics.get(Metric.MORTGAGE_INTEREST).history; }

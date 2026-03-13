@@ -33,7 +33,7 @@ export class PayrollEngine {
             this.monthly.addResult(result);
 
             if (InstrumentType.isRetirementIncome(modelAsset.instrument)) {
-                this.monthly.socialSecurity.add(modelAsset.incomeCurrency);
+                this.monthly.socialSecurityIncome.add(modelAsset.incomeCurrency);
             } else {
 
                 // it's self-employed or w2-employed
@@ -69,7 +69,7 @@ export class PayrollEngine {
             if (InstrumentType.isWorkingIncome(modelAsset.instrument)) {
 
                 let withholding = activeTaxTable.calculateFICATax(modelAsset.isSelfEmployed, modelAsset.incomeCurrency.copy());
-                activeTaxTable.addYearlySocialSecurity(withholding.socialSecurity);
+                activeTaxTable.addYearlySocialSecurity(withholding.socialSecurityTax);
 
                 this.taxEngine.recordFICAWithholding(modelAsset, withholding);
 
@@ -115,8 +115,8 @@ export class PayrollEngine {
         let netIncome = modelAsset.incomeCurrency.copy();
 
         // subtract per-asset FICA (Social Security + Medicare, stored as negative values on model asset)
-        netIncome.add(modelAsset.socialSecurityCurrency);  // negative, so add subtracts
-        netIncome.add(modelAsset.medicareCurrency);
+        netIncome.add(modelAsset.socialSecurityTaxCurrency);  // negative, so add subtracts
+        netIncome.add(modelAsset.medicareTaxCurrency);
 
         // subtract pre-tax 401K contributions (per-asset)
         let four01KContribution = modelAsset.four01KContributionCurrency;
