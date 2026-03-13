@@ -34,10 +34,10 @@ import {
 } from './charting.js';
 
 // Monte Carlo
-import { runMonteCarlo } from './monte-carlo.js';
+import { runMonteCarlo, getMonteCarloResults } from './monte-carlo.js';
 
 // Guardrails
-import { runGuardrails } from './guardrails.js';
+import { runGuardrails, getGuardrailsResults } from './guardrails.js';
 
 // Logger
 import { logger, LogCategory } from './utils/logger.js';
@@ -110,6 +110,7 @@ import './components/share-modal.js';
 
 // Generators
 import { generatePortfolioMarkdown } from './generators/assets-ai.js';
+import { generateProjectionsMarkdown } from './generators/projections-ai.js';
 
 // ─── DOM Element References ──────────────────────────────────
 
@@ -696,7 +697,19 @@ function closeFabPopup() { fabPopup.classList.add('hidden'); }
 document.getElementById('btn-projections-action').addEventListener('click', () => {
     const activeTab = document.querySelector('.chart-tab.active');
     const tabName = activeTab ? activeTab.textContent.trim() : 'unknown';
-    openFabPopup(`Projections (${tabName})`);
+
+    if (!activePortfolio) {
+        openFabPopup(`Projections Report (${tabName})`, 'No simulation has been run yet. Click Simulate first.');
+        return;
+    }
+
+    const context = {
+        mcResults: getMonteCarloResults(),
+        guardrailsResults: getGuardrailsResults(),
+    };
+
+    const markdown = generateProjectionsMarkdown(tabName, activePortfolio, context);
+    openFabPopup(`Projections Report (${tabName})`, markdown);
 });
 
 document.getElementById('btn-portfolio-action').addEventListener('click', () => {

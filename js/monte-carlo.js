@@ -131,6 +131,12 @@ function percentile(sortedArr, p) {
     return sortedArr[lo] + (sortedArr[hi] - sortedArr[lo]) * (idx - lo);
 }
 
+// ── Cached results (read by projections markdown generator) ──────
+
+let cachedResults = null;
+
+export function getMonteCarloResults() { return cachedResults; }
+
 // ── Main entry point ─────────────────────────────────────────────
 
 let monteCarloChart = null;
@@ -222,6 +228,16 @@ export function runMonteCarlo(sourceAssets, container, numSimulations = 1000, gu
         }
         basePf.finalizeChron();
         activeTaxTable.finalizeChron();
+
+        cachedResults = {
+            labels,
+            bands,
+            bandData,
+            baselineData,
+            numSimulations,
+            withGuardrails: !!guardrailParams,
+            startDateInt: new DateInt(startDateInt.toInt()),
+        };
 
         renderFanChart(container, labels, bands, bandData, baselineData, numSimulations, !!guardrailParams);
     }, 50);

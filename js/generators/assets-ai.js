@@ -75,20 +75,20 @@ export function generatePortfolioMarkdown(portfolio) {
     const yearlyReports = portfolio.generatedReports.filter(r => r.type === 'yearly');
     if (yearlyReports.length > 0) {
         md += `## Annual Cash Flow\n`;
-        md += `| Year | Gross Income | Taxes (Eff. Rate) | Contributions | Expenses | Mortgage P+I | Net Cash Flow |\n`;
-        md += `| :--- | ---: | ---: | ---: | ---: | ---: | ---: |\n`;
+        md += `| Year | Gross Income | Taxes | Contributions | Expenses | Mortgage P+I | Cash Surplus | Growth |\n`;
+        md += `| :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |\n`;
 
         for (const report of yearlyReports) {
             const p = report.pkg;
             const income = p.totalIncome().amount;
             const taxes = Math.abs(p.totalTaxes().amount);
-            const rate = income > 0 ? ((taxes / income) * 100).toFixed(0) : '0';
             const contribs = Math.abs(p.contributions().amount);
             const expenses = Math.abs(p.expense.amount);
             const mortgage = Math.abs(p.mortgageInterest.amount) + Math.abs(p.mortgagePrincipal.amount);
-            const cashFlow = p.cashFlow().amount;
+            const surplus = income - taxes - contribs - expenses - mortgage;
+            const growth = p.growth().amount;
 
-            md += `| ${report.dateLabel} | ${fmt(income)} | ${fmt(taxes)} (${rate}%) | ${fmt(contribs)} | ${fmt(expenses)} | ${fmt(mortgage)} | ${fmt(cashFlow)} |\n`;
+            md += `| ${report.dateLabel} | ${fmt(income)} | ${fmt(taxes)} | ${fmt(contribs)} | ${fmt(expenses)} | ${fmt(mortgage)} | ${fmt(surplus)} | ${fmt(growth)} |\n`;
         }
         md += '\n';
     }

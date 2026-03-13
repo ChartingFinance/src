@@ -16,6 +16,12 @@ import { chronometer_run } from './chronometer.js';
 
 let guardrailsChart = null;
 
+// ── Cached results (read by projections markdown generator) ──────
+
+let cachedResults = null;
+
+export function getGuardrailsResults() { return cachedResults; }
+
 // ── Clone assets via JSON round-trip ─────────────────────────────
 
 function cloneAssets(sourceAssets) {
@@ -74,6 +80,15 @@ export function runGuardrails(sourceAssets, canvas, params) {
     // Guardrail event markers
     const events = portfolio.guardrailEvents;
     const snapshots = portfolio.yearlySnapshots;
+
+    cachedResults = {
+        labels,
+        portfolioValues,
+        withdrawalSteps,
+        events,
+        snapshots,
+        params,
+    };
 
     renderChart(canvas, labels, portfolioValues, withdrawalSteps, events, snapshots, params);
 }
