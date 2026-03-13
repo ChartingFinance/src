@@ -108,6 +108,9 @@ import './components/simulator-modal.js';
 // Share modal (Lit component)
 import './components/share-modal.js';
 
+// Generators
+import { generatePortfolioMarkdown } from './generators/assets-ai.js';
+
 // ─── DOM Element References ──────────────────────────────────
 
 const assetFormModal = document.getElementById('assetFormModal');
@@ -681,17 +684,38 @@ document.getElementById('btn-add-asset').addEventListener('click', openCreateAss
 // ─── FAB Action Buttons ─────────────────────────────────────
 const fabPopup = document.getElementById('fab-action-popup');
 const fabPopupMessage = document.getElementById('fab-popup-message');
-function openFabPopup(source) {
-    fabPopupMessage.textContent = `Launched from: ${source}`;
+const fabPopupTextarea = document.getElementById('fab-popup-textarea');
+
+function openFabPopup(source, content = '') {
+    fabPopupMessage.textContent = source;
+    fabPopupTextarea.value = content;
     fabPopup.classList.remove('hidden');
 }
 function closeFabPopup() { fabPopup.classList.add('hidden'); }
+
 document.getElementById('btn-projections-action').addEventListener('click', () => {
     const activeTab = document.querySelector('.chart-tab.active');
     const tabName = activeTab ? activeTab.textContent.trim() : 'unknown';
     openFabPopup(`Projections (${tabName})`);
 });
-document.getElementById('btn-portfolio-action').addEventListener('click', () => openFabPopup('Portfolio'));
+
+document.getElementById('btn-portfolio-action').addEventListener('click', () => {
+    if (!activePortfolio) {
+        openFabPopup('Portfolio Report', 'No simulation has been run yet. Click Simulate first.');
+        return;
+    }
+    const markdown = generatePortfolioMarkdown(activePortfolio);
+    openFabPopup('Portfolio Report', markdown);
+});
+
+document.getElementById('fab-popup-copy').addEventListener('click', () => {
+    navigator.clipboard.writeText(fabPopupTextarea.value).then(() => {
+        const btn = document.getElementById('fab-popup-copy');
+        btn.title = 'Copied!';
+        setTimeout(() => { btn.title = 'Copy to clipboard'; }, 2000);
+    });
+});
+
 document.getElementById('fab-popup-close').addEventListener('click', closeFabPopup);
 fabPopup.addEventListener('click', (e) => { if (e.target === fabPopup) closeFabPopup(); });
 

@@ -76,6 +76,7 @@ export class FinancialPackage {
         let income = this.wageIncome().copy();
         income.add(this.ordinaryIncome());
         income.add(this.nontaxableIncome());
+        income.add(this.longTermCapitalGains);
         return income;
 
     }

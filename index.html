@@ -330,7 +330,7 @@
                     </div>
                 </div>
 
-                <button class="fab-action absolute bottom-6 right-6 w-12 h-12 bg-black text-white rounded-full shadow-xl hover:scale-110 transition-transform flex items-center justify-center text-lg z-10" id="btn-projections-action" title="Projections action">
+                <button class="fab-action absolute bottom-6 left-6 w-12 h-12 bg-black text-white rounded-full shadow-xl hover:scale-110 transition-transform flex items-center justify-center text-lg z-10" id="btn-projections-action" title="Projections action">
                     ⚡
                 </button>
             </div>
@@ -352,7 +352,7 @@
             <div class="glass-card p-6 relative flex flex-col flex-grow min-h-0">
                 <asset-list class="assets-container selected-assets flex flex-col items-center gap-3 overflow-y-auto flex-grow min-h-0 pb-24" id="assets" style="flex: 1;"></asset-list>
                 
-                <button class="fab-action absolute bottom-20 right-6 w-12 h-12 bg-black text-white rounded-full shadow-xl hover:scale-110 transition-transform flex items-center justify-center text-lg z-10" id="btn-portfolio-action" title="Portfolio action">
+                <button class="fab-action absolute bottom-6 left-6 w-12 h-12 bg-black text-white rounded-full shadow-xl hover:scale-110 transition-transform flex items-center justify-center text-lg z-10" id="btn-portfolio-action" title="Portfolio action">
                     ⚡
                 </button>
                 <button class="absolute bottom-6 right-6 w-14 h-14 bg-black text-white rounded-full shadow-xl hover:scale-110 transition-transform flex items-center justify-center text-2xl font-light z-10" id="btn-add-asset" title="Add a new instrument">
@@ -376,9 +376,17 @@
     <!-- ═══ Footer ═══ -->
     <!-- FAB Action Popup -->
     <div id="fab-action-popup" class="popup fixed inset-0 z-50 hidden flex items-center justify-center p-4">
-        <div class="popup-content glass-card p-8 w-full max-w-sm relative text-center">
-            <button class="absolute top-4 right-4 text-gray-400 hover:text-gray-900 text-xl cursor-pointer" id="fab-popup-close">&times;</button>
-            <p id="fab-popup-message" class="text-lg font-medium text-gray-700"></p>
+        <div class="popup-content glass-card p-8 w-full max-w-2xl relative">
+            <div class="flex items-center justify-between mb-4">
+                <p id="fab-popup-message" class="text-lg font-medium text-gray-700"></p>
+                <div class="flex items-center gap-2">
+                    <button class="text-gray-400 hover:text-gray-900 cursor-pointer p-1" id="fab-popup-copy" title="Copy to clipboard">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                    </button>
+                    <button class="text-gray-400 hover:text-gray-900 text-xl cursor-pointer" id="fab-popup-close">&times;</button>
+                </div>
+            </div>
+            <textarea id="fab-popup-textarea" class="w-full h-96 p-3 font-mono text-sm border border-gray-200 rounded-lg bg-gray-50 resize-y focus:outline-none focus:ring-2 focus:ring-blue-300" readonly></textarea>
         </div>
     </div>
 
