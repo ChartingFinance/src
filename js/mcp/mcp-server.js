@@ -7,20 +7,13 @@
  *
  * Usage:  node js/mcp/mcp-server.js
  */
+
+// Polyfill must run before any static imports touch global.js
+await import('./polyfill.js');
+
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
-
-// Minimal localStorage polyfill for Node.js (globals.js setters/getters use it)
-if (typeof globalThis.localStorage === 'undefined') {
-  const store = new Map();
-  globalThis.localStorage = {
-    getItem: (k) => store.get(k) ?? null,
-    setItem: (k, v) => store.set(k, String(v)),
-    removeItem: (k) => store.delete(k),
-    clear: () => store.clear(),
-  };
-}
 
 // Simulation engine
 import { quickStartAssets } from '../quick-start.js';
