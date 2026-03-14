@@ -33,7 +33,7 @@ function cloneAssets(sourceAssets) {
 
 // ── Main entry point ─────────────────────────────────────────────
 
-export function runGuardrails(sourceAssets, canvas, params) {
+export function runGuardrails(sourceAssets, canvas, params, deficitDateInt = null) {
     const assets = cloneAssets(sourceAssets);
     const portfolio = new Portfolio(assets, false);
 
@@ -43,6 +43,7 @@ export function runGuardrails(sourceAssets, canvas, params) {
         preservation: params.preservation,
         prosperity: params.prosperity,
         adjustment: params.adjustment,
+        deficitDateInt,
     };
 
     chronometer_run(portfolio);
@@ -81,6 +82,15 @@ export function runGuardrails(sourceAssets, canvas, params) {
     const events = portfolio.guardrailEvents;
     const snapshots = portfolio.yearlySnapshots;
 
+    // Compute deficit trigger index for chart annotation
+    const monthNames2 = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    let deficitMonthIndex = null;
+    if (deficitDateInt) {
+        const deficitLabel = `${monthNames2[deficitDateInt.month - 1]} ${deficitDateInt.year}`;
+        deficitMonthIndex = labels.indexOf(deficitLabel);
+        if (deficitMonthIndex < 0) deficitMonthIndex = null;
+    }
+
     cachedResults = {
         labels,
         portfolioValues,
@@ -88,9 +98,11 @@ export function runGuardrails(sourceAssets, canvas, params) {
         events,
         snapshots,
         params,
+        deficitDateInt,
+        deficitMonthIndex,
     };
 
-    renderChart(canvas, labels, portfolioValues, withdrawalSteps, events, snapshots, params);
+    renderChart(canvas, labels, portfolioValues, withdrawalSteps, events, snapshots, params, deficitMonthIndex);
 }
 
 // ── Helpers ──────────────────────────────────────────────────────
@@ -135,13 +147,41 @@ function buildWithdrawalSteps(portfolio, numMonths) {
 
 // ── Chart rendering ──────────────────────────────────────────────
 
-function renderChart(canvas, labels, portfolioValues, withdrawalSteps, events, snapshots, params) {
+function renderChart(canvas, labels, portfolioValues, withdrawalSteps, events, snapshots, params, deficitMonthIndex) {
     if (guardrailsChart) {
         guardrailsChart.destroy();
         guardrailsChart = null;
     }
 
     const fmt = (v) => '$' + Math.round(v).toLocaleString();
+
+    // Custom plugin: vertical "Start Withdrawals" line
+    const deficitLinePlugin = {
+        id: 'deficitLine',
+        afterDraw(chart) {
+            if (deficitMonthIndex == null) return;
+            const meta = chart.getDatasetMeta(0);
+            if (!meta.data[deficitMonthIndex]) return;
+            const x = meta.data[deficitMonthIndex].x;
+            const { top, bottom } = chart.chartArea;
+            const ctx = chart.ctx;
+            ctx.save();
+            ctx.strokeStyle = 'rgba(245, 158, 11, 0.8)';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([6, 4]);
+            ctx.beginPath();
+            ctx.moveTo(x, top);
+            ctx.lineTo(x, bottom);
+            ctx.stroke();
+            // Label
+            ctx.setLineDash([]);
+            ctx.fillStyle = 'rgba(245, 158, 11, 0.9)';
+            ctx.font = 'bold 11px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('Start Withdrawals', x, top - 6);
+            ctx.restore();
+        },
+    };
 
     // Build sparse arrays for event markers — same length as labels so indices align
     const preservationData = new Array(labels.length).fill(null);
@@ -165,6 +205,7 @@ function renderChart(canvas, labels, portfolioValues, withdrawalSteps, events, s
 
     guardrailsChart = new Chart(canvas, {
         type: 'line',
+        plugins: [deficitLinePlugin],
         data: {
             labels,
             datasets: [

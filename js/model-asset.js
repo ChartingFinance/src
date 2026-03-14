@@ -22,6 +22,7 @@ import { CreditMemo } from './results.js';
 import { IncomeResult } from './results.js';
 import { colorRange }    from './utils/html.js';
 import { getBehavior }   from './instruments/instrument-behavior.js';
+import { global_getFinishDateInt } from './globals.js';
 
 const rgb2hex = (rgb) => `#${rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/).slice(1).map(n => parseInt(n, 10).toString(16).padStart(2, '0')).join('')}`;
 
@@ -168,7 +169,7 @@ export class ModelAsset {
    * @param {DateInt}        opts.startDateInt
    * @param {Currency}       opts.startCurrency
    * @param {Currency}       [opts.startBasisCurrency]
-   * @param {DateInt}        opts.finishDateInt
+   * @param {DateInt|null}   [opts.finishDateInt]
    * @param {number}         [opts.monthsRemaining]
    * @param {ARR}            opts.annualReturnRate
    * @param {FundTransfer[]} [opts.fundTransfers]
@@ -179,7 +180,7 @@ export class ModelAsset {
     startDateInt,
     startCurrency,
     startBasisCurrency = Currency.zero(),
-    finishDateInt,
+    finishDateInt = null,
     monthsRemaining = 0,
     annualReturnRate,
     annualDividendRate = new ARR(0),
@@ -195,7 +196,7 @@ export class ModelAsset {
     this.startCurrency   = startCurrency;
     this.startBasisCurrency = startBasisCurrency;
     this.finishBasisCurrency = new Currency(startBasisCurrency.amount);
-    this.finishDateInt   = finishDateInt;
+    this.finishDateInt   = finishDateInt || null;
     this.monthsRemaining = Number.isInteger(monthsRemaining) ? monthsRemaining : 0;
     this.annualDividendRate = annualDividendRate;
     this.longTermCapitalHoldingPercentage = longTermCapitalHoldingPercentage;
@@ -220,6 +221,10 @@ export class ModelAsset {
     this.#metrics = new MetricSet(this.behavior.relevantMetrics());
   }
 
+  get effectiveFinishDateInt() {
+    return this.finishDateInt ?? global_getFinishDateInt();
+  }
+
   // ── Factories ────────────────────────────────────────────────────
 
   static trackedMetricNames() {
@@ -241,7 +246,7 @@ export class ModelAsset {
       startDateInt:    new DateInt(obj.startDateInt.year * 100 + obj.startDateInt.month),
       startCurrency:   new Currency(obj.startCurrency.amount),
       startBasisCurrency: new Currency(obj.startBasisCurrency?.amount ?? obj.basisCurrency?.amount ?? 0),
-      finishDateInt:   new DateInt(obj.finishDateInt.year * 100 + obj.finishDateInt.month),
+      finishDateInt:   obj.finishDateInt ? new DateInt(obj.finishDateInt.year * 100 + obj.finishDateInt.month) : null,
       monthsRemaining: obj.monthsRemaining ?? 0,
       annualReturnRate: new ARR(obj.annualReturnRate?.annualReturnRate ?? obj.annualReturnRate?.rate ?? 0),
       annualDividendRate: new ARR(obj.annualDividendRate?.annualReturnRate ?? obj.annualDividendRate?.rate ?? 0),
@@ -274,7 +279,7 @@ export class ModelAsset {
       startDateInt:    DateInt.parse(vals.startDate?.value),
       startCurrency:   Currency.parse(vals.startValue?.value),
       startBasisCurrency: Currency.parse(vals.startBasisValue?.value),
-      finishDateInt:   DateInt.parse(vals.finishDate?.value),
+      finishDateInt:   vals.finishDate?.value ? DateInt.parse(vals.finishDate.value) : null,
       monthsRemaining: parseInt(vals.monthsRemaining?.value, 10) || 0,
       annualReturnRate: ARR.parse(vals.annualReturnRate?.value),
       annualDividendRate: vals.dividendRate ? ARR.parse(vals.dividendRate.value) : new ARR(0),
@@ -534,7 +539,7 @@ export class ModelAsset {
       this.beforeStartDate = false;      
       this.afterFinishDate = false;
       this.onStartDate = (currentDateInt.toInt() == this.startDateInt.toInt());
-      this.onFinishDate = (currentDateInt.toInt() == this.finishDateInt.toInt());
+      this.onFinishDate = (currentDateInt.toInt() == this.effectiveFinishDateInt.toInt());
 
     } else {
 
@@ -545,7 +550,7 @@ export class ModelAsset {
         this.onFinishDate = false;
         this.afterFinishDate = false;
 
-      } else if (currentDateInt.toInt() > this.finishDateInt.toInt()) {
+      } else if (currentDateInt.toInt() > this.effectiveFinishDateInt.toInt()) {
 
         this.beforeStartDate = false;
         this.onStartDate = false;
@@ -811,7 +816,7 @@ export class ModelAsset {
     }
     else {
       return dateInt.toInt() >= this.startDateInt.toInt()
-          && dateInt.toInt() <= this.finishDateInt.toInt();
+          && dateInt.toInt() <= this.effectiveFinishDateInt.toInt();
 
     }
   }
@@ -821,7 +826,7 @@ export class ModelAsset {
       return false;
     }
     else {
-      return d && this.finishDateInt.year === d.year && this.finishDateInt.month === d.month;
+      return d && this.effectiveFinishDateInt.year === d.year && this.effectiveFinishDateInt.month === d.month;
     }
   }
 

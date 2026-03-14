@@ -60,7 +60,7 @@ class AssetFormModal extends LitElement {
         const displayName = isEdit && ma ? ma.displayName : '';
         const startDate = isEdit && ma ? ma.startDateInt.toHTML() : DateInt.today().toHTML();
         const startValue = isEdit && ma ? ma.startCurrency.toHTML() : '';
-        const finishDate = isEdit && ma ? ma.finishDateInt.toHTML() : '';
+        const finishDate = isEdit && ma && ma.finishDateInt ? ma.finishDateInt.toHTML() : '';
         const closed = isEdit && ma && ma.isClosed;
         const finishValue = closed && ma.closedValue ? ma.closedValue.toHTML()
             : (isEdit && ma && ma.finishCurrency ? ma.finishCurrency.toHTML() : '0.0');
@@ -117,9 +117,9 @@ class AssetFormModal extends LitElement {
                                     step="0.01" placeholder="$0.00" required />
                             </div>
                             <div>
-                                <label class="block text-xs font-semibold ${closedLabel} uppercase tracking-wider mb-1">Finish Date</label>
+                                <label class="block text-xs font-semibold ${closedLabel} uppercase tracking-wider mb-1">Finish Date (optional)</label>
                                 <input type="month" class="fin-input ${closedInput}" name="finishDate"
-                                    .value=${finishDate} required />
+                                    .value=${finishDate} placeholder="Defaults to Finish Age" />
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold ${closedLabel} uppercase tracking-wider mb-1">Finish Value</label>

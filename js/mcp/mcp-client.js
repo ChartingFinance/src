@@ -23,12 +23,12 @@ tools.set('add_asset', {
       displayName:     { type: 'string', description: 'User-friendly name' },
       startDate:       { type: 'string', description: 'Start date in YYYY-MM format' },
       startValue:      { type: 'number', description: 'Starting dollar value' },
-      finishDate:      { type: 'string', description: 'End date in YYYY-MM format' },
+      finishDate:      { type: 'string', description: 'End date in YYYY-MM format (optional, defaults to global Finish Age)' },
       annualReturnRate:{ type: 'number', description: 'Annual return as percentage, e.g. 7 for 7%' },
       startBasisValue: { type: 'number', description: 'Starting cost basis (optional, defaults to 0)' },
       isSelfEmployed:  { type: 'boolean', description: 'Self-employed income flag (optional)' },
     },
-    required: ['instrument', 'displayName', 'startDate', 'startValue', 'finishDate', 'annualReturnRate'],
+    required: ['instrument', 'displayName', 'startDate', 'startValue', 'annualReturnRate'],
   },
   handler(args) {
     if (!VALID_INSTRUMENTS.has(args.instrument)) {
@@ -41,14 +41,14 @@ tools.set('add_asset', {
       startDateInt:    DateInt.parse(args.startDate),
       startCurrency:   new Currency(args.startValue),
       startBasisCurrency: new Currency(args.startBasisValue ?? 0),
-      finishDateInt:   DateInt.parse(args.finishDate),
+      finishDateInt:   args.finishDate ? DateInt.parse(args.finishDate) : null,
       annualReturnRate:new ARR(args.annualReturnRate / 100),
       isSelfEmployed:  args.isSelfEmployed ?? false,
     });
 
     return {
       modelAsset,
-      summary: `Created ${args.instrument} "${args.displayName}" from ${args.startDate} to ${args.finishDate} with $${args.startValue} at ${args.annualReturnRate}%`,
+      summary: `Created ${args.instrument} "${args.displayName}" from ${args.startDate} to ${args.finishDate ?? 'Finish Age'} with $${args.startValue} at ${args.annualReturnRate}%`,
     };
   },
 });

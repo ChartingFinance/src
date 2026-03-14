@@ -84,6 +84,15 @@ function generateMonteCarloMarkdown(portfolio, context) {
     const { bands, bandData, baselineData, labels } = mcResults;
     const lastIdx = bandData[0].length - 1;
 
+    // Deficit trigger phase callout
+    if (mcResults.deficitDateInt) {
+        const d = mcResults.deficitDateInt;
+        md += `## Simulation Phases\n`;
+        md += `The simulation uses a **two-phase model** anchored on the date when projected expenses first exceed income:\n\n`;
+        md += `- **Accumulation Phase** (before ${d.toString()}): Asset returns use the user-specified deterministic rates.\n`;
+        md += `- **Withdrawal Phase** (${d.toString()} onward): Asset returns are randomized using correlated historical data (S&P 500, treasuries, CPI, wage growth), reflecting the uncertainty that matters most when drawing down assets.\n\n`;
+    }
+
     // Terminal outcome distribution
     md += `## Terminal Portfolio Value Distribution\n`;
     md += `| Percentile | Ending Value | vs. Baseline |\n`;
@@ -176,6 +185,15 @@ function generateGuardrailsMarkdown(portfolio, context) {
 
     const { params, snapshots, events, labels, portfolioValues, withdrawalSteps } = gr;
     const pct = (v) => (v * 100).toFixed(1) + '%';
+
+    // Deficit trigger phase callout
+    if (gr.deficitDateInt) {
+        const d = gr.deficitDateInt;
+        md += `## Simulation Phases\n`;
+        md += `Guardrail adjustments (preservation cuts and prosperity raises) only activate after expenses first exceed income:\n\n`;
+        md += `- **Accumulation Phase** (before ${d.toString()}): Portfolio grows without guardrail intervention.\n`;
+        md += `- **Withdrawal Phase** (${d.toString()} onward): Guardrail thresholds are evaluated annually and adjustments applied when triggered.\n\n`;
+    }
 
     // Parameters
     md += `## Guardrail Parameters\n`;

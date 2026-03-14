@@ -43,7 +43,7 @@ export function charting_buildDateMarkers(portfolio) {
     for (const modelAsset of portfolio.modelAssets) {
         const color = colorRange[modelAsset.colorId];
         const startIdx = dateIntToChartIndex(modelAsset.startDateInt, portfolio.firstDateInt, monthsSpan);
-        const finishIdx = dateIntToChartIndex(modelAsset.finishDateInt, portfolio.firstDateInt, monthsSpan);
+        const finishIdx = dateIntToChartIndex(modelAsset.effectiveFinishDateInt, portfolio.firstDateInt, monthsSpan);
         if (startIdx >= 0) markers.push({ index: startIdx, color });
         if (finishIdx >= 0) markers.push({ index: finishIdx, color });
     }

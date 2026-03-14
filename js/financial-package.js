@@ -89,6 +89,14 @@ export class FinancialPackage {
 
     }
 
+    /** Earned/passive income only — wages + social security/pension.
+     *  Excludes distributions, capital gains, dividends (those are asset drawdown). */
+    earnedIncome() {
+        let income = this.wageIncome().copy();
+        income.add(this.socialSecurityIncome);
+        return income;
+    }
+
     fica() {
 
         let total = this.medicareTax.copy();

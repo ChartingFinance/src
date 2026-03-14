@@ -29,7 +29,7 @@ export function firstDateInt(assets) {
 export function lastDateInt(assets) {
   if (!assets?.length) return null;
   return assets.reduce((latest, a) =>
-    !latest || a.finishDateInt.isAfter(latest) ? a.finishDateInt : latest,
+    !latest || a.effectiveFinishDateInt.isAfter(latest) ? a.effectiveFinishDateInt : latest,
     null
   );
 }

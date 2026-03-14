@@ -106,7 +106,7 @@ export function generatePortfolioMarkdown(portfolio) {
         const isDebt = InstrumentType.isDebt(asset.instrument);
 
         md += `### ${emoji} ${asset.displayName} (${typeLabel})\n`;
-        md += `- Timeline: ${asset.startDateInt.toString()} to ${asset.finishDateInt.toString()}`;
+        md += `- Timeline: ${asset.startDateInt.toString()} to ${asset.effectiveFinishDateInt.toString()}`;
         if (asset.isClosed) md += ` (closed)`;
         md += `\n`;
 

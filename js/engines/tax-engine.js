@@ -123,7 +123,7 @@ export class TaxEngine {
         const capitalGains = new Currency(modelAsset.finishCurrency.amount - modelAsset.finishBasisCurrency.amount);
         logger.log(LogCategory.TAX, 'capital gains of ' + capitalGains.toString());
 
-        const monthsSpan = MonthsSpan.build(modelAsset.startDateInt, modelAsset.finishDateInt);
+        const monthsSpan = MonthsSpan.build(modelAsset.startDateInt, modelAsset.effectiveFinishDateInt);
         const annualizedIncome = this.monthly.totalIncome().copy().multiply(12);
         const isRealEstate = InstrumentType.isRealEstate(modelAsset.instrument);
         const isPrimaryHome = isRealEstate && modelAsset.isPrimaryHome;

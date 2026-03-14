@@ -1,3 +1,5 @@
+import { DateInt } from './utils/date-int.js';
+
 // S&P 500 annual total returns (price + dividends), 2000–2025
 // Source: https://www.slickcharts.com/sp500/returns
 export const global_sp500_annual_returns = Object.freeze({
@@ -410,6 +412,13 @@ export function global_getUserFinishAge() {
         localUA = global_user_finishAge.toString();
 
     global_user_finishAge = parseInt(localUA);
+}
+
+export function global_getFinishDateInt() {
+    const currentYear = new Date().getFullYear();
+    const birthYear = currentYear - global_user_startAge;
+    const finishYear = birthYear + global_user_finishAge;
+    return DateInt.from(finishYear, 12);
 }
 
 export function global_setBacktestYear(value) {
