@@ -1,5 +1,5 @@
 // Minimal localStorage polyfill for Node.js (globals.js setters/getters use it)
-if (typeof globalThis.localStorage === 'undefined') {
+
   const store = new Map();
   globalThis.localStorage = {
     getItem: (k) => store.get(k) ?? null,
@@ -7,4 +7,3 @@ if (typeof globalThis.localStorage === 'undefined') {
     removeItem: (k) => store.delete(k),
     clear: () => store.clear(),
   };
-}

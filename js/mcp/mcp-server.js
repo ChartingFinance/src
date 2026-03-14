@@ -9,7 +9,7 @@
  */
 
 // Polyfill must run before any static imports touch global.js
-await import('./polyfill.js');
+import './polyfill.js';
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
