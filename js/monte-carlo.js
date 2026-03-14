@@ -70,7 +70,7 @@ function cloneAssets(sourceAssets) {
 
 // ── Single simulation run ────────────────────────────────────────
 
-function runOnce(sourceAssets, guardrailParams, deficitDateInt) {
+function runOnce(sourceAssets, guardrailParams, retirementDateInt) {
     const assets = cloneAssets(sourceAssets);
     const portfolio = new Portfolio(assets, false);
 
@@ -81,9 +81,9 @@ function runOnce(sourceAssets, guardrailParams, deficitDateInt) {
     activeTaxTable.initializeChron();
     portfolio.initializeChron();
 
-    // Two-phase simulation: deterministic rates before deficit, randomized after
-    const deficitInt = deficitDateInt ? deficitDateInt.toInt() : 0;
-    let withdrawalPhase = !deficitDateInt; // no trigger = randomize from start
+    // Two-phase simulation: deterministic rates before retirement, randomized after
+    const retirementInt = retirementDateInt ? retirementDateInt.toInt() : 0;
+    let withdrawalPhase = !retirementDateInt; // no trigger = randomize from start
     if (withdrawalPhase) applyRandomRates(portfolio.modelAssets);
 
     let currentDateInt = new DateInt(portfolio.firstDateInt.toInt());
@@ -110,7 +110,7 @@ function runOnce(sourceAssets, guardrailParams, deficitDateInt) {
 
         if (currentDateInt.isNewYearsDay()) {
             // Activate randomization once we reach the withdrawal phase
-            if (!withdrawalPhase && currentDateInt.toInt() >= deficitInt) {
+            if (!withdrawalPhase && currentDateInt.toInt() >= retirementInt) {
                 withdrawalPhase = true;
             }
             if (withdrawalPhase) {
@@ -150,7 +150,7 @@ export function getMonteCarloResults() { return cachedResults; }
 
 let monteCarloChart = null;
 
-export function runMonteCarlo(sourceAssets, container, numSimulations = 1000, guardrailParams = null, deficitDateInt = null) {
+export function runMonteCarlo(sourceAssets, container, numSimulations = 1000, guardrailParams = null, retirementDateInt = null) {
     // Determine number of months from a reference run
     const refAssets = cloneAssets(sourceAssets);
     const refPortfolio = new Portfolio(refAssets, false);
@@ -187,7 +187,7 @@ export function runMonteCarlo(sourceAssets, container, numSimulations = 1000, gu
     setTimeout(() => {
         const allRuns = [];
         for (let i = 0; i < numSimulations; i++) {
-            const totals = runOnce(sourceAssets, guardrailParams, deficitDateInt);
+            const totals = runOnce(sourceAssets, guardrailParams, retirementDateInt);
             while (totals.length < numMonths) totals.push(totals[totals.length - 1] ?? 0);
             if (totals.length > numMonths) totals.length = numMonths;
             allRuns.push(totals);
@@ -238,12 +238,12 @@ export function runMonteCarlo(sourceAssets, container, numSimulations = 1000, gu
         basePf.finalizeChron();
         activeTaxTable.finalizeChron();
 
-        // Compute deficit trigger index for chart annotation
-        let deficitMonthIndex = null;
-        if (deficitDateInt) {
-            const deficitLabel = `${monthNames[deficitDateInt.month - 1]} ${deficitDateInt.year}`;
-            deficitMonthIndex = labels.indexOf(deficitLabel);
-            if (deficitMonthIndex < 0) deficitMonthIndex = null;
+        // Compute retirement trigger index for chart annotation
+        let retirementMonthIndex = null;
+        if (retirementDateInt) {
+            const retirementLabel = `${monthNames[retirementDateInt.month - 1]} ${retirementDateInt.year}`;
+            retirementMonthIndex = labels.indexOf(retirementLabel);
+            if (retirementMonthIndex < 0) retirementMonthIndex = null;
         }
 
         cachedResults = {
@@ -254,17 +254,17 @@ export function runMonteCarlo(sourceAssets, container, numSimulations = 1000, gu
             numSimulations,
             withGuardrails: !!guardrailParams,
             startDateInt: new DateInt(startDateInt.toInt()),
-            deficitDateInt,
-            deficitMonthIndex,
+            retirementDateInt,
+            retirementMonthIndex,
         };
 
-        renderFanChart(container, labels, bands, bandData, baselineData, numSimulations, !!guardrailParams, deficitMonthIndex);
+        renderFanChart(container, labels, bands, bandData, baselineData, numSimulations, !!guardrailParams, retirementMonthIndex);
     }, 50);
 }
 
 // ── Chart rendering ──────────────────────────────────────────────
 
-function renderFanChart(container, labels, bands, bandData, baselineData, numSimulations, withGuardrails, deficitMonthIndex) {
+function renderFanChart(container, labels, bands, bandData, baselineData, numSimulations, withGuardrails, retirementMonthIndex) {
     container.innerHTML = '';
 
     const canvas = document.createElement('canvas');
@@ -280,14 +280,14 @@ function renderFanChart(container, labels, bands, bandData, baselineData, numSim
     const step = Math.max(1, Math.floor(labels.length / 12));
     const thinLabels = labels.map((l, i) => i % step === 0 ? l : '');
 
-    // Custom plugin: vertical "Start Withdrawals" line
-    const deficitLinePlugin = {
-        id: 'deficitLine',
+    // Custom plugin: vertical "Retirement" line
+    const retirementLinePlugin = {
+        id: 'retirementLine',
         afterDraw(chart) {
-            if (deficitMonthIndex == null) return;
+            if (retirementMonthIndex == null) return;
             const meta = chart.getDatasetMeta(0);
-            if (!meta.data[deficitMonthIndex]) return;
-            const x = meta.data[deficitMonthIndex].x;
+            if (!meta.data[retirementMonthIndex]) return;
+            const x = meta.data[retirementMonthIndex].x;
             const { top, bottom } = chart.chartArea;
             const ctx = chart.ctx;
             ctx.save();
@@ -303,14 +303,14 @@ function renderFanChart(container, labels, bands, bandData, baselineData, numSim
             ctx.fillStyle = 'rgba(245, 158, 11, 0.9)';
             ctx.font = 'bold 11px sans-serif';
             ctx.textAlign = 'center';
-            ctx.fillText('Start Withdrawals', x, top - 6);
+            ctx.fillText('Retirement', x, top - 6);
             ctx.restore();
         },
     };
 
     monteCarloChart = new Chart(canvas, {
         type: 'line',
-        plugins: [deficitLinePlugin],
+        plugins: [retirementLinePlugin],
         data: {
             labels: thinLabels,
             datasets: [

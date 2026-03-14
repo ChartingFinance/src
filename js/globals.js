@@ -414,6 +414,13 @@ export function global_getUserFinishAge() {
     global_user_finishAge = parseInt(localUA);
 }
 
+export function global_getRetirementDateInt() {
+    const currentYear = new Date().getFullYear();
+    const birthYear = currentYear - global_user_startAge;
+    const retirementYear = birthYear + global_user_retirementAge;
+    return DateInt.from(retirementYear, 1);
+}
+
 export function global_getFinishDateInt() {
     const currentYear = new Date().getFullYear();
     const birthYear = currentYear - global_user_startAge;

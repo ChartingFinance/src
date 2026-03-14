@@ -33,7 +33,7 @@ function cloneAssets(sourceAssets) {
 
 // ── Main entry point ─────────────────────────────────────────────
 
-export function runGuardrails(sourceAssets, canvas, params, deficitDateInt = null) {
+export function runGuardrails(sourceAssets, canvas, params, retirementDateInt = null) {
     const assets = cloneAssets(sourceAssets);
     const portfolio = new Portfolio(assets, false);
 
@@ -43,7 +43,7 @@ export function runGuardrails(sourceAssets, canvas, params, deficitDateInt = nul
         preservation: params.preservation,
         prosperity: params.prosperity,
         adjustment: params.adjustment,
-        deficitDateInt,
+        retirementDateInt,
     };
 
     chronometer_run(portfolio);
@@ -82,13 +82,13 @@ export function runGuardrails(sourceAssets, canvas, params, deficitDateInt = nul
     const events = portfolio.guardrailEvents;
     const snapshots = portfolio.yearlySnapshots;
 
-    // Compute deficit trigger index for chart annotation
+    // Compute retirement trigger index for chart annotation
     const monthNames2 = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    let deficitMonthIndex = null;
-    if (deficitDateInt) {
-        const deficitLabel = `${monthNames2[deficitDateInt.month - 1]} ${deficitDateInt.year}`;
-        deficitMonthIndex = labels.indexOf(deficitLabel);
-        if (deficitMonthIndex < 0) deficitMonthIndex = null;
+    let retirementMonthIndex = null;
+    if (retirementDateInt) {
+        const retirementLabel = `${monthNames2[retirementDateInt.month - 1]} ${retirementDateInt.year}`;
+        retirementMonthIndex = labels.indexOf(retirementLabel);
+        if (retirementMonthIndex < 0) retirementMonthIndex = null;
     }
 
     cachedResults = {
@@ -98,11 +98,11 @@ export function runGuardrails(sourceAssets, canvas, params, deficitDateInt = nul
         events,
         snapshots,
         params,
-        deficitDateInt,
-        deficitMonthIndex,
+        retirementDateInt,
+        retirementMonthIndex,
     };
 
-    renderChart(canvas, labels, portfolioValues, withdrawalSteps, events, snapshots, params, deficitMonthIndex);
+    renderChart(canvas, labels, portfolioValues, withdrawalSteps, events, snapshots, params, retirementMonthIndex);
 }
 
 // ── Helpers ──────────────────────────────────────────────────────
@@ -147,7 +147,7 @@ function buildWithdrawalSteps(portfolio, numMonths) {
 
 // ── Chart rendering ──────────────────────────────────────────────
 
-function renderChart(canvas, labels, portfolioValues, withdrawalSteps, events, snapshots, params, deficitMonthIndex) {
+function renderChart(canvas, labels, portfolioValues, withdrawalSteps, events, snapshots, params, retirementMonthIndex) {
     if (guardrailsChart) {
         guardrailsChart.destroy();
         guardrailsChart = null;
@@ -155,14 +155,14 @@ function renderChart(canvas, labels, portfolioValues, withdrawalSteps, events, s
 
     const fmt = (v) => '$' + Math.round(v).toLocaleString();
 
-    // Custom plugin: vertical "Start Withdrawals" line
-    const deficitLinePlugin = {
-        id: 'deficitLine',
+    // Custom plugin: vertical "Retirement" line
+    const retirementLinePlugin = {
+        id: 'retirementLine',
         afterDraw(chart) {
-            if (deficitMonthIndex == null) return;
+            if (retirementMonthIndex == null) return;
             const meta = chart.getDatasetMeta(0);
-            if (!meta.data[deficitMonthIndex]) return;
-            const x = meta.data[deficitMonthIndex].x;
+            if (!meta.data[retirementMonthIndex]) return;
+            const x = meta.data[retirementMonthIndex].x;
             const { top, bottom } = chart.chartArea;
             const ctx = chart.ctx;
             ctx.save();
@@ -178,7 +178,7 @@ function renderChart(canvas, labels, portfolioValues, withdrawalSteps, events, s
             ctx.fillStyle = 'rgba(245, 158, 11, 0.9)';
             ctx.font = 'bold 11px sans-serif';
             ctx.textAlign = 'center';
-            ctx.fillText('Start Withdrawals', x, top - 6);
+            ctx.fillText('Retirement', x, top - 6);
             ctx.restore();
         },
     };
@@ -205,7 +205,7 @@ function renderChart(canvas, labels, portfolioValues, withdrawalSteps, events, s
 
     guardrailsChart = new Chart(canvas, {
         type: 'line',
-        plugins: [deficitLinePlugin],
+        plugins: [retirementLinePlugin],
         data: {
             labels,
             datasets: [

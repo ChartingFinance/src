@@ -25,8 +25,6 @@ export class Portfolio {
         this.guardrailEvents = [];    // [{ year, type, rate, adjustedTo }]
         this.yearlySnapshots = [];    // [{ year, investableAssets, annualExpense, withdrawalRate }]
 
-        // Deficit trigger — first month where expenses exceed income (signals withdrawal phase)
-        this.deficitDateInt = null;
 
         this.firstDateInt = firstDateInt(this.modelAssets);
         this.lastDateInt = lastDateInt(this.modelAssets);
@@ -178,17 +176,6 @@ export class Portfolio {
 
         this.computePerAssetCashFlow();
 
-        // Detect first month where expenses exceed earned income (deficit trigger).
-        // Uses earnedIncome (wages + SS/pension) — excludes distributions and capital
-        // gains, which represent asset drawdown rather than independent income.
-        if (!this.deficitDateInt) {
-            const earned = this.monthly.earnedIncome().amount;
-            const expense = Math.abs(this.monthly.expense.amount);
-            if (expense > 0 && expense > earned) {
-                this.deficitDateInt = currentDateInt.copy();
-            }
-        }
-
         this.yearly.add(this.monthly);
         this.total.add(this.monthly);
         this.monthly.zero();
@@ -271,9 +258,9 @@ export class Portfolio {
             withdrawalRate: currentRate,
         });
 
-        // Only apply guardrail adjustments after the deficit trigger
-        const deficitDate = this.guardrailsParams.deficitDateInt;
-        if (deficitDate && currentDateInt.toInt() < deficitDate.toInt()) return;
+        // Only apply guardrail adjustments after retirement
+        const retirementDate = this.guardrailsParams.retirementDateInt;
+        if (retirementDate && currentDateInt.toInt() < retirementDate.toInt()) return;
 
         const upperGuardrail = initialRate * (1 + preservationThreshold);
         const lowerGuardrail = initialRate * (1 - prosperityThreshold);

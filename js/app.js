@@ -68,8 +68,10 @@ import {
     global_setUserStartAge,
     global_getUserStartAge,
     global_setUserRetirementAge,
+    global_getUserRetirementAge,
     global_setUserFinishAge,
     global_getUserFinishAge,
+    global_getRetirementDateInt,
     global_setBacktestYear,
     global_getBacktestYear,
     global_guardrail_withdrawalRate,
@@ -321,7 +323,7 @@ function tab2_click() {
         const chartArea = document.getElementById('monteCarloChartArea');
         const useGuardrails = document.getElementById('monte-carlo-guardrails').checked;
         runMonteCarlo(activePortfolio.modelAssets, chartArea, 1000,
-            useGuardrails ? getGuardrailsParams() : null, activePortfolio.deficitDateInt);
+            useGuardrails ? getGuardrailsParams() : null, global_getRetirementDateInt());
     }
 }
 
@@ -344,7 +346,7 @@ function syncGuardrailsToDOM() {
 function refreshGuardrails() {
     if (activePortfolio) {
         guardrailsStale = false;
-        runGuardrails(activePortfolio.modelAssets, guardrailsCanvas, getGuardrailsParams(), activePortfolio.deficitDateInt);
+        runGuardrails(activePortfolio.modelAssets, guardrailsCanvas, getGuardrailsParams(), global_getRetirementDateInt());
     }
 }
 
@@ -472,10 +474,10 @@ function calculate(target) {
         const chartArea = document.getElementById('monteCarloChartArea');
         const useGuardrails = document.getElementById('monte-carlo-guardrails').checked;
         runMonteCarlo(portfolio.modelAssets, chartArea, 1000,
-            useGuardrails ? getGuardrailsParams() : null, portfolio.deficitDateInt);
+            useGuardrails ? getGuardrailsParams() : null, global_getRetirementDateInt());
     } else if (tab3.classList.contains('active')) {
         guardrailsStale = false;
-        runGuardrails(portfolio.modelAssets, guardrailsCanvas, getGuardrailsParams(), portfolio.deficitDateInt);
+        runGuardrails(portfolio.modelAssets, guardrailsCanvas, getGuardrailsParams(), global_getRetirementDateInt());
     }
 
     // build the chart configs (must happen before innerCalculate creates Chart instances)
@@ -756,8 +758,8 @@ tab6.addEventListener('click', tab6_click);
 
 function syncGlobalsToSettings() {
     document.getElementById('setting-startAge').value = global_user_startAge;
+    document.getElementById('setting-retirementAge').value = global_user_retirementAge;
     document.getElementById('setting-finishAge').value = global_user_finishAge;
-    document.getElementById('setting-taxYear').value = global_taxYear;
     document.getElementById('setting-filingAs').value = global_filingAs;
     document.getElementById('setting-inflationRate').value = global_multBy100(global_inflationRate);
     document.getElementById('setting-backtestYear').value = global_backtestYear;
@@ -769,15 +771,14 @@ function connectSettings() {
         global_getUserStartAge();
         calculate('assets');
     });
+    document.getElementById('setting-retirementAge').addEventListener('change', function() {
+        global_setUserRetirementAge(parseInt(this.value));
+        global_getUserRetirementAge();
+        calculate('assets');
+    });
     document.getElementById('setting-finishAge').addEventListener('change', function() {
         global_setUserFinishAge(parseInt(this.value));
         global_getUserFinishAge();
-        calculate('assets');
-    });
-    document.getElementById('setting-taxYear').addEventListener('change', function() {
-        global_setTaxYear(parseInt(this.value));
-        global_getTaxYear();
-        setActiveTaxTable(new TaxTable());
         calculate('assets');
     });
     document.getElementById('setting-filingAs').addEventListener('change', function() {

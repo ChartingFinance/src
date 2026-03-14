@@ -66,6 +66,19 @@
         </div>
     </div>
 
+    <!-- ═══ Tax Settings ═══ -->
+    <div class="glass-card p-8 sm:p-12 mb-6">
+        <h2 class="text-2xl font-bold tracking-tight mb-2">Tax Settings</h2>
+        <p class="text-gray-600 leading-relaxed mb-6">Tax year determines which tax brackets and thresholds are used in the simulation.</p>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <div>
+                <label for="taxYear" class="block text-sm font-medium text-gray-500 mb-1">Tax Year</label>
+                <input id="taxYear" type="number" value="2025" step="1" min="2020" max="2040"
+                       class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-transparent" />
+            </div>
+        </div>
+    </div>
+
     <!-- ═══ Privacy ═══ -->
     <div class="glass-card p-8 sm:p-12 mb-6">
         <p class="font-bold text-gray-900 leading-relaxed">Charting Finance does not store any user data on its server! All user information is stored only on your computer in your web browser's Local Storage.</p>
@@ -95,13 +108,15 @@
         import {
             global_initialize, global_reset,
             global_user_startAge, global_user_retirementAge, global_user_finishAge,
-            global_setUserStartAge, global_setUserRetirementAge, global_setUserFinishAge
+            global_setUserStartAge, global_setUserRetirementAge, global_setUserFinishAge,
+            global_taxYear, global_setTaxYear,
         } from './js/globals.js';
 
         function valuesToElements() {
             document.getElementById('startAge').value = global_user_startAge;
             document.getElementById('retirementAge').value = global_user_retirementAge;
             document.getElementById('finishAge').value = global_user_finishAge;
+            document.getElementById('taxYear').value = global_taxYear;
         }
 
         global_initialize();
@@ -115,6 +130,9 @@
         });
         document.getElementById('finishAge').addEventListener('change', (e) => {
             global_setUserFinishAge(parseInt(e.target.value));
+        });
+        document.getElementById('taxYear').addEventListener('change', (e) => {
+            global_setTaxYear(parseInt(e.target.value));
         });
         document.getElementById('resetBtn').addEventListener('click', () => {
             global_reset();
