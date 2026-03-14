@@ -58,6 +58,9 @@ export class logger {
      * Falls back to GENERAL when called with a single argument (backward-compatible).
      */
     static log(messageOrCategory, message) {
+
+        // TODO: move off of console.log because we will try mcp-server over stdio
+        /*
         if (message === undefined) {
             // legacy single-arg call: logger.log('something')
             if (_enabled.has(LogCategory.GENERAL)) {
@@ -68,6 +71,8 @@ export class logger {
         if (_enabled.has(messageOrCategory)) {
             console.log(`[${messageOrCategory}] ${message}`);
         }
+        */
+
     }
 }
 

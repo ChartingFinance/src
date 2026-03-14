@@ -1,12 +1,12 @@
 // mcp-client.js - MCP Server stub for external AI agent integration
-import { ModelAsset } from './model-asset.js';
-import { Currency } from './utils/currency.js';
-import { DateInt } from './utils/date-int.js';
-import { ARR } from './utils/arr.js';
-import { Instrument } from './instruments/instrument.js';
-import { membrane_rawDataToModelAssets } from './membrane.js';
-import { Portfolio } from './portfolio.js';
-import { chronometer_run } from './chronometer.js';
+import { ModelAsset } from '../model-asset.js';
+import { Currency } from '../utils/currency.js';
+import { DateInt } from '../utils/date-int.js';
+import { ARR } from '../utils/arr.js';
+import { Instrument } from '../instruments/instrument.js';
+import { membrane_rawDataToModelAssets } from '../membrane.js';
+import { Portfolio } from '../portfolio.js';
+import { chronometer_run } from '../chronometer.js';
 
 const VALID_INSTRUMENTS = new Set(Object.values(Instrument));
 
