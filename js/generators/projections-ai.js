@@ -483,7 +483,7 @@ function generateGuardrailsMarkdown(portfolio, context) {
     md += `## Guardrail Parameters\n`;
     md += `| Parameter | Value |\n`;
     md += `| :--- | :--- |\n`;
-    md += `| Initial Withdrawal Rate | ${params.withdrawalRate}% |\n`;
+    md += `| Target Rate | ${params.withdrawalRate}% |\n`;
     md += `| Preservation Threshold | ${params.preservation}% |\n`;
     md += `| Prosperity Threshold | ${params.prosperity}% |\n`;
     md += `| Adjustment Percentage | ±${params.adjustment}% |\n\n`;

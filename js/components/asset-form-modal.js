@@ -132,7 +132,7 @@ class AssetFormModal extends LitElement {
                                 <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">${isExpense ? 'Inflation % (optional)' : 'Annual Return %'}</label>
                                 <input type="number" class="fin-input" name="annualReturnRate"
                                     .value=${annualReturn}
-                                    step="1" placeholder=${isExpense ? 'Defaults to Inflation' : 'e.g. 50 == 50%'} ?required=${!isExpense} />
+                                    step="0.01" placeholder=${isExpense ? 'Defaults to Inflation' : 'e.g. 50 == 50%'} ?required=${!isExpense} />
                             </div>
                         </div>
                         ${this._renderInstrumentFields(selectedInstrument, ma, closed)}

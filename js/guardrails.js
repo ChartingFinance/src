@@ -269,7 +269,7 @@ function renderChart(canvas, labels, portfolioValues, withdrawalSteps, events, s
             plugins: {
                 title: {
                     display: true,
-                    text: `Guyton-Klinger Guardrails · ${params.withdrawalRate}% withdrawal · ±${params.adjustment}% adjustment`,
+                    text: `Guyton-Klinger Guardrails · ${params.withdrawalRate}% target rate · ±${params.adjustment}% adjustment`,
                     font: { size: 14, weight: '600' },
                     padding: { bottom: 16 },
                 },
