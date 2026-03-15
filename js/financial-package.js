@@ -153,37 +153,67 @@ export class FinancialPackage {
 
     }
 
-    totalTaxes() {
+    federalTaxes() {
 
         let taxes = this.incomeTax.copy();
         taxes.add(this.fica());
         taxes.add(this.longTermCapitalGainsTax);
-        //taxes.add(this.propertyTaxes);
         taxes.add(this.estimatedTaxes);
         return taxes;
 
     }
 
-    growth() {
-        return this.assetAppreciation.copy();
+    localTaxes() {
+
+        let taxes = this.propertyTaxes.copy();
+        return taxes;
+
+    }
+
+    totalTaxes() {
+
+        let taxes = this.federalTaxes().copy();
+        taxes.add(this.localTaxes());
+        return taxes;
+
+    }
+
+    cashOutFlow() {
+
+        // Subtract liabilities and outflows (all stored as negative values)
+        let e = this.totalTaxes();
+        e.add(this.expense);
+        e.add(this.mortgagePrincipal);
+        e.add(this.mortgageInterest);
+
+        // TODO: debt interest
+
+        return e;
+
+    }
+
+    cashInFlow() {
+
+        return this.trueGrossIncome().copy();
+
     }
 
     cashFlow() {
-        let e = this.trueGrossIncome();
 
-        // Add wealth generation
-        e.add(this.growth()); // Asset appreciation captures incremental wealth generation
+        return new Currency(this.cashInFlow().amount + this.cashOutFlow().amount);
+        
+    }
 
-        // Note: We DO NOT add shortTermCapitalGains or longTermCapitalGains here.
-        // Selling an asset is a balance sheet transfer (Asset -> Cash).
-        // The wealth was already captured incrementally via growth().
+    growth() {
 
-        // Subtract liabilities and outflows (all stored as negative values)
-        e.add(this.totalTaxes());
-        e.add(this.expense);
-        e.add(this.mortgageInterest);
+        return this.assetAppreciation.copy();
 
-        return e;
+    }
+
+    wealth() {
+
+        return new Currency(this.growth().amount + this.cashFlow().amount);
+
     }
 
     effectiveTaxRate() {
@@ -254,12 +284,13 @@ export class FinancialPackage {
         logger.log(category, '  401KContribution:          ' + this.four01KContribution.toString());
         logger.log(category, '  mortgageInterest:          ' + this.mortgageInterest.toString());
         logger.log(category, '  propertyTaxes:             ' + this.deductiblePropertyTaxes().toString());
-        logger.log(category, 'taxes:                       ' + this.totalTaxes().toString());
+        logger.log(category, 'federal taxes:               ' + this.federalTaxes().toString());
         logger.log(category, '  fica:                      ' + this.fica().toString());
         logger.log(category, '  incomeTax:                 ' + this.incomeTax.toString());
-        logger.log(category, '  longTermCapitalGainsTax:   ' + this.longTermCapitalGainsTax.toString());
-        logger.log(category, '  propertyTaxes:             ' + this.propertyTaxes.toString());
+        logger.log(category, '  longTermCapitalGainsTax:   ' + this.longTermCapitalGainsTax.toString());        
         logger.log(category, '  estimatedTaxes:            ' + this.estimatedTaxes.toString());
+        logger.log(category, 'local taxes:                 ' + this.localTaxes().toString());
+        logger.log(category, '  propertyTaxes:             ' + this.propertyTaxes.toString());
         logger.log(category, 'contributions:               ' + this.contributions().toString());
         logger.log(category, '  401KContribution:          ' + this.four01KContribution.toString());
         logger.log(category, '  iraContribution:           ' + this.tradIRAContribution.toString());
@@ -267,9 +298,11 @@ export class FinancialPackage {
         logger.log(category, 'expenses:                    ' + this.expense.toString());
         logger.log(category, 'assetAppreciation:           ' + this.assetAppreciation.toString());
         logger.log(category, 'mortgagePrincipal:           ' + this.mortgagePrincipal.toString());
+        logger.log(category, 'cashInFlow:                  ' + this.cashInFlow().toString());
+        logger.log(category, 'cashOutFlow:                 ' + this.cashOutFlow().toString());
         logger.log(category, 'cashFlow:                    ' + this.cashFlow().toString());
         logger.log(category, 'effectTaxRate:               ' + this.effectiveTaxRate().toFixed(2));
-        logger.log(category, 'expenses:                    ' + this.expense.toString());
+    
     }
 
     reportHTML(currentDateInt) {
@@ -296,21 +329,22 @@ export class FinancialPackage {
         html += '  <li>401KContribution:          ' + this.four01KContribution.toString() + '</li>';
         html += '  <li>mortgageInterest:          ' + this.mortgageInterest.toString() + '</li>';
         html += '  <li>propertyTaxes:             ' + this.deductiblePropertyTaxes().toString() + '</li></ul>';
-        html += '<li>taxes:                       ' + this.totalTaxes().toString() + '<ul>';
+        html += '<li>federal taxes:               ' + this.federalTaxes().toString() + '<ul>';
         html += '  <li>fica:                      ' + this.fica().toString() + '</li>';
         html += '  <li>incomeTax:                 ' + this.incomeTax.toString() + '</li>';
         html += '  <li>longTermCapitalGainsTax:   ' + this.longTermCapitalGainsTax.toString() + '</li>';
-        html += '  <li>propertyTaxes:             ' + this.propertyTaxes.toString() + '</li>';
         html += '  <li>estimatedTaxes:            ' + this.estimatedTaxes.toString() + '</li></ul>';
+        html += '<li>local taxes:                 ' + this.localTaxes().toString() + '</li><ul>';
+        html += '  <li>property taxes             ' + this.propertyTaxes.toString() + '</li></ul>';
         html += '<li>contributions:               ' + this.contributions().toString() + '<ul>';
         html += '  <li>401KContribution:          ' + this.four01KContribution.toString() + '</li>';
         html += '  <li>iraContribution:           ' + this.tradIRAContribution.toString() + '</li>';
-        html += '  <li>rothContribution:            ' + this.rothIRAContribution.toString() + '</li>';
+        html += '  <li>rothContribution:          ' + this.rothIRAContribution.toString() + '</li>';
         html += '<li>assetAppreciation:           ' + this.assetAppreciation.toString() + '</li>';
-        html += '<li>mortgagePrincipal:           ' + this.mortgagePrincipal.toString() + '</li>';
-        html += '<li>cashFlow:                    ' + this.cashFlow().toString() + '</li>';
+        html += '<li>cashFlow:                    ' + this.cashFlow().toString() + '<ul>';
+        html += '  <li>inFlow:                    ' + this.cashInFlow().toString() + '</li>';
+        html += '  <li>outFlow:                   ' + this.cashOutFlow().toString() + '</li></ul>'; 
         html += '<li>effectiveTaxRate:            ' + this.effectiveTaxRate().toFixed(2) + '</li>';
-        html += '<li>expenses:                    ' + this.expense.toString() + '</li>';
         html += '</ul>';
         html += '</div>';
 
