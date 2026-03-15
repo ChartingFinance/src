@@ -549,6 +549,13 @@ export class ModelAsset {
       this.onStartDate = (currentDateInt.toInt() == this.startDateInt.toInt());
       this.onFinishDate = (currentDateInt.toInt() == this.effectiveFinishDateInt.toInt());
 
+    } else if (this.isClosed) {
+
+        this.beforeStartDate = false;
+        this.onStartDate = false;
+        this.onFinishDate = false;
+        this.afterFinishDate = true;
+
     } else {
 
       if (currentDateInt.toInt() < this.startDateInt.toInt()) {
@@ -562,7 +569,7 @@ export class ModelAsset {
 
         this.beforeStartDate = false;
         this.onStartDate = false;
-        this.onFinishDate = false;      
+        this.onFinishDate = false;
         this.afterFinishDate = true;
 
       }

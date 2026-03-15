@@ -153,6 +153,13 @@ export class FinancialPackage {
 
     }
 
+    totalDebtPaydown() {
+
+        let pd = this.mortgagePrincipal.copy();
+        return pd;
+        
+    }
+
     federalTaxes() {
 
         let taxes = this.incomeTax.copy();

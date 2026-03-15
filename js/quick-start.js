@@ -26,7 +26,6 @@ const QUICK_START_DATA = [
         instrument: '401K',
         displayName: '401K',
         startDateInt: { year: 2026, month: 1 },
-        finishDateInt: { year: 2036, month: 12 },
         startCurrency: { amount: 50000 },
         annualReturnRate: { rate: 0.09 },
     },
@@ -34,7 +33,6 @@ const QUICK_START_DATA = [
         instrument: 'rothIRA',
         displayName: 'Roth IRA',
         startDateInt: { year: 2026, month: 1 },
-        finishDateInt: { year: 2036, month: 12 },
         startCurrency: { amount: 25000 },
         annualReturnRate: { rate: 0.09 },
     },
@@ -42,7 +40,6 @@ const QUICK_START_DATA = [
         instrument: 'taxableEquity',
         displayName: 'Brokerage',
         startDateInt: { year: 2026, month: 1 },
-        finishDateInt: { year: 2036, month: 12 },
         startCurrency: { amount: 30000 },
         startBasisCurrency: { amount: 25000 },
         annualReturnRate: { rate: 0.09 },
@@ -76,7 +73,6 @@ const QUICK_START_DATA = [
         instrument: 'monthlyExpense',
         displayName: 'Living Expenses',
         startDateInt: { year: 2026, month: 1 },
-        finishDateInt: { year: 2036, month: 12 },
         startCurrency: { amount: -3000 },
         annualReturnRate: { rate: 0.03 },
         fundTransfers: [
@@ -90,8 +86,16 @@ export function quickStartAssets() {
 }
 
 export function quickStartLifeEvents() {
+    const retire = ModelLifeEvent.createDefault(LifeEvent.RETIRE, 62);
+    retire.transferOverrides = {
+        'Living Expenses': [
+            { toDisplayName: '401K', frequency: 'monthly', monthlyMoveValue: 75, closeMoveValue: 0 },
+            { toDisplayName: 'Brokerage', frequency: 'monthly', monthlyMoveValue: 25, closeMoveValue: 0 },
+        ],
+    };
+
     return [
         ModelLifeEvent.createDefault(LifeEvent.ACCUMULATE, 35),
-        ModelLifeEvent.createDefault(LifeEvent.RETIRE, 62),
+        retire,
     ];
 }
