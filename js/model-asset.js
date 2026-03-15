@@ -22,7 +22,7 @@ import { CreditMemo } from './results.js';
 import { IncomeResult } from './results.js';
 import { colorRange }    from './utils/html.js';
 import { getBehavior }   from './instruments/instrument-behavior.js';
-import { global_getFinishDateInt } from './globals.js';
+import { global_getFinishDateInt, global_inflationRate } from './globals.js';
 
 const rgb2hex = (rgb) => `#${rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/).slice(1).map(n => parseInt(n, 10).toString(16).padStart(2, '0')).join('')}`;
 
@@ -225,6 +225,14 @@ export class ModelAsset {
     return this.finishDateInt ?? global_getFinishDateInt();
   }
 
+  /** For expense instruments, fall back to global inflation when no rate is set. */
+  get effectiveAnnualReturnRate() {
+    if (InstrumentType.isMonthlyExpense(this.instrument) && this.annualReturnRate.rate === 0) {
+      return new ARR(global_inflationRate);
+    }
+    return this.annualReturnRate;
+  }
+
   // ── Factories ────────────────────────────────────────────────────
 
   static trackedMetricNames() {
@@ -281,7 +289,7 @@ export class ModelAsset {
       startBasisCurrency: Currency.parse(vals.startBasisValue?.value),
       finishDateInt:   vals.finishDate?.value ? DateInt.parse(vals.finishDate.value) : null,
       monthsRemaining: parseInt(vals.monthsRemaining?.value, 10) || 0,
-      annualReturnRate: ARR.parse(vals.annualReturnRate?.value),
+      annualReturnRate: vals.annualReturnRate?.value ? ARR.parse(vals.annualReturnRate.value) : new ARR(0),
       annualDividendRate: vals.dividendRate ? ARR.parse(vals.dividendRate.value) : new ARR(0),
       longTermCapitalHoldingPercentage: vals.longTermRate ? ARR.parse(vals.longTermRate.value) : new ARR(0),
       fundTransfers,

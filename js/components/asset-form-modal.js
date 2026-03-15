@@ -68,6 +68,7 @@ class AssetFormModal extends LitElement {
         const closedLabel = closed ? 'text-purple-700' : 'text-gray-500';
         const closedInput = closed ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-gray-100 text-gray-400';
         const selectedInstrument = this._instrument || (isEdit && ma ? ma.instrument : '');
+        const isExpense = InstrumentType.isMonthlyExpense(selectedInstrument);
 
         return html`
             <div class="popup fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -128,10 +129,10 @@ class AssetFormModal extends LitElement {
                                     step="0.01" placeholder="Computed automatically" disabled />
                             </div>
                             <div>
-                                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Annual Return %</label>
+                                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">${isExpense ? 'Inflation % (optional)' : 'Annual Return %'}</label>
                                 <input type="number" class="fin-input" name="annualReturnRate"
                                     .value=${annualReturn}
-                                    step="1" placeholder="e.g. 50 == 50%" required />
+                                    step="1" placeholder=${isExpense ? 'Defaults to Inflation' : 'e.g. 50 == 50%'} ?required=${!isExpense} />
                             </div>
                         </div>
                         ${this._renderInstrumentFields(selectedInstrument, ma, closed)}

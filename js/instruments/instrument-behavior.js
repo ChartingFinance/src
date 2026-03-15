@@ -148,7 +148,7 @@ const ExpenseBehavior = Object.freeze({
     const expense = asset.finishCurrency.copy();
     asset.expenseCurrency.add(expense);
 
-    const inflation = new Currency(expense.amount * asset.annualReturnRate.asMonthly());
+    const inflation = new Currency(expense.amount * asset.effectiveAnnualReturnRate.asMonthly());
     asset.finishCurrency.add(inflation);
     asset.monthlyValueChange.add(inflation);
     
