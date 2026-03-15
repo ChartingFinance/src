@@ -74,7 +74,6 @@ const QUICK_START_DATA = [
         displayName: 'Living Expenses',
         startDateInt: { year: 2026, month: 1 },
         startCurrency: { amount: -3000 },
-        annualReturnRate: { rate: 0.03 },
         fundTransfers: [
             { toDisplayName: 'Brokerage', frequency: 'monthly', monthlyMoveValue: 100, closeMoveValue: 0 },
         ],
