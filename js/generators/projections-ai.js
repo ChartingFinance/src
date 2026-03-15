@@ -6,6 +6,7 @@
  */
 
 import { generatePortfolioMarkdown } from './assets-ai.js';
+import { Metric, MetricLabel } from '../model-asset.js';
 
 const fmt = (val) =>
     new Intl.NumberFormat('en-US', {
@@ -44,20 +45,299 @@ export function generateProjectionsMarkdown(tabName, portfolio, context) {
     if (tab.includes('report'))       return generateReportsMarkdown(portfolio);
 
     // Default: metrics chart tab (tab1)
-    return generateMetricsMarkdown(portfolio);
+    return generateMetricsMarkdown(portfolio, context);
 }
 
 // ── Metrics (Tab 1) ─────────────────────────────────────────────
 
-function generateMetricsMarkdown(portfolio) {
+// Tier 1: High-value metrics — full yearly data table + observations
+const HIGH_VALUE_METRICS = new Set([
+    Metric.VALUE, Metric.CASH_FLOW, Metric.CASH_FLOW_ACCUMULATED,
+    Metric.INCOME, Metric.NET_INCOME, Metric.EXPENSE, Metric.GROWTH,
+    Metric.CAPITAL_GAIN,
+]);
+
+// Tier 2: Moderate-value metrics — summary stats + condensed table
+const MODERATE_METRICS = new Set([
+    Metric.MORTGAGE_PAYMENT, Metric.MORTGAGE_INTEREST, Metric.MORTGAGE_PRINCIPAL,
+    Metric.TAXABLE_CONTRIBUTION, Metric.TRAD_IRA_CONTRIBUTION,
+    Metric.ROTH_IRA_CONTRIBUTION, Metric.FOUR_01K_CONTRIBUTION,
+    Metric.TRAD_IRA_DISTRIBUTION, Metric.ROTH_IRA_DISTRIBUTION,
+    Metric.FOUR_01K_DISTRIBUTION, Metric.TAXABLE_DISTRIBUTION,
+    Metric.RMD, Metric.DIVIDEND, Metric.INTEREST_INCOME,
+    Metric.ORDINARY_INCOME, Metric.WORKING_INCOME,
+    Metric.SHORT_TERM_CAPITAL_GAIN, Metric.LONG_TERM_CAPITAL_GAIN,
+    Metric.PROPERTY_TAX,
+]);
+
+// Tier 3: everything else — label + one-liner
+
+const METRIC_DESCRIPTIONS = {
+    [Metric.VALUE]:                       'Net asset value over time. Cumulative — each data point is the current balance.',
+    [Metric.GROWTH]:                      'Monthly growth from appreciation and compounding returns.',
+    [Metric.DIVIDEND]:                    'Dividend income from taxable equity positions.',
+    [Metric.INTEREST_INCOME]:             'Interest earned on bonds and bank accounts.',
+    [Metric.ORDINARY_INCOME]:             'Income taxed at ordinary rates — wages (W-2), IRA/401K distributions, bond interest.',
+    [Metric.WORKING_INCOME]:              'Self-employment income subject to FICA and Medicare self-employment tax.',
+    [Metric.INCOME]:                      'Total income across all sources — wages, distributions, interest, dividends.',
+    [Metric.WITHHELD_FICA_TAX]:           'FICA taxes withheld from W-2 wages (employer-side).',
+    [Metric.ESTIMATED_FICA_TAX]:          'FICA taxes estimated for self-employment income.',
+    [Metric.WITHHELD_INCOME_TAX]:         'Federal income tax withheld from W-2 wages.',
+    [Metric.ESTIMATED_INCOME_TAX]:        'Estimated income tax on self-employment and other non-withheld income.',
+    [Metric.ESTIMATED_TAX]:               'Total estimated tax liability (income + FICA).',
+    [Metric.INCOME_TAX]:                  'Total income tax (withheld + estimated).',
+    [Metric.NET_INCOME]:                  'Income after all tax withholding and estimated payments.',
+    [Metric.EXPENSE]:                     'Monthly expense outflows, adjusted for inflation over time.',
+    [Metric.CASH_FLOW]:                   'Net monthly cash movement — income minus expenses, taxes, and contributions.',
+    [Metric.CASH_FLOW_ACCUMULATED]:       'Running total of all cash flows from simulation start. Shows cumulative surplus or deficit.',
+    [Metric.SHORT_TERM_CAPITAL_GAIN]:     'Capital gains on assets held less than one year, taxed at ordinary income rates.',
+    [Metric.LONG_TERM_CAPITAL_GAIN]:      'Capital gains on assets held over one year, taxed at preferential rates.',
+    [Metric.CAPITAL_GAIN]:                'Combined short-term and long-term realized capital gains.',
+    [Metric.RMD]:                         'Required Minimum Distributions from traditional IRA and 401K accounts after age 73.',
+    [Metric.SOCIAL_SECURITY_TAX]:         'Social Security tax (6.2% employee / 12.4% self-employed, up to wage base).',
+    [Metric.SOCIAL_SECURITY_INCOME]:      'Social Security benefit income received during retirement.',
+    [Metric.MEDICARE_TAX]:                'Medicare tax (1.45% employee / 2.9% self-employed, no cap).',
+    [Metric.MORTGAGE_PAYMENT]:            'Total monthly mortgage payment (principal + interest).',
+    [Metric.MORTGAGE_INTEREST]:           'Interest portion of monthly mortgage payment.',
+    [Metric.MORTGAGE_PRINCIPAL]:          'Principal portion of monthly mortgage payment — reduces loan balance.',
+    [Metric.MORTGAGE_ESCROW]:             'Property tax escrow collected with mortgage payment.',
+    [Metric.PROPERTY_TAX]:                'Annual property tax on real estate, assessed monthly.',
+    [Metric.TAXABLE_CONTRIBUTION]:        'Contributions to taxable brokerage accounts.',
+    [Metric.TRAD_IRA_CONTRIBUTION]:       'Pre-tax contributions to traditional IRA.',
+    [Metric.ROTH_IRA_CONTRIBUTION]:       'After-tax contributions to Roth IRA.',
+    [Metric.FOUR_01K_CONTRIBUTION]:       'Pre-tax contributions to 401K employer plan.',
+    [Metric.TRAD_IRA_DISTRIBUTION]:       'Withdrawals from traditional IRA (taxed as ordinary income).',
+    [Metric.ROTH_IRA_DISTRIBUTION]:       'Withdrawals from Roth IRA (tax-free if qualified).',
+    [Metric.FOUR_01K_DISTRIBUTION]:       'Withdrawals from 401K (taxed as ordinary income).',
+    [Metric.TAXABLE_DISTRIBUTION]:        'Cash distributions from taxable accounts.',
+    [Metric.SHORT_TERM_CAPITAL_GAIN_TAX]: 'Tax on short-term capital gains (ordinary income rates).',
+    [Metric.LONG_TERM_CAPITAL_GAIN_TAX]:  'Tax on long-term capital gains (preferential rates).',
+    [Metric.CAPITAL_GAIN_TAX]:            'Combined capital gains tax (short-term + long-term).',
+    [Metric.CREDIT]:                      'Credit memo audit total — sum of all value changes applied to the asset.',
+};
+
+function generateMetricsMarkdown(portfolio, context) {
+    const metricName = context?.activeMetric || Metric.VALUE;
+    const label = MetricLabel[metricName] || metricName;
+    const description = METRIC_DESCRIPTIONS[metricName] || '';
+
     let md = baseMarkdown(portfolio);
     md += `---\n\n`;
-    md += `# Metrics Projection\n\n`;
-    md += `The metrics chart shows monthly time-series data for the selected metric across all portfolio assets. `;
-    md += `Each asset's metric history is plotted independently, allowing comparison of growth trajectories, `;
-    md += `income streams, and expense patterns over the simulation period.\n\n`;
-    md += `*TODO: This section will include per-asset metric trajectories at yearly intervals.*\n\n`;
+    md += `# ${label} Projection\n\n`;
+    if (description) md += `${description}\n\n`;
+
+    // Collect assets that have data for this metric
+    const assetsWithData = portfolio.modelAssets.filter(a => {
+        const history = a.getHistory(metricName);
+        return history && history.length > 0 && history.some(v => v !== 0);
+    });
+
+    if (assetsWithData.length === 0) {
+        md += `No assets in this portfolio track the **${label}** metric.\n\n`;
+        md += GENERATOR_LINE;
+        return md;
+    }
+
+    md += `**${assetsWithData.length} asset(s)** contribute to this metric: ${assetsWithData.map(a => a.displayName).join(', ')}.\n\n`;
+
+    if (HIGH_VALUE_METRICS.has(metricName)) {
+        md += generateHighValueMetric(portfolio, metricName, label, assetsWithData);
+    } else if (MODERATE_METRICS.has(metricName)) {
+        md += generateModerateMetric(portfolio, metricName, label, assetsWithData);
+    } else {
+        md += generateLowValueMetric(metricName, label, assetsWithData);
+    }
+
     md += GENERATOR_LINE;
+    return md;
+}
+
+/**
+ * Extract yearly snapshots from monthly history.
+ * Returns array of { year, values: { assetName: number } }
+ */
+function yearlySnapshots(portfolio, metricName, assets) {
+    const first = portfolio.firstDateInt;
+    const rows = [];
+    const isCumulative = metricName === Metric.VALUE || metricName === Metric.CASH_FLOW_ACCUMULATED;
+
+    for (const asset of assets) {
+        const history = asset.getHistory(metricName);
+        if (!history) continue;
+
+        let month = first.month;
+        let year = first.year;
+        let yearlySum = 0;
+
+        for (let i = 0; i < history.length; i++) {
+            const val = typeof history[i] === 'number' ? history[i] : (history[i]?.amount ?? history[i] ?? 0);
+
+            if (isCumulative) {
+                yearlySum = val; // point-in-time, take last value
+            } else {
+                yearlySum += val;
+            }
+
+            // At December or last data point, emit a row
+            if (month === 12 || i === history.length - 1) {
+                let row = rows.find(r => r.year === year);
+                if (!row) { row = { year, values: {} }; rows.push(row); }
+                row.values[asset.displayName] = yearlySum;
+                yearlySum = 0;
+            }
+
+            month++;
+            if (month > 12) { month = 1; year++; }
+        }
+    }
+
+    rows.sort((a, b) => a.year - b.year);
+    return rows;
+}
+
+function generateHighValueMetric(portfolio, metricName, label, assets) {
+    let md = '';
+    const rows = yearlySnapshots(portfolio, metricName, assets);
+    if (rows.length === 0) return md;
+
+    const isCumulative = metricName === Metric.VALUE || metricName === Metric.CASH_FLOW_ACCUMULATED;
+    const columnLabel = isCumulative ? 'Year-End' : 'Annual Total';
+
+    // Yearly data table
+    md += `## Yearly ${label} by Asset\n`;
+    md += `| Year | ${assets.map(a => a.displayName).join(' | ')} | Portfolio |\n`;
+    md += `| :--- | ${assets.map(() => '---:').join(' | ')} | ---: |\n`;
+
+    for (const row of rows) {
+        let total = 0;
+        const cells = assets.map(a => {
+            const v = row.values[a.displayName] ?? 0;
+            total += v;
+            return fmt(v);
+        });
+        md += `| ${row.year} | ${cells.join(' | ')} | ${fmt(total)} |\n`;
+    }
+    md += '\n';
+
+    // Summary stats
+    const firstRow = rows[0];
+    const lastRow = rows[rows.length - 1];
+    const firstTotal = assets.reduce((s, a) => s + (firstRow.values[a.displayName] ?? 0), 0);
+    const lastTotal = assets.reduce((s, a) => s + (lastRow.values[a.displayName] ?? 0), 0);
+
+    md += `## Summary\n`;
+    md += `| Stat | Value |\n`;
+    md += `| :--- | ---: |\n`;
+
+    if (isCumulative) {
+        md += `| Starting (${firstRow.year}) | ${fmt(firstTotal)} |\n`;
+        md += `| Ending (${lastRow.year}) | ${fmt(lastTotal)} |\n`;
+        md += `| Change | ${fmt(lastTotal - firstTotal)} |\n`;
+        if (firstTotal !== 0) {
+            const pctChange = ((lastTotal / firstTotal) - 1) * 100;
+            md += `| % Change | ${pctChange >= 0 ? '+' : ''}${pctChange.toFixed(1)}% |\n`;
+        }
+    } else {
+        // For flow metrics, show totals
+        let grandTotal = 0;
+        for (const row of rows) {
+            grandTotal += assets.reduce((s, a) => s + (row.values[a.displayName] ?? 0), 0);
+        }
+        md += `| Simulation Total | ${fmt(grandTotal)} |\n`;
+        md += `| Annual Average | ${fmt(grandTotal / rows.length)} |\n`;
+        md += `| First Year (${firstRow.year}) | ${fmt(firstTotal)} |\n`;
+        md += `| Last Year (${lastRow.year}) | ${fmt(lastTotal)} |\n`;
+    }
+    md += '\n';
+
+    // Observations
+    const observations = [];
+
+    if (isCumulative && lastTotal < 0 && firstTotal > 0) {
+        observations.push(`Portfolio ${label.toLowerCase()} turned negative — ending at ${fmt(lastTotal)}.`);
+    }
+
+    if (!isCumulative && lastTotal !== 0 && firstTotal !== 0) {
+        const ratio = lastTotal / firstTotal;
+        if (ratio > 1.5) {
+            observations.push(`${label} grew ${((ratio - 1) * 100).toFixed(0)}% from first to last year, reflecting compounding or rate increases.`);
+        } else if (ratio < 0.5 && ratio > 0) {
+            observations.push(`${label} declined ${((1 - ratio) * 100).toFixed(0)}% from first to last year.`);
+        }
+    }
+
+    // Check for sign changes in cumulative metrics
+    if (isCumulative) {
+        let signFlips = 0;
+        let prevSign = Math.sign(firstTotal);
+        for (const row of rows) {
+            const total = assets.reduce((s, a) => s + (row.values[a.displayName] ?? 0), 0);
+            const sign = Math.sign(total);
+            if (sign !== 0 && sign !== prevSign && prevSign !== 0) signFlips++;
+            if (sign !== 0) prevSign = sign;
+        }
+        if (signFlips > 0) {
+            observations.push(`Portfolio ${label.toLowerCase()} crossed zero ${signFlips} time(s) during the simulation.`);
+        }
+    }
+
+    if (observations.length > 0) {
+        md += `## Observations\n`;
+        for (const obs of observations) md += `- ${obs}\n`;
+        md += '\n';
+    }
+
+    return md;
+}
+
+function generateModerateMetric(portfolio, metricName, label, assets) {
+    let md = '';
+    const rows = yearlySnapshots(portfolio, metricName, assets);
+    if (rows.length === 0) return md;
+
+    // Summary stats
+    let grandTotal = 0;
+    for (const row of rows) {
+        grandTotal += assets.reduce((s, a) => s + (row.values[a.displayName] ?? 0), 0);
+    }
+
+    const firstTotal = assets.reduce((s, a) => s + (rows[0].values[a.displayName] ?? 0), 0);
+    const lastTotal = assets.reduce((s, a) => s + (rows[rows.length - 1].values[a.displayName] ?? 0), 0);
+
+    md += `## ${label} Summary\n`;
+    md += `| Stat | Value |\n`;
+    md += `| :--- | ---: |\n`;
+    md += `| Simulation Total | ${fmt(grandTotal)} |\n`;
+    md += `| Annual Average | ${fmt(grandTotal / rows.length)} |\n`;
+    md += `| First Year (${rows[0].year}) | ${fmt(firstTotal)} |\n`;
+    md += `| Last Year (${rows[rows.length - 1].year}) | ${fmt(lastTotal)} |\n`;
+    if (assets.length > 1) {
+        for (const a of assets) {
+            let assetTotal = 0;
+            for (const row of rows) assetTotal += row.values[a.displayName] ?? 0;
+            md += `| ${a.displayName} Total | ${fmt(assetTotal)} |\n`;
+        }
+    }
+    md += '\n';
+
+    // Condensed yearly table (portfolio total only)
+    md += `## Yearly ${label}\n`;
+    md += `| Year | Total |\n`;
+    md += `| :--- | ---: |\n`;
+    for (const row of rows) {
+        const total = assets.reduce((s, a) => s + (row.values[a.displayName] ?? 0), 0);
+        md += `| ${row.year} | ${fmt(total)} |\n`;
+    }
+    md += '\n';
+
+    return md;
+}
+
+function generateLowValueMetric(metricName, label, assets) {
+    let md = '';
+    md += `## ${label}\n`;
+    md += `This is a detailed simulation metric tracked for: ${assets.map(a => a.displayName).join(', ')}. `;
+    md += `Refer to the chart for monthly time-series data.\n\n`;
     return md;
 }
 
@@ -85,7 +365,11 @@ function generateMonteCarloMarkdown(portfolio, context) {
     const lastIdx = bandData[0].length - 1;
 
     // Retirement phase callout
-    if (mcResults.retirementDateInt) {
+    if (mcResults.runFromStart) {
+        md += `## Simulation Phases\n`;
+        md += `The simulation runs **randomized historical returns from start** across the entire timeline.\n`;
+        md += `All asset returns are sampled from correlated historical data (S&P 500, treasuries, CPI, wage growth) for every year of the simulation.\n\n`;
+    } else if (mcResults.retirementDateInt) {
         const d = mcResults.retirementDateInt;
         md += `## Simulation Phases\n`;
         md += `The simulation uses a **two-phase model** anchored on the user's retirement date (${d.toString()}):\n\n`;

@@ -322,8 +322,9 @@ function tab2_click() {
         monteCarloStale = false;
         const chartArea = document.getElementById('monteCarloChartArea');
         const useGuardrails = document.getElementById('monte-carlo-guardrails').checked;
+        const runFromStart = document.getElementById('monte-carlo-run-from-start').checked;
         runMonteCarlo(activePortfolio.modelAssets, chartArea, 1000,
-            useGuardrails ? getGuardrailsParams() : null, global_getRetirementDateInt());
+            useGuardrails ? getGuardrailsParams() : null, global_getRetirementDateInt(), runFromStart);
     }
 }
 
@@ -473,8 +474,9 @@ function calculate(target) {
         monteCarloStale = false;
         const chartArea = document.getElementById('monteCarloChartArea');
         const useGuardrails = document.getElementById('monte-carlo-guardrails').checked;
+        const runFromStart = document.getElementById('monte-carlo-run-from-start').checked;
         runMonteCarlo(portfolio.modelAssets, chartArea, 1000,
-            useGuardrails ? getGuardrailsParams() : null, global_getRetirementDateInt());
+            useGuardrails ? getGuardrailsParams() : null, global_getRetirementDateInt(), runFromStart);
     } else if (tab3.classList.contains('active')) {
         guardrailsStale = false;
         runGuardrails(portfolio.modelAssets, guardrailsCanvas, getGuardrailsParams(), global_getRetirementDateInt());
@@ -667,12 +669,22 @@ for (const [id, setter] of Object.entries(guardrailSetters)) {
     });
 }
 
-// Monte Carlo guardrails checkbox — rerun when toggled
+// Monte Carlo checkboxes — rerun when toggled
 document.getElementById('monte-carlo-guardrails').addEventListener('change', function() {
     if (activePortfolio) {
         const chartArea = document.getElementById('monteCarloChartArea');
+        const runFromStart = document.getElementById('monte-carlo-run-from-start').checked;
         runMonteCarlo(activePortfolio.modelAssets, chartArea, 1000,
-            this.checked ? getGuardrailsParams() : null);
+            this.checked ? getGuardrailsParams() : null, global_getRetirementDateInt(), runFromStart);
+    }
+});
+
+document.getElementById('monte-carlo-run-from-start').addEventListener('change', function() {
+    if (activePortfolio) {
+        const chartArea = document.getElementById('monteCarloChartArea');
+        const useGuardrails = document.getElementById('monte-carlo-guardrails').checked;
+        runMonteCarlo(activePortfolio.modelAssets, chartArea, 1000,
+            useGuardrails ? getGuardrailsParams() : null, global_getRetirementDateInt(), this.checked);
     }
 });
 
@@ -709,6 +721,7 @@ document.getElementById('btn-projections-action').addEventListener('click', () =
     const context = {
         mcResults: getMonteCarloResults(),
         guardrailsResults: getGuardrailsResults(),
+        activeMetric: activeMetric1Name,
     };
 
     const markdown = generateProjectionsMarkdown(tabName, activePortfolio, context);

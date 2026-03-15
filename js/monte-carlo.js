@@ -150,7 +150,7 @@ export function getMonteCarloResults() { return cachedResults; }
 
 let monteCarloChart = null;
 
-export function runMonteCarlo(sourceAssets, container, numSimulations = 1000, guardrailParams = null, retirementDateInt = null) {
+export function runMonteCarlo(sourceAssets, container, numSimulations = 1000, guardrailParams = null, retirementDateInt = null, runFromStart = false) {
     // Determine number of months from a reference run
     const refAssets = cloneAssets(sourceAssets);
     const refPortfolio = new Portfolio(refAssets, false);
@@ -187,7 +187,7 @@ export function runMonteCarlo(sourceAssets, container, numSimulations = 1000, gu
     setTimeout(() => {
         const allRuns = [];
         for (let i = 0; i < numSimulations; i++) {
-            const totals = runOnce(sourceAssets, guardrailParams, retirementDateInt);
+            const totals = runOnce(sourceAssets, guardrailParams, runFromStart ? null : retirementDateInt);
             while (totals.length < numMonths) totals.push(totals[totals.length - 1] ?? 0);
             if (totals.length > numMonths) totals.length = numMonths;
             allRuns.push(totals);
@@ -253,6 +253,7 @@ export function runMonteCarlo(sourceAssets, container, numSimulations = 1000, gu
             baselineData,
             numSimulations,
             withGuardrails: !!guardrailParams,
+            runFromStart,
             startDateInt: new DateInt(startDateInt.toInt()),
             retirementDateInt,
             retirementMonthIndex,
