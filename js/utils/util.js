@@ -84,6 +84,17 @@ export function util_ensureStoryNames(storyArc, storyName) {
 
 // ── Local Storage Helpers ──────────────────────────────────────────────
 
+export function util_saveLocalLifeEvents(storyArc, scenario, events) {
+    const key = `lifeEvents_${storyArc}_${scenario}`;
+    localStorage.setItem(key, JSON.stringify(events));
+}
+
+export function util_loadLocalLifeEvents(storyArc, scenario) {
+    const key = `lifeEvents_${storyArc}_${scenario}`;
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : null;
+}
+
 export function util_saveLocalAssetModels(storyArc, storyName, assetModels) {
     let key = util_buildStoryArcKey(storyArc, storyName);
     localStorage.setItem(key, JSON.stringify(assetModels));

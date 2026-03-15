@@ -17,12 +17,13 @@ import { chronometer_run, chronometer_run_animated } from './chronometer.js';
 // Membrane (model conversion)
 import { membrane_rawDataToModelAssets } from './membrane.js';
 import { quickStartAssets } from './quick-start.js';
+import { ModelLifeEvent, LifeEvent } from './life-event.js';
 
 // Lit components
 import './components/asset-list.js';
 import './components/asset-form-modal.js';
 import './components/transfer-modal.js';
-import './components/portfolio-ledger.js';
+import './components/timeline-ledger.js';
 
 // Charting
 import {
@@ -94,6 +95,8 @@ import {
     util_ensureStoryNames,
     util_saveLocalAssetModels,
     util_loadLocalAssetModels,
+    util_saveLocalLifeEvents,
+    util_loadLocalLifeEvents,
     util_saveLocalGuardrailParams,
     util_loadLocalGuardrailParams,
 } from './utils/util.js';
@@ -120,7 +123,7 @@ import { generateProjectionsMarkdown } from './generators/projections-ai.js';
 const assetFormModal = document.getElementById('assetFormModal');
 const assetsContainerElement = document.getElementById('assets');
 
-const portfolioLedger = document.getElementById('portfolioLedger');
+const timelineLedger = document.getElementById('timelineLedger');
 
 const chartMetric1Canvas = document.getElementById('chartMetric1Canvas');
 const spreadsheetElement = document.getElementById('spreadsheetElement');
@@ -148,6 +151,7 @@ let activeMetric1Name = Metric.VALUE;
 let activePortfolio = null;
 let monteCarloStale = true;
 let guardrailsStale = true;
+let activeLifeEvents = [];
 
 const metric1Select = document.getElementById('metric1Select');
 const monteCarloContainer = document.getElementById('monteCarloContainer');
@@ -169,14 +173,13 @@ metric1Select.addEventListener('click', function(ev) { ev.stopPropagation(); });
 metric1Select.addEventListener('change', function() {
     activeMetric1Name = metric1Select.value;
     tab1.querySelector('.tab-label').textContent = MetricLabel[activeMetric1Name];
-    portfolioLedger.metricName = activeMetric1Name;
     if (!activePortfolio) return;
     const chartData = charting_buildPortfolioMetric(activePortfolio, activeMetric1Name, true);
     if (activeMetric1Canvas != null) activeMetric1Canvas.destroy();
     activeMetric1Canvas = new Chart(chartMetric1Canvas, chartData);
 });
 
-portfolioLedger.addEventListener('ledger-metric1-change', function(e) {
+timelineLedger.addEventListener('ledger-metric1-change', function(e) {
     activeMetric1Name = e.detail.metricName;
     metric1Select.value = activeMetric1Name;
     tab1.querySelector('.tab-label').textContent = MetricLabel[activeMetric1Name];
@@ -292,18 +295,45 @@ function connectAssetListEvents() {
 
 // ─── Tab Handling ────────────────────────────────────────────
 
+// Map projectionTab keys → { tab, content, click }
+const tabRegistry = [
+    { key: 'value',        tab: tab1, content: () => chartMetric1Canvas.parentElement },
+    { key: 'monteCarlo',   tab: tab2, content: () => monteCarloContainer },
+    { key: 'guardrails',   tab: tab3, content: () => guardrailsContainer },
+    { key: 'spreadsheet',  tab: tab4, content: () => spreadsheetElement.parentElement },
+    { key: 'creditMemos',  tab: tab5, content: () => creditMemosElement.parentElement },
+    { key: 'reports',      tab: tab6, content: () => debugReportsElement.parentElement },
+];
+
+// Tabs always visible regardless of phase
+const alwaysVisibleTabs = new Set(['creditMemos', 'reports']);
+
 function hideAllTabs() {
-    const tabs = [
-        { tab: tab1, content: chartMetric1Canvas.parentElement },
-        { tab: tab2, content: monteCarloContainer },
-        { tab: tab3, content: guardrailsContainer },
-        { tab: tab4, content: spreadsheetElement.parentElement },
-        { tab: tab5, content: creditMemosElement.parentElement },
-        { tab: tab6, content: debugReportsElement.parentElement },
-    ];
-    for (const { tab, content } of tabs) {
-        tab.classList.remove('active');
-        content.style.display = 'none';
+    for (const entry of tabRegistry) {
+        entry.tab.classList.remove('active');
+        entry.content().style.display = 'none';
+    }
+}
+
+/**
+ * Show/hide projection tabs based on the selected phase's projectionTabs array.
+ * Always-visible tabs (Credit Memos, Reports) remain shown regardless.
+ * If the currently active tab becomes hidden, auto-selects tab1.
+ */
+function filterTabsForPhase(projectionTabs) {
+    const allowed = new Set(projectionTabs);
+    let activeTabHidden = false;
+
+    for (const entry of tabRegistry) {
+        const visible = allowed.has(entry.key) || alwaysVisibleTabs.has(entry.key);
+        entry.tab.style.display = visible ? '' : 'none';
+        if (!visible && entry.tab.classList.contains('active')) {
+            activeTabHidden = true;
+        }
+    }
+
+    if (activeTabHidden) {
+        tab1_click();
     }
 }
 
@@ -453,7 +483,11 @@ function calculate(target) {
 
     let modelAssets = assetsContainerElement.modelAssets || [];    
     let portfolio = new Portfolio(modelAssets, true);
+    portfolio.lifeEvents = activeLifeEvents.map(e => e.copy());
+
     chronometer_run(portfolio);
+
+    timelineLedger.portfolio = activePortfolio;
 
     // Update asset cards with calculated values
     assetsContainerElement.modelAssets = [...portfolio.modelAssets];
@@ -492,8 +526,8 @@ function calculate(target) {
     }
 
     // Update ledger display
-    portfolioLedger.metricName = activeMetric1Name;
-    portfolioLedger.portfolio = portfolio;
+    timelineLedger.metricName = activeMetric1Name;
+    timelineLedger.portfolio = portfolio;
 }
 
 function innerCalculate(portfolio) {
@@ -518,6 +552,21 @@ function loadLocalData() {
     const slotName = activeScenario === 'default' ? activeStoryName : activeScenario;
     let assetModelsRaw = util_loadLocalAssetModels(activeStoryArc, slotName);
     assetsContainerElement.modelAssets = membrane_rawDataToModelAssets(assetModelsRaw);
+
+    // Load life events (or create defaults)
+    const savedEvents = util_loadLocalLifeEvents(activeStoryArc, activeScenario);
+    if (savedEvents) {
+        activeLifeEvents = savedEvents.map(ModelLifeEvent.fromJSON);
+    } else {
+        activeLifeEvents = ModelLifeEvent.defaultTimeline(
+            global_user_startAge, global_user_retirementAge
+        );
+    }
+
+    timelineLedger.lifeEvents = activeLifeEvents;
+    timelineLedger.startAge   = global_user_startAge;
+    timelineLedger.finishAge  = global_user_finishAge;
+    filterTabsForPhase(activeLifeEvents[timelineLedger.selectedIndex]?.projectionTabs ?? ['value', 'spreadsheet']);
 
     // Load per-scenario guardrail params (fall back to globals if none saved)
     const gp = util_loadLocalGuardrailParams(activeStoryArc, slotName);
@@ -811,6 +860,22 @@ function connectSettings() {
         calculate('assets');
     });
 }
+
+// --- timeline events -----------------------------------
+
+timelineLedger.addEventListener('phase-select', (e) => {
+    const { event, index } = e.detail;
+    filterTabsForPhase(event.projectionTabs);
+});
+
+timelineLedger.addEventListener('event-edit', (e) => {
+    const { event, index } = e.detail;
+    // Open the rewiring modal (future component)
+});
+
+timelineLedger.addEventListener('event-add', () => {
+    // Open event creation flow (future component)
+});
 
 // ─── Initialize ──────────────────────────────────────────────
 

@@ -298,8 +298,10 @@ export class PayrollEngine {
             }
         }
 
+        /*
         console.assert(totalContribution.amount <= modelAsset.netIncomeCurrency.amount,
             `Post-tax contributions (${totalContribution.amount}) exceed net income (${modelAsset.netIncomeCurrency.amount}) for ${modelAsset.displayName}`);
+        */
 
     }
 

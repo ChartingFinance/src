@@ -2,6 +2,7 @@ import { Currency } from './utils/currency.js';
 import { InstrumentType } from './instruments/instrument.js';
 import { MonthsSpan } from './utils/months-span.js';
 import { logger, LogCategory } from './utils/logger.js';
+import { ModelLifeEvent } from './life-event.js';
 import { User } from './user.js';
 import { firstDateInt, lastDateInt } from './asset-queries.js';
 import { global_user_startAge } from './globals.js';
@@ -25,6 +26,8 @@ export class Portfolio {
         this.guardrailEvents = [];    // [{ year, type, rate, adjustedTo }]
         this.yearlySnapshots = [];    // [{ year, investableAssets, annualExpense, withdrawalRate }]
 
+        // Life events timeline
+        this.lifeEvents = [];
 
         this.firstDateInt = firstDateInt(this.modelAssets);
         this.lastDateInt = lastDateInt(this.modelAssets);
@@ -104,9 +107,29 @@ export class Portfolio {
             modelAsset.initializeChron();
         }
 
+        // Reset life event applied flags for re-simulation
+        for (const event of this.lifeEvents) {
+            event.applied = false;
+        }
+
         this.taxes = new TaxEngine(this.modelAssets, this.monthly, this.yearly, this.activeUser);
         this.payroll = new PayrollEngine(this.modelAssets, this.monthly, this.yearly, this.activeUser, this.taxes);
         this.expenses = new ExpenseEngine(this.modelAssets, this.monthly, this.activeUser);
+    }
+
+    /**
+     * Check and apply any life events whose triggerDateInt matches
+    * the current simulation month. Called at day=1 of each month
+    * by the chronometer, BEFORE applyMonth.
+    */
+    applyLifeEvents(currentDateInt) {
+        for (const event of this.lifeEvents) {
+            if (event.applied) continue;
+            const trigger = event.triggerDateInt;
+            if (trigger.year === currentDateInt.year && trigger.month === currentDateInt.month) {
+                event.apply(this, currentDateInt);
+            }
+        }
     }
 
     monthlySanityCheck(currentDateInt) {

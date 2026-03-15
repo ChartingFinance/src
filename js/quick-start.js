@@ -5,6 +5,7 @@
  * American household portfolio. Edit the raw data below to adjust.
  */
 
+import { ModelLifeEvent, LifeEvent } from './life-event.js';
 import { ModelAsset } from './model-asset.js';
 
 const QUICK_START_DATA = [
@@ -86,4 +87,11 @@ const QUICK_START_DATA = [
 
 export function quickStartAssets() {
     return QUICK_START_DATA.map(raw => ModelAsset.fromJSON(raw));
+}
+
+export function quickStartLifeEvents() {
+    return [
+        ModelLifeEvent.createDefault(LifeEvent.ACCUMULATE, 35),
+        ModelLifeEvent.createDefault(LifeEvent.RETIRE, 62),
+    ];
 }

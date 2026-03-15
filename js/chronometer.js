@@ -88,6 +88,12 @@ export async function chronometer_run(portfolio) {
     let lastDateInt = new DateInt(portfolio.lastDateInt.toInt());
     while (currentDateInt.toInt() <= lastDateInt.toInt()) {
 
+        // Life events fire at the first tick of their trigger month,
+        // before any financial calculations for that month.
+        if (currentDateInt.day === 1) {
+            portfolio.applyLifeEvents(currentDateInt);
+        }
+
         totalMonths += portfolio.applyMonth(currentDateInt);
         currentDateInt.next();
 
@@ -166,6 +172,12 @@ export async function chronometer_run_animated(portfolio, visualizerContainerId)
     let currentDateInt = new DateInt(portfolio.firstDateInt.toInt());
     let lastDateInt = new DateInt(portfolio.lastDateInt.toInt());
     while (currentDateInt.toInt() <= lastDateInt.toInt()) {
+
+        // Life events fire at the first tick of their trigger month,
+        // before any financial calculations for that month.
+        if (currentDateInt.day === 1) {
+            portfolio.applyLifeEvents(currentDateInt);
+        }
 
         // Break out of the loop if the popup was closed
         const container = document.getElementById(visualizerContainerId);
