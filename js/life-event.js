@@ -20,7 +20,6 @@
  */
 
 import { DateInt }        from './utils/date-int.js';
-import { ModelAsset }     from './model-asset.js';
 import { FundTransfer }   from './fund-transfer.js';
 import { InstrumentType } from './instruments/instrument.js';
 import { findByName }     from './asset-queries.js';
@@ -47,8 +46,8 @@ export const LifeEventMeta = new Map([
     assetGroupLabels: { income: 'Income', capital: 'Capital', outflows: 'Outflows' },
     defaultMutations: {
       closes:  [],
-      creates: [],
     },
+    advisoryChecks: [],
   }],
   [LifeEvent.BUY_HOME, {
     label:       'Buy home',
@@ -58,25 +57,11 @@ export const LifeEventMeta = new Map([
     assetGroupLabels: { income: 'Income', realEstate: 'Real estate', capital: 'Capital', outflows: 'Outflows' },
     defaultMutations: {
       closes:  [],
-      creates: [
-        {
-          instrument: 'realEstate',
-          displayName: 'Home',
-          startCurrency: { amount: 400000 },
-          startBasisCurrency: { amount: 400000 },
-          annualReturnRate: { rate: 0.03 },
-          annualTaxRate: { rate: 0.012 },
-          isPrimaryHome: true,
-        },
-        {
-          instrument: 'mortgage',
-          displayName: 'Mortgage',
-          startCurrency: { amount: -320000 },
-          annualReturnRate: { rate: 0.065 },
-          monthsRemaining: 360,
-        },
-      ],
     },
+    advisoryChecks: [
+      { instrument: 'realEstate', message: 'No real estate asset found. Would you like to add one?' },
+      { instrument: 'mortgage', message: 'No mortgage found. Would you like to add one?' },
+    ],
   }],
   [LifeEvent.SELL_HOME, {
     label:       'Sell home',
@@ -86,8 +71,8 @@ export const LifeEventMeta = new Map([
     assetGroupLabels: { distributions: 'Distributions', capital: 'Capital', closed: 'Closed', outflows: 'Outflows' },
     defaultMutations: {
       closes:  ['Home', 'Mortgage'],
-      creates: [],
     },
+    advisoryChecks: [],
   }],
   [LifeEvent.RETIRE, {
     label:       'Retire',
@@ -97,15 +82,10 @@ export const LifeEventMeta = new Map([
     assetGroupLabels: { distributions: 'Distributions', capital: 'Capital', outflows: 'Outflows' },
     defaultMutations: {
       closes:  ['Salary'],
-      creates: [
-        {
-          instrument: 'retirementIncome',
-          displayName: 'Social Security',
-          startCurrency: { amount: 2800 },
-          annualReturnRate: { rate: 0.02 },
-        },
-      ],
     },
+    advisoryChecks: [
+      { instrument: 'retirementIncome', message: 'No retirement income found. Would you like to add one?' },
+    ],
   }],
 ]);
 
@@ -167,7 +147,6 @@ export class ModelLifeEvent {
    * @param {string}  opts.displayName    User-facing name
    * @param {number}  opts.triggerAge     Age when event fires
    * @param {string[]}        [opts.closes]            Asset displayNames to close
-   * @param {Object[]}        [opts.creates]           Asset JSON templates to instantiate
    * @param {Object}          [opts.transferOverrides]  { assetDisplayName: [FundTransfer JSON] }
    * @param {Object}          [opts.globalOverrides]    { inflationRate?: number, ... }
    */
@@ -176,7 +155,6 @@ export class ModelLifeEvent {
     displayName,
     triggerAge,
     closes  = [],
-    creates = [],
     transferOverrides = {},
     globalOverrides   = {},
   }) {
@@ -184,7 +162,6 @@ export class ModelLifeEvent {
     this.displayName    = displayName;
     this.triggerAge      = triggerAge;
     this.closes          = closes;
-    this.creates         = creates;
     this.transferOverrides = transferOverrides;
     this.globalOverrides   = globalOverrides;
 
@@ -232,21 +209,7 @@ export class ModelLifeEvent {
       }
     }
 
-    // 2. Create new assets from JSON templates
-    for (const template of this.creates) {
-      const json = {
-        ...template,
-        startDateInt: currentDateInt.toJSON(),
-        finishDateInt: null,   // will use global finish
-      };
-      const newAsset = ModelAsset.fromJSON(json);
-      portfolio.modelAssets.push(newAsset);
-      newAsset.initializeChron();
-      logger.log(LogCategory.GENERAL,
-        `LifeEvent created asset: ${newAsset.displayName} (${newAsset.instrument})`);
-    }
-
-    // 3. Override fund transfers on surviving assets
+    // 2. Override fund transfers on surviving assets
     for (const [assetName, transfersJSON] of Object.entries(this.transferOverrides)) {
       const asset = findByName(portfolio.modelAssets, assetName);
       if (!asset || asset.isClosed) continue;
@@ -257,7 +220,7 @@ export class ModelLifeEvent {
         `LifeEvent rewired transfers for: ${assetName} (${newTransfers.length} transfers)`);
     }
 
-    // 4. Re-sort after creating/closing
+    // 3. Re-sort after closing
     portfolio.modelAssets = portfolio.sortModelAssets(portfolio.modelAssets);
   }
 
@@ -276,7 +239,6 @@ export class ModelLifeEvent {
       displayName:      meta.label,
       triggerAge,
       closes:           [...(meta.defaultMutations.closes || [])],
-      creates:          structuredClone(meta.defaultMutations.creates || []),
       transferOverrides: {},
       globalOverrides:   {},
     });
@@ -301,7 +263,6 @@ export class ModelLifeEvent {
       displayName:       this.displayName,
       triggerAge:        this.triggerAge,
       closes:            this.closes,
-      creates:           this.creates,
       transferOverrides: this.transferOverrides,
       globalOverrides:   this.globalOverrides,
     };
@@ -313,7 +274,6 @@ export class ModelLifeEvent {
       displayName:       obj.displayName,
       triggerAge:        obj.triggerAge,
       closes:            obj.closes ?? [],
-      creates:           obj.creates ?? [],
       transferOverrides: obj.transferOverrides ?? {},
       globalOverrides:   obj.globalOverrides ?? {},
     });

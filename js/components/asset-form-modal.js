@@ -44,7 +44,10 @@ class AssetFormModal extends LitElement {
             if (this.mode === 'edit' && this.modelAsset) {
                 this._instrument = this.modelAsset.instrument;
             } else {
-                this._instrument = null;
+                this._instrument = this.preselectedInstrument || null;
+                this._startDate = this.preselectedStartDate || null;
+                this.preselectedInstrument = null;
+                this.preselectedStartDate = null;
             }
         }
     }
@@ -58,7 +61,7 @@ class AssetFormModal extends LitElement {
 
         // Pre-fill values for edit mode
         const displayName = isEdit && ma ? ma.displayName : '';
-        const startDate = isEdit && ma ? ma.startDateInt.toHTML() : DateInt.today().toHTML();
+        const startDate = isEdit && ma ? ma.startDateInt.toHTML() : (this._startDate || DateInt.today().toHTML());
         const startValue = isEdit && ma ? ma.startCurrency.toHTML() : '';
         const finishDate = isEdit && ma && ma.finishDateInt ? ma.finishDateInt.toHTML() : '';
         const closed = isEdit && ma && ma.isClosed;

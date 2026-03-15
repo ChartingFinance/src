@@ -105,6 +105,25 @@
 </head>
 <body class="min-h-screen p-4 sm:p-8 max-w-[1400px] mx-auto">
 
+    <!-- ═══ Popup: Advisory Check ═══ -->
+    <div id="popupAdvisory" class="popup fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+        <div class="popup-content glass-card p-8 w-full max-w-sm relative">
+            <button class="closeBtn absolute top-4 right-4 text-gray-400 hover:text-gray-800 text-2xl">&times;</button>
+            <div class="text-3xl mb-3" id="advisoryEmoji">💡</div>
+            <p class="text-gray-700 text-sm mb-6" id="advisoryMessage"></p>
+            <div class="flex items-center justify-between">
+                <label class="flex items-center gap-2 text-xs text-gray-400 cursor-pointer">
+                    <input type="checkbox" id="advisoryDismiss" class="rounded border-gray-300">
+                    Do not ask again
+                </label>
+                <div class="flex gap-2">
+                    <button id="advisoryNo" class="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-800 transition">No thanks</button>
+                    <button id="advisoryYes" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition">Yes, add it</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- ═══ Popup: Donate / Coffee ═══ -->
     <div id="popupFormDonate" class="popup fixed inset-0 z-50 hidden flex items-center justify-center p-4">
         <div class="popup-content glass-card p-8 w-full max-w-md relative text-center">

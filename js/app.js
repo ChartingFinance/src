@@ -17,7 +17,7 @@ import { chronometer_run, chronometer_run_animated } from './chronometer.js';
 // Membrane (model conversion)
 import { membrane_rawDataToModelAssets } from './membrane.js';
 import { quickStartAssets } from './quick-start.js';
-import { ModelLifeEvent, LifeEvent } from './life-event.js';
+import { ModelLifeEvent, LifeEvent, LifeEventMeta } from './life-event.js';
 
 // Lit components
 import './components/asset-list.js';
@@ -246,9 +246,11 @@ function connectAssetFormModal() {
     });
 }
 
-function openCreateAssetModal() {
+function openCreateAssetModal(preselectedInstrument, preselectedStartDate) {
     assetFormModal.mode = 'create';
     assetFormModal.modelAsset = null;
+    assetFormModal.preselectedInstrument = preselectedInstrument || null;
+    assetFormModal.preselectedStartDate = preselectedStartDate || null;
     assetFormModal.open = true;
 }
 
@@ -481,11 +483,12 @@ function calculate(target) {
     if (target == 'assets')
         updateActiveAssetsElement(assetsContainerElement);
 
-    let modelAssets = assetsContainerElement.modelAssets || [];    
+    let modelAssets = assetsContainerElement.modelAssets || [];
     let portfolio = new Portfolio(modelAssets, true);
     portfolio.lifeEvents = activeLifeEvents.map(e => e.copy());
 
     chronometer_run(portfolio);
+    activePortfolio = portfolio;
 
     timelineLedger.portfolio = activePortfolio;
 
@@ -863,9 +866,66 @@ function connectSettings() {
 
 // --- timeline events -----------------------------------
 
-timelineLedger.addEventListener('phase-select', (e) => {
-    const { event, index } = e.detail;
+// ── Advisory popup ─────────────────────────────────────────
+
+const advisoryPopup = document.getElementById('popupAdvisory');
+const advisoryMessage = document.getElementById('advisoryMessage');
+const advisoryDismiss = document.getElementById('advisoryDismiss');
+const advisoryYes = document.getElementById('advisoryYes');
+const advisoryNo = document.getElementById('advisoryNo');
+let advisoryResolve = null;
+let advisoryKey = null;
+
+function showAdvisory(message, storageKey) {
+    advisoryKey = storageKey;
+    advisoryMessage.textContent = message;
+    advisoryDismiss.checked = false;
+    advisoryPopup.classList.remove('hidden');
+    advisoryPopup.style.display = 'flex';
+    return new Promise(resolve => { advisoryResolve = resolve; });
+}
+
+function closeAdvisory(accepted) {
+    if (advisoryDismiss.checked && advisoryKey) {
+        localStorage.setItem(`advisory_${advisoryKey}`, 'dismissed');
+    }
+    advisoryPopup.classList.add('hidden');
+    advisoryPopup.style.display = '';
+    if (advisoryResolve) advisoryResolve(accepted);
+    advisoryResolve = null;
+    advisoryKey = null;
+}
+
+advisoryYes.addEventListener('click', () => closeAdvisory(true));
+advisoryNo.addEventListener('click', () => closeAdvisory(false));
+advisoryPopup.querySelector('.closeBtn').addEventListener('click', () => closeAdvisory(false));
+
+function isAdvisoryDismissed(storageKey) {
+    return localStorage.getItem(`advisory_${storageKey}`) === 'dismissed';
+}
+
+// ── Phase select ──────────────────────────────────────────
+
+timelineLedger.addEventListener('phase-select', async (e) => {
+    const { event } = e.detail;
     filterTabsForPhase(event.projectionTabs);
+
+    // Advisory checks: suggest missing assets for this phase
+    const meta = LifeEventMeta.get(event.type);
+    const checks = meta?.advisoryChecks ?? [];
+    const assets = assetsContainerElement.modelAssets || [];
+    for (const check of checks) {
+        const storageKey = `${event.type}:${check.instrument}`;
+        if (isAdvisoryDismissed(storageKey)) continue;
+        const hasInstrument = assets.some(a => a.instrument === check.instrument);
+        if (!hasInstrument) {
+            const accepted = await showAdvisory(check.message, storageKey);
+            if (accepted) {
+                openCreateAssetModal(check.instrument, event.triggerDateInt.toHTML());
+            }
+            break;  // one advisory at a time
+        }
+    }
 });
 
 timelineLedger.addEventListener('event-edit', (e) => {
