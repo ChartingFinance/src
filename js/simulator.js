@@ -18,6 +18,7 @@ import { chronometer_run } from './chronometer.js';
 import { setActiveTaxTable } from './globals.js';
 import { TaxTable } from './taxes.js';
 import { Portfolio } from './portfolio.js';
+import { ModelLifeEvent } from './life-event.js';
 
 // Theoretical maximums for normalization (scaling to 0.0–1.0)
 const THEORETICAL_MAX_CASHFLOW = 10_000_000;
@@ -57,6 +58,9 @@ self.onmessage = function(event) {
     }
 
     const portfolio = new Portfolio(assetModels, false);
+    if (payload.lifeEvents) {
+        portfolio.lifeEvents = payload.lifeEvents.map(e => ModelLifeEvent.fromJSON(e));
+    }
     const simulator = new Simulator(portfolio, guardrailParams, fitnessBalance);
     simulator.runGeneticAlgorithm(50, 200, 0.15, postCallback);
 
@@ -210,6 +214,16 @@ class Simulator {
 
     evaluateFitness(chromosome, callback) {
         this.setFundTransfersFromChromosome(chromosome);
+
+        // Sync mutated transfer values back to phase so initializeChron picks them up
+        const phase0 = this.portfolio.lifeEvents[0];
+        if (phase0) {
+            for (const asset of this.portfolio.modelAssets) {
+                if (asset.fundTransfers.length > 0) {
+                    phase0.phaseTransfers[asset.displayName] = asset.fundTransfers.map(ft => ft.toJSON());
+                }
+            }
+        }
 
         // Extract guardrail params from chromosome genes
         const params = this._guardrailParamsFromChromosome(chromosome);

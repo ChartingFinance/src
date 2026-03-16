@@ -932,7 +932,7 @@ export class ModelAsset {
       annualReturnRate: this.annualReturnRate,
       annualDividendRate: this.annualDividendRate,
       longTermCapitalHoldingPercentage: this.longTermCapitalHoldingPercentage,
-      fundTransfers:   this.fundTransfers.map(ft => ft.copy()),
+      fundTransfers:   [],
       isSelfEmployed:  this.isSelfEmployed,
       isPrimaryHome:   this.isPrimaryHome,
       annualTaxRate:   this.annualTaxRate,
@@ -945,7 +945,7 @@ export class ModelAsset {
   // ── Serialization ───────────────────────────────────────────────
 
   toJSON() {
-    const { creditMemos, creditMemosCheckedIndex, ...rest } = this;
+    const { creditMemos, creditMemosCheckedIndex, fundTransfers, ...rest } = this;
     return rest;
   }
 

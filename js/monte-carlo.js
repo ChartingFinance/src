@@ -70,9 +70,10 @@ function cloneAssets(sourceAssets) {
 
 // ── Single simulation run ────────────────────────────────────────
 
-function runOnce(sourceAssets, guardrailParams, retirementDateInt) {
+function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents) {
     const assets = cloneAssets(sourceAssets);
     const portfolio = new Portfolio(assets, false);
+    if (lifeEvents) portfolio.lifeEvents = lifeEvents.map(e => e.copy());
 
     if (guardrailParams) {
         portfolio.guardrailsParams = guardrailParams;
@@ -150,10 +151,11 @@ export function getMonteCarloResults() { return cachedResults; }
 
 let monteCarloChart = null;
 
-export function runMonteCarlo(sourceAssets, container, numSimulations = 1000, guardrailParams = null, retirementDateInt = null, runFromStart = false) {
+export function runMonteCarlo(sourceAssets, container, numSimulations = 1000, guardrailParams = null, retirementDateInt = null, runFromStart = false, lifeEvents = []) {
     // Determine number of months from a reference run
     const refAssets = cloneAssets(sourceAssets);
     const refPortfolio = new Portfolio(refAssets, false);
+    if (lifeEvents.length) refPortfolio.lifeEvents = lifeEvents.map(e => e.copy());
     activeTaxTable.initializeChron();
     refPortfolio.initializeChron();
 
@@ -187,7 +189,7 @@ export function runMonteCarlo(sourceAssets, container, numSimulations = 1000, gu
     setTimeout(() => {
         const allRuns = [];
         for (let i = 0; i < numSimulations; i++) {
-            const totals = runOnce(sourceAssets, guardrailParams, runFromStart ? null : retirementDateInt);
+            const totals = runOnce(sourceAssets, guardrailParams, runFromStart ? null : retirementDateInt, lifeEvents);
             while (totals.length < numMonths) totals.push(totals[totals.length - 1] ?? 0);
             if (totals.length > numMonths) totals.length = numMonths;
             allRuns.push(totals);
@@ -207,6 +209,7 @@ export function runMonteCarlo(sourceAssets, container, numSimulations = 1000, gu
         // Compute deterministic baseline
         const baseAssets = cloneAssets(sourceAssets);
         const basePf = new Portfolio(baseAssets, false);
+        if (lifeEvents.length) basePf.lifeEvents = lifeEvents.map(e => e.copy());
         activeTaxTable.initializeChron();
         basePf.initializeChron();
 

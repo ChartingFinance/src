@@ -12,7 +12,7 @@
  * A ModelLifeEvent represents a user decision that rewires the portfolio:
  *   - Closing assets (e.g. stop salary)
  *   - Creating assets (e.g. Social Security income)
- *   - Overriding fund transfers on surviving assets
+ *   - Owning fund transfers for assets during this phase
  *   - Overriding global parameters (e.g. inflation assumptions)
  *
  * The chronometer checks portfolio.lifeEvents each month and calls
@@ -20,8 +20,6 @@
  */
 
 import { DateInt }        from './utils/date-int.js';
-import { FundTransfer }   from './fund-transfer.js';
-import { InstrumentType } from './instruments/instrument.js';
 import { findByName }     from './asset-queries.js';
 import { logger, LogCategory } from './utils/logger.js';
 import { global_user_startAge } from './globals.js';
@@ -147,7 +145,7 @@ export class ModelLifeEvent {
    * @param {string}  opts.displayName    User-facing name
    * @param {number}  opts.triggerAge     Age when event fires
    * @param {string[]}        [opts.closes]            Asset displayNames to close
-   * @param {Object}          [opts.transferOverrides]  { assetDisplayName: [FundTransfer JSON] }
+   * @param {Object}          [opts.phaseTransfers]   { assetDisplayName: [FundTransfer JSON] }
    * @param {Object}          [opts.globalOverrides]    { inflationRate?: number, ... }
    */
   constructor({
@@ -155,14 +153,14 @@ export class ModelLifeEvent {
     displayName,
     triggerAge,
     closes  = [],
-    transferOverrides = {},
+    phaseTransfers = {},
     globalOverrides   = {},
   }) {
     this.type           = type;
     this.displayName    = displayName;
     this.triggerAge      = triggerAge;
     this.closes          = closes;
-    this.transferOverrides = transferOverrides;
+    this.phaseTransfers = phaseTransfers;
     this.globalOverrides   = globalOverrides;
 
     // Derived
@@ -209,16 +207,8 @@ export class ModelLifeEvent {
       }
     }
 
-    // 2. Override fund transfers on surviving assets
-    for (const [assetName, transfersJSON] of Object.entries(this.transferOverrides)) {
-      const asset = findByName(portfolio.modelAssets, assetName);
-      if (!asset || asset.isClosed) continue;
-
-      const newTransfers = transfersJSON.map(FundTransfer.fromJSON);
-      asset.fundTransfers = newTransfers;
-      logger.log(LogCategory.TRANSFER,
-        `LifeEvent rewired transfers for: ${assetName} (${newTransfers.length} transfers)`);
-    }
+    // 2. Apply this phase's fund transfers to surviving assets
+    portfolio.applyPhaseTransfers(this);
 
     // 3. Re-sort after closing
     portfolio.modelAssets = portfolio.sortModelAssets(portfolio.modelAssets);
@@ -239,7 +229,7 @@ export class ModelLifeEvent {
       displayName:      meta.label,
       triggerAge,
       closes:           [...(meta.defaultMutations.closes || [])],
-      transferOverrides: {},
+      phaseTransfers: {},
       globalOverrides:   {},
     });
   }
@@ -263,7 +253,7 @@ export class ModelLifeEvent {
       displayName:       this.displayName,
       triggerAge:        this.triggerAge,
       closes:            this.closes,
-      transferOverrides: this.transferOverrides,
+      phaseTransfers: this.phaseTransfers,
       globalOverrides:   this.globalOverrides,
     };
   }
@@ -274,7 +264,7 @@ export class ModelLifeEvent {
       displayName:       obj.displayName,
       triggerAge:        obj.triggerAge,
       closes:            obj.closes ?? [],
-      transferOverrides: obj.transferOverrides ?? {},
+      phaseTransfers: obj.phaseTransfers ?? obj.transferOverrides ?? {},
       globalOverrides:   obj.globalOverrides ?? {},
     });
   }

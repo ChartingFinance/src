@@ -7,7 +7,6 @@
  */
 
 // Core types
-import { findByName } from './asset-queries.js';
 import { Metric, MetricLabel } from './model-asset.js';
 
 
@@ -16,8 +15,8 @@ import { chronometer_run, chronometer_run_animated } from './chronometer.js';
 
 // Membrane (model conversion)
 import { membrane_rawDataToModelAssets } from './membrane.js';
-import { quickStartAssets } from './quick-start.js';
-import { ModelLifeEvent, LifeEvent, LifeEventMeta } from './life-event.js';
+import { quickStartAssets, quickStartLifeEvents } from './quick-start.js';
+import { ModelLifeEvent, LifeEvent, LifeEventMeta, LifeEventType } from './life-event.js';
 
 // Lit components
 import './components/asset-list.js';
@@ -274,6 +273,8 @@ function connectAssetListEvents() {
 
     assetsContainerElement.addEventListener('quick-start', function() {
         assetsContainerElement.modelAssets = quickStartAssets();
+        activeLifeEvents = quickStartLifeEvents();
+        timelineLedger.lifeEvents = activeLifeEvents;
         calculate('assets');
     });
 
@@ -356,7 +357,7 @@ function tab2_click() {
         const useGuardrails = document.getElementById('monte-carlo-guardrails').checked;
         const runFromStart = document.getElementById('monte-carlo-run-from-start').checked;
         runMonteCarlo(activePortfolio.modelAssets, chartArea, 1000,
-            useGuardrails ? getGuardrailsParams() : null, global_getRetirementDateInt(), runFromStart);
+            useGuardrails ? getGuardrailsParams() : null, global_getRetirementDateInt(), runFromStart, activeLifeEvents);
     }
 }
 
@@ -379,7 +380,7 @@ function syncGuardrailsToDOM() {
 function refreshGuardrails() {
     if (activePortfolio) {
         guardrailsStale = false;
-        runGuardrails(activePortfolio.modelAssets, guardrailsCanvas, getGuardrailsParams(), global_getRetirementDateInt());
+        runGuardrails(activePortfolio.modelAssets, guardrailsCanvas, getGuardrailsParams(), global_getRetirementDateInt(), activeLifeEvents);
     }
 }
 
@@ -470,6 +471,7 @@ function ensureHighlightDisplayName() {
 function updateCharts() {
     let modelAssets = assetsContainerElement.modelAssets || [];
     let portfolio = new Portfolio(modelAssets);
+    portfolio.lifeEvents = activeLifeEvents.map(e => e.copy());
     activePortfolio = portfolio;
     chronometer_run(portfolio);
     portfolio.buildChartingDisplayData();
@@ -513,10 +515,10 @@ function calculate(target) {
         const useGuardrails = document.getElementById('monte-carlo-guardrails').checked;
         const runFromStart = document.getElementById('monte-carlo-run-from-start').checked;
         runMonteCarlo(portfolio.modelAssets, chartArea, 1000,
-            useGuardrails ? getGuardrailsParams() : null, global_getRetirementDateInt(), runFromStart);
+            useGuardrails ? getGuardrailsParams() : null, global_getRetirementDateInt(), runFromStart, activeLifeEvents);
     } else if (tab3.classList.contains('active')) {
         guardrailsStale = false;
-        runGuardrails(portfolio.modelAssets, guardrailsCanvas, getGuardrailsParams(), global_getRetirementDateInt());
+        runGuardrails(portfolio.modelAssets, guardrailsCanvas, getGuardrailsParams(), global_getRetirementDateInt(), activeLifeEvents);
     }
 
     // build the chart configs (must happen before innerCalculate creates Chart instances)
@@ -548,6 +550,7 @@ function saveLocalData() {
     if (activeScenario === 'Fittest') return;
     const slotName = activeScenario === 'default' ? activeStoryName : activeScenario;
     util_saveLocalAssetModels(activeStoryArc, slotName, assetsContainerElement.modelAssets || []);
+    util_saveLocalLifeEvents(activeStoryArc, slotName, activeLifeEvents.map(e => e.toJSON()));
     util_saveLocalGuardrailParams(activeStoryArc, slotName, getGuardrailsParams());
 }
 
@@ -564,6 +567,17 @@ function loadLocalData() {
         activeLifeEvents = ModelLifeEvent.defaultTimeline(
             global_user_startAge, global_user_retirementAge
         );
+    }
+
+    // Migration: if Accumulate phase has no transfers but assets do, migrate them
+    const accEvent = activeLifeEvents.find(e => LifeEventType.isAccumulation(e.type));
+    if (accEvent && Object.keys(accEvent.phaseTransfers).length === 0) {
+        const assets = assetsContainerElement.modelAssets || [];
+        for (const asset of assets) {
+            if (asset.fundTransfers?.length > 0) {
+                accEvent.phaseTransfers[asset.displayName] = asset.fundTransfers.map(ft => ft.toJSON());
+            }
+        }
     }
 
     timelineLedger.lifeEvents = activeLifeEvents;
@@ -597,10 +611,11 @@ async function doVisualize() {
     popup.style.display = 'flex'; // Force display to override Tailwind hidden
 
     let modelAssets = assetsContainerElement.modelAssets || [];
-    
-    // Crucial: We create a throwaway copy of the portfolio so the animation 
+
+    // Crucial: We create a throwaway copy of the portfolio so the animation
     // doesn't pollute your real ledger / charts while it runs!
     let portfolio = new Portfolio(modelAssets, false);
+    portfolio.lifeEvents = activeLifeEvents.map(e => e.copy());
 
     // Launch the animation loop
     await chronometer_run_animated(portfolio, 'hydraulic-container');
@@ -644,6 +659,7 @@ function _ensureSimModal() {
 function _launchSimulator(sliderDefault) {
     const simModal = _ensureSimModal();
     simModal.modelAssets = assetsContainerElement.modelAssets || [];
+    simModal.lifeEvents = activeLifeEvents;
     simModal.guardrailParams = getGuardrailsParams();
     simModal.fitnessBalance = sliderDefault;
     simModal.open = true;
@@ -663,6 +679,7 @@ function donateData() {
 
 function openShareModal() {
     shareModal.modelAssets = assetsContainerElement.modelAssets || [];
+    shareModal.lifeEvents = activeLifeEvents;
     shareModal.portfolioName = activeStoryName || '';
     shareModal.globalSettings = {
         inflationRate: global_inflationRate,
@@ -671,14 +688,17 @@ function openShareModal() {
         startAge: global_user_startAge,
         retirementAge: global_user_retirementAge,
         finishAge: global_user_finishAge,
+        backtestYear: global_backtestYear,
     };
     shareModal.guardrailParams = getGuardrailsParams();
     shareModal.open = true;
 }
 
 function showPopupTransfers(currentDisplayName) {
+    const activePhase = activeLifeEvents[timelineLedger.selectedIndex];
     transferModal.currentDisplayName = currentDisplayName;
     transferModal.modelAssets = assetsContainerElement.modelAssets || [];
+    transferModal.phaseTransfers = activePhase?.phaseTransfers ?? {};
     transferModal.open = true;
 }
 
@@ -687,9 +707,9 @@ function connectTransferModal() {
 
     transferModal.addEventListener('save-transfers', function(ev) {
         const { displayName, fundTransfers } = ev.detail;
-        let modelAsset = findByName(assetsContainerElement.modelAssets || [], displayName);
-        if (modelAsset) {
-            modelAsset.fundTransfers = fundTransfers;
+        const activePhase = activeLifeEvents[timelineLedger.selectedIndex];
+        if (activePhase) {
+            activePhase.phaseTransfers[displayName] = fundTransfers.map(ft => ft.toJSON());
         }
         calculate();
     });
@@ -727,7 +747,7 @@ document.getElementById('monte-carlo-guardrails').addEventListener('change', fun
         const chartArea = document.getElementById('monteCarloChartArea');
         const runFromStart = document.getElementById('monte-carlo-run-from-start').checked;
         runMonteCarlo(activePortfolio.modelAssets, chartArea, 1000,
-            this.checked ? getGuardrailsParams() : null, global_getRetirementDateInt(), runFromStart);
+            this.checked ? getGuardrailsParams() : null, global_getRetirementDateInt(), runFromStart, activeLifeEvents);
     }
 });
 
@@ -736,7 +756,7 @@ document.getElementById('monte-carlo-run-from-start').addEventListener('change',
         const chartArea = document.getElementById('monteCarloChartArea');
         const useGuardrails = document.getElementById('monte-carlo-guardrails').checked;
         runMonteCarlo(activePortfolio.modelAssets, chartArea, 1000,
-            useGuardrails ? getGuardrailsParams() : null, global_getRetirementDateInt(), this.checked);
+            useGuardrails ? getGuardrailsParams() : null, global_getRetirementDateInt(), this.checked, activeLifeEvents);
     }
 });
 
@@ -957,6 +977,7 @@ function loadSharedPortfolio() {
             global_setUserStartAge(data.settings.startAge);
             global_setUserRetirementAge(data.settings.retirementAge);
             global_setUserFinishAge(data.settings.finishAge);
+            if (data.settings.backtestYear != null) global_setBacktestYear(data.settings.backtestYear);
             setActiveTaxTable(new TaxTable());
             syncGlobalsToSettings();
         }
@@ -971,9 +992,31 @@ function loadSharedPortfolio() {
             syncGuardrailsToDOM();
         }
 
+        // Load life events (or create defaults for pre-migration links)
+        if (data.lifeEvents?.length) {
+            activeLifeEvents = data.lifeEvents.map(ModelLifeEvent.fromJSON);
+        } else {
+            activeLifeEvents = ModelLifeEvent.defaultTimeline(
+                global_user_startAge, global_user_retirementAge
+            );
+        }
+        timelineLedger.lifeEvents = activeLifeEvents;
+
         // Load assets
         if (data.modelAssets) {
-            assetsContainerElement.modelAssets = membrane_rawDataToModelAssets(data.modelAssets);
+            const assets = membrane_rawDataToModelAssets(data.modelAssets);
+
+            // Migration: if Accumulate phase has no transfers, migrate from assets
+            const accEvent = activeLifeEvents.find(e => LifeEventType.isAccumulation(e.type));
+            if (accEvent && Object.keys(accEvent.phaseTransfers).length === 0) {
+                for (const asset of assets) {
+                    if (asset.fundTransfers?.length > 0) {
+                        accEvent.phaseTransfers[asset.displayName] = asset.fundTransfers.map(ft => ft.toJSON());
+                    }
+                }
+            }
+
+            assetsContainerElement.modelAssets = assets;
             calculate('assets');
         }
 

@@ -33,6 +33,7 @@ class TransferModal extends LitElement {
         open:               { type: Boolean, reflect: true },
         currentDisplayName: { type: String },
         modelAssets:        { type: Array },
+        phaseTransfers:     { type: Object },
         _activeTab:         { state: true },
     };
 
@@ -43,6 +44,7 @@ class TransferModal extends LitElement {
         this.open = false;
         this.currentDisplayName = '';
         this.modelAssets = [];
+        this.phaseTransfers = {};
         this._activeTab = 0;
         this._chart = null;
         this._portfolio = null;
@@ -138,12 +140,15 @@ class TransferModal extends LitElement {
 
         this._tabs = this._getChartTabs(currentAsset);
 
+        // Look up existing transfers from the active phase
+        const existingTransfers = this.phaseTransfers[this.currentDisplayName] || [];
+
         return this._portfolio.modelAssets.filter(ma =>
             InstrumentType.isFundable(ma.instrument) &&
             ma.displayName !== this.currentDisplayName
         ).map(ma => {
-            const existing = currentAsset.fundTransfers.find(
-                ft => ft.toDisplayName === ma.displayName
+            const existing = existingTransfers.find(
+                ft => (ft.toDisplayName ?? ft.toDisplayName) === ma.displayName
             );
             return {
                 modelAsset: ma,

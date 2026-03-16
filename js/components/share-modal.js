@@ -22,6 +22,7 @@ class ShareModal extends LitElement {
     static properties = {
         open:           { type: Boolean, reflect: true },
         modelAssets:    { type: Array },
+        lifeEvents:     { type: Array },
         portfolioName:  { type: String },
         globalSettings:  { type: Object },
         guardrailParams: { type: Object },
@@ -37,6 +38,7 @@ class ShareModal extends LitElement {
         super();
         this.open = false;
         this.modelAssets = [];
+        this.lifeEvents = [];
         this.portfolioName = '';
         this.globalSettings = {};
         this.guardrailParams = null;
@@ -56,29 +58,11 @@ class ShareModal extends LitElement {
     }
 
     _buildShareUrl() {
-        // Clean model assets for serialization (remove circular refs)
-        const cleanAssets = (this.modelAssets || []).map(a => {
-            const copy = { ...a };
-            delete copy.fromModel;
-            delete copy.toModel;
-            delete copy.metrics;
-            delete copy.creditMemos;
-            // Clean fund transfers too
-            if (copy.fundTransfers) {
-                copy.fundTransfers = copy.fundTransfers.map(ft => {
-                    const ftCopy = { ...ft };
-                    delete ftCopy.fromModel;
-                    delete ftCopy.toModel;
-                    return ftCopy;
-                });
-            }
-            return copy;
-        });
-
         const payload = {
             name: this._name,
             settings: this.globalSettings,
-            modelAssets: cleanAssets,
+            modelAssets: (this.modelAssets || []).map(a => a.toJSON()),
+            lifeEvents: this.lifeEvents.map(e => e.toJSON()),
             guardrailParams: this.guardrailParams,
         };
 

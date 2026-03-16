@@ -4,7 +4,7 @@ import { MonthsSpan } from './utils/months-span.js';
 import { logger, LogCategory } from './utils/logger.js';
 import { ModelLifeEvent } from './life-event.js';
 import { User } from './user.js';
-import { firstDateInt, lastDateInt } from './asset-queries.js';
+import { firstDateInt, lastDateInt, findByName } from './asset-queries.js';
 import { global_user_startAge } from './globals.js';
 import { FundTransfer } from './fund-transfer.js';
 import { FinancialPackage } from './financial-package.js';
@@ -67,6 +67,7 @@ export class Portfolio {
         portfolio.monthly = this.monthly.copy();
         portfolio.yearly = this.yearly.copy();
         portfolio.total = this.total.copy();
+        portfolio.lifeEvents = this.lifeEvents.map(e => e.copy());
         return portfolio;
 
     }
@@ -112,6 +113,11 @@ export class Portfolio {
             event.applied = false;
         }
 
+        // Load first phase's transfers onto assets
+        if (this.lifeEvents.length > 0) {
+            this.applyPhaseTransfers(this.lifeEvents[0]);
+        }
+
         this.taxes = new TaxEngine(this.modelAssets, this.monthly, this.yearly, this.activeUser);
         this.payroll = new PayrollEngine(this.modelAssets, this.monthly, this.yearly, this.activeUser, this.taxes);
         this.expenses = new ExpenseEngine(this.modelAssets, this.monthly, this.activeUser);
@@ -129,6 +135,19 @@ export class Portfolio {
             if (trigger.year === currentDateInt.year && trigger.month === currentDateInt.month) {
                 event.apply(this, currentDateInt);
             }
+        }
+    }
+
+    /**
+     * Populate asset.fundTransfers from a life event's phaseTransfers map.
+     * Called by initializeChron() for phase 0, and by ModelLifeEvent.apply() for subsequent phases.
+     */
+    applyPhaseTransfers(phaseEvent) {
+        if (!phaseEvent?.phaseTransfers) return;
+        for (const [assetName, transfersJSON] of Object.entries(phaseEvent.phaseTransfers)) {
+            const asset = findByName(this.modelAssets, assetName);
+            if (!asset || asset.isClosed) continue;
+            asset.fundTransfers = transfersJSON.map(FundTransfer.fromJSON);
         }
     }
 

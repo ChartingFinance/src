@@ -33,9 +33,10 @@ function cloneAssets(sourceAssets) {
 
 // ── Main entry point ─────────────────────────────────────────────
 
-export function runGuardrails(sourceAssets, canvas, params, retirementDateInt = null) {
+export function runGuardrails(sourceAssets, canvas, params, retirementDateInt = null, lifeEvents = []) {
     const assets = cloneAssets(sourceAssets);
     const portfolio = new Portfolio(assets, false);
+    if (lifeEvents.length) portfolio.lifeEvents = lifeEvents.map(e => e.copy());
 
     // Activate guardrails on this portfolio
     portfolio.guardrailsParams = {

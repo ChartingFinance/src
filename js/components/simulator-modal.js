@@ -26,6 +26,7 @@ class SimulatorModal extends LitElement {
     static properties = {
         open:             { type: Boolean, reflect: true },
         modelAssets:      { type: Array },
+        lifeEvents:       { type: Array },
         guardrailParams:  { type: Object },
         fitnessBalance:   { type: Number },
         _status:          { state: true },
@@ -42,6 +43,7 @@ class SimulatorModal extends LitElement {
         super();
         this.open = false;
         this.modelAssets = [];
+        this.lifeEvents = [];
         this.guardrailParams = null;
         this.fitnessBalance = 50;
         this._status = 'Starting...';
@@ -165,6 +167,7 @@ class SimulatorModal extends LitElement {
 
         this._worker.postMessage({
             modelAssets: JSON.parse(JSON.stringify(this.modelAssets)),
+            lifeEvents: this.lifeEvents.map(e => e.toJSON()),
             guardrailParams: this.guardrailParams,
             fitnessBalance: this._sliderValue,
         });
