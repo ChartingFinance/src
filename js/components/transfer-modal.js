@@ -183,27 +183,14 @@ class TransferModal extends LitElement {
                     </div>
                 </div>
                 <div class="flex items-center gap-4">
-                    <label class="flex items-center gap-2 text-xs text-gray-600 cursor-pointer">
-                        <input type="checkbox" class="rounded" name="onCloseCheck"
-                            ?checked=${ta.closeMoveValue > 0}
-                            @change=${this._onCloseCheckChange} />
-                        On Asset Close
-                    </label>
                     <div class="flex flex-col ml-auto">
                         <label class="text-xs text-gray-400 mb-1">Close %</label>
                         <input type="number" class="fin-input w-20 text-center text-sm"
-                            name="closeMoveValue" .value=${String(ta.closeMoveValue)} step="0.1"
-                            ?disabled=${ta.closeMoveValue === 0} />
+                            name="closeMoveValue" .value=${String(ta.closeMoveValue)} step="0.1" />
                     </div>
                 </div>
             </form>
         `;
-    }
-
-    _onCloseCheckChange(e) {
-        const form = e.target.closest('.fund-transfer');
-        const closeInput = form.querySelector('[name="closeMoveValue"]');
-        closeInput.disabled = !e.target.checked;
     }
 
     _switchTab(index) {
@@ -255,10 +242,7 @@ class TransferModal extends LitElement {
         for (const form of forms) {
             const toDisplayName = form.querySelector('[name="toDisplayName"]').value;
             const monthlyMoveValue = parseInt(form.querySelector('[name="monthlyMoveValue"]').value, 10) || 0;
-            const onCloseChecked = form.querySelector('[name="onCloseCheck"]').checked;
-            const closeMoveValue = onCloseChecked
-                ? (parseInt(form.querySelector('[name="closeMoveValue"]').value, 10) || 0)
-                : 0;
+            const closeMoveValue = parseInt(form.querySelector('[name="closeMoveValue"]').value, 10) || 0;
 
             if (monthlyMoveValue > 0 || closeMoveValue > 0) {
                 fundTransfers.push(new FundTransfer(toDisplayName, Frequency.MONTHLY, monthlyMoveValue, closeMoveValue));

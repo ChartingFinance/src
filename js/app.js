@@ -560,7 +560,7 @@ function loadLocalData() {
     assetsContainerElement.modelAssets = membrane_rawDataToModelAssets(assetModelsRaw);
 
     // Load life events (or create defaults)
-    const savedEvents = util_loadLocalLifeEvents(activeStoryArc, activeScenario);
+    const savedEvents = util_loadLocalLifeEvents(activeStoryArc, slotName);
     if (savedEvents) {
         activeLifeEvents = savedEvents.map(ModelLifeEvent.fromJSON);
     } else {
