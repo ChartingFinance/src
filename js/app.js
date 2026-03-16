@@ -24,6 +24,7 @@ import './components/asset-form-modal.js';
 import './components/transfer-modal.js';
 import './components/timeline-ledger.js';
 import './components/event-form-modal.js';
+import './components/amortization-view.js';
 
 // Charting
 import {
@@ -139,6 +140,8 @@ const tab3 = document.getElementById('tab3');
 const tab4 = document.getElementById('tab4');
 const tab5 = document.getElementById('tab5');
 const tab6 = document.getElementById('tab6');
+const tab7 = document.getElementById('tab7');
+const amortizationElement = document.getElementById('amortizationElement');
 
 // ─── App State ───────────────────────────────────────────────
 
@@ -308,6 +311,7 @@ const tabRegistry = [
     { key: 'spreadsheet',  tab: tab4, content: () => spreadsheetElement.parentElement },
     { key: 'creditMemos',  tab: tab5, content: () => creditMemosElement.parentElement },
     { key: 'reports',      tab: tab6, content: () => debugReportsElement.parentElement },
+    { key: 'amortization', tab: tab7, content: () => amortizationElement.parentElement },
 ];
 
 // Tabs always visible regardless of phase
@@ -412,6 +416,12 @@ function tab6_click() {
     hideAllTabs();
     tab6.classList.add('active');
     debugReportsElement.parentElement.style.display = '';
+}
+
+function tab7_click() {
+    hideAllTabs();
+    tab7.classList.add('active');
+    amortizationElement.parentElement.style.display = '';
 }
 
 // ─── Scenarios ───────────────────────────────────────────────
@@ -545,6 +555,7 @@ function innerCalculate(portfolio) {
     spreadsheetElement.portfolio = portfolio;
     creditMemosElement.portfolio = portfolio;
     debugReportsElement.reports = portfolio.generatedReports;
+    amortizationElement.portfolio = portfolio;
 }
 
 function saveLocalData() {
@@ -840,6 +851,7 @@ tab3.addEventListener('click', tab3_click);
 tab4.addEventListener('click', tab4_click);
 tab5.addEventListener('click', tab5_click);
 tab6.addEventListener('click', tab6_click);
+tab7.addEventListener('click', tab7_click);
 
 // ─── Settings Row ─────────────────────────────────────────────
 

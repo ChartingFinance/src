@@ -4,6 +4,7 @@ import { colorRange, positiveBackgroundColor, negativeBackgroundColor } from './
 import { logger, LogCategory } from './utils/logger.js';
 import { findByName } from './asset-queries.js';
 import { Metric } from './model-asset.js';
+import { LifeEventMeta } from './life-event.js';
 
 // ── Date marker plugin ────────────────────────────────────────────
 
@@ -17,12 +18,19 @@ const dateMarkerPlugin = {
         for (const marker of markers) {
             const xPos = x.getPixelForValue(marker.index);
             ctx.beginPath();
-            ctx.setLineDash([4, 4]);
+            ctx.setLineDash(marker.label ? [6, 4] : [4, 4]);
             ctx.strokeStyle = marker.color;
-            ctx.lineWidth = 1;
+            ctx.lineWidth = marker.label ? 2 : 1;
             ctx.moveTo(xPos, top);
             ctx.lineTo(xPos, bottom);
             ctx.stroke();
+            if (marker.label) {
+                ctx.setLineDash([]);
+                ctx.fillStyle = marker.color;
+                ctx.font = 'bold 10px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(marker.label, xPos, top - 5);
+            }
         }
         ctx.restore();
     }
@@ -46,6 +54,15 @@ export function charting_buildDateMarkers(portfolio) {
         const finishIdx = dateIntToChartIndex(modelAsset.effectiveFinishDateInt, portfolio.firstDateInt, monthsSpan);
         if (startIdx >= 0) markers.push({ index: startIdx, color });
         if (finishIdx >= 0) markers.push({ index: finishIdx, color });
+    }
+    // Life event markers (skip the first — Accumulate starts at simulation start)
+    for (let i = 1; i < portfolio.lifeEvents.length; i++) {
+        const ev = portfolio.lifeEvents[i];
+        const idx = dateIntToChartIndex(ev.triggerDateInt, portfolio.firstDateInt, monthsSpan);
+        if (idx >= 0) {
+            const meta = LifeEventMeta.get(ev.type);
+            markers.push({ index: idx, color: meta?.colorAccent ?? '#888780', label: ev.displayName });
+        }
     }
     return markers;
 }
