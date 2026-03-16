@@ -23,6 +23,7 @@ import './components/asset-list.js';
 import './components/asset-form-modal.js';
 import './components/transfer-modal.js';
 import './components/timeline-ledger.js';
+import './components/event-form-modal.js';
 
 // Charting
 import {
@@ -130,6 +131,7 @@ const creditMemosElement = document.getElementById('creditMemosElement');
 const debugReportsElement = document.getElementById('debugReportsElement');
 const transferModal = document.getElementById('transferModal');
 const shareModal = document.getElementById('shareModal');
+const eventFormModal = document.getElementById('eventFormModal');
 
 const tab1 = document.getElementById('tab1');
 const tab2 = document.getElementById('tab2');
@@ -950,11 +952,47 @@ timelineLedger.addEventListener('phase-select', async (e) => {
 
 timelineLedger.addEventListener('event-edit', (e) => {
     const { event, index } = e.detail;
-    // Open the rewiring modal (future component)
+    eventFormModal.mode = 'edit';
+    eventFormModal.lifeEvent = event;
+    eventFormModal.editIndex = index;
+    eventFormModal.modelAssets = assetsContainerElement.modelAssets || [];
+    eventFormModal.open = true;
 });
 
 timelineLedger.addEventListener('event-add', () => {
-    // Open event creation flow (future component)
+    eventFormModal.mode = 'create';
+    eventFormModal.lifeEvent = null;
+    eventFormModal.editIndex = -1;
+    eventFormModal.modelAssets = assetsContainerElement.modelAssets || [];
+    eventFormModal.open = true;
+});
+
+eventFormModal.addEventListener('save-life-event', (e) => {
+    const { lifeEvent, index, mode } = e.detail;
+    if (mode === 'create') {
+        activeLifeEvents.push(lifeEvent);
+    } else {
+        activeLifeEvents[index] = lifeEvent;
+    }
+    activeLifeEvents.sort((a, b) => a.triggerAge - b.triggerAge);
+    timelineLedger.lifeEvents = activeLifeEvents;
+    calculate('assets');
+});
+
+eventFormModal.addEventListener('delete-life-event', async (e) => {
+    const { index } = e.detail;
+    const event = activeLifeEvents[index];
+    if (!event || LifeEventType.isAccumulation(event.type)) return;
+    const accepted = await showAdvisory(
+        `Delete "${event.displayName}" event? This will remove all phase transfers associated with it.`,
+        `delete_event_${event.type}`
+    );
+    if (accepted) {
+        activeLifeEvents.splice(index, 1);
+        timelineLedger.lifeEvents = activeLifeEvents;
+        timelineLedger.selectedIndex = Math.min(timelineLedger.selectedIndex, activeLifeEvents.length - 1);
+        calculate('assets');
+    }
 });
 
 // ─── Initialize ──────────────────────────────────────────────

@@ -158,6 +158,7 @@ class TimelineLedger extends LitElement {
           ${this.lifeEvents.map((ev, i) => html`
             <div class="flex flex-col items-center flex-shrink-0 cursor-pointer"
                  style="width: 28px;"
+                 title="Edit this phase by clicking ${ev.displayName} on the lower left"
                  @click=${() => this._onSelectPhase(i)}>
               <div class="rounded-full transition-transform"
                 style="width: ${this.selectedIndex === i ? '16px' : '12px'};
@@ -209,10 +210,14 @@ class TimelineLedger extends LitElement {
         <div class="flex items-center gap-3 px-3 py-2 rounded-xl"
           style="background: ${this._phaseColor()}12;">
 
-          <span class="text-xs font-medium px-2.5 py-0.5 rounded-full cursor-pointer"
+          <span class="text-xs font-medium px-2.5 py-1 rounded-full cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-1"
             style="background: ${this._phaseColor()}25; color: ${this._phaseColorAccent()};"
+            title="Edit life event"
             @click=${this._onEditSelectedEvent}>
             ${this._phaseLabel()}
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" style="opacity: 0.7;">
+              <path d="M9.1 1.2L10.8 2.9 3.6 10.1 1.2 10.8 1.9 8.4z"/>
+            </svg>
           </span>
 
           <span class="text-xs text-gray-500">${this._phaseSpan()}</span>
