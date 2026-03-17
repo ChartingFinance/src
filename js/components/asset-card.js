@@ -29,6 +29,7 @@ class AssetCard extends LitElement {
         groupColor: { type: String },
         ghost: { type: Boolean },
         future: { type: Boolean },
+        metricValue: { type: Number },  // override display value from history
     };
 
     createRenderRoot() { return this; }
@@ -59,9 +60,11 @@ class AssetCard extends LitElement {
             ? InstrumentType.assetEmoji(ma.instrument)
             : (InstrumentMeta.get(ma.instrument)?.emoji ?? '');
 
-        // Display value: prefer closed value, then finish value, fall back to start
+        // Display value: use metric history value if provided, else fall back to finish/start
         let displayAmount;
-        if (ma.isClosed && ma.closedValue) {
+        if (this.metricValue != null) {
+            displayAmount = this.metricValue;
+        } else if (ma.isClosed && ma.closedValue) {
             displayAmount = ma.closedValue.toHTML();
         } else {
             const finishVal = ma.finishCurrency ? ma.finishCurrency.toHTML() : '0.0';

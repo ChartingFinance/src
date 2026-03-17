@@ -27,12 +27,13 @@ import { ModelLifeEvent, LifeEvent, LifeEventType } from './life-event.js';
 // ── Charting ────────────────────────────────────────────────
 import {
     charting_buildFromPortfolio,
-    charting_buildGroupedMetric,
-    charting_buildPortfolioMetric,
     charting_buildDateMarkers,
+    charting_buildDisplayLabels,
     charting_buildPhaseMarkers,
     charting_jsonMetric1ChartData,
 } from './charting.js';
+
+import { classifyAssets, classifyAssetGroup, GROUP_DISPLAY_ORDER, getAssetChartColor } from './asset-groups.js';
 
 // ── Simulations ─────────────────────────────────────────────
 import { runMonteCarlo, getMonteCarloChart, getMonteCarloResults } from './monte-carlo.js';
@@ -181,6 +182,7 @@ metricSelect.value = activeMetricName;
 metricSelect.addEventListener('change', () => {
     activeMetricName = metricSelect.value;
     if (timeline) timeline.metricName = activeMetricName;
+    assetList.metricName = activeMetricName;
     if (!activePortfolio) return;
     rebuildProjectionCharts();
 });
@@ -195,10 +197,23 @@ function updateViewingBadge(year, month) {
     if (viewingBadge) viewingBadge.textContent = text;
     document.querySelectorAll('.viewing-badge').forEach(el => el.textContent = text);
 }
+/** Sync asset-list to show metric values at the selected date */
+function syncAssetListToDate(year, month) {
+    const dateInt = DateInt.from(year, month);
+    assetList.atDateInt = dateInt;
+    assetList.metricName = activeMetricName;
+    if (activePortfolio?.firstDateInt) {
+        assetList.historyIndex = DateInt.diffMonths(activePortfolio.firstDateInt, dateInt);
+    } else {
+        assetList.historyIndex = -1;
+    }
+}
+
 updateViewingBadge(store.selectedYear, store.selectedMonth);
 store.addEventListener('date-change', (e) => {
     updateViewingBadge(e.detail.year, e.detail.month);
     updateProjectionCursor();
+    syncAssetListToDate(e.detail.year, e.detail.month);
     if (spreadsheetView) spreadsheetView.scrollToDate(e.detail.year, e.detail.month);
     if (reportView) reportView.scrollToDate(e.detail.year, e.detail.month);
 });
@@ -305,6 +320,7 @@ function calculate() {
     assetList.expandedGroups = new Set(expandedGroups);
     assetList.activeLifeEvent = activeLifeEvents[0] ?? null;
     assetList.portfolio = portfolio;
+    syncAssetListToDate(store.selectedYear, store.selectedMonth);
 
     // Build charting data
     portfolio.buildChartingDisplayData();
@@ -411,27 +427,80 @@ function rebuildProjectionCharts() {
 
     const markers = buildPhaseMarkersForCharts();
 
-    // Macro: grouped stacked bar for the selected metric
-    charting_buildFromPortfolio(activePortfolio, true, activeMetricName, expandedGroups);
+    // Macro: always fully grouped (never expand into individual assets)
+    charting_buildFromPortfolio(activePortfolio, true, activeMetricName, new Set());
 
     if (macroChart) macroChart.destroy();
     if (charting_jsonMetric1ChartData) {
-        // Override markers with phase markers
         charting_jsonMetric1ChartData.options.plugins.dateMarkers = { markers };
         macroChart = new Chart(macroCanvas, charting_jsonMetric1ChartData);
     }
 
-    // Micro: individual asset stacked bar for the same metric
-    const microCfg = charting_buildPortfolioMetric(activePortfolio, activeMetricName, true);
-    if (microCfg) {
-        if (!microCfg.options.plugins) microCfg.options.plugins = {};
-        microCfg.options.plugins.dateMarkers = { markers };
-    }
+    // Micro: individual assets from expanded groups only
+    rebuildMicroChart(markers);
+}
+
+function rebuildMicroChart(markers) {
+    if (!activePortfolio) return;
+    if (!markers) markers = buildPhaseMarkersForCharts();
 
     if (microChart) microChart.destroy();
-    if (microCfg) {
+    microChart = null;
+
+    const labels = charting_buildDisplayLabels(activePortfolio.firstDateInt, activePortfolio.lastDateInt);
+
+    if (expandedGroups.size === 0) {
+        // Empty state: axes but no data, with a prompt message
+        const microCfg = {
+            type: 'bar',
+            data: { labels, datasets: [] },
+            options: {
+                responsive: true,
+                plugins: {
+                    title: { display: true, text: 'Expand a group to see data', color: '#9ca3af', font: { size: 13, weight: 'normal' } },
+                    dateMarkers: { markers },
+                },
+                scales: { x: { stacked: true }, y: { stacked: true } },
+            },
+        };
         microChart = new Chart(microCanvas, microCfg);
+        return;
     }
+
+    // Classify by instrument (ignore isClosed) so chart shows full history
+    const groups = new Map();
+    for (const asset of activePortfolio.modelAssets) {
+        const groupKey = classifyAssetGroup(asset.instrument);
+        if (!groups.has(groupKey)) groups.set(groupKey, []);
+        groups.get(groupKey).push(asset);
+    }
+
+    const datasets = [];
+    for (const groupKey of GROUP_DISPLAY_ORDER) {
+        if (!expandedGroups.has(groupKey)) continue;
+        const assets = groups.get(groupKey);
+        if (!assets || assets.length === 0) continue;
+        for (const asset of assets) {
+            datasets.push({
+                label: asset.displayName,
+                data: asset.getDisplayHistory(activeMetricName),
+                backgroundColor: getAssetChartColor(asset.instrument, false),
+            });
+        }
+    }
+
+    if (datasets.length === 0) return;
+
+    const microCfg = {
+        type: 'bar',
+        data: { labels, datasets },
+        options: {
+            responsive: true,
+            plugins: { title: { display: false }, dateMarkers: { markers } },
+            scales: { x: { stacked: true }, y: { stacked: true } },
+        },
+    };
+    microChart = new Chart(microCanvas, microCfg);
 }
 
 function buildSimulationMarkers(chart, fullLabels) {
@@ -544,7 +613,7 @@ function connectAssetListEvents() {
         if (expandedGroups.has(group)) expandedGroups.delete(group);
         else expandedGroups.add(group);
         assetList.expandedGroups = new Set(expandedGroups);
-        updateCharts();
+        rebuildMicroChart();
     });
 }
 

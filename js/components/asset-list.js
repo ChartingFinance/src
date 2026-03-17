@@ -39,6 +39,9 @@ class AssetList extends LitElement {
         expandedGroups: { type: Object },   // Set<AssetGroup key>
         activeLifeEvent: { type: Object },  // ModelLifeEvent — for contextual group labels
         portfolio: { type: Object },        // Portfolio — for Taxes group metrics
+        atDateInt: { type: Object },        // DateInt — classify active/closed at this date
+        metricName: { type: String },       // Metric key — look up history value at historyIndex
+        historyIndex: { type: Number },     // Month offset into history[] for metric display
     };
 
     createRenderRoot() { return this; }
@@ -51,6 +54,9 @@ class AssetList extends LitElement {
         this.expandedGroups = null;
         this.activeLifeEvent = null;
         this.portfolio = null;
+        this.atDateInt = null;
+        this.metricName = null;
+        this.historyIndex = -1;
     }
 
     render() {
@@ -87,7 +93,7 @@ class AssetList extends LitElement {
         }
 
         // Grouped mode
-        const groups = classifyAssets(this.modelAssets);
+        const groups = classifyAssets(this.modelAssets, this.atDateInt);
         const expanded = this.expandedGroups || new Set();
 
         return html`
@@ -129,6 +135,7 @@ class AssetList extends LitElement {
                                 <asset-card
                                     .modelAsset=${ma}
                                     .groupColor=${getAssetChartColor(ma.instrument, ma.isClosed)}
+                                    .metricValue=${this._getMetricValue(ma)}
                                     ?ghost=${isGhost}
                                     ?selected=${this.highlightName === ma.displayName}
                                 ></asset-card>
@@ -209,14 +216,27 @@ class AssetList extends LitElement {
         return items;
     }
 
+    /** Get metric value for a single asset at the current historyIndex */
+    _getMetricValue(asset) {
+        if (!this.metricName || this.historyIndex < 0) return null;
+        const history = asset.getHistory?.(this.metricName);
+        if (!history || this.historyIndex >= history.length) return null;
+        const entry = history[this.historyIndex];
+        return entry?.amount ?? (typeof entry === 'number' ? entry : null);
+    }
+
     _computeRollupTotal(groupKey, assets) {
         if (groupKey === AssetGroup.CLOSED) return '';
 
         let sum = 0;
         for (const a of assets) {
-            if (a.isClosed) continue;
-            const val = a.finishCurrency?.amount ?? a.startCurrency?.amount ?? 0;
-            sum += val;
+            const mv = this._getMetricValue(a);
+            if (mv != null) {
+                sum += mv;
+            } else {
+                const val = a.finishCurrency?.amount ?? a.startCurrency?.amount ?? 0;
+                sum += val;
+            }
         }
 
         if (groupKey === AssetGroup.INCOME || groupKey === AssetGroup.OUTFLOWS) {

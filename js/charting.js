@@ -7,7 +7,7 @@ import { Metric } from './model-asset.js';
 import { LifeEvent, LifeEventMeta } from './life-event.js';
 import {
     AssetGroup, AssetGroupMeta,
-    classifyAssets, sumDisplayHistories, getAssetChartColor,
+    classifyAssetGroup, sumDisplayHistories, getAssetChartColor,
     GROUP_DISPLAY_ORDER,
 } from './asset-groups.js';
 
@@ -534,7 +534,15 @@ export function charting_buildDisplaySpreadsheetFromPortfolio(portfolio, buildNe
  */
 export function charting_buildGroupedMetric(portfolio, metricName, expandedGroups) {
   const labels = charting_buildDisplayLabels(portfolio.firstDateInt, portfolio.lastDateInt);
-  const groups = classifyAssets(portfolio.modelAssets);
+
+  // Classify by instrument (ignore isClosed) so charts show full history
+  const groups = new Map();
+  for (const asset of portfolio.modelAssets) {
+    const groupKey = classifyAssetGroup(asset.instrument);
+    if (!groups.has(groupKey)) groups.set(groupKey, []);
+    groups.get(groupKey).push(asset);
+  }
+
   const datasets = [];
 
   for (const groupKey of GROUP_DISPLAY_ORDER) {

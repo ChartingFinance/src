@@ -154,12 +154,26 @@ export function classifyAssetGroup(instrument) {
  * Returns Map<AssetGroup, ModelAsset[]> — only includes non-empty groups.
  * Closed assets go to CLOSED group. TAXES group is never populated here
  * (it's rendered from portfolio metrics in the UI layer).
+ *
+ * @param {ModelAsset[]} modelAssets
+ * @param {DateInt} [atDateInt] — if provided, classify as active/closed based on
+ *   whether the asset's date range includes this date (not just final isClosed state)
  */
-export function classifyAssets(modelAssets) {
+export function classifyAssets(modelAssets, atDateInt) {
   const groups = new Map();
+  const atInt = atDateInt?.toInt?.();
 
   for (const asset of modelAssets) {
-    const groupKey = asset.isClosed
+    let isClosed;
+    if (atInt != null) {
+      const start = asset.startDateInt.toInt();
+      const finish = asset.effectiveFinishDateInt.toInt();
+      isClosed = atInt < start || atInt > finish;
+    } else {
+      isClosed = asset.isClosed;
+    }
+
+    const groupKey = isClosed
       ? AssetGroup.CLOSED
       : classifyAssetGroup(asset.instrument);
 
