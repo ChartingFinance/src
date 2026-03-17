@@ -66,6 +66,23 @@ class CreditMemoView extends LitElement {
         `;
     }
 
+    scrollToDate(year, month) {
+        const target = `${year}-${String(month).padStart(2, '0')}`;
+        const container = this.closest('.overflow-auto');
+        const rows = this.querySelectorAll('tbody tr');
+        for (const row of rows) {
+            const cell = row.querySelector('.spreadsheet-date-col');
+            if (cell && cell.textContent.trim() === target) {
+                if (container) {
+                    container.scrollTop = row.offsetTop - container.offsetTop - container.clientHeight / 2;
+                }
+                row.style.background = '#FAECE7';
+                setTimeout(() => row.style.background = '', 1500);
+                return;
+            }
+        }
+    }
+
     _collectRows() {
         const rows = [];
         for (const modelAsset of this.portfolio.modelAssets) {

@@ -30,6 +30,7 @@ class AssetCard extends LitElement {
         ghost: { type: Boolean },
         future: { type: Boolean },
         metricValue: { type: Number },  // override display value from history
+        closedEmoji: { type: String },  // e.g. '⛔' when asset is closed at selected date
     };
 
     createRenderRoot() { return this; }
@@ -47,6 +48,7 @@ class AssetCard extends LitElement {
         this.groupColor = null;
         this.ghost = false;
         this.future = false;
+        this.closedEmoji = '';
     }
 
     render() {
@@ -76,12 +78,13 @@ class AssetCard extends LitElement {
 
         return html`
             <div class="asset glass-card p-4 ${this.selected ? 'selected-card-chart' : ''} ${stateClass}"
-                 style="--card-color: ${color}; border-left: 4px solid ${color}"
+                 style="--card-color: ${color}; border-bottom: 4px solid ${color}"
                  @click=${this._onCardClick}>
                 ${this.readonly ? '' : html`
                     <span class="asset-action-btn edit" title="Edit" @click=${this._onEdit}>&#x270E;</span>
                     <span class="asset-action-btn transfers" title="Transfers" @click=${this._onTransfers}>&#x21C4;</span>
                 `}
+                ${this.closedEmoji ? html`<div class="asset-card-icon" style="font-size: 12px; margin-right: -4px;">${this.closedEmoji}</div>` : ''}
                 <div class="asset-card-icon">${emoji}</div>
                 <div class="asset-card-name">${ma.displayName}</div>
                 <div class="asset-card-value">${valueDisplay}</div>

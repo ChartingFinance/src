@@ -114,10 +114,9 @@ class AssetList extends LitElement {
         const meta = AssetGroupMeta.get(groupKey);
         const label = getGroupLabel(groupKey, this.activeLifeEvent);
         const total = this._computeRollupTotal(groupKey, assets);
-        const isGhost = groupKey === AssetGroup.CLOSED;
 
         return html`
-            <div class="${isGhost ? 'asset-ghost' : ''}">
+            <div>
                 <div class="asset-group-header"
                      style="background: ${meta.headerBg}; color: ${meta.headerFg}"
                      @click=${() => this._onGroupToggle(groupKey)}>
@@ -134,9 +133,10 @@ class AssetList extends LitElement {
                             (ma) => html`
                                 <asset-card
                                     .modelAsset=${ma}
-                                    .groupColor=${getAssetChartColor(ma.instrument, ma.isClosed)}
+                                    .groupColor=${getAssetChartColor(ma.instrument, false)}
                                     .metricValue=${this._getMetricValue(ma)}
-                                    ?ghost=${isGhost}
+                                    ?ghost=${ma._isClosedAtDate}
+                                    .closedEmoji=${ma._isClosedAtDate ? '⛔' : ''}
                                     ?selected=${this.highlightName === ma.displayName}
                                 ></asset-card>
                             `
@@ -226,8 +226,6 @@ class AssetList extends LitElement {
     }
 
     _computeRollupTotal(groupKey, assets) {
-        if (groupKey === AssetGroup.CLOSED) return '';
-
         let sum = 0;
         for (const a of assets) {
             const mv = this._getMetricValue(a);

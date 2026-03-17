@@ -288,9 +288,10 @@ class FinplanTimeline extends LitElement {
             if (pt.type === 'cursor') {
                 items.push(html`
                     <div class="flex flex-col items-center flex-shrink-0" style="width: 0;">
-                        <span style="font-size: 10px; font-weight: 700; color: #111827; line-height: 1;
-                                     white-space: nowrap;">${MONTH_NAMES[this.selectedMonth - 1]} ${this.selectedYear}</span>
-                        <span style="font-size: 12px; font-weight: 900; color: #111827; line-height: 1; margin-top: -1px;">&#9660;</span>
+                        <span style="font-size: 10px; font-weight: 700; background: #FAECE7; color: #993C1D;
+                                     padding: 1px 6px; border-radius: 8px; line-height: 1.3;
+                                     white-space: nowrap;">You are Here</span>
+                        <span style="font-size: 12px; font-weight: 900; color: #993C1D; line-height: 1; margin-top: -1px;">&#9660;</span>
                     </div>
                 `);
             } else if (pt.type === 'start' || pt.type === 'finish') {

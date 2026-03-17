@@ -152,11 +152,12 @@ export function classifyAssetGroup(instrument) {
 /**
  * Classifies an array of ModelAssets into groups.
  * Returns Map<AssetGroup, ModelAsset[]> — only includes non-empty groups.
- * Closed assets go to CLOSED group. TAXES group is never populated here
- * (it's rendered from portfolio metrics in the UI layer).
+ * Assets always stay in their natural instrument group (never routed to CLOSED).
+ * Each asset gets a `_isClosedAtDate` flag so the UI can ghost closed assets.
+ * TAXES group is never populated here (it's rendered from portfolio metrics).
  *
  * @param {ModelAsset[]} modelAssets
- * @param {DateInt} [atDateInt] — if provided, classify as active/closed based on
+ * @param {DateInt} [atDateInt] — if provided, determine closed state based on
  *   whether the asset's date range includes this date (not just final isClosed state)
  */
 export function classifyAssets(modelAssets, atDateInt) {
@@ -164,18 +165,15 @@ export function classifyAssets(modelAssets, atDateInt) {
   const atInt = atDateInt?.toInt?.();
 
   for (const asset of modelAssets) {
-    let isClosed;
     if (atInt != null) {
       const start = asset.startDateInt.toInt();
       const finish = asset.effectiveFinishDateInt.toInt();
-      isClosed = atInt < start || atInt > finish;
+      asset._isClosedAtDate = atInt < start || atInt > finish;
     } else {
-      isClosed = asset.isClosed;
+      asset._isClosedAtDate = asset.isClosed;
     }
 
-    const groupKey = isClosed
-      ? AssetGroup.CLOSED
-      : classifyAssetGroup(asset.instrument);
+    const groupKey = classifyAssetGroup(asset.instrument);
 
     if (!groups.has(groupKey)) groups.set(groupKey, []);
     groups.get(groupKey).push(asset);
@@ -196,7 +194,6 @@ export const GROUP_DISPLAY_ORDER = [
   AssetGroup.CAPITAL,
   AssetGroup.OUTFLOWS,
   AssetGroup.TAXES,
-  AssetGroup.CLOSED,
 ];
 
 // ── Aggregation utilities ───────────────────────────────────────────

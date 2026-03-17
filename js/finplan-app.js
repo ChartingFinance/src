@@ -49,6 +49,8 @@ import './components/finplan-timeline.js';
 import './components/simulator-modal.js';
 import './components/spreadsheet-view.js';
 import './components/debug-report-view.js';
+import './components/credit-memo-view.js';
+import './components/share-modal.js';
 
 // ── Store ───────────────────────────────────────────────────
 import { store } from './finplan-store.js';
@@ -108,7 +110,9 @@ const mcContainer       = document.getElementById('finplan-mc-container');
 const guardrailsCanvas  = document.getElementById('finplan-guardrails-canvas');
 const spreadsheetView   = document.getElementById('finplanSpreadsheet');
 const reportView        = document.getElementById('finplanReport');
+const creditMemoView    = document.getElementById('finplanCreditMemos');
 const metricSelect      = document.getElementById('finplan-metric-select');
+const shareModal        = document.getElementById('shareModal');
 
 // ── App state ───────────────────────────────────────────────
 let activePortfolio     = null;
@@ -167,7 +171,31 @@ eventFormModal.addEventListener('delete-life-event', (ev) => {
 });
 
 // Wire buttons
-document.getElementById('btn-calculate').addEventListener('click', () => calculate());
+document.getElementById('btn-donate').addEventListener('click', () => {
+    document.getElementById('popupFormDonate').style.display = 'flex';
+});
+document.getElementById('btn-share').addEventListener('click', () => {
+    if (shareModal) {
+        shareModal.modelAssets = activePortfolio?.modelAssets || [];
+        shareModal.lifeEvents = activeLifeEvents;
+        shareModal.portfolioName = activeStoryName || '';
+        shareModal.globalSettings = {
+            inflationRate: global_inflationRate,
+            filingAs: global_filingAs,
+            startAge: global_user_startAge,
+            retirementAge: global_user_retirementAge,
+            finishAge: global_user_finishAge,
+            backtestYear: global_backtestYear,
+        };
+        shareModal.guardrailParams = getGuardrailParams();
+        shareModal.open = true;
+    }
+});
+// Donate popup close
+const donatePopup = document.getElementById('popupFormDonate');
+donatePopup.querySelector('.closeBtn').addEventListener('click', () => donatePopup.style.display = 'none');
+donatePopup.addEventListener('click', (e) => { if (e.target === donatePopup) donatePopup.style.display = 'none'; });
+
 document.getElementById('btn-add-asset').addEventListener('click', () => openCreateAssetModal());
 document.getElementById('btn-run-mc').addEventListener('click', () => doMonteCarlo());
 document.getElementById('btn-run-guardrails').addEventListener('click', () => doGuardrails());
@@ -216,6 +244,7 @@ store.addEventListener('date-change', (e) => {
     syncAssetListToDate(e.detail.year, e.detail.month);
     if (spreadsheetView) spreadsheetView.scrollToDate(e.detail.year, e.detail.month);
     if (reportView) reportView.scrollToDate(e.detail.year, e.detail.month);
+    if (creditMemoView) creditMemoView.scrollToDate(e.detail.year, e.detail.month);
 });
 
 // ── Settings ────────────────────────────────────────────────
@@ -331,6 +360,7 @@ function calculate() {
     // Update details
     if (spreadsheetView) spreadsheetView.portfolio = portfolio;
     if (reportView) reportView.reports = portfolio.generatedReports;
+    if (creditMemoView) creditMemoView.portfolio = portfolio;
 
     // Update timeline
     updateTimeline();
