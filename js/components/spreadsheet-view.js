@@ -146,6 +146,43 @@ class SpreadsheetView extends LitElement {
         }
     }
 
+    /** Build CSV string from the same data the table renders */
+    toCSV() {
+        if (!this.portfolio) return '';
+        const assetColumns = this._buildAssetColumns();
+        if (assetColumns.length === 0) return '';
+        const dateLabels = this._buildDateLabels();
+
+        // Header row 1: Date + asset names spanning their metric columns
+        const h1 = ['Date'];
+        for (const ac of assetColumns) {
+            h1.push(ac.asset.displayName);
+            for (let i = 1; i < ac.metrics.length; i++) h1.push('');
+        }
+
+        // Header row 2: empty + metric labels
+        const h2 = [''];
+        for (const ac of assetColumns) {
+            for (const m of ac.metrics) h2.push(m.label);
+        }
+
+        const rows = [h1.join(','), h2.join(',')];
+
+        for (let i = 0; i < dateLabels.length; i++) {
+            const cells = [dateLabels[i]];
+            for (const ac of assetColumns) {
+                for (const m of ac.metrics) {
+                    const arr = ac.asset[m.key];
+                    const val = (arr && i < arr.length) ? arr[i] : 0;
+                    cells.push(val !== 0 ? val.toFixed(2) : '0');
+                }
+            }
+            rows.push(cells.join(','));
+        }
+
+        return rows.join('\n');
+    }
+
     _getDateInt() {
         // Import cached — DateInt is needed for date iteration
         if (!this._dateIntModule) {

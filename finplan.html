@@ -225,6 +225,20 @@
         .asset-future { opacity: 0.5; }
         .asset-future .asset { border-style: dashed; }
 
+        /* AI Summary FAB */
+        .ai-fab {
+            position: absolute; bottom: 12px; left: 12px;
+            width: 36px; height: 36px;
+            background: #111827; color: #fff;
+            border: none; border-radius: 50%;
+            font-size: 16px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            opacity: 0.6; transition: opacity 0.2s, transform 0.2s;
+            z-index: 5;
+        }
+        .ai-fab:hover { opacity: 1; transform: scale(1.1); }
+
         /* ─── Asset Cards (needed since no index.css) ─── */
 
         .asset { position: relative; text-align: center; }
@@ -294,6 +308,22 @@
             <h2 class="text-2xl font-bold tracking-tight mb-2">Buy me a Coffee!</h2>
             <p class="text-gray-500 mb-6 text-sm">This will help pay for server costs as this project grows.</p>
             <a href="https://buymeacoffee.com/charting.finance" target="_blank" class="btn-modern primary w-full text-center">Visit my Coffee</a>
+        </div>
+    </div>
+
+    <!-- ═══ AI Summary Popup ═══ -->
+    <div id="ai-summary-popup" class="popup fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+        <div class="popup-content glass-card p-8 w-full max-w-2xl relative">
+            <div class="flex items-center justify-between mb-4">
+                <p id="ai-summary-title" class="text-lg font-medium text-gray-700"></p>
+                <div class="flex items-center gap-2">
+                    <button class="text-gray-400 hover:text-gray-900 cursor-pointer p-1" id="ai-summary-copy" title="Copy to clipboard">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                    </button>
+                    <button class="text-gray-400 hover:text-gray-900 text-xl cursor-pointer" id="ai-summary-close">&times;</button>
+                </div>
+            </div>
+            <textarea id="ai-summary-textarea" class="w-full h-96 p-3 font-mono text-sm border border-gray-200 rounded-lg bg-gray-50 resize-y focus:outline-none focus:ring-2 focus:ring-blue-300" readonly></textarea>
         </div>
     </div>
 
@@ -382,8 +412,9 @@
         <div class="finplan-charts flex flex-col gap-4">
             <h2 class="text-lg font-bold flex items-center gap-2 flex-shrink-0">🕐 Your Timeline</h2>
 
-            <div class="glass-card p-5 flex-grow min-h-0">
+            <div class="glass-card p-5 flex-grow min-h-0 relative">
                 <finplan-timeline id="finplanTimeline"></finplan-timeline>
+                <button class="ai-fab" data-section="timeline" title="AI Summary">⚡</button>
             </div>
         </div>
 
@@ -395,6 +426,7 @@
 
             <div class="glass-card p-6 relative flex flex-col flex-grow min-h-0">
                 <asset-list class="flex-grow overflow-y-auto min-h-0" id="finplanAssetList"></asset-list>
+                <button class="ai-fab" data-section="portfolio" title="AI Summary">⚡</button>
                 <button class="absolute bottom-6 right-6 w-14 h-14 bg-black text-white rounded-full shadow-xl hover:scale-110 transition-transform flex items-center justify-center text-2xl font-light z-10" id="btn-add-asset" title="Add a new instrument">
                     +
                 </button>
@@ -412,7 +444,7 @@
             <span class="badge-coral ml-auto viewing-badge"></span>
         </h2>
 
-        <div class="glass-card p-6">
+        <div class="glass-card p-6 relative">
             <!-- Macro + Micro side by side -->
             <div class="flex gap-6">
                 <div class="finplan-chart-slot flex-1 min-w-0" id="finplan-macro-slot" style="border-bottom: none;">
@@ -429,6 +461,7 @@
                     </div>
                 </div>
             </div>
+            <button class="ai-fab" data-section="projections" title="AI Summary">⚡</button>
         </div>
     </div>
 
@@ -438,7 +471,7 @@
             <span class="badge-coral ml-auto viewing-badge"></span>
         </h2>
 
-        <div class="glass-card p-6">
+        <div class="glass-card p-6 relative">
             <!-- Monte Carlo + Guardrails side by side -->
             <div class="flex gap-6">
                 <div class="finplan-chart-slot flex-1 min-w-0" id="finplan-mc-slot" style="border-bottom: none;">
@@ -459,6 +492,7 @@
                     </div>
                 </div>
             </div>
+            <button class="ai-fab" data-section="simulations" title="AI Summary">⚡</button>
         </div>
     </div>
 
@@ -468,7 +502,7 @@
             <span class="badge-coral ml-auto viewing-badge"></span>
         </h2>
 
-        <div class="flex gap-6">
+        <div class="flex gap-6 relative">
             <!-- Credit Memos -->
             <div class="glass-card p-6 flex-1 min-w-0 overflow-auto" style="max-height: 440px;">
                 <div class="slot-heading" style="position: sticky; top: 0; background: #fff; z-index: 1;">Credit Memos</div>
@@ -480,17 +514,25 @@
                 <div class="slot-heading" style="position: sticky; top: 0; background: #fff; z-index: 1;">Report</div>
                 <debug-report-view id="finplanReport"></debug-report-view>
             </div>
+            <button class="ai-fab" data-section="details" title="AI Summary">⚡</button>
         </div>
     </div>
 
     <!-- ═══ Spreadsheet ═══ -->
     <div class="mb-8">
         <h2 class="text-lg font-bold flex items-center gap-2 mb-4">📊 Spreadsheet
-            <span class="badge-coral ml-auto viewing-badge"></span>
+            <span class="flex items-center gap-2 ml-auto">
+                <button class="btn-modern outline text-xs" id="btn-spreadsheet-copy" style="padding: 4px 8px;" title="Copy to clipboard">📋</button>
+                <button class="btn-modern outline text-xs" id="btn-spreadsheet-download" style="padding: 4px 8px;" title="Download CSV">⬇️</button>
+            </span>
+            <span class="badge-coral viewing-badge"></span>
         </h2>
 
-        <div class="glass-card p-6 overflow-auto" style="max-height: 600px;">
-            <spreadsheet-view id="finplanSpreadsheet"></spreadsheet-view>
+        <div class="relative">
+            <div class="glass-card p-6 overflow-auto" style="max-height: 600px;">
+                <spreadsheet-view id="finplanSpreadsheet"></spreadsheet-view>
+            </div>
+            <button class="ai-fab" data-section="spreadsheet" title="AI Summary">⚡</button>
         </div>
     </div>
 

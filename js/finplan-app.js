@@ -52,6 +52,16 @@ import './components/debug-report-view.js';
 import './components/credit-memo-view.js';
 import './components/share-modal.js';
 
+// ── AI Summary generators ──────────────────────────────────
+import {
+    generateTimelineMarkdown,
+    generatePortfolioSectionMarkdown,
+    generateProjectionsSectionMarkdown,
+    generateSimulationsSectionMarkdown,
+    generateDetailsSectionMarkdown,
+    generateSpreadsheetSectionMarkdown,
+} from './generators/finplan-ai.js';
+
 // ── Store ───────────────────────────────────────────────────
 import { store } from './finplan-store.js';
 
@@ -195,6 +205,71 @@ document.getElementById('btn-share').addEventListener('click', () => {
 const donatePopup = document.getElementById('popupFormDonate');
 donatePopup.querySelector('.closeBtn').addEventListener('click', () => donatePopup.style.display = 'none');
 donatePopup.addEventListener('click', (e) => { if (e.target === donatePopup) donatePopup.style.display = 'none'; });
+
+// ── AI Summary popup ────────────────────────────────────────
+const aiPopup = document.getElementById('ai-summary-popup');
+const aiTitle = document.getElementById('ai-summary-title');
+const aiTextarea = document.getElementById('ai-summary-textarea');
+
+function openAiSummary(title, content) {
+    aiTitle.textContent = title;
+    aiTextarea.value = content;
+    aiPopup.style.display = 'flex';
+}
+
+const aiGenerators = {
+    timeline:    () => generateTimelineMarkdown(activePortfolio, activeLifeEvents),
+    portfolio:   () => generatePortfolioSectionMarkdown(activePortfolio),
+    projections: () => generateProjectionsSectionMarkdown(activePortfolio, activeMetricName),
+    simulations: () => generateSimulationsSectionMarkdown(activePortfolio),
+    details:     () => generateDetailsSectionMarkdown(activePortfolio),
+    spreadsheet: () => generateSpreadsheetSectionMarkdown(activePortfolio),
+};
+
+const aiLabels = {
+    timeline: 'Your Timeline', portfolio: 'Your Portfolio', projections: 'Projections',
+    simulations: 'Simulations', details: 'Details', spreadsheet: 'Spreadsheet',
+};
+
+for (const btn of document.querySelectorAll('.ai-fab')) {
+    btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const section = btn.dataset.section;
+        const gen = aiGenerators[section];
+        if (gen) openAiSummary(`${aiLabels[section]} — AI Summary`, gen());
+    });
+}
+
+document.getElementById('ai-summary-copy').addEventListener('click', () => {
+    navigator.clipboard.writeText(aiTextarea.value).then(() => {
+        const btn = document.getElementById('ai-summary-copy');
+        btn.title = 'Copied!';
+        setTimeout(() => { btn.title = 'Copy to clipboard'; }, 2000);
+    });
+});
+document.getElementById('ai-summary-close').addEventListener('click', () => aiPopup.style.display = 'none');
+aiPopup.addEventListener('click', (e) => { if (e.target === aiPopup) aiPopup.style.display = 'none'; });
+
+document.getElementById('btn-spreadsheet-copy').addEventListener('click', () => {
+    if (!spreadsheetView) return;
+    const csv = spreadsheetView.toCSV();
+    navigator.clipboard.writeText(csv).then(() => {
+        const btn = document.getElementById('btn-spreadsheet-copy');
+        btn.textContent = '✅';
+        setTimeout(() => { btn.textContent = '📋'; }, 2000);
+    });
+});
+document.getElementById('btn-spreadsheet-download').addEventListener('click', () => {
+    if (!spreadsheetView) return;
+    const csv = spreadsheetView.toCSV();
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'spreadsheet.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+});
 
 document.getElementById('btn-add-asset').addEventListener('click', () => openCreateAssetModal());
 document.getElementById('btn-run-mc').addEventListener('click', () => doMonteCarlo());
