@@ -16,6 +16,8 @@ import { chronometer_run } from './chronometer.js';
 
 let guardrailsChart = null;
 
+export function getGuardrailsChart() { return guardrailsChart; }
+
 // ── Cached results (read by projections markdown generator) ──────
 
 let cachedResults = null;

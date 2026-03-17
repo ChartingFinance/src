@@ -151,6 +151,8 @@ export function getMonteCarloResults() { return cachedResults; }
 
 let monteCarloChart = null;
 
+export function getMonteCarloChart() { return monteCarloChart; }
+
 export function runMonteCarlo(sourceAssets, container, numSimulations = 1000, guardrailParams = null, retirementDateInt = null, runFromStart = false, lifeEvents = []) {
     // Determine number of months from a reference run
     const refAssets = cloneAssets(sourceAssets);

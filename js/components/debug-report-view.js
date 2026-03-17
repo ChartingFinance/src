@@ -103,6 +103,24 @@ class DebugReportView extends LitElement {
         })}`;
     }
 
+    scrollToDate(year, month) {
+        const target = `${year}-${String(month).padStart(2, '0')}`;
+        const container = this.closest('.overflow-auto');
+        const details = this.querySelectorAll('details');
+        for (const el of details) {
+            const summary = el.querySelector('summary');
+            if (summary && summary.textContent.includes(target)) {
+                el.open = true;
+                if (container) {
+                    container.scrollTop = el.offsetTop - container.offsetTop - container.clientHeight / 2;
+                }
+                el.style.background = '#FAECE7';
+                setTimeout(() => el.style.background = '', 1500);
+                return;
+            }
+        }
+    }
+
     _fmt(currency) {
         if (currency && typeof currency.toString === 'function') return currency.toString();
         return String(currency);

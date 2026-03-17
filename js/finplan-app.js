@@ -11,7 +11,7 @@
  */
 
 // ── Core types ──────────────────────────────────────────────
-import { Metric } from './model-asset.js';
+import { Metric, MetricLabel } from './model-asset.js';
 import { DateInt } from './utils/date-int.js';
 
 // ── Simulation ──────────────────────────────────────────────
@@ -29,13 +29,14 @@ import {
     charting_buildFromPortfolio,
     charting_buildGroupedMetric,
     charting_buildPortfolioMetric,
+    charting_buildDateMarkers,
+    charting_buildPhaseMarkers,
     charting_jsonMetric1ChartData,
-    charting_jsonRollupChartData,
 } from './charting.js';
 
 // ── Simulations ─────────────────────────────────────────────
-import { runMonteCarlo } from './monte-carlo.js';
-import { runGuardrails } from './guardrails.js';
+import { runMonteCarlo, getMonteCarloChart, getMonteCarloResults } from './monte-carlo.js';
+import { runGuardrails, getGuardrailsChart } from './guardrails.js';
 
 // ── Lit components ──────────────────────────────────────────
 import './components/asset-list.js';
@@ -106,6 +107,7 @@ const mcContainer       = document.getElementById('finplan-mc-container');
 const guardrailsCanvas  = document.getElementById('finplan-guardrails-canvas');
 const spreadsheetView   = document.getElementById('finplanSpreadsheet');
 const reportView        = document.getElementById('finplanReport');
+const metricSelect      = document.getElementById('finplan-metric-select');
 
 // ── App state ───────────────────────────────────────────────
 let activePortfolio     = null;
@@ -136,6 +138,33 @@ connectAssetListEvents();
 connectAssetFormModal();
 connectTransferModal();
 
+// Wire timeline edit event
+timeline.addEventListener('event-edit', (ev) => {
+    const { event: lifeEvent, index } = ev.detail;
+    eventFormModal.mode = 'edit';
+    eventFormModal.lifeEvent = lifeEvent;
+    eventFormModal.editIndex = index;
+    eventFormModal.modelAssets = assetList.modelAssets || [];
+    eventFormModal.open = true;
+});
+
+// Wire event form modal save/delete
+eventFormModal.addEventListener('save-life-event', (ev) => {
+    const { lifeEvent, index, mode } = ev.detail;
+    if (mode === 'create') {
+        activeLifeEvents.push(lifeEvent);
+        activeLifeEvents.sort((a, b) => a.triggerAge - b.triggerAge);
+    } else if (mode === 'edit') {
+        activeLifeEvents[index] = lifeEvent;
+    }
+    calculate();
+});
+
+eventFormModal.addEventListener('delete-life-event', (ev) => {
+    activeLifeEvents.splice(ev.detail.index, 1);
+    calculate();
+});
+
 // Wire buttons
 document.getElementById('btn-calculate').addEventListener('click', () => calculate());
 document.getElementById('btn-add-asset').addEventListener('click', () => openCreateAssetModal());
@@ -144,16 +173,35 @@ document.getElementById('btn-run-guardrails').addEventListener('click', () => do
 document.getElementById('btn-visualize').addEventListener('click', () => doVisualize());
 document.getElementById('btn-maximize').addEventListener('click', () => doMaximize());
 
+// Wire metric select
+metricSelect.innerHTML = Object.values(Metric).map(m =>
+    `<option value="${m}">${MetricLabel[m]}</option>`
+).join('');
+metricSelect.value = activeMetricName;
+metricSelect.addEventListener('change', () => {
+    activeMetricName = metricSelect.value;
+    if (timeline) timeline.metricName = activeMetricName;
+    if (!activePortfolio) return;
+    rebuildProjectionCharts();
+});
+
 // Wire store
 store.setRetirementDate(global_getRetirementDateInt());
 store.setSelectedDate(DateInt.today());
 
 const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 function updateViewingBadge(year, month) {
-    if (viewingBadge) viewingBadge.textContent = `Viewing: ${MONTH_NAMES[month - 1]} ${year}`;
+    const text = `Viewing: ${MONTH_NAMES[month - 1]} ${year}`;
+    if (viewingBadge) viewingBadge.textContent = text;
+    document.querySelectorAll('.viewing-badge').forEach(el => el.textContent = text);
 }
 updateViewingBadge(store.selectedYear, store.selectedMonth);
-store.addEventListener('date-change', (e) => updateViewingBadge(e.detail.year, e.detail.month));
+store.addEventListener('date-change', (e) => {
+    updateViewingBadge(e.detail.year, e.detail.month);
+    updateProjectionCursor();
+    if (spreadsheetView) spreadsheetView.scrollToDate(e.detail.year, e.detail.month);
+    if (reportView) reportView.scrollToDate(e.detail.year, e.detail.month);
+});
 
 // ── Settings ────────────────────────────────────────────────
 
@@ -261,22 +309,8 @@ function calculate() {
     // Build charting data
     portfolio.buildChartingDisplayData();
 
-    // Build chart configs
-    charting_buildFromPortfolio(portfolio, true, activeMetricName, expandedGroups);
-
-    // Render macro chart
-    if (macroChart) macroChart.destroy();
-    if (charting_jsonMetric1ChartData) {
-        const cfg = charting_jsonMetric1ChartData;
-        macroChart = new Chart(macroCanvas, cfg);
-    }
-
-    // Render micro chart (cash flow rollup)
-    if (microChart) microChart.destroy();
-    if (charting_jsonRollupChartData) {
-        const cfg = charting_jsonRollupChartData;
-        microChart = new Chart(microCanvas, cfg);
-    }
+    // Build and render projection charts
+    rebuildProjectionCharts();
 
     // Update details
     if (spreadsheetView) spreadsheetView.portfolio = portfolio;
@@ -305,6 +339,14 @@ function doMonteCarlo() {
         getGuardrailParams(), global_getRetirementDateInt(),
         false, activeLifeEvents
     );
+    // MC renders async (setTimeout 50ms) — apply phase markers after it's done
+    setTimeout(() => {
+        const mc = getMonteCarloChart();
+        if (mc) {
+            mc.options.plugins.dateMarkers = { markers: buildSimulationMarkers(mc, getMonteCarloResults()?.labels) };
+            mc.update('none');
+        }
+    }, 200);
 }
 
 function doGuardrails() {
@@ -313,6 +355,14 @@ function doGuardrails() {
         activePortfolio.modelAssets, guardrailsCanvas, getGuardrailParams(),
         global_getRetirementDateInt(), activeLifeEvents
     );
+    // Apply phase markers after render
+    setTimeout(() => {
+        const gr = getGuardrailsChart();
+        if (gr) {
+            gr.options.plugins.dateMarkers = { markers: buildSimulationMarkers(gr) };
+            gr.update('none');
+        }
+    }, 100);
 }
 
 let isVisualizing = false;
@@ -348,6 +398,94 @@ function doMaximize() {
     simModal.open = true;
 }
 
+function buildPhaseMarkersForCharts() {
+    const cursorDateInt = DateInt.from(store.selectedYear, store.selectedMonth);
+    return charting_buildPhaseMarkers(
+        activePortfolio, activeLifeEvents,
+        global_user_startAge, global_user_retirementAge, cursorDateInt
+    );
+}
+
+function rebuildProjectionCharts() {
+    if (!activePortfolio) return;
+
+    const markers = buildPhaseMarkersForCharts();
+
+    // Macro: grouped stacked bar for the selected metric
+    charting_buildFromPortfolio(activePortfolio, true, activeMetricName, expandedGroups);
+
+    if (macroChart) macroChart.destroy();
+    if (charting_jsonMetric1ChartData) {
+        // Override markers with phase markers
+        charting_jsonMetric1ChartData.options.plugins.dateMarkers = { markers };
+        macroChart = new Chart(macroCanvas, charting_jsonMetric1ChartData);
+    }
+
+    // Micro: individual asset stacked bar for the same metric
+    const microCfg = charting_buildPortfolioMetric(activePortfolio, activeMetricName, true);
+    if (microCfg) {
+        if (!microCfg.options.plugins) microCfg.options.plugins = {};
+        microCfg.options.plugins.dateMarkers = { markers };
+    }
+
+    if (microChart) microChart.destroy();
+    if (microCfg) {
+        microChart = new Chart(microCanvas, microCfg);
+    }
+}
+
+function buildSimulationMarkers(chart, fullLabels) {
+    if (!chart?.data?.labels) return [];
+    // Use full (unthinned) labels for index lookup when available
+    const labels = fullLabels || chart.data.labels;
+    const markers = [];
+
+    // Accumulate line (if visible)
+    if (global_user_startAge < global_user_retirementAge) {
+        const accEvent = activeLifeEvents.find(ev => ev.type === 'accumulate');
+        if (accEvent) {
+            const accLabel = `Jan ${accEvent.triggerDateInt.year}`;
+            const accIdx = labels.indexOf(accLabel);
+            if (accIdx >= 0) markers.push({ index: accIdx, color: '#0F6E56', label: 'Accumulate' });
+        }
+    }
+
+    // Retire line — already drawn by retirementLinePlugin, but we want consistent style
+    // Skip — let the existing plugin handle it to avoid double-drawing
+
+    // Cursor
+    const cursorLabel = `${MONTH_NAMES[store.selectedMonth - 1]} ${store.selectedYear}`;
+    const cursorIdx = labels.indexOf(cursorLabel);
+    if (cursorIdx >= 0) markers.push({ index: cursorIdx, color: '#111827', label: '\u25BC' });
+
+    return markers;
+}
+
+function updateProjectionCursor() {
+    if (!activePortfolio) return;
+    const markers = buildPhaseMarkersForCharts();
+    if (macroChart) {
+        macroChart.options.plugins.dateMarkers = { markers };
+        macroChart.update('none');
+    }
+    if (microChart) {
+        microChart.options.plugins.dateMarkers = { markers };
+        microChart.update('none');
+    }
+
+    // Simulation charts
+    const mcChart = getMonteCarloChart();
+    if (mcChart) {
+        mcChart.options.plugins.dateMarkers = { markers: buildSimulationMarkers(mcChart, getMonteCarloResults()?.labels) };
+        mcChart.update('none');
+    }
+    const grChart = getGuardrailsChart();
+    if (grChart) {
+        grChart.options.plugins.dateMarkers = { markers: buildSimulationMarkers(grChart) };
+        grChart.update('none');
+    }
+}
+
 function updateCharts() {
     if (!activePortfolio) return;
 
@@ -356,20 +494,9 @@ function updateCharts() {
     p2.lifeEvents = activeLifeEvents.map(e => e.copy());
     chronometer_run(p2);
     p2.buildChartingDisplayData();
+    activePortfolio = p2;
 
-    charting_buildFromPortfolio(p2, true, activeMetricName, expandedGroups);
-
-    if (macroChart) macroChart.destroy();
-    if (charting_jsonMetric1ChartData) {
-        const cfg = charting_jsonMetric1ChartData;
-        macroChart = new Chart(macroCanvas, cfg);
-    }
-
-    if (microChart) microChart.destroy();
-    if (charting_jsonRollupChartData) {
-        const cfg = charting_jsonRollupChartData;
-        microChart = new Chart(microCanvas, cfg);
-    }
+    rebuildProjectionCharts();
 }
 
 
@@ -381,6 +508,8 @@ function updateTimeline() {
     timeline.retirementAge = global_user_retirementAge;
     timeline.finishAge = global_user_finishAge;
     timeline.lifeEvents = activeLifeEvents;
+    timeline.portfolio = activePortfolio;
+    timeline.metricName = activeMetricName;
 }
 
 // ── Asset List Events ───────────────────────────────────────

@@ -1,395 +1,299 @@
 # FinPlan UI specification — implementation guide
 
 ## Document purpose
-This is the authoritative design specification for the FinPlan financial planning tool UI. It captures architectural decisions, interaction patterns, and phased implementation guidance. Hand this to Claude Code as the source of truth.
+This is the authoritative design specification for the FinPlan financial planning tool UI. It captures architectural decisions, interaction patterns, and implementation status. Hand this to Claude Code as the source of truth.
 
 ---
 
 ## 1. Design philosophy
 
-### Core principle: the timeline is the instrument
-The entire UI is organized around a single horizontal timeline that represents the user's financial life. Every visual layer below the timeline shares its x-axis. Scroll position determines information density — summary at top, raw data at bottom. There are no tabs, no modals, no hidden panels. Everything is visible on load.
+### Core principle: everything visible, scroll = detail
+The entire UI is a single vertical page. There are no tabs, no hidden panels. Every tool and dataset is visible on load. Scroll position determines information density — summary at top, raw data at bottom.
 
 ### Information architecture
-The page reads top-to-bottom as a progressive density gradient:
+The page reads top-to-bottom as a progressive density gradient. Each section is a named region with its own heading, glass-card container, and "Viewing" badge.
 
 ```
-Global bar          → settings and assumptions
-Pinned timeline     → temporal navigation (sacred x-axis)
-Macro projection    → grouped asset chart
-Micro projection    → individual asset chart
-Monte Carlo         → probability simulation
-Guardrails          → floor/ceiling thresholds
-────────────────────── visual break: full-width foundation ──────
-Report              → summary cards + detail table
-Spreadsheet         → year-by-year raw data
-────────────────────── secondary tools ──────
-Visualizer          → what-if scenarios, custom charts
-Maximizer           → optimization recommendations
+Header              → app identity + recalculate action
+Settings            → global assumptions (full-width glass-card)
+─── Timeline + Portfolio (75/25 side-by-side) ───
+  Your Timeline     → temporal navigation (year/month dropdowns, phase dots)
+  Your Portfolio    → grouped asset hierarchy + add asset
+─── Projections (full-width) ───
+  Macro + Micro     → side-by-side charts in one glass-card
+─── Simulations (full-width) ───
+  Monte Carlo + Guardrails → side-by-side, on-demand (Run buttons)
+─── Details (full-width) ───
+  Spreadsheet + Report → side-by-side, scrollable containers
+─── Tools (full-width) ───
+  Visualizer        → hydraulic flow animation (on-demand Run button)
+  Maximizer         → genetic algorithm optimizer (on-demand Run button)
+Footer
 ```
 
 ### No tabs, no accordions
 We explicitly rejected tabbed navigation and collapsible panels. Both force the user to hold mental state across hidden views. The vertical scroll model means the user's position on the page *is* their level of detail.
 
----
-
-## 2. Layout structure
-
-### Global bar
-Fixed at the very top. Contains:
-- App identity (logo/name)
-- Global assumptions: inflation rate, expected return, tax bracket
-- Settings access
-
-Not sticky — scrolls away. These are set-and-forget values.
-
-### Pinned timeline
-**Sticky-positioned** below the global bar. Does not scroll away. This is the single most important UI element.
-
-#### X-axis alignment (sacred constraint)
-The left edge of the timeline bar aligns pixel-for-pixel with the left edge of every chart below. The right edge does the same. The timeline IS the shared x-axis. This means:
-- Timeline and all charts must share the same container width
-- Any padding, margins, or borders must be identical across the timeline and all chart layers
-- The "now" marker at, say, 35% across the timeline must correspond to 35% across every chart
-- Implementation should use a shared constant or CSS variable for the chart content area boundaries
-
-#### Timeline controls
-- **Year dropdown** — select any year in the planning horizon
-- **Month dropdown** — select month within the year
-- No drag-based scrubbing. Dropdowns provide precision without fine motor overhead.
-
-#### Timeline visual elements
-- **Phase bar** — horizontal track showing accumulation phase (teal) and retirement phase (blue)
-- **"Now" marker** — thin vertical line at the current real-world date
-- **Phase labels** — "Accumulation" and "Retirement" text labels, plus "now" and "retire" markers above the bar
-- **Viewing badge** — coral pill showing "Viewing: [Month] [Year]" reflecting the dropdown selection
-
-### 80/20 split
-Below the pinned timeline, the content area divides:
-- **80% left column** — chart layers, stacked vertically
-- **20% right column** — portfolio sidebar
-
-This split persists from the macro projection through guardrails. The sidebar border aligns with the right edge of the charts.
-
-### Portfolio sidebar (20% column)
-Contains the user's asset hierarchy:
-```
-My portfolios
-  Tax-advantaged
-    401k
-    Roth IRA
-  Taxable
-    Brokerage
-    Crypto
-  Real assets
-    Home equity
-```
-
-Plus quick tools:
-- + Add asset
-- + New group
-
-The sidebar is allowed to be tall and partially empty. It does not morph or change content based on scroll position — that was explicitly rejected as too complex. It runs the full height of the 80/20 split zone.
-
-**Future consideration:** The empty sidebar space below the portfolio list could potentially house the Visualizer and Maximizer tools. Not for initial implementation.
-
-### Full-width foundation
-Below the 80/20 split, a **visual break** (2px border or heavier divider) signals the transition from chart territory to data territory. Everything below this break is full-width — no sidebar.
-
-This visual break also signals a **sync boundary** — see metric sync rules below.
+### On-demand execution
+Expensive operations (Monte Carlo, Guardrails, Visualizer, Maximizer) are triggered by explicit Run buttons rather than auto-running on every recalculation. This keeps the page responsive and gives the user control over when to spend computation.
 
 ---
 
-## 3. Chart layers (within 80% column)
+## 2. Design system: Modern1
 
-All chart layers share the sacred x-axis. A vertical "now" reference line appears at the same horizontal pixel position on every chart.
+### Visual language
+- **Font**: Poppins (400/500/600/700)
+- **Body background**: #fcfcfd
+- **Text**: #111827
+- **Borders/grays**: #e5e7eb / #f3f4f6
+- **Glass-card**: white bg, 24px border-radius, subtle shadow (`0 20px 40px -15px rgba(0,0,0,0.05)`), 1px border
+- **Inputs** (`fin-input`): #f3f4f6 bg, 12px border-radius, purple focus ring
+- **Buttons** (`btn-modern`): primary = black bg, outline = white with gray border
+- **Gradient text**: purple-to-pink gradient for brand accent
+- **Badge (coral)**: background #FAECE7, text #993C1D, pill shape, 11px font
+- **Scrollbars**: thin (8px), gray thumb, transparent track
+- **Max width**: 1400px centered with responsive padding
 
-### Layer 1: Macro — grouped asset projection
-- Shows projection lines for each asset group (tax-advantaged, taxable, real assets)
-- Color-coded by group with legend labels at the right edge
-- **Metric selector** toggle: see section 5
-- **Badge** showing the active metric's value at the selected timeline date (e.g., "Wealth · $2.1M")
-
-### Layer 2: Micro — individual asset projection
-- Shows projection lines for each individual asset (401k, Roth IRA, brokerage, crypto, home equity)
-- Color-coded by asset with legend labels at the right edge
-- **Metric selector** toggle: synced bidirectionally with macro (see section 5)
-- **Badges** showing top asset values at the selected date (e.g., "401k $890k", "Home $480k")
-
-### Layer 3: Monte Carlo
-- Probability cone with P10, P50, P90 bands
-- Individual simulation traces at low opacity
-- **Metric-aware**: cone recomputes based on active metric (see section 5)
-- **Badge** showing success probability or metric-specific summary at the selected date
-
-### Layer 4: Guardrails
-- Projected path line against floor (red dashed) and ceiling (green dashed) thresholds
-- **Metric-aware**: thresholds adapt to active metric (see section 5)
-- **State badge** showing qualitative status: "Above floor", "Near floor", "Below floor" — color-coded green/amber/red
+### Not Tidewater
+The original index.html used a design system internally called "Tidewater" (DM Sans/Fraunces fonts, CSS vars like `--cream`, `--ink`, `--rule`). FinPlan uses Modern1 exclusively. Do not reference Tidewater tokens or link index.css.
 
 ---
 
-## 4. Foundation layers (full-width)
+## 3. Layout structure
 
-### Layer 5: Report
-- **Summary cards** in a 4-column grid: net worth, annual draw, tax burden, success probability
-- **Detail table** with columns: account, balance, withdrawal, tax impact, % of total, YoY change
-- **Total row** at the bottom with aggregated values
-- Synced to the timeline date — all values reflect the selected year/month
-- **Carry-down badge** in the header: displays the currently active chart metric and its value (e.g., "Charts showing: Wealth · $2.1M at Jun 2047"). This is informational only — not interactive.
-- Column structure does NOT change when the chart metric changes (see section 5)
+### Header
+Full-width. Contains app title ("Charting Finance.") with gradient text accent, tagline, and Recalculate button. Separated from settings by a bottom border. Scrolls away — not sticky.
 
-### Layer 6: Spreadsheet
-- Monospace font, year-by-year tabular data
-- Columns: year, each account balance, net total
-- The selected year's row is **highlighted** with the coral color scheme
-- Surrounding rows (±2 years) provide context
-- Auto-scrolls so the highlighted row is visible/centered
-- **Carry-down badge** in the header: "Scrolled to: [Year]" plus the active chart metric echo
-- Column structure does NOT change when the chart metric changes (see section 5)
+### Settings row
+Full-width glass-card with 6-column grid: Current Age, Retirement Age, Finish Age, Filing As, Inflation, Backtest from Year. All use `fin-input` styling. Changes trigger recalculation.
 
-### Layer 7+: Visualizer and Maximizer
-- Placed below the foundation as secondary power tools
-- **Visualizer**: scenario comparison, what-if overlays, custom chart builder
-- **Maximizer**: optimization suggestions, tax-loss harvesting, rebalance recommendations
-- These are not part of the core navigation flow. Implementation is lower priority.
+### Timeline + Portfolio (75/25 split)
+Side-by-side in a flex row with `gap: 32px` and fixed height (360px).
+
+**Left (flex: 3) — Your Timeline:**
+- Section heading with clock emoji
+- Glass-card containing `<finplan-timeline>` component
+- Year/month dropdown selectors styled in coral (#FAECE7 bg, #993C1D text) to match badges
+- Dropdowns centered horizontally
+- Phase bar: colored dots for life events with connecting lines, S/F anchors, age labels
+- Pure HTML/CSS rendering (no Chart.js canvas)
+
+**Right (flex: 1) — Your Portfolio:**
+- Section heading with briefcase emoji
+- "Viewing: [Month] [Year]" badge centered at top of the glass-card
+- `<asset-list>` component with grouped assets (collapsible group headers)
+- Floating black circle "+" button (bottom-right) for adding assets
+- Independent vertical scroll within container
+
+### Projections (full-width)
+Section heading with chart emoji + "Viewing" badge (right-aligned).
+
+Glass-card containing Macro and Micro charts **side-by-side** in a flex row with `gap: 24px`:
+- **Macro Projection**: grouped stacked bar chart (asset groups with stable colors)
+- **Micro Projection**: cash flow rollup chart
+
+Both charts use `finplan-chart-canvas-wrap` (375px height). Chart.js with `responsive: true`, `maintainAspectRatio: false`.
+
+### Simulations (full-width)
+Section heading with dice emoji + "Viewing" badge.
+
+Glass-card containing Monte Carlo and Guardrails **side-by-side**, each with its own slot heading row containing a `Run` button:
+- **Monte Carlo**: 1,000-simulation fan chart with P10/P25/P50/P75/P90 percentile bands, deterministic baseline, retirement annotation line. Renders into a container div (creates its own canvas).
+- **Guardrails**: Guyton-Klinger dual-axis chart — portfolio value (left axis, blue) + annual withdrawal (right axis, red step-line) with preservation/prosperity event markers.
+
+Both are **on-demand** — triggered by their respective Run buttons, not auto-run on recalculate.
+
+### Details (full-width)
+Section heading with clipboard emoji + "Viewing" badge.
+
+Two glass-cards **side-by-side**, each with `max-height: 440px` and `overflow: auto`:
+- **Spreadsheet**: `<spreadsheet-view>` — monthly tabular data for all assets and metrics. Sticky heading within scroll container.
+- **Report**: `<debug-report-view>` — collapsible monthly/yearly financial reports with income/tax/cash flow breakdowns. Sticky heading within scroll container.
+
+Both auto-scroll to the selected year/month when the timeline date changes (scrolls within container, not the page). Matched row/entry gets a temporary coral highlight.
+
+### Visualizer (full-width)
+Section heading with faucet emoji.
+
+Glass-card with date display header, Run button, and dark container (`#1e1e2e`, 600px height, 12px border-radius) for the hydraulic SVG animation. On-demand via Run button. Uses `chronometer_run_animated()` to step through the simulation with 80ms animated ticks, rendering asset tanks, flow pipes, and value changes.
+
+### Maximizer (full-width)
+Section heading with crystal ball emoji.
+
+Glass-card with description text and Run button. Launches `<simulator-modal>` overlay — a genetic algorithm that optimizes fund transfer allocations and guardrail parameters. Population of 50, 200 generations, with live progress display.
+
+### Footer
+Simple footer with app name and version label.
 
 ---
 
-## 5. Metric system
+## 4. Dropped concepts
+
+### Sacred x-axis alignment
+The original spec required pixel-perfect alignment between the timeline and all chart x-axes. This was attempted with a Chart.js canvas timeline sharing a `FORCED_Y_AXIS_WIDTH = 60px` via `afterFit` callbacks. The result looked worse than a clean HTML timeline. **Dropped in favor of visual quality.** Charts are now full-width in their own section, decoupled from the timeline.
+
+### Sticky timeline
+The timeline was originally sticky-positioned (`position: sticky; top: 0`). With the layout change to timeline + portfolio side-by-side, stickiness was dropped. The timeline scrolls with the page. The "Viewing" badges on each section provide continuity.
+
+### 80/20 chart/sidebar split
+The original spec had charts in an 80% column with the portfolio sidebar in a 20% column running the full chart zone height. This created empty space in the sidebar and constrained chart widths. **Replaced with:** timeline + portfolio at 75/25 at the top, charts full-width below. Charts get more horizontal space; portfolio is visible where it matters (near the timeline).
+
+---
+
+## 5. Badge system
+
+### Badge purpose
+Badges are small inline coral indicators that echo the selected timeline date across sections. They let the user see temporal context without scrolling back to the timeline.
+
+### Badge visual design
+- **Color scheme**: coral — background #FAECE7, text #993C1D, border #F5D0C5
+- **Shape**: pill/rounded rectangle, `border-radius: 999px`
+- **Typography**: 11px, font-weight 500
+- **Placement**: right-aligned in section heading rows (via `ml-auto` in flex container)
+
+### Current badge placements
+
+| Location | Badge content | Updates on |
+|----------|--------------|------------|
+| Your Portfolio (in glass-card) | "Viewing: [Month] [Year]" | Date change |
+| Projections heading | "Viewing: [Month] [Year]" | Date change |
+| Simulations heading | "Viewing: [Month] [Year]" | Date change |
+| Details heading | "Viewing: [Month] [Year]" | Date change |
+
+### Future badge enhancements
+- Macro badge: active metric + aggregate value at selected date
+- Micro badge: top asset values at selected date
+- Monte Carlo badge: success probability at selected date
+- Guardrails state badge: "Above floor" / "Near floor" / "Below floor" with semantic colors
+- Report/spreadsheet carry-down badges echoing the active chart metric
+
+---
+
+## 6. Timeline date sync
+
+The selected timeline date (via year/month dropdowns) is global state managed by `FinPlanStore` (an `EventTarget` singleton). It drives:
+
+1. **Timeline dropdowns** — coral-styled selects update store
+2. **All "Viewing" badges** — update text across all sections
+3. **Spreadsheet** — auto-scrolls within its container to the matching month row, coral highlight
+4. **Report** — auto-scrolls within its container to the matching entry, opens it, coral highlight
+
+### Future date sync targets
+- Chart crosshair/highlight at the selected date
+- Monte Carlo percentile values recalculated at selected date
+- Guardrails status assessed at selected date
+- Phase-aware metric toggle adjusting priorities based on accumulation vs retirement
+
+---
+
+## 7. Metric system (future)
 
 ### Available metrics (5 total)
 
 | Metric | Description | Primary phase |
 |--------|-------------|---------------|
-| **Wealth** | Net worth trajectory. The accumulation-phase hero metric. "Is my number going up?" | Accumulation |
-| **Balance** | Raw account balances. Phase-neutral accounting view. | Both |
-| **Growth** | Rate of return / growth percentage. Phase-neutral analytical view. | Both |
-| **Income** | Portfolio-generated income streams. Retirement-phase hero. "What's coming in?" | Retirement |
-| **Withdrawal** | Distribution amounts from accounts. Retirement-phase hero. "How much can I take?" | Retirement |
+| **Wealth** | Net worth trajectory | Accumulation |
+| **Balance** | Raw account balances | Both |
+| **Growth** | Rate of return / growth percentage | Both |
+| **Income** | Portfolio-generated income streams | Retirement |
+| **Withdrawal** | Distribution amounts from accounts | Retirement |
 
-### Phase-aware metric toggle
+### Current state
+The macro chart uses a grouped stacked bar driven by `activeMetricName` (defaults to `Metric.VALUE`). The micro chart shows cash flow rollup. No metric toggle UI exists yet.
 
-The metric selector displays all five metrics but **visually prioritizes** metrics relevant to the current timeline phase.
-
-**When viewing a date in the accumulation phase:**
-- Primary (full visual weight): Wealth, Balance, Growth
-- Demoted (smaller, lighter, or grouped under "more"): Income, Withdrawal
-
-**When viewing a date in the retirement phase:**
-- Primary (full visual weight): Withdrawal, Income, Balance
-- Demoted (smaller, lighter, or grouped under "more"): Wealth, Growth
-
-All five metrics are always accessible regardless of phase. The filtering is a visual suggestion, not a restriction.
-
-**Phase transition behavior:** When the user changes the timeline date from accumulation to retirement (or vice versa), the toggle layout updates to reflect the new phase's priorities. If the currently active metric becomes demoted, it remains active — the toggle rearranges around it but does not force a metric change.
-
-### Metric sync rules
-
-#### Synced zone (chart layers — within the 80/20 split)
-
-| Component | Syncs? | Behavior |
-|-----------|--------|----------|
-| Macro | Yes | Bidirectional. Changing metric here updates micro, Monte Carlo, guardrails. |
-| Micro | Yes | Bidirectional. Changing metric here updates macro, Monte Carlo, guardrails. |
-| Monte Carlo | Yes | Follows the active metric. Probability cone recomputes. Badge updates to reflect metric-appropriate language (e.g., "87% success" for wealth, "87% of scenarios exceed 4.2%" for growth). |
-| Guardrails | Yes | Follows the active metric. Floor/ceiling thresholds adapt: dollar thresholds for wealth/balance, rate thresholds for growth, income/withdrawal floors for income/withdrawal metrics. State badge updates accordingly. |
-
-A metric change on ANY synced component propagates to ALL synced components. There is no primary/secondary — macro and micro are peers.
-
-#### Unsynced zone (foundation layers — full-width)
-
-| Component | Syncs? | Behavior |
-|-----------|--------|----------|
-| Report | No | Columns always show: balance, withdrawal, tax impact, % of total, YoY. Structure never changes. |
-| Spreadsheet | No | Columns always show: year, account balances, net total. Structure never changes. |
-
-**Carry-down badges**: Although the report and spreadsheet do not change their data structure, they display a **carry-down badge** that echoes the active chart metric and its aggregate value at the selected date. Example: if the charts are set to "Growth" and the date is Jun 2047, the report header shows a badge reading "Charts showing: Growth · 4.2% at Jun 2047". This provides continuity without requiring the tables to restructure.
-
-**Rationale**: Rebuilding table columns per metric means either maintaining multiple table schemas or handling every format permutation. The visual break to full-width already signals a context shift. The carry-down badge bridges the gap cheaply.
+### Future implementation
+- Metric toggle UI with all five metrics, placed in the Projections section
+- Phase-aware toggle: visually prioritize metrics relevant to the current timeline phase
+- Metric sync: changing metric propagates to macro, micro, Monte Carlo, and guardrails
+- Monte Carlo and guardrails respond to metric changes (recompute per metric)
 
 ---
 
-## 6. Badge system
+## 8. State management
 
-### Badge purpose
-Badges are small inline indicators that echo synchronized state (timeline date, active metric, computed values) across topographically distant regions of the page. They let the user see connected information without scrolling.
+Three pieces of global state in `FinPlanStore` (`js/finplan-store.js`):
 
-### Badge visual design
-- **Color scheme**: coral family — background #FAECE7, text #993C1D
-- **Shape**: pill/rounded rectangle, small (fits inline with section headers)
-- **Typography**: 10-11px, consistent across all badge instances
-- **Exception — state badges**: guardrails status badge uses semantic colors (green for healthy, amber for warning, red for danger) instead of coral
+1. **Selected date** (`#selectedDateInt`) — DateInt, drives timeline, badges, detail scrolling
+2. **Active metric** (`#activeMetric`) — Metric enum value, drives chart rendering
+3. **Asset visibility** (`#assetVisibility`) — Map<string, boolean>, drives chart line toggling
 
-### Badge placements
+Mutators dispatch CustomEvents: `date-change`, `metric-change`, `visibility-change`.
 
-| Location | Badge content | Updates on |
-|----------|--------------|------------|
-| Pinned timeline | "Viewing: [Month] [Year]" | Date change |
-| Macro chart | "[Metric] · [value]" (e.g., "Wealth · $2.1M") | Date change, metric change |
-| Micro chart | Top 2-3 asset values (e.g., "401k $890k · Home $480k") | Date change, metric change |
-| Monte Carlo | "[Success %] at [Month] [Year]" or metric-specific summary | Date change, metric change |
-| Guardrails | State badge: "Above floor" / "Near floor" / "Below floor" | Date change, metric change |
-| Report header | "Charts showing: [Metric] · [value] at [Month] [Year]" | Date change, metric change |
-| Spreadsheet header | "Scrolled to: [Year]" + metric echo | Date change, metric change |
-
-### Badge behavior rules
-1. All badges update simultaneously when the timeline date changes
-2. Chart-zone badges update when the active metric changes
-3. Foundation-zone badges update their metric *echo text* but do not alter the table data
-4. Badges are read-only — they are not interactive controls
-5. Badge values must round appropriately: integers for counts, 1-2 decimals for percentages, abbreviated for currency ($2.1M not $2,112,347)
-6. When a metric produces a near-zero or flat value (e.g., withdrawal during accumulation), the badge should still display the value rather than hiding — it reinforces the phase distinction
+Additionally, `#retirementDateInt` is set at init to determine phase boundaries.
 
 ---
 
-## 7. Timeline date sync
+## 9. Implementation status
 
-The selected timeline date (via year/month dropdowns) is a global state that drives:
+### Done
+- [x] Header with app identity and recalculate button
+- [x] Settings row (6 fields in glass-card)
+- [x] Timeline with year/month dropdowns (coral styled) and phase dot bar
+- [x] Portfolio sidebar with grouped assets, collapsible headers, add-asset button
+- [x] Timeline + Portfolio side-by-side (75/25 at fixed 360px)
+- [x] "Viewing" badges on Portfolio, Projections, Simulations, Details headings
+- [x] Macro chart (grouped stacked bar)
+- [x] Micro chart (cash flow rollup)
+- [x] Monte Carlo fan chart with Run button
+- [x] Guardrails dual-axis chart with Run button
+- [x] Spreadsheet view (live data, scrollable container)
+- [x] Report view (live data, scrollable container)
+- [x] Detail auto-scroll to selected month with coral highlight
+- [x] Visualizer (hydraulic animation with Run button)
+- [x] Maximizer (genetic algorithm optimizer with Run button)
+- [x] Modern1 design system throughout
+- [x] Reactive state store (FinPlanStore)
+- [x] Footer
 
-1. **Pinned timeline** — viewing badge updates, selection indicator moves
-2. **All chart layers** — if charts support a crosshair or highlight at the selected date, they show it
-3. **Monte Carlo** — percentile values recalculated at the selected date
-4. **Guardrails** — status assessed at the selected date
-5. **Report** — summary cards and detail table show values for the selected date
-6. **Spreadsheet** — selected year row is highlighted with coral background, table auto-scrolls to center it
-7. **All badges** — update to reflect values at the new date
-8. **Phase-aware metric toggle** — if the date crosses the accumulation/retirement boundary, toggle layout updates
-
----
-
-## 8. Implementation phases
-
-### Phase 1: Layout skeleton and timeline
-**Goal**: Establish the sacred x-axis and the full vertical structure.
-
-- [ ] Global bar with editable assumption fields (inflation, return, tax bracket)
-- [ ] Pinned (sticky) timeline with year/month dropdown selectors
-- [ ] Timeline phase bar with accumulation/retirement coloring
-- [ ] "Now" marker and phase transition marker on timeline
-- [ ] "Viewing: [date]" badge on timeline
-- [ ] 80/20 column split below timeline
-- [ ] Portfolio sidebar with static asset hierarchy (grouped and individual)
-- [ ] Placeholder containers for each chart layer at correct widths
-- [ ] Full-width foundation section below the split with visual break divider
-- [ ] Placeholder containers for report and spreadsheet
-- [ ] Placeholder containers for visualizer and maximizer
-
-**Acceptance criteria**: Changing the year/month dropdown updates the "Viewing" badge. All placeholder containers share identical left/right content boundaries. The timeline is sticky on scroll. The 80/20 split is visually correct with the sidebar running the full chart zone height.
-
-### Phase 2: Chart rendering with metric sync
-**Goal**: Render real projection data in all four chart layers with synchronized metric switching.
-
-- [ ] Macro chart: render grouped asset projection lines from model data
-- [ ] Micro chart: render individual asset projection lines from model data
-- [ ] Monte Carlo chart: render probability cone with P10/P50/P90 bands
-- [ ] Guardrails chart: render projected path against floor/ceiling lines
-- [ ] Implement metric toggle UI with all five metrics: wealth, balance, growth, income, withdrawal
-- [ ] Phase-aware toggle: visually prioritize metrics based on whether selected date is in accumulation or retirement
-- [ ] Metric sync: changing metric on any chart layer propagates to all chart layers
-- [ ] Monte Carlo and guardrails respond to metric changes (recompute cone/thresholds per metric)
-- [ ] "Now" vertical reference line appears at the same x-position on all four charts
-- [ ] Verify x-axis pixel alignment: timeline endpoints match chart endpoints exactly
-
-**Acceptance criteria**: Switching from "Wealth" to "Growth" on the micro chart updates the macro chart, Monte Carlo, and guardrails simultaneously. The "now" line is vertically continuous across all layers. Charts resize correctly if the browser window changes width.
-
-### Phase 3: Badge system
-**Goal**: Implement cross-region badges that echo state across the page.
-
-- [ ] Macro chart badge: shows active metric + value at selected date
-- [ ] Micro chart badges: show top 2-3 individual asset values at selected date
-- [ ] Monte Carlo badge: shows success probability or metric-specific summary at selected date
-- [ ] Guardrails state badge: "Above floor" / "Near floor" / "Below floor" with semantic coloring
-- [ ] Report carry-down badge: "Charts showing: [Metric] · [value] at [date]"
-- [ ] Spreadsheet carry-down badge: "Scrolled to: [Year]" + metric echo
-- [ ] All badges update on date change
-- [ ] Chart-zone badges update on metric change
-- [ ] Foundation carry-down badges update metric echo text on metric change
-- [ ] Number formatting: abbreviated currency ($2.1M), 1-2 decimal percentages, integer counts
-
-**Acceptance criteria**: Changing the timeline date from 2035 to 2055 updates every badge on the page. Changing the metric from "Balance" to "Withdrawal" updates all chart-zone badges and the carry-down badge text on report/spreadsheet headers. Badge values are correctly rounded and formatted.
-
-### Phase 4: Foundation tables
-**Goal**: Build the report and spreadsheet with timeline date sync.
-
-- [ ] Report summary cards: 4-column grid (net worth, annual draw, tax burden, success probability)
-- [ ] Report detail table: account, balance, withdrawal, tax impact, % of total, YoY change
-- [ ] Report total row with aggregated values
-- [ ] Spreadsheet: monospace year-by-year table with all accounts + net column
-- [ ] Spreadsheet row highlight: selected year row gets coral background
-- [ ] Spreadsheet context rows: show ±2 years around the selected year
-- [ ] Spreadsheet auto-scroll: highlighted row centers in view when date changes
-- [ ] Report and spreadsheet column structure remains static regardless of metric changes
-- [ ] Carry-down badges in both headers (implemented in phase 3, wired to data here)
-
-**Acceptance criteria**: Changing timeline date to 2047 highlights the 2047 row in the spreadsheet, updates all report card values to 2047 data, and the detail table shows 2047 account-level data. Switching the chart metric does NOT change any column in the report or spreadsheet — only the carry-down badge text updates.
-
-### Phase 5: Portfolio sidebar interactivity
-**Goal**: Make the sidebar functional for controlling chart visibility.
-
-- [ ] Clicking an asset group toggles its visibility on the macro chart
-- [ ] Clicking an individual asset toggles its visibility on the micro chart
-- [ ] Visual indication of toggled-off state (dimmed text, unchecked indicator)
-- [ ] "Add asset" and "New group" actions (wire to data model)
-- [ ] Sidebar scroll behavior: if the asset list exceeds the chart zone height, the sidebar scrolls independently
-
-**Acceptance criteria**: Toggling off "Taxable" in the sidebar hides the taxable line on the macro chart. Toggling off "Crypto" hides the crypto line on the micro chart. Toggled-off assets do not contribute to badge values.
-
-### Phase 6: Visualizer and Maximizer
-**Goal**: Build the secondary power tools below the foundation.
-
-- [ ] Visualizer: scenario comparison (overlay alternate assumption sets on the same chart)
-- [ ] Visualizer: what-if builder (adjust a single variable and see the projection delta)
-- [ ] Maximizer: optimization suggestions based on current portfolio and goals
-- [ ] Maximizer: tax-loss harvesting recommendations
-- [ ] Maximizer: rebalance recommendations
-- [ ] Placement below foundation, potentially exploring use of empty sidebar space
-
-**Acceptance criteria**: User can create a what-if scenario (e.g., "retire 2 years earlier") and see it overlaid on the main projection. Maximizer surfaces at least one actionable recommendation based on the current portfolio state.
+### Remaining
+- [ ] Metric toggle UI (5 metrics with phase-aware prioritization)
+- [ ] Metric sync across all chart layers
+- [ ] Rich badges (metric values, success probability, guardrails state)
+- [ ] Report summary cards (4-column grid above detail table)
+- [ ] "Now" marker on timeline and charts
+- [ ] Chart crosshair at selected timeline date
+- [ ] Responsive collapse (< 1024px)
 
 ---
 
-## 9. Technical constraints and notes
+## 10. Technical notes
 
-### X-axis alignment implementation
-The sacred x-axis constraint is the hardest technical requirement. Recommended approach:
-- Define a shared `chartContentLeft` and `chartContentRight` value (in px or %) that both the timeline and all chart containers use for their drawable area
-- Account for y-axis labels on charts — these eat into the left side. The timeline must have an equivalent left offset
-- If using a charting library, ensure the plot area boundaries are extractable and matchable
-- Test with browser DevTools overlay: a vertical line drawn at any x-position on the timeline should cross the same temporal point on every chart
+### File structure
+- `finplan.html` — layout skeleton, Modern1 styles, all section containers
+- `js/finplan-app.js` — orchestrator (globals, simulation, chart wiring, event handling)
+- `js/finplan-store.js` — reactive state store (EventTarget singleton)
+- `js/components/finplan-timeline.js` — Lit component, pure HTML/CSS phase bar
 
-### State management
-Three pieces of global state drive the entire UI:
-1. **Selected date** (year + month) — drives timeline position, badge values, report/spreadsheet data, phase-aware toggle
-2. **Active metric** (one of: wealth, balance, growth, income, withdrawal) — drives chart rendering, badge content, Monte Carlo/guardrails computation
-3. **Asset visibility** (per-asset boolean) — drives which lines appear on charts, which assets contribute to aggregate badge values
+### No build step
+ES modules served directly. CDN imports for Tailwind, Chart.js, Lit 3, Poppins, lz-string.
 
-These three should be in a single reactive store (React context, Zustand, or similar). Every component subscribes to what it needs.
+### Two entry points coexist
+- `index.html` + `js/app.js` — original tab-based UI
+- `finplan.html` + `js/finplan-app.js` — new vertical scroll UI
 
-### Performance considerations
-- Monte Carlo recomputation on metric change could be expensive. Consider caching simulation results for all metrics upfront, or debouncing the metric switch.
-- Spreadsheet auto-scroll should use `scrollIntoView({ behavior: 'smooth', block: 'center' })` or equivalent.
-- Sticky timeline must not cause layout thrashing — use `position: sticky` with a known `top` value, not JS scroll listeners.
+Same localStorage data, same simulation engine, same Lit components.
 
-### Responsive behavior
-- Below ~1024px viewport width, the 80/20 split may need to collapse to a stacked layout (sidebar above or below charts). This is a phase 5+ concern.
-- The pinned timeline should remain full-width in all viewport sizes.
-- Badge text should truncate gracefully if the viewport is narrow.
+### Performance
+- Projections (macro + micro) render on every recalculate
+- Simulations (Monte Carlo + Guardrails) are on-demand via Run buttons
+- Visualizer is on-demand, runs async with 80ms tick animation
+- Maximizer is on-demand, uses a Web Worker for the genetic algorithm
+- Detail scroll uses container-local scrolling (not page scroll)
 
 ---
 
-## 10. Glossary
+## 11. Glossary
 
 | Term | Definition |
 |------|------------|
-| **Sacred x-axis** | The constraint that the timeline and all chart layers share identical horizontal pixel boundaries for their time axis |
-| **Pinned timeline** | The sticky-positioned timeline bar with year/month selectors that remains visible on scroll |
-| **Macro** | The grouped asset projection chart (layer 1) |
-| **Micro** | The individual asset projection chart (layer 2) |
-| **Foundation** | The full-width section below the 80/20 split containing report and spreadsheet |
-| **Carry-down badge** | A badge on a foundation component that echoes the active chart metric without changing the component's data structure |
-| **Phase-aware toggle** | The metric selector that visually prioritizes different metrics depending on whether the selected date falls in accumulation or retirement |
+| **Macro** | The grouped asset projection chart (stacked bar by asset group) |
+| **Micro** | The cash flow rollup chart |
+| **Foundation / Details** | The full-width section containing spreadsheet and report |
+| **Carry-down badge** | A badge on a foundation component that echoes the active chart metric (future) |
+| **Phase-aware toggle** | The metric selector that visually prioritizes different metrics depending on timeline phase (future) |
 | **Explore date** | The date selected via the year/month dropdowns, distinct from "now" (the actual current date) |
-| **State badge** | A badge that shows qualitative status (e.g., "Above floor") rather than a numeric value |
-| **Visualizer** | Power tool for scenario comparison and what-if analysis |
-| **Maximizer** | Power tool for optimization recommendations |
+| **State badge** | A badge that shows qualitative status (e.g., "Above floor") rather than a numeric value (future) |
+| **Visualizer** | Hydraulic flow animation showing money movement through the portfolio |
+| **Maximizer** | Genetic algorithm optimizer for fund transfers and guardrail parameters |
+| **Modern1** | The design system used by finplan.html — Poppins, white/gray palette, glass-card, coral badges |
+| **On-demand** | Execution pattern where expensive operations require an explicit Run button click |

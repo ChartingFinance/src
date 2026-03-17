@@ -4,7 +4,7 @@ import { colorRange, positiveBackgroundColor, negativeBackgroundColor } from './
 import { logger, LogCategory } from './utils/logger.js';
 import { findByName } from './asset-queries.js';
 import { Metric } from './model-asset.js';
-import { LifeEventMeta } from './life-event.js';
+import { LifeEvent, LifeEventMeta } from './life-event.js';
 import {
     AssetGroup, AssetGroupMeta,
     classifyAssets, sumDisplayHistories, getAssetChartColor,
@@ -69,6 +69,45 @@ export function charting_buildDateMarkers(portfolio) {
             markers.push({ index: idx, color: meta?.colorAccent ?? '#888780', label: ev.displayName });
         }
     }
+    return markers;
+}
+
+/**
+ * Build phase markers (Accumulate if visible, Retire) + a "you are here" cursor marker.
+ * @param {Portfolio} portfolio
+ * @param {ModelLifeEvent[]} lifeEvents - full life events array
+ * @param {number} startAge - user's current age
+ * @param {number} retirementAge
+ * @param {DateInt} cursorDateInt - selected date from timeline
+ * @returns {Object[]} marker objects for dateMarkerPlugin
+ */
+export function charting_buildPhaseMarkers(portfolio, lifeEvents, startAge, retirementAge, cursorDateInt) {
+    if (!portfolio?.firstDateInt) return [];
+    const monthsSpan = MonthsSpan.build(portfolio.firstDateInt, portfolio.lastDateInt);
+    const markers = [];
+
+    for (const ev of lifeEvents) {
+        const isAccumulate = ev.type === LifeEvent.ACCUMULATE;
+        const isRetire = ev.type === LifeEvent.RETIRE;
+        if (!isAccumulate && !isRetire) continue;
+        // Hide Accumulate if already retired
+        if (isAccumulate && startAge >= retirementAge) continue;
+
+        const idx = dateIntToChartIndex(ev.triggerDateInt, portfolio.firstDateInt, monthsSpan);
+        if (idx >= 0) {
+            const meta = LifeEventMeta.get(ev.type);
+            markers.push({ index: idx, color: meta?.colorAccent ?? '#888780', label: ev.displayName });
+        }
+    }
+
+    // "You are here" cursor
+    if (cursorDateInt) {
+        const idx = dateIntToChartIndex(cursorDateInt, portfolio.firstDateInt, monthsSpan);
+        if (idx >= 0) {
+            markers.push({ index: idx, color: '#111827', label: '\u25BC' });
+        }
+    }
+
     return markers;
 }
 
