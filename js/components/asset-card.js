@@ -7,7 +7,7 @@
  */
 
 import { LitElement, html } from 'lit';
-import { InstrumentMeta } from '../instruments/instrument.js';
+import { InstrumentMeta, InstrumentType } from '../instruments/instrument.js';
 import { colorRange } from '../utils/html.js';
 
 function formatCompactCurrency(amount) {
@@ -26,6 +26,9 @@ class AssetCard extends LitElement {
         modelAsset: { type: Object },
         readonly: { type: Boolean },
         selected: { type: Boolean, reflect: true },
+        groupColor: { type: String },
+        ghost: { type: Boolean },
+        future: { type: Boolean },
     };
 
     createRenderRoot() { return this; }
@@ -40,15 +43,21 @@ class AssetCard extends LitElement {
         this.modelAsset = null;
         this.readonly = false;
         this.selected = false;
+        this.groupColor = null;
+        this.ghost = false;
+        this.future = false;
     }
 
     render() {
         if (!this.modelAsset) return html``;
 
         const ma = this.modelAsset;
-        const color = colorRange[ma.colorId] || colorRange[0];
-        const meta = InstrumentMeta.get(ma.instrument);
-        const emoji = meta ? meta.emoji : '';
+        // Use stable group color when provided, fall back to legacy colorRange for simulator modal
+        const color = this.groupColor || colorRange[ma.colorId] || colorRange[0];
+        // Use single assetEmoji when groupColor is set (grouped sidebar), else legacy 2-char emoji
+        const emoji = this.groupColor
+            ? InstrumentType.assetEmoji(ma.instrument)
+            : (InstrumentMeta.get(ma.instrument)?.emoji ?? '');
 
         // Display value: prefer closed value, then finish value, fall back to start
         let displayAmount;
@@ -60,8 +69,10 @@ class AssetCard extends LitElement {
         }
         const valueDisplay = formatCompactCurrency(displayAmount);
 
+        const stateClass = this.ghost ? 'asset-ghost' : this.future ? 'asset-future' : '';
+
         return html`
-            <div class="asset glass-card p-4 ${this.selected ? 'selected-card-chart' : ''}"
+            <div class="asset glass-card p-4 ${this.selected ? 'selected-card-chart' : ''} ${stateClass}"
                  style="--card-color: ${color}; border-left: 4px solid ${color}"
                  @click=${this._onCardClick}>
                 ${this.readonly ? '' : html`

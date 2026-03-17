@@ -1,0 +1,249 @@
+/**
+ * asset-groups.js
+ *
+ * Groups assets by financial category for the portfolio sidebar and chart.
+ * Follows the same pattern as Instrument / InstrumentType / InstrumentMeta:
+ *
+ *  1. AssetGroup      — frozen enum of group keys
+ *  2. AssetGroupMeta  — Map of display metadata, colors, asset-level shades
+ *  3. classifyAssetGroup() / classifyAssets() — classification functions
+ *  4. sumDisplayHistories() — aggregation for collapsed-group chart datasets
+ *  5. getGroupLabel() — phase-aware label via LifeEventMeta.assetGroupLabels
+ */
+
+import { Instrument, InstrumentType } from './instruments/instrument.js';
+
+// ── Group enum ──────────────────────────────────────────────────────
+
+export const AssetGroup = Object.freeze({
+  INCOME:      'income',
+  REAL_ESTATE: 'realestate',
+  CAPITAL:     'capital',
+  OUTFLOWS:    'outflows',
+  TAXES:       'taxes',
+  CLOSED:      'closed',
+});
+
+// ── Classification Sets ─────────────────────────────────────────────
+
+const INCOME_SET = new Set([
+  Instrument.WORKING_INCOME,
+  Instrument.RETIREMENT_INCOME,
+]);
+
+const REAL_ESTATE_SET = new Set([
+  Instrument.REAL_ESTATE,
+  Instrument.MORTGAGE,
+]);
+
+const OUTFLOWS_SET = new Set([
+  Instrument.MONTHLY_EXPENSE,
+  Instrument.DEBT,
+]);
+
+// Everything not in the above three groups falls into CAPITAL.
+
+// ── Display metadata ────────────────────────────────────────────────
+
+export const AssetGroupMeta = new Map([
+  [AssetGroup.INCOME, {
+    label:      'Income',
+    groupEmoji: '💰',
+    chartColor: '#1D9E75',
+    chartColorFill: 'rgba(29, 158, 117, 0.10)',
+    headerBg:   '#E1F5EE',
+    headerFg:   '#085041',
+    assetShades: new Map([
+      [Instrument.WORKING_INCOME,    '#1D9E75'],
+      [Instrument.RETIREMENT_INCOME, '#5DCAA5'],
+    ]),
+  }],
+  [AssetGroup.REAL_ESTATE, {
+    label:      'Real estate',
+    groupEmoji: '🏠',
+    chartColor: '#378ADD',
+    chartColorFill: 'rgba(55, 138, 221, 0.10)',
+    headerBg:   '#E6F1FB',
+    headerFg:   '#0C447C',
+    assetShades: new Map([
+      [Instrument.REAL_ESTATE, '#378ADD'],
+      [Instrument.MORTGAGE,    '#85B7EB'],
+    ]),
+  }],
+  [AssetGroup.CAPITAL, {
+    label:      'Capital',
+    groupEmoji: '📊',
+    chartColor: '#7F77DD',
+    chartColorFill: 'rgba(127, 119, 221, 0.10)',
+    headerBg:   '#EEEDFE',
+    headerFg:   '#3C3489',
+    assetShades: new Map([
+      [Instrument.FOUR_01K,        '#7F77DD'],
+      [Instrument.IRA,             '#6B63C7'],
+      [Instrument.ROTH_IRA,        '#9B8FE8'],
+      [Instrument.TAXABLE_EQUITY,  '#AFA9EC'],
+      [Instrument.BANK,            '#B8B3F0'],
+      [Instrument.US_BOND,         '#C5C1F4'],
+      [Instrument.CORP_BOND,       '#D2CFF8'],
+      [Instrument.CASH,            '#DFDCFC'],
+    ]),
+  }],
+  [AssetGroup.OUTFLOWS, {
+    label:      'Outflows',
+    groupEmoji: '💸',
+    chartColor: '#E24B4A',
+    chartColorFill: 'rgba(226, 75, 74, 0.10)',
+    headerBg:   '#FCEBEB',
+    headerFg:   '#791F1F',
+    assetShades: new Map([
+      [Instrument.MONTHLY_EXPENSE, '#E24B4A'],
+      [Instrument.DEBT,            '#F09595'],
+    ]),
+  }],
+  [AssetGroup.TAXES, {
+    label:      'Taxes',
+    groupEmoji: '🏛️',
+    chartColor: '#B8963E',
+    chartColorFill: 'rgba(184, 150, 62, 0.10)',
+    headerBg:   '#F8F2E0',
+    headerFg:   '#633806',
+    assetShades: new Map(),  // virtual group — no instrument-backed assets
+  }],
+  [AssetGroup.CLOSED, {
+    label:      'Closed',
+    groupEmoji: '⛔',
+    chartColor: '#888780',
+    chartColorFill: 'rgba(136, 135, 128, 0.10)',
+    headerBg:   '#F1EFE8',
+    headerFg:   '#5F5E5A',
+    assetShades: new Map(),  // inherits from original group shade
+  }],
+]);
+
+// ── Tax items (virtual — rendered from portfolio metrics) ───────────
+
+export const TaxItem = Object.freeze({
+  FICA:           'fica',
+  INCOME_TAX:     'incomeTax',
+  CAPITAL_GAINS:  'capitalGains',
+  PROPERTY_TAX:   'propertyTax',
+});
+
+export const TaxItemMeta = new Map([
+  [TaxItem.FICA,          { label: 'FICA / Medicare', emoji: '🏥' }],
+  [TaxItem.INCOME_TAX,    { label: 'Income Tax',      emoji: '📄' }],
+  [TaxItem.CAPITAL_GAINS, { label: 'Capital Gains',   emoji: '📉' }],
+  [TaxItem.PROPERTY_TAX,  { label: 'Property Tax',    emoji: '🏘️' }],
+]);
+
+// ── Classification functions ────────────────────────────────────────
+
+/**
+ * Returns the AssetGroup key for a given instrument.
+ * Does NOT check isClosed — caller should check that first.
+ */
+export function classifyAssetGroup(instrument) {
+  if (INCOME_SET.has(instrument))      return AssetGroup.INCOME;
+  if (REAL_ESTATE_SET.has(instrument)) return AssetGroup.REAL_ESTATE;
+  if (OUTFLOWS_SET.has(instrument))    return AssetGroup.OUTFLOWS;
+  return AssetGroup.CAPITAL;
+}
+
+/**
+ * Classifies an array of ModelAssets into groups.
+ * Returns Map<AssetGroup, ModelAsset[]> — only includes non-empty groups.
+ * Closed assets go to CLOSED group. TAXES group is never populated here
+ * (it's rendered from portfolio metrics in the UI layer).
+ */
+export function classifyAssets(modelAssets) {
+  const groups = new Map();
+
+  for (const asset of modelAssets) {
+    const groupKey = asset.isClosed
+      ? AssetGroup.CLOSED
+      : classifyAssetGroup(asset.instrument);
+
+    if (!groups.has(groupKey)) groups.set(groupKey, []);
+    groups.get(groupKey).push(asset);
+  }
+
+  // Sort each group by instrument sortOrder
+  for (const [, assets] of groups) {
+    assets.sort((a, b) => InstrumentType.sortOrder(a.instrument) - InstrumentType.sortOrder(b.instrument));
+  }
+
+  return groups;
+}
+
+/** Display order for groups in the sidebar and chart legend. */
+export const GROUP_DISPLAY_ORDER = [
+  AssetGroup.INCOME,
+  AssetGroup.REAL_ESTATE,
+  AssetGroup.CAPITAL,
+  AssetGroup.OUTFLOWS,
+  AssetGroup.TAXES,
+  AssetGroup.CLOSED,
+];
+
+// ── Aggregation utilities ───────────────────────────────────────────
+
+/**
+ * Element-wise sum of getDisplayHistory() arrays for a set of assets.
+ * Used to build a single collapsed-group dataset for the chart.
+ */
+export function sumDisplayHistories(assets, metricName) {
+  if (assets.length === 0) return [];
+
+  const histories = assets.map(a => a.getDisplayHistory(metricName));
+  const maxLen = Math.max(...histories.map(h => h.length));
+  const result = new Array(maxLen).fill(0);
+
+  for (const h of histories) {
+    for (let i = 0; i < h.length; i++) {
+      result[i] += (h[i] ?? 0);
+    }
+  }
+  return result;
+}
+
+// ── Phase-aware labels ──────────────────────────────────────────────
+
+/**
+ * Returns the display label for a group within a life event phase.
+ * Falls back to the group's default label if the event doesn't define one.
+ *
+ * @param {string} assetGroupKey — e.g. AssetGroup.INCOME
+ * @param {ModelLifeEvent|null} lifeEvent — current phase
+ * @returns {string} — e.g. "Income" or "Distributions"
+ */
+export function getGroupLabel(assetGroupKey, lifeEvent) {
+  const meta = AssetGroupMeta.get(assetGroupKey);
+  if (!meta) return assetGroupKey;
+
+  if (lifeEvent?.meta?.assetGroupLabels) {
+    const phaseLabel = lifeEvent.meta.assetGroupLabels[assetGroupKey];
+    if (phaseLabel) return phaseLabel;
+  }
+
+  return meta.label;
+}
+
+/**
+ * Returns the stable chart color for an individual asset.
+ * Looks up the instrument's shade within its group's color family.
+ * Falls back to the group's primary chartColor.
+ */
+export function getAssetChartColor(instrument, isClosed) {
+  const groupKey = isClosed ? AssetGroup.CLOSED : classifyAssetGroup(instrument);
+
+  // For closed assets, try to find the shade from their original group
+  if (isClosed) {
+    const originalGroup = classifyAssetGroup(instrument);
+    const originalMeta = AssetGroupMeta.get(originalGroup);
+    const shade = originalMeta?.assetShades.get(instrument);
+    if (shade) return shade;
+  }
+
+  const groupMeta = AssetGroupMeta.get(groupKey);
+  return groupMeta?.assetShades.get(instrument) ?? groupMeta?.chartColor ?? '#888780';
+}

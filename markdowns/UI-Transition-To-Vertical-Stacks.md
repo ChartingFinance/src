@@ -1,5 +1,5 @@
 Transition Plan: Vertically Stacked Analytical Layout
-This document outlines the engineering tasks required to transition the UI from a standard tabbed dashboard to the professional, time-aligned vertical stack with a synchronized scrubber.
+This document outlines the engineering tasks required to transition the UI from a standard tabbed dashboard to the professional, time-aligned vertical stack with discrete time selection and explicit controls.
 
 Phase 1: Structural Layout Refactor
 The first goal is to establish the rigid 8-col/4-col split and prepare the left side to act as a vertical flex container.
@@ -17,43 +17,39 @@ Replace the mutually exclusive tab system with a toolbar that allows multiple vi
 
 [ ] Implement Conditional Rendering: In the main view container, use Lit's html template to conditionally render components based on the toolbar's state.
 
-JavaScript
-// Pseudo-implementation
-${this.showMacro ? html`<macro-chart-view .data=${this.data}></macro-chart-view>` : ''}
-${this.showMicro ? html`<micro-chart-view .data=${this.data}></micro-chart-view>` : ''}
 [ ] Lock Chart Heights: Assign fixed or relative heights (e.g., height: 40vh) to the chart components so they don't collapse or expand infinitely when stacked. Chart.js requires stable parent containers with maintainAspectRatio: false.
 
-Phase 3: Global Time State & The Scrubber
-Establish the state management required to track the user's cursor across the X-axis.
+Phase 3: Global Time State & The Master Picker
+Establish the state management required to track the active time slice and provide precise selection tools directly within the timeline UI.
 
-[ ] Define the Scrubber State: In the parent component (or context provider), create a reactive property to hold the currently hovered time index (e.g., @state() activeTimeIndex = null;).
+[ ] Define the Time State: In the parent component, create a reactive property to hold the currently selected time index (e.g., @state() selectedTimeIndex = null;). Initialize this state to represent the current year and month ("Today") upon component load.
 
-[ ] Chart.js Hover Events: Attach an onHover event listener to both Chart.js instances. When the user moves the mouse over the canvas, calculate the closest data point on the X-axis and dispatch a custom Lit event (e.g., dispatch('time-scrub', { index: hoveredIndex })).
+[ ] Embed the Centered Time Picker: Add a precise calendar input (e.g., <input type="month"> or a custom Lit dropdown) directly inside the <timeline-ledger> component. Position it at the absolute top of the control, centered horizontally over the timeline.
 
-[ ] Sync State Upwards: The parent container listens for time-scrub from any chart and updates its activeTimeIndex.
+[ ] Dispatch Selection Events: When a user explicitly changes the date via this centered picker, or clicks directly on the timeline canvas below it, dispatch a unified custom event (e.g., dispatch('time-select', { index: targetIndex })) to update the global selectedTimeIndex.
 
-Phase 4: Synchronizing the Visual Crosshair
-Ensure that hovering over one chart visually updates the other chart to maintain the "plumb line" effect.
+Phase 4: Synchronizing the Visual Crosshair & Timeline
+Ensure the selected time index is clearly reflected across all macro and micro visual components, guiding the user's eye down the stack.
 
-[ ] Chart.js Crosshair Plugin: Implement a custom Chart.js plugin (or use an existing one like chartjs-plugin-crosshair) to draw a vertical line at the active X-axis coordinate.
+[ ] The "You Are Here" Dot: Update the <timeline-ledger> to reactively listen to selectedTimeIndex. Calculate the corresponding percentage along the X-axis and render an absolutely positioned SVG dot or badge resting directly on the timeline track to represent the active date.
 
-[ ] Programmatic Tooltips/Active Elements: When activeTimeIndex changes in the parent, pass it down to all rendered charts. Use Chart.js API chart.setActiveElements([{ datasetIndex: ..., index: activeTimeIndex }]) followed by chart.tooltip.setActiveElements(...) and chart.update(). This forces the inactive chart to highlight the same month/year the user is hovering over on the active chart.
+[ ] Chart.js Annotation Plugin: Utilize chartjs-plugin-annotation to draw a subtle vertical shaded box (a "box annotation") over the selected year on both the Macro and Micro charts, providing the visual "plumb line" connecting the charts.
+
+[ ] Programmatic Sync: When selectedTimeIndex changes, pass the new index down to all rendered charts to update the annotation plugin's X-scale coordinates and execute chart.update().
 
 Phase 5: The Snapshot Panel (Bottom Layer)
-Refactor the spreadsheet/report views to act as a dynamic snapshot rather than a massive scrolling grid.
+Refactor the spreadsheet/report views to act as a dynamic snapshot that responds to the selected time index.
 
-[ ] Create <snapshot-view>: Duplicate or refactor the existing <spreadsheet-view> into a specialized component that accepts activeTimeIndex as a property.
+[ ] Create <snapshot-view>: Duplicate or refactor the existing <spreadsheet-view> into a specialized component that accepts selectedTimeIndex as a property.
 
-[ ] Filter Data by Index: Instead of rendering the entire 40-year ledger, the <snapshot-view> should filter the projection arrays to only render the math for that specific index.
+[ ] Filter Data by Index: Instead of rendering the entire ledger, the <snapshot-view> should filter the projection arrays to only render the exact financial math for that specific month and year.
 
-[ ] Format for Density: Style the snapshot panel to look like a high-density summary (e.g., a multi-column mini-table showing exact values for Income, Real Estate, Capital, and Taxes for that specific month).
-
-[ ] Fallback State: If activeTimeIndex is null (mouse is off the charts), the snapshot panel should either display the starting year data, the ending year data, or a subtle placeholder stating "Hover over timeline to view data."
+[ ] Native DOM Scrolling (Alternative): If retaining the full scrolling ledger is preferred, use native DOM APIs (rowElement.scrollIntoView({ behavior: 'smooth', block: 'center' })) to automatically slide the targeted time row into the center of the viewport when selectedTimeIndex updates.
 
 Phase 6: Portfolio Panel Binding (Right Side)
 Connect the interactive 4-col control surface to the newly stacked charts.
 
-[ ] Highlighting Logic: Retain the logic where hovering an <asset-card> in the right panel dispatches an event.
+[ ] Highlighting Logic: Retain the logic where hovering an <asset-card> in the right panel dispatches a selection event.
 
 [ ] Multi-Chart Response: Ensure the parent container passes the highlighted asset ID to both the Macro and Micro charts.
 

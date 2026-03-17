@@ -33,6 +33,7 @@ import {
     charting_jsonMetric1ChartData,
     charting_buildFromPortfolio,
     charting_buildPortfolioMetric,
+    charting_buildGroupedMetric,
 } from './charting.js';
 
 // Monte Carlo
@@ -156,6 +157,7 @@ let activePortfolio = null;
 let monteCarloStale = true;
 let guardrailsStale = true;
 let activeLifeEvents = [];
+let expandedGroups = new Set();
 
 const metric1Select = document.getElementById('metric1Select');
 const monteCarloContainer = document.getElementById('monteCarloContainer');
@@ -178,7 +180,9 @@ metric1Select.addEventListener('change', function() {
     activeMetric1Name = metric1Select.value;
     tab1.querySelector('.tab-label').textContent = MetricLabel[activeMetric1Name];
     if (!activePortfolio) return;
-    const chartData = charting_buildPortfolioMetric(activePortfolio, activeMetric1Name, true);
+    const chartData = expandedGroups
+        ? charting_buildGroupedMetric(activePortfolio, activeMetric1Name, expandedGroups)
+        : charting_buildPortfolioMetric(activePortfolio, activeMetric1Name, true);
     if (activeMetric1Canvas != null) activeMetric1Canvas.destroy();
     activeMetric1Canvas = new Chart(chartMetric1Canvas, chartData);
 });
@@ -188,7 +192,9 @@ timelineLedger.addEventListener('ledger-metric1-change', function(e) {
     metric1Select.value = activeMetric1Name;
     tab1.querySelector('.tab-label').textContent = MetricLabel[activeMetric1Name];
     if (!activePortfolio) return;
-    const chartData = charting_buildPortfolioMetric(activePortfolio, activeMetric1Name, true);
+    const chartData = expandedGroups
+        ? charting_buildGroupedMetric(activePortfolio, activeMetric1Name, expandedGroups)
+        : charting_buildPortfolioMetric(activePortfolio, activeMetric1Name, true);
     if (activeMetric1Canvas != null) activeMetric1Canvas.destroy();
     activeMetric1Canvas = new Chart(chartMetric1Canvas, chartData);
 });
@@ -297,6 +303,14 @@ function connectAssetListEvents() {
             charting_setHighlightDisplayName(null);
         }
         assetsContainerElement.highlightName = charting_getHighlightDisplayName();
+        updateCharts();
+    });
+
+    assetsContainerElement.addEventListener('group-toggle', function(ev) {
+        const group = ev.detail.group;
+        if (expandedGroups.has(group)) expandedGroups.delete(group);
+        else expandedGroups.add(group);
+        assetsContainerElement.expandedGroups = new Set(expandedGroups);
         updateCharts();
     });
 }
@@ -488,8 +502,11 @@ function updateCharts() {
     chronometer_run(portfolio);
     portfolio.buildChartingDisplayData();
     ensureHighlightDisplayName();
-    charting_buildFromPortfolio(portfolio, false, activeMetric1Name);
-    activeMetric1Canvas.update();
+    charting_buildFromPortfolio(portfolio, true, activeMetric1Name, expandedGroups);
+    // Destroy and recreate since chart type may change between grouped (line) and legacy (bar)
+    if (activeMetric1Canvas != null) activeMetric1Canvas.destroy();
+    if (charting_jsonMetric1ChartData != null)
+        activeMetric1Canvas = new Chart(chartMetric1Canvas, charting_jsonMetric1ChartData);
 }
 
 function calculate(target) {
@@ -508,6 +525,11 @@ function calculate(target) {
 
     // Update asset cards with calculated values
     assetsContainerElement.modelAssets = [...portfolio.modelAssets];
+
+    // Pass grouped rendering properties
+    assetsContainerElement.expandedGroups = new Set(expandedGroups);
+    assetsContainerElement.activeLifeEvent = activeLifeEvents[timelineLedger.selectedIndex] ?? null;
+    assetsContainerElement.portfolio = portfolio;
 
     // prepare the chart data
     portfolio.buildChartingDisplayData();
@@ -534,7 +556,7 @@ function calculate(target) {
     }
 
     // build the chart configs (must happen before innerCalculate creates Chart instances)
-    charting_buildFromPortfolio(portfolio, true, activeMetric1Name);
+    charting_buildFromPortfolio(portfolio, true, activeMetric1Name, expandedGroups);
 
     innerCalculate(portfolio);
 
@@ -943,6 +965,9 @@ function isAdvisoryDismissed(storageKey) {
 timelineLedger.addEventListener('phase-select', async (e) => {
     const { event } = e.detail;
     filterTabsForPhase(event.projectionTabs);
+
+    // Update asset list with the selected phase for contextual group labels
+    assetsContainerElement.activeLifeEvent = event;
 
     // Advisory checks: suggest missing assets for this phase
     const meta = LifeEventMeta.get(event.type);

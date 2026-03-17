@@ -5,6 +5,11 @@ import { logger, LogCategory } from './utils/logger.js';
 import { findByName } from './asset-queries.js';
 import { Metric } from './model-asset.js';
 import { LifeEventMeta } from './life-event.js';
+import {
+    AssetGroup, AssetGroupMeta,
+    classifyAssets, sumDisplayHistories, getAssetChartColor,
+    GROUP_DISPLAY_ORDER,
+} from './asset-groups.js';
 
 // ── Date marker plugin ────────────────────────────────────────────
 
@@ -481,7 +486,62 @@ export function charting_buildDisplaySpreadsheetFromPortfolio(portfolio, buildNe
 }
 */
 
-export function charting_buildFromPortfolio(portfolio, buildNewDataSet, metric1Name) {
+/**
+ * Builds a stacked bar chart config with grouped datasets and stable colors.
+ * Collapsed groups → single dataset (summed values) in group color.
+ * Expanded groups → individual datasets per asset in shade colors.
+ * Same chart type as the legacy charting_buildPortfolioMetric, just with
+ * group-aware colors and collapse/expand support.
+ */
+export function charting_buildGroupedMetric(portfolio, metricName, expandedGroups) {
+  const labels = charting_buildDisplayLabels(portfolio.firstDateInt, portfolio.lastDateInt);
+  const groups = classifyAssets(portfolio.modelAssets);
+  const datasets = [];
+
+  for (const groupKey of GROUP_DISPLAY_ORDER) {
+    if (groupKey === AssetGroup.TAXES || groupKey === AssetGroup.CLOSED) continue;
+    const assets = groups.get(groupKey);
+    if (!assets || assets.length === 0) continue;
+
+    const groupMeta = AssetGroupMeta.get(groupKey);
+
+    if (expandedGroups?.has(groupKey)) {
+      // Expanded: one bar dataset per asset, using stable shade colors
+      for (const asset of assets) {
+        const color = getAssetChartColor(asset.instrument, false);
+        datasets.push({
+          label: asset.displayName,
+          data: asset.getDisplayHistory(metricName),
+          backgroundColor: color,
+        });
+      }
+    } else {
+      // Collapsed: single bar dataset (summed), using group color
+      datasets.push({
+        label: groupMeta.label,
+        data: sumDisplayHistories(assets, metricName),
+        backgroundColor: groupMeta.chartColor,
+      });
+    }
+  }
+
+  return {
+    type: 'bar',
+    data: { labels, datasets },
+    options: {
+      plugins: {
+        title: { display: false, text: null },
+      },
+      responsive: true,
+      scales: {
+        x: { stacked: true },
+        y: { stacked: true },
+      },
+    },
+  };
+}
+
+export function charting_buildFromPortfolio(portfolio, buildNewDataSet, metric1Name, expandedGroups) {
   if (portfolio == null || portfolio.modelAssets == null || portfolio.modelAssets.length == 0) {
 
     logger.log(LogCategory.CHARTING, 'charting_buildFromPortfolio - null or zero length array provided');
@@ -494,7 +554,13 @@ export function charting_buildFromPortfolio(portfolio, buildNewDataSet, metric1N
   else {
 
     setModelAssetColorIds(portfolio.modelAssets);
-    charting_jsonMetric1ChartData = charting_buildPortfolioMetric(portfolio, metric1Name, buildNewDataSet);
+
+    // Use grouped chart when expandedGroups is provided, else legacy stacked bar
+    if (expandedGroups) {
+      charting_jsonMetric1ChartData = charting_buildGroupedMetric(portfolio, metric1Name, expandedGroups);
+    } else {
+      charting_jsonMetric1ChartData = charting_buildPortfolioMetric(portfolio, metric1Name, buildNewDataSet);
+    }
     charting_jsonRollupChartData = charting_buildPortfolioMetric(portfolio, "cashFlow", buildNewDataSet);
 
     const markers = charting_buildDateMarkers(portfolio);
