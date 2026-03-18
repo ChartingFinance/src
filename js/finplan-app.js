@@ -99,6 +99,10 @@ import {
     global_setGuardrailPreservation,
     global_setGuardrailProsperity,
     global_setGuardrailAdjustment,
+    global_default_guardrail_withdrawalRate,
+    global_default_guardrail_preservation,
+    global_default_guardrail_prosperity,
+    global_default_guardrail_adjustment,
 } from './globals.js';
 
 // ── Util ────────────────────────────────────────────────────
@@ -136,6 +140,17 @@ const shareModal        = document.getElementById('shareModal');
 const scenarioSelect    = document.getElementById('scenario-select');
 const scenarioNote      = document.getElementById('scenario-note');
 const btnDeleteScenario = document.getElementById('btn-delete-scenario');
+const grWithdrawal      = document.getElementById('guardrail-withdrawal-rate');
+const grPreservation    = document.getElementById('guardrail-preservation');
+const grProsperity      = document.getElementById('guardrail-prosperity');
+const grAdjustment      = document.getElementById('guardrail-adjustment');
+
+function syncGuardrailsToDOM() {
+    grWithdrawal.value   = global_guardrail_withdrawalRate;
+    grPreservation.value = global_guardrail_preservation;
+    grProsperity.value   = global_guardrail_prosperity;
+    grAdjustment.value   = global_guardrail_adjustment;
+}
 
 // ── App state ───────────────────────────────────────────────
 let activePortfolio     = null;
@@ -297,6 +312,28 @@ document.getElementById('btn-run-mc').addEventListener('click', () => doMonteCar
 document.getElementById('btn-run-guardrails').addEventListener('click', () => doGuardrails());
 document.getElementById('btn-visualize').addEventListener('click', () => doVisualize());
 document.getElementById('btn-maximize').addEventListener('click', () => doMaximize());
+
+// ── Guardrail parameter controls ──────────────────────────
+grWithdrawal.addEventListener('change', () => {
+    global_setGuardrailWithdrawalRate(parseFloat(grWithdrawal.value));
+});
+grPreservation.addEventListener('change', () => {
+    global_setGuardrailPreservation(parseFloat(grPreservation.value));
+});
+grProsperity.addEventListener('change', () => {
+    global_setGuardrailProsperity(parseFloat(grProsperity.value));
+});
+grAdjustment.addEventListener('change', () => {
+    global_setGuardrailAdjustment(parseFloat(grAdjustment.value));
+});
+
+document.getElementById('btn-revert-guardrails').addEventListener('click', () => {
+    global_setGuardrailWithdrawalRate(global_default_guardrail_withdrawalRate);
+    global_setGuardrailPreservation(global_default_guardrail_preservation);
+    global_setGuardrailProsperity(global_default_guardrail_prosperity);
+    global_setGuardrailAdjustment(global_default_guardrail_adjustment);
+    syncGuardrailsToDOM();
+});
 
 // ── Scenario UI events ─────────────────────────────────────
 let _scenarioPopupMode = 'create'; // 'create' or 'edit'
@@ -532,6 +569,7 @@ function loadLocalData() {
         global_setGuardrailProsperity(gp.prosperity);
         global_setGuardrailAdjustment(gp.adjustment);
     }
+    syncGuardrailsToDOM();
 
     // Migration: copy legacy per-asset transfers to accumulate phase
     const accEvent = activeLifeEvents.find(e => LifeEventType.isAccumulation(e.type));
@@ -1103,6 +1141,7 @@ function applyImportedPortfolio(data, persist) {
         global_setGuardrailProsperity(gp.prosperity);
         global_setGuardrailAdjustment(gp.adjustment);
     }
+    syncGuardrailsToDOM();
 
     // Load life events
     if (data.lifeEvents?.length) {
