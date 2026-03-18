@@ -186,7 +186,7 @@ class FinplanTimeline extends LitElement {
 
         return html`
             <!-- Controls row -->
-            <div class="flex items-center justify-center gap-3 mb-2">
+            <div class="flex items-center justify-center gap-3 mb-4">
                 <select class="text-xs px-2 py-1.5 rounded-lg cursor-pointer outline-none font-medium"
                     style="background: #FAECE7; color: #993C1D; border: 1px solid #F5D0C5;"
                     @change=${this._onYearChange}>

@@ -30,6 +30,7 @@ class AssetCard extends LitElement {
         ghost: { type: Boolean },
         future: { type: Boolean },
         metricValue: { type: Number },  // override display value from history
+        metricLabel: { type: String },  // label shown below value (e.g. "Dividend") for Properties view
         closedEmoji: { type: String },  // e.g. '⛔' when asset is closed at selected date
     };
 
@@ -48,6 +49,7 @@ class AssetCard extends LitElement {
         this.groupColor = null;
         this.ghost = false;
         this.future = false;
+        this.metricLabel = '';
         this.closedEmoji = '';
     }
 
@@ -88,6 +90,7 @@ class AssetCard extends LitElement {
                 <div class="asset-card-icon">${emoji}</div>
                 <div class="asset-card-name">${ma.displayName}</div>
                 <div class="asset-card-value">${valueDisplay}</div>
+                ${this.metricLabel ? html`<div class="text-xs text-gray-400" style="margin-top: 1px;">${this.metricLabel}</div>` : ''}
                 ${this.readonly ? '' : html`
                     <span class="asset-action-btn remove" title="Remove" @click=${this._onRemove}>&#x2715;</span>
                 `}

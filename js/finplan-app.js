@@ -34,6 +34,10 @@ import {
 } from './charting.js';
 
 import { classifyAssets, classifyAssetGroup, GROUP_DISPLAY_ORDER, getAssetChartColor } from './asset-groups.js';
+import {
+    PropertyGroupMeta, PROPERTY_DISPLAY_ORDER, PropertyGroupMetrics,
+    classifyAssetsByProperty, getPrimaryMetric, sumPropertyDisplayHistories,
+} from './property-groups.js';
 
 // ── Simulations ─────────────────────────────────────────────
 import { runMonteCarlo, getMonteCarloChart, getMonteCarloResults } from './monte-carlo.js';
@@ -161,6 +165,7 @@ let macroChart          = null;
 let microChart          = null;
 let editingModelAsset   = null;
 
+let viewMode            = 'assets'; // 'assets' | 'properties'
 let activeStoryArc      = null;
 let activeStoryName     = null;
 
@@ -313,6 +318,30 @@ document.getElementById('btn-run-guardrails').addEventListener('click', () => do
 document.getElementById('btn-visualize').addEventListener('click', () => doVisualize());
 document.getElementById('btn-maximize').addEventListener('click', () => doMaximize());
 
+// ── View toggle (Assets / Properties) ─────────────────────
+const viewToggle = document.getElementById('viewToggle');
+viewToggle.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('[data-view]');
+    if (!btn || btn.dataset.view === viewMode) return;
+    viewMode = btn.dataset.view;
+    // Update toggle button styles
+    viewToggle.querySelectorAll('[data-view]').forEach(b => {
+        if (b.dataset.view === viewMode) {
+            b.style.background = '#111827';
+            b.style.color = 'white';
+        } else {
+            b.style.background = 'white';
+            b.style.color = '#6b7280';
+        }
+    });
+    // Clear expanded groups (different key namespaces)
+    expandedGroups.clear();
+    assetList.viewMode = viewMode;
+    assetList.expandedGroups = new Set(expandedGroups);
+    rebuildProjectionCharts();
+    updateMetricDropdown();
+});
+
 // ── Guardrail parameter controls ──────────────────────────
 grWithdrawal.addEventListener('change', () => {
     global_setGuardrailWithdrawalRate(parseFloat(grWithdrawal.value));
@@ -444,6 +473,28 @@ metricSelect.addEventListener('change', () => {
     if (!activePortfolio) return;
     rebuildProjectionCharts();
 });
+
+function updateMetricDropdown() {
+    if (viewMode === 'properties' && expandedGroups.size > 0) {
+        const allowedMetrics = new Set();
+        for (const groupKey of expandedGroups) {
+            const metrics = PropertyGroupMetrics.get(groupKey);
+            if (metrics) metrics.forEach(m => allowedMetrics.add(m));
+        }
+        metricSelect.innerHTML = [...allowedMetrics].map(m =>
+            `<option value="${m}">${MetricLabel[m]}</option>`
+        ).join('');
+        if (!allowedMetrics.has(activeMetricName)) {
+            activeMetricName = [...allowedMetrics][0];
+        }
+        metricSelect.value = activeMetricName;
+    } else {
+        metricSelect.innerHTML = Object.values(Metric).map(m =>
+            `<option value="${m}">${MetricLabel[m]}</option>`
+        ).join('');
+        metricSelect.value = activeMetricName;
+    }
+}
 
 // Wire store
 store.setRetirementDate(global_getRetirementDateInt());
@@ -708,17 +759,52 @@ function rebuildProjectionCharts() {
 
     const markers = buildPhaseMarkersForCharts();
 
-    // Macro: always fully grouped (never expand into individual assets)
-    charting_buildFromPortfolio(activePortfolio, true, activeMetricName, new Set());
+    if (viewMode === 'properties') {
+        rebuildMacroChartProperties(markers);
+    } else {
+        // Macro: always fully grouped (never expand into individual assets)
+        charting_buildFromPortfolio(activePortfolio, true, activeMetricName, new Set());
 
-    if (macroChart) macroChart.destroy();
-    if (charting_jsonMetric1ChartData) {
-        charting_jsonMetric1ChartData.options.plugins.dateMarkers = { markers };
-        macroChart = new Chart(macroCanvas, charting_jsonMetric1ChartData);
+        if (macroChart) macroChart.destroy();
+        if (charting_jsonMetric1ChartData) {
+            charting_jsonMetric1ChartData.options.plugins.dateMarkers = { markers };
+            macroChart = new Chart(macroCanvas, charting_jsonMetric1ChartData);
+        }
     }
 
     // Micro: individual assets from expanded groups only
     rebuildMicroChart(markers);
+}
+
+function rebuildMacroChartProperties(markers) {
+    if (!activePortfolio) return;
+    const labels = charting_buildDisplayLabels(activePortfolio.firstDateInt, activePortfolio.lastDateInt);
+    const groups = classifyAssetsByProperty(activePortfolio.modelAssets);
+    const datasets = [];
+
+    for (const groupKey of PROPERTY_DISPLAY_ORDER) {
+        const assets = groups.get(groupKey);
+        if (!assets || assets.length === 0) continue;
+        const meta = PropertyGroupMeta.get(groupKey);
+
+        datasets.push({
+            label: meta.label,
+            data: sumPropertyDisplayHistories(assets, groupKey),
+            backgroundColor: meta.chartColor,
+        });
+    }
+
+    if (macroChart) macroChart.destroy();
+    const cfg = {
+        type: 'bar',
+        data: { labels, datasets },
+        options: {
+            responsive: true,
+            plugins: { dateMarkers: { markers } },
+            scales: { x: { stacked: true }, y: { stacked: true } },
+        },
+    };
+    macroChart = new Chart(macroCanvas, cfg);
 }
 
 function rebuildMicroChart(markers) {
@@ -748,25 +834,45 @@ function rebuildMicroChart(markers) {
         return;
     }
 
-    // Classify by instrument (ignore isClosed) so chart shows full history
-    const groups = new Map();
-    for (const asset of activePortfolio.modelAssets) {
-        const groupKey = classifyAssetGroup(asset.instrument);
-        if (!groups.has(groupKey)) groups.set(groupKey, []);
-        groups.get(groupKey).push(asset);
-    }
-
     const datasets = [];
-    for (const groupKey of GROUP_DISPLAY_ORDER) {
-        if (!expandedGroups.has(groupKey)) continue;
-        const assets = groups.get(groupKey);
-        if (!assets || assets.length === 0) continue;
-        for (const asset of assets) {
-            datasets.push({
-                label: asset.displayName,
-                data: asset.getDisplayHistory(activeMetricName),
-                backgroundColor: getAssetChartColor(asset.instrument, false),
-            });
+
+    if (viewMode === 'properties') {
+        // Properties mode: chart assets from expanded property groups
+        const groups = classifyAssetsByProperty(activePortfolio.modelAssets);
+        for (const groupKey of PROPERTY_DISPLAY_ORDER) {
+            if (!expandedGroups.has(groupKey)) continue;
+            const assets = groups.get(groupKey);
+            if (!assets) continue;
+            const meta = PropertyGroupMeta.get(groupKey);
+            for (const asset of assets) {
+                const metric = getPrimaryMetric(asset, groupKey);
+                datasets.push({
+                    label: asset.displayName,
+                    data: asset.getDisplayHistory(metric),
+                    backgroundColor: meta.chartColor,
+                });
+            }
+        }
+    } else {
+        // Assets mode: chart assets from expanded instrument groups
+        const groups = new Map();
+        for (const asset of activePortfolio.modelAssets) {
+            const groupKey = classifyAssetGroup(asset.instrument);
+            if (!groups.has(groupKey)) groups.set(groupKey, []);
+            groups.get(groupKey).push(asset);
+        }
+
+        for (const groupKey of GROUP_DISPLAY_ORDER) {
+            if (!expandedGroups.has(groupKey)) continue;
+            const assets = groups.get(groupKey);
+            if (!assets || assets.length === 0) continue;
+            for (const asset of assets) {
+                datasets.push({
+                    label: asset.displayName,
+                    data: asset.getDisplayHistory(activeMetricName),
+                    backgroundColor: getAssetChartColor(asset.instrument, false),
+                });
+            }
         }
     }
 
@@ -895,6 +1001,7 @@ function connectAssetListEvents() {
         else expandedGroups.add(group);
         assetList.expandedGroups = new Set(expandedGroups);
         rebuildMicroChart();
+        updateMetricDropdown();
     });
 }
 

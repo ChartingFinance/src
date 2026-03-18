@@ -18,6 +18,11 @@ import {
     classifyAssets, getGroupLabel, getAssetChartColor,
     GROUP_DISPLAY_ORDER,
 } from '../asset-groups.js';
+import {
+    PropertyGroupMeta, PROPERTY_DISPLAY_ORDER,
+    classifyAssetsByProperty, getPrimaryMetric, computePropertyRollupAtIndex,
+} from '../property-groups.js';
+import { MetricLabel } from '../model-asset.js';
 import './asset-card.js';
 
 function formatCompactCurrency(amount) {
@@ -42,6 +47,7 @@ class AssetList extends LitElement {
         atDateInt: { type: Object },        // DateInt — classify active/closed at this date
         metricName: { type: String },       // Metric key — look up history value at historyIndex
         historyIndex: { type: Number },     // Month offset into history[] for metric display
+        viewMode: { type: String },        // 'assets' | 'properties'
     };
 
     createRenderRoot() { return this; }
@@ -57,6 +63,7 @@ class AssetList extends LitElement {
         this.atDateInt = null;
         this.metricName = null;
         this.historyIndex = -1;
+        this.viewMode = 'assets';
     }
 
     render() {
@@ -92,7 +99,14 @@ class AssetList extends LitElement {
             `;
         }
 
-        // Grouped mode
+        // Branch on view mode
+        if (this.viewMode === 'properties') {
+            return this._renderPropertiesView();
+        }
+        return this._renderAssetsView();
+    }
+
+    _renderAssetsView() {
         const groups = classifyAssets(this.modelAssets, this.atDateInt);
         const expanded = this.expandedGroups || new Set();
 
@@ -108,6 +122,68 @@ class AssetList extends LitElement {
                 })}
             </div>
         `;
+    }
+
+    _renderPropertiesView() {
+        const groups = classifyAssetsByProperty(this.modelAssets);
+        const expanded = this.expandedGroups || new Set();
+
+        return html`
+            <div class="flex flex-col gap-3 w-full">
+                ${PROPERTY_DISPLAY_ORDER.map(groupKey => {
+                    const assets = groups.get(groupKey);
+                    if (!assets || assets.length === 0) return nothing;
+                    return this._renderPropertyGroup(groupKey, assets, expanded.has(groupKey));
+                })}
+            </div>
+        `;
+    }
+
+    _renderPropertyGroup(groupKey, assets, isExpanded) {
+        const meta = PropertyGroupMeta.get(groupKey);
+        const total = computePropertyRollupAtIndex(assets, groupKey, this.historyIndex);
+
+        return html`
+            <div>
+                <div class="asset-group-header"
+                     style="background: ${meta.headerBg}; color: ${meta.headerFg}"
+                     @click=${() => this._onGroupToggle(groupKey)}>
+                    <span class="asset-group-emoji">${meta.groupEmoji}</span>
+                    <span class="asset-group-label">${meta.label}</span>
+                    <span class="asset-group-total">${formatCompactCurrency(total)}</span>
+                    <span class="asset-group-chevron ${isExpanded ? 'expanded' : ''}">&#x25B6;</span>
+                </div>
+                ${isExpanded ? html`
+                    <div class="asset-group-children">
+                        ${repeat(
+                            assets,
+                            (ma) => ma.displayName + ':' + groupKey,
+                            (ma) => {
+                                const metric = getPrimaryMetric(ma, groupKey);
+                                return html`
+                                    <asset-card
+                                        .modelAsset=${ma}
+                                        .groupColor=${meta.chartColor}
+                                        .metricValue=${this._getMetricValueForMetric(ma, metric)}
+                                        .metricLabel=${MetricLabel[metric] || ''}
+                                        ?selected=${this.highlightName === ma.displayName}
+                                    ></asset-card>
+                                `;
+                            }
+                        )}
+                    </div>
+                ` : nothing}
+            </div>
+        `;
+    }
+
+    /** Get metric value for a specific metric at current historyIndex */
+    _getMetricValueForMetric(asset, metricName) {
+        if (!metricName || this.historyIndex < 0) return null;
+        const history = asset.getHistory?.(metricName);
+        if (!history || this.historyIndex >= history.length) return null;
+        const entry = history[this.historyIndex];
+        return entry?.amount ?? (typeof entry === 'number' ? entry : null);
     }
 
     _renderGroup(groupKey, assets, isExpanded) {

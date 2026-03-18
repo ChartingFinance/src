@@ -60,7 +60,7 @@
         .finplan-split {
             display: flex;
             gap: 32px;
-            height: 360px;
+            height: 432px;
         }
 
         .finplan-charts {
@@ -501,6 +501,11 @@
             <h2 class="text-lg font-bold flex items-center gap-2 flex-shrink-0">💼 Your Portfolio
                 <span class="badge-coral ml-auto" id="viewingBadge">Viewing: Mar 2026</span>
             </h2>
+
+            <div id="viewToggle" class="flex rounded-lg overflow-hidden border border-gray-200 text-sm flex-shrink-0">
+                <button data-view="assets" class="flex-1 px-3 py-1.5 font-medium transition-all cursor-pointer active" style="background: #111827; color: white;">Assets</button>
+                <button data-view="properties" class="flex-1 px-3 py-1.5 font-medium transition-all cursor-pointer" style="background: white; color: #6b7280;">Properties</button>
+            </div>
 
             <div class="glass-card p-6 relative flex flex-col flex-grow min-h-0">
                 <asset-list class="flex-grow overflow-y-auto min-h-0" id="finplanAssetList"></asset-list>
