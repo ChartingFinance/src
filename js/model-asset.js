@@ -70,6 +70,8 @@ export const Metric = Object.freeze({
   SHORT_TERM_CAPITAL_GAIN_TAX:  'shortTermCapitalGainTax',
   LONG_TERM_CAPITAL_GAIN_TAX:   'longTermCapitalGainTax',
   CAPITAL_GAIN_TAX:             'capitalGainTax',
+  MAINTENANCE:                  'maintenance',
+  INSURANCE:                    'insurance',
   CREDIT:                       'credit',
 });
 
@@ -115,6 +117,8 @@ export const MetricLabel = Object.freeze({
   [Metric.SHORT_TERM_CAPITAL_GAIN_TAX]: 'Short Term Capital Gain Tax', // these are distributions from taxable accounts taxed as short term gains
   [Metric.LONG_TERM_CAPITAL_GAIN_TAX]:  'Long Term Capital Gain Tax',  // these are distriubtions from taxable accounts taxed as long term gains
   [Metric.CAPITAL_GAIN_TAX]:            'Capital Gains Tax',
+  [Metric.MAINTENANCE]:                  'Maintenance',
+  [Metric.INSURANCE]:                    'Insurance',
   [Metric.CREDIT]:                      'Credit',
 });
 
@@ -153,6 +157,8 @@ export const MetricRollups = {
     [Metric.MORTGAGE_ESCROW]:             [Metric.MORTGAGE_PAYMENT],
     [Metric.MORTGAGE_PAYMENT]:            [Metric.EXPENSE],
     [Metric.PROPERTY_TAX]:                [Metric.EXPENSE],
+    [Metric.MAINTENANCE]:                 [Metric.EXPENSE],
+    [Metric.INSURANCE]:                   [Metric.EXPENSE],
 };
 
 // Metrics that should NOT be zeroed on monthly snapshot
@@ -189,6 +195,8 @@ export class ModelAsset {
     isSelfEmployed = false,
     isPrimaryHome = true,
     annualTaxRate = new ARR(0),
+    annualMaintenanceRate = new ARR(0),
+    annualInsuranceCost = Currency.zero(),
   }) {
     this.instrument      = instrument;
     this.displayName     = displayName;
@@ -205,6 +213,8 @@ export class ModelAsset {
     this.isSelfEmployed  = isSelfEmployed;
     this.isPrimaryHome   = isPrimaryHome;
     this.annualTaxRate   = annualTaxRate;
+    this.annualMaintenanceRate = annualMaintenanceRate;
+    this.annualInsuranceCost = annualInsuranceCost;
 
     this.behavior      = getBehavior(instrument);
     this.colorId       = 0;
@@ -263,6 +273,8 @@ export class ModelAsset {
       isSelfEmployed:  obj.isSelfEmployed ?? false,
       isPrimaryHome:   obj.isPrimaryHome ?? true,
       annualTaxRate:   new ARR(obj.annualTaxRate?.annualReturnRate ?? obj.annualTaxRate?.rate ?? 0),
+      annualMaintenanceRate: new ARR(obj.annualMaintenanceRate?.annualReturnRate ?? obj.annualMaintenanceRate?.rate ?? 0),
+      annualInsuranceCost: new Currency(obj.annualInsuranceCost?.amount ?? 0),
     });
   }
 
@@ -300,6 +312,8 @@ export class ModelAsset {
         ? vals.isPrimaryHome.checked
         : (vals.isPrimaryHome?.value !== 'false'),
       annualTaxRate: vals.annualTaxRate ? ARR.parse(vals.annualTaxRate.value) : new ARR(0),
+      annualMaintenanceRate: vals.annualMaintenanceRate ? ARR.parse(vals.annualMaintenanceRate.value) : new ARR(0),
+      annualInsuranceCost: vals.annualInsuranceCost ? Currency.parse(vals.annualInsuranceCost.value) : Currency.zero(),
     });
 
     // Restore color
@@ -455,6 +469,12 @@ export class ModelAsset {
 
   get propertyTaxCurrency()   { return this.#metrics.get(Metric.PROPERTY_TAX).current; }
   set propertyTaxCurrency(c)  { this.#metrics.get(Metric.PROPERTY_TAX).current = c; }
+
+  get maintenanceCurrency()   { return this.#metrics.get(Metric.MAINTENANCE).current; }
+  set maintenanceCurrency(c)  { this.#metrics.get(Metric.MAINTENANCE).current = c; }
+
+  get insuranceCurrency()   { return this.#metrics.get(Metric.INSURANCE).current; }
+  set insuranceCurrency(c)  { this.#metrics.get(Metric.INSURANCE).current = c; }
 
   get taxableContributionCurrency()   { return this.#metrics.get(Metric.TAXABLE_CONTRIBUTION).current; }
   set taxableContributionCurrency(c)  { this.#metrics.get(Metric.TAXABLE_CONTRIBUTION).current = c; }

@@ -35,7 +35,8 @@ import {
 
 import { classifyAssets, classifyAssetGroup, GROUP_DISPLAY_ORDER, getAssetChartColor } from './asset-groups.js';
 import {
-    PropertyGroupMeta, PROPERTY_DISPLAY_ORDER, PropertyGroupMetrics,
+    PropertyGroupMeta, PROPERTY_ORDER_ACCUMULATE, PROPERTY_ORDER_RETIRE,
+    PropertyGroupMetrics, PropertyGroupRollupMetrics, ASSET_LESS_GROUPS,
     classifyAssetsByProperty, getPrimaryMetric, sumPropertyDisplayHistories,
 } from './property-groups.js';
 
@@ -140,6 +141,7 @@ const spreadsheetView   = document.getElementById('finplanSpreadsheet');
 const reportView        = document.getElementById('finplanReport');
 const creditMemoView    = document.getElementById('finplanCreditMemos');
 const metricSelect      = document.getElementById('finplan-metric-select');
+const microMetricSelect = document.getElementById('finplan-micro-metric-select');
 const shareModal        = document.getElementById('shareModal');
 const scenarioSelect    = document.getElementById('scenario-select');
 const scenarioNote      = document.getElementById('scenario-note');
@@ -161,6 +163,7 @@ let activePortfolio     = null;
 let activeLifeEvents    = [];
 let expandedGroups      = new Set();
 let activeMetricName    = Metric.VALUE;
+let activeMicroMetric   = Metric.VALUE;
 let macroChart          = null;
 let microChart          = null;
 let editingModelAsset   = null;
@@ -168,6 +171,12 @@ let editingModelAsset   = null;
 let viewMode            = 'assets'; // 'assets' | 'properties'
 let activeStoryArc      = null;
 let activeStoryName     = null;
+
+function getPropertyDisplayOrder() {
+    const evt = activeLifeEvents?.[0];
+    const isRetired = evt?.event ? LifeEventType.isRetirement(evt.event) : false;
+    return isRetired ? PROPERTY_ORDER_RETIRE : PROPERTY_ORDER_ACCUMULATE;
+}
 
 // ── Init ────────────────────────────────────────────────────
 
@@ -461,7 +470,7 @@ document.getElementById('btn-import-save').addEventListener('click', () => {
     }
 });
 
-// Wire metric select
+// Macro metric dropdown — always full list, drives Macro chart + timeline
 metricSelect.innerHTML = Object.values(Metric).map(m =>
     `<option value="${m}">${MetricLabel[m]}</option>`
 ).join('');
@@ -474,25 +483,35 @@ metricSelect.addEventListener('change', () => {
     rebuildProjectionCharts();
 });
 
+// Micro metric dropdown — filtered by expanded property group, drives Micro chart
+microMetricSelect.addEventListener('change', () => {
+    activeMicroMetric = microMetricSelect.value;
+    if (!activePortfolio) return;
+    rebuildMicroChart();
+});
+
 function updateMetricDropdown() {
-    if (viewMode === 'properties' && expandedGroups.size > 0) {
-        const allowedMetrics = new Set();
-        for (const groupKey of expandedGroups) {
-            const metrics = PropertyGroupMetrics.get(groupKey);
-            if (metrics) metrics.forEach(m => allowedMetrics.add(m));
+    // Macro dropdown stays full — no changes needed
+
+    // Micro dropdown: show/hide based on view mode, populate from expanded group
+    if (viewMode === 'properties') {
+        microMetricSelect.style.display = '';
+        if (expandedGroups.size > 0) {
+            const allowedMetrics = new Set();
+            for (const groupKey of expandedGroups) {
+                const metrics = PropertyGroupMetrics.get(groupKey);
+                if (metrics) metrics.forEach(m => allowedMetrics.add(m));
+            }
+            microMetricSelect.innerHTML = [...allowedMetrics].map(m =>
+                `<option value="${m}">${MetricLabel[m]}</option>`
+            ).join('');
+            if (!allowedMetrics.has(activeMicroMetric)) {
+                activeMicroMetric = [...allowedMetrics][0];
+            }
+            microMetricSelect.value = activeMicroMetric;
         }
-        metricSelect.innerHTML = [...allowedMetrics].map(m =>
-            `<option value="${m}">${MetricLabel[m]}</option>`
-        ).join('');
-        if (!allowedMetrics.has(activeMetricName)) {
-            activeMetricName = [...allowedMetrics][0];
-        }
-        metricSelect.value = activeMetricName;
     } else {
-        metricSelect.innerHTML = Object.values(Metric).map(m =>
-            `<option value="${m}">${MetricLabel[m]}</option>`
-        ).join('');
-        metricSelect.value = activeMetricName;
+        microMetricSelect.style.display = 'none';
     }
 }
 
@@ -782,16 +801,23 @@ function rebuildMacroChartProperties(markers) {
     const groups = classifyAssetsByProperty(activePortfolio.modelAssets);
     const datasets = [];
 
-    for (const groupKey of PROPERTY_DISPLAY_ORDER) {
-        const assets = groups.get(groupKey);
-        if (!assets || assets.length === 0) continue;
+    for (const groupKey of getPropertyDisplayOrder()) {
         const meta = PropertyGroupMeta.get(groupKey);
 
-        datasets.push({
-            label: meta.label,
-            data: sumPropertyDisplayHistories(assets, groupKey),
-            backgroundColor: meta.chartColor,
-        });
+        if (ASSET_LESS_GROUPS.has(groupKey)) {
+            // Asset-less groups sum across all assets
+            const data = sumPropertyDisplayHistories([], groupKey, activePortfolio.modelAssets);
+            if (data.length === 0) continue;
+            datasets.push({ label: meta.label, data, backgroundColor: meta.chartColor });
+        } else {
+            const assets = groups.get(groupKey);
+            if (!assets || assets.length === 0) continue;
+            datasets.push({
+                label: meta.label,
+                data: sumPropertyDisplayHistories(assets, groupKey),
+                backgroundColor: meta.chartColor,
+            });
+        }
     }
 
     if (macroChart) macroChart.destroy();
@@ -839,17 +865,22 @@ function rebuildMicroChart(markers) {
     if (viewMode === 'properties') {
         // Properties mode: chart assets from expanded property groups
         const groups = classifyAssetsByProperty(activePortfolio.modelAssets);
-        for (const groupKey of PROPERTY_DISPLAY_ORDER) {
+        for (const groupKey of getPropertyDisplayOrder()) {
             if (!expandedGroups.has(groupKey)) continue;
-            const assets = groups.get(groupKey);
-            if (!assets) continue;
             const meta = PropertyGroupMeta.get(groupKey);
+
+            // Asset-less groups (Cash Flow, Growth): show all assets with the group's metric
+            const assets = ASSET_LESS_GROUPS.has(groupKey)
+                ? activePortfolio.modelAssets
+                : groups.get(groupKey);
+            if (!assets) continue;
+
             for (const asset of assets) {
-                const metric = getPrimaryMetric(asset, groupKey);
+                const shade = meta.assetShades?.get(asset.instrument) ?? meta.chartColor;
                 datasets.push({
                     label: asset.displayName,
-                    data: asset.getDisplayHistory(metric),
-                    backgroundColor: meta.chartColor,
+                    data: asset.getDisplayHistory(activeMicroMetric),
+                    backgroundColor: shade,
                 });
             }
         }
@@ -997,8 +1028,19 @@ function connectAssetListEvents() {
 
     assetList.addEventListener('group-toggle', (ev) => {
         const group = ev.detail.group;
-        if (expandedGroups.has(group)) expandedGroups.delete(group);
-        else expandedGroups.add(group);
+        if (viewMode === 'properties') {
+            // Single-select: toggle off if already active, otherwise switch
+            if (expandedGroups.has(group)) {
+                expandedGroups.clear();
+            } else {
+                expandedGroups.clear();
+                expandedGroups.add(group);
+            }
+        } else {
+            // Multi-select for Assets view
+            if (expandedGroups.has(group)) expandedGroups.delete(group);
+            else expandedGroups.add(group);
+        }
         assetList.expandedGroups = new Set(expandedGroups);
         rebuildMicroChart();
         updateMetricDropdown();

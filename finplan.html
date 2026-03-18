@@ -256,7 +256,7 @@
 
         /* ─── Asset Cards (needed since no index.css) ─── */
 
-        .asset { position: relative; text-align: center; }
+        .asset { position: relative; text-align: center; min-width: 120px; }
         .asset-card-icon { font-size: 28px; line-height: 1; margin-bottom: 6px; }
         .asset-card-name { font-size: 11px; font-weight: 500; color: #111827; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .asset-card-value { font-size: 13px; color: #6b7280; margin-top: 2px; }
@@ -272,7 +272,7 @@
         .asset-action-btn.edit:hover      { background: #111827; color: white; }
 
         .assets-container .asset {
-            width: 110px;
+            min-width: 150px;
             padding: 12px 8px;
             border: 2px solid transparent;
             border-radius: 12px;
@@ -519,9 +519,6 @@
     <!-- ═══ Projections (full width) ═══ -->
     <div class="mb-8">
         <h2 class="text-lg font-bold flex items-center gap-2 mb-4">📊 Projections
-            <select class="fin-input text-xs cursor-pointer font-medium"
-                style="width: auto; padding: 6px 12px;"
-                id="finplan-metric-select"></select>
             <span class="badge-coral ml-auto viewing-badge"></span>
         </h2>
 
@@ -529,14 +526,24 @@
             <!-- Macro + Micro side by side -->
             <div class="flex gap-6">
                 <div class="finplan-chart-slot flex-1 min-w-0" id="finplan-macro-slot" style="border-bottom: none;">
-                    <div class="slot-heading">Macro Projection</div>
+                    <div class="slot-heading" style="display: flex; align-items: center; gap: 8px;">
+                        Macro Projection
+                        <select class="fin-input text-xs cursor-pointer font-medium"
+                            style="width: auto; padding: 4px 8px; margin-left: auto;"
+                            id="finplan-metric-select"></select>
+                    </div>
                     <div class="finplan-chart-canvas-wrap">
                         <canvas id="finplan-macro-canvas"></canvas>
                     </div>
                 </div>
 
                 <div class="finplan-chart-slot flex-1 min-w-0" id="finplan-micro-slot" style="border-bottom: none;">
-                    <div class="slot-heading">Micro Projection</div>
+                    <div class="slot-heading" style="display: flex; align-items: center; gap: 8px;">
+                        Micro Projection
+                        <select class="fin-input text-xs cursor-pointer font-medium"
+                            style="width: auto; padding: 4px 8px; margin-left: auto; display: none;"
+                            id="finplan-micro-metric-select"></select>
+                    </div>
                     <div class="finplan-chart-canvas-wrap">
                         <canvas id="finplan-micro-canvas"></canvas>
                     </div>

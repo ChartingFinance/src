@@ -59,6 +59,8 @@ const M = {
   SHORT_TERM_CAPITAL_GAIN_TAX: 'shortTermCapitalGainTax',
   LONG_TERM_CAPITAL_GAIN_TAX:  'longTermCapitalGainTax',
   CAPITAL_GAIN_TAX:            'capitalGainTax',
+  MAINTENANCE:                 'maintenance',
+  INSURANCE:                   'insurance',
   CREDIT:                      'credit',
 };
 
@@ -271,6 +273,7 @@ const RealEstateBehavior = Object.freeze({
       M.SHORT_TERM_CAPITAL_GAIN, M.LONG_TERM_CAPITAL_GAIN, M.CAPITAL_GAIN,
       M.SHORT_TERM_CAPITAL_GAIN_TAX, M.LONG_TERM_CAPITAL_GAIN_TAX, M.CAPITAL_GAIN_TAX,
       M.PROPERTY_TAX, M.MORTGAGE_ESCROW,
+      M.MAINTENANCE, M.INSURANCE,
     ];
   },
 
@@ -290,12 +293,30 @@ const RealEstateBehavior = Object.freeze({
     asset.propertyTaxCurrency.add(tax);
     asset.addCreditMemo(tax, 'Property tax');
 
+    // Maintenance: percentage of home value (e.g. 1% annual rule of thumb)
+    if (asset.annualMaintenanceRate.rate !== 0) {
+      const maint = new Currency(asset.finishCurrency.amount * asset.annualMaintenanceRate.asMonthly());
+      maint.flipSign();
+      asset.maintenanceCurrency.add(maint);
+      asset.addCreditMemo(maint, 'Maintenance');
+    }
+
+    // Insurance: fixed annual cost spread monthly
+    if (asset.annualInsuranceCost.amount !== 0) {
+      const ins = new Currency(asset.annualInsuranceCost.amount / -12);
+      asset.insuranceCurrency.add(ins);
+      asset.addCreditMemo(ins, 'Insurance');
+    }
+
     return new AssetAppreciationResult(asset.finishCurrency.copy(), growth, Currency.zero(), tax);
 
   },
 
   computeCashFlow(asset) {
-    return asset.propertyTaxCurrency.copy();
+    const cf = asset.propertyTaxCurrency.copy();
+    cf.add(asset.maintenanceCurrency);
+    cf.add(asset.insuranceCurrency);
+    return cf;
   },
 });
 

@@ -249,6 +249,16 @@ class AssetFormModal extends LitElement {
                                 Primary Home
                             </label>
                         </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Annual Maintenance %</label>
+                            <input type="number" class="fin-input" name="annualMaintenanceRate"
+                                .value=${ma ? ma.annualMaintenanceRate.toHTML() : '1'} step="0.01" placeholder="e.g. 1%" />
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Annual Insurance $</label>
+                            <input type="number" class="fin-input" name="annualInsuranceCost"
+                                .value=${ma ? ma.annualInsuranceCost.toHTML() : '0'} step="1" placeholder="annual $" />
+                        </div>
                     </div>
                 </div>
             `;

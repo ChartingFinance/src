@@ -19,9 +19,11 @@ import {
     GROUP_DISPLAY_ORDER,
 } from '../asset-groups.js';
 import {
-    PropertyGroupMeta, PROPERTY_DISPLAY_ORDER,
+    PropertyGroupMeta, PROPERTY_ORDER_ACCUMULATE, PROPERTY_ORDER_RETIRE,
+    ASSET_LESS_GROUPS,
     classifyAssetsByProperty, getPrimaryMetric, computePropertyRollupAtIndex,
 } from '../property-groups.js';
+import { LifeEventType } from '../life-event.js';
 import { MetricLabel } from '../model-asset.js';
 import './asset-card.js';
 
@@ -125,12 +127,31 @@ class AssetList extends LitElement {
     }
 
     _renderPropertiesView() {
+        // Set closed-at-date flag for ghosting (same logic as classifyAssets)
+        const atInt = this.atDateInt?.toInt?.();
+        for (const asset of this.modelAssets) {
+            if (atInt != null) {
+                const start = asset.startDateInt.toInt();
+                const finish = asset.effectiveFinishDateInt.toInt();
+                asset._isClosedAtDate = atInt < start || atInt > finish;
+            } else {
+                asset._isClosedAtDate = asset.isClosed;
+            }
+        }
+
         const groups = classifyAssetsByProperty(this.modelAssets);
         const expanded = this.expandedGroups || new Set();
+        const isRetired = this.activeLifeEvent?.event
+            ? LifeEventType.isRetirement(this.activeLifeEvent.event)
+            : false;
+        const order = isRetired ? PROPERTY_ORDER_RETIRE : PROPERTY_ORDER_ACCUMULATE;
 
         return html`
             <div class="flex flex-col gap-3 w-full">
-                ${PROPERTY_DISPLAY_ORDER.map(groupKey => {
+                ${order.map(groupKey => {
+                    if (ASSET_LESS_GROUPS.has(groupKey)) {
+                        return this._renderAssetLessPropertyGroup(groupKey, expanded.has(groupKey));
+                    }
                     const assets = groups.get(groupKey);
                     if (!assets || assets.length === 0) return nothing;
                     return this._renderPropertyGroup(groupKey, assets, expanded.has(groupKey));
@@ -160,12 +181,15 @@ class AssetList extends LitElement {
                             (ma) => ma.displayName + ':' + groupKey,
                             (ma) => {
                                 const metric = getPrimaryMetric(ma, groupKey);
+                                const shade = meta.assetShades?.get(ma.instrument) ?? meta.chartColor;
                                 return html`
                                     <asset-card
                                         .modelAsset=${ma}
-                                        .groupColor=${meta.chartColor}
+                                        .groupColor=${shade}
                                         .metricValue=${this._getMetricValueForMetric(ma, metric)}
                                         .metricLabel=${MetricLabel[metric] || ''}
+                                        ?ghost=${ma._isClosedAtDate}
+                                        .closedEmoji=${ma._isClosedAtDate ? '⛔' : ''}
                                         ?selected=${this.highlightName === ma.displayName}
                                     ></asset-card>
                                 `;
@@ -177,13 +201,35 @@ class AssetList extends LitElement {
         `;
     }
 
+    _renderAssetLessPropertyGroup(groupKey, isActive) {
+        const meta = PropertyGroupMeta.get(groupKey);
+        const total = computePropertyRollupAtIndex([], groupKey, this.historyIndex, this.modelAssets);
+
+        return html`
+            <div>
+                <div class="asset-group-header"
+                     style="background: ${meta.headerBg}; color: ${meta.headerFg}"
+                     @click=${() => this._onGroupToggle(groupKey)}>
+                    <span class="asset-group-emoji">${meta.groupEmoji}</span>
+                    <span class="asset-group-label">${meta.label}</span>
+                    <span class="asset-group-total">${formatCompactCurrency(total)}</span>
+                    <span class="asset-group-spotlight" title="Spotlight in Micro chart">${isActive ? '🔦' : '🔅'}</span>
+                </div>
+            </div>
+        `;
+    }
+
     /** Get metric value for a specific metric at current historyIndex */
     _getMetricValueForMetric(asset, metricName) {
         if (!metricName || this.historyIndex < 0) return null;
         const history = asset.getHistory?.(metricName);
         if (!history || this.historyIndex >= history.length) return null;
         const entry = history[this.historyIndex];
-        return entry?.amount ?? (typeof entry === 'number' ? entry : null);
+        if (entry == null) return null;
+        if (entry.amount != null) return entry.amount;
+        if (typeof entry === 'number') return entry;
+        const parsed = parseFloat(entry);
+        return isNaN(parsed) ? null : parsed;
     }
 
     _renderGroup(groupKey, assets, isExpanded) {
@@ -298,7 +344,11 @@ class AssetList extends LitElement {
         const history = asset.getHistory?.(this.metricName);
         if (!history || this.historyIndex >= history.length) return null;
         const entry = history[this.historyIndex];
-        return entry?.amount ?? (typeof entry === 'number' ? entry : null);
+        if (entry == null) return null;
+        if (entry.amount != null) return entry.amount;       // Currency object
+        if (typeof entry === 'number') return entry;         // plain number
+        const parsed = parseFloat(entry);                    // string from toCurrency()
+        return isNaN(parsed) ? null : parsed;
     }
 
     _computeRollupTotal(groupKey, assets) {
