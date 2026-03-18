@@ -239,6 +239,21 @@
         }
         .ai-fab:hover { opacity: 1; transform: scale(1.1); }
 
+        /* Scenario bar */
+        .scenario-bar {
+            position: absolute; bottom: 40px; left: 48px; right: 48px;
+            display: flex; flex-direction: column; align-items: center; gap: 4px;
+            padding: 4px 0;
+        }
+        .scenario-bar .scenario-row {
+            display: flex; align-items: center; gap: 8px;
+        }
+        .scenario-bar .scenario-note-text {
+            font-size: 11px; color: #9ca3af; text-align: center;
+            max-width: 320px; line-height: 1.3;
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+
         /* ─── Asset Cards (needed since no index.css) ─── */
 
         .asset { position: relative; text-align: center; }
@@ -308,6 +323,56 @@
             <h2 class="text-2xl font-bold tracking-tight mb-2">Buy me a Coffee!</h2>
             <p class="text-gray-500 mb-6 text-sm">This will help pay for server costs as this project grows.</p>
             <a href="https://buymeacoffee.com/charting.finance" target="_blank" class="btn-modern primary w-full text-center">Visit my Coffee</a>
+        </div>
+    </div>
+
+    <!-- ═══ Popup: Create Scenario ═══ -->
+    <div id="popupCreateScenario" class="popup fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+        <div class="popup-content glass-card p-8 w-full max-w-md relative">
+            <button class="closeBtn absolute top-4 right-4 text-gray-400 hover:text-gray-800 text-2xl">&times;</button>
+            <h2 class="text-xl font-bold tracking-tight mb-4" id="scenario-popup-title">New Scenario</h2>
+            <div class="flex flex-col gap-4">
+                <div>
+                    <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Title</label>
+                    <input type="text" class="fin-input w-full mt-1" id="scenario-title-input" placeholder="e.g. Conservative Approach">
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Note (optional)</label>
+                    <textarea class="fin-input w-full mt-1" id="scenario-note-input" rows="3" placeholder="Describe what makes this scenario different..."></textarea>
+                </div>
+                <label class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer" id="scenario-copy-label">
+                    <input type="checkbox" id="scenario-copy-check" checked class="accent-[#993C1D]">
+                    Fill with current scenario?
+                </label>
+                <div class="flex gap-3 justify-end">
+                    <button class="btn-modern outline" id="btn-scenario-cancel">Cancel</button>
+                    <button class="btn-modern primary" id="btn-scenario-create">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ Popup: Import Shared Portfolio ═══ -->
+    <div id="popupImportPortfolio" class="popup fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+        <div class="popup-content glass-card p-8 w-full max-w-md relative">
+            <button class="closeBtn absolute top-4 right-4 text-gray-400 hover:text-gray-800 text-2xl">&times;</button>
+            <div class="text-4xl mb-3 text-center">📬</div>
+            <h2 class="text-xl font-bold tracking-tight mb-2 text-center">Shared Portfolio Received</h2>
+            <div class="flex flex-col gap-4 mt-4">
+                <div>
+                    <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Title</label>
+                    <input type="text" class="fin-input w-full mt-1" id="import-title-input">
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Note</label>
+                    <textarea class="fin-input w-full mt-1" id="import-note-input" rows="3"></textarea>
+                </div>
+                <div class="flex gap-3 justify-end">
+                    <button class="btn-modern outline" id="btn-import-dismiss">Dismiss</button>
+                    <button class="btn-modern outline" id="btn-import-open">Open</button>
+                    <button class="btn-modern primary" id="btn-import-save">Open &amp; Save</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -412,9 +477,22 @@
         <div class="finplan-charts flex flex-col gap-4">
             <h2 class="text-lg font-bold flex items-center gap-2 flex-shrink-0">🕐 Your Timeline</h2>
 
-            <div class="glass-card p-5 flex-grow min-h-0 relative">
+            <div class="glass-card p-5 flex-grow min-h-0 relative" style="padding-bottom: 72px;">
                 <finplan-timeline id="finplanTimeline"></finplan-timeline>
+
+                <!-- Scenario bar -->
+                <div class="scenario-bar">
+                    <div class="scenario-row">
+                        <select class="fin-input text-xs font-medium" id="scenario-select"
+                            style="width: auto; max-width: 200px; padding: 4px 8px;"></select>
+                        <button class="text-gray-400 hover:text-gray-800 text-sm cursor-pointer" id="btn-edit-scenario" title="Edit scenario">✏️</button>
+                        <button class="text-gray-400 hover:text-red-500 text-sm cursor-pointer hidden" id="btn-delete-scenario" title="Delete scenario">🗑️</button>
+                    </div>
+                    <div class="scenario-note-text" id="scenario-note"></div>
+                </div>
+
                 <button class="ai-fab" data-section="timeline" title="AI Summary">⚡</button>
+                <button class="ai-fab" style="left: auto; right: 12px;" id="btn-add-scenario" title="New scenario">+</button>
             </div>
         </div>
 
@@ -427,9 +505,7 @@
             <div class="glass-card p-6 relative flex flex-col flex-grow min-h-0">
                 <asset-list class="flex-grow overflow-y-auto min-h-0" id="finplanAssetList"></asset-list>
                 <button class="ai-fab" data-section="portfolio" title="AI Summary">⚡</button>
-                <button class="absolute bottom-6 right-6 w-14 h-14 bg-black text-white rounded-full shadow-xl hover:scale-110 transition-transform flex items-center justify-center text-2xl font-light z-10" id="btn-add-asset" title="Add a new instrument">
-                    +
-                </button>
+                <button class="ai-fab" style="left: auto; right: 12px;" id="btn-add-asset" title="Add a new instrument">+</button>
             </div>
         </div>
 

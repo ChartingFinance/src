@@ -95,6 +95,10 @@ import {
     global_guardrail_preservation,
     global_guardrail_prosperity,
     global_guardrail_adjustment,
+    global_setGuardrailWithdrawalRate,
+    global_setGuardrailPreservation,
+    global_setGuardrailProsperity,
+    global_setGuardrailAdjustment,
 } from './globals.js';
 
 // ── Util ────────────────────────────────────────────────────
@@ -105,6 +109,12 @@ import {
     util_loadLocalAssetModels,
     util_saveLocalLifeEvents,
     util_loadLocalLifeEvents,
+    util_saveLocalGuardrailParams,
+    util_loadLocalGuardrailParams,
+    util_saveLocalScenarioMeta,
+    util_loadLocalScenarioMeta,
+    util_loadStoryNames,
+    util_deleteScenario,
 } from './utils/util.js';
 
 // ── DOM refs ────────────────────────────────────────────────
@@ -123,6 +133,9 @@ const reportView        = document.getElementById('finplanReport');
 const creditMemoView    = document.getElementById('finplanCreditMemos');
 const metricSelect      = document.getElementById('finplan-metric-select');
 const shareModal        = document.getElementById('shareModal');
+const scenarioSelect    = document.getElementById('scenario-select');
+const scenarioNote      = document.getElementById('scenario-note');
+const btnDeleteScenario = document.getElementById('btn-delete-scenario');
 
 // ── App state ───────────────────────────────────────────────
 let activePortfolio     = null;
@@ -271,11 +284,116 @@ document.getElementById('btn-spreadsheet-download').addEventListener('click', ()
     URL.revokeObjectURL(url);
 });
 
+// Timeline life event "+" dispatches event-create
+timeline.addEventListener('event-create', () => {
+    eventFormModal.mode = 'create';
+    eventFormModal.lifeEvent = null;
+    eventFormModal.editIndex = -1;
+    eventFormModal.modelAssets = assetList.modelAssets || [];
+    eventFormModal.open = true;
+});
 document.getElementById('btn-add-asset').addEventListener('click', () => openCreateAssetModal());
 document.getElementById('btn-run-mc').addEventListener('click', () => doMonteCarlo());
 document.getElementById('btn-run-guardrails').addEventListener('click', () => doGuardrails());
 document.getElementById('btn-visualize').addEventListener('click', () => doVisualize());
 document.getElementById('btn-maximize').addEventListener('click', () => doMaximize());
+
+// ── Scenario UI events ─────────────────────────────────────
+let _scenarioPopupMode = 'create'; // 'create' or 'edit'
+
+document.getElementById('btn-add-scenario').addEventListener('click', () => {
+    _scenarioPopupMode = 'create';
+    document.getElementById('scenario-popup-title').textContent = 'New Scenario';
+    document.getElementById('scenario-title-input').value = '';
+    document.getElementById('scenario-note-input').value = '';
+    document.getElementById('scenario-copy-label').style.display = '';
+    document.getElementById('scenario-copy-check').checked = true;
+    document.getElementById('popupCreateScenario').style.display = 'flex';
+});
+
+document.getElementById('btn-edit-scenario').addEventListener('click', () => {
+    _scenarioPopupMode = 'edit';
+    const meta = util_loadLocalScenarioMeta(activeStoryArc, activeStoryName);
+    document.getElementById('scenario-popup-title').textContent = 'Edit Scenario';
+    document.getElementById('scenario-title-input').value = meta?.title || '';
+    document.getElementById('scenario-note-input').value = meta?.note || '';
+    document.getElementById('scenario-copy-label').style.display = 'none';
+    document.getElementById('popupCreateScenario').style.display = 'flex';
+});
+
+document.getElementById('btn-scenario-create').addEventListener('click', () => {
+    const title = document.getElementById('scenario-title-input').value.trim();
+    if (!title) return; // Title required
+    const note = document.getElementById('scenario-note-input').value.trim();
+
+    if (_scenarioPopupMode === 'edit') {
+        util_saveLocalScenarioMeta(activeStoryArc, activeStoryName, { title, note });
+        loadScenarioList();
+    } else {
+        const copyData = document.getElementById('scenario-copy-check').checked;
+        createScenario(title, note, copyData);
+    }
+    document.getElementById('popupCreateScenario').style.display = 'none';
+});
+
+document.getElementById('btn-scenario-cancel').addEventListener('click', () => {
+    document.getElementById('popupCreateScenario').style.display = 'none';
+});
+
+const createScenarioPopup = document.getElementById('popupCreateScenario');
+createScenarioPopup.querySelector('.closeBtn').addEventListener('click', () => createScenarioPopup.style.display = 'none');
+createScenarioPopup.addEventListener('click', (e) => { if (e.target === createScenarioPopup) createScenarioPopup.style.display = 'none'; });
+
+scenarioSelect.addEventListener('change', () => {
+    switchScenario(scenarioSelect.value);
+});
+
+btnDeleteScenario.addEventListener('click', () => {
+    const meta = util_loadLocalScenarioMeta(activeStoryArc, activeStoryName);
+    const label = meta?.title || activeStoryName;
+    if (confirm(`Delete scenario "${label}"?`)) {
+        deleteScenario(activeStoryName);
+    }
+});
+
+// Import popup events
+const importPopup = document.getElementById('popupImportPortfolio');
+importPopup.querySelector('.closeBtn').addEventListener('click', () => {
+    importPopup.style.display = 'none';
+    _pendingImport = null;
+    // Fall back to local data if dismissed
+    activeStoryArc = localStorage.getItem('activeStoryArc') || 'default';
+    activeStoryName = localStorage.getItem('activeStoryName') || util_YYYYmm();
+    util_ensureStoryNames(activeStoryArc, activeStoryName);
+    loadScenarioList();
+    loadLocalData();
+});
+
+document.getElementById('btn-import-dismiss').addEventListener('click', () => {
+    importPopup.style.display = 'none';
+    _pendingImport = null;
+    activeStoryArc = localStorage.getItem('activeStoryArc') || 'default';
+    activeStoryName = localStorage.getItem('activeStoryName') || util_YYYYmm();
+    util_ensureStoryNames(activeStoryArc, activeStoryName);
+    loadScenarioList();
+    loadLocalData();
+});
+
+document.getElementById('btn-import-open').addEventListener('click', () => {
+    importPopup.style.display = 'none';
+    if (_pendingImport) {
+        applyImportedPortfolio(_pendingImport, false);
+        _pendingImport = null;
+    }
+});
+
+document.getElementById('btn-import-save').addEventListener('click', () => {
+    importPopup.style.display = 'none';
+    if (_pendingImport) {
+        applyImportedPortfolio(_pendingImport, true);
+        _pendingImport = null;
+    }
+});
 
 // Wire metric select
 metricSelect.innerHTML = Object.values(Metric).map(m =>
@@ -371,13 +489,24 @@ function connectSettings() {
 // ── Data Loading ────────────────────────────────────────────
 
 function initiateActiveData() {
+    // Check for shared portfolio in URL first
+    if (loadSharedPortfolio()) return;
+
     activeStoryArc = localStorage.getItem('activeStoryArc') || 'default';
     activeStoryName = localStorage.getItem('activeStoryName');
     if (!activeStoryName) {
         activeStoryName = util_YYYYmm();
         util_ensureStoryNames(activeStoryArc, activeStoryName);
+        // Auto-create a "Default" scenario meta if none exists
+        if (!util_loadLocalScenarioMeta(activeStoryArc, activeStoryName)) {
+            util_saveLocalScenarioMeta(activeStoryArc, activeStoryName, {
+                title: 'Default', note: 'Your default scenario'
+            });
+        }
     }
+    loadScenarioList();
     loadLocalData();
+    ensureMonthlySnapshot();
 }
 
 function loadLocalData() {
@@ -393,6 +522,15 @@ function loadLocalData() {
         activeLifeEvents = ModelLifeEvent.defaultTimeline(
             global_user_startAge, global_user_retirementAge
         );
+    }
+
+    // Load guardrail params
+    const gp = util_loadLocalGuardrailParams(activeStoryArc, slotName);
+    if (gp) {
+        global_setGuardrailWithdrawalRate(gp.withdrawalRate);
+        global_setGuardrailPreservation(gp.preservation);
+        global_setGuardrailProsperity(gp.prosperity);
+        global_setGuardrailAdjustment(gp.adjustment);
     }
 
     // Migration: copy legacy per-asset transfers to accumulate phase
@@ -791,4 +929,224 @@ function saveLocalData() {
     const slotName = activeStoryName;
     util_saveLocalAssetModels(activeStoryArc, slotName, assetList.modelAssets || []);
     util_saveLocalLifeEvents(activeStoryArc, slotName, activeLifeEvents.map(e => e.toJSON()));
+    util_saveLocalGuardrailParams(activeStoryArc, slotName, getGuardrailParams());
+    localStorage.setItem('activeStoryName', slotName);
+}
+
+// ── Scenario Management ──────────────────────────────────────
+
+function loadScenarioList() {
+    const storyNames = util_loadStoryNames(activeStoryArc);
+
+    // Ensure current activeStoryName is in the list
+    if (storyNames.length === 0) {
+        storyNames.push(activeStoryName);
+        util_ensureStoryNames(activeStoryArc, activeStoryName);
+    }
+
+    // Populate dropdown
+    scenarioSelect.innerHTML = '';
+    for (const name of storyNames) {
+        const meta = util_loadLocalScenarioMeta(activeStoryArc, name);
+        const option = document.createElement('option');
+        option.value = name;
+        option.textContent = meta?.title || name;
+        scenarioSelect.appendChild(option);
+    }
+    scenarioSelect.value = activeStoryName;
+
+    // Show note for active scenario
+    updateScenarioNote();
+
+    // Show/hide delete button (hide when only 1 scenario)
+    btnDeleteScenario.style.display = storyNames.length > 1 ? '' : 'none';
+}
+
+function updateScenarioNote() {
+    const meta = util_loadLocalScenarioMeta(activeStoryArc, activeStoryName);
+    scenarioNote.textContent = meta?.note || '';
+    scenarioNote.title = meta?.note || '';
+}
+
+function switchScenario(storyName) {
+    if (storyName === activeStoryName) return;
+
+    // Save current scenario before switching
+    saveLocalData();
+
+    // Switch
+    activeStoryName = storyName;
+    localStorage.setItem('activeStoryName', activeStoryName);
+
+    // Load guardrail params for new scenario
+    const gp = util_loadLocalGuardrailParams(activeStoryArc, storyName);
+    if (gp) {
+        global_setGuardrailWithdrawalRate(gp.withdrawalRate);
+        global_setGuardrailPreservation(gp.preservation);
+        global_setGuardrailProsperity(gp.prosperity);
+        global_setGuardrailAdjustment(gp.adjustment);
+    }
+
+    // Load data and recalculate
+    loadLocalData();
+    updateScenarioNote();
+    btnDeleteScenario.style.display = util_loadStoryNames(activeStoryArc).length > 1 ? '' : 'none';
+}
+
+function createScenario(title, note, copyData = true) {
+    // Save current scenario first
+    saveLocalData();
+
+    // Generate a unique story name key from timestamp
+    const newStoryName = util_YYYYmm() + '-' + Date.now().toString(36);
+
+    if (copyData) {
+        // ensureStoryNames copies previous slot data to new slot
+        util_ensureStoryNames(activeStoryArc, newStoryName);
+    } else {
+        // Just register the name without copying data — empty scenario
+        util_ensureStoryNames(activeStoryArc, newStoryName);
+        // Clear the copied data so it starts empty
+        const baseKey = activeStoryArc + '+' + newStoryName;
+        localStorage.removeItem(baseKey);
+        localStorage.removeItem(`lifeEvents_${activeStoryArc}_${newStoryName}`);
+        localStorage.removeItem(baseKey + '+guardrails');
+    }
+
+    util_saveLocalScenarioMeta(activeStoryArc, newStoryName, { title, note });
+
+    activeStoryName = newStoryName;
+    localStorage.setItem('activeStoryName', activeStoryName);
+
+    loadScenarioList();
+    loadLocalData();
+}
+
+function deleteScenario(storyName) {
+    const storyNames = util_loadStoryNames(activeStoryArc);
+    if (storyNames.length <= 1) return; // Never delete last scenario
+
+    util_deleteScenario(activeStoryArc, storyName);
+
+    // Switch to first remaining scenario
+    const remaining = util_loadStoryNames(activeStoryArc);
+    activeStoryName = remaining[0] || util_YYYYmm();
+    localStorage.setItem('activeStoryName', activeStoryName);
+
+    loadScenarioList();
+    loadLocalData();
+}
+
+function ensureMonthlySnapshot() {
+    // Silently snapshot current state to a monthly backup key
+    const snapshotKey = activeStoryName + '@' + util_YYYYmm();
+    const existing = localStorage.getItem(snapshotKey);
+    if (!existing) {
+        const assets = util_loadLocalAssetModels(activeStoryArc, activeStoryName);
+        if (assets) {
+            localStorage.setItem(snapshotKey, JSON.stringify(assets));
+        }
+    }
+}
+
+function loadSharedPortfolio() {
+    const params = new URLSearchParams(window.location.search);
+    const compressed = params.get('portfolio');
+    if (!compressed) return false;
+
+    try {
+        const json = LZString.decompressFromEncodedURIComponent(compressed);
+        if (!json) return false;
+        const data = JSON.parse(json);
+
+        // Store parsed data for import popup
+        _pendingImport = data;
+
+        // Show import popup with sender's info
+        const titleInput = document.getElementById('import-title-input');
+        const noteInput = document.getElementById('import-note-input');
+        titleInput.value = data.portfolioName || 'Shared Portfolio';
+        noteInput.value = data.note || '';
+
+        document.getElementById('popupImportPortfolio').style.display = 'flex';
+
+        // Clean URL without reloading
+        window.history.replaceState({}, '', window.location.pathname);
+        return true;
+    } catch (e) {
+        console.error('Failed to load shared portfolio:', e);
+        return false;
+    }
+}
+
+let _pendingImport = null;
+
+function applyImportedPortfolio(data, persist) {
+    // Apply global settings
+    if (data.settings) {
+        global_setInflationRate(data.settings.inflationRate);
+        global_setFilingAs(data.settings.filingAs);
+        global_setUserStartAge(data.settings.startAge);
+        global_setUserRetirementAge(data.settings.retirementAge);
+        global_setUserFinishAge(data.settings.finishAge);
+        if (data.settings.backtestYear != null) global_setBacktestYear(data.settings.backtestYear);
+        setActiveTaxTable(new TaxTable());
+        syncGlobalsToSettings();
+        store.setRetirementDate(global_getRetirementDateInt());
+    }
+
+    // Load guardrail params
+    if (data.guardrailParams) {
+        const gp = data.guardrailParams;
+        global_setGuardrailWithdrawalRate(gp.withdrawalRate);
+        global_setGuardrailPreservation(gp.preservation);
+        global_setGuardrailProsperity(gp.prosperity);
+        global_setGuardrailAdjustment(gp.adjustment);
+    }
+
+    // Load life events
+    if (data.lifeEvents?.length) {
+        activeLifeEvents = data.lifeEvents.map(ModelLifeEvent.fromJSON);
+    } else {
+        activeLifeEvents = ModelLifeEvent.defaultTimeline(
+            global_user_startAge, global_user_retirementAge
+        );
+    }
+
+    // Load assets
+    if (data.modelAssets) {
+        const assets = membrane_rawDataToModelAssets(data.modelAssets);
+
+        // Migration: copy legacy per-asset transfers to accumulate phase
+        const accEvent = activeLifeEvents.find(e => LifeEventType.isAccumulation(e.type));
+        if (accEvent && Object.keys(accEvent.phaseTransfers).length === 0) {
+            for (const asset of assets) {
+                if (asset.fundTransfers?.length > 0) {
+                    accEvent.phaseTransfers[asset.displayName] = asset.fundTransfers.map(ft => ft.toJSON());
+                }
+            }
+        }
+
+        assetList.modelAssets = assets;
+    }
+
+    if (persist) {
+        // Create a new scenario for the imported portfolio
+        activeStoryArc = localStorage.getItem('activeStoryArc') || 'default';
+        const title = document.getElementById('import-title-input').value || 'Shared Portfolio';
+        const note = document.getElementById('import-note-input').value || '';
+        const newStoryName = util_YYYYmm() + '-' + Date.now().toString(36);
+        util_ensureStoryNames(activeStoryArc, newStoryName);
+        util_saveLocalScenarioMeta(activeStoryArc, newStoryName, { title, note });
+        activeStoryName = newStoryName;
+        localStorage.setItem('activeStoryName', activeStoryName);
+        loadScenarioList();
+    } else {
+        // Temporary load — init arc/name but don't persist as scenario
+        activeStoryArc = localStorage.getItem('activeStoryArc') || 'default';
+        activeStoryName = localStorage.getItem('activeStoryName') || util_YYYYmm();
+        loadScenarioList();
+    }
+
+    calculate();
 }

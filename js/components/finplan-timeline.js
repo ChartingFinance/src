@@ -245,6 +245,13 @@ class FinplanTimeline extends LitElement {
                 <span class="text-sm font-semibold ${cagrPositive ? 'text-green-600' : 'text-pink-600'}">
                     ${cagr.toFixed(1)}%
                 </span>
+
+                <span class="text-gray-200">|</span>
+
+                <span class="text-xs font-medium px-1.5 py-0.5 rounded-full cursor-pointer hover:bg-gray-200 transition-colors"
+                    style="color: #666;"
+                    title="Add life event"
+                    @click=${this._onAddEvent}>+</span>
             </div>
         `;
     }
@@ -461,6 +468,12 @@ class FinplanTimeline extends LitElement {
         this.dispatchEvent(new CustomEvent('phase-select', {
             bubbles: true, composed: true,
             detail: { event: this._visibleEvents[index], index },
+        }));
+    }
+
+    _onAddEvent() {
+        this.dispatchEvent(new CustomEvent('event-create', {
+            bubbles: true, composed: true,
         }));
     }
 

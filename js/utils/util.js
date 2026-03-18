@@ -34,7 +34,8 @@ export function util_buildStoryArcKey(storyArc, storyName) {
 }
 
 export function util_removeStoryName(storyArc, storyName) {
-    let asString = localStorage.getItem(util_buildStoryArcKey(storyArc, storyNamesKey));
+    const storyArcNamesKey = util_buildStoryArcKey(storyArc, storyNamesKey);
+    let asString = localStorage.getItem(storyArcNamesKey);
     if (!asString)
         asString = '[]';
 
@@ -47,9 +48,8 @@ export function util_removeStoryName(storyArc, storyName) {
     }
 
     if (ii < storyNames.length) {
-        storyNames = storyNames.splice(ii, 1);
-        asString = JSON.stringify(storyNames);
-        localStorage.setItem(storyNamesKey, asString);
+        storyNames.splice(ii, 1);
+        localStorage.setItem(storyArcNamesKey, JSON.stringify(storyNames));
     }
 }
 
@@ -118,6 +118,37 @@ export function util_loadLocalGuardrailParams(storyArc, storyName) {
     const key = util_buildStoryArcKey(storyArc, storyName) + '+guardrails';
     const raw = localStorage.getItem(key);
     return raw ? JSON.parse(raw) : null;
+}
+
+// ── Scenario Metadata ─────────────────────────────────────────────────
+
+export function util_saveLocalScenarioMeta(storyArc, storyName, meta) {
+    const key = util_buildStoryArcKey(storyArc, storyName) + '+meta';
+    localStorage.setItem(key, JSON.stringify(meta));
+}
+
+export function util_loadLocalScenarioMeta(storyArc, storyName) {
+    const key = util_buildStoryArcKey(storyArc, storyName) + '+meta';
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : null;
+}
+
+export function util_loadStoryNames(storyArc) {
+    const storyArcNamesKey = util_buildStoryArcKey(storyArc, storyNamesKey);
+    const raw = localStorage.getItem(storyArcNamesKey);
+    return raw ? JSON.parse(raw) : [];
+}
+
+export function util_deleteScenario(storyArc, storyName) {
+    // Remove from story names list
+    util_removeStoryName(storyArc, storyName);
+
+    // Delete all associated keys
+    const baseKey = util_buildStoryArcKey(storyArc, storyName);
+    localStorage.removeItem(baseKey);                          // assets
+    localStorage.removeItem(`lifeEvents_${storyArc}_${storyName}`); // life events
+    localStorage.removeItem(baseKey + '+guardrails');           // guardrail params
+    localStorage.removeItem(baseKey + '+meta');                 // scenario metadata
 }
 
 export function util_loadFromStorage(key) {
