@@ -35,7 +35,7 @@ export const Metric = Object.freeze({
   DIVIDEND:                     'dividend',
   INTEREST_INCOME:              'interestIncome',
   ORDINARY_INCOME:              'ordinaryIncome',
-  WORKING_INCOME:               'workingIncome', // subjct to FICA, Medicare, withholding
+  WORKING_INCOME:               'workingIncome', // subject to FICA, Medicare, withholding
   INCOME:                       'income',
   WITHHELD_FICA_TAX:            'withheldFicaTax',
   ESTIMATED_FICA_TAX:           'estimatedFicaTax',
