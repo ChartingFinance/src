@@ -60,10 +60,11 @@ const HIGH_VALUE_METRICS = new Set([
 // Tier 2: Moderate-value metrics — summary stats + condensed table
 const MODERATE_METRICS = new Set([
     Metric.MORTGAGE_PAYMENT, Metric.MORTGAGE_INTEREST, Metric.MORTGAGE_PRINCIPAL,
-    Metric.TAXABLE_CONTRIBUTION, Metric.TRAD_IRA_CONTRIBUTION,
+    Metric.PRETAX_CONTRIBUTION, Metric.POSTTAX_CONTRIBUTION,
+    Metric.TRAD_IRA_CONTRIBUTION,
     Metric.ROTH_IRA_CONTRIBUTION, Metric.FOUR_01K_CONTRIBUTION,
     Metric.TRAD_IRA_DISTRIBUTION, Metric.ROTH_IRA_DISTRIBUTION,
-    Metric.FOUR_01K_DISTRIBUTION, Metric.TAXABLE_DISTRIBUTION,
+    Metric.FOUR_01K_DISTRIBUTION, Metric.TAX_FREE_DISTRIBUTION, Metric.TAXABLE_DISTRIBUTION,
     Metric.RMD, Metric.QUALIFIED_DIVIDEND, Metric.NON_QUALIFIED_DIVIDEND, Metric.INTEREST_INCOME,
     Metric.ORDINARY_INCOME, Metric.EMPLOYED_INCOME, Metric.SELF_INCOME,
     Metric.SHORT_TERM_CAPITAL_GAIN, Metric.LONG_TERM_CAPITAL_GAIN,
@@ -104,7 +105,6 @@ const METRIC_DESCRIPTIONS = {
     [Metric.MORTGAGE_PRINCIPAL]:          'Principal portion of monthly mortgage payment — reduces loan balance.',
     [Metric.MORTGAGE_ESCROW]:             'Property tax escrow collected with mortgage payment.',
     [Metric.PROPERTY_TAX]:                'Annual property tax on real estate, assessed monthly.',
-    [Metric.TAXABLE_CONTRIBUTION]:        'Contributions to taxable brokerage accounts.',
     [Metric.TRAD_IRA_CONTRIBUTION]:       'Pre-tax contributions to traditional IRA.',
     [Metric.ROTH_IRA_CONTRIBUTION]:       'After-tax contributions to Roth IRA.',
     [Metric.FOUR_01K_CONTRIBUTION]:       'Pre-tax contributions to 401K employer plan.',

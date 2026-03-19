@@ -61,17 +61,20 @@ export const Metric = Object.freeze({
   MORTGAGE_PRINCIPAL:           'mortgagePrincipal',
   MORTGAGE_ESCROW:              'mortgageEscrow',
   PROPERTY_TAX:                 'propertyTax',
-  TAXABLE_CONTRIBUTION:         'taxableContribution',
+  CONTRIBUTION:                 'contribution',
+  PRETAX_CONTRIBUTION:          'preTaxContribution',
+  POSTTAX_CONTRIBUTION:         'postTaxContribution',
   TRAD_IRA_CONTRIBUTION:        'tradIRAContribution',
   ROTH_IRA_CONTRIBUTION:        'rothIRAContribution',
   FOUR_01K_CONTRIBUTION:        'four01KContribution',
+  TAX_FREE_DISTRIBUTION:        'taxFreeDistribution', // from roth IRA or post tax cash
+  TAXABLE_DISTRIBUTION:         'taxableDistribution', // these are distributions from IRA and 401K accounts
   TRAD_IRA_DISTRIBUTION:        'tradIRADistribution',
   ROTH_IRA_DISTRIBUTION:        'rothIRADistribution',
   FOUR_01K_DISTRIBUTION:        'four01KDistribution',
-  TAXABLE_DISTRIBUTION:         'taxableDistribution', // these are distributions from taxable accounts as cash
+  CAPITAL_GAIN_TAX:             'capitalGainTax',
   SHORT_TERM_CAPITAL_GAIN_TAX:  'shortTermCapitalGainTax',
   LONG_TERM_CAPITAL_GAIN_TAX:   'longTermCapitalGainTax',
-  CAPITAL_GAIN_TAX:             'capitalGainTax',
   MAINTENANCE:                  'maintenance',
   INSURANCE:                    'insurance',
   CREDIT:                       'credit',
@@ -82,11 +85,11 @@ const METRIC_NAMES = Object.values(Metric);
 export const MetricLabel = Object.freeze({
   [Metric.VALUE]:                       'Value',
   [Metric.GROWTH]:                      'Growth',
-  [Metric.QUALIFIED_DIVIDEND]:           'Qualified Dividend',
+  [Metric.QUALIFIED_DIVIDEND]:          'Qualified Dividend',
   [Metric.NON_QUALIFIED_DIVIDEND]:      'Non-Qualified Dividend',
   [Metric.INTEREST_INCOME]:             'Interest Income',
   [Metric.ORDINARY_INCOME]:             'Ordinary Income',
-  [Metric.EMPLOYED_INCOME]:              'Employed Income',
+  [Metric.EMPLOYED_INCOME]:             'Employed Income',
   [Metric.SELF_INCOME]:                 'Self-Employment Income',
   [Metric.INCOME]:                      'Income', // rolls up ordinary, interest, and working income (i.e. everything that is considered income for tax purposes)
   [Metric.WITHHELD_FICA_TAX]:           'Withheld FICA / Medicare',
@@ -110,14 +113,17 @@ export const MetricLabel = Object.freeze({
   [Metric.MORTGAGE_INTEREST]:           'Mortgage Interest',
   [Metric.MORTGAGE_PRINCIPAL]:          'Mortgage Principal',
   [Metric.MORTGAGE_ESCROW]:             'Mortgage Escrow', 
-  [Metric.TAXABLE_CONTRIBUTION]:        'Taxable Contribution',
+  [Metric.CONTRIBUTION]:                'Contribution',
+  [Metric.PRETAX_CONTRIBUTION]:         'Pre Tax Contribution',
+  [Metric.POSTTAX_CONTRIBUTION]:        'Post Tax Contribution',
   [Metric.TRAD_IRA_CONTRIBUTION]:       'Traditional IRA Contribution',
   [Metric.ROTH_IRA_CONTRIBUTION]:       'Roth IRA Contribution',
   [Metric.FOUR_01K_CONTRIBUTION]:       '401K Contribution',
+  [Metric.TAX_FREE_DISTRIBUTION]:       'Tax Free Distribution',
+  [Metric.TAXABLE_DISTRIBUTION]:        'Taxable Distribution', // these are distributions from taxable accounts as cash
   [Metric.TRAD_IRA_DISTRIBUTION]:       'Traditional IRA Distribution',
   [Metric.ROTH_IRA_DISTRIBUTION]:       'Roth IRA Distribution',
   [Metric.FOUR_01K_DISTRIBUTION]:       '401K Distribution',
-  [Metric.TAXABLE_DISTRIBUTION]:        'Taxable Distribution', // these are distributions from taxable accounts as cash
   [Metric.SHORT_TERM_CAPITAL_GAIN_TAX]: 'Short Term Capital Gain Tax', // these are distributions from taxable accounts taxed as short term gains
   [Metric.LONG_TERM_CAPITAL_GAIN_TAX]:  'Long Term Capital Gain Tax',  // these are distriubtions from taxable accounts taxed as long term gains
   [Metric.CAPITAL_GAIN_TAX]:            'Capital Gains Tax',
@@ -129,8 +135,10 @@ export const MetricLabel = Object.freeze({
 // A mapping of Child Metric -> Array of Parent Metrics
 export const MetricRollups = {
     // --- FOUNDATIONAL INCOME TO ORDINARY INCOME ---
-    [Metric.TRAD_IRA_DISTRIBUTION]:       [Metric.ORDINARY_INCOME],
-    [Metric.FOUR_01K_DISTRIBUTION]:       [Metric.ORDINARY_INCOME],
+    [Metric.TRAD_IRA_DISTRIBUTION]:       [Metric.TAXABLE_DISTRIBUTION],
+    [Metric.FOUR_01K_DISTRIBUTION]:       [Metric.TAXABLE_DISTRIBUTION],
+
+    [Metric.TAXABLE_DISTRIBUTION]:        [Metric.ORDINARY_INCOME],
     [Metric.EMPLOYED_INCOME]:             [Metric.ORDINARY_INCOME],
     [Metric.SELF_INCOME]:                 [Metric.ORDINARY_INCOME],
     [Metric.INTEREST_INCOME]:             [Metric.ORDINARY_INCOME],
@@ -140,10 +148,15 @@ export const MetricRollups = {
     // --- FOUNDATIONAL GAINS TO CAPITAL GAINS ---
     [Metric.LONG_TERM_CAPITAL_GAIN]:      [Metric.CAPITAL_GAIN],
 
+    // --- MASTER COMBINATIONS TO RETIREMENT PLANS ---
+    [Metric.PRETAX_CONTRIBUTION]:         [Metric.CONTRIBUTION],
+    [Metric.POSTTAX_CONTRIBUTION]:        [Metric.CONTRIBUTION],
+
     // --- MASTER COMBINATIONS TO TOTAL INCOME ---
     [Metric.ORDINARY_INCOME]:             [Metric.INCOME],
     [Metric.CAPITAL_GAIN]:                [Metric.INCOME],
-    [Metric.ROTH_IRA_DISTRIBUTION]:       [Metric.INCOME], // Non-taxable, but still cash flow income
+    [Metric.ROTH_IRA_DISTRIBUTION]:       [Metric.TAX_FREE_DISTRIBUTION], // Non-taxable, but still cash flow income
+    [Metric.TAX_FREE_DISTRIBUTION]:        [Metric.INCOME],
     [Metric.NON_QUALIFIED_DIVIDEND]:      [Metric.ORDINARY_INCOME],
     [Metric.QUALIFIED_DIVIDEND]:          [Metric.INCOME],
 
@@ -492,8 +505,14 @@ export class ModelAsset {
   get insuranceCurrency()   { return this.#metrics.get(Metric.INSURANCE).current; }
   set insuranceCurrency(c)  { this.#metrics.get(Metric.INSURANCE).current = c; }
 
-  get taxableContributionCurrency()   { return this.#metrics.get(Metric.TAXABLE_CONTRIBUTION).current; }
-  set taxableContributionCurrency(c)  { this.#metrics.get(Metric.TAXABLE_CONTRIBUTION).current = c; }
+  get contributionCurrency()   { return this.#metrics.get(Metric.CONTRIBUTION).current; }
+  set contributionCurrency(c)  { this.#metrics.get(Metric.CONTRIBUTION).current = c; }
+
+  get preTaxContributionCurrency()   { return this.#metrics.get(Metric.PRETAX_CONTRIBUTION).current; }
+  set preTaxContributionCurrency(c)  { this.#metrics.get(Metric.PRETAX_CONTRIBUTION).current = c; }
+
+  get postTaxContributionCurrency()   { return this.#metrics.get(Metric.POSTTAX_CONTRIBUTION).current; }
+  set postTaxContributionCurrency(c)  { this.#metrics.get(Metric.POSTTAX_CONTRIBUTION).current = c; }
 
   get tradIRAContributionCurrency()   { return this.#metrics.get(Metric.TRAD_IRA_CONTRIBUTION).current; }
   set tradIRAContributionCurrency(c)  { this.#metrics.get(Metric.TRAD_IRA_CONTRIBUTION).current = c; }
@@ -503,6 +522,12 @@ export class ModelAsset {
 
   get four01KContributionCurrency()   { return this.#metrics.get(Metric.FOUR_01K_CONTRIBUTION).current; }
   set four01KContributionCurrency(c)  { this.#metrics.get(Metric.FOUR_01K_CONTRIBUTION).current = c; }
+
+  get taxFreeDistributionCurrency()   { return this.#metrics.get(Metric.TAX_FREE_DISTRIBUTION).current; }
+  set taxFreeDistributionCurrency(c)  { this.#metrics.get(Metric.TAX_FREE_DISTRIBUTION).current = c; }
+
+  get taxableDistributionCurrency()   { return this.#metrics.get(Metric.TAXABLE_DISTRIBUTION).current; }
+  set taxableDistributionCurrency(c)  { this.#metrics.get(Metric.TAXABLE_DISTRIBUTION).current = c; }
 
   get tradIRADistributionCurrency()   { return this.#metrics.get(Metric.TRAD_IRA_DISTRIBUTION).current; }
   set tradIRADistributionCurrency(c)  { this.#metrics.get(Metric.TRAD_IRA_DISTRIBUTION).current = c; }
@@ -538,9 +563,13 @@ export class ModelAsset {
   get monthlyMortgagePrincipals()    { return this.#metrics.get(Metric.MORTGAGE_PRINCIPAL).history; }
   get monthlyPropertyTaxes()         { return this.#metrics.get(Metric.PROPERTY_TAX).history; }
   get monthlyEstimatedTaxes()        { return this.#metrics.get(Metric.ESTIMATED_INCOME_TAX).history; }
+  get monthlyPreTaxContributionCurrency()   { return this.#metrics.get(Metric.PRETAX_CONTRIBUTION).history; }
+  get monthlyPostTaxContributionCurrency()  { return this.#metrics.get(Metric.POSTTAX_CONTRIBUTION).history; }
   get monthlyTradIRAContributions()  { return this.#metrics.get(Metric.TRAD_IRA_CONTRIBUTION).history; }
   get monthlyRothIRAContributions()  { return this.#metrics.get(Metric.ROTH_IRA_CONTRIBUTION).history; }
   get monthlyFour01KContributions()  { return this.#metrics.get(Metric.FOUR_01K_CONTRIBUTION).history; }
+  get monthlyTaxFreeDistributions()  { return this.#metrics.get(Metric.TAX_FREE_DISTRIBUTION).history; }
+  get monthlyTaxableDistributions()  { return this.#metrics.get(Metric.TAXABLE_DISTRIBUTION).history; }
   get monthlyTradIRADistributions()  { return this.#metrics.get(Metric.TRAD_IRA_DISTRIBUTION).history; }
   get monthlyRothIRADistributions()  { return this.#metrics.get(Metric.ROTH_IRA_DISTRIBUTION).history; }
   get monthlyFour01KDistributions()  { return this.#metrics.get(Metric.FOUR_01K_DISTRIBUTION).history; }
@@ -801,7 +830,7 @@ export class ModelAsset {
   #recordMetric(amount, skipGain, realizedGain) {
     const T = InstrumentType;
     if (amount.amount > 0) {
-      if (T.isTaxableAccount(this.instrument))        this.addToMetric(Metric.TAXABLE_CONTRIBUTION, amount);
+      if (T.isTaxableAccount(this.instrument))        this.addToMetric(Metric.POSTTAX_CONTRIBUTION, amount);
       else if (T.isIRA(this.instrument))               this.addToMetric(Metric.TRAD_IRA_CONTRIBUTION, amount);
       else if (T.isRothIRA(this.instrument))            this.addToMetric(Metric.ROTH_IRA_CONTRIBUTION, amount);
       else if (T.is401K(this.instrument))               this.addToMetric(Metric.FOUR_01K_CONTRIBUTION, amount);

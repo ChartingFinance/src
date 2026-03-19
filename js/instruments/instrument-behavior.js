@@ -50,13 +50,15 @@ const M = {
   MORTGAGE_PRINCIPAL:          'mortgagePrincipal',
   PROPERTY_TAX:                'propertyTax',
   MORTGAGE_ESCROW:             'mortgageEscrow',
-  TAXABLE_CONTRIBUTION:        'taxableContribution',
+  PRETAX_CONTRIBUTION:         'preTaxContribution',
+  POSTTAX_CONTRIBUTION:        'postTaxContribution',
   TRAD_IRA_CONTRIBUTION:       'tradIRAContribution',
   ROTH_IRA_CONTRIBUTION:       'rothIRAContribution',
   FOUR_01K_CONTRIBUTION:       'four01KContribution',
   TRAD_IRA_DISTRIBUTION:       'tradIRADistribution',
   ROTH_IRA_DISTRIBUTION:       'rothIRADistribution',
   FOUR_01K_DISTRIBUTION:       'four01KDistribution',
+  TAXFREE_DISTRIBUTION:        'taxFreeDistribution',
   TAXABLE_DISTRIBUTION:        'taxableDistribution',
   SHORT_TERM_CAPITAL_GAIN_TAX: 'shortTermCapitalGainTax',
   LONG_TERM_CAPITAL_GAIN_TAX:  'longTermCapitalGainTax',
@@ -224,7 +226,7 @@ const CapitalBehavior = Object.freeze({
       M.GROWTH, M.QUALIFIED_DIVIDEND, M.NON_QUALIFIED_DIVIDEND, M.INCOME, M.ORDINARY_INCOME,
       M.SHORT_TERM_CAPITAL_GAIN, M.LONG_TERM_CAPITAL_GAIN, M.CAPITAL_GAIN,
       M.SHORT_TERM_CAPITAL_GAIN_TAX, M.LONG_TERM_CAPITAL_GAIN_TAX, M.CAPITAL_GAIN_TAX,
-      M.TAXABLE_CONTRIBUTION, M.TAXABLE_DISTRIBUTION,
+      M.PRETAX_CONTRIBUTION, M.POSTTAX_CONTRIBUTION, M.TAXFREE_DISTRIBUTION, M.TAXABLE_DISTRIBUTION,
       M.TRAD_IRA_CONTRIBUTION, M.ROTH_IRA_CONTRIBUTION, M.FOUR_01K_CONTRIBUTION,
       M.TRAD_IRA_DISTRIBUTION, M.ROTH_IRA_DISTRIBUTION, M.FOUR_01K_DISTRIBUTION,
       M.RMD,
@@ -269,7 +271,8 @@ const CapitalBehavior = Object.freeze({
     cf.add(asset.tradIRADistributionCurrency);
     cf.add(asset.four01KDistributionCurrency);
     cf.add(asset.rothIRADistributionCurrency);
-    cf.add(asset.taxableDistributionCurrency);
+    // TODO: Is this double counting traditional and 401K distribution?
+    // cf.add(asset.taxableDistributionCurrency);
     return cf;
 
   },
