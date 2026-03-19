@@ -14,6 +14,7 @@ export const FINANCIAL_FIELDS = [
     'shortTermCapitalGains', 'longTermCapitalGains',
     'nonQualifiedDividends', 'qualifiedDividends', "maintenance", "insurance",
     'interestIncome', 'longTermCapitalGainsTax',
+    'value',
 ];
 
 export class FinancialPackage {
@@ -182,6 +183,8 @@ export class FinancialPackage {
         e.add(this.expense);
         e.add(this.mortgagePrincipal);
         e.add(this.mortgageInterest);
+        e.add(this.maintenance);
+        e.add(this.insurance);
 
         // TODO: debt interest
 
@@ -391,6 +394,8 @@ export class FinancialPackage {
     addMortgageResult(mortgageResult) {
         this.mortgageInterest.add(mortgageResult.interest);
         this.mortgagePrincipal.add(mortgageResult.principal);
+        // Principal paydown is growth — mortgage balance shrank, net worth increased
+        this.assetAppreciation.add(mortgageResult.principal.copy().flipSign());
     }
 
     addIncomeResult(incomeResult) {

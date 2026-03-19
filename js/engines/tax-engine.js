@@ -194,6 +194,7 @@ export class TaxEngine {
 
             const liquidAsset = this.modelAssets.find(a => InstrumentType.isLiquid(a.instrument) && !a.isClosed);
             if (liquidAsset) {
+                liquidAsset.estimatedIncomeTaxCurrency.add(additionalTax);
                 liquidAsset.addCreditMemo(additionalTax.copy(), 'Income tax withholding');
             }
         }

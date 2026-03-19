@@ -55,12 +55,11 @@ const WorkingIncomeBehavior = Object.freeze({
 
   computeCashFlow(asset) {
     const cf = asset.incomeCurrency.copy();
-    cf.add(asset.socialSecurityTaxCurrency);
-    cf.add(asset.medicareTaxCurrency);
-    cf.add(asset.estimatedIncomeTaxCurrency);
-    cf.add(asset.four01KContributionCurrency);
-    cf.add(asset.tradIRAContributionCurrency);
-    cf.add(asset.rothIRAContributionCurrency);
+    cf.add(asset.socialSecurityTaxCurrency);      // stored negative (after flipSigns)
+    cf.add(asset.medicareTaxCurrency);             // stored negative (after flipSigns)
+    cf.subtract(asset.withheldIncomeTaxCurrency);  // stored positive — subtract to reduce CF
+    cf.subtract(asset.estimatedIncomeTaxCurrency); // stored positive for self-employed
+    // Contributions are internal transfers (salary → 401K), not household cash flow
     return cf;
   },
 });
@@ -174,7 +173,7 @@ const CapitalBehavior = Object.freeze({
       ...COMMON_METRICS,
       M.GROWTH, M.QUALIFIED_DIVIDEND, M.NON_QUALIFIED_DIVIDEND, M.INCOME, M.ORDINARY_INCOME,
       M.SHORT_TERM_CAPITAL_GAIN, M.LONG_TERM_CAPITAL_GAIN, M.CAPITAL_GAIN,
-      M.SHORT_TERM_CAPITAL_GAIN_TAX, M.LONG_TERM_CAPITAL_GAIN_TAX,
+      M.SHORT_TERM_CAPITAL_GAIN_TAX, M.LONG_TERM_CAPITAL_GAIN_TAX, M.ESTIMATED_INCOME_TAX,
       M.CONTRIBUTION, M.PRETAX_CONTRIBUTION, M.POSTTAX_CONTRIBUTION,
       M.TAX_FREE_DISTRIBUTION, M.TAXABLE_DISTRIBUTION,
       M.TRAD_IRA_CONTRIBUTION, M.ROTH_IRA_CONTRIBUTION, M.FOUR_01K_CONTRIBUTION,
@@ -213,18 +212,13 @@ const CapitalBehavior = Object.freeze({
   },
 
   computeCashFlow(asset) {
-
+    // Dividends are household income. Gains and distributions are
+    // portfolio restructuring (asset drawdown), not household cash flow.
     let cf = asset.qualifiedDividendCurrency.copy();
     cf.add(asset.nonQualifiedDividendCurrency);
-    cf.add(asset.shortTermCapitalGainCurrency);
-    cf.add(asset.longTermCapitalGainCurrency);
-    cf.add(asset.tradIRADistributionCurrency);
-    cf.add(asset.four01KDistributionCurrency);
-    cf.add(asset.rothIRADistributionCurrency);
-    // TODO: Is this double counting traditional and 401K distribution?
-    // cf.add(asset.taxableDistributionCurrency);
+    // Estimated income tax from monthly true-up (assigned to liquid assets)
+    cf.add(asset.estimatedIncomeTaxCurrency);
     return cf;
-
   },
 });
 
@@ -288,7 +282,7 @@ const IncomeAccountBehavior = Object.freeze({
   relevantMetrics() {
     return [
       ...COMMON_METRICS,
-      M.INTEREST_INCOME, M.INCOME, M.NET_INCOME, M.GROWTH,
+      M.INTEREST_INCOME, M.INCOME, M.NET_INCOME, M.GROWTH, M.ESTIMATED_INCOME_TAX,
     ];
   },
 
@@ -308,7 +302,10 @@ const IncomeAccountBehavior = Object.freeze({
   },
 
   computeCashFlow(asset) {
-    return asset.interestIncomeCurrency.copy();
+    let cf = asset.interestIncomeCurrency.copy();
+    // Estimated income tax from monthly true-up (assigned to liquid assets)
+    cf.add(asset.estimatedIncomeTaxCurrency);
+    return cf;
   },
 });
 

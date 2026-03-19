@@ -180,6 +180,12 @@ const TAX_LEAVES = [
     { label: 'propertyTax',        fp: pkg => pkg.propertyTaxes.amount,            metric: Metric.PROPERTY_TAX },
 ];
 
+const GROWTH_VALUE_FLOW_LEAVES = [
+    { label: 'growth',    fp: pkg => pkg.assetAppreciation.amount,  metric: Metric.GROWTH },
+    { label: 'value',     fp: pkg => pkg.value.amount,              metric: Metric.VALUE },
+    { label: 'cashFlow',  fp: pkg => pkg.cashFlow().amount,         metric: Metric.CASH_FLOW },
+];
+
 const TOLERANCE = 0.02; // penny tolerance
 
 /** @param {ModelAsset[]} [assetScope] - subset of assets to sum (defaults to all) */
@@ -219,6 +225,7 @@ checkLeaves('CONTRIBUTION leaves', CONTRIBUTION_LEAVES, capitalAssets);
 checkLeaves('DISTRIBUTION leaves', DISTRIBUTION_LEAVES, capitalAssets);
 checkLeaves('EXPENSE leaves', EXPENSE_LEAVES);
 checkLeaves('TAX leaves', TAX_LEAVES);
+checkLeaves('GROWTH/VALUE/FLOW leaves', GROWTH_VALUE_FLOW_LEAVES);
 
 // Also check rollup totals
 let rollupFails = 0;

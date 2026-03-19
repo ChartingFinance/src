@@ -222,6 +222,11 @@ export class Portfolio {
 
         this.computePerAssetCashFlow();
 
+        // Snapshot portfolio value — sum of all asset balances
+        for (const modelAsset of this.modelAssets) {
+            this.monthly.value.add(modelAsset.finishCurrency);
+        }
+
         this.monthlyPackages.push(this.monthly.copy());
         this.yearly.add(this.monthly);
         this.total.add(this.monthly);
