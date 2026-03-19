@@ -108,7 +108,7 @@ Section heading with clipboard emoji + "Viewing" badge.
 
 Two glass-cards **side-by-side**, each with `max-height: 440px` and `overflow: auto`:
 - **Spreadsheet**: `<spreadsheet-view>` — monthly tabular data for all assets and metrics. Sticky heading within scroll container.
-- **Report**: `<debug-report-view>` — collapsible monthly/yearly financial reports with income/tax/cash flow breakdowns. Sticky heading within scroll container.
+- **Report**: `<report-view>` — collapsible monthly/yearly financial reports with income/tax/cash flow breakdowns. Sticky heading within scroll container.
 
 Both auto-scroll to the selected year/month when the timeline date changes (scrolls within container, not the page). Matched row/entry gets a temporary coral highlight.
 

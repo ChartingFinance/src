@@ -1,18 +1,18 @@
 /**
- * <debug-report-view>
+ * <report-view>
  *
- * Lit component that renders accumulated debug reports (monthly & yearly)
+ * Lit component that renders accumulated reports (monthly & yearly)
  * as collapsible <details> sections with financial tables.
  *
  * Usage:
- *   <debug-report-view></debug-report-view>
- *   document.querySelector('debug-report-view').reports = getReports();
+ *   <report-view></report-view>
+ *   document.querySelector('report-view').reports = getReports();
  */
 
 import { LitElement, html, css } from 'lit';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 
-class DebugReportView extends LitElement {
+class ReportView extends LitElement {
 
     static properties = {
         reports: { type: Array },
@@ -29,7 +29,7 @@ class DebugReportView extends LitElement {
     render() {
         if (this.reports.length === 0) {
             return html`<p style="padding: 24px; font-family: DM Sans, sans-serif;">
-                No debug reports recorded. Enable reports on an asset and run a calculation.
+                No reports recorded. Enable reports on an asset and run a calculation.
             </p>`;
         }
 
@@ -127,4 +127,4 @@ class DebugReportView extends LitElement {
     }
 }
 
-customElements.define('debug-report-view', DebugReportView);
+customElements.define('report-view', ReportView);

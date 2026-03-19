@@ -107,8 +107,8 @@ import {
 import './components/spreadsheet-view.js';
 import './components/credit-memo-view.js';
 
-// Debug tab view (Lit component)
-import './components/debug-report-view.js';
+// Report tab view (Lit component)
+import './components/report-view.js';
 
 // Simulator modal (Lit component)
 import './components/simulator-modal.js';
@@ -130,7 +130,7 @@ const timelineLedger = document.getElementById('timelineLedger');
 const chartMetric1Canvas = document.getElementById('chartMetric1Canvas');
 const spreadsheetElement = document.getElementById('spreadsheetElement');
 const creditMemosElement = document.getElementById('creditMemosElement');
-const debugReportsElement = document.getElementById('debugReportsElement');
+const reportsElement = document.getElementById('reportsElement');
 const transferModal = document.getElementById('transferModal');
 const shareModal = document.getElementById('shareModal');
 const eventFormModal = document.getElementById('eventFormModal');

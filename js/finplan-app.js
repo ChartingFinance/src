@@ -53,7 +53,7 @@ import './components/event-form-modal.js';
 import './components/finplan-timeline.js';
 import './components/simulator-modal.js';
 import './components/spreadsheet-view.js';
-import './components/debug-report-view.js';
+import './components/report-view.js';
 import './components/credit-memo-view.js';
 import './components/share-modal.js';
 
