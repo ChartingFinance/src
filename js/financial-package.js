@@ -10,7 +10,6 @@ export const FINANCIAL_FIELDS = [
     'expense', 'medicareTax', 'incomeTax', 'estimatedTaxes', 'contribution',
     'preTaxContribution', 'postTaxContribution',
     'tradIRAContribution', 'four01KContribution', 'rothIRAContribution',
-    'taxFreeDistribution', 'taxableDistribution',
     'tradIRADistribution', 'four01KDistribution', 'rothIRADistribution',
     'mortgageInterest', 'mortgagePrincipal', 'propertyTaxes',
     'shortTermCapitalGains', 'longTermCapitalGains',
@@ -56,74 +55,58 @@ export class FinancialPackage {
     }
 
     irsTaxableGrossIncome() {
-        // Only what the IRS taxes (Wages + taxable distributions + taxable gains/interest)
-        let irsIncome = this.wageIncome().copy();
-        irsIncome.add(this.ordinaryIncome());
+        // IRS taxable = ordinary income with SS at 85% (max taxable portion)
+        let irsIncome = this.ordinaryIncome().copy();
+        // Undo the full SS and add back at 85%
+        irsIncome.subtract(this.socialSecurityIncome);
+        irsIncome.add(this.socialSecurityIncome.copy().multiply(0.85));
         return irsIncome;
     }
 
-    trueGrossIncome() {
-        let income = this.wageIncome().copy();
-        income.add(this.socialSecurityIncome); // Note: raw SS, not the 85% taxed portion
-        income.add(this.interestIncome);
-        income.add(this.qualifiedDividends);
-        income.add(this.nonQualifiedDividends);
-        // We do NOT add IRA/401k/Roth distributions here!
-        return income;
-    }
+    // ── Income rollups (aligned with Metric DAG) ─────────────────────
 
     totalIncome() {
-
-        let income = this.wageIncome().copy();
-        income.add(this.ordinaryIncome());
-        income.add(this.nontaxableIncome());
-        income.add(this.longTermCapitalGains);
+        let income = this.ordinaryIncome().copy();
+        income.add(this.capitalGain());
+        income.add(this.taxFreeDistribution());
+        income.add(this.qualifiedDividends);
         return income;
-
-    }
-
-    wageIncome() {
-
-        let income = this.employedIncome.copy();
-        income.add(this.selfIncome);
-        return income;
-
-    }
-
-    /** Earned/passive income only — wages + social security/pension.
-     *  Excludes distributions, capital gains, dividends (those are asset drawdown). */
-    earnedIncome() {
-        let income = this.wageIncome().copy();
-        income.add(this.socialSecurityIncome);
-        return income;
-    }
-
-    fica() {
-
-        let total = this.medicareTax.copy();
-        total.add(this.socialSecurityTax);
-        return total;
-
     }
 
     ordinaryIncome() {
-
-        let income = this.socialSecurityIncome.copy().multiply(0.85); // maximum allowed for social security
+        let income = this.wageIncome().copy();
+        income.add(this.socialSecurityIncome);
         income.add(this.interestIncome);
         income.add(this.shortTermCapitalGains);
-        income.add(this.tradIRADistribution);
-        income.add(this.four01KDistribution);
         income.add(this.nonQualifiedDividends);
+        income.add(this.taxableDistribution());
         return income;
-
     }
 
-    nontaxableIncome() {
-
-        let income = this.rothIRADistribution.copy();
-        income.add(this.qualifiedDividends);
+    wageIncome() {
+        let income = this.employedIncome.copy();
+        income.add(this.selfIncome);
         return income;
+    }
 
+    taxableDistribution() {
+        let dist = this.tradIRADistribution.copy();
+        dist.add(this.four01KDistribution);
+        return dist;
+    }
+
+    capitalGain() {
+        return this.longTermCapitalGains.copy();
+    }
+
+    taxFreeDistribution() {
+        return this.rothIRADistribution.copy();
+    }
+
+    fica() {
+        let total = this.medicareTax.copy();
+        total.add(this.socialSecurityTax);
+        return total;
     }
 
     deductiblePropertyTaxes() {
@@ -201,9 +184,13 @@ export class FinancialPackage {
     }
 
     cashInFlow() {
-
-        return this.trueGrossIncome().copy();
-
+        // Wage + SS + interest + dividends (excludes distributions — those are asset drawdown)
+        let income = this.wageIncome().copy();
+        income.add(this.socialSecurityIncome);
+        income.add(this.interestIncome);
+        income.add(this.qualifiedDividends);
+        income.add(this.nonQualifiedDividends);
+        return income;
     }
 
     cashFlow() {
@@ -274,19 +261,20 @@ export class FinancialPackage {
     report(category = LogCategory.GENERAL) {
 
         logger.log(category, 'income:                      ' + this.totalIncome().toString());
-        logger.log(category, '  employedIncome:            ' + this.employedIncome.toString());
-        logger.log(category, '  selfIncome:                ' + this.selfIncome.toString());
         logger.log(category, '  ordinaryIncome:            ' + this.ordinaryIncome().toString());
-        logger.log(category, '    socialSecurity (taxed):  ' + this.socialSecurityIncome.toString());
-        logger.log(category, '    iraDistribution:         ' + this.tradIRADistribution.toString());
-        logger.log(category, '    401KDistribution:        ' + this.four01KDistribution.toString());
-        logger.log(category, '    shortTermCapitalGains:   ' + this.shortTermCapitalGains.toString());
+        logger.log(category, '    employedIncome:          ' + this.employedIncome.toString());
+        logger.log(category, '    selfIncome:              ' + this.selfIncome.toString());
+        logger.log(category, '    socialSecurity:          ' + this.socialSecurityIncome.toString());
         logger.log(category, '    interestIncome:          ' + this.interestIncome.toString());
+        logger.log(category, '    shortTermCapitalGains:   ' + this.shortTermCapitalGains.toString());
         logger.log(category, '    nonQualifiedDividends:   ' + this.nonQualifiedDividends.toString());
-        logger.log(category, '  longTermCapitalGains:      ' + this.longTermCapitalGains.toString());
-        logger.log(category, '  nonTaxableIncome:          ' + this.nontaxableIncome().toString());
-        logger.log(category, '    qualifiedDividends       ' + this.qualifiedDividends.toString());
+        logger.log(category, '    taxableDistribution:     ' + this.taxableDistribution().toString());
+        logger.log(category, '      iraDistribution:       ' + this.tradIRADistribution.toString());
+        logger.log(category, '      401KDistribution:      ' + this.four01KDistribution.toString());
+        logger.log(category, '  capitalGain:               ' + this.capitalGain().toString());
+        logger.log(category, '  taxFreeDistribution:       ' + this.taxFreeDistribution().toString());
         logger.log(category, '    rothDistribution:        ' + this.rothIRADistribution.toString());
+        logger.log(category, '  qualifiedDividends:        ' + this.qualifiedDividends.toString());
         logger.log(category, 'deductions:                  ' + this.deductions().toString());
         logger.log(category, '  iraContribution:           ' + this.tradIRAContribution.toString());
         logger.log(category, '  401KContribution:          ' + this.four01KContribution.toString());
@@ -319,19 +307,20 @@ export class FinancialPackage {
         html += ('<h3>' + currentDateInt.toString() + '</h3>');
         html += "<ul>";
         html += '<li>income:                      ' + this.totalIncome().toString() + '<ul>';
-        html += '  <li>employedIncome:            ' + this.employedIncome.toString() + '</li>';
-        html += '  <li>selfIncome:                ' + this.selfIncome.toString() + '</li>';
         html += '  <li>ordinaryIncome:            ' + this.ordinaryIncome().toString() + '<ul>';
+        html += '    <li>employedIncome:          ' + this.employedIncome.toString() + '</li>';
+        html += '    <li>selfIncome:              ' + this.selfIncome.toString() + '</li>';
         html += '    <li>socialSecurity:          ' + this.socialSecurityIncome.toString() + '</li>';
-        html += '    <li>iraDistribution:         ' + this.tradIRADistribution.toString() + '</li>';
-        html += '    <li>401KDistribution:        ' + this.four01KDistribution.toString() + '</li>';
-        html += '    <li>shortTermCapitalGains:   ' + this.shortTermCapitalGains.toString() + '</li>';
         html += '    <li>interestIncome:          ' + this.interestIncome.toString() + '</li>';
-        html += '    <li>nonQualifiedDividends:   ' + this.nonQualifiedDividends.toString() + '</li></ul>';
-        html += '  <li>longTermCapitalGains:      ' + this.longTermCapitalGains.toString() + '</li>';
-        html += '  <li>nonTaxableIncome:          ' + this.nontaxableIncome().toString() + '<ul>';
-        html += '    <li>qualifiedDividends       ' + this.qualifiedDividends.toString() + '</li>';
-        html += '    <li>rothDistribution:        ' + this.rothIRADistribution.toString() + '</li></ul></ul>';
+        html += '    <li>shortTermCapitalGains:   ' + this.shortTermCapitalGains.toString() + '</li>';
+        html += '    <li>nonQualifiedDividends:   ' + this.nonQualifiedDividends.toString() + '</li>';
+        html += '    <li>taxableDistribution:     ' + this.taxableDistribution().toString() + '<ul>';
+        html += '      <li>iraDistribution:       ' + this.tradIRADistribution.toString() + '</li>';
+        html += '      <li>401KDistribution:      ' + this.four01KDistribution.toString() + '</li></ul></ul>';
+        html += '  <li>capitalGain:               ' + this.capitalGain().toString() + '</li>';
+        html += '  <li>taxFreeDistribution:       ' + this.taxFreeDistribution().toString() + '<ul>';
+        html += '    <li>rothDistribution:        ' + this.rothIRADistribution.toString() + '</li></ul>';
+        html += '  <li>qualifiedDividends:        ' + this.qualifiedDividends.toString() + '</li></ul>';
         html += '<li>deductions:                  ' + this.deductions().toString() + '<ul>';
         html += '  <li>iraContribution:           ' + this.tradIRAContribution.toString() + '</li>';
         html += '  <li>401KContribution:          ' + this.four01KContribution.toString() + '</li>';
