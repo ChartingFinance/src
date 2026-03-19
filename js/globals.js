@@ -279,7 +279,6 @@ export let global_equity_dividend_allocation = 0.5;
 export let global_equity_growth_allocation = 0.5;
 
 export let global_equity_dividend_average_annual_rate = 0.025;
-export let global_equity_dividend_qualified = 1.0;
 
 export let global_home_sale_capital_gains_discount = 250000;
 

@@ -8,7 +8,7 @@
 
 import { InstrumentMeta, InstrumentType } from '../instruments/instrument.js';
 import { classifyAssetGroup, AssetGroupMeta } from '../asset-groups.js';
-import { Metric, MetricLabel } from '../model-asset.js';
+import { Metric, MetricLabel } from '../metric.js';
 import {
     global_user_startAge, global_user_retirementAge, global_user_finishAge,
     global_filingAs, global_inflationRate, global_backtestYear,

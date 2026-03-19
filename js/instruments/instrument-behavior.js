@@ -15,57 +15,7 @@ import {
   IncomeResult, ExpenseResult, MortgageResult,
   AssetAppreciationResult, InterestResult,
 } from '../results.js';
-
-// ── Metric keys (import-free; matches Metric enum in model-asset.js) ────
-
-const M = {
-  VALUE:                       'value',
-  GROWTH:                      'growth',
-  QUALIFIED_DIVIDEND:          'qualifiedDividend',
-  NON_QUALIFIED_DIVIDEND:      'nonQualifiedDividend',
-  INTEREST_INCOME:             'interestIncome',
-  ORDINARY_INCOME:             'ordinaryIncome',
-  EMPLOYED_INCOME:             'employedIncome',
-  SELF_INCOME:                 'selfIncome',
-  INCOME:                      'income',
-  WITHHELD_FICA_TAX:           'withheldFicaTax',
-  ESTIMATED_FICA_TAX:          'estimatedFicaTax',
-  WITHHELD_INCOME_TAX:         'withheldIncomeTax',
-  ESTIMATED_INCOME_TAX:        'estimatedIncomeTax',
-  ESTIMATED_TAX:               'estimatedTax',
-  INCOME_TAX:                  'incomeTax',
-  NET_INCOME:                  'netIncome',
-  EXPENSE:                     'expense',
-  CASH_FLOW:                   'cashFlow',
-  CASH_FLOW_ACCUMULATED:       'cashFlowAccumulated',
-  SHORT_TERM_CAPITAL_GAIN:     'shortTermCapitalGain',
-  LONG_TERM_CAPITAL_GAIN:      'longTermCapitalGain',
-  CAPITAL_GAIN:                'capitalGain',
-  RMD:                         'rmd',
-  SOCIAL_SECURITY_TAX:         'socialSecurityTax',
-  SOCIAL_SECURITY_INCOME:      'socialSecurityIncome',
-  MEDICARE_TAX:                'medicareTax',
-  MORTGAGE_PAYMENT:            'mortgagePayment',
-  MORTGAGE_INTEREST:           'mortgageInterest',
-  MORTGAGE_PRINCIPAL:          'mortgagePrincipal',
-  PROPERTY_TAX:                'propertyTax',
-  PRETAX_CONTRIBUTION:         'preTaxContribution',
-  POSTTAX_CONTRIBUTION:        'postTaxContribution',
-  TRAD_IRA_CONTRIBUTION:       'tradIRAContribution',
-  ROTH_IRA_CONTRIBUTION:       'rothIRAContribution',
-  FOUR_01K_CONTRIBUTION:       'four01KContribution',
-  TRAD_IRA_DISTRIBUTION:       'tradIRADistribution',
-  ROTH_IRA_DISTRIBUTION:       'rothIRADistribution',
-  FOUR_01K_DISTRIBUTION:       'four01KDistribution',
-  TAX_FREE_DISTRIBUTION:       'taxFreeDistribution',
-  TAXABLE_DISTRIBUTION:        'taxableDistribution',
-  SHORT_TERM_CAPITAL_GAIN_TAX: 'shortTermCapitalGainTax',
-  LONG_TERM_CAPITAL_GAIN_TAX:  'longTermCapitalGainTax',
-  CAPITAL_GAIN_TAX:            'capitalGainTax',
-  MAINTENANCE:                 'maintenance',
-  INSURANCE:                   'insurance',
-  CREDIT:                      'credit',
-};
+import { Metric as M } from '../metric.js';
 
 // Every instrument gets these
 const COMMON_METRICS = [M.VALUE, M.CASH_FLOW, M.CASH_FLOW_ACCUMULATED, M.CREDIT];

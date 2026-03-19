@@ -3,7 +3,7 @@ import { DateInt } from './utils/date-int.js';
 import { colorRange, positiveBackgroundColor, negativeBackgroundColor } from './utils/html.js';
 import { logger, LogCategory } from './utils/logger.js';
 import { findByName } from './asset-queries.js';
-import { Metric } from './model-asset.js';
+import { Metric } from './metric.js';
 import { LifeEvent, LifeEventMeta } from './life-event.js';
 import {
     AssetGroup, AssetGroupMeta,

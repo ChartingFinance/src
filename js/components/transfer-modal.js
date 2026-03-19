@@ -21,7 +21,7 @@ import { colorRange } from '../utils/html.js';
 import { chronometer_run } from '../chronometer.js';
 import { Portfolio } from '../portfolio.js';
 import { findByName } from '../asset-queries.js';
-import { Metric } from '../model-asset.js';
+import { Metric } from '../metric.js';
 import {
     charting_buildFromModelAsset,
     charting_jsonMetricChartConfigIndividual,

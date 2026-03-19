@@ -11,7 +11,7 @@
  */
 
 // ── Core types ──────────────────────────────────────────────
-import { Metric, MetricLabel } from './model-asset.js';
+import { Metric, MetricLabel } from './metric.js';
 import { DateInt } from './utils/date-int.js';
 
 // ── Simulation ──────────────────────────────────────────────

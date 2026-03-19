@@ -22,7 +22,7 @@
  */
 
 import { LitElement, html } from 'lit';
-import { Metric, MetricLabel } from '../model-asset.js';
+import { Metric, MetricLabel } from '../metric.js';
 import { LifeEventMeta, LifeEventType } from '../life-event.js';
 
 class TimelineLedger extends LitElement {

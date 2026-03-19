@@ -11,7 +11,7 @@
 
 import { Currency } from '../utils/currency.js';
 import { InstrumentType } from '../instruments/instrument.js';
-import { Metric } from '../model-asset.js';
+import { Metric } from '../metric.js';
 import { FundTransferOneSided, FundTransfer } from '../fund-transfer.js';
 import { activeTaxTable } from '../globals.js';
 import { logger, LogCategory } from '../utils/logger.js';

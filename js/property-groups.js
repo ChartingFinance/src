@@ -11,7 +11,7 @@
  * Follows the same enum + meta + classify pattern as asset-groups.js.
  */
 
-import { Metric } from './model-asset.js';
+import { Metric } from './metric.js';
 import { Instrument, InstrumentType } from './instruments/instrument.js';
 
 // ── Property Group enum ─────────────────────────────────────────────

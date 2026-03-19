@@ -15,7 +15,7 @@
  */
 
 import { DateInt } from './utils/date-int.js';
-import { Metric } from './model-asset.js';
+import { Metric } from './metric.js';
 
 const MONTH_NAMES = [
     'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',

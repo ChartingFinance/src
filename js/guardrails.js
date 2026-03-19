@@ -8,7 +8,8 @@
  */
 
 import { Portfolio } from './portfolio.js';
-import { ModelAsset, Metric } from './model-asset.js';
+import { ModelAsset } from './model-asset.js';
+import { Metric } from './metric.js';
 import { DateInt } from './utils/date-int.js';
 import { chronometer_run } from './chronometer.js';
 

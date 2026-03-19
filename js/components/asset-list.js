@@ -24,7 +24,7 @@ import {
     classifyAssetsByProperty, getPrimaryMetric, computePropertyRollupAtIndex,
 } from '../property-groups.js';
 import { LifeEventType } from '../life-event.js';
-import { MetricLabel } from '../model-asset.js';
+import { MetricLabel } from '../metric.js';
 import './asset-card.js';
 
 function formatCompactCurrency(amount) {

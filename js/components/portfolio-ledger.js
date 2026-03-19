@@ -7,7 +7,7 @@
  */
 
 import { LitElement, html } from 'lit';
-import { Metric, MetricLabel } from '../model-asset.js';
+import { Metric, MetricLabel } from '../metric.js';
 
 class PortfolioLedger extends LitElement {
 

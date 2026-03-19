@@ -9,7 +9,7 @@
  */
 
 import { LitElement, html } from 'lit';
-import { Metric } from '../model-asset.js';
+import { Metric } from '../metric.js';
 import { InstrumentType } from '../instruments/instrument.js';
 import { charting_buildDisplayLabels } from '../charting.js';
 

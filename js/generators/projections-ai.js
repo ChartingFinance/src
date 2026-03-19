@@ -6,7 +6,7 @@
  */
 
 import { generatePortfolioMarkdown } from './assets-ai.js';
-import { Metric, MetricLabel } from '../model-asset.js';
+import { Metric, MetricLabel } from '../metric.js';
 
 const fmt = (val) =>
     new Intl.NumberFormat('en-US', {
