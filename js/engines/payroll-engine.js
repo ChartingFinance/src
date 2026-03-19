@@ -320,18 +320,21 @@ export class PayrollEngine {
 
                     if (InstrumentType.isTaxDeferred(fundTransfer.toModel.instrument)) {
 
-                        // should always be an approved amount?
-                        if (fundTransfer.approvedAmount) {
-                            runningTransferAmount.add(fundTransfer.approvedAmount);
-                        } else {
-                            runningTransferAmount.add(fundTransfer.calculate());
-                        }
+                        const contribution = fundTransfer.approvedAmount || fundTransfer.calculate();
+                        runningTransferAmount.add(contribution);
 
                         fundTransfer.execute();
+
+                        // Record contribution on the destination (capital) asset
+                        if (InstrumentType.is401K(fundTransfer.toModel.instrument)) {
+                            fundTransfer.toModel.addToMetric(Metric.FOUR_01K_CONTRIBUTION, contribution);
+                        } else if (InstrumentType.isIRA(fundTransfer.toModel.instrument)) {
+                            fundTransfer.toModel.addToMetric(Metric.TRAD_IRA_CONTRIBUTION, contribution);
+                        }
                     }
                 }
 
-                this.monthly.preTaxContribution.add(runningTransferAmount);
+                // preTaxContribution is now a rollup method on FP (derived from leaves)
             }
         }
 
@@ -354,14 +357,15 @@ export class PayrollEngine {
                     // This was handled by pre tax calculations and transfers
                     if (!InstrumentType.isTaxDeferred(fundTransfer.toModel.instrument)) {
 
-                        // should always be an approved amount?
-                        if (fundTransfer.approvedAmount) {
-                            runningTransferAmount.add(fundTransfer.approvedAmount);
-                        } else {
-                            runningTransferAmount.add(fundTransfer.calculate());
-                        }
+                        const contribution = fundTransfer.approvedAmount || fundTransfer.calculate();
+                        runningTransferAmount.add(contribution);
 
                         fundTransfer.execute();
+
+                        // Record contribution on the destination (capital) asset
+                        if (InstrumentType.isRothIRA(fundTransfer.toModel.instrument)) {
+                            fundTransfer.toModel.addToMetric(Metric.ROTH_IRA_CONTRIBUTION, contribution);
+                        }
                     }
 
                 }

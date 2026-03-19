@@ -69,6 +69,8 @@ export class ExpenseEngine {
                     this.monthly.recordTransfer(targetAsset.instrument, grossWithdrawal, result.realizedGain);
 
                     if (result && result.realizedGain && result.realizedGain.amount > 0) {
+                        targetAsset.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, result.realizedGain);
+                        targetAsset.addCreditMemo(result.realizedGain.copy(), 'Capital gains');
                         // Isolate tax liability to prevent the death-spiral loop
                         const taxLiability = new Currency(grossWithdrawal.amount - netShortfall.amount);
                         this.monthly.estimatedTaxes.add(taxLiability);
@@ -90,6 +92,8 @@ export class ExpenseEngine {
                 this.monthly.recordTransfer(targetAsset.instrument, grossWithdrawal, result.realizedGain);
 
                 if (result && result.realizedGain && result.realizedGain.amount > 0) {
+                    targetAsset.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, result.realizedGain);
+                    targetAsset.addCreditMemo(result.realizedGain.copy(), 'Capital gains');
                     // Isolate tax liability to prevent the death-spiral loop
                     const taxLiability = new Currency(grossWithdrawal.amount - netShortfall.amount);
                     this.monthly.estimatedTaxes.add(taxLiability);
@@ -148,6 +152,10 @@ export class ExpenseEngine {
             const memo = `${modelAsset.displayName} → ${oneSided.toModel.displayName} (monthly)`;
             const result = oneSided.toModel.debit(oneSided.amount, memo);
             this.monthly.recordTransfer(oneSided.toModel.instrument, oneSided.amount, result.realizedGain);
+            if (result.realizedGain && result.realizedGain.amount > 0) {
+                oneSided.toModel.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, result.realizedGain);
+                oneSided.toModel.addCreditMemo(result.realizedGain.copy(), 'Capital gains');
+            }
         }
 
     }
@@ -202,6 +210,12 @@ export class ExpenseEngine {
         if (InstrumentType.isCapital(modelAsset.instrument) || InstrumentType.isIncomeAccount(modelAsset.instrument) || InstrumentType.isMonthlyExpense(modelAsset.instrument)) {
             let result = modelAsset.applyMonthly();
             this.monthly.addResult(result);
+
+            // Real estate carrying costs → FP
+            if (InstrumentType.isRealEstate(modelAsset.instrument)) {
+                this.monthly.maintenance.add(modelAsset.maintenanceCurrency);
+                this.monthly.insurance.add(modelAsset.insuranceCurrency);
+            }
 
             /*
             // TODO: revisit and see if this is the best spot to log capital gains

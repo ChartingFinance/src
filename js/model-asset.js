@@ -605,19 +605,19 @@ export class ModelAsset {
 
   // ── Credit / Debit (fund transfer interface) ─────────────────────
 
-  credit(amount, note = '', skipGain = false) {
+  credit(amount, note = '') {
     logger.log(LogCategory.TRANSFER,
-      `${this.displayName}.credit(${amount.toString()}, '${note}', skipGain=${skipGain})`);
-    return this.#transact(amount.copy(), note, skipGain);
+      `${this.displayName}.credit(${amount.toString()}, '${note}')`);
+    return this.#transact(amount.copy(), note);
   }
 
-  debit(amount, note = '', skipGain = false) {
+  debit(amount, note = '') {
     logger.log(LogCategory.TRANSFER,
-      `${this.displayName}.debit(${amount.toString()}, '${note}', skipGain=${skipGain})`);
-    return this.#transact(amount.copy().flipSign(), note, skipGain);
+      `${this.displayName}.debit(${amount.toString()}, '${note}')`);
+    return this.#transact(amount.copy().flipSign(), note);
   }
 
-  #transact(amount, note, skipGain) {
+  #transact(amount, note) {
     // Flow instruments: memo only, no balance change
     if (this.#isFlowInstrument()) {
       if (note) this.addCreditMemo(amount.copy(), note);
@@ -664,44 +664,11 @@ export class ModelAsset {
       }
     }
 
-    this.#recordMetric(amount, skipGain, realizedGain);
-
     if (note) {
       this.addCreditMemo(amount.copy(), note);
     }
-    else {
-      console.warn('modelAsset.#recordMetric called without a note for ' + amount.toString());
-      debugger;
-    }
 
     return { assetChange: amount.copy(), realizedGain };
-  }
-
-  #recordMetric(amount, skipGain, realizedGain) {
-    const T = InstrumentType;
-    if (amount.amount > 0) {
-      if (T.isTaxableAccount(this.instrument))        this.addToMetric(Metric.POSTTAX_CONTRIBUTION, amount);
-      else if (T.isIRA(this.instrument))               this.addToMetric(Metric.TRAD_IRA_CONTRIBUTION, amount);
-      else if (T.isRothIRA(this.instrument))            this.addToMetric(Metric.ROTH_IRA_CONTRIBUTION, amount);
-      else if (T.is401K(this.instrument))               this.addToMetric(Metric.FOUR_01K_CONTRIBUTION, amount);
-      else if (T.isRealEstate(this.instrument) && !skipGain)  this.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, amount);
-      else if (T.isMortgage(this.instrument))           this.addToMetric(Metric.MORTGAGE_PRINCIPAL, amount);
-    } else if (amount.amount < 0) {
-      const positive = amount.copy().flipSign();
-      if (T.isTaxableAccount(this.instrument)) {
-        if (!skipGain) {
-          this.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, realizedGain);
-          if (realizedGain.amount > 0) {
-            this.addCreditMemo(realizedGain.copy(), 'Capital gains');
-          }
-        }
-      }
-      else if (T.isIRA(this.instrument))               this.addToMetric(Metric.TRAD_IRA_DISTRIBUTION, positive);
-      else if (T.isRothIRA(this.instrument))            this.addToMetric(Metric.ROTH_IRA_DISTRIBUTION, positive);
-      else if (T.is401K(this.instrument))               this.addToMetric(Metric.FOUR_01K_DISTRIBUTION, positive);
-      else if (T.isRealEstate(this.instrument) && !skipGain)  this.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, amount);
-      else if (T.isMortgage(this.instrument))           this.addToMetric(Metric.MORTGAGE_PRINCIPAL, amount);
-    }
   }
 
   // ── Fund transfers ───────────────────────────────────────────────

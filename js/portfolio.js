@@ -530,7 +530,7 @@ export class Portfolio {
                 }
 
                 let transferAmount = fundTransfer.calculate({ useClosePercent: true });
-                fundTransfer.execute({ skipGain: true, useClosePercent: true });
+                fundTransfer.execute({ useClosePercent: true });
 
                 runningTransferAmount.add(transferAmount);
             }
@@ -541,7 +541,7 @@ export class Portfolio {
 
                 const target = FundTransfer.resolveExpensable(this.modelAssets);
                 if (target) {
-                    FundTransfer.system(modelAsset, target, extraAmount).execute({ skipGain: true });
+                    FundTransfer.system(modelAsset, target, extraAmount).execute();
                 }
             }
 
@@ -552,7 +552,7 @@ export class Portfolio {
 
             const target = FundTransfer.resolveExpensable(this.modelAssets);
             if (target) {
-                FundTransfer.system(modelAsset, target, modelAssetValue).execute({ skipGain: true });
+                FundTransfer.system(modelAsset, target, modelAssetValue).execute();
             }
 
         }

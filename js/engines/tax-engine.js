@@ -105,7 +105,11 @@ export class TaxEngine {
                 for (const oneSided of preFlights) {                
                     const memo = `${modelAsset.displayName} property tax`;
                     const result = oneSided.toModel.debit(oneSided.amount, memo);
-                    this.monthly.recordTransfer(oneSided.toModel.instrument, oneSided.amount, result.realizedGain);                    
+                    this.monthly.recordTransfer(oneSided.toModel.instrument, oneSided.amount, result.realizedGain);
+                    if (result.realizedGain && result.realizedGain.amount > 0) {
+                        oneSided.toModel.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, result.realizedGain);
+                        oneSided.toModel.addCreditMemo(result.realizedGain.copy(), 'Capital gains');
+                    }
                 }
 
                 modelAsset.clearMonthlyTaxEscrow();
@@ -161,6 +165,10 @@ export class TaxEngine {
         logger.log(LogCategory.TAX, 'applyCapitalGainsTax: ' + modelAsset.displayName + ' generated tax of ' + amountToTax.toString() + ' to deduct from closure');
         modelAsset.finishCurrency.add(amountToTax);
         modelAsset.monthlyValueChange.add(amountToTax);
+
+        // Neutralize basis so subsequent close transfers don't re-trigger
+        // realized gains — capital gains have already been taxed above.
+        modelAsset.finishBasisCurrency = modelAsset.finishCurrency.copy();
     }
 
     // ── Day 30: Monthly Tax True-Up ───────────────────────────────────

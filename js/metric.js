@@ -55,6 +55,7 @@ export const Metric = Object.freeze({
   FOUR_01K_DISTRIBUTION:        'four01KDistribution',
   SHORT_TERM_CAPITAL_GAIN_TAX:  'shortTermCapitalGainTax',
   LONG_TERM_CAPITAL_GAIN_TAX:   'longTermCapitalGainTax',
+  INTEREST_EXPENSE:             'interestExpense',
   MAINTENANCE:                  'maintenance',
   INSURANCE:                    'insurance',
   CREDIT:                       'credit',
@@ -110,6 +111,7 @@ export const MetricLabel = Object.freeze({
   [Metric.FOUR_01K_DISTRIBUTION]:       '401K Distribution',
   [Metric.SHORT_TERM_CAPITAL_GAIN_TAX]: 'Short Term Capital Gain Tax',
   [Metric.LONG_TERM_CAPITAL_GAIN_TAX]:  'Long Term Capital Gain Tax',
+  [Metric.INTEREST_EXPENSE]:             'Interest Expense',
   [Metric.MAINTENANCE]:                 'Maintenance',
   [Metric.INSURANCE]:                   'Insurance',
   [Metric.CREDIT]:                      'Credit',
@@ -123,7 +125,7 @@ export const MetricRollups = {
     // --- FOUNDATIONAL INCOME TO ORDINARY INCOME ---
     [Metric.TRAD_IRA_DISTRIBUTION]:       [Metric.TAXABLE_DISTRIBUTION],
     [Metric.FOUR_01K_DISTRIBUTION]:       [Metric.TAXABLE_DISTRIBUTION],
-    [Metric.RMD]:                         [Metric.TAXABLE_DISTRIBUTION],
+    // RMD is informational only — no rollup. Income is captured by the distribution leaves.
 
     [Metric.TAXABLE_DISTRIBUTION]:        [Metric.ORDINARY_INCOME],
     [Metric.EMPLOYED_INCOME]:             [Metric.ORDINARY_INCOME],
@@ -163,12 +165,13 @@ export const MetricRollups = {
     [Metric.LONG_TERM_CAPITAL_GAIN_TAX]:  [Metric.FEDERAL_TAXES],
 
     // --- EXPENSE & DEBT ROLLUPS ---
-    [Metric.MORTGAGE_INTEREST]:           [Metric.MORTGAGE_PAYMENT],
-    [Metric.MORTGAGE_PRINCIPAL]:          [Metric.MORTGAGE_PAYMENT],
-    [Metric.MORTGAGE_PAYMENT]:            [Metric.EXPENSE],
+    // MORTGAGE_PAYMENT and MORTGAGE_PRINCIPAL are informational only (like RMD) — no rollup.
+    // Principal nets to zero via credit memos; payment is interest + principal for display.
+    [Metric.MORTGAGE_INTEREST]:           [Metric.INTEREST_EXPENSE],
+    [Metric.INTEREST_EXPENSE]:            [Metric.EXPENSE],
+    [Metric.MAINTENANCE]:                 [Metric.EXPENSE],
+    [Metric.INSURANCE]:                   [Metric.EXPENSE],
     [Metric.PROPERTY_TAX]:                [Metric.SALT_TAXES],
     [Metric.FEDERAL_TAXES]:               [Metric.TAXES],
     [Metric.SALT_TAXES]:                  [Metric.TAXES],
-    [Metric.MAINTENANCE]:                 [Metric.EXPENSE],
-    [Metric.INSURANCE]:                   [Metric.EXPENSE],
 };

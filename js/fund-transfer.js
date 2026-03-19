@@ -9,6 +9,7 @@
 import { Currency } from './utils/currency.js';
 import { Instrument, InstrumentType } from './instruments/instrument.js';
 import { FundTransferResult } from './results.js';
+import { Metric } from './metric.js';
 
 export const Frequency = Object.freeze({
   NONE:        'none',
@@ -213,24 +214,35 @@ export class FundTransfer {
 
   /**
    * Execute the transfer: debit source, credit target.
-   * @param {{ skipGain?: boolean }} options
+   * @param {{ useClosePercent?: boolean }} options
    * @returns {FundTransferResult}
    */
-  execute({ skipGain = false, useClosePercent = false } = {}) {
+  execute({ useClosePercent = false } = {}) {
     if (!this.fromModel || !this.toModel) return new FundTransferResult();
 
     const amount = this.calculate({ useClosePercent });
     const memo = this.describe(null, useClosePercent);
 
-    const fromResult = this.fromModel.debit(amount, memo, skipGain);
-    const toResult   = this.toModel.credit(amount, memo, skipGain);
+    const fromResult = this.fromModel.debit(amount, memo);
+    const toResult   = this.toModel.credit(amount, memo);
+
+    // Mechanical bookkeeping: record realized capital gains on whichever
+    // side produced them (debit with positive gain, or credit-as-withdrawal)
+    if (fromResult.realizedGain?.amount > 0) {
+      this.fromModel.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, fromResult.realizedGain);
+      this.fromModel.addCreditMemo(fromResult.realizedGain.copy(), 'Capital gains');
+    }
+    if (toResult.realizedGain?.amount > 0) {
+      this.toModel.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, toResult.realizedGain);
+      this.toModel.addCreditMemo(toResult.realizedGain.copy(), 'Capital gains');
+    }
 
     return new FundTransferResult(
       fromResult.assetChange,
       toResult.assetChange,
       memo,
       memo,
-      toResult.realizedGain
+      fromResult.realizedGain
     );
   }
 

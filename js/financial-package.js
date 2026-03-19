@@ -7,8 +7,7 @@ import { global_propertyTaxDeductionMax } from './globals.js';
 
 export const FINANCIAL_FIELDS = [
     'employedIncome', 'selfIncome', 'socialSecurityTax', 'socialSecurityIncome', 'assetAppreciation',
-    'expense', 'medicareTax', 'incomeTax', 'estimatedTaxes', 'contribution',
-    'preTaxContribution', 'postTaxContribution',
+    'expense', 'medicareTax', 'incomeTax', 'estimatedTaxes',
     'tradIRAContribution', 'four01KContribution', 'rothIRAContribution',
     'tradIRADistribution', 'four01KDistribution', 'rothIRADistribution',
     'mortgageInterest', 'mortgagePrincipal', 'propertyTaxes',
@@ -118,13 +117,20 @@ export class FinancialPackage {
 
     }
 
+    preTaxContribution() {
+        let c = this.four01KContribution.copy();
+        c.add(this.tradIRAContribution);
+        return c;
+    }
+
+    postTaxContribution() {
+        return this.rothIRAContribution.copy();
+    }
+
     contributions() {
-
-        let contributions = this.tradIRAContribution.copy();
-        contributions.add(this.four01KContribution);
-        contributions.add(this.rothIRAContribution);
-        return contributions;
-
+        let c = this.preTaxContribution().copy();
+        c.add(this.postTaxContribution());
+        return c;
     }
 
     deductions() {
@@ -154,7 +160,7 @@ export class FinancialPackage {
 
     }
 
-    localTaxes() {
+    saltTaxes() {
 
         let taxes = this.propertyTaxes.copy();
         return taxes;
@@ -164,7 +170,7 @@ export class FinancialPackage {
     totalTaxes() {
 
         let taxes = this.federalTaxes().copy();
-        taxes.add(this.localTaxes());
+        taxes.add(this.saltTaxes());
         return taxes;
 
     }
@@ -285,12 +291,14 @@ export class FinancialPackage {
         logger.log(category, '  incomeTax:                 ' + this.incomeTax.toString());
         logger.log(category, '  longTermCapitalGainsTax:   ' + this.longTermCapitalGainsTax.toString());        
         logger.log(category, '  estimatedTaxes:            ' + this.estimatedTaxes.toString());
-        logger.log(category, 'local taxes:                 ' + this.localTaxes().toString());
+        logger.log(category, 'State/Local taxes:           ' + this.saltTaxes().toString());
         logger.log(category, '  propertyTaxes:             ' + this.propertyTaxes.toString());
         logger.log(category, 'contributions:               ' + this.contributions().toString());
-        logger.log(category, '  401KContribution:          ' + this.four01KContribution.toString());
-        logger.log(category, '  iraContribution:           ' + this.tradIRAContribution.toString());
-        logger.log(category, '  rothContribution:          ' + this.rothIRAContribution.toString());
+        logger.log(category, '  preTaxContribution:        ' + this.preTaxContribution().toString());
+        logger.log(category, '    401KContribution:        ' + this.four01KContribution.toString());
+        logger.log(category, '    iraContribution:         ' + this.tradIRAContribution.toString());
+        logger.log(category, '  postTaxContribution:       ' + this.postTaxContribution().toString());
+        logger.log(category, '    rothContribution:        ' + this.rothIRAContribution.toString());
         logger.log(category, 'expenses:                    ' + this.expense.toString());
         logger.log(category, 'assetAppreciation:           ' + this.assetAppreciation.toString());
         logger.log(category, 'mortgagePrincipal:           ' + this.mortgagePrincipal.toString());
@@ -334,9 +342,11 @@ export class FinancialPackage {
         html += '<li>local taxes:                 ' + this.localTaxes().toString() + '</li><ul>';
         html += '  <li>property taxes             ' + this.propertyTaxes.toString() + '</li></ul>';
         html += '<li>contributions:               ' + this.contributions().toString() + '<ul>';
-        html += '  <li>401KContribution:          ' + this.four01KContribution.toString() + '</li>';
-        html += '  <li>iraContribution:           ' + this.tradIRAContribution.toString() + '</li>';
-        html += '  <li>rothContribution:          ' + this.rothIRAContribution.toString() + '</li>';
+        html += '  <li>preTaxContribution:        ' + this.preTaxContribution().toString() + '<ul>';
+        html += '    <li>401KContribution:        ' + this.four01KContribution.toString() + '</li>';
+        html += '    <li>iraContribution:         ' + this.tradIRAContribution.toString() + '</li></ul>';
+        html += '  <li>postTaxContribution:       ' + this.postTaxContribution().toString() + '<ul>';
+        html += '    <li>rothContribution:        ' + this.rothIRAContribution.toString() + '</li></ul>';
         html += '<li>assetAppreciation:           ' + this.assetAppreciation.toString() + '</li>';
         html += '<li>cashFlow:                    ' + this.cashFlow().toString() + '<ul>';
         html += '  <li>inFlow:                    ' + this.cashInFlow().toString() + '</li>';
