@@ -49,7 +49,6 @@ const M = {
   MORTGAGE_INTEREST:           'mortgageInterest',
   MORTGAGE_PRINCIPAL:          'mortgagePrincipal',
   PROPERTY_TAX:                'propertyTax',
-  MORTGAGE_ESCROW:             'mortgageEscrow',
   PRETAX_CONTRIBUTION:         'preTaxContribution',
   POSTTAX_CONTRIBUTION:        'postTaxContribution',
   TRAD_IRA_CONTRIBUTION:       'tradIRAContribution',
@@ -58,7 +57,7 @@ const M = {
   TRAD_IRA_DISTRIBUTION:       'tradIRADistribution',
   ROTH_IRA_DISTRIBUTION:       'rothIRADistribution',
   FOUR_01K_DISTRIBUTION:       'four01KDistribution',
-  TAXFREE_DISTRIBUTION:        'taxFreeDistribution',
+  TAX_FREE_DISTRIBUTION:       'taxFreeDistribution',
   TAXABLE_DISTRIBUTION:        'taxableDistribution',
   SHORT_TERM_CAPITAL_GAIN_TAX: 'shortTermCapitalGainTax',
   LONG_TERM_CAPITAL_GAIN_TAX:  'longTermCapitalGainTax',
@@ -175,8 +174,8 @@ const MortgageBehavior = Object.freeze({
   relevantMetrics() {
     return [
       ...COMMON_METRICS,
-      M.MORTGAGE_PAYMENT, M.MORTGAGE_INTEREST, M.MORTGAGE_PRINCIPAL,
-      M.MORTGAGE_ESCROW, M.GROWTH,
+      M.MORTGAGE_PAYMENT, M.MORTGAGE_INTEREST, M.MORTGAGE_PRINCIPAL, M.MAINTENANCE, M.INSURANCE,
+      M.GROWTH,
     ];
   },
 
@@ -286,8 +285,7 @@ const RealEstateBehavior = Object.freeze({
       M.GROWTH, M.INCOME,
       M.SHORT_TERM_CAPITAL_GAIN, M.LONG_TERM_CAPITAL_GAIN, M.CAPITAL_GAIN,
       M.SHORT_TERM_CAPITAL_GAIN_TAX, M.LONG_TERM_CAPITAL_GAIN_TAX, M.CAPITAL_GAIN_TAX,
-      M.PROPERTY_TAX, M.MORTGAGE_ESCROW,
-      M.MAINTENANCE, M.INSURANCE,
+      M.PROPERTY_TAX, M.MAINTENANCE, M.INSURANCE,
     ];
   },
 

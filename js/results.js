@@ -18,14 +18,13 @@ export class AssetAppreciationResult {
 }
 
 export class MortgageResult {
-  constructor(principal = Currency.zero(), interest = Currency.zero(), escrow = Currency.zero()) {
+  constructor(principal = Currency.zero(), interest = Currency.zero()) {
     this.principal = principal instanceof Currency ? principal.copy() : new Currency(principal);
-    this.interest  = interest instanceof Currency ? interest.copy() : new Currency(interest);
-    this.escrow    = escrow instanceof Currency ? escrow.copy() : new Currency(escrow);
+    this.interest  = interest instanceof Currency ? interest.copy() : new Currency(interest);    
   }
 
   payment() {
-    return new Currency(this.principal.amount + this.interest.amount + this.escrow.amount);
+    return new Currency(this.principal.amount + this.interest.amount);
   }
 }
 

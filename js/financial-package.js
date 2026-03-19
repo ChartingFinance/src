@@ -7,13 +7,14 @@ import { global_propertyTaxDeductionMax } from './globals.js';
 
 export const FINANCIAL_FIELDS = [
     'employedIncome', 'selfIncome', 'socialSecurityTax', 'socialSecurityIncome', 'assetAppreciation',
-    'expense', 'medicareTax', 'incomeTax', 'estimatedTaxes',
+    'expense', 'medicareTax', 'incomeTax', 'estimatedTaxes', 'contribution',
     'preTaxContribution', 'postTaxContribution',
     'tradIRAContribution', 'four01KContribution', 'rothIRAContribution',
+    'taxFreeDistribution', 'taxableDistribution',
     'tradIRADistribution', 'four01KDistribution', 'rothIRADistribution',
-    'mortgageInterest', 'mortgagePrincipal', 'mortgageEscrow', 'propertyTaxes',
+    'mortgageInterest', 'mortgagePrincipal', 'propertyTaxes',
     'shortTermCapitalGains', 'longTermCapitalGains',
-    'nonQualifiedDividends', 'qualifiedDividends',
+    'nonQualifiedDividends', 'qualifiedDividends', "maintenance", "insurance",
     'interestIncome', 'longTermCapitalGainsTax',
 ];
 
@@ -391,7 +392,6 @@ export class FinancialPackage {
     addMortgageResult(mortgageResult) {
         this.mortgageInterest.add(mortgageResult.interest);
         this.mortgagePrincipal.add(mortgageResult.principal);
-        this.mortgageEscrow.add(mortgageResult.escrow);
     }
 
     addIncomeResult(incomeResult) {

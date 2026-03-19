@@ -59,7 +59,6 @@ export const Metric = Object.freeze({
   MORTGAGE_PAYMENT:             'mortgagePayment',
   MORTGAGE_INTEREST:            'mortgageInterest',
   MORTGAGE_PRINCIPAL:           'mortgagePrincipal',
-  MORTGAGE_ESCROW:              'mortgageEscrow',
   PROPERTY_TAX:                 'propertyTax',
   CONTRIBUTION:                 'contribution',
   PRETAX_CONTRIBUTION:          'preTaxContribution',
@@ -112,7 +111,6 @@ export const MetricLabel = Object.freeze({
   [Metric.MORTGAGE_PAYMENT]:            'Mortgage Payment',
   [Metric.MORTGAGE_INTEREST]:           'Mortgage Interest',
   [Metric.MORTGAGE_PRINCIPAL]:          'Mortgage Principal',
-  [Metric.MORTGAGE_ESCROW]:             'Mortgage Escrow', 
   [Metric.CONTRIBUTION]:                'Contribution',
   [Metric.PRETAX_CONTRIBUTION]:         'Pre Tax Contribution',
   [Metric.POSTTAX_CONTRIBUTION]:        'Post Tax Contribution',
@@ -173,7 +171,6 @@ export const MetricRollups = {
     // --- EXPENSE & DEBT ROLLUPS ---
     [Metric.MORTGAGE_INTEREST]:           [Metric.MORTGAGE_PAYMENT],
     [Metric.MORTGAGE_PRINCIPAL]:          [Metric.MORTGAGE_PAYMENT],
-    [Metric.MORTGAGE_ESCROW]:             [Metric.MORTGAGE_PAYMENT],
     [Metric.MORTGAGE_PAYMENT]:            [Metric.EXPENSE],
     [Metric.PROPERTY_TAX]:                [Metric.EXPENSE],
     [Metric.MAINTENANCE]:                 [Metric.EXPENSE],

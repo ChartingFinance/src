@@ -141,7 +141,7 @@ export const PropertyGroupMetrics = new Map([
   ]],
   [PropertyGroup.REAL_ESTATE, [
     Metric.VALUE, Metric.GROWTH, Metric.PROPERTY_TAX, Metric.MAINTENANCE, Metric.INSURANCE,
-    Metric.MORTGAGE_PAYMENT, Metric.MORTGAGE_INTEREST, Metric.MORTGAGE_PRINCIPAL, Metric.MORTGAGE_ESCROW,
+    Metric.MORTGAGE_PAYMENT, Metric.MORTGAGE_INTEREST, Metric.MORTGAGE_PRINCIPAL,
   ]],
   [PropertyGroup.INCOME, [
     Metric.EMPLOYED_INCOME, Metric.SELF_INCOME,
@@ -167,7 +167,7 @@ export const PropertyGroupMetrics = new Map([
   ]],
   [PropertyGroup.DEBT_SERVICE, [
     Metric.MORTGAGE_PAYMENT, Metric.MORTGAGE_INTEREST,
-    Metric.MORTGAGE_PRINCIPAL, Metric.MORTGAGE_ESCROW,
+    Metric.MORTGAGE_PRINCIPAL,
     Metric.EXPENSE,
   ]],
   [PropertyGroup.CASH_FLOW, [
