@@ -246,6 +246,7 @@ function connectAssetFormModal() {
             editingModelAsset.startBasisCurrency = newAsset.startBasisCurrency;
             editingModelAsset.monthsRemaining = newAsset.monthsRemaining;
             editingModelAsset.annualDividendRate = newAsset.annualDividendRate;
+            editingModelAsset.dividendQualifiedRatio = newAsset.dividendQualifiedRatio;
             editingModelAsset.longTermCapitalHoldingPercentage = newAsset.longTermCapitalHoldingPercentage;
             editingModelAsset.isSelfEmployed = newAsset.isSelfEmployed;
             editingModelAsset.annualTaxRate = newAsset.annualTaxRate;

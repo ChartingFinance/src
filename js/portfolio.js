@@ -36,6 +36,8 @@ export class Portfolio {
         this.yearly = new FinancialPackage();
         this.total = new FinancialPackage();
 
+        this.monthlyPackages = []; // FP copy per month — for double-entry testing
+
         this.monthlyPropertyTaxes = [];
         this.monthlyIncomeTaxes = [];
         this.monthlyCapitalGainsTaxes = [];
@@ -160,7 +162,8 @@ export class Portfolio {
         let mortgageInterestMemos = 0;
         let mortgagePrincipalMemos = 0;
         let propertyTaxMemos = 0;
-        let dividendMemos = 0;
+        let qualifiedDividendMemos = 0;
+        let nonQualifiedDividendMemos = 0;
         let interestIncomeMemos = 0;
         let assetGrowthMemos = 0;
 
@@ -175,7 +178,8 @@ export class Portfolio {
                     case 'Mortgage interest':      mortgageInterestMemos += memo.amount.amount; break;
                     case 'Mortgage principal':     mortgagePrincipalMemos += memo.amount.amount; break;
                     case 'Property taxes':         propertyTaxMemos += memo.amount.amount; break;
-                    case 'Dividend income':        dividendMemos += memo.amount.amount; break;
+                    case 'Qualified dividend':     qualifiedDividendMemos += memo.amount.amount; break;
+                    case 'Non-qualified dividend': nonQualifiedDividendMemos += memo.amount.amount; break;
                     case 'Interest income':        interestIncomeMemos += memo.amount.amount; break;
                     case 'Asset growth':           assetGrowthMemos += memo.amount.amount; break;
                     case 'Expense growth':         assetGrowthMemos += memo.amount.amount; break; // Or create an expenseGrowthMemos variable
@@ -218,6 +222,7 @@ export class Portfolio {
 
         this.computePerAssetCashFlow();
 
+        this.monthlyPackages.push(this.monthly.copy());
         this.yearly.add(this.monthly);
         this.total.add(this.monthly);
         this.monthly.zero();

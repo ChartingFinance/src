@@ -32,10 +32,12 @@ const rgb2hex = (rgb) => `#${rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/).slice
 export const Metric = Object.freeze({
   VALUE:                        'value',
   GROWTH:                       'growth',
-  DIVIDEND:                     'dividend',
+  QUALIFIED_DIVIDEND:           'qualifiedDividend',
+  NON_QUALIFIED_DIVIDEND:       'nonQualifiedDividend',
   INTEREST_INCOME:              'interestIncome',
   ORDINARY_INCOME:              'ordinaryIncome',
-  WORKING_INCOME:               'workingIncome', // subject to FICA, Medicare, withholding
+  EMPLOYED_INCOME:              'employedIncome',
+  SELF_INCOME:                  'selfIncome',
   INCOME:                       'income',
   WITHHELD_FICA_TAX:            'withheldFicaTax',
   ESTIMATED_FICA_TAX:           'estimatedFicaTax',
@@ -80,10 +82,12 @@ const METRIC_NAMES = Object.values(Metric);
 export const MetricLabel = Object.freeze({
   [Metric.VALUE]:                       'Value',
   [Metric.GROWTH]:                      'Growth',
-  [Metric.DIVIDEND]:                    'Dividend',
+  [Metric.QUALIFIED_DIVIDEND]:           'Qualified Dividend',
+  [Metric.NON_QUALIFIED_DIVIDEND]:      'Non-Qualified Dividend',
   [Metric.INTEREST_INCOME]:             'Interest Income',
   [Metric.ORDINARY_INCOME]:             'Ordinary Income',
-  [Metric.WORKING_INCOME]:              'Working Income',
+  [Metric.EMPLOYED_INCOME]:              'Employed Income',
+  [Metric.SELF_INCOME]:                 'Self-Employment Income',
   [Metric.INCOME]:                      'Income', // rolls up ordinary, interest, and working income (i.e. everything that is considered income for tax purposes)
   [Metric.WITHHELD_FICA_TAX]:           'Withheld FICA / Medicare',
   [Metric.ESTIMATED_FICA_TAX]:          'Estimated FICA / Medicare',
@@ -127,7 +131,8 @@ export const MetricRollups = {
     // --- FOUNDATIONAL INCOME TO ORDINARY INCOME ---
     [Metric.TRAD_IRA_DISTRIBUTION]:       [Metric.ORDINARY_INCOME],
     [Metric.FOUR_01K_DISTRIBUTION]:       [Metric.ORDINARY_INCOME],
-    [Metric.WORKING_INCOME]:              [Metric.ORDINARY_INCOME],
+    [Metric.EMPLOYED_INCOME]:             [Metric.ORDINARY_INCOME],
+    [Metric.SELF_INCOME]:                 [Metric.ORDINARY_INCOME],
     [Metric.INTEREST_INCOME]:             [Metric.ORDINARY_INCOME],
     [Metric.SOCIAL_SECURITY_INCOME]:      [Metric.ORDINARY_INCOME], 
     [Metric.SHORT_TERM_CAPITAL_GAIN]:     [Metric.ORDINARY_INCOME], // Taxed at ordinary rates
@@ -139,7 +144,8 @@ export const MetricRollups = {
     [Metric.ORDINARY_INCOME]:             [Metric.INCOME],
     [Metric.CAPITAL_GAIN]:                [Metric.INCOME],
     [Metric.ROTH_IRA_DISTRIBUTION]:       [Metric.INCOME], // Non-taxable, but still cash flow income
-    [Metric.DIVIDEND]:                    [Metric.INCOME],
+    [Metric.NON_QUALIFIED_DIVIDEND]:      [Metric.ORDINARY_INCOME],
+    [Metric.QUALIFIED_DIVIDEND]:          [Metric.INCOME],
 
     [Metric.MEDICARE_TAX]:                [Metric.WITHHELD_FICA_TAX],
     [Metric.SOCIAL_SECURITY_TAX]:         [Metric.WITHHELD_FICA_TAX],
@@ -195,6 +201,7 @@ export class ModelAsset {
     isSelfEmployed = false,
     isPrimaryHome = true,
     annualTaxRate = new ARR(0),
+    dividendQualifiedRatio = 1.0,
     annualMaintenanceRate = new ARR(0),
     annualInsuranceCost = Currency.zero(),
   }) {
@@ -207,6 +214,7 @@ export class ModelAsset {
     this.finishDateInt   = finishDateInt || null;
     this.monthsRemaining = Number.isInteger(monthsRemaining) ? monthsRemaining : 0;
     this.annualDividendRate = annualDividendRate;
+    this.dividendQualifiedRatio = dividendQualifiedRatio;
     this.longTermCapitalHoldingPercentage = longTermCapitalHoldingPercentage;
     this.annualReturnRate = annualReturnRate;
     this.fundTransfers   = fundTransfers;
@@ -268,6 +276,7 @@ export class ModelAsset {
       monthsRemaining: obj.monthsRemaining ?? 0,
       annualReturnRate: new ARR(obj.annualReturnRate?.annualReturnRate ?? obj.annualReturnRate?.rate ?? 0),
       annualDividendRate: new ARR(obj.annualDividendRate?.annualReturnRate ?? obj.annualDividendRate?.rate ?? 0),
+      dividendQualifiedRatio: obj.dividendQualifiedRatio ?? 1.0,
       longTermCapitalHoldingPercentage: new ARR(obj.longTermCapitalHoldingPercentage?.annualReturnRate ?? obj.longTermCapitalHoldingPercentage?.rate ?? 0),
       fundTransfers:   (obj.fundTransfers ?? []).map(FundTransfer.fromJSON),
       isSelfEmployed:  obj.isSelfEmployed ?? false,
@@ -303,6 +312,7 @@ export class ModelAsset {
       monthsRemaining: parseInt(vals.monthsRemaining?.value, 10) || 0,
       annualReturnRate: vals.annualReturnRate?.value ? ARR.parse(vals.annualReturnRate.value) : new ARR(0),
       annualDividendRate: vals.dividendRate ? ARR.parse(vals.dividendRate.value) : new ARR(0),
+      dividendQualifiedRatio: vals.dividendQualifiedRatio ? parseFloat(vals.dividendQualifiedRatio.value) / 100 : 1.0,
       longTermCapitalHoldingPercentage: vals.longTermRate ? ARR.parse(vals.longTermRate.value) : new ARR(0),
       fundTransfers,
       isSelfEmployed: vals.isSelfEmployed?.type === 'checkbox'
@@ -380,8 +390,11 @@ export class ModelAsset {
   get growthCurrency()   { return this.#metrics.get(Metric.GROWTH).current; }
   set growthCurrency(c)  { this.#metrics.get(Metric.GROWTH).current = c; }
 
-  get dividendCurrency()   { return this.#metrics.get(Metric.DIVIDEND).current; }
-  set dividendCurrency(c)  { this.#metrics.get(Metric.DIVIDEND).current = c; }
+  get qualifiedDividendCurrency()   { return this.#metrics.get(Metric.QUALIFIED_DIVIDEND).current; }
+  set qualifiedDividendCurrency(c)  { this.#metrics.get(Metric.QUALIFIED_DIVIDEND).current = c; }
+
+  get nonQualifiedDividendCurrency()   { return this.#metrics.get(Metric.NON_QUALIFIED_DIVIDEND).current; }
+  set nonQualifiedDividendCurrency(c)  { this.#metrics.get(Metric.NON_QUALIFIED_DIVIDEND).current = c; }
 
   get interestIncomeCurrency()   { return this.#metrics.get(Metric.INTEREST_INCOME).current; }
   set interestIncomeCurrency(c)  { this.#metrics.get(Metric.INTEREST_INCOME).current = c; }
@@ -389,8 +402,11 @@ export class ModelAsset {
   get ordinaryIncomeCurrency()   { return this.#metrics.get(Metric.ORDINARY_INCOME).current; }
   set ordinaryIncomeCurrency(c)  { this.#metrics.get(Metric.ORDINARY_INCOME).current = c; }
 
-  get workingIncomeCurrency()   { return this.#metrics.get(Metric.WORKING_INCOME).current; }
-  set workingIncomeCurrency(c)  { this.#metrics.get(Metric.WORKING_INCOME).current = c; }
+  get employedIncomeCurrency()   { return this.#metrics.get(Metric.EMPLOYED_INCOME).current; }
+  set employedIncomeCurrency(c)  { this.#metrics.get(Metric.EMPLOYED_INCOME).current = c; }
+
+  get selfIncomeCurrency()   { return this.#metrics.get(Metric.SELF_INCOME).current; }
+  set selfIncomeCurrency(c)  { this.#metrics.get(Metric.SELF_INCOME).current = c; }
 
   get incomeCurrency()    { return this.#metrics.get(Metric.INCOME).current; }
   set incomeCurrency(c)   { this.#metrics.get(Metric.INCOME).current = c; }
@@ -504,7 +520,8 @@ export class ModelAsset {
 
   get monthlyValues()                { return this.#metrics.get(Metric.VALUE).history; }
   get monthlyGrowths()               { return this.#metrics.get(Metric.GROWTH).history; }
-  get monthlyDividends()             { return this.#metrics.get(Metric.DIVIDEND).history; }
+  get monthlyQualifiedDividends()    { return this.#metrics.get(Metric.QUALIFIED_DIVIDEND).history; }
+  get monthlyNonQualifiedDividends() { return this.#metrics.get(Metric.NON_QUALIFIED_DIVIDEND).history; }
   get monthlyIncomes()               { return this.#metrics.get(Metric.INCOME).history; }
   get monthlyCashFlows()              { return this.#metrics.get(Metric.CASH_FLOW).history; }
   get monthlyTaxes()                 { return this.#metrics.get(Metric.INCOME_TAX).history; }
@@ -951,6 +968,7 @@ export class ModelAsset {
       monthsRemaining: this.monthsRemaining,
       annualReturnRate: this.annualReturnRate,
       annualDividendRate: this.annualDividendRate,
+      dividendQualifiedRatio: this.dividendQualifiedRatio,
       longTermCapitalHoldingPercentage: this.longTermCapitalHoldingPercentage,
       fundTransfers:   [],
       isSelfEmployed:  this.isSelfEmployed,

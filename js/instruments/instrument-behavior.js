@@ -21,10 +21,12 @@ import {
 const M = {
   VALUE:                       'value',
   GROWTH:                      'growth',
-  DIVIDEND:                    'dividend',
+  QUALIFIED_DIVIDEND:          'qualifiedDividend',
+  NON_QUALIFIED_DIVIDEND:      'nonQualifiedDividend',
   INTEREST_INCOME:             'interestIncome',
   ORDINARY_INCOME:             'ordinaryIncome',
-  WORKING_INCOME:              'workingIncome',
+  EMPLOYED_INCOME:             'employedIncome',
+  SELF_INCOME:                 'selfIncome',
   INCOME:                      'income',
   WITHHELD_FICA_TAX:           'withheldFicaTax',
   ESTIMATED_FICA_TAX:          'estimatedFicaTax',
@@ -74,7 +76,7 @@ const WorkingIncomeBehavior = Object.freeze({
   relevantMetrics() {
     return [
       ...COMMON_METRICS,
-      M.INCOME, M.WORKING_INCOME, M.ORDINARY_INCOME, M.NET_INCOME, M.GROWTH,
+      M.INCOME, M.EMPLOYED_INCOME, M.SELF_INCOME, M.ORDINARY_INCOME, M.NET_INCOME, M.GROWTH,
       M.SOCIAL_SECURITY_TAX, M.MEDICARE_TAX,
       M.WITHHELD_FICA_TAX, M.ESTIMATED_FICA_TAX,
       M.WITHHELD_INCOME_TAX, M.ESTIMATED_INCOME_TAX, M.ESTIMATED_TAX, M.INCOME_TAX,
@@ -87,9 +89,9 @@ const WorkingIncomeBehavior = Object.freeze({
 
     const income = asset.finishCurrency.copy();
     if (asset.isSelfEmployed) {
-      asset.workingIncomeCurrency.add(income);
+      asset.selfIncomeCurrency.add(income);
     } else {
-      asset.ordinaryIncomeCurrency.add(income);
+      asset.employedIncomeCurrency.add(income);
     }
 
     asset.incomeCurrency.add(income);
@@ -219,7 +221,7 @@ const CapitalBehavior = Object.freeze({
   relevantMetrics() {
     return [
       ...COMMON_METRICS,
-      M.GROWTH, M.DIVIDEND, M.INCOME, M.ORDINARY_INCOME,
+      M.GROWTH, M.QUALIFIED_DIVIDEND, M.NON_QUALIFIED_DIVIDEND, M.INCOME, M.ORDINARY_INCOME,
       M.SHORT_TERM_CAPITAL_GAIN, M.LONG_TERM_CAPITAL_GAIN, M.CAPITAL_GAIN,
       M.SHORT_TERM_CAPITAL_GAIN_TAX, M.LONG_TERM_CAPITAL_GAIN_TAX, M.CAPITAL_GAIN_TAX,
       M.TAXABLE_CONTRIBUTION, M.TAXABLE_DISTRIBUTION,
@@ -237,22 +239,31 @@ const CapitalBehavior = Object.freeze({
     asset.monthlyValueChange.add(growth);
     asset.addCreditMemo(growth, 'Asset growth');
 
-    let dividend = Currency.zero();
+    let qualifiedDiv = Currency.zero();
+    let nonQualifiedDiv = Currency.zero();
     if (asset.annualDividendRate.rate != 0.0) {
-      dividend = new Currency(asset.finishCurrency.amount * asset.annualDividendRate.asMonthly());
+      const totalDiv = asset.finishCurrency.amount * asset.annualDividendRate.asMonthly();
+      const qualifiedRatio = asset.dividendQualifiedRatio;
+      qualifiedDiv = new Currency(totalDiv * qualifiedRatio);
+      nonQualifiedDiv = new Currency(totalDiv * (1 - qualifiedRatio));
 
-      asset.dividendCurrency.add(dividend);
-      asset.finishCurrency.add(dividend);
-      asset.monthlyValueChange.add(dividend);
-      asset.addCreditMemo(dividend, 'Dividend income');
+      asset.addToMetric(M.QUALIFIED_DIVIDEND, qualifiedDiv);
+      asset.addToMetric(M.NON_QUALIFIED_DIVIDEND, nonQualifiedDiv);
+
+      const totalDivCurrency = qualifiedDiv.plus(nonQualifiedDiv);
+      asset.finishCurrency.add(totalDivCurrency);
+      asset.monthlyValueChange.add(totalDivCurrency);
+      if (qualifiedDiv.amount !== 0) asset.addCreditMemo(qualifiedDiv, 'Qualified dividend');
+      if (nonQualifiedDiv.amount !== 0) asset.addCreditMemo(nonQualifiedDiv, 'Non-qualified dividend');
     }
 
-    return new AssetAppreciationResult(asset.finishCurrency.copy(), growth, dividend);
+    return new AssetAppreciationResult(asset.finishCurrency.copy(), growth, qualifiedDiv, nonQualifiedDiv);
   },
 
   computeCashFlow(asset) {
 
-    let cf = asset.dividendCurrency.copy();
+    let cf = asset.qualifiedDividendCurrency.copy();
+    cf.add(asset.nonQualifiedDividendCurrency);
     cf.add(asset.shortTermCapitalGainCurrency);
     cf.add(asset.longTermCapitalGainCurrency);
     cf.add(asset.tradIRADistributionCurrency);
@@ -308,7 +319,7 @@ const RealEstateBehavior = Object.freeze({
       asset.addCreditMemo(ins, 'Insurance');
     }
 
-    return new AssetAppreciationResult(asset.finishCurrency.copy(), growth, Currency.zero(), tax);
+    return new AssetAppreciationResult(asset.finishCurrency.copy(), growth, Currency.zero(), Currency.zero(), tax);
 
   },
 

@@ -144,8 +144,9 @@ export const PropertyGroupMetrics = new Map([
     Metric.MORTGAGE_PAYMENT, Metric.MORTGAGE_INTEREST, Metric.MORTGAGE_PRINCIPAL, Metric.MORTGAGE_ESCROW,
   ]],
   [PropertyGroup.INCOME, [
-    Metric.WORKING_INCOME, Metric.DIVIDEND, Metric.INTEREST_INCOME,
-    Metric.SOCIAL_SECURITY_INCOME, Metric.INCOME,
+    Metric.EMPLOYED_INCOME, Metric.SELF_INCOME,
+    Metric.QUALIFIED_DIVIDEND, Metric.NON_QUALIFIED_DIVIDEND,
+    Metric.INTEREST_INCOME, Metric.SOCIAL_SECURITY_INCOME, Metric.INCOME,
   ]],
   [PropertyGroup.TAX, [
     Metric.WITHHELD_FICA_TAX, Metric.INCOME_TAX, Metric.CAPITAL_GAIN_TAX,

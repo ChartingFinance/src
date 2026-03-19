@@ -378,6 +378,8 @@ export class FinancialPackage {
 
     addAssetAppreciationResult(assetAppreciationResult) {
         this.assetAppreciation.add(assetAppreciationResult.growth);
+        this.qualifiedDividends.add(assetAppreciationResult.qualifiedDividend);
+        this.nonQualifiedDividends.add(assetAppreciationResult.nonQualifiedDividend);
         this.propertyTaxes.add(assetAppreciationResult.tax);
     }
 

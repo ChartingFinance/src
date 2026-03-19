@@ -8,10 +8,11 @@
 import { Currency } from './utils/currency.js';
 
 export class AssetAppreciationResult {
-  constructor(principal = Currency.zero(), growth = Currency.zero(), dividend = Currency.zero(), tax = Currency.zero()) {
+  constructor(principal = Currency.zero(), growth = Currency.zero(), qualifiedDividend = Currency.zero(), nonQualifiedDividend = Currency.zero(), tax = Currency.zero()) {
     this.principal = principal instanceof Currency ? principal.copy() : new Currency(principal);
     this.growth = growth instanceof Currency ? growth.copy() : new Currency(growth);
-    this.dividend = dividend instanceof Currency ? dividend.copy() : new Currency(dividend);
+    this.qualifiedDividend = qualifiedDividend instanceof Currency ? qualifiedDividend.copy() : new Currency(qualifiedDividend);
+    this.nonQualifiedDividend = nonQualifiedDividend instanceof Currency ? nonQualifiedDividend.copy() : new Currency(nonQualifiedDividend);
     this.tax = tax instanceof Currency ? tax.copy() : new Currency(tax);
   }
 }

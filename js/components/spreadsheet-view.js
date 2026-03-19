@@ -10,7 +10,8 @@ import { LitElement, html } from 'lit';
 const metrics = [
     { key: 'monthlyValues',                label: 'Value' },
     { key: 'monthlyGrowths',               label: 'Growth' },
-    { key: 'monthlyDividends',             label: 'Dividend' },
+    { key: 'monthlyQualifiedDividends',     label: 'Qual. Div' },
+    { key: 'monthlyNonQualifiedDividends', label: 'Non-Q Div' },
     { key: 'monthlyIncomes',               label: 'Income' },
     { key: 'monthlyTaxes',                 label: 'Taxes' },
     { key: 'monthlyCashFlows',              label: 'Cash Flow' },

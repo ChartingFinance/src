@@ -189,6 +189,7 @@ class AssetFormModal extends LitElement {
             const finishBasisVal = closed && ma.closedBasisValue ? ma.closedBasisValue.toHTML()
                 : (ma ? ma.finishBasisCurrency.toHTML() : '0');
             const divVal = ma ? ma.annualDividendRate.toHTML() : '0';
+            const divQualVal = ma ? (ma.dividendQualifiedRatio * 100).toFixed(0) : '100';
             const ltVal = ma ? ma.longTermCapitalHoldingPercentage.toHTML() : '0';
             return html`
                 <div class="mt-6 border-t border-gray-100 pt-6">
@@ -207,6 +208,11 @@ class AssetFormModal extends LitElement {
                             <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Dividend Rate %</label>
                             <input type="number" class="fin-input" name="dividendRate"
                                 .value=${divVal} step="0.01" placeholder="annual %" />
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Qualified Dividend %</label>
+                            <input type="number" class="fin-input" name="dividendQualifiedRatio"
+                                .value=${divQualVal} step="1" min="0" max="100" placeholder="% qualified" />
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Long-Term Rate %</label>
