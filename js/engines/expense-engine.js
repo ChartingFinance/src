@@ -74,7 +74,7 @@ export class ExpenseEngine {
                         // Isolate tax liability to prevent the death-spiral loop
                         const taxLiability = new Currency(grossWithdrawal.amount - netShortfall.amount);
                         this.monthly.estimatedTaxes.add(taxLiability);
-                        targetAsset.estimatedIncomeTaxCurrency.add(taxLiability.copy().flipSign());
+                        targetAsset.addToMetric(Metric.ESTIMATED_INCOME_TAX, taxLiability.copy().flipSign());
                     }
                 }
             }
@@ -98,7 +98,7 @@ export class ExpenseEngine {
                     // Isolate tax liability to prevent the death-spiral loop
                     const taxLiability = new Currency(grossWithdrawal.amount - netShortfall.amount);
                     this.monthly.estimatedTaxes.add(taxLiability);
-                    targetAsset.estimatedIncomeTaxCurrency.add(taxLiability.copy().flipSign());
+                    targetAsset.addToMetric(Metric.ESTIMATED_INCOME_TAX, taxLiability.copy().flipSign());
                 }
             }
         }

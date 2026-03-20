@@ -55,6 +55,7 @@ export const Metric = Object.freeze({
   FOUR_01K_DISTRIBUTION:        'four01KDistribution',
   SHORT_TERM_CAPITAL_GAIN_TAX:  'shortTermCapitalGainTax',
   LONG_TERM_CAPITAL_GAIN_TAX:   'longTermCapitalGainTax',
+  LIVING_EXPENSE:               'livingExpense',
   INTEREST_EXPENSE:             'interestExpense',
   MAINTENANCE:                  'maintenance',
   INSURANCE:                    'insurance',
@@ -111,6 +112,7 @@ export const MetricLabel = Object.freeze({
   [Metric.FOUR_01K_DISTRIBUTION]:       '401K Distribution',
   [Metric.SHORT_TERM_CAPITAL_GAIN_TAX]: 'Short Term Capital Gain Tax',
   [Metric.LONG_TERM_CAPITAL_GAIN_TAX]:  'Long Term Capital Gain Tax',
+  [Metric.LIVING_EXPENSE]:                'Living Expense',
   [Metric.INTEREST_EXPENSE]:             'Interest Expense',
   [Metric.MAINTENANCE]:                 'Maintenance',
   [Metric.INSURANCE]:                   'Insurance',
@@ -167,6 +169,7 @@ export const MetricRollups = {
     // --- EXPENSE & DEBT ROLLUPS ---
     // MORTGAGE_PAYMENT and MORTGAGE_PRINCIPAL are informational only (like RMD) — no rollup.
     // Principal nets to zero via credit memos; payment is interest + principal for display.
+    [Metric.LIVING_EXPENSE]:              [Metric.EXPENSE],
     [Metric.MORTGAGE_INTEREST]:           [Metric.INTEREST_EXPENSE],
     [Metric.INTEREST_EXPENSE]:            [Metric.EXPENSE],
     [Metric.MAINTENANCE]:                 [Metric.EXPENSE],
@@ -199,3 +202,12 @@ export const MACRO_METRICS = [
  */
 const _macroSet = new Set(MACRO_METRICS);
 export function isTopLevelMetric(m) { return _macroSet.has(m); }
+
+/**
+ * Parent metrics — metrics that have children rolling up to them in the DAG.
+ * These must NEVER be written to directly; they are populated solely by
+ * addToMetric() DAG propagation from leaf metrics.
+ */
+export const PARENT_METRICS = new Set(
+  Object.values(MetricRollups).flat()
+);

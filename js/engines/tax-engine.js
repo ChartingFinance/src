@@ -31,8 +31,8 @@ export class TaxEngine {
     recordFICAWithholding(modelAsset, withholding) {
 
         withholding.flipSigns();
-        modelAsset.medicareTaxCurrency.add(withholding.medicareTax);
-        modelAsset.socialSecurityTaxCurrency.add(withholding.socialSecurityTax);
+        modelAsset.addToMetric(Metric.MEDICARE_TAX, withholding.medicareTax);
+        modelAsset.addToMetric(Metric.SOCIAL_SECURITY_TAX, withholding.socialSecurityTax);
         this.monthly.addWithholdingResult(withholding);
 
         modelAsset.addCreditMemo(withholding.fica(), 'FICA withholding');
@@ -194,7 +194,7 @@ export class TaxEngine {
 
             const liquidAsset = this.modelAssets.find(a => InstrumentType.isLiquid(a.instrument) && !a.isClosed);
             if (liquidAsset) {
-                liquidAsset.estimatedIncomeTaxCurrency.add(additionalTax);
+                liquidAsset.addToMetric(Metric.ESTIMATED_INCOME_TAX, additionalTax);
                 liquidAsset.addCreditMemo(additionalTax.copy(), 'Income tax withholding');
             }
         }

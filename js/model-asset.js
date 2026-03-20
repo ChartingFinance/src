@@ -23,7 +23,7 @@ import { IncomeResult } from './results.js';
 import { colorRange }    from './utils/html.js';
 import { getBehavior }   from './instruments/instrument-behavior.js';
 import { global_getFinishDateInt, global_inflationRate } from './globals.js';
-import { Metric, METRIC_NAMES, MetricLabel, MetricRollups } from './metric.js';
+import { Metric, METRIC_NAMES, MetricLabel, MetricRollups, PARENT_METRICS } from './metric.js';
 
 // Re-export so existing consumers can still import from model-asset.js
 export { Metric, MetricLabel, MetricRollups };
@@ -208,8 +208,16 @@ export class ModelAsset {
    * @param {Currency} amount
    * @returns {Currency} current accumulated value
    */
-  addToMetric(metricName, amount) {
- 
+  addToMetric(metricName, amount, _isDagPropagation = false) {
+
+    // Guard: parent metrics must only be written via DAG propagation
+    if (!_isDagPropagation && PARENT_METRICS.has(metricName)) {
+        throw new Error(
+            `Cannot write directly to parent metric "${metricName}" on "${this.displayName}". ` +
+            `Write to a leaf metric instead and let the DAG propagate.`
+        );
+    }
+
     // 1. Add to the target metric
     let result = this.#metrics.get(metricName).current.add(amount);
 
@@ -217,7 +225,7 @@ export class ModelAsset {
     const parentMetrics = MetricRollups[metricName];
     if (parentMetrics) {
         for (const parentName of parentMetrics) {
-            this.addToMetric(parentName, amount); // Recursive call
+            this.addToMetric(parentName, amount, true); // Recursive — DAG propagation
         }
     }
 
@@ -264,7 +272,7 @@ export class ModelAsset {
   set interestIncomeCurrency(c)  { this.#metrics.get(Metric.INTEREST_INCOME).current = c; }
 
   get ordinaryIncomeCurrency()   { return this.#metrics.get(Metric.ORDINARY_INCOME).current; }
-  set ordinaryIncomeCurrency(c)  { this.#metrics.get(Metric.ORDINARY_INCOME).current = c; }
+  set ordinaryIncomeCurrency(_)  { throw new Error('Cannot set parent metric ORDINARY_INCOME directly; use addToMetric on a leaf'); }
 
   get employedIncomeCurrency()   { return this.#metrics.get(Metric.EMPLOYED_INCOME).current; }
   set employedIncomeCurrency(c)  { this.#metrics.get(Metric.EMPLOYED_INCOME).current = c; }
@@ -273,10 +281,10 @@ export class ModelAsset {
   set selfIncomeCurrency(c)  { this.#metrics.get(Metric.SELF_INCOME).current = c; }
 
   get incomeCurrency()    { return this.#metrics.get(Metric.INCOME).current; }
-  set incomeCurrency(c)   { this.#metrics.get(Metric.INCOME).current = c; }
+  set incomeCurrency(_)   { throw new Error('Cannot set parent metric INCOME directly; use addToMetric on a leaf'); }
 
   get expenseCurrency()   { return this.#metrics.get(Metric.EXPENSE).current; }
-  set expenseCurrency(c)  { this.#metrics.get(Metric.EXPENSE).current = c; }
+  set expenseCurrency(_)  { throw new Error('Cannot set parent metric EXPENSE directly; use addToMetric on a leaf'); }
 
   get cashFlowCurrency()   { return this.#metrics.get(Metric.CASH_FLOW).current; }
   set cashFlowCurrency(c)  { this.#metrics.get(Metric.CASH_FLOW).current = c; }
@@ -297,7 +305,7 @@ export class ModelAsset {
   set longTermCapitalGainCurrency(c)  { this.#metrics.get(Metric.LONG_TERM_CAPITAL_GAIN).current = c; }
 
   get capitalGainCurrency()   { return this.#metrics.get(Metric.CAPITAL_GAIN).current; }
-  set capitalGainCurrency(c)  { this.#metrics.get(Metric.CAPITAL_GAIN).current = c; }
+  set capitalGainCurrency(_)  { throw new Error('Cannot set parent metric CAPITAL_GAIN directly; use addToMetric on a leaf'); }
 
   get rmdCurrency()   { return this.#metrics.get(Metric.RMD).current; }
   set rmdCurrency(c)  { this.#metrics.get(Metric.RMD).current = c; }
@@ -312,7 +320,7 @@ export class ModelAsset {
   set medicareTaxCurrency(c)  { this.#metrics.get(Metric.MEDICARE_TAX).current = c; }
 
   get withheldFicaTaxCurrency()   { return this.#metrics.get(Metric.WITHHELD_FICA_TAX).current; }
-  set withheldFicaTaxCurrency(c)  { this.#metrics.get(Metric.WITHHELD_FICA_TAX).current = c; }
+  set withheldFicaTaxCurrency(_)  { throw new Error('Cannot set parent metric WITHHELD_FICA_TAX directly; use addToMetric on a leaf'); }
 
   get estimatedFicaTaxCurrency()   { return this.#metrics.get(Metric.ESTIMATED_FICA_TAX).current; }
   set estimatedFicaTaxCurrency(c)  { this.#metrics.get(Metric.ESTIMATED_FICA_TAX).current = c; }
@@ -327,7 +335,7 @@ export class ModelAsset {
   set estimatedTaxCurrency(c)  { this.#metrics.get(Metric.ESTIMATED_TAX).current = c; }
 
   get incomeTaxCurrency()    { return this.#metrics.get(Metric.INCOME_TAX).current; }
-  set incomeTaxCurrency(c)   { this.#metrics.get(Metric.INCOME_TAX).current = c; }
+  set incomeTaxCurrency(_)   { throw new Error('Cannot set parent metric INCOME_TAX directly; use addToMetric on a leaf'); }
 
   get shortTermCapitalGainTaxCurrency()   { return this.#metrics.get(Metric.SHORT_TERM_CAPITAL_GAIN_TAX).current; }
   set shortTermCapitalGainTaxCurrency(c)  { this.#metrics.get(Metric.SHORT_TERM_CAPITAL_GAIN_TAX).current = c; }
@@ -357,13 +365,13 @@ export class ModelAsset {
   set insuranceCurrency(c)  { this.#metrics.get(Metric.INSURANCE).current = c; }
 
   get contributionCurrency()   { return this.#metrics.get(Metric.CONTRIBUTION).current; }
-  set contributionCurrency(c)  { this.#metrics.get(Metric.CONTRIBUTION).current = c; }
+  set contributionCurrency(_)  { throw new Error('Cannot set parent metric CONTRIBUTION directly; use addToMetric on a leaf'); }
 
   get preTaxContributionCurrency()   { return this.#metrics.get(Metric.PRETAX_CONTRIBUTION).current; }
-  set preTaxContributionCurrency(c)  { this.#metrics.get(Metric.PRETAX_CONTRIBUTION).current = c; }
+  set preTaxContributionCurrency(_)  { throw new Error('Cannot set parent metric PRETAX_CONTRIBUTION directly; use addToMetric on a leaf'); }
 
   get postTaxContributionCurrency()   { return this.#metrics.get(Metric.POSTTAX_CONTRIBUTION).current; }
-  set postTaxContributionCurrency(c)  { this.#metrics.get(Metric.POSTTAX_CONTRIBUTION).current = c; }
+  set postTaxContributionCurrency(_)  { throw new Error('Cannot set parent metric POSTTAX_CONTRIBUTION directly; use addToMetric on a leaf'); }
 
   get tradIRAContributionCurrency()   { return this.#metrics.get(Metric.TRAD_IRA_CONTRIBUTION).current; }
   set tradIRAContributionCurrency(c)  { this.#metrics.get(Metric.TRAD_IRA_CONTRIBUTION).current = c; }
@@ -375,10 +383,10 @@ export class ModelAsset {
   set four01KContributionCurrency(c)  { this.#metrics.get(Metric.FOUR_01K_CONTRIBUTION).current = c; }
 
   get taxFreeDistributionCurrency()   { return this.#metrics.get(Metric.TAX_FREE_DISTRIBUTION).current; }
-  set taxFreeDistributionCurrency(c)  { this.#metrics.get(Metric.TAX_FREE_DISTRIBUTION).current = c; }
+  set taxFreeDistributionCurrency(_)  { throw new Error('Cannot set parent metric TAX_FREE_DISTRIBUTION directly; use addToMetric on a leaf'); }
 
   get taxableDistributionCurrency()   { return this.#metrics.get(Metric.TAXABLE_DISTRIBUTION).current; }
-  set taxableDistributionCurrency(c)  { this.#metrics.get(Metric.TAXABLE_DISTRIBUTION).current = c; }
+  set taxableDistributionCurrency(_)  { throw new Error('Cannot set parent metric TAXABLE_DISTRIBUTION directly; use addToMetric on a leaf'); }
 
   get tradIRADistributionCurrency()   { return this.#metrics.get(Metric.TRAD_IRA_DISTRIBUTION).current; }
   set tradIRADistributionCurrency(c)  { this.#metrics.get(Metric.TRAD_IRA_DISTRIBUTION).current = c; }
@@ -388,9 +396,6 @@ export class ModelAsset {
 
   get four01KDistributionCurrency()   { return this.#metrics.get(Metric.FOUR_01K_DISTRIBUTION).current; }
   set four01KDistributionCurrency(c)  { this.#metrics.get(Metric.FOUR_01K_DISTRIBUTION).current = c; }
-
-  get taxableDistributionCurrency()   { return this.#metrics.get(Metric.TAXABLE_DISTRIBUTION).current; }
-  set taxableDistributionCurrency(c)  { this.#metrics.get(Metric.TAXABLE_DISTRIBUTION).current = c; }
 
   // ── History array getters (for spreadsheet-view and charting) ──
 

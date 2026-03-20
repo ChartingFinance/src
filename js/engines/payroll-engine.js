@@ -138,12 +138,11 @@ export class PayrollEngine {
 
         netIncome.subtract(assetTax);
         if (modelAsset.isSelfEmployed) {
-            modelAsset.estimatedIncomeTaxCurrency = assetTax;
+            modelAsset.addToMetric(Metric.ESTIMATED_INCOME_TAX, assetTax);
         } else {
-            modelAsset.withheldIncomeTaxCurrency = assetTax;
+            modelAsset.addToMetric(Metric.WITHHELD_INCOME_TAX, assetTax);
         }
-
-        modelAsset.incomeTaxCurrency = assetTax;
+        // INCOME_TAX populated by DAG: WITHHELD/ESTIMATED_INCOME_TAX → INCOME_TAX
         modelAsset.netIncomeCurrency = netIncome;
 
         this.taxEngine.recordIncomeTaxWithholding(modelAsset, assetTax);
@@ -191,7 +190,6 @@ export class PayrollEngine {
                             contribution = new Currency(contributionLimit.amount - this.yearly.four01KContribution.amount - this.monthly.four01KContribution.amount - total401KContribution.amount);
                         }
 
-                        fundTransfer.fromModel.four01KContributionCurrency.add(contribution);
                         total401KContribution.add(contribution);
 
                     }
@@ -203,7 +201,6 @@ export class PayrollEngine {
                             contribution = new Currency(contributionLimit.amount - this.yearly.tradIRAContribution.amount - this.monthly.tradIRAContribution.amount - totalIRAContribution.amount);
                         }
 
-                        fundTransfer.fromModel.tradIRAContributionCurrency.add(contribution);
                         totalIRAContribution.add(contribution);
 
                     }
@@ -253,7 +250,6 @@ export class PayrollEngine {
                                 totalContribution.amount - contribution.amount);
                             }
 
-                    modelAsset.rothIRAContributionCurrency.add(contribution);
                     fundTransfer.approvedAmount = contribution.copy();
 
                     totalContribution.add(contribution);
@@ -288,7 +284,6 @@ export class PayrollEngine {
                 if (totalContribution.amount + contribution.amount > modelAsset.netIncomeCurrency.amount) {
 
                     contribution = new Currency(modelAsset.netIncomeCurrency.amount - totalContribution.amount);
-                    fundTransfer.fromModel.rothIRAContributionCurrency.add(contribution);
                     totalContribution.add(contribution);
                     fundTransfer.approvedAmount = contribution.copy();
 

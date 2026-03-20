@@ -40,12 +40,11 @@ const WorkingIncomeBehavior = Object.freeze({
 
     const income = asset.finishCurrency.copy();
     if (asset.isSelfEmployed) {
-      asset.selfIncomeCurrency.add(income);
+      asset.addToMetric(M.SELF_INCOME, income);
     } else {
-      asset.employedIncomeCurrency.add(income);
+      asset.addToMetric(M.EMPLOYED_INCOME, income);
     }
-
-    asset.incomeCurrency.add(income);
+    // INCOME populated by DAG: EMPLOYED_INCOME/SELF_INCOME → ORDINARY_INCOME → INCOME
     asset.netIncomeCurrency.add(income);
 
     return asset.isSelfEmployed
@@ -78,8 +77,8 @@ const RetirementIncomeBehavior = Object.freeze({
     asset.ensurePositiveStart();
 
     const income = asset.finishCurrency.copy();
-    asset.ordinaryIncomeCurrency.add(income);
-    asset.incomeCurrency.add(income);
+    asset.addToMetric(M.SOCIAL_SECURITY_INCOME, income);
+    // INCOME populated by DAG: SOCIAL_SECURITY_INCOME → ORDINARY_INCOME → INCOME
     asset.netIncomeCurrency.add(income);
 
     return new IncomeResult(Currency.zero(), income);
@@ -93,14 +92,15 @@ const RetirementIncomeBehavior = Object.freeze({
 const ExpenseBehavior = Object.freeze({
 
   relevantMetrics() {
-    return [...COMMON_METRICS, M.EXPENSE, M.GROWTH];
+    return [...COMMON_METRICS, M.LIVING_EXPENSE, M.EXPENSE, M.GROWTH];
   },
 
   applyMonthly(asset) {
     asset.ensureNegativeStart();
 
     const expense = asset.finishCurrency.copy();
-    asset.expenseCurrency.add(expense);
+    asset.addToMetric(M.LIVING_EXPENSE, expense);
+    // EXPENSE populated by DAG: LIVING_EXPENSE → EXPENSE
 
     const inflation = new Currency(expense.amount * asset.effectiveAnnualReturnRate.asMonthly());
     asset.finishCurrency.add(inflation);
@@ -140,9 +140,9 @@ const MortgageBehavior = Object.freeze({
     const interest = new Currency(asset.finishCurrency.amount * rate);
     const principal = new Currency(payment - interest.amount);
 
-    asset.mortgagePaymentCurrency.add(paymentCurrency);
-    asset.mortgageInterestCurrency.add(interest);
-    asset.mortgagePrincipalCurrency.add(principal);
+    asset.mortgagePaymentCurrency.add(paymentCurrency);   // informational — no DAG
+    asset.addToMetric(M.MORTGAGE_INTEREST, interest);     // leaf → INTEREST_EXPENSE → EXPENSE
+    asset.mortgagePrincipalCurrency.add(principal);        // informational — no DAG
 
     asset.monthsRemainingDynamic--;
     asset.finishCurrency.subtract(principal);    
@@ -249,21 +249,21 @@ const RealEstateBehavior = Object.freeze({
     const tax = new Currency(asset.finishCurrency.amount * asset.annualTaxRate.asMonthly());
     tax.flipSign(); // taxes are negative
 
-    asset.propertyTaxCurrency.add(tax);
+    asset.addToMetric(M.PROPERTY_TAX, tax);      // leaf → SALT_TAXES → TAXES
     asset.addCreditMemo(tax, 'Property tax');
 
     // Maintenance: percentage of home value (e.g. 1% annual rule of thumb)
     if (asset.annualMaintenanceRate.rate !== 0) {
       const maint = new Currency(asset.finishCurrency.amount * asset.annualMaintenanceRate.asMonthly());
       maint.flipSign();
-      asset.maintenanceCurrency.add(maint);
+      asset.addToMetric(M.MAINTENANCE, maint);   // leaf → EXPENSE
       asset.addCreditMemo(maint, 'Maintenance');
     }
 
     // Insurance: fixed annual cost spread monthly
     if (asset.annualInsuranceCost.amount !== 0) {
       const ins = new Currency(asset.annualInsuranceCost.amount / -12);
-      asset.insuranceCurrency.add(ins);
+      asset.addToMetric(M.INSURANCE, ins);        // leaf → EXPENSE
       asset.addCreditMemo(ins, 'Insurance');
     }
 
@@ -293,8 +293,8 @@ const IncomeAccountBehavior = Object.freeze({
     asset.ensurePositiveStart();
     const income = new Currency(asset.finishCurrency.amount * asset.annualReturnRate.asMonthly());
 
-    asset.interestIncomeCurrency.add(income);
-    asset.incomeCurrency.add(income);
+    asset.addToMetric(M.INTEREST_INCOME, income);
+    // INCOME populated by DAG: INTEREST_INCOME → ORDINARY_INCOME → INCOME
     asset.netIncomeCurrency.add(income);
     asset.finishCurrency.add(income);
     asset.monthlyValueChange.add(income);

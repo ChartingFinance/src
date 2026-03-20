@@ -237,12 +237,16 @@ export class FundTransfer {
       this.toModel.addCreditMemo(toResult.realizedGain.copy(), 'Capital gains');
     }
 
+    // Combine gains from both sides: debit may trigger gains on the source,
+    // and credit-as-withdrawal (negative amount) may trigger gains on the target.
+    const combinedGain = fromResult.realizedGain.plus(toResult.realizedGain ?? Currency.zero());
+
     return new FundTransferResult(
       fromResult.assetChange,
       toResult.assetChange,
       memo,
       memo,
-      fromResult.realizedGain
+      combinedGain
     );
   }
 
