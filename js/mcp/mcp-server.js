@@ -24,7 +24,7 @@ import { setActiveTaxTable, global_setInflationRate, global_getInflationRate,
          global_setUserRetirementAge, global_getUserRetirementAge,
          global_setUserFinishAge, global_getUserFinishAge } from '../globals.js';
 import { TaxTable } from '../taxes.js';
-import { generatePortfolioMarkdown } from '../generators/assets-ai.js';
+import { generatePortfolioMarkdown } from '../generators/finplan-ai.js';
 
 // ── Server ────────────────────────────────────────────────────────
 

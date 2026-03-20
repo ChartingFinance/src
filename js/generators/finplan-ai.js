@@ -375,3 +375,20 @@ export function generateSpreadsheetSectionMarkdown(portfolio) {
     md += GENERATOR_LINE;
     return md;
 }
+
+// ── Combined report (for MCP server / external consumers) ───────
+
+/**
+ * Generates a single self-contained markdown report combining all sections.
+ * Drop-in replacement for the old assets-ai.js generatePortfolioMarkdown.
+ * @param {Portfolio} portfolio - A portfolio that has been through chronometer_run()
+ * @returns {string} Full markdown report
+ */
+export function generatePortfolioMarkdown(portfolio) {
+    return [
+        generatePortfolioSectionMarkdown(portfolio),
+        generateProjectionsSectionMarkdown(portfolio, 'value'),
+        generateDetailsSectionMarkdown(portfolio),
+        generateSpreadsheetSectionMarkdown(portfolio),
+    ].join('\n\n');
+}

@@ -20,6 +20,7 @@
 import { LitElement, html } from 'lit';
 import { store } from '../finplan-store.js';
 import { LifeEvent, LifeEventType } from '../life-event.js';
+import { MetricLabel } from '../metric.js';
 
 const MONTH_NAMES = [
     'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -230,6 +231,9 @@ class FinplanTimeline extends LitElement {
                 <span class="text-xs text-gray-500">${this._phaseSpan()}</span>
 
                 <span class="flex-1"></span>
+
+                <span class="text-xs font-semibold text-gray-500 tracking-wide">${MetricLabel[this.metricName] || 'Value'}</span>
+                <span class="text-gray-200">|</span>
 
                 <span class="text-xs font-medium text-gray-400 tracking-wide">OPEN</span>
                 <span class="text-sm font-semibold text-gray-800">${this._formatCurrency(startMetric)}</span>
