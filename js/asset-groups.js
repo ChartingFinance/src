@@ -12,6 +12,7 @@
  */
 
 import { Instrument, InstrumentType } from './instruments/instrument.js';
+import { getBehavior } from './instruments/instrument-behavior.js';
 
 // ── Group enum ──────────────────────────────────────────────────────
 
@@ -21,7 +22,7 @@ export const AssetGroup = Object.freeze({
   REAL_ESTATE: 'realestate',
   CAPITAL:     'capital',
   RETIREMENT:  'retirement',
-  OUTFLOWS:    'outflows',
+  EXPENSES:    'expenses',
   TAXES:       'taxes',
 });
 
@@ -43,7 +44,7 @@ const RETIREMENT_SET = new Set([
   Instrument.ROTH_IRA,
 ]);
 
-const OUTFLOWS_SET = new Set([
+const EXPENSES_SET = new Set([
   Instrument.MONTHLY_EXPENSE,
   Instrument.DEBT,
 ]);
@@ -132,8 +133,8 @@ export const AssetGroupMeta = new Map([
       [Instrument.ROTH_IRA,  '#C4B5FD'],
     ]),
   }],
-  [AssetGroup.OUTFLOWS, {
-    label:      'Outflows',
+  [AssetGroup.EXPENSES, {
+    label:      'Expenses',
     groupEmoji: '💸',
     chartColor: '#E24B4A',
     chartColorFill: 'rgba(226, 75, 74, 0.10)',
@@ -181,7 +182,7 @@ export function classifyAssetGroup(instrument) {
   if (INCOME_SET.has(instrument))      return AssetGroup.INCOME;
   if (REAL_ESTATE_SET.has(instrument)) return AssetGroup.REAL_ESTATE;
   if (RETIREMENT_SET.has(instrument))  return AssetGroup.RETIREMENT;
-  if (OUTFLOWS_SET.has(instrument))    return AssetGroup.OUTFLOWS;
+  if (EXPENSES_SET.has(instrument))    return AssetGroup.EXPENSES;
   return AssetGroup.CAPITAL;
 }
 
@@ -240,22 +241,54 @@ export const GROUP_ORDER_ACCUMULATE = [
   AssetGroup.REAL_ESTATE,
   AssetGroup.CAPITAL,
   AssetGroup.RETIREMENT,
-  AssetGroup.OUTFLOWS,
+  AssetGroup.EXPENSES,
   AssetGroup.TAXES,
 ];
 
 export const GROUP_ORDER_RETIRE = [
   AssetGroup.ALL,
   AssetGroup.RETIREMENT,
+  AssetGroup.EXPENSES,
   AssetGroup.CAPITAL,
-  AssetGroup.REAL_ESTATE,
-  AssetGroup.OUTFLOWS,
   AssetGroup.TAXES,
   AssetGroup.INCOME,
+  AssetGroup.REAL_ESTATE,
 ];
 
 // Legacy export — defaults to accumulation order
 export const GROUP_DISPLAY_ORDER = GROUP_ORDER_ACCUMULATE;
+
+// ── Group → Metric mapping ──────────────────────────────────────────
+
+/** Map of group key → instruments in that group */
+const GROUP_INSTRUMENTS = new Map([
+  [AssetGroup.INCOME,      [...INCOME_SET]],
+  [AssetGroup.REAL_ESTATE,  [...REAL_ESTATE_SET]],
+  [AssetGroup.RETIREMENT,   [...RETIREMENT_SET]],
+  [AssetGroup.EXPENSES,     [...EXPENSES_SET]],
+  [AssetGroup.CAPITAL,      [Instrument.TAXABLE_EQUITY, Instrument.CASH, Instrument.US_BOND, Instrument.CORP_BOND, Instrument.BANK]],
+]);
+
+/** Returns the union of relevantMetrics() for all instruments in a group. */
+export function getGroupMetrics(groupKey) {
+  if (groupKey === AssetGroup.ALL) {
+    // Union of all groups
+    const all = new Set();
+    for (const instruments of GROUP_INSTRUMENTS.values()) {
+      for (const inst of instruments) {
+        getBehavior(inst).relevantMetrics().forEach(m => all.add(m));
+      }
+    }
+    return all;
+  }
+  const instruments = GROUP_INSTRUMENTS.get(groupKey);
+  if (!instruments) return new Set();
+  const metrics = new Set();
+  for (const inst of instruments) {
+    getBehavior(inst).relevantMetrics().forEach(m => metrics.add(m));
+  }
+  return metrics;
+}
 
 // ── Aggregation utilities ───────────────────────────────────────────
 

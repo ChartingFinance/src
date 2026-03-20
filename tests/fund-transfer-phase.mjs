@@ -138,10 +138,10 @@ const salaryIncomeM1 = salary.getHistory(Metric.INCOME)?.[0];
 assert(salaryIncomeM1 > 0,
     `1. Salary earned income in month 1: $${salaryIncomeM1?.toFixed?.(2) ?? salaryIncomeM1}`);
 
-// 2. 401K received contributions during accumulate phase (tracked on salary asset)
-const salaryContribM1 = salary.getHistory(Metric.FOUR_01K_CONTRIBUTION)?.[0];
-assert(salaryContribM1 != null && salaryContribM1 > 0,
-    `2. 401K contribution from salary in month 1: $${salaryContribM1?.toFixed?.(2) ?? salaryContribM1}`);
+// 2. 401K received contributions during accumulate phase (tracked on destination 401K asset)
+const four01kContribM1 = four01k.getHistory(Metric.FOUR_01K_CONTRIBUTION)?.[0];
+assert(four01kContribM1 != null && four01kContribM1 > 0,
+    `2. 401K contribution from salary in month 1: $${four01kContribM1?.toFixed?.(2) ?? four01kContribM1}`);
 
 // 3. 401K value grew from contributions (zero return rate, so growth = contributions only)
 const four01kValueStart = four01k.getHistory(Metric.VALUE)?.[0];

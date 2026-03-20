@@ -41,7 +41,7 @@ export const LifeEventMeta = new Map([
     color:       '#1D9E75',
     colorAccent: '#0F6E56',
     projectionTabs: ['value', 'monteCarlo', 'contributions', 'spreadsheet'],
-    assetGroupLabels: { income: 'Income', capital: 'Capital', outflows: 'Outflows', taxes: 'Taxes' },
+    assetGroupLabels: { income: 'Income', capital: 'Capital', expenses: 'Expenses', taxes: 'Taxes' },
     defaultMutations: {
       closes:  [],
     },
@@ -52,7 +52,7 @@ export const LifeEventMeta = new Map([
     color:       '#378ADD',
     colorAccent: '#185FA5',
     projectionTabs: ['value', 'amortization', 'equityBuildup', 'spreadsheet'],
-    assetGroupLabels: { income: 'Income', realestate: 'Real estate', capital: 'Capital', outflows: 'Outflows', taxes: 'Taxes' },
+    assetGroupLabels: { income: 'Income', realestate: 'Real estate', capital: 'Capital', expenses: 'Expenses', taxes: 'Taxes' },
     defaultMutations: {
       closes:  [],
     },
@@ -66,7 +66,7 @@ export const LifeEventMeta = new Map([
     color:       '#888780',
     colorAccent: '#5F5E5A',
     projectionTabs: ['value', 'capitalGainsImpact', 'proceedsAllocation', 'spreadsheet'],
-    assetGroupLabels: { distributions: 'Distributions', capital: 'Capital', closed: 'Closed', outflows: 'Outflows', taxes: 'Taxes' },
+    assetGroupLabels: { distributions: 'Distributions', capital: 'Capital', closed: 'Closed', expenses: 'Expenses', taxes: 'Taxes' },
     defaultMutations: {
       closes:  ['Home', 'Mortgage'],
     },
@@ -77,7 +77,7 @@ export const LifeEventMeta = new Map([
     color:       '#D85A30',
     colorAccent: '#993C1D',
     projectionTabs: ['value', 'guardrails', 'monteCarlo', 'spreadsheet'],
-    assetGroupLabels: { distributions: 'Distributions', capital: 'Capital', outflows: 'Outflows', taxes: 'Taxes' },
+    assetGroupLabels: { distributions: 'Distributions', capital: 'Capital', expenses: 'Expenses', taxes: 'Taxes' },
     defaultMutations: {
       closes:  ['Salary'],
     },

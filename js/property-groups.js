@@ -81,6 +81,9 @@ const TAX_SET = new Set([
   Instrument.TAXABLE_EQUITY,       // capital gains tax, estimated income tax
   Instrument.FOUR_01K,             // tax on distributions
   Instrument.IRA,                  // tax on distributions
+  Instrument.BANK,                 // estimated income tax (monthly true-up)
+  Instrument.US_BOND,              // estimated income tax (monthly true-up)
+  Instrument.CORP_BOND,            // estimated income tax (monthly true-up)
 ]);
 
 const EXPENSE_SET = new Set([
@@ -132,15 +135,17 @@ export const PropertyGroupMetrics = new Map([
     Metric.VALUE,
   ]],
   [PropertyGroup.INCOME, [
-    Metric.INCOME,
+    Metric.INCOME, Metric.NET_INCOME,
     Metric.EMPLOYED_INCOME, Metric.SELF_INCOME,
     Metric.QUALIFIED_DIVIDEND, Metric.NON_QUALIFIED_DIVIDEND,
     Metric.INTEREST_INCOME, Metric.SOCIAL_SECURITY_INCOME,
+    Metric.SHORT_TERM_CAPITAL_GAIN, Metric.LONG_TERM_CAPITAL_GAIN,
     Metric.ORDINARY_INCOME, Metric.CAPITAL_GAIN,
   ]],
   [PropertyGroup.TAX, [
     Metric.TAXES, Metric.FEDERAL_TAXES, Metric.SALT_TAXES,
     Metric.INCOME_TAX, Metric.WITHHELD_FICA_TAX,
+    Metric.SOCIAL_SECURITY_TAX, Metric.MEDICARE_TAX,
     Metric.WITHHELD_INCOME_TAX, Metric.ESTIMATED_INCOME_TAX,
     Metric.SHORT_TERM_CAPITAL_GAIN_TAX, Metric.LONG_TERM_CAPITAL_GAIN_TAX,
     Metric.PROPERTY_TAX,
@@ -160,6 +165,7 @@ export const PropertyGroupMetrics = new Map([
   ]],
   [PropertyGroup.CAPITAL, [
     Metric.VALUE, Metric.GROWTH,
+    Metric.SHORT_TERM_CAPITAL_GAIN, Metric.LONG_TERM_CAPITAL_GAIN, Metric.CAPITAL_GAIN,
   ]],
   [PropertyGroup.DEBT_SERVICE, [
     Metric.MORTGAGE_PAYMENT, Metric.MORTGAGE_INTEREST, Metric.MORTGAGE_PRINCIPAL,
@@ -235,6 +241,9 @@ export const PropertyGroupMeta = new Map([
       [Instrument.TAXABLE_EQUITY,    '#D4BB75'],
       [Instrument.FOUR_01K,          '#DECC8E'],
       [Instrument.IRA,               '#E8DCA8'],
+      [Instrument.BANK,              '#EEEAC0'],
+      [Instrument.US_BOND,           '#F3F0D0'],
+      [Instrument.CORP_BOND,         '#F8F5E0'],
     ]),
   }],
   [PropertyGroup.EXPENSE, {

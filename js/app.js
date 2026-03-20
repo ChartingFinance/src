@@ -577,7 +577,7 @@ function innerCalculate(portfolio) {
         activeMetric1Canvas = new Chart(chartMetric1Canvas, charting_jsonMetric1ChartData);
     spreadsheetElement.portfolio = portfolio;
     creditMemosElement.portfolio = portfolio;
-    debugReportsElement.reports = portfolio.generatedReports;
+    reportsElement.reports = portfolio.generatedReports;
     amortizationElement.portfolio = portfolio;
 }
 

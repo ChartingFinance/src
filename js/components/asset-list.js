@@ -369,7 +369,7 @@ class AssetList extends LitElement {
             }
         }
 
-        if (groupKey === AssetGroup.INCOME || groupKey === AssetGroup.OUTFLOWS) {
+        if (groupKey === AssetGroup.INCOME || groupKey === AssetGroup.EXPENSES) {
             return formatCompactCurrency(sum) + '/mo';
         }
         return formatCompactCurrency(sum);

@@ -175,3 +175,27 @@ export const MetricRollups = {
     [Metric.FEDERAL_TAXES]:               [Metric.TAXES],
     [Metric.SALT_TAXES]:                  [Metric.TAXES],
 };
+
+// ── Derived sets ─────────────────────────────────────────────────────
+
+/** Pinned metrics that always appear first in any dropdown. */
+export const PINNED_METRICS = [Metric.VALUE, Metric.GROWTH, Metric.CASH_FLOW];
+
+/**
+ * Top-level metrics for the Macro projection dropdown.
+ * DAG roots (parents that are never children) + standalone aggregates.
+ * Ordered: pinned first, then DAG roots, then useful standalone.
+ */
+export const MACRO_METRICS = [
+  ...PINNED_METRICS,
+  Metric.INCOME, Metric.NET_INCOME, Metric.CONTRIBUTION,
+  Metric.EXPENSE, Metric.TAXES,
+  Metric.CREDIT,
+];
+
+/**
+ * Returns true if a metric is a top-level / macro metric.
+ * Used to partition group metrics into macro vs micro.
+ */
+const _macroSet = new Set(MACRO_METRICS);
+export function isTopLevelMetric(m) { return _macroSet.has(m); }

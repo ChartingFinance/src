@@ -11,7 +11,7 @@
  */
 
 // ── Core types ──────────────────────────────────────────────
-import { Metric, MetricLabel } from './metric.js';
+import { Metric, MetricLabel, PINNED_METRICS, MACRO_METRICS, isTopLevelMetric } from './metric.js';
 import { DateInt } from './utils/date-int.js';
 
 // ── Simulation ──────────────────────────────────────────────
@@ -33,7 +33,7 @@ import {
     charting_jsonMetric1ChartData,
 } from './charting.js';
 
-import { classifyAssets, classifyAssetGroup, GROUP_ORDER_ACCUMULATE, GROUP_ORDER_RETIRE, getAssetChartColor } from './asset-groups.js';
+import { classifyAssets, classifyAssetGroup, GROUP_ORDER_ACCUMULATE, GROUP_ORDER_RETIRE, getAssetChartColor, getGroupMetrics } from './asset-groups.js';
 import {
     PropertyGroupMeta, PROPERTY_ORDER_ACCUMULATE, PROPERTY_ORDER_RETIRE,
     PropertyGroupMetrics, PropertyGroupRollupMetrics, ASSET_LESS_GROUPS,
@@ -477,8 +477,8 @@ document.getElementById('btn-import-save').addEventListener('click', () => {
     }
 });
 
-// Macro metric dropdown — always full list, drives Macro chart + timeline
-metricSelect.innerHTML = Object.values(Metric).map(m =>
+// Macro metric dropdown — top-level nodes only
+metricSelect.innerHTML = MACRO_METRICS.map(m =>
     `<option value="${m}">${MetricLabel[m]}</option>`
 ).join('');
 metricSelect.value = activeMetricName;
@@ -498,25 +498,35 @@ microMetricSelect.addEventListener('change', () => {
 });
 
 function updateMetricDropdown() {
-    // Macro dropdown stays full — no changes needed
-
-    // Micro dropdown: show/hide based on view mode, populate from expanded group
-    if (viewMode === 'properties') {
+    // Micro dropdown: pinned first, then non-top-level metrics from expanded group
+    if (expandedGroups.size > 0) {
         microMetricSelect.style.display = '';
-        if (expandedGroups.size > 0) {
-            const allowedMetrics = new Set();
+
+        // Collect all metrics for the expanded group(s)
+        const groupMetrics = new Set();
+        if (viewMode === 'properties') {
             for (const groupKey of expandedGroups) {
                 const metrics = PropertyGroupMetrics.get(groupKey);
-                if (metrics) metrics.forEach(m => allowedMetrics.add(m));
+                if (metrics) metrics.forEach(m => groupMetrics.add(m));
             }
-            microMetricSelect.innerHTML = [...allowedMetrics].map(m =>
-                `<option value="${m}">${MetricLabel[m]}</option>`
-            ).join('');
-            if (!allowedMetrics.has(activeMicroMetric)) {
-                activeMicroMetric = [...allowedMetrics][0];
+        } else {
+            for (const groupKey of expandedGroups) {
+                getGroupMetrics(groupKey).forEach(m => groupMetrics.add(m));
             }
-            microMetricSelect.value = activeMicroMetric;
         }
+
+        // Pinned metrics first, then non-top-level metrics from the group
+        const pinned = PINNED_METRICS.filter(m => groupMetrics.has(m));
+        const rest = [...groupMetrics].filter(m => !isTopLevelMetric(m) && !PINNED_METRICS.includes(m));
+        const ordered = [...pinned, ...rest];
+
+        microMetricSelect.innerHTML = ordered.map(m =>
+            `<option value="${m}">${MetricLabel[m]}</option>`
+        ).join('');
+        if (!ordered.includes(activeMicroMetric)) {
+            activeMicroMetric = ordered[0];
+        }
+        microMetricSelect.value = activeMicroMetric;
     } else {
         microMetricSelect.style.display = 'none';
     }
@@ -883,7 +893,8 @@ function rebuildMicroChart(markers) {
             if (!assets) continue;
 
             for (const asset of assets) {
-                const shade = meta.assetShades?.get(asset.instrument) ?? meta.chartColor;
+                const shade = meta.assetShades?.get(asset.instrument)
+                    || (ASSET_LESS_GROUPS.has(groupKey) ? getAssetChartColor(asset.instrument) : meta.chartColor);
                 datasets.push({
                     label: asset.displayName,
                     data: asset.getDisplayHistory(activeMicroMetric),
@@ -907,7 +918,7 @@ function rebuildMicroChart(markers) {
             for (const asset of assets) {
                 datasets.push({
                     label: asset.displayName,
-                    data: asset.getDisplayHistory(activeMetricName),
+                    data: asset.getDisplayHistory(activeMicroMetric),
                     backgroundColor: getAssetChartColor(asset.instrument),
                 });
             }
