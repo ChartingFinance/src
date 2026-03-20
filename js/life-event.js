@@ -203,7 +203,7 @@ export class ModelLifeEvent {
       if (asset && !asset.isClosed) {
         logger.log(LogCategory.TRANSFER,
           `LifeEvent closing asset: ${name}`);
-        portfolio.closeAsset(asset);
+        portfolio.closeAsset(asset, currentDateInt);
       }
     }
 

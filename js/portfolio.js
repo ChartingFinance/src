@@ -393,7 +393,7 @@ export class Portfolio {
         // close assets that are now past their finish date
         for (let modelAsset of this.modelAssets) {
             if (modelAsset.afterFinishDate && !modelAsset.isClosed) {
-                this.closeAsset(modelAsset);
+                this.closeAsset(modelAsset, currentDateInt);
             }
         }
 
@@ -487,12 +487,12 @@ export class Portfolio {
 
     }
 
-    closeAsset(modelAsset) {
+    closeAsset(modelAsset, currentDateInt) {
 
         if (InstrumentType.isMonthlyIncome(modelAsset.instrument) ||
             InstrumentType.isMonthlyExpense(modelAsset.instrument)) {
             logger.log(LogCategory.TRANSFER, 'closing ' + modelAsset.displayName + ' with monthly income or expense, skipping fund transfers');
-            modelAsset.close();
+            modelAsset.close(currentDateInt);
             return;
         }
 
@@ -510,7 +510,7 @@ export class Portfolio {
         modelAsset.closedBasisValue = modelAsset.finishBasisCurrency.copy();
 
         this.applyAssetCloseFundTransfers(modelAsset);
-        modelAsset.close();
+        modelAsset.close(currentDateInt);
 
     }
 

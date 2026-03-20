@@ -16,7 +16,7 @@ import { colorRange } from '../utils/html.js';
 import {
     AssetGroup, AssetGroupMeta, TaxItem, TaxItemMeta,
     classifyAssets, getGroupLabel, getAssetChartColor,
-    GROUP_DISPLAY_ORDER,
+    GROUP_ORDER_ACCUMULATE, GROUP_ORDER_RETIRE,
 } from '../asset-groups.js';
 import {
     PropertyGroupMeta, PROPERTY_ORDER_ACCUMULATE, PROPERTY_ORDER_RETIRE,
@@ -111,10 +111,14 @@ class AssetList extends LitElement {
     _renderAssetsView() {
         const groups = classifyAssets(this.modelAssets, this.atDateInt);
         const expanded = this.expandedGroups || new Set();
+        const isRetired = this.activeLifeEvent?.event
+            ? LifeEventType.isRetirement(this.activeLifeEvent.event)
+            : false;
+        const order = isRetired ? GROUP_ORDER_RETIRE : GROUP_ORDER_ACCUMULATE;
 
         return html`
             <div class="flex flex-col gap-3 w-full">
-                ${GROUP_DISPLAY_ORDER.map(groupKey => {
+                ${order.map(groupKey => {
                     if (groupKey === AssetGroup.TAXES) {
                         return this._renderTaxesGroup(expanded.has(groupKey));
                     }
@@ -127,13 +131,15 @@ class AssetList extends LitElement {
     }
 
     _renderPropertiesView() {
-        // Set closed-at-date flag for ghosting (same logic as classifyAssets)
+        // Set closed-at-date flag for ghosting
         const atInt = this.atDateInt?.toInt?.();
         for (const asset of this.modelAssets) {
             if (atInt != null) {
                 const start = asset.startDateInt.toInt();
                 const finish = asset.effectiveFinishDateInt.toInt();
-                asset._isClosedAtDate = atInt < start || atInt > finish;
+                // Ghost if before start, after declared finish, or after early closure by life event
+                const closedEarly = asset.closedDateInt && atInt >= asset.closedDateInt.toInt();
+                asset._isClosedAtDate = atInt < start || atInt > finish || closedEarly;
             } else {
                 asset._isClosedAtDate = asset.isClosed;
             }
@@ -255,7 +261,7 @@ class AssetList extends LitElement {
                             (ma) => html`
                                 <asset-card
                                     .modelAsset=${ma}
-                                    .groupColor=${getAssetChartColor(ma.instrument, false)}
+                                    .groupColor=${getAssetChartColor(ma.instrument)}
                                     .metricValue=${this._getMetricValue(ma)}
                                     ?ghost=${ma._isClosedAtDate}
                                     .closedEmoji=${ma._isClosedAtDate ? '⛔' : ''}

@@ -532,7 +532,7 @@ export function charting_buildDisplaySpreadsheetFromPortfolio(portfolio, buildNe
  * Same chart type as the legacy charting_buildPortfolioMetric, just with
  * group-aware colors and collapse/expand support.
  */
-export function charting_buildGroupedMetric(portfolio, metricName, expandedGroups) {
+export function charting_buildGroupedMetric(portfolio, metricName, expandedGroups, groupOrder) {
   const labels = charting_buildDisplayLabels(portfolio.firstDateInt, portfolio.lastDateInt);
 
   // Classify by instrument (ignore isClosed) so charts show full history
@@ -545,8 +545,8 @@ export function charting_buildGroupedMetric(portfolio, metricName, expandedGroup
 
   const datasets = [];
 
-  for (const groupKey of GROUP_DISPLAY_ORDER) {
-    if (groupKey === AssetGroup.TAXES || groupKey === AssetGroup.CLOSED) continue;
+  for (const groupKey of (groupOrder || GROUP_DISPLAY_ORDER)) {
+    if (groupKey === AssetGroup.TAXES || groupKey === AssetGroup.ALL) continue;
     const assets = groups.get(groupKey);
     if (!assets || assets.length === 0) continue;
 
@@ -555,7 +555,7 @@ export function charting_buildGroupedMetric(portfolio, metricName, expandedGroup
     if (expandedGroups?.has(groupKey)) {
       // Expanded: one bar dataset per asset, using stable shade colors
       for (const asset of assets) {
-        const color = getAssetChartColor(asset.instrument, false);
+        const color = getAssetChartColor(asset.instrument);
         datasets.push({
           label: asset.displayName,
           data: asset.getDisplayHistory(metricName),

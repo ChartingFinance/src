@@ -33,7 +33,7 @@ import {
     charting_jsonMetric1ChartData,
 } from './charting.js';
 
-import { classifyAssets, classifyAssetGroup, GROUP_DISPLAY_ORDER, getAssetChartColor } from './asset-groups.js';
+import { classifyAssets, classifyAssetGroup, GROUP_ORDER_ACCUMULATE, GROUP_ORDER_RETIRE, getAssetChartColor } from './asset-groups.js';
 import {
     PropertyGroupMeta, PROPERTY_ORDER_ACCUMULATE, PROPERTY_ORDER_RETIRE,
     PropertyGroupMetrics, PropertyGroupRollupMetrics, ASSET_LESS_GROUPS,
@@ -172,10 +172,17 @@ let viewMode            = 'assets'; // 'assets' | 'properties'
 let activeStoryArc      = null;
 let activeStoryName     = null;
 
-function getPropertyDisplayOrder() {
+function isRetiredPhase() {
     const evt = activeLifeEvents?.[0];
-    const isRetired = evt?.event ? LifeEventType.isRetirement(evt.event) : false;
-    return isRetired ? PROPERTY_ORDER_RETIRE : PROPERTY_ORDER_ACCUMULATE;
+    return evt?.event ? LifeEventType.isRetirement(evt.event) : false;
+}
+
+function getAssetDisplayOrder() {
+    return isRetiredPhase() ? GROUP_ORDER_RETIRE : GROUP_ORDER_ACCUMULATE;
+}
+
+function getPropertyDisplayOrder() {
+    return isRetiredPhase() ? PROPERTY_ORDER_RETIRE : PROPERTY_ORDER_ACCUMULATE;
 }
 
 // ── Init ────────────────────────────────────────────────────
@@ -893,7 +900,7 @@ function rebuildMicroChart(markers) {
             groups.get(groupKey).push(asset);
         }
 
-        for (const groupKey of GROUP_DISPLAY_ORDER) {
+        for (const groupKey of getAssetDisplayOrder()) {
             if (!expandedGroups.has(groupKey)) continue;
             const assets = groups.get(groupKey);
             if (!assets || assets.length === 0) continue;
@@ -901,7 +908,7 @@ function rebuildMicroChart(markers) {
                 datasets.push({
                     label: asset.displayName,
                     data: asset.getDisplayHistory(activeMetricName),
-                    backgroundColor: getAssetChartColor(asset.instrument, false),
+                    backgroundColor: getAssetChartColor(asset.instrument),
                 });
             }
         }

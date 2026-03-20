@@ -8,6 +8,9 @@
  * Classification is instrument-based (deterministic), not data-driven.
  * Display order is phase-aware: accumulation vs retirement priorities differ.
  *
+ * Rollup metrics align with the Metric DAG in metric.js — each group's rollup
+ * is the DAG root that captures all leaf activity for that financial action.
+ *
  * Follows the same enum + meta + classify pattern as asset-groups.js.
  */
 
@@ -20,13 +23,11 @@ import { Instrument, InstrumentType } from './instruments/instrument.js';
 
 export const PropertyGroup = Object.freeze({
   ALL:          'prop_all',
-  CAPITAL:      'prop_capital',
-  REAL_ESTATE:  'prop_realEstate',
   INCOME:       'prop_income',
   TAX:          'prop_tax',
-  SAVINGS:      'prop_savings',
-  EXPENSES:     'prop_expenses',
+  EXPENSE:      'prop_expense',
   RETIREMENT:   'prop_retirement',
+  CAPITAL:      'prop_capital',
   DEBT_SERVICE: 'prop_debtService',
   CASH_FLOW:    'prop_cashFlow',
   GROWTH:       'prop_growth',
@@ -38,12 +39,10 @@ export const PROPERTY_ORDER_ACCUMULATE = [
   PropertyGroup.ALL,
   PropertyGroup.INCOME,
   PropertyGroup.CAPITAL,
-  PropertyGroup.REAL_ESTATE,
-  PropertyGroup.TAX,
-  PropertyGroup.EXPENSES,
-  PropertyGroup.DEBT_SERVICE,
   PropertyGroup.RETIREMENT,
-  PropertyGroup.SAVINGS,
+  PropertyGroup.TAX,
+  PropertyGroup.EXPENSE,
+  PropertyGroup.DEBT_SERVICE,
   PropertyGroup.CASH_FLOW,
   PropertyGroup.GROWTH,
 ];
@@ -51,13 +50,11 @@ export const PROPERTY_ORDER_ACCUMULATE = [
 export const PROPERTY_ORDER_RETIRE = [
   PropertyGroup.ALL,
   PropertyGroup.RETIREMENT,
-  PropertyGroup.EXPENSES,
+  PropertyGroup.INCOME,
+  PropertyGroup.EXPENSE,
   PropertyGroup.TAX,
   PropertyGroup.CAPITAL,
-  PropertyGroup.REAL_ESTATE,
   PropertyGroup.DEBT_SERVICE,
-  PropertyGroup.INCOME,
-  PropertyGroup.SAVINGS,
   PropertyGroup.CASH_FLOW,
   PropertyGroup.GROWTH,
 ];
@@ -67,50 +64,48 @@ export const PROPERTY_DISPLAY_ORDER = PROPERTY_ORDER_ACCUMULATE;
 
 // ── Instrument-based classification Sets ─────────────────────────────
 // Deterministic: an instrument always belongs to the same groups.
-
-const CAPITAL_SET = new Set([
-  Instrument.REAL_ESTATE,
-  Instrument.TAXABLE_EQUITY,
-]);
-
-const REAL_ESTATE_SET = new Set([
-  Instrument.REAL_ESTATE,
-  Instrument.MORTGAGE,
-]);
+// An asset appears in every group whose Set contains its instrument.
 
 const INCOME_SET = new Set([
   Instrument.WORKING_INCOME,
   Instrument.RETIREMENT_INCOME,
-  Instrument.TAXABLE_EQUITY,
-  Instrument.BANK,
-  Instrument.US_BOND,
-  Instrument.CORP_BOND,
+  Instrument.TAXABLE_EQUITY,       // dividends
+  Instrument.BANK,                 // interest income
+  Instrument.US_BOND,              // interest income
+  Instrument.CORP_BOND,            // interest income
 ]);
 
 const TAX_SET = new Set([
-  Instrument.WORKING_INCOME,
-  Instrument.REAL_ESTATE,
-  Instrument.TAXABLE_EQUITY,
-  Instrument.FOUR_01K,
-  Instrument.IRA,
+  Instrument.WORKING_INCOME,       // FICA + income tax withholding
+  Instrument.REAL_ESTATE,          // property tax + capital gains tax on sale
+  Instrument.TAXABLE_EQUITY,       // capital gains tax, estimated income tax
+  Instrument.FOUR_01K,             // tax on distributions
+  Instrument.IRA,                  // tax on distributions
 ]);
 
-const SAVINGS_SET = new Set([
-  Instrument.BANK,
-  Instrument.US_BOND,
-  Instrument.CORP_BOND,
-]);
-
-const EXPENSES_SET = new Set([
-  Instrument.MONTHLY_EXPENSE,
-  Instrument.REAL_ESTATE,
-  Instrument.DEBT,
+const EXPENSE_SET = new Set([
+  Instrument.MONTHLY_EXPENSE,      // direct expenses
+  Instrument.REAL_ESTATE,          // maintenance, insurance, mortgage interest → expense
+  Instrument.MORTGAGE,             // mortgage interest → interest expense → expense
+  Instrument.DEBT,                 // interest expense
 ]);
 
 const RETIREMENT_SET = new Set([
   Instrument.FOUR_01K,
   Instrument.IRA,
   Instrument.ROTH_IRA,
+]);
+
+const CAPITAL_SET = new Set([
+  Instrument.REAL_ESTATE,
+  Instrument.TAXABLE_EQUITY,
+  Instrument.FOUR_01K,
+  Instrument.IRA,
+  Instrument.ROTH_IRA,
+  Instrument.BANK,
+  Instrument.US_BOND,
+  Instrument.CORP_BOND,
+  Instrument.CASH,
 ]);
 
 const DEBT_SERVICE_SET = new Set([
@@ -120,55 +115,54 @@ const DEBT_SERVICE_SET = new Set([
 
 // Map group → instrument Set (excludes ALL, CASH_FLOW, GROWTH which are special)
 const GROUP_INSTRUMENT_SETS = new Map([
-  [PropertyGroup.CAPITAL,      CAPITAL_SET],
-  [PropertyGroup.REAL_ESTATE,  REAL_ESTATE_SET],
   [PropertyGroup.INCOME,       INCOME_SET],
   [PropertyGroup.TAX,          TAX_SET],
-  [PropertyGroup.SAVINGS,      SAVINGS_SET],
-  [PropertyGroup.EXPENSES,     EXPENSES_SET],
+  [PropertyGroup.EXPENSE,      EXPENSE_SET],
   [PropertyGroup.RETIREMENT,   RETIREMENT_SET],
+  [PropertyGroup.CAPITAL,      CAPITAL_SET],
   [PropertyGroup.DEBT_SERVICE, DEBT_SERVICE_SET],
 ]);
 
 // ── Metrics per group (for card display & dropdown filtering) ────────
+// These are the metrics available in the micro chart dropdown when
+// a property group is expanded. Ordered from most-specific to rollup.
 
 export const PropertyGroupMetrics = new Map([
   [PropertyGroup.ALL, [
     Metric.VALUE,
   ]],
-  [PropertyGroup.CAPITAL, [
-    Metric.VALUE, Metric.GROWTH,
-  ]],
-  [PropertyGroup.REAL_ESTATE, [
-    Metric.VALUE, Metric.GROWTH, Metric.PROPERTY_TAX, Metric.MAINTENANCE, Metric.INSURANCE,
-    Metric.MORTGAGE_PAYMENT, Metric.MORTGAGE_INTEREST, Metric.MORTGAGE_PRINCIPAL,
-  ]],
   [PropertyGroup.INCOME, [
+    Metric.INCOME,
     Metric.EMPLOYED_INCOME, Metric.SELF_INCOME,
     Metric.QUALIFIED_DIVIDEND, Metric.NON_QUALIFIED_DIVIDEND,
-    Metric.INTEREST_INCOME, Metric.SOCIAL_SECURITY_INCOME, Metric.INCOME,
+    Metric.INTEREST_INCOME, Metric.SOCIAL_SECURITY_INCOME,
+    Metric.ORDINARY_INCOME, Metric.CAPITAL_GAIN,
   ]],
   [PropertyGroup.TAX, [
-    Metric.WITHHELD_FICA_TAX, Metric.INCOME_TAX, Metric.CAPITAL_GAIN_TAX,
-    Metric.PROPERTY_TAX, Metric.ESTIMATED_INCOME_TAX,
+    Metric.TAXES, Metric.FEDERAL_TAXES, Metric.SALT_TAXES,
+    Metric.INCOME_TAX, Metric.WITHHELD_FICA_TAX,
+    Metric.WITHHELD_INCOME_TAX, Metric.ESTIMATED_INCOME_TAX,
+    Metric.SHORT_TERM_CAPITAL_GAIN_TAX, Metric.LONG_TERM_CAPITAL_GAIN_TAX,
+    Metric.PROPERTY_TAX,
   ]],
-  [PropertyGroup.SAVINGS, [
-    Metric.VALUE, Metric.INTEREST_INCOME, Metric.GROWTH,
-  ]],
-  [PropertyGroup.EXPENSES, [
-    Metric.EXPENSE, Metric.MAINTENANCE, Metric.INSURANCE,
+  [PropertyGroup.EXPENSE, [
+    Metric.EXPENSE,
+    Metric.INTEREST_EXPENSE, Metric.MORTGAGE_INTEREST,
+    Metric.MAINTENANCE, Metric.INSURANCE,
   ]],
   [PropertyGroup.RETIREMENT, [
     Metric.VALUE,
-    Metric.TRAD_IRA_CONTRIBUTION, Metric.ROTH_IRA_CONTRIBUTION,
-    Metric.FOUR_01K_CONTRIBUTION, Metric.TRAD_IRA_DISTRIBUTION,
-    Metric.ROTH_IRA_DISTRIBUTION, Metric.FOUR_01K_DISTRIBUTION,
+    Metric.CONTRIBUTION, Metric.PRETAX_CONTRIBUTION, Metric.POSTTAX_CONTRIBUTION,
+    Metric.FOUR_01K_CONTRIBUTION, Metric.TRAD_IRA_CONTRIBUTION, Metric.ROTH_IRA_CONTRIBUTION,
+    Metric.TAXABLE_DISTRIBUTION, Metric.TAX_FREE_DISTRIBUTION,
+    Metric.FOUR_01K_DISTRIBUTION, Metric.TRAD_IRA_DISTRIBUTION, Metric.ROTH_IRA_DISTRIBUTION,
     Metric.RMD,
   ]],
+  [PropertyGroup.CAPITAL, [
+    Metric.VALUE, Metric.GROWTH,
+  ]],
   [PropertyGroup.DEBT_SERVICE, [
-    Metric.MORTGAGE_PAYMENT, Metric.MORTGAGE_INTEREST,
-    Metric.MORTGAGE_PRINCIPAL,
-    Metric.EXPENSE,
+    Metric.MORTGAGE_PAYMENT, Metric.MORTGAGE_INTEREST, Metric.MORTGAGE_PRINCIPAL,
   ]],
   [PropertyGroup.CASH_FLOW, [
     Metric.CASH_FLOW, Metric.CASH_FLOW_ACCUMULATED,
@@ -179,16 +173,16 @@ export const PropertyGroupMetrics = new Map([
 ]);
 
 // ── Rollup metrics per group (for chart aggregation & header totals) ─
+// Each entry is the DAG root(s) that capture all leaf activity for the group.
+// Using DAG roots avoids double-counting and stays aligned with metric.js.
 
 export const PropertyGroupRollupMetrics = new Map([
   [PropertyGroup.ALL,          [Metric.VALUE]],
-  [PropertyGroup.CAPITAL,      [Metric.VALUE]],
-  [PropertyGroup.REAL_ESTATE,  [Metric.VALUE]],
   [PropertyGroup.INCOME,       [Metric.INCOME]],
-  [PropertyGroup.TAX,          [Metric.INCOME_TAX, Metric.CAPITAL_GAIN_TAX]],
-  [PropertyGroup.SAVINGS,      [Metric.VALUE]],
-  [PropertyGroup.EXPENSES,     [Metric.EXPENSE]],
+  [PropertyGroup.TAX,          [Metric.TAXES]],
+  [PropertyGroup.EXPENSE,      [Metric.EXPENSE]],
   [PropertyGroup.RETIREMENT,   [Metric.VALUE]],
+  [PropertyGroup.CAPITAL,      [Metric.VALUE]],
   [PropertyGroup.DEBT_SERVICE, [Metric.MORTGAGE_PAYMENT]],
   [PropertyGroup.CASH_FLOW,    [Metric.CASH_FLOW]],
   [PropertyGroup.GROWTH,       [Metric.GROWTH]],
@@ -218,24 +212,6 @@ export const PropertyGroupMeta = new Map([
       [Instrument.DEBT,              '#C7CCD1'],
     ]),
   }],
-  [PropertyGroup.CAPITAL, {
-    label: 'Capital',      groupEmoji: '📊',
-    chartColor: '#7F77DD', chartColorFill: 'rgba(127, 119, 221, 0.10)',
-    headerBg: '#EEEDFE',   headerFg: '#3C3489',
-    assetShades: new Map([
-      [Instrument.REAL_ESTATE,       '#7F77DD'],
-      [Instrument.TAXABLE_EQUITY,    '#A9A3E8'],
-    ]),
-  }],
-  [PropertyGroup.REAL_ESTATE, {
-    label: 'Real Estate',  groupEmoji: '🏠',
-    chartColor: '#378ADD', chartColorFill: 'rgba(55, 138, 221, 0.10)',
-    headerBg: '#E6F1FB',   headerFg: '#0C447C',
-    assetShades: new Map([
-      [Instrument.REAL_ESTATE,       '#378ADD'],
-      [Instrument.MORTGAGE,          '#85B7EB'],
-    ]),
-  }],
   [PropertyGroup.INCOME, {
     label: 'Income',       groupEmoji: '💰',
     chartColor: '#1D9E75', chartColorFill: 'rgba(29, 158, 117, 0.10)',
@@ -261,24 +237,15 @@ export const PropertyGroupMeta = new Map([
       [Instrument.IRA,               '#E8DCA8'],
     ]),
   }],
-  [PropertyGroup.SAVINGS, {
-    label: 'Savings',      groupEmoji: '🏦',
-    chartColor: '#0891B2', chartColorFill: 'rgba(8, 145, 178, 0.10)',
-    headerBg: '#CFFAFE',   headerFg: '#155E75',
-    assetShades: new Map([
-      [Instrument.BANK,              '#0891B2'],
-      [Instrument.US_BOND,           '#3BB0CA'],
-      [Instrument.CORP_BOND,         '#6DC8DD'],
-    ]),
-  }],
-  [PropertyGroup.EXPENSES, {
+  [PropertyGroup.EXPENSE, {
     label: 'Expenses',     groupEmoji: '💸',
     chartColor: '#E24B4A', chartColorFill: 'rgba(226, 75, 74, 0.10)',
     headerBg: '#FCEBEB',   headerFg: '#791F1F',
     assetShades: new Map([
       [Instrument.MONTHLY_EXPENSE,   '#E24B4A'],
       [Instrument.REAL_ESTATE,       '#EB7575'],
-      [Instrument.DEBT,              '#F09595'],
+      [Instrument.MORTGAGE,          '#F09595'],
+      [Instrument.DEBT,              '#F5B0B0'],
     ]),
   }],
   [PropertyGroup.RETIREMENT, {
@@ -289,6 +256,22 @@ export const PropertyGroupMeta = new Map([
       [Instrument.FOUR_01K,          '#8B5CF6'],
       [Instrument.IRA,               '#A78BFA'],
       [Instrument.ROTH_IRA,          '#C4B5FD'],
+    ]),
+  }],
+  [PropertyGroup.CAPITAL, {
+    label: 'Capital',      groupEmoji: '📊',
+    chartColor: '#7F77DD', chartColorFill: 'rgba(127, 119, 221, 0.10)',
+    headerBg: '#EEEDFE',   headerFg: '#3C3489',
+    assetShades: new Map([
+      [Instrument.REAL_ESTATE,       '#6B63C7'],
+      [Instrument.TAXABLE_EQUITY,    '#7F77DD'],
+      [Instrument.FOUR_01K,          '#9B8FE8'],
+      [Instrument.IRA,               '#AFA9EC'],
+      [Instrument.ROTH_IRA,          '#B8B3F0'],
+      [Instrument.BANK,              '#C5C1F4'],
+      [Instrument.US_BOND,           '#D2CFF8'],
+      [Instrument.CORP_BOND,         '#DFDCFC'],
+      [Instrument.CASH,              '#E8E5FE'],
     ]),
   }],
   [PropertyGroup.DEBT_SERVICE, {
@@ -365,11 +348,16 @@ export function classifyAssetsByProperty(modelAssets) {
 
 /**
  * Returns the primary metric to display for an asset within a property group.
- * Uses the group's rollup metric — the same metric shown in the group header.
+ * Picks the first rollup metric that the asset actually tracks (has real history).
  */
 export function getPrimaryMetric(asset, groupKey) {
   const rollups = PropertyGroupRollupMetrics.get(groupKey);
-  return rollups?.[0] ?? Metric.VALUE;
+  if (!rollups) return Metric.VALUE;
+  for (const m of rollups) {
+    const h = asset.getHistory?.(m);
+    if (h && h.length > 0) return m;
+  }
+  return rollups[0] ?? Metric.VALUE;
 }
 
 // ── Aggregation for charts ──────────────────────────────────────────

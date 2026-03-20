@@ -94,6 +94,7 @@ export class ModelAsset {
     this.onOrBeforeFinishDate  = false;
     this.afterFinishDate = false;
     this.isClosed      = false;
+    this.closedDateInt = null;
 
     // Chronometer state
     this.finishCurrency = Currency.zero();
@@ -440,6 +441,7 @@ export class ModelAsset {
     this.onFinishDate  = false;
     this.afterFinishDate = false;
     this.isClosed = false;
+    this.closedDateInt = null;
     this.closedValue = null;
     this.closedBasisValue = null;
     this.creditMemos = [];
@@ -753,7 +755,7 @@ export class ModelAsset {
     return Math.max(0, 1.0 - basisRatio); // Returns a float between 0.0 and 1.0
   }
 
-  close() {
+  close(dateInt) {
 
     // closedValue / closedBasisValue are captured by Portfolio.closeAsset()
     // before fund transfers drain the asset
@@ -764,6 +766,7 @@ export class ModelAsset {
     this.monthlyValueChange.zero();
 
     this.isClosed = true;
+    if (dateInt) this.closedDateInt = dateInt;
 
   }
 
