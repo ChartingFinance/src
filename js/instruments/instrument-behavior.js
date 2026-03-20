@@ -11,10 +11,48 @@
 
 import { Currency } from '../utils/currency.js';
 import { Instrument } from './instrument.js';
-import {
-  IncomeResult, ExpenseResult, MortgageResult,
-  AssetAppreciationResult, InterestResult,
-} from '../results.js';
+// ── Result Types ─────────────────────────────────────────────────────
+
+export class AssetAppreciationResult {
+  constructor(principal = Currency.zero(), growth = Currency.zero(), qualifiedDividend = Currency.zero(), nonQualifiedDividend = Currency.zero(), tax = Currency.zero()) {
+    this.principal = principal instanceof Currency ? principal.copy() : new Currency(principal);
+    this.growth = growth instanceof Currency ? growth.copy() : new Currency(growth);
+    this.qualifiedDividend = qualifiedDividend instanceof Currency ? qualifiedDividend.copy() : new Currency(qualifiedDividend);
+    this.nonQualifiedDividend = nonQualifiedDividend instanceof Currency ? nonQualifiedDividend.copy() : new Currency(nonQualifiedDividend);
+    this.tax = tax instanceof Currency ? tax.copy() : new Currency(tax);
+  }
+}
+
+export class MortgageResult {
+  constructor(principal = Currency.zero(), interest = Currency.zero()) {
+    this.principal = principal instanceof Currency ? principal.copy() : new Currency(principal);
+    this.interest  = interest instanceof Currency ? interest.copy() : new Currency(interest);
+  }
+
+  payment() {
+    return new Currency(this.principal.amount + this.interest.amount);
+  }
+}
+
+export class IncomeResult {
+  constructor(selfIncome = Currency.zero(), employedIncome = Currency.zero()) {
+    this.selfIncome    = selfIncome instanceof Currency ? selfIncome.copy() : new Currency(selfIncome);
+    this.employedIncome = employedIncome instanceof Currency ? employedIncome.copy() : new Currency(employedIncome);
+  }
+}
+
+export class ExpenseResult {
+  constructor(expense = Currency.zero(), nextExpense = Currency.zero()) {
+    this.expense     = expense instanceof Currency ? expense.copy() : new Currency(expense);
+    this.nextExpense = nextExpense instanceof Currency ? nextExpense.copy() : new Currency(nextExpense);
+  }
+}
+
+export class InterestResult {
+  constructor(income = Currency.zero()) {
+    this.income = income instanceof Currency ? income.copy() : new Currency(income);
+  }
+}
 import { Metric as M } from '../metric.js';
 
 // Every instrument gets these

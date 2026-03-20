@@ -17,9 +17,18 @@ import { ARR }            from './utils/arr.js';
 import { InstrumentType } from './instruments/instrument.js';
 import { FundTransfer }   from './fund-transfer.js';
 import { logger, LogCategory } from './utils/logger.js';
-import { MetricSet }      from './tracked-metric.js';
-import { CreditMemo } from './results.js';
-import { IncomeResult } from './results.js';
+import { MetricSet }      from './metric.js';
+import { IncomeResult } from './instruments/instrument-behavior.js';
+
+// ── Result Type ──────────────────────────────────────────────────────
+
+export class CreditMemo {
+  constructor(amount = Currency.zero(), note = '', dateInt = null) {
+    this.amount = amount instanceof Currency ? amount.copy() : new Currency(amount);
+    this.note = note;
+    this.dateInt = dateInt;
+  }
+}
 import { colorRange }    from './utils/html.js';
 import { getBehavior }   from './instruments/instrument-behavior.js';
 import { global_getFinishDateInt, global_inflationRate } from './globals.js';

@@ -12,8 +12,9 @@
 //   Fund transfer genes: 0–100 (integer percentages)
 //   Guardrail genes: real-valued within defined ranges
 
-import { InstrumentType, ModelAsset, FundTransfer } from './index.js';
-import { Frequency } from './fund-transfer.js';
+import { InstrumentType } from './instruments/instrument.js';
+import { ModelAsset } from './model-asset.js';
+import { FundTransfer, Frequency } from './fund-transfer.js';
 import { chronometer_run } from './chronometer.js';
 import { setActiveTaxTable } from './globals.js';
 import { TaxTable } from './taxes.js';

@@ -20,7 +20,8 @@
  */
 
 import { DateInt }        from './utils/date-int.js';
-import { findByName }     from './asset-queries.js';
+/** Inline to avoid circular dep with portfolio.js */
+function findByName(assets, name) { return assets.find(a => a.displayName === name); }
 import { logger, LogCategory } from './utils/logger.js';
 import { global_user_startAge } from './globals.js';
 

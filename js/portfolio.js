@@ -4,7 +4,6 @@ import { MonthsSpan } from './utils/months-span.js';
 import { logger, LogCategory } from './utils/logger.js';
 import { ModelLifeEvent } from './life-event.js';
 import { User } from './user.js';
-import { firstDateInt, lastDateInt, findByName } from './asset-queries.js';
 import { global_user_startAge } from './globals.js';
 import { FundTransfer } from './fund-transfer.js';
 import { FinancialPackage } from './financial-package.js';
@@ -652,4 +651,41 @@ export class Portfolio {
 
     }
 
+}
+
+// ── Asset Queries ─────────────────────────────────────────────────────
+// (merged from asset-queries.js)
+
+export function firstDateInt(assets) {
+  if (!assets?.length) return null;
+  return assets.reduce((earliest, a) =>
+    !earliest || a.startDateInt.isBefore(earliest) ? a.startDateInt : earliest,
+    null
+  );
+}
+
+export function lastDateInt(assets) {
+  if (!assets?.length) return null;
+  return assets.reduce((latest, a) =>
+    !latest || a.effectiveFinishDateInt.isAfter(latest) ? a.effectiveFinishDateInt : latest,
+    null
+  );
+}
+
+export function findByName(assets, displayName) {
+  return assets.find(a => a.displayName === displayName);
+}
+
+export function removeByName(assets, displayName) {
+  const idx = assets.findIndex(a => a.displayName === displayName);
+  return idx >= 0 ? assets.splice(idx, 1)[0] : undefined;
+}
+
+export function filterByInstrument(assets, instrument) {
+  if (instrument === null) return [...assets];
+  return assets.filter(a => a.instrument === instrument);
+}
+
+export function sortByInstrument(assets) {
+  return [...assets].sort((a, b) => a.sortIndex() - b.sortIndex());
 }

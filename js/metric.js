@@ -211,3 +211,131 @@ export function isTopLevelMetric(m) { return _macroSet.has(m); }
 export const PARENT_METRICS = new Set(
   Object.values(MetricRollups).flat()
 );
+
+// ── TrackedMetric & MetricSet ─────────────────────────────────────────
+// (merged from tracked-metric.js)
+//
+// TrackedMetric encapsulates one Currency accumulator + its history array.
+// MetricSet manages the full collection so initializeChron/monthlyChron
+// become one-liners in ModelAsset.
+
+import { Currency } from './utils/currency.js';
+
+export class TrackedMetric {
+  constructor(name) {
+    this.name = name;
+    this.current = new Currency();
+    this.history = [];
+    this.displayHistory = [];
+  }
+
+  initialize() {
+    this.current = new Currency();
+    this.history = [];
+    this.displayHistory = [];
+  }
+
+  snapshot() {
+    this.history.push(this.current.toCurrency());
+    this.current.zero();
+  }
+
+  snapshotKeep() {
+    this.history.push(this.current.toCurrency());
+  }
+
+  add(amount) {
+    if (amount instanceof Currency) {
+      this.current.add(amount);
+    }
+    return this.current.copy();
+  }
+
+  subtract(amount) {
+    if (amount instanceof Currency) {
+      this.current.subtract(amount);
+    }
+    return this.current.copy();
+  }
+
+  get amount() { return this.current.amount; }
+  set amount(v) { this.current.amount = v; }
+
+  copy() { return this.current.copy(); }
+  zero() { this.current.zero(); return this; }
+  toFixed() { return this.current.toFixed(); }
+  toCurrency() { return this.current.toCurrency(); }
+
+  displayName() {
+    return 'display' + this.name.charAt(0).toUpperCase() + this.name.slice(1) + 's';
+  }
+
+  buildDisplayHistory(monthsSpan) {
+    this.displayHistory = [];
+    for (let ii = monthsSpan.offsetMonths; ii < this.history.length; ii += monthsSpan.combineMonths) {
+        this.displayHistory.push(this.history[ii]);
+    }
+    return this.displayHistory;
+  }
+}
+
+const NULL_CURRENCY = Object.freeze({ amount: 0, add() {}, subtract() {}, copy() { return new Currency(); }, zero() {}, toCurrency() { return 0; }, toFixed() { return '0.00'; }, toHTML() { return '0.00'; }, toString() { return '$0.00'; } });
+const EMPTY_ARRAY = Object.freeze([]);
+const NULL_METRIC = Object.freeze({
+  name: '_null',
+  current: NULL_CURRENCY,
+  history: EMPTY_ARRAY,
+  displayHistory: EMPTY_ARRAY,
+  initialize() {},
+  snapshot() {},
+  snapshotKeep() {},
+  add() { return new Currency(); },
+  subtract() { return new Currency(); },
+  get amount() { return 0; },
+  set amount(_v) {},
+  copy() { return new Currency(); },
+  zero() { return this; },
+  toFixed() { return '0.00'; },
+  toCurrency() { return 0; },
+  displayName() { return '_null'; },
+  buildDisplayHistory() { return EMPTY_ARRAY; },
+});
+
+export class MetricSet {
+  constructor(names) {
+    this._map = new Map();
+    for (const name of names) {
+      this._map.set(name, new TrackedMetric(name));
+    }
+  }
+
+  get(name) {
+    return this._map.get(name) || NULL_METRIC;
+  }
+
+  has(name) {
+    return this._map.has(name);
+  }
+
+  initializeAll() {
+    for (const m of this._map.values()) m.initialize();
+  }
+
+  snapshotAll(keepNames) {
+    for (const [name, m] of this._map) {
+      if (keepNames?.has(name)) {
+        m.snapshotKeep();
+      } else {
+        m.snapshot();
+      }
+    }
+  }
+
+  [Symbol.iterator]() {
+    return this._map.values();
+  }
+
+  entries() {
+    return this._map.entries();
+  }
+}

@@ -1,6 +1,28 @@
 import { Currency } from './utils/currency.js';
 import { InstrumentType } from './instruments/instrument.js';
-import { WithholdingResult } from './results.js';
+// ── Result Type ──────────────────────────────────────────────────────
+
+export class WithholdingResult {
+  constructor(medicareTax = Currency.zero(), socialSecurityTax = Currency.zero(), income = Currency.zero()) {
+    this.medicareTax       = medicareTax instanceof Currency ? medicareTax.copy() : new Currency(medicareTax);
+    this.socialSecurityTax = socialSecurityTax instanceof Currency ? socialSecurityTax.copy() : new Currency(socialSecurityTax);
+    this.income            = income instanceof Currency ? income.copy() : new Currency(income);
+  }
+
+  fica() {
+    return new Currency(this.medicareTax.amount + this.socialSecurityTax.amount);
+  }
+
+  total() {
+    return this.fica().add(this.income);
+  }
+
+  flipSigns() {
+    this.medicareTax.flipSign();
+    this.socialSecurityTax.flipSign();
+    this.income.flipSign();
+  }
+}
 import { logger, LogCategory } from './utils/logger.js';
 import { global_filingAs, global_inflationRate, global_propertyTaxDeductionMax, global_home_sale_capital_gains_discount } from './globals.js';
 

@@ -1,6 +1,7 @@
 import { Currency } from './utils/currency.js';
 import { InstrumentType } from './instruments/instrument.js';
-import { AssetAppreciationResult, CapitalGainsResult, MortgageResult, IncomeResult, ExpenseResult, InterestResult, WithholdingResult } from './results.js';
+import { AssetAppreciationResult, MortgageResult, IncomeResult, ExpenseResult, InterestResult } from './instruments/instrument-behavior.js';
+import { WithholdingResult } from './taxes.js';
 import { logger, LogCategory } from './utils/logger.js';
 import { activeTaxTable } from './globals.js';
 import { global_propertyTaxDeductionMax } from './globals.js';
@@ -365,8 +366,6 @@ export class FinancialPackage {
     addResult(result) {
         if (result instanceof AssetAppreciationResult)
             this.addAssetAppreciationResult(result);
-        else if (result instanceof CapitalGainsResult)
-            this.addCapitalGainsResult(result);
         else if (result instanceof MortgageResult)
             this.addMortgageResult(result);
         else if (result instanceof IncomeResult)
@@ -384,11 +383,6 @@ export class FinancialPackage {
         this.qualifiedDividends.add(assetAppreciationResult.qualifiedDividend);
         this.nonQualifiedDividends.add(assetAppreciationResult.nonQualifiedDividend);
         this.propertyTaxes.add(assetAppreciationResult.tax);
-    }
-
-    addCapitalGainsResult(capitalGainsResult) {
-        this.shortTermCapitalGains.add(capitalGainsResult.shortTerm);
-        this.longTermCapitalGains.add(capitalGainsResult.longTerm);
     }
 
     addMortgageResult(mortgageResult) {

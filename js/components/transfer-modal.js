@@ -20,7 +20,7 @@ import { FundTransfer, Frequency } from '../fund-transfer.js';
 import { colorRange } from '../utils/html.js';
 import { chronometer_run } from '../chronometer.js';
 import { Portfolio } from '../portfolio.js';
-import { findByName } from '../asset-queries.js';
+import { findByName } from '../portfolio.js';
 import { Metric } from '../metric.js';
 import {
     charting_buildFromModelAsset,
