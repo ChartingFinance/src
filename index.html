@@ -54,6 +54,7 @@
         .btn-modern.outline:hover { background: #f9fafb; border-color: #d1d5db; }
         .btn-modern.primary { background: #111827; color: #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         .btn-modern.primary:hover { background: #000000; transform: scale(1.02); }
+        .btn-modern:disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
 
         .popup { background: rgba(17, 24, 39, 0.4); backdrop-filter: blur(4px); }
 
@@ -188,11 +189,9 @@
             background: #f9fafb;
         }
 
-        /* ─── Badge (coral) ─── */
+        /* ─── Badge (phase-colored) ─── */
 
-        .badge-coral {
-            background: #FAECE7;
-            color: #993C1D;
+        .badge-phase {
             padding: 2px 10px;
             border-radius: 999px;
             font-size: 11px;
@@ -509,7 +508,7 @@
         <!-- RIGHT: Your Portfolio -->
         <div class="finplan-sidebar gap-4">
             <h2 class="text-lg font-bold flex items-center gap-2 flex-shrink-0">💼 Your Portfolio
-                <span class="badge-coral ml-auto" id="viewingBadge">Viewing: Mar 2026</span>
+                <span class="badge-phase ml-auto" id="viewingBadge">Viewing: Mar 2026</span>
             </h2>
 
             <div id="viewToggle" class="flex rounded-lg overflow-hidden border border-gray-200 text-sm flex-shrink-0">
@@ -529,7 +528,7 @@
     <!-- ═══ Projections (full width) ═══ -->
     <div class="mb-8">
         <h2 class="text-lg font-bold flex items-center gap-2 mb-4">📊 Projections
-            <span class="badge-coral ml-auto viewing-badge"></span>
+            <span class="badge-phase ml-auto viewing-badge"></span>
         </h2>
 
         <div class="glass-card p-6 relative">
@@ -566,23 +565,29 @@
     <!-- ═══ Simulations ═══ -->
     <div class="mb-8">
         <h2 class="text-lg font-bold flex items-center gap-2 mb-4">🎲 Simulations
-            <span class="badge-coral ml-auto viewing-badge"></span>
+            <span class="badge-phase ml-auto viewing-badge"></span>
         </h2>
 
         <div class="flex gap-6 relative">
             <!-- Monte Carlo -->
-            <div class="glass-card p-6 flex-1 min-w-0">
+            <div class="glass-card p-6 flex-1 min-w-0" style="position: relative;">
                 <div class="finplan-chart-slot" style="border-bottom: none;">
                     <div class="flex items-center justify-between mb-3 w-full">
                         <div class="slot-heading" style="margin-bottom: 0;">Monte Carlo</div>
-                        <button class="btn-modern primary text-sm" id="btn-run-mc" style="padding: 6px 16px; white-space: nowrap;">&#9654; Run</button>
+                        <div class="flex items-center gap-3">
+                            <label class="flex items-center gap-1 text-xs text-gray-500 whitespace-nowrap cursor-pointer">
+                                <input type="checkbox" id="mc-with-guardrails"> With Guardrails
+                            </label>
+                            <button class="btn-modern primary text-sm" id="btn-run-mc" style="padding: 6px 16px; white-space: nowrap;">&#9654; Run</button>
+                        </div>
                     </div>
                     <div class="finplan-chart-canvas-wrap" id="finplan-mc-container"></div>
                 </div>
+                <button class="ai-fab" data-section="montecarlo" title="AI Summary">⚡</button>
             </div>
 
             <!-- Guardrails -->
-            <div class="glass-card p-6 flex-1 min-w-0">
+            <div class="glass-card p-6 flex-1 min-w-0" style="position: relative;">
                 <div class="finplan-chart-slot" style="border-bottom: none;">
                     <div class="flex items-center justify-between mb-3 w-full">
                         <div class="slot-heading" style="margin-bottom: 0;">Guardrails</div>
@@ -623,38 +628,39 @@
                     </div>
                     <button class="btn-modern outline rounded-full px-2 py-1 text-xs" id="btn-revert-guardrails" title="Reset to defaults">&#x21BA;</button>
                 </div>
+                <button class="ai-fab" data-section="guardrails" title="AI Summary">⚡</button>
             </div>
-            <button class="ai-fab" data-section="simulations" title="AI Summary">⚡</button>
         </div>
     </div>
 
     <!-- ═══ Details ═══ -->
     <div class="mb-8">
         <h2 class="text-lg font-bold flex items-center gap-2 mb-4">📋 Details
-            <span class="badge-coral ml-auto viewing-badge"></span>
+            <span class="badge-phase ml-auto viewing-badge"></span>
         </h2>
 
         <div class="flex gap-6 relative">
             <!-- Credit Memos -->
-            <div class="glass-card p-6 flex-1 min-w-0 flex flex-col" style="max-height: 440px;">
+            <div class="glass-card p-6 flex-1 min-w-0 flex flex-col" style="max-height: 440px; position: relative;">
                 <div class="finplan-chart-slot flex-shrink-0" style="border-bottom: none; min-height: 0; padding: 0 0 8px 0;">
                     <div class="slot-heading" style="margin-bottom: 0;">Credit Memos</div>
                 </div>
                 <div class="overflow-auto flex-1 min-h-0">
                     <credit-memo-view id="finplanCreditMemos"></credit-memo-view>
                 </div>
+                <button class="ai-fab" data-section="creditmemos" title="AI Summary">⚡</button>
             </div>
 
             <!-- Report -->
-            <div class="glass-card p-6 flex-1 min-w-0 flex flex-col" style="max-height: 440px;">
+            <div class="glass-card p-6 flex-1 min-w-0 flex flex-col" style="max-height: 440px; position: relative;">
                 <div class="finplan-chart-slot flex-shrink-0" style="border-bottom: none; min-height: 0; padding: 0 0 8px 0;">
                     <div class="slot-heading" style="margin-bottom: 0;">Reports</div>
                 </div>
                 <div class="overflow-auto flex-1 min-h-0">
                     <report-view id="finplanReport"></report-view>
                 </div>
+                <button class="ai-fab" data-section="reports" title="AI Summary">⚡</button>
             </div>
-            <button class="ai-fab" data-section="details" title="AI Summary">⚡</button>
         </div>
     </div>
 
@@ -665,7 +671,7 @@
                 <button class="btn-modern outline text-xs" id="btn-spreadsheet-copy" style="padding: 4px 8px;" title="Copy to clipboard">📋</button>
                 <button class="btn-modern outline text-xs" id="btn-spreadsheet-download" style="padding: 4px 8px;" title="Download CSV">⬇️</button>
             </span>
-            <span class="badge-coral viewing-badge"></span>
+            <span class="badge-phase viewing-badge"></span>
         </h2>
 
         <div class="relative">

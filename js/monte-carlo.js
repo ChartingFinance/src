@@ -93,6 +93,9 @@ function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents) {
     const monthlyTotals = [];
 
     while (currentDateInt.toInt() <= lastDateInt.toInt()) {
+        if (currentDateInt.day === 1) {
+            portfolio.applyLifeEvents(currentDateInt);
+        }
         portfolio.applyMonth(currentDateInt);
         currentDateInt.next();
 
@@ -221,6 +224,9 @@ export function runMonteCarlo(sourceAssets, container, numSimulations = 1000, gu
         const baselineData = [];
 
         while (bd.toInt() <= bLast.toInt()) {
+            if (bd.day === 1) {
+                basePf.applyLifeEvents(bd);
+            }
             basePf.applyMonth(bd);
             bd.next();
             if (bd.day === 1) {

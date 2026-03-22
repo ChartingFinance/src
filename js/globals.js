@@ -255,9 +255,9 @@ export const global_default_propertyTaxRate = 0.01;
 
 export const global_default_propertyTaxDeductionMax = 40000.0;
 
-export const global_default_user_startAge = 57;
-export const gobal_default_user_retirementAge = 67;
-export const global_default_user_finishAge = 85;
+export const global_default_user_startAge = 50;
+export const global_default_user_retirementAge = 67;
+export const global_default_user_finishAge = 87;
 
 export const global_default_fica = 7.65;
 
@@ -272,7 +272,7 @@ export let global_propertyTaxRate = global_default_propertyTaxRate;
 export let global_propertyTaxDeductionMax = global_default_propertyTaxDeductionMax;
 
 export let global_user_startAge = global_default_user_startAge;
-export let global_user_retirementAge = gobal_default_user_retirementAge;
+export let global_user_retirementAge = global_default_user_retirementAge;
 export let global_user_finishAge = global_default_user_finishAge;
 
 export let global_equity_dividend_allocation = 0.5;
@@ -294,7 +294,7 @@ export function global_reset() {
     global_propertyTaxRate = global_default_propertyTaxRate;
     global_propertyTaxDeductionMax = global_default_propertyTaxDeductionMax;
     global_user_startAge = global_default_user_startAge;
-    global_user_retirementAge = gobal_default_user_retirementAge;
+    global_user_retirementAge = global_default_user_retirementAge;
     global_user_finishAge = global_default_user_finishAge;
 
     global_setInflationRate(global_inflationRate);

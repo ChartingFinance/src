@@ -62,8 +62,10 @@ import {
     generateTimelineMarkdown,
     generatePortfolioSectionMarkdown,
     generateProjectionsSectionMarkdown,
-    generateSimulationsSectionMarkdown,
-    generateDetailsSectionMarkdown,
+    generateMonteCarloSectionMarkdown,
+    generateGuardrailsSectionMarkdown,
+    generateCreditMemosSectionMarkdown,
+    generateReportsSectionMarkdown,
     generateSpreadsheetSectionMarkdown,
 } from './generators/finplan-ai.js';
 
@@ -169,6 +171,7 @@ let microChart          = null;
 let editingModelAsset   = null;
 
 let viewMode            = 'assets'; // 'assets' | 'properties'
+let activePhaseIndex    = 0;
 let activeStoryArc      = null;
 let activeStoryName     = null;
 
@@ -201,6 +204,11 @@ initiateActiveData();
 connectAssetListEvents();
 connectAssetFormModal();
 connectTransferModal();
+
+// Wire phase selection — track selected phase for fund transfers
+timeline.addEventListener('phase-select', (ev) => {
+    activePhaseIndex = ev.detail.index;
+});
 
 // Wire timeline edit event
 timeline.addEventListener('event-edit', (ev) => {
@@ -270,14 +278,16 @@ const aiGenerators = {
     timeline:    () => generateTimelineMarkdown(activePortfolio, activeLifeEvents),
     portfolio:   () => generatePortfolioSectionMarkdown(activePortfolio),
     projections: () => generateProjectionsSectionMarkdown(activePortfolio, activeMetricName),
-    simulations: () => generateSimulationsSectionMarkdown(activePortfolio),
-    details:     () => generateDetailsSectionMarkdown(activePortfolio),
+    montecarlo:  () => generateMonteCarloSectionMarkdown(activePortfolio),
+    guardrails:  () => generateGuardrailsSectionMarkdown(activePortfolio),
+    creditmemos: () => generateCreditMemosSectionMarkdown(activePortfolio),
+    reports:     () => generateReportsSectionMarkdown(activePortfolio),
     spreadsheet: () => generateSpreadsheetSectionMarkdown(activePortfolio),
 };
 
 const aiLabels = {
     timeline: 'Your Timeline', portfolio: 'Your Portfolio', projections: 'Projections',
-    simulations: 'Simulations', details: 'Details', spreadsheet: 'Spreadsheet',
+    montecarlo: 'Monte Carlo', guardrails: 'Guardrails', creditmemos: 'Credit Memos', reports: 'Reports', spreadsheet: 'Spreadsheet',
 };
 
 for (const btn of document.querySelectorAll('.ai-fab')) {
@@ -537,10 +547,29 @@ store.setRetirementDate(global_getRetirementDateInt());
 store.setSelectedDate(DateInt.today());
 
 const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+/** Determine which life event phase the given year/month falls within. */
+function currentPhaseEvent(year, month) {
+    const birthYear = new Date().getFullYear() - global_user_startAge;
+    const age = (year - birthYear) + (month - 1) / 12;
+    for (let i = activeLifeEvents.length - 1; i >= 0; i--) {
+        if (age >= activeLifeEvents[i].triggerAge) return activeLifeEvents[i];
+    }
+    return activeLifeEvents[0] ?? null;
+}
+
 function updateViewingBadge(year, month) {
     const text = `Viewing: ${MONTH_NAMES[month - 1]} ${year}`;
-    if (viewingBadge) viewingBadge.textContent = text;
-    document.querySelectorAll('.viewing-badge').forEach(el => el.textContent = text);
+    const phase = currentPhaseEvent(year, month);
+    const bg = phase ? LifeEventType.color(phase.type) + '20' : '#f3f4f6';
+    const fg = phase ? LifeEventType.colorAccent(phase.type) : '#6b7280';
+    const applyBadge = (el) => {
+        el.textContent = text;
+        el.style.background = bg;
+        el.style.color = fg;
+    };
+    if (viewingBadge) applyBadge(viewingBadge);
+    document.querySelectorAll('.viewing-badge').forEach(applyBadge);
 }
 /** Sync asset-list to show metric values at the selected date */
 function syncAssetListToDate(year, month) {
@@ -676,6 +705,15 @@ function loadLocalData() {
 
 function calculate() {
     const modelAssets = assetList.modelAssets || [];
+
+    // When no assets, keep phase trigger ages in sync with global settings
+    if (modelAssets.length === 0) {
+        const accum = activeLifeEvents.find(e => e.type === LifeEvent.ACCUMULATE);
+        const retire = activeLifeEvents.find(e => e.type === LifeEvent.RETIRE);
+        if (accum) accum.triggerAge = global_user_startAge;
+        if (retire) retire.triggerAge = global_user_retirementAge;
+    }
+
     const portfolio = new Portfolio(modelAssets, true);
     portfolio.lifeEvents = activeLifeEvents.map(e => e.copy());
 
@@ -703,6 +741,13 @@ function calculate() {
     // Update timeline
     updateTimeline();
 
+    // Disable simulation buttons when no assets
+    const hasAssets = modelAssets.length > 0;
+    document.getElementById('btn-run-mc').disabled = !hasAssets;
+    document.getElementById('btn-run-guardrails').disabled = !hasAssets;
+    document.getElementById('btn-visualize').disabled = !hasAssets;
+    document.getElementById('btn-maximize').disabled = !hasAssets;
+
     // Save
     saveLocalData();
 }
@@ -717,10 +762,12 @@ function getGuardrailParams() {
 }
 
 function doMonteCarlo() {
-    if (!activePortfolio) return;
+    if (!activePortfolio?.firstDateInt) return;
+    const withGuardrails = document.getElementById('mc-with-guardrails')?.checked;
     runMonteCarlo(
         activePortfolio.modelAssets, mcContainer, 1000,
-        getGuardrailParams(), global_getRetirementDateInt(),
+        withGuardrails ? getGuardrailParams() : null,
+        global_getRetirementDateInt(),
         false, activeLifeEvents
     );
     // MC renders async (setTimeout 50ms) — apply phase markers after it's done
@@ -734,7 +781,7 @@ function doMonteCarlo() {
 }
 
 function doGuardrails() {
-    if (!activePortfolio) return;
+    if (!activePortfolio?.firstDateInt) return;
     runGuardrails(
         activePortfolio.modelAssets, guardrailsCanvas, getGuardrailParams(),
         global_getRetirementDateInt(), activeLifeEvents
@@ -805,6 +852,20 @@ function rebuildProjectionCharts() {
         if (charting_jsonMetric1ChartData) {
             charting_jsonMetric1ChartData.options.plugins.dateMarkers = { markers };
             macroChart = new Chart(macroCanvas, charting_jsonMetric1ChartData);
+        } else {
+            // Empty state skeleton
+            macroChart = new Chart(macroCanvas, {
+                type: 'bar',
+                data: { labels: [], datasets: [] },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: { display: true, text: 'Add an asset to see data', color: '#9ca3af', font: { size: 13, weight: 'normal' } },
+                        dateMarkers: { markers },
+                    },
+                    scales: { x: { stacked: true }, y: { stacked: true } },
+                },
+            });
         }
     }
 
@@ -1112,8 +1173,7 @@ function openEditAssetModal(modelAsset) {
 function connectTransferModal() {
     transferModal.addEventListener('save-transfers', (ev) => {
         const { displayName, fundTransfers } = ev.detail;
-        // Default to first life event (accumulate phase)
-        const activePhase = activeLifeEvents[0];
+        const activePhase = activeLifeEvents[activePhaseIndex] ?? activeLifeEvents[0];
         if (activePhase) {
             activePhase.phaseTransfers[displayName] = fundTransfers.map(ft => ft.toJSON());
         }
@@ -1122,7 +1182,7 @@ function connectTransferModal() {
 }
 
 function showPopupTransfers(currentDisplayName) {
-    const activePhase = activeLifeEvents[0];
+    const activePhase = activeLifeEvents[activePhaseIndex] ?? activeLifeEvents[0];
     transferModal.currentDisplayName = currentDisplayName;
     transferModal.modelAssets = assetList.modelAssets || [];
     transferModal.phaseTransfers = activePhase?.phaseTransfers ?? {};

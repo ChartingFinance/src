@@ -194,6 +194,7 @@ export let charting_jsonMetricChartConfigIndividual = null; // for individual mo
 const chartMetricConfigCache = new Map();
 
 export function charting_buildDisplayLabels(firstDateInt, lastDateInt) {
+  if (!firstDateInt || !lastDateInt) return [];
   let monthsSpan = MonthsSpan.build(firstDateInt, lastDateInt);
   let runnerDateInt = new DateInt(firstDateInt.toInt());
   runnerDateInt.addMonths(monthsSpan.offsetMonths);

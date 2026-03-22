@@ -31,8 +31,10 @@ const SECTIONS = [
     { key: 'timeline',    label: 'Your Timeline' },
     { key: 'portfolio',   label: 'Your Portfolio' },
     { key: 'projections', label: 'Projections' },
-    { key: 'simulations', label: 'Simulations' },
-    { key: 'details',     label: 'Details' },
+    { key: 'montecarlo',  label: 'Monte Carlo' },
+    { key: 'guardrails',  label: 'Guardrails' },
+    { key: 'creditmemos', label: 'Credit Memos' },
+    { key: 'reports',     label: 'Reports' },
     { key: 'spreadsheet', label: 'Spreadsheet' },
 ];
 
@@ -223,16 +225,13 @@ export function generateProjectionsSectionMarkdown(portfolio, metricName) {
 
 // ── Simulations ─────────────────────────────────────────────────
 
-export function generateSimulationsSectionMarkdown(portfolio) {
-    if (!portfolio) return `# Simulations\n\nNo simulation has been run yet.\n` + GENERATOR_LINE;
+export function generateMonteCarloSectionMarkdown(portfolio) {
+    if (!portfolio) return `# Monte Carlo\n\nNo simulation has been run yet.\n` + GENERATOR_LINE;
 
-    let md = `# Simulations\n\n`;
-    md += `This section covers Monte Carlo analysis and Guyton-Klinger guardrails — stress testing the portfolio under randomized historical returns.\n\n`;
+    let md = `# Monte Carlo\n\n`;
 
-    // Monte Carlo
     const mcResults = getMonteCarloResults();
     if (mcResults) {
-        md += `## Monte Carlo Analysis\n`;
         md += `*${mcResults.numSimulations.toLocaleString()} simulations*`;
         if (mcResults.withGuardrails) md += ` *with guardrails active*`;
         md += '\n\n';
@@ -254,13 +253,21 @@ export function generateSimulationsSectionMarkdown(portfolio) {
         if (p10 < 0) md += `**Warning:** 10th percentile is negative (${fmt(p10)}).`;
         md += '\n\n';
     } else {
-        md += `## Monte Carlo\nNot yet run. Click ▶ Run to generate.\n\n`;
+        md += `Not yet run. Click ▶ Run to generate.\n\n`;
     }
 
-    // Guardrails
+    md += directionalNotes('montecarlo');
+    md += GENERATOR_LINE;
+    return md;
+}
+
+export function generateGuardrailsSectionMarkdown(portfolio) {
+    if (!portfolio) return `# Guardrails\n\nNo simulation has been run yet.\n` + GENERATOR_LINE;
+
+    let md = `# Guardrails\n\n`;
+
     const gr = getGuardrailsResults();
     if (gr) {
-        md += `## Guardrails\n`;
         md += `Target withdrawal: ${gr.params.withdrawalRate}%, `;
         md += `preservation: ${gr.params.preservation}%, `;
         md += `prosperity: ${gr.params.prosperity}%, `;
@@ -278,23 +285,21 @@ export function generateSimulationsSectionMarkdown(portfolio) {
             md += `No guardrail events triggered — withdrawal rate stayed within thresholds.\n\n`;
         }
     } else {
-        md += `## Guardrails\nNot yet run. Click ▶ Run to generate.\n\n`;
+        md += `Not yet run. Click ▶ Run to generate.\n\n`;
     }
 
-    md += directionalNotes('simulations');
+    md += directionalNotes('guardrails');
     md += GENERATOR_LINE;
     return md;
 }
 
 // ── Details ─────────────────────────────────────────────────────
 
-export function generateDetailsSectionMarkdown(portfolio) {
-    if (!portfolio) return `# Details\n\nNo simulation has been run yet.\n` + GENERATOR_LINE;
+export function generateCreditMemosSectionMarkdown(portfolio) {
+    if (!portfolio) return `# Credit Memos\n\nNo simulation has been run yet.\n` + GENERATOR_LINE;
 
-    let md = `# Details\n\n`;
-    md += `This section contains credit memos (audit trail of every value change) and financial reports (monthly/yearly income, taxes, expenses).\n\n`;
+    let md = `# Credit Memos\n\n`;
 
-    // Credit memo summary by asset
     const memosByAsset = new Map();
     for (const a of portfolio.modelAssets) {
         if (!a.creditMemos?.length) continue;
@@ -304,7 +309,6 @@ export function generateDetailsSectionMarkdown(portfolio) {
     }
 
     if (memosByAsset.size > 0) {
-        md += `## Credit Memo Summary\n`;
         md += `| Asset | Memos | Net Amount |\n`;
         md += `| :--- | ---: | ---: |\n`;
         for (const [name, { count, total }] of memosByAsset) {
@@ -312,6 +316,16 @@ export function generateDetailsSectionMarkdown(portfolio) {
         }
         md += '\n';
     }
+
+    md += directionalNotes('creditmemos');
+    md += GENERATOR_LINE;
+    return md;
+}
+
+export function generateReportsSectionMarkdown(portfolio) {
+    if (!portfolio) return `# Reports\n\nNo simulation has been run yet.\n` + GENERATOR_LINE;
+
+    let md = `# Reports\n\n`;
 
     // Tax summary from portfolio total
     const total = portfolio.total;
@@ -344,7 +358,7 @@ export function generateDetailsSectionMarkdown(portfolio) {
         md += '\n';
     }
 
-    md += directionalNotes('details');
+    md += directionalNotes('reports');
     md += GENERATOR_LINE;
     return md;
 }
@@ -388,7 +402,8 @@ export function generatePortfolioMarkdown(portfolio) {
     return [
         generatePortfolioSectionMarkdown(portfolio),
         generateProjectionsSectionMarkdown(portfolio, 'value'),
-        generateDetailsSectionMarkdown(portfolio),
+        generateCreditMemosSectionMarkdown(portfolio),
+        generateReportsSectionMarkdown(portfolio),
         generateSpreadsheetSectionMarkdown(portfolio),
     ].join('\n\n');
 }

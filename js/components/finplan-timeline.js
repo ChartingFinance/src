@@ -58,6 +58,15 @@ class FinplanTimeline extends LitElement {
         this._onDateChange = (e) => {
             this.selectedYear = e.detail.year;
             this.selectedMonth = e.detail.month;
+            // Auto-select the phase that the cursor now falls within
+            const phaseIndex = this._cursorPhaseIndex;
+            if (phaseIndex !== this.selectedIndex) {
+                this.selectedIndex = phaseIndex;
+                this.dispatchEvent(new CustomEvent('phase-select', {
+                    bubbles: true, composed: true,
+                    detail: { event: this._visibleEvents[phaseIndex], index: phaseIndex },
+                }));
+            }
         };
     }
 
@@ -105,6 +114,31 @@ class FinplanTimeline extends LitElement {
     get _selectedAge() {
         const birthYear = new Date().getFullYear() - this.startAge;
         return (this.selectedYear - birthYear) + (this.selectedMonth - 1) / 12;
+    }
+
+    // ── Cursor phase (which phase the selected date falls within) ──
+
+    get _cursorPhaseIndex() {
+        const age = this._selectedAge;
+        const visible = this._visibleEvents;
+        for (let i = visible.length - 1; i >= 0; i--) {
+            if (age >= visible[i].triggerAge) return i;
+        }
+        return 0;
+    }
+
+    get _cursorPhase() {
+        return this._visibleEvents[this._cursorPhaseIndex] ?? null;
+    }
+
+    _cursorColor() {
+        const phase = this._cursorPhase;
+        return phase ? LifeEventType.color(phase.type) : '#888780';
+    }
+
+    _cursorColorAccent() {
+        const phase = this._cursorPhase;
+        return phase ? LifeEventType.colorAccent(phase.type) : '#5F5E5A';
     }
 
     // ── Selected phase helpers ──────────────────────────────────────
@@ -189,7 +223,7 @@ class FinplanTimeline extends LitElement {
             <!-- Controls row -->
             <div class="flex items-center justify-center gap-3 mb-4">
                 <select class="text-xs px-2 py-1.5 rounded-lg cursor-pointer outline-none font-medium"
-                    style="background: #FAECE7; color: #993C1D; border: 1px solid #F5D0C5;"
+                    style="background: ${this._cursorColor()}20; color: ${this._cursorColorAccent()}; border: 1px solid ${this._cursorColor()}30;"
                     @change=${this._onYearChange}>
                     ${years.map(y => html`
                         <option value=${y} ?selected=${y === this.selectedYear}>${y}</option>
@@ -197,7 +231,7 @@ class FinplanTimeline extends LitElement {
                 </select>
 
                 <select class="text-xs px-2 py-1.5 rounded-lg cursor-pointer outline-none font-medium"
-                    style="background: #FAECE7; color: #993C1D; border: 1px solid #F5D0C5;"
+                    style="background: ${this._cursorColor()}20; color: ${this._cursorColorAccent()}; border: 1px solid ${this._cursorColor()}30;"
                     @change=${this._onMonthChange}>
                     ${MONTH_NAMES.map((name, i) => html`
                         <option value=${i + 1} ?selected=${(i + 1) === this.selectedMonth}>${name}</option>
@@ -299,10 +333,10 @@ class FinplanTimeline extends LitElement {
             if (pt.type === 'cursor') {
                 items.push(html`
                     <div class="flex flex-col items-center flex-shrink-0" style="width: 0;">
-                        <span style="font-size: 10px; font-weight: 700; background: #FAECE7; color: #993C1D;
+                        <span style="font-size: 10px; font-weight: 700; background: ${this._cursorColor()}20; color: ${this._cursorColorAccent()};
                                      padding: 1px 6px; border-radius: 8px; line-height: 1.3;
                                      white-space: nowrap;">You are Here</span>
-                        <span style="font-size: 12px; font-weight: 900; color: #993C1D; line-height: 1; margin-top: -1px;">&#9660;</span>
+                        <span style="font-size: 12px; font-weight: 900; color: ${this._cursorColorAccent()}; line-height: 1; margin-top: -1px;">&#9660;</span>
                     </div>
                 `);
             } else if (pt.type === 'start' || pt.type === 'finish') {
@@ -351,7 +385,7 @@ class FinplanTimeline extends LitElement {
                 items.push(html`
                     <div class="flex flex-col items-center flex-shrink-0 cursor-pointer" style="width: 24px;"
                          title="${ev.displayName}"
-                         @click=${() => this._onSelectPhase(i)}>
+                         @click=${(e) => { e.stopPropagation(); this._onSelectPhase(i); }}>
                         <div class="rounded-full transition-all"
                             style="width: ${size}px; height: ${size}px;
                                    background: ${LifeEventType.color(ev.type)};
@@ -381,7 +415,8 @@ class FinplanTimeline extends LitElement {
         }
 
         return html`
-            <div class="flex items-center px-2 mb-1">
+            <div class="flex items-center px-2 mb-1" style="cursor: pointer;"
+                 @click=${this._onTimelineBarClick}>
                 ${items}
             </div>
         `;
@@ -467,11 +502,37 @@ class FinplanTimeline extends LitElement {
         store.setSelectedYearMonth(this.selectedYear, month);
     }
 
+    _onTimelineBarClick(e) {
+        const bar = e.currentTarget;
+        const rect = bar.getBoundingClientRect();
+        const padding = 8; // px-2
+        const innerWidth = rect.width - padding * 2;
+        if (innerWidth <= 0) return;
+        const clickX = e.clientX - rect.left - padding;
+        const fraction = Math.max(0, Math.min(1, clickX / innerWidth));
+
+        const sAge = this._timelineStartAge;
+        const fAge = this._timelineFinishAge;
+        const age = sAge + fraction * (fAge - sAge);
+
+        const birthYear = new Date().getFullYear() - this.startAge;
+        const year = birthYear + Math.floor(age);
+        const month = Math.max(1, Math.min(12, Math.floor((age % 1) * 12) + 1));
+
+        store.setSelectedYearMonth(year, month);
+    }
+
     _onSelectPhase(index) {
         this.selectedIndex = index;
+        const ev = this._visibleEvents[index];
+        if (ev) {
+            const birthYear = new Date().getFullYear() - this.startAge;
+            const year = birthYear + ev.triggerAge;
+            store.setSelectedYearMonth(year, 1);
+        }
         this.dispatchEvent(new CustomEvent('phase-select', {
             bubbles: true, composed: true,
-            detail: { event: this._visibleEvents[index], index },
+            detail: { event: ev, index },
         }));
     }
 
