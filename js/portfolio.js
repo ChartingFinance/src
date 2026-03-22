@@ -96,14 +96,7 @@ export class Portfolio {
         this.monthly = new FinancialPackage();
         this.yearly = new FinancialPackage();
         this.total = new FinancialPackage();
-
-        /*
-        this.monthlyPropertyTaxes = [];
-        this.monthlyIncomeTaxes = [];
-        this.monthlyCapitalGainsTaxes = [];
-
-        this.displayCapitalGainsTaxes = [];
-        */
+        this.monthlyPackages = [];
 
         for (let modelAsset of this.modelAssets) {
             modelAsset.initializeChron();
@@ -647,6 +640,15 @@ export class Portfolio {
         return result;
     }
 
+    getHistoryCount() {
+        if (!this.modelAssets) return 0;
+        let total = 0;
+        for (let modelAsset of this.modelAssets) {
+            total += modelAsset.getHistoryCount();
+        }
+        return total;
+    }
+
     assertions() {
 
     }
@@ -655,6 +657,7 @@ export class Portfolio {
 
 // ── Asset Queries ─────────────────────────────────────────────────────
 // (merged from asset-queries.js)
+
 
 export function firstDateInt(assets) {
   if (!assets?.length) return null;

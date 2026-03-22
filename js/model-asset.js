@@ -447,6 +447,14 @@ export class ModelAsset {
     this.#metrics.setTrackHistory(enabled);
   }
 
+  getHistoryCount() {
+    let total = 0;
+    for (let metric of this.#metrics) {
+      total += metric.history.length + metric.displayHistory.length;
+    }
+    return total;
+  }
+
   // ── Chronometer lifecycle ────────────────────────────────────────
 
   initializeChron() {

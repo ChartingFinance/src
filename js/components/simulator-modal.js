@@ -14,6 +14,7 @@ import { LitElement, html } from 'lit';
 import { membrane_jsonObjectsToModelAssets } from '../membrane.js';
 import { chronometer_run } from '../chronometer.js';
 import { Portfolio } from '../portfolio.js';
+import { ModelLifeEvent } from '../life-event.js';
 import {
     setModelAssetColorIds,
     charting_buildPortfolioMetric,
@@ -33,6 +34,8 @@ class SimulatorModal extends LitElement {
         _bestValue:       { state: true },
         _runComplete:     { state: true },
         _sliderValue:     { state: true },
+        _instructions:    { state: true },
+        _showInstructions: { state: true },
     };
 
     createRenderRoot() { return this; }
@@ -51,6 +54,8 @@ class SimulatorModal extends LitElement {
         this._sliderValue = 50;
         this._chart = null;
         this._worker = null;
+        this._instructions = '';
+        this._showInstructions = false;
     }
 
     render() {
@@ -91,7 +96,32 @@ class SimulatorModal extends LitElement {
                 <span>${this._generation}</span>
                 <span class="font-medium">${this._status}</span>
                 <span class="font-semibold text-gray-700">${this._bestValue}</span>
+                ${this._instructions ? html`
+                    <button class="btn-modern outline text-xs"
+                        style="padding: 3px 10px;"
+                        @click=${() => { this._showInstructions = true; }}>
+                        📋 Recommendations
+                    </button>
+                ` : ''}
             </div>
+            ${this._showInstructions ? html`
+                <div class="sim-instructions-overlay"
+                    style="position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 1000; display: flex; align-items: center; justify-content: center;"
+                    @click=${(e) => { if (e.target === e.currentTarget) this._showInstructions = false; }}>
+                    <div style="background: white; border-radius: 12px; padding: 24px; max-width: 640px; width: 90%; max-height: 80vh; display: flex; flex-direction: column; box-shadow: 0 25px 50px rgba(0,0,0,0.25);">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 style="font-size: 14px; font-weight: 700; margin: 0;">Maximizer Recommendations</h3>
+                            <button style="background: none; border: none; font-size: 20px; cursor: pointer; padding: 0 4px; color: #666;"
+                                @click=${() => { this._showInstructions = false; }}>&times;</button>
+                        </div>
+                        <textarea readonly
+                            style="flex: 1; min-height: 300px; font-family: monospace; font-size: 12px; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; resize: none; background: #f9fafb;"
+                        >${this._instructions}</textarea>
+                        <button class="btn-modern outline text-xs" style="margin-top: 8px; align-self: flex-end; padding: 4px 12px;"
+                            @click=${this._copyInstructions}>📋 Copy</button>
+                    </div>
+                </div>
+            ` : ''}
         `;
     }
 
@@ -120,6 +150,10 @@ class SimulatorModal extends LitElement {
         }
     }
 
+    _copyInstructions() {
+        navigator.clipboard.writeText(this._instructions).catch(() => {});
+    }
+
     _restart() {
         this._teardown();
         this._runComplete = false;
@@ -135,6 +169,12 @@ class SimulatorModal extends LitElement {
 
         // Build initial chart from current portfolio
         const portfolio = new Portfolio(this.modelAssets, false);
+        if (this.lifeEvents?.length > 0) {
+            portfolio.lifeEvents = this.lifeEvents.map(e => e.copy());
+        }
+        if (this.guardrailParams) {
+            portfolio.guardrailsParams = { ...this.guardrailParams };
+        }
         chronometer_run(portfolio);
         portfolio.buildChartingDisplayData();
         setModelAssetColorIds(portfolio.modelAssets);
@@ -173,7 +213,7 @@ class SimulatorModal extends LitElement {
             const msg = event.data;
 
             if (msg.action === 'foundBetter') {
-                this._pendingBetter = msg.data;
+                this._pendingBetter = { assets: msg.data, lifeEvents: msg.lifeEvents, guardrailParams: msg.guardrailParams };
 
                 if (!this._updateTimer) {
                     this._updateTimer = setTimeout(() => {
@@ -193,6 +233,7 @@ class SimulatorModal extends LitElement {
                 this._status = 'Complete';
                 this._generation = 'Generation 200 / 200';
                 this._runComplete = true;
+                if (msg.instructions) this._instructions = msg.instructions;
             }
         };
 
@@ -201,11 +242,17 @@ class SimulatorModal extends LitElement {
 
     _processPendingBetter() {
         if (!this._pendingBetter || !this._chart) return;
-        const data = this._pendingBetter;
+        const { assets, lifeEvents, guardrailParams } = this._pendingBetter;
         this._pendingBetter = null;
 
-        const assetModels = membrane_jsonObjectsToModelAssets(data);
+        const assetModels = membrane_jsonObjectsToModelAssets(assets);
         const p = new Portfolio(assetModels, false);
+        if (lifeEvents) {
+            p.lifeEvents = lifeEvents.map(e => ModelLifeEvent.fromJSON(e));
+        }
+        if (guardrailParams) {
+            p.guardrailsParams = guardrailParams;
+        }
         chronometer_run(p);
         p.buildChartingDisplayData();
         setModelAssetColorIds(p.modelAssets);
@@ -248,6 +295,8 @@ class SimulatorModal extends LitElement {
         this._status = '';
         this._generation = '';
         this._bestValue = '';
+        this._instructions = '';
+        this._showInstructions = false;
     }
 }
 

@@ -70,6 +70,7 @@ class Simulator {
     constructor(portfolio, guardrailParams, fitnessBalance) {
 
         this.guardrailParams = { ...guardrailParams };
+        this._originalGuardrailParams = { ...guardrailParams };
         this.fitnessBalance = fitnessBalance;
 
         // Initial baseline run with history (for first chart render)
@@ -83,6 +84,12 @@ class Simulator {
 
         // Disable metric history for fitness evaluations (massive memory savings)
         this._setTrackHistory(false);
+
+        // Snapshot original phase transfers before GA mutates them
+        this._originalPhaseTransfers = portfolio.lifeEvents.map(e => ({
+            displayName: e.displayName,
+            phaseTransfers: structuredClone(e.phaseTransfers),
+        }));
 
         // Build gene map across all life event phases
         this.geneMap = [];
@@ -115,6 +122,13 @@ class Simulator {
         const totalYears = Math.max(portfolio.yearlySnapshots.length, 1);
         const volatilityPenalty = (preservationCount / totalYears) * 0.1;
 
+        // Penalize individual assets going negative (prevents debt concentration)
+        let debtPenalty = 0;
+        for (const asset of portfolio.modelAssets) {
+            const val = asset.finishCurrency.amount;
+            if (val < 0) debtPenalty += Math.abs(val) / THEORETICAL_MAX_PORTFOLIO;
+        }
+
         // Weight by slider position
         const weightCashFlow = this.fitnessBalance;
         const weightValue = 1 - this.fitnessBalance;
@@ -122,6 +136,7 @@ class Simulator {
         let fitness = (normalizedCashFlow * weightCashFlow) +
                       (normalizedTerminal * weightValue);
         fitness -= volatilityPenalty;
+        fitness -= debtPenalty;
 
         return Math.max(0, fitness);
     }
@@ -161,6 +176,105 @@ class Simulator {
         }
     }
 
+    // ── Instructions (diff original vs optimized) ─────────────────
+
+    _buildInstructions() {
+        const bestEvents = this.bestPortfolio.lifeEvents;
+        const spendingPct = Math.round(100 - (this.fitnessBalance * 100));
+        const terminalPct = 100 - spendingPct;
+        let md = '# Maximizer Recommendations\n\n';
+        md += `*Fitness objective: ${spendingPct}% Spending / ${terminalPct}% Terminal Value*\n\n`;
+        let hasChanges = false;
+
+        for (let i = 0; i < this._originalPhaseTransfers.length; i++) {
+            const orig = this._originalPhaseTransfers[i];
+            const best = bestEvents[i];
+            if (!best) continue;
+
+            const phaseChanges = [];
+
+            for (const [assetName, origTransfers] of Object.entries(orig.phaseTransfers)) {
+                const bestTransfers = best.phaseTransfers?.[assetName] ?? [];
+
+                for (const ot of origTransfers) {
+                    const bt = bestTransfers.find(t => t.toDisplayName === ot.toDisplayName);
+                    const origVal = Math.round(ot.monthlyMoveValue);
+                    const bestVal = bt ? Math.round(bt.monthlyMoveValue) : 0;
+                    if (origVal !== bestVal) {
+                        phaseChanges.push({ assetName, to: ot.toDisplayName, from: origVal, to_val: bestVal });
+                    }
+                }
+
+                // Transfers in best that weren't in original
+                for (const bt of bestTransfers) {
+                    if (!origTransfers.some(t => t.toDisplayName === bt.toDisplayName)) {
+                        const bestVal = Math.round(bt.monthlyMoveValue);
+                        if (bestVal > 0) {
+                            phaseChanges.push({ assetName, to: bt.toDisplayName, from: 0, to_val: bestVal });
+                        }
+                    }
+                }
+            }
+
+            // Transfers on assets not in original
+            if (best.phaseTransfers) {
+                for (const [assetName, bestTransfers] of Object.entries(best.phaseTransfers)) {
+                    if (orig.phaseTransfers[assetName]) continue;
+                    for (const bt of bestTransfers) {
+                        const bestVal = Math.round(bt.monthlyMoveValue);
+                        if (bestVal > 0) {
+                            phaseChanges.push({ assetName, to: bt.toDisplayName, from: 0, to_val: bestVal });
+                        }
+                    }
+                }
+            }
+
+            if (phaseChanges.length > 0) {
+                hasChanges = true;
+                md += `## ${orig.displayName} Phase\n\n`;
+                md += '| Asset | Transfer To | Current | Recommended |\n';
+                md += '| :--- | :--- | ---: | ---: |\n';
+                for (const c of phaseChanges) {
+                    md += `| ${c.assetName} | ${c.to} | ${c.from}% | ${c.to_val}% |\n`;
+                }
+                md += '\n';
+            }
+        }
+
+        // Guardrail param diff
+        const gp = this.bestGuardrailParams;
+        const op = this._originalGuardrailParams;
+        const grChanges = [];
+        if (Math.round(op.withdrawalRate * 10) !== Math.round(gp.withdrawalRate * 10))
+            grChanges.push(['Withdrawal Rate', `${op.withdrawalRate.toFixed(1)}%`, `${gp.withdrawalRate.toFixed(1)}%`]);
+        if (Math.round(op.preservation) !== Math.round(gp.preservation))
+            grChanges.push(['Preservation', `${Math.round(op.preservation)}%`, `${Math.round(gp.preservation)}%`]);
+        if (Math.round(op.prosperity) !== Math.round(gp.prosperity))
+            grChanges.push(['Prosperity', `${Math.round(op.prosperity)}%`, `${Math.round(gp.prosperity)}%`]);
+        if (Math.round(op.adjustment) !== Math.round(gp.adjustment))
+            grChanges.push(['Adjustment', `±${Math.round(op.adjustment)}%`, `±${Math.round(gp.adjustment)}%`]);
+
+        if (grChanges.length > 0) {
+            hasChanges = true;
+            md += '## Guardrail Parameters\n\n';
+            md += '| Parameter | Current | Recommended |\n';
+            md += '| :--- | ---: | ---: |\n';
+            for (const [name, cur, rec] of grChanges) {
+                md += `| ${name} | ${cur} | ${rec} |\n`;
+            }
+            md += '\n';
+        }
+
+        if (!hasChanges) {
+            md += 'No significant changes recommended. Current allocations are near-optimal.\n';
+        }
+
+        const bestVal = this.bestPortfolio.finishValue().amount;
+        md += `\n---\n*Optimized terminal value: $${bestVal.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}*\n`;
+
+        return md;
+    }
+
     // ── Phase-Aware Fund Transfer Management ─────────────────────
 
     /**
@@ -172,11 +286,13 @@ class Simulator {
         const closedSoFar = new Set();
         for (let phaseIdx = 0; phaseIdx < this.portfolio.lifeEvents.length; phaseIdx++) {
             const event = this.portfolio.lifeEvents[phaseIdx];
-            const alive = this.portfolio.modelAssets.filter(a => !closedSoFar.has(a.displayName));
-            this._ensurePhaseTransfersForAssets(event, alive);
+            // Apply this phase's closes before building transfers
+            // (mirrors ModelLifeEvent.apply which closes first, then applies transfers)
             for (const name of event.closes) {
                 closedSoFar.add(name);
             }
+            const alive = this.portfolio.modelAssets.filter(a => !closedSoFar.has(a.displayName));
+            this._ensurePhaseTransfersForAssets(event, alive);
         }
     }
 
@@ -284,7 +400,8 @@ class Simulator {
         this.portfolio.yearlySnapshots = [];
         this.portfolio.generatedReports = [];
 
-        chronometer_run(this.portfolio);
+        chronometer_run(this.portfolio);        
+        //console.log('Current history count: ' + this.portfolio.getHistoryCount());
 
         const fitness = this.calculateFitness(this.portfolio);
         if (fitness > this.bestFitness) {
@@ -303,6 +420,7 @@ class Simulator {
             callback({
                 "action": "foundBetter",
                 "data": this.bestPortfolio.modelAssets,
+                "lifeEvents": this.bestPortfolio.lifeEvents.map(e => e.toJSON()),
                 "guardrailParams": this.bestGuardrailParams,
             });
         }
@@ -354,6 +472,7 @@ class Simulator {
                     "action": "complete",
                     "data": this.bestPortfolio.modelAssets,
                     "guardrailParams": this.bestGuardrailParams,
+                    "instructions": this._buildInstructions(),
                 });
                 return;
             }
