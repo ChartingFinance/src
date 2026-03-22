@@ -72,7 +72,7 @@ class Simulator {
         this.guardrailParams = { ...guardrailParams };
         this.fitnessBalance = fitnessBalance;
 
-        // Always run with guardrails so we capture cash flow + event data
+        // Initial baseline run with history (for first chart render)
         portfolio.guardrailsParams = this.guardrailParams;
         chronometer_run(portfolio);
 
@@ -80,6 +80,9 @@ class Simulator {
         this.bestPortfolio = portfolio.copy();
         this.bestFitness = this.calculateFitness(portfolio);
         this.bestGuardrailParams = { ...this.guardrailParams };
+
+        // Disable metric history for fitness evaluations (massive memory savings)
+        this._setTrackHistory(false);
 
         // Build gene map across all life event phases
         this.geneMap = [];
@@ -149,6 +152,13 @@ class Simulator {
     _clampGuardrailGene(key, value) {
         const [min, max] = GUARDRAIL_RANGES[key];
         return Math.max(min, Math.min(max, value));
+    }
+
+    /** Toggle metric history tracking on all assets */
+    _setTrackHistory(enabled) {
+        for (const asset of this.portfolio.modelAssets) {
+            asset.setTrackHistory(enabled);
+        }
     }
 
     // ── Phase-Aware Fund Transfer Management ─────────────────────
@@ -268,7 +278,7 @@ class Simulator {
         // Extract guardrail params from chromosome genes
         const params = this._guardrailParamsFromChromosome(chromosome);
 
-        // Reset simulation state for fresh run
+        // Reset simulation state for fresh run (history disabled for speed)
         this.portfolio.guardrailsParams = params;
         this.portfolio.guardrailEvents = [];
         this.portfolio.yearlySnapshots = [];
@@ -279,8 +289,17 @@ class Simulator {
         const fitness = this.calculateFitness(this.portfolio);
         if (fitness > this.bestFitness) {
             this.bestFitness = fitness;
-            this.bestPortfolio = this.portfolio.copy();
             this.bestGuardrailParams = { ...params };
+
+            // Re-run with history enabled so the chart can render
+            this._setTrackHistory(true);
+            this.portfolio.guardrailEvents = [];
+            this.portfolio.yearlySnapshots = [];
+            this.portfolio.generatedReports = [];
+            chronometer_run(this.portfolio);
+            this._setTrackHistory(false);
+
+            this.bestPortfolio = this.portfolio.copy();
             callback({
                 "action": "foundBetter",
                 "data": this.bestPortfolio.modelAssets,

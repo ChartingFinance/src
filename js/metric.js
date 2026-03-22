@@ -227,6 +227,7 @@ export class TrackedMetric {
     this.current = new Currency();
     this.history = [];
     this.displayHistory = [];
+    this.trackHistory = true;
   }
 
   initialize() {
@@ -236,12 +237,12 @@ export class TrackedMetric {
   }
 
   snapshot() {
-    this.history.push(this.current.toCurrency());
+    if (this.trackHistory) this.history.push(this.current.toCurrency());
     this.current.zero();
   }
 
   snapshotKeep() {
-    this.history.push(this.current.toCurrency());
+    if (this.trackHistory) this.history.push(this.current.toCurrency());
   }
 
   add(amount) {
@@ -319,6 +320,10 @@ export class MetricSet {
 
   initializeAll() {
     for (const m of this._map.values()) m.initialize();
+  }
+
+  setTrackHistory(enabled) {
+    for (const m of this._map.values()) m.trackHistory = enabled;
   }
 
   snapshotAll(keepNames) {

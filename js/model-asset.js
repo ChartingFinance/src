@@ -443,6 +443,10 @@ export class ModelAsset {
   get monthlyCredits()               { return this.#metrics.get(Metric.CREDIT).history; }
 
 
+  setTrackHistory(enabled) {
+    this.#metrics.setTrackHistory(enabled);
+  }
+
   // ── Chronometer lifecycle ────────────────────────────────────────
 
   initializeChron() {
