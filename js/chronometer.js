@@ -187,7 +187,7 @@ export async function chronometer_run_animated(portfolio, visualizerContainerId)
 
         // Update the date in the UI
         if (dateDisplay) {
-            dateDisplay.textContent = `${monthNames[currentDateInt.month - 1]} ${currentDateInt.year}`;
+            dateDisplay.textContent = `${currentDateInt.year} ${monthNames[currentDateInt.month - 1]}`;
         }
 
         totalMonths += portfolio.applyMonth(currentDateInt);

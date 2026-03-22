@@ -7,14 +7,13 @@
 // Guardrails are always active during simulation so withdrawal adjustments
 // are reflected in both cash flow and terminal value outcomes.
 //
-// Chromosome layout:
-//   [...fundTransferMoveValues, withdrawalRate, preservation, prosperity, adjustment]
-//   Fund transfer genes: 0–100 (integer percentages)
+// Chromosome layout (phase-aware):
+//   [...phase0_ft_genes, ...phase1_ft_genes, ..., withdrawalRate, preservation, prosperity, adjustment]
+//   Fund transfer genes: 0–100 (integer percentages), grouped by life event phase
 //   Guardrail genes: real-valued within defined ranges
 
 import { InstrumentType } from './instruments/instrument.js';
 import { ModelAsset } from './model-asset.js';
-import { FundTransfer, Frequency } from './fund-transfer.js';
 import { chronometer_run } from './chronometer.js';
 import { setActiveTaxTable } from './globals.js';
 import { TaxTable } from './taxes.js';
@@ -82,9 +81,10 @@ class Simulator {
         this.bestFitness = this.calculateFitness(portfolio);
         this.bestGuardrailParams = { ...this.guardrailParams };
 
-        this.fundTransfers = [];
-        this.generateAllFundTransfers();
-
+        // Build gene map across all life event phases
+        this.geneMap = [];
+        this.ensureAllPhaseTransfers();
+        this.buildGeneMap();
     }
 
     /**
@@ -126,7 +126,7 @@ class Simulator {
     // ── Chromosome ↔ Guardrail Gene Helpers ─────────────────────
 
     /** Number of fund transfer genes (everything before the 4 guardrail genes) */
-    get _ftGeneCount() { return this.fundTransfers.length; }
+    get _ftGeneCount() { return this.geneMap.length; }
 
     /** Extract guardrail params from the last 4 genes of a chromosome */
     _guardrailParamsFromChromosome(chromosome) {
@@ -151,38 +151,69 @@ class Simulator {
         return Math.max(min, Math.min(max, value));
     }
 
-    // ── Fund Transfer Management ────────────────────────────────
+    // ── Phase-Aware Fund Transfer Management ─────────────────────
 
-    generateAllFundTransfers() {
-        for (const modelAsset of this.portfolio.modelAssets) {
-            if (InstrumentType.isMonthlyIncome(modelAsset.instrument) ||
-                InstrumentType.isMonthlyExpense(modelAsset.instrument))
-                this.generateAssetFundTransfers(modelAsset);
-        }
-    }
-
-    ensureFundTransfer(fromModel, toModel) {
-        if (!fromModel.hasFundTransfer(toModel.displayName)) {
-            const fundTransfer = new FundTransfer(toModel.displayName, Frequency.MONTHLY, 0.0);
-            fromModel.fundTransfers.push(fundTransfer);
-            this.fundTransfers.push(fundTransfer);
-        }
-    }
-
-    generateAssetFundTransfers(anchorAsset) {
-        if (!InstrumentType.isMonthlyIncome(anchorAsset.instrument) &&
-            !InstrumentType.isMonthlyExpense(anchorAsset.instrument)) return;
-
-        for (const modelAsset of this.portfolio.modelAssets) {
-            if (anchorAsset == modelAsset) continue;
-
-            if (InstrumentType.isMonthlyIncome(anchorAsset.instrument)) {
-                if (InstrumentType.isFundable(modelAsset.instrument))
-                    this.ensureFundTransfer(anchorAsset, modelAsset);
+    /**
+     * For each life event phase, ensure all valid income→fundable and
+     * expense→expensable transfers exist in that phase's phaseTransfers JSON.
+     * Tracks cumulative closes to determine which assets are alive per phase.
+     */
+    ensureAllPhaseTransfers() {
+        const closedSoFar = new Set();
+        for (let phaseIdx = 0; phaseIdx < this.portfolio.lifeEvents.length; phaseIdx++) {
+            const event = this.portfolio.lifeEvents[phaseIdx];
+            const alive = this.portfolio.modelAssets.filter(a => !closedSoFar.has(a.displayName));
+            this._ensurePhaseTransfersForAssets(event, alive);
+            for (const name of event.closes) {
+                closedSoFar.add(name);
             }
-            else if (InstrumentType.isMonthlyExpense(anchorAsset.instrument)) {
-                if (InstrumentType.isExpensable(modelAsset.instrument))
-                    this.ensureFundTransfer(anchorAsset, modelAsset);
+        }
+    }
+
+    _ensurePhaseTransfersForAssets(event, aliveAssets) {
+        if (!event.phaseTransfers) event.phaseTransfers = {};
+
+        for (const anchor of aliveAssets) {
+            if (!InstrumentType.isMonthlyIncome(anchor.instrument) &&
+                !InstrumentType.isMonthlyExpense(anchor.instrument)) continue;
+
+            if (!event.phaseTransfers[anchor.displayName]) {
+                event.phaseTransfers[anchor.displayName] = [];
+            }
+            const existing = event.phaseTransfers[anchor.displayName];
+
+            for (const target of aliveAssets) {
+                if (anchor === target) continue;
+
+                const shouldLink =
+                    (InstrumentType.isMonthlyIncome(anchor.instrument) && InstrumentType.isFundable(target.instrument)) ||
+                    (InstrumentType.isMonthlyExpense(anchor.instrument) && InstrumentType.isExpensable(target.instrument));
+
+                if (shouldLink && !existing.some(t => t.toDisplayName === target.displayName)) {
+                    existing.push({
+                        toDisplayName: target.displayName,
+                        frequency: 'monthly',
+                        monthlyMoveValue: 0,
+                        closeMoveValue: 0,
+                    });
+                }
+            }
+        }
+    }
+
+    /**
+     * Build flat geneMap: each entry maps a chromosome gene index to a specific
+     * monthlyMoveValue slot in a specific phase's phaseTransfers JSON.
+     */
+    buildGeneMap() {
+        this.geneMap = [];
+        for (let phaseIdx = 0; phaseIdx < this.portfolio.lifeEvents.length; phaseIdx++) {
+            const event = this.portfolio.lifeEvents[phaseIdx];
+            if (!event.phaseTransfers) continue;
+            for (const [assetName, transfers] of Object.entries(event.phaseTransfers)) {
+                for (let transferIdx = 0; transferIdx < transfers.length; transferIdx++) {
+                    this.geneMap.push({ phaseIdx, assetName, transferIdx });
+                }
             }
         }
     }
@@ -193,7 +224,7 @@ class Simulator {
         const population = [];
         for (let i = 0; i < popSize; i++) {
             const chromosome = [
-                ...this.fundTransfers.map(() => Math.ceil(Math.random() * 100)),
+                ...this.geneMap.map(() => Math.ceil(Math.random() * 100)),
                 this._randomGuardrailGene('withdrawalRate'),
                 this._randomGuardrailGene('preservation'),
                 this._randomGuardrailGene('prosperity'),
@@ -204,35 +235,44 @@ class Simulator {
         return population;
     }
 
+    /**
+     * Write chromosome gene values into phaseTransfers JSON for all phases,
+     * then apply stochastic limiting (cap total per asset at 100%).
+     */
     setFundTransfersFromChromosome(chromosome) {
-        for (let i = 0; i < this.fundTransfers.length; i++) {
-            this.fundTransfers[i].monthlyMoveValue = chromosome[i];
+        for (let i = 0; i < this.geneMap.length; i++) {
+            const { phaseIdx, assetName, transferIdx } = this.geneMap[i];
+            const transfers = this.portfolio.lifeEvents[phaseIdx].phaseTransfers[assetName];
+            transfers[transferIdx].monthlyMoveValue = chromosome[i];
         }
-        for (const modelAsset of this.portfolio.modelAssets) {
-            modelAsset.stochasticLimit(100);
+
+        // Stochastic limiting: cap each asset's total transfers at 100% per phase
+        for (const event of this.portfolio.lifeEvents) {
+            if (!event.phaseTransfers) continue;
+            for (const transfers of Object.values(event.phaseTransfers)) {
+                if (transfers.length <= 1) continue;
+                const total = transfers.reduce((sum, t) => sum + t.monthlyMoveValue, 0);
+                if (total > 100) {
+                    const scale = 100 / total;
+                    for (const t of transfers) {
+                        t.monthlyMoveValue *= scale;
+                    }
+                }
+            }
         }
     }
 
     evaluateFitness(chromosome, callback) {
         this.setFundTransfersFromChromosome(chromosome);
 
-        // Sync mutated transfer values back to phase so initializeChron picks them up
-        const phase0 = this.portfolio.lifeEvents[0];
-        if (phase0) {
-            for (const asset of this.portfolio.modelAssets) {
-                if (asset.fundTransfers.length > 0) {
-                    phase0.phaseTransfers[asset.displayName] = asset.fundTransfers.map(ft => ft.toJSON());
-                }
-            }
-        }
-
         // Extract guardrail params from chromosome genes
         const params = this._guardrailParamsFromChromosome(chromosome);
 
-        // Reset guardrail state for fresh simulation
+        // Reset simulation state for fresh run
         this.portfolio.guardrailsParams = params;
         this.portfolio.guardrailEvents = [];
         this.portfolio.yearlySnapshots = [];
+        this.portfolio.generatedReports = [];
 
         chronometer_run(this.portfolio);
 
@@ -287,8 +327,17 @@ class Simulator {
     runGeneticAlgorithm(popSize = 50, generations = 200, mutationRate = 0.15, callback) {
         let population = this.generateInitialPopulation(popSize);
         let bestChromosome = null;
+        let gen = 0;
 
-        for (let gen = 0; gen < generations; gen++) {
+        const runGeneration = () => {
+            if (gen >= generations) {
+                callback({
+                    "action": "complete",
+                    "data": this.bestPortfolio.modelAssets,
+                    "guardrailParams": this.bestGuardrailParams,
+                });
+                return;
+            }
 
             // Inject diversity every 50 gens, but keep the top performers
             if (gen > 0 && gen % 50 === 0) {
@@ -322,15 +371,17 @@ class Simulator {
                 "action": "iteration",
                 "data": "Generation: " + gen.toString() + '\n' + this.portfolio.dnaFundTransfers()
             });
-        }
 
-        callback({
-            "action": "complete",
-            "data": this.bestPortfolio.modelAssets,
-            "guardrailParams": this.bestGuardrailParams,
-        });
+            gen++;
+            // Yield to GC every 10 generations to prevent OOM in the worker
+            if (gen % 10 === 0) {
+                setTimeout(runGeneration, 0);
+            } else {
+                runGeneration();
+            }
+        };
 
-        return this.bestFitness;
+        runGeneration();
     }
 
 }

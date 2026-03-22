@@ -811,22 +811,13 @@ async function doVisualize() {
 }
 
 function doMaximize() {
-    let simModal = document.querySelector('simulator-modal');
-    if (!simModal) {
-        simModal = document.createElement('simulator-modal');
-        document.body.appendChild(simModal);
-
-        simModal.addEventListener('found-fittest', (e) => {
-            // Apply optimized assets
-            assetList.modelAssets = e.detail.modelAssets;
-            calculate();
-        });
-    }
-    simModal.modelAssets = assetList.modelAssets || [];
-    simModal.lifeEvents = activeLifeEvents;
-    simModal.guardrailParams = getGuardrailParams();
-    simModal.fitnessBalance = 100;
-    simModal.open = true;
+    const sim = document.getElementById('simulator-inline');
+    if (!sim) return;
+    sim.modelAssets = assetList.modelAssets || [];
+    sim.lifeEvents = activeLifeEvents;
+    sim.guardrailParams = getGuardrailParams();
+    sim.fitnessBalance = 100;
+    sim.open = true;
 }
 
 function buildPhaseMarkersForCharts() {

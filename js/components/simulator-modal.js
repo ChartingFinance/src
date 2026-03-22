@@ -1,8 +1,8 @@
 /**
  * <simulator-modal>
  *
- * Lit component that wraps the genetic algorithm simulator popup.
- * Set `modelAssets` and `open` to launch; dispatches 'close' when dismissed.
+ * Lit component that wraps the genetic algorithm simulator.
+ * Renders inline (not as a popup). Set `modelAssets` and `open` to launch.
  * Manages Chart.js instance and Web Worker lifecycle internally.
  *
  * The fitnessBalance slider controls the unified fitness function:
@@ -19,7 +19,6 @@ import {
     charting_buildPortfolioMetric,
     charting_buildDateMarkers,
 } from '../charting.js';
-import './asset-list.js';
 
 class SimulatorModal extends LitElement {
 
@@ -32,7 +31,6 @@ class SimulatorModal extends LitElement {
         _status:          { state: true },
         _generation:      { state: true },
         _bestValue:       { state: true },
-        _displayAssets:   { state: true },
         _runComplete:     { state: true },
         _sliderValue:     { state: true },
     };
@@ -46,10 +44,9 @@ class SimulatorModal extends LitElement {
         this.lifeEvents = [];
         this.guardrailParams = null;
         this.fitnessBalance = 50;
-        this._status = 'Starting...';
-        this._generation = 'Generation 0 / 200';
+        this._status = '';
+        this._generation = '';
         this._bestValue = '';
-        this._displayAssets = [];
         this._runComplete = false;
         this._sliderValue = 50;
         this._chart = null;
@@ -59,45 +56,41 @@ class SimulatorModal extends LitElement {
     render() {
         if (!this.open) return html``;
 
+        const steps = [];
+        for (let v = 0; v <= 100; v += 5) steps.push(v);
+
         return html`
-            <div class="sim-overlay" @click=${this._onOverlayClick}>
-                <div class="sim-modal" @click=${(e) => e.stopPropagation()}>
-                    <div class="sim-header">
-                        <span class="sim-title">Simulator</span>
-                        <div class="sim-controls">
-                            <span class="sim-status">${this._status}</span>
-                            <button class="sim-close-btn" title="Close"
-                                @click=${this._close}>&times;</button>
-                        </div>
-                    </div>
-                    <div class="text-xs text-gray-400 px-4 pt-2">
-                        Results saved as "Fittest" in the portfolio scenario dropdown.
-                    </div>
-                    <div class="flex items-center gap-3 px-4 pt-2 text-xs">
-                        <span class="text-gray-500 font-semibold whitespace-nowrap">Spending</span>
-                        <input type="range" min="0" max="100" step="5"
-                            .value=${String(this._sliderValue)}
-                            class="flex-grow"
-                            style="accent-color: #333;"
-                            @input=${this._onSliderInput}
-                            @change=${this._onSliderChange}>
-                        <span class="text-gray-500 font-semibold whitespace-nowrap">Terminal Value</span>
-                    </div>
-                    <div class="sim-body">
-                        <div class="sim-chart-area">
-                            <canvas></canvas>
-                        </div>
-                        <div class="sim-assets-panel">
-                            <asset-list class="sim-assets-container assets-container"
-                                .modelAssets=${this._displayAssets}
-                                readonly></asset-list>
-                        </div>
-                    </div>
-                    <div class="sim-footer">
-                        <span class="sim-generation">${this._generation}</span>
-                        <span class="sim-best-value">${this._bestValue}</span>
-                    </div>
+            <div class="flex items-center gap-2 mb-3 text-xs">
+                <span class="text-gray-500 font-semibold whitespace-nowrap">Spending</span>
+                <div class="flex items-center flex-grow" style="gap: 2px;">
+                    ${steps.map(v => html`
+                        <button
+                            class="sim-notch"
+                            style="
+                                flex: 1;
+                                height: ${v === this._sliderValue ? '18px' : '10px'};
+                                border: none;
+                                border-radius: 2px;
+                                cursor: pointer;
+                                transition: all 0.15s ease;
+                                background: ${v === this._sliderValue
+                                    ? '#333'
+                                    : '#d1d5db'};
+                            "
+                            title="${100 - v}% Spending / ${v}% Terminal Value"
+                            @click=${() => this._onNotchClick(v)}
+                        ></button>
+                    `)}
                 </div>
+                <span class="text-gray-500 font-semibold whitespace-nowrap">Terminal Value</span>
+            </div>
+            <div class="finplan-chart-canvas-wrap" style="min-height: 300px;">
+                <canvas></canvas>
+            </div>
+            <div class="flex items-center justify-between mt-2 text-xs text-gray-500">
+                <span>${this._generation}</span>
+                <span class="font-medium">${this._status}</span>
+                <span class="font-semibold text-gray-700">${this._bestValue}</span>
             </div>
         `;
     }
@@ -120,11 +113,8 @@ class SimulatorModal extends LitElement {
 
     // ── Private ──────────────────────────────────────────────────
 
-    _onSliderInput(e) {
-        this._sliderValue = parseInt(e.target.value);
-    }
-
-    _onSliderChange() {
+    _onNotchClick(value) {
+        this._sliderValue = value;
         if (this._runComplete) {
             this._restart();
         }
@@ -134,7 +124,7 @@ class SimulatorModal extends LitElement {
         this._teardown();
         this._runComplete = false;
         this._status = 'Starting...';
-        this._generation = 'Generation 0 / 200';
+        this._generation = '';
         this._bestValue = '';
         requestAnimationFrame(() => this._start());
     }
@@ -156,7 +146,6 @@ class SimulatorModal extends LitElement {
         chartConfig.options.maintainAspectRatio = false;
 
         this._chart = new Chart(canvas, chartConfig);
-        this._displayAssets = [...portfolio.modelAssets];
 
         if (!window.Worker) {
             this._status = 'Web Workers not supported';
@@ -185,14 +174,6 @@ class SimulatorModal extends LitElement {
 
             if (msg.action === 'foundBetter') {
                 this._pendingBetter = msg.data;
-
-                this.dispatchEvent(new CustomEvent('found-fittest', {
-                    bubbles: true, composed: true,
-                    detail: {
-                        modelAssets: msg.data,
-                        guardrailParams: msg.guardrailParams,
-                    },
-                }));
 
                 if (!this._updateTimer) {
                     this._updateTimer = setTimeout(() => {
@@ -244,8 +225,6 @@ class SimulatorModal extends LitElement {
         this._chart.data.labels = newData.labels;
         this._chart.update();
 
-        this._displayAssets = [...p.modelAssets];
-
         const bestVal = p.finishValue().amount;
         this._bestValue = 'Best: $' + bestVal.toLocaleString(undefined, {
             minimumFractionDigits: 0, maximumFractionDigits: 0
@@ -266,19 +245,9 @@ class SimulatorModal extends LitElement {
             this._chart.destroy();
             this._chart = null;
         }
-        this._status = 'Starting...';
-        this._generation = 'Generation 0 / 200';
+        this._status = '';
+        this._generation = '';
         this._bestValue = '';
-        this._displayAssets = [];
-    }
-
-    _close() {
-        this.open = false;
-        this.dispatchEvent(new CustomEvent('close', { bubbles: true, composed: true }));
-    }
-
-    _onOverlayClick(ev) {
-        if (ev.target === ev.currentTarget) this._close();
     }
 }
 
