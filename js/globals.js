@@ -437,6 +437,11 @@ export function global_getBacktestYear() {
     global_backtestYear = local;
 }
 
+/** Set backtest year directly (no localStorage). Used by Web Workers. */
+export function global_setBacktestYearDirect(value) {
+    global_backtestYear = value;
+}
+
 // ── Guardrails ────────────────────────────────────────────────
 
 export const global_default_guardrail_withdrawalRate = 5;

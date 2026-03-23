@@ -198,6 +198,7 @@ syncGlobalsToSettings();
 connectSettings();
 
 // Load data
+let _pendingImport = null;
 initiateActiveData();
 
 // Wire sidebar events
@@ -343,6 +344,30 @@ document.getElementById('btn-run-mc').addEventListener('click', () => doMonteCar
 document.getElementById('btn-run-guardrails').addEventListener('click', () => doGuardrails());
 document.getElementById('btn-visualize').addEventListener('click', () => doVisualize());
 document.getElementById('btn-maximize').addEventListener('click', () => doMaximize());
+
+// Apply optimized transfers and guardrails from the Maximizer
+document.getElementById('simulator-inline').addEventListener('apply-optimized', (ev) => {
+    const { lifeEvents, guardrailParams } = ev.detail;
+
+    // Update phase transfers on existing life events (preserves triggerAge, closes, etc.)
+    if (lifeEvents) {
+        const optimized = lifeEvents.map(ModelLifeEvent.fromJSON);
+        for (let i = 0; i < activeLifeEvents.length && i < optimized.length; i++) {
+            activeLifeEvents[i].phaseTransfers = optimized[i].phaseTransfers;
+        }
+    }
+
+    // Update guardrail globals and sync to DOM inputs
+    if (guardrailParams) {
+        global_setGuardrailWithdrawalRate(guardrailParams.withdrawalRate);
+        global_setGuardrailPreservation(guardrailParams.preservation);
+        global_setGuardrailProsperity(guardrailParams.prosperity);
+        global_setGuardrailAdjustment(guardrailParams.adjustment);
+        syncGuardrailsToDOM();
+    }
+
+    calculate();
+});
 
 // ── View toggle (Assets / Properties) ─────────────────────
 const viewToggle = document.getElementById('viewToggle');
@@ -816,6 +841,7 @@ function doMaximize() {
     sim.modelAssets = assetList.modelAssets || [];
     sim.lifeEvents = activeLifeEvents;
     sim.guardrailParams = getGuardrailParams();
+    sim.backtestYear = global_backtestYear;
     sim.fitnessBalance = 100;
     if (sim.open) {
         sim.restart();
@@ -1329,7 +1355,9 @@ function loadSharedPortfolio() {
         titleInput.value = data.portfolioName || 'Shared Portfolio';
         noteInput.value = data.note || '';
 
-        document.getElementById('popupImportPortfolio').style.display = 'flex';
+        const popup = document.getElementById('popupImportPortfolio');
+        popup.classList.remove('hidden');
+        popup.style.display = 'flex';
 
         // Clean URL without reloading
         window.history.replaceState({}, '', window.location.pathname);
@@ -1339,8 +1367,6 @@ function loadSharedPortfolio() {
         return false;
     }
 }
-
-let _pendingImport = null;
 
 function applyImportedPortfolio(data, persist) {
     // Apply global settings

@@ -12,11 +12,11 @@
 //   Fund transfer genes: 0–100 (integer percentages), grouped by life event phase
 //   Guardrail genes: real-valued within defined ranges
 
-import { Instrument, InstrumentType } from './instruments/instrument.js';
+import { Instrument, InstrumentType, InstrumentMeta } from './instruments/instrument.js';
 import { LifeEventType } from './life-event.js';
 import { ModelAsset } from './model-asset.js';
 import { chronometer_run } from './chronometer.js';
-import { setActiveTaxTable } from './globals.js';
+import { setActiveTaxTable, global_setBacktestYearDirect } from './globals.js';
 import { TaxTable } from './taxes.js';
 import { Portfolio } from './portfolio.js';
 import { ModelLifeEvent } from './life-event.js';
@@ -51,6 +51,11 @@ self.onmessage = function(event) {
     setActiveTaxTable(new TaxTable());
 
     const payload = event.data;
+
+    // Apply backtest year so chronometer uses historical returns
+    if (payload.backtestYear) {
+        global_setBacktestYearDirect(payload.backtestYear);
+    }
     const assetModels = (Array.isArray(payload) ? payload : payload.modelAssets)
         .map(obj => ModelAsset.fromJSON(obj));
 
@@ -95,6 +100,16 @@ class Simulator {
         this.bestPortfolio = portfolio.copy();
         this.bestFitness = this.calculateFitness(portfolio);
         this.bestGuardrailParams = { ...this.guardrailParams };
+
+        // Snapshot baseline per-asset values for recommendations comparison
+        this._baselineTerminalValue = portfolio.finishValue().amount;
+        this._baselineAssetSnapshot = portfolio.modelAssets.map(a => ({
+            name: a.displayName,
+            instrument: a.instrument,
+            startValue: a.startCurrency.amount,
+            endValue: a.finishCurrency.amount,
+            isClosed: a.isClosed,
+        }));
 
         // Disable metric history for fitness evaluations (massive memory savings)
         this._setTrackHistory(false);
@@ -196,10 +211,79 @@ class Simulator {
         const bestEvents = this.bestPortfolio.lifeEvents;
         const spendingPct = Math.round(this.fitnessBalance * 100);
         const terminalPct = 100 - spendingPct;
+        const fmt = (v) => '$' + Math.round(v).toLocaleString();
+        const pctChange = (from, to) => from === 0
+            ? (to > 0 ? '+100' : '0')
+            : ((to - from) / Math.abs(from) * 100).toFixed(0);
+
         let md = '# Maximizer Recommendations\n\n';
-        md += `*Fitness objective: ${spendingPct}% Spending / ${terminalPct}% Terminal Value*\n\n`;
-        md += `*Constraints: Real Estate/Mortgage/Debt locked; Expenses ±25%; Retirement contributions capped (25% accumulation, 10% retirement); all others fully optimized*\n\n`;
-        let hasChanges = false;
+        md += `*Fitness objective: ${spendingPct}% Spending / ${terminalPct}% Terminal Value*\n`;
+        md += `*Constraints: Real Estate/Mortgage/Debt locked; Expenses +/-25%; Retirement contributions capped (25% accumulation, 10% retirement); all others fully optimized*\n\n`;
+
+        // ── Headline: Baseline vs Optimized ──────────────────────────
+        const bestTerminal = this.bestPortfolio.finishValue().amount;
+        const baseTerminal = this._baselineTerminalValue;
+        const terminalDelta = bestTerminal - baseTerminal;
+        const terminalPctChg = pctChange(baseTerminal, bestTerminal);
+
+        md += '## Bottom Line\n\n';
+        md += `| | Baseline | Optimized | Change |\n`;
+        md += `| :--- | ---: | ---: | ---: |\n`;
+        md += `| Terminal Value | ${fmt(baseTerminal)} | ${fmt(bestTerminal)} | ${fmt(terminalDelta)} (${terminalPctChg}%) |\n\n`;
+
+        // ── Per-Asset Comparison ─────────────────────────────────────
+        const bestAssets = this.bestPortfolio.modelAssets;
+        const assetComps = [];
+
+        for (const base of this._baselineAssetSnapshot) {
+            const opt = bestAssets.find(a => a.displayName === base.name);
+            if (!opt) continue;
+            const optEnd = opt.finishCurrency.amount;
+            const delta = optEnd - base.endValue;
+            const meta = InstrumentMeta.get(base.instrument);
+            assetComps.push({
+                name: base.name,
+                emoji: meta?.assetEmoji || '',
+                instrument: base.instrument,
+                baseStart: base.startValue,
+                baseEnd: base.endValue,
+                optEnd,
+                delta,
+                absDelta: Math.abs(delta),
+            });
+        }
+
+        // Sort by absolute impact (biggest movers first)
+        assetComps.sort((a, b) => b.absDelta - a.absDelta);
+
+        // Only show assets with meaningful divergence (> $100)
+        const meaningful = assetComps.filter(a => a.absDelta > 100);
+
+        if (meaningful.length > 0) {
+            md += '## Portfolio Impact by Asset\n\n';
+            md += `The optimizer found a different growth path for ${meaningful.length} asset${meaningful.length > 1 ? 's' : ''}. `;
+            md += 'Assets are ranked by the magnitude of change from your baseline.\n\n';
+            md += '| Asset | Baseline End | Optimized End | Impact |\n';
+            md += '| :--- | ---: | ---: | ---: |\n';
+            for (const a of meaningful) {
+                const sign = a.delta >= 0 ? '+' : '';
+                md += `| ${a.emoji} ${a.name} | ${fmt(a.baseEnd)} | ${fmt(a.optEnd)} | ${sign}${fmt(a.delta)} |\n`;
+            }
+            md += '\n';
+
+            // ── Narrative callouts for top movers ────────────────────
+            const callouts = this._buildDivergenceCallouts(meaningful);
+            if (callouts.length > 0) {
+                md += '### Key Insights\n\n';
+                for (const c of callouts) {
+                    md += `- ${c}\n`;
+                }
+                md += '\n';
+            }
+        }
+
+        // ── Fund Transfer Diffs (per phase) ──────────────────────────
+        let hasTransferChanges = false;
 
         for (let i = 0; i < this._originalPhaseTransfers.length; i++) {
             const orig = this._originalPhaseTransfers[i];
@@ -220,7 +304,6 @@ class Simulator {
                     }
                 }
 
-                // Transfers in best that weren't in original
                 for (const bt of bestTransfers) {
                     if (!origTransfers.some(t => t.toDisplayName === bt.toDisplayName)) {
                         const bestVal = Math.round(bt.monthlyMoveValue);
@@ -231,7 +314,6 @@ class Simulator {
                 }
             }
 
-            // Transfers on assets not in original
             if (best.phaseTransfers) {
                 for (const [assetName, bestTransfers] of Object.entries(best.phaseTransfers)) {
                     if (orig.phaseTransfers[assetName]) continue;
@@ -245,8 +327,8 @@ class Simulator {
             }
 
             if (phaseChanges.length > 0) {
-                hasChanges = true;
-                md += `## ${orig.displayName} Phase\n\n`;
+                hasTransferChanges = true;
+                md += `## ${orig.displayName} Phase — Transfer Changes\n\n`;
                 md += '| Asset | Transfer To | Current | Recommended |\n';
                 md += '| :--- | :--- | ---: | ---: |\n';
                 for (const c of phaseChanges) {
@@ -256,7 +338,7 @@ class Simulator {
             }
         }
 
-        // Guardrail param diff
+        // ── Guardrail param diff ─────────────────────────────────────
         const gp = this.bestGuardrailParams;
         const op = this._originalGuardrailParams;
         const grChanges = [];
@@ -267,10 +349,10 @@ class Simulator {
         if (Math.round(op.prosperity) !== Math.round(gp.prosperity))
             grChanges.push(['Prosperity', `${Math.round(op.prosperity)}%`, `${Math.round(gp.prosperity)}%`]);
         if (Math.round(op.adjustment) !== Math.round(gp.adjustment))
-            grChanges.push(['Adjustment', `±${Math.round(op.adjustment)}%`, `±${Math.round(gp.adjustment)}%`]);
+            grChanges.push(['Adjustment', `+/-${Math.round(op.adjustment)}%`, `+/-${Math.round(gp.adjustment)}%`]);
 
         if (grChanges.length > 0) {
-            hasChanges = true;
+            hasTransferChanges = true;
             md += '## Guardrail Parameters\n\n';
             md += '| Parameter | Current | Recommended |\n';
             md += '| :--- | ---: | ---: |\n';
@@ -280,14 +362,111 @@ class Simulator {
             md += '\n';
         }
 
-        if (!hasChanges) {
+        // ── Guardrail Events Summary ─────────────────────────────────
+        const preservationCount = this.bestPortfolio.guardrailEvents
+            .filter(e => e.type === 'preservation').length;
+        const prosperityCount = this.bestPortfolio.guardrailEvents
+            .filter(e => e.type === 'prosperity').length;
+
+        if (preservationCount > 0 || prosperityCount > 0) {
+            md += '## Guardrail Activity\n\n';
+            md += `During the optimized simulation, guardrails triggered ${preservationCount + prosperityCount} time${preservationCount + prosperityCount > 1 ? 's' : ''}`;
+            if (preservationCount > 0) {
+                md += `: ${preservationCount} preservation cut${preservationCount > 1 ? 's' : ''} (spending reduced in down markets)`;
+            }
+            if (prosperityCount > 0) {
+                md += `${preservationCount > 0 ? ', ' : ': '}${prosperityCount} prosperity raise${prosperityCount > 1 ? 's' : ''} (spending increased in up markets)`;
+            }
+            md += '.\n';
+            if (preservationCount > 3) {
+                md += `*Note: ${preservationCount} preservation cuts suggests the withdrawal rate may be aggressive. Consider lowering it for more stability.*\n`;
+            }
+            md += '\n';
+        }
+
+        if (!hasTransferChanges && meaningful.length === 0) {
             md += 'No significant changes recommended. Current allocations are near-optimal.\n';
         }
 
-        const bestVal = this.bestPortfolio.finishValue().amount;
-        md += `\n---\n*Optimized terminal value: $${bestVal.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}*\n`;
+        md += `\n---\n*Optimized terminal value: ${fmt(bestTerminal)}*\n`;
 
         return md;
+    }
+
+    /**
+     * Build human-readable callouts explaining WHY each top-mover diverged.
+     * Cross-references transfer changes with asset value impacts.
+     */
+    _buildDivergenceCallouts(assetComps) {
+        const callouts = [];
+        const bestEvents = this.bestPortfolio.lifeEvents;
+        const top = assetComps.slice(0, 5); // Focus on top 5 movers
+
+        for (const asset of top) {
+            const reasons = [];
+
+            // Find transfer changes that flow INTO or OUT OF this asset
+            for (let i = 0; i < this._originalPhaseTransfers.length; i++) {
+                const orig = this._originalPhaseTransfers[i];
+                const best = bestEvents[i];
+                if (!best) continue;
+                const phaseName = orig.displayName;
+
+                // Transfers FROM other assets INTO this asset
+                for (const [sourceName, origTransfers] of Object.entries(orig.phaseTransfers)) {
+                    const bestTransfers = best.phaseTransfers?.[sourceName] ?? [];
+                    for (const ot of origTransfers) {
+                        if (ot.toDisplayName !== asset.name) continue;
+                        const bt = bestTransfers.find(t => t.toDisplayName === ot.toDisplayName);
+                        const origVal = Math.round(ot.monthlyMoveValue);
+                        const bestVal = bt ? Math.round(bt.monthlyMoveValue) : 0;
+                        if (origVal !== bestVal) {
+                            const direction = bestVal > origVal ? 'increased' : 'decreased';
+                            reasons.push(`${sourceName} contributions ${direction} from ${origVal}% to ${bestVal}% (${phaseName})`);
+                        }
+                    }
+                }
+
+                // Transfers FROM this asset to others
+                const origOut = orig.phaseTransfers[asset.name] ?? [];
+                const bestOut = best.phaseTransfers?.[asset.name] ?? [];
+                for (const ot of origOut) {
+                    const bt = bestOut.find(t => t.toDisplayName === ot.toDisplayName);
+                    const origVal = Math.round(ot.monthlyMoveValue);
+                    const bestVal = bt ? Math.round(bt.monthlyMoveValue) : 0;
+                    if (origVal !== bestVal) {
+                        const direction = bestVal > origVal ? 'increased' : 'decreased';
+                        reasons.push(`outflows to ${ot.toDisplayName} ${direction} from ${origVal}% to ${bestVal}% (${phaseName})`);
+                    }
+                }
+            }
+
+            // Build the callout
+            const fmt = (v) => '$' + Math.round(v).toLocaleString();
+            const sign = asset.delta >= 0 ? '+' : '';
+            let callout = `**${asset.emoji} ${asset.name}** (${sign}${fmt(asset.delta)}): `;
+
+            if (reasons.length > 0) {
+                callout += reasons.join('; ') + '.';
+            } else if (asset.baseEnd < 0 && asset.optEnd >= 0) {
+                callout += 'Eliminated negative balance. Avoiding debt prevents compounding losses that accelerate over time.';
+            } else if (asset.baseEnd >= 0 && asset.optEnd < 0) {
+                callout += 'Went negative under the optimized plan. Review transfers to prevent debt accumulation.';
+            } else if (Math.abs(asset.delta) > 100_000) {
+                callout += 'Large shift driven by compounding differences in fund transfer routing over the full simulation period.';
+            } else {
+                callout += 'Minor adjustment from rebalanced transfer percentages.';
+            }
+
+            // Extra warning for debt recovery
+            if (asset.baseEnd < -1000 && asset.optEnd > 0) {
+                callout += ' Negative balances compound against you — even small changes to prevent crossing zero can have outsized impact over decades.';
+            }
+
+            callouts.push(callout);
+        }
+
+        return callouts;
     }
 
     // ── Phase-Aware Fund Transfer Management ─────────────────────
@@ -570,6 +749,7 @@ class Simulator {
                 callback({
                     "action": "complete",
                     "data": this.bestPortfolio.modelAssets,
+                    "lifeEvents": this.bestPortfolio.lifeEvents.map(e => e.toJSON()),
                     "guardrailParams": this.bestGuardrailParams,
                     "instructions": this._buildInstructions(),
                 });

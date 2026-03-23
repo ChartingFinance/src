@@ -28,6 +28,7 @@ class SimulatorModal extends LitElement {
         modelAssets:      { type: Array },
         lifeEvents:       { type: Array },
         guardrailParams:  { type: Object },
+        backtestYear:     { type: String },
         fitnessBalance:   { type: Number },
         _status:          { state: true },
         _generation:      { state: true },
@@ -46,6 +47,7 @@ class SimulatorModal extends LitElement {
         this.modelAssets = [];
         this.lifeEvents = [];
         this.guardrailParams = null;
+        this.backtestYear = 'current';
         this.fitnessBalance = 50;
         this._status = '';
         this._generation = '';
@@ -56,6 +58,8 @@ class SimulatorModal extends LitElement {
         this._worker = null;
         this._instructions = '';
         this._showInstructions = false;
+        this._bestLifeEvents = null;
+        this._bestGuardrailParams = null;
     }
 
     render() {
@@ -117,8 +121,14 @@ class SimulatorModal extends LitElement {
                         <textarea readonly
                             style="flex: 1; min-height: 300px; font-family: monospace; font-size: 12px; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; resize: none; background: #f9fafb;"
                         >${this._instructions}</textarea>
-                        <button class="btn-modern outline text-xs" style="margin-top: 8px; align-self: flex-end; padding: 4px 12px;"
-                            @click=${this._copyInstructions}>📋 Copy</button>
+                        <div class="flex items-center justify-end gap-2 mt-2">
+                            <button class="btn-modern outline text-xs" style="padding: 4px 12px;"
+                                @click=${this._copyInstructions}>Copy</button>
+                            ${this._bestLifeEvents ? html`
+                                <button class="btn-modern primary text-xs" style="padding: 4px 12px;"
+                                    @click=${this._applyToBaseline}>Apply to Baseline</button>
+                            ` : ''}
+                        </div>
                     </div>
                 </div>
             ` : ''}
@@ -198,6 +208,7 @@ class SimulatorModal extends LitElement {
             modelAssets: JSON.parse(JSON.stringify(this.modelAssets)),
             lifeEvents: this.lifeEvents.map(e => e.toJSON()),
             guardrailParams: this.guardrailParams,
+            backtestYear: this.backtestYear,
             fitnessBalance: this._sliderValue,
         });
 
@@ -234,6 +245,8 @@ class SimulatorModal extends LitElement {
                 this._generation = 'Generation 200 / 200';
                 this._runComplete = true;
                 if (msg.instructions) this._instructions = msg.instructions;
+                if (msg.lifeEvents) this._bestLifeEvents = msg.lifeEvents;
+                if (msg.guardrailParams) this._bestGuardrailParams = msg.guardrailParams;
             }
         };
 
@@ -244,6 +257,10 @@ class SimulatorModal extends LitElement {
         if (!this._pendingBetter || !this._chart) return;
         const { assets, lifeEvents, guardrailParams } = this._pendingBetter;
         this._pendingBetter = null;
+
+        // Retain best results for "Apply to Baseline"
+        if (lifeEvents) this._bestLifeEvents = lifeEvents;
+        if (guardrailParams) this._bestGuardrailParams = guardrailParams;
 
         const assetModels = membrane_jsonObjectsToModelAssets(assets);
         const p = new Portfolio(assetModels, false);
@@ -296,6 +313,19 @@ class SimulatorModal extends LitElement {
         this._generation = '';
         this._bestValue = '';
         this._instructions = '';
+        this._showInstructions = false;
+        this._bestLifeEvents = null;
+        this._bestGuardrailParams = null;
+    }
+
+    _applyToBaseline() {
+        this.dispatchEvent(new CustomEvent('apply-optimized', {
+            bubbles: true, composed: true,
+            detail: {
+                lifeEvents: this._bestLifeEvents,
+                guardrailParams: this._bestGuardrailParams,
+            },
+        }));
         this._showInstructions = false;
     }
 }
