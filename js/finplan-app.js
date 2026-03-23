@@ -340,6 +340,12 @@ timeline.addEventListener('event-create', () => {
     eventFormModal.open = true;
 });
 document.getElementById('btn-add-asset').addEventListener('click', () => openCreateAssetModal());
+document.getElementById('btn-welcome-quickstart').addEventListener('click', () => {
+    assetList.modelAssets = quickStartAssets();
+    activeLifeEvents = quickStartLifeEvents();
+    calculate();
+});
+document.getElementById('btn-welcome-add-asset').addEventListener('click', () => openCreateAssetModal());
 document.getElementById('btn-run-mc').addEventListener('click', () => doMonteCarlo());
 document.getElementById('btn-run-guardrails').addEventListener('click', () => doGuardrails());
 document.getElementById('btn-visualize').addEventListener('click', () => doVisualize());
@@ -631,18 +637,26 @@ function syncGlobalsToSettings() {
 
 function connectSettings() {
     document.getElementById('setting-startAge').addEventListener('change', function() {
-        global_setUserStartAge(parseInt(this.value));
+        let val = Math.max(18, Math.min(100, parseInt(this.value) || 30));
+        if (val >= global_user_retirementAge) val = global_user_retirementAge - 1;
+        this.value = val;
+        global_setUserStartAge(val);
         global_getUserStartAge();
         calculate();
     });
     document.getElementById('setting-retirementAge').addEventListener('change', function() {
-        global_setUserRetirementAge(parseInt(this.value));
+        let val = Math.max(global_user_startAge + 1, Math.min(100, parseInt(this.value) || 65));
+        if (val >= global_user_finishAge) val = global_user_finishAge - 1;
+        this.value = val;
+        global_setUserRetirementAge(val);
         global_getUserRetirementAge();
         store.setRetirementDate(global_getRetirementDateInt());
         calculate();
     });
     document.getElementById('setting-finishAge').addEventListener('change', function() {
-        global_setUserFinishAge(parseInt(this.value));
+        let val = Math.max(global_user_retirementAge + 1, Math.min(120, parseInt(this.value) || 95));
+        this.value = val;
+        global_setUserFinishAge(val);
         global_getUserFinishAge();
         calculate();
     });
@@ -766,12 +780,29 @@ function calculate() {
     // Update timeline
     updateTimeline();
 
-    // Disable simulation buttons when no assets
+    // Disable simulation buttons when no assets and show/hide welcome banner
     const hasAssets = modelAssets.length > 0;
-    document.getElementById('btn-run-mc').disabled = !hasAssets;
-    document.getElementById('btn-run-guardrails').disabled = !hasAssets;
-    document.getElementById('btn-visualize').disabled = !hasAssets;
-    document.getElementById('btn-maximize').disabled = !hasAssets;
+    const mcBtn = document.getElementById('btn-run-mc');
+    const grBtn = document.getElementById('btn-run-guardrails');
+    const vizBtn = document.getElementById('btn-visualize');
+    const maxBtn = document.getElementById('btn-maximize');
+    mcBtn.disabled = !hasAssets;
+    grBtn.disabled = !hasAssets;
+    vizBtn.disabled = !hasAssets;
+    maxBtn.disabled = !hasAssets;
+    mcBtn.title = hasAssets ? '' : 'Add assets to run simulations';
+    grBtn.title = hasAssets ? '' : 'Add assets to run simulations';
+    vizBtn.title = hasAssets ? '' : 'Add assets to run visualizer';
+    maxBtn.title = hasAssets ? '' : 'Add assets to run maximizer';
+
+    const banner = document.getElementById('welcome-banner');
+    if (banner) {
+        if (hasAssets) {
+            banner.classList.add('hidden');
+        } else {
+            banner.classList.remove('hidden');
+        }
+    }
 
     // Save
     saveLocalData();

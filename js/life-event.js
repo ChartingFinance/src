@@ -273,6 +273,6 @@ export class ModelLifeEvent {
   // ── Copy ──────────────────────────────────────────────────────
 
   copy() {
-    return ModelLifeEvent.fromJSON(structuredClone(this.toJSON()));
+    return ModelLifeEvent.fromJSON(JSON.parse(JSON.stringify(this.toJSON())));
   }
 }

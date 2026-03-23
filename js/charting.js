@@ -51,6 +51,7 @@ function dateIntToChartIndex(dateInt, firstDateInt, monthsSpan) {
 }
 
 export function charting_buildDateMarkers(portfolio) {
+    if (!portfolio?.firstDateInt || !portfolio?.lastDateInt) return [];
     const monthsSpan = MonthsSpan.build(portfolio.firstDateInt, portfolio.lastDateInt);
     const markers = [];
     for (const modelAsset of portfolio.modelAssets) {
@@ -534,6 +535,7 @@ export function charting_buildDisplaySpreadsheetFromPortfolio(portfolio, buildNe
  * group-aware colors and collapse/expand support.
  */
 export function charting_buildGroupedMetric(portfolio, metricName, expandedGroups, groupOrder) {
+  if (!portfolio?.firstDateInt) return { type: 'bar', data: { labels: [], datasets: [] }, options: {} };
   const labels = charting_buildDisplayLabels(portfolio.firstDateInt, portfolio.lastDateInt);
 
   // Classify by instrument (ignore isClosed) so charts show full history
@@ -620,8 +622,10 @@ export function charting_buildFromPortfolio(portfolio, buildNewDataSet, metric1N
 
 export function charting_buildFromModelAsset(portfolio, modelDisplayName, metricName = Metric.CASH_FLOW) {
 
+    if (!portfolio?.firstDateInt) return;
     setModelAssetColorIds(portfolio.modelAssets);
     let modelAsset = findByName(portfolio.modelAssets, modelDisplayName);
+    if (!modelAsset) return;
 
     let config = JSON.parse(JSON.stringify(stackedBarChartConfig));
     let data = JSON.parse(JSON.stringify(stackedBarChartData));

@@ -80,14 +80,16 @@ self.onmessage = function(event) {
     if (payload.lifeEvents) {
         portfolio.lifeEvents = payload.lifeEvents.map(e => ModelLifeEvent.fromJSON(e));
     }
-    const simulator = new Simulator(portfolio, guardrailParams, fitnessBalance);
+    const backtestYear = payload.backtestYear || 'current';
+    const simulator = new Simulator(portfolio, guardrailParams, fitnessBalance, backtestYear);
     simulator.runGeneticAlgorithm(50, 200, 0.15, postCallback);
 
 }
 
 class Simulator {
-    constructor(portfolio, guardrailParams, fitnessBalance) {
+    constructor(portfolio, guardrailParams, fitnessBalance, backtestYear = 'current') {
 
+        this.backtestYear = backtestYear;
         this.guardrailParams = { ...guardrailParams };
         this._originalGuardrailParams = { ...guardrailParams };
         this.fitnessBalance = fitnessBalance;
@@ -117,7 +119,7 @@ class Simulator {
         // Snapshot original phase transfers before GA mutates them
         this._originalPhaseTransfers = portfolio.lifeEvents.map(e => ({
             displayName: e.displayName,
-            phaseTransfers: structuredClone(e.phaseTransfers),
+            phaseTransfers: JSON.parse(JSON.stringify(e.phaseTransfers)),
         }));
 
         // Build gene map across all life event phases
@@ -217,6 +219,9 @@ class Simulator {
             : ((to - from) / Math.abs(from) * 100).toFixed(0);
 
         let md = '# Maximizer Recommendations\n\n';
+        if (this.backtestYear !== 'current') {
+            md += `**Backtested from ${this.backtestYear}** — These recommendations are optimized against historical market returns (S&P 500, Treasury rates, CPI) starting from ${this.backtestYear}, not projected annual rates.\n\n`;
+        }
         md += `*Fitness objective: ${spendingPct}% Spending / ${terminalPct}% Terminal Value*\n`;
         md += `*Constraints: Real Estate/Mortgage/Debt locked; Expenses +/-25%; Retirement contributions capped (25% accumulation, 10% retirement); all others fully optimized*\n\n`;
 

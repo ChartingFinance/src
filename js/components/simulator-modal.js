@@ -202,7 +202,13 @@ class SimulatorModal extends LitElement {
             return;
         }
 
-        this._worker = new Worker('js/simulator.js', { type: 'module' });
+        try {
+            this._worker = new Worker('js/simulator.js', { type: 'module' });
+        } catch (e) {
+            console.error('Module Worker not supported:', e);
+            this._status = 'Maximizer requires Chrome, Edge, or Safari 15+';
+            return;
+        }
 
         this._worker.postMessage({
             modelAssets: JSON.parse(JSON.stringify(this.modelAssets)),
