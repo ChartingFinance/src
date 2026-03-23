@@ -146,7 +146,7 @@ class SimulatorModal extends LitElement {
     _onNotchClick(value) {
         this._sliderValue = value;
         if (this._runComplete) {
-            this._restart();
+            this.restart();
         }
     }
 
@@ -154,7 +154,7 @@ class SimulatorModal extends LitElement {
         navigator.clipboard.writeText(this._instructions).catch(() => {});
     }
 
-    _restart() {
+    restart() {
         this._teardown();
         this._runComplete = false;
         this._status = 'Starting...';

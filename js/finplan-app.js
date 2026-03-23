@@ -817,7 +817,11 @@ function doMaximize() {
     sim.lifeEvents = activeLifeEvents;
     sim.guardrailParams = getGuardrailParams();
     sim.fitnessBalance = 100;
-    sim.open = true;
+    if (sim.open) {
+        sim.restart();
+    } else {
+        sim.open = true;
+    }
 }
 
 function buildPhaseMarkersForCharts() {

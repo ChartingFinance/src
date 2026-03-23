@@ -12,7 +12,8 @@
 //   Fund transfer genes: 0–100 (integer percentages), grouped by life event phase
 //   Guardrail genes: real-valued within defined ranges
 
-import { InstrumentType } from './instruments/instrument.js';
+import { Instrument, InstrumentType } from './instruments/instrument.js';
+import { LifeEventType } from './life-event.js';
 import { ModelAsset } from './model-asset.js';
 import { chronometer_run } from './chronometer.js';
 import { setActiveTaxTable } from './globals.js';
@@ -23,6 +24,19 @@ import { ModelLifeEvent } from './life-event.js';
 // Theoretical maximums for normalization (scaling to 0.0–1.0)
 const THEORETICAL_MAX_CASHFLOW = 10_000_000;
 const THEORETICAL_MAX_PORTFOLIO = 50_000_000;
+
+// Mutability levels per instrument type
+// 0 = immutable (contractual obligations), 0.25 = 25% flex, 1 = fully mutable
+const INSTRUMENT_MUTABILITY = {
+    [Instrument.REAL_ESTATE]:       0,
+    [Instrument.MORTGAGE]:          0,
+    [Instrument.DEBT]:              0,
+    [Instrument.MONTHLY_EXPENSE]:   0.25,
+};
+
+function getGeneMutability(instrument) {
+    return INSTRUMENT_MUTABILITY[instrument] ?? 1;
+}
 
 // Guardrail gene ranges: [min, max]
 const GUARDRAIL_RANGES = {
@@ -184,6 +198,7 @@ class Simulator {
         const terminalPct = 100 - spendingPct;
         let md = '# Maximizer Recommendations\n\n';
         md += `*Fitness objective: ${spendingPct}% Spending / ${terminalPct}% Terminal Value*\n\n`;
+        md += `*Constraints: Real Estate/Mortgage/Debt locked; Expenses ±25%; Retirement contributions capped (25% accumulation, 10% retirement); all others fully optimized*\n\n`;
         let hasChanges = false;
 
         for (let i = 0; i < this._originalPhaseTransfers.length; i++) {
@@ -333,12 +348,21 @@ class Simulator {
      */
     buildGeneMap() {
         this.geneMap = [];
+        // Build a name→instrument lookup from portfolio assets (also used by retirement cap)
+        this._instrumentByName = new Map();
+        for (const a of this.portfolio.modelAssets) {
+            this._instrumentByName.set(a.displayName, a.instrument);
+        }
+
         for (let phaseIdx = 0; phaseIdx < this.portfolio.lifeEvents.length; phaseIdx++) {
             const event = this.portfolio.lifeEvents[phaseIdx];
             if (!event.phaseTransfers) continue;
             for (const [assetName, transfers] of Object.entries(event.phaseTransfers)) {
+                const instrument = this._instrumentByName.get(assetName);
+                const mutability = getGeneMutability(instrument);
                 for (let transferIdx = 0; transferIdx < transfers.length; transferIdx++) {
-                    this.geneMap.push({ phaseIdx, assetName, transferIdx });
+                    const originalValue = transfers[transferIdx].monthlyMoveValue;
+                    this.geneMap.push({ phaseIdx, assetName, transferIdx, mutability, originalValue });
                 }
             }
         }
@@ -350,7 +374,7 @@ class Simulator {
         const population = [];
         for (let i = 0; i < popSize; i++) {
             const chromosome = [
-                ...this.geneMap.map(() => Math.ceil(Math.random() * 100)),
+                ...this.geneMap.map(g => this._randomFtGene(g)),
                 this._randomGuardrailGene('withdrawalRate'),
                 this._randomGuardrailGene('preservation'),
                 this._randomGuardrailGene('prosperity'),
@@ -361,15 +385,39 @@ class Simulator {
         return population;
     }
 
+    /** Generate a random fund transfer gene value respecting mutability */
+    _randomFtGene(gene) {
+        if (gene.mutability === 0) return gene.originalValue;
+        if (gene.mutability < 1) {
+            // Partial: vary within ±mutability of original, clamped 0–100
+            const range = gene.originalValue * gene.mutability;
+            const lo = Math.max(0, gene.originalValue - range);
+            const hi = Math.min(100, gene.originalValue + range);
+            return lo + Math.random() * (hi - lo);
+        }
+        return Math.random() * 100;
+    }
+
+    /** Clamp a fund transfer gene to its allowed range */
+    _clampFtGene(gene, value) {
+        if (gene.mutability === 0) return gene.originalValue;
+        if (gene.mutability < 1) {
+            const range = gene.originalValue * gene.mutability;
+            return Math.max(0, Math.min(100, Math.max(gene.originalValue - range, Math.min(gene.originalValue + range, value))));
+        }
+        return Math.max(0, Math.min(100, value));
+    }
+
     /**
      * Write chromosome gene values into phaseTransfers JSON for all phases,
      * then apply stochastic limiting (cap total per asset at 100%).
      */
     setFundTransfersFromChromosome(chromosome) {
         for (let i = 0; i < this.geneMap.length; i++) {
-            const { phaseIdx, assetName, transferIdx } = this.geneMap[i];
-            const transfers = this.portfolio.lifeEvents[phaseIdx].phaseTransfers[assetName];
-            transfers[transferIdx].monthlyMoveValue = chromosome[i];
+            const gene = this.geneMap[i];
+            const transfers = this.portfolio.lifeEvents[gene.phaseIdx].phaseTransfers[gene.assetName];
+            // Clamp to allowed range (handles crossover producing out-of-range values)
+            transfers[gene.transferIdx].monthlyMoveValue = this._clampFtGene(gene, chromosome[i]);
         }
 
         // Stochastic limiting: cap each asset's total transfers at 100% per phase
@@ -381,6 +429,33 @@ class Simulator {
                 if (total > 100) {
                     const scale = 100 / total;
                     for (const t of transfers) {
+                        t.monthlyMoveValue *= scale;
+                    }
+                }
+            }
+        }
+
+        // Retirement account contribution cap per income asset per phase
+        // Accumulate: max 25% to retirement accounts; Retire+: max 10%
+        for (const event of this.portfolio.lifeEvents) {
+            if (!event.phaseTransfers) continue;
+            const isAccum = LifeEventType.isAccumulation(event.type);
+            const retirementCap = isAccum ? 25 : 10;
+
+            for (const [assetName, transfers] of Object.entries(event.phaseTransfers)) {
+                const srcInstrument = this._instrumentByName.get(assetName);
+                if (!InstrumentType.isMonthlyIncome(srcInstrument)) continue;
+
+                const retirementTransfers = transfers.filter(t => {
+                    const targetInstrument = this._instrumentByName.get(t.toDisplayName);
+                    return InstrumentType.isTaxDeferred(targetInstrument) ||
+                           InstrumentType.isTaxFree(targetInstrument);
+                });
+
+                const retTotal = retirementTransfers.reduce((s, t) => s + t.monthlyMoveValue, 0);
+                if (retTotal > retirementCap) {
+                    const scale = retirementCap / retTotal;
+                    for (const t of retirementTransfers) {
                         t.monthlyMoveValue *= scale;
                     }
                 }
@@ -448,13 +523,14 @@ class Simulator {
         const keys = ['withdrawalRate', 'preservation', 'prosperity', 'adjustment'];
 
         return chromosome.map((gene, idx) => {
-            if (Math.random() >= mutationRate) return gene;
-
             if (idx < ftCount) {
-                // Fund transfer gene: random 0–100
-                return Math.random() * 100;
+                const geneInfo = this.geneMap[idx];
+                // Immutable genes never change
+                if (geneInfo.mutability === 0) return geneInfo.originalValue;
+                if (Math.random() >= mutationRate) return gene;
+                return this._randomFtGene(geneInfo);
             } else {
-                // Guardrail gene: random within range, clamped
+                if (Math.random() >= mutationRate) return gene;
                 const key = keys[idx - ftCount];
                 return this._randomGuardrailGene(key);
             }
