@@ -79,7 +79,7 @@ function buildQuickStartData() {
             instrument: 'realEstate',
             displayName: 'Home',
             startDateInt: d.now,
-            finishDateInt: d.plus(5),
+            finishDateInt: d.plus(10),
             startCurrency: { amount: 400000 },
             startBasisCurrency: { amount: 400000 },
             annualReturnRate: { rate: 0.03 },
@@ -89,7 +89,7 @@ function buildQuickStartData() {
             instrument: 'mortgage',
             displayName: 'Mortgage',
             startDateInt: d.now,
-            finishDateInt: d.plus(5),
+            finishDateInt: d.plus(10),
             startCurrency: { amount: -320000 },
             annualReturnRate: { rate: 0.065 },
             monthsRemaining: 360,
@@ -97,7 +97,7 @@ function buildQuickStartData() {
         {
             instrument: 'monthlyExpense',
             displayName: 'Rent',
-            startDateInt: d.plus(5),
+            startDateInt: d.plus(10),
             startCurrency: { amount: -3000 },
         },
         {

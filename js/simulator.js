@@ -194,7 +194,7 @@ class Simulator {
 
     _buildInstructions() {
         const bestEvents = this.bestPortfolio.lifeEvents;
-        const spendingPct = Math.round(100 - (this.fitnessBalance * 100));
+        const spendingPct = Math.round(this.fitnessBalance * 100);
         const terminalPct = 100 - spendingPct;
         let md = '# Maximizer Recommendations\n\n';
         md += `*Fitness objective: ${spendingPct}% Spending / ${terminalPct}% Terminal Value*\n\n`;
@@ -298,16 +298,39 @@ class Simulator {
      * Tracks cumulative closes to determine which assets are alive per phase.
      */
     ensureAllPhaseTransfers() {
+        const events = this.portfolio.lifeEvents;
         const closedSoFar = new Set();
-        for (let phaseIdx = 0; phaseIdx < this.portfolio.lifeEvents.length; phaseIdx++) {
-            const event = this.portfolio.lifeEvents[phaseIdx];
+
+        // Compute approximate phase date boundaries from trigger ages
+        // birthYear = portfolio start year - first phase's trigger age
+        const firstEvent = events[0];
+        const portfolioStartYear = this.portfolio.firstDateInt?.year ?? 2026;
+        const birthYear = firstEvent ? portfolioStartYear - firstEvent.triggerAge : 1976;
+
+        for (let phaseIdx = 0; phaseIdx < events.length; phaseIdx++) {
+            const event = events[phaseIdx];
+            // Phase spans from this event's trigger year to the next event's trigger year
+            const phaseStartYear = birthYear + event.triggerAge;
+            const nextEvent = events[phaseIdx + 1];
+            const phaseEndYear = nextEvent
+                ? birthYear + nextEvent.triggerAge
+                : (this.portfolio.lastDateInt?.year ?? 2070);
+
             // Apply this phase's closes before building transfers
-            // (mirrors ModelLifeEvent.apply which closes first, then applies transfers)
             for (const name of event.closes) {
                 closedSoFar.add(name);
             }
-            const alive = this.portfolio.modelAssets.filter(a => !closedSoFar.has(a.displayName));
-            this._ensurePhaseTransfersForAssets(event, alive);
+
+            // Filter: not closed, and asset's active period overlaps this phase
+            const active = this.portfolio.modelAssets.filter(a => {
+                if (closedSoFar.has(a.displayName)) return false;
+                const assetStart = a.startDateInt?.year ?? 0;
+                const assetEnd = a.finishDateInt?.year ?? 9999;
+                // Asset must start before phase ends and end after phase starts
+                return assetStart < phaseEndYear && assetEnd >= phaseStartYear;
+            });
+
+            this._ensurePhaseTransfersForAssets(event, active);
         }
     }
 
