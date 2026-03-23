@@ -393,6 +393,50 @@
 
     </div>
 
+    <!-- ═══ Life Events & Phases ═══ -->
+    <div class="glass-card p-8 sm:p-12 mb-8" style="background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%);">
+        <div class="flex items-center gap-3 mb-4">
+            <span class="text-2xl">🔄</span>
+            <h2 class="text-2xl font-bold tracking-tight">Life Events &amp; Phases</h2>
+        </div>
+        <p class="text-gray-600 mb-6 leading-relaxed">Your financial life isn't one long straight line &mdash; it's a series of phases. During accumulation, your salary flows into 401(k)s and brokerage accounts. In retirement, the flow reverses: Social Security and retirement account drawdowns fund your living expenses. Life Events capture these transitions and automatically rewire your portfolio when each phase begins.</p>
+
+        <div class="grid sm:grid-cols-2 gap-4 mb-6">
+            <div class="p-4 rounded-xl bg-white/70">
+                <div class="font-semibold text-sm mb-1" style="color: #1D9E75;">&#x1F7E2; Accumulate Phase</div>
+                <div class="text-sm text-gray-500">The earning years. Income flows into savings, investments, and retirement accounts. Fund transfers route your salary to 401(k), Roth IRA, and brokerage based on the percentages you set for this phase.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-white/70">
+                <div class="font-semibold text-sm mb-1" style="color: #D85A30;">&#x1F7E0; Retire Phase</div>
+                <div class="text-sm text-gray-500">The drawdown years. Salary closes automatically. Social Security begins. Fund transfers flip: retirement accounts and brokerage now fund your living expenses &mdash; all configured independently from the accumulation phase.</div>
+            </div>
+        </div>
+
+        <div class="space-y-2 mb-6">
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
+                <span class="rule-chip">Phase Transfers</span>
+                <span class="text-sm text-gray-700">Each life event owns its own set of fund transfers. When you configure "Salary &rarr; 5% to 401(k)" in Accumulate and "401(k) &rarr; 40% to Living Expenses" in Retire, the simulator <strong>automatically switches between them</strong> at the transition age you set.</span>
+            </div>
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
+                <span class="rule-chip">Asset Closing</span>
+                <span class="text-sm text-gray-700">Life events can close assets when a phase begins. When Retire triggers, <strong>Salary automatically closes</strong> &mdash; its on-close transfers fire, and the asset stops producing income. No manual intervention needed.</span>
+            </div>
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
+                <span class="rule-chip">Color-Coded Timeline</span>
+                <span class="text-sm text-gray-700">The interactive timeline shows each phase as a colored segment &mdash; <strong style="color: #1D9E75;">green for Accumulate</strong>, <strong style="color: #D85A30;">coral for Retire</strong>. Click any phase dot to jump to that date. The "You are Here" indicator, year/month selectors, and viewing badges all reflect the current phase's color.</span>
+            </div>
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
+                <span class="rule-chip">Age-Driven</span>
+                <span class="text-sm text-gray-700">Phases are triggered by age, not fixed dates. Set your <strong>Current Age, Retirement Age, and Finish Age</strong> in the global settings, and the entire timeline &mdash; phase boundaries, asset start/end dates, and fund transfer activation &mdash; adapts automatically.</span>
+            </div>
+        </div>
+
+        <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
+            <span class="rule-chip">Why it matters</span>
+            <span class="text-sm text-gray-700">Without phases, you'd need separate portfolios for "working" and "retired." Life Events let you model your <strong>entire financial arc</strong> &mdash; from first paycheck to last withdrawal &mdash; in a single simulation, with fund transfers that adapt to each chapter of your life.</span>
+        </div>
+    </div>
+
     <!-- ═══ Projections & Analysis ═══ -->
     <div class="glass-card p-8 sm:p-12 mb-8">
         <h2 class="text-2xl font-bold tracking-tight mb-4">Projections &amp; Analysis</h2>
@@ -530,36 +574,114 @@
         </div>
     </div>
 
-    <!-- ═══ Optimizer ═══ -->
+    <!-- ═══ Maximizer ═══ -->
     <div class="glass-card p-8 sm:p-12 mb-8" style="background: linear-gradient(135deg, #ecfdf5 0%, #eff6ff 100%);">
         <div class="flex items-center gap-3 mb-4">
-            <span class="text-2xl">🧬</span>
-            <h2 class="text-2xl font-bold tracking-tight">Genetic Algorithm Optimizer</h2>
+            <span class="text-2xl">🔮</span>
+            <h2 class="text-2xl font-bold tracking-tight">Maximizer</h2>
+            <span class="text-xs text-gray-400 font-medium ml-1">Genetic Algorithm Optimizer</span>
         </div>
-        <p class="text-gray-600 mb-6 leading-relaxed">Stop guessing your fund transfer percentages and withdrawal parameters. The optimizer uses a <strong>genetic algorithm</strong> &mdash; inspired by natural selection &mdash; to evolve the best combination of fund allocations and guardrail settings for your specific portfolio. In 200 generations, it explores thousands of possibilities you'd never test by hand.</p>
+        <p class="text-gray-600 mb-6 leading-relaxed">Stop guessing your fund transfer percentages and withdrawal parameters. The Maximizer uses a <strong>genetic algorithm</strong> &mdash; inspired by natural selection &mdash; to evolve the best combination of fund allocations and guardrail settings for your specific portfolio. It runs directly inside the Maximizer section, updating the chart in real time as it discovers better solutions.</p>
 
         <div class="grid sm:grid-cols-2 gap-4 mb-6">
             <div class="p-4 rounded-xl bg-white/70">
-                <div class="font-semibold text-sm mb-1">Fitness Balance Slider</div>
-                <div class="text-sm text-gray-500">Dial between <strong>maximizing lifetime spending</strong> and <strong>maximizing terminal portfolio value</strong>. Slide left to prioritize cash flow in retirement; slide right to preserve wealth for heirs.</div>
+                <div class="font-semibold text-sm mb-1">Spending &#x2194; Terminal Value Selector</div>
+                <div class="text-sm text-gray-500">A row of discrete notches lets you set the optimization objective. All the way left maximizes <strong>lifetime cash flow</strong> (spending in retirement). All the way right maximizes <strong>ending portfolio value</strong> (wealth preservation). Pick any point in between for a blended goal.</div>
             </div>
             <div class="p-4 rounded-xl bg-white/70">
                 <div class="font-semibold text-sm mb-1">Evolvable Guardrail Genes</div>
-                <div class="text-sm text-gray-500">The optimizer doesn't just tune fund transfers &mdash; it also evolves your guardrail parameters (withdrawal rate, preservation, prosperity, adjustment) to find the sweet spot.</div>
+                <div class="text-sm text-gray-500">The optimizer doesn't just tune fund transfers &mdash; it also evolves your guardrail parameters (withdrawal rate, preservation, prosperity, adjustment) within realistic ranges to find the sweet spot for your chosen objective.</div>
             </div>
             <div class="p-4 rounded-xl bg-white/70">
-                <div class="font-semibold text-sm mb-1">Real-Time Feedback</div>
-                <div class="text-sm text-gray-500">Watch the best fitness score improve generation by generation, with live previews of the fittest chromosome's fund transfer allocations and guardrail values.</div>
+                <div class="font-semibold text-sm mb-1">Phase-Aware Optimization</div>
+                <div class="text-sm text-gray-500">The chromosome encodes fund transfers <strong>grouped by life event phase</strong>. Accumulate-phase allocations are evolved independently from retire-phase allocations, and only assets active during a phase are included &mdash; Social Security won't appear in accumulation genes.</div>
             </div>
             <div class="p-4 rounded-xl bg-white/70">
-                <div class="font-semibold text-sm mb-1">"Fittest" Scenario</div>
-                <div class="text-sm text-gray-500">When optimization completes, the winning solution is saved to a dedicated <strong>Fittest scenario</strong> &mdash; ready to compare against your hand-tuned portfolios.</div>
+                <div class="font-semibold text-sm mb-1">Real-Time Chart Updates</div>
+                <div class="text-sm text-gray-500">Watch the portfolio projection chart update live as the optimizer discovers better solutions. The generation counter, fitness status, and best terminal value are displayed below the chart throughout the run.</div>
+            </div>
+        </div>
+
+        <h3 class="text-lg font-bold tracking-tight mb-3">Real-World Constraints</h3>
+        <p class="text-gray-600 mb-4 leading-relaxed">A truly useful optimizer can't just chase math &mdash; it has to respect reality. The Maximizer enforces three tiers of constraints so its recommendations are <strong>actionable, not theoretical</strong>.</p>
+
+        <div class="grid sm:grid-cols-3 gap-4 mb-6">
+            <div class="p-4 rounded-xl bg-white/70">
+                <div class="font-semibold text-sm mb-1">&#x1F512; Immutable Transfers</div>
+                <div class="text-sm text-gray-500"><strong>Real Estate, Mortgage, and Debt</strong> fund transfers are locked to their original values. You can't optimize away your mortgage payment &mdash; it's a contractual obligation.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-white/70">
+                <div class="font-semibold text-sm mb-1">&#x1F50F; Partially Mutable</div>
+                <div class="text-sm text-gray-500"><strong>Monthly Expenses</strong> can vary &plusmn;25% of their original allocation. You can tighten the belt, but you can't eliminate groceries.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-white/70">
+                <div class="font-semibold text-sm mb-1">&#x2705; Fully Mutable</div>
+                <div class="text-sm text-gray-500"><strong>All other transfers</strong> (salary routing, retirement account contributions, Social Security allocation) can be freely optimized from 0% to 100%.</div>
+            </div>
+        </div>
+
+        <div class="space-y-2 mb-6">
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
+                <span class="rule-chip">Contribution Caps</span>
+                <span class="text-sm text-gray-700">During accumulation, no more than <strong>25% of income</strong> can flow to retirement accounts (401(k), IRA, Roth). In retirement, the cap drops to <strong>10%</strong>. This prevents the optimizer from producing unrealistic over-contributions.</span>
+            </div>
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
+                <span class="rule-chip">Debt Penalty</span>
+                <span class="text-sm text-gray-700">Any individual asset that ends with a negative balance incurs a <strong>fitness penalty proportional to the debt</strong>. This prevents the optimizer from concentrating losses in one account while inflating others.</span>
+            </div>
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
+                <span class="rule-chip">Volatility Penalty</span>
+                <span class="text-sm text-gray-700">Portfolios that trigger frequent <strong>preservation cuts</strong> (guardrail spending reductions) are penalized &mdash; because a plan that constantly slashes your income isn't really a plan.</span>
+            </div>
+        </div>
+
+        <h3 class="text-lg font-bold tracking-tight mb-3">Recommendations</h3>
+        <p class="text-gray-600 mb-4 leading-relaxed">When the optimizer completes, click <strong>Recommendations</strong> to see a detailed comparison of your current fund transfers and guardrail settings versus the optimizer's best solution &mdash; organized by phase, with exact percentage changes for every transfer.</p>
+
+        <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
+            <span class="rule-chip">How it works</span>
+            <span class="text-sm text-gray-700">A population of 50 candidate portfolios competes over <strong>200 generations</strong>. Each candidate encodes fund transfer percentages for every phase plus four guardrail parameters. The fittest survive, crossover, and mutate &mdash; converging on an allocation that respects real-world constraints while maximizing your chosen objective. The entire process runs in a Web Worker so the UI stays responsive.</span>
+        </div>
+    </div>
+
+    <!-- ═══ AI Summaries ═══ -->
+    <div class="glass-card p-8 sm:p-12 mb-8" style="background: linear-gradient(135deg, #fdf4ff 0%, #faf5ff 100%);">
+        <div class="flex items-center gap-3 mb-4">
+            <span class="text-2xl">&#x26A1;</span>
+            <h2 class="text-2xl font-bold tracking-tight">AI Summaries</h2>
+        </div>
+        <p class="text-gray-600 mb-6 leading-relaxed">Every section of the simulator has a floating <strong>&#x26A1;</strong> button that generates a structured markdown summary of your portfolio's current state &mdash; ready to paste into a conversation with your financial advisor, an AI assistant, or your own notes. Each summary is tailored to its section and includes directional notes pointing to related insights elsewhere in the tool.</p>
+
+        <div class="grid sm:grid-cols-3 gap-4 mb-6">
+            <div class="p-4 rounded-xl bg-white/70">
+                <div class="font-semibold text-sm mb-1">&#x1F4C5; Timeline Summary</div>
+                <div class="text-sm text-gray-500">Life event phases, trigger ages, fund transfer configurations per phase, and which assets close at each transition.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-white/70">
+                <div class="font-semibold text-sm mb-1">&#x1F4BC; Portfolio Summary</div>
+                <div class="text-sm text-gray-500">Every asset with starting value, ending value, instrument type, annual return rate, and fund transfer routing.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-white/70">
+                <div class="font-semibold text-sm mb-1">&#x1F4C8; Projections Summary</div>
+                <div class="text-sm text-gray-500">Metric snapshots at key dates &mdash; start, retirement, and finish &mdash; with per-asset breakdowns and growth trends.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-white/70">
+                <div class="font-semibold text-sm mb-1">&#x1F3B2; Monte Carlo Summary</div>
+                <div class="text-sm text-gray-500">Percentile ending values (10th through 90th), baseline comparison, and 10th&ndash;90th spread with warnings if the downside is negative.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-white/70">
+                <div class="font-semibold text-sm mb-1">&#x1F6E1; Guardrails Summary</div>
+                <div class="text-sm text-gray-500">Current guardrail parameters and a table of every preservation cut or prosperity raise that fired during the simulation, with the year and adjusted rate.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-white/70">
+                <div class="font-semibold text-sm mb-1">&#x1F4CB; Details Summary</div>
+                <div class="text-sm text-gray-500">Credit memo audit totals per asset, lifetime tax summary (income, FICA, Medicare, capital gains, property), and annual cash flow table.</div>
             </div>
         </div>
 
         <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
-            <span class="rule-chip">How it works</span>
-            <span class="text-sm text-gray-700">A population of 50 candidate portfolios competes over <strong>200 generations</strong>. Each candidate runs a full simulation with guardrails active. The fittest survive, crossover, and mutate &mdash; converging on an allocation that balances cash flow, portfolio survival, and withdrawal stability.</span>
+            <span class="rule-chip">Why it matters</span>
+            <span class="text-sm text-gray-700">Financial data is only useful if you can <strong>communicate it</strong>. Each summary is structured markdown &mdash; tables, headers, and bullet points &mdash; designed to be pasted into ChatGPT, Claude, an email to your advisor, or a planning document. Copy with one click.</span>
         </div>
     </div>
 

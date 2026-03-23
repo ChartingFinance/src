@@ -405,7 +405,14 @@
     <header class="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4 pb-6 border-b border-gray-200">
         <div>
             <h1 class="text-4xl font-bold tracking-tight text-gray-900">Charting <span class="gradient-text">Finance.</span></h1>
-            <div class="text-xs font-semibold text-gray-500 uppercase tracking-widest mt-2">Your financial story, one month at a time</div>
+            <div class="text-sm text-gray-400 mt-1">Your financial story, one month at a time</div>
+            <nav class="flex gap-6 text-sm font-medium text-gray-400 mt-2">
+                <span class="text-gray-900">Home</span>
+                <a href="rules.html" class="hover:text-gray-900 transition">Rules</a>
+                <a href="globals.html" class="hover:text-gray-900 transition">Globals</a>
+                <a href="disclaimer.html" class="hover:text-gray-900 transition">Disclaimer</a>
+                <a href="about.html" class="hover:text-gray-900 transition">About</a>
+            </nav>
         </div>
         <div class="flex flex-wrap items-center gap-2">
             <button class="btn-modern outline" id="btn-donate">Donate ☕</button>
@@ -484,7 +491,9 @@
 
         <!-- LEFT: Timeline -->
         <div class="finplan-charts flex flex-col gap-4">
-            <h2 class="text-lg font-bold flex items-center gap-2 flex-shrink-0">🕐 Your Timeline</h2>
+            <h2 class="text-lg font-bold flex items-center gap-2 flex-shrink-0">🕐 Your Timeline
+                <a href="help.html#timeline" class="ml-auto text-gray-300 hover:text-gray-500 transition" title="Help" style="font-size: 14px; font-weight: 500; text-decoration: none;">?</a>
+            </h2>
 
             <div class="glass-card p-5 flex-grow min-h-0 relative" style="padding-bottom: 72px;">
                 <finplan-timeline id="finplanTimeline"></finplan-timeline>
@@ -509,6 +518,7 @@
         <div class="finplan-sidebar gap-4">
             <h2 class="text-lg font-bold flex items-center gap-2 flex-shrink-0">💼 Your Portfolio
                 <span class="badge-phase ml-auto" id="viewingBadge">Viewing: Mar 2026</span>
+                <a href="help.html#portfolio" class="text-gray-300 hover:text-gray-500 transition" title="Help" style="font-size: 14px; font-weight: 500; text-decoration: none;">?</a>
             </h2>
 
             <div id="viewToggle" class="flex rounded-lg overflow-hidden border border-gray-200 text-sm flex-shrink-0">
@@ -529,6 +539,7 @@
     <div class="mb-8">
         <h2 class="text-lg font-bold flex items-center gap-2 mb-4">📊 Projections
             <span class="badge-phase ml-auto viewing-badge"></span>
+            <a href="help.html#projections" class="text-gray-300 hover:text-gray-500 transition" title="Help" style="font-size: 14px; font-weight: 500; text-decoration: none;">?</a>
         </h2>
 
         <div class="glass-card p-6 relative">
@@ -566,6 +577,7 @@
     <div class="mb-8">
         <h2 class="text-lg font-bold flex items-center gap-2 mb-4">🎲 Simulations
             <span class="badge-phase ml-auto viewing-badge"></span>
+            <a href="help.html#simulations" class="text-gray-300 hover:text-gray-500 transition" title="Help" style="font-size: 14px; font-weight: 500; text-decoration: none;">?</a>
         </h2>
 
         <div class="flex gap-6 relative">
@@ -637,6 +649,7 @@
     <div class="mb-8">
         <h2 class="text-lg font-bold flex items-center gap-2 mb-4">📋 Details
             <span class="badge-phase ml-auto viewing-badge"></span>
+            <a href="help.html#details" class="text-gray-300 hover:text-gray-500 transition" title="Help" style="font-size: 14px; font-weight: 500; text-decoration: none;">?</a>
         </h2>
 
         <div class="flex gap-6 relative">
@@ -672,6 +685,7 @@
                 <button class="btn-modern outline text-xs" id="btn-spreadsheet-download" style="padding: 4px 8px;" title="Download CSV">⬇️</button>
             </span>
             <span class="badge-phase viewing-badge"></span>
+            <a href="help.html#spreadsheet" class="text-gray-300 hover:text-gray-500 transition" title="Help" style="font-size: 14px; font-weight: 500; text-decoration: none;">?</a>
         </h2>
 
         <div class="relative">
@@ -684,7 +698,9 @@
 
     <!-- ═══ Visualizer ═══ -->
     <div class="mb-8">
-        <h2 class="text-lg font-bold flex items-center gap-2 mb-4">🚰 Visualizer</h2>
+        <h2 class="text-lg font-bold flex items-center gap-2 mb-4">🚰 Visualizer
+            <a href="help.html#visualizer" class="ml-auto text-gray-300 hover:text-gray-500 transition" title="Help" style="font-size: 14px; font-weight: 500; text-decoration: none;">?</a>
+        </h2>
 
         <div class="glass-card p-6">
             <div class="flex items-center justify-between mb-4">
@@ -697,7 +713,9 @@
 
     <!-- ═══ Maximizer ═══ -->
     <div class="mb-8">
-        <h2 class="text-lg font-bold flex items-center gap-2 mb-4">🔮 Maximizer</h2>
+        <h2 class="text-lg font-bold flex items-center gap-2 mb-4">🔮 Maximizer
+            <a href="help.html#maximizer" class="ml-auto text-gray-300 hover:text-gray-500 transition" title="Help" style="font-size: 14px; font-weight: 500; text-decoration: none;">?</a>
+        </h2>
 
         <div class="glass-card p-6">
             <div class="flex items-center justify-between mb-4">
