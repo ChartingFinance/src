@@ -231,7 +231,11 @@ export class Portfolio {
 
     computePerAssetCashFlow() {
         for (let modelAsset of this.modelAssets) {
-            modelAsset.cashFlowCurrency = modelAsset.behavior.computeCashFlow(modelAsset);
+            if (modelAsset.isClosed) {
+                modelAsset.cashFlowCurrency = Currency.zero();
+            } else {
+                modelAsset.cashFlowCurrency = modelAsset.behavior.computeCashFlow(modelAsset);
+            }
         }
     }
 

@@ -808,6 +808,10 @@ export class ModelAsset {
     this.firstDayOfMonthValue.zero();
     this.monthlyValueChange.zero();
 
+    // Zero stale metric accumulators that use snapshotKeep (not auto-zeroed).
+    // Without this, property tax bleeds into cash flow calculations forever.
+    this.propertyTaxCurrency.zero();
+
     this.isClosed = true;
     if (dateInt) this.closedDateInt = dateInt;
 
