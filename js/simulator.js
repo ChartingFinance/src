@@ -533,8 +533,12 @@ class Simulator {
             for (const target of aliveAssets) {
                 if (anchor === target) continue;
 
+                // IRS: retirement income (Social Security) cannot contribute to IRA, Roth IRA, or 401K
+                const retirementToTaxAdvantaged = InstrumentType.isRetirementIncome(anchor.instrument) &&
+                    (InstrumentType.isTaxDeferred(target.instrument) || InstrumentType.isTaxFree(target.instrument));
+
                 const shouldLink =
-                    (InstrumentType.isMonthlyIncome(anchor.instrument) && InstrumentType.isFundable(target.instrument)) ||
+                    (InstrumentType.isMonthlyIncome(anchor.instrument) && InstrumentType.isFundable(target.instrument) && !retirementToTaxAdvantaged) ||
                     (InstrumentType.isMonthlyExpense(anchor.instrument) && InstrumentType.isExpensable(target.instrument));
 
                 if (shouldLink && !existing.some(t => t.toDisplayName === target.displayName)) {

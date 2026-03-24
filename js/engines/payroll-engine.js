@@ -352,6 +352,12 @@ export class PayrollEngine {
                     // This was handled by pre tax calculations and transfers
                     if (!InstrumentType.isTaxDeferred(fundTransfer.toModel.instrument)) {
 
+                        // IRS: retirement income cannot contribute to Roth IRA (or any tax-advantaged account)
+                        if (InstrumentType.isRetirementIncome(modelAsset.instrument) &&
+                            InstrumentType.isTaxFree(fundTransfer.toModel.instrument)) {
+                            continue;
+                        }
+
                         const contribution = fundTransfer.approvedAmount || fundTransfer.calculate();
                         runningTransferAmount.add(contribution);
 

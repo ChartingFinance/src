@@ -143,10 +143,15 @@ class TransferModal extends LitElement {
         // Look up existing transfers from the active phase
         const existingTransfers = this.phaseTransfers[this.currentDisplayName] || [];
 
-        return this._portfolio.modelAssets.filter(ma =>
-            InstrumentType.isFundable(ma.instrument) &&
-            ma.displayName !== this.currentDisplayName
-        ).map(ma => {
+        const isRetirement = InstrumentType.isRetirementIncome(currentAsset.instrument);
+
+        return this._portfolio.modelAssets.filter(ma => {
+            if (!InstrumentType.isFundable(ma.instrument)) return false;
+            if (ma.displayName === this.currentDisplayName) return false;
+            // IRS: retirement income (Social Security) cannot contribute to IRA, Roth IRA, or 401K
+            if (isRetirement && (InstrumentType.isTaxDeferred(ma.instrument) || InstrumentType.isTaxFree(ma.instrument))) return false;
+            return true;
+        }).map(ma => {
             const existing = existingTransfers.find(
                 ft => (ft.toDisplayName ?? ft.toDisplayName) === ma.displayName
             );
