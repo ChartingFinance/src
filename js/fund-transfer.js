@@ -40,7 +40,7 @@ export class FundTransferOneSided {
     this.fromModel = fundTransfer?.fromModel ?? null;
     this.toModel = fundTransfer?.toModel ?? null;
 
-    if (!amount) debugger;
+    //if (!amount) debugger;
 
     this.amount = amount;
     
