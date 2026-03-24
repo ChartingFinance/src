@@ -154,15 +154,17 @@ export class FundTransfer {
 
   // ── Account Resolution ─────────────────────────────────────────
 
-  /** First non-closed taxable account. */
+  /** First non-closed taxable account with a positive balance. */
   static resolveTaxable(modelAssets) {
-    return modelAssets.find(a => InstrumentType.isTaxableAccount(a.instrument) && !a.isClosed) ?? null;
+    return modelAssets.find(a =>
+      InstrumentType.isTaxableAccount(a.instrument) && !a.isClosed && a.finishCurrency.amount > 0
+    ) ?? null;
   }
 
-  /** First non-closed expensable account, following priority order. */
+  /** First non-closed expensable account with a positive balance, following priority order. */
   static resolveExpensable(modelAssets) {
     for (const key of InstrumentType.expensablePriority) {
-      const match = modelAssets.find(a => a.instrument === key && !a.isClosed);
+      const match = modelAssets.find(a => a.instrument === key && !a.isClosed && a.finishCurrency.amount > 0);
       if (match) return match;
     }
     return null;

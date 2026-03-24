@@ -192,7 +192,7 @@ export class TaxEngine {
             // Additional tax owed beyond payroll withholding (e.g., from capital gains, dividends)
             this.monthly.incomeTax.add(additionalTax);
 
-            const liquidAsset = this.modelAssets.find(a => InstrumentType.isLiquid(a.instrument) && !a.isClosed);
+            const liquidAsset = this.modelAssets.find(a => InstrumentType.isLiquid(a.instrument) && !a.isClosed && a.finishCurrency.amount > 0);
             if (liquidAsset) {
                 liquidAsset.addToMetric(Metric.ESTIMATED_INCOME_TAX, additionalTax);
                 liquidAsset.addCreditMemo(additionalTax.copy(), 'Income tax withholding');
@@ -237,7 +237,7 @@ export class TaxEngine {
         // Only act if the discrepancy is material (> $1)
         if (Math.abs(taxDifference) < 1) return;
 
-        const liquidAsset = this.modelAssets.find(a => InstrumentType.isLiquid(a.instrument) && !a.isClosed);
+        const liquidAsset = this.modelAssets.find(a => InstrumentType.isLiquid(a.instrument) && !a.isClosed && a.finishCurrency.amount > 0);
         if (!liquidAsset) return;
 
         if (taxDifference > 0) {
