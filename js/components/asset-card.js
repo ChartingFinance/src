@@ -86,7 +86,7 @@ class AssetCard extends LitElement {
                     <span class="asset-action-btn edit" title="Edit" @click=${this._onEdit}>&#x270E;</span>
                     <span class="asset-action-btn transfers" title="Transfers" @click=${this._onTransfers}>&#x21C4;</span>
                 `}
-                ${this.closedEmoji ? html`<div class="asset-card-icon" style="font-size: 12px; margin-right: -4px;">${this.closedEmoji}</div>` : ''}
+                ${this.closedEmoji ? html`<div class="asset-card-icon" style="font-size: 12px; margin-right: -4px;" title="${this.closedEmoji === '⚠️' ? 'Account depleted — balance clamped to $0' : 'Closed'}">${this.closedEmoji}</div>` : ''}
                 <div class="asset-card-icon">${emoji}</div>
                 <div class="asset-card-name">${ma.displayName}</div>
                 <div class="asset-card-value">${valueDisplay}</div>

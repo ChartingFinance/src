@@ -467,6 +467,7 @@ export class ModelAsset {
     this.onFinishDate  = false;
     this.afterFinishDate = false;
     this.isClosed = false;
+    this.isDepleted = false;
     this.closedDateInt = null;
     this.closedValue = null;
     this.closedBasisValue = null;
@@ -689,6 +690,15 @@ export class ModelAsset {
         }
         this.finishCurrency.subtract(fromVested);
         this.monthlyValueChange.subtract(fromVested);
+      }
+
+      // Clamp tax-advantaged accounts to $0 floor — negative balances are nonsensical
+      // for IRA, 401K, and Roth IRA and distort RMD calculations and growth.
+      if (this.finishCurrency.amount < 0 &&
+          (InstrumentType.isTaxDeferred(this.instrument) || InstrumentType.isTaxFree(this.instrument))) {
+        this.finishCurrency.amount = 0;
+        this.finishBasisCurrency.amount = 0;
+        this.isDepleted = true;
       }
     }
 

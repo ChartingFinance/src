@@ -195,7 +195,7 @@ class AssetList extends LitElement {
                                         .metricValue=${this._getMetricValueForMetric(ma, metric)}
                                         .metricLabel=${MetricLabel[metric] || ''}
                                         ?ghost=${ma._isClosedAtDate}
-                                        .closedEmoji=${ma._isClosedAtDate ? '⛔' : ''}
+                                        .closedEmoji=${ma._isClosedAtDate ? '⛔' : ma.isDepleted ? '⚠️' : ''}
                                         ?selected=${this.highlightName === ma.displayName}
                                     ></asset-card>
                                 `;
@@ -264,7 +264,7 @@ class AssetList extends LitElement {
                                     .groupColor=${getAssetChartColor(ma.instrument)}
                                     .metricValue=${this._getMetricValue(ma)}
                                     ?ghost=${ma._isClosedAtDate}
-                                    .closedEmoji=${ma._isClosedAtDate ? '⛔' : ''}
+                                    .closedEmoji=${ma._isClosedAtDate ? '⛔' : ma.isDepleted ? '⚠️' : ''}
                                     ?selected=${this.highlightName === ma.displayName}
                                 ></asset-card>
                             `

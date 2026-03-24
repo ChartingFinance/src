@@ -201,6 +201,12 @@ export class FundTransfer {
       return this.approvedAmount.copy();
     }
 
+    // Skip percentage-based transfers from depleted capital accounts (IRA, 401K, etc.)
+    // Flow instruments (salary, expenses) use negative balances by design, so exclude them.
+    if (InstrumentType.isCapital(this.fromModel.instrument) && this.fromModel.finishCurrency.amount <= 0) {
+      return Currency.zero();
+    }
+
     const pct = (useClosePercent ? this.closeMoveValue : this.monthlyMoveValue) / 100;
 
     // Old -- Determine the base amount for the transfer:
