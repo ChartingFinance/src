@@ -143,11 +143,12 @@ export class FundTransfer {
    * @param {Currency}   amount     Fixed amount to transfer
    * @returns {FundTransfer}
    */
-  static system(fromModel, toModel, amount) {
+  static system(fromModel, toModel, amount, allModels = null) {
     const ft = new FundTransfer(toModel.displayName, Frequency.NONE, 0, 0);
     ft.fromModel = fromModel;
     ft.toModel = toModel;
     ft.approvedAmount = amount.copy();
+    ft._allModels = allModels;
     return ft;
   }
 
@@ -175,9 +176,10 @@ export class FundTransfer {
    * @param {ModelAsset[]} allModels
    */
   bind(fromModel, allModels) {
-    
+
     this.fromModel = fromModel;
     this.toModel = allModels.find(m => m.displayName === this.toDisplayName) ?? null;
+    this._allModels = allModels;
 
   }
 
@@ -251,6 +253,20 @@ export class FundTransfer {
     if (toResult.realizedGain?.amount > 0) {
       this.toModel.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, toResult.realizedGain);
       this.toModel.addCreditMemo(toResult.realizedGain.copy(), 'Capital gains');
+    }
+
+    // Tax-advantaged account depleted: the overshoot must come from a taxable account.
+    // This models reality — you can't withdraw more than the account holds.
+    if (fromResult.spillover?.amount > 0 && this._allModels) {
+      const fallback = FundTransfer.resolveTaxable(this._allModels);
+      if (fallback) {
+        const spillMemo = `Spillover from depleted ${this.fromModel.displayName}`;
+        const spillResult = fallback.debit(fromResult.spillover, spillMemo);
+        if (spillResult.realizedGain?.amount > 0) {
+          fallback.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, spillResult.realizedGain);
+          fallback.addCreditMemo(spillResult.realizedGain.copy(), 'Capital gains (spillover)');
+        }
+      }
     }
 
     // Combine gains from both sides: debit may trigger gains on the source,

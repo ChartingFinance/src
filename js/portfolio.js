@@ -538,7 +538,7 @@ export class Portfolio {
 
                 const target = FundTransfer.resolveExpensable(this.modelAssets);
                 if (target) {
-                    FundTransfer.system(modelAsset, target, extraAmount).execute();
+                    FundTransfer.system(modelAsset, target, extraAmount, this.modelAssets).execute();
                 }
             }
 
@@ -549,7 +549,7 @@ export class Portfolio {
 
             const target = FundTransfer.resolveExpensable(this.modelAssets);
             if (target) {
-                FundTransfer.system(modelAsset, target, modelAssetValue).execute();
+                FundTransfer.system(modelAsset, target, modelAssetValue, this.modelAssets).execute();
             }
 
         }

@@ -650,11 +650,12 @@ export class ModelAsset {
     // Flow instruments: memo only, no balance change
     if (this.#isFlowInstrument()) {
       if (note) this.addCreditMemo(amount.copy(), note);
-      return { assetChange: Currency.zero(), realizedGain: Currency.zero() };
+      return { assetChange: Currency.zero(), realizedGain: Currency.zero(), spillover: Currency.zero() };
     }
 
     const isTaxable = InstrumentType.isTaxableAccount(this.instrument);
     let realizedGain = Currency.zero();
+    let spillover = Currency.zero();
 
     if (amount.amount >= 0) {
       
@@ -694,8 +695,10 @@ export class ModelAsset {
 
       // Clamp tax-advantaged accounts to $0 floor — negative balances are nonsensical
       // for IRA, 401K, and Roth IRA and distort RMD calculations and growth.
+      // The overshoot (spillover) must be sourced from a taxable account by the caller.
       if (this.finishCurrency.amount < 0 &&
           (InstrumentType.isTaxDeferred(this.instrument) || InstrumentType.isTaxFree(this.instrument))) {
+        spillover = new Currency(Math.abs(this.finishCurrency.amount));
         this.finishCurrency.amount = 0;
         this.finishBasisCurrency.amount = 0;
         this.isDepleted = true;
@@ -706,7 +709,7 @@ export class ModelAsset {
       this.addCreditMemo(amount.copy(), note);
     }
 
-    return { assetChange: amount.copy(), realizedGain };
+    return { assetChange: amount.copy(), realizedGain, spillover };
   }
 
   // ── Fund transfers ───────────────────────────────────────────────

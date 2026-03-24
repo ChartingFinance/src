@@ -198,7 +198,7 @@ export class ExpenseEngine {
             const rmdNote = `RMD distribution from ${modelAsset.displayName}`;
             const target = FundTransfer.resolveExpensable(this.modelAssets);
             if (target) {
-                FundTransfer.system(modelAsset, target, remains).execute();
+                FundTransfer.system(modelAsset, target, remains, this.modelAssets).execute();
             }
 
         }
