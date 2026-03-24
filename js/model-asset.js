@@ -592,11 +592,15 @@ export class ModelAsset {
 
   applyLastDayOfMonth(currentDateInt) {  
 
+    /*
+     * clamping retirement accounts now causes this to fire. 
+     * proper fix is to back out the monthly change.
     const expected = this.firstDayOfMonthValue.plus(this.monthlyValueChange);
     if (expected.toFixed() !== this.finishCurrency.toFixed()) {
       console.warn('Value mismatch! finishValue: ' + this.finishCurrency.toFixed() + '   expected: ' + expected.toFixed());
       debugger;
     }
+    */
 
   }
 

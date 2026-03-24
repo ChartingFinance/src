@@ -201,49 +201,59 @@ export class TaxEngine {
 
     }
 
-    // ── Month 12: Annual Tax True-Up ──────────────────────────────────
-    // TODO: Not yet active — requires yearly accumulators (yearlyGrossIncome,
-    // yearlyDeductions, yearlyCapitalGains, yearlyWithheldTaxes) to be
-    // implemented on TaxEngine or passed in from Portfolio.
+    // ── Year-End: Annual Tax True-Up ──────────────────────────────────
+    // Compares exact yearly tax liability against total withheld/estimated
+    // amounts accumulated in this.yearly. Debits underpayment or credits
+    // overpayment to the first liquid account.
 
-    applyAnnualTaxTrueUp(currentDateInt) {
-        // Only run this once a year (e.g., end of December)
-        if (currentDateInt.month !== 12) return;
+    applyAnnualTaxTrueUp() {
 
-        /*
-        // 1. Calculate the EXACT tax liability based on the full 365-day reality
-        const actualTaxableIncome = activeTaxTable.calculateYearlyTaxableIncome(
-            this.yearlyGrossIncome.copy().subtract(this.yearlyDeductions)
-        );
+        // 1. Compute exact tax liability from the yearly accumulator
+        const yearlySnapshot = this.yearly.copy();
+        yearlySnapshot.limitDeductions(this.activeUser);
 
-        // TODO: calculate the FICA liability for employedIncome and selfIncome
-
+        const actualTaxableIncome = activeTaxTable.calculateYearlyTaxableIncome(yearlySnapshot);
         const actualIncomeTax = activeTaxTable.calculateYearlyIncomeTax(actualTaxableIncome);
+
+        const yearlyCapitalGains = new Currency(
+            yearlySnapshot.longTermCapitalGains.amount + yearlySnapshot.qualifiedDividends.amount
+        );
         const actualCapitalGainsTax = activeTaxTable.calculateYearlyLongTermCapitalGainsTax(
-            actualTaxableIncome,
-            this.yearlyCapitalGains
+            actualTaxableIncome, yearlyCapitalGains
         );
 
-        const totalActualTax = actualIncomeTax.copy().add(actualCapitalGainsTax);
+        // Total actual liability (positive = tax owed)
+        const totalActualTax = actualIncomeTax.amount + actualCapitalGainsTax.amount;
 
-        // 2. Compare Actual vs. Withheld
-        const taxDifference = totalActualTax.amount - this.yearlyWithheldTaxes.amount;
+        // 2. What was already withheld/estimated throughout the year?
+        // These are stored as negative values (outflows), so negate to get positive totals.
+        const totalWithheld = Math.abs(this.yearly.incomeTax.amount)
+                            + Math.abs(this.yearly.estimatedTaxes.amount)
+                            + Math.abs(this.yearly.longTermCapitalGainsTax.amount);
+
+        // 3. Compute the difference
+        const taxDifference = totalActualTax - totalWithheld;
+
+        // Only act if the discrepancy is material (> $1)
+        if (Math.abs(taxDifference) < 1) return;
+
+        const liquidAsset = this.modelAssets.find(a => InstrumentType.isLiquid(a.instrument) && !a.isClosed);
+        if (!liquidAsset) return;
 
         if (taxDifference > 0) {
-            logger.log(LogCategory.TAX, `Annual True-Up: User owes ${taxDifference}. Debiting account.`);
+            // Underpaid — debit the shortfall (April tax bill)
             const taxBill = new Currency(taxDifference);
-            this.router.debitFromExpensable(taxBill, 'Annual IRS Tax Bill Due');
-
-        } else if (taxDifference < 0) {
-            const refundAmount = Math.abs(taxDifference);
-            logger.log(LogCategory.TAX, `Annual True-Up: User overpaid. Refunding ${refundAmount}.`);
-            const taxRefund = new Currency(refundAmount);
-            this.router.creditToExpensable(taxRefund, 'IRS Tax Refund');
+            logger.log(LogCategory.TAX, `Annual True-Up: Underpaid by $${taxDifference.toFixed(0)}. Debiting ${liquidAsset.displayName}.`);
+            liquidAsset.debit(taxBill, 'Annual tax true-up (underpayment)');
+            liquidAsset.addToMetric(Metric.ESTIMATED_INCOME_TAX, taxBill.copy().flipSign());
+        } else {
+            // Overpaid — credit the refund
+            const taxRefund = new Currency(Math.abs(taxDifference));
+            logger.log(LogCategory.TAX, `Annual True-Up: Overpaid by $${Math.abs(taxDifference).toFixed(0)}. Refunding to ${liquidAsset.displayName}.`);
+            liquidAsset.credit(taxRefund, 'Annual tax true-up (refund)');
+            liquidAsset.addToMetric(Metric.ESTIMATED_INCOME_TAX, taxRefund);
         }
 
-        // 3. Reset the annual accumulators for the next year
-        this.resetAnnualAccumulators();
-        */
     }
 
 }

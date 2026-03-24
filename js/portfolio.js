@@ -567,6 +567,9 @@ export class Portfolio {
             }
         }
 
+        // Annual tax true-up: reconcile exact liability vs. withheld amounts
+        this.taxes.applyAnnualTaxTrueUp();
+
     }
 
     modelMetricsToDisplayData(monthsSpan, modelAsset) {
