@@ -257,12 +257,12 @@ export class TaxTable {
         
     }
 
-    yearlyChron() {
+    yearlyChron(inflationOverride) {
 
         this.yearlySocialSecurityAccumulator.zero();
 
         // apply inflation to the tax rows
-        this.inflateTaxes();
+        this.inflateTaxes(inflationOverride);
 
     }
 
@@ -270,22 +270,22 @@ export class TaxTable {
 
     }
 
-    inflateTaxRows(taxTables) {
+    inflateTaxRows(taxTables, r) {
         for (let taxTable of taxTables) {
             for (let taxRow of taxTable.taxRows) {
-                taxRow.fromAmount *= (1.0 + global_inflationRate);
+                taxRow.fromAmount *= r;
                 if (taxRow.toAmount != -1.0)
-                    taxRow.toAmount *= (1.0 + global_inflationRate);
+                    taxRow.toAmount *= r;
             }
         }
     }
 
-    inflateTaxes() {
+    inflateTaxes(inflationOverride) {
 
-        const r = 1.0 + global_inflationRate;
+        const r = 1.0 + (inflationOverride != null ? inflationOverride : global_inflationRate);
         this.activeTaxTables.fica.maxSSEarnings *= r;
-        this.inflateTaxRows(this.activeTaxTables.income.tables);
-        this.inflateTaxRows(this.activeTaxTables.capitalGains.tables);
+        this.inflateTaxRows(this.activeTaxTables.income.tables, r);
+        this.inflateTaxRows(this.activeTaxTables.capitalGains.tables, r);
         this.activeStandardDeduction *= r;
         this.iraContributionLimitBelow50 *= r;
         this.iraContributionLimit50AndOver *= r;

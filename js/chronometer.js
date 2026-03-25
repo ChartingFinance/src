@@ -112,7 +112,12 @@ export async function chronometer_run(portfolio) {
             activeTaxTable.applyYear(portfolio.yearly);
 
             portfolio.yearlyChron(currentDateInt);
-            activeTaxTable.yearlyChron(currentDateInt);
+
+            // When backtesting, inflate tax tables using historical CPI
+            const cpiRate = backtesting
+                ? global_cpi_annual_inflation[backtestStartYear + (currentDateInt.year - simStartYear)]
+                : undefined;
+            activeTaxTable.yearlyChron(cpiRate != null ? cpiRate / 100 : undefined);
         }
 
         portfolio.totalMonths = totalMonths;
@@ -214,7 +219,12 @@ export async function chronometer_run_animated(portfolio, visualizerContainerId)
             activeTaxTable.applyYear(portfolio.yearly);
 
             portfolio.yearlyChron(currentDateInt);
-            activeTaxTable.yearlyChron(currentDateInt);
+
+            // When backtesting, inflate tax tables using historical CPI
+            const cpiRate = backtesting
+                ? global_cpi_annual_inflation[backtestStartYear + (currentDateInt.year - simStartYear)]
+                : undefined;
+            activeTaxTable.yearlyChron(cpiRate != null ? cpiRate / 100 : undefined);
         }
 
         portfolio.totalMonths = totalMonths;
