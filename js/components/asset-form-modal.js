@@ -82,18 +82,18 @@ class AssetFormModal extends LitElement {
                         @click=${this._close}>&times;</button>
                     <div class="mb-6">
                         <h2 class="text-2xl font-bold flex items-center gap-2">
-                            ${isEdit ? '✏️ Edit Instrument' : '✨ Add New Instrument'}
+                            ${isEdit ? '✏️ Edit Asset' : '✨ Add New Asset'}
                         </h2>
                         <p class="text-gray-500 text-sm mt-1">
                             ${isEdit
-                                ? 'Modify the details of your financial instrument below.'
+                                ? 'Modify the details of your financial asset below.'
                                 : 'Finish value and returns are computed on simulation run.'}
                         </p>
                     </div>
                     <form @submit=${this._onSubmit}>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Instrument</label>
+                                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Asset Type</label>
                                 <select class="fin-input" name="instrument"
                                     @change=${this._onInstrumentChange}>
                                     ${instruments.map(inst => html`

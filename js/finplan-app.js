@@ -21,7 +21,7 @@ import { TaxTable } from './taxes.js';
 
 // ── Data loading ────────────────────────────────────────────
 import { membrane_rawDataToModelAssets } from './membrane.js';
-import { quickStartAssets, quickStartLifeEvents } from './quick-start.js';
+import { quickStartAssets, quickStartLifeEvents, quickStartProfiles, buildQuickStart } from './quick-start.js';
 import { ModelLifeEvent, LifeEvent, LifeEventType } from './life-event.js';
 
 // ── Charting ────────────────────────────────────────────────
@@ -341,11 +341,38 @@ timeline.addEventListener('event-create', () => {
     eventFormModal.open = true;
 });
 document.getElementById('btn-add-asset').addEventListener('click', () => openCreateAssetModal());
-document.getElementById('btn-welcome-quickstart').addEventListener('click', () => {
-    assetList.modelAssets = quickStartAssets();
-    activeLifeEvents = quickStartLifeEvents();
+// ── Populate welcome profile cards ──────────────────────────
+const profileGrid = document.getElementById('welcome-profiles');
+if (profileGrid) {
+    for (const profile of quickStartProfiles) {
+        const card = document.createElement('div');
+        card.className = 'profile-card';
+        card.innerHTML = `
+            <div class="profile-emoji">${profile.emoji}</div>
+            <div class="profile-ages">Ages ${profile.ages}</div>
+            <div class="profile-label">${profile.label}</div>
+            <div class="profile-tagline">${profile.tagline}</div>`;
+        card.addEventListener('click', () => loadQuickStartProfile(profile));
+        profileGrid.appendChild(card);
+    }
+}
+
+function loadQuickStartProfile(profile) {
+    // Set ages before building assets (they use dateAnchors)
+    global_setUserStartAge(profile.startAge);
+    global_getUserStartAge();
+    global_setUserRetirementAge(profile.retirementAge);
+    global_getUserRetirementAge();
+    global_setUserFinishAge(profile.finishAge);
+    global_getUserFinishAge();
+    syncGlobalsToSettings();
+    store.setRetirementDate(global_getRetirementDateInt());
+
+    const qs = buildQuickStart(profile);
+    assetList.modelAssets = qs.assets;
+    activeLifeEvents = qs.lifeEvents;
     calculate();
-});
+}
 document.getElementById('btn-welcome-add-asset').addEventListener('click', () => openCreateAssetModal());
 document.getElementById('btn-run-mc').addEventListener('click', () => doMonteCarlo());
 document.getElementById('btn-run-guardrails').addEventListener('click', () => doGuardrails());
@@ -1145,10 +1172,16 @@ function connectAssetListEvents() {
         showPopupTransfers(ev.detail.modelAsset.displayName);
     });
 
-    assetList.addEventListener('quick-start', () => {
-        assetList.modelAssets = quickStartAssets();
-        activeLifeEvents = quickStartLifeEvents();
-        calculate();
+    assetList.addEventListener('quick-start', (ev) => {
+        const profile = ev.detail?.profile;
+        if (profile) {
+            loadQuickStartProfile(profile);
+        } else {
+            // Fallback: default Mid Career
+            assetList.modelAssets = quickStartAssets();
+            activeLifeEvents = quickStartLifeEvents();
+            calculate();
+        }
     });
 
     assetList.addEventListener('remove-asset', (ev) => {

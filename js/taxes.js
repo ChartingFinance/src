@@ -26,6 +26,73 @@ export class WithholdingResult {
 import { logger, LogCategory } from './utils/logger.js';
 import { global_filingAs, global_inflationRate, global_propertyTaxDeductionMax, global_home_sale_capital_gains_discount } from './globals.js';
 
+export const us_2026_taxtables = {
+    "year": 2026,
+    "fica": {
+        "url": "https://www.ssa.gov/oact/cola/cbb.html",
+        "ssHalfRate": 0.062,
+        "ssFullRate": 0.124,
+        "medicareHalfRate": 0.0145,
+        "medicareFullRate": 0.0290,
+        "maxSSEarnings": 184500.0
+    },
+    "income": {
+        "url": "https://www.irs.gov/newsroom/irs-releases-tax-inflation-adjustments-for-tax-year-2026-including-amendments-from-the-one-big-beautiful-bill",
+        "tables": [
+            {
+                "filingType": "single",
+                "taxRows": [
+                    {"rate": 0.10, "fromAmount": 0.0, "toAmount": 12400.0},
+                    {"rate": 0.12, "fromAmount": 12401.0, "toAmount": 50400.0},
+                    {"rate": 0.22, "fromAmount": 50401.0, "toAmount": 105700.0},
+                    {"rate": 0.24, "fromAmount": 105701.0, "toAmount": 201775.0},
+                    {"rate": 0.32, "fromAmount": 201776.0, "toAmount": 256225.0},
+                    {"rate": 0.35, "fromAmount": 256226.0, "toAmount": 640600.0},
+                    {"rate": 0.37, "fromAmount": 640601.0, "toAmount": -1.0}
+                ]
+            },
+            {
+                "filingType": "married",
+                "taxRows": [
+                    {"rate": 0.10, "fromAmount": 0.0, "toAmount": 24800.0},
+                    {"rate": 0.12, "fromAmount": 24801.0, "toAmount": 100800.0},
+                    {"rate": 0.22, "fromAmount": 100801.0, "toAmount": 211400.0},
+                    {"rate": 0.24, "fromAmount": 211401.0, "toAmount": 403550.0},
+                    {"rate": 0.32, "fromAmount": 403551.0, "toAmount": 512450.0},
+                    {"rate": 0.35, "fromAmount": 512451.0, "toAmount": 768700.0},
+                    {"rate": 0.37, "fromAmount": 768701.0, "toAmount": -1.0}
+                ]
+            }
+        ]
+    },
+    "capitalGains": {
+        "url": "https://www.irs.gov/taxtopics/tc409",
+        "tables": [
+            {
+                "filingType": "single",
+                "taxRows": [
+                    {"rate": 0.0, "fromAmount": 0.0, "toAmount": 49450.0},
+                    {"rate": 0.15, "fromAmount": 49451.0, "toAmount": 545500.0},
+                    {"rate": 0.2, "fromAmount": 545501.0, "toAmount": -1.0}
+                ]
+            },
+            {
+                "filingType": "married",
+                "taxRows": [
+                    {"rate": 0.0, "fromAmount": 0.0, "toAmount": 98900.0},
+                    {"rate": 0.15, "fromAmount": 98901.0, "toAmount": 613700.0},
+                    {"rate": 0.2, "fromAmount": 613701.0, "toAmount": -1.0}
+                ]
+            }
+        ]
+    },
+    "standardDeduction": {
+        "url": "https://www.irs.gov/newsroom/irs-releases-tax-inflation-adjustments-for-tax-year-2026-including-amendments-from-the-one-big-beautiful-bill",
+        "single": 16100.0,
+        "married": 32200.0
+    }
+};
+
 export const us_2025_taxtables = {
     "year": 2025,
     "fica": {
@@ -156,24 +223,25 @@ export class TaxTable {
 
     initializeChron() {
         
-        this.activeTaxTables = JSON.parse(JSON.stringify(us_2025_taxtables));
+        this.activeTaxTables = JSON.parse(JSON.stringify(us_2026_taxtables));
         if (global_filingAs == 'Single') {
             this.activeIncomeTable = this.activeTaxTables.income.tables[0];
             this.activeCapitalGainsTable = this.activeTaxTables.capitalGains.tables[0];
             this.activeStandardDeduction = this.activeTaxTables.standardDeduction.single;
-            this.iraContributionLimitBelow50 = 7000;
-            this.iraContributionLimit50AndOver = 8000;
-            this.four01KContributionLimitBelow50 = 23500;
-            this.four01KContributionLimit50AndOver = 31000;
+            this.iraContributionLimitBelow50 = 7500;
+            this.iraContributionLimit50AndOver = 8600;
+            this.four01KContributionLimitBelow50 = 24500;
+            this.four01KContributionLimit50AndOver = 32500;
         }
         else {
             this.activeIncomeTable = this.activeTaxTables.income.tables[1];
             this.activeCapitalGainsTable = this.activeTaxTables.capitalGains.tables[1];
             this.activeStandardDeduction = this.activeTaxTables.standardDeduction.married;
-            this.iraContributionLimitBelow50 = 14000;
-            this.iraContributionLimit50AndOver = 16000;
-            this.four01KContributionLimitBelow50 = 23500;
-            this.four01KContributionLimit50AndOver = 31000;        }
+            this.iraContributionLimitBelow50 = 15000;
+            this.iraContributionLimit50AndOver = 17200;
+            this.four01KContributionLimitBelow50 = 24500;
+            this.four01KContributionLimit50AndOver = 32500;
+        }
 
         this.yearlySocialSecurityAccumulator = new Currency();
 
@@ -214,9 +282,15 @@ export class TaxTable {
 
     inflateTaxes() {
 
-        this.activeTaxTables.fica.maxSSEarnings *= (1.0 + global_inflationRate);
+        const r = 1.0 + global_inflationRate;
+        this.activeTaxTables.fica.maxSSEarnings *= r;
         this.inflateTaxRows(this.activeTaxTables.income.tables);
         this.inflateTaxRows(this.activeTaxTables.capitalGains.tables);
+        this.activeStandardDeduction *= r;
+        this.iraContributionLimitBelow50 *= r;
+        this.iraContributionLimit50AndOver *= r;
+        this.four01KContributionLimitBelow50 *= r;
+        this.four01KContributionLimit50AndOver *= r;
 
     }
 

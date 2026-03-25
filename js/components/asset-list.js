@@ -24,6 +24,7 @@ import {
     classifyAssetsByProperty, getPrimaryMetric, computePropertyRollupAtIndex,
 } from '../property-groups.js';
 import { LifeEventType } from '../life-event.js';
+import { quickStartProfiles } from '../quick-start.js';
 import { MetricLabel } from '../metric.js';
 import './asset-card.js';
 
@@ -71,14 +72,19 @@ class AssetList extends LitElement {
     render() {
         if (!this.modelAssets || this.modelAssets.length === 0) {
             return html`
-                <div class="flex flex-col items-center justify-center gap-4 py-16 text-center">
-                    <div class="text-5xl">🚀</div>
+                <div class="flex flex-col items-center justify-center gap-3 py-10 text-center">
                     <div class="text-lg font-semibold text-slate-700">Get started in seconds</div>
-                    <div class="text-sm text-slate-400">Load an example portfolio to explore the simulator</div>
-                    <button class="w-48 h-12 bg-black text-white rounded-full shadow-xl hover:scale-105 transition-transform font-medium text-base"
-                        @click=${this._onQuickStart}>
-                        Quick Start
-                    </button>
+                    <div class="text-sm text-slate-400 mb-2">Pick a life stage to load an example portfolio</div>
+                    <div class="grid gap-2 w-full" style="grid-template-columns: 1fr 1fr;">
+                        ${quickStartProfiles.map(p => html`
+                            <div class="profile-card" @click=${() => this._onQuickStart(p)}
+                                 style="padding: 12px 8px; border-radius: 12px; cursor: pointer;">
+                                <div style="font-size: 1.4rem;">${p.emoji}</div>
+                                <div style="font-weight: 700; font-size: 0.8rem; color: #a855f7;">${p.ages}</div>
+                                <div style="font-weight: 600; font-size: 0.75rem; color: #111827;">${p.label}</div>
+                            </div>
+                        `)}
+                    </div>
                 </div>
             `;
         }
@@ -394,8 +400,10 @@ class AssetList extends LitElement {
         }));
     }
 
-    _onQuickStart() {
-        this.dispatchEvent(new CustomEvent('quick-start', { bubbles: true, composed: true }));
+    _onQuickStart(profile) {
+        this.dispatchEvent(new CustomEvent('quick-start', {
+            bubbles: true, composed: true, detail: { profile },
+        }));
     }
 
     // Legacy colorId assignment for readonly/simulator mode

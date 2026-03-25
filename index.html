@@ -56,6 +56,14 @@
         .btn-modern.primary:hover { background: #000000; transform: scale(1.02); }
         .btn-modern:disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
 
+        .profile-card { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 16px; padding: 20px 16px; cursor: pointer; transition: all 0.2s; text-align: center; }
+        .profile-card:hover { background: #ffffff; border-color: #a855f7; box-shadow: 0 4px 16px rgba(168, 85, 247, 0.12); transform: translateY(-2px); }
+        .profile-card .profile-emoji { font-size: 2rem; margin-bottom: 8px; }
+        .profile-card .profile-label { font-weight: 700; font-size: 0.95rem; color: #111827; }
+        .profile-card .profile-ages { font-weight: 600; font-size: 0.8rem; color: #a855f7; margin-bottom: 4px; }
+        .profile-card .profile-tagline { font-size: 0.75rem; color: #6b7280; line-height: 1.3; }
+        @media (max-width: 768px) { #welcome-profiles { grid-template-columns: repeat(2, 1fr) !important; } }
+
         .popup { background: rgba(17, 24, 39, 0.4); backdrop-filter: blur(4px); }
 
         /* Custom Scrollbars */
@@ -488,13 +496,16 @@
     </div>
 
     <!-- ═══ Welcome Banner (shown when no assets) ═══ -->
-    <div id="welcome-banner" class="glass-card p-8 mb-8 text-center hidden">
-        <div class="text-4xl mb-3">🚀</div>
-        <h2 class="text-xl font-bold tracking-tight mb-2">Welcome to Charting Finance</h2>
-        <p class="text-sm text-gray-500 mb-5 max-w-lg mx-auto">Start by loading an example portfolio or adding your own assets. Set your age and retirement targets above, then explore projections, simulations, and optimization below.</p>
-        <div class="flex items-center justify-center gap-3">
-            <button class="btn-modern primary" id="btn-welcome-quickstart" style="padding: 10px 28px;">Quick Start</button>
-            <button class="btn-modern outline" id="btn-welcome-add-asset" style="padding: 10px 28px;">Add Asset</button>
+    <div id="welcome-banner" class="glass-card p-8 mb-8 hidden">
+        <div class="text-center mb-6">
+            <h2 class="text-xl font-bold tracking-tight mb-2">Welcome to Charting Finance</h2>
+            <p class="text-sm text-gray-500 max-w-lg mx-auto">Choose a starting portfolio that matches your life stage, or add your own assets from scratch.</p>
+        </div>
+        <div id="welcome-profiles" class="grid gap-3" style="grid-template-columns: repeat(4, 1fr);">
+            <!-- Populated by JS from quickStartProfiles -->
+        </div>
+        <div class="text-center mt-5">
+            <button class="btn-modern outline" id="btn-welcome-add-asset" style="padding: 10px 28px;">Start from Scratch</button>
         </div>
     </div>
 
@@ -541,7 +552,7 @@
             <div class="glass-card p-6 relative flex flex-col flex-grow min-h-0">
                 <asset-list class="flex-grow overflow-y-auto min-h-0" id="finplanAssetList"></asset-list>
                 <button class="ai-fab" data-section="portfolio" title="AI Summary">⚡</button>
-                <button class="ai-fab" style="left: auto; right: 12px;" id="btn-add-asset" title="Add a new instrument">+</button>
+                <button class="ai-fab" style="left: auto; right: 12px;" id="btn-add-asset" title="Add a new asset">+</button>
             </div>
         </div>
 
