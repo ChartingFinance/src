@@ -217,6 +217,7 @@ timeline.addEventListener('event-edit', (ev) => {
     eventFormModal.mode = 'edit';
     eventFormModal.lifeEvent = lifeEvent;
     eventFormModal.editIndex = index;
+    eventFormModal.eventCount = activeLifeEvents.length;
     eventFormModal.modelAssets = assetList.modelAssets || [];
     eventFormModal.open = true;
 });
@@ -638,14 +639,16 @@ function syncGlobalsToSettings() {
 function connectSettings() {
     document.getElementById('setting-startAge').addEventListener('change', function() {
         let val = Math.max(18, Math.min(100, parseInt(this.value) || 30));
-        if (val >= global_user_retirementAge) val = global_user_retirementAge - 1;
+        // Finish age must stay above the greater of current/retirement + 1
+        if (val >= global_user_finishAge) val = global_user_finishAge - 1;
         this.value = val;
         global_setUserStartAge(val);
         global_getUserStartAge();
         calculate();
     });
     document.getElementById('setting-retirementAge').addEventListener('change', function() {
-        let val = Math.max(global_user_startAge + 1, Math.min(100, parseInt(this.value) || 65));
+        let val = Math.max(18, Math.min(100, parseInt(this.value) || 65));
+        // Finish age must stay above the greater of current/retirement + 1
         if (val >= global_user_finishAge) val = global_user_finishAge - 1;
         this.value = val;
         global_setUserRetirementAge(val);
@@ -654,7 +657,8 @@ function connectSettings() {
         calculate();
     });
     document.getElementById('setting-finishAge').addEventListener('change', function() {
-        let val = Math.max(global_user_retirementAge + 1, Math.min(120, parseInt(this.value) || 95));
+        const minFinish = Math.max(global_user_startAge, global_user_retirementAge) + 1;
+        let val = Math.max(minFinish, Math.min(120, parseInt(this.value) || 95));
         this.value = val;
         global_setUserFinishAge(val);
         global_getUserFinishAge();

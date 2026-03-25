@@ -18,7 +18,7 @@
  */
 
 import { LitElement, html } from 'lit';
-import { LifeEvent, LifeEventMeta, ModelLifeEvent } from '../life-event.js';
+import { LifeEventMeta, ModelLifeEvent } from '../life-event.js';
 import { global_user_startAge, global_user_finishAge } from '../globals.js';
 
 class EventFormModal extends LitElement {
@@ -28,6 +28,7 @@ class EventFormModal extends LitElement {
         open:           { type: Boolean, reflect: true },
         lifeEvent:      { type: Object },
         editIndex:      { type: Number },
+        eventCount:     { type: Number },
         modelAssets:    { type: Array },
         _selectedType:  { state: true },
         _closes:        { state: true },
@@ -41,6 +42,7 @@ class EventFormModal extends LitElement {
         this.open = false;
         this.lifeEvent = null;
         this.editIndex = -1;
+        this.eventCount = 1;
         this.modelAssets = [];
         this._selectedType = null;
         this._closes = [];
@@ -64,7 +66,6 @@ class EventFormModal extends LitElement {
         const isEdit = this.mode === 'edit';
         const le = this.lifeEvent;
         const meta = this._selectedType ? LifeEventMeta.get(this._selectedType) : null;
-        const isAccumulate = this._selectedType === LifeEvent.ACCUMULATE;
 
         return html`
             <div class="popup fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -86,7 +87,7 @@ class EventFormModal extends LitElement {
 
                     ${this._renderTypeSelector(isEdit, le)}
 
-                    ${this._selectedType ? this._renderForm(isEdit, le, meta, isAccumulate) : html``}
+                    ${this._selectedType ? this._renderForm(isEdit, le, meta) : html``}
                 </div>
             </div>
         `;
@@ -125,7 +126,7 @@ class EventFormModal extends LitElement {
         `;
     }
 
-    _renderForm(isEdit, le, meta, isAccumulate) {
+    _renderForm(isEdit, le, meta) {
         const displayName = isEdit && le ? le.displayName : meta.label;
         const triggerAge = isEdit && le ? le.triggerAge : global_user_startAge;
         const assets = this.modelAssets || [];
@@ -143,7 +144,7 @@ class EventFormModal extends LitElement {
                         <input type="number" class="fin-input" name="triggerAge"
                             .value=${String(triggerAge)}
                             min=${global_user_startAge} max=${global_user_finishAge}
-                            ?disabled=${isAccumulate} required />
+                            ?disabled=${isEdit && this.editIndex === 0} required />
                     </div>
                 </div>
 
@@ -166,8 +167,8 @@ class EventFormModal extends LitElement {
                     </div>
                 ` : html``}
 
-                <div class="mt-8 flex ${isEdit && !isAccumulate ? 'justify-between' : 'justify-end'} items-center">
-                    ${isEdit && !isAccumulate ? html`
+                <div class="mt-8 flex ${isEdit && this.eventCount > 1 ? 'justify-between' : 'justify-end'} items-center">
+                    ${isEdit && this.eventCount > 1 ? html`
                         <button type="button" class="text-sm text-red-500 hover:text-red-700 font-semibold cursor-pointer"
                             @click=${this._onDelete}>Delete Event</button>
                     ` : html``}

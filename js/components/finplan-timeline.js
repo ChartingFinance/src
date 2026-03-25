@@ -83,7 +83,7 @@ class FinplanTimeline extends LitElement {
     // ── Timeline span ───────────────────────────────────────────────
 
     get _timelineStartAge() {
-        let sAge = this.startAge - 1;
+        let sAge = Math.min(this.startAge, this.retirementAge) - 1;
         if (this.portfolio?.firstDateInt) {
             const birthYear = new Date().getFullYear() - this.startAge;
             const portfolioStartAge = this.portfolio.firstDateInt.year - birthYear;
