@@ -352,9 +352,6 @@ export class ModelAsset {
   get longTermCapitalGainTaxCurrency()   { return this.#metrics.get(Metric.LONG_TERM_CAPITAL_GAIN_TAX).current; }
   set longTermCapitalGainTaxCurrency(c)  { this.#metrics.get(Metric.LONG_TERM_CAPITAL_GAIN_TAX).current = c; }
 
-  get capitalGainTaxCurrency()   { return this.#metrics.get(Metric.CAPITAL_GAIN_TAX).current; }
-  set capitalGainTaxCurrency(c)  { this.#metrics.get(Metric.CAPITAL_GAIN_TAX).current = c; }
-
   get mortgagePaymentCurrency()   { return this.#metrics.get(Metric.MORTGAGE_PAYMENT).current; }
   set mortgagePaymentCurrency(c)  { this.#metrics.get(Metric.MORTGAGE_PAYMENT).current = c; }
 

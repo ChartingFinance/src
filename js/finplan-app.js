@@ -1203,6 +1203,9 @@ function connectAssetFormModal() {
             editingModelAsset.longTermCapitalHoldingPercentage = newAsset.longTermCapitalHoldingPercentage;
             editingModelAsset.isSelfEmployed = newAsset.isSelfEmployed;
             editingModelAsset.annualTaxRate = newAsset.annualTaxRate;
+            editingModelAsset.isPrimaryHome = newAsset.isPrimaryHome;
+            editingModelAsset.annualMaintenanceRate = newAsset.annualMaintenanceRate;
+            editingModelAsset.annualInsuranceCost = newAsset.annualInsuranceCost;
             editingModelAsset = null;
         }
         calculate();

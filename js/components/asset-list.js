@@ -317,12 +317,24 @@ class AssetList extends LitElement {
 
         let ficaTotal = 0, incomeTaxTotal = 0, capGainsTotal = 0, propertyTaxTotal = 0;
 
+        // Read leaf metrics at cursor position from history arrays.
+        // FICA = SS tax + Medicare tax (leaves of WITHHELD_FICA_TAX)
+        // Income Tax = withheld + estimated (leaves of INCOME_TAX, excluding FICA and STCG)
+        // Capital Gains Tax = LTCG tax + STCG tax (separate leaves)
+        // Property Tax = PROPERTY_TAX (leaf, no rollup issue)
+        const idx = this.historyIndex;
+        const atIdx = (asset, metricName) => {
+            const h = asset.getHistory?.(metricName);
+            return (h && idx < h.length) ? (h[idx] ?? 0) : 0;
+        };
+
         for (const a of assets) {
-            if (a.isClosed) continue;
-            ficaTotal += (a.withheldFicaTaxCurrency?.amount ?? 0);
-            incomeTaxTotal += (a.incomeTaxCurrency?.amount ?? 0);
-            capGainsTotal += (a.capitalGainTaxCurrency?.amount ?? 0);
-            propertyTaxTotal += (a.propertyTaxCurrency?.amount ?? 0);
+            // Don't skip closed assets — isClosed reflects end-of-simulation state,
+            // but history[idx] correctly holds 0 for months the asset wasn't active.
+            ficaTotal += atIdx(a, 'socialSecurityTax') + atIdx(a, 'medicareTax');
+            incomeTaxTotal += atIdx(a, 'withheldIncomeTax') + atIdx(a, 'estimatedIncomeTax');
+            capGainsTotal += atIdx(a, 'longTermCapitalGainTax') + atIdx(a, 'shortTermCapitalGainTax');
+            propertyTaxTotal += atIdx(a, 'propertyTax');
         }
 
         // Annualize monthly values (these are monthly snapshots)
