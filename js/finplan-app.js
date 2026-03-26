@@ -1317,7 +1317,7 @@ function loadScenarioList() {
     updateScenarioNote();
 
     // Show/hide delete button (hide when only 1 scenario)
-    btnDeleteScenario.style.display = storyNames.length > 1 ? '' : 'none';
+    btnDeleteScenario.classList.toggle('hidden', storyNames.length <= 1);
 }
 
 function updateScenarioNote() {
