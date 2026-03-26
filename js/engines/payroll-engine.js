@@ -33,7 +33,11 @@ export class PayrollEngine {
             this.monthly.addResult(result);
 
             if (InstrumentType.isRetirementIncome(modelAsset.instrument)) {
-                this.monthly.socialSecurityIncome.add(modelAsset.incomeCurrency);
+                if (InstrumentType.isPension(modelAsset.instrument)) {
+                    this.monthly.pensionIncome.add(modelAsset.incomeCurrency);
+                } else {
+                    this.monthly.socialSecurityIncome.add(modelAsset.incomeCurrency);
+                }
             } else {
 
                 // it's self-employed or w2-employed

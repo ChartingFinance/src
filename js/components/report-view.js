@@ -43,6 +43,7 @@ class ReportView extends LitElement {
                 ['    Employed', this._fmt(pkg.employedIncome)],
                 ['    Self', this._fmt(pkg.selfIncome)],
                 ['    Social Security', this._fmt(pkg.socialSecurityIncome)],
+                ['    Pension', this._fmt(pkg.pensionIncome)],
                 ['    Interest', this._fmt(pkg.interestIncome)],
                 ['    Short-Term Gains', this._fmt(pkg.shortTermCapitalGains)],
                 ['    Non-Qual Dividends', this._fmt(pkg.nonQualifiedDividends)],

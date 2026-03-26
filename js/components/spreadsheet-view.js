@@ -21,6 +21,7 @@ const metrics = [
     { key: 'monthlyRMDs',                  label: 'RMD' },
     { key: 'monthlySocialSecurityTaxes',    label: 'SS Tax' },
     { key: 'monthlySocialSecurityIncomes', label: 'SS Income' },
+    { key: 'monthlyPensionIncomes',       label: 'Pension Inc' },
     { key: 'monthlyMedicareTaxes',         label: 'Medicare Tax' },
     { key: 'monthlyIncomeTaxes',           label: 'Income Tax' },
     { key: 'monthlyMortgagePayments',      label: 'Mortgage Pmt' },

@@ -242,6 +242,9 @@ const RETIRED = {
             { instrument: 'retirementIncome', displayName: 'Social Security',
               startDateInt: d.now,
               startCurrency: { amount: 3000 }, annualReturnRate: { rate: 0.025 } },
+            { instrument: 'pension', displayName: 'FERS Pension',
+              startDateInt: d.now,
+              startCurrency: { amount: 2200 }, annualReturnRate: { rate: 0.02 } },
             { instrument: '401K', displayName: '401K',
               startDateInt: d.now,
               startCurrency: { amount: 500000 }, annualReturnRate: { rate: 0.07 } },
@@ -265,6 +268,7 @@ const RETIRED = {
         const ret = ModelLifeEvent.createDefault(LifeEvent.RETIRE, ages.startAge);
         ret.phaseTransfers = {
             'Social Security': [xfer('Brokerage', 100)],
+            'FERS Pension': [xfer('Brokerage', 100)],
             'Living Expenses': [xfer('Brokerage', 50), xfer('401K', 30), xfer('Roth IRA', 20)],
         };
         return [ret];

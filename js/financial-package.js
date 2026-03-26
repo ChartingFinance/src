@@ -7,7 +7,7 @@ import { activeTaxTable } from './globals.js';
 import { global_propertyTaxDeductionMax } from './globals.js';
 
 export const FINANCIAL_FIELDS = [
-    'employedIncome', 'selfIncome', 'socialSecurityTax', 'socialSecurityIncome', 'assetAppreciation',
+    'employedIncome', 'selfIncome', 'socialSecurityTax', 'socialSecurityIncome', 'pensionIncome', 'assetAppreciation',
     'expense', 'medicareTax', 'incomeTax', 'estimatedTaxes',
     'tradIRAContribution', 'four01KContribution', 'rothIRAContribution',
     'tradIRADistribution', 'four01KDistribution', 'rothIRADistribution',
@@ -77,6 +77,7 @@ export class FinancialPackage {
     ordinaryIncome() {
         let income = this.wageIncome().copy();
         income.add(this.socialSecurityIncome);
+        income.add(this.pensionIncome);
         income.add(this.interestIncome);
         income.add(this.shortTermCapitalGains);
         income.add(this.nonQualifiedDividends);
@@ -197,6 +198,7 @@ export class FinancialPackage {
         // Wage + SS + interest + dividends (excludes distributions — those are asset drawdown)
         let income = this.wageIncome().copy();
         income.add(this.socialSecurityIncome);
+        income.add(this.pensionIncome);
         income.add(this.interestIncome);
         income.add(this.qualifiedDividends);
         income.add(this.nonQualifiedDividends);
@@ -275,6 +277,7 @@ export class FinancialPackage {
         logger.log(category, '    employedIncome:          ' + this.employedIncome.toString());
         logger.log(category, '    selfIncome:              ' + this.selfIncome.toString());
         logger.log(category, '    socialSecurity:          ' + this.socialSecurityIncome.toString());
+        logger.log(category, '    pensionIncome:           ' + this.pensionIncome.toString());
         logger.log(category, '    interestIncome:          ' + this.interestIncome.toString());
         logger.log(category, '    shortTermCapitalGains:   ' + this.shortTermCapitalGains.toString());
         logger.log(category, '    nonQualifiedDividends:   ' + this.nonQualifiedDividends.toString());
@@ -323,6 +326,7 @@ export class FinancialPackage {
         html += '    <li>employedIncome:          ' + this.employedIncome.toString() + '</li>';
         html += '    <li>selfIncome:              ' + this.selfIncome.toString() + '</li>';
         html += '    <li>socialSecurity:          ' + this.socialSecurityIncome.toString() + '</li>';
+        html += '    <li>pensionIncome:           ' + this.pensionIncome.toString() + '</li>';
         html += '    <li>interestIncome:          ' + this.interestIncome.toString() + '</li>';
         html += '    <li>shortTermCapitalGains:   ' + this.shortTermCapitalGains.toString() + '</li>';
         html += '    <li>nonQualifiedDividends:   ' + this.nonQualifiedDividends.toString() + '</li>';

@@ -69,6 +69,7 @@ export const PROPERTY_DISPLAY_ORDER = PROPERTY_ORDER_ACCUMULATE;
 const INCOME_SET = new Set([
   Instrument.WORKING_INCOME,
   Instrument.RETIREMENT_INCOME,
+  Instrument.PENSION,
   Instrument.TAXABLE_EQUITY,       // dividends
   Instrument.BANK,                 // interest income
   Instrument.US_BOND,              // interest income
@@ -77,6 +78,7 @@ const INCOME_SET = new Set([
 
 const TAX_SET = new Set([
   Instrument.WORKING_INCOME,       // FICA + income tax withholding
+  Instrument.PENSION,              // income tax withholding (no FICA)
   Instrument.REAL_ESTATE,          // property tax + capital gains tax on sale
   Instrument.TAXABLE_EQUITY,       // capital gains tax, estimated income tax
   Instrument.FOUR_01K,             // tax on distributions
@@ -138,7 +140,7 @@ export const PropertyGroupMetrics = new Map([
     Metric.INCOME, Metric.NET_INCOME,
     Metric.EMPLOYED_INCOME, Metric.SELF_INCOME,
     Metric.QUALIFIED_DIVIDEND, Metric.NON_QUALIFIED_DIVIDEND,
-    Metric.INTEREST_INCOME, Metric.SOCIAL_SECURITY_INCOME,
+    Metric.INTEREST_INCOME, Metric.SOCIAL_SECURITY_INCOME, Metric.PENSION_INCOME,
     Metric.SHORT_TERM_CAPITAL_GAIN, Metric.LONG_TERM_CAPITAL_GAIN,
     Metric.ORDINARY_INCOME, Metric.CAPITAL_GAIN,
   ]],
@@ -204,6 +206,7 @@ export const PropertyGroupMeta = new Map([
     assetShades: new Map([
       [Instrument.WORKING_INCOME,    '#4B5563'],
       [Instrument.RETIREMENT_INCOME, '#6B7280'],
+      [Instrument.PENSION,           '#757E88'],
       [Instrument.REAL_ESTATE,       '#555E6B'],
       [Instrument.MORTGAGE,          '#7C8590'],
       [Instrument.TAXABLE_EQUITY,    '#5E6773'],
@@ -225,6 +228,7 @@ export const PropertyGroupMeta = new Map([
     assetShades: new Map([
       [Instrument.WORKING_INCOME,    '#1D9E75'],
       [Instrument.RETIREMENT_INCOME, '#3DB890'],
+      [Instrument.PENSION,           '#2DAB82'],
       [Instrument.TAXABLE_EQUITY,    '#5DCAA5'],
       [Instrument.BANK,              '#7DD8B8'],
       [Instrument.US_BOND,           '#9DE5CB'],
@@ -237,6 +241,7 @@ export const PropertyGroupMeta = new Map([
     headerBg: '#F8F2E0',   headerFg: '#633806',
     assetShades: new Map([
       [Instrument.WORKING_INCOME,    '#B8963E'],
+      [Instrument.PENSION,           '#C1A04A'],
       [Instrument.REAL_ESTATE,       '#C9AA5C'],
       [Instrument.TAXABLE_EQUITY,    '#D4BB75'],
       [Instrument.FOUR_01K,          '#DECC8E'],

@@ -372,9 +372,9 @@
             <div class="flex items-center gap-3 mb-4">
                 <span class="text-2xl">🧓</span>
                 <h2 class="text-xl font-bold tracking-tight">Retirement Income</h2>
-                <span class="text-xs text-gray-400 font-medium ml-1">Social Security &middot; Pensions &middot; Annuities</span>
+                <span class="text-xs text-gray-400 font-medium ml-1">Social Security &middot; Annuities</span>
             </div>
-            <p class="text-gray-600 mb-4 leading-relaxed">The income that kicks in when the paychecks stop. Model Social Security benefits, pension payments, or any recurring income stream that starts at a future date &mdash; so your retirement projections don't pretend you're living on air.</p>
+            <p class="text-gray-600 mb-4 leading-relaxed">The income that kicks in when the paychecks stop. Model Social Security benefits or any recurring income stream that starts at a future date &mdash; so your retirement projections don't pretend you're living on air.</p>
             <div class="space-y-2">
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 1</span>
@@ -387,6 +387,30 @@
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 3</span>
                     <span class="text-sm text-gray-700">Retirement income is taxed as <strong>ordinary income</strong> and flows through the same withholding pipeline as salary &mdash; brackets, FICA exemptions, and all.</span>
+                </div>
+            </div>
+        </div>
+
+    <!-- ═══ Pension ═══ -->
+        <div class="glass-card p-8">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="text-2xl">🏛️</span>
+                <h2 class="text-xl font-bold tracking-tight">Pension</h2>
+                <span class="text-xs text-gray-400 font-medium ml-1">FERS &middot; CSRS &middot; Military &middot; State/Local</span>
+            </div>
+            <p class="text-gray-600 mb-4 leading-relaxed">Model defined-benefit pension payments separately from Social Security. Pensions have their own COLA schedule and are kept distinct so future tax treatment differences (MAGI thresholds, the Social Security 85% rule) can be modeled accurately.</p>
+            <div class="space-y-2">
+                <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+                    <span class="rule-chip">Rule 1</span>
+                    <span class="text-sm text-gray-700">Monthly pension income is credited <strong>starting on the asset's start date</strong>, just like Retirement Income.</span>
+                </div>
+                <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+                    <span class="rule-chip">Rule 2</span>
+                    <span class="text-sm text-gray-700">The annual return rate applies <strong>COLA adjustments</strong> (e.g. FERS 2% cap) &mdash; separate from Social Security COLA.</span>
+                </div>
+                <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+                    <span class="rule-chip">Rule 3</span>
+                    <span class="text-sm text-gray-700">Pension income is taxed as <strong>ordinary income</strong> but is <strong>exempt from FICA</strong>. No contributions or RMDs apply.</span>
                 </div>
             </div>
         </div>

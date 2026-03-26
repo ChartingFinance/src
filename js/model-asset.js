@@ -418,6 +418,7 @@ export class ModelAsset {
   get monthlyRMDs()                  { return this.#metrics.get(Metric.RMD).history; }
   get monthlySocialSecurityTaxes()   { return this.#metrics.get(Metric.SOCIAL_SECURITY_TAX).history; }
   get monthlySocialSecurityIncomes() { return this.#metrics.get(Metric.SOCIAL_SECURITY_INCOME).history; }
+  get monthlyPensionIncomes()        { return this.#metrics.get(Metric.PENSION_INCOME).history; }
   get monthlyMedicareTaxes()         { return this.#metrics.get(Metric.MEDICARE_TAX).history; }
   get monthlyIncomeTaxes()           { return this.#metrics.get(Metric.INCOME_TAX).history; }
   get monthlyMortgagePayments()      { return this.#metrics.get(Metric.MORTGAGE_PAYMENT).history; }

@@ -23,6 +23,7 @@ export const Instrument = Object.freeze({
   CASH:                'cash',
   DEBT:                'debt',
   MONTHLY_EXPENSE:     'monthlyExpense',
+  PENSION:             'pension',
 });
 
 /** Display metadata — keeps UI concerns separate from identity.
@@ -44,6 +45,7 @@ export const InstrumentMeta = new Map([
   [Instrument.CASH,              { emoji: '💰💰', assetEmoji: '💵', label: 'Cash',              sortOrder: 12 }],
   [Instrument.DEBT,              { emoji: '💳💸', assetEmoji: '💳', label: 'Debt',              sortOrder: 13 }],
   [Instrument.MONTHLY_EXPENSE,   { emoji: '💸💸', assetEmoji: '📋', label: 'Monthly Expense',   sortOrder: 14 }],
+  [Instrument.PENSION,           { emoji: '🏛️💲', assetEmoji: '🏛️', label: 'Pension',           sortOrder: 4  }],
 ]);
 
 // ── Classification Sets ──────────────────────────────────────────────
@@ -52,6 +54,7 @@ export const InstrumentMeta = new Map([
 const MONTHLY_INCOME = new Set([
   Instrument.WORKING_INCOME,
   Instrument.RETIREMENT_INCOME,
+  Instrument.PENSION,
 ]);
 
 const MONTHLY_EXPENSE = new Set([
@@ -156,7 +159,8 @@ export const InstrumentType = Object.freeze({
   isDebt:               (v) => DEBT.has(v),
   isMonthlyIncome:      (v) => MONTHLY_INCOME.has(v),
   isWorkingIncome:      (v) => v === Instrument.WORKING_INCOME,
-  isRetirementIncome:   (v) => v === Instrument.RETIREMENT_INCOME,
+  isRetirementIncome:   (v) => v === Instrument.RETIREMENT_INCOME || v === Instrument.PENSION,
+  isPension:            (v) => v === Instrument.PENSION,
   isMonthlyExpense:     (v) => MONTHLY_EXPENSE.has(v),
   isIRA:                (v) => v === Instrument.IRA,
   isRothIRA:            (v) => v === Instrument.ROTH_IRA,

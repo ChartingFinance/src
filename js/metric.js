@@ -37,6 +37,7 @@ export const Metric = Object.freeze({
   RMD:                          'rmd',
   SOCIAL_SECURITY_TAX:          'socialSecurityTax',
   SOCIAL_SECURITY_INCOME:       'socialSecurityIncome',
+  PENSION_INCOME:               'pensionIncome',
   MEDICARE_TAX:                 'medicareTax',
   MORTGAGE_PAYMENT:             'mortgagePayment',
   MORTGAGE_INTEREST:            'mortgageInterest',
@@ -95,6 +96,7 @@ export const MetricLabel = Object.freeze({
   [Metric.RMD]:                         'Required Min. Distribution',
   [Metric.SOCIAL_SECURITY_TAX]:         'Social Security Tax',
   [Metric.SOCIAL_SECURITY_INCOME]:      'Social Security Income',
+  [Metric.PENSION_INCOME]:              'Pension Income',
   [Metric.MEDICARE_TAX]:                'Medicare Tax',
   [Metric.MORTGAGE_PAYMENT]:            'Mortgage Payment',
   [Metric.MORTGAGE_INTEREST]:           'Mortgage Interest',
@@ -134,6 +136,7 @@ export const MetricRollups = {
     [Metric.SELF_INCOME]:                 [Metric.ORDINARY_INCOME],
     [Metric.INTEREST_INCOME]:             [Metric.ORDINARY_INCOME],
     [Metric.SOCIAL_SECURITY_INCOME]:      [Metric.ORDINARY_INCOME],
+    [Metric.PENSION_INCOME]:              [Metric.ORDINARY_INCOME],
     [Metric.SHORT_TERM_CAPITAL_GAIN]:     [Metric.ORDINARY_INCOME], // Taxed at ordinary rates
 
     // --- FOUNDATIONAL GAINS TO CAPITAL GAINS ---

@@ -146,6 +146,7 @@ const INCOME_LEAVES = [
     { label: 'employedIncome',     fp: pkg => pkg.employedIncome.amount,         metric: Metric.EMPLOYED_INCOME },
     { label: 'selfIncome',         fp: pkg => pkg.selfIncome.amount,             metric: Metric.SELF_INCOME },
     { label: 'socialSecurityIncome', fp: pkg => pkg.socialSecurityIncome.amount,  metric: Metric.SOCIAL_SECURITY_INCOME },
+    { label: 'pensionIncome',      fp: pkg => pkg.pensionIncome.amount,          metric: Metric.PENSION_INCOME },
     { label: 'interestIncome',     fp: pkg => pkg.interestIncome.amount,         metric: Metric.INTEREST_INCOME },
     { label: 'shortTermCapGain',   fp: pkg => pkg.shortTermCapitalGains.amount,  metric: Metric.SHORT_TERM_CAPITAL_GAIN },
     { label: 'longTermCapGain',    fp: pkg => pkg.longTermCapitalGains.amount,   metric: Metric.LONG_TERM_CAPITAL_GAIN },

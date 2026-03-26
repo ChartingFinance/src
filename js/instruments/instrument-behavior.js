@@ -127,6 +127,32 @@ const RetirementIncomeBehavior = Object.freeze({
   },
 });
 
+const PensionBehavior = Object.freeze({
+
+  relevantMetrics() {
+    return [
+      ...COMMON_METRICS,
+      M.INCOME, M.ORDINARY_INCOME, M.NET_INCOME, M.GROWTH,
+      M.PENSION_INCOME,
+    ];
+  },
+
+  applyMonthly(asset) {
+    asset.ensurePositiveStart();
+
+    const income = asset.finishCurrency.copy();
+    asset.addToMetric(M.PENSION_INCOME, income);
+    // INCOME populated by DAG: PENSION_INCOME → ORDINARY_INCOME → INCOME
+    asset.netIncomeCurrency.add(income);
+
+    return new IncomeResult(Currency.zero(), income);
+  },
+
+  computeCashFlow(asset) {
+    return asset.incomeCurrency.copy();
+  },
+});
+
 const ExpenseBehavior = Object.freeze({
 
   relevantMetrics() {
@@ -355,6 +381,7 @@ const IncomeAccountBehavior = Object.freeze({
 const BEHAVIOR_MAP = new Map([
   [Instrument.WORKING_INCOME,    WorkingIncomeBehavior],
   [Instrument.RETIREMENT_INCOME, RetirementIncomeBehavior],
+  [Instrument.PENSION,           PensionBehavior],
   [Instrument.MONTHLY_EXPENSE, ExpenseBehavior],
   [Instrument.MORTGAGE,        MortgageBehavior],
   [Instrument.TAXABLE_EQUITY,  CapitalBehavior],

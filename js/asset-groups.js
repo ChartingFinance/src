@@ -31,6 +31,7 @@ export const AssetGroup = Object.freeze({
 const INCOME_SET = new Set([
   Instrument.WORKING_INCOME,
   Instrument.RETIREMENT_INCOME,
+  Instrument.PENSION,
 ]);
 
 const REAL_ESTATE_SET = new Set([
@@ -64,6 +65,7 @@ export const AssetGroupMeta = new Map([
     assetShades: new Map([
       [Instrument.WORKING_INCOME,    '#4B5563'],
       [Instrument.RETIREMENT_INCOME, '#6B7280'],
+      [Instrument.PENSION,           '#757E88'],
       [Instrument.REAL_ESTATE,       '#555E6B'],
       [Instrument.MORTGAGE,          '#7C8590'],
       [Instrument.TAXABLE_EQUITY,    '#5E6773'],
@@ -88,6 +90,7 @@ export const AssetGroupMeta = new Map([
     assetShades: new Map([
       [Instrument.WORKING_INCOME,    '#1D9E75'],
       [Instrument.RETIREMENT_INCOME, '#5DCAA5'],
+      [Instrument.PENSION,           '#3DB890'],
     ]),
   }],
   [AssetGroup.REAL_ESTATE, {
