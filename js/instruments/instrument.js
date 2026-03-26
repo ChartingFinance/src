@@ -31,21 +31,25 @@ export const Instrument = Object.freeze({
  *  assetEmoji — single char for the grouped sidebar (paired with group emoji from AssetGroupMeta)
  */
 export const InstrumentMeta = new Map([
-  [Instrument.REAL_ESTATE,       { emoji: '🏡🌳', assetEmoji: '🌳', label: 'Real Estate',       sortOrder: 0  }],
-  [Instrument.MORTGAGE,          { emoji: '🏡💸', assetEmoji: '🔑', label: 'Mortgage',          sortOrder: 1  }],
-  [Instrument.WORKING_INCOME,    { emoji: '🔧💲', assetEmoji: '🔧', label: 'Working Income',    sortOrder: 2  }],
-  [Instrument.RETIREMENT_INCOME, { emoji: '🏛️💲', assetEmoji: '🎖️', label: 'Retirement Income', sortOrder: 3  }],
-  [Instrument.US_BOND,           { emoji: '🏛️💲', assetEmoji: '🇺🇸', label: 'US Treasury',       sortOrder: 5  }],
-  [Instrument.CORP_BOND,         { emoji: '🏦💲', assetEmoji: '🏢', label: 'Corporate Bond',    sortOrder: 6  }],
-  [Instrument.BANK,              { emoji: '🏦💲', assetEmoji: '🏦', label: 'Savings',           sortOrder: 7  }],
-  [Instrument.ROTH_IRA,          { emoji: '📈📈', assetEmoji: '🛡️', label: 'Roth IRA',          sortOrder: 8  }],
-  [Instrument.IRA,               { emoji: '⏳📈', assetEmoji: '📜', label: 'IRA',               sortOrder: 9  }],
-  [Instrument.FOUR_01K,          { emoji: '⏳📈', assetEmoji: '⏳', label: '401K',              sortOrder: 10 }],
-  [Instrument.TAXABLE_EQUITY,    { emoji: '🧾📈', assetEmoji: '🧾', label: 'Taxable Account',   sortOrder: 11 }],
-  [Instrument.CASH,              { emoji: '💰💰', assetEmoji: '💵', label: 'Cash',              sortOrder: 12 }],
+  // ── Income Sources ──
+  [Instrument.WORKING_INCOME,    { emoji: '🔧💲', assetEmoji: '🔧', label: 'Working Income',    sortOrder: 0  }],
+  [Instrument.RETIREMENT_INCOME, { emoji: '🏛️💲', assetEmoji: '🎖️', label: 'Retirement Income', sortOrder: 1  }],
+  [Instrument.PENSION,           { emoji: '🏛️💲', assetEmoji: '🏛️', label: 'Pension',           sortOrder: 2  }],
+  // ── Savings & Investing ──
+  [Instrument.BANK,              { emoji: '🏦💲', assetEmoji: '🏦', label: 'Savings',           sortOrder: 3  }],
+  [Instrument.FOUR_01K,          { emoji: '⏳📈', assetEmoji: '⏳', label: '401K',              sortOrder: 4  }],
+  [Instrument.IRA,               { emoji: '⏳📈', assetEmoji: '📜', label: 'IRA',               sortOrder: 5  }],
+  [Instrument.ROTH_IRA,          { emoji: '📈📈', assetEmoji: '🛡️', label: 'Roth IRA',          sortOrder: 6  }],
+  [Instrument.TAXABLE_EQUITY,    { emoji: '🧾📈', assetEmoji: '🧾', label: 'Taxable Account',   sortOrder: 7  }],
+  [Instrument.US_BOND,           { emoji: '🏛️💲', assetEmoji: '🇺🇸', label: 'US Treasury',       sortOrder: 8  }],
+  [Instrument.CORP_BOND,         { emoji: '🏦💲', assetEmoji: '🏢', label: 'Corporate Bond',    sortOrder: 9  }],
+  [Instrument.CASH,              { emoji: '💰💰', assetEmoji: '💵', label: 'Cash',              sortOrder: 10 }],
+  // ── Real Estate & Debt ──
+  [Instrument.REAL_ESTATE,       { emoji: '🏡🌳', assetEmoji: '🌳', label: 'Real Estate',       sortOrder: 11 }],
+  [Instrument.MORTGAGE,          { emoji: '🏡💸', assetEmoji: '🔑', label: 'Mortgage',          sortOrder: 12 }],
   [Instrument.DEBT,              { emoji: '💳💸', assetEmoji: '💳', label: 'Debt',              sortOrder: 13 }],
+  // ── Expenses ──
   [Instrument.MONTHLY_EXPENSE,   { emoji: '💸💸', assetEmoji: '📋', label: 'Monthly Expense',   sortOrder: 14 }],
-  [Instrument.PENSION,           { emoji: '🏛️💲', assetEmoji: '🏛️', label: 'Pension',           sortOrder: 4  }],
 ]);
 
 // ── Classification Sets ──────────────────────────────────────────────
