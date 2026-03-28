@@ -16,6 +16,7 @@ import { DateInt }        from './utils/date-int.js';
 import { ARR }            from './utils/arr.js';
 import { InstrumentType } from './instruments/instrument.js';
 import { FundTransfer }   from './fund-transfer.js';
+import { Windfall }       from './windfall.js';
 import { logger, LogCategory } from './utils/logger.js';
 import { MetricSet }      from './metric.js';
 import { IncomeResult } from './instruments/instrument-behavior.js';
@@ -76,6 +77,8 @@ export class ModelAsset {
     dividendQualifiedRatio = 1.0,
     annualMaintenanceRate = new ARR(0),
     annualInsuranceCost = Currency.zero(),
+    fundingConfig = null,
+    windfalls = [],
   }) {
     this.instrument      = instrument;
     this.displayName     = displayName;
@@ -95,6 +98,8 @@ export class ModelAsset {
     this.annualTaxRate   = annualTaxRate;
     this.annualMaintenanceRate = annualMaintenanceRate;
     this.annualInsuranceCost = annualInsuranceCost;
+    this.fundingConfig = fundingConfig;
+    this.windfalls = windfalls;
 
     this.behavior      = getBehavior(instrument);
     this.colorId       = 0;
@@ -157,6 +162,8 @@ export class ModelAsset {
       annualTaxRate:   new ARR(obj.annualTaxRate?.annualReturnRate ?? obj.annualTaxRate?.rate ?? 0),
       annualMaintenanceRate: new ARR(obj.annualMaintenanceRate?.annualReturnRate ?? obj.annualMaintenanceRate?.rate ?? 0),
       annualInsuranceCost: new Currency(obj.annualInsuranceCost?.amount ?? 0),
+      fundingConfig: obj.fundingConfig ?? null,
+      windfalls: (obj.windfalls ?? []).map(Windfall.fromJSON),
     });
   }
 
@@ -172,6 +179,15 @@ export class ModelAsset {
       if (raw) {
         const parsed = JSON.parse(atob(raw));
         fundTransfers = parsed.map(FundTransfer.fromJSON);
+      }
+    }
+
+    let windfalls = [];
+    if (vals.windfalls) {
+      const raw = vals.windfalls.getAttribute('data-windfalls');
+      if (raw) {
+        const parsed = JSON.parse(atob(raw));
+        windfalls = parsed.map(Windfall.fromJSON);
       }
     }
 
@@ -197,6 +213,7 @@ export class ModelAsset {
       annualTaxRate: vals.annualTaxRate ? ARR.parse(vals.annualTaxRate.value) : new ARR(0),
       annualMaintenanceRate: vals.annualMaintenanceRate ? ARR.parse(vals.annualMaintenanceRate.value) : new ARR(0),
       annualInsuranceCost: vals.annualInsuranceCost ? Currency.parse(vals.annualInsuranceCost.value) : Currency.zero(),
+      windfalls,
     });
 
     // Restore color

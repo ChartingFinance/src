@@ -85,6 +85,9 @@ class AssetCard extends LitElement {
                 ${this.readonly ? '' : html`
                     <span class="asset-action-btn edit" title="Edit" @click=${this._onEdit}>&#x270E;</span>
                     <span class="asset-action-btn transfers" title="Transfers" @click=${this._onTransfers}>&#x21C4;</span>
+                    ${this.modelAsset.windfalls?.length ? html`
+                        <span class="asset-action-btn windfall" title="Windfalls" @click=${this._onWindfalls}>&#x1F4B0;</span>
+                    ` : ''}
                 `}
                 ${this.closedEmoji ? html`<div class="asset-card-icon" style="font-size: 12px; margin-right: -4px;" title="${this.closedEmoji === '⚠️' ? 'Account depleted — balance clamped to $0' : 'Closed'}">${this.closedEmoji}</div>` : ''}
                 <div class="asset-card-icon">${emoji}</div>
@@ -109,6 +112,14 @@ class AssetCard extends LitElement {
     _onTransfers(ev) {
         ev.stopPropagation();
         this.dispatchEvent(new CustomEvent('show-transfers', {
+            bubbles: true, composed: true,
+            detail: { modelAsset: this.modelAsset },
+        }));
+    }
+
+    _onWindfalls(ev) {
+        ev.stopPropagation();
+        this.dispatchEvent(new CustomEvent('show-windfalls', {
             bubbles: true, composed: true,
             detail: { modelAsset: this.modelAsset },
         }));

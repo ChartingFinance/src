@@ -401,7 +401,24 @@ export class Portfolio {
             }
 
         }
-        
+
+        // One-time funding transfers for assets starting this month
+        for (const modelAsset of this.modelAssets) {
+            if (!modelAsset.isClosed && modelAsset.onStartDate && modelAsset.fundingConfig) {
+                this.applyAssetOpenFundTransfer(modelAsset);
+            }
+        }
+
+        // Day 1 windfall credits
+        for (const modelAsset of this.modelAssets) {
+            if (modelAsset.isClosed || !modelAsset.windfalls?.length) continue;
+            for (const windfall of modelAsset.windfalls) {
+                if (windfall.dateInt.equals(currentDateInt)) {
+                    modelAsset.credit(windfall.amount.copy(), 'Windfall: ' + (windfall.note || 'one-time'));
+                }
+            }
+        }
+
         // TODO: You can either make contributions or take distributions. Not both.
 
         // Day 1 payroll pipeline
@@ -560,7 +577,24 @@ export class Portfolio {
 
     }
 
+    applyAssetOpenFundTransfer(modelAsset) {
+        const config = modelAsset.fundingConfig;
+        const source = findByName(this.modelAssets, config.sourceDisplayName);
+        if (!source || source.isClosed) {
+            logger.log(LogCategory.TRANSFER, 'Portfolio.applyAssetOpenFundTransfer: funding source "' + config.sourceDisplayName + '" not found or closed');
+            return;
+        }
 
+        const percent = config.downPaymentPercent ?? 100;
+        const amount = new Currency(modelAsset.startCurrency.amount * (percent / 100));
+        const memo = source.displayName + ' → ' + modelAsset.displayName + ' (funding)';
+
+        logger.log(LogCategory.TRANSFER, 'Portfolio.applyAssetOpenFundTransfer: ' + source.displayName + ' funding ' + amount.toString() + ' for ' + modelAsset.displayName);
+
+        // Debit-only: real estate already has its value via finishCurrency = startCurrency.
+        // A two-sided execute() would double-credit the real estate.
+        source.debit(amount, memo);
+    }
 
     applyYear(currentDateInt) {
 

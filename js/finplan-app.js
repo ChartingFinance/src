@@ -15,6 +15,7 @@ import { Metric, MetricLabel, PINNED_METRICS, MACRO_METRICS, isTopLevelMetric } 
 import { DateInt } from './utils/date-int.js';
 
 // ── Simulation ──────────────────────────────────────────────
+import { InstrumentType } from './instruments/instrument.js';
 import { chronometer_run, chronometer_run_animated } from './chronometer.js';
 import { Portfolio } from './portfolio.js';
 import { TaxTable } from './taxes.js';
@@ -49,6 +50,8 @@ import './components/asset-list.js';
 import './components/asset-card.js';
 import './components/asset-form-modal.js';
 import './components/transfer-modal.js';
+import './components/funding-modal.js';
+import './components/windfall-modal.js';
 import './components/event-form-modal.js';
 import './components/finplan-timeline.js';
 import './components/simulator-modal.js';
@@ -132,6 +135,8 @@ import {
 const assetList         = document.getElementById('finplanAssetList');
 const assetFormModal    = document.getElementById('assetFormModal');
 const transferModal     = document.getElementById('transferModal');
+const fundingModal      = document.getElementById('fundingModal');
+const windfallModal     = document.getElementById('windfallModal');
 const eventFormModal    = document.getElementById('eventFormModal');
 const timeline          = document.getElementById('finplanTimeline');
 const viewingBadge      = document.getElementById('viewingBadge');
@@ -169,6 +174,7 @@ let activeMicroMetric   = Metric.VALUE;
 let macroChart          = null;
 let microChart          = null;
 let editingModelAsset   = null;
+let pendingFundingAsset = null;  // stashed real estate asset awaiting funding confirmation
 
 let viewMode            = 'assets'; // 'assets' | 'properties'
 let activePhaseIndex    = 0;
@@ -204,7 +210,9 @@ initiateActiveData();
 // Wire sidebar events
 connectAssetListEvents();
 connectAssetFormModal();
+connectFundingModal();
 connectTransferModal();
+connectWindfallModal();
 
 // Wire phase selection — track selected phase for fund transfers
 timeline.addEventListener('phase-select', (ev) => {
@@ -1069,14 +1077,17 @@ function rebuildMicroChart(markers) {
         }
     }
 
-    if (datasets.length === 0) return;
-
     const microCfg = {
         type: 'bar',
         data: { labels, datasets },
         options: {
             responsive: true,
-            plugins: { title: { display: false }, dateMarkers: { markers } },
+            plugins: {
+                title: datasets.length === 0
+                    ? { display: true, text: 'No data for selected metric', color: '#9ca3af', font: { size: 13, weight: 'normal' } }
+                    : { display: false },
+                dateMarkers: { markers },
+            },
             scales: { x: { stacked: true }, y: { stacked: true } },
         },
     };
@@ -1172,6 +1183,10 @@ function connectAssetListEvents() {
         showPopupTransfers(ev.detail.modelAsset.displayName);
     });
 
+    assetList.addEventListener('show-windfalls', (ev) => {
+        showWindfallModal(ev.detail.modelAsset);
+    });
+
     assetList.addEventListener('quick-start', (ev) => {
         const profile = ev.detail?.profile;
         if (profile) {
@@ -1210,8 +1225,8 @@ function connectAssetListEvents() {
             else expandedGroups.add(group);
         }
         assetList.expandedGroups = new Set(expandedGroups);
-        rebuildMicroChart();
         updateMetricDropdown();
+        rebuildMicroChart();
     });
 }
 
@@ -1221,6 +1236,16 @@ function connectAssetFormModal() {
     assetFormModal.addEventListener('save-asset', (ev) => {
         const { modelAsset: newAsset, mode } = ev.detail;
         if (mode === 'create') {
+            // Future real estate purchases route through the funding modal
+            if (InstrumentType.isRealEstate(newAsset.instrument)
+                && newAsset.startDateInt.isAfter(DateInt.today())) {
+                pendingFundingAsset = newAsset;
+                fundingModal.modelAssets = assetList.modelAssets || [];
+                fundingModal.purchasePrice = newAsset.startCurrency.amount;
+                fundingModal.startDate = newAsset.startDateInt.toHTML();
+                fundingModal.open = true;
+                return;
+            }
             assetList.modelAssets = [...(assetList.modelAssets || []), newAsset];
         } else if (mode === 'edit' && editingModelAsset) {
             editingModelAsset.instrument = newAsset.instrument;
@@ -1239,17 +1264,19 @@ function connectAssetFormModal() {
             editingModelAsset.isPrimaryHome = newAsset.isPrimaryHome;
             editingModelAsset.annualMaintenanceRate = newAsset.annualMaintenanceRate;
             editingModelAsset.annualInsuranceCost = newAsset.annualInsuranceCost;
+            editingModelAsset.windfalls = newAsset.windfalls;
             editingModelAsset = null;
         }
         calculate();
     });
 }
 
-function openCreateAssetModal(preselectedInstrument, preselectedStartDate) {
+function openCreateAssetModal(preselectedInstrument, preselectedStartDate, preselectedStartValue) {
     assetFormModal.mode = 'create';
     assetFormModal.modelAsset = null;
     assetFormModal.preselectedInstrument = preselectedInstrument || null;
     assetFormModal.preselectedStartDate = preselectedStartDate || null;
+    assetFormModal.preselectedStartValue = preselectedStartValue || null;
     assetFormModal.open = true;
 }
 
@@ -1258,6 +1285,32 @@ function openEditAssetModal(modelAsset) {
     assetFormModal.mode = 'edit';
     assetFormModal.modelAsset = modelAsset;
     assetFormModal.open = true;
+}
+
+// ── Funding Modal ───────────────────────────────────────────
+
+function connectFundingModal() {
+    fundingModal.addEventListener('funding-confirmed', (ev) => {
+        if (!pendingFundingAsset) return;
+        const asset = pendingFundingAsset;
+        pendingFundingAsset = null;
+
+        // Attach funding config and save the real estate asset
+        asset.fundingConfig = ev.detail;
+        assetList.modelAssets = [...(assetList.modelAssets || []), asset];
+
+        // Chain: if down payment, open pre-filled mortgage form for the remaining balance
+        if (asset.fundingConfig.purchaseType === 'downPayment') {
+            const remaining = 100 - asset.fundingConfig.downPaymentPercent;
+            const mortgageAmount = asset.startCurrency.amount * (remaining / 100);
+            setTimeout(() => openCreateAssetModal('mortgage', asset.startDateInt.toHTML(), -mortgageAmount), 100);
+        }
+        calculate();
+    });
+
+    fundingModal.addEventListener('funding-cancelled', () => {
+        pendingFundingAsset = null;
+    });
 }
 
 // ── Transfer Modal ──────────────────────────────────────────
@@ -1279,6 +1332,28 @@ function showPopupTransfers(currentDisplayName) {
     transferModal.modelAssets = assetList.modelAssets || [];
     transferModal.phaseTransfers = activePhase?.phaseTransfers ?? {};
     transferModal.open = true;
+}
+
+// ── Windfall Modal ─────────────────────────────────────────
+
+function connectWindfallModal() {
+    windfallModal.addEventListener('save-windfalls', (ev) => {
+        const { displayName, windfalls } = ev.detail;
+        const asset = (assetList.modelAssets || []).find(a => a.displayName === displayName);
+        if (asset) {
+            asset.windfalls = windfalls;
+        }
+        calculate();
+    });
+
+    assetFormModal.addEventListener('open-windfalls', (ev) => {
+        showWindfallModal(ev.detail.modelAsset);
+    });
+}
+
+function showWindfallModal(modelAsset) {
+    windfallModal.modelAsset = modelAsset;
+    windfallModal.open = true;
 }
 
 // ── Persistence ─────────────────────────────────────────────
