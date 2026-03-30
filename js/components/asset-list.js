@@ -186,29 +186,27 @@ class AssetList extends LitElement {
                     <span class="asset-group-total">${formatCompactCurrency(total)}</span>
                     <span class="asset-group-chevron ${isExpanded ? 'expanded' : ''}">&#x25B6;</span>
                 </div>
-                ${isExpanded ? html`
-                    <div class="asset-group-children">
-                        ${repeat(
-                            assets,
-                            (ma) => ma.displayName + ':' + groupKey,
-                            (ma) => {
-                                const metric = getPrimaryMetric(ma, groupKey);
-                                const shade = meta.assetShades?.get(ma.instrument) ?? meta.chartColor;
-                                return html`
-                                    <asset-card
-                                        .modelAsset=${ma}
-                                        .groupColor=${shade}
-                                        .metricValue=${this._getMetricValueForMetric(ma, metric)}
-                                        .metricLabel=${MetricLabel[metric] || ''}
-                                        ?ghost=${ma._isClosedAtDate}
-                                        .closedEmoji=${ma._isClosedAtDate ? '⛔' : ma.isDepleted ? '⚠️' : ''}
-                                        ?selected=${this.highlightName === ma.displayName}
-                                    ></asset-card>
-                                `;
-                            }
-                        )}
-                    </div>
-                ` : nothing}
+                <div class="asset-group-children ${isExpanded ? '' : 'collapsed'}">
+                    ${repeat(
+                        assets,
+                        (ma) => ma.displayName + ':' + groupKey,
+                        (ma) => {
+                            const metric = getPrimaryMetric(ma, groupKey);
+                            const shade = meta.assetShades?.get(ma.instrument) ?? meta.chartColor;
+                            return html`
+                                <asset-card
+                                    .modelAsset=${ma}
+                                    .groupColor=${shade}
+                                    .metricValue=${this._getMetricValueForMetric(ma, metric)}
+                                    .metricLabel=${MetricLabel[metric] || ''}
+                                    ?ghost=${ma._isClosedAtDate}
+                                    .closedEmoji=${ma._isClosedAtDate ? '⛔' : ma.isDepleted ? '⚠️' : ''}
+                                    ?selected=${this.highlightName === ma.displayName}
+                                ></asset-card>
+                            `;
+                        }
+                    )}
+                </div>
             </div>
         `;
     }
@@ -259,24 +257,22 @@ class AssetList extends LitElement {
                     <span class="asset-group-total">${total}</span>
                     <span class="asset-group-chevron ${isExpanded ? 'expanded' : ''}">&#x25B6;</span>
                 </div>
-                ${isExpanded ? html`
-                    <div class="asset-group-children">
-                        ${repeat(
-                            assets,
-                            (ma) => ma.displayName,
-                            (ma) => html`
-                                <asset-card
-                                    .modelAsset=${ma}
-                                    .groupColor=${getAssetChartColor(ma.instrument)}
-                                    .metricValue=${this._getMetricValue(ma)}
-                                    ?ghost=${ma._isClosedAtDate}
-                                    .closedEmoji=${ma._isClosedAtDate ? '⛔' : ma.isDepleted ? '⚠️' : ''}
-                                    ?selected=${this.highlightName === ma.displayName}
-                                ></asset-card>
-                            `
-                        )}
-                    </div>
-                ` : nothing}
+                <div class="asset-group-children ${isExpanded ? '' : 'collapsed'}">
+                    ${repeat(
+                        assets,
+                        (ma) => ma.displayName,
+                        (ma) => html`
+                            <asset-card
+                                .modelAsset=${ma}
+                                .groupColor=${getAssetChartColor(ma.instrument)}
+                                .metricValue=${this._getMetricValue(ma)}
+                                ?ghost=${ma._isClosedAtDate}
+                                .closedEmoji=${ma._isClosedAtDate ? '⛔' : ma.isDepleted ? '⚠️' : ''}
+                                ?selected=${this.highlightName === ma.displayName}
+                            ></asset-card>
+                        `
+                    )}
+                </div>
             </div>
         `;
     }
@@ -301,17 +297,15 @@ class AssetList extends LitElement {
                     <span class="asset-group-total">${formatCompactCurrency(total)}/yr</span>
                     <span class="asset-group-chevron ${isExpanded ? 'expanded' : ''}">&#x25B6;</span>
                 </div>
-                ${isExpanded ? html`
-                    <div class="asset-group-children">
-                        ${taxItems.map(t => html`
-                            <div class="tax-item-pill">
-                                <span class="tax-item-emoji">${t.emoji}</span>
-                                <span class="tax-item-label">${t.label}</span>
-                                <span class="tax-item-value">${formatCompactCurrency(t.amount)}/yr</span>
-                            </div>
-                        `)}
-                    </div>
-                ` : nothing}
+                <div class="asset-group-children ${isExpanded ? '' : 'collapsed'}">
+                    ${taxItems.map(t => html`
+                        <div class="tax-item-pill">
+                            <span class="tax-item-emoji">${t.emoji}</span>
+                            <span class="tax-item-label">${t.label}</span>
+                            <span class="tax-item-value">${formatCompactCurrency(t.amount)}/yr</span>
+                        </div>
+                    `)}
+                </div>
             </div>
         `;
     }

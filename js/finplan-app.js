@@ -51,7 +51,7 @@ import './components/asset-card.js';
 import './components/asset-form-modal.js';
 import './components/transfer-modal.js';
 import './components/funding-modal.js';
-import './components/windfall-modal.js';
+import './components/one-time-modal.js';
 import './components/event-form-modal.js';
 import './components/finplan-timeline.js';
 import './components/simulator-modal.js';
@@ -59,6 +59,7 @@ import './components/spreadsheet-view.js';
 import './components/report-view.js';
 import './components/credit-memo-view.js';
 import './components/share-modal.js';
+import './components/issues-modal.js';
 
 // ── AI Summary generators ──────────────────────────────────
 import {
@@ -136,7 +137,7 @@ const assetList         = document.getElementById('finplanAssetList');
 const assetFormModal    = document.getElementById('assetFormModal');
 const transferModal     = document.getElementById('transferModal');
 const fundingModal      = document.getElementById('fundingModal');
-const windfallModal     = document.getElementById('windfallModal');
+const oneTimeModal      = document.getElementById('oneTimeModal');
 const eventFormModal    = document.getElementById('eventFormModal');
 const timeline          = document.getElementById('finplanTimeline');
 const viewingBadge      = document.getElementById('viewingBadge');
@@ -150,6 +151,7 @@ const creditMemoView    = document.getElementById('finplanCreditMemos');
 const metricSelect      = document.getElementById('finplan-metric-select');
 const microMetricSelect = document.getElementById('finplan-micro-metric-select');
 const shareModal        = document.getElementById('shareModal');
+const issuesModal       = document.getElementById('issuesModal');
 const scenarioSelect    = document.getElementById('scenario-select');
 const scenarioNote      = document.getElementById('scenario-note');
 const btnDeleteScenario = document.getElementById('btn-delete-scenario');
@@ -164,6 +166,10 @@ function syncGuardrailsToDOM() {
     grProsperity.value   = global_guardrail_prosperity;
     grAdjustment.value   = global_guardrail_adjustment;
 }
+
+// Disable Chart.js animations globally — prevents ResizeObserver-triggered
+// redraws from blocking the main thread when DOM layout shifts (e.g. group expand).
+Chart.defaults.animation = false;
 
 // ── App state ───────────────────────────────────────────────
 let activePortfolio     = null;
@@ -212,7 +218,7 @@ connectAssetListEvents();
 connectAssetFormModal();
 connectFundingModal();
 connectTransferModal();
-connectWindfallModal();
+connectOneTimeModal();
 
 // Wire phase selection — track selected phase for fund transfers
 timeline.addEventListener('phase-select', (ev) => {
@@ -248,6 +254,9 @@ eventFormModal.addEventListener('delete-life-event', (ev) => {
 });
 
 // Wire buttons
+document.getElementById('btn-issues').addEventListener('click', () => {
+    if (issuesModal) issuesModal.open = true;
+});
 document.getElementById('btn-donate').addEventListener('click', () => {
     document.getElementById('popupFormDonate').style.display = 'flex';
 });
@@ -1006,92 +1015,83 @@ function rebuildMicroChart(markers) {
     if (!activePortfolio) return;
     if (!markers) markers = buildPhaseMarkersForCharts();
 
-    if (microChart) microChart.destroy();
-    microChart = null;
-
     const labels = charting_buildDisplayLabels(activePortfolio.firstDateInt, activePortfolio.lastDateInt);
 
-    if (expandedGroups.size === 0) {
-        // Empty state: axes but no data, with a prompt message
-        const microCfg = {
-            type: 'bar',
-            data: { labels, datasets: [] },
-            options: {
-                responsive: true,
-                plugins: {
-                    title: { display: true, text: 'Expand a group to see data', color: '#9ca3af', font: { size: 13, weight: 'normal' } },
-                    dateMarkers: { markers },
-                },
-                scales: { x: { stacked: true }, y: { stacked: true } },
-            },
-        };
-        microChart = new Chart(microCanvas, microCfg);
+    // Build datasets
+    const datasets = [];
+
+    if (expandedGroups.size > 0) {
+        if (viewMode === 'properties') {
+            const groups = classifyAssetsByProperty(activePortfolio.modelAssets);
+            for (const groupKey of getPropertyDisplayOrder()) {
+                if (!expandedGroups.has(groupKey)) continue;
+                const meta = PropertyGroupMeta.get(groupKey);
+                const assets = ASSET_LESS_GROUPS.has(groupKey)
+                    ? activePortfolio.modelAssets
+                    : groups.get(groupKey);
+                if (!assets) continue;
+                for (const asset of assets) {
+                    const shade = meta.assetShades?.get(asset.instrument)
+                        || (ASSET_LESS_GROUPS.has(groupKey) ? getAssetChartColor(asset.instrument) : meta.chartColor);
+                    datasets.push({
+                        label: asset.displayName,
+                        data: asset.getDisplayHistory(activeMicroMetric),
+                        backgroundColor: shade,
+                    });
+                }
+            }
+        } else {
+            const groups = new Map();
+            for (const asset of activePortfolio.modelAssets) {
+                const groupKey = classifyAssetGroup(asset.instrument);
+                if (!groups.has(groupKey)) groups.set(groupKey, []);
+                groups.get(groupKey).push(asset);
+            }
+            for (const groupKey of getAssetDisplayOrder()) {
+                if (!expandedGroups.has(groupKey)) continue;
+                const assets = groups.get(groupKey);
+                if (!assets || assets.length === 0) continue;
+                for (const asset of assets) {
+                    datasets.push({
+                        label: asset.displayName,
+                        data: asset.getDisplayHistory(activeMicroMetric),
+                        backgroundColor: getAssetChartColor(asset.instrument),
+                    });
+                }
+            }
+        }
+    }
+
+    // Determine title
+    const titlePlugin = expandedGroups.size === 0
+        ? { display: true, text: 'Expand a group to see data', color: '#9ca3af', font: { size: 13, weight: 'normal' } }
+        : datasets.length === 0
+            ? { display: true, text: 'No data for selected metric', color: '#9ca3af', font: { size: 13, weight: 'normal' } }
+            : { display: false };
+
+    // Reuse existing chart if labels haven't changed — just swap datasets
+    if (microChart && microChart.data.labels.length === labels.length) {
+        microChart.data.datasets = datasets;
+        microChart.options.plugins.title = titlePlugin;
+        microChart.options.plugins.dateMarkers = { markers };
+        microChart.update('none');
         return;
     }
 
-    const datasets = [];
-
-    if (viewMode === 'properties') {
-        // Properties mode: chart assets from expanded property groups
-        const groups = classifyAssetsByProperty(activePortfolio.modelAssets);
-        for (const groupKey of getPropertyDisplayOrder()) {
-            if (!expandedGroups.has(groupKey)) continue;
-            const meta = PropertyGroupMeta.get(groupKey);
-
-            // Asset-less groups (Cash Flow, Growth): show all assets with the group's metric
-            const assets = ASSET_LESS_GROUPS.has(groupKey)
-                ? activePortfolio.modelAssets
-                : groups.get(groupKey);
-            if (!assets) continue;
-
-            for (const asset of assets) {
-                const shade = meta.assetShades?.get(asset.instrument)
-                    || (ASSET_LESS_GROUPS.has(groupKey) ? getAssetChartColor(asset.instrument) : meta.chartColor);
-                datasets.push({
-                    label: asset.displayName,
-                    data: asset.getDisplayHistory(activeMicroMetric),
-                    backgroundColor: shade,
-                });
-            }
-        }
-    } else {
-        // Assets mode: chart assets from expanded instrument groups
-        const groups = new Map();
-        for (const asset of activePortfolio.modelAssets) {
-            const groupKey = classifyAssetGroup(asset.instrument);
-            if (!groups.has(groupKey)) groups.set(groupKey, []);
-            groups.get(groupKey).push(asset);
-        }
-
-        for (const groupKey of getAssetDisplayOrder()) {
-            if (!expandedGroups.has(groupKey)) continue;
-            const assets = groups.get(groupKey);
-            if (!assets || assets.length === 0) continue;
-            for (const asset of assets) {
-                datasets.push({
-                    label: asset.displayName,
-                    data: asset.getDisplayHistory(activeMicroMetric),
-                    backgroundColor: getAssetChartColor(asset.instrument),
-                });
-            }
-        }
-    }
-
-    const microCfg = {
+    // Full rebuild only when label count changes (new portfolio loaded)
+    if (microChart) microChart.destroy();
+    microChart = new Chart(microCanvas, {
         type: 'bar',
         data: { labels, datasets },
         options: {
             responsive: true,
             plugins: {
-                title: datasets.length === 0
-                    ? { display: true, text: 'No data for selected metric', color: '#9ca3af', font: { size: 13, weight: 'normal' } }
-                    : { display: false },
+                title: titlePlugin,
                 dateMarkers: { markers },
             },
             scales: { x: { stacked: true }, y: { stacked: true } },
         },
-    };
-    microChart = new Chart(microCanvas, microCfg);
+    });
 }
 
 function buildSimulationMarkers(chart, fullLabels) {
@@ -1183,8 +1183,8 @@ function connectAssetListEvents() {
         showPopupTransfers(ev.detail.modelAsset.displayName);
     });
 
-    assetList.addEventListener('show-windfalls', (ev) => {
-        showWindfallModal(ev.detail.modelAsset);
+    assetList.addEventListener('show-one-times', (ev) => {
+        showOneTimeModal(ev.detail.modelAsset);
     });
 
     assetList.addEventListener('quick-start', (ev) => {
@@ -1225,8 +1225,7 @@ function connectAssetListEvents() {
             else expandedGroups.add(group);
         }
         assetList.expandedGroups = new Set(expandedGroups);
-        updateMetricDropdown();
-        rebuildMicroChart();
+        setTimeout(() => { updateMetricDropdown(); rebuildMicroChart(); }, 0);
     });
 }
 
@@ -1264,7 +1263,6 @@ function connectAssetFormModal() {
             editingModelAsset.isPrimaryHome = newAsset.isPrimaryHome;
             editingModelAsset.annualMaintenanceRate = newAsset.annualMaintenanceRate;
             editingModelAsset.annualInsuranceCost = newAsset.annualInsuranceCost;
-            editingModelAsset.windfalls = newAsset.windfalls;
             editingModelAsset = null;
         }
         calculate();
@@ -1334,26 +1332,27 @@ function showPopupTransfers(currentDisplayName) {
     transferModal.open = true;
 }
 
-// ── Windfall Modal ─────────────────────────────────────────
+// ── One-Time Modal ─────────────────────────────────────────
 
-function connectWindfallModal() {
-    windfallModal.addEventListener('save-windfalls', (ev) => {
-        const { displayName, windfalls } = ev.detail;
+function connectOneTimeModal() {
+    oneTimeModal.addEventListener('save-one-times', (ev) => {
+        const { displayName, oneTimeEvents } = ev.detail;
         const asset = (assetList.modelAssets || []).find(a => a.displayName === displayName);
         if (asset) {
-            asset.windfalls = windfalls;
+            asset.oneTimeEvents = oneTimeEvents;
         }
         calculate();
     });
 
-    assetFormModal.addEventListener('open-windfalls', (ev) => {
-        showWindfallModal(ev.detail.modelAsset);
+    assetFormModal.addEventListener('open-one-times', (ev) => {
+        showOneTimeModal(ev.detail.modelAsset);
     });
 }
 
-function showWindfallModal(modelAsset) {
-    windfallModal.modelAsset = modelAsset;
-    windfallModal.open = true;
+function showOneTimeModal(modelAsset) {
+    oneTimeModal.modelAsset = modelAsset;
+    oneTimeModal.defaultDate = DateInt.from(store.selectedYear, store.selectedMonth).toHTML();
+    oneTimeModal.open = true;
 }
 
 // ── Persistence ─────────────────────────────────────────────

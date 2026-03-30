@@ -85,11 +85,13 @@ class AssetCard extends LitElement {
                 ${this.readonly ? '' : html`
                     <span class="asset-action-btn edit" title="Edit" @click=${this._onEdit}>&#x270E;</span>
                     <span class="asset-action-btn transfers" title="Transfers" @click=${this._onTransfers}>&#x21C4;</span>
-                    ${this.modelAsset.windfalls?.length ? html`
-                        <span class="asset-action-btn windfall" title="Windfalls" @click=${this._onWindfalls}>&#x1F4B0;</span>
-                    ` : ''}
                 `}
-                ${this.closedEmoji ? html`<div class="asset-card-icon" style="font-size: 12px; margin-right: -4px;" title="${this.closedEmoji === '⚠️' ? 'Account depleted — balance clamped to $0' : 'Closed'}">${this.closedEmoji}</div>` : ''}
+                ${(this.closedEmoji || this.modelAsset.oneTimeEvents?.length) ? html`
+                    <div class="asset-card-icon" style="display: flex; gap: 3px; justify-content: center; font-size: 12px;">
+                        ${this.closedEmoji ? html`<span title="${this.closedEmoji === '⚠️' ? 'Account depleted — balance clamped to $0' : 'Closed'}">${this.closedEmoji}</span>` : ''}
+                        ${this.modelAsset.oneTimeEvents?.length ? html`<span title="One-Time Events" style="cursor: pointer;" @click=${this._onOneTime}>&#x1F4B0;</span>` : ''}
+                    </div>
+                ` : ''}
                 <div class="asset-card-icon">${emoji}</div>
                 <div class="asset-card-name">${ma.displayName}</div>
                 <div class="asset-card-value">${valueDisplay}</div>
@@ -117,9 +119,9 @@ class AssetCard extends LitElement {
         }));
     }
 
-    _onWindfalls(ev) {
+    _onOneTime(ev) {
         ev.stopPropagation();
-        this.dispatchEvent(new CustomEvent('show-windfalls', {
+        this.dispatchEvent(new CustomEvent('show-one-times', {
             bubbles: true, composed: true,
             detail: { modelAsset: this.modelAsset },
         }));

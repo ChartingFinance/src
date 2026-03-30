@@ -152,7 +152,7 @@ const SELF_EMPLOYABLE = new Set([
   Instrument.WORKING_INCOME,
 ]);
 
-const WINDFALL_ELIGIBLE = new Set([
+const ONE_TIME_ELIGIBLE = new Set([
   Instrument.BANK,
   Instrument.TAXABLE_EQUITY,
   Instrument.US_BOND,
@@ -189,7 +189,7 @@ export const InstrumentType = Object.freeze({
   isMonthsRemainingAble:(v) => MONTHS_REMAINING_ABLE.has(v),
   isBasisable:          (v) => BASISABLE.has(v),
   isSelfEmployable:     (v) => v === Instrument.WORKING_INCOME,
-  isWindfallEligible:   (v) => WINDFALL_ELIGIBLE.has(v),
+  isOneTimeEligible:    (v) => ONE_TIME_ELIGIBLE.has(v),
 
   /** True if instrument represents a balance-sheet asset (not income/expense) */
   isAsset: (v) => FUNDABLE.has(v) || v === Instrument.REAL_ESTATE || v === Instrument.MORTGAGE,

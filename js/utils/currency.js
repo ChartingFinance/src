@@ -16,7 +16,7 @@ export class Currency {
    * @param {number} [amount=0]
    */
   constructor(amount = 0) {
-    this.amount = typeof amount === 'number' ? amount : 0;
+    this.amount = typeof amount === 'number' ? Math.round(amount * 100) / 100 : 0;
   }
 
   // ── Parsing ──────────────────────────────────────────────────────

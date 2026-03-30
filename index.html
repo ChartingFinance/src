@@ -17,7 +17,7 @@
 
     <!-- Modern1: Poppins + Tailwind -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/tw.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <!-- Lit 3 (CDN) -->
@@ -226,6 +226,7 @@
         .asset-group-chevron { font-size: 10px; transition: transform 0.2s; }
         .asset-group-chevron.expanded { transform: rotate(90deg); }
         .asset-group-children { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 4px 0 4px 12px; }
+        .asset-group-children.collapsed { display: none; }
 
         .tax-item-pill {
             display: flex; align-items: center; gap: 6px;
@@ -329,10 +330,11 @@
     <!-- ═══ Modals (reused Lit components) ═══ -->
     <transfer-modal id="transferModal"></transfer-modal>
     <funding-modal id="fundingModal"></funding-modal>
-    <windfall-modal id="windfallModal"></windfall-modal>
+    <one-time-modal id="oneTimeModal"></one-time-modal>
     <asset-form-modal id="assetFormModal"></asset-form-modal>
     <event-form-modal id="eventFormModal"></event-form-modal>
     <share-modal id="shareModal"></share-modal>
+    <issues-modal id="issuesModal"></issues-modal>
 
     <!-- ═══ Popup: Donate / Coffee ═══ -->
     <div id="popupFormDonate" class="popup fixed inset-0 z-50 hidden flex items-center justify-center p-4">
@@ -426,6 +428,7 @@
             </nav>
         </div>
         <div class="flex flex-wrap items-center gap-2">
+            <button class="btn-modern outline" id="btn-issues">Issues 🐛</button>
             <button class="btn-modern outline" id="btn-donate">Donate ☕</button>
             <button class="btn-modern outline" id="btn-share">Share 📤</button>
         </div>

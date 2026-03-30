@@ -409,12 +409,17 @@ export class Portfolio {
             }
         }
 
-        // Day 1 windfall credits
+        // Day 1 one-time event credits/debits
         for (const modelAsset of this.modelAssets) {
-            if (modelAsset.isClosed || !modelAsset.windfalls?.length) continue;
-            for (const windfall of modelAsset.windfalls) {
-                if (windfall.dateInt.equals(currentDateInt)) {
-                    modelAsset.credit(windfall.amount.copy(), 'Windfall: ' + (windfall.note || 'one-time'));
+            if (modelAsset.isClosed || !modelAsset.oneTimeEvents?.length) continue;
+            for (const event of modelAsset.oneTimeEvents) {
+                if (event.dateInt.equals(currentDateInt)) {
+                    const memo = 'One-Time: ' + (event.note || 'one-time event');
+                    if (event.amount.amount >= 0) {
+                        modelAsset.credit(event.amount.copy(), memo);
+                    } else {
+                        modelAsset.debit(event.amount.copy().flipSign(), memo);
+                    }
                 }
             }
         }

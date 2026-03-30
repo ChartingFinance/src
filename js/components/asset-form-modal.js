@@ -141,8 +141,8 @@ class AssetFormModal extends LitElement {
                             </div>
                         </div>
                         ${this._renderInstrumentFields(selectedInstrument, ma, closed)}
-                        ${isEdit && InstrumentType.isWindfallEligible(selectedInstrument)
-                            ? this._renderWindfallFields(ma) : ''}
+                        ${isEdit && InstrumentType.isOneTimeEligible(selectedInstrument)
+                            ? this._renderOneTimeFields(ma) : ''}
                         <div class="mt-8 flex justify-end">
                             <input type="submit" class="btn-modern primary cursor-pointer"
                                 .value=${isEdit ? 'Save Changes ✨' : 'Add to Stack 🚀'} />
@@ -281,34 +281,22 @@ class AssetFormModal extends LitElement {
         this._instrument = ev.target.value;
     }
 
-    _renderWindfallFields(ma) {
+    _renderOneTimeFields(ma) {
         if (!ma) return html``;
-        const total = (ma.windfalls || [])
-            .reduce((sum, w) => sum + w.amount.amount, 0);
+        const count = ma.oneTimeEvents?.length ?? 0;
         return html`
             <div class="mt-6 border-t border-gray-100 pt-6">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Total Windfall</label>
-                        <input type="text" class="fin-input bg-gray-100 text-gray-400"
-                            .value=${'$' + total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} disabled />
-                    </div>
-                    <div class="flex items-end">
-                        <button type="button" class="btn-modern w-full cursor-pointer"
-                            @click=${this._onOpenWindfalls}>
-                            💰 ${ma.windfalls?.length ? `Windfalls (${ma.windfalls.length})` : 'Add Windfall'}
-                        </button>
-                    </div>
-                </div>
-                <input type="hidden" name="windfalls"
-                    data-windfalls=${btoa(JSON.stringify(ma.windfalls || []))} />
+                <button type="button" class="btn-modern w-full cursor-pointer"
+                    @click=${this._onOpenOneTime}>
+                    💰 One-Time Events${count ? ` (${count})` : ''}
+                </button>
             </div>
         `;
     }
 
-    _onOpenWindfalls(ev) {
+    _onOpenOneTime(ev) {
         ev.preventDefault();
-        this.dispatchEvent(new CustomEvent('open-windfalls', {
+        this.dispatchEvent(new CustomEvent('open-one-times', {
             bubbles: true, composed: true,
             detail: { modelAsset: this.modelAsset },
         }));
