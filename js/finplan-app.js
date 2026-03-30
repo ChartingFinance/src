@@ -10,6 +10,12 @@
  *   - Sacred x-axis alignment via forced y-axis width on all Chart.js instances
  */
 
+// ── Styles (Vite bundles via @tailwindcss/vite) ─────────────
+import '../css/tw-input.css';
+
+// ── Global shims (Chart.js, lz-string → window globals) ─────
+import './globals-shim.js';
+
 // ── Core types ──────────────────────────────────────────────
 import { Metric, MetricLabel, PINNED_METRICS, MACRO_METRICS, isTopLevelMetric } from './metric.js';
 import { DateInt } from './utils/date-int.js';

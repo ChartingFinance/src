@@ -3,13 +3,25 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "test": "node tests/fund-transfer-phase.mjs"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "node ../tests/quick-start-sanity.mjs"
   },
   "author": "John Milan",
   "license": "ISC",
   "description": "",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.27.1",
+    "chart.js": "^4.5.1",
+    "lit": "^3.3.2",
+    "lz-string": "^1.5.0",
     "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.2.2",
+    "@tailwindcss/vite": "^4.2.2",
+    "tailwindcss": "^4.2.2",
+    "vite": "^7.3.1"
   }
 }

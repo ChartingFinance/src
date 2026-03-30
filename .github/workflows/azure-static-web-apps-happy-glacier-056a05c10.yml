@@ -19,6 +19,15 @@ jobs:
         with:
           submodules: false
           lfs: false
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Build
+        run: npm run build
       - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
@@ -30,8 +39,8 @@ jobs:
           # For more information regarding Static Web App workflow configurations, please visit: https://aka.ms/swaworkflowconfig
           app_location: "." # App source code path
           api_location: "" # Api source code path - optional
-          output_location: "." # Built app content directory - optional
-          skip_app_build: true # put here because of vitest
+          output_location: "dist" # Vite build output
+          skip_app_build: true # Build handled by npm run build step above
           ###### End of Repository/Build Configurations ######
 
   close_pull_request_job:
