@@ -85,15 +85,19 @@ export function runGuardrails(sourceAssets, canvas, params, retirementDateInt = 
 
     // Guardrail event markers
     const events = portfolio.guardrailEvents;
-    const snapshots = portfolio.yearlySnapshots;
 
-    // Compute retirement trigger index for chart annotation
+    // Compute retirement index — withdrawal line starts here, vertical line drawn here
     const monthNames2 = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     let retirementMonthIndex = null;
     if (retirementDateInt) {
         const retirementLabel = `${monthNames2[retirementDateInt.month - 1]} ${retirementDateInt.year}`;
-        retirementMonthIndex = labels.indexOf(retirementLabel);
-        if (retirementMonthIndex < 0) retirementMonthIndex = null;
+        const idx = labels.indexOf(retirementLabel);
+        if (idx >= 0) retirementMonthIndex = idx;
+    }
+
+    // Zero out withdrawal before retirement so the line only appears post-retirement
+    if (retirementMonthIndex !== null) {
+        for (let i = 0; i < retirementMonthIndex; i++) withdrawalSteps[i] = null;
     }
 
     cachedResults = {
@@ -101,13 +105,12 @@ export function runGuardrails(sourceAssets, canvas, params, retirementDateInt = 
         portfolioValues,
         withdrawalSteps,
         events,
-        snapshots,
         params,
         retirementDateInt,
         retirementMonthIndex,
     };
 
-    renderChart(canvas, labels, portfolioValues, withdrawalSteps, events, snapshots, params, retirementMonthIndex);
+    renderChart(canvas, labels, portfolioValues, withdrawalSteps, events, params, retirementMonthIndex);
 }
 
 // ── Helpers ──────────────────────────────────────────────────────
@@ -142,7 +145,6 @@ function buildWithdrawalSteps(portfolio, numMonths) {
     }
 
     // Fill any trailing months with the last known value
-    const lastExpense = snapshots[snapshots.length - 1].annualExpense;
     for (let i = 0; i < numMonths; i++) {
         if (steps[i] === 0 && i > 0) steps[i] = steps[i - 1];
     }
@@ -152,7 +154,7 @@ function buildWithdrawalSteps(portfolio, numMonths) {
 
 // ── Chart rendering ──────────────────────────────────────────────
 
-function renderChart(canvas, labels, portfolioValues, withdrawalSteps, events, snapshots, params, retirementMonthIndex) {
+function renderChart(canvas, labels, portfolioValues, withdrawalSteps, events, params, retirementMonthIndex) {
     if (guardrailsChart) {
         guardrailsChart.destroy();
         guardrailsChart = null;
