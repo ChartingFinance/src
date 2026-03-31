@@ -483,7 +483,7 @@ select.setting-value:focus {
     text-align: center;
     cursor: pointer;
     position: relative;
-    transition: border-color 0.2s, box-shadow 0.2s;
+    transition: none;
     white-space: normal;
 }
 

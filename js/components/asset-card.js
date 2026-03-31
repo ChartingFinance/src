@@ -10,6 +10,11 @@ import { LitElement, html } from 'lit';
 import { InstrumentMeta, InstrumentType } from '../instruments/instrument.js';
 import { colorRange } from '../utils/html.js';
 
+function hexToRgba25(hex) {
+    const n = parseInt(hex.replace('#', ''), 16);
+    return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},0.25)`;
+}
+
 function formatCompactCurrency(amount) {
     const num = parseFloat(amount);
     if (isNaN(num)) return '$0';
@@ -78,9 +83,12 @@ class AssetCard extends LitElement {
 
         const stateClass = this.ghost ? 'asset-ghost' : this.future ? 'asset-future' : '';
 
+        const selectedStyle = this.selected
+            ? `border-color: ${color}; box-shadow: 0 0 0 3px ${hexToRgba25(color)};`
+            : '';
         return html`
             <div class="asset glass-card p-4 ${this.selected ? 'selected-card-chart' : ''} ${stateClass}"
-                 style="--card-color: ${color}; border-bottom: 4px solid ${color}"
+                 style="border-bottom: 4px solid ${color}; ${selectedStyle}"
                  @click=${this._onCardClick}>
                 ${this.readonly ? '' : html`
                     <span class="asset-action-btn edit" title="Edit" @click=${this._onEdit}>&#x270E;</span>
