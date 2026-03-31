@@ -126,7 +126,7 @@ function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents) {
             portfolio.applyYear(currentDateInt);
             activeTaxTable.applyYear(portfolio.yearly);
             portfolio.yearlyChron(currentDateInt);
-            activeTaxTable.yearlyChron(currentDateInt);
+            activeTaxTable.yearlyChron(undefined);
         }
     }
 
@@ -217,6 +217,7 @@ export function runMonteCarlo(sourceAssets, container, numSimulations = 1000, gu
         const baseAssets = cloneAssets(sourceAssets);
         const basePf = new Portfolio(baseAssets, false);
         if (lifeEvents.length) basePf.lifeEvents = lifeEvents.map(e => e.copy());
+        if (guardrailParams) basePf.guardrailsParams = guardrailParams;
         activeTaxTable.initializeChron();
         basePf.initializeChron();
 
@@ -242,10 +243,11 @@ export function runMonteCarlo(sourceAssets, container, numSimulations = 1000, gu
                 baselineData.push(total);
             }
             if (bd.isNewYearsDay()) {
+                basePf.applyGuardrails(bd);
                 basePf.applyYear(bd);
                 activeTaxTable.applyYear(basePf.yearly);
                 basePf.yearlyChron(bd);
-                activeTaxTable.yearlyChron(bd);
+                activeTaxTable.yearlyChron(undefined);
             }
         }
         basePf.finalizeChron();
