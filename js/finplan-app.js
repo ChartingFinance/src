@@ -223,6 +223,7 @@ connectAssetFormModal();
 connectFundingModal();
 connectTransferModal();
 connectOneTimeModal();
+connectChartExpandButtons();
 
 // Wire phase selection — track selected phase for fund transfers
 timeline.addEventListener('phase-select', (ev) => {
@@ -1356,6 +1357,36 @@ function showOneTimeModal(modelAsset) {
     oneTimeModal.modelAsset = modelAsset;
     oneTimeModal.defaultDate = DateInt.from(store.selectedYear, store.selectedMonth).toHTML();
     oneTimeModal.open = true;
+}
+
+// ── Chart fullscreen ─────────────────────────────────────────
+
+function connectChartExpandButtons() {
+    const slots = [
+        { btnId: 'btn-macro-expand', slotId: 'finplan-macro-slot' },
+        { btnId: 'btn-micro-expand', slotId: 'finplan-micro-slot' },
+    ];
+    for (const { btnId, slotId } of slots) {
+        const btn = document.getElementById(btnId);
+        const slot = document.getElementById(slotId);
+        btn.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            const isFullscreen = slot.classList.toggle('chart-fullscreen');
+            btn.textContent = isFullscreen ? '✕' : '⛶';
+            btn.title = isFullscreen ? 'Exit fullscreen' : 'Fullscreen';
+        });
+    }
+    document.addEventListener('keydown', (ev) => {
+        if (ev.key !== 'Escape') return;
+        for (const { btnId, slotId } of slots) {
+            const slot = document.getElementById(slotId);
+            if (slot.classList.contains('chart-fullscreen')) {
+                slot.classList.remove('chart-fullscreen');
+                document.getElementById(btnId).textContent = '⛶';
+                document.getElementById(btnId).title = 'Fullscreen';
+            }
+        }
+    });
 }
 
 // ── Persistence ─────────────────────────────────────────────
