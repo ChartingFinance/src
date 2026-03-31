@@ -31,17 +31,16 @@ import { ModelLifeEvent, LifeEvent, LifeEventType } from './life-event.js';
 // ── Charting ────────────────────────────────────────────────
 import {
     charting_buildFromPortfolio,
-    charting_buildDateMarkers,
     charting_buildDisplayLabels,
     charting_buildPhaseMarkers,
     charting_jsonMetric1ChartData,
 } from './charting.js';
 
-import { classifyAssets, classifyAssetGroup, GROUP_ORDER_ACCUMULATE, GROUP_ORDER_RETIRE, getAssetChartColor, getGroupMetrics } from './asset-groups.js';
+import { AssetGroup, classifyAssetGroup, GROUP_ORDER_ACCUMULATE, GROUP_ORDER_RETIRE, getAssetChartColor, getGroupMetrics } from './asset-groups.js';
 import {
     PropertyGroupMeta, PROPERTY_ORDER_ACCUMULATE, PROPERTY_ORDER_RETIRE,
-    PropertyGroupMetrics, PropertyGroupRollupMetrics, ASSET_LESS_GROUPS,
-    classifyAssetsByProperty, getPrimaryMetric, sumPropertyDisplayHistories,
+    PropertyGroupMetrics, ASSET_LESS_GROUPS,
+    classifyAssetsByProperty, sumPropertyDisplayHistories,
 } from './property-groups.js';
 
 // ── Simulations ─────────────────────────────────────────────
@@ -1050,7 +1049,18 @@ function rebuildMicroChart(markers) {
                 if (!groups.has(groupKey)) groups.set(groupKey, []);
                 groups.get(groupKey).push(asset);
             }
+            // ALL group: every asset regardless of instrument group
+            if (expandedGroups.has(AssetGroup.ALL)) {
+                for (const asset of activePortfolio.modelAssets) {
+                    datasets.push({
+                        label: asset.displayName,
+                        data: asset.getDisplayHistory(activeMicroMetric),
+                        backgroundColor: getAssetChartColor(asset.instrument),
+                    });
+                }
+            }
             for (const groupKey of getAssetDisplayOrder()) {
+                if (groupKey === AssetGroup.ALL) continue;
                 if (!expandedGroups.has(groupKey)) continue;
                 const assets = groups.get(groupKey);
                 if (!assets || assets.length === 0) continue;
@@ -1149,18 +1159,6 @@ function updateProjectionCursor() {
     }
 }
 
-function updateCharts() {
-    if (!activePortfolio) return;
-
-    const modelAssets = assetList.modelAssets || [];
-    const p2 = new Portfolio(modelAssets);
-    p2.lifeEvents = activeLifeEvents.map(e => e.copy());
-    chronometer_run(p2);
-    p2.buildChartingDisplayData();
-    activePortfolio = p2;
-
-    rebuildProjectionCharts();
-}
 
 
 // ── Timeline ────────────────────────────────────────────────
