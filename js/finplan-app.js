@@ -10,8 +10,10 @@
  *   - Sacred x-axis alignment via forced y-axis width on all Chart.js instances
  */
 
-// ── Global shims (Chart.js, lz-string → window globals) ─────
-import './globals-shim.js';
+// ── Chart.js + lz-string ─────────────────────────────────────
+import { Chart, registerables } from 'chart.js';
+Chart.register(...registerables);
+import LZString from 'lz-string';
 
 // ── Core types ──────────────────────────────────────────────
 import { Metric, MetricLabel, PINNED_METRICS, MACRO_METRICS, isTopLevelMetric } from './metric.js';

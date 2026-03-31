@@ -16,6 +16,7 @@
  */
 
 import { LitElement, html } from 'lit';
+import LZString from 'lz-string';
 
 class ShareModal extends LitElement {
 

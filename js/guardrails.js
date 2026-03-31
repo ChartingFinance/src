@@ -7,6 +7,7 @@
  *   Axis 2 (step-line): Annual cash flow (withdrawal amount)
  */
 
+import { Chart } from 'chart.js';
 import { Portfolio } from './portfolio.js';
 import { ModelAsset } from './model-asset.js';
 import { Metric } from './metric.js';

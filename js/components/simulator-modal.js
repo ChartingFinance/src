@@ -11,6 +11,7 @@
  */
 
 import { LitElement, html } from 'lit';
+import { Chart } from 'chart.js';
 import { membrane_jsonObjectsToModelAssets } from '../membrane.js';
 import { chronometer_run } from '../chronometer.js';
 import { Portfolio } from '../portfolio.js';

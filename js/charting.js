@@ -1,3 +1,5 @@
+import { Chart, registerables } from 'chart.js';
+Chart.register(...registerables);
 import { MonthsSpan } from './utils/months-span.js';
 import { DateInt } from './utils/date-int.js';
 import { colorRange, positiveBackgroundColor, negativeBackgroundColor } from './utils/html.js';

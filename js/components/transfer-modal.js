@@ -15,6 +15,7 @@
  */
 
 import { LitElement, html } from 'lit';
+import { Chart } from 'chart.js';
 import { InstrumentType, InstrumentMeta } from '../instruments/instrument.js';
 import { FundTransfer, Frequency } from '../fund-transfer.js';
 import { colorRange } from '../utils/html.js';
