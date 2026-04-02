@@ -491,7 +491,7 @@ export class Portfolio {
         // Maybe an optimistic option to do this prior to expenses?
         for (let modelAsset of this.modelAssets) {
             if (!modelAsset.isClosed) {
-                this.expenses.applyAssetGrowth(modelAsset);
+                this.expenses.applyAssetGrowth(modelAsset, currentDateInt);
             }
         }
 
