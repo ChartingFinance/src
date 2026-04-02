@@ -167,6 +167,10 @@ export class ModelAsset {
     });
   }
 
+  static cloneArray(sourceAssets) {
+    return sourceAssets.map(a => ModelAsset.fromJSON(JSON.parse(JSON.stringify(a))));
+  }
+
   static fromHTML(inputElements, colorElement) {
     const vals = {};
     for (const el of inputElements) {

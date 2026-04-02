@@ -10,7 +10,7 @@ import { Chart } from 'chart.js';
 import { Portfolio } from './portfolio.js';
 import { ModelAsset } from './model-asset.js';
 import { Metric } from './metric.js';
-import { DateInt } from './utils/date-int.js';
+import { DateInt, MONTH_NAMES } from './utils/date-int.js';
 import { InstrumentType, Instrument } from './instruments/instrument.js';
 import { activeTaxTable } from './globals.js';
 import {
@@ -61,19 +61,11 @@ function applyRandomRates(modelAssets) {
     }
 }
 
-// ── Clone assets via JSON round-trip (fully independent) ─────────
-
-function cloneAssets(sourceAssets) {
-    return sourceAssets.map(a => {
-        const json = JSON.parse(JSON.stringify(a));
-        return ModelAsset.fromJSON(json);
-    });
-}
 
 // ── Single simulation run ────────────────────────────────────────
 
 function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents) {
-    const assets = cloneAssets(sourceAssets);
+    const assets = ModelAsset.cloneArray(sourceAssets);
     const portfolio = new Portfolio(assets, false);
     if (lifeEvents) portfolio.lifeEvents = lifeEvents.map(e => e.copy());
 
@@ -160,7 +152,7 @@ export function getMonteCarloChart() { return monteCarloChart; }
 
 export function runMonteCarlo(sourceAssets, container, numSimulations = 1000, guardrailParams = null, retirementDateInt = null, runFromStart = false, lifeEvents = []) {
     // Determine number of months from a reference run
-    const refAssets = cloneAssets(sourceAssets);
+    const refAssets = ModelAsset.cloneArray(sourceAssets);
     const refPortfolio = new Portfolio(refAssets, false);
     if (lifeEvents.length) refPortfolio.lifeEvents = lifeEvents.map(e => e.copy());
     activeTaxTable.initializeChron();
@@ -182,9 +174,8 @@ export function runMonteCarlo(sourceAssets, container, numSimulations = 1000, gu
     // Build month labels
     const labels = [];
     let ld = new DateInt(startDateInt.toInt());
-    const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     for (let i = 0; i < numMonths; i++) {
-        labels.push(`${monthNames[ld.month - 1]} ${ld.year}`);
+        labels.push(`${MONTH_NAMES[ld.month - 1]} ${ld.year}`);
         if (ld.month === 12) ld = DateInt.from(ld.year + 1, 1);
         else ld = DateInt.from(ld.year, ld.month + 1);
     }
@@ -214,7 +205,7 @@ export function runMonteCarlo(sourceAssets, container, numSimulations = 1000, gu
         }
 
         // Compute deterministic baseline
-        const baseAssets = cloneAssets(sourceAssets);
+        const baseAssets = ModelAsset.cloneArray(sourceAssets);
         const basePf = new Portfolio(baseAssets, false);
         if (lifeEvents.length) basePf.lifeEvents = lifeEvents.map(e => e.copy());
         if (guardrailParams) basePf.guardrailsParams = guardrailParams;
@@ -256,7 +247,7 @@ export function runMonteCarlo(sourceAssets, container, numSimulations = 1000, gu
         // Compute retirement trigger index for chart annotation
         let retirementMonthIndex = null;
         if (retirementDateInt) {
-            const retirementLabel = `${monthNames[retirementDateInt.month - 1]} ${retirementDateInt.year}`;
+            const retirementLabel = `${MONTH_NAMES[retirementDateInt.month - 1]} ${retirementDateInt.year}`;
             retirementMonthIndex = labels.indexOf(retirementLabel);
             if (retirementMonthIndex < 0) retirementMonthIndex = null;
         }

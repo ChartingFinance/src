@@ -10,6 +10,8 @@
  *  - `next()` / `prev()` day-stepping logic preserved for chronometer compatibility
  */
 
+export const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
 export class DateInt {
   /**
    * @param {number} yyyyMM  e.g. 202501 for January 2025

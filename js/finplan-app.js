@@ -11,13 +11,12 @@
  */
 
 // ── Chart.js + lz-string ─────────────────────────────────────
-import { Chart, registerables } from 'chart.js';
-Chart.register(...registerables);
+import { Chart } from 'chart.js';
 import LZString from 'lz-string';
 
 // ── Core types ──────────────────────────────────────────────
 import { Metric, MetricLabel, PINNED_METRICS, MACRO_METRICS, isTopLevelMetric } from './metric.js';
-import { DateInt } from './utils/date-int.js';
+import { DateInt, MONTH_NAMES } from './utils/date-int.js';
 
 // ── Simulation ──────────────────────────────────────────────
 import { InstrumentType } from './instruments/instrument.js';
@@ -627,7 +626,6 @@ function updateMetricDropdown() {
 store.setRetirementDate(global_getRetirementDateInt());
 store.setSelectedDate(DateInt.today());
 
-const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
 /** Determine which life event phase the given year/month falls within. */
 function currentPhaseEvent(year, month) {

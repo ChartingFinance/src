@@ -11,7 +11,7 @@ import { Chart } from 'chart.js';
 import { Portfolio } from './portfolio.js';
 import { ModelAsset } from './model-asset.js';
 import { Metric } from './metric.js';
-import { DateInt } from './utils/date-int.js';
+import { DateInt, MONTH_NAMES } from './utils/date-int.js';
 import { chronometer_run } from './chronometer.js';
 
 // ── Chart instance ───────────────────────────────────────────────
@@ -26,19 +26,10 @@ let cachedResults = null;
 
 export function getGuardrailsResults() { return cachedResults; }
 
-// ── Clone assets via JSON round-trip ─────────────────────────────
-
-function cloneAssets(sourceAssets) {
-    return sourceAssets.map(a => {
-        const json = JSON.parse(JSON.stringify(a));
-        return ModelAsset.fromJSON(json);
-    });
-}
-
 // ── Main entry point ─────────────────────────────────────────────
 
 export function runGuardrails(sourceAssets, canvas, params, retirementDateInt = null, lifeEvents = []) {
-    const assets = cloneAssets(sourceAssets);
+    const assets = ModelAsset.cloneArray(sourceAssets);
     const portfolio = new Portfolio(assets, false);
     if (lifeEvents.length) portfolio.lifeEvents = lifeEvents.map(e => e.copy());
 
@@ -60,9 +51,8 @@ export function runGuardrails(sourceAssets, canvas, params, retirementDateInt = 
     // Build month labels
     const labels = [];
     let d = new DateInt(portfolio.firstDateInt.toInt());
-    const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     for (let i = 0; i < numMonths; i++) {
-        labels.push(`${monthNames[d.month - 1]} ${d.year}`);
+        labels.push(`${MONTH_NAMES[d.month - 1]} ${d.year}`);
         if (d.month === 12) d = DateInt.from(d.year + 1, 1);
         else d = DateInt.from(d.year, d.month + 1);
     }
@@ -87,10 +77,9 @@ export function runGuardrails(sourceAssets, canvas, params, retirementDateInt = 
     const events = portfolio.guardrailEvents;
 
     // Compute retirement index — withdrawal line starts here, vertical line drawn here
-    const monthNames2 = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     let retirementMonthIndex = null;
     if (retirementDateInt) {
-        const retirementLabel = `${monthNames2[retirementDateInt.month - 1]} ${retirementDateInt.year}`;
+        const retirementLabel = `${MONTH_NAMES[retirementDateInt.month - 1]} ${retirementDateInt.year}`;
         const idx = labels.indexOf(retirementLabel);
         if (idx >= 0) retirementMonthIndex = idx;
     }

@@ -21,11 +21,7 @@ import { LitElement, html } from 'lit';
 import { store } from '../finplan-store.js';
 import { LifeEvent, LifeEventType } from '../life-event.js';
 import { MetricLabel } from '../metric.js';
-
-const MONTH_NAMES = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-];
+import { MONTH_NAMES } from '../utils/date-int.js';
 
 class FinplanTimeline extends LitElement {
 

@@ -14,13 +14,8 @@
  * Exported as a singleton — import { store } from './finplan-store.js';
  */
 
-import { DateInt } from './utils/date-int.js';
+import { DateInt, MONTH_NAMES } from './utils/date-int.js';
 import { Metric } from './metric.js';
-
-const MONTH_NAMES = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-];
 
 class FinPlanStore extends EventTarget {
 
