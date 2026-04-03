@@ -116,6 +116,7 @@ export const MetricLabel = Object.freeze({
   [Metric.FOUR_01K_DISTRIBUTION]:       '401K Distribution',
   [Metric.SHORT_TERM_CAPITAL_GAIN_TAX]: 'Short Term Capital Gain Tax',
   [Metric.LONG_TERM_CAPITAL_GAIN_TAX]:  'Long Term Capital Gain Tax',
+  [Metric.PROPERTY_TAX]:                'Property Tax',
   [Metric.LIVING_EXPENSE]:                'Living Expense',
   [Metric.INTEREST_EXPENSE]:             'Interest Expense',
   [Metric.MAINTENANCE]:                 'Maintenance',

@@ -1,7 +1,8 @@
 export class User {
-    constructor(age) {
+    constructor(age, birthYear) {
         this.age = age;
         this.month = 0;
+        this.birthYear = birthYear ?? (new Date().getFullYear() - age);
     }
 
     addMonths(additionalMonths) {
@@ -41,7 +42,13 @@ export class User {
     }
 
     rmdRequired() {
-        return this.age >= 73;
+        return this.age >= this.rmdAge();
+    }
+
+    rmdAge() {
+        if (this.birthYear < 1951) return 72;
+        if (this.birthYear < 1960) return 73;
+        return 75;
     }
 
 }

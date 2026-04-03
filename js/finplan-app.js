@@ -815,8 +815,27 @@ function calculate() {
     if (global_user_startAge >= global_user_retirementAge) {
         const idx = activeLifeEvents.findIndex(e => e.type === LifeEvent.ACCUMULATE);
         if (idx !== -1) {
-            // console.log('[FinPlan] Removing zero-duration Accumulate phase (startAge >= retirementAge)');
             activeLifeEvents.splice(idx, 1);
+        }
+    }
+
+    // Prune orphaned phase transfer entries that reference assets no longer in the portfolio
+    const assetNames = new Set(modelAssets.map(a => a.displayName));
+    for (const event of activeLifeEvents) {
+        if (!event.phaseTransfers) continue;
+        // Remove source entries for assets that no longer exist
+        for (const name of Object.keys(event.phaseTransfers)) {
+            if (!assetNames.has(name)) {
+                delete event.phaseTransfers[name];
+            }
+        }
+        // Remove target entries pointing to assets that no longer exist
+        for (const transfers of Object.values(event.phaseTransfers)) {
+            for (let i = transfers.length - 1; i >= 0; i--) {
+                if (!assetNames.has(transfers[i].toDisplayName)) {
+                    transfers.splice(i, 1);
+                }
+            }
         }
     }
 

@@ -18,7 +18,11 @@ export class Portfolio {
         this.modelAssets = this.sortModelAssets(modelAssets);
         this.reports = !!reports;
         this.generatedReports = [];
-        this.activeUser = new User(global_user_startAge);
+        this.firstDateInt = firstDateInt(this.modelAssets);
+        this.lastDateInt = lastDateInt(this.modelAssets);
+
+        const birthYear = this.firstDateInt ? this.firstDateInt.year - global_user_startAge : undefined;
+        this.activeUser = new User(global_user_startAge, birthYear);
 
         // Guardrails (Guyton-Klinger) — set before chronometer_run to activate
         this.guardrailsParams = null; // { withdrawalRate, preservation, prosperity, adjustment }
@@ -27,9 +31,6 @@ export class Portfolio {
 
         // Life events timeline
         this.lifeEvents = [];
-
-        this.firstDateInt = firstDateInt(this.modelAssets);
-        this.lastDateInt = lastDateInt(this.modelAssets);
 
         this.monthly = new FinancialPackage();
         this.yearly = new FinancialPackage();
@@ -389,6 +390,14 @@ export class Portfolio {
         // close assets that are now past their finish date
         for (let modelAsset of this.modelAssets) {
             if (modelAsset.afterFinishDate && !modelAsset.isClosed) {
+                this.closeAsset(modelAsset, currentDateInt);
+            }
+        }
+
+        // Implicitly close mortgages/debts that are fully paid off
+        for (let modelAsset of this.modelAssets) {
+            if (!modelAsset.isClosed && InstrumentType.isMortgage(modelAsset.instrument)
+                && modelAsset.monthsRemainingDynamic <= 0) {
                 this.closeAsset(modelAsset, currentDateInt);
             }
         }

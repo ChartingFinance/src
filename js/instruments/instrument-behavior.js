@@ -10,7 +10,7 @@
  */
 
 import { Currency } from '../utils/currency.js';
-import { Instrument } from './instrument.js';
+import { Instrument, InstrumentType } from './instrument.js';
 // ── Result Types ─────────────────────────────────────────────────────
 
 export class AssetAppreciationResult {
@@ -197,6 +197,11 @@ const MortgageBehavior = Object.freeze({
     const rate = asset.annualReturnRate.asMonthly();
     const n = asset.monthsRemainingDynamic;
 
+    // Mortgage fully amortized — nothing left to compute
+    if (n <= 0) {
+      return new MortgageResult();
+    }
+
     const payment = (asset.finishCurrency.amount * rate * Math.pow(1 + rate, n))
                   / (Math.pow(1 + rate, n) - 1);
 
@@ -248,6 +253,12 @@ const CapitalBehavior = Object.freeze({
   },
 
   applyMonthly(asset) {
+    // Debt paid off — cap at $0, no reverse interest
+    if (InstrumentType.isDebt(asset.instrument) && asset.finishCurrency.amount >= 0) {
+      asset.finishCurrency.zero();
+      return new AssetAppreciationResult(Currency.zero(), Currency.zero(), Currency.zero(), Currency.zero());
+    }
+
     const growth = new Currency(asset.finishCurrency.amount * asset.annualReturnRate.asMonthly());
 
     asset.growthCurrency.add(growth);
