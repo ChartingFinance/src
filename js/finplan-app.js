@@ -253,7 +253,12 @@ eventFormModal.addEventListener('save-life-event', (ev) => {
 });
 
 eventFormModal.addEventListener('delete-life-event', (ev) => {
+    // console.log('[FinPlan] Deleting life event index', ev.detail.index,
+    //     'was:', activeLifeEvents[ev.detail.index]?.type,
+    //     'total before:', activeLifeEvents.length);
     activeLifeEvents.splice(ev.detail.index, 1);
+    // console.log('[FinPlan] After delete, activeLifeEvents:', activeLifeEvents.length,
+    //     activeLifeEvents.map(e => e.type));
     calculate();
 });
 
@@ -749,7 +754,6 @@ function initiateActiveData() {
     }
     loadScenarioList();
     loadLocalData();
-    ensureMonthlySnapshot();
 }
 
 function loadLocalData() {
@@ -761,7 +765,10 @@ function loadLocalData() {
     const savedEvents = util_loadLocalLifeEvents(activeStoryArc, slotName);
     if (savedEvents) {
         activeLifeEvents = savedEvents.map(ModelLifeEvent.fromJSON);
+        // console.log('[FinPlan] Loaded', activeLifeEvents.length, 'life events from localStorage:',
+        //     activeLifeEvents.map(e => `${e.type}@${e.triggerAge}`));
     } else {
+        // console.log('[FinPlan] No saved life events, creating defaultTimeline');
         activeLifeEvents = ModelLifeEvent.defaultTimeline(
             global_user_startAge, global_user_retirementAge
         );
@@ -802,6 +809,15 @@ function calculate() {
         const retire = activeLifeEvents.find(e => e.type === LifeEvent.RETIRE);
         if (accum) accum.triggerAge = global_user_startAge;
         if (retire) retire.triggerAge = global_user_retirementAge;
+    }
+
+    // Remove Accumulate phase when current age >= retirement age (already retired)
+    if (global_user_startAge >= global_user_retirementAge) {
+        const idx = activeLifeEvents.findIndex(e => e.type === LifeEvent.ACCUMULATE);
+        if (idx !== -1) {
+            // console.log('[FinPlan] Removing zero-duration Accumulate phase (startAge >= retirementAge)');
+            activeLifeEvents.splice(idx, 1);
+        }
     }
 
     const portfolio = new Portfolio(modelAssets, true);
@@ -920,6 +936,8 @@ async function doVisualize() {
 function doMaximize() {
     const sim = document.getElementById('simulator-inline');
     if (!sim) return;
+    // console.log('[FinPlan] doMaximize: activeLifeEvents:', activeLifeEvents.length,
+    //     activeLifeEvents.map(e => `${e.type}@${e.triggerAge}`));
     sim.modelAssets = assetList.modelAssets || [];
     sim.lifeEvents = activeLifeEvents;
     sim.guardrailParams = getGuardrailParams();
@@ -1391,10 +1409,22 @@ function connectChartExpandButtons() {
 
 function saveLocalData() {
     const slotName = activeStoryName;
-    util_saveLocalAssetModels(activeStoryArc, slotName, assetList.modelAssets || []);
-    util_saveLocalLifeEvents(activeStoryArc, slotName, activeLifeEvents.map(e => e.toJSON()));
-    util_saveLocalGuardrailParams(activeStoryArc, slotName, getGuardrailParams());
+    const assets = assetList.modelAssets || [];
+    const lifeEvents = activeLifeEvents.map(e => e.toJSON());
+    const guardrails = getGuardrailParams();
+
+    util_saveLocalAssetModels(activeStoryArc, slotName, assets);
+    util_saveLocalLifeEvents(activeStoryArc, slotName, lifeEvents);
+    util_saveLocalGuardrailParams(activeStoryArc, slotName, guardrails);
     localStorage.setItem('activeStoryName', slotName);
+
+    // Monthly snapshot — always overwrite so it reflects the last state for this month
+    const snapshotKey = slotName + '@' + util_YYYYmm();
+    localStorage.setItem(snapshotKey, JSON.stringify({
+        assets,
+        lifeEvents,
+        guardrails,
+    }));
 }
 
 // ── Scenario Management ──────────────────────────────────────
@@ -1501,17 +1531,8 @@ function deleteScenario(storyName) {
     loadLocalData();
 }
 
-function ensureMonthlySnapshot() {
-    // Silently snapshot current state to a monthly backup key
-    const snapshotKey = activeStoryName + '@' + util_YYYYmm();
-    const existing = localStorage.getItem(snapshotKey);
-    if (!existing) {
-        const assets = util_loadLocalAssetModels(activeStoryArc, activeStoryName);
-        if (assets) {
-            localStorage.setItem(snapshotKey, JSON.stringify(assets));
-        }
-    }
-}
+// Monthly snapshots are now written by saveLocalData() on every calculate(),
+// always reflecting the latest state for the current month.
 
 function loadSharedPortfolio() {
     const params = new URLSearchParams(window.location.search);

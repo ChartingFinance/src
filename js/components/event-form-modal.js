@@ -18,7 +18,7 @@
  */
 
 import { LitElement, html } from 'lit';
-import { LifeEventMeta, ModelLifeEvent } from '../life-event.js';
+import { LifeEvent, LifeEventMeta, ModelLifeEvent } from '../life-event.js';
 import { global_user_startAge, global_user_finishAge } from '../globals.js';
 
 class EventFormModal extends LitElement {
@@ -144,7 +144,7 @@ class EventFormModal extends LitElement {
                         <input type="number" class="fin-input" name="triggerAge"
                             .value=${String(triggerAge)}
                             min=${global_user_startAge} max=${global_user_finishAge}
-                            ?disabled=${isEdit && this.editIndex === 0} required />
+                            ?disabled=${isEdit && le?.type === LifeEvent.ACCUMULATE} required />
                     </div>
                 </div>
 

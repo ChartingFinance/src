@@ -79,6 +79,10 @@ self.onmessage = function(event) {
     const portfolio = new Portfolio(assetModels, false);
     if (payload.lifeEvents) {
         portfolio.lifeEvents = payload.lifeEvents.map(e => ModelLifeEvent.fromJSON(e));
+        // console.log('[Simulator Worker] Received', portfolio.lifeEvents.length, 'life events:',
+        //     portfolio.lifeEvents.map(e => `${e.type}@${e.triggerAge}`));
+    } else {
+        // console.log('[Simulator Worker] No life events in payload');
     }
     const backtestYear = payload.backtestYear || 'current';
     const simulator = new Simulator(portfolio, guardrailParams, fitnessBalance, backtestYear);

@@ -211,6 +211,10 @@ class SimulatorModal extends LitElement {
             return;
         }
 
+        // const outboundEvents = this.lifeEvents.map(e => e.toJSON());
+        // console.log('[SimulatorModal] Sending to worker:', outboundEvents.length, 'life events:',
+        //     outboundEvents.map(e => `${e.type}@${e.triggerAge} (${Object.keys(e.phaseTransfers || {}).join(', ')})`));
+
         this._worker.postMessage({
             modelAssets: JSON.parse(JSON.stringify(this.modelAssets)),
             lifeEvents: this.lifeEvents.map(e => e.toJSON()),
