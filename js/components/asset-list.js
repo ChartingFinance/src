@@ -16,10 +16,8 @@ import { repeat } from 'lit/directives/repeat.js';
 import { colorRange } from '../utils/html.js';
 import {
     AssetGroup, AssetGroupMeta, TaxItem, TaxItemMeta,
-    classifyAssets, getGroupLabel, getAssetChartColor,
+    classifyAssets, classifyAssetGroup, getGroupLabel, getAssetChartColor,
 } from '../asset-groups.js';
-import { LifeEventType } from '../life-event.js';
-
 import { computeAssetFlows } from '../utils/asset-flow.js';
 import './asset-card.js';
 
@@ -32,6 +30,19 @@ const HORIZONTAL_GROUP_ORDER = [
     AssetGroup.EXPENSES,
     AssetGroup.TAXES,
 ];
+
+/**
+ * Tax item → metrics that indicate an asset contributes to that tax.
+ * Includes both the tax metrics themselves AND the income/activity metrics
+ * that generate the tax liability, since the tax may be recorded on a
+ * different asset (e.g., estimated income tax debited from a liquid account).
+ */
+const TAX_ITEM_METRICS = new Map([
+    [TaxItem.FICA,          ['socialSecurityTax', 'medicareTax', 'employedIncome', 'selfIncome']],
+    [TaxItem.INCOME_TAX,    ['withheldIncomeTax', 'estimatedIncomeTax', 'income', 'qualifiedDividend', 'nonQualifiedDividend', 'interestIncome']],
+    [TaxItem.CAPITAL_GAINS, ['longTermCapitalGainTax', 'shortTermCapitalGainTax', 'longTermCapitalGain', 'shortTermCapitalGain']],
+    [TaxItem.PROPERTY_TAX,  ['propertyTax']],
+]);
 
 function formatCompactCurrency(amount) {
     const num = typeof amount === 'number' ? amount : parseFloat(amount);
@@ -70,6 +81,8 @@ class AssetList extends LitElement {
         this.atDateInt = null;
         this.metricName = null;
         this.historyIndex = -1;
+        this._taxHighlightAssets = new Set(); // displayNames of assets to highlight
+        this._taxHighlightGroups = new Set(); // group keys to highlight (when collapsed)
     }
 
     render() {
@@ -120,10 +133,11 @@ class AssetList extends LitElement {
         const meta = AssetGroupMeta.get(groupKey);
         const label = getGroupLabel(groupKey, this.activeLifeEvent);
         const total = this._computeRollupTotal(groupKey, assets);
+        const headerHighlight = this._taxHighlightGroups.has(groupKey);
 
         return html`
             <div class="asset-group-column">
-                <div class="asset-group-header"
+                <div class="asset-group-header ${headerHighlight ? 'tax-highlight-pulse' : ''}"
                      style="background: ${meta.headerBg}; color: ${meta.headerFg}"
                      @click=${() => this._onGroupToggle(groupKey)}>
                     <span class="asset-group-emoji">${meta.groupEmoji}</span>
@@ -138,6 +152,7 @@ class AssetList extends LitElement {
                         (ma) => {
                             const history = ma.getHistory?.('value') || [];
                             const flows = isExpanded ? computeAssetFlows(ma, this.historyIndex) : { inflow: 0, growth: 0, outflow: 0 };
+                            const taxHl = this._taxHighlightAssets.has(ma.displayName);
                             return html`
                                 <asset-card
                                     .modelAsset=${ma}
@@ -149,6 +164,7 @@ class AssetList extends LitElement {
                                     .growth=${flows.growth}
                                     .outflow=${flows.outflow}
                                     ?ghost=${ma._isClosedAtDate}
+                                    ?taxHighlight=${taxHl}
                                     .closedEmoji=${ma._isClosedAtDate ? '⛔' : ma.isDepleted ? '⚠️' : ''}
                                     ?selected=${this.highlightName === ma.displayName}
                                 ></asset-card>
@@ -182,7 +198,8 @@ class AssetList extends LitElement {
                 </div>
                 <div class="asset-group-children ${isExpanded ? '' : 'collapsed'}">
                     ${taxItems.map(t => html`
-                        <div class="tax-item-pill">
+                        <div class="tax-item-pill" @click=${(e) => { e.stopPropagation(); this._onTaxItemClick(t.key); }}
+                             style="cursor: pointer;" title="Click to highlight contributing assets">
                             <span class="tax-item-emoji">${t.emoji}</span>
                             <span class="tax-item-label">${t.label}</span>
                             <span class="tax-item-value">${formatCompactCurrency(t.amount)}/yr</span>
@@ -224,10 +241,10 @@ class AssetList extends LitElement {
         const capMeta = TaxItemMeta.get(TaxItem.CAPITAL_GAINS);
         const propMeta = TaxItemMeta.get(TaxItem.PROPERTY_TAX);
 
-        if (ficaTotal !== 0) items.push({ ...ficaMeta, amount: ficaTotal });
-        if (incomeTaxTotal !== 0) items.push({ ...incomeMeta, amount: incomeTaxTotal });
-        if (capGainsTotal !== 0) items.push({ ...capMeta, amount: capGainsTotal });
-        if (propertyTaxTotal !== 0) items.push({ ...propMeta, amount: propertyTaxTotal });
+        if (ficaTotal !== 0) items.push({ ...ficaMeta, key: TaxItem.FICA, amount: ficaTotal });
+        if (incomeTaxTotal !== 0) items.push({ ...incomeMeta, key: TaxItem.INCOME_TAX, amount: incomeTaxTotal });
+        if (capGainsTotal !== 0) items.push({ ...capMeta, key: TaxItem.CAPITAL_GAINS, amount: capGainsTotal });
+        if (propertyTaxTotal !== 0) items.push({ ...propMeta, key: TaxItem.PROPERTY_TAX, amount: propertyTaxTotal });
 
         return items;
     }
@@ -268,6 +285,51 @@ class AssetList extends LitElement {
             bubbles: true, composed: true,
             detail: { group: groupKey },
         }));
+    }
+
+    _onTaxItemClick(taxItemKey) {
+        const metrics = TAX_ITEM_METRICS.get(taxItemKey);
+        if (!metrics) return;
+
+        const assets = this.portfolio?.modelAssets;
+        if (!assets) return;
+
+        const idx = this.historyIndex;
+        const atIdx = (asset, metricName) => {
+            const h = asset.getHistory?.(metricName);
+            return (h && idx >= 0 && idx < h.length) ? (h[idx] ?? 0) : 0;
+        };
+
+        // Find contributing assets
+        const highlightNames = new Set();
+        for (const a of assets) {
+            const total = metrics.reduce((sum, m) => sum + Math.abs(atIdx(a, m)), 0);
+            if (total > 0) highlightNames.add(a.displayName);
+        }
+
+        if (highlightNames.size === 0) return;
+
+        // Determine which groups to highlight (for collapsed groups)
+        const expanded = this.expandedGroups || new Set();
+        const highlightGroups = new Set();
+        for (const a of assets) {
+            if (!highlightNames.has(a.displayName)) continue;
+            const group = classifyAssetGroup(a.instrument);
+            if (!expanded.has(group)) {
+                highlightGroups.add(group);
+            }
+        }
+
+        this._taxHighlightAssets = highlightNames;
+        this._taxHighlightGroups = highlightGroups;
+        this.requestUpdate();
+
+        // Clear after animation
+        setTimeout(() => {
+            this._taxHighlightAssets = new Set();
+            this._taxHighlightGroups = new Set();
+            this.requestUpdate();
+        }, 1500);
     }
 
     // Legacy colorId assignment for readonly/simulator mode

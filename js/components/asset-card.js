@@ -42,6 +42,7 @@ class AssetCard extends LitElement {
         inflow:  { type: Number },          // monthly inflow at cursor (green)
         growth:  { type: Number },          // monthly growth at cursor (blue)
         outflow: { type: Number },          // monthly outflow at cursor (red)
+        taxHighlight: { type: Boolean },    // pulse animation from tax item click
     };
 
     createRenderRoot() { return this; }
@@ -65,6 +66,7 @@ class AssetCard extends LitElement {
         this.inflow = 0;
         this.growth = 0;
         this.outflow = 0;
+        this.taxHighlight = false;
     }
 
     render() {
@@ -93,7 +95,7 @@ class AssetCard extends LitElement {
             ? `border-color: ${color}; box-shadow: 0 0 0 3px ${hexToRgba25(color)};`
             : '';
         return html`
-            <div class="asset glass-card p-4 ${this.selected ? 'selected-card-chart' : ''} ${stateClass}"
+            <div class="asset glass-card p-4 ${this.selected ? 'selected-card-chart' : ''} ${stateClass} ${this.taxHighlight ? 'tax-highlight-pulse' : ''}"
                  style="border-bottom: 4px solid ${color}; ${selectedStyle}"
                  @click=${this._onCardClick}>
                 ${this.readonly ? '' : html`

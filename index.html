@@ -255,6 +255,17 @@
         .asset-future { opacity: 0.5; }
         .asset-future .asset { border-style: dashed; }
 
+        /* Tax highlight pulse */
+        .tax-highlight-pulse {
+            animation: taxPulse 1.5s ease-out;
+        }
+        @keyframes taxPulse {
+            0%   { box-shadow: 0 0 0 0 rgba(184, 150, 62, 0.6); }
+            20%  { box-shadow: 0 0 12px 4px rgba(184, 150, 62, 0.4); }
+            100% { box-shadow: none; }
+        }
+        .tax-item-pill:hover { filter: brightness(0.93); }
+
         /* AI Summary FAB */
         .ai-fab {
             position: absolute; bottom: 12px; left: 12px;
