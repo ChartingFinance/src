@@ -38,12 +38,6 @@ import {
 } from './charting.js';
 
 import { AssetGroup, classifyAssetGroup, GROUP_ORDER_ACCUMULATE, GROUP_ORDER_RETIRE, getAssetChartColor, getGroupMetrics } from './asset-groups.js';
-import {
-    PropertyGroupMeta, PROPERTY_ORDER_ACCUMULATE, PROPERTY_ORDER_RETIRE,
-    PropertyGroupMetrics, ASSET_LESS_GROUPS,
-    classifyAssetsByProperty, sumPropertyDisplayHistories,
-} from './property-groups.js';
-
 // ── Simulations ─────────────────────────────────────────────
 import { runMonteCarlo, getMonteCarloChart, getMonteCarloResults } from './monte-carlo.js';
 import { runGuardrails, getGuardrailsChart } from './guardrails.js';
@@ -177,7 +171,10 @@ Chart.defaults.animation = false;
 // ── App state ───────────────────────────────────────────────
 let activePortfolio     = null;
 let activeLifeEvents    = [];
-let expandedGroups      = new Set();
+let expandedGroups      = new Set([
+    AssetGroup.INCOME, AssetGroup.CAPITAL, AssetGroup.REAL_ESTATE,
+    AssetGroup.RETIREMENT, AssetGroup.EXPENSES, AssetGroup.TAXES,
+]);
 let activeMetricName    = Metric.VALUE;
 let activeMicroMetric   = Metric.VALUE;
 let macroChart          = null;
@@ -185,7 +182,7 @@ let microChart          = null;
 let editingModelAsset   = null;
 let pendingFundingAsset = null;  // stashed real estate asset awaiting funding confirmation
 
-let viewMode            = 'assets'; // 'assets' | 'properties'
+// viewMode removed — always 'assets' (horizontal group columns)
 let activePhaseIndex    = 0;
 let activeStoryArc      = null;
 let activeStoryName     = null;
@@ -197,10 +194,6 @@ function isRetiredPhase() {
 
 function getAssetDisplayOrder() {
     return isRetiredPhase() ? GROUP_ORDER_RETIRE : GROUP_ORDER_ACCUMULATE;
-}
-
-function getPropertyDisplayOrder() {
-    return isRetiredPhase() ? PROPERTY_ORDER_RETIRE : PROPERTY_ORDER_ACCUMULATE;
 }
 
 // ── Init ────────────────────────────────────────────────────
@@ -429,30 +422,6 @@ document.getElementById('simulator-inline').addEventListener('apply-optimized', 
     calculate();
 });
 
-// ── View toggle (Assets / Properties) ─────────────────────
-const viewToggle = document.getElementById('viewToggle');
-viewToggle.addEventListener('click', (ev) => {
-    const btn = ev.target.closest('[data-view]');
-    if (!btn || btn.dataset.view === viewMode) return;
-    viewMode = btn.dataset.view;
-    // Update toggle button styles
-    viewToggle.querySelectorAll('[data-view]').forEach(b => {
-        if (b.dataset.view === viewMode) {
-            b.style.background = '#111827';
-            b.style.color = 'white';
-        } else {
-            b.style.background = 'white';
-            b.style.color = '#6b7280';
-        }
-    });
-    // Clear expanded groups (different key namespaces)
-    expandedGroups.clear();
-    assetList.viewMode = viewMode;
-    assetList.expandedGroups = new Set(expandedGroups);
-    rebuildProjectionCharts();
-    updateMetricDropdown();
-});
-
 // ── Guardrail parameter controls ──────────────────────────
 grWithdrawal.addEventListener('change', () => {
     global_setGuardrailWithdrawalRate(parseFloat(grWithdrawal.value));
@@ -599,15 +568,8 @@ function updateMetricDropdown() {
 
         // Collect all metrics for the expanded group(s)
         const groupMetrics = new Set();
-        if (viewMode === 'properties') {
-            for (const groupKey of expandedGroups) {
-                const metrics = PropertyGroupMetrics.get(groupKey);
-                if (metrics) metrics.forEach(m => groupMetrics.add(m));
-            }
-        } else {
-            for (const groupKey of expandedGroups) {
-                getGroupMetrics(groupKey).forEach(m => groupMetrics.add(m));
-            }
+        for (const groupKey of expandedGroups) {
+            getGroupMetrics(groupKey).forEach(m => groupMetrics.add(m));
         }
 
         // Pinned metrics first, then non-top-level metrics from the group
@@ -982,9 +944,7 @@ function rebuildProjectionCharts() {
 
     const markers = buildPhaseMarkersForCharts();
 
-    if (viewMode === 'properties') {
-        rebuildMacroChartProperties(markers);
-    } else {
+    {
         // Macro: always fully grouped (never expand into individual assets)
         charting_buildFromPortfolio(activePortfolio, true, activeMetricName, new Set());
 
@@ -1013,44 +973,6 @@ function rebuildProjectionCharts() {
     rebuildMicroChart(markers);
 }
 
-function rebuildMacroChartProperties(markers) {
-    if (!activePortfolio) return;
-    const labels = charting_buildDisplayLabels(activePortfolio.firstDateInt, activePortfolio.lastDateInt);
-    const groups = classifyAssetsByProperty(activePortfolio.modelAssets);
-    const datasets = [];
-
-    for (const groupKey of getPropertyDisplayOrder()) {
-        const meta = PropertyGroupMeta.get(groupKey);
-
-        if (ASSET_LESS_GROUPS.has(groupKey)) {
-            // Asset-less groups sum across all assets
-            const data = sumPropertyDisplayHistories([], groupKey, activePortfolio.modelAssets);
-            if (data.length === 0) continue;
-            datasets.push({ label: meta.label, data, backgroundColor: meta.chartColor });
-        } else {
-            const assets = groups.get(groupKey);
-            if (!assets || assets.length === 0) continue;
-            datasets.push({
-                label: meta.label,
-                data: sumPropertyDisplayHistories(assets, groupKey),
-                backgroundColor: meta.chartColor,
-            });
-        }
-    }
-
-    if (macroChart) macroChart.destroy();
-    const cfg = {
-        type: 'bar',
-        data: { labels, datasets },
-        options: {
-            responsive: true,
-            plugins: { dateMarkers: { markers } },
-            scales: { x: { stacked: true }, y: { stacked: true } },
-        },
-    };
-    macroChart = new Chart(macroCanvas, cfg);
-}
-
 function rebuildMicroChart(markers) {
     if (!activePortfolio) return;
     if (!markers) markers = buildPhaseMarkersForCharts();
@@ -1061,54 +983,33 @@ function rebuildMicroChart(markers) {
     const datasets = [];
 
     if (expandedGroups.size > 0) {
-        if (viewMode === 'properties') {
-            const groups = classifyAssetsByProperty(activePortfolio.modelAssets);
-            for (const groupKey of getPropertyDisplayOrder()) {
-                if (!expandedGroups.has(groupKey)) continue;
-                const meta = PropertyGroupMeta.get(groupKey);
-                const assets = ASSET_LESS_GROUPS.has(groupKey)
-                    ? activePortfolio.modelAssets
-                    : groups.get(groupKey);
-                if (!assets) continue;
-                for (const asset of assets) {
-                    const shade = meta.assetShades?.get(asset.instrument)
-                        || (ASSET_LESS_GROUPS.has(groupKey) ? getAssetChartColor(asset.instrument) : meta.chartColor);
-                    datasets.push({
-                        label: asset.displayName,
-                        data: asset.getDisplayHistory(activeMicroMetric),
-                        backgroundColor: shade,
-                    });
-                }
-            }
-        } else {
-            const groups = new Map();
+        const groups = new Map();
+        for (const asset of activePortfolio.modelAssets) {
+            const groupKey = classifyAssetGroup(asset.instrument);
+            if (!groups.has(groupKey)) groups.set(groupKey, []);
+            groups.get(groupKey).push(asset);
+        }
+        // ALL group: every asset regardless of instrument group
+        if (expandedGroups.has(AssetGroup.ALL)) {
             for (const asset of activePortfolio.modelAssets) {
-                const groupKey = classifyAssetGroup(asset.instrument);
-                if (!groups.has(groupKey)) groups.set(groupKey, []);
-                groups.get(groupKey).push(asset);
+                datasets.push({
+                    label: asset.displayName,
+                    data: asset.getDisplayHistory(activeMicroMetric),
+                    backgroundColor: getAssetChartColor(asset.instrument),
+                });
             }
-            // ALL group: every asset regardless of instrument group
-            if (expandedGroups.has(AssetGroup.ALL)) {
-                for (const asset of activePortfolio.modelAssets) {
-                    datasets.push({
-                        label: asset.displayName,
-                        data: asset.getDisplayHistory(activeMicroMetric),
-                        backgroundColor: getAssetChartColor(asset.instrument),
-                    });
-                }
-            }
-            for (const groupKey of getAssetDisplayOrder()) {
-                if (groupKey === AssetGroup.ALL) continue;
-                if (!expandedGroups.has(groupKey)) continue;
-                const assets = groups.get(groupKey);
-                if (!assets || assets.length === 0) continue;
-                for (const asset of assets) {
-                    datasets.push({
-                        label: asset.displayName,
-                        data: asset.getDisplayHistory(activeMicroMetric),
-                        backgroundColor: getAssetChartColor(asset.instrument),
-                    });
-                }
+        }
+        for (const groupKey of getAssetDisplayOrder()) {
+            if (groupKey === AssetGroup.ALL) continue;
+            if (!expandedGroups.has(groupKey)) continue;
+            const assets = groups.get(groupKey);
+            if (!assets || assets.length === 0) continue;
+            for (const asset of assets) {
+                datasets.push({
+                    label: asset.displayName,
+                    data: asset.getDisplayHistory(activeMicroMetric),
+                    backgroundColor: getAssetChartColor(asset.instrument),
+                });
             }
         }
     }
@@ -1250,19 +1151,8 @@ function connectAssetListEvents() {
 
     assetList.addEventListener('group-toggle', (ev) => {
         const group = ev.detail.group;
-        if (viewMode === 'properties') {
-            // Single-select: toggle off if already active, otherwise switch
-            if (expandedGroups.has(group)) {
-                expandedGroups.clear();
-            } else {
-                expandedGroups.clear();
-                expandedGroups.add(group);
-            }
-        } else {
-            // Multi-select for Assets view
-            if (expandedGroups.has(group)) expandedGroups.delete(group);
-            else expandedGroups.add(group);
-        }
+        if (expandedGroups.has(group)) expandedGroups.delete(group);
+        else expandedGroups.add(group);
         assetList.expandedGroups = new Set(expandedGroups);
         setTimeout(() => { updateMetricDropdown(); rebuildMicroChart(); }, 0);
     });

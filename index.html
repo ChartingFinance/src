@@ -59,25 +59,15 @@
 
         /* ─── FinPlan Layout ─── */
 
-        /* ─── 75/25 Split ─── */
+        /* ─── Timeline + Portfolio (stacked full-width) ─── */
 
-        .finplan-split {
-            display: flex;
-            gap: 32px;
+        .finplan-timeline-section {
             height: 432px;
-        }
-
-        .finplan-charts {
-            flex: 3;
-            min-width: 0;
             display: flex;
             flex-direction: column;
         }
 
-        .finplan-sidebar {
-            flex: 1;
-            min-width: 300px;
-            max-width: 400px;
+        .finplan-portfolio-section {
             display: flex;
             flex-direction: column;
         }
@@ -178,9 +168,9 @@
             display: block;
         }
 
-        /* ─── Sidebar ─── */
+        /* ─── Portfolio ─── */
 
-        .finplan-sidebar .sidebar-heading {
+        .finplan-portfolio-section .sidebar-heading {
             font-size: 11px;
             font-weight: 600;
             letter-spacing: 0.1em;
@@ -189,7 +179,7 @@
             margin-bottom: 16px;
         }
 
-        .finplan-sidebar .add-asset-btn {
+        .finplan-portfolio-section .add-asset-btn {
             display: block;
             width: 100%;
             margin-top: 16px;
@@ -206,7 +196,7 @@
             transition: all 0.2s;
         }
 
-        .finplan-sidebar .add-asset-btn:hover {
+        .finplan-portfolio-section .add-asset-btn:hover {
             border-color: #6b7280;
             color: #374151;
             background: #f9fafb;
@@ -227,21 +217,28 @@
             border-top: 2px solid #111827;
         }
 
-        /* ─── Asset Group Styles (for sidebar) ─── */
+        /* ─── Asset Group Styles (horizontal columns) ─── */
 
+        .asset-group-columns {
+            display: flex; gap: 16px; width: 100%;
+        }
+        .asset-group-column {
+            flex: 1; min-width: 0;
+            display: flex; flex-direction: column;
+        }
         .asset-group-header {
-            display: flex; align-items: center; gap: 8px;
-            padding: 8px 12px; border-radius: 12px; cursor: pointer;
+            display: flex; align-items: center; gap: 6px;
+            padding: 8px 10px; border-radius: 12px; cursor: pointer;
             width: 100%; transition: filter 0.2s; user-select: none;
         }
         .asset-group-header:hover { filter: brightness(0.95); }
-        .asset-group-emoji { font-size: 20px; line-height: 1; }
-        .asset-group-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; flex: 1; }
-        .asset-group-total { font-size: 13px; font-weight: 600; }
+        .asset-group-emoji { font-size: 18px; line-height: 1; }
+        .asset-group-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .asset-group-total { font-size: 12px; font-weight: 600; white-space: nowrap; }
         .asset-group-chevron { font-size: 10px; transition: transform 0.2s; }
         .asset-group-chevron.expanded { transform: rotate(90deg); }
-        .asset-group-children { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 4px 0 4px 12px; }
-        .asset-group-children.collapsed { height: 0; overflow: hidden; }
+        .asset-group-children { display: flex; flex-direction: column; gap: 8px; padding: 8px 0 0 0; }
+        .asset-group-children.collapsed { height: 0; overflow: hidden; padding: 0; }
 
         .tax-item-pill {
             display: flex; align-items: center; gap: 6px;
@@ -294,6 +291,15 @@
         .asset-card-name { font-size: 11px; font-weight: 500; color: #111827; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .asset-card-value { font-size: 13px; color: #6b7280; margin-top: 2px; }
 
+        .asset-card-sparkline { margin: 4px 0 2px; line-height: 0; background: #f3f4f6; border-radius: 6px; padding: 2px; }
+        .asset-card-flows {
+            display: flex; justify-content: center; gap: 4px;
+            font-size: 13px; line-height: 1.2; margin-top: 2px;
+        }
+        .flow-in   { color: #16a34a; }
+        .flow-grow { color: #2563eb; }
+        .flow-out  { color: #dc2626; }
+
         .asset-action-btn { position: absolute; font-size: 10px; width: 18px; height: 18px; line-height: 18px; text-align: center; border-radius: 50%; cursor: pointer; background: #e5e7eb; color: #374151; opacity: 0; transition: opacity 0.2s, background 0.2s, color 0.2s; }
         .asset:hover .asset-action-btn { opacity: 1; }
         .asset-action-btn.edit      { top: 4px; left: 4px; }
@@ -330,8 +336,7 @@
         /* ─── Responsive ─── */
 
         @media (max-width: 900px) {
-            .finplan-split { flex-direction: column; }
-            .finplan-sidebar { max-width: none; border-left: none; border-top: 1px solid #e5e7eb; }
+            .finplan-timeline-section, .finplan-portfolio-section { height: auto; }
             .finplan-global-bar, .finplan-timeline-wrap, .finplan-foundation-slot {
                 padding-left: 24px;
                 padding-right: 24px;
@@ -528,53 +533,43 @@
         </div>
     </div>
 
-    <!-- ═══ Timeline + Portfolio (side by side) ═══ -->
-    <div class="finplan-split mb-8">
+    <!-- ═══ Your Timeline ═══ -->
+    <div class="finplan-timeline-section mb-8">
+        <h2 class="text-lg font-bold flex items-center gap-2 flex-shrink-0 mb-4">🕐 Your Timeline
+            <a href="help.html#timeline" class="ml-auto text-gray-300 hover:text-gray-500 transition" title="Help" style="font-size: 14px; font-weight: 500; text-decoration: none;">?</a>
+        </h2>
 
-        <!-- LEFT: Timeline -->
-        <div class="finplan-charts flex flex-col gap-4">
-            <h2 class="text-lg font-bold flex items-center gap-2 flex-shrink-0">🕐 Your Timeline
-                <a href="help.html#timeline" class="ml-auto text-gray-300 hover:text-gray-500 transition" title="Help" style="font-size: 14px; font-weight: 500; text-decoration: none;">?</a>
-            </h2>
+        <div class="glass-card p-5 flex-grow min-h-0 relative" style="padding-bottom: 72px;">
+            <finplan-timeline id="finplanTimeline"></finplan-timeline>
 
-            <div class="glass-card p-5 flex-grow min-h-0 relative" style="padding-bottom: 72px;">
-                <finplan-timeline id="finplanTimeline"></finplan-timeline>
-
-                <!-- Scenario bar -->
-                <div class="scenario-bar">
-                    <div class="scenario-row">
-                        <button class="text-gray-400 hover:text-gray-800 text-sm cursor-pointer" id="btn-edit-scenario" title="Edit scenario">✏️</button>
-                        <select class="fin-input text-xs font-medium" id="scenario-select"
-                            style="width: auto; max-width: 200px; padding: 4px 8px;"></select>
-                        <button class="text-gray-400 hover:text-red-500 text-sm cursor-pointer hidden" id="btn-delete-scenario" title="Delete scenario">🗑️</button>
-                    </div>
-                    <div class="scenario-note-text" id="scenario-note"></div>
+            <!-- Scenario bar -->
+            <div class="scenario-bar">
+                <div class="scenario-row">
+                    <button class="text-gray-400 hover:text-gray-800 text-sm cursor-pointer" id="btn-edit-scenario" title="Edit scenario">✏️</button>
+                    <select class="fin-input text-xs font-medium" id="scenario-select"
+                        style="width: auto; max-width: 200px; padding: 4px 8px;"></select>
+                    <button class="text-gray-400 hover:text-red-500 text-sm cursor-pointer hidden" id="btn-delete-scenario" title="Delete scenario">🗑️</button>
                 </div>
-
-                <button class="ai-fab" data-section="timeline" title="AI Summary">⚡</button>
-                <button class="ai-fab" style="left: auto; right: 12px;" id="btn-add-scenario" title="New scenario">+</button>
+                <div class="scenario-note-text" id="scenario-note"></div>
             </div>
+
+            <button class="ai-fab" data-section="timeline" title="AI Summary">⚡</button>
+            <button class="ai-fab" style="left: auto; right: 12px;" id="btn-add-scenario" title="New scenario">+</button>
         </div>
+    </div>
 
-        <!-- RIGHT: Your Portfolio -->
-        <div class="finplan-sidebar gap-4">
-            <h2 class="text-lg font-bold flex items-center gap-2 flex-shrink-0">💼 Your Portfolio
-                <span class="badge-phase ml-auto" id="viewingBadge">Viewing: Mar 2026</span>
-                <a href="help.html#portfolio" class="text-gray-300 hover:text-gray-500 transition" title="Help" style="font-size: 14px; font-weight: 500; text-decoration: none;">?</a>
-            </h2>
+    <!-- ═══ Your Portfolio ═══ -->
+    <div class="finplan-portfolio-section mb-8">
+        <h2 class="text-lg font-bold flex items-center gap-2 flex-shrink-0 mb-4">💼 Your Portfolio
+            <span class="badge-phase ml-auto" id="viewingBadge">Viewing: Mar 2026</span>
+            <a href="help.html#portfolio" class="text-gray-300 hover:text-gray-500 transition" title="Help" style="font-size: 14px; font-weight: 500; text-decoration: none;">?</a>
+        </h2>
 
-            <div id="viewToggle" class="flex rounded-lg overflow-hidden border border-gray-200 text-sm flex-shrink-0">
-                <button data-view="assets" class="flex-1 px-3 py-1.5 font-medium transition-all cursor-pointer active" style="background: #111827; color: white;">Assets</button>
-                <button data-view="properties" class="flex-1 px-3 py-1.5 font-medium transition-all cursor-pointer" style="background: white; color: #6b7280;">Properties</button>
-            </div>
-
-            <div class="glass-card p-6 relative flex flex-col flex-grow min-h-0">
-                <asset-list class="flex-grow overflow-y-auto min-h-0" id="finplanAssetList"></asset-list>
-                <button class="ai-fab" data-section="portfolio" title="AI Summary">⚡</button>
-                <button class="ai-fab" style="left: auto; right: 12px;" id="btn-add-asset" title="Add a new asset">+</button>
-            </div>
+        <div class="glass-card p-6 relative flex flex-col flex-grow min-h-0">
+            <asset-list class="flex-grow min-h-0" id="finplanAssetList"></asset-list>
+            <button class="ai-fab" data-section="portfolio" title="AI Summary">⚡</button>
+            <button class="ai-fab" style="left: auto; right: 12px;" id="btn-add-asset" title="Add a new asset">+</button>
         </div>
-
     </div>
 
     <!-- ═══ Projections (full width) ═══ -->

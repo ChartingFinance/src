@@ -2,11 +2,12 @@
  * <asset-card>
  *
  * Lit component that renders a single financial asset card.
+ * Three-row design: identity (emoji + name + value), sparkline, flow row.
  * Receives a `modelAsset` object and optional `readonly` flag.
  * Dispatches: 'edit-asset', 'remove-asset', 'show-transfers', 'select-asset'
  */
 
-import { LitElement, html } from 'lit';
+import { LitElement, html, svg, nothing } from 'lit';
 import { InstrumentMeta, InstrumentType } from '../instruments/instrument.js';
 import { colorRange } from '../utils/html.js';
 
@@ -34,9 +35,13 @@ class AssetCard extends LitElement {
         groupColor: { type: String },
         ghost: { type: Boolean },
         future: { type: Boolean },
-        metricValue: { type: Number },  // override display value from history
-        metricLabel: { type: String },  // label shown below value (e.g. "Dividend") for Properties view
-        closedEmoji: { type: String },  // e.g. '⛔' when asset is closed at selected date
+        metricValue: { type: Number },
+        closedEmoji: { type: String },
+        valueHistory: { type: Array },      // full VALUE history (numbers) for sparkline
+        historyIndex: { type: Number },     // cursor position for "you are here" dot
+        inflow:  { type: Number },          // monthly inflow at cursor (green)
+        growth:  { type: Number },          // monthly growth at cursor (blue)
+        outflow: { type: Number },          // monthly outflow at cursor (red)
     };
 
     createRenderRoot() { return this; }
@@ -54,22 +59,23 @@ class AssetCard extends LitElement {
         this.groupColor = null;
         this.ghost = false;
         this.future = false;
-        this.metricLabel = '';
         this.closedEmoji = '';
+        this.valueHistory = null;
+        this.historyIndex = -1;
+        this.inflow = 0;
+        this.growth = 0;
+        this.outflow = 0;
     }
 
     render() {
         if (!this.modelAsset) return html``;
 
         const ma = this.modelAsset;
-        // Use stable group color when provided, fall back to legacy colorRange for simulator modal
         const color = this.groupColor || colorRange[ma.colorId] || colorRange[0];
-        // Use single assetEmoji when groupColor is set (grouped sidebar), else legacy 2-char emoji
         const emoji = this.groupColor
             ? InstrumentType.assetEmoji(ma.instrument)
             : (InstrumentMeta.get(ma.instrument)?.emoji ?? '');
 
-        // Display value: use metric history value if provided, else fall back to finish/start
         let displayAmount;
         if (this.metricValue != null) {
             displayAmount = this.metricValue;
@@ -103,10 +109,70 @@ class AssetCard extends LitElement {
                 <div class="asset-card-icon">${emoji}</div>
                 <div class="asset-card-name">${ma.displayName}</div>
                 <div class="asset-card-value">${valueDisplay}</div>
-                ${this.metricLabel ? html`<div class="text-xs text-gray-400" style="margin-top: 1px;">${this.metricLabel}</div>` : ''}
+                ${this._renderSparkline(color)}
+                ${this._renderFlowRow()}
                 ${this.readonly ? '' : html`
                     <span class="asset-action-btn remove" title="Remove" @click=${this._onRemove}>&#x2715;</span>
                 `}
+            </div>
+        `;
+    }
+
+    _renderSparkline(color) {
+        const data = this.valueHistory;
+        if (!data || data.length < 2 || this.readonly) return nothing;
+
+        const W = 100;
+        const H = 32;
+        const PAD = 3;
+
+        let min = Infinity, max = -Infinity;
+        for (let k = 0; k < data.length; k++) {
+            const v = data[k];
+            if (v < min) min = v;
+            if (v > max) max = v;
+        }
+        const range = max - min || 1;
+
+        const points = [];
+        for (let k = 0; k < data.length; k++) {
+            const x = PAD + (k / (data.length - 1)) * (W - 2 * PAD);
+            const y = H - PAD - ((data[k] - min) / range) * (H - 2 * PAD);
+            points.push(`${x.toFixed(1)},${y.toFixed(1)}`);
+        }
+
+        const dotIdx = Math.max(0, Math.min(this.historyIndex, data.length - 1));
+        const dotX = PAD + (dotIdx / (data.length - 1)) * (W - 2 * PAD);
+        const dotY = H - PAD - ((data[dotIdx] - min) / range) * (H - 2 * PAD);
+
+        return html`
+            <div class="asset-card-sparkline">
+                <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"
+                     style="width: 100%; height: 32px; display: block;">
+                    ${svg`
+                        <polyline points="${points.join(' ')}"
+                                  fill="none" stroke="${color}" stroke-width="1.5"
+                                  stroke-linejoin="round" stroke-linecap="round"
+                                  vector-effect="non-scaling-stroke" />
+                        <circle cx="${dotX}" cy="${dotY}" r="3"
+                                fill="${color}" stroke="white" stroke-width="1"
+                                vector-effect="non-scaling-stroke" />
+                    `}
+                </svg>
+            </div>
+        `;
+    }
+
+    _renderFlowRow() {
+        if (this.readonly) return nothing;
+        const { inflow, growth, outflow } = this;
+        if (!inflow && !growth && !outflow) return nothing;
+
+        return html`
+            <div class="asset-card-flows">
+                ${inflow  ? html`<span class="flow-in"  title="Monthly inflow: ${formatCompactCurrency(inflow)}">↗${formatCompactCurrency(inflow)}</span>` : ''}
+                ${growth  ? html`<span class="flow-grow" title="Monthly growth: ${formatCompactCurrency(growth)}">↑${formatCompactCurrency(growth)}</span>` : ''}
+                ${outflow ? html`<span class="flow-out"  title="Monthly outflow: ${formatCompactCurrency(outflow)}">↙${formatCompactCurrency(outflow)}</span>` : ''}
             </div>
         `;
     }

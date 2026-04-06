@@ -1,9 +1,10 @@
 /**
  * <asset-list>
  *
- * Lit component that renders assets grouped by financial category.
- * Groups have collapsible headers with emoji, contextual label, roll-up total, and chevron.
- * Individual assets render as <asset-card> children with stable group-derived colors.
+ * Lit component that renders assets grouped by financial category in horizontal columns.
+ * Groups: Income, Capital, Real Estate, Retirement, Expenses, Taxes.
+ * Each column has a header with emoji, label, roll-up total, and chevron toggle.
+ * Individual assets render as <asset-card> children stacked vertically within each column.
  *
  * Also supports `readonly` mode (for simulator popup) — renders flat list with legacy colors.
  *
@@ -16,17 +17,21 @@ import { colorRange } from '../utils/html.js';
 import {
     AssetGroup, AssetGroupMeta, TaxItem, TaxItemMeta,
     classifyAssets, getGroupLabel, getAssetChartColor,
-    GROUP_ORDER_ACCUMULATE, GROUP_ORDER_RETIRE,
 } from '../asset-groups.js';
-import {
-    PropertyGroupMeta, PROPERTY_ORDER_ACCUMULATE, PROPERTY_ORDER_RETIRE,
-    ASSET_LESS_GROUPS,
-    classifyAssetsByProperty, getPrimaryMetric, computePropertyRollupAtIndex,
-} from '../property-groups.js';
 import { LifeEventType } from '../life-event.js';
 
-import { MetricLabel } from '../metric.js';
+import { computeAssetFlows } from '../utils/asset-flow.js';
 import './asset-card.js';
+
+/** Standard group order for horizontal columns */
+const HORIZONTAL_GROUP_ORDER = [
+    AssetGroup.INCOME,
+    AssetGroup.CAPITAL,
+    AssetGroup.REAL_ESTATE,
+    AssetGroup.RETIREMENT,
+    AssetGroup.EXPENSES,
+    AssetGroup.TAXES,
+];
 
 function formatCompactCurrency(amount) {
     const num = typeof amount === 'number' ? amount : parseFloat(amount);
@@ -50,7 +55,6 @@ class AssetList extends LitElement {
         atDateInt: { type: Object },        // DateInt — classify active/closed at this date
         metricName: { type: String },       // Metric key — look up history value at historyIndex
         historyIndex: { type: Number },     // Month offset into history[] for metric display
-        viewMode: { type: String },        // 'assets' | 'properties'
     };
 
     createRenderRoot() { return this; }
@@ -66,7 +70,6 @@ class AssetList extends LitElement {
         this.atDateInt = null;
         this.metricName = null;
         this.historyIndex = -1;
-        this.viewMode = 'assets';
     }
 
     render() {
@@ -92,148 +95,34 @@ class AssetList extends LitElement {
             `;
         }
 
-        // Branch on view mode
-        if (this.viewMode === 'properties') {
-            return this._renderPropertiesView();
-        }
-        return this._renderAssetsView();
+        return this._renderHorizontalGroups();
     }
 
-    _renderAssetsView() {
+    _renderHorizontalGroups() {
         const groups = classifyAssets(this.modelAssets, this.atDateInt);
         const expanded = this.expandedGroups || new Set();
-        const isRetired = this.activeLifeEvent?.event
-            ? LifeEventType.isRetirement(this.activeLifeEvent.event)
-            : false;
-        const order = isRetired ? GROUP_ORDER_RETIRE : GROUP_ORDER_ACCUMULATE;
 
         return html`
-            <div class="flex flex-col gap-3 w-full">
-                ${order.map(groupKey => {
+            <div class="asset-group-columns">
+                ${HORIZONTAL_GROUP_ORDER.map(groupKey => {
                     if (groupKey === AssetGroup.TAXES) {
-                        return this._renderTaxesGroup(expanded.has(groupKey));
+                        return this._renderTaxesColumn(expanded.has(groupKey));
                     }
                     const assets = groups.get(groupKey);
                     if (!assets || assets.length === 0) return nothing;
-                    return this._renderGroup(groupKey, assets, expanded.has(groupKey));
+                    return this._renderGroupColumn(groupKey, assets, expanded.has(groupKey));
                 })}
             </div>
         `;
     }
 
-    _renderPropertiesView() {
-        // Set closed-at-date flag for ghosting
-        const atInt = this.atDateInt?.toInt?.();
-        for (const asset of this.modelAssets) {
-            if (atInt != null) {
-                const start = asset.startDateInt.toInt();
-                const finish = asset.effectiveFinishDateInt.toInt();
-                // Ghost if before start, after declared finish, or after early closure by life event
-                const closedEarly = asset.closedDateInt && atInt >= asset.closedDateInt.toInt();
-                asset._isClosedAtDate = atInt < start || atInt > finish || closedEarly;
-            } else {
-                asset._isClosedAtDate = asset.isClosed;
-            }
-        }
-
-        const groups = classifyAssetsByProperty(this.modelAssets);
-        const expanded = this.expandedGroups || new Set();
-        const isRetired = this.activeLifeEvent?.event
-            ? LifeEventType.isRetirement(this.activeLifeEvent.event)
-            : false;
-        const order = isRetired ? PROPERTY_ORDER_RETIRE : PROPERTY_ORDER_ACCUMULATE;
-
-        return html`
-            <div class="flex flex-col gap-3 w-full">
-                ${order.map(groupKey => {
-                    if (ASSET_LESS_GROUPS.has(groupKey)) {
-                        return this._renderAssetLessPropertyGroup(groupKey, expanded.has(groupKey));
-                    }
-                    const assets = groups.get(groupKey);
-                    if (!assets || assets.length === 0) return nothing;
-                    return this._renderPropertyGroup(groupKey, assets, expanded.has(groupKey));
-                })}
-            </div>
-        `;
-    }
-
-    _renderPropertyGroup(groupKey, assets, isExpanded) {
-        const meta = PropertyGroupMeta.get(groupKey);
-        const total = computePropertyRollupAtIndex(assets, groupKey, this.historyIndex);
-
-        return html`
-            <div>
-                <div class="asset-group-header"
-                     style="background: ${meta.headerBg}; color: ${meta.headerFg}"
-                     @click=${() => this._onGroupToggle(groupKey)}>
-                    <span class="asset-group-emoji">${meta.groupEmoji}</span>
-                    <span class="asset-group-label">${meta.label}</span>
-                    <span class="asset-group-total">${formatCompactCurrency(total)}</span>
-                    <span class="asset-group-chevron ${isExpanded ? 'expanded' : ''}">&#x25B6;</span>
-                </div>
-                <div class="asset-group-children ${isExpanded ? '' : 'collapsed'}">
-                    ${repeat(
-                        assets,
-                        (ma) => ma.displayName + ':' + groupKey,
-                        (ma) => {
-                            const metric = getPrimaryMetric(ma, groupKey);
-                            const shade = meta.assetShades?.get(ma.instrument) ?? meta.chartColor;
-                            return html`
-                                <asset-card
-                                    .modelAsset=${ma}
-                                    .groupColor=${shade}
-                                    .metricValue=${this._getMetricValueForMetric(ma, metric)}
-                                    .metricLabel=${MetricLabel[metric] || ''}
-                                    ?ghost=${ma._isClosedAtDate}
-                                    .closedEmoji=${ma._isClosedAtDate ? '⛔' : ma.isDepleted ? '⚠️' : ''}
-                                    ?selected=${this.highlightName === ma.displayName}
-                                ></asset-card>
-                            `;
-                        }
-                    )}
-                </div>
-            </div>
-        `;
-    }
-
-    _renderAssetLessPropertyGroup(groupKey, isActive) {
-        const meta = PropertyGroupMeta.get(groupKey);
-        const total = computePropertyRollupAtIndex([], groupKey, this.historyIndex, this.modelAssets);
-
-        return html`
-            <div>
-                <div class="asset-group-header"
-                     style="background: ${meta.headerBg}; color: ${meta.headerFg}"
-                     @click=${() => this._onGroupToggle(groupKey)}>
-                    <span class="asset-group-emoji">${meta.groupEmoji}</span>
-                    <span class="asset-group-label">${meta.label}</span>
-                    <span class="asset-group-total">${formatCompactCurrency(total)}</span>
-                    <span class="asset-group-spotlight" title="Spotlight in Micro chart">${isActive ? '🔦' : '🔅'}</span>
-                </div>
-            </div>
-        `;
-    }
-
-    /** Get metric value for a specific metric at current historyIndex */
-    _getMetricValueForMetric(asset, metricName) {
-        if (!metricName || this.historyIndex < 0) return null;
-        const history = asset.getHistory?.(metricName);
-        if (!history || this.historyIndex >= history.length) return null;
-        const entry = history[this.historyIndex];
-        if (entry == null) return null;
-        if (entry.amount != null) return entry.amount;
-        if (typeof entry === 'number') return entry;
-        const parsed = parseFloat(entry);
-        return isNaN(parsed) ? null : parsed;
-    }
-
-    _renderGroup(groupKey, assets, isExpanded) {
+    _renderGroupColumn(groupKey, assets, isExpanded) {
         const meta = AssetGroupMeta.get(groupKey);
         const label = getGroupLabel(groupKey, this.activeLifeEvent);
         const total = this._computeRollupTotal(groupKey, assets);
 
         return html`
-            <div>
+            <div class="asset-group-column">
                 <div class="asset-group-header"
                      style="background: ${meta.headerBg}; color: ${meta.headerFg}"
                      @click=${() => this._onGroupToggle(groupKey)}>
@@ -246,23 +135,32 @@ class AssetList extends LitElement {
                     ${repeat(
                         assets,
                         (ma) => ma.displayName,
-                        (ma) => html`
-                            <asset-card
-                                .modelAsset=${ma}
-                                .groupColor=${getAssetChartColor(ma.instrument)}
-                                .metricValue=${this._getMetricValue(ma)}
-                                ?ghost=${ma._isClosedAtDate}
-                                .closedEmoji=${ma._isClosedAtDate ? '⛔' : ma.isDepleted ? '⚠️' : ''}
-                                ?selected=${this.highlightName === ma.displayName}
-                            ></asset-card>
-                        `
+                        (ma) => {
+                            const history = ma.getHistory?.('value') || [];
+                            const flows = isExpanded ? computeAssetFlows(ma, this.historyIndex) : { inflow: 0, growth: 0, outflow: 0 };
+                            return html`
+                                <asset-card
+                                    .modelAsset=${ma}
+                                    .groupColor=${getAssetChartColor(ma.instrument)}
+                                    .metricValue=${this._getMetricValue(ma)}
+                                    .valueHistory=${history}
+                                    .historyIndex=${this.historyIndex}
+                                    .inflow=${flows.inflow}
+                                    .growth=${flows.growth}
+                                    .outflow=${flows.outflow}
+                                    ?ghost=${ma._isClosedAtDate}
+                                    .closedEmoji=${ma._isClosedAtDate ? '⛔' : ma.isDepleted ? '⚠️' : ''}
+                                    ?selected=${this.highlightName === ma.displayName}
+                                ></asset-card>
+                            `;
+                        }
                     )}
                 </div>
             </div>
         `;
     }
 
-    _renderTaxesGroup(isExpanded) {
+    _renderTaxesColumn(isExpanded) {
         if (!this.portfolio) return nothing;
 
         const taxItems = this._computeTaxItems();
@@ -273,7 +171,7 @@ class AssetList extends LitElement {
         const total = taxItems.reduce((sum, t) => sum + t.amount, 0);
 
         return html`
-            <div>
+            <div class="asset-group-column">
                 <div class="asset-group-header"
                      style="background: ${meta.headerBg}; color: ${meta.headerFg}"
                      @click=${() => this._onGroupToggle(AssetGroup.TAXES)}>
@@ -302,11 +200,6 @@ class AssetList extends LitElement {
 
         let ficaTotal = 0, incomeTaxTotal = 0, capGainsTotal = 0, propertyTaxTotal = 0;
 
-        // Read leaf metrics at cursor position from history arrays.
-        // FICA = SS tax + Medicare tax (leaves of WITHHELD_FICA_TAX)
-        // Income Tax = withheld + estimated (leaves of INCOME_TAX, excluding FICA and STCG)
-        // Capital Gains Tax = LTCG tax + STCG tax (separate leaves)
-        // Property Tax = PROPERTY_TAX (leaf, no rollup issue)
         const idx = this.historyIndex;
         const atIdx = (asset, metricName) => {
             const h = asset.getHistory?.(metricName);
@@ -314,15 +207,13 @@ class AssetList extends LitElement {
         };
 
         for (const a of assets) {
-            // Don't skip closed assets — isClosed reflects end-of-simulation state,
-            // but history[idx] correctly holds 0 for months the asset wasn't active.
             ficaTotal += atIdx(a, 'socialSecurityTax') + atIdx(a, 'medicareTax');
             incomeTaxTotal += atIdx(a, 'withheldIncomeTax') + atIdx(a, 'estimatedIncomeTax');
             capGainsTotal += atIdx(a, 'longTermCapitalGainTax') + atIdx(a, 'shortTermCapitalGainTax');
             propertyTaxTotal += atIdx(a, 'propertyTax');
         }
 
-        // Annualize monthly values (these are monthly snapshots)
+        // Annualize monthly values
         ficaTotal *= 12;
         incomeTaxTotal *= 12;
         capGainsTotal *= 12;
@@ -378,7 +269,6 @@ class AssetList extends LitElement {
             detail: { group: groupKey },
         }));
     }
-
 
     // Legacy colorId assignment for readonly/simulator mode
     _assignColorIds() {
