@@ -574,6 +574,13 @@ class Simulator {
             if (!event.phaseTransfers) continue;
             for (const [assetName, transfers] of Object.entries(event.phaseTransfers)) {
                 const instrument = this._instrumentByName.get(assetName);
+                // Only create genes for assets where the simulation actually executes
+                // monthly fund transfers (income, expense, mortgage, real estate).
+                // Capital assets (taxableEquity, bank, bond) don't execute monthly transfers.
+                if (instrument && !InstrumentType.isMonthlyIncome(instrument)
+                    && !InstrumentType.isMonthlyExpense(instrument)
+                    && !InstrumentType.isMortgage(instrument)
+                    && !InstrumentType.isRealEstate(instrument)) continue;
                 const mutability = getGeneMutability(instrument);
                 for (let transferIdx = 0; transferIdx < transfers.length; transferIdx++) {
                     const originalValue = transfers[transferIdx].monthlyMoveValue;

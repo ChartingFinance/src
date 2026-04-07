@@ -170,6 +170,70 @@
 
         /* ─── Portfolio ─── */
 
+        /* ─── Portfolio View Toggle ─── */
+
+        .portfolio-view-toggle {
+            display: flex; border-radius: 8px; overflow: hidden;
+            border: 1px solid #e5e7eb; font-size: 12px;
+        }
+        .pv-btn {
+            padding: 3px 12px; font-weight: 500; cursor: pointer; border: none;
+            transition: all 0.15s; background: white; color: #6b7280;
+        }
+        .pv-btn.active { background: #111827; color: white; }
+
+        /* ─── Pipeline Styles ─── */
+
+        .pipeline-columns { display: flex; gap: 16px; width: 100%; }
+        .pipeline-source-column { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+        .pipeline-source-header {
+            display: flex; align-items: center; gap: 6px;
+            padding: 8px 10px; border-radius: 12px; user-select: none;
+        }
+        .pipeline-source-emoji { font-size: 18px; line-height: 1; }
+        .pipeline-source-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; flex: 1; white-space: nowrap; }
+        .pipeline-source-total { font-size: 12px; font-weight: 600; white-space: nowrap; }
+
+        .pipeline-card-list { display: flex; flex-direction: column; gap: 8px; padding: 8px 0 0 0; }
+
+        .pipeline-card {
+            background: white; border: 1px solid #e5e7eb; border-radius: 10px;
+            overflow: hidden; transition: box-shadow 0.2s;
+        }
+        .pipeline-card:hover { box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+        .pipeline-card-header {
+            display: flex; align-items: center; gap: 6px;
+            padding: 8px 10px; cursor: pointer; user-select: none;
+        }
+        .pipeline-card-emoji { font-size: 16px; line-height: 1; }
+        .pipeline-card-label { font-size: 11px; font-weight: 600; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .pipeline-card-total { font-size: 12px; font-weight: 600; white-space: nowrap; color: #374151; }
+        .pipeline-card-chevron { font-size: 10px; transition: transform 0.2s; color: #9ca3af; }
+        .pipeline-card-chevron.expanded { transform: rotate(90deg); }
+
+        .pipeline-routes { padding: 0 10px 8px; display: flex; flex-direction: column; gap: 4px; }
+        .pipeline-routes.collapsed { height: 0; overflow: hidden; padding: 0; }
+
+        .pipeline-route {
+            display: flex; align-items: center; gap: 4px;
+            font-size: 11px; color: #4b5563; padding: 2px 0;
+        }
+        .pipeline-route-source { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .pipeline-route-arrow { color: #9ca3af; flex-shrink: 0; }
+        .pipeline-route-target { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .pipeline-route-pct { font-size: 10px; color: #9ca3af; flex-shrink: 0; min-width: 28px; text-align: right; }
+        .pipeline-route-amount { font-weight: 600; flex-shrink: 0; min-width: 40px; text-align: right; }
+
+        .pipeline-route-system { font-style: italic; }
+        .pipeline-route-system .pipeline-route-pct { font-style: normal; }
+        .pipeline-route-inactive { opacity: 0.4; }
+
+        .pipeline-inactive { opacity: 0.5; }
+        .pipeline-warning { border-color: #f59e0b; border-width: 2px; }
+        .pipeline-warning-text { font-size: 11px; color: #92400e; padding: 0 10px 6px; }
+        .pipeline-route-clickable { cursor: pointer; border-radius: 4px; padding: 2px 4px; margin: 0 -4px; transition: background 0.15s; }
+        .pipeline-route-clickable:hover { background: #f3f4f6; }
+
         .finplan-portfolio-section .sidebar-heading {
             font-size: 11px;
             font-weight: 600;
@@ -572,12 +636,17 @@
     <!-- ═══ Your Portfolio ═══ -->
     <div class="finplan-portfolio-section mb-8">
         <h2 class="text-lg font-bold flex items-center gap-2 flex-shrink-0 mb-4">💼 Your Portfolio
+            <div id="portfolioViewToggle" class="portfolio-view-toggle ml-4">
+                <button data-pview="assets" class="pv-btn active">Assets</button>
+                <button data-pview="flows" class="pv-btn">Flows</button>
+            </div>
             <span class="badge-phase ml-auto" id="viewingBadge">Viewing: Mar 2026</span>
             <a href="help.html#portfolio" class="text-gray-300 hover:text-gray-500 transition" title="Help" style="font-size: 14px; font-weight: 500; text-decoration: none;">?</a>
         </h2>
 
         <div class="glass-card p-6 relative flex flex-col flex-grow min-h-0">
             <asset-list class="flex-grow min-h-0" id="finplanAssetList"></asset-list>
+            <pipeline-list class="flex-grow min-h-0" id="finplanPipelineList" style="display:none"></pipeline-list>
             <button class="ai-fab" data-section="portfolio" title="AI Summary">⚡</button>
             <button class="ai-fab" style="left: auto; right: 12px;" id="btn-add-asset" title="Add a new asset">+</button>
         </div>

@@ -38,6 +38,8 @@ import {
 } from './charting.js';
 
 import { AssetGroup, classifyAssetGroup, GROUP_ORDER_ACCUMULATE, GROUP_ORDER_RETIRE, getAssetChartColor, getGroupMetrics } from './asset-groups.js';
+import { buildPipelines } from './flow-pipelines.js';
+import './components/pipeline-list.js';
 // ── Simulations ─────────────────────────────────────────────
 import { runMonteCarlo, getMonteCarloChart, getMonteCarloResults } from './monte-carlo.js';
 import { runGuardrails, getGuardrailsChart } from './guardrails.js';
@@ -182,7 +184,9 @@ let microChart          = null;
 let editingModelAsset   = null;
 let pendingFundingAsset = null;  // stashed real estate asset awaiting funding confirmation
 
-// viewMode removed — always 'assets' (horizontal group columns)
+let portfolioView       = 'assets'; // 'assets' | 'flows'
+const pipelineList      = document.getElementById('finplanPipelineList');
+let expandedPipelines   = new Set();
 let activePhaseIndex    = 0;
 let activeStoryArc      = null;
 let activeStoryName     = null;
@@ -423,6 +427,31 @@ document.getElementById('simulator-inline').addEventListener('apply-optimized', 
 });
 
 // ── Guardrail parameter controls ──────────────────────────
+// ── Portfolio view toggle (Assets / Flows) ───────────────
+const portfolioViewToggle = document.getElementById('portfolioViewToggle');
+portfolioViewToggle.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('[data-pview]');
+    if (!btn || btn.dataset.pview === portfolioView) return;
+    portfolioView = btn.dataset.pview;
+    portfolioViewToggle.querySelectorAll('[data-pview]').forEach(b => {
+        b.classList.toggle('active', b.dataset.pview === portfolioView);
+    });
+    if (portfolioView === 'flows') {
+        assetList.style.display = 'none';
+        pipelineList.style.display = '';
+        refreshPipelines();
+        // Auto-expand all pipelines on first switch
+        if (expandedPipelines.size === 0 && pipelineList.pipelines?.length > 0) {
+            for (const p of pipelineList.pipelines) expandedPipelines.add(p.key);
+            pipelineList.expandedPipelines = new Set(expandedPipelines);
+        }
+    } else {
+        pipelineList.style.display = 'none';
+        assetList.style.display = '';
+    }
+});
+
+// ── Guardrail parameter controls ──────────────────────────
 grWithdrawal.addEventListener('change', () => {
     global_setGuardrailWithdrawalRate(parseFloat(grWithdrawal.value));
 });
@@ -629,11 +658,21 @@ function syncAssetListToDate(year, month) {
     }
 }
 
+function refreshPipelines() {
+    if (!activePortfolio || portfolioView !== 'flows') return;
+    const idx = activePortfolio.firstDateInt
+        ? DateInt.diffMonths(activePortfolio.firstDateInt, DateInt.from(store.selectedYear, store.selectedMonth))
+        : -1;
+    pipelineList.pipelines = buildPipelines(activePortfolio, idx);
+    pipelineList.expandedPipelines = new Set(expandedPipelines);
+}
+
 updateViewingBadge(store.selectedYear, store.selectedMonth);
 store.addEventListener('date-change', (e) => {
     updateViewingBadge(e.detail.year, e.detail.month);
     updateProjectionCursor();
     syncAssetListToDate(e.detail.year, e.detail.month);
+    refreshPipelines();
     if (spreadsheetView) spreadsheetView.scrollToDate(e.detail.year, e.detail.month);
     if (reportView) reportView.scrollToDate(e.detail.year, e.detail.month);
     if (creditMemoView) creditMemoView.scrollToDate(e.detail.year, e.detail.month);
@@ -813,6 +852,15 @@ function calculate() {
     assetList.activeLifeEvent = activeLifeEvents[0] ?? null;
     assetList.portfolio = portfolio;
     syncAssetListToDate(store.selectedYear, store.selectedMonth);
+
+    // Update flows view — compute pipelines and auto-expand all on first build
+    if (portfolioView === 'flows') {
+        refreshPipelines();
+        if (expandedPipelines.size === 0 && pipelineList.pipelines?.length > 0) {
+            for (const p of pipelineList.pipelines) expandedPipelines.add(p.key);
+            pipelineList.expandedPipelines = new Set(expandedPipelines);
+        }
+    }
 
     // Build charting data
     portfolio.buildChartingDisplayData();
@@ -1155,6 +1203,17 @@ function connectAssetListEvents() {
         else expandedGroups.add(group);
         assetList.expandedGroups = new Set(expandedGroups);
         setTimeout(() => { updateMetricDropdown(); rebuildMicroChart(); }, 0);
+    });
+
+    pipelineList.addEventListener('pipeline-toggle', (ev) => {
+        const key = ev.detail.pipeline;
+        if (expandedPipelines.has(key)) expandedPipelines.delete(key);
+        else expandedPipelines.add(key);
+        pipelineList.expandedPipelines = new Set(expandedPipelines);
+    });
+
+    pipelineList.addEventListener('edit-transfers', (ev) => {
+        showPopupTransfers(ev.detail.displayName);
     });
 }
 
