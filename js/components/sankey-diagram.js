@@ -1,17 +1,6 @@
-/**
- * <sankey-diagram>
- *
- * Lit component that renders a Sankey diagram of fund transfers as inline SVG.
- * Three columns: Sources (left) → Dual-role (middle) → Sinks (right).
- * Node height is proportional to flow volume, not asset value.
- * Updates reactively to "you are here" cursor via pipeline data.
- *
- * Properties:
- *   pipelines   — Pipeline[] from buildPipelines()
- *   modelAssets — ModelAsset[] for instrument classification
- */
+// js/components/sankey-diagram.js
 
-import { LitElement, html, svg, nothing } from 'lit';
+import { LitElement, html, svg } from 'lit';
 import { buildSankeyLayout } from '../utils/sankey-layout.js';
 
 function formatCompactCurrency(amount) {
@@ -24,14 +13,15 @@ function formatCompactCurrency(amount) {
     return sign + '$' + Math.round(abs);
 }
 
-const SVG_W = 700;
-const SVG_H = 400;
+const SVG_W = 900;
+const SVG_H = 300;
 
 class SankeyDiagram extends LitElement {
 
     static properties = {
         pipelines:   { type: Array },
         modelAssets: { type: Array },
+        _hoverNode:  { state: true },
     };
 
     createRenderRoot() { return this; }
@@ -40,6 +30,7 @@ class SankeyDiagram extends LitElement {
         super();
         this.pipelines = [];
         this.modelAssets = [];
+        this._hoverNode = null;
     }
 
     render() {
@@ -55,28 +46,44 @@ class SankeyDiagram extends LitElement {
             return html`<div class="text-sm text-gray-400 text-center p-8">No active flows at this date.</div>`;
         }
 
-        // Build gradient defs for links
         const gradients = layout.links.map((link, i) => svg`
             <linearGradient id="sg${i}" x1="0" x2="1" y1="0" y2="0">
-                <stop offset="0%" stop-color="${link.sourceColor}" stop-opacity="0.5" />
-                <stop offset="100%" stop-color="${link.targetColor}" stop-opacity="0.5" />
+                <stop offset="0%" stop-color="${link.sourceColor}" />
+                <stop offset="100%" stop-color="${link.targetColor}" />
             </linearGradient>
         `);
 
         return html`
             <div class="sankey-container">
                 <svg viewBox="0 0 ${SVG_W} ${SVG_H}"
-                     style="width: 100%; height: auto; display: block; max-height: 500px;">
+                     style="width: 100%; height: auto; display: block; max-height: 350px;"
+                     @mouseleave=${() => this._hoverNode = null}>
                     <defs>${gradients}</defs>
                     ${layout.links.map((link, i) => this._renderLink(link, i))}
-                    ${layout.nodes.map(node => this._renderNode(node, layout.hasMiddle))}
+                    ${layout.nodes.map(node => this._renderNode(node, layout))}
                 </svg>
             </div>
         `;
     }
 
+    _getLinkOpacity(link) {
+        if (!this._hoverNode) return 0.4;
+        if (link.sourceName === this._hoverNode || link.targetName === this._hoverNode) return 0.8;
+        return 0.05;
+    }
+
+    _getNodeOpacity(node, links) {
+        if (!this._hoverNode) return 1.0;
+        if (node.name === this._hoverNode) return 1.0;
+        
+        const isConnected = links.some(l => 
+            (l.sourceName === this._hoverNode && l.targetName === node.name) ||
+            (l.targetName === this._hoverNode && l.sourceName === node.name)
+        );
+        return isConnected ? 1.0 : 0.2;
+    }
+
     _renderLink(link, index) {
-        // Filled ribbon: two bezier curves forming a band
         const half = link.thickness / 2;
         const midX = (link.x0 + link.x1) / 2;
 
@@ -88,30 +95,34 @@ class SankeyDiagram extends LitElement {
             'Z',
         ].join(' ');
 
+        const opacity = this._getLinkOpacity(link);
+
         return svg`
             <path d="${d}"
                   fill="url(#sg${index})"
-                  class="sankey-link">
+                  style="opacity: ${opacity}; transition: opacity 0.2s ease;"
+                  class="sankey-link"
+                  @mouseenter=${() => this._hoverNode = link.sourceName}>
                 <title>${link.sourceName} → ${link.targetName}: ${formatCompactCurrency(link.amount)}/mo</title>
             </path>
         `;
     }
 
-    _renderNode(node, hasMiddle) {
-        const isLeft = node.col === 0;
-        const isMiddle = hasMiddle && node.col === 1;
-        const isRight = hasMiddle ? node.col === 2 : node.col === 1;
-
-        // Label to the left for left-column, right for right-column, right for middle
-        const labelX = isLeft ? node.x - node.w / 2 - 6 : node.x + node.w / 2 + 6;
-        const labelAnchor = isLeft ? 'end' : 'start';
+    _renderNode(node, layout) {
+        const isRight = node.col === layout.maxLayer;
+        
+        const labelX = isRight ? node.x - 8 : node.x + node.w + 8;
+        const labelAnchor = isRight ? 'end' : 'start';
         const labelY = node.y + node.h / 2 - 5;
         const amountY = labelY + 13;
 
         const displayName = node.name.length > 16 ? node.name.slice(0, 15) + '\u2026' : node.name;
+        const opacity = this._getNodeOpacity(node, layout.links);
 
         return svg`
-            <g class="sankey-node">
+            <g class="sankey-node" 
+               style="opacity: ${opacity}; transition: opacity 0.2s ease; cursor: pointer;"
+               @mouseenter=${() => this._hoverNode = node.name}>
                 <rect x="${node.x - node.w / 2}" y="${node.y}"
                       width="${node.w}" height="${Math.max(4, node.h)}"
                       rx="4" fill="${node.color}">
@@ -119,12 +130,12 @@ class SankeyDiagram extends LitElement {
                 </rect>
                 <text x="${labelX}" y="${labelY}"
                       text-anchor="${labelAnchor}" dominant-baseline="central"
-                      class="sankey-label" fill="#374151">
+                      class="sankey-label" fill="#374151" style="font-weight: 600; font-size: 12px; pointer-events: none;">
                     ${displayName}
                 </text>
                 <text x="${labelX}" y="${amountY}"
                       text-anchor="${labelAnchor}" dominant-baseline="central"
-                      class="sankey-amount" fill="#9ca3af">
+                      class="sankey-amount" fill="#9ca3af" style="font-size: 11px; pointer-events: none;">
                     ${formatCompactCurrency(node.flow)}/mo
                 </text>
             </g>
