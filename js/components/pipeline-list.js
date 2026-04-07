@@ -115,7 +115,7 @@ class PipelineList extends LitElement {
                  title=${clickable ? `Click to edit transfers on ${route.ownerName}` : ''}>
                 <span class="pipeline-route-source">${route.sourceName}</span>
                 <span class="pipeline-route-arrow">→</span>
-                <span class="pipeline-route-target">${route.targetName}</span>
+                <span class="pipeline-route-target">${route.targetName}${route.detail ? ` (${route.detail})` : ''}</span>
                 <span class="pipeline-route-pct">${pctLabel}</span>
                 <span class="pipeline-route-amount">${formatCompactCurrency(route.monthlyAmount)}</span>
             </div>

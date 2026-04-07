@@ -127,14 +127,14 @@ export function buildPipelines(portfolio, historyIndex, isRetired = false) {
     // - Income assets (payroll engine distributes to accounts)
     // - Expense assets (expense engine pulls from funding accounts)
     // - Mortgage assets (expense engine pulls payment from funding accounts)
-    // - Real estate / home assets (fund transfers specify funding source for system debits)
-    // Capital assets (taxableEquity, bank, bond, etc.) do NOT execute monthly transfers —
-    // their fundTransfers only matter for on-close transfers.
+    // Real estate fund transfers specify funding sources for system debits (property tax,
+    // maintenance, insurance) but don't execute as regular monthly transfers — the actual
+    // money movement is captured by addSystemTransfers().
+    // Capital assets (taxableEquity, bank, bond, etc.) do NOT execute monthly transfers.
     const MONTHLY_EXECUTABLE = (inst) =>
         InstrumentType.isMonthlyIncome(inst)
         || InstrumentType.isMonthlyExpense(inst)
-        || InstrumentType.isMortgage(inst)
-        || InstrumentType.isRealEstate(inst);
+        || InstrumentType.isMortgage(inst);
 
     for (const asset of assets) {
         if (!asset.fundTransfers?.length) continue;
@@ -303,36 +303,39 @@ function addSystemTransfers(pipelineMap, assets, historyIndex) {
                         pipelineMap.get(key).routes.push({
                             type: 'system',
                             sourceName: fundingSource.displayName,
-                            targetName: `${asset.displayName} (tax)`,
+                            targetName: asset.displayName,
                             sourceInstrument: fundingSource.instrument,
                             targetInstrument: asset.instrument,
                             percentage: null,
                             monthlyAmount: propTax,
                             active: true,
+                            detail: 'Property tax',
                         });
                     }
                     if (maint > 0) {
                         pipelineMap.get(key).routes.push({
                             type: 'system',
                             sourceName: fundingSource.displayName,
-                            targetName: `${asset.displayName} (maint)`,
+                            targetName: asset.displayName,
                             sourceInstrument: fundingSource.instrument,
                             targetInstrument: asset.instrument,
                             percentage: null,
                             monthlyAmount: maint,
                             active: true,
+                            detail: 'Maintenance',
                         });
                     }
                     if (ins > 0) {
                         pipelineMap.get(key).routes.push({
                             type: 'system',
                             sourceName: fundingSource.displayName,
-                            targetName: `${asset.displayName} (ins)`,
+                            targetName: asset.displayName,
                             sourceInstrument: fundingSource.instrument,
                             targetInstrument: asset.instrument,
                             percentage: null,
                             monthlyAmount: ins,
                             active: true,
+                            detail: 'Insurance',
                         });
                     }
                 }

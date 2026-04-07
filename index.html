@@ -234,6 +234,13 @@
         .pipeline-route-clickable { cursor: pointer; border-radius: 4px; padding: 2px 4px; margin: 0 -4px; transition: background 0.15s; }
         .pipeline-route-clickable:hover { background: #f3f4f6; }
 
+        /* ─── Sankey Diagram ─── */
+        .sankey-container { padding: 8px 0; }
+        .sankey-link { transition: opacity 0.2s; opacity: 0.7; }
+        .sankey-link:hover { opacity: 1; }
+        .sankey-label { font-size: 11px; font-weight: 600; font-family: 'DM Sans', sans-serif; }
+        .sankey-amount { font-size: 10px; font-family: 'DM Sans', sans-serif; }
+
         .finplan-portfolio-section .sidebar-heading {
             font-size: 11px;
             font-weight: 600;
@@ -647,6 +654,7 @@
         <div class="glass-card p-6 relative flex flex-col flex-grow min-h-0">
             <asset-list class="flex-grow min-h-0" id="finplanAssetList"></asset-list>
             <pipeline-list class="flex-grow min-h-0" id="finplanPipelineList" style="display:none"></pipeline-list>
+            <sankey-diagram class="flex-grow min-h-0" id="finplanSankey" style="display:none"></sankey-diagram>
             <button class="ai-fab" data-section="portfolio" title="AI Summary">⚡</button>
             <button class="ai-fab" style="left: auto; right: 12px;" id="btn-add-asset" title="Add a new asset">+</button>
         </div>
