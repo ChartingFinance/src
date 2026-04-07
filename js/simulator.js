@@ -537,6 +537,13 @@ class Simulator {
             for (const target of aliveAssets) {
                 if (anchor === target) continue;
 
+                // Skip if anchor and target lifespans don't overlap
+                const anchorStart = anchor.startDateInt?.year ?? 0;
+                const anchorEnd = anchor.finishDateInt?.year ?? 9999;
+                const targetStart = target.startDateInt?.year ?? 0;
+                const targetEnd = target.finishDateInt?.year ?? 9999;
+                if (anchorStart >= targetEnd || targetStart >= anchorEnd) continue;
+
                 // IRS: retirement income (Social Security) cannot contribute to IRA, Roth IRA, or 401K
                 const retirementToTaxAdvantaged = InstrumentType.isRetirementIncome(anchor.instrument) &&
                     (InstrumentType.isTaxDeferred(target.instrument) || InstrumentType.isTaxFree(target.instrument));

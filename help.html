@@ -166,34 +166,42 @@
             <span class="text-2xl">&#x1F4BC;</span>
             <h2 class="text-2xl font-bold tracking-tight">Your Portfolio</h2>
         </div>
-        <p class="text-gray-600 mb-6 leading-relaxed">The Portfolio sidebar is where you create, inspect, and manage every asset in your financial plan. Assets are grouped by type and displayed alongside a stacked bar chart showing the composition of your portfolio at the currently selected date.</p>
+        <p class="text-gray-600 mb-6 leading-relaxed">Your Portfolio shows every asset in your financial plan, organized into horizontal group columns. Two views &mdash; <strong>Assets</strong> and <strong>Flows</strong> &mdash; give you both a snapshot of what you own and a map of where your money goes.</p>
 
         <!-- Elements -->
         <h3 class="text-lg font-bold mb-4">Elements</h3>
         <div class="grid sm:grid-cols-2 gap-4 mb-8">
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Asset List</div>
-                <div class="text-sm text-gray-500">A scrollable list of every asset in the active scenario, grouped by category (Income, Retirement Accounts, Taxable Accounts, Real Estate, Expenses, Debt). Each row shows the asset's emoji, name, and current value at the selected date.</div>
+                <div class="font-semibold text-sm mb-1">Asset Columns</div>
+                <div class="text-sm text-gray-500">Assets are displayed in six horizontal columns: <strong>Income</strong>, <strong>Capital</strong>, <strong>Real Estate</strong>, <strong>Retirement</strong>, <strong>Expenses</strong>, and <strong>Taxes</strong>. Each column header shows the group total. All groups start expanded.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Assets / Properties Toggle</div>
-                <div class="text-sm text-gray-500">Switch between the <strong>Assets</strong> view (grouped list with values) and the <strong>Properties</strong> view (detailed configuration for the selected asset including asset type, dates, return rates, and fund transfers).</div>
+                <div class="font-semibold text-sm mb-1">Asset Cards</div>
+                <div class="text-sm text-gray-500">Each asset card shows three layers: the asset's <strong>value</strong> at the selected date, a <strong>sparkline</strong> showing the full simulation trajectory with a "you are here" dot, and a <strong>flow row</strong> with colored arrows showing monthly inflows (green), growth (blue), and outflows (red).</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">Assets / Flows Toggle</div>
+                <div class="text-sm text-gray-500">Switch between the <strong>Assets</strong> view (grouped asset cards) and the <strong>Flows</strong> view (fund transfer pipelines showing where money moves between groups). Both views update as you navigate the timeline.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Viewing Badge</div>
-                <div class="text-sm text-gray-500">Shows the currently selected month and year. All values displayed in the portfolio reflect the simulation state at this date. Changes when you navigate the timeline.</div>
+                <div class="text-sm text-gray-500">Shows the currently selected month and year. All values, sparkline dots, and flow amounts reflect the simulation state at this date.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Grouped Bar Charts</div>
-                <div class="text-sm text-gray-500">Each asset group header includes a small stacked bar chart showing the relative value of assets within that group. Hover to see individual asset values.</div>
+                <div class="font-semibold text-sm mb-1">Taxes Column</div>
+                <div class="text-sm text-gray-500">A virtual group that surfaces hidden taxes: FICA, income tax, capital gains, and property tax. Click any tax item to <strong>highlight the contributing assets</strong> with a pulse animation across all columns.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">Flow Pipelines</div>
+                <div class="text-sm text-gray-500">In the Flows view, money movement is organized as <strong>pipelines</strong> grouped by source (From Income, From Capital, From Retirement). Each pipeline card shows the monthly aggregate and individual transfer routes. Click a route to edit it.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Fund Transfer Modal</div>
-                <div class="text-sm text-gray-500">Accessed by clicking an asset row. Configure percentage-based monthly transfers from this asset to other assets. Transfers are <strong>phase-specific</strong> &mdash; Accumulate and Retire phases have independent transfer configurations.</div>
+                <div class="text-sm text-gray-500">Accessed by hovering over an asset card and clicking the <strong>&#x21C4;</strong> button, or by clicking a route in the Flows view. Configure percentage-based transfers that are <strong>phase-specific</strong> (Accumulate and Retire phases have independent configurations).</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">&#x26A1; AI Summary &amp; + Add Asset</div>
-                <div class="text-sm text-gray-500">The &#x26A1; generates a markdown summary of your portfolio composition. The <strong>+</strong> button opens the asset creation dialog where you choose an asset type and configure the new asset.</div>
+                <div class="text-sm text-gray-500">The &#x26A1; generates a markdown summary of your portfolio composition. The <strong>+</strong> button opens the asset creation dialog.</div>
             </div>
         </div>
 
@@ -223,7 +231,7 @@
                 <div class="space-y-2">
                     <div class="flex items-start gap-3">
                         <span class="step-number">1</span>
-                        <span class="text-sm text-gray-700">Click an asset row to open its <strong>fund transfer modal</strong>. Transfers shown are specific to the currently selected <strong>life event phase</strong> (Accumulate or Retire).</span>
+                        <span class="text-sm text-gray-700">Hover over an asset card and click the <strong>&#x21C4;</strong> button, or switch to the <strong>Flows</strong> view and click any transfer route to open the fund transfer modal.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">2</span>
@@ -241,15 +249,33 @@
                 <div class="space-y-2">
                     <div class="flex items-start gap-3">
                         <span class="step-number">1</span>
-                        <span class="text-sm text-gray-700">Switch to the <strong>Properties</strong> view using the toggle at the top of the sidebar.</span>
+                        <span class="text-sm text-gray-700">Hover over the asset card and click the <strong>pencil icon</strong> to edit, or the <strong>&#x2715;</strong> to remove it.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">2</span>
-                        <span class="text-sm text-gray-700">Click the asset you want to modify. Edit its fields directly &mdash; changes are applied when you click away or press Save.</span>
+                        <span class="text-sm text-gray-700">In the edit dialog, modify the asset's fields &mdash; name, dates, values, return rates. Click Save to apply changes.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">3</span>
-                        <span class="text-sm text-gray-700">To delete an asset, click the <strong>trash icon</strong> on the asset row. This permanently removes the asset and all its fund transfers from the current scenario.</span>
+                        <span class="text-sm text-gray-700">Removing an asset permanently deletes it and all its fund transfers from the current scenario.</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-2">Explore the Flows view</div>
+                <div class="space-y-2">
+                    <div class="flex items-start gap-3">
+                        <span class="step-number">1</span>
+                        <span class="text-sm text-gray-700">Click <strong>Flows</strong> in the Assets/Flows toggle at the top of Your Portfolio.</span>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <span class="step-number">2</span>
+                        <span class="text-sm text-gray-700">Pipelines are grouped by source: <strong>From Income</strong>, <strong>From Capital</strong>, <strong>From Retirement</strong>. Each pipeline card shows the monthly total and individual routes with percentages and dollar amounts.</span>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <span class="step-number">3</span>
+                        <span class="text-sm text-gray-700">Click any route to open the fund transfer modal for that asset. System transfers (mortgage payments, property tax, carrying costs) appear in <em>italic</em> and are auto-configured.</span>
                     </div>
                 </div>
             </div>

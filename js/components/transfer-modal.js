@@ -19,8 +19,6 @@ import { Chart } from 'chart.js';
 import { InstrumentType, InstrumentMeta } from '../instruments/instrument.js';
 import { FundTransfer, Frequency } from '../fund-transfer.js';
 import { colorRange } from '../utils/html.js';
-import { chronometer_run } from '../chronometer.js';
-import { Portfolio } from '../portfolio.js';
 import { findByName } from '../portfolio.js';
 import { Metric } from '../metric.js';
 import {
@@ -35,6 +33,7 @@ class TransferModal extends LitElement {
         currentDisplayName: { type: String },
         modelAssets:        { type: Array },
         phaseTransfers:     { type: Object },
+        portfolio:          { type: Object },   // pre-simulated Portfolio (avoids re-running simulation)
         _activeTab:         { state: true },
     };
 
@@ -46,6 +45,7 @@ class TransferModal extends LitElement {
         this.currentDisplayName = '';
         this.modelAssets = [];
         this.phaseTransfers = {};
+        this.portfolio = null;
         this._activeTab = 0;
         this._chart = null;
         this._portfolio = null;
@@ -131,10 +131,9 @@ class TransferModal extends LitElement {
 
     _getTransferrableAssets() {
         if (!this._portfolio) {
-            this._portfolio = new Portfolio(this.modelAssets, false);
-            chronometer_run(this._portfolio);
-            this._portfolio.buildChartingDisplayData();
+            this._portfolio = this.portfolio;
         }
+        if (!this._portfolio) return { currentAsset: null, targets: [] };
 
         const currentAsset = findByName(this._portfolio.modelAssets, this.currentDisplayName);
         if (!currentAsset) return [];
@@ -222,9 +221,8 @@ class TransferModal extends LitElement {
     }
 
     _buildChart() {
-        this._portfolio = new Portfolio(this.modelAssets, false);
-        chronometer_run(this._portfolio);
-        this._portfolio.buildChartingDisplayData();
+        this._portfolio = this.portfolio;
+        if (!this._portfolio) return;
 
         const currentAsset = findByName(this._portfolio.modelAssets, this.currentDisplayName);
         this._tabs = this._getChartTabs(currentAsset);

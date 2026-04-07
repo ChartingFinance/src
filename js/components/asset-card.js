@@ -149,16 +149,14 @@ class AssetCard extends LitElement {
 
         return html`
             <div class="asset-card-sparkline">
-                <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"
+                <svg viewBox="0 0 ${W} ${H}"
                      style="width: 100%; height: 32px; display: block;">
                     ${svg`
                         <polyline points="${points.join(' ')}"
                                   fill="none" stroke="${color}" stroke-width="1.5"
-                                  stroke-linejoin="round" stroke-linecap="round"
-                                  vector-effect="non-scaling-stroke" />
+                                  stroke-linejoin="round" stroke-linecap="round" />
                         <circle cx="${dotX}" cy="${dotY}" r="3"
-                                fill="${color}" stroke="white" stroke-width="1"
-                                vector-effect="non-scaling-stroke" />
+                                fill="${color}" stroke="white" stroke-width="1" />
                     `}
                 </svg>
             </div>

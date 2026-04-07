@@ -27,6 +27,7 @@ const PREDEFINED = [
         targetGroup: AssetGroup.RETIREMENT,
         label: 'Income → Retirement',
         warnIfMissing: true,
+        warnOnlyDuring: 'accumulate', // only warn during accumulation phase
         warningText: 'No retirement savings configured',
     },
     {
@@ -98,7 +99,7 @@ function isClosedAt(asset, historyIndex) {
  * @param {number} historyIndex — "you are here" cursor
  * @returns {Pipeline[]}
  */
-export function buildPipelines(portfolio, historyIndex) {
+export function buildPipelines(portfolio, historyIndex, isRetired = false) {
     const assets = portfolio.modelAssets;
     if (!assets || assets.length === 0) return [];
 
@@ -148,6 +149,13 @@ export function buildPipelines(portfolio, historyIndex) {
 
             ft.bind(asset, assets);
             if (!ft.toModel) continue;
+
+            // Skip if asset lifespans don't overlap (e.g., SS starts after TaxCloud closes)
+            const assetStart = asset.startDateInt?.year ?? 0;
+            const assetEnd = asset.finishDateInt?.year ?? 9999;
+            const targetStart = ft.toModel.startDateInt?.year ?? 0;
+            const targetEnd = ft.toModel.finishDateInt?.year ?? 9999;
+            if (assetStart >= targetEnd || targetStart >= assetEnd) continue;
 
             const ftTargetGroup = classifyAssetGroup(ft.toModel.instrument);
 
@@ -199,7 +207,10 @@ export function buildPipelines(portfolio, historyIndex) {
     for (const pipeline of pipelineMap.values()) {
         pipeline.monthlyTotal = pipeline.routes.reduce((sum, r) => sum + r.monthlyAmount, 0);
         pipeline.active = pipeline.routes.some(r => r.active && r.monthlyAmount > 0);
-        pipeline.missing = pipeline.expected && pipeline.routes.length === 0;
+        const phaseMatch = !pipeline.warnOnlyDuring
+            || (pipeline.warnOnlyDuring === 'accumulate' && !isRetired)
+            || (pipeline.warnOnlyDuring === 'retire' && isRetired);
+        pipeline.missing = pipeline.expected && pipeline.routes.length === 0 && phaseMatch;
 
         // Only include predefined pipelines (even if empty) and dynamic ones with routes
         if (pipeline.expected || pipeline.routes.length > 0) {

@@ -70,6 +70,10 @@
                 </div>
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 3</span>
+                    <span class="text-sm text-gray-700"><strong>Carrying costs</strong> &mdash; maintenance (percentage of home value) and insurance (fixed annual cost) &mdash; are computed monthly and debited from your first expensable account, or from the funding account specified via fund transfers.</span>
+                </div>
+                <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+                    <span class="rule-chip">Rule 4</span>
                     <span class="text-sm text-gray-700">When you sell, capital gains are computed against your cost basis &mdash; with the <strong>$250K primary residence exclusion</strong> applied automatically if you've owned for 24+ months.</span>
                 </div>
             </div>
@@ -89,7 +93,7 @@
                 </div>
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 2</span>
-                    <span class="text-sm text-gray-700">The simulator tracks your <strong>months remaining</strong> and automatically closes the mortgage when the balance reaches zero &mdash; no manual cleanup needed.</span>
+                    <span class="text-sm text-gray-700">The simulator tracks your <strong>months remaining</strong> and automatically closes the mortgage when the balance reaches zero &mdash; no manual cleanup needed. This works even if no finish date is set; the mortgage closes implicitly when fully amortized.</span>
                 </div>
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 3</span>
@@ -162,7 +166,7 @@
                 </div>
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 2</span>
-                    <span class="text-sm text-gray-700"><strong>Required Minimum Distributions</strong> kick in at age 73 for tax-deferred accounts (IRA, 401k). The simulator uses the IRS Uniform Lifetime Table to calculate your annual RMD automatically.</span>
+                    <span class="text-sm text-gray-700"><strong>Required Minimum Distributions</strong> follow SECURE Act 2.0 rules: age 72 if born before 1951, age 73 if born 1951&ndash;1959, age 75 if born 1960 or later. The simulator uses the IRS Uniform Lifetime Table to calculate your annual RMD automatically.</span>
                 </div>
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 3</span>
@@ -254,7 +258,7 @@
                 </div>
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 3</span>
-                    <span class="text-sm text-gray-700">The asset automatically <strong>closes when the balance hits zero</strong>, freeing up cash flow for the rest of your portfolio.</span>
+                    <span class="text-sm text-gray-700">Once the balance reaches zero, <strong>interest stops accruing</strong> &mdash; the debt stays open (like a line of credit at $0) but doesn't generate reverse interest. Mortgages automatically close when fully amortized.</span>
                 </div>
             </div>
         </div>
@@ -319,6 +323,14 @@
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">On-Close Transfers</div>
                 <div class="text-sm text-gray-500">When an asset reaches its finish date, a separate close percentage sweeps the remaining value into the target account automatically.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">System Transfers</div>
+                <div class="text-sm text-gray-500">Mortgage payments, property tax, maintenance, and insurance are automatically debited from the first available funding account. These implicit flows appear in the <strong>Flows</strong> view alongside your configured transfers.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">Flow Pipelines</div>
+                <div class="text-sm text-gray-500">Switch to the <strong>Flows</strong> view in Your Portfolio to see all money movement organized as pipelines &mdash; grouped by source (Income, Capital, Retirement) showing where each dollar goes.</div>
             </div>
         </div>
     </div>

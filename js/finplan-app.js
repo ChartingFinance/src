@@ -193,7 +193,7 @@ let activeStoryName     = null;
 
 function isRetiredPhase() {
     const evt = activeLifeEvents?.[0];
-    return evt?.event ? LifeEventType.isRetirement(evt.event) : false;
+    return evt?.type ? LifeEventType.isRetirement(evt.type) : false;
 }
 
 function getAssetDisplayOrder() {
@@ -663,7 +663,7 @@ function refreshPipelines() {
     const idx = activePortfolio.firstDateInt
         ? DateInt.diffMonths(activePortfolio.firstDateInt, DateInt.from(store.selectedYear, store.selectedMonth))
         : -1;
-    pipelineList.pipelines = buildPipelines(activePortfolio, idx);
+    pipelineList.pipelines = buildPipelines(activePortfolio, idx, isRetiredPhase());
     pipelineList.expandedPipelines = new Set(expandedPipelines);
 }
 
@@ -1317,6 +1317,7 @@ function showPopupTransfers(currentDisplayName) {
     transferModal.currentDisplayName = currentDisplayName;
     transferModal.modelAssets = assetList.modelAssets || [];
     transferModal.phaseTransfers = activePhase?.phaseTransfers ?? {};
+    transferModal.portfolio = activePortfolio;
     transferModal.open = true;
 }
 
