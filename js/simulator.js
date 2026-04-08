@@ -526,8 +526,14 @@ class Simulator {
         if (!event.phaseTransfers) event.phaseTransfers = {};
 
         for (const anchor of aliveAssets) {
-            if (!InstrumentType.isMonthlyIncome(anchor.instrument) &&
-                !InstrumentType.isMonthlyExpense(anchor.instrument)) continue;
+            const isIncome = InstrumentType.isMonthlyIncome(anchor.instrument);
+            const isExpense = InstrumentType.isMonthlyExpense(anchor.instrument);
+            const isCapital = InstrumentType.isFundable(anchor.instrument)
+                && !isIncome && !isExpense
+                && !InstrumentType.isMortgage(anchor.instrument)
+                && !InstrumentType.isRealEstate(anchor.instrument);
+
+            if (!isIncome && !isExpense && !isCapital) continue;
 
             if (!event.phaseTransfers[anchor.displayName]) {
                 event.phaseTransfers[anchor.displayName] = [];
@@ -549,8 +555,9 @@ class Simulator {
                     (InstrumentType.isTaxDeferred(target.instrument) || InstrumentType.isTaxFree(target.instrument));
 
                 const shouldLink =
-                    (InstrumentType.isMonthlyIncome(anchor.instrument) && InstrumentType.isFundable(target.instrument) && !retirementToTaxAdvantaged) ||
-                    (InstrumentType.isMonthlyExpense(anchor.instrument) && InstrumentType.isExpensable(target.instrument));
+                    (isIncome && InstrumentType.isFundable(target.instrument) && !retirementToTaxAdvantaged) ||
+                    (isExpense && InstrumentType.isExpensable(target.instrument)) ||
+                    (isCapital && InstrumentType.isFundable(target.instrument));
 
                 if (shouldLink && !existing.some(t => t.toDisplayName === target.displayName)) {
                     existing.push({
@@ -582,12 +589,9 @@ class Simulator {
             for (const [assetName, transfers] of Object.entries(event.phaseTransfers)) {
                 const instrument = this._instrumentByName.get(assetName);
                 // Only create genes for assets where the simulation actually executes
-                // monthly fund transfers (income, expense, mortgage, real estate).
-                // Capital assets (taxableEquity, bank, bond) don't execute monthly transfers.
-                if (instrument && !InstrumentType.isMonthlyIncome(instrument)
-                    && !InstrumentType.isMonthlyExpense(instrument)
-                    && !InstrumentType.isMortgage(instrument)
-                    && !InstrumentType.isRealEstate(instrument)) continue;
+                // monthly fund transfers. Real estate uses transfers only to specify
+                // funding sources for system debits, not actual transfers.
+                if (instrument && InstrumentType.isRealEstate(instrument)) continue;
                 const mutability = getGeneMutability(instrument);
                 for (let transferIdx = 0; transferIdx < transfers.length; transferIdx++) {
                     const originalValue = transfers[transferIdx].monthlyMoveValue;

@@ -35,6 +35,7 @@ class FinplanTimeline extends LitElement {
         selectedYear:   { type: Number },
         selectedMonth:  { type: Number },
         selectedIndex:  { type: Number },
+        _playing:       { state: true },
     };
 
     createRenderRoot() { return this; }
@@ -50,6 +51,8 @@ class FinplanTimeline extends LitElement {
         this.selectedYear = new Date().getFullYear();
         this.selectedMonth = new Date().getMonth() + 1;
         this.selectedIndex = 0;
+        this._playing = false;
+        this._playInterval = null;
 
         this._onDateChange = (e) => {
             this.selectedYear = e.detail.year;
@@ -74,6 +77,7 @@ class FinplanTimeline extends LitElement {
     disconnectedCallback() {
         super.disconnectedCallback();
         store.removeEventListener('date-change', this._onDateChange);
+        this._stopPlayback();
     }
 
     // ── Timeline span ───────────────────────────────────────────────
@@ -233,6 +237,13 @@ class FinplanTimeline extends LitElement {
                         <option value=${i + 1} ?selected=${(i + 1) === this.selectedMonth}>${name}</option>
                     `)}
                 </select>
+
+                <button class="timeline-play-btn"
+                    style="background: ${this._cursorColor()}20; color: ${this._cursorColorAccent()}; border: 1px solid ${this._cursorColor()}30;"
+                    @click=${this._onPlayPause}
+                    title=${this._playing ? 'Pause' : 'Play through timeline'}>
+                    ${this._playing ? '⏸' : '▶'}
+                </button>
             </div>
 
             <!-- Cursor indicator above timeline -->
@@ -489,16 +500,57 @@ class FinplanTimeline extends LitElement {
     }
 
     _onYearChange(e) {
+        this._stopPlayback();
         const year = parseInt(e.target.value, 10);
         store.setSelectedYearMonth(year, this.selectedMonth);
     }
 
     _onMonthChange(e) {
+        this._stopPlayback();
         const month = parseInt(e.target.value, 10);
         store.setSelectedYearMonth(this.selectedYear, month);
     }
 
+    _onPlayPause() {
+        if (this._playing) {
+            this._stopPlayback();
+        } else {
+            this._startPlayback();
+        }
+    }
+
+    _startPlayback() {
+        this._playing = true;
+        this._playInterval = setInterval(() => {
+            const years = this._getYearRange();
+            const maxYear = years[years.length - 1];
+
+            let nextMonth = this.selectedMonth + 1;
+            let nextYear = this.selectedYear;
+            if (nextMonth > 12) {
+                nextMonth = 1;
+                nextYear++;
+            }
+
+            if (nextYear > maxYear) {
+                this._stopPlayback();
+                return;
+            }
+
+            store.setSelectedYearMonth(nextYear, nextMonth);
+        }, 1000);
+    }
+
+    _stopPlayback() {
+        this._playing = false;
+        if (this._playInterval) {
+            clearInterval(this._playInterval);
+            this._playInterval = null;
+        }
+    }
+
     _onTimelineBarClick(e) {
+        this._stopPlayback();
         const bar = e.currentTarget;
         const rect = bar.getBoundingClientRect();
         const padding = 8; // px-2

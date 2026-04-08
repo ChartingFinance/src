@@ -10,6 +10,7 @@ import { FinancialPackage } from './financial-package.js';
 import { PayrollEngine } from './engines/payroll-engine.js';
 import { ExpenseEngine } from './engines/expense-engine.js';
 import { TaxEngine } from './engines/tax-engine.js';
+import { RebalanceEngine } from './engines/rebalance-engine.js';
 
 export { FinancialPackage, FINANCIAL_FIELDS } from './financial-package.js';
 
@@ -116,6 +117,7 @@ export class Portfolio {
         this.taxes = new TaxEngine(this.modelAssets, this.monthly, this.yearly, this.activeUser);
         this.payroll = new PayrollEngine(this.modelAssets, this.monthly, this.yearly, this.activeUser, this.taxes);
         this.expenses = new ExpenseEngine(this.modelAssets, this.monthly, this.activeUser);
+        this.rebalance = new RebalanceEngine(this.modelAssets, this.monthly, this.yearly, this.activeUser);
     }
 
     /**
@@ -474,6 +476,13 @@ export class Portfolio {
         for (let modelAsset of this.modelAssets) {
             if (!modelAsset.isClosed) {
                 this.payroll.applyPostTaxTransfers(modelAsset);
+            }
+        }
+
+        // Capital/fundable rebalancing transfers (after payroll so deposits are available)
+        for (let modelAsset of this.modelAssets) {
+            if (!modelAsset.isClosed) {
+                this.rebalance.applyRebalanceTransfers(modelAsset, currentDateInt);
             }
         }
 

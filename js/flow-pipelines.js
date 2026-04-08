@@ -123,18 +123,17 @@ export function buildPipelines(portfolio, historyIndex, isRetired = false) {
     // Note: Expense and mortgage fund transfers are data-modeled as expense→fundingAccount,
     // but money flows the opposite direction (fundingAccount→expense). We reverse these
     // so pipelines reflect the direction of money flow.
-    // Monthly fund transfers only execute during simulation for:
-    // - Income assets (payroll engine distributes to accounts)
-    // - Expense assets (expense engine pulls from funding accounts)
-    // - Mortgage assets (expense engine pulls payment from funding accounts)
-    // Real estate fund transfers specify funding sources for system debits (property tax,
-    // maintenance, insurance) but don't execute as regular monthly transfers — the actual
-    // money movement is captured by addSystemTransfers().
-    // Capital assets (taxableEquity, bank, bond, etc.) do NOT execute monthly transfers.
+    // Monthly fund transfers execute during simulation for:
+    // - Income assets (payroll engine)
+    // - Expense assets (expense engine)
+    // - Mortgage assets (expense engine)
+    // - Fundable capital assets (rebalance engine — bank, taxableEquity, bond, retirement)
+    // Real estate fund transfers specify funding sources for system debits, not actual transfers.
     const MONTHLY_EXECUTABLE = (inst) =>
         InstrumentType.isMonthlyIncome(inst)
         || InstrumentType.isMonthlyExpense(inst)
-        || InstrumentType.isMortgage(inst);
+        || InstrumentType.isMortgage(inst)
+        || (InstrumentType.isFundable(inst) && !InstrumentType.isRealEstate(inst));
 
     for (const asset of assets) {
         if (!asset.fundTransfers?.length) continue;
