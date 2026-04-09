@@ -15,6 +15,7 @@
 
 import { classifyAssetGroup, AssetGroup, AssetGroupMeta } from './asset-groups.js';
 import { buildPipelines } from './flow-pipelines.js';
+import { Metric, MetricLabel } from './metric.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
@@ -101,46 +102,41 @@ export class HydraulicVisualizer {
 
     // ── Main update (dispatches to mode-specific logic) ──────────────
 
-    update(historyIndex, isRetired = false, mode = 'cashflow') {
+    update(historyIndex, isRetired = false, metricName = Metric.VALUE) {
         if (!this.svg || !this.portfolio) return;
 
-        // Update closed state on all assets
         this._updateClosedState(historyIndex);
 
-        // Clear previous flow lines
         if (this._flowGroup) this._flowGroup.remove();
         this._flowGroup = document.createElementNS(SVG_NS, 'g');
         this.svg.insertBefore(this._flowGroup, this._nodeGroup);
 
         let totalPositive = 0;
         let totalNegative = 0;
-        let wealthValue = 0;
         let wealthLabel = '';
 
-        // Update wealth tank label to match mode
         if (this._wealthLabel) {
-            const modeLabels = { cashflow: 'Cash Flow', value: 'Value', growth: 'Growth' };
-            this._wealthLabel.textContent = modeLabels[mode] || 'Cash Flow';
+            this._wealthLabel.textContent = MetricLabel[metricName] || 'Value';
         }
 
-        if (mode === 'cashflow') {
+        if (metricName === Metric.CASH_FLOW) {
             const result = this._updateCashFlow(historyIndex, isRetired);
             totalPositive = result.totalInflow;
             totalNegative = result.totalOutflow;
-            wealthValue = result.totalInflow - result.totalOutflow;
-            wealthLabel = (wealthValue >= 0 ? '+' : '') + formatCompact(wealthValue) + '/mo';
-        } else if (mode === 'value') {
+            const net = result.totalInflow - result.totalOutflow;
+            wealthLabel = (net >= 0 ? '+' : '') + formatCompact(net) + '/mo';
+        } else if (metricName === Metric.VALUE) {
             const result = this._updateValue(historyIndex);
             totalPositive = result.portfolioValue;
             totalNegative = 0;
-            wealthValue = result.portfolioValue;
-            wealthLabel = formatCompact(wealthValue);
-        } else if (mode === 'growth') {
-            const result = this._updateGrowth(historyIndex);
-            totalPositive = result.totalGrowth;
-            totalNegative = result.totalShrink;
-            wealthValue = result.totalGrowth - result.totalShrink;
-            wealthLabel = (wealthValue >= 0 ? '+' : '') + formatCompact(wealthValue) + '/mo';
+            wealthLabel = formatCompact(result.portfolioValue);
+        } else {
+            // Generic metric mode: read metric history per asset, show positive/negative
+            const result = this._updateGenericMetric(historyIndex, metricName);
+            totalPositive = result.totalPositive;
+            totalNegative = result.totalNegative;
+            const net = result.totalPositive - result.totalNegative;
+            wealthLabel = (net >= 0 ? '+' : '') + formatCompact(net) + '/mo';
         }
 
         // Update conduit blend and tooltip
@@ -317,75 +313,86 @@ export class HydraulicVisualizer {
         return { portfolioValue };
     }
 
-    // ── Growth mode ──────────────────────────────────────────────────
+    // ── Generic metric mode ─────────────────────────────────────────
+    // Works for growth, income, net income, contribution, expense, taxes, credit, etc.
+    // For 'growth', aggregates growth + interestIncome + dividends to cover all instrument types.
 
-    _updateGrowth(historyIndex) {
-        let totalGrowth = 0, totalShrink = 0;
+    _updateGenericMetric(historyIndex, metricName) {
+        let totalPositive = 0, totalNegative = 0;
+        const metricLabel = MetricLabel[metricName] || metricName;
 
-        // Compute taxes for this month (they are a form of negative growth)
+        // Compute taxes for tax-related display on the Taxes virtual node
         let totalTaxes = 0;
-        for (const a of this.portfolio.modelAssets) {
-            totalTaxes += Math.abs(atIdx(a, 'socialSecurityTax', historyIndex))
-                        + Math.abs(atIdx(a, 'medicareTax', historyIndex))
-                        + Math.abs(atIdx(a, 'withheldIncomeTax', historyIndex))
-                        + Math.abs(atIdx(a, 'estimatedIncomeTax', historyIndex))
-                        + Math.abs(atIdx(a, 'longTermCapitalGainTax', historyIndex))
-                        + Math.abs(atIdx(a, 'shortTermCapitalGainTax', historyIndex))
-                        + Math.abs(atIdx(a, 'propertyTax', historyIndex));
+        if (metricName === Metric.GROWTH || metricName === Metric.TAXES) {
+            for (const a of this.portfolio.modelAssets) {
+                totalTaxes += Math.abs(atIdx(a, 'socialSecurityTax', historyIndex))
+                            + Math.abs(atIdx(a, 'medicareTax', historyIndex))
+                            + Math.abs(atIdx(a, 'withheldIncomeTax', historyIndex))
+                            + Math.abs(atIdx(a, 'estimatedIncomeTax', historyIndex))
+                            + Math.abs(atIdx(a, 'longTermCapitalGainTax', historyIndex))
+                            + Math.abs(atIdx(a, 'shortTermCapitalGainTax', historyIndex))
+                            + Math.abs(atIdx(a, 'propertyTax', historyIndex));
+            }
         }
 
         const taxEl = this._elements.get('Taxes');
         if (taxEl) taxEl.valueText.textContent = totalTaxes > 0 ? '-' + formatCompact(totalTaxes) + '/mo' : '';
 
-        // Total growth = growth metric + interest income + dividends (covers all instrument types)
-        const assetGrowth = new Map();
+        // Read metric value per asset
+        const assetMetric = new Map();
         for (const asset of this.portfolio.modelAssets) {
-            const g = atIdx(asset, 'growth', historyIndex)
+            let val;
+            if (metricName === Metric.GROWTH) {
+                // Growth: aggregate growth + interest income + dividends
+                val = atIdx(asset, 'growth', historyIndex)
                     + atIdx(asset, 'interestIncome', historyIndex)
                     + atIdx(asset, 'qualifiedDividend', historyIndex)
                     + atIdx(asset, 'nonQualifiedDividend', historyIndex);
+            } else {
+                val = atIdx(asset, metricName, historyIndex);
+            }
 
-            assetGrowth.set(asset.displayName, g);
+            assetMetric.set(asset.displayName, val);
 
             const el = this._elements.get(asset.displayName);
             if (el) {
-                if (g !== 0) {
-                    el.valueText.textContent = (g >= 0 ? '+' : '') + formatCompact(g) + '/mo';
+                if (val !== 0) {
+                    el.valueText.textContent = (val >= 0 ? '+' : '') + formatCompact(val) + '/mo';
                 } else {
                     el.valueText.textContent = '';
                 }
             }
 
-            if (g > 0) totalGrowth += g;
-            else totalShrink += Math.abs(g);
+            if (val > 0) totalPositive += val;
+            else totalNegative += Math.abs(val);
         }
 
-        // Draw lines based on growth
+        // Draw lines
         const LINE_OFFSET = 8;
 
         for (const [assetName, pos] of this._nodePositions) {
             if (assetName === 'Taxes') continue;
-            const growth = assetGrowth.get(assetName) || 0;
-            if (growth === 0) continue;
+            const val = assetMetric.get(assetName) || 0;
+            if (val === 0) continue;
 
             const conduitX = pos.zone === 'left' ? this._conduitX0
                 : Math.max(this._conduitX0, Math.min(this._conduitX1, pos.cx));
             const isHorizontal = pos.zone === 'left';
-            const absGrowth = Math.abs(growth);
+            const absVal = Math.abs(val);
 
-            if (growth > 0) {
-                this._drawFlowLine(pos, conduitX, isHorizontal, -LINE_OFFSET, absGrowth, '#43e97b',
-                    `${assetName}: +${formatCompact(growth)}/mo growth`);
+            if (val > 0) {
+                this._drawFlowLine(pos, conduitX, isHorizontal, -LINE_OFFSET, absVal, '#43e97b',
+                    `${assetName}: +${formatCompact(val)}/mo ${metricLabel}`);
             }
-            if (growth < 0) {
-                this._drawFlowLine(pos, conduitX, isHorizontal, LINE_OFFSET, absGrowth, '#ff6b6b',
-                    `${assetName}: ${formatCompact(growth)}/mo decline`);
+            if (val < 0) {
+                this._drawFlowLine(pos, conduitX, isHorizontal, LINE_OFFSET, absVal, '#ff6b6b',
+                    `${assetName}: ${formatCompact(val)}/mo ${metricLabel}`);
             }
         }
 
-        // Taxes as negative growth
+        // Taxes drain (for growth and taxes metrics)
         if (totalTaxes > 0) {
-            totalShrink += totalTaxes;
+            totalNegative += totalTaxes;
             const taxPos = this._nodePositions.get('Taxes');
             if (taxPos) {
                 const conduitX = Math.max(this._conduitX0, Math.min(this._conduitX1, taxPos.cx));
@@ -394,7 +401,7 @@ export class HydraulicVisualizer {
             }
         }
 
-        return { totalGrowth, totalShrink };
+        return { totalPositive, totalNegative };
     }
 
     // ── Shared drawing helpers ────────────────────────────────────────

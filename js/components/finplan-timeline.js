@@ -17,11 +17,11 @@
  *  - Dots positioned proportionally within S–F
  */
 
-import { LitElement, html } from 'lit';
+import { LitElement, html, svg, nothing } from 'lit';
 import { store } from '../finplan-store.js';
 import { LifeEvent, LifeEventType } from '../life-event.js';
 import { MetricLabel } from '../metric.js';
-import { MONTH_NAMES } from '../utils/date-int.js';
+import { DateInt, MONTH_NAMES } from '../utils/date-int.js';
 
 class FinplanTimeline extends LitElement {
 
@@ -197,6 +197,79 @@ class FinplanTimeline extends LitElement {
         return (Math.pow(finishVal / startVal, 1 / years) - 1) * 100;
     }
 
+    /**
+     * Compute the history index for a given age (year boundary).
+     */
+    _historyIndexForAge(age) {
+        if (!this.portfolio?.firstDateInt) return -1;
+        const birthYear = new Date().getFullYear() - this.startAge;
+        const targetYear = birthYear + age;
+        return DateInt.diffMonths(this.portfolio.firstDateInt, DateInt.from(targetYear, 1));
+    }
+
+    /**
+     * Compute portfolio metric total at a specific history index.
+     */
+    _metricAtIndex(idx) {
+        if (!this.portfolio || idx < 0) return 0;
+        let total = 0;
+        for (const asset of this.portfolio.modelAssets) {
+            const history = asset.getHistory(this.metricName);
+            if (history && idx >= 0 && idx < history.length) {
+                total += history[idx] ?? 0;
+            }
+        }
+        return total;
+    }
+
+    /**
+     * Compute the "you are here" metric value at the cursor position.
+     */
+    _computeCursorMetric() {
+        if (!this.portfolio?.firstDateInt) return 0;
+        const idx = DateInt.diffMonths(this.portfolio.firstDateInt, DateInt.from(this.selectedYear, this.selectedMonth));
+        return this._metricAtIndex(idx);
+    }
+
+    /**
+     * Compute CAGR between two history indices.
+     */
+    _computeCAGRBetween(startIdx, endIdx) {
+        const startVal = this._metricAtIndex(startIdx);
+        const endVal = this._metricAtIndex(endIdx);
+        if (!startVal || startVal === 0) return 0;
+        const months = endIdx - startIdx;
+        if (months <= 0) return 0;
+        const years = months / 12;
+        return (Math.pow(endVal / startVal, 1 / years) - 1) * 100;
+    }
+
+    /**
+     * Build per-phase sparkline data (array of metric values for each month in the phase).
+     */
+    _phaseSparklineData(phaseStartAge, phaseEndAge) {
+        if (!this.portfolio?.firstDateInt) return [];
+        const startIdx = Math.max(0, this._historyIndexForAge(phaseStartAge));
+        const endIdx = this._historyIndexForAge(phaseEndAge);
+        const data = [];
+        for (let i = startIdx; i <= endIdx; i++) {
+            data.push(this._metricAtIndex(i));
+        }
+        return data;
+    }
+
+    /**
+     * Get the last valid history index from the portfolio.
+     */
+    _lastHistoryIndex() {
+        if (!this.portfolio) return 0;
+        for (const asset of this.portfolio.modelAssets) {
+            const h = asset.getHistory(this.metricName);
+            if (h?.length > 0) return h.length - 1;
+        }
+        return 0;
+    }
+
     _formatCurrency(amount) {
         const val = parseFloat(amount) || 0;
         const abs = Math.abs(val);
@@ -220,8 +293,20 @@ class FinplanTimeline extends LitElement {
         const fAge = this._timelineFinishAge;
 
         return html`
-            <!-- Controls row -->
-            <div class="flex items-center justify-center gap-3 mb-4">
+            <!-- Portfolio Open/Close (upper left/right) -->
+            <div class="flex items-center justify-between px-2 mb-2">
+                <span class="text-xs text-gray-400">
+                    <span class="font-medium">OPEN</span>
+                    <span class="text-sm font-semibold text-gray-700 ml-1">${this._formatCurrency(startMetric)}</span>
+                </span>
+                <span class="text-xs text-gray-400">
+                    <span class="text-sm font-semibold text-gray-700 mr-1">${this._formatCurrency(finishMetric)}</span>
+                    <span class="font-medium">CLOSE</span>
+                </span>
+            </div>
+
+            <!-- Controls row with cursor value -->
+            <div class="flex items-center justify-center gap-3 mb-3">
                 <select class="text-xs px-2 py-1.5 rounded-lg cursor-pointer outline-none font-medium"
                     style="background: ${this._cursorColor()}20; color: ${this._cursorColorAccent()}; border: 1px solid ${this._cursorColor()}30;"
                     @change=${this._onYearChange}>
@@ -255,49 +340,8 @@ class FinplanTimeline extends LitElement {
             <!-- Timeline labels (flex with proportional spacers) -->
             ${this._renderTimelineLabels(visible, sAge, fAge)}
 
-            <!-- Phase summary bar -->
-            <div class="flex items-center gap-3 px-3 py-2 rounded-xl"
-                style="background: ${this._phaseColor()}12;">
-
-                <span class="text-xs font-medium px-2.5 py-1 rounded-full cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-1"
-                    style="background: ${this._phaseColor()}25; color: ${this._phaseColorAccent()};"
-                    title="Edit life event"
-                    @click=${this._onEditSelectedEvent}>
-                    ${this._phaseLabel()}
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" style="opacity: 0.7;">
-                        <path d="M9.1 1.2L10.8 2.9 3.6 10.1 1.2 10.8 1.9 8.4z"/>
-                    </svg>
-                </span>
-
-                <span class="text-xs text-gray-500">${this._phaseSpan()}</span>
-
-                <span class="flex-1"></span>
-
-                <span class="text-xs font-semibold text-gray-500 tracking-wide">${MetricLabel[this.metricName] || 'Value'}</span>
-                <span class="text-gray-200">|</span>
-
-                <span class="text-xs font-medium text-gray-400 tracking-wide">OPEN</span>
-                <span class="text-sm font-semibold text-gray-800">${this._formatCurrency(startMetric)}</span>
-
-                <span class="text-gray-200">|</span>
-
-                <span class="text-xs font-medium text-gray-400 tracking-wide">CLOSE</span>
-                <span class="text-sm font-semibold text-gray-800">${this._formatCurrency(finishMetric)}</span>
-
-                <span class="text-gray-200">|</span>
-
-                <span class="text-xs font-medium text-gray-400 tracking-wide">CAGR</span>
-                <span class="text-sm font-semibold ${cagrPositive ? 'text-green-600' : 'text-pink-600'}">
-                    ${cagr.toFixed(1)}%
-                </span>
-
-                <span class="text-gray-200">|</span>
-
-                <span class="text-xs font-medium px-1.5 py-0.5 rounded-full cursor-pointer hover:bg-gray-200 transition-colors"
-                    style="color: #666;"
-                    title="Add life event"
-                    @click=${this._onAddEvent}>+</span>
-            </div>
+            <!-- Per-phase summary bars -->
+            ${this._renderPhaseBars(visible)}
         `;
     }
 
@@ -338,11 +382,12 @@ class FinplanTimeline extends LitElement {
             const pt = points[p];
 
             if (pt.type === 'cursor') {
+                const cursorVal = this._computeCursorMetric();
                 items.push(html`
                     <div class="flex flex-col items-center flex-shrink-0" style="width: 0;">
                         <span style="font-size: 10px; font-weight: 700; background: ${this._cursorColor()}20; color: ${this._cursorColorAccent()};
                                      padding: 1px 6px; border-radius: 8px; line-height: 1.3;
-                                     white-space: nowrap;">You are Here</span>
+                                     white-space: nowrap;">You are Here · ${this._formatCurrency(cursorVal)}</span>
                         <span style="font-size: 12px; font-weight: 900; color: ${this._cursorColorAccent()}; line-height: 1; margin-top: -1px;">&#9660;</span>
                     </div>
                 `);
@@ -482,6 +527,83 @@ class FinplanTimeline extends LitElement {
             <div class="flex items-start px-2 mb-3">
                 ${items}
             </div>
+        `;
+    }
+
+    _renderPhaseBars(visible) {
+        if (!visible.length) return nothing;
+
+        return html`
+            <div class="flex gap-2">
+                ${visible.map((ev, i) => {
+                    const phaseStartAge = ev.triggerAge;
+                    const isLastPhase = i === visible.length - 1;
+                    const startIdx = Math.max(0, this._historyIndexForAge(phaseStartAge));
+                    // Last phase: use the actual last history index to match portfolio close
+                    const endIdx = isLastPhase ? this._lastHistoryIndex() : this._historyIndexForAge(visible[i + 1].triggerAge);
+                    const openVal = this._metricAtIndex(startIdx);
+                    const closeVal = this._metricAtIndex(Math.max(0, endIdx));
+                    const cagr = this._computeCAGRBetween(startIdx, Math.max(startIdx + 1, endIdx));
+                    const cagrPositive = cagr >= 0;
+                    const color = LifeEventType.color(ev.type);
+                    const accent = LifeEventType.colorAccent(ev.type);
+                    return html`
+                        <div class="flex-1 flex items-center gap-2 px-3 py-1.5 rounded-xl cursor-pointer hover:opacity-90 transition-opacity"
+                             style="background: ${color}12; border: 1px solid ${color}20;"
+                             @click=${() => this._onSelectPhase(i)}>
+
+                            <span class="text-xs font-semibold" style="color: ${accent};">${ev.displayName}</span>
+
+                            <span class="flex-1"></span>
+
+                            <span class="text-xs text-gray-400">
+                                ${this._formatCurrency(openVal)}
+                                <span style="color: ${accent};">→</span>
+                                ${this._formatCurrency(closeVal)}
+                            </span>
+
+                            <span class="text-xs font-semibold ${cagrPositive ? 'text-green-600' : 'text-pink-600'}">
+                                ${cagr.toFixed(1)}%
+                            </span>
+                        </div>
+                    `;
+                })}
+
+                <span class="text-xs font-medium px-1.5 py-0.5 rounded-full cursor-pointer hover:bg-gray-200 transition-colors flex items-center"
+                    style="color: #666;"
+                    title="Add life event"
+                    @click=${this._onAddEvent}>+</span>
+            </div>
+        `;
+    }
+
+    _renderPhaseSparkline(data, color) {
+        if (!data || data.length < 2) return nothing;
+
+        const W = 80;
+        const H = 16;
+        const PAD = 1;
+
+        let min = Infinity, max = -Infinity;
+        for (const v of data) {
+            if (v < min) min = v;
+            if (v > max) max = v;
+        }
+        const range = max - min || 1;
+
+        const points = [];
+        for (let k = 0; k < data.length; k++) {
+            const x = PAD + (k / (data.length - 1)) * (W - 2 * PAD);
+            const y = H - PAD - ((data[k] - min) / range) * (H - 2 * PAD);
+            points.push(`${x.toFixed(1)},${y.toFixed(1)}`);
+        }
+
+        return html`
+            <svg viewBox="0 0 ${W} ${H}" style="width: 100%; height: 16px; display: block; opacity: 0.5;">
+                ${svg`<polyline points="${points.join(' ')}"
+                    fill="none" stroke="${color}" stroke-width="1.5"
+                    stroke-linejoin="round" stroke-linecap="round" />`}
+            </svg>
         `;
     }
 

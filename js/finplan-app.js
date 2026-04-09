@@ -155,6 +155,7 @@ const shareModal        = document.getElementById('shareModal');
 const issuesModal       = document.getElementById('issuesModal');
 const scenarioSelect    = document.getElementById('scenario-select');
 const scenarioNote      = document.getElementById('scenario-note');
+const scenarioSparkline = document.getElementById('scenario-sparkline');
 const btnDeleteScenario = document.getElementById('btn-delete-scenario');
 const grWithdrawal      = document.getElementById('guardrail-withdrawal-rate');
 const grPreservation    = document.getElementById('guardrail-preservation');
@@ -174,7 +175,6 @@ Chart.defaults.animation = false;
 
 // ── App state ───────────────────────────────────────────────
 let hydraulicViz        = null;
-let vizMode             = 'cashflow'; // 'cashflow' | 'value' | 'growth'
 let activePortfolio     = null;
 let activeLifeEvents    = [];
 let expandedGroups      = new Set([
@@ -460,17 +460,6 @@ portfolioViewToggle.addEventListener('click', (ev) => {
     }
 });
 
-// ── Visualizer mode toggle (Cash Flow / Value / Growth) ──
-const vizModeToggle = document.getElementById('vizModeToggle');
-vizModeToggle.addEventListener('click', (ev) => {
-    const btn = ev.target.closest('[data-vizmode]');
-    if (!btn || btn.dataset.vizmode === vizMode) return;
-    vizMode = btn.dataset.vizmode;
-    vizModeToggle.querySelectorAll('[data-vizmode]').forEach(b => {
-        b.classList.toggle('active', b.dataset.vizmode === vizMode);
-    });
-    refreshVisualizer();
-});
 
 // ── Guardrail parameter controls ──────────────────────────
 grWithdrawal.addEventListener('change', () => {
@@ -600,6 +589,8 @@ metricSelect.addEventListener('change', () => {
     activeMetricName = metricSelect.value;
     if (timeline) timeline.metricName = activeMetricName;
     assetList.metricName = activeMetricName;
+    updateViewingBadge(store.selectedYear, store.selectedMonth);
+    refreshVisualizer();
     if (!activePortfolio) return;
     rebuildProjectionCharts();
 });
@@ -655,7 +646,8 @@ function currentPhaseEvent(year, month) {
 }
 
 function updateViewingBadge(year, month) {
-    const text = `Viewing: ${MONTH_NAMES[month - 1]} ${year}`;
+    const metricName = MetricLabel[activeMetricName] || 'Value';
+    const text = `Viewing: ${MONTH_NAMES[month - 1]} ${year} · ${metricName}`;
     const phase = currentPhaseEvent(year, month);
     const bg = phase ? LifeEventType.color(phase.type) + '20' : '#f3f4f6';
     const fg = phase ? LifeEventType.colorAccent(phase.type) : '#6b7280';
@@ -663,9 +655,22 @@ function updateViewingBadge(year, month) {
         el.textContent = text;
         el.style.background = bg;
         el.style.color = fg;
+        el.style.cursor = 'pointer';
+        el.title = 'Click to cycle metric';
     };
     if (viewingBadge) applyBadge(viewingBadge);
     document.querySelectorAll('.viewing-badge').forEach(applyBadge);
+}
+
+function cycleMetric() {
+    const idx = MACRO_METRICS.indexOf(activeMetricName);
+    activeMetricName = MACRO_METRICS[(idx + 1) % MACRO_METRICS.length];
+    metricSelect.value = activeMetricName;
+    if (timeline) timeline.metricName = activeMetricName;
+    assetList.metricName = activeMetricName;
+    updateViewingBadge(store.selectedYear, store.selectedMonth);
+    refreshVisualizer();
+    if (activePortfolio) rebuildProjectionCharts();
 }
 /** Sync asset-list to show metric values at the selected date */
 function syncAssetListToDate(year, month) {
@@ -698,6 +703,11 @@ function refreshSankey() {
 }
 
 updateViewingBadge(store.selectedYear, store.selectedMonth);
+
+// Click-to-cycle metric on all viewing badges
+if (viewingBadge) viewingBadge.addEventListener('click', cycleMetric);
+document.querySelectorAll('.viewing-badge').forEach(el => el.addEventListener('click', cycleMetric));
+
 store.addEventListener('date-change', (e) => {
     updateViewingBadge(e.detail.year, e.detail.month);
     updateProjectionCursor();
@@ -899,6 +909,9 @@ function calculate() {
     // Init/refresh visualizer with the updated portfolio
     initVisualizer();
 
+    // Update scenario sparkline
+    updateScenarioSparkline();
+
     // Build charting data
     portfolio.buildChartingDisplayData();
 
@@ -994,7 +1007,7 @@ function refreshVisualizer() {
     const idx = activePortfolio.firstDateInt
         ? DateInt.diffMonths(activePortfolio.firstDateInt, DateInt.from(store.selectedYear, store.selectedMonth))
         : -1;
-    hydraulicViz.update(idx, isRetiredPhase(), vizMode);
+    hydraulicViz.update(idx, isRetiredPhase(), activeMetricName);
 }
 
 function doMaximize() {
@@ -1464,6 +1477,56 @@ function updateScenarioNote() {
     const meta = util_loadLocalScenarioMeta(activeStoryArc, activeStoryName);
     scenarioNote.textContent = meta?.note || '';
     scenarioNote.title = meta?.note || '';
+}
+
+function updateScenarioSparkline() {
+    if (!scenarioSparkline || !activePortfolio) {
+        if (scenarioSparkline) scenarioSparkline.innerHTML = '';
+        return;
+    }
+
+    // Build total portfolio value history
+    const assets = activePortfolio.modelAssets;
+    let histLen = 0;
+    for (const a of assets) {
+        const h = a.getHistory?.('value');
+        if (h && h.length > histLen) histLen = h.length;
+    }
+    if (histLen < 2) { scenarioSparkline.innerHTML = ''; return; }
+
+    const data = [];
+    let min = Infinity, max = -Infinity;
+    for (let i = 0; i < histLen; i++) {
+        let total = 0;
+        for (const a of assets) {
+            const h = a.getHistory?.('value');
+            if (h && i < h.length) total += h[i];
+        }
+        data.push(total);
+        if (total < min) min = total;
+        if (total > max) max = total;
+    }
+
+    const W = 420;
+    const H = 24;
+    const PAD = 2;
+    const range = max - min || 1;
+
+    const points = [];
+    for (let k = 0; k < data.length; k++) {
+        const x = PAD + (k / (data.length - 1)) * (W - 2 * PAD);
+        const y = H - PAD - ((data[k] - min) / range) * (H - 2 * PAD);
+        points.push(`${x.toFixed(1)},${y.toFixed(1)}`);
+    }
+
+    // Color: green if ended higher, red if lower
+    const color = data[data.length - 1] >= data[0] ? '#43e97b' : '#ff6b6b';
+
+    scenarioSparkline.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width: 100%; height: 24px; display: block;">
+        <polyline points="${points.join(' ')}"
+            fill="none" stroke="${color}" stroke-width="1.5"
+            stroke-linejoin="round" stroke-linecap="round" opacity="0.6" />
+    </svg>`;
 }
 
 function switchScenario(storyName) {
