@@ -20,7 +20,8 @@ import { DateInt, MONTH_NAMES } from './utils/date-int.js';
 
 // ── Simulation ──────────────────────────────────────────────
 import { InstrumentType } from './instruments/instrument.js';
-import { chronometer_run, chronometer_run_animated } from './chronometer.js';
+import { chronometer_run } from './chronometer.js';
+import { HydraulicVisualizer } from './hydraulic-visualizer.js';
 import { Portfolio } from './portfolio.js';
 import { TaxTable } from './taxes.js';
 
@@ -172,6 +173,8 @@ function syncGuardrailsToDOM() {
 Chart.defaults.animation = false;
 
 // ── App state ───────────────────────────────────────────────
+let hydraulicViz        = null;
+let vizMode             = 'cashflow'; // 'cashflow' | 'value' | 'growth'
 let activePortfolio     = null;
 let activeLifeEvents    = [];
 let expandedGroups      = new Set([
@@ -401,7 +404,6 @@ function loadQuickStartProfile(profile) {
 document.getElementById('btn-welcome-add-asset').addEventListener('click', () => openCreateAssetModal());
 document.getElementById('btn-run-mc').addEventListener('click', () => doMonteCarlo());
 document.getElementById('btn-run-guardrails').addEventListener('click', () => doGuardrails());
-document.getElementById('btn-visualize').addEventListener('click', () => doVisualize());
 document.getElementById('btn-maximize').addEventListener('click', () => doMaximize());
 
 // Apply optimized transfers and guardrails from the Maximizer
@@ -456,6 +458,18 @@ portfolioViewToggle.addEventListener('click', (ev) => {
     } else {
         assetList.style.display = '';
     }
+});
+
+// ── Visualizer mode toggle (Cash Flow / Value / Growth) ──
+const vizModeToggle = document.getElementById('vizModeToggle');
+vizModeToggle.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('[data-vizmode]');
+    if (!btn || btn.dataset.vizmode === vizMode) return;
+    vizMode = btn.dataset.vizmode;
+    vizModeToggle.querySelectorAll('[data-vizmode]').forEach(b => {
+        b.classList.toggle('active', b.dataset.vizmode === vizMode);
+    });
+    refreshVisualizer();
 });
 
 // ── Guardrail parameter controls ──────────────────────────
@@ -693,6 +707,7 @@ store.addEventListener('date-change', (e) => {
     if (spreadsheetView) spreadsheetView.scrollToDate(e.detail.year, e.detail.month);
     if (reportView) reportView.scrollToDate(e.detail.year, e.detail.month);
     if (creditMemoView) creditMemoView.scrollToDate(e.detail.year, e.detail.month);
+    refreshVisualizer();
 });
 
 // ── Settings ────────────────────────────────────────────────
@@ -881,6 +896,9 @@ function calculate() {
         refreshSankey();
     }
 
+    // Init/refresh visualizer with the updated portfolio
+    initVisualizer();
+
     // Build charting data
     portfolio.buildChartingDisplayData();
 
@@ -899,15 +917,12 @@ function calculate() {
     const hasAssets = modelAssets.length > 0;
     const mcBtn = document.getElementById('btn-run-mc');
     const grBtn = document.getElementById('btn-run-guardrails');
-    const vizBtn = document.getElementById('btn-visualize');
     const maxBtn = document.getElementById('btn-maximize');
     mcBtn.disabled = !hasAssets;
     grBtn.disabled = !hasAssets;
-    vizBtn.disabled = !hasAssets;
     maxBtn.disabled = !hasAssets;
     mcBtn.title = hasAssets ? '' : 'Add assets to run simulations';
     grBtn.title = hasAssets ? '' : 'Add assets to run simulations';
-    vizBtn.title = hasAssets ? '' : 'Add assets to run visualizer';
     maxBtn.title = hasAssets ? '' : 'Add assets to run maximizer';
 
     const banner = document.getElementById('welcome-banner');
@@ -967,18 +982,19 @@ function doGuardrails() {
     }, 100);
 }
 
-let isVisualizing = false;
+function initVisualizer() {
+    if (!activePortfolio) return;
+    hydraulicViz = new HydraulicVisualizer('finplan-hydraulic-container');
+    hydraulicViz.init(activePortfolio);
+    refreshVisualizer();
+}
 
-async function doVisualize() {
-    if (isVisualizing) return;
-    isVisualizing = true;
-
-    const modelAssets = assetList.modelAssets || [];
-    const portfolio = new Portfolio(modelAssets, false);
-    portfolio.lifeEvents = activeLifeEvents.map(e => e.copy());
-
-    await chronometer_run_animated(portfolio, 'finplan-hydraulic-container');
-    isVisualizing = false;
+function refreshVisualizer() {
+    if (!hydraulicViz || !activePortfolio) return;
+    const idx = activePortfolio.firstDateInt
+        ? DateInt.diffMonths(activePortfolio.firstDateInt, DateInt.from(store.selectedYear, store.selectedMonth))
+        : -1;
+    hydraulicViz.update(idx, isRetiredPhase(), vizMode);
 }
 
 function doMaximize() {
