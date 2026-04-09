@@ -709,6 +709,23 @@
         </div>
     </div>
 
+    <!-- ═══ Visualizer ═══ -->
+    <div class="mb-8">
+        <h2 class="text-lg font-bold flex items-center gap-2 mb-4">🚰 Visualizer
+            <div id="vizModeToggle" class="portfolio-view-toggle ml-4">
+                <button data-vizmode="cashflow" class="pv-btn active">Cash Flow</button>
+                <button data-vizmode="value" class="pv-btn">Value</button>
+                <button data-vizmode="growth" class="pv-btn">Growth</button>
+            </div>
+            <span class="badge-phase ml-auto viewing-badge"></span>
+            <a href="help.html#visualizer" class="text-gray-300 hover:text-gray-500 transition" title="Help" style="font-size: 14px; font-weight: 500; text-decoration: none;">?</a>
+        </h2>
+
+        <div class="glass-card p-6">
+            <div id="finplan-hydraulic-container" style="width: 100%; height: 600px; background: #1e1e2e; border-radius: 12px; overflow: hidden;"></div>
+        </div>
+    </div>
+
     <!-- ═══ Simulations ═══ -->
     <div class="mb-8">
         <h2 class="text-lg font-bold flex items-center gap-2 mb-4">🎲 Simulations
@@ -829,23 +846,6 @@
                 <spreadsheet-view id="finplanSpreadsheet"></spreadsheet-view>
             </div>
             <button class="ai-fab" data-section="spreadsheet" title="AI Summary">⚡</button>
-        </div>
-    </div>
-
-    <!-- ═══ Visualizer ═══ -->
-    <div class="mb-8">
-        <h2 class="text-lg font-bold flex items-center gap-2 mb-4">🚰 Visualizer
-            <div id="vizModeToggle" class="portfolio-view-toggle ml-4">
-                <button data-vizmode="cashflow" class="pv-btn active">Cash Flow</button>
-                <button data-vizmode="value" class="pv-btn">Value</button>
-                <button data-vizmode="growth" class="pv-btn">Growth</button>
-            </div>
-            <span class="badge-phase ml-auto viewing-badge"></span>
-            <a href="help.html#visualizer" class="text-gray-300 hover:text-gray-500 transition" title="Help" style="font-size: 14px; font-weight: 500; text-decoration: none;">?</a>
-        </h2>
-
-        <div class="glass-card p-6">
-            <div id="finplan-hydraulic-container" style="width: 100%; height: 600px; background: #1e1e2e; border-radius: 12px; overflow: hidden;"></div>
         </div>
     </div>
 
