@@ -10,6 +10,7 @@
 
 export const Metric = Object.freeze({
   VALUE:                        'value',
+  NET_WORTH_CHANGE:             'netWorthChange', // derived: value[i] - value[i-1]
   GROWTH:                       'growth',
   QUALIFIED_DIVIDEND:           'qualifiedDividend',
   NON_QUALIFIED_DIVIDEND:       'nonQualifiedDividend',
@@ -69,7 +70,8 @@ export const METRIC_NAMES = Object.values(Metric);
 // ── Display labels ───────────────────────────────────────────────────
 
 export const MetricLabel = Object.freeze({
-  [Metric.VALUE]:                       'Value',
+  [Metric.VALUE]:                       'Net Worth',
+  [Metric.NET_WORTH_CHANGE]:            'Net Worth Change',
   [Metric.GROWTH]:                      'Growth',
   [Metric.QUALIFIED_DIVIDEND]:          'Qualified Dividend',
   [Metric.NON_QUALIFIED_DIVIDEND]:      'Non-Qualified Dividend',
@@ -189,7 +191,25 @@ export const MetricRollups = {
 // ── Derived sets ─────────────────────────────────────────────────────
 
 /** Pinned metrics that always appear first in any dropdown. */
-export const PINNED_METRICS = [Metric.VALUE, Metric.GROWTH, Metric.CASH_FLOW];
+export const PINNED_METRICS = [Metric.VALUE, Metric.NET_WORTH_CHANGE, Metric.GROWTH, Metric.CASH_FLOW];
+
+/** Derived metrics computed on-the-fly from other metric histories (not stored). */
+export const DERIVED_METRICS = new Set([Metric.NET_WORTH_CHANGE]);
+
+/**
+ * Resolve a derived metric value for an asset at a specific index.
+ * Returns null if the metric is not derived (caller should use regular history lookup).
+ */
+export function getDerivedMetricValue(asset, metricName, historyIndex) {
+    if (metricName === Metric.NET_WORTH_CHANGE) {
+        const h = asset.getHistory?.(Metric.VALUE);
+        if (!h || historyIndex < 0 || historyIndex >= h.length) return 0;
+        const cur = h[historyIndex] ?? 0;
+        const prev = historyIndex > 0 ? (h[historyIndex - 1] ?? 0) : cur;
+        return cur - prev;
+    }
+    return null;
+}
 
 /**
  * Top-level metrics for the Macro projection dropdown.

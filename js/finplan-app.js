@@ -618,8 +618,8 @@ function updateMetricDropdown() {
             getGroupMetrics(groupKey).forEach(m => groupMetrics.add(m));
         }
 
-        // Pinned metrics first, then non-top-level metrics from the group
-        const pinned = PINNED_METRICS.filter(m => groupMetrics.has(m));
+        // Pinned metrics always appear first; then non-top-level metrics from the group
+        const pinned = [...PINNED_METRICS];
         const rest = [...groupMetrics].filter(m => !isTopLevelMetric(m) && !PINNED_METRICS.includes(m));
         const ordered = [...pinned, ...rest];
 
@@ -921,6 +921,7 @@ function calculate() {
     portfolio.buildChartingDisplayData();
 
     // Build and render projection charts
+    updateMetricDropdown();
     rebuildProjectionCharts();
 
     // Update details

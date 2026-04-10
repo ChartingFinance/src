@@ -256,9 +256,9 @@ class AssetList extends LitElement {
         if (!history || this.historyIndex >= history.length) return null;
         const entry = history[this.historyIndex];
         if (entry == null) return null;
-        if (entry.amount != null) return entry.amount;       // Currency object
-        if (typeof entry === 'number') return entry;         // plain number
-        const parsed = parseFloat(entry);                    // string from toCurrency()
+        if (entry.amount != null) return entry.amount;
+        if (typeof entry === 'number') return entry;
+        const parsed = parseFloat(entry);
         return isNaN(parsed) ? null : parsed;
     }
 

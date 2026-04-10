@@ -259,12 +259,24 @@ export class ModelAsset {
 
   /** Get the raw monthly history array for a named metric. */
   getHistory(metricName) {
-    return this.#metrics.get(metricName).history;
+    // Derived: netWorthChange = value[i] - value[i-1]
+    if (metricName === Metric.NET_WORTH_CHANGE) {
+      const valHist = this.#metrics.get(Metric.VALUE)?.history;
+      if (!valHist) return [];
+      return valHist.map((v, i) => i === 0 ? 0 : (v ?? 0) - (valHist[i - 1] ?? 0));
+    }
+    return this.#metrics.get(metricName)?.history;
   }
 
   /** Get the display-aligned history array for a named metric. */
   getDisplayHistory(metricName) {
-    return this.#metrics.get(metricName).displayHistory;
+    // Derived: netWorthChange = value[i] - value[i-1] on display history
+    if (metricName === Metric.NET_WORTH_CHANGE) {
+      const valHist = this.#metrics.get(Metric.VALUE)?.displayHistory;
+      if (!valHist) return [];
+      return valHist.map((v, i) => i === 0 ? 0 : (parseFloat(v) || 0) - (parseFloat(valHist[i - 1]) || 0));
+    }
+    return this.#metrics.get(metricName)?.displayHistory;
   }
 
   /** Build display histories for all metrics at once. */

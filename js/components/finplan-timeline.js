@@ -545,7 +545,7 @@ class FinplanTimeline extends LitElement {
         }
 
         return html`
-            <div class="flex items-start px-2" style="height: 40px; margin-bottom: 5px;">
+            <div class="flex items-start px-2" style="height: 40px; margin-top: -10px; margin-bottom: 5px;">
                 ${items}
             </div>
         `;
@@ -673,7 +673,6 @@ class FinplanTimeline extends LitElement {
                             style="color: ${isSelected ? LifeEventType.colorAccent(ev.type) : 'rgb(107,114,128)'};">
                             ${ev.displayName}
                         </span>
-                        <span class="text-xs text-gray-400">${ev.triggerAge}</span>
                     </div>
                 `);
             }

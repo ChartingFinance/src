@@ -332,6 +332,37 @@
                 <div class="font-semibold text-sm mb-1">Flow Pipelines</div>
                 <div class="text-sm text-gray-500">Switch to the <strong>Flows</strong> view in Your Portfolio to see all money movement organized as pipelines &mdash; grouped by source (Income, Capital, Retirement) showing where each dollar goes.</div>
             </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">Rebalance Engine</div>
+                <div class="text-sm text-gray-500">Capital-to-capital, capital-to-retirement, and retirement-to-capital transfers run on <strong>day 1</strong> of each month <em>after</em> the payroll pipeline completes. This means salary deposits and 401(k) contributions are settled before rebalancing pulls from accounts. Roth conversions, early mortgage payoff, and savings&nbsp;&rarr;&nbsp;brokerage sweeps all route through here, with realized gains picked up automatically by the monthly tax true-up.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ Metrics ═══ -->
+    <div class="glass-card p-8 sm:p-12 mb-8">
+        <h2 class="text-2xl font-bold tracking-tight mb-4">Metrics</h2>
+        <p class="text-gray-600 mb-6 leading-relaxed">Every asset tracks a rich set of metrics each month &mdash; balances, flows, taxes, and returns. Four of them are <strong>pinned</strong> so they always appear first wherever you cycle metrics (timeline, projections, visualizer, asset cards).</p>
+        <div class="grid sm:grid-cols-2 gap-4">
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">&#x1F4B0; Value</div>
+                <div class="text-sm text-gray-500">The asset's balance at the end of the month &mdash; the canonical "how much is this worth right now" number. Snapshotted from <code>finishCurrency</code> on the last day of each month.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">&#x1F4CA; Net Worth Change <span class="text-xs text-gray-400 font-normal">(derived)</span></div>
+                <div class="text-sm text-gray-500">Month-over-month change in Value: <code>value[i] &minus; value[i&minus;1]</code>. Captures the combined effect of growth <em>and</em> cash flow in a single number &mdash; so you can immediately see when negative cash flow is consuming your growth. Computed on demand from the Value history, no separate storage.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">&#x1F4C8; Growth</div>
+                <div class="text-sm text-gray-500">Appreciation earned through the annual return rate, compounded monthly at 1/12 of ARR. Does not include deposits or withdrawals &mdash; pure market return.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">&#x1F4B8; Cash Flow</div>
+                <div class="text-sm text-gray-500">Net of all deposits and withdrawals for the month &mdash; contributions, distributions, transfers in and out. Positive when money is flowing into the asset, negative when it's flowing out.</div>
+            </div>
+        </div>
+        <div class="mt-6 p-4 rounded-xl bg-blue-50/60 border border-blue-100">
+            <div class="text-sm text-gray-700"><strong>Why track Net Worth Change?</strong> Growth alone is misleading during retirement &mdash; a portfolio can grow 6% while withdrawals drain 8%, leaving you poorer. Net Worth Change is the honest bottom line: did my wealth actually go up or down this month?</div>
         </div>
     </div>
 

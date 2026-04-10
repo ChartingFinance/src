@@ -62,24 +62,32 @@
         <h3 class="text-lg font-bold mb-4">Elements</h3>
         <div class="grid sm:grid-cols-2 gap-4 mb-8">
             <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">Portfolio Open / Close</div>
+                <div class="text-sm text-gray-500">Above the timeline, the starting value (upper left) and ending value (upper right) bookend the full simulation scope. They reflect the currently selected metric.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">Year / Month Selectors &amp; Play Button</div>
+                <div class="text-sm text-gray-500">Dropdown controls to navigate to any specific year and month within your simulation range, with a <strong>&#9654;</strong> play button that auto-increments the date one month per second. Click the timeline bar, a dot, or adjust the selectors to pause playback.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Phase Dots &amp; Timeline Bar</div>
                 <div class="text-sm text-gray-500">Colored dots on a proportional bar represent your life event phases (e.g. <strong style="color: #1D9E75;">Accumulate</strong> and <strong style="color: #D85A30;">Retire</strong>). Click a dot to jump the cursor to that phase's start date. Click anywhere on the bar to navigate to that point in time.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">Asset Annotations</div>
+                <div class="text-sm text-gray-500">Emoji markers on the timeline bar showing asset lifecycle events &mdash; real estate buy/sell, mortgage payoff, Social Security start, pension start. Emojis stack vertically when events cluster at the same age. Click any emoji to open the edit modal for that asset.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">"You are Here" Indicator</div>
-                <div class="text-sm text-gray-500">A colored badge on the timeline showing your currently selected date. Its color matches the phase you're viewing. Moving the date selector or clicking a phase dot updates its position.</div>
+                <div class="text-sm text-gray-500">A colored badge below the timeline showing the selected date and the portfolio metric value at that moment (e.g. <em>You are Here &middot; $1.2M</em>). Flanked by up/down triangles that vertically anchor the cursor to the timeline bar above and phase bars below. Color matches the current phase.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Year / Month Selectors</div>
-                <div class="text-sm text-gray-500">Dropdown controls to navigate to any specific year and month within your simulation range. The selector styling reflects the current phase color. Changing the date updates all charts and the portfolio view.</div>
+                <div class="font-semibold text-sm mb-1">Per-Phase Summary Bars</div>
+                <div class="text-sm text-gray-500">Below the cursor, one bar per life phase. Each shows the phase name, open &rarr; close metric values for that phase, and CAGR. Click to select a phase.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Phase Summary Bar</div>
-                <div class="text-sm text-gray-500">Below the timeline, a summary shows the selected phase's name, age range, and key metrics (opening value, closing value, CAGR). Click a different phase dot to switch the summary.</div>
-            </div>
-            <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Scenario Selector</div>
-                <div class="text-sm text-gray-500">A dropdown at the bottom of the timeline card. Each scenario holds a complete portfolio &mdash; assets, fund transfers, and guardrail settings. Switch between scenarios to compare strategies.</div>
+                <div class="font-semibold text-sm mb-1">Scenario Selector &amp; Sparkline</div>
+                <div class="text-sm text-gray-500">A dropdown at the bottom of the timeline card holds complete portfolios &mdash; assets, fund transfers, and guardrail settings. A sparkline of the scenario's portfolio value appears between the selector and the descriptive text, colored green if the portfolio grew over the simulation, red if it shrank.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">&#x26A1; AI Summary &amp; + New Scenario</div>
@@ -113,7 +121,7 @@
                 <div class="space-y-2">
                     <div class="flex items-start gap-3">
                         <span class="step-number">1</span>
-                        <span class="text-sm text-gray-700">Use the <strong>Year</strong> and <strong>Month</strong> dropdowns to pick a date. All charts, the portfolio sidebar, and the viewing badge update to reflect that month's data.</span>
+                        <span class="text-sm text-gray-700">Use the <strong>Year</strong> and <strong>Month</strong> dropdowns to pick a date. All charts, the portfolio view, the visualizer, and every viewing badge update to reflect that month's data.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">2</span>
@@ -121,7 +129,7 @@
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">3</span>
-                        <span class="text-sm text-gray-700">If the date falls in a different phase, the phase selection and all phase-colored UI elements automatically update to match.</span>
+                        <span class="text-sm text-gray-700">Click the <strong>&#9654; play</strong> button next to the month selector to auto-advance one month per second. Everything animates in sync &mdash; sparklines, flow arrows, pipeline amounts, visualizer conduit, and wealth tank. Click the timeline, a dot, or a selector to pause.</span>
                     </div>
                 </div>
             </div>
@@ -295,19 +303,27 @@
         <div class="grid sm:grid-cols-2 gap-4 mb-8">
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Macro Projection Chart</div>
-                <div class="text-sm text-gray-500">A stacked area chart showing every asset's value over the full simulation timeline. Color-coded by asset. Use the <strong>metric selector</strong> dropdown to switch between Value, Growth, Income, Expenses, and other metrics.</div>
+                <div class="text-sm text-gray-500">A stacked area chart showing every asset's trajectory over the full simulation timeline. Color-coded by asset group. Driven by the current metric (the same one shown in every viewing badge).</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Micro Projection Chart</div>
-                <div class="text-sm text-gray-500">A detailed bar/pie chart showing the composition of your portfolio at the currently selected month. Updates in real time as you navigate the timeline.</div>
+                <div class="text-sm text-gray-500">A companion chart showing the individual assets from the currently expanded portfolio groups. Updates as you expand or collapse groups in Your Portfolio.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Metric Selector</div>
-                <div class="text-sm text-gray-500">A dropdown on the Macro chart that lets you switch the displayed metric. Options include <strong>Value</strong> (net worth over time), <strong>Growth</strong> (appreciation), <strong>Income</strong>, <strong>Expenses</strong>, and more.</div>
+                <div class="text-sm text-gray-500">A dropdown on the Macro chart that lets you switch the displayed metric. Options include <strong>Value</strong> (balance), <strong>Net Worth Change</strong> (month-over-month delta), <strong>Growth</strong> (appreciation), <strong>Cash Flow</strong> (wallet flows), <strong>Income</strong>, <strong>Expense</strong>, <strong>Taxes</strong>, and more. Changing the metric updates every section of the page.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">Click-to-cycle Badges</div>
+                <div class="text-sm text-gray-500">Every <strong>Viewing: Apr 2026 &middot; Value</strong> badge (Portfolio, Projections, Visualizer, Simulations, Details, Spreadsheet) is clickable. Click any badge to cycle through the macro metrics &mdash; the dropdown, timeline, asset cards, charts, and visualizer all update together.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Phase Date Markers</div>
                 <div class="text-sm text-gray-500">Vertical dashed lines on the Macro chart marking the boundaries between life event phases (e.g., the transition from Accumulate to Retire). Helps you see how your portfolio behaves across phases.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">Fullscreen Button</div>
+                <div class="text-sm text-gray-500">Click the <strong>&#x26F6;</strong> in the upper-right of the Macro or Micro chart to expand it to fullscreen. Press Escape or click <strong>&times;</strong> to exit.</div>
             </div>
         </div>
 
@@ -323,11 +339,11 @@
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">2</span>
-                        <span class="text-sm text-gray-700">Use the <strong>metric selector</strong> to switch views. "Value" shows net worth; "Growth" isolates appreciation; "Income" and "Expenses" show cash flow.</span>
+                        <span class="text-sm text-gray-700">Cycle through metrics by clicking any <strong>viewing badge</strong> (or use the metric dropdown). <em>Value</em> shows the balance curve. <em>Net Worth Change</em> shows how fast wealth is changing month by month &mdash; when cash flow exceeds growth, the delta goes negative even if you still have money. <em>Growth</em>, <em>Cash Flow</em>, <em>Income</em>, and <em>Expense</em> isolate specific contributors.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">3</span>
-                        <span class="text-sm text-gray-700">Click on the timeline or use the date selectors to move the cursor. The <strong>Micro chart</strong> updates to show a snapshot of that specific month's portfolio composition.</span>
+                        <span class="text-sm text-gray-700">Click on the timeline or use the date selectors to move the cursor. The <strong>Micro chart</strong>, asset cards, visualizer, and every reactive element update to show that specific month.</span>
                     </div>
                 </div>
             </div>
@@ -510,18 +526,34 @@
             <span class="text-2xl">&#x1F6B0;</span>
             <h2 class="text-2xl font-bold tracking-tight">Visualizer</h2>
         </div>
-        <p class="text-gray-600 mb-6 leading-relaxed">The Visualizer renders a hydraulic-style flow diagram of your portfolio at the selected date. Money flows like water from income sources through accounts to expenses, giving you an intuitive picture of where your money goes each month.</p>
+        <p class="text-gray-600 mb-6 leading-relaxed">The Visualizer renders a hydraulic-style flow diagram of your portfolio laid out as a horizontal conduit. Income feeds in from the left, capital and retirement accounts sit above, expenses, housing, and taxes drain below, and a wealth tank on the right shows your total net worth. The view is reactive &mdash; it follows the timeline cursor and the currently selected metric automatically, no button press required.</p>
 
         <!-- Elements -->
         <h3 class="text-lg font-bold mb-4">Elements</h3>
         <div class="grid sm:grid-cols-2 gap-4 mb-8">
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Flow Diagram</div>
-                <div class="text-sm text-gray-500">A dark-themed canvas showing income sources on the left, accounts in the middle, and expenses on the right. Animated flows represent fund transfers &mdash; thicker flows mean larger transfers. The layout updates based on the selected date.</div>
+                <div class="font-semibold text-sm mb-1">Horizontal Conduit</div>
+                <div class="text-sm text-gray-500">The central pipe carrying money across the system. Its blend color reflects net flow at the cursor &mdash; green when inflows dominate, red when outflows dominate. Hover for a tooltip showing the net change since the prior month.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Date Display</div>
-                <div class="text-sm text-gray-500">Shows which month the visualizer is rendering. The flow diagram reflects the fund transfers, income, and expenses active in that specific month of your simulation.</div>
+                <div class="font-semibold text-sm mb-1">Income Sources</div>
+                <div class="text-sm text-gray-500">On the left: salary, self-employment, pension, and Social Security. Line thickness is log-scaled to the flow amount, so both small and large streams remain visible side by side.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">Capital &amp; Retirement (Above)</div>
+                <div class="text-sm text-gray-500">Taxable accounts, IRAs, and 401(k)s sit above the conduit. Each asset shows dual lines: a green line for inflows (contributions, growth) and a red line for outflows (distributions, withdrawals).</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">Expenses, Housing &amp; Taxes (Below)</div>
+                <div class="text-sm text-gray-500">Outflows drain below the conduit: monthly expenses, mortgage/property, and taxes as a meta-flow aggregating FICA, income tax, capital gains, and property tax.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">Wealth Tank</div>
+                <div class="text-sm text-gray-500">On the right: a vertical tank showing total portfolio value. Fill color signals health &mdash; <strong>red</strong> when under 15% of your peak, <strong>blue</strong> between 15&ndash;50%, and <strong>green</strong> above 50%.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">Metric-Driven View</div>
+                <div class="text-sm text-gray-500">The visualizer follows whichever metric is selected globally. <strong>Cash Flow</strong> shows pipeline routes for the month. <strong>Value</strong> shows each asset's share of the portfolio. Other metrics render from history. Closed assets appear with a &#x26D4; emoji in place of their line.</div>
             </div>
         </div>
 
@@ -529,19 +561,19 @@
         <h3 class="text-lg font-bold mb-4">How To</h3>
         <div class="space-y-3">
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-2">Visualize your money flow</div>
+                <div class="font-semibold text-sm mb-2">Read your money flow</div>
                 <div class="space-y-2">
                     <div class="flex items-start gap-3">
                         <span class="step-number">1</span>
-                        <span class="text-sm text-gray-700">Navigate the timeline to the month you want to visualize.</span>
+                        <span class="text-sm text-gray-700">Move the timeline cursor to any month. The visualizer re-renders automatically for that date &mdash; no Run button to click.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">2</span>
-                        <span class="text-sm text-gray-700">Click <strong>Run</strong> in the Visualizer section. The hydraulic diagram renders showing all active income, accounts, expenses, and the fund transfer flows between them.</span>
+                        <span class="text-sm text-gray-700">Cycle the metric badge (Value &rarr; Net Worth Change &rarr; Growth &rarr; Cash Flow&hellip;) to change what the lines represent. The conduit, assets, and wealth tank all update together.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">3</span>
-                        <span class="text-sm text-gray-700">Compare Accumulate vs. Retire phases by running the visualizer at dates in each phase &mdash; you'll see how money routing changes (e.g., salary contributions during accumulation vs. retirement account withdrawals).</span>
+                        <span class="text-sm text-gray-700">Hover the conduit to see net change since the previous month. Compare Accumulate vs. Retire phases by scrubbing the cursor &mdash; watch the conduit blend shift from green to red as income sources close and expenses dominate.</span>
                     </div>
                 </div>
             </div>
