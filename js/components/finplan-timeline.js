@@ -20,6 +20,7 @@
 import { LitElement, html, svg, nothing } from 'lit';
 import { store } from '../finplan-store.js';
 import { LifeEvent, LifeEventType } from '../life-event.js';
+import { InstrumentType } from '../instruments/instrument.js';
 import { MetricLabel } from '../metric.js';
 import { DateInt, MONTH_NAMES } from '../utils/date-int.js';
 
@@ -96,17 +97,156 @@ class FinplanTimeline extends LitElement {
         return this.finishAge + 1;
     }
 
-    // ── Visible events (only Accumulate + Retire) ───────────────────
+    // ── Visible events (phases: Accumulate + Retire) ─────────────────
 
     get _visibleEvents() {
-        const events = this.lifeEvents.filter(ev =>
-            ev.type === LifeEvent.ACCUMULATE || ev.type === LifeEvent.RETIRE
-        );
-        // If current age >= retirement age, hide Accumulate
+        const events = this.lifeEvents.filter(ev => LifeEventType.isPhase(ev.type));
         if (this.startAge >= this.retirementAge) {
             return events.filter(ev => ev.type !== LifeEvent.ACCUMULATE);
         }
         return events;
+    }
+
+    // ── Asset annotations (lifecycle markers) ────────────────────────
+    //
+    // Returns array of { asset, age, emoji, label, type } for asset lifecycle
+    // events. Includes: real estate buy/sell, mortgage payoff, retirement
+    // income start, pension start.
+
+    get _assetAnnotations() {
+        if (!this.portfolio?.modelAssets) return [];
+        const birthYear = new Date().getFullYear() - this.startAge;
+        const annotations = [];
+
+        const ageFromDate = (di) => di.year - birthYear + (di.month - 1) / 12;
+        const emojiFor = (inst) => InstrumentType.assetEmoji(inst);
+
+        for (const asset of this.portfolio.modelAssets) {
+            const inst = asset.instrument;
+            const assetEmoji = emojiFor(inst);
+
+            // Real estate: buy/sell
+            if (InstrumentType.isRealEstate(inst)) {
+                if (asset.startDateInt) {
+                    annotations.push({
+                        asset, age: ageFromDate(asset.startDateInt),
+                        emoji: assetEmoji,
+                        label: `Buy ${asset.displayName}`,
+                        type: 'buy',
+                    });
+                }
+                if (asset.finishDateInt) {
+                    annotations.push({
+                        asset, age: ageFromDate(asset.finishDateInt),
+                        emoji: assetEmoji,
+                        label: `Sell ${asset.displayName}`,
+                        type: 'sell',
+                    });
+                }
+            }
+
+            // Mortgage: start and payoff markers
+            else if (InstrumentType.isMortgage(inst)) {
+                if (asset.startDateInt) {
+                    annotations.push({
+                        asset, age: ageFromDate(asset.startDateInt),
+                        emoji: assetEmoji,
+                        label: `Open ${asset.displayName}`,
+                        type: 'mortgage-start',
+                    });
+                }
+                const payoffAge = this._mortgagePayoffAge(asset, birthYear);
+                if (payoffAge != null) {
+                    annotations.push({
+                        asset, age: payoffAge,
+                        emoji: assetEmoji,
+                        label: `${asset.displayName} paid off`,
+                        type: 'payoff',
+                    });
+                }
+            }
+
+            // Retirement income (Social Security) start
+            else if (InstrumentType.isRetirementIncome(inst) && !InstrumentType.isPension(inst)) {
+                if (asset.startDateInt) {
+                    annotations.push({
+                        asset, age: ageFromDate(asset.startDateInt),
+                        emoji: assetEmoji,
+                        label: `${asset.displayName} starts`,
+                        type: 'income-start',
+                    });
+                }
+            }
+
+            // Pension start
+            else if (InstrumentType.isPension(inst)) {
+                if (asset.startDateInt) {
+                    annotations.push({
+                        asset, age: ageFromDate(asset.startDateInt),
+                        emoji: assetEmoji,
+                        label: `${asset.displayName} starts`,
+                        type: 'pension-start',
+                    });
+                }
+            }
+        }
+
+        return annotations;
+    }
+
+    /**
+     * Group annotations that share a near-same age and assign stack indices.
+     * Annotations within CLUSTER_TOLERANCE years of each other are stacked
+     * vertically. Each gets a `stackIndex` (0 = base, 1 = above, etc.).
+     */
+    _clusterAnnotations(annotations) {
+        const CLUSTER_TOLERANCE = 0.4; // years — ~5 months
+        const sorted = [...annotations].sort((a, b) => a.age - b.age);
+        const result = [];
+        let currentCluster = [];
+        let clusterAnchor = null;
+
+        const flushCluster = () => {
+            currentCluster.forEach((ann, idx) => {
+                result.push({ ...ann, stackIndex: idx });
+            });
+            currentCluster = [];
+            clusterAnchor = null;
+        };
+
+        for (const ann of sorted) {
+            if (clusterAnchor == null || Math.abs(ann.age - clusterAnchor) > CLUSTER_TOLERANCE) {
+                flushCluster();
+                clusterAnchor = ann.age;
+            }
+            currentCluster.push(ann);
+        }
+        flushCluster();
+
+        return result;
+    }
+
+    /**
+     * Find the age at which a mortgage reaches zero balance.
+     * Scans the value history for the first month where balance is >= 0 (paid off).
+     */
+    _mortgagePayoffAge(asset, birthYear) {
+        const history = asset.getHistory?.('value');
+        if (!history?.length || !this.portfolio?.firstDateInt) return null;
+
+        const startYear = this.portfolio.firstDateInt.year;
+        const startMonth = this.portfolio.firstDateInt.month;
+
+        for (let i = 0; i < history.length; i++) {
+            // Mortgage balance is stored as negative; paid off when >= 0
+            if (history[i] >= 0) {
+                const monthsOffset = i;
+                const year = startYear + Math.floor((startMonth - 1 + monthsOffset) / 12);
+                const month = ((startMonth - 1 + monthsOffset) % 12) + 1;
+                return (year - birthYear) + (month - 1) / 12;
+            }
+        }
+        return null;
     }
 
     // ── Selected date as fractional age ────────────────────────────
@@ -331,14 +471,14 @@ class FinplanTimeline extends LitElement {
                 </button>
             </div>
 
-            <!-- Cursor indicator above timeline -->
-            ${this._renderCursorRow(visible, sAge, fAge)}
-
             <!-- Timeline bar (flex with proportional spacers) -->
             ${this._renderTimelineBar(visible, sAge, fAge)}
 
             <!-- Timeline labels (flex with proportional spacers) -->
             ${this._renderTimelineLabels(visible, sAge, fAge)}
+
+            <!-- Cursor indicator below timeline -->
+            ${this._renderCursorRow(visible, sAge, fAge)}
 
             <!-- Per-phase summary bars -->
             ${this._renderPhaseBars(visible)}
@@ -385,6 +525,7 @@ class FinplanTimeline extends LitElement {
                 const cursorVal = this._computeCursorMetric();
                 items.push(html`
                     <div class="flex flex-col items-center flex-shrink-0" style="width: 0;">
+                        <span style="font-size: 12px; font-weight: 900; color: ${this._cursorColorAccent()}; line-height: 1; margin-bottom: -1px;">&#9650;</span>
                         <span style="font-size: 10px; font-weight: 700; background: ${this._cursorColor()}20; color: ${this._cursorColorAccent()};
                                      padding: 1px 6px; border-radius: 8px; line-height: 1.3;
                                      white-space: nowrap;">You are Here · ${this._formatCurrency(cursorVal)}</span>
@@ -404,7 +545,7 @@ class FinplanTimeline extends LitElement {
         }
 
         return html`
-            <div class="flex items-end px-2" style="height: 28px;">
+            <div class="flex items-start px-2" style="height: 40px; margin-bottom: 5px;">
                 ${items}
             </div>
         `;
@@ -466,10 +607,31 @@ class FinplanTimeline extends LitElement {
             }
         }
 
+        // Asset annotation emojis — cluster by near-same age and stack vertically
+        const stackedAnnotations = this._clusterAnnotations(this._assetAnnotations);
+
+        // Compute the max stack depth for vertical space allocation
+        const maxStack = stackedAnnotations.reduce((m, a) => Math.max(m, a.stackIndex), 0);
+        const annotationLaneHeight = 30 + maxStack * 18;
+
         return html`
-            <div class="flex items-center px-2 mb-1" style="cursor: pointer;"
+            <div class="flex items-center px-2 mb-1"
+                 style="cursor: pointer; position: relative; margin-top: ${annotationLaneHeight}px;"
                  @click=${this._onTimelineBarClick}>
                 ${items}
+                ${stackedAnnotations.map(ann => {
+                    const pct = ((ann.age - sAge) / (fAge - sAge)) * 100;
+                    if (pct < 0 || pct > 100) return nothing;
+                    const stackOffset = ann.stackIndex * 18; // 18px per stack level
+                    return html`
+                        <div class="timeline-annotation"
+                             style="left: ${pct}%; top: ${-18 - stackOffset}px;"
+                             title="${ann.label} (age ${Math.round(ann.age)})"
+                             @click=${(e) => { e.stopPropagation(); this._onEditAsset(ann.asset); }}>
+                            ${ann.emoji}
+                        </div>
+                    `;
+                })}
             </div>
         `;
     }
@@ -714,11 +876,17 @@ class FinplanTimeline extends LitElement {
 
     _onEditSelectedEvent() {
         if (!this.selectedEvent) return;
-        // Find the real index in lifeEvents (not _visibleEvents)
         const realIndex = this.lifeEvents.indexOf(this.selectedEvent);
         this.dispatchEvent(new CustomEvent('event-edit', {
             bubbles: true, composed: true,
             detail: { event: this.selectedEvent, index: realIndex },
+        }));
+    }
+
+    _onEditAsset(asset) {
+        this.dispatchEvent(new CustomEvent('edit-asset', {
+            bubbles: true, composed: true,
+            detail: { modelAsset: asset },
         }));
     }
 }

@@ -29,8 +29,6 @@ import { global_user_startAge } from './globals.js';
 
 export const LifeEvent = Object.freeze({
   ACCUMULATE: 'accumulate',
-  BUY_HOME:   'buyHome',
-  SELL_HOME:  'sellHome',
   RETIRE:     'retire',
 });
 
@@ -39,6 +37,7 @@ export const LifeEvent = Object.freeze({
 export const LifeEventMeta = new Map([
   [LifeEvent.ACCUMULATE, {
     label:       'Accumulate',
+    emoji:       '',
     color:       '#1D9E75',
     colorAccent: '#0F6E56',
     projectionTabs: ['value', 'monteCarlo', 'contributions', 'spreadsheet'],
@@ -48,33 +47,9 @@ export const LifeEventMeta = new Map([
     },
     advisoryChecks: [],
   }],
-  [LifeEvent.BUY_HOME, {
-    label:       'Buy home',
-    color:       '#378ADD',
-    colorAccent: '#185FA5',
-    projectionTabs: ['value', 'amortization', 'equityBuildup', 'spreadsheet'],
-    assetGroupLabels: { income: 'Income', realestate: 'Real estate', capital: 'Capital', expenses: 'Expenses', taxes: 'Taxes' },
-    defaultMutations: {
-      closes:  [],
-    },
-    advisoryChecks: [
-      { instrument: 'realEstate', message: 'No real estate asset found. Would you like to add one?' },
-      { instrument: 'mortgage', message: 'No mortgage found. Would you like to add one?' },
-    ],
-  }],
-  [LifeEvent.SELL_HOME, {
-    label:       'Sell home',
-    color:       '#888780',
-    colorAccent: '#5F5E5A',
-    projectionTabs: ['value', 'capitalGainsImpact', 'proceedsAllocation', 'spreadsheet'],
-    assetGroupLabels: { distributions: 'Distributions', capital: 'Capital', closed: 'Closed', expenses: 'Expenses', taxes: 'Taxes' },
-    defaultMutations: {
-      closes:  ['Home', 'Mortgage'],
-    },
-    advisoryChecks: [],
-  }],
   [LifeEvent.RETIRE, {
     label:       'Retire',
+    emoji:       '',
     color:       '#D85A30',
     colorAccent: '#993C1D',
     projectionTabs: ['value', 'guardrails', 'monteCarlo', 'spreadsheet'],
@@ -99,27 +74,19 @@ const HAS_MONTE_CARLO = new Set([
   LifeEvent.RETIRE,
 ]);
 
-const CREATES_REAL_ESTATE = new Set([
-  LifeEvent.BUY_HOME,
-]);
-
-const CLOSES_REAL_ESTATE = new Set([
-  LifeEvent.SELL_HOME,
-]);
-
 // ── Public classifier API ───────────────────────────────────────
 
 export const LifeEventType = Object.freeze({
   isAccumulation:  (v) => v === LifeEvent.ACCUMULATE,
   isRetirement:    (v) => v === LifeEvent.RETIRE,
-  isHomePurchase:  (v) => v === LifeEvent.BUY_HOME,
-  isHomeSale:      (v) => v === LifeEvent.SELL_HOME,
   hasGuardrails:   (v) => HAS_GUARDRAILS.has(v),
   hasMonteCarlo:   (v) => HAS_MONTE_CARLO.has(v),
-  createsRealEstate: (v) => CREATES_REAL_ESTATE.has(v),
-  closesRealEstate:  (v) => CLOSES_REAL_ESTATE.has(v),
+
+  /** True for phase-level events (Accumulate, Retire) that define timeline segments */
+  isPhase:       (v) => v === LifeEvent.ACCUMULATE || v === LifeEvent.RETIRE,
 
   displayName: (v) => LifeEventMeta.get(v)?.label ?? v,
+  emoji:       (v) => LifeEventMeta.get(v)?.emoji ?? '',
   color:       (v) => LifeEventMeta.get(v)?.color ?? '#888780',
   colorAccent: (v) => LifeEventMeta.get(v)?.colorAccent ?? '#5F5E5A',
 

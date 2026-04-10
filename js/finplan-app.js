@@ -231,6 +231,11 @@ timeline.addEventListener('phase-select', (ev) => {
     activePhaseIndex = ev.detail.index;
 });
 
+// Wire timeline asset edit (from annotation emoji clicks)
+timeline.addEventListener('edit-asset', (ev) => {
+    openEditAssetModal(ev.detail.modelAsset);
+});
+
 // Wire timeline edit event
 timeline.addEventListener('event-edit', (ev) => {
     const { event: lifeEvent, index } = ev.detail;
