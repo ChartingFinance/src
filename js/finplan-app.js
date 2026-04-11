@@ -723,6 +723,7 @@ store.addEventListener('date-change', (e) => {
     if (reportView) reportView.scrollToDate(e.detail.year, e.detail.month);
     if (creditMemoView) creditMemoView.scrollToDate(e.detail.year, e.detail.month);
     refreshVisualizer();
+    updateScenarioSparkline();
 });
 
 // ── Settings ────────────────────────────────────────────────
@@ -1528,10 +1529,23 @@ function updateScenarioSparkline() {
     // Color: green if ended higher, red if lower
     const color = data[data.length - 1] >= data[0] ? '#43e97b' : '#ff6b6b';
 
+    // "You are here" cursor marker
+    let cursorMarker = '';
+    if (activePortfolio.firstDateInt) {
+        const cursorIdx = DateInt.diffMonths(activePortfolio.firstDateInt, DateInt.from(store.selectedYear, store.selectedMonth));
+        if (cursorIdx >= 0 && cursorIdx < data.length) {
+            const cx = PAD + (cursorIdx / (data.length - 1)) * (W - 2 * PAD);
+            const cy = H - PAD - ((data[cursorIdx] - min) / range) * (H - 2 * PAD);
+            cursorMarker = `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="3"
+                fill="${color}" stroke="white" stroke-width="1" />`;
+        }
+    }
+
     scenarioSparkline.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width: 100%; height: 24px; display: block;">
         <polyline points="${points.join(' ')}"
             fill="none" stroke="${color}" stroke-width="1.5"
             stroke-linejoin="round" stroke-linecap="round" opacity="0.6" />
+        ${cursorMarker}
     </svg>`;
 }
 

@@ -15,7 +15,7 @@ import { LitElement, html, nothing } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
 import { colorRange } from '../utils/html.js';
 import {
-    AssetGroup, AssetGroupMeta, TaxItem, TaxItemMeta,
+    AssetGroup, AssetGroupMeta,
     classifyAssets, classifyAssetGroup, getGroupLabel, getAssetChartColor,
 } from '../asset-groups.js';
 import { computeAssetFlows } from '../utils/asset-flow.js';
@@ -32,17 +32,80 @@ const HORIZONTAL_GROUP_ORDER = [
 ];
 
 /**
- * Tax item → metrics that indicate an asset contributes to that tax.
- * Includes both the tax metrics themselves AND the income/activity metrics
- * that generate the tax liability, since the tax may be recorded on a
- * different asset (e.g., estimated income tax debited from a liquid account).
+ * Hierarchical tax tree. Each node has:
+ *   - amountMetrics: leaf metrics summed to compute the node's dollar amount
+ *   - highlightMetrics: metrics that identify "contributing" assets (broader —
+ *     includes the income/activity metrics that generate the tax, since the
+ *     tax may be recorded on a different asset)
+ *   - children: optional sub-nodes
+ *
+ * Amounts and highlights are computed per-node; zero-amount nodes are pruned.
  */
-const TAX_ITEM_METRICS = new Map([
-    [TaxItem.FICA,          ['socialSecurityTax', 'medicareTax', 'employedIncome', 'selfIncome']],
-    [TaxItem.INCOME_TAX,    ['withheldIncomeTax', 'estimatedIncomeTax', 'income', 'qualifiedDividend', 'nonQualifiedDividend', 'interestIncome']],
-    [TaxItem.CAPITAL_GAINS, ['longTermCapitalGainTax', 'shortTermCapitalGainTax', 'longTermCapitalGain', 'shortTermCapitalGain']],
-    [TaxItem.PROPERTY_TAX,  ['propertyTax']],
-]);
+const TAX_TREE = [
+    {
+        id: 'fica',
+        label: 'FICA / Medicare',
+        emoji: '🏥',
+        amountMetrics: ['socialSecurityTax', 'medicareTax'],
+        highlightMetrics: ['socialSecurityTax', 'medicareTax', 'employedIncome', 'selfIncome'],
+        children: [
+            { id: 'ssTax', label: 'Social Security', emoji: '👴',
+              amountMetrics: ['socialSecurityTax'],
+              highlightMetrics: ['socialSecurityTax', 'employedIncome', 'selfIncome'] },
+            { id: 'medicareTax', label: 'Medicare', emoji: '⚕️',
+              amountMetrics: ['medicareTax'],
+              highlightMetrics: ['medicareTax', 'employedIncome', 'selfIncome'] },
+        ],
+    },
+    {
+        id: 'incomeTax',
+        label: 'Income Tax',
+        emoji: '📄',
+        amountMetrics: ['withheldIncomeTax', 'estimatedIncomeTax'],
+        highlightMetrics: ['withheldIncomeTax', 'estimatedIncomeTax', 'income', 'qualifiedDividend', 'nonQualifiedDividend', 'interestIncome'],
+        children: [
+            { id: 'withheldIT', label: 'Withheld', emoji: '💼',
+              amountMetrics: ['withheldIncomeTax'],
+              highlightMetrics: ['withheldIncomeTax', 'employedIncome'] },
+            { id: 'estimatedIT', label: 'Estimated', emoji: '📝',
+              amountMetrics: ['estimatedIncomeTax'],
+              highlightMetrics: ['estimatedIncomeTax', 'qualifiedDividend', 'nonQualifiedDividend', 'interestIncome', 'selfIncome', 'socialSecurityIncome', 'pensionIncome'] },
+        ],
+    },
+    {
+        id: 'capGains',
+        label: 'Capital Gains',
+        emoji: '📉',
+        amountMetrics: ['longTermCapitalGainTax', 'shortTermCapitalGainTax'],
+        highlightMetrics: ['longTermCapitalGainTax', 'shortTermCapitalGainTax', 'longTermCapitalGain', 'shortTermCapitalGain'],
+        children: [
+            { id: 'ltcg', label: 'Long Term', emoji: '📈',
+              amountMetrics: ['longTermCapitalGainTax'],
+              highlightMetrics: ['longTermCapitalGainTax', 'longTermCapitalGain'] },
+            { id: 'stcg', label: 'Short Term', emoji: '⚡',
+              amountMetrics: ['shortTermCapitalGainTax'],
+              highlightMetrics: ['shortTermCapitalGainTax', 'shortTermCapitalGain'] },
+        ],
+    },
+    {
+        id: 'propertyTax',
+        label: 'Property Tax',
+        emoji: '🏘️',
+        amountMetrics: ['propertyTax'],
+        highlightMetrics: ['propertyTax'],
+    },
+];
+
+/** Union of every highlightMetric across the whole tree — used when clicking the Taxes column header. */
+const ALL_TAX_HIGHLIGHT_METRICS = (() => {
+    const s = new Set();
+    const walk = (nodes) => nodes.forEach(n => {
+        n.highlightMetrics.forEach(m => s.add(m));
+        if (n.children) walk(n.children);
+    });
+    walk(TAX_TREE);
+    return [...s];
+})();
 
 function formatCompactCurrency(amount) {
     const num = typeof amount === 'number' ? amount : parseFloat(amount);
@@ -83,6 +146,7 @@ class AssetList extends LitElement {
         this.historyIndex = -1;
         this._taxHighlightAssets = new Set(); // displayNames of assets to highlight
         this._taxHighlightGroups = new Set(); // group keys to highlight (when collapsed)
+        this._expandedTaxNodes = new Set();   // tax tree node ids currently expanded
     }
 
     render() {
@@ -179,43 +243,61 @@ class AssetList extends LitElement {
     _renderTaxesColumn(isExpanded) {
         if (!this.portfolio) return nothing;
 
-        const taxItems = this._computeTaxItems();
-        if (taxItems.length === 0) return nothing;
+        const nodes = this._computeTaxTree();
+        if (nodes.length === 0) return nothing;
 
         const meta = AssetGroupMeta.get(AssetGroup.TAXES);
         const label = getGroupLabel(AssetGroup.TAXES, this.activeLifeEvent);
-        const total = taxItems.reduce((sum, t) => sum + t.amount, 0);
+        const total = nodes.reduce((sum, n) => sum + n.amount, 0);
 
         return html`
             <div class="asset-group-column">
                 <div class="asset-group-header"
                      style="background: ${meta.headerBg}; color: ${meta.headerFg}"
-                     @click=${() => this._onGroupToggle(AssetGroup.TAXES)}>
+                     @click=${() => { this._onGroupToggle(AssetGroup.TAXES); this._highlightAssetsForMetrics(ALL_TAX_HIGHLIGHT_METRICS); }}>
                     <span class="asset-group-emoji">${meta.groupEmoji}</span>
                     <span class="asset-group-label">${label}</span>
                     <span class="asset-group-total">${formatCompactCurrency(total)}/yr</span>
                     <span class="asset-group-chevron ${isExpanded ? 'expanded' : ''}">&#x25B6;</span>
                 </div>
                 <div class="asset-group-children ${isExpanded ? '' : 'collapsed'}">
-                    ${taxItems.map(t => html`
-                        <div class="tax-item-pill" @click=${(e) => { e.stopPropagation(); this._onTaxItemClick(t.key); }}
-                             style="cursor: pointer;" title="Click to highlight contributing assets">
-                            <span class="tax-item-emoji">${t.emoji}</span>
-                            <span class="tax-item-label">${t.label}</span>
-                            <span class="tax-item-value">${formatCompactCurrency(t.amount)}/yr</span>
-                        </div>
-                    `)}
+                    ${nodes.map(n => this._renderTaxNode(n, 0))}
                 </div>
             </div>
         `;
     }
 
-    _computeTaxItems() {
-        const items = [];
-        const assets = this.portfolio?.modelAssets;
-        if (!assets) return items;
+    _renderTaxNode(node, depth) {
+        const hasChildren = node.children && node.children.length > 0;
+        const isExpanded = this._expandedTaxNodes.has(node.id);
+        const indent = depth * 14;
 
-        let ficaTotal = 0, incomeTaxTotal = 0, capGainsTotal = 0, propertyTaxTotal = 0;
+        return html`
+            <div>
+                <div class="tax-item-pill"
+                     style="cursor: pointer; margin-left: ${indent}px;"
+                     title="Click to highlight contributing assets"
+                     @click=${(e) => { e.stopPropagation(); this._highlightAssetsForMetrics(node.highlightMetrics); }}>
+                    <span class="tax-item-emoji">${node.emoji}</span>
+                    <span class="tax-item-label">${node.label}</span>
+                    <span class="tax-item-value">${formatCompactCurrency(node.amount)}/yr</span>
+                    ${hasChildren ? html`
+                        <span class="tax-item-chevron ${isExpanded ? 'expanded' : ''}"
+                              @click=${(e) => { e.stopPropagation(); this._onTaxNodeToggle(node.id); }}>&#x25B6;</span>
+                    ` : nothing}
+                </div>
+                ${hasChildren && isExpanded ? html`
+                    <div class="tax-item-children">
+                        ${node.children.map(c => this._renderTaxNode(c, depth + 1))}
+                    </div>
+                ` : nothing}
+            </div>
+        `;
+    }
+
+    _computeTaxTree() {
+        const assets = this.portfolio?.modelAssets;
+        if (!assets) return [];
 
         const idx = this.historyIndex;
         const atIdx = (asset, metricName) => {
@@ -223,30 +305,27 @@ class AssetList extends LitElement {
             return (h && idx < h.length) ? (h[idx] ?? 0) : 0;
         };
 
-        for (const a of assets) {
-            ficaTotal += atIdx(a, 'socialSecurityTax') + atIdx(a, 'medicareTax');
-            incomeTaxTotal += atIdx(a, 'withheldIncomeTax') + atIdx(a, 'estimatedIncomeTax');
-            capGainsTotal += atIdx(a, 'longTermCapitalGainTax') + atIdx(a, 'shortTermCapitalGainTax');
-            propertyTaxTotal += atIdx(a, 'propertyTax');
-        }
+        // Sum a list of metrics across all assets, annualized.
+        const sumMetrics = (metrics) => {
+            let total = 0;
+            for (const a of assets) {
+                for (const m of metrics) total += atIdx(a, m);
+            }
+            return total * 12;
+        };
 
-        // Annualize monthly values
-        ficaTotal *= 12;
-        incomeTaxTotal *= 12;
-        capGainsTotal *= 12;
-        propertyTaxTotal *= 12;
+        // Walk the tree, compute amounts, prune zero nodes and zero children.
+        const walk = (node) => {
+            const amount = sumMetrics(node.amountMetrics);
+            if (amount === 0) return null;
+            const out = { ...node, amount };
+            if (node.children) {
+                out.children = node.children.map(walk).filter(Boolean);
+            }
+            return out;
+        };
 
-        const ficaMeta = TaxItemMeta.get(TaxItem.FICA);
-        const incomeMeta = TaxItemMeta.get(TaxItem.INCOME_TAX);
-        const capMeta = TaxItemMeta.get(TaxItem.CAPITAL_GAINS);
-        const propMeta = TaxItemMeta.get(TaxItem.PROPERTY_TAX);
-
-        if (ficaTotal !== 0) items.push({ ...ficaMeta, key: TaxItem.FICA, amount: ficaTotal });
-        if (incomeTaxTotal !== 0) items.push({ ...incomeMeta, key: TaxItem.INCOME_TAX, amount: incomeTaxTotal });
-        if (capGainsTotal !== 0) items.push({ ...capMeta, key: TaxItem.CAPITAL_GAINS, amount: capGainsTotal });
-        if (propertyTaxTotal !== 0) items.push({ ...propMeta, key: TaxItem.PROPERTY_TAX, amount: propertyTaxTotal });
-
-        return items;
+        return TAX_TREE.map(walk).filter(Boolean);
     }
 
     /** Get metric value for a single asset at the current historyIndex */
@@ -287,9 +366,17 @@ class AssetList extends LitElement {
         }));
     }
 
-    _onTaxItemClick(taxItemKey) {
-        const metrics = TAX_ITEM_METRICS.get(taxItemKey);
-        if (!metrics) return;
+    _onTaxNodeToggle(nodeId) {
+        if (this._expandedTaxNodes.has(nodeId)) {
+            this._expandedTaxNodes.delete(nodeId);
+        } else {
+            this._expandedTaxNodes.add(nodeId);
+        }
+        this.requestUpdate();
+    }
+
+    _highlightAssetsForMetrics(metrics) {
+        if (!metrics || metrics.length === 0) return;
 
         const assets = this.portfolio?.modelAssets;
         if (!assets) return;
