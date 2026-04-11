@@ -274,16 +274,20 @@ class AssetList extends LitElement {
 
         return html`
             <div>
-                <div class="tax-item-pill"
-                     style="cursor: pointer; margin-left: ${indent}px;"
-                     title="Click to highlight contributing assets"
-                     @click=${(e) => { e.stopPropagation(); this._highlightAssetsForMetrics(node.highlightMetrics); }}>
-                    <span class="tax-item-emoji">${node.emoji}</span>
-                    <span class="tax-item-label">${node.label}</span>
-                    <span class="tax-item-value">${formatCompactCurrency(node.amount)}/yr</span>
+                <div class="tax-item-pill" style="margin-left: ${indent}px;">
+                    <span class="tax-item-body"
+                          title="Click to highlight contributing assets"
+                          @click=${() => this._highlightAssetsForMetrics(node.highlightMetrics)}>
+                        <span class="tax-item-emoji">${node.emoji}</span>
+                        <span class="tax-item-label">${node.label}</span>
+                        <span class="tax-item-value">${formatCompactCurrency(node.amount)}/yr</span>
+                    </span>
                     ${hasChildren ? html`
-                        <span class="tax-item-chevron ${isExpanded ? 'expanded' : ''}"
-                              @click=${(e) => { e.stopPropagation(); this._onTaxNodeToggle(node.id); }}>&#x25B6;</span>
+                        <span class="tax-item-chevron"
+                              title="Expand / collapse"
+                              @click=${() => this._onTaxNodeToggle(node.id)}>
+                            <span class="tax-item-chevron-glyph ${isExpanded ? 'expanded' : ''}">&#x25B6;</span>
+                        </span>
                     ` : nothing}
                 </div>
                 ${hasChildren && isExpanded ? html`

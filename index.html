@@ -312,20 +312,32 @@
         .asset-group-children.collapsed { height: 0; overflow: hidden; padding: 0; }
 
         .tax-item-pill {
-            display: flex; align-items: center; gap: 6px;
-            padding: 4px 10px; border-radius: 8px; font-size: 12px;
+            display: flex; align-items: stretch; gap: 0;
+            border-radius: 8px; font-size: 12px;
             background: #FEF3C7; color: #92400E;
+            overflow: hidden;
         }
+        .tax-item-body {
+            flex: 1; display: flex; align-items: center; gap: 6px;
+            padding: 4px 10px; cursor: pointer;
+        }
+        .tax-item-body:hover { filter: brightness(0.93); }
         .tax-item-emoji { font-size: 14px; }
         .tax-item-label { flex: 1; }
         .tax-item-value { font-weight: 600; }
         .tax-item-chevron {
-            font-size: 9px; margin-left: 6px; opacity: 0.6;
-            transition: transform 0.15s ease;
-            display: inline-block;
+            display: flex; align-items: center; justify-content: center;
+            padding: 0 10px; min-width: 24px;
+            opacity: 0.6; cursor: pointer;
+            border-left: 1px solid rgba(146, 64, 14, 0.18);
+            transition: opacity 0.15s ease, background 0.15s ease;
         }
-        .tax-item-chevron.expanded { transform: rotate(90deg); }
-        .tax-item-chevron:hover { opacity: 1; }
+        .tax-item-chevron:hover { opacity: 1; background: rgba(146, 64, 14, 0.08); }
+        .tax-item-chevron-glyph {
+            font-size: 11px; display: inline-block;
+            transition: transform 0.15s ease;
+        }
+        .tax-item-chevron-glyph.expanded { transform: rotate(90deg); }
         .tax-item-children { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
 
         .asset-ghost { opacity: 0.7; }
