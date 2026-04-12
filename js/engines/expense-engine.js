@@ -165,35 +165,34 @@ export class ExpenseEngine {
     // ── Day 30: Real Estate Carrying Costs (Maintenance + Insurance) ──
 
     applyCarryingCostTransfers(modelAsset, currentDateInt) {
+        const maint = modelAsset.maintenanceCurrency.copy().flipSign();
+        const ins   = modelAsset.insuranceCurrency.copy().flipSign();
 
-        const carryingCost = modelAsset.maintenanceCurrency.copy().flipSign();
-        carryingCost.add(modelAsset.insuranceCurrency.copy().flipSign());
-        if (carryingCost.amount <= 0) return;
+        if (maint.amount > 0) this._debitCarryingCost(modelAsset, maint, 'maintenance', currentDateInt);
+        if (ins.amount > 0)   this._debitCarryingCost(modelAsset, ins, 'insurance', currentDateInt);
+    }
 
+    _debitCarryingCost(modelAsset, cost, label, currentDateInt) {
         let preFlights = [];
-        let remaining = carryingCost.copy();
+        let remaining = cost.copy();
 
-        // Try explicit fund transfers first
         if (modelAsset.fundTransfers?.length) {
             for (const fundTransfer of modelAsset.fundTransfers) {
-
                 if (!fundTransfer.isActiveForMonth(currentDateInt.month)) continue;
                 fundTransfer.bind(modelAsset, this.modelAssets);
                 if (!fundTransfer.toModel) continue;
                 if (remaining.amount == 0) break;
 
-                let preFlight = new FundTransferOneSided(fundTransfer, carryingCost);
+                let preFlight = new FundTransferOneSided(fundTransfer, cost);
                 remaining.subtract(preFlight.amount);
                 if (remaining.amount < 0) {
                     preFlight.amount.add(remaining);
                     remaining.zero();
                 }
                 preFlights.push(preFlight);
-
             }
         }
 
-        // Fallback: first expensable account
         if (remaining.amount > 0) {
             let fundingSource = FundTransfer.resolveExpensable(this.modelAssets);
             if (fundingSource) {
@@ -204,10 +203,8 @@ export class ExpenseEngine {
             }
         }
 
-        // One-sided withdrawal: applyMonthly() already recorded the expense
-        // on the real estate asset. Only debit the funding source.
         for (const oneSided of preFlights) {
-            const memo = `${modelAsset.displayName} → ${oneSided.toModel.displayName} (carrying costs)`;
+            const memo = `${modelAsset.displayName} → ${oneSided.toModel.displayName} (${label})`;
             const result = oneSided.toModel.debit(oneSided.amount, memo);
             this.monthly.recordTransfer(oneSided.toModel.instrument, oneSided.amount, result.realizedGain);
             if (result.realizedGain && result.realizedGain.amount > 0) {
@@ -215,7 +212,6 @@ export class ExpenseEngine {
                 oneSided.toModel.addCreditMemo(result.realizedGain.copy(), 'Capital gains');
             }
         }
-
     }
 
     // ── Day 30: RMDs ─────────────────────────────────────────────────

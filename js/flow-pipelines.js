@@ -291,56 +291,47 @@ function addSystemTransfers(pipelineMap, assets, historyIndex) {
             const carryingTotal = propTax + maint + ins;
 
             if (carryingTotal > 0) {
-                const fundingSource = expensable || taxable;
-                if (fundingSource) {
+                const costs = [];
+                if (propTax > 0) costs.push({ amount: propTax, detail: 'Property tax' });
+                if (maint > 0)   costs.push({ amount: maint,   detail: 'Maintenance' });
+                if (ins > 0)     costs.push({ amount: ins,     detail: 'Insurance' });
+
+                for (const cost of costs) {
+                    const fundingSource = resolveCarryingCostSource(asset, cost.amount, assets) || expensable || taxable;
+                    if (!fundingSource) continue;
                     const sourceGroup = classifyAssetGroup(fundingSource.instrument);
                     const targetGroup = AssetGroup.REAL_ESTATE;
                     const key = pipelineKey(sourceGroup, targetGroup);
                     ensurePipeline(pipelineMap, key, sourceGroup, targetGroup);
-
-                    if (propTax > 0) {
-                        pipelineMap.get(key).routes.push({
-                            type: 'system',
-                            sourceName: fundingSource.displayName,
-                            targetName: asset.displayName,
-                            sourceInstrument: fundingSource.instrument,
-                            targetInstrument: asset.instrument,
-                            percentage: null,
-                            monthlyAmount: propTax,
-                            active: true,
-                            detail: 'Property tax',
-                        });
-                    }
-                    if (maint > 0) {
-                        pipelineMap.get(key).routes.push({
-                            type: 'system',
-                            sourceName: fundingSource.displayName,
-                            targetName: asset.displayName,
-                            sourceInstrument: fundingSource.instrument,
-                            targetInstrument: asset.instrument,
-                            percentage: null,
-                            monthlyAmount: maint,
-                            active: true,
-                            detail: 'Maintenance',
-                        });
-                    }
-                    if (ins > 0) {
-                        pipelineMap.get(key).routes.push({
-                            type: 'system',
-                            sourceName: fundingSource.displayName,
-                            targetName: asset.displayName,
-                            sourceInstrument: fundingSource.instrument,
-                            targetInstrument: asset.instrument,
-                            percentage: null,
-                            monthlyAmount: ins,
-                            active: true,
-                            detail: 'Insurance',
-                        });
-                    }
+                    pipelineMap.get(key).routes.push({
+                        type: 'system',
+                        sourceName: fundingSource.displayName,
+                        targetName: asset.displayName,
+                        sourceInstrument: fundingSource.instrument,
+                        targetInstrument: asset.instrument,
+                        percentage: null,
+                        monthlyAmount: cost.amount,
+                        active: true,
+                        detail: cost.detail,
+                    });
                 }
             }
         }
     }
+}
+
+/**
+ * Mirror simulation logic: if the real estate asset has an explicit fund transfer,
+ * use its target as the funding source for carrying costs / property tax.
+ */
+function resolveCarryingCostSource(realEstateAsset, costAmount, allAssets) {
+    if (!realEstateAsset.fundTransfers?.length) return null;
+    for (const ft of realEstateAsset.fundTransfers) {
+        if (ft.monthlyMoveValue <= 0) continue;
+        const target = allAssets.find(a => a.displayName === ft.toDisplayName && !a.isClosed);
+        if (target) return target;
+    }
+    return null;
 }
 
 function hasUserRouteForTarget(pipelineMap, key, targetName) {

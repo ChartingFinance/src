@@ -715,6 +715,15 @@ class FinplanTimeline extends LitElement {
 
                             <span class="text-xs font-semibold" style="color: ${accent};">${ev.displayName}</span>
 
+                            <span class="text-xs rounded-full hover:bg-white/60 transition-colors flex items-center justify-center"
+                                  style="color: ${accent}; width: 18px; height: 18px; opacity: 0.75;"
+                                  title="Edit phase"
+                                  @click=${(e) => { e.stopPropagation(); this._onEditPhase(i); }}>
+                                <svg width="11" height="11" viewBox="0 0 12 12" fill="currentColor">
+                                    <path d="M9.1 1.2L10.8 2.9 3.6 10.1 1.2 10.8 1.9 8.4z"/>
+                                </svg>
+                            </span>
+
                             <span class="flex-1"></span>
 
                             <span class="text-xs text-gray-400">
@@ -879,6 +888,17 @@ class FinplanTimeline extends LitElement {
         this.dispatchEvent(new CustomEvent('event-edit', {
             bubbles: true, composed: true,
             detail: { event: this.selectedEvent, index: realIndex },
+        }));
+    }
+
+    _onEditPhase(visibleIndex) {
+        this._onSelectPhase(visibleIndex);
+        const ev = this._visibleEvents[visibleIndex];
+        if (!ev) return;
+        const realIndex = this.lifeEvents.indexOf(ev);
+        this.dispatchEvent(new CustomEvent('event-edit', {
+            bubbles: true, composed: true,
+            detail: { event: ev, index: realIndex },
         }));
     }
 
