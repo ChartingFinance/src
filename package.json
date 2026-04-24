@@ -6,7 +6,9 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node ../tests/quick-start-sanity.mjs"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:sanity": "node tests/quick-start-sanity.mjs"
   },
   "author": "John Milan",
   "license": "ISC",
@@ -22,6 +24,7 @@
     "@tailwindcss/cli": "^4.2.2",
     "@tailwindcss/vite": "^4.2.2",
     "tailwindcss": "^4.2.2",
-    "vite": "^7.3.1"
+    "vite": "^7.3.1",
+    "vitest": "^4.1.4"
   }
 }

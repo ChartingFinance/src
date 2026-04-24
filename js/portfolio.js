@@ -68,9 +68,24 @@ export class Portfolio {
         let portfolio = new Portfolio(modelAssets);
 
         portfolio.monthly = this.monthly.copy();
-        portfolio.yearly = this.yearly.copy();
-        portfolio.total = this.total.copy();
+        portfolio.yearly  = this.yearly.copy();
+        portfolio.total   = this.total.copy();
         portfolio.lifeEvents = this.lifeEvents.map(e => e.copy());
+
+        // Snapshot the trace/summary arrays so consumers of the copy observe
+        // the state produced by the run being copied. Subsequent mutations on
+        // the source portfolio (next chronometer run populating its own
+        // guardrailEvents, yearlySnapshots, etc.) must not leak in.
+        portfolio.guardrailEvents         = [...this.guardrailEvents];
+        portfolio.yearlySnapshots         = [...this.yearlySnapshots];
+        portfolio.generatedReports        = [...this.generatedReports];
+        portfolio.monthlyPackages         = this.monthlyPackages.map(p => p.copy());
+        portfolio.monthlyPropertyTaxes    = [...this.monthlyPropertyTaxes];
+        portfolio.monthlyIncomeTaxes      = [...this.monthlyIncomeTaxes];
+        portfolio.monthlyCapitalGainsTaxes = [...this.monthlyCapitalGainsTaxes];
+        portfolio.displayCapitalGainsTaxes = [...this.displayCapitalGainsTaxes];
+        portfolio.guardrailsParams        = this.guardrailsParams ? { ...this.guardrailsParams } : null;
+
         return portfolio;
 
     }

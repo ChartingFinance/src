@@ -8,7 +8,7 @@
  *   mode        - 'create' | 'edit'
  *   open        - boolean
  *   lifeEvent   - ModelLifeEvent (for edit mode pre-fill)
- *   editIndex   - number (index in activeLifeEvents array)
+ *   editIndex   - number (index in appState.lifeEvents array)
  *   modelAssets - ModelAsset[] (for closes multi-select)
  *
  * Dispatches:

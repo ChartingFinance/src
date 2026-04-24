@@ -76,6 +76,7 @@ import {
 
 // ── Store ───────────────────────────────────────────────────
 import { store } from './finplan-store.js';
+import { AppState } from './app-state.js';
 
 
 // ── Globals ─────────────────────────────────────────────────
@@ -174,30 +175,31 @@ function syncGuardrailsToDOM() {
 Chart.defaults.animation = false;
 
 // ── App state ───────────────────────────────────────────────
+const appState = new AppState({
+    metricName:    Metric.VALUE,
+    microMetric:   Metric.VALUE,
+    portfolioView: 'assets',   // 'assets' | 'flows' | 'sankey'
+});
+
+// Ephemeral UI handles — not state, just references
 let hydraulicViz        = null;
-let activePortfolio     = null;
-let activeLifeEvents    = [];
-let expandedGroups      = new Set([
-    AssetGroup.INCOME, AssetGroup.CAPITAL, AssetGroup.REAL_ESTATE,
-    AssetGroup.RETIREMENT, AssetGroup.EXPENSES, AssetGroup.TAXES,
-]);
-let activeMetricName    = Metric.VALUE;
-let activeMicroMetric   = Metric.VALUE;
 let macroChart          = null;
 let microChart          = null;
 let editingModelAsset   = null;
 let pendingFundingAsset = null;  // stashed real estate asset awaiting funding confirmation
 
-let portfolioView       = 'assets'; // 'assets' | 'flows' | 'sankey'
+// Session-only UI (doesn't outlive a reload)
+let expandedGroups      = new Set([
+    AssetGroup.INCOME, AssetGroup.CAPITAL, AssetGroup.REAL_ESTATE,
+    AssetGroup.RETIREMENT, AssetGroup.EXPENSES, AssetGroup.TAXES,
+]);
+let expandedPipelines   = new Set();
+
 const pipelineList      = document.getElementById('finplanPipelineList');
 const sankeyDiagram     = document.getElementById('finplanSankey');
-let expandedPipelines   = new Set();
-let activePhaseIndex    = 0;
-let activeStoryArc      = null;
-let activeStoryName     = null;
 
 function isRetiredPhase() {
-    const evt = activeLifeEvents?.[0];
+    const evt = appState.lifeEvents?.[0];
     return evt?.type ? LifeEventType.isRetirement(evt.type) : false;
 }
 
@@ -228,7 +230,7 @@ connectChartExpandButtons();
 
 // Wire phase selection — track selected phase for fund transfers
 timeline.addEventListener('phase-select', (ev) => {
-    activePhaseIndex = ev.detail.index;
+    appState.phaseIndex = ev.detail.index;
 });
 
 // Wire timeline asset edit (from annotation emoji clicks)
@@ -242,7 +244,7 @@ timeline.addEventListener('event-edit', (ev) => {
     eventFormModal.mode = 'edit';
     eventFormModal.lifeEvent = lifeEvent;
     eventFormModal.editIndex = index;
-    eventFormModal.eventCount = activeLifeEvents.length;
+    eventFormModal.eventCount = appState.lifeEvents.length;
     eventFormModal.modelAssets = assetList.modelAssets || [];
     eventFormModal.open = true;
 });
@@ -251,21 +253,21 @@ timeline.addEventListener('event-edit', (ev) => {
 eventFormModal.addEventListener('save-life-event', (ev) => {
     const { lifeEvent, index, mode } = ev.detail;
     if (mode === 'create') {
-        activeLifeEvents.push(lifeEvent);
-        activeLifeEvents.sort((a, b) => a.triggerAge - b.triggerAge);
+        appState.lifeEvents.push(lifeEvent);
+        appState.lifeEvents.sort((a, b) => a.triggerAge - b.triggerAge);
     } else if (mode === 'edit') {
-        activeLifeEvents[index] = lifeEvent;
+        appState.lifeEvents[index] = lifeEvent;
     }
     calculate();
 });
 
 eventFormModal.addEventListener('delete-life-event', (ev) => {
     // console.log('[FinPlan] Deleting life event index', ev.detail.index,
-    //     'was:', activeLifeEvents[ev.detail.index]?.type,
-    //     'total before:', activeLifeEvents.length);
-    activeLifeEvents.splice(ev.detail.index, 1);
-    // console.log('[FinPlan] After delete, activeLifeEvents:', activeLifeEvents.length,
-    //     activeLifeEvents.map(e => e.type));
+    //     'was:', appState.lifeEvents[ev.detail.index]?.type,
+    //     'total before:', appState.lifeEvents.length);
+    appState.lifeEvents.splice(ev.detail.index, 1);
+    // console.log('[FinPlan] After delete, appState.lifeEvents:', appState.lifeEvents.length,
+    //     appState.lifeEvents.map(e => e.type));
     calculate();
 });
 
@@ -278,9 +280,9 @@ document.getElementById('btn-donate').addEventListener('click', () => {
 });
 document.getElementById('btn-share').addEventListener('click', () => {
     if (shareModal) {
-        shareModal.modelAssets = activePortfolio?.modelAssets || [];
-        shareModal.lifeEvents = activeLifeEvents;
-        shareModal.portfolioName = activeStoryName || '';
+        shareModal.modelAssets = appState.portfolio?.modelAssets || [];
+        shareModal.lifeEvents = appState.lifeEvents;
+        shareModal.portfolioName = appState.storyName || '';
         shareModal.globalSettings = {
             inflationRate: global_inflationRate,
             filingAs: global_filingAs,
@@ -310,14 +312,14 @@ function openAiSummary(title, content) {
 }
 
 const aiGenerators = {
-    timeline:    () => generateTimelineMarkdown(activePortfolio, activeLifeEvents),
-    portfolio:   () => generatePortfolioSectionMarkdown(activePortfolio),
-    projections: () => generateProjectionsSectionMarkdown(activePortfolio, activeMetricName),
-    montecarlo:  () => generateMonteCarloSectionMarkdown(activePortfolio),
-    guardrails:  () => generateGuardrailsSectionMarkdown(activePortfolio),
-    creditmemos: () => generateCreditMemosSectionMarkdown(activePortfolio),
-    reports:     () => generateReportsSectionMarkdown(activePortfolio),
-    spreadsheet: () => generateSpreadsheetSectionMarkdown(activePortfolio),
+    timeline:    () => generateTimelineMarkdown(appState.portfolio, appState.lifeEvents),
+    portfolio:   () => generatePortfolioSectionMarkdown(appState.portfolio),
+    projections: () => generateProjectionsSectionMarkdown(appState.portfolio, appState.metricName),
+    montecarlo:  () => generateMonteCarloSectionMarkdown(appState.portfolio),
+    guardrails:  () => generateGuardrailsSectionMarkdown(appState.portfolio),
+    creditmemos: () => generateCreditMemosSectionMarkdown(appState.portfolio),
+    reports:     () => generateReportsSectionMarkdown(appState.portfolio),
+    spreadsheet: () => generateSpreadsheetSectionMarkdown(appState.portfolio),
 };
 
 const aiLabels = {
@@ -403,7 +405,7 @@ function loadQuickStartProfile(profile) {
 
     const qs = buildQuickStart(profile);
     assetList.modelAssets = qs.assets;
-    activeLifeEvents = qs.lifeEvents;
+    appState.lifeEvents = qs.lifeEvents;
     calculate();
 }
 document.getElementById('btn-welcome-add-asset').addEventListener('click', () => openCreateAssetModal());
@@ -418,8 +420,8 @@ document.getElementById('simulator-inline').addEventListener('apply-optimized', 
     // Update phase transfers on existing life events (preserves triggerAge, closes, etc.)
     if (lifeEvents) {
         const optimized = lifeEvents.map(ModelLifeEvent.fromJSON);
-        for (let i = 0; i < activeLifeEvents.length && i < optimized.length; i++) {
-            activeLifeEvents[i].phaseTransfers = optimized[i].phaseTransfers;
+        for (let i = 0; i < appState.lifeEvents.length && i < optimized.length; i++) {
+            appState.lifeEvents[i].phaseTransfers = optimized[i].phaseTransfers;
         }
     }
 
@@ -440,24 +442,24 @@ document.getElementById('simulator-inline').addEventListener('apply-optimized', 
 const portfolioViewToggle = document.getElementById('portfolioViewToggle');
 portfolioViewToggle.addEventListener('click', (ev) => {
     const btn = ev.target.closest('[data-pview]');
-    if (!btn || btn.dataset.pview === portfolioView) return;
-    portfolioView = btn.dataset.pview;
+    if (!btn || btn.dataset.pview === appState.portfolioView) return;
+    appState.portfolioView = btn.dataset.pview;
     portfolioViewToggle.querySelectorAll('[data-pview]').forEach(b => {
-        b.classList.toggle('active', b.dataset.pview === portfolioView);
+        b.classList.toggle('active', b.dataset.pview === appState.portfolioView);
     });
     // Hide all, then show the active view
     assetList.style.display = 'none';
     pipelineList.style.display = 'none';
     sankeyDiagram.style.display = 'none';
 
-    if (portfolioView === 'flows') {
+    if (appState.portfolioView === 'flows') {
         pipelineList.style.display = '';
         refreshPipelines();
         if (expandedPipelines.size === 0 && pipelineList.pipelines?.length > 0) {
             for (const p of pipelineList.pipelines) expandedPipelines.add(p.key);
             pipelineList.expandedPipelines = new Set(expandedPipelines);
         }
-    } else if (portfolioView === 'sankey') {
+    } else if (appState.portfolioView === 'sankey') {
         sankeyDiagram.style.display = '';
         refreshSankey();
     } else {
@@ -503,7 +505,7 @@ document.getElementById('btn-add-scenario').addEventListener('click', () => {
 
 document.getElementById('btn-edit-scenario').addEventListener('click', () => {
     _scenarioPopupMode = 'edit';
-    const meta = util_loadLocalScenarioMeta(activeStoryArc, activeStoryName);
+    const meta = util_loadLocalScenarioMeta(appState.storyArc, appState.storyName);
     document.getElementById('scenario-popup-title').textContent = 'Edit Scenario';
     document.getElementById('scenario-title-input').value = meta?.title || '';
     document.getElementById('scenario-note-input').value = meta?.note || '';
@@ -517,7 +519,7 @@ document.getElementById('btn-scenario-create').addEventListener('click', () => {
     const note = document.getElementById('scenario-note-input').value.trim();
 
     if (_scenarioPopupMode === 'edit') {
-        util_saveLocalScenarioMeta(activeStoryArc, activeStoryName, { title, note });
+        util_saveLocalScenarioMeta(appState.storyArc, appState.storyName, { title, note });
         loadScenarioList();
     } else {
         const copyData = document.getElementById('scenario-copy-check').checked;
@@ -539,34 +541,33 @@ scenarioSelect.addEventListener('change', () => {
 });
 
 btnDeleteScenario.addEventListener('click', () => {
-    const meta = util_loadLocalScenarioMeta(activeStoryArc, activeStoryName);
-    const label = meta?.title || activeStoryName;
+    const meta = util_loadLocalScenarioMeta(appState.storyArc, appState.storyName);
+    const label = meta?.title || appState.storyName;
     if (confirm(`Delete scenario "${label}"?`)) {
-        deleteScenario(activeStoryName);
+        deleteScenario(appState.storyName);
     }
 });
 
 // Import popup events
 const importPopup = document.getElementById('popupImportPortfolio');
+function fallbackToLocalStory() {
+    appState.load();
+    if (!appState.storyName) appState.storyName = util_YYYYmm();
+    util_ensureStoryNames(appState.storyArc, appState.storyName);
+    loadScenarioList();
+    loadLocalData();
+}
+
 importPopup.querySelector('.closeBtn').addEventListener('click', () => {
     importPopup.style.display = 'none';
     _pendingImport = null;
-    // Fall back to local data if dismissed
-    activeStoryArc = localStorage.getItem('activeStoryArc') || 'default';
-    activeStoryName = localStorage.getItem('activeStoryName') || util_YYYYmm();
-    util_ensureStoryNames(activeStoryArc, activeStoryName);
-    loadScenarioList();
-    loadLocalData();
+    fallbackToLocalStory();
 });
 
 document.getElementById('btn-import-dismiss').addEventListener('click', () => {
     importPopup.style.display = 'none';
     _pendingImport = null;
-    activeStoryArc = localStorage.getItem('activeStoryArc') || 'default';
-    activeStoryName = localStorage.getItem('activeStoryName') || util_YYYYmm();
-    util_ensureStoryNames(activeStoryArc, activeStoryName);
-    loadScenarioList();
-    loadLocalData();
+    fallbackToLocalStory();
 });
 
 document.getElementById('btn-import-open').addEventListener('click', () => {
@@ -589,21 +590,21 @@ document.getElementById('btn-import-save').addEventListener('click', () => {
 metricSelect.innerHTML = MACRO_METRICS.map(m =>
     `<option value="${m}">${MetricLabel[m]}</option>`
 ).join('');
-metricSelect.value = activeMetricName;
+metricSelect.value = appState.metricName;
 metricSelect.addEventListener('change', () => {
-    activeMetricName = metricSelect.value;
-    if (timeline) timeline.metricName = activeMetricName;
-    assetList.metricName = activeMetricName;
+    appState.metricName = metricSelect.value;
+    if (timeline) timeline.metricName = appState.metricName;
+    assetList.metricName = appState.metricName;
     updateViewingBadge(store.selectedYear, store.selectedMonth);
     refreshVisualizer();
-    if (!activePortfolio) return;
+    if (!appState.portfolio) return;
     rebuildProjectionCharts();
 });
 
 // Micro metric dropdown — filtered by expanded property group, drives Micro chart
 microMetricSelect.addEventListener('change', () => {
-    activeMicroMetric = microMetricSelect.value;
-    if (!activePortfolio) return;
+    appState.microMetric = microMetricSelect.value;
+    if (!appState.portfolio) return;
     rebuildMicroChart();
 });
 
@@ -626,10 +627,10 @@ function updateMetricDropdown() {
         microMetricSelect.innerHTML = ordered.map(m =>
             `<option value="${m}">${MetricLabel[m]}</option>`
         ).join('');
-        if (!ordered.includes(activeMicroMetric)) {
-            activeMicroMetric = ordered[0];
+        if (!ordered.includes(appState.microMetric)) {
+            appState.microMetric = ordered[0];
         }
-        microMetricSelect.value = activeMicroMetric;
+        microMetricSelect.value = appState.microMetric;
     } else {
         microMetricSelect.style.display = 'none';
     }
@@ -644,14 +645,14 @@ store.setSelectedDate(DateInt.today());
 function currentPhaseEvent(year, month) {
     const birthYear = new Date().getFullYear() - global_user_startAge;
     const age = (year - birthYear) + (month - 1) / 12;
-    for (let i = activeLifeEvents.length - 1; i >= 0; i--) {
-        if (age >= activeLifeEvents[i].triggerAge) return activeLifeEvents[i];
+    for (let i = appState.lifeEvents.length - 1; i >= 0; i--) {
+        if (age >= appState.lifeEvents[i].triggerAge) return appState.lifeEvents[i];
     }
-    return activeLifeEvents[0] ?? null;
+    return appState.lifeEvents[0] ?? null;
 }
 
 function updateViewingBadge(year, month) {
-    const metricName = MetricLabel[activeMetricName] || 'Value';
+    const metricName = MetricLabel[appState.metricName] || 'Value';
     const text = `Viewing: ${MONTH_NAMES[month - 1]} ${year} · ${metricName}`;
     const phase = currentPhaseEvent(year, month);
     const bg = phase ? LifeEventType.color(phase.type) + '20' : '#f3f4f6';
@@ -668,43 +669,43 @@ function updateViewingBadge(year, month) {
 }
 
 function cycleMetric() {
-    const idx = MACRO_METRICS.indexOf(activeMetricName);
-    activeMetricName = MACRO_METRICS[(idx + 1) % MACRO_METRICS.length];
-    metricSelect.value = activeMetricName;
-    if (timeline) timeline.metricName = activeMetricName;
-    assetList.metricName = activeMetricName;
+    const idx = MACRO_METRICS.indexOf(appState.metricName);
+    appState.metricName = MACRO_METRICS[(idx + 1) % MACRO_METRICS.length];
+    metricSelect.value = appState.metricName;
+    if (timeline) timeline.metricName = appState.metricName;
+    assetList.metricName = appState.metricName;
     updateViewingBadge(store.selectedYear, store.selectedMonth);
     refreshVisualizer();
-    if (activePortfolio) rebuildProjectionCharts();
+    if (appState.portfolio) rebuildProjectionCharts();
 }
 /** Sync asset-list to show metric values at the selected date */
 function syncAssetListToDate(year, month) {
     const dateInt = DateInt.from(year, month);
     assetList.atDateInt = dateInt;
-    assetList.metricName = activeMetricName;
-    if (activePortfolio?.firstDateInt) {
-        assetList.historyIndex = DateInt.diffMonths(activePortfolio.firstDateInt, dateInt);
+    assetList.metricName = appState.metricName;
+    if (appState.portfolio?.firstDateInt) {
+        assetList.historyIndex = DateInt.diffMonths(appState.portfolio.firstDateInt, dateInt);
     } else {
         assetList.historyIndex = -1;
     }
 }
 
 function refreshPipelines() {
-    if (!activePortfolio || portfolioView !== 'flows') return;
-    const idx = activePortfolio.firstDateInt
-        ? DateInt.diffMonths(activePortfolio.firstDateInt, DateInt.from(store.selectedYear, store.selectedMonth))
+    if (!appState.portfolio || appState.portfolioView !== 'flows') return;
+    const idx = appState.portfolio.firstDateInt
+        ? DateInt.diffMonths(appState.portfolio.firstDateInt, DateInt.from(store.selectedYear, store.selectedMonth))
         : -1;
-    pipelineList.pipelines = buildPipelines(activePortfolio, idx, isRetiredPhase());
+    pipelineList.pipelines = buildPipelines(appState.portfolio, idx, isRetiredPhase());
     pipelineList.expandedPipelines = new Set(expandedPipelines);
 }
 
 function refreshSankey() {
-    if (!activePortfolio || portfolioView !== 'sankey') return;
-    const idx = activePortfolio.firstDateInt
-        ? DateInt.diffMonths(activePortfolio.firstDateInt, DateInt.from(store.selectedYear, store.selectedMonth))
+    if (!appState.portfolio || appState.portfolioView !== 'sankey') return;
+    const idx = appState.portfolio.firstDateInt
+        ? DateInt.diffMonths(appState.portfolio.firstDateInt, DateInt.from(store.selectedYear, store.selectedMonth))
         : -1;
-    sankeyDiagram.pipelines = buildPipelines(activePortfolio, idx, isRetiredPhase());
-    sankeyDiagram.modelAssets = activePortfolio.modelAssets;
+    sankeyDiagram.pipelines = buildPipelines(appState.portfolio, idx, isRetiredPhase());
+    sankeyDiagram.modelAssets = appState.portfolio.modelAssets;
 }
 
 updateViewingBadge(store.selectedYear, store.selectedMonth);
@@ -789,14 +790,13 @@ function initiateActiveData() {
     // Check for shared portfolio in URL first
     if (loadSharedPortfolio()) return;
 
-    activeStoryArc = localStorage.getItem('activeStoryArc') || 'default';
-    activeStoryName = localStorage.getItem('activeStoryName');
-    if (!activeStoryName) {
-        activeStoryName = util_YYYYmm();
-        util_ensureStoryNames(activeStoryArc, activeStoryName);
+    appState.load();
+    if (!appState.storyName) {
+        appState.storyName = util_YYYYmm();
+        util_ensureStoryNames(appState.storyArc, appState.storyName);
         // Auto-create a "Default" scenario meta if none exists
-        if (!util_loadLocalScenarioMeta(activeStoryArc, activeStoryName)) {
-            util_saveLocalScenarioMeta(activeStoryArc, activeStoryName, {
+        if (!util_loadLocalScenarioMeta(appState.storyArc, appState.storyName)) {
+            util_saveLocalScenarioMeta(appState.storyArc, appState.storyName, {
                 title: 'Default', note: 'Your default scenario'
             });
         }
@@ -806,25 +806,25 @@ function initiateActiveData() {
 }
 
 function loadLocalData() {
-    const slotName = activeStoryName;
-    const assetModelsRaw = util_loadLocalAssetModels(activeStoryArc, slotName);
+    const slotName = appState.storyName;
+    const assetModelsRaw = util_loadLocalAssetModels(appState.storyArc, slotName);
     assetList.modelAssets = membrane_rawDataToModelAssets(assetModelsRaw);
 
     // Load life events (or create defaults)
-    const savedEvents = util_loadLocalLifeEvents(activeStoryArc, slotName);
+    const savedEvents = util_loadLocalLifeEvents(appState.storyArc, slotName);
     if (savedEvents) {
-        activeLifeEvents = savedEvents.map(ModelLifeEvent.fromJSON);
-        // console.log('[FinPlan] Loaded', activeLifeEvents.length, 'life events from localStorage:',
-        //     activeLifeEvents.map(e => `${e.type}@${e.triggerAge}`));
+        appState.lifeEvents = savedEvents.map(ModelLifeEvent.fromJSON);
+        // console.log('[FinPlan] Loaded', appState.lifeEvents.length, 'life events from localStorage:',
+        //     appState.lifeEvents.map(e => `${e.type}@${e.triggerAge}`));
     } else {
         // console.log('[FinPlan] No saved life events, creating defaultTimeline');
-        activeLifeEvents = ModelLifeEvent.defaultTimeline(
+        appState.lifeEvents = ModelLifeEvent.defaultTimeline(
             global_user_startAge, global_user_retirementAge
         );
     }
 
     // Load guardrail params
-    const gp = util_loadLocalGuardrailParams(activeStoryArc, slotName);
+    const gp = util_loadLocalGuardrailParams(appState.storyArc, slotName);
     if (gp) {
         global_setGuardrailWithdrawalRate(gp.withdrawalRate);
         global_setGuardrailPreservation(gp.preservation);
@@ -834,7 +834,7 @@ function loadLocalData() {
     syncGuardrailsToDOM();
 
     // Migration: copy legacy per-asset transfers to accumulate phase
-    const accEvent = activeLifeEvents.find(e => LifeEventType.isAccumulation(e.type));
+    const accEvent = appState.lifeEvents.find(e => LifeEventType.isAccumulation(e.type));
     if (accEvent && Object.keys(accEvent.phaseTransfers).length === 0) {
         const assets = assetList.modelAssets || [];
         for (const asset of assets) {
@@ -854,23 +854,23 @@ function calculate() {
 
     // When no assets, keep phase trigger ages in sync with global settings
     if (modelAssets.length === 0) {
-        const accum = activeLifeEvents.find(e => e.type === LifeEvent.ACCUMULATE);
-        const retire = activeLifeEvents.find(e => e.type === LifeEvent.RETIRE);
+        const accum = appState.lifeEvents.find(e => e.type === LifeEvent.ACCUMULATE);
+        const retire = appState.lifeEvents.find(e => e.type === LifeEvent.RETIRE);
         if (accum) accum.triggerAge = global_user_startAge;
         if (retire) retire.triggerAge = global_user_retirementAge;
     }
 
     // Remove Accumulate phase when current age >= retirement age (already retired)
     if (global_user_startAge >= global_user_retirementAge) {
-        const idx = activeLifeEvents.findIndex(e => e.type === LifeEvent.ACCUMULATE);
+        const idx = appState.lifeEvents.findIndex(e => e.type === LifeEvent.ACCUMULATE);
         if (idx !== -1) {
-            activeLifeEvents.splice(idx, 1);
+            appState.lifeEvents.splice(idx, 1);
         }
     }
 
     // Prune orphaned phase transfer entries that reference assets no longer in the portfolio
     const assetNames = new Set(modelAssets.map(a => a.displayName));
-    for (const event of activeLifeEvents) {
+    for (const event of appState.lifeEvents) {
         if (!event.phaseTransfers) continue;
         // Remove source entries for assets that no longer exist
         for (const name of Object.keys(event.phaseTransfers)) {
@@ -889,26 +889,26 @@ function calculate() {
     }
 
     const portfolio = new Portfolio(modelAssets, true);
-    portfolio.lifeEvents = activeLifeEvents.map(e => e.copy());
+    portfolio.lifeEvents = appState.lifeEvents.map(e => e.copy());
 
     chronometer_run(portfolio);
-    activePortfolio = portfolio;
+    appState.portfolio = portfolio;
 
     // Update sidebar
     assetList.modelAssets = [...portfolio.modelAssets];
     assetList.expandedGroups = new Set(expandedGroups);
-    assetList.activeLifeEvent = activeLifeEvents[0] ?? null;
+    assetList.activeLifeEvent = appState.lifeEvents[0] ?? null;
     assetList.portfolio = portfolio;
     syncAssetListToDate(store.selectedYear, store.selectedMonth);
 
     // Update flows/sankey views
-    if (portfolioView === 'flows') {
+    if (appState.portfolioView === 'flows') {
         refreshPipelines();
         if (expandedPipelines.size === 0 && pipelineList.pipelines?.length > 0) {
             for (const p of pipelineList.pipelines) expandedPipelines.add(p.key);
             pipelineList.expandedPipelines = new Set(expandedPipelines);
         }
-    } else if (portfolioView === 'sankey') {
+    } else if (appState.portfolioView === 'sankey') {
         refreshSankey();
     }
 
@@ -968,13 +968,13 @@ function getGuardrailParams() {
 }
 
 function doMonteCarlo() {
-    if (!activePortfolio?.firstDateInt) return;
+    if (!appState.portfolio?.firstDateInt) return;
     const withGuardrails = document.getElementById('mc-with-guardrails')?.checked;
     runMonteCarlo(
-        activePortfolio.modelAssets, mcContainer, 1000,
+        appState.portfolio.modelAssets, mcContainer, 1000,
         withGuardrails ? getGuardrailParams() : null,
         global_getRetirementDateInt(),
-        false, activeLifeEvents
+        false, appState.lifeEvents
     );
     // MC renders async (setTimeout 50ms) — apply phase markers after it's done
     setTimeout(() => {
@@ -987,10 +987,10 @@ function doMonteCarlo() {
 }
 
 function doGuardrails() {
-    if (!activePortfolio?.firstDateInt) return;
+    if (!appState.portfolio?.firstDateInt) return;
     runGuardrails(
-        activePortfolio.modelAssets, guardrailsCanvas, getGuardrailParams(),
-        global_getRetirementDateInt(), activeLifeEvents
+        appState.portfolio.modelAssets, guardrailsCanvas, getGuardrailParams(),
+        global_getRetirementDateInt(), appState.lifeEvents
     );
     // Apply phase markers after render
     setTimeout(() => {
@@ -1003,27 +1003,27 @@ function doGuardrails() {
 }
 
 function initVisualizer() {
-    if (!activePortfolio) return;
+    if (!appState.portfolio) return;
     hydraulicViz = new HydraulicVisualizer('finplan-hydraulic-container');
-    hydraulicViz.init(activePortfolio);
+    hydraulicViz.init(appState.portfolio);
     refreshVisualizer();
 }
 
 function refreshVisualizer() {
-    if (!hydraulicViz || !activePortfolio) return;
-    const idx = activePortfolio.firstDateInt
-        ? DateInt.diffMonths(activePortfolio.firstDateInt, DateInt.from(store.selectedYear, store.selectedMonth))
+    if (!hydraulicViz || !appState.portfolio) return;
+    const idx = appState.portfolio.firstDateInt
+        ? DateInt.diffMonths(appState.portfolio.firstDateInt, DateInt.from(store.selectedYear, store.selectedMonth))
         : -1;
-    hydraulicViz.update(idx, isRetiredPhase(), activeMetricName);
+    hydraulicViz.update(idx, isRetiredPhase(), appState.metricName);
 }
 
 function doMaximize() {
     const sim = document.getElementById('simulator-inline');
     if (!sim) return;
-    // console.log('[FinPlan] doMaximize: activeLifeEvents:', activeLifeEvents.length,
-    //     activeLifeEvents.map(e => `${e.type}@${e.triggerAge}`));
+    // console.log('[FinPlan] doMaximize: appState.lifeEvents:', appState.lifeEvents.length,
+    //     appState.lifeEvents.map(e => `${e.type}@${e.triggerAge}`));
     sim.modelAssets = assetList.modelAssets || [];
-    sim.lifeEvents = activeLifeEvents;
+    sim.lifeEvents = appState.lifeEvents;
     sim.guardrailParams = getGuardrailParams();
     sim.backtestYear = global_backtestYear;
     sim.fitnessBalance = 100;
@@ -1037,19 +1037,19 @@ function doMaximize() {
 function buildPhaseMarkersForCharts() {
     const cursorDateInt = DateInt.from(store.selectedYear, store.selectedMonth);
     return charting_buildPhaseMarkers(
-        activePortfolio, activeLifeEvents,
+        appState.portfolio, appState.lifeEvents,
         global_user_startAge, global_user_retirementAge, cursorDateInt
     );
 }
 
 function rebuildProjectionCharts() {
-    if (!activePortfolio) return;
+    if (!appState.portfolio) return;
 
     const markers = buildPhaseMarkersForCharts();
 
     {
         // Macro: always fully grouped (never expand into individual assets)
-        charting_buildFromPortfolio(activePortfolio, true, activeMetricName, new Set());
+        charting_buildFromPortfolio(appState.portfolio, true, appState.metricName, new Set());
 
         if (macroChart) macroChart.destroy();
         if (charting_jsonMetric1ChartData) {
@@ -1077,27 +1077,27 @@ function rebuildProjectionCharts() {
 }
 
 function rebuildMicroChart(markers) {
-    if (!activePortfolio) return;
+    if (!appState.portfolio) return;
     if (!markers) markers = buildPhaseMarkersForCharts();
 
-    const labels = charting_buildDisplayLabels(activePortfolio.firstDateInt, activePortfolio.lastDateInt);
+    const labels = charting_buildDisplayLabels(appState.portfolio.firstDateInt, appState.portfolio.lastDateInt);
 
     // Build datasets
     const datasets = [];
 
     if (expandedGroups.size > 0) {
         const groups = new Map();
-        for (const asset of activePortfolio.modelAssets) {
+        for (const asset of appState.portfolio.modelAssets) {
             const groupKey = classifyAssetGroup(asset.instrument);
             if (!groups.has(groupKey)) groups.set(groupKey, []);
             groups.get(groupKey).push(asset);
         }
         // ALL group: every asset regardless of instrument group
         if (expandedGroups.has(AssetGroup.ALL)) {
-            for (const asset of activePortfolio.modelAssets) {
+            for (const asset of appState.portfolio.modelAssets) {
                 datasets.push({
                     label: asset.displayName,
-                    data: asset.getDisplayHistory(activeMicroMetric),
+                    data: asset.getDisplayHistory(appState.microMetric),
                     backgroundColor: getAssetChartColor(asset.instrument),
                 });
             }
@@ -1110,7 +1110,7 @@ function rebuildMicroChart(markers) {
             for (const asset of assets) {
                 datasets.push({
                     label: asset.displayName,
-                    data: asset.getDisplayHistory(activeMicroMetric),
+                    data: asset.getDisplayHistory(appState.microMetric),
                     backgroundColor: getAssetChartColor(asset.instrument),
                 });
             }
@@ -1157,7 +1157,7 @@ function buildSimulationMarkers(chart, fullLabels) {
 
     // Accumulate line (if visible)
     if (global_user_startAge < global_user_retirementAge) {
-        const accEvent = activeLifeEvents.find(ev => ev.type === 'accumulate');
+        const accEvent = appState.lifeEvents.find(ev => ev.type === 'accumulate');
         if (accEvent) {
             const accLabel = `Jan ${accEvent.triggerDateInt.year}`;
             const accIdx = labels.indexOf(accLabel);
@@ -1177,7 +1177,7 @@ function buildSimulationMarkers(chart, fullLabels) {
 }
 
 function updateProjectionCursor() {
-    if (!activePortfolio) return;
+    if (!appState.portfolio) return;
     const markers = buildPhaseMarkersForCharts();
     if (macroChart) {
         macroChart.options.plugins.dateMarkers = { markers };
@@ -1210,9 +1210,9 @@ function updateTimeline() {
     timeline.startAge = global_user_startAge;
     timeline.retirementAge = global_user_retirementAge;
     timeline.finishAge = global_user_finishAge;
-    timeline.lifeEvents = activeLifeEvents;
-    timeline.portfolio = activePortfolio;
-    timeline.metricName = activeMetricName;
+    timeline.lifeEvents = appState.lifeEvents;
+    timeline.portfolio = appState.portfolio;
+    timeline.metricName = appState.metricName;
 }
 
 // ── Asset List Events ───────────────────────────────────────
@@ -1237,7 +1237,7 @@ function connectAssetListEvents() {
         } else {
             // Fallback: default Mid Career
             assetList.modelAssets = quickStartAssets();
-            activeLifeEvents = quickStartLifeEvents();
+            appState.lifeEvents = quickStartLifeEvents();
             calculate();
         }
     });
@@ -1359,7 +1359,7 @@ function connectFundingModal() {
 function connectTransferModal() {
     transferModal.addEventListener('save-transfers', (ev) => {
         const { displayName, fundTransfers } = ev.detail;
-        const activePhase = activeLifeEvents[activePhaseIndex] ?? activeLifeEvents[0];
+        const activePhase = appState.lifeEvents[appState.phaseIndex] ?? appState.lifeEvents[0];
         if (activePhase) {
             activePhase.phaseTransfers[displayName] = fundTransfers.map(ft => ft.toJSON());
         }
@@ -1368,11 +1368,11 @@ function connectTransferModal() {
 }
 
 function showPopupTransfers(currentDisplayName) {
-    const activePhase = activeLifeEvents[activePhaseIndex] ?? activeLifeEvents[0];
+    const activePhase = appState.lifeEvents[appState.phaseIndex] ?? appState.lifeEvents[0];
     transferModal.currentDisplayName = currentDisplayName;
     transferModal.modelAssets = assetList.modelAssets || [];
     transferModal.phaseTransfers = activePhase?.phaseTransfers ?? {};
-    transferModal.portfolio = activePortfolio;
+    transferModal.portfolio = appState.portfolio;
     transferModal.open = true;
 }
 
@@ -1432,15 +1432,15 @@ function connectChartExpandButtons() {
 // ── Persistence ─────────────────────────────────────────────
 
 function saveLocalData() {
-    const slotName = activeStoryName;
+    const slotName = appState.storyName;
     const assets = assetList.modelAssets || [];
-    const lifeEvents = activeLifeEvents.map(e => e.toJSON());
+    const lifeEvents = appState.lifeEvents.map(e => e.toJSON());
     const guardrails = getGuardrailParams();
 
-    util_saveLocalAssetModels(activeStoryArc, slotName, assets);
-    util_saveLocalLifeEvents(activeStoryArc, slotName, lifeEvents);
-    util_saveLocalGuardrailParams(activeStoryArc, slotName, guardrails);
-    localStorage.setItem('activeStoryName', slotName);
+    util_saveLocalAssetModels(appState.storyArc, slotName, assets);
+    util_saveLocalLifeEvents(appState.storyArc, slotName, lifeEvents);
+    util_saveLocalGuardrailParams(appState.storyArc, slotName, guardrails);
+    // appState.storyName setter keeps localStorage in sync — no explicit write needed here
 
     // Monthly snapshot — always overwrite so it reflects the last state for this month
     const snapshotKey = slotName + '@' + util_YYYYmm();
@@ -1454,24 +1454,24 @@ function saveLocalData() {
 // ── Scenario Management ──────────────────────────────────────
 
 function loadScenarioList() {
-    const storyNames = util_loadStoryNames(activeStoryArc);
+    const storyNames = util_loadStoryNames(appState.storyArc);
 
-    // Ensure current activeStoryName is in the list
+    // Ensure current appState.storyName is in the list
     if (storyNames.length === 0) {
-        storyNames.push(activeStoryName);
-        util_ensureStoryNames(activeStoryArc, activeStoryName);
+        storyNames.push(appState.storyName);
+        util_ensureStoryNames(appState.storyArc, appState.storyName);
     }
 
     // Populate dropdown
     scenarioSelect.innerHTML = '';
     for (const name of storyNames) {
-        const meta = util_loadLocalScenarioMeta(activeStoryArc, name);
+        const meta = util_loadLocalScenarioMeta(appState.storyArc, name);
         const option = document.createElement('option');
         option.value = name;
         option.textContent = meta?.title || name;
         scenarioSelect.appendChild(option);
     }
-    scenarioSelect.value = activeStoryName;
+    scenarioSelect.value = appState.storyName;
 
     // Show note for active scenario
     updateScenarioNote();
@@ -1481,19 +1481,19 @@ function loadScenarioList() {
 }
 
 function updateScenarioNote() {
-    const meta = util_loadLocalScenarioMeta(activeStoryArc, activeStoryName);
+    const meta = util_loadLocalScenarioMeta(appState.storyArc, appState.storyName);
     scenarioNote.textContent = meta?.note || '';
     scenarioNote.title = meta?.note || '';
 }
 
 function updateScenarioSparkline() {
-    if (!scenarioSparkline || !activePortfolio) {
+    if (!scenarioSparkline || !appState.portfolio) {
         if (scenarioSparkline) scenarioSparkline.innerHTML = '';
         return;
     }
 
     // Build total portfolio value history
-    const assets = activePortfolio.modelAssets;
+    const assets = appState.portfolio.modelAssets;
     let histLen = 0;
     for (const a of assets) {
         const h = a.getHistory?.('value');
@@ -1531,8 +1531,8 @@ function updateScenarioSparkline() {
 
     // "You are here" cursor marker
     let cursorMarker = '';
-    if (activePortfolio.firstDateInt) {
-        const cursorIdx = DateInt.diffMonths(activePortfolio.firstDateInt, DateInt.from(store.selectedYear, store.selectedMonth));
+    if (appState.portfolio.firstDateInt) {
+        const cursorIdx = DateInt.diffMonths(appState.portfolio.firstDateInt, DateInt.from(store.selectedYear, store.selectedMonth));
         if (cursorIdx >= 0 && cursorIdx < data.length) {
             const cx = PAD + (cursorIdx / (data.length - 1)) * (W - 2 * PAD);
             const cy = H - PAD - ((data[cursorIdx] - min) / range) * (H - 2 * PAD);
@@ -1550,17 +1550,16 @@ function updateScenarioSparkline() {
 }
 
 function switchScenario(storyName) {
-    if (storyName === activeStoryName) return;
+    if (storyName === appState.storyName) return;
 
     // Save current scenario before switching
     saveLocalData();
 
     // Switch
-    activeStoryName = storyName;
-    localStorage.setItem('activeStoryName', activeStoryName);
+    appState.storyName = storyName;
 
     // Load guardrail params for new scenario
-    const gp = util_loadLocalGuardrailParams(activeStoryArc, storyName);
+    const gp = util_loadLocalGuardrailParams(appState.storyArc, storyName);
     if (gp) {
         global_setGuardrailWithdrawalRate(gp.withdrawalRate);
         global_setGuardrailPreservation(gp.preservation);
@@ -1571,7 +1570,7 @@ function switchScenario(storyName) {
     // Load data and recalculate
     loadLocalData();
     updateScenarioNote();
-    btnDeleteScenario.style.display = util_loadStoryNames(activeStoryArc).length > 1 ? '' : 'none';
+    btnDeleteScenario.style.display = util_loadStoryNames(appState.storyArc).length > 1 ? '' : 'none';
 }
 
 function createScenario(title, note, copyData = true) {
@@ -1583,36 +1582,34 @@ function createScenario(title, note, copyData = true) {
 
     if (copyData) {
         // ensureStoryNames copies previous slot data to new slot
-        util_ensureStoryNames(activeStoryArc, newStoryName);
+        util_ensureStoryNames(appState.storyArc, newStoryName);
     } else {
         // Just register the name without copying data — empty scenario
-        util_ensureStoryNames(activeStoryArc, newStoryName);
+        util_ensureStoryNames(appState.storyArc, newStoryName);
         // Clear the copied data so it starts empty
-        const baseKey = activeStoryArc + '+' + newStoryName;
+        const baseKey = appState.storyArc + '+' + newStoryName;
         localStorage.removeItem(baseKey);
-        localStorage.removeItem(`lifeEvents_${activeStoryArc}_${newStoryName}`);
+        localStorage.removeItem(`lifeEvents_${appState.storyArc}_${newStoryName}`);
         localStorage.removeItem(baseKey + '+guardrails');
     }
 
-    util_saveLocalScenarioMeta(activeStoryArc, newStoryName, { title, note });
+    util_saveLocalScenarioMeta(appState.storyArc, newStoryName, { title, note });
 
-    activeStoryName = newStoryName;
-    localStorage.setItem('activeStoryName', activeStoryName);
+    appState.storyName = newStoryName;
 
     loadScenarioList();
     loadLocalData();
 }
 
 function deleteScenario(storyName) {
-    const storyNames = util_loadStoryNames(activeStoryArc);
+    const storyNames = util_loadStoryNames(appState.storyArc);
     if (storyNames.length <= 1) return; // Never delete last scenario
 
-    util_deleteScenario(activeStoryArc, storyName);
+    util_deleteScenario(appState.storyArc, storyName);
 
     // Switch to first remaining scenario
-    const remaining = util_loadStoryNames(activeStoryArc);
-    activeStoryName = remaining[0] || util_YYYYmm();
-    localStorage.setItem('activeStoryName', activeStoryName);
+    const remaining = util_loadStoryNames(appState.storyArc);
+    appState.storyName = remaining[0] || util_YYYYmm();
 
     loadScenarioList();
     loadLocalData();
@@ -1679,9 +1676,9 @@ function applyImportedPortfolio(data, persist) {
 
     // Load life events
     if (data.lifeEvents?.length) {
-        activeLifeEvents = data.lifeEvents.map(ModelLifeEvent.fromJSON);
+        appState.lifeEvents = data.lifeEvents.map(ModelLifeEvent.fromJSON);
     } else {
-        activeLifeEvents = ModelLifeEvent.defaultTimeline(
+        appState.lifeEvents = ModelLifeEvent.defaultTimeline(
             global_user_startAge, global_user_retirementAge
         );
     }
@@ -1691,7 +1688,7 @@ function applyImportedPortfolio(data, persist) {
         const assets = membrane_rawDataToModelAssets(data.modelAssets);
 
         // Migration: copy legacy per-asset transfers to accumulate phase
-        const accEvent = activeLifeEvents.find(e => LifeEventType.isAccumulation(e.type));
+        const accEvent = appState.lifeEvents.find(e => LifeEventType.isAccumulation(e.type));
         if (accEvent && Object.keys(accEvent.phaseTransfers).length === 0) {
             for (const asset of assets) {
                 if (asset.fundTransfers?.length > 0) {
@@ -1705,19 +1702,18 @@ function applyImportedPortfolio(data, persist) {
 
     if (persist) {
         // Create a new scenario for the imported portfolio
-        activeStoryArc = localStorage.getItem('activeStoryArc') || 'default';
+        appState.load();
         const title = document.getElementById('import-title-input').value || 'Shared Portfolio';
         const note = document.getElementById('import-note-input').value || '';
         const newStoryName = util_YYYYmm() + '-' + Date.now().toString(36);
-        util_ensureStoryNames(activeStoryArc, newStoryName);
-        util_saveLocalScenarioMeta(activeStoryArc, newStoryName, { title, note });
-        activeStoryName = newStoryName;
-        localStorage.setItem('activeStoryName', activeStoryName);
+        util_ensureStoryNames(appState.storyArc, newStoryName);
+        util_saveLocalScenarioMeta(appState.storyArc, newStoryName, { title, note });
+        appState.storyName = newStoryName;
         loadScenarioList();
     } else {
         // Temporary load — init arc/name but don't persist as scenario
-        activeStoryArc = localStorage.getItem('activeStoryArc') || 'default';
-        activeStoryName = localStorage.getItem('activeStoryName') || util_YYYYmm();
+        appState.load();
+        if (!appState.storyName) appState.storyName = util_YYYYmm();
         loadScenarioList();
     }
 

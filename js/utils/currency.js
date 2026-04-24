@@ -3,12 +3,11 @@
  *
  * Immutable-friendly Currency value object.
  *
- * Changes from original:
- *  - Constructor handles 0 correctly (old version treated 0 as falsy → defaulted to 0.0 anyway,
- *    but `add()` skipped when amount was 0 because of `if (currency && currency.amount)`)
- *  - `add` / `subtract` guard against null but not against zero (fixes silent-skip bug)
- *  - Added `plus()` / `minus()` immutable variants for functional pipelines
- *  - `toFixed()` rounding happens only on output, not on construction (avoids accumulated drift)
+ * Rounding policy:
+ *   The internal `amount` is stored at full float precision. Rounding to cents
+ *   happens only at the output boundary via `toFixed()` / `toString()` / `toJSON()`.
+ *   This avoids accumulated drift from repeated construction in hot paths (e.g.
+ *   fractional capital-gains splits, monthly growth).
  */
 
 export class Currency {
@@ -16,7 +15,7 @@ export class Currency {
    * @param {number} [amount=0]
    */
   constructor(amount = 0) {
-    this.amount = typeof amount === 'number' ? Math.round(amount * 100) / 100 : 0;
+    this.amount = typeof amount === 'number' && Number.isFinite(amount) ? amount : 0;
   }
 
   // ── Parsing ──────────────────────────────────────────────────────
@@ -52,8 +51,7 @@ export class Currency {
 
   divide(divisor) {
     if (divisor === 0) {
-      console.error('Currency.divide: division by zero');
-      return this;
+      throw new RangeError('Currency.divide: division by zero');
     }
     this.amount /= divisor;
     return this;
@@ -74,7 +72,10 @@ export class Currency {
   plus(other)    { return new Currency(this.amount + (other?.amount ?? 0)); }
   minus(other)   { return new Currency(this.amount - (other?.amount ?? 0)); }
   times(factor)  { return new Currency(this.amount * factor); }
-  dividedBy(d)   { return d === 0 ? Currency.zero() : new Currency(this.amount / d); }
+  dividedBy(d)   {
+    if (d === 0) throw new RangeError('Currency.dividedBy: division by zero');
+    return new Currency(this.amount / d);
+  }
   negated()      { return new Currency(-this.amount); }
 
   // ── Queries ──────────────────────────────────────────────────────

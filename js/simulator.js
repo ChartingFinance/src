@@ -34,8 +34,23 @@ const INSTRUMENT_MUTABILITY = {
     [Instrument.MONTHLY_EXPENSE]:   0.25,
 };
 
+// Minimum absolute flex range for partially-mutable genes, in percentage
+// points. Without this, a gene whose originalValue is 0 would have a
+// multiplicative flex of 0 and be permanently locked — preventing the GA
+// from discovering routings the user hasn't yet configured.
+export const PARTIAL_FLEX_FLOOR = 10;
+
 function getGeneMutability(instrument) {
     return INSTRUMENT_MUTABILITY[instrument] ?? 1;
+}
+
+/** Exploration bounds for a partially-mutable gene, clamped to [0, 100]. */
+export function partialGeneBounds(originalValue, mutability) {
+    const absFlex = Math.max(originalValue * mutability, PARTIAL_FLEX_FLOOR);
+    return {
+        lo: Math.max(0, originalValue - absFlex),
+        hi: Math.min(100, originalValue + absFlex),
+    };
 }
 
 // Guardrail gene ranges: [min, max]
@@ -46,7 +61,12 @@ const GUARDRAIL_RANGES = {
     adjustment:     [2, 25],     // 2% – 25%
 };
 
-self.onmessage = function(event) {
+// Only wire the worker entry when running inside a Worker context.
+// Node-side tests (vitest) import this module to exercise the Simulator class
+// and exported helpers; without this guard the import would throw on `self`.
+const isWorker = typeof self !== 'undefined' && typeof self.postMessage === 'function';
+
+if (isWorker) self.onmessage = function(event) {
 
     setActiveTaxTable(new TaxTable());
 
@@ -90,7 +110,7 @@ self.onmessage = function(event) {
 
 }
 
-class Simulator {
+export class Simulator {
     constructor(portfolio, guardrailParams, fitnessBalance, backtestYear = 'current') {
 
         this.backtestYear = backtestYear;
@@ -138,8 +158,12 @@ class Simulator {
     calculateFitness(portfolio) {
         const endingValue = portfolio.finishValue().amount;
 
-        // Hard constraint: portfolio failed
-        if (endingValue <= 0) return 0;
+        // Failure region: return a negative score scaled by how deep the
+        // failure is, so the GA can climb from worse failures toward less-bad
+        // ones. All successes (>= 0 pre-penalty) outrank all failures.
+        if (endingValue <= 0) {
+            return -1 - Math.abs(endingValue) / THEORETICAL_MAX_PORTFOLIO;
+        }
 
         // Total lifetime cash flow from yearly guardrail snapshots
         const totalCashFlow = portfolio.yearlySnapshots
@@ -622,10 +646,7 @@ class Simulator {
     _randomFtGene(gene) {
         if (gene.mutability === 0) return gene.originalValue;
         if (gene.mutability < 1) {
-            // Partial: vary within ±mutability of original, clamped 0–100
-            const range = gene.originalValue * gene.mutability;
-            const lo = Math.max(0, gene.originalValue - range);
-            const hi = Math.min(100, gene.originalValue + range);
+            const { lo, hi } = partialGeneBounds(gene.originalValue, gene.mutability);
             return lo + Math.random() * (hi - lo);
         }
         return Math.random() * 100;
@@ -635,8 +656,8 @@ class Simulator {
     _clampFtGene(gene, value) {
         if (gene.mutability === 0) return gene.originalValue;
         if (gene.mutability < 1) {
-            const range = gene.originalValue * gene.mutability;
-            return Math.max(0, Math.min(100, Math.max(gene.originalValue - range, Math.min(gene.originalValue + range, value))));
+            const { lo, hi } = partialGeneBounds(gene.originalValue, gene.mutability);
+            return Math.max(lo, Math.min(hi, value));
         }
         return Math.max(0, Math.min(100, value));
     }
