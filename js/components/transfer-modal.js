@@ -17,7 +17,7 @@
 import { LitElement, html } from 'lit';
 import { Chart } from 'chart.js';
 import { InstrumentType, InstrumentMeta } from '../instruments/instrument.js';
-import { FundTransfer, Frequency } from '../fund-transfer.js';
+import { FundTransfer } from '../fund-transfer.js';
 import { colorRange } from '../utils/html.js';
 import { findByName } from '../portfolio.js';
 import { Metric } from '../metric.js';
@@ -249,7 +249,7 @@ class TransferModal extends LitElement {
             const closeMoveValue = parseInt(form.querySelector('[name="closeMoveValue"]').value, 10) || 0;
 
             if (monthlyMoveValue > 0 || closeMoveValue > 0) {
-                fundTransfers.push(new FundTransfer(toDisplayName, Frequency.MONTHLY, monthlyMoveValue, closeMoveValue));
+                fundTransfers.push(new FundTransfer(toDisplayName, monthlyMoveValue, closeMoveValue));
             }
         }
 

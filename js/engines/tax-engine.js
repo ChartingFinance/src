@@ -72,7 +72,7 @@ export class TaxEngine {
                 for (const fundTransfer of modelAsset.fundTransfers) {
 
                     // so we don't blow up
-                    if (!fundTransfer.isActiveForMonth(currentDateInt.month)) continue;
+                    if (!fundTransfer.hasRecurring) continue;
                     fundTransfer.bind(modelAsset, this.modelAssets);
                     if (!fundTransfer.toModel) continue;
                     if (remaining.amount == 0) break;

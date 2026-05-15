@@ -35,7 +35,7 @@ export class RebalanceEngine {
      * Execute rebalancing transfers for a single asset.
      * Only processes fundable assets not handled by payroll or expense engines.
      */
-    applyRebalanceTransfers(modelAsset, currentDateInt) {
+    applyRebalanceTransfers(modelAsset, _currentDateInt) {
 
         const inst = modelAsset.instrument;
 
@@ -47,7 +47,7 @@ export class RebalanceEngine {
         if (!modelAsset.fundTransfers?.length) return;
 
         for (const ft of modelAsset.fundTransfers) {
-            if (!ft.hasRecurring || !ft.isActiveForMonth(currentDateInt.month)) continue;
+            if (!ft.hasRecurring) continue;
 
             ft.bind(modelAsset, this.modelAssets);
             if (!ft.toModel || ft.toModel.isClosed) continue;

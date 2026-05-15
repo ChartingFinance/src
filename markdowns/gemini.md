@@ -25,8 +25,8 @@
 ### 🔧 {Asset.displayName} ({Instrument.WORKING_INCOME})
 * **Timeline:** {startDate} to {finishDate}
 * **Income Rate:** ${startCurrency}/mo (Self-Employed: {isSelfEmployed})
-* **[Transfers / Piping]:** * ↳ {frequency} {amount/percent} to `{targetAsset1}` (Pre-tax)
-  * ↳ {frequency} {amount/percent} to `{targetAsset2}` (Post-tax)
+* **[Transfers / Piping]:** * ↳ {amount/percent}/mo to `{targetAsset1}` (Pre-tax)
+  * ↳ {amount/percent}/mo to `{targetAsset2}` (Post-tax)
 * **Terminal Rollup:** ${totalNetIncome} Total Net Income Generated, ${totalFICA} FICA Paid.
 
 ### 🏡 {Asset.displayName} ({Instrument.REAL_ESTATE})

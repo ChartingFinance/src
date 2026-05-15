@@ -22,7 +22,7 @@
 
 import { Portfolio } from '../js/portfolio.js';
 import { ModelAsset } from '../js/model-asset.js';
-import { FundTransfer, Frequency } from '../js/fund-transfer.js';
+import { FundTransfer } from '../js/fund-transfer.js';
 import { Instrument } from '../js/instruments/instrument.js';
 import { Currency } from '../js/utils/currency.js';
 import { DateInt } from '../js/utils/date-int.js';
@@ -91,7 +91,7 @@ const expenses = new ModelAsset({
 
 // Accumulate phase: 20% of net income → 401K
 salary.fundTransfers = [
-    new FundTransfer('401K', Frequency.MONTHLY, 20, 0),
+    new FundTransfer('401K', 20, 0),
 ];
 
 // ── Build life events ────────────────────────────────────────────────

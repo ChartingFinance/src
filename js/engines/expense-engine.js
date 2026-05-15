@@ -43,7 +43,7 @@ export class ExpenseEngine {
         if (modelAsset.fundTransfers?.length > 0) {
 
             for (const fundTransfer of modelAsset.fundTransfers) {
-                if (!fundTransfer.isActiveForMonth(currentDateInt.month)) continue;
+                if (!fundTransfer.hasRecurring) continue;
                 fundTransfer.bind(modelAsset, this.modelAssets);
                 if (!fundTransfer.toModel) continue;
                 const expenseAmount = fundTransfer.calculate();
@@ -119,7 +119,7 @@ export class ExpenseEngine {
             for (const fundTransfer of modelAsset.fundTransfers) {
 
                 // so we don't blow up
-                if (!fundTransfer.isActiveForMonth(currentDateInt.month)) continue;
+                if (!fundTransfer.hasRecurring) continue;
                 fundTransfer.bind(modelAsset, this.modelAssets);
                 if (!fundTransfer.toModel) continue;
                 if (remaining.amount == 0) break;
@@ -178,7 +178,7 @@ export class ExpenseEngine {
 
         if (modelAsset.fundTransfers?.length) {
             for (const fundTransfer of modelAsset.fundTransfers) {
-                if (!fundTransfer.isActiveForMonth(currentDateInt.month)) continue;
+                if (!fundTransfer.hasRecurring) continue;
                 fundTransfer.bind(modelAsset, this.modelAssets);
                 if (!fundTransfer.toModel) continue;
                 if (remaining.amount == 0) break;

@@ -38,7 +38,7 @@ const testData = [
         "longTermCapitalHoldingPercentage": { "annualReturnRate": 0 },
         "annualReturnRate": { "annualReturnRate": 0.03 },
         "fundTransfers": [
-            { "toDisplayName": "Taxable Assets", "frequency": "monthly", "moveValue": 100, "closeMoveValue": 100 }
+            { "toDisplayName": "Taxable Assets", "moveValue": 100, "closeMoveValue": 100 }
         ],
         "isSelfEmployed": false,
         "annualTaxRate": { "annualReturnRate": 0.01 }
@@ -55,7 +55,7 @@ const testData = [
         "longTermCapitalHoldingPercentage": { "annualReturnRate": 0 },
         "annualReturnRate": { "annualReturnRate": 0.0275 },
         "fundTransfers": [
-            { "toDisplayName": "Taxable Assets", "frequency": "none", "moveValue": 0, "closeMoveValue": 100 }
+            { "toDisplayName": "Taxable Assets", "moveValue": 0, "closeMoveValue": 100 }
         ],
         "isSelfEmployed": false,
         "annualTaxRate": { "annualReturnRate": 0 }
@@ -177,7 +177,7 @@ const testData = [
         "longTermCapitalHoldingPercentage": { "annualReturnRate": 0 },
         "annualReturnRate": { "annualReturnRate": 0.2 },
         "fundTransfers": [
-            { "toDisplayName": "Taxable Assets", "frequency": "none", "moveValue": 0, "closeMoveValue": 100 }
+            { "toDisplayName": "Taxable Assets", "moveValue": 0, "closeMoveValue": 100 }
         ],
         "isSelfEmployed": false,
         "annualTaxRate": { "annualReturnRate": 0 }
@@ -194,8 +194,8 @@ const testData = [
         "longTermCapitalHoldingPercentage": { "annualReturnRate": 0 },
         "annualReturnRate": { "annualReturnRate": 0.03 },
         "fundTransfers": [
-            { "toDisplayName": "IRA", "frequency": "monthly", "moveValue": 80, "closeMoveValue": 0 },
-            { "toDisplayName": "Taxable Assets", "frequency": "monthly", "moveValue": 20, "closeMoveValue": 0 }
+            { "toDisplayName": "IRA", "moveValue": 80, "closeMoveValue": 0 },
+            { "toDisplayName": "Taxable Assets", "moveValue": 20, "closeMoveValue": 0 }
         ],
         "isSelfEmployed": false,
         "annualTaxRate": { "annualReturnRate": 0 }

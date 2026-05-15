@@ -39,9 +39,9 @@ const QUICK_START_DATA = [
         startBasisCurrency: { amount: 0 },
         annualReturnRate: { rate: 0.025 },
         fundTransfers: [
-            { toDisplayName: '401K', frequency: 'monthly', monthlyMoveValue: 10, closeMoveValue: 0 },
-            { toDisplayName: 'Roth IRA', frequency: 'monthly', monthlyMoveValue: 5, closeMoveValue: 0 },
-            { toDisplayName: 'Brokerage', frequency: 'monthly', monthlyMoveValue: 85, closeMoveValue: 0 },
+            { toDisplayName: '401K', monthlyMoveValue: 10, closeMoveValue: 0 },
+            { toDisplayName: 'Roth IRA', monthlyMoveValue: 5, closeMoveValue: 0 },
+            { toDisplayName: 'Brokerage', monthlyMoveValue: 85, closeMoveValue: 0 },
         ],
     },
     {
@@ -91,7 +91,7 @@ const QUICK_START_DATA = [
         annualReturnRate: { rate: 0.065 },
         monthsRemaining: 360,
         fundTransfers: [
-            { toDisplayName: 'Brokerage', frequency: 'monthly', monthlyMoveValue: 100, closeMoveValue: 0 },
+            { toDisplayName: 'Brokerage', monthlyMoveValue: 100, closeMoveValue: 0 },
         ],
     },
     {
@@ -103,7 +103,7 @@ const QUICK_START_DATA = [
         startBasisCurrency: { amount: 0 },
         annualReturnRate: { rate: 0.03 },
         fundTransfers: [
-            { toDisplayName: 'Brokerage', frequency: 'monthly', monthlyMoveValue: 100, closeMoveValue: 0 },
+            { toDisplayName: 'Brokerage', monthlyMoveValue: 100, closeMoveValue: 0 },
         ],
     },
 ];

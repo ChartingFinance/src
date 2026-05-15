@@ -36,7 +36,7 @@ function dateAnchors(startAge, retirementAge, finishAge) {
 // ── Transfer shorthand ──────────────────────────────────────
 
 const xfer = (to, monthly, close = 0) => ({
-    toDisplayName: to, frequency: 'monthly', monthlyMoveValue: monthly, closeMoveValue: close,
+    toDisplayName: to, monthlyMoveValue: monthly, closeMoveValue: close,
 });
 
 // ══════════════════════════════════════════════════════════════

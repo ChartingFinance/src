@@ -135,37 +135,37 @@ function buildLifeEvents() {
   const accumulate = ModelLifeEvent.createDefault(LifeEvent.ACCUMULATE, 50);
   accumulate.phaseTransfers = {
     'Salary': [
-      { toDisplayName: '401K', frequency: 'monthly', monthlyMoveValue: 5, closeMoveValue: 0 },
-      { toDisplayName: 'Roth IRA', frequency: 'monthly', monthlyMoveValue: 2, closeMoveValue: 0 },
-      { toDisplayName: 'Brokerage', frequency: 'monthly', monthlyMoveValue: 93, closeMoveValue: 0 },
+      { toDisplayName: '401K', monthlyMoveValue: 5, closeMoveValue: 0 },
+      { toDisplayName: 'Roth IRA', monthlyMoveValue: 2, closeMoveValue: 0 },
+      { toDisplayName: 'Brokerage', monthlyMoveValue: 93, closeMoveValue: 0 },
     ],
     'Home': [
-      { toDisplayName: 'Brokerage', frequency: 'monthly', monthlyMoveValue: 100, closeMoveValue: 0 },
+      { toDisplayName: 'Brokerage', monthlyMoveValue: 100, closeMoveValue: 0 },
     ],
     'Mortgage': [
-      { toDisplayName: 'Brokerage', frequency: 'monthly', monthlyMoveValue: 100, closeMoveValue: 0 },
+      { toDisplayName: 'Brokerage', monthlyMoveValue: 100, closeMoveValue: 0 },
     ],
     'Rent': [
-      { toDisplayName: 'Brokerage', frequency: 'monthly', monthlyMoveValue: 100, closeMoveValue: 0 },
+      { toDisplayName: 'Brokerage', monthlyMoveValue: 100, closeMoveValue: 0 },
     ],
     'Living Expenses': [
-      { toDisplayName: 'Brokerage', frequency: 'monthly', monthlyMoveValue: 100, closeMoveValue: 0 },
+      { toDisplayName: 'Brokerage', monthlyMoveValue: 100, closeMoveValue: 0 },
     ],
   };
 
   const retire = ModelLifeEvent.createDefault(LifeEvent.RETIRE, 62);
   retire.phaseTransfers = {
     'Social Security': [
-      { toDisplayName: 'Brokerage', frequency: 'monthly', monthlyMoveValue: 100, closeMoveValue: 0 },
+      { toDisplayName: 'Brokerage', monthlyMoveValue: 100, closeMoveValue: 0 },
     ],
     'Rent': [
-      { toDisplayName: 'Roth IRA', frequency: 'monthly', monthlyMoveValue: 30, closeMoveValue: 0 },
-      { toDisplayName: '401K', frequency: 'monthly', monthlyMoveValue: 10, closeMoveValue: 0 },
-      { toDisplayName: 'Brokerage', frequency: 'monthly', monthlyMoveValue: 60, closeMoveValue: 0 },
+      { toDisplayName: 'Roth IRA', monthlyMoveValue: 30, closeMoveValue: 0 },
+      { toDisplayName: '401K', monthlyMoveValue: 10, closeMoveValue: 0 },
+      { toDisplayName: 'Brokerage', monthlyMoveValue: 60, closeMoveValue: 0 },
     ],
     'Living Expenses': [
-      { toDisplayName: '401K', frequency: 'monthly', monthlyMoveValue: 40, closeMoveValue: 0 },
-      { toDisplayName: 'Brokerage', frequency: 'monthly', monthlyMoveValue: 60, closeMoveValue: 0 },
+      { toDisplayName: '401K', monthlyMoveValue: 40, closeMoveValue: 0 },
+      { toDisplayName: 'Brokerage', monthlyMoveValue: 60, closeMoveValue: 0 },
     ],
   };
 
@@ -383,7 +383,6 @@ class InlineSimulator {
         if (shouldLink && !existing.some(t => t.toDisplayName === target.displayName)) {
           existing.push({
             toDisplayName: target.displayName,
-            frequency: 'monthly',
             monthlyMoveValue: 0,
             closeMoveValue: 0,
           });

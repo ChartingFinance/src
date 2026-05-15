@@ -2,8 +2,8 @@
  * fund-transfer.js
  *
  * Represents a percentage-based transfer of funds from one asset to another.
- * Supports recurring transfers (monthly/quarterly/half-yearly/yearly) and/or
- * a separate on-close transfer when the source asset reaches its finish date.
+ * Supports a monthly recurring transfer and/or a separate on-close transfer
+ * when the source asset reaches its finish date.
  */
 
 import { Currency } from './utils/currency.js';
@@ -20,14 +20,6 @@ export class FundTransferResult {
   }
 }
 import { Metric } from './metric.js';
-
-export const Frequency = Object.freeze({
-  NONE:        'none',
-  MONTHLY:     'monthly',
-  QUARTERLY:   'quarterly',
-  HALF_YEARLY: 'half-yearly',
-  YEARLY:      'yearly',
-});
 
 /**
  * This is to handle one-sided debits or credits. For example, a tax payment. Here we simply
@@ -54,13 +46,11 @@ export class FundTransferOneSided {
 export class FundTransfer {
   /**
    * @param {string} toDisplayName     Target asset's familiar name
-   * @param {string} frequency         Recurring frequency (Frequency enum value)
    * @param {number} monthlyMoveValue  Monthly percentage of source value (0-100)
    * @param {number} closeMoveValue    On-close percentage of source value (0-100)
    */
-  constructor(toDisplayName, frequency = Frequency.NONE, monthlyMoveValue = 0, closeMoveValue = 0) {
+  constructor(toDisplayName, monthlyMoveValue = 0, closeMoveValue = 0) {
     this.toDisplayName    = toDisplayName;
-    this.frequency        = frequency;
     this.monthlyMoveValue = monthlyMoveValue;
     this.closeMoveValue   = closeMoveValue;
 
@@ -78,15 +68,12 @@ export class FundTransfer {
     const mv = obj.monthlyMoveValue ?? obj.moveValue ?? 0;
     // Backward compat: old format had moveOnFinishDate (boolean) + single moveValue
     if (obj.moveOnFinishDate !== undefined) {
-      if (obj.moveOnFinishDate) {
-        return new FundTransfer(obj.toDisplayName, Frequency.NONE, 0, mv);
-      } else {
-        return new FundTransfer(obj.toDisplayName, Frequency.MONTHLY, mv, 0);
-      }
+      return obj.moveOnFinishDate
+        ? new FundTransfer(obj.toDisplayName, 0, mv)
+        : new FundTransfer(obj.toDisplayName, mv, 0);
     }
     return new FundTransfer(
       obj.toDisplayName,
-      obj.frequency ?? Frequency.NONE,
       mv,
       obj.closeMoveValue ?? 0,
     );
@@ -94,7 +81,6 @@ export class FundTransfer {
 
   static fromHTML(formElement) {
     let toDisplayName = null;
-    let frequency = Frequency.NONE;
     let monthlyMoveValue = 0;
     let closeMoveValue = 0;
 
@@ -105,23 +91,15 @@ export class FundTransfer {
     for (const el of elements) {
       switch (el.name) {
         case 'toDisplayName':      toDisplayName = el.value; break;
-        case 'frequency':          frequency = el.value; break;
         case 'monthlyMoveValue':   monthlyMoveValue = parseInt(el.value, 10) || 0; break;
         case 'closeMoveValue':     closeMoveValue = parseInt(el.value, 10) || 0; break;
       }
     }
 
-    return new FundTransfer(toDisplayName, frequency, monthlyMoveValue, closeMoveValue);
+    return new FundTransfer(toDisplayName, monthlyMoveValue, closeMoveValue);
   }
 
-  // ── Frequency helpers ──────────────────────────────────────────
-
-  /**
-   * Returns true if this transfer's recurring frequency is active for the given month (1-12).
-   */
-  isActiveForMonth(_month) {
-    return this.monthlyMoveValue > 0;
-  }
+  // ── Activity helpers ───────────────────────────────────────────
 
   get hasRecurring() {
     return this.monthlyMoveValue > 0;
@@ -144,7 +122,7 @@ export class FundTransfer {
    * @returns {FundTransfer}
    */
   static system(fromModel, toModel, amount, allModels = null) {
-    const ft = new FundTransfer(toModel.displayName, Frequency.NONE, 0, 0);
+    const ft = new FundTransfer(toModel.displayName, 0, 0);
     ft.fromModel = fromModel;
     ft.toModel = toModel;
     ft.approvedAmount = amount.copy();
@@ -287,13 +265,12 @@ export class FundTransfer {
   // ── Utilities ────────────────────────────────────────────────────
 
   copy() {
-    return new FundTransfer(this.toDisplayName, this.frequency, this.monthlyMoveValue, this.closeMoveValue);
+    return new FundTransfer(this.toDisplayName, this.monthlyMoveValue, this.closeMoveValue);
   }
 
   toJSON() {
     return {
       toDisplayName:    this.toDisplayName,
-      frequency:        this.frequency,
       monthlyMoveValue: this.monthlyMoveValue,
       closeMoveValue:   this.closeMoveValue,
     };

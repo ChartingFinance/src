@@ -586,7 +586,6 @@ export class Simulator {
                 if (shouldLink && !existing.some(t => t.toDisplayName === target.displayName)) {
                     existing.push({
                         toDisplayName: target.displayName,
-                        frequency: 'monthly',
                         monthlyMoveValue: 0,
                         closeMoveValue: 0,
                     });
