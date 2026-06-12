@@ -195,7 +195,7 @@ if (mismatches.length > 0) {
     const pkg = monthlyPkgs[firstBad.month];
     console.log(`    wageIncome (employed+self):  ${fmt(pkg.wageIncome().amount)}`);
     console.log(`    ordinaryIncome:             ${fmt(pkg.ordinaryIncome().amount)}`);
-    console.log(`    nontaxableIncome:           ${fmt(pkg.nontaxableIncome().amount)}`);
+    console.log(`    taxFreeDistribution:        ${fmt(pkg.taxFreeDistribution().amount)}`);
     console.log(`    longTermCapitalGains:       ${fmt(pkg.longTermCapitalGains.amount)}`);
     console.log(`    qualifiedDividends:         ${fmt(pkg.qualifiedDividends.amount)}`);
     console.log(`    nonQualifiedDividends:      ${fmt(pkg.nonQualifiedDividends.amount)}`);

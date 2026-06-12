@@ -8,6 +8,7 @@
 
 import { Currency } from './utils/currency.js';
 import { Instrument, InstrumentType } from './instruments/instrument.js';
+import { logger, LogCategory } from './utils/logger.js';
 // ── Result Type ──────────────────────────────────────────────────────
 
 export class FundTransferResult {
@@ -17,6 +18,17 @@ export class FundTransferResult {
     this.fromMemo = fromMemo;
     this.toMemo = toMemo;
     this.realizedGain = realizedGain instanceof Currency ? realizedGain.copy() : new Currency(realizedGain);
+
+    // Spillover leg: when a tax-advantaged account is clamped at $0 mid-
+    // withdrawal, execute() sources the shortfall from a taxable fallback and
+    // reports it here so callers can book each leg against the account that
+    // actually supplied the cash. fromAssetChange/toAssetChange report the
+    // REQUESTED amounts; subtract `spillover` to get what the nominal account
+    // really supplied. spilloverGain is kept separate from realizedGain to
+    // make double-booking impossible.
+    this.spillover = Currency.zero();           // amount supplied by the fallback
+    this.spilloverGain = Currency.zero();       // realized gain on the fallback debit
+    this.spilloverInstrument = null;            // fallback account's instrument
   }
 }
 import { Metric } from './metric.js';
@@ -235,17 +247,41 @@ export class FundTransfer {
       this.toModel.addCreditMemo(toResult.realizedGain.copy(), 'Capital gains');
     }
 
-    // Tax-advantaged account depleted: the overshoot must come from a taxable account.
-    // This models reality — you can't withdraw more than the account holds.
-    if (fromResult.spillover?.amount > 0 && this._allModels) {
+    // Tax-advantaged account depleted: the overshoot must come from a taxable
+    // account — you can't withdraw more than the account holds. The clamped
+    // WITHDRAWAL can sit on either side of a transfer:
+    //   - debit(amount > 0) on fromModel (e.g. an RMD top-up from an IRA), or
+    //   - credit(amount < 0) on toModel — "credit-as-withdrawal", which is how
+    //     expense transfers pull from their funding account.
+    // The two are mutually exclusive (opposite signs of `amount`). Handling
+    // only the from side (the old code) silently discarded the to-side
+    // spillover: a depleted IRA "paid" expenses in full with money that never
+    // existed, and the books recorded the phantom as a taxable distribution.
+    const spillSource = fromResult.spillover?.amount > 0 ? this.fromModel
+                      : toResult.spillover?.amount > 0 ? this.toModel
+                      : null;
+    let spillover = Currency.zero();
+    let spilloverGain = Currency.zero();
+    let spilloverInstrument = null;
+    if (spillSource && this._allModels) {
+      const spillAmount = fromResult.spillover?.amount > 0 ? fromResult.spillover : toResult.spillover;
       const fallback = FundTransfer.resolveTaxable(this._allModels);
       if (fallback) {
-        const spillMemo = `Spillover from depleted ${this.fromModel.displayName}`;
-        const spillResult = fallback.debit(fromResult.spillover, spillMemo);
-        if (spillResult.realizedGain?.amount > 0) {
-          fallback.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, spillResult.realizedGain);
-          fallback.addCreditMemo(spillResult.realizedGain.copy(), 'Capital gains (spillover)');
+        const spillMemo = `Spillover from depleted ${spillSource.displayName}`;
+        const spillResult = fallback.debit(spillAmount, spillMemo);
+        spillover = spillAmount.copy();
+        spilloverGain = spillResult.realizedGain?.copy() ?? Currency.zero();
+        spilloverInstrument = fallback.instrument;
+        if (spilloverGain.amount > 0) {
+          fallback.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, spilloverGain);
+          fallback.addCreditMemo(spilloverGain.copy(), 'Capital gains (spillover)');
         }
+      } else {
+        // No taxable account can cover the shortfall. Nothing at this layer
+        // can conjure the cash; surface it instead of failing silently — the
+        // requested amount was still credited in full to the target.
+        logger.log(LogCategory.SANITY,
+          `FundTransfer.execute: ${spillSource.displayName} depleted, no taxable account to cover ${spillAmount.toString()} spillover`);
       }
     }
 
@@ -253,13 +289,17 @@ export class FundTransfer {
     // and credit-as-withdrawal (negative amount) may trigger gains on the target.
     const combinedGain = fromResult.realizedGain.plus(toResult.realizedGain ?? Currency.zero());
 
-    return new FundTransferResult(
+    const result = new FundTransferResult(
       fromResult.assetChange,
       toResult.assetChange,
       memo,
       memo,
       combinedGain
     );
+    result.spillover = spillover;
+    result.spilloverGain = spilloverGain;
+    result.spilloverInstrument = spilloverInstrument;
+    return result;
   }
 
   // ── Utilities ────────────────────────────────────────────────────

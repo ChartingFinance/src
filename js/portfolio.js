@@ -25,6 +25,14 @@ export class Portfolio {
         const birthYear = this.firstDateInt ? this.firstDateInt.year - global_user_startAge : undefined;
         this.activeUser = new User(global_user_startAge, birthYear);
 
+        // Construction-time age snapshot, restored by initializeChron. The
+        // chronometer ages activeUser one year per simulated year, and the GA
+        // optimizer re-runs the chronometer on this same Portfolio thousands
+        // of times — without the reset, each fitness evaluation starts where
+        // the previous one ended (run 3 of a 30-year sim starts at age 100),
+        // flipping RMD and catch-up regimes mid-optimization.
+        this.startUserAge = this.activeUser.age;
+
         // Guardrails (Guyton-Klinger) — set before chronometer_run to activate
         this.guardrailsParams = null; // { withdrawalRate, preservation, prosperity, adjustment }
         this.guardrailEvents = [];    // [{ year, type, rate, adjustedTo }]
@@ -109,6 +117,15 @@ export class Portfolio {
     }
 
     initializeChron() {
+
+        // Rewind the user to their starting age. Every other piece of run
+        // state is rebuilt below; the user must rewind too or successive
+        // chronometer runs on the same Portfolio simulate different worlds
+        // (fitness evaluations stop being comparable — same chromosome,
+        // different RMD/contribution-limit regime). Mutate in place rather
+        // than replacing the object: engines and callers hold references.
+        this.activeUser.setAge(this.startUserAge);
+        this.activeUser.month = 0;
 
         this.monthly = new FinancialPackage();
         this.yearly = new FinancialPackage();

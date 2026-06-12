@@ -608,6 +608,22 @@ export class ModelAsset {
 
     else if (this.onStartDate) {
 
+      // Liability/outflow instruments live as negative balances, but the UI
+      // and saved datasets enter them as positive amounts. Normalize at the
+      // moment the live balance is seeded — engines read finishCurrency later
+      // in this same tick, BEFORE the behavior's lazy ensureNegativeStart in
+      // applyMonthly can run. Relying on the lazy call made correctness an
+      // ordering accident per instrument: a positive expense made its first
+      // month's transfer flow backwards (depositing into the funding account,
+      // because day-30 transfers execute before ExpenseBehavior.applyMonthly),
+      // and a positive debt was erased outright by CapitalBehavior's paid-off
+      // clamp on day 1 (debt has no lazy normalizer at all).
+      if (InstrumentType.isMortgage(this.instrument) ||
+          InstrumentType.isDebt(this.instrument) ||
+          InstrumentType.isMonthlyExpense(this.instrument)) {
+        this.ensureNegativeStart();
+      }
+
       this.finishCurrency = this.startCurrency.copy();
 
     }

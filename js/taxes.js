@@ -509,6 +509,21 @@ export class TaxTable {
             if (index < 0)
                 index = 0;
             let value = modelAsset.monthlyValues[index];
+
+            // IRS rule: RMD divides the prior-year December 31 balance, which
+            // the index above finds in the VALUE metric history. But history
+            // tracking is disabled during GA fitness runs (Simulator
+            // _setTrackHistory) — the lookup then returns undefined, and
+            // undefined/divisor is NaN, which Currency coerces to $0. That
+            // silently removed RMDs from every fitness world while the real
+            // run kept them, so the optimizer scored candidates against rules
+            // the recommendation would never face. Fall back to the live
+            // balance: an approximation of prior-Dec-31, but it keeps
+            // history-less runs in the same tax regime as tracked runs.
+            if (!Number.isFinite(value)) {
+                value = modelAsset.finishCurrency.amount;
+            }
+
             let rmd = value / divisor;
 
             rmd /= 12.0;

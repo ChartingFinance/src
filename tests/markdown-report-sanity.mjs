@@ -1,8 +1,15 @@
 /**
  * markdown-report-sanity.mjs
  *
- * Runs the simulation on the QuickStart dataset, generates the AI markdown
- * report, and asserts key structural and content invariants.
+ * Runs the simulation on the QuickStart dataset, generates the combined AI
+ * markdown report (generatePortfolioMarkdown in generators/finplan-ai.js),
+ * and asserts key structural and content invariants.
+ *
+ * Section names assert the CURRENT finplan-ai.js contract (Your Portfolio /
+ * Net Worth / Assets by Group / Fund Transfer Topology / Reports /
+ * Lifetime Tax Summary / Annual Cash Flow / Spreadsheet). The original
+ * version of this test targeted the retired assets-ai.js generator, whose
+ * section names no longer exist.
  *
  * Usage:  node src/tests/markdown-report-sanity.mjs   (from repo root)
  */
@@ -24,7 +31,7 @@ import { Portfolio } from '../js/portfolio.js';
 import { chronometer_run } from '../js/chronometer.js';
 import { TaxTable } from '../js/taxes.js';
 import { setActiveTaxTable } from '../js/globals.js';
-import { generatePortfolioMarkdown } from '../js/generators/assets-ai.js';
+import { generatePortfolioMarkdown } from '../js/generators/finplan-ai.js';
 
 // ── QuickStart data ───────────────────────────────────────────────────
 const QUICK_START_DATA = [
@@ -140,19 +147,39 @@ check('Report is a non-empty string', () => {
         `Report is ${typeof md}, length ${md.length}`);
 });
 
-check('Contains top-level heading', () => {
-    assert.ok(md.includes('# Portfolio Projection Report'),
-        'Missing top-level heading');
+check('Contains Portfolio top-level section', () => {
+    assert.ok(md.includes('# Your Portfolio'),
+        'Missing # Your Portfolio section');
 });
 
-check('Contains Simulation Parameters section', () => {
-    assert.ok(md.includes('## Simulation Parameters'),
-        'Missing Simulation Parameters section');
+check('Contains Net Worth section', () => {
+    assert.ok(md.includes('## Net Worth'),
+        'Missing Net Worth section');
 });
 
-check('Contains Net Worth Summary section', () => {
-    assert.ok(md.includes('## Net Worth Summary'),
-        'Missing Net Worth Summary section');
+check('Contains Assets by Group section', () => {
+    assert.ok(md.includes('## Assets by Group'),
+        'Missing Assets by Group section');
+});
+
+check('Contains Fund Transfer Topology section', () => {
+    assert.ok(md.includes('## Fund Transfer Topology'),
+        'Missing Fund Transfer Topology section');
+});
+
+check('Contains Projections section', () => {
+    assert.ok(md.includes('# Projections'),
+        'Missing Projections section');
+});
+
+check('Contains Credit Memos section', () => {
+    assert.ok(md.includes('# Credit Memos'),
+        'Missing Credit Memos section');
+});
+
+check('Contains Lifetime Tax Summary section', () => {
+    assert.ok(md.includes('## Lifetime Tax Summary'),
+        'Missing Lifetime Tax Summary section');
 });
 
 check('Contains Annual Cash Flow section', () => {
@@ -160,19 +187,9 @@ check('Contains Annual Cash Flow section', () => {
         'Missing Annual Cash Flow section');
 });
 
-check('Contains Asset Inventory section', () => {
-    assert.ok(md.includes('## Asset Inventory'),
-        'Missing Asset Inventory section');
-});
-
-check('Contains Money Flow Topology section', () => {
-    assert.ok(md.includes('## Money Flow Topology'),
-        'Missing Money Flow Topology section');
-});
-
-check('Contains Lifetime Tax Breakdown section', () => {
-    assert.ok(md.includes('## Lifetime Tax Breakdown'),
-        'Missing Lifetime Tax Breakdown section');
+check('Contains Spreadsheet Asset Summary section', () => {
+    assert.ok(md.includes('# Spreadsheet') && md.includes('## Asset Summary'),
+        'Missing Spreadsheet / Asset Summary section');
 });
 
 // ── Content Tests ────────────────────────────────────────────────────
@@ -190,10 +207,9 @@ check('Simulation dates are present', () => {
     assert.ok(md.includes('2036'), 'Missing end year');
 });
 
-check('Filing status is present', () => {
-    assert.ok(md.includes('Single') || md.includes('Married'),
-        'Missing filing status');
-});
+// NOTE: filing status lives in the Timeline section (generateTimelineMarkdown),
+// which generatePortfolioMarkdown does not include — so it is deliberately
+// not asserted here.
 
 check('Fund transfer topology shows Salary → Brokerage', () => {
     assert.ok(md.includes('Salary') && md.includes('Brokerage') && md.includes('85%'),
@@ -210,14 +226,14 @@ check('Mortgage shows interest rate', () => {
         'Missing mortgage interest rate (6.5%)');
 });
 
-check('Tax breakdown includes income tax row', () => {
-    assert.ok(md.includes('Federal Income Tax'),
-        'Missing Federal Income Tax in breakdown');
+check('Tax summary includes income tax row', () => {
+    assert.ok(md.includes('| Income Tax |'),
+        'Missing Income Tax row in Lifetime Tax Summary');
 });
 
-check('Tax breakdown includes FICA taxes', () => {
-    assert.ok(md.includes('Social Security Tax') && md.includes('Medicare Tax'),
-        'Missing FICA taxes in breakdown');
+check('Tax summary includes FICA taxes', () => {
+    assert.ok(md.includes('| SS Tax |') && md.includes('| Medicare Tax |'),
+        'Missing FICA tax rows in Lifetime Tax Summary');
 });
 
 check('Tax breakdown includes property taxes', () => {
@@ -231,25 +247,16 @@ check('Annual cash flow table has multiple year rows', () => {
         `Expected at least 5 annual rows, found ${yearRows ? yearRows.length : 0}`);
 });
 
-check('Tax-deferred status noted for 401K', () => {
-    // Find the 401K section and check for tax status
-    const idx401k = md.indexOf('401K');
-    const section = md.substring(idx401k, idx401k + 500);
-    assert.ok(section.includes('Tax-Deferred'),
-        'Missing Tax-Deferred status for 401K');
+check('Asset summary table lists every asset with start/end values', () => {
+    // The Spreadsheet section's Asset Summary table has one row per asset
+    const rows = md.match(/\n\| (Salary|401K|Roth IRA|Brokerage|Home|Mortgage|Living Expenses) \|/g);
+    assert.ok(rows && rows.length >= 7,
+        `Expected 7 asset rows in Asset Summary, found ${rows ? rows.length : 0}`);
 });
-
-check('Tax-free status noted for Roth IRA', () => {
-    const idxRoth = md.indexOf('Roth IRA');
-    const section = md.substring(idxRoth, idxRoth + 500);
-    assert.ok(section.includes('Tax-Free'),
-        'Missing Tax-Free status for Roth IRA');
-});
-
-check('Brokerage negative balance triggers observation', () => {
-    assert.ok(md.includes('Observations') && md.includes('negative balance'),
-        'Missing observation about Brokerage going negative');
-});
+// NOTE: the retired assets-ai.js generator annotated assets with
+// Tax-Deferred / Tax-Free status and emitted an Observations section for
+// negative balances. finplan-ai.js does not — those checks were removed,
+// not relaxed. If those features return, re-assert them here.
 
 // ── Summary ──────────────────────────────────────────────────────────
 console.log(`\n${'─'.repeat(55)}`);

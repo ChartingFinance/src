@@ -49,8 +49,21 @@ export class ExpenseEngine {
                 const expenseAmount = fundTransfer.calculate();
                 const fundTransferResult = fundTransfer.execute();
 
+                // Book tax consequences against what each account ACTUALLY
+                // supplied. toAssetChange is the REQUESTED withdrawal; if the
+                // funding account was clamped at $0 (tax-advantaged accounts
+                // can't go negative), execute() sourced the remainder from a
+                // taxable fallback and reports that leg separately. Booking
+                // the full request against the funding account (the old code)
+                // recorded phantom IRA distributions for money the IRA never
+                // held.
                 const withdrawalAmount = fundTransferResult.toAssetChange.copy().flipSign();
+                withdrawalAmount.subtract(fundTransferResult.spillover);
                 this.monthly.recordTransfer(fundTransfer.toModel.instrument, withdrawalAmount, fundTransferResult.realizedGain);
+                if (fundTransferResult.spillover.amount > 0 && fundTransferResult.spilloverInstrument) {
+                    this.monthly.recordTransfer(fundTransferResult.spilloverInstrument,
+                        fundTransferResult.spillover, fundTransferResult.spilloverGain);
+                }
                 runningExpenseAmount.add(expenseAmount);
             }
 
@@ -239,18 +252,36 @@ export class ExpenseEngine {
 
             let remains = new Currency(rmd.amount - distributions.amount);
 
-            if (InstrumentType.isIRA(modelAsset.instrument)) {
-                modelAsset.addToMetric(Metric.TRAD_IRA_DISTRIBUTION, remains);
-                this.monthly.tradIRADistribution.add(remains);
-            } else {
-                modelAsset.addToMetric(Metric.FOUR_01K_DISTRIBUTION, remains);
-                this.monthly.four01KDistribution.add(remains);
+            // Execute first, book after — book what actually moved, not what
+            // was requested. The old order booked `remains` as a distribution
+            // before (and regardless of) the transfer: with no expensable
+            // target the income was recorded but no cash ever left the IRA,
+            // and when the IRA held less than the RMD the spillover portion
+            // (sourced from a taxable account) was booked as IRA income too.
+            const target = FundTransfer.resolveExpensable(this.modelAssets);
+            if (!target) {
+                logger.log(LogCategory.SANITY,
+                    `ExpenseEngine.ensureRMDs: no expensable target for ${modelAsset.displayName} RMD of ${remains.toString()}`);
+                return;
             }
 
-            const rmdNote = `RMD distribution from ${modelAsset.displayName}`;
-            const target = FundTransfer.resolveExpensable(this.modelAssets);
-            if (target) {
-                FundTransfer.system(modelAsset, target, remains, this.modelAssets).execute();
+            const result = FundTransfer.system(modelAsset, target, remains, this.modelAssets).execute();
+
+            // Only the portion the IRA/401K itself supplied is a taxable
+            // distribution; the spillover leg is a taxable-account withdrawal
+            // whose consequence is its realized gain.
+            const actual = remains.minus(result.spillover);
+            if (actual.amount > 0) {
+                if (InstrumentType.isIRA(modelAsset.instrument)) {
+                    modelAsset.addToMetric(Metric.TRAD_IRA_DISTRIBUTION, actual);
+                    this.monthly.tradIRADistribution.add(actual);
+                } else {
+                    modelAsset.addToMetric(Metric.FOUR_01K_DISTRIBUTION, actual);
+                    this.monthly.four01KDistribution.add(actual);
+                }
+            }
+            if (result.spillover.amount > 0 && result.spilloverInstrument) {
+                this.monthly.recordTransfer(result.spilloverInstrument, result.spillover, result.spilloverGain);
             }
 
         }
