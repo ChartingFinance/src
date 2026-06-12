@@ -1,5 +1,21 @@
-import { Chart, registerables } from 'chart.js';
-Chart.register(...registerables);
+// Selective registration: the app renders only bar and line charts, so
+// registering `...registerables` (every controller, scale, and plugin
+// Chart.js ships) wasted ~30 KB of bundle. If a new chart type or option
+// is added, its controller/scale/plugin must be registered here — a missing
+// piece fails at RUNTIME ("not a registered controller"), not at build.
+import {
+  Chart,
+  BarController, BarElement,
+  LineController, LineElement, PointElement,
+  CategoryScale, LinearScale,
+  Tooltip, Legend, Filler,
+} from 'chart.js';
+Chart.register(
+  BarController, BarElement,
+  LineController, LineElement, PointElement,
+  CategoryScale, LinearScale,
+  Tooltip, Legend, Filler,
+);
 import { MonthsSpan } from './utils/months-span.js';
 import { DateInt } from './utils/date-int.js';
 import { colorRange, positiveBackgroundColor, negativeBackgroundColor } from './utils/html.js';

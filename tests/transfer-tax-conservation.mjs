@@ -255,6 +255,76 @@ check('conservation: pure transfer, Δ(IRA + Roth) == 0 (±$1)', () => {
   assert.ok(Math.abs(delta) < 1, `Δbalances ${fmt(delta)}, expected $0.00`);
 });
 
+// ══════════════════════════════════════════════════════════════════════
+// Scenario K — closing a traditional IRA is a FULL ordinary-income
+// distribution (fixed 2026-06-12)
+//
+// $50k IRA (zero growth) closes at its finish date mid-run, sweeping 100%
+// to the brokerage. The ENTIRE balance must be booked as tradIRADistribution
+// (ordinary income) with income tax withheld at close — NOT capital gains
+// on finish − basis, which the old code computed (basis 0 → the whole
+// balance taxed at LTCG rates, or $0 for an account whose basis equaled
+// its value).
+// ══════════════════════════════════════════════════════════════════════
+
+console.log('\n── Scenario K: IRA close = ordinary income (D-fix) ─────\n');
+
+const { portfolio: portfolioK } = await runPortfolio([
+  {
+    instrument: 'ira', displayName: 'IRA',
+    startDateInt: { year: 2026, month: 1 }, finishDateInt: { year: 2026, month: 6 },
+    startCurrency: { amount: 50000 }, startBasisCurrency: { amount: 0 },
+    annualReturnRate: { rate: 0 },
+    fundTransfers: [
+      { toDisplayName: 'Brokerage', monthlyMoveValue: 0, closeMoveValue: 100 },
+    ],
+  },
+  {
+    instrument: 'taxableEquity', displayName: 'Brokerage', ...YEAR,
+    startCurrency: { amount: 20000 }, startBasisCurrency: { amount: 20000 },
+    annualReturnRate: { rate: 0 },
+  },
+]);
+
+const iraK       = portfolioK.modelAssets.find(a => a.displayName === 'IRA');
+const brokerageK = portfolioK.modelAssets.find(a => a.displayName === 'Brokerage');
+const totalK     = portfolioK.total;
+
+check('IRA actually closed mid-run (scenario premise)', () => {
+  assert.ok(iraK.isClosed && Math.abs(iraK.finishCurrency.amount) < 0.01,
+    `IRA isClosed=${iraK.isClosed}, balance ${fmt(iraK.finishCurrency.amount)}`);
+});
+
+check('full balance booked as ordinary-income distribution', () => {
+  assert.ok(Math.abs(totalK.tradIRADistribution.amount - 50000) < 0.01,
+    `FP tradIRADistribution ${fmt(totalK.tradIRADistribution.amount)}, expected $50,000.00 — ` +
+    `pre-fix this was $0: the close was classified as capital gains on growth only`);
+});
+
+check('no capital gains booked from the deferred close (neither LT nor ST)', () => {
+  // Pre-fix, the close fell into calculateCapitalGainsTax: a >12-month
+  // holding booked the whole balance as LTCG; a shorter holding (like this
+  // 6-month one) booked it as shortTermCapitalGains. Both must be zero.
+  assert.ok(Math.abs(totalK.longTermCapitalGains.amount) < 0.01 &&
+            Math.abs(totalK.shortTermCapitalGains.amount) < 0.01,
+    `FP LTCG ${fmt(totalK.longTermCapitalGains.amount)} / STCG ${fmt(totalK.shortTermCapitalGains.amount)}, ` +
+    `expected both $0.00 — pre-fix the $50,000 balance was booked as a capital gain`);
+});
+
+check('ordinary income tax was withheld at close', () => {
+  assert.ok(totalK.incomeTax.amount < -4000,
+    `FP incomeTax ${fmt(totalK.incomeTax.amount)}, expected a material withholding ` +
+    `(ordinary brackets on a $50k distribution)`);
+});
+
+check('conservation: Δ(IRA + Brokerage) == taxes collected (±$1)', () => {
+  const delta = (0 - 50000) + (brokerageK.finishCurrency.amount - 20000);
+  const expected = totalK.incomeTax.amount
+                 + memoSum(brokerageK, 'Annual tax true-up') + memoSum(iraK, 'Annual tax true-up');
+  assert.ok(Math.abs(delta - expected) < 1,
+    `Δbalances ${fmt(delta)} vs taxes ${fmt(expected)} — residual ${fmt(delta - expected)}`);
+});
+
 // ── Summary ──────────────────────────────────────────────────────────
 console.log(`\n${'─'.repeat(55)}`);
 console.log(`  ${passed} passed, ${failed} failed`);

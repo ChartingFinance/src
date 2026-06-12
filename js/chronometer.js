@@ -2,8 +2,6 @@ import { DateInt } from './utils/date-int.js';
 import { logger, LogCategory } from './utils/logger.js';
 import { activeTaxTable, global_backtestYear, global_sp500_annual_returns, global_10yr_treasury_rates, global_cpi_annual_inflation, global_wage_growth_annual } from './globals.js';
 import { Instrument, InstrumentType } from './instruments/instrument.js';
-import { GraphMapper } from './graph-mapper.js';
-import { HydraulicVisualizer } from './hydraulic-visualizer.js';
 
 // ── Backtest helpers ──────────────────────────────────────────
 
@@ -134,100 +132,6 @@ export async function chronometer_run(portfolio) {
             annualExpense,
             withdrawalRate: investable > 0 ? annualExpense / investable : 0,
         });
-    }
-
-    if (backtesting) {
-        restoreOriginalRates(savedRates);
-    }
-
-    portfolio.finalizeChron();
-    activeTaxTable.finalizeChron();
-
-}
-
-export async function chronometer_run_animated(portfolio, visualizerContainerId) {
-
-    if (portfolio.modelAssets == null || portfolio.modelAssets.length == 0) return;
-    if (portfolio.firstDateInt == null || portfolio.lastDateInt == null) return;
-
-    let totalMonths = 0;
-
-    activeTaxTable.initializeChron();
-    portfolio.initializeChron();
-
-    const backtesting = global_backtestYear !== 'current';
-    const savedRates = backtesting ? saveOriginalRates(portfolio) : null;
-    const backtestStartYear = backtesting ? parseInt(global_backtestYear) : 0;
-
-    if (backtesting) {
-        applyBacktestRates(portfolio, backtestStartYear);
-    }
-
-    const simStartYear = portfolio.firstDateInt.year;
-    const visualizer = new HydraulicVisualizer(visualizerContainerId);
-    const graphLayout = GraphMapper.buildGraph(portfolio);
-
-    // Pass the portfolio to init so tanks scale dynamically
-    visualizer.init(graphLayout, portfolio);
-
-    // Grab the date display element and setup month formatting
-    const dateDisplay = document.getElementById('visualizer-date-display');
-    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-
-    let currentDateInt = new DateInt(portfolio.firstDateInt.toInt());
-    let lastDateInt = new DateInt(portfolio.lastDateInt.toInt());
-    while (currentDateInt.toInt() <= lastDateInt.toInt()) {
-
-        // Life events fire at the first tick of their trigger month,
-        // before any financial calculations for that month.
-        if (currentDateInt.day === 1) {
-            portfolio.applyLifeEvents(currentDateInt);
-        }
-
-        // Break out of the loop if the popup was closed
-        const container = document.getElementById(visualizerContainerId);
-        if (!container || (container.closest('.popup') && container.closest('.popup').style.display === 'none')) {
-            break;
-        }
-
-        // Update the date in the UI
-        if (dateDisplay) {
-            dateDisplay.textContent = `${currentDateInt.year} ${monthNames[currentDateInt.month - 1]}`;
-        }
-
-        totalMonths += portfolio.applyMonth(currentDateInt);
-
-        GraphMapper.calculateFlows(portfolio, currentDateInt, graphLayout.edges);
-        visualizer.update(graphLayout, portfolio);
-
-        await new Promise(resolve => setTimeout(resolve, 80));
-
-        currentDateInt.next();
-
-        if (currentDateInt.day == 1) {
-            portfolio.monthlyChron(currentDateInt);
-            activeTaxTable.monthlyChron(currentDateInt);
-        }
-
-        if (currentDateInt.isNewYearsDay()) {
-            if (backtesting) {
-                applyBacktestForYear(portfolio, currentDateInt.year, backtestStartYear, simStartYear, savedRates);
-            }
-
-            portfolio.applyGuardrails(currentDateInt);
-            portfolio.applyYear(currentDateInt);
-            activeTaxTable.applyYear(portfolio.yearly);
-
-            portfolio.yearlyChron(currentDateInt);
-
-            // When backtesting, inflate tax tables using historical CPI
-            const cpiRate = backtesting
-                ? global_cpi_annual_inflation[backtestStartYear + (currentDateInt.year - simStartYear)]
-                : undefined;
-            activeTaxTable.yearlyChron(cpiRate != null ? cpiRate / 100 : undefined);
-        }
-
-        portfolio.totalMonths = totalMonths;
     }
 
     if (backtesting) {

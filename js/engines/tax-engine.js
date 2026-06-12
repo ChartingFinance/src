@@ -124,6 +124,17 @@ export class TaxEngine {
     applyCapitalGainsTax(modelAsset) {
         if (InstrumentType.isTaxFree(modelAsset.instrument)) return;
 
+        // Closing a traditional IRA/401K is a FULL DISTRIBUTION: the entire
+        // balance is ordinary income — inside the deferred wrapper there is
+        // no basis and no capital-gains treatment. Falling through to the
+        // LTCG path below (the old behavior) taxed only finish − basis at
+        // capital-gains rates, understating the tax on a large close by
+        // tens of thousands of dollars.
+        if (InstrumentType.isTaxDeferred(modelAsset.instrument)) {
+            this.applyDeferredCloseDistribution(modelAsset);
+            return;
+        }
+
         const capitalGains = new Currency(modelAsset.finishCurrency.amount - modelAsset.finishBasisCurrency.amount);
         logger.log(LogCategory.TAX, 'capital gains of ' + capitalGains.toString());
 
@@ -169,6 +180,58 @@ export class TaxEngine {
         // Neutralize basis so subsequent close transfers don't re-trigger
         // realized gains — capital gains have already been taxed above.
         modelAsset.finishBasisCurrency = modelAsset.finishCurrency.copy();
+    }
+
+    // ── On Close: Tax-Deferred Full Distribution ──────────────────────
+
+    applyDeferredCloseDistribution(modelAsset) {
+
+        const distribution = modelAsset.finishCurrency.copy();
+        if (distribution.amount <= 0) return;
+
+        // Baseline income BEFORE the distribution is booked, so the
+        // marginal computation below doesn't count it twice. (At close time
+        // this.monthly is usually freshly zeroed — the same weak baseline
+        // the capital-gains close path uses; the annual true-up settles the
+        // exact liability since ordinaryIncome() includes distributions.)
+        const annualizedIncome = this.monthly.totalIncome().copy().multiply(12);
+
+        // Book the full balance as a taxable distribution, classified by the
+        // source instrument (recordTransfer routes IRA vs 401K), plus the
+        // per-asset display metric.
+        this.monthly.recordTransfer(modelAsset.instrument, distribution, Currency.zero());
+        if (InstrumentType.isIRA(modelAsset.instrument)) {
+            modelAsset.addToMetric(Metric.TRAD_IRA_DISTRIBUTION, distribution);
+        } else {
+            modelAsset.addToMetric(Metric.FOUR_01K_DISTRIBUTION, distribution);
+        }
+
+        // Withhold the INCREMENTAL ordinary tax: tax(income + distribution)
+        // − tax(income). A standalone tax(distribution) would walk the
+        // brackets from $0 and understate the marginal cost whenever other
+        // income exists — the same flaw the short-term-gains path has.
+        const taxWith = activeTaxTable.calculateYearlyIncomeTax(
+            new Currency(annualizedIncome.amount + distribution.amount));
+        const taxWithout = activeTaxTable.calculateYearlyIncomeTax(annualizedIncome.copy());
+        const amountToTax = new Currency(-(taxWith.amount - taxWithout.amount));
+
+        if (amountToTax.amount !== 0) {
+            this.monthly.incomeTax.add(amountToTax);
+            modelAsset.addToMetric(Metric.ESTIMATED_INCOME_TAX, amountToTax);
+            modelAsset.addCreditMemo(amountToTax.copy(), 'Income tax withholding');
+        }
+
+        logger.log(LogCategory.TAX, 'applyDeferredCloseDistribution: ' + modelAsset.displayName
+            + ' distributed ' + distribution.toString() + ', withholding ' + amountToTax.toString());
+
+        // Collect the withholding from the closing balance itself (book-and-
+        // collect stay atomic), so the close fund transfers move the post-tax
+        // remainder. Basis tracks the post-tax value for the same reason as
+        // the capital-gains path: close transfers must not re-realize.
+        modelAsset.finishCurrency.add(amountToTax);
+        modelAsset.monthlyValueChange.add(amountToTax);
+        modelAsset.finishBasisCurrency = modelAsset.finishCurrency.copy();
+
     }
 
     // ── Day 30: Monthly Tax True-Up ───────────────────────────────────

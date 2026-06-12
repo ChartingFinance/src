@@ -21,7 +21,6 @@ import { DateInt, MONTH_NAMES } from './utils/date-int.js';
 // ── Simulation ──────────────────────────────────────────────
 import { InstrumentType } from './instruments/instrument.js';
 import { chronometer_run } from './chronometer.js';
-import { HydraulicVisualizer } from './hydraulic-visualizer.js';
 import { Portfolio } from './portfolio.js';
 import { TaxTable } from './taxes.js';
 
@@ -41,10 +40,14 @@ import {
 import { AssetGroup, classifyAssetGroup, GROUP_ORDER_ACCUMULATE, GROUP_ORDER_RETIRE, getAssetChartColor, getGroupMetrics } from './asset-groups.js';
 import { buildPipelines } from './flow-pipelines.js';
 import './components/pipeline-list.js';
-import './components/sankey-diagram.js';
+// sankey-diagram deliberately NOT imported: the Sankey view toggle is
+// disabled in index.html (its <sankey-diagram> tag stays an inert unknown
+// element). Re-add the import when the feature ships.
+
 // ── Simulations ─────────────────────────────────────────────
-import { runMonteCarlo, getMonteCarloChart, getMonteCarloResults } from './monte-carlo.js';
-import { runGuardrails, getGuardrailsChart } from './guardrails.js';
+// monte-carlo.js and guardrails.js are code-split: dynamically imported on
+// the first Run click (see loadMonteCarlo/loadGuardrails below) so their
+// Chart.js-heavy code stays out of the initial bundle.
 
 // ── Lit components ──────────────────────────────────────────
 import './components/asset-list.js';
@@ -55,7 +58,8 @@ import './components/funding-modal.js';
 import './components/one-time-modal.js';
 import './components/event-form-modal.js';
 import './components/finplan-timeline.js';
-import './components/simulator-modal.js';
+// simulator-modal is code-split: imported on the first Maximizer Run click
+// (doMaximize) — the <simulator-modal> tag stays inert until then.
 import './components/spreadsheet-view.js';
 import './components/report-view.js';
 import './components/credit-memo-view.js';
@@ -63,16 +67,9 @@ import './components/share-modal.js';
 import './components/issues-modal.js';
 
 // ── AI Summary generators ──────────────────────────────────
-import {
-    generateTimelineMarkdown,
-    generatePortfolioSectionMarkdown,
-    generateProjectionsSectionMarkdown,
-    generateMonteCarloSectionMarkdown,
-    generateGuardrailsSectionMarkdown,
-    generateCreditMemosSectionMarkdown,
-    generateReportsSectionMarkdown,
-    generateSpreadsheetSectionMarkdown,
-} from './generators/finplan-ai.js';
+// generators/finplan-ai.js is code-split: dynamically imported on the first
+// AI-FAB click. It eagerly imports monte-carlo.js and guardrails.js, so a
+// static import here would drag both back into the initial bundle.
 
 // ── Store ───────────────────────────────────────────────────
 import { store } from './finplan-store.js';
@@ -311,16 +308,18 @@ function openAiSummary(title, content) {
     aiPopup.style.display = 'flex';
 }
 
-const aiGenerators = {
-    timeline:    () => generateTimelineMarkdown(appState.portfolio, appState.lifeEvents),
-    portfolio:   () => generatePortfolioSectionMarkdown(appState.portfolio),
-    projections: () => generateProjectionsSectionMarkdown(appState.portfolio, appState.metricName),
-    montecarlo:  () => generateMonteCarloSectionMarkdown(appState.portfolio),
-    guardrails:  () => generateGuardrailsSectionMarkdown(appState.portfolio),
-    creditmemos: () => generateCreditMemosSectionMarkdown(appState.portfolio),
-    reports:     () => generateReportsSectionMarkdown(appState.portfolio),
-    spreadsheet: () => generateSpreadsheetSectionMarkdown(appState.portfolio),
-};
+// The generator module loads on first FAB click (code-split — it also pulls
+// in monte-carlo and guardrails for its simulation sections).
+const aiGenerators = (ai) => ({
+    timeline:    () => ai.generateTimelineMarkdown(appState.portfolio, appState.lifeEvents),
+    portfolio:   () => ai.generatePortfolioSectionMarkdown(appState.portfolio),
+    projections: () => ai.generateProjectionsSectionMarkdown(appState.portfolio, appState.metricName),
+    montecarlo:  () => ai.generateMonteCarloSectionMarkdown(appState.portfolio),
+    guardrails:  () => ai.generateGuardrailsSectionMarkdown(appState.portfolio),
+    creditmemos: () => ai.generateCreditMemosSectionMarkdown(appState.portfolio),
+    reports:     () => ai.generateReportsSectionMarkdown(appState.portfolio),
+    spreadsheet: () => ai.generateSpreadsheetSectionMarkdown(appState.portfolio),
+});
 
 const aiLabels = {
     timeline: 'Your Timeline', portfolio: 'Your Portfolio', projections: 'Projections',
@@ -328,10 +327,11 @@ const aiLabels = {
 };
 
 for (const btn of document.querySelectorAll('.ai-fab')) {
-    btn.addEventListener('click', (e) => {
+    btn.addEventListener('click', async (e) => {
         e.stopPropagation();
         const section = btn.dataset.section;
-        const gen = aiGenerators[section];
+        const ai = await import('./generators/finplan-ai.js');
+        const gen = aiGenerators(ai)[section];
         if (gen) openAiSummary(`${aiLabels[section]} — AI Summary`, gen());
     });
 }
@@ -967,10 +967,18 @@ function getGuardrailParams() {
     };
 }
 
-function doMonteCarlo() {
+// ── Code-split feature modules ──────────────────────────────
+// Loaded on first use; the cached namespace also lets passive refresh paths
+// (phase-marker updates) reach a chart's module state without forcing a load
+// — if the module was never loaded, there is no chart to refresh.
+let mcModule = null;         // ./monte-carlo.js
+let guardrailsModule = null; // ./guardrails.js
+
+async function doMonteCarlo() {
     if (!appState.portfolio?.firstDateInt) return;
+    mcModule ??= await import('./monte-carlo.js');
     const withGuardrails = document.getElementById('mc-with-guardrails')?.checked;
-    runMonteCarlo(
+    mcModule.runMonteCarlo(
         appState.portfolio.modelAssets, mcContainer, 1000,
         withGuardrails ? getGuardrailParams() : null,
         global_getRetirementDateInt(),
@@ -978,23 +986,24 @@ function doMonteCarlo() {
     );
     // MC renders async (setTimeout 50ms) — apply phase markers after it's done
     setTimeout(() => {
-        const mc = getMonteCarloChart();
+        const mc = mcModule.getMonteCarloChart();
         if (mc) {
-            mc.options.plugins.dateMarkers = { markers: buildSimulationMarkers(mc, getMonteCarloResults()?.labels) };
+            mc.options.plugins.dateMarkers = { markers: buildSimulationMarkers(mc, mcModule.getMonteCarloResults()?.labels) };
             mc.update('none');
         }
     }, 200);
 }
 
-function doGuardrails() {
+async function doGuardrails() {
     if (!appState.portfolio?.firstDateInt) return;
-    runGuardrails(
+    guardrailsModule ??= await import('./guardrails.js');
+    guardrailsModule.runGuardrails(
         appState.portfolio.modelAssets, guardrailsCanvas, getGuardrailParams(),
         global_getRetirementDateInt(), appState.lifeEvents
     );
     // Apply phase markers after render
     setTimeout(() => {
-        const gr = getGuardrailsChart();
+        const gr = guardrailsModule.getGuardrailsChart();
         if (gr) {
             gr.options.plugins.dateMarkers = { markers: buildSimulationMarkers(gr) };
             gr.update('none');
@@ -1002,8 +1011,9 @@ function doGuardrails() {
     }, 100);
 }
 
-function initVisualizer() {
+async function initVisualizer() {
     if (!appState.portfolio) return;
+    const { HydraulicVisualizer } = await import('./hydraulic-visualizer.js');
     hydraulicViz = new HydraulicVisualizer('finplan-hydraulic-container');
     hydraulicViz.init(appState.portfolio);
     refreshVisualizer();
@@ -1017,7 +1027,11 @@ function refreshVisualizer() {
     hydraulicViz.update(idx, isRetiredPhase(), appState.metricName);
 }
 
-function doMaximize() {
+async function doMaximize() {
+    // Code-split: defines the <simulator-modal> element on first use (the
+    // tag in index.html upgrades in place; the GA itself already runs in a
+    // separate module Worker).
+    await import('./components/simulator-modal.js');
     const sim = document.getElementById('simulator-inline');
     if (!sim) return;
     // console.log('[FinPlan] doMaximize: appState.lifeEvents:', appState.lifeEvents.length,
@@ -1188,13 +1202,14 @@ function updateProjectionCursor() {
         microChart.update('none');
     }
 
-    // Simulation charts
-    const mcChart = getMonteCarloChart();
+    // Simulation charts — null-safe through the lazy module refs: if a
+    // module was never loaded, its chart can't exist either.
+    const mcChart = mcModule?.getMonteCarloChart();
     if (mcChart) {
-        mcChart.options.plugins.dateMarkers = { markers: buildSimulationMarkers(mcChart, getMonteCarloResults()?.labels) };
+        mcChart.options.plugins.dateMarkers = { markers: buildSimulationMarkers(mcChart, mcModule.getMonteCarloResults()?.labels) };
         mcChart.update('none');
     }
-    const grChart = getGuardrailsChart();
+    const grChart = guardrailsModule?.getGuardrailsChart();
     if (grChart) {
         grChart.options.plugins.dateMarkers = { markers: buildSimulationMarkers(grChart) };
         grChart.update('none');
