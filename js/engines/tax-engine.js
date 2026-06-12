@@ -188,15 +188,39 @@ export class TaxEngine {
         // Both values are negative, so if total is more negative, additionalTax is negative (owe more)
         const additionalTax = new Currency(totalIncomeTax.amount - alreadyWithheld.amount);
 
-        if (additionalTax.amount < 0) {
-            // Additional tax owed beyond payroll withholding (e.g., from capital gains, dividends)
-            this.monthly.incomeTax.add(additionalTax);
+        if (additionalTax.amount >= 0) return;
 
-            const liquidAsset = this.modelAssets.find(a => InstrumentType.isLiquid(a.instrument) && !a.isClosed && a.finishCurrency.amount > 0);
-            if (liquidAsset) {
-                liquidAsset.addToMetric(Metric.ESTIMATED_INCOME_TAX, additionalTax);
-                liquidAsset.addCreditMemo(additionalTax.copy(), 'Income tax withholding');
-            }
+        // Additional tax owed beyond payroll withholding (e.g., interest,
+        // dividends, IRA/401K distributions, pensions).
+        //
+        // Book-and-collect must be atomic. monthly.incomeTax rolls up into
+        // yearly.incomeTax, which the annual true-up treats as cash already
+        // collected (totalWithheld). Booking the liability without debiting an
+        // account would therefore make the year-end settlement believe the tax
+        // was paid, and it would never be collected from any balance. So: no
+        // funding account, no booking — the annual true-up then sees the full
+        // shortfall and collects it in its April settlement instead.
+        const liquidAsset = this.modelAssets.find(a => InstrumentType.isLiquid(a.instrument) && !a.isClosed && a.finishCurrency.amount > 0);
+        if (!liquidAsset) {
+            logger.log(LogCategory.TAX, `Monthly True-Up: no liquid asset to pay ${additionalTax.toString()}; deferring to annual true-up`);
+            return;
+        }
+
+        this.monthly.incomeTax.add(additionalTax);
+        liquidAsset.addToMetric(Metric.ESTIMATED_INCOME_TAX, additionalTax);
+
+        // debit() expects the positive payment amount; it flips the sign and
+        // writes the 'Income tax withholding' credit memo itself.
+        const payment = additionalTax.copy().flipSign();
+        const result = liquidAsset.debit(payment, 'Income tax withholding');
+
+        // Paying tax from a brokerage account sells shares, and the realized
+        // gain is itself taxable — same handling as the property-tax escrow
+        // debit above. recordTransfer is a no-op for CASH/BANK sources.
+        this.monthly.recordTransfer(liquidAsset.instrument, payment, result.realizedGain);
+        if (result.realizedGain && result.realizedGain.amount > 0) {
+            liquidAsset.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, result.realizedGain);
+            liquidAsset.addCreditMemo(result.realizedGain.copy(), 'Capital gains');
         }
 
     }

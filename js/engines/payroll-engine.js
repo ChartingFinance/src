@@ -14,6 +14,7 @@ import { InstrumentType } from '../instruments/instrument.js';
 import { Metric } from '../metric.js';
 import { FundTransfer } from '../fund-transfer.js';
 import { activeTaxTable } from '../globals.js';
+import { logger, LogCategory } from '../utils/logger.js';
 
 export class PayrollEngine {
 
@@ -23,6 +24,14 @@ export class PayrollEngine {
         this.yearly = yearly;
         this.activeUser = activeUser;
         this.taxEngine = taxEngine;
+
+        // Per-income-asset pre-tax payroll deductions (401K + trad IRA) for the
+        // current Day-1 pass, written by calculatePreTaxContributions and
+        // consumed (deleted) by applyNetIncome. This is engine working state,
+        // not an asset metric: contribution metrics live on the DESTINATION
+        // account only, so reading them off a WORKING_INCOME asset resolves to
+        // NULL_METRIC's frozen zero. Keyed by ModelAsset identity.
+        this.preTaxDeductions = new Map();
     }
 
     applyPreTaxCalculations(modelAsset, currentDateInt) {
@@ -122,16 +131,17 @@ export class PayrollEngine {
         netIncome.add(modelAsset.socialSecurityTaxCurrency);  // negative, so add subtracts
         netIncome.add(modelAsset.medicareTaxCurrency);
 
-        // subtract pre-tax 401K contributions (per-asset)
-        let four01KContribution = modelAsset.four01KContributionCurrency;
-        if (four01KContribution.amount > 0) {
-            netIncome.subtract(four01KContribution);
-        }
-
-        // subtract traditional IRA contributions (per-asset)
-        let iraContribution = modelAsset.tradIRAContributionCurrency;
-        if (iraContribution.amount > 0) {
-            netIncome.subtract(iraContribution);
+        // Subtract this asset's pre-tax 401K/trad-IRA deferrals, computed and
+        // capped earlier in calculatePreTaxContributions. Deliberately NOT read
+        // from modelAsset.four01KContributionCurrency: contribution metrics are
+        // only registered on the destination account's behavior, so on a
+        // WORKING_INCOME asset those getters return NULL_METRIC's frozen zero —
+        // a silent no-op that previously let the full unreduced paycheck flow
+        // downstream while the 401K was also credited.
+        const preTaxDeduction = this.preTaxDeductions.get(modelAsset);
+        this.preTaxDeductions.delete(modelAsset); // consume — never reuse across months
+        if (preTaxDeduction && preTaxDeduction.amount > 0) {
+            netIncome.subtract(preTaxDeduction);
         }
 
         // Proportional share of household income tax for this asset
@@ -146,6 +156,18 @@ export class PayrollEngine {
         } else {
             modelAsset.addToMetric(Metric.WITHHELD_INCOME_TAX, assetTax);
         }
+
+        // Deferrals exceeding after-tax pay are a configuration problem the
+        // pipeline can't fully honor: the 401K/IRA transfers have already
+        // executed for the full amount. Clamp to zero so downstream post-tax
+        // clamps can't compute negative contributions (which would execute
+        // reverse transfers), and surface the gap rather than hiding it.
+        if (netIncome.amount < 0) {
+            logger.log(LogCategory.SANITY,
+                `applyNetIncome: ${modelAsset.displayName} pre-tax deferrals exceed after-tax pay by ${netIncome.copy().flipSign().toString()}; net income clamped to $0`);
+            netIncome.zero();
+        }
+
         // INCOME_TAX populated by DAG: WITHHELD/ESTIMATED_INCOME_TAX → INCOME_TAX
         modelAsset.netIncomeCurrency = netIncome;
 
@@ -214,6 +236,14 @@ export class PayrollEngine {
 
                 }
             }
+
+            // Hand this asset's total payroll deduction to applyNetIncome.
+            // The transfers themselves execute in applyPreTaxTransfers, which
+            // credits the destination accounts — the paycheck must shrink by
+            // the same total or every deferral is double-counted (401K funded
+            // AND full net income swept to savings).
+            this.preTaxDeductions.set(modelAsset,
+                new Currency(total401KContribution.amount + totalIRAContribution.amount));
         }
 
         this.monthly.four01KContribution.add(total401KContribution);
