@@ -251,47 +251,50 @@ export class PayrollEngine {
 
     }
 
-    // Handle the Roth contribution specifically because it is a special case
-    // The Roth contribution limit requires an account of traditional IRA contribution
+    // Handle the Roth contribution specifically because it is a special case:
+    // Roth shares the combined annual IRA limit with traditional IRA, so the
+    // clamp must account for both types across the year, the month, and
+    // earlier transfers in this loop.
     calculateRothIRAContribution(modelAsset) {
 
-        if (InstrumentType.isWorkingIncome(modelAsset.instrument)) {
+        if (!InstrumentType.isWorkingIncome(modelAsset.instrument)) return;
 
-            let contributionLimit = activeTaxTable.iraContributionLimit(this.activeUser);
-            let totalContribution = Currency.zero();
+        const contributionLimit = activeTaxTable.iraContributionLimit(this.activeUser);
+        let totalContribution = Currency.zero();
 
-            for (let fundTransfer of modelAsset.fundTransfers) {
+        for (let fundTransfer of modelAsset.fundTransfers) {
 
-                fundTransfer.bind(modelAsset, this.modelAssets);
-                if (!fundTransfer.toModel) continue;
+            fundTransfer.bind(modelAsset, this.modelAssets);
+            if (!fundTransfer.toModel) continue;
+            if (!InstrumentType.isRothIRA(fundTransfer.toModel.instrument)) continue;
 
-                let toModelInstrument = fundTransfer.toModel.instrument;
-                let contribution = Currency.zero();
+            delete fundTransfer.approvedAmount;
+            fundTransfer.useNetIncome = true;
+            let contribution = fundTransfer.calculate();
 
-                if (InstrumentType.isRothIRA(toModelInstrument)) {
-
-                    delete fundTransfer.approvedAmount;
-                    fundTransfer.useNetIncome = true;
-                    contribution = fundTransfer.calculate();
-
-                    if (this.yearly.tradIRAContribution.amount + this.yearly.rothIRAContribution.amount +
-                        this.monthly.tradIRAContribution.amount + this.monthly.rothIRAContribution.amount +
-                        totalContribution.amount + contribution.amount > contributionLimit.amount) {
-
-                            contribution = new Currency(contributionLimit.amount -
-                                this.yearly.tradIRAContribution.amount - this.yearly.rothIRAContribution.amount -
-                                this.monthly.tradIRAContribution.amount - this.monthly.rothIRAContribution.amount -
-                                totalContribution.amount - contribution.amount);
-                            }
-
-                    fundTransfer.approvedAmount = contribution.copy();
-
-                    totalContribution.add(contribution);
-                    this.monthly.rothIRAContribution.add(totalContribution);
-
-                }
+            // Headroom under the shared IRA limit. The PROPOSED contribution is
+            // not part of "used" — subtracting it here (the old formula) made
+            // the clamp negative every time it triggered, approving a reverse
+            // transfer instead of a capped one.
+            const used = this.yearly.tradIRAContribution.amount + this.yearly.rothIRAContribution.amount
+                       + this.monthly.tradIRAContribution.amount + this.monthly.rothIRAContribution.amount
+                       + totalContribution.amount;
+            const remaining = Math.max(0, contributionLimit.amount - used);
+            if (contribution.amount > remaining) {
+                contribution = new Currency(remaining);
             }
+
+            // The clamp is only real if it survives to execution:
+            // applyPostTaxTransfers executes approvedAmount verbatim, and
+            // calculatePostTaxContributions must not recalculate this transfer.
+            fundTransfer.approvedAmount = contribution.copy();
+            totalContribution.add(contribution);
         }
+
+        // Book the month's Roth contributions once, after the loop. Adding the
+        // RUNNING total per iteration (the old code) booked earlier transfers
+        // again for every later one.
+        this.monthly.rothIRAContribution.add(totalContribution);
 
     }
 
@@ -306,31 +309,60 @@ export class PayrollEngine {
             fundTransfer.bind(modelAsset, this.modelAssets);
             if (!fundTransfer.toModel) continue;
 
-            let toModelInstrument = fundTransfer.toModel.instrument;
-            let contribution = Currency.zero();
+            const toModelInstrument = fundTransfer.toModel.instrument;
 
-            if (!InstrumentType.isTaxDeferred(toModelInstrument)) {
+            // Pre-tax lane: computed against gross income in
+            // calculatePreTaxContributions; not part of the net-income budget.
+            if (InstrumentType.isTaxDeferred(toModelInstrument)) continue;
 
+            // IRS: retirement income cannot contribute to tax-advantaged
+            // accounts. applyPostTaxTransfers skips these at execution; clear
+            // any leftover approval so it can't leak into other calculations.
+            if (InstrumentType.isRetirementIncome(modelAsset.instrument) &&
+                InstrumentType.isTaxFree(toModelInstrument)) {
+                delete fundTransfer.approvedAmount;
+                continue;
+            }
+
+            let contribution;
+            if (InstrumentType.isRothIRA(toModelInstrument)) {
+                // Roth transfers arrive here already computed AND capped
+                // against the shared IRA annual limit by
+                // calculateRothIRAContribution. Recalculating from scratch
+                // (the old `delete approvedAmount` + calculate()) silently
+                // discarded that cap — the limit was enforced in the books but
+                // never on the executed cash flows.
+                contribution = fundTransfer.approvedAmount?.copy() ?? fundTransfer.calculate();
+            } else {
                 delete fundTransfer.approvedAmount;
                 fundTransfer.useNetIncome = true;
                 contribution = fundTransfer.calculate();
-
-                if (totalContribution.amount + contribution.amount > modelAsset.netIncomeCurrency.amount) {
-
-                    contribution = new Currency(modelAsset.netIncomeCurrency.amount - totalContribution.amount);
-                    totalContribution.add(contribution);
-                    fundTransfer.approvedAmount = contribution.copy();
-
-                }
-
-                totalContribution.add(contribution);
             }
-        }
 
-        /*
-        console.assert(totalContribution.amount <= modelAsset.netIncomeCurrency.amount,
-            `Post-tax contributions (${totalContribution.amount}) exceed net income (${modelAsset.netIncomeCurrency.amount}) for ${modelAsset.displayName}`);
-        */
+            // Net income is a shared budget consumed sequentially: each
+            // transfer gets at most what the earlier ones left behind. Floor
+            // at zero — the old unfloored shortfall math produced NEGATIVE
+            // approved amounts, which execute() happily ran as reverse
+            // transfers pulling money back OUT of the target accounts.
+            const remainingNetIncome = modelAsset.netIncomeCurrency.amount - totalContribution.amount;
+            if (contribution.amount > remainingNetIncome) {
+                const clamped = new Currency(Math.max(0, remainingNetIncome));
+                if (InstrumentType.isRothIRA(toModelInstrument)) {
+                    // The Roth booking happened at the pre-clamp amount in
+                    // calculateRothIRAContribution — shrink the books by the
+                    // same amount the cash flow shrank.
+                    this.monthly.rothIRAContribution.subtract(contribution.minus(clamped));
+                }
+                contribution = clamped;
+                fundTransfer.approvedAmount = contribution.copy();
+            }
+
+            // Exactly one add per transfer. The old shortfall branch added the
+            // clamped amount AND fell through to the unconditional add,
+            // double-counting it — every transfer after a clamp then saw a
+            // budget that was already (incorrectly) exhausted.
+            totalContribution.add(contribution);
+        }
 
     }
 

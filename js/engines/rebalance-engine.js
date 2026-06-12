@@ -12,8 +12,11 @@
  *  - Retirement → Capital (distributions, tracked as taxable income)
  *  - Roth conversions (IRA/401K → Roth IRA)
  *
- * Tax consequences are handled by FundTransfer.execute() which calls
- * debit() → realizedGain, and the monthly tax true-up picks up gains.
+ * Tax consequences: FundTransfer.execute() computes realizedGain via
+ * debit(); applyRebalanceTransfers books it into the FinancialPackage with
+ * recordTransfer, classified by the SOURCE instrument (taxable → realized
+ * gain, tax-deferred/Roth → distribution income). The tax true-ups then
+ * collect against those FP totals.
  */
 
 import { Currency } from '../utils/currency.js';
@@ -69,9 +72,16 @@ export class RebalanceEngine {
             // ── Execute ──────────────────────────────────────────────
             const result = ft.execute();
 
-            // Record in monthly package so tax true-up sees the transfer
-            const withdrawalAmount = result.toAssetChange?.copy().flipSign() ?? amount;
-            this.monthly.recordTransfer(ft.toModel.instrument, withdrawalAmount, result.realizedGain);
+            // Record tax consequences against the SOURCE of the funds, with
+            // the positive amount that was debited. recordTransfer classifies
+            // by where the money CAME FROM: realized gains for a taxable
+            // source, distribution income for a tax-deferred/Roth source
+            // (e.g. a Roth conversion's IRA side is ordinary income). The old
+            // call passed the DESTINATION instrument and a negative amount,
+            // which booked phantom negative distributions against the target
+            // account and dropped the realized gain from the tax base
+            // entirely.
+            this.monthly.recordTransfer(modelAsset.instrument, amount, result.realizedGain);
 
             // Record contribution metric on target (for retirement accounts)
             this._trackContribution(ft.toModel, amount);
@@ -118,20 +128,21 @@ export class RebalanceEngine {
     }
 
     /**
-     * Track distribution metrics when money leaves a tax-deferred account.
+     * Track per-asset distribution METRICS when money leaves a tax-deferred
+     * account. Asset metrics only — the FinancialPackage side is booked by
+     * recordTransfer in applyRebalanceTransfers, which classifies by source
+     * instrument. Booking the FP here as well would double-count every
+     * distribution in the tax base.
      */
     _trackDistribution(sourceAsset, amount) {
         if (InstrumentType.isIRA(sourceAsset.instrument) && !InstrumentType.isRothIRA(sourceAsset.instrument)) {
             sourceAsset.addToMetric(Metric.TRAD_IRA_DISTRIBUTION, amount);
-            this.monthly.tradIRADistribution.add(amount);
         }
         else if (InstrumentType.is401K(sourceAsset.instrument)) {
             sourceAsset.addToMetric(Metric.FOUR_01K_DISTRIBUTION, amount);
-            this.monthly.four01KDistribution.add(amount);
         }
         else if (InstrumentType.isRothIRA(sourceAsset.instrument)) {
             sourceAsset.addToMetric(Metric.ROTH_IRA_DISTRIBUTION, amount);
-            this.monthly.rothIRADistribution.add(amount);
         }
     }
 
