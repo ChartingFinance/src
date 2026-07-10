@@ -32,11 +32,37 @@ function terminateWorker() {
     }
 }
 
+// \u2500\u2500 Container layout \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+//
+// The container (a fixed-height .finplan-chart-canvas-wrap) is split into a
+// status line and a chart area, so the simulation count lives in the DOM
+// above the chart instead of inside the canvas \u2014 it stays visible and keeps
+// ticking while the interim chart is already on screen.
+
+function ensureLayout(container) {
+    let statusEl = container.querySelector('.mc-status');
+    let chartEl = container.querySelector('.mc-chart-area');
+    if (!statusEl || !chartEl) {
+        container.innerHTML =
+            '<div style="display: flex; flex-direction: column; height: 100%;">' +
+            '<div class="mc-status" style="flex: none; text-align: center; font-size: 12px; color: #64748b; padding: 2px 0 6px;"></div>' +
+            '<div class="mc-chart-area" style="flex: 1 1 auto; min-height: 0; position: relative;"></div>' +
+            '</div>';
+        statusEl = container.querySelector('.mc-status');
+        chartEl = container.querySelector('.mc-chart-area');
+    }
+    return { statusEl, chartEl };
+}
+
+function setStatus(container, text) {
+    ensureLayout(container).statusEl.textContent = text;
+}
+
 function showLoading(container, completed, total) {
     const msg = completed
         ? `Running simulations\u2026 ${completed.toLocaleString()} / ${total.toLocaleString()}`
         : `Running ${total.toLocaleString()} simulations\u2026`;
-    container.innerHTML = `<p style="padding: 24px; color: #64748b;">${msg}</p>`;
+    setStatus(container, msg);
 }
 
 // ── Main entry point ─────────────────────────────────────────────
@@ -66,9 +92,13 @@ export function runMonteCarlo(sourceAssets, container, numSimulations = 1000, gu
             startDateInt: new DateInt(results.startDateInt),
             retirementDateInt: retirementDateInt ?? null,
         };
-        renderFanChart(container, results.labels, results.bands, results.bandData,
-            results.baselineData, results.numSimulations, results.withGuardrails,
-            results.retirementMonthIndex, results.completed);
+        const isInterim = results.completed < results.numSimulations;
+        setStatus(container, isInterim
+            ? `Showing ${results.completed.toLocaleString()} of ${results.numSimulations.toLocaleString()} simulations · refining…`
+            : `${results.numSimulations.toLocaleString()} simulations`);
+        renderFanChart(ensureLayout(container).chartEl, results.labels, results.bands,
+            results.bandData, results.baselineData, results.withGuardrails,
+            results.retirementMonthIndex);
         if (monteCarloChart && onRender) onRender(monteCarloChart);
         return monteCarloChart;
     };
@@ -99,11 +129,9 @@ export function runMonteCarlo(sourceAssets, container, numSimulations = 1000, gu
         mcWorker.onmessage = (event) => {
             const msg = event.data;
             if (msg.action === 'progress') {
-                // Before the interim paint the container shows the loading
-                // strip; after it, the chart is live — leave it alone.
-                if (!monteCarloChart || !container.contains(monteCarloChart.canvas)) {
-                    showLoading(container, msg.completed, msg.total);
-                }
+                // The status line is separate from the chart area, so it can
+                // keep ticking even after the interim chart is on screen.
+                showLoading(container, msg.completed, msg.total);
             } else if (msg.action === 'interim') {
                 render(msg.results);
             } else if (msg.action === 'complete') {
@@ -137,11 +165,11 @@ export function runMonteCarlo(sourceAssets, container, numSimulations = 1000, gu
 
 // ── Chart rendering ──────────────────────────────────────────────
 
-function renderFanChart(container, labels, bands, bandData, baselineData, numSimulations, withGuardrails, retirementMonthIndex, completed = null) {
-    container.innerHTML = '';
+function renderFanChart(chartEl, labels, bands, bandData, baselineData, withGuardrails, retirementMonthIndex) {
+    chartEl.innerHTML = '';
 
     const canvas = document.createElement('canvas');
-    container.appendChild(canvas);
+    chartEl.appendChild(canvas);
 
     if (monteCarloChart) {
         monteCarloChart.destroy();
@@ -262,9 +290,7 @@ function renderFanChart(container, labels, bands, bandData, baselineData, numSim
             plugins: {
                 title: {
                     display: true,
-                    text: `Monte Carlo · ${completed && completed < numSimulations
-                        ? `${completed.toLocaleString()} of ${numSimulations.toLocaleString()} simulations · refining…`
-                        : `${numSimulations.toLocaleString()} simulations`} · Portfolio Value${withGuardrails ? ' · With Guardrails' : ''}`,
+                    text: `Monte Carlo · Portfolio Value${withGuardrails ? ' · With Guardrails' : ''}`,
                     font: { size: 14, weight: '600' },
                     padding: { bottom: 16 },
                 },
