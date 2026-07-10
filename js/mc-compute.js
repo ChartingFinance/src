@@ -197,6 +197,8 @@ function computeBaseline(sourceAssets, guardrailParams, lifeEvents) {
  *   runFromStart      {boolean}  randomize from month 0 (ignores retirement trigger)
  *   lifeEvents        {ModelLifeEvent[]}
  *   onProgress        {function(completed, total)|null}
+ *   interimAt         {number|null}  emit a partial-results snapshot after this many sims
+ *   onInterim         {function(results)|null}  receives the snapshot (same shape as final)
  * @returns results object (JSON-serializable; DateInts carried as ints)
  */
 export function computeMonteCarlo(sourceAssets, {
@@ -206,6 +208,8 @@ export function computeMonteCarlo(sourceAssets, {
     runFromStart = false,
     lifeEvents = [],
     onProgress = null,
+    interimAt = null,
+    onInterim = null,
 } = {}) {
     // Determine number of months from a reference run
     const refAssets = ModelAsset.cloneArray(sourceAssets);
@@ -236,32 +240,7 @@ export function computeMonteCarlo(sourceAssets, {
         else ld = DateInt.from(ld.year, ld.month + 1);
     }
 
-    const PROGRESS_EVERY = 50;
-    const allRuns = [];
-    for (let i = 0; i < numSimulations; i++) {
-        const totals = runOnce(sourceAssets, guardrailParams, runFromStart ? null : retirementDateInt, lifeEvents);
-        while (totals.length < numMonths) totals.push(totals[totals.length - 1] ?? 0);
-        if (totals.length > numMonths) totals.length = numMonths;
-        allRuns.push(totals);
-        if (onProgress && (i + 1) % PROGRESS_EVERY === 0) onProgress(i + 1, numSimulations);
-    }
-
-    // Compute percentile bands
-    const bands = [10, 25, 50, 75, 90];
-    const bandData = bands.map(() => []);
-
-    for (let m = 0; m < numMonths; m++) {
-        const col = allRuns.map(run => run[m]).sort((a, b) => a - b);
-        for (let b = 0; b < bands.length; b++) {
-            bandData[b].push(percentile(col, bands[b]));
-        }
-    }
-
-    // Success rate: fraction of runs whose terminal value stays above zero
-    const lastMonth = numMonths - 1;
-    const successRate = allRuns.filter(run => run[lastMonth] > 0).length / numSimulations;
-
-    // Deterministic baseline
+    // Deterministic baseline — computed up front so interim snapshots carry it too
     const baselineData = computeBaseline(sourceAssets, guardrailParams, lifeEvents);
 
     // Retirement trigger index for chart annotation
@@ -272,17 +251,52 @@ export function computeMonteCarlo(sourceAssets, {
         if (retirementMonthIndex < 0) retirementMonthIndex = null;
     }
 
-    return {
-        labels,
-        bands,
-        bandData,
-        baselineData,
-        successRate,
-        numSimulations,
-        withGuardrails: !!guardrailParams,
-        runFromStart,
-        startDateInt: startDateInt.toInt(),
-        retirementDateInt: retirementDateInt ? retirementDateInt.toInt() : null,
-        retirementMonthIndex,
+    const PROGRESS_EVERY = 50;
+    const allRuns = [];
+
+    // Assemble a results object from the runs collected so far. `completed`
+    // tells the consumer how many sims back this snapshot (< numSimulations
+    // for an interim, == numSimulations for the final).
+    const buildResults = (completed) => {
+        const bands = [10, 25, 50, 75, 90];
+        const bandData = bands.map(() => []);
+        for (let m = 0; m < numMonths; m++) {
+            const col = allRuns.map(run => run[m]).sort((a, b) => a - b);
+            for (let b = 0; b < bands.length; b++) {
+                bandData[b].push(percentile(col, bands[b]));
+            }
+        }
+
+        // Success rate: fraction of runs whose terminal value stays above zero
+        const lastMonth = numMonths - 1;
+        const successRate = allRuns.filter(run => run[lastMonth] > 0).length / allRuns.length;
+
+        return {
+            labels,
+            bands,
+            bandData,
+            baselineData,
+            successRate,
+            numSimulations,
+            completed,
+            withGuardrails: !!guardrailParams,
+            runFromStart,
+            startDateInt: startDateInt.toInt(),
+            retirementDateInt: retirementDateInt ? retirementDateInt.toInt() : null,
+            retirementMonthIndex,
+        };
     };
+
+    for (let i = 0; i < numSimulations; i++) {
+        const totals = runOnce(sourceAssets, guardrailParams, runFromStart ? null : retirementDateInt, lifeEvents);
+        while (totals.length < numMonths) totals.push(totals[totals.length - 1] ?? 0);
+        if (totals.length > numMonths) totals.length = numMonths;
+        allRuns.push(totals);
+        if (onInterim && interimAt && (i + 1) === interimAt && interimAt < numSimulations) {
+            onInterim(buildResults(i + 1));
+        }
+        if (onProgress && (i + 1) % PROGRESS_EVERY === 0) onProgress(i + 1, numSimulations);
+    }
+
+    return buildResults(numSimulations);
 }

@@ -41,15 +41,22 @@ function showLoading(container, completed, total) {
 
 // ── Main entry point ─────────────────────────────────────────────
 
+// First paint lands after this many sims; the same worker run then continues
+// to the requested total and re-renders. The early chart is a prefix of the
+// final run pool, so it converges rather than being replaced by a rival.
+const INTERIM_AT = 200;
+
 /**
- * Same signature as before, but now resolves a Promise once the fan chart
- * has rendered (or resolves null if there was nothing to run), so callers
- * can apply chart decorations without setTimeout guesswork.
+ * Same signature as before, but now resolves a Promise once the final fan
+ * chart has rendered (or resolves null if there was nothing to run).
+ * Renders progressively: an interim paint at INTERIM_AT sims, then the final.
+ * `onRender(chart)` fires after every paint so callers can apply chart
+ * decorations to both without setTimeout guesswork.
  */
-export function runMonteCarlo(sourceAssets, container, numSimulations = 1000, guardrailParams = null, retirementDateInt = null, runFromStart = false, lifeEvents = []) {
+export function runMonteCarlo(sourceAssets, container, numSimulations = 1000, guardrailParams = null, retirementDateInt = null, runFromStart = false, lifeEvents = [], onRender = null) {
     showLoading(container, 0, numSimulations);
 
-    const finish = (results) => {
+    const render = (results) => {
         if (!results) {
             container.innerHTML = '';
             return null;
@@ -61,11 +68,13 @@ export function runMonteCarlo(sourceAssets, container, numSimulations = 1000, gu
         };
         renderFanChart(container, results.labels, results.bands, results.bandData,
             results.baselineData, results.numSimulations, results.withGuardrails,
-            results.retirementMonthIndex);
+            results.retirementMonthIndex, results.completed);
+        if (monteCarloChart && onRender) onRender(monteCarloChart);
         return monteCarloChart;
     };
 
     // Fallback: no module-worker support — compute on the main thread.
+    // No interim paint here: it would just block the thread twice.
     const canWorker = typeof Worker !== 'undefined';
     if (!canWorker) {
         return new Promise((resolve) => {
@@ -76,7 +85,7 @@ export function runMonteCarlo(sourceAssets, container, numSimulations = 1000, gu
                     retirementDateInt: runFromStart ? null : retirementDateInt,
                     runFromStart, lifeEvents,
                 });
-                resolve(finish(results));
+                resolve(render(results));
             }, 50);
         });
     }
@@ -90,10 +99,16 @@ export function runMonteCarlo(sourceAssets, container, numSimulations = 1000, gu
         mcWorker.onmessage = (event) => {
             const msg = event.data;
             if (msg.action === 'progress') {
-                showLoading(container, msg.completed, msg.total);
+                // Before the interim paint the container shows the loading
+                // strip; after it, the chart is live — leave it alone.
+                if (!monteCarloChart || !container.contains(monteCarloChart.canvas)) {
+                    showLoading(container, msg.completed, msg.total);
+                }
+            } else if (msg.action === 'interim') {
+                render(msg.results);
             } else if (msg.action === 'complete') {
                 terminateWorker();
-                resolve(finish(msg.results));
+                resolve(render(msg.results));
             } else if (msg.action === 'error') {
                 terminateWorker();
                 container.innerHTML = `<p style="padding: 24px; color: #dc2626;">Monte Carlo failed: ${msg.message}</p>`;
@@ -115,13 +130,14 @@ export function runMonteCarlo(sourceAssets, container, numSimulations = 1000, gu
             runFromStart,
             numSimulations,
             backtestYear: global_backtestYear,
+            interimAt: INTERIM_AT,
         });
     });
 }
 
 // ── Chart rendering ──────────────────────────────────────────────
 
-function renderFanChart(container, labels, bands, bandData, baselineData, numSimulations, withGuardrails, retirementMonthIndex) {
+function renderFanChart(container, labels, bands, bandData, baselineData, numSimulations, withGuardrails, retirementMonthIndex, completed = null) {
     container.innerHTML = '';
 
     const canvas = document.createElement('canvas');
@@ -246,7 +262,9 @@ function renderFanChart(container, labels, bands, bandData, baselineData, numSim
             plugins: {
                 title: {
                     display: true,
-                    text: `Monte Carlo · ${numSimulations.toLocaleString()} simulations · Portfolio Value${withGuardrails ? ' · With Guardrails' : ''}`,
+                    text: `Monte Carlo · ${completed && completed < numSimulations
+                        ? `${completed.toLocaleString()} of ${numSimulations.toLocaleString()} simulations · refining…`
+                        : `${numSimulations.toLocaleString()} simulations`} · Portfolio Value${withGuardrails ? ' · With Guardrails' : ''}`,
                     font: { size: 14, weight: '600' },
                     padding: { bottom: 16 },
                 },

@@ -104,14 +104,33 @@ const serialized = JSON.parse(JSON.stringify(QUICK_START_DATA));
 const assets = serialized.map(o => ModelAsset.fromJSON(o));
 
 const t0 = Date.now();
+let interim = null;
 const results = computeMonteCarlo(assets, {
     numSimulations: 50,
     retirementDateInt: new DateInt(DateInt.from(2036, 12).toInt()),
     onProgress: (c, t) => process.stdout.write(`  progress ${c}/${t}\n`),
+    interimAt: 20,
+    onInterim: (r) => { interim = r; },
 });
 const elapsed = Date.now() - t0;
 
+// Interim snapshot: same shape as final, flagged with its sim count
+assert.ok(interim, 'interim snapshot delivered');
+assert.equal(interim.completed, 20, 'interim completed count');
+assert.equal(interim.numSimulations, 50, 'interim carries target total');
+assert.equal(interim.bandData.length, 5, 'interim has 5 bands');
+assert.equal(interim.bandData[0].length, interim.labels.length, 'interim band length matches labels');
+assert.equal(interim.baselineData.length, interim.labels.length, 'interim baseline matches labels');
+assert.ok(interim.successRate >= 0 && interim.successRate <= 1, 'interim successRate in [0,1]');
+for (let b = 1; b < 5; b++) {
+    const last = interim.labels.length - 1;
+    assert.ok(interim.bandData[b][last] >= interim.bandData[b-1][last] - 1e-6,
+        `interim percentiles ordered at final month (band ${b})`);
+}
+assert.ok(JSON.stringify(interim), 'interim is JSON-serializable');
+
 assert.ok(results, 'results returned');
+assert.equal(results.completed, 50, 'final completed count equals total');
 assert.equal(results.bands.length, 5);
 assert.equal(results.bandData.length, 5);
 assert.ok(results.labels.length > 100, 'labels span many months');

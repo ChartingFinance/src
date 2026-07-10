@@ -191,6 +191,7 @@ let expandedGroups      = new Set([
     AssetGroup.RETIREMENT, AssetGroup.EXPENSES, AssetGroup.TAXES,
 ]);
 let expandedPipelines   = new Set();
+let mcAutoRunDone       = false;  // one-shot Monte Carlo auto-run per page load
 
 const pipelineList      = document.getElementById('finplanPipelineList');
 const sankeyDiagram     = document.getElementById('finplanSankey');
@@ -945,6 +946,14 @@ function calculate() {
     grBtn.title = hasAssets ? '' : 'Add assets to run simulations';
     maxBtn.title = hasAssets ? '' : 'Add assets to run maximizer';
 
+    // One-shot Monte Carlo auto-run so the region isn't blank on first load.
+    // Compute happens in a worker with a progressive first paint; subsequent
+    // recalcs leave re-running to the user via the Run button.
+    if (hasAssets && !mcAutoRunDone) {
+        mcAutoRunDone = true;
+        doMonteCarlo();
+    }
+
     const banner = document.getElementById('welcome-banner');
     if (banner) {
         if (hasAssets) {
@@ -978,20 +987,20 @@ async function doMonteCarlo() {
     if (!appState.portfolio?.firstDateInt) return;
     mcModule ??= await import('./monte-carlo.js');
     const withGuardrails = document.getElementById('mc-with-guardrails')?.checked;
-    // Compute runs in a module Worker; the promise resolves after the fan
-    // chart has rendered, so phase markers can be applied deterministically.
-    // On worker failure the container already shows the error message.
+    // Phase markers are applied on every paint — the interim fan (first ~200
+    // sims) and the final — via the onRender hook.
+    const applyMarkers = (chart) => {
+        chart.options.plugins.dateMarkers = { markers: buildSimulationMarkers(chart, mcModule.getMonteCarloResults()?.labels) };
+        chart.update('none');
+    };
+    // Compute runs in a module Worker; the promise resolves after the final
+    // render. On worker failure the container already shows the error message.
     await mcModule.runMonteCarlo(
         appState.portfolio.modelAssets, mcContainer, 1000,
         withGuardrails ? getGuardrailParams() : null,
         global_getRetirementDateInt(),
-        false, appState.lifeEvents
+        false, appState.lifeEvents, applyMarkers
     ).catch(() => null);
-    const mc = mcModule.getMonteCarloChart();
-    if (mc) {
-        mc.options.plugins.dateMarkers = { markers: buildSimulationMarkers(mc, mcModule.getMonteCarloResults()?.labels) };
-        mc.update('none');
-    }
 }
 
 async function doGuardrails() {

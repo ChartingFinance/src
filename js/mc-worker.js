@@ -5,6 +5,7 @@
 //
 // Messages out:
 //   { action: 'progress', completed, total }
+//   { action: 'interim', results }    partial snapshot (results.completed < total)
 //   { action: 'complete', results }   results = computeMonteCarlo() output
 //   { action: 'error', message }
 
@@ -36,6 +37,8 @@ if (isWorker) self.onmessage = function (event) {
                 runFromStart: !!payload.runFromStart,
                 lifeEvents: (payload.lifeEvents || []).map(e => ModelLifeEvent.fromJSON(e)),
                 onProgress: (completed, total) => self.postMessage({ action: 'progress', completed, total }),
+                interimAt: payload.interimAt || null,
+                onInterim: (results) => self.postMessage({ action: 'interim', results }),
             },
         );
 
