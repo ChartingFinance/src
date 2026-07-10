@@ -1,0 +1,130 @@
+/**
+ * mc-worker-sanity.mjs — exercises the exact rehydration + compute path the
+ * Monte Carlo worker runs, without a Worker context (isWorker guard is false).
+ */
+import assert from 'node:assert/strict';
+
+const store = {};
+globalThis.localStorage = {
+  getItem: (k) => store[k] ?? null,
+  setItem: (k, v) => { store[k] = String(v); },
+  removeItem: (k) => { delete store[k]; },
+};
+globalThis.window = globalThis;
+
+import { ModelAsset } from '../js/model-asset.js';
+import { TaxTable } from '../js/taxes.js';
+import { setActiveTaxTable } from '../js/globals.js';
+import { DateInt } from '../js/utils/date-int.js';
+import { computeMonteCarlo } from '../js/mc-compute.js';
+import '../js/mc-worker.js'; // must import cleanly outside a Worker
+
+const QUICK_START_DATA = [
+    {
+        instrument: 'workingIncome',
+        displayName: 'Salary',
+        startDateInt: { year: 2026, month: 1 },
+        finishDateInt: { year: 2036, month: 12 },
+        startCurrency: { amount: 6000 },
+        startBasisCurrency: { amount: 0 },
+        annualReturnRate: { rate: 0.025 },
+        fundTransfers: [
+            { toDisplayName: '401K', monthlyMoveValue: 10, closeMoveValue: 0 },
+            { toDisplayName: 'Roth IRA', monthlyMoveValue: 5, closeMoveValue: 0 },
+            { toDisplayName: 'Brokerage', monthlyMoveValue: 85, closeMoveValue: 0 },
+        ],
+    },
+    {
+        instrument: '401K',
+        displayName: '401K',
+        startDateInt: { year: 2026, month: 1 },
+        finishDateInt: { year: 2036, month: 12 },
+        startCurrency: { amount: 50000 },
+        startBasisCurrency: { amount: 50000 },
+        annualReturnRate: { rate: 0.09 },
+    },
+    {
+        instrument: 'rothIRA',
+        displayName: 'Roth IRA',
+        startDateInt: { year: 2026, month: 1 },
+        finishDateInt: { year: 2036, month: 12 },
+        startCurrency: { amount: 25000 },
+        startBasisCurrency: { amount: 20000 },
+        annualReturnRate: { rate: 0.09 },
+    },
+    {
+        instrument: 'taxableEquity',
+        displayName: 'Brokerage',
+        startDateInt: { year: 2026, month: 1 },
+        finishDateInt: { year: 2036, month: 12 },
+        startCurrency: { amount: 30000 },
+        startBasisCurrency: { amount: 25000 },
+        annualReturnRate: { rate: 0.09 },
+    },
+    {
+        instrument: 'realEstate',
+        displayName: 'Home',
+        startDateInt: { year: 2026, month: 1 },
+        finishDateInt: { year: 2036, month: 12 },
+        startCurrency: { amount: 400000 },
+        startBasisCurrency: { amount: 400000 },
+        annualReturnRate: { rate: 0.03 },
+        annualTaxRate: { rate: 0.012 },
+    },
+    {
+        instrument: 'mortgage',
+        displayName: 'Mortgage',
+        startDateInt: { year: 2026, month: 1 },
+        finishDateInt: { year: 2036, month: 12 },
+        startCurrency: { amount: 320000 },
+        startBasisCurrency: { amount: 0 },
+        annualReturnRate: { rate: 0.065 },
+        monthsRemaining: 360,
+        fundTransfers: [
+            { toDisplayName: 'Brokerage', monthlyMoveValue: 100, closeMoveValue: 0 },
+        ],
+    },
+    {
+        instrument: 'monthlyExpense',
+        displayName: 'Living Expenses',
+        startDateInt: { year: 2026, month: 1 },
+        finishDateInt: { year: 2036, month: 12 },
+        startCurrency: { amount: 3000 },
+        startBasisCurrency: { amount: 0 },
+        annualReturnRate: { rate: 0.03 },
+        fundTransfers: [
+            { toDisplayName: 'Brokerage', monthlyMoveValue: 100, closeMoveValue: 0 },
+        ],
+    },
+];
+
+// Worker-style rehydration: through JSON, then fromJSON
+setActiveTaxTable(new TaxTable());
+const serialized = JSON.parse(JSON.stringify(QUICK_START_DATA));
+const assets = serialized.map(o => ModelAsset.fromJSON(o));
+
+const t0 = Date.now();
+const results = computeMonteCarlo(assets, {
+    numSimulations: 50,
+    retirementDateInt: new DateInt(DateInt.from(2036, 12).toInt()),
+    onProgress: (c, t) => process.stdout.write(`  progress ${c}/${t}\n`),
+});
+const elapsed = Date.now() - t0;
+
+assert.ok(results, 'results returned');
+assert.equal(results.bands.length, 5);
+assert.equal(results.bandData.length, 5);
+assert.ok(results.labels.length > 100, 'labels span many months');
+assert.equal(results.bandData[0].length, results.labels.length, 'band length matches labels');
+assert.equal(results.baselineData.length, results.labels.length, 'baseline matches labels');
+assert.ok(results.successRate >= 0 && results.successRate <= 1, 'successRate in [0,1]');
+for (let b = 1; b < 5; b++) {
+    const last = results.labels.length - 1;
+    assert.ok(results.bandData[b][last] >= results.bandData[b-1][last] - 1e-6,
+        `percentiles ordered at final month (band ${b})`);
+}
+assert.ok(Number.isInteger(results.startDateInt), 'startDateInt serialized as int');
+assert.ok(JSON.stringify(results), 'results are JSON-serializable');
+
+console.log(`mc-worker-sanity OK — 50 sims in ${elapsed}ms, ` +
+    `successRate=${results.successRate}, months=${results.labels.length}`);

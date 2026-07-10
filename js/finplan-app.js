@@ -978,20 +978,20 @@ async function doMonteCarlo() {
     if (!appState.portfolio?.firstDateInt) return;
     mcModule ??= await import('./monte-carlo.js');
     const withGuardrails = document.getElementById('mc-with-guardrails')?.checked;
-    mcModule.runMonteCarlo(
+    // Compute runs in a module Worker; the promise resolves after the fan
+    // chart has rendered, so phase markers can be applied deterministically.
+    // On worker failure the container already shows the error message.
+    await mcModule.runMonteCarlo(
         appState.portfolio.modelAssets, mcContainer, 1000,
         withGuardrails ? getGuardrailParams() : null,
         global_getRetirementDateInt(),
         false, appState.lifeEvents
-    );
-    // MC renders async (setTimeout 50ms) — apply phase markers after it's done
-    setTimeout(() => {
-        const mc = mcModule.getMonteCarloChart();
-        if (mc) {
-            mc.options.plugins.dateMarkers = { markers: buildSimulationMarkers(mc, mcModule.getMonteCarloResults()?.labels) };
-            mc.update('none');
-        }
-    }, 200);
+    ).catch(() => null);
+    const mc = mcModule.getMonteCarloChart();
+    if (mc) {
+        mc.options.plugins.dateMarkers = { markers: buildSimulationMarkers(mc, mcModule.getMonteCarloResults()?.labels) };
+        mc.update('none');
+    }
 }
 
 async function doGuardrails() {
