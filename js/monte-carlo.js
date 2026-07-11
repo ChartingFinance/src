@@ -9,8 +9,16 @@
 
 import { Chart } from 'chart.js';
 import { DateInt } from './utils/date-int.js';
-import { global_backtestYear } from './globals.js';
+import { global_backtestYear, global_simDataMode } from './globals.js';
 import { ensureLayout, setStatus } from './sim-panel.js';
+
+// 'Backtest from year' restricts the MC sampling pool to that era, keeping
+// the backtest story coherent across projections, guardrails, and MC.
+function backtestFromYear() {
+    return global_backtestYear && global_backtestYear !== 'current'
+        ? parseInt(global_backtestYear, 10)
+        : null;
+}
 
 // ── Cached results (read by projections markdown generator) ──────
 
@@ -94,9 +102,13 @@ export function runMonteCarlo(sourceAssets, container, numSimulations = 1000, gu
             retirementDateInt: retirementDateInt ?? null,
         };
         const isInterim = results.completed < results.numSimulations;
+        const era = `${results.poolFirstYear}–${results.poolLastYear}`;
+        const modeNote = results.dataMode === 'calibrated'
+            ? `${era} volatility on your rates`
+            : `drawing ${era} history`;
         setStatus(container, isInterim
             ? `Showing ${results.completed.toLocaleString()} of ${results.numSimulations.toLocaleString()} simulations · refining…`
-            : `${results.numSimulations.toLocaleString()} simulations`);
+            : `${results.numSimulations.toLocaleString()} simulations · ${modeNote}`);
         const { chartEl } = ensureLayout(container);
         if (!firstPaint && monteCarloChart && chartEl.contains(monteCarloChart.canvas)) {
             // In-run repaint: swap band data in place. Labels, title, and the
@@ -130,6 +142,8 @@ export function runMonteCarlo(sourceAssets, container, numSimulations = 1000, gu
                     numSimulations, guardrailParams,
                     retirementDateInt: runFromStart ? null : retirementDateInt,
                     runFromStart, lifeEvents,
+                    dataMode: global_simDataMode,
+                    backtestFromYear: backtestFromYear(),
                 });
                 resolve(render(results));
             }, 50);
@@ -178,6 +192,8 @@ export function runMonteCarlo(sourceAssets, container, numSimulations = 1000, gu
             numSimulations,
             backtestYear: global_backtestYear,
             interimEvery: INTERIM_EVERY,
+            dataMode: global_simDataMode,
+            backtestFromYear: backtestFromYear(),
         });
     });
 }

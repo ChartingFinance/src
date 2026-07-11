@@ -779,6 +779,15 @@
             <a href="help.html#simulations" class="text-gray-300 hover:text-gray-500 transition" title="Help" style="font-size: 14px; font-weight: 500; text-decoration: none;">?</a>
         </h2>
 
+        <!-- Data mode: governs the return series feeding the simulations below -->
+        <div class="flex items-center gap-4 mb-4">
+            <div class="portfolio-view-toggle" id="sim-datamode-toggle">
+                <button data-simmode="historical" class="pv-btn active">Historical</button>
+                <button data-simmode="calibrated" class="pv-btn">Calibrated</button>
+            </div>
+            <span class="text-xs text-gray-500" id="sim-datamode-text"></span>
+        </div>
+
         <div class="flex gap-6 relative">
             <!-- Monte Carlo -->
             <div class="glass-card p-6 flex-1 min-w-0" style="position: relative;">

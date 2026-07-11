@@ -442,6 +442,23 @@ export function global_setBacktestYearDirect(value) {
     global_backtestYear = value;
 }
 
+// ── Simulation data mode ──────────────────────────────────────
+// 'historical'  — Monte Carlo samples raw historical returns (as they happened)
+// 'calibrated'  — historical deviations re-centered on the user's configured rates
+
+export const global_default_simDataMode = 'historical';
+
+export let global_simDataMode = global_default_simDataMode;
+
+export function global_setSimDataMode(value) {
+    localStorage.setItem('simDataMode', value);
+    global_simDataMode = value;
+}
+export function global_getSimDataMode() {
+    const v = localStorage.getItem('simDataMode');
+    global_simDataMode = v != null ? v : global_default_simDataMode;
+}
+
 // ── Guardrails ────────────────────────────────────────────────
 
 export const global_default_guardrail_withdrawalRate = 5;
@@ -500,6 +517,7 @@ export function global_initialize() {
     global_getUserRetirementAge();
     global_getUserFinishAge();
     global_getBacktestYear();
+    global_getSimDataMode();
     global_getGuardrailWithdrawalRate();
     global_getGuardrailPreservation();
     global_getGuardrailProsperity();

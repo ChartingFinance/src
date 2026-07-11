@@ -76,6 +76,8 @@ if (isWorker) self.onmessage = async function (event) {
                 onProgress: (completed, total) => self.postMessage({ action: 'progress', completed, total }),
                 interimEvery: payload.interimEvery || null,
                 onInterim: (results) => self.postMessage({ action: 'interim', results }),
+                dataMode: payload.dataMode || 'historical',
+                backtestFromYear: payload.backtestFromYear ?? null,
                 checkpoint: async (completed) => {
                     // Macrotask yield: lets queued pause/resume messages run
                     await new Promise((resolve) => setTimeout(resolve, 0));

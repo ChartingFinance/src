@@ -24,48 +24,94 @@ import {
 
 // ── Historical year pool (correlated sampling) ──────────────────
 
-// Build array of years present in all four datasets so we sample
-// a single historical year and preserve cross-asset correlation.
-const historicalYears = Object.keys(global_sp500_annual_returns)
+// Years present in all four datasets, so sampling a single historical year
+// preserves cross-asset correlation (1974's crash arrives with 1974's CPI).
+const allPoolYears = Object.keys(global_sp500_annual_returns)
     .filter(y => y in global_10yr_treasury_rates &&
                  y in global_cpi_annual_inflation &&
                  y in global_wage_growth_annual);
 
-function pickRandomYear() {
-    return historicalYears[Math.floor(Math.random() * historicalYears.length)];
+/**
+ * Build the sampling pool, optionally restricted to a backtest era
+ * (fromYear onward). Includes per-series geometric means for the
+ * 'calibrated' data mode. Exported for tests and for the UI's
+ * descriptive text.
+ */
+export function buildYearPool(fromYear = null) {
+    let years = fromYear ? allPoolYears.filter(y => Number(y) >= fromYear) : allPoolYears;
+    if (years.length === 0) years = allPoolYears;   // backtest year beyond the data
+
+    const geoMean = (series) =>
+        Math.exp(years.reduce((a, y) => a + Math.log(1 + series[y] / 100), 0) / years.length) - 1;
+
+    return {
+        years,
+        firstYear: Number(years[0]),
+        lastYear: Number(years[years.length - 1]),
+        means: {
+            sp500: geoMean(global_sp500_annual_returns),
+            treasury: geoMean(global_10yr_treasury_rates),
+            cpi: geoMean(global_cpi_annual_inflation),
+            wage: geoMean(global_wage_growth_annual),
+        },
+    };
 }
 
 // ── Apply random rates for one year ──────────────────────────────
 
-function applyRandomRates(modelAssets) {
-    const year = pickRandomYear();
-    const sp500 = global_sp500_annual_returns[year];
-    const treasury = global_10yr_treasury_rates[year];
-    const cpi = global_cpi_annual_inflation[year];
-    const wage = global_wage_growth_annual[year];
+/**
+ * Overwrite asset rates from one sampled historical year. Exported for tests.
+ *
+ * dataMode 'historical': raw sampled values — returns as they happened.
+ * dataMode 'calibrated': the year's deviation from the pool's geometric mean,
+ *   added to the asset's configured rate (baseRates) — the user's assumptions
+ *   carrying history's turbulence and correlation.
+ */
+export function applyRandomRates(modelAssets, pool, dataMode = 'historical', baseRates = null) {
+    const year = pool.years[Math.floor(Math.random() * pool.years.length)];
+    const sp500 = global_sp500_annual_returns[year] / 100;
+    const treasury = global_10yr_treasury_rates[year] / 100;
+    const cpi = global_cpi_annual_inflation[year] / 100;
+    const wage = global_wage_growth_annual[year] / 100;
+    const calibrated = dataMode === 'calibrated';
 
     for (const asset of modelAssets) {
+        const base = baseRates?.get(asset) ?? 0;
+        // The sampled series are TOTAL returns (dividends included), but the
+        // sim pays annualDividendRate separately each month — subtract it so
+        // growth + dividends together equal the sampled year's return. In
+        // calibrated mode the deviation cancels the pool's dividend level,
+        // and the configured base rate is already ex-dividend.
+        const dividendRate = asset.annualDividendRate?.rate ?? 0;
         if (InstrumentType.isTaxableAccount(asset.instrument) ||
             InstrumentType.isIRA(asset.instrument) ||
             InstrumentType.isRothIRA(asset.instrument) ||
             InstrumentType.is401K(asset.instrument)) {
-            asset.annualReturnRate.rate = sp500 / 100;
+            asset.annualReturnRate.rate = calibrated
+                ? base + (sp500 - pool.means.sp500)
+                : sp500 - dividendRate;
         }
         if (asset.instrument === Instrument.US_BOND) {
-            asset.annualReturnRate.rate = treasury / 100;
+            asset.annualReturnRate.rate = calibrated
+                ? base + (treasury - pool.means.treasury)
+                : treasury - dividendRate;
         }
         if (InstrumentType.isMonthlyExpense(asset.instrument)) {
-            asset.annualReturnRate.rate = cpi / 100;
+            asset.annualReturnRate.rate = calibrated
+                ? base + (cpi - pool.means.cpi)
+                : cpi;
         }
         if (InstrumentType.isMonthlyIncome(asset.instrument)) {
-            asset.annualReturnRate.rate = wage / 100;
+            asset.annualReturnRate.rate = calibrated
+                ? base + (wage - pool.means.wage)
+                : wage;
         }
     }
 }
 
 // ── Single simulation run ────────────────────────────────────────
 
-function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents) {
+function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, pool, dataMode) {
     const assets = ModelAsset.cloneArray(sourceAssets);
     const portfolio = new Portfolio(assets, false);
     if (lifeEvents) portfolio.lifeEvents = lifeEvents.map(e => e.copy());
@@ -77,10 +123,16 @@ function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents) {
     activeTaxTable.initializeChron();
     portfolio.initializeChron();
 
+    // Calibrated mode re-centers deviations on each asset's configured rate —
+    // capture those rates now, before applyRandomRates starts overwriting them.
+    const baseRates = dataMode === 'calibrated'
+        ? new Map(portfolio.modelAssets.map(a => [a, a.annualReturnRate?.rate ?? 0]))
+        : null;
+
     // Two-phase simulation: deterministic rates before retirement, randomized after
     const retirementInt = retirementDateInt ? retirementDateInt.toInt() : 0;
     let withdrawalPhase = !retirementDateInt; // no trigger = randomize from start
-    if (withdrawalPhase) applyRandomRates(portfolio.modelAssets);
+    if (withdrawalPhase) applyRandomRates(portfolio.modelAssets, pool, dataMode, baseRates);
 
     let currentDateInt = new DateInt(portfolio.firstDateInt.toInt());
     const lastDateInt = new DateInt(portfolio.lastDateInt.toInt());
@@ -113,7 +165,7 @@ function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents) {
                 withdrawalPhase = true;
             }
             if (withdrawalPhase) {
-                applyRandomRates(portfolio.modelAssets);
+                applyRandomRates(portfolio.modelAssets, pool, dataMode, baseRates);
             }
             portfolio.applyGuardrails(currentDateInt);
             portfolio.applyYear(currentDateInt);
@@ -202,6 +254,9 @@ function computeBaseline(sourceAssets, guardrailParams, lifeEvents) {
  *   checkpoint        {async function(completed)|null}  awaited at every batch
  *                     boundary — lets a worker host yield its event loop to
  *                     process pause/abort control messages mid-run
+ *   dataMode          {'historical'|'calibrated'}  raw sampled returns, or
+ *                     deviations re-centered on each asset's configured rate
+ *   backtestFromYear  {number|null}  restrict the sampling pool to this year onward
  * @returns Promise of results object (JSON-serializable; DateInts carried as ints)
  */
 export async function computeMonteCarlo(sourceAssets, {
@@ -214,6 +269,8 @@ export async function computeMonteCarlo(sourceAssets, {
     interimEvery = null,
     onInterim = null,
     checkpoint = null,
+    dataMode = 'historical',
+    backtestFromYear = null,
 } = {}) {
     // Determine number of months from a reference run
     const refAssets = ModelAsset.cloneArray(sourceAssets);
@@ -243,6 +300,10 @@ export async function computeMonteCarlo(sourceAssets, {
         if (ld.month === 12) ld = DateInt.from(ld.year + 1, 1);
         else ld = DateInt.from(ld.year, ld.month + 1);
     }
+
+    // Sampling pool — optionally restricted to the backtest era so "backtest
+    // from 1990" means one coherent thing across the app.
+    const pool = buildYearPool(backtestFromYear);
 
     // Guardrail adjustments are gated on retirement (portfolio.applyGuardrails
     // skips years before guardrailsParams.retirementDateInt) — mirror
@@ -291,6 +352,9 @@ export async function computeMonteCarlo(sourceAssets, {
             completed,
             withGuardrails: !!guardrailParams,
             runFromStart,
+            dataMode,
+            poolFirstYear: pool.firstYear,
+            poolLastYear: pool.lastYear,
             startDateInt: startDateInt.toInt(),
             retirementDateInt: retirementDateInt ? retirementDateInt.toInt() : null,
             retirementMonthIndex,
@@ -298,7 +362,7 @@ export async function computeMonteCarlo(sourceAssets, {
     };
 
     for (let i = 0; i < numSimulations; i++) {
-        const totals = runOnce(sourceAssets, grParams, runFromStart ? null : retirementDateInt, lifeEvents);
+        const totals = runOnce(sourceAssets, grParams, runFromStart ? null : retirementDateInt, lifeEvents, pool, dataMode);
         while (totals.length < numMonths) totals.push(totals[totals.length - 1] ?? 0);
         if (totals.length > numMonths) totals.length = numMonths;
         allRuns.push(totals);

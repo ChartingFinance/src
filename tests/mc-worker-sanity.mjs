@@ -17,8 +17,9 @@ import { ModelAsset } from '../js/model-asset.js';
 import { TaxTable } from '../js/taxes.js';
 import { setActiveTaxTable } from '../js/globals.js';
 import { DateInt } from '../js/utils/date-int.js';
-import { computeMonteCarlo } from '../js/mc-compute.js';
+import { computeMonteCarlo, applyRandomRates, buildYearPool } from '../js/mc-compute.js';
 import { computeGuardrails } from '../js/gr-compute.js';
+import { global_sp500_annual_returns } from '../js/globals.js';
 import '../js/mc-worker.js'; // must import cleanly outside a Worker
 
 const QUICK_START_DATA = [
@@ -201,6 +202,73 @@ for (let m = 0; m < retirementIdx; m++) {
         `guardrailed baseline matches plain baseline pre-retirement (month ${m}: ` +
         `${mcGuarded.baselineData[m]} vs ${mcPlain.baselineData[m]})`);
 }
+
+// ── Random rates: no dividend double-count ───────────────────────
+//
+// The sampled S&P series is TOTAL return (dividends included), and the sim
+// pays annualDividendRate separately — so after applyRandomRates, an equity
+// asset's growth rate PLUS its dividend rate must land exactly on a pool
+// value. If the dividend isn't subtracted (the bug this locks against),
+// growth alone equals the pool value and growth+dividend overshoots it.
+
+const poolValues = Object.values(global_sp500_annual_returns).map(v => v / 100);
+const isPoolValue = (r) => poolValues.some(v => Math.abs(v - r) < 1e-12);
+const fullPool = buildYearPool();
+
+const makeEquity = (name, dividends) => ModelAsset.fromJSON({
+    instrument: 'taxableEquity', displayName: name,
+    startDateInt: { year: 2026, month: 1 }, finishDateInt: { year: 2036, month: 12 },
+    startCurrency: { amount: 100000 }, startBasisCurrency: { amount: 100000 },
+    annualReturnRate: { rate: 0.09 },
+    ...(dividends ? { annualDividendRate: { rate: 0.02 } } : {}),
+});
+
+const divAsset = makeEquity('DivEquity', true);
+const plainAsset = makeEquity('PlainEquity', false);
+for (let i = 0; i < 20; i++) {
+    applyRandomRates([divAsset, plainAsset], fullPool);
+    assert.ok(isPoolValue(divAsset.annualReturnRate.rate + divAsset.annualDividendRate.rate),
+        `dividend asset: growth (${divAsset.annualReturnRate.rate}) + dividend (0.02) is a sampled total return`);
+    assert.ok(isPoolValue(plainAsset.annualReturnRate.rate),
+        `plain asset: growth (${plainAsset.annualReturnRate.rate}) is a sampled total return`);
+}
+
+// ── Calibrated mode: deviations re-centered on configured rates ──
+
+const calAsset = makeEquity('CalEquity', false);
+const baseRates = new Map([[calAsset, calAsset.annualReturnRate.rate]]);
+const isPoolDeviation = (d) => poolValues.some(v => Math.abs((v - fullPool.means.sp500) - d) < 1e-12);
+for (let i = 0; i < 20; i++) {
+    applyRandomRates([calAsset], fullPool, 'calibrated', baseRates);
+    const deviation = calAsset.annualReturnRate.rate - 0.09;
+    assert.ok(isPoolDeviation(deviation),
+        `calibrated: rate is configured 9% plus a pool deviation (got dev ${deviation})`);
+}
+
+// ── Backtest era restricts the sampling pool ─────────────────────
+
+const eraPool = buildYearPool(1990);
+assert.equal(eraPool.firstYear, 1990, 'backtest pool starts at the backtest year');
+assert.ok(eraPool.years.every(y => Number(y) >= 1990), 'backtest pool has no earlier years');
+assert.ok(eraPool.years.length < fullPool.years.length, 'backtest pool is a strict subset');
+assert.ok(buildYearPool(9999).years.length === fullPool.years.length,
+    'backtest year beyond the data falls back to the full pool');
+
+// ── End-to-end mode ordering: calibrated (9%) medians below historical (~11%) ──
+
+const mkOpts = (dataMode) => ({
+    numSimulations: 100,
+    retirementDateInt: new DateInt(DateInt.from(2030, 1).toInt()),
+    dataMode,
+});
+const mcHist = await computeMonteCarlo(assets, mkOpts('historical'));
+const mcCal = await computeMonteCarlo(assets, mkOpts('calibrated'));
+const lastM = mcHist.labels.length - 1;
+assert.equal(mcCal.dataMode, 'calibrated', 'results carry dataMode');
+assert.equal(mcHist.poolFirstYear, fullPool.firstYear, 'results carry pool era');
+assert.ok(mcCal.bandData[2][lastM] < mcHist.bandData[2][lastM],
+    `calibrated median (${Math.round(mcCal.bandData[2][lastM])}) < historical median ` +
+    `(${Math.round(mcHist.bandData[2][lastM])}) when configured rate is below the pool mean`);
 
 console.log(`mc-worker-sanity OK — 100 sims in ${elapsed}ms, ` +
     `successRate=${results.successRate}, months=${results.labels.length}; ` +

@@ -109,7 +109,10 @@ import {
     global_setGuardrailPreservation,
     global_setGuardrailProsperity,
     global_setGuardrailAdjustment,
+    global_simDataMode,
+    global_setSimDataMode,
 } from './globals.js';
+import { buildYearPool } from './mc-compute.js';
 
 // ── Util ────────────────────────────────────────────────────
 import {
@@ -569,6 +572,42 @@ connectGuardrailInput(grPreservation, global_setGuardrailPreservation);
 connectGuardrailInput(grProsperity, global_setGuardrailProsperity);
 connectGuardrailInput(grAdjustment, global_setGuardrailAdjustment);
 
+// ── Simulation data mode (Historical / Calibrated) ─────────
+// Governs the return series feeding Monte Carlo; the caption also explains
+// how 'Backtest from year' flows into both simulations.
+
+const simModeToggle = document.getElementById('sim-datamode-toggle');
+const simModeText   = document.getElementById('sim-datamode-text');
+
+function updateSimDataModeUI() {
+    simModeToggle.querySelectorAll('[data-simmode]').forEach(b =>
+        b.classList.toggle('active', b.dataset.simmode === global_simDataMode));
+
+    const backtest = global_backtestYear && global_backtestYear !== 'current'
+        ? parseInt(global_backtestYear, 10) : null;
+    const pool = buildYearPool(backtest);
+    const era = `${pool.firstYear}–${pool.lastYear}`;
+    const sp = (pool.means.sp500 * 100).toFixed(1);
+
+    let text = global_simDataMode === 'calibrated'
+        ? `Monte Carlo re-centers ${era} market swings on your configured return rates — your assumptions, history's turbulence.`
+        : `Monte Carlo draws whole years from ${era} market history as it happened (S&P ${sp}%/yr).`;
+    text += backtest
+        ? ` Backtesting: projections and Guardrails replay actual history from ${backtest}.`
+        : ` Guardrails uses your configured rates.`;
+    simModeText.textContent = text;
+}
+
+simModeToggle.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('[data-simmode]');
+    if (!btn || btn.dataset.simmode === global_simDataMode) return;
+    global_setSimDataMode(btn.dataset.simmode);
+    updateSimDataModeUI();
+    scheduleMonteCarloSync();   // sampling mode affects MC only
+});
+
+updateSimDataModeUI();
+
 // ── Scenario UI events ─────────────────────────────────────
 let _scenarioPopupMode = 'create'; // 'create' or 'edit'
 
@@ -860,6 +899,11 @@ function connectSettings() {
         global_setBacktestYear(this.value);
         global_getBacktestYear();
         calculate();
+        // Backtest era feeds the simulations too: guardrails replays it, the
+        // MC sampling pool is restricted to it — refresh both and the caption.
+        updateSimDataModeUI();
+        doGuardrails();
+        scheduleMonteCarloSync();
     });
 }
 
