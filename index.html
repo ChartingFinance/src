@@ -792,36 +792,44 @@
                     </div>
                     <div class="finplan-chart-canvas-wrap" id="finplan-guardrails-container"></div>
                 </div>
-                <div class="flex flex-wrap items-center gap-3 mt-3 pt-3 border-t border-gray-100">
-                    <div class="flex items-center gap-1">
-                        <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Target Rate</label>
-                        <div class="relative">
-                            <input type="number" id="guardrail-withdrawal-rate" class="fin-input py-1 px-2 w-20 text-sm pr-6" step="0.5" min="0" max="20">
-                            <span class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-xs">%</span>
-                        </div>
+                <div class="mt-3 pt-3 border-t border-gray-100">
+                    <!-- Read view: one quiet line, whole row clickable -->
+                    <div id="guardrail-summary" class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer rounded-lg px-2 py-1 -mx-2 hover:bg-gray-50 transition" title="Edit guardrail settings">
+                        <span id="guardrail-summary-text"></span>
+                        <span class="text-gray-300 text-xs">&#x270E;</span>
                     </div>
-                    <div class="flex items-center gap-1">
-                        <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Preservation</label>
-                        <div class="relative">
-                            <input type="number" id="guardrail-preservation" class="fin-input py-1 px-2 w-20 text-sm pr-6" step="5" min="0" max="100">
-                            <span class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-xs">%</span>
+                    <!-- Edit view: swapped in on click; any change re-runs the chart -->
+                    <div id="guardrail-editor" class="flex-wrap items-center gap-3" style="display: none;">
+                        <div class="flex items-center gap-1">
+                            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Target Rate</label>
+                            <div class="relative">
+                                <input type="number" id="guardrail-withdrawal-rate" class="fin-input py-1 px-2 w-20 text-sm pr-6" step="0.5" min="0" max="20">
+                                <span class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-xs">%</span>
+                            </div>
                         </div>
-                    </div>
-                    <div class="flex items-center gap-1">
-                        <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Prosperity</label>
-                        <div class="relative">
-                            <input type="number" id="guardrail-prosperity" class="fin-input py-1 px-2 w-20 text-sm pr-6" step="5" min="0" max="100">
-                            <span class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-xs">%</span>
+                        <div class="flex items-center gap-1">
+                            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Preservation</label>
+                            <div class="relative">
+                                <input type="number" id="guardrail-preservation" class="fin-input py-1 px-2 w-20 text-sm pr-6" step="5" min="0" max="100">
+                                <span class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-xs">%</span>
+                            </div>
                         </div>
-                    </div>
-                    <div class="flex items-center gap-1">
-                        <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Adjustment</label>
-                        <div class="relative">
-                            <input type="number" id="guardrail-adjustment" class="fin-input py-1 px-2 w-20 text-sm pr-6" step="5" min="0" max="50">
-                            <span class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-xs">%</span>
+                        <div class="flex items-center gap-1">
+                            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Prosperity</label>
+                            <div class="relative">
+                                <input type="number" id="guardrail-prosperity" class="fin-input py-1 px-2 w-20 text-sm pr-6" step="5" min="0" max="100">
+                                <span class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-xs">%</span>
+                            </div>
                         </div>
+                        <div class="flex items-center gap-1">
+                            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Adjustment</label>
+                            <div class="relative">
+                                <input type="number" id="guardrail-adjustment" class="fin-input py-1 px-2 w-20 text-sm pr-6" step="5" min="0" max="50">
+                                <span class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-xs">%</span>
+                            </div>
+                        </div>
+                        <button class="btn-modern outline rounded-full px-2 py-1 text-xs" id="btn-close-guardrail-editor" title="Done">&#x2713;</button>
                     </div>
-                    <button class="btn-modern outline rounded-full px-2 py-1 text-xs" id="btn-revert-guardrails" title="Reset to defaults">&#x21BA;</button>
                 </div>
                 <button class="ai-fab" data-section="guardrails" title="AI Summary">⚡</button>
             </div>

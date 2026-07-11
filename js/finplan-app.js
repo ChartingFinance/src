@@ -109,10 +109,6 @@ import {
     global_setGuardrailPreservation,
     global_setGuardrailProsperity,
     global_setGuardrailAdjustment,
-    global_default_guardrail_withdrawalRate,
-    global_default_guardrail_preservation,
-    global_default_guardrail_prosperity,
-    global_default_guardrail_adjustment,
 } from './globals.js';
 
 // ── Util ────────────────────────────────────────────────────
@@ -159,12 +155,23 @@ const grWithdrawal      = document.getElementById('guardrail-withdrawal-rate');
 const grPreservation    = document.getElementById('guardrail-preservation');
 const grProsperity      = document.getElementById('guardrail-prosperity');
 const grAdjustment      = document.getElementById('guardrail-adjustment');
+const grSummary         = document.getElementById('guardrail-summary');
+const grSummaryText     = document.getElementById('guardrail-summary-text');
+const grEditor          = document.getElementById('guardrail-editor');
+
+function guardrailSummaryText() {
+    return `${global_guardrail_withdrawalRate}% target rate · `
+        + `${global_guardrail_preservation}% preservation · `
+        + `${global_guardrail_prosperity}% prosperity · `
+        + `±${global_guardrail_adjustment}% adjustment`;
+}
 
 function syncGuardrailsToDOM() {
     grWithdrawal.value   = global_guardrail_withdrawalRate;
     grPreservation.value = global_guardrail_preservation;
     grProsperity.value   = global_guardrail_prosperity;
     grAdjustment.value   = global_guardrail_adjustment;
+    grSummaryText.textContent = guardrailSummaryText();
 }
 
 // Disable Chart.js animations globally — prevents ResizeObserver-triggered
@@ -498,26 +505,49 @@ portfolioViewToggle.addEventListener('click', (ev) => {
 
 
 // ── Guardrail parameter controls ──────────────────────────
-grWithdrawal.addEventListener('change', () => {
-    global_setGuardrailWithdrawalRate(parseFloat(grWithdrawal.value));
-});
-grPreservation.addEventListener('change', () => {
-    global_setGuardrailPreservation(parseFloat(grPreservation.value));
-});
-grProsperity.addEventListener('change', () => {
-    global_setGuardrailProsperity(parseFloat(grProsperity.value));
-});
-grAdjustment.addEventListener('change', () => {
-    global_setGuardrailAdjustment(parseFloat(grAdjustment.value));
-});
+// Read view is a one-line summary; clicking it swaps in the inline editor.
+// Any change re-runs the simulation immediately — a single guardrails run
+// is a few ms in the worker, so the chart is never stale.
 
-document.getElementById('btn-revert-guardrails').addEventListener('click', () => {
-    global_setGuardrailWithdrawalRate(global_default_guardrail_withdrawalRate);
-    global_setGuardrailPreservation(global_default_guardrail_preservation);
-    global_setGuardrailProsperity(global_default_guardrail_prosperity);
-    global_setGuardrailAdjustment(global_default_guardrail_adjustment);
-    syncGuardrailsToDOM();
-});
+function onDocClickForGrEditor(ev) {
+    if (!grEditor.contains(ev.target) && !grSummary.contains(ev.target)) {
+        closeGuardrailEditor();
+    }
+}
+
+function openGuardrailEditor() {
+    grSummary.style.display = 'none';
+    grEditor.style.display = 'flex';
+    grWithdrawal.focus();
+    // Deferred so the opening click doesn't immediately close it again
+    setTimeout(() => document.addEventListener('click', onDocClickForGrEditor), 0);
+}
+
+function closeGuardrailEditor() {
+    document.removeEventListener('click', onDocClickForGrEditor);
+    grEditor.style.display = 'none';
+    grSummary.style.display = '';
+}
+
+grSummary.addEventListener('click', () => openGuardrailEditor());
+document.getElementById('btn-close-guardrail-editor').addEventListener('click', () => closeGuardrailEditor());
+
+function connectGuardrailInput(input, setter) {
+    input.addEventListener('change', () => {
+        const v = parseFloat(input.value);
+        if (!Number.isFinite(v)) {
+            syncGuardrailsToDOM();  // restore the last good value
+            return;
+        }
+        setter(v);
+        grSummaryText.textContent = guardrailSummaryText();
+        doGuardrails();
+    });
+}
+connectGuardrailInput(grWithdrawal, global_setGuardrailWithdrawalRate);
+connectGuardrailInput(grPreservation, global_setGuardrailPreservation);
+connectGuardrailInput(grProsperity, global_setGuardrailProsperity);
+connectGuardrailInput(grAdjustment, global_setGuardrailAdjustment);
 
 // ── Scenario UI events ─────────────────────────────────────
 let _scenarioPopupMode = 'create'; // 'create' or 'edit'
