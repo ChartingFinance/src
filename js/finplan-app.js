@@ -471,9 +471,13 @@ document.getElementById('simulator-inline').addEventListener('apply-optimized', 
     }
 
     calculate();
+
+    // The optimizer changed both simulation inputs (phase transfers, and
+    // possibly guardrail params) — refresh both charts to match.
+    doGuardrails();
+    scheduleMonteCarloSync();
 });
 
-// ── Guardrail parameter controls ──────────────────────────
 // ── Portfolio view toggle (Assets / Flows / Sankey) ──────
 const portfolioViewToggle = document.getElementById('portfolioViewToggle');
 portfolioViewToggle.addEventListener('click', (ev) => {
@@ -532,6 +536,19 @@ function closeGuardrailEditor() {
 grSummary.addEventListener('click', () => openGuardrailEditor());
 document.getElementById('btn-close-guardrail-editor').addEventListener('click', () => closeGuardrailEditor());
 
+// Monte Carlo consumes the guardrail params when "With Guardrails" is on, so
+// a param edit (or toggling the checkbox itself) makes the fan chart stale —
+// relaunch the full run to keep the two visuals in sync. Debounced so spinner
+// mashing doesn't restart the 1,000-sim run on every click; the in-flight
+// cancellation in runMonteCarlo handles any overlap.
+let _mcSyncTimer = null;
+function scheduleMonteCarloSync() {
+    clearTimeout(_mcSyncTimer);
+    _mcSyncTimer = setTimeout(() => doMonteCarlo(), 400);
+}
+
+document.getElementById('mc-with-guardrails').addEventListener('change', () => scheduleMonteCarloSync());
+
 function connectGuardrailInput(input, setter) {
     input.addEventListener('change', () => {
         const v = parseFloat(input.value);
@@ -542,6 +559,9 @@ function connectGuardrailInput(input, setter) {
         setter(v);
         grSummaryText.textContent = guardrailSummaryText();
         doGuardrails();
+        if (document.getElementById('mc-with-guardrails')?.checked) {
+            scheduleMonteCarloSync();
+        }
     });
 }
 connectGuardrailInput(grWithdrawal, global_setGuardrailWithdrawalRate);
