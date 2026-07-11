@@ -10,6 +10,7 @@
 import { Chart } from 'chart.js';
 import { DateInt } from './utils/date-int.js';
 import { global_backtestYear } from './globals.js';
+import { ensureLayout, setStatus } from './sim-panel.js';
 
 // ── Cached results (read by projections markdown generator) ──────
 
@@ -32,32 +33,6 @@ function terminateWorker() {
     }
 }
 
-// \u2500\u2500 Container layout \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
-//
-// The container (a fixed-height .finplan-chart-canvas-wrap) is split into a
-// status line and a chart area, so the simulation count lives in the DOM
-// above the chart instead of inside the canvas \u2014 it stays visible and keeps
-// ticking while the interim chart is already on screen.
-
-function ensureLayout(container) {
-    let statusEl = container.querySelector('.mc-status');
-    let chartEl = container.querySelector('.mc-chart-area');
-    if (!statusEl || !chartEl) {
-        container.innerHTML =
-            '<div style="display: flex; flex-direction: column; height: 100%;">' +
-            '<div class="mc-status" style="flex: none; text-align: center; font-size: 12px; color: #64748b; padding: 2px 0 6px;"></div>' +
-            '<div class="mc-chart-area" style="flex: 1 1 auto; min-height: 0; position: relative;"></div>' +
-            '</div>';
-        statusEl = container.querySelector('.mc-status');
-        chartEl = container.querySelector('.mc-chart-area');
-    }
-    return { statusEl, chartEl };
-}
-
-function setStatus(container, text) {
-    ensureLayout(container).statusEl.textContent = text;
-}
-
 function showLoading(container, completed, total) {
     const msg = completed
         ? `Running simulations\u2026 ${completed.toLocaleString()} / ${total.toLocaleString()}`
@@ -67,21 +42,22 @@ function showLoading(container, completed, total) {
 
 // ── Main entry point ─────────────────────────────────────────────
 
-// First paint lands after this many sims; the same worker run then continues
-// to the requested total and re-renders. The early chart is a prefix of the
-// final run pool, so it converges rather than being replaced by a rival.
-const INTERIM_AT = 200;
+// The fan chart repaints after every batch of this many sims; the run pool
+// only grows, so the user watches the bands converge instead of seeing one
+// chart replaced by a contradicting one.
+const INTERIM_EVERY = 50;
 
 /**
  * Same signature as before, but now resolves a Promise once the final fan
  * chart has rendered (or resolves null if there was nothing to run).
- * Renders progressively: an interim paint at INTERIM_AT sims, then the final.
+ * Renders progressively: a repaint every INTERIM_EVERY sims, then the final.
  * `onRender(chart)` fires after every paint so callers can apply chart
- * decorations to both without setTimeout guesswork.
+ * decorations without setTimeout guesswork.
  */
 export function runMonteCarlo(sourceAssets, container, numSimulations = 1000, guardrailParams = null, retirementDateInt = null, runFromStart = false, lifeEvents = [], onRender = null) {
     showLoading(container, 0, numSimulations);
 
+    let firstPaint = true;
     const render = (results) => {
         if (!results) {
             container.innerHTML = '';
@@ -96,9 +72,24 @@ export function runMonteCarlo(sourceAssets, container, numSimulations = 1000, gu
         setStatus(container, isInterim
             ? `Showing ${results.completed.toLocaleString()} of ${results.numSimulations.toLocaleString()} simulations · refining…`
             : `${results.numSimulations.toLocaleString()} simulations`);
-        renderFanChart(ensureLayout(container).chartEl, results.labels, results.bands,
-            results.bandData, results.baselineData, results.withGuardrails,
-            results.retirementMonthIndex);
+        const { chartEl } = ensureLayout(container);
+        if (!firstPaint && monteCarloChart && chartEl.contains(monteCarloChart.canvas)) {
+            // In-run repaint: swap band data in place. Labels, title, and the
+            // retirement marker are constant within a run, and skipping the
+            // canvas rebuild keeps 20 repaints cheap and flicker-free.
+            const ds = monteCarloChart.data.datasets;
+            ds[0].data = results.bandData[4];
+            ds[1].data = results.bandData[3];
+            ds[2].data = results.bandData[2];
+            ds[3].data = results.bandData[1];
+            ds[4].data = results.bandData[0];
+            ds[5].data = results.baselineData;
+            monteCarloChart.update('none');
+        } else {
+            renderFanChart(chartEl, results.labels, results.bands, results.bandData,
+                results.baselineData, results.withGuardrails, results.retirementMonthIndex);
+        }
+        firstPaint = false;
         if (monteCarloChart && onRender) onRender(monteCarloChart);
         return monteCarloChart;
     };
@@ -158,7 +149,7 @@ export function runMonteCarlo(sourceAssets, container, numSimulations = 1000, gu
             runFromStart,
             numSimulations,
             backtestYear: global_backtestYear,
-            interimAt: INTERIM_AT,
+            interimEvery: INTERIM_EVERY,
         });
     });
 }

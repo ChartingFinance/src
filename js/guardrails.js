@@ -1,18 +1,20 @@
 /**
  * guardrails.js
  *
- * Runs a single simulation with Guyton-Klinger guardrails active,
- * then renders a dual-axis chart:
+ * Main-thread orchestration + Chart.js rendering for the Guyton-Klinger
+ * guardrails simulation (one deterministic run). The compute lives in
+ * gr-compute.js and runs inside the shared simulation worker (mc-worker.js,
+ * kind: 'guardrails') so the UI thread never blocks. Falls back to
+ * main-thread compute where module workers are unavailable.
+ *
+ * Renders a dual-axis chart:
  *   Axis 1 (line):      Total portfolio value over time
  *   Axis 2 (step-line): Annual cash flow (withdrawal amount)
  */
 
 import { Chart } from 'chart.js';
-import { Portfolio } from './portfolio.js';
-import { ModelAsset } from './model-asset.js';
-import { Metric } from './metric.js';
-import { DateInt, MONTH_NAMES } from './utils/date-int.js';
-import { chronometer_run } from './chronometer.js';
+import { global_backtestYear } from './globals.js';
+import { ensureLayout, setStatus } from './sim-panel.js';
 
 // ── Chart instance ───────────────────────────────────────────────
 
@@ -26,124 +28,110 @@ let cachedResults = null;
 
 export function getGuardrailsResults() { return cachedResults; }
 
+// ── Worker lifecycle ─────────────────────────────────────────────
+
+let grWorker = null;
+
+function terminateWorker() {
+    if (grWorker) {
+        grWorker.terminate();
+        grWorker = null;
+    }
+}
+
+// Status line: a single deterministic run has no counter to tick, so the
+// line reports what the run found — the guardrail events themselves.
+function summarize(events) {
+    const cuts = events.filter(e => e.type === 'preservation').length;
+    const raises = events.length - cuts;
+    if (!cuts && !raises) return 'Single run · no guardrail adjustments triggered';
+    const parts = [];
+    if (cuts) parts.push(`${cuts} preservation cut${cuts === 1 ? '' : 's'}`);
+    if (raises) parts.push(`${raises} prosperity raise${raises === 1 ? '' : 's'}`);
+    return `Single run · ${parts.join(' · ')}`;
+}
+
 // ── Main entry point ─────────────────────────────────────────────
 
-export function runGuardrails(sourceAssets, canvas, params, retirementDateInt = null, lifeEvents = []) {
-    const assets = ModelAsset.cloneArray(sourceAssets);
-    const portfolio = new Portfolio(assets, false);
-    if (lifeEvents.length) portfolio.lifeEvents = lifeEvents.map(e => e.copy());
+/**
+ * Resolves once the chart has rendered (or resolves null if there was
+ * nothing to run). `onRender(chart)` fires after the paint so callers can
+ * apply chart decorations without setTimeout guesswork.
+ */
+export function runGuardrails(sourceAssets, container, params, retirementDateInt = null, lifeEvents = [], onRender = null) {
+    setStatus(container, 'Running guardrails simulation…');
 
-    // Activate guardrails on this portfolio
-    portfolio.guardrailsParams = {
-        withdrawalRate: params.withdrawalRate,
-        preservation: params.preservation,
-        prosperity: params.prosperity,
-        adjustment: params.adjustment,
-        retirementDateInt,
+    const render = (results) => {
+        if (!results) {
+            container.innerHTML = '';
+            return null;
+        }
+        cachedResults = {
+            ...results,
+            retirementDateInt: retirementDateInt ?? null,
+        };
+        setStatus(container, summarize(results.events));
+        renderChart(ensureLayout(container).chartEl, results.labels, results.portfolioValues,
+            results.withdrawalSteps, results.events, results.params, results.retirementMonthIndex);
+        if (guardrailsChart && onRender) onRender(guardrailsChart);
+        return guardrailsChart;
     };
 
-    chronometer_run(portfolio);
-
-    // Collect monthly portfolio value from metric histories
-    const numMonths = getMonthCount(portfolio);
-    if (numMonths === 0) return;
-
-    // Build month labels
-    const labels = [];
-    let d = new DateInt(portfolio.firstDateInt.toInt());
-    for (let i = 0; i < numMonths; i++) {
-        labels.push(`${MONTH_NAMES[d.month - 1]} ${d.year}`);
-        if (d.month === 12) d = DateInt.from(d.year + 1, 1);
-        else d = DateInt.from(d.year, d.month + 1);
+    // Fallback: no module-worker support — compute on the main thread.
+    const canWorker = typeof Worker !== 'undefined';
+    if (!canWorker) {
+        return new Promise((resolve) => {
+            setTimeout(async () => {
+                const { computeGuardrails } = await import('./gr-compute.js');
+                const results = await computeGuardrails(sourceAssets, { params, retirementDateInt, lifeEvents });
+                resolve(render(results));
+            }, 50);
+        });
     }
 
-    // Portfolio value at each month
-    const portfolioValues = [];
-    for (let m = 0; m < numMonths; m++) {
-        let total = 0;
-        for (const asset of portfolio.modelAssets) {
-            const history = asset.getHistory(Metric.VALUE);
-            if (history && history.length > m) {
-                total += history[m] ?? 0;
+    // Terminating any in-flight worker doubles as cancellation: only the
+    // latest requested run ever resolves into the chart.
+    terminateWorker();
+    grWorker = new Worker(new URL('./mc-worker.js', import.meta.url), { type: 'module' });
+
+    return new Promise((resolve, reject) => {
+        grWorker.onmessage = (event) => {
+            const msg = event.data;
+            if (msg.action === 'complete') {
+                terminateWorker();
+                resolve(render(msg.results));
+            } else if (msg.action === 'error') {
+                terminateWorker();
+                container.innerHTML = `<p style="padding: 24px; color: #dc2626;">Guardrails failed: ${msg.message}</p>`;
+                reject(new Error(msg.message));
             }
-        }
-        portfolioValues.push(total);
-    }
+        };
+        grWorker.onerror = (err) => {
+            console.error('Guardrails worker error:', err);
+            terminateWorker();
+            container.innerHTML = '<p style="padding: 24px; color: #dc2626;">Guardrails worker failed.</p>';
+            reject(err instanceof Error ? err : new Error('Guardrails worker failed'));
+        };
 
-    // Annual withdrawal as step-line (held constant for 12 months, changes at year boundaries)
-    const withdrawalSteps = buildWithdrawalSteps(portfolio, numMonths);
-
-    // Guardrail event markers
-    const events = portfolio.guardrailEvents;
-
-    // Compute retirement index — withdrawal line starts here, vertical line drawn here
-    let retirementMonthIndex = null;
-    if (retirementDateInt) {
-        const retirementLabel = `${MONTH_NAMES[retirementDateInt.month - 1]} ${retirementDateInt.year}`;
-        const idx = labels.indexOf(retirementLabel);
-        if (idx >= 0) retirementMonthIndex = idx;
-    }
-
-    // Zero out withdrawal before retirement so the line only appears post-retirement
-    if (retirementMonthIndex !== null) {
-        for (let i = 0; i < retirementMonthIndex; i++) withdrawalSteps[i] = null;
-    }
-
-    cachedResults = {
-        labels,
-        portfolioValues,
-        withdrawalSteps,
-        events,
-        params,
-        retirementDateInt,
-        retirementMonthIndex,
-    };
-
-    renderChart(canvas, labels, portfolioValues, withdrawalSteps, events, params, retirementMonthIndex);
-}
-
-// ── Helpers ──────────────────────────────────────────────────────
-
-function getMonthCount(portfolio) {
-    for (const asset of portfolio.modelAssets) {
-        const h = asset.getHistory(Metric.VALUE);
-        if (h && h.length > 0) return h.length;
-    }
-    return 0;
-}
-
-function buildWithdrawalSteps(portfolio, numMonths) {
-    const snapshots = portfolio.yearlySnapshots;
-    const steps = new Array(numMonths).fill(0);
-
-    if (snapshots.length === 0) return steps;
-
-    // Map each snapshot year to month indices
-    const startYear = portfolio.firstDateInt.year;
-    const startMonth = portfolio.firstDateInt.month;
-
-    for (const snap of snapshots) {
-        // Months from simulation start to Jan of this snapshot's year
-        const yearOffset = (snap.year - startYear) * 12 - (startMonth - 1);
-        for (let m = 0; m < 12; m++) {
-            const idx = yearOffset + m;
-            if (idx >= 0 && idx < numMonths) {
-                steps[idx] = snap.annualExpense;
-            }
-        }
-    }
-
-    // Fill any trailing months with the last known value
-    for (let i = 0; i < numMonths; i++) {
-        if (steps[i] === 0 && i > 0) steps[i] = steps[i - 1];
-    }
-
-    return steps;
+        grWorker.postMessage({
+            kind: 'guardrails',
+            modelAssets: JSON.parse(JSON.stringify(sourceAssets)),
+            lifeEvents: (lifeEvents || []).map(e => e.toJSON()),
+            params,
+            retirementDateInt: retirementDateInt ? retirementDateInt.toInt() : null,
+            backtestYear: global_backtestYear,
+        });
+    });
 }
 
 // ── Chart rendering ──────────────────────────────────────────────
 
-function renderChart(canvas, labels, portfolioValues, withdrawalSteps, events, params, retirementMonthIndex) {
+function renderChart(chartEl, labels, portfolioValues, withdrawalSteps, events, params, retirementMonthIndex) {
+    chartEl.innerHTML = '';
+
+    const canvas = document.createElement('canvas');
+    chartEl.appendChild(canvas);
+
     if (guardrailsChart) {
         guardrailsChart.destroy();
         guardrailsChart = null;

@@ -197,8 +197,8 @@ function computeBaseline(sourceAssets, guardrailParams, lifeEvents) {
  *   runFromStart      {boolean}  randomize from month 0 (ignores retirement trigger)
  *   lifeEvents        {ModelLifeEvent[]}
  *   onProgress        {function(completed, total)|null}
- *   interimAt         {number|null}  emit a partial-results snapshot after this many sims
- *   onInterim         {function(results)|null}  receives the snapshot (same shape as final)
+ *   interimEvery      {number|null}  emit a partial-results snapshot every N sims
+ *   onInterim         {function(results)|null}  receives snapshots (same shape as final)
  * @returns results object (JSON-serializable; DateInts carried as ints)
  */
 export function computeMonteCarlo(sourceAssets, {
@@ -208,7 +208,7 @@ export function computeMonteCarlo(sourceAssets, {
     runFromStart = false,
     lifeEvents = [],
     onProgress = null,
-    interimAt = null,
+    interimEvery = null,
     onInterim = null,
 } = {}) {
     // Determine number of months from a reference run
@@ -292,10 +292,15 @@ export function computeMonteCarlo(sourceAssets, {
         while (totals.length < numMonths) totals.push(totals[totals.length - 1] ?? 0);
         if (totals.length > numMonths) totals.length = numMonths;
         allRuns.push(totals);
-        if (onInterim && interimAt && (i + 1) === interimAt && interimAt < numSimulations) {
+        // An interim snapshot supersedes the plain progress ping at the same
+        // increment — the consumer gets one coherent update per tick.
+        const emitInterim = onInterim && interimEvery
+            && (i + 1) % interimEvery === 0 && (i + 1) < numSimulations;
+        if (emitInterim) {
             onInterim(buildResults(i + 1));
+        } else if (onProgress && (i + 1) % PROGRESS_EVERY === 0) {
+            onProgress(i + 1, numSimulations);
         }
-        if (onProgress && (i + 1) % PROGRESS_EVERY === 0) onProgress(i + 1, numSimulations);
     }
 
     return buildResults(numSimulations);

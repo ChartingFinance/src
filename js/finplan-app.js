@@ -143,7 +143,7 @@ const viewingBadge      = document.getElementById('viewingBadge');
 const macroCanvas       = document.getElementById('finplan-macro-canvas');
 const microCanvas       = document.getElementById('finplan-micro-canvas');
 const mcContainer       = document.getElementById('finplan-mc-container');
-const guardrailsCanvas  = document.getElementById('finplan-guardrails-canvas');
+const guardrailsContainer = document.getElementById('finplan-guardrails-container');
 const spreadsheetView   = document.getElementById('finplanSpreadsheet');
 const reportView        = document.getElementById('finplanReport');
 const creditMemoView    = document.getElementById('finplanCreditMemos');
@@ -191,7 +191,7 @@ let expandedGroups      = new Set([
     AssetGroup.RETIREMENT, AssetGroup.EXPENSES, AssetGroup.TAXES,
 ]);
 let expandedPipelines   = new Set();
-let mcAutoRunDone       = false;  // one-shot Monte Carlo auto-run per page load
+let simAutoRunDone      = false;  // one-shot simulations auto-run per page load
 
 const pipelineList      = document.getElementById('finplanPipelineList');
 const sankeyDiagram     = document.getElementById('finplanSankey');
@@ -946,12 +946,13 @@ function calculate() {
     grBtn.title = hasAssets ? '' : 'Add assets to run simulations';
     maxBtn.title = hasAssets ? '' : 'Add assets to run maximizer';
 
-    // One-shot Monte Carlo auto-run so the region isn't blank on first load.
-    // Compute happens in a worker with a progressive first paint; subsequent
-    // recalcs leave re-running to the user via the Run button.
-    if (hasAssets && !mcAutoRunDone) {
-        mcAutoRunDone = true;
+    // One-shot simulations auto-run so the regions aren't blank on first
+    // load. Compute happens in workers (Monte Carlo with a progressive first
+    // paint); subsequent recalcs leave re-running to the user via Run.
+    if (hasAssets && !simAutoRunDone) {
+        simAutoRunDone = true;
         doMonteCarlo();
+        doGuardrails();
     }
 
     const banner = document.getElementById('welcome-banner');
@@ -1006,18 +1007,17 @@ async function doMonteCarlo() {
 async function doGuardrails() {
     if (!appState.portfolio?.firstDateInt) return;
     guardrailsModule ??= await import('./guardrails.js');
-    guardrailsModule.runGuardrails(
-        appState.portfolio.modelAssets, guardrailsCanvas, getGuardrailParams(),
-        global_getRetirementDateInt(), appState.lifeEvents
-    );
-    // Apply phase markers after render
-    setTimeout(() => {
-        const gr = guardrailsModule.getGuardrailsChart();
-        if (gr) {
-            gr.options.plugins.dateMarkers = { markers: buildSimulationMarkers(gr) };
-            gr.update('none');
-        }
-    }, 100);
+    // Phase markers are applied via the onRender hook, which fires after the
+    // chart paints. Compute runs in the shared simulation worker; on failure
+    // the container already shows the error message.
+    const applyMarkers = (chart) => {
+        chart.options.plugins.dateMarkers = { markers: buildSimulationMarkers(chart) };
+        chart.update('none');
+    };
+    await guardrailsModule.runGuardrails(
+        appState.portfolio.modelAssets, guardrailsContainer, getGuardrailParams(),
+        global_getRetirementDateInt(), appState.lifeEvents, applyMarkers
+    ).catch(() => null);
 }
 
 async function initVisualizer() {

@@ -1,6 +1,7 @@
 /**
  * mc-worker-sanity.mjs — exercises the exact rehydration + compute path the
- * Monte Carlo worker runs, without a Worker context (isWorker guard is false).
+ * simulation worker runs (Monte Carlo and Guardrails), without a Worker
+ * context (isWorker guard is false).
  */
 import assert from 'node:assert/strict';
 
@@ -17,6 +18,7 @@ import { TaxTable } from '../js/taxes.js';
 import { setActiveTaxTable } from '../js/globals.js';
 import { DateInt } from '../js/utils/date-int.js';
 import { computeMonteCarlo } from '../js/mc-compute.js';
+import { computeGuardrails } from '../js/gr-compute.js';
 import '../js/mc-worker.js'; // must import cleanly outside a Worker
 
 const QUICK_START_DATA = [
@@ -104,30 +106,32 @@ const serialized = JSON.parse(JSON.stringify(QUICK_START_DATA));
 const assets = serialized.map(o => ModelAsset.fromJSON(o));
 
 const t0 = Date.now();
-let interim = null;
+const interims = [];
 const results = computeMonteCarlo(assets, {
     numSimulations: 50,
     retirementDateInt: new DateInt(DateInt.from(2036, 12).toInt()),
     onProgress: (c, t) => process.stdout.write(`  progress ${c}/${t}\n`),
-    interimAt: 20,
-    onInterim: (r) => { interim = r; },
+    interimEvery: 20,
+    onInterim: (r) => { interims.push(r); },
 });
 const elapsed = Date.now() - t0;
 
-// Interim snapshot: same shape as final, flagged with its sim count
-assert.ok(interim, 'interim snapshot delivered');
-assert.equal(interim.completed, 20, 'interim completed count');
-assert.equal(interim.numSimulations, 50, 'interim carries target total');
-assert.equal(interim.bandData.length, 5, 'interim has 5 bands');
-assert.equal(interim.bandData[0].length, interim.labels.length, 'interim band length matches labels');
-assert.equal(interim.baselineData.length, interim.labels.length, 'interim baseline matches labels');
-assert.ok(interim.successRate >= 0 && interim.successRate <= 1, 'interim successRate in [0,1]');
-for (let b = 1; b < 5; b++) {
-    const last = interim.labels.length - 1;
-    assert.ok(interim.bandData[b][last] >= interim.bandData[b-1][last] - 1e-6,
-        `interim percentiles ordered at final month (band ${b})`);
+// Interim snapshots: every interimEvery sims, excluding the final increment
+assert.equal(interims.length, 2, 'two interim snapshots (at 20 and 40, not 50)');
+assert.deepEqual(interims.map(r => r.completed), [20, 40], 'interim completed counts');
+for (const interim of interims) {
+    assert.equal(interim.numSimulations, 50, 'interim carries target total');
+    assert.equal(interim.bandData.length, 5, 'interim has 5 bands');
+    assert.equal(interim.bandData[0].length, interim.labels.length, 'interim band length matches labels');
+    assert.equal(interim.baselineData.length, interim.labels.length, 'interim baseline matches labels');
+    assert.ok(interim.successRate >= 0 && interim.successRate <= 1, 'interim successRate in [0,1]');
+    for (let b = 1; b < 5; b++) {
+        const last = interim.labels.length - 1;
+        assert.ok(interim.bandData[b][last] >= interim.bandData[b-1][last] - 1e-6,
+            `interim percentiles ordered at final month (band ${b})`);
+    }
+    assert.ok(JSON.stringify(interim), 'interim is JSON-serializable');
 }
-assert.ok(JSON.stringify(interim), 'interim is JSON-serializable');
 
 assert.ok(results, 'results returned');
 assert.equal(results.completed, 50, 'final completed count equals total');
@@ -145,5 +149,26 @@ for (let b = 1; b < 5; b++) {
 assert.ok(Number.isInteger(results.startDateInt), 'startDateInt serialized as int');
 assert.ok(JSON.stringify(results), 'results are JSON-serializable');
 
+// ── Guardrails: same rehydrated assets through the worker's other path ──
+
+const grT0 = Date.now();
+const grResults = await computeGuardrails(assets, {
+    params: { withdrawalRate: 4, preservation: 20, prosperity: 20, adjustment: 10 },
+    retirementDateInt: new DateInt(DateInt.from(2030, 1).toInt()),
+    lifeEvents: [],
+});
+const grElapsed = Date.now() - grT0;
+
+assert.ok(grResults, 'guardrails results returned');
+assert.equal(grResults.portfolioValues.length, grResults.labels.length, 'guardrails values match labels');
+assert.equal(grResults.withdrawalSteps.length, grResults.labels.length, 'guardrails steps match labels');
+assert.ok(Array.isArray(grResults.events), 'guardrails events is an array');
+assert.equal(grResults.params.withdrawalRate, 4, 'guardrails params echoed');
+assert.ok(Number.isInteger(grResults.retirementDateInt), 'guardrails retirementDateInt serialized as int');
+assert.ok(grResults.retirementMonthIndex === null || Number.isInteger(grResults.retirementMonthIndex),
+    'guardrails retirementMonthIndex is null or int');
+assert.ok(JSON.stringify(grResults), 'guardrails results are JSON-serializable');
+
 console.log(`mc-worker-sanity OK — 50 sims in ${elapsed}ms, ` +
-    `successRate=${results.successRate}, months=${results.labels.length}`);
+    `successRate=${results.successRate}, months=${results.labels.length}; ` +
+    `guardrails in ${grElapsed}ms, events=${grResults.events.length}`);
