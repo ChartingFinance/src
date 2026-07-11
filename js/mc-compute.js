@@ -244,8 +244,14 @@ export async function computeMonteCarlo(sourceAssets, {
         else ld = DateInt.from(ld.year, ld.month + 1);
     }
 
+    // Guardrail adjustments are gated on retirement (portfolio.applyGuardrails
+    // skips years before guardrailsParams.retirementDateInt) — mirror
+    // gr-compute and carry the date, or the preservation cut fires every
+    // accumulation year and inflates terminal values.
+    const grParams = guardrailParams ? { ...guardrailParams, retirementDateInt } : null;
+
     // Deterministic baseline — computed up front so interim snapshots carry it too
-    const baselineData = computeBaseline(sourceAssets, guardrailParams, lifeEvents);
+    const baselineData = computeBaseline(sourceAssets, grParams, lifeEvents);
 
     // Retirement trigger index for chart annotation
     let retirementMonthIndex = null;
@@ -292,7 +298,7 @@ export async function computeMonteCarlo(sourceAssets, {
     };
 
     for (let i = 0; i < numSimulations; i++) {
-        const totals = runOnce(sourceAssets, guardrailParams, runFromStart ? null : retirementDateInt, lifeEvents);
+        const totals = runOnce(sourceAssets, grParams, runFromStart ? null : retirementDateInt, lifeEvents);
         while (totals.length < numMonths) totals.push(totals[totals.length - 1] ?? 0);
         if (totals.length > numMonths) totals.length = numMonths;
         allRuns.push(totals);

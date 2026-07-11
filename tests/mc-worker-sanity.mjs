@@ -174,6 +174,35 @@ assert.ok(grResults.retirementMonthIndex === null || Number.isInteger(grResults.
     'guardrails retirementMonthIndex is null or int');
 assert.ok(JSON.stringify(grResults), 'guardrails results are JSON-serializable');
 
+// ── MC + guardrails: adjustments must be gated on retirement ────
+//
+// The baseline run is deterministic, and portfolio.applyGuardrails skips
+// years before guardrailsParams.retirementDateInt — so a guardrailed
+// baseline must match a plain baseline exactly for every pre-retirement
+// month. If the retirement gate is dropped (the bug this locks against),
+// the preservation cut fires from year one and the series diverge early.
+
+const retirement = DateInt.from(2030, 1);   // sims span 2026-01 … 2036-12
+const mcPlain = await computeMonteCarlo(assets, {
+    numSimulations: 5,
+    retirementDateInt: new DateInt(retirement.toInt()),
+});
+const mcGuarded = await computeMonteCarlo(assets, {
+    numSimulations: 5,
+    guardrailParams: { withdrawalRate: 4, preservation: 20, prosperity: 20, adjustment: 10 },
+    retirementDateInt: new DateInt(retirement.toInt()),
+});
+
+assert.ok(mcGuarded.withGuardrails, 'guardrailed MC flags withGuardrails');
+const retirementIdx = mcPlain.labels.indexOf('Jan 2030');
+assert.ok(retirementIdx > 0, 'retirement month found in labels');
+for (let m = 0; m < retirementIdx; m++) {
+    assert.ok(Math.abs(mcGuarded.baselineData[m] - mcPlain.baselineData[m]) < 0.01,
+        `guardrailed baseline matches plain baseline pre-retirement (month ${m}: ` +
+        `${mcGuarded.baselineData[m]} vs ${mcPlain.baselineData[m]})`);
+}
+
 console.log(`mc-worker-sanity OK — 100 sims in ${elapsed}ms, ` +
     `successRate=${results.successRate}, months=${results.labels.length}; ` +
-    `guardrails in ${grElapsed}ms, events=${grResults.events.length}`);
+    `guardrails in ${grElapsed}ms, events=${grResults.events.length}; ` +
+    `MC guardrail gate verified over ${retirementIdx} pre-retirement months`);
