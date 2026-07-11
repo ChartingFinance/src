@@ -16,7 +16,7 @@
 //   { action: 'complete', results }   compute module output
 //   { action: 'error', message }
 
-import { setActiveTaxTable, global_setBacktestYearDirect } from './globals.js';
+import { setActiveTaxTable, global_setBacktestYearDirect, global_applyWorkerSnapshot } from './globals.js';
 import { TaxTable } from './taxes.js';
 import { ModelAsset } from './model-asset.js';
 import { ModelLifeEvent } from './life-event.js';
@@ -50,6 +50,11 @@ if (isWorker) self.onmessage = async function (event) {
     }
 
     try {
+        // Workers boot with default globals (no localStorage) — install the
+        // main thread's settings before anything reads them. Life-event
+        // trigger dates, filing status, RMD ages, and tax-bracket inflation
+        // all depend on these.
+        global_applyWorkerSnapshot(payload.settings);
         setActiveTaxTable(new TaxTable());
         if (payload.backtestYear) {
             global_setBacktestYearDirect(payload.backtestYear);

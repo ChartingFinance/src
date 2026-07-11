@@ -16,7 +16,7 @@ import { Instrument, InstrumentType, InstrumentMeta } from './instruments/instru
 import { LifeEventType } from './life-event.js';
 import { ModelAsset } from './model-asset.js';
 import { chronometer_run } from './chronometer.js';
-import { setActiveTaxTable, global_setBacktestYearDirect } from './globals.js';
+import { setActiveTaxTable, global_setBacktestYearDirect, global_applyWorkerSnapshot } from './globals.js';
 import { TaxTable } from './taxes.js';
 import { Portfolio } from './portfolio.js';
 import { ModelLifeEvent } from './life-event.js';
@@ -68,9 +68,14 @@ const isWorker = typeof self !== 'undefined' && typeof self.postMessage === 'fun
 
 if (isWorker) self.onmessage = function(event) {
 
-    setActiveTaxTable(new TaxTable());
-
     const payload = event.data;
+
+    // Workers boot with default globals (no localStorage) — install the main
+    // thread's settings before anything reads them (life-event trigger dates,
+    // filing status, RMD ages, tax-bracket inflation).
+    global_applyWorkerSnapshot(payload.settings);
+
+    setActiveTaxTable(new TaxTable());
 
     // Apply backtest year so chronometer uses historical returns
     if (payload.backtestYear) {

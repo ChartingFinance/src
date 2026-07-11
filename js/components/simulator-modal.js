@@ -14,6 +14,7 @@ import { LitElement, html } from 'lit';
 import { Chart } from 'chart.js';
 import { membrane_jsonObjectsToModelAssets } from '../membrane.js';
 import { chronometer_run } from '../chronometer.js';
+import { global_workerSnapshot } from '../globals.js';
 import { Portfolio } from '../portfolio.js';
 import { ModelLifeEvent } from '../life-event.js';
 import {
@@ -221,6 +222,7 @@ class SimulatorModal extends LitElement {
         //     outboundEvents.map(e => `${e.type}@${e.triggerAge} (${Object.keys(e.phaseTransfers || {}).join(', ')})`));
 
         this._worker.postMessage({
+            settings: global_workerSnapshot(),
             modelAssets: JSON.parse(JSON.stringify(this.modelAssets)),
             lifeEvents: this.lifeEvents.map(e => e.toJSON()),
             guardrailParams: this.guardrailParams,

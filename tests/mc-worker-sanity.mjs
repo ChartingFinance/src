@@ -14,8 +14,13 @@ globalThis.localStorage = {
 globalThis.window = globalThis;
 
 import { ModelAsset } from '../js/model-asset.js';
+import { ModelLifeEvent, LifeEvent } from '../js/life-event.js';
 import { TaxTable } from '../js/taxes.js';
-import { setActiveTaxTable } from '../js/globals.js';
+import {
+    setActiveTaxTable,
+    global_workerSnapshot,
+    global_applyWorkerSnapshot,
+} from '../js/globals.js';
 import { DateInt } from '../js/utils/date-int.js';
 import { computeMonteCarlo, applyRandomRates, buildYearPool } from '../js/mc-compute.js';
 import { computeGuardrails } from '../js/gr-compute.js';
@@ -269,6 +274,39 @@ assert.equal(mcHist.poolFirstYear, fullPool.firstYear, 'results carry pool era')
 assert.ok(mcCal.bandData[2][lastM] < mcHist.bandData[2][lastM],
     `calibrated median (${Math.round(mcCal.bandData[2][lastM])}) < historical median ` +
     `(${Math.round(mcHist.bandData[2][lastM])}) when configured rate is below the pool mean`);
+
+// ── Worker settings snapshot ─────────────────────────────────────
+//
+// Workers boot with default globals (no localStorage). The snapshot pair
+// must carry the main thread's settings across — the sharpest consequence
+// of NOT doing so is that life-event trigger dates derive from
+// global_user_startAge, so every phase (Retire!) fires shifted by
+// (actualAge − defaultAge) years inside the worker.
+
+const originalSnapshot = global_workerSnapshot();
+assert.equal(originalSnapshot.userStartAge, 50, 'Node boots on the default age (50), like a worker');
+assert.equal(originalSnapshot.filingAs, 'Single', 'Node boots on the default filing status, like a worker');
+
+const retireEvent = ModelLifeEvent.fromJSON({
+    type: LifeEvent.RETIRE, displayName: 'Retire', triggerAge: 65,
+    closes: [], phaseTransfers: {},
+});
+const triggerAtDefault = retireEvent.triggerDateInt.year;
+
+// A 55-year-old's snapshot: born 5 years earlier, so age-65 arrives 5 years sooner
+global_applyWorkerSnapshot({ ...originalSnapshot, userStartAge: 55, filingAs: 'Married' });
+const triggerAt55 = retireEvent.triggerDateInt.year;
+assert.equal(triggerAtDefault - triggerAt55, 5,
+    `snapshot shifts life-event triggers (${triggerAtDefault} → ${triggerAt55})`);
+
+const applied = global_workerSnapshot();
+assert.equal(applied.filingAs, 'Married', 'snapshot round-trips filing status');
+assert.equal(applied.userStartAge, 55, 'snapshot round-trips age');
+assert.ok(JSON.stringify(originalSnapshot), 'snapshot is JSON-serializable (worker payload)');
+
+// Restore so earlier compute results in this file stay comparable on re-runs
+global_applyWorkerSnapshot(originalSnapshot);
+assert.equal(retireEvent.triggerDateInt.year, triggerAtDefault, 'restore returns triggers to baseline');
 
 console.log(`mc-worker-sanity OK — 100 sims in ${elapsed}ms, ` +
     `successRate=${results.successRate}, months=${results.labels.length}; ` +

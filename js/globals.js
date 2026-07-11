@@ -307,6 +307,53 @@ export function global_reset() {
     global_setUserFinishAge(global_user_finishAge);
 }
 
+// ── Worker settings snapshot ──────────────────────────────────
+//
+// Web Workers have no localStorage, so their copy of this module boots with
+// DEFAULTS — a simulation run in a worker would use the wrong age, filing
+// status, inflation, etc. (life-event trigger dates derive from
+// global_user_startAge, so even phase timing shifts). Every worker payload
+// must carry global_workerSnapshot() from the main thread, and every worker
+// message handler must call global_applyWorkerSnapshot(payload.settings)
+// BEFORE constructing a TaxTable or touching model objects.
+
+export function global_workerSnapshot() {
+    return {
+        inflationRate: global_inflationRate,
+        taxYear: global_taxYear,
+        filingAs: global_filingAs,
+        propertyTaxRate: global_propertyTaxRate,
+        propertyTaxDeductionMax: global_propertyTaxDeductionMax,
+        userStartAge: global_user_startAge,
+        userRetirementAge: global_user_retirementAge,
+        userFinishAge: global_user_finishAge,
+        equityDividendAllocation: global_equity_dividend_allocation,
+        equityGrowthAllocation: global_equity_growth_allocation,
+        equityDividendAverageAnnualRate: global_equity_dividend_average_annual_rate,
+        homeSaleCapitalGainsDiscount: global_home_sale_capital_gains_discount,
+        backtestYear: global_backtestYear,
+        simDataMode: global_simDataMode,
+    };
+}
+
+export function global_applyWorkerSnapshot(s) {
+    if (!s) return;
+    global_inflationRate = s.inflationRate;
+    global_taxYear = s.taxYear;
+    global_filingAs = s.filingAs;
+    global_propertyTaxRate = s.propertyTaxRate;
+    global_propertyTaxDeductionMax = s.propertyTaxDeductionMax;
+    global_user_startAge = s.userStartAge;
+    global_user_retirementAge = s.userRetirementAge;
+    global_user_finishAge = s.userFinishAge;
+    global_equity_dividend_allocation = s.equityDividendAllocation;
+    global_equity_growth_allocation = s.equityGrowthAllocation;
+    global_equity_dividend_average_annual_rate = s.equityDividendAverageAnnualRate;
+    global_home_sale_capital_gains_discount = s.homeSaleCapitalGainsDiscount;
+    global_backtestYear = s.backtestYear;
+    global_simDataMode = s.simDataMode;
+}
+
 export function global_divBy100(strValue) {
     let asFloat = parseFloat(strValue);
     asFloat /= 100.0;

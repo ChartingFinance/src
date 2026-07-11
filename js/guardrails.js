@@ -13,7 +13,7 @@
  */
 
 import { Chart } from 'chart.js';
-import { global_backtestYear } from './globals.js';
+import { global_backtestYear, global_workerSnapshot } from './globals.js';
 import { ensureLayout, setStatus } from './sim-panel.js';
 
 // ── Chart instance ───────────────────────────────────────────────
@@ -115,6 +115,7 @@ export function runGuardrails(sourceAssets, container, params, retirementDateInt
 
         grWorker.postMessage({
             kind: 'guardrails',
+            settings: global_workerSnapshot(),
             modelAssets: JSON.parse(JSON.stringify(sourceAssets)),
             lifeEvents: (lifeEvents || []).map(e => e.toJSON()),
             params,
