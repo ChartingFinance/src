@@ -4,9 +4,15 @@
 // Mirrors the simulator.js worker pattern: rehydrate the payload, install a
 // fresh tax table, run the pure compute module, stream progress back.
 //
+// Messages in:
+//   compute payload (kind, modelAssets, …)  starts a run
+//   { action: 'pause' }                     halt at the next batch boundary
+//   { action: 'resume' }                    continue a paused run
+//
 // Messages out:
 //   { action: 'progress', completed, total }
 //   { action: 'interim', results }    partial snapshot (results.completed < total)
+//   { action: 'paused', completed }   pause took effect at this sim count
 //   { action: 'complete', results }   compute module output
 //   { action: 'error', message }
 
@@ -21,8 +27,27 @@ import { computeGuardrails } from './gr-compute.js';
 // Guard so Node-side tests can import this module without a Worker context.
 const isWorker = typeof self !== 'undefined' && typeof self.postMessage === 'function';
 
+// Pause gate: the compute loop awaits a macrotask at every batch boundary,
+// which yields the worker's event loop so queued control messages get
+// processed. While paused, the checkpoint blocks on gate.promise.
+let pauseGate = null;
+
 if (isWorker) self.onmessage = async function (event) {
     const payload = event.data;
+
+    if (payload?.action === 'pause') {
+        if (!pauseGate) {
+            let release;
+            const promise = new Promise((resolve) => { release = resolve; });
+            pauseGate = { promise, release };
+        }
+        return;
+    }
+    if (payload?.action === 'resume') {
+        pauseGate?.release();
+        pauseGate = null;
+        return;
+    }
 
     try {
         setActiveTaxTable(new TaxTable());
@@ -42,7 +67,7 @@ if (isWorker) self.onmessage = async function (event) {
                 lifeEvents,
             });
         } else {
-            results = computeMonteCarlo(modelAssets, {
+            results = await computeMonteCarlo(modelAssets, {
                 numSimulations: payload.numSimulations,
                 guardrailParams: payload.guardrailParams || null,
                 retirementDateInt,
@@ -51,6 +76,14 @@ if (isWorker) self.onmessage = async function (event) {
                 onProgress: (completed, total) => self.postMessage({ action: 'progress', completed, total }),
                 interimEvery: payload.interimEvery || null,
                 onInterim: (results) => self.postMessage({ action: 'interim', results }),
+                checkpoint: async (completed) => {
+                    // Macrotask yield: lets queued pause/resume messages run
+                    await new Promise((resolve) => setTimeout(resolve, 0));
+                    while (pauseGate) {
+                        self.postMessage({ action: 'paused', completed });
+                        await pauseGate.promise;
+                    }
+                },
             });
         }
 

@@ -25,12 +25,35 @@ export function getMonteCarloChart() { return monteCarloChart; }
 // ── Worker lifecycle ─────────────────────────────────────────────
 
 let mcWorker = null;
+let activeContainer = null;   // container of the in-flight run (status writes)
+let activeTotal = 0;          // numSimulations of the in-flight run
 
 function terminateWorker() {
     if (mcWorker) {
         mcWorker.terminate();
         mcWorker = null;
     }
+    activeContainer = null;
+}
+
+// ── Pause / resume ───────────────────────────────────────────────
+//
+// Pause takes effect at the next batch boundary (~50 sims); the worker
+// answers with a 'paused' message carrying the sim count it stopped at, and
+// the chart keeps showing that batch's interim bands. Resume continues the
+// same run pool — no sims are lost or redrawn.
+
+export function pauseMonteCarlo() {
+    if (!mcWorker) return false;
+    mcWorker.postMessage({ action: 'pause' });
+    return true;
+}
+
+export function resumeMonteCarlo() {
+    if (!mcWorker) return false;
+    mcWorker.postMessage({ action: 'resume' });
+    if (activeContainer) setStatus(activeContainer, 'Resuming…');
+    return true;
 }
 
 function showLoading(container, completed, total) {
@@ -56,6 +79,8 @@ const INTERIM_EVERY = 50;
  */
 export function runMonteCarlo(sourceAssets, container, numSimulations = 1000, guardrailParams = null, retirementDateInt = null, runFromStart = false, lifeEvents = [], onRender = null) {
     showLoading(container, 0, numSimulations);
+    activeContainer = container;
+    activeTotal = numSimulations;
 
     let firstPaint = true;
     const render = (results) => {
@@ -101,7 +126,7 @@ export function runMonteCarlo(sourceAssets, container, numSimulations = 1000, gu
         return new Promise((resolve) => {
             setTimeout(async () => {
                 const { computeMonteCarlo } = await import('./mc-compute.js');
-                const results = computeMonteCarlo(sourceAssets, {
+                const results = await computeMonteCarlo(sourceAssets, {
                     numSimulations, guardrailParams,
                     retirementDateInt: runFromStart ? null : retirementDateInt,
                     runFromStart, lifeEvents,
@@ -123,6 +148,9 @@ export function runMonteCarlo(sourceAssets, container, numSimulations = 1000, gu
                 // The status line is separate from the chart area, so it can
                 // keep ticking even after the interim chart is on screen.
                 showLoading(container, msg.completed, msg.total);
+            } else if (msg.action === 'paused') {
+                setStatus(container,
+                    `Paused at ${msg.completed.toLocaleString()} of ${activeTotal.toLocaleString()} simulations`);
             } else if (msg.action === 'interim') {
                 render(msg.results);
             } else if (msg.action === 'complete') {

@@ -193,6 +193,15 @@ let expandedGroups      = new Set([
 let expandedPipelines   = new Set();
 let simAutoRunDone      = false;  // one-shot simulations auto-run per page load
 
+// Code-split feature modules — loaded on first use. Declared here (before
+// the init code below calls calculate()) so the auto-run path can reach
+// doMonteCarlo()/doGuardrails() during module evaluation without hitting a
+// temporal-dead-zone error. The cached namespace also lets passive refresh
+// paths (phase-marker updates) reach a chart's module state without forcing
+// a load — if the module was never loaded, there is no chart to refresh.
+let mcModule = null;         // ./monte-carlo.js
+let guardrailsModule = null; // ./guardrails.js
+
 const pipelineList      = document.getElementById('finplanPipelineList');
 const sankeyDiagram     = document.getElementById('finplanSankey');
 
@@ -410,7 +419,26 @@ function loadQuickStartProfile(profile) {
     calculate();
 }
 document.getElementById('btn-welcome-add-asset').addEventListener('click', () => openCreateAssetModal());
-document.getElementById('btn-run-mc').addEventListener('click', () => doMonteCarlo());
+// Run / Pause / Resume state machine for the Monte Carlo button. The state
+// is stamped on the button itself; doMonteCarlo() owns the running↔idle
+// transitions, this handler owns pause↔resume.
+document.getElementById('btn-run-mc').addEventListener('click', (ev) => {
+    const btn = ev.currentTarget;
+    const state = btn.dataset.simState || 'idle';
+    if (state === 'running') {
+        if (mcModule?.pauseMonteCarlo()) {
+            btn.dataset.simState = 'paused';
+            btn.innerHTML = '&#9654; Resume';
+        }
+    } else if (state === 'paused') {
+        if (mcModule?.resumeMonteCarlo()) {
+            btn.dataset.simState = 'running';
+            btn.innerHTML = '&#9208; Pause';
+        }
+    } else {
+        doMonteCarlo();
+    }
+});
 document.getElementById('btn-run-guardrails').addEventListener('click', () => doGuardrails());
 document.getElementById('btn-maximize').addEventListener('click', () => doMaximize());
 
@@ -977,31 +1005,32 @@ function getGuardrailParams() {
     };
 }
 
-// ── Code-split feature modules ──────────────────────────────
-// Loaded on first use; the cached namespace also lets passive refresh paths
-// (phase-marker updates) reach a chart's module state without forcing a load
-// — if the module was never loaded, there is no chart to refresh.
-let mcModule = null;         // ./monte-carlo.js
-let guardrailsModule = null; // ./guardrails.js
+// ── Simulations ─────────────────────────────────────────────
 
 async function doMonteCarlo() {
     if (!appState.portfolio?.firstDateInt) return;
     mcModule ??= await import('./monte-carlo.js');
     const withGuardrails = document.getElementById('mc-with-guardrails')?.checked;
-    // Phase markers are applied on every paint — the interim fan (first ~200
-    // sims) and the final — via the onRender hook.
+    // Phase markers are applied on every paint — each interim fan and the
+    // final — via the onRender hook.
     const applyMarkers = (chart) => {
         chart.options.plugins.dateMarkers = { markers: buildSimulationMarkers(chart, mcModule.getMonteCarloResults()?.labels) };
         chart.update('none');
     };
+    const btn = document.getElementById('btn-run-mc');
+    btn.dataset.simState = 'running';
+    btn.innerHTML = '&#9208; Pause';
     // Compute runs in a module Worker; the promise resolves after the final
-    // render. On worker failure the container already shows the error message.
+    // render (a paused run holds here until resumed). On worker failure the
+    // container already shows the error message.
     await mcModule.runMonteCarlo(
         appState.portfolio.modelAssets, mcContainer, 1000,
         withGuardrails ? getGuardrailParams() : null,
         global_getRetirementDateInt(),
         false, appState.lifeEvents, applyMarkers
     ).catch(() => null);
+    btn.dataset.simState = 'idle';
+    btn.innerHTML = '&#9654; Run';
 }
 
 async function doGuardrails() {

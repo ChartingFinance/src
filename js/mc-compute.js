@@ -199,9 +199,12 @@ function computeBaseline(sourceAssets, guardrailParams, lifeEvents) {
  *   onProgress        {function(completed, total)|null}
  *   interimEvery      {number|null}  emit a partial-results snapshot every N sims
  *   onInterim         {function(results)|null}  receives snapshots (same shape as final)
- * @returns results object (JSON-serializable; DateInts carried as ints)
+ *   checkpoint        {async function(completed)|null}  awaited at every batch
+ *                     boundary — lets a worker host yield its event loop to
+ *                     process pause/abort control messages mid-run
+ * @returns Promise of results object (JSON-serializable; DateInts carried as ints)
  */
-export function computeMonteCarlo(sourceAssets, {
+export async function computeMonteCarlo(sourceAssets, {
     numSimulations = 1000,
     guardrailParams = null,
     retirementDateInt = null,
@@ -210,6 +213,7 @@ export function computeMonteCarlo(sourceAssets, {
     onProgress = null,
     interimEvery = null,
     onInterim = null,
+    checkpoint = null,
 } = {}) {
     // Determine number of months from a reference run
     const refAssets = ModelAsset.cloneArray(sourceAssets);
@@ -300,6 +304,9 @@ export function computeMonteCarlo(sourceAssets, {
             onInterim(buildResults(i + 1));
         } else if (onProgress && (i + 1) % PROGRESS_EVERY === 0) {
             onProgress(i + 1, numSimulations);
+        }
+        if (checkpoint && (i + 1) % PROGRESS_EVERY === 0 && (i + 1) < numSimulations) {
+            await checkpoint(i + 1);
         }
     }
 
