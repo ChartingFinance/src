@@ -12,15 +12,7 @@ import { LitElement, html, nothing } from 'lit';
 import { AssetGroupMeta } from '../asset-groups.js';
 import { groupPipelinesBySource } from '../flow-pipelines.js';
 
-function formatCompactCurrency(amount) {
-    const num = typeof amount === 'number' ? amount : parseFloat(amount);
-    if (isNaN(num)) return '$0';
-    const abs = Math.abs(num);
-    const sign = num < 0 ? '-' : '';
-    if (abs >= 1000000) return sign + '$' + (abs / 1000000).toFixed(1) + 'M';
-    if (abs >= 1000) return sign + '$' + Math.round(abs / 1000).toLocaleString() + 'K';
-    return sign + '$' + Math.round(abs);
-}
+import { formatCompactCurrency } from '../utils/html.js';
 
 /** Source group display order */
 const SOURCE_GROUP_ORDER = ['income', 'capital', 'retirement'];

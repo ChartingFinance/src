@@ -9,21 +9,11 @@
 
 import { LitElement, html, svg, nothing } from 'lit';
 import { InstrumentMeta, InstrumentType } from '../instruments/instrument.js';
-import { colorRange } from '../utils/html.js';
+import { colorRange, formatCompactCurrency } from '../utils/html.js';
 
 function hexToRgba25(hex) {
     const n = parseInt(hex.replace('#', ''), 16);
     return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},0.25)`;
-}
-
-function formatCompactCurrency(amount) {
-    const num = parseFloat(amount);
-    if (isNaN(num)) return '$0';
-    const abs = Math.abs(num);
-    const sign = num < 0 ? '-' : '';
-    if (abs >= 1000000) return sign + '$' + (abs / 1000000).toFixed(1) + 'M';
-    if (abs >= 1000) return sign + '$' + Math.round(abs / 1000).toLocaleString() + 'K';
-    return sign + '$' + Math.round(abs);
 }
 
 class AssetCard extends LitElement {

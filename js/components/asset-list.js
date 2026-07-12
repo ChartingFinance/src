@@ -13,7 +13,7 @@
 
 import { LitElement, html, nothing } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
-import { colorRange } from '../utils/html.js';
+import { colorRange, formatCompactCurrency } from '../utils/html.js';
 import {
     AssetGroup, AssetGroupMeta,
     classifyAssets, classifyAssetGroup, getGroupLabel, getAssetChartColor,
@@ -106,16 +106,6 @@ const ALL_TAX_HIGHLIGHT_METRICS = (() => {
     walk(TAX_TREE);
     return [...s];
 })();
-
-function formatCompactCurrency(amount) {
-    const num = typeof amount === 'number' ? amount : parseFloat(amount);
-    if (isNaN(num)) return '$0';
-    const abs = Math.abs(num);
-    const sign = num < 0 ? '-' : '';
-    if (abs >= 1000000) return sign + '$' + (abs / 1000000).toFixed(1) + 'M';
-    if (abs >= 1000) return sign + '$' + Math.round(abs / 1000).toLocaleString() + 'K';
-    return sign + '$' + Math.round(abs);
-}
 
 class AssetList extends LitElement {
 

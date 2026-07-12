@@ -113,6 +113,7 @@ import {
     global_setSimDataMode,
 } from './globals.js';
 import { buildYearPool } from './mc-compute.js';
+import { formatCompactCurrency } from './utils/html.js';
 
 // ── Util ────────────────────────────────────────────────────
 import {
@@ -1101,12 +1102,14 @@ function getGuardrailParams() {
 
 // ── Simulations ─────────────────────────────────────────────
 
-function fmtCompactUSD(v) {
-    const sign = v < 0 ? '-' : '';
-    const abs = Math.abs(v);
-    if (abs >= 1e6) return `${sign}$${(abs / 1e6).toFixed(abs >= 1e7 ? 1 : 2)}M`;
-    if (abs >= 1e3) return `${sign}$${Math.round(abs / 1e3)}K`;
-    return `${sign}$${Math.round(abs)}`;
+/** Render a row of compact stat cards into a footer summary element. */
+function renderStatCards(el, cards) {
+    el.innerHTML = cards.map(c =>
+        `<div class="stat-card${c.tone ? ` tone-${c.tone}` : ''}"${c.title ? ` title="${c.title}"` : ''}>` +
+        `<span class="stat-label">${c.label}</span>` +
+        `<span class="stat-value">${c.value}</span>` +
+        `</div>`
+    ).join('');
 }
 
 async function doMonteCarlo() {
@@ -1140,11 +1143,16 @@ async function doMonteCarlo() {
     const mcSummary = document.getElementById('mc-summary');
     if (res && mcSummary) {
         const last = res.labels.length - 1;
-        mcSummary.innerHTML =
-            `Success <b>${Math.round(res.successRate * 100)}%</b>` +
-            ` · Median <b>${fmtCompactUSD(res.bandData[2][last])}</b>` +
-            ` · P10–P90 <b>${fmtCompactUSD(res.bandData[0][last])} – ${fmtCompactUSD(res.bandData[4][last])}</b>` +
-            ` · ${res.labels[last]}`;
+        const pct = Math.round(res.successRate * 100);
+        renderStatCards(mcSummary, [
+            { label: 'Success', value: `${pct}%`,
+              tone: pct >= 90 ? 'good' : pct >= 70 ? 'warn' : 'bad',
+              title: 'Share of simulations that never dipped below $0 from retirement onward' },
+            { label: 'Median', value: formatCompactCurrency(res.bandData[2][last]) },
+            { label: 'P10', value: formatCompactCurrency(res.bandData[0][last]) },
+            { label: 'P90', value: formatCompactCurrency(res.bandData[4][last]) },
+            { label: 'Horizon', value: res.labels[last] },
+        ]);
     }
 }
 
@@ -1168,13 +1176,21 @@ async function doGuardrails() {
     const grSummaryEl = document.getElementById('guardrails-summary');
     if (gr && grSummaryEl) {
         const last = gr.portfolioValues.length - 1;
+        const endVal = gr.portfolioValues[last];
         const cuts = gr.events.filter(e => e.type === 'preservation').length;
         const raises = gr.events.length - cuts;
         const finalWithdrawal = gr.withdrawalSteps[last];
-        grSummaryEl.innerHTML =
-            `Ends <b>${fmtCompactUSD(gr.portfolioValues[last])}</b> in ${gr.labels[last]}` +
-            (finalWithdrawal ? ` · Final withdrawal <b>${fmtCompactUSD(finalWithdrawal)}/yr</b>` : '') +
-            ` · <b>${cuts}</b> cut${cuts === 1 ? '' : 's'} · <b>${raises}</b> raise${raises === 1 ? '' : 's'}`;
+        renderStatCards(grSummaryEl, [
+            { label: 'Ends', value: formatCompactCurrency(endVal),
+              tone: endVal > 0 ? undefined : 'bad' },
+            ...(finalWithdrawal ? [{ label: 'Withdrawal', value: `${formatCompactCurrency(finalWithdrawal)}/yr`,
+              title: 'Annual withdrawal in the final simulated year' }] : []),
+            { label: 'Cuts', value: String(cuts), tone: cuts ? 'warn' : undefined,
+              title: 'Preservation events: spending reduced to protect the portfolio' },
+            { label: 'Raises', value: String(raises), tone: raises ? 'good' : undefined,
+              title: 'Prosperity events: spending increased when the plan ran ahead' },
+            { label: 'Horizon', value: gr.labels[last] },
+        ]);
     }
 }
 

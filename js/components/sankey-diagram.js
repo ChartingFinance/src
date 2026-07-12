@@ -2,16 +2,7 @@
 
 import { LitElement, html, svg } from 'lit';
 import { buildSankeyLayout } from '../utils/sankey-layout.js';
-
-function formatCompactCurrency(amount) {
-    const num = parseFloat(amount);
-    if (isNaN(num)) return '$0';
-    const abs = Math.abs(num);
-    const sign = num < 0 ? '-' : '';
-    if (abs >= 1000000) return sign + '$' + (abs / 1000000).toFixed(1) + 'M';
-    if (abs >= 1000) return sign + '$' + Math.round(abs / 1000).toLocaleString() + 'K';
-    return sign + '$' + Math.round(abs);
-}
+import { formatCompactCurrency } from '../utils/html.js';
 
 const SVG_W = 900;
 const SVG_H = 300;
