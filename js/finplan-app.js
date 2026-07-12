@@ -1101,6 +1101,14 @@ function getGuardrailParams() {
 
 // ── Simulations ─────────────────────────────────────────────
 
+function fmtCompactUSD(v) {
+    const sign = v < 0 ? '-' : '';
+    const abs = Math.abs(v);
+    if (abs >= 1e6) return `${sign}$${(abs / 1e6).toFixed(abs >= 1e7 ? 1 : 2)}M`;
+    if (abs >= 1e3) return `${sign}$${Math.round(abs / 1e3)}K`;
+    return `${sign}$${Math.round(abs)}`;
+}
+
 async function doMonteCarlo() {
     if (!appState.portfolio?.firstDateInt) return;
     mcModule ??= await import('./monte-carlo.js');
@@ -1117,7 +1125,7 @@ async function doMonteCarlo() {
     // Compute runs in a module Worker; the promise resolves after the final
     // render (a paused run holds here until resumed). On worker failure the
     // container already shows the error message.
-    await mcModule.runMonteCarlo(
+    const chart = await mcModule.runMonteCarlo(
         appState.portfolio.modelAssets, mcContainer, 1000,
         withGuardrails ? getGuardrailParams() : null,
         global_getRetirementDateInt(),
@@ -1125,6 +1133,19 @@ async function doMonteCarlo() {
     ).catch(() => null);
     btn.dataset.simState = 'idle';
     btn.innerHTML = '&#9654; Run';
+
+    // Plan summary in the section footer — only from a run that completed
+    // (a failed run would otherwise show the previous run's cached numbers).
+    const res = chart ? mcModule.getMonteCarloResults() : null;
+    const mcSummary = document.getElementById('mc-summary');
+    if (res && mcSummary) {
+        const last = res.labels.length - 1;
+        mcSummary.innerHTML =
+            `Success <b>${Math.round(res.successRate * 100)}%</b>` +
+            ` · Median <b>${fmtCompactUSD(res.bandData[2][last])}</b>` +
+            ` · P10–P90 <b>${fmtCompactUSD(res.bandData[0][last])} – ${fmtCompactUSD(res.bandData[4][last])}</b>` +
+            ` · ${res.labels[last]}`;
+    }
 }
 
 async function doGuardrails() {
@@ -1137,10 +1158,24 @@ async function doGuardrails() {
         chart.options.plugins.dateMarkers = { markers: buildSimulationMarkers(chart) };
         chart.update('none');
     };
-    await guardrailsModule.runGuardrails(
+    const chart = await guardrailsModule.runGuardrails(
         appState.portfolio.modelAssets, guardrailsContainer, getGuardrailParams(),
         global_getRetirementDateInt(), appState.lifeEvents, applyMarkers
     ).catch(() => null);
+
+    // Plan summary in the section footer
+    const gr = chart ? guardrailsModule.getGuardrailsResults() : null;
+    const grSummaryEl = document.getElementById('guardrails-summary');
+    if (gr && grSummaryEl) {
+        const last = gr.portfolioValues.length - 1;
+        const cuts = gr.events.filter(e => e.type === 'preservation').length;
+        const raises = gr.events.length - cuts;
+        const finalWithdrawal = gr.withdrawalSteps[last];
+        grSummaryEl.innerHTML =
+            `Ends <b>${fmtCompactUSD(gr.portfolioValues[last])}</b> in ${gr.labels[last]}` +
+            (finalWithdrawal ? ` · Final withdrawal <b>${fmtCompactUSD(finalWithdrawal)}/yr</b>` : '') +
+            ` · <b>${cuts}</b> cut${cuts === 1 ? '' : 's'} · <b>${raises}</b> raise${raises === 1 ? '' : 's'}`;
+    }
 }
 
 async function initVisualizer() {

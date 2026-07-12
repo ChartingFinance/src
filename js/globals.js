@@ -492,8 +492,10 @@ export function global_setBacktestYearDirect(value) {
 // ── Simulation data mode ──────────────────────────────────────
 // 'historical'  — Monte Carlo samples raw historical returns (as they happened)
 // 'calibrated'  — historical deviations re-centered on the user's configured rates
+//                 (the default: matches what most retail MC tools model, and keeps
+//                 the fan consistent with the deterministic charts' assumptions)
 
-export const global_default_simDataMode = 'historical';
+export const global_default_simDataMode = 'calibrated';
 
 export let global_simDataMode = global_default_simDataMode;
 

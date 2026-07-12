@@ -338,9 +338,18 @@ export async function computeMonteCarlo(sourceAssets, {
             }
         }
 
-        // Success rate: fraction of runs whose terminal value stays above zero
-        const lastMonth = numMonths - 1;
-        const successRate = allRuns.filter(run => run[lastMonth] > 0).length / allRuns.length;
+        // Success rate: fraction of runs that never dip to (or below) $0 from
+        // retirement onward — the "moment of ruin" definition, stricter than
+        // terminal-value-positive. Anchored at retirement because the pre-
+        // retirement phase is deterministic and shared by every run (and a
+        // fresh mortgage can make early net position legitimately negative).
+        const ruinFrom = retirementMonthIndex ?? 0;
+        const successRate = allRuns.filter(run => {
+            for (let m = ruinFrom; m < run.length; m++) {
+                if (run[m] <= 0) return false;
+            }
+            return true;
+        }).length / allRuns.length;
 
         return {
             labels,

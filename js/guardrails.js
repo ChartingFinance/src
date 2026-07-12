@@ -39,17 +39,9 @@ function terminateWorker() {
     }
 }
 
-// Status line: a single deterministic run has no counter to tick, so the
-// line reports what the run found — the guardrail events themselves.
-function summarize(events) {
-    const cuts = events.filter(e => e.type === 'preservation').length;
-    const raises = events.length - cuts;
-    if (!cuts && !raises) return 'Single run · no guardrail adjustments triggered';
-    const parts = [];
-    if (cuts) parts.push(`${cuts} preservation cut${cuts === 1 ? '' : 's'}`);
-    if (raises) parts.push(`${raises} prosperity raise${raises === 1 ? '' : 's'}`);
-    return `Single run · ${parts.join(' · ')}`;
-}
+// Status line: a single deterministic run has no counter to tick. Event
+// counts live in the section footer's plan summary, so the line stays
+// minimal here.
 
 // ── Main entry point ─────────────────────────────────────────────
 
@@ -70,7 +62,11 @@ export function runGuardrails(sourceAssets, container, params, retirementDateInt
             ...results,
             retirementDateInt: retirementDateInt ?? null,
         };
-        setStatus(container, summarize(results.events));
+        const rateSource = global_backtestYear && global_backtestYear !== 'current'
+            ? `replaying history from ${global_backtestYear}`
+            : 'your configured rates';
+        setStatus(container, `Single deterministic run · ${rateSource}`
+            + (results.retirementDateInt ? ' · guardrails active from retirement' : ''));
         renderChart(ensureLayout(container).chartEl, results.labels, results.portfolioValues,
             results.withdrawalSteps, results.events, results.params, results.retirementMonthIndex);
         if (guardrailsChart && onRender) onRender(guardrailsChart);
