@@ -201,17 +201,24 @@ export class Portfolio {
                 switch (memo.note) {
                     case 'FICA withholding':       ficaMemos += memo.amount.amount; break;
                     case 'Income tax withholding': incomeTaxMemos += memo.amount.amount; break;
-                    case 'Capital gains':          capitalGainsMemos += memo.amount.amount; break;
-                    case 'Mortgage interest':      mortgageInterestMemos += memo.amount.amount; break;
-                    case 'Mortgage principal':     mortgagePrincipalMemos += memo.amount.amount; break;
-                    case 'Property taxes':         propertyTaxMemos += memo.amount.amount; break;
+                    case 'Capital gains':
+                    case 'Capital gains (spillover)': capitalGainsMemos += memo.amount.amount; break;
+                    case 'Mortgage Interest':      mortgageInterestMemos += memo.amount.amount; break;
+                    case 'Mortgage Principal':     mortgagePrincipalMemos += memo.amount.amount; break;
+                    case 'Property tax':           propertyTaxMemos += memo.amount.amount; break;
                     case 'Qualified dividend':     qualifiedDividendMemos += memo.amount.amount; break;
                     case 'Non-qualified dividend': nonQualifiedDividendMemos += memo.amount.amount; break;
                     case 'Interest income':        interestIncomeMemos += memo.amount.amount; break;
-                    case 'Asset growth':           assetGrowthMemos += memo.amount.amount; break;
-                    case 'Expense growth':         assetGrowthMemos += memo.amount.amount; break; // Or create an expenseGrowthMemos variable
+                    case 'Asset growth':
+                    case 'Expense inflation':
+                    case 'Annual income growth':   assetGrowthMemos += memo.amount.amount; break;
                     case 'Capital gains tax withholding': capitalGainsTaxMemos += memo.amount.amount; break;
-                    default:                       transferNet += memo.amount.amount; break;
+                    default:
+                        // Transfer conservation: only CASH memos participate.
+                        // Info memos (recognition, attribution, escrow accrual)
+                        // moved no money and must not pollute the net.
+                        if (memo.kind !== 'info') transferNet += memo.amount.amount;
+                        break;
                 }
             }
             modelAsset.creditMemosCheckedIndex = modelAsset.creditMemos.length;

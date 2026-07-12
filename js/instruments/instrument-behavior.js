@@ -221,7 +221,9 @@ const MortgageBehavior = Object.freeze({
     asset.monthlyValueChange.subtract(principal);
 
     asset.addCreditMemo(principal.copy().flipSign(), 'Mortgage Principal');
-    asset.addCreditMemo(interest, 'Mortgage Interest');
+    // Interest is paid from the funding account (its own cash memo there) —
+    // on the mortgage itself it's attribution, not a balance change.
+    asset.addCreditMemo(interest, 'Mortgage Interest', 'info');
 
     return new MortgageResult(principal, interest, Currency.zero());
   },
@@ -280,6 +282,12 @@ const CapitalBehavior = Object.freeze({
       const totalDivCurrency = qualifiedDiv.plus(nonQualifiedDiv);
       asset.finishCurrency.add(totalDivCurrency);
       asset.monthlyValueChange.add(totalDivCurrency);
+      // Reinvested dividends create new basis in taxable accounts — they are
+      // taxed as dividend income in the year received, so without this the
+      // same dollars would be taxed a second time as capital gain on sale.
+      if (InstrumentType.isTaxableAccount(asset.instrument)) {
+        asset.finishBasisCurrency.add(totalDivCurrency);
+      }
       if (qualifiedDiv.amount !== 0) asset.addCreditMemo(qualifiedDiv, 'Qualified dividend');
       if (nonQualifiedDiv.amount !== 0) asset.addCreditMemo(nonQualifiedDiv, 'Non-qualified dividend');
     }
@@ -324,22 +332,25 @@ const RealEstateBehavior = Object.freeze({
     const tax = new Currency(asset.finishCurrency.amount * asset.annualTaxRate.asMonthly());
     tax.flipSign(); // taxes are negative
 
+    // Property tax / maintenance / insurance are paid from funding accounts
+    // (their own cash memos there) — on the home they're attributed costs,
+    // not balance changes.
     asset.addToMetric(M.PROPERTY_TAX, tax);      // leaf → SALT_TAXES → TAXES
-    asset.addCreditMemo(tax, 'Property tax');
+    asset.addCreditMemo(tax, 'Property tax', 'info');
 
     // Maintenance: percentage of home value (e.g. 1% annual rule of thumb)
     if (asset.annualMaintenanceRate.rate !== 0) {
       const maint = new Currency(asset.finishCurrency.amount * asset.annualMaintenanceRate.asMonthly());
       maint.flipSign();
       asset.addToMetric(M.MAINTENANCE, maint);   // leaf → EXPENSE
-      asset.addCreditMemo(maint, 'Maintenance');
+      asset.addCreditMemo(maint, 'Maintenance', 'info');
     }
 
     // Insurance: fixed annual cost spread monthly
     if (asset.annualInsuranceCost.amount !== 0) {
       const ins = new Currency(asset.annualInsuranceCost.amount / -12);
       asset.addToMetric(M.INSURANCE, ins);        // leaf → EXPENSE
-      asset.addCreditMemo(ins, 'Insurance');
+      asset.addCreditMemo(ins, 'Insurance', 'info');
     }
 
     return new AssetAppreciationResult(asset.finishCurrency.copy(), growth, Currency.zero(), Currency.zero(), tax);

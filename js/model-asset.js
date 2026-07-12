@@ -24,10 +24,18 @@ import { IncomeResult } from './instruments/instrument-behavior.js';
 // ── Result Type ──────────────────────────────────────────────────────
 
 export class CreditMemo {
-  constructor(amount = Currency.zero(), note = '', dateInt = null) {
+  /**
+   * @param {string} kind  'cash' — the memo reflects an actual balance change
+   *                       on this asset; 'info' — recognition or attribution
+   *                       only (capital-gain recognition, costs paid from a
+   *                       funding account, escrow accrual). Info memos must
+   *                       be excluded from any cash reconciliation.
+   */
+  constructor(amount = Currency.zero(), note = '', dateInt = null, kind = 'cash') {
     this.amount = amount instanceof Currency ? amount.copy() : new Currency(amount);
     this.note = note;
     this.dateInt = dateInt;
+    this.kind = kind;
   }
 }
 import { colorRange }    from './utils/html.js';
@@ -675,8 +683,8 @@ export class ModelAsset {
     return null;
   }
 
-  addCreditMemo(amount, note) {
-    this.creditMemos.push(new CreditMemo(amount, note, this.currentDateInt));
+  addCreditMemo(amount, note, kind = 'cash') {
+    this.creditMemos.push(new CreditMemo(amount, note, this.currentDateInt, kind));
   }
 
   // ── Credit / Debit (fund transfer interface) ─────────────────────

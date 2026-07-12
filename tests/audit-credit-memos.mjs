@@ -225,6 +225,7 @@ for (const asset of portfolio.modelAssets) {
                 instrument: asset.instrument,
                 note: memo.note,
                 amount: memo.amount.amount,
+                kind: memo.kind,
             });
         }
     }
@@ -242,7 +243,7 @@ allMemos.sort((a, b) => {
 const categories = {};
 for (const m of allMemos) {
     if (!categories[m.note]) {
-        categories[m.note] = { memos: [], total: 0 };
+        categories[m.note] = { memos: [], total: 0, kind: m.kind };
     }
     categories[m.note].memos.push(m);
     categories[m.note].total += m.amount;
@@ -268,9 +269,12 @@ const sortedCats = Object.entries(categories).sort((a, b) => Math.abs(b[1].total
 console.log(`${'Category'.padEnd(45)} ${'Count'.padStart(6)} ${'Total'.padStart(15)}`);
 console.log('-'.repeat(68));
 for (const [note, data] of sortedCats) {
-    console.log(`${note.padEnd(45)} ${String(data.memos.length).padStart(6)} ${fmt(data.total).padStart(15)}`);
+    const label = data.kind === 'info' ? `${note} (non-cash)` : note;
+    console.log(`${label.padEnd(45)} ${String(data.memos.length).padStart(6)} ${fmt(data.total).padStart(15)}`);
 }
 console.log('-'.repeat(68));
+const cashMemos = allMemos.filter(m => m.kind !== 'info');
+console.log(`${'CASH TOTAL (excludes non-cash)'.padEnd(45)} ${String(cashMemos.length).padStart(6)} ${fmt(cashMemos.reduce((s, m) => s + m.amount, 0)).padStart(15)}`);
 console.log(`${'GRAND TOTAL'.padEnd(45)} ${String(allMemos.length).padStart(6)} ${fmt(allMemos.reduce((s, m) => s + m.amount, 0)).padStart(15)}`);
 
 // Detail by category
@@ -310,15 +314,16 @@ if (currentMonth) {
     console.log(`${''.padEnd(75)} ${fmt(monthTotal).padStart(15)}  ← month net`);
 }
 
-// Asset balance reconciliation
+// Asset balance reconciliation — CASH memos only: info memos (recognition,
+// attribution, escrow accrual) move no money and would break the ledger.
 console.log(`\n${'='.repeat(100)}`);
-console.log('ASSET BALANCE RECONCILIATION (start value + sum of memos through Mar 2027)');
+console.log('ASSET BALANCE RECONCILIATION (start value + sum of CASH memos through Mar 2027)');
 console.log(`${'='.repeat(100)}`);
-console.log(`${'Asset'.padEnd(25)} ${'Start Value'.padStart(15)} ${'Memo Sum'.padStart(15)} ${'Expected'.padStart(15)} ${'Actual'.padStart(15)} ${'Delta'.padStart(12)}`);
+console.log(`${'Asset'.padEnd(25)} ${'Start Value'.padStart(15)} ${'Cash Memos'.padStart(15)} ${'Expected'.padStart(15)} ${'Actual'.padStart(15)} ${'Delta'.padStart(12)}`);
 console.log('-'.repeat(100));
 
 for (const asset of portfolio.modelAssets) {
-    const assetMemos = allMemos.filter(m => m.asset === asset.displayName);
+    const assetMemos = allMemos.filter(m => m.asset === asset.displayName && m.kind !== 'info');
     const memoSum = assetMemos.reduce((s, m) => s + m.amount, 0);
     const startVal = asset.startCurrency.amount;
     const expected = startVal + memoSum;

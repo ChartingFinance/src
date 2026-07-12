@@ -52,12 +52,21 @@ class CreditMemoView extends LitElement {
                         const formatted = val !== 0
                             ? val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
                             : '\u2014';
+                        // Info memos (gain recognition, attributed costs, escrow
+                        // accruals) moved no cash on this asset \u2014 mute the amount
+                        // and badge them so the ledger visibly reconciles.
+                        const isInfo = row.kind === 'info';
                         return html`
                             <tr>
                                 <td class="spreadsheet-date-col">${dateStr}</td>
                                 <td>${row.asset}</td>
-                                <td class="${val < 0 ? 'spreadsheet-negative' : ''}">${formatted}</td>
-                                <td>${row.note || ''}</td>
+                                <td class="${val < 0 && !isInfo ? 'spreadsheet-negative' : ''}"
+                                    style="${isInfo ? 'color: #9ca3af; font-style: italic;' : ''}">${formatted}</td>
+                                <td>${row.note || ''}${isInfo ? html` <span
+                                    style="font-size: 10px; font-weight: 600; letter-spacing: 0.05em;
+                                           color: #9ca3af; background: #f3f4f6; border-radius: 6px;
+                                           padding: 1px 6px; white-space: nowrap; vertical-align: 1px;"
+                                    title="Recognition or attribution entry \u2014 no cash moved on this asset. Excluded from cash reconciliation.">NON-CASH</span>` : ''}</td>
                             </tr>
                         `;
                     })}
@@ -93,6 +102,7 @@ class CreditMemoView extends LitElement {
                     asset: modelAsset.displayName,
                     amount: memo.amount,
                     note: memo.note,
+                    kind: memo.kind,
                 });
             }
         }

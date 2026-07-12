@@ -240,11 +240,11 @@ export class FundTransfer {
     // side produced them (debit with positive gain, or credit-as-withdrawal)
     if (fromResult.realizedGain?.amount > 0) {
       this.fromModel.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, fromResult.realizedGain);
-      this.fromModel.addCreditMemo(fromResult.realizedGain.copy(), 'Capital gains');
+      this.fromModel.addCreditMemo(fromResult.realizedGain.copy(), 'Capital gains', 'info');
     }
     if (toResult.realizedGain?.amount > 0) {
       this.toModel.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, toResult.realizedGain);
-      this.toModel.addCreditMemo(toResult.realizedGain.copy(), 'Capital gains');
+      this.toModel.addCreditMemo(toResult.realizedGain.copy(), 'Capital gains', 'info');
     }
 
     // Tax-advantaged account depleted: the overshoot must come from a taxable
@@ -274,7 +274,7 @@ export class FundTransfer {
         spilloverInstrument = fallback.instrument;
         if (spilloverGain.amount > 0) {
           fallback.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, spilloverGain);
-          fallback.addCreditMemo(spilloverGain.copy(), 'Capital gains (spillover)');
+          fallback.addCreditMemo(spilloverGain.copy(), 'Capital gains (spillover)', 'info');
         }
       } else {
         // No taxable account can cover the shortfall. Nothing at this layer

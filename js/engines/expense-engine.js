@@ -83,7 +83,7 @@ export class ExpenseEngine {
 
                     if (result && result.realizedGain && result.realizedGain.amount > 0) {
                         targetAsset.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, result.realizedGain);
-                        targetAsset.addCreditMemo(result.realizedGain.copy(), 'Capital gains');
+                        targetAsset.addCreditMemo(result.realizedGain.copy(), 'Capital gains', 'info');
                         // Isolate tax liability to prevent the death-spiral loop
                         const taxLiability = new Currency(grossWithdrawal.amount - netShortfall.amount);
                         this.monthly.estimatedTaxes.add(taxLiability);
@@ -107,7 +107,7 @@ export class ExpenseEngine {
 
                 if (result && result.realizedGain && result.realizedGain.amount > 0) {
                     targetAsset.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, result.realizedGain);
-                    targetAsset.addCreditMemo(result.realizedGain.copy(), 'Capital gains');
+                    targetAsset.addCreditMemo(result.realizedGain.copy(), 'Capital gains', 'info');
                     // Isolate tax liability to prevent the death-spiral loop
                     const taxLiability = new Currency(grossWithdrawal.amount - netShortfall.amount);
                     this.monthly.estimatedTaxes.add(taxLiability);
@@ -169,7 +169,7 @@ export class ExpenseEngine {
             this.monthly.recordTransfer(oneSided.toModel.instrument, oneSided.amount, result.realizedGain);
             if (result.realizedGain && result.realizedGain.amount > 0) {
                 oneSided.toModel.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, result.realizedGain);
-                oneSided.toModel.addCreditMemo(result.realizedGain.copy(), 'Capital gains');
+                oneSided.toModel.addCreditMemo(result.realizedGain.copy(), 'Capital gains', 'info');
             }
         }
 
@@ -222,7 +222,7 @@ export class ExpenseEngine {
             this.monthly.recordTransfer(oneSided.toModel.instrument, oneSided.amount, result.realizedGain);
             if (result.realizedGain && result.realizedGain.amount > 0) {
                 oneSided.toModel.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, result.realizedGain);
-                oneSided.toModel.addCreditMemo(result.realizedGain.copy(), 'Capital gains');
+                oneSided.toModel.addCreditMemo(result.realizedGain.copy(), 'Capital gains', 'info');
             }
         }
     }

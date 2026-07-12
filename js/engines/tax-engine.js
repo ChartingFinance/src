@@ -53,7 +53,7 @@ export class TaxEngine {
 
     // ── Day 15: Property Tax Escrow ───────────────────────────────────
 
-    applyPropertyTaxEscrow(modelAsset, currentDateInt) {
+    applyPropertyTaxEscrow(modelAsset, _currentDateInt) {
 
         if (!InstrumentType.isRealEstate(modelAsset.instrument)) return;
 
@@ -61,7 +61,7 @@ export class TaxEngine {
 
             const escrow = modelAsset.applyMonthlyTaxEscrow();
             //this.monthly.propertyTaxes.subtract(escrow);
-            modelAsset.addCreditMemo(escrow, 'Property tax escrow');            
+            modelAsset.addCreditMemo(escrow, 'Property tax escrow', 'info');
 
             if (modelAsset.monthlyTaxEscrow.amount) {
 
@@ -108,7 +108,7 @@ export class TaxEngine {
                     this.monthly.recordTransfer(oneSided.toModel.instrument, oneSided.amount, result.realizedGain);
                     if (result.realizedGain && result.realizedGain.amount > 0) {
                         oneSided.toModel.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, result.realizedGain);
-                        oneSided.toModel.addCreditMemo(result.realizedGain.copy(), 'Capital gains');
+                        oneSided.toModel.addCreditMemo(result.realizedGain.copy(), 'Capital gains', 'info');
                     }
                 }
 
@@ -153,7 +153,7 @@ export class TaxEngine {
             this.monthly.longTermCapitalGains.add(capitalGains);
             modelAsset.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, capitalGains);
 
-            modelAsset.addCreditMemo(capitalGains.copy(), 'Capital gains');
+            modelAsset.addCreditMemo(capitalGains.copy(), 'Capital gains', 'info');
 
             this.monthly.longTermCapitalGainsTax.add(amountToTax.flipSign());
             modelAsset.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN_TAX, amountToTax);
@@ -283,7 +283,7 @@ export class TaxEngine {
         this.monthly.recordTransfer(liquidAsset.instrument, payment, result.realizedGain);
         if (result.realizedGain && result.realizedGain.amount > 0) {
             liquidAsset.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, result.realizedGain);
-            liquidAsset.addCreditMemo(result.realizedGain.copy(), 'Capital gains');
+            liquidAsset.addCreditMemo(result.realizedGain.copy(), 'Capital gains', 'info');
         }
 
     }
