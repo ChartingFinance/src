@@ -133,6 +133,20 @@ export function util_loadLocalScenarioMeta(storyArc, storyName) {
     return raw ? JSON.parse(raw) : null;
 }
 
+// Cached preview curve for the scenario menu: { series: number[], end: number, ts: number }.
+// Stored separately from +meta so scenario title/note edits never clobber it.
+
+export function util_saveLocalScenarioPreview(storyArc, storyName, preview) {
+    const key = util_buildStoryArcKey(storyArc, storyName) + '+preview';
+    localStorage.setItem(key, JSON.stringify(preview));
+}
+
+export function util_loadLocalScenarioPreview(storyArc, storyName) {
+    const key = util_buildStoryArcKey(storyArc, storyName) + '+preview';
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : null;
+}
+
 export function util_loadStoryNames(storyArc) {
     const storyArcNamesKey = util_buildStoryArcKey(storyArc, storyNamesKey);
     const raw = localStorage.getItem(storyArcNamesKey);
@@ -149,6 +163,7 @@ export function util_deleteScenario(storyArc, storyName) {
     localStorage.removeItem(`lifeEvents_${storyArc}_${storyName}`); // life events
     localStorage.removeItem(baseKey + '+guardrails');           // guardrail params
     localStorage.removeItem(baseKey + '+meta');                 // scenario metadata
+    localStorage.removeItem(baseKey + '+preview');              // cached preview curve
 }
 
 export function util_loadFromStorage(key) {

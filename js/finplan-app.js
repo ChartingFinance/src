@@ -127,6 +127,8 @@ import {
     util_loadLocalGuardrailParams,
     util_saveLocalScenarioMeta,
     util_loadLocalScenarioMeta,
+    util_saveLocalScenarioPreview,
+    util_loadLocalScenarioPreview,
     util_loadStoryNames,
     util_deleteScenario,
 } from './utils/util.js';
@@ -151,10 +153,9 @@ const metricSelect      = document.getElementById('finplan-metric-select');
 const microMetricSelect = document.getElementById('finplan-micro-metric-select');
 const shareModal        = document.getElementById('shareModal');
 const issuesModal       = document.getElementById('issuesModal');
-const scenarioSelect    = document.getElementById('scenario-select');
-const scenarioNote      = document.getElementById('scenario-note');
-const scenarioSparkline = document.getElementById('scenario-sparkline');
-const btnDeleteScenario = document.getElementById('btn-delete-scenario');
+const scenarioChip      = document.getElementById('scenario-chip');
+const scenarioChipName  = document.getElementById('scenario-chip-name');
+const scenarioMenu      = document.getElementById('scenario-menu');
 const grWithdrawal      = document.getElementById('guardrail-withdrawal-rate');
 const grPreservation    = document.getElementById('guardrail-preservation');
 const grProsperity      = document.getElementById('guardrail-prosperity');
@@ -612,24 +613,42 @@ updateSimDataModeUI();
 // ── Scenario UI events ─────────────────────────────────────
 let _scenarioPopupMode = 'create'; // 'create' or 'edit'
 
-document.getElementById('btn-add-scenario').addEventListener('click', () => {
-    _scenarioPopupMode = 'create';
-    document.getElementById('scenario-popup-title').textContent = 'New Scenario';
-    document.getElementById('scenario-title-input').value = '';
-    document.getElementById('scenario-note-input').value = '';
-    document.getElementById('scenario-copy-label').style.display = '';
-    document.getElementById('scenario-copy-check').checked = true;
+function openScenarioPopup(mode) {
+    _scenarioPopupMode = mode;
+    if (mode === 'edit') {
+        const meta = util_loadLocalScenarioMeta(appState.storyArc, appState.storyName);
+        document.getElementById('scenario-popup-title').textContent = 'Edit Scenario';
+        document.getElementById('scenario-title-input').value = meta?.title || '';
+        document.getElementById('scenario-note-input').value = meta?.note || '';
+        document.getElementById('scenario-copy-label').style.display = 'none';
+    } else {
+        document.getElementById('scenario-popup-title').textContent = 'New Scenario';
+        document.getElementById('scenario-title-input').value = '';
+        document.getElementById('scenario-note-input').value = '';
+        document.getElementById('scenario-copy-label').style.display = '';
+        document.getElementById('scenario-copy-check').checked = true;
+    }
     document.getElementById('popupCreateScenario').style.display = 'flex';
-});
+}
 
-document.getElementById('btn-edit-scenario').addEventListener('click', () => {
-    _scenarioPopupMode = 'edit';
-    const meta = util_loadLocalScenarioMeta(appState.storyArc, appState.storyName);
-    document.getElementById('scenario-popup-title').textContent = 'Edit Scenario';
-    document.getElementById('scenario-title-input').value = meta?.title || '';
-    document.getElementById('scenario-note-input').value = meta?.note || '';
-    document.getElementById('scenario-copy-label').style.display = 'none';
-    document.getElementById('popupCreateScenario').style.display = 'flex';
+// Chip toggles the menu; outside click / Escape close it
+function closeScenarioMenu() {
+    scenarioMenu.classList.add('hidden');
+    scenarioChip.setAttribute('aria-expanded', 'false');
+}
+
+scenarioChip.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const open = !scenarioMenu.classList.toggle('hidden');
+    scenarioChip.setAttribute('aria-expanded', open);
+});
+document.addEventListener('click', (e) => {
+    if (scenarioMenu.classList.contains('hidden')) return;
+    if (scenarioMenu.contains(e.target) || scenarioChip.contains(e.target)) return;
+    closeScenarioMenu();
+});
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeScenarioMenu();
 });
 
 document.getElementById('btn-scenario-create').addEventListener('click', () => {
@@ -654,18 +673,6 @@ document.getElementById('btn-scenario-cancel').addEventListener('click', () => {
 const createScenarioPopup = document.getElementById('popupCreateScenario');
 createScenarioPopup.querySelector('.closeBtn').addEventListener('click', () => createScenarioPopup.style.display = 'none');
 createScenarioPopup.addEventListener('click', (e) => { if (e.target === createScenarioPopup) createScenarioPopup.style.display = 'none'; });
-
-scenarioSelect.addEventListener('change', () => {
-    switchScenario(scenarioSelect.value);
-});
-
-btnDeleteScenario.addEventListener('click', () => {
-    const meta = util_loadLocalScenarioMeta(appState.storyArc, appState.storyName);
-    const label = meta?.title || appState.storyName;
-    if (confirm(`Delete scenario "${label}"?`)) {
-        deleteScenario(appState.storyName);
-    }
-});
 
 // Import popup events
 const importPopup = document.getElementById('popupImportPortfolio');
@@ -843,7 +850,6 @@ store.addEventListener('date-change', (e) => {
     if (reportView) reportView.scrollToDate(e.detail.year, e.detail.month);
     if (creditMemoView) creditMemoView.scrollToDate(e.detail.year, e.detail.month);
     refreshVisualizer();
-    updateScenarioSparkline();
 });
 
 // ── Settings ────────────────────────────────────────────────
@@ -1039,8 +1045,9 @@ function calculate() {
     // Init/refresh visualizer with the updated portfolio
     initVisualizer();
 
-    // Update scenario sparkline
-    updateScenarioSparkline();
+    // Cache this scenario's preview curve + refresh the scenario menu
+    cacheScenarioPreview();
+    loadScenarioList();
 
     // Build charting data
     portfolio.buildChartingDisplayData();
@@ -1651,6 +1658,12 @@ function saveLocalData() {
 
 // ── Scenario Management ──────────────────────────────────────
 
+/**
+ * Rebuild the scenario menu (heading chip dropdown): one row per scenario
+ * with its cached preview curve, title, note, and end value. The active row
+ * carries edit/delete actions; the menu footer adds "+ New scenario".
+ * Also refreshes the chip label.
+ */
 function loadScenarioList() {
     const storyNames = util_loadStoryNames(appState.storyArc);
 
@@ -1660,91 +1673,170 @@ function loadScenarioList() {
         util_ensureStoryNames(appState.storyArc, appState.storyName);
     }
 
-    // Populate dropdown
-    scenarioSelect.innerHTML = '';
+    const activeMeta = util_loadLocalScenarioMeta(appState.storyArc, appState.storyName);
+    scenarioChipName.textContent = activeMeta?.title || appState.storyName;
+
+    scenarioMenu.innerHTML = '';
     for (const name of storyNames) {
         const meta = util_loadLocalScenarioMeta(appState.storyArc, name);
-        const option = document.createElement('option');
-        option.value = name;
-        option.textContent = meta?.title || name;
-        scenarioSelect.appendChild(option);
+        const preview = util_loadLocalScenarioPreview(appState.storyArc, name);
+        const isActive = name === appState.storyName;
+
+        const row = document.createElement('div');
+        row.className = 'scenario-menu-item' + (isActive ? ' active' : '');
+        row.setAttribute('role', 'menuitem');
+
+        const spark = document.createElement('span');
+        spark.className = 'scenario-menu-spark';
+        spark.innerHTML = buildScenarioPreviewSvg(preview);
+        row.appendChild(spark);
+
+        const text = document.createElement('span');
+        text.className = 'scenario-menu-text';
+        const nameEl = document.createElement('span');
+        nameEl.className = 'scenario-menu-name';
+        nameEl.textContent = meta?.title || name;
+        const noteEl = document.createElement('span');
+        noteEl.className = 'scenario-menu-note';
+        const endLabel = preview?.end != null ? `ends ${formatShortCurrency(preview.end)}` : '';
+        noteEl.textContent = [meta?.note || '', endLabel].filter(Boolean).join(' · ');
+        noteEl.title = noteEl.textContent;
+        text.appendChild(nameEl);
+        text.appendChild(noteEl);
+        row.appendChild(text);
+
+        if (isActive) {
+            const edit = document.createElement('button');
+            edit.className = 'scenario-menu-action';
+            edit.textContent = '✏️';
+            edit.title = 'Edit scenario';
+            edit.addEventListener('click', (e) => {
+                e.stopPropagation();
+                closeScenarioMenu();
+                openScenarioPopup('edit');
+            });
+            row.appendChild(edit);
+
+            if (storyNames.length > 1) {
+                const del = document.createElement('button');
+                del.className = 'scenario-menu-action danger';
+                del.textContent = '🗑️';
+                del.title = 'Delete scenario';
+                del.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const label = meta?.title || name;
+                    if (confirm(`Delete scenario "${label}"?`)) {
+                        closeScenarioMenu();
+                        deleteScenario(name);
+                    }
+                });
+                row.appendChild(del);
+            }
+        }
+
+        row.addEventListener('click', () => {
+            closeScenarioMenu();
+            if (!isActive) switchScenario(name);
+        });
+
+        scenarioMenu.appendChild(row);
     }
-    scenarioSelect.value = appState.storyName;
 
-    // Show note for active scenario
-    updateScenarioNote();
-
-    // Show/hide delete button (hide when only 1 scenario)
-    btnDeleteScenario.classList.toggle('hidden', storyNames.length <= 1);
+    const addBtn = document.createElement('button');
+    addBtn.className = 'scenario-menu-new';
+    addBtn.textContent = '＋ New scenario';
+    addBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        closeScenarioMenu();
+        openScenarioPopup('create');
+    });
+    scenarioMenu.appendChild(addBtn);
 }
 
-function updateScenarioNote() {
-    const meta = util_loadLocalScenarioMeta(appState.storyArc, appState.storyName);
-    scenarioNote.textContent = meta?.note || '';
-    scenarioNote.title = meta?.note || '';
+/** Compact $ label for menu rows: $1.9M / $287K / $950. */
+function formatShortCurrency(amount) {
+    const val = parseFloat(amount) || 0;
+    const abs = Math.abs(val);
+    const sign = val < 0 ? '-' : '';
+    if (abs >= 1000000) return `${sign}$${(abs / 1000000).toFixed(1)}M`;
+    if (abs >= 1000) return `${sign}$${Math.round(abs / 1000).toLocaleString()}K`;
+    return `${sign}$${Math.round(abs)}`;
 }
 
-function updateScenarioSparkline() {
-    if (!scenarioSparkline || !appState.portfolio) {
-        if (scenarioSparkline) scenarioSparkline.innerHTML = '';
-        return;
+/** Tiny polyline preview for a scenario menu row (cached series or flat placeholder). */
+function buildScenarioPreviewSvg(preview, W = 64, H = 18) {
+    const PAD = 2;
+    const series = preview?.series;
+    if (!series || series.length < 2) {
+        return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" aria-hidden="true">
+            <line x1="${PAD}" y1="${H / 2}" x2="${W - PAD}" y2="${H / 2}"
+                stroke="#e5e7eb" stroke-width="1.5" stroke-linecap="round" /></svg>`;
     }
 
-    // Build total portfolio value history
+    let min = Infinity, max = -Infinity;
+    for (const v of series) {
+        if (v < min) min = v;
+        if (v > max) max = v;
+    }
+    const range = max - min || 1;
+
+    const points = [];
+    for (let k = 0; k < series.length; k++) {
+        const x = PAD + (k / (series.length - 1)) * (W - 2 * PAD);
+        const y = H - PAD - ((series[k] - min) / range) * (H - 2 * PAD);
+        points.push(`${x.toFixed(1)},${y.toFixed(1)}`);
+    }
+
+    // Color: green if ended higher, red if lower
+    const color = series[series.length - 1] >= series[0] ? '#43e97b' : '#ff6b6b';
+
+    return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" aria-hidden="true">
+        <polyline points="${points.join(' ')}"
+            fill="none" stroke="${color}" stroke-width="1.5"
+            stroke-linejoin="round" stroke-linecap="round" opacity="0.8" /></svg>`;
+}
+
+/**
+ * Cache the active scenario's preview curve (downsampled total net worth)
+ * so the scenario menu can draw every scenario without re-simulating it.
+ * Called after each recalculation.
+ */
+function cacheScenarioPreview() {
+    if (!appState.portfolio) return;
+
+    // Build total portfolio value history (always 'value', independent of the viewing metric)
     const assets = appState.portfolio.modelAssets;
     let histLen = 0;
     for (const a of assets) {
         const h = a.getHistory?.('value');
         if (h && h.length > histLen) histLen = h.length;
     }
-    if (histLen < 2) { scenarioSparkline.innerHTML = ''; return; }
+    if (histLen < 2) return;
 
-    const data = [];
-    let min = Infinity, max = -Infinity;
-    for (let i = 0; i < histLen; i++) {
+    const PREVIEW_POINTS = 48;
+    const step = Math.max(1, Math.floor(histLen / PREVIEW_POINTS));
+    const series = [];
+    for (let i = 0; i < histLen; i += step) {
         let total = 0;
         for (const a of assets) {
             const h = a.getHistory?.('value');
             if (h && i < h.length) total += h[i];
         }
-        data.push(total);
-        if (total < min) min = total;
-        if (total > max) max = total;
+        series.push(Math.round(total));
     }
-
-    const W = 420;
-    const H = 24;
-    const PAD = 2;
-    const range = max - min || 1;
-
-    const points = [];
-    for (let k = 0; k < data.length; k++) {
-        const x = PAD + (k / (data.length - 1)) * (W - 2 * PAD);
-        const y = H - PAD - ((data[k] - min) / range) * (H - 2 * PAD);
-        points.push(`${x.toFixed(1)},${y.toFixed(1)}`);
+    // Always include the final month so the end value is exact
+    let endTotal = 0;
+    for (const a of assets) {
+        const h = a.getHistory?.('value');
+        if (h && histLen - 1 < h.length) endTotal += h[histLen - 1];
     }
+    if ((histLen - 1) % step !== 0) series.push(Math.round(endTotal));
 
-    // Color: green if ended higher, red if lower
-    const color = data[data.length - 1] >= data[0] ? '#43e97b' : '#ff6b6b';
-
-    // "You are here" cursor marker
-    let cursorMarker = '';
-    if (appState.portfolio.firstDateInt) {
-        const cursorIdx = DateInt.diffMonths(appState.portfolio.firstDateInt, DateInt.from(store.selectedYear, store.selectedMonth));
-        if (cursorIdx >= 0 && cursorIdx < data.length) {
-            const cx = PAD + (cursorIdx / (data.length - 1)) * (W - 2 * PAD);
-            const cy = H - PAD - ((data[cursorIdx] - min) / range) * (H - 2 * PAD);
-            cursorMarker = `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="3"
-                fill="${color}" stroke="white" stroke-width="1" />`;
-        }
-    }
-
-    scenarioSparkline.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width: 100%; height: 24px; display: block;">
-        <polyline points="${points.join(' ')}"
-            fill="none" stroke="${color}" stroke-width="1.5"
-            stroke-linejoin="round" stroke-linecap="round" opacity="0.6" />
-        ${cursorMarker}
-    </svg>`;
+    util_saveLocalScenarioPreview(appState.storyArc, appState.storyName, {
+        series,
+        end: Math.round(endTotal),
+        ts: Date.now(),
+    });
 }
 
 function switchScenario(storyName) {
@@ -1767,8 +1859,7 @@ function switchScenario(storyName) {
 
     // Load data and recalculate
     loadLocalData();
-    updateScenarioNote();
-    btnDeleteScenario.style.display = util_loadStoryNames(appState.storyArc).length > 1 ? '' : 'none';
+    loadScenarioList();
 }
 
 function createScenario(title, note, copyData = true) {
