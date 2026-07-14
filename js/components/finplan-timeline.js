@@ -53,6 +53,8 @@ class FinplanTimeline extends LitElement {
         selectedMonth:  { type: Number },
         selectedIndex:  { type: Number },
         _playing:       { state: true },
+        _monthCardOpen: { state: true },
+        _phasePopIndex: { state: true },
     };
 
     createRenderRoot() { return this; }
@@ -71,6 +73,21 @@ class FinplanTimeline extends LitElement {
         this._playing = false;
         this._playInterval = null;
         this._scrubbing = false;
+        this._monthCardOpen = false;
+        this._phasePopIndex = null;
+
+        // Close popovers on outside click / Escape (listeners live for the
+        // component's lifetime; cheap no-ops while nothing is open)
+        this._onDocClick = (e) => {
+            if (this.contains(e.target)) return;
+            if (this._monthCardOpen) this._monthCardOpen = false;
+            if (this._phasePopIndex != null) this._phasePopIndex = null;
+        };
+        this._onDocKeydown = (e) => {
+            if (e.key !== 'Escape') return;
+            this._monthCardOpen = false;
+            this._phasePopIndex = null;
+        };
 
         this._onDateChange = (e) => {
             this.selectedYear = e.detail.year;
@@ -90,11 +107,15 @@ class FinplanTimeline extends LitElement {
     connectedCallback() {
         super.connectedCallback();
         store.addEventListener('date-change', this._onDateChange);
+        document.addEventListener('click', this._onDocClick);
+        document.addEventListener('keydown', this._onDocKeydown);
     }
 
     disconnectedCallback() {
         super.disconnectedCallback();
         store.removeEventListener('date-change', this._onDateChange);
+        document.removeEventListener('click', this._onDocClick);
+        document.removeEventListener('keydown', this._onDocKeydown);
         this._stopPlayback();
     }
 
@@ -377,15 +398,35 @@ class FinplanTimeline extends LitElement {
      * Compute portfolio metric total at a specific history index.
      */
     _metricAtIndex(idx) {
+        return this._metricAtIndexFor(this.metricName, idx);
+    }
+
+    _metricAtIndexFor(metricName, idx) {
         if (!this.portfolio || idx < 0) return 0;
         let total = 0;
         for (const asset of this.portfolio.modelAssets) {
-            const history = asset.getHistory(this.metricName);
+            const history = asset.getHistory(metricName);
             if (history && idx >= 0 && idx < history.length) {
                 total += history[idx] ?? 0;
             }
         }
         return total;
+    }
+
+    /** The cursor month's flow metrics for the month card. */
+    _cursorMonthTotals() {
+        if (!this.portfolio?.firstDateInt) return null;
+        const idx = DateInt.diffMonths(this.portfolio.firstDateInt, DateInt.from(this.selectedYear, this.selectedMonth));
+        if (idx < 0 || idx > this._lastHistoryIndex()) return null;
+        return {
+            value:     this._metricAtIndexFor('value', idx),
+            income:    this._metricAtIndexFor('income', idx),
+            expense:   this._metricAtIndexFor('expense', idx),
+            taxes:     this._metricAtIndexFor('taxes', idx),
+            cashFlow:  this._metricAtIndexFor('cashFlow', idx),
+            growth:    this._metricAtIndexFor('growth', idx),
+            netChange: this._metricAtIndexFor('netWorthChange', idx),
+        };
     }
 
     /**
@@ -429,6 +470,12 @@ class FinplanTimeline extends LitElement {
         if (abs >= 1000000) return `${sign}$${(abs / 1000000).toFixed(1)}M`;
         if (abs >= 1000) return `${sign}$${Math.round(abs / 1000).toLocaleString()}K`;
         return `${sign}$${Math.round(abs)}`;
+    }
+
+    /** Like _formatCurrency but with an explicit + on positive values. */
+    _formatSignedCurrency(amount) {
+        const s = this._formatCurrency(amount);
+        return amount > 0 ? `+${s}` : s;
     }
 
     // ── Render ─────────────────────────────────────────────────────
@@ -668,7 +715,7 @@ class FinplanTimeline extends LitElement {
         return parts;
     }
 
-    /** Phase-start dots on the axis — click to select the phase. */
+    /** Phase-start dots on the axis — click opens the phase's edit popover (on its chip). */
     _svgBoundaryDots(spans) {
         return spans.map(span => {
             const color = LifeEventType.color(span.event.type);
@@ -678,8 +725,8 @@ class FinplanTimeline extends LitElement {
             return svg`
                 <g style="cursor: pointer;"
                    @pointerdown=${(e) => e.stopPropagation()}
-                   @click=${(e) => { e.stopPropagation(); this._onSelectPhase(span.index); }}>
-                    <title>${span.event.displayName} — ages ${span.startAge}–${span.endAge}</title>
+                   @click=${(e) => { e.stopPropagation(); this._togglePhasePopover(span.index); }}>
+                    <title>${span.event.displayName} — ages ${span.startAge}–${span.endAge} (click to edit)</title>
                     ${isSelected ? svg`<circle cx=${cx} cy=${BASE_Y} r="10" fill="none" stroke="${color}" stroke-width="1.5" opacity="0.5"></circle>` : nothing}
                     <circle cx=${cx} cy=${BASE_Y} r="6" fill="${color}" stroke="${accent}" stroke-width="2"></circle>
                 </g>
@@ -728,7 +775,7 @@ class FinplanTimeline extends LitElement {
         `;
     }
 
-    /** HTML overlay chip above the cursor: date · age — value. */
+    /** HTML overlay chip above the cursor: date · age — value, plus the ⋯ month card. */
     _renderCursorChip(sAge, fAge) {
         if (!this.portfolio?.firstDateInt) return nothing;
         const age = Math.max(sAge, Math.min(fAge, this._selectedAge));
@@ -740,8 +787,58 @@ class FinplanTimeline extends LitElement {
                  style="left: clamp(80px, ${pct}%, calc(100% - 80px)); background: #ffffff; border: 1px solid ${color}40; color: ${accent};">
                 ${MONTH_NAMES[this.selectedMonth - 1]} ${this.selectedYear} · Age ${Math.floor(this._selectedAge)}
                 — <strong>${this._formatCurrency(this._computeCursorMetric())}</strong>
+                <button class="timeline-more-btn"
+                        title="Month details"
+                        aria-label="Month details"
+                        aria-expanded=${this._monthCardOpen}
+                        @pointerdown=${(e) => e.stopPropagation()}
+                        @click=${this._onToggleMonthCard}>⋯</button>
+            </div>
+            ${this._renderMonthCard(pct)}
+        `;
+    }
+
+    /** Month detail popover under the cursor chip (review point 5). */
+    _renderMonthCard(pct) {
+        if (!this._monthCardOpen) return nothing;
+        const totals = this._cursorMonthTotals();
+        return html`
+            <div class="timeline-month-card"
+                 style="left: clamp(125px, ${pct}%, calc(100% - 125px));"
+                 @pointerdown=${(e) => e.stopPropagation()}>
+                <div class="tmc-head">${MONTH_NAMES[this.selectedMonth - 1]} ${this.selectedYear} · Age ${Math.floor(this._selectedAge)}</div>
+                ${totals ? html`
+                    <div class="tmc-row tmc-nw"><span>Net worth</span>
+                        <span class="tmc-val">${this._formatCurrency(totals.value)}
+                            <span class="tmc-delta ${totals.netChange >= 0 ? 'text-green-600' : 'text-pink-600'}">${this._formatSignedCurrency(totals.netChange)}</span></span></div>
+                    <div class="tmc-row"><span>Income</span><span class="tmc-val">${this._formatSignedCurrency(totals.income)}</span></div>
+                    <div class="tmc-row"><span>Expenses</span><span class="tmc-val">${this._formatSignedCurrency(totals.expense)}</span></div>
+                    <div class="tmc-row"><span>Taxes</span><span class="tmc-val">${this._formatSignedCurrency(totals.taxes)}</span></div>
+                    <div class="tmc-row"><span>Cash flow</span>
+                        <span class="tmc-val ${totals.cashFlow >= 0 ? 'text-green-600' : 'text-pink-600'}">${this._formatSignedCurrency(totals.cashFlow)}</span></div>
+                    <div class="tmc-row"><span>Asset growth</span>
+                        <span class="tmc-val ${totals.growth >= 0 ? 'text-green-600' : 'text-pink-600'}">${this._formatSignedCurrency(totals.growth)}</span></div>
+                ` : html`
+                    <div class="tmc-row"><span class="text-gray-400">No simulation data for this month</span></div>
+                `}
+                <hr>
+                <button class="tmc-link" @click=${() => this._onJumpToView('spreadsheet')}>Open in Spreadsheet →</button>
+                <button class="tmc-link" @click=${() => this._onJumpToView('creditmemos')}>Credit memos →</button>
             </div>
         `;
+    }
+
+    _onToggleMonthCard(e) {
+        e.stopPropagation();
+        this._monthCardOpen = !this._monthCardOpen;
+    }
+
+    _onJumpToView(view) {
+        this._monthCardOpen = false;
+        this.dispatchEvent(new CustomEvent('jump-to-view', {
+            bubbles: true, composed: true,
+            detail: { view },
+        }));
     }
 
     // ── Phase chips ────────────────────────────────────────────────
@@ -757,21 +854,26 @@ class FinplanTimeline extends LitElement {
                     const accent = LifeEventType.colorAccent(span.event.type);
                     const isSelected = this.selectedIndex === span.index;
                     return html`
-                        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full cursor-pointer hover:opacity-90 transition-opacity text-xs"
-                             style="background: ${color}12; border: 1px solid ${color}${isSelected ? '55' : '20'};"
-                             @click=${() => this._onSelectPhase(span.index)}>
-                            <span style="width: 8px; height: 8px; border-radius: 50%; background: ${color};"></span>
-                            <span class="font-semibold" style="color: ${accent};">${span.event.displayName}</span>
-                            <span class="text-gray-400" style="font-size: 11.5px;">${span.startAge}–${span.endAge}</span>
-                            <span class="text-xs rounded-full hover:bg-white/60 transition-colors flex items-center justify-center"
-                                  style="color: ${accent}; width: 18px; height: 18px; opacity: 0.75;"
-                                  title="Edit phase"
-                                  @click=${(e) => { e.stopPropagation(); this._onEditPhase(span.index); }}>
-                                <svg width="11" height="11" viewBox="0 0 12 12" fill="currentColor">
-                                    <path d="M9.1 1.2L10.8 2.9 3.6 10.1 1.2 10.8 1.9 8.4z"/>
-                                </svg>
-                            </span>
-                        </div>
+                        <span class="relative">
+                            <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full cursor-pointer hover:opacity-90 transition-opacity text-xs"
+                                 style="background: ${color}12; border: 1px solid ${color}${isSelected ? '55' : '20'};"
+                                 aria-haspopup="true"
+                                 aria-expanded=${this._phasePopIndex === span.index}
+                                 @click=${(e) => { e.stopPropagation(); this._togglePhasePopover(span.index); }}>
+                                <span style="width: 8px; height: 8px; border-radius: 50%; background: ${color};"></span>
+                                <span class="font-semibold" style="color: ${accent};">${span.event.displayName}</span>
+                                <span class="text-gray-400" style="font-size: 11.5px;">${span.startAge}–${span.endAge}</span>
+                                <span class="text-xs rounded-full hover:bg-white/60 transition-colors flex items-center justify-center"
+                                      style="color: ${accent}; width: 18px; height: 18px; opacity: 0.75;"
+                                      title="Edit phase"
+                                      @click=${(e) => { e.stopPropagation(); this._onEditPhase(span.index); }}>
+                                    <svg width="11" height="11" viewBox="0 0 12 12" fill="currentColor">
+                                        <path d="M9.1 1.2L10.8 2.9 3.6 10.1 1.2 10.8 1.9 8.4z"/>
+                                    </svg>
+                                </span>
+                            </div>
+                            ${this._phasePopIndex === span.index ? this._renderPhasePopover(span) : nothing}
+                        </span>
                     `;
                 })}
 
@@ -781,6 +883,30 @@ class FinplanTimeline extends LitElement {
                     @click=${this._onAddEvent}>+ Life event</span>
             </div>
         `;
+    }
+
+    /**
+     * Edit/Remove popover for a phase chip (review point 4).
+     * Phases are structural, so Remove is an explanation rather than an action;
+     * when removable (non-phase) life events join the chips row, a live Remove
+     * item slots in here.
+     */
+    _renderPhasePopover(span) {
+        return html`
+            <div class="timeline-phase-pop" @click=${(e) => e.stopPropagation()}>
+                <button class="tpp-item" @click=${() => this._onEditPhase(span.index)}>
+                    ✏️ Edit ${span.event.displayName}…
+                </button>
+                <div class="tpp-disabled">
+                    🗑️ Remove — phases are structural; adjust ages in Edit instead.
+                </div>
+            </div>
+        `;
+    }
+
+    _togglePhasePopover(index) {
+        this._selectPhase(index);
+        this._phasePopIndex = this._phasePopIndex === index ? null : index;
     }
 
     // ── Cursor scrubbing ────────────────────────────────────────────
@@ -903,16 +1029,12 @@ class FinplanTimeline extends LitElement {
         }
     }
 
-    _onSelectPhase(index) {
+    /** Select a phase (ring + phase-select event) without moving the cursor. */
+    _selectPhase(index) {
         this.selectedIndex = index;
-        const ev = this._visibleEvents[index];
-        if (ev) {
-            const year = this._birthYear + ev.triggerAge;
-            store.setSelectedYearMonth(year, 1);
-        }
         this.dispatchEvent(new CustomEvent('phase-select', {
             bubbles: true, composed: true,
-            detail: { event: ev, index },
+            detail: { event: this._visibleEvents[index], index },
         }));
     }
 
@@ -923,7 +1045,8 @@ class FinplanTimeline extends LitElement {
     }
 
     _onEditPhase(visibleIndex) {
-        this._onSelectPhase(visibleIndex);
+        this._selectPhase(visibleIndex);
+        this._phasePopIndex = null;
         const ev = this._visibleEvents[visibleIndex];
         if (!ev) return;
         const realIndex = this.lifeEvents.indexOf(ev);

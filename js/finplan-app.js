@@ -257,6 +257,17 @@ timeline.addEventListener('edit-asset', (ev) => {
     openEditAssetModal(ev.detail.modelAsset);
 });
 
+// Wire timeline month-card jump links — the target views already track the
+// cursor date via store 'date-change', so scrolling the page there suffices.
+// Scroll to the view's card, not the tall view element itself: scrollIntoView
+// on the element would also reset its container's scrollToDate row position.
+timeline.addEventListener('jump-to-view', (ev) => {
+    const target = ev.detail.view === 'creditmemos' ? creditMemoView : spreadsheetView;
+    const card = target?.closest('.glass-card') ?? target;
+    const behavior = matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+    card?.scrollIntoView({ behavior, block: 'start' });
+});
+
 // Wire timeline edit event
 timeline.addEventListener('event-edit', (ev) => {
     const { event: lifeEvent, index } = ev.detail;
