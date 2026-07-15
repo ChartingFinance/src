@@ -56,42 +56,42 @@
             <span class="text-2xl">&#x1F550;</span>
             <h2 class="text-2xl font-bold tracking-tight">Your Timeline</h2>
         </div>
-        <p class="text-gray-600 mb-6 leading-relaxed">The Timeline is the control center for your financial plan. It shows your life phases on a proportional bar, lets you navigate to any date, and manages the scenarios that hold your portfolio data.</p>
+        <p class="text-gray-600 mb-6 leading-relaxed">The Timeline is the control center for your financial plan. One chart &mdash; the wealth arc &mdash; draws your money's path across your life phases, pins the milestones that shape it, and carries a scrubbable cursor that drives every other section of the page. The scenario menu in the section heading switches between the independent portfolios that hold your data.</p>
 
         <!-- Elements -->
         <h3 class="text-lg font-bold mb-4">Elements</h3>
         <div class="grid sm:grid-cols-2 gap-4 mb-8">
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Portfolio Open / Close</div>
-                <div class="text-sm text-gray-500">Above the timeline, the starting value (upper left) and ending value (upper right) bookend the full simulation scope. They reflect the currently selected metric.</div>
+                <div class="font-semibold text-sm mb-1">The Wealth Arc</div>
+                <div class="text-sm text-gray-500">The curve plots your total portfolio across the full simulation, using the currently selected metric. The starting value sits on the left endpoint, the ending value in bold on the right, and a checkpoint marks the value where the curve crosses into retirement. The age axis runs beneath, with calendar years at the extremes.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Year / Month Selectors &amp; Play Button</div>
-                <div class="text-sm text-gray-500">Dropdown controls to navigate to any specific year and month within your simulation range, with a <strong>&#9654;</strong> play button that auto-increments the date one month per second. Click the timeline bar, a dot, or adjust the selectors to pause playback.</div>
+                <div class="font-semibold text-sm mb-1">Phase Bands &amp; Growth Rates</div>
+                <div class="text-sm text-gray-500">Tinted background bands mark your life phases &mdash; <strong style="color: #1D9E75;">Accumulate</strong> in green, <strong style="color: #D85A30;">Retire</strong> in coral. Each band is headlined with that phase's annualized growth rate (<em>%/yr</em>), computed over the phase's span. A dashed line marks the retirement boundary.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Phase Dots &amp; Timeline Bar</div>
-                <div class="text-sm text-gray-500">Colored dots on a proportional bar represent your life event phases (e.g. <strong style="color: #1D9E75;">Accumulate</strong> and <strong style="color: #D85A30;">Retire</strong>). Click a dot to jump the cursor to that phase's start date. Click anywhere on the bar to navigate to that point in time.</div>
+                <div class="font-semibold text-sm mb-1">Milestone Pins</div>
+                <div class="text-sm text-gray-500">Emoji pins anchored to the curve show asset lifecycle events &mdash; real estate buy/sell, mortgage open and payoff, Social Security and pension starts. Pins stack vertically when events cluster at the same age. Click any pin to open the edit modal for that asset.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Asset Annotations</div>
-                <div class="text-sm text-gray-500">Emoji markers on the timeline bar showing asset lifecycle events &mdash; real estate buy/sell, mortgage payoff, Social Security start, pension start. Emojis stack vertically when events cluster at the same age. Click any emoji to open the edit modal for that asset.</div>
+                <div class="font-semibold text-sm mb-1">"You are Here" Cursor</div>
+                <div class="text-sm text-gray-500">A vertical line with a chip showing the selected date, your age, and the portfolio value at that moment. <strong>Drag anywhere on the arc</strong> to scrub through time &mdash; or focus the arc and use <strong>&larr; / &rarr;</strong> to step by month (<strong>Shift</strong> for a year). Every chart, badge, and view on the page follows the cursor.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">"You are Here" Indicator</div>
-                <div class="text-sm text-gray-500">A colored badge below the timeline showing the selected date and the portfolio metric value at that moment (e.g. <em>You are Here &middot; $1.2M</em>). Flanked by up/down triangles that vertically anchor the cursor to the timeline bar above and phase bars below. Color matches the current phase.</div>
+                <div class="font-semibold text-sm mb-1">&#x22EF; Month Card</div>
+                <div class="text-sm text-gray-500">The <strong>&#x22EF;</strong> button on the cursor chip opens a detail card for the selected month: net worth with its month-over-month delta, income, expenses, taxes, cash flow, and asset growth. Cash flow can run negative in retirement while asset growth offsets it &mdash; the card shows both so the pair reads together. Jump links open that month in the Spreadsheet or Credit Memos.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Per-Phase Summary Bars</div>
-                <div class="text-sm text-gray-500">Below the cursor, one bar per life phase. Each shows the phase name, open &rarr; close metric values for that phase, and CAGR. Click to select a phase.</div>
+                <div class="font-semibold text-sm mb-1">Phase Chips &amp; Edit Popover</div>
+                <div class="text-sm text-gray-500">Below the arc, one chip per life phase showing its name and age range. Click a chip &mdash; or its colored dot on the arc's axis &mdash; to open a popover with <strong>Edit</strong> (opens the life event modal). The <strong>+ Life event</strong> button adds a new event.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Scenario Selector &amp; Sparkline</div>
-                <div class="text-sm text-gray-500">A dropdown at the bottom of the timeline card holds complete portfolios &mdash; assets, fund transfers, and guardrail settings. A sparkline of the scenario's portfolio value appears between the selector and the descriptive text, colored green if the portfolio grew over the simulation, red if it shrank.</div>
+                <div class="font-semibold text-sm mb-1">Scenario Menu</div>
+                <div class="text-sm text-gray-500">The chip in the section heading names the active scenario &mdash; a complete, independent portfolio with its own assets, fund transfers, life events, and guardrail settings. Click it to open the menu: each row shows a preview curve of that scenario's trajectory (green if it grew, red if it shrank), its note, and its ending value. The active row carries rename (&#x270F;&#xFE0F;) and delete (&#x1F5D1;&#xFE0F;) actions.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">&#x26A1; AI Summary &amp; + New Scenario</div>
-                <div class="text-sm text-gray-500">Floating buttons at the bottom corners. The &#x26A1; generates a markdown summary of your timeline and phases. The <strong>+</strong> creates a new scenario (blank or copied from the current one).</div>
+                <div class="font-semibold text-sm mb-1">Date Controls &amp; &#x26A1; AI Summary</div>
+                <div class="text-sm text-gray-500">Year and month dropdowns in the card's upper right jump to an exact date, and the <strong>&#9654;</strong> play button auto-advances one month per second (scrub the arc or adjust a selector to pause). The <strong>&#x26A1;</strong> button in the section heading generates a markdown summary of your timeline and phases.</div>
             </div>
         </div>
 
@@ -107,11 +107,11 @@
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">2</span>
-                        <span class="text-sm text-gray-700">Click a <strong>phase dot</strong> on the timeline to select that phase. The summary bar updates to show the phase's details and the cursor jumps to that phase's start date.</span>
+                        <span class="text-sm text-gray-700">Click a <strong>phase chip</strong> below the arc (or the phase's dot on the arc's axis) to select it and open its popover; choose <strong>Edit</strong> to adjust the phase in the life event modal.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">3</span>
-                        <span class="text-sm text-gray-700">Open an asset's <strong>fund transfer modal</strong> (via the portfolio sidebar). The transfers shown are specific to the currently selected phase &mdash; configure different allocations for Accumulate vs. Retire.</span>
+                        <span class="text-sm text-gray-700">Open an asset's <strong>fund transfer modal</strong> (via the portfolio section). The transfers shown are specific to the currently selected phase &mdash; configure different allocations for Accumulate vs. Retire.</span>
                     </div>
                 </div>
             </div>
@@ -125,11 +125,29 @@
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">2</span>
-                        <span class="text-sm text-gray-700">Alternatively, <strong>click directly on the timeline bar</strong> at the approximate position you want. The cursor snaps to the nearest date.</span>
+                        <span class="text-sm text-gray-700">Alternatively, <strong>drag anywhere on the wealth arc</strong>. The cursor scrubs month by month as you drag &mdash; or focus the arc and step with the <strong>&larr; / &rarr;</strong> arrow keys (<strong>Shift</strong> jumps a year).</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">3</span>
-                        <span class="text-sm text-gray-700">Click the <strong>&#9654; play</strong> button next to the month selector to auto-advance one month per second. Everything animates in sync &mdash; sparklines, flow arrows, pipeline amounts, visualizer conduit, and wealth tank. Click the timeline, a dot, or a selector to pause.</span>
+                        <span class="text-sm text-gray-700">Click the <strong>&#9654; play</strong> button next to the month selector to auto-advance one month per second. Everything animates in sync &mdash; sparklines, flow arrows, pipeline amounts, visualizer conduit, and wealth tank. Scrub the arc or adjust a selector to pause.</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-2">Inspect a single month</div>
+                <div class="space-y-2">
+                    <div class="flex items-start gap-3">
+                        <span class="step-number">1</span>
+                        <span class="text-sm text-gray-700">Scrub the cursor to the month you're curious about, then click the <strong>&#x22EF;</strong> button on the cursor chip to open the month card.</span>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <span class="step-number">2</span>
+                        <span class="text-sm text-gray-700">Read the rows together: in retirement, <strong>Cash flow</strong> often runs negative while <strong>Asset growth</strong> offsets it &mdash; the delta beside <strong>Net worth</strong> shows the net result for the month. The card stays open while you scrub, so you can watch the flows change across the retirement boundary.</span>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <span class="step-number">3</span>
+                        <span class="text-sm text-gray-700">Use <strong>Open in Spreadsheet</strong> or <strong>Credit memos</strong> to jump to that month's row in the detail views &mdash; both are already positioned at the cursor date.</span>
                     </div>
                 </div>
             </div>
@@ -139,15 +157,15 @@
                 <div class="space-y-2">
                     <div class="flex items-start gap-3">
                         <span class="step-number">1</span>
-                        <span class="text-sm text-gray-700">Click the <strong>+</strong> button to create a new scenario. Choose whether to start blank or copy the current scenario's data.</span>
+                        <span class="text-sm text-gray-700">Click the <strong>scenario chip</strong> in the section heading and choose <strong>＋ New scenario</strong>. Pick a name and note, and choose whether to start blank or copy the current scenario's data.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">2</span>
-                        <span class="text-sm text-gray-700">Use the <strong>scenario dropdown</strong> to switch between scenarios. Each scenario is fully independent &mdash; assets, life events, fund transfers, and guardrail parameters are all scenario-specific.</span>
+                        <span class="text-sm text-gray-700">Switch scenarios by clicking a row in the menu. Each row's <strong>preview curve</strong> and ending value show where that scenario lands. Scenarios are fully independent &mdash; assets, life events, fund transfers, and guardrail parameters are all scenario-specific.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">3</span>
-                        <span class="text-sm text-gray-700">Click the <strong>&#x270F;&#xFE0F;</strong> pencil icon to rename a scenario or edit its description. Click the <strong>&#x1F5D1;&#xFE0F;</strong> trash icon to delete a scenario (only visible for non-default scenarios).</span>
+                        <span class="text-sm text-gray-700">On the active row, click <strong>&#x270F;&#xFE0F;</strong> to rename the scenario or edit its note, or <strong>&#x1F5D1;&#xFE0F;</strong> to delete it (hidden when only one scenario exists).</span>
                     </div>
                 </div>
             </div>
@@ -157,7 +175,7 @@
                 <div class="space-y-2">
                     <div class="flex items-start gap-3">
                         <span class="step-number">1</span>
-                        <span class="text-sm text-gray-700">If you have no assets yet, look for the <strong>Quick Start</strong> button in the portfolio sidebar. It loads a pre-built example portfolio with salary, retirement accounts, a home, expenses, and realistic fund transfers for both phases.</span>
+                        <span class="text-sm text-gray-700">If you have no assets yet, a <strong>welcome banner</strong> offers four life-stage starting portfolios &mdash; Early Career, Mid Career, Pre-Retirement, and Retired &mdash; each with salary or retirement income, accounts, a home, expenses, and realistic fund transfers for both phases. Or choose <strong>Start from Scratch</strong>.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">2</span>
