@@ -41,6 +41,16 @@ export class IncomeResult {
   }
 }
 
+// Benefits are not wages: they carry no FICA and Social Security is taxed
+// at 85% inclusion, so they must reach the FinancialPackage through their
+// own fields — never selfIncome/employedIncome.
+export class RetirementIncomeResult {
+  constructor(socialSecurityIncome = Currency.zero(), pensionIncome = Currency.zero()) {
+    this.socialSecurityIncome = socialSecurityIncome instanceof Currency ? socialSecurityIncome.copy() : new Currency(socialSecurityIncome);
+    this.pensionIncome        = pensionIncome instanceof Currency ? pensionIncome.copy() : new Currency(pensionIncome);
+  }
+}
+
 export class ExpenseResult {
   constructor(expense = Currency.zero(), nextExpense = Currency.zero()) {
     this.expense     = expense instanceof Currency ? expense.copy() : new Currency(expense);
@@ -119,7 +129,7 @@ const RetirementIncomeBehavior = Object.freeze({
     // INCOME populated by DAG: SOCIAL_SECURITY_INCOME → ORDINARY_INCOME → INCOME
     asset.netIncomeCurrency.add(income);
 
-    return new IncomeResult(Currency.zero(), income);
+    return new RetirementIncomeResult(income, Currency.zero());
   },
 
   computeCashFlow(asset) {
@@ -145,7 +155,7 @@ const PensionBehavior = Object.freeze({
     // INCOME populated by DAG: PENSION_INCOME → ORDINARY_INCOME → INCOME
     asset.netIncomeCurrency.add(income);
 
-    return new IncomeResult(Currency.zero(), income);
+    return new RetirementIncomeResult(Currency.zero(), income);
   },
 
   computeCashFlow(asset) {

@@ -38,16 +38,13 @@ export class PayrollEngine {
 
         if (InstrumentType.isMonthlyIncome(modelAsset.instrument)) {
 
+            // Booking happens once, in addResult: wages route to
+            // selfIncome/employedIncome, benefits to socialSecurityIncome/
+            // pensionIncome via their RetirementIncomeResult.
             let result = modelAsset.applyMonthly();
             this.monthly.addResult(result);
 
-            if (InstrumentType.isRetirementIncome(modelAsset.instrument)) {
-                if (InstrumentType.isPension(modelAsset.instrument)) {
-                    this.monthly.pensionIncome.add(modelAsset.incomeCurrency);
-                } else {
-                    this.monthly.socialSecurityIncome.add(modelAsset.incomeCurrency);
-                }
-            } else {
+            if (!InstrumentType.isRetirementIncome(modelAsset.instrument)) {
 
                 // it's self-employed or w2-employed
                 this.applyPreTaxWithholding(modelAsset);
