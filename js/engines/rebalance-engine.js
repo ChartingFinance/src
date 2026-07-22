@@ -135,15 +135,7 @@ export class RebalanceEngine {
      * distribution in the tax base.
      */
     _trackDistribution(sourceAsset, amount) {
-        if (InstrumentType.isIRA(sourceAsset.instrument) && !InstrumentType.isRothIRA(sourceAsset.instrument)) {
-            sourceAsset.addToMetric(Metric.TRAD_IRA_DISTRIBUTION, amount);
-        }
-        else if (InstrumentType.is401K(sourceAsset.instrument)) {
-            sourceAsset.addToMetric(Metric.FOUR_01K_DISTRIBUTION, amount);
-        }
-        else if (InstrumentType.isRothIRA(sourceAsset.instrument)) {
-            sourceAsset.addToMetric(Metric.ROTH_IRA_DISTRIBUTION, amount);
-        }
+        sourceAsset.recordDistribution(amount);
     }
 
     /**
