@@ -167,7 +167,7 @@ const testData = [
     },
     {
         "instrument": "taxableEquity",
-        "displayName": "TaxCloud",
+        "displayName": "CompanyStock",
         "startDateInt": { "year": 2026, "month": 2 },
         "startCurrency": { "amount": 300000 },
         "startBasisCurrency": { "amount": 57000 },

@@ -396,7 +396,7 @@
     },
     {
       "instrument": "taxableEquity",
-      "displayName": "TaxCloud",
+      "displayName": "CompanyStock",
       "startDateInt": {
         "year": 2026,
         "month": 5
@@ -825,7 +825,7 @@
             "closeMoveValue": 0
           }
         ],
-        "TaxCloud": [
+        "CompanyStock": [
           {
             "toDisplayName": "Brokerage",
             "monthlyMoveValue": 0,

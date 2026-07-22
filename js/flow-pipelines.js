@@ -149,7 +149,7 @@ export function buildPipelines(portfolio, historyIndex, isRetired = false) {
             ft.bind(asset, assets);
             if (!ft.toModel) continue;
 
-            // Skip if asset lifespans don't overlap (e.g., SS starts after TaxCloud closes)
+            // Skip if asset lifespans don't overlap (e.g., SS starts after CompanyStock closes)
             const assetStart = asset.startDateInt?.year ?? 0;
             const assetEnd = asset.finishDateInt?.year ?? 9999;
             const targetStart = ft.toModel.startDateInt?.year ?? 0;

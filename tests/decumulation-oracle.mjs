@@ -94,7 +94,7 @@ function requireRouting() {
     le: t['Living Expenses']?.map(x => [x.toDisplayName, x.monthlyMoveValue]),
     ho: t['Home']?.map(x => [x.toDisplayName, x.monthlyMoveValue]),
     ss: t['Social Security']?.map(x => [x.toDisplayName, x.monthlyMoveValue]),
-    tc: t['TaxCloud']?.map(x => [x.toDisplayName, x.closeMoveValue]),
+    tc: t['CompanyStock']?.map(x => [x.toDisplayName, x.closeMoveValue]),
   });
   const expected = JSON.stringify({
     le: [['IRA', 75], ['Brokerage', 25]],
@@ -155,14 +155,14 @@ function runOracle({ withNIIT }) {
   let roth = byName('Roth').startCurrency.amount;
   let brokerage = byName('Brokerage').startCurrency.amount;
   let brokerageBasis = byName('Brokerage').startBasisCurrency.amount;
-  let taxcloud = byName('TaxCloud').startCurrency.amount;
+  let taxcloud = byName('CompanyStock').startCurrency.amount;
   let treasuries = byName('Treasuries').startCurrency.amount;
   let home = byName('Home').startCurrency.amount;
   let mortgage = -byName('Mortgage').startCurrency.amount;
 
   const g = {
     ira: rate(byName('IRA')) / 12, roth: rate(byName('Roth')) / 12,
-    brok: rate(byName('Brokerage')) / 12, tc: rate(byName('TaxCloud')) / 12,
+    brok: rate(byName('Brokerage')) / 12, tc: rate(byName('CompanyStock')) / 12,
     home: rate(byName('Home')) / 12, sav: rate(byName('Savings')) / 12,
     tre: rate(byName('Treasuries')) / 12,
     div: (byName('Brokerage').annualDividendRate.annualReturnRate ?? 0) / 12,
@@ -178,7 +178,7 @@ function runOracle({ withNIIT }) {
   let ssBenefit = ssCfg.startCurrency.amount;
   const ssStart = { y: ssCfg.startDateInt.year, m: ssCfg.startDateInt.month };
   const ssCola = rate(ssCfg);
-  const tcFinish = byName('TaxCloud').finishDateInt;
+  const tcFinish = byName('CompanyStock').finishDateInt;
   const exp0 = -byName('Living Expenses').startCurrency.amount;
 
   let Y = { iraDist: 0, interest: 0, ss: 0, stGains: 0, ltGains: 0, qualDiv: 0, mortInt: 0, propTax: 0 };
@@ -351,7 +351,7 @@ const engine = {
   'IRA': asset('IRA').finishCurrency.amount,
   'Roth': asset('Roth').finishCurrency.amount,
   'Brokerage': asset('Brokerage').finishCurrency.amount,
-  'TaxCloud': asset('TaxCloud').finishCurrency.amount,
+  'CompanyStock': asset('CompanyStock').finishCurrency.amount,
   'Treasuries': asset('Treasuries').finishCurrency.amount,
   'Home': asset('Home').finishCurrency.amount,
   'Mortgage': asset('Mortgage').finishCurrency.amount,
@@ -376,7 +376,7 @@ const EXPECTED_ENGINE = {
   "IRA": 1825464.00,
   "Roth": 4028947.93,
   "Brokerage": 8943629.51,
-  "TaxCloud": 0.00,
+  "CompanyStock": 0.00,
   "Treasuries": 116821.90,
   "Home": 2307042.36,
   "Mortgage": 0.00,
@@ -465,8 +465,8 @@ check('benefits are never wages (employedIncome === $0)', () => {
   assert.ok(Math.abs(engine.employedIncome) <= 0.005,
     `total.employedIncome = ${fmt(engine.employedIncome)} — Social Security is leaking into the wage ledger again`);
 });
-check('TaxCloud closed and swept', () => {
-  assert.ok(Math.abs(engine['TaxCloud']) <= 0.005, `TaxCloud ended at ${fmt(engine['TaxCloud'])}`);
+check('CompanyStock closed and swept', () => {
+  assert.ok(Math.abs(engine['CompanyStock']) <= 0.005, `CompanyStock ended at ${fmt(engine['CompanyStock'])}`);
 });
 
 console.log(`\n  (info) full-law oracle incl. NIIT: total ${fmt(oracleLaw.total)}, NIIT ${fmt(oracleLaw.totals.niit)} — not banded; the engine does not model NIIT`);
