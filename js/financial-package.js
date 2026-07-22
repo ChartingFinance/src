@@ -1,6 +1,6 @@
 import { Currency } from './utils/currency.js';
 import { InstrumentType } from './instruments/instrument.js';
-import { AssetAppreciationResult, MortgageResult, IncomeResult, ExpenseResult, InterestResult } from './instruments/instrument-behavior.js';
+import { AssetAppreciationResult, MortgageResult, IncomeResult, RetirementIncomeResult, ExpenseResult, InterestResult } from './instruments/instrument-behavior.js';
 import { WithholdingResult } from './taxes.js';
 import { logger, LogCategory } from './utils/logger.js';
 import { activeTaxTable } from './globals.js';
@@ -374,6 +374,8 @@ export class FinancialPackage {
             this.addMortgageResult(result);
         else if (result instanceof IncomeResult)
             this.addIncomeResult(result);
+        else if (result instanceof RetirementIncomeResult)
+            this.addRetirementIncomeResult(result);
         else if (result instanceof ExpenseResult)
             this.addExpenseResult(result);
         else if (result instanceof InterestResult)
@@ -399,6 +401,11 @@ export class FinancialPackage {
     addIncomeResult(incomeResult) {
         this.selfIncome.add(incomeResult.selfIncome);
         this.employedIncome.add(incomeResult.employedIncome);
+    }
+
+    addRetirementIncomeResult(retirementIncomeResult) {
+        this.socialSecurityIncome.add(retirementIncomeResult.socialSecurityIncome);
+        this.pensionIncome.add(retirementIncomeResult.pensionIncome);
     }
 
     addExpenseResult(expenseResult) {
