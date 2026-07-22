@@ -155,7 +155,7 @@ function runOracle({ withNIIT }) {
   let roth = byName('Roth').startCurrency.amount;
   let brokerage = byName('Brokerage').startCurrency.amount;
   let brokerageBasis = byName('Brokerage').startBasisCurrency.amount;
-  let taxcloud = byName('CompanyStock').startCurrency.amount;
+  let companyStock = byName('CompanyStock').startCurrency.amount;
   let treasuries = byName('Treasuries').startCurrency.amount;
   let home = byName('Home').startCurrency.amount;
   let mortgage = -byName('Mortgage').startCurrency.amount;
@@ -252,7 +252,7 @@ function runOracle({ withNIIT }) {
     ira *= 1 + g.ira;
     roth *= 1 + g.roth;
     brokerage *= 1 + g.brok;
-    if (taxcloud > 0) taxcloud *= 1 + g.tc;
+    if (companyStock > 0) companyStock *= 1 + g.tc;
     const savInt = savings * g.sav;
     savings += savInt;
     const treInt = treasuries * g.tre;
@@ -265,10 +265,10 @@ function runOracle({ withNIIT }) {
     Y.qualDiv += div;
 
     if (y === tcFinish.year && m === tcFinish.month) {  // held >12mo: long-term
-      Y.ltGains += taxcloud;
-      brokerage += taxcloud;
-      brokerageBasis += taxcloud;
-      taxcloud = 0;
+      Y.ltGains += companyStock;
+      brokerage += companyStock;
+      brokerageBasis += companyStock;
+      companyStock = 0;
     }
 
     if (m === 12) {
@@ -316,11 +316,11 @@ function runOracle({ withNIIT }) {
   }
 
   return {
-    savings, ira, roth, brokerage, brokerageBasis, taxcloud, treasuries, home,
+    savings, ira, roth, brokerage, brokerageBasis, companyStock, treasuries, home,
     mortgage: -mortgage,
     ssMonthly: ssBenefit,
     livingExpMonthly: -(exp0 * Math.pow(1 + INFL / 12, MONTHS)),
-    total: savings + ira + roth + brokerage + taxcloud + treasuries + home - mortgage,
+    total: savings + ira + roth + brokerage + companyStock + treasuries + home - mortgage,
     totals,
   };
 }
