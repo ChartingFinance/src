@@ -1,0 +1,857 @@
+{
+  "name": "2026-05-mouk0ygz",
+  "settings": {
+    "inflationRate": 0.035,
+    "filingAs": "Single",
+    "startAge": 57,
+    "retirementAge": 57,
+    "finishAge": 87,
+    "backtestYear": "current"
+  },
+  "modelAssets": [
+    {
+      "instrument": "retirementIncome",
+      "displayName": "Social Security",
+      "startDateInt": {
+        "year": 2032,
+        "month": 5
+      },
+      "startCurrency": {
+        "amount": 2500
+      },
+      "startBasisCurrency": {
+        "amount": 0
+      },
+      "finishBasisCurrency": {
+        "amount": 0
+      },
+      "finishDateInt": null,
+      "monthsRemaining": 0,
+      "annualDividendRate": {
+        "annualReturnRate": 0
+      },
+      "dividendQualifiedRatio": 1,
+      "longTermCapitalHoldingPercentage": {
+        "annualReturnRate": 0
+      },
+      "annualReturnRate": {
+        "annualReturnRate": 0.02
+      },
+      "isSelfEmployed": false,
+      "isPrimaryHome": true,
+      "annualTaxRate": {
+        "annualReturnRate": 0
+      },
+      "annualMaintenanceRate": {
+        "annualReturnRate": 0
+      },
+      "annualInsuranceCost": {
+        "amount": 0
+      },
+      "fundingConfig": null,
+      "oneTimeEvents": [],
+      "behavior": {},
+      "colorId": 0,
+      "beforeStartDate": false,
+      "onOrAfterStateDate": false,
+      "onOrBeforeFinishDate": false,
+      "afterFinishDate": false,
+      "isClosed": false,
+      "closedDateInt": null,
+      "finishCurrency": {
+        "amount": 4021.09
+      },
+      "monthsRemainingDynamic": 0,
+      "monthlyTaxEscrow": {
+        "amount": 0
+      },
+      "onStateDate": false,
+      "onFinishDate": true,
+      "isDepleted": false,
+      "closedValue": null,
+      "closedBasisValue": null,
+      "monthlyCreditBalance": {
+        "amount": 0
+      },
+      "monthlyValueChange": {
+        "amount": 0
+      },
+      "currentDateInt": {
+        "year": 2056,
+        "month": 12
+      },
+      "onStartDate": false,
+      "firstDayOfMonthValue": {
+        "amount": 4021.09
+      },
+      "_isClosedAtDate": true
+    },
+    {
+      "instrument": "bank",
+      "displayName": "Savings",
+      "startDateInt": {
+        "year": 2026,
+        "month": 5
+      },
+      "startCurrency": {
+        "amount": 13250
+      },
+      "startBasisCurrency": {
+        "amount": 0
+      },
+      "finishBasisCurrency": {
+        "amount": 0
+      },
+      "finishDateInt": null,
+      "monthsRemaining": 0,
+      "annualDividendRate": {
+        "annualReturnRate": 0
+      },
+      "dividendQualifiedRatio": 1,
+      "longTermCapitalHoldingPercentage": {
+        "annualReturnRate": 0
+      },
+      "annualReturnRate": {
+        "annualReturnRate": 0.035
+      },
+      "isSelfEmployed": false,
+      "isPrimaryHome": true,
+      "annualTaxRate": {
+        "annualReturnRate": 0
+      },
+      "annualMaintenanceRate": {
+        "annualReturnRate": 0
+      },
+      "annualInsuranceCost": {
+        "amount": 0
+      },
+      "fundingConfig": null,
+      "oneTimeEvents": [],
+      "behavior": {},
+      "colorId": 1,
+      "beforeStartDate": false,
+      "onOrAfterStateDate": false,
+      "onOrBeforeFinishDate": false,
+      "afterFinishDate": false,
+      "isClosed": false,
+      "closedDateInt": null,
+      "finishCurrency": {
+        "amount": -17435.19
+      },
+      "monthsRemainingDynamic": 0,
+      "monthlyTaxEscrow": {
+        "amount": 0
+      },
+      "onStateDate": false,
+      "onFinishDate": true,
+      "isDepleted": false,
+      "closedValue": null,
+      "closedBasisValue": null,
+      "monthlyCreditBalance": {
+        "amount": 0
+      },
+      "monthlyValueChange": {
+        "amount": -50.7
+      },
+      "currentDateInt": {
+        "year": 2056,
+        "month": 12
+      },
+      "onStartDate": false,
+      "firstDayOfMonthValue": {
+        "amount": -17384.48
+      },
+      "_isClosedAtDate": null
+    },
+    {
+      "instrument": "ira",
+      "displayName": "IRA",
+      "startDateInt": {
+        "year": 2026,
+        "month": 5
+      },
+      "startCurrency": {
+        "amount": 959000
+      },
+      "startBasisCurrency": {
+        "amount": 0
+      },
+      "finishBasisCurrency": {
+        "amount": 0
+      },
+      "finishDateInt": null,
+      "monthsRemaining": 0,
+      "annualDividendRate": {
+        "annualReturnRate": 0
+      },
+      "dividendQualifiedRatio": 1,
+      "longTermCapitalHoldingPercentage": {
+        "annualReturnRate": 0
+      },
+      "annualReturnRate": {
+        "annualReturnRate": 0.085
+      },
+      "isSelfEmployed": false,
+      "isPrimaryHome": true,
+      "annualTaxRate": {
+        "annualReturnRate": 0
+      },
+      "annualMaintenanceRate": {
+        "annualReturnRate": 0
+      },
+      "annualInsuranceCost": {
+        "amount": 0
+      },
+      "fundingConfig": null,
+      "oneTimeEvents": [],
+      "behavior": {},
+      "colorId": 2,
+      "beforeStartDate": false,
+      "onOrAfterStateDate": false,
+      "onOrBeforeFinishDate": false,
+      "afterFinishDate": false,
+      "isClosed": false,
+      "closedDateInt": null,
+      "finishCurrency": {
+        "amount": 433843.26
+      },
+      "monthsRemainingDynamic": 0,
+      "monthlyTaxEscrow": {
+        "amount": 0
+      },
+      "onStateDate": false,
+      "onFinishDate": true,
+      "isDepleted": false,
+      "closedValue": null,
+      "closedBasisValue": null,
+      "monthlyCreditBalance": {
+        "amount": 0
+      },
+      "monthlyValueChange": {
+        "amount": -11900.32
+      },
+      "currentDateInt": {
+        "year": 2056,
+        "month": 12
+      },
+      "onStartDate": false,
+      "firstDayOfMonthValue": {
+        "amount": 445743.57
+      },
+      "_isClosedAtDate": null
+    },
+    {
+      "instrument": "rothIRA",
+      "displayName": "Roth",
+      "startDateInt": {
+        "year": 2026,
+        "month": 5
+      },
+      "startCurrency": {
+        "amount": 300000
+      },
+      "startBasisCurrency": {
+        "amount": 0
+      },
+      "finishBasisCurrency": {
+        "amount": 0
+      },
+      "finishDateInt": null,
+      "monthsRemaining": 0,
+      "annualDividendRate": {
+        "annualReturnRate": 0
+      },
+      "dividendQualifiedRatio": 1,
+      "longTermCapitalHoldingPercentage": {
+        "annualReturnRate": 0
+      },
+      "annualReturnRate": {
+        "annualReturnRate": 0.085
+      },
+      "isSelfEmployed": false,
+      "isPrimaryHome": true,
+      "annualTaxRate": {
+        "annualReturnRate": 0
+      },
+      "annualMaintenanceRate": {
+        "annualReturnRate": 0
+      },
+      "annualInsuranceCost": {
+        "amount": 0
+      },
+      "fundingConfig": null,
+      "oneTimeEvents": [],
+      "behavior": {},
+      "colorId": 3,
+      "beforeStartDate": false,
+      "onOrAfterStateDate": false,
+      "onOrBeforeFinishDate": false,
+      "afterFinishDate": false,
+      "isClosed": false,
+      "closedDateInt": null,
+      "finishCurrency": {
+        "amount": 4028947.93
+      },
+      "monthsRemainingDynamic": 0,
+      "monthlyTaxEscrow": {
+        "amount": 0
+      },
+      "onStateDate": false,
+      "onFinishDate": true,
+      "isDepleted": false,
+      "closedValue": null,
+      "closedBasisValue": null,
+      "monthlyCreditBalance": {
+        "amount": 0
+      },
+      "monthlyValueChange": {
+        "amount": 28337.66
+      },
+      "currentDateInt": {
+        "year": 2056,
+        "month": 12
+      },
+      "onStartDate": false,
+      "firstDayOfMonthValue": {
+        "amount": 4000610.28
+      },
+      "_isClosedAtDate": null
+    },
+    {
+      "instrument": "taxableEquity",
+      "displayName": "Brokerage",
+      "startDateInt": {
+        "year": 2026,
+        "month": 5
+      },
+      "startCurrency": {
+        "amount": 660000
+      },
+      "startBasisCurrency": {
+        "amount": 300000
+      },
+      "finishBasisCurrency": {
+        "amount": 1489224.69
+      },
+      "finishDateInt": null,
+      "monthsRemaining": 0,
+      "annualDividendRate": {
+        "annualReturnRate": 0.01
+      },
+      "dividendQualifiedRatio": 1,
+      "longTermCapitalHoldingPercentage": {
+        "annualReturnRate": 0.8
+      },
+      "annualReturnRate": {
+        "annualReturnRate": 0.085
+      },
+      "isSelfEmployed": false,
+      "isPrimaryHome": true,
+      "annualTaxRate": {
+        "annualReturnRate": 0
+      },
+      "annualMaintenanceRate": {
+        "annualReturnRate": 0
+      },
+      "annualInsuranceCost": {
+        "amount": 0
+      },
+      "fundingConfig": null,
+      "oneTimeEvents": [],
+      "behavior": {},
+      "colorId": 4,
+      "beforeStartDate": false,
+      "onOrAfterStateDate": false,
+      "onOrBeforeFinishDate": false,
+      "afterFinishDate": false,
+      "isClosed": false,
+      "closedDateInt": null,
+      "finishCurrency": {
+        "amount": 9363365.1
+      },
+      "monthsRemainingDynamic": 0,
+      "monthlyTaxEscrow": {
+        "amount": 0
+      },
+      "onStateDate": false,
+      "onFinishDate": true,
+      "isDepleted": false,
+      "closedValue": null,
+      "closedBasisValue": null,
+      "monthlyCreditBalance": {
+        "amount": 0
+      },
+      "monthlyValueChange": {
+        "amount": 60769.68
+      },
+      "currentDateInt": {
+        "year": 2056,
+        "month": 12
+      },
+      "onStartDate": false,
+      "firstDayOfMonthValue": {
+        "amount": 9302595.42
+      },
+      "_isClosedAtDate": null
+    },
+    {
+      "instrument": "taxableEquity",
+      "displayName": "TaxCloud",
+      "startDateInt": {
+        "year": 2026,
+        "month": 5
+      },
+      "startCurrency": {
+        "amount": 350000
+      },
+      "startBasisCurrency": {
+        "amount": 0
+      },
+      "finishBasisCurrency": {
+        "amount": 0
+      },
+      "finishDateInt": {
+        "year": 2027,
+        "month": 12
+      },
+      "monthsRemaining": 0,
+      "annualDividendRate": {
+        "annualReturnRate": 0
+      },
+      "dividendQualifiedRatio": 0,
+      "longTermCapitalHoldingPercentage": {
+        "annualReturnRate": 0
+      },
+      "annualReturnRate": {
+        "annualReturnRate": 0.15
+      },
+      "isSelfEmployed": false,
+      "isPrimaryHome": true,
+      "annualTaxRate": {
+        "annualReturnRate": 0
+      },
+      "annualMaintenanceRate": {
+        "annualReturnRate": 0
+      },
+      "annualInsuranceCost": {
+        "amount": 0
+      },
+      "fundingConfig": null,
+      "oneTimeEvents": [],
+      "behavior": {},
+      "colorId": 5,
+      "beforeStartDate": false,
+      "onOrAfterStateDate": false,
+      "onOrBeforeFinishDate": false,
+      "afterFinishDate": true,
+      "isClosed": true,
+      "closedDateInt": {
+        "year": 2057,
+        "month": 1
+      },
+      "finishCurrency": {
+        "amount": 0
+      },
+      "monthsRemainingDynamic": 0,
+      "monthlyTaxEscrow": {
+        "amount": 0
+      },
+      "onStateDate": false,
+      "onFinishDate": false,
+      "isDepleted": false,
+      "closedValue": {
+        "amount": 389352.05
+      },
+      "closedBasisValue": {
+        "amount": 389352.05
+      },
+      "monthlyCreditBalance": {
+        "amount": 0
+      },
+      "monthlyValueChange": {
+        "amount": 0
+      },
+      "currentDateInt": {
+        "year": 2056,
+        "month": 12
+      },
+      "onStartDate": false,
+      "firstDayOfMonthValue": {
+        "amount": 0
+      },
+      "_isClosedAtDate": false
+    },
+    {
+      "instrument": "usBond",
+      "displayName": "Treasuries",
+      "startDateInt": {
+        "year": 2026,
+        "month": 5
+      },
+      "startCurrency": {
+        "amount": 40000
+      },
+      "startBasisCurrency": {
+        "amount": 0
+      },
+      "finishBasisCurrency": {
+        "amount": 0
+      },
+      "finishDateInt": null,
+      "monthsRemaining": 0,
+      "annualDividendRate": {
+        "annualReturnRate": 0
+      },
+      "dividendQualifiedRatio": 1,
+      "longTermCapitalHoldingPercentage": {
+        "annualReturnRate": 0
+      },
+      "annualReturnRate": {
+        "annualReturnRate": 0.035
+      },
+      "isSelfEmployed": false,
+      "isPrimaryHome": true,
+      "annualTaxRate": {
+        "annualReturnRate": 0
+      },
+      "annualMaintenanceRate": {
+        "annualReturnRate": 0
+      },
+      "annualInsuranceCost": {
+        "amount": 0
+      },
+      "fundingConfig": null,
+      "oneTimeEvents": [],
+      "behavior": {},
+      "colorId": 6,
+      "beforeStartDate": false,
+      "onOrAfterStateDate": false,
+      "onOrBeforeFinishDate": false,
+      "afterFinishDate": false,
+      "isClosed": false,
+      "closedDateInt": null,
+      "finishCurrency": {
+        "amount": 116821.9
+      },
+      "monthsRemainingDynamic": 0,
+      "monthlyTaxEscrow": {
+        "amount": 0
+      },
+      "onStateDate": false,
+      "onFinishDate": true,
+      "isDepleted": false,
+      "closedValue": null,
+      "closedBasisValue": null,
+      "monthlyCreditBalance": {
+        "amount": 0
+      },
+      "monthlyValueChange": {
+        "amount": 339.74
+      },
+      "currentDateInt": {
+        "year": 2056,
+        "month": 12
+      },
+      "onStartDate": false,
+      "firstDayOfMonthValue": {
+        "amount": 116482.16
+      },
+      "_isClosedAtDate": null
+    },
+    {
+      "instrument": "realEstate",
+      "displayName": "Home",
+      "startDateInt": {
+        "year": 2026,
+        "month": 5
+      },
+      "startCurrency": {
+        "amount": 1250000
+      },
+      "startBasisCurrency": {
+        "amount": 1185000
+      },
+      "finishBasisCurrency": {
+        "amount": 1185000
+      },
+      "finishDateInt": null,
+      "monthsRemaining": 0,
+      "annualDividendRate": {
+        "annualReturnRate": 0
+      },
+      "dividendQualifiedRatio": 1,
+      "longTermCapitalHoldingPercentage": {
+        "annualReturnRate": 0
+      },
+      "annualReturnRate": {
+        "annualReturnRate": 0.02
+      },
+      "isSelfEmployed": false,
+      "isPrimaryHome": true,
+      "annualTaxRate": {
+        "annualReturnRate": 0.01
+      },
+      "annualMaintenanceRate": {
+        "annualReturnRate": 0.01
+      },
+      "annualInsuranceCost": {
+        "amount": 800
+      },
+      "fundingConfig": null,
+      "oneTimeEvents": [],
+      "behavior": {},
+      "colorId": 7,
+      "beforeStartDate": false,
+      "onOrAfterStateDate": false,
+      "onOrBeforeFinishDate": false,
+      "afterFinishDate": false,
+      "isClosed": false,
+      "closedDateInt": null,
+      "finishCurrency": {
+        "amount": 2307042.36
+      },
+      "monthsRemainingDynamic": 0,
+      "monthlyTaxEscrow": {
+        "amount": 0
+      },
+      "onStateDate": false,
+      "onFinishDate": true,
+      "isDepleted": false,
+      "closedValue": null,
+      "closedBasisValue": null,
+      "monthlyCreditBalance": {
+        "amount": 0
+      },
+      "monthlyValueChange": {
+        "amount": 3838.67
+      },
+      "currentDateInt": {
+        "year": 2056,
+        "month": 12
+      },
+      "onStartDate": false,
+      "firstDayOfMonthValue": {
+        "amount": 2303203.69
+      },
+      "_isClosedAtDate": null
+    },
+    {
+      "instrument": "mortgage",
+      "displayName": "Mortgage",
+      "startDateInt": {
+        "year": 2026,
+        "month": 5
+      },
+      "startCurrency": {
+        "amount": -634400
+      },
+      "startBasisCurrency": {
+        "amount": 0
+      },
+      "finishBasisCurrency": {
+        "amount": 0
+      },
+      "finishDateInt": null,
+      "monthsRemaining": 304,
+      "annualDividendRate": {
+        "annualReturnRate": 0
+      },
+      "dividendQualifiedRatio": 1,
+      "longTermCapitalHoldingPercentage": {
+        "annualReturnRate": 0
+      },
+      "annualReturnRate": {
+        "annualReturnRate": 0.0275
+      },
+      "isSelfEmployed": false,
+      "isPrimaryHome": true,
+      "annualTaxRate": {
+        "annualReturnRate": 0
+      },
+      "annualMaintenanceRate": {
+        "annualReturnRate": 0
+      },
+      "annualInsuranceCost": {
+        "amount": 0
+      },
+      "fundingConfig": null,
+      "oneTimeEvents": [],
+      "behavior": {},
+      "colorId": 8,
+      "beforeStartDate": false,
+      "onOrAfterStateDate": false,
+      "onOrBeforeFinishDate": false,
+      "afterFinishDate": true,
+      "isClosed": true,
+      "closedDateInt": {
+        "year": 2057,
+        "month": 1
+      },
+      "finishCurrency": {
+        "amount": 0
+      },
+      "monthsRemainingDynamic": 0,
+      "monthlyTaxEscrow": {
+        "amount": 0
+      },
+      "onStateDate": false,
+      "onFinishDate": false,
+      "isDepleted": false,
+      "closedValue": {
+        "amount": 0
+      },
+      "closedBasisValue": {
+        "amount": 0
+      },
+      "monthlyCreditBalance": {
+        "amount": 0
+      },
+      "monthlyValueChange": {
+        "amount": 0
+      },
+      "currentDateInt": {
+        "year": 2056,
+        "month": 12
+      },
+      "onStartDate": false,
+      "firstDayOfMonthValue": {
+        "amount": 0
+      },
+      "_isClosedAtDate": false
+    },
+    {
+      "instrument": "monthlyExpense",
+      "displayName": "Living Expenses",
+      "startDateInt": {
+        "year": 2026,
+        "month": 5
+      },
+      "startCurrency": {
+        "amount": -4000
+      },
+      "startBasisCurrency": {
+        "amount": 0
+      },
+      "finishBasisCurrency": {
+        "amount": 0
+      },
+      "finishDateInt": null,
+      "monthsRemaining": 0,
+      "annualDividendRate": {
+        "annualReturnRate": 0
+      },
+      "dividendQualifiedRatio": 1,
+      "longTermCapitalHoldingPercentage": {
+        "annualReturnRate": 0
+      },
+      "annualReturnRate": {
+        "annualReturnRate": 0
+      },
+      "isSelfEmployed": false,
+      "isPrimaryHome": true,
+      "annualTaxRate": {
+        "annualReturnRate": 0
+      },
+      "annualMaintenanceRate": {
+        "annualReturnRate": 0
+      },
+      "annualInsuranceCost": {
+        "amount": 0
+      },
+      "fundingConfig": null,
+      "oneTimeEvents": [],
+      "behavior": {},
+      "colorId": 9,
+      "beforeStartDate": false,
+      "onOrAfterStateDate": false,
+      "onOrBeforeFinishDate": false,
+      "afterFinishDate": false,
+      "isClosed": false,
+      "closedDateInt": null,
+      "finishCurrency": {
+        "amount": -11682.19
+      },
+      "monthsRemainingDynamic": 0,
+      "monthlyTaxEscrow": {
+        "amount": 0
+      },
+      "onStateDate": false,
+      "onFinishDate": true,
+      "isDepleted": false,
+      "closedValue": null,
+      "closedBasisValue": null,
+      "monthlyCreditBalance": {
+        "amount": 0
+      },
+      "monthlyValueChange": {
+        "amount": -33.97
+      },
+      "currentDateInt": {
+        "year": 2056,
+        "month": 12
+      },
+      "onStartDate": false,
+      "firstDayOfMonthValue": {
+        "amount": -11648.22
+      },
+      "_isClosedAtDate": null
+    }
+  ],
+  "lifeEvents": [
+    {
+      "type": "retire",
+      "displayName": "Retire",
+      "triggerAge": 57,
+      "closes": [
+        "Salary"
+      ],
+      "phaseTransfers": {
+        "Living Expenses": [
+          {
+            "toDisplayName": "IRA",
+            "monthlyMoveValue": 75,
+            "closeMoveValue": 0
+          },
+          {
+            "toDisplayName": "Brokerage",
+            "monthlyMoveValue": 25,
+            "closeMoveValue": 0
+          }
+        ],
+        "Social Security": [
+          {
+            "toDisplayName": "Brokerage",
+            "monthlyMoveValue": 100,
+            "closeMoveValue": 0
+          }
+        ],
+        "TaxCloud": [
+          {
+            "toDisplayName": "Brokerage",
+            "monthlyMoveValue": 0,
+            "closeMoveValue": 100
+          }
+        ],
+        "Home": [
+          {
+            "toDisplayName": "IRA",
+            "monthlyMoveValue": 75,
+            "closeMoveValue": 0
+          },
+          {
+            "toDisplayName": "Brokerage",
+            "monthlyMoveValue": 25,
+            "closeMoveValue": 0
+          }
+        ]
+      },
+      "globalOverrides": {}
+    }
+  ],
+  "guardrailParams": {
+    "withdrawalRate": 5,
+    "preservation": 15,
+    "prosperity": 15,
+    "adjustment": 15
+  }
+}
