@@ -536,19 +536,21 @@ export class Portfolio {
             }
         }
 
-        // ensure RMDs are handled
-        for (let modelAsset of this.modelAssets) {
-            if (!modelAsset.isClosed) {
-                this.expenses.ensureRMDs(modelAsset);
-            }
-        }
-
         // recognize asset gains
         // Doing this after applying expenses is pessimistic
         // Maybe an optimistic option to do this prior to expenses?
         for (let modelAsset of this.modelAssets) {
             if (!modelAsset.isClosed) {
                 this.expenses.applyAssetGrowth(modelAsset, currentDateInt);
+            }
+        }
+
+        // ensure RMDs are handled — after growth, because carrying-cost
+        // transfers inside applyAssetGrowth are distributions too and must
+        // be credited against the month's RMD before any top-up fires
+        for (let modelAsset of this.modelAssets) {
+            if (!modelAsset.isClosed) {
+                this.expenses.ensureRMDs(modelAsset);
             }
         }
 

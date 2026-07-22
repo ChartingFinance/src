@@ -767,6 +767,24 @@ export class ModelAsset {
     return { assetChange: amount.copy(), realizedGain, spillover };
   }
 
+  /**
+   * Book a withdrawal from this tax-advantaged account as a distribution
+   * on the asset's own ledger. Callers that classify the movement for the
+   * household FinancialPackage (recordTransfer) must book here too — the
+   * RMD check in ensureRMDs reads THIS ledger, and any distribution
+   * counts toward the RMD under IRS rules.
+   */
+  recordDistribution(amount) {
+    if (!amount || amount.amount <= 0) return;
+    if (InstrumentType.isIRA(this.instrument)) {
+      this.addToMetric(Metric.TRAD_IRA_DISTRIBUTION, amount);
+    } else if (InstrumentType.is401K(this.instrument)) {
+      this.addToMetric(Metric.FOUR_01K_DISTRIBUTION, amount);
+    } else if (InstrumentType.isRothIRA(this.instrument)) {
+      this.addToMetric(Metric.ROTH_IRA_DISTRIBUTION, amount);
+    }
+  }
+
   // ── Fund transfers ───────────────────────────────────────────────
 
   hasFundTransfer(name) {

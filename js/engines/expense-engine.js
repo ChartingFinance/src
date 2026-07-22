@@ -60,6 +60,7 @@ export class ExpenseEngine {
                 const withdrawalAmount = fundTransferResult.toAssetChange.copy().flipSign();
                 withdrawalAmount.subtract(fundTransferResult.spillover);
                 this.monthly.recordTransfer(fundTransfer.toModel.instrument, withdrawalAmount, fundTransferResult.realizedGain);
+                fundTransfer.toModel.recordDistribution(withdrawalAmount);
                 if (fundTransferResult.spillover.amount > 0 && fundTransferResult.spilloverInstrument) {
                     this.monthly.recordTransfer(fundTransferResult.spilloverInstrument,
                         fundTransferResult.spillover, fundTransferResult.spilloverGain);
@@ -167,6 +168,7 @@ export class ExpenseEngine {
             const memo = `${modelAsset.displayName} → ${oneSided.toModel.displayName} (monthly)`;
             const result = oneSided.toModel.debit(oneSided.amount, memo);
             this.monthly.recordTransfer(oneSided.toModel.instrument, oneSided.amount, result.realizedGain);
+            oneSided.toModel.recordDistribution(oneSided.amount.minus(result.spillover));
             if (result.realizedGain && result.realizedGain.amount > 0) {
                 oneSided.toModel.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, result.realizedGain);
                 oneSided.toModel.addCreditMemo(result.realizedGain.copy(), 'Capital gains', 'info');
@@ -220,6 +222,7 @@ export class ExpenseEngine {
             const memo = `${modelAsset.displayName} → ${oneSided.toModel.displayName} (${label})`;
             const result = oneSided.toModel.debit(oneSided.amount, memo);
             this.monthly.recordTransfer(oneSided.toModel.instrument, oneSided.amount, result.realizedGain);
+            oneSided.toModel.recordDistribution(oneSided.amount.minus(result.spillover));
             if (result.realizedGain && result.realizedGain.amount > 0) {
                 oneSided.toModel.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, result.realizedGain);
                 oneSided.toModel.addCreditMemo(result.realizedGain.copy(), 'Capital gains', 'info');
