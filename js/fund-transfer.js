@@ -160,6 +160,75 @@ export class FundTransfer {
     return null;
   }
 
+  // ── One-Sided Settlement ───────────────────────────────────────
+
+  /**
+   * Settle a one-sided withdrawal (mortgage payment, property tax escrow,
+   * carrying cost): debit the funding account and, when that account is
+   * tax-advantaged and clamps at $0, source the shortfall from a fallback.
+   *
+   * These paths call debit() directly rather than execute(), so they never
+   * reached execute()'s spillover handling: the clamped remainder was
+   * reported and then dropped — the obligation was booked but the cash never
+   * left any account. They also booked the FULL requested amount against the
+   * named account, recording phantom IRA/401K distributions for money the
+   * account never held.
+   *
+   * `supplied` is what the named account actually paid; `spillover` is what
+   * the fallback paid. Callers book each leg against the account that really
+   * supplied the cash.
+   *
+   * @param {FundTransferOneSided} oneSided
+   * @param {string}      memo
+   * @param {ModelAsset[]} allModels
+   * @param {Function}    resolveFallback  Funding policy for the shortfall
+   * @returns {{supplied: Currency, realizedGain: Currency, spillover: Currency,
+   *            spilloverGain: Currency, spilloverInstrument: string|null}}
+   */
+  static settleOneSided(oneSided, memo, allModels, resolveFallback = FundTransfer.resolveTaxable) {
+    const result = oneSided.toModel.debit(oneSided.amount, memo);
+    const supplied = oneSided.amount.minus(result.spillover);
+
+    oneSided.toModel.recordDistribution(supplied);
+    if (result.realizedGain?.amount > 0) {
+      oneSided.toModel.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, result.realizedGain);
+      oneSided.toModel.addCreditMemo(result.realizedGain.copy(), 'Capital gains', 'info');
+    }
+
+    let spillover = Currency.zero();
+    let spilloverGain = Currency.zero();
+    let spilloverInstrument = null;
+
+    if (result.spillover.amount > 0) {
+      const fallback = resolveFallback(allModels);
+      if (fallback) {
+        const spillMemo = `Spillover from depleted ${oneSided.toModel.displayName}`;
+        const spillResult = fallback.debit(result.spillover, spillMemo);
+        spillover = result.spillover.copy();
+        spilloverGain = spillResult.realizedGain?.copy() ?? Currency.zero();
+        spilloverInstrument = fallback.instrument;
+
+        fallback.recordDistribution(spillover.minus(spillResult.spillover));
+        if (spilloverGain.amount > 0) {
+          fallback.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, spilloverGain);
+          fallback.addCreditMemo(spilloverGain.copy(), 'Capital gains (spillover)', 'info');
+        }
+        // The fallback itself clamped: nothing left at this layer to draw on.
+        if (spillResult.spillover?.amount > 0) {
+          logger.log(LogCategory.SANITY,
+            `FundTransfer.settleOneSided: fallback ${fallback.displayName} also depleted, ` +
+            `${spillResult.spillover.toString()} of ${memo} unfunded`);
+        }
+      } else {
+        logger.log(LogCategory.SANITY,
+          `FundTransfer.settleOneSided: ${oneSided.toModel.displayName} depleted, ` +
+          `no fallback account to cover ${result.spillover.toString()} of ${memo}`);
+      }
+    }
+
+    return { supplied, realizedGain: result.realizedGain, spillover, spilloverGain, spilloverInstrument };
+  }
+
   // ── Binding ──────────────────────────────────────────────────────
 
   /**
