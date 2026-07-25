@@ -122,12 +122,22 @@ export async function chronometer_run(portfolio) {
 
     }
 
-    // Capture final year snapshot for guardrails
-    if (portfolio.guardrailsParams) {
+    // Capture the plan's trailing stub year for guardrails.
+    //
+    // The loop above snapshots a year on each New Year's rollover and then
+    // zeroes portfolio.yearly (yearlyChron). A plan ending in December has
+    // therefore already been snapshotted in full — currentDateInt sits on the
+    // following New Year's Day — and appending here would duplicate that year
+    // with an empty accumulator ($0 spend, 0% withdrawal rate). Only a plan
+    // that ends mid-year leaves unaccumulated months in portfolio.yearly.
+    if (portfolio.guardrailsParams && !currentDateInt.isNewYearsDay()) {
         const investable = portfolio.getTotalInvestableAssets().amount;
         const annualExpense = Math.abs(portfolio.yearly.expense.amount);
+        const finalYear = portfolio.lastDateInt.year;
         portfolio.yearlySnapshots.push({
-            year: portfolio.lastDateInt.year,
+            year: finalYear,
+            months: portfolio.monthsInPlanYear(finalYear),
+            partial: true,
             investableAssets: investable,
             annualExpense,
             withdrawalRate: investable > 0 ? annualExpense / investable : 0,

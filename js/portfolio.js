@@ -36,7 +36,7 @@ export class Portfolio {
         // Guardrails (Guyton-Klinger) — set before chronometer_run to activate
         this.guardrailsParams = null; // { withdrawalRate, preservation, prosperity, adjustment }
         this.guardrailEvents = [];    // [{ year, type, rate, adjustedTo }]
-        this.yearlySnapshots = [];    // [{ year, investableAssets, annualExpense, withdrawalRate }]
+        this.yearlySnapshots = [];    // [{ year, months, partial, investableAssets, annualExpense, withdrawalRate }]
 
         // Life events timeline
         this.lifeEvents = [];
@@ -328,6 +328,19 @@ export class Portfolio {
         return total;
     }
 
+    /**
+     * How many months of the calendar `year` actually fall inside the plan.
+     * The first and last years are short when the plan starts or ends
+     * mid-year; every year between them is a full 12. Used to mark yearly
+     * snapshots as partial so consumers do not read a stub year's spend as a
+     * full year of spending.
+     */
+    monthsInPlanYear(year) {
+        const startMonth = year === this.firstDateInt?.year ? this.firstDateInt.month : 1;
+        const endMonth   = year === this.lastDateInt?.year  ? this.lastDateInt.month  : 12;
+        return Math.max(0, endMonth - startMonth + 1);
+    }
+
     applyGuardrails(currentDateInt) {
         if (!this.guardrailsParams) return;
 
@@ -336,13 +349,17 @@ export class Portfolio {
 
         const annualExpense = Math.abs(this.yearly.expense.amount);
         const currentRate = annualExpense / investable;
+        const snapshotYear = currentDateInt.year - 1;
+        const monthsElapsed = this.monthsInPlanYear(snapshotYear);
         const initialRate = this.guardrailsParams.withdrawalRate / 100;
         const preservationThreshold = this.guardrailsParams.preservation / 100;
         const prosperityThreshold = this.guardrailsParams.prosperity / 100;
         const adjustmentPct = this.guardrailsParams.adjustment / 100;
 
         this.yearlySnapshots.push({
-            year: currentDateInt.year - 1,
+            year: snapshotYear,
+            months: monthsElapsed,
+            partial: monthsElapsed < 12,
             investableAssets: investable,
             annualExpense,
             withdrawalRate: currentRate,

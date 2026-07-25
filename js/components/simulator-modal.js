@@ -26,6 +26,9 @@ import {
     charting_buildDateMarkers,
 } from '../charting.js';
 
+// Mirrors the generation count simulator.js runs (runGeneticAlgorithm call).
+const TOTAL_GENERATIONS = 200;
+
 class SimulatorModal extends LitElement {
 
     static properties = {
@@ -38,6 +41,7 @@ class SimulatorModal extends LitElement {
         _status:          { state: true },
         _generation:      { state: true },
         _bestValue:       { state: true },
+        _bestSpending:    { state: true },
         _runComplete:     { state: true },
         _instructions:    { state: true },
         _showInstructions: { state: true },
@@ -54,8 +58,10 @@ class SimulatorModal extends LitElement {
         this.backtestYear = 'current';
         this.fitnessBalance = 100;
         this._status = '';
-        this._generation = '';
+        this._generation = 0;
         this._bestValue = '';
+        this._bestSpending = '';
+        this._bestSpendingTitle = '';
         this._runComplete = false;
         this._chart = null;
         this._worker = null;
@@ -73,8 +79,8 @@ class SimulatorModal extends LitElement {
                 <canvas></canvas>
             </div>
             <div class="flex items-center justify-between mt-2 text-xs text-gray-500">
-                <span>${this._generation}</span>
-                <span class="font-medium">${this._status}</span>
+                <span class="font-semibold text-gray-700" title="${this._bestSpendingTitle}">${this._bestSpending}</span>
+                <span class="font-medium">${this._progressLabel()}</span>
                 <span class="font-semibold text-gray-700">${this._bestValue}</span>
                 ${this._instructions ? html`
                     <button class="btn-modern outline text-xs"
@@ -128,6 +134,22 @@ class SimulatorModal extends LitElement {
 
     // ── Private ──────────────────────────────────────────────────
 
+    /**
+     * One line for the middle slot: 'Running' and the generation counter are
+     * the same piece of information, so they read better coalesced.
+     */
+    _progressLabel() {
+        if (this._status === 'Running') {
+            return this._generation
+                ? `Running Generation ${this._generation} / ${TOTAL_GENERATIONS}`
+                : 'Running...';
+        }
+        if (this._status === 'Complete') {
+            return `Complete — ${TOTAL_GENERATIONS} generations`;
+        }
+        return this._status;
+    }
+
     _copyInstructions() {
         navigator.clipboard.writeText(this._instructions).catch(() => {});
     }
@@ -136,8 +158,10 @@ class SimulatorModal extends LitElement {
         this._teardown();
         this._runComplete = false;
         this._status = 'Starting...';
-        this._generation = '';
+        this._generation = 0;
         this._bestValue = '';
+        this._bestSpending = '';
+        this._bestSpendingTitle = '';
         requestAnimationFrame(() => this._start());
     }
 
@@ -220,13 +244,13 @@ class SimulatorModal extends LitElement {
             else if (msg.action === 'iteration') {
                 const match = msg.data.match(/Generation:\s*(\d+)/);
                 if (match) {
-                    this._generation = `Generation ${parseInt(match[1]) + 1} / 200`;
+                    this._generation = parseInt(match[1]) + 1;
                 }
             }
             else if (msg.action === 'complete') {
                 if (this._pendingBetter) this._processPendingBetter();
                 this._status = 'Complete';
-                this._generation = 'Generation 200 / 200';
+                this._generation = TOTAL_GENERATIONS;
                 this._runComplete = true;
                 if (msg.instructions) this._instructions = msg.instructions;
                 if (msg.lifeEvents) this._bestLifeEvents = msg.lifeEvents;
@@ -234,7 +258,7 @@ class SimulatorModal extends LitElement {
             }
         };
 
-        this._status = 'Running...';
+        this._status = 'Running';
     }
 
     _processPendingBetter() {
@@ -273,10 +297,36 @@ class SimulatorModal extends LitElement {
         this._chart.data.labels = newData.labels;
         this._chart.update();
 
-        const bestVal = p.finishValue().amount;
-        this._bestValue = 'Best: $' + bestVal.toLocaleString(undefined, {
+        const money = (v) => '$' + v.toLocaleString(undefined, {
             minimumFractionDigits: 0, maximumFractionDigits: 0
         });
+
+        const bestVal = p.finishValue().amount;
+        this._bestValue = 'Best Terminal: ' + money(bestVal);
+
+        // Spending side of the slider. The headline is the final year's spend
+        // (the end-state counterpart to terminal value); the GA's cash-flow
+        // term is actually the lifetime sum, so that goes in the tooltip.
+        //
+        // A plan that starts or ends mid-year contributes a short snapshot at
+        // either end, flagged `partial`; quoting one as an annual figure would
+        // understate the spend, so the headline uses the last full year.
+        const snapshots = p.yearlySnapshots;
+        const fullYears = snapshots.filter(s => !s.partial);
+        const lastFull = fullYears[fullYears.length - 1] ?? snapshots[snapshots.length - 1];
+
+        if (lastFull) {
+            // Sum over every snapshot, matching Simulator.calculateFitness.
+            const lifetimeSpend = snapshots.reduce((sum, s) => sum + s.annualExpense, 0);
+            this._bestSpending = 'Best Spending: ' + money(lastFull.annualExpense) + '/yr';
+            this._bestSpendingTitle =
+                `Spend in ${lastFull.year}, the last full year of the plan. ` +
+                `Lifetime spending: ${money(lifetimeSpend)} — that total, not the ` +
+                `final year, is what the fitness function maximizes.`;
+        } else {
+            this._bestSpending = '';
+            this._bestSpendingTitle = '';
+        }
     }
 
     _teardown() {
@@ -294,8 +344,10 @@ class SimulatorModal extends LitElement {
             this._chart = null;
         }
         this._status = '';
-        this._generation = '';
+        this._generation = 0;
         this._bestValue = '';
+        this._bestSpending = '';
+        this._bestSpendingTitle = '';
         this._instructions = '';
         this._showInstructions = false;
         this._bestLifeEvents = null;
