@@ -559,7 +559,13 @@ class FinplanTimeline extends LitElement {
                 </button>
             </div>
 
-            <!-- Opening and closing values, out of the plot area -->
+            <!-- Cursor chip floats on its own line so it never shifts the
+                 start/end values off the baseline they share. -->
+            <div style="position: relative; height: 28px;">
+                ${this._renderCursorChip(this._timelineStartAge, this._timelineFinishAge)}
+            </div>
+
+            <!-- Opening and closing values, on the line closest to the arc -->
             ${this._renderEndpointValues(series)}
 
             <!-- The wealth arc -->
@@ -607,7 +613,6 @@ class FinplanTimeline extends LitElement {
                     ${series ? this._svgPins(series, Y) : nothing}
                     ${this._svgCursor(series, Y, sAge, fAge)}
                 </svg>
-                ${this._renderCursorChip(sAge, fAge)}
             </div>
         `;
     }
