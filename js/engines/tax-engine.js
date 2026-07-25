@@ -104,12 +104,10 @@ export class TaxEngine {
                 // Only debit the funding source (toModel).
                 for (const oneSided of preFlights) {
                     const memo = `${modelAsset.displayName} property tax`;
-                    const result = oneSided.toModel.debit(oneSided.amount, memo);
-                    this.monthly.recordTransfer(oneSided.toModel.instrument, oneSided.amount, result.realizedGain);
-                    oneSided.toModel.recordDistribution(oneSided.amount.minus(result.spillover));
-                    if (result.realizedGain && result.realizedGain.amount > 0) {
-                        oneSided.toModel.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, result.realizedGain);
-                        oneSided.toModel.addCreditMemo(result.realizedGain.copy(), 'Capital gains', 'info');
+                    const settled = FundTransfer.settleOneSided(oneSided, memo, this.modelAssets);
+                    this.monthly.recordTransfer(oneSided.toModel.instrument, settled.supplied, settled.realizedGain);
+                    if (settled.spillover.amount > 0 && settled.spilloverInstrument) {
+                        this.monthly.recordTransfer(settled.spilloverInstrument, settled.spillover, settled.spilloverGain);
                     }
                 }
 

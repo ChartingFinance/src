@@ -166,12 +166,10 @@ export class ExpenseEngine {
         // balance (principal) and recorded interest. Only debit the funding source.
         for (const oneSided of preFlights) {
             const memo = `${modelAsset.displayName} → ${oneSided.toModel.displayName} (monthly)`;
-            const result = oneSided.toModel.debit(oneSided.amount, memo);
-            this.monthly.recordTransfer(oneSided.toModel.instrument, oneSided.amount, result.realizedGain);
-            oneSided.toModel.recordDistribution(oneSided.amount.minus(result.spillover));
-            if (result.realizedGain && result.realizedGain.amount > 0) {
-                oneSided.toModel.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, result.realizedGain);
-                oneSided.toModel.addCreditMemo(result.realizedGain.copy(), 'Capital gains', 'info');
+            const settled = FundTransfer.settleOneSided(oneSided, memo, this.modelAssets);
+            this.monthly.recordTransfer(oneSided.toModel.instrument, settled.supplied, settled.realizedGain);
+            if (settled.spillover.amount > 0 && settled.spilloverInstrument) {
+                this.monthly.recordTransfer(settled.spilloverInstrument, settled.spillover, settled.spilloverGain);
             }
         }
 
@@ -218,14 +216,15 @@ export class ExpenseEngine {
             }
         }
 
+        // Carrying costs resolve their own fallback through the priority list,
+        // so the spillover leg follows the same policy.
         for (const oneSided of preFlights) {
             const memo = `${modelAsset.displayName} → ${oneSided.toModel.displayName} (${label})`;
-            const result = oneSided.toModel.debit(oneSided.amount, memo);
-            this.monthly.recordTransfer(oneSided.toModel.instrument, oneSided.amount, result.realizedGain);
-            oneSided.toModel.recordDistribution(oneSided.amount.minus(result.spillover));
-            if (result.realizedGain && result.realizedGain.amount > 0) {
-                oneSided.toModel.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, result.realizedGain);
-                oneSided.toModel.addCreditMemo(result.realizedGain.copy(), 'Capital gains', 'info');
+            const settled = FundTransfer.settleOneSided(oneSided, memo, this.modelAssets,
+                FundTransfer.resolveExpensable);
+            this.monthly.recordTransfer(oneSided.toModel.instrument, settled.supplied, settled.realizedGain);
+            if (settled.spillover.amount > 0 && settled.spilloverInstrument) {
+                this.monthly.recordTransfer(settled.spilloverInstrument, settled.spillover, settled.spilloverGain);
             }
         }
     }
