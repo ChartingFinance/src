@@ -38,6 +38,8 @@ globalThis.window = globalThis;
 
 // ── Imports ───────────────────────────────────────────────────────────
 import { ModelAsset } from '../js/model-asset.js';
+import { Metric } from '../js/metric.js';
+import { MonthsSpan } from '../js/utils/months-span.js';
 import { Portfolio } from '../js/portfolio.js';
 import { chronometer_run } from '../js/chronometer.js';
 import { computeMonteCarlo } from '../js/mc-compute.js';
@@ -272,6 +274,50 @@ console.log('\n── 5. Monte Carlo per-run deflation ────────�
       const ratio = mc.baselineData[i] / mc.baselineDataReal[i];
       assert.ok(ratio >= prev, `implied index fell at month ${i}: ${ratio} < ${prev}`);
       prev = ratio;
+    }
+  });
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// 6. Chart display bucketing — the deflator must be sampled exactly the way
+//    TrackedMetric samples display history, or the real line lands on the
+//    wrong months once a long plan buckets into quarters/half-years/years
+// ══════════════════════════════════════════════════════════════════════
+console.log('\n── 6. Display-bucket alignment ──────────────────────────\n');
+{
+  // 20 years starting in March: > 216 months → annual buckets with an offset.
+  global_setInflationRate(0.031); global_getInflationRate();
+  global_setBacktestYear('current'); global_getBacktestYear();
+  setActiveTaxTable(new TaxTable());
+  const marchStart = { year: 2026, month: 3 };
+  const longAssets = [
+    { instrument: 'bank', displayName: 'Savings',
+      startDateInt: marchStart, finishDateInt: { year: 2046, month: 12 },
+      startCurrency: { amount: 500000 }, annualReturnRate: { rate: 0 } },
+  ].map(o => ModelAsset.fromJSON(o));
+  const p = new Portfolio(longAssets, false);
+  await chronometer_run(p);
+
+  const span = MonthsSpan.build(p.firstDateInt, p.lastDateInt);
+  const asset = p.modelAssets[0];
+  asset.buildAllDisplayHistories(span);
+  const displayValues = asset.getDisplayHistory(Metric.VALUE);
+  const displayIndex = PriceIndex.toDisplay(p.monthlyPriceIndex, span);
+
+  check('the plan really is bucketed (combineMonths > 1)', () => {
+    assert.ok(span.combineMonths > 1,
+      `combineMonths = ${span.combineMonths} — this test needs a bucketed plan`);
+  });
+
+  check('display index has one entry per display bucket', () => {
+    assert.equal(displayIndex.length, displayValues.length,
+      `index ${displayIndex.length} buckets vs values ${displayValues.length}`);
+  });
+
+  check('each bucket samples the SAME month the value history sampled', () => {
+    for (let b = 0, i = span.offsetMonths; i < p.monthlyPriceIndex.length; b++, i += span.combineMonths) {
+      assert.equal(displayIndex[b], p.monthlyPriceIndex[i],
+        `bucket ${b} took index month ${i}: ${displayIndex[b]} !== ${p.monthlyPriceIndex[i]}`);
     }
   });
 }
