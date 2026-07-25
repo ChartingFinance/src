@@ -55,21 +55,6 @@ export class PriceIndex {
     });
   }
 
-  /**
-   * Sample the index onto a chart's display buckets. TrackedMetric's display
-   * history takes every combineMonths-th entry from offsetMonths, so the
-   * deflator has to be sampled the same way or the real line lands on the
-   * wrong months once a long plan starts bucketing quarters or years.
-   */
-  static toDisplay(indexHistory, monthsSpan) {
-    const out = [];
-    if (!indexHistory?.length || !monthsSpan) return out;
-    for (let i = monthsSpan.offsetMonths; i < indexHistory.length; i += monthsSpan.combineMonths) {
-      out.push(indexHistory[i]);
-    }
-    return out;
-  }
-
   /** Real value of a single entry. */
   static deflateAt(value, indexHistory, i) {
     if (value == null) return value;

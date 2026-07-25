@@ -21,8 +21,7 @@ import { DateInt } from './utils/date-int.js';
 import { colorRange, positiveBackgroundColor, negativeBackgroundColor } from './utils/html.js';
 import { logger, LogCategory } from './utils/logger.js';
 import { findByName } from './portfolio.js';
-import { Metric, hasRealDollarLine } from './metric.js';
-import { PriceIndex } from './utils/price-index.js';
+import { Metric } from './metric.js';
 import { LifeEvent, LifeEventMeta } from './life-event.js';
 import {
     AssetGroup, AssetGroupMeta,
@@ -350,64 +349,9 @@ export function charting_buildPortfolioMetric(portfolio, metricName, buildNewDat
       chartingMetricData.datasets.push(chartingMetricDataSet);
   }
 
-  applyRealDollarOverlay(portfolio, metricName, chartingMetricData, reducedModelAssets);
-
   chartingMetricConfig.data = chartingMetricData;
   chartMetricConfigCache.set(metricName, chartingMetricConfig);
   return chartingMetricConfig;
-}
-
-const REAL_OVERLAY_LABEL = 'Total (today’s $)';
-
-/**
- * Overlay the stacked total in today's dollars as a line on top of the bars.
- *
- * Scoped to net worth (see hasRealDollarLine): a stack of monthly flows is
- * noisy and near-term, where a second series costs more legibility than it
- * buys. The overlay is appended last so the per-asset dataset indices the
- * reuse path relies on stay put.
- */
-function applyRealDollarOverlay(portfolio, metricName, chartingMetricData, reducedModelAssets) {
-  const datasets = chartingMetricData.datasets;
-  const existingIdx = datasets.findIndex(d => d.label === REAL_OVERLAY_LABEL);
-
-  if (!hasRealDollarLine(metricName) || !portfolio.monthlyPriceIndex?.length) {
-    if (existingIdx >= 0) datasets.splice(existingIdx, 1);
-    return;
-  }
-
-  const monthsSpan = MonthsSpan.build(portfolio.firstDateInt, portfolio.lastDateInt);
-  const displayIndex = PriceIndex.toDisplay(portfolio.monthlyPriceIndex, monthsSpan);
-  if (!displayIndex.length) {
-    if (existingIdx >= 0) datasets.splice(existingIdx, 1);
-    return;
-  }
-
-  const realTotals = displayIndex.map((level, i) => {
-    let nominal = 0;
-    for (const modelAsset of reducedModelAssets) {
-      if (modelAsset == null) continue;
-      const h = modelAsset.getDisplayHistory(metricName);
-      if (h && i < h.length) nominal += parseFloat(h[i]) || 0;
-    }
-    return level ? nominal / level : nominal;
-  });
-
-  const overlay = {
-    type: 'line',
-    label: REAL_OVERLAY_LABEL,
-    data: realTotals,
-    borderColor: 'rgba(17, 24, 39, 0.45)',
-    borderWidth: 1.75,
-    borderDash: [5, 4],
-    pointRadius: 0,
-    fill: false,
-    tension: 0.3,
-    order: 0,
-  };
-
-  if (existingIdx >= 0) datasets[existingIdx] = overlay;
-  else datasets.push(overlay);
 }
 
 /*
@@ -621,13 +565,11 @@ export function charting_buildGroupedMetric(portfolio, metricName, expandedGroup
   }
 
   const datasets = [];
-  const chartedAssets = [];
 
   for (const groupKey of (groupOrder || GROUP_DISPLAY_ORDER)) {
     if (groupKey === AssetGroup.TAXES || groupKey === AssetGroup.ALL) continue;
     const assets = groups.get(groupKey);
     if (!assets || assets.length === 0) continue;
-    chartedAssets.push(...assets);
 
     const groupMeta = AssetGroupMeta.get(groupKey);
 
@@ -650,10 +592,6 @@ export function charting_buildGroupedMetric(portfolio, metricName, expandedGroup
       });
     }
   }
-
-  // Same overlay the legacy stacked chart gets — summed over exactly the
-  // assets that made it into the bars, so the line matches the stack height.
-  applyRealDollarOverlay(portfolio, metricName, { datasets }, chartedAssets);
 
   return {
     type: 'bar',
