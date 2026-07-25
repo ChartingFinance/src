@@ -121,10 +121,13 @@ export function runMonteCarlo(sourceAssets, container, numSimulations = 1000, gu
             ds[3].data = results.bandData[1];
             ds[4].data = results.bandData[0];
             ds[5].data = results.baselineData;
+            // Real-dollar companions are appended after the six nominal
+            // datasets, so the indices above stay put.
+            if (ds[6]) ds[6].data = results.bandDataReal?.[2];
+            if (ds[7]) ds[7].data = results.baselineDataReal;
             monteCarloChart.update('none');
         } else {
-            renderFanChart(chartEl, results.labels, results.bands, results.bandData,
-                results.baselineData, results.withGuardrails, results.retirementMonthIndex);
+            renderFanChart(chartEl, results);
         }
         firstPaint = false;
         if (monteCarloChart && onRender) onRender(monteCarloChart);
@@ -201,7 +204,11 @@ export function runMonteCarlo(sourceAssets, container, numSimulations = 1000, gu
 
 // ── Chart rendering ──────────────────────────────────────────────
 
-function renderFanChart(chartEl, labels, bands, bandData, baselineData, withGuardrails, retirementMonthIndex) {
+function renderFanChart(chartEl, results) {
+    const {
+        labels, bands, bandData, baselineData, withGuardrails, retirementMonthIndex,
+        bandDataReal, baselineDataReal,
+    } = results;
     chartEl.innerHTML = '';
 
     const canvas = document.createElement('canvas');
@@ -317,6 +324,30 @@ function renderFanChart(chartEl, labels, bands, bandData, baselineData, withGuar
                     pointRadius: 0,
                     tension: 0.3,
                 },
+                // Real-dollar companions. Deliberately only the median and the
+                // baseline: a second five-band fan on top of the first is
+                // unreadable. These are drawn thin and quiet so the nominal fan
+                // stays the primary read.
+                ...(bandDataReal ? [{
+                    label: 'Median (today’s $)',
+                    data: bandDataReal[2],
+                    fill: false,
+                    borderColor: 'rgba(168, 85, 247, 0.55)',
+                    borderWidth: 1.75,
+                    borderDash: [4, 3],
+                    pointRadius: 0,
+                    tension: 0.3,
+                }] : []),
+                ...(baselineDataReal ? [{
+                    label: 'Baseline (today’s $)',
+                    data: baselineDataReal,
+                    fill: false,
+                    borderColor: 'rgba(17, 24, 39, 0.3)',
+                    borderWidth: 1.5,
+                    borderDash: [3, 3],
+                    pointRadius: 0,
+                    tension: 0.3,
+                }] : []),
             ],
         },
         options: {
