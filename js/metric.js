@@ -231,6 +231,21 @@ const _macroSet = new Set(MACRO_METRICS);
 export function isTopLevelMetric(m) { return _macroSet.has(m); }
 
 /**
+ * Metrics that get an inflation-adjusted companion line.
+ *
+ * Every metric in the enum is a currency amount, so this is a SCOPE decision
+ * rather than a type check. Net worth is a stock measure — a balance carried
+ * decades into the future — which is exactly where nominal dollars mislead,
+ * and where one extra line reads clearly. Monthly flows are small, noisy and
+ * near-term; a second line there costs legibility and buys little.
+ *
+ * Shared by the Timeline arc and the Projections chart so the two can never
+ * disagree about what "today's dollars" applies to.
+ */
+const _realDollarSet = new Set([Metric.VALUE]);
+export function hasRealDollarLine(metricName) { return _realDollarSet.has(metricName); }
+
+/**
  * Parent metrics — metrics that have children rolling up to them in the DAG.
  * These must NEVER be written to directly; they are populated solely by
  * addToMetric() DAG propagation from leaf metrics.

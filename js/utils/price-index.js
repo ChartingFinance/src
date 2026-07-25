@@ -55,6 +55,21 @@ export class PriceIndex {
     });
   }
 
+  /**
+   * Sample the index onto a chart's display buckets. TrackedMetric's display
+   * history takes every combineMonths-th entry from offsetMonths, so the
+   * deflator has to be sampled the same way or the real line lands on the
+   * wrong months once a long plan starts bucketing quarters or years.
+   */
+  static toDisplay(indexHistory, monthsSpan) {
+    const out = [];
+    if (!indexHistory?.length || !monthsSpan) return out;
+    for (let i = monthsSpan.offsetMonths; i < indexHistory.length; i += monthsSpan.combineMonths) {
+      out.push(indexHistory[i]);
+    }
+    return out;
+  }
+
   /** Real value of a single entry. */
   static deflateAt(value, indexHistory, i) {
     if (value == null) return value;
@@ -62,17 +77,4 @@ export class PriceIndex {
     const level = indexHistory[i] ?? indexHistory[indexHistory.length - 1];
     return value / level;
   }
-}
-
-/**
- * Annualized real growth implied by a nominal CAGR and the index — used for
- * the "x%/yr nominal · y%/yr real" pair on the timeline.
- */
-export function realCagr(startValue, endValue, months, indexHistory) {
-  if (!(startValue > 0) || !(endValue > 0) || months <= 0) return null;
-  const level = indexHistory?.length
-    ? indexHistory[Math.min(months, indexHistory.length) - 1]
-    : 1;
-  const realEnd = endValue / level;
-  return Math.pow(realEnd / startValue, 12 / months) - 1;
 }

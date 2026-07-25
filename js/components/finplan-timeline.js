@@ -26,7 +26,8 @@ import { LitElement, html, svg, nothing } from 'lit';
 import { store } from '../finplan-store.js';
 import { LifeEvent, LifeEventType } from '../life-event.js';
 import { InstrumentType } from '../instruments/instrument.js';
-import { MetricLabel } from '../metric.js';
+import { MetricLabel, hasRealDollarLine } from '../metric.js';
+import { PriceIndex } from '../utils/price-index.js';
 import { DateInt, MONTH_NAMES } from '../utils/date-int.js';
 
 // ── Arc geometry (viewBox units; the SVG scales to container width) ──
@@ -366,8 +367,23 @@ class FinplanTimeline extends LitElement {
             if (v > max) max = v;
         }
         if (!Number.isFinite(min) || !Number.isFinite(max)) return null;
+
+        // Inflation-adjusted companion. The arc is metric-switchable, so the
+        // same gate Projections uses decides whether a real line makes sense
+        // for what's currently plotted.
+        const priceIndex = this.portfolio?.monthlyPriceIndex;
+        let realVals = null;
+        if (hasRealDollarLine(this.metricName) && priceIndex?.length) {
+            realVals = PriceIndex.deflate(vals, priceIndex);
+            // The scale must contain BOTH curves or the real line clips.
+            for (const v of realVals) {
+                if (v < min) min = v;
+                if (v > max) max = v;
+            }
+        }
+
         if (max === min) max = min + 1;   // avoid a zero-height range
-        return { vals, min, max, lastIdx };
+        return { vals, realVals, min, max, lastIdx, priceIndex };
     }
 
     /** Age (fractional) at a given history index. */
@@ -426,6 +442,8 @@ class FinplanTimeline extends LitElement {
             cashFlow:  this._metricAtIndexFor('cashFlow', idx),
             growth:    this._metricAtIndexFor('growth', idx),
             netChange: this._metricAtIndexFor('netWorthChange', idx),
+            valueReal: PriceIndex.deflateAt(
+                this._metricAtIndexFor('value', idx), this.portfolio.monthlyPriceIndex, idx),
         };
     }
 
@@ -449,6 +467,23 @@ class FinplanTimeline extends LitElement {
         if (months <= 0) return 0;
         const years = months / 12;
         return (Math.pow(endVal / startVal, 1 / years) - 1) * 100;
+    }
+
+    /**
+     * Same span, in today's dollars. The pair reads as "7.2%/yr · 4.0% real"
+     * — the single most honest number on this screen, since a nominal growth
+     * rate quietly includes the inflation the plan also assumes.
+     * Returns null when a real rate isn't meaningful (sign change, no index).
+     */
+    _computeRealCAGRBetween(startIdx, endIdx) {
+        const idx = this.portfolio?.monthlyPriceIndex;
+        if (!hasRealDollarLine(this.metricName) || !idx?.length) return null;
+        const startVal = this._metricAtIndex(startIdx) / (idx[startIdx] ?? 1);
+        const endVal = this._metricAtIndex(endIdx) / (idx[endIdx] ?? idx[idx.length - 1]);
+        if (!(startVal > 0) || !(endVal > 0)) return null;
+        const months = endIdx - startIdx;
+        if (months <= 0) return null;
+        return (Math.pow(endVal / startVal, 12 / months) - 1) * 100;
     }
 
     /**
@@ -596,11 +631,21 @@ class FinplanTimeline extends LitElement {
                 const startIdx = Math.max(0, this._historyIndexForAge(span.startAge));
                 const isLast = span.index === spans.length - 1;
                 const endIdx = isLast ? series.lastIdx : this._historyIndexForAge(span.endAge);
-                const cagr = this._computeCAGRBetween(startIdx, Math.max(startIdx + 1, endIdx));
+                const safeEnd = Math.max(startIdx + 1, endIdx);
+                const cagr = this._computeCAGRBetween(startIdx, safeEnd);
+                const realCagr = this._computeRealCAGRBetween(startIdx, safeEnd);
                 parts.push(svg`
                     <text x=${labelX.toFixed(1)} y=${PAD_T + 16} font-size="16" font-weight="700"
                           fill="${accent}">${cagr.toFixed(1)}%/yr</text>
                 `);
+                if (realCagr !== null) {
+                    // +34 clears the 16px nominal figure's descender; measured,
+                    // not guessed — at +28 the two glyph boxes overlapped by 3px.
+                    parts.push(svg`
+                        <text x=${labelX.toFixed(1)} y=${PAD_T + 34} font-size="9.5" font-weight="600"
+                              fill="${accent}" opacity="0.6">${realCagr.toFixed(1)}%/yr real</text>
+                    `);
+                }
             }
         }
         return parts;
@@ -648,6 +693,19 @@ class FinplanTimeline extends LitElement {
             `);
         }
 
+        // Inflation-adjusted curve, drawn UNDER the nominal one. Phase area
+        // fills stay keyed to nominal only — a second set of fills would muddy
+        // every band without adding information.
+        if (series.realVals) {
+            const realPointAt = (i) =>
+                `${this._ageToX(this._ageAtIndex(i)).toFixed(1)},${Y(series.realVals[i]).toFixed(1)}`;
+            parts.push(svg`
+                <path d="M${curveIdxs.map(realPointAt).join(' L')}"
+                      fill="none" stroke="#111827" stroke-width="1.5" stroke-linecap="round"
+                      stroke-linejoin="round" stroke-dasharray="5 4" opacity="0.35"></path>
+            `);
+        }
+
         // The curve itself
         parts.push(svg`
             <path d="M${curveIdxs.map(pointAt).join(' L')}"
@@ -683,17 +741,25 @@ class FinplanTimeline extends LitElement {
 
     /** Open/close values on the curve endpoints. */
     _svgEndpoints(series, Y) {
-        const { vals, lastIdx } = series;
+        const { vals, realVals, lastIdx } = series;
         const x0 = this._ageToX(this._ageAtIndex(0));
         const y0 = Y(vals[0]);
         const x1 = this._ageToX(this._ageAtIndex(lastIdx));
         const y1 = Y(vals[lastIdx]);
+        // Sits below the nominal figure with clearance for its descender; if
+        // the curve ends low enough that it would collide with the axis, flip
+        // it above instead.
+        const realLabelY = (y1 + 26 > BASE_Y - 4) ? y1 - 14 : y1 + 26;
         return svg`
             <circle cx=${x0.toFixed(1)} cy=${y0.toFixed(1)} r="3.5" fill="#fff" stroke="#111827" stroke-width="1.5"></circle>
             <text x=${(x0 + 7).toFixed(1)} y=${(y0 - 7).toFixed(1)} font-size="11" fill="#6b7280" font-weight="500">${this._formatCurrency(vals[0])}</text>
             <circle cx=${x1.toFixed(1)} cy=${y1.toFixed(1)} r="4" fill="#111827"></circle>
             <text x=${(x1 - 8).toFixed(1)} y=${(y1 + 4).toFixed(1)} font-size="13" font-weight="700"
                   fill="#111827" text-anchor="end">${this._formatCurrency(vals[lastIdx])}</text>
+            ${realVals ? svg`
+                <text x=${(x1 - 8).toFixed(1)} y=${realLabelY.toFixed(1)} font-size="10.5" font-weight="600"
+                      fill="#9ca3af" text-anchor="end">${this._formatCurrency(realVals[lastIdx])} today’s $</text>
+            ` : nothing}
         `;
     }
 
@@ -811,6 +877,11 @@ class FinplanTimeline extends LitElement {
                     <div class="tmc-row tmc-nw"><span>Net worth</span>
                         <span class="tmc-val">${this._formatCurrency(totals.value)}
                             <span class="tmc-delta ${totals.netChange >= 0 ? 'text-green-600' : 'text-pink-600'}">${this._formatSignedCurrency(totals.netChange)}</span></span></div>
+                    ${totals.valueReal != null
+                        && this._formatCurrency(totals.valueReal) !== this._formatCurrency(totals.value) ? html`
+                        <div class="tmc-row"><span class="text-gray-400">In today’s $</span>
+                            <span class="tmc-val text-gray-400">${this._formatCurrency(totals.valueReal)}</span></div>
+                    ` : nothing}
                     <div class="tmc-row"><span>Income</span><span class="tmc-val">${this._formatSignedCurrency(totals.income)}</span></div>
                     <div class="tmc-row"><span>Expenses</span><span class="tmc-val">${this._formatSignedCurrency(totals.expense)}</span></div>
                     <div class="tmc-row"><span>Taxes</span><span class="tmc-val">${this._formatSignedCurrency(totals.taxes)}</span></div>
