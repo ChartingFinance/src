@@ -456,6 +456,16 @@ class FinplanTimeline extends LitElement {
         return this._metricAtIndex(idx);
     }
 
+    /** The cursor value in today's dollars, or null when it doesn't apply. */
+    _cursorRealMetric() {
+        if (!this.portfolio?.firstDateInt) return null;
+        if (!hasRealDollarLine(this.metricName)) return null;
+        const idx = DateInt.diffMonths(this.portfolio.firstDateInt, DateInt.from(this.selectedYear, this.selectedMonth));
+        if (idx < 0) return null;
+        const real = PriceIndex.deflateAt(this._metricAtIndex(idx), this.portfolio.monthlyPriceIndex, idx);
+        return real ?? null;
+    }
+
     /**
      * Compute CAGR between two history indices.
      */
@@ -518,6 +528,9 @@ class FinplanTimeline extends LitElement {
     render() {
         const years = this._getYearRange();
         const visible = this._visibleEvents;
+        // Built once and shared: the header values and the arc plot the same
+        // series, and it walks every month of every asset.
+        const series = this._buildSeries();
 
         return html`
             <!-- Date controls (right-aligned above the arc) -->
@@ -546,8 +559,11 @@ class FinplanTimeline extends LitElement {
                 </button>
             </div>
 
+            <!-- Opening and closing values, out of the plot area -->
+            ${this._renderEndpointValues(series)}
+
             <!-- The wealth arc -->
-            ${this._renderArc(visible)}
+            ${this._renderArc(visible, series)}
 
             <!-- Phase chips: name + age range + edit -->
             ${this._renderPhaseChips(visible)}
@@ -556,10 +572,9 @@ class FinplanTimeline extends LitElement {
 
     // ── Arc rendering ───────────────────────────────────────────────
 
-    _renderArc(visible) {
+    _renderArc(visible, series) {
         const sAge = this._timelineStartAge;
         const fAge = this._timelineFinishAge;
-        const series = this._buildSeries();
         const spans = this._phaseSpans;
 
         const Y = series
@@ -740,26 +755,44 @@ class FinplanTimeline extends LitElement {
     }
 
     /** Open/close values on the curve endpoints. */
+    /**
+     * Endpoint DOTS only. The values themselves live in the header row above
+     * the arc (_renderEndpointValues): stacking a nominal and a real figure on
+     * the curve put four numbers inside the plot area and made the whole thing
+     * hard to read.
+     */
     _svgEndpoints(series, Y) {
-        const { vals, realVals, lastIdx } = series;
+        const { vals, lastIdx } = series;
         const x0 = this._ageToX(this._ageAtIndex(0));
         const y0 = Y(vals[0]);
         const x1 = this._ageToX(this._ageAtIndex(lastIdx));
         const y1 = Y(vals[lastIdx]);
-        // Sits below the nominal figure with clearance for its descender; if
-        // the curve ends low enough that it would collide with the axis, flip
-        // it above instead.
-        const realLabelY = (y1 + 26 > BASE_Y - 4) ? y1 - 14 : y1 + 26;
         return svg`
             <circle cx=${x0.toFixed(1)} cy=${y0.toFixed(1)} r="3.5" fill="#fff" stroke="#111827" stroke-width="1.5"></circle>
-            <text x=${(x0 + 7).toFixed(1)} y=${(y0 - 7).toFixed(1)} font-size="11" fill="#6b7280" font-weight="500">${this._formatCurrency(vals[0])}</text>
             <circle cx=${x1.toFixed(1)} cy=${y1.toFixed(1)} r="4" fill="#111827"></circle>
-            <text x=${(x1 - 8).toFixed(1)} y=${(y1 + 4).toFixed(1)} font-size="13" font-weight="700"
-                  fill="#111827" text-anchor="end">${this._formatCurrency(vals[lastIdx])}</text>
-            ${realVals ? svg`
-                <text x=${(x1 - 8).toFixed(1)} y=${realLabelY.toFixed(1)} font-size="10.5" font-weight="600"
-                      fill="#9ca3af" text-anchor="end">${this._formatCurrency(realVals[lastIdx])} today’s $</text>
-            ` : nothing}
+        `;
+    }
+
+    /**
+     * Opening and closing values, above the arc: start on the left, end on the
+     * right, nominal bold over the inflation-adjusted figure on both sides.
+     */
+    _renderEndpointValues(series) {
+        if (!series) return nothing;
+        const { vals, realVals, lastIdx } = series;
+        const pair = (nominal, real, align) => html`
+            <div style="display: flex; flex-direction: column; align-items: ${align}; line-height: 1.25;">
+                <span style="font-size: 13px; font-weight: 700; color: #111827;">${this._formatCurrency(nominal)}</span>
+                ${real != null ? html`
+                    <span style="font-size: 10.5px; font-weight: 600; color: #9ca3af;">${this._formatCurrency(real)} today’s $</span>
+                ` : nothing}
+            </div>
+        `;
+        return html`
+            <div class="flex items-start justify-between px-1 mb-1">
+                ${pair(vals[0], realVals ? realVals[0] : null, 'flex-start')}
+                ${pair(vals[lastIdx], realVals ? realVals[lastIdx] : null, 'flex-end')}
+            </div>
         `;
     }
 
@@ -853,6 +886,9 @@ class FinplanTimeline extends LitElement {
                  style="left: clamp(80px, ${pct}%, calc(100% - 80px)); background: #ffffff; border: 1px solid ${color}40; color: ${accent};">
                 ${MONTH_NAMES[this.selectedMonth - 1]} ${this.selectedYear} · Age ${Math.floor(this._selectedAge)}
                 — <strong>${this._formatCurrency(this._computeCursorMetric())}</strong>
+                ${this._cursorRealMetric() != null ? html`
+                    <span style="font-size: 10.5px; font-weight: 600; color: #9ca3af;">${this._formatCurrency(this._cursorRealMetric())} today’s $</span>
+                ` : nothing}
                 <button class="timeline-more-btn"
                         title="Month details"
                         aria-label="Month details"
@@ -875,13 +911,13 @@ class FinplanTimeline extends LitElement {
                 <div class="tmc-head">${MONTH_NAMES[this.selectedMonth - 1]} ${this.selectedYear} · Age ${Math.floor(this._selectedAge)}</div>
                 ${totals ? html`
                     <div class="tmc-row tmc-nw"><span>Net worth</span>
-                        <span class="tmc-val">${this._formatCurrency(totals.value)}
-                            <span class="tmc-delta ${totals.netChange >= 0 ? 'text-green-600' : 'text-pink-600'}">${this._formatSignedCurrency(totals.netChange)}</span></span></div>
-                    ${totals.valueReal != null
-                        && this._formatCurrency(totals.valueReal) !== this._formatCurrency(totals.value) ? html`
-                        <div class="tmc-row"><span class="text-gray-400">In today’s $</span>
-                            <span class="tmc-val text-gray-400">${this._formatCurrency(totals.valueReal)}</span></div>
-                    ` : nothing}
+                        <span class="tmc-val" style="display: flex; flex-direction: column; align-items: flex-end; line-height: 1.25;">
+                            <span>${this._formatCurrency(totals.value)}
+                                <span class="tmc-delta ${totals.netChange >= 0 ? 'text-green-600' : 'text-pink-600'}">${this._formatSignedCurrency(totals.netChange)}</span></span>
+                            ${totals.valueReal != null ? html`
+                                <span style="font-size: 10.5px; font-weight: 600; color: #9ca3af;">${this._formatCurrency(totals.valueReal)} today’s $</span>
+                            ` : nothing}
+                        </span></div>
                     <div class="tmc-row"><span>Income</span><span class="tmc-val">${this._formatSignedCurrency(totals.income)}</span></div>
                     <div class="tmc-row"><span>Expenses</span><span class="tmc-val">${this._formatSignedCurrency(totals.expense)}</span></div>
                     <div class="tmc-row"><span>Taxes</span><span class="tmc-val">${this._formatSignedCurrency(totals.taxes)}</span></div>
