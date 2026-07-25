@@ -1,7 +1,8 @@
 import { DateInt } from './utils/date-int.js';
 import { logger, LogCategory } from './utils/logger.js';
-import { activeTaxTable, global_backtestYear, global_sp500_annual_returns, global_10yr_treasury_rates, global_cpi_annual_inflation, global_wage_growth_annual } from './globals.js';
+import { activeTaxTable, global_backtestYear, global_inflationRate, global_sp500_annual_returns, global_10yr_treasury_rates, global_cpi_annual_inflation, global_wage_growth_annual } from './globals.js';
 import { Instrument, InstrumentType } from './instruments/instrument.js';
+import { PriceIndex } from './utils/price-index.js';
 
 // ── Backtest helpers ──────────────────────────────────────────
 
@@ -43,6 +44,22 @@ function applyBacktestRates(portfolio, calendarYear) {
     }
 }
 
+/**
+ * Inflation rate driving the real-dollar deflator for one simulated year.
+ *
+ * Deliberately mirrors applyBacktestForYear's data-year mapping AND its
+ * fallback: CPI data covers 1970-2025, so a long plan backtested from a
+ * recent year runs off the end. There, applyBacktestForYear restores the
+ * assets' configured rates — so the deflator must fall back to the general
+ * inflation rate rather than flattening the real line to zero growth.
+ */
+function inflationRateForYear(backtesting, backtestStartYear, simStartYear, simulationYear) {
+    if (!backtesting) return global_inflationRate;
+    const dataYear = backtestStartYear + (simulationYear - simStartYear);
+    const cpi = global_cpi_annual_inflation[dataYear];
+    return cpi != null ? cpi / 100 : global_inflationRate;
+}
+
 function applyBacktestForYear(portfolio, simulationYear, backtestStartYear, simStartYear, savedRates) {
     const dataYear = backtestStartYear + (simulationYear - simStartYear);
     if (global_sp500_annual_returns[dataYear] !== undefined ||
@@ -82,6 +99,14 @@ export async function chronometer_run(portfolio) {
     }
 
     const simStartYear = portfolio.firstDateInt.year;
+
+    // Real-dollar deflator. Stepped on the same tick as monthlyChron so its
+    // history lines up index-for-index with every asset metric history.
+    const priceIndex = new PriceIndex(
+        inflationRateForYear(backtesting, backtestStartYear, simStartYear, simStartYear)
+    );
+    portfolio.monthlyPriceIndex = priceIndex.history;
+
     let currentDateInt = new DateInt(portfolio.firstDateInt.toInt());
     let lastDateInt = new DateInt(portfolio.lastDateInt.toInt());
     while (currentDateInt.toInt() <= lastDateInt.toInt()) {
@@ -98,12 +123,17 @@ export async function chronometer_run(portfolio) {
         if (currentDateInt.day == 1) {
             portfolio.monthlyChron(currentDateInt);
             activeTaxTable.monthlyChron(currentDateInt);
+            priceIndex.stepAndRecord();
         }
 
         if (currentDateInt.isNewYearsDay()) {
             if (backtesting) {
                 applyBacktestForYear(portfolio, currentDateInt.year, backtestStartYear, simStartYear, savedRates);
             }
+            // Same data year the asset rates and tax tables just moved to.
+            priceIndex.setAnnualRate(
+                inflationRateForYear(backtesting, backtestStartYear, simStartYear, currentDateInt.year)
+            );
 
             portfolio.applyGuardrails(currentDateInt);
             portfolio.applyYear(currentDateInt);
