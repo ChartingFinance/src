@@ -1071,9 +1071,14 @@
         </h2>
 
         <div class="glass-card p-6">
-            <div class="flex items-center justify-between mb-4">
-                <p class="text-sm text-gray-500">Genetic algorithm optimizer — finds the best fund transfer allocations and guardrail parameters.</p>
-                <button class="btn-modern primary text-sm flex-shrink-0" id="btn-maximize" style="padding: 6px 16px; white-space: nowrap;">&#9654; Run</button>
+            <p class="text-sm text-gray-500 mb-3">Genetic algorithm optimizer — finds the best fund transfer allocations and guardrail parameters.</p>
+            <div class="flex items-center gap-3 mb-4 flex-wrap">
+                <div class="flex items-center gap-2 flex-grow text-xs" style="min-width: 260px;">
+                    <span class="text-gray-500 font-semibold whitespace-nowrap">Spending</span>
+                    <div class="flex items-center flex-grow" id="maximizer-bias" style="gap: 2px;"></div>
+                    <span class="text-gray-500 font-semibold whitespace-nowrap">Terminal Value</span>
+                </div>
+                <button class="btn-modern primary text-sm flex-shrink-0 ml-auto" id="btn-maximize" style="padding: 6px 16px; white-space: nowrap;">&#9654; Run</button>
             </div>
             <simulator-modal id="simulator-inline"></simulator-modal>
         </div>

@@ -5,9 +5,12 @@
  * Renders inline (not as a popup). Set `modelAssets` and `open` to launch.
  * Manages Chart.js instance and Web Worker lifecycle internally.
  *
- * The fitnessBalance slider controls the unified fitness function:
- *   Left  (0)   = Maximize Spending (cash flow)
- *   Right (100)  = Maximize Terminal Value
+ * The `fitnessBalance` property controls the unified fitness function:
+ *   0   = Maximize Spending (cash flow)
+ *   100 = Maximize Terminal Value
+ * The notch selector that sets it lives in index.html next to the Run button,
+ * so the bias can be chosen before a run starts (this element only upgrades on
+ * the first Run click — it is code-split).
  */
 
 import { LitElement, html } from 'lit';
@@ -36,7 +39,6 @@ class SimulatorModal extends LitElement {
         _generation:      { state: true },
         _bestValue:       { state: true },
         _runComplete:     { state: true },
-        _sliderValue:     { state: true },
         _instructions:    { state: true },
         _showInstructions: { state: true },
     };
@@ -50,12 +52,11 @@ class SimulatorModal extends LitElement {
         this.lifeEvents = [];
         this.guardrailParams = null;
         this.backtestYear = 'current';
-        this.fitnessBalance = 50;
+        this.fitnessBalance = 100;
         this._status = '';
         this._generation = '';
         this._bestValue = '';
         this._runComplete = false;
-        this._sliderValue = 50;
         this._chart = null;
         this._worker = null;
         this._instructions = '';
@@ -67,34 +68,7 @@ class SimulatorModal extends LitElement {
     render() {
         if (!this.open) return html``;
 
-        const steps = [];
-        for (let v = 0; v <= 100; v += 5) steps.push(v);
-
         return html`
-            <div class="flex items-center gap-2 mb-3 text-xs">
-                <span class="text-gray-500 font-semibold whitespace-nowrap">Spending</span>
-                <div class="flex items-center flex-grow" style="gap: 2px;">
-                    ${steps.map(v => html`
-                        <button
-                            class="sim-notch"
-                            style="
-                                flex: 1;
-                                height: ${v === this._sliderValue ? '18px' : '10px'};
-                                border: none;
-                                border-radius: 2px;
-                                cursor: pointer;
-                                transition: all 0.15s ease;
-                                background: ${v === this._sliderValue
-                                    ? '#333'
-                                    : '#d1d5db'};
-                            "
-                            title="${100 - v}% Spending / ${v}% Terminal Value"
-                            @click=${() => this._onNotchClick(v)}
-                        ></button>
-                    `)}
-                </div>
-                <span class="text-gray-500 font-semibold whitespace-nowrap">Terminal Value</span>
-            </div>
             <div class="finplan-chart-canvas-wrap" style="min-height: 300px;">
                 <canvas></canvas>
             </div>
@@ -139,7 +113,6 @@ class SimulatorModal extends LitElement {
 
     updated(changed) {
         if (changed.has('open') && this.open) {
-            this._sliderValue = this.fitnessBalance;
             this._runComplete = false;
             requestAnimationFrame(() => this._start());
         }
@@ -154,13 +127,6 @@ class SimulatorModal extends LitElement {
     }
 
     // ── Private ──────────────────────────────────────────────────
-
-    _onNotchClick(value) {
-        this._sliderValue = value;
-        if (this._runComplete) {
-            this.restart();
-        }
-    }
 
     _copyInstructions() {
         navigator.clipboard.writeText(this._instructions).catch(() => {});
@@ -227,7 +193,7 @@ class SimulatorModal extends LitElement {
             lifeEvents: this.lifeEvents.map(e => e.toJSON()),
             guardrailParams: this.guardrailParams,
             backtestYear: this.backtestYear,
-            fitnessBalance: this._sliderValue,
+            fitnessBalance: this.fitnessBalance,
         });
 
         this._worker.onerror = (err) => {

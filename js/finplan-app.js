@@ -205,6 +205,13 @@ let expandedGroups      = new Set([
 let expandedPipelines   = new Set();
 let simAutoRunDone      = false;  // one-shot simulations auto-run per page load
 
+// Maximizer fitness bias: 0 = maximize spending, 100 = maximize terminal value.
+// Lives here rather than inside <simulator-modal> because that element is
+// code-split and doesn't upgrade until the first Run — the bias has to be
+// selectable before then. Declared up here (not beside buildMaximizerBias)
+// because the init code below paints the strip during module evaluation.
+let maximizerBias = 100;
+
 // Code-split feature modules — loaded on first use. Declared here (before
 // the init code below calls calculate()) so the auto-run path can reach
 // doMonteCarlo()/doGuardrails() during module evaluation without hitting a
@@ -464,6 +471,7 @@ document.getElementById('btn-run-mc').addEventListener('click', (ev) => {
 });
 document.getElementById('btn-run-guardrails').addEventListener('click', () => doGuardrails());
 document.getElementById('btn-maximize').addEventListener('click', () => doMaximize());
+buildMaximizerBias();
 
 // Apply optimized transfers and guardrails from the Maximizer
 document.getElementById('simulator-inline').addEventListener('apply-optimized', (ev) => {
@@ -1086,6 +1094,11 @@ function calculate() {
     mcBtn.title = hasAssets ? '' : 'Add assets to run simulations';
     grBtn.title = hasAssets ? '' : 'Add assets to run simulations';
     maxBtn.title = hasAssets ? '' : 'Add assets to run maximizer';
+    const biasStrip = document.getElementById('maximizer-bias');
+    if (biasStrip) {
+        biasStrip.style.opacity = hasAssets ? '' : '0.5';
+        biasStrip.style.pointerEvents = hasAssets ? '' : 'none';
+    }
 
     // One-shot simulations auto-run so the regions aren't blank on first
     // load. Compute happens in workers (Monte Carlo with a progressive first
@@ -1228,6 +1241,41 @@ function refreshVisualizer() {
     hydraulicViz.update(idx, isRetiredPhase(), appState.metricName);
 }
 
+function buildMaximizerBias() {
+    const strip = document.getElementById('maximizer-bias');
+    if (!strip) return;
+
+    strip.replaceChildren(...Array.from({ length: 21 }, (_, i) => {
+        const v = i * 5;
+        const notch = document.createElement('button');
+        notch.className = 'sim-notch';
+        notch.type = 'button';
+        notch.dataset.value = String(v);
+        notch.title = `${100 - v}% Spending / ${v}% Terminal Value`;
+        notch.style.cssText = 'flex: 1; border: none; border-radius: 2px; cursor: pointer; transition: all 0.15s ease;';
+        notch.addEventListener('click', () => {
+            maximizerBias = v;
+            paintMaximizerBias();
+            // A run already on screen was optimizing for the old bias — redo it.
+            const sim = document.getElementById('simulator-inline');
+            if (sim?.open) doMaximize();
+        });
+        return notch;
+    }));
+
+    paintMaximizerBias();
+}
+
+function paintMaximizerBias() {
+    const strip = document.getElementById('maximizer-bias');
+    if (!strip) return;
+    for (const notch of strip.children) {
+        const selected = Number(notch.dataset.value) === maximizerBias;
+        notch.style.height = selected ? '18px' : '10px';
+        notch.style.background = selected ? '#333' : '#d1d5db';
+    }
+}
+
 async function doMaximize() {
     // Code-split: defines the <simulator-modal> element on first use (the
     // tag in index.html upgrades in place; the GA itself already runs in a
@@ -1241,7 +1289,7 @@ async function doMaximize() {
     sim.lifeEvents = appState.lifeEvents;
     sim.guardrailParams = getGuardrailParams();
     sim.backtestYear = global_backtestYear;
-    sim.fitnessBalance = 100;
+    sim.fitnessBalance = maximizerBias;
     if (sim.open) {
         sim.restart();
     } else {
