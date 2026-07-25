@@ -67,8 +67,7 @@ export function runGuardrails(sourceAssets, container, params, retirementDateInt
             : 'your configured rates';
         setStatus(container, `Single deterministic run · ${rateSource}`
             + (results.retirementDateInt ? ' · guardrails active from retirement' : ''));
-        renderChart(ensureLayout(container).chartEl, results.labels, results.portfolioValues,
-            results.withdrawalSteps, results.events, results.params, results.retirementMonthIndex);
+        renderChart(ensureLayout(container).chartEl, results);
         if (guardrailsChart && onRender) onRender(guardrailsChart);
         return guardrailsChart;
     };
@@ -123,7 +122,11 @@ export function runGuardrails(sourceAssets, container, params, retirementDateInt
 
 // ── Chart rendering ──────────────────────────────────────────────
 
-function renderChart(chartEl, labels, portfolioValues, withdrawalSteps, events, params, retirementMonthIndex) {
+function renderChart(chartEl, results) {
+    const {
+        labels, portfolioValues, withdrawalSteps, events, params, retirementMonthIndex,
+        portfolioValuesReal, withdrawalStepsReal,
+    } = results;
     chartEl.innerHTML = '';
 
     const canvas = document.createElement('canvas');
@@ -203,6 +206,20 @@ function renderChart(chartEl, labels, portfolioValues, withdrawalSteps, events, 
                     tension: 0.3,
                     order: 2,
                 },
+                // Portfolio value in today's dollars — same series, same axis,
+                // deflated by the run's own price index.
+                ...(portfolioValuesReal ? [{
+                    label: 'Portfolio Value (today’s $)',
+                    data: portfolioValuesReal,
+                    yAxisID: 'yValue',
+                    fill: false,
+                    borderColor: 'rgba(59, 130, 246, 0.45)',
+                    borderWidth: 2,
+                    borderDash: [5, 4],
+                    pointRadius: 0,
+                    tension: 0.3,
+                    order: 3,
+                }] : []),
                 // Annual withdrawal (right axis, step-line)
                 {
                     label: 'Annual Withdrawal',
@@ -216,6 +233,21 @@ function renderChart(chartEl, labels, portfolioValues, withdrawalSteps, events, 
                     stepped: 'before',
                     order: 1,
                 },
+                // Withdrawal in today's dollars. The guardrail machinery raises
+                // spending in nominal terms year after year; this line shows
+                // how much of that is real and how much is just inflation.
+                ...(withdrawalStepsReal ? [{
+                    label: 'Annual Withdrawal (today’s $)',
+                    data: withdrawalStepsReal,
+                    yAxisID: 'yWithdrawal',
+                    fill: false,
+                    borderColor: 'rgba(239, 68, 68, 0.4)',
+                    borderWidth: 1.75,
+                    borderDash: [5, 4],
+                    pointRadius: 0,
+                    stepped: 'before',
+                    order: 1,
+                }] : []),
                 // Preservation events (markers — line dataset with sparse data, no connecting line)
                 ...(hasPreservation ? [{
                     label: 'Preservation Cut',

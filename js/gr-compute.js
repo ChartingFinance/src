@@ -12,6 +12,7 @@ import { ModelAsset } from './model-asset.js';
 import { Metric } from './metric.js';
 import { DateInt, MONTH_NAMES } from './utils/date-int.js';
 import { chronometer_run } from './chronometer.js';
+import { PriceIndex } from './utils/price-index.js';
 
 // ── Helpers ──────────────────────────────────────────────────────
 
@@ -130,10 +131,19 @@ export async function computeGuardrails(sourceAssets, {
         for (let i = 0; i < retirementMonthIndex; i++) withdrawalSteps[i] = null;
     }
 
+    // Real-dollar companions. The withdrawal line matters most here: a
+    // spending figure 20 years out is where nominal dollars mislead hardest.
+    const priceIndex = portfolio.monthlyPriceIndex ?? [];
+    const portfolioValuesReal = PriceIndex.deflate(portfolioValues, priceIndex);
+    const withdrawalStepsReal = PriceIndex.deflate(withdrawalSteps, priceIndex);
+
     return {
         labels,
         portfolioValues,
+        portfolioValuesReal,
         withdrawalSteps,
+        withdrawalStepsReal,
+        priceIndex,
         events,
         params,
         retirementDateInt: retirementDateInt ? retirementDateInt.toInt() : null,
