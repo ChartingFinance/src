@@ -649,16 +649,21 @@ class FinplanTimeline extends LitElement {
                 const safeEnd = Math.max(startIdx + 1, endIdx);
                 const cagr = this._computeCAGRBetween(startIdx, safeEnd);
                 const realCagr = this._computeRealCAGRBetween(startIdx, safeEnd);
+                // Centred on the phase it measures. Anchored at the left edge
+                // it read as a property of the boundary it sat next to; the
+                // rate describes the whole span, so it belongs over the middle
+                // of it. The name stays at the edge — that IS a boundary label.
+                const rateX = (x0 + x1) / 2;
                 parts.push(svg`
-                    <text x=${labelX.toFixed(1)} y=${PAD_T + 16} font-size="16" font-weight="700"
-                          fill="${accent}">${cagr.toFixed(1)}%/yr</text>
+                    <text x=${rateX.toFixed(1)} y=${PAD_T + 16} font-size="16" font-weight="700"
+                          fill="${accent}" text-anchor="middle">${cagr.toFixed(1)}%/yr</text>
                 `);
                 if (realCagr !== null) {
                     // +34 clears the 16px nominal figure's descender; measured,
                     // not guessed — at +28 the two glyph boxes overlapped by 3px.
                     parts.push(svg`
-                        <text x=${labelX.toFixed(1)} y=${PAD_T + 34} font-size="9.5" font-weight="600"
-                              fill="${accent}" opacity="0.6">${realCagr.toFixed(1)}%/yr real</text>
+                        <text x=${rateX.toFixed(1)} y=${PAD_T + 34} font-size="9.5" font-weight="600"
+                              fill="${accent}" opacity="0.6" text-anchor="middle">${realCagr.toFixed(1)}%/yr real</text>
                     `);
                 }
             }
