@@ -35,7 +35,10 @@ const ARC_W = 1000;
 const ARC_H = 210;
 const PAD_L = 10;
 const PAD_R = 10;
-const PAD_T = 70;   // room for band labels, pins, and the cursor chip
+const PAD_T = 42;   // room for band labels and pins — the cursor chip used to
+                    // live in here too, which is why this was 70; it now has
+                    // its own row above the arc, so the reserve came back as
+                    // dead space between the start/end values and the bands.
 const PAD_B = 30;   // room for the age axis
 const PLOT_W = ARC_W - PAD_L - PAD_R;
 const PLOT_H = ARC_H - PAD_T - PAD_B;
@@ -799,7 +802,7 @@ class FinplanTimeline extends LitElement {
             </div>
         `;
         return html`
-            <div class="flex items-start justify-between px-1 mb-1">
+            <div class="flex items-start justify-between px-1" style="margin-bottom: 2px;">
                 ${pair(vals[0], realVals ? realVals[0] : null, 'flex-start')}
                 ${pair(vals[lastIdx], realVals ? realVals[lastIdx] : null, 'flex-end')}
             </div>
