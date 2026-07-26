@@ -47,6 +47,12 @@ export class Portfolio {
 
         this.monthlyPackages = []; // FP copy per month — for double-entry testing
 
+        // Cumulative price level per month, base 1.0 at the plan's first month.
+        // Written by the simulation loop (chronometer_run / mc-compute runOnce);
+        // consumers deflate nominal series with it. Derived state — never
+        // serialised, rebuilt on every run.
+        this.monthlyPriceIndex = [];
+
         this.monthlyPropertyTaxes = [];
         this.monthlyIncomeTaxes = [];
         this.monthlyCapitalGainsTaxes = [];
@@ -88,6 +94,7 @@ export class Portfolio {
         portfolio.yearlySnapshots         = [...this.yearlySnapshots];
         portfolio.generatedReports        = [...this.generatedReports];
         portfolio.monthlyPackages         = this.monthlyPackages.map(p => p.copy());
+        portfolio.monthlyPriceIndex       = [...this.monthlyPriceIndex];
         portfolio.monthlyPropertyTaxes    = [...this.monthlyPropertyTaxes];
         portfolio.monthlyIncomeTaxes      = [...this.monthlyIncomeTaxes];
         portfolio.monthlyCapitalGainsTaxes = [...this.monthlyCapitalGainsTaxes];
@@ -131,6 +138,7 @@ export class Portfolio {
         this.yearly = new FinancialPackage();
         this.total = new FinancialPackage();
         this.monthlyPackages = [];
+        this.monthlyPriceIndex = [];
 
         for (let modelAsset of this.modelAssets) {
             modelAsset.initializeChron();

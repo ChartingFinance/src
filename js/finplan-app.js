@@ -164,18 +164,24 @@ const grSummary         = document.getElementById('guardrail-summary');
 const grSummaryText     = document.getElementById('guardrail-summary-text');
 const grEditor          = document.getElementById('guardrail-editor');
 
+// The Maximizer writes its optimizer output straight into these globals, so
+// they carry full float precision (4.387129...). Display to the nearest tenth
+// and drop a trailing zero, so the defaults still read "5%" not "5.0%".
+// Presentation only — the stored value keeps its precision.
+const grDisplay = (v) => parseFloat(Number(v).toFixed(1));
+
 function guardrailSummaryText() {
-    return `${global_guardrail_withdrawalRate}% target rate · `
-        + `${global_guardrail_preservation}% preservation · `
-        + `${global_guardrail_prosperity}% prosperity · `
-        + `±${global_guardrail_adjustment}% adjustment`;
+    return `${grDisplay(global_guardrail_withdrawalRate)}% target rate · `
+        + `${grDisplay(global_guardrail_preservation)}% preservation · `
+        + `${grDisplay(global_guardrail_prosperity)}% prosperity · `
+        + `±${grDisplay(global_guardrail_adjustment)}% adjustment`;
 }
 
 function syncGuardrailsToDOM() {
-    grWithdrawal.value   = global_guardrail_withdrawalRate;
-    grPreservation.value = global_guardrail_preservation;
-    grProsperity.value   = global_guardrail_prosperity;
-    grAdjustment.value   = global_guardrail_adjustment;
+    grWithdrawal.value   = grDisplay(global_guardrail_withdrawalRate);
+    grPreservation.value = grDisplay(global_guardrail_preservation);
+    grProsperity.value   = grDisplay(global_guardrail_prosperity);
+    grAdjustment.value   = grDisplay(global_guardrail_adjustment);
     grSummaryText.textContent = guardrailSummaryText();
 }
 
