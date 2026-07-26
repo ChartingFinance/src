@@ -89,14 +89,16 @@ export class TaxEngine {
 
                 }
 
-                // Fallback: first taxable account
+                // Backstop: whatever the user did not route explicitly
                 if (remaining.amount > 0) {
-                    let fundingSource = FundTransfer.resolveTaxable(this.modelAssets);
+                    let fundingSource = FundTransfer.resolveFunding(this.modelAssets);
                     if (fundingSource) {
                         let preFlight = new FundTransferOneSided(null, remaining);
                         preFlight.fromModel = modelAsset;
                         preFlight.toModel = fundingSource;
                         preFlights.push(preFlight);
+                    } else {
+                        FundTransfer.reportUnfunded(modelAsset, remaining, 'property tax');
                     }
                 }
 
@@ -262,9 +264,9 @@ export class TaxEngine {
         // was paid, and it would never be collected from any balance. So: no
         // funding account, no booking — the annual true-up then sees the full
         // shortfall and collects it in its April settlement instead.
-        const liquidAsset = this.modelAssets.find(a => InstrumentType.isLiquid(a.instrument) && !a.isClosed && a.finishCurrency.amount > 0);
+        const liquidAsset = FundTransfer.resolveFunding(this.modelAssets);
         if (!liquidAsset) {
-            logger.log(LogCategory.TAX, `Monthly True-Up: no liquid asset to pay ${additionalTax.toString()}; deferring to annual true-up`);
+            logger.log(LogCategory.TAX, `Monthly True-Up: no backstop account to pay ${additionalTax.toString()}; deferring to annual true-up`);
             return;
         }
 
@@ -323,7 +325,7 @@ export class TaxEngine {
         // Only act if the discrepancy is material (> $1)
         if (Math.abs(taxDifference) < 1) return;
 
-        const liquidAsset = this.modelAssets.find(a => InstrumentType.isLiquid(a.instrument) && !a.isClosed && a.finishCurrency.amount > 0);
+        const liquidAsset = FundTransfer.resolveFunding(this.modelAssets);
         if (!liquidAsset) return;
 
         if (taxDifference > 0) {

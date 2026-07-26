@@ -74,9 +74,9 @@ export class ExpenseEngine {
             // =========================================================================
             const netShortfall = new Currency(runningExpenseAmount.amount - modelAssetExpense.amount);
             if (netShortfall.amount > 0) {
-                logger.log(LogCategory.TRANSFER, `ExpenseEngine.applyExpenseTransfers: ${modelAsset.displayName} expensing ${netShortfall.toString()} from taxable account (Grossed Up)`);
+                logger.log(LogCategory.TRANSFER, `ExpenseEngine.applyExpenseTransfers: ${modelAsset.displayName} expensing ${netShortfall.toString()} from the funding backstop (Grossed Up)`);
 
-                const targetAsset = FundTransfer.resolveTaxable(this.modelAssets);
+                const targetAsset = FundTransfer.resolveFunding(this.modelAssets);
                 if (targetAsset) {
                     const grossWithdrawal = this.calculateGrossWithdrawal(netShortfall, targetAsset);
                     const result = targetAsset.debit(grossWithdrawal, `Grossed-up expense overflow for ${modelAsset.displayName}`);
@@ -90,6 +90,8 @@ export class ExpenseEngine {
                         this.monthly.estimatedTaxes.add(taxLiability);
                         targetAsset.addToMetric(Metric.ESTIMATED_INCOME_TAX, taxLiability.copy().flipSign());
                     }
+                } else {
+                    FundTransfer.reportUnfunded(modelAsset, netShortfall, 'expense overflow');
                 }
             }
         } else {
@@ -98,9 +100,9 @@ export class ExpenseEngine {
             // Replaces the old "this.debitFromFirstTaxableAccount" fallback
             // =========================================================================
             const netShortfall = modelAssetExpense.copy().flipSign();
-            logger.log(LogCategory.TRANSFER, `ExpenseEngine.applyExpenseTransfers: ${modelAsset.displayName} expensing ${netShortfall.toString()} from taxable account (Grossed Up)`);
+            logger.log(LogCategory.TRANSFER, `ExpenseEngine.applyExpenseTransfers: ${modelAsset.displayName} expensing ${netShortfall.toString()} from the funding backstop (Grossed Up)`);
 
-            const targetAsset = FundTransfer.resolveTaxable(this.modelAssets);
+            const targetAsset = FundTransfer.resolveFunding(this.modelAssets);
             if (targetAsset) {
                 const grossWithdrawal = this.calculateGrossWithdrawal(netShortfall, targetAsset);
                 const result = targetAsset.debit(grossWithdrawal, `Grossed-up expense debit for ${modelAsset.displayName}`);
@@ -114,6 +116,8 @@ export class ExpenseEngine {
                     this.monthly.estimatedTaxes.add(taxLiability);
                     targetAsset.addToMetric(Metric.ESTIMATED_INCOME_TAX, taxLiability.copy().flipSign());
                 }
+            } else {
+                FundTransfer.reportUnfunded(modelAsset, netShortfall, 'expense');
             }
         }
 
@@ -151,14 +155,16 @@ export class ExpenseEngine {
             }
         }
 
-        // Fallback: first taxable account
+        // Backstop: whatever the user did not route explicitly
         if (remaining.amount > 0) {
-            let fundingSource = FundTransfer.resolveTaxable(this.modelAssets);
+            let fundingSource = FundTransfer.resolveFunding(this.modelAssets);
             if (fundingSource) {
                 let preFlight = new FundTransferOneSided(null, remaining);
                 preFlight.fromModel = modelAsset;
                 preFlight.toModel = fundingSource;
                 preFlights.push(preFlight);
+            } else {
+                FundTransfer.reportUnfunded(modelAsset, remaining, 'mortgage payment');
             }
         }
 
@@ -207,21 +213,20 @@ export class ExpenseEngine {
         }
 
         if (remaining.amount > 0) {
-            let fundingSource = FundTransfer.resolveExpensable(this.modelAssets);
+            let fundingSource = FundTransfer.resolveFunding(this.modelAssets);
             if (fundingSource) {
                 let preFlight = new FundTransferOneSided(null, remaining);
                 preFlight.fromModel = modelAsset;
                 preFlight.toModel = fundingSource;
                 preFlights.push(preFlight);
+            } else {
+                FundTransfer.reportUnfunded(modelAsset, remaining, label);
             }
         }
 
-        // Carrying costs resolve their own fallback through the priority list,
-        // so the spillover leg follows the same policy.
         for (const oneSided of preFlights) {
             const memo = `${modelAsset.displayName} → ${oneSided.toModel.displayName} (${label})`;
-            const settled = FundTransfer.settleOneSided(oneSided, memo, this.modelAssets,
-                FundTransfer.resolveExpensable);
+            const settled = FundTransfer.settleOneSided(oneSided, memo, this.modelAssets);
             this.monthly.recordTransfer(oneSided.toModel.instrument, settled.supplied, settled.realizedGain);
             if (settled.spillover.amount > 0 && settled.spilloverInstrument) {
                 this.monthly.recordTransfer(settled.spilloverInstrument, settled.spillover, settled.spilloverGain);
@@ -260,10 +265,10 @@ export class ExpenseEngine {
             // target the income was recorded but no cash ever left the IRA,
             // and when the IRA held less than the RMD the spillover portion
             // (sourced from a taxable account) was booked as IRA income too.
-            const target = FundTransfer.resolveExpensable(this.modelAssets);
+            const target = FundTransfer.resolveFunding(this.modelAssets);
             if (!target) {
                 logger.log(LogCategory.SANITY,
-                    `ExpenseEngine.ensureRMDs: no expensable target for ${modelAsset.displayName} RMD of ${remains.toString()}`);
+                    `ExpenseEngine.ensureRMDs: no backstop account to receive ${modelAsset.displayName} RMD of ${remains.toString()}`);
                 return;
             }
 
@@ -322,6 +327,12 @@ export class ExpenseEngine {
     // ── Helpers ──────────────────────────────────────────────────────
 
     calculateGrossWithdrawal(netShortfall, modelAsset) {
+        // Only taxable accounts realize a gain on withdrawal (see ModelAsset.#transact).
+        // Cash, savings and bonds have no basis to speak of, so getUnrealizedGainRatio()
+        // reads 1.0 on them — grossing up against that would over-withdraw for a tax
+        // that never comes due.
+        if (!InstrumentType.isTaxableAccount(modelAsset.instrument)) return netShortfall.copy();
+
         // 1. Estimate current marginal LTCG bracket based strictly on base income (W-2, etc)
         const yearlyEstimate = this.monthly.copy().multiply(12.0);
         yearlyEstimate.limitDeductions(this.activeUser);

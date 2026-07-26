@@ -437,9 +437,11 @@ export class PayrollEngine {
 
             if (runningTransferAmount.amount < modelAsset.netIncomeCurrency.amount) {
                 let delta = new Currency(modelAsset.netIncomeCurrency.amount - runningTransferAmount.amount);
-                const target = FundTransfer.resolveTaxable(this.modelAssets);
+                const target = FundTransfer.resolveFunding(this.modelAssets);
                 if (target) {
                     FundTransfer.system(modelAsset, target, delta).execute();
+                } else {
+                    FundTransfer.reportUnfunded(modelAsset, delta, 'unallocated take-home pay (nowhere to deposit)');
                 }
             }
 

@@ -251,9 +251,8 @@ function ensurePipeline(map, key, sourceGroup, targetGroup) {
 }
 
 function addSystemTransfers(pipelineMap, assets, historyIndex) {
-    // Find funding sources (same logic used by expense-engine/tax-engine at simulation time)
-    const expensable = FundTransfer.resolveExpensable(assets);
-    const taxable = FundTransfer.resolveTaxable(assets);
+    // The funding backstop — same resolver the engines use at simulation time
+    const backstop = FundTransfer.resolveFunding(assets);
 
     for (const asset of assets) {
         if (asset.isClosed) continue;
@@ -261,8 +260,8 @@ function addSystemTransfers(pipelineMap, assets, historyIndex) {
         // Mortgage payment — Capital → Housing
         if (InstrumentType.isMortgage(asset.instrument)) {
             const payment = Math.abs(atIdx(asset, Metric.MORTGAGE_PAYMENT, historyIndex));
-            if (payment > 0 && taxable) {
-                const sourceGroup = classifyAssetGroup(taxable.instrument);
+            if (payment > 0 && backstop) {
+                const sourceGroup = classifyAssetGroup(backstop.instrument);
                 const targetGroup = AssetGroup.REAL_ESTATE;
                 const key = pipelineKey(sourceGroup, targetGroup);
 
@@ -271,9 +270,9 @@ function addSystemTransfers(pipelineMap, assets, historyIndex) {
                     ensurePipeline(pipelineMap, key, sourceGroup, targetGroup);
                     pipelineMap.get(key).routes.push({
                         type: 'system',
-                        sourceName: taxable.displayName,
+                        sourceName: backstop.displayName,
                         targetName: asset.displayName,
-                        sourceInstrument: taxable.instrument,
+                        sourceInstrument: backstop.instrument,
                         targetInstrument: asset.instrument,
                         percentage: null,
                         monthlyAmount: payment,
@@ -297,7 +296,7 @@ function addSystemTransfers(pipelineMap, assets, historyIndex) {
                 if (ins > 0)     costs.push({ amount: ins,     detail: 'Insurance' });
 
                 for (const cost of costs) {
-                    const fundingSource = resolveCarryingCostSource(asset, cost.amount, assets) || expensable || taxable;
+                    const fundingSource = resolveCarryingCostSource(asset, cost.amount, assets) || backstop;
                     if (!fundingSource) continue;
                     const sourceGroup = classifyAssetGroup(fundingSource.instrument);
                     const targetGroup = AssetGroup.REAL_ESTATE;

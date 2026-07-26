@@ -144,20 +144,45 @@ export class FundTransfer {
 
   // ── Account Resolution ─────────────────────────────────────────
 
-  /** First non-closed taxable account with a positive balance. */
-  static resolveTaxable(modelAssets) {
-    return modelAssets.find(a =>
-      InstrumentType.isTaxableAccount(a.instrument) && !a.isClosed && a.finishCurrency.amount > 0
-    ) ?? null;
-  }
-
-  /** First non-closed expensable account with a positive balance, following priority order. */
-  static resolveExpensable(modelAssets) {
-    for (const key of InstrumentType.expensablePriority) {
+  /**
+   * The funding backstop: the first open account from the everyday priority
+   * list (cash → savings → brokerage → treasuries → corporate bonds) holding
+   * a positive balance.
+   *
+   * This is the ONE policy for every implicit money movement the engine makes
+   * on the user's behalf: paying an expense or mortgage no fund transfer
+   * covers, escrowing property tax, sweeping unallocated take-home pay,
+   * settling a tax true-up, landing sale proceeds and RMDs, and covering
+   * spillover from a depleted account. Retirement accounts are not eligible —
+   * see `FUNDING_BACKSTOP_PRIORITY` in instrument.js for why.
+   *
+   * Returns null when nothing qualifies. Callers must treat that as an
+   * UNFUNDED obligation and report it via `reportUnfunded()` — never as a
+   * silent skip, which books the obligation while no cash leaves any account.
+   */
+  static resolveFunding(modelAssets) {
+    for (const key of InstrumentType.fundingBackstopPriority) {
       const match = modelAssets.find(a => a.instrument === key && !a.isClosed && a.finishCurrency.amount > 0);
       if (match) return match;
     }
     return null;
+  }
+
+  /**
+   * Record an obligation the funding backstop could not cover. The memo is
+   * `info` kind — no money moved, so it must stay out of cash reconciliation —
+   * and lands on the asset that owes, where the UI already shows its ledger.
+   *
+   * @param {ModelAsset} modelAsset  The obligation's own asset (expense, mortgage, home)
+   * @param {Currency}   amount      Positive amount that went unpaid
+   * @param {string}     memo        What the money was for
+   */
+  static reportUnfunded(modelAsset, amount, memo) {
+    if (!amount || amount.amount <= 0) return;
+    logger.log(LogCategory.SANITY,
+      `Unfunded: ${modelAsset?.displayName ?? '?'} ${memo} ${amount.toString()} — ` +
+      `no eligible funding account (cash, savings, brokerage or bonds with a positive balance)`);
+    modelAsset?.addCreditMemo(amount.copy().flipSign(), `Unfunded — ${memo}`, 'info');
   }
 
   // ── One-Sided Settlement ───────────────────────────────────────
@@ -185,7 +210,7 @@ export class FundTransfer {
    * @returns {{supplied: Currency, realizedGain: Currency, spillover: Currency,
    *            spilloverGain: Currency, spilloverInstrument: string|null}}
    */
-  static settleOneSided(oneSided, memo, allModels, resolveFallback = FundTransfer.resolveTaxable) {
+  static settleOneSided(oneSided, memo, allModels, resolveFallback = FundTransfer.resolveFunding) {
     const result = oneSided.toModel.debit(oneSided.amount, memo);
     const supplied = oneSided.amount.minus(result.spillover);
 
@@ -215,14 +240,10 @@ export class FundTransfer {
         }
         // The fallback itself clamped: nothing left at this layer to draw on.
         if (spillResult.spillover?.amount > 0) {
-          logger.log(LogCategory.SANITY,
-            `FundTransfer.settleOneSided: fallback ${fallback.displayName} also depleted, ` +
-            `${spillResult.spillover.toString()} of ${memo} unfunded`);
+          FundTransfer.reportUnfunded(oneSided.fromModel ?? oneSided.toModel, spillResult.spillover, memo);
         }
       } else {
-        logger.log(LogCategory.SANITY,
-          `FundTransfer.settleOneSided: ${oneSided.toModel.displayName} depleted, ` +
-          `no fallback account to cover ${result.spillover.toString()} of ${memo}`);
+        FundTransfer.reportUnfunded(oneSided.fromModel ?? oneSided.toModel, result.spillover, memo);
       }
     }
 
@@ -334,7 +355,7 @@ export class FundTransfer {
     let spilloverInstrument = null;
     if (spillSource && this._allModels) {
       const spillAmount = fromResult.spillover?.amount > 0 ? fromResult.spillover : toResult.spillover;
-      const fallback = FundTransfer.resolveTaxable(this._allModels);
+      const fallback = FundTransfer.resolveFunding(this._allModels);
       if (fallback) {
         const spillMemo = `Spillover from depleted ${spillSource.displayName}`;
         const spillResult = fallback.debit(spillAmount, spillMemo);
@@ -346,11 +367,10 @@ export class FundTransfer {
           fallback.addCreditMemo(spilloverGain.copy(), 'Capital gains (spillover)', 'info');
         }
       } else {
-        // No taxable account can cover the shortfall. Nothing at this layer
+        // No backstop account can cover the shortfall. Nothing at this layer
         // can conjure the cash; surface it instead of failing silently — the
         // requested amount was still credited in full to the target.
-        logger.log(LogCategory.SANITY,
-          `FundTransfer.execute: ${spillSource.displayName} depleted, no taxable account to cover ${spillAmount.toString()} spillover`);
+        FundTransfer.reportUnfunded(spillSource, spillAmount, `${memo} (account depleted, no backstop)`);
       }
     }
 

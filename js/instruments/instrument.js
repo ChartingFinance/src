@@ -121,22 +121,26 @@ const EXPENSABLE = new Set([
   Instrument.ROTH_IRA,
 ]);
 
-const LIQUID = new Set([
-  Instrument.TAXABLE_EQUITY,
+// ── Funding backstop ────────────────────────────────────────────────
+// The everyday accounts the engine may reach for on its own when no explicit
+// fund transfer covers an obligation: cash, savings, brokerage, then bonds.
+// Ordered — first match with a positive balance wins.
+//
+// Retirement accounts (401K, IRA, Roth IRA) are deliberately ABSENT. Spending
+// them carries consequences the engine cannot choose on the user's behalf —
+// ordinary-income tax, early-withdrawal penalties, Roth ordering rules — so a
+// plan that means to spend retirement money says so with an explicit fund
+// transfer. Real estate is absent for the obvious reason: you cannot pay the
+// electric bill with a fraction of a house.
+const FUNDING_BACKSTOP_PRIORITY = [
   Instrument.CASH,
   Instrument.BANK,
-]);
-
-// Priority order for implicit debits/credits (taxes, FICA, withholding, etc.).
-// Liquid taxable accounts first, then tax-advantaged as a last resort.
-const EXPENSABLE_PRIORITY = [
-  Instrument.CASH,
-  Instrument.BANK,
   Instrument.TAXABLE_EQUITY,
-  Instrument.FOUR_01K,
-  Instrument.IRA,
-  Instrument.ROTH_IRA,
+  Instrument.US_BOND,
+  Instrument.CORP_BOND,
 ];
+
+const FUNDING_BACKSTOP = new Set(FUNDING_BACKSTOP_PRIORITY);
 
 const MONTHS_REMAINING_ABLE = new Set([
   Instrument.MORTGAGE,
@@ -184,7 +188,7 @@ export const InstrumentType = Object.freeze({
   isCapital:            (v) => CAPITAL.has(v),
   isFundable:           (v) => FUNDABLE.has(v),
   isExpensable:         (v) => EXPENSABLE.has(v),
-  isLiquid:             (v) => LIQUID.has(v),
+  isFundingBackstop:    (v) => FUNDING_BACKSTOP.has(v),
   isSavingsAccount:     (v) => v === Instrument.BANK,
   isMonthsRemainingAble:(v) => MONTHS_REMAINING_ABLE.has(v),
   isBasisable:          (v) => BASISABLE.has(v),
@@ -205,6 +209,6 @@ export const InstrumentType = Object.freeze({
     .sort((a, b) => a[1].sortOrder - b[1].sortOrder)
     .map(([key, meta]) => ({ key, ...meta })),
 
-  /** Priority order for implicit debits/credits (taxes, withholding, etc.) */
-  expensablePriority: EXPENSABLE_PRIORITY,
+  /** Priority order the funding backstop draws on (see FUNDING_BACKSTOP_PRIORITY) */
+  fundingBackstopPriority: FUNDING_BACKSTOP_PRIORITY,
 });
