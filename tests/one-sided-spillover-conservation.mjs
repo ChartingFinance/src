@@ -25,10 +25,10 @@
  *   4. Distributions are booked against the account that ACTUALLY supplied the
  *      cash — household FP === the asset's own distribution metric.
  *
- * Scope note: the fallback RESOLVER is deliberately unchanged here (mortgage
- * and property tax still resolve a taxable account; carrying costs still walk
- * the expensable priority list). Widening it so bank/cash can fund these paths
- * is finding #1 of review_code_2026_07_25 and lands separately.
+ * Scope note: this suite covers the SPILLOVER mechanics only — who supplies
+ * the shortfall once a named funding account clamps at $0. Which accounts the
+ * engine may draft in the first place is one shared policy now
+ * (`FundTransfer.resolveFunding`); see funding-backstop.mjs.
  *
  * Usage:  node src/tests/one-sided-spillover-conservation.mjs   (from repo root)
  */

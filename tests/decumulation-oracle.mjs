@@ -31,7 +31,7 @@
  *
  * Known open findings the bands still absorb (tighten when fixed):
  *   - Savings is overdrawn by a tax settlement and stranded (audit F4):
- *     oracle floors the bank at $0, engine ends ≈ −$17.4k.
+ *     oracle floors the bank at $0, engine ends ≈ −$6.0k.
  *   - longTermCapitalHoldingPercentage is unread (F5): oracle books 80/20
  *     LT/ST per config, engine books all gains long-term.
  *   - NIIT is not modeled (F8): asserted informationally, not banded.
@@ -372,22 +372,22 @@ const engine = {
 // review the diff line by line.
 const EXPECTED_ENGINE = {
   "Social Security": 4021.09,
-  "Savings": -17435.19,
+  "Savings": -6048.12,
   "IRA": 1825464.00,
   "Roth": 4028947.93,
-  "Brokerage": 8943629.51,
+  "Brokerage": 8898144.04,
   "CompanyStock": 0.00,
   "Treasuries": 116821.90,
   "Home": 2307042.36,
   "Mortgage": 0.00,
   "Living Expenses": -11682.19,
-  "portfolioTotal": 17204470.52,
+  "portfolioTotal": 17170372.12,
   "employedIncome": 0.00,
   "socialSecurityIncome": 950908.99,
   "tradIRADistribution": 2786481.44,
-  "qualifiedDividends": 985773.08,
-  "longTermCapitalGains": 1240545.89,
-  "interestIncome": 66765.17,
+  "qualifiedDividends": 981665.34,
+  "longTermCapitalGains": 1238273.67,
+  "interestIncome": 72935.79,
   "mortgageInterest": -247134.01,
 };
 

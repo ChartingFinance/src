@@ -644,22 +644,26 @@ export class Portfolio {
 
             let extraAmount = new Currency(modelAssetValue.amount - runningTransferAmount.amount);
             if (extraAmount.amount > 0) {
-                logger.log(LogCategory.TRANSFER, 'Portfolio.applyAssetCloseFundTransfers: ' + modelAsset.displayName + ' funding ' + extraAmount.toString() + ' to first expensable account');
+                logger.log(LogCategory.TRANSFER, 'Portfolio.applyAssetCloseFundTransfers: ' + modelAsset.displayName + ' funding ' + extraAmount.toString() + ' to the funding backstop');
 
-                const target = FundTransfer.resolveExpensable(this.modelAssets);
+                const target = FundTransfer.resolveFunding(this.modelAssets);
                 if (target) {
                     FundTransfer.system(modelAsset, target, extraAmount, this.modelAssets).execute();
+                } else {
+                    FundTransfer.reportUnfunded(modelAsset, extraAmount, 'sale proceeds (nowhere to deposit)');
                 }
             }
 
         }
         else {
 
-            logger.log(LogCategory.TRANSFER, 'Portfolio.applyAssetCloseFundTransfers: ' + modelAsset.displayName + ' funding ' + modelAssetValue.toString() + ' to first expensable account');
+            logger.log(LogCategory.TRANSFER, 'Portfolio.applyAssetCloseFundTransfers: ' + modelAsset.displayName + ' funding ' + modelAssetValue.toString() + ' to the funding backstop');
 
-            const target = FundTransfer.resolveExpensable(this.modelAssets);
+            const target = FundTransfer.resolveFunding(this.modelAssets);
             if (target) {
                 FundTransfer.system(modelAsset, target, modelAssetValue, this.modelAssets).execute();
+            } else {
+                FundTransfer.reportUnfunded(modelAsset, modelAssetValue, 'sale proceeds (nowhere to deposit)');
             }
 
         }

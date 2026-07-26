@@ -226,6 +226,10 @@
                 <div class="text-sm text-gray-500">Accessed by hovering over an asset card and clicking the <strong>&#x21C4;</strong> button, or by clicking a route in the Flows view. Configure percentage-based transfers that are <strong>phase-specific</strong> (Accumulate and Retire phases have independent configurations).</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">Funding Backstop</div>
+                <div class="text-sm text-gray-500">Bills, mortgage payments, property tax and taxes still have to be paid when no fund transfer covers them. The simulator falls back to your everyday accounts, in this order: <strong>Cash &rarr; Savings &rarr; Taxable Account &rarr; US Treasury &rarr; Corporate Bond</strong> &mdash; the first one holding a positive balance pays. Sale proceeds and leftover take-home pay land the same way.<br><br><strong>Retirement accounts are never used automatically.</strong> Spending a 401K, IRA or Roth has tax and penalty consequences the simulator will not choose for you, so if your plan means to fund expenses from retirement savings, set up an explicit fund transfer. When nothing is eligible, the obligation is marked <em>Unfunded</em> in that asset's Credit Memos rather than being quietly skipped.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">&#x26A1; AI Summary &amp; + Add Asset</div>
                 <div class="text-sm text-gray-500">The &#x26A1; generates a markdown summary of your portfolio composition. The <strong>+</strong> button opens the asset creation dialog.</div>
             </div>
