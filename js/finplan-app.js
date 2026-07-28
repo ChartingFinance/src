@@ -53,6 +53,7 @@ import './components/pipeline-list.js';
 import './components/asset-list.js';
 import './components/asset-card.js';
 import './components/asset-form-modal.js';
+import './components/asset-view-modal.js';
 import './components/transfer-modal.js';
 import './components/funding-modal.js';
 import './components/one-time-modal.js';
@@ -136,6 +137,7 @@ import {
 // ── DOM refs ────────────────────────────────────────────────
 const assetList         = document.getElementById('finplanAssetList');
 const assetFormModal    = document.getElementById('assetFormModal');
+const assetViewModal    = document.getElementById('assetViewModal');
 const transferModal     = document.getElementById('transferModal');
 const fundingModal      = document.getElementById('fundingModal');
 const oneTimeModal      = document.getElementById('oneTimeModal');
@@ -1492,6 +1494,10 @@ function connectAssetListEvents() {
         openEditAssetModal(ev.detail.modelAsset);
     });
 
+    assetList.addEventListener('view-asset', (ev) => {
+        openViewAssetModal(ev.detail.modelAsset);
+    });
+
     assetList.addEventListener('show-transfers', (ev) => {
         showPopupTransfers(ev.detail.modelAsset.displayName);
     });
@@ -1596,6 +1602,20 @@ function openEditAssetModal(modelAsset) {
     assetFormModal.mode = 'edit';
     assetFormModal.modelAsset = modelAsset;
     assetFormModal.open = true;
+}
+
+// ── Asset View Modal (read surface) ─────────────────────────
+
+function openViewAssetModal(modelAsset) {
+    const dateInt = DateInt.from(store.selectedYear, store.selectedMonth);
+    const firstDateInt = appState.portfolio?.firstDateInt ?? null;
+    assetViewModal.modelAsset = modelAsset;
+    assetViewModal.firstDateInt = firstDateInt;
+    assetViewModal.atDateInt = dateInt;
+    assetViewModal.historyIndex = firstDateInt
+        ? DateInt.diffMonths(firstDateInt, dateInt)
+        : -1;
+    assetViewModal.open = true;
 }
 
 // ── Funding Modal ───────────────────────────────────────────
