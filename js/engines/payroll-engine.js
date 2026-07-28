@@ -148,11 +148,18 @@ export class PayrollEngine {
         const assetTax = new Currency(householdTax.amount * proportion);
 
         netIncome.subtract(assetTax);
-        if (modelAsset.isSelfEmployed) {
-            modelAsset.addToMetric(Metric.ESTIMATED_INCOME_TAX, assetTax);
-        } else {
-            modelAsset.addToMetric(Metric.WITHHELD_INCOME_TAX, assetTax);
-        }
+
+        // Negative == money out, the convention every other tax metric follows
+        // (recordFICAWithholding flips in place before its metric write). This
+        // site used to record the raw positive amount, so once the DAG landed
+        // the two signs cancelled inside INCOME_TAX and a worker withholding
+        // $1,636 reported +$412 of tax. assetTax must stay positive for the
+        // netIncome arithmetic above and for recordIncomeTaxWithholding below,
+        // so flip a copy.
+        const taxMetric = modelAsset.isSelfEmployed
+            ? Metric.ESTIMATED_INCOME_TAX
+            : Metric.WITHHELD_INCOME_TAX;
+        modelAsset.addToMetric(taxMetric, assetTax.copy().flipSign());
 
         // Deferrals exceeding after-tax pay are a configuration problem the
         // pipeline can't fully honor: the 401K/IRA transfers have already
