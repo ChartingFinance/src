@@ -1610,6 +1610,8 @@ function openViewAssetModal(modelAsset) {
     const dateInt = DateInt.from(store.selectedYear, store.selectedMonth);
     const firstDateInt = appState.portfolio?.firstDateInt ?? null;
     assetViewModal.modelAsset = modelAsset;
+    // Siblings let the modal name which account settled this asset's tax
+    assetViewModal.modelAssets = appState.portfolio?.modelAssets ?? [];
     assetViewModal.firstDateInt = firstDateInt;
     assetViewModal.atDateInt = dateInt;
     assetViewModal.historyIndex = firstDateInt

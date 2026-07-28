@@ -31,6 +31,7 @@ import {
     Metric, MetricLabel, MetricKind, metricKind, aggregateMetric, MetricRollups,
 } from '../metric.js';
 import { InstrumentMeta, InstrumentType } from '../instruments/instrument.js';
+import { global_home_sale_capital_gains_discount } from '../globals.js';
 import { DateInt, MONTH_NAMES } from '../utils/date-int.js';
 import { formatCurrency } from '../utils/html.js';
 
@@ -73,6 +74,7 @@ class AssetViewModal extends LitElement {
     static properties = {
         open:         { type: Boolean, reflect: true },
         modelAsset:   { type: Object },
+        modelAssets:  { type: Array },      // siblings — needed to name where tax was settled
         firstDateInt: { type: Object },
         atDateInt:    { type: Object },
         historyIndex: { type: Number },
@@ -85,6 +87,7 @@ class AssetViewModal extends LitElement {
         super();
         this.open = false;
         this.modelAsset = null;
+        this.modelAssets = [];
         this.firstDateInt = null;
         this.atDateInt = null;
         this.historyIndex = -1;
@@ -139,8 +142,9 @@ class AssetViewModal extends LitElement {
      *
      * Two shapes in the table need care: a metric may declare several parents
      * (it is a DAG, not a tree), so a row is nested under the first parent that
-     * is on screen and appears once; and PENSION_TAX lists itself as its own
-     * parent, so self-edges are skipped.
+     * is on screen and appears once. Self-edges and cycles are skipped — the
+     * table has none today, but a walk that trusts it would hang rather than
+     * misrender, so the guards stay.
      */
     _tree(rows) {
         const shown = new Map(rows.map(r => [r.name, r]));
@@ -184,6 +188,89 @@ class AssetViewModal extends LitElement {
     get _yearStartMonth() {
         if (!this.atDateInt || !this.firstDateInt) return 1;
         return this.atDateInt.year === this.firstDateInt.year ? this.firstDateInt.month : 1;
+    }
+
+    /**
+     * Runtime confirmation that a tax rule fired.
+     *
+     * A rule that works silently is indistinguishable from a rule that never
+     * ran — a Roth showing no tax looks identical to a bug, and a pension
+     * showing no tax looks identical to evasion. Say which it is, in the place
+     * the number is missing.
+     *
+     * Every note is derived from recorded history, never recomputed: a note may
+     * only describe an amount the engine actually booked. Splitting the
+     * household true-up across the incomes that caused it would be inventing an
+     * allocation the engine never made, so these notes name the counterparty and
+     * stop there.
+     */
+    _ruleNotes(from, to) {
+        const ma = this.modelAsset;
+        if (!ma) return [];
+
+        const notes = [];
+        const total = (metric) => aggregateMetric(ma.getHistory(metric), metric, from, to);
+        const income = total(Metric.INCOME);
+        const taxes = total(Metric.TAXES);
+
+        // Whether something above has already accounted for an absent tax. A
+        // second note offering a different reason for the same zero reads as a
+        // contradiction, so the specific explanation wins over the general one.
+        let zeroTaxExplained = false;
+
+        // Roth: no tax is the feature, not an omission.
+        if (InstrumentType.isTaxFree(ma.instrument) && income !== 0) {
+            notes.push({
+                emoji: '\u{1F6E1}\u{FE0F}',
+                text: 'Qualified Roth withdrawals are tax-free — no income tax is due on this money, and none was charged.',
+            });
+            zeroTaxExplained = true;
+        }
+
+        // Primary-home exclusion: only reachable after 24 months (taxes.js:454),
+        // and only visible once a gain has actually been realised. It explains a
+        // missing tax only when the gain fell entirely inside the exclusion.
+        if (InstrumentType.isRealEstate(ma.instrument) && ma.isPrimaryHome
+            && total(Metric.LONG_TERM_CAPITAL_GAIN) !== 0) {
+            notes.push({
+                emoji: '\u{1F3E1}',
+                text: `Primary home sold after more than two years — the first ${formatCurrency(global_home_sale_capital_gains_discount)} of gain is excluded before capital gains tax.`,
+            });
+            if (taxes === 0) zeroTaxExplained = true;
+        }
+
+        // Income whose tax was settled somewhere else entirely.
+        if (income !== 0 && taxes === 0 && !zeroTaxExplained) {
+            const settlers = this._settlingAccounts(from, to);
+            const where = settlers.length === 1 ? settlers[0].displayName
+                        : settlers.length > 1 ? 'your funding accounts'
+                        : null;
+            notes.push({
+                emoji: '\u{1F9FE}',
+                text: where
+                    ? `Tax is not withheld from this income. The household's tax on it is settled from ${where}.`
+                    : 'Tax is not withheld from this income. The household\'s tax on it is settled at the annual true-up.',
+            });
+        }
+
+        return notes;
+    }
+
+    /**
+     * Assets that paid estimated income tax in this window — the true-up debits
+     * the funding account and books ESTIMATED_INCOME_TAX there, so a non-zero
+     * value IS the settlement, resolved per month rather than guessed from
+     * today's account list.
+     */
+    _settlingAccounts(from, to) {
+        const out = [];
+        for (const a of (this.modelAssets ?? [])) {
+            if (a === this.modelAsset) continue;
+            const h = a.getHistory?.(Metric.ESTIMATED_INCOME_TAX);
+            if (!h) continue;
+            if (aggregateMetric(h, Metric.ESTIMATED_INCOME_TAX, from, to) !== 0) out.push(a);
+        }
+        return out;
     }
 
     /** "Jan–Jun 2033", or "Jun 2033" when the window is a single month. */
@@ -302,6 +389,23 @@ class AssetViewModal extends LitElement {
         return html`
             ${section(levelSectionTitle(this.modelAsset.instrument), balances, [0, to], false)}
             ${section(activityTitle, flows, [from, to], true)}
+            ${this._renderRuleNotes(from, to)}
+        `;
+    }
+
+    _renderRuleNotes(from, to) {
+        const notes = this._ruleNotes(from, to);
+        if (notes.length === 0) return nothing;
+
+        return html`
+            <div class="mt-4 pt-4 border-t border-gray-100 flex flex-col gap-2">
+                ${notes.map(n => html`
+                    <p class="text-xs text-gray-500 flex items-start gap-2 leading-relaxed">
+                        <span aria-hidden="true">${n.emoji}</span>
+                        <span>${n.text}</span>
+                    </p>
+                `)}
+            </div>
         `;
     }
 

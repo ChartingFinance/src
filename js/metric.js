@@ -38,7 +38,6 @@ export const Metric = Object.freeze({
   RMD:                          'rmd',
   SOCIAL_SECURITY_TAX:          'socialSecurityTax',
   SOCIAL_SECURITY_INCOME:       'socialSecurityIncome',
-  PENSION_TAX:                  'pensionTax',
   PENSION_INCOME:               'pensionIncome',
   MEDICARE_TAX:                 'medicareTax',
   MORTGAGE_PAYMENT:             'mortgagePayment',
@@ -99,7 +98,6 @@ export const MetricLabel = Object.freeze({
   [Metric.RMD]:                         'Required Min. Distribution',
   [Metric.SOCIAL_SECURITY_TAX]:         'Social Security Tax',
   [Metric.SOCIAL_SECURITY_INCOME]:      'Social Security Income',
-  [Metric.PENSION_TAX]:                 'Pension Tax',
   [Metric.PENSION_INCOME]:              'Pension Income',
   [Metric.MEDICARE_TAX]:                'Medicare Tax',
   [Metric.MORTGAGE_PAYMENT]:            'Mortgage Payment',
@@ -166,7 +164,10 @@ export const MetricRollups = {
     [Metric.SOCIAL_SECURITY_TAX]:         [Metric.WITHHELD_FICA_TAX],
 
     // --- TAX ROLLUPS ---
-    [Metric.PENSION_TAX]:                 [Metric.PENSION_TAX],
+    // Retirement income (pension, Social Security) has no per-asset tax leaf:
+    // its liability is settled by the monthly/annual true-up against the funding
+    // account, which books ESTIMATED_INCOME_TAX there. Adding one means adding a
+    // writer too — see tax-engine.applyMonthlyTaxTrueUp.
     [Metric.WITHHELD_FICA_TAX]:           [Metric.INCOME_TAX],
     [Metric.WITHHELD_INCOME_TAX]:         [Metric.INCOME_TAX],
     [Metric.ESTIMATED_INCOME_TAX]:        [Metric.INCOME_TAX],
