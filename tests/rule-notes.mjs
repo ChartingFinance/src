@@ -262,6 +262,45 @@ check('SILENCE: an account with no RMD obligation says nothing about RMDs', () =
   assert.ok(!idsFor(retirement, 'Pension').includes('rmd-satisfied'));
 });
 
+// ══ Contribution caps ════════════════════════════════════════════════
+console.log('\n── Contribution limits ──\n');
+
+// 100% of a large salary aimed at a 401K — the annual limit must bite.
+const capped = await run([
+  { instrument: 'workingIncome', displayName: 'Salary',
+    startDateInt: { year: 2026, month: 1 }, finishDateInt: { year: 2027, month: 12 },
+    startCurrency: { amount: 20000 }, startBasisCurrency: { amount: 0 }, annualReturnRate: { rate: 0 },
+    fundTransfers: [{ toDisplayName: '401K', monthlyMoveValue: 60, closeMoveValue: 0 }] },
+  { instrument: '401K', displayName: '401K',
+    startDateInt: { year: 2026, month: 1 }, finishDateInt: { year: 2027, month: 12 },
+    startCurrency: { amount: 10000 }, startBasisCurrency: { amount: 0 }, annualReturnRate: { rate: 0 } },
+  bank('Savings', 20000, { year: 2027, month: 12 }),
+], { start: 45, retire: 65 });
+
+check('a 401K capped by the annual limit says so, with the shortfall', () => {
+  const notes = notesFor(capped, '401K');
+  const note = notes.find(n => n.id === 'contribution-capped');
+  assert.ok(note, `expected contribution-capped, got [${notes.map(n => n.id)}]`);
+  assert.match(note.text, /401\(k\) limit/, `should name the limit: "${note.text}"`);
+  assert.match(note.text, /\$[\d,]+/, `should quantify the shortfall: "${note.text}"`);
+});
+
+check('SILENCE: a contribution under the limit is not reported as capped', () => {
+  // 1% of the same salary stays far below the annual limit.
+  const ids = idsFor(employed, 'Savings');
+  assert.ok(!ids.includes('contribution-capped'), `got [${ids}]`);
+});
+
+check('the cap memo is info-kind, so it stays out of cash reconciliation', () => {
+  const k = capped.modelAssets.find(a => a.displayName === '401K');
+  const memos = k.creditMemos.filter(m => /^Contribution capped/.test(m.note));
+  assert.ok(memos.length > 0, 'no cap memos recorded');
+  for (const m of memos) {
+    assert.equal(m.kind, 'info', `cap memo must be info, got "${m.kind}"`);
+    assert.ok(m.amount.amount < 0, 'shortfall should be negative — money that did NOT arrive');
+  }
+});
+
 // ══ Windowing ════════════════════════════════════════════════════════
 console.log('\n── Windowing ──\n');
 

@@ -163,11 +163,21 @@ export const RULES = [
         evaluate(ctx) {
             const unfunded = ctx.memos().filter(m => /^Unfunded\b/.test(m.note ?? ''));
             if (unfunded.length === 0) return null;
+
             const shortfall = unfunded.reduce((s, m) => s + Math.abs(m.amount?.amount ?? 0), 0);
+            // reportUnfunded covers two different events and the wording has to
+            // follow: an obligation nothing could pay, and take-home pay with
+            // nowhere to be deposited. Quote the engine's own reason rather than
+            // asserting one story for both.
+            const reasons = [...new Set(
+                unfunded.map(m => m.note.split('—')[1]?.trim()).filter(Boolean)
+            )];
+            const why = reasons.length ? ` (${reasons.join('; ')})` : '';
+
             return {
                 emoji: '\u{26A0}\u{FE0F}',
                 tone: 'warn',
-                text: `${formatCurrency(shortfall)} of this obligation went unpaid — no eligible funding account had a positive balance. The plan books the cost but no cash covers it.`,
+                text: `${formatCurrency(shortfall)} could not be funded${why}. No eligible account — cash, savings, brokerage or bonds — held a positive balance, so the plan's books and its cash no longer agree.`,
             };
         },
     },
@@ -184,6 +194,29 @@ export const RULES = [
             return {
                 emoji: '\u{1F3E6}',
                 text: "This is the household's funding account: taxes, bills and mortgage payments draw from here automatically when no transfer covers them.",
+            };
+        },
+    },
+
+    {
+        // Why a contribution came in under what the transfer asked for.
+        // PayrollEngine.recordContributionCap writes the shortfall as an `info`
+        // memo at the clamp site — before that the reduction left no trace, and
+        // only "you reached the limit" was sayable, which cannot tell a cap
+        // apart from a deliberate election of exactly the limit.
+        id: 'contribution-capped',
+        evaluate(ctx) {
+            const capped = ctx.memos().filter(m => /^Contribution capped\b/.test(m.note ?? ''));
+            if (capped.length === 0) return null;
+
+            const shortfall = capped.reduce((s, m) => s + Math.abs(m.amount?.amount ?? 0), 0);
+            // Every memo carries its limit's name; if they all agree, use it.
+            const names = new Set(capped.map(m => m.note.split('—')[1]?.trim()).filter(Boolean));
+            const which = names.size === 1 ? [...names][0] : 'the annual contribution limits';
+
+            return {
+                emoji: '\u{1F4CA}',
+                text: `Contributions were capped by the ${which} — ${formatCurrency(shortfall)} of what your transfers asked for could not be contributed.`,
             };
         },
     },
