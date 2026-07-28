@@ -245,6 +245,86 @@ export function isTopLevelMetric(m) { return _macroSet.has(m); }
 const _realDollarSet = new Set([Metric.VALUE]);
 export function hasRealDollarLine(metricName) { return _realDollarSet.has(metricName); }
 
+// ── Metric kind: how a history aggregates over time ──────────────────
+//
+// Every metric history is one number per month, but they do not mean the same
+// thing month to month, and so they do not combine the same way.  Summing a
+// balance over twelve months produces a number roughly 12x too large; summing a
+// running total double-counts every month before the last.  Any view that
+// offers a window wider than a single month has to know which is which.
+//
+// The distinction is already implicit in monthlyChron() / KEEP_ON_SNAPSHOT in
+// model-asset.js.  This makes it explicit and shared, so the answer lives in
+// one place rather than being re-derived (or guessed) per view.
+
+export const MetricKind = Object.freeze({
+  /** A balance at a point in time.  Snapshot, never summed. */
+  LEVEL:   'level',
+  /** An amount that occurred during that month.  Sums across a window. */
+  FLOW:    'flow',
+  /** Already a running total since plan start.  Differenced, never summed. */
+  RUNNING: 'running',
+});
+
+/** VALUE is zeroed then refilled from finishCurrency each month — a balance. */
+const _levelMetrics = new Set([Metric.VALUE]);
+
+/**
+ * CASH_FLOW_ACCUMULATED is in KEEP_ON_SNAPSHOT and never zeroed, so each entry
+ * is the lifetime total to that month.
+ *
+ * PROPERTY_TAX is deliberately NOT here: it is also in KEEP_ON_SNAPSHOT, but
+ * the escrow run on day 15 (portfolio.js) zeroes it before the day-30 accrual,
+ * so each snapshot still holds a single month's tax.  It is a FLOW.
+ */
+const _runningMetrics = new Set([Metric.CASH_FLOW_ACCUMULATED]);
+
+/** How this metric's history combines over a multi-month window. */
+export function metricKind(metricName) {
+  if (_levelMetrics.has(metricName))   return MetricKind.LEVEL;
+  if (_runningMetrics.has(metricName)) return MetricKind.RUNNING;
+  return MetricKind.FLOW;
+}
+
+/**
+ * Combine a metric history over the inclusive month window [fromIndex, toIndex]
+ * according to its kind.  This is the one function a multi-month view needs:
+ * pass the window, get a number that means what the label says.
+ *
+ *   FLOW    → sum of the window          ("$42,000 of income in 2035")
+ *   LEVEL   → value at toIndex           ("$682,000 balance at Dec 2035")
+ *   RUNNING → accumulated during window  (h[to] - h[from-1]; life-to-date when
+ *                                         fromIndex is 0, since nothing precedes)
+ *
+ * Returns 0 for an empty history or a window that lies entirely outside it;
+ * a partially covered window is clamped rather than rejected, so a plan that
+ * starts or ends mid-year still reports its real months.
+ */
+export function aggregateMetric(history, metricName, fromIndex, toIndex) {
+  if (!history || history.length === 0) return 0;
+
+  const last = history.length - 1;
+  const to   = Math.min(toIndex, last);
+  const from = Math.max(fromIndex, 0);
+  if (to < 0 || from > last || from > to) return 0;
+
+  switch (metricKind(metricName)) {
+    case MetricKind.LEVEL:
+      return history[to] ?? 0;
+
+    case MetricKind.RUNNING: {
+      const before = from > 0 ? (history[from - 1] ?? 0) : 0;
+      return (history[to] ?? 0) - before;
+    }
+
+    default: {
+      let sum = 0;
+      for (let i = from; i <= to; i++) sum += history[i] ?? 0;
+      return sum;
+    }
+  }
+}
+
 /**
  * Parent metrics — metrics that have children rolling up to them in the DAG.
  * These must NEVER be written to directly; they are populated solely by

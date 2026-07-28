@@ -4,7 +4,7 @@
  * Lit component that renders a single financial asset card.
  * Three-row design: identity (emoji + name + value), sparkline, flow row.
  * Receives a `modelAsset` object and optional `readonly` flag.
- * Dispatches: 'edit-asset', 'remove-asset', 'show-transfers', 'select-asset'
+ * Dispatches: 'edit-asset', 'view-asset', 'remove-asset', 'show-transfers', 'select-asset'
  */
 
 import { LitElement, html, svg, nothing } from 'lit';
@@ -91,6 +91,7 @@ class AssetCard extends LitElement {
                 ${this.readonly ? '' : html`
                     <span class="asset-action-btn edit" title="Edit" @click=${this._onEdit}>&#x270E;</span>
                     <span class="asset-action-btn transfers" title="Transfers" @click=${this._onTransfers}>&#x21C4;</span>
+                    <span class="asset-action-btn view" title="View results" @click=${this._onView}>&#x1F453;</span>
                 `}
                 ${(this.closedEmoji || this.modelAsset.oneTimeEvents?.length) ? html`
                     <div class="asset-card-icon" style="display: flex; gap: 3px; justify-content: center; font-size: 12px;">
@@ -170,6 +171,14 @@ class AssetCard extends LitElement {
     _onEdit(ev) {
         ev.stopPropagation();
         this.dispatchEvent(new CustomEvent('edit-asset', {
+            bubbles: true, composed: true,
+            detail: { modelAsset: this.modelAsset },
+        }));
+    }
+
+    _onView(ev) {
+        ev.stopPropagation();
+        this.dispatchEvent(new CustomEvent('view-asset', {
             bubbles: true, composed: true,
             detail: { modelAsset: this.modelAsset },
         }));
