@@ -192,6 +192,39 @@ export class PayrollEngine {
 
     }
 
+    /**
+     * Record that an IRS annual limit reduced a contribution below what the
+     * user's transfer asked for.
+     *
+     * Without this the clamp leaves no trace at all: the books show a smaller
+     * contribution and nothing anywhere says why, so "my 15% election only put
+     * in $8,000" is unanswerable. The absence of money IS the event, so this is
+     * an `info` memo — no cash moved that otherwise would have, and it must stay
+     * out of reconciliation. Same shape and reasoning as
+     * FundTransfer.reportUnfunded.
+     *
+     * Lands on the DESTINATION account, where the contribution metrics live and
+     * where someone reading a too-small balance goes looking.
+     *
+     * @param {ModelAsset} toModel   destination account
+     * @param {Currency}   requested what the transfer computed before the clamp
+     * @param {Currency}   allowed   what the limit left room for (may be <= 0)
+     * @param {string}     limitName human-readable limit, e.g. 'annual 401(k) limit'
+     */
+    recordContributionCap(toModel, requested, allowed, limitName) {
+        if (!toModel || !requested) return;
+        // A negative `allowed` means the limit was already exhausted; nothing was
+        // granted, so the whole request is the shortfall.
+        const granted = Math.max(0, allowed?.amount ?? 0);
+        const shortfall = requested.amount - granted;
+        if (shortfall <= 0.01) return;
+
+        logger.log(LogCategory.SANITY,
+            `Contribution capped: ${toModel.displayName} requested ${requested.toString()}, ` +
+            `${limitName} allowed ${granted.toFixed(2)}`);
+        toModel.addCreditMemo(new Currency(-shortfall), `Contribution capped — ${limitName}`, 'info');
+    }
+
     calculatePreTaxContributions(modelAsset) {
 
         let total401KContribution = Currency.zero();
@@ -217,7 +250,9 @@ export class PayrollEngine {
 
                         let contributionLimit = activeTaxTable.four01KContributionLimit(this.activeUser);
                         if (this.yearly.four01KContribution.amount + this. monthly.four01KContribution.amount + total401KContribution.amount + contribution.amount > contributionLimit.amount) {
+                            const requested = contribution.copy();
                             contribution = new Currency(contributionLimit.amount - this.yearly.four01KContribution.amount - this.monthly.four01KContribution.amount - total401KContribution.amount);
+                            this.recordContributionCap(fundTransfer.toModel, requested, contribution, 'annual 401(k) limit');
                         }
 
                         total401KContribution.add(contribution);
@@ -228,7 +263,9 @@ export class PayrollEngine {
 
                         let contributionLimit = activeTaxTable.iraContributionLimit(this.activeUser);
                         if (this.yearly.tradIRAContribution.amount + this. monthly.tradIRAContribution.amount + totalIRAContribution.amount + contribution.amount > contributionLimit.amount) {
+                            const requested = contribution.copy();
                             contribution = new Currency(contributionLimit.amount - this.yearly.tradIRAContribution.amount - this.monthly.tradIRAContribution.amount - totalIRAContribution.amount);
+                            this.recordContributionCap(fundTransfer.toModel, requested, contribution, 'annual IRA limit');
                         }
 
                         totalIRAContribution.add(contribution);
@@ -285,7 +322,10 @@ export class PayrollEngine {
                        + totalContribution.amount;
             const remaining = Math.max(0, contributionLimit.amount - used);
             if (contribution.amount > remaining) {
+                const requested = contribution.copy();
                 contribution = new Currency(remaining);
+                this.recordContributionCap(fundTransfer.toModel, requested, contribution,
+                    'shared annual IRA limit');
             }
 
             // The clamp is only real if it survives to execution:
