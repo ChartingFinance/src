@@ -102,10 +102,11 @@ const WorkingIncomeBehavior = Object.freeze({
 
   computeCashFlow(asset) {
     const cf = asset.incomeCurrency.copy();
-    cf.add(asset.socialSecurityTaxCurrency);      // stored negative (after flipSigns)
-    cf.add(asset.medicareTaxCurrency);             // stored negative (after flipSigns)
-    cf.subtract(asset.withheldIncomeTaxCurrency);  // stored positive — subtract to reduce CF
-    cf.subtract(asset.estimatedIncomeTaxCurrency); // stored positive for self-employed
+    // All four are stored negative (money out), so cash flow just adds them.
+    cf.add(asset.socialSecurityTaxCurrency);
+    cf.add(asset.medicareTaxCurrency);
+    cf.add(asset.withheldIncomeTaxCurrency);
+    cf.add(asset.estimatedIncomeTaxCurrency);
     // Contributions are internal transfers (salary → 401K), not household cash flow
     return cf;
   },
