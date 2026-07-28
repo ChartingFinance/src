@@ -139,8 +139,9 @@ class AssetViewModal extends LitElement {
      *
      * Two shapes in the table need care: a metric may declare several parents
      * (it is a DAG, not a tree), so a row is nested under the first parent that
-     * is on screen and appears once; and PENSION_TAX lists itself as its own
-     * parent, so self-edges are skipped.
+     * is on screen and appears once. Self-edges and cycles are skipped — the
+     * table has none today, but a walk that trusts it would hang rather than
+     * misrender, so the guards stay.
      */
     _tree(rows) {
         const shown = new Map(rows.map(r => [r.name, r]));

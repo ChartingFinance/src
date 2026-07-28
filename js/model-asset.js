@@ -356,9 +356,6 @@ export class ModelAsset {
   get socialSecurityIncomeCurrency()   { return this.#metrics.get(Metric.SOCIAL_SECURITY_INCOME).current; }
   set socialSecurityIncomeCurrency(c)  { this.#metrics.get(Metric.SOCIAL_SECURITY_INCOME).current = c; }
 
-  get pensionTaxCurrency()   { return this.#metrics.get(Metric.PENSION_TAX).current; }
-  set pensionTaxCurrency(c)  { this.#metrics.get(Metric.PENSION_TAX).current = c; }
-
   get pensionIncomeCurrency()   { return this.#metrics.get(Metric.PENSION_INCOME).current; }
   set pensionIncomeCurrency(c)  { this.#metrics.get(Metric.PENSION_INCOME).current = c; }
 
