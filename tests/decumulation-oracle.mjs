@@ -30,11 +30,13 @@
  * would rot every January.
  *
  * Known open findings the bands still absorb (tighten when fixed):
- *   - Savings is overdrawn by a tax settlement and stranded (audit F4):
- *     oracle floors the bank at $0, engine ends ≈ −$6.0k.
  *   - longTermCapitalHoldingPercentage is unread (F5): oracle books 80/20
  *     LT/ST per config, engine books all gains long-term.
  *   - NIIT is not modeled (F8): asserted informationally, not banded.
+ *
+ * CLOSED: F4 (Savings overdrawn and stranded) — fixed 2026-07-28. Funding
+ * accounts floor at $0 and the shortfall re-sources through the backstop
+ * chain, so that band tightened from a $25,000 window to exact agreement.
  *
  * Usage:  node src/tests/decumulation-oracle.mjs                (assert)
  *         node src/tests/decumulation-oracle.mjs --print-actual (regen B)
@@ -370,24 +372,44 @@ const engine = {
 // Generated with --print-actual under the pinned 2026-07-15 clock.
 // Regenerate DELIBERATELY after intentional calculation changes and
 // review the diff line by line.
+//
+// Regenerated 2026-07-28 across the two-step overdraft fix. Both diffs were
+// predicted before applying and reviewed line by line.
+//
+// Step 1, earnings no longer accrue on a deficit:
+//   Savings         -6,048.12 -> -2,095.15   (+3,952.97)
+//   interestIncome  72,935.79 -> 76,888.75   (+3,952.96)
+// Matching to the cent — the whole Savings improvement IS the phantom negative
+// interest no longer subtracted from a below-zero balance.
+//
+// Step 2, funding accounts now floor at $0:
+//   Savings         -2,095.15 ->     0.00    (exactly as predicted here)
+//   Brokerage    8,893,804.28 -> 8,858,591.13  (-35,213.15)
+// Savings can no longer finance spending by going negative, so the shortfall
+// spills to the Brokerage and is actually PAID. That draw realizes gains,
+// which are taxed, which draws again — hence the movement being larger than
+// the 2,095 it replaces. qualifiedDividends (-3,568.12) follows the smaller
+// brokerage balance; longTermCapitalGains (+954.50) is the realized gain.
+// portfolioTotal drops 33,118.01: the household now settles a debt it used to
+// carry as a negative savings balance. Less flattering, more true.
 const EXPECTED_ENGINE = {
   "Social Security": 4021.09,
-  "Savings": -6048.12,
+  "Savings": 0.00,
   "IRA": 1825464.00,
   "Roth": 4028947.93,
-  "Brokerage": 8898144.04,
+  "Brokerage": 8858591.13,
   "CompanyStock": 0.00,
   "Treasuries": 116821.90,
   "Home": 2307042.36,
   "Mortgage": 0.00,
   "Living Expenses": -11682.19,
-  "portfolioTotal": 17170372.12,
+  "portfolioTotal": 17136867.32,
   "employedIncome": 0.00,
   "socialSecurityIncome": 950908.99,
   "tradIRADistribution": 2786481.44,
-  "qualifiedDividends": 981665.34,
-  "longTermCapitalGains": 1238273.67,
-  "interestIncome": 72935.79,
+  "qualifiedDividends": 977731.10,
+  "longTermCapitalGains": 1239790.41,
+  "interestIncome": 76888.75,
   "mortgageInterest": -247134.01,
 };
 
@@ -455,9 +477,12 @@ band('IRA balance', engine['IRA'], oracle.ira, 0, 0.02);
 // total by −4% and Brokerage by −11%; these still catch that class.
 band('Brokerage balance', engine['Brokerage'], oracle.brokerage, 0, 0.08);
 band('Portfolio total', engine.portfolioTotal, oracle.total, 0, 0.05);
-check('Savings within the open-F4 window (oracle floors at $0)', () => {
-  assert.ok(Math.abs(engine['Savings'] - oracle.savings) <= 25000,
-    `engine ${fmt(engine['Savings'])} vs oracle ${fmt(oracle.savings)} — tighten this band when audit finding F4 is fixed`);
+// F4 (stranded overdraft) FIXED 2026-07-28: funding accounts now floor at $0
+// and the shortfall re-sources through the backstop chain, so the engine and
+// the oracle agree exactly instead of needing a $25,000 window.
+check('Savings floors at $0, matching the oracle exactly', () => {
+  assert.ok(Math.abs(engine['Savings'] - oracle.savings) <= 0.01,
+    `engine ${fmt(engine['Savings'])} vs oracle ${fmt(oracle.savings)}`);
 });
 
 // Regression tripwires for the two fixed bugs, exact:
