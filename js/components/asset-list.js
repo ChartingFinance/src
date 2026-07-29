@@ -119,6 +119,7 @@ class AssetList extends LitElement {
         atDateInt: { type: Object },        // DateInt — classify active/closed at this date
         metricName: { type: String },       // Metric key — look up history value at historyIndex
         historyIndex: { type: Number },     // Month offset into history[] for metric display
+        alertAssets: { type: Object },      // Set<displayName> — assets with an ALERT issue
     };
 
     createRenderRoot() { return this; }
@@ -134,6 +135,7 @@ class AssetList extends LitElement {
         this.atDateInt = null;
         this.metricName = null;
         this.historyIndex = -1;
+        this.alertAssets = new Set();
         this._taxHighlightAssets = new Set(); // displayNames of assets to highlight
         this._taxHighlightGroups = new Set(); // group keys to highlight (when collapsed)
         this._expandedTaxNodes = new Set();   // tax tree node ids currently expanded
@@ -219,7 +221,8 @@ class AssetList extends LitElement {
                                     .outflow=${flows.outflow}
                                     ?ghost=${ma._isClosedAtDate}
                                     ?taxHighlight=${taxHl}
-                                    .closedEmoji=${ma._isClosedAtDate ? '⛔' : ma.isDepleted ? '⚠️' : ''}
+                                    .closedEmoji=${ma._isClosedAtDate ? '⛔'
+                                        : this.alertAssets?.has(ma.displayName) ? '⚠️' : ''}
                                     ?selected=${this.highlightName === ma.displayName}
                                 ></asset-card>
                             `;

@@ -79,6 +79,16 @@
         </div>
     </div>
 
+    <!-- ═══ Advanced ═══ -->
+    <div class="glass-card p-8 sm:p-12 mb-6">
+        <h2 class="text-2xl font-bold tracking-tight mb-2">Advanced</h2>
+        <p class="text-gray-600 leading-relaxed mb-6">Engine diagnostics add a technical section to &ldquo;What needs attention&rdquo; reporting where the simulation&rsquo;s own bookkeeping does not reconcile. These are notes about the engine, not about your finances &mdash; most people should leave this off.</p>
+        <label class="flex items-center gap-3 text-sm text-gray-700 cursor-pointer">
+            <input id="showEngineDiagnostics" type="checkbox" class="accent-[#993C1D] w-4 h-4" />
+            Show engine diagnostics
+        </label>
+    </div>
+
     <!-- ═══ Privacy ═══ -->
     <div class="glass-card p-8 sm:p-12 mb-6">
         <p class="font-bold text-gray-900 leading-relaxed">Charting Finance does not store any user data on its server! All user information is stored only on your computer in your web browser's Local Storage.</p>
@@ -110,6 +120,7 @@
             global_user_startAge, global_user_retirementAge, global_user_finishAge,
             global_setUserStartAge, global_setUserRetirementAge, global_setUserFinishAge,
             global_taxYear, global_setTaxYear,
+            global_showEngineDiagnostics, global_setShowEngineDiagnostics, global_getShowEngineDiagnostics,
         } from './js/globals.js';
 
         function valuesToElements() {
@@ -117,6 +128,9 @@
             document.getElementById('retirementAge').value = global_user_retirementAge;
             document.getElementById('finishAge').value = global_user_finishAge;
             document.getElementById('taxYear').value = global_taxYear;
+            // Read through the getter: the imported binding is only refreshed
+            // when the getter runs (see the paired-accessor pattern in globals.js).
+            document.getElementById('showEngineDiagnostics').checked = global_getShowEngineDiagnostics();
         }
 
         global_initialize();
@@ -133,6 +147,9 @@
         });
         document.getElementById('taxYear').addEventListener('change', (e) => {
             global_setTaxYear(parseInt(e.target.value));
+        });
+        document.getElementById('showEngineDiagnostics').addEventListener('change', (e) => {
+            global_setShowEngineDiagnostics(e.target.checked);
         });
         document.getElementById('resetBtn').addEventListener('click', () => {
             global_reset();

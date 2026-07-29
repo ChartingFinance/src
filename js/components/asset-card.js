@@ -95,7 +95,7 @@ class AssetCard extends LitElement {
                 `}
                 ${(this.closedEmoji || this.modelAsset.oneTimeEvents?.length) ? html`
                     <div class="asset-card-icon" style="display: flex; gap: 3px; justify-content: center; font-size: 12px;">
-                        ${this.closedEmoji ? html`<span title="${this.closedEmoji === '⚠️' ? 'Account depleted — balance clamped to $0' : 'Closed'}">${this.closedEmoji}</span>` : ''}
+                        ${this.closedEmoji ? html`<span title="${this.closedEmoji === '⚠️' ? 'Something on this asset could not be paid — open View for the details' : 'Closed'}">${this.closedEmoji}</span>` : ''}
                         ${this.modelAsset.oneTimeEvents?.length ? html`<span title="One-Time Events" style="cursor: pointer;" @click=${this._onOneTime}>&#x1F4B0;</span>` : ''}
                     </div>
                 ` : ''}

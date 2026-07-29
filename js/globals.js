@@ -305,6 +305,8 @@ export function global_reset() {
     global_setUserStartAge(global_user_startAge);
     global_setUserRetirementAge(global_user_retirementAge);
     global_setUserFinishAge(global_user_finishAge);
+
+    global_setShowEngineDiagnostics(global_default_showEngineDiagnostics);
 }
 
 // ── Worker settings snapshot ──────────────────────────────────
@@ -508,6 +510,26 @@ export function global_getSimDataMode() {
     global_simDataMode = v != null ? v : global_default_simDataMode;
 }
 
+// ── Engine diagnostics ────────────────────────────────────────
+// Off by default, and deliberately so. The reconciliation findings this
+// unlocks say "these numbers may not add up", which is an honest signal but
+// reads as self-doubt printed beside someone's retirement projection. It is a
+// firehose for getting into the weeds, not a default experience.
+
+export const global_default_showEngineDiagnostics = false;
+
+export let global_showEngineDiagnostics = global_default_showEngineDiagnostics;
+
+export function global_setShowEngineDiagnostics(value) {
+    localStorage.setItem('showEngineDiagnostics', value ? 'true' : 'false');
+    global_showEngineDiagnostics = !!value;
+}
+export function global_getShowEngineDiagnostics() {
+    const v = localStorage.getItem('showEngineDiagnostics');
+    global_showEngineDiagnostics = v != null ? v === 'true' : global_default_showEngineDiagnostics;
+    return global_showEngineDiagnostics;
+}
+
 // ── Guardrails ────────────────────────────────────────────────
 
 export const global_default_guardrail_withdrawalRate = 5;
@@ -567,6 +589,7 @@ export function global_initialize() {
     global_getUserFinishAge();
     global_getBacktestYear();
     global_getSimDataMode();
+    global_getShowEngineDiagnostics();
     global_getGuardrailWithdrawalRate();
     global_getGuardrailPreservation();
     global_getGuardrailProsperity();
