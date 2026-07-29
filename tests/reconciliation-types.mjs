@@ -47,7 +47,7 @@ function check(label, fn) {
 const BUCKETS = new Set([
   'fica', 'incomeTax', 'capitalGains', 'capitalGainsTax',
   'mortgageInterest', 'mortgagePrincipal', 'propertyTax',
-  'excluded', 'passThrough',
+  'excluded', 'paired', 'oneSided',
 ]);
 
 console.log('\n── Reconciliation keyed on event type ──\n');
@@ -85,17 +85,32 @@ check('an unmapped event type throws instead of being swallowed', () => {
     'an undeclared event type must stop the run, not join transferNet');
 });
 
-check('engine reports and recognition stay out of the transfer total', () => {
-  // passThrough participates only when cash moved, so which types are `info`
-  // decides what conservation sees. Lock the ones whose miscategorisation
-  // would silently break it: an UNFUNDED counted as cash would report money
-  // moving that never did.
+check('ONLY genuinely two-sided movement is expected to net to zero', () => {
+  // The load-bearing distinction. execute() books both legs, so TRANSFER must
+  // balance. Everything else is single-legged by design, and expecting it to
+  // balance is what made this check fail every month on any plan with an
+  // expense — 293 false findings across five healthy scenarios. Verified
+  // empirically before being encoded: a probe summed every cash event type
+  // over a full run and TRANSFER was the only one that came to zero.
+  assert.equal(EVENT_RECONCILIATION[EventType.TRANSFER], 'paired');
+
+  for (const t of [EventType.SETTLEMENT, EventType.SPILLOVER, EventType.GROSS_UP,
+                   EventType.ONE_TIME, EventType.TAX_TRUE_UP]) {
+    assert.equal(EVENT_RECONCILIATION[t], 'oneSided',
+      `${t} books one leg only — asserting it nets to zero produces false alarms`);
+  }
+});
+
+check('engine reports and recognition stay out of both movement totals', () => {
+  // Movement totals count cash only, so which types are `info` decides what
+  // conservation sees. An UNFUNDED counted as cash would report money moving
+  // that never did.
   for (const t of [EventType.UNFUNDED, EventType.CONTRIBUTION_CAPPED,
                    EventType.MAINTENANCE, EventType.INSURANCE,
                    EventType.PROPERTY_TAX_ESCROW]) {
-    assert.equal(EVENT_RECONCILIATION[t], 'passThrough', `${t} should be passThrough`);
+    assert.equal(EVENT_RECONCILIATION[t], 'oneSided', `${t} should be oneSided`);
     assert.equal(kindOf(t), EventKind.INFO,
-      `${t} must be info — passThrough counts cash events, and no money moved here`);
+      `${t} must be info — movement totals count cash, and no money moved here`);
   }
   // And the converse: real movement must NOT be info, or conservation would
   // stop seeing transfers at all.

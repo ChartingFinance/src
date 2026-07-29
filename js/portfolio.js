@@ -61,17 +61,32 @@ export const EVENT_RECONCILIATION = Object.freeze({
     [EventType.DIVIDEND]:                'excluded',
     [EventType.INTEREST_INCOME]:         'excluded',
 
-    [EventType.TRANSFER]:                'passThrough',
-    [EventType.SETTLEMENT]:              'passThrough',
-    [EventType.SPILLOVER]:               'passThrough',
-    [EventType.GROSS_UP]:                'passThrough',
-    [EventType.ONE_TIME]:                'passThrough',
-    [EventType.TAX_TRUE_UP]:             'passThrough',
-    [EventType.PROPERTY_TAX_ESCROW]:     'passThrough',
-    [EventType.MAINTENANCE]:             'passThrough',
-    [EventType.INSURANCE]:               'passThrough',
-    [EventType.UNFUNDED]:                'passThrough',
-    [EventType.CONTRIBUTION_CAPPED]:     'passThrough',
+    // Genuinely two-sided: execute() debits one account and credits another by
+    // the same amount, so these MUST net to zero and a residue is a real
+    // defect. Determined empirically (2026-07-29), not assumed — a probe summed
+    // every cash event type over a full run and TRANSFER was the only one that
+    // came to zero.
+    [EventType.TRANSFER]:                'paired',
+
+    // Single-legged BY DESIGN. settleOneSided debits the funding account and
+    // books nothing on the obligation it pays; a windfall credits one account
+    // with no counterparty; the annual true-up debits one account. Expecting
+    // these to net to zero is what made the transfer check fail every month on
+    // any plan with an expense — the deltas were exactly the monthly expense.
+    [EventType.SETTLEMENT]:              'oneSided',
+    [EventType.SPILLOVER]:               'oneSided',
+    [EventType.GROSS_UP]:                'oneSided',
+    [EventType.ONE_TIME]:                'oneSided',
+    [EventType.TAX_TRUE_UP]:             'oneSided',
+
+    // Info-kind: no money moved, so they reach neither total. Routed here
+    // rather than to `excluded` so the kind guard stays the thing that
+    // excludes them, and behaviour cannot drift if a kind ever changes.
+    [EventType.PROPERTY_TAX_ESCROW]:     'oneSided',
+    [EventType.MAINTENANCE]:             'oneSided',
+    [EventType.INSURANCE]:               'oneSided',
+    [EventType.UNFUNDED]:                'oneSided',
+    [EventType.CONTRIBUTION_CAPPED]:     'oneSided',
 });
 
 /**
@@ -275,7 +290,6 @@ export class Portfolio {
     monthlySanityCheck(currentDateInt) {
         const buckets = {};
         for (const b of Object.values(EVENT_RECONCILIATION)) buckets[b] = 0;
-        let transferNet = 0;
 
         for (const modelAsset of this.modelAssets) {
             const startIdx = modelAsset.eventsCheckedIndex || 0;
@@ -293,12 +307,14 @@ export class Portfolio {
                         `EVENT_RECONCILIATION — declare how it reconciles before emitting it`);
                 }
 
-                if (bucket === 'passThrough') {
-                    // Transfer conservation: only events that MOVED CASH
-                    // participate. Recognition, attribution and engine reports
-                    // moved no money and must not pollute the net.
-                    if (event.kind !== 'info') transferNet += event.amount.amount;
-                } else {
+                // The MOVEMENT totals take cash only — recognition and engine
+                // reports moved no money and would pollute conservation. The
+                // named tax/housing buckets take the event whatever its kind,
+                // because mortgage interest, property tax and capital-gain
+                // recognition are all info-kind and are precisely what those
+                // checks compare against the FinancialPackage.
+                const isMovement = bucket === 'paired' || bucket === 'oneSided';
+                if (!isMovement || event.kind !== 'info') {
                     buckets[bucket] += event.amount.amount;
                 }
             }
@@ -306,22 +322,40 @@ export class Portfolio {
         }
 
         const tolerance = 0.01;
-        const check = (label, memoTotal, packageTotal) => {
-            if (Math.abs(memoTotal - packageTotal) > tolerance) {
-                logger.log(LogCategory.SANITY, `${currentDateInt} ${label}: memos=${memoTotal.toFixed(2)}, package=${packageTotal.toFixed(2)}`);
+        const check = (label, eventTotal, packageTotal) => {
+            if (Math.abs(eventTotal - packageTotal) > tolerance) {
+                logger.log(LogCategory.SANITY, `${currentDateInt} ${label}: events=${eventTotal.toFixed(2)}, package=${packageTotal.toFixed(2)}`);
             }
         };
 
         check('FICA', buckets.fica, this.monthly.fica().amount);
         check('Income tax', buckets.incomeTax, this.monthly.incomeTax.amount);
         check('Mortgage interest', buckets.mortgageInterest, this.monthly.mortgageInterest.amount);
-        check('Mortgage principal', buckets.mortgagePrincipal, this.monthly.mortgagePrincipal.amount);
+        // NEGATED, deliberately. The event tracks the mortgage BALANCE moving
+        // toward zero — positive, because a mortgage is held as a negative
+        // balance — while FinancialPackage.mortgagePrincipal tracks household
+        // CASH GOING OUT, which is negative. Both are right about different
+        // things, and comparing them raw reported a false mismatch every month
+        // a mortgage was active (+271.20 against -271.20). Negating here fixes
+        // the comparison without changing either number.
+        check('Mortgage principal', buckets.mortgagePrincipal, -this.monthly.mortgagePrincipal.amount);
         check('Property taxes', buckets.propertyTax, this.monthly.propertyTaxes.amount);
         check('Capital gains', buckets.capitalGains, this.monthly.longTermCapitalGains.amount);
         check('Capital gains tax', buckets.capitalGainsTax, this.monthly.longTermCapitalGainsTax.amount);
 
-        if (Math.abs(transferNet) > tolerance) {
-            logger.log(LogCategory.SANITY, `${currentDateInt} Fund transfers do not net to zero: ${transferNet.toFixed(2)}`);
+        // Two-sided conservation. execute() debits one account and credits
+        // another by the same amount, so TRANSFER must net to zero; a residue
+        // means money appeared or vanished between two halves of one movement.
+        //
+        // One-sided events are NOT included and are not expected to balance:
+        // settleOneSided books the debit on the funding account and nothing on
+        // the obligation it pays. Summing them in here made this check fail
+        // every month on any plan with an expense, by exactly the expense
+        // amount — 293 findings across five healthy scenarios, all of them
+        // false. There is no second leg to balance against, so the honest
+        // report is the total, not a zero assertion.
+        if (Math.abs(buckets.paired) > tolerance) {
+            logger.log(LogCategory.SANITY, `${currentDateInt} Two-sided transfers do not net to zero: ${buckets.paired.toFixed(2)}`);
         }
     }
 

@@ -804,7 +804,15 @@ export class ModelAsset {
     }
 
     if (event) {
-      this.recordEvent(event.type, amount.copy(), { data: event.data });
+      // Record what MOVED, not what was asked for. When a withdrawal clamps at
+      // the $0 floor the account supplies less than requested, and the caller
+      // re-sources the shortfall from somewhere else — which records its own
+      // event there. Booking the full request here would count the spillover
+      // twice and claim more money left this account than it ever held:
+      // probed 2026-07-29, a $5,000 Checking account whose ledger said $8,010
+      // had gone out. `amount` is negative on a withdrawal and `spillover` a
+      // positive magnitude, so adding them yields what actually left.
+      this.recordEvent(event.type, amount.plus(spillover), { data: event.data });
     }
 
     return { assetChange: amount.copy(), realizedGain, spillover };
