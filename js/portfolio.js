@@ -14,6 +14,44 @@ import { RebalanceEngine } from './engines/rebalance-engine.js';
 
 export { FinancialPackage, FINANCIAL_FIELDS } from './financial-package.js';
 
+/**
+ * How each credit-memo note participates in monthly reconciliation.
+ *
+ * This used to be a `switch (memo.note)` inline in monthlySanityCheck, which
+ * meant the engine decided whether its own books balanced by matching English
+ * prose — and the switch's `default:` swallowed anything it did not recognise
+ * instead of rejecting it. Renaming 'Asset growth' to 'Asset Growth' silently
+ * emptied the growth bucket, corrupted the transfer-conservation total, and
+ * passed every test in the suite (verified 2026-07-29).
+ *
+ * Exporting the map does not fix the underlying design — notes are still
+ * prose, and `tests/memo-vocabulary.mjs` is the guard that makes a rename
+ * loud. The real fix is a typed event stream; see the CreditMemo → SimEvent
+ * study before extending this.
+ *
+ * `excluded` means: kept out of transferNet, but not currently checked against
+ * anything. Those four buckets were separate accumulators that nothing ever
+ * read — an exclusion list wearing the costume of an accumulator. Naming them
+ * honestly is behaviour-preserving.
+ */
+export const MEMO_RECONCILIATION = Object.freeze({
+    'FICA withholding':              'fica',
+    'Income tax withholding':        'incomeTax',
+    'Capital gains':                 'capitalGains',
+    'Capital gains (spillover)':     'capitalGains',
+    'Capital gains tax withholding': 'capitalGainsTax',
+    'Mortgage Interest':             'mortgageInterest',
+    'Mortgage Principal':            'mortgagePrincipal',
+    'Property tax':                  'propertyTax',
+
+    'Qualified dividend':            'excluded',
+    'Non-qualified dividend':        'excluded',
+    'Interest income':               'excluded',
+    'Asset growth':                  'excluded',
+    'Expense inflation':             'excluded',
+    'Annual income growth':          'excluded',
+});
+
 export class Portfolio {
     constructor(modelAssets, reports) {
         this.modelAssets = this.sortModelAssets(modelAssets);
@@ -189,44 +227,23 @@ export class Portfolio {
     }
 
     monthlySanityCheck(currentDateInt) {
-        let ficaMemos = 0;
-        let incomeTaxMemos = 0;
+        const buckets = {};
+        for (const b of Object.values(MEMO_RECONCILIATION)) buckets[b] = 0;
         let transferNet = 0;
-        let capitalGainsMemos = 0;
-        let capitalGainsTaxMemos = 0;
-        let mortgageInterestMemos = 0;
-        let mortgagePrincipalMemos = 0;
-        let propertyTaxMemos = 0;
-        let qualifiedDividendMemos = 0;
-        let nonQualifiedDividendMemos = 0;
-        let interestIncomeMemos = 0;
-        let assetGrowthMemos = 0;
 
         for (const modelAsset of this.modelAssets) {
             const startIdx = modelAsset.creditMemosCheckedIndex || 0;
             for (let i = startIdx; i < modelAsset.creditMemos.length; i++) {
                 const memo = modelAsset.creditMemos[i];
-                switch (memo.note) {
-                    case 'FICA withholding':       ficaMemos += memo.amount.amount; break;
-                    case 'Income tax withholding': incomeTaxMemos += memo.amount.amount; break;
-                    case 'Capital gains':
-                    case 'Capital gains (spillover)': capitalGainsMemos += memo.amount.amount; break;
-                    case 'Mortgage Interest':      mortgageInterestMemos += memo.amount.amount; break;
-                    case 'Mortgage Principal':     mortgagePrincipalMemos += memo.amount.amount; break;
-                    case 'Property tax':           propertyTaxMemos += memo.amount.amount; break;
-                    case 'Qualified dividend':     qualifiedDividendMemos += memo.amount.amount; break;
-                    case 'Non-qualified dividend': nonQualifiedDividendMemos += memo.amount.amount; break;
-                    case 'Interest income':        interestIncomeMemos += memo.amount.amount; break;
-                    case 'Asset growth':
-                    case 'Expense inflation':
-                    case 'Annual income growth':   assetGrowthMemos += memo.amount.amount; break;
-                    case 'Capital gains tax withholding': capitalGainsTaxMemos += memo.amount.amount; break;
-                    default:
-                        // Transfer conservation: only CASH memos participate.
-                        // Info memos (recognition, attribution, escrow accrual)
-                        // moved no money and must not pollute the net.
-                        if (memo.kind !== 'info') transferNet += memo.amount.amount;
-                        break;
+                const bucket = MEMO_RECONCILIATION[memo.note];
+                if (bucket) {
+                    buckets[bucket] += memo.amount.amount;
+                } else {
+                    // Everything else is a transfer, a one-time event or an
+                    // engine report. Transfer conservation: only CASH memos
+                    // participate — info memos (recognition, attribution,
+                    // escrow accrual) moved no money and must not pollute it.
+                    if (memo.kind !== 'info') transferNet += memo.amount.amount;
                 }
             }
             modelAsset.creditMemosCheckedIndex = modelAsset.creditMemos.length;
@@ -239,13 +256,13 @@ export class Portfolio {
             }
         };
 
-        check('FICA', ficaMemos, this.monthly.fica().amount);
-        check('Income tax', incomeTaxMemos, this.monthly.incomeTax.amount);
-        check('Mortgage interest', mortgageInterestMemos, this.monthly.mortgageInterest.amount);
-        check('Mortgage principal', mortgagePrincipalMemos, this.monthly.mortgagePrincipal.amount);
-        check('Property taxes', propertyTaxMemos, this.monthly.propertyTaxes.amount);
-        check('Capital gains', capitalGainsMemos, this.monthly.longTermCapitalGains.amount);
-        check('Capital gains tax', capitalGainsTaxMemos, this.monthly.longTermCapitalGainsTax.amount);
+        check('FICA', buckets.fica, this.monthly.fica().amount);
+        check('Income tax', buckets.incomeTax, this.monthly.incomeTax.amount);
+        check('Mortgage interest', buckets.mortgageInterest, this.monthly.mortgageInterest.amount);
+        check('Mortgage principal', buckets.mortgagePrincipal, this.monthly.mortgagePrincipal.amount);
+        check('Property taxes', buckets.propertyTax, this.monthly.propertyTaxes.amount);
+        check('Capital gains', buckets.capitalGains, this.monthly.longTermCapitalGains.amount);
+        check('Capital gains tax', buckets.capitalGainsTax, this.monthly.longTermCapitalGainsTax.amount);
 
         if (Math.abs(transferNet) > tolerance) {
             logger.log(LogCategory.SANITY, `${currentDateInt} Fund transfers do not net to zero: ${transferNet.toFixed(2)}`);
