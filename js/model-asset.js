@@ -505,7 +505,7 @@ export class ModelAsset {
     this.closedValue = null;
     this.closedBasisValue = null;
     this.creditMemos = [];
-    this.creditMemosCheckedIndex = 0;
+    this.eventsCheckedIndex = 0;
     // Structured mirror of creditMemos — same order, same length, one for one.
     // Run state: rebuilt every chronometer_run, never serialized.
     this.events = [];
@@ -690,7 +690,7 @@ export class ModelAsset {
    * Appends a structured SimEvent and, from it, the rendered CreditMemo — in
    * that order, one for one. The pairing is an invariant
    * (`tests/sim-event-invariant.mjs`): monthlySanityCheck scans memos
-   * incrementally from creditMemosCheckedIndex, so anything that let the two
+   * incrementally from eventsCheckedIndex, so anything that let the two
    * arrays drift apart could double-count or skip a month's reconciliation.
    *
    * `traceId` is read from ambient run context rather than passed by callers.
@@ -994,7 +994,7 @@ export class ModelAsset {
     // events/creditMemos are run state — rebuilt by every chronometer_run.
     // Serializing them would bloat share links and worker payloads with data
     // the receiving side throws away and regenerates.
-    const { creditMemos, creditMemosCheckedIndex, events, fundTransfers, ...rest } = this;
+    const { creditMemos, eventsCheckedIndex, events, fundTransfers, ...rest } = this;
     return rest;
   }
 

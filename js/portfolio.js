@@ -16,24 +16,69 @@ import { RebalanceEngine } from './engines/rebalance-engine.js';
 export { FinancialPackage, FINANCIAL_FIELDS } from './financial-package.js';
 
 /**
- * How each credit-memo note participates in monthly reconciliation.
+ * How each kind of engine event participates in monthly reconciliation.
  *
- * This used to be a `switch (memo.note)` inline in monthlySanityCheck, which
- * meant the engine decided whether its own books balanced by matching English
- * prose — and the switch's `default:` swallowed anything it did not recognise
- * instead of rejecting it. Renaming 'Asset growth' to 'Asset Growth' silently
- * emptied the growth bucket, corrupted the transfer-conservation total, and
- * passed every test in the suite (verified 2026-07-29).
+ * This was a `switch (memo.note)` over English prose, which meant the engine
+ * decided whether its own books balanced by string-matching — and the switch's
+ * `default:` swallowed anything unrecognised instead of rejecting it. Renaming
+ * 'Asset growth' to 'Asset Growth' silently emptied the growth bucket,
+ * corrupted the transfer total, and passed all 162 assertions (2026-07-29).
  *
- * Exporting the map does not fix the underlying design — notes are still
- * prose, and `tests/memo-vocabulary.mjs` is the guard that makes a rename
- * loud. The real fix is a typed event stream; see the CreditMemo → SimEvent
- * study before extending this.
+ * Keying on EventType removes the failure mode rather than guarding it: the
+ * types are enum constants, so a rename is a reference error at load time
+ * instead of a wrong number at runtime.
  *
- * `excluded` means: kept out of transferNet, but not currently checked against
- * anything. Those four buckets were separate accumulators that nothing ever
- * read — an exclusion list wearing the costume of an accumulator. Naming them
- * honestly is behaviour-preserving.
+ * Two buckets are not accumulators:
+ *
+ *   `excluded`     — CASH events that must stay out of the transfer total.
+ *                    Growth and dividends move a balance without being a
+ *                    transfer. These were four separate accumulators that
+ *                    nothing ever read: an exclusion list wearing the costume
+ *                    of an accumulator.
+ *
+ *   `passThrough`  — transfers, settlements and engine reports, which count
+ *                    toward the transfer total ONLY when they moved cash. The
+ *                    `kind` check is deliberately kept rather than hardcoding
+ *                    which of these are info, so the behaviour cannot drift if
+ *                    an event's kind ever changes.
+ *
+ * MEMO_RECONCILIATION (the old note→bucket map) is retained below purely so
+ * `tests/memo-vocabulary.mjs` can keep asserting that the rendered vocabulary
+ * has not drifted. Nothing in the engine reads it.
+ */
+export const EVENT_RECONCILIATION = Object.freeze({
+    [EventType.FICA_WITHHOLDING]:        'fica',
+    [EventType.INCOME_TAX_WITHHOLDING]:  'incomeTax',
+    [EventType.CAPITAL_GAIN_RECOGNIZED]: 'capitalGains',
+    [EventType.CAPITAL_GAINS_TAX]:       'capitalGainsTax',
+    [EventType.MORTGAGE_INTEREST]:       'mortgageInterest',
+    [EventType.MORTGAGE_PRINCIPAL]:      'mortgagePrincipal',
+    [EventType.PROPERTY_TAX]:            'propertyTax',
+
+    [EventType.ASSET_GROWTH]:            'excluded',
+    [EventType.EXPENSE_INFLATION]:       'excluded',
+    [EventType.INCOME_GROWTH]:           'excluded',
+    [EventType.DIVIDEND]:                'excluded',
+    [EventType.INTEREST_INCOME]:         'excluded',
+
+    [EventType.TRANSFER]:                'passThrough',
+    [EventType.SETTLEMENT]:              'passThrough',
+    [EventType.SPILLOVER]:               'passThrough',
+    [EventType.GROSS_UP]:                'passThrough',
+    [EventType.ONE_TIME]:                'passThrough',
+    [EventType.TAX_TRUE_UP]:             'passThrough',
+    [EventType.PROPERTY_TAX_ESCROW]:     'passThrough',
+    [EventType.MAINTENANCE]:             'passThrough',
+    [EventType.INSURANCE]:               'passThrough',
+    [EventType.UNFUNDED]:                'passThrough',
+    [EventType.CONTRIBUTION_CAPPED]:     'passThrough',
+});
+
+/**
+ * Legacy note→bucket map. NOT read by the engine any more — kept only so
+ * tests/memo-vocabulary.mjs can go on locking the rendered vocabulary against
+ * drift while notes are still matched by portfolio-issues and rule-notes.
+ * Delete this when those consumers move to event types.
  */
 export const MEMO_RECONCILIATION = Object.freeze({
     'FICA withholding':              'fica',
@@ -229,25 +274,35 @@ export class Portfolio {
 
     monthlySanityCheck(currentDateInt) {
         const buckets = {};
-        for (const b of Object.values(MEMO_RECONCILIATION)) buckets[b] = 0;
+        for (const b of Object.values(EVENT_RECONCILIATION)) buckets[b] = 0;
         let transferNet = 0;
 
         for (const modelAsset of this.modelAssets) {
-            const startIdx = modelAsset.creditMemosCheckedIndex || 0;
-            for (let i = startIdx; i < modelAsset.creditMemos.length; i++) {
-                const memo = modelAsset.creditMemos[i];
-                const bucket = MEMO_RECONCILIATION[memo.note];
-                if (bucket) {
-                    buckets[bucket] += memo.amount.amount;
+            const startIdx = modelAsset.eventsCheckedIndex || 0;
+            for (let i = startIdx; i < modelAsset.events.length; i++) {
+                const event = modelAsset.events[i];
+                const bucket = EVENT_RECONCILIATION[event.type];
+
+                // An unmapped type is a programming error — someone added an
+                // event and did not say how it reconciles. The old default:
+                // branch swallowed exactly this case into transferNet, which
+                // is how a rename corrupted the books in silence.
+                if (!bucket) {
+                    throw new Error(
+                        `monthlySanityCheck: event type "${event.type}" has no entry in ` +
+                        `EVENT_RECONCILIATION — declare how it reconciles before emitting it`);
+                }
+
+                if (bucket === 'passThrough') {
+                    // Transfer conservation: only events that MOVED CASH
+                    // participate. Recognition, attribution and engine reports
+                    // moved no money and must not pollute the net.
+                    if (event.kind !== 'info') transferNet += event.amount.amount;
                 } else {
-                    // Everything else is a transfer, a one-time event or an
-                    // engine report. Transfer conservation: only CASH memos
-                    // participate — info memos (recognition, attribution,
-                    // escrow accrual) moved no money and must not pollute it.
-                    if (memo.kind !== 'info') transferNet += memo.amount.amount;
+                    buckets[bucket] += event.amount.amount;
                 }
             }
-            modelAsset.creditMemosCheckedIndex = modelAsset.creditMemos.length;
+            modelAsset.eventsCheckedIndex = modelAsset.events.length;
         }
 
         const tolerance = 0.01;
