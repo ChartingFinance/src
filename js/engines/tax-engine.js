@@ -123,7 +123,13 @@ export class TaxEngine {
     // ── On Close: Capital Gains Tax ───────────────────────────────────
 
     applyCapitalGainsTax(modelAsset) {
-        if (InstrumentType.isTaxFree(modelAsset.instrument)) return;
+        // A Roth owes no tax on close — but distribution RECORDING used to ride
+        // on this early return, so closing one booked nothing at all while the
+        // same account's monthly draws booked normally. Book first, then leave.
+        if (InstrumentType.isTaxFree(modelAsset.instrument)) {
+            this.applyTaxFreeCloseDistribution(modelAsset);
+            return;
+        }
 
         // Closing a traditional IRA/401K is a FULL DISTRIBUTION: the entire
         // balance is ordinary income — inside the deferred wrapper there is
@@ -187,6 +193,40 @@ export class TaxEngine {
         // Neutralize basis so subsequent close transfers don't re-trigger
         // realized gains — capital gains have already been taxed above.
         modelAsset.finishBasisCurrency = modelAsset.finishCurrency.copy();
+    }
+
+    // ── On Close: Tax-Free Full Distribution ──────────────────────────
+
+    /**
+     * Closing a Roth is a full distribution like closing any other retirement
+     * account — it simply isn't taxable. It still has to be BOOKED: the cash
+     * leaves via the close fund transfers either way, and if nothing records it
+     * the account's own ledger shows a balance vanishing with no distribution
+     * and no income, while the household's totalIncome() silently drops the
+     * same amount.
+     *
+     * The asymmetry this removes was visible inside a single account: a Roth
+     * that drew $91,459 monthly and closed with $208,541 booked only the first
+     * — the monthly path records distributions (expense-engine, settleOneSided)
+     * and the close path did not.
+     *
+     * Recording only. No tax arises, and none is deducted from the balance:
+     * taxFreeDistribution is not part of ordinaryIncome() or
+     * irsTaxableGrossIncome(), so taxable income cannot move.
+     */
+    applyTaxFreeCloseDistribution(modelAsset) {
+
+        const distribution = modelAsset.finishCurrency.copy();
+        if (distribution.amount <= 0) return;
+
+        // Household books (routes tax-free sources to rothIRADistribution)…
+        this.monthly.recordTransfer(modelAsset.instrument, distribution, Currency.zero());
+        // …and the asset's own ledger, which recordDistribution routes by
+        // instrument. Both halves are required — see its docstring.
+        modelAsset.recordDistribution(distribution);
+
+        logger.log(LogCategory.TAX, 'applyTaxFreeCloseDistribution: ' + modelAsset.displayName
+            + ' distributed ' + distribution.toString() + ' tax-free');
     }
 
     // ── On Close: Tax-Deferred Full Distribution ──────────────────────
