@@ -16,6 +16,7 @@ import { FundTransferOneSided, FundTransfer } from '../fund-transfer.js';
 import { MonthsSpan } from '../utils/months-span.js';
 import { activeTaxTable } from '../globals.js';
 import { logger, LogCategory } from '../utils/logger.js';
+import { EventType } from '../sim-event.js';
 
 export class TaxEngine {
 
@@ -35,7 +36,7 @@ export class TaxEngine {
         modelAsset.addToMetric(Metric.SOCIAL_SECURITY_TAX, withholding.socialSecurityTax);
         this.monthly.addWithholdingResult(withholding);
 
-        modelAsset.addCreditMemo(withholding.fica(), 'FICA withholding');
+        modelAsset.recordEvent(EventType.FICA_WITHHOLDING, withholding.fica(), { metric: Metric.SOCIAL_SECURITY_TAX });
 
     }
 
@@ -45,7 +46,7 @@ export class TaxEngine {
 
         const withheldTax = assetTax.copy().flipSign();
         this.monthly.incomeTax.add(withheldTax);
-        modelAsset.addCreditMemo(withheldTax.copy(), 'Income tax withholding');
+        modelAsset.recordEvent(EventType.INCOME_TAX_WITHHOLDING, withheldTax.copy(), { metric: Metric.WITHHELD_INCOME_TAX });
 
         logger.log(LogCategory.TRANSFER, `recordIncomeTaxWithholding: ${modelAsset.displayName} tax=${assetTax.toString()}`);
 
@@ -61,7 +62,7 @@ export class TaxEngine {
 
             const escrow = modelAsset.applyMonthlyTaxEscrow();
             //this.monthly.propertyTaxes.subtract(escrow);
-            modelAsset.addCreditMemo(escrow, 'Property tax escrow', 'info');
+            modelAsset.recordEvent(EventType.PROPERTY_TAX_ESCROW, escrow);
 
             if (modelAsset.monthlyTaxEscrow.amount) {
 
@@ -105,8 +106,9 @@ export class TaxEngine {
                 // One-sided withdrawal: escrow already adjusted the home's balance.
                 // Only debit the funding source (toModel).
                 for (const oneSided of preFlights) {
-                    const memo = `${modelAsset.displayName} property tax`;
-                    const settled = FundTransfer.settleOneSided(oneSided, memo, this.modelAssets);
+                    const event = { type: EventType.SETTLEMENT, data: {
+                        from: modelAsset.displayName, to: oneSided.toModel.displayName, label: 'property tax' } };
+                    const settled = FundTransfer.settleOneSided(oneSided, event, this.modelAssets);
                     this.monthly.recordTransfer(oneSided.toModel.instrument, settled.supplied, settled.realizedGain);
                     if (settled.spillover.amount > 0 && settled.spilloverInstrument) {
                         this.monthly.recordTransfer(settled.spilloverInstrument, settled.spillover, settled.spilloverGain);
@@ -160,13 +162,13 @@ export class TaxEngine {
             this.monthly.longTermCapitalGains.add(capitalGains);
             modelAsset.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, capitalGains);
 
-            modelAsset.addCreditMemo(capitalGains.copy(), 'Capital gains', 'info');
+            modelAsset.recordEvent(EventType.CAPITAL_GAIN_RECOGNIZED, capitalGains.copy(), { metric: Metric.LONG_TERM_CAPITAL_GAIN, data: { spillover: false } });
 
             this.monthly.longTermCapitalGainsTax.add(amountToTax.flipSign());
             modelAsset.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN_TAX, amountToTax);
 
             if (amountToTax.amount !== 0) {
-                modelAsset.addCreditMemo(amountToTax.copy(), 'Capital gains tax withholding');
+                modelAsset.recordEvent(EventType.CAPITAL_GAINS_TAX, amountToTax.copy(), { metric: Metric.LONG_TERM_CAPITAL_GAIN_TAX });
             }
         } else {
             this.monthly.shortTermCapitalGains.add(capitalGains);
@@ -182,7 +184,7 @@ export class TaxEngine {
             modelAsset.addToMetric(Metric.SHORT_TERM_CAPITAL_GAIN_TAX, amountToTax);
 
             if (amountToTax.amount !== 0) {
-                modelAsset.addCreditMemo(amountToTax.copy(), 'Income tax withholding');
+                modelAsset.recordEvent(EventType.INCOME_TAX_WITHHOLDING, amountToTax.copy(), { metric: Metric.SHORT_TERM_CAPITAL_GAIN_TAX });
             }
         }
 
@@ -265,7 +267,7 @@ export class TaxEngine {
         if (amountToTax.amount !== 0) {
             this.monthly.incomeTax.add(amountToTax);
             modelAsset.addToMetric(Metric.ESTIMATED_INCOME_TAX, amountToTax);
-            modelAsset.addCreditMemo(amountToTax.copy(), 'Income tax withholding');
+            modelAsset.recordEvent(EventType.INCOME_TAX_WITHHOLDING, amountToTax.copy(), { metric: Metric.ESTIMATED_INCOME_TAX });
         }
 
         logger.log(LogCategory.TAX, 'applyDeferredCloseDistribution: ' + modelAsset.displayName
@@ -330,7 +332,7 @@ export class TaxEngine {
         // reportUnfunded falls back to naming the account that could not pay.
         const oneSided = new FundTransferOneSided(null, payment);
         oneSided.toModel = liquidAsset;
-        const settled = FundTransfer.settleOneSided(oneSided, 'Income tax withholding', this.modelAssets);
+        const settled = FundTransfer.settleOneSided(oneSided, { type: EventType.INCOME_TAX_WITHHOLDING }, this.modelAssets);
 
         this.monthly.recordTransfer(liquidAsset.instrument, settled.supplied, settled.realizedGain);
         if (settled.spillover.amount > 0 && settled.spilloverInstrument) {
@@ -382,13 +384,13 @@ export class TaxEngine {
             // Underpaid — debit the shortfall (April tax bill)
             const taxBill = new Currency(taxDifference);
             logger.log(LogCategory.TAX, `Annual True-Up: Underpaid by $${taxDifference.toFixed(0)}. Debiting ${liquidAsset.displayName}.`);
-            liquidAsset.debit(taxBill, 'Annual tax true-up (underpayment)');
+            liquidAsset.debit(taxBill, { type: EventType.TAX_TRUE_UP, data: { direction: 'underpayment' } });
             liquidAsset.addToMetric(Metric.ESTIMATED_INCOME_TAX, taxBill.copy().flipSign());
         } else {
             // Overpaid — credit the refund
             const taxRefund = new Currency(Math.abs(taxDifference));
             logger.log(LogCategory.TAX, `Annual True-Up: Overpaid by $${Math.abs(taxDifference).toFixed(0)}. Refunding to ${liquidAsset.displayName}.`);
-            liquidAsset.credit(taxRefund, 'Annual tax true-up (refund)');
+            liquidAsset.credit(taxRefund, { type: EventType.TAX_TRUE_UP, data: { direction: 'refund' } });
             liquidAsset.addToMetric(Metric.ESTIMATED_INCOME_TAX, taxRefund);
         }
 

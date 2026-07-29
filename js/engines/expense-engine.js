@@ -15,6 +15,7 @@ import { Metric } from '../metric.js';
 import { FundTransferOneSided, FundTransfer } from '../fund-transfer.js';
 import { activeTaxTable } from '../globals.js';
 import { logger, LogCategory } from '../utils/logger.js';
+import { EventType } from '../sim-event.js';
 
 export class ExpenseEngine {
 
@@ -81,7 +82,7 @@ export class ExpenseEngine {
                     const grossWithdrawal = this.calculateGrossWithdrawal(netShortfall, targetAsset);
                     const settled = this.settleFromBackstop(
                         modelAsset, targetAsset, grossWithdrawal,
-                        `Grossed-up expense overflow for ${modelAsset.displayName}`);
+                        { type: EventType.GROSS_UP, data: { forAsset: modelAsset.displayName, overflow: true } });
 
                     if (settled.realizedGain && settled.realizedGain.amount > 0) {
                         // Isolate tax liability to prevent the death-spiral loop
@@ -106,7 +107,7 @@ export class ExpenseEngine {
                 const grossWithdrawal = this.calculateGrossWithdrawal(netShortfall, targetAsset);
                 const settled = this.settleFromBackstop(
                     modelAsset, targetAsset, grossWithdrawal,
-                    `Grossed-up expense debit for ${modelAsset.displayName}`);
+                    { type: EventType.GROSS_UP, data: { forAsset: modelAsset.displayName, overflow: false } });
 
                 if (settled.realizedGain && settled.realizedGain.amount > 0) {
                     // Isolate tax liability to prevent the death-spiral loop
@@ -169,8 +170,9 @@ export class ExpenseEngine {
         // One-sided withdrawal: MortgageBehavior already reduced the mortgage
         // balance (principal) and recorded interest. Only debit the funding source.
         for (const oneSided of preFlights) {
-            const memo = `${modelAsset.displayName} → ${oneSided.toModel.displayName} (monthly)`;
-            const settled = FundTransfer.settleOneSided(oneSided, memo, this.modelAssets);
+            const event = { type: EventType.SETTLEMENT, data: {
+                from: modelAsset.displayName, to: oneSided.toModel.displayName, label: 'monthly' } };
+            const settled = FundTransfer.settleOneSided(oneSided, event, this.modelAssets);
             this.monthly.recordTransfer(oneSided.toModel.instrument, settled.supplied, settled.realizedGain);
             if (settled.spillover.amount > 0 && settled.spilloverInstrument) {
                 this.monthly.recordTransfer(settled.spilloverInstrument, settled.spillover, settled.spilloverGain);
@@ -223,8 +225,9 @@ export class ExpenseEngine {
         }
 
         for (const oneSided of preFlights) {
-            const memo = `${modelAsset.displayName} → ${oneSided.toModel.displayName} (${label})`;
-            const settled = FundTransfer.settleOneSided(oneSided, memo, this.modelAssets);
+            const event = { type: EventType.SETTLEMENT, data: {
+                from: modelAsset.displayName, to: oneSided.toModel.displayName, label } };
+            const settled = FundTransfer.settleOneSided(oneSided, event, this.modelAssets);
             this.monthly.recordTransfer(oneSided.toModel.instrument, settled.supplied, settled.realizedGain);
             if (settled.spillover.amount > 0 && settled.spilloverInstrument) {
                 this.monthly.recordTransfer(settled.spilloverInstrument, settled.spillover, settled.spilloverGain);
@@ -337,12 +340,12 @@ export class ExpenseEngine {
      * @param {ModelAsset} owingAsset  the expense/obligation this pays for
      * @param {ModelAsset} fundingAsset the account being drawn
      */
-    settleFromBackstop(owingAsset, fundingAsset, amount, memo) {
+    settleFromBackstop(owingAsset, fundingAsset, amount, event) {
         const oneSided = new FundTransferOneSided(null, amount);
         oneSided.fromModel = owingAsset;
         oneSided.toModel = fundingAsset;
 
-        const settled = FundTransfer.settleOneSided(oneSided, memo, this.modelAssets);
+        const settled = FundTransfer.settleOneSided(oneSided, event, this.modelAssets);
 
         this.monthly.recordTransfer(fundingAsset.instrument, settled.supplied, settled.realizedGain);
         if (settled.spillover.amount > 0 && settled.spilloverInstrument) {

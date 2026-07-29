@@ -64,6 +64,7 @@ export class InterestResult {
   }
 }
 import { Metric as M } from '../metric.js';
+import { EventType } from '../sim-event.js';
 
 // Every instrument gets these
 const COMMON_METRICS = [M.VALUE, M.CASH_FLOW, M.CASH_FLOW_ACCUMULATED, M.CREDIT];
@@ -182,7 +183,7 @@ const ExpenseBehavior = Object.freeze({
     asset.monthlyValueChange.add(inflation);
     
     if (inflation.amount !== 0) {
-      asset.addCreditMemo(inflation, 'Expense inflation');
+      asset.recordEvent(EventType.EXPENSE_INFLATION, inflation);
     }
 
     return new ExpenseResult(expense, asset.finishCurrency.copy());
@@ -231,10 +232,10 @@ const MortgageBehavior = Object.freeze({
     // and don't forget our monthlyValueChange tracker
     asset.monthlyValueChange.subtract(principal);
 
-    asset.addCreditMemo(principal.copy().flipSign(), 'Mortgage Principal');
+    asset.recordEvent(EventType.MORTGAGE_PRINCIPAL, principal.copy().flipSign(), { metric: M.MORTGAGE_PRINCIPAL });
     // Interest is paid from the funding account (its own cash memo there) —
     // on the mortgage itself it's attribution, not a balance change.
-    asset.addCreditMemo(interest, 'Mortgage Interest', 'info');
+    asset.recordEvent(EventType.MORTGAGE_INTEREST, interest, { metric: M.MORTGAGE_INTEREST });
 
     return new MortgageResult(principal, interest, Currency.zero());
   },
@@ -287,7 +288,7 @@ const CapitalBehavior = Object.freeze({
     asset.growthCurrency.add(growth);
     asset.finishCurrency.add(growth);
     asset.monthlyValueChange.add(growth);
-    asset.addCreditMemo(growth, 'Asset growth');
+    asset.recordEvent(EventType.ASSET_GROWTH, growth, { metric: M.GROWTH });
 
     let qualifiedDiv = Currency.zero();
     let nonQualifiedDiv = Currency.zero();
@@ -309,8 +310,8 @@ const CapitalBehavior = Object.freeze({
       if (InstrumentType.isTaxableAccount(asset.instrument)) {
         asset.finishBasisCurrency.add(totalDivCurrency);
       }
-      if (qualifiedDiv.amount !== 0) asset.addCreditMemo(qualifiedDiv, 'Qualified dividend');
-      if (nonQualifiedDiv.amount !== 0) asset.addCreditMemo(nonQualifiedDiv, 'Non-qualified dividend');
+      if (qualifiedDiv.amount !== 0) asset.recordEvent(EventType.DIVIDEND, qualifiedDiv, { metric: M.QUALIFIED_DIVIDEND, data: { qualified: true } });
+      if (nonQualifiedDiv.amount !== 0) asset.recordEvent(EventType.DIVIDEND, nonQualifiedDiv, { metric: M.NON_QUALIFIED_DIVIDEND, data: { qualified: false } });
     }
 
     return new AssetAppreciationResult(asset.finishCurrency.copy(), growth, qualifiedDiv, nonQualifiedDiv);
@@ -348,7 +349,7 @@ const RealEstateBehavior = Object.freeze({
     asset.growthCurrency.add(growth);
     asset.finishCurrency.add(growth);
     asset.monthlyValueChange.add(growth);
-    asset.addCreditMemo(growth, 'Asset growth');
+    asset.recordEvent(EventType.ASSET_GROWTH, growth, { metric: M.GROWTH });
 
     const tax = new Currency(asset.finishCurrency.amount * asset.annualTaxRate.asMonthly());
     tax.flipSign(); // taxes are negative
@@ -357,21 +358,21 @@ const RealEstateBehavior = Object.freeze({
     // (their own cash memos there) — on the home they're attributed costs,
     // not balance changes.
     asset.addToMetric(M.PROPERTY_TAX, tax);      // leaf → SALT_TAXES → TAXES
-    asset.addCreditMemo(tax, 'Property tax', 'info');
+    asset.recordEvent(EventType.PROPERTY_TAX, tax, { metric: M.PROPERTY_TAX });
 
     // Maintenance: percentage of home value (e.g. 1% annual rule of thumb)
     if (asset.annualMaintenanceRate.rate !== 0) {
       const maint = new Currency(asset.finishCurrency.amount * asset.annualMaintenanceRate.asMonthly());
       maint.flipSign();
       asset.addToMetric(M.MAINTENANCE, maint);   // leaf → EXPENSE
-      asset.addCreditMemo(maint, 'Maintenance', 'info');
+      asset.recordEvent(EventType.MAINTENANCE, maint, { metric: M.MAINTENANCE });
     }
 
     // Insurance: fixed annual cost spread monthly
     if (asset.annualInsuranceCost.amount !== 0) {
       const ins = new Currency(asset.annualInsuranceCost.amount / -12);
       asset.addToMetric(M.INSURANCE, ins);        // leaf → EXPENSE
-      asset.addCreditMemo(ins, 'Insurance', 'info');
+      asset.recordEvent(EventType.INSURANCE, ins, { metric: M.INSURANCE });
     }
 
     return new AssetAppreciationResult(asset.finishCurrency.copy(), growth, Currency.zero(), Currency.zero(), tax);
@@ -410,7 +411,7 @@ const IncomeAccountBehavior = Object.freeze({
     asset.finishCurrency.add(income);
     asset.monthlyValueChange.add(income);
 
-    asset.addCreditMemo(income, 'Interest income');
+    asset.recordEvent(EventType.INTEREST_INCOME, income, { metric: M.INTEREST_INCOME });
 
     return new InterestResult(income);
   },

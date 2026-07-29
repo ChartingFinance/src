@@ -15,6 +15,7 @@ import { Metric } from '../metric.js';
 import { FundTransfer } from '../fund-transfer.js';
 import { activeTaxTable } from '../globals.js';
 import { logger, LogCategory } from '../utils/logger.js';
+import { EventType } from '../sim-event.js';
 
 export class PayrollEngine {
 
@@ -222,7 +223,7 @@ export class PayrollEngine {
         logger.log(LogCategory.SANITY,
             `Contribution capped: ${toModel.displayName} requested ${requested.toString()}, ` +
             `${limitName} allowed ${granted.toFixed(2)}`);
-        toModel.addCreditMemo(new Currency(-shortfall), `Contribution capped — ${limitName}`, 'info');
+        toModel.recordEvent(EventType.CONTRIBUTION_CAPPED, new Currency(-shortfall), { data: { limitName } });
     }
 
     calculatePreTaxContributions(modelAsset) {

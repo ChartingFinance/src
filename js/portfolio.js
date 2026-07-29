@@ -6,6 +6,7 @@ import { ModelLifeEvent } from './life-event.js';
 import { User } from './user.js';
 import { global_user_startAge } from './globals.js';
 import { FundTransfer } from './fund-transfer.js';
+import { EventType } from './sim-event.js';
 import { FinancialPackage } from './financial-package.js';
 import { PayrollEngine } from './engines/payroll-engine.js';
 import { ExpenseEngine } from './engines/expense-engine.js';
@@ -506,11 +507,11 @@ export class Portfolio {
             if (modelAsset.isClosed || !modelAsset.oneTimeEvents?.length) continue;
             for (const event of modelAsset.oneTimeEvents) {
                 if (event.dateInt.equals(currentDateInt)) {
-                    const memo = 'One-Time: ' + (event.note || 'one-time event');
+                    const descriptor = { type: EventType.ONE_TIME, data: { note: event.note } };
                     if (event.amount.amount >= 0) {
-                        modelAsset.credit(event.amount.copy(), memo);
+                        modelAsset.credit(event.amount.copy(), descriptor);
                     } else {
-                        modelAsset.debit(event.amount.copy().flipSign(), memo);
+                        modelAsset.debit(event.amount.copy().flipSign(), descriptor);
                     }
                 }
             }
@@ -697,13 +698,14 @@ export class Portfolio {
 
         const percent = config.downPaymentPercent ?? 100;
         const amount = new Currency(modelAsset.startCurrency.amount * (percent / 100));
-        const memo = source.displayName + ' → ' + modelAsset.displayName + ' (funding)';
+        const event = { type: EventType.TRANSFER, data: {
+            from: source.displayName, to: modelAsset.displayName, cadence: 'funding' } };
 
         logger.log(LogCategory.TRANSFER, 'Portfolio.applyAssetOpenFundTransfer: ' + source.displayName + ' funding ' + amount.toString() + ' for ' + modelAsset.displayName);
 
         // Debit-only: real estate already has its value via finishCurrency = startCurrency.
         // A two-sided execute() would double-credit the real estate.
-        source.debit(amount, memo);
+        source.debit(amount, event);
     }
 
     applyYear(currentDateInt) {
