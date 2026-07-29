@@ -38,6 +38,7 @@ import {
   global_setUserRetirementAge, global_getUserRetirementAge,
 } from '../js/globals.js';
 import { EventType, renderNote, kindOf } from '../js/sim-event.js';
+import { InstrumentType } from '../js/instruments/instrument.js';
 
 let passed = 0;
 let failed = 0;
@@ -193,6 +194,56 @@ check('events are chronologically ordered', () => {
       prev = t;
     }
   });
+});
+
+check('a balance-sheet asset\'s cash events account for its whole balance change', () => {
+  // start + sum(cash events) === finish. This is the event log telling the
+  // truth about the balance rather than merely being self-consistent, and it is
+  // the strongest single statement available about whether the ledger can be
+  // trusted.
+  //
+  // It failed before 2026-07-29: a clamped withdrawal recorded the FULL
+  // requested amount, so a $5,000 Checking account's ledger claimed $8,010.33
+  // had left it. The spillover was booked twice — once inside the overstated
+  // debit, once as the fallback account's SPILLOVER event. #transact now
+  // records what actually moved.
+  //
+  // BALANCE-SHEET ASSETS ONLY. On an income or expense, finishCurrency is the
+  // recurring monthly amount — a rate, not a stock — and #transact deliberately
+  // records the memo without touching it. A salary paying $20,000/month out for
+  // six years books $1.44M of transfers against a balance that never leaves
+  // $20,000, and that is correct, not a leak.
+  eachAsset((a, s) => {
+    if (!InstrumentType.isAsset(a.instrument)) return;
+    const cash = a.events.filter(e => e.kind !== 'info');
+    const sum = cash.reduce((acc, e) => acc + e.amount.amount, 0);
+    const expected = a.startCurrency.amount + sum;
+    assert.ok(Math.abs(a.finishCurrency.amount - expected) < 0.02,
+      `${s}/${a.displayName}: start ${a.startCurrency.amount.toFixed(2)} + events ` +
+      `${sum.toFixed(2)} = ${expected.toFixed(2)}, but balance is ` +
+      `${a.finishCurrency.amount.toFixed(2)} (delta ${(a.finishCurrency.amount - expected).toFixed(2)})`);
+  });
+});
+
+// An account deliberately too small for its obligations. Awaited here rather
+// than inside check(), which is synchronous — a promise handed to it would make
+// the assertion unfailable.
+const clamped = await run([
+  { instrument: 'monthlyExpense', displayName: 'Living', startDateInt: S, finishDateInt: F,
+    startCurrency: { amount: -4000 }, startBasisCurrency: { amount: 0 }, annualReturnRate: { rate: 0 } },
+  { instrument: 'bank', displayName: 'Checking', startDateInt: S, finishDateInt: F,
+    startCurrency: { amount: 5000 }, startBasisCurrency: { amount: 5000 }, annualReturnRate: { rate: 0 } },
+  { instrument: 'taxableEquity', displayName: 'Brokerage', startDateInt: S, finishDateInt: F,
+    startCurrency: { amount: 300000 }, startBasisCurrency: { amount: 300000 }, annualReturnRate: { rate: 0 } },
+], { start: 50, retire: 65 });
+
+check('a clamped withdrawal records only what the account could supply', () => {
+  const chk = clamped.modelAssets.find(a => a.displayName === 'Checking');
+  assert.equal(chk.isDepleted, true, 'fixture is wrong: Checking should deplete');
+  const out = chk.events.filter(e => e.kind !== 'info')
+                        .reduce((s, e) => s + e.amount.amount, 0);
+  assert.ok(Math.abs(out) <= 5000.01,
+    `Checking only ever held $5,000 but its ledger says ${Math.abs(out).toFixed(2)} left it`);
 });
 
 check('run state is not serialized', () => {
