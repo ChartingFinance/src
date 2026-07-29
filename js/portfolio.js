@@ -6,7 +6,7 @@ import { ModelLifeEvent } from './life-event.js';
 import { User } from './user.js';
 import { global_user_startAge } from './globals.js';
 import { FundTransfer } from './fund-transfer.js';
-import { EventType } from './sim-event.js';
+import { EventType, ShortfallOrigin } from './sim-event.js';
 import { FinancialPackage } from './financial-package.js';
 import { PayrollEngine } from './engines/payroll-engine.js';
 import { ExpenseEngine } from './engines/expense-engine.js';
@@ -112,6 +112,43 @@ export const MEMO_RECONCILIATION = Object.freeze({
     'Expense inflation':             'excluded',
     'Annual income growth':          'excluded',
 });
+
+/**
+ * Which reconciliation total an event belongs to, or null for "none".
+ *
+ * Most of this is a table lookup, but SPILLOVER and UNFUNDED cannot be
+ * classified statically: both are "the part of a movement one account could not
+ * supply", and both are emitted from the two-sided `execute()` path AND the
+ * one-sided `settleOneSided` path. Only the two-sided total is expected to net
+ * to zero, so the shortfall has to follow its PROVENANCE.
+ *
+ * Getting this wrong is not academic. A probe over the four quick-start
+ * profiles showed TRANSFER + SPILLOVER + UNFUNDED === 0 and it looked like a
+ * law; it is not. Those profiles simply never spill from a settlement. A home
+ * whose carrying costs drain its funding account breaks that naive sum by up to
+ * $2,265 a month (measured 2026-07-29).
+ */
+function conservationBucket(event, bucket) {
+    // A shortfall completes whatever movement produced it.
+    if (event.type === EventType.SPILLOVER || event.type === EventType.UNFUNDED) {
+        return event.data?.origin === ShortfallOrigin.PAIRED ? 'paired' : 'oneSided';
+        // UNFUNDED is info-kind — no cash moved — but it IS a conservation
+        // term: it is the acknowledged gap between what a movement asked for
+        // and what it delivered. Excluding it is what left the transfer check
+        // short by exactly the unpaid amount.
+    }
+
+    // Movement totals take cash only. Recognition and attribution moved no
+    // money and are not a gap either, so they participate in nothing.
+    if (bucket === 'paired' || bucket === 'oneSided') {
+        return event.kind === 'info' ? null : bucket;
+    }
+
+    // The named tax/housing buckets take the event whatever its kind, because
+    // mortgage interest, property tax and capital-gain recognition are all
+    // info-kind and are precisely what those checks compare.
+    return bucket;
+}
 
 export class Portfolio {
     constructor(modelAssets, reports) {
@@ -307,16 +344,8 @@ export class Portfolio {
                         `EVENT_RECONCILIATION — declare how it reconciles before emitting it`);
                 }
 
-                // The MOVEMENT totals take cash only — recognition and engine
-                // reports moved no money and would pollute conservation. The
-                // named tax/housing buckets take the event whatever its kind,
-                // because mortgage interest, property tax and capital-gain
-                // recognition are all info-kind and are precisely what those
-                // checks compare against the FinancialPackage.
-                const isMovement = bucket === 'paired' || bucket === 'oneSided';
-                if (!isMovement || event.kind !== 'info') {
-                    buckets[bucket] += event.amount.amount;
-                }
+                const target = conservationBucket(event, bucket);
+                if (target) buckets[target] += event.amount.amount;
             }
             modelAsset.eventsCheckedIndex = modelAsset.events.length;
         }
@@ -343,19 +372,25 @@ export class Portfolio {
         check('Capital gains', buckets.capitalGains, this.monthly.longTermCapitalGains.amount);
         check('Capital gains tax', buckets.capitalGainsTax, this.monthly.longTermCapitalGainsTax.amount);
 
-        // Two-sided conservation. execute() debits one account and credits
-        // another by the same amount, so TRANSFER must net to zero; a residue
-        // means money appeared or vanished between two halves of one movement.
+        // Two-sided conservation, in full:
         //
-        // One-sided events are NOT included and are not expected to balance:
+        //     TRANSFER + SPILLOVER(paired) + UNFUNDED(paired) === 0
+        //
+        // execute() debits one account and credits another by the same amount,
+        // so the two legs must cancel. They legitimately differ when the debited
+        // account cannot supply what was asked and clamps at $0 — and the
+        // difference is then carried by exactly one of two terms: the shortfall
+        // was re-sourced from another account (SPILLOVER) or it could not be
+        // sourced at all (UNFUNDED). Both are folded in above by provenance, so
+        // a residue here means money genuinely appeared or vanished.
+        //
+        // One-sided settlements are excluded and are not expected to balance:
         // settleOneSided books the debit on the funding account and nothing on
-        // the obligation it pays. Summing them in here made this check fail
-        // every month on any plan with an expense, by exactly the expense
-        // amount — 293 findings across five healthy scenarios, all of them
-        // false. There is no second leg to balance against, so the honest
-        // report is the total, not a zero assertion.
+        // the obligation it pays. Asserting they net to zero made this check
+        // fail every month on any plan with an expense, by exactly the expense
+        // amount.
         if (Math.abs(buckets.paired) > tolerance) {
-            logger.log(LogCategory.SANITY, `${currentDateInt} Two-sided transfers do not net to zero: ${buckets.paired.toFixed(2)}`);
+            logger.log(LogCategory.SANITY, `${currentDateInt} Transfer conservation broken: ${buckets.paired.toFixed(2)}`);
         }
     }
 
@@ -757,7 +792,7 @@ export class Portfolio {
                 if (target) {
                     FundTransfer.system(modelAsset, target, extraAmount, this.modelAssets).execute();
                 } else {
-                    FundTransfer.reportUnfunded(modelAsset, extraAmount, 'sale proceeds (nowhere to deposit)');
+                    FundTransfer.reportUnfunded(modelAsset, extraAmount, 'sale proceeds (nowhere to deposit)', ShortfallOrigin.STANDALONE);
                 }
             }
 
@@ -770,7 +805,7 @@ export class Portfolio {
             if (target) {
                 FundTransfer.system(modelAsset, target, modelAssetValue, this.modelAssets).execute();
             } else {
-                FundTransfer.reportUnfunded(modelAsset, modelAssetValue, 'sale proceeds (nowhere to deposit)');
+                FundTransfer.reportUnfunded(modelAsset, modelAssetValue, 'sale proceeds (nowhere to deposit)', ShortfallOrigin.STANDALONE);
             }
 
         }

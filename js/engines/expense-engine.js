@@ -15,7 +15,7 @@ import { Metric } from '../metric.js';
 import { FundTransferOneSided, FundTransfer } from '../fund-transfer.js';
 import { activeTaxTable } from '../globals.js';
 import { logger, LogCategory } from '../utils/logger.js';
-import { EventType } from '../sim-event.js';
+import { EventType, ShortfallOrigin } from '../sim-event.js';
 
 export class ExpenseEngine {
 
@@ -91,7 +91,7 @@ export class ExpenseEngine {
                         targetAsset.addToMetric(Metric.ESTIMATED_INCOME_TAX, taxLiability.copy().flipSign());
                     }
                 } else {
-                    FundTransfer.reportUnfunded(modelAsset, netShortfall, 'expense overflow');
+                    FundTransfer.reportUnfunded(modelAsset, netShortfall, 'expense overflow', ShortfallOrigin.STANDALONE);
                 }
             }
         } else {
@@ -116,7 +116,7 @@ export class ExpenseEngine {
                     targetAsset.addToMetric(Metric.ESTIMATED_INCOME_TAX, taxLiability.copy().flipSign());
                 }
             } else {
-                FundTransfer.reportUnfunded(modelAsset, netShortfall, 'expense');
+                FundTransfer.reportUnfunded(modelAsset, netShortfall, 'expense', ShortfallOrigin.STANDALONE);
             }
         }
 
@@ -163,7 +163,7 @@ export class ExpenseEngine {
                 preFlight.toModel = fundingSource;
                 preFlights.push(preFlight);
             } else {
-                FundTransfer.reportUnfunded(modelAsset, remaining, 'mortgage payment');
+                FundTransfer.reportUnfunded(modelAsset, remaining, 'mortgage payment', ShortfallOrigin.STANDALONE);
             }
         }
 
@@ -220,7 +220,7 @@ export class ExpenseEngine {
                 preFlight.toModel = fundingSource;
                 preFlights.push(preFlight);
             } else {
-                FundTransfer.reportUnfunded(modelAsset, remaining, label);
+                FundTransfer.reportUnfunded(modelAsset, remaining, label, ShortfallOrigin.STANDALONE);
             }
         }
 

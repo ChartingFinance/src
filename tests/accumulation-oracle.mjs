@@ -5,10 +5,10 @@
  * Early Career quick-start profile (age 35 -> 67 -> 90). Companion to
  * decumulation-oracle.mjs, which does the same job for a retiree drawdown.
  *
- * Early Career is the profile that historically breaks first: it is the one
- * that drove its Brokerage to -$13.4M before the overdraft fix, and the only
- * one of the four whose transfer conservation still fails (158 months).
- * It had no oracle. It does now.
+ * Early Career is the profile that historically breaks first: it drove its
+ * Brokerage to -$13.4M before the overdraft fix, and it was the profile whose
+ * transfer conservation appeared to fail 158 months — the finding that led to
+ * the provenance fix described under Layer C. It had no oracle. It does now.
  *
  * ── Scope, stated honestly ───────────────────────────────────────────
  *
@@ -28,25 +28,31 @@
  *             moves them BY DESIGN; regenerate with --print-actual and review.
  *   Layer C — CONSERVATION. The reason this file exists now.
  *
- * ── Layer C: the three-term conservation law ─────────────────────────
+ * ── Layer C: conservation, with provenance ───────────────────────────
  *
  * A two-sided transfer's two legs can legitimately differ, and the difference
- * is always accounted for by exactly two things:
+ * is always carried by one of two terms:
  *
- *     TRANSFER + SPILLOVER + UNFUNDED === 0
+ *     TRANSFER + SPILLOVER(origin=paired) + UNFUNDED(origin=paired) === 0
  *
  * When an account cannot supply what a transfer asked for it clamps at $0, and
  * the shortfall either re-sources from another account (SPILLOVER) or cannot be
- * sourced at all (UNFUNDED). Verified 2026-07-29 to hold to the cent on all
- * four quick-start profiles.
+ * sourced at all (UNFUNDED).
  *
- * This matters because `monthlySanityCheck` currently asserts only that
- * TRANSFER nets to zero, which fails 158 months on Early Career and 2 on
- * Retired. Those failures are REAL but they are not money going missing — the
- * check is missing two terms. This file asserts the true law (which passes) and
- * separately freezes the count of months the narrower check trips, so that when
- * the engine adopts the three-term law the improvement is visible rather than
- * asserted into existence.
+ * THE `origin` QUALIFIER IS LOAD-BEARING. An earlier version of this file
+ * asserted the sum WITHOUT it, on the evidence that it held to the cent across
+ * all four quick-start profiles. That was an overgeneralisation: those four
+ * never spill from a one-sided settlement. A home whose carrying costs drain
+ * its funding account breaks the unqualified sum by up to $2,265 a month.
+ * SPILLOVER and UNFUNDED are emitted from both the two-sided `execute()` path
+ * and the one-sided `settleOneSided` path, and only the two-sided total is
+ * expected to balance — so each shortfall must follow the movement that
+ * produced it.
+ *
+ * `pairedAloneFails` is also tracked and frozen: the count of months where
+ * TRANSFER alone does not net, i.e. where the shortfall terms are doing real
+ * work. On Early Career that is 158 of 666 months, which is a statement about
+ * how often its single funding account runs dry — not a defect.
  *
  * THE CLOCK IS PINNED to 2026-07-15: quick-start dates derive from `new Date()`
  * via dateAnchors(), so without pinning every value here would rot monthly.
@@ -83,7 +89,7 @@ import { Portfolio, EVENT_RECONCILIATION } from '../js/portfolio.js';
 import { chronometer_run } from '../js/chronometer.js';
 import { TaxTable } from '../js/taxes.js';
 import { quickStartProfiles, buildQuickStart } from '../js/quick-start.js';
-import { EventType } from '../js/sim-event.js';
+import { EventType, ShortfallOrigin } from '../js/sim-event.js';
 import {
   setActiveTaxTable,
   global_default_inflationRate,
@@ -221,7 +227,7 @@ setActiveTaxTable(new TaxTable());
 
 // Layer C instrumentation: capture conservation per month while the run
 // happens, since monthlySanityCheck reports into a dead logger.
-const conservation = { pairedOnlyFails: 0, threeTermFails: 0, worstPairedOnly: 0, worstThreeTerm: 0, months: 0 };
+const conservation = { pairedAloneFails: 0, lawFails: 0, worstPairedAlone: 0, worstLaw: 0, months: 0 };
 const origCheck = Portfolio.prototype.monthlySanityCheck;
 Portfolio.prototype.monthlySanityCheck = function (currentDateInt) {
   let paired = 0, spillover = 0, unfunded = 0;
@@ -229,22 +235,26 @@ Portfolio.prototype.monthlySanityCheck = function (currentDateInt) {
     const start = a.eventsCheckedIndex || 0;
     for (let i = start; i < a.events.length; i++) {
       const ev = a.events[i];
-      if (ev.type === EventType.UNFUNDED) { unfunded += ev.amount.amount; continue; }
+      // Shortfalls count toward conservation only when they complete a
+      // TWO-SIDED transfer. Applied independently of portfolio.js so this is a
+      // real check rather than a restatement of the engine's own classifier.
+      const fromPaired = ev.data?.origin === ShortfallOrigin.PAIRED;
+      if (ev.type === EventType.UNFUNDED) { if (fromPaired) unfunded += ev.amount.amount; continue; }
+      if (ev.type === EventType.SPILLOVER) { if (fromPaired) spillover += ev.amount.amount; continue; }
       if (ev.kind === 'info') continue;
       if (EVENT_RECONCILIATION[ev.type] === 'paired') paired += ev.amount.amount;
-      if (ev.type === EventType.SPILLOVER) spillover += ev.amount.amount;
     }
     a.eventsCheckedIndex = a.events.length;
   }
   conservation.months++;
   if (Math.abs(paired) > 0.01) {
-    conservation.pairedOnlyFails++;
-    conservation.worstPairedOnly = Math.max(conservation.worstPairedOnly, Math.abs(paired));
+    conservation.pairedAloneFails++;
+    conservation.worstPairedAlone = Math.max(conservation.worstPairedAlone, Math.abs(paired));
   }
-  const threeTerm = paired + spillover + unfunded;
-  if (Math.abs(threeTerm) > 0.01) {
-    conservation.threeTermFails++;
-    conservation.worstThreeTerm = Math.max(conservation.worstThreeTerm, Math.abs(threeTerm));
+  const law = paired + spillover + unfunded;
+  if (Math.abs(law) > 0.01) {
+    conservation.lawFails++;
+    conservation.worstLaw = Math.max(conservation.worstLaw, Math.abs(law));
   }
 };
 
@@ -298,9 +308,11 @@ const EXPECTED_ENGINE = {
   "incomeTax": -681290.82,
 };
 
+// Frozen: how often Early Career's transfers legitimately fail to balance on
+// their own, i.e. how often its single funding-backstop account runs dry and
+// the shortfall terms do the work. A statement about the plan, not a defect.
 const CONSERVATION_BASELINE = {
-  pairedOnlyFails: 158,
-  threeTermFails: 0,
+  pairedAloneFails: 158,
 };
 
 if (PRINT_MODE) {
@@ -309,8 +321,7 @@ if (PRINT_MODE) {
   for (const [k, v] of Object.entries(engine)) console.log(`  ${JSON.stringify(k)}: ${v.toFixed(2)},`);
   console.log('};');
   console.log('\nconst CONSERVATION_BASELINE = {');
-  console.log(`  pairedOnlyFails: ${conservation.pairedOnlyFails},`);
-  console.log(`  threeTermFails: ${conservation.threeTermFails},`);
+  console.log(`  pairedAloneFails: ${conservation.pairedAloneFails},`);
   console.log('};');
   process.exit(0);
 }
@@ -372,10 +383,10 @@ check('Salary and Home both closed at their finish dates', () => {
 // ══ Layer C ══════════════════════════════════════════════════════════
 console.log('\n── Layer C: conservation ────────────────────────────────\n');
 
-check('THE LAW: transfer + spillover + unfunded === 0, every month', () => {
-  assert.equal(conservation.threeTermFails, 0,
-    `${conservation.threeTermFails} of ${conservation.months} months break conservation ` +
-    `(worst ${fmt(conservation.worstThreeTerm)}). Money is appearing or vanishing — this is ` +
+check('THE LAW: transfer + paired-origin spillover + paired-origin unfunded === 0', () => {
+  assert.equal(conservation.lawFails, 0,
+    `${conservation.lawFails} of ${conservation.months} months break conservation ` +
+    `(worst ${fmt(conservation.worstLaw)}). Money is appearing or vanishing — this is ` +
     `not a check artifact, it is a leak.`);
 });
 
@@ -389,12 +400,11 @@ check('the run actually exercised conservation', () => {
 // a term monthlySanityCheck does not yet include. Frozen, not asserted to be
 // zero: when the engine adopts the three-term law this should drop to 0 and
 // this baseline must be updated deliberately.
-check('engine-side paired-only failures match the recorded baseline', () => {
-  assert.equal(conservation.pairedOnlyFails, CONSERVATION_BASELINE.pairedOnlyFails,
-    `paired-only failures moved from ${CONSERVATION_BASELINE.pairedOnlyFails} to ` +
-    `${conservation.pairedOnlyFails}. If you fixed monthlySanityCheck to use the ` +
-    `three-term law this is the expected improvement — update the baseline. If you ` +
-    `did not, something changed the funding path.`);
+check('months where transfers alone do not balance match the baseline', () => {
+  assert.equal(conservation.pairedAloneFails, CONSERVATION_BASELINE.pairedAloneFails,
+    `moved from ${CONSERVATION_BASELINE.pairedAloneFails} to ${conservation.pairedAloneFails}. ` +
+    `This counts months where Early Career's only funding account ran dry, so the ` +
+    `shortfall terms carried the difference. A change means the funding path changed.`);
 });
 
 // ══ Layer B ══════════════════════════════════════════════════════════

@@ -36,7 +36,9 @@ import {
   global_setUserStartAge, global_getUserStartAge,
   global_setUserRetirementAge, global_getUserRetirementAge,
 } from '../js/globals.js';
-import { EventType, kindOf, EventKind } from '../js/sim-event.js';
+import { EventType, kindOf, EventKind, ShortfallOrigin } from '../js/sim-event.js';
+import { FundTransfer } from '../js/fund-transfer.js';
+import { logger } from '../js/utils/logger.js';
 
 let passed = 0, failed = 0;
 function check(label, fn) {
@@ -99,6 +101,21 @@ check('ONLY genuinely two-sided movement is expected to net to zero', () => {
     assert.equal(EVENT_RECONCILIATION[t], 'oneSided',
       `${t} books one leg only — asserting it nets to zero produces false alarms`);
   }
+});
+
+check('a shortfall must declare which movement it completes', () => {
+  // SPILLOVER and UNFUNDED are emitted from BOTH the two-sided execute() path
+  // and the one-sided settleOneSided path, and only the two-sided total is
+  // expected to net to zero. Without provenance the sum breaks by up to $2,265
+  // a month on a home whose carrying costs drain its funding account — which is
+  // why reportUnfunded refuses to guess.
+  assert.throws(() => FundTransfer.reportUnfunded(
+    { recordEvent() {} }, { amount: 100, copy: () => ({ flipSign: () => ({}) }) }, 'x'),
+    /origin must be a ShortfallOrigin/,
+    'reportUnfunded must reject a missing origin rather than default it');
+  assert.throws(() => FundTransfer.reportUnfunded(
+    { recordEvent() {} }, { amount: 100, copy: () => ({ flipSign: () => ({}) }) }, 'x', 'nonsense'),
+    /origin must be a ShortfallOrigin/);
 });
 
 check('engine reports and recognition stay out of both movement totals', () => {
@@ -184,6 +201,97 @@ for (const [name, ages, assets] of scenarios) {
     }
   });
 }
+
+// ── Shortfalls must be attributable ──────────────────────────────────
+// Chosen so shortfalls arise from BOTH paths: a home's carrying costs draining
+// its funding account (one-sided settlement) and an expense transfer outrunning
+// its only funding account (two-sided transfer).
+console.log('\n── Shortfall provenance ──\n');
+
+const shortfallScenarios = [
+  ['settlement spills', { start: 50, retire: 65 }, [
+    base({ instrument: 'realEstate', displayName: 'Home', isPrimaryHome: true,
+           startCurrency: { amount: 600000 }, startBasisCurrency: { amount: 600000 },
+           annualReturnRate: { rate: 0.03 }, annualTaxRate: { rate: 0.015 },
+           annualMaintenanceRate: { rate: 0.02 }, annualInsuranceCost: { amount: 6000 } }),
+    base({ instrument: 'bank', displayName: 'Checking', startCurrency: { amount: 3000 }, startBasisCurrency: { amount: 3000 } }),
+    base({ instrument: 'taxableEquity', displayName: 'Brokerage', startCurrency: { amount: 900000 },
+           startBasisCurrency: { amount: 600000 }, annualReturnRate: { rate: 0.06 } }),
+  ]],
+  // Settlement with NO fallback at all: exercises settleOneSided's UNFUNDED
+  // branch, which the spill scenario above never reaches because it has a
+  // Brokerage to fall back on. Without this case, mis-tagging that branch
+  // passes every test in the suite (verified by mutation).
+  ['settlement goes unfunded', { start: 50, retire: 65 }, [
+    base({ instrument: 'realEstate', displayName: 'Home', isPrimaryHome: true,
+           startCurrency: { amount: 600000 }, startBasisCurrency: { amount: 600000 },
+           annualReturnRate: { rate: 0.03 }, annualTaxRate: { rate: 0.015 },
+           annualMaintenanceRate: { rate: 0.02 }, annualInsuranceCost: { amount: 6000 } }),
+    base({ instrument: 'bank', displayName: 'Checking', startCurrency: { amount: 3000 }, startBasisCurrency: { amount: 3000 } }),
+  ]],
+  // DOUBLE depletion: the funding account clamps AND the account it falls back
+  // to clamps in the same draw, hitting settleOneSided's inner unfunded branch.
+  // Needs an obligation large enough to exhaust both in one month, which is why
+  // the carrying costs are deliberately punitive against tiny balances.
+  ['settlement exhausts its fallback too', { start: 50, retire: 65 }, [
+    base({ instrument: 'realEstate', displayName: 'Home', isPrimaryHome: true,
+           startCurrency: { amount: 1200000 }, startBasisCurrency: { amount: 1200000 },
+           annualReturnRate: { rate: 0.03 }, annualTaxRate: { rate: 0.02 },
+           annualMaintenanceRate: { rate: 0.05 }, annualInsuranceCost: { amount: 24000 } }),
+    base({ instrument: 'cash', displayName: 'Wallet', startCurrency: { amount: 1200 }, startBasisCurrency: { amount: 1200 } }),
+    base({ instrument: 'taxableEquity', displayName: 'Brokerage', startCurrency: { amount: 2500 }, startBasisCurrency: { amount: 2500 } }),
+  ]],
+  ['transfer goes unfunded', { start: 50, retire: 65 }, [
+    base({ instrument: 'monthlyExpense', displayName: 'Living', startCurrency: { amount: -6000 }, startBasisCurrency: { amount: 0 },
+           fundTransfers: [{ toDisplayName: 'Brokerage', monthlyMoveValue: 100, closeMoveValue: 0 }] }),
+    base({ instrument: 'taxableEquity', displayName: 'Brokerage', startCurrency: { amount: 40000 }, startBasisCurrency: { amount: 40000 } }),
+  ]],
+];
+
+// Capture the engine's own conservation complaint. logger.log is a no-op in
+// production, so this is the only way to observe monthlySanityCheck's verdict.
+const complaints = [];
+logger.log = (cat, msg) => {
+  if (typeof msg === 'string' && msg.includes('Transfer conservation broken')) complaints.push(msg);
+};
+
+const seenOrigins = new Set();
+for (const [name, ages, assets] of shortfallScenarios) {
+  complaints.length = 0;
+  const portfolio = await run(assets, ages);
+
+  // THE assertion that catches a mis-tagged origin. The accumulation oracle
+  // cannot: Early Career never spills from a settlement, so tagging that path
+  // wrongly is invisible there. These scenarios exercise it directly.
+  check(`${name}: conservation holds`, () => {
+    assert.deepEqual(complaints, [],
+      `${complaints.length} month(s) broke transfer conservation:\n      ` +
+      complaints.slice(0, 3).join('\n      ') +
+      `\n      A mis-tagged shortfall origin puts a term in the wrong total.`);
+  });
+
+  check(`${name}: every shortfall declares a valid origin`, () => {
+    const valid = new Set(Object.values(ShortfallOrigin));
+    let found = 0;
+    for (const a of portfolio.modelAssets) {
+      for (const e of a.events) {
+        if (e.type !== EventType.SPILLOVER && e.type !== EventType.UNFUNDED) continue;
+        found++;
+        seenOrigins.add(e.data?.origin);
+        assert.ok(valid.has(e.data?.origin),
+          `${a.displayName}: ${e.type} recorded origin "${e.data?.origin}"`);
+      }
+    }
+    assert.ok(found > 0, 'fixture produced no shortfalls — it is not testing anything');
+  });
+}
+
+check('shortfalls are observed from more than one origin', () => {
+  // If every shortfall in the suite shared one origin, the provenance split
+  // would be untested however green it looked.
+  assert.ok(seenOrigins.size >= 2,
+    `only saw origins [${[...seenOrigins]}] — the paired/one-sided split is untested`);
+});
 
 console.log(`\n${'─'.repeat(55)}`);
 console.log(`  ${passed} passed, ${failed} failed`);

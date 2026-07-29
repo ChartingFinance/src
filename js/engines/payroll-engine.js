@@ -15,7 +15,7 @@ import { Metric } from '../metric.js';
 import { FundTransfer } from '../fund-transfer.js';
 import { activeTaxTable } from '../globals.js';
 import { logger, LogCategory } from '../utils/logger.js';
-import { EventType } from '../sim-event.js';
+import { EventType, ShortfallOrigin } from '../sim-event.js';
 
 export class PayrollEngine {
 
@@ -489,7 +489,7 @@ export class PayrollEngine {
                 if (target) {
                     FundTransfer.system(modelAsset, target, delta).execute();
                 } else {
-                    FundTransfer.reportUnfunded(modelAsset, delta, 'unallocated take-home pay (nowhere to deposit)');
+                    FundTransfer.reportUnfunded(modelAsset, delta, 'unallocated take-home pay (nowhere to deposit)', ShortfallOrigin.STANDALONE);
                 }
             }
 
