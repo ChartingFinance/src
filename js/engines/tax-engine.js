@@ -319,18 +319,22 @@ export class TaxEngine {
         this.monthly.incomeTax.add(additionalTax);
         liquidAsset.addToMetric(Metric.ESTIMATED_INCOME_TAX, additionalTax);
 
-        // debit() expects the positive payment amount; it flips the sign and
-        // writes the 'Income tax withholding' credit memo itself.
+        // Route through settleOneSided rather than a raw debit: it clamps the
+        // account at $0, re-sources the remainder from the next backstop, and
+        // reports whatever nothing can cover. A raw debit books the tax as paid
+        // no matter what the account actually held. It also books the realized
+        // gain — paying tax from a brokerage sells shares — so that must NOT be
+        // duplicated here. recordTransfer is a no-op for CASH/BANK sources.
         const payment = additionalTax.copy().flipSign();
-        const result = liquidAsset.debit(payment, 'Income tax withholding');
+        // No single asset "owes" household tax, so fromModel stays null and
+        // reportUnfunded falls back to naming the account that could not pay.
+        const oneSided = new FundTransferOneSided(null, payment);
+        oneSided.toModel = liquidAsset;
+        const settled = FundTransfer.settleOneSided(oneSided, 'Income tax withholding', this.modelAssets);
 
-        // Paying tax from a brokerage account sells shares, and the realized
-        // gain is itself taxable — same handling as the property-tax escrow
-        // debit above. recordTransfer is a no-op for CASH/BANK sources.
-        this.monthly.recordTransfer(liquidAsset.instrument, payment, result.realizedGain);
-        if (result.realizedGain && result.realizedGain.amount > 0) {
-            liquidAsset.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, result.realizedGain);
-            liquidAsset.addCreditMemo(result.realizedGain.copy(), 'Capital gains', 'info');
+        this.monthly.recordTransfer(liquidAsset.instrument, settled.supplied, settled.realizedGain);
+        if (settled.spillover.amount > 0 && settled.spilloverInstrument) {
+            this.monthly.recordTransfer(settled.spilloverInstrument, settled.spillover, settled.spilloverGain);
         }
 
     }

@@ -79,12 +79,11 @@ export class ExpenseEngine {
                 const targetAsset = FundTransfer.resolveFunding(this.modelAssets);
                 if (targetAsset) {
                     const grossWithdrawal = this.calculateGrossWithdrawal(netShortfall, targetAsset);
-                    const result = targetAsset.debit(grossWithdrawal, `Grossed-up expense overflow for ${modelAsset.displayName}`);
-                    this.monthly.recordTransfer(targetAsset.instrument, grossWithdrawal, result.realizedGain);
+                    const settled = this.settleFromBackstop(
+                        modelAsset, targetAsset, grossWithdrawal,
+                        `Grossed-up expense overflow for ${modelAsset.displayName}`);
 
-                    if (result && result.realizedGain && result.realizedGain.amount > 0) {
-                        targetAsset.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, result.realizedGain);
-                        targetAsset.addCreditMemo(result.realizedGain.copy(), 'Capital gains', 'info');
+                    if (settled.realizedGain && settled.realizedGain.amount > 0) {
                         // Isolate tax liability to prevent the death-spiral loop
                         const taxLiability = new Currency(grossWithdrawal.amount - netShortfall.amount);
                         this.monthly.estimatedTaxes.add(taxLiability);
@@ -105,12 +104,11 @@ export class ExpenseEngine {
             const targetAsset = FundTransfer.resolveFunding(this.modelAssets);
             if (targetAsset) {
                 const grossWithdrawal = this.calculateGrossWithdrawal(netShortfall, targetAsset);
-                const result = targetAsset.debit(grossWithdrawal, `Grossed-up expense debit for ${modelAsset.displayName}`);
-                this.monthly.recordTransfer(targetAsset.instrument, grossWithdrawal, result.realizedGain);
+                const settled = this.settleFromBackstop(
+                    modelAsset, targetAsset, grossWithdrawal,
+                    `Grossed-up expense debit for ${modelAsset.displayName}`);
 
-                if (result && result.realizedGain && result.realizedGain.amount > 0) {
-                    targetAsset.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, result.realizedGain);
-                    targetAsset.addCreditMemo(result.realizedGain.copy(), 'Capital gains', 'info');
+                if (settled.realizedGain && settled.realizedGain.amount > 0) {
                     // Isolate tax liability to prevent the death-spiral loop
                     const taxLiability = new Currency(grossWithdrawal.amount - netShortfall.amount);
                     this.monthly.estimatedTaxes.add(taxLiability);
@@ -325,6 +323,33 @@ export class ExpenseEngine {
     }
 
     // ── Helpers ──────────────────────────────────────────────────────
+
+    /**
+     * Draw from a funding account through settleOneSided rather than a raw
+     * debit.
+     *
+     * A raw debit books the expense as paid whatever the account actually held,
+     * and silently discards the clamped remainder. settleOneSided caps the
+     * account at $0, re-sources the shortfall from the next backstop, and
+     * reports whatever nothing can cover — and it books the realized gain and
+     * its memo itself, so callers must not duplicate that.
+     *
+     * @param {ModelAsset} owingAsset  the expense/obligation this pays for
+     * @param {ModelAsset} fundingAsset the account being drawn
+     */
+    settleFromBackstop(owingAsset, fundingAsset, amount, memo) {
+        const oneSided = new FundTransferOneSided(null, amount);
+        oneSided.fromModel = owingAsset;
+        oneSided.toModel = fundingAsset;
+
+        const settled = FundTransfer.settleOneSided(oneSided, memo, this.modelAssets);
+
+        this.monthly.recordTransfer(fundingAsset.instrument, settled.supplied, settled.realizedGain);
+        if (settled.spillover.amount > 0 && settled.spilloverInstrument) {
+            this.monthly.recordTransfer(settled.spilloverInstrument, settled.spillover, settled.spilloverGain);
+        }
+        return settled;
+    }
 
     calculateGrossWithdrawal(netShortfall, modelAsset) {
         // Only taxable accounts realize a gain on withdrawal (see ModelAsset.#transact).
