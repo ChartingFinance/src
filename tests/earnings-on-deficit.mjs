@@ -77,7 +77,7 @@ async function overdraw(instrument, name, rate = 0.06) {
     },
   ].map(o => ModelAsset.fromJSON(o)), true);
   await chronometer_run(p);
-  return p.modelAssets.find(a => a.displayName === name);
+  return { portfolio: p, account: p.modelAssets.find(a => a.displayName === name) };
 }
 
 const FUNDING = [
@@ -91,7 +91,7 @@ const FUNDING = [
 console.log('\n── No funding account earns on a deficit ──\n');
 
 for (const [instrument, name] of FUNDING) {
-  const a = await overdraw(instrument, name);
+  const { portfolio, account: a } = await overdraw(instrument, name);
 
   check(`${instrument}: never books negative growth, dividends or interest`, () => {
     const earnings = [
@@ -107,17 +107,23 @@ for (const [instrument, name] of FUNDING) {
       `a deficit must not compound`);
   });
 
-  check(`${instrument}: the deficit does not grow once the account is empty`, () => {
+  check(`${instrument}: never goes below $0 at all`, () => {
     const vals = hist(a, Metric.VALUE);
-    const firstNeg = vals.findIndex(v => v < -0.01);
-    if (firstNeg < 0) return; // never overdrew — fine
-    // From the first negative month onward the balance may still be drafted by
-    // explicit transfers, but it must never move DOWN on its own. Compare
-    // months where nothing else touched the account.
-    const worst = Math.min(...vals.slice(firstNeg));
-    const firstDip = vals[firstNeg];
-    assert.ok(worst >= firstDip * 3,
-      `deficit ran away: first dip ${fmt(firstDip)} but reached ${fmt(worst)}`);
+    const worst = Math.min(...vals);
+    assert.ok(worst >= -0.01,
+      `balance reached ${fmt(worst)} — funding accounts floor at $0 and the ` +
+      `shortfall re-sources through the backstop chain`);
+  });
+
+  check(`${instrument}: running dry surfaces as unfunded, not silence`, () => {
+    const ranDry = hist(a, Metric.VALUE).some(v => Math.abs(v) < 0.01);
+    assert.ok(ranDry, 'scenario should have emptied the account');
+    // reportUnfunded lands on the asset that OWES, so look across the whole
+    // portfolio. Money the plan could not pay must never simply disappear.
+    const unfunded = portfolio.modelAssets
+      .flatMap(x => x.creditMemos.filter(m => /^Unfunded\b/.test(m.note ?? '')));
+    assert.ok(unfunded.length > 0,
+      'account ran dry and the expense went unpaid, but nothing was recorded as unfunded');
   });
 }
 

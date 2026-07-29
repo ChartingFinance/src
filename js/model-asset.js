@@ -745,11 +745,18 @@ export class ModelAsset {
         this.monthlyValueChange.subtract(fromVested);
       }
 
-      // Clamp tax-advantaged accounts to $0 floor — negative balances are nonsensical
-      // for IRA, 401K, and Roth IRA and distort RMD calculations and growth.
-      // The overshoot (spillover) must be sourced from a taxable account by the caller.
+      // Clamp to a $0 floor. Negative balances are nonsensical for every
+      // account a household spends FROM — an overdrawn savings account is not
+      // a loan against itself — and they distort RMD calculations and growth.
+      // The overshoot (spillover) must be re-sourced by the caller; every
+      // backstop draw goes through FundTransfer.settleOneSided, which does it.
+      //
+      // DEBT and MORTGAGE are absent on purpose: they are the accounts that are
+      // SUPPOSED to be negative. Real estate too — you cannot overdraw a house.
       if (this.finishCurrency.amount < 0 &&
-          (InstrumentType.isTaxDeferred(this.instrument) || InstrumentType.isTaxFree(this.instrument))) {
+          (InstrumentType.isTaxDeferred(this.instrument)
+           || InstrumentType.isTaxFree(this.instrument)
+           || InstrumentType.isFundingBackstop(this.instrument))) {
         spillover = new Currency(Math.abs(this.finishCurrency.amount));
         this.finishCurrency.amount = 0;
         this.finishBasisCurrency.amount = 0;
