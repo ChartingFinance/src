@@ -42,6 +42,7 @@ import { colorRange }    from './utils/html.js';
 import { getBehavior }   from './instruments/instrument-behavior.js';
 import { global_getFinishDateInt, global_inflationRate } from './globals.js';
 import { Metric, METRIC_NAMES, MetricLabel, MetricRollups, PARENT_METRICS } from './metric.js';
+import { SimEvent, EventType, renderNote } from './sim-event.js';
 
 // Re-export so existing consumers can still import from model-asset.js
 export { Metric, MetricLabel, MetricRollups };
@@ -505,6 +506,9 @@ export class ModelAsset {
     this.closedBasisValue = null;
     this.creditMemos = [];
     this.creditMemosCheckedIndex = 0;
+    // Structured mirror of creditMemos — same order, same length, one for one.
+    // Run state: rebuilt every chronometer_run, never serialized.
+    this.events = [];
     this.monthlyCreditBalance = Currency.zero();
     this.monthlyTaxEscrow = Currency.zero();
     this.#metrics.initializeAll();
@@ -667,7 +671,7 @@ export class ModelAsset {
       const growth = new Currency(this.finishCurrency.amount * this.annualReturnRate.rate);
       this.growthCurrency.add(growth);
       this.finishCurrency.add(growth);      
-      this.addCreditMemo(growth, 'Annual income growth');
+      this.recordEvent(EventType.INCOME_GROWTH, growth, { metric: Metric.INCOME });
 
       // and don't forget our monthlyValueChange tracker
       this.monthlyValueChange.add(growth);
@@ -680,28 +684,63 @@ export class ModelAsset {
     return null;
   }
 
-  addCreditMemo(amount, note, kind = 'cash') {
-    this.creditMemos.push(new CreditMemo(amount, note, this.currentDateInt, kind));
+  /**
+   * Record something the engine did. The ONLY write path for the ledger.
+   *
+   * Appends a structured SimEvent and, from it, the rendered CreditMemo — in
+   * that order, one for one. The pairing is an invariant
+   * (`tests/sim-event-invariant.mjs`): monthlySanityCheck scans memos
+   * incrementally from creditMemosCheckedIndex, so anything that let the two
+   * arrays drift apart could double-count or skip a month's reconciliation.
+   *
+   * `traceId` is read from ambient run context rather than passed by callers.
+   * Nothing sets it today; when causal grouping arrives it becomes a change
+   * here plus a few scope-openers, not a migration across every call site.
+   *
+   * @param {string}   type    EventType key
+   * @param {Currency} amount
+   * @param {object}   [opts]
+   * @param {string}   [opts.metric]  Metric this event moved, if any
+   * @param {object}   [opts.data]    type-specific payload
+   */
+  recordEvent(type, amount, { metric = null, data = null } = {}) {
+    const event = new SimEvent(type, amount, this.currentDateInt, {
+      metric, data,
+      seq: this.events.length,
+      traceId: this.currentTraceId ?? null,
+    });
+    this.events.push(event);
+    this.creditMemos.push(
+      new CreditMemo(amount, renderNote(event), this.currentDateInt, event.kind)
+    );
   }
 
   // ── Credit / Debit (fund transfer interface) ─────────────────────
 
-  credit(amount, note = '') {
+  /**
+   * `event` is a descriptor — `{ type, data }` — not a note string.
+   *
+   * The note used to be built by the caller and passed through to the ledger,
+   * which made the wording of a reconciliation-critical record the property of
+   * whichever engine happened to call. Callers now say what HAPPENED and
+   * sim-event.js decides how it reads.
+   */
+  credit(amount, event = null) {
     logger.log(LogCategory.TRANSFER,
-      `${this.displayName}.credit(${amount.toString()}, '${note}')`);
-    return this.#transact(amount.copy(), note);
+      `${this.displayName}.credit(${amount.toString()}, '${event?.type ?? ''}')`);
+    return this.#transact(amount.copy(), event);
   }
 
-  debit(amount, note = '') {
+  debit(amount, event = null) {
     logger.log(LogCategory.TRANSFER,
-      `${this.displayName}.debit(${amount.toString()}, '${note}')`);
-    return this.#transact(amount.copy().flipSign(), note);
+      `${this.displayName}.debit(${amount.toString()}, '${event?.type ?? ''}')`);
+    return this.#transact(amount.copy().flipSign(), event);
   }
 
-  #transact(amount, note) {
+  #transact(amount, event) {
     // Flow instruments: memo only, no balance change
     if (this.#isFlowInstrument()) {
-      if (note) this.addCreditMemo(amount.copy(), note);
+      if (event) this.recordEvent(event.type, amount.copy(), { data: event.data });
       return { assetChange: Currency.zero(), realizedGain: Currency.zero(), spillover: Currency.zero() };
     }
 
@@ -764,8 +803,8 @@ export class ModelAsset {
       }
     }
 
-    if (note) {
-      this.addCreditMemo(amount.copy(), note);
+    if (event) {
+      this.recordEvent(event.type, amount.copy(), { data: event.data });
     }
 
     return { assetChange: amount.copy(), realizedGain, spillover };
@@ -952,7 +991,10 @@ export class ModelAsset {
   // ── Serialization ───────────────────────────────────────────────
 
   toJSON() {
-    const { creditMemos, creditMemosCheckedIndex, fundTransfers, ...rest } = this;
+    // events/creditMemos are run state — rebuilt by every chronometer_run.
+    // Serializing them would bloat share links and worker payloads with data
+    // the receiving side throws away and regenerates.
+    const { creditMemos, creditMemosCheckedIndex, events, fundTransfers, ...rest } = this;
     return rest;
   }
 

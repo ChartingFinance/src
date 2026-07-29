@@ -32,6 +32,7 @@ export class FundTransferResult {
   }
 }
 import { Metric } from './metric.js';
+import { EventType, renderNote } from './sim-event.js';
 
 /**
  * This is to handle one-sided debits or credits. For example, a tax payment. Here we simply
@@ -182,7 +183,7 @@ export class FundTransfer {
     logger.log(LogCategory.SANITY,
       `Unfunded: ${modelAsset?.displayName ?? '?'} ${memo} ${amount.toString()} — ` +
       `no eligible funding account (cash, savings, brokerage or bonds with a positive balance)`);
-    modelAsset?.addCreditMemo(amount.copy().flipSign(), `Unfunded — ${memo}`, 'info');
+    modelAsset?.recordEvent(EventType.UNFUNDED, amount.copy().flipSign(), { data: { cause: memo } });
   }
 
   // ── One-Sided Settlement ───────────────────────────────────────
@@ -210,14 +211,17 @@ export class FundTransfer {
    * @returns {{supplied: Currency, realizedGain: Currency, spillover: Currency,
    *            spilloverGain: Currency, spilloverInstrument: string|null}}
    */
-  static settleOneSided(oneSided, memo, allModels, resolveFallback = FundTransfer.resolveFunding) {
-    const result = oneSided.toModel.debit(oneSided.amount, memo);
+  static settleOneSided(oneSided, event, allModels, resolveFallback = FundTransfer.resolveFunding) {
+    const result = oneSided.toModel.debit(oneSided.amount, event);
+    // The unfunded report quotes what could not be paid for, which is this
+    // settlement's own note — rendered once, here, rather than rebuilt.
+    const memo = renderNote(event);
     const supplied = oneSided.amount.minus(result.spillover);
 
     oneSided.toModel.recordDistribution(supplied);
     if (result.realizedGain?.amount > 0) {
       oneSided.toModel.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, result.realizedGain);
-      oneSided.toModel.addCreditMemo(result.realizedGain.copy(), 'Capital gains', 'info');
+      oneSided.toModel.recordEvent(EventType.CAPITAL_GAIN_RECOGNIZED, result.realizedGain.copy(), { metric: Metric.LONG_TERM_CAPITAL_GAIN, data: { spillover: false } });
     }
 
     let spillover = Currency.zero();
@@ -227,8 +231,8 @@ export class FundTransfer {
     if (result.spillover.amount > 0) {
       const fallback = resolveFallback(allModels);
       if (fallback) {
-        const spillMemo = `Spillover from depleted ${oneSided.toModel.displayName}`;
-        const spillResult = fallback.debit(result.spillover, spillMemo);
+        const spillResult = fallback.debit(result.spillover,
+          { type: EventType.SPILLOVER, data: { depleted: oneSided.toModel.displayName } });
         spillover = result.spillover.copy();
         spilloverGain = spillResult.realizedGain?.copy() ?? Currency.zero();
         spilloverInstrument = fallback.instrument;
@@ -236,7 +240,7 @@ export class FundTransfer {
         fallback.recordDistribution(spillover.minus(spillResult.spillover));
         if (spilloverGain.amount > 0) {
           fallback.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, spilloverGain);
-          fallback.addCreditMemo(spilloverGain.copy(), 'Capital gains (spillover)', 'info');
+          fallback.recordEvent(EventType.CAPITAL_GAIN_RECOGNIZED, spilloverGain.copy(), { metric: Metric.LONG_TERM_CAPITAL_GAIN, data: { spillover: true } });
         }
         // The fallback itself clamped: nothing left at this layer to draw on.
         if (spillResult.spillover?.amount > 0) {
@@ -321,20 +325,28 @@ export class FundTransfer {
     if (!this.fromModel || !this.toModel) return new FundTransferResult();
 
     const amount = this.calculate({ useClosePercent });
-    const memo = this.describe(null, useClosePercent);
+    const event = {
+      type: EventType.TRANSFER,
+      data: {
+        from: this.fromModel?.displayName ?? '?',
+        to: this.toDisplayName,
+        cadence: useClosePercent ? 'on close' : 'monthly',
+      },
+    };
+    const memo = renderNote(event);
 
-    const fromResult = this.fromModel.debit(amount, memo);
-    const toResult   = this.toModel.credit(amount, memo);
+    const fromResult = this.fromModel.debit(amount, event);
+    const toResult   = this.toModel.credit(amount, event);
 
     // Mechanical bookkeeping: record realized capital gains on whichever
     // side produced them (debit with positive gain, or credit-as-withdrawal)
     if (fromResult.realizedGain?.amount > 0) {
       this.fromModel.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, fromResult.realizedGain);
-      this.fromModel.addCreditMemo(fromResult.realizedGain.copy(), 'Capital gains', 'info');
+      this.fromModel.recordEvent(EventType.CAPITAL_GAIN_RECOGNIZED, fromResult.realizedGain.copy(), { metric: Metric.LONG_TERM_CAPITAL_GAIN, data: { spillover: false } });
     }
     if (toResult.realizedGain?.amount > 0) {
       this.toModel.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, toResult.realizedGain);
-      this.toModel.addCreditMemo(toResult.realizedGain.copy(), 'Capital gains', 'info');
+      this.toModel.recordEvent(EventType.CAPITAL_GAIN_RECOGNIZED, toResult.realizedGain.copy(), { metric: Metric.LONG_TERM_CAPITAL_GAIN, data: { spillover: false } });
     }
 
     // Tax-advantaged account depleted: the overshoot must come from a taxable
@@ -357,14 +369,14 @@ export class FundTransfer {
       const spillAmount = fromResult.spillover?.amount > 0 ? fromResult.spillover : toResult.spillover;
       const fallback = FundTransfer.resolveFunding(this._allModels);
       if (fallback) {
-        const spillMemo = `Spillover from depleted ${spillSource.displayName}`;
-        const spillResult = fallback.debit(spillAmount, spillMemo);
+        const spillResult = fallback.debit(spillAmount,
+          { type: EventType.SPILLOVER, data: { depleted: spillSource.displayName } });
         spillover = spillAmount.copy();
         spilloverGain = spillResult.realizedGain?.copy() ?? Currency.zero();
         spilloverInstrument = fallback.instrument;
         if (spilloverGain.amount > 0) {
           fallback.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, spilloverGain);
-          fallback.addCreditMemo(spilloverGain.copy(), 'Capital gains (spillover)', 'info');
+          fallback.recordEvent(EventType.CAPITAL_GAIN_RECOGNIZED, spilloverGain.copy(), { metric: Metric.LONG_TERM_CAPITAL_GAIN, data: { spillover: true } });
         }
       } else {
         // No backstop account can cover the shortfall. Nothing at this layer
