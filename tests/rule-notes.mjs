@@ -262,6 +262,56 @@ check('SILENCE: an account with no RMD obligation says nothing about RMDs', () =
   assert.ok(!idsFor(retirement, 'Pension').includes('rmd-satisfied'));
 });
 
+// ══ Depletion: demoted from the card icon to a note ══════════════════
+console.log('\n── Account depleted ──\n');
+
+// Checking is too small for the mortgage and clamps at $0; Brokerage covers
+// the rest. The card no longer marks this with ⚠️ — the fact lives here.
+const drained = await run([
+  { instrument: 'realEstate', displayName: 'Home', isPrimaryHome: true,
+    startDateInt: { year: 2026, month: 1 }, finishDateInt: { year: 2029, month: 12 },
+    startCurrency: { amount: 500000 }, startBasisCurrency: { amount: 500000 }, annualReturnRate: { rate: 0 } },
+  { instrument: 'mortgage', displayName: 'Mortgage',
+    startDateInt: { year: 2026, month: 1 }, finishDateInt: { year: 2029, month: 12 },
+    startCurrency: { amount: -300000 }, startBasisCurrency: { amount: 0 },
+    annualReturnRate: { rate: 0.065 }, monthsRemaining: 360 },
+  { instrument: 'bank', displayName: 'Checking',
+    startDateInt: { year: 2026, month: 1 }, finishDateInt: { year: 2029, month: 12 },
+    startCurrency: { amount: 4000 }, startBasisCurrency: { amount: 4000 }, annualReturnRate: { rate: 0 } },
+  { instrument: 'taxableEquity', displayName: 'Brokerage',
+    startDateInt: { year: 2026, month: 1 }, finishDateInt: { year: 2029, month: 12 },
+    startCurrency: { amount: 400000 }, startBasisCurrency: { amount: 400000 }, annualReturnRate: { rate: 0 } },
+], { start: 50, retire: 65 });
+
+check('a depleted account says so, and dates it', () => {
+  const notes = notesFor(drained, 'Checking');
+  const note = notes.find(n => n.id === 'account-depleted');
+  assert.ok(note, `expected account-depleted, got [${notes.map(n => n.id)}]`);
+  assert.match(note.text, /\w+ 20\d\d/, `should name the month: "${note.text}"`);
+});
+
+check('depletion is stated without alarm — it is the modelled scenario', () => {
+  const note = notesFor(drained, 'Checking').find(n => n.id === 'account-depleted');
+  assert.equal(note.tone, 'info',
+    'drawing an account down is normal; only an unpaid obligation is a warning');
+});
+
+check('WINDOWING: the note is silent in months before the account ran dry', () => {
+  // Month 0 — the account still held its opening balance.
+  const asset = drained.modelAssets.find(a => a.displayName === 'Checking');
+  const out = ruleNotesFor(makeRuleContext({
+    asset, modelAssets: drained.modelAssets,
+    firstDateInt: drained.firstDateInt, from: 0, to: 0,
+  }));
+  assert.ok(!out.map(n => n.id).includes('account-depleted'),
+    `isDepleted is present state — the note must not claim it happened in month one; got [${out.map(n => n.id)}]`);
+});
+
+check('SILENCE: an account that never ran dry says nothing about depletion', () => {
+  assert.ok(!idsFor(drained, 'Brokerage').includes('account-depleted'));
+  assert.ok(!idsFor(employed, 'Savings').includes('account-depleted'));
+});
+
 // ══ Contribution caps ════════════════════════════════════════════════
 console.log('\n── Contribution limits ──\n');
 

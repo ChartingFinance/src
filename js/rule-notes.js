@@ -40,7 +40,7 @@
 import { Metric, aggregateMetric } from './metric.js';
 import { InstrumentType } from './instruments/instrument.js';
 import { global_home_sale_capital_gains_discount } from './globals.js';
-import { DateInt } from './utils/date-int.js';
+import { DateInt, monthLabel } from './utils/date-int.js';
 import { formatCurrency } from './utils/html.js';
 
 /**
@@ -217,6 +217,49 @@ export const RULES = [
             return {
                 emoji: '\u{1F4CA}',
                 text: `Contributions were capped by the ${which} — ${formatCurrency(shortfall)} of what your transfers asked for could not be contributed.`,
+            };
+        },
+    },
+
+    {
+        // Where depletion went when it lost the ⚠️.
+        //
+        // The card icon used to mean isDepleted, which fires on every retiree
+        // whose accounts draw down — i.e. on the exact scenario this tool
+        // exists to model. The icon now means an unpayable obligation, and the
+        // fact that an account emptied lives here, stated plainly and without
+        // alarm.
+        //
+        // isDepleted is present state — true forever once set — so it cannot
+        // date the event on its own (rule 3). The month comes from the VALUE
+        // history, and the note stays silent unless that month falls inside
+        // the window being viewed.
+        id: 'account-depleted',
+        evaluate(ctx) {
+            const { asset } = ctx;
+            if (!asset?.isDepleted) return null;
+
+            const history = asset.getHistory?.(Metric.VALUE);
+            if (!history?.length) return null;
+
+            // First month the balance fell to nothing after holding something.
+            let idx = -1;
+            for (let i = 1; i < history.length; i++) {
+                if (history[i - 1] > 0.01 && history[i] <= 0.01) { idx = i; break; }
+            }
+            if (idx < 0) return null;
+            if (idx < ctx.from || idx > ctx.to) return null;
+
+            let when = 'this plan';
+            if (ctx.firstDateInt) {
+                const d = DateInt.from(ctx.firstDateInt.year, ctx.firstDateInt.month);
+                d.addMonths(idx);
+                when = monthLabel(d);
+            }
+
+            return {
+                emoji: '\u{1FAB9}',
+                text: `This account reached $0 in ${when} and was held there — it cannot go negative. Drawing an account down is normal; what matters is whether anything went unpaid, which is reported separately.`,
             };
         },
     },

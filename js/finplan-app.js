@@ -66,6 +66,7 @@ import './components/report-view.js';
 import './components/credit-memo-view.js';
 import './components/share-modal.js';
 import './components/issues-modal.js';
+import './components/plan-issues-panel.js';
 
 // ── AI Summary generators ──────────────────────────────────
 // generators/finplan-ai.js is code-split: dynamically imported on the first
@@ -112,7 +113,9 @@ import {
     global_setGuardrailAdjustment,
     global_simDataMode,
     global_setSimDataMode,
+    global_showEngineDiagnostics,
 } from './globals.js';
+import { detectIssues, alertAssetNames } from './portfolio-issues.js';
 import { buildYearPool } from './mc-compute.js';
 import { formatCompactCurrency } from './utils/html.js';
 
@@ -155,6 +158,7 @@ const metricSelect      = document.getElementById('finplan-metric-select');
 const microMetricSelect = document.getElementById('finplan-micro-metric-select');
 const shareModal        = document.getElementById('shareModal');
 const issuesModal       = document.getElementById('issuesModal');
+const planIssuesPanel   = document.getElementById('planIssuesPanel');
 const scenarioChip      = document.getElementById('scenario-chip');
 const scenarioChipName  = document.getElementById('scenario-chip-name');
 const scenarioMenu      = document.getElementById('scenario-menu');
@@ -1051,11 +1055,18 @@ function calculate() {
     chronometer_run(portfolio);
     appState.portfolio = portfolio;
 
+    // What needs attention. Detected once and distributed from here: the panel,
+    // the ⚠️ on the cards and the View modal must never disagree about what is
+    // wrong with the plan.
+    const issues = detectIssues(portfolio, { includeReconciliation: global_showEngineDiagnostics });
+    if (planIssuesPanel) planIssuesPanel.issues = issues;
+
     // Update sidebar
     assetList.modelAssets = [...portfolio.modelAssets];
     assetList.expandedGroups = new Set(expandedGroups);
     assetList.activeLifeEvent = appState.lifeEvents[0] ?? null;
     assetList.portfolio = portfolio;
+    assetList.alertAssets = alertAssetNames(issues);
     syncAssetListToDate(store.selectedYear, store.selectedMonth);
 
     // Update flows/sankey views
