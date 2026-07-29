@@ -101,8 +101,30 @@ export const EventType = Object.freeze({
     ONE_TIME:                'oneTime',           // data: { note }
 
     // ── Engine reports (no money moved) ──
-    UNFUNDED:                'unfunded',          // data: { cause }
+    UNFUNDED:                'unfunded',          // data: { cause, origin }
     CONTRIBUTION_CAPPED:     'contributionCapped',// data: { limitName }
+});
+
+/**
+ * Where a shortfall came from. SPILLOVER and UNFUNDED are both "the part of a
+ * movement that one account could not supply", and they are emitted from BOTH
+ * the two-sided `execute()` path and the one-sided `settleOneSided` path.
+ * Conservation has to know which, because only the two-sided total is expected
+ * to net to zero.
+ *
+ * Learned the hard way: a probe over the four quick-start profiles showed
+ * TRANSFER + SPILLOVER + UNFUNDED === 0 and that looked like a law. It is not —
+ * those four profiles simply never spill from a settlement. Scenarios where a
+ * home's carrying costs drain their funding account break the naive sum by up
+ * to $2,265 a month.
+ */
+export const ShortfallOrigin = Object.freeze({
+    /** Remainder of a two-sided transfer. Participates in conservation. */
+    PAIRED: 'paired',
+    /** Remainder of a one-sided settlement. Has no second leg to balance. */
+    ONE_SIDED: 'oneSided',
+    /** An obligation that never moved money at all — a pre-flight failure. */
+    STANDALONE: 'standalone',
 });
 
 /** Cash moved on this asset, versus recognition/attribution only. */

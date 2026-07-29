@@ -16,7 +16,7 @@ import { FundTransferOneSided, FundTransfer } from '../fund-transfer.js';
 import { MonthsSpan } from '../utils/months-span.js';
 import { activeTaxTable } from '../globals.js';
 import { logger, LogCategory } from '../utils/logger.js';
-import { EventType } from '../sim-event.js';
+import { EventType, ShortfallOrigin } from '../sim-event.js';
 
 export class TaxEngine {
 
@@ -99,7 +99,7 @@ export class TaxEngine {
                         preFlight.toModel = fundingSource;
                         preFlights.push(preFlight);
                     } else {
-                        FundTransfer.reportUnfunded(modelAsset, remaining, 'property tax');
+                        FundTransfer.reportUnfunded(modelAsset, remaining, 'property tax', ShortfallOrigin.STANDALONE);
                     }
                 }
 

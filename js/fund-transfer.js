@@ -32,7 +32,7 @@ export class FundTransferResult {
   }
 }
 import { Metric } from './metric.js';
-import { EventType, renderNote } from './sim-event.js';
+import { EventType, ShortfallOrigin, renderNote } from './sim-event.js';
 
 /**
  * This is to handle one-sided debits or credits. For example, a tax payment. Here we simply
@@ -174,16 +174,25 @@ export class FundTransfer {
    * `info` kind — no money moved, so it must stay out of cash reconciliation —
    * and lands on the asset that owes, where the UI already shows its ledger.
    *
+   * `origin` is REQUIRED and has no default on purpose. It decides which
+   * conservation total this shortfall belongs to, and a wrong answer silently
+   * mis-buckets money — the exact failure class this whole line of work exists
+   * to remove. An omitted origin throws instead.
+   *
    * @param {ModelAsset} modelAsset  The obligation's own asset (expense, mortgage, home)
    * @param {Currency}   amount      Positive amount that went unpaid
    * @param {string}     memo        What the money was for
+   * @param {string}     origin      ShortfallOrigin — which movement this is the remainder of
    */
-  static reportUnfunded(modelAsset, amount, memo) {
+  static reportUnfunded(modelAsset, amount, memo, origin) {
+    if (!Object.values(ShortfallOrigin).includes(origin)) {
+      throw new Error(`reportUnfunded: origin must be a ShortfallOrigin, got "${origin}"`);
+    }
     if (!amount || amount.amount <= 0) return;
     logger.log(LogCategory.SANITY,
       `Unfunded: ${modelAsset?.displayName ?? '?'} ${memo} ${amount.toString()} — ` +
       `no eligible funding account (cash, savings, brokerage or bonds with a positive balance)`);
-    modelAsset?.recordEvent(EventType.UNFUNDED, amount.copy().flipSign(), { data: { cause: memo } });
+    modelAsset?.recordEvent(EventType.UNFUNDED, amount.copy().flipSign(), { data: { cause: memo, origin } });
   }
 
   // ── One-Sided Settlement ───────────────────────────────────────
@@ -232,7 +241,8 @@ export class FundTransfer {
       const fallback = resolveFallback(allModels);
       if (fallback) {
         const spillResult = fallback.debit(result.spillover,
-          { type: EventType.SPILLOVER, data: { depleted: oneSided.toModel.displayName } });
+          { type: EventType.SPILLOVER,
+            data: { depleted: oneSided.toModel.displayName, origin: ShortfallOrigin.ONE_SIDED } });
         spillover = result.spillover.copy();
         spilloverGain = spillResult.realizedGain?.copy() ?? Currency.zero();
         spilloverInstrument = fallback.instrument;
@@ -244,10 +254,10 @@ export class FundTransfer {
         }
         // The fallback itself clamped: nothing left at this layer to draw on.
         if (spillResult.spillover?.amount > 0) {
-          FundTransfer.reportUnfunded(oneSided.fromModel ?? oneSided.toModel, spillResult.spillover, memo);
+          FundTransfer.reportUnfunded(oneSided.fromModel ?? oneSided.toModel, spillResult.spillover, memo, ShortfallOrigin.ONE_SIDED);
         }
       } else {
-        FundTransfer.reportUnfunded(oneSided.fromModel ?? oneSided.toModel, result.spillover, memo);
+        FundTransfer.reportUnfunded(oneSided.fromModel ?? oneSided.toModel, result.spillover, memo, ShortfallOrigin.ONE_SIDED);
       }
     }
 
@@ -370,7 +380,8 @@ export class FundTransfer {
       const fallback = FundTransfer.resolveFunding(this._allModels);
       if (fallback) {
         const spillResult = fallback.debit(spillAmount,
-          { type: EventType.SPILLOVER, data: { depleted: spillSource.displayName } });
+          { type: EventType.SPILLOVER,
+            data: { depleted: spillSource.displayName, origin: ShortfallOrigin.PAIRED } });
         spillover = spillAmount.copy();
         spilloverGain = spillResult.realizedGain?.copy() ?? Currency.zero();
         spilloverInstrument = fallback.instrument;
@@ -382,7 +393,7 @@ export class FundTransfer {
         // No backstop account can cover the shortfall. Nothing at this layer
         // can conjure the cash; surface it instead of failing silently — the
         // requested amount was still credited in full to the target.
-        FundTransfer.reportUnfunded(spillSource, spillAmount, `${memo} (account depleted, no backstop)`);
+        FundTransfer.reportUnfunded(spillSource, spillAmount, `${memo} (account depleted, no backstop)`, ShortfallOrigin.PAIRED);
       }
     }
 
