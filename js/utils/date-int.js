@@ -12,6 +12,23 @@
 
 export const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
+export const MONTH_NAMES_LONG = [
+  'January','February','March','April','May','June',
+  'July','August','September','October','November','December',
+];
+
+/**
+ * "March 2049" — for prose. Tables and axes want the short MONTH_NAMES; a
+ * sentence telling someone their plan ran out of money wants the whole word.
+ *
+ * Takes anything with `year` / `month`, not just a DateInt, because memo dates
+ * and raw JSON both flow through here.
+ */
+export function monthLabel(dateInt) {
+  if (!dateInt || dateInt.year == null) return 'an unknown month';
+  return `${MONTH_NAMES_LONG[(dateInt.month ?? 1) - 1]} ${dateInt.year}`;
+}
+
 export class DateInt {
   /**
    * @param {number} yyyyMM  e.g. 202501 for January 2025
