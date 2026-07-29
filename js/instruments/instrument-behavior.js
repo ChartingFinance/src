@@ -272,7 +272,17 @@ const CapitalBehavior = Object.freeze({
       return new AssetAppreciationResult(Currency.zero(), Currency.zero(), Currency.zero(), Currency.zero());
     }
 
-    const growth = new Currency(asset.finishCurrency.amount * asset.annualReturnRate.asMonthly());
+    // Earnings never accrue on a deficit. An overdrawn account is not a margin
+    // loan: compounding a negative balance at the asset's own return rate is
+    // what turned a -$424 overdraft into -$11.5M across one shipped profile's
+    // lifetime, 82% of the hole. Debt is exempt: it reaches here only while
+    // still owed (the paid-off case returned above), and its "growth" IS the
+    // interest accruing on that balance.
+    const earns = InstrumentType.isDebt(asset.instrument) || asset.finishCurrency.amount > 0;
+
+    const growth = earns
+      ? new Currency(asset.finishCurrency.amount * asset.annualReturnRate.asMonthly())
+      : Currency.zero();
 
     asset.growthCurrency.add(growth);
     asset.finishCurrency.add(growth);
@@ -281,7 +291,7 @@ const CapitalBehavior = Object.freeze({
 
     let qualifiedDiv = Currency.zero();
     let nonQualifiedDiv = Currency.zero();
-    if (asset.annualDividendRate.rate != 0.0) {
+    if (asset.annualDividendRate.rate != 0.0 && earns) {
       const totalDiv = asset.finishCurrency.amount * asset.annualDividendRate.asMonthly();
       const qualifiedRatio = asset.dividendQualifiedRatio;
       qualifiedDiv = new Currency(totalDiv * qualifiedRatio);
@@ -388,7 +398,11 @@ const IncomeAccountBehavior = Object.freeze({
 
   applyMonthly(asset) {
     asset.ensurePositiveStart();
-    const income = new Currency(asset.finishCurrency.amount * asset.annualReturnRate.asMonthly());
+    // Interest never accrues on a deficit — see CapitalBehavior. A savings
+    // account drawn below zero is not a loan against itself.
+    const income = asset.finishCurrency.amount > 0
+      ? new Currency(asset.finishCurrency.amount * asset.annualReturnRate.asMonthly())
+      : Currency.zero();
 
     asset.addToMetric(M.INTEREST_INCOME, income);
     // INCOME populated by DAG: INTEREST_INCOME → ORDINARY_INCOME → INCOME

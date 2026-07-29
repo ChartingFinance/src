@@ -370,24 +370,38 @@ const engine = {
 // Generated with --print-actual under the pinned 2026-07-15 clock.
 // Regenerate DELIBERATELY after intentional calculation changes and
 // review the diff line by line.
+//
+// Regenerated 2026-07-28 for the earnings-on-a-deficit guard. Six values moved,
+// all explained and all improvements:
+//   Savings           -6,048.12 -> -2,095.15   (+3,952.97)
+//   interestIncome    72,935.79 -> 76,888.75   (+3,952.96)
+// Those match to the cent — the entire Savings improvement IS the phantom
+// negative interest no longer being subtracted from a below-zero balance.
+// Brokerage (-4,339.76), qualifiedDividends (-366.12) and longTermCapitalGains
+// (+562.24) are second-order: more interest income means more taxable income,
+// settled from the brokerage. portfolioTotal moves -386.79, their sum.
+//
+// Savings is still NEGATIVE here. That is the remaining half of the overdraft
+// work — no $0 floor exists for funding-backstop accounts yet — so this value
+// is expected to move again, to 0.00, when that lands.
 const EXPECTED_ENGINE = {
   "Social Security": 4021.09,
-  "Savings": -6048.12,
+  "Savings": -2095.15,
   "IRA": 1825464.00,
   "Roth": 4028947.93,
-  "Brokerage": 8898144.04,
+  "Brokerage": 8893804.28,
   "CompanyStock": 0.00,
   "Treasuries": 116821.90,
   "Home": 2307042.36,
   "Mortgage": 0.00,
   "Living Expenses": -11682.19,
-  "portfolioTotal": 17170372.12,
+  "portfolioTotal": 17169985.33,
   "employedIncome": 0.00,
   "socialSecurityIncome": 950908.99,
   "tradIRADistribution": 2786481.44,
-  "qualifiedDividends": 981665.34,
-  "longTermCapitalGains": 1238273.67,
-  "interestIncome": 72935.79,
+  "qualifiedDividends": 981299.22,
+  "longTermCapitalGains": 1238835.91,
+  "interestIncome": 76888.75,
   "mortgageInterest": -247134.01,
 };
 
