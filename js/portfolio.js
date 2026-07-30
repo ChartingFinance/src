@@ -198,7 +198,11 @@ export class Portfolio {
     }
 
     sortModelAssets(modelAssets) {
-        logger.log(LogCategory.GENERAL, 'Portfolio.sortModelAssets');
+        // INIT, not GENERAL: this runs in every Portfolio constructor, and Monte
+        // Carlo builds one per iteration. As a GENERAL line carrying no
+        // information it would put thousands of entries in the worker console
+        // the moment the logger came back to life.
+        logger.log(LogCategory.INIT, 'Portfolio.sortModelAssets');
     
         modelAssets.sort(function (a, b) {
             if (a.sortIndex() < b.sortIndex())

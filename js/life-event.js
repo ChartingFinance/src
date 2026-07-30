@@ -162,7 +162,12 @@ export class ModelLifeEvent {
     if (this.applied) return;
     this.applied = true;
 
-    logger.log(LogCategory.GENERAL,
+    // MONTHLY, not GENERAL: this is per-month simulation detail, and the GA
+    // optimizer re-runs the chronometer thousands of times per analysis. As a
+    // GENERAL line it put 3,078 entries on stderr the moment the logger came
+    // back to life. GENERAL stays on by default and is reserved for the rare
+    // and the important, so that a newly added log line is still visible.
+    logger.log(LogCategory.MONTHLY,
       `LifeEvent.apply: "${this.displayName}" (${this.type}) at ${currentDateInt}`);
 
     // 1. Close named assets
