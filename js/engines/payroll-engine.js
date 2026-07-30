@@ -16,6 +16,7 @@ import { FundTransfer } from '../fund-transfer.js';
 import { activeTaxTable } from '../globals.js';
 import { logger, LogCategory } from '../utils/logger.js';
 import { EventType, ShortfallOrigin } from '../sim-event.js';
+import { withTrace, TraceKind } from '../trace.js';
 
 export class PayrollEngine {
 
@@ -36,6 +37,16 @@ export class PayrollEngine {
     }
 
     applyPreTaxCalculations(modelAsset, currentDateInt) {
+        // FICA and the pre-tax contribution clamps land here, so this is the
+        // scope that makes "why was my 401K contribution capped?" answerable.
+        // NOTE: payroll is a pipeline of passes over ALL assets rather than a
+        // per-asset sequence (household tax needs every income first), so an
+        // income asset opens several PAYROLL scopes per month rather than one.
+        return withTrace(TraceKind.PAYROLL, `Payroll: ${modelAsset.displayName}`, currentDateInt,
+            () => this.#applyPreTaxCalculationsInScope(modelAsset, currentDateInt));
+    }
+
+    #applyPreTaxCalculationsInScope(modelAsset, currentDateInt) {
 
         if (InstrumentType.isMonthlyIncome(modelAsset.instrument)) {
 
@@ -118,6 +129,12 @@ export class PayrollEngine {
      * then compute its net income.
      */
     applyNetIncome(modelAsset, householdTax, totalWorkingIncome) {
+        return withTrace(TraceKind.PAYROLL, `Withholding: ${modelAsset.displayName}`,
+            modelAsset.currentDateInt,
+            () => this.#applyNetIncomeInScope(modelAsset, householdTax, totalWorkingIncome));
+    }
+
+    #applyNetIncomeInScope(modelAsset, householdTax, totalWorkingIncome) {
 
         if (!InstrumentType.isWorkingIncome(modelAsset.instrument)) {
             return;

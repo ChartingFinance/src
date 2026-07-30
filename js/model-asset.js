@@ -43,6 +43,7 @@ import { getBehavior }   from './instruments/instrument-behavior.js';
 import { global_getFinishDateInt, global_inflationRate } from './globals.js';
 import { Metric, METRIC_NAMES, MetricLabel, MetricRollups, PARENT_METRICS } from './metric.js';
 import { SimEvent, EventType, renderNote } from './sim-event.js';
+import { currentTraceId } from './trace.js';
 
 // Re-export so existing consumers can still import from model-asset.js
 export { Metric, MetricLabel, MetricRollups };
@@ -707,7 +708,7 @@ export class ModelAsset {
     const event = new SimEvent(type, amount, this.currentDateInt, {
       metric, data,
       seq: this.events.length,
-      traceId: this.currentTraceId ?? null,
+      traceId: currentTraceId(),
     });
     this.events.push(event);
     this.creditMemos.push(

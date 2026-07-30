@@ -16,6 +16,7 @@ import { FundTransferOneSided, FundTransfer } from '../fund-transfer.js';
 import { activeTaxTable } from '../globals.js';
 import { logger, LogCategory } from '../utils/logger.js';
 import { EventType, ShortfallOrigin } from '../sim-event.js';
+import { withTrace, TraceKind } from '../trace.js';
 
 export class ExpenseEngine {
 
@@ -28,6 +29,13 @@ export class ExpenseEngine {
     // ── Day 30: Expenses ─────────────────────────────────────────────
 
     applyExpenseTransfers(modelAsset, currentDateInt) {
+        // Root of an expense's causal chain: "Pay Living Expenses". Every
+        // transfer, clamp, spillover and shortfall that follows hangs off this.
+        return withTrace(TraceKind.EXPENSE, `Pay ${modelAsset.displayName}`, currentDateInt,
+            () => this.#applyExpenseTransfersInScope(modelAsset, currentDateInt));
+    }
+
+    #applyExpenseTransfersInScope(modelAsset, currentDateInt) {
 
         // Mortgage: execute fund transfers to pull payment from funding account
         if (InstrumentType.isMortgage(modelAsset.instrument)) {
@@ -123,6 +131,11 @@ export class ExpenseEngine {
     }
 
     applyMortgageTransfers(modelAsset, currentDateInt) {
+        return withTrace(TraceKind.MORTGAGE, `Pay ${modelAsset.displayName}`, currentDateInt,
+            () => this.#applyMortgageTransfersInScope(modelAsset, currentDateInt));
+    }
+
+    #applyMortgageTransfersInScope(modelAsset, currentDateInt) {
 
         // The mortgage payment amount was already computed by MortgageBehavior.applyMonthly()
         const payment = modelAsset.mortgagePaymentCurrency.copy().flipSign(); // payment is negative, need positive for debit
@@ -192,6 +205,11 @@ export class ExpenseEngine {
     }
 
     _debitCarryingCost(modelAsset, cost, label, currentDateInt) {
+        return withTrace(TraceKind.CARRYING_COST, `${modelAsset.displayName} ${label}`, currentDateInt,
+            () => this.#debitCarryingCostInScope(modelAsset, cost, label, currentDateInt));
+    }
+
+    #debitCarryingCostInScope(modelAsset, cost, label, currentDateInt) {
         let preFlights = [];
         let remaining = cost.copy();
 
@@ -238,6 +256,12 @@ export class ExpenseEngine {
     // ── Day 30: RMDs ─────────────────────────────────────────────────
 
     ensureRMDs(modelAsset) {
+        return withTrace(TraceKind.RMD, `Required distribution from ${modelAsset.displayName}`,
+            modelAsset.currentDateInt,
+            () => this.#ensureRMDsInScope(modelAsset));
+    }
+
+    #ensureRMDsInScope(modelAsset) {
 
         if (!InstrumentType.isTaxDeferred(modelAsset.instrument))
             return;

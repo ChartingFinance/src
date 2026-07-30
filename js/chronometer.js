@@ -1,5 +1,6 @@
 import { DateInt } from './utils/date-int.js';
 import { logger, LogCategory } from './utils/logger.js';
+import { resetTraces, traceScopes, assertNoOpenScopes } from './trace.js';
 import { activeTaxTable, global_backtestYear, global_inflationRate, global_sp500_annual_returns, global_10yr_treasury_rates, global_cpi_annual_inflation, global_wage_growth_annual } from './globals.js';
 import { Instrument, InstrumentType } from './instruments/instrument.js';
 import { PriceIndex } from './utils/price-index.js';
@@ -81,6 +82,7 @@ export async function chronometer_run(portfolio) {
     // lines; without a per-run reset the cap would silence the second run of a
     // session instead of the tail of the first.
     logger.reset();
+    resetTraces();
 
     if (portfolio.modelAssets == null || portfolio.modelAssets.length == 0) {
         logger.log(LogCategory.GENERAL, 'chronometer_run - no modelAssets');
@@ -187,4 +189,15 @@ export async function chronometer_run(portfolio) {
     portfolio.finalizeChron();
     activeTaxTable.finalizeChron();
 
+    // Hand the causal scopes to the portfolio so any consumer can answer
+    // "why did this happen?" without reaching into module state.
+    portfolio.traceScopes = traceScopes();
+
+    // A scope left open means an engine operation returned without unwinding,
+    // and every event after it was attributed to the wrong parent. Silent
+    // misattribution is worse than none, so say so.
+    if (!assertNoOpenScopes()) {
+        logger.log(LogCategory.SANITY,
+            'trace scopes left open at end of run — causal attribution is unreliable');
+    }
 }
