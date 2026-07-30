@@ -33,6 +33,7 @@ export class FundTransferResult {
 }
 import { Metric } from './metric.js';
 import { EventType, ShortfallOrigin, renderNote } from './sim-event.js';
+import { withTrace, TraceKind } from './trace.js';
 
 /**
  * This is to handle one-sided debits or credits. For example, a tax payment. Here we simply
@@ -221,6 +222,15 @@ export class FundTransfer {
    *            spilloverGain: Currency, spilloverInstrument: string|null}}
    */
   static settleOneSided(oneSided, event, allModels, resolveFallback = FundTransfer.resolveFunding) {
+    // Nested under whatever obligation asked for this draw, so the chain reads
+    // "Pay Living Expenses > Settle from Brokerage > spillover".
+    return withTrace(TraceKind.SETTLEMENT,
+      `Settle from ${oneSided.toModel?.displayName ?? '?'}`,
+      oneSided.toModel?.currentDateInt,
+      () => FundTransfer.#settleInScope(oneSided, event, allModels, resolveFallback));
+  }
+
+  static #settleInScope(oneSided, event, allModels, resolveFallback) {
     const result = oneSided.toModel.debit(oneSided.amount, event);
     // The unfunded report quotes what could not be paid for, which is this
     // settlement's own note — rendered once, here, rather than rebuilt.
@@ -333,6 +343,18 @@ export class FundTransfer {
    */
   execute({ useClosePercent = false } = {}) {
     if (!this.fromModel || !this.toModel) return new FundTransferResult();
+
+    // One causal scope for the whole movement. Everything recorded inside —
+    // both legs, any realized gain, a clamp's spillover, an unfunded remainder
+    // — becomes attributable to this one transfer rather than floating loose in
+    // the month.
+    return withTrace(TraceKind.TRANSFER,
+      `Transfer ${this.fromModel.displayName} → ${this.toDisplayName}`,
+      this.fromModel.currentDateInt,
+      () => this.#executeInScope({ useClosePercent }));
+  }
+
+  #executeInScope({ useClosePercent = false } = {}) {
 
     const amount = this.calculate({ useClosePercent });
     const event = {

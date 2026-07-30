@@ -7,6 +7,8 @@ import { User } from './user.js';
 import { global_user_startAge } from './globals.js';
 import { FundTransfer } from './fund-transfer.js';
 import { EventType, ShortfallOrigin } from './sim-event.js';
+import { withTrace, TraceKind } from './trace.js';
+import { monthLabel } from './utils/date-int.js';
 import { FinancialPackage } from './financial-package.js';
 import { PayrollEngine } from './engines/payroll-engine.js';
 import { ExpenseEngine } from './engines/expense-engine.js';
@@ -310,7 +312,12 @@ export class Portfolio {
             if (event.applied) continue;
             const trigger = event.triggerDateInt;
             if (trigger.year === currentDateInt.year && trigger.month === currentDateInt.month) {
-                event.apply(this, currentDateInt);
+                // Its own causal root. Life events fire from chronometer_run
+                // BEFORE applyMonth, so without a scope here the asset closes
+                // and close-transfers a phase triggers would be the only events
+                // in the run with no attribution at all.
+                withTrace(TraceKind.MONTH, `Life event: ${event.displayName}`, currentDateInt,
+                    () => event.apply(this, currentDateInt));
             }
         }
     }
@@ -556,6 +563,15 @@ export class Portfolio {
     }
     
     applyMonth(currentDateInt) {
+        // Root of every causal chain: the month. applyMonth is called once per
+        // day-tick (1, 15, 30), so a month opens three roots with the same
+        // label — an implementation detail that does not surface, since a chain
+        // renders as "November 2051 > Pay Living Expenses > ...".
+        return withTrace(TraceKind.MONTH, monthLabel(currentDateInt), currentDateInt,
+            () => this.#applyMonthInScope(currentDateInt));
+    }
+
+    #applyMonthInScope(currentDateInt) {
 
         /*
         leaving this in to test a specific test data case when selling a house
@@ -837,16 +853,27 @@ export class Portfolio {
     }
 
     applyYear(currentDateInt) {
+        // The annual pass runs OUTSIDE applyMonth, so without its own root the
+        // events it emits — annual income growth and the tax true-up — are the
+        // only ones in a run the engine cannot explain. Found by asserting that
+        // every event is attributable: 73 orphans on the Early Career profile.
+        return withTrace(TraceKind.YEAR, `${currentDateInt.year} annual pass`, currentDateInt,
+            () => this.#applyYearInScope(currentDateInt));
+    }
+
+    #applyYearInScope(currentDateInt) {
 
         for (let modelAsset of this.modelAssets) {
             if (modelAsset.inMonth(currentDateInt)) {
                 if (InstrumentType.isMonthlyIncome(modelAsset.instrument))
-                    modelAsset.applyYearly();
+                    withTrace(TraceKind.YEAR, `Annual growth: ${modelAsset.displayName}`,
+                        currentDateInt, () => modelAsset.applyYearly());
             }
         }
 
         // Annual tax true-up: reconcile exact liability vs. withheld amounts
-        this.taxes.applyAnnualTaxTrueUp();
+        withTrace(TraceKind.TAX_TRUE_UP, `${currentDateInt.year} tax true-up`, currentDateInt,
+            () => this.taxes.applyAnnualTaxTrueUp());
 
     }
 
