@@ -116,6 +116,7 @@ import {
     global_showEngineDiagnostics,
 } from './globals.js';
 import { detectIssues, alertAssetNames } from './portfolio-issues.js';
+import { logger, LogCategory } from './utils/logger.js';
 import { buildYearPool } from './mc-compute.js';
 import { formatCompactCurrency } from './utils/html.js';
 
@@ -249,6 +250,12 @@ function getAssetDisplayOrder() {
 
 global_initialize();
 setActiveTaxTable(new TaxTable());
+
+// The engine's own reconciliation verdict goes to the console only when the
+// user has asked for diagnostics — the same advanced flag that reveals the
+// reconciliation category in the issues panel. SANITY fires once a month, so
+// leaving it on by default would bury every other message.
+if (global_showEngineDiagnostics) logger.enable(LogCategory.SANITY);
 
 // Sync settings inputs to globals
 syncGlobalsToSettings();

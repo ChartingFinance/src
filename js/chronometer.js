@@ -76,6 +76,12 @@ function applyBacktestForYear(portfolio, simulationYear, backtestStartYear, simS
 
 export async function chronometer_run(portfolio) {
 
+    // Clear the logger's per-run output cap. SANITY fires once a month, so a
+    // 666-month plan with a real reconciliation problem can emit thousands of
+    // lines; without a per-run reset the cap would silence the second run of a
+    // session instead of the tail of the first.
+    logger.reset();
+
     if (portfolio.modelAssets == null || portfolio.modelAssets.length == 0) {
         logger.log(LogCategory.GENERAL, 'chronometer_run - no modelAssets');
         return;
