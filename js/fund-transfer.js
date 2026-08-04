@@ -250,9 +250,16 @@ export class FundTransfer {
     if (result.spillover.amount > 0) {
       const fallback = resolveFallback(allModels);
       if (fallback) {
+        // `cause` carries WHICH obligation this spill was settling. Without it
+        // every one-sided spill reads alike, so a tax payment re-sourced from
+        // the backstop is indistinguishable from a mortgage or property-tax
+        // spill — which made a genuinely-collected $2,670 tax bill look like an
+        // uncollected gap during reconciliation (probed 2026-08-03).
         const spillResult = fallback.debit(result.spillover,
           { type: EventType.SPILLOVER,
-            data: { depleted: oneSided.toModel.displayName, origin: ShortfallOrigin.ONE_SIDED } });
+            data: { depleted: oneSided.toModel.displayName,
+                    origin: ShortfallOrigin.ONE_SIDED,
+                    cause: event?.type ?? null } });
         spillover = result.spillover.copy();
         spilloverGain = spillResult.realizedGain?.copy() ?? Currency.zero();
         spilloverInstrument = fallback.instrument;

@@ -381,11 +381,40 @@ export class TaxEngine {
         if (!liquidAsset) return;
 
         if (taxDifference > 0) {
-            // Underpaid — debit the shortfall (April tax bill)
+            // Underpaid — collect the shortfall (April tax bill).
+            //
+            // Routed through settleOneSided rather than a raw debit, for the
+            // same reason applyMonthlyTaxTrueUp is: a raw debit CLAMPS at $0 and
+            // returns the overshoot in `spillover`, which this site used to
+            // discard — booking ESTIMATED_INCOME_TAX for the full bill while
+            // that cash never left any account. Probed 2026-08-03: an April tax
+            // bill asked a $791.98 savings account for $3,462.57 and silently
+            // "collected" the missing $2,670.59.
+            //
+            // settleOneSided re-sources the remainder from the next backstop and
+            // reports what nothing can cover, so the books only ever claim tax
+            // that a balance actually paid. Each leg is booked against the
+            // account that really supplied it.
             const taxBill = new Currency(taxDifference);
             logger.log(LogCategory.TAX, `Annual True-Up: Underpaid by $${taxDifference.toFixed(0)}. Debiting ${liquidAsset.displayName}.`);
-            liquidAsset.debit(taxBill, { type: EventType.TAX_TRUE_UP, data: { direction: 'underpayment' } });
-            liquidAsset.addToMetric(Metric.ESTIMATED_INCOME_TAX, taxBill.copy().flipSign());
+
+            const oneSided = new FundTransferOneSided(null, taxBill);
+            oneSided.toModel = liquidAsset;
+            const settled = FundTransfer.settleOneSided(oneSided,
+                { type: EventType.TAX_TRUE_UP, data: { direction: 'underpayment' } },
+                this.modelAssets);
+
+            liquidAsset.addToMetric(Metric.ESTIMATED_INCOME_TAX, settled.supplied.copy().flipSign());
+            this.monthly.recordTransfer(liquidAsset.instrument, settled.supplied, settled.realizedGain);
+
+            if (settled.spillover.amount > 0 && settled.spilloverInstrument) {
+                this.monthly.recordTransfer(settled.spilloverInstrument, settled.spillover, settled.spilloverGain);
+                // The account that actually supplied the spilled leg carries its
+                // tax on its own ledger; booking it all against liquidAsset
+                // would show a depleted account paying tax it never held.
+                const payer = FundTransfer.resolveFunding(this.modelAssets);
+                if (payer) payer.addToMetric(Metric.ESTIMATED_INCOME_TAX, settled.spillover.copy().flipSign());
+            }
         } else {
             // Overpaid — credit the refund
             const taxRefund = new Currency(Math.abs(taxDifference));
