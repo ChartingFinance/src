@@ -67,7 +67,7 @@ export class RebalanceEngine {
             ft.approvedAmount = amount.copy();
 
             // ── Distribution tracking (source is tax-deferred) ───────
-            this._trackDistribution(modelAsset, amount);
+            this._trackDistribution(modelAsset, amount, ft.toModel);
 
             // ── Execute ──────────────────────────────────────────────
             const result = ft.execute();
@@ -134,8 +134,18 @@ export class RebalanceEngine {
      * instrument. Booking the FP here as well would double-count every
      * distribution in the tax base.
      */
-    _trackDistribution(sourceAsset, amount) {
+    _trackDistribution(sourceAsset, amount, targetAsset = null) {
         sourceAsset.recordDistribution(amount);
+
+        // A conversion (IRA → Roth, IRA → 401K) is a taxable distribution but
+        // the cash never leaves the shelter, so it is NOT withheld at the
+        // source: the user asked to convert a specific amount and withholding
+        // would silently shrink it, breaking the pure-transfer conservation
+        // that tests/transfer-tax-conservation asserts.
+        if (targetAsset && (InstrumentType.isTaxDeferred(targetAsset.instrument)
+                         || InstrumentType.isTaxFree(targetAsset.instrument))) {
+            sourceAsset.monthlyShelteredDistribution.add(amount);
+        }
     }
 
     /**
