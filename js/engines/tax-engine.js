@@ -14,9 +14,10 @@ import { InstrumentType } from '../instruments/instrument.js';
 import { Metric } from '../metric.js';
 import { FundTransferOneSided, FundTransfer } from '../fund-transfer.js';
 import { MonthsSpan } from '../utils/months-span.js';
-import { activeTaxTable } from '../globals.js';
+import { activeTaxTable, global_retirement_withholding_rate } from '../globals.js';
 import { logger, LogCategory } from '../utils/logger.js';
 import { EventType, ShortfallOrigin } from '../sim-event.js';
+import { withTrace, TraceKind } from '../trace.js';
 
 export class TaxEngine {
 
@@ -50,6 +51,144 @@ export class TaxEngine {
 
         logger.log(LogCategory.TRANSFER, `recordIncomeTaxWithholding: ${modelAsset.displayName} tax=${assetTax.toString()}`);
 
+    }
+
+    // ── Last day of month: withholding on deferred distributions ──────
+
+    /**
+     * Withhold federal tax at the SOURCE of every traditional IRA / 401(K)
+     * distribution taken this month.
+     *
+     * WHY THIS IS A MONTHLY SWEEP AND NOT A PER-DRAW HOOK
+     * ---------------------------------------------------
+     * Six code paths book a deferred distribution: expense fund transfers,
+     * the RMD top-up, rebalancing, close distributions, settleOneSided, and
+     * its spillover leg. Hanging a withholding call off each one means the
+     * rule is correct only while all six are remembered — and a missed site
+     * fails SILENTLY, booking a distribution with no tax. That is the same
+     * shape as the provenance-tag bug that shipped with a green suite.
+     *
+     * Reading the distribution METRIC instead makes the sweep total by
+     * construction: every path already writes it (recordDistribution and the
+     * two direct addToMetric sites), so a path added later is covered without
+     * anyone remembering this file exists.
+     *
+     * THE GROSS-UP
+     * ------------
+     * `distributed` is what the account paid out NET of tax. Withholding is
+     * `net × r/(1−r)`, not `net × r`, so that the withheld amount is r of the
+     * GROSS: at 10%, a $9,000 net draw withholds $1,000 against a $10,000
+     * gross. The withheld amount is itself a distribution — it left the
+     * account and is ordinary income — so it is added to both the asset metric
+     * and the household package, exactly as the net draw was.
+     *
+     * Because the rate is flat rather than a function of the liability, there
+     * is no iteration and no feedback loop; next month's true-up settles the
+     * difference either way.
+     *
+     * NOT APPLIED ON CLOSE. applyDeferredCloseDistribution already withholds
+     * the incremental marginal tax on a full distribution, which is strictly
+     * better than a flat 10%. It books ESTIMATED_INCOME_TAX and adds to
+     * monthly.incomeTax itself. This sweep would double-withhold, so the close
+     * path zeroes finishCurrency before month end and is excluded by the
+     * isClosed check below.
+     */
+    withholdOnDeferredDistributions() {
+
+        for (const modelAsset of this.modelAssets) {
+
+            if (!InstrumentType.isTaxDeferred(modelAsset.instrument)) continue;
+
+            // Consume the month's conversion total whether or not this asset
+            // goes on to withhold — leaving it would carry into next month and
+            // suppress withholding on an unrelated draw.
+            const sheltered = modelAsset.monthlyShelteredDistribution.copy();
+            modelAsset.monthlyShelteredDistribution.zero();
+
+            if (modelAsset.isClosed) continue;
+
+            const metric = InstrumentType.isIRA(modelAsset.instrument)
+                ? Metric.TRAD_IRA_DISTRIBUTION
+                : Metric.FOUR_01K_DISTRIBUTION;
+
+            const distributed = InstrumentType.isIRA(modelAsset.instrument)
+                ? modelAsset.tradIRADistributionCurrency
+                : modelAsset.four01KDistributionCurrency;
+
+            if (!distributed || distributed.amount <= 0) continue;
+
+            // Only the portion that actually left the shelter is withheld.
+            const eligible = new Currency(distributed.amount - sheltered.amount);
+            if (eligible.amount <= 0) continue;
+
+            const rate = global_retirement_withholding_rate;
+            const withheld = new Currency(eligible.amount * rate / (1 - rate));
+            if (withheld.amount <= 0) continue;
+
+            withTrace(TraceKind.SETTLEMENT,
+                `Federal withholding: ${modelAsset.displayName}`,
+                modelAsset.currentDateInt,
+                () => this.#withholdInScope(modelAsset, metric, withheld, rate));
+        }
+    }
+
+    #withholdInScope(modelAsset, metric, withheld, rate) {
+
+        // The account funds its own withholding first. debit() clamps at $0 and
+        // reports the overshoot rather than going negative.
+        const result = modelAsset.debit(withheld, {
+            type: EventType.INCOME_TAX_WITHHOLDING,
+            data: { rate, source: 'distribution' },
+        });
+
+        const supplied = withheld.minus(result.spillover);
+
+        if (supplied.amount > 0) {
+            // The withheld dollars left the account, so they are a distribution
+            // too — on the asset's ledger and in the household package. Skipping
+            // either half understates ordinary income by exactly the withholding.
+            modelAsset.addToMetric(metric, supplied);
+            this.monthly.recordTransfer(modelAsset.instrument, supplied, Currency.zero());
+
+            modelAsset.addToMetric(Metric.WITHHELD_INCOME_TAX, supplied.copy().flipSign());
+            this.monthly.incomeTax.add(supplied.copy().flipSign());
+        }
+
+        // A depleted account still owes the tax. Re-source from the backstop —
+        // that leg is NOT a deferred distribution (the cash came from a taxable
+        // account), so it books the tax but not the distribution metrics.
+        if (result.spillover.amount > 0) {
+            const fallback = FundTransfer.resolveFunding(this.modelAssets);
+            if (fallback) {
+                // `cause` distinguishes this from every other one-sided spill.
+                // Without it a withholding spill is indistinguishable in the
+                // ledger from a property-tax or expense settlement spill, which
+                // made a $796 tax payment look like an uncollected gap during
+                // reconciliation (probed 2026-08-03).
+                const spillResult = fallback.debit(result.spillover,
+                    { type: EventType.SPILLOVER,
+                      data: { depleted: modelAsset.displayName,
+                              origin: ShortfallOrigin.ONE_SIDED,
+                              cause: 'withholding' } });
+
+                const spilled = result.spillover.minus(spillResult.spillover);
+                this.monthly.recordTransfer(fallback.instrument, spilled,
+                    spillResult.realizedGain ?? Currency.zero());
+
+                if (spillResult.realizedGain?.amount > 0) {
+                    fallback.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, spillResult.realizedGain);
+                    fallback.recordEvent(EventType.CAPITAL_GAIN_RECOGNIZED,
+                        spillResult.realizedGain.copy(),
+                        { metric: Metric.LONG_TERM_CAPITAL_GAIN, data: { spillover: true } });
+                }
+
+                fallback.addToMetric(Metric.WITHHELD_INCOME_TAX, spilled.copy().flipSign());
+                this.monthly.incomeTax.add(spilled.copy().flipSign());
+            } else {
+                FundTransfer.reportUnfunded(modelAsset, result.spillover,
+                    'federal withholding', ShortfallOrigin.ONE_SIDED);
+            }
+        }
     }
 
     // ── Day 15: Property Tax Escrow ───────────────────────────────────
@@ -387,9 +526,9 @@ export class TaxEngine {
             // same reason applyMonthlyTaxTrueUp is: a raw debit CLAMPS at $0 and
             // returns the overshoot in `spillover`, which this site used to
             // discard — booking ESTIMATED_INCOME_TAX for the full bill while
-            // that cash never left any account. Probed 2026-08-03: an April tax
-            // bill asked a $791.98 savings account for $3,462.57 and silently
-            // "collected" the missing $2,670.59.
+            // that cash never left any account. Probed 2026-08-03: the April
+            // 2029 bill asked Savings for $3,462.57 against a $791.98 balance
+            // and silently "collected" the missing $2,670.59.
             //
             // settleOneSided re-sources the remainder from the next backstop and
             // reports what nothing can cover, so the books only ever claim tax

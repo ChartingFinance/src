@@ -747,6 +747,11 @@ export class Portfolio {
             }
         }
 
+        // Withhold at the source BEFORE the true-up: the true-up collects
+        // liability minus what was already withheld, so a sweep running after
+        // it would collect the same tax twice.
+        this.taxes.withholdOnDeferredDistributions();
+
         this.taxes.applyMonthlyTaxTrueUp();
 
     }

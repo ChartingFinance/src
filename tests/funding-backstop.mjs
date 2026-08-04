@@ -285,13 +285,24 @@ console.log('\n── F. An explicit transfer to an IRA still spends the IRA ─
     expense(1000, 'IRA'),
   ]);
 
-  check('IRA pays because the user said so', () => {
-    assert.ok(near(-delta12(byName(p, 'IRA')), 12000),
-      `IRA supplied ${fmt(-delta12(byName(p, 'IRA')))}, expected $12,000.00`);
+  check('IRA pays the expense AND the withholding on it', () => {
+    // $12,000 of expense, plus federal withholding at the source: the account
+    // funds the obligation and the tax on the resulting gross distribution, so
+    // it gives up 12,000 / (1 − 0.10) = $13,333.33 and $1,333.33 of that is
+    // withheld. Before source withholding this expected a flat $12,000.
+    assert.ok(near(-delta12(byName(p, 'IRA')), 13333.33),
+      `IRA supplied ${fmt(-delta12(byName(p, 'IRA')))}, expected $13,333.33`);
+  });
+
+  check('the withholding is booked on the IRA, not guessed', () => {
+    const withheld = Math.abs(byName(p, 'IRA').getHistory(Metric.WITHHELD_INCOME_TAX)
+      .slice(0, 12).reduce((a, v) => a + (v ?? 0), 0));
+    assert.ok(near(withheld, 1333.33),
+      `IRA withheld ${fmt(withheld)}, expected $1,333.33 (10% of the $13,333.33 gross)`);
   });
 
   check('savings is left alone — routing beats the backstop', () => {
-    // Income tax on the distribution is collected from the backstop, so allow
+    // Any residual household tax still settles from the backstop, so allow
     // that, but the $12,000 expense itself must not appear here.
     const moved = -delta12(byName(p, 'Savings'));
     assert.ok(moved < 12000,

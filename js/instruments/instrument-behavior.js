@@ -257,6 +257,9 @@ const CapitalBehavior = Object.freeze({
       M.GROWTH, M.QUALIFIED_DIVIDEND, M.NON_QUALIFIED_DIVIDEND, M.INCOME, M.ORDINARY_INCOME,
       M.SHORT_TERM_CAPITAL_GAIN, M.LONG_TERM_CAPITAL_GAIN, M.CAPITAL_GAIN,
       M.SHORT_TERM_CAPITAL_GAIN_TAX, M.LONG_TERM_CAPITAL_GAIN_TAX, M.ESTIMATED_INCOME_TAX,
+      // Federal withholding at the source of a deferred distribution books here.
+      // Without it the tax is deducted from the account and never shown on it.
+      M.WITHHELD_INCOME_TAX,
       M.INCOME_TAX, M.FEDERAL_TAXES, M.TAXES,
       M.CONTRIBUTION, M.PRETAX_CONTRIBUTION, M.POSTTAX_CONTRIBUTION,
       M.TAX_FREE_DISTRIBUTION, M.TAXABLE_DISTRIBUTION,

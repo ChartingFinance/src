@@ -290,22 +290,22 @@ const engine = {
 // terms are adopted by the engine, so that change shows as a reviewable diff.
 const EXPECTED_ENGINE = {
   "Social Security": 3882.14,
-  "401K": 4876213.41,
+  "401K": 4330365.45,
   "Roth IRA": 4990880.32,
-  "Brokerage": 8212308.30,
+  "Brokerage": 8655712.64,
   "Home": 0.00,
   "Mortgage": 0.00,
   "Living Expenses": -13937.35,
   "Rent": -6427.41,
-  "portfolioTotal": 18079402.02,
+  "portfolioTotal": 17976958.40,
   "employedIncome": 3432182.06,
   "socialSecurityIncome": 854014.60,
   "four01KContribution": 274574.57,
-  "four01KDistribution": 4185149.97,
-  "longTermCapitalGains": 1828754.65,
+  "four01KDistribution": 4373405.30,
+  "longTermCapitalGains": 1811139.62,
   "mortgageInterest": -287174.02,
   "propertyTaxes": -157235.10,
-  "incomeTax": -681290.82,
+  "incomeTax": -734205.66,
 };
 
 // Frozen: how often Early Career's transfers legitimately fail to balance on

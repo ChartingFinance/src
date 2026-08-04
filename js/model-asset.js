@@ -511,6 +511,14 @@ export class ModelAsset {
     // Run state: rebuilt every chronometer_run, never serialized.
     this.events = [];
     this.monthlyCreditBalance = Currency.zero();
+
+    // Distributions this month that moved into ANOTHER tax-advantaged account
+    // (a Roth conversion, or an IRA→401K move). Taxable as ordinary income like
+    // any distribution, but NOT withheld at the source: the money never left
+    // the shelter, the user asked to convert a specific amount, and withholding
+    // would silently shrink it. Read and cleared by
+    // TaxEngine.withholdOnDeferredDistributions once per month.
+    this.monthlyShelteredDistribution = Currency.zero();
     this.monthlyTaxEscrow = Currency.zero();
     this.#metrics.initializeAll();
 

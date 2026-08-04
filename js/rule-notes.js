@@ -265,6 +265,43 @@ export const RULES = [
     },
 
     {
+        // Federal withholding at the source of a deferred distribution is
+        // non-optional and has no UI, so without this note a user watching
+        // their IRA shrink by more than they spent has no way to tell a policy
+        // from a bug.
+        //
+        // Derived, never recomputed (rule 1): the withheld total is read from
+        // WITHHELD_INCOME_TAX, which the engine booked. Recomputing it as
+        // rate × distribution would keep reporting a number even if the writer
+        // were deleted — the note would survive the feature.
+        //
+        // The rate is stated as booked, not read from the current constant
+        // (rule 3): a window thirty years ago must not re-render at whatever
+        // rate is configured today.
+        id: 'retirement-withholding',
+        evaluate(ctx) {
+            if (!InstrumentType.isTaxDeferred(ctx.asset.instrument)) return null;
+
+            const withheld = Math.abs(ctx.total(Metric.WITHHELD_INCOME_TAX));
+            if (withheld === 0) return null;
+
+            const distributed = Math.abs(ctx.total(Metric.TRAD_IRA_DISTRIBUTION))
+                              + Math.abs(ctx.total(Metric.FOUR_01K_DISTRIBUTION));
+            if (distributed === 0) return null;
+
+            // Rate as it actually applied over this window, from the two booked
+            // figures — so a window spanning a rate change reads as the blend
+            // it was, not as either endpoint.
+            const pct = Math.round((withheld / distributed) * 100);
+
+            return {
+                emoji: '\u{1F4E4}',
+                text: `${formatCurrency(withheld)} of the ${formatCurrency(distributed)} distributed was withheld for federal income tax (${pct}%) and sent straight to the IRS — the same default a custodian applies when you make no election. Your annual true-up settles the difference either way, refunding any excess.`,
+            };
+        },
+    },
+
+    {
         // RMD: required amount and what actually left are both recorded, so
         // both can be stated. Splitting "draws that counted" from "top-up" is
         // NOT available — the distribution metric already includes the top-up,
