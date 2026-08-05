@@ -14,7 +14,8 @@ import { InstrumentType } from '../instruments/instrument.js';
 import { Metric } from '../metric.js';
 import { FundTransferOneSided, FundTransfer } from '../fund-transfer.js';
 import { MonthsSpan } from '../utils/months-span.js';
-import { activeTaxTable, global_retirement_withholding_rate } from '../globals.js';
+import { activeTaxTable, global_retirement_withholding_rate, global_allocate_household_tax } from '../globals.js';
+import { basisThisMonth, basisOverMonths, isAllocationEligible, planAllocation } from '../tax-allocation.js';
 import { logger, LogCategory } from '../utils/logger.js';
 import { EventType, ShortfallOrigin } from '../sim-event.js';
 import { withTrace, TraceKind } from '../trace.js';
@@ -451,6 +452,22 @@ export class TaxEngine {
         // was paid, and it would never be collected from any balance. So: no
         // funding account, no booking — the annual true-up then sees the full
         // shortfall and collects it in its April settlement instead.
+        const payment = additionalTax.copy().flipSign();
+
+        // Who generated the income this tax is on? Empty when the feature is
+        // off, or when nothing eligible earned anything this month — both fall
+        // through to the single backstop draw below.
+        const legs = this.#planTaxAllocation(payment, (asset) => basisThisMonth(asset));
+
+        if (legs.length > 0) {
+            this.monthly.incomeTax.add(additionalTax);
+            for (const leg of legs) {
+                this.#settleAllocatedLeg(leg, EventType.INCOME_TAX_WITHHOLDING,
+                    Metric.ESTIMATED_INCOME_TAX);
+            }
+            return;
+        }
+
         const liquidAsset = FundTransfer.resolveFunding(this.modelAssets);
         if (!liquidAsset) {
             logger.log(LogCategory.TAX, `Monthly True-Up: no backstop account to pay ${additionalTax.toString()}; deferring to annual true-up`);
@@ -466,7 +483,7 @@ export class TaxEngine {
         // no matter what the account actually held. It also books the realized
         // gain — paying tax from a brokerage sells shares — so that must NOT be
         // duplicated here. recordTransfer is a no-op for CASH/BANK sources.
-        const payment = additionalTax.copy().flipSign();
+        //
         // No single asset "owes" household tax, so fromModel stays null and
         // reportUnfunded falls back to naming the account that could not pay.
         const oneSided = new FundTransferOneSided(null, payment);
@@ -480,12 +497,94 @@ export class TaxEngine {
 
     }
 
+    // ── Spec 4a: billing the tax to the income that caused it ─────────
+
+    /**
+     * Split `payment` across the accounts that generated this period's taxable
+     * income. Returns [] when the feature is off or nothing qualifies, and the
+     * caller then takes the single-backstop path unchanged — which is what makes
+     * the flag a true no-op rather than a different code path that happens to
+     * agree.
+     *
+     * `basisOf` differs between the two true-up sites: the monthly one reads
+     * live accumulators, the annual one reads history. See tax-allocation.js.
+     *
+     * @param {Currency} payment positive
+     * @param {(asset) => number} basisOf
+     */
+    #planTaxAllocation(payment, basisOf) {
+        if (!global_allocate_household_tax) return [];
+        if (!payment || payment.amount <= 0) return [];
+
+        const age = this.activeUser?.age ?? 0;
+        const candidates = [];
+        for (const modelAsset of this.modelAssets) {
+            if (!isAllocationEligible(modelAsset, age)) continue;
+            const basis = basisOf(modelAsset);
+            if (basis > 0) candidates.push({ modelAsset, basis });
+        }
+        return planAllocation(payment.amount, candidates);
+    }
+
+    /**
+     * Collect one allocated leg from the account that earned the income.
+     *
+     * Deliberately the same settleOneSided path the single backstop draw uses,
+     * so a leg inherits the $0 clamp, the spillover re-sourcing and the unfunded
+     * report without restating any of it. An account billed for more than it
+     * holds pays what it has and the rest spills — the same outcome as today,
+     * just starting from a different account.
+     *
+     * NO GROSS-UP on a tax-deferred leg. settleOneSided already calls
+     * recordDistribution (fund-transfer.js), and recordTransfer below books the
+     * household half, so the draw is ordinary income by the same machinery every
+     * other deferred withdrawal uses. The annual true-up charges tax on it
+     * through this.yearly. Grossing up here would tax it twice. See
+     * markdowns/tax-allocation-spec.md section 3.2.1.
+     */
+    #settleAllocatedLeg(leg, eventType, metric, extraData = {}) {
+        const { modelAsset, amount, share } = leg;
+        const draw = new Currency(amount);
+
+        return withTrace(TraceKind.SETTLEMENT,
+            `Tax allocated to ${modelAsset.displayName}`,
+            modelAsset.currentDateInt,
+            () => {
+                const oneSided = new FundTransferOneSided(null, draw);
+                oneSided.toModel = modelAsset;
+                const settled = FundTransfer.settleOneSided(oneSided,
+                    { type: eventType, data: { ...extraData, basis: 'proportional', share } },
+                    this.modelAssets);
+
+                // Each payer carries its own share on its own ledger. Booking the
+                // whole bill against one account is the thing this spec exists to
+                // stop, and it would also make the rule note lie about who paid.
+                modelAsset.addToMetric(metric, settled.supplied.copy().flipSign());
+                this.monthly.recordTransfer(modelAsset.instrument, settled.supplied, settled.realizedGain);
+
+                if (settled.spillover.amount > 0 && settled.spilloverInstrument) {
+                    this.monthly.recordTransfer(settled.spilloverInstrument, settled.spillover, settled.spilloverGain);
+                    const payer = FundTransfer.resolveFunding(this.modelAssets);
+                    if (payer) payer.addToMetric(metric, settled.spillover.copy().flipSign());
+                }
+                return settled;
+            });
+    }
+
     // ── Year-End: Annual Tax True-Up ──────────────────────────────────
     // Compares exact yearly tax liability against total withheld/estimated
     // amounts accumulated in this.yearly. Debits underpayment or credits
     // overpayment to the first liquid account.
 
-    applyAnnualTaxTrueUp() {
+    /**
+     * @param {number} settledYearMonths How many months of the year being
+     *   settled fell inside the plan. Needed only by spec 4a's allocation, which
+     *   reads per-asset history rather than the live accumulators: this pass
+     *   runs on January 1 of the FOLLOWING year, by which point every month of
+     *   the settled year — December included — has been snapshotted and zeroed.
+     *   Portfolio.monthsInPlanYear() owns the short first/last year arithmetic.
+     */
+    applyAnnualTaxTrueUp(settledYearMonths) {
 
         // 1. Compute exact tax liability from the yearly accumulator
         const yearlySnapshot = this.yearly.copy();
@@ -516,7 +615,50 @@ export class TaxEngine {
         // Only act if the discrepancy is material (> $1)
         if (Math.abs(taxDifference) < 1) return;
 
+        // Spec 4a basis window. VALUE is in COMMON_METRICS so every instrument
+        // tracks it, and every asset is snapshotted every month, so all
+        // histories share a length and an index origin. December of the settled
+        // year is therefore the last entry.
+        const referenceHistory = this.modelAssets[0]?.getHistory(Metric.VALUE) ?? [];
+        const hiIndex = referenceHistory.length - 1;
+        const loIndex = hiIndex - (Math.max(1, settledYearMonths ?? 12) - 1);
+        const yearBasis = (asset) => basisOverMonths(asset, loIndex, hiIndex);
+
         const liquidAsset = FundTransfer.resolveFunding(this.modelAssets);
+
+        if (taxDifference > 0) {
+            const legs = this.#planTaxAllocation(new Currency(taxDifference), yearBasis);
+            if (legs.length > 0) {
+                logger.log(LogCategory.TAX, `Annual True-Up: Underpaid by $${taxDifference.toFixed(0)}. Allocating across ${legs.length} account(s) by income share.`);
+                for (const leg of legs) {
+                    this.#settleAllocatedLeg(leg, EventType.TAX_TRUE_UP,
+                        Metric.ESTIMATED_INCOME_TAX, { direction: 'underpayment' });
+                }
+                return;
+            }
+        } else {
+            const refund = new Currency(Math.abs(taxDifference));
+            const legs = this.#planTaxAllocation(refund, yearBasis);
+            if (legs.length > 0) {
+                // Refunds follow the same basis as collections. Sending every
+                // refund to the backstop while billing the earners would ratchet
+                // cash out of the income generators over repeated over/under
+                // cycles — a slow version of the bug this spec exists to fix.
+                // credit() adds a taxable deposit to finishBasisCurrency, so this
+                // manufactures no untaxed future gain.
+                logger.log(LogCategory.TAX, `Annual True-Up: Overpaid by $${refund.amount.toFixed(0)}. Refunding across ${legs.length} account(s) by income share.`);
+                for (const leg of legs) {
+                    const credit = new Currency(leg.amount);
+                    leg.modelAsset.credit(credit, {
+                        type: EventType.TAX_TRUE_UP,
+                        data: { direction: 'refund', basis: 'proportional', share: leg.share },
+                    });
+                    leg.modelAsset.addToMetric(Metric.ESTIMATED_INCOME_TAX, credit);
+                }
+                return;
+            }
+        }
+
         if (!liquidAsset) return;
 
         if (taxDifference > 0) {

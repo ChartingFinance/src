@@ -876,9 +876,13 @@ export class Portfolio {
             }
         }
 
-        // Annual tax true-up: reconcile exact liability vs. withheld amounts
+        // Annual tax true-up: reconcile exact liability vs. withheld amounts.
+        // This pass runs on January 1, so the year being settled is the previous
+        // one; its month count is what spec 4a's allocation needs to size the
+        // history window it reads the income basis from.
+        const settledYear = currentDateInt.year - 1;
         withTrace(TraceKind.TAX_TRUE_UP, `${currentDateInt.year} tax true-up`, currentDateInt,
-            () => this.taxes.applyAnnualTaxTrueUp());
+            () => this.taxes.applyAnnualTaxTrueUp(this.monthsInPlanYear(settledYear)));
 
     }
 

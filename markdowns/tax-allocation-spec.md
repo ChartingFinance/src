@@ -156,19 +156,40 @@ back: this month's payment raises next month's taxable income, which raises the
 next allocation. 4b avoided this entirely by using a rate that is not a function
 of the liability; 4a cannot, because the bill *is* the liability.
 
-The series converges (each pass is ~22–24% of the previous at these brackets),
-but it must be modelled deliberately rather than left to iterate across months:
+**REVISED 2026-08-05, before implementation.** An earlier draft of this section
+called for grossing the deferred leg up at the allocation site with
+`W = X / (1 − t)`. Reading the settlement path shows that would **double-count**.
 
-- **Gross up the deferred leg at the point of allocation.** For a fully-ordinary
-  distribution the existing formula applies with `g = 1.0`:
-  `W = X / (1 − t)`, the same shape `calculateGrossWithdrawal` already
-  implements ([expense-engine.js:381](../js/engines/expense-engine.js)).
-- `t` must be a **flat** rate — reuse `global_retirement_withholding_rate` —
-  never the marginal rate implied by the bill, which reintroduces the loop the
-  `calculateGrossWithdrawal` comments warn about.
-- The grossed-up increment is a distribution: book it to the distribution
-  metric and to `this.monthly`, exactly as
-  `TaxEngine.#withholdInScope` does ([tax-engine.js:146–155](../js/engines/tax-engine.js)).
+`FundTransfer.settleOneSided` already calls
+`oneSided.toModel.recordDistribution(supplied)`
+([fund-transfer.js:240](../js/fund-transfer.js)), which books
+`TRAD_IRA_DISTRIBUTION` / `FOUR_01K_DISTRIBUTION` on the asset's own ledger. The
+caller's `this.monthly.recordTransfer(instrument, supplied, gain)` books the
+household half. So an allocated IRA leg **is already ordinary income**, by the
+same machinery every other deferred draw uses, and the annual true-up charges
+tax on it through `this.yearly`. Adding a gross-up on top would tax it twice.
+
+The loop therefore closes across years rather than within a month, and it
+converges without special handling. Prediction recorded here before the code:
+
+1. **No gross-up at the allocation site.** The leg is settled at face value.
+2. **Lifetime tax RISES** against the §7.4 baseline. Paying tax from a deferred
+   account is genuinely taxable; a run where it does not rise has failed to book
+   the distribution and is wrong.
+3. **The tax identity still holds exactly** — collected equals liability, year by
+   year. This is the assertion that distinguishes (2) from a leak, and it is the
+   one that fails if `recordDistribution` is somehow bypassed.
+4. **4b's source withholding does NOT fire on these particular distributions.**
+   `withholdOnDeferredDistributions` runs at
+   [portfolio.js:753](../js/portfolio.js), *before* `applyMonthlyTaxTrueUp` at
+   [:755](../js/portfolio.js), and the distribution metric is zeroed by
+   `monthlyChron` before the next sweep. A distribution created by the true-up is
+   therefore never swept. That ordering is deliberate — the comment above the
+   sweep explains that running it after the true-up would collect the same tax
+   twice — so the annual true-up collects this instead. Accepted asymmetry,
+   recorded so it is not later "fixed" into a double charge.
+
+If (2) or (3) fails, the shape is wrong and the flag stays off.
 
 **§7's measured reallocation figures are first-order** — computed against the
 existing residual, before any feedback. The converged numbers will be higher.
