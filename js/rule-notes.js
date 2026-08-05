@@ -16,10 +16,17 @@
  *     actually booked. Reconstructing the engine's arithmetic to explain it is
  *     how a display change quietly becomes an unreviewed modelling change.
  *
- *  2. DON'T INVENT ALLOCATIONS. The household tax true-up is deliberately not
- *     split across the incomes that caused it — that number does not exist in
- *     the engine, and on screen people would treat it as real. Name the
- *     counterparty and stop.
+ *  2. DON'T INVENT ALLOCATIONS. A split may only be shown if the engine booked
+ *     it. When global_allocate_household_tax is on, the true-up IS split across
+ *     the accounts that generated the income and each payer's share is a real
+ *     booked amount on its own ledger — say that, and read it from the event
+ *     rather than recomputing the proportion. When it is off, the whole bill
+ *     lands on one account: name the counterparty and stop.
+ *
+ *     What stays unsayable either way is what any single asset "owes". Brackets
+ *     are not additive, so a per-asset liability is not a number the engine
+ *     has — the allocation is a share OF A HOUSEHOLD BILL, not a computation of
+ *     that account's own tax. A note must not imply otherwise.
  *
  *  3. RESOLVE FROM HISTORY, NOT PRESENT STATE. Asking resolveFunding() who the
  *     funding account is answers for TODAY, which is wrong for a month thirty
@@ -42,6 +49,7 @@ import { InstrumentType } from './instruments/instrument.js';
 import { global_home_sale_capital_gains_discount } from './globals.js';
 import { DateInt, monthLabel } from './utils/date-int.js';
 import { formatCurrency } from './utils/html.js';
+import { EventType } from './sim-event.js';
 
 /**
  * Build the evaluation context for one asset over one inclusive month window.
@@ -78,7 +86,38 @@ export function makeRuleContext({ asset, modelAssets = [], firstDateInt = null, 
         });
     };
 
-    return { asset, modelAssets, firstDateInt, from, to, total, memos };
+    /**
+     * SimEvents on this asset inside the window.
+     *
+     * Same windowing as memos(), but reading the structured record rather than
+     * the rendered note. Rules that need to tell two settlements apart — a
+     * backstop draw from an allocated share, say — cannot do it from prose,
+     * because both render identically.
+     */
+    const events = () => {
+        const all = asset?.events ?? [];
+        if (!firstDateInt) return all;
+        const bound = (offset) => {
+            const d = DateInt.from(firstDateInt.year, firstDateInt.month);
+            d.addMonths(offset);
+            return d.toInt();
+        };
+        const lo = bound(from);
+        const hi = bound(to);
+        return all.filter(e => {
+            if (!e.dateInt) return false;
+            const v = DateInt.from(e.dateInt.year, e.dateInt.month).toInt();
+            return v >= lo && v <= hi;
+        });
+    };
+
+    return { asset, modelAssets, firstDateInt, from, to, total, memos, events };
+}
+
+/** Tax settlements on this asset that were allocated by income share (spec 4a). */
+function allocatedTaxLegs(ctx) {
+    return ctx.events().filter(e =>
+        e.data?.basis === 'proportional' && e.data?.direction !== 'refund');
 }
 
 // ── Rules ────────────────────────────────────────────────────────────
@@ -183,14 +222,64 @@ export const RULES = [
     },
 
     {
+        // Why this account was billed for tax on income it earned.
+        //
+        // Without this an allocated payer is silent, and silence reads as a bug
+        // — especially on an IRA, which the funding-backstop note below can
+        // never explain because a retirement account is not in the backstop.
+        //
+        // Rule 2: the SHARE is read off the event, where the engine booked it.
+        // It is a share of a HOUSEHOLD bill, and the wording must not suggest
+        // the engine computed what this account alone owes — brackets are not
+        // additive and that number does not exist.
+        id: 'tax-allocated-by-income',
+        suppresses: ['funding-backstop'],
+        evaluate(ctx) {
+            const legs = allocatedTaxLegs(ctx);
+            if (legs.length === 0) return null;
+
+            const paid = legs.reduce((s, e) => s + Math.abs(e.amount?.amount ?? 0), 0);
+            if (paid === 0) return null;
+
+            const shares = legs.map(e => e.data?.share).filter(s => typeof s === 'number');
+            const avg = shares.length ? shares.reduce((s, v) => s + v, 0) / shares.length : null;
+            const pct = avg == null ? null : `${(avg * 100).toFixed(avg < 0.1 ? 1 : 0)}%`;
+
+            const deferred = InstrumentType.isTaxDeferred(ctx.asset.instrument);
+            const because = pct
+                ? `it generated about ${pct} of the household's taxable income`
+                : 'it generated part of the household\'s taxable income';
+
+            return {
+                emoji: '\u{1F9FE}',
+                text: `${formatCurrency(paid)} of the household's income tax was paid from here because ${because} over this period. ` +
+                      (deferred
+                        ? 'Withdrawing from a retirement account to pay tax is itself a taxable distribution, so it adds to next year\'s bill.'
+                        : 'This is a share of one household bill, not this account\'s own tax — tax brackets apply to the household, not per account.'),
+            };
+        },
+    },
+
+    {
         // Why money leaves an account the user never wired up. A policy
         // statement, not a claim about an amount — which is what makes it safe
         // to show on every month the account actually settled something.
+        //
+        // Must NOT fire for an account that only paid an allocated share: that
+        // account was chosen because it earned the income, not because it is the
+        // household's default source, and calling it the automatic funding
+        // account would describe a mechanism that did not run.
         id: 'funding-backstop',
         evaluate(ctx) {
             const { asset } = ctx;
             if (!InstrumentType.isFundingBackstop(asset.instrument)) return null;
             if (ctx.total(Metric.ESTIMATED_INCOME_TAX) === 0) return null;
+
+            const settlements = ctx.events().filter(e =>
+                e.type === EventType.INCOME_TAX_WITHHOLDING || e.type === EventType.TAX_TRUE_UP);
+            const anyBackstopDraw = settlements.some(e => e.data?.basis !== 'proportional');
+            if (settlements.length > 0 && !anyBackstopDraw) return null;
+
             return {
                 emoji: '\u{1F3E6}',
                 text: "This is the household's funding account: taxes, bills and mortgage payments draw from here automatically when no transfer covers them.",

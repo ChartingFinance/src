@@ -58,6 +58,7 @@ import { InstrumentType, Instrument } from '../js/instruments/instrument.js';
 import { ModelLifeEvent, LifeEvent } from '../js/life-event.js';
 import { membrane_rawDataToModelAssets } from '../js/membrane.js';
 import { buildQuickStart, quickStartProfiles } from '../js/quick-start.js';
+import { makeRuleContext, ruleNotesFor } from '../js/rule-notes.js';
 import {
   setActiveTaxTable, activeTaxTable,
   global_setAllocateHouseholdTax,
@@ -439,6 +440,56 @@ console.log('spec 4a — proportional allocation of the residual household tax')
       'type requires an EVENT_RECONCILIATION entry or monthlySanityCheck throws');
   }
   console.log('  ok  reconciliation — allocated legs reuse already-declared event types');
+}
+
+// ── 10. The rule notes tell the truth about who paid and why ──────────
+// A rule that fires silently is indistinguishable from one that never ran, and
+// an IRA paying tax has no other explanation available: the funding-backstop
+// note cannot cover it, because a retirement account is not in the backstop.
+{
+  const span = (pf) => ({ from: 0, to: (pf.modelAssets[0].getHistory(Metric.VALUE) ?? []).length - 1 });
+
+  const notesFor = (pf, name) => {
+    const asset = pf.modelAssets.find(a => a.displayName === name);
+    const { from, to } = span(pf);
+    return ruleNotesFor(makeRuleContext({
+      asset, modelAssets: pf.modelAssets, firstDateInt: pf.firstDateInt, from, to,
+    }));
+  };
+
+  const on = await runWith(true, buildReference);
+  const off = await runWith(false, buildReference);
+
+  // The IRA is allocated to and must say so.
+  const iraNotes = notesFor(on, 'IRA');
+  const allocNote = iraNotes.find(n => n.id === 'tax-allocated-by-income');
+  check(allocNote, 'the allocated IRA must carry a note explaining why it paid tax; ' +
+    `got [${iraNotes.map(n => n.id).join(', ')}]`);
+  check(/taxable income/.test(allocNote.text),
+    'the allocation note must say the account generated the income');
+  check(/taxable distribution/.test(allocNote.text),
+    'a deferred payer must be told the draw is itself taxable');
+
+  // A brokerage paying only an allocated share must NOT be called the
+  // household's automatic funding account.
+  const brokerOn = notesFor(on, 'Brokerage').map(n => n.id);
+  const brokerOff = notesFor(off, 'Brokerage').map(n => n.id);
+  check(brokerOff.includes('funding-backstop'),
+    'with allocation off the brokerage IS the backstop and must say so; ' +
+    `got [${brokerOff.join(', ')}]`);
+  check(brokerOn.includes('tax-allocated-by-income'),
+    `an allocated brokerage must carry the allocation note; got [${brokerOn.join(', ')}]`);
+  check(!brokerOn.includes('funding-backstop'),
+    'the backstop note must be suppressed for an account that only paid an ' +
+    'allocated share — otherwise it describes a mechanism that did not run');
+
+  // Silence: an account that paid no tax at all says nothing about tax.
+  const rothNotes = notesFor(on, 'Roth').map(n => n.id);
+  check(!rothNotes.includes('tax-allocated-by-income'),
+    `the Roth paid no allocated tax and must stay silent; got [${rothNotes.join(', ')}]`);
+
+  console.log(`  ok  rule notes — IRA explains its share, brokerage drops the ` +
+              `backstop claim, Roth silent`);
 }
 
 console.log(`\nPASS — ${checks} assertions`);
