@@ -471,33 +471,13 @@ console.log('spec 4a — proportional allocation of the residual household tax')
       seen.push(cap.lines.length);
       const findings = cap.lines.filter(l => /events=.*package=/.test(l.message));
 
-      if (!flag) {
-        // What actually ships. Must be clean, no exceptions.
-        eq(findings.length, 0,
-          `${label} (allocation off): reconciliation mismatch — ${findings[0]?.message ?? ''}`);
-        continue;
-      }
-
-      // KNOWN OPEN, and it BLOCKS enabling this feature by default.
-      //
-      // TaxEngine.#withholdInScope books this.monthly.incomeTax for tax the
-      // BACKSTOP paid when a depleted IRA's source withholding spills
-      // (tax-engine.js, the `spilled` branch), but the only event recorded for
-      // that money is a SPILLOVER, which EVENT_RECONCILIATION files under
-      // 'oneSided' rather than 'incomeTax'. The package gains income tax that no
-      // incomeTax event backs.
-      //
-      // This is spec 4b code, shipped in PR #23, not something 4a introduced —
-      // 4a only reaches it by draining the IRA hard enough for the withholding
-      // to spill. It was invisible because SANITY is off by default and nothing
-      // asserted on it.
-      //
-      // Asserted as an exact count so the known case cannot quietly grow and a
-      // NEW class of mismatch still fails. Drop this branch — do not raise the
-      // number — when the bucketing is fixed.
-      const KNOWN_WITHHOLDING_SPILL_MISMATCHES = { 'reference': 1, 'Early Career': 0 };
-      eq(findings.length, KNOWN_WITHHOLDING_SPILL_MISMATCHES[label],
-        `${label} (allocation on): reconciliation mismatch count changed — ` +
+      // Clean either way. A withholding spill — a depleted IRA whose source
+      // withholding is paid by the backstop — used to leave the incomeTax bucket
+      // short by exactly the spill, because the only cash event was a SPILLOVER
+      // filed under 'oneSided'. conservationBucket now files a
+      // cause:'withholding' spill under incomeTax.
+      eq(findings.length, 0,
+        `${label} (allocation ${flag ? 'on' : 'off'}): reconciliation mismatch — ` +
         `${findings.map(f => f.message).join(' | ')}`);
     }
   }
@@ -506,8 +486,7 @@ console.log('spec 4a — proportional allocation of the residual household tax')
     'Early Career emits unfunded reports and must show up here');
   logger.disable(LogCategory.SANITY);
   console.log(`  ok  reconciliation — ${seen.reduce((a, b) => a + b, 0)} SANITY lines captured ` +
-              'across four runs; clean with allocation OFF, 1 KNOWN withholding-spill ' +
-              'mismatch with it ON (blocks enabling by default)');
+              'across four runs, zero package/event mismatches with allocation on OR off');
 }
 
 // ── 10. The rule notes tell the truth about who paid and why ──────────
