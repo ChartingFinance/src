@@ -280,6 +280,39 @@ export const global_default_fica = 7.65;
  */
 export const global_retirement_withholding_rate = 0.10;
 
+/**
+ * Split the residual household tax across the accounts that generated the
+ * income, instead of billing the whole thing to the funding backstop.
+ *
+ * OFF until the golden masters are re-blessed against the predictions in
+ * markdowns/tax-allocation-spec.md §7.6. With this false the engine must be
+ * event-for-event identical to one built without the feature — that is the
+ * neutrality assertion in tests/tax-allocation.mjs, and it is what makes the
+ * flag a real rollback rather than a decoration.
+ */
+export let global_allocate_household_tax = false;
+
+export function global_setAllocateHouseholdTax(value) {
+    global_allocate_household_tax = !!value;
+}
+
+/**
+ * Age from which a tax-DEFERRED account may be allocated a share of the tax on
+ * income it generated.
+ *
+ * The statutory threshold is 59.5, which this engine cannot express: the
+ * simulated user ages in whole years on New Year's Day (Portfolio.applyYear
+ * calls activeUser.addYears(1); activeUser.month is pinned to 0 and no caller
+ * advances it). 60 is the conservative rounding — it never reaches money that
+ * might still carry a 10% early-withdrawal penalty, at the cost of a few months
+ * of attribution in the year the holder turns 59.5.
+ *
+ * This gates ATTRIBUTION ONLY. FUNDING_BACKSTOP_PRIORITY is deliberately
+ * unchanged: the engine still never implicitly draws a retirement account to
+ * pay an expense, a mortgage or an escrow at any age.
+ */
+export const global_deferred_allocation_age = 60;
+
 export let global_inflationRate = global_default_inflationRate;
 
 export let global_taxYear = global_default_taxYear;
