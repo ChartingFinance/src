@@ -13,7 +13,11 @@ import { Currency } from '../utils/currency.js';
 import { InstrumentType } from '../instruments/instrument.js';
 import { Metric } from '../metric.js';
 import { FundTransfer } from '../fund-transfer.js';
-import { activeTaxTable } from '../globals.js';
+import {
+    activeTaxTable,
+    global_pension_withholding_rate,
+    global_social_security_withholding_rate,
+} from '../globals.js';
 import { logger, LogCategory } from '../utils/logger.js';
 import { EventType, ShortfallOrigin } from '../sim-event.js';
 import { withTrace, TraceKind } from '../trace.js';
@@ -134,7 +138,74 @@ export class PayrollEngine {
             () => this.#applyNetIncomeInScope(modelAsset, householdTax, totalWorkingIncome));
     }
 
+    /**
+     * Withhold federal tax ON ARRIVAL from Social Security or a pension.
+     *
+     * WHY ON ARRIVAL, AND NOT THE 4b SHAPE
+     * ------------------------------------
+     * IRA/401(K) withholding debits the account after the fact. That cannot work
+     * here: these are FLOWS, and ModelAsset#transact short-circuits for flow
+     * instruments — it records the event, changes no balance, and returns
+     * spillover ZERO, so the caller is told the money was collected when nothing
+     * moved. Reducing what lands is the only shape that actually withholds, and
+     * it is what payroll already does for a salary a few lines below.
+     *
+     * NO GROSS-UP. A balance grossed up because the withheld dollars are
+     * themselves a distribution; a flow's benefit is already gross. Adding to it
+     * would inflate taxable income and RAISE the household's bill — the failure
+     * this spec's predictions are built to catch. SOCIAL_SECURITY_INCOME and
+     * PENSION_INCOME are booked by the behavior and are not touched here.
+     *
+     * RATES DIFFER BY INSTRUMENT ON PURPOSE. A pension mirrors Form W-4P, whose
+     * default is to withhold. Social Security mirrors Form W-4V, which is
+     * elective with NO default and which most recipients never file — so its
+     * rate is 0 unless someone chooses otherwise, and SS stays unattributed by
+     * default. Modelling a withholding the household never elected would be
+     * inventing policy.
+     */
+    #withholdOnRetirementIncome(modelAsset) {
+
+        const isPension = InstrumentType.isPension(modelAsset.instrument);
+        const rate = isPension
+            ? global_pension_withholding_rate
+            : global_social_security_withholding_rate;
+
+        if (!(rate > 0)) return;
+
+        // The month's GROSS benefit, read from the metric the behavior just
+        // booked rather than from netIncomeCurrency — which other passes may
+        // already have drawn against.
+        const gross = isPension
+            ? modelAsset.getMetricAmount(Metric.PENSION_INCOME)
+            : modelAsset.getMetricAmount(Metric.SOCIAL_SECURITY_INCOME);
+        if (!(gross > 0)) return;
+
+        const withheld = new Currency(gross * rate);
+
+        // Less arrives. netIncomeCurrency is what applyPostTaxTransfers sweeps to
+        // the backstop, so this is the whole behavioural change.
+        modelAsset.netIncomeCurrency.subtract(withheld);
+
+        // Negative on the asset's own ledger, the convention every tax metric
+        // follows. INCOME_TAX → FEDERAL_TAXES → TAXES populate by DAG, and those
+        // metrics had to be registered on these behaviors first — before that
+        // they resolved to NULL_METRIC and this write was a silent no-op.
+        modelAsset.addToMetric(Metric.WITHHELD_INCOME_TAX, withheld.copy().flipSign());
+
+        // Household books, plus the INCOME_TAX_WITHHOLDING event. Counted as
+        // already collected so the monthly true-up does not charge it twice.
+        this.taxEngine.recordIncomeTaxWithholding(modelAsset, withheld);
+
+        logger.log(LogCategory.TAX,
+            `withholdOnRetirementIncome: ${modelAsset.displayName} gross ${gross.toFixed(2)} ` +
+            `at ${(rate * 100).toFixed(0)}% withheld ${withheld.toString()}`);
+    }
+
     #applyNetIncomeInScope(modelAsset, householdTax, totalWorkingIncome) {
+
+        if (InstrumentType.isRetirementIncome(modelAsset.instrument)) {
+            return this.#withholdOnRetirementIncome(modelAsset);
+        }
 
         if (!InstrumentType.isWorkingIncome(modelAsset.instrument)) {
             return;

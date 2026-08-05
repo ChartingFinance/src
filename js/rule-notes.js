@@ -175,6 +175,38 @@ export const RULES = [
     },
 
     {
+        // Why a benefit pays out less than it is worth.
+        //
+        // Non-optional for a pension, so it MUST be visible: the household never
+        // chose this and a smaller deposit with no explanation reads as a bug.
+        // Before spec 4c a retirement-income asset showed no tax at all and the
+        // tax-settled-elsewhere note below covered it; once the benefit withholds
+        // its own, that note correctly stops applying and would leave silence.
+        //
+        // Rule 1 — the amount is read from what was booked, never recomputed
+        // from the rate.
+        id: 'retirement-income-withholding',
+        suppresses: ['tax-settled-elsewhere'],
+        evaluate(ctx) {
+            const { asset } = ctx;
+            if (!InstrumentType.isRetirementIncome(asset.instrument)) return null;
+            const withheld = Math.abs(ctx.total(Metric.WITHHELD_INCOME_TAX));
+            if (withheld === 0) return null;
+
+            const isPension = InstrumentType.isPension(asset.instrument);
+            return {
+                emoji: '\u{1F4CB}',
+                text: `${formatCurrency(withheld)} of federal tax was withheld from this ` +
+                      `${isPension ? 'pension' : 'benefit'} before it was paid out, so the deposits ` +
+                      'you see are net of tax. ' +
+                      (isPension
+                        ? 'Pensions withhold by default; the year-end true-up refunds any excess.'
+                        : 'Social Security only withholds when you elect it, and the year-end true-up refunds any excess.'),
+            };
+        },
+    },
+
+    {
         // Income whose tax was settled somewhere else entirely.
         id: 'tax-settled-elsewhere',
         evaluate(ctx) {

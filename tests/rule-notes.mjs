@@ -149,15 +149,29 @@ const retirement = await run([
   bank('Savings', 50000),
 ]);
 
-check('pension names the account that settled its tax', () => {
+// Spec 4c: a pension withholds its own tax on arrival at the W-4P default rate,
+// so "settled somewhere else" no longer describes it. The note it gets instead
+// must explain the smaller deposit — non-optional withholding the household
+// never chose is exactly the case where silence reads as a bug.
+check('pension explains its own withholding', () => {
   const notes = notesFor(retirement, 'Pension');
+  const note = notes.find(n => n.id === 'retirement-income-withholding');
+  assert.ok(note, `expected retirement-income-withholding, got [${notes.map(n => n.id)}]`);
+  assert.match(note.text, /withheld/, `should say tax was withheld: "${note.text}"`);
+  assert.ok(!notes.some(n => n.id === 'tax-settled-elsewhere'),
+    'a pension that withholds its own tax must not also claim it was settled elsewhere');
+});
+
+// Social Security's W-4V default is no withholding, so its tax IS settled
+// elsewhere and the original note still applies. The two instruments diverging
+// here is the policy, asserted as behaviour.
+check('social security still names the account that settled its tax', () => {
+  const notes = notesFor(retirement, 'Social Security');
   const note = notes.find(n => n.id === 'tax-settled-elsewhere');
   assert.ok(note, `expected tax-settled-elsewhere, got [${notes.map(n => n.id)}]`);
   assert.match(note.text, /Savings/, `should name Savings: "${note.text}"`);
-});
-
-check('social security gets the same note', () => {
-  assert.ok(idsFor(retirement, 'Social Security').includes('tax-settled-elsewhere'));
+  assert.ok(!notes.some(n => n.id === 'retirement-income-withholding'),
+    'Social Security withholds nothing by default and must not claim otherwise');
 });
 
 check('the funding account explains why money leaves it', () => {

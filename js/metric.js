@@ -164,10 +164,17 @@ export const MetricRollups = {
     [Metric.SOCIAL_SECURITY_TAX]:         [Metric.WITHHELD_FICA_TAX],
 
     // --- TAX ROLLUPS ---
-    // Retirement income (pension, Social Security) has no per-asset tax leaf:
-    // its liability is settled by the monthly/annual true-up against the funding
-    // account, which books ESTIMATED_INCOME_TAX there. Adding one means adding a
-    // writer too — see tax-engine.applyMonthlyTaxTrueUp.
+    // Retirement income DOES have a per-asset tax leaf as of spec 4c: a pension
+    // and Social Security withhold on arrival and book WITHHELD_INCOME_TAX on
+    // their own asset (PayrollEngine.#withholdOnRetirementIncome). The writer
+    // came with it, as the older version of this comment required.
+    //
+    // Two things still hold. Whatever a flow does NOT withhold is settled by the
+    // monthly/annual true-up against the funding account, which books
+    // ESTIMATED_INCOME_TAX there — and for Social Security that is everything by
+    // default, because Form W-4V is elective. And the metrics have to be
+    // REGISTERED on the behavior (instrument-behavior.js) or the write lands in
+    // NULL_METRIC and disappears without error.
     [Metric.WITHHELD_FICA_TAX]:           [Metric.INCOME_TAX],
     [Metric.WITHHELD_INCOME_TAX]:         [Metric.INCOME_TAX],
     [Metric.ESTIMATED_INCOME_TAX]:        [Metric.INCOME_TAX],
