@@ -59,6 +59,7 @@ import { ModelLifeEvent, LifeEvent } from '../js/life-event.js';
 import { membrane_rawDataToModelAssets } from '../js/membrane.js';
 import { buildQuickStart, quickStartProfiles } from '../js/quick-start.js';
 import { makeRuleContext, ruleNotesFor } from '../js/rule-notes.js';
+import { logger, LogCategory } from '../js/utils/logger.js';
 import {
   setActiveTaxTable, activeTaxTable,
   global_setAllocateHouseholdTax,
@@ -440,6 +441,73 @@ console.log('spec 4a — proportional allocation of the residual household tax')
       'type requires an EVENT_RECONCILIATION entry or monthlySanityCheck throws');
   }
   console.log('  ok  reconciliation — allocated legs reuse already-declared event types');
+}
+
+// ── 9b. Reconciliation stays silent, and the capture is proven live ───
+// The engine's own monthly reconciliation is the check that catches "the
+// package says tax was collected but no event backs it". Allocation bills an
+// account by income share, which can exceed what that account holds, so this is
+// exactly where that class of defect appears — it did, on 2056-04 of the
+// reference portfolio, until the monthly site was changed to book what was
+// actually supplied rather than what was billed.
+//
+// A probe that captures nothing reports zero findings and looks identical to a
+// clean run, so this asserts the capture EMITTED before trusting its silence.
+{
+  logger.enable(LogCategory.SANITY);
+  const seen = [];
+  for (const [label, build] of [['reference', buildReference],
+                                ['Early Career', () => buildProfile(quickStartProfiles[0])]]) {
+    for (const flag of [false, true]) {
+      global_setAllocateHouseholdTax(flag);
+      const cap = logger.capture();
+      try {
+        const pf = build();
+        await chronometer_run(pf);
+      } finally {
+        cap.stop();
+        global_setAllocateHouseholdTax(false);
+      }
+      seen.push(cap.lines.length);
+      const findings = cap.lines.filter(l => /events=.*package=/.test(l.message));
+
+      if (!flag) {
+        // What actually ships. Must be clean, no exceptions.
+        eq(findings.length, 0,
+          `${label} (allocation off): reconciliation mismatch — ${findings[0]?.message ?? ''}`);
+        continue;
+      }
+
+      // KNOWN OPEN, and it BLOCKS enabling this feature by default.
+      //
+      // TaxEngine.#withholdInScope books this.monthly.incomeTax for tax the
+      // BACKSTOP paid when a depleted IRA's source withholding spills
+      // (tax-engine.js, the `spilled` branch), but the only event recorded for
+      // that money is a SPILLOVER, which EVENT_RECONCILIATION files under
+      // 'oneSided' rather than 'incomeTax'. The package gains income tax that no
+      // incomeTax event backs.
+      //
+      // This is spec 4b code, shipped in PR #23, not something 4a introduced —
+      // 4a only reaches it by draining the IRA hard enough for the withholding
+      // to spill. It was invisible because SANITY is off by default and nothing
+      // asserted on it.
+      //
+      // Asserted as an exact count so the known case cannot quietly grow and a
+      // NEW class of mismatch still fails. Drop this branch — do not raise the
+      // number — when the bucketing is fixed.
+      const KNOWN_WITHHOLDING_SPILL_MISMATCHES = { 'reference': 1, 'Early Career': 0 };
+      eq(findings.length, KNOWN_WITHHOLDING_SPILL_MISMATCHES[label],
+        `${label} (allocation on): reconciliation mismatch count changed — ` +
+        `${findings.map(f => f.message).join(' | ')}`);
+    }
+  }
+  check(seen.some(n => n > 0),
+    'the SANITY capture produced no output at all, so its silence proves nothing — ' +
+    'Early Career emits unfunded reports and must show up here');
+  logger.disable(LogCategory.SANITY);
+  console.log(`  ok  reconciliation — ${seen.reduce((a, b) => a + b, 0)} SANITY lines captured ` +
+              'across four runs; clean with allocation OFF, 1 KNOWN withholding-spill ' +
+              'mismatch with it ON (blocks enabling by default)');
 }
 
 // ── 10. The rule notes tell the truth about who paid and why ──────────

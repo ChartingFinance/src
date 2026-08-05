@@ -460,11 +460,28 @@ export class TaxEngine {
         const legs = this.#planTaxAllocation(payment, (asset) => basisThisMonth(asset));
 
         if (legs.length > 0) {
-            this.monthly.incomeTax.add(additionalTax);
+            // Book what the accounts ACTUALLY supplied, not what they were
+            // billed. An allocated leg is sized by income share, so an account
+            // that earned a lot this month but holds little cash is billed more
+            // than it can pay; settleOneSided then supplies what it has and
+            // spills the rest, and the spilled leg books a SPILLOVER event which
+            // reconciliation counts in a different bucket.
+            //
+            // Adding the full bill here instead made the package claim income
+            // tax that no incomeTax event backed — probed 2026-08-05 on the
+            // reference portfolio, "2056-04 Income tax: events=0.00,
+            // package=-431.79", an account billed $431.79 with nothing left to
+            // pay it. Same book-and-collect rule the comment above states; the
+            // difference is that the single-backstop path is billed only what
+            // one already-chosen liquid account can cover, so it rarely trips.
+            let collected = Currency.zero();
             for (const leg of legs) {
-                this.#settleAllocatedLeg(leg, EventType.INCOME_TAX_WITHHOLDING,
+                const settled = this.#settleAllocatedLeg(leg, EventType.INCOME_TAX_WITHHOLDING,
                     Metric.ESTIMATED_INCOME_TAX);
+                collected.add(settled.supplied);
+                collected.add(settled.spillover);
             }
+            if (collected.amount > 0) this.monthly.incomeTax.add(collected.copy().flipSign());
             return;
         }
 
