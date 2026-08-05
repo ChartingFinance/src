@@ -267,6 +267,17 @@ export class ModelAsset {
     return this.#metrics[Symbol.iterator]();
   }
 
+  /**
+   * Current (this-month) accumulated amount for a named metric.
+   *
+   * The scalar counterpart to getHistory(): valid only before the month's
+   * snapshot zeroes the accumulators. Returns 0 for a metric this instrument
+   * does not track, because MetricSet.get() falls back to NULL_METRIC.
+   */
+  getMetricAmount(metricName) {
+    return this.#metrics.get(metricName).amount;
+  }
+
   /** Get the raw monthly history array for a named metric. */
   getHistory(metricName) {
     // Derived: netWorthChange = value[i] - value[i-1]

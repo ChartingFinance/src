@@ -8,7 +8,7 @@ import { global_user_startAge } from './globals.js';
 import { FundTransfer } from './fund-transfer.js';
 import { EventType, ShortfallOrigin } from './sim-event.js';
 import { withTrace, TraceKind } from './trace.js';
-import { monthLabel } from './utils/date-int.js';
+import { monthLabel, DateInt } from './utils/date-int.js';
 import { FinancialPackage } from './financial-package.js';
 import { PayrollEngine } from './engines/payroll-engine.js';
 import { ExpenseEngine } from './engines/expense-engine.js';
@@ -133,6 +133,32 @@ export const MEMO_RECONCILIATION = Object.freeze({
 function conservationBucket(event, bucket) {
     // A shortfall completes whatever movement produced it.
     if (event.type === EventType.SPILLOVER || event.type === EventType.UNFUNDED) {
+        // ...except a spill that PAID INCOME TAX, which belongs to the income-tax
+        // total no matter which account ended up supplying it.
+        //
+        // TaxEngine.#withholdInScope books monthly.incomeTax for the spilled leg
+        // — the tax was genuinely collected, just not from the account that owed
+        // it — while the only cash event is this SPILLOVER. Filing it under
+        // oneSided left the incomeTax bucket short by exactly the spill and the
+        // package claiming tax no event backed: "2056-04 Income tax: events=0.00,
+        // package=-431.81" on the reference portfolio, once an IRA was drained
+        // hard enough for its withholding to spill.
+        //
+        // The alternatives were worse. A second INCOME_TAX_WITHHOLDING event on
+        // the fallback would be a second CASH event for one movement and break
+        // the `start + Σ cash events == finish` invariant, since `kind` is a
+        // property of the type and cannot be info for one instance. Replacing the
+        // SPILLOVER outright would discard the depleted/origin provenance. Both
+        // change the engine to satisfy a check; this changes only the check, and
+        // the event keeps saying which account ran dry.
+        //
+        // Safe because `cause: 'withholding'` is set in exactly one place, and
+        // that same block is the only writer of monthly.incomeTax for a spill —
+        // one event, one booking. oneSided is explicitly not asserted to balance,
+        // so moving a term out of it cannot break a conservation law.
+        if (event.type === EventType.SPILLOVER && event.data?.cause === 'withholding') {
+            return 'incomeTax';
+        }
         return event.data?.origin === ShortfallOrigin.PAIRED ? 'paired' : 'oneSided';
         // UNFUNDED is info-kind — no cash moved — but it IS a conservation
         // term: it is the acknowledged gap between what a movement asked for
@@ -361,10 +387,18 @@ export class Portfolio {
             modelAsset.eventsCheckedIndex = modelAsset.events.length;
         }
 
+        // Label the month whose events are being reconciled, not the date this
+        // pass runs on. chronometer_run advances currentDateInt BEFORE calling
+        // monthlyChron, so the raw value is one month ahead of the events in the
+        // buckets — a finding reported as "2056-04" is about March's events.
+        // Cost a full forensic pass on the wrong month before it was noticed.
+        const settled = DateInt.from(currentDateInt.year, currentDateInt.month);
+        settled.addMonths(-1);
+
         const tolerance = 0.01;
         const check = (label, eventTotal, packageTotal) => {
             if (Math.abs(eventTotal - packageTotal) > tolerance) {
-                logger.log(LogCategory.SANITY, `${currentDateInt} ${label}: events=${eventTotal.toFixed(2)}, package=${packageTotal.toFixed(2)}`);
+                logger.log(LogCategory.SANITY, `${settled} ${label}: events=${eventTotal.toFixed(2)}, package=${packageTotal.toFixed(2)}`);
             }
         };
 
@@ -876,9 +910,13 @@ export class Portfolio {
             }
         }
 
-        // Annual tax true-up: reconcile exact liability vs. withheld amounts
+        // Annual tax true-up: reconcile exact liability vs. withheld amounts.
+        // This pass runs on January 1, so the year being settled is the previous
+        // one; its month count is what spec 4a's allocation needs to size the
+        // history window it reads the income basis from.
+        const settledYear = currentDateInt.year - 1;
         withTrace(TraceKind.TAX_TRUE_UP, `${currentDateInt.year} tax true-up`, currentDateInt,
-            () => this.taxes.applyAnnualTaxTrueUp());
+            () => this.taxes.applyAnnualTaxTrueUp(this.monthsInPlanYear(settledYear)));
 
     }
 
