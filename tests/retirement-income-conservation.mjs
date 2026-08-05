@@ -149,6 +149,7 @@ console.log('\n── Pension ($1,000/mo, one year) ─────────�
   const p = await run('pension', 'FERS Pension');
   const T = p.total;
   const savings = p.modelAssets.find(a => a.displayName === 'Savings');
+  const brokerage = p.modelAssets.find(a => a.displayName === 'Brokerage');
 
   check('employedIncome is $0 (pension is not wages)', () => {
     assert.ok(near(T.employedIncome.amount, 0),
@@ -162,13 +163,28 @@ console.log('\n── Pension ($1,000/mo, one year) ─────────�
     assert.ok(near(T.socialSecurityIncome.amount, 0),
       `total.socialSecurityIncome = ${fmt(T.socialSecurityIncome.amount)}, expected $0.00`);
   });
-  check('no income tax: $12,000 pension sits under the standard deduction', () => {
-    assert.ok(near(T.incomeTax.amount, 0),
-      `total.incomeTax = ${fmt(T.incomeTax.amount)}, expected $0.00`);
+  // Spec 4c withholds 10% on arrival from a pension, mirroring the Form W-4P
+  // default. $12,000 still sits under the standard deduction, so the household
+  // OWES nothing — but $1,200 is withheld during the year and refunded at the
+  // annual true-up. That over-withhold-then-refund cycle is what really happens
+  // to a retiree who never adjusts their W-4P, so the invariant is no longer
+  // "nothing was withheld" but "nothing was ultimately kept".
+  check('withholding is refunded in full: $12,000 pension owes no tax', () => {
+    const withheld = Math.abs(T.incomeTax.amount);
+    assert.ok(near(withheld, 1200),
+      `expected $1,200.00 withheld at the W-4P default rate, got ${fmt(withheld)}`);
+    const refund = savings.finishCurrency.amount - 50000;
+    assert.ok(near(refund, withheld),
+      `withheld ${fmt(withheld)} but only ${fmt(refund)} came back — a household ` +
+      `under the standard deduction must end the year having paid $0 net`);
   });
-  check('bank untouched by tax true-ups', () => {
-    assert.ok(near(savings.finishCurrency.amount, 50000),
-      `Savings ended at ${fmt(savings.finishCurrency.amount)}, expected $50,000.00`);
+  check('the withheld cash really left the benefit', () => {
+    // Less swept to Brokerage by exactly what was withheld. Without this the tax
+    // could be BOOKED as collected while no cash moved, and the refund above
+    // would then be money from nowhere.
+    assert.ok(near(brokerage.finishCurrency.amount, 10000 + 12000 - 1200),
+      `Brokerage ended at ${fmt(brokerage.finishCurrency.amount)}, expected ` +
+      `${fmt(10000 + 12000 - 1200)} — $10,000 opening plus a year of pension net of withholding`);
   });
 }
 

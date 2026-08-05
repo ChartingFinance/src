@@ -120,6 +120,11 @@ const RetirementIncomeBehavior = Object.freeze({
       ...COMMON_METRICS,
       M.INCOME, M.ORDINARY_INCOME, M.NET_INCOME, M.GROWTH,
       M.SOCIAL_SECURITY_INCOME,
+      // Withholding on arrival books here. Without these the tax is deducted
+      // from the benefit and shown nowhere: MetricSet.get() falls back to
+      // NULL_METRIC, whose add() is a no-op, so the write succeeds silently and
+      // the asset's own ledger disagrees with the household package.
+      M.WITHHELD_INCOME_TAX, M.INCOME_TAX, M.FEDERAL_TAXES, M.TAXES,
     ];
   },
 
@@ -146,6 +151,9 @@ const PensionBehavior = Object.freeze({
       ...COMMON_METRICS,
       M.INCOME, M.ORDINARY_INCOME, M.NET_INCOME, M.GROWTH,
       M.PENSION_INCOME,
+      // See RetirementIncomeBehavior above — a pension carried no tax metrics
+      // at all, so withholding booked here would have vanished into NULL_METRIC.
+      M.WITHHELD_INCOME_TAX, M.INCOME_TAX, M.FEDERAL_TAXES, M.TAXES,
     ];
   },
 
