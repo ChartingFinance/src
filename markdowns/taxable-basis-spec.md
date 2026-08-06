@@ -267,6 +267,49 @@ Two things were decided while writing it, both now fixed by test:
 - **`ltcgStackBase` is a copy**, so a caller mutating it cannot silently move
   `ordinaryTaxable`.
 
+## 5.2 Step 2 — DONE 2026-08-06. P5 holds
+
+All four ordinary-base sites now call `taxableBasis`:
+
+| Site | Call |
+| --- | --- |
+| `payroll-engine.js:116` | `taxableBasis(this.monthly, user, { annualise: true })` |
+| `tax-engine.js:445` `applyMonthlyTaxTrueUp` | same |
+| `expense-engine.js:391` gross-up | same |
+| `tax-engine.js:622` annual true-up | `taxableBasis(this.yearly, user)` |
+
+**P5 holds: 20 fixtures unchanged, 0 baselines touched.** Four sites replaced by
+one helper with no simulated number moving is the evidence that they really were
+computing the same thing, which §2.1 asserted and this proves.
+
+The annual site keeps its `yearlySnapshot` for the capital-gains block. That is
+site 5 and belongs to step 4; leaving it duplicated for one commit keeps each
+diff attributable.
+
+### Mutating the helper proves the sites route through it
+
+An empty diff is also what a migration that silently did nothing would produce,
+so the helper was mutated to confirm the wiring is live:
+
+| Mutation of `taxableBasis` | Caught by |
+| --- | --- |
+| drop the standard/itemised deduction | 15 fixtures |
+| never annualise (delete the ×12) | 15 fixtures |
+| cap before annualising (true reorder) | dividends-caps-and-windfalls, mfj-two-401ks, grossup-at-the-ltcg-boundary |
+| drop the `capitalGains` floor | **none — expected** |
+
+**Consolidation improved coverage.** Before step 2, reordering the cap against
+the annualisation was caught by exactly one fixture, at one site — the single
+point of failure recorded in the gross-up fixture's note. Routed through the
+shared helper, three fixtures catch it, and `grossup-at-the-ltcg-boundary`'s
+above-limit deferral earns its keep after all: not by discriminating at the site,
+but through the shared path.
+
+The `capitalGains` floor catching nothing is correct at this stage. No site
+consumes `taxableBasis().capitalGains` until step 4, so it is covered by unit
+tests only. That is a gap to close in step 4, not a defect now — and it is
+recorded here so an empty result then is read as a failure rather than a pass.
+
 ## 6. Sequencing
 
 Each step is one commit with its own predicted, then verified, baseline diff.

@@ -19,6 +19,7 @@ import { basisThisMonth, basisOverMonths, isAllocationEligible, planAllocation }
 import { logger, LogCategory } from '../utils/logger.js';
 import { EventType, ShortfallOrigin } from '../sim-event.js';
 import { withTrace, TraceKind } from '../trace.js';
+import { taxableBasis } from '../tax-basis.js';
 
 export class TaxEngine {
 
@@ -441,10 +442,8 @@ export class TaxEngine {
     applyMonthlyTaxTrueUp() {
 
         // Compute total tax liability across ALL income (salary + capital gains + dividends + interest)
-        let yearly = this.monthly.copy().multiply(12.0);
-        yearly.limitDeductions(this.activeUser);
-        let yearlyIncome = activeTaxTable.calculateYearlyTaxableIncome(yearly);
-        let totalIncomeTax = activeTaxTable.calculateYearlyIncomeTax(yearlyIncome).divide(12.0).flipSign();
+        const { ordinaryTaxable } = taxableBasis(this.monthly, this.activeUser, { annualise: true });
+        let totalIncomeTax = activeTaxTable.calculateYearlyIncomeTax(ordinaryTaxable).divide(12.0).flipSign();
 
         // What was already withheld from payroll on Day 1? (negative value)
         const alreadyWithheld = this.monthly.incomeTax.copy();
@@ -620,7 +619,7 @@ export class TaxEngine {
         const yearlySnapshot = this.yearly.copy();
         yearlySnapshot.limitDeductions(this.activeUser);
 
-        const actualTaxableIncome = activeTaxTable.calculateYearlyTaxableIncome(yearlySnapshot);
+        const { ordinaryTaxable: actualTaxableIncome } = taxableBasis(this.yearly, this.activeUser);
         const actualIncomeTax = activeTaxTable.calculateYearlyIncomeTax(actualTaxableIncome);
 
         // Gross gains, less whatever §121 excluded at close. Subtracting here
