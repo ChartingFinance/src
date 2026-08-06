@@ -442,8 +442,10 @@ So today, for every filing status:
 > the primary-home capital-gains exclusion changes which account pays and in
 > which month, and has no effect whatsoever on how much tax a household owes.
 
-Single filers are affected identically. `housing-carrying-costs` realises an ~$80k
-home gain that is fully excluded at close and then taxed in full by the true-up.
+Single filers are affected identically **in principle** — the mechanism has no
+filing-status dependence. An earlier draft of this section named
+`housing-carrying-costs` as a worked example; that was wrong and is corrected in
+7.0.1. No single-filer fixture reaches §121 at all today.
 
 **The fix is not two lines.** Reconciliation compares the sum of
 `CAPITAL_GAIN_RECOGNIZED` events against `monthly.longTermCapitalGains`
@@ -461,6 +463,83 @@ committed is still correct and still required: the figure is right at the
 withholding site, it lives with the other filing-status data, and the rule note
 stops telling MFJ households the wrong number. It is a prerequisite for the fix,
 not a substitute for it.
+
+### 7.0.1 Step 2b blast radius — measured 2026-08-06, before writing any code
+
+**§121 fires in exactly one fixture in the whole corpus: `mfj-home-sale`.** It is
+the only one whose primary home *closes*. Scanned, not assumed:
+
+| Fixture | `isPrimaryHome` | home closes | gain realised | §121 applies |
+| --- | --- | --- | --- | --- |
+| mfj-home-sale | yes | **yes** | $488,452.07 | **yes** |
+| housing-carrying-costs | yes | no | — | no |
+| settlement-spills | yes | no | — | no |
+| settlement-unfunded | yes | no | — | no |
+| settlement-exhausts-fallback | yes | no | — | no |
+| quickstart-earlyCareer | **no** | yes | $392,107.49 | no |
+| quickstart-midCareer | **no** | yes | $141,090.77 | no |
+
+The two quick-start homes that do close are not flagged as primary residences in
+`js/quick-start.js`, so the exclusion has never applied to them and 2b will not
+move them.
+
+**Baselines that move: 1 of 17.** Package fields render only when non-zero
+(`snapshot.mjs:523`), so a new `FinancialPackage` field produces an *empty* diff
+everywhere it stays zero. That is also the safety net: if the field leaks into a
+fixture with no home sale, the diff says so without anyone having to look.
+
+**Code surfaces — five files:**
+
+| File | Change |
+| --- | --- |
+| `js/taxes.js` | `calculateCapitalGainsTax` returns the excluded amount alongside `{isLongTerm, tax}` |
+| `js/financial-package.js` | one new name in `FINANCIAL_FIELDS`; `add`/`subtract`/`multiply`/`copy` all iterate it, so they come free |
+| `js/engines/tax-engine.js` ~302 | accumulate the excluded amount at close |
+| `js/engines/tax-engine.js` ~614 | subtract it from the LTCG base in `applyAnnualTaxTrueUp` — **the actual fix** |
+| `js/sim-event.js` + `js/portfolio.js` | a new info EventType needs an `EVENT_RECONCILIATION` entry (`'excluded'`), or reconciliation throws on an undeclared type |
+
+**Deliberately not touched, and why:**
+
+- `portfolio.js:425` — reconciliation compares `CAPITAL_GAIN_RECOGNIZED` against
+  `monthly.longTermCapitalGains`. Both stay **gross**, so this check is
+  untouched. Keeping the gross gain gross on both sides is what keeps the fix
+  small, and it keeps the event honest: a household that realised $488,452
+  should see $488,452.
+- `totalIncome()` / `capitalGain()` (`financial-package.js:69,101`) feed
+  `report-view.js` and the `annualizedIncome` used for the close-time bracket
+  lookup (`tax-engine.js:291,386`). Leaving them gross means the excluded gain
+  still counts as income when choosing the LTCG bracket. Arguably wrong, but it
+  is a different question from the true-up double-count and it ripples into the
+  UI report. Flagged, not folded in.
+- `taxes.js:654` (`applyYear`) computes an LTCG figure and only logs it. Same
+  subtraction for consistency; zero behavioural effect.
+
+**No persistence migration.** `FinancialPackage` has no `toJSON`/`fromJSON` and
+does not appear in `finplan-store.js` or `app-state.js`.
+
+**A new fixture is required, or half the fix is vacuous.** With §121 reachable
+only from an MFJ fixture, 2b could be implemented for married filers alone and
+the suite would stay green. `single-home-sale` — single filer, primary home, gain
+**above** $250,000 — is the case that distinguishes "exclusion applied once" from
+"exclusion applied and then undone", because part is excluded and part is
+genuinely taxed.
+
+### 7.0.2 Predictions for 2b — recorded before coding
+
+1. 15 of 18 baselines show an **empty** diff: no new field, no number.
+2. `mfj-home-sale` total federal tax **falls by exactly $19,509.78**, and
+   Checking's `federalTaxes` returns to **−48,406.74**. Step 2 measured where
+   that money went; 2b must send it back to precisely that number.
+3. `single-home-sale` pays close-time tax on (gain − $250,000) and the true-up
+   adds nothing further for the excluded portion.
+4. `_coverage` gains the new EventType; `[never emitted]` stays "(none)".
+5. Reconciliation findings stay at **0** — the gross gain is untouched on both
+   sides of `check('Capital gains', …)`.
+
+**Mutation checks before it counts as covered:** revert the `applyAnnualTaxTrueUp`
+subtraction and `mfj-home-sale` must drift back; revert the close-site
+accumulation and **both** home-sale fixtures must drift. A fix that survives
+either mutation green is not covered, per the house rule.
 
 ### 7.1 Two harness defects found while doing this
 
