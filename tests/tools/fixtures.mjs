@@ -444,6 +444,43 @@ const adversarialFixtures = [
     }),
   },
   {
+    name: 'deferred-close-distribution',
+    kind: 'adversarial',
+    reaches:
+      'applyDeferredCloseDistribution, which on 2026-08-06 was reached by ' +
+      'NOTHING. Multiplying its withholding by 7.77 left all 18 baselines ' +
+      'unchanged and all 34 integration suites passing — the entire branch, ' +
+      'including its incremental tax(income+distribution) − tax(income) ' +
+      'calculation, could be deleted or inverted in silence.\n' +
+      '      The reason it was unreachable is a property of the engine worth ' +
+      'knowing: an asset only CLOSES when its finishDateInt precedes the plan ' +
+      'end. Every IRA and 401(K) in the corpus ran to the end, so none of them ' +
+      'ever closed. Hence the 2029-06 finish dates here against a 2030-12 plan.\n' +
+      '      The salary is load-bearing too. The marginal calculation is only ' +
+      'meaningfully different from a standalone tax(distribution) when other ' +
+      'income already exists — with no salary it would walk the brackets from ' +
+      '$0 and the branch would be exercised but not DISCRIMINATED. Two deferred ' +
+      'accounts closing in the same month also pin the ordering: the second ' +
+      "one's baseline income includes the first one's distribution.",
+    config: { startAge: 62, retirementAge: 67, filingAs: 'Single' },
+    build: () => ({
+      assets: [
+        asset(DEC)({ instrument: 'workingIncome', displayName: 'Salary',
+          startCurrency: { amount: 9000 }, startBasisCurrency: { amount: 0 } }),
+        asset({ year: 2029, month: 6 })({ instrument: 'ira', displayName: 'IRA',
+          startCurrency: { amount: 400000 }, startBasisCurrency: { amount: 0 },
+          annualReturnRate: { rate: 0.05 } }),
+        asset({ year: 2029, month: 6 })({ instrument: '401K', displayName: '401K',
+          startCurrency: { amount: 300000 }, startBasisCurrency: { amount: 0 },
+          annualReturnRate: { rate: 0.05 } }),
+        asset(DEC)({ instrument: 'bank', displayName: 'Checking',
+          startCurrency: { amount: 60000 }, startBasisCurrency: { amount: 60000 } }),
+        asset(DEC)({ instrument: 'monthlyExpense', displayName: 'Living',
+          startCurrency: { amount: -6000 }, startBasisCurrency: { amount: 0 } }),
+      ].map(ModelAsset.fromJSON),
+    }),
+  },
+  {
     name: 'transfer-unfunded',
     kind: 'adversarial',
     reaches:

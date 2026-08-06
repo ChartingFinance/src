@@ -47,6 +47,16 @@
     spillover
     taxTrueUp
     transfer
+  deferred-close-distribution:
+    assetGrowth
+    expenseInflation
+    ficaWithholding
+    grossUp
+    incomeGrowth
+    incomeTaxWithholding
+    interestIncome
+    taxTrueUp
+    transfer
   dividends-caps-and-windfalls:
     assetGrowth
     capitalGainRecognized

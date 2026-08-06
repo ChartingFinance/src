@@ -105,6 +105,57 @@ the work.
 
 ---
 
+## 3.1 Step 0 — DONE 2026-08-06. P1 satisfied; the matrix
+
+`deferred-close-distribution` closes an IRA and a 401(k) in 2029-06 against a
+2030-12 plan, alongside a running salary. Both close; both emit withholding.
+
+Every site mutated, and the fixtures that caught it recorded. This is the
+evidence for P1, and it is what makes each migration step's diff attributable.
+
+| # | Site | Mutation | Caught by |
+| --- | --- | --- | --- |
+| 1 | `payroll-engine` `computeHouseholdIncomeTax` | tax ×1.4 | 10 fixtures |
+| 2 | `tax-engine` `applyMonthlyTaxTrueUp` | tax ×1.4 | 14 fixtures |
+| 3 | `expense-engine` gross-up | LTCG rate forced 0.5 | annual-trueup-from-brokerage, dividends-caps-and-windfalls |
+| 4 | `tax-engine` annual true-up, ordinary | ×1.5 | 14 fixtures |
+| 5 | `tax-engine` annual true-up, LTCG | ×3 | 7 fixtures |
+| 6 | `taxes.js` close-path LTCG | ×3 | quickstart-earlyCareer, mfj-high-earner-ltcg, single-home-sale |
+| 7 | `tax-engine` deferred close withholding | ×7.77 | **deferred-close-distribution — and only it** |
+| 8 | `taxes.js` `reconcileYearlyTax` | ×9 | **none, by design** |
+| 9 | `taxes.js` `applyYear` | ×9 | **none, by design** |
+
+Sites 8 and 9 reporting nothing is the *expected* result and is what makes step
+3's empty-diff claim provable rather than assumed: they genuinely only log.
+
+Site 3 is thinly covered — two fixtures, neither built for it. Worth widening
+before step 2, though it is not blocking.
+
+### 3.2 What the new fixture immediately exposed
+
+Closing the deferred accounts makes the household withholding produce a number
+that cannot be right:
+
+```
+2029-06  incomeTaxWithholding      -1,173.56   (Salary, every month)
+2029-07  incomeTaxWithholding    -307,184.19   ← the month the accounts close
+2029-08  incomeTaxWithholding      -1,173.56
+```
+
+A **262× spike on a $9,000 paycheck**, for one month. The distributions land in
+`this.monthly`, and `computeHouseholdIncomeTax` annualises that month ×12 as
+though $566,521 arrived every month, then divides the resulting liability by 12.
+The IRA's own close withholding is 58.7% of the balance distributed — above the
+top marginal rate, which no incremental ordinary tax can be.
+
+The engine does not collect it: `applyNetIncome: Salary pre-tax deferrals exceed
+after-tax pay by $298,872.69; net income clamped to $0`. So the number is
+reported and then clamped away.
+
+This is the ×12 annualisation listed as out of scope in §8, and it stays out of
+scope — but it is no longer invisible, and this fixture is where a fix would be
+measured. It had never been reachable before today.
+
 ## 4. Design
 
 One module, `js/tax-basis.js`, one exported function.
