@@ -25,6 +25,7 @@ export class WithholdingResult {
 }
 import { logger, LogCategory } from './utils/logger.js';
 import { global_filingAs, global_inflationRate, global_propertyTaxDeductionMax } from './globals.js';
+import { taxableBasis } from './tax-basis.js';
 
 export const us_2026_taxtables = {
     "year": 2026,
@@ -600,7 +601,7 @@ export class TaxTable {
 
     }
 
-    reconcileYearlyTax(yearly) {
+    reconcileYearlyTax(yearly, activeUser) {
 
         let yearlyFICA = this.calculateYearlyFICATax(yearly);
         if (yearlyFICA.amount != yearly.fica.amount)
@@ -608,7 +609,7 @@ export class TaxTable {
         else
             logger.log(LogCategory.TAX, 'computed yearly FICA check PASSED');
 
-        let yearlyTaxableIncome = this.calculateYearlyTaxableIncome(yearly);
+        let yearlyTaxableIncome = taxableBasis(yearly, activeUser, { taxTable: this }).ordinaryTaxable;
         if (yearlyTaxableIncome.amount != (yearly.selfIncome.amount + yearly.employedIncome.amount))
             logger.log(LogCategory.TAX, 'computed yearly taxable income != portfolio yearly taxable income');
         else
@@ -651,15 +652,15 @@ export class TaxTable {
     }
     */
 
-    applyYear(yearly) {
-        this.reconcileYearlyTax(yearly);
+    applyYear(yearly, activeUser) {
+        this.reconcileYearlyTax(yearly, activeUser);
 
         let yearlyFICATax = this.calculateYearlyFICATax(yearly);
-        let yearlyTaxableIncome = this.calculateYearlyTaxableIncome(yearly);
-        let yearlyIncomeTax = this.calculateYearlyIncomeTax(yearlyTaxableIncome);        
-        
-        let yearlyLongTermCapitalGainsAndQualifiedDividends = new Currency(yearly.longTermCapitalGains.amount + yearly.qualifiedDividends.amount);
-        let yearlyLongTermCapitalGainsAndQualifiedDividendsTax = this.calculateYearlyLongTermCapitalGainsTax(yearlyTaxableIncome, yearlyLongTermCapitalGainsAndQualifiedDividends);
+        const basis = taxableBasis(yearly, activeUser, { taxTable: this });
+        let yearlyTaxableIncome = basis.ordinaryTaxable;
+        let yearlyIncomeTax = this.calculateYearlyIncomeTax(yearlyTaxableIncome);
+
+        let yearlyLongTermCapitalGainsAndQualifiedDividendsTax = this.calculateYearlyLongTermCapitalGainsTax(yearlyTaxableIncome, basis.capitalGains);
         logger.log(LogCategory.TAX, 'Taxes.applyYear|yearlyLongTermCapitalGainsAndQualifiedDividendsTax: ' + yearlyLongTermCapitalGainsAndQualifiedDividendsTax.toString());
     }
 
