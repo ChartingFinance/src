@@ -228,6 +228,45 @@ extraction must not accidentally make filing status inert.
 
 ---
 
+## 5.1 Step 1 — DONE 2026-08-06
+
+`js/tax-basis.js` exists, with the §4 semantics and their citations written into
+the file so P2 is satisfied at the point of use rather than only in this
+document. **No call site was changed**, which makes the deliverable an assertion
+rather than a claim:
+
+```
+19 fixture(s) unchanged. No simulated number moved.
+0 baselines touched
+```
+
+**T1: 21 hand-computed unit tests** in `tests/unit/tax-basis.test.js`, every
+expected value derived from the 2026 tables rather than from the
+implementation's output. They cover the standard deduction under both filing
+statuses, SS at 85%, the zero floor, pre-tax contributions and their annual cap,
+itemising, the property-tax cap, long-term gains and qualified dividends being
+absent from `ordinaryTaxable`, short-term gains being present, the §121
+subtraction and its floor, `ltcgStackBase` excluding both the gains and Roth
+distributions, and the caller's package surviving unmutated.
+
+They passed on the first run, so they were mutation-verified rather than
+trusted:
+
+| Mutation of `taxableBasis` | Tests that failed |
+| --- | --- |
+| drop the `capitalGains` floor | 1 |
+| cap deductions before annualising instead of after | 3 |
+| operate on the live package instead of a copy | 1 |
+| stack gains on top of themselves | 2 |
+
+Two things were decided while writing it, both now fixed by test:
+
+- **Order is load-bearing.** Annualise first, cap second — every pre-existing
+  call site does this, and reversing it lets twelve times the 401(k) limit
+  through. The "caps contributions AFTER annualising" test is the guard.
+- **`ltcgStackBase` is a copy**, so a caller mutating it cannot silently move
+  `ordinaryTaxable`.
+
 ## 6. Sequencing
 
 Each step is one commit with its own predicted, then verified, baseline diff.
