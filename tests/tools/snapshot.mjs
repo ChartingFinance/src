@@ -123,6 +123,17 @@ function fail(msg) {
   process.exit(2);
 }
 
+/**
+ * Read a baseline with line endings normalised.
+ *
+ * This repo is used with core.autocrlf=true, so a checkout can hand back CRLF
+ * while the tool always generates LF — which would report every fixture as
+ * drifted on a clean clone, with no engine change behind it. .gitattributes
+ * pins these files to LF; this is the seatbelt for anyone whose copy arrived
+ * some other way.
+ */
+const readBaseline = (file) => readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
+
 const BLESS = has('--bless');
 const ONLY = valueOf('--only');
 /** Write every history value instead of a digest. Local investigation only. */
@@ -634,7 +645,7 @@ for (const fixture of selected) {
     console.log(`  MISSING  ${fixture.name} — no baseline. Run with --bless.`);
     continue;
   }
-  const expected = readFileSync(file, 'utf8');
+  const expected = readBaseline(file);
   // Under --set the deliberate config difference is not drift.
   const [lhs, rhs] = overrides.length
     ? [stripConfig(expected), stripConfig(text)]
@@ -663,9 +674,9 @@ if (!ONLY) {
   } else if (!existsSync(covFile)) {
     drifted++;
     console.log('  MISSING  _coverage — no baseline. Run with --bless.');
-  } else if (readFileSync(covFile, 'utf8') !== covText) {
+  } else if (readBaseline(covFile) !== covText) {
     drifted++;
-    const d = firstDivergence(readFileSync(covFile, 'utf8'), covText);
+    const d = firstDivergence(readBaseline(covFile), covText);
     console.log(`  DRIFT    _coverage  (first change at line ${d.line})`);
     for (const l of d.expected) console.log(`             - ${l}`);
     for (const l of d.actual) console.log(`             + ${l}`);
