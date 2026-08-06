@@ -481,6 +481,58 @@ const adversarialFixtures = [
     }),
   },
   {
+    name: 'grossup-at-the-ltcg-boundary',
+    kind: 'adversarial',
+    reaches:
+      'calculateGrossWithdrawal — the gross-up that enlarges a withdrawal to ' +
+      'cover the tax on the gain the withdrawal itself realises, W = X / ' +
+      '(1 − t·g). It was reached only incidentally, by two fixtures built for ' +
+      'other things.\n' +
+      '      Reaching it is not enough, because it consumes the tax base ONLY ' +
+      'through getMarginalLTCGRate — a three-step function. A base that shifts ' +
+      'without crossing 0%/15%/20% changes nothing, so a fixture parked deep ' +
+      'inside a band reports "no drift" for almost any error and proves ' +
+      'nothing. This one straddles the 0%/15% boundary, with an 80% gain ratio ' +
+      '(basis $100,000 on $500,000) so the gross-up is worth ~13.6% of a ' +
+      'withdrawal whenever the rate is 15%.\n' +
+      '      MEASURED, not assumed. It catches forcing the rate to 0.5, and it ' +
+      'catches replacing the taxable base with the gross rollup — the second ' +
+      'being the realistic error, which annual-trueup-from-brokerage also ' +
+      'catches but dividends-caps-and-windfalls does not. The three fixtures ' +
+      'are complementary rather than redundant.\n' +
+      '      WHAT IT DOES NOT CATCH: skipping limitDeductions, or capping ' +
+      'before annualising instead of after. Both shift the base by the 401(k) ' +
+      'overage without moving it across a bracket edge here, so ' +
+      'dividends-caps-and-windfalls remains the ONLY fixture catching those ' +
+      'two. The primary guard for them is tests/unit/tax-basis.test.js, which ' +
+      'asserts both directly. The deferral below is still deliberately above ' +
+      'the annual limit — it exercises the capping path and emits ' +
+      'contributionCapped — it just does not discriminate it here.\n' +
+      '      Probing this fixture also showed the base is not a stable annual ' +
+      'quantity at all: within 2026 alone this one site saw $14,500, $79,900 ' +
+      'and $151,900, because this.monthly is mid-accumulation when the call ' +
+      'happens and ×12 amplifies whatever has landed so far. That is evidence ' +
+      'for spec 6, not an argument against this fixture.',
+    config: { startAge: 50, retirementAge: 67, filingAs: 'Single' },
+    build: () => ({
+      assets: [
+        asset(DEC)({ instrument: 'workingIncome', displayName: 'Salary',
+          startCurrency: { amount: 8000 }, startBasisCurrency: { amount: 0 },
+          fundTransfers: [xfer('401K', 2500)] }),
+        asset(DEC)({ instrument: '401K', displayName: '401K',
+          startCurrency: { amount: 120000 }, startBasisCurrency: { amount: 0 },
+          annualReturnRate: { rate: 0.05 } }),
+        asset(DEC)({ instrument: 'taxableEquity', displayName: 'Brokerage',
+          startCurrency: { amount: 500000 }, startBasisCurrency: { amount: 100000 },
+          annualReturnRate: { rate: 0.04 } }),
+        asset(DEC)({ instrument: 'bank', displayName: 'Checking',
+          startCurrency: { amount: 3000 }, startBasisCurrency: { amount: 3000 } }),
+        asset(DEC)({ instrument: 'monthlyExpense', displayName: 'Living',
+          startCurrency: { amount: -10000 }, startBasisCurrency: { amount: 0 } }),
+      ].map(ModelAsset.fromJSON),
+    }),
+  },
+  {
     name: 'transfer-unfunded',
     kind: 'adversarial',
     reaches:
