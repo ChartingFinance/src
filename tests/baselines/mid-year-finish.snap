@@ -1,0 +1,874 @@
+# fixture: mid-year-finish  (adversarial)
+#
+# the OTHER side of the year-boundary branch: a plan whose last month is
+# July never rolls into January, so the final annual pass never runs and the
+# trailing reconciliation must find nothing. Also the stub-year guardrail
+# snapshot, which is skipped entirely on a December finish.
+
+[config]
+  backtestYear = current
+  equityDividendAllocation = 0.5
+  equityDividendAverageAnnualRate = 0.025
+  equityGrowthAllocation = 0.5
+  filingAs = Single
+  homeSaleCapitalGainsDiscount = 250000
+  inflationRate = 0.031
+  propertyTaxDeductionMax = 40000
+  propertyTaxRate = 0.01
+  simDataMode = calibrated
+  taxYear = 2025
+  userFinishAge = 87
+  userRetirementAge = 65
+  userStartAge = 75
+  allocateHouseholdTax = false
+  pensionWithholdingRate = 0.1
+  socialSecurityWithholdingRate = 0
+  retirementWithholdingRate = 0.1
+  guardrails = rate:4 preservation:20 prosperity:20 adjustment:10 from:2026-01
+
+[totals]
+  months = 220
+  firstDate = 2026-01
+  lastDate = 2030-07
+  startValue = 1000000.000000
+  finishValue = 894608.278021
+  accumulated = -9501.455286
+  total.socialSecurityIncome = 165000.000000
+  total.expense = -244679.814366
+  total.incomeTax = -25711.907613
+  total.tradIRADistribution = 162104.523265
+  total.value = 51586004.337854
+
+[assetOrder]
+  0 Social Security
+  1 Savings
+  2 IRA
+  3 Living
+
+[asset] IRA
+  instrument = ira
+  start = 2026-01  finish = 2030-07
+  startCurrency = 800000.000000
+  finishCurrency = 637895.476735
+  startBasis = 0.000000
+  finishBasis = 0.000000
+  isClosed = no  isDepleted = no
+  closedDate = -  closedValue = -
+  events = 165  reconciled = 165
+
+[events] IRA
+  0000 2026-01 assetGrowth                      0.000000 cash  growth                 c-
+  0001 2026-01 transfer                     -2699.055331 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0002 2026-01 incomeTaxWithholding          -299.895037 cash  -                      c1 {rate=0.100000 source=distribution}
+  0003 2026-02 assetGrowth                      0.000000 cash  growth                 c-
+  0004 2026-02 transfer                     -2688.937416 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0005 2026-02 incomeTaxWithholding          -298.770824 cash  -                      c1 {rate=0.100000 source=distribution}
+  0006 2026-03 assetGrowth                      0.000000 cash  growth                 c-
+  0007 2026-03 transfer                     -2688.937416 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0008 2026-03 incomeTaxWithholding          -298.770824 cash  -                      c1 {rate=0.100000 source=distribution}
+  0009 2026-04 assetGrowth                      0.000000 cash  growth                 c-
+  0010 2026-04 transfer                     -2688.937416 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0011 2026-04 incomeTaxWithholding          -298.770824 cash  -                      c1 {rate=0.100000 source=distribution}
+  0012 2026-05 assetGrowth                      0.000000 cash  growth                 c-
+  0013 2026-05 transfer                     -2688.937416 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0014 2026-05 incomeTaxWithholding          -298.770824 cash  -                      c1 {rate=0.100000 source=distribution}
+  0015 2026-06 assetGrowth                      0.000000 cash  growth                 c-
+  0016 2026-06 transfer                     -2688.937416 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0017 2026-06 incomeTaxWithholding          -298.770824 cash  -                      c1 {rate=0.100000 source=distribution}
+  0018 2026-07 assetGrowth                      0.000000 cash  growth                 c-
+  0019 2026-07 transfer                     -2688.937416 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0020 2026-07 incomeTaxWithholding          -298.770824 cash  -                      c1 {rate=0.100000 source=distribution}
+  0021 2026-08 assetGrowth                      0.000000 cash  growth                 c-
+  0022 2026-08 transfer                     -2688.937416 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0023 2026-08 incomeTaxWithholding          -298.770824 cash  -                      c1 {rate=0.100000 source=distribution}
+  0024 2026-09 assetGrowth                      0.000000 cash  growth                 c-
+  0025 2026-09 transfer                     -2688.937416 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0026 2026-09 incomeTaxWithholding          -298.770824 cash  -                      c1 {rate=0.100000 source=distribution}
+  0027 2026-10 assetGrowth                      0.000000 cash  growth                 c-
+  0028 2026-10 transfer                     -2688.937416 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0029 2026-10 incomeTaxWithholding          -298.770824 cash  -                      c1 {rate=0.100000 source=distribution}
+  0030 2026-11 assetGrowth                      0.000000 cash  growth                 c-
+  0031 2026-11 transfer                     -2688.937416 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0032 2026-11 incomeTaxWithholding          -298.770824 cash  -                      c1 {rate=0.100000 source=distribution}
+  0033 2026-12 assetGrowth                      0.000000 cash  growth                 c-
+  0034 2026-12 transfer                     -2688.937416 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0035 2026-12 incomeTaxWithholding          -298.770824 cash  -                      c1 {rate=0.100000 source=distribution}
+  0036 2027-01 assetGrowth                      0.000000 cash  growth                 c-
+  0037 2027-01 transfer                     -2675.547129 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0038 2027-01 incomeTaxWithholding          -297.283014 cash  -                      c1 {rate=0.100000 source=distribution}
+  0039 2027-02 assetGrowth                      0.000000 cash  growth                 c-
+  0040 2027-02 transfer                     -2675.547129 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0041 2027-02 incomeTaxWithholding          -297.283014 cash  -                      c1 {rate=0.100000 source=distribution}
+  0042 2027-03 assetGrowth                      0.000000 cash  growth                 c-
+  0043 2027-03 transfer                     -2675.547129 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0044 2027-03 incomeTaxWithholding          -297.283014 cash  -                      c1 {rate=0.100000 source=distribution}
+  0045 2027-04 assetGrowth                      0.000000 cash  growth                 c-
+  0046 2027-04 transfer                     -2675.547129 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0047 2027-04 incomeTaxWithholding          -297.283014 cash  -                      c1 {rate=0.100000 source=distribution}
+  0048 2027-05 assetGrowth                      0.000000 cash  growth                 c-
+  0049 2027-05 transfer                     -2675.547129 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0050 2027-05 incomeTaxWithholding          -297.283014 cash  -                      c1 {rate=0.100000 source=distribution}
+  0051 2027-06 assetGrowth                      0.000000 cash  growth                 c-
+  0052 2027-06 transfer                     -2675.547129 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0053 2027-06 incomeTaxWithholding          -297.283014 cash  -                      c1 {rate=0.100000 source=distribution}
+  0054 2027-07 assetGrowth                      0.000000 cash  growth                 c-
+  0055 2027-07 transfer                     -2675.547129 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0056 2027-07 incomeTaxWithholding          -297.283014 cash  -                      c1 {rate=0.100000 source=distribution}
+  0057 2027-08 assetGrowth                      0.000000 cash  growth                 c-
+  0058 2027-08 transfer                     -2675.547129 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0059 2027-08 incomeTaxWithholding          -297.283014 cash  -                      c1 {rate=0.100000 source=distribution}
+  0060 2027-09 assetGrowth                      0.000000 cash  growth                 c-
+  0061 2027-09 transfer                     -2675.547129 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0062 2027-09 incomeTaxWithholding          -297.283014 cash  -                      c1 {rate=0.100000 source=distribution}
+  0063 2027-10 assetGrowth                      0.000000 cash  growth                 c-
+  0064 2027-10 transfer                     -2675.547129 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0065 2027-10 incomeTaxWithholding          -297.283014 cash  -                      c1 {rate=0.100000 source=distribution}
+  0066 2027-11 assetGrowth                      0.000000 cash  growth                 c-
+  0067 2027-11 transfer                     -2675.547129 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0068 2027-11 incomeTaxWithholding          -297.283014 cash  -                      c1 {rate=0.100000 source=distribution}
+  0069 2027-12 assetGrowth                      0.000000 cash  growth                 c-
+  0070 2027-12 transfer                     -2675.547129 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0071 2027-12 incomeTaxWithholding          -297.283014 cash  -                      c1 {rate=0.100000 source=distribution}
+  0072 2028-01 assetGrowth                      0.000000 cash  growth                 c-
+  0073 2028-01 transfer                     -2650.881732 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0074 2028-01 incomeTaxWithholding          -294.542415 cash  -                      c1 {rate=0.100000 source=distribution}
+  0075 2028-02 assetGrowth                      0.000000 cash  growth                 c-
+  0076 2028-02 transfer                     -2650.881732 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0077 2028-02 incomeTaxWithholding          -294.542415 cash  -                      c1 {rate=0.100000 source=distribution}
+  0078 2028-03 assetGrowth                      0.000000 cash  growth                 c-
+  0079 2028-03 transfer                     -2650.881732 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0080 2028-03 incomeTaxWithholding          -294.542415 cash  -                      c1 {rate=0.100000 source=distribution}
+  0081 2028-04 assetGrowth                      0.000000 cash  growth                 c-
+  0082 2028-04 transfer                     -2650.881732 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0083 2028-04 incomeTaxWithholding          -294.542415 cash  -                      c1 {rate=0.100000 source=distribution}
+  0084 2028-05 assetGrowth                      0.000000 cash  growth                 c-
+  0085 2028-05 transfer                     -2650.881732 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0086 2028-05 incomeTaxWithholding          -294.542415 cash  -                      c1 {rate=0.100000 source=distribution}
+  0087 2028-06 assetGrowth                      0.000000 cash  growth                 c-
+  0088 2028-06 transfer                     -2650.881732 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0089 2028-06 incomeTaxWithholding          -294.542415 cash  -                      c1 {rate=0.100000 source=distribution}
+  0090 2028-07 assetGrowth                      0.000000 cash  growth                 c-
+  0091 2028-07 transfer                     -2650.881732 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0092 2028-07 incomeTaxWithholding          -294.542415 cash  -                      c1 {rate=0.100000 source=distribution}
+  0093 2028-08 assetGrowth                      0.000000 cash  growth                 c-
+  0094 2028-08 transfer                     -2650.881732 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0095 2028-08 incomeTaxWithholding          -294.542415 cash  -                      c1 {rate=0.100000 source=distribution}
+  0096 2028-09 assetGrowth                      0.000000 cash  growth                 c-
+  0097 2028-09 transfer                     -2650.881732 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0098 2028-09 incomeTaxWithholding          -294.542415 cash  -                      c1 {rate=0.100000 source=distribution}
+  0099 2028-10 assetGrowth                      0.000000 cash  growth                 c-
+  0100 2028-10 transfer                     -2650.881732 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0101 2028-10 incomeTaxWithholding          -294.542415 cash  -                      c1 {rate=0.100000 source=distribution}
+  0102 2028-11 assetGrowth                      0.000000 cash  growth                 c-
+  0103 2028-11 transfer                     -2650.881732 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0104 2028-11 incomeTaxWithholding          -294.542415 cash  -                      c1 {rate=0.100000 source=distribution}
+  0105 2028-12 assetGrowth                      0.000000 cash  growth                 c-
+  0106 2028-12 transfer                     -2650.881732 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0107 2028-12 incomeTaxWithholding          -294.542415 cash  -                      c1 {rate=0.100000 source=distribution}
+  0108 2029-01 assetGrowth                      0.000000 cash  growth                 c-
+  0109 2029-01 transfer                     -2625.443977 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0110 2029-01 incomeTaxWithholding          -291.715997 cash  -                      c1 {rate=0.100000 source=distribution}
+  0111 2029-02 assetGrowth                      0.000000 cash  growth                 c-
+  0112 2029-02 transfer                     -2625.443977 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0113 2029-02 incomeTaxWithholding          -291.715997 cash  -                      c1 {rate=0.100000 source=distribution}
+  0114 2029-03 assetGrowth                      0.000000 cash  growth                 c-
+  0115 2029-03 transfer                     -2625.443977 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0116 2029-03 incomeTaxWithholding          -291.715997 cash  -                      c1 {rate=0.100000 source=distribution}
+  0117 2029-04 assetGrowth                      0.000000 cash  growth                 c-
+  0118 2029-04 transfer                     -2625.443977 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0119 2029-04 incomeTaxWithholding          -291.715997 cash  -                      c1 {rate=0.100000 source=distribution}
+  0120 2029-05 assetGrowth                      0.000000 cash  growth                 c-
+  0121 2029-05 transfer                     -2625.443977 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0122 2029-05 incomeTaxWithholding          -291.715997 cash  -                      c1 {rate=0.100000 source=distribution}
+  0123 2029-06 assetGrowth                      0.000000 cash  growth                 c-
+  0124 2029-06 transfer                     -2625.443977 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0125 2029-06 incomeTaxWithholding          -291.715997 cash  -                      c1 {rate=0.100000 source=distribution}
+  0126 2029-07 assetGrowth                      0.000000 cash  growth                 c-
+  0127 2029-07 transfer                     -2625.443977 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0128 2029-07 incomeTaxWithholding          -291.715997 cash  -                      c1 {rate=0.100000 source=distribution}
+  0129 2029-08 assetGrowth                      0.000000 cash  growth                 c-
+  0130 2029-08 transfer                     -2625.443977 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0131 2029-08 incomeTaxWithholding          -291.715997 cash  -                      c1 {rate=0.100000 source=distribution}
+  0132 2029-09 assetGrowth                      0.000000 cash  growth                 c-
+  0133 2029-09 transfer                     -2625.443977 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0134 2029-09 incomeTaxWithholding          -291.715997 cash  -                      c1 {rate=0.100000 source=distribution}
+  0135 2029-10 assetGrowth                      0.000000 cash  growth                 c-
+  0136 2029-10 transfer                     -2625.443977 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0137 2029-10 incomeTaxWithholding          -291.715997 cash  -                      c1 {rate=0.100000 source=distribution}
+  0138 2029-11 assetGrowth                      0.000000 cash  growth                 c-
+  0139 2029-11 transfer                     -2625.443977 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0140 2029-11 incomeTaxWithholding          -291.715997 cash  -                      c1 {rate=0.100000 source=distribution}
+  0141 2029-12 assetGrowth                      0.000000 cash  growth                 c-
+  0142 2029-12 transfer                     -2625.443977 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0143 2029-12 incomeTaxWithholding          -291.715997 cash  -                      c1 {rate=0.100000 source=distribution}
+  0144 2030-01 assetGrowth                      0.000000 cash  growth                 c-
+  0145 2030-01 transfer                     -2599.175711 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0146 2030-01 incomeTaxWithholding          -288.797301 cash  -                      c1 {rate=0.100000 source=distribution}
+  0147 2030-02 assetGrowth                      0.000000 cash  growth                 c-
+  0148 2030-02 transfer                     -2599.175711 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0149 2030-02 incomeTaxWithholding          -288.797301 cash  -                      c1 {rate=0.100000 source=distribution}
+  0150 2030-03 assetGrowth                      0.000000 cash  growth                 c-
+  0151 2030-03 transfer                     -2599.175711 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0152 2030-03 incomeTaxWithholding          -288.797301 cash  -                      c1 {rate=0.100000 source=distribution}
+  0153 2030-04 assetGrowth                      0.000000 cash  growth                 c-
+  0154 2030-04 transfer                     -2599.175711 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0155 2030-04 incomeTaxWithholding          -288.797301 cash  -                      c1 {rate=0.100000 source=distribution}
+  0156 2030-05 assetGrowth                      0.000000 cash  growth                 c-
+  0157 2030-05 transfer                     -2599.175711 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0158 2030-05 incomeTaxWithholding          -288.797301 cash  -                      c1 {rate=0.100000 source=distribution}
+  0159 2030-06 assetGrowth                      0.000000 cash  growth                 c-
+  0160 2030-06 transfer                     -2599.175711 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0161 2030-06 incomeTaxWithholding          -288.797301 cash  -                      c1 {rate=0.100000 source=distribution}
+  0162 2030-07 assetGrowth                      0.000000 cash  growth                 c-
+  0163 2030-07 transfer                     -2599.175711 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0164 2030-07 incomeTaxWithholding          -288.797301 cash  -                      c1 {rate=0.100000 source=distribution}
+
+[history] IRA
+  value                        n=  55 first=   797001.050000 last=   637895.480000 min=   637895.480000 max=   797001.050000 sum=   39432166.520000 #2fed7fb6
+  ordinaryIncome               n=  55 first=     2998.950000 last=     2887.970000 min=     2887.970000 max=     2998.950000 sum=     162104.470000 #4e8728da
+  income                       n=  55 first=     2998.950000 last=     2887.970000 min=     2887.970000 max=     2998.950000 sum=     162104.470000 #4e8728da
+  withheldIncomeTax            n=  55 first=     -299.900000 last=     -288.800000 min=     -299.900000 max=     -288.800000 sum=     -16210.450000 #c401f9f2
+  incomeTax                    n=  55 first=     -299.900000 last=     -288.800000 min=     -299.900000 max=     -288.800000 sum=     -16210.450000 #c401f9f2
+  federalTaxes                 n=  55 first=     -299.900000 last=     -288.800000 min=     -299.900000 max=     -288.800000 sum=     -16210.450000 #c401f9f2
+  taxes                        n=  55 first=     -299.900000 last=     -288.800000 min=     -299.900000 max=     -288.800000 sum=     -16210.450000 #c401f9f2
+  rmd                          n=  55 first=     2699.060000 last=     2599.180000 min=     2599.180000 max=     2699.060000 sum=     145894.100000 #ca605cd4
+  taxableDistribution          n=  55 first=     2998.950000 last=     2887.970000 min=     2887.970000 max=     2998.950000 sum=     162104.470000 #4e8728da
+  tradIRADistribution          n=  55 first=     2998.950000 last=     2887.970000 min=     2887.970000 max=     2998.950000 sum=     162104.470000 #4e8728da
+
+[asset] Living
+  instrument = monthlyExpense
+  start = 2026-01  finish = 2030-07
+  startCurrency = -5000.000000
+  finishCurrency = -3780.650082
+  startBasis = 0.000000
+  finishBasis = 0.000000
+  isClosed = no  isDepleted = no
+  closedDate = -  closedValue = -
+  events = 55  reconciled = 55
+
+[events] Living
+  0000 2026-01 expenseInflation               -12.916667 cash  -                      c-
+  0001 2026-02 expenseInflation               -12.950035 cash  -                      c-
+  0002 2026-03 expenseInflation               -12.983489 cash  -                      c-
+  0003 2026-04 expenseInflation               -13.017030 cash  -                      c-
+  0004 2026-05 expenseInflation               -13.050657 cash  -                      c-
+  0005 2026-06 expenseInflation               -13.084371 cash  -                      c-
+  0006 2026-07 expenseInflation               -13.118172 cash  -                      c-
+  0007 2026-08 expenseInflation               -13.152061 cash  -                      c-
+  0008 2026-09 expenseInflation               -13.186037 cash  -                      c-
+  0009 2026-10 expenseInflation               -13.220101 cash  -                      c-
+  0010 2026-11 expenseInflation               -13.254253 cash  -                      c-
+  0011 2026-12 expenseInflation               -13.288493 cash  -                      c-
+  0012 2027-01 expenseInflation               -11.990540 cash  -                      c-
+  0013 2027-02 expenseInflation               -12.021515 cash  -                      c-
+  0014 2027-03 expenseInflation               -12.052571 cash  -                      c-
+  0015 2027-04 expenseInflation               -12.083707 cash  -                      c-
+  0016 2027-05 expenseInflation               -12.114923 cash  -                      c-
+  0017 2027-06 expenseInflation               -12.146220 cash  -                      c-
+  0018 2027-07 expenseInflation               -12.177597 cash  -                      c-
+  0019 2027-08 expenseInflation               -12.209056 cash  -                      c-
+  0020 2027-09 expenseInflation               -12.240596 cash  -                      c-
+  0021 2027-10 expenseInflation               -12.272218 cash  -                      c-
+  0022 2027-11 expenseInflation               -12.303921 cash  -                      c-
+  0023 2027-12 expenseInflation               -12.335706 cash  -                      c-
+  0024 2028-01 expenseInflation               -11.130816 cash  -                      c-
+  0025 2028-02 expenseInflation               -11.159571 cash  -                      c-
+  0026 2028-03 expenseInflation               -11.188400 cash  -                      c-
+  0027 2028-04 expenseInflation               -11.217303 cash  -                      c-
+  0028 2028-05 expenseInflation               -11.246281 cash  -                      c-
+  0029 2028-06 expenseInflation               -11.275334 cash  -                      c-
+  0030 2028-07 expenseInflation               -11.304462 cash  -                      c-
+  0031 2028-08 expenseInflation               -11.333665 cash  -                      c-
+  0032 2028-09 expenseInflation               -11.362944 cash  -                      c-
+  0033 2028-10 expenseInflation               -11.392298 cash  -                      c-
+  0034 2028-11 expenseInflation               -11.421728 cash  -                      c-
+  0035 2028-12 expenseInflation               -11.451234 cash  -                      c-
+  0036 2029-01 expenseInflation               -10.332735 cash  -                      c-
+  0037 2029-02 expenseInflation               -10.359428 cash  -                      c-
+  0038 2029-03 expenseInflation               -10.386190 cash  -                      c-
+  0039 2029-04 expenseInflation               -10.413021 cash  -                      c-
+  0040 2029-05 expenseInflation               -10.439921 cash  -                      c-
+  0041 2029-06 expenseInflation               -10.466891 cash  -                      c-
+  0042 2029-07 expenseInflation               -10.493930 cash  -                      c-
+  0043 2029-08 expenseInflation               -10.521040 cash  -                      c-
+  0044 2029-09 expenseInflation               -10.548219 cash  -                      c-
+  0045 2029-10 expenseInflation               -10.575468 cash  -                      c-
+  0046 2029-11 expenseInflation               -10.602788 cash  -                      c-
+  0047 2029-12 expenseInflation               -10.630179 cash  -                      c-
+  0048 2030-01 expenseInflation                -9.591876 cash  -                      c-
+  0049 2030-02 expenseInflation                -9.616655 cash  -                      c-
+  0050 2030-03 expenseInflation                -9.641498 cash  -                      c-
+  0051 2030-04 expenseInflation                -9.666405 cash  -                      c-
+  0052 2030-05 expenseInflation                -9.691377 cash  -                      c-
+  0053 2030-06 expenseInflation                -9.716413 cash  -                      c-
+  0054 2030-07 expenseInflation                -9.741514 cash  -                      c-
+
+[history] Living
+  value                        n=  55 first=    -5012.920000 last=    -3780.650000 min=    -5157.220000 max=    -3722.580000 sum=    -245311.930000 #792c960c
+  expense                      n=  55 first=    -5000.000000 last=    -3770.910000 min=    -5143.930000 max=    -3712.980000 sum=    -244679.830000 #11dcd8ca
+  cashFlow                     n=  55 first=    -5000.000000 last=    -3770.910000 min=    -5143.930000 max=    -3712.980000 sum=    -244679.830000 #11dcd8ca
+  cashFlowAccumulated          n=  55 first=    -5000.000000 last=  -244679.810000 min=  -244679.810000 max=    -5000.000000 sum=   -7223564.910000 #5bef591f
+  livingExpense                n=  55 first=    -5000.000000 last=    -3770.910000 min=    -5143.930000 max=    -3712.980000 sum=    -244679.830000 #11dcd8ca
+
+[asset] Savings
+  instrument = bank
+  start = 2026-01  finish = 2030-07
+  startCurrency = 200000.000000
+  finishCurrency = 256712.801287
+  startBasis = 200000.000000
+  finishBasis = 200000.000000
+  isClosed = no  isDepleted = no
+  closedDate = -  closedValue = -
+  events = 275  reconciled = 275
+
+[events] Savings
+  0000 2026-01 transfer                      3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0001 2026-01 grossUp                      -5000.000000 cash  -                      c3 {forAsset=Living overflow=false}
+  0002 2026-01 interestIncome                   0.000000 cash  interestIncome         c-
+  0003 2026-01 transfer                      2699.055331 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0004 2026-01 incomeTaxWithholding          -185.012377 cash  -                      c4
+  0005 2026-02 transfer                      3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0006 2026-02 grossUp                      -5012.916667 cash  -                      c3 {forAsset=Living overflow=false}
+  0007 2026-02 interestIncome                   0.000000 cash  interestIncome         c-
+  0008 2026-02 transfer                      2688.937416 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0009 2026-02 incomeTaxWithholding          -184.077498 cash  -                      c4
+  0010 2026-03 transfer                      3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0011 2026-03 grossUp                      -5025.866701 cash  -                      c3 {forAsset=Living overflow=false}
+  0012 2026-03 interestIncome                   0.000000 cash  interestIncome         c-
+  0013 2026-03 transfer                      2688.937416 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0014 2026-03 incomeTaxWithholding          -184.077498 cash  -                      c4
+  0015 2026-04 transfer                      3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0016 2026-04 grossUp                      -5038.850190 cash  -                      c3 {forAsset=Living overflow=false}
+  0017 2026-04 interestIncome                   0.000000 cash  interestIncome         c-
+  0018 2026-04 transfer                      2688.937416 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0019 2026-04 incomeTaxWithholding          -184.077498 cash  -                      c4
+  0020 2026-05 transfer                      3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0021 2026-05 grossUp                      -5051.867220 cash  -                      c3 {forAsset=Living overflow=false}
+  0022 2026-05 interestIncome                   0.000000 cash  interestIncome         c-
+  0023 2026-05 transfer                      2688.937416 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0024 2026-05 incomeTaxWithholding          -184.077498 cash  -                      c4
+  0025 2026-06 transfer                      3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0026 2026-06 grossUp                      -5064.917877 cash  -                      c3 {forAsset=Living overflow=false}
+  0027 2026-06 interestIncome                   0.000000 cash  interestIncome         c-
+  0028 2026-06 transfer                      2688.937416 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0029 2026-06 incomeTaxWithholding          -184.077498 cash  -                      c4
+  0030 2026-07 transfer                      3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0031 2026-07 grossUp                      -5078.002248 cash  -                      c3 {forAsset=Living overflow=false}
+  0032 2026-07 interestIncome                   0.000000 cash  interestIncome         c-
+  0033 2026-07 transfer                      2688.937416 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0034 2026-07 incomeTaxWithholding          -184.077498 cash  -                      c4
+  0035 2026-08 transfer                      3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0036 2026-08 grossUp                      -5091.120421 cash  -                      c3 {forAsset=Living overflow=false}
+  0037 2026-08 interestIncome                   0.000000 cash  interestIncome         c-
+  0038 2026-08 transfer                      2688.937416 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0039 2026-08 incomeTaxWithholding          -184.077498 cash  -                      c4
+  0040 2026-09 transfer                      3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0041 2026-09 grossUp                      -5104.272482 cash  -                      c3 {forAsset=Living overflow=false}
+  0042 2026-09 interestIncome                   0.000000 cash  interestIncome         c-
+  0043 2026-09 transfer                      2688.937416 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0044 2026-09 incomeTaxWithholding          -184.077498 cash  -                      c4
+  0045 2026-10 transfer                      3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0046 2026-10 grossUp                      -5117.458519 cash  -                      c3 {forAsset=Living overflow=false}
+  0047 2026-10 interestIncome                   0.000000 cash  interestIncome         c-
+  0048 2026-10 transfer                      2688.937416 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0049 2026-10 incomeTaxWithholding          -184.077498 cash  -                      c4
+  0050 2026-11 transfer                      3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0051 2026-11 grossUp                      -5130.678620 cash  -                      c3 {forAsset=Living overflow=false}
+  0052 2026-11 interestIncome                   0.000000 cash  interestIncome         c-
+  0053 2026-11 transfer                      2688.937416 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0054 2026-11 incomeTaxWithholding          -184.077498 cash  -                      c4
+  0055 2026-12 transfer                      3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0056 2026-12 grossUp                      -5143.932873 cash  -                      c3 {forAsset=Living overflow=false}
+  0057 2026-12 interestIncome                   0.000000 cash  interestIncome         c-
+  0058 2026-12 transfer                      2688.937416 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0059 2026-12 incomeTaxWithholding          -184.077498 cash  -                      c4
+  0060 2027-01 transfer                      3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0061 2027-01 grossUp                      -4641.499230 cash  -                      c3 {forAsset=Living overflow=false}
+  0062 2027-01 interestIncome                   0.000000 cash  interestIncome         c-
+  0063 2027-01 transfer                      2675.547129 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0064 2027-01 incomeTaxWithholding          -178.147960 cash  -                      c4
+  0065 2027-02 transfer                      3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0066 2027-02 grossUp                      -4653.489770 cash  -                      c3 {forAsset=Living overflow=false}
+  0067 2027-02 interestIncome                   0.000000 cash  interestIncome         c-
+  0068 2027-02 transfer                      2675.547129 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0069 2027-02 incomeTaxWithholding          -178.147960 cash  -                      c4
+  0070 2027-03 transfer                      3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0071 2027-03 grossUp                      -4665.511285 cash  -                      c3 {forAsset=Living overflow=false}
+  0072 2027-03 interestIncome                   0.000000 cash  interestIncome         c-
+  0073 2027-03 transfer                      2675.547129 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0074 2027-03 incomeTaxWithholding          -178.147960 cash  -                      c4
+  0075 2027-04 transfer                      3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0076 2027-04 grossUp                      -4677.563856 cash  -                      c3 {forAsset=Living overflow=false}
+  0077 2027-04 interestIncome                   0.000000 cash  interestIncome         c-
+  0078 2027-04 transfer                      2675.547129 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0079 2027-04 incomeTaxWithholding          -178.147960 cash  -                      c4
+  0080 2027-05 transfer                      3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0081 2027-05 grossUp                      -4689.647562 cash  -                      c3 {forAsset=Living overflow=false}
+  0082 2027-05 interestIncome                   0.000000 cash  interestIncome         c-
+  0083 2027-05 transfer                      2675.547129 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0084 2027-05 incomeTaxWithholding          -178.147960 cash  -                      c4
+  0085 2027-06 transfer                      3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0086 2027-06 grossUp                      -4701.762485 cash  -                      c3 {forAsset=Living overflow=false}
+  0087 2027-06 interestIncome                   0.000000 cash  interestIncome         c-
+  0088 2027-06 transfer                      2675.547129 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0089 2027-06 incomeTaxWithholding          -178.147960 cash  -                      c4
+  0090 2027-07 transfer                      3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0091 2027-07 grossUp                      -4713.908705 cash  -                      c3 {forAsset=Living overflow=false}
+  0092 2027-07 interestIncome                   0.000000 cash  interestIncome         c-
+  0093 2027-07 transfer                      2675.547129 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0094 2027-07 incomeTaxWithholding          -178.147960 cash  -                      c4
+  0095 2027-08 transfer                      3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0096 2027-08 grossUp                      -4726.086302 cash  -                      c3 {forAsset=Living overflow=false}
+  0097 2027-08 interestIncome                   0.000000 cash  interestIncome         c-
+  0098 2027-08 transfer                      2675.547129 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0099 2027-08 incomeTaxWithholding          -178.147960 cash  -                      c4
+  0100 2027-09 transfer                      3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0101 2027-09 grossUp                      -4738.295359 cash  -                      c3 {forAsset=Living overflow=false}
+  0102 2027-09 interestIncome                   0.000000 cash  interestIncome         c-
+  0103 2027-09 transfer                      2675.547129 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0104 2027-09 incomeTaxWithholding          -178.147960 cash  -                      c4
+  0105 2027-10 transfer                      3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0106 2027-10 grossUp                      -4750.535955 cash  -                      c3 {forAsset=Living overflow=false}
+  0107 2027-10 interestIncome                   0.000000 cash  interestIncome         c-
+  0108 2027-10 transfer                      2675.547129 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0109 2027-10 incomeTaxWithholding          -178.147960 cash  -                      c4
+  0110 2027-11 transfer                      3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0111 2027-11 grossUp                      -4762.808173 cash  -                      c3 {forAsset=Living overflow=false}
+  0112 2027-11 interestIncome                   0.000000 cash  interestIncome         c-
+  0113 2027-11 transfer                      2675.547129 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0114 2027-11 incomeTaxWithholding          -178.147960 cash  -                      c4
+  0115 2027-12 transfer                      3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0116 2027-12 grossUp                      -4775.112094 cash  -                      c3 {forAsset=Living overflow=false}
+  0117 2027-12 interestIncome                   0.000000 cash  interestIncome         c-
+  0118 2027-12 transfer                      2675.547129 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0119 2027-12 incomeTaxWithholding          -178.147960 cash  -                      c4
+  0120 2028-01 transfer                      3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0121 2028-01 grossUp                      -4308.703020 cash  -                      c3 {forAsset=Living overflow=false}
+  0122 2028-01 interestIncome                   0.000000 cash  interestIncome         c-
+  0123 2028-01 transfer                      2650.881732 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0124 2028-01 incomeTaxWithholding          -171.793272 cash  -                      c4
+  0125 2028-02 transfer                      3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0126 2028-02 grossUp                      -4319.833836 cash  -                      c3 {forAsset=Living overflow=false}
+  0127 2028-02 interestIncome                   0.000000 cash  interestIncome         c-
+  0128 2028-02 transfer                      2650.881732 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0129 2028-02 incomeTaxWithholding          -171.793272 cash  -                      c4
+  0130 2028-03 transfer                      3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0131 2028-03 grossUp                      -4330.993407 cash  -                      c3 {forAsset=Living overflow=false}
+  0132 2028-03 interestIncome                   0.000000 cash  interestIncome         c-
+  0133 2028-03 transfer                      2650.881732 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0134 2028-03 incomeTaxWithholding          -171.793272 cash  -                      c4
+  0135 2028-04 transfer                      3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0136 2028-04 grossUp                      -4342.181807 cash  -                      c3 {forAsset=Living overflow=false}
+  0137 2028-04 interestIncome                   0.000000 cash  interestIncome         c-
+  0138 2028-04 transfer                      2650.881732 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0139 2028-04 incomeTaxWithholding          -171.793272 cash  -                      c4
+  0140 2028-05 transfer                      3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0141 2028-05 grossUp                      -4353.399110 cash  -                      c3 {forAsset=Living overflow=false}
+  0142 2028-05 interestIncome                   0.000000 cash  interestIncome         c-
+  0143 2028-05 transfer                      2650.881732 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0144 2028-05 incomeTaxWithholding          -171.793272 cash  -                      c4
+  0145 2028-06 transfer                      3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0146 2028-06 grossUp                      -4364.645391 cash  -                      c3 {forAsset=Living overflow=false}
+  0147 2028-06 interestIncome                   0.000000 cash  interestIncome         c-
+  0148 2028-06 transfer                      2650.881732 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0149 2028-06 incomeTaxWithholding          -171.793272 cash  -                      c4
+  0150 2028-07 transfer                      3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0151 2028-07 grossUp                      -4375.920725 cash  -                      c3 {forAsset=Living overflow=false}
+  0152 2028-07 interestIncome                   0.000000 cash  interestIncome         c-
+  0153 2028-07 transfer                      2650.881732 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0154 2028-07 incomeTaxWithholding          -171.793272 cash  -                      c4
+  0155 2028-08 transfer                      3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0156 2028-08 grossUp                      -4387.225187 cash  -                      c3 {forAsset=Living overflow=false}
+  0157 2028-08 interestIncome                   0.000000 cash  interestIncome         c-
+  0158 2028-08 transfer                      2650.881732 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0159 2028-08 incomeTaxWithholding          -171.793272 cash  -                      c4
+  0160 2028-09 transfer                      3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0161 2028-09 grossUp                      -4398.558852 cash  -                      c3 {forAsset=Living overflow=false}
+  0162 2028-09 interestIncome                   0.000000 cash  interestIncome         c-
+  0163 2028-09 transfer                      2650.881732 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0164 2028-09 incomeTaxWithholding          -171.793272 cash  -                      c4
+  0165 2028-10 transfer                      3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0166 2028-10 grossUp                      -4409.921795 cash  -                      c3 {forAsset=Living overflow=false}
+  0167 2028-10 interestIncome                   0.000000 cash  interestIncome         c-
+  0168 2028-10 transfer                      2650.881732 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0169 2028-10 incomeTaxWithholding          -171.793272 cash  -                      c4
+  0170 2028-11 transfer                      3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0171 2028-11 grossUp                      -4421.314093 cash  -                      c3 {forAsset=Living overflow=false}
+  0172 2028-11 interestIncome                   0.000000 cash  interestIncome         c-
+  0173 2028-11 transfer                      2650.881732 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0174 2028-11 incomeTaxWithholding          -171.793272 cash  -                      c4
+  0175 2028-12 transfer                      3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0176 2028-12 grossUp                      -4432.735821 cash  -                      c3 {forAsset=Living overflow=false}
+  0177 2028-12 interestIncome                   0.000000 cash  interestIncome         c-
+  0178 2028-12 transfer                      2650.881732 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0179 2028-12 incomeTaxWithholding          -171.793272 cash  -                      c4
+  0180 2029-01 transfer                      3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0181 2029-01 grossUp                      -3999.768350 cash  -                      c3 {forAsset=Living overflow=false}
+  0182 2029-01 interestIncome                   0.000000 cash  interestIncome         c-
+  0183 2029-01 transfer                      2625.443977 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0184 2029-01 incomeTaxWithholding          -165.241417 cash  -                      c4
+  0185 2029-02 transfer                      3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0186 2029-02 grossUp                      -4010.101085 cash  -                      c3 {forAsset=Living overflow=false}
+  0187 2029-02 interestIncome                   0.000000 cash  interestIncome         c-
+  0188 2029-02 transfer                      2625.443977 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0189 2029-02 incomeTaxWithholding          -165.241417 cash  -                      c4
+  0190 2029-03 transfer                      3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0191 2029-03 grossUp                      -4020.460513 cash  -                      c3 {forAsset=Living overflow=false}
+  0192 2029-03 interestIncome                   0.000000 cash  interestIncome         c-
+  0193 2029-03 transfer                      2625.443977 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0194 2029-03 incomeTaxWithholding          -165.241417 cash  -                      c4
+  0195 2029-04 transfer                      3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0196 2029-04 grossUp                      -4030.846702 cash  -                      c3 {forAsset=Living overflow=false}
+  0197 2029-04 interestIncome                   0.000000 cash  interestIncome         c-
+  0198 2029-04 transfer                      2625.443977 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0199 2029-04 incomeTaxWithholding          -165.241417 cash  -                      c4
+  0200 2029-05 transfer                      3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0201 2029-05 grossUp                      -4041.259723 cash  -                      c3 {forAsset=Living overflow=false}
+  0202 2029-05 interestIncome                   0.000000 cash  interestIncome         c-
+  0203 2029-05 transfer                      2625.443977 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0204 2029-05 incomeTaxWithholding          -165.241417 cash  -                      c4
+  0205 2029-06 transfer                      3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0206 2029-06 grossUp                      -4051.699644 cash  -                      c3 {forAsset=Living overflow=false}
+  0207 2029-06 interestIncome                   0.000000 cash  interestIncome         c-
+  0208 2029-06 transfer                      2625.443977 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0209 2029-06 incomeTaxWithholding          -165.241417 cash  -                      c4
+  0210 2029-07 transfer                      3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0211 2029-07 grossUp                      -4062.166535 cash  -                      c3 {forAsset=Living overflow=false}
+  0212 2029-07 interestIncome                   0.000000 cash  interestIncome         c-
+  0213 2029-07 transfer                      2625.443977 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0214 2029-07 incomeTaxWithholding          -165.241417 cash  -                      c4
+  0215 2029-08 transfer                      3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0216 2029-08 grossUp                      -4072.660465 cash  -                      c3 {forAsset=Living overflow=false}
+  0217 2029-08 interestIncome                   0.000000 cash  interestIncome         c-
+  0218 2029-08 transfer                      2625.443977 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0219 2029-08 incomeTaxWithholding          -165.241417 cash  -                      c4
+  0220 2029-09 transfer                      3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0221 2029-09 grossUp                      -4083.181504 cash  -                      c3 {forAsset=Living overflow=false}
+  0222 2029-09 interestIncome                   0.000000 cash  interestIncome         c-
+  0223 2029-09 transfer                      2625.443977 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0224 2029-09 incomeTaxWithholding          -165.241417 cash  -                      c4
+  0225 2029-10 transfer                      3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0226 2029-10 grossUp                      -4093.729723 cash  -                      c3 {forAsset=Living overflow=false}
+  0227 2029-10 interestIncome                   0.000000 cash  interestIncome         c-
+  0228 2029-10 transfer                      2625.443977 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0229 2029-10 incomeTaxWithholding          -165.241417 cash  -                      c4
+  0230 2029-11 transfer                      3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0231 2029-11 grossUp                      -4104.305192 cash  -                      c3 {forAsset=Living overflow=false}
+  0232 2029-11 interestIncome                   0.000000 cash  interestIncome         c-
+  0233 2029-11 transfer                      2625.443977 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0234 2029-11 incomeTaxWithholding          -165.241417 cash  -                      c4
+  0235 2029-12 transfer                      3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0236 2029-12 grossUp                      -4114.907980 cash  -                      c3 {forAsset=Living overflow=false}
+  0237 2029-12 interestIncome                   0.000000 cash  interestIncome         c-
+  0238 2029-12 transfer                      2625.443977 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0239 2029-12 incomeTaxWithholding          -165.241417 cash  -                      c4
+  0240 2030-01 transfer                      3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0241 2030-01 grossUp                      -3712.984343 cash  -                      c3 {forAsset=Living overflow=false}
+  0242 2030-01 interestIncome                   0.000000 cash  interestIncome         c-
+  0243 2030-01 transfer                      2599.175711 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0244 2030-01 incomeTaxWithholding          -158.485522 cash  -                      c4
+  0245 2030-02 transfer                      3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0246 2030-02 grossUp                      -3722.576219 cash  -                      c3 {forAsset=Living overflow=false}
+  0247 2030-02 interestIncome                   0.000000 cash  interestIncome         c-
+  0248 2030-02 transfer                      2599.175711 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0249 2030-02 incomeTaxWithholding          -158.485522 cash  -                      c4
+  0250 2030-03 transfer                      3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0251 2030-03 grossUp                      -3732.192875 cash  -                      c3 {forAsset=Living overflow=false}
+  0252 2030-03 interestIncome                   0.000000 cash  interestIncome         c-
+  0253 2030-03 transfer                      2599.175711 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0254 2030-03 incomeTaxWithholding          -158.485522 cash  -                      c4
+  0255 2030-04 transfer                      3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0256 2030-04 grossUp                      -3741.834373 cash  -                      c3 {forAsset=Living overflow=false}
+  0257 2030-04 interestIncome                   0.000000 cash  interestIncome         c-
+  0258 2030-04 transfer                      2599.175711 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0259 2030-04 incomeTaxWithholding          -158.485522 cash  -                      c4
+  0260 2030-05 transfer                      3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0261 2030-05 grossUp                      -3751.500778 cash  -                      c3 {forAsset=Living overflow=false}
+  0262 2030-05 interestIncome                   0.000000 cash  interestIncome         c-
+  0263 2030-05 transfer                      2599.175711 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0264 2030-05 incomeTaxWithholding          -158.485522 cash  -                      c4
+  0265 2030-06 transfer                      3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0266 2030-06 grossUp                      -3761.192155 cash  -                      c3 {forAsset=Living overflow=false}
+  0267 2030-06 interestIncome                   0.000000 cash  interestIncome         c-
+  0268 2030-06 transfer                      2599.175711 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0269 2030-06 incomeTaxWithholding          -158.485522 cash  -                      c4
+  0270 2030-07 transfer                      3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0271 2030-07 grossUp                      -3770.908568 cash  -                      c3 {forAsset=Living overflow=false}
+  0272 2030-07 interestIncome                   0.000000 cash  interestIncome         c-
+  0273 2030-07 transfer                      2599.175711 cash  -                      c0 {cadence=monthly from=IRA to=Savings}
+  0274 2030-07 incomeTaxWithholding          -158.485522 cash  -                      c4
+
+[history] Savings
+  value                        n=  55 first=   200514.040000 last=   256712.800000 min=   200514.040000 max=   256712.800000 sum=   12234149.760000 #85170ef7
+  estimatedIncomeTax           n=  55 first=     -185.010000 last=     -158.490000 min=     -185.010000 max=     -158.490000 sum=      -9501.480000 #cff79d13
+  incomeTax                    n=  55 first=     -185.010000 last=     -158.490000 min=     -185.010000 max=     -158.490000 sum=      -9501.480000 #cff79d13
+  federalTaxes                 n=  55 first=     -185.010000 last=     -158.490000 min=     -185.010000 max=     -158.490000 sum=      -9501.480000 #cff79d13
+  taxes                        n=  55 first=     -185.010000 last=     -158.490000 min=     -185.010000 max=     -158.490000 sum=      -9501.480000 #cff79d13
+  cashFlow                     n=  55 first=     -185.010000 last=     -158.490000 min=     -185.010000 max=     -158.490000 sum=      -9501.480000 #cff79d13
+  cashFlowAccumulated          n=  55 first=     -185.010000 last=    -9501.460000 min=    -9501.460000 max=     -185.010000 sum=    -273335.460000 #5dbd1a22
+
+[asset] Social Security
+  instrument = retirementIncome
+  start = 2026-01  finish = 2030-07
+  startCurrency = 3000.000000
+  finishCurrency = 3000.000000
+  startBasis = 0.000000
+  finishBasis = 0.000000
+  isClosed = no  isDepleted = no
+  closedDate = -  closedValue = -
+  events = 59  reconciled = 59
+
+[events] Social Security
+  0000 2026-01 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0001 2026-02 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0002 2026-03 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0003 2026-04 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0004 2026-05 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0005 2026-06 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0006 2026-07 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0007 2026-08 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0008 2026-09 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0009 2026-10 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0010 2026-11 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0011 2026-12 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0012 2026-12 incomeGrowth                     0.000000 cash  income                 c5
+  0013 2027-01 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0014 2027-02 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0015 2027-03 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0016 2027-04 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0017 2027-05 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0018 2027-06 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0019 2027-07 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0020 2027-08 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0021 2027-09 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0022 2027-10 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0023 2027-11 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0024 2027-12 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0025 2027-12 incomeGrowth                     0.000000 cash  income                 c6
+  0026 2028-01 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0027 2028-02 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0028 2028-03 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0029 2028-04 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0030 2028-05 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0031 2028-06 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0032 2028-07 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0033 2028-08 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0034 2028-09 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0035 2028-10 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0036 2028-11 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0037 2028-12 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0038 2028-12 incomeGrowth                     0.000000 cash  income                 c7
+  0039 2029-01 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0040 2029-02 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0041 2029-03 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0042 2029-04 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0043 2029-05 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0044 2029-06 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0045 2029-07 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0046 2029-08 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0047 2029-09 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0048 2029-10 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0049 2029-11 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0050 2029-12 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0051 2029-12 incomeGrowth                     0.000000 cash  income                 c8
+  0052 2030-01 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0053 2030-02 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0054 2030-03 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0055 2030-04 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0056 2030-05 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0057 2030-06 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+  0058 2030-07 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
+
+[history] Social Security
+  value                        n=  55 first=     3000.000000 last=     3000.000000 min=     3000.000000 max=     3000.000000 sum=     165000.000000 #93426dec
+  ordinaryIncome               n=  55 first=     3000.000000 last=     3000.000000 min=     3000.000000 max=     3000.000000 sum=     165000.000000 #93426dec
+  income                       n=  55 first=     3000.000000 last=     3000.000000 min=     3000.000000 max=     3000.000000 sum=     165000.000000 #93426dec
+  netIncome                    n=  55 first=     3000.000000 last=     3000.000000 min=     3000.000000 max=     3000.000000 sum=     165000.000000 #93426dec
+  cashFlow                     n=  55 first=     3000.000000 last=     3000.000000 min=     3000.000000 max=     3000.000000 sum=     165000.000000 #93426dec
+  cashFlowAccumulated          n=  55 first=     3000.000000 last=   165000.000000 min=     3000.000000 max=   165000.000000 sum=    4620000.000000 #f9f9ec1a
+  socialSecurityIncome         n=  55 first=     3000.000000 last=     3000.000000 min=     3000.000000 max=     3000.000000 sum=     165000.000000 #93426dec
+
+[packages]
+  0000 socialSecurityIncome=3000.000000 expense=-5000.000000 incomeTax=-484.907414 tradIRADistribution=2998.950367 value=995502.175919
+  0001 socialSecurityIncome=3000.000000 expense=-5012.916667 incomeTax=-482.848322 tradIRADistribution=2987.708240 value=992993.460896
+  0002 socialSecurityIncome=3000.000000 expense=-5025.866701 incomeTax=-482.848322 tradIRADistribution=2987.708240 value=990471.762383
+  0003 socialSecurityIncome=3000.000000 expense=-5038.850190 incomeTax=-482.848322 tradIRADistribution=2987.708240 value=987937.046841
+  0004 socialSecurityIncome=3000.000000 expense=-5051.867220 incomeTax=-482.848322 tradIRADistribution=2987.708240 value=985389.280642
+  0005 socialSecurityIncome=3000.000000 expense=-5064.917877 incomeTax=-482.848322 tradIRADistribution=2987.708240 value=982828.430072
+  0006 socialSecurityIncome=3000.000000 expense=-5078.002248 incomeTax=-482.848322 tradIRADistribution=2987.708240 value=980254.461329
+  0007 socialSecurityIncome=3000.000000 expense=-5091.120421 incomeTax=-482.848322 tradIRADistribution=2987.708240 value=977667.340525
+  0008 socialSecurityIncome=3000.000000 expense=-5104.272482 incomeTax=-482.848322 tradIRADistribution=2987.708240 value=975067.033684
+  0009 socialSecurityIncome=3000.000000 expense=-5117.458519 incomeTax=-482.848322 tradIRADistribution=2987.708240 value=972453.506742
+  0010 socialSecurityIncome=3000.000000 expense=-5130.678620 incomeTax=-482.848322 tradIRADistribution=2987.708240 value=969826.725546
+  0011 socialSecurityIncome=3000.000000 expense=-5143.932873 incomeTax=-482.848322 tradIRADistribution=2987.708240 value=967186.655858
+  0012 socialSecurityIncome=3000.000000 expense=-4641.499230 incomeTax=-475.430974 tradIRADistribution=2972.830143 value=965573.457251
+  0013 socialSecurityIncome=3000.000000 expense=-4653.489770 incomeTax=-475.430974 tradIRADistribution=2972.830143 value=963432.514992
+  0014 socialSecurityIncome=3000.000000 expense=-4665.511285 incomeTax=-475.430974 tradIRADistribution=2972.830143 value=961279.520163
+  0015 socialSecurityIncome=3000.000000 expense=-4677.563856 incomeTax=-475.430974 tradIRADistribution=2972.830143 value=959114.441627
+  0016 socialSecurityIncome=3000.000000 expense=-4689.647562 incomeTax=-475.430974 tradIRADistribution=2972.830143 value=956937.248168
+  0017 socialSecurityIncome=3000.000000 expense=-4701.762485 incomeTax=-475.430974 tradIRADistribution=2972.830143 value=954747.908489
+  0018 socialSecurityIncome=3000.000000 expense=-4713.908705 incomeTax=-475.430974 tradIRADistribution=2972.830143 value=952546.391213
+  0019 socialSecurityIncome=3000.000000 expense=-4726.086302 incomeTax=-475.430974 tradIRADistribution=2972.830143 value=950332.664881
+  0020 socialSecurityIncome=3000.000000 expense=-4738.295359 incomeTax=-475.430974 tradIRADistribution=2972.830143 value=948106.697952
+  0021 socialSecurityIncome=3000.000000 expense=-4750.535955 incomeTax=-475.430974 tradIRADistribution=2972.830143 value=945868.458805
+  0022 socialSecurityIncome=3000.000000 expense=-4762.808173 incomeTax=-475.430974 tradIRADistribution=2972.830143 value=943617.915737
+  0023 socialSecurityIncome=3000.000000 expense=-4775.112094 incomeTax=-475.430974 tradIRADistribution=2972.830143 value=941355.036963
+  0024 socialSecurityIncome=3000.000000 expense=-4308.703020 incomeTax=-466.335686 tradIRADistribution=2945.424147 value=940047.612221
+  0025 socialSecurityIncome=3000.000000 expense=-4319.833836 incomeTax=-466.335686 tradIRADistribution=2945.424147 value=938250.283127
+  0026 socialSecurityIncome=3000.000000 expense=-4330.993407 incomeTax=-466.335686 tradIRADistribution=2945.424147 value=936441.765634
+  0027 socialSecurityIncome=3000.000000 expense=-4342.181807 incomeTax=-466.335686 tradIRADistribution=2945.424147 value=934622.030838
+  0028 socialSecurityIncome=3000.000000 expense=-4353.399110 incomeTax=-466.335686 tradIRADistribution=2945.424147 value=932791.049761
+  0029 socialSecurityIncome=3000.000000 expense=-4364.645391 incomeTax=-466.335686 tradIRADistribution=2945.424147 value=930948.793350
+  0030 socialSecurityIncome=3000.000000 expense=-4375.920725 incomeTax=-466.335686 tradIRADistribution=2945.424147 value=929095.232477
+  0031 socialSecurityIncome=3000.000000 expense=-4387.225187 incomeTax=-466.335686 tradIRADistribution=2945.424147 value=927230.337939
+  0032 socialSecurityIncome=3000.000000 expense=-4398.558852 incomeTax=-466.335686 tradIRADistribution=2945.424147 value=925354.080457
+  0033 socialSecurityIncome=3000.000000 expense=-4409.921795 incomeTax=-466.335686 tradIRADistribution=2945.424147 value=923466.430678
+  0034 socialSecurityIncome=3000.000000 expense=-4421.314093 incomeTax=-466.335686 tradIRADistribution=2945.424147 value=921567.359170
+  0035 socialSecurityIncome=3000.000000 expense=-4432.735821 incomeTax=-466.335686 tradIRADistribution=2945.424147 value=919656.836428
+  0036 socialSecurityIncome=3000.000000 expense=-3999.768350 incomeTax=-456.957414 tradIRADistribution=2917.159975 value=918634.196635
+  0037 socialSecurityIncome=3000.000000 expense=-4010.101085 incomeTax=-456.957414 tradIRADistribution=2917.159975 value=917156.778708
+  0038 socialSecurityIncome=3000.000000 expense=-4020.460513 incomeTax=-456.957414 tradIRADistribution=2917.159975 value=915668.974591
+  0039 socialSecurityIncome=3000.000000 expense=-4030.846702 incomeTax=-456.957414 tradIRADistribution=2917.159975 value=914170.757454
+  0040 socialSecurityIncome=3000.000000 expense=-4041.259723 incomeTax=-456.957414 tradIRADistribution=2917.159975 value=912662.100396
+  0041 socialSecurityIncome=3000.000000 expense=-4051.699644 incomeTax=-456.957414 tradIRADistribution=2917.159975 value=911142.976447
+  0042 socialSecurityIncome=3000.000000 expense=-4062.166535 incomeTax=-456.957414 tradIRADistribution=2917.159975 value=909613.358568
+  0043 socialSecurityIncome=3000.000000 expense=-4072.660465 incomeTax=-456.957414 tradIRADistribution=2917.159975 value=908073.219650
+  0044 socialSecurityIncome=3000.000000 expense=-4083.181504 incomeTax=-456.957414 tradIRADistribution=2917.159975 value=906522.532512
+  0045 socialSecurityIncome=3000.000000 expense=-4093.729723 incomeTax=-456.957414 tradIRADistribution=2917.159975 value=904961.269906
+  0046 socialSecurityIncome=3000.000000 expense=-4104.305192 incomeTax=-456.957414 tradIRADistribution=2917.159975 value=903389.404512
+  0047 socialSecurityIncome=3000.000000 expense=-4114.907980 incomeTax=-456.957414 tradIRADistribution=2917.159975 value=901806.908938
+  0048 socialSecurityIncome=3000.000000 expense=-3712.984343 incomeTax=-447.282823 tradIRADistribution=2887.973012 value=901049.603712
+  0049 socialSecurityIncome=3000.000000 expense=-3722.576219 incomeTax=-447.282823 tradIRADistribution=2887.973012 value=899870.128014
+  0050 socialSecurityIncome=3000.000000 expense=-3732.192875 incomeTax=-447.282823 tradIRADistribution=2887.973012 value=898681.010817
+  0051 socialSecurityIncome=3000.000000 expense=-3741.834373 incomeTax=-447.282823 tradIRADistribution=2887.973012 value=897482.227215
+  0052 socialSecurityIncome=3000.000000 expense=-3751.500778 incomeTax=-447.282823 tradIRADistribution=2887.973012 value=896273.752237
+  0053 socialSecurityIncome=3000.000000 expense=-3761.192155 incomeTax=-447.282823 tradIRADistribution=2887.973012 value=895055.560845
+  0054 socialSecurityIncome=3000.000000 expense=-3770.908568 incomeTax=-447.282823 tradIRADistribution=2887.973012 value=893827.627939
+
+[priceIndex]
+  [0000]         1.002583         1.005173         1.007770         1.010373         1.012984         1.015600
+  [0006]         1.018224         1.020854         1.023492         1.026136         1.028787         1.031444
+  [0012]         1.034109         1.036780         1.039459         1.042144         1.044836         1.047535
+  [0018]         1.050241         1.052955         1.055675         1.058402         1.061136         1.063877
+  [0024]         1.066626         1.069381         1.072144         1.074913         1.077690         1.080474
+  [0030]         1.083265         1.086064         1.088870         1.091682         1.094503         1.097330
+  [0036]         1.100165         1.103007         1.105856         1.108713         1.111577         1.114449
+  [0042]         1.117328         1.120214         1.123108         1.126010         1.128919         1.131835
+  [0048]         1.134759         1.137690         1.140629         1.143576         1.146530         1.149492
+  [0054]         1.152462
+
+[yearlySnapshots]
+  2026 months=12 partial=no investable=969343.877224 expense=60859.883819 rate=0.062785
+  2027 months=12 partial=no investable=943142.484763 expense=56496.220775 rate=0.059902
+  2028 months=12 partial=no investable=921101.023484 expense=52445.433043 rate=0.056938
+  2029 months=12 partial=no investable=902932.447098 expense=48685.087416 rate=0.053919
+  2030 months=7 partial=yes investable=894608.278021 expense=26193.189313 rate=0.029279
+
+[guardrailEvents]
+  2026 preservation rate=0.062785 adjustedTo=0.05650615506388835
+  2027 preservation rate=0.059902 adjustedTo=0.053911895094093526
+  2028 preservation rate=0.056938 adjustedTo=0.05124398794022488
+  2029 preservation rate=0.053919 adjustedTo=0.04852697321442915
+
+[sanity]
+  (no findings)
+
+[traces]
+  scopes = 1552
+  unattributedEvents = 0
+  1x 2027 annual pass
+  1x 2027 tax true-up
+  1x 2028 annual pass
+  1x 2028 tax true-up
+  1x 2029 annual pass
+  1x 2029 tax true-up
+  1x 2030 annual pass
+  1x 2030 tax true-up
+  4x Annual growth: Social Security
+  7x April 2026
+  7x April 2027
+  7x April 2028
+  7x April 2029
+  7x April 2030
+  7x August 2026
+  7x August 2027
+  7x August 2028
+  7x August 2029
+  7x December 2026
+  7x December 2027
+  7x December 2028
+  7x December 2029
+  7x February 2026
+  7x February 2027
+  7x February 2028
+  7x February 2029
+  7x February 2030
+  55x Federal withholding: IRA
+  7x January 2026
+  7x January 2027
+  7x January 2028
+  7x January 2029
+  7x January 2030
+  7x July 2026
+  7x July 2027
+  7x July 2028
+  7x July 2029
+  7x July 2030
+  7x June 2026
+  7x June 2027
+  7x June 2028
+  7x June 2029
+  7x June 2030
+  7x March 2026
+  7x March 2027
+  7x March 2028
+  7x March 2029
+  7x March 2030
+  7x May 2026
+  7x May 2027
+  7x May 2028
+  7x May 2029
+  7x May 2030
+  7x November 2026
+  7x November 2027
+  7x November 2028
+  7x November 2029
+  7x October 2026
+  7x October 2027
+  7x October 2028
+  7x October 2029
+  55x Pay IRA
+  55x Pay Living
+  55x Pay Savings
+  55x Pay Social Security
+  55x Payroll: IRA
+  55x Payroll: Living
+  55x Payroll: Savings
+  55x Payroll: Social Security
+  55x Required distribution from IRA
+  55x Required distribution from Living
+  55x Required distribution from Savings
+  55x Required distribution from Social Security
+  7x September 2026
+  7x September 2027
+  7x September 2028
+  7x September 2029
+  110x Settle from Savings
+  55x Transfer IRA → Savings
+  55x Transfer Social Security → Savings
+  55x Withholding: IRA
+  55x Withholding: Living
+  55x Withholding: Savings
+  55x Withholding: Social Security
+
+[traceLegend]
+  c0 = Required distribution from IRA > Transfer IRA → Savings
+  c1 = Federal withholding: IRA
+  c2 = Transfer Social Security → Savings
+  c3 = Pay Living > Settle from Savings
+  c4 = Settle from Savings
+  c5 = 2027 annual pass > Annual growth: Social Security
+  c6 = 2028 annual pass > Annual growth: Social Security
+  c7 = 2029 annual pass > Annual growth: Social Security
+  c8 = 2030 annual pass > Annual growth: Social Security
+

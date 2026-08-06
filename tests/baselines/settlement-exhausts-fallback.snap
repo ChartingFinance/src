@@ -1,0 +1,993 @@
+# fixture: settlement-exhausts-fallback  (adversarial)
+#
+# DOUBLE depletion — the funding account clamps AND its fallback clamps in
+# the same draw, reaching settleOneSided's inner unfunded branch. Needs an
+# obligation big enough to exhaust both in one month, hence the punitive
+# carrying costs against tiny balances.
+
+[config]
+  backtestYear = current
+  equityDividendAllocation = 0.5
+  equityDividendAverageAnnualRate = 0.025
+  equityGrowthAllocation = 0.5
+  filingAs = Single
+  homeSaleCapitalGainsDiscount = 250000
+  inflationRate = 0.031
+  propertyTaxDeductionMax = 40000
+  propertyTaxRate = 0.01
+  simDataMode = calibrated
+  taxYear = 2025
+  userFinishAge = 87
+  userRetirementAge = 65
+  userStartAge = 50
+  allocateHouseholdTax = false
+  pensionWithholdingRate = 0.1
+  socialSecurityWithholdingRate = 0
+  retirementWithholdingRate = 0.1
+
+[totals]
+  months = 180
+  firstDate = 2026-01
+  lastDate = 2030-12
+  startValue = 1203700.000000
+  finishValue = 1393940.137866
+  accumulated = -573658.305826
+  total.assetAppreciation = 193940.137866
+  total.propertyTaxes = -129616.658807
+  total.longTermCapitalGains = 1312.500000
+  total.maintenance = -324041.647018
+  total.insurance = -120000.000000
+  total.value = 77769995.284398
+
+[assetOrder]
+  0 Brokerage
+  1 Wallet
+  2 Home
+
+[asset] Brokerage
+  instrument = taxableEquity
+  start = 2026-01  finish = 2030-12
+  startCurrency = 2500.000000
+  finishCurrency = 0.000000
+  startBasis = 2500.000000
+  finishBasis = 0.000000
+  isClosed = no  isDepleted = yes
+  closedDate = -  closedValue = -
+  events = 62  reconciled = 62
+
+[events] Brokerage
+  0000 2026-01 assetGrowth                      0.000000 cash  growth                 c-
+  0001 2026-01 spillover                    -2500.000000 cash  -                      c0 {cause=settlement depleted=Wallet origin=oneSided}
+  0002 2026-01 capitalGainRecognized         1312.500000 info  longTermCapitalGain    c0 {spillover=true}
+  0003 2026-02 assetGrowth                      0.000000 cash  growth                 c-
+  0004 2026-03 assetGrowth                      0.000000 cash  growth                 c-
+  0005 2026-04 assetGrowth                      0.000000 cash  growth                 c-
+  0006 2026-05 assetGrowth                      0.000000 cash  growth                 c-
+  0007 2026-06 assetGrowth                      0.000000 cash  growth                 c-
+  0008 2026-07 assetGrowth                      0.000000 cash  growth                 c-
+  0009 2026-08 assetGrowth                      0.000000 cash  growth                 c-
+  0010 2026-09 assetGrowth                      0.000000 cash  growth                 c-
+  0011 2026-10 assetGrowth                      0.000000 cash  growth                 c-
+  0012 2026-11 assetGrowth                      0.000000 cash  growth                 c-
+  0013 2026-12 assetGrowth                      0.000000 cash  growth                 c-
+  0014 2027-01 assetGrowth                      0.000000 cash  growth                 c-
+  0015 2027-02 assetGrowth                      0.000000 cash  growth                 c-
+  0016 2027-03 assetGrowth                      0.000000 cash  growth                 c-
+  0017 2027-04 assetGrowth                      0.000000 cash  growth                 c-
+  0018 2027-05 assetGrowth                      0.000000 cash  growth                 c-
+  0019 2027-06 assetGrowth                      0.000000 cash  growth                 c-
+  0020 2027-07 assetGrowth                      0.000000 cash  growth                 c-
+  0021 2027-08 assetGrowth                      0.000000 cash  growth                 c-
+  0022 2027-09 assetGrowth                      0.000000 cash  growth                 c-
+  0023 2027-10 assetGrowth                      0.000000 cash  growth                 c-
+  0024 2027-11 assetGrowth                      0.000000 cash  growth                 c-
+  0025 2027-12 assetGrowth                      0.000000 cash  growth                 c-
+  0026 2028-01 assetGrowth                      0.000000 cash  growth                 c-
+  0027 2028-02 assetGrowth                      0.000000 cash  growth                 c-
+  0028 2028-03 assetGrowth                      0.000000 cash  growth                 c-
+  0029 2028-04 assetGrowth                      0.000000 cash  growth                 c-
+  0030 2028-05 assetGrowth                      0.000000 cash  growth                 c-
+  0031 2028-06 assetGrowth                      0.000000 cash  growth                 c-
+  0032 2028-07 assetGrowth                      0.000000 cash  growth                 c-
+  0033 2028-08 assetGrowth                      0.000000 cash  growth                 c-
+  0034 2028-09 assetGrowth                      0.000000 cash  growth                 c-
+  0035 2028-10 assetGrowth                      0.000000 cash  growth                 c-
+  0036 2028-11 assetGrowth                      0.000000 cash  growth                 c-
+  0037 2028-12 assetGrowth                      0.000000 cash  growth                 c-
+  0038 2029-01 assetGrowth                      0.000000 cash  growth                 c-
+  0039 2029-02 assetGrowth                      0.000000 cash  growth                 c-
+  0040 2029-03 assetGrowth                      0.000000 cash  growth                 c-
+  0041 2029-04 assetGrowth                      0.000000 cash  growth                 c-
+  0042 2029-05 assetGrowth                      0.000000 cash  growth                 c-
+  0043 2029-06 assetGrowth                      0.000000 cash  growth                 c-
+  0044 2029-07 assetGrowth                      0.000000 cash  growth                 c-
+  0045 2029-08 assetGrowth                      0.000000 cash  growth                 c-
+  0046 2029-09 assetGrowth                      0.000000 cash  growth                 c-
+  0047 2029-10 assetGrowth                      0.000000 cash  growth                 c-
+  0048 2029-11 assetGrowth                      0.000000 cash  growth                 c-
+  0049 2029-12 assetGrowth                      0.000000 cash  growth                 c-
+  0050 2030-01 assetGrowth                      0.000000 cash  growth                 c-
+  0051 2030-02 assetGrowth                      0.000000 cash  growth                 c-
+  0052 2030-03 assetGrowth                      0.000000 cash  growth                 c-
+  0053 2030-04 assetGrowth                      0.000000 cash  growth                 c-
+  0054 2030-05 assetGrowth                      0.000000 cash  growth                 c-
+  0055 2030-06 assetGrowth                      0.000000 cash  growth                 c-
+  0056 2030-07 assetGrowth                      0.000000 cash  growth                 c-
+  0057 2030-08 assetGrowth                      0.000000 cash  growth                 c-
+  0058 2030-09 assetGrowth                      0.000000 cash  growth                 c-
+  0059 2030-10 assetGrowth                      0.000000 cash  growth                 c-
+  0060 2030-11 assetGrowth                      0.000000 cash  growth                 c-
+  0061 2030-12 assetGrowth                      0.000000 cash  growth                 c-
+
+[history] Brokerage
+  income                       n=  60 first=     1312.500000 last=        0.000000 min=        0.000000 max=     1312.500000 sum=       1312.500000 #426ac547
+  longTermCapitalGain          n=  60 first=     1312.500000 last=        0.000000 min=        0.000000 max=     1312.500000 sum=       1312.500000 #426ac547
+  capitalGain                  n=  60 first=     1312.500000 last=        0.000000 min=        0.000000 max=     1312.500000 sum=       1312.500000 #426ac547
+
+[asset] Home
+  instrument = realEstate
+  start = 2026-01  finish = 2030-12
+  startCurrency = 1200000.000000
+  finishCurrency = 1393940.137866
+  startBasis = 1200000.000000
+  finishBasis = 1200000.000000
+  isClosed = no  isDepleted = no
+  closedDate = -  closedValue = -
+  events = 479  reconciled = 479
+
+[events] Home
+  0000 2026-01 propertyTaxEscrow                0.000000 info  -                      c-
+  0001 2026-01 assetGrowth                   3000.000000 cash  growth                 c-
+  0002 2026-01 propertyTax                  -2005.000000 info  propertyTax            c-
+  0003 2026-01 maintenance                  -5012.500000 info  maintenance            c-
+  0004 2026-01 insurance                    -2000.000000 info  insurance              c-
+  0005 2026-01 unfunded                     -1312.500000 info  -                      c0 {cause=Home → Wallet (maintenance) origin=oneSided}
+  0006 2026-01 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0007 2026-02 propertyTaxEscrow            -2005.000000 info  -                      c-
+  0008 2026-02 unfunded                     -2005.000000 info  -                      c- {cause=property tax origin=standalone}
+  0009 2026-02 assetGrowth                   3007.500000 cash  growth                 c-
+  0010 2026-02 propertyTax                  -2010.012500 info  propertyTax            c-
+  0011 2026-02 maintenance                  -5025.031250 info  maintenance            c-
+  0012 2026-02 insurance                    -2000.000000 info  insurance              c-
+  0013 2026-02 unfunded                     -5025.031250 info  -                      c2 {cause=maintenance origin=standalone}
+  0014 2026-02 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0015 2026-03 propertyTaxEscrow            -2010.012500 info  -                      c-
+  0016 2026-03 unfunded                     -2010.012500 info  -                      c- {cause=property tax origin=standalone}
+  0017 2026-03 assetGrowth                   3015.018750 cash  growth                 c-
+  0018 2026-03 propertyTax                  -2015.037531 info  propertyTax            c-
+  0019 2026-03 maintenance                  -5037.593828 info  maintenance            c-
+  0020 2026-03 insurance                    -2000.000000 info  insurance              c-
+  0021 2026-03 unfunded                     -5037.593828 info  -                      c2 {cause=maintenance origin=standalone}
+  0022 2026-03 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0023 2026-04 propertyTaxEscrow            -2015.037531 info  -                      c-
+  0024 2026-04 unfunded                     -2015.037531 info  -                      c- {cause=property tax origin=standalone}
+  0025 2026-04 assetGrowth                   3022.556297 cash  growth                 c-
+  0026 2026-04 propertyTax                  -2020.075125 info  propertyTax            c-
+  0027 2026-04 maintenance                  -5050.187813 info  maintenance            c-
+  0028 2026-04 insurance                    -2000.000000 info  insurance              c-
+  0029 2026-04 unfunded                     -5050.187813 info  -                      c2 {cause=maintenance origin=standalone}
+  0030 2026-04 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0031 2026-05 propertyTaxEscrow            -2020.075125 info  -                      c-
+  0032 2026-05 unfunded                     -2020.075125 info  -                      c- {cause=property tax origin=standalone}
+  0033 2026-05 assetGrowth                   3030.112688 cash  growth                 c-
+  0034 2026-05 propertyTax                  -2025.125313 info  propertyTax            c-
+  0035 2026-05 maintenance                  -5062.813282 info  maintenance            c-
+  0036 2026-05 insurance                    -2000.000000 info  insurance              c-
+  0037 2026-05 unfunded                     -5062.813282 info  -                      c2 {cause=maintenance origin=standalone}
+  0038 2026-05 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0039 2026-06 propertyTaxEscrow            -2025.125313 info  -                      c-
+  0040 2026-06 unfunded                     -2025.125313 info  -                      c- {cause=property tax origin=standalone}
+  0041 2026-06 assetGrowth                   3037.687969 cash  growth                 c-
+  0042 2026-06 propertyTax                  -2030.188126 info  propertyTax            c-
+  0043 2026-06 maintenance                  -5075.470315 info  maintenance            c-
+  0044 2026-06 insurance                    -2000.000000 info  insurance              c-
+  0045 2026-06 unfunded                     -5075.470315 info  -                      c2 {cause=maintenance origin=standalone}
+  0046 2026-06 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0047 2026-07 propertyTaxEscrow            -2030.188126 info  -                      c-
+  0048 2026-07 unfunded                     -2030.188126 info  -                      c- {cause=property tax origin=standalone}
+  0049 2026-07 assetGrowth                   3045.282189 cash  growth                 c-
+  0050 2026-07 propertyTax                  -2035.263596 info  propertyTax            c-
+  0051 2026-07 maintenance                  -5088.158991 info  maintenance            c-
+  0052 2026-07 insurance                    -2000.000000 info  insurance              c-
+  0053 2026-07 unfunded                     -5088.158991 info  -                      c2 {cause=maintenance origin=standalone}
+  0054 2026-07 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0055 2026-08 propertyTaxEscrow            -2035.263596 info  -                      c-
+  0056 2026-08 unfunded                     -2035.263596 info  -                      c- {cause=property tax origin=standalone}
+  0057 2026-08 assetGrowth                   3052.895395 cash  growth                 c-
+  0058 2026-08 propertyTax                  -2040.351755 info  propertyTax            c-
+  0059 2026-08 maintenance                  -5100.879389 info  maintenance            c-
+  0060 2026-08 insurance                    -2000.000000 info  insurance              c-
+  0061 2026-08 unfunded                     -5100.879389 info  -                      c2 {cause=maintenance origin=standalone}
+  0062 2026-08 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0063 2026-09 propertyTaxEscrow            -2040.351755 info  -                      c-
+  0064 2026-09 unfunded                     -2040.351755 info  -                      c- {cause=property tax origin=standalone}
+  0065 2026-09 assetGrowth                   3060.527633 cash  growth                 c-
+  0066 2026-09 propertyTax                  -2045.452635 info  propertyTax            c-
+  0067 2026-09 maintenance                  -5113.631587 info  maintenance            c-
+  0068 2026-09 insurance                    -2000.000000 info  insurance              c-
+  0069 2026-09 unfunded                     -5113.631587 info  -                      c2 {cause=maintenance origin=standalone}
+  0070 2026-09 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0071 2026-10 propertyTaxEscrow            -2045.452635 info  -                      c-
+  0072 2026-10 unfunded                     -2045.452635 info  -                      c- {cause=property tax origin=standalone}
+  0073 2026-10 assetGrowth                   3068.178952 cash  growth                 c-
+  0074 2026-10 propertyTax                  -2050.566266 info  propertyTax            c-
+  0075 2026-10 maintenance                  -5126.415666 info  maintenance            c-
+  0076 2026-10 insurance                    -2000.000000 info  insurance              c-
+  0077 2026-10 unfunded                     -5126.415666 info  -                      c2 {cause=maintenance origin=standalone}
+  0078 2026-10 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0079 2026-11 propertyTaxEscrow            -2050.566266 info  -                      c-
+  0080 2026-11 unfunded                     -2050.566266 info  -                      c- {cause=property tax origin=standalone}
+  0081 2026-11 assetGrowth                   3075.849400 cash  growth                 c-
+  0082 2026-11 propertyTax                  -2055.692682 info  propertyTax            c-
+  0083 2026-11 maintenance                  -5139.231705 info  maintenance            c-
+  0084 2026-11 insurance                    -2000.000000 info  insurance              c-
+  0085 2026-11 unfunded                     -5139.231705 info  -                      c2 {cause=maintenance origin=standalone}
+  0086 2026-11 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0087 2026-12 propertyTaxEscrow            -2055.692682 info  -                      c-
+  0088 2026-12 unfunded                     -2055.692682 info  -                      c- {cause=property tax origin=standalone}
+  0089 2026-12 assetGrowth                   3083.539023 cash  growth                 c-
+  0090 2026-12 propertyTax                  -2060.831914 info  propertyTax            c-
+  0091 2026-12 maintenance                  -5152.079785 info  maintenance            c-
+  0092 2026-12 insurance                    -2000.000000 info  insurance              c-
+  0093 2026-12 unfunded                     -5152.079785 info  -                      c2 {cause=maintenance origin=standalone}
+  0094 2026-12 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0095 2027-01 propertyTaxEscrow            -2060.831914 info  -                      c-
+  0096 2027-01 unfunded                     -2060.831914 info  -                      c- {cause=property tax origin=standalone}
+  0097 2027-01 assetGrowth                   3091.247871 cash  growth                 c-
+  0098 2027-01 propertyTax                  -2065.983994 info  propertyTax            c-
+  0099 2027-01 maintenance                  -5164.959984 info  maintenance            c-
+  0100 2027-01 insurance                    -2000.000000 info  insurance              c-
+  0101 2027-01 unfunded                     -5164.959984 info  -                      c2 {cause=maintenance origin=standalone}
+  0102 2027-01 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0103 2027-02 propertyTaxEscrow            -2065.983994 info  -                      c-
+  0104 2027-02 unfunded                     -2065.983994 info  -                      c- {cause=property tax origin=standalone}
+  0105 2027-02 assetGrowth                   3098.975990 cash  growth                 c-
+  0106 2027-02 propertyTax                  -2071.148954 info  propertyTax            c-
+  0107 2027-02 maintenance                  -5177.872384 info  maintenance            c-
+  0108 2027-02 insurance                    -2000.000000 info  insurance              c-
+  0109 2027-02 unfunded                     -5177.872384 info  -                      c2 {cause=maintenance origin=standalone}
+  0110 2027-02 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0111 2027-03 propertyTaxEscrow            -2071.148954 info  -                      c-
+  0112 2027-03 unfunded                     -2071.148954 info  -                      c- {cause=property tax origin=standalone}
+  0113 2027-03 assetGrowth                   3106.723430 cash  growth                 c-
+  0114 2027-03 propertyTax                  -2076.326826 info  propertyTax            c-
+  0115 2027-03 maintenance                  -5190.817065 info  maintenance            c-
+  0116 2027-03 insurance                    -2000.000000 info  insurance              c-
+  0117 2027-03 unfunded                     -5190.817065 info  -                      c2 {cause=maintenance origin=standalone}
+  0118 2027-03 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0119 2027-04 propertyTaxEscrow            -2076.326826 info  -                      c-
+  0120 2027-04 unfunded                     -2076.326826 info  -                      c- {cause=property tax origin=standalone}
+  0121 2027-04 assetGrowth                   3114.490239 cash  growth                 c-
+  0122 2027-04 propertyTax                  -2081.517643 info  propertyTax            c-
+  0123 2027-04 maintenance                  -5203.794108 info  maintenance            c-
+  0124 2027-04 insurance                    -2000.000000 info  insurance              c-
+  0125 2027-04 unfunded                     -5203.794108 info  -                      c2 {cause=maintenance origin=standalone}
+  0126 2027-04 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0127 2027-05 propertyTaxEscrow            -2081.517643 info  -                      c-
+  0128 2027-05 unfunded                     -2081.517643 info  -                      c- {cause=property tax origin=standalone}
+  0129 2027-05 assetGrowth                   3122.276465 cash  growth                 c-
+  0130 2027-05 propertyTax                  -2086.721437 info  propertyTax            c-
+  0131 2027-05 maintenance                  -5216.803593 info  maintenance            c-
+  0132 2027-05 insurance                    -2000.000000 info  insurance              c-
+  0133 2027-05 unfunded                     -5216.803593 info  -                      c2 {cause=maintenance origin=standalone}
+  0134 2027-05 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0135 2027-06 propertyTaxEscrow            -2086.721437 info  -                      c-
+  0136 2027-06 unfunded                     -2086.721437 info  -                      c- {cause=property tax origin=standalone}
+  0137 2027-06 assetGrowth                   3130.082156 cash  growth                 c-
+  0138 2027-06 propertyTax                  -2091.938241 info  propertyTax            c-
+  0139 2027-06 maintenance                  -5229.845602 info  maintenance            c-
+  0140 2027-06 insurance                    -2000.000000 info  insurance              c-
+  0141 2027-06 unfunded                     -5229.845602 info  -                      c2 {cause=maintenance origin=standalone}
+  0142 2027-06 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0143 2027-07 propertyTaxEscrow            -2091.938241 info  -                      c-
+  0144 2027-07 unfunded                     -2091.938241 info  -                      c- {cause=property tax origin=standalone}
+  0145 2027-07 assetGrowth                   3137.907361 cash  growth                 c-
+  0146 2027-07 propertyTax                  -2097.168086 info  propertyTax            c-
+  0147 2027-07 maintenance                  -5242.920216 info  maintenance            c-
+  0148 2027-07 insurance                    -2000.000000 info  insurance              c-
+  0149 2027-07 unfunded                     -5242.920216 info  -                      c2 {cause=maintenance origin=standalone}
+  0150 2027-07 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0151 2027-08 propertyTaxEscrow            -2097.168086 info  -                      c-
+  0152 2027-08 unfunded                     -2097.168086 info  -                      c- {cause=property tax origin=standalone}
+  0153 2027-08 assetGrowth                   3145.752130 cash  growth                 c-
+  0154 2027-08 propertyTax                  -2102.411007 info  propertyTax            c-
+  0155 2027-08 maintenance                  -5256.027516 info  maintenance            c-
+  0156 2027-08 insurance                    -2000.000000 info  insurance              c-
+  0157 2027-08 unfunded                     -5256.027516 info  -                      c2 {cause=maintenance origin=standalone}
+  0158 2027-08 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0159 2027-09 propertyTaxEscrow            -2102.411007 info  -                      c-
+  0160 2027-09 unfunded                     -2102.411007 info  -                      c- {cause=property tax origin=standalone}
+  0161 2027-09 assetGrowth                   3153.616510 cash  growth                 c-
+  0162 2027-09 propertyTax                  -2107.667034 info  propertyTax            c-
+  0163 2027-09 maintenance                  -5269.167585 info  maintenance            c-
+  0164 2027-09 insurance                    -2000.000000 info  insurance              c-
+  0165 2027-09 unfunded                     -5269.167585 info  -                      c2 {cause=maintenance origin=standalone}
+  0166 2027-09 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0167 2027-10 propertyTaxEscrow            -2107.667034 info  -                      c-
+  0168 2027-10 unfunded                     -2107.667034 info  -                      c- {cause=property tax origin=standalone}
+  0169 2027-10 assetGrowth                   3161.500551 cash  growth                 c-
+  0170 2027-10 propertyTax                  -2112.936202 info  propertyTax            c-
+  0171 2027-10 maintenance                  -5282.340504 info  maintenance            c-
+  0172 2027-10 insurance                    -2000.000000 info  insurance              c-
+  0173 2027-10 unfunded                     -5282.340504 info  -                      c2 {cause=maintenance origin=standalone}
+  0174 2027-10 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0175 2027-11 propertyTaxEscrow            -2112.936202 info  -                      c-
+  0176 2027-11 unfunded                     -2112.936202 info  -                      c- {cause=property tax origin=standalone}
+  0177 2027-11 assetGrowth                   3169.404302 cash  growth                 c-
+  0178 2027-11 propertyTax                  -2118.218542 info  propertyTax            c-
+  0179 2027-11 maintenance                  -5295.546355 info  maintenance            c-
+  0180 2027-11 insurance                    -2000.000000 info  insurance              c-
+  0181 2027-11 unfunded                     -5295.546355 info  -                      c2 {cause=maintenance origin=standalone}
+  0182 2027-11 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0183 2027-12 propertyTaxEscrow            -2118.218542 info  -                      c-
+  0184 2027-12 unfunded                     -2118.218542 info  -                      c- {cause=property tax origin=standalone}
+  0185 2027-12 assetGrowth                   3177.327813 cash  growth                 c-
+  0186 2027-12 propertyTax                  -2123.514089 info  propertyTax            c-
+  0187 2027-12 maintenance                  -5308.785221 info  maintenance            c-
+  0188 2027-12 insurance                    -2000.000000 info  insurance              c-
+  0189 2027-12 unfunded                     -5308.785221 info  -                      c2 {cause=maintenance origin=standalone}
+  0190 2027-12 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0191 2028-01 propertyTaxEscrow            -2123.514089 info  -                      c-
+  0192 2028-01 unfunded                     -2123.514089 info  -                      c- {cause=property tax origin=standalone}
+  0193 2028-01 assetGrowth                   3185.271133 cash  growth                 c-
+  0194 2028-01 propertyTax                  -2128.822874 info  propertyTax            c-
+  0195 2028-01 maintenance                  -5322.057184 info  maintenance            c-
+  0196 2028-01 insurance                    -2000.000000 info  insurance              c-
+  0197 2028-01 unfunded                     -5322.057184 info  -                      c2 {cause=maintenance origin=standalone}
+  0198 2028-01 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0199 2028-02 propertyTaxEscrow            -2128.822874 info  -                      c-
+  0200 2028-02 unfunded                     -2128.822874 info  -                      c- {cause=property tax origin=standalone}
+  0201 2028-02 assetGrowth                   3193.234311 cash  growth                 c-
+  0202 2028-02 propertyTax                  -2134.144931 info  propertyTax            c-
+  0203 2028-02 maintenance                  -5335.362327 info  maintenance            c-
+  0204 2028-02 insurance                    -2000.000000 info  insurance              c-
+  0205 2028-02 unfunded                     -5335.362327 info  -                      c2 {cause=maintenance origin=standalone}
+  0206 2028-02 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0207 2028-03 propertyTaxEscrow            -2134.144931 info  -                      c-
+  0208 2028-03 unfunded                     -2134.144931 info  -                      c- {cause=property tax origin=standalone}
+  0209 2028-03 assetGrowth                   3201.217396 cash  growth                 c-
+  0210 2028-03 propertyTax                  -2139.480293 info  propertyTax            c-
+  0211 2028-03 maintenance                  -5348.700733 info  maintenance            c-
+  0212 2028-03 insurance                    -2000.000000 info  insurance              c-
+  0213 2028-03 unfunded                     -5348.700733 info  -                      c2 {cause=maintenance origin=standalone}
+  0214 2028-03 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0215 2028-04 propertyTaxEscrow            -2139.480293 info  -                      c-
+  0216 2028-04 unfunded                     -2139.480293 info  -                      c- {cause=property tax origin=standalone}
+  0217 2028-04 assetGrowth                   3209.220440 cash  growth                 c-
+  0218 2028-04 propertyTax                  -2144.828994 info  propertyTax            c-
+  0219 2028-04 maintenance                  -5362.072485 info  maintenance            c-
+  0220 2028-04 insurance                    -2000.000000 info  insurance              c-
+  0221 2028-04 unfunded                     -5362.072485 info  -                      c2 {cause=maintenance origin=standalone}
+  0222 2028-04 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0223 2028-05 propertyTaxEscrow            -2144.828994 info  -                      c-
+  0224 2028-05 unfunded                     -2144.828994 info  -                      c- {cause=property tax origin=standalone}
+  0225 2028-05 assetGrowth                   3217.243491 cash  growth                 c-
+  0226 2028-05 propertyTax                  -2150.191066 info  propertyTax            c-
+  0227 2028-05 maintenance                  -5375.477666 info  maintenance            c-
+  0228 2028-05 insurance                    -2000.000000 info  insurance              c-
+  0229 2028-05 unfunded                     -5375.477666 info  -                      c2 {cause=maintenance origin=standalone}
+  0230 2028-05 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0231 2028-06 propertyTaxEscrow            -2150.191066 info  -                      c-
+  0232 2028-06 unfunded                     -2150.191066 info  -                      c- {cause=property tax origin=standalone}
+  0233 2028-06 assetGrowth                   3225.286600 cash  growth                 c-
+  0234 2028-06 propertyTax                  -2155.566544 info  propertyTax            c-
+  0235 2028-06 maintenance                  -5388.916360 info  maintenance            c-
+  0236 2028-06 insurance                    -2000.000000 info  insurance              c-
+  0237 2028-06 unfunded                     -5388.916360 info  -                      c2 {cause=maintenance origin=standalone}
+  0238 2028-06 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0239 2028-07 propertyTaxEscrow            -2155.566544 info  -                      c-
+  0240 2028-07 unfunded                     -2155.566544 info  -                      c- {cause=property tax origin=standalone}
+  0241 2028-07 assetGrowth                   3233.349816 cash  growth                 c-
+  0242 2028-07 propertyTax                  -2160.955461 info  propertyTax            c-
+  0243 2028-07 maintenance                  -5402.388651 info  maintenance            c-
+  0244 2028-07 insurance                    -2000.000000 info  insurance              c-
+  0245 2028-07 unfunded                     -5402.388651 info  -                      c2 {cause=maintenance origin=standalone}
+  0246 2028-07 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0247 2028-08 propertyTaxEscrow            -2160.955461 info  -                      c-
+  0248 2028-08 unfunded                     -2160.955461 info  -                      c- {cause=property tax origin=standalone}
+  0249 2028-08 assetGrowth                   3241.433191 cash  growth                 c-
+  0250 2028-08 propertyTax                  -2166.357849 info  propertyTax            c-
+  0251 2028-08 maintenance                  -5415.894623 info  maintenance            c-
+  0252 2028-08 insurance                    -2000.000000 info  insurance              c-
+  0253 2028-08 unfunded                     -5415.894623 info  -                      c2 {cause=maintenance origin=standalone}
+  0254 2028-08 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0255 2028-09 propertyTaxEscrow            -2166.357849 info  -                      c-
+  0256 2028-09 unfunded                     -2166.357849 info  -                      c- {cause=property tax origin=standalone}
+  0257 2028-09 assetGrowth                   3249.536774 cash  growth                 c-
+  0258 2028-09 propertyTax                  -2171.773744 info  propertyTax            c-
+  0259 2028-09 maintenance                  -5429.434359 info  maintenance            c-
+  0260 2028-09 insurance                    -2000.000000 info  insurance              c-
+  0261 2028-09 unfunded                     -5429.434359 info  -                      c2 {cause=maintenance origin=standalone}
+  0262 2028-09 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0263 2028-10 propertyTaxEscrow            -2171.773744 info  -                      c-
+  0264 2028-10 unfunded                     -2171.773744 info  -                      c- {cause=property tax origin=standalone}
+  0265 2028-10 assetGrowth                   3257.660616 cash  growth                 c-
+  0266 2028-10 propertyTax                  -2177.203178 info  propertyTax            c-
+  0267 2028-10 maintenance                  -5443.007945 info  maintenance            c-
+  0268 2028-10 insurance                    -2000.000000 info  insurance              c-
+  0269 2028-10 unfunded                     -5443.007945 info  -                      c2 {cause=maintenance origin=standalone}
+  0270 2028-10 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0271 2028-11 propertyTaxEscrow            -2177.203178 info  -                      c-
+  0272 2028-11 unfunded                     -2177.203178 info  -                      c- {cause=property tax origin=standalone}
+  0273 2028-11 assetGrowth                   3265.804767 cash  growth                 c-
+  0274 2028-11 propertyTax                  -2182.646186 info  propertyTax            c-
+  0275 2028-11 maintenance                  -5456.615465 info  maintenance            c-
+  0276 2028-11 insurance                    -2000.000000 info  insurance              c-
+  0277 2028-11 unfunded                     -5456.615465 info  -                      c2 {cause=maintenance origin=standalone}
+  0278 2028-11 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0279 2028-12 propertyTaxEscrow            -2182.646186 info  -                      c-
+  0280 2028-12 unfunded                     -2182.646186 info  -                      c- {cause=property tax origin=standalone}
+  0281 2028-12 assetGrowth                   3273.969279 cash  growth                 c-
+  0282 2028-12 propertyTax                  -2188.102802 info  propertyTax            c-
+  0283 2028-12 maintenance                  -5470.257004 info  maintenance            c-
+  0284 2028-12 insurance                    -2000.000000 info  insurance              c-
+  0285 2028-12 unfunded                     -5470.257004 info  -                      c2 {cause=maintenance origin=standalone}
+  0286 2028-12 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0287 2029-01 propertyTaxEscrow            -2188.102802 info  -                      c-
+  0288 2029-01 unfunded                     -2188.102802 info  -                      c- {cause=property tax origin=standalone}
+  0289 2029-01 assetGrowth                   3282.154202 cash  growth                 c-
+  0290 2029-01 propertyTax                  -2193.573059 info  propertyTax            c-
+  0291 2029-01 maintenance                  -5483.932646 info  maintenance            c-
+  0292 2029-01 insurance                    -2000.000000 info  insurance              c-
+  0293 2029-01 unfunded                     -5483.932646 info  -                      c2 {cause=maintenance origin=standalone}
+  0294 2029-01 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0295 2029-02 propertyTaxEscrow            -2193.573059 info  -                      c-
+  0296 2029-02 unfunded                     -2193.573059 info  -                      c- {cause=property tax origin=standalone}
+  0297 2029-02 assetGrowth                   3290.359588 cash  growth                 c-
+  0298 2029-02 propertyTax                  -2199.056991 info  propertyTax            c-
+  0299 2029-02 maintenance                  -5497.642478 info  maintenance            c-
+  0300 2029-02 insurance                    -2000.000000 info  insurance              c-
+  0301 2029-02 unfunded                     -5497.642478 info  -                      c2 {cause=maintenance origin=standalone}
+  0302 2029-02 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0303 2029-03 propertyTaxEscrow            -2199.056991 info  -                      c-
+  0304 2029-03 unfunded                     -2199.056991 info  -                      c- {cause=property tax origin=standalone}
+  0305 2029-03 assetGrowth                   3298.585487 cash  growth                 c-
+  0306 2029-03 propertyTax                  -2204.554634 info  propertyTax            c-
+  0307 2029-03 maintenance                  -5511.386584 info  maintenance            c-
+  0308 2029-03 insurance                    -2000.000000 info  insurance              c-
+  0309 2029-03 unfunded                     -5511.386584 info  -                      c2 {cause=maintenance origin=standalone}
+  0310 2029-03 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0311 2029-04 propertyTaxEscrow            -2204.554634 info  -                      c-
+  0312 2029-04 unfunded                     -2204.554634 info  -                      c- {cause=property tax origin=standalone}
+  0313 2029-04 assetGrowth                   3306.831951 cash  growth                 c-
+  0314 2029-04 propertyTax                  -2210.066020 info  propertyTax            c-
+  0315 2029-04 maintenance                  -5525.165051 info  maintenance            c-
+  0316 2029-04 insurance                    -2000.000000 info  insurance              c-
+  0317 2029-04 unfunded                     -5525.165051 info  -                      c2 {cause=maintenance origin=standalone}
+  0318 2029-04 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0319 2029-05 propertyTaxEscrow            -2210.066020 info  -                      c-
+  0320 2029-05 unfunded                     -2210.066020 info  -                      c- {cause=property tax origin=standalone}
+  0321 2029-05 assetGrowth                   3315.099030 cash  growth                 c-
+  0322 2029-05 propertyTax                  -2215.591185 info  propertyTax            c-
+  0323 2029-05 maintenance                  -5538.977963 info  maintenance            c-
+  0324 2029-05 insurance                    -2000.000000 info  insurance              c-
+  0325 2029-05 unfunded                     -5538.977963 info  -                      c2 {cause=maintenance origin=standalone}
+  0326 2029-05 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0327 2029-06 propertyTaxEscrow            -2215.591185 info  -                      c-
+  0328 2029-06 unfunded                     -2215.591185 info  -                      c- {cause=property tax origin=standalone}
+  0329 2029-06 assetGrowth                   3323.386778 cash  growth                 c-
+  0330 2029-06 propertyTax                  -2221.130163 info  propertyTax            c-
+  0331 2029-06 maintenance                  -5552.825408 info  maintenance            c-
+  0332 2029-06 insurance                    -2000.000000 info  insurance              c-
+  0333 2029-06 unfunded                     -5552.825408 info  -                      c2 {cause=maintenance origin=standalone}
+  0334 2029-06 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0335 2029-07 propertyTaxEscrow            -2221.130163 info  -                      c-
+  0336 2029-07 unfunded                     -2221.130163 info  -                      c- {cause=property tax origin=standalone}
+  0337 2029-07 assetGrowth                   3331.695245 cash  growth                 c-
+  0338 2029-07 propertyTax                  -2226.682989 info  propertyTax            c-
+  0339 2029-07 maintenance                  -5566.707472 info  maintenance            c-
+  0340 2029-07 insurance                    -2000.000000 info  insurance              c-
+  0341 2029-07 unfunded                     -5566.707472 info  -                      c2 {cause=maintenance origin=standalone}
+  0342 2029-07 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0343 2029-08 propertyTaxEscrow            -2226.682989 info  -                      c-
+  0344 2029-08 unfunded                     -2226.682989 info  -                      c- {cause=property tax origin=standalone}
+  0345 2029-08 assetGrowth                   3340.024483 cash  growth                 c-
+  0346 2029-08 propertyTax                  -2232.249696 info  propertyTax            c-
+  0347 2029-08 maintenance                  -5580.624240 info  maintenance            c-
+  0348 2029-08 insurance                    -2000.000000 info  insurance              c-
+  0349 2029-08 unfunded                     -5580.624240 info  -                      c2 {cause=maintenance origin=standalone}
+  0350 2029-08 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0351 2029-09 propertyTaxEscrow            -2232.249696 info  -                      c-
+  0352 2029-09 unfunded                     -2232.249696 info  -                      c- {cause=property tax origin=standalone}
+  0353 2029-09 assetGrowth                   3348.374544 cash  growth                 c-
+  0354 2029-09 propertyTax                  -2237.830320 info  propertyTax            c-
+  0355 2029-09 maintenance                  -5594.575801 info  maintenance            c-
+  0356 2029-09 insurance                    -2000.000000 info  insurance              c-
+  0357 2029-09 unfunded                     -5594.575801 info  -                      c2 {cause=maintenance origin=standalone}
+  0358 2029-09 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0359 2029-10 propertyTaxEscrow            -2237.830320 info  -                      c-
+  0360 2029-10 unfunded                     -2237.830320 info  -                      c- {cause=property tax origin=standalone}
+  0361 2029-10 assetGrowth                   3356.745481 cash  growth                 c-
+  0362 2029-10 propertyTax                  -2243.424896 info  propertyTax            c-
+  0363 2029-10 maintenance                  -5608.562240 info  maintenance            c-
+  0364 2029-10 insurance                    -2000.000000 info  insurance              c-
+  0365 2029-10 unfunded                     -5608.562240 info  -                      c2 {cause=maintenance origin=standalone}
+  0366 2029-10 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0367 2029-11 propertyTaxEscrow            -2243.424896 info  -                      c-
+  0368 2029-11 unfunded                     -2243.424896 info  -                      c- {cause=property tax origin=standalone}
+  0369 2029-11 assetGrowth                   3365.137344 cash  growth                 c-
+  0370 2029-11 propertyTax                  -2249.033458 info  propertyTax            c-
+  0371 2029-11 maintenance                  -5622.583646 info  maintenance            c-
+  0372 2029-11 insurance                    -2000.000000 info  insurance              c-
+  0373 2029-11 unfunded                     -5622.583646 info  -                      c2 {cause=maintenance origin=standalone}
+  0374 2029-11 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0375 2029-12 propertyTaxEscrow            -2249.033458 info  -                      c-
+  0376 2029-12 unfunded                     -2249.033458 info  -                      c- {cause=property tax origin=standalone}
+  0377 2029-12 assetGrowth                   3373.550188 cash  growth                 c-
+  0378 2029-12 propertyTax                  -2254.656042 info  propertyTax            c-
+  0379 2029-12 maintenance                  -5636.640105 info  maintenance            c-
+  0380 2029-12 insurance                    -2000.000000 info  insurance              c-
+  0381 2029-12 unfunded                     -5636.640105 info  -                      c2 {cause=maintenance origin=standalone}
+  0382 2029-12 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0383 2030-01 propertyTaxEscrow            -2254.656042 info  -                      c-
+  0384 2030-01 unfunded                     -2254.656042 info  -                      c- {cause=property tax origin=standalone}
+  0385 2030-01 assetGrowth                   3381.984063 cash  growth                 c-
+  0386 2030-01 propertyTax                  -2260.292682 info  propertyTax            c-
+  0387 2030-01 maintenance                  -5650.731705 info  maintenance            c-
+  0388 2030-01 insurance                    -2000.000000 info  insurance              c-
+  0389 2030-01 unfunded                     -5650.731705 info  -                      c2 {cause=maintenance origin=standalone}
+  0390 2030-01 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0391 2030-02 propertyTaxEscrow            -2260.292682 info  -                      c-
+  0392 2030-02 unfunded                     -2260.292682 info  -                      c- {cause=property tax origin=standalone}
+  0393 2030-02 assetGrowth                   3390.439023 cash  growth                 c-
+  0394 2030-02 propertyTax                  -2265.943414 info  propertyTax            c-
+  0395 2030-02 maintenance                  -5664.858535 info  maintenance            c-
+  0396 2030-02 insurance                    -2000.000000 info  insurance              c-
+  0397 2030-02 unfunded                     -5664.858535 info  -                      c2 {cause=maintenance origin=standalone}
+  0398 2030-02 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0399 2030-03 propertyTaxEscrow            -2265.943414 info  -                      c-
+  0400 2030-03 unfunded                     -2265.943414 info  -                      c- {cause=property tax origin=standalone}
+  0401 2030-03 assetGrowth                   3398.915121 cash  growth                 c-
+  0402 2030-03 propertyTax                  -2271.608272 info  propertyTax            c-
+  0403 2030-03 maintenance                  -5679.020681 info  maintenance            c-
+  0404 2030-03 insurance                    -2000.000000 info  insurance              c-
+  0405 2030-03 unfunded                     -5679.020681 info  -                      c2 {cause=maintenance origin=standalone}
+  0406 2030-03 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0407 2030-04 propertyTaxEscrow            -2271.608272 info  -                      c-
+  0408 2030-04 unfunded                     -2271.608272 info  -                      c- {cause=property tax origin=standalone}
+  0409 2030-04 assetGrowth                   3407.412409 cash  growth                 c-
+  0410 2030-04 propertyTax                  -2277.287293 info  propertyTax            c-
+  0411 2030-04 maintenance                  -5693.218233 info  maintenance            c-
+  0412 2030-04 insurance                    -2000.000000 info  insurance              c-
+  0413 2030-04 unfunded                     -5693.218233 info  -                      c2 {cause=maintenance origin=standalone}
+  0414 2030-04 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0415 2030-05 propertyTaxEscrow            -2277.287293 info  -                      c-
+  0416 2030-05 unfunded                     -2277.287293 info  -                      c- {cause=property tax origin=standalone}
+  0417 2030-05 assetGrowth                   3415.930940 cash  growth                 c-
+  0418 2030-05 propertyTax                  -2282.980511 info  propertyTax            c-
+  0419 2030-05 maintenance                  -5707.451278 info  maintenance            c-
+  0420 2030-05 insurance                    -2000.000000 info  insurance              c-
+  0421 2030-05 unfunded                     -5707.451278 info  -                      c2 {cause=maintenance origin=standalone}
+  0422 2030-05 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0423 2030-06 propertyTaxEscrow            -2282.980511 info  -                      c-
+  0424 2030-06 unfunded                     -2282.980511 info  -                      c- {cause=property tax origin=standalone}
+  0425 2030-06 assetGrowth                   3424.470767 cash  growth                 c-
+  0426 2030-06 propertyTax                  -2288.687963 info  propertyTax            c-
+  0427 2030-06 maintenance                  -5721.719907 info  maintenance            c-
+  0428 2030-06 insurance                    -2000.000000 info  insurance              c-
+  0429 2030-06 unfunded                     -5721.719907 info  -                      c2 {cause=maintenance origin=standalone}
+  0430 2030-06 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0431 2030-07 propertyTaxEscrow            -2288.687963 info  -                      c-
+  0432 2030-07 unfunded                     -2288.687963 info  -                      c- {cause=property tax origin=standalone}
+  0433 2030-07 assetGrowth                   3433.031944 cash  growth                 c-
+  0434 2030-07 propertyTax                  -2294.409683 info  propertyTax            c-
+  0435 2030-07 maintenance                  -5736.024206 info  maintenance            c-
+  0436 2030-07 insurance                    -2000.000000 info  insurance              c-
+  0437 2030-07 unfunded                     -5736.024206 info  -                      c2 {cause=maintenance origin=standalone}
+  0438 2030-07 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0439 2030-08 propertyTaxEscrow            -2294.409683 info  -                      c-
+  0440 2030-08 unfunded                     -2294.409683 info  -                      c- {cause=property tax origin=standalone}
+  0441 2030-08 assetGrowth                   3441.614524 cash  growth                 c-
+  0442 2030-08 propertyTax                  -2300.145707 info  propertyTax            c-
+  0443 2030-08 maintenance                  -5750.364267 info  maintenance            c-
+  0444 2030-08 insurance                    -2000.000000 info  insurance              c-
+  0445 2030-08 unfunded                     -5750.364267 info  -                      c2 {cause=maintenance origin=standalone}
+  0446 2030-08 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0447 2030-09 propertyTaxEscrow            -2300.145707 info  -                      c-
+  0448 2030-09 unfunded                     -2300.145707 info  -                      c- {cause=property tax origin=standalone}
+  0449 2030-09 assetGrowth                   3450.218560 cash  growth                 c-
+  0450 2030-09 propertyTax                  -2305.896071 info  propertyTax            c-
+  0451 2030-09 maintenance                  -5764.740177 info  maintenance            c-
+  0452 2030-09 insurance                    -2000.000000 info  insurance              c-
+  0453 2030-09 unfunded                     -5764.740177 info  -                      c2 {cause=maintenance origin=standalone}
+  0454 2030-09 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0455 2030-10 propertyTaxEscrow            -2305.896071 info  -                      c-
+  0456 2030-10 unfunded                     -2305.896071 info  -                      c- {cause=property tax origin=standalone}
+  0457 2030-10 assetGrowth                   3458.844106 cash  growth                 c-
+  0458 2030-10 propertyTax                  -2311.660811 info  propertyTax            c-
+  0459 2030-10 maintenance                  -5779.152028 info  maintenance            c-
+  0460 2030-10 insurance                    -2000.000000 info  insurance              c-
+  0461 2030-10 unfunded                     -5779.152028 info  -                      c2 {cause=maintenance origin=standalone}
+  0462 2030-10 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0463 2030-11 propertyTaxEscrow            -2311.660811 info  -                      c-
+  0464 2030-11 unfunded                     -2311.660811 info  -                      c- {cause=property tax origin=standalone}
+  0465 2030-11 assetGrowth                   3467.491217 cash  growth                 c-
+  0466 2030-11 propertyTax                  -2317.439963 info  propertyTax            c-
+  0467 2030-11 maintenance                  -5793.599908 info  maintenance            c-
+  0468 2030-11 insurance                    -2000.000000 info  insurance              c-
+  0469 2030-11 unfunded                     -5793.599908 info  -                      c2 {cause=maintenance origin=standalone}
+  0470 2030-11 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+  0471 2030-12 propertyTaxEscrow            -2317.439963 info  -                      c-
+  0472 2030-12 unfunded                     -2317.439963 info  -                      c- {cause=property tax origin=standalone}
+  0473 2030-12 assetGrowth                   3476.159945 cash  growth                 c-
+  0474 2030-12 propertyTax                  -2323.233563 info  propertyTax            c-
+  0475 2030-12 maintenance                  -5808.083908 info  maintenance            c-
+  0476 2030-12 insurance                    -2000.000000 info  insurance              c-
+  0477 2030-12 unfunded                     -5808.083908 info  -                      c2 {cause=maintenance origin=standalone}
+  0478 2030-12 unfunded                     -2000.000000 info  -                      c1 {cause=insurance origin=standalone}
+
+[history] Home
+  value                        n=  60 first=  1203000.000000 last=  1393940.140000 min=  1203000.000000 max=  1393940.140000 sum=   77769995.330000 #5708283a
+  growth                       n=  60 first=     3000.000000 last=     3476.160000 min=     3000.000000 max=     3476.160000 sum=     193940.140000 #6d22a04f
+  saltTaxes                    n=  60 first=    -2005.000000 last=    -2323.230000 min=    -2323.230000 max=    -2005.000000 sum=    -129616.660000 #87a71c02
+  taxes                        n=  60 first=    -2005.000000 last=    -2323.230000 min=    -2323.230000 max=    -2005.000000 sum=    -129616.660000 #87a71c02
+  expense                      n=  60 first=    -7012.500000 last=    -7808.080000 min=    -7808.080000 max=    -7012.500000 sum=    -444041.650000 #945465c0
+  cashFlow                     n=  60 first=    -9017.500000 last=   -10131.320000 min=   -10131.320000 max=    -9017.500000 sum=    -573658.280000 #85604907
+  cashFlowAccumulated          n=  60 first=    -9017.500000 last=  -573658.310000 min=  -573658.310000 max=    -9017.500000 sum=  -17156980.650000 #4bf979fc
+  propertyTax                  n=  60 first=    -2005.000000 last=    -2323.230000 min=    -2323.230000 max=    -2005.000000 sum=    -129616.660000 #87a71c02
+  maintenance                  n=  60 first=    -5012.500000 last=    -5808.080000 min=    -5808.080000 max=    -5012.500000 sum=    -324041.650000 #2c5e76d8
+  insurance                    n=  60 first=    -2000.000000 last=    -2000.000000 min=    -2000.000000 max=    -2000.000000 sum=    -120000.000000 #6061a081
+
+[asset] Wallet
+  instrument = cash
+  start = 2026-01  finish = 2030-12
+  startCurrency = 1200.000000
+  finishCurrency = 0.000000
+  startBasis = 1200.000000
+  finishBasis = 0.000000
+  isClosed = no  isDepleted = yes
+  closedDate = -  closedValue = -
+  events = 1  reconciled = 1
+
+[events] Wallet
+  0000 2026-01 settlement                   -1200.000000 cash  -                      c0 {from=Home label=maintenance to=Wallet}
+
+[packages]
+  0000 assetAppreciation=3000.000000 propertyTaxes=-2005.000000 longTermCapitalGains=1312.500000 maintenance=-5012.500000 insurance=-2000.000000 value=1203000.000000
+  0001 assetAppreciation=3007.500000 propertyTaxes=-2010.012500 maintenance=-5025.031250 insurance=-2000.000000 value=1206007.500000
+  0002 assetAppreciation=3015.018750 propertyTaxes=-2015.037531 maintenance=-5037.593828 insurance=-2000.000000 value=1209022.518750
+  0003 assetAppreciation=3022.556297 propertyTaxes=-2020.075125 maintenance=-5050.187813 insurance=-2000.000000 value=1212045.075047
+  0004 assetAppreciation=3030.112688 propertyTaxes=-2025.125313 maintenance=-5062.813282 insurance=-2000.000000 value=1215075.187734
+  0005 assetAppreciation=3037.687969 propertyTaxes=-2030.188126 maintenance=-5075.470315 insurance=-2000.000000 value=1218112.875704
+  0006 assetAppreciation=3045.282189 propertyTaxes=-2035.263596 maintenance=-5088.158991 insurance=-2000.000000 value=1221158.157893
+  0007 assetAppreciation=3052.895395 propertyTaxes=-2040.351755 maintenance=-5100.879389 insurance=-2000.000000 value=1224211.053288
+  0008 assetAppreciation=3060.527633 propertyTaxes=-2045.452635 maintenance=-5113.631587 insurance=-2000.000000 value=1227271.580921
+  0009 assetAppreciation=3068.178952 propertyTaxes=-2050.566266 maintenance=-5126.415666 insurance=-2000.000000 value=1230339.759873
+  0010 assetAppreciation=3075.849400 propertyTaxes=-2055.692682 maintenance=-5139.231705 insurance=-2000.000000 value=1233415.609273
+  0011 assetAppreciation=3083.539023 propertyTaxes=-2060.831914 maintenance=-5152.079785 insurance=-2000.000000 value=1236499.148296
+  0012 assetAppreciation=3091.247871 propertyTaxes=-2065.983994 maintenance=-5164.959984 insurance=-2000.000000 value=1239590.396167
+  0013 assetAppreciation=3098.975990 propertyTaxes=-2071.148954 maintenance=-5177.872384 insurance=-2000.000000 value=1242689.372157
+  0014 assetAppreciation=3106.723430 propertyTaxes=-2076.326826 maintenance=-5190.817065 insurance=-2000.000000 value=1245796.095588
+  0015 assetAppreciation=3114.490239 propertyTaxes=-2081.517643 maintenance=-5203.794108 insurance=-2000.000000 value=1248910.585827
+  0016 assetAppreciation=3122.276465 propertyTaxes=-2086.721437 maintenance=-5216.803593 insurance=-2000.000000 value=1252032.862291
+  0017 assetAppreciation=3130.082156 propertyTaxes=-2091.938241 maintenance=-5229.845602 insurance=-2000.000000 value=1255162.944447
+  0018 assetAppreciation=3137.907361 propertyTaxes=-2097.168086 maintenance=-5242.920216 insurance=-2000.000000 value=1258300.851808
+  0019 assetAppreciation=3145.752130 propertyTaxes=-2102.411007 maintenance=-5256.027516 insurance=-2000.000000 value=1261446.603938
+  0020 assetAppreciation=3153.616510 propertyTaxes=-2107.667034 maintenance=-5269.167585 insurance=-2000.000000 value=1264600.220448
+  0021 assetAppreciation=3161.500551 propertyTaxes=-2112.936202 maintenance=-5282.340504 insurance=-2000.000000 value=1267761.720999
+  0022 assetAppreciation=3169.404302 propertyTaxes=-2118.218542 maintenance=-5295.546355 insurance=-2000.000000 value=1270931.125301
+  0023 assetAppreciation=3177.327813 propertyTaxes=-2123.514089 maintenance=-5308.785221 insurance=-2000.000000 value=1274108.453114
+  0024 assetAppreciation=3185.271133 propertyTaxes=-2128.822874 maintenance=-5322.057184 insurance=-2000.000000 value=1277293.724247
+  0025 assetAppreciation=3193.234311 propertyTaxes=-2134.144931 maintenance=-5335.362327 insurance=-2000.000000 value=1280486.958558
+  0026 assetAppreciation=3201.217396 propertyTaxes=-2139.480293 maintenance=-5348.700733 insurance=-2000.000000 value=1283688.175954
+  0027 assetAppreciation=3209.220440 propertyTaxes=-2144.828994 maintenance=-5362.072485 insurance=-2000.000000 value=1286897.396394
+  0028 assetAppreciation=3217.243491 propertyTaxes=-2150.191066 maintenance=-5375.477666 insurance=-2000.000000 value=1290114.639885
+  0029 assetAppreciation=3225.286600 propertyTaxes=-2155.566544 maintenance=-5388.916360 insurance=-2000.000000 value=1293339.926485
+  0030 assetAppreciation=3233.349816 propertyTaxes=-2160.955461 maintenance=-5402.388651 insurance=-2000.000000 value=1296573.276301
+  0031 assetAppreciation=3241.433191 propertyTaxes=-2166.357849 maintenance=-5415.894623 insurance=-2000.000000 value=1299814.709492
+  0032 assetAppreciation=3249.536774 propertyTaxes=-2171.773744 maintenance=-5429.434359 insurance=-2000.000000 value=1303064.246265
+  0033 assetAppreciation=3257.660616 propertyTaxes=-2177.203178 maintenance=-5443.007945 insurance=-2000.000000 value=1306321.906881
+  0034 assetAppreciation=3265.804767 propertyTaxes=-2182.646186 maintenance=-5456.615465 insurance=-2000.000000 value=1309587.711648
+  0035 assetAppreciation=3273.969279 propertyTaxes=-2188.102802 maintenance=-5470.257004 insurance=-2000.000000 value=1312861.680927
+  0036 assetAppreciation=3282.154202 propertyTaxes=-2193.573059 maintenance=-5483.932646 insurance=-2000.000000 value=1316143.835130
+  0037 assetAppreciation=3290.359588 propertyTaxes=-2199.056991 maintenance=-5497.642478 insurance=-2000.000000 value=1319434.194718
+  0038 assetAppreciation=3298.585487 propertyTaxes=-2204.554634 maintenance=-5511.386584 insurance=-2000.000000 value=1322732.780204
+  0039 assetAppreciation=3306.831951 propertyTaxes=-2210.066020 maintenance=-5525.165051 insurance=-2000.000000 value=1326039.612155
+  0040 assetAppreciation=3315.099030 propertyTaxes=-2215.591185 maintenance=-5538.977963 insurance=-2000.000000 value=1329354.711185
+  0041 assetAppreciation=3323.386778 propertyTaxes=-2221.130163 maintenance=-5552.825408 insurance=-2000.000000 value=1332678.097963
+  0042 assetAppreciation=3331.695245 propertyTaxes=-2226.682989 maintenance=-5566.707472 insurance=-2000.000000 value=1336009.793208
+  0043 assetAppreciation=3340.024483 propertyTaxes=-2232.249696 maintenance=-5580.624240 insurance=-2000.000000 value=1339349.817691
+  0044 assetAppreciation=3348.374544 propertyTaxes=-2237.830320 maintenance=-5594.575801 insurance=-2000.000000 value=1342698.192235
+  0045 assetAppreciation=3356.745481 propertyTaxes=-2243.424896 maintenance=-5608.562240 insurance=-2000.000000 value=1346054.937716
+  0046 assetAppreciation=3365.137344 propertyTaxes=-2249.033458 maintenance=-5622.583646 insurance=-2000.000000 value=1349420.075060
+  0047 assetAppreciation=3373.550188 propertyTaxes=-2254.656042 maintenance=-5636.640105 insurance=-2000.000000 value=1352793.625248
+  0048 assetAppreciation=3381.984063 propertyTaxes=-2260.292682 maintenance=-5650.731705 insurance=-2000.000000 value=1356175.609311
+  0049 assetAppreciation=3390.439023 propertyTaxes=-2265.943414 maintenance=-5664.858535 insurance=-2000.000000 value=1359566.048334
+  0050 assetAppreciation=3398.915121 propertyTaxes=-2271.608272 maintenance=-5679.020681 insurance=-2000.000000 value=1362964.963455
+  0051 assetAppreciation=3407.412409 propertyTaxes=-2277.287293 maintenance=-5693.218233 insurance=-2000.000000 value=1366372.375864
+  0052 assetAppreciation=3415.930940 propertyTaxes=-2282.980511 maintenance=-5707.451278 insurance=-2000.000000 value=1369788.306803
+  0053 assetAppreciation=3424.470767 propertyTaxes=-2288.687963 maintenance=-5721.719907 insurance=-2000.000000 value=1373212.777570
+  0054 assetAppreciation=3433.031944 propertyTaxes=-2294.409683 maintenance=-5736.024206 insurance=-2000.000000 value=1376645.809514
+  0055 assetAppreciation=3441.614524 propertyTaxes=-2300.145707 maintenance=-5750.364267 insurance=-2000.000000 value=1380087.424038
+  0056 assetAppreciation=3450.218560 propertyTaxes=-2305.896071 maintenance=-5764.740177 insurance=-2000.000000 value=1383537.642598
+  0057 assetAppreciation=3458.844106 propertyTaxes=-2311.660811 maintenance=-5779.152028 insurance=-2000.000000 value=1386996.486705
+  0058 assetAppreciation=3467.491217 propertyTaxes=-2317.439963 maintenance=-5793.599908 insurance=-2000.000000 value=1390463.977922
+  0059 assetAppreciation=3476.159945 propertyTaxes=-2323.233563 maintenance=-5808.083908 insurance=-2000.000000 value=1393940.137866
+
+[priceIndex]
+  [0000]         1.002583         1.005173         1.007770         1.010373         1.012984         1.015600
+  [0006]         1.018224         1.020854         1.023492         1.026136         1.028787         1.031444
+  [0012]         1.034109         1.036780         1.039459         1.042144         1.044836         1.047535
+  [0018]         1.050241         1.052955         1.055675         1.058402         1.061136         1.063877
+  [0024]         1.066626         1.069381         1.072144         1.074913         1.077690         1.080474
+  [0030]         1.083265         1.086064         1.088870         1.091682         1.094503         1.097330
+  [0036]         1.100165         1.103007         1.105856         1.108713         1.111577         1.114449
+  [0042]         1.117328         1.120214         1.123108         1.126010         1.128919         1.131835
+  [0048]         1.134759         1.137690         1.140629         1.143576         1.146530         1.149492
+  [0054]         1.152462         1.155439         1.158424         1.161416         1.164417         1.167425
+
+[sanity]
+  Unfunded: Home Home → Wallet (maintenance) $1312.5 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2005 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5025.03 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2010.01 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5037.59 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2015.04 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5050.19 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2020.08 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5062.81 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2025.13 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5075.47 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2030.19 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5088.16 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2035.26 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5100.88 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2040.35 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5113.63 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2045.45 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5126.42 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2050.57 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5139.23 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2055.69 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5152.08 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2060.83 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5164.96 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2065.98 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5177.87 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2071.15 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5190.82 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2076.33 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5203.79 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2081.52 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5216.8 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2086.72 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5229.85 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2091.94 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5242.92 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2097.17 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5256.03 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2102.41 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5269.17 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2107.67 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5282.34 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2112.94 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5295.55 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2118.22 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5308.79 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2123.51 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5322.06 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2128.82 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5335.36 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2134.14 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5348.7 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2139.48 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5362.07 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2144.83 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5375.48 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2150.19 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5388.92 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2155.57 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5402.39 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2160.96 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5415.89 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2166.36 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5429.43 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2171.77 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5443.01 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2177.2 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5456.62 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2182.65 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5470.26 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2188.1 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5483.93 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2193.57 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5497.64 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2199.06 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5511.39 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2204.55 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5525.17 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2210.07 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5538.98 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2215.59 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5552.83 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2221.13 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5566.71 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2226.68 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5580.62 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2232.25 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5594.58 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2237.83 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5608.56 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2243.42 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5622.58 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2249.03 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5636.64 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2254.66 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5650.73 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2260.29 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5664.86 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2265.94 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5679.02 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2271.61 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5693.22 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2277.29 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5707.45 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2282.98 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5721.72 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2288.69 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5736.02 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2294.41 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5750.36 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2300.15 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5764.74 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2305.9 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5779.15 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2311.66 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5793.6 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home property tax $2317.44 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home maintenance $5808.08 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Home insurance $2000 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+
+[traces]
+  scopes = 1271
+  unattributedEvents = 0
+  1x 2027 annual pass
+  1x 2027 tax true-up
+  1x 2028 annual pass
+  1x 2028 tax true-up
+  1x 2029 annual pass
+  1x 2029 tax true-up
+  1x 2030 annual pass
+  1x 2030 tax true-up
+  1x 2031 annual pass
+  1x 2031 tax true-up
+  7x April 2026
+  7x April 2027
+  7x April 2028
+  7x April 2029
+  7x April 2030
+  7x August 2026
+  7x August 2027
+  7x August 2028
+  7x August 2029
+  7x August 2030
+  7x December 2026
+  7x December 2027
+  7x December 2028
+  7x December 2029
+  7x December 2030
+  7x February 2026
+  7x February 2027
+  7x February 2028
+  7x February 2029
+  7x February 2030
+  60x Home insurance
+  60x Home maintenance
+  7x January 2026
+  7x January 2027
+  7x January 2028
+  7x January 2029
+  7x January 2030
+  7x July 2026
+  7x July 2027
+  7x July 2028
+  7x July 2029
+  7x July 2030
+  7x June 2026
+  7x June 2027
+  7x June 2028
+  7x June 2029
+  7x June 2030
+  7x March 2026
+  7x March 2027
+  7x March 2028
+  7x March 2029
+  7x March 2030
+  7x May 2026
+  7x May 2027
+  7x May 2028
+  7x May 2029
+  7x May 2030
+  7x November 2026
+  7x November 2027
+  7x November 2028
+  7x November 2029
+  7x November 2030
+  7x October 2026
+  7x October 2027
+  7x October 2028
+  7x October 2029
+  7x October 2030
+  60x Pay Brokerage
+  60x Pay Home
+  60x Pay Wallet
+  60x Payroll: Brokerage
+  60x Payroll: Home
+  60x Payroll: Wallet
+  60x Required distribution from Brokerage
+  60x Required distribution from Home
+  60x Required distribution from Wallet
+  7x September 2026
+  7x September 2027
+  7x September 2028
+  7x September 2029
+  7x September 2030
+  1x Settle from Wallet
+  60x Withholding: Brokerage
+  60x Withholding: Home
+  60x Withholding: Wallet
+
+[traceLegend]
+  c0 = Home maintenance > Settle from Wallet
+  c1 = Home insurance
+  c2 = Home maintenance
+
