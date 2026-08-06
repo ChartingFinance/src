@@ -38,7 +38,7 @@ import {
 } from '../js/globals.js';
 import { EventType, kindOf, EventKind, ShortfallOrigin } from '../js/sim-event.js';
 import { FundTransfer } from '../js/fund-transfer.js';
-import { logger } from '../js/utils/logger.js';
+import { logger, LogCategory } from '../js/utils/logger.js';
 
 let passed = 0, failed = 0;
 function check(label, fn) {
@@ -182,6 +182,27 @@ const scenarios = [
     base({ instrument: 'bank', displayName: 'Savings', startCurrency: { amount: 200000 }, startBasisCurrency: { amount: 200000 } }),
     base({ instrument: 'monthlyExpense', displayName: 'Living', startCurrency: { amount: -5000 }, startBasisCurrency: { amount: 0 } }),
   ]],
+  // Reaches the LAST thing the loop does. chronometer_run calls applyYear after
+  // monthlyChron, so the annual tax true-up's events land past the scan index
+  // and only the next month's pass picks them up — and the final year has no
+  // next month. This fixture is built so that final pass actually emits: a
+  // retired plan whose annual true-up settles a real residual and draws it from
+  // a brokerage, which realizes a gain, so BOTH a taxTrueUp and a
+  // capitalGainRecognized event are left behind.
+  //
+  // The two scenarios above cannot catch a regression here. `housing`'s true-up
+  // never fires at all, and `retired`'s only fires when tax allocation is on —
+  // so with the shipped flag state, deleting the trailing reconciliation passed
+  // every assertion in this file. Verified by mutation 2026-08-05: remove
+  // Portfolio.finalSanityCheck's call site and only this scenario goes red.
+  ['retired, tax bill drawn from a taxable account', { start: 75, retire: 65 }, [
+    base({ instrument: 'retirementIncome', displayName: 'Social Security', startCurrency: { amount: 3000 }, startBasisCurrency: { amount: 0 } }),
+    base({ instrument: 'ira', displayName: 'IRA', startCurrency: { amount: 600000 }, startBasisCurrency: { amount: 0 } }),
+    base({ instrument: 'taxableEquity', displayName: 'Brokerage', startCurrency: { amount: 500000 },
+           startBasisCurrency: { amount: 150000 }, annualReturnRate: { rate: 0.06 } }),
+    base({ instrument: 'bank', displayName: 'Checking', startCurrency: { amount: 2000 }, startBasisCurrency: { amount: 2000 } }),
+    base({ instrument: 'monthlyExpense', displayName: 'Living', startCurrency: { amount: -7000 }, startBasisCurrency: { amount: 0 } }),
+  ]],
 ];
 
 for (const [name, ages, assets] of scenarios) {
@@ -201,6 +222,94 @@ for (const [name, ages, assets] of scenarios) {
     }
   });
 }
+
+// ── The trailing reconciliation ──────────────────────────────────────
+// chronometer_run's loop calls applyYear AFTER monthlyChron, so the annual pass
+// always emits past the scan index. Mid-run the next month's pass collects it —
+// and it must, because monthlyChron zeroes portfolio.monthly BEFORE applyYear,
+// so the true-up's package bookings and its events belong to the same month.
+// The final year has no next month, which is what Portfolio.finalSanityCheck is
+// for.
+console.log('\n── The trailing reconciliation ──\n');
+
+const taxableFixture = scenarios[scenarios.length - 1];
+
+const unscannedWhenFinalRan = [];
+const origFinal = Portfolio.prototype.finalSanityCheck;
+Portfolio.prototype.finalSanityCheck = function (d) {
+  let n = 0;
+  for (const a of this.modelAssets) n += a.events.length - (a.eventsCheckedIndex || 0);
+  unscannedWhenFinalRan.push(n);
+  return origFinal.call(this, d);
+};
+const trailing = await run(taxableFixture[2], taxableFixture[1]);
+Portfolio.prototype.finalSanityCheck = origFinal;
+
+check('the run ends with exactly one trailing reconciliation', () => {
+  // Deleting the call site makes this 0. A per-year scan — the tempting fix,
+  // which reconciles the true-up a month before its package bookings are
+  // compared and invents a Capital gains finding for every year — makes it 5.
+  assert.equal(unscannedWhenFinalRan.length, 1,
+    `finalSanityCheck ran ${unscannedWhenFinalRan.length} times, expected once after the loop`);
+});
+
+check('the trailing pass has something to reconcile', () => {
+  // Guards the FIXTURE, not the engine. Every other scenario in this file
+  // leaves nothing behind — `housing`'s true-up never fires and `retired`'s
+  // only fires with tax allocation on — so without a fixture that reaches it,
+  // the trailing pass could be deleted with the whole suite green.
+  assert.ok(unscannedWhenFinalRan[0] > 0,
+    'this fixture no longer leaves the final annual pass unscanned, so it has ' +
+    'stopped testing the thing it exists for');
+});
+
+check('nothing is left unreconciled once the run is over', () => {
+  for (const a of trailing.modelAssets) {
+    assert.equal(a.eventsCheckedIndex, a.events.length,
+      `${a.displayName}: index ${a.eventsCheckedIndex} vs ${a.events.length} events`);
+  }
+});
+
+check('the trailing pass files findings under the month the events happened', () => {
+  // The monthly pass reports currentDateInt MINUS one month, because it runs a
+  // month ahead of the events it scans. The trailing pass does not: its events
+  // were emitted on the date it is handed. Reusing the -1 default would file
+  // them under the month the previous pass already reported — the same class of
+  // mistake that once cost a full forensic pass on the wrong month.
+  logger.enable(LogCategory.SANITY);
+
+  const stub = () => {
+    const p = new Portfolio([], false);
+    p.modelAssets = [{
+      displayName: 'Stub',
+      eventsCheckedIndex: 0,
+      // Unbalanced on purpose: monthly.incomeTax is 0, so this forces a finding
+      // whose label is the thing under test.
+      events: [{ type: EventType.INCOME_TAX_WITHHOLDING, kind: 'cash', amount: { amount: -100 } }],
+    }];
+    return p;
+  };
+
+  const grab = (fn) => {
+    const cap = logger.capture(LogCategory.SANITY);
+    fn();
+    cap.stop();
+    return cap.lines.map(l => l.message).find(m => m.includes('Income tax'));
+  };
+
+  const trailingLine = grab(() => stub().finalSanityCheck({ year: 2031, month: 1 }));
+  assert.ok(trailingLine, 'the trailing pass must reconcile what the loop left behind');
+  assert.ok(trailingLine.startsWith('2031-01 '),
+    `trailing finding labelled "${trailingLine}" — its events happened in 2031-01`);
+
+  // The converse, so the override cannot be made unconditional: the monthly
+  // pass must still report the month BEHIND it.
+  const monthlyLine = grab(() => stub().monthlySanityCheck({ year: 2031, month: 1 }));
+  assert.ok(monthlyLine.startsWith('2030-12 '),
+    `monthly finding labelled "${monthlyLine}" — it scans the previous month's events`);
+
+  logger.disable(LogCategory.SANITY);
+});
 
 // ── Shortfalls must be attributable ──────────────────────────────────
 // Chosen so shortfalls arise from BOTH paths: a home's carrying costs draining

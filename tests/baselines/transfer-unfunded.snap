@@ -1,0 +1,592 @@
+# fixture: transfer-unfunded  (adversarial)
+#
+# the PAIRED shortfall origin: a two-sided execute() whose source cannot
+# supply the transfer. Only the paired total is expected to net to zero, so
+# this and settlement-unfunded together are what keep the origin split
+# honest.
+
+[config]
+  backtestYear = current
+  equityDividendAllocation = 0.5
+  equityDividendAverageAnnualRate = 0.025
+  equityGrowthAllocation = 0.5
+  filingAs = Single
+  homeSaleCapitalGainsDiscount = 250000
+  inflationRate = 0.031
+  propertyTaxDeductionMax = 40000
+  propertyTaxRate = 0.01
+  simDataMode = calibrated
+  taxYear = 2025
+  userFinishAge = 87
+  userRetirementAge = 65
+  userStartAge = 50
+  allocateHouseholdTax = false
+  pensionWithholdingRate = 0.1
+  socialSecurityWithholdingRate = 0
+  retirementWithholdingRate = 0.1
+
+[totals]
+  months = 120
+  firstDate = 2026-01
+  lastDate = 2030-12
+  startValue = 40000.000000
+  finishValue = 0.000000
+  accumulated = 0.000000
+  total.expense = -388857.161972
+  total.longTermCapitalGains = 2326.905084
+  total.value = -276405.613273
+
+[assetOrder]
+  0 Brokerage
+  1 Living
+
+[asset] Brokerage
+  instrument = taxableEquity
+  start = 2026-01  finish = 2030-12
+  startCurrency = 40000.000000
+  finishCurrency = 0.000000
+  startBasis = 40000.000000
+  finishBasis = 0.000000
+  isClosed = no  isDepleted = yes
+  closedDate = -  closedValue = -
+  events = 175  reconciled = 175
+
+[events] Brokerage
+  0000 2026-01 transfer                     -6000.000000 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0001 2026-01 assetGrowth                      0.000000 cash  growth                 c-
+  0002 2026-02 transfer                     -6015.500000 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0003 2026-02 assetGrowth                      0.000000 cash  growth                 c-
+  0004 2026-03 transfer                     -6031.040042 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0005 2026-03 assetGrowth                      0.000000 cash  growth                 c-
+  0006 2026-04 transfer                     -6046.620228 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0007 2026-04 assetGrowth                      0.000000 cash  growth                 c-
+  0008 2026-05 transfer                     -6062.240664 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0009 2026-05 assetGrowth                      0.000000 cash  growth                 c-
+  0010 2026-06 transfer                     -6077.901452 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0011 2026-06 assetGrowth                      0.000000 cash  growth                 c-
+  0012 2026-07 transfer                     -3766.697613 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0013 2026-07 capitalGainRecognized         2326.905084 info  longTermCapitalGain    c0 {spillover=false}
+  0014 2026-07 unfunded                     -2326.905084 info  -                      c0 {cause=Living → Brokerage (monthly) (account depleted, no backstop) origin=paired}
+  0015 2026-07 assetGrowth                      0.000000 cash  growth                 c-
+  0016 2026-08 transfer                         0.000000 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0017 2026-08 unfunded                     -6109.344505 info  -                      c0 {cause=Living → Brokerage (monthly) (account depleted, no backstop) origin=paired}
+  0018 2026-08 assetGrowth                      0.000000 cash  growth                 c-
+  0019 2026-09 transfer                         0.000000 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0020 2026-09 unfunded                     -6125.126978 info  -                      c0 {cause=Living → Brokerage (monthly) (account depleted, no backstop) origin=paired}
+  0021 2026-09 assetGrowth                      0.000000 cash  growth                 c-
+  0022 2026-10 transfer                         0.000000 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0023 2026-10 unfunded                     -6140.950223 info  -                      c0 {cause=Living → Brokerage (monthly) (account depleted, no backstop) origin=paired}
+  0024 2026-10 assetGrowth                      0.000000 cash  growth                 c-
+  0025 2026-11 transfer                         0.000000 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0026 2026-11 unfunded                     -6156.814344 info  -                      c0 {cause=Living → Brokerage (monthly) (account depleted, no backstop) origin=paired}
+  0027 2026-11 assetGrowth                      0.000000 cash  growth                 c-
+  0028 2026-12 transfer                         0.000000 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0029 2026-12 unfunded                     -6172.719448 info  -                      c0 {cause=Living → Brokerage (monthly) (account depleted, no backstop) origin=paired}
+  0030 2026-12 assetGrowth                      0.000000 cash  growth                 c-
+  0031 2027-01 transfer                         0.000000 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0032 2027-01 unfunded                     -6188.665640 info  -                      c0 {cause=Living → Brokerage (monthly) (account depleted, no backstop) origin=paired}
+  0033 2027-01 assetGrowth                      0.000000 cash  growth                 c-
+  0034 2027-02 transfer                         0.000000 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0035 2027-02 unfunded                     -6204.653026 info  -                      c0 {cause=Living → Brokerage (monthly) (account depleted, no backstop) origin=paired}
+  0036 2027-02 assetGrowth                      0.000000 cash  growth                 c-
+  0037 2027-03 transfer                         0.000000 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0038 2027-03 unfunded                     -6220.681713 info  -                      c0 {cause=Living → Brokerage (monthly) (account depleted, no backstop) origin=paired}
+  0039 2027-03 assetGrowth                      0.000000 cash  growth                 c-
+  0040 2027-04 transfer                         0.000000 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0041 2027-04 unfunded                     -6236.751807 info  -                      c0 {cause=Living → Brokerage (monthly) (account depleted, no backstop) origin=paired}
+  0042 2027-04 assetGrowth                      0.000000 cash  growth                 c-
+  0043 2027-05 transfer                         0.000000 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0044 2027-05 unfunded                     -6252.863416 info  -                      c0 {cause=Living → Brokerage (monthly) (account depleted, no backstop) origin=paired}
+  0045 2027-05 assetGrowth                      0.000000 cash  growth                 c-
+  0046 2027-06 transfer                         0.000000 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0047 2027-06 unfunded                     -6269.016647 info  -                      c0 {cause=Living → Brokerage (monthly) (account depleted, no backstop) origin=paired}
+  0048 2027-06 assetGrowth                      0.000000 cash  growth                 c-
+  0049 2027-07 transfer                         0.000000 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0050 2027-07 unfunded                     -6285.211606 info  -                      c0 {cause=Living → Brokerage (monthly) (account depleted, no backstop) origin=paired}
+  0051 2027-07 assetGrowth                      0.000000 cash  growth                 c-
+  0052 2027-08 transfer                         0.000000 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0053 2027-08 unfunded                     -6301.448403 info  -                      c0 {cause=Living → Brokerage (monthly) (account depleted, no backstop) origin=paired}
+  0054 2027-08 assetGrowth                      0.000000 cash  growth                 c-
+  0055 2027-09 transfer                         0.000000 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0056 2027-09 unfunded                     -6317.727145 info  -                      c0 {cause=Living → Brokerage (monthly) (account depleted, no backstop) origin=paired}
+  0057 2027-09 assetGrowth                      0.000000 cash  growth                 c-
+  0058 2027-10 transfer                         0.000000 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0059 2027-10 unfunded                     -6334.047940 info  -                      c0 {cause=Living → Brokerage (monthly) (account depleted, no backstop) origin=paired}
+  0060 2027-10 assetGrowth                      0.000000 cash  growth                 c-
+  0061 2027-11 transfer                         0.000000 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0062 2027-11 unfunded                     -6350.410897 info  -                      c0 {cause=Living → Brokerage (monthly) (account depleted, no backstop) origin=paired}
+  0063 2027-11 assetGrowth                      0.000000 cash  growth                 c-
+  0064 2027-12 transfer                         0.000000 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0065 2027-12 unfunded                     -6366.816125 info  -                      c0 {cause=Living → Brokerage (monthly) (account depleted, no backstop) origin=paired}
+  0066 2027-12 assetGrowth                      0.000000 cash  growth                 c-
+  0067 2028-01 transfer                         0.000000 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0068 2028-01 unfunded                     -6383.263734 info  -                      c0 {cause=Living → Brokerage (monthly) (account depleted, no backstop) origin=paired}
+  0069 2028-01 assetGrowth                      0.000000 cash  growth                 c-
+  0070 2028-02 transfer                         0.000000 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0071 2028-02 unfunded                     -6399.753832 info  -                      c0 {cause=Living → Brokerage (monthly) (account depleted, no backstop) origin=paired}
+  0072 2028-02 assetGrowth                      0.000000 cash  growth                 c-
+  0073 2028-03 transfer                         0.000000 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0074 2028-03 unfunded                     -6416.286529 info  -                      c0 {cause=Living → Brokerage (monthly) (account depleted, no backstop) origin=paired}
+  0075 2028-03 assetGrowth                      0.000000 cash  growth                 c-
+  0076 2028-04 transfer                         0.000000 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0077 2028-04 unfunded                     -6432.861936 info  -                      c0 {cause=Living → Brokerage (monthly) (account depleted, no backstop) origin=paired}
+  0078 2028-04 assetGrowth                      0.000000 cash  growth                 c-
+  0079 2028-05 transfer                         0.000000 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0080 2028-05 unfunded                     -6449.480163 info  -                      c0 {cause=Living → Brokerage (monthly) (account depleted, no backstop) origin=paired}
+  0081 2028-05 assetGrowth                      0.000000 cash  growth                 c-
+  0082 2028-06 transfer                         0.000000 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0083 2028-06 unfunded                     -6466.141320 info  -                      c0 {cause=Living → Brokerage (monthly) (account depleted, no backstop) origin=paired}
+  0084 2028-06 assetGrowth                      0.000000 cash  growth                 c-
+  0085 2028-07 transfer                         0.000000 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0086 2028-07 unfunded                     -6482.845518 info  -                      c0 {cause=Living → Brokerage (monthly) (account depleted, no backstop) origin=paired}
+  0087 2028-07 assetGrowth                      0.000000 cash  growth                 c-
+  0088 2028-08 transfer                         0.000000 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0089 2028-08 unfunded                     -6499.592869 info  -                      c0 {cause=Living → Brokerage (monthly) (account depleted, no backstop) origin=paired}
+  0090 2028-08 assetGrowth                      0.000000 cash  growth                 c-
+  0091 2028-09 transfer                         0.000000 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0092 2028-09 unfunded                     -6516.383484 info  -                      c0 {cause=Living → Brokerage (monthly) (account depleted, no backstop) origin=paired}
+  0093 2028-09 assetGrowth                      0.000000 cash  growth                 c-
+  0094 2028-10 transfer                         0.000000 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0095 2028-10 unfunded                     -6533.217475 info  -                      c0 {cause=Living → Brokerage (monthly) (account depleted, no backstop) origin=paired}
+  0096 2028-10 assetGrowth                      0.000000 cash  growth                 c-
+  0097 2028-11 transfer                         0.000000 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0098 2028-11 unfunded                     -6550.094953 info  -                      c0 {cause=Living → Brokerage (monthly) (account depleted, no backstop) origin=paired}
+  0099 2028-11 assetGrowth                      0.000000 cash  growth                 c-
+  0100 2028-12 transfer                         0.000000 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0101 2028-12 unfunded                     -6567.016032 info  -                      c0 {cause=Living → Brokerage (monthly) (account depleted, no backstop) origin=paired}
+  0102 2028-12 assetGrowth                      0.000000 cash  growth                 c-
+  0103 2029-01 transfer                         0.000000 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0104 2029-01 unfunded                     -6583.980823 info  -                      c0 {cause=Living → Brokerage (monthly) (account depleted, no backstop) origin=paired}
+  0105 2029-01 assetGrowth                      0.000000 cash  growth                 c-
+  0106 2029-02 transfer                         0.000000 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0107 2029-02 unfunded                     -6600.989440 info  -                      c0 {cause=Living → Brokerage (monthly) (account depleted, no backstop) origin=paired}
+  0108 2029-02 assetGrowth                      0.000000 cash  growth                 c-
+  0109 2029-03 transfer                         0.000000 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0110 2029-03 unfunded                     -6618.041996 info  -                      c0 {cause=Living → Brokerage (monthly) (account depleted, no backstop) origin=paired}
+  0111 2029-03 assetGrowth                      0.000000 cash  growth                 c-
+  0112 2029-04 transfer                         0.000000 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0113 2029-04 unfunded                     -6635.138605 info  -                      c0 {cause=Living → Brokerage (monthly) (account depleted, no backstop) origin=paired}
+  0114 2029-04 assetGrowth                      0.000000 cash  growth                 c-
+  0115 2029-05 transfer                         0.000000 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0116 2029-05 unfunded                     -6652.279379 info  -                      c0 {cause=Living → Brokerage (monthly) (account depleted, no backstop) origin=paired}
+  0117 2029-05 assetGrowth                      0.000000 cash  growth                 c-
+  0118 2029-06 transfer                         0.000000 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0119 2029-06 unfunded                     -6669.464435 info  -                      c0 {cause=Living → Brokerage (monthly) (account depleted, no backstop) origin=paired}
+  0120 2029-06 assetGrowth                      0.000000 cash  growth                 c-
+  0121 2029-07 transfer                         0.000000 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0122 2029-07 unfunded                     -6686.693884 info  -                      c0 {cause=Living → Brokerage (monthly) (account depleted, no backstop) origin=paired}
+  0123 2029-07 assetGrowth                      0.000000 cash  growth                 c-
+  0124 2029-08 transfer                         0.000000 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0125 2029-08 unfunded                     -6703.967843 info  -                      c0 {cause=Living → Brokerage (monthly) (account depleted, no backstop) origin=paired}
+  0126 2029-08 assetGrowth                      0.000000 cash  growth                 c-
+  0127 2029-09 transfer                         0.000000 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0128 2029-09 unfunded                     -6721.286427 info  -                      c0 {cause=Living → Brokerage (monthly) (account depleted, no backstop) origin=paired}
+  0129 2029-09 assetGrowth                      0.000000 cash  growth                 c-
+  0130 2029-10 transfer                         0.000000 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0131 2029-10 unfunded                     -6738.649750 info  -                      c0 {cause=Living → Brokerage (monthly) (account depleted, no backstop) origin=paired}
+  0132 2029-10 assetGrowth                      0.000000 cash  growth                 c-
+  0133 2029-11 transfer                         0.000000 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0134 2029-11 unfunded                     -6756.057929 info  -                      c0 {cause=Living → Brokerage (monthly) (account depleted, no backstop) origin=paired}
+  0135 2029-11 assetGrowth                      0.000000 cash  growth                 c-
+  0136 2029-12 transfer                         0.000000 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0137 2029-12 unfunded                     -6773.511079 info  -                      c0 {cause=Living → Brokerage (monthly) (account depleted, no backstop) origin=paired}
+  0138 2029-12 assetGrowth                      0.000000 cash  growth                 c-
+  0139 2030-01 transfer                         0.000000 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0140 2030-01 unfunded                     -6791.009315 info  -                      c0 {cause=Living → Brokerage (monthly) (account depleted, no backstop) origin=paired}
+  0141 2030-01 assetGrowth                      0.000000 cash  growth                 c-
+  0142 2030-02 transfer                         0.000000 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0143 2030-02 unfunded                     -6808.552756 info  -                      c0 {cause=Living → Brokerage (monthly) (account depleted, no backstop) origin=paired}
+  0144 2030-02 assetGrowth                      0.000000 cash  growth                 c-
+  0145 2030-03 transfer                         0.000000 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0146 2030-03 unfunded                     -6826.141518 info  -                      c0 {cause=Living → Brokerage (monthly) (account depleted, no backstop) origin=paired}
+  0147 2030-03 assetGrowth                      0.000000 cash  growth                 c-
+  0148 2030-04 transfer                         0.000000 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0149 2030-04 unfunded                     -6843.775716 info  -                      c0 {cause=Living → Brokerage (monthly) (account depleted, no backstop) origin=paired}
+  0150 2030-04 assetGrowth                      0.000000 cash  growth                 c-
+  0151 2030-05 transfer                         0.000000 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0152 2030-05 unfunded                     -6861.455470 info  -                      c0 {cause=Living → Brokerage (monthly) (account depleted, no backstop) origin=paired}
+  0153 2030-05 assetGrowth                      0.000000 cash  growth                 c-
+  0154 2030-06 transfer                         0.000000 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0155 2030-06 unfunded                     -6879.180897 info  -                      c0 {cause=Living → Brokerage (monthly) (account depleted, no backstop) origin=paired}
+  0156 2030-06 assetGrowth                      0.000000 cash  growth                 c-
+  0157 2030-07 transfer                         0.000000 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0158 2030-07 unfunded                     -6896.952114 info  -                      c0 {cause=Living → Brokerage (monthly) (account depleted, no backstop) origin=paired}
+  0159 2030-07 assetGrowth                      0.000000 cash  growth                 c-
+  0160 2030-08 transfer                         0.000000 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0161 2030-08 unfunded                     -6914.769241 info  -                      c0 {cause=Living → Brokerage (monthly) (account depleted, no backstop) origin=paired}
+  0162 2030-08 assetGrowth                      0.000000 cash  growth                 c-
+  0163 2030-09 transfer                         0.000000 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0164 2030-09 unfunded                     -6932.632394 info  -                      c0 {cause=Living → Brokerage (monthly) (account depleted, no backstop) origin=paired}
+  0165 2030-09 assetGrowth                      0.000000 cash  growth                 c-
+  0166 2030-10 transfer                         0.000000 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0167 2030-10 unfunded                     -6950.541695 info  -                      c0 {cause=Living → Brokerage (monthly) (account depleted, no backstop) origin=paired}
+  0168 2030-10 assetGrowth                      0.000000 cash  growth                 c-
+  0169 2030-11 transfer                         0.000000 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0170 2030-11 unfunded                     -6968.497261 info  -                      c0 {cause=Living → Brokerage (monthly) (account depleted, no backstop) origin=paired}
+  0171 2030-11 assetGrowth                      0.000000 cash  growth                 c-
+  0172 2030-12 transfer                         0.000000 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0173 2030-12 unfunded                     -6986.499212 info  -                      c0 {cause=Living → Brokerage (monthly) (account depleted, no backstop) origin=paired}
+  0174 2030-12 assetGrowth                      0.000000 cash  growth                 c-
+
+[history] Brokerage
+  value                        n=  60 first=    34000.000000 last=        0.000000 min=        0.000000 max=    34000.000000 sum=     113456.100000 #89762622
+  income                       n=  60 first=        0.000000 last=        0.000000 min=        0.000000 max=     2326.910000 sum=       2326.910000 #693badfc
+  longTermCapitalGain          n=  60 first=        0.000000 last=        0.000000 min=        0.000000 max=     2326.910000 sum=       2326.910000 #693badfc
+  capitalGain                  n=  60 first=        0.000000 last=        0.000000 min=        0.000000 max=     2326.910000 sum=       2326.910000 #693badfc
+
+[asset] Living
+  instrument = monthlyExpense
+  start = 2026-01  finish = 2030-12
+  startCurrency = -6000.000000
+  finishCurrency = -7004.547668
+  startBasis = 0.000000
+  finishBasis = 0.000000
+  isClosed = no  isDepleted = no
+  closedDate = -  closedValue = -
+  events = 120  reconciled = 120
+
+[events] Living
+  0000 2026-01 transfer                      6000.000000 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0001 2026-01 expenseInflation               -15.500000 cash  -                      c-
+  0002 2026-02 transfer                      6015.500000 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0003 2026-02 expenseInflation               -15.540042 cash  -                      c-
+  0004 2026-03 transfer                      6031.040042 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0005 2026-03 expenseInflation               -15.580187 cash  -                      c-
+  0006 2026-04 transfer                      6046.620228 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0007 2026-04 expenseInflation               -15.620436 cash  -                      c-
+  0008 2026-05 transfer                      6062.240664 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0009 2026-05 expenseInflation               -15.660788 cash  -                      c-
+  0010 2026-06 transfer                      6077.901452 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0011 2026-06 expenseInflation               -15.701245 cash  -                      c-
+  0012 2026-07 transfer                      6093.602698 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0013 2026-07 expenseInflation               -15.741807 cash  -                      c-
+  0014 2026-08 transfer                      6109.344505 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0015 2026-08 expenseInflation               -15.782473 cash  -                      c-
+  0016 2026-09 transfer                      6125.126978 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0017 2026-09 expenseInflation               -15.823245 cash  -                      c-
+  0018 2026-10 transfer                      6140.950223 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0019 2026-10 expenseInflation               -15.864121 cash  -                      c-
+  0020 2026-11 transfer                      6156.814344 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0021 2026-11 expenseInflation               -15.905104 cash  -                      c-
+  0022 2026-12 transfer                      6172.719448 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0023 2026-12 expenseInflation               -15.946192 cash  -                      c-
+  0024 2027-01 transfer                      6188.665640 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0025 2027-01 expenseInflation               -15.987386 cash  -                      c-
+  0026 2027-02 transfer                      6204.653026 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0027 2027-02 expenseInflation               -16.028687 cash  -                      c-
+  0028 2027-03 transfer                      6220.681713 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0029 2027-03 expenseInflation               -16.070094 cash  -                      c-
+  0030 2027-04 transfer                      6236.751807 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0031 2027-04 expenseInflation               -16.111609 cash  -                      c-
+  0032 2027-05 transfer                      6252.863416 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0033 2027-05 expenseInflation               -16.153230 cash  -                      c-
+  0034 2027-06 transfer                      6269.016647 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0035 2027-06 expenseInflation               -16.194960 cash  -                      c-
+  0036 2027-07 transfer                      6285.211606 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0037 2027-07 expenseInflation               -16.236797 cash  -                      c-
+  0038 2027-08 transfer                      6301.448403 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0039 2027-08 expenseInflation               -16.278742 cash  -                      c-
+  0040 2027-09 transfer                      6317.727145 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0041 2027-09 expenseInflation               -16.320795 cash  -                      c-
+  0042 2027-10 transfer                      6334.047940 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0043 2027-10 expenseInflation               -16.362957 cash  -                      c-
+  0044 2027-11 transfer                      6350.410897 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0045 2027-11 expenseInflation               -16.405228 cash  -                      c-
+  0046 2027-12 transfer                      6366.816125 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0047 2027-12 expenseInflation               -16.447608 cash  -                      c-
+  0048 2028-01 transfer                      6383.263734 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0049 2028-01 expenseInflation               -16.490098 cash  -                      c-
+  0050 2028-02 transfer                      6399.753832 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0051 2028-02 expenseInflation               -16.532697 cash  -                      c-
+  0052 2028-03 transfer                      6416.286529 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0053 2028-03 expenseInflation               -16.575407 cash  -                      c-
+  0054 2028-04 transfer                      6432.861936 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0055 2028-04 expenseInflation               -16.618227 cash  -                      c-
+  0056 2028-05 transfer                      6449.480163 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0057 2028-05 expenseInflation               -16.661157 cash  -                      c-
+  0058 2028-06 transfer                      6466.141320 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0059 2028-06 expenseInflation               -16.704198 cash  -                      c-
+  0060 2028-07 transfer                      6482.845518 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0061 2028-07 expenseInflation               -16.747351 cash  -                      c-
+  0062 2028-08 transfer                      6499.592869 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0063 2028-08 expenseInflation               -16.790615 cash  -                      c-
+  0064 2028-09 transfer                      6516.383484 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0065 2028-09 expenseInflation               -16.833991 cash  -                      c-
+  0066 2028-10 transfer                      6533.217475 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0067 2028-10 expenseInflation               -16.877478 cash  -                      c-
+  0068 2028-11 transfer                      6550.094953 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0069 2028-11 expenseInflation               -16.921079 cash  -                      c-
+  0070 2028-12 transfer                      6567.016032 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0071 2028-12 expenseInflation               -16.964791 cash  -                      c-
+  0072 2029-01 transfer                      6583.980823 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0073 2029-01 expenseInflation               -17.008617 cash  -                      c-
+  0074 2029-02 transfer                      6600.989440 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0075 2029-02 expenseInflation               -17.052556 cash  -                      c-
+  0076 2029-03 transfer                      6618.041996 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0077 2029-03 expenseInflation               -17.096608 cash  -                      c-
+  0078 2029-04 transfer                      6635.138605 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0079 2029-04 expenseInflation               -17.140775 cash  -                      c-
+  0080 2029-05 transfer                      6652.279379 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0081 2029-05 expenseInflation               -17.185055 cash  -                      c-
+  0082 2029-06 transfer                      6669.464435 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0083 2029-06 expenseInflation               -17.229450 cash  -                      c-
+  0084 2029-07 transfer                      6686.693884 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0085 2029-07 expenseInflation               -17.273959 cash  -                      c-
+  0086 2029-08 transfer                      6703.967843 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0087 2029-08 expenseInflation               -17.318584 cash  -                      c-
+  0088 2029-09 transfer                      6721.286427 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0089 2029-09 expenseInflation               -17.363323 cash  -                      c-
+  0090 2029-10 transfer                      6738.649750 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0091 2029-10 expenseInflation               -17.408179 cash  -                      c-
+  0092 2029-11 transfer                      6756.057929 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0093 2029-11 expenseInflation               -17.453150 cash  -                      c-
+  0094 2029-12 transfer                      6773.511079 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0095 2029-12 expenseInflation               -17.498237 cash  -                      c-
+  0096 2030-01 transfer                      6791.009315 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0097 2030-01 expenseInflation               -17.543441 cash  -                      c-
+  0098 2030-02 transfer                      6808.552756 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0099 2030-02 expenseInflation               -17.588761 cash  -                      c-
+  0100 2030-03 transfer                      6826.141518 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0101 2030-03 expenseInflation               -17.634199 cash  -                      c-
+  0102 2030-04 transfer                      6843.775716 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0103 2030-04 expenseInflation               -17.679754 cash  -                      c-
+  0104 2030-05 transfer                      6861.455470 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0105 2030-05 expenseInflation               -17.725427 cash  -                      c-
+  0106 2030-06 transfer                      6879.180897 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0107 2030-06 expenseInflation               -17.771217 cash  -                      c-
+  0108 2030-07 transfer                      6896.952114 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0109 2030-07 expenseInflation               -17.817126 cash  -                      c-
+  0110 2030-08 transfer                      6914.769241 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0111 2030-08 expenseInflation               -17.863154 cash  -                      c-
+  0112 2030-09 transfer                      6932.632394 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0113 2030-09 expenseInflation               -17.909300 cash  -                      c-
+  0114 2030-10 transfer                      6950.541695 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0115 2030-10 expenseInflation               -17.955566 cash  -                      c-
+  0116 2030-11 transfer                      6968.497261 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0117 2030-11 expenseInflation               -18.001951 cash  -                      c-
+  0118 2030-12 transfer                      6986.499212 cash  -                      c0 {cadence=monthly from=Living to=Brokerage}
+  0119 2030-12 expenseInflation               -18.048456 cash  -                      c-
+
+[history] Living
+  value                        n=  60 first=    -6015.500000 last=    -7004.550000 min=    -7004.550000 max=    -6015.500000 sum=    -389861.700000 #cbd267f4
+  expense                      n=  60 first=    -6000.000000 last=    -6986.500000 min=    -6986.500000 max=    -6000.000000 sum=    -388857.150000 #58322bab
+  cashFlow                     n=  60 first=    -6000.000000 last=    -6986.500000 min=    -6986.500000 max=    -6000.000000 sum=    -388857.150000 #58322bab
+  cashFlowAccumulated          n=  60 first=    -6000.000000 last=  -388857.160000 min=  -388857.160000 max=    -6000.000000 sum=  -11559371.450000 #6b1cb668
+  livingExpense                n=  60 first=    -6000.000000 last=    -6986.500000 min=    -6986.500000 max=    -6000.000000 sum=    -388857.150000 #58322bab
+
+[packages]
+  0000 expense=-6000.000000 value=27984.500000
+  0001 expense=-6015.500000 value=21953.459958
+  0002 expense=-6031.040042 value=15906.839730
+  0003 expense=-6046.620228 value=9844.599066
+  0004 expense=-6062.240664 value=3766.697613
+  0005 expense=-6077.901452 value=-2326.905084
+  0006 expense=-6093.602698 longTermCapitalGains=2326.905084 value=-6109.344505
+  0007 expense=-6109.344505 value=-6125.126978
+  0008 expense=-6125.126978 value=-6140.950223
+  0009 expense=-6140.950223 value=-6156.814344
+  0010 expense=-6156.814344 value=-6172.719448
+  0011 expense=-6172.719448 value=-6188.665640
+  0012 expense=-6188.665640 value=-6204.653026
+  0013 expense=-6204.653026 value=-6220.681713
+  0014 expense=-6220.681713 value=-6236.751807
+  0015 expense=-6236.751807 value=-6252.863416
+  0016 expense=-6252.863416 value=-6269.016647
+  0017 expense=-6269.016647 value=-6285.211606
+  0018 expense=-6285.211606 value=-6301.448403
+  0019 expense=-6301.448403 value=-6317.727145
+  0020 expense=-6317.727145 value=-6334.047940
+  0021 expense=-6334.047940 value=-6350.410897
+  0022 expense=-6350.410897 value=-6366.816125
+  0023 expense=-6366.816125 value=-6383.263734
+  0024 expense=-6383.263734 value=-6399.753832
+  0025 expense=-6399.753832 value=-6416.286529
+  0026 expense=-6416.286529 value=-6432.861936
+  0027 expense=-6432.861936 value=-6449.480163
+  0028 expense=-6449.480163 value=-6466.141320
+  0029 expense=-6466.141320 value=-6482.845518
+  0030 expense=-6482.845518 value=-6499.592869
+  0031 expense=-6499.592869 value=-6516.383484
+  0032 expense=-6516.383484 value=-6533.217475
+  0033 expense=-6533.217475 value=-6550.094953
+  0034 expense=-6550.094953 value=-6567.016032
+  0035 expense=-6567.016032 value=-6583.980823
+  0036 expense=-6583.980823 value=-6600.989440
+  0037 expense=-6600.989440 value=-6618.041996
+  0038 expense=-6618.041996 value=-6635.138605
+  0039 expense=-6635.138605 value=-6652.279379
+  0040 expense=-6652.279379 value=-6669.464435
+  0041 expense=-6669.464435 value=-6686.693884
+  0042 expense=-6686.693884 value=-6703.967843
+  0043 expense=-6703.967843 value=-6721.286427
+  0044 expense=-6721.286427 value=-6738.649750
+  0045 expense=-6738.649750 value=-6756.057929
+  0046 expense=-6756.057929 value=-6773.511079
+  0047 expense=-6773.511079 value=-6791.009315
+  0048 expense=-6791.009315 value=-6808.552756
+  0049 expense=-6808.552756 value=-6826.141518
+  0050 expense=-6826.141518 value=-6843.775716
+  0051 expense=-6843.775716 value=-6861.455470
+  0052 expense=-6861.455470 value=-6879.180897
+  0053 expense=-6879.180897 value=-6896.952114
+  0054 expense=-6896.952114 value=-6914.769241
+  0055 expense=-6914.769241 value=-6932.632394
+  0056 expense=-6932.632394 value=-6950.541695
+  0057 expense=-6950.541695 value=-6968.497261
+  0058 expense=-6968.497261 value=-6986.499212
+  0059 expense=-6986.499212 value=-7004.547668
+
+[priceIndex]
+  [0000]         1.002583         1.005173         1.007770         1.010373         1.012984         1.015600
+  [0006]         1.018224         1.020854         1.023492         1.026136         1.028787         1.031444
+  [0012]         1.034109         1.036780         1.039459         1.042144         1.044836         1.047535
+  [0018]         1.050241         1.052955         1.055675         1.058402         1.061136         1.063877
+  [0024]         1.066626         1.069381         1.072144         1.074913         1.077690         1.080474
+  [0030]         1.083265         1.086064         1.088870         1.091682         1.094503         1.097330
+  [0036]         1.100165         1.103007         1.105856         1.108713         1.111577         1.114449
+  [0042]         1.117328         1.120214         1.123108         1.126010         1.128919         1.131835
+  [0048]         1.134759         1.137690         1.140629         1.143576         1.146530         1.149492
+  [0054]         1.152462         1.155439         1.158424         1.161416         1.164417         1.167425
+
+[sanity]
+  Unfunded: Brokerage Living → Brokerage (monthly) (account depleted, no backstop) $2326.91 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Brokerage Living → Brokerage (monthly) (account depleted, no backstop) $6109.34 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Brokerage Living → Brokerage (monthly) (account depleted, no backstop) $6125.13 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Brokerage Living → Brokerage (monthly) (account depleted, no backstop) $6140.95 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Brokerage Living → Brokerage (monthly) (account depleted, no backstop) $6156.81 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Brokerage Living → Brokerage (monthly) (account depleted, no backstop) $6172.72 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Brokerage Living → Brokerage (monthly) (account depleted, no backstop) $6188.67 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Brokerage Living → Brokerage (monthly) (account depleted, no backstop) $6204.65 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Brokerage Living → Brokerage (monthly) (account depleted, no backstop) $6220.68 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Brokerage Living → Brokerage (monthly) (account depleted, no backstop) $6236.75 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Brokerage Living → Brokerage (monthly) (account depleted, no backstop) $6252.86 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Brokerage Living → Brokerage (monthly) (account depleted, no backstop) $6269.02 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Brokerage Living → Brokerage (monthly) (account depleted, no backstop) $6285.21 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Brokerage Living → Brokerage (monthly) (account depleted, no backstop) $6301.45 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Brokerage Living → Brokerage (monthly) (account depleted, no backstop) $6317.73 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Brokerage Living → Brokerage (monthly) (account depleted, no backstop) $6334.05 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Brokerage Living → Brokerage (monthly) (account depleted, no backstop) $6350.41 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Brokerage Living → Brokerage (monthly) (account depleted, no backstop) $6366.82 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Brokerage Living → Brokerage (monthly) (account depleted, no backstop) $6383.26 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Brokerage Living → Brokerage (monthly) (account depleted, no backstop) $6399.75 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Brokerage Living → Brokerage (monthly) (account depleted, no backstop) $6416.29 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Brokerage Living → Brokerage (monthly) (account depleted, no backstop) $6432.86 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Brokerage Living → Brokerage (monthly) (account depleted, no backstop) $6449.48 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Brokerage Living → Brokerage (monthly) (account depleted, no backstop) $6466.14 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Brokerage Living → Brokerage (monthly) (account depleted, no backstop) $6482.85 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Brokerage Living → Brokerage (monthly) (account depleted, no backstop) $6499.59 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Brokerage Living → Brokerage (monthly) (account depleted, no backstop) $6516.38 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Brokerage Living → Brokerage (monthly) (account depleted, no backstop) $6533.22 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Brokerage Living → Brokerage (monthly) (account depleted, no backstop) $6550.09 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Brokerage Living → Brokerage (monthly) (account depleted, no backstop) $6567.02 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Brokerage Living → Brokerage (monthly) (account depleted, no backstop) $6583.98 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Brokerage Living → Brokerage (monthly) (account depleted, no backstop) $6600.99 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Brokerage Living → Brokerage (monthly) (account depleted, no backstop) $6618.04 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Brokerage Living → Brokerage (monthly) (account depleted, no backstop) $6635.14 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Brokerage Living → Brokerage (monthly) (account depleted, no backstop) $6652.28 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Brokerage Living → Brokerage (monthly) (account depleted, no backstop) $6669.46 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Brokerage Living → Brokerage (monthly) (account depleted, no backstop) $6686.69 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Brokerage Living → Brokerage (monthly) (account depleted, no backstop) $6703.97 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Brokerage Living → Brokerage (monthly) (account depleted, no backstop) $6721.29 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Brokerage Living → Brokerage (monthly) (account depleted, no backstop) $6738.65 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Brokerage Living → Brokerage (monthly) (account depleted, no backstop) $6756.06 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Brokerage Living → Brokerage (monthly) (account depleted, no backstop) $6773.51 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Brokerage Living → Brokerage (monthly) (account depleted, no backstop) $6791.01 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Brokerage Living → Brokerage (monthly) (account depleted, no backstop) $6808.55 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Brokerage Living → Brokerage (monthly) (account depleted, no backstop) $6826.14 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Brokerage Living → Brokerage (monthly) (account depleted, no backstop) $6843.78 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Brokerage Living → Brokerage (monthly) (account depleted, no backstop) $6861.46 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Brokerage Living → Brokerage (monthly) (account depleted, no backstop) $6879.18 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Brokerage Living → Brokerage (monthly) (account depleted, no backstop) $6896.95 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Brokerage Living → Brokerage (monthly) (account depleted, no backstop) $6914.77 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Brokerage Living → Brokerage (monthly) (account depleted, no backstop) $6932.63 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Brokerage Living → Brokerage (monthly) (account depleted, no backstop) $6950.54 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Brokerage Living → Brokerage (monthly) (account depleted, no backstop) $6968.5 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: Brokerage Living → Brokerage (monthly) (account depleted, no backstop) $6986.5 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+
+[traces]
+  scopes = 970
+  unattributedEvents = 0
+  1x 2027 annual pass
+  1x 2027 tax true-up
+  1x 2028 annual pass
+  1x 2028 tax true-up
+  1x 2029 annual pass
+  1x 2029 tax true-up
+  1x 2030 annual pass
+  1x 2030 tax true-up
+  1x 2031 annual pass
+  1x 2031 tax true-up
+  7x April 2026
+  7x April 2027
+  7x April 2028
+  7x April 2029
+  7x April 2030
+  7x August 2026
+  7x August 2027
+  7x August 2028
+  7x August 2029
+  7x August 2030
+  7x December 2026
+  7x December 2027
+  7x December 2028
+  7x December 2029
+  7x December 2030
+  7x February 2026
+  7x February 2027
+  7x February 2028
+  7x February 2029
+  7x February 2030
+  7x January 2026
+  7x January 2027
+  7x January 2028
+  7x January 2029
+  7x January 2030
+  7x July 2026
+  7x July 2027
+  7x July 2028
+  7x July 2029
+  7x July 2030
+  7x June 2026
+  7x June 2027
+  7x June 2028
+  7x June 2029
+  7x June 2030
+  7x March 2026
+  7x March 2027
+  7x March 2028
+  7x March 2029
+  7x March 2030
+  7x May 2026
+  7x May 2027
+  7x May 2028
+  7x May 2029
+  7x May 2030
+  7x November 2026
+  7x November 2027
+  7x November 2028
+  7x November 2029
+  7x November 2030
+  7x October 2026
+  7x October 2027
+  7x October 2028
+  7x October 2029
+  7x October 2030
+  60x Pay Brokerage
+  60x Pay Living
+  60x Payroll: Brokerage
+  60x Payroll: Living
+  60x Required distribution from Brokerage
+  60x Required distribution from Living
+  7x September 2026
+  7x September 2027
+  7x September 2028
+  7x September 2029
+  7x September 2030
+  60x Transfer Living → Brokerage
+  60x Withholding: Brokerage
+  60x Withholding: Living
+
+[traceLegend]
+  c0 = Pay Living > Transfer Living → Brokerage
+

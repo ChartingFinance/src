@@ -1,0 +1,10 @@
+# Snapshot baselines are compared byte-for-byte against text the tool generates
+# fresh, which always uses LF. This repo is used with core.autocrlf=true, which
+# would rewrite them to CRLF on checkout — and every fixture would then report
+# drift on a clean clone, with no engine change behind it.
+#
+# tests/tools/snapshot.mjs also normalises line endings when it reads a
+# baseline, so a stray CRLF cannot break the check. This attribute is the fix;
+# that normalisation is the seatbelt.
+tests/baselines/*.snap text eol=lf
+tests/baselines/README.md text eol=lf

@@ -1,0 +1,1329 @@
+# fixture: housing-carrying-costs  (adversarial)
+#
+# one-sided settlement of maintenance / insurance / property tax against a
+# funded backstop, plus mortgage interest-vs-principal sign conventions
+
+[config]
+  backtestYear = current
+  equityDividendAllocation = 0.5
+  equityDividendAverageAnnualRate = 0.025
+  equityGrowthAllocation = 0.5
+  filingAs = Single
+  homeSaleCapitalGainsDiscount = 250000
+  inflationRate = 0.031
+  propertyTaxDeductionMax = 40000
+  propertyTaxRate = 0.01
+  simDataMode = calibrated
+  taxYear = 2025
+  userFinishAge = 87
+  userRetirementAge = 65
+  userStartAge = 50
+  allocateHouseholdTax = false
+  pensionWithholdingRate = 0.1
+  socialSecurityWithholdingRate = 0
+  retirementWithholdingRate = 0.1
+
+[totals]
+  months = 240
+  firstDate = 2026-01
+  lastDate = 2030-12
+  startValue = 604000.000000
+  finishValue = 651816.003459
+  accumulated = -185179.879515
+  total.assetAppreciation = 232415.074584
+  total.mortgageInterest = -94605.176553
+  total.mortgagePrincipal = -19167.067675
+  total.propertyTaxes = -32404.164702
+  total.longTermCapitalGains = 104694.117619
+  total.maintenance = -27003.470585
+  total.insurance = -12000.000000
+  total.value = 37757234.848883
+
+[assetOrder]
+  0 Checking
+  1 Brokerage
+  2 Home
+  3 Mortgage
+
+[asset] Brokerage
+  instrument = taxableEquity
+  start = 2026-01  finish = 2030-12
+  startCurrency = 400000.000000
+  finishCurrency = 351840.545007
+  startBasis = 200000.000000
+  finishBasis = 124095.046494
+  isClosed = no  isDepleted = no
+  closedDate = -  closedValue = -
+  events = 530  reconciled = 530
+
+[events] Brokerage
+  0000 2026-01 assetGrowth                   2333.333333 cash  growth                 c-
+  0001 2026-02 spillover                     -911.366474 cash  -                      c0 {cause=settlement depleted=Checking origin=oneSided}
+  0002 2026-02 capitalGainRecognized          458.325973 info  longTermCapitalGain    c0 {spillover=true}
+  0003 2026-02 assetGrowth                   2341.628140 cash  growth                 c-
+  0004 2026-02 settlement                    -418.752604 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0005 2026-02 capitalGainRecognized          211.797817 info  longTermCapitalGain    c1 {spillover=false}
+  0006 2026-02 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0007 2026-02 capitalGainRecognized          101.156537 info  longTermCapitalGain    c2 {spillover=false}
+  0008 2026-03 settlement                    -502.503125 cash  -                      c3 {from=Home label=property tax to=Brokerage}
+  0009 2026-03 capitalGainRecognized          254.157380 info  longTermCapitalGain    c3 {spillover=false}
+  0010 2026-03 settlement                   -1896.204070 cash  -                      c4 {from=Mortgage label=monthly to=Brokerage}
+  0011 2026-03 capitalGainRecognized          959.067188 info  longTermCapitalGain    c4 {spillover=false}
+  0012 2026-03 assetGrowth                   2337.685789 cash  growth                 c-
+  0013 2026-03 settlement                    -419.799486 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0014 2026-03 capitalGainRecognized          213.530547 info  longTermCapitalGain    c1 {spillover=false}
+  0015 2026-03 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0016 2026-03 capitalGainRecognized          101.729780 info  longTermCapitalGain    c2 {spillover=false}
+  0017 2026-04 settlement                    -503.759383 cash  -                      c3 {from=Home label=property tax to=Brokerage}
+  0018 2026-04 capitalGainRecognized          256.236656 info  longTermCapitalGain    c3 {spillover=false}
+  0019 2026-04 settlement                   -1896.204070 cash  -                      c4 {from=Mortgage label=monthly to=Brokerage}
+  0020 2026-04 capitalGainRecognized          964.502116 info  longTermCapitalGain    c4 {spillover=false}
+  0021 2026-04 assetGrowth                   2333.707005 cash  growth                 c-
+  0022 2026-04 settlement                    -420.848984 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0023 2026-04 capitalGainRecognized          215.263621 info  longTermCapitalGain    c1 {spillover=false}
+  0024 2026-04 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0025 2026-04 capitalGainRecognized          102.299699 info  longTermCapitalGain    c2 {spillover=false}
+  0026 2026-05 settlement                    -505.018781 cash  -                      c3 {from=Home label=property tax to=Brokerage}
+  0027 2026-05 capitalGainRecognized          258.316345 info  longTermCapitalGain    c3 {spillover=false}
+  0028 2026-05 settlement                   -1896.204070 cash  -                      c4 {from=Mortgage label=monthly to=Brokerage}
+  0029 2026-05 capitalGainRecognized          969.905524 info  longTermCapitalGain    c4 {spillover=false}
+  0030 2026-05 assetGrowth                   2329.691544 cash  growth                 c-
+  0031 2026-05 settlement                    -421.901107 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0032 2026-05 capitalGainRecognized          216.997054 info  longTermCapitalGain    c1 {spillover=false}
+  0033 2026-05 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0034 2026-05 capitalGainRecognized          102.866312 info  longTermCapitalGain    c2 {spillover=false}
+  0035 2026-06 settlement                    -506.281328 cash  -                      c3 {from=Home label=property tax to=Brokerage}
+  0036 2026-06 capitalGainRecognized          260.396465 info  longTermCapitalGain    c3 {spillover=false}
+  0037 2026-06 settlement                   -1896.204070 cash  -                      c4 {from=Mortgage label=monthly to=Brokerage}
+  0038 2026-06 capitalGainRecognized          975.277595 info  longTermCapitalGain    c4 {spillover=false}
+  0039 2026-06 assetGrowth                   2325.639156 cash  growth                 c-
+  0040 2026-06 settlement                    -422.955860 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0041 2026-06 capitalGainRecognized          218.730859 info  longTermCapitalGain    c1 {spillover=false}
+  0042 2026-06 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0043 2026-06 capitalGainRecognized          103.429639 info  longTermCapitalGain    c2 {spillover=false}
+  0044 2026-07 settlement                    -507.547032 cash  -                      c3 {from=Home label=property tax to=Brokerage}
+  0045 2026-07 capitalGainRecognized          262.477031 info  longTermCapitalGain    c3 {spillover=false}
+  0046 2026-07 settlement                   -1896.204070 cash  -                      c4 {from=Mortgage label=monthly to=Brokerage}
+  0047 2026-07 capitalGainRecognized          980.618511 info  longTermCapitalGain    c4 {spillover=false}
+  0048 2026-07 assetGrowth                   2321.549594 cash  growth                 c-
+  0049 2026-07 settlement                    -424.013249 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0050 2026-07 capitalGainRecognized          220.465051 info  longTermCapitalGain    c1 {spillover=false}
+  0051 2026-07 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0052 2026-07 capitalGainRecognized          103.989699 info  longTermCapitalGain    c2 {spillover=false}
+  0053 2026-08 settlement                    -508.815899 cash  -                      c3 {from=Home label=property tax to=Brokerage}
+  0054 2026-08 capitalGainRecognized          264.558061 info  longTermCapitalGain    c3 {spillover=false}
+  0055 2026-08 settlement                   -1896.204070 cash  -                      c4 {from=Mortgage label=monthly to=Brokerage}
+  0056 2026-08 capitalGainRecognized          985.928452 info  longTermCapitalGain    c4 {spillover=false}
+  0057 2026-08 assetGrowth                   2317.422606 cash  growth                 c-
+  0058 2026-08 settlement                    -425.073282 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0059 2026-08 capitalGainRecognized          222.199643 info  longTermCapitalGain    c1 {spillover=false}
+  0060 2026-08 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0061 2026-08 capitalGainRecognized          104.546511 info  longTermCapitalGain    c2 {spillover=false}
+  0062 2026-09 settlement                    -510.087939 cash  -                      c3 {from=Home label=property tax to=Brokerage}
+  0063 2026-09 capitalGainRecognized          266.639571 info  longTermCapitalGain    c3 {spillover=false}
+  0064 2026-09 settlement                   -1896.204070 cash  -                      c4 {from=Mortgage label=monthly to=Brokerage}
+  0065 2026-09 capitalGainRecognized          991.207598 info  longTermCapitalGain    c4 {spillover=false}
+  0066 2026-09 assetGrowth                   2313.257941 cash  growth                 c-
+  0067 2026-09 settlement                    -426.135966 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0068 2026-09 capitalGainRecognized          223.934650 info  longTermCapitalGain    c1 {spillover=false}
+  0069 2026-09 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0070 2026-09 capitalGainRecognized          105.100094 info  longTermCapitalGain    c2 {spillover=false}
+  0071 2026-10 settlement                    -511.363159 cash  -                      c3 {from=Home label=property tax to=Brokerage}
+  0072 2026-10 capitalGainRecognized          268.721580 info  longTermCapitalGain    c3 {spillover=false}
+  0073 2026-10 settlement                   -1896.204070 cash  -                      c4 {from=Mortgage label=monthly to=Brokerage}
+  0074 2026-10 capitalGainRecognized          996.456128 info  longTermCapitalGain    c4 {spillover=false}
+  0075 2026-10 assetGrowth                   2309.055344 cash  growth                 c-
+  0076 2026-10 settlement                    -427.201306 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0077 2026-10 capitalGainRecognized          225.670085 info  longTermCapitalGain    c1 {spillover=false}
+  0078 2026-10 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0079 2026-10 capitalGainRecognized          105.650466 info  longTermCapitalGain    c2 {spillover=false}
+  0080 2026-11 settlement                    -512.641567 cash  -                      c3 {from=Home label=property tax to=Brokerage}
+  0081 2026-11 capitalGainRecognized          270.804102 info  longTermCapitalGain    c3 {spillover=false}
+  0082 2026-11 settlement                   -1896.204070 cash  -                      c4 {from=Mortgage label=monthly to=Brokerage}
+  0083 2026-11 capitalGainRecognized         1001.674218 info  longTermCapitalGain    c4 {spillover=false}
+  0084 2026-11 assetGrowth                   2304.814559 cash  growth                 c-
+  0085 2026-11 settlement                    -428.269309 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0086 2026-11 capitalGainRecognized          227.405963 info  longTermCapitalGain    c1 {spillover=false}
+  0087 2026-11 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0088 2026-11 capitalGainRecognized          106.197646 info  longTermCapitalGain    c2 {spillover=false}
+  0089 2026-12 settlement                    -513.923171 cash  -                      c3 {from=Home label=property tax to=Brokerage}
+  0090 2026-12 capitalGainRecognized          272.887156 info  longTermCapitalGain    c3 {spillover=false}
+  0091 2026-12 settlement                   -1896.204070 cash  -                      c4 {from=Mortgage label=monthly to=Brokerage}
+  0092 2026-12 capitalGainRecognized         1006.862047 info  longTermCapitalGain    c4 {spillover=false}
+  0093 2026-12 assetGrowth                   2300.535331 cash  growth                 c-
+  0094 2026-12 settlement                    -429.339982 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0095 2026-12 capitalGainRecognized          229.142298 info  longTermCapitalGain    c1 {spillover=false}
+  0096 2026-12 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0097 2026-12 capitalGainRecognized          106.741653 info  longTermCapitalGain    c2 {spillover=false}
+  0098 2027-01 settlement                    -515.207978 cash  -                      c3 {from=Home label=property tax to=Brokerage}
+  0099 2027-01 capitalGainRecognized          274.970757 info  longTermCapitalGain    c3 {spillover=false}
+  0100 2027-01 settlement                   -1896.204070 cash  -                      c4 {from=Mortgage label=monthly to=Brokerage}
+  0101 2027-01 capitalGainRecognized         1012.019788 info  longTermCapitalGain    c4 {spillover=false}
+  0102 2027-01 assetGrowth                   2296.217400 cash  growth                 c-
+  0103 2027-01 settlement                    -430.413332 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0104 2027-01 capitalGainRecognized          230.879103 info  longTermCapitalGain    c1 {spillover=false}
+  0105 2027-01 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0106 2027-01 capitalGainRecognized          107.282505 info  longTermCapitalGain    c2 {spillover=false}
+  0107 2027-02 settlement                    -516.495998 cash  -                      c3 {from=Home label=property tax to=Brokerage}
+  0108 2027-02 capitalGainRecognized          277.054924 info  longTermCapitalGain    c3 {spillover=false}
+  0109 2027-02 settlement                   -1896.204070 cash  -                      c4 {from=Mortgage label=monthly to=Brokerage}
+  0110 2027-02 capitalGainRecognized         1017.147618 info  longTermCapitalGain    c4 {spillover=false}
+  0111 2027-02 assetGrowth                   2291.860507 cash  growth                 c-
+  0112 2027-02 settlement                    -431.489365 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0113 2027-02 capitalGainRecognized          232.616393 info  longTermCapitalGain    c1 {spillover=false}
+  0114 2027-02 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0115 2027-02 capitalGainRecognized          107.820221 info  longTermCapitalGain    c2 {spillover=false}
+  0116 2027-03 settlement                    -517.787238 cash  -                      c3 {from=Home label=property tax to=Brokerage}
+  0117 2027-03 capitalGainRecognized          279.139672 info  longTermCapitalGain    c3 {spillover=false}
+  0118 2027-03 settlement                   -1896.204070 cash  -                      c4 {from=Mortgage label=monthly to=Brokerage}
+  0119 2027-03 capitalGainRecognized         1022.245708 info  longTermCapitalGain    c4 {spillover=false}
+  0120 2027-03 assetGrowth                   2287.464389 cash  growth                 c-
+  0121 2027-03 settlement                    -432.568089 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0122 2027-03 capitalGainRecognized          234.354182 info  longTermCapitalGain    c1 {spillover=false}
+  0123 2027-03 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0124 2027-03 capitalGainRecognized          108.354818 info  longTermCapitalGain    c2 {spillover=false}
+  0125 2027-04 settlement                    -519.081706 cash  -                      c3 {from=Home label=property tax to=Brokerage}
+  0126 2027-04 capitalGainRecognized          281.225019 info  longTermCapitalGain    c3 {spillover=false}
+  0127 2027-04 settlement                   -1896.204070 cash  -                      c4 {from=Mortgage label=monthly to=Brokerage}
+  0128 2027-04 capitalGainRecognized         1027.314232 info  longTermCapitalGain    c4 {spillover=false}
+  0129 2027-04 assetGrowth                   2283.028784 cash  growth                 c-
+  0130 2027-04 settlement                    -433.649509 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0131 2027-04 capitalGainRecognized          236.092484 info  longTermCapitalGain    c1 {spillover=false}
+  0132 2027-04 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0133 2027-04 capitalGainRecognized          108.886314 info  longTermCapitalGain    c2 {spillover=false}
+  0134 2027-05 settlement                    -520.379411 cash  -                      c3 {from=Home label=property tax to=Brokerage}
+  0135 2027-05 capitalGainRecognized          283.310980 info  longTermCapitalGain    c3 {spillover=false}
+  0136 2027-05 settlement                   -1896.204070 cash  -                      c4 {from=Mortgage label=monthly to=Brokerage}
+  0137 2027-05 capitalGainRecognized         1032.353361 info  longTermCapitalGain    c4 {spillover=false}
+  0138 2027-05 assetGrowth                   2278.553426 cash  growth                 c-
+  0139 2027-05 settlement                    -434.733633 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0140 2027-05 capitalGainRecognized          237.831312 info  longTermCapitalGain    c1 {spillover=false}
+  0141 2027-05 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0142 2027-05 capitalGainRecognized          109.414728 info  longTermCapitalGain    c2 {spillover=false}
+  0143 2027-06 settlement                    -521.680359 cash  -                      c3 {from=Home label=property tax to=Brokerage}
+  0144 2027-06 capitalGainRecognized          285.397574 info  longTermCapitalGain    c3 {spillover=false}
+  0145 2027-06 settlement                   -1896.204070 cash  -                      c4 {from=Mortgage label=monthly to=Brokerage}
+  0146 2027-06 capitalGainRecognized         1037.363266 info  longTermCapitalGain    c4 {spillover=false}
+  0147 2027-06 assetGrowth                   2274.038049 cash  growth                 c-
+  0148 2027-06 settlement                    -435.820467 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0149 2027-06 capitalGainRecognized          239.570680 info  longTermCapitalGain    c1 {spillover=false}
+  0150 2027-06 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0151 2027-06 capitalGainRecognized          109.940078 info  longTermCapitalGain    c2 {spillover=false}
+  0152 2027-07 settlement                    -522.984560 cash  -                      c3 {from=Home label=property tax to=Brokerage}
+  0153 2027-07 capitalGainRecognized          287.484816 info  longTermCapitalGain    c3 {spillover=false}
+  0154 2027-07 settlement                   -1896.204070 cash  -                      c4 {from=Mortgage label=monthly to=Brokerage}
+  0155 2027-07 capitalGainRecognized         1042.344116 info  longTermCapitalGain    c4 {spillover=false}
+  0156 2027-07 assetGrowth                   2269.482385 cash  growth                 c-
+  0157 2027-07 settlement                    -436.910018 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0158 2027-07 capitalGainRecognized          241.310604 info  longTermCapitalGain    c1 {spillover=false}
+  0159 2027-07 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0160 2027-07 capitalGainRecognized          110.462381 info  longTermCapitalGain    c2 {spillover=false}
+  0161 2027-08 settlement                    -524.292022 cash  -                      c3 {from=Home label=property tax to=Brokerage}
+  0162 2027-08 capitalGainRecognized          289.572724 info  longTermCapitalGain    c3 {spillover=false}
+  0163 2027-08 settlement                   -1896.204070 cash  -                      c4 {from=Mortgage label=monthly to=Brokerage}
+  0164 2027-08 capitalGainRecognized         1047.296079 info  longTermCapitalGain    c4 {spillover=false}
+  0165 2027-08 assetGrowth                   2264.886163 cash  growth                 c-
+  0166 2027-08 settlement                    -438.002293 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0167 2027-08 capitalGainRecognized          243.051095 info  longTermCapitalGain    c1 {spillover=false}
+  0168 2027-08 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0169 2027-08 capitalGainRecognized          110.981654 info  longTermCapitalGain    c2 {spillover=false}
+  0170 2027-09 settlement                    -525.602752 cash  -                      c3 {from=Home label=property tax to=Brokerage}
+  0171 2027-09 capitalGainRecognized          291.661315 info  longTermCapitalGain    c3 {spillover=false}
+  0172 2027-09 settlement                   -1896.204070 cash  -                      c4 {from=Mortgage label=monthly to=Brokerage}
+  0173 2027-09 capitalGainRecognized         1052.219323 info  longTermCapitalGain    c4 {spillover=false}
+  0174 2027-09 assetGrowth                   2260.249112 cash  growth                 c-
+  0175 2027-09 settlement                    -439.097299 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0176 2027-09 capitalGainRecognized          244.792170 info  longTermCapitalGain    c1 {spillover=false}
+  0177 2027-09 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0178 2027-09 capitalGainRecognized          111.497916 info  longTermCapitalGain    c2 {spillover=false}
+  0179 2027-10 settlement                    -526.916759 cash  -                      c3 {from=Home label=property tax to=Brokerage}
+  0180 2027-10 capitalGainRecognized          293.750604 info  longTermCapitalGain    c3 {spillover=false}
+  0181 2027-10 settlement                   -1896.204070 cash  -                      c4 {from=Mortgage label=monthly to=Brokerage}
+  0182 2027-10 capitalGainRecognized         1057.114015 info  longTermCapitalGain    c4 {spillover=false}
+  0183 2027-10 assetGrowth                   2255.570960 cash  growth                 c-
+  0184 2027-10 settlement                    -440.195042 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0185 2027-10 capitalGainRecognized          246.533841 info  longTermCapitalGain    c1 {spillover=false}
+  0186 2027-10 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0187 2027-10 capitalGainRecognized          112.011185 info  longTermCapitalGain    c2 {spillover=false}
+  0188 2027-11 settlement                    -528.234050 cash  -                      c3 {from=Home label=property tax to=Brokerage}
+  0189 2027-11 capitalGainRecognized          295.840609 info  longTermCapitalGain    c3 {spillover=false}
+  0190 2027-11 settlement                   -1896.204070 cash  -                      c4 {from=Mortgage label=monthly to=Brokerage}
+  0191 2027-11 capitalGainRecognized         1061.980321 info  longTermCapitalGain    c4 {spillover=false}
+  0192 2027-11 assetGrowth                   2250.851430 cash  growth                 c-
+  0193 2027-11 settlement                    -441.295530 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0194 2027-11 capitalGainRecognized          248.276122 info  longTermCapitalGain    c1 {spillover=false}
+  0195 2027-11 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0196 2027-11 capitalGainRecognized          112.521476 info  longTermCapitalGain    c2 {spillover=false}
+  0197 2027-12 settlement                    -529.554636 cash  -                      c3 {from=Home label=property tax to=Brokerage}
+  0198 2027-12 capitalGainRecognized          297.931346 info  longTermCapitalGain    c3 {spillover=false}
+  0199 2027-12 settlement                   -1896.204070 cash  -                      c4 {from=Mortgage label=monthly to=Brokerage}
+  0200 2027-12 capitalGainRecognized         1066.818404 info  longTermCapitalGain    c4 {spillover=false}
+  0201 2027-12 assetGrowth                   2246.090247 cash  growth                 c-
+  0202 2027-12 settlement                    -442.398768 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0203 2027-12 capitalGainRecognized          250.019027 info  longTermCapitalGain    c1 {spillover=false}
+  0204 2027-12 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0205 2027-12 capitalGainRecognized          113.028808 info  longTermCapitalGain    c2 {spillover=false}
+  0206 2028-01 settlement                    -530.878522 cash  -                      c3 {from=Home label=property tax to=Brokerage}
+  0207 2028-01 capitalGainRecognized          300.022833 info  longTermCapitalGain    c3 {spillover=false}
+  0208 2028-01 settlement                   -1896.204070 cash  -                      c4 {from=Mortgage label=monthly to=Brokerage}
+  0209 2028-01 capitalGainRecognized         1071.628428 info  longTermCapitalGain    c4 {spillover=false}
+  0210 2028-01 assetGrowth                   2241.287132 cash  growth                 c-
+  0211 2028-01 settlement                    -443.504765 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0212 2028-01 capitalGainRecognized          251.762571 info  longTermCapitalGain    c1 {spillover=false}
+  0213 2028-01 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0214 2028-01 capitalGainRecognized          113.533198 info  longTermCapitalGain    c2 {spillover=false}
+  0215 2028-02 settlement                    -532.205718 cash  -                      c3 {from=Home label=property tax to=Brokerage}
+  0216 2028-02 capitalGainRecognized          302.115085 info  longTermCapitalGain    c3 {spillover=false}
+  0217 2028-02 settlement                   -1896.204070 cash  -                      c4 {from=Mortgage label=monthly to=Brokerage}
+  0218 2028-02 capitalGainRecognized         1076.410557 info  longTermCapitalGain    c4 {spillover=false}
+  0219 2028-02 assetGrowth                   2236.441806 cash  growth                 c-
+  0220 2028-02 settlement                    -444.613527 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0221 2028-02 capitalGainRecognized          253.506767 info  longTermCapitalGain    c1 {spillover=false}
+  0222 2028-02 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0223 2028-02 capitalGainRecognized          114.034662 info  longTermCapitalGain    c2 {spillover=false}
+  0224 2028-03 settlement                    -533.536233 cash  -                      c3 {from=Home label=property tax to=Brokerage}
+  0225 2028-03 capitalGainRecognized          304.208120 info  longTermCapitalGain    c3 {spillover=false}
+  0226 2028-03 settlement                   -1896.204070 cash  -                      c4 {from=Mortgage label=monthly to=Brokerage}
+  0227 2028-03 capitalGainRecognized         1081.164952 info  longTermCapitalGain    c4 {spillover=false}
+  0228 2028-03 assetGrowth                   2231.553985 cash  growth                 c-
+  0229 2028-03 settlement                    -445.725061 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0230 2028-03 capitalGainRecognized          255.251629 info  longTermCapitalGain    c1 {spillover=false}
+  0231 2028-03 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0232 2028-03 capitalGainRecognized          114.533218 info  longTermCapitalGain    c2 {spillover=false}
+  0233 2028-04 settlement                    -534.870073 cash  -                      c3 {from=Home label=property tax to=Brokerage}
+  0234 2028-04 capitalGainRecognized          306.301954 info  longTermCapitalGain    c3 {spillover=false}
+  0235 2028-04 settlement                   -1896.204070 cash  -                      c4 {from=Mortgage label=monthly to=Brokerage}
+  0236 2028-04 capitalGainRecognized         1085.891774 info  longTermCapitalGain    c4 {spillover=false}
+  0237 2028-04 assetGrowth                   2226.623388 cash  growth                 c-
+  0238 2028-04 settlement                    -446.839374 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0239 2028-04 capitalGainRecognized          256.997171 info  longTermCapitalGain    c1 {spillover=false}
+  0240 2028-04 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0241 2028-04 capitalGainRecognized          115.028883 info  longTermCapitalGain    c2 {spillover=false}
+  0242 2028-05 settlement                    -536.207248 cash  -                      c3 {from=Home label=property tax to=Brokerage}
+  0243 2028-05 capitalGainRecognized          308.396605 info  longTermCapitalGain    c3 {spillover=false}
+  0244 2028-05 settlement                   -1896.204070 cash  -                      c4 {from=Mortgage label=monthly to=Brokerage}
+  0245 2028-05 capitalGainRecognized         1090.591182 info  longTermCapitalGain    c4 {spillover=false}
+  0246 2028-05 assetGrowth                   2221.649729 cash  growth                 c-
+  0247 2028-05 settlement                    -447.956472 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0248 2028-05 capitalGainRecognized          258.743406 info  longTermCapitalGain    c1 {spillover=false}
+  0249 2028-05 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0250 2028-05 capitalGainRecognized          115.521673 info  longTermCapitalGain    c2 {spillover=false}
+  0251 2028-06 settlement                    -537.547767 cash  -                      c3 {from=Home label=property tax to=Brokerage}
+  0252 2028-06 capitalGainRecognized          310.492088 info  longTermCapitalGain    c3 {spillover=false}
+  0253 2028-06 settlement                   -1896.204070 cash  -                      c4 {from=Mortgage label=monthly to=Brokerage}
+  0254 2028-06 capitalGainRecognized         1095.263337 info  longTermCapitalGain    c4 {spillover=false}
+  0255 2028-06 assetGrowth                   2216.632721 cash  growth                 c-
+  0256 2028-06 settlement                    -449.076363 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0257 2028-06 capitalGainRecognized          260.490350 info  longTermCapitalGain    c1 {spillover=false}
+  0258 2028-06 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0259 2028-06 capitalGainRecognized          116.011606 info  longTermCapitalGain    c2 {spillover=false}
+  0260 2028-07 settlement                    -538.891636 cash  -                      c3 {from=Home label=property tax to=Brokerage}
+  0261 2028-07 capitalGainRecognized          312.588420 info  longTermCapitalGain    c3 {spillover=false}
+  0262 2028-07 settlement                   -1896.204070 cash  -                      c4 {from=Mortgage label=monthly to=Brokerage}
+  0263 2028-07 capitalGainRecognized         1099.908395 info  longTermCapitalGain    c4 {spillover=false}
+  0264 2028-07 assetGrowth                   2211.572075 cash  growth                 c-
+  0265 2028-07 settlement                    -450.199054 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0266 2028-07 capitalGainRecognized          262.238015 info  longTermCapitalGain    c1 {spillover=false}
+  0267 2028-07 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0268 2028-07 capitalGainRecognized          116.498697 info  longTermCapitalGain    c2 {spillover=false}
+  0269 2028-08 settlement                    -540.238865 cash  -                      c3 {from=Home label=property tax to=Brokerage}
+  0270 2028-08 capitalGainRecognized          314.685618 info  longTermCapitalGain    c3 {spillover=false}
+  0271 2028-08 settlement                   -1896.204070 cash  -                      c4 {from=Mortgage label=monthly to=Brokerage}
+  0272 2028-08 capitalGainRecognized         1104.526514 info  longTermCapitalGain    c4 {spillover=false}
+  0273 2028-08 assetGrowth                   2206.467500 cash  growth                 c-
+  0274 2028-08 settlement                    -451.324552 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0275 2028-08 capitalGainRecognized          263.986416 info  longTermCapitalGain    c1 {spillover=false}
+  0276 2028-08 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0277 2028-08 capitalGainRecognized          116.982963 info  longTermCapitalGain    c2 {spillover=false}
+  0278 2028-09 settlement                    -541.589462 cash  -                      c3 {from=Home label=property tax to=Brokerage}
+  0279 2028-09 capitalGainRecognized          316.783699 info  longTermCapitalGain    c3 {spillover=false}
+  0280 2028-09 settlement                   -1896.204070 cash  -                      c4 {from=Mortgage label=monthly to=Brokerage}
+  0281 2028-09 capitalGainRecognized         1109.117850 info  longTermCapitalGain    c4 {spillover=false}
+  0282 2028-09 assetGrowth                   2201.318705 cash  growth                 c-
+  0283 2028-09 settlement                    -452.452863 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0284 2028-09 capitalGainRecognized          265.735566 info  longTermCapitalGain    c1 {spillover=false}
+  0285 2028-09 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0286 2028-09 capitalGainRecognized          117.464420 info  longTermCapitalGain    c2 {spillover=false}
+  0287 2028-10 settlement                    -542.943436 cash  -                      c3 {from=Home label=property tax to=Brokerage}
+  0288 2028-10 capitalGainRecognized          318.882680 info  longTermCapitalGain    c3 {spillover=false}
+  0289 2028-10 settlement                   -1896.204070 cash  -                      c4 {from=Mortgage label=monthly to=Brokerage}
+  0290 2028-10 capitalGainRecognized         1113.682559 info  longTermCapitalGain    c4 {spillover=false}
+  0291 2028-10 assetGrowth                   2196.125395 cash  growth                 c-
+  0292 2028-10 settlement                    -453.583995 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0293 2028-10 capitalGainRecognized          267.485480 info  longTermCapitalGain    c1 {spillover=false}
+  0294 2028-10 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0295 2028-10 capitalGainRecognized          117.943086 info  longTermCapitalGain    c2 {spillover=false}
+  0296 2028-11 settlement                    -544.300795 cash  -                      c3 {from=Home label=property tax to=Brokerage}
+  0297 2028-11 capitalGainRecognized          320.982576 info  longTermCapitalGain    c3 {spillover=false}
+  0298 2028-11 settlement                   -1896.204070 cash  -                      c4 {from=Mortgage label=monthly to=Brokerage}
+  0299 2028-11 capitalGainRecognized         1118.220795 info  longTermCapitalGain    c4 {spillover=false}
+  0300 2028-11 assetGrowth                   2190.887275 cash  growth                 c-
+  0301 2028-11 settlement                    -454.717955 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0302 2028-11 capitalGainRecognized          269.236171 info  longTermCapitalGain    c1 {spillover=false}
+  0303 2028-11 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0304 2028-11 capitalGainRecognized          118.418975 info  longTermCapitalGain    c2 {spillover=false}
+  0305 2028-12 settlement                    -545.661547 cash  -                      c3 {from=Home label=property tax to=Brokerage}
+  0306 2028-12 capitalGainRecognized          323.083405 info  longTermCapitalGain    c3 {spillover=false}
+  0307 2028-12 settlement                   -1896.204070 cash  -                      c4 {from=Mortgage label=monthly to=Brokerage}
+  0308 2028-12 capitalGainRecognized         1122.732711 info  longTermCapitalGain    c4 {spillover=false}
+  0309 2028-12 assetGrowth                   2185.604047 cash  growth                 c-
+  0310 2028-12 settlement                    -455.854750 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0311 2028-12 capitalGainRecognized          270.987653 info  longTermCapitalGain    c1 {spillover=false}
+  0312 2028-12 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0313 2028-12 capitalGainRecognized          118.892104 info  longTermCapitalGain    c2 {spillover=false}
+  0314 2029-01 settlement                    -547.025700 cash  -                      c3 {from=Home label=property tax to=Brokerage}
+  0315 2029-01 capitalGainRecognized          325.185183 info  longTermCapitalGain    c3 {spillover=false}
+  0316 2029-01 settlement                   -1896.204070 cash  -                      c4 {from=Mortgage label=monthly to=Brokerage}
+  0317 2029-01 capitalGainRecognized         1127.218460 info  longTermCapitalGain    c4 {spillover=false}
+  0318 2029-01 assetGrowth                   2180.275411 cash  growth                 c-
+  0319 2029-01 settlement                    -456.994387 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0320 2029-01 capitalGainRecognized          272.739939 info  longTermCapitalGain    c1 {spillover=false}
+  0321 2029-01 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0322 2029-01 capitalGainRecognized          119.362490 info  longTermCapitalGain    c2 {spillover=false}
+  0323 2029-02 settlement                    -548.393265 cash  -                      c3 {from=Home label=property tax to=Brokerage}
+  0324 2029-02 capitalGainRecognized          327.287927 info  longTermCapitalGain    c3 {spillover=false}
+  0325 2029-02 settlement                   -1896.204070 cash  -                      c4 {from=Mortgage label=monthly to=Brokerage}
+  0326 2029-02 capitalGainRecognized         1131.678195 info  longTermCapitalGain    c4 {spillover=false}
+  0327 2029-02 assetGrowth                   2174.901065 cash  growth                 c-
+  0328 2029-02 settlement                    -458.136873 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0329 2029-02 capitalGainRecognized          274.493045 info  longTermCapitalGain    c1 {spillover=false}
+  0330 2029-02 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0331 2029-02 capitalGainRecognized          119.830147 info  longTermCapitalGain    c2 {spillover=false}
+  0332 2029-03 settlement                    -549.764248 cash  -                      c3 {from=Home label=property tax to=Brokerage}
+  0333 2029-03 capitalGainRecognized          329.391654 info  longTermCapitalGain    c3 {spillover=false}
+  0334 2029-03 settlement                   -1896.204070 cash  -                      c4 {from=Mortgage label=monthly to=Brokerage}
+  0335 2029-03 capitalGainRecognized         1136.112065 info  longTermCapitalGain    c4 {spillover=false}
+  0336 2029-03 assetGrowth                   2169.480708 cash  growth                 c-
+  0337 2029-03 settlement                    -459.282215 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0338 2029-03 capitalGainRecognized          276.246983 info  longTermCapitalGain    c1 {spillover=false}
+  0339 2029-03 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0340 2029-03 capitalGainRecognized          120.295093 info  longTermCapitalGain    c2 {spillover=false}
+  0341 2029-04 settlement                    -551.138658 cash  -                      c3 {from=Home label=property tax to=Brokerage}
+  0342 2029-04 capitalGainRecognized          331.496379 info  longTermCapitalGain    c3 {spillover=false}
+  0343 2029-04 settlement                   -1896.204070 cash  -                      c4 {from=Mortgage label=monthly to=Brokerage}
+  0344 2029-04 capitalGainRecognized         1140.520220 info  longTermCapitalGain    c4 {spillover=false}
+  0345 2029-04 assetGrowth                   2164.014033 cash  growth                 c-
+  0346 2029-04 settlement                    -460.430421 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0347 2029-04 capitalGainRecognized          278.001768 info  longTermCapitalGain    c1 {spillover=false}
+  0348 2029-04 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0349 2029-04 capitalGainRecognized          120.757341 info  longTermCapitalGain    c2 {spillover=false}
+  0350 2029-05 settlement                    -552.516505 cash  -                      c3 {from=Home label=property tax to=Brokerage}
+  0351 2029-05 capitalGainRecognized          333.602121 info  longTermCapitalGain    c3 {spillover=false}
+  0352 2029-05 settlement                   -1896.204070 cash  -                      c4 {from=Mortgage label=monthly to=Brokerage}
+  0353 2029-05 capitalGainRecognized         1144.902811 info  longTermCapitalGain    c4 {spillover=false}
+  0354 2029-05 assetGrowth                   2158.500734 cash  growth                 c-
+  0355 2029-05 settlement                    -461.581497 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0356 2029-05 capitalGainRecognized          279.757412 info  longTermCapitalGain    c1 {spillover=false}
+  0357 2029-05 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0358 2029-05 capitalGainRecognized          121.216909 info  longTermCapitalGain    c2 {spillover=false}
+  0359 2029-06 settlement                    -553.897796 cash  -                      c3 {from=Home label=property tax to=Brokerage}
+  0360 2029-06 capitalGainRecognized          335.708895 info  longTermCapitalGain    c3 {spillover=false}
+  0361 2029-06 settlement                   -1896.204070 cash  -                      c4 {from=Mortgage label=monthly to=Brokerage}
+  0362 2029-06 capitalGainRecognized         1149.259985 info  longTermCapitalGain    c4 {spillover=false}
+  0363 2029-06 assetGrowth                   2152.940502 cash  growth                 c-
+  0364 2029-06 settlement                    -462.735451 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0365 2029-06 capitalGainRecognized          281.513931 info  longTermCapitalGain    c1 {spillover=false}
+  0366 2029-06 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0367 2029-06 capitalGainRecognized          121.673812 info  longTermCapitalGain    c2 {spillover=false}
+  0368 2029-07 settlement                    -555.282541 cash  -                      c3 {from=Home label=property tax to=Brokerage}
+  0369 2029-07 capitalGainRecognized          337.816718 info  longTermCapitalGain    c3 {spillover=false}
+  0370 2029-07 settlement                   -1896.204070 cash  -                      c4 {from=Mortgage label=monthly to=Brokerage}
+  0371 2029-07 capitalGainRecognized         1153.591889 info  longTermCapitalGain    c4 {spillover=false}
+  0372 2029-07 assetGrowth                   2147.333027 cash  growth                 c-
+  0373 2029-07 settlement                    -463.892289 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0374 2029-07 capitalGainRecognized          283.271339 info  longTermCapitalGain    c1 {spillover=false}
+  0375 2029-07 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0376 2029-07 capitalGainRecognized          122.128065 info  longTermCapitalGain    c2 {spillover=false}
+  0377 2029-08 settlement                    -556.670747 cash  -                      c3 {from=Home label=property tax to=Brokerage}
+  0378 2029-08 capitalGainRecognized          339.925606 info  longTermCapitalGain    c3 {spillover=false}
+  0379 2029-08 settlement                   -1896.204070 cash  -                      c4 {from=Mortgage label=monthly to=Brokerage}
+  0380 2029-08 capitalGainRecognized         1157.898671 info  longTermCapitalGain    c4 {spillover=false}
+  0381 2029-08 assetGrowth                   2141.677994 cash  growth                 c-
+  0382 2029-08 settlement                    -465.052020 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0383 2029-08 capitalGainRecognized          285.029647 info  longTermCapitalGain    c1 {spillover=false}
+  0384 2029-08 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0385 2029-08 capitalGainRecognized          122.579684 info  longTermCapitalGain    c2 {spillover=false}
+  0386 2029-09 settlement                    -558.062424 cash  -                      c3 {from=Home label=property tax to=Brokerage}
+  0387 2029-09 capitalGainRecognized          342.035577 info  longTermCapitalGain    c3 {spillover=false}
+  0388 2029-09 settlement                   -1896.204070 cash  -                      c4 {from=Mortgage label=monthly to=Brokerage}
+  0389 2029-09 capitalGainRecognized         1162.180475 info  longTermCapitalGain    c4 {spillover=false}
+  0390 2029-09 assetGrowth                   2135.975091 cash  growth                 c-
+  0391 2029-09 settlement                    -466.214650 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0392 2029-09 capitalGainRecognized          286.788872 info  longTermCapitalGain    c1 {spillover=false}
+  0393 2029-09 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0394 2029-09 capitalGainRecognized          123.028683 info  longTermCapitalGain    c2 {spillover=false}
+  0395 2029-10 settlement                    -559.457580 cash  -                      c3 {from=Home label=property tax to=Brokerage}
+  0396 2029-10 capitalGainRecognized          344.146646 info  longTermCapitalGain    c3 {spillover=false}
+  0397 2029-10 settlement                   -1896.204070 cash  -                      c4 {from=Mortgage label=monthly to=Brokerage}
+  0398 2029-10 capitalGainRecognized         1166.437447 info  longTermCapitalGain    c4 {spillover=false}
+  0399 2029-10 assetGrowth                   2130.224001 cash  growth                 c-
+  0400 2029-10 settlement                    -467.380187 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0401 2029-10 capitalGainRecognized          288.549026 info  longTermCapitalGain    c1 {spillover=false}
+  0402 2029-10 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0403 2029-10 capitalGainRecognized          123.475078 info  longTermCapitalGain    c2 {spillover=false}
+  0404 2029-11 settlement                    -560.856224 cash  -                      c3 {from=Home label=property tax to=Brokerage}
+  0405 2029-11 capitalGainRecognized          346.258831 info  longTermCapitalGain    c3 {spillover=false}
+  0406 2029-11 settlement                   -1896.204070 cash  -                      c4 {from=Mortgage label=monthly to=Brokerage}
+  0407 2029-11 capitalGainRecognized         1170.669731 info  longTermCapitalGain    c4 {spillover=false}
+  0408 2029-11 assetGrowth                   2124.424405 cash  growth                 c-
+  0409 2029-11 settlement                    -468.548637 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0410 2029-11 capitalGainRecognized          290.310123 info  longTermCapitalGain    c1 {spillover=false}
+  0411 2029-11 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0412 2029-11 capitalGainRecognized          123.918885 info  longTermCapitalGain    c2 {spillover=false}
+  0413 2029-12 settlement                    -562.258365 cash  -                      c3 {from=Home label=property tax to=Brokerage}
+  0414 2029-12 capitalGainRecognized          348.372148 info  longTermCapitalGain    c3 {spillover=false}
+  0415 2029-12 settlement                   -1896.204070 cash  -                      c4 {from=Mortgage label=monthly to=Brokerage}
+  0416 2029-12 capitalGainRecognized         1174.877469 info  longTermCapitalGain    c4 {spillover=false}
+  0417 2029-12 assetGrowth                   2118.575983 cash  growth                 c-
+  0418 2029-12 settlement                    -469.720009 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0419 2029-12 capitalGainRecognized          292.072177 info  longTermCapitalGain    c1 {spillover=false}
+  0420 2029-12 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0421 2029-12 capitalGainRecognized          124.360117 info  longTermCapitalGain    c2 {spillover=false}
+  0422 2030-01 settlement                    -563.664011 cash  -                      c3 {from=Home label=property tax to=Brokerage}
+  0423 2030-01 capitalGainRecognized          350.486613 info  longTermCapitalGain    c3 {spillover=false}
+  0424 2030-01 settlement                   -1896.204070 cash  -                      c4 {from=Mortgage label=monthly to=Brokerage}
+  0425 2030-01 capitalGainRecognized         1179.060805 info  longTermCapitalGain    c4 {spillover=false}
+  0426 2030-01 assetGrowth                   2112.678412 cash  growth                 c-
+  0427 2030-01 settlement                    -470.894309 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0428 2030-01 capitalGainRecognized          293.835203 info  longTermCapitalGain    c1 {spillover=false}
+  0429 2030-01 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0430 2030-01 capitalGainRecognized          124.798791 info  longTermCapitalGain    c2 {spillover=false}
+  0431 2030-02 settlement                    -565.073171 cash  -                      c3 {from=Home label=property tax to=Brokerage}
+  0432 2030-02 capitalGainRecognized          352.602243 info  longTermCapitalGain    c3 {spillover=false}
+  0433 2030-02 settlement                   -1896.204070 cash  -                      c4 {from=Mortgage label=monthly to=Brokerage}
+  0434 2030-02 capitalGainRecognized         1183.219879 info  longTermCapitalGain    c4 {spillover=false}
+  0435 2030-02 assetGrowth                   2106.731369 cash  growth                 c-
+  0436 2030-02 settlement                    -472.071545 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0437 2030-02 capitalGainRecognized          295.599213 info  longTermCapitalGain    c1 {spillover=false}
+  0438 2030-02 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0439 2030-02 capitalGainRecognized          125.234921 info  longTermCapitalGain    c2 {spillover=false}
+  0440 2030-03 settlement                    -566.485853 cash  -                      c3 {from=Home label=property tax to=Brokerage}
+  0441 2030-03 capitalGainRecognized          354.719055 info  longTermCapitalGain    c3 {spillover=false}
+  0442 2030-03 settlement                   -1896.204070 cash  -                      c4 {from=Mortgage label=monthly to=Brokerage}
+  0443 2030-03 capitalGainRecognized         1187.354833 info  longTermCapitalGain    c4 {spillover=false}
+  0444 2030-03 assetGrowth                   2100.734526 cash  growth                 c-
+  0445 2030-03 settlement                    -473.251723 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0446 2030-03 capitalGainRecognized          297.364221 info  longTermCapitalGain    c1 {spillover=false}
+  0447 2030-03 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0448 2030-03 capitalGainRecognized          125.668521 info  longTermCapitalGain    c2 {spillover=false}
+  0449 2030-04 settlement                    -567.902068 cash  -                      c3 {from=Home label=property tax to=Brokerage}
+  0450 2030-04 capitalGainRecognized          356.837065 info  longTermCapitalGain    c3 {spillover=false}
+  0451 2030-04 settlement                   -1896.204070 cash  -                      c4 {from=Mortgage label=monthly to=Brokerage}
+  0452 2030-04 capitalGainRecognized         1191.465806 info  longTermCapitalGain    c4 {spillover=false}
+  0453 2030-04 assetGrowth                   2094.687557 cash  growth                 c-
+  0454 2030-04 settlement                    -474.434853 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0455 2030-04 capitalGainRecognized          299.130242 info  longTermCapitalGain    c1 {spillover=false}
+  0456 2030-04 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0457 2030-04 capitalGainRecognized          126.099607 info  longTermCapitalGain    c2 {spillover=false}
+  0458 2030-05 settlement                    -569.321823 cash  -                      c3 {from=Home label=property tax to=Brokerage}
+  0459 2030-05 capitalGainRecognized          358.956290 info  longTermCapitalGain    c3 {spillover=false}
+  0460 2030-05 settlement                   -1896.204070 cash  -                      c4 {from=Mortgage label=monthly to=Brokerage}
+  0461 2030-05 capitalGainRecognized         1195.552938 info  longTermCapitalGain    c4 {spillover=false}
+  0462 2030-05 assetGrowth                   2088.590130 cash  growth                 c-
+  0463 2030-05 settlement                    -475.620940 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0464 2030-05 capitalGainRecognized          300.897289 info  longTermCapitalGain    c1 {spillover=false}
+  0465 2030-05 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0466 2030-05 capitalGainRecognized          126.528192 info  longTermCapitalGain    c2 {spillover=false}
+  0467 2030-06 settlement                    -570.745128 cash  -                      c3 {from=Home label=property tax to=Brokerage}
+  0468 2030-06 capitalGainRecognized          361.076746 info  longTermCapitalGain    c3 {spillover=false}
+  0469 2030-06 settlement                   -1896.204070 cash  -                      c4 {from=Mortgage label=monthly to=Brokerage}
+  0470 2030-06 capitalGainRecognized         1199.616366 info  longTermCapitalGain    c4 {spillover=false}
+  0471 2030-06 assetGrowth                   2082.441913 cash  growth                 c-
+  0472 2030-06 settlement                    -476.809992 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0473 2030-06 capitalGainRecognized          302.665376 info  longTermCapitalGain    c1 {spillover=false}
+  0474 2030-06 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0475 2030-06 capitalGainRecognized          126.954292 info  longTermCapitalGain    c2 {spillover=false}
+  0476 2030-07 settlement                    -572.171991 cash  -                      c3 {from=Home label=property tax to=Brokerage}
+  0477 2030-07 capitalGainRecognized          363.198451 info  longTermCapitalGain    c3 {spillover=false}
+  0478 2030-07 settlement                   -1896.204070 cash  -                      c4 {from=Mortgage label=monthly to=Brokerage}
+  0479 2030-07 capitalGainRecognized         1203.656229 info  longTermCapitalGain    c4 {spillover=false}
+  0480 2030-07 assetGrowth                   2076.242572 cash  growth                 c-
+  0481 2030-07 settlement                    -478.002017 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0482 2030-07 capitalGainRecognized          304.434516 info  longTermCapitalGain    c1 {spillover=false}
+  0483 2030-07 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0484 2030-07 capitalGainRecognized          127.377921 info  longTermCapitalGain    c2 {spillover=false}
+  0485 2030-08 settlement                    -573.602421 cash  -                      c3 {from=Home label=property tax to=Brokerage}
+  0486 2030-08 capitalGainRecognized          365.321419 info  longTermCapitalGain    c3 {spillover=false}
+  0487 2030-08 settlement                   -1896.204070 cash  -                      c4 {from=Mortgage label=monthly to=Brokerage}
+  0488 2030-08 capitalGainRecognized         1207.672662 info  longTermCapitalGain    c4 {spillover=false}
+  0489 2030-08 assetGrowth                   2069.991771 cash  growth                 c-
+  0490 2030-08 settlement                    -479.197022 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0491 2030-08 capitalGainRecognized          306.204724 info  longTermCapitalGain    c1 {spillover=false}
+  0492 2030-08 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0493 2030-08 capitalGainRecognized          127.799093 info  longTermCapitalGain    c2 {spillover=false}
+  0494 2030-09 settlement                    -575.036427 cash  -                      c3 {from=Home label=property tax to=Brokerage}
+  0495 2030-09 capitalGainRecognized          367.445669 info  longTermCapitalGain    c3 {spillover=false}
+  0496 2030-09 settlement                   -1896.204070 cash  -                      c4 {from=Mortgage label=monthly to=Brokerage}
+  0497 2030-09 capitalGainRecognized         1211.665802 info  longTermCapitalGain    c4 {spillover=false}
+  0498 2030-09 assetGrowth                   2063.689171 cash  growth                 c-
+  0499 2030-09 settlement                    -480.395015 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0500 2030-09 capitalGainRecognized          307.976013 info  longTermCapitalGain    c1 {spillover=false}
+  0501 2030-09 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0502 2030-09 capitalGainRecognized          128.217822 info  longTermCapitalGain    c2 {spillover=false}
+  0503 2030-10 settlement                    -576.474018 cash  -                      c3 {from=Home label=property tax to=Brokerage}
+  0504 2030-10 capitalGainRecognized          369.571216 info  longTermCapitalGain    c3 {spillover=false}
+  0505 2030-10 settlement                   -1896.204070 cash  -                      c4 {from=Mortgage label=monthly to=Brokerage}
+  0506 2030-10 capitalGainRecognized         1215.635784 info  longTermCapitalGain    c4 {spillover=false}
+  0507 2030-10 assetGrowth                   2057.334431 cash  growth                 c-
+  0508 2030-10 settlement                    -481.596002 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0509 2030-10 capitalGainRecognized          309.748398 info  longTermCapitalGain    c1 {spillover=false}
+  0510 2030-10 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0511 2030-10 capitalGainRecognized          128.634123 info  longTermCapitalGain    c2 {spillover=false}
+  0512 2030-11 settlement                    -577.915203 cash  -                      c3 {from=Home label=property tax to=Brokerage}
+  0513 2030-11 capitalGainRecognized          371.698077 info  longTermCapitalGain    c3 {spillover=false}
+  0514 2030-11 settlement                   -1896.204070 cash  -                      c4 {from=Mortgage label=monthly to=Brokerage}
+  0515 2030-11 capitalGainRecognized         1219.582741 info  longTermCapitalGain    c4 {spillover=false}
+  0516 2030-11 assetGrowth                   2050.927210 cash  growth                 c-
+  0517 2030-11 settlement                    -482.799992 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0518 2030-11 capitalGainRecognized          311.521891 info  longTermCapitalGain    c1 {spillover=false}
+  0519 2030-11 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0520 2030-11 capitalGainRecognized          129.048010 info  longTermCapitalGain    c2 {spillover=false}
+  0521 2030-12 settlement                    -579.359991 cash  -                      c3 {from=Home label=property tax to=Brokerage}
+  0522 2030-12 capitalGainRecognized          373.826269 info  longTermCapitalGain    c3 {spillover=false}
+  0523 2030-12 settlement                   -1896.204070 cash  -                      c4 {from=Mortgage label=monthly to=Brokerage}
+  0524 2030-12 capitalGainRecognized         1223.506809 info  longTermCapitalGain    c4 {spillover=false}
+  0525 2030-12 assetGrowth                   2044.467162 cash  growth                 c-
+  0526 2030-12 settlement                    -484.006992 cash  -                      c1 {from=Home label=maintenance to=Brokerage}
+  0527 2030-12 capitalGainRecognized          313.296507 info  longTermCapitalGain    c1 {spillover=false}
+  0528 2030-12 settlement                    -200.000000 cash  -                      c2 {from=Home label=insurance to=Brokerage}
+  0529 2030-12 capitalGainRecognized          129.459496 info  longTermCapitalGain    c2 {spillover=false}
+
+[history] Brokerage
+  value                        n=  60 first=   402333.330000 last=   351840.550000 min=   351840.550000 max=   403144.840000 sum=   22797988.050000 #240fd004
+  growth                       n=  60 first=     2333.330000 last=     2044.470000 min=     2044.470000 max=     2341.630000 sum=     132439.610000 #ed11755a
+  income                       n=  60 first=        0.000000 last=     2040.090000 min=        0.000000 max=     2040.090000 sum=     104694.120000 #84df4137
+  longTermCapitalGain          n=  60 first=        0.000000 last=     2040.090000 min=        0.000000 max=     2040.090000 sum=     104694.120000 #84df4137
+  capitalGain                  n=  60 first=        0.000000 last=     2040.090000 min=        0.000000 max=     2040.090000 sum=     104694.120000 #84df4137
+
+[asset] Checking
+  instrument = bank
+  start = 2026-01  finish = 2030-12
+  startCurrency = 4000.000000
+  finishCurrency = 0.000000
+  startBasis = 4000.000000
+  finishBasis = 0.000000
+  isClosed = no  isDepleted = yes
+  closedDate = -  closedValue = -
+  events = 65  reconciled = 65
+
+[events] Checking
+  0000 2026-01 settlement                   -1896.204070 cash  -                      c0 {from=Mortgage label=monthly to=Checking}
+  0001 2026-01 interestIncome                   0.000000 cash  interestIncome         c-
+  0002 2026-01 settlement                    -417.708333 cash  -                      c5 {from=Home label=maintenance to=Checking}
+  0003 2026-01 settlement                    -200.000000 cash  -                      c6 {from=Home label=insurance to=Checking}
+  0004 2026-02 settlement                    -501.250000 cash  -                      c7 {from=Home label=property tax to=Checking}
+  0005 2026-02 settlement                    -984.837596 cash  -                      c0 {from=Mortgage label=monthly to=Checking}
+  0006 2026-02 interestIncome                   0.000000 cash  interestIncome         c-
+  0007 2026-03 interestIncome                   0.000000 cash  interestIncome         c-
+  0008 2026-04 interestIncome                   0.000000 cash  interestIncome         c-
+  0009 2026-05 interestIncome                   0.000000 cash  interestIncome         c-
+  0010 2026-06 interestIncome                   0.000000 cash  interestIncome         c-
+  0011 2026-07 interestIncome                   0.000000 cash  interestIncome         c-
+  0012 2026-08 interestIncome                   0.000000 cash  interestIncome         c-
+  0013 2026-09 interestIncome                   0.000000 cash  interestIncome         c-
+  0014 2026-10 interestIncome                   0.000000 cash  interestIncome         c-
+  0015 2026-11 interestIncome                   0.000000 cash  interestIncome         c-
+  0016 2026-12 interestIncome                   0.000000 cash  interestIncome         c-
+  0017 2027-01 interestIncome                   0.000000 cash  interestIncome         c-
+  0018 2027-02 interestIncome                   0.000000 cash  interestIncome         c-
+  0019 2027-03 interestIncome                   0.000000 cash  interestIncome         c-
+  0020 2027-04 interestIncome                   0.000000 cash  interestIncome         c-
+  0021 2027-05 interestIncome                   0.000000 cash  interestIncome         c-
+  0022 2027-06 interestIncome                   0.000000 cash  interestIncome         c-
+  0023 2027-07 interestIncome                   0.000000 cash  interestIncome         c-
+  0024 2027-08 interestIncome                   0.000000 cash  interestIncome         c-
+  0025 2027-09 interestIncome                   0.000000 cash  interestIncome         c-
+  0026 2027-10 interestIncome                   0.000000 cash  interestIncome         c-
+  0027 2027-11 interestIncome                   0.000000 cash  interestIncome         c-
+  0028 2027-12 interestIncome                   0.000000 cash  interestIncome         c-
+  0029 2028-01 interestIncome                   0.000000 cash  interestIncome         c-
+  0030 2028-02 interestIncome                   0.000000 cash  interestIncome         c-
+  0031 2028-03 interestIncome                   0.000000 cash  interestIncome         c-
+  0032 2028-04 interestIncome                   0.000000 cash  interestIncome         c-
+  0033 2028-05 interestIncome                   0.000000 cash  interestIncome         c-
+  0034 2028-06 interestIncome                   0.000000 cash  interestIncome         c-
+  0035 2028-07 interestIncome                   0.000000 cash  interestIncome         c-
+  0036 2028-08 interestIncome                   0.000000 cash  interestIncome         c-
+  0037 2028-09 interestIncome                   0.000000 cash  interestIncome         c-
+  0038 2028-10 interestIncome                   0.000000 cash  interestIncome         c-
+  0039 2028-11 interestIncome                   0.000000 cash  interestIncome         c-
+  0040 2028-12 interestIncome                   0.000000 cash  interestIncome         c-
+  0041 2029-01 interestIncome                   0.000000 cash  interestIncome         c-
+  0042 2029-02 interestIncome                   0.000000 cash  interestIncome         c-
+  0043 2029-03 interestIncome                   0.000000 cash  interestIncome         c-
+  0044 2029-04 interestIncome                   0.000000 cash  interestIncome         c-
+  0045 2029-05 interestIncome                   0.000000 cash  interestIncome         c-
+  0046 2029-06 interestIncome                   0.000000 cash  interestIncome         c-
+  0047 2029-07 interestIncome                   0.000000 cash  interestIncome         c-
+  0048 2029-08 interestIncome                   0.000000 cash  interestIncome         c-
+  0049 2029-09 interestIncome                   0.000000 cash  interestIncome         c-
+  0050 2029-10 interestIncome                   0.000000 cash  interestIncome         c-
+  0051 2029-11 interestIncome                   0.000000 cash  interestIncome         c-
+  0052 2029-12 interestIncome                   0.000000 cash  interestIncome         c-
+  0053 2030-01 interestIncome                   0.000000 cash  interestIncome         c-
+  0054 2030-02 interestIncome                   0.000000 cash  interestIncome         c-
+  0055 2030-03 interestIncome                   0.000000 cash  interestIncome         c-
+  0056 2030-04 interestIncome                   0.000000 cash  interestIncome         c-
+  0057 2030-05 interestIncome                   0.000000 cash  interestIncome         c-
+  0058 2030-06 interestIncome                   0.000000 cash  interestIncome         c-
+  0059 2030-07 interestIncome                   0.000000 cash  interestIncome         c-
+  0060 2030-08 interestIncome                   0.000000 cash  interestIncome         c-
+  0061 2030-09 interestIncome                   0.000000 cash  interestIncome         c-
+  0062 2030-10 interestIncome                   0.000000 cash  interestIncome         c-
+  0063 2030-11 interestIncome                   0.000000 cash  interestIncome         c-
+  0064 2030-12 interestIncome                   0.000000 cash  interestIncome         c-
+
+[history] Checking
+  value                        n=  60 first=     1486.090000 last=        0.000000 min=        0.000000 max=     1486.090000 sum=       1486.090000 #a7656a31
+
+[asset] Home
+  instrument = realEstate
+  start = 2026-01  finish = 2030-12
+  startCurrency = 500000.000000
+  finishCurrency = 580808.390778
+  startBasis = 500000.000000
+  finishBasis = 500000.000000
+  isClosed = no  isDepleted = no
+  closedDate = -  closedValue = -
+  events = 300  reconciled = 300
+
+[events] Home
+  0000 2026-01 propertyTaxEscrow                0.000000 info  -                      c-
+  0001 2026-01 assetGrowth                   1250.000000 cash  growth                 c-
+  0002 2026-01 propertyTax                   -501.250000 info  propertyTax            c-
+  0003 2026-01 maintenance                   -417.708333 info  maintenance            c-
+  0004 2026-01 insurance                     -200.000000 info  insurance              c-
+  0005 2026-02 propertyTaxEscrow             -501.250000 info  -                      c-
+  0006 2026-02 assetGrowth                   1253.125000 cash  growth                 c-
+  0007 2026-02 propertyTax                   -502.503125 info  propertyTax            c-
+  0008 2026-02 maintenance                   -418.752604 info  maintenance            c-
+  0009 2026-02 insurance                     -200.000000 info  insurance              c-
+  0010 2026-03 propertyTaxEscrow             -502.503125 info  -                      c-
+  0011 2026-03 assetGrowth                   1256.257813 cash  growth                 c-
+  0012 2026-03 propertyTax                   -503.759383 info  propertyTax            c-
+  0013 2026-03 maintenance                   -419.799486 info  maintenance            c-
+  0014 2026-03 insurance                     -200.000000 info  insurance              c-
+  0015 2026-04 propertyTaxEscrow             -503.759383 info  -                      c-
+  0016 2026-04 assetGrowth                   1259.398457 cash  growth                 c-
+  0017 2026-04 propertyTax                   -505.018781 info  propertyTax            c-
+  0018 2026-04 maintenance                   -420.848984 info  maintenance            c-
+  0019 2026-04 insurance                     -200.000000 info  insurance              c-
+  0020 2026-05 propertyTaxEscrow             -505.018781 info  -                      c-
+  0021 2026-05 assetGrowth                   1262.546953 cash  growth                 c-
+  0022 2026-05 propertyTax                   -506.281328 info  propertyTax            c-
+  0023 2026-05 maintenance                   -421.901107 info  maintenance            c-
+  0024 2026-05 insurance                     -200.000000 info  insurance              c-
+  0025 2026-06 propertyTaxEscrow             -506.281328 info  -                      c-
+  0026 2026-06 assetGrowth                   1265.703321 cash  growth                 c-
+  0027 2026-06 propertyTax                   -507.547032 info  propertyTax            c-
+  0028 2026-06 maintenance                   -422.955860 info  maintenance            c-
+  0029 2026-06 insurance                     -200.000000 info  insurance              c-
+  0030 2026-07 propertyTaxEscrow             -507.547032 info  -                      c-
+  0031 2026-07 assetGrowth                   1268.867579 cash  growth                 c-
+  0032 2026-07 propertyTax                   -508.815899 info  propertyTax            c-
+  0033 2026-07 maintenance                   -424.013249 info  maintenance            c-
+  0034 2026-07 insurance                     -200.000000 info  insurance              c-
+  0035 2026-08 propertyTaxEscrow             -508.815899 info  -                      c-
+  0036 2026-08 assetGrowth                   1272.039748 cash  growth                 c-
+  0037 2026-08 propertyTax                   -510.087939 info  propertyTax            c-
+  0038 2026-08 maintenance                   -425.073282 info  maintenance            c-
+  0039 2026-08 insurance                     -200.000000 info  insurance              c-
+  0040 2026-09 propertyTaxEscrow             -510.087939 info  -                      c-
+  0041 2026-09 assetGrowth                   1275.219847 cash  growth                 c-
+  0042 2026-09 propertyTax                   -511.363159 info  propertyTax            c-
+  0043 2026-09 maintenance                   -426.135966 info  maintenance            c-
+  0044 2026-09 insurance                     -200.000000 info  insurance              c-
+  0045 2026-10 propertyTaxEscrow             -511.363159 info  -                      c-
+  0046 2026-10 assetGrowth                   1278.407897 cash  growth                 c-
+  0047 2026-10 propertyTax                   -512.641567 info  propertyTax            c-
+  0048 2026-10 maintenance                   -427.201306 info  maintenance            c-
+  0049 2026-10 insurance                     -200.000000 info  insurance              c-
+  0050 2026-11 propertyTaxEscrow             -512.641567 info  -                      c-
+  0051 2026-11 assetGrowth                   1281.603917 cash  growth                 c-
+  0052 2026-11 propertyTax                   -513.923171 info  propertyTax            c-
+  0053 2026-11 maintenance                   -428.269309 info  maintenance            c-
+  0054 2026-11 insurance                     -200.000000 info  insurance              c-
+  0055 2026-12 propertyTaxEscrow             -513.923171 info  -                      c-
+  0056 2026-12 assetGrowth                   1284.807926 cash  growth                 c-
+  0057 2026-12 propertyTax                   -515.207978 info  propertyTax            c-
+  0058 2026-12 maintenance                   -429.339982 info  maintenance            c-
+  0059 2026-12 insurance                     -200.000000 info  insurance              c-
+  0060 2027-01 propertyTaxEscrow             -515.207978 info  -                      c-
+  0061 2027-01 assetGrowth                   1288.019946 cash  growth                 c-
+  0062 2027-01 propertyTax                   -516.495998 info  propertyTax            c-
+  0063 2027-01 maintenance                   -430.413332 info  maintenance            c-
+  0064 2027-01 insurance                     -200.000000 info  insurance              c-
+  0065 2027-02 propertyTaxEscrow             -516.495998 info  -                      c-
+  0066 2027-02 assetGrowth                   1291.239996 cash  growth                 c-
+  0067 2027-02 propertyTax                   -517.787238 info  propertyTax            c-
+  0068 2027-02 maintenance                   -431.489365 info  maintenance            c-
+  0069 2027-02 insurance                     -200.000000 info  insurance              c-
+  0070 2027-03 propertyTaxEscrow             -517.787238 info  -                      c-
+  0071 2027-03 assetGrowth                   1294.468096 cash  growth                 c-
+  0072 2027-03 propertyTax                   -519.081706 info  propertyTax            c-
+  0073 2027-03 maintenance                   -432.568089 info  maintenance            c-
+  0074 2027-03 insurance                     -200.000000 info  insurance              c-
+  0075 2027-04 propertyTaxEscrow             -519.081706 info  -                      c-
+  0076 2027-04 assetGrowth                   1297.704266 cash  growth                 c-
+  0077 2027-04 propertyTax                   -520.379411 info  propertyTax            c-
+  0078 2027-04 maintenance                   -433.649509 info  maintenance            c-
+  0079 2027-04 insurance                     -200.000000 info  insurance              c-
+  0080 2027-05 propertyTaxEscrow             -520.379411 info  -                      c-
+  0081 2027-05 assetGrowth                   1300.948527 cash  growth                 c-
+  0082 2027-05 propertyTax                   -521.680359 info  propertyTax            c-
+  0083 2027-05 maintenance                   -434.733633 info  maintenance            c-
+  0084 2027-05 insurance                     -200.000000 info  insurance              c-
+  0085 2027-06 propertyTaxEscrow             -521.680359 info  -                      c-
+  0086 2027-06 assetGrowth                   1304.200898 cash  growth                 c-
+  0087 2027-06 propertyTax                   -522.984560 info  propertyTax            c-
+  0088 2027-06 maintenance                   -435.820467 info  maintenance            c-
+  0089 2027-06 insurance                     -200.000000 info  insurance              c-
+  0090 2027-07 propertyTaxEscrow             -522.984560 info  -                      c-
+  0091 2027-07 assetGrowth                   1307.461400 cash  growth                 c-
+  0092 2027-07 propertyTax                   -524.292022 info  propertyTax            c-
+  0093 2027-07 maintenance                   -436.910018 info  maintenance            c-
+  0094 2027-07 insurance                     -200.000000 info  insurance              c-
+  0095 2027-08 propertyTaxEscrow             -524.292022 info  -                      c-
+  0096 2027-08 assetGrowth                   1310.730054 cash  growth                 c-
+  0097 2027-08 propertyTax                   -525.602752 info  propertyTax            c-
+  0098 2027-08 maintenance                   -438.002293 info  maintenance            c-
+  0099 2027-08 insurance                     -200.000000 info  insurance              c-
+  0100 2027-09 propertyTaxEscrow             -525.602752 info  -                      c-
+  0101 2027-09 assetGrowth                   1314.006879 cash  growth                 c-
+  0102 2027-09 propertyTax                   -526.916759 info  propertyTax            c-
+  0103 2027-09 maintenance                   -439.097299 info  maintenance            c-
+  0104 2027-09 insurance                     -200.000000 info  insurance              c-
+  0105 2027-10 propertyTaxEscrow             -526.916759 info  -                      c-
+  0106 2027-10 assetGrowth                   1317.291896 cash  growth                 c-
+  0107 2027-10 propertyTax                   -528.234050 info  propertyTax            c-
+  0108 2027-10 maintenance                   -440.195042 info  maintenance            c-
+  0109 2027-10 insurance                     -200.000000 info  insurance              c-
+  0110 2027-11 propertyTaxEscrow             -528.234050 info  -                      c-
+  0111 2027-11 assetGrowth                   1320.585126 cash  growth                 c-
+  0112 2027-11 propertyTax                   -529.554636 info  propertyTax            c-
+  0113 2027-11 maintenance                   -441.295530 info  maintenance            c-
+  0114 2027-11 insurance                     -200.000000 info  insurance              c-
+  0115 2027-12 propertyTaxEscrow             -529.554636 info  -                      c-
+  0116 2027-12 assetGrowth                   1323.886589 cash  growth                 c-
+  0117 2027-12 propertyTax                   -530.878522 info  propertyTax            c-
+  0118 2027-12 maintenance                   -442.398768 info  maintenance            c-
+  0119 2027-12 insurance                     -200.000000 info  insurance              c-
+  0120 2028-01 propertyTaxEscrow             -530.878522 info  -                      c-
+  0121 2028-01 assetGrowth                   1327.196305 cash  growth                 c-
+  0122 2028-01 propertyTax                   -532.205718 info  propertyTax            c-
+  0123 2028-01 maintenance                   -443.504765 info  maintenance            c-
+  0124 2028-01 insurance                     -200.000000 info  insurance              c-
+  0125 2028-02 propertyTaxEscrow             -532.205718 info  -                      c-
+  0126 2028-02 assetGrowth                   1330.514296 cash  growth                 c-
+  0127 2028-02 propertyTax                   -533.536233 info  propertyTax            c-
+  0128 2028-02 maintenance                   -444.613527 info  maintenance            c-
+  0129 2028-02 insurance                     -200.000000 info  insurance              c-
+  0130 2028-03 propertyTaxEscrow             -533.536233 info  -                      c-
+  0131 2028-03 assetGrowth                   1333.840582 cash  growth                 c-
+  0132 2028-03 propertyTax                   -534.870073 info  propertyTax            c-
+  0133 2028-03 maintenance                   -445.725061 info  maintenance            c-
+  0134 2028-03 insurance                     -200.000000 info  insurance              c-
+  0135 2028-04 propertyTaxEscrow             -534.870073 info  -                      c-
+  0136 2028-04 assetGrowth                   1337.175183 cash  growth                 c-
+  0137 2028-04 propertyTax                   -536.207248 info  propertyTax            c-
+  0138 2028-04 maintenance                   -446.839374 info  maintenance            c-
+  0139 2028-04 insurance                     -200.000000 info  insurance              c-
+  0140 2028-05 propertyTaxEscrow             -536.207248 info  -                      c-
+  0141 2028-05 assetGrowth                   1340.518121 cash  growth                 c-
+  0142 2028-05 propertyTax                   -537.547767 info  propertyTax            c-
+  0143 2028-05 maintenance                   -447.956472 info  maintenance            c-
+  0144 2028-05 insurance                     -200.000000 info  insurance              c-
+  0145 2028-06 propertyTaxEscrow             -537.547767 info  -                      c-
+  0146 2028-06 assetGrowth                   1343.869417 cash  growth                 c-
+  0147 2028-06 propertyTax                   -538.891636 info  propertyTax            c-
+  0148 2028-06 maintenance                   -449.076363 info  maintenance            c-
+  0149 2028-06 insurance                     -200.000000 info  insurance              c-
+  0150 2028-07 propertyTaxEscrow             -538.891636 info  -                      c-
+  0151 2028-07 assetGrowth                   1347.229090 cash  growth                 c-
+  0152 2028-07 propertyTax                   -540.238865 info  propertyTax            c-
+  0153 2028-07 maintenance                   -450.199054 info  maintenance            c-
+  0154 2028-07 insurance                     -200.000000 info  insurance              c-
+  0155 2028-08 propertyTaxEscrow             -540.238865 info  -                      c-
+  0156 2028-08 assetGrowth                   1350.597163 cash  growth                 c-
+  0157 2028-08 propertyTax                   -541.589462 info  propertyTax            c-
+  0158 2028-08 maintenance                   -451.324552 info  maintenance            c-
+  0159 2028-08 insurance                     -200.000000 info  insurance              c-
+  0160 2028-09 propertyTaxEscrow             -541.589462 info  -                      c-
+  0161 2028-09 assetGrowth                   1353.973656 cash  growth                 c-
+  0162 2028-09 propertyTax                   -542.943436 info  propertyTax            c-
+  0163 2028-09 maintenance                   -452.452863 info  maintenance            c-
+  0164 2028-09 insurance                     -200.000000 info  insurance              c-
+  0165 2028-10 propertyTaxEscrow             -542.943436 info  -                      c-
+  0166 2028-10 assetGrowth                   1357.358590 cash  growth                 c-
+  0167 2028-10 propertyTax                   -544.300795 info  propertyTax            c-
+  0168 2028-10 maintenance                   -453.583995 info  maintenance            c-
+  0169 2028-10 insurance                     -200.000000 info  insurance              c-
+  0170 2028-11 propertyTaxEscrow             -544.300795 info  -                      c-
+  0171 2028-11 assetGrowth                   1360.751986 cash  growth                 c-
+  0172 2028-11 propertyTax                   -545.661547 info  propertyTax            c-
+  0173 2028-11 maintenance                   -454.717955 info  maintenance            c-
+  0174 2028-11 insurance                     -200.000000 info  insurance              c-
+  0175 2028-12 propertyTaxEscrow             -545.661547 info  -                      c-
+  0176 2028-12 assetGrowth                   1364.153866 cash  growth                 c-
+  0177 2028-12 propertyTax                   -547.025700 info  propertyTax            c-
+  0178 2028-12 maintenance                   -455.854750 info  maintenance            c-
+  0179 2028-12 insurance                     -200.000000 info  insurance              c-
+  0180 2029-01 propertyTaxEscrow             -547.025700 info  -                      c-
+  0181 2029-01 assetGrowth                   1367.564251 cash  growth                 c-
+  0182 2029-01 propertyTax                   -548.393265 info  propertyTax            c-
+  0183 2029-01 maintenance                   -456.994387 info  maintenance            c-
+  0184 2029-01 insurance                     -200.000000 info  insurance              c-
+  0185 2029-02 propertyTaxEscrow             -548.393265 info  -                      c-
+  0186 2029-02 assetGrowth                   1370.983162 cash  growth                 c-
+  0187 2029-02 propertyTax                   -549.764248 info  propertyTax            c-
+  0188 2029-02 maintenance                   -458.136873 info  maintenance            c-
+  0189 2029-02 insurance                     -200.000000 info  insurance              c-
+  0190 2029-03 propertyTaxEscrow             -549.764248 info  -                      c-
+  0191 2029-03 assetGrowth                   1374.410619 cash  growth                 c-
+  0192 2029-03 propertyTax                   -551.138658 info  propertyTax            c-
+  0193 2029-03 maintenance                   -459.282215 info  maintenance            c-
+  0194 2029-03 insurance                     -200.000000 info  insurance              c-
+  0195 2029-04 propertyTaxEscrow             -551.138658 info  -                      c-
+  0196 2029-04 assetGrowth                   1377.846646 cash  growth                 c-
+  0197 2029-04 propertyTax                   -552.516505 info  propertyTax            c-
+  0198 2029-04 maintenance                   -460.430421 info  maintenance            c-
+  0199 2029-04 insurance                     -200.000000 info  insurance              c-
+  0200 2029-05 propertyTaxEscrow             -552.516505 info  -                      c-
+  0201 2029-05 assetGrowth                   1381.291263 cash  growth                 c-
+  0202 2029-05 propertyTax                   -553.897796 info  propertyTax            c-
+  0203 2029-05 maintenance                   -461.581497 info  maintenance            c-
+  0204 2029-05 insurance                     -200.000000 info  insurance              c-
+  0205 2029-06 propertyTaxEscrow             -553.897796 info  -                      c-
+  0206 2029-06 assetGrowth                   1384.744491 cash  growth                 c-
+  0207 2029-06 propertyTax                   -555.282541 info  propertyTax            c-
+  0208 2029-06 maintenance                   -462.735451 info  maintenance            c-
+  0209 2029-06 insurance                     -200.000000 info  insurance              c-
+  0210 2029-07 propertyTaxEscrow             -555.282541 info  -                      c-
+  0211 2029-07 assetGrowth                   1388.206352 cash  growth                 c-
+  0212 2029-07 propertyTax                   -556.670747 info  propertyTax            c-
+  0213 2029-07 maintenance                   -463.892289 info  maintenance            c-
+  0214 2029-07 insurance                     -200.000000 info  insurance              c-
+  0215 2029-08 propertyTaxEscrow             -556.670747 info  -                      c-
+  0216 2029-08 assetGrowth                   1391.676868 cash  growth                 c-
+  0217 2029-08 propertyTax                   -558.062424 info  propertyTax            c-
+  0218 2029-08 maintenance                   -465.052020 info  maintenance            c-
+  0219 2029-08 insurance                     -200.000000 info  insurance              c-
+  0220 2029-09 propertyTaxEscrow             -558.062424 info  -                      c-
+  0221 2029-09 assetGrowth                   1395.156060 cash  growth                 c-
+  0222 2029-09 propertyTax                   -559.457580 info  propertyTax            c-
+  0223 2029-09 maintenance                   -466.214650 info  maintenance            c-
+  0224 2029-09 insurance                     -200.000000 info  insurance              c-
+  0225 2029-10 propertyTaxEscrow             -559.457580 info  -                      c-
+  0226 2029-10 assetGrowth                   1398.643950 cash  growth                 c-
+  0227 2029-10 propertyTax                   -560.856224 info  propertyTax            c-
+  0228 2029-10 maintenance                   -467.380187 info  maintenance            c-
+  0229 2029-10 insurance                     -200.000000 info  insurance              c-
+  0230 2029-11 propertyTaxEscrow             -560.856224 info  -                      c-
+  0231 2029-11 assetGrowth                   1402.140560 cash  growth                 c-
+  0232 2029-11 propertyTax                   -562.258365 info  propertyTax            c-
+  0233 2029-11 maintenance                   -468.548637 info  maintenance            c-
+  0234 2029-11 insurance                     -200.000000 info  insurance              c-
+  0235 2029-12 propertyTaxEscrow             -562.258365 info  -                      c-
+  0236 2029-12 assetGrowth                   1405.645912 cash  growth                 c-
+  0237 2029-12 propertyTax                   -563.664011 info  propertyTax            c-
+  0238 2029-12 maintenance                   -469.720009 info  maintenance            c-
+  0239 2029-12 insurance                     -200.000000 info  insurance              c-
+  0240 2030-01 propertyTaxEscrow             -563.664011 info  -                      c-
+  0241 2030-01 assetGrowth                   1409.160026 cash  growth                 c-
+  0242 2030-01 propertyTax                   -565.073171 info  propertyTax            c-
+  0243 2030-01 maintenance                   -470.894309 info  maintenance            c-
+  0244 2030-01 insurance                     -200.000000 info  insurance              c-
+  0245 2030-02 propertyTaxEscrow             -565.073171 info  -                      c-
+  0246 2030-02 assetGrowth                   1412.682926 cash  growth                 c-
+  0247 2030-02 propertyTax                   -566.485853 info  propertyTax            c-
+  0248 2030-02 maintenance                   -472.071545 info  maintenance            c-
+  0249 2030-02 insurance                     -200.000000 info  insurance              c-
+  0250 2030-03 propertyTaxEscrow             -566.485853 info  -                      c-
+  0251 2030-03 assetGrowth                   1416.214634 cash  growth                 c-
+  0252 2030-03 propertyTax                   -567.902068 info  propertyTax            c-
+  0253 2030-03 maintenance                   -473.251723 info  maintenance            c-
+  0254 2030-03 insurance                     -200.000000 info  insurance              c-
+  0255 2030-04 propertyTaxEscrow             -567.902068 info  -                      c-
+  0256 2030-04 assetGrowth                   1419.755170 cash  growth                 c-
+  0257 2030-04 propertyTax                   -569.321823 info  propertyTax            c-
+  0258 2030-04 maintenance                   -474.434853 info  maintenance            c-
+  0259 2030-04 insurance                     -200.000000 info  insurance              c-
+  0260 2030-05 propertyTaxEscrow             -569.321823 info  -                      c-
+  0261 2030-05 assetGrowth                   1423.304558 cash  growth                 c-
+  0262 2030-05 propertyTax                   -570.745128 info  propertyTax            c-
+  0263 2030-05 maintenance                   -475.620940 info  maintenance            c-
+  0264 2030-05 insurance                     -200.000000 info  insurance              c-
+  0265 2030-06 propertyTaxEscrow             -570.745128 info  -                      c-
+  0266 2030-06 assetGrowth                   1426.862820 cash  growth                 c-
+  0267 2030-06 propertyTax                   -572.171991 info  propertyTax            c-
+  0268 2030-06 maintenance                   -476.809992 info  maintenance            c-
+  0269 2030-06 insurance                     -200.000000 info  insurance              c-
+  0270 2030-07 propertyTaxEscrow             -572.171991 info  -                      c-
+  0271 2030-07 assetGrowth                   1430.429977 cash  growth                 c-
+  0272 2030-07 propertyTax                   -573.602421 info  propertyTax            c-
+  0273 2030-07 maintenance                   -478.002017 info  maintenance            c-
+  0274 2030-07 insurance                     -200.000000 info  insurance              c-
+  0275 2030-08 propertyTaxEscrow             -573.602421 info  -                      c-
+  0276 2030-08 assetGrowth                   1434.006052 cash  growth                 c-
+  0277 2030-08 propertyTax                   -575.036427 info  propertyTax            c-
+  0278 2030-08 maintenance                   -479.197022 info  maintenance            c-
+  0279 2030-08 insurance                     -200.000000 info  insurance              c-
+  0280 2030-09 propertyTaxEscrow             -575.036427 info  -                      c-
+  0281 2030-09 assetGrowth                   1437.591067 cash  growth                 c-
+  0282 2030-09 propertyTax                   -576.474018 info  propertyTax            c-
+  0283 2030-09 maintenance                   -480.395015 info  maintenance            c-
+  0284 2030-09 insurance                     -200.000000 info  insurance              c-
+  0285 2030-10 propertyTaxEscrow             -576.474018 info  -                      c-
+  0286 2030-10 assetGrowth                   1441.185044 cash  growth                 c-
+  0287 2030-10 propertyTax                   -577.915203 info  propertyTax            c-
+  0288 2030-10 maintenance                   -481.596002 info  maintenance            c-
+  0289 2030-10 insurance                     -200.000000 info  insurance              c-
+  0290 2030-11 propertyTaxEscrow             -577.915203 info  -                      c-
+  0291 2030-11 assetGrowth                   1444.788007 cash  growth                 c-
+  0292 2030-11 propertyTax                   -579.359991 info  propertyTax            c-
+  0293 2030-11 maintenance                   -482.799992 info  maintenance            c-
+  0294 2030-11 insurance                     -200.000000 info  insurance              c-
+  0295 2030-12 propertyTaxEscrow             -579.359991 info  -                      c-
+  0296 2030-12 assetGrowth                   1448.399977 cash  growth                 c-
+  0297 2030-12 propertyTax                   -580.808391 info  propertyTax            c-
+  0298 2030-12 maintenance                   -484.006992 info  maintenance            c-
+  0299 2030-12 insurance                     -200.000000 info  insurance              c-
+
+[history] Home
+  value                        n=  60 first=   501250.000000 last=   580808.390000 min=   501250.000000 max=   580808.390000 sum=   32404164.720000 #ee9463f4
+  growth                       n=  60 first=     1250.000000 last=     1448.400000 min=     1250.000000 max=     1448.400000 sum=      80808.410000 #a8f06b06
+  saltTaxes                    n=  60 first=     -501.250000 last=     -580.810000 min=     -580.810000 max=     -501.250000 sum=     -32404.170000 #9ae98064
+  taxes                        n=  60 first=     -501.250000 last=     -580.810000 min=     -580.810000 max=     -501.250000 sum=     -32404.170000 #9ae98064
+  expense                      n=  60 first=     -617.710000 last=     -684.010000 min=     -684.010000 max=     -617.710000 sum=     -39003.460000 #600ad2ea
+  cashFlow                     n=  60 first=    -1118.960000 last=    -1264.820000 min=    -1264.820000 max=    -1118.960000 sum=     -71407.650000 #4e07a1ff
+  cashFlowAccumulated          n=  60 first=    -1118.960000 last=   -71407.640000 min=   -71407.640000 max=    -1118.960000 sum=   -2133461.750000 #804bfb91
+  propertyTax                  n=  60 first=     -501.250000 last=     -580.810000 min=     -580.810000 max=     -501.250000 sum=     -32404.170000 #9ae98064
+  maintenance                  n=  60 first=     -417.710000 last=     -484.010000 min=     -484.010000 max=     -417.710000 sum=     -27003.460000 #0d05b9a6
+  insurance                    n=  60 first=     -200.000000 last=     -200.000000 min=     -200.000000 max=     -200.000000 sum=     -12000.000000 #8f0ff81d
+
+[asset] Mortgage
+  instrument = mortgage
+  start = 2026-01  finish = 2030-12
+  startCurrency = -300000.000000
+  finishCurrency = -280832.932325
+  startBasis = 0.000000
+  finishBasis = 0.000000
+  isClosed = no  isDepleted = no
+  closedDate = -  closedValue = -
+  events = 120  reconciled = 120
+
+[events] Mortgage
+  0000 2026-01 mortgagePrincipal              271.204070 cash  mortgagePrincipal      c8
+  0001 2026-01 mortgageInterest             -1625.000000 info  mortgageInterest       c8
+  0002 2026-02 mortgagePrincipal              272.673093 cash  mortgagePrincipal      c8
+  0003 2026-02 mortgageInterest             -1623.530978 info  mortgageInterest       c8
+  0004 2026-03 mortgagePrincipal              274.150072 cash  mortgagePrincipal      c8
+  0005 2026-03 mortgageInterest             -1622.053999 info  mortgageInterest       c8
+  0006 2026-04 mortgagePrincipal              275.635051 cash  mortgagePrincipal      c8
+  0007 2026-04 mortgageInterest             -1620.569019 info  mortgageInterest       c8
+  0008 2026-05 mortgagePrincipal              277.128075 cash  mortgagePrincipal      c8
+  0009 2026-05 mortgageInterest             -1619.075996 info  mortgageInterest       c8
+  0010 2026-06 mortgagePrincipal              278.629185 cash  mortgagePrincipal      c8
+  0011 2026-06 mortgageInterest             -1617.574886 info  mortgageInterest       c8
+  0012 2026-07 mortgagePrincipal              280.138426 cash  mortgagePrincipal      c8
+  0013 2026-07 mortgageInterest             -1616.065644 info  mortgageInterest       c8
+  0014 2026-08 mortgagePrincipal              281.655843 cash  mortgagePrincipal      c8
+  0015 2026-08 mortgageInterest             -1614.548228 info  mortgageInterest       c8
+  0016 2026-09 mortgagePrincipal              283.181479 cash  mortgagePrincipal      c8
+  0017 2026-09 mortgageInterest             -1613.022592 info  mortgageInterest       c8
+  0018 2026-10 mortgagePrincipal              284.715378 cash  mortgagePrincipal      c8
+  0019 2026-10 mortgageInterest             -1611.488692 info  mortgageInterest       c8
+  0020 2026-11 mortgagePrincipal              286.257587 cash  mortgagePrincipal      c8
+  0021 2026-11 mortgageInterest             -1609.946484 info  mortgageInterest       c8
+  0022 2026-12 mortgagePrincipal              287.808149 cash  mortgagePrincipal      c8
+  0023 2026-12 mortgageInterest             -1608.395922 info  mortgageInterest       c8
+  0024 2027-01 mortgagePrincipal              289.367109 cash  mortgagePrincipal      c8
+  0025 2027-01 mortgageInterest             -1606.836961 info  mortgageInterest       c8
+  0026 2027-02 mortgagePrincipal              290.934515 cash  mortgagePrincipal      c8
+  0027 2027-02 mortgageInterest             -1605.269556 info  mortgageInterest       c8
+  0028 2027-03 mortgagePrincipal              292.510410 cash  mortgagePrincipal      c8
+  0029 2027-03 mortgageInterest             -1603.693661 info  mortgageInterest       c8
+  0030 2027-04 mortgagePrincipal              294.094841 cash  mortgagePrincipal      c8
+  0031 2027-04 mortgageInterest             -1602.109229 info  mortgageInterest       c8
+  0032 2027-05 mortgagePrincipal              295.687855 cash  mortgagePrincipal      c8
+  0033 2027-05 mortgageInterest             -1600.516216 info  mortgageInterest       c8
+  0034 2027-06 mortgagePrincipal              297.289497 cash  mortgagePrincipal      c8
+  0035 2027-06 mortgageInterest             -1598.914573 info  mortgageInterest       c8
+  0036 2027-07 mortgagePrincipal              298.899816 cash  mortgagePrincipal      c8
+  0037 2027-07 mortgageInterest             -1597.304255 info  mortgageInterest       c8
+  0038 2027-08 mortgagePrincipal              300.518856 cash  mortgagePrincipal      c8
+  0039 2027-08 mortgageInterest             -1595.685214 info  mortgageInterest       c8
+  0040 2027-09 mortgagePrincipal              302.146667 cash  mortgagePrincipal      c8
+  0041 2027-09 mortgageInterest             -1594.057404 info  mortgageInterest       c8
+  0042 2027-10 mortgagePrincipal              303.783294 cash  mortgagePrincipal      c8
+  0043 2027-10 mortgageInterest             -1592.420776 info  mortgageInterest       c8
+  0044 2027-11 mortgagePrincipal              305.428787 cash  mortgagePrincipal      c8
+  0045 2027-11 mortgageInterest             -1590.775283 info  mortgageInterest       c8
+  0046 2027-12 mortgagePrincipal              307.083193 cash  mortgagePrincipal      c8
+  0047 2027-12 mortgageInterest             -1589.120877 info  mortgageInterest       c8
+  0048 2028-01 mortgagePrincipal              308.746561 cash  mortgagePrincipal      c8
+  0049 2028-01 mortgageInterest             -1587.457510 info  mortgageInterest       c8
+  0050 2028-02 mortgagePrincipal              310.418938 cash  mortgagePrincipal      c8
+  0051 2028-02 mortgageInterest             -1585.785133 info  mortgageInterest       c8
+  0052 2028-03 mortgagePrincipal              312.100374 cash  mortgagePrincipal      c8
+  0053 2028-03 mortgageInterest             -1584.103697 info  mortgageInterest       c8
+  0054 2028-04 mortgagePrincipal              313.790917 cash  mortgagePrincipal      c8
+  0055 2028-04 mortgageInterest             -1582.413153 info  mortgageInterest       c8
+  0056 2028-05 mortgagePrincipal              315.490618 cash  mortgagePrincipal      c8
+  0057 2028-05 mortgageInterest             -1580.713452 info  mortgageInterest       c8
+  0058 2028-06 mortgagePrincipal              317.199526 cash  mortgagePrincipal      c8
+  0059 2028-06 mortgageInterest             -1579.004545 info  mortgageInterest       c8
+  0060 2028-07 mortgagePrincipal              318.917690 cash  mortgagePrincipal      c8
+  0061 2028-07 mortgageInterest             -1577.286381 info  mortgageInterest       c8
+  0062 2028-08 mortgagePrincipal              320.645161 cash  mortgagePrincipal      c8
+  0063 2028-08 mortgageInterest             -1575.558910 info  mortgageInterest       c8
+  0064 2028-09 mortgagePrincipal              322.381989 cash  mortgagePrincipal      c8
+  0065 2028-09 mortgageInterest             -1573.822082 info  mortgageInterest       c8
+  0066 2028-10 mortgagePrincipal              324.128224 cash  mortgagePrincipal      c8
+  0067 2028-10 mortgageInterest             -1572.075846 info  mortgageInterest       c8
+  0068 2028-11 mortgagePrincipal              325.883919 cash  mortgagePrincipal      c8
+  0069 2028-11 mortgageInterest             -1570.320152 info  mortgageInterest       c8
+  0070 2028-12 mortgagePrincipal              327.649123 cash  mortgagePrincipal      c8
+  0071 2028-12 mortgageInterest             -1568.554947 info  mortgageInterest       c8
+  0072 2029-01 mortgagePrincipal              329.423890 cash  mortgagePrincipal      c8
+  0073 2029-01 mortgageInterest             -1566.780181 info  mortgageInterest       c8
+  0074 2029-02 mortgagePrincipal              331.208269 cash  mortgagePrincipal      c8
+  0075 2029-02 mortgageInterest             -1564.995802 info  mortgageInterest       c8
+  0076 2029-03 mortgagePrincipal              333.002314 cash  mortgagePrincipal      c8
+  0077 2029-03 mortgageInterest             -1563.201757 info  mortgageInterest       c8
+  0078 2029-04 mortgagePrincipal              334.806076 cash  mortgagePrincipal      c8
+  0079 2029-04 mortgageInterest             -1561.397994 info  mortgageInterest       c8
+  0080 2029-05 mortgagePrincipal              336.619609 cash  mortgagePrincipal      c8
+  0081 2029-05 mortgageInterest             -1559.584461 info  mortgageInterest       c8
+  0082 2029-06 mortgagePrincipal              338.442965 cash  mortgagePrincipal      c8
+  0083 2029-06 mortgageInterest             -1557.761105 info  mortgageInterest       c8
+  0084 2029-07 mortgagePrincipal              340.276198 cash  mortgagePrincipal      c8
+  0085 2029-07 mortgageInterest             -1555.927872 info  mortgageInterest       c8
+  0086 2029-08 mortgagePrincipal              342.119361 cash  mortgagePrincipal      c8
+  0087 2029-08 mortgageInterest             -1554.084710 info  mortgageInterest       c8
+  0088 2029-09 mortgagePrincipal              343.972507 cash  mortgagePrincipal      c8
+  0089 2029-09 mortgageInterest             -1552.231563 info  mortgageInterest       c8
+  0090 2029-10 mortgagePrincipal              345.835692 cash  mortgagePrincipal      c8
+  0091 2029-10 mortgageInterest             -1550.368379 info  mortgageInterest       c8
+  0092 2029-11 mortgagePrincipal              347.708968 cash  mortgagePrincipal      c8
+  0093 2029-11 mortgageInterest             -1548.495102 info  mortgageInterest       c8
+  0094 2029-12 mortgagePrincipal              349.592392 cash  mortgagePrincipal      c8
+  0095 2029-12 mortgageInterest             -1546.611678 info  mortgageInterest       c8
+  0096 2030-01 mortgagePrincipal              351.486018 cash  mortgagePrincipal      c8
+  0097 2030-01 mortgageInterest             -1544.718053 info  mortgageInterest       c8
+  0098 2030-02 mortgagePrincipal              353.389900 cash  mortgagePrincipal      c8
+  0099 2030-02 mortgageInterest             -1542.814170 info  mortgageInterest       c8
+  0100 2030-03 mortgagePrincipal              355.304095 cash  mortgagePrincipal      c8
+  0101 2030-03 mortgageInterest             -1540.899975 info  mortgageInterest       c8
+  0102 2030-04 mortgagePrincipal              357.228659 cash  mortgagePrincipal      c8
+  0103 2030-04 mortgageInterest             -1538.975411 info  mortgageInterest       c8
+  0104 2030-05 mortgagePrincipal              359.163648 cash  mortgagePrincipal      c8
+  0105 2030-05 mortgageInterest             -1537.040423 info  mortgageInterest       c8
+  0106 2030-06 mortgagePrincipal              361.109118 cash  mortgagePrincipal      c8
+  0107 2030-06 mortgageInterest             -1535.094953 info  mortgageInterest       c8
+  0108 2030-07 mortgagePrincipal              363.065125 cash  mortgagePrincipal      c8
+  0109 2030-07 mortgageInterest             -1533.138945 info  mortgageInterest       c8
+  0110 2030-08 mortgagePrincipal              365.031728 cash  mortgagePrincipal      c8
+  0111 2030-08 mortgageInterest             -1531.172342 info  mortgageInterest       c8
+  0112 2030-09 mortgagePrincipal              367.008983 cash  mortgagePrincipal      c8
+  0113 2030-09 mortgageInterest             -1529.195087 info  mortgageInterest       c8
+  0114 2030-10 mortgagePrincipal              368.996949 cash  mortgagePrincipal      c8
+  0115 2030-10 mortgageInterest             -1527.207122 info  mortgageInterest       c8
+  0116 2030-11 mortgagePrincipal              370.995682 cash  mortgagePrincipal      c8
+  0117 2030-11 mortgageInterest             -1525.208388 info  mortgageInterest       c8
+  0118 2030-12 mortgagePrincipal              373.005242 cash  mortgagePrincipal      c8
+  0119 2030-12 mortgageInterest             -1523.198828 info  mortgageInterest       c8
+
+[history] Mortgage
+  value                        n=  60 first=  -299728.800000 last=  -280832.930000 min=  -299728.800000 max=  -280832.930000 sum=  -17446403.980000 #71d9dc74
+  growth                       n=  60 first=      271.200000 last=      373.010000 min=      271.200000 max=      373.010000 sum=      19167.100000 #244c3744
+  expense                      n=  60 first=    -1625.000000 last=    -1523.200000 min=    -1625.000000 max=    -1523.200000 sum=     -94605.190000 #b4cd0c8e
+  cashFlow                     n=  60 first=    -1896.200000 last=    -1896.200000 min=    -1896.200000 max=    -1896.200000 sum=    -113772.000000 #71832de9
+  cashFlowAccumulated          n=  60 first=    -1896.200000 last=  -113772.240000 min=  -113772.240000 max=    -1896.200000 sum=   -3470053.450000 #f493eab0
+  mortgagePayment              n=  60 first=    -1896.200000 last=    -1896.200000 min=    -1896.200000 max=    -1896.200000 sum=    -113772.000000 #71832de9
+  mortgageInterest             n=  60 first=    -1625.000000 last=    -1523.200000 min=    -1625.000000 max=    -1523.200000 sum=     -94605.190000 #b4cd0c8e
+  mortgagePrincipal            n=  60 first=     -271.200000 last=     -373.010000 min=     -373.010000 max=     -271.200000 sum=     -19167.100000 #ac744256
+  interestExpense              n=  60 first=    -1625.000000 last=    -1523.200000 min=    -1625.000000 max=    -1523.200000 sum=     -94605.190000 #b4cd0c8e
+
+[packages]
+  0000 assetAppreciation=3854.537404 mortgageInterest=-1625.000000 mortgagePrincipal=-271.204070 propertyTaxes=-501.250000 maintenance=-417.708333 insurance=-200.000000 value=605340.625000
+  0001 assetAppreciation=3867.426233 mortgageInterest=-1623.530978 mortgagePrincipal=-272.673093 propertyTaxes=-502.503125 longTermCapitalGains=771.280327 maintenance=-418.752604 insurance=-200.000000 value=606191.844558
+  0002 assetAppreciation=3868.093673 mortgageInterest=-1622.053999 mortgagePrincipal=-274.150072 propertyTaxes=-503.759383 longTermCapitalGains=1528.484895 maintenance=-419.799486 insurance=-200.000000 value=607041.431550
+  0003 assetAppreciation=3868.740514 mortgageInterest=-1620.569019 mortgagePrincipal=-275.635051 propertyTaxes=-505.018781 longTermCapitalGains=1538.302092 maintenance=-420.848984 insurance=-200.000000 value=607889.359626
+  0004 assetAppreciation=3869.366571 mortgageInterest=-1619.075996 mortgagePrincipal=-277.128075 propertyTaxes=-506.281328 longTermCapitalGains=1548.085235 maintenance=-421.901107 insurance=-200.000000 value=608735.602239
+  0005 assetAppreciation=3869.971662 mortgageInterest=-1617.574886 mortgagePrincipal=-278.629185 propertyTaxes=-507.547032 longTermCapitalGains=1557.834557 maintenance=-422.955860 insurance=-200.000000 value=609580.132642
+  0006 assetAppreciation=3870.555600 mortgageInterest=-1616.065644 mortgagePrincipal=-280.138426 propertyTaxes=-508.815899 longTermCapitalGains=1567.550291 maintenance=-424.013249 insurance=-200.000000 value=610422.923890
+  0007 assetAppreciation=3871.118197 mortgageInterest=-1614.548228 mortgagePrincipal=-281.655843 propertyTaxes=-510.087939 longTermCapitalGains=1577.232666 maintenance=-425.073282 insurance=-200.000000 value=611263.948836
+  0008 assetAppreciation=3871.659267 mortgageInterest=-1613.022592 mortgagePrincipal=-283.181479 propertyTaxes=-511.363159 longTermCapitalGains=1586.881913 maintenance=-426.135966 insurance=-200.000000 value=612103.180127
+  0009 assetAppreciation=3872.178619 mortgageInterest=-1611.488692 mortgagePrincipal=-284.715378 propertyTaxes=-512.641567 longTermCapitalGains=1596.498258 maintenance=-427.201306 insurance=-200.000000 value=612940.590211
+  0010 assetAppreciation=3872.676062 mortgageInterest=-1609.946484 mortgagePrincipal=-286.257587 propertyTaxes=-513.923171 longTermCapitalGains=1606.081930 maintenance=-428.269309 insurance=-200.000000 value=613776.151328
+  0011 assetAppreciation=3873.151406 mortgageInterest=-1608.395922 mortgagePrincipal=-287.808149 propertyTaxes=-515.207978 longTermCapitalGains=1615.633154 maintenance=-429.339982 insurance=-200.000000 value=614609.835510
+  0012 assetAppreciation=3873.604456 mortgageInterest=-1606.836961 mortgagePrincipal=-289.367109 propertyTaxes=-516.495998 longTermCapitalGains=1625.152155 maintenance=-430.413332 insurance=-200.000000 value=615441.614585
+  0013 assetAppreciation=3874.035017 mortgageInterest=-1605.269556 mortgagePrincipal=-290.934515 propertyTaxes=-517.787238 longTermCapitalGains=1634.639156 maintenance=-431.489365 insurance=-200.000000 value=616271.460168
+  0014 assetAppreciation=3874.442895 mortgageInterest=-1603.693661 mortgagePrincipal=-292.510410 propertyTaxes=-519.081706 longTermCapitalGains=1644.094380 maintenance=-432.568089 insurance=-200.000000 value=617099.343666
+  0015 assetAppreciation=3874.827891 mortgageInterest=-1602.109229 mortgagePrincipal=-294.094841 propertyTaxes=-520.379411 longTermCapitalGains=1653.518049 maintenance=-433.649509 insurance=-200.000000 value=617925.236271
+  0016 assetAppreciation=3875.189808 mortgageInterest=-1600.516216 mortgagePrincipal=-295.687855 propertyTaxes=-521.680359 longTermCapitalGains=1662.910382 maintenance=-434.733633 insurance=-200.000000 value=618749.108965
+  0017 assetAppreciation=3875.528445 mortgageInterest=-1598.914573 mortgagePrincipal=-297.289497 propertyTaxes=-522.984560 longTermCapitalGains=1672.271598 maintenance=-435.820467 insurance=-200.000000 value=619570.932513
+  0018 assetAppreciation=3875.843601 mortgageInterest=-1597.304255 mortgagePrincipal=-298.899816 propertyTaxes=-524.292022 longTermCapitalGains=1681.601916 maintenance=-436.910018 insurance=-200.000000 value=620390.677465
+  0019 assetAppreciation=3876.135073 mortgageInterest=-1595.685214 mortgagePrincipal=-300.518856 propertyTaxes=-525.602752 longTermCapitalGains=1690.901553 maintenance=-438.002293 insurance=-200.000000 value=621208.314153
+  0020 assetAppreciation=3876.402658 mortgageInterest=-1594.057404 mortgagePrincipal=-302.146667 propertyTaxes=-526.916759 longTermCapitalGains=1700.170724 maintenance=-439.097299 insurance=-200.000000 value=622023.812690
+  0021 assetAppreciation=3876.646150 mortgageInterest=-1592.420776 mortgagePrincipal=-303.783294 propertyTaxes=-528.234050 longTermCapitalGains=1709.409644 maintenance=-440.195042 insurance=-200.000000 value=622837.142969
+  0022 assetAppreciation=3876.865344 mortgageInterest=-1590.775283 mortgagePrincipal=-305.428787 propertyTaxes=-529.554636 longTermCapitalGains=1718.618527 maintenance=-441.295530 insurance=-200.000000 value=623648.274662
+  0023 assetAppreciation=3877.060029 mortgageInterest=-1589.120877 mortgagePrincipal=-307.083193 propertyTaxes=-530.878522 longTermCapitalGains=1727.797585 maintenance=-442.398768 insurance=-200.000000 value=624457.177217
+  0024 assetAppreciation=3877.229998 mortgageInterest=-1587.457510 mortgagePrincipal=-308.746561 propertyTaxes=-532.205718 longTermCapitalGains=1736.947029 maintenance=-443.504765 insurance=-200.000000 value=625263.819857
+  0025 assetAppreciation=3877.375040 mortgageInterest=-1585.785133 mortgagePrincipal=-310.418938 propertyTaxes=-533.536233 longTermCapitalGains=1746.067071 maintenance=-444.613527 insurance=-200.000000 value=626068.171581
+  0026 assetAppreciation=3877.494941 mortgageInterest=-1584.103697 mortgagePrincipal=-312.100374 propertyTaxes=-534.870073 longTermCapitalGains=1755.157919 maintenance=-445.725061 insurance=-200.000000 value=626870.201157
+  0027 assetAppreciation=3877.589489 mortgageInterest=-1582.413153 mortgagePrincipal=-313.790917 propertyTaxes=-536.207248 longTermCapitalGains=1764.219782 maintenance=-446.839374 insurance=-200.000000 value=627669.877129
+  0028 assetAppreciation=3877.658469 mortgageInterest=-1580.713452 mortgagePrincipal=-315.490618 propertyTaxes=-537.547767 longTermCapitalGains=1773.252867 maintenance=-447.956472 insurance=-200.000000 value=628467.167806
+  0029 assetAppreciation=3877.701663 mortgageInterest=-1579.004545 mortgagePrincipal=-317.199526 propertyTaxes=-538.891636 longTermCapitalGains=1782.257380 maintenance=-449.076363 insurance=-200.000000 value=629262.041269
+  0030 assetAppreciation=3877.718854 mortgageInterest=-1577.286381 mortgagePrincipal=-318.917690 propertyTaxes=-540.238865 longTermCapitalGains=1791.233526 maintenance=-450.199054 insurance=-200.000000 value=630054.465362
+  0031 assetAppreciation=3877.709823 mortgageInterest=-1575.558910 mortgagePrincipal=-320.645161 propertyTaxes=-541.589462 longTermCapitalGains=1800.181511 maintenance=-451.324552 insurance=-200.000000 value=630844.407698
+  0032 assetAppreciation=3877.674349 mortgageInterest=-1573.822082 mortgagePrincipal=-322.381989 propertyTaxes=-542.943436 longTermCapitalGains=1809.101536 maintenance=-452.452863 insurance=-200.000000 value=631631.835651
+  0033 assetAppreciation=3877.612209 mortgageInterest=-1572.075846 mortgagePrincipal=-324.128224 propertyTaxes=-544.300795 longTermCapitalGains=1817.993804 maintenance=-453.583995 insurance=-200.000000 value=632416.716359
+  0034 assetAppreciation=3877.523180 mortgageInterest=-1570.320152 mortgagePrincipal=-325.883919 propertyTaxes=-545.661547 longTermCapitalGains=1826.858516 maintenance=-454.717955 insurance=-200.000000 value=633199.016719
+  0035 assetAppreciation=3877.407036 mortgageInterest=-1568.554947 mortgagePrincipal=-327.649123 propertyTaxes=-547.025700 longTermCapitalGains=1835.695872 maintenance=-455.854750 insurance=-200.000000 value=633978.703388
+  0036 assetAppreciation=3877.263551 mortgageInterest=-1566.780181 mortgagePrincipal=-329.423890 propertyTaxes=-548.393265 longTermCapitalGains=1844.506072 maintenance=-456.994387 insurance=-200.000000 value=634755.742781
+  0037 assetAppreciation=3877.092496 mortgageInterest=-1564.995802 mortgagePrincipal=-331.208269 propertyTaxes=-549.764248 longTermCapitalGains=1853.289314 maintenance=-458.136873 insurance=-200.000000 value=635530.101068
+  0038 assetAppreciation=3876.893641 mortgageInterest=-1563.201757 mortgagePrincipal=-333.002314 propertyTaxes=-551.138658 longTermCapitalGains=1862.045794 maintenance=-459.282215 insurance=-200.000000 value=636301.744176
+  0039 assetAppreciation=3876.666756 mortgageInterest=-1561.397994 mortgagePrincipal=-334.806076 propertyTaxes=-552.516505 longTermCapitalGains=1870.775709 maintenance=-460.430421 insurance=-200.000000 value=637070.637782
+  0040 assetAppreciation=3876.411606 mortgageInterest=-1559.584461 mortgagePrincipal=-336.619609 propertyTaxes=-553.897796 longTermCapitalGains=1879.479254 maintenance=-461.581497 insurance=-200.000000 value=637836.747315
+  0041 assetAppreciation=3876.127958 mortgageInterest=-1557.761105 mortgagePrincipal=-338.442965 propertyTaxes=-555.282541 longTermCapitalGains=1888.156623 maintenance=-462.735451 insurance=-200.000000 value=638600.037956
+  0042 assetAppreciation=3875.815577 mortgageInterest=-1555.927872 mortgagePrincipal=-340.276198 propertyTaxes=-556.670747 longTermCapitalGains=1896.808011 maintenance=-463.892289 insurance=-200.000000 value=639360.474632
+  0043 assetAppreciation=3875.474223 mortgageInterest=-1554.084710 mortgagePrincipal=-342.119361 propertyTaxes=-558.062424 longTermCapitalGains=1905.433608 maintenance=-465.052020 insurance=-200.000000 value=640118.022018
+  0044 assetAppreciation=3875.103659 mortgageInterest=-1552.231563 mortgagePrincipal=-343.972507 propertyTaxes=-559.457580 longTermCapitalGains=1914.033607 maintenance=-466.214650 insurance=-200.000000 value=640872.644532
+  0045 assetAppreciation=3874.703643 mortgageInterest=-1550.368379 mortgagePrincipal=-345.835692 propertyTaxes=-560.856224 longTermCapitalGains=1922.608197 maintenance=-467.380187 insurance=-200.000000 value=641624.306338
+  0046 assetAppreciation=3874.273933 mortgageInterest=-1548.495102 mortgagePrincipal=-347.708968 propertyTaxes=-562.258365 longTermCapitalGains=1931.157570 maintenance=-468.548637 insurance=-200.000000 value=642372.971339
+  0047 assetAppreciation=3873.814286 mortgageInterest=-1546.611678 mortgagePrincipal=-349.592392 propertyTaxes=-563.664011 longTermCapitalGains=1939.681912 maintenance=-469.720009 insurance=-200.000000 value=643118.603182
+  0048 assetAppreciation=3873.324456 mortgageInterest=-1544.718053 mortgagePrincipal=-351.486018 propertyTaxes=-565.073171 longTermCapitalGains=1948.181412 maintenance=-470.894309 insurance=-200.000000 value=643861.165248
+  0049 assetAppreciation=3872.804195 mortgageInterest=-1542.814170 mortgagePrincipal=-353.389900 propertyTaxes=-566.485853 longTermCapitalGains=1956.656256 maintenance=-472.071545 insurance=-200.000000 value=644600.620657
+  0050 assetAppreciation=3872.253255 mortgageInterest=-1540.899975 mortgagePrincipal=-355.304095 propertyTaxes=-567.902068 longTermCapitalGains=1965.106630 maintenance=-473.251723 insurance=-200.000000 value=645336.932265
+  0051 assetAppreciation=3871.671386 mortgageInterest=-1538.975411 mortgagePrincipal=-357.228659 propertyTaxes=-569.321823 longTermCapitalGains=1973.532720 maintenance=-474.434853 insurance=-200.000000 value=646070.062661
+  0052 assetAppreciation=3871.058336 mortgageInterest=-1537.040423 mortgagePrincipal=-359.163648 propertyTaxes=-570.745128 longTermCapitalGains=1981.934709 maintenance=-475.620940 insurance=-200.000000 value=646799.974163
+  0053 assetAppreciation=3870.413850 mortgageInterest=-1535.094953 mortgagePrincipal=-361.109118 propertyTaxes=-572.171991 longTermCapitalGains=1990.312781 maintenance=-476.809992 insurance=-200.000000 value=647526.628823
+  0054 assetAppreciation=3869.737674 mortgageInterest=-1533.138945 mortgagePrincipal=-363.065125 propertyTaxes=-573.602421 longTermCapitalGains=1998.667116 maintenance=-478.002017 insurance=-200.000000 value=648249.988419
+  0055 assetAppreciation=3869.029551 mortgageInterest=-1531.172342 mortgagePrincipal=-365.031728 propertyTaxes=-575.036427 longTermCapitalGains=2006.997898 maintenance=-479.197022 insurance=-200.000000 value=648970.014456
+  0056 assetAppreciation=3868.289221 mortgageInterest=-1529.195087 mortgagePrincipal=-367.008983 propertyTaxes=-576.474018 longTermCapitalGains=2015.305307 maintenance=-480.395015 insurance=-200.000000 value=649686.668165
+  0057 assetAppreciation=3867.516424 mortgageInterest=-1527.207122 mortgagePrincipal=-368.996949 propertyTaxes=-577.915203 longTermCapitalGains=2023.589521 maintenance=-481.596002 insurance=-200.000000 value=650399.910499
+  0058 assetAppreciation=3866.710899 mortgageInterest=-1525.208388 mortgagePrincipal=-370.995682 propertyTaxes=-579.359991 longTermCapitalGains=2031.850720 maintenance=-482.799992 insurance=-200.000000 value=651109.702133
+  0059 assetAppreciation=3865.872381 mortgageInterest=-1523.198828 mortgagePrincipal=-373.005242 propertyTaxes=-580.808391 longTermCapitalGains=2040.089081 maintenance=-484.006992 insurance=-200.000000 value=651816.003459
+
+[priceIndex]
+  [0000]         1.002583         1.005173         1.007770         1.010373         1.012984         1.015600
+  [0006]         1.018224         1.020854         1.023492         1.026136         1.028787         1.031444
+  [0012]         1.034109         1.036780         1.039459         1.042144         1.044836         1.047535
+  [0018]         1.050241         1.052955         1.055675         1.058402         1.061136         1.063877
+  [0024]         1.066626         1.069381         1.072144         1.074913         1.077690         1.080474
+  [0030]         1.083265         1.086064         1.088870         1.091682         1.094503         1.097330
+  [0036]         1.100165         1.103007         1.105856         1.108713         1.111577         1.114449
+  [0042]         1.117328         1.120214         1.123108         1.126010         1.128919         1.131835
+  [0048]         1.134759         1.137690         1.140629         1.143576         1.146530         1.149492
+  [0054]         1.152462         1.155439         1.158424         1.161416         1.164417         1.167425
+
+[sanity]
+  (no findings)
+
+[traces]
+  scopes = 1809
+  unattributedEvents = 0
+  1x 2027 annual pass
+  1x 2027 tax true-up
+  1x 2028 annual pass
+  1x 2028 tax true-up
+  1x 2029 annual pass
+  1x 2029 tax true-up
+  1x 2030 annual pass
+  1x 2030 tax true-up
+  1x 2031 annual pass
+  1x 2031 tax true-up
+  7x April 2026
+  7x April 2027
+  7x April 2028
+  7x April 2029
+  7x April 2030
+  7x August 2026
+  7x August 2027
+  7x August 2028
+  7x August 2029
+  7x August 2030
+  7x December 2026
+  7x December 2027
+  7x December 2028
+  7x December 2029
+  7x December 2030
+  7x February 2026
+  7x February 2027
+  7x February 2028
+  7x February 2029
+  7x February 2030
+  60x Home insurance
+  60x Home maintenance
+  7x January 2026
+  7x January 2027
+  7x January 2028
+  7x January 2029
+  7x January 2030
+  7x July 2026
+  7x July 2027
+  7x July 2028
+  7x July 2029
+  7x July 2030
+  7x June 2026
+  7x June 2027
+  7x June 2028
+  7x June 2029
+  7x June 2030
+  7x March 2026
+  7x March 2027
+  7x March 2028
+  7x March 2029
+  7x March 2030
+  7x May 2026
+  7x May 2027
+  7x May 2028
+  7x May 2029
+  7x May 2030
+  7x November 2026
+  7x November 2027
+  7x November 2028
+  7x November 2029
+  7x November 2030
+  7x October 2026
+  7x October 2027
+  7x October 2028
+  7x October 2029
+  7x October 2030
+  60x Pay Brokerage
+  60x Pay Checking
+  60x Pay Home
+  120x Pay Mortgage
+  60x Payroll: Brokerage
+  60x Payroll: Checking
+  60x Payroll: Home
+  60x Payroll: Mortgage
+  60x Required distribution from Brokerage
+  60x Required distribution from Checking
+  60x Required distribution from Home
+  60x Required distribution from Mortgage
+  7x September 2026
+  7x September 2027
+  7x September 2028
+  7x September 2029
+  7x September 2030
+  234x Settle from Brokerage
+  5x Settle from Checking
+  60x Withholding: Brokerage
+  60x Withholding: Checking
+  60x Withholding: Home
+  60x Withholding: Mortgage
+
+[traceLegend]
+  c0 = Pay Mortgage > Pay Mortgage > Settle from Checking
+  c1 = Home maintenance > Settle from Brokerage
+  c2 = Home insurance > Settle from Brokerage
+  c3 = Settle from Brokerage
+  c4 = Pay Mortgage > Pay Mortgage > Settle from Brokerage
+  c5 = Home maintenance > Settle from Checking
+  c6 = Home insurance > Settle from Checking
+  c7 = Settle from Checking
+  c8 = Payroll: Mortgage
+
