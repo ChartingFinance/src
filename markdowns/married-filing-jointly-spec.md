@@ -362,7 +362,8 @@ written prediction.
 | --- | --- | --- |
 | 0 | Fix the `--set global_filingAs` no-op | none — `--set` is not blessed |
 | 1 | Add `filingAs` to fixture config; add the four MFJ fixtures | new baselines only; Single fixtures byte-identical |
-| 2 | Home-sale exclusion by filing status (3.4) + the rule note | `mfj-home-sale` only |
+| 2 | Home-sale exclusion by filing status (3.4) + the rule note | `mfj-home-sale` only — DONE, see 7.0 |
+| 2b | Stop the annual true-up re-taxing the excluded gain (7.0) | every fixture that sells a primary home, **including single** |
 | 3 | Filing-status vocabulary: one validated enum, `'MFJ'` recognised rather than defaulted (3.7) | none — pure refactor, empty diff is the proof |
 | 4 | Contribution limits: per-person semantics behind `limitFor(kind, user)` (3.1) | `mfj-two-401ks`; Single fixtures unchanged |
 | 5 | Owner-keyed FICA accumulator with a single key (3.3, seam only) | none — empty diff is the proof |
@@ -414,6 +415,52 @@ not have capped. — HELD.** Present in its coverage entry. Step 4 must remove i
 
 **5. Step 3 (the vocabulary refactor) produces an empty baseline diff.** Not yet
 checked — step 3 is not written.
+
+### 7.0 Step 2 — the exclusion is fixed, and it changes nobody's tax bill
+
+**Predictions, all three held.** The 12 single fixtures and the three MFJ
+fixtures without a home showed config-header changes only — zero simulated
+numbers moved. `mfj-home-sale` was the only fixture whose numbers moved:
+`homeSaleExclusion = 250000 → 500000`, a realised gain of $488,452 (inside the
+$250k–$500k window the fixture was built for), and its close-time
+`capitalGainsTax` of $19,509.78 fell to zero.
+
+**And the household paid exactly the same total federal tax: $67,916.52 before,
+$67,916.52 after.** The charge moved from the Home asset to Checking. It did not
+go away.
+
+The cause is a **separate, pre-existing bug that this change exposed rather than
+introduced**. `tax-engine.js:302` accumulates the *gross* gain into
+`this.monthly.longTermCapitalGains` while the tax at close is computed on the
+*post-§121* gain. `applyAnnualTaxTrueUp` then recomputes the year's liability
+from `yearlySnapshot.longTermCapitalGains` — the gross figure — subtracts what
+was withheld, and bills the difference to the backstop. The exclusion is applied
+at withholding time and **undone by the annual true-up**.
+
+So today, for every filing status:
+
+> the primary-home capital-gains exclusion changes which account pays and in
+> which month, and has no effect whatsoever on how much tax a household owes.
+
+Single filers are affected identically. `housing-carrying-costs` realises an ~$80k
+home gain that is fully excluded at close and then taxed in full by the true-up.
+
+**The fix is not two lines.** Reconciliation compares the sum of
+`CAPITAL_GAIN_RECOGNIZED` events against `monthly.longTermCapitalGains`
+(`portfolio.js:425`), so the accumulator cannot simply be reduced. And the event
+should keep reporting the gross gain — a household that sold a home for a
+$488,452 gain should see $488,452, not a tax-adjusted figure. The shape that
+satisfies both is a new `FinancialPackage` field carrying the excluded amount,
+accumulated at close and subtracted in `applyAnnualTaxTrueUp`. That touches
+`FINANCIAL_FIELDS`, the monthly-package lines in every baseline, and the
+reconciliation buckets.
+
+**It also moves Single-filer results**, which is outside what step 2 was scoped
+to do — hence it is recorded here for a decision rather than folded in. Step 2 as
+committed is still correct and still required: the figure is right at the
+withholding site, it lives with the other filing-status data, and the rule note
+stops telling MFJ households the wrong number. It is a prerequisite for the fix,
+not a substitute for it.
 
 ### 7.1 Two harness defects found while doing this
 

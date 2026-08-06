@@ -275,6 +275,10 @@ function historyDigestLine(name, values) {
  */
 const EXTRA_CONFIG = [
   ['allocateHouseholdTax', () => G.global_allocate_household_tax],
+  // Derived from filingAs rather than set directly, so it is recorded as the
+  // EFFECTIVE value — a reader should not have to know the mapping to see that
+  // an MFJ fixture excludes $500,000 and a single one $250,000.
+  ['homeSaleExclusion', () => G.activeTaxTable?.activeHomeSaleExclusion],
   ['pensionWithholdingRate', () => G.global_pension_withholding_rate],
   ['socialSecurityWithholdingRate', () => G.global_social_security_withholding_rate],
   ['retirementWithholdingRate', () => G.global_retirement_withholding_rate],

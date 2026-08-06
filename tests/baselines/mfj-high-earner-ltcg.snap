@@ -22,7 +22,6 @@
   equityDividendAverageAnnualRate = 0.025
   equityGrowthAllocation = 0.5
   filingAs = MFJ
-  homeSaleCapitalGainsDiscount = 250000
   inflationRate = 0.031
   propertyTaxDeductionMax = 40000
   propertyTaxRate = 0.01
@@ -32,6 +31,7 @@
   userRetirementAge = 67
   userStartAge = 55
   allocateHouseholdTax = false
+  homeSaleExclusion = 500000
   pensionWithholdingRate = 0.1
   socialSecurityWithholdingRate = 0
   retirementWithholdingRate = 0.1

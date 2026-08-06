@@ -24,7 +24,7 @@ export class WithholdingResult {
   }
 }
 import { logger, LogCategory } from './utils/logger.js';
-import { global_filingAs, global_inflationRate, global_propertyTaxDeductionMax, global_home_sale_capital_gains_discount } from './globals.js';
+import { global_filingAs, global_inflationRate, global_propertyTaxDeductionMax } from './globals.js';
 
 export const us_2026_taxtables = {
     "year": 2026,
@@ -90,6 +90,13 @@ export const us_2026_taxtables = {
         "url": "https://www.irs.gov/newsroom/irs-releases-tax-inflation-adjustments-for-tax-year-2026-including-amendments-from-the-one-big-beautiful-bill",
         "single": 16100.0,
         "married": 32200.0
+    },
+    // IRC §121. NOT inflation-indexed — unchanged since 1997, unlike every other
+    // figure in this table. See the note in inflateTaxes().
+    "homeSaleExclusion": {
+        "url": "https://www.irs.gov/taxtopics/tc701",
+        "single": 250000.0,
+        "married": 500000.0
     }
 };
 
@@ -156,9 +163,15 @@ export const us_2025_taxtables = {
     "standardDeduction": {
         "url": "https://www.irs.gov/newsroom/irs-provides-tax-inflation-adjustments-for-tax-year-2024",
         "single": 15000.0,
-        "married": 30000.0        
+        "married": 30000.0
+    },
+    // IRC §121 — same figures as 2026, because it is not inflation-indexed.
+    "homeSaleExclusion": {
+        "url": "https://www.irs.gov/taxtopics/tc701",
+        "single": 250000.0,
+        "married": 500000.0
     }
-}; 
+};
 
 // https://www.irs.gov/publications/p590b
 export const uniformLifetimeTable = [
@@ -227,6 +240,7 @@ export class TaxTable {
             this.activeIncomeTable = this.activeTaxTables.income.tables[0];
             this.activeCapitalGainsTable = this.activeTaxTables.capitalGains.tables[0];
             this.activeStandardDeduction = this.activeTaxTables.standardDeduction.single;
+            this.activeHomeSaleExclusion = this.activeTaxTables.homeSaleExclusion.single;
             this.iraContributionLimitBelow50 = 7500;
             this.iraContributionLimit50AndOver = 8600;
             this.four01KContributionLimitBelow50 = 24500;
@@ -236,6 +250,7 @@ export class TaxTable {
             this.activeIncomeTable = this.activeTaxTables.income.tables[1];
             this.activeCapitalGainsTable = this.activeTaxTables.capitalGains.tables[1];
             this.activeStandardDeduction = this.activeTaxTables.standardDeduction.married;
+            this.activeHomeSaleExclusion = this.activeTaxTables.homeSaleExclusion.married;
             this.iraContributionLimitBelow50 = 15000;
             this.iraContributionLimit50AndOver = 17200;
             this.four01KContributionLimitBelow50 = 24500;
@@ -286,6 +301,12 @@ export class TaxTable {
         this.inflateTaxRows(this.activeTaxTables.income.tables, r);
         this.inflateTaxRows(this.activeTaxTables.capitalGains.tables, r);
         this.activeStandardDeduction *= r;
+        // activeHomeSaleExclusion is deliberately absent. IRC §121 fixed it at
+        // $250,000 / $500,000 in 1997 with no inflation indexing, so a plan that
+        // inflated it would under-tax every long-held home — by a factor of 2.4
+        // over a 30-year plan at 3.1%. Everything else in this method is indexed
+        // by statute; this one is the exception, so it is called out rather than
+        // looking like an omission.
         this.iraContributionLimitBelow50 *= r;
         this.iraContributionLimit50AndOver *= r;
         this.four01KContributionLimitBelow50 *= r;
@@ -452,7 +473,7 @@ export class TaxTable {
         if (isLongTerm) {
             let taxableGains = capitalGains.copy();
             if (holdingMonths > 24 && isPrimaryHome) {
-                taxableGains.amount -= global_home_sale_capital_gains_discount;
+                taxableGains.amount -= this.activeHomeSaleExclusion;
                 if (taxableGains.amount < 0) taxableGains.zero();
             }
             const tax = this.calculateYearlyLongTermCapitalGainsTax(annualizedIncome, taxableGains);

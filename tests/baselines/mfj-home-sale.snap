@@ -16,7 +16,6 @@
   equityDividendAverageAnnualRate = 0.025
   equityGrowthAllocation = 0.5
   filingAs = MFJ
-  homeSaleCapitalGainsDiscount = 250000
   inflationRate = 0.031
   propertyTaxDeductionMax = 40000
   propertyTaxRate = 0.01
@@ -26,6 +25,7 @@
   userRetirementAge = 67
   userStartAge = 55
   allocateHouseholdTax = false
+  homeSaleExclusion = 500000
   pensionWithholdingRate = 0.1
   socialSecurityWithholdingRate = 0
   retirementWithholdingRate = 0.1
@@ -36,7 +36,7 @@
   lastDate = 2030-12
   startValue = 830000.000000
   finishValue = 847006.351967
-  accumulated = -120977.978050
+  accumulated = -140487.757205
   total.employedIncome = 540000.000000
   total.socialSecurityTax = -33480.000000
   total.assetAppreciation = 88452.065309
@@ -47,8 +47,7 @@
   total.longTermCapitalGains = 488452.065309
   total.maintenance = -29557.731824
   total.insurance = -10500.000000
-  total.longTermCapitalGainsTax = -19509.779155
-  total.value = 52047598.147812
+  total.value = 52164656.822741
 
 [assetOrder]
   0 Salary
@@ -319,7 +318,7 @@
   0248 2029-06 interestIncome                   0.000000 cash  interestIncome         c-
   0249 2029-06 settlement                    -740.376721 cash  -                      c2 {from=Home label=maintenance to=Checking}
   0250 2029-06 settlement                    -250.000000 cash  -                      c3 {from=Home label=insurance to=Checking}
-  0251 2029-07 transfer                    868942.286154 cash  -                      c5 {cadence=monthly from=Home to=Checking}
+  0251 2029-07 transfer                    888452.065309 cash  -                      c5 {cadence=monthly from=Home to=Checking}
   0252 2029-07 transfer                      7629.692607 cash  -                      c0 {cadence=monthly from=Salary to=Checking}
   0253 2029-07 grossUp                      -6686.693884 cash  -                      c1 {forAsset=Living overflow=false}
   0254 2029-07 interestIncome                   0.000000 cash  interestIncome         c-
@@ -338,7 +337,7 @@
   0267 2029-12 transfer                      7629.692607 cash  -                      c0 {cadence=monthly from=Salary to=Checking}
   0268 2029-12 grossUp                      -6773.511079 cash  -                      c1 {forAsset=Living overflow=false}
   0269 2029-12 interestIncome                   0.000000 cash  interestIncome         c-
-  0270 2029-12 taxTrueUp                   -48406.741219 cash  -                      c6 {direction=underpayment}
+  0270 2029-12 taxTrueUp                   -67916.520374 cash  -                      c6 {direction=underpayment}
   0271 2030-01 transfer                      7642.036577 cash  -                      c0 {cadence=monthly from=Salary to=Checking}
   0272 2030-01 grossUp                      -6791.009315 cash  -                      c1 {forAsset=Living overflow=false}
   0273 2030-01 interestIncome                   0.000000 cash  interestIncome         c-
@@ -377,13 +376,13 @@
   0306 2030-12 interestIncome                   0.000000 cash  interestIncome         c-
 
 [history] Checking
-  value                        n=  60 first=    30676.510000 last=   847006.350000 min=    12028.390000 max=   886368.660000 sum=   16428181.670000 #8b0a667c
-  estimatedIncomeTax           n=  60 first=        0.000000 last=        0.000000 min=   -48406.740000 max=        0.000000 sum=     -48406.740000 #092c6c99
-  incomeTax                    n=  60 first=        0.000000 last=        0.000000 min=   -48406.740000 max=        0.000000 sum=     -48406.740000 #092c6c99
-  federalTaxes                 n=  60 first=        0.000000 last=        0.000000 min=   -48406.740000 max=        0.000000 sum=     -48406.740000 #092c6c99
-  taxes                        n=  60 first=        0.000000 last=        0.000000 min=   -48406.740000 max=        0.000000 sum=     -48406.740000 #092c6c99
-  cashFlow                     n=  60 first=        0.000000 last=        0.000000 min=   -48406.740000 max=        0.000000 sum=     -48406.740000 #092c6c99
-  cashFlowAccumulated          n=  60 first=        0.000000 last=   -48406.740000 min=   -48406.740000 max=        0.000000 sum=    -580880.880000 #3757bbf5
+  value                        n=  60 first=    30676.510000 last=   847006.350000 min=    12028.390000 max=   905878.440000 sum=   16545240.340000 #38893b78
+  estimatedIncomeTax           n=  60 first=        0.000000 last=        0.000000 min=   -67916.520000 max=        0.000000 sum=     -67916.520000 #3894e078
+  incomeTax                    n=  60 first=        0.000000 last=        0.000000 min=   -67916.520000 max=        0.000000 sum=     -67916.520000 #3894e078
+  federalTaxes                 n=  60 first=        0.000000 last=        0.000000 min=   -67916.520000 max=        0.000000 sum=     -67916.520000 #3894e078
+  taxes                        n=  60 first=        0.000000 last=        0.000000 min=   -67916.520000 max=        0.000000 sum=     -67916.520000 #3894e078
+  cashFlow                     n=  60 first=        0.000000 last=        0.000000 min=   -67916.520000 max=        0.000000 sum=     -67916.520000 #3894e078
+  cashFlowAccumulated          n=  60 first=        0.000000 last=   -67916.520000 min=   -67916.520000 max=        0.000000 sum=    -814998.240000 #f7bf8335
 
 [asset] Home
   instrument = realEstate
@@ -391,10 +390,10 @@
   startCurrency = 800000.000000
   finishCurrency = 0.000000
   startBasis = 400000.000000
-  finishBasis = 868942.286154
+  finishBasis = 888452.065309
   isClosed = yes  isDepleted = no
-  closedDate = 2031-01  closedValue = 868942.286154
-  events = 213  reconciled = 213
+  closedDate = 2031-01  closedValue = 888452.065309
+  events = 212  reconciled = 212
 
 [events] Home
   0000 2026-01 propertyTaxEscrow                0.000000 info  -                      c-
@@ -608,23 +607,20 @@
   0208 2029-06 maintenance                   -740.376721 info  maintenance            c-
   0209 2029-06 insurance                     -250.000000 info  insurance              c-
   0210 2029-07 capitalGainRecognized       488452.065309 info  longTermCapitalGain    c- {spillover=false}
-  0211 2029-07 capitalGainsTax             -19509.779155 cash  longTermCapitalGainTax c-
-  0212 2029-07 transfer                   -868942.286154 cash  -                      c5 {cadence=monthly from=Home to=Checking}
+  0211 2029-07 transfer                   -888452.065309 cash  -                      c5 {cadence=monthly from=Home to=Checking}
 
 [history] Home
   value                        n=  60 first=   802000.000000 last=        0.000000 min=        0.000000 max=   888452.070000 sum=   35469278.190000 #eb107da4
   growth                       n=  60 first=     2000.000000 last=        0.000000 min=        0.000000 max=     2215.590000 sum=      88452.070000 #3ee5056c
   income                       n=  60 first=        0.000000 last=        0.000000 min=        0.000000 max=   488452.070000 sum=     488452.070000 #ae2af1db
-  federalTaxes                 n=  60 first=        0.000000 last=        0.000000 min=   -19509.780000 max=        0.000000 sum=     -19509.780000 #ccea4ce1
   saltTaxes                    n=  60 first=     -735.170000 last=        0.000000 min=     -814.410000 max=        0.000000 sum=     -32513.470000 #5c675bfc
-  taxes                        n=  60 first=     -735.170000 last=        0.000000 min=   -19509.780000 max=        0.000000 sum=     -52023.250000 #849954aa
+  taxes                        n=  60 first=     -735.170000 last=        0.000000 min=     -814.410000 max=        0.000000 sum=     -32513.470000 #5c675bfc
   expense                      n=  60 first=     -918.330000 last=        0.000000 min=     -990.380000 max=        0.000000 sum=     -40057.710000 #503c2c48
   cashFlow                     n=  60 first=    -1653.500000 last=        0.000000 min=    -1804.790000 max=        0.000000 sum=     -72571.250000 #f6b5875c
   cashFlowAccumulated          n=  60 first=    -1653.500000 last=   -72571.240000 min=   -72571.240000 max=    -1653.500000 sum=   -2843798.310000 #5fea4968
   longTermCapitalGain          n=  60 first=        0.000000 last=        0.000000 min=        0.000000 max=   488452.070000 sum=     488452.070000 #ae2af1db
   capitalGain                  n=  60 first=        0.000000 last=        0.000000 min=        0.000000 max=   488452.070000 sum=     488452.070000 #ae2af1db
   propertyTax                  n=  60 first=     -735.170000 last=        0.000000 min=     -814.410000 max=        0.000000 sum=     -32513.470000 #5c675bfc
-  longTermCapitalGainTax       n=  60 first=        0.000000 last=        0.000000 min=   -19509.780000 max=        0.000000 sum=     -19509.780000 #ccea4ce1
   maintenance                  n=  60 first=     -668.330000 last=        0.000000 min=     -740.380000 max=        0.000000 sum=     -29557.710000 #6032855d
   insurance                    n=  60 first=     -250.000000 last=        0.000000 min=     -250.000000 max=        0.000000 sum=     -10500.000000 #81cd734d
 
@@ -964,12 +960,12 @@
   0039 employedIncome=9000.000000 socialSecurityTax=-558.000000 assetAppreciation=2204.554634 expense=-6635.138605 medicareTax=-130.500000 incomeTax=-681.807393 propertyTaxes=-810.357541 maintenance=-736.688673 insurance=-250.000000 value=900066.522385
   0040 employedIncome=9000.000000 socialSecurityTax=-558.000000 assetAppreciation=2210.066020 expense=-6652.279379 medicareTax=-130.500000 incomeTax=-681.807393 propertyTaxes=-812.383435 maintenance=-738.530395 insurance=-250.000000 value=901437.928641
   0041 employedIncome=9000.000000 socialSecurityTax=-558.000000 assetAppreciation=2215.591185 expense=-6669.464435 medicareTax=-130.500000 incomeTax=-681.807393 propertyTaxes=-814.414393 maintenance=-740.376721 insurance=-250.000000 value=902793.758393
-  0042 employedIncome=9000.000000 socialSecurityTax=-558.000000 expense=-6686.693884 medicareTax=-130.500000 incomeTax=-681.807393 longTermCapitalGains=488452.065309 longTermCapitalGainsTax=-19509.779155 value=884209.704001
-  0043 employedIncome=9000.000000 socialSecurityTax=-558.000000 expense=-6703.967843 medicareTax=-130.500000 incomeTax=-681.807393 value=885118.110180
-  0044 employedIncome=9000.000000 socialSecurityTax=-558.000000 expense=-6721.286427 medicareTax=-130.500000 incomeTax=-681.807393 value=886009.153036
-  0045 employedIncome=9000.000000 socialSecurityTax=-558.000000 expense=-6738.649750 medicareTax=-130.500000 incomeTax=-681.807393 value=886882.787714
-  0046 employedIncome=9000.000000 socialSecurityTax=-558.000000 expense=-6756.057929 medicareTax=-130.500000 incomeTax=-681.807393 value=887738.969242
-  0047 employedIncome=9000.000000 socialSecurityTax=-558.000000 expense=-6773.511079 medicareTax=-130.500000 incomeTax=-681.807393 value=888577.652533
+  0042 employedIncome=9000.000000 socialSecurityTax=-558.000000 expense=-6686.693884 medicareTax=-130.500000 incomeTax=-681.807393 longTermCapitalGains=488452.065309 value=903719.483156
+  0043 employedIncome=9000.000000 socialSecurityTax=-558.000000 expense=-6703.967843 medicareTax=-130.500000 incomeTax=-681.807393 value=904627.889335
+  0044 employedIncome=9000.000000 socialSecurityTax=-558.000000 expense=-6721.286427 medicareTax=-130.500000 incomeTax=-681.807393 value=905518.932191
+  0045 employedIncome=9000.000000 socialSecurityTax=-558.000000 expense=-6738.649750 medicareTax=-130.500000 incomeTax=-681.807393 value=906392.566869
+  0046 employedIncome=9000.000000 socialSecurityTax=-558.000000 expense=-6756.057929 medicareTax=-130.500000 incomeTax=-681.807393 value=907248.748397
+  0047 employedIncome=9000.000000 socialSecurityTax=-558.000000 expense=-6773.511079 medicareTax=-130.500000 incomeTax=-681.807393 value=908087.431688
   0048 employedIncome=9000.000000 socialSecurityTax=-558.000000 expense=-6791.009315 medicareTax=-130.500000 incomeTax=-669.463423 value=841004.395135
   0049 employedIncome=9000.000000 socialSecurityTax=-558.000000 expense=-6808.552756 medicareTax=-130.500000 incomeTax=-669.463423 value=841820.290195
   0050 employedIncome=9000.000000 socialSecurityTax=-558.000000 expense=-6826.141518 medicareTax=-130.500000 incomeTax=-669.463423 value=842618.551056

@@ -370,8 +370,6 @@ export let global_equity_growth_allocation = 0.5;
 
 export let global_equity_dividend_average_annual_rate = 0.025;
 
-export let global_home_sale_capital_gains_discount = 250000;
-
 export let global_backtestYear = 'current';
 
 export let activeTaxTable = null;
@@ -422,7 +420,6 @@ export function global_workerSnapshot() {
         equityDividendAllocation: global_equity_dividend_allocation,
         equityGrowthAllocation: global_equity_growth_allocation,
         equityDividendAverageAnnualRate: global_equity_dividend_average_annual_rate,
-        homeSaleCapitalGainsDiscount: global_home_sale_capital_gains_discount,
         backtestYear: global_backtestYear,
         simDataMode: global_simDataMode,
     };
@@ -441,7 +438,6 @@ export function global_applyWorkerSnapshot(s) {
     global_equity_dividend_allocation = s.equityDividendAllocation;
     global_equity_growth_allocation = s.equityGrowthAllocation;
     global_equity_dividend_average_annual_rate = s.equityDividendAverageAnnualRate;
-    global_home_sale_capital_gains_discount = s.homeSaleCapitalGainsDiscount;
     global_backtestYear = s.backtestYear;
     global_simDataMode = s.simDataMode;
 }
