@@ -294,7 +294,21 @@ function applyConfig(fixture) {
   for (const [name, raw] of overrides) {
     const setter = SETTERS[name];
     if (!setter) fail(`--set ${name}: no known setter. Known: ${Object.keys(SETTERS).join(', ')}`);
-    setter(coerce(raw));
+
+    const want = coerce(raw);
+    setter.apply(want);
+
+    // The write must be observable, or the run below would silently measure the
+    // default and report it as "no drift". See the note on SETTERS.
+    const got = setter.read();
+    if (!valueLanded(got, want)) {
+      fail(
+        `--set ${name}=${raw} did not take — the global still reads ${JSON.stringify(got)}.\n` +
+        `  This global is probably localStorage-backed, so its setter writes the key\n` +
+        `  without assigning the module variable. Add the matching global_getX() to\n` +
+        `  the SETTERS entry.`
+      );
+    }
   }
 
   // A fresh table every fixture: TaxTable caches bracket state across years.
@@ -308,16 +322,69 @@ const coerce = (raw) => {
   return Number.isNaN(n) ? raw : n;
 };
 
-/** Only globals that actually change a simulation are exposed to --set. */
+/**
+ * Only globals that actually change a simulation are exposed to --set.
+ *
+ * Each entry is {apply, read}, and `read` is not decoration — it is the whole
+ * point. Several of these globals are localStorage-backed: `global_setX` writes
+ * the key and DOES NOT assign the module variable, which only `global_getX`
+ * copies back. A `--set` wired to the setter alone therefore writes somewhere
+ * real, throws nothing, and changes no simulated number — the tool reports "no
+ * drift" and the reader concludes the flag does nothing.
+ *
+ * That was true here for four of the eight knobs below (filingAs, inflationRate,
+ * taxYear, propertyTaxRate) until 2026-08-06. `--set global_inflationRate=0.02`
+ * on a 46-year plan reported "No simulated number moved", against a probe-
+ * measured ~$6M swing.
+ *
+ * So every entry now declares how to read the value back, and applyConfig
+ * verifies the write landed. A future knob added without its getter fails loudly
+ * on first use instead of quietly reporting that nothing happened.
+ */
 const SETTERS = {
-  global_allocate_household_tax: (v) => G.global_setAllocateHouseholdTax(v),
-  global_inflationRate: (v) => G.global_setInflationRate(v),
-  global_taxYear: (v) => G.global_setTaxYear(v),
-  global_filingAs: (v) => G.global_setFilingAs(v),
-  global_user_startAge: (v) => { G.global_setUserStartAge(v); G.global_getUserStartAge(); },
-  global_user_retirementAge: (v) => { G.global_setUserRetirementAge(v); G.global_getUserRetirementAge(); },
-  global_propertyTaxRate: (v) => G.global_setPropertyTaxRate(v),
-  global_backtestYear: (v) => G.global_setBacktestYearDirect(v),
+  global_allocate_household_tax: {
+    apply: (v) => G.global_setAllocateHouseholdTax(v),
+    read: () => G.global_allocate_household_tax,
+  },
+  global_inflationRate: {
+    apply: (v) => { G.global_setInflationRate(v); G.global_getInflationRate(); },
+    read: () => G.global_inflationRate,
+  },
+  global_taxYear: {
+    apply: (v) => { G.global_setTaxYear(v); G.global_getTaxYear(); },
+    read: () => G.global_taxYear,
+  },
+  global_filingAs: {
+    apply: (v) => { G.global_setFilingAs(v); G.global_getFilingAs(); },
+    read: () => G.global_filingAs,
+  },
+  global_user_startAge: {
+    apply: (v) => { G.global_setUserStartAge(v); G.global_getUserStartAge(); },
+    read: () => G.global_user_startAge,
+  },
+  global_user_retirementAge: {
+    apply: (v) => { G.global_setUserRetirementAge(v); G.global_getUserRetirementAge(); },
+    read: () => G.global_user_retirementAge,
+  },
+  global_propertyTaxRate: {
+    apply: (v) => { G.global_setPropertyTaxRate(v); G.global_getPropertyTaxRate(); },
+    read: () => G.global_propertyTaxRate,
+  },
+  global_backtestYear: {
+    apply: (v) => G.global_setBacktestYearDirect(v),
+    read: () => G.global_backtestYear,
+  },
+};
+
+/**
+ * Did the write land? Compared loosely on purpose: the setters round-trip
+ * through localStorage strings (`toFixed(4)`, `parseInt`), so 0.05 comes back as
+ * 0.05 but by way of "0.0500". Exact equality would report false failures.
+ */
+const valueLanded = (got, want) => {
+  const a = Number(got), b = Number(want);
+  if (Number.isFinite(a) && Number.isFinite(b)) return Math.abs(a - b) < 1e-9;
+  return String(got) === String(want);
 };
 
 // ── Running one fixture ──────────────────────────────────────────────
