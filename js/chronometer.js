@@ -186,6 +186,11 @@ export async function chronometer_run(portfolio) {
         restoreOriginalRates(savedRates);
     }
 
+    // The loop's last iteration runs applyYear AFTER monthlyChron, so anything
+    // the annual pass emitted has never been through a reconciliation scan.
+    // Nothing below appends events, so this is the last point that can see them.
+    portfolio.finalSanityCheck(currentDateInt);
+
     portfolio.finalizeChron();
     activeTaxTable.finalizeChron();
 

@@ -361,7 +361,12 @@ export class Portfolio {
         }
     }
 
-    monthlySanityCheck(currentDateInt) {
+    /**
+     * @param {DateInt} currentDateInt the month this pass runs on
+     * @param {DateInt} [settledOverride] the month the unscanned events actually
+     *   belong to. Only the trailing pass needs it — see finalSanityCheck.
+     */
+    monthlySanityCheck(currentDateInt, settledOverride = null) {
         const buckets = {};
         for (const b of Object.values(EVENT_RECONCILIATION)) buckets[b] = 0;
 
@@ -392,8 +397,11 @@ export class Portfolio {
         // monthlyChron, so the raw value is one month ahead of the events in the
         // buckets — a finding reported as "2056-04" is about March's events.
         // Cost a full forensic pass on the wrong month before it was noticed.
-        const settled = DateInt.from(currentDateInt.year, currentDateInt.month);
-        settled.addMonths(-1);
+        let settled = settledOverride;
+        if (!settled) {
+            settled = DateInt.from(currentDateInt.year, currentDateInt.month);
+            settled.addMonths(-1);
+        }
 
         const tolerance = 0.01;
         const check = (label, eventTotal, packageTotal) => {
@@ -437,6 +445,41 @@ export class Portfolio {
         if (Math.abs(buckets.paired) > tolerance) {
             logger.log(LogCategory.SANITY, `${currentDateInt} Transfer conservation broken: ${buckets.paired.toFixed(2)}`);
         }
+    }
+
+    /**
+     * Reconcile whatever the loop left behind. Called once, after the last
+     * iteration.
+     *
+     * monthlySanityCheck runs from monthlyChron, but chronometer_run calls
+     * applyYear AFTER monthlyChron in the same iteration, so the annual tax
+     * true-up's events are always emitted past the scan index. Mid-run that is
+     * harmless and in fact correct: monthlyChron zeroes this.monthly before
+     * applyYear, so the true-up's package bookings land in the SAME month's
+     * package as the next pass's events, and the two sides stay aligned.
+     *
+     * The final year has no next pass. Its true-up events were never classified,
+     * never counted, and — worse — never put through the undeclared-EventType
+     * throw, so a new event type emitted only there could ship unmapped.
+     *
+     * Measured 2026-08-05: a retired plan ending in December leaves the annual
+     * true-up's taxTrueUp and capitalGainRecognized events unscanned. Not an
+     * allocation bug — it reproduces with global_allocate_household_tax off, on
+     * any plan whose true-up settles a non-zero residual; turning allocation on
+     * merely gave an existing fixture a residual to settle.
+     *
+     * Deliberately NOT a scan after every applyYear. That variant consumes the
+     * true-up's events a month before its package bookings are compared, and the
+     * following month then sees a package the events no longer explain: 4 false
+     * "Capital gains" findings on a retired plan drawing its tax bill from a
+     * brokerage, each exactly the size of that year's realized gain.
+     */
+    finalSanityCheck(currentDateInt) {
+        // The trailing events happened ON currentDateInt, not the month before
+        // it, so the usual -1 label would file them under the month the previous
+        // pass already reported — two different findings on one label.
+        this.monthlySanityCheck(currentDateInt,
+            DateInt.from(currentDateInt.year, currentDateInt.month));
     }
 
     monthlyChron(currentDateInt) {
