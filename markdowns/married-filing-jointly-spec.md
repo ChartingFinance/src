@@ -375,16 +375,54 @@ provisional-income taxability (3.5), `taxYear` selection (3.8).
 
 ---
 
-## 7. Predictions to record before step 1
+## 7. Predictions, and what actually happened
 
-Per the house rule, these go down before any code is written:
+Recorded before step 1 was written, checked after. Steps 0 and 1 are done.
 
-1. Adding the four MFJ fixtures leaves all 13 existing baselines byte-identical.
-2. `mfj-two-earners` will show `socialSecurityTax` **lower** than two independent
-   single filers would pay — the bug in 3.3, made visible for the first time.
-3. `mfj-high-earner-ltcg` restores `capitalGainsTax` to `[emitted]`, and
-   `[never emitted]` stays at "(none)".
-4. `mfj-two-401ks` emits `contributionCapped` on the second 401(k) in a year when
-   a per-person limit would not have capped it.
-5. Step 3 (the vocabulary refactor) produces an empty baseline diff. If it does
-   not, a string comparison somewhere was load-bearing in a way this spec missed.
+**1. Adding the four MFJ fixtures leaves all 13 existing baselines
+byte-identical. — HELD.** All 13 reported `ok`; only the four new fixtures were
+`MISSING` and `_coverage` drifted.
+
+**2. `mfj-two-earners` shows the two salaries sharing one Social Security wage
+base. — HELD, and it is stark.** Each earner makes $18,000/month ($216,000/year),
+so each should pay SS tax until roughly month 11 of each year. In the baseline,
+withholding for Salary A drops from $1,377/month (6.2% SS + 1.45% Medicare) to
+$261/month (Medicare only) in **June** — month 6. The two earners are splitting a
+single $184,500 base. This is the first time bug 3.3 has been visible anywhere in
+the corpus.
+
+**3. `mfj-high-earner-ltcg` restores `capitalGainsTax` to `[emitted]`. — FAILED
+FIRST, then held.** The first draft emitted `capitalGainRecognized` and no tax at
+all. Two reasons, both worth recording because they are properties of the engine
+and not of the fixture:
+
+- `CAPITAL_GAINS_TAX` is emitted **only on close** — `tax-engine.js:287` reads
+  `finishCurrency − finishBasisCurrency`. Ongoing withdrawals recognise gains but
+  never emit it. The draft funded a $22,000/month expense from the brokerage, so
+  the account closed at ~$0 and there was no gain left to tax.
+- the tax is priced against annualised income *at the moment of close*, so an
+  asset closing in the plan's final month is valued against almost no income —
+  the known close-time-LTCG gap from the 2026-07-25 review. Under MFJ's doubled
+  0% bracket that swallows the gain entirely.
+
+The fixture now closes the brokerage in 2029-06 while a salary is still running.
+Result: a $2,066,065 gain taxed $363,327, and `[never emitted]` still reads
+"(none)".
+
+**4. `mfj-two-401ks` emits `contributionCapped` where a per-person limit would
+not have capped. — HELD.** Present in its coverage entry. Step 4 must remove it.
+
+**5. Step 3 (the vocabulary refactor) produces an empty baseline diff.** Not yet
+checked — step 3 is not written.
+
+### 7.1 Two harness defects found while doing this
+
+- **`--set` was a no-op for four of eight knobs.** Section 2. Fixed in step 0.
+- **`--bless --only` silently leaves `_coverage.snap` stale.** Coverage is
+  corpus-wide so a filtered run correctly skips it, but the combination rewrites
+  the filtered baselines and leaves the coverage report describing the corpus as
+  it used to be. That is how a branch going unreached would go unnoticed — the
+  exact failure this file exists to prevent. It cost real confusion here: a
+  partial bless left an entry describing a fixture two revisions old, which read
+  as "prediction 3 failed" after it had actually started passing. The tool now
+  prints a NOTE when both flags are used.

@@ -290,6 +290,10 @@ function applyConfig(fixture) {
   if (c.startAge != null) { G.global_setUserStartAge(c.startAge); G.global_getUserStartAge(); }
   if (c.retirementAge != null) { G.global_setUserRetirementAge(c.retirementAge); G.global_getUserRetirementAge(); }
   if (c.finishAge != null) { G.global_setUserFinishAge(c.finishAge); G.global_getUserFinishAge?.(); }
+  // A fixture declares its filing status rather than inheriting the reset
+  // default, so an MFJ fixture is MFJ on its own terms and not because of the
+  // order it happened to run in. --set is applied after this and still wins.
+  if (c.filingAs != null) { G.global_setFilingAs(c.filingAs); G.global_getFilingAs(); }
 
   for (const [name, raw] of overrides) {
     const setter = SETTERS[name];
@@ -732,6 +736,23 @@ for (const fixture of selected) {
 
 // Coverage is part of the baseline only on a full run — a filtered run would
 // otherwise record a corpus-wide claim it did not measure.
+//
+// `--bless --only` therefore rewrites the filtered baselines and leaves
+// _coverage.snap describing the corpus as it used to be. That is a quiet way to
+// lose exactly what this file is for: the coverage report is how a branch going
+// unreached gets noticed, and a stale one still reads as green. Caught while
+// building the MFJ fixtures, where a partial bless left the coverage entry
+// describing a fixture two revisions old. Say so rather than assume the next
+// full run will clean it up.
+if (ONLY && BLESS) {
+  console.log(
+    `\n  NOTE  _coverage.snap was NOT updated — coverage is corpus-wide and this\n` +
+    `        run was filtered by --only. Re-run 'node tests/tools/snapshot.mjs --bless'\n` +
+    `        with no filter before committing, or the coverage report will describe\n` +
+    `        fixtures as they used to be.`
+  );
+}
+
 if (!ONLY) {
   const covFile = join(BASELINE_DIR, '_coverage.snap');
   const covText = renderCoverage(covered, perFixture);

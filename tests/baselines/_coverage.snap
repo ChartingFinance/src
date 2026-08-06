@@ -73,6 +73,54 @@
     propertyTaxEscrow
     settlement
     spillover
+  mfj-high-earner-ltcg:
+    assetGrowth
+    capitalGainRecognized
+    capitalGainsTax
+    expenseInflation
+    ficaWithholding
+    grossUp
+    incomeGrowth
+    incomeTaxWithholding
+    interestIncome
+    taxTrueUp
+    transfer
+  mfj-home-sale:
+    assetGrowth
+    capitalGainRecognized
+    capitalGainsTax
+    expenseInflation
+    ficaWithholding
+    grossUp
+    incomeGrowth
+    incomeTaxWithholding
+    insurance
+    interestIncome
+    maintenance
+    propertyTax
+    propertyTaxEscrow
+    settlement
+    taxTrueUp
+    transfer
+  mfj-two-401ks:
+    assetGrowth
+    contributionCapped
+    expenseInflation
+    ficaWithholding
+    grossUp
+    incomeGrowth
+    incomeTaxWithholding
+    interestIncome
+    taxTrueUp
+    transfer
+  mfj-two-earners:
+    expenseInflation
+    ficaWithholding
+    grossUp
+    incomeGrowth
+    incomeTaxWithholding
+    interestIncome
+    transfer
   mid-year-finish:
     assetGrowth
     expenseInflation

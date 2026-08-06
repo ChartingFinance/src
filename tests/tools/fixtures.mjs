@@ -275,6 +275,134 @@ const adversarialFixtures = [
       ].map(ModelAsset.fromJSON),
     }),
   },
+  // ── Married Filing Jointly (spec 5) ────────────────────────────────
+  // Every fixture below declares `filingAs: 'MFJ'`. They exist because the
+  // Single-filer corpus cannot reach the branches MFJ changes — measured, not
+  // assumed: under `--set global_filingAs=MFJ` the entire 13-fixture corpus
+  // showed byte-identical socialSecurityTax and LOST capitalGainsTax from
+  // coverage altogether.
+  {
+    name: 'mfj-two-earners',
+    kind: 'adversarial',
+    reaches:
+      'TWO working-income assets, each earning above the Social Security wage ' +
+      'base. TaxTable keeps ONE yearlySocialSecurityAccumulator and ' +
+      'payroll-engine calls addYearlySocialSecurity once per income asset, so ' +
+      'both salaries share a single $184,500 base and the second earner stops ' +
+      'paying SS tax early. No other fixture has more than one working income, ' +
+      'which is why the whole corpus reported identical socialSecurityTax under ' +
+      'MFJ — the branch was unreachable, not correct.',
+    config: { startAge: 45, retirementAge: 67, filingAs: 'MFJ' },
+    build: () => ({
+      assets: [
+        asset(DEC)({ instrument: 'workingIncome', displayName: 'Salary A',
+          startCurrency: { amount: 18000 }, startBasisCurrency: { amount: 0 } }),
+        asset(DEC)({ instrument: 'workingIncome', displayName: 'Salary B',
+          startCurrency: { amount: 18000 }, startBasisCurrency: { amount: 0 } }),
+        asset(DEC)({ instrument: 'bank', displayName: 'Checking',
+          startCurrency: { amount: 20000 }, startBasisCurrency: { amount: 20000 } }),
+        asset(DEC)({ instrument: 'monthlyExpense', displayName: 'Living',
+          startCurrency: { amount: -9000 }, startBasisCurrency: { amount: 0 } }),
+      ].map(ModelAsset.fromJSON),
+    }),
+  },
+  {
+    name: 'mfj-high-earner-ltcg',
+    kind: 'adversarial',
+    reaches:
+      'capitalGainsTax UNDER MFJ. The married 0% LTCG bracket is $98,900 against ' +
+      "single's $49,450, and quickstart-earlyCareer is the only fixture in the " +
+      'corpus that emits capitalGainsTax at all — so switching it to MFJ drops ' +
+      'the type out of [emitted] entirely and every assertion about capital-gains ' +
+      'tax becomes vacuous with the suite green. Found by this tool\'s own ' +
+      'coverage report, not by guessing.\n' +
+      '      Two things had to be true, and the first draft got both wrong. ' +
+      'CAPITAL_GAINS_TAX is emitted only on CLOSE (tax-engine reads ' +
+      'finishCurrency − finishBasisCurrency), not on ongoing withdrawals, so the ' +
+      'brokerage must survive to its close date rather than being drained by an ' +
+      'expense — a draft that funded a large expense from it closed at ~$0 gain ' +
+      'and emitted nothing. And the tax is computed against annualised income at ' +
+      'the moment of close, so the brokerage closes in 2029 while the salary is ' +
+      'still running; closing it in the final month would price the gain against ' +
+      'almost no income (the known close-time-LTCG gap, review 2026-07-25) and ' +
+      'the doubled 0% bracket would swallow it again.',
+    config: { startAge: 55, retirementAge: 67, filingAs: 'MFJ' },
+    build: () => ({
+      assets: [
+        asset(DEC)({ instrument: 'workingIncome', displayName: 'Salary',
+          startCurrency: { amount: 20000 }, startBasisCurrency: { amount: 0 } }),
+        asset({ year: 2029, month: 6 })({ instrument: 'taxableEquity', displayName: 'Brokerage',
+          startCurrency: { amount: 2000000 }, startBasisCurrency: { amount: 400000 },
+          annualReturnRate: { rate: 0.06 } }),
+        asset(DEC)({ instrument: 'bank', displayName: 'Checking',
+          startCurrency: { amount: 25000 }, startBasisCurrency: { amount: 25000 } }),
+        asset(DEC)({ instrument: 'monthlyExpense', displayName: 'Living',
+          startCurrency: { amount: -8000 }, startBasisCurrency: { amount: 0 } }),
+      ].map(ModelAsset.fromJSON),
+    }),
+  },
+  {
+    name: 'mfj-two-401ks',
+    kind: 'adversarial',
+    reaches:
+      'the household-vs-per-person 401(k) cap. four01KContributionLimit returns ' +
+      'the SAME $24,500 for married as for single, and payroll-engine compares it ' +
+      'against this.yearly.four01KContribution — a household aggregate summed ' +
+      'across every income asset. Each salary here defers $24,000/yr, which no ' +
+      'per-person limit would cap, so the contributionCapped this fixture emits ' +
+      'is exactly the defect. When spec 5 step 4 makes the limit per-person, this ' +
+      'baseline must lose those events.',
+    config: { startAge: 45, retirementAge: 67, filingAs: 'MFJ' },
+    build: () => ({
+      assets: [
+        asset(DEC)({ instrument: 'workingIncome', displayName: 'Salary A',
+          startCurrency: { amount: 12000 }, startBasisCurrency: { amount: 0 },
+          fundTransfers: [xfer('401K A', 2000)] }),
+        asset(DEC)({ instrument: 'workingIncome', displayName: 'Salary B',
+          startCurrency: { amount: 12000 }, startBasisCurrency: { amount: 0 },
+          fundTransfers: [xfer('401K B', 2000)] }),
+        asset(DEC)({ instrument: '401K', displayName: '401K A',
+          startCurrency: { amount: 150000 }, startBasisCurrency: { amount: 0 },
+          annualReturnRate: { rate: 0.05 } }),
+        asset(DEC)({ instrument: '401K', displayName: '401K B',
+          startCurrency: { amount: 90000 }, startBasisCurrency: { amount: 0 },
+          annualReturnRate: { rate: 0.05 } }),
+        asset(DEC)({ instrument: 'bank', displayName: 'Checking',
+          startCurrency: { amount: 15000 }, startBasisCurrency: { amount: 15000 } }),
+        asset(DEC)({ instrument: 'monthlyExpense', displayName: 'Living',
+          startCurrency: { amount: -8000 }, startBasisCurrency: { amount: 0 } }),
+      ].map(ModelAsset.fromJSON),
+    }),
+  },
+  {
+    name: 'mfj-home-sale',
+    kind: 'adversarial',
+    reaches:
+      'the primary-home capital-gains exclusion, sized to the window where filing ' +
+      'status is the whole answer. The home closes after more than 24 months with ' +
+      'a gain of roughly $400k: single excludes $250k and taxes the rest, MFJ ' +
+      'excludes $500k and taxes nothing. Today the exclusion is the hardcoded ' +
+      'global_home_sale_capital_gains_discount = 250000 with no filing check ' +
+      '(taxes.js), so THIS BASELINE IS EXPECTED TO BE WRONG when first recorded. ' +
+      'It exists so spec 5 step 2 has something that must move; a gain outside ' +
+      'that $250k-$500k window would leave step 2 with an empty diff and no proof.',
+    config: { startAge: 55, retirementAge: 67, filingAs: 'MFJ' },
+    build: () => ({
+      assets: [
+        asset({ year: 2029, month: 6 })({ instrument: 'realEstate', displayName: 'Home',
+          isPrimaryHome: true,
+          startCurrency: { amount: 800000 }, startBasisCurrency: { amount: 400000 },
+          annualReturnRate: { rate: 0.03 }, annualTaxRate: { rate: 0.011 },
+          annualMaintenanceRate: { rate: 0.01 }, annualInsuranceCost: { amount: 3000 } }),
+        asset(DEC)({ instrument: 'workingIncome', displayName: 'Salary',
+          startCurrency: { amount: 9000 }, startBasisCurrency: { amount: 0 } }),
+        asset(DEC)({ instrument: 'bank', displayName: 'Checking',
+          startCurrency: { amount: 30000 }, startBasisCurrency: { amount: 30000 } }),
+        asset(DEC)({ instrument: 'monthlyExpense', displayName: 'Living',
+          startCurrency: { amount: -6000 }, startBasisCurrency: { amount: 0 } }),
+      ].map(ModelAsset.fromJSON),
+    }),
+  },
   {
     name: 'transfer-unfunded',
     kind: 'adversarial',
