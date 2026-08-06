@@ -404,6 +404,46 @@ const adversarialFixtures = [
     }),
   },
   {
+    name: 'single-home-sale',
+    kind: 'adversarial',
+    reaches:
+      'the SINGLE-filer half of the §121 exclusion, and the only fixture where ' +
+      'part of a home gain is excluded and part is genuinely taxed — the same ' +
+      '$488,452 gain as mfj-home-sale, $250,000 excluded here against $500,000 ' +
+      'there.\n' +
+      '      It exists because §121 was reachable from ONE fixture, and that ' +
+      'fixture was married — so spec 5 step 2b could have been implemented for ' +
+      'married filers alone with the whole suite green. The partial-exclusion ' +
+      'case is also the one that distinguishes "exclusion applied once" from ' +
+      '"exclusion applied at close and handed back by the annual true-up": a ' +
+      'fully-excluded gain leaves no tax to get wrong.\n' +
+      '      THE $150,000 CHECKING BALANCE IS LOAD-BEARING, and is the only ' +
+      'thing that stops this fixture being vacuous. A single filer pays ' +
+      'materially more tax here than the married one, and at $30,000 Checking ' +
+      'ran dry — at which point FundTransfer.resolveFunding returns null and ' +
+      'applyAnnualTaxTrueUp SILENTLY RETURNS without booking anything ' +
+      '(tax-engine.js, `if (!liquidAsset) return;`). The true-up then produced ' +
+      'the same nothing whether the exclusion was subtracted or not, so ' +
+      'mutating the fix left this fixture green. Caught by mutation testing on ' +
+      '2026-08-06; do not trim this balance.',
+    config: { startAge: 55, retirementAge: 67, filingAs: 'Single' },
+    build: () => ({
+      assets: [
+        asset({ year: 2029, month: 6 })({ instrument: 'realEstate', displayName: 'Home',
+          isPrimaryHome: true,
+          startCurrency: { amount: 800000 }, startBasisCurrency: { amount: 400000 },
+          annualReturnRate: { rate: 0.03 }, annualTaxRate: { rate: 0.011 },
+          annualMaintenanceRate: { rate: 0.01 }, annualInsuranceCost: { amount: 3000 } }),
+        asset(DEC)({ instrument: 'workingIncome', displayName: 'Salary',
+          startCurrency: { amount: 9000 }, startBasisCurrency: { amount: 0 } }),
+        asset(DEC)({ instrument: 'bank', displayName: 'Checking',
+          startCurrency: { amount: 150000 }, startBasisCurrency: { amount: 150000 } }),
+        asset(DEC)({ instrument: 'monthlyExpense', displayName: 'Living',
+          startCurrency: { amount: -6000 }, startBasisCurrency: { amount: 0 } }),
+      ].map(ModelAsset.fromJSON),
+    }),
+  },
+  {
     name: 'transfer-unfunded',
     kind: 'adversarial',
     reaches:

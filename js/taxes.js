@@ -477,10 +477,17 @@ export class TaxTable {
                 if (taxableGains.amount < 0) taxableGains.zero();
             }
             const tax = this.calculateYearlyLongTermCapitalGainsTax(annualizedIncome, taxableGains);
-            return { isLongTerm: true, tax };
+            // How much §121 actually removed — the difference, not the headline
+            // exclusion, because a gain smaller than the exclusion only uses
+            // part of it. The caller has to tell the annual true-up, which
+            // otherwise recomputes the year from the gross gain and hands the
+            // exclusion straight back. Derived here rather than recomputed
+            // there so the clamp above cannot be applied twice differently.
+            const excluded = capitalGains.amount - taxableGains.amount;
+            return { isLongTerm: true, tax, excluded };
         } else {
             const tax = this.calculateYearlyIncomeTax(capitalGains);
-            return { isLongTerm: false, tax };
+            return { isLongTerm: false, tax, excluded: 0 };
         }
     }
 

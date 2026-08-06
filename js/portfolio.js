@@ -57,6 +57,12 @@ export const EVENT_RECONCILIATION = Object.freeze({
     [EventType.MORTGAGE_PRINCIPAL]:      'mortgagePrincipal',
     [EventType.PROPERTY_TAX]:            'propertyTax',
 
+    // Info-only: §121 removes gain from the TAX base without moving cash and
+    // without changing the gain the household realised, so it must not land in
+    // the capitalGains bucket — that one balances against
+    // monthly.longTermCapitalGains, which stays gross on both sides.
+    [EventType.CAPITAL_GAIN_EXCLUDED]:   'excluded',
+
     [EventType.ASSET_GROWTH]:            'excluded',
     [EventType.EXPENSE_INFLATION]:       'excluded',
     [EventType.INCOME_GROWTH]:           'excluded',

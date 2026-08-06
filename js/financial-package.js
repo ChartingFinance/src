@@ -12,7 +12,7 @@ export const FINANCIAL_FIELDS = [
     'tradIRAContribution', 'four01KContribution', 'rothIRAContribution',
     'tradIRADistribution', 'four01KDistribution', 'rothIRADistribution',
     'mortgageInterest', 'mortgagePrincipal', 'propertyTaxes',
-    'shortTermCapitalGains', 'longTermCapitalGains',
+    'shortTermCapitalGains', 'longTermCapitalGains', 'excludedCapitalGains',
     'nonQualifiedDividends', 'qualifiedDividends', "maintenance", "insurance",
     'interestIncome', 'longTermCapitalGainsTax',
     'value',

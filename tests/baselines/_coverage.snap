@@ -8,6 +8,7 @@
 
 [emitted]
   assetGrowth
+  capitalGainExcluded
   capitalGainRecognized
   capitalGainsTax
   contributionCapped
@@ -87,6 +88,7 @@
     transfer
   mfj-home-sale:
     assetGrowth
+    capitalGainExcluded
     capitalGainRecognized
     expenseInflation
     ficaWithholding
@@ -99,7 +101,6 @@
     propertyTax
     propertyTaxEscrow
     settlement
-    taxTrueUp
     transfer
   mfj-two-401ks:
     assetGrowth
@@ -130,6 +131,7 @@
     transfer
   quickstart-earlyCareer:
     assetGrowth
+    capitalGainExcluded
     capitalGainRecognized
     capitalGainsTax
     expenseInflation
@@ -147,6 +149,7 @@
     unfunded
   quickstart-midCareer:
     assetGrowth
+    capitalGainExcluded
     capitalGainRecognized
     expenseInflation
     ficaWithholding
@@ -215,6 +218,24 @@
     propertyTaxEscrow
     settlement
     unfunded
+  single-home-sale:
+    assetGrowth
+    capitalGainExcluded
+    capitalGainRecognized
+    capitalGainsTax
+    expenseInflation
+    ficaWithholding
+    grossUp
+    incomeGrowth
+    incomeTaxWithholding
+    insurance
+    interestIncome
+    maintenance
+    propertyTax
+    propertyTaxEscrow
+    settlement
+    taxTrueUp
+    transfer
   transfer-unfunded:
     assetGrowth
     capitalGainRecognized

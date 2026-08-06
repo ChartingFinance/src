@@ -575,6 +575,70 @@ subtraction and `mfj-home-sale` must drift back; revert the close-site
 accumulation and **both** home-sale fixtures must drift. A fix that survives
 either mutation green is not covered, per the house rule.
 
+### 7.0.4 Step 2b — SHIPPED, and three of five predictions were wrong
+
+The exclusion now survives the annual true-up. `calculateCapitalGainsTax` returns
+how much §121 removed, `tax-engine` books it to a new
+`FinancialPackage.excludedCapitalGains` and emits an info-only
+`CAPITAL_GAIN_EXCLUDED` event, and `applyAnnualTaxTrueUp` subtracts it from the
+LTCG base. The gross gain stays gross in the ledger and in the reconciliation
+bucket, so `check('Capital gains', …)` is untouched — 0 findings everywhere.
+
+**Prediction 1 — 15 of 18 empty. WRONG: 14 of 18.** `quickstart-earlyCareer` and
+`quickstart-midCareer` moved, because `isPrimaryHome` **defaults to `true`**
+(`model-asset.js:85,171`). 7.0.1 inferred "not a primary residence" from the
+flag's absence in `js/quick-start.js`, which is exactly backwards. Both profiles
+sell a primary home and had been re-taxed on the excluded portion all along.
+midCareer finishes **+$410,093 (+10.04%)**.
+
+**Prediction 2 — falls by exactly $19,509.78, Checking back to −$48,406.74.
+WRONG, and wrong in an instructive way.** `mfj-home-sale`'s total federal tax
+fell from **−$150,831.72 to −$82,915.20**, a drop of **$67,916.52**, and
+Checking's tax line disappeared entirely. The prediction confused *where step 2
+moved the money* with *what 2b removes*. Step 2 did not reduce the bill; it
+revealed that $67,916.52 of capital-gains tax was being charged on a gain that
+MFJ excludes in full. 2b removes all of it, leaving only the salary's ordinary
+withholding. The right prediction was recoverable from step 2's own baseline —
+Checking $48,406.74 + Home $19,509.78 — and was simply not read carefully.
+
+**Prediction 3 — `single-home-sale` taxed on gain − $250,000. HELD**, and it is
+the load-bearing one: $250,000 excluded, $27,638.71 taxed at close on the
+remaining $238,452, and an $8,129.10 true-up that is now a genuine residual
+rather than a re-tax.
+
+**Predictions 4 and 5 — coverage and reconciliation. HELD.**
+`capitalGainExcluded` is emitted, `[never emitted]` still reads "(none)", and no
+fixture reports a reconciliation finding.
+
+#### The fixture was vacuous, and only mutation testing said so
+
+`single-home-sale` initially gave Checking $30,000. It recorded the exclusion and
+the close-time tax correctly, and **survived mutation 1 completely green**.
+
+The cause is a real engine gap: when Checking is depleted,
+`FundTransfer.resolveFunding` returns null and `applyAnnualTaxTrueUp` hits
+`if (!liquidAsset) return;` — **an annual tax bill that cannot be funded is
+silently dropped**, with no event, no unfunded record and no issue raised. The
+true-up produced the same nothing whether the exclusion was subtracted or not, so
+the fixture could not see the fix it existed to guard.
+
+At $150,000 the residual is collectible and both mutations are caught by all four
+affected fixtures. The balance is documented as load-bearing in the fixture's
+`reaches:` note.
+
+That silent drop deserves its own chip: it is the same class as the overdraft
+floor and the 293 hidden findings — an obligation that vanishes rather than
+reporting that it could not be met.
+
+#### Golden files that had to move
+
+- `tests/quickstart-golden.mjs` — enumerates every `FinancialPackage` field and
+  flags new ones, so `excludedCapitalGains: 0.00` was added to all 8 stages.
+- `tests/accumulation-oracle.mjs` — three frozen Early Career values, moved by
+  design and annotated with why, including that `longTermCapitalGains` rises
+  $12,593 as a **second-order** effect: a larger Brokerage changes what each
+  proportional-basis withdrawal realises.
+
 ### 7.1 Two harness defects found while doing this
 
 - **`--set` was a no-op for four of eight knobs.** Section 2. Fixed in step 0.

@@ -304,6 +304,19 @@ export class TaxEngine {
 
             modelAsset.recordEvent(EventType.CAPITAL_GAIN_RECOGNIZED, capitalGains.copy(), { metric: Metric.LONG_TERM_CAPITAL_GAIN, data: { spillover: false } });
 
+            // §121 removed some of that gain from the tax base. Record it so
+            // applyAnnualTaxTrueUp can subtract it; without this the true-up
+            // recomputes the year from the gross gain, finds more tax than was
+            // withheld, and bills the difference — handing the exclusion back.
+            // The gain itself stays gross above: the household really did
+            // realise it, and reconciliation balances the recognised event
+            // against monthly.longTermCapitalGains on both sides.
+            if (result.excluded > 0) {
+                const excluded = new Currency(result.excluded);
+                this.monthly.excludedCapitalGains.add(excluded);
+                modelAsset.recordEvent(EventType.CAPITAL_GAIN_EXCLUDED, excluded.copy());
+            }
+
             this.monthly.longTermCapitalGainsTax.add(amountToTax.flipSign());
             modelAsset.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN_TAX, amountToTax);
 
@@ -610,9 +623,26 @@ export class TaxEngine {
         const actualTaxableIncome = activeTaxTable.calculateYearlyTaxableIncome(yearlySnapshot);
         const actualIncomeTax = activeTaxTable.calculateYearlyIncomeTax(actualTaxableIncome);
 
+        // Gross gains, less whatever §121 excluded at close. Subtracting here
+        // rather than reducing longTermCapitalGains at the source keeps the
+        // recognised gain honest — a household that sold a home for a $488,452
+        // gain should see $488,452 in its ledger — and leaves the
+        // capitalGains reconciliation bucket balancing against an untouched
+        // accumulator.
         const yearlyCapitalGains = new Currency(
-            yearlySnapshot.longTermCapitalGains.amount + yearlySnapshot.qualifiedDividends.amount
+            yearlySnapshot.longTermCapitalGains.amount
+            + yearlySnapshot.qualifiedDividends.amount
+            - yearlySnapshot.excludedCapitalGains.amount
         );
+
+        // The exclusion can never exceed the gains it came from, so a negative
+        // base means the two accumulators have drifted apart. Clamp, but say so
+        // — silently taxing a negative base would just produce a wrong number.
+        if (yearlyCapitalGains.amount < 0) {
+            logger.log(LogCategory.TAX,
+                'applyAnnualTaxTrueUp: excluded gains exceed realised gains — clamping to 0');
+            yearlyCapitalGains.zero();
+        }
         const actualCapitalGainsTax = activeTaxTable.calculateYearlyLongTermCapitalGainsTax(
             actualTaxableIncome, yearlyCapitalGains
         );
