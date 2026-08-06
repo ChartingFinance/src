@@ -505,12 +505,8 @@ fixture with no home sale, the diff says so without anyone having to look.
   untouched. Keeping the gross gain gross on both sides is what keeps the fix
   small, and it keeps the event honest: a household that realised $488,452
   should see $488,452.
-- `totalIncome()` / `capitalGain()` (`financial-package.js:69,101`) feed
-  `report-view.js` and the `annualizedIncome` used for the close-time bracket
-  lookup (`tax-engine.js:291,386`). Leaving them gross means the excluded gain
-  still counts as income when choosing the LTCG bracket. Arguably wrong, but it
-  is a different question from the true-up double-count and it ripples into the
-  UI report. Flagged, not folded in.
+- `totalIncome()` / `capitalGain()` (`financial-package.js:69,101`). See 7.0.3 —
+  this is a separate defect, not part of 2b.
 - `taxes.js:654` (`applyYear`) computes an LTCG figure and only logs it. Same
   subtraction for consistency; zero behavioural effect.
 
@@ -523,6 +519,44 @@ the suite would stay green. `single-home-sale` — single filer, primary home, g
 **above** $250,000 — is the case that distinguishes "exclusion applied once" from
 "exclusion applied and then undone", because part is excluded and part is
 genuinely taxed.
+
+### 7.0.3 The LTCG bracket base — a separate defect, NOT part of 2b
+
+Raised 2026-08-06 and deliberately kept out of 2b's scope.
+
+To be clear about what is *not* wrong: long-term gains are correctly kept out of
+ordinary income. `irsTaxableGrossIncome()` excludes them, and `ordinaryIncome()`
+includes short-term gains — which are taxed as ordinary income — but not
+long-term ones. That part of the engine is right.
+
+The defect is in the **bracket base**: the first argument to
+`calculateYearlyLongTermCapitalGainsTax(taxableIncome, capitalGains)`, which the
+function stacks gains on top of to decide the 0/15/20% band. Two call paths pass
+different quantities into it:
+
+| Path | Passes |
+| --- | --- |
+| annual true-up, `tax-engine.js:611` | `calculateYearlyTaxableIncome()` — ordinary taxable income after the standard deduction. Correct. |
+| close path, `tax-engine.js:290` and `:386` | `this.monthly.totalIncome() × 12` |
+
+and `totalIncome()` is `ordinaryIncome + capitalGain + taxFreeDistribution +
+qualifiedDividends`. So the close path's base is gross rather than taxable, it
+includes **tax-free Roth distributions** that can never affect a bracket, and it
+already contains long-term gains which are then stacked on top a second time.
+
+On `mfj-home-sale` the base at close is about $108,000 (wage × 12) where the
+taxable figure after the MFJ standard deduction would be about $75,800 — enough
+on its own to move gains out of the 0% band.
+
+This is the same parameter as the "close-time LTCG from $0 income" item in the
+2026-07-25 review — the other failure mode of the same line. The comment at
+`tax-engine.js:382` already names it: *"the same weak baseline the capital-gains
+close path uses."* Too low when `this.monthly` is freshly zeroed, too high when
+it is not.
+
+Not MFJ-specific; single filers are affected identically. Kept separate because
+folding a bracket-base fix into an exclusion fix would make one baseline diff
+carry two unrelated changes, and neither could then be read.
 
 ### 7.0.2 Predictions for 2b — recorded before coding
 
