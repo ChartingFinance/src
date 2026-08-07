@@ -310,6 +310,89 @@ consumes `taxableBasis().capitalGains` until step 4, so it is covered by unit
 tests only. That is a gap to close in step 4, not a defect now — and it is
 recorded here so an empty result then is read as a failure rather than a pass.
 
+## 5.3 Step 4 — predictions, recorded before the change
+
+The close path stops stacking gains on `monthly.totalIncome() × 12` and stacks
+them on `ltcgStackBase` instead. The old base was gross ordinary income **plus
+the long-term gains themselves, plus tax-free Roth distributions, plus qualified
+dividends, with no deduction removed**; the new one is ordinary taxable income
+after deductions. It is strictly lower in every realistic case.
+
+1. **Direction: less capital-gains tax at close, so higher finish values.** A
+   lower stacking base puts more of each gain in a lower §1(h) band.
+2. **Fixtures that move: `quickstart-earlyCareer`, `mfj-high-earner-ltcg`,
+   `single-home-sale`** — the three the step-0 matrix showed reaching site 6.
+3. **`mfj-home-sale` and `quickstart-midCareer` do NOT move**, even though both
+   close a primary home. Their gains are fully inside the §121 exclusion, so the
+   taxable gain is zero and no base can change a tax of zero.
+4. **Everything else is byte-identical** — no other fixture realises a gain at
+   close.
+5. Reconciliation stays at 0 findings; `_coverage` is unchanged, since no event
+   type appears or disappears.
+
+## 5.4 Step 4 — DONE 2026-08-06. Two of five predictions wrong, and the reason matters
+
+The close path now stacks gains on `ltcgStackBase`. But:
+
+**Prediction 1 (less tax, higher finish values) and 2 (three fixtures move) —
+WRONG. The snapshot corpus did not move at all.**
+
+Not because the two bases agree. Because **both are zero**. Measured at every
+close in the corpus:
+
+```
+CB Brokerage  old 0  new 0  gain 2,066,065
+CB Home       old 0  new 0  gain   488,452
+CB Home       old 0  new 0  gain   392,107
+CB Home       old 0  new 0  gain   141,091
+```
+
+This is structural, not accidental. `closeAsset` is called at the top of
+`Portfolio.applyFirstDayOfMonth` (`portfolio.js:704`), **before**
+`modelAsset.applyFirstDayOfMonth` books any income, and `this.monthly` was zeroed
+at the previous month-end (`portfolio.js:511`). A closing asset is therefore
+priced against an empty month.
+
+So the defect at this site was never really "gross rollup versus taxable income".
+It is that **the base is empty**, which is the "close-time LTCG from $0 income"
+item from the 2026-07-25 review. Both expressions evaluate to zero, and the
+gross-versus-taxable distinction — the thing §2.2 identified and this step fixed
+— is unobservable until that is repaired.
+
+**What did move: `tests/decumulation-oracle.mjs`, and only it.** At its
+`CompanyStock` close the old base is **$6,883** and the new one **$0** (the
+standard deduction wipes it), moving ~$6,883 of gain from the 15% band to the 0%
+band. Brokerage and portfolioTotal +$708.83, qualifiedDividends +$81.26,
+longTermCapitalGains +$307.79. **Direction confirms prediction 1** — less tax,
+higher balances — at a magnitude three orders below what was expected.
+
+Predictions 3, 4 and 5 held, though 3 held for the wrong reason: those two
+fixtures were always going to be unaffected because their taxable gain is zero,
+*and* because no base could have changed anything.
+
+### A fixture was built to close this gap, and removed when it failed
+
+`close-with-income-booked` tried to put money in the base at a close — first via
+Roth distributions and dividends, then by closing a Roth in the same pass so its
+tax-free distribution would land in `totalIncome()` (the cleanest possible
+discriminator, since Roth money can never affect a band). It measured `old 0, new
+0` both times, and was **deleted rather than kept with a `reaches:` note claiming
+something untrue**. The phase ordering above is why: nothing a fixture can
+express gets booked before the close runs.
+
+**Site 6's semantic change is therefore guarded by `decumulation-oracle` alone**,
+whose non-zero base is an accident of that scenario's asset ordering. That is
+recorded in the suite itself so the value is not "simplified" away. It is thinner
+coverage than this spec asked for, and saying so is better than implying the
+corpus covers it.
+
+### What this changes about the plan
+
+The zero base is now the more important defect, and it is the same parameter as
+§2.3's. Fixing it would give steps 4 and 5 their real payoff. It remains out of
+scope here — it is a behavioural change of its own, deserving its own predictions
+— but it should be the next spec rather than a someday item.
+
 ## 6. Sequencing
 
 Each step is one commit with its own predicted, then verified, baseline diff.

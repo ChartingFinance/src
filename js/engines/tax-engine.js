@@ -289,12 +289,18 @@ export class TaxEngine {
         logger.log(LogCategory.TAX, 'capital gains of ' + capitalGains.toString());
 
         const monthsSpan = MonthsSpan.build(modelAsset.startDateInt, modelAsset.effectiveFinishDateInt);
-        const annualizedIncome = this.monthly.totalIncome().copy().multiply(12);
+        // The band a gain lands in is measured against TAXABLE income with the
+        // gain stacked last (IRC §1(h)). This used to pass totalIncome() × 12 —
+        // a gross rollup that already contained the gains being taxed, plus
+        // tax-free Roth distributions, with no deduction removed — so gains
+        // were pushed into a higher band than they belong in, and the annual
+        // true-up disagreed with this site about the same liability.
+        const { ltcgStackBase } = taxableBasis(this.monthly, this.activeUser, { annualise: true });
         const isRealEstate = InstrumentType.isRealEstate(modelAsset.instrument);
         const isPrimaryHome = isRealEstate && modelAsset.isPrimaryHome;
 
         const result = activeTaxTable.calculateCapitalGainsTax(
-            capitalGains, monthsSpan.totalMonths, isPrimaryHome, annualizedIncome
+            capitalGains, monthsSpan.totalMonths, isPrimaryHome, ltcgStackBase
         );
 
         let amountToTax = result.tax.copy();
