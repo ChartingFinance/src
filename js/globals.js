@@ -1,4 +1,6 @@
 import { DateInt } from './utils/date-int.js';
+// logger.js imports nothing, so this cannot cycle back through globals.
+import { logger, LogCategory } from './utils/logger.js';
 
 // S&P 500 annual total returns (price + dividends), 2000–2025
 // Source: https://www.slickcharts.com/sp500/returns
@@ -249,7 +251,43 @@ export const global_default_inflationRate = 0.031;
 
 export const global_default_taxYear = 2025;
 
-export const global_default_filingAs = 'Single';
+/**
+ * The filing statuses this engine models. One vocabulary, validated at the door.
+ *
+ * There used to be three: 'Single' here, 'MFJ' in the settings <select>, and
+ * "single" / "married" as the filingType keys inside the tax tables — with
+ * `global_filingAs != 'Single'` as the only branch that read any of them. MFJ
+ * therefore worked by falling through an else, which means a corrupted
+ * localStorage value or a future 'MFS' option would have silently filed the
+ * household jointly. FILING_TYPE_KEY in taxes.js maps these to the table keys,
+ * so the table vocabulary stays an implementation detail of the tables.
+ */
+export const FilingStatus = Object.freeze({
+    SINGLE: 'Single',
+    MARRIED_FILING_JOINTLY: 'MFJ',
+});
+
+export const FILING_STATUSES = Object.freeze(Object.values(FilingStatus));
+
+export function isFilingStatus(value) {
+    return FILING_STATUSES.includes(value);
+}
+
+/**
+ * Coerce UNTRUSTED input — localStorage, an imported portfolio — to a known
+ * status, falling back rather than throwing. Code paths should call
+ * global_setFilingAs directly and get an exception if they are wrong.
+ */
+export function asFilingStatus(value, fallback = FilingStatus.SINGLE) {
+    if (isFilingStatus(value)) return value;
+    if (value != null) {
+        logger.log(LogCategory.GENERAL,
+            `unrecognised filing status ${JSON.stringify(value)} — using ${fallback}`);
+    }
+    return fallback;
+}
+
+export const global_default_filingAs = FilingStatus.SINGLE;
 
 export const global_default_propertyTaxRate = 0.01;
 
@@ -429,7 +467,10 @@ export function global_applyWorkerSnapshot(s) {
     if (!s) return;
     global_inflationRate = s.inflationRate;
     global_taxYear = s.taxYear;
-    global_filingAs = s.filingAs;
+    // Workers boot on defaults and receive this payload; a status the main
+    // thread never validated would otherwise reach TaxTable and throw inside a
+    // worker, where the failure is far harder to see.
+    global_filingAs = asFilingStatus(s.filingAs, global_default_filingAs);
     global_propertyTaxRate = s.propertyTaxRate;
     global_propertyTaxDeductionMax = s.propertyTaxDeductionMax;
     global_user_startAge = s.userStartAge;
@@ -477,15 +518,20 @@ export function global_getTaxYear() {
 }
 
 export function global_setFilingAs(value) {
+    // Throws rather than coerces: every caller is code with a known value — the
+    // settings <select>, a quick-start profile, a test harness. A silent
+    // fallback here is how 'MFJ' came to work by accident in the first place.
+    if (!isFilingStatus(value)) {
+        throw new Error(`global_setFilingAs: ${JSON.stringify(value)} is not one of ${FILING_STATUSES.join(', ')}`);
+    }
     localStorage.setItem('filingAs', value);
 }
 
 export function global_getFilingAs() {
-    let localFA = localStorage.getItem('filingAs');
-    if (localFA == null)
-        localFA = global_filingAs;
-
-    global_filingAs = localFA;
+    const stored = localStorage.getItem('filingAs');
+    // localStorage is untrusted — it can hold a value written by an older
+    // version — so this coerces where the setter throws.
+    global_filingAs = asFilingStatus(stored ?? global_filingAs, global_default_filingAs);
 }
 
 export function global_setPropertyTaxRate(value) {

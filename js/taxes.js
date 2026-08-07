@@ -24,7 +24,8 @@ export class WithholdingResult {
   }
 }
 import { logger, LogCategory } from './utils/logger.js';
-import { global_filingAs, global_inflationRate, global_propertyTaxDeductionMax } from './globals.js';
+import { global_filingAs, global_inflationRate, global_propertyTaxDeductionMax,
+         FilingStatus, FILING_STATUSES } from './globals.js';
 import { taxableBasis } from './tax-basis.js';
 
 /**
@@ -250,6 +251,31 @@ export const uniformLifetimeTable = [
     { age: 120, divisor: 2.0 }
 ];
 
+/**
+ * FilingStatus -> the `filingType` key used inside the tax tables. The tables
+ * keep their own vocabulary ("single" / "married", matching the IRS releases
+ * they are transcribed from); this is the only place the two meet.
+ */
+const FILING_TYPE_KEY = Object.freeze({
+    [FilingStatus.SINGLE]: 'single',
+    [FilingStatus.MARRIED_FILING_JOINTLY]: 'married',
+});
+
+/**
+ * Annual contribution limits, by filing-table key.
+ *
+ * HOUSEHOLD figures, not per-person — spec 5 scoped MFJ to the household level,
+ * and every limit is enforced against a household aggregate (payroll-engine
+ * compares against this.yearly.four01KContribution, summed across all income
+ * assets). So a married limit is the per-person statutory figure DOUBLED, and
+ * saying that here is the point of the table: the previous code doubled the IRA
+ * limit and left the 401(k) one alone, which is not a policy anyone chose.
+ */
+const CONTRIBUTION_LIMITS = Object.freeze({
+    single:  { iraBelow50:  7500, ira50AndOver:  8600, four01KBelow50: 24500, four01K50AndOver: 32500 },
+    married: { iraBelow50: 15000, ira50AndOver: 17200, four01KBelow50: 24500, four01K50AndOver: 32500 },
+});
+
 export class TaxTable {
     constructor() {
         this.taxes = null;     
@@ -260,26 +286,31 @@ export class TaxTable {
     initializeChron() {
         
         this.activeTaxTables = JSON.parse(JSON.stringify(us_2026_taxtables));
-        if (global_filingAs == 'Single') {
-            this.activeIncomeTable = this.activeTaxTables.income.tables[0];
-            this.activeCapitalGainsTable = this.activeTaxTables.capitalGains.tables[0];
-            this.activeStandardDeduction = this.activeTaxTables.standardDeduction.single;
-            this.activeHomeSaleExclusion = this.activeTaxTables.homeSaleExclusion.single;
-            this.iraContributionLimitBelow50 = 7500;
-            this.iraContributionLimit50AndOver = 8600;
-            this.four01KContributionLimitBelow50 = 24500;
-            this.four01KContributionLimit50AndOver = 32500;
+
+        // Selected BY KEY, not by array index and an else. The old form made
+        // every unrecognised status file jointly by falling through, so 'MFJ'
+        // worked by accident and a future 'MFS' would have too.
+        const key = FILING_TYPE_KEY[global_filingAs];
+        if (!key) {
+            throw new Error(`TaxTable: filing status ${JSON.stringify(global_filingAs)} `
+                + `is not one of ${FILING_STATUSES.join(', ')}`);
         }
-        else {
-            this.activeIncomeTable = this.activeTaxTables.income.tables[1];
-            this.activeCapitalGainsTable = this.activeTaxTables.capitalGains.tables[1];
-            this.activeStandardDeduction = this.activeTaxTables.standardDeduction.married;
-            this.activeHomeSaleExclusion = this.activeTaxTables.homeSaleExclusion.married;
-            this.iraContributionLimitBelow50 = 15000;
-            this.iraContributionLimit50AndOver = 17200;
-            this.four01KContributionLimitBelow50 = 24500;
-            this.four01KContributionLimit50AndOver = 32500;
-        }
+        const byKey = (tables) => {
+            const found = tables.find((t) => t.filingType === key);
+            if (!found) throw new Error(`TaxTable: no ${key} table`);
+            return found;
+        };
+
+        this.activeIncomeTable = byKey(this.activeTaxTables.income.tables);
+        this.activeCapitalGainsTable = byKey(this.activeTaxTables.capitalGains.tables);
+        this.activeStandardDeduction = this.activeTaxTables.standardDeduction[key];
+        this.activeHomeSaleExclusion = this.activeTaxTables.homeSaleExclusion[key];
+
+        const limits = CONTRIBUTION_LIMITS[key];
+        this.iraContributionLimitBelow50 = limits.iraBelow50;
+        this.iraContributionLimit50AndOver = limits.ira50AndOver;
+        this.four01KContributionLimitBelow50 = limits.four01KBelow50;
+        this.four01KContributionLimit50AndOver = limits.four01K50AndOver;
 
         this.yearlySocialSecurityAccumulator = new Currency();
 

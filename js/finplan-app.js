@@ -94,6 +94,7 @@ import {
     global_getInflationRate,
     global_setFilingAs,
     global_getFilingAs,
+    asFilingStatus,
     global_setUserStartAge,
     global_getUserStartAge,
     global_setUserRetirementAge,
@@ -2055,7 +2056,8 @@ function applyImportedPortfolio(data, persist) {
     // Apply global settings
     if (data.settings) {
         global_setInflationRate(data.settings.inflationRate);
-        global_setFilingAs(data.settings.filingAs);
+        // Imported data is untrusted — it may carry a status an older version wrote.
+        global_setFilingAs(asFilingStatus(data.settings.filingAs));
         global_setUserStartAge(data.settings.startAge);
         global_setUserRetirementAge(data.settings.retirementAge);
         global_setUserFinishAge(data.settings.finishAge);
