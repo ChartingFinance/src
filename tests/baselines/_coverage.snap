@@ -150,6 +150,15 @@
     incomeTaxWithholding
     interestIncome
     transfer
+  quickstart-coupleNearingRetirement:
+    assetGrowth
+    expenseInflation
+    ficaWithholding
+    grossUp
+    incomeGrowth
+    incomeTaxWithholding
+    taxTrueUp
+    transfer
   quickstart-dualIncome:
     assetGrowth
     capitalGainRecognized
@@ -216,6 +225,29 @@
     incomeGrowth
     incomeTaxWithholding
     spillover
+    transfer
+  quickstart-retiredCouple:
+    assetGrowth
+    expenseInflation
+    grossUp
+    incomeGrowth
+    incomeTaxWithholding
+    transfer
+  quickstart-youngCouple:
+    assetGrowth
+    capitalGainExcluded
+    capitalGainRecognized
+    expenseInflation
+    ficaWithholding
+    grossUp
+    incomeGrowth
+    incomeTaxWithholding
+    mortgageInterest
+    mortgagePrincipal
+    propertyTax
+    propertyTaxEscrow
+    settlement
+    taxTrueUp
     transfer
   retired-deferred-draw:
     assetGrowth
