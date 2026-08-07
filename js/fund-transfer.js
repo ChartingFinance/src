@@ -185,6 +185,27 @@ export class FundTransfer {
    * @param {string}     memo        What the money was for
    * @param {string}     origin      ShortfallOrigin — which movement this is the remainder of
    */
+  /**
+   * Where money COMING IN should land when no account was named.
+   *
+   * Same priority list as resolveFunding, minus the positive-balance filter —
+   * that filter is a precondition for taking money OUT, and applying it to a
+   * deposit is what made an annual tax refund vanish when the household had
+   * spent everything. A depleted current account is a perfectly good place to
+   * receive a refund; being empty is the reason it needs one.
+   *
+   * Deferred and tax-free accounts stay out for the same reason they do on the
+   * debit side: a deposit into a 401(k) is a contribution with plan rules
+   * attached, not somewhere to park a cheque.
+   */
+  static resolveDeposit(modelAssets) {
+    for (const key of InstrumentType.fundingBackstopPriority) {
+      const match = modelAssets.find(a => a.instrument === key && !a.isClosed);
+      if (match) return match;
+    }
+    return null;
+  }
+
   static reportUnfunded(modelAsset, amount, memo, origin) {
     if (!Object.values(ShortfallOrigin).includes(origin)) {
       throw new Error(`reportUnfunded: origin must be a ShortfallOrigin, got "${origin}"`);

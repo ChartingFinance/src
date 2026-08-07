@@ -520,6 +520,36 @@ const adversarialFixtures = [
     }),
   },
   {
+    name: 'unfundable-tax-bill',
+    kind: 'adversarial',
+    reaches:
+      'an annual tax true-up that NOTHING can pay, and the funded true-ups that '
+      + 'precede it in the same plan. '
+      + '      FundTransfer.resolveFunding only considers everyday accounts — '
+      + 'cash, bank, brokerage, bonds — with a positive balance, by deliberate '
+      + 'policy, so it returns null both when a household is broke and when its '
+      + 'money is all in a 401(k) the engine will not raid implicitly. Either '
+      + 'way applyAnnualTaxTrueUp used to hit `if (!liquidAsset) return;` and '
+      + 'the bill vanished: no event, no metric, no issue raised. '
+      + '      The brokerage has an 83% gain ratio and funds an expense larger '
+      + 'than Social Security covers, so every withdrawal realises a gain that '
+      + 'nothing withheld against — which is what creates a real annual '
+      + 'residual. It is collectible for the first years and then is not, so '
+      + 'the fixture pins BOTH sides of the branch rather than only the broken '
+      + 'one. There is deliberately no Home: an earlier draft had one and its '
+      + 'monthly maintenance, insurance and property tax buried the tax bill '
+      + 'under 74 unfunded events.',
+    config: { startAge: 68, retirementAge: 65, filingAs: 'Single' },
+    build: () => ({
+      assets: [
+        benefit('Social Security', 3000),
+        equity('Brokerage', 120000, 20000, { annualReturnRate: { rate: 0.04 } }),
+        bank('Checking', 2000),
+        expense('Living', 7000),
+      ].map(ModelAsset.fromJSON),
+    }),
+  },
+  {
     name: 'transfer-unfunded',
     kind: 'adversarial',
     reaches:

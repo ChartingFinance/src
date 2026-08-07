@@ -310,3 +310,15 @@
     expenseInflation
     transfer
     unfunded
+  unfundable-tax-bill:
+    assetGrowth
+    capitalGainRecognized
+    expenseInflation
+    grossUp
+    incomeGrowth
+    incomeTaxWithholding
+    interestIncome
+    spillover
+    taxTrueUp
+    transfer
+    unfunded
