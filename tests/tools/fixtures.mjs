@@ -46,6 +46,65 @@ const xfer = (to, monthly, close = 0) => ({
   toDisplayName: to, monthlyMoveValue: monthly, closeMoveValue: close,
 });
 
+const JUN29 = { year: 2029, month: 6 };  // closes BEFORE the plan end, so it closes at all
+
+/**
+ * Instrument shorthands.
+ *
+ * These exist to delete boilerplate, NOT to make fixtures cheap to generate.
+ * Every adversarial fixture in this file earns its place by a tuned specific —
+ * a balance that must be large enough for a true-up to be collectible, a
+ * taxable income parked next to a bracket edge, a finish date that precedes the
+ * plan end. A helper cannot know any of that, and a corpus of quickly-generated
+ * plans would reach code without discriminating it, which is this project's
+ * signature failure. So: the skeleton is shared, the specifics stay written out
+ * where a reader can see and question them.
+ *
+ * Each builds on `asset(DEC)`, so it inherits the START date and the zero
+ * default return rate, and the trailing `x` spread overrides anything —
+ * including `instrument` and `finishDateInt`.
+ */
+
+/** Any account whose basis equals its balance: bank, cash. */
+const bank = (displayName, amount, x = {}) => asset(DEC)({
+  instrument: 'bank', displayName,
+  startCurrency: { amount }, startBasisCurrency: { amount }, ...x });
+
+/** Monthly outgoing. Takes a MAGNITUDE — the sign convention lives here, once. */
+const expense = (displayName, monthly, x = {}) => asset(DEC)({
+  instrument: 'monthlyExpense', displayName,
+  startCurrency: { amount: -Math.abs(monthly) }, startBasisCurrency: { amount: 0 }, ...x });
+
+/** Earned income. */
+const salary = (displayName, monthly, x = {}) => asset(DEC)({
+  instrument: 'workingIncome', displayName,
+  startCurrency: { amount: monthly }, startBasisCurrency: { amount: 0 }, ...x });
+
+/** Social Security or a pension. */
+const benefit = (displayName, monthly, x = {}) => asset(DEC)({
+  instrument: 'retirementIncome', displayName,
+  startCurrency: { amount: monthly }, startBasisCurrency: { amount: 0 }, ...x });
+
+/** Taxable brokerage. Basis is explicit because the gain ratio is usually the point. */
+const equity = (displayName, amount, basis, x = {}) => asset(DEC)({
+  instrument: 'taxableEquity', displayName,
+  startCurrency: { amount }, startBasisCurrency: { amount: basis }, ...x });
+
+/** ira | 401K | rothIRA — zero basis, because distributions are fully taxable. */
+const deferred = (instrument, displayName, amount, x = {}) => asset(DEC)({
+  instrument, displayName,
+  startCurrency: { amount }, startBasisCurrency: { amount: 0 }, ...x });
+
+/** Primary residence by default — §121 only applies to one, and every fixture here wants it. */
+const home = (displayName, amount, basis, x = {}) => asset(DEC)({
+  instrument: 'realEstate', displayName, isPrimaryHome: true,
+  startCurrency: { amount }, startBasisCurrency: { amount: basis }, ...x });
+
+/** Re-date one asset, or a whole list, off the DEC default. */
+const by = (finish, a) => (Array.isArray(a)
+  ? a.map((one) => ({ ...one, finishDateInt: finish }))
+  : { ...a, finishDateInt: finish });
+
 // ── The corpus ───────────────────────────────────────────────────────
 
 /**
@@ -85,18 +144,14 @@ const adversarialFixtures = [
     config: { startAge: 50, retirementAge: 65 },
     build: () => ({
       assets: [
-        asset(DEC)({ instrument: 'realEstate', displayName: 'Home', isPrimaryHome: true,
-          startCurrency: { amount: 500000 }, startBasisCurrency: { amount: 500000 },
-          annualReturnRate: { rate: 0.03 }, annualTaxRate: { rate: 0.012 },
-          annualMaintenanceRate: { rate: 0.01 }, annualInsuranceCost: { amount: 2400 } }),
+        home('Home', 500000, 500000, { annualReturnRate: { rate: 0.03 },
+          annualTaxRate: { rate: 0.012 }, annualMaintenanceRate: { rate: 0.01 },
+          annualInsuranceCost: { amount: 2400 } }),
         asset(DEC)({ instrument: 'mortgage', displayName: 'Mortgage',
           startCurrency: { amount: -300000 }, startBasisCurrency: { amount: 0 },
           annualReturnRate: { rate: 0.065 }, monthsRemaining: 360 }),
-        asset(DEC)({ instrument: 'bank', displayName: 'Checking',
-          startCurrency: { amount: 4000 }, startBasisCurrency: { amount: 4000 } }),
-        asset(DEC)({ instrument: 'taxableEquity', displayName: 'Brokerage',
-          startCurrency: { amount: 400000 }, startBasisCurrency: { amount: 200000 },
-          annualReturnRate: { rate: 0.07 } }),
+        bank('Checking', 4000),
+        equity('Brokerage', 400000, 200000, { annualReturnRate: { rate: 0.07 } }),
       ].map(ModelAsset.fromJSON),
     }),
   },
@@ -109,15 +164,10 @@ const adversarialFixtures = [
     config: { startAge: 75, retirementAge: 65 },
     build: () => ({
       assets: [
-        asset(DEC)({ instrument: 'retirementIncome', displayName: 'Social Security',
-          startCurrency: { amount: 3000 }, startBasisCurrency: { amount: 0 },
-          fundTransfers: [xfer('Savings', 100)] }),
-        asset(DEC)({ instrument: 'ira', displayName: 'IRA',
-          startCurrency: { amount: 800000 }, startBasisCurrency: { amount: 0 } }),
-        asset(DEC)({ instrument: 'bank', displayName: 'Savings',
-          startCurrency: { amount: 200000 }, startBasisCurrency: { amount: 200000 } }),
-        asset(DEC)({ instrument: 'monthlyExpense', displayName: 'Living',
-          startCurrency: { amount: -5000 }, startBasisCurrency: { amount: 0 } }),
+        benefit('Social Security', 3000, { fundTransfers: [xfer('Savings', 100)] }),
+        deferred('ira', 'IRA', 800000),
+        bank('Savings', 200000),
+        expense('Living', 5000),
       ].map(ModelAsset.fromJSON),
     }),
   },
@@ -135,17 +185,11 @@ const adversarialFixtures = [
     config: { startAge: 75, retirementAge: 65 },
     build: () => ({
       assets: [
-        asset(DEC)({ instrument: 'retirementIncome', displayName: 'Social Security',
-          startCurrency: { amount: 3000 }, startBasisCurrency: { amount: 0 } }),
-        asset(DEC)({ instrument: 'ira', displayName: 'IRA',
-          startCurrency: { amount: 600000 }, startBasisCurrency: { amount: 0 } }),
-        asset(DEC)({ instrument: 'taxableEquity', displayName: 'Brokerage',
-          startCurrency: { amount: 500000 }, startBasisCurrency: { amount: 150000 },
-          annualReturnRate: { rate: 0.06 } }),
-        asset(DEC)({ instrument: 'bank', displayName: 'Checking',
-          startCurrency: { amount: 2000 }, startBasisCurrency: { amount: 2000 } }),
-        asset(DEC)({ instrument: 'monthlyExpense', displayName: 'Living',
-          startCurrency: { amount: -7000 }, startBasisCurrency: { amount: 0 } }),
+        benefit('Social Security', 3000),
+        deferred('ira', 'IRA', 600000),
+        equity('Brokerage', 500000, 150000, { annualReturnRate: { rate: 0.06 } }),
+        bank('Checking', 2000),
+        expense('Living', 7000),
       ].map(ModelAsset.fromJSON),
     }),
   },
@@ -159,16 +203,12 @@ const adversarialFixtures = [
       'snapshot, which is skipped entirely on a December finish.',
     config: { startAge: 75, retirementAge: 65 },
     build: () => ({
-      assets: [
-        asset(JUL)({ instrument: 'retirementIncome', displayName: 'Social Security',
-          startCurrency: { amount: 3000 }, startBasisCurrency: { amount: 0 } }),
-        asset(JUL)({ instrument: 'ira', displayName: 'IRA',
-          startCurrency: { amount: 800000 }, startBasisCurrency: { amount: 0 } }),
-        asset(JUL)({ instrument: 'bank', displayName: 'Savings',
-          startCurrency: { amount: 200000 }, startBasisCurrency: { amount: 200000 } }),
-        asset(JUL)({ instrument: 'monthlyExpense', displayName: 'Living',
-          startCurrency: { amount: -5000 }, startBasisCurrency: { amount: 0 } }),
-      ].map(ModelAsset.fromJSON),
+      assets: by(JUL, [
+        benefit('Social Security', 3000),
+        deferred('ira', 'IRA', 800000),
+        bank('Savings', 200000),
+        expense('Living', 5000),
+      ]).map(ModelAsset.fromJSON),
       guardrails: {
         withdrawalRate: 4, preservation: 20, prosperity: 20, adjustment: 10,
         retirementDateInt: DateInt.from(2026, 1),
@@ -186,15 +226,11 @@ const adversarialFixtures = [
     config: { startAge: 50, retirementAge: 65 },
     build: () => ({
       assets: [
-        asset(DEC)({ instrument: 'realEstate', displayName: 'Home', isPrimaryHome: true,
-          startCurrency: { amount: 600000 }, startBasisCurrency: { amount: 600000 },
-          annualReturnRate: { rate: 0.03 }, annualTaxRate: { rate: 0.015 },
-          annualMaintenanceRate: { rate: 0.02 }, annualInsuranceCost: { amount: 6000 } }),
-        asset(DEC)({ instrument: 'bank', displayName: 'Checking',
-          startCurrency: { amount: 3000 }, startBasisCurrency: { amount: 3000 } }),
-        asset(DEC)({ instrument: 'taxableEquity', displayName: 'Brokerage',
-          startCurrency: { amount: 900000 }, startBasisCurrency: { amount: 600000 },
-          annualReturnRate: { rate: 0.06 } }),
+        home('Home', 600000, 600000, { annualReturnRate: { rate: 0.03 },
+          annualTaxRate: { rate: 0.015 }, annualMaintenanceRate: { rate: 0.02 },
+          annualInsuranceCost: { amount: 6000 } }),
+        bank('Checking', 3000),
+        equity('Brokerage', 900000, 600000, { annualReturnRate: { rate: 0.06 } }),
       ].map(ModelAsset.fromJSON),
     }),
   },
@@ -207,12 +243,10 @@ const adversarialFixtures = [
     config: { startAge: 50, retirementAge: 65 },
     build: () => ({
       assets: [
-        asset(DEC)({ instrument: 'realEstate', displayName: 'Home', isPrimaryHome: true,
-          startCurrency: { amount: 600000 }, startBasisCurrency: { amount: 600000 },
-          annualReturnRate: { rate: 0.03 }, annualTaxRate: { rate: 0.015 },
-          annualMaintenanceRate: { rate: 0.02 }, annualInsuranceCost: { amount: 6000 } }),
-        asset(DEC)({ instrument: 'bank', displayName: 'Checking',
-          startCurrency: { amount: 3000 }, startBasisCurrency: { amount: 3000 } }),
+        home('Home', 600000, 600000, { annualReturnRate: { rate: 0.03 },
+          annualTaxRate: { rate: 0.015 }, annualMaintenanceRate: { rate: 0.02 },
+          annualInsuranceCost: { amount: 6000 } }),
+        bank('Checking', 3000),
       ].map(ModelAsset.fromJSON),
     }),
   },
@@ -227,14 +261,11 @@ const adversarialFixtures = [
     config: { startAge: 50, retirementAge: 65 },
     build: () => ({
       assets: [
-        asset(DEC)({ instrument: 'realEstate', displayName: 'Home', isPrimaryHome: true,
-          startCurrency: { amount: 1200000 }, startBasisCurrency: { amount: 1200000 },
-          annualReturnRate: { rate: 0.03 }, annualTaxRate: { rate: 0.02 },
-          annualMaintenanceRate: { rate: 0.05 }, annualInsuranceCost: { amount: 24000 } }),
-        asset(DEC)({ instrument: 'cash', displayName: 'Wallet',
-          startCurrency: { amount: 1200 }, startBasisCurrency: { amount: 1200 } }),
-        asset(DEC)({ instrument: 'taxableEquity', displayName: 'Brokerage',
-          startCurrency: { amount: 2500 }, startBasisCurrency: { amount: 2500 } }),
+        home('Home', 1200000, 1200000, { annualReturnRate: { rate: 0.03 },
+          annualTaxRate: { rate: 0.02 }, annualMaintenanceRate: { rate: 0.05 },
+          annualInsuranceCost: { amount: 24000 } }),
+        bank('Wallet', 1200, { instrument: 'cash' }),
+        equity('Brokerage', 2500, 2500),
       ].map(ModelAsset.fromJSON),
     }),
   },
@@ -251,27 +282,18 @@ const adversarialFixtures = [
     config: { startAge: 40, retirementAge: 65 },
     build: () => ({
       assets: [
-        asset(DEC)({ instrument: 'workingIncome', displayName: 'Salary',
-          startCurrency: { amount: 14000 }, startBasisCurrency: { amount: 0 },
-          // Well above the annual 401(k) limit, which is the point.
-          fundTransfers: [xfer('401K', 4000), xfer('Brokerage', 2000)] }),
-        asset(DEC)({ instrument: '401K', displayName: '401K',
-          startCurrency: { amount: 250000 }, startBasisCurrency: { amount: 0 },
-          annualReturnRate: { rate: 0.05 } }),
-        asset(DEC)({ instrument: 'taxableEquity', displayName: 'Brokerage',
-          startCurrency: { amount: 300000 }, startBasisCurrency: { amount: 200000 },
-          annualReturnRate: { rate: 0.04 },
-          // Split ratio so BOTH dividend branches fire — a ratio of 1.0 leaves
-          // the non-qualified recordEvent unreached.
+        // Transfers well above the annual 401(k) limit, which is the point.
+        salary('Salary', 14000, { fundTransfers: [xfer('401K', 4000), xfer('Brokerage', 2000)] }),
+        deferred('401K', '401K', 250000, { annualReturnRate: { rate: 0.05 } }),
+        // Split ratio so BOTH dividend branches fire — a ratio of 1.0 leaves
+        // the non-qualified recordEvent unreached.
+        equity('Brokerage', 300000, 200000, { annualReturnRate: { rate: 0.04 },
           annualDividendRate: { rate: 0.025 }, dividendQualifiedRatio: 0.7 }),
-        asset(DEC)({ instrument: 'bank', displayName: 'Checking',
-          startCurrency: { amount: 25000 }, startBasisCurrency: { amount: 25000 },
-          oneTimeEvents: [
-            { dateInt: { year: 2027, month: 6 }, amount: { amount: 50000 }, note: 'Inheritance' },
-            { dateInt: { year: 2028, month: 9 }, amount: { amount: -18000 }, note: 'Roof replacement' },
-          ] }),
-        asset(DEC)({ instrument: 'monthlyExpense', displayName: 'Living',
-          startCurrency: { amount: -6000 }, startBasisCurrency: { amount: 0 } }),
+        bank('Checking', 25000, { oneTimeEvents: [
+          { dateInt: { year: 2027, month: 6 }, amount: { amount: 50000 }, note: 'Inheritance' },
+          { dateInt: { year: 2028, month: 9 }, amount: { amount: -18000 }, note: 'Roof replacement' },
+        ] }),
+        expense('Living', 6000),
       ].map(ModelAsset.fromJSON),
     }),
   },
@@ -295,14 +317,10 @@ const adversarialFixtures = [
     config: { startAge: 45, retirementAge: 67, filingAs: 'MFJ' },
     build: () => ({
       assets: [
-        asset(DEC)({ instrument: 'workingIncome', displayName: 'Salary A',
-          startCurrency: { amount: 18000 }, startBasisCurrency: { amount: 0 } }),
-        asset(DEC)({ instrument: 'workingIncome', displayName: 'Salary B',
-          startCurrency: { amount: 18000 }, startBasisCurrency: { amount: 0 } }),
-        asset(DEC)({ instrument: 'bank', displayName: 'Checking',
-          startCurrency: { amount: 20000 }, startBasisCurrency: { amount: 20000 } }),
-        asset(DEC)({ instrument: 'monthlyExpense', displayName: 'Living',
-          startCurrency: { amount: -9000 }, startBasisCurrency: { amount: 0 } }),
+        salary('Salary A', 18000),
+        salary('Salary B', 18000),
+        bank('Checking', 20000),
+        expense('Living', 9000),
       ].map(ModelAsset.fromJSON),
     }),
   },
@@ -329,15 +347,10 @@ const adversarialFixtures = [
     config: { startAge: 55, retirementAge: 67, filingAs: 'MFJ' },
     build: () => ({
       assets: [
-        asset(DEC)({ instrument: 'workingIncome', displayName: 'Salary',
-          startCurrency: { amount: 20000 }, startBasisCurrency: { amount: 0 } }),
-        asset({ year: 2029, month: 6 })({ instrument: 'taxableEquity', displayName: 'Brokerage',
-          startCurrency: { amount: 2000000 }, startBasisCurrency: { amount: 400000 },
-          annualReturnRate: { rate: 0.06 } }),
-        asset(DEC)({ instrument: 'bank', displayName: 'Checking',
-          startCurrency: { amount: 25000 }, startBasisCurrency: { amount: 25000 } }),
-        asset(DEC)({ instrument: 'monthlyExpense', displayName: 'Living',
-          startCurrency: { amount: -8000 }, startBasisCurrency: { amount: 0 } }),
+        salary('Salary', 20000),
+        by(JUN29, equity('Brokerage', 2000000, 400000, { annualReturnRate: { rate: 0.06 } })),
+        bank('Checking', 25000),
+        expense('Living', 8000),
       ].map(ModelAsset.fromJSON),
     }),
   },
@@ -355,22 +368,12 @@ const adversarialFixtures = [
     config: { startAge: 45, retirementAge: 67, filingAs: 'MFJ' },
     build: () => ({
       assets: [
-        asset(DEC)({ instrument: 'workingIncome', displayName: 'Salary A',
-          startCurrency: { amount: 12000 }, startBasisCurrency: { amount: 0 },
-          fundTransfers: [xfer('401K A', 2000)] }),
-        asset(DEC)({ instrument: 'workingIncome', displayName: 'Salary B',
-          startCurrency: { amount: 12000 }, startBasisCurrency: { amount: 0 },
-          fundTransfers: [xfer('401K B', 2000)] }),
-        asset(DEC)({ instrument: '401K', displayName: '401K A',
-          startCurrency: { amount: 150000 }, startBasisCurrency: { amount: 0 },
-          annualReturnRate: { rate: 0.05 } }),
-        asset(DEC)({ instrument: '401K', displayName: '401K B',
-          startCurrency: { amount: 90000 }, startBasisCurrency: { amount: 0 },
-          annualReturnRate: { rate: 0.05 } }),
-        asset(DEC)({ instrument: 'bank', displayName: 'Checking',
-          startCurrency: { amount: 15000 }, startBasisCurrency: { amount: 15000 } }),
-        asset(DEC)({ instrument: 'monthlyExpense', displayName: 'Living',
-          startCurrency: { amount: -8000 }, startBasisCurrency: { amount: 0 } }),
+        salary('Salary A', 12000, { fundTransfers: [xfer('401K A', 2000)] }),
+        salary('Salary B', 12000, { fundTransfers: [xfer('401K B', 2000)] }),
+        deferred('401K', '401K A', 150000, { annualReturnRate: { rate: 0.05 } }),
+        deferred('401K', '401K B', 90000, { annualReturnRate: { rate: 0.05 } }),
+        bank('Checking', 15000),
+        expense('Living', 8000),
       ].map(ModelAsset.fromJSON),
     }),
   },
@@ -389,17 +392,12 @@ const adversarialFixtures = [
     config: { startAge: 55, retirementAge: 67, filingAs: 'MFJ' },
     build: () => ({
       assets: [
-        asset({ year: 2029, month: 6 })({ instrument: 'realEstate', displayName: 'Home',
-          isPrimaryHome: true,
-          startCurrency: { amount: 800000 }, startBasisCurrency: { amount: 400000 },
-          annualReturnRate: { rate: 0.03 }, annualTaxRate: { rate: 0.011 },
-          annualMaintenanceRate: { rate: 0.01 }, annualInsuranceCost: { amount: 3000 } }),
-        asset(DEC)({ instrument: 'workingIncome', displayName: 'Salary',
-          startCurrency: { amount: 9000 }, startBasisCurrency: { amount: 0 } }),
-        asset(DEC)({ instrument: 'bank', displayName: 'Checking',
-          startCurrency: { amount: 30000 }, startBasisCurrency: { amount: 30000 } }),
-        asset(DEC)({ instrument: 'monthlyExpense', displayName: 'Living',
-          startCurrency: { amount: -6000 }, startBasisCurrency: { amount: 0 } }),
+        by(JUN29, home('Home', 800000, 400000, { annualReturnRate: { rate: 0.03 },
+          annualTaxRate: { rate: 0.011 }, annualMaintenanceRate: { rate: 0.01 },
+          annualInsuranceCost: { amount: 3000 } })),
+        salary('Salary', 9000),
+        bank('Checking', 30000),
+        expense('Living', 6000),
       ].map(ModelAsset.fromJSON),
     }),
   },
@@ -429,17 +427,12 @@ const adversarialFixtures = [
     config: { startAge: 55, retirementAge: 67, filingAs: 'Single' },
     build: () => ({
       assets: [
-        asset({ year: 2029, month: 6 })({ instrument: 'realEstate', displayName: 'Home',
-          isPrimaryHome: true,
-          startCurrency: { amount: 800000 }, startBasisCurrency: { amount: 400000 },
-          annualReturnRate: { rate: 0.03 }, annualTaxRate: { rate: 0.011 },
-          annualMaintenanceRate: { rate: 0.01 }, annualInsuranceCost: { amount: 3000 } }),
-        asset(DEC)({ instrument: 'workingIncome', displayName: 'Salary',
-          startCurrency: { amount: 9000 }, startBasisCurrency: { amount: 0 } }),
-        asset(DEC)({ instrument: 'bank', displayName: 'Checking',
-          startCurrency: { amount: 150000 }, startBasisCurrency: { amount: 150000 } }),
-        asset(DEC)({ instrument: 'monthlyExpense', displayName: 'Living',
-          startCurrency: { amount: -6000 }, startBasisCurrency: { amount: 0 } }),
+        by(JUN29, home('Home', 800000, 400000, { annualReturnRate: { rate: 0.03 },
+          annualTaxRate: { rate: 0.011 }, annualMaintenanceRate: { rate: 0.01 },
+          annualInsuranceCost: { amount: 3000 } })),
+        salary('Salary', 9000),
+        bank('Checking', 150000),
+        expense('Living', 6000),
       ].map(ModelAsset.fromJSON),
     }),
   },
@@ -465,18 +458,11 @@ const adversarialFixtures = [
     config: { startAge: 62, retirementAge: 67, filingAs: 'Single' },
     build: () => ({
       assets: [
-        asset(DEC)({ instrument: 'workingIncome', displayName: 'Salary',
-          startCurrency: { amount: 9000 }, startBasisCurrency: { amount: 0 } }),
-        asset({ year: 2029, month: 6 })({ instrument: 'ira', displayName: 'IRA',
-          startCurrency: { amount: 400000 }, startBasisCurrency: { amount: 0 },
-          annualReturnRate: { rate: 0.05 } }),
-        asset({ year: 2029, month: 6 })({ instrument: '401K', displayName: '401K',
-          startCurrency: { amount: 300000 }, startBasisCurrency: { amount: 0 },
-          annualReturnRate: { rate: 0.05 } }),
-        asset(DEC)({ instrument: 'bank', displayName: 'Checking',
-          startCurrency: { amount: 60000 }, startBasisCurrency: { amount: 60000 } }),
-        asset(DEC)({ instrument: 'monthlyExpense', displayName: 'Living',
-          startCurrency: { amount: -6000 }, startBasisCurrency: { amount: 0 } }),
+        salary('Salary', 9000),
+        by(JUN29, deferred('ira', 'IRA', 400000, { annualReturnRate: { rate: 0.05 } })),
+        by(JUN29, deferred('401K', '401K', 300000, { annualReturnRate: { rate: 0.05 } })),
+        bank('Checking', 60000),
+        expense('Living', 6000),
       ].map(ModelAsset.fromJSON),
     }),
   },
@@ -516,19 +502,11 @@ const adversarialFixtures = [
     config: { startAge: 50, retirementAge: 67, filingAs: 'Single' },
     build: () => ({
       assets: [
-        asset(DEC)({ instrument: 'workingIncome', displayName: 'Salary',
-          startCurrency: { amount: 8000 }, startBasisCurrency: { amount: 0 },
-          fundTransfers: [xfer('401K', 2500)] }),
-        asset(DEC)({ instrument: '401K', displayName: '401K',
-          startCurrency: { amount: 120000 }, startBasisCurrency: { amount: 0 },
-          annualReturnRate: { rate: 0.05 } }),
-        asset(DEC)({ instrument: 'taxableEquity', displayName: 'Brokerage',
-          startCurrency: { amount: 500000 }, startBasisCurrency: { amount: 100000 },
-          annualReturnRate: { rate: 0.04 } }),
-        asset(DEC)({ instrument: 'bank', displayName: 'Checking',
-          startCurrency: { amount: 3000 }, startBasisCurrency: { amount: 3000 } }),
-        asset(DEC)({ instrument: 'monthlyExpense', displayName: 'Living',
-          startCurrency: { amount: -10000 }, startBasisCurrency: { amount: 0 } }),
+        salary('Salary', 8000, { fundTransfers: [xfer('401K', 2500)] }),
+        deferred('401K', '401K', 120000, { annualReturnRate: { rate: 0.05 } }),
+        equity('Brokerage', 500000, 100000, { annualReturnRate: { rate: 0.04 } }),
+        bank('Checking', 3000),
+        expense('Living', 10000),
       ].map(ModelAsset.fromJSON),
     }),
   },
@@ -543,11 +521,8 @@ const adversarialFixtures = [
     config: { startAge: 50, retirementAge: 65 },
     build: () => ({
       assets: [
-        asset(DEC)({ instrument: 'monthlyExpense', displayName: 'Living',
-          startCurrency: { amount: -6000 }, startBasisCurrency: { amount: 0 },
-          fundTransfers: [xfer('Brokerage', 100)] }),
-        asset(DEC)({ instrument: 'taxableEquity', displayName: 'Brokerage',
-          startCurrency: { amount: 40000 }, startBasisCurrency: { amount: 40000 } }),
+        expense('Living', 6000, { fundTransfers: [xfer('Brokerage', 100)] }),
+        equity('Brokerage', 40000, 40000),
       ].map(ModelAsset.fromJSON),
     }),
   },
