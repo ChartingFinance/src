@@ -452,23 +452,29 @@ const engine = {
 // is booked, and monthly was zeroed at the previous month-end. Do not "simplify"
 // this scenario: its non-zero base is an accident of asset ordering that the
 // corpus could not reproduce despite a fixture built specifically to try.
+// Moved again 2026-08-07 by the bracket-gap fix: Brokerage and portfolioTotal
+// -83.02, qualifiedDividends -6.80, longTermCapitalGains +13.06. Bracket rows
+// now tile exactly instead of starting a dollar above the previous row's end, so
+// no band loses a dollar of base at a crossed boundary. More tax, smaller
+// balances, and a slightly different realised gain because the brokerage it is
+// drawn from is smaller.
 const EXPECTED_ENGINE = {
   "Social Security": 4021.09,
   "Savings": 0.00,
   "IRA": 604532.76,
   "Roth": 4028947.93,
-  "Brokerage": 9971134.71,
+  "Brokerage": 9971051.69,
   "CompanyStock": 0.00,
   "Treasuries": 116821.90,
   "Home": 2307042.36,
   "Mortgage": 0.00,
   "Living Expenses": -11682.19,
-  "portfolioTotal": 17028479.66,
+  "portfolioTotal": 17028396.64,
   "employedIncome": 0.00,
   "socialSecurityIncome": 950908.99,
   "tradIRADistribution": 3096090.49,
-  "qualifiedDividends": 1071832.91,
-  "longTermCapitalGains": 1254999.37,
+  "qualifiedDividends": 1071826.11,
+  "longTermCapitalGains": 1255012.43,
   "interestIncome": 76892.34,
   "mortgageInterest": -247134.01,
 };

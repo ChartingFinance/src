@@ -27,6 +27,29 @@ import { logger, LogCategory } from './utils/logger.js';
 import { global_filingAs, global_inflationRate, global_propertyTaxDeductionMax } from './globals.js';
 import { taxableBasis } from './tax-basis.js';
 
+/**
+ * Bracket rows are HALF-OPEN: `[fromAmount, toAmount)`. Each row's `fromAmount`
+ * is exactly the previous row's `toAmount`, so the bands tile with no gap and no
+ * overlap.
+ *
+ * The IRS publishes them the other way — "$12,401 to $50,400" — and this file
+ * used to copy that literally. But `calculateYearlyIncomeTax` charges
+ * `(toAmount − fromAmount)` for a fully-spanned band, so every published `+1`
+ * boundary lost a dollar of base, and income landing in the one-dollar gap was
+ * taxed at no rate at all. Measured by an independent hand calculation on
+ * 2026-08-06 (spec 6 post-test T5): a $90,355.80 taxable income crossing three
+ * boundaries under-taxed by $0.37.
+ *
+ * Do not "correct" these back to the published figures. If a boundary needs
+ * checking, check the `toAmount` against the IRS release — those are the
+ * authoritative numbers here, and the `fromAmount` is derived from them.
+ *
+ * Two transcription errors surfaced when the bands were made to tile: the 2025
+ * single table had 250,556 where the IRS says the 35% band starts at 250,526,
+ * and 626,251 where the 37% band starts at 626,351. The first left 31 dollars
+ * untaxed; the second made the rows OVERLAP by 99 dollars, which the loop taxed
+ * at 35% and 37% both. Deriving `fromAmount` from `toAmount` repairs both.
+ */
 export const us_2026_taxtables = {
     "year": 2026,
     "fica": {
@@ -44,24 +67,24 @@ export const us_2026_taxtables = {
                 "filingType": "single",
                 "taxRows": [
                     {"rate": 0.10, "fromAmount": 0.0, "toAmount": 12400.0},
-                    {"rate": 0.12, "fromAmount": 12401.0, "toAmount": 50400.0},
-                    {"rate": 0.22, "fromAmount": 50401.0, "toAmount": 105700.0},
-                    {"rate": 0.24, "fromAmount": 105701.0, "toAmount": 201775.0},
-                    {"rate": 0.32, "fromAmount": 201776.0, "toAmount": 256225.0},
-                    {"rate": 0.35, "fromAmount": 256226.0, "toAmount": 640600.0},
-                    {"rate": 0.37, "fromAmount": 640601.0, "toAmount": -1.0}
+                    {"rate": 0.12, "fromAmount": 12400.0, "toAmount": 50400.0},
+                    {"rate": 0.22, "fromAmount": 50400.0, "toAmount": 105700.0},
+                    {"rate": 0.24, "fromAmount": 105700.0, "toAmount": 201775.0},
+                    {"rate": 0.32, "fromAmount": 201775.0, "toAmount": 256225.0},
+                    {"rate": 0.35, "fromAmount": 256225.0, "toAmount": 640600.0},
+                    {"rate": 0.37, "fromAmount": 640600.0, "toAmount": -1.0}
                 ]
             },
             {
                 "filingType": "married",
                 "taxRows": [
                     {"rate": 0.10, "fromAmount": 0.0, "toAmount": 24800.0},
-                    {"rate": 0.12, "fromAmount": 24801.0, "toAmount": 100800.0},
-                    {"rate": 0.22, "fromAmount": 100801.0, "toAmount": 211400.0},
-                    {"rate": 0.24, "fromAmount": 211401.0, "toAmount": 403550.0},
-                    {"rate": 0.32, "fromAmount": 403551.0, "toAmount": 512450.0},
-                    {"rate": 0.35, "fromAmount": 512451.0, "toAmount": 768700.0},
-                    {"rate": 0.37, "fromAmount": 768701.0, "toAmount": -1.0}
+                    {"rate": 0.12, "fromAmount": 24800.0, "toAmount": 100800.0},
+                    {"rate": 0.22, "fromAmount": 100800.0, "toAmount": 211400.0},
+                    {"rate": 0.24, "fromAmount": 211400.0, "toAmount": 403550.0},
+                    {"rate": 0.32, "fromAmount": 403550.0, "toAmount": 512450.0},
+                    {"rate": 0.35, "fromAmount": 512450.0, "toAmount": 768700.0},
+                    {"rate": 0.37, "fromAmount": 768700.0, "toAmount": -1.0}
                 ]
             }
         ]
@@ -73,16 +96,16 @@ export const us_2026_taxtables = {
                 "filingType": "single",
                 "taxRows": [
                     {"rate": 0.0, "fromAmount": 0.0, "toAmount": 49450.0},
-                    {"rate": 0.15, "fromAmount": 49451.0, "toAmount": 545500.0},
-                    {"rate": 0.2, "fromAmount": 545501.0, "toAmount": -1.0}
+                    {"rate": 0.15, "fromAmount": 49450.0, "toAmount": 545500.0},
+                    {"rate": 0.2, "fromAmount": 545500.0, "toAmount": -1.0}
                 ]
             },
             {
                 "filingType": "married",
                 "taxRows": [
                     {"rate": 0.0, "fromAmount": 0.0, "toAmount": 98900.0},
-                    {"rate": 0.15, "fromAmount": 98901.0, "toAmount": 613700.0},
-                    {"rate": 0.2, "fromAmount": 613701.0, "toAmount": -1.0}
+                    {"rate": 0.15, "fromAmount": 98900.0, "toAmount": 613700.0},
+                    {"rate": 0.2, "fromAmount": 613700.0, "toAmount": -1.0}
                 ]
             }
         ]
@@ -118,24 +141,24 @@ export const us_2025_taxtables = {
                 "filingType": "single",
                 "taxRows": [
                     {"rate": 0.10, "fromAmount": 0.0, "toAmount": 11925.0},
-                    {"rate": 0.12, "fromAmount": 11926.0, "toAmount": 48475.0},
-                    {"rate": 0.22, "fromAmount": 48476.0, "toAmount": 103350.0},
-                    {"rate": 0.24, "fromAmount": 103351.0, "toAmount": 197300.0},
-                    {"rate": 0.32, "fromAmount": 197301.0, "toAmount": 250525.0},
-                    {"rate": 0.35, "fromAmount": 250556.0, "toAmount": 626350.0},
-                    {"rate": 0.37, "fromAmount": 626251.0, "toAmount": -1.0 }
+                    {"rate": 0.12, "fromAmount": 11925.0, "toAmount": 48475.0},
+                    {"rate": 0.22, "fromAmount": 48475.0, "toAmount": 103350.0},
+                    {"rate": 0.24, "fromAmount": 103350.0, "toAmount": 197300.0},
+                    {"rate": 0.32, "fromAmount": 197300.0, "toAmount": 250525.0},
+                    {"rate": 0.35, "fromAmount": 250525.0, "toAmount": 626350.0},
+                    {"rate": 0.37, "fromAmount": 626350.0, "toAmount": -1.0 }
                 ]
             },
             {
                 "filingType": "married",
                 "taxRows": [
                     {"rate": 0.10, "fromAmount": 0.0, "toAmount": 23850.0},
-                    {"rate": 0.12, "fromAmount": 23851.0, "toAmount": 96950.0},
-                    {"rate": 0.22, "fromAmount": 96951.0, "toAmount": 206700.0},
-                    {"rate": 0.24, "fromAmount": 206701.0, "toAmount": 394600.0},
-                    {"rate": 0.32, "fromAmount": 394601.0, "toAmount": 501050.0},
-                    {"rate": 0.35, "fromAmount": 501051.0, "toAmount": 751600.0},
-                    {"rate": 0.37, "fromAmount": 751601.0, "toAmount": -1.0}
+                    {"rate": 0.12, "fromAmount": 23850.0, "toAmount": 96950.0},
+                    {"rate": 0.22, "fromAmount": 96950.0, "toAmount": 206700.0},
+                    {"rate": 0.24, "fromAmount": 206700.0, "toAmount": 394600.0},
+                    {"rate": 0.32, "fromAmount": 394600.0, "toAmount": 501050.0},
+                    {"rate": 0.35, "fromAmount": 501050.0, "toAmount": 751600.0},
+                    {"rate": 0.37, "fromAmount": 751600.0, "toAmount": -1.0}
                 ]
             }
         ]
@@ -147,16 +170,16 @@ export const us_2025_taxtables = {
                 "filingType": "single",
                 "taxRows": [
                 {"rate": 0.0, "fromAmount": 0.0, "toAmount": 48350.0 },
-                {"rate": 0.15, "fromAmount": 48351.0, "toAmount": 533400.0 },
-                {"rate": 0.2, "fromAmount": 533401.0, "toAmount": -1.0 }
+                {"rate": 0.15, "fromAmount": 48350.0, "toAmount": 533400.0 },
+                {"rate": 0.2, "fromAmount": 533400.0, "toAmount": -1.0 }
                 ]
             },
             {
                 "filingType": "married",
                 "taxRows": [
                     {"rate": 0.0, "fromAmount": 0.0, "toAmount": 96700.0 },
-                    {"rate": 0.15, "fromAmount": 96701.0, "toAmount": 600050.0 },
-                    {"rate": 0.2, "fromAmount": 600051.0, "toAmount": -1.0 }                    
+                    {"rate": 0.15, "fromAmount": 96700.0, "toAmount": 600050.0 },
+                    {"rate": 0.2, "fromAmount": 600050.0, "toAmount": -1.0 }                    
                 ]
             }
         ]
