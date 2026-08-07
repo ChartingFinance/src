@@ -393,6 +393,56 @@ The zero base is now the more important defect, and it is the same parameter as
 scope here — it is a behavioural change of its own, deserving its own predictions
 — but it should be the next spec rather than a someday item.
 
+## 5.5 Step 5 — DONE 2026-08-06. Prediction held, for a reason worth keeping
+
+`applyDeferredCloseDistribution` computed **ordinary** income tax against
+`totalIncome() × 12` — a rollup carrying long-term gains, qualified dividends and
+tax-free Roth distributions, none of which belong in an ordinary-rate
+calculation, and carrying no deduction. It now uses `ordinaryTaxable`.
+
+**Predicted before the change: no fixture moves.** Measured at the same program
+point, before the distribution is booked:
+
+| Asset | old base | new base |
+| --- | --- | --- |
+| 401K (closes first) | 0 | 0 |
+| IRA (closes second) | $4,286,927 | $4,269,283 |
+
+The gap is exactly the standard deduction inflated to 2029 ($17,644), and both
+figures sit far inside the 37% band, so `tax(base + D) − tax(base)` is `0.37 × D`
+either way. **Held: 20 fixtures unchanged, 0 baselines touched.**
+
+An empty diff is what a no-op migration also produces, so the site was mutated:
+
+| Mutation | Caught by |
+| --- | --- |
+| force the base to 0 | deferred-close-distribution |
+| force the base to 10× | **nothing** |
+
+The second is not a coverage failure, it is the prediction's reasoning confirmed
+from the other side: once the base is deep in the top bracket, scaling it cannot
+change the incremental tax. The site is guarded against base changes that **cross
+a bracket**, and nothing else can be guarded, because nothing else is observable.
+
+### The $4.29M base is itself the finding
+
+The IRA's base is the 401(k)'s $357,244 distribution annualised ×12. That is the
+×12 gap, and it is why this fixture withholds 58.7% of the IRA balance — above
+the top marginal rate, which no incremental ordinary tax can be. Unifying the
+base does not fix it. It does mean there is now exactly **one** place to fix it.
+
+## 5.6 The central goal is delivered
+
+After step 5:
+
+- **`calculateYearlyTaxableIncome` has exactly one caller in the codebase:
+  `tax-basis.js`.** Nine sites became one definition.
+- **`totalIncome()` is no longer used as a tax base anywhere.** Its only
+  remaining uses are `report-view.js` and `finplan-ai.js`, where it is what it
+  says: a reporting rollup of money in.
+
+Step 6 is therefore mostly confirmation of a state already reached.
+
 ## 6. Sequencing
 
 Each step is one commit with its own predicted, then verified, baseline diff.

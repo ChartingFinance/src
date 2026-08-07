@@ -403,7 +403,14 @@ export class TaxEngine {
         // this.monthly is usually freshly zeroed — the same weak baseline
         // the capital-gains close path uses; the annual true-up settles the
         // exact liability since ordinaryIncome() includes distributions.)
-        const annualizedIncome = this.monthly.totalIncome().copy().multiply(12);
+        // Ordinary tax must be measured against ORDINARY taxable income. This
+        // used to pass totalIncome() × 12, a rollup carrying long-term gains,
+        // qualified dividends and tax-free Roth distributions — none of which
+        // belong in an ordinary-rate calculation — and carrying no deduction.
+        // Captured BEFORE the distribution is booked below, so the marginal
+        // computation does not count it twice.
+        const { ordinaryTaxable: annualizedIncome } =
+            taxableBasis(this.monthly, this.activeUser, { annualise: true });
 
         // Book the full balance as a taxable distribution, classified by the
         // source instrument (recordTransfer routes IRA vs 401K), plus the
