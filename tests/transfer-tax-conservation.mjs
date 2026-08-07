@@ -40,7 +40,7 @@ globalThis.window = globalThis;
 import { ModelAsset } from '../js/model-asset.js';
 import { Portfolio } from '../js/portfolio.js';
 import { chronometer_run } from '../js/chronometer.js';
-import { TaxTable } from '../js/taxes.js';
+import { TaxTable, ContributionKind } from '../js/taxes.js';
 import { setActiveTaxTable, activeTaxTable } from '../js/globals.js';
 
 // ── Helpers ───────────────────────────────────────────────────────────
@@ -75,7 +75,7 @@ async function runPortfolio(assetData) {
   setActiveTaxTable(new TaxTable());
   const modelAssets = assetData.map(obj => ModelAsset.fromJSON(obj));
   const portfolio = new Portfolio(modelAssets, true);
-  const iraLimit = activeTaxTable.iraContributionLimit(portfolio.activeUser).amount;
+  const iraLimit = activeTaxTable.limitFor(ContributionKind.IRA, portfolio.activeUser).amount;
   await chronometer_run(portfolio);
   return { portfolio, iraLimit };
 }

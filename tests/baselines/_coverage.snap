@@ -127,14 +127,12 @@
     transfer
   mfj-two-401ks:
     assetGrowth
-    contributionCapped
     expenseInflation
     ficaWithholding
     grossUp
     incomeGrowth
     incomeTaxWithholding
     interestIncome
-    taxTrueUp
     transfer
   mfj-two-earners:
     expenseInflation

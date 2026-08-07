@@ -1,7 +1,7 @@
 import { Currency } from './utils/currency.js';
 import { InstrumentType } from './instruments/instrument.js';
 import { AssetAppreciationResult, MortgageResult, IncomeResult, RetirementIncomeResult, ExpenseResult, InterestResult } from './instruments/instrument-behavior.js';
-import { WithholdingResult } from './taxes.js';
+import { WithholdingResult, ContributionKind } from './taxes.js';
 import { logger, LogCategory } from './utils/logger.js';
 import { activeTaxTable } from './globals.js';
 import { global_propertyTaxDeductionMax } from './globals.js';
@@ -40,13 +40,13 @@ export class FinancialPackage {
 
     limitDeductions(activeUser) {
 
-        let maxIRADeduction = activeTaxTable.iraContributionLimit(activeUser);
+        let maxIRADeduction = activeTaxTable.limitFor(ContributionKind.IRA, activeUser);
         if (this.tradIRAContribution.amount + this.rothIRAContribution.amount > maxIRADeduction.amount) {
             // TODO: figure out how to split this up between traditional and roth
             //this.iraContribution.amount = maxIRADeduction.amount;
         }
 
-        let max401KDeduction = activeTaxTable.four01KContributionLimit(activeUser);
+        let max401KDeduction = activeTaxTable.limitFor(ContributionKind.FOUR01K, activeUser);
         if (this.four01KContribution.amount > max401KDeduction.amount)
             this.four01KContribution.amount = max401KDeduction.amount;
 

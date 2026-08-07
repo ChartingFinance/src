@@ -362,18 +362,23 @@ const adversarialFixtures = [
     name: 'mfj-two-401ks',
     kind: 'adversarial',
     reaches:
-      'the household-vs-per-person 401(k) cap. four01KContributionLimit returns ' +
-      'the SAME $24,500 for married as for single, and payroll-engine compares it ' +
-      'against this.yearly.four01KContribution — a household aggregate summed ' +
-      'across every income asset. Each salary here defers $24,000/yr, which no ' +
-      'per-person limit would cap, so the contributionCapped this fixture emits ' +
-      'is exactly the defect. When spec 5 step 4 makes the limit per-person, this ' +
-      'baseline must lose those events.',
+      'the household 401(k) ceiling with two earners under it.\n' +
+      '      xfer takes a PERCENTAGE of the source, not an amount — 16% of a ' +
+      '$12,000/month salary is $23,040 a year each, $46,080 for the household. ' +
+      'That sits above the $24,500 this engine used to allow a married couple ' +
+      '(the single figure, undoubled) and below the $49,000 it allows now, so ' +
+      'this fixture is the one that moves when the policy changes and nothing ' +
+      'else does.\n' +
+      '      An earlier version passed 2000, meaning 2000% of salary, and its ' +
+      'note claimed that was $24,000 a year. It capped every month for a reason ' +
+      'that had nothing to do with the policy under test. Corrected 2026-08-07 ' +
+      'when step 4 made the units visible: the caps did not disappear as ' +
+      'predicted, because the request had always been absurd.',
     config: { startAge: 45, retirementAge: 67, filingAs: 'MFJ' },
     build: () => ({
       assets: [
-        salary('Salary A', 12000, { fundTransfers: [xfer('401K A', 2000)] }),
-        salary('Salary B', 12000, { fundTransfers: [xfer('401K B', 2000)] }),
+        salary('Salary A', 12000, { fundTransfers: [xfer('401K A', 16)] }),
+        salary('Salary B', 12000, { fundTransfers: [xfer('401K B', 16)] }),
         deferred('401K', '401K A', 150000, { annualReturnRate: { rate: 0.05 } }),
         deferred('401K', '401K B', 90000, { annualReturnRate: { rate: 0.05 } }),
         bank('Checking', 15000),

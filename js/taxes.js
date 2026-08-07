@@ -271,9 +271,14 @@ const FILING_TYPE_KEY = Object.freeze({
  * saying that here is the point of the table: the previous code doubled the IRA
  * limit and left the 401(k) one alone, which is not a policy anyone chose.
  */
+export const ContributionKind = Object.freeze({
+    IRA: 'ira',
+    FOUR01K: '401k',
+});
+
 const CONTRIBUTION_LIMITS = Object.freeze({
     single:  { iraBelow50:  7500, ira50AndOver:  8600, four01KBelow50: 24500, four01K50AndOver: 32500 },
-    married: { iraBelow50: 15000, ira50AndOver: 17200, four01KBelow50: 24500, four01K50AndOver: 32500 },
+    married: { iraBelow50: 15000, ira50AndOver: 17200, four01KBelow50: 49000, four01K50AndOver: 65000 },
 });
 
 export class TaxTable {
@@ -734,17 +739,34 @@ export class TaxTable {
         logger.log(LogCategory.TAX, 'Taxes.applyYear|yearlyLongTermCapitalGainsAndQualifiedDividendsTax: ' + yearlyLongTermCapitalGainsAndQualifiedDividendsTax.toString());
     }
 
-    iraContributionLimit(activeUser) {
-        if (activeUser.age < 50)
-            return new Currency(this.iraContributionLimitBelow50);
-        else
-            return new Currency(this.iraContributionLimit50AndOver);
-    }
-
-    four01KContributionLimit(activeUser) {
-        if (activeUser.age < 50)
-            return new Currency(this.four01KContributionLimitBelow50);
-        else
-            return new Currency(this.four01KContributionLimit50AndOver);
+    /**
+     * The annual contribution ceiling for one kind of account.
+     *
+     * ONE helper, because there used to be two methods called from eight sites,
+     * and the IRA limit had been doubled for married filers while the 401(k)
+     * limit had not. Nobody chose that; it is what happens when the same policy
+     * lives in several places. This is also the seam the per-person spec needs:
+     * it already takes a user, so a second User slots in without touching a
+     * single call site.
+     *
+     * The figure is a HOUSEHOLD ceiling — every caller compares it against a
+     * household aggregate — so married values are the statutory per-person
+     * amounts doubled.
+     *
+     * @param {'ira'|'401k'} kind  ContributionKind
+     * @param {import('./user.js').User} activeUser
+     */
+    limitFor(kind, activeUser) {
+        const catchUp = activeUser.age >= 50;
+        switch (kind) {
+            case ContributionKind.IRA:
+                return new Currency(catchUp ? this.iraContributionLimit50AndOver
+                                            : this.iraContributionLimitBelow50);
+            case ContributionKind.FOUR01K:
+                return new Currency(catchUp ? this.four01KContributionLimit50AndOver
+                                            : this.four01KContributionLimitBelow50);
+            default:
+                throw new Error(`TaxTable.limitFor: unknown contribution kind ${JSON.stringify(kind)}`);
+        }
     }
 }

@@ -22,6 +22,7 @@ import { logger, LogCategory } from '../utils/logger.js';
 import { EventType, ShortfallOrigin } from '../sim-event.js';
 import { withTrace, TraceKind } from '../trace.js';
 import { taxableBasis } from '../tax-basis.js';
+import { ContributionKind } from '../taxes.js';
 
 export class PayrollEngine {
 
@@ -336,7 +337,7 @@ export class PayrollEngine {
 
                     if (InstrumentType.is401K(toModelInstrument)) {
 
-                        let contributionLimit = activeTaxTable.four01KContributionLimit(this.activeUser);
+                        let contributionLimit = activeTaxTable.limitFor(ContributionKind.FOUR01K, this.activeUser);
                         if (this.yearly.four01KContribution.amount + this. monthly.four01KContribution.amount + total401KContribution.amount + contribution.amount > contributionLimit.amount) {
                             const requested = contribution.copy();
                             contribution = new Currency(contributionLimit.amount - this.yearly.four01KContribution.amount - this.monthly.four01KContribution.amount - total401KContribution.amount);
@@ -349,7 +350,7 @@ export class PayrollEngine {
 
                     else if (InstrumentType.isIRA(toModelInstrument) && !InstrumentType.isRothIRA(toModelInstrument)) {
 
-                        let contributionLimit = activeTaxTable.iraContributionLimit(this.activeUser);
+                        let contributionLimit = activeTaxTable.limitFor(ContributionKind.IRA, this.activeUser);
                         if (this.yearly.tradIRAContribution.amount + this. monthly.tradIRAContribution.amount + totalIRAContribution.amount + contribution.amount > contributionLimit.amount) {
                             const requested = contribution.copy();
                             contribution = new Currency(contributionLimit.amount - this.yearly.tradIRAContribution.amount - this.monthly.tradIRAContribution.amount - totalIRAContribution.amount);
@@ -388,7 +389,7 @@ export class PayrollEngine {
 
         if (!InstrumentType.isWorkingIncome(modelAsset.instrument)) return;
 
-        const contributionLimit = activeTaxTable.iraContributionLimit(this.activeUser);
+        const contributionLimit = activeTaxTable.limitFor(ContributionKind.IRA, this.activeUser);
         let totalContribution = Currency.zero();
 
         for (let fundTransfer of modelAsset.fundTransfers) {
