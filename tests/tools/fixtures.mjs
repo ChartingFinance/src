@@ -312,8 +312,8 @@ const adversarialFixtures = [
     kind: 'adversarial',
     reaches:
       'TWO working-income assets, each earning above the Social Security wage ' +
-      'base. TaxTable keeps ONE yearlySocialSecurityAccumulator and ' +
-      'payroll-engine calls addYearlySocialSecurity once per income asset, so ' +
+      'base. TaxTable keys its accumulator by TaxOwner but ships with exactly ' +
+      'ONE owner, and payroll-engine passes PRIMARY for every income asset, so ' +
       'both salaries share a single $184,500 base and the second earner stops ' +
       'paying SS tax early. No other fixture has more than one working income, ' +
       'which is why the whole corpus reported identical socialSecurityTax under ' +

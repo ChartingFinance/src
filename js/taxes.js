@@ -271,6 +271,23 @@ const FILING_TYPE_KEY = Object.freeze({
  * saying that here is the point of the table: the previous code doubled the IRA
  * limit and left the 401(k) one alone, which is not a policy anyone chose.
  */
+/**
+ * Whose Social Security wage base is being consumed.
+ *
+ * ONE key today — spec 5 scoped MFJ to the household level, so there is a single
+ * User and a single earner identity. The seam exists because the wage base is
+ * the one FICA figure that is irreducibly PER PERSON: two spouses each get their
+ * own $184,500, and this engine gave them one between them. That is a real bug
+ * (spec 5 §3.3, visible in the mfj-two-earners fixture) and it cannot be fixed
+ * without somewhere to put the second identity.
+ *
+ * Adding SPOUSE here plus a second User is the whole of the change; no call site
+ * moves, because every one of them already passes an owner.
+ */
+export const TaxOwner = Object.freeze({
+    PRIMARY: 'primary',
+});
+
 export const ContributionKind = Object.freeze({
     IRA: 'ira',
     FOUR01K: '401k',
@@ -317,7 +334,8 @@ export class TaxTable {
         this.four01KContributionLimitBelow50 = limits.four01KBelow50;
         this.four01KContributionLimit50AndOver = limits.four01K50AndOver;
 
-        this.yearlySocialSecurityAccumulator = new Currency();
+        // Keyed by TaxOwner, with exactly one key. See TaxOwner.
+        this.yearlySocialSecurityByOwner = new Map([[TaxOwner.PRIMARY, new Currency()]]);
 
     }
 
@@ -325,15 +343,26 @@ export class TaxTable {
 
     }
 
-    addYearlySocialSecurity(amount) {
+    /** The running total of SS tax withheld from one earner this year. */
+    #socialSecurityAccumulator(owner) {
+        let acc = this.yearlySocialSecurityByOwner.get(owner);
+        if (!acc) {
+            acc = new Currency();
+            this.yearlySocialSecurityByOwner.set(owner, acc);
+        }
+        return acc;
+    }
 
-        this.yearlySocialSecurityAccumulator.add(amount);
-        
+    addYearlySocialSecurity(amount, owner = TaxOwner.PRIMARY) {
+
+        this.#socialSecurityAccumulator(owner).add(amount);
+
     }
 
     yearlyChron(inflationOverride) {
 
-        this.yearlySocialSecurityAccumulator.zero();
+        // Every earner's base resets on the same January.
+        for (const acc of this.yearlySocialSecurityByOwner.values()) acc.zero();
 
         // apply inflation to the tax rows
         this.inflateTaxes(inflationOverride);
@@ -382,18 +411,18 @@ export class TaxTable {
         return (currentDateInt.month == 4);
     }    
 
-    calculateMonthlyWithholding(isSelfEmployed, income) {
+    calculateMonthlyWithholding(isSelfEmployed, income, owner = TaxOwner.PRIMARY) {
 
-        let result = this.calculateFICATax(isSelfEmployed, income);
+        let result = this.calculateFICATax(isSelfEmployed, income, owner);
         result.income.add(this.calculateMonthlyIncomeTax(income, new Currency()));                        
         return result;
 
     }
 
-    calculateFICATax(isSelfEmployed, income) {
+    calculateFICATax(isSelfEmployed, income, owner = TaxOwner.PRIMARY) {
 
         let result = new WithholdingResult(new Currency(), new Currency(), new Currency());
-        result.socialSecurityTax.add(this.calculateSocialSecurityTax(isSelfEmployed, income));
+        result.socialSecurityTax.add(this.calculateSocialSecurityTax(isSelfEmployed, income, owner));
         result.medicareTax.add(this.calculateMedicareTax(isSelfEmployed, income));
 
         if (isSelfEmployed && result.fica().amount / income.amount > 0.16) {
@@ -411,7 +440,7 @@ export class TaxTable {
 
     }
 
-    calculateSocialSecurityTax(isSelfEmployed, income) {
+    calculateSocialSecurityTax(isSelfEmployed, income, owner = TaxOwner.PRIMARY) {
 
         let c = null;
         let maxC = null;
@@ -424,9 +453,10 @@ export class TaxTable {
             maxC = new Currency(this.activeTaxTables.fica.maxSSEarnings * this.activeTaxTables.fica.ssHalfRate);
         }
             
-        if (this.yearlySocialSecurityAccumulator.amount + c.amount > maxC.amount) {
+        const accumulated = this.#socialSecurityAccumulator(owner);
+        if (accumulated.amount + c.amount > maxC.amount) {
             logger.log(LogCategory.TAX, 'at maximum social security tax');
-            c.amount = maxC.amount - this.yearlySocialSecurityAccumulator.amount;
+            c.amount = maxC.amount - accumulated.amount;
         }
 
         return c;

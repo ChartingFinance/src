@@ -22,7 +22,7 @@ import { logger, LogCategory } from '../utils/logger.js';
 import { EventType, ShortfallOrigin } from '../sim-event.js';
 import { withTrace, TraceKind } from '../trace.js';
 import { taxableBasis } from '../tax-basis.js';
-import { ContributionKind } from '../taxes.js';
+import { ContributionKind, TaxOwner } from '../taxes.js';
 
 export class PayrollEngine {
 
@@ -96,8 +96,11 @@ export class PayrollEngine {
             // TODO: make a test for selfEmployed or Employee
             if (InstrumentType.isWorkingIncome(modelAsset.instrument)) {
 
-                let withholding = activeTaxTable.calculateFICATax(modelAsset.isSelfEmployed, modelAsset.incomeCurrency.copy());
-                activeTaxTable.addYearlySocialSecurity(withholding.socialSecurityTax);
+                // Owner is explicit at both sites so the per-person spec adds a
+                // second identity rather than rewriting this call.
+                const owner = TaxOwner.PRIMARY;
+                let withholding = activeTaxTable.calculateFICATax(modelAsset.isSelfEmployed, modelAsset.incomeCurrency.copy(), owner);
+                activeTaxTable.addYearlySocialSecurity(withholding.socialSecurityTax, owner);
 
                 this.taxEngine.recordFICAWithholding(modelAsset, withholding);
 
