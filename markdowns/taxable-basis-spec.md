@@ -443,6 +443,81 @@ After step 5:
 
 Step 6 is therefore mostly confirmation of a state already reached.
 
+## 5.7 Step 6 — DONE 2026-08-06. Spec 6 is complete
+
+Nothing to delete: after step 5, `totalIncome()` was already unused as a tax
+base. What remained was to make that state hold. `financial-package.js` now
+carries a guard comment on `totalIncome()` saying what it is for, why it is wrong
+as either kind of tax base, and where to go instead — the failure mode was a
+reasonable-looking method being reached for by someone who needed a number, so
+the warning belongs at the definition rather than in a spec nobody re-reads.
+
+`reconcileYearlyTax` is documented as vestigial rather than deleted. Its middle
+check compares post-deduction taxable income against gross wages, which cannot
+agree except by coincidence, so its "check PASSED" branch is effectively
+unreachable and its failure branch logs on every run. It cannot be repaired
+without deciding what it was meant to assert, and `FinancialPackage` carries no
+recorded taxable-income field to compare against. Deleting it is a separate call
+with its own log-output consequences; flagged, not quietly removed.
+
+**Empty diff: 20 fixtures unchanged.**
+
+### T3 — the final mutation matrix, post-migration
+
+Every site still has at least one fixture that catches it:
+
+| # | Site | Caught by |
+| --- | --- | --- |
+| 1 | payroll household income tax | 11 fixtures |
+| 2 | `applyMonthlyTaxTrueUp` | 15 fixtures |
+| 3 | expense-engine gross-up | annual-trueup-from-brokerage, dividends-caps-and-windfalls, grossup-at-the-ltcg-boundary |
+| 4 | annual true-up, ordinary | 15 fixtures |
+| 5 | annual true-up, LTCG | 8 fixtures |
+| 6 | close-path LTCG stack base | quickstart-earlyCareer, mfj-high-earner-ltcg, single-home-sale |
+| 7 | deferred close withholding | deferred-close-distribution |
+
+## 5.8 T5 — the independent hand calculation, and it passes
+
+The check that matters most, because every site agreeing on the same *wrong*
+number is indistinguishable from every site agreeing on the right one by any test
+that only compares sites to each other.
+
+`single-home-sale`, tax year 2029. Engine inputs: $108,000 of wages, a $488,452
+long-term gain, $250,000 excluded under §121. Tables inflated from 2026 by
+`1.031³ = 1.09591279`.
+
+| Quantity | By hand | Engine |
+| --- | --- | --- |
+| standard deduction | 17,644.20 | 17,644.20 |
+| ordinary taxable income | 90,355.80 | **90,355.80** |
+| ordinary income tax | 14,083.09 | 14,082.72 |
+| taxable gain after §121 | 238,452.07 | **238,452.07** |
+| LTCG tax, base 0 (as charged at close) | 27,638.71 | **27,638.71** |
+| LTCG tax, base = taxable income (correct) | 35,767.81 | **35,767.81** |
+| **2029 federal total** | **49,850.90** | **49,850.53** |
+
+Agreement to **$0.37 on ~$49,851**, and the residual is explained rather than
+waved at: the bracket rows in `taxes.js` leave a one-dollar gap between each
+band (`toAmount: 12400` followed by `fromAmount: 12401`), and
+`calculateYearlyIncomeTax` charges `(to − from)` for a fully-spanned bracket, so
+each crossed boundary loses a dollar of base. Three boundaries, inflated. Worth
+its own chip; it is a data defect, not a basis defect.
+
+**What T5 establishes beyond agreement:**
+
+- §121 is applied **exactly once** — 238,452.07 is taxed, not 488,452.07 and not
+  a doubly-excluded figure. That is spec 5 step 2b verified from outside the
+  engine.
+- The zero base at close (§5.4) is a **timing** error, not a total error. The
+  close under-withholds at $27,638.71, the annual true-up computes the correct
+  $35,767.81 and bills the $8,129.10 difference, and the year's total is right.
+- That correction depends entirely on the true-up running **and being fundable**.
+  When it is not, `applyAnnualTaxTrueUp` returns silently and the shortfall
+  simply vanishes — the defect found in spec 5 §7.0.4 and now chipped. T5 is
+  what turns that from an untidiness into a correctness issue: it is the only
+  thing standing between the close-time under-withholding and a wrong annual
+  total.
+
 ## 6. Sequencing
 
 Each step is one commit with its own predicted, then verified, baseline diff.

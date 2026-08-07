@@ -601,6 +601,22 @@ export class TaxTable {
 
     }
 
+    /**
+     * VESTIGIAL. Logs three self-checks and returns an empty Currency; nothing
+     * reads its result and no caller branches on it.
+     *
+     * The middle check is worse than useless: it compares POST-deduction
+     * taxable income against GROSS wages (`selfIncome + employedIncome`), which
+     * cannot agree except by coincidence, so its "check PASSED" branch is
+     * effectively unreachable and its failure branch logs on every run. It has
+     * no recorded taxable-income field to compare against — the FinancialPackage
+     * does not carry one — so the check cannot be repaired without first
+     * deciding what it was meant to assert.
+     *
+     * Left in place deliberately: spec 6 step 6 must not change behaviour, and
+     * deleting it is a separate decision with its own (small) log-output
+     * consequences. Flagged rather than quietly removed.
+     */
     reconcileYearlyTax(yearly, activeUser) {
 
         let yearlyFICA = this.calculateYearlyFICATax(yearly);
