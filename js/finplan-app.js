@@ -437,9 +437,25 @@ timeline.addEventListener('event-create', () => {
 });
 document.getElementById('btn-add-asset').addEventListener('click', () => openCreateAssetModal());
 // ── Populate welcome profile cards ──────────────────────────
-const profileGrid = document.getElementById('welcome-profiles');
-if (profileGrid) {
-    for (const profile of quickStartProfiles) {
+/**
+ * Show the Quick Start profiles that match the current filing status.
+ *
+ * There are four of each, paired by life stage, and the grid offers one set at
+ * a time — so changing Filing As swaps a Single household for the equivalent
+ * couple rather than lengthening a list of eight. It is the first thing a new
+ * user sees, and it is where the app says out loud that both statuses are
+ * supported end to end: the brackets, the standard deduction, the home-sale
+ * exclusion and the 401(k) allowance all differ underneath.
+ *
+ * Rebuilt rather than hidden with CSS, because the set is small and the cards
+ * carry click handlers bound to a specific profile.
+ */
+function renderQuickStartProfiles() {
+    const profileGrid = document.getElementById('welcome-profiles');
+    if (!profileGrid) return;
+
+    profileGrid.replaceChildren();
+    for (const profile of quickStartProfiles.filter((p) => p.filingAs === global_filingAs)) {
         const card = document.createElement('div');
         card.className = 'profile-card';
         card.innerHTML = `
@@ -451,6 +467,7 @@ if (profileGrid) {
         profileGrid.appendChild(card);
     }
 }
+renderQuickStartProfiles();
 
 function loadQuickStartProfile(profile) {
     // Set ages before building assets (they use dateAnchors)
@@ -460,10 +477,12 @@ function loadQuickStartProfile(profile) {
     global_getUserRetirementAge();
     global_setUserFinishAge(profile.finishAge);
     global_getUserFinishAge();
-    // A profile is a complete starting point, and filing status changes the
-    // answer by up to 49% on these shapes — a two-earner couple loaded against
-    // single brackets would be wrong before the user touched anything. The tax
-    // table has to be rebuilt: it caches the bracket set at construction.
+    // Redundant now that the grid only offers profiles matching the current
+    // status, and kept anyway: a profile is a complete starting point, and
+    // loading one from anywhere else — an import, a future deep link — must not
+    // leave a couple filed as a single earner. Filing status moves these shapes
+    // by up to 49%. The tax table is rebuilt because it caches its brackets at
+    // construction.
     global_setFilingAs(profile.filingAs);
     global_getFilingAs();
     setActiveTaxTable(new TaxTable());
@@ -941,6 +960,10 @@ function connectSettings() {
         global_setFilingAs(this.value);
         global_getFilingAs();
         setActiveTaxTable(new TaxTable());
+        // The welcome grid offers one set per filing status, so it follows the
+        // setting. Harmless when a portfolio is already loaded and the grid is
+        // hidden — the next new-scenario view gets the right cards.
+        renderQuickStartProfiles();
         calculate();
     });
     document.getElementById('setting-inflationRate').addEventListener('change', function() {
