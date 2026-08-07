@@ -152,6 +152,21 @@
     incomeTaxWithholding
     interestIncome
     transfer
+  quickstart-dualIncome:
+    assetGrowth
+    capitalGainRecognized
+    expenseInflation
+    ficaWithholding
+    grossUp
+    incomeGrowth
+    incomeTaxWithholding
+    mortgageInterest
+    mortgagePrincipal
+    propertyTax
+    propertyTaxEscrow
+    settlement
+    taxTrueUp
+    transfer
   quickstart-earlyCareer:
     assetGrowth
     capitalGainExcluded

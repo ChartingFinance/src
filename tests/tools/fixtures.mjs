@@ -127,6 +127,10 @@ const realFixtures = quickStartProfiles.map((profile) => ({
     startAge: profile.startAge,
     retirementAge: profile.retirementAge,
     finishAge: profile.finishAge,
+    // The profile owns its filing status, exactly as loadQuickStartProfile
+    // applies it in the app. A fixture that inherited the reset default would
+    // snapshot the MFJ profile under single brackets and prove nothing.
+    filingAs: profile.filingAs,
   },
   build() {
     const qs = buildQuickStart(profile);
