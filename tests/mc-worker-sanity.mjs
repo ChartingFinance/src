@@ -294,13 +294,18 @@ const retireEvent = ModelLifeEvent.fromJSON({
 const triggerAtDefault = retireEvent.triggerDateInt.year;
 
 // A 55-year-old's snapshot: born 5 years earlier, so age-65 arrives 5 years sooner
-global_applyWorkerSnapshot({ ...originalSnapshot, userStartAge: 55, filingAs: 'Married' });
+// 'MFJ', not 'Married': filing status has a validated domain since spec 5 step
+// 3, and global_applyWorkerSnapshot coerces anything outside it to the default.
+// This line used to say 'Married' and round-tripped only because nothing
+// checked — the assertion below was passing on a value the engine never
+// accepted.
+global_applyWorkerSnapshot({ ...originalSnapshot, userStartAge: 55, filingAs: 'MFJ' });
 const triggerAt55 = retireEvent.triggerDateInt.year;
 assert.equal(triggerAtDefault - triggerAt55, 5,
     `snapshot shifts life-event triggers (${triggerAtDefault} → ${triggerAt55})`);
 
 const applied = global_workerSnapshot();
-assert.equal(applied.filingAs, 'Married', 'snapshot round-trips filing status');
+assert.equal(applied.filingAs, 'MFJ', 'snapshot round-trips filing status');
 assert.equal(applied.userStartAge, 55, 'snapshot round-trips age');
 assert.ok(JSON.stringify(originalSnapshot), 'snapshot is JSON-serializable (worker payload)');
 

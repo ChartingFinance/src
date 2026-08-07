@@ -24,9 +24,33 @@ export class WithholdingResult {
   }
 }
 import { logger, LogCategory } from './utils/logger.js';
-import { global_filingAs, global_inflationRate, global_propertyTaxDeductionMax } from './globals.js';
+import { global_filingAs, global_inflationRate, global_propertyTaxDeductionMax,
+         FilingStatus, FILING_STATUSES } from './globals.js';
 import { taxableBasis } from './tax-basis.js';
 
+/**
+ * Bracket rows are HALF-OPEN: `[fromAmount, toAmount)`. Each row's `fromAmount`
+ * is exactly the previous row's `toAmount`, so the bands tile with no gap and no
+ * overlap.
+ *
+ * The IRS publishes them the other way — "$12,401 to $50,400" — and this file
+ * used to copy that literally. But `calculateYearlyIncomeTax` charges
+ * `(toAmount − fromAmount)` for a fully-spanned band, so every published `+1`
+ * boundary lost a dollar of base, and income landing in the one-dollar gap was
+ * taxed at no rate at all. Measured by an independent hand calculation on
+ * 2026-08-06 (spec 6 post-test T5): a $90,355.80 taxable income crossing three
+ * boundaries under-taxed by $0.37.
+ *
+ * Do not "correct" these back to the published figures. If a boundary needs
+ * checking, check the `toAmount` against the IRS release — those are the
+ * authoritative numbers here, and the `fromAmount` is derived from them.
+ *
+ * Two transcription errors surfaced when the bands were made to tile: the 2025
+ * single table had 250,556 where the IRS says the 35% band starts at 250,526,
+ * and 626,251 where the 37% band starts at 626,351. The first left 31 dollars
+ * untaxed; the second made the rows OVERLAP by 99 dollars, which the loop taxed
+ * at 35% and 37% both. Deriving `fromAmount` from `toAmount` repairs both.
+ */
 export const us_2026_taxtables = {
     "year": 2026,
     "fica": {
@@ -44,24 +68,24 @@ export const us_2026_taxtables = {
                 "filingType": "single",
                 "taxRows": [
                     {"rate": 0.10, "fromAmount": 0.0, "toAmount": 12400.0},
-                    {"rate": 0.12, "fromAmount": 12401.0, "toAmount": 50400.0},
-                    {"rate": 0.22, "fromAmount": 50401.0, "toAmount": 105700.0},
-                    {"rate": 0.24, "fromAmount": 105701.0, "toAmount": 201775.0},
-                    {"rate": 0.32, "fromAmount": 201776.0, "toAmount": 256225.0},
-                    {"rate": 0.35, "fromAmount": 256226.0, "toAmount": 640600.0},
-                    {"rate": 0.37, "fromAmount": 640601.0, "toAmount": -1.0}
+                    {"rate": 0.12, "fromAmount": 12400.0, "toAmount": 50400.0},
+                    {"rate": 0.22, "fromAmount": 50400.0, "toAmount": 105700.0},
+                    {"rate": 0.24, "fromAmount": 105700.0, "toAmount": 201775.0},
+                    {"rate": 0.32, "fromAmount": 201775.0, "toAmount": 256225.0},
+                    {"rate": 0.35, "fromAmount": 256225.0, "toAmount": 640600.0},
+                    {"rate": 0.37, "fromAmount": 640600.0, "toAmount": -1.0}
                 ]
             },
             {
                 "filingType": "married",
                 "taxRows": [
                     {"rate": 0.10, "fromAmount": 0.0, "toAmount": 24800.0},
-                    {"rate": 0.12, "fromAmount": 24801.0, "toAmount": 100800.0},
-                    {"rate": 0.22, "fromAmount": 100801.0, "toAmount": 211400.0},
-                    {"rate": 0.24, "fromAmount": 211401.0, "toAmount": 403550.0},
-                    {"rate": 0.32, "fromAmount": 403551.0, "toAmount": 512450.0},
-                    {"rate": 0.35, "fromAmount": 512451.0, "toAmount": 768700.0},
-                    {"rate": 0.37, "fromAmount": 768701.0, "toAmount": -1.0}
+                    {"rate": 0.12, "fromAmount": 24800.0, "toAmount": 100800.0},
+                    {"rate": 0.22, "fromAmount": 100800.0, "toAmount": 211400.0},
+                    {"rate": 0.24, "fromAmount": 211400.0, "toAmount": 403550.0},
+                    {"rate": 0.32, "fromAmount": 403550.0, "toAmount": 512450.0},
+                    {"rate": 0.35, "fromAmount": 512450.0, "toAmount": 768700.0},
+                    {"rate": 0.37, "fromAmount": 768700.0, "toAmount": -1.0}
                 ]
             }
         ]
@@ -73,16 +97,16 @@ export const us_2026_taxtables = {
                 "filingType": "single",
                 "taxRows": [
                     {"rate": 0.0, "fromAmount": 0.0, "toAmount": 49450.0},
-                    {"rate": 0.15, "fromAmount": 49451.0, "toAmount": 545500.0},
-                    {"rate": 0.2, "fromAmount": 545501.0, "toAmount": -1.0}
+                    {"rate": 0.15, "fromAmount": 49450.0, "toAmount": 545500.0},
+                    {"rate": 0.2, "fromAmount": 545500.0, "toAmount": -1.0}
                 ]
             },
             {
                 "filingType": "married",
                 "taxRows": [
                     {"rate": 0.0, "fromAmount": 0.0, "toAmount": 98900.0},
-                    {"rate": 0.15, "fromAmount": 98901.0, "toAmount": 613700.0},
-                    {"rate": 0.2, "fromAmount": 613701.0, "toAmount": -1.0}
+                    {"rate": 0.15, "fromAmount": 98900.0, "toAmount": 613700.0},
+                    {"rate": 0.2, "fromAmount": 613700.0, "toAmount": -1.0}
                 ]
             }
         ]
@@ -118,24 +142,24 @@ export const us_2025_taxtables = {
                 "filingType": "single",
                 "taxRows": [
                     {"rate": 0.10, "fromAmount": 0.0, "toAmount": 11925.0},
-                    {"rate": 0.12, "fromAmount": 11926.0, "toAmount": 48475.0},
-                    {"rate": 0.22, "fromAmount": 48476.0, "toAmount": 103350.0},
-                    {"rate": 0.24, "fromAmount": 103351.0, "toAmount": 197300.0},
-                    {"rate": 0.32, "fromAmount": 197301.0, "toAmount": 250525.0},
-                    {"rate": 0.35, "fromAmount": 250556.0, "toAmount": 626350.0},
-                    {"rate": 0.37, "fromAmount": 626251.0, "toAmount": -1.0 }
+                    {"rate": 0.12, "fromAmount": 11925.0, "toAmount": 48475.0},
+                    {"rate": 0.22, "fromAmount": 48475.0, "toAmount": 103350.0},
+                    {"rate": 0.24, "fromAmount": 103350.0, "toAmount": 197300.0},
+                    {"rate": 0.32, "fromAmount": 197300.0, "toAmount": 250525.0},
+                    {"rate": 0.35, "fromAmount": 250525.0, "toAmount": 626350.0},
+                    {"rate": 0.37, "fromAmount": 626350.0, "toAmount": -1.0 }
                 ]
             },
             {
                 "filingType": "married",
                 "taxRows": [
                     {"rate": 0.10, "fromAmount": 0.0, "toAmount": 23850.0},
-                    {"rate": 0.12, "fromAmount": 23851.0, "toAmount": 96950.0},
-                    {"rate": 0.22, "fromAmount": 96951.0, "toAmount": 206700.0},
-                    {"rate": 0.24, "fromAmount": 206701.0, "toAmount": 394600.0},
-                    {"rate": 0.32, "fromAmount": 394601.0, "toAmount": 501050.0},
-                    {"rate": 0.35, "fromAmount": 501051.0, "toAmount": 751600.0},
-                    {"rate": 0.37, "fromAmount": 751601.0, "toAmount": -1.0}
+                    {"rate": 0.12, "fromAmount": 23850.0, "toAmount": 96950.0},
+                    {"rate": 0.22, "fromAmount": 96950.0, "toAmount": 206700.0},
+                    {"rate": 0.24, "fromAmount": 206700.0, "toAmount": 394600.0},
+                    {"rate": 0.32, "fromAmount": 394600.0, "toAmount": 501050.0},
+                    {"rate": 0.35, "fromAmount": 501050.0, "toAmount": 751600.0},
+                    {"rate": 0.37, "fromAmount": 751600.0, "toAmount": -1.0}
                 ]
             }
         ]
@@ -147,16 +171,16 @@ export const us_2025_taxtables = {
                 "filingType": "single",
                 "taxRows": [
                 {"rate": 0.0, "fromAmount": 0.0, "toAmount": 48350.0 },
-                {"rate": 0.15, "fromAmount": 48351.0, "toAmount": 533400.0 },
-                {"rate": 0.2, "fromAmount": 533401.0, "toAmount": -1.0 }
+                {"rate": 0.15, "fromAmount": 48350.0, "toAmount": 533400.0 },
+                {"rate": 0.2, "fromAmount": 533400.0, "toAmount": -1.0 }
                 ]
             },
             {
                 "filingType": "married",
                 "taxRows": [
                     {"rate": 0.0, "fromAmount": 0.0, "toAmount": 96700.0 },
-                    {"rate": 0.15, "fromAmount": 96701.0, "toAmount": 600050.0 },
-                    {"rate": 0.2, "fromAmount": 600051.0, "toAmount": -1.0 }                    
+                    {"rate": 0.15, "fromAmount": 96700.0, "toAmount": 600050.0 },
+                    {"rate": 0.2, "fromAmount": 600050.0, "toAmount": -1.0 }                    
                 ]
             }
         ]
@@ -227,6 +251,53 @@ export const uniformLifetimeTable = [
     { age: 120, divisor: 2.0 }
 ];
 
+/**
+ * FilingStatus -> the `filingType` key used inside the tax tables. The tables
+ * keep their own vocabulary ("single" / "married", matching the IRS releases
+ * they are transcribed from); this is the only place the two meet.
+ */
+const FILING_TYPE_KEY = Object.freeze({
+    [FilingStatus.SINGLE]: 'single',
+    [FilingStatus.MARRIED_FILING_JOINTLY]: 'married',
+});
+
+/**
+ * Annual contribution limits, by filing-table key.
+ *
+ * HOUSEHOLD figures, not per-person — spec 5 scoped MFJ to the household level,
+ * and every limit is enforced against a household aggregate (payroll-engine
+ * compares against this.yearly.four01KContribution, summed across all income
+ * assets). So a married limit is the per-person statutory figure DOUBLED, and
+ * saying that here is the point of the table: the previous code doubled the IRA
+ * limit and left the 401(k) one alone, which is not a policy anyone chose.
+ */
+/**
+ * Whose Social Security wage base is being consumed.
+ *
+ * ONE key today — spec 5 scoped MFJ to the household level, so there is a single
+ * User and a single earner identity. The seam exists because the wage base is
+ * the one FICA figure that is irreducibly PER PERSON: two spouses each get their
+ * own $184,500, and this engine gave them one between them. That is a real bug
+ * (spec 5 §3.3, visible in the mfj-two-earners fixture) and it cannot be fixed
+ * without somewhere to put the second identity.
+ *
+ * Adding SPOUSE here plus a second User is the whole of the change; no call site
+ * moves, because every one of them already passes an owner.
+ */
+export const TaxOwner = Object.freeze({
+    PRIMARY: 'primary',
+});
+
+export const ContributionKind = Object.freeze({
+    IRA: 'ira',
+    FOUR01K: '401k',
+});
+
+const CONTRIBUTION_LIMITS = Object.freeze({
+    single:  { iraBelow50:  7500, ira50AndOver:  8600, four01KBelow50: 24500, four01K50AndOver: 32500 },
+    married: { iraBelow50: 15000, ira50AndOver: 17200, four01KBelow50: 49000, four01K50AndOver: 65000 },
+});
+
 export class TaxTable {
     constructor() {
         this.taxes = null;     
@@ -237,28 +308,34 @@ export class TaxTable {
     initializeChron() {
         
         this.activeTaxTables = JSON.parse(JSON.stringify(us_2026_taxtables));
-        if (global_filingAs == 'Single') {
-            this.activeIncomeTable = this.activeTaxTables.income.tables[0];
-            this.activeCapitalGainsTable = this.activeTaxTables.capitalGains.tables[0];
-            this.activeStandardDeduction = this.activeTaxTables.standardDeduction.single;
-            this.activeHomeSaleExclusion = this.activeTaxTables.homeSaleExclusion.single;
-            this.iraContributionLimitBelow50 = 7500;
-            this.iraContributionLimit50AndOver = 8600;
-            this.four01KContributionLimitBelow50 = 24500;
-            this.four01KContributionLimit50AndOver = 32500;
-        }
-        else {
-            this.activeIncomeTable = this.activeTaxTables.income.tables[1];
-            this.activeCapitalGainsTable = this.activeTaxTables.capitalGains.tables[1];
-            this.activeStandardDeduction = this.activeTaxTables.standardDeduction.married;
-            this.activeHomeSaleExclusion = this.activeTaxTables.homeSaleExclusion.married;
-            this.iraContributionLimitBelow50 = 15000;
-            this.iraContributionLimit50AndOver = 17200;
-            this.four01KContributionLimitBelow50 = 24500;
-            this.four01KContributionLimit50AndOver = 32500;
-        }
 
-        this.yearlySocialSecurityAccumulator = new Currency();
+        // Selected BY KEY, not by array index and an else. The old form made
+        // every unrecognised status file jointly by falling through, so 'MFJ'
+        // worked by accident and a future 'MFS' would have too.
+        const key = FILING_TYPE_KEY[global_filingAs];
+        if (!key) {
+            throw new Error(`TaxTable: filing status ${JSON.stringify(global_filingAs)} `
+                + `is not one of ${FILING_STATUSES.join(', ')}`);
+        }
+        const byKey = (tables) => {
+            const found = tables.find((t) => t.filingType === key);
+            if (!found) throw new Error(`TaxTable: no ${key} table`);
+            return found;
+        };
+
+        this.activeIncomeTable = byKey(this.activeTaxTables.income.tables);
+        this.activeCapitalGainsTable = byKey(this.activeTaxTables.capitalGains.tables);
+        this.activeStandardDeduction = this.activeTaxTables.standardDeduction[key];
+        this.activeHomeSaleExclusion = this.activeTaxTables.homeSaleExclusion[key];
+
+        const limits = CONTRIBUTION_LIMITS[key];
+        this.iraContributionLimitBelow50 = limits.iraBelow50;
+        this.iraContributionLimit50AndOver = limits.ira50AndOver;
+        this.four01KContributionLimitBelow50 = limits.four01KBelow50;
+        this.four01KContributionLimit50AndOver = limits.four01K50AndOver;
+
+        // Keyed by TaxOwner, with exactly one key. See TaxOwner.
+        this.yearlySocialSecurityByOwner = new Map([[TaxOwner.PRIMARY, new Currency()]]);
 
     }
 
@@ -266,15 +343,26 @@ export class TaxTable {
 
     }
 
-    addYearlySocialSecurity(amount) {
+    /** The running total of SS tax withheld from one earner this year. */
+    #socialSecurityAccumulator(owner) {
+        let acc = this.yearlySocialSecurityByOwner.get(owner);
+        if (!acc) {
+            acc = new Currency();
+            this.yearlySocialSecurityByOwner.set(owner, acc);
+        }
+        return acc;
+    }
 
-        this.yearlySocialSecurityAccumulator.add(amount);
-        
+    addYearlySocialSecurity(amount, owner = TaxOwner.PRIMARY) {
+
+        this.#socialSecurityAccumulator(owner).add(amount);
+
     }
 
     yearlyChron(inflationOverride) {
 
-        this.yearlySocialSecurityAccumulator.zero();
+        // Every earner's base resets on the same January.
+        for (const acc of this.yearlySocialSecurityByOwner.values()) acc.zero();
 
         // apply inflation to the tax rows
         this.inflateTaxes(inflationOverride);
@@ -323,18 +411,18 @@ export class TaxTable {
         return (currentDateInt.month == 4);
     }    
 
-    calculateMonthlyWithholding(isSelfEmployed, income) {
+    calculateMonthlyWithholding(isSelfEmployed, income, owner = TaxOwner.PRIMARY) {
 
-        let result = this.calculateFICATax(isSelfEmployed, income);
+        let result = this.calculateFICATax(isSelfEmployed, income, owner);
         result.income.add(this.calculateMonthlyIncomeTax(income, new Currency()));                        
         return result;
 
     }
 
-    calculateFICATax(isSelfEmployed, income) {
+    calculateFICATax(isSelfEmployed, income, owner = TaxOwner.PRIMARY) {
 
         let result = new WithholdingResult(new Currency(), new Currency(), new Currency());
-        result.socialSecurityTax.add(this.calculateSocialSecurityTax(isSelfEmployed, income));
+        result.socialSecurityTax.add(this.calculateSocialSecurityTax(isSelfEmployed, income, owner));
         result.medicareTax.add(this.calculateMedicareTax(isSelfEmployed, income));
 
         if (isSelfEmployed && result.fica().amount / income.amount > 0.16) {
@@ -352,7 +440,7 @@ export class TaxTable {
 
     }
 
-    calculateSocialSecurityTax(isSelfEmployed, income) {
+    calculateSocialSecurityTax(isSelfEmployed, income, owner = TaxOwner.PRIMARY) {
 
         let c = null;
         let maxC = null;
@@ -365,9 +453,10 @@ export class TaxTable {
             maxC = new Currency(this.activeTaxTables.fica.maxSSEarnings * this.activeTaxTables.fica.ssHalfRate);
         }
             
-        if (this.yearlySocialSecurityAccumulator.amount + c.amount > maxC.amount) {
+        const accumulated = this.#socialSecurityAccumulator(owner);
+        if (accumulated.amount + c.amount > maxC.amount) {
             logger.log(LogCategory.TAX, 'at maximum social security tax');
-            c.amount = maxC.amount - this.yearlySocialSecurityAccumulator.amount;
+            c.amount = maxC.amount - accumulated.amount;
         }
 
         return c;
@@ -680,17 +769,34 @@ export class TaxTable {
         logger.log(LogCategory.TAX, 'Taxes.applyYear|yearlyLongTermCapitalGainsAndQualifiedDividendsTax: ' + yearlyLongTermCapitalGainsAndQualifiedDividendsTax.toString());
     }
 
-    iraContributionLimit(activeUser) {
-        if (activeUser.age < 50)
-            return new Currency(this.iraContributionLimitBelow50);
-        else
-            return new Currency(this.iraContributionLimit50AndOver);
-    }
-
-    four01KContributionLimit(activeUser) {
-        if (activeUser.age < 50)
-            return new Currency(this.four01KContributionLimitBelow50);
-        else
-            return new Currency(this.four01KContributionLimit50AndOver);
+    /**
+     * The annual contribution ceiling for one kind of account.
+     *
+     * ONE helper, because there used to be two methods called from eight sites,
+     * and the IRA limit had been doubled for married filers while the 401(k)
+     * limit had not. Nobody chose that; it is what happens when the same policy
+     * lives in several places. This is also the seam the per-person spec needs:
+     * it already takes a user, so a second User slots in without touching a
+     * single call site.
+     *
+     * The figure is a HOUSEHOLD ceiling — every caller compares it against a
+     * household aggregate — so married values are the statutory per-person
+     * amounts doubled.
+     *
+     * @param {'ira'|'401k'} kind  ContributionKind
+     * @param {import('./user.js').User} activeUser
+     */
+    limitFor(kind, activeUser) {
+        const catchUp = activeUser.age >= 50;
+        switch (kind) {
+            case ContributionKind.IRA:
+                return new Currency(catchUp ? this.iraContributionLimit50AndOver
+                                            : this.iraContributionLimitBelow50);
+            case ContributionKind.FOUR01K:
+                return new Currency(catchUp ? this.four01KContributionLimit50AndOver
+                                            : this.four01KContributionLimitBelow50);
+            default:
+                throw new Error(`TaxTable.limitFor: unknown contribution kind ${JSON.stringify(kind)}`);
+        }
     }
 }

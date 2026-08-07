@@ -94,6 +94,7 @@ import {
     global_getInflationRate,
     global_setFilingAs,
     global_getFilingAs,
+    asFilingStatus,
     global_setUserStartAge,
     global_getUserStartAge,
     global_setUserRetirementAge,
@@ -459,6 +460,13 @@ function loadQuickStartProfile(profile) {
     global_getUserRetirementAge();
     global_setUserFinishAge(profile.finishAge);
     global_getUserFinishAge();
+    // A profile is a complete starting point, and filing status changes the
+    // answer by up to 49% on these shapes — a two-earner couple loaded against
+    // single brackets would be wrong before the user touched anything. The tax
+    // table has to be rebuilt: it caches the bracket set at construction.
+    global_setFilingAs(profile.filingAs);
+    global_getFilingAs();
+    setActiveTaxTable(new TaxTable());
     syncGlobalsToSettings();
     store.setRetirementDate(global_getRetirementDateInt());
 
@@ -2048,7 +2056,8 @@ function applyImportedPortfolio(data, persist) {
     // Apply global settings
     if (data.settings) {
         global_setInflationRate(data.settings.inflationRate);
-        global_setFilingAs(data.settings.filingAs);
+        // Imported data is untrusted — it may carry a status an older version wrote.
+        global_setFilingAs(asFilingStatus(data.settings.filingAs));
         global_setUserStartAge(data.settings.startAge);
         global_setUserRetirementAge(data.settings.retirementAge);
         global_setUserFinishAge(data.settings.finishAge);

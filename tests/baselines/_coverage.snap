@@ -127,14 +127,12 @@
     transfer
   mfj-two-401ks:
     assetGrowth
-    contributionCapped
     expenseInflation
     ficaWithholding
     grossUp
     incomeGrowth
     incomeTaxWithholding
     interestIncome
-    taxTrueUp
     transfer
   mfj-two-earners:
     expenseInflation
@@ -151,6 +149,21 @@
     incomeGrowth
     incomeTaxWithholding
     interestIncome
+    transfer
+  quickstart-dualIncome:
+    assetGrowth
+    capitalGainRecognized
+    expenseInflation
+    ficaWithholding
+    grossUp
+    incomeGrowth
+    incomeTaxWithholding
+    mortgageInterest
+    mortgagePrincipal
+    propertyTax
+    propertyTaxEscrow
+    settlement
+    taxTrueUp
     transfer
   quickstart-earlyCareer:
     assetGrowth

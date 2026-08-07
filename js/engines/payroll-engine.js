@@ -22,6 +22,7 @@ import { logger, LogCategory } from '../utils/logger.js';
 import { EventType, ShortfallOrigin } from '../sim-event.js';
 import { withTrace, TraceKind } from '../trace.js';
 import { taxableBasis } from '../tax-basis.js';
+import { ContributionKind, TaxOwner } from '../taxes.js';
 
 export class PayrollEngine {
 
@@ -95,8 +96,11 @@ export class PayrollEngine {
             // TODO: make a test for selfEmployed or Employee
             if (InstrumentType.isWorkingIncome(modelAsset.instrument)) {
 
-                let withholding = activeTaxTable.calculateFICATax(modelAsset.isSelfEmployed, modelAsset.incomeCurrency.copy());
-                activeTaxTable.addYearlySocialSecurity(withholding.socialSecurityTax);
+                // Owner is explicit at both sites so the per-person spec adds a
+                // second identity rather than rewriting this call.
+                const owner = TaxOwner.PRIMARY;
+                let withholding = activeTaxTable.calculateFICATax(modelAsset.isSelfEmployed, modelAsset.incomeCurrency.copy(), owner);
+                activeTaxTable.addYearlySocialSecurity(withholding.socialSecurityTax, owner);
 
                 this.taxEngine.recordFICAWithholding(modelAsset, withholding);
 
@@ -336,7 +340,7 @@ export class PayrollEngine {
 
                     if (InstrumentType.is401K(toModelInstrument)) {
 
-                        let contributionLimit = activeTaxTable.four01KContributionLimit(this.activeUser);
+                        let contributionLimit = activeTaxTable.limitFor(ContributionKind.FOUR01K, this.activeUser);
                         if (this.yearly.four01KContribution.amount + this. monthly.four01KContribution.amount + total401KContribution.amount + contribution.amount > contributionLimit.amount) {
                             const requested = contribution.copy();
                             contribution = new Currency(contributionLimit.amount - this.yearly.four01KContribution.amount - this.monthly.four01KContribution.amount - total401KContribution.amount);
@@ -349,7 +353,7 @@ export class PayrollEngine {
 
                     else if (InstrumentType.isIRA(toModelInstrument) && !InstrumentType.isRothIRA(toModelInstrument)) {
 
-                        let contributionLimit = activeTaxTable.iraContributionLimit(this.activeUser);
+                        let contributionLimit = activeTaxTable.limitFor(ContributionKind.IRA, this.activeUser);
                         if (this.yearly.tradIRAContribution.amount + this. monthly.tradIRAContribution.amount + totalIRAContribution.amount + contribution.amount > contributionLimit.amount) {
                             const requested = contribution.copy();
                             contribution = new Currency(contributionLimit.amount - this.yearly.tradIRAContribution.amount - this.monthly.tradIRAContribution.amount - totalIRAContribution.amount);
@@ -388,7 +392,7 @@ export class PayrollEngine {
 
         if (!InstrumentType.isWorkingIncome(modelAsset.instrument)) return;
 
-        const contributionLimit = activeTaxTable.iraContributionLimit(this.activeUser);
+        const contributionLimit = activeTaxTable.limitFor(ContributionKind.IRA, this.activeUser);
         let totalContribution = Currency.zero();
 
         for (let fundTransfer of modelAsset.fundTransfers) {

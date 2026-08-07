@@ -299,24 +299,31 @@ const engine = {
 // realises a different gain -- which is why it moved without any gain
 // recognition changing. Predicted and cross-checked against
 // tests/baselines/single-home-sale.snap, where the same rule is isolated.
+// Moved again 2026-08-07 by the bracket-gap fix, and by very little: incomeTax
+// -18.01, portfolioTotal -97.15. Every bracket row's fromAmount used to sit one
+// dollar above the previous row's toAmount, copying how the IRS publishes them,
+// so calculateYearlyIncomeTax charged (to - from) for a fully-spanned band and
+// lost a dollar of base at every crossed boundary. The bands now tile exactly.
+// Tax goes UP everywhere and balances down, which is the whole expected shape of
+// this change.
 const EXPECTED_ENGINE = {
   "Social Security": 3882.14,
   "401K": 4330365.45,
-  "Roth IRA": 4990880.32,
-  "Brokerage": 9128223.72,
+  "Roth IRA": 4990872.31,
+  "Brokerage": 9128134.58,
   "Home": 0.00,
   "Mortgage": 0.00,
   "Living Expenses": -13937.35,
   "Rent": -6427.41,
-  "portfolioTotal": 18449469.49,
+  "portfolioTotal": 18449372.34,
   "employedIncome": 3432182.06,
   "socialSecurityIncome": 854014.60,
   "four01KContribution": 274574.57,
   "four01KDistribution": 4373405.30,
-  "longTermCapitalGains": 1823732.65,
+  "longTermCapitalGains": 1823732.99,
   "mortgageInterest": -287174.02,
   "propertyTaxes": -157235.10,
-  "incomeTax": -734205.66,
+  "incomeTax": -734223.67,
 };
 
 // Frozen: how often Early Career's transfers legitimately fail to balance on
