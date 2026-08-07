@@ -17,6 +17,7 @@ import { activeTaxTable } from '../globals.js';
 import { logger, LogCategory } from '../utils/logger.js';
 import { EventType, ShortfallOrigin } from '../sim-event.js';
 import { withTrace, TraceKind } from '../trace.js';
+import { taxableBasis } from '../tax-basis.js';
 
 export class ExpenseEngine {
 
@@ -386,9 +387,8 @@ export class ExpenseEngine {
         if (!InstrumentType.isTaxableAccount(modelAsset.instrument)) return netShortfall.copy();
 
         // 1. Estimate current marginal LTCG bracket based strictly on base income (W-2, etc)
-        const yearlyEstimate = this.monthly.copy().multiply(12.0);
-        yearlyEstimate.limitDeductions(this.activeUser);
-        const taxableIncome = activeTaxTable.calculateYearlyTaxableIncome(yearlyEstimate);
+        const { ordinaryTaxable: taxableIncome } =
+            taxableBasis(this.monthly, this.activeUser, { annualise: true });
 
         // Quick heuristic for marginal LTCG rate (0%, 15%, 20%)
         const ltcgRate = activeTaxTable.getMarginalLTCGRate(taxableIncome);

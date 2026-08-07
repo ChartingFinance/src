@@ -198,7 +198,7 @@ function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, p
             }
             portfolio.applyGuardrails(currentDateInt);
             portfolio.applyYear(currentDateInt);
-            activeTaxTable.applyYear(portfolio.yearly);
+            activeTaxTable.applyYear(portfolio.yearly, portfolio.activeUser);
             portfolio.yearlyChron(currentDateInt);
             activeTaxTable.yearlyChron(undefined);
         }
@@ -259,7 +259,7 @@ function computeBaseline(sourceAssets, guardrailParams, lifeEvents) {
         if (bd.isNewYearsDay()) {
             basePf.applyGuardrails(bd);
             basePf.applyYear(bd);
-            activeTaxTable.applyYear(basePf.yearly);
+            activeTaxTable.applyYear(basePf.yearly, basePf.activeUser);
             basePf.yearlyChron(bd);
             activeTaxTable.yearlyChron(undefined);
         }

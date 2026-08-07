@@ -8,6 +8,7 @@
 
 [emitted]
   assetGrowth
+  capitalGainExcluded
   capitalGainRecognized
   capitalGainsTax
   contributionCapped
@@ -46,6 +47,16 @@
     spillover
     taxTrueUp
     transfer
+  deferred-close-distribution:
+    assetGrowth
+    expenseInflation
+    ficaWithholding
+    grossUp
+    incomeGrowth
+    incomeTaxWithholding
+    interestIncome
+    taxTrueUp
+    transfer
   dividends-caps-and-windfalls:
     assetGrowth
     capitalGainRecognized
@@ -61,6 +72,19 @@
     spillover
     taxTrueUp
     transfer
+  grossup-at-the-ltcg-boundary:
+    assetGrowth
+    capitalGainRecognized
+    contributionCapped
+    expenseInflation
+    ficaWithholding
+    grossUp
+    incomeGrowth
+    incomeTaxWithholding
+    interestIncome
+    spillover
+    taxTrueUp
+    transfer
   housing-carrying-costs:
     assetGrowth
     capitalGainRecognized
@@ -73,6 +97,53 @@
     propertyTaxEscrow
     settlement
     spillover
+  mfj-high-earner-ltcg:
+    assetGrowth
+    capitalGainRecognized
+    capitalGainsTax
+    expenseInflation
+    ficaWithholding
+    grossUp
+    incomeGrowth
+    incomeTaxWithholding
+    interestIncome
+    taxTrueUp
+    transfer
+  mfj-home-sale:
+    assetGrowth
+    capitalGainExcluded
+    capitalGainRecognized
+    expenseInflation
+    ficaWithholding
+    grossUp
+    incomeGrowth
+    incomeTaxWithholding
+    insurance
+    interestIncome
+    maintenance
+    propertyTax
+    propertyTaxEscrow
+    settlement
+    transfer
+  mfj-two-401ks:
+    assetGrowth
+    contributionCapped
+    expenseInflation
+    ficaWithholding
+    grossUp
+    incomeGrowth
+    incomeTaxWithholding
+    interestIncome
+    taxTrueUp
+    transfer
+  mfj-two-earners:
+    expenseInflation
+    ficaWithholding
+    grossUp
+    incomeGrowth
+    incomeTaxWithholding
+    interestIncome
+    transfer
   mid-year-finish:
     assetGrowth
     expenseInflation
@@ -83,6 +154,7 @@
     transfer
   quickstart-earlyCareer:
     assetGrowth
+    capitalGainExcluded
     capitalGainRecognized
     capitalGainsTax
     expenseInflation
@@ -100,6 +172,7 @@
     unfunded
   quickstart-midCareer:
     assetGrowth
+    capitalGainExcluded
     capitalGainRecognized
     expenseInflation
     ficaWithholding
@@ -168,6 +241,24 @@
     propertyTaxEscrow
     settlement
     unfunded
+  single-home-sale:
+    assetGrowth
+    capitalGainExcluded
+    capitalGainRecognized
+    capitalGainsTax
+    expenseInflation
+    ficaWithholding
+    grossUp
+    incomeGrowth
+    incomeTaxWithholding
+    insurance
+    interestIncome
+    maintenance
+    propertyTax
+    propertyTaxEscrow
+    settlement
+    taxTrueUp
+    transfer
   transfer-unfunded:
     assetGrowth
     capitalGainRecognized

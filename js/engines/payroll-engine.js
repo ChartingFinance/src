@@ -21,6 +21,7 @@ import {
 import { logger, LogCategory } from '../utils/logger.js';
 import { EventType, ShortfallOrigin } from '../sim-event.js';
 import { withTrace, TraceKind } from '../trace.js';
+import { taxableBasis } from '../tax-basis.js';
 
 export class PayrollEngine {
 
@@ -112,10 +113,8 @@ export class PayrollEngine {
      * @returns {{ householdTax: Currency, totalWorkingIncome: Currency }}
      */
     computeHouseholdIncomeTax() {
-        let yearlyEstimate = this.monthly.copy().multiply(12.0);
-        yearlyEstimate.limitDeductions(this.activeUser);
-        let yearlyTaxableIncome = activeTaxTable.calculateYearlyTaxableIncome(yearlyEstimate);
-        let householdTax = activeTaxTable.calculateYearlyIncomeTax(yearlyTaxableIncome).divide(12.0);
+        const { ordinaryTaxable } = taxableBasis(this.monthly, this.activeUser, { annualise: true });
+        let householdTax = activeTaxTable.calculateYearlyIncomeTax(ordinaryTaxable).divide(12.0);
 
         // Sum working income across all active assets for proportional allocation
         let totalWorkingIncome = Currency.zero();

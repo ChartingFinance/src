@@ -437,23 +437,38 @@ const engine = {
 // brokerage balance; longTermCapitalGains (+954.50) is the realized gain.
 // portfolioTotal drops 33,118.01: the household now settles a debt it used to
 // carry as a negative savings balance. Less flattering, more true.
+//
+// Moved again 2026-08-06 by spec 6 step 4, and by very little: Brokerage and
+// portfolioTotal +708.83, qualifiedDividends +81.26, longTermCapitalGains
+// +307.79. The close path now stacks capital gains on taxable income rather
+// than on monthly.totalIncome() x 12. THIS SUITE IS THE ONLY THING IN THE
+// PROJECT THAT NOTICES. At CompanyStock's close the old base was $6,883 and the
+// new one is $0 -- the standard deduction wipes it -- so ~$6,883 of gain moves
+// from the 15% band to the 0% band and the household keeps about $1,032, which
+// compounds to the +708.83 above.
+//
+// Every fixture in the snapshot corpus sees a base of EXACTLY ZERO at a close,
+// because closeAsset runs at the top of applyFirstDayOfMonth, before any income
+// is booked, and monthly was zeroed at the previous month-end. Do not "simplify"
+// this scenario: its non-zero base is an accident of asset ordering that the
+// corpus could not reproduce despite a fixture built specifically to try.
 const EXPECTED_ENGINE = {
   "Social Security": 4021.09,
   "Savings": 0.00,
   "IRA": 604532.76,
   "Roth": 4028947.93,
-  "Brokerage": 9970425.88,
+  "Brokerage": 9971134.71,
   "CompanyStock": 0.00,
   "Treasuries": 116821.90,
   "Home": 2307042.36,
   "Mortgage": 0.00,
   "Living Expenses": -11682.19,
-  "portfolioTotal": 17027770.83,
+  "portfolioTotal": 17028479.66,
   "employedIncome": 0.00,
   "socialSecurityIncome": 950908.99,
   "tradIRADistribution": 3096090.49,
-  "qualifiedDividends": 1071751.65,
-  "longTermCapitalGains": 1254691.58,
+  "qualifiedDividends": 1071832.91,
+  "longTermCapitalGains": 1254999.37,
   "interestIncome": 76892.34,
   "mortgageInterest": -247134.01,
 };

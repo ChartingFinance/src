@@ -145,7 +145,7 @@ export async function chronometer_run(portfolio) {
 
             portfolio.applyGuardrails(currentDateInt);
             portfolio.applyYear(currentDateInt);
-            activeTaxTable.applyYear(portfolio.yearly);
+            activeTaxTable.applyYear(portfolio.yearly, portfolio.activeUser);
 
             portfolio.yearlyChron(currentDateInt);
 

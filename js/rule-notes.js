@@ -46,7 +46,7 @@
 
 import { Metric, aggregateMetric } from './metric.js';
 import { InstrumentType } from './instruments/instrument.js';
-import { global_home_sale_capital_gains_discount } from './globals.js';
+import { activeTaxTable } from './globals.js';
 import { DateInt, monthLabel } from './utils/date-int.js';
 import { formatCurrency } from './utils/html.js';
 import { EventType } from './sim-event.js';
@@ -166,7 +166,11 @@ export const RULES = [
             if (ctx.total(Metric.LONG_TERM_CAPITAL_GAIN) === 0) return null;
             return {
                 emoji: '\u{1F3E1}',
-                text: `Primary home sold after more than two years — the first ${formatCurrency(global_home_sale_capital_gains_discount)} of gain is excluded before capital gains tax.`,
+                // Read from the tax table, not a global: the exclusion is
+                // $250,000 filing single and $500,000 filing jointly, and this
+                // note previously quoted the single figure to everyone — telling
+                // an MFJ household the wrong number as well as taxing on it.
+                text: `Primary home sold after more than two years — the first ${formatCurrency(activeTaxTable.activeHomeSaleExclusion)} of gain is excluded before capital gains tax.`,
                 // A taxed gain still gets the explanation, but must not silence
                 // the counterparty note, which is then describing a real tax.
                 suppressOnly: ctx.total(Metric.TAXES) === 0,

@@ -288,21 +288,32 @@ const engine = {
 // Generated with --print-actual under the pinned 2026-07-15 clock.
 // Established 2026-07-29 as the baseline BEFORE the transfer-conservation
 // terms are adopted by the engine, so that change shows as a reviewable diff.
+//
+// Moved 2026-08-06 by spec 5 step 2b, and only these three. Early Career's Home
+// is a primary residence that closes with a $392,107 gain, so the annual
+// true-up used to re-tax the $250,000 that IRC 121 had already excluded at
+// close. It no longer does, which leaves the household richer: Brokerage
+// +$472,511 and portfolioTotal by the same, after decades of compounding on the
+// tax it stopped paying. longTermCapitalGains rises $12,593 as a SECOND-ORDER
+// effect -- a fatter Brokerage means each proportional-basis withdrawal
+// realises a different gain -- which is why it moved without any gain
+// recognition changing. Predicted and cross-checked against
+// tests/baselines/single-home-sale.snap, where the same rule is isolated.
 const EXPECTED_ENGINE = {
   "Social Security": 3882.14,
   "401K": 4330365.45,
   "Roth IRA": 4990880.32,
-  "Brokerage": 8655712.64,
+  "Brokerage": 9128223.72,
   "Home": 0.00,
   "Mortgage": 0.00,
   "Living Expenses": -13937.35,
   "Rent": -6427.41,
-  "portfolioTotal": 17976958.40,
+  "portfolioTotal": 18449469.49,
   "employedIncome": 3432182.06,
   "socialSecurityIncome": 854014.60,
   "four01KContribution": 274574.57,
   "four01KDistribution": 4373405.30,
-  "longTermCapitalGains": 1811139.62,
+  "longTermCapitalGains": 1823732.65,
   "mortgageInterest": -287174.02,
   "propertyTaxes": -157235.10,
   "incomeTax": -734205.66,

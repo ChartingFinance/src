@@ -275,6 +275,10 @@ function historyDigestLine(name, values) {
  */
 const EXTRA_CONFIG = [
   ['allocateHouseholdTax', () => G.global_allocate_household_tax],
+  // Derived from filingAs rather than set directly, so it is recorded as the
+  // EFFECTIVE value — a reader should not have to know the mapping to see that
+  // an MFJ fixture excludes $500,000 and a single one $250,000.
+  ['homeSaleExclusion', () => G.activeTaxTable?.activeHomeSaleExclusion],
   ['pensionWithholdingRate', () => G.global_pension_withholding_rate],
   ['socialSecurityWithholdingRate', () => G.global_social_security_withholding_rate],
   ['retirementWithholdingRate', () => G.global_retirement_withholding_rate],
@@ -290,11 +294,29 @@ function applyConfig(fixture) {
   if (c.startAge != null) { G.global_setUserStartAge(c.startAge); G.global_getUserStartAge(); }
   if (c.retirementAge != null) { G.global_setUserRetirementAge(c.retirementAge); G.global_getUserRetirementAge(); }
   if (c.finishAge != null) { G.global_setUserFinishAge(c.finishAge); G.global_getUserFinishAge?.(); }
+  // A fixture declares its filing status rather than inheriting the reset
+  // default, so an MFJ fixture is MFJ on its own terms and not because of the
+  // order it happened to run in. --set is applied after this and still wins.
+  if (c.filingAs != null) { G.global_setFilingAs(c.filingAs); G.global_getFilingAs(); }
 
   for (const [name, raw] of overrides) {
     const setter = SETTERS[name];
     if (!setter) fail(`--set ${name}: no known setter. Known: ${Object.keys(SETTERS).join(', ')}`);
-    setter(coerce(raw));
+
+    const want = coerce(raw);
+    setter.apply(want);
+
+    // The write must be observable, or the run below would silently measure the
+    // default and report it as "no drift". See the note on SETTERS.
+    const got = setter.read();
+    if (!valueLanded(got, want)) {
+      fail(
+        `--set ${name}=${raw} did not take — the global still reads ${JSON.stringify(got)}.\n` +
+        `  This global is probably localStorage-backed, so its setter writes the key\n` +
+        `  without assigning the module variable. Add the matching global_getX() to\n` +
+        `  the SETTERS entry.`
+      );
+    }
   }
 
   // A fresh table every fixture: TaxTable caches bracket state across years.
@@ -308,16 +330,69 @@ const coerce = (raw) => {
   return Number.isNaN(n) ? raw : n;
 };
 
-/** Only globals that actually change a simulation are exposed to --set. */
+/**
+ * Only globals that actually change a simulation are exposed to --set.
+ *
+ * Each entry is {apply, read}, and `read` is not decoration — it is the whole
+ * point. Several of these globals are localStorage-backed: `global_setX` writes
+ * the key and DOES NOT assign the module variable, which only `global_getX`
+ * copies back. A `--set` wired to the setter alone therefore writes somewhere
+ * real, throws nothing, and changes no simulated number — the tool reports "no
+ * drift" and the reader concludes the flag does nothing.
+ *
+ * That was true here for four of the eight knobs below (filingAs, inflationRate,
+ * taxYear, propertyTaxRate) until 2026-08-06. `--set global_inflationRate=0.02`
+ * on a 46-year plan reported "No simulated number moved", against a probe-
+ * measured ~$6M swing.
+ *
+ * So every entry now declares how to read the value back, and applyConfig
+ * verifies the write landed. A future knob added without its getter fails loudly
+ * on first use instead of quietly reporting that nothing happened.
+ */
 const SETTERS = {
-  global_allocate_household_tax: (v) => G.global_setAllocateHouseholdTax(v),
-  global_inflationRate: (v) => G.global_setInflationRate(v),
-  global_taxYear: (v) => G.global_setTaxYear(v),
-  global_filingAs: (v) => G.global_setFilingAs(v),
-  global_user_startAge: (v) => { G.global_setUserStartAge(v); G.global_getUserStartAge(); },
-  global_user_retirementAge: (v) => { G.global_setUserRetirementAge(v); G.global_getUserRetirementAge(); },
-  global_propertyTaxRate: (v) => G.global_setPropertyTaxRate(v),
-  global_backtestYear: (v) => G.global_setBacktestYearDirect(v),
+  global_allocate_household_tax: {
+    apply: (v) => G.global_setAllocateHouseholdTax(v),
+    read: () => G.global_allocate_household_tax,
+  },
+  global_inflationRate: {
+    apply: (v) => { G.global_setInflationRate(v); G.global_getInflationRate(); },
+    read: () => G.global_inflationRate,
+  },
+  global_taxYear: {
+    apply: (v) => { G.global_setTaxYear(v); G.global_getTaxYear(); },
+    read: () => G.global_taxYear,
+  },
+  global_filingAs: {
+    apply: (v) => { G.global_setFilingAs(v); G.global_getFilingAs(); },
+    read: () => G.global_filingAs,
+  },
+  global_user_startAge: {
+    apply: (v) => { G.global_setUserStartAge(v); G.global_getUserStartAge(); },
+    read: () => G.global_user_startAge,
+  },
+  global_user_retirementAge: {
+    apply: (v) => { G.global_setUserRetirementAge(v); G.global_getUserRetirementAge(); },
+    read: () => G.global_user_retirementAge,
+  },
+  global_propertyTaxRate: {
+    apply: (v) => { G.global_setPropertyTaxRate(v); G.global_getPropertyTaxRate(); },
+    read: () => G.global_propertyTaxRate,
+  },
+  global_backtestYear: {
+    apply: (v) => G.global_setBacktestYearDirect(v),
+    read: () => G.global_backtestYear,
+  },
+};
+
+/**
+ * Did the write land? Compared loosely on purpose: the setters round-trip
+ * through localStorage strings (`toFixed(4)`, `parseInt`), so 0.05 comes back as
+ * 0.05 but by way of "0.0500". Exact equality would report false failures.
+ */
+const valueLanded = (got, want) => {
+  const a = Number(got), b = Number(want);
+  if (Number.isFinite(a) && Number.isFinite(b)) return Math.abs(a - b) < 1e-9;
+  return String(got) === String(want);
 };
 
 // ── Running one fixture ──────────────────────────────────────────────
@@ -665,6 +740,23 @@ for (const fixture of selected) {
 
 // Coverage is part of the baseline only on a full run — a filtered run would
 // otherwise record a corpus-wide claim it did not measure.
+//
+// `--bless --only` therefore rewrites the filtered baselines and leaves
+// _coverage.snap describing the corpus as it used to be. That is a quiet way to
+// lose exactly what this file is for: the coverage report is how a branch going
+// unreached gets noticed, and a stale one still reads as green. Caught while
+// building the MFJ fixtures, where a partial bless left the coverage entry
+// describing a fixture two revisions old. Say so rather than assume the next
+// full run will clean it up.
+if (ONLY && BLESS) {
+  console.log(
+    `\n  NOTE  _coverage.snap was NOT updated — coverage is corpus-wide and this\n` +
+    `        run was filtered by --only. Re-run 'node tests/tools/snapshot.mjs --bless'\n` +
+    `        with no filter before committing, or the coverage report will describe\n` +
+    `        fixtures as they used to be.`
+  );
+}
+
 if (!ONLY) {
   const covFile = join(BASELINE_DIR, '_coverage.snap');
   const covText = renderCoverage(covered, perFixture);

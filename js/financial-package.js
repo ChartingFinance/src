@@ -12,7 +12,7 @@ export const FINANCIAL_FIELDS = [
     'tradIRAContribution', 'four01KContribution', 'rothIRAContribution',
     'tradIRADistribution', 'four01KDistribution', 'rothIRADistribution',
     'mortgageInterest', 'mortgagePrincipal', 'propertyTaxes',
-    'shortTermCapitalGains', 'longTermCapitalGains',
+    'shortTermCapitalGains', 'longTermCapitalGains', 'excludedCapitalGains',
     'nonQualifiedDividends', 'qualifiedDividends', "maintenance", "insurance",
     'interestIncome', 'longTermCapitalGainsTax',
     'value',
@@ -66,6 +66,22 @@ export class FinancialPackage {
 
     // ── Income rollups (aligned with Metric DAG) ─────────────────────
 
+    /**
+     * Every dollar that arrived, for REPORTING. Not a tax base — see below.
+     *
+     * This includes tax-free Roth distributions and long-term capital gains,
+     * so it is wrong for an ordinary-rate calculation (it contains money that
+     * is not ordinary income, and money that is not taxable at all) and wrong
+     * as the base capital gains are stacked on (it already contains those
+     * gains, and carries no deduction).
+     *
+     * It was used as both for a long time, which is how the close path and the
+     * annual true-up came to disagree about the same liability. Spec 6 moved
+     * every tax site to `taxableBasis()` in js/tax-basis.js; the only remaining
+     * callers are report-view.js and finplan-ai.js, which want exactly what the
+     * name says. If a tax calculation needs a number from here, it needs
+     * taxableBasis instead.
+     */
     totalIncome() {
         let income = this.ordinaryIncome().copy();
         income.add(this.capitalGain());

@@ -92,6 +92,7 @@ export const EventType = Object.freeze({
     CAPITAL_GAINS_TAX:       'capitalGainsTax',
     TAX_TRUE_UP:             'taxTrueUp',         // data.direction: 'underpayment' | 'refund'
     CAPITAL_GAIN_RECOGNIZED: 'capitalGainRecognized', // data.spillover: boolean
+    CAPITAL_GAIN_EXCLUDED:   'capitalGainExcluded',   // IRC §121 primary-home exclusion
 
     // ── Movement ──
     TRANSFER:                'transfer',          // data: { from, to, cadence }
@@ -145,6 +146,7 @@ const INFO_TYPES = new Set([
     EventType.MAINTENANCE,
     EventType.INSURANCE,
     EventType.CAPITAL_GAIN_RECOGNIZED,
+    EventType.CAPITAL_GAIN_EXCLUDED,
     EventType.UNFUNDED,
     EventType.CONTRIBUTION_CAPPED,
 ]);
@@ -215,6 +217,7 @@ export function renderNote(event) {
         case EventType.CAPITAL_GAINS_TAX:       return 'Capital gains tax withholding';
         case EventType.TAX_TRUE_UP:             return `Annual tax true-up (${d.direction})`;
         case EventType.CAPITAL_GAIN_RECOGNIZED: return d.spillover ? 'Capital gains (spillover)' : 'Capital gains';
+        case EventType.CAPITAL_GAIN_EXCLUDED:   return 'Primary home gain excluded';
 
         // Transfers and settlements share a shape but not a format: property
         // tax settles as "Home property tax" while maintenance settles as

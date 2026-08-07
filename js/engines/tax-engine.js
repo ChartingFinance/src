@@ -19,6 +19,7 @@ import { basisThisMonth, basisOverMonths, isAllocationEligible, planAllocation }
 import { logger, LogCategory } from '../utils/logger.js';
 import { EventType, ShortfallOrigin } from '../sim-event.js';
 import { withTrace, TraceKind } from '../trace.js';
+import { taxableBasis } from '../tax-basis.js';
 
 export class TaxEngine {
 
@@ -288,12 +289,18 @@ export class TaxEngine {
         logger.log(LogCategory.TAX, 'capital gains of ' + capitalGains.toString());
 
         const monthsSpan = MonthsSpan.build(modelAsset.startDateInt, modelAsset.effectiveFinishDateInt);
-        const annualizedIncome = this.monthly.totalIncome().copy().multiply(12);
+        // The band a gain lands in is measured against TAXABLE income with the
+        // gain stacked last (IRC §1(h)). This used to pass totalIncome() × 12 —
+        // a gross rollup that already contained the gains being taxed, plus
+        // tax-free Roth distributions, with no deduction removed — so gains
+        // were pushed into a higher band than they belong in, and the annual
+        // true-up disagreed with this site about the same liability.
+        const { ltcgStackBase } = taxableBasis(this.monthly, this.activeUser, { annualise: true });
         const isRealEstate = InstrumentType.isRealEstate(modelAsset.instrument);
         const isPrimaryHome = isRealEstate && modelAsset.isPrimaryHome;
 
         const result = activeTaxTable.calculateCapitalGainsTax(
-            capitalGains, monthsSpan.totalMonths, isPrimaryHome, annualizedIncome
+            capitalGains, monthsSpan.totalMonths, isPrimaryHome, ltcgStackBase
         );
 
         let amountToTax = result.tax.copy();
@@ -303,6 +310,19 @@ export class TaxEngine {
             modelAsset.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, capitalGains);
 
             modelAsset.recordEvent(EventType.CAPITAL_GAIN_RECOGNIZED, capitalGains.copy(), { metric: Metric.LONG_TERM_CAPITAL_GAIN, data: { spillover: false } });
+
+            // §121 removed some of that gain from the tax base. Record it so
+            // applyAnnualTaxTrueUp can subtract it; without this the true-up
+            // recomputes the year from the gross gain, finds more tax than was
+            // withheld, and bills the difference — handing the exclusion back.
+            // The gain itself stays gross above: the household really did
+            // realise it, and reconciliation balances the recognised event
+            // against monthly.longTermCapitalGains on both sides.
+            if (result.excluded > 0) {
+                const excluded = new Currency(result.excluded);
+                this.monthly.excludedCapitalGains.add(excluded);
+                modelAsset.recordEvent(EventType.CAPITAL_GAIN_EXCLUDED, excluded.copy());
+            }
 
             this.monthly.longTermCapitalGainsTax.add(amountToTax.flipSign());
             modelAsset.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN_TAX, amountToTax);
@@ -383,7 +403,14 @@ export class TaxEngine {
         // this.monthly is usually freshly zeroed — the same weak baseline
         // the capital-gains close path uses; the annual true-up settles the
         // exact liability since ordinaryIncome() includes distributions.)
-        const annualizedIncome = this.monthly.totalIncome().copy().multiply(12);
+        // Ordinary tax must be measured against ORDINARY taxable income. This
+        // used to pass totalIncome() × 12, a rollup carrying long-term gains,
+        // qualified dividends and tax-free Roth distributions — none of which
+        // belong in an ordinary-rate calculation — and carrying no deduction.
+        // Captured BEFORE the distribution is booked below, so the marginal
+        // computation does not count it twice.
+        const { ordinaryTaxable: annualizedIncome } =
+            taxableBasis(this.monthly, this.activeUser, { annualise: true });
 
         // Book the full balance as a taxable distribution, classified by the
         // source instrument (recordTransfer routes IRA vs 401K), plus the
@@ -428,10 +455,8 @@ export class TaxEngine {
     applyMonthlyTaxTrueUp() {
 
         // Compute total tax liability across ALL income (salary + capital gains + dividends + interest)
-        let yearly = this.monthly.copy().multiply(12.0);
-        yearly.limitDeductions(this.activeUser);
-        let yearlyIncome = activeTaxTable.calculateYearlyTaxableIncome(yearly);
-        let totalIncomeTax = activeTaxTable.calculateYearlyIncomeTax(yearlyIncome).divide(12.0).flipSign();
+        const { ordinaryTaxable } = taxableBasis(this.monthly, this.activeUser, { annualise: true });
+        let totalIncomeTax = activeTaxTable.calculateYearlyIncomeTax(ordinaryTaxable).divide(12.0).flipSign();
 
         // What was already withheld from payroll on Day 1? (negative value)
         const alreadyWithheld = this.monthly.incomeTax.copy();
@@ -607,12 +632,29 @@ export class TaxEngine {
         const yearlySnapshot = this.yearly.copy();
         yearlySnapshot.limitDeductions(this.activeUser);
 
-        const actualTaxableIncome = activeTaxTable.calculateYearlyTaxableIncome(yearlySnapshot);
+        const { ordinaryTaxable: actualTaxableIncome } = taxableBasis(this.yearly, this.activeUser);
         const actualIncomeTax = activeTaxTable.calculateYearlyIncomeTax(actualTaxableIncome);
 
+        // Gross gains, less whatever §121 excluded at close. Subtracting here
+        // rather than reducing longTermCapitalGains at the source keeps the
+        // recognised gain honest — a household that sold a home for a $488,452
+        // gain should see $488,452 in its ledger — and leaves the
+        // capitalGains reconciliation bucket balancing against an untouched
+        // accumulator.
         const yearlyCapitalGains = new Currency(
-            yearlySnapshot.longTermCapitalGains.amount + yearlySnapshot.qualifiedDividends.amount
+            yearlySnapshot.longTermCapitalGains.amount
+            + yearlySnapshot.qualifiedDividends.amount
+            - yearlySnapshot.excludedCapitalGains.amount
         );
+
+        // The exclusion can never exceed the gains it came from, so a negative
+        // base means the two accumulators have drifted apart. Clamp, but say so
+        // — silently taxing a negative base would just produce a wrong number.
+        if (yearlyCapitalGains.amount < 0) {
+            logger.log(LogCategory.TAX,
+                'applyAnnualTaxTrueUp: excluded gains exceed realised gains — clamping to 0');
+            yearlyCapitalGains.zero();
+        }
         const actualCapitalGainsTax = activeTaxTable.calculateYearlyLongTermCapitalGainsTax(
             actualTaxableIncome, yearlyCapitalGains
         );

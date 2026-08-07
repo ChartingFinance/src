@@ -9,7 +9,6 @@
   equityDividendAverageAnnualRate = 0.025
   equityGrowthAllocation = 0.5
   filingAs = Single
-  homeSaleCapitalGainsDiscount = 250000
   inflationRate = 0.031
   propertyTaxDeductionMax = 40000
   propertyTaxRate = 0.01
@@ -19,6 +18,7 @@
   userRetirementAge = 65
   userStartAge = 75
   allocateHouseholdTax = false
+  homeSaleExclusion = 250000
   pensionWithholdingRate = 0.1
   socialSecurityWithholdingRate = 0
   retirementWithholdingRate = 0.1
