@@ -8,3 +8,19 @@
 # that normalisation is the seatbelt.
 tests/baselines/*.snap text eol=lf
 tests/baselines/README.md text eol=lf
+
+# Collapse the baselines in GitHub's diff view, and keep them out of the
+# repository's language statistics.
+#
+# They are generated — `node tests/tools/snapshot.mjs --bless` reproduces every
+# byte deterministically — and they are large: about 85% of the corpus is the
+# per-event listing, so one 55-year quick-start profile is over 20,000 lines. A
+# PR that adds a profile was reading as 46,000 additions against 250 lines of
+# actual change, which buries the review.
+#
+# This only affects how GitHub PRESENTS them. `git diff tests/baselines/` is
+# untouched, which matters: the committed baselines exist so that a behavioural
+# change is reviewable as text and "nothing moved" is an empty diff rather than
+# a claim. Do NOT reach for `-diff` or `binary` here — that would take the diff
+# away locally too, and the diff is the entire point of committing them.
+tests/baselines/*.snap linguist-generated=true

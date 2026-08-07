@@ -283,7 +283,84 @@ const RETIRED = {
 // Registry + exports
 // ══════════════════════════════════════════════════════════════
 
-/** Ordered list of all Quick Start profiles */
+// ══════════════════════════════
+// Profile: Young Couple (30-40), filing jointly
+// ══════════════════════════════
+
+const YOUNG_COUPLE = {
+    key:   'youngCouple',
+    label: 'Young Couple',
+    ages:  '30–40',
+    tagline: 'Two incomes, a long runway, and a first home',
+    emoji: '🌱',
+    filingAs: 'MFJ',
+    startAge: 35, retirementAge: 67, finishAge: 90,
+
+    assets(d) {
+        return [
+            { instrument: 'workingIncome', displayName: 'Salary A',
+              startDateInt: d.now, finishDateInt: d.retire,
+              startCurrency: { amount: 5500 }, annualReturnRate: { rate: 0.03 } },
+            { instrument: 'workingIncome', displayName: 'Salary B',
+              startDateInt: d.now, finishDateInt: d.retire,
+              startCurrency: { amount: 4500 }, annualReturnRate: { rate: 0.03 } },
+            { instrument: 'retirementIncome', displayName: 'Social Security A',
+              startDateInt: d.retire,
+              startCurrency: { amount: 2200 }, annualReturnRate: { rate: 0.025 } },
+            { instrument: 'retirementIncome', displayName: 'Social Security B',
+              startDateInt: d.retire,
+              startCurrency: { amount: 1800 }, annualReturnRate: { rate: 0.025 } },
+            { instrument: '401K', displayName: '401K A',
+              startDateInt: d.now,
+              startCurrency: { amount: 45000 }, annualReturnRate: { rate: 0.085 } },
+            { instrument: '401K', displayName: '401K B',
+              startDateInt: d.now,
+              startCurrency: { amount: 28000 }, annualReturnRate: { rate: 0.085 } },
+            { instrument: 'rothIRA', displayName: 'Roth IRA',
+              startDateInt: d.now,
+              startCurrency: { amount: 20000 }, annualReturnRate: { rate: 0.085 } },
+            { instrument: 'taxableEquity', displayName: 'Brokerage',
+              startDateInt: d.now,
+              startCurrency: { amount: 25000 }, startBasisCurrency: { amount: 15000 },
+              annualReturnRate: { rate: 0.085 } },
+            { instrument: 'realEstate', displayName: 'Home',
+              startDateInt: d.now, finishDateInt: d.plus(25),
+              startCurrency: { amount: 420000 }, startBasisCurrency: { amount: 420000 },
+              annualReturnRate: { rate: 0.03 }, annualTaxRate: { rate: 0.012 } },
+            { instrument: 'mortgage', displayName: 'Mortgage',
+              startDateInt: d.now, finishDateInt: d.plus(25),
+              startCurrency: { amount: -340000 }, annualReturnRate: { rate: 0.065 },
+              monthsRemaining: 300 },
+            { instrument: 'monthlyExpense', displayName: 'Rent',
+              startDateInt: d.plus(25),
+              startCurrency: { amount: -3000 } },
+            { instrument: 'monthlyExpense', displayName: 'Living Expenses',
+              startDateInt: d.now,
+              startCurrency: { amount: -3200 } },
+        ];
+    },
+
+    lifeEvents(ages) {
+        const acc = ModelLifeEvent.createDefault(LifeEvent.ACCUMULATE, ages.startAge);
+        acc.phaseTransfers = {
+            'Salary A': [xfer('401K A', 8), xfer('Roth IRA', 4), xfer('Brokerage', 88)],
+            'Salary B': [xfer('401K B', 8), xfer('Brokerage', 92)],
+            'Home': [xfer('Brokerage', 100)],
+            'Mortgage': [xfer('Brokerage', 100)],
+            'Rent': [xfer('Brokerage', 100)],
+            'Living Expenses': [xfer('Brokerage', 100)],
+        };
+        const ret = ModelLifeEvent.createDefault(LifeEvent.RETIRE, ages.retirementAge);
+        ret.phaseTransfers = {
+            'Social Security A': [xfer('Brokerage', 100)],
+            'Social Security B': [xfer('Brokerage', 100)],
+            'Rent': [xfer('Brokerage', 100)],
+            'Living Expenses': [xfer('Brokerage', 60), xfer('401K A', 25), xfer('401K B', 15)],
+        };
+        return [acc, ret];
+    },
+};
+
 // ══════════════════════════════
 // Profile: Dual Income Couple (40-50), filing jointly
 //
@@ -368,7 +445,142 @@ const DUAL_INCOME = {
     },
 };
 
-export const quickStartProfiles = [EARLY_CAREER, MID_CAREER, DUAL_INCOME, PRE_RETIREMENT, RETIRED];
+// ══════════════════════════════
+// Profile: Couple Nearing Retirement (50-60), filing jointly
+// ══════════════════════════════
+
+const COUPLE_NEARING_RETIREMENT = {
+    key:   'coupleNearingRetirement',
+    label: 'Couple Nearing Retirement',
+    ages:  '50–60',
+    tagline: 'Two careers winding down — check both sides are ready',
+    emoji: '🧭',
+    filingAs: 'MFJ',
+    startAge: 55, retirementAge: 65, finishAge: 90,
+
+    assets(d) {
+        return [
+            { instrument: 'workingIncome', displayName: 'Salary A',
+              startDateInt: d.now, finishDateInt: d.retire,
+              startCurrency: { amount: 7500 }, annualReturnRate: { rate: 0.02 } },
+            { instrument: 'workingIncome', displayName: 'Salary B',
+              startDateInt: d.now, finishDateInt: d.retire,
+              startCurrency: { amount: 6000 }, annualReturnRate: { rate: 0.02 } },
+            { instrument: 'retirementIncome', displayName: 'Social Security A',
+              startDateInt: d.retire,
+              startCurrency: { amount: 2800 }, annualReturnRate: { rate: 0.025 } },
+            { instrument: 'retirementIncome', displayName: 'Social Security B',
+              startDateInt: d.retire,
+              startCurrency: { amount: 2300 }, annualReturnRate: { rate: 0.025 } },
+            { instrument: '401K', displayName: '401K A',
+              startDateInt: d.now,
+              startCurrency: { amount: 350000 }, annualReturnRate: { rate: 0.085 } },
+            { instrument: '401K', displayName: '401K B',
+              startDateInt: d.now,
+              startCurrency: { amount: 240000 }, annualReturnRate: { rate: 0.085 } },
+            { instrument: 'ira', displayName: 'IRA',
+              startDateInt: d.now,
+              startCurrency: { amount: 120000 }, annualReturnRate: { rate: 0.085 } },
+            { instrument: 'rothIRA', displayName: 'Roth IRA',
+              startDateInt: d.now,
+              startCurrency: { amount: 110000 }, annualReturnRate: { rate: 0.085 } },
+            { instrument: 'taxableEquity', displayName: 'Brokerage',
+              startDateInt: d.now,
+              startCurrency: { amount: 140000 }, startBasisCurrency: { amount: 80000 },
+              annualReturnRate: { rate: 0.085 } },
+            { instrument: 'monthlyExpense', displayName: 'Living Expenses',
+              startDateInt: d.now,
+              startCurrency: { amount: -5500 } },
+        ];
+    },
+
+    lifeEvents(ages) {
+        const acc = ModelLifeEvent.createDefault(LifeEvent.ACCUMULATE, ages.startAge);
+        acc.phaseTransfers = {
+            'Salary A': [xfer('401K A', 10), xfer('Roth IRA', 3), xfer('Brokerage', 87)],
+            'Salary B': [xfer('401K B', 10), xfer('Brokerage', 90)],
+            'Living Expenses': [xfer('Brokerage', 100)],
+        };
+        const ret = ModelLifeEvent.createDefault(LifeEvent.RETIRE, ages.retirementAge);
+        ret.phaseTransfers = {
+            'Social Security A': [xfer('Brokerage', 100)],
+            'Social Security B': [xfer('Brokerage', 100)],
+            'Living Expenses': [xfer('Brokerage', 50), xfer('401K A', 20), xfer('401K B', 15), xfer('Roth IRA', 15)],
+        };
+        return [acc, ret];
+    },
+};
+
+// ══════════════════════════════
+// Profile: Retired Couple (60+), filing jointly
+// ══════════════════════════════
+
+const RETIRED_COUPLE = {
+    key:   'retiredCouple',
+    label: 'Retired Couple',
+    ages:  '60+',
+    tagline: 'Both retired — two benefits, one household to fund',
+    emoji: '⛵',
+    filingAs: 'MFJ',
+    startAge: 67, retirementAge: 67, finishAge: 92,
+
+    assets(d) {
+        return [
+            { instrument: 'retirementIncome', displayName: 'Social Security A',
+              startDateInt: d.now,
+              startCurrency: { amount: 3000 }, annualReturnRate: { rate: 0.025 } },
+            { instrument: 'retirementIncome', displayName: 'Social Security B',
+              startDateInt: d.now,
+              startCurrency: { amount: 2400 }, annualReturnRate: { rate: 0.025 } },
+            { instrument: 'pension', displayName: 'Pension',
+              startDateInt: d.now,
+              startCurrency: { amount: 2200 }, annualReturnRate: { rate: 0.02 } },
+            { instrument: '401K', displayName: '401K A',
+              startDateInt: d.now,
+              startCurrency: { amount: 500000 }, annualReturnRate: { rate: 0.085 } },
+            { instrument: '401K', displayName: '401K B',
+              startDateInt: d.now,
+              startCurrency: { amount: 320000 }, annualReturnRate: { rate: 0.085 } },
+            { instrument: 'ira', displayName: 'IRA',
+              startDateInt: d.now,
+              startCurrency: { amount: 200000 }, annualReturnRate: { rate: 0.085 } },
+            { instrument: 'rothIRA', displayName: 'Roth IRA',
+              startDateInt: d.now,
+              startCurrency: { amount: 180000 }, annualReturnRate: { rate: 0.085 } },
+            { instrument: 'taxableEquity', displayName: 'Brokerage',
+              startDateInt: d.now,
+              startCurrency: { amount: 260000 }, startBasisCurrency: { amount: 120000 },
+              annualReturnRate: { rate: 0.085 } },
+            { instrument: 'monthlyExpense', displayName: 'Living Expenses',
+              startDateInt: d.now,
+              startCurrency: { amount: -6000 } },
+        ];
+    },
+
+    lifeEvents(ages) {
+        const ret = ModelLifeEvent.createDefault(LifeEvent.RETIRE, ages.startAge);
+        ret.phaseTransfers = {
+            'Social Security A': [xfer('Brokerage', 100)],
+            'Social Security B': [xfer('Brokerage', 100)],
+            'Pension': [xfer('Brokerage', 100)],
+            'Living Expenses': [xfer('Brokerage', 50), xfer('401K A', 20), xfer('401K B', 15), xfer('Roth IRA', 15)],
+        };
+        return [ret];
+    },
+};
+
+/**
+ * Ordered list of all Quick Start profiles.
+ *
+ * Four Single, then four MFJ, one pair per life stage. The welcome grid shows
+ * only the set matching the current filing status, so the two are alternatives
+ * rather than a list of eight — and the pairing is why each MFJ profile mirrors
+ * the age band of a Single one instead of inventing new stages.
+ */
+export const quickStartProfiles = [
+    EARLY_CAREER, MID_CAREER, PRE_RETIREMENT, RETIRED,
+    YOUNG_COUPLE, DUAL_INCOME, COUPLE_NEARING_RETIREMENT, RETIRED_COUPLE,
+];
 
 /**
  * Build assets + life events for a given profile.
