@@ -249,6 +249,16 @@
     settlement
     taxTrueUp
     transfer
+  rebalance-drawdown-and-conversion:
+    assetGrowth
+    expenseInflation
+    grossUp
+    incomeGrowth
+    incomeTaxWithholding
+    interestIncome
+    spillover
+    taxTrueUp
+    transfer
   retired-deferred-draw:
     assetGrowth
     expenseInflation

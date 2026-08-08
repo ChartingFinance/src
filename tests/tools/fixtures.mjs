@@ -550,6 +550,55 @@ const adversarialFixtures = [
     }),
   },
   {
+    name: 'rebalance-drawdown-and-conversion',
+    kind: 'adversarial',
+    reaches:
+      'RebalanceEngine, which the corpus did not touch at all. Day 1 runs it '
+      + 'after payroll to move money between capital accounts, and every kind of '
+      + 'move it makes has a tax consequence: a retirement account drawn into a '
+      + 'taxable one is ordinary income, and a Roth conversion is ordinary income '
+      + 'that never leaves the shelter. '
+      + 'A mutation sweep on 2026-08-07 found the whole engine resting on ONE '
+      + 'suite, transfer-tax-conservation, and two subtle changes that nothing '
+      + 'at all caught: deleting _trackDistribution, which is what makes a '
+      + 'retirement withdrawal taxable — the money still moves, it is simply '
+      + 'never taxed. The fixture now catches that one, and three others: '
+      + 'booking gains against the destination, dropping the contribution '
+      + 'metric, and skipping the contribution limits. '
+      + 'The hasRecurring guard is NOT covered here, and measurement says '
+      + 'it cannot be: a close-only transfer has monthlyMoveValue 0, so '
+      + 'calculate() returns 0 on the monthly pass and a zero transfer '
+      + 'moves nothing whether the guard runs or not. Removing hasRecurring '
+      + 'AND the amount<=0 guard together still produces no drift. It is '
+      + 'redundant clarity, not an unguarded path — the same conclusion as '
+      + "monthsRemaining's `|| 0` and Currency.parse's isNaN check. "
+      + 'The IRA draws to a taxable Brokerage (unsheltered distribution) while '
+      + 'the 401K converts to a Roth (sheltered distribution, so the source is '
+      + 'taxed but nothing is withheld at it). The Bonds asset carries a '
+      + 'close-only transfer alongside the recurring ones, so the two cadences '
+      + 'are pinned against each other rather than assumed.',
+    config: { startAge: 70, retirementAge: 65, filingAs: 'Single' },
+    build: () => ({
+      assets: [
+        benefit('Social Security', 2500),
+        deferred('ira', 'IRA', 600000, { annualReturnRate: { rate: 0.05 },
+          fundTransfers: [xfer('Brokerage', 2)] }),
+        deferred('401K', '401K', 300000, { annualReturnRate: { rate: 0.05 },
+          fundTransfers: [xfer('Roth IRA', 1)] }),
+        deferred('rothIRA', 'Roth IRA', 50000, { annualReturnRate: { rate: 0.05 } }),
+        // Close-only: monthlyMoveValue 0, closeMoveValue 100. Nothing should
+        // move until it closes in 2029-06.
+        by(JUN29, asset(DEC)({ instrument: 'usBond', displayName: 'Bonds',
+          startCurrency: { amount: 80000 }, startBasisCurrency: { amount: 80000 },
+          annualReturnRate: { rate: 0.03 },
+          fundTransfers: [xfer('Brokerage', 0, 100)] })),
+        equity('Brokerage', 100000, 60000, { annualReturnRate: { rate: 0.04 } }),
+        bank('Checking', 20000),
+        expense('Living', 5000),
+      ].map(ModelAsset.fromJSON),
+    }),
+  },
+  {
     name: 'transfer-unfunded',
     kind: 'adversarial',
     reaches:
