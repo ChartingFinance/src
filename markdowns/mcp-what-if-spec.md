@@ -31,47 +31,112 @@ design pass, and still needs the app's compare UX. Nothing here pre-empts it.
 
 ---
 
-## 2. THE BLOCKING PRECONDITION: `retire_at` is incoherent today
+## 2. THE BLOCKING PRECONDITION: a portfolio does not reproduce across time
 
-`retire_at` is the flagship adjustment and the reason the whole feature is
-interesting. It does not currently work on an arbitrary plan, and no amount of
-tooling fixes that.
+> **Scope note.** This section is *not* what-if work. It is a correctness defect
+> in the engine that the what-if design happened to surface, and it is
+> independently necessary — a portfolio that cannot reproduce itself cannot be
+> compared against a variant of itself. If it is easier to land as its own spec,
+> it should be. It is written here because this is where it was found.
 
-**Life events are age-relative.** `ModelLifeEvent` stores `triggerAge`, and
-`triggerDateInt` derives the date at read time from `global_user_startAge`
-(`life-event.js:99`). Changing a retirement age moves the phase boundary
-immediately and correctly.
+### 2.1 The stated goal
 
-**Assets carry absolute dates.** A salary has `finishDateInt: 2048-01`. It does
-not move when the retire event's `triggerAge` changes.
+> A portfolio is the minimum data necessary to communicate a constant timeline
+> and its events — start values, finish values, and everything emitted between.
+> Share it with someone and they see the same generation. Same for MCP.
 
-Quick Start only *appears* to work because `dateAnchors()` computes both from the
-same ages at build time. Feed in a portfolio the user built by hand — which is
-the whole point of `run_plan` — and `retire_at(62)` produces:
+That goal is achievable and the data format already supports it. Every premise
+holds: start dates, finish dates, starting values and return rates are all
+constant in a stored plan. The engine simply does not treat that data as its
+only source of truth.
 
-- the Retire phase beginning at 62, activating drawdown transfers, and
-- a salary still paying income until 2048,
+### 2.2 Measured, not argued
 
-simultaneously. That is not a pessimistic plan or an optimistic plan. It is an
-incoherent one, and it would be reported with the same confidence as any other.
+One frozen Mid Career spec, replayed under different wall clocks. Hashed over
+the **full event stream** — the generation itself, not a summary figure:
 
-### P0 — resolve the date-anchoring asymmetry before any adjustment code
+| | clock 2026 | clock 2027 | clock 2029 |
+| :--- | :--- | :--- | :--- |
+| As saved | 12,282 events · `e3d775f4` | 12,508 · `655480cf` | 12,921 · `9f416bcb` |
+| Life events stripped | 7,359 · `39e7fa6f` | 7,456 · `a7cb8421` | 7,650 · `2501e314` |
 
-Three candidate answers, in preference order:
+Ending net worth moved $4,659,211 → $5,299,247 across those three clocks:
+**13.7%, from nothing but the calendar.**
 
-1. **Adjustment-scoped retargeting.** `retire_at` moves the trigger age *and*
-   retargets assets whose finish date coincides with the old boundary. Requires
-   defining "coincides" — exact match on the old trigger date is the honest
-   version, and it must be conservative: an asset that does not match is left
-   alone and **reported as unmoved**, never silently dragged.
-2. **Age-relative asset dates.** Assets grow an optional `finishAtAge`. Correct,
-   and a schema migration across every stored portfolio and share URL.
-3. **Refuse.** `retire_at` is rejected on plans whose assets do not line up with
-   the current boundary, with a message naming them.
+### 2.3 Two leaks, one expression
 
-(3) is not a cop-out and may be the right first shipment: it is honest, it is
-cheap, and it converts a silent incoherence into a clear refusal. (1) is the
-target. **P0 must be settled before Step 1.**
+**Leak 1 — phase boundaries.** `ModelLifeEvent` stores `triggerAge`;
+`ageToDateInt` (`life-event.js:100`) resolves it at read time. The retirement
+boundary slides one year per calendar year while assets stay put. Observed: the
+salary ends 2048 under every clock, while the Retire phase starts 2048 → 2049 →
+2051. By the 2029 clock there are three years in which the salary has ended but
+the Retire phase has not begun — accumulation transfers still active with no
+income, drawdown not yet started.
+
+**Leak 2 — run length.** Six of the nine assets in a saved Mid Career spec carry
+no `finishDateInt`, so `effectiveFinishDateInt` falls through to
+`global_getFinishDateInt()`. The simulation ran to 2071-12 under a 2026 clock
+and 2074-12 under a 2029 clock.
+
+Both are the same expression, in three leaking sites — `globals.js:598`,
+`globals.js:605`, `life-event.js:100`:
+
+```js
+birthYear = new Date().getFullYear() - global_user_startAge
+```
+
+One concept — *resolve an age to a date* — reaching for the wall clock instead
+of for the plan. (`quick-start.js:20` uses the clock too, but legitimately: it
+builds a NEW portfolio, where "today" is the right answer. `user.js:5` carries
+the same expression as a fallback default, but see below — it is already
+bypassed in practice.)
+
+### 2.4 The anchor already exists, and one site already uses it
+
+`portfolio.firstDateInt` is the earliest asset start date (`portfolio.js:1062`).
+It is derived entirely from stored absolute dates and was **2026-08 under every
+clock tested**.
+
+The decisive detail: `Portfolio` **already anchors this way**, at
+`portfolio.js:195`:
+
+```js
+const birthYear = this.firstDateInt ? this.firstDateInt.year - global_user_startAge : undefined;
+this.activeUser = new User(global_user_startAge, birthYear);
+```
+
+So the User's age — and therefore RMD timing — is already resolved against the
+plan rather than the clock, which is why `user.js:5`'s wall-clock default almost
+never fires. **This is not a new idea to introduce; it is an existing pattern
+three other sites failed to follow.**
+
+That requires **no new field, no schema change, and no migration of existing
+share URLs.**
+
+It also supersedes the three-option analysis this section previously carried:
+"give assets an optional `finishAtAge`" was proposed to buy an anchor the data
+already has. The remaining work is plumbing — `ageToDateInt` and
+`ModelAsset.effectiveFinishDateInt` are module- and instance-level and do not
+know their portfolio. That is the actual engineering, and it is the reason the
+three sites diverged from `Portfolio` in the first place.
+
+### P0 — re-anchor age resolution to the plan, not the clock
+
+1. **Re-anchor (preferred).** The three leaking sites resolve against the plan's
+   own first date, matching what `Portfolio` already does for the User. No
+   migration. Fixes both leaks and makes `retire_at` coherent as a side effect,
+   because the boundary and the assets finally share an origin.
+2. **Refuse.** Reject `retire_at` where asset dates do not line up with the
+   current boundary. Still worth having as a guard, but it addresses only the
+   user-triggered symptom and leaves the calendar-triggered one running.
+
+(1) is now clearly right; (2) is a useful diagnostic to keep alongside it. The
+earlier preference for a refuse-first shipment was based on believing the
+correct fix needed a migration. It does not.
+
+**A consequence worth stating plainly:** until this lands, two people opening
+the same shared portfolio in different calendar years see different plans, with
+nothing signalling the divergence.
 
 ---
 
@@ -213,11 +278,26 @@ without a declared caveat set should fail loudly, not default to silence.
 
 Ordered; each must hold before the step that depends on it.
 
-- **P0 — the date-anchoring asymmetry is resolved (§2).** Blocks everything.
-- **P1 — determinism.** The same spec run twice must produce byte-identical
-  results. If it does not, `compare_plans` reports noise as signal. Assert it
-  directly: run one spec twice, compare total state. The snapshot harness
-  already knows how to do this.
+- **P0 — age resolution is re-anchored to the plan (§2).** Blocks everything.
+- **P1 — determinism ACROSS CLOCKS.** The same spec must produce an identical
+  **event stream** when replayed at different wall-clock times.
+
+  The earlier wording — "run the same spec twice" — was inadequate and is worth
+  keeping on the record as a lesson. It passes today, against every defect in
+  §2, because two runs a second apart share a clock. A determinism assertion
+  that does not vary the thing that actually varies asserts nothing.
+
+  The assertion: replay one spec under several distinct fake clocks spanning a
+  year boundary, hash the full event stream (asset, date, type, amount), and
+  require the hashes to match. Totals are not sufficient — two different
+  generations can land on similar end values, and the goal in §2.1 is about the
+  events, not the endpoint.
+
+  Note why the existing suites never caught this: `snapshot.mjs` **pins the
+  clock**, and `fixtures.mjs` mandates no wall-clock reads. The test harness is
+  deliberately immune to the exact thing production is exposed to. That was the
+  right call for baseline stability and it is precisely why this needs its own
+  assertion rather than a baseline.
 - **P2 — round-trip.** Every adjustment output must be a valid share-format
   plan the app can import. Otherwise MCP grows a dialect and the reuse argument
   in §3.1 collapses.
@@ -237,7 +317,8 @@ Ordered; each must hold before the step that depends on it.
 
 | Step | Deliverable | Gate |
 | :--- | :--- | :--- |
-| 0 | Resolve P0; assert P1 determinism | Blocking |
+| 0a | **Multi-clock determinism assertion, written FIRST and failing** (P1) | Blocking |
+| 0b | Re-anchor age resolution to `firstDateInt` at all four sites (P0) | 0a red |
 | 1 | Adjustment vocabulary + `applyAdjustments()`, no MCP tool | P0, P1 |
 | 2 | Lineage-aware run cache (§5.0) | P3 |
 | 3 | `adjust_plan` tool | P2 |
@@ -248,6 +329,18 @@ Ordered; each must hold before the step that depends on it.
 Steps 1 and 4 are independently useful and independently testable. Step 4 needs
 no MCP surface at all, which is the cheapest place to find out whether the
 comparison shape is right.
+
+**0a before 0b, deliberately.** The assertion must be seen failing against
+today's engine before the fix goes in — this codebase has repeatedly shipped
+green suites that were asserting nothing, and a determinism test written after
+its fix is indistinguishable from one that never worked. Predict the hashes
+diverge, watch them diverge, then re-anchor and watch them converge.
+
+**Step 0b changes simulation output**, so the 26 committed baselines must be
+re-blessed. They are clock-pinned, so the diff should be *empty* — the fix
+re-anchors to a date the pinned clock already agrees with. **An empty baseline
+diff is the prediction.** If any baseline moves, the re-anchoring changed
+something it should not have, and that is a finding, not a re-bless.
 
 ---
 
@@ -265,8 +358,19 @@ comparison shape is right.
 
 ## 10. Open questions
 
-1. **P0's answer.** Refuse-first (cheap, honest) or retarget (correct, more
-   design)? This is the one decision that shapes everything after it.
+1. **Does P0 ship as its own spec?** It is now a reproducibility fix for stored
+   and shared portfolios that what-if merely depends on — see the scope note in
+   §2. Landing it separately would let it go in without waiting on any of the
+   design questions below. *(The original form of this question — refuse-first
+   or retarget? — is answered: re-anchor, per §2.4. It needs no migration, so
+   the reason to prefer a cheaper shipment is gone.)*
+   - *Follow-on:* **should a plan record its anchor explicitly?**
+     `firstDateInt` is the earliest asset start date (`portfolio.js:1062`), so
+     adding an asset that starts *earlier* than any existing one shifts the
+     anchor and re-dates every phase. Deriving it is enough for P0 and needs no
+     migration; an explicit `anchorDateInt` would be immune, at the cost of the
+     schema change §2.4 avoids. Worth deciding before the derived form
+     calcifies — and note `Portfolio` already lives with this exposure today.
 2. **Divergence threshold.** Absolute dollars, percent of net worth, or percent
    of the *difference at plan end*? The third is scale-free but harder to explain.
 3. **Does `compare_plans` take two handles, or a handle plus adjustments?** Two
