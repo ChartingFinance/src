@@ -584,11 +584,25 @@ export const quickStartProfiles = [
 
 /**
  * Build assets + life events for a given profile.
+ *
+ * `ageOverrides` exists because the ages are not decoration — every asset date
+ * and every life-event trigger is derived from them by dateAnchors(). A caller
+ * that wants a 57-year-old's version of Mid Career has to say so HERE; setting
+ * global_user_startAge afterwards does not move a single date, which is exactly
+ * the bug the MCP server shipped with.
+ *
+ * Defaults to the profile's own ages, so every existing caller is unchanged.
+ *
  * @param {object} profile - one of the quickStartProfiles entries
+ * @param {object} [ageOverrides] - partial {startAge, retirementAge, finishAge}
  * @returns {{ assets: ModelAsset[], lifeEvents: ModelLifeEvent[], ages: {startAge, retirementAge, finishAge} }}
  */
-export function buildQuickStart(profile) {
-    const ages = { startAge: profile.startAge, retirementAge: profile.retirementAge, finishAge: profile.finishAge };
+export function buildQuickStart(profile, ageOverrides = null) {
+    const ages = {
+        startAge:      ageOverrides?.startAge      ?? profile.startAge,
+        retirementAge: ageOverrides?.retirementAge ?? profile.retirementAge,
+        finishAge:     ageOverrides?.finishAge     ?? profile.finishAge,
+    };
     const d = dateAnchors(ages.startAge, ages.retirementAge, ages.finishAge);
     return {
         assets: profile.assets(d).map(raw => ModelAsset.fromJSON(raw)),
