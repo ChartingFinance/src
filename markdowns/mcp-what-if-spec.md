@@ -113,6 +113,11 @@ three other sites failed to follow.**
 That requires **no new field, no schema change, and no migration of existing
 share URLs.**
 
+The anchor is therefore **part of the portfolio's identity**. Adding an asset
+that starts earlier than any existing one moves it and re-dates every phase —
+which is the right answer, because a plan that now begins earlier is a different
+plan. Decided 2026-08-08; see §10.1.
+
 It also supersedes the three-option analysis this section previously carried:
 "give assets an optional `finishAtAge`" was proposed to buy an anchor the data
 already has. The remaining work is plumbing — `ageToDateInt` and
@@ -364,13 +369,15 @@ something it should not have, and that is a finding, not a re-bless.
    design questions below. *(The original form of this question — refuse-first
    or retarget? — is answered: re-anchor, per §2.4. It needs no migration, so
    the reason to prefer a cheaper shipment is gone.)*
-   - *Follow-on:* **should a plan record its anchor explicitly?**
+   - *Follow-on — **RESOLVED 2026-08-08**: derive it, no explicit field.*
      `firstDateInt` is the earliest asset start date (`portfolio.js:1062`), so
      adding an asset that starts *earlier* than any existing one shifts the
-     anchor and re-dates every phase. Deriving it is enough for P0 and needs no
-     migration; an explicit `anchorDateInt` would be immune, at the cost of the
-     schema change §2.4 avoids. Worth deciding before the derived form
-     calcifies — and note `Portfolio` already lives with this exposure today.
+     anchor and re-dates every phase. That is **correct behaviour, not drift**:
+     a plan that now begins earlier is a different plan, and it should re-date.
+     The anchor is part of the portfolio's identity, so an explicit
+     `anchorDateInt` would only serve to preserve an origin the portfolio no
+     longer has. Derived it stays — which is also what keeps §2.4's "no schema
+     change" true.
 2. **Divergence threshold.** Absolute dollars, percent of net worth, or percent
    of the *difference at plan end*? The third is scale-free but harder to explain.
 3. **Does `compare_plans` take two handles, or a handle plus adjustments?** Two
