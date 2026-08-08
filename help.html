@@ -38,6 +38,7 @@
         </div>
         <nav class="flex gap-6 text-sm font-medium text-gray-400">
             <a href="index.html" class="hover:text-gray-900 transition">Home</a>
+            <span class="text-gray-900">Help</span>
             <a href="rules.html" class="hover:text-gray-900 transition">Rules</a>
             <a href="globals.html" class="hover:text-gray-900 transition">Globals</a>
             <a href="disclaimer.html" class="hover:text-gray-900 transition">Disclaimer</a>
@@ -67,7 +68,11 @@
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Phase Bands &amp; Growth Rates</div>
-                <div class="text-sm text-gray-500">Tinted background bands mark your life phases &mdash; <strong style="color: #1D9E75;">Accumulate</strong> in green, <strong style="color: #D85A30;">Retire</strong> in coral. Each band is headlined with that phase's annualized growth rate (<em>%/yr</em>), computed over the phase's span. A dashed line marks the retirement boundary.</div>
+                <div class="text-sm text-gray-500">Tinted background bands mark your life phases &mdash; <strong style="color: #1D9E75;">Accumulate</strong> in green, <strong style="color: #D85A30;">Retire</strong> in coral. Each band is headlined with that phase's annualized growth rate over its own span, as a pair: nominal and real (<em>7.2%/yr &middot; 4.0% real</em>). A dashed line marks the retirement boundary.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">Today's Dollars</div>
+                <div class="text-sm text-gray-500">A faint companion curve tracks the arc in <strong>inflation-adjusted dollars</strong>, and the start, end and cursor values each carry a smaller <em>today's&nbsp;$</em> figure beneath them. It appears only for metrics where deflating means something &mdash; a balance, not a rate. This is the honest read on a long projection: a $4M portfolio in 2056 is not $4M of groceries.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Milestone Pins</div>
@@ -175,10 +180,14 @@
                 <div class="space-y-2">
                     <div class="flex items-start gap-3">
                         <span class="step-number">1</span>
-                        <span class="text-sm text-gray-700">If you have no assets yet, a <strong>welcome banner</strong> offers four life-stage starting portfolios &mdash; Early Career, Mid Career, Pre-Retirement, and Retired &mdash; each with salary or retirement income, accounts, a home, expenses, and realistic fund transfers for both phases. Or choose <strong>Start from Scratch</strong>.</span>
+                        <span class="text-sm text-gray-700">If you have no assets yet, a <strong>welcome banner</strong> offers four life-stage starting portfolios &mdash; each with salary or retirement income, accounts, a home, expenses, and realistic fund transfers for both phases. Or choose <strong>Start from Scratch</strong>.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">2</span>
+                        <span class="text-sm text-gray-700">The four on offer <strong>follow your Filing As setting</strong>. Filing Single you get <strong>Early Career</strong>, <strong>Mid Career</strong>, <strong>Pre-Retirement</strong> and <strong>Retired</strong>; filing jointly you get <strong>Young Couple</strong>, <strong>Dual Income Couple</strong>, <strong>Couple Nearing Retirement</strong> and <strong>Retired Couple</strong> &mdash; the joint profiles carry two salaries and two Social Security benefits. Change Filing As in the Settings Row and the banner re-offers.</span>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <span class="step-number">3</span>
                         <span class="text-sm text-gray-700">Quick Start data adapts to your <strong>Current Age</strong> and <strong>Retirement Age</strong> settings &mdash; all asset dates, life event triggers, and fund transfer routing are computed dynamically.</span>
                     </div>
                 </div>
@@ -198,12 +207,24 @@
         <h3 class="text-lg font-bold mb-4">Elements</h3>
         <div class="grid sm:grid-cols-2 gap-4 mb-8">
             <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">&#x26A0;&#xFE0F; What Needs Attention</div>
+                <div class="text-sm text-gray-500">A panel above the asset list reporting what went wrong with the <strong>plan</strong> &mdash; not with the app. Findings are grouped into <strong>&#x1F4B8; Paying for the plan</strong> (an obligation nothing could pay, an account that ran dry and was covered by the next one down) and <strong>&#x1F527; Needs setting up</strong> (no funding account configured, contributions that hit the annual limit, a required distribution that was not met). If the plan runs out of money, that month leads as its own callout above the list.<br><br>The panel opens itself <strong>once</strong>, on the transition from clear to not-clear &mdash; after that the badge is the only nag, so it won't fight you while you type. Not to be confused with the <strong>Issues &#x1F41B;</strong> button in the page header, which is the form for reporting a bug in the tool itself.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">&#x26A0;&#xFE0F; on an Asset Card</div>
+                <div class="text-sm text-gray-500">A warning marker on a card means <strong>an obligation this asset owed could not be paid</strong>. It does <em>not</em> mean the account is empty &mdash; a retirement account is supposed to draw down, and a zero balance alone never raises a flag. Open the card to see which months failed and why.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">&#x1F453; Asset View</div>
+                <div class="text-sm text-gray-500">Hover an asset card and click <strong>&#x1F453;</strong> (&ldquo;View results&rdquo;) to open a read-only view of what the simulation actually did to it, over three windows: <strong>This month</strong>, <strong>This year</strong> (January through the selected month) and <strong>Life to date</strong>. Below the numbers sit <strong>rule notes</strong> &mdash; plain-language explanations of the rules that fired, such as why a Roth withdrawal was untaxed, where the tax on untaxed income was settled instead, what was withheld from a pension before it paid out, or why a contribution was capped. Nothing here is editable; it is all simulation output.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Asset Columns</div>
                 <div class="text-sm text-gray-500">Assets are displayed in six horizontal columns: <strong>Income</strong>, <strong>Capital</strong>, <strong>Real Estate</strong>, <strong>Retirement</strong>, <strong>Expenses</strong>, and <strong>Taxes</strong>. Each column header shows the group total. All groups start expanded.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Asset Cards</div>
-                <div class="text-sm text-gray-500">Each asset card shows three layers: the asset's <strong>value</strong> at the selected date, a <strong>sparkline</strong> showing the full simulation trajectory with a "you are here" dot, and a <strong>flow row</strong> with colored arrows showing monthly inflows (green), growth (blue), and outflows (red).</div>
+                <div class="text-sm text-gray-500">Each asset card shows three layers: the asset's <strong>value</strong> at the selected date, a <strong>sparkline</strong> showing the full simulation trajectory with a "you are here" dot, and a <strong>flow row</strong> with colored arrows showing monthly inflows (green), growth (blue), and outflows (red). Hovering reveals four actions &mdash; <strong>&#x270E;</strong> edit, <strong>&#x21C4;</strong> transfers, <strong>&#x1F453;</strong> view results, <strong>&#x2715;</strong> remove. Clicking the card body instead <strong>selects</strong> it, highlighting that asset across the charts.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Assets / Flows Toggle</div>
@@ -288,6 +309,28 @@
                     <div class="flex items-start gap-3">
                         <span class="step-number">3</span>
                         <span class="text-sm text-gray-700">Removing an asset permanently deletes it and all its fund transfers from the current scenario.</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-2">Work through &ldquo;What needs attention&rdquo;</div>
+                <div class="space-y-2">
+                    <div class="flex items-start gap-3">
+                        <span class="step-number">1</span>
+                        <span class="text-sm text-gray-700">Start with the callout at the top if there is one &mdash; <strong>the month the plan runs out of money</strong>. That is the first month an obligation came due and no eligible account held a positive balance, so everything after it is downstream of the same failure.</span>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <span class="step-number">2</span>
+                        <span class="text-sm text-gray-700">Read <strong>&#x1F527; Needs setting up</strong> next. These are usually configuration, not arithmetic: no cash or savings account exists to pay from, a transfer is asking for more than the annual contribution limit allows, or a required minimum distribution has nowhere to land. They are often the cause of the row above.</span>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <span class="step-number">3</span>
+                        <span class="text-sm text-gray-700">Treat <strong>&ldquo;Ran dry&rdquo;</strong> notices as the early warning. The obligations were still met &mdash; the next account down covered them &mdash; but the plan is now leaning on its backstop. Scrub the timeline to that month and open the asset's <strong>&#x1F453;</strong> view to see what drained it.</span>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <span class="step-number">4</span>
+                        <span class="text-sm text-gray-700">Remember that the simulator <strong>never spends a 401(k), IRA or Roth on its own</strong>. If a plan is meant to fund retirement from retirement savings, that has to be an explicit fund transfer &mdash; an unfunded obligation beside healthy retirement balances almost always means the transfer is missing.</span>
                     </div>
                 </div>
             </div>
@@ -385,7 +428,7 @@
         <div class="grid sm:grid-cols-2 gap-4 mb-8">
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Monte Carlo Chart</div>
-                <div class="text-sm text-gray-500">Runs hundreds of randomized simulations using historical return distributions. Displays percentile bands (10th, 25th, 50th, 75th, 90th) showing the range of possible outcomes for your portfolio.</div>
+                <div class="text-sm text-gray-500">Runs <strong>1,000</strong> randomized simulations drawn from historical market data. Displays percentile bands (10th, 25th, 50th, 75th, 90th) showing the range of possible outcomes for your portfolio, with your deterministic baseline overlaid.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">With Guardrails Checkbox</div>
@@ -397,7 +440,7 @@
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Guardrail Parameters</div>
-                <div class="text-sm text-gray-500">Four configurable inputs: <strong>Target Rate</strong> (base withdrawal %), <strong>Preservation</strong> (floor trigger %), <strong>Prosperity</strong> (ceiling trigger %), and <strong>Adjustment</strong> (how much to cut or raise spending %). A reset button restores defaults.</div>
+                <div class="text-sm text-gray-500">Four configurable inputs, defaulting to <strong>Target Rate 5%</strong>, <strong>Preservation 15%</strong>, <strong>Prosperity 15%</strong> and <strong>Adjustment 15%</strong>. The two bands are <em>relative drift</em> from the target rate, not absolute rates &mdash; at these defaults, spending is cut once your withdrawal rate exceeds 5.75% and raised once it falls below 4.25%. A reset button restores the defaults. Parameters are saved per scenario.</div>
             </div>
         </div>
 
@@ -427,15 +470,15 @@
                 <div class="space-y-2">
                     <div class="flex items-start gap-3">
                         <span class="step-number">1</span>
-                        <span class="text-sm text-gray-700">Set the <strong>Target Rate</strong> (e.g., 4%) &mdash; this is your baseline annual withdrawal percentage from the portfolio during retirement.</span>
+                        <span class="text-sm text-gray-700">Set the <strong>Target Rate</strong> (e.g., 5%) &mdash; this is your baseline annual withdrawal percentage from the portfolio during retirement.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">2</span>
-                        <span class="text-sm text-gray-700">Set <strong>Preservation</strong> and <strong>Prosperity</strong> thresholds. If the portfolio drops below the preservation threshold, spending is reduced. If it rises above prosperity, spending can increase.</span>
+                        <span class="text-sm text-gray-700">Set the <strong>Preservation</strong> and <strong>Prosperity</strong> bands. Each year the simulator compares your <em>actual</em> withdrawal rate &mdash; annual expenses over investable assets &mdash; against the target. Drift above the target by more than the preservation band and spending is cut; drift below it by more than the prosperity band and spending rises. It is the <strong>rate</strong> that triggers the rule, not the portfolio balance, which is why a falling market and rising expenses both set it off.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">3</span>
-                        <span class="text-sm text-gray-700">Set the <strong>Adjustment</strong> percentage &mdash; how much spending changes when a guardrail is triggered (e.g., 10% means cut or raise by 10%).</span>
+                        <span class="text-sm text-gray-700">Set the <strong>Adjustment</strong> percentage &mdash; how much spending changes when a guardrail is triggered (15% means every open Monthly Expense is scaled by that much). Adjustments only apply <strong>after your retirement date</strong>; the accumulation years are left alone.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">4</span>
@@ -459,7 +502,11 @@
         <div class="grid sm:grid-cols-2 gap-4 mb-8">
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Credit Memos</div>
-                <div class="text-sm text-gray-500">A scrollable ledger of every financial transaction at the selected date &mdash; income receipts, fund transfers, expense debits, tax withholdings, asset appreciation, and more. Each memo shows the source, destination, amount, and transaction type.</div>
+                <div class="text-sm text-gray-500">A scrollable ledger of every financial transaction at the selected date &mdash; income receipts, fund transfers, expense debits, tax withholdings, asset appreciation, and more. Each memo shows the source, destination, amount, and transaction type. Every line is written by the engine at the moment it acted, so the ledger is the record of what happened rather than a summary assembled afterwards.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">Memos Worth Looking For</div>
+                <div class="text-sm text-gray-500"><strong>Unfunded &mdash;</strong> an obligation nothing could pay; the first one in the plan is the month you ran out of money. <strong>Spillover from depleted &hellip;</strong> &mdash; an account hit $0 mid-payment and another covered the rest. <strong>Contribution capped &mdash;</strong> a transfer asked for more than the annual limit allows. <strong>Federal withholding</strong> &mdash; tax taken at the source of a retirement distribution or pension payment. Each of these is also surfaced in plain language by &ldquo;What needs attention&rdquo; and by the asset's <strong>&#x1F453;</strong> view.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Reports</div>
@@ -689,6 +736,7 @@
         <div>Charting Finance &middot; Portfolio Simulator &middot; &copy; 2025-2026 Charting Finance, LLC</div>
         <div class="flex gap-6 items-center">
             <a href="index.html" class="hover:text-gray-900 transition">Home</a>
+            <span class="text-gray-900">Help</span>
             <a href="rules.html" class="hover:text-gray-900 transition">Rules</a>
             <a href="globals.html" class="hover:text-gray-900 transition">Globals</a>
             <a href="disclaimer.html" class="hover:text-gray-900 transition">Disclaimer</a>
