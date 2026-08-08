@@ -27,9 +27,11 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 
-import { runPlan, planFromProfile, listProfiles } from './run-plan.js';
+import { runPlanCached, getRun, planFromProfile, listProfiles } from './run-plan.js';
+import { explainIssue, explainAt, explainIssueMarkdown, explainAtMarkdown } from './explain.js';
 import { generatePortfolioMarkdown } from '../generators/finplan-ai.js';
 import { planExhaustion } from '../portfolio-issues.js';
+import { EventType } from '../sim-event.js';
 
 // ── Server ────────────────────────────────────────────────────────
 
@@ -98,8 +100,29 @@ function issuesMarkdown(issues) {
   return lines.join('\n');
 }
 
-function reportFor(portfolio, issues) {
-  return `${issuesMarkdown(issues)}\n\n---\n\n${generatePortfolioMarkdown(portfolio)}`;
+/**
+ * The report, headed by the handle.
+ *
+ * The handle is stated up front and in the imperative, because a tool result is
+ * the only place the client learns that follow-up questions are possible at all.
+ * Findings carry their own ids so `explain_issue` can be called without the
+ * agent having to guess one.
+ */
+function reportFor(handle, portfolio, issues) {
+  const ids = [...new Set(issues.map(i => i.id))];
+  const followUp = [
+    `**Run handle:** \`${handle}\``,
+    '',
+    ids.length
+      ? `Ask why any of these happened with \`explain_issue\` — finding ids in this run: `
+        + ids.map(i => `\`${i}\``).join(', ') + '.'
+      : `Nothing needs attention in this run. Use \`explain_month\` to look at any month anyway.`,
+    '',
+    '---',
+    '',
+  ].join('\n');
+
+  return `${followUp}${issuesMarkdown(issues)}\n\n---\n\n${generatePortfolioMarkdown(portfolio)}`;
 }
 
 // ── list_profiles ─────────────────────────────────────────────────
@@ -143,8 +166,8 @@ server.tool(
     const spec = planFromProfile(profile, { startAge, retirementAge, finishAge });
     if (inflationRate != null) spec.settings.inflationRate = inflationRate;
 
-    const { portfolio, issues } = await runPlan(spec, { includeReconciliation });
-    return { content: [{ type: "text", text: reportFor(portfolio, issues) }] };
+    const { handle, portfolio, issues } = await runPlanCached(spec, { includeReconciliation });
+    return { content: [{ type: "text", text: reportFor(handle, portfolio, issues) }] };
   })
 );
 
@@ -178,8 +201,55 @@ server.tool(
     includeReconciliation: z.boolean().default(false),
   },
   guard(async ({ plan, includeReconciliation }) => {
-    const { portfolio, issues } = await runPlan(plan, { includeReconciliation });
-    return { content: [{ type: "text", text: reportFor(portfolio, issues) }] };
+    const { handle, portfolio, issues } = await runPlanCached(plan, { includeReconciliation });
+    return { content: [{ type: "text", text: reportFor(handle, portfolio, issues) }] };
+  })
+);
+
+// ── explain_issue ─────────────────────────────────────────────────
+
+server.tool(
+  "explain_issue",
+  "Answers WHY a finding from a plan's report happened, as a causal chain: the sequence of "
+  + "engine operations that produced it, plus everything else that happened in the same step. "
+  + "Requires a run handle from quick_start_report or run_plan.",
+  {
+    handle: z.string().describe("Run handle, e.g. 'plan_1', from a report."),
+    issueId: z.string()
+        .describe("Finding id, e.g. 'plan-exhaustion', 'unfunded-obligation', 'funding-ran-dry', "
+                + "'contribution-capped'. The report lists the ids present in that run."),
+    assetName: z.string().optional()
+        .describe("Disambiguates when several assets carry the same finding."),
+    limit: z.number().int().min(1).max(20).default(3)
+        .describe("How many occurrences to explain, earliest first."),
+  },
+  guard(async ({ handle, issueId, assetName, limit }) => {
+    const result = explainIssue(getRun(handle), issueId, { assetName, limit });
+    return { content: [{ type: "text", text: explainIssueMarkdown(result) }] };
+  })
+);
+
+// ── explain_month ─────────────────────────────────────────────────
+
+server.tool(
+  "explain_month",
+  "Shows what the engine did at a point in a plan, with the causal chain behind each event. "
+  + "Use this to investigate a month that looks surprising in the projection table. "
+  + "Requires a run handle from quick_start_report or run_plan.",
+  {
+    handle: z.string().describe("Run handle, e.g. 'plan_1', from a report."),
+    date: z.string().optional()
+        .describe("Month to inspect as 'YYYY-MM', e.g. '2051-11'. Omit to search the whole plan "
+                + "(pair with assetName or eventType so the result stays useful)."),
+    assetName: z.string().optional()
+        .describe("Restrict to one asset, by its display name."),
+    eventType: z.enum(Object.values(EventType)).optional()
+        .describe("Restrict to one kind of engine event."),
+    limit: z.number().int().min(1).max(50).default(10),
+  },
+  guard(async ({ handle, date, assetName, eventType, limit }) => {
+    const result = explainAt(getRun(handle), { date, assetName, eventType, limit });
+    return { content: [{ type: "text", text: explainAtMarkdown(result) }] };
   })
 );
 
