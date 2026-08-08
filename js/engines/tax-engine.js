@@ -450,6 +450,26 @@ export class TaxEngine {
 
     }
 
+    /**
+     * Which asset an unpayable household tax bill is reported against.
+     *
+     * The bill belongs to the household, not to any one account, but an event
+     * has to live somewhere and portfolio-issues groups by asset. The largest
+     * remaining balance is the most useful anchor: in the case that matters —
+     * money sitting in a 401(k) that the backstop policy will not touch — it
+     * puts the warning on exactly the account the user would have to draw from.
+     */
+    #unfundedTaxAnchor() {
+        let best = null;
+        for (const modelAsset of this.modelAssets) {
+            if (modelAsset.isClosed) continue;
+            if (!best || modelAsset.finishCurrency.amount > best.finishCurrency.amount) {
+                best = modelAsset;
+            }
+        }
+        return best ?? this.modelAssets[0] ?? null;
+    }
+
     // ── Day 30: Monthly Tax True-Up ───────────────────────────────────
 
     applyMonthlyTaxTrueUp() {
@@ -718,7 +738,57 @@ export class TaxEngine {
             }
         }
 
-        if (!liquidAsset) return;
+        if (!liquidAsset) {
+            // NOTHING everyday can pay this. Report it — never return in
+            // silence, which books no tax, moves no cash and raises no issue,
+            // so a plan that cannot pay its April bill looks identical to one
+            // that has none. resolveFunding's own contract says as much: an
+            // obligation with no funding account is an UNFUNDED obligation,
+            // "never a silent skip".
+            //
+            // This is the LAST line of defence. applyMonthlyTaxTrueUp may also
+            // find no backstop, but it logs and defers here; this site has
+            // nowhere left to defer to.
+            //
+            // Note that "no liquid asset" is not the same as "no money".
+            // resolveFunding considers everyday accounts only, by deliberate
+            // policy — the engine will not raid a 401(k) implicitly — so a
+            // household with a large deferred balance and an empty current
+            // account lands here too. The obligation is just as real, and the
+            // user is the one who decides which account pays it.
+            if (taxDifference > 0) {
+                FundTransfer.reportUnfunded(this.#unfundedTaxAnchor(),
+                    new Currency(taxDifference), 'annual tax true-up',
+                    ShortfallOrigin.ONE_SIDED);
+            } else {
+                // A refund is money owed TO the household, so it is not an
+                // unfunded obligation — but dropping it is the same defect
+                // wearing the other hat, and it fires on a SHIPPED profile:
+                // Early Career is owed $2,018.62 across six refunds it never
+                // received.
+                //
+                // resolveFunding said no only because every everyday account
+                // was empty, and emptiness is a reason to RECEIVE a refund, not
+                // a reason to refuse one. resolveDeposit drops that filter.
+                const refund = new Currency(Math.abs(taxDifference));
+                const target = FundTransfer.resolveDeposit(this.modelAssets);
+                if (target) {
+                    target.credit(refund, {
+                        type: EventType.TAX_TRUE_UP,
+                        data: { direction: 'refund', basis: 'backstop' },
+                    });
+                    target.addToMetric(Metric.ESTIMATED_INCOME_TAX, refund);
+                    logger.log(LogCategory.TAX,
+                        `Annual True-Up: Overpaid by $${refund.amount.toFixed(0)}. `
+                        + `Crediting ${target.displayName}.`);
+                } else {
+                    logger.log(LogCategory.SANITY,
+                        `Annual True-Up: refund of ${refund.toString()} could not be `
+                        + `credited — the plan has no everyday account at all`);
+                }
+            }
+            return;
+        }
 
         if (taxDifference > 0) {
             // Underpaid — collect the shortfall (April tax bill).

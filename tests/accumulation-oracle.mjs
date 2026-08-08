@@ -306,6 +306,14 @@ const engine = {
 // lost a dollar of base at every crossed boundary. The bands now tile exactly.
 // Tax goes UP everywhere and balances down, which is the whole expected shape of
 // this change.
+// Moved 2026-08-07 by the unfundable-true-up fix, and by one value only:
+// longTermCapitalGains +621.69. Early Career is owed six annual tax refunds that
+// used to vanish because resolveFunding refused to name an account with a zero
+// balance -- a positive-balance test that is a precondition for taking money
+// OUT, applied to money coming IN. The refunds now land in the Brokerage, which
+// changes what each later proportional-basis withdrawal realises. The final
+// balances are unchanged because the Brokerage is depleted again by the end;
+// only the realised gain along the way differs.
 const EXPECTED_ENGINE = {
   "Social Security": 3882.14,
   "401K": 4330365.45,
@@ -320,7 +328,7 @@ const EXPECTED_ENGINE = {
   "socialSecurityIncome": 854014.60,
   "four01KContribution": 274574.57,
   "four01KDistribution": 4373405.30,
-  "longTermCapitalGains": 1823732.99,
+  "longTermCapitalGains": 1824354.68,
   "mortgageInterest": -287174.02,
   "propertyTaxes": -157235.10,
   "incomeTax": -734223.67,
