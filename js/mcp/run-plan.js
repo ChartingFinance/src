@@ -166,6 +166,63 @@ export async function runProfile(profileKey, ageOverrides = null, opts = {}) {
     return runPlan(planFromProfile(profileKey, ageOverrides), opts);
 }
 
+// ── Run cache ────────────────────────────────────────────────────────
+//
+// A handle exists so a client can run once and then ask several questions
+// about that run. It is not an optimisation — it is a CORRECTNESS
+// requirement for explain.js.
+//
+// Trace scopes are run state: chronometer_run calls resetTraces() at the top,
+// so running a second plan wipes the first one's scope list. A stateless
+// server that re-ran the plan on every explain call would resolve chains
+// against a different run than the one it is describing. Holding the finished
+// Portfolio — traceScopes and all — is what makes a chain resolvable at all,
+// and it is the same rule as "reads take the scope list explicitly", one
+// level up.
+//
+// Bounded because a 666-month plan holds tens of thousands of events and
+// scopes; four of those is already a lot of memory for a stdio server that
+// may sit open all day.
+
+const MAX_CACHED_RUNS = 4;
+const RUNS = new Map();
+let runCounter = 0;
+
+/** Cache a completed run and return its handle. Oldest is evicted first. */
+export function cacheRun(result) {
+    const handle = `plan_${++runCounter}`;
+    RUNS.set(handle, result);
+    while (RUNS.size > MAX_CACHED_RUNS) {
+        // Map preserves insertion order, so the first key is the oldest.
+        RUNS.delete(RUNS.keys().next().value);
+    }
+    return handle;
+}
+
+/** Look up a cached run, or throw naming the handles that are still live. */
+export function getRun(handle) {
+    const run = RUNS.get(handle);
+    if (!run) {
+        const live = [...RUNS.keys()];
+        throw new Error(
+            `No run "${handle}". ${live.length
+                ? `Live handles: ${live.join(', ')}. Only the ${MAX_CACHED_RUNS} most recent are kept.`
+                : 'No runs are cached — run a plan first.'}`);
+    }
+    return run;
+}
+
+/** Run a plan and cache it. Returns the handle alongside the result. */
+export async function runPlanCached(spec, opts = {}) {
+    const result = await runPlan(spec, opts);
+    return { handle: cacheRun(result), ...result };
+}
+
+/** Test seam: drop every cached run. */
+export function clearRuns() {
+    RUNS.clear();
+}
+
 /** Profile keys and labels, for a tool that needs to offer a choice. */
 export function listProfiles() {
     return quickStartProfiles.map(p => ({
