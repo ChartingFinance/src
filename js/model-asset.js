@@ -726,9 +726,18 @@ export class ModelAsset {
    * incrementally from eventsCheckedIndex, so anything that let the two
    * arrays drift apart could double-count or skip a month's reconciliation.
    *
-   * `traceId` is read from ambient run context rather than passed by callers.
-   * Nothing sets it today; when causal grouping arrives it becomes a change
-   * here plus a few scope-openers, not a migration across every call site.
+   * `traceId` is read from the ambient scope stack in trace.js — maintained by
+   * `withTrace()` — rather than passed by callers. That was the whole point of
+   * putting it here: causality landed as a change to the scope-openers (fifteen
+   * of them, in the engines, fund-transfer.js and portfolio.js) rather than a
+   * second migration across every event write site.
+   *
+   * READING a chain back does NOT work this way. Resolution must take the scope
+   * list explicitly — `portfolio.traceScopes`, from the run that produced the
+   * event — because `calculate()` re-runs on every edit and `resetTraces()`
+   * empties the module state. Resolving from module state instead looks correct
+   * and silently finds nothing after the next run. See the note above
+   * `scopeById` in trace.js, where that was found the hard way.
    *
    * @param {string}   type    EventType key
    * @param {Currency} amount

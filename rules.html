@@ -37,6 +37,7 @@
         </div>
         <nav class="flex gap-6 text-sm font-medium text-gray-400">
             <a href="index.html" class="hover:text-gray-900 transition">Home</a>
+            <a href="help.html" class="hover:text-gray-900 transition">Help</a>
             <span class="text-gray-900">Rules</span>
             <a href="globals.html" class="hover:text-gray-900 transition">Globals</a>
             <a href="disclaimer.html" class="hover:text-gray-900 transition">Disclaimer</a>
@@ -46,7 +47,13 @@
 
     <!-- ═══ Intro ═══ -->
     <div class="glass-card p-8 sm:p-12 mb-8">
-        <p class="text-gray-600 leading-relaxed">Every asset card in your portfolio follows a set of simulation rules. Below you'll find exactly how each asset type behaves month-by-month &mdash; so you can build scenarios with confidence, not guesswork.</p>
+        <p class="text-gray-600 leading-relaxed mb-6">Every asset card in your portfolio follows a set of simulation rules. Below you'll find exactly how each asset type behaves month-by-month &mdash; so you can build scenarios with confidence, not guesswork.</p>
+        <div class="flex flex-wrap gap-2 text-sm">
+            <a href="#taxes" class="px-4 py-2 rounded-xl bg-gray-50 hover:bg-gray-100 transition text-gray-700 no-underline">Tax Rates</a>
+            <a href="#filing-status" class="px-4 py-2 rounded-xl bg-gray-50 hover:bg-gray-100 transition text-gray-700 no-underline">Filing Status</a>
+            <a href="#explanations" class="px-4 py-2 rounded-xl bg-gray-50 hover:bg-gray-100 transition text-gray-700 no-underline">Why It Did That</a>
+            <a href="#limits" class="px-4 py-2 rounded-xl bg-gray-50 hover:bg-gray-100 transition text-gray-700 no-underline">What It Does Not Model</a>
+        </div>
     </div>
 
     <!-- ═══ Instrument Rules ═══ -->
@@ -74,7 +81,7 @@
                 </div>
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 4</span>
-                    <span class="text-sm text-gray-700">When you sell, capital gains are computed against your cost basis &mdash; with the <strong>$250K primary residence exclusion</strong> applied automatically if you've owned for 24+ months.</span>
+                    <span class="text-sm text-gray-700">When you sell, capital gains are computed against your cost basis &mdash; with the primary residence exclusion applied automatically if you've owned for <strong>more than 24 months</strong>. The exclusion follows your filing status: <strong>$250,000 filing Single, $500,000 filing jointly</strong>. Unlike every other figure in the tax tables it is <strong>never indexed for inflation</strong>, because IRC&nbsp;&sect;121 has not moved it since 1997 &mdash; so a long-held home is progressively less sheltered the further out you project.</span>
                 </div>
             </div>
         </div>
@@ -112,7 +119,7 @@
             <div class="space-y-2">
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 1</span>
-                    <span class="text-sm text-gray-700">Your gross income is credited on <strong>day 1 of each month</strong>. At year-end, 1/12 of the annual return rate is applied as a raise &mdash; compounding your earning power year over year.</span>
+                    <span class="text-sm text-gray-700">Your gross income is credited on <strong>day 1 of each month</strong>. At year-end the <strong>full annual return rate</strong> is applied once as a raise &mdash; unlike balances and expenses, which compound at 1/12 of their rate every month, a salary steps up once a year the way a real one does.</span>
                 </div>
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 2</span>
@@ -162,7 +169,7 @@
             <div class="space-y-2">
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 1</span>
-                    <span class="text-sm text-gray-700">Annual contribution limits are enforced: <strong>$23,500 for 401(k)</strong> ($31,000 if 50+) and <strong>$7,000 for IRA/Roth</strong> ($8,000 if 50+). Contributions are sourced from linked income via fund transfers.</span>
+                    <span class="text-sm text-gray-700">Annual contribution limits are enforced against a <strong>household</strong> total. Filing Single: <strong>$24,500 for 401(k)</strong> ($32,500 if 50+) and <strong>$7,500 for IRA/Roth</strong> ($8,600 if 50+). Filing jointly, each figure is <strong>doubled</strong> &mdash; $49,000 and $65,000 for 401(k), $15,000 and $17,200 for IRA/Roth. Limits start from the 2026 figures and are indexed forward by your inflation rate each simulated year. Contributions are sourced from linked income via fund transfers; anything over the cap stays in the source account and is reported as a <em>Contribution capped</em> note.</span>
                 </div>
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 2</span>
@@ -171,6 +178,14 @@
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 3</span>
                     <span class="text-sm text-gray-700">Tax treatment follows real-world rules: <strong>401(k) and IRA withdrawals</strong> are taxed as ordinary income, while <strong>Roth distributions are tax-free</strong> &mdash; a powerful lever in your retirement planning.</span>
+                </div>
+                <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+                    <span class="rule-chip">Rule 4</span>
+                    <span class="text-sm text-gray-700"><strong>10% federal tax is withheld at the source</strong> of every traditional IRA or 401(k) distribution, mirroring the custodian default when no election is filed. The draw is grossed up, so a $1,000 transfer still delivers $1,000 and an extra $111 leaves the account as withholding. <strong>Roth is excluded</strong> &mdash; the test is whether the account is tax-deferred, not whether it is a retirement account. If the account is empty, the withholding is re-sourced from your funding accounts; it is never skipped.</span>
+                </div>
+                <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+                    <span class="rule-chip">Rule 5</span>
+                    <span class="text-sm text-gray-700">Withholding governs <strong>where the cash comes from, not what you owe</strong>. The monthly and annual true-ups reconcile over- and under-withholding in both directions, so the household's total tax is the same either way &mdash; and a refund is credited back rather than dropped.</span>
                 </div>
             </div>
         </div>
@@ -326,7 +341,11 @@
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">System Transfers</div>
-                <div class="text-sm text-gray-500">Mortgage payments, property tax, maintenance, and insurance are automatically debited from the first available funding account. These implicit flows appear in the <strong>Flows</strong> view alongside your configured transfers.</div>
+                <div class="text-sm text-gray-500">Mortgage payments, property tax, maintenance, insurance and tax settlements are automatically debited from your funding accounts. These implicit flows appear in the <strong>Flows</strong> view alongside your configured transfers.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">Funding Backstop</div>
+                <div class="text-sm text-gray-500">When no transfer you configured covers an obligation, the engine falls back to your everyday accounts in a fixed order &mdash; <strong>Cash &rarr; Savings &rarr; Taxable Account &rarr; US Treasury &rarr; Corporate Bond</strong> &mdash; and the first one holding a positive balance pays. <strong>Retirement accounts are never chosen automatically</strong> at any age: spending a 401(k), IRA or Roth has tax and penalty consequences the simulator will not decide for you. If nothing is eligible, the payment is recorded as <em>Unfunded</em> rather than quietly skipped.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Flow Pipelines</div>
@@ -367,9 +386,10 @@
     </div>
 
     <!-- ═══ Tax Rates ═══ -->
-    <div class="glass-card p-8 sm:p-12 mb-8">
+    <div id="taxes" class="glass-card p-8 sm:p-12 mb-8">
         <h2 class="text-2xl font-bold tracking-tight mb-4">Tax Rates</h2>
-        <p class="text-gray-600 mb-6 leading-relaxed">The IRS is the source of truth &mdash; and so is this simulator. 2024 brackets for Single and Married Filing Jointly are built in. Here are the publications we reference:</p>
+        <p class="text-gray-600 mb-4 leading-relaxed">The IRS is the source of truth &mdash; and so is this simulator. Every run is built from the <strong>2026 federal tables</strong>, selected by your filing status: income brackets, capital gains bands, the standard deduction, the Social Security wage base, and the retirement contribution limits.</p>
+        <p class="text-gray-600 mb-6 leading-relaxed">From the second simulated year onward, all of those figures are <strong>indexed forward by your inflation rate</strong> &mdash; brackets widen, the deduction rises, the wage base climbs. That keeps a 30-year projection from quietly pushing you into the top bracket through inflation alone. The single exception is the primary-home sale exclusion, held fixed at $250,000&thinsp;/&thinsp;$500,000 by statute. Here are the publications we reference:</p>
 
         <div class="grid gap-3">
             <a href="https://www.irs.gov/filing/federal-income-tax-rates-and-brackets" target="_blank"
@@ -410,8 +430,40 @@
         </div>
     </div>
 
+    <!-- ═══ Filing Status ═══ -->
+    <div id="filing-status" class="glass-card p-8 sm:p-12 mb-8">
+        <div class="flex items-center gap-3 mb-4">
+            <span class="text-2xl">👫</span>
+            <h2 class="text-2xl font-bold tracking-tight">Filing Status</h2>
+            <span class="text-xs text-gray-400 font-medium ml-1">Single &middot; Married Filing Jointly</span>
+        </div>
+        <p class="text-gray-600 mb-6 leading-relaxed">Set <strong>Filing As</strong> in the Settings Row at the top of the page and the whole tax model moves with it. Filing jointly is not a discount applied at the end &mdash; it selects a different table at every point where tax is computed.</p>
+        <div class="grid sm:grid-cols-2 gap-4 mb-6">
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">What changes</div>
+                <div class="text-sm text-gray-500">Income brackets, capital gains bands, the standard deduction, the primary-home sale exclusion, and the 401(k) and IRA contribution allowances all switch to their joint figures.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">Household, not per-person</div>
+                <div class="text-sm text-gray-500">The simulation models <strong>one household</strong>, not two individuals. Contribution limits are enforced against a household total, so a married plan gets two 401(k) allowances between all its income assets &mdash; not one each, tracked separately.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">Two incomes, one plan</div>
+                <div class="text-sm text-gray-500">Model a second earner by adding a second Monthly Salary asset. The joint Quick Start profiles do exactly this &mdash; <strong>Salary A</strong> and <strong>Salary B</strong>, each with its own rate and retirement date.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">Quick Start follows your status</div>
+                <div class="text-sm text-gray-500">The welcome banner offers the four profiles that match your filing status &mdash; Early Career, Mid Career, Pre-Retirement and Retired for Single; Young Couple, Dual Income Couple, Couple Nearing Retirement and Retired Couple for joint filers.</div>
+            </div>
+        </div>
+        <div class="flex items-start gap-3 p-3 rounded-xl bg-amber-50/70 border border-amber-100">
+            <span class="rule-chip">Known limit</span>
+            <span class="text-sm text-gray-700">The <strong>Social Security wage base is shared</strong> across a married household rather than granted per spouse. Two high earners who would each get their own cap therefore stop paying Social Security tax earlier than they really would, overstating take-home pay. This bites only when combined wages clear the cap; everything else about joint filing is modelled per the tables.</span>
+        </div>
+    </div>
+
     <!-- ═══ Retirement Income ═══ -->
-        <div class="glass-card p-8">
+    <div class="glass-card p-8 mb-6">
             <div class="flex items-center gap-3 mb-4">
                 <span class="text-2xl">🧓</span>
                 <h2 class="text-xl font-bold tracking-tight">Retirement Income</h2>
@@ -429,13 +481,21 @@
                 </div>
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 3</span>
-                    <span class="text-sm text-gray-700">Retirement income is taxed as <strong>ordinary income</strong> and flows through the same withholding pipeline as salary &mdash; brackets, FICA exemptions, and all.</span>
+                    <span class="text-sm text-gray-700">Retirement income is taxed as <strong>ordinary income</strong> but is <strong>exempt from FICA and Medicare</strong> &mdash; a benefit is not wages.</span>
+                </div>
+                <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+                    <span class="rule-chip">Rule 4</span>
+                    <span class="text-sm text-gray-700"><strong>Social Security withholds nothing by default</strong>, and that is a modelling choice rather than an omission. Form W-4V is elective &mdash; most recipients never file one &mdash; so withholding by default would model a decision your household never made. The tax is still owed; it is settled from your funding accounts at the monthly and annual true-ups.</span>
+                </div>
+                <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+                    <span class="rule-chip">Rule 5</span>
+                    <span class="text-sm text-gray-700">Social Security is included in taxable income at a <strong>flat 85%</strong>. The real rule steps 0%, 50% and 85% against provisional-income thresholds, so a household with modest other income is taxed more here than it would be in practice.</span>
                 </div>
             </div>
         </div>
 
     <!-- ═══ Pension ═══ -->
-        <div class="glass-card p-8">
+    <div class="glass-card p-8 mb-8">
             <div class="flex items-center gap-3 mb-4">
                 <span class="text-2xl">🏛️</span>
                 <h2 class="text-xl font-bold tracking-tight">Pension</h2>
@@ -455,9 +515,11 @@
                     <span class="rule-chip">Rule 3</span>
                     <span class="text-sm text-gray-700">Pension income is taxed as <strong>ordinary income</strong> but is <strong>exempt from FICA</strong>. No contributions or RMDs apply.</span>
                 </div>
+                <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+                    <span class="rule-chip">Rule 4</span>
+                    <span class="text-sm text-gray-700"><strong>10% federal tax is withheld on arrival</strong>, standing in for the Form W-4P default of withholding on periodic payments unless you elect otherwise. A pension is a flow with no balance to debit, so the withholding reduces what it pays out &mdash; the deposits you see are net of tax. The year-end true-up refunds any excess.</span>
+                </div>
             </div>
-        </div>
-
     </div>
 
     <!-- ═══ Life Events & Phases ═══ -->
@@ -504,10 +566,77 @@
         </div>
     </div>
 
+    <!-- ═══ Why It Did That ═══ -->
+    <div id="explanations" class="glass-card p-8 sm:p-12 mb-8" style="background: linear-gradient(135deg, #fff7ed 0%, #fefce8 100%);">
+        <div class="flex items-center gap-3 mb-4">
+            <span class="text-2xl">🔍</span>
+            <h2 class="text-2xl font-bold tracking-tight">Why It Did That</h2>
+        </div>
+        <p class="text-gray-600 mb-6 leading-relaxed">A number you can't explain is a number you can't trust. Two surfaces report what the rules on this page actually <em>did</em> to your plan &mdash; one for the plan as a whole, one for a single asset. Both are derived from events the engine recorded while running, never recomputed afterwards, so what they say is what happened.</p>
+
+        <div class="grid sm:grid-cols-2 gap-4 mb-6">
+            <div class="p-4 rounded-xl bg-white/70">
+                <div class="font-semibold text-sm mb-1">&#x26A0;&#xFE0F; What needs attention</div>
+                <div class="text-sm text-gray-500">A panel above your asset list, grouped into <strong>&#x1F4B8; Paying for the plan</strong> and <strong>&#x1F527; Needs setting up</strong>. It catches the month the plan runs out of money, obligations nothing could pay, accounts that ran dry and were covered by the next one down, contributions that hit the annual limit, and required distributions that were not met.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-white/70">
+                <div class="font-semibold text-sm mb-1">&#x1F4D6; Rule notes on an asset</div>
+                <div class="text-sm text-gray-500">Open any asset card to read its metrics over <strong>this month</strong>, <strong>this year</strong> and <strong>life to date</strong>, with plain-language notes explaining the rules that fired on it &mdash; why a Roth paid no tax, where the tax on untaxed income was actually settled, what was withheld from a pension, why a contribution was capped.</div>
+            </div>
+        </div>
+
+        <div class="space-y-2">
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
+                <span class="rule-chip">Depletion is not an alarm</span>
+                <span class="text-sm text-gray-700">A retiree's accounts are <em>supposed</em> to draw down &mdash; that is the scenario being modelled, not a fault. Nothing fires on a zero balance alone. The &#x26A0;&#xFE0F; on a card means an <strong>obligation that could not be paid</strong>, which is a different and much rarer thing.</span>
+            </div>
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
+                <span class="rule-chip">Silence is the contract</span>
+                <span class="text-sm text-gray-700">A false &ldquo;you could not pay your mortgage&rdquo; is worse than saying nothing at all. Every check is built to stay quiet unless the engine actually recorded the failure it is describing.</span>
+            </div>
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
+                <span class="rule-chip">Engine diagnostics</span>
+                <span class="text-sm text-gray-700">A third category, <strong>&#x1F9EA; Engine diagnostics</strong>, reports where the simulation's own bookkeeping does not reconcile. It is hidden unless you enable it in <a href="globals.html" class="underline hover:text-gray-900">Globals</a> &mdash; those are notes about the engine, not about your finances.</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ What This Engine Does Not Model ═══ -->
+    <div id="limits" class="glass-card p-8 sm:p-12 mb-8">
+        <h2 class="text-2xl font-bold tracking-tight mb-4">What This Engine Does Not Model</h2>
+        <p class="text-gray-600 mb-6 leading-relaxed">Knowing where a model stops is part of reading it. These are deliberate, verified gaps &mdash; each one makes your projection optimistic or pessimistic in a specific, nameable direction.</p>
+        <div class="grid sm:grid-cols-2 gap-4">
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">No early-withdrawal penalty</div>
+                <div class="text-sm text-gray-500">The 10% additional tax on distributions before age 59&frac12; is not charged, and the engine has no concept of that age. A plan that retires early and draws a 401(k) or IRA will look better than it would be. <span class="text-gray-400">Optimistic.</span></div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">No state or local income tax</div>
+                <div class="text-sm text-gray-500">Federal only. Property tax is modelled; state income tax, local tax and state-specific retirement-income exemptions are not. <span class="text-gray-400">Optimistic in most states.</span></div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">Social Security taxed at a flat 85%</div>
+                <div class="text-sm text-gray-500">The provisional-income thresholds that step the taxable share through 0% and 50% are not implemented. <span class="text-gray-400">Pessimistic for households with modest other income.</span></div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">Monthly compounding is rate &divide; 12</div>
+                <div class="text-sm text-gray-500">A stated 8.5% return compounds to about 8.84% realized, because a twelfth of the annual rate is applied each month rather than the twelfth root. Over 30 years that ends a plan meaningfully richer than the rate you typed. <span class="text-gray-400">Optimistic.</span></div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">One Social Security wage base per household</div>
+                <div class="text-sm text-gray-500">Married filers share a single cap instead of one each, so two high earners stop paying Social Security tax earlier than they would. <span class="text-gray-400">Optimistic above the cap.</span></div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">No RMD penalty</div>
+                <div class="text-sm text-gray-500">A required minimum distribution that goes unmet is <em>reported</em> in &ldquo;What needs attention&rdquo;, but the excise tax a real shortfall would incur is not charged. <span class="text-gray-400">Optimistic.</span></div>
+            </div>
+        </div>
+    </div>
+
     <!-- ═══ Projections & Analysis ═══ -->
     <div class="glass-card p-8 sm:p-12 mb-8">
         <h2 class="text-2xl font-bold tracking-tight mb-4">Projections &amp; Analysis</h2>
-        <p class="text-gray-600 mb-6 leading-relaxed">A single projection is a starting point &mdash; not the whole story. The simulator gives you five ways to interrogate your financial future, from a deterministic baseline to full stochastic analysis and AI-driven optimization.</p>
+        <p class="text-gray-600 mb-6 leading-relaxed">A single projection is a starting point &mdash; not the whole story. The simulator gives you several ways to interrogate your financial future, from a deterministic baseline to full stochastic analysis and AI-driven optimization.</p>
         <div class="grid sm:grid-cols-3 gap-4">
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">📈 Value Projections</div>
@@ -781,6 +910,7 @@
         <div>Charting Finance &middot; Portfolio Simulator &middot; &copy; 2025-2026 Charting Finance, LLC</div>
         <div class="flex gap-6 items-center">
             <a href="index.html" class="hover:text-gray-900 transition">Home</a>
+            <a href="help.html" class="hover:text-gray-900 transition">Help</a>
             <span class="text-gray-900">Rules</span>
             <a href="globals.html" class="hover:text-gray-900 transition">Globals</a>
             <a href="disclaimer.html" class="hover:text-gray-900 transition">Disclaimer</a>

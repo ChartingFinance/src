@@ -36,6 +36,7 @@
         </div>
         <nav class="flex gap-6 text-sm font-medium text-gray-400">
             <a href="index.html" class="hover:text-gray-900 transition">Home</a>
+            <a href="help.html" class="hover:text-gray-900 transition">Help</a>
             <a href="rules.html" class="hover:text-gray-900 transition">Rules</a>
             <span class="text-gray-900">Globals</span>
             <a href="disclaimer.html" class="hover:text-gray-900 transition">Disclaimer</a>
@@ -46,11 +47,12 @@
     <!-- ═══ User Information ═══ -->
     <div class="glass-card p-8 sm:p-12 mb-6">
         <h2 class="text-2xl font-bold tracking-tight mb-2">User Information</h2>
-        <p class="text-gray-600 leading-relaxed mb-6">Your age is used to calculate Social Security eligibility and Required Minimum Distribution amounts.</p>
+        <p class="text-gray-600 leading-relaxed mb-6">These three ages define the whole simulation. <strong>Start Age</strong> sets the year the plan begins and fixes your birth year, which is what Social Security timing, the RMD start age (72, 73 or 75 under SECURE&nbsp;2.0), catch-up contribution eligibility, and the age-60 gate on deferred-account tax attribution are all measured against. <strong>Retirement Age</strong> is where the Accumulate phase ends and the Retire phase begins &mdash; every life event trigger, asset start date and fund transfer switch derives from it. <strong>Finish Age</strong> ends the run.</p>
+        <p class="text-gray-600 leading-relaxed mb-6 text-sm">These are the same three fields as the Settings Row on the main page &mdash; changing them here changes them everywhere. <strong>Filing status</strong>, <strong>inflation</strong> and <strong>backtest year</strong> live on the main page only.</p>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
             <div>
                 <label for="startAge" class="block text-sm font-medium text-gray-500 mb-1">Start Age</label>
-                <input id="startAge" type="number" value="30" step="1"
+                <input id="startAge" type="number" value="50" step="1"
                        class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-transparent" />
             </div>
             <div>
@@ -60,7 +62,7 @@
             </div>
             <div>
                 <label for="finishAge" class="block text-sm font-medium text-gray-500 mb-1">Finish Age</label>
-                <input id="finishAge" type="number" value="100" step="1"
+                <input id="finishAge" type="number" value="87" step="1"
                        class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-transparent" />
             </div>
         </div>
@@ -69,7 +71,8 @@
     <!-- ═══ Tax Settings ═══ -->
     <div class="glass-card p-8 sm:p-12 mb-6">
         <h2 class="text-2xl font-bold tracking-tight mb-2">Tax Settings</h2>
-        <p class="text-gray-600 leading-relaxed mb-6">Tax year determines which tax brackets and thresholds are used in the simulation.</p>
+        <p class="text-gray-600 leading-relaxed mb-4">Every run starts from the <strong>2026 federal tables</strong> &mdash; brackets, capital gains bands, the standard deduction, the Social Security wage base and the contribution limits &mdash; selected by your filing status. From the second simulated year onward each of those figures is indexed forward by your inflation rate. The one exception is the primary-home sale exclusion, which is fixed in statute at $250,000&thinsp;/&thinsp;$500,000 and is deliberately never indexed.</p>
+        <p class="text-gray-600 leading-relaxed mb-6 text-sm">Tax Year below is <strong>recorded with your settings but does not currently select a different table</strong>. It is saved, shared and passed to background workers; no part of the engine reads it. See <a href="rules.html#taxes" class="underline hover:text-gray-900">Rules &rarr; Tax Rates</a> for what the simulation actually applies.</p>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
             <div>
                 <label for="taxYear" class="block text-sm font-medium text-gray-500 mb-1">Tax Year</label>
@@ -82,7 +85,7 @@
     <!-- ═══ Advanced ═══ -->
     <div class="glass-card p-8 sm:p-12 mb-6">
         <h2 class="text-2xl font-bold tracking-tight mb-2">Advanced</h2>
-        <p class="text-gray-600 leading-relaxed mb-6">Engine diagnostics add a technical section to &ldquo;What needs attention&rdquo; reporting where the simulation&rsquo;s own bookkeeping does not reconcile. These are notes about the engine, not about your finances &mdash; most people should leave this off.</p>
+        <p class="text-gray-600 leading-relaxed mb-6">Engine diagnostics add a third category &mdash; <strong>&#x1F9EA; Engine diagnostics</strong> &mdash; to the &ldquo;What needs attention&rdquo; panel above your asset list, alongside <strong>&#x1F4B8; Paying for the plan</strong> and <strong>&#x1F527; Needs setting up</strong>. It reports where the simulation&rsquo;s own bookkeeping does not reconcile. These are notes about the engine, not about your finances &mdash; most people should leave this off.</p>
         <label class="flex items-center gap-3 text-sm text-gray-700 cursor-pointer">
             <input id="showEngineDiagnostics" type="checkbox" class="accent-[#993C1D] w-4 h-4" />
             Show engine diagnostics
@@ -100,6 +103,7 @@
                 class="px-6 py-2.5 rounded-xl bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 transition">
             Reset to Defaults
         </button>
+        <p class="text-xs text-gray-500 mt-3">Restores ages, tax year, filing status, inflation, property tax and engine diagnostics. Your assets, scenarios, guardrail parameters and backtest year are untouched.</p>
     </div>
 
     <!-- ═══ Footer ═══ -->
@@ -107,6 +111,7 @@
         <div>Charting Finance &middot; Portfolio Simulator &middot; &copy; 2025-2026 Charting Finance, LLC</div>
         <div class="flex gap-6 items-center">
             <a href="index.html" class="hover:text-gray-900 transition">Home</a>
+            <a href="help.html" class="hover:text-gray-900 transition">Help</a>
             <a href="rules.html" class="hover:text-gray-900 transition">Rules</a>
             <span class="text-gray-900">Globals</span>
             <a href="disclaimer.html" class="hover:text-gray-900 transition">Disclaimer</a>

@@ -35,22 +35,21 @@
  * That question is answered by a CHAIN, not by a leaf. A $1,847 brokerage
  * withdrawal is the end of a story that starts with an expense coming due and
  * runs through a depleted IRA and a backstop policy choosing this account over
- * three others. Each of those is recorded; nothing yet says they are the same
- * story.
- *
- * Two fields anticipate that, and both are deliberately shaped so adding
- * causality later does NOT mean migrating every write site a second time:
+ * three others. Each of those is recorded; two fields say they are the same
+ * story:
  *
  *   `metric`  — which Metric this event moved, where there is one. Turns "why
  *               is my capital-gains number $412?" into "show every event that
  *               wrote to that metric". Nearly free to capture, because the
  *               engine already writes the metric and the memo side by side.
  *
- *   `traceId` — read from AMBIENT context inside recordEvent(), never passed
- *               by callers. Populated by nobody today. When causal grouping
- *               arrives it is a change to recordEvent() and a handful of
- *               scope-openers, not another 29-site migration. This is the one
- *               decision here that would be expensive to get wrong.
+ *   `traceId` — the enclosing causal scope, read from AMBIENT context inside
+ *               recordEvent() and never passed by callers. Shaping it that way
+ *               is why causality (trace.js) landed as scope-openers around
+ *               existing operations rather than a second migration across every
+ *               write site. Read chains back with `chainFor` / `explainEvent`,
+ *               passing `portfolio.traceScopes` — never the module state, which
+ *               the next run resets.
  *
  * Freeze frames — the decision context captured at the moment of a choice, the
  * way OBD-II stores sensor values with a fault code — are NOT here yet.
@@ -164,7 +163,8 @@ export class SimEvent {
      * @param {string}   [opts.metric]   Metric this event moved, if any
      * @param {object}   [opts.data]     type-specific payload
      * @param {number}   [opts.seq]      monotonic within a run
-     * @param {string}   [opts.traceId]  causal grouping; ambient, unused today
+     * @param {number}   [opts.traceId]  enclosing causal scope; read from
+     *                                   ambient context, never passed by callers
      */
     constructor(type, amount, dateInt, { metric = null, data = null, seq = 0, traceId = null } = {}) {
         this.type    = type;
