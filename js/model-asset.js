@@ -54,6 +54,16 @@ const rgb2hex = (rgb) => `#${rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/).slice
 const KEEP_ON_SNAPSHOT = new Set([Metric.PROPERTY_TAX, Metric.CASH_FLOW_ACCUMULATED]);
 
 
+/**
+ * A percentage input as a 0-1 ratio, falling back when the field is blank or
+ * unparseable. See the note on ARR.parse: NaN here does not throw, it quietly
+ * changes the answer.
+ */
+function ratioOrDefault(raw, fallback) {
+  const value = parseFloat(raw) / 100;
+  return Number.isFinite(value) ? value : fallback;
+}
+
 export class ModelAsset {
   #metrics;
 
@@ -206,7 +216,10 @@ export class ModelAsset {
       monthsRemaining: parseInt(vals.monthsRemaining?.value, 10) || 0,
       annualReturnRate: vals.annualReturnRate?.value ? ARR.parse(vals.annualReturnRate.value) : new ARR(0),
       annualDividendRate: vals.dividendRate ? ARR.parse(vals.dividendRate.value) : new ARR(0),
-      dividendQualifiedRatio: vals.dividendQualifiedRatio ? parseFloat(vals.dividendQualifiedRatio.value) / 100 : 1.0,
+      // Raw parseFloat rather than a parser, so it needs its own guard: a
+      // blank-but-present field otherwise yields NaN. Absent OR blank means
+      // "all qualified", which is the neutral default.
+      dividendQualifiedRatio: ratioOrDefault(vals.dividendQualifiedRatio?.value, 1.0),
       longTermCapitalHoldingPercentage: vals.longTermRate ? ARR.parse(vals.longTermRate.value) : new ARR(0),
       fundTransfers,
       isSelfEmployed: vals.isSelfEmployed?.type === 'checkbox'
