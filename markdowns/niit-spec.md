@@ -1,8 +1,24 @@
 # Spec 8 — Net Investment Income Tax (IRC §1411)
 
-Status: **scope only, no code written.** Written 2026-08-18, immediately after
-the §63 deduction-overflow fix in `js/tax-basis.js`, which established the seam
-this spec builds on.
+Status: **COMPLETE 2026-08-18**, steps 1-4, on `feat/niit` off the §63
+deduction-overflow fix (#36). Written the same day, immediately after that fix
+established the seam this spec builds on.
+
+Outcome against the plan, recorded because two predictions were worth keeping
+and one section was wrong:
+
+- **§6.2 held exactly.** The two opposite-direction silence fixtures both did
+  their job under mutation: `mfj-two-earners` caught dropping the NII argument,
+  `gain-harvest-under-the-deduction` caught dropping the MAGI argument. Neither
+  moved when NIIT shipped.
+- **§6.3 was necessary.** Nothing in the corpus reached the asymmetry, and the
+  new `niit-from-a-deferred-draw` is also the only fixture where the NII side of
+  the `min` binds.
+- **§5.1 was corrected during implementation** — see the note in that section.
+- **Bonus:** `decumulation-oracle.mjs` already carried an independent §1411
+  model, written from the statute, sitting unbanded behind finding F8. It agreed
+  with the implementation and is now the banded model. F8 is closed.
+- **§5.4 decided:** allocate by NII, not by total taxable income.
 
 ---
 
