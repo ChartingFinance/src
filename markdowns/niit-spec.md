@@ -128,12 +128,21 @@ definition."* Adding a tenth site is the failure this module exists to prevent.
                           + longTermCapitalGains
                           + qualifiedDividends
                           − excludedCapitalGains
-                          − preTaxContribution()
+                          − the DEDUCTIBLE pre-tax contribution
 
 `magi` is **AGI**, not taxable income: measured *before* the standard or
 itemised deduction, *after* pre-tax contributions. It is a different quantity
 from `ordinaryTaxable` and from `ltcgStackBase`, and must not be derived from
 either.
+
+**Corrected during step 1 (2026-08-18).** This section first said
+`− preTaxContribution()`. That helper sums 401(k) *and* traditional IRA, while
+`applyYearlyDeductions` has always taken one **or** the other. Real AGI does
+subtract both, but MAGI and taxable income disagreeing about the same
+contribution is exactly the tenth-definition failure `tax-basis.js` exists to
+prevent, so `magi` uses `deductionComponents().preTax` — the amount this engine
+actually treats as deductible. The either/or is a pre-existing simplification;
+fixing it is its own change, not a side effect of adding NIIT.
 
 `unusedDeduction` is **not** an input here. Both bases sit above the deduction
 line. (An earlier comment in `tax-basis.js` claimed NIIT would consult it; that

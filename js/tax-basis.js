@@ -71,6 +71,27 @@
  *                    per-asset. Do not attribute it to individual assets to get
  *                    around that.
  *
+ *   netInvestmentIncome  Income subject to the 3.8% net investment income tax:
+ *                    interest, both kinds of dividend, and both kinds of
+ *                    capital gain, less any §121 exclusion. Wages, Social
+ *                    Security, pensions and qualified-plan distributions are
+ *                    NOT in it. Gross of allocable deductions, which this model
+ *                    does not track. Floored at zero. IRC §1411(c).
+ *
+ *   magi             Modified adjusted gross income, the figure the §1411
+ *                    threshold is measured against. This is AGI — BEFORE the
+ *                    standard or itemised deduction, AFTER the deductible
+ *                    pre-tax contribution. NOT floored: a MAGI below the
+ *                    threshold must stay below it, and the 3.8% calculation
+ *                    floors its own result. IRC §1411(d).
+ *
+ *                    The asymmetry between these two is the point, not an
+ *                    accident: an IRA or 401(k) distribution is OUT of
+ *                    netInvestmentIncome but IN magi, so a withdrawal or Roth
+ *                    conversion can never be taxed by NIIT itself and can still
+ *                    drag other investment income into it. Roth distributions
+ *                    raise neither.
+ *
  * ── Why the deduction reaches the gains at all ───────────────────────
  *
  * This module originally floored `ordinaryTaxable` at zero and stopped, which
@@ -130,7 +151,7 @@ import { activeTaxTable } from './globals.js';
  *        currently unreachable, since every caller sets the active table first,
  *        but it is the kind of mismatch this module exists to prevent.
  * @returns {{ordinaryTaxable: Currency, capitalGains: Currency, ltcgStackBase: Currency,
- *            unusedDeduction: Currency}}
+ *            unusedDeduction: Currency, netInvestmentIncome: Currency, magi: Currency}}
  */
 export function taxableBasis(pkg, activeUser, { annualise = false, taxTable = null } = {}) {
 
@@ -164,10 +185,47 @@ export function taxableBasis(pkg, activeUser, { annualise = false, taxTable = nu
     const capitalGains = new Currency(Math.max(0, grossGains - deductionOverflow));
     const unusedDeduction = new Currency(Math.max(0, deductionOverflow - grossGains));
 
+    // ── IRC §1411 bases ──────────────────────────────────────────────
+    //
+    // BOTH sit ABOVE the deduction line. Neither is derived from
+    // `ordinaryTaxable` and neither consults `unusedDeduction` — §1411 keys off
+    // AGI (Form 1040 line 11), and the standard deduction is line 12. Deriving
+    // MAGI from ordinaryTaxable would under-state it by the whole deduction and
+    // put households under the threshold that are genuinely over it.
+
+    const netInvestmentIncome = new Currency(Math.max(0,
+        yearly.interestIncome.amount
+        + yearly.nonQualifiedDividends.amount
+        + yearly.qualifiedDividends.amount
+        + yearly.shortTermCapitalGains.amount
+        + yearly.longTermCapitalGains.amount
+        // §121-excluded gain is out of NII as well as out of gross income.
+        - yearly.excludedCapitalGains.amount
+    ));
+
+    // The deductible contribution as THIS ENGINE books it — 401(k) if there is
+    // one, otherwise the traditional IRA. NOT `pkg.preTaxContribution()`, which
+    // sums both: real AGI subtracts both, but `applyYearlyDeductions` has always
+    // taken one or the other, and MAGI disagreeing with taxable income about the
+    // same contribution is precisely the tenth-definition failure this module
+    // exists to prevent. The either/or is a pre-existing simplification; fixing
+    // it is its own change, not a side effect of adding NIIT.
+    const { preTax } = table.deductionComponents(yearly);
+
+    const magi = new Currency(
+        yearly.irsTaxableGrossIncome().amount
+        + yearly.longTermCapitalGains.amount
+        + yearly.qualifiedDividends.amount
+        - yearly.excludedCapitalGains.amount
+        - preTax.amount
+    );
+
     return {
         ordinaryTaxable,
         capitalGains,
         unusedDeduction,
+        netInvestmentIncome,
+        magi,
         // Copy, so a caller mutating one cannot silently move the other.
         ltcgStackBase: ordinaryTaxable.copy(),
     };
