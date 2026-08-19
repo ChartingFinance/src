@@ -47,6 +47,32 @@ export const BASIS_METRICS = Object.freeze([
 ]);
 
 /**
+ * An asset's contribution to NET INVESTMENT INCOME — the §1411 base.
+ *
+ * Deliberately NOT BASIS_METRICS. That set is built on ORDINARY_INCOME, which
+ * rolls up wages, pensions, Social Security and qualified-plan distributions —
+ * none of which is investment income, and none of which can trigger NIIT. Using
+ * it would bill a salary asset a share of a tax its income cannot cause.
+ *
+ * NIIT is the one federal tax here that defines its own base by construction,
+ * so allocating it by that base is the defensible choice rather than a
+ * convenient one. Decided explicitly on 2026-08-18 (spec 8 §5.4).
+ *
+ * The five are disjoint under the rollup DAG — QUALIFIED_DIVIDEND rolls only to
+ * INCOME; LONG_TERM_CAPITAL_GAIN to CAPITAL_GAIN; interest, non-qualified
+ * dividends and short-term gains to ORDINARY_INCOME — so summing them
+ * double-counts nothing. Named individually rather than via a parent for that
+ * reason: there is no rollup node that means "investment income".
+ */
+export const NII_BASIS_METRICS = Object.freeze([
+  Metric.INTEREST_INCOME,
+  Metric.NON_QUALIFIED_DIVIDEND,
+  Metric.QUALIFIED_DIVIDEND,
+  Metric.SHORT_TERM_CAPITAL_GAIN,
+  Metric.LONG_TERM_CAPITAL_GAIN,
+]);
+
+/**
  * This month's taxable income for one asset.
  *
  * Reads the LIVE accumulators, which are valid only before the month's
@@ -74,9 +100,9 @@ export function basisThisMonth(modelAsset) {
  * @param {number} loIndex inclusive
  * @param {number} hiIndex inclusive
  */
-export function basisOverMonths(modelAsset, loIndex, hiIndex) {
+export function basisOverMonths(modelAsset, loIndex, hiIndex, metrics = BASIS_METRICS) {
   let total = 0;
-  for (const metric of BASIS_METRICS) {
+  for (const metric of metrics) {
     const history = modelAsset.getHistory(metric);
     if (!history) continue;
     const hi = Math.min(hiIndex, history.length - 1);

@@ -92,6 +92,7 @@ export const EventType = Object.freeze({
     TAX_TRUE_UP:             'taxTrueUp',         // data.direction: 'underpayment' | 'refund'
     CAPITAL_GAIN_RECOGNIZED: 'capitalGainRecognized', // data.spillover: boolean
     CAPITAL_GAIN_EXCLUDED:   'capitalGainExcluded',   // IRC §121 primary-home exclusion
+    NIIT_ASSESSED:           'niitAssessed',      // IRC §1411; data: { nii, magi, threshold }
 
     // ── Movement ──
     TRANSFER:                'transfer',          // data: { from, to, cadence }
@@ -216,6 +217,14 @@ export function renderNote(event) {
         case EventType.INCOME_TAX_WITHHOLDING:  return 'Income tax withholding';
         case EventType.CAPITAL_GAINS_TAX:       return 'Capital gains tax withholding';
         case EventType.TAX_TRUE_UP:             return `Annual tax true-up (${d.direction})`;
+        // Says WHICH side of the min bound, because that is the whole
+        // question a reader has: too much investment income, or too much
+        // total income? No currency formatting — this module imports
+        // nothing, and reaching for a helper here is what put an
+        // undefined formatCurrency in this line on 2026-08-18.
+        case EventType.NIIT_ASSESSED:           return d.bound === 'nii'
+            ? 'Net investment income tax (3.8% of net investment income)'
+            : 'Net investment income tax (3.8% of MAGI over the threshold)';
         case EventType.CAPITAL_GAIN_RECOGNIZED: return d.spillover ? 'Capital gains (spillover)' : 'Capital gains';
         case EventType.CAPITAL_GAIN_EXCLUDED:   return 'Primary home gain excluded';
 

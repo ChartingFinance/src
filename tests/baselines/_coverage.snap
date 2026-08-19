@@ -23,6 +23,7 @@
   maintenance
   mortgageInterest
   mortgagePrincipal
+  niitAssessed
   oneTime
   propertyTax
   propertyTaxEscrow
@@ -114,6 +115,7 @@
     incomeGrowth
     incomeTaxWithholding
     interestIncome
+    niitAssessed
     taxTrueUp
     transfer
   mfj-home-sale:
@@ -157,6 +159,17 @@
     incomeTaxWithholding
     interestIncome
     transfer
+  niit-from-a-deferred-draw:
+    assetGrowth
+    dividend
+    expenseInflation
+    grossUp
+    incomeTaxWithholding
+    interestIncome
+    niitAssessed
+    spillover
+    taxTrueUp
+    transfer
   quickstart-coupleNearingRetirement:
     assetGrowth
     expenseInflation
@@ -176,6 +189,7 @@
     incomeTaxWithholding
     mortgageInterest
     mortgagePrincipal
+    niitAssessed
     propertyTax
     propertyTaxEscrow
     settlement
@@ -193,6 +207,7 @@
     incomeTaxWithholding
     mortgageInterest
     mortgagePrincipal
+    niitAssessed
     propertyTax
     propertyTaxEscrow
     settlement
@@ -210,6 +225,7 @@
     incomeTaxWithholding
     mortgageInterest
     mortgagePrincipal
+    niitAssessed
     propertyTax
     propertyTaxEscrow
     settlement
@@ -223,6 +239,7 @@
     grossUp
     incomeGrowth
     incomeTaxWithholding
+    niitAssessed
     taxTrueUp
     transfer
   quickstart-retired:
@@ -251,6 +268,7 @@
     incomeTaxWithholding
     mortgageInterest
     mortgagePrincipal
+    niitAssessed
     propertyTax
     propertyTaxEscrow
     settlement
@@ -316,6 +334,7 @@
     insurance
     interestIncome
     maintenance
+    niitAssessed
     propertyTax
     propertyTaxEscrow
     settlement

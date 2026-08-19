@@ -434,9 +434,20 @@ console.log('spec 4a — proportional allocation of the residual household tax')
 // declares, so no bucket should change shape and monthlySanityCheck must not
 // throw on an undeclared type.
 {
+  // NIIT_ASSESSED joined this list on 2026-08-18 (spec 8). It is allocated by a
+  // DIFFERENT basis from the other two — NII_BASIS_METRICS rather than
+  // BASIS_METRICS, because wages cannot trigger §1411 — but it settles through
+  // the same #settleAllocatedLeg path, so it lands here and needs its own
+  // EVENT_RECONCILIATION entry ('oneSided') exactly as the assertion says.
+  const ALLOCATED_LEG_TYPES = new Set([
+    EventType.INCOME_TAX_WITHHOLDING,
+    EventType.TAX_TRUE_UP,
+    EventType.NIIT_ASSESSED,
+  ]);
+
   const on = await runWith(true, buildReference);
   for (const leg of allocatedLegs(on)) {
-    check(leg.event.type === EventType.INCOME_TAX_WITHHOLDING || leg.event.type === EventType.TAX_TRUE_UP,
+    check(ALLOCATED_LEG_TYPES.has(leg.event.type),
       `allocated leg used unexpected event type ${leg.event.type}; adding a new ` +
       'type requires an EVENT_RECONCILIATION entry or monthlySanityCheck throws');
   }

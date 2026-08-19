@@ -86,6 +86,7 @@ export const EVENT_RECONCILIATION = Object.freeze({
     [EventType.GROSS_UP]:                'oneSided',
     [EventType.ONE_TIME]:                'oneSided',
     [EventType.TAX_TRUE_UP]:             'oneSided',
+    [EventType.NIIT_ASSESSED]:           'oneSided',
 
     // Info-kind: no money moved, so they reach neither total. Routed here
     // rather than to `excluded` so the kind guard stays the thing that
@@ -966,6 +967,23 @@ export class Portfolio {
         const settledYear = currentDateInt.year - 1;
         withTrace(TraceKind.TAX_TRUE_UP, `${currentDateInt.year} tax true-up`, currentDateInt,
             () => this.taxes.applyAnnualTaxTrueUp(this.monthsInPlanYear(settledYear)));
+
+        // NIIT is settled AFTER the true-up and as a separate pass, not folded
+        // into it. Two reasons, both load-bearing:
+        //
+        //  - applyAnnualTaxTrueUp derives what was already withheld from
+        //    this.yearly.incomeTax / estimatedTaxes / longTermCapitalGainsTax.
+        //    A NIIT charge booked before it runs would look like withholding
+        //    against income tax and shrink the April bill by its own amount.
+        //  - That method has six early returns. Anything appended inside it is
+        //    skipped on most paths, which is the quietest possible way for a
+        //    tax to go uncollected.
+        // NOT wrapped in withTrace here. The scope is opened INSIDE, only once
+        // the tax is known to be due: opening one unconditionally allocates a
+        // trace id every year for every household, which renumbered the causal
+        // chains of all 27 fixtures — including the ones that owe nothing. A
+        // scope should describe work that happened.
+        this.taxes.applyAnnualNIIT(this.monthsInPlanYear(settledYear));
 
     }
 

@@ -1,0 +1,1012 @@
+# fixture: niit-from-a-deferred-draw  (adversarial)
+#
+# the IRC 1411 ASYMMETRY, and nothing else in the corpus does. A
+# qualified-plan distribution is OUT of net investment income but IN MAGI,
+# so a large IRA draw can never be taxed by NIIT itself yet drags the
+# household over the threshold and exposes investment income that would
+# otherwise sit far below it. This retiree has NO wages: MAGI is carried
+# over $200,000 almost entirely by the 1%/month IRA distribution, while the
+# taxed base is the brokerage dividends. Delete the distribution and the
+# same dividends owe nothing. It is also the only fixture where the NII side
+# of the min binds — single-home-sale and mfj-high-earner-ltcg both bind on
+# the MAGI excess, so without this one an implementation could drop the NII
+# argument entirely and stay green. Both halves verified by mutation on
+# 2026-08-18.
+
+[config]
+  backtestYear = current
+  equityDividendAllocation = 0.5
+  equityDividendAverageAnnualRate = 0.025
+  equityGrowthAllocation = 0.5
+  filingAs = Single
+  inflationRate = 0.031
+  propertyTaxDeductionMax = 40000
+  propertyTaxRate = 0.01
+  simDataMode = calibrated
+  taxYear = 2025
+  userFinishAge = 87
+  userRetirementAge = 65
+  userStartAge = 70
+  allocateHouseholdTax = false
+  homeSaleExclusion = 250000
+  pensionWithholdingRate = 0.1
+  socialSecurityWithholdingRate = 0
+  retirementWithholdingRate = 0.1
+
+[totals]
+  months = 240
+  firstDate = 2026-01
+  lastDate = 2030-12
+  startValue = 2640000.000000
+  finishValue = 2707180.535803
+  accumulated = -25636.350224
+  total.assetAppreciation = 619855.438716
+  total.expense = -388857.161972
+  total.incomeTax = -246469.645021
+  total.tradIRADistribution = 1201460.821605
+  total.nonQualifiedDividends = 32698.591073
+  total.qualifiedDividends = 76296.712504
+  total.value = 159367815.777417
+
+[assetOrder]
+  0 Checking
+  1 IRA
+  2 Brokerage
+  3 Living
+
+[asset] Brokerage
+  instrument = taxableEquity
+  start = 2026-01  finish = 2030-12
+  startCurrency = 400000.000000
+  finishCurrency = 1262599.027387
+  startBasis = 300000.000000
+  finishBasis = 988785.918692
+  isClosed = no  isDepleted = no
+  closedDate = -  closedValue = -
+  events = 362  reconciled = 362
+
+[events] Brokerage
+  0000 2026-01 transfer                     22000.000000 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0001 2026-01 assetGrowth                   1406.666667 cash  growth                 c-
+  0002 2026-01 dividend                       617.468056 cash  qualifiedDividend      c- {qualified=true}
+  0003 2026-01 dividend                       264.629167 cash  nonQualifiedDividend   c- {qualified=false}
+  0004 2026-02 transfer                     21846.305556 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0005 2026-02 assetGrowth                   1487.116898 cash  growth                 c-
+  0006 2026-02 dividend                       652.782355 cash  qualifiedDividend      c- {qualified=true}
+  0007 2026-02 dividend                       279.763866 cash  nonQualifiedDividend   c- {qualified=false}
+  0008 2026-03 transfer                     21693.684838 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0009 2026-03 assetGrowth                   1567.494725 cash  growth                 c-
+  0010 2026-03 dividend                       688.064872 cash  qualifiedDividend      c- {qualified=true}
+  0011 2026-03 dividend                       294.884945 cash  nonQualifiedDividend   c- {qualified=false}
+  0012 2026-04 transfer                     21542.130345 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0013 2026-04 assetGrowth                   1647.803308 cash  growth                 c-
+  0014 2026-04 dividend                       723.316994 cash  qualifiedDividend      c- {qualified=true}
+  0015 2026-04 dividend                       309.992997 cash  nonQualifiedDividend   c- {qualified=false}
+  0016 2026-05 transfer                     21391.634629 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0017 2026-05 spillover                    -2458.540425 cash  -                      c1 {cause=grossUp depleted=Checking origin=oneSided}
+  0018 2026-05 assetGrowth                   1719.850666 cash  growth                 c-
+  0019 2026-05 dividend                       754.942782 cash  qualifiedDividend      c- {qualified=true}
+  0020 2026-05 dividend                       323.546907 cash  nonQualifiedDividend   c- {qualified=false}
+  0021 2026-05 incomeTaxWithholding         -2983.216314 cash  -                      c2
+  0022 2026-06 transfer                     21242.190292 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0023 2026-06 grossUp                      -6266.647302 cash  -                      c3 {forAsset=Living overflow=false}
+  0024 2026-06 assetGrowth                   1769.152889 cash  growth                 c-
+  0025 2026-06 dividend                       776.584404 cash  qualifiedDividend      c- {qualified=true}
+  0026 2026-06 dividend                       332.821887 cash  nonQualifiedDividend   c- {qualified=false}
+  0027 2026-06 incomeTaxWithholding         -2944.950242 cash  -                      c2
+  0028 2026-07 transfer                     21093.789991 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0029 2026-07 grossUp                      -6280.732904 cash  -                      c3 {forAsset=Living overflow=false}
+  0030 2026-07 assetGrowth                   1818.308443 cash  growth                 c-
+  0031 2026-07 dividend                       798.161644 cash  qualifiedDividend      c- {qualified=true}
+  0032 2026-07 dividend                       342.069276 cash  nonQualifiedDividend   c- {qualified=false}
+  0033 2026-07 incomeTaxWithholding         -2906.964522 cash  -                      c2
+  0034 2026-08 transfer                     20946.426430 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0035 2026-08 grossUp                      -6295.059750 cash  -                      c3 {forAsset=Living overflow=false}
+  0036 2026-08 assetGrowth                   1867.318248 cash  growth                 c-
+  0037 2026-08 dividend                       819.674906 cash  qualifiedDividend      c- {qualified=true}
+  0038 2026-08 dividend                       351.289245 cash  nonQualifiedDividend   c- {qualified=false}
+  0039 2026-08 incomeTaxWithholding         -2869.257189 cash  -                      c2
+  0040 2026-09 transfer                     20800.092368 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0041 2026-09 grossUp                      -6309.612492 cash  -                      c3 {forAsset=Living overflow=false}
+  0042 2026-09 assetGrowth                   1916.183265 cash  growth                 c-
+  0043 2026-09 dividend                       841.124612 cash  qualifiedDividend      c- {qualified=true}
+  0044 2026-09 dividend                       360.481977 cash  nonQualifiedDividend   c- {qualified=false}
+  0045 2026-09 incomeTaxWithholding         -2831.826294 cash  -                      c2
+  0046 2026-10 transfer                     20654.780611 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0047 2026-10 grossUp                      -6324.377425 cash  -                      c3 {forAsset=Living overflow=false}
+  0048 2026-10 assetGrowth                   1964.904487 cash  growth                 c-
+  0049 2026-10 dividend                       862.511199 cash  qualifiedDividend      c- {qualified=true}
+  0050 2026-10 dividend                       369.647657 cash  nonQualifiedDividend   c- {qualified=false}
+  0051 2026-10 incomeTaxWithholding         -2794.669905 cash  -                      c2
+  0052 2026-11 transfer                     20510.484019 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0053 2026-11 grossUp                      -6339.342268 cash  -                      c3 {forAsset=Living overflow=false}
+  0054 2026-11 assetGrowth                   2013.482938 cash  growth                 c-
+  0055 2026-11 dividend                       883.835115 cash  qualifiedDividend      c- {qualified=true}
+  0056 2026-11 dividend                       378.786478 cash  nonQualifiedDividend   c- {qualified=false}
+  0057 2026-11 incomeTaxWithholding         -2757.786106 cash  -                      c2
+  0058 2026-12 transfer                     20367.195499 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0059 2026-12 grossUp                      -6354.495992 cash  -                      c3 {forAsset=Living overflow=false}
+  0060 2026-12 assetGrowth                   2061.919664 cash  growth                 c-
+  0061 2026-12 dividend                       905.096819 cash  qualifiedDividend      c- {qualified=true}
+  0062 2026-12 dividend                       387.898637 cash  nonQualifiedDividend   c- {qualified=false}
+  0063 2026-12 incomeTaxWithholding         -2721.172995 cash  -                      c2
+  0064 2026-12 taxTrueUp                    -1398.534563 cash  -                      c4 {direction=underpayment}
+  0065 2026-12 niitAssessed                  -506.136318 cash  -                      c5 {bound=nii magi=295640.170769 nii=13319.376795 taxedBase=13319.376795 threshold=200000}
+  0066 2027-01 transfer                     20224.908008 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0067 2027-01 grossUp                      -6370.385796 cash  -                      c3 {forAsset=Living overflow=false}
+  0068 2027-01 assetGrowth                   2103.864976 cash  growth                 c-
+  0069 2027-01 dividend                       923.509063 cash  qualifiedDividend      c- {qualified=true}
+  0070 2027-01 dividend                       395.789599 cash  nonQualifiedDividend   c- {qualified=false}
+  0071 2027-01 incomeTaxWithholding         -2605.054407 cash  -                      c2
+  0072 2027-02 transfer                     20083.614553 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0073 2027-02 grossUp                      -6385.845245 cash  -                      c3 {forAsset=Living overflow=false}
+  0074 2027-02 assetGrowth                   2152.251238 cash  growth                 c-
+  0075 2027-02 dividend                       944.748616 cash  qualifiedDividend      c- {qualified=true}
+  0076 2027-02 dividend                       404.892264 cash  nonQualifiedDividend   c- {qualified=false}
+  0077 2027-02 incomeTaxWithholding         -2573.428860 cash  -                      c2
+  0078 2027-03 transfer                     19943.308191 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0079 2027-03 grossUp                      -6401.470342 cash  -                      c3 {forAsset=Living overflow=false}
+  0080 2027-03 assetGrowth                   2200.485575 cash  growth                 c-
+  0081 2027-03 dividend                       965.921480 cash  qualifiedDividend      c- {qualified=true}
+  0082 2027-03 dividend                       413.966349 cash  nonQualifiedDividend   c- {qualified=false}
+  0083 2027-03 incomeTaxWithholding         -2542.035456 cash  -                      c2
+  0084 2027-04 transfer                     19803.982024 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0085 2027-04 grossUp                      -6417.253393 cash  -                      c3 {forAsset=Living overflow=false}
+  0086 2027-04 assetGrowth                   2248.569130 cash  growth                 c-
+  0087 2027-04 dividend                       987.028158 cash  qualifiedDividend      c- {qualified=true}
+  0088 2027-04 dividend                       423.012068 cash  nonQualifiedDividend   c- {qualified=false}
+  0089 2027-04 incomeTaxWithholding         -2510.872579 cash  -                      c2
+  0090 2027-05 transfer                     19665.629205 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0091 2027-05 grossUp                      -6433.187413 cash  -                      c3 {forAsset=Living overflow=false}
+  0092 2027-05 assetGrowth                   2296.503059 cash  growth                 c-
+  0093 2027-05 dividend                      1008.069155 cash  qualifiedDividend      c- {qualified=true}
+  0094 2027-05 dividend                       432.029638 cash  nonQualifiedDividend   c- {qualified=false}
+  0095 2027-05 incomeTaxWithholding         -2479.938623 cash  -                      c2
+  0096 2027-06 transfer                     19528.242934 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0097 2027-06 grossUp                      -6449.266047 cash  -                      c3 {forAsset=Living overflow=false}
+  0098 2027-06 assetGrowth                   2344.288526 cash  growth                 c-
+  0099 2027-06 dividend                      1029.044984 cash  qualifiedDividend      c- {qualified=true}
+  0100 2027-06 dividend                       441.019279 cash  nonQualifiedDividend   c- {qualified=false}
+  0101 2027-06 incomeTaxWithholding         -2449.231998 cash  -                      c2
+  0102 2027-07 transfer                     19391.816459 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0103 2027-07 grossUp                      -6465.483503 cash  -                      c3 {forAsset=Living overflow=false}
+  0104 2027-07 assetGrowth                   2391.926705 cash  growth                 c-
+  0105 2027-07 dividend                      1049.956160 cash  qualifiedDividend      c- {qualified=true}
+  0106 2027-07 dividend                       449.981211 cash  nonQualifiedDividend   c- {qualified=false}
+  0107 2027-07 incomeTaxWithholding         -2418.751122 cash  -                      c2
+  0108 2027-08 transfer                     19256.343075 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0109 2027-08 grossUp                      -6481.834494 cash  -                      c3 {forAsset=Living overflow=false}
+  0110 2027-08 assetGrowth                   2439.418777 cash  growth                 c-
+  0111 2027-08 dividend                      1070.803200 cash  qualifiedDividend      c- {qualified=true}
+  0112 2027-08 dividend                       458.915657 cash  nonQualifiedDividend   c- {qualified=false}
+  0113 2027-08 incomeTaxWithholding         -2388.494429 cash  -                      c2
+  0114 2027-09 transfer                     19121.816122 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0115 2027-09 grossUp                      -6498.314181 cash  -                      c3 {forAsset=Living overflow=false}
+  0116 2027-09 assetGrowth                   2486.765927 cash  growth                 c-
+  0117 2027-09 dividend                      1091.586627 cash  qualifiedDividend      c- {qualified=true}
+  0118 2027-09 dividend                       467.822840 cash  nonQualifiedDividend   c- {qualified=false}
+  0119 2027-09 incomeTaxWithholding         -2358.460361 cash  -                      c2
+  0120 2027-10 transfer                     18988.228990 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0121 2027-10 grossUp                      -6514.918132 cash  -                      c3 {forAsset=Living overflow=false}
+  0122 2027-10 assetGrowth                   2533.969347 cash  growth                 c-
+  0123 2027-10 dividend                      1112.306961 cash  qualifiedDividend      c- {qualified=true}
+  0124 2027-10 dividend                       476.702983 cash  nonQualifiedDividend   c- {qualified=false}
+  0125 2027-10 incomeTaxWithholding         -2328.647375 cash  -                      c2
+  0126 2027-11 transfer                     18855.575113 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0127 2027-11 grossUp                      -6531.642281 cash  -                      c3 {forAsset=Living overflow=false}
+  0128 2027-11 assetGrowth                   2581.030229 cash  growth                 c-
+  0129 2027-11 dividend                      1132.964728 cash  qualifiedDividend      c- {qualified=true}
+  0130 2027-11 dividend                       485.556312 cash  nonQualifiedDividend   c- {qualified=false}
+  0131 2027-11 incomeTaxWithholding         -2299.053936 cash  -                      c2
+  0132 2027-12 transfer                     18723.847970 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0133 2027-12 grossUp                      -6548.482890 cash  -                      c3 {forAsset=Living overflow=false}
+  0134 2027-12 assetGrowth                   2627.949771 cash  growth                 c-
+  0135 2027-12 dividend                      1153.560451 cash  qualifiedDividend      c- {qualified=true}
+  0136 2027-12 dividend                       494.383051 cash  nonQualifiedDividend   c- {qualified=false}
+  0137 2027-12 incomeTaxWithholding         -2269.678524 cash  -                      c2
+  0138 2027-12 taxTrueUp                    -1870.424938 cash  -                      c6 {direction=underpayment}
+  0139 2027-12 niitAssessed                  -676.915692 cash  -                      c7 {bound=nii magi=277355.029327 nii=17813.570834 taxedBase=17813.570834 threshold=200000}
+  0140 2028-01 transfer                     18593.041088 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0141 2028-01 grossUp                      -6566.028437 cash  -                      c3 {forAsset=Living overflow=false}
+  0142 2028-01 assetGrowth                   2666.236060 cash  growth                 c-
+  0143 2028-01 dividend                      1170.366537 cash  qualifiedDividend      c- {qualified=true}
+  0144 2028-01 dividend                       501.585659 cash  nonQualifiedDividend   c- {qualified=false}
+  0145 2028-01 incomeTaxWithholding         -2163.578939 cash  -                      c2
+  0146 2028-02 transfer                     18463.148037 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0147 2028-02 grossUp                      -6583.058766 cash  -                      c3 {forAsset=Living overflow=false}
+  0148 2028-02 assetGrowth                   2713.085055 cash  growth                 c-
+  0149 2028-02 dividend                      1190.931294 cash  qualifiedDividend      c- {qualified=true}
+  0150 2028-02 dividend                       510.399126 cash  nonQualifiedDividend   c- {qualified=false}
+  0151 2028-02 incomeTaxWithholding         -2134.647614 cash  -                      c2
+  0152 2028-03 transfer                     18334.162433 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0153 2028-03 grossUp                      -6600.197394 cash  -                      c3 {forAsset=Living overflow=false}
+  0154 2028-03 assetGrowth                   2759.797498 cash  growth                 c-
+  0155 2028-03 dividend                      1211.436110 cash  qualifiedDividend      c- {qualified=true}
+  0156 2028-03 dividend                       519.186904 cash  nonQualifiedDividend   c- {qualified=false}
+  0157 2028-03 incomeTaxWithholding         -2105.929888 cash  -                      c2
+  0158 2028-04 transfer                     18206.077937 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0159 2028-04 grossUp                      -6617.441526 cash  -                      c3 {forAsset=Living overflow=false}
+  0160 2028-04 assetGrowth                   2806.374588 cash  growth                 c-
+  0161 2028-04 dividend                      1231.881512 cash  qualifiedDividend      c- {qualified=true}
+  0162 2028-04 dividend                       527.949219 cash  nonQualifiedDividend   c- {qualified=false}
+  0163 2028-04 incomeTaxWithholding         -2077.424286 cash  -                      c2
+  0164 2028-05 transfer                     18078.888254 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0165 2028-05 grossUp                      -6634.788578 cash  -                      c3 {forAsset=Living overflow=false}
+  0166 2028-05 assetGrowth                   2852.817524 cash  growth                 c-
+  0167 2028-05 dividend                      1252.268026 cash  qualifiedDividend      c- {qualified=true}
+  0168 2028-05 dividend                       536.686297 cash  nonQualifiedDividend   c- {qualified=false}
+  0169 2028-05 incomeTaxWithholding         -2049.129339 cash  -                      c2
+  0170 2028-06 transfer                     17952.587132 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0171 2028-06 grossUp                      -6652.236158 cash  -                      c3 {forAsset=Living overflow=false}
+  0172 2028-06 assetGrowth                   2899.127502 cash  growth                 c-
+  0173 2028-06 dividend                      1272.596176 cash  qualifiedDividend      c- {qualified=true}
+  0174 2028-06 dividend                       545.398361 cash  nonQualifiedDividend   c- {qualified=false}
+  0175 2028-06 incomeTaxWithholding         -2021.043592 cash  -                      c2
+  0176 2028-07 transfer                     17827.168363 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0177 2028-07 grossUp                      -6669.782051 cash  -                      c3 {forAsset=Living overflow=false}
+  0178 2028-07 assetGrowth                   2945.305718 cash  growth                 c-
+  0179 2028-07 dividend                      1292.866489 cash  qualifiedDividend      c- {qualified=true}
+  0180 2028-07 dividend                       554.085638 cash  nonQualifiedDividend   c- {qualified=false}
+  0181 2028-07 incomeTaxWithholding         -1993.165599 cash  -                      c2
+  0182 2028-08 transfer                     17702.625784 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0183 2028-08 grossUp                      -6687.424203 cash  -                      c3 {forAsset=Living overflow=false}
+  0184 2028-08 assetGrowth                   2991.353364 cash  growth                 c-
+  0185 2028-08 dividend                      1313.079487 cash  qualifiedDividend      c- {qualified=true}
+  0186 2028-08 dividend                       562.748352 cash  nonQualifiedDividend   c- {qualified=false}
+  0187 2028-08 incomeTaxWithholding         -1965.493926 cash  -                      c2
+  0188 2028-09 transfer                     17578.953274 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0189 2028-09 grossUp                      -6705.160708 cash  -                      c3 {forAsset=Living overflow=false}
+  0190 2028-09 assetGrowth                   3037.271630 cash  growth                 c-
+  0191 2028-09 dividend                      1333.235693 cash  qualifiedDividend      c- {qualified=true}
+  0192 2028-09 dividend                       571.386725 cash  nonQualifiedDividend   c- {qualified=false}
+  0193 2028-09 incomeTaxWithholding         -1938.027148 cash  -                      c2
+  0194 2028-10 transfer                     17456.144753 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0195 2028-10 grossUp                      -6722.989794 cash  -                      c3 {forAsset=Living overflow=false}
+  0196 2028-10 assetGrowth                   3083.061703 cash  growth                 c-
+  0197 2028-10 dividend                      1353.335627 cash  qualifiedDividend      c- {qualified=true}
+  0198 2028-10 dividend                       580.000983 cash  nonQualifiedDividend   c- {qualified=false}
+  0199 2028-10 incomeTaxWithholding         -1910.763849 cash  -                      c2
+  0200 2028-11 transfer                     17334.194186 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0201 2028-11 grossUp                      -6740.909815 cash  -                      c3 {forAsset=Living overflow=false}
+  0202 2028-11 assetGrowth                   3128.724766 cash  growth                 c-
+  0203 2028-11 dividend                      1373.379809 cash  qualifiedDividend      c- {qualified=true}
+  0204 2028-11 dividend                       588.591347 cash  nonQualifiedDividend   c- {qualified=false}
+  0205 2028-11 incomeTaxWithholding         -1883.702627 cash  -                      c2
+  0206 2028-12 transfer                     17213.095579 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0207 2028-12 grossUp                      -6758.919241 cash  -                      c3 {forAsset=Living overflow=false}
+  0208 2028-12 assetGrowth                   3174.261998 cash  growth                 c-
+  0209 2028-12 dividend                      1393.368756 cash  qualifiedDividend      c- {qualified=true}
+  0210 2028-12 dividend                       597.158038 cash  nonQualifiedDividend   c- {qualified=false}
+  0211 2028-12 incomeTaxWithholding         -1856.842087 cash  -                      c2
+  0212 2028-12 taxTrueUp                    -2308.311827 cash  -                      c8 {direction=underpayment}
+  0213 2028-12 niitAssessed                  -835.389042 cash  -                      c9 {bound=nii magi=260584.018631 nii=21983.922165 taxedBase=21983.922165 threshold=200000}
+  0214 2029-01 transfer                     17092.842981 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0215 2029-01 grossUp                      -6777.660973 cash  -                      c3 {forAsset=Living overflow=false}
+  0216 2029-01 assetGrowth                   3209.193424 cash  growth                 c-
+  0217 2029-01 dividend                      1408.702197 cash  qualifiedDividend      c- {qualified=true}
+  0218 2029-01 dividend                       603.729513 cash  nonQualifiedDividend   c- {qualified=false}
+  0219 2029-01 incomeTaxWithholding         -1774.902310 cash  -                      c2
+  0220 2029-02 transfer                     16973.430481 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0221 2029-02 grossUp                      -6795.821189 cash  -                      c3 {forAsset=Living overflow=false}
+  0222 2029-02 assetGrowth                   3254.607865 cash  growth                 c-
+  0223 2029-02 dividend                      1428.637244 cash  qualifiedDividend      c- {qualified=true}
+  0224 2029-02 dividend                       612.273105 cash  nonQualifiedDividend   c- {qualified=false}
+  0225 2029-02 incomeTaxWithholding         -1758.377495 cash  -                      c2
+  0226 2029-03 transfer                     16854.852210 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0227 2029-03 grossUp                      -6814.069574 cash  -                      c3 {forAsset=Living overflow=false}
+  0228 2029-03 assetGrowth                   3299.867609 cash  growth                 c-
+  0229 2029-03 dividend                      1448.504386 cash  qualifiedDividend      c- {qualified=true}
+  0230 2029-03 dividend                       620.787594 cash  nonQualifiedDividend   c- {qualified=false}
+  0231 2029-03 incomeTaxWithholding         -1741.975463 cash  -                      c2
+  0232 2029-04 transfer                     16737.102339 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0233 2029-04 grossUp                      -6832.404851 cash  -                      c3 {forAsset=Living overflow=false}
+  0234 2029-04 assetGrowth                   3344.973881 cash  growth                 c-
+  0235 2029-04 dividend                      1468.304160 cash  qualifiedDividend      c- {qualified=true}
+  0236 2029-04 dividend                       629.273211 cash  nonQualifiedDividend   c- {qualified=false}
+  0237 2029-04 incomeTaxWithholding         -1725.695365 cash  -                      c2
+  0238 2029-05 transfer                     16620.175083 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0239 2029-05 grossUp                      -6850.825832 cash  -                      c3 {forAsset=Living overflow=false}
+  0240 2029-05 assetGrowth                   3389.927898 cash  growth                 c-
+  0241 2029-05 dividend                      1488.037100 cash  qualifiedDividend      c- {qualified=true}
+  0242 2029-05 dividend                       637.730186 cash  nonQualifiedDividend   c- {qualified=false}
+  0243 2029-05 incomeTaxWithholding         -1709.536354 cash  -                      c2
+  0244 2029-06 transfer                     16504.064693 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0245 2029-06 grossUp                      -6869.331409 cash  -                      c3 {forAsset=Living overflow=false}
+  0246 2029-06 assetGrowth                   3434.730872 cash  growth                 c-
+  0247 2029-06 dividend                      1507.703739 cash  qualifiedDividend      c- {qualified=true}
+  0248 2029-06 dividend                       646.158745 cash  nonQualifiedDividend   c- {qualified=false}
+  0249 2029-06 incomeTaxWithholding         -1693.497592 cash  -                      c2
+  0250 2029-07 transfer                     16388.765463 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0251 2029-07 grossUp                      -6887.920549 cash  -                      c3 {forAsset=Living overflow=false}
+  0252 2029-07 assetGrowth                   3479.384008 cash  growth                 c-
+  0253 2029-07 dividend                      1527.304605 cash  qualifiedDividend      c- {qualified=true}
+  0254 2029-07 dividend                       654.559116 cash  nonQualifiedDividend   c- {qualified=false}
+  0255 2029-07 incomeTaxWithholding         -1677.578246 cash  -                      c2
+  0256 2029-08 transfer                     16274.271727 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0257 2029-08 grossUp                      -6906.592289 cash  -                      c3 {forAsset=Living overflow=false}
+  0258 2029-08 assetGrowth                   3523.888504 cash  growth                 c-
+  0259 2029-08 dividend                      1546.840225 cash  qualifiedDividend      c- {qualified=true}
+  0260 2029-08 dividend                       662.931525 cash  nonQualifiedDividend   c- {qualified=false}
+  0261 2029-08 incomeTaxWithholding         -1661.777487 cash  -                      c2
+  0262 2029-09 transfer                     16160.577856 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0263 2029-09 grossUp                      -6925.345728 cash  -                      c3 {forAsset=Living overflow=false}
+  0264 2029-09 assetGrowth                   3568.245554 cash  growth                 c-
+  0265 2029-09 dividend                      1566.311121 cash  qualifiedDividend      c- {qualified=true}
+  0266 2029-09 dividend                       671.276195 cash  nonQualifiedDividend   c- {qualified=false}
+  0267 2029-09 incomeTaxWithholding         -1646.094495 cash  -                      c2
+  0268 2029-10 transfer                     16047.678264 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0269 2029-10 grossUp                      -6944.180030 cash  -                      c3 {forAsset=Living overflow=false}
+  0270 2029-10 assetGrowth                   3612.456342 cash  growth                 c-
+  0271 2029-10 dividend                      1585.717815 cash  qualifiedDividend      c- {qualified=true}
+  0272 2029-10 dividend                       679.593349 cash  nonQualifiedDividend   c- {qualified=false}
+  0273 2029-10 incomeTaxWithholding         -1630.528453 cash  -                      c2
+  0274 2029-11 transfer                     15935.567400 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0275 2029-11 grossUp                      -6963.094410 cash  -                      c3 {forAsset=Living overflow=false}
+  0276 2029-11 assetGrowth                   3656.522049 cash  growth                 c-
+  0277 2029-11 dividend                      1605.060824 cash  qualifiedDividend      c- {qualified=true}
+  0278 2029-11 dividend                       687.883210 cash  nonQualifiedDividend   c- {qualified=false}
+  0279 2029-11 incomeTaxWithholding         -1615.078552 cash  -                      c2
+  0280 2029-12 transfer                     15824.239756 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0281 2029-12 grossUp                      -6982.088138 cash  -                      c3 {forAsset=Living overflow=false}
+  0282 2029-12 assetGrowth                   3700.443846 cash  growth                 c-
+  0283 2029-12 dividend                      1624.340663 cash  qualifiedDividend      c- {qualified=true}
+  0284 2029-12 dividend                       696.145999 cash  nonQualifiedDividend   c- {qualified=false}
+  0285 2029-12 incomeTaxWithholding         -1599.743987 cash  -                      c2
+  0286 2029-12 taxTrueUp                    -2730.819612 cash  -                      c10 {direction=underpayment}
+  0287 2029-12 niitAssessed                  -988.296621 cash  -                      c11 {bound=nii magi=245356.214996 nii=26007.805828 taxedBase=26007.805828 threshold=200000}
+  0288 2030-01 transfer                     15713.689858 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0289 2030-01 grossUp                      -7001.875855 cash  -                      c3 {forAsset=Living overflow=false}
+  0290 2030-01 assetGrowth                   3731.823461 cash  growth                 c-
+  0291 2030-01 dividend                      1638.115007 cash  qualifiedDividend      c- {qualified=true}
+  0292 2030-01 dividend                       702.049289 cash  nonQualifiedDividend   c- {qualified=false}
+  0293 2030-01 incomeTaxWithholding         -1552.068863 cash  -                      c2
+  0294 2030-02 transfer                     15603.912275 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0295 2030-02 grossUp                      -7021.009525 cash  -                      c3 {forAsset=Living overflow=false}
+  0296 2030-02 assetGrowth                   3775.499533 cash  growth                 c-
+  0297 2030-02 dividend                      1657.286982 cash  qualifiedDividend      c- {qualified=true}
+  0298 2030-02 dividend                       710.265850 cash  nonQualifiedDividend   c- {qualified=false}
+  0299 2030-02 incomeTaxWithholding         -1536.964325 cash  -                      c2
+  0300 2030-03 transfer                     15494.901610 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0301 2030-03 grossUp                      -7040.221069 cash  -                      c3 {forAsset=Living overflow=false}
+  0302 2030-03 assetGrowth                   3819.035428 cash  growth                 c-
+  0303 2030-03 dividend                      1676.397426 cash  qualifiedDividend      c- {qualified=true}
+  0304 2030-03 dividend                       718.456040 cash  nonQualifiedDividend   c- {qualified=false}
+  0305 2030-03 incomeTaxWithholding         -1521.972756 cash  -                      c2
+  0306 2030-04 transfer                     15386.652506 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0307 2030-04 grossUp                      -7059.509910 cash  -                      c3 {forAsset=Living overflow=false}
+  0308 2030-04 assetGrowth                   3862.432290 cash  growth                 c-
+  0309 2030-04 dividend                      1695.446841 cash  qualifiedDividend      c- {qualified=true}
+  0310 2030-04 dividend                       726.620075 cash  nonQualifiedDividend   c- {qualified=false}
+  0311 2030-04 incomeTaxWithholding         -1507.093375 cash  -                      c2
+  0312 2030-05 transfer                     15279.159642 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0313 2030-05 grossUp                      -7078.875515 cash  -                      c3 {forAsset=Living overflow=false}
+  0314 2030-05 assetGrowth                   3905.691257 cash  growth                 c-
+  0315 2030-05 dividend                      1714.435725 cash  qualifiedDividend      c- {qualified=true}
+  0316 2030-05 dividend                       734.758168 cash  nonQualifiedDividend   c- {qualified=false}
+  0317 2030-05 incomeTaxWithholding         -1492.325405 cash  -                      c2
+  0318 2030-06 transfer                     15172.417735 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0319 2030-06 grossUp                      -7098.317382 cash  -                      c3 {forAsset=Living overflow=false}
+  0320 2030-06 assetGrowth                   3948.813457 cash  growth                 c-
+  0321 2030-06 dividend                      1733.364574 cash  qualifiedDividend      c- {qualified=true}
+  0322 2030-06 dividend                       742.870532 cash  nonQualifiedDividend   c- {qualified=false}
+  0323 2030-06 incomeTaxWithholding         -1477.668076 cash  -                      c2
+  0324 2030-07 transfer                     15066.421539 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0325 2030-07 grossUp                      -7117.835046 cash  -                      c3 {forAsset=Living overflow=false}
+  0326 2030-07 assetGrowth                   3991.800014 cash  growth                 c-
+  0327 2030-07 dividend                      1752.233881 cash  qualifiedDividend      c- {qualified=true}
+  0328 2030-07 dividend                       750.957378 cash  nonQualifiedDividend   c- {qualified=false}
+  0329 2030-07 incomeTaxWithholding         -1463.120621 cash  -                      c2
+  0330 2030-08 transfer                     14961.165844 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0331 2030-08 grossUp                      -7137.428073 cash  -                      c3 {forAsset=Living overflow=false}
+  0332 2030-08 assetGrowth                   4034.652042 cash  growth                 c-
+  0333 2030-08 dividend                      1771.044136 cash  qualifiedDividend      c- {qualified=true}
+  0334 2030-08 dividend                       759.018915 cash  nonQualifiedDividend   c- {qualified=false}
+  0335 2030-08 incomeTaxWithholding         -1448.682282 cash  -                      c2
+  0336 2030-09 transfer                     14856.645477 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0337 2030-09 grossUp                      -7157.096059 cash  -                      c3 {forAsset=Living overflow=false}
+  0338 2030-09 assetGrowth                   4077.370649 cash  growth                 c-
+  0339 2030-09 dividend                      1789.795825 cash  qualifiedDividend      c- {qualified=true}
+  0340 2030-09 dividend                       767.055353 cash  nonQualifiedDividend   c- {qualified=false}
+  0341 2030-09 incomeTaxWithholding         -1434.352304 cash  -                      c2
+  0342 2030-10 transfer                     14752.855301 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0343 2030-10 grossUp                      -7176.838628 cash  -                      c3 {forAsset=Living overflow=false}
+  0344 2030-10 assetGrowth                   4119.956937 cash  growth                 c-
+  0345 2030-10 dividend                      1808.489430 cash  qualifiedDividend      c- {qualified=true}
+  0346 2030-10 dividend                       775.066899 cash  nonQualifiedDividend   c- {qualified=false}
+  0347 2030-10 incomeTaxWithholding         -1420.129936 cash  -                      c2
+  0348 2030-11 transfer                     14649.790215 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0349 2030-11 grossUp                      -7196.655430 cash  -                      c3 {forAsset=Living overflow=false}
+  0350 2030-11 assetGrowth                   4162.411997 cash  growth                 c-
+  0351 2030-11 dividend                      1827.125433 cash  qualifiedDividend      c- {qualified=true}
+  0352 2030-11 dividend                       783.053757 cash  nonQualifiedDividend   c- {qualified=false}
+  0353 2030-11 incomeTaxWithholding         -1406.014435 cash  -                      c2
+  0354 2030-12 transfer                     14547.445152 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0355 2030-12 grossUp                      -7216.546141 cash  -                      c3 {forAsset=Living overflow=false}
+  0356 2030-12 assetGrowth                   4204.736916 cash  growth                 c-
+  0357 2030-12 dividend                      1845.704309 cash  qualifiedDividend      c- {qualified=true}
+  0358 2030-12 dividend                       791.016132 cash  nonQualifiedDividend   c- {qualified=false}
+  0359 2030-12 incomeTaxWithholding         -1392.005063 cash  -                      c2
+  0360 2030-12 taxTrueUp                    -3136.415935 cash  -                      c12 {direction=underpayment}
+  0361 2030-12 niitAssessed                 -1135.083862 cash  -                      c13 {bound=nii magi=231520.691459 nii=29870.627955 taxedBase=29870.627955 threshold=200000}
+
+[history] Brokerage
+  value                        n=  60 first=   424288.760000 last=  1266870.530000 min=   424288.760000 max=  1266870.530000 sum=   52312720.610000 #ff2a0974
+  growth                       n=  60 first=     1406.670000 last=     4204.740000 min=     1406.670000 max=     4204.740000 sum=     173813.100000 #1ec8f651
+  qualifiedDividend            n=  60 first=      617.470000 last=     1845.700000 min=      617.470000 max=     1845.700000 sum=      76296.720000 #445a60ad
+  nonQualifiedDividend         n=  60 first=      264.630000 last=      791.020000 min=      264.630000 max=      791.020000 sum=      32698.630000 #b65cf45f
+  ordinaryIncome               n=  60 first=      264.630000 last=      791.020000 min=      264.630000 max=      791.020000 sum=      32698.630000 #b65cf45f
+  income                       n=  60 first=      882.100000 last=     2636.720000 min=      882.100000 max=     2636.720000 sum=     108995.290000 #b429ce61
+  estimatedIncomeTax           n=  60 first=        0.000000 last=    -1392.010000 min=    -4282.890000 max=        0.000000 sum=    -122328.510000 #426c151e
+  incomeTax                    n=  60 first=        0.000000 last=    -1392.010000 min=    -4282.890000 max=        0.000000 sum=    -122328.510000 #426c151e
+  federalTaxes                 n=  60 first=        0.000000 last=    -1392.010000 min=    -5271.190000 max=        0.000000 sum=    -125335.260000 #dc9354bd
+  taxes                        n=  60 first=        0.000000 last=    -1392.010000 min=    -5271.190000 max=        0.000000 sum=    -125335.260000 #dc9354bd
+  cashFlow                     n=  60 first=      882.100000 last=     1244.720000 min=    -2684.290000 max=     1244.720000 sum=     -13333.210000 #eeedfa05
+  cashFlowAccumulated          n=  60 first=      882.100000 last=   -13333.210000 min=   -28356.110000 max=     3830.900000 sum=   -1093228.780000 #cd21c850
+
+[asset] Checking
+  instrument = bank
+  start = 2026-01  finish = 2030-12
+  startCurrency = 40000.000000
+  finishCurrency = 0.000000
+  startBasis = 40000.000000
+  finishBasis = 0.000000
+  isClosed = no  isDepleted = yes
+  closedDate = -  closedValue = -
+  events = 69  reconciled = 69
+
+[events] Checking
+  0000 2026-01 grossUp                      -6000.000000 cash  -                      c1 {forAsset=Living overflow=false}
+  0001 2026-01 interestIncome                   0.000000 cash  interestIncome         c-
+  0002 2026-01 incomeTaxWithholding         -3131.585486 cash  -                      c14
+  0003 2026-02 grossUp                      -6015.500000 cash  -                      c1 {forAsset=Living overflow=false}
+  0004 2026-02 interestIncome                   0.000000 cash  interestIncome         c-
+  0005 2026-02 incomeTaxWithholding         -3094.189730 cash  -                      c14
+  0006 2026-03 grossUp                      -6031.040042 cash  -                      c1 {forAsset=Living overflow=false}
+  0007 2026-03 interestIncome                   0.000000 cash  interestIncome         c-
+  0008 2026-03 incomeTaxWithholding         -3057.087463 cash  -                      c14
+  0009 2026-04 grossUp                      -6046.620228 cash  -                      c1 {forAsset=Living overflow=false}
+  0010 2026-04 interestIncome                   0.000000 cash  interestIncome         c-
+  0011 2026-04 incomeTaxWithholding         -3020.276812 cash  -                      c14
+  0012 2026-05 grossUp                      -3603.700239 cash  -                      c1 {forAsset=Living overflow=false}
+  0013 2026-05 interestIncome                   0.000000 cash  interestIncome         c-
+  0014 2026-06 interestIncome                   0.000000 cash  interestIncome         c-
+  0015 2026-07 interestIncome                   0.000000 cash  interestIncome         c-
+  0016 2026-08 interestIncome                   0.000000 cash  interestIncome         c-
+  0017 2026-09 interestIncome                   0.000000 cash  interestIncome         c-
+  0018 2026-10 interestIncome                   0.000000 cash  interestIncome         c-
+  0019 2026-11 interestIncome                   0.000000 cash  interestIncome         c-
+  0020 2026-12 interestIncome                   0.000000 cash  interestIncome         c-
+  0021 2027-01 interestIncome                   0.000000 cash  interestIncome         c-
+  0022 2027-02 interestIncome                   0.000000 cash  interestIncome         c-
+  0023 2027-03 interestIncome                   0.000000 cash  interestIncome         c-
+  0024 2027-04 interestIncome                   0.000000 cash  interestIncome         c-
+  0025 2027-05 interestIncome                   0.000000 cash  interestIncome         c-
+  0026 2027-06 interestIncome                   0.000000 cash  interestIncome         c-
+  0027 2027-07 interestIncome                   0.000000 cash  interestIncome         c-
+  0028 2027-08 interestIncome                   0.000000 cash  interestIncome         c-
+  0029 2027-09 interestIncome                   0.000000 cash  interestIncome         c-
+  0030 2027-10 interestIncome                   0.000000 cash  interestIncome         c-
+  0031 2027-11 interestIncome                   0.000000 cash  interestIncome         c-
+  0032 2027-12 interestIncome                   0.000000 cash  interestIncome         c-
+  0033 2028-01 interestIncome                   0.000000 cash  interestIncome         c-
+  0034 2028-02 interestIncome                   0.000000 cash  interestIncome         c-
+  0035 2028-03 interestIncome                   0.000000 cash  interestIncome         c-
+  0036 2028-04 interestIncome                   0.000000 cash  interestIncome         c-
+  0037 2028-05 interestIncome                   0.000000 cash  interestIncome         c-
+  0038 2028-06 interestIncome                   0.000000 cash  interestIncome         c-
+  0039 2028-07 interestIncome                   0.000000 cash  interestIncome         c-
+  0040 2028-08 interestIncome                   0.000000 cash  interestIncome         c-
+  0041 2028-09 interestIncome                   0.000000 cash  interestIncome         c-
+  0042 2028-10 interestIncome                   0.000000 cash  interestIncome         c-
+  0043 2028-11 interestIncome                   0.000000 cash  interestIncome         c-
+  0044 2028-12 interestIncome                   0.000000 cash  interestIncome         c-
+  0045 2029-01 interestIncome                   0.000000 cash  interestIncome         c-
+  0046 2029-02 interestIncome                   0.000000 cash  interestIncome         c-
+  0047 2029-03 interestIncome                   0.000000 cash  interestIncome         c-
+  0048 2029-04 interestIncome                   0.000000 cash  interestIncome         c-
+  0049 2029-05 interestIncome                   0.000000 cash  interestIncome         c-
+  0050 2029-06 interestIncome                   0.000000 cash  interestIncome         c-
+  0051 2029-07 interestIncome                   0.000000 cash  interestIncome         c-
+  0052 2029-08 interestIncome                   0.000000 cash  interestIncome         c-
+  0053 2029-09 interestIncome                   0.000000 cash  interestIncome         c-
+  0054 2029-10 interestIncome                   0.000000 cash  interestIncome         c-
+  0055 2029-11 interestIncome                   0.000000 cash  interestIncome         c-
+  0056 2029-12 interestIncome                   0.000000 cash  interestIncome         c-
+  0057 2030-01 interestIncome                   0.000000 cash  interestIncome         c-
+  0058 2030-02 interestIncome                   0.000000 cash  interestIncome         c-
+  0059 2030-03 interestIncome                   0.000000 cash  interestIncome         c-
+  0060 2030-04 interestIncome                   0.000000 cash  interestIncome         c-
+  0061 2030-05 interestIncome                   0.000000 cash  interestIncome         c-
+  0062 2030-06 interestIncome                   0.000000 cash  interestIncome         c-
+  0063 2030-07 interestIncome                   0.000000 cash  interestIncome         c-
+  0064 2030-08 interestIncome                   0.000000 cash  interestIncome         c-
+  0065 2030-09 interestIncome                   0.000000 cash  interestIncome         c-
+  0066 2030-10 interestIncome                   0.000000 cash  interestIncome         c-
+  0067 2030-11 interestIncome                   0.000000 cash  interestIncome         c-
+  0068 2030-12 interestIncome                   0.000000 cash  interestIncome         c-
+
+[history] Checking
+  value                        n=  60 first=    30868.410000 last=        0.000000 min=        0.000000 max=    30868.410000 sum=      68901.430000 #988d9cae
+  estimatedIncomeTax           n=  60 first=    -3131.590000 last=        0.000000 min=    -3131.590000 max=        0.000000 sum=     -12303.150000 #df91803a
+  incomeTax                    n=  60 first=    -3131.590000 last=        0.000000 min=    -3131.590000 max=        0.000000 sum=     -12303.150000 #df91803a
+  federalTaxes                 n=  60 first=    -3131.590000 last=        0.000000 min=    -3131.590000 max=        0.000000 sum=     -12303.150000 #df91803a
+  taxes                        n=  60 first=    -3131.590000 last=        0.000000 min=    -3131.590000 max=        0.000000 sum=     -12303.150000 #df91803a
+  cashFlow                     n=  60 first=    -3131.590000 last=        0.000000 min=    -3131.590000 max=        0.000000 sum=     -12303.150000 #df91803a
+  cashFlowAccumulated          n=  60 first=    -3131.590000 last=   -12303.140000 min=   -12303.140000 max=    -3131.590000 sum=    -719919.210000 #d7755f3c
+
+[asset] IRA
+  instrument = ira
+  start = 2026-01  finish = 2030-12
+  startCurrency = 2200000.000000
+  finishCurrency = 1444581.508416
+  startBasis = 0.000000
+  finishBasis = 0.000000
+  isClosed = no  isDepleted = no
+  closedDate = -  closedValue = -
+  events = 180  reconciled = 180
+
+[events] IRA
+  0000 2026-01 transfer                    -22000.000000 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0001 2026-01 assetGrowth                   9075.000000 cash  growth                 c-
+  0002 2026-01 incomeTaxWithholding         -2444.444444 cash  -                      c15 {rate=0.100000 source=distribution}
+  0003 2026-02 transfer                    -21846.305556 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0004 2026-02 assetGrowth                   9011.601042 cash  growth                 c-
+  0005 2026-02 incomeTaxWithholding         -2427.367284 cash  -                      c15 {rate=0.100000 source=distribution}
+  0006 2026-03 transfer                    -21693.684838 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0007 2026-03 assetGrowth                   8948.644996 cash  growth                 c-
+  0008 2026-03 incomeTaxWithholding         -2410.409426 cash  -                      c15 {rate=0.100000 source=distribution}
+  0009 2026-04 transfer                    -21542.130345 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0010 2026-04 assetGrowth                   8886.128767 cash  growth                 c-
+  0011 2026-04 incomeTaxWithholding         -2393.570038 cash  -                      c15 {rate=0.100000 source=distribution}
+  0012 2026-05 transfer                    -21391.634629 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0013 2026-05 assetGrowth                   8824.049284 cash  growth                 c-
+  0014 2026-05 incomeTaxWithholding         -2376.848292 cash  -                      c15 {rate=0.100000 source=distribution}
+  0015 2026-06 transfer                    -21242.190292 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0016 2026-06 assetGrowth                   8762.403496 cash  growth                 c-
+  0017 2026-06 incomeTaxWithholding         -2360.243366 cash  -                      c15 {rate=0.100000 source=distribution}
+  0018 2026-07 transfer                    -21093.789991 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0019 2026-07 assetGrowth                   8701.188371 cash  growth                 c-
+  0020 2026-07 incomeTaxWithholding         -2343.754443 cash  -                      c15 {rate=0.100000 source=distribution}
+  0021 2026-08 transfer                    -20946.426430 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0022 2026-08 assetGrowth                   8640.400902 cash  growth                 c-
+  0023 2026-08 incomeTaxWithholding         -2327.380714 cash  -                      c15 {rate=0.100000 source=distribution}
+  0024 2026-09 transfer                    -20800.092368 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0025 2026-09 assetGrowth                   8580.038102 cash  growth                 c-
+  0026 2026-09 incomeTaxWithholding         -2311.121374 cash  -                      c15 {rate=0.100000 source=distribution}
+  0027 2026-10 transfer                    -20654.780611 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0028 2026-10 assetGrowth                   8520.097002 cash  growth                 c-
+  0029 2026-10 incomeTaxWithholding         -2294.975623 cash  -                      c15 {rate=0.100000 source=distribution}
+  0030 2026-11 transfer                    -20510.484019 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0031 2026-11 assetGrowth                   8460.574658 cash  growth                 c-
+  0032 2026-11 incomeTaxWithholding         -2278.942669 cash  -                      c15 {rate=0.100000 source=distribution}
+  0033 2026-12 transfer                    -20367.195499 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0034 2026-12 assetGrowth                   8401.468143 cash  growth                 c-
+  0035 2026-12 incomeTaxWithholding         -2263.021722 cash  -                      c15 {rate=0.100000 source=distribution}
+  0036 2027-01 transfer                    -20224.908008 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0037 2027-01 assetGrowth                   8342.774553 cash  growth                 c-
+  0038 2027-01 incomeTaxWithholding         -2247.212001 cash  -                      c15 {rate=0.100000 source=distribution}
+  0039 2027-02 transfer                    -20083.614553 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0040 2027-02 assetGrowth                   8284.491003 cash  growth                 c-
+  0041 2027-02 incomeTaxWithholding         -2231.512728 cash  -                      c15 {rate=0.100000 source=distribution}
+  0042 2027-03 transfer                    -19943.308191 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0043 2027-03 assetGrowth                   8226.614629 cash  growth                 c-
+  0044 2027-03 incomeTaxWithholding         -2215.923132 cash  -                      c15 {rate=0.100000 source=distribution}
+  0045 2027-04 transfer                    -19803.982024 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0046 2027-04 assetGrowth                   8169.142585 cash  growth                 c-
+  0047 2027-04 incomeTaxWithholding         -2200.442447 cash  -                      c15 {rate=0.100000 source=distribution}
+  0048 2027-05 transfer                    -19665.629205 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0049 2027-05 assetGrowth                   8112.072047 cash  growth                 c-
+  0050 2027-05 incomeTaxWithholding         -2185.069912 cash  -                      c15 {rate=0.100000 source=distribution}
+  0051 2027-06 transfer                    -19528.242934 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0052 2027-06 assetGrowth                   8055.400210 cash  growth                 c-
+  0053 2027-06 incomeTaxWithholding         -2169.804770 cash  -                      c15 {rate=0.100000 source=distribution}
+  0054 2027-07 transfer                    -19391.816459 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0055 2027-07 assetGrowth                   7999.124289 cash  growth                 c-
+  0056 2027-07 incomeTaxWithholding         -2154.646273 cash  -                      c15 {rate=0.100000 source=distribution}
+  0057 2027-08 transfer                    -19256.343075 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0058 2027-08 assetGrowth                   7943.241518 cash  growth                 c-
+  0059 2027-08 incomeTaxWithholding         -2139.593675 cash  -                      c15 {rate=0.100000 source=distribution}
+  0060 2027-09 transfer                    -19121.816122 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0061 2027-09 assetGrowth                   7887.749150 cash  growth                 c-
+  0062 2027-09 incomeTaxWithholding         -2124.646236 cash  -                      c15 {rate=0.100000 source=distribution}
+  0063 2027-10 transfer                    -18988.228990 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0064 2027-10 assetGrowth                   7832.644458 cash  growth                 c-
+  0065 2027-10 incomeTaxWithholding         -2109.803221 cash  -                      c15 {rate=0.100000 source=distribution}
+  0066 2027-11 transfer                    -18855.575113 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0067 2027-11 assetGrowth                   7777.924734 cash  growth                 c-
+  0068 2027-11 incomeTaxWithholding         -2095.063901 cash  -                      c15 {rate=0.100000 source=distribution}
+  0069 2027-12 transfer                    -18723.847970 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0070 2027-12 assetGrowth                   7723.587288 cash  growth                 c-
+  0071 2027-12 incomeTaxWithholding         -2080.427552 cash  -                      c15 {rate=0.100000 source=distribution}
+  0072 2028-01 transfer                    -18593.041088 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0073 2028-01 assetGrowth                   7669.629449 cash  growth                 c-
+  0074 2028-01 incomeTaxWithholding         -2065.893454 cash  -                      c15 {rate=0.100000 source=distribution}
+  0075 2028-02 transfer                    -18463.148037 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0076 2028-02 assetGrowth                   7616.048565 cash  growth                 c-
+  0077 2028-02 incomeTaxWithholding         -2051.460893 cash  -                      c15 {rate=0.100000 source=distribution}
+  0078 2028-03 transfer                    -18334.162433 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0079 2028-03 assetGrowth                   7562.842004 cash  growth                 c-
+  0080 2028-03 incomeTaxWithholding         -2037.129159 cash  -                      c15 {rate=0.100000 source=distribution}
+  0081 2028-04 transfer                    -18206.077937 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0082 2028-04 assetGrowth                   7510.007149 cash  growth                 c-
+  0083 2028-04 incomeTaxWithholding         -2022.897549 cash  -                      c15 {rate=0.100000 source=distribution}
+  0084 2028-05 transfer                    -18078.888254 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0085 2028-05 assetGrowth                   7457.541405 cash  growth                 c-
+  0086 2028-05 incomeTaxWithholding         -2008.765362 cash  -                      c15 {rate=0.100000 source=distribution}
+  0087 2028-06 transfer                    -17952.587132 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0088 2028-06 assetGrowth                   7405.442192 cash  growth                 c-
+  0089 2028-06 incomeTaxWithholding         -1994.731904 cash  -                      c15 {rate=0.100000 source=distribution}
+  0090 2028-07 transfer                    -17827.168363 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0091 2028-07 assetGrowth                   7353.706950 cash  growth                 c-
+  0092 2028-07 incomeTaxWithholding         -1980.796485 cash  -                      c15 {rate=0.100000 source=distribution}
+  0093 2028-08 transfer                    -17702.625784 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0094 2028-08 assetGrowth                   7302.333136 cash  growth                 c-
+  0095 2028-08 incomeTaxWithholding         -1966.958420 cash  -                      c15 {rate=0.100000 source=distribution}
+  0096 2028-09 transfer                    -17578.953274 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0097 2028-09 assetGrowth                   7251.318225 cash  growth                 c-
+  0098 2028-09 incomeTaxWithholding         -1953.217030 cash  -                      c15 {rate=0.100000 source=distribution}
+  0099 2028-10 transfer                    -17456.144753 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0100 2028-10 assetGrowth                   7200.659711 cash  growth                 c-
+  0101 2028-10 incomeTaxWithholding         -1939.571639 cash  -                      c15 {rate=0.100000 source=distribution}
+  0102 2028-11 transfer                    -17334.194186 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0103 2028-11 assetGrowth                   7150.355102 cash  growth                 c-
+  0104 2028-11 incomeTaxWithholding         -1926.021576 cash  -                      c15 {rate=0.100000 source=distribution}
+  0105 2028-12 transfer                    -17213.095579 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0106 2028-12 assetGrowth                   7100.401926 cash  growth                 c-
+  0107 2028-12 incomeTaxWithholding         -1912.566175 cash  -                      c15 {rate=0.100000 source=distribution}
+  0108 2029-01 transfer                    -17092.842981 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0109 2029-01 assetGrowth                   7050.797730 cash  growth                 c-
+  0110 2029-01 incomeTaxWithholding         -1899.204776 cash  -                      c15 {rate=0.100000 source=distribution}
+  0111 2029-02 transfer                    -16973.430481 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0112 2029-02 assetGrowth                   7001.540073 cash  growth                 c-
+  0113 2029-02 incomeTaxWithholding         -1885.936720 cash  -                      c15 {rate=0.100000 source=distribution}
+  0114 2029-03 transfer                    -16854.852210 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0115 2029-03 assetGrowth                   6952.626536 cash  growth                 c-
+  0116 2029-03 incomeTaxWithholding         -1872.761357 cash  -                      c15 {rate=0.100000 source=distribution}
+  0117 2029-04 transfer                    -16737.102339 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0118 2029-04 assetGrowth                   6904.054715 cash  growth                 c-
+  0119 2029-04 incomeTaxWithholding         -1859.678038 cash  -                      c15 {rate=0.100000 source=distribution}
+  0120 2029-05 transfer                    -16620.175083 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0121 2029-05 assetGrowth                   6855.822222 cash  growth                 c-
+  0122 2029-05 incomeTaxWithholding         -1846.686120 cash  -                      c15 {rate=0.100000 source=distribution}
+  0123 2029-06 transfer                    -16504.064693 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0124 2029-06 assetGrowth                   6807.926686 cash  growth                 c-
+  0125 2029-06 incomeTaxWithholding         -1833.784966 cash  -                      c15 {rate=0.100000 source=distribution}
+  0126 2029-07 transfer                    -16388.765463 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0127 2029-07 assetGrowth                   6760.365754 cash  growth                 c-
+  0128 2029-07 incomeTaxWithholding         -1820.973940 cash  -                      c15 {rate=0.100000 source=distribution}
+  0129 2029-08 transfer                    -16274.271727 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0130 2029-08 assetGrowth                   6713.137087 cash  growth                 c-
+  0131 2029-08 incomeTaxWithholding         -1808.252414 cash  -                      c15 {rate=0.100000 source=distribution}
+  0132 2029-09 transfer                    -16160.577856 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0133 2029-09 assetGrowth                   6666.238366 cash  growth                 c-
+  0134 2029-09 incomeTaxWithholding         -1795.619762 cash  -                      c15 {rate=0.100000 source=distribution}
+  0135 2029-10 transfer                    -16047.678264 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0136 2029-10 assetGrowth                   6619.667284 cash  growth                 c-
+  0137 2029-10 incomeTaxWithholding         -1783.075363 cash  -                      c15 {rate=0.100000 source=distribution}
+  0138 2029-11 transfer                    -15935.567400 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0139 2029-11 assetGrowth                   6573.421553 cash  growth                 c-
+  0140 2029-11 incomeTaxWithholding         -1770.618600 cash  -                      c15 {rate=0.100000 source=distribution}
+  0141 2029-12 transfer                    -15824.239756 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0142 2029-12 assetGrowth                   6527.498899 cash  growth                 c-
+  0143 2029-12 incomeTaxWithholding         -1758.248862 cash  -                      c15 {rate=0.100000 source=distribution}
+  0144 2030-01 transfer                    -15713.689858 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0145 2030-01 assetGrowth                   6481.897067 cash  growth                 c-
+  0146 2030-01 incomeTaxWithholding         -1745.965540 cash  -                      c15 {rate=0.100000 source=distribution}
+  0147 2030-02 transfer                    -15603.912275 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0148 2030-02 assetGrowth                   6436.613813 cash  growth                 c-
+  0149 2030-02 incomeTaxWithholding         -1733.768031 cash  -                      c15 {rate=0.100000 source=distribution}
+  0150 2030-03 transfer                    -15494.901610 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0151 2030-03 assetGrowth                   6391.646914 cash  growth                 c-
+  0152 2030-03 incomeTaxWithholding         -1721.655734 cash  -                      c15 {rate=0.100000 source=distribution}
+  0153 2030-04 transfer                    -15386.652506 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0154 2030-04 assetGrowth                   6346.994159 cash  growth                 c-
+  0155 2030-04 incomeTaxWithholding         -1709.628056 cash  -                      c15 {rate=0.100000 source=distribution}
+  0156 2030-05 transfer                    -15279.159642 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0157 2030-05 assetGrowth                   6302.653352 cash  growth                 c-
+  0158 2030-05 incomeTaxWithholding         -1697.684405 cash  -                      c15 {rate=0.100000 source=distribution}
+  0159 2030-06 transfer                    -15172.417735 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0160 2030-06 assetGrowth                   6258.622316 cash  growth                 c-
+  0161 2030-06 incomeTaxWithholding         -1685.824193 cash  -                      c15 {rate=0.100000 source=distribution}
+  0162 2030-07 transfer                    -15066.421539 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0163 2030-07 assetGrowth                   6214.898885 cash  growth                 c-
+  0164 2030-07 incomeTaxWithholding         -1674.046838 cash  -                      c15 {rate=0.100000 source=distribution}
+  0165 2030-08 transfer                    -14961.165844 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0166 2030-08 assetGrowth                   6171.480911 cash  growth                 c-
+  0167 2030-08 incomeTaxWithholding         -1662.351760 cash  -                      c15 {rate=0.100000 source=distribution}
+  0168 2030-09 transfer                    -14856.645477 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0169 2030-09 assetGrowth                   6128.366259 cash  growth                 c-
+  0170 2030-09 incomeTaxWithholding         -1650.738386 cash  -                      c15 {rate=0.100000 source=distribution}
+  0171 2030-10 transfer                    -14752.855301 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0172 2030-10 assetGrowth                   6085.552812 cash  growth                 c-
+  0173 2030-10 incomeTaxWithholding         -1639.206145 cash  -                      c15 {rate=0.100000 source=distribution}
+  0174 2030-11 transfer                    -14649.790215 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0175 2030-11 assetGrowth                   6043.038464 cash  growth                 c-
+  0176 2030-11 incomeTaxWithholding         -1627.754468 cash  -                      c15 {rate=0.100000 source=distribution}
+  0177 2030-12 transfer                    -14547.445152 cash  -                      c0 {cadence=monthly from=IRA to=Brokerage}
+  0178 2030-12 assetGrowth                   6000.821125 cash  growth                 c-
+  0179 2030-12 incomeTaxWithholding         -1616.382795 cash  -                      c15 {rate=0.100000 source=distribution}
+
+[history] IRA
+  value                        n=  60 first=  2184630.560000 last=  1444581.510000 min=  1444581.510000 max=  2184630.560000 sum=  107376055.470000 #398079e4
+  growth                       n=  60 first=     9075.000000 last=     6000.820000 min=     6000.820000 max=     9075.000000 sum=     446042.310000 #9317f8a4
+  ordinaryIncome               n=  60 first=    24444.440000 last=    16163.830000 min=    16163.830000 max=    24444.440000 sum=    1201460.800000 #88e34e25
+  income                       n=  60 first=    24444.440000 last=    16163.830000 min=    16163.830000 max=    24444.440000 sum=    1201460.800000 #88e34e25
+  withheldIncomeTax            n=  60 first=    -2444.440000 last=    -1616.380000 min=    -2444.440000 max=    -1616.380000 sum=    -120146.070000 #95d60740
+  incomeTax                    n=  60 first=    -2444.440000 last=    -1616.380000 min=    -2444.440000 max=    -1616.380000 sum=    -120146.070000 #95d60740
+  federalTaxes                 n=  60 first=    -2444.440000 last=    -1616.380000 min=    -2444.440000 max=    -1616.380000 sum=    -120146.070000 #95d60740
+  taxes                        n=  60 first=    -2444.440000 last=    -1616.380000 min=    -2444.440000 max=    -1616.380000 sum=    -120146.070000 #95d60740
+  rmd                          n=  60 first=        0.000000 last=     5115.130000 min=        0.000000 max=     5375.110000 sum=     125882.880000 #96ef204d
+  taxableDistribution          n=  60 first=    24444.440000 last=    16163.830000 min=    16163.830000 max=    24444.440000 sum=    1201460.800000 #88e34e25
+  tradIRADistribution          n=  60 first=    24444.440000 last=    16163.830000 min=    16163.830000 max=    24444.440000 sum=    1201460.800000 #88e34e25
+
+[asset] Living
+  instrument = monthlyExpense
+  start = 2026-01  finish = 2030-12
+  startCurrency = -6000.000000
+  finishCurrency = -7004.547668
+  startBasis = 0.000000
+  finishBasis = 0.000000
+  isClosed = no  isDepleted = no
+  closedDate = -  closedValue = -
+  events = 60  reconciled = 60
+
+[events] Living
+  0000 2026-01 expenseInflation               -15.500000 cash  -                      c-
+  0001 2026-02 expenseInflation               -15.540042 cash  -                      c-
+  0002 2026-03 expenseInflation               -15.580187 cash  -                      c-
+  0003 2026-04 expenseInflation               -15.620436 cash  -                      c-
+  0004 2026-05 expenseInflation               -15.660788 cash  -                      c-
+  0005 2026-06 expenseInflation               -15.701245 cash  -                      c-
+  0006 2026-07 expenseInflation               -15.741807 cash  -                      c-
+  0007 2026-08 expenseInflation               -15.782473 cash  -                      c-
+  0008 2026-09 expenseInflation               -15.823245 cash  -                      c-
+  0009 2026-10 expenseInflation               -15.864121 cash  -                      c-
+  0010 2026-11 expenseInflation               -15.905104 cash  -                      c-
+  0011 2026-12 expenseInflation               -15.946192 cash  -                      c-
+  0012 2027-01 expenseInflation               -15.987386 cash  -                      c-
+  0013 2027-02 expenseInflation               -16.028687 cash  -                      c-
+  0014 2027-03 expenseInflation               -16.070094 cash  -                      c-
+  0015 2027-04 expenseInflation               -16.111609 cash  -                      c-
+  0016 2027-05 expenseInflation               -16.153230 cash  -                      c-
+  0017 2027-06 expenseInflation               -16.194960 cash  -                      c-
+  0018 2027-07 expenseInflation               -16.236797 cash  -                      c-
+  0019 2027-08 expenseInflation               -16.278742 cash  -                      c-
+  0020 2027-09 expenseInflation               -16.320795 cash  -                      c-
+  0021 2027-10 expenseInflation               -16.362957 cash  -                      c-
+  0022 2027-11 expenseInflation               -16.405228 cash  -                      c-
+  0023 2027-12 expenseInflation               -16.447608 cash  -                      c-
+  0024 2028-01 expenseInflation               -16.490098 cash  -                      c-
+  0025 2028-02 expenseInflation               -16.532697 cash  -                      c-
+  0026 2028-03 expenseInflation               -16.575407 cash  -                      c-
+  0027 2028-04 expenseInflation               -16.618227 cash  -                      c-
+  0028 2028-05 expenseInflation               -16.661157 cash  -                      c-
+  0029 2028-06 expenseInflation               -16.704198 cash  -                      c-
+  0030 2028-07 expenseInflation               -16.747351 cash  -                      c-
+  0031 2028-08 expenseInflation               -16.790615 cash  -                      c-
+  0032 2028-09 expenseInflation               -16.833991 cash  -                      c-
+  0033 2028-10 expenseInflation               -16.877478 cash  -                      c-
+  0034 2028-11 expenseInflation               -16.921079 cash  -                      c-
+  0035 2028-12 expenseInflation               -16.964791 cash  -                      c-
+  0036 2029-01 expenseInflation               -17.008617 cash  -                      c-
+  0037 2029-02 expenseInflation               -17.052556 cash  -                      c-
+  0038 2029-03 expenseInflation               -17.096608 cash  -                      c-
+  0039 2029-04 expenseInflation               -17.140775 cash  -                      c-
+  0040 2029-05 expenseInflation               -17.185055 cash  -                      c-
+  0041 2029-06 expenseInflation               -17.229450 cash  -                      c-
+  0042 2029-07 expenseInflation               -17.273959 cash  -                      c-
+  0043 2029-08 expenseInflation               -17.318584 cash  -                      c-
+  0044 2029-09 expenseInflation               -17.363323 cash  -                      c-
+  0045 2029-10 expenseInflation               -17.408179 cash  -                      c-
+  0046 2029-11 expenseInflation               -17.453150 cash  -                      c-
+  0047 2029-12 expenseInflation               -17.498237 cash  -                      c-
+  0048 2030-01 expenseInflation               -17.543441 cash  -                      c-
+  0049 2030-02 expenseInflation               -17.588761 cash  -                      c-
+  0050 2030-03 expenseInflation               -17.634199 cash  -                      c-
+  0051 2030-04 expenseInflation               -17.679754 cash  -                      c-
+  0052 2030-05 expenseInflation               -17.725427 cash  -                      c-
+  0053 2030-06 expenseInflation               -17.771217 cash  -                      c-
+  0054 2030-07 expenseInflation               -17.817126 cash  -                      c-
+  0055 2030-08 expenseInflation               -17.863154 cash  -                      c-
+  0056 2030-09 expenseInflation               -17.909300 cash  -                      c-
+  0057 2030-10 expenseInflation               -17.955566 cash  -                      c-
+  0058 2030-11 expenseInflation               -18.001951 cash  -                      c-
+  0059 2030-12 expenseInflation               -18.048456 cash  -                      c-
+
+[history] Living
+  value                        n=  60 first=    -6015.500000 last=    -7004.550000 min=    -7004.550000 max=    -6015.500000 sum=    -389861.700000 #cbd267f4
+  expense                      n=  60 first=    -6000.000000 last=    -6986.500000 min=    -6986.500000 max=    -6000.000000 sum=    -388857.150000 #58322bab
+  cashFlow                     n=  60 first=    -6000.000000 last=    -6986.500000 min=    -6986.500000 max=    -6000.000000 sum=    -388857.150000 #58322bab
+  cashFlowAccumulated          n=  60 first=    -6000.000000 last=  -388857.160000 min=  -388857.160000 max=    -6000.000000 sum=  -11559371.450000 #6b1cb668
+  livingExpense                n=  60 first=    -6000.000000 last=    -6986.500000 min=    -6986.500000 max=    -6000.000000 sum=    -388857.150000 #58322bab
+
+[packages]
+  0000 assetAppreciation=10481.666667 expense=-6000.000000 incomeTax=-5576.029931 tradIRADistribution=24444.444444 nonQualifiedDividends=264.629167 qualifiedDividends=617.468056 value=2633772.233958
+  0001 assetAppreciation=10498.717940 expense=-6015.500000 incomeTax=-5521.557014 tradIRADistribution=24273.672840 nonQualifiedDividends=279.763866 qualifiedDividends=652.782355 value=2633650.901064
+  0002 assetAppreciation=10516.139720 expense=-6031.040042 incomeTax=-5467.496890 tradIRADistribution=24104.094264 nonQualifiedDividends=294.884945 qualifiedDividends=688.064872 value=2633635.873483
+  0003 assetAppreciation=10533.932075 expense=-6046.620228 incomeTax=-5413.846850 tradIRADistribution=23935.700383 nonQualifiedDividends=309.992997 qualifiedDividends=723.316994 value=2633727.028035
+  0004 assetAppreciation=10543.899950 expense=-6062.240664 incomeTax=-5360.064606 tradIRADistribution=23768.482921 nonQualifiedDividends=323.546907 qualifiedDividends=754.942782 value=2633911.451615
+  0005 assetAppreciation=10531.556385 expense=-6077.901452 incomeTax=-5305.193608 tradIRADistribution=23602.433658 nonQualifiedDividends=332.821887 qualifiedDividends=776.584404 value=2633964.872136
+  0006 assetAppreciation=10519.496814 expense=-6093.602698 incomeTax=-5250.718965 tradIRADistribution=23437.544434 nonQualifiedDividends=342.069276 qualifiedDividends=798.161644 value=2634077.406194
+  0007 assetAppreciation=10507.719150 expense=-6109.344505 incomeTax=-5196.637903 tradIRADistribution=23273.807145 nonQualifiedDividends=351.289245 qualifiedDividends=819.674906 value=2634248.609369
+  0008 assetAppreciation=10496.221367 expense=-6125.126978 incomeTax=-5142.947668 tradIRADistribution=23111.213742 nonQualifiedDividends=360.481977 qualifiedDividends=841.124612 value=2634478.053920
+  0009 assetAppreciation=10485.001489 expense=-6140.950223 incomeTax=-5089.645529 tradIRADistribution=22949.756235 nonQualifiedDividends=369.647657 qualifiedDividends=862.511199 value=2634765.327190
+  0010 assetAppreciation=10474.057596 expense=-6156.814344 incomeTax=-5036.728775 tradIRADistribution=22789.426688 nonQualifiedDividends=378.786478 qualifiedDividends=883.835115 value=2635110.030232
+  0011 assetAppreciation=10463.387808 expense=-6172.719448 incomeTax=-4984.194717 tradIRADistribution=22630.217221 nonQualifiedDividends=387.898637 qualifiedDividends=905.096819 value=2635511.776595
+  0012 assetAppreciation=10446.639529 expense=-6188.665640 incomeTax=-4852.266408 tradIRADistribution=22472.120009 nonQualifiedDividends=395.789599 qualifiedDividends=923.509063 value=2634134.404314
+  0013 assetAppreciation=10436.742241 expense=-6204.653026 incomeTax=-4804.941588 tradIRADistribution=22315.127281 nonQualifiedDividends=404.892264 qualifiedDividends=944.748616 value=2634713.971915
+  0014 assetAppreciation=10427.100203 expense=-6220.681713 incomeTax=-4757.958588 tradIRADistribution=22159.231323 nonQualifiedDividends=413.966349 qualifiedDividends=965.921480 value=2635345.460923
+  0015 assetAppreciation=10417.711715 expense=-6236.751807 incomeTax=-4711.315026 tradIRADistribution=22004.424471 nonQualifiedDividends=423.012068 qualifiedDividends=987.028158 value=2636028.532836
+  0016 assetAppreciation=10408.575106 expense=-6252.863416 incomeTax=-4665.008535 tradIRADistribution=21850.699116 nonQualifiedDividends=432.029638 qualifiedDividends=1008.069155 value=2636762.857557
+  0017 assetAppreciation=10399.688736 expense=-6269.016647 incomeTax=-4619.036768 tradIRADistribution=21698.047705 nonQualifiedDividends=441.019279 qualifiedDividends=1029.044984 value=2637548.112781
+  0018 assetAppreciation=10391.050994 expense=-6285.211606 incomeTax=-4573.397395 tradIRADistribution=21546.462732 nonQualifiedDividends=449.981211 qualifiedDividends=1049.956160 value=2638383.983451
+  0019 assetAppreciation=10382.660295 expense=-6301.448403 incomeTax=-4528.088104 tradIRADistribution=21395.936750 nonQualifiedDividends=458.915657 qualifiedDividends=1070.803200 value=2639270.161265
+  0020 assetAppreciation=10374.515078 expense=-6317.727145 incomeTax=-4483.106597 tradIRADistribution=21246.462358 nonQualifiedDividends=467.822840 qualifiedDividends=1091.586627 value=2640206.344237
+  0021 assetAppreciation=10366.613805 expense=-6334.047940 incomeTax=-4438.450596 tradIRADistribution=21098.032211 nonQualifiedDividends=476.702983 qualifiedDividends=1112.306961 value=2641192.236301
+  0022 assetAppreciation=10358.954963 expense=-6350.410897 incomeTax=-4394.117838 tradIRADistribution=20950.639014 nonQualifiedDividends=485.556312 qualifiedDividends=1132.964728 value=2642227.546957
+  0023 assetAppreciation=10351.537058 expense=-6366.816125 incomeTax=-4350.106077 tradIRADistribution=20804.275522 nonQualifiedDividends=494.383051 qualifiedDividends=1153.560451 value=2643311.990942
+  0024 assetAppreciation=10335.865508 expense=-6383.263734 incomeTax=-4229.472393 tradIRADistribution=20658.934542 nonQualifiedDividends=501.585659 qualifiedDividends=1170.366537 value=2641960.477090
+  0025 assetAppreciation=10329.133620 expense=-6399.753832 incomeTax=-4186.108506 tradIRADistribution=20514.608930 nonQualifiedDividends=510.399126 qualifiedDividends=1190.931294 value=2643205.241161
+  0026 assetAppreciation=10322.639502 expense=-6416.286529 incomeTax=-4143.059048 tradIRADistribution=20371.291592 nonQualifiedDividends=519.186904 qualifiedDividends=1211.436110 value=2644498.671829
+  0027 assetAppreciation=10316.381737 expense=-6432.861936 incomeTax=-4100.321834 tradIRADistribution=20228.975486 nonQualifiedDividends=527.949219 qualifiedDividends=1231.881512 value=2645840.502710
+  0028 assetAppreciation=10310.358929 expense=-6449.480163 incomeTax=-4057.894701 tradIRADistribution=20087.653615 nonQualifiedDividends=536.686297 qualifiedDividends=1252.268026 value=2647230.471526
+  0029 assetAppreciation=10304.569694 expense=-6466.141320 incomeTax=-4015.775496 tradIRADistribution=19947.319035 nonQualifiedDividends=545.398361 qualifiedDividends=1272.596176 value=2648668.319906
+  0030 assetAppreciation=10299.012668 expense=-6482.845518 incomeTax=-3973.962084 tradIRADistribution=19807.964848 nonQualifiedDividends=554.085638 qualifiedDividends=1292.866489 value=2650153.793215
+  0031 assetAppreciation=10293.686500 expense=-6499.592869 incomeTax=-3932.452347 tradIRADistribution=19669.584205 nonQualifiedDividends=562.748352 qualifiedDividends=1313.079487 value=2651686.640389
+  0032 assetAppreciation=10288.589856 expense=-6516.383484 incomeTax=-3891.244178 tradIRADistribution=19532.170304 nonQualifiedDividends=571.386725 qualifiedDividends=1333.235693 value=2653266.613787
+  0033 assetAppreciation=10283.721414 expense=-6533.217475 incomeTax=-3850.335489 tradIRADistribution=19395.716392 nonQualifiedDividends=580.000983 qualifiedDividends=1353.335627 value=2654893.469049
+  0034 assetAppreciation=10279.079868 expense=-6550.094953 incomeTax=-3809.724203 tradIRADistribution=19260.215762 nonQualifiedDividends=588.591347 qualifiedDividends=1373.379809 value=2656566.964975
+  0035 assetAppreciation=10274.663925 expense=-6567.016032 incomeTax=-3769.408263 tradIRADistribution=19125.661755 nonQualifiedDividends=597.158038 qualifiedDividends=1393.368756 value=2658286.863400
+  0036 assetAppreciation=10259.991154 expense=-6583.980823 incomeTax=-3674.107086 tradIRADistribution=18992.047757 nonQualifiedDividends=603.729513 qualifiedDividends=1408.702197 value=2656946.808717
+  0037 assetAppreciation=10256.147938 expense=-6600.989440 incomeTax=-3644.314215 tradIRADistribution=18859.367201 nonQualifiedDividends=612.273105 qualifiedDividends=1428.637244 value=2658786.679044
+  0038 assetAppreciation=10252.494146 expense=-6618.041996 incomeTax=-3614.736820 tradIRADistribution=18727.613566 nonQualifiedDividends=620.787594 qualifiedDividends=1448.504386 value=2660662.562167
+  0039 assetAppreciation=10249.028596 expense=-6635.138605 incomeTax=-3585.373403 tradIRADistribution=18596.780377 nonQualifiedDividends=629.273211 qualifiedDividends=1468.304160 value=2662574.249106
+  0040 assetAppreciation=10245.750120 expense=-6652.279379 incomeTax=-3556.222475 tradIRADistribution=18466.861203 nonQualifiedDividends=637.730186 qualifiedDividends=1488.037100 value=2664521.533150
+  0041 assetAppreciation=10242.657558 expense=-6669.464435 incomeTax=-3527.282558 tradIRADistribution=18337.849659 nonQualifiedDividends=646.158745 qualifiedDividends=1507.703739 value=2666504.209774
+  0042 assetAppreciation=10239.749761 expense=-6686.693884 incomeTax=-3498.552186 tradIRADistribution=18209.739403 nonQualifiedDividends=654.559116 qualifiedDividends=1527.304605 value=2668522.076562
+  0043 assetAppreciation=10237.025591 expense=-6703.967843 incomeTax=-3470.029901 tradIRADistribution=18082.524141 nonQualifiedDividends=662.931525 qualifiedDividends=1546.840225 value=2670574.933129
+  0044 assetAppreciation=10234.483919 expense=-6721.286427 incomeTax=-3441.714256 tradIRADistribution=17956.197618 nonQualifiedDividends=671.276195 qualifiedDividends=1566.311121 value=2672662.581056
+  0045 assetAppreciation=10232.123626 expense=-6738.649750 incomeTax=-3413.603816 tradIRADistribution=17830.753626 nonQualifiedDividends=679.593349 qualifiedDividends=1585.717815 value=2674784.823823
+  0046 assetAppreciation=10229.943602 expense=-6756.057929 incomeTax=-3385.697152 tradIRADistribution=17706.186000 nonQualifiedDividends=687.883210 qualifiedDividends=1605.060824 value=2676941.466748
+  0047 assetAppreciation=10227.942745 expense=-6773.511079 incomeTax=-3357.992849 tradIRADistribution=17582.488617 nonQualifiedDividends=696.145999 qualifiedDividends=1624.340663 value=2679132.316931
+  0048 assetAppreciation=10213.720527 expense=-6791.009315 incomeTax=-3298.034403 tradIRADistribution=17459.655398 nonQualifiedDividends=702.049289 qualifiedDividends=1638.115007 value=2677649.631821
+  0049 assetAppreciation=10212.113346 expense=-6808.552756 incomeTax=-3270.732355 tradIRADistribution=17337.680306 nonQualifiedDividends=710.265850 qualifiedDividends=1657.286982 value=2679919.967357
+  0050 assetAppreciation=10210.682342 expense=-6826.141518 incomeTax=-3243.628490 tradIRADistribution=17216.557345 nonQualifiedDividends=718.456040 qualifiedDividends=1676.397426 value=2682224.019408
+  0051 assetAppreciation=10209.426449 expense=-6843.775716 incomeTax=-3216.721431 tradIRADistribution=17096.280562 nonQualifiedDividends=726.620075 qualifiedDividends=1695.446841 value=2684561.601677
+  0052 assetAppreciation=10208.344609 expense=-6861.455470 incomeTax=-3190.009810 tradIRADistribution=16976.844047 nonQualifiedDividends=734.758168 qualifiedDividends=1714.435725 value=2686932.529428
+  0053 assetAppreciation=10207.435773 expense=-6879.180897 incomeTax=-3163.492268 tradIRADistribution=16858.241928 nonQualifiedDividends=742.870532 qualifiedDividends=1733.364574 value=2689336.619439
+  0054 assetAppreciation=10206.698899 expense=-6896.952114 incomeTax=-3137.167459 tradIRADistribution=16740.468376 nonQualifiedDividends=750.957378 qualifiedDividends=1752.233881 value=2691773.689965
+  0055 assetAppreciation=10206.132953 expense=-6914.769241 incomeTax=-3111.034043 tradIRADistribution=16623.517604 nonQualifiedDividends=759.018915 qualifiedDividends=1771.044136 value=2694243.560699
+  0056 assetAppreciation=10205.736909 expense=-6932.632394 incomeTax=-3085.090690 tradIRADistribution=16507.383863 nonQualifiedDividends=767.055353 qualifiedDividends=1789.795825 value=2696746.052736
+  0057 assetAppreciation=10205.509748 expense=-6950.541695 incomeTax=-3059.336081 tradIRADistribution=16392.061445 nonQualifiedDividends=775.066899 qualifiedDividends=1808.489430 value=2699280.988538
+  0058 assetAppreciation=10205.450461 expense=-6968.497261 incomeTax=-3033.768904 tradIRADistribution=16277.544683 nonQualifiedDividends=783.053757 qualifiedDividends=1827.125433 value=2701848.191903
+  0059 assetAppreciation=10205.558042 expense=-6986.499212 incomeTax=-3008.387857 tradIRADistribution=16163.827947 nonQualifiedDividends=791.016132 qualifiedDividends=1845.704309 value=2704447.487932
+
+[priceIndex]
+  [0000]         1.002583         1.005173         1.007770         1.010373         1.012984         1.015600
+  [0006]         1.018224         1.020854         1.023492         1.026136         1.028787         1.031444
+  [0012]         1.034109         1.036780         1.039459         1.042144         1.044836         1.047535
+  [0018]         1.050241         1.052955         1.055675         1.058402         1.061136         1.063877
+  [0024]         1.066626         1.069381         1.072144         1.074913         1.077690         1.080474
+  [0030]         1.083265         1.086064         1.088870         1.091682         1.094503         1.097330
+  [0036]         1.100165         1.103007         1.105856         1.108713         1.111577         1.114449
+  [0042]         1.117328         1.120214         1.123108         1.126010         1.128919         1.131835
+  [0048]         1.134759         1.137690         1.140629         1.143576         1.146530         1.149492
+  [0054]         1.152462         1.155439         1.158424         1.161416         1.164417         1.167425
+
+[sanity]
+  (no findings)
+
+[traces]
+  scopes = 1645
+  unattributedEvents = 0
+  1x 2027 annual pass
+  1x 2027 tax true-up
+  1x 2028 annual pass
+  1x 2028 tax true-up
+  1x 2029 annual pass
+  1x 2029 tax true-up
+  1x 2030 annual pass
+  1x 2030 tax true-up
+  1x 2031 annual pass
+  1x 2031 tax true-up
+  7x April 2026
+  7x April 2027
+  7x April 2028
+  7x April 2029
+  7x April 2030
+  7x August 2026
+  7x August 2027
+  7x August 2028
+  7x August 2029
+  7x August 2030
+  7x December 2026
+  7x December 2027
+  7x December 2028
+  7x December 2029
+  7x December 2030
+  7x February 2026
+  7x February 2027
+  7x February 2028
+  7x February 2029
+  7x February 2030
+  60x Federal withholding: IRA
+  7x January 2026
+  7x January 2027
+  7x January 2028
+  7x January 2029
+  7x January 2030
+  7x July 2026
+  7x July 2027
+  7x July 2028
+  7x July 2029
+  7x July 2030
+  7x June 2026
+  7x June 2027
+  7x June 2028
+  7x June 2029
+  7x June 2030
+  7x March 2026
+  7x March 2027
+  7x March 2028
+  7x March 2029
+  7x March 2030
+  7x May 2026
+  7x May 2027
+  7x May 2028
+  7x May 2029
+  7x May 2030
+  5x Net investment income tax
+  7x November 2026
+  7x November 2027
+  7x November 2028
+  7x November 2029
+  7x November 2030
+  7x October 2026
+  7x October 2027
+  7x October 2028
+  7x October 2029
+  7x October 2030
+  60x Pay Brokerage
+  60x Pay Checking
+  60x Pay IRA
+  60x Pay Living
+  60x Payroll: Brokerage
+  60x Payroll: Checking
+  60x Payroll: IRA
+  60x Payroll: Living
+  60x Required distribution from Brokerage
+  60x Required distribution from Checking
+  60x Required distribution from IRA
+  60x Required distribution from Living
+  7x September 2026
+  7x September 2027
+  7x September 2028
+  7x September 2029
+  7x September 2030
+  121x Settle from Brokerage
+  9x Settle from Checking
+  60x Transfer IRA → Brokerage
+  60x Withholding: Brokerage
+  60x Withholding: Checking
+  60x Withholding: IRA
+  60x Withholding: Living
+
+[traceLegend]
+  c0 = Transfer IRA → Brokerage
+  c1 = Pay Living > Settle from Checking
+  c2 = Settle from Brokerage
+  c3 = Pay Living > Settle from Brokerage
+  c4 = 2027 annual pass > 2027 tax true-up > Settle from Brokerage
+  c5 = 2027 annual pass > Net investment income tax > Settle from Brokerage
+  c6 = 2028 annual pass > 2028 tax true-up > Settle from Brokerage
+  c7 = 2028 annual pass > Net investment income tax > Settle from Brokerage
+  c8 = 2029 annual pass > 2029 tax true-up > Settle from Brokerage
+  c9 = 2029 annual pass > Net investment income tax > Settle from Brokerage
+  c10 = 2030 annual pass > 2030 tax true-up > Settle from Brokerage
+  c11 = 2030 annual pass > Net investment income tax > Settle from Brokerage
+  c12 = 2031 annual pass > 2031 tax true-up > Settle from Brokerage
+  c13 = 2031 annual pass > Net investment income tax > Settle from Brokerage
+  c14 = Settle from Checking
+  c15 = Federal withholding: IRA
+
