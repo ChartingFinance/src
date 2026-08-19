@@ -119,7 +119,11 @@ describe('ordinaryTaxable', () => {
 
 describe('capitalGains', () => {
   it('is long-term gains plus qualified dividends, less the §121 exclusion', () => {
+    // The wages are not decoration. Without ordinary income to absorb it, the
+    // $16,100 standard deduction spills onto the gains under §63 and this
+    // asserts 18,900 instead — a different rule than the one named here.
     const b = taxableBasis(pkg({
+      employedIncome: 100000,
       longTermCapitalGains: 50000, qualifiedDividends: 5000, excludedCapitalGains: 20000,
     }), USER);
     expect(b.capitalGains.amount).toBeCloseTo(35000, 6);
@@ -131,10 +135,92 @@ describe('capitalGains', () => {
     expect(b.capitalGains.amount).toBe(0);
   });
 
-  it('ignores ordinary income entirely', () => {
+  it('ignores ordinary income entirely — as long as it covers the deduction', () => {
     const b = taxableBasis(
       pkg({ employedIncome: 250000, longTermCapitalGains: 40000 }), USER);
     expect(b.capitalGains.amount).toBeCloseTo(40000, 6);
+  });
+});
+
+/**
+ * IRC §63 takes the deduction off TAXABLE INCOME, which includes capital gain;
+ * §1(h) then counts the gain LAST. So the deduction lands on ordinary income
+ * first and only what ordinary income cannot absorb reaches the gain. The
+ * engine used to floor ordinary taxable income at zero and discard the
+ * remainder, over-taxing exactly the early retiree living off a brokerage
+ * account.
+ *
+ * Every figure below is hand-computed from the 2026 Single table (standard
+ * deduction $16,100, 0% capital-gains band to $49,450) against the IRS
+ * Qualified Dividends and Capital Gain Tax Worksheet, not read off the
+ * implementation.
+ */
+describe('deduction overflow onto capital gains (§63 / §1(h))', () => {
+  it('does not touch the gains when ordinary income covers the deduction', () => {
+    // 20,000 wages > 16,100 deduction. Nothing spills.
+    const b = taxableBasis(
+      pkg({ employedIncome: 20000, longTermCapitalGains: 40000 }), USER);
+    expect(b.ordinaryTaxable.amount).toBeCloseTo(3900, 6);
+    expect(b.capitalGains.amount).toBeCloseTo(40000, 6);
+    expect(b.unusedDeduction.amount).toBe(0);
+  });
+
+  it('spends exactly the overflow, not the whole deduction', () => {
+    // 10,000 ordinary absorbs 10,000; 6,100 is left and lands on the gains.
+    const b = taxableBasis(
+      pkg({ interestIncome: 10000, longTermCapitalGains: 60000 }), USER);
+    expect(b.ordinaryTaxable.amount).toBe(0);
+    expect(b.capitalGains.amount).toBeCloseTo(53900, 6);
+    expect(b.unusedDeduction.amount).toBe(0);
+  });
+
+  it('shelters the gain outright when there is no ordinary income', () => {
+    // 60,000 − 16,100 = 43,900, which sits below the 49,450 top of the 0% band.
+    const b = taxableBasis(pkg({ longTermCapitalGains: 60000 }), USER);
+    expect(b.capitalGains.amount).toBeCloseTo(43900, 6);
+  });
+
+  it('reports the leftover when the deduction outruns income and gains both', () => {
+    // 2,000 ordinary + 3,000 gains = 5,000 against a 16,100 deduction.
+    const b = taxableBasis(
+      pkg({ interestIncome: 2000, longTermCapitalGains: 3000 }), USER);
+    expect(b.ordinaryTaxable.amount).toBe(0);
+    expect(b.capitalGains.amount).toBe(0);
+    expect(b.unusedDeduction.amount).toBeCloseTo(11100, 6);
+  });
+
+  it('counts an itemised deduction, not just the standard one', () => {
+    // 25,000 interest + 8,000 property tax = 33,000 itemised, beating 16,100.
+    // No ordinary income at all, so all 33,000 reaches the gains.
+    const b = taxableBasis(pkg({
+      mortgageInterest: -25000, propertyTaxes: -8000, longTermCapitalGains: 50000,
+    }), USER);
+    expect(b.capitalGains.amount).toBeCloseTo(17000, 6);
+  });
+
+  it('applies §121 before the deduction, so the two do not overlap', () => {
+    // 30,000 gain less a 20,000 exclusion = 10,000, then the 16,100 deduction
+    // wipes it out and 6,100 is still going spare.
+    const b = taxableBasis(
+      pkg({ longTermCapitalGains: 30000, excludedCapitalGains: 20000 }), USER);
+    expect(b.capitalGains.amount).toBe(0);
+    expect(b.unusedDeduction.amount).toBeCloseTo(6100, 6);
+  });
+
+  it('uses the MFJ deduction when filing jointly', () => {
+    setFiling('MFJ');
+    // 32,200 deduction, no ordinary income: 80,000 − 32,200.
+    const b = taxableBasis(pkg({ longTermCapitalGains: 80000 }), USER);
+    expect(b.capitalGains.amount).toBeCloseTo(47800, 6);
+  });
+
+  it('bills nothing on the sheltered gain — the tax, not just the base', () => {
+    // The regression this rule exists for. 60,000 of gain, no ordinary income:
+    // taxable income 43,900, entirely inside the 0% band. Was $1,582.50.
+    const T = G.activeTaxTable;
+    const b = taxableBasis(pkg({ longTermCapitalGains: 60000 }), USER);
+    const tax = T.calculateYearlyLongTermCapitalGainsTax(b.ltcgStackBase, b.capitalGains);
+    expect(tax.amount).toBe(0);
   });
 });
 
@@ -182,7 +268,9 @@ describe('annualise', () => {
   });
 
   it('scales capital gains too', () => {
-    const b = taxableBasis(pkg({ longTermCapitalGains: 1000 }), USER, { annualise: true });
+    // Wages again carry the deduction, so this measures the ×12 and nothing else.
+    const b = taxableBasis(
+      pkg({ employedIncome: 10000, longTermCapitalGains: 1000 }), USER, { annualise: true });
     expect(b.capitalGains.amount).toBeCloseTo(12000, 6);
   });
 });

@@ -72,6 +72,13 @@
     spillover
     taxTrueUp
     transfer
+  gain-harvest-under-the-deduction:
+    assetGrowth
+    capitalGainRecognized
+    expenseInflation
+    grossUp
+    interestIncome
+    spillover
   grossup-at-the-ltcg-boundary:
     assetGrowth
     capitalGainRecognized

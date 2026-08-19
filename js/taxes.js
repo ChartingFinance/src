@@ -566,14 +566,19 @@ export class TaxTable {
                 taxableGains.amount -= this.activeHomeSaleExclusion;
                 if (taxableGains.amount < 0) taxableGains.zero();
             }
-            const tax = this.calculateYearlyLongTermCapitalGainsTax(annualizedIncome, taxableGains);
             // How much §121 actually removed — the difference, not the headline
             // exclusion, because a gain smaller than the exclusion only uses
             // part of it. The caller has to tell the annual true-up, which
             // otherwise recomputes the year from the gross gain and hands the
             // exclusion straight back. Derived here rather than recomputed
             // there so the clamp above cannot be applied twice differently.
+            //
+            // This is withholding, not liability: the §63 deduction overflow
+            // that tax-basis.js computes is NOT applied here. See the note at
+            // the call site in tax-engine.js for the measurement behind that.
             const excluded = capitalGains.amount - taxableGains.amount;
+
+            const tax = this.calculateYearlyLongTermCapitalGainsTax(annualizedIncome, taxableGains);
             return { isLongTerm: true, tax, excluded };
         } else {
             const tax = this.calculateYearlyIncomeTax(capitalGains);
@@ -650,10 +655,46 @@ export class TaxTable {
         return new Currency(0);
     }
 
-    applyYearlyDeductions(yearly, taxableIncome) {
+    /**
+     * Every dollar this package may deduct, as a POSITIVE Currency: the greater
+     * of the standard or the itemised deduction, plus the deductible pre-tax
+     * contribution.
+     *
+     * Extracted from `applyYearlyDeductions`, which used to compute it inline
+     * and immediately spend it. The total has to be VISIBLE, not just applied,
+     * because a deduction larger than ordinary income is not wasted — under IRC
+     * §1(h) the remainder shelters net capital gain, and nothing could work that
+     * out from a taxable income that had already been floored at zero. See
+     * `taxableBasis`, which is the only thing that needs the number.
+     *
+     * The property-tax sign-normalising below looks redundant and is not: the
+     * accumulator carries expenses negative, but a package assembled by hand in
+     * a test may carry it positive, and both have always meant the same thing
+     * here. Preserved exactly as it was.
+     */
+    totalYearlyDeduction(yearly) {
+
+        const { base, preTax } = this.deductionComponents(yearly);
+        return base.copy().add(preTax);
+
+    }
+
+    /**
+     * The deduction split into the two pieces `applyYearlyDeductions` has always
+     * subtracted SEPARATELY. Kept separate on purpose: Currency is raw IEEE-754
+     * with no rounding, and `x − base − preTax` is not `x − (base + preTax)` for
+     * about a third of operand triples. Collapsing them into one subtraction
+     * changed nothing any household would notice — every committed baseline's
+     * totals stayed bit-identical — but it silently deleted a handful of
+     * −$0.000000 withholding events in years where income and deduction cancel,
+     * which is a snapshot diff that has nothing to do with any tax rule. The
+     * extraction is meant to be provably behaviour-neutral, so it subtracts in
+     * the original order and leaves the noise where it was.
+     */
+    deductionComponents(yearly) {
 
         let propertyTaxDeduction = new Currency(yearly.propertyTaxes.amount);
-        
+
         if (propertyTaxDeduction.amount < 0)
             propertyTaxDeduction.flipSign();
 
@@ -664,22 +705,26 @@ export class TaxTable {
         if (propertyTaxDeduction.amount > 0)
             propertyTaxDeduction.flipSign();
 
-        let totalDeduction = new Currency(yearly.mortgageInterest.amount + propertyTaxDeduction.amount);
-        totalDeduction.flipSign();
+        let itemised = new Currency(yearly.mortgageInterest.amount + propertyTaxDeduction.amount);
+        itemised.flipSign();
 
-        if (totalDeduction.amount > this.activeStandardDeduction) {
-            taxableIncome.subtract(totalDeduction);
-        }
-        else {
-            let c = new Currency(this.activeStandardDeduction);;            
-            taxableIncome.subtract(c);
-        }
+        const base = itemised.amount > this.activeStandardDeduction
+            ? itemised
+            : new Currency(this.activeStandardDeduction);
 
-        if (yearly.four01KContribution.amount > 0)
-            taxableIncome.subtract(yearly.four01KContribution);
-        else
-            taxableIncome.subtract(yearly.tradIRAContribution);
+        const preTax = new Currency(yearly.four01KContribution.amount > 0
+            ? yearly.four01KContribution.amount
+            : yearly.tradIRAContribution.amount);
 
+        return { base, preTax };
+
+    }
+
+    applyYearlyDeductions(yearly, taxableIncome) {
+
+        const { base, preTax } = this.deductionComponents(yearly);
+        taxableIncome.subtract(base);
+        taxableIncome.subtract(preTax);
 
         if (taxableIncome.amount < 0) {
             logger.log(LogCategory.TAX, 'TaxTable.applyYearlyDeductions: taxable income < 0, setting to 0');

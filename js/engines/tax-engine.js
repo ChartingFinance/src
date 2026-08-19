@@ -295,6 +295,22 @@ export class TaxEngine {
         // tax-free Roth distributions, with no deduction removed — so gains
         // were pushed into a higher band than they belong in, and the annual
         // true-up disagreed with this site about the same liability.
+        // Deliberately does NOT apply `basis.unusedDeduction`, though the §63
+        // overflow rule is real and the annual true-up does apply it. Measured
+        // 2026-08-18: this package is ONE MONTH annualised, and at close time it
+        // reads as roughly zero ordinary income, so the whole (inflated)
+        // standard deduction looks unused — to a household earning $108k in the
+        // single-home-sale fixture and far more in mfj-high-earner-ltcg. Wiring
+        // it in cut withholding here by exactly what December then billed back
+        // (2,646.63 and 7,057.68, equal to the cent in both directions), which
+        // buys no accuracy and enlarges the true-up that unfundable-tax-bill
+        // exists to watch.
+        //
+        // This is the same ×12 gap tax-basis.js documents, not a disagreement
+        // about the RULE — withholding is allowed to differ from liability;
+        // that is what a true-up is for. Revisit when the close path gets a
+        // stack base worth trusting: it currently stacks from $0 income, which
+        // the 2026-07-25 review already has open.
         const { ltcgStackBase } = taxableBasis(this.monthly, this.activeUser, { annualise: true });
         const isRealEstate = InstrumentType.isRealEstate(modelAsset.instrument);
         const isPrimaryHome = isRealEstate && modelAsset.isPrimaryHome;
@@ -652,28 +668,28 @@ export class TaxEngine {
         const yearlySnapshot = this.yearly.copy();
         yearlySnapshot.limitDeductions(this.activeUser);
 
-        const { ordinaryTaxable: actualTaxableIncome } = taxableBasis(this.yearly, this.activeUser);
+        // Both bases from ONE call. This site used to recompute the gains base
+        // inline — gross gains less §121, clamped — which was a correct copy of
+        // taxableBasis on the day it was written and a tenth disagreeing
+        // definition the moment the §63 deduction overflow was added to one and
+        // not the other. Subtracting §121 rather than reducing
+        // longTermCapitalGains at the source keeps the recognised gain honest (a
+        // household that sold a home for a $488,452 gain should see $488,452 in
+        // its ledger) and leaves the capitalGains reconciliation bucket
+        // balancing against an untouched accumulator; taxableBasis does it the
+        // same way.
+        const { ordinaryTaxable: actualTaxableIncome, capitalGains: yearlyCapitalGains } =
+            taxableBasis(this.yearly, this.activeUser);
         const actualIncomeTax = activeTaxTable.calculateYearlyIncomeTax(actualTaxableIncome);
 
-        // Gross gains, less whatever §121 excluded at close. Subtracting here
-        // rather than reducing longTermCapitalGains at the source keeps the
-        // recognised gain honest — a household that sold a home for a $488,452
-        // gain should see $488,452 in its ledger — and leaves the
-        // capitalGains reconciliation bucket balancing against an untouched
-        // accumulator.
-        const yearlyCapitalGains = new Currency(
-            yearlySnapshot.longTermCapitalGains.amount
-            + yearlySnapshot.qualifiedDividends.amount
-            - yearlySnapshot.excludedCapitalGains.amount
-        );
-
-        // The exclusion can never exceed the gains it came from, so a negative
-        // base means the two accumulators have drifted apart. Clamp, but say so
-        // — silently taxing a negative base would just produce a wrong number.
-        if (yearlyCapitalGains.amount < 0) {
+        // The exclusion can never exceed the gains it came from, so a zero base
+        // against nonzero gains means the two accumulators may have drifted
+        // apart. taxableBasis clamps silently; say so here, because a wrong
+        // number is easier to find than a quiet one.
+        if (yearlySnapshot.longTermCapitalGains.amount + yearlySnapshot.qualifiedDividends.amount
+            < yearlySnapshot.excludedCapitalGains.amount) {
             logger.log(LogCategory.TAX,
-                'applyAnnualTaxTrueUp: excluded gains exceed realised gains — clamping to 0');
-            yearlyCapitalGains.zero();
+                'applyAnnualTaxTrueUp: excluded gains exceed realised gains — clamped to 0');
         }
         const actualCapitalGainsTax = activeTaxTable.calculateYearlyLongTermCapitalGainsTax(
             actualTaxableIncome, yearlyCapitalGains
