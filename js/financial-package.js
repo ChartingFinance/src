@@ -14,7 +14,7 @@ export const FINANCIAL_FIELDS = [
     'mortgageInterest', 'mortgagePrincipal', 'propertyTaxes',
     'shortTermCapitalGains', 'longTermCapitalGains', 'excludedCapitalGains',
     'nonQualifiedDividends', 'qualifiedDividends', "maintenance", "insurance",
-    'interestIncome', 'longTermCapitalGainsTax',
+    'interestIncome', 'longTermCapitalGainsTax', 'niit',
     'value',
 ];
 
@@ -175,6 +175,12 @@ export class FinancialPackage {
         taxes.add(this.fica());
         taxes.add(this.longTermCapitalGainsTax);
         taxes.add(this.estimatedTaxes);
+        // IRC §1411. Omitted here until 2026-08-20, which left the household
+        // package disagreeing with its own assets: the per-asset FEDERAL_TAXES
+        // metric already included NIIT through the rollup, so an account showed
+        // more federal tax than the package that was meant to total it. It also
+        // made effectiveTaxRate() understate for every household that owed any.
+        taxes.add(this.niit);
         return taxes;
 
     }

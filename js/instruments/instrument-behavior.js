@@ -268,6 +268,12 @@ const CapitalBehavior = Object.freeze({
       // Federal withholding at the source of a deferred distribution books here.
       // Without it the tax is deducted from the account and never shown on it.
       M.WITHHELD_INCOME_TAX,
+      // IRC §1411 books here. Without it the charge still reaches FEDERAL_TAXES
+      // through the rollup, but the NIIT line itself resolves to NULL_METRIC and
+      // the write is a silent no-op — the tax is collected and shown nowhere by
+      // name. Measured 2026-08-20: every fixture that owed NIIT had it folded
+      // anonymously into federalTaxes.
+      M.NIIT,
       M.INCOME_TAX, M.FEDERAL_TAXES, M.TAXES,
       M.CONTRIBUTION, M.PRETAX_CONTRIBUTION, M.POSTTAX_CONTRIBUTION,
       M.TAX_FREE_DISTRIBUTION, M.TAXABLE_DISTRIBUTION,
@@ -347,6 +353,8 @@ const RealEstateBehavior = Object.freeze({
       M.GROWTH, M.INCOME, M.ORDINARY_INCOME, M.EXPENSE,
       M.SHORT_TERM_CAPITAL_GAIN, M.LONG_TERM_CAPITAL_GAIN, M.CAPITAL_GAIN,
       M.SHORT_TERM_CAPITAL_GAIN_TAX, M.LONG_TERM_CAPITAL_GAIN_TAX,
+      // A home sale's gain is net investment income above the §121 exclusion.
+      M.NIIT,
       M.INCOME_TAX, M.FEDERAL_TAXES, M.SALT_TAXES, M.TAXES,
       M.PROPERTY_TAX, M.MAINTENANCE, M.INSURANCE,
     ];
@@ -404,6 +412,9 @@ const IncomeAccountBehavior = Object.freeze({
     return [
       ...COMMON_METRICS,
       M.INTEREST_INCOME, M.ORDINARY_INCOME, M.INCOME, M.NET_INCOME, M.GROWTH,
+      // Interest is net investment income, and a bank is the usual NIIT
+      // backstop and spillover payer — see the note in CapitalBehavior.
+      M.NIIT,
       M.ESTIMATED_INCOME_TAX, M.INCOME_TAX, M.FEDERAL_TAXES, M.TAXES,
     ];
   },

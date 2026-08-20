@@ -45,6 +45,7 @@
   total.propertyTaxes = -188682.122886
   total.longTermCapitalGains = 2347663.639248
   total.excludedCapitalGains = 470528.984753
+  total.niit = -50843.089447
   total.value = 11200106828.836769
 
 [assetOrder]
@@ -9804,6 +9805,7 @@
   growth                       n= 672 first=      191.460000 last=   438811.310000 min=      191.460000 max=   438811.310000 sum=   56582518.310000 #2fe4c8c9
   income                       n= 672 first=        0.000000 last=    10160.960000 min=        0.000000 max=    10160.960000 sum=    1877134.670000 #55a78076
   estimatedIncomeTax           n= 672 first=        0.000000 last=     -933.000000 min=   -18131.140000 max=     5741.330000 sum=     -72844.800000 #60851a68
+  niit                         n= 672 first=        0.000000 last=        0.000000 min=    -4356.860000 max=        0.000000 sum=     -50843.080000 #6bf5749b
   incomeTax                    n= 672 first=        0.000000 last=     -933.000000 min=   -18131.140000 max=     5741.330000 sum=     -72844.800000 #60851a68
   federalTaxes                 n= 672 first=        0.000000 last=     -933.000000 min=   -22488.010000 max=     5741.330000 sum=    -123687.880000 #92ab442f
   taxes                        n= 672 first=        0.000000 last=     -933.000000 min=   -22488.010000 max=     5741.330000 sum=    -123687.880000 #92ab442f
@@ -20971,7 +20973,7 @@
   0489 socialSecurityIncome=4873.611590 assetAppreciation=161859.827565 expense=-16184.961732 incomeTax=-2174.462832 four01KDistribution=21744.628318 longTermCapitalGains=5702.446162 value=22999131.389051
   0490 socialSecurityIncome=4873.611590 assetAppreciation=162910.514006 expense=-16226.772884 incomeTax=-2174.462832 four01KDistribution=21744.628318 longTermCapitalGains=5729.842569 value=23148472.359768
   0491 socialSecurityIncome=4873.611590 assetAppreciation=163968.345882 expense=-16268.692047 incomeTax=-2174.462832 four01KDistribution=21744.628318 longTermCapitalGains=5757.352904 value=23298829.134907
-  0492 socialSecurityIncome=4995.451880 assetAppreciation=165041.631642 expense=-16310.719501 incomeTax=-2350.442028 four01KDistribution=23504.420285 longTermCapitalGains=5682.181617 value=23451328.841366
+  0492 socialSecurityIncome=4995.451880 assetAppreciation=165041.631642 expense=-16310.719501 incomeTax=-2350.442028 four01KDistribution=23504.420285 longTermCapitalGains=5682.181617 niit=-2557.309175 value=23451328.841366
   0493 socialSecurityIncome=4995.451880 assetAppreciation=166113.579293 expense=-16352.855527 incomeTax=-2350.442028 four01KDistribution=23504.420285 longTermCapitalGains=5709.309239 value=23603692.330107
   0494 socialSecurityIncome=4995.451880 assetAppreciation=167192.820672 expense=-16395.100403 incomeTax=-2350.442028 four01KDistribution=23504.420285 longTermCapitalGains=5736.554611 value=23757092.706217
   0495 socialSecurityIncome=4995.451880 assetAppreciation=168279.406669 expense=-16437.454413 incomeTax=-2350.442028 four01KDistribution=23504.420285 longTermCapitalGains=5763.917733 value=23911537.204900
@@ -20983,7 +20985,7 @@
   0501 socialSecurityIncome=4995.451880 assetAppreciation=174956.055029 expense=-16693.886093 incomeTax=-2350.442028 four01KDistribution=23504.420285 longTermCapitalGains=5930.569462 value=24860542.409906
   0502 socialSecurityIncome=4995.451880 assetAppreciation=176095.508737 expense=-16737.011965 incomeTax=-2350.442028 four01KDistribution=23504.420285 longTermCapitalGains=5958.756987 value=25022502.679248
   0503 socialSecurityIncome=4995.451880 assetAppreciation=177242.727311 expense=-16780.249246 incomeTax=-2350.442028 four01KDistribution=23504.420285 longTermCapitalGains=5987.062321 value=25185566.818188
-  0504 socialSecurityIncome=5120.338177 assetAppreciation=178404.515699 expense=-16823.598223 incomeTax=-2539.981926 four01KDistribution=25399.819262 longTermCapitalGains=5909.834348 value=25350637.676121
+  0504 socialSecurityIncome=5120.338177 assetAppreciation=178404.515699 expense=-16823.598223 incomeTax=-2539.981926 four01KDistribution=25399.819262 longTermCapitalGains=5909.834348 niit=-2660.095341 value=25350637.676121
   0505 socialSecurityIncome=5120.338177 assetAppreciation=179567.016873 expense=-16867.059185 incomeTax=-2539.981926 four01KDistribution=25399.819262 longTermCapitalGains=5937.753833 value=25515874.416823
   0506 socialSecurityIncome=5120.338177 assetAppreciation=180737.443786 expense=-16910.632421 incomeTax=-2539.981926 four01KDistribution=25399.819262 longTermCapitalGains=5965.795048 value=25682237.898638
   0507 socialSecurityIncome=5120.338177 assetAppreciation=181915.851782 expense=-16954.318222 incomeTax=-2539.981926 four01KDistribution=25399.819262 longTermCapitalGains=5993.957989 value=25849735.989793
@@ -20995,7 +20997,7 @@
   0513 socialSecurityIncome=5120.338177 assetAppreciation=189157.051209 expense=-17218.813209 incomeTax=-2539.981926 four01KDistribution=25399.819262 longTermCapitalGains=6165.491885 value=26878998.988923
   0514 socialSecurityIncome=5120.338177 assetAppreciation=190392.909505 expense=-17263.295144 incomeTax=-2539.981926 four01KDistribution=25399.819262 longTermCapitalGains=6194.506943 value=27054664.362689
   0515 socialSecurityIncome=5120.338177 assetAppreciation=191637.205902 expense=-17307.891989 incomeTax=-2539.981926 four01KDistribution=25399.819262 longTermCapitalGains=6223.643754 value=27231529.320799
-  0516 socialSecurityIncome=5248.346631 assetAppreciation=192895.064917 expense=-17352.604044 incomeTax=-2744.009415 four01KDistribution=27440.094150 longTermCapitalGains=6144.344807 value=27410246.429435
+  0516 socialSecurityIncome=5248.346631 assetAppreciation=192895.064917 expense=-17352.604044 incomeTax=-2744.009415 four01KDistribution=27440.094150 longTermCapitalGains=6144.344807 niit=-2765.924173 value=27410246.429435
   0517 socialSecurityIncome=5248.346631 assetAppreciation=194155.912208 expense=-17397.431604 incomeTax=-2744.009415 four01KDistribution=27440.094150 longTermCapitalGains=6173.092908 value=27589464.303891
   0518 socialSecurityIncome=5248.346631 assetAppreciation=195425.372153 expense=-17442.374969 incomeTax=-2744.009415 four01KDistribution=27440.094150 longTermCapitalGains=6201.966779 value=27769906.578822
   0519 socialSecurityIncome=5248.346631 assetAppreciation=196703.504933 expense=-17487.434438 incomeTax=-2744.009415 four01KDistribution=27440.094150 longTermCapitalGains=6230.966410 value=27951581.810662
@@ -21007,7 +21009,7 @@
   0525 socialSecurityIncome=5248.346631 assetAppreciation=204557.855313 expense=-17760.246278 incomeTax=-2744.009415 four01KDistribution=27440.094150 longTermCapitalGains=6407.604953 value=29068012.109737
   0526 socialSecurityIncome=5248.346631 assetAppreciation=205898.419111 expense=-17806.126914 incomeTax=-2744.009415 four01KDistribution=27440.094150 longTermCapitalGains=6437.484835 value=29258562.739988
   0527 socialSecurityIncome=5248.346631 assetAppreciation=207248.152742 expense=-17852.126075 incomeTax=-2744.009415 four01KDistribution=27440.094150 longTermCapitalGains=6467.490476 value=29450416.985878
-  0528 socialSecurityIncome=5379.555297 assetAppreciation=208610.308857 expense=-17898.244068 incomeTax=-2963.490833 four01KDistribution=29634.908329 longTermCapitalGains=6386.102439 value=29643949.024805
+  0528 socialSecurityIncome=5379.555297 assetAppreciation=208610.308857 expense=-17898.244068 incomeTax=-2963.490833 four01KDistribution=29634.908329 longTermCapitalGains=6386.102439 niit=-2874.972801 value=29643949.024805
   0529 socialSecurityIncome=5379.555297 assetAppreciation=209977.972259 expense=-17944.481198 incomeTax=-2963.490833 four01KDistribution=29634.908329 longTermCapitalGains=6415.716838 value=29838352.223753
   0530 socialSecurityIncome=5379.555297 assetAppreciation=211354.994918 expense=-17990.837775 incomeTax=-2963.490833 four01KDistribution=29634.908329 longTermCapitalGains=6445.461103 value=30034085.969030
   0531 socialSecurityIncome=5379.555297 assetAppreciation=212741.442281 expense=-18037.314106 incomeTax=-2963.490833 four01KDistribution=29634.908329 longTermCapitalGains=6475.335221 value=30231159.565274
@@ -21019,7 +21021,7 @@
   0537 socialSecurityIncome=5379.555297 assetAppreciation=221261.768772 expense=-18318.704316 incomeTax=-2963.490833 four01KDistribution=29634.908329 longTermCapitalGains=6657.306432 value=31442267.396893
   0538 socialSecurityIncome=5379.555297 assetAppreciation=222716.060728 expense=-18366.027635 incomeTax=-2963.490833 four01KDistribution=29634.908329 longTermCapitalGains=6688.089353 value=31648986.048878
   0539 socialSecurityIncome=5379.555297 assetAppreciation=224180.317846 expense=-18413.473207 incomeTax=-2963.490833 four01KDistribution=29634.908329 longTermCapitalGains=6719.002098 value=31857121.389842
-  0540 socialSecurityIncome=5514.044179 assetAppreciation=225655.714368 expense=-18461.041346 incomeTax=-3199.427475 four01KDistribution=31994.274752 longTermCapitalGains=6635.503195 value=32066738.921227
+  0540 socialSecurityIncome=5514.044179 assetAppreciation=225655.714368 expense=-18461.041346 incomeTax=-3199.427475 four01KDistribution=31994.274752 longTermCapitalGains=6635.503195 niit=-2987.421135 value=32066738.921227
   0541 socialSecurityIncome=5514.044179 assetAppreciation=227139.400692 expense=-18508.732369 incomeTax=-3199.427475 four01KDistribution=31994.274752 longTermCapitalGains=6666.022554 value=32277636.392029
   0542 socialSecurityIncome=5514.044179 assetAppreciation=228633.257777 expense=-18556.546595 incomeTax=-3199.427475 four01KDistribution=31994.274752 longTermCapitalGains=6696.675931 value=32489979.782170
   0543 socialSecurityIncome=5514.044179 assetAppreciation=230137.356790 expense=-18604.484340 incomeTax=-3199.427475 four01KDistribution=31994.274752 longTermCapitalGains=6727.463313 value=32703779.209740
@@ -21031,7 +21033,7 @@
   0549 socialSecurityIncome=5514.044179 assetAppreciation=239381.080460 expense=-18894.722661 incomeTax=-3199.427475 four01KDistribution=31994.274752 longTermCapitalGains=6915.001092 value=34017728.228140
   0550 socialSecurityIncome=5514.044179 assetAppreciation=240958.908283 expense=-18943.534028 incomeTax=-3199.427475 four01KDistribution=31994.274752 longTermCapitalGains=6946.726243 value=34242009.281636
   0551 socialSecurityIncome=5514.044179 assetAppreciation=242547.565745 expense=-18992.471491 incomeTax=-3199.427475 four01KDistribution=31994.274752 longTermCapitalGains=6978.585346 value=34467829.928710
-  0552 socialSecurityIncome=5651.895284 assetAppreciation=244141.731471 expense=-19041.535375 incomeTax=-3435.050830 four01KDistribution=34350.508305 longTermCapitalGains=6893.114826 value=34694335.822236
+  0552 socialSecurityIncome=5651.895284 assetAppreciation=244141.731471 expense=-19041.535375 incomeTax=-3435.050830 four01KDistribution=34350.508305 longTermCapitalGains=6893.114826 niit=-3103.452183 value=34694335.822236
   0553 socialSecurityIncome=5651.895284 assetAppreciation=245751.545408 expense=-19090.726009 incomeTax=-3435.050830 four01KDistribution=34350.508305 longTermCapitalGains=6924.622437 value=34923164.168380
   0554 socialSecurityIncome=5651.895284 assetAppreciation=247372.412859 expense=-19140.043717 incomeTax=-3435.050830 four01KDistribution=34350.508305 longTermCapitalGains=6956.267931 value=35153563.936862
   0555 socialSecurityIncome=5651.895284 assetAppreciation=249004.411219 expense=-19189.488830 incomeTax=-3435.050830 four01KDistribution=34350.508305 longTermCapitalGains=6988.051291 value=35385546.130859
@@ -21043,7 +21045,7 @@
   0561 socialSecurityIncome=5651.895284 assetAppreciation=259034.553745 expense=-19488.853484 incomeTax=-3435.050830 four01KDistribution=34350.508305 longTermCapitalGains=7181.646068 value=36811296.256674
   0562 socialSecurityIncome=5651.895284 assetAppreciation=260746.681818 expense=-19539.199689 incomeTax=-3435.050830 four01KDistribution=34350.508305 longTermCapitalGains=7214.394241 value=37054670.106990
   0563 socialSecurityIncome=5651.895284 assetAppreciation=262470.579925 expense=-19589.675955 incomeTax=-3435.050830 four01KDistribution=34350.508305 longTermCapitalGains=7247.280230 value=37299717.248750
-  0564 socialSecurityIncome=5793.192666 assetAppreciation=264180.856643 expense=-19640.282618 incomeTax=-3705.781491 four01KDistribution=37057.814915 longTermCapitalGains=7160.316173 value=37542698.185670
+  0564 socialSecurityIncome=5793.192666 assetAppreciation=264180.856643 expense=-19640.282618 incomeTax=-3705.781491 four01KDistribution=37057.814915 longTermCapitalGains=7160.316173 niit=-3223.433920 value=37542698.185670
   0565 socialSecurityIncome=5793.192666 assetAppreciation=265927.445482 expense=-19691.020015 incomeTax=-3705.781491 four01KDistribution=37057.814915 longTermCapitalGains=7192.803643 value=37790971.153843
   0566 socialSecurityIncome=5793.192666 assetAppreciation=267686.045673 expense=-19741.888483 incomeTax=-3705.781491 four01KDistribution=37057.814915 longTermCapitalGains=7225.433285 value=38040951.722329
   0567 socialSecurityIncome=5793.192666 assetAppreciation=269456.741366 expense=-19792.888362 incomeTax=-3705.781491 four01KDistribution=37057.814915 longTermCapitalGains=7258.205082 value=38292651.854880
@@ -21055,7 +21057,7 @@
   0573 socialSecurityIncome=5793.192666 assetAppreciation=280339.708783 expense=-20101.666320 incomeTax=-3705.781491 four01KDistribution=37057.814915 longTermCapitalGains=7457.820388 value=39839644.176035
   0574 socialSecurityIncome=5793.192666 assetAppreciation=282197.479580 expense=-20153.595624 incomeTax=-3705.781491 four01KDistribution=37057.814915 longTermCapitalGains=7491.586948 value=40103723.407710
   0575 socialSecurityIncome=5793.192666 assetAppreciation=284068.040805 expense=-20205.659080 incomeTax=-3705.781491 four01KDistribution=37057.814915 longTermCapitalGains=7525.495595 value=40369621.002657
-  0576 socialSecurityIncome=5938.022483 assetAppreciation=285901.285350 expense=-20257.857032 incomeTax=-3973.470109 four01KDistribution=39734.701088 longTermCapitalGains=7437.037387 value=40630090.050249
+  0576 socialSecurityIncome=5938.022483 assetAppreciation=285901.285350 expense=-20257.857032 incomeTax=-3973.470109 four01KDistribution=39734.701088 longTermCapitalGains=7437.037387 niit=-3347.771041 value=40630090.050249
   0577 socialSecurityIncome=5938.022483 assetAppreciation=287796.471189 expense=-20310.189830 incomeTax=-3973.470109 four01KDistribution=39734.701088 longTermCapitalGains=7470.593980 value=40899488.415992
   0578 socialSecurityIncome=5938.022483 assetAppreciation=289704.709613 expense=-20362.657820 incomeTax=-3973.470109 four01KDistribution=39734.701088 longTermCapitalGains=7504.296706 value=41170742.416626
   0579 socialSecurityIncome=5938.022483 assetAppreciation=291626.092118 expense=-20415.261353 incomeTax=-3973.470109 four01KDistribution=39734.701088 longTermCapitalGains=7538.145547 value=41443865.060340
@@ -21067,7 +21069,7 @@
   0585 socialSecurityIncome=5938.022483 assetAppreciation=303435.618521 expense=-20733.748609 incomeTax=-3973.470109 four01KDistribution=39734.701088 longTermCapitalGains=7744.306365 value=43122582.533587
   0586 socialSecurityIncome=5938.022483 assetAppreciation=305451.626280 expense=-20787.310793 incomeTax=-3973.470109 four01KDistribution=39734.701088 longTermCapitalGains=7779.177730 value=43409157.700894
   0587 socialSecurityIncome=5938.022483 assetAppreciation=307481.533715 expense=-20841.011346 incomeTax=-3973.470109 four01KDistribution=39734.701088 longTermCapitalGains=7814.195154 value=43697708.936357
-  0588 socialSecurityIncome=6086.473045 assetAppreciation=309451.396152 expense=-20894.850626 incomeTax=-4282.809645 four01KDistribution=42828.096451 longTermCapitalGains=7724.114337 value=43977562.157895
+  0588 socialSecurityIncome=6086.473045 assetAppreciation=309451.396152 expense=-20894.850626 incomeTax=-4282.809645 four01KDistribution=42828.096451 longTermCapitalGains=7724.114337 niit=-3476.670403 value=43977562.157895
   0589 socialSecurityIncome=6086.473045 assetAppreciation=311507.731952 expense=-20948.828990 incomeTax=-4282.809645 four01KDistribution=42828.096451 longTermCapitalGains=7758.728237 value=44269870.606448
   0590 socialSecurityIncome=6086.473045 assetAppreciation=313578.250129 expense=-21002.946798 incomeTax=-4282.809645 four01KDistribution=42828.096451 longTermCapitalGains=7793.492706 value=44564195.315567
   0591 socialSecurityIncome=6086.473045 assetAppreciation=315663.050152 expense=-21057.204410 incomeTax=-4282.809645 four01KDistribution=42828.096451 longTermCapitalGains=7828.407726 value=44860550.426930
@@ -21079,7 +21081,7 @@
   0597 socialSecurityIncome=6086.473045 assetAppreciation=328477.428351 expense=-21385.706267 incomeTax=-4282.809645 four01KDistribution=42828.096451 longTermCapitalGains=8041.058677 value=46682124.141547
   0598 socialSecurityIncome=6086.473045 assetAppreciation=330665.046003 expense=-21440.952675 incomeTax=-4282.809645 four01KDistribution=42828.096451 longTermCapitalGains=8077.027229 value=46993096.509146
   0599 socialSecurityIncome=6086.473045 assetAppreciation=332867.766940 expense=-21496.341803 incomeTax=-4282.809645 four01KDistribution=42828.096451 longTermCapitalGains=8113.146265 value=47306216.065466
-  0600 socialSecurityIncome=6238.634871 assetAppreciation=334982.243179 expense=-21551.874019 incomeTax=-4584.854722 four01KDistribution=45848.547222 longTermCapitalGains=8021.445343 value=47606639.275353
+  0600 socialSecurityIncome=6238.634871 assetAppreciation=334982.243179 expense=-21551.874019 incomeTax=-4584.854722 four01KDistribution=45848.547222 longTermCapitalGains=8021.445343 niit=-3610.266281 value=47606639.275353
   0601 socialSecurityIncome=6238.634871 assetAppreciation=337213.694867 expense=-21607.549694 incomeTax=-4584.854722 four01KDistribution=45848.547222 longTermCapitalGains=8057.216309 value=47923843.381172
   0602 socialSecurityIncome=6238.634871 assetAppreciation=339460.557283 expense=-21663.369197 incomeTax=-4584.854722 four01KDistribution=45848.547222 longTermCapitalGains=8093.141886 value=48243238.385703
   0603 socialSecurityIncome=6238.634871 assetAppreciation=341722.938565 expense=-21719.332901 incomeTax=-4584.854722 four01KDistribution=45848.547222 longTermCapitalGains=8129.222060 value=48564839.663239
@@ -21091,7 +21093,7 @@
   0609 socialSecurityIncome=6238.634871 assetAppreciation=355629.275028 expense=-22058.164260 incomeTax=-4584.854722 four01KDistribution=45848.547222 longTermCapitalGains=8348.949017 value=50541653.793673
   0610 socialSecurityIncome=6238.634871 assetAppreciation=358003.381039 expense=-22115.147851 incomeTax=-4584.854722 four01KDistribution=45848.547222 longTermCapitalGains=8386.111110 value=50879138.676211
   0611 socialSecurityIncome=6238.634871 assetAppreciation=360393.898956 expense=-22172.278650 incomeTax=-4584.854722 four01KDistribution=45848.547222 longTermCapitalGains=8423.427754 value=51218956.798279
-  0612 socialSecurityIncome=6394.600743 assetAppreciation=362679.512722 expense=-22229.557036 incomeTax=-5002.030180 four01KDistribution=49039.027778 longTermCapitalGains=8329.667619 value=51543598.660717
+  0612 socialSecurityIncome=6394.600743 assetAppreciation=362679.512722 expense=-22229.557036 incomeTax=-5002.030180 four01KDistribution=49039.027778 longTermCapitalGains=8329.667619 niit=-3748.784984 value=51543598.660717
   0613 socialSecurityIncome=6394.600743 assetAppreciation=365100.490513 expense=-22286.983392 incomeTax=-5002.030180 four01KDistribution=49039.027778 longTermCapitalGains=8366.663254 value=51887747.163694
   0614 socialSecurityIncome=6394.600743 assetAppreciation=367538.209076 expense=-22344.558099 incomeTax=-5002.030180 four01KDistribution=49039.027778 longTermCapitalGains=8403.817413 value=52234275.661792
   0615 socialSecurityIncome=6394.600743 assetAppreciation=369992.785938 expense=-22402.281541 incomeTax=-5002.030180 four01KDistribution=49039.027778 longTermCapitalGains=8441.130084 value=52583200.864191
@@ -21103,7 +21105,7 @@
   0621 socialSecurityIncome=6394.600743 assetAppreciation=385080.958182 expense=-22751.767206 incomeTax=-5002.030180 four01KDistribution=49039.027778 longTermCapitalGains=8668.334535 value=54728033.553045
   0622 socialSecurityIncome=6394.600743 assetAppreciation=387656.904334 expense=-22810.542604 incomeTax=-5002.030180 four01KDistribution=49039.027778 longTermCapitalGains=8706.756673 value=55094213.558103
   0623 socialSecurityIncome=6394.600743 assetAppreciation=390250.679370 expense=-22869.469839 incomeTax=-5002.030180 four01KDistribution=49039.027778 longTermCapitalGains=8745.337315 value=55462928.258732
-  0624 socialSecurityIncome=6554.465761 assetAppreciation=392727.134804 expense=-22928.549303 incomeTax=-5554.980645 four01KDistribution=52400.429784 longTermCapitalGains=8649.317427 value=55814569.634455
+  0624 socialSecurityIncome=6554.465761 assetAppreciation=392727.134804 expense=-22928.549303 incomeTax=-5554.980645 four01KDistribution=52400.429784 longTermCapitalGains=8649.317427 niit=-3892.438603 value=55814569.634455
   0625 socialSecurityIncome=6554.465761 assetAppreciation=395353.201577 expense=-22987.781389 incomeTax=-5554.980645 four01KDistribution=52400.429784 longTermCapitalGains=8687.607727 value=56187875.154658
   0626 socialSecurityIncome=6554.465761 assetAppreciation=397997.449012 expense=-23047.166491 incomeTax=-5554.980645 four01KDistribution=52400.429784 longTermCapitalGains=8726.060323 value=56563765.383782
   0627 socialSecurityIncome=6554.465761 assetAppreciation=400660.004802 expense=-23106.705004 incomeTax=-5554.980645 four01KDistribution=52400.429784 longTermCapitalGains=8764.675213 value=56942258.476374
@@ -21115,7 +21117,7 @@
   0633 socialSecurityIncome=6554.465761 assetAppreciation=417027.080221 expense=-23467.179992 incomeTax=-5554.980645 four01KDistribution=52400.429784 longTermCapitalGains=8999.772739 value=59268910.087094
   0634 socialSecurityIncome=6554.465761 assetAppreciation=419821.446450 expense=-23527.803540 incomeTax=-5554.980645 four01KDistribution=52400.429784 longTermCapitalGains=9039.523747 value=59666142.434961
   0635 socialSecurityIncome=6554.465761 assetAppreciation=422635.175581 expense=-23588.583699 incomeTax=-5554.980645 four01KDistribution=52400.429784 longTermCapitalGains=9079.437095 value=60066127.574784
-  0636 socialSecurityIncome=6718.327405 assetAppreciation=425327.935367 expense=-23649.520874 incomeTax=-6049.415087 four01KDistribution=55522.952893 longTermCapitalGains=8980.856392 value=60448582.989950
+  0636 socialSecurityIncome=6718.327405 assetAppreciation=425327.935367 expense=-23649.520874 incomeTax=-6049.415087 four01KDistribution=55522.952893 longTermCapitalGains=8980.856392 niit=-4041.477608 value=60448582.989950
   0637 socialSecurityIncome=6718.327405 assetAppreciation=428177.462845 expense=-23710.615470 incomeTax=-6049.415087 four01KDistribution=55522.952893 longTermCapitalGains=9020.550431 value=60853657.497220
   0638 socialSecurityIncome=6718.327405 assetAppreciation=431046.740605 expense=-23771.867893 incomeTax=-6049.415087 four01KDistribution=55522.952893 longTermCapitalGains=9060.410108 value=61261539.871592
   0639 socialSecurityIncome=6718.327405 assetAppreciation=433935.907424 expense=-23833.278552 incomeTax=-6049.415087 four01KDistribution=55522.952893 longTermCapitalGains=9100.435428 value=61672249.843479
@@ -21127,7 +21129,7 @@
   0645 socialSecurityIncome=6718.327405 assetAppreciation=451696.474449 expense=-24205.088413 incomeTax=-6049.415087 four01KDistribution=55522.952893 longTermCapitalGains=9344.066541 value=64197011.808414
   0646 socialSecurityIncome=6718.327405 assetAppreciation=454728.833643 expense=-24267.618225 incomeTax=-6049.415087 four01KDistribution=55522.952893 longTermCapitalGains=9385.251749 value=64628079.244802
   0647 socialSecurityIncome=6718.327405 assetAppreciation=457782.227984 expense=-24330.309572 incomeTax=-6049.415087 four01KDistribution=55522.952893 longTermCapitalGains=9426.602735 value=65062137.222232
-  0648 socialSecurityIncome=6886.285590 assetAppreciation=460710.943701 expense=-24393.162872 incomeTax=-6659.900942 four01KDistribution=59200.946024 longTermCapitalGains=9325.450274 value=65478026.142840
+  0648 socialSecurityIncome=6886.285590 assetAppreciation=460710.943701 expense=-24393.162872 incomeTax=-6659.900942 four01KDistribution=59200.946024 longTermCapitalGains=9325.450274 niit=-4196.208088 value=65478026.142840
   0649 socialSecurityIncome=6886.285590 assetAppreciation=463802.685178 expense=-24456.178543 incomeTax=-6659.900942 four01KDistribution=59200.946024 longTermCapitalGains=9366.535160 value=65917535.855663
   0650 socialSecurityIncome=6886.285590 assetAppreciation=466915.878978 expense=-24519.357004 incomeTax=-6659.900942 four01KDistribution=59200.946024 longTermCapitalGains=9407.789561 value=66360095.420613
   0651 socialSecurityIncome=6886.285590 assetAppreciation=470050.675896 expense=-24582.698676 incomeTax=-6659.900942 four01KDistribution=59200.946024 longTermCapitalGains=9449.213491 value=66805726.277177
@@ -21139,7 +21141,7 @@
   0657 socialSecurityIncome=6886.285590 assetAppreciation=489321.702756 expense=-24966.199829 incomeTax=-6659.900942 four01KDistribution=59200.946024 longTermCapitalGains=9701.318310 value=69545228.368831
   0658 socialSecurityIncome=6886.285590 assetAppreciation=492612.034279 expense=-25030.695845 incomeTax=-6659.900942 four01KDistribution=59200.946024 longTermCapitalGains=9743.929552 value=70012971.429282
   0659 socialSecurityIncome=6886.285590 assetAppreciation=495925.214291 expense=-25095.358476 incomeTax=-6659.900942 four01KDistribution=59200.946024 longTermCapitalGains=9786.710523 value=70483962.840069
-  0660 socialSecurityIncome=7058.442730 assetAppreciation=499109.941577 expense=-25160.188152 incomeTax=-7184.931591 four01KDistribution=62519.357772 longTermCapitalGains=9682.871027 value=70936338.254689
+  0660 socialSecurityIncome=7058.442730 assetAppreciation=499109.941577 expense=-25160.188152 incomeTax=-7184.931591 four01KDistribution=62519.357772 longTermCapitalGains=9682.871027 niit=-4356.863710 value=70936338.254689
   0661 socialSecurityIncome=7058.442730 assetAppreciation=502465.729304 expense=-25225.185305 incomeTax=-7184.931591 four01KDistribution=62519.357772 longTermCapitalGains=9725.468712 value=71413387.144765
   0662 socialSecurityIncome=7058.442730 assetAppreciation=505844.825609 expense=-25290.350367 incomeTax=-7184.931591 four01KDistribution=62519.357772 longTermCapitalGains=9768.239287 value=71893749.797740
   0663 socialSecurityIncome=7058.442730 assetAppreciation=509247.394401 expense=-25355.683772 incomeTax=-7184.931591 four01KDistribution=62519.357772 longTermCapitalGains=9811.182780 value=72377449.517325

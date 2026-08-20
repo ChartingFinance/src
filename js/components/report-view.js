@@ -63,6 +63,7 @@ class ReportView extends LitElement {
                 ['  FICA', this._fmt(pkg.fica())],
                 ['  Income Tax', this._fmt(pkg.incomeTax)],
                 ['  LT Cap Gains Tax', this._fmt(pkg.longTermCapitalGainsTax)],
+                ['  Net Investment Income Tax', this._fmt(pkg.niit)],
                 ['  Estimated Taxes', this._fmt(pkg.estimatedTaxes)],
                 ['Local Taxes', this._fmt(pkg.saltTaxes())],
                 ['  Property Tax (Total)', this._fmt(pkg.propertyTaxes)],
