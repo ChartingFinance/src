@@ -712,9 +712,19 @@ export class TaxEngine {
         if (legs.length > 0) {
             logger.log(LogCategory.TAX,
                 `NIIT: allocating ${niit.toString()} across ${legs.length} account(s) by NII share.`);
+            // Book what the accounts ACTUALLY supplied, not what they were
+            // billed — the same rule applyMonthlyTaxTrueUp follows. An account
+            // billed more than it holds spills, and the spilled leg is counted
+            // through settled.spillover; adding the full bill here would make
+            // the package claim tax no balance ever paid.
+            const collected = Currency.zero();
             for (const leg of legs) {
-                this.#settleAllocatedLeg(leg, EventType.NIIT_ASSESSED, Metric.NIIT, eventData);
+                const settled = this.#settleAllocatedLeg(
+                    leg, EventType.NIIT_ASSESSED, Metric.NIIT, eventData);
+                collected.add(settled.supplied);
+                collected.add(settled.spillover);
             }
+            if (collected.amount > 0) this.monthly.niit.add(collected.copy().flipSign());
             return;
         }
 
@@ -739,11 +749,17 @@ export class TaxEngine {
         liquidAsset.addToMetric(Metric.NIIT, settled.supplied.copy().flipSign());
         this.monthly.recordTransfer(liquidAsset.instrument, settled.supplied, settled.realizedGain);
 
+        const collected = settled.supplied.copy();
+
         if (settled.spillover.amount > 0 && settled.spilloverInstrument) {
             this.monthly.recordTransfer(settled.spilloverInstrument, settled.spillover, settled.spilloverGain);
             const payer = FundTransfer.resolveFunding(this.modelAssets);
             if (payer) payer.addToMetric(Metric.NIIT, settled.spillover.copy().flipSign());
+            collected.add(settled.spillover);
         }
+
+        // The household ledger, so federalTaxes() and effectiveTaxRate() see it.
+        if (collected.amount > 0) this.monthly.niit.add(collected.flipSign());
 
     }
 

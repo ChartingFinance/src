@@ -19,6 +19,9 @@ and one section was wrong:
   model, written from the statute, sitting unbanded behind finding F8. It agreed
   with the implementation and is now the banded model. F8 is closed.
 - **§5.4 decided:** allocate by NII, not by total taxable income.
+- **§9 added 2026-08-20** after the engine work shipped: NIIT was collected
+  correctly and *reported* nowhere. The spec covered the engine and stopped
+  there, which is why the gap existed.
 
 ---
 
@@ -277,6 +280,8 @@ Record expected direction and rough magnitude for every drifting fixture
 
 ## 8. Explicitly out of scope
 
+(Section 9 below was added after implementation — see the status note at the top.)
+
 - **Additional Medicare Tax** (0.9% on wages over the same thresholds, IRC
   §3101(b)(2)). Adjacent, same thresholds, *different base* — it is a payroll
   tax on earned income and belongs with FICA, not here. Folding it in would
@@ -288,3 +293,76 @@ Record expected direction and rough magnitude for every drifting fixture
 - **IRMAA** — also MAGI-keyed and a natural follow-on, but it is a Medicare
   premium surcharge, not a tax, and it uses a two-year-lookback MAGI. Separate
   spec; the `magi` field built here is what it will consume.
+
+---
+
+## 9. Presentation — added 2026-08-20, after steps 1-4 shipped
+
+Steps 1-4 made the engine charge NIIT correctly and left it invisible. The spec
+had nothing to say about the presentation layer, so nothing checked it, and the
+question "is this actually shown to the user?" was never asked until it was
+asked out loud.
+
+**Two defects, both silent, both the same shape: a write that goes nowhere and
+reports success.**
+
+### 9.1 `Metric.NIIT` was a no-op on every instrument
+
+`addToMetric(Metric.NIIT, ...)` looked correct at both call sites and stored
+nothing. No `relevantMetrics()` listed the metric, so `MetricSet.get()` fell
+back to `NULL_METRIC`, whose `add()` does nothing. The charge still reached
+`FEDERAL_TAXES` through the rollup DAG, so every total was right and no suite
+complained — the tax was simply folded in anonymously, with no line of its own
+anywhere.
+
+`instrument-behavior.js` already documented this exact trap for retirement-income
+withholding (*"the tax is deducted from the benefit and shown nowhere"*). It
+caught the next feature anyway.
+
+Fixed by adding `M.NIIT` to `CapitalBehavior`, `IncomeAccountBehavior` and
+`RealEstateBehavior` — the three that hold investment assets or act as the
+funding backstop.
+
+### 9.2 `FinancialPackage` had no `niit` field at all
+
+So `federalTaxes()` — the number the report view prints and `effectiveTaxRate()`
+divides by — omitted it entirely. That left the per-asset ledger and the
+household package **disagreeing about the same tax**: an account's
+`FEDERAL_TAXES` metric included NIIT, the package meant to total those accounts
+did not. Neither side complained, because `NIIT_ASSESSED` reconciles as
+`'oneSided'` and is not matched against a package field.
+
+Every household that owed NIIT saw a federal tax total and an effective rate
+lower than what it actually paid.
+
+Fixed by adding `niit` to `FINANCIAL_FIELDS`, booking it in `applyAnnualNIIT`
+(what accounts **supplied**, including spillover — never what they were billed),
+adding it to `federalTaxes()`, and giving it its own line in `report-view.js`.
+
+### 9.3 The lesson, and the test that encodes it
+
+Neither defect was reachable by a totals check: the money genuinely moved and
+every balance was correct. Only the *link* between the charge and its record was
+broken.
+
+`tests/niit-visibility.mjs` asserts the links rather than the totals:
+
+1. every `NIIT_ASSESSED` event left a stored `Metric.NIIT` on the asset it
+   landed on — catches the `NULL_METRIC` no-op for **any** instrument, including
+   one added later;
+2. the package's `niit` is non-zero and never exceeds the events that produced
+   it;
+3. `federalTaxes()` actually moves by that amount when it is removed;
+4. a household owing no NIIT reports none.
+
+Plus a guard that the suite is reachable at all — it fails if no fixture charges
+NIIT, the same trap §6 was written for.
+
+All three original defects are mutation-confirmed to fail it. The snapshot drift
+is **purely additive**: verified by stripping the new `niit` lines and comparing
+literals, so no pre-existing simulated value moved.
+
+**Generalisation worth carrying:** `addToMetric` is silent when a metric is not
+in `relevantMetrics()`. Any new metric needs a fixture that reaches it AND an
+assertion that the value was stored — "the engine charged it" and "the user can
+see it" are different claims, and only the first one was ever in this spec.
