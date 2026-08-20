@@ -37,26 +37,14 @@ function mockLocalStorage() {
 mockLocalStorage();
 globalThis.window = globalThis;
 
-const { Metric, MetricRollups } = await import('../../js/metric.js');
+const { Metric, MetricRollups, LEAF_TAX_METRICS } = await import('../../js/metric.js');
 const { TAX_TREE } = await import('../../js/components/asset-list.js');
 
-/** Does `m` roll up into `target` along the DAG? */
-function reaches(m, target, seen = new Set()) {
-  if (m === target) return true;
-  if (seen.has(m)) return false;
-  seen.add(m);
-  return (MetricRollups[m] ?? []).some((p) => reaches(p, target, seen));
-}
-
 /**
- * The engine's own definition of "a tax the household pays": a metric that
- * reaches TAXES and has nothing rolling into it. Aggregates like INCOME_TAX and
- * FEDERAL_TAXES are excluded — they are sums of these, and TAX_TREE shows them
- * as parent rows built from their children's metrics.
+ * The engine's own definition of "a tax the household pays", now exported from
+ * metric.js so the Visualizer's tax drain and this test cannot disagree about
+ * what the set is. Recomputing it here would defeat that.
  */
-const hasChildren = new Set(Object.values(MetricRollups).flat());
-const LEAF_TAX_METRICS = Object.values(Metric)
-  .filter((m) => m !== Metric.TAXES && reaches(m, Metric.TAXES) && !hasChildren.has(m));
 
 /** Every metric named anywhere in the tree, at any depth. */
 function treeMetrics(nodes, acc = new Set()) {

@@ -389,7 +389,7 @@
     <div id="taxes" class="glass-card p-8 sm:p-12 mb-8">
         <h2 class="text-2xl font-bold tracking-tight mb-4">Tax Rates</h2>
         <p class="text-gray-600 mb-4 leading-relaxed">The IRS is the source of truth &mdash; and so is this simulator. Every run is built from the <strong>2026 federal tables</strong>, selected by your filing status: income brackets, capital gains bands, the standard deduction, the Social Security wage base, and the retirement contribution limits.</p>
-        <p class="text-gray-600 mb-6 leading-relaxed">From the second simulated year onward, all of those figures are <strong>indexed forward by your inflation rate</strong> &mdash; brackets widen, the deduction rises, the wage base climbs. That keeps a 30-year projection from quietly pushing you into the top bracket through inflation alone. The single exception is the primary-home sale exclusion, held fixed at $250,000&thinsp;/&thinsp;$500,000 by statute. Here are the publications we reference:</p>
+        <p class="text-gray-600 mb-6 leading-relaxed">From the second simulated year onward, all of those figures are <strong>indexed forward by your inflation rate</strong> &mdash; brackets widen, the deduction rises, the wage base climbs. That keeps a 30-year projection from quietly pushing you into the top bracket through inflation alone. Two figures are deliberately held fixed, because Congress never indexed them: the primary-home sale exclusion at $250,000&thinsp;/&thinsp;$500,000, and the Net Investment Income Tax threshold at $200,000&thinsp;/&thinsp;$250,000. Both catch more households every year by standing still, and a simulator that quietly inflated them would model a tax that fades away. Here are the publications we reference:</p>
 
         <div class="grid gap-3">
             <a href="https://www.irs.gov/filing/federal-income-tax-rates-and-brackets" target="_blank"
@@ -422,12 +422,45 @@
                 <span class="text-gray-400 group-hover:text-gray-600">&#8599;</span>
                 Topic 590-b — Distributions from Individual Retirement Arrangements (IRAs)
             </a>
+            <a href="https://www.irs.gov/individuals/net-investment-income-tax" target="_blank"
+               class="flex items-center gap-3 p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition text-gray-700 no-underline group">
+                <span class="text-gray-400 group-hover:text-gray-600">&#8599;</span>
+                Net Investment Income Tax (IRC &sect;1411)
+            </a>
             <a href="https://www.irs.gov/pub/irs-pdf/i1040gi.pdf?os=wtmbzegmu5hwrefapp&ref=app" target="_blank"
                class="flex items-center gap-3 p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition text-gray-700 no-underline group">
                 <span class="text-gray-400 group-hover:text-gray-600">&#8599;</span>
                 Form 1040 instructions with Qualified Dividends and Capital Gains Tax Worksheet
             </a>
         </div>
+    </div>
+
+    <!-- ═══ Net Investment Income Tax ═══ -->
+    <div id="niit" class="glass-card p-8 sm:p-12 mb-8">
+        <div class="flex items-center gap-3 mb-4">
+            <span class="text-2xl">&#128202;</span>
+            <h2 class="text-2xl font-bold tracking-tight">Net Investment Income Tax</h2>
+            <span class="text-xs text-gray-400 font-medium ml-1">IRC &sect;1411 &middot; 3.8%</span>
+        </div>
+        <p class="text-gray-600 mb-4 leading-relaxed">An extra <strong>3.8%</strong> on investment income, charged once a year on top of ordinary and capital-gains tax. It applies to the <strong>lesser</strong> of two numbers, which is why a large gain does not automatically mean a large surcharge:</p>
+
+        <div class="grid sm:grid-cols-2 gap-4 mb-6">
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">Your net investment income</div>
+                <div class="text-sm text-gray-500">Interest, dividends of both kinds, and capital gains both short and long. Wages, Social Security, pensions and withdrawals from retirement accounts are <strong>not</strong> investment income and are never taxed by it.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">How far you are over the threshold</div>
+                <div class="text-sm text-gray-500"><strong>$200,000</strong> filing single, <strong>$250,000</strong> filing jointly, measured against your adjusted gross income &mdash; before the standard deduction, not after. Under the threshold, nothing is due however much of your income is investment income.</div>
+            </div>
+        </div>
+
+        <div class="p-4 rounded-xl bg-amber-50 border border-amber-200 mb-4">
+            <div class="font-semibold text-sm mb-1">&#9888;&#65039; The part worth planning around</div>
+            <div class="text-sm text-gray-600 leading-relaxed">A withdrawal or Roth conversion from an IRA or 401(k) can never be taxed by this surcharge &mdash; but it <em>does</em> raise your adjusted gross income, and by doing so it can drag your investment income over the threshold. So a large conversion can trigger 3.8% on gains and dividends you were not otherwise going to be surcharged on. Roth <em>distributions</em> raise neither number and are safe on both counts. If you are sizing a conversion, this is often the constraint that binds first.</div>
+        </div>
+
+        <p class="text-gray-600 leading-relaxed">The simulator charges it in one payment each year, alongside the annual tax true-up &mdash; there is no withholding for it in real life either. You will find it in the <strong>Taxes</strong> column of Your Portfolio, on the Reports tab, and as its own line in the Spreadsheet. When the accounts that earned the investment income are being billed individually, it is charged to those accounts specifically, never to salary or pension assets, because their income cannot trigger it.</p>
     </div>
 
     <!-- ═══ Filing Status ═══ -->
@@ -625,6 +658,14 @@
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">One Social Security wage base per household</div>
                 <div class="text-sm text-gray-500">Married filers share a single cap instead of one each, so two high earners stop paying Social Security tax earlier than they would. <span class="text-gray-400">Optimistic above the cap.</span></div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">No rental income</div>
+                <div class="text-sm text-gray-500">Rent is net investment income, and an income property is not a supported asset type yet &mdash; real estate here is a residence. A landlord's Net Investment Income Tax will be understated until that asset exists. <span class="text-gray-400">Optimistic for property investors.</span></div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">Investment expenses are not deducted</div>
+                <div class="text-sm text-gray-500">Net investment income is counted gross. Advisory fees, investment interest and the state tax allocable to that income would all reduce it in a real return, and none is tracked here. <span class="text-gray-400">Slightly pessimistic.</span></div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">No RMD penalty</div>

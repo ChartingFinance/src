@@ -15,7 +15,7 @@
 
 import { classifyAssetGroup, AssetGroup, AssetGroupMeta } from './asset-groups.js';
 import { buildPipelines } from './flow-pipelines.js';
-import { Metric, MetricLabel } from './metric.js';
+import { Metric, MetricLabel, LEAF_TAX_METRICS } from './metric.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
@@ -185,16 +185,13 @@ export class HydraulicVisualizer {
             }
         }
 
-        // Compute taxes
+        // Compute taxes. LEAF_TAX_METRICS is derived from the rollup DAG, so a
+        // tax added later lands here without an edit — this sum was hand-written
+        // and quietly omitted NIIT, under-reporting the drain by the whole
+        // amount charged.
         let totalTaxes = 0;
         for (const a of this.portfolio.modelAssets) {
-            totalTaxes += Math.abs(atIdx(a, 'socialSecurityTax', historyIndex))
-                        + Math.abs(atIdx(a, 'medicareTax', historyIndex))
-                        + Math.abs(atIdx(a, 'withheldIncomeTax', historyIndex))
-                        + Math.abs(atIdx(a, 'estimatedIncomeTax', historyIndex))
-                        + Math.abs(atIdx(a, 'longTermCapitalGainTax', historyIndex))
-                        + Math.abs(atIdx(a, 'shortTermCapitalGainTax', historyIndex))
-                        + Math.abs(atIdx(a, 'propertyTax', historyIndex));
+            for (const m of LEAF_TAX_METRICS) totalTaxes += Math.abs(atIdx(a, m, historyIndex));
         }
 
         const taxEl = this._elements.get('Taxes');
@@ -325,13 +322,7 @@ export class HydraulicVisualizer {
         let totalTaxes = 0;
         if (metricName === Metric.GROWTH || metricName === Metric.TAXES) {
             for (const a of this.portfolio.modelAssets) {
-                totalTaxes += Math.abs(atIdx(a, 'socialSecurityTax', historyIndex))
-                            + Math.abs(atIdx(a, 'medicareTax', historyIndex))
-                            + Math.abs(atIdx(a, 'withheldIncomeTax', historyIndex))
-                            + Math.abs(atIdx(a, 'estimatedIncomeTax', historyIndex))
-                            + Math.abs(atIdx(a, 'longTermCapitalGainTax', historyIndex))
-                            + Math.abs(atIdx(a, 'shortTermCapitalGainTax', historyIndex))
-                            + Math.abs(atIdx(a, 'propertyTax', historyIndex));
+                for (const m of LEAF_TAX_METRICS) totalTaxes += Math.abs(atIdx(a, m, historyIndex));
             }
         }
 
