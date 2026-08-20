@@ -198,6 +198,30 @@ const adversarialFixtures = [
     }),
   },
   {
+    name: 'gain-harvest-under-the-deduction',
+    kind: 'adversarial',
+    reaches:
+      'the IRC 63 deduction OVERFLOW onto capital gains. An early retiree with ' +
+      'no salary and no Social Security yet has essentially zero ordinary ' +
+      'income, so the standard deduction is not consumed and the remainder ' +
+      'shelters long-term gain before the 0% band even starts. Every other ' +
+      'fixture here either has ordinary income comfortably above the deduction ' +
+      'or realises no gain, so all 26 of them were bit-identical before and ' +
+      'after the rule went in (measured 2026-08-18) — the engine-level ' +
+      'behaviour had no witness at all and tax-basis.js could have gone back to ' +
+      'flooring at zero with the whole suite green. The brokerage is mostly ' +
+      'gain so the draw realises enough to cross out of the shelter, which is ' +
+      'what makes the true-up move rather than just sit at zero.',
+    config: { startAge: 55, retirementAge: 55 },
+    build: () => ({
+      assets: [
+        equity('Brokerage', 1200000, 200000, { annualReturnRate: { rate: 0.05 } }),
+        bank('Checking', 20000),
+        expense('Living', 5500),
+      ].map(ModelAsset.fromJSON),
+    }),
+  },
+  {
     name: 'mid-year-finish',
     kind: 'adversarial',
     reaches:
