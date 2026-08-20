@@ -23,6 +23,7 @@ export const Metric = Object.freeze({
   ESTIMATED_FICA_TAX:           'estimatedFicaTax',       // reserved: future self-employment enhancement
   WITHHELD_INCOME_TAX:          'withheldIncomeTax',
   ESTIMATED_INCOME_TAX:         'estimatedIncomeTax',
+  NIIT:                         'niit',
   ESTIMATED_TAX:                'estimatedTax',            // reserved: future self-employment enhancement
   INCOME_TAX:                   'incomeTax',
   FEDERAL_TAXES:                'federalTaxes',
@@ -83,6 +84,7 @@ export const MetricLabel = Object.freeze({
   [Metric.ESTIMATED_FICA_TAX]:          'Estimated FICA / Medicare',
   [Metric.WITHHELD_INCOME_TAX]:         'Withheld Income Tax',
   [Metric.ESTIMATED_INCOME_TAX]:        'Estimated Income Tax',
+  [Metric.NIIT]:                        'Net Investment Income Tax',
   [Metric.ESTIMATED_TAX]:               'Estimated Tax',
   [Metric.INCOME_TAX]:                  'Income Tax',
   [Metric.FEDERAL_TAXES]:               'Federal Taxes',
@@ -182,6 +184,10 @@ export const MetricRollups = {
 
     [Metric.INCOME_TAX]:                  [Metric.FEDERAL_TAXES],
     [Metric.LONG_TERM_CAPITAL_GAIN_TAX]:  [Metric.FEDERAL_TAXES],
+    // Straight to FEDERAL_TAXES, NOT via INCOME_TAX: NIIT is a separate
+    // levy on a separate base, and rolling it through income tax would
+    // make the income-tax line disagree with what the brackets produced.
+    [Metric.NIIT]:                        [Metric.FEDERAL_TAXES],
 
     // --- EXPENSE & DEBT ROLLUPS ---
     // MORTGAGE_PAYMENT and MORTGAGE_PRINCIPAL are informational only (like RMD) — no rollup.

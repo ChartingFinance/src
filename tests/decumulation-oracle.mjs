@@ -32,7 +32,12 @@
  * Known open findings the bands still absorb (tighten when fixed):
  *   - longTermCapitalHoldingPercentage is unread (F5): oracle books 80/20
  *     LT/ST per config, engine books all gains long-term.
- *   - NIIT is not modeled (F8): asserted informationally, not banded.
+ *
+ * CLOSED: F8 (NIIT not modeled) - fixed 2026-08-18, spec 8. The oracle's own
+ * 1411 model was written from the statute before the engine had one, so it is
+ * a genuinely independent check rather than a restatement; the banded model
+ * switched from withNIIT:false to withNIIT:true when the engine started
+ * charging it.
  *
  * CLOSED: F4 (Savings overdrawn and stranded) — fixed 2026-07-28. Funding
  * accounts floor at $0 and the shortfall re-sources through the backstop
@@ -463,18 +468,18 @@ const EXPECTED_ENGINE = {
   "Savings": 0.00,
   "IRA": 604532.76,
   "Roth": 4028947.93,
-  "Brokerage": 9971051.69,
+  "Brokerage": 9735005.50,
   "CompanyStock": 0.00,
   "Treasuries": 116821.90,
   "Home": 2307042.36,
   "Mortgage": 0.00,
   "Living Expenses": -11682.19,
-  "portfolioTotal": 17028396.64,
+  "portfolioTotal": 16792350.46,
   "employedIncome": 0.00,
   "socialSecurityIncome": 950908.99,
   "tradIRADistribution": 3096090.49,
-  "qualifiedDividends": 1071826.11,
-  "longTermCapitalGains": 1255012.43,
+  "qualifiedDividends": 1051083.33,
+  "longTermCapitalGains": 1279531.73,
   "interestIncome": 76892.34,
   "mortgageInterest": -247134.01,
 };
@@ -509,8 +514,12 @@ function check(label, fn) {
 }
 
 // ── Layer A: oracle bands ─────────────────────────────────────────────
-const oracle = runOracle({ withNIIT: false });   // engine scope: no NIIT
-const oracleLaw = runOracle({ withNIIT: true }); // informational
+// F8 CLOSED 2026-08-18 (spec 8): the engine charges NIIT, so the banded model
+// is now the full-law one. This flipped from `withNIIT: false` - leaving it
+// would have made the oracle assert that the engine does NOT charge 1411,
+// quietly turning an independent cross-check into a guard against the feature.
+const oracle = runOracle({ withNIIT: true });
+const oracleNoNIIT = runOracle({ withNIIT: false }); // informational: the old engine scope
 
 console.log('\n── Oracle vs engine (2056-12) ───────────────────────────\n');
 
@@ -568,7 +577,13 @@ check('CompanyStock closed and swept', () => {
   assert.ok(Math.abs(engine['CompanyStock']) <= 0.005, `CompanyStock ended at ${fmt(engine['CompanyStock'])}`);
 });
 
-console.log(`\n  (info) full-law oracle incl. NIIT: total ${fmt(oracleLaw.total)}, NIIT ${fmt(oracleLaw.totals.niit)} — not banded; the engine does not model NIIT`);
+// The oracle's 1411 model is INDEPENDENT of the engine's - written from the
+// statute before the engine had one, not derived from js/tax-basis.js. It
+// reaches the same shape by a different route: nii = interest + qualified
+// dividends + both gain kinds, threshold 200,000, 3.8% of the lesser of NII
+// and the MAGI excess. The bands above are what assert that agreement.
+console.log(`
+  (info) NIIT charged by the oracle: ${fmt(oracle.totals.niit)}; the same plan with 1411 switched off ends at ${fmt(oracleNoNIIT.total)}`);
 
 // ── Layer B: frozen engine values ─────────────────────────────────────
 console.log('\n── Frozen engine values (stability) ─────────────────────\n');

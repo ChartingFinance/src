@@ -222,6 +222,39 @@ const adversarialFixtures = [
     }),
   },
   {
+    name: 'niit-from-a-deferred-draw',
+    kind: 'adversarial',
+    reaches:
+      'the IRC 1411 ASYMMETRY, and nothing else in the corpus does. A '
+      + 'qualified-plan distribution is OUT of net investment income but IN '
+      + 'MAGI, so a large IRA draw can never be taxed by NIIT itself yet drags '
+      + 'the household over the threshold and exposes investment income that '
+      + 'would otherwise sit far below it. This retiree has NO wages: MAGI is '
+      + 'carried over $200,000 almost entirely by the 1%/month IRA '
+      + 'distribution, while the taxed base is the brokerage dividends. '
+      + 'Delete the distribution and the same dividends owe nothing. '
+      + 'It is also the only fixture where the NII side of the min binds — '
+      + 'single-home-sale and mfj-high-earner-ltcg both bind on the MAGI '
+      + 'excess, so without this one an implementation could drop the NII '
+      + 'argument entirely and stay green. Both halves verified by mutation '
+      + 'on 2026-08-18.',
+    config: { startAge: 70, retirementAge: 65, filingAs: 'Single' },
+    build: () => ({
+      assets: [
+        // 1%/month of a large balance: the draw that moves MAGI, taxable as
+        // ordinary income and invisible to NII.
+        deferred('ira', 'IRA', 2200000, { annualReturnRate: { rate: 0.05 },
+          fundTransfers: [xfer('Brokerage', 1)] }),
+        // The dividends are the NII. Small next to the draw, which is the
+        // point — they are what gets taxed.
+        equity('Brokerage', 400000, 300000, { annualReturnRate: { rate: 0.04 },
+          annualDividendRate: { rate: 0.025 }, dividendQualifiedRatio: 0.7 }),
+        bank('Checking', 40000),
+        expense('Living', 6000),
+      ].map(ModelAsset.fromJSON),
+    }),
+  },
+  {
     name: 'mid-year-finish',
     kind: 'adversarial',
     reaches:

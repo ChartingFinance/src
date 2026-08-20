@@ -15,7 +15,7 @@ import { Metric } from '../metric.js';
 import { FundTransferOneSided, FundTransfer } from '../fund-transfer.js';
 import { MonthsSpan } from '../utils/months-span.js';
 import { activeTaxTable, global_retirement_withholding_rate, global_allocate_household_tax } from '../globals.js';
-import { basisThisMonth, basisOverMonths, isAllocationEligible, planAllocation } from '../tax-allocation.js';
+import { basisThisMonth, basisOverMonths, isAllocationEligible, planAllocation, NII_BASIS_METRICS } from '../tax-allocation.js';
 import { logger, LogCategory } from '../utils/logger.js';
 import { EventType, ShortfallOrigin } from '../sim-event.js';
 import { withTrace, TraceKind } from '../trace.js';
@@ -647,6 +647,104 @@ export class TaxEngine {
                 }
                 return settled;
             });
+    }
+
+    /**
+     * IRC §1411 net investment income tax — 3.8% on the LESSER of net
+     * investment income and the amount by which MAGI exceeds a fixed threshold.
+     *
+     * Runs once a year, from the annual pass, AFTER applyAnnualTaxTrueUp. It is
+     * a separate pass rather than a branch inside that method; portfolio.js
+     * records why at the call site.
+     *
+     * There is no monthly counterpart, deliberately. Every monthly tax site
+     * annualises a single month by twelve, and for a THRESHOLD rule that is not
+     * a rounding error but a step function: one windfall month would annualise
+     * over $200,000 and charge 3.8% to a household that never crosses it. NIIT
+     * is not withheld at source in reality either — it is settled on the return.
+     *
+     * @param {number} settledYearMonths months of the settled year inside the
+     *   plan, for the same history window spec 4a's allocation uses.
+     */
+    applyAnnualNIIT(settledYearMonths) {
+
+        const { netInvestmentIncome, magi } = taxableBasis(this.yearly, this.activeUser);
+        const niit = activeTaxTable.calculateNIIT(netInvestmentIncome, magi);
+
+        // Same $1 materiality gate the true-up uses. Returns BEFORE any trace
+        // scope is opened — see the note at the call site in portfolio.js.
+        if (niit.amount < 1) return;
+
+        return withTrace(TraceKind.TAX_TRUE_UP, 'Net investment income tax',
+            this.#unfundedTaxAnchor()?.currentDateInt ?? null,
+            () => this.#applyAnnualNIITInScope(niit, netInvestmentIncome, magi, settledYearMonths));
+
+    }
+
+    #applyAnnualNIITInScope(niit, netInvestmentIncome, magi, settledYearMonths) {
+
+        logger.log(LogCategory.TAX,
+            `NIIT: ${niit.toString()} on NII ${netInvestmentIncome.toString()}, `
+            + `MAGI ${magi.toString()} vs threshold $${activeTaxTable.activeNIITThreshold}`);
+
+        // What the 3.8% was actually charged on — the binding side of the min.
+        // Derived here and carried on the event so the ledger can say which
+        // constraint bound without recomputing it.
+        const taxedBase = niit.amount / activeTaxTable.niitRate;
+        const eventData = {
+            taxedBase,
+            nii: netInvestmentIncome.amount,
+            magi: magi.amount,
+            threshold: activeTaxTable.activeNIITThreshold,
+            bound: netInvestmentIncome.amount <= (magi.amount - activeTaxTable.activeNIITThreshold)
+                ? 'nii' : 'magi',
+        };
+
+        // Spec 4a window — identical to applyAnnualTaxTrueUp's, because this
+        // pass runs immediately after it on the same January 1.
+        const referenceHistory = this.modelAssets[0]?.getHistory(Metric.VALUE) ?? [];
+        const hiIndex = referenceHistory.length - 1;
+        const loIndex = hiIndex - (Math.max(1, settledYearMonths ?? 12) - 1);
+        const niiBasis = (asset) =>
+            basisOverMonths(asset, loIndex, hiIndex, NII_BASIS_METRICS);
+
+        const legs = this.#planTaxAllocation(niit, niiBasis);
+        if (legs.length > 0) {
+            logger.log(LogCategory.TAX,
+                `NIIT: allocating ${niit.toString()} across ${legs.length} account(s) by NII share.`);
+            for (const leg of legs) {
+                this.#settleAllocatedLeg(leg, EventType.NIIT_ASSESSED, Metric.NIIT, eventData);
+            }
+            return;
+        }
+
+        const liquidAsset = FundTransfer.resolveFunding(this.modelAssets);
+        if (!liquidAsset) {
+            // Never a silent skip — the same contract the true-up follows. A
+            // household that cannot pay its NIIT must look different from one
+            // that owes none.
+            FundTransfer.reportUnfunded(this.#unfundedTaxAnchor(), niit.copy(),
+                'net investment income tax', ShortfallOrigin.ONE_SIDED);
+            return;
+        }
+
+        // settleOneSided rather than a raw debit, for the reason the true-up
+        // spells out: a raw debit clamps at $0 and returns the overshoot in
+        // `spillover`, which books tax that no balance ever paid.
+        const oneSided = new FundTransferOneSided(null, niit.copy());
+        oneSided.toModel = liquidAsset;
+        const settled = FundTransfer.settleOneSided(oneSided,
+            { type: EventType.NIIT_ASSESSED, data: eventData }, this.modelAssets);
+
+        liquidAsset.addToMetric(Metric.NIIT, settled.supplied.copy().flipSign());
+        this.monthly.recordTransfer(liquidAsset.instrument, settled.supplied, settled.realizedGain);
+
+        if (settled.spillover.amount > 0 && settled.spilloverInstrument) {
+            this.monthly.recordTransfer(settled.spilloverInstrument, settled.spillover, settled.spilloverGain);
+            const payer = FundTransfer.resolveFunding(this.modelAssets);
+            if (payer) payer.addToMetric(Metric.NIIT, settled.spillover.copy().flipSign());
+        }
+
     }
 
     // ── Year-End: Annual Tax True-Up ──────────────────────────────────

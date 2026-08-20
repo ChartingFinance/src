@@ -122,6 +122,16 @@ export const us_2026_taxtables = {
         "url": "https://www.irs.gov/taxtopics/tc701",
         "single": 250000.0,
         "married": 500000.0
+    },
+    // IRC §1411 net investment income tax. The RATE and the THRESHOLDS have
+    // both been fixed since 2013 and neither is inflation-indexed — see the
+    // note in inflateTaxes(). This is a deliberate stealth tax: the threshold
+    // catches more households every year by standing still.
+    "niit": {
+        "url": "https://www.irs.gov/individuals/net-investment-income-tax",
+        "rate": 0.038,
+        "single": 200000.0,
+        "married": 250000.0
     }
 };
 
@@ -195,6 +205,13 @@ export const us_2025_taxtables = {
         "url": "https://www.irs.gov/taxtopics/tc701",
         "single": 250000.0,
         "married": 500000.0
+    },
+    // IRC §1411 — same figures as 2026, and for the same reason: never indexed.
+    "niit": {
+        "url": "https://www.irs.gov/individuals/net-investment-income-tax",
+        "rate": 0.038,
+        "single": 200000.0,
+        "married": 250000.0
     }
 };
 
@@ -327,6 +344,8 @@ export class TaxTable {
         this.activeCapitalGainsTable = byKey(this.activeTaxTables.capitalGains.tables);
         this.activeStandardDeduction = this.activeTaxTables.standardDeduction[key];
         this.activeHomeSaleExclusion = this.activeTaxTables.homeSaleExclusion[key];
+        this.activeNIITThreshold = this.activeTaxTables.niit[key];
+        this.niitRate = this.activeTaxTables.niit.rate;
 
         const limits = CONTRIBUTION_LIMITS[key];
         this.iraContributionLimitBelow50 = limits.iraBelow50;
@@ -390,6 +409,12 @@ export class TaxTable {
         this.inflateTaxRows(this.activeTaxTables.income.tables, r);
         this.inflateTaxRows(this.activeTaxTables.capitalGains.tables, r);
         this.activeStandardDeduction *= r;
+        // activeNIITThreshold is deliberately absent, for the same reason and
+        // with more consequence. IRC §1411 fixed it at $200,000 / $250,000 in
+        // 2013 and has never indexed it, so it catches more households every
+        // year by standing still — that is what the statute does, and a plan
+        // that inflated it would model a tax that quietly stops applying.
+        //
         // activeHomeSaleExclusion is deliberately absent. IRC §121 fixed it at
         // $250,000 / $500,000 in 1997 with no inflation indexing, so a plan that
         // inflated it would under-tax every long-held home — by a factor of 2.4
@@ -595,6 +620,36 @@ export class TaxTable {
         // Fallback to the last bracket's rate
         const rows = this.activeCapitalGainsTable.taxRows;
         return rows[rows.length - 1].rate;
+    }
+
+    /**
+     * IRC §1411 net investment income tax.
+     *
+     *     0.038 × min( netInvestmentIncome , MAGI − threshold )
+     *
+     * BOTH arguments matter, and taking either alone is wrong in a direction a
+     * fixture already demonstrates: a household with $432k of wages and no
+     * investment income owes nothing despite clearing the threshold by far
+     * (mfj-two-earners), and a household living on gains below the threshold
+     * owes nothing despite its income being almost entirely investment income
+     * (gain-harvest-under-the-deduction). Those two fail in OPPOSITE
+     * directions, which is what makes them worth keeping.
+     *
+     * Floored at zero here rather than by the caller, so a MAGI under the
+     * threshold produces no tax instead of a negative one — `magi` itself is
+     * deliberately unfloored (see tax-basis.js), and this is where that has to
+     * be resolved.
+     *
+     * @param {Currency} netInvestmentIncome  from taxableBasis
+     * @param {Currency} magi                 from taxableBasis — AGI, gross of the deduction
+     */
+    calculateNIIT(netInvestmentIncome, magi) {
+
+        const overThreshold = magi.amount - this.activeNIITThreshold;
+        const base = Math.min(netInvestmentIncome.amount, overThreshold);
+        if (base <= 0) return new Currency(0);
+        return new Currency(base * this.niitRate);
+
     }
 
     calculateMonthlyEstimatedTaxes(modelAsset) {

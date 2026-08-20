@@ -224,6 +224,148 @@ describe('deduction overflow onto capital gains (§63 / §1(h))', () => {
   });
 });
 
+/**
+ * IRC §1411. Every figure hand-computed from the 2026 tables, not read off the
+ * implementation.
+ *
+ * The two bases exist to be DIFFERENT. NII is investment income only; MAGI is
+ * AGI, which includes wages and qualified-plan distributions and is measured
+ * BEFORE the standard deduction. A test suite that only ever feeds them
+ * packages where they agree proves nothing about either.
+ */
+describe('netInvestmentIncome', () => {
+  it('excludes wages entirely', () => {
+    const b = taxableBasis(pkg({ employedIncome: 250000, selfIncome: 50000 }), USER);
+    expect(b.netInvestmentIncome.amount).toBe(0);
+  });
+
+  it('sums interest, both dividend kinds and both gain kinds', () => {
+    // 5,000 + 2,000 + 3,000 + 4,000 + 10,000
+    const b = taxableBasis(pkg({
+      interestIncome: 5000, nonQualifiedDividends: 2000, qualifiedDividends: 3000,
+      shortTermCapitalGains: 4000, longTermCapitalGains: 10000,
+    }), USER);
+    expect(b.netInvestmentIncome.amount).toBeCloseTo(24000, 6);
+  });
+
+  it('excludes Social Security, pensions and qualified-plan distributions', () => {
+    // All four are ordinary income and none is investment income.
+    const b = taxableBasis(pkg({
+      socialSecurityIncome: 40000, pensionIncome: 30000,
+      tradIRADistribution: 50000, four01KDistribution: 60000,
+      rothIRADistribution: 25000,
+    }), USER);
+    expect(b.netInvestmentIncome.amount).toBe(0);
+  });
+
+  it('subtracts the §121 exclusion — excluded gain is out of NII too', () => {
+    // 400,000 gain less a 250,000 exclusion.
+    const b = taxableBasis(
+      pkg({ longTermCapitalGains: 400000, excludedCapitalGains: 250000 }), USER);
+    expect(b.netInvestmentIncome.amount).toBeCloseTo(150000, 6);
+  });
+
+  it('floors at zero when the exclusion exceeds the gain', () => {
+    const b = taxableBasis(
+      pkg({ longTermCapitalGains: 10000, excludedCapitalGains: 25000 }), USER);
+    expect(b.netInvestmentIncome.amount).toBe(0);
+  });
+
+  it('is NOT reduced by the standard deduction', () => {
+    // 30,000 of gain with no ordinary income. capitalGains gets the §63
+    // overflow; NII must not — it sits above the deduction line.
+    const b = taxableBasis(pkg({ longTermCapitalGains: 30000 }), USER);
+    expect(b.capitalGains.amount).toBeCloseTo(13900, 6);
+    expect(b.netInvestmentIncome.amount).toBeCloseTo(30000, 6);
+  });
+});
+
+describe('magi', () => {
+  it('is gross of the standard deduction — unlike ordinaryTaxable', () => {
+    // The single most likely wrong assumption: MAGI is AGI (line 11), the
+    // deduction is line 12. These must differ by exactly 16,100.
+    const b = taxableBasis(pkg({ employedIncome: 100000 }), USER);
+    expect(b.magi.amount).toBeCloseTo(100000, 6);
+    expect(b.ordinaryTaxable.amount).toBeCloseTo(83900, 6);
+    expect(b.magi.amount - b.ordinaryTaxable.amount).toBeCloseTo(16100, 6);
+  });
+
+  it('subtracts the deductible pre-tax contribution', () => {
+    // 100,000 − 20,000 deferral. Contributions are above the line.
+    const b = taxableBasis(
+      pkg({ employedIncome: 100000, four01KContribution: 20000 }), USER);
+    expect(b.magi.amount).toBeCloseTo(80000, 6);
+  });
+
+  it('caps that contribution at the annual limit, like the deduction does', () => {
+    // 40,000 requested, capped to 24,500.
+    const b = taxableBasis(
+      pkg({ employedIncome: 200000, four01KContribution: 40000 }), USER);
+    expect(b.magi.amount).toBeCloseTo(175500, 6);
+  });
+
+  it('counts Social Security at 85%', () => {
+    const b = taxableBasis(pkg({ socialSecurityIncome: 40000 }), USER);
+    expect(b.magi.amount).toBeCloseTo(34000, 6);
+  });
+
+  it('includes long-term gains and qualified dividends', () => {
+    // 100,000 + 40,000 + 5,000
+    const b = taxableBasis(pkg({
+      employedIncome: 100000, longTermCapitalGains: 40000, qualifiedDividends: 5000,
+    }), USER);
+    expect(b.magi.amount).toBeCloseTo(145000, 6);
+  });
+
+  it('subtracts the §121 exclusion', () => {
+    const b = taxableBasis(
+      pkg({ longTermCapitalGains: 400000, excludedCapitalGains: 250000 }), USER);
+    expect(b.magi.amount).toBeCloseTo(150000, 6);
+  });
+
+  it('ignores Roth distributions — they raise neither base', () => {
+    const withRoth = taxableBasis(
+      pkg({ employedIncome: 100000, rothIRADistribution: 80000 }), USER);
+    const without = taxableBasis(pkg({ employedIncome: 100000 }), USER);
+    expect(withRoth.magi.amount).toBeCloseTo(without.magi.amount, 6);
+    expect(withRoth.netInvestmentIncome.amount).toBe(0);
+  });
+});
+
+/**
+ * The reason NIIT is worth modelling at all. A qualified-plan distribution can
+ * never be taxed by NIIT itself, yet by raising MAGI it can drag OTHER
+ * investment income over the threshold. An implementation that treats the two
+ * bases as the same quantity loses this entirely, and it is the part a user
+ * would actually plan around (Roth conversion sizing).
+ */
+describe('the §1411 asymmetry', () => {
+  it('puts an IRA distribution in MAGI but not in NII', () => {
+    const b = taxableBasis(pkg({ tradIRADistribution: 120000 }), USER);
+    expect(b.magi.amount).toBeCloseTo(120000, 6);
+    expect(b.netInvestmentIncome.amount).toBe(0);
+  });
+
+  it('puts a 401(k) distribution in MAGI but not in NII', () => {
+    const b = taxableBasis(pkg({ four01KDistribution: 120000 }), USER);
+    expect(b.magi.amount).toBeCloseTo(120000, 6);
+    expect(b.netInvestmentIncome.amount).toBe(0);
+  });
+
+  it('lets a distribution carry gains over the threshold it cannot itself cross', () => {
+    // 30,000 of gain is far below the 200,000 single threshold on its own.
+    const gainsOnly = taxableBasis(pkg({ longTermCapitalGains: 30000 }), USER);
+    expect(gainsOnly.magi.amount).toBeCloseTo(30000, 6);
+
+    // Add a 250,000 conversion: MAGI clears the threshold, and the amount
+    // exposed is the GAIN, not the conversion.
+    const withDraw = taxableBasis(
+      pkg({ longTermCapitalGains: 30000, tradIRADistribution: 250000 }), USER);
+    expect(withDraw.magi.amount).toBeCloseTo(280000, 6);
+    expect(withDraw.netInvestmentIncome.amount).toBeCloseTo(30000, 6);
+  });
+});
+
 describe('ltcgStackBase', () => {
   it('equals ordinaryTaxable — §1(h) measures the bands against taxable income', () => {
     const b = taxableBasis(

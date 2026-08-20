@@ -41,7 +41,7 @@
   firstDate = 2026-01
   lastDate = 2030-12
   startValue = 2025000.000000
-  finishValue = 2534462.831759
+  finishValue = 2456332.346658
   accumulated = -26493.446661
   total.employedIncome = 1200000.000000
   total.socialSecurityTax = -60852.733250
@@ -51,7 +51,7 @@
   total.incomeTax = -170053.040545
   total.longTermCapitalGains = 2066065.397415
   total.longTermCapitalGainsTax = -363327.129237
-  total.value = 146915282.433582
+  total.value = 145977716.612361
 
 [assetOrder]
   0 Salary
@@ -131,12 +131,12 @@
   instrument = bank
   start = 2026-01  finish = 2030-12
   startCurrency = 25000.000000
-  finishCurrency = 2534462.831759
+  finishCurrency = 2456332.346658
   startBasis = 25000.000000
   finishBasis = 25000.000000
   isClosed = no  isDepleted = no
   closedDate = -  closedValue = -
-  events = 182  reconciled = 182
+  events = 183  reconciled = 183
 
 [events] Checking
   0000 2026-01 transfer                     15541.666667 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
@@ -285,49 +285,50 @@
   0143 2029-12 grossUp                      -9031.348105 cash  -                      c2 {forAsset=Living overflow=false}
   0144 2029-12 interestIncome                   0.000000 cash  interestIncome         c-
   0145 2029-12 taxTrueUp                   -26493.446661 cash  -                      c3 {direction=underpayment}
-  0146 2030-01 transfer                     15732.815692 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0147 2030-01 grossUp                      -9054.679087 cash  -                      c2 {forAsset=Living overflow=false}
-  0148 2030-01 interestIncome                   0.000000 cash  interestIncome         c-
-  0149 2030-02 transfer                     15732.815692 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0150 2030-02 grossUp                      -9078.070342 cash  -                      c2 {forAsset=Living overflow=false}
-  0151 2030-02 interestIncome                   0.000000 cash  interestIncome         c-
-  0152 2030-03 transfer                     15732.815692 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0153 2030-03 grossUp                      -9101.522023 cash  -                      c2 {forAsset=Living overflow=false}
-  0154 2030-03 interestIncome                   0.000000 cash  interestIncome         c-
-  0155 2030-04 transfer                     15732.815692 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0156 2030-04 grossUp                      -9125.034289 cash  -                      c2 {forAsset=Living overflow=false}
-  0157 2030-04 interestIncome                   0.000000 cash  interestIncome         c-
-  0158 2030-05 transfer                     15732.815692 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0159 2030-05 grossUp                      -9148.607294 cash  -                      c2 {forAsset=Living overflow=false}
-  0160 2030-05 interestIncome                   0.000000 cash  interestIncome         c-
-  0161 2030-06 transfer                     15732.815692 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0162 2030-06 grossUp                      -9172.241196 cash  -                      c2 {forAsset=Living overflow=false}
-  0163 2030-06 interestIncome                   0.000000 cash  interestIncome         c-
-  0164 2030-07 transfer                     15732.815692 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0165 2030-07 grossUp                      -9195.936152 cash  -                      c2 {forAsset=Living overflow=false}
-  0166 2030-07 interestIncome                   0.000000 cash  interestIncome         c-
-  0167 2030-08 transfer                     15732.815692 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0168 2030-08 grossUp                      -9219.692321 cash  -                      c2 {forAsset=Living overflow=false}
-  0169 2030-08 interestIncome                   0.000000 cash  interestIncome         c-
-  0170 2030-09 transfer                     15732.815692 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0171 2030-09 grossUp                      -9243.509859 cash  -                      c2 {forAsset=Living overflow=false}
-  0172 2030-09 interestIncome                   0.000000 cash  interestIncome         c-
-  0173 2030-10 transfer                     15732.815692 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0174 2030-10 grossUp                      -9267.388926 cash  -                      c2 {forAsset=Living overflow=false}
-  0175 2030-10 interestIncome                   0.000000 cash  interestIncome         c-
-  0176 2030-11 transfer                     16448.048737 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0177 2030-11 grossUp                      -9291.329681 cash  -                      c2 {forAsset=Living overflow=false}
-  0178 2030-11 interestIncome                   0.000000 cash  interestIncome         c-
-  0179 2030-12 transfer                     16972.815692 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0180 2030-12 grossUp                      -9315.332283 cash  -                      c2 {forAsset=Living overflow=false}
-  0181 2030-12 interestIncome                   0.000000 cash  interestIncome         c-
+  0146 2029-12 niitAssessed                -78130.485102 cash  -                      c4 {bound=magi magi=2306065.397415 nii=2066065.397415 taxedBase=2056065.397415 threshold=250000}
+  0147 2030-01 transfer                     15732.815692 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
+  0148 2030-01 grossUp                      -9054.679087 cash  -                      c2 {forAsset=Living overflow=false}
+  0149 2030-01 interestIncome                   0.000000 cash  interestIncome         c-
+  0150 2030-02 transfer                     15732.815692 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
+  0151 2030-02 grossUp                      -9078.070342 cash  -                      c2 {forAsset=Living overflow=false}
+  0152 2030-02 interestIncome                   0.000000 cash  interestIncome         c-
+  0153 2030-03 transfer                     15732.815692 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
+  0154 2030-03 grossUp                      -9101.522023 cash  -                      c2 {forAsset=Living overflow=false}
+  0155 2030-03 interestIncome                   0.000000 cash  interestIncome         c-
+  0156 2030-04 transfer                     15732.815692 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
+  0157 2030-04 grossUp                      -9125.034289 cash  -                      c2 {forAsset=Living overflow=false}
+  0158 2030-04 interestIncome                   0.000000 cash  interestIncome         c-
+  0159 2030-05 transfer                     15732.815692 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
+  0160 2030-05 grossUp                      -9148.607294 cash  -                      c2 {forAsset=Living overflow=false}
+  0161 2030-05 interestIncome                   0.000000 cash  interestIncome         c-
+  0162 2030-06 transfer                     15732.815692 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
+  0163 2030-06 grossUp                      -9172.241196 cash  -                      c2 {forAsset=Living overflow=false}
+  0164 2030-06 interestIncome                   0.000000 cash  interestIncome         c-
+  0165 2030-07 transfer                     15732.815692 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
+  0166 2030-07 grossUp                      -9195.936152 cash  -                      c2 {forAsset=Living overflow=false}
+  0167 2030-07 interestIncome                   0.000000 cash  interestIncome         c-
+  0168 2030-08 transfer                     15732.815692 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
+  0169 2030-08 grossUp                      -9219.692321 cash  -                      c2 {forAsset=Living overflow=false}
+  0170 2030-08 interestIncome                   0.000000 cash  interestIncome         c-
+  0171 2030-09 transfer                     15732.815692 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
+  0172 2030-09 grossUp                      -9243.509859 cash  -                      c2 {forAsset=Living overflow=false}
+  0173 2030-09 interestIncome                   0.000000 cash  interestIncome         c-
+  0174 2030-10 transfer                     15732.815692 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
+  0175 2030-10 grossUp                      -9267.388926 cash  -                      c2 {forAsset=Living overflow=false}
+  0176 2030-10 interestIncome                   0.000000 cash  interestIncome         c-
+  0177 2030-11 transfer                     16448.048737 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
+  0178 2030-11 grossUp                      -9291.329681 cash  -                      c2 {forAsset=Living overflow=false}
+  0179 2030-11 interestIncome                   0.000000 cash  interestIncome         c-
+  0180 2030-12 transfer                     16972.815692 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
+  0181 2030-12 grossUp                      -9315.332283 cash  -                      c2 {forAsset=Living overflow=false}
+  0182 2030-12 interestIncome                   0.000000 cash  interestIncome         c-
 
 [history] Checking
-  value                        n=  60 first=    32541.670000 last=  2534462.830000 min=    32541.670000 max=  2534462.830000 sum=   52555953.180000 #6f9da99d
+  value                        n=  60 first=    32541.670000 last=  2456332.350000 min=    32541.670000 max=  2480420.600000 sum=   51618387.360000 #e0e5bb7a
   estimatedIncomeTax           n=  60 first=        0.000000 last=        0.000000 min=   -26493.450000 max=        0.000000 sum=     -26493.450000 #631f5c67
   incomeTax                    n=  60 first=        0.000000 last=        0.000000 min=   -26493.450000 max=        0.000000 sum=     -26493.450000 #631f5c67
-  federalTaxes                 n=  60 first=        0.000000 last=        0.000000 min=   -26493.450000 max=        0.000000 sum=     -26493.450000 #631f5c67
-  taxes                        n=  60 first=        0.000000 last=        0.000000 min=   -26493.450000 max=        0.000000 sum=     -26493.450000 #631f5c67
+  federalTaxes                 n=  60 first=        0.000000 last=        0.000000 min=  -104623.930000 max=        0.000000 sum=    -104623.930000 #28cb9f8c
+  taxes                        n=  60 first=        0.000000 last=        0.000000 min=  -104623.930000 max=        0.000000 sum=    -104623.930000 #28cb9f8c
   cashFlow                     n=  60 first=        0.000000 last=        0.000000 min=   -26493.450000 max=        0.000000 sum=     -26493.450000 #631f5c67
   cashFlowAccumulated          n=  60 first=        0.000000 last=   -26493.450000 min=   -26493.450000 max=        0.000000 sum=    -317921.400000 #a752452d
 
@@ -423,189 +424,189 @@
   events = 184  reconciled = 184
 
 [events] Salary
-  0000 2026-01 ficaWithholding              -1530.000000 cash  socialSecurityTax      c4
-  0001 2026-01 incomeTaxWithholding         -2928.333333 cash  withheldIncomeTax      c5
+  0000 2026-01 ficaWithholding              -1530.000000 cash  socialSecurityTax      c5
+  0001 2026-01 incomeTaxWithholding         -2928.333333 cash  withheldIncomeTax      c6
   0002 2026-01 transfer                    -15541.666667 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0003 2026-02 ficaWithholding              -1530.000000 cash  socialSecurityTax      c4
-  0004 2026-02 incomeTaxWithholding         -2928.333333 cash  withheldIncomeTax      c5
+  0003 2026-02 ficaWithholding              -1530.000000 cash  socialSecurityTax      c5
+  0004 2026-02 incomeTaxWithholding         -2928.333333 cash  withheldIncomeTax      c6
   0005 2026-02 transfer                    -15541.666667 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0006 2026-03 ficaWithholding              -1530.000000 cash  socialSecurityTax      c4
-  0007 2026-03 incomeTaxWithholding         -2928.333333 cash  withheldIncomeTax      c5
+  0006 2026-03 ficaWithholding              -1530.000000 cash  socialSecurityTax      c5
+  0007 2026-03 incomeTaxWithholding         -2928.333333 cash  withheldIncomeTax      c6
   0008 2026-03 transfer                    -15541.666667 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0009 2026-04 ficaWithholding              -1530.000000 cash  socialSecurityTax      c4
-  0010 2026-04 incomeTaxWithholding         -2928.333333 cash  withheldIncomeTax      c5
+  0009 2026-04 ficaWithholding              -1530.000000 cash  socialSecurityTax      c5
+  0010 2026-04 incomeTaxWithholding         -2928.333333 cash  withheldIncomeTax      c6
   0011 2026-04 transfer                    -15541.666667 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0012 2026-05 ficaWithholding              -1530.000000 cash  socialSecurityTax      c4
-  0013 2026-05 incomeTaxWithholding         -2928.333333 cash  withheldIncomeTax      c5
+  0012 2026-05 ficaWithholding              -1530.000000 cash  socialSecurityTax      c5
+  0013 2026-05 incomeTaxWithholding         -2928.333333 cash  withheldIncomeTax      c6
   0014 2026-05 transfer                    -15541.666667 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0015 2026-06 ficaWithholding              -1530.000000 cash  socialSecurityTax      c4
-  0016 2026-06 incomeTaxWithholding         -2928.333333 cash  withheldIncomeTax      c5
+  0015 2026-06 ficaWithholding              -1530.000000 cash  socialSecurityTax      c5
+  0016 2026-06 incomeTaxWithholding         -2928.333333 cash  withheldIncomeTax      c6
   0017 2026-06 transfer                    -15541.666667 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0018 2026-07 ficaWithholding              -1530.000000 cash  socialSecurityTax      c4
-  0019 2026-07 incomeTaxWithholding         -2928.333333 cash  withheldIncomeTax      c5
+  0018 2026-07 ficaWithholding              -1530.000000 cash  socialSecurityTax      c5
+  0019 2026-07 incomeTaxWithholding         -2928.333333 cash  withheldIncomeTax      c6
   0020 2026-07 transfer                    -15541.666667 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0021 2026-08 ficaWithholding              -1530.000000 cash  socialSecurityTax      c4
-  0022 2026-08 incomeTaxWithholding         -2928.333333 cash  withheldIncomeTax      c5
+  0021 2026-08 ficaWithholding              -1530.000000 cash  socialSecurityTax      c5
+  0022 2026-08 incomeTaxWithholding         -2928.333333 cash  withheldIncomeTax      c6
   0023 2026-08 transfer                    -15541.666667 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0024 2026-09 ficaWithholding              -1530.000000 cash  socialSecurityTax      c4
-  0025 2026-09 incomeTaxWithholding         -2928.333333 cash  withheldIncomeTax      c5
+  0024 2026-09 ficaWithholding              -1530.000000 cash  socialSecurityTax      c5
+  0025 2026-09 incomeTaxWithholding         -2928.333333 cash  withheldIncomeTax      c6
   0026 2026-09 transfer                    -15541.666667 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0027 2026-10 ficaWithholding               -569.000000 cash  socialSecurityTax      c4
-  0028 2026-10 incomeTaxWithholding         -2928.333333 cash  withheldIncomeTax      c5
+  0027 2026-10 ficaWithholding               -569.000000 cash  socialSecurityTax      c5
+  0028 2026-10 incomeTaxWithholding         -2928.333333 cash  withheldIncomeTax      c6
   0029 2026-10 transfer                    -16502.666667 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0030 2026-11 ficaWithholding               -290.000000 cash  socialSecurityTax      c4
-  0031 2026-11 incomeTaxWithholding         -2928.333333 cash  withheldIncomeTax      c5
+  0030 2026-11 ficaWithholding               -290.000000 cash  socialSecurityTax      c5
+  0031 2026-11 incomeTaxWithholding         -2928.333333 cash  withheldIncomeTax      c6
   0032 2026-11 transfer                    -16781.666667 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0033 2026-12 ficaWithholding               -290.000000 cash  socialSecurityTax      c4
-  0034 2026-12 incomeTaxWithholding         -2928.333333 cash  withheldIncomeTax      c5
+  0033 2026-12 ficaWithholding               -290.000000 cash  socialSecurityTax      c5
+  0034 2026-12 incomeTaxWithholding         -2928.333333 cash  withheldIncomeTax      c6
   0035 2026-12 transfer                    -16781.666667 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0036 2026-12 incomeGrowth                     0.000000 cash  income                 c6
-  0037 2027-01 ficaWithholding              -1530.000000 cash  socialSecurityTax      c4
-  0038 2027-01 incomeTaxWithholding         -2882.711667 cash  withheldIncomeTax      c5
+  0036 2026-12 incomeGrowth                     0.000000 cash  income                 c7
+  0037 2027-01 ficaWithholding              -1530.000000 cash  socialSecurityTax      c5
+  0038 2027-01 incomeTaxWithholding         -2882.711667 cash  withheldIncomeTax      c6
   0039 2027-01 transfer                    -15587.288333 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0040 2027-02 ficaWithholding              -1530.000000 cash  socialSecurityTax      c4
-  0041 2027-02 incomeTaxWithholding         -2882.711667 cash  withheldIncomeTax      c5
+  0040 2027-02 ficaWithholding              -1530.000000 cash  socialSecurityTax      c5
+  0041 2027-02 incomeTaxWithholding         -2882.711667 cash  withheldIncomeTax      c6
   0042 2027-02 transfer                    -15587.288333 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0043 2027-03 ficaWithholding              -1530.000000 cash  socialSecurityTax      c4
-  0044 2027-03 incomeTaxWithholding         -2882.711667 cash  withheldIncomeTax      c5
+  0043 2027-03 ficaWithholding              -1530.000000 cash  socialSecurityTax      c5
+  0044 2027-03 incomeTaxWithholding         -2882.711667 cash  withheldIncomeTax      c6
   0045 2027-03 transfer                    -15587.288333 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0046 2027-04 ficaWithholding              -1530.000000 cash  socialSecurityTax      c4
-  0047 2027-04 incomeTaxWithholding         -2882.711667 cash  withheldIncomeTax      c5
+  0046 2027-04 ficaWithholding              -1530.000000 cash  socialSecurityTax      c5
+  0047 2027-04 incomeTaxWithholding         -2882.711667 cash  withheldIncomeTax      c6
   0048 2027-04 transfer                    -15587.288333 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0049 2027-05 ficaWithholding              -1530.000000 cash  socialSecurityTax      c4
-  0050 2027-05 incomeTaxWithholding         -2882.711667 cash  withheldIncomeTax      c5
+  0049 2027-05 ficaWithholding              -1530.000000 cash  socialSecurityTax      c5
+  0050 2027-05 incomeTaxWithholding         -2882.711667 cash  withheldIncomeTax      c6
   0051 2027-05 transfer                    -15587.288333 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0052 2027-06 ficaWithholding              -1530.000000 cash  socialSecurityTax      c4
-  0053 2027-06 incomeTaxWithholding         -2882.711667 cash  withheldIncomeTax      c5
+  0052 2027-06 ficaWithholding              -1530.000000 cash  socialSecurityTax      c5
+  0053 2027-06 incomeTaxWithholding         -2882.711667 cash  withheldIncomeTax      c6
   0054 2027-06 transfer                    -15587.288333 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0055 2027-07 ficaWithholding              -1530.000000 cash  socialSecurityTax      c4
-  0056 2027-07 incomeTaxWithholding         -2882.711667 cash  withheldIncomeTax      c5
+  0055 2027-07 ficaWithholding              -1530.000000 cash  socialSecurityTax      c5
+  0056 2027-07 incomeTaxWithholding         -2882.711667 cash  withheldIncomeTax      c6
   0057 2027-07 transfer                    -15587.288333 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0058 2027-08 ficaWithholding              -1530.000000 cash  socialSecurityTax      c4
-  0059 2027-08 incomeTaxWithholding         -2882.711667 cash  withheldIncomeTax      c5
+  0058 2027-08 ficaWithholding              -1530.000000 cash  socialSecurityTax      c5
+  0059 2027-08 incomeTaxWithholding         -2882.711667 cash  withheldIncomeTax      c6
   0060 2027-08 transfer                    -15587.288333 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0061 2027-09 ficaWithholding              -1530.000000 cash  socialSecurityTax      c4
-  0062 2027-09 incomeTaxWithholding         -2882.711667 cash  withheldIncomeTax      c5
+  0061 2027-09 ficaWithholding              -1530.000000 cash  socialSecurityTax      c5
+  0062 2027-09 incomeTaxWithholding         -2882.711667 cash  withheldIncomeTax      c6
   0063 2027-09 transfer                    -15587.288333 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0064 2027-10 ficaWithholding               -923.609000 cash  socialSecurityTax      c4
-  0065 2027-10 incomeTaxWithholding         -2882.711667 cash  withheldIncomeTax      c5
+  0064 2027-10 ficaWithholding               -923.609000 cash  socialSecurityTax      c5
+  0065 2027-10 incomeTaxWithholding         -2882.711667 cash  withheldIncomeTax      c6
   0066 2027-10 transfer                    -16193.679333 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0067 2027-11 ficaWithholding               -290.000000 cash  socialSecurityTax      c4
-  0068 2027-11 incomeTaxWithholding         -2882.711667 cash  withheldIncomeTax      c5
+  0067 2027-11 ficaWithholding               -290.000000 cash  socialSecurityTax      c5
+  0068 2027-11 incomeTaxWithholding         -2882.711667 cash  withheldIncomeTax      c6
   0069 2027-11 transfer                    -16827.288333 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0070 2027-12 ficaWithholding               -290.000000 cash  socialSecurityTax      c4
-  0071 2027-12 incomeTaxWithholding         -2882.711667 cash  withheldIncomeTax      c5
+  0070 2027-12 ficaWithholding               -290.000000 cash  socialSecurityTax      c5
+  0071 2027-12 incomeTaxWithholding         -2882.711667 cash  withheldIncomeTax      c6
   0072 2027-12 transfer                    -16827.288333 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0073 2027-12 incomeGrowth                     0.000000 cash  income                 c7
-  0074 2028-01 ficaWithholding              -1530.000000 cash  socialSecurityTax      c4
-  0075 2028-01 incomeTaxWithholding         -2835.675728 cash  withheldIncomeTax      c5
+  0073 2027-12 incomeGrowth                     0.000000 cash  income                 c8
+  0074 2028-01 ficaWithholding              -1530.000000 cash  socialSecurityTax      c5
+  0075 2028-01 incomeTaxWithholding         -2835.675728 cash  withheldIncomeTax      c6
   0076 2028-01 transfer                    -15634.324272 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0077 2028-02 ficaWithholding              -1530.000000 cash  socialSecurityTax      c4
-  0078 2028-02 incomeTaxWithholding         -2835.675728 cash  withheldIncomeTax      c5
+  0077 2028-02 ficaWithholding              -1530.000000 cash  socialSecurityTax      c5
+  0078 2028-02 incomeTaxWithholding         -2835.675728 cash  withheldIncomeTax      c6
   0079 2028-02 transfer                    -15634.324272 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0080 2028-03 ficaWithholding              -1530.000000 cash  socialSecurityTax      c4
-  0081 2028-03 incomeTaxWithholding         -2835.675728 cash  withheldIncomeTax      c5
+  0080 2028-03 ficaWithholding              -1530.000000 cash  socialSecurityTax      c5
+  0081 2028-03 incomeTaxWithholding         -2835.675728 cash  withheldIncomeTax      c6
   0082 2028-03 transfer                    -15634.324272 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0083 2028-04 ficaWithholding              -1530.000000 cash  socialSecurityTax      c4
-  0084 2028-04 incomeTaxWithholding         -2835.675728 cash  withheldIncomeTax      c5
+  0083 2028-04 ficaWithholding              -1530.000000 cash  socialSecurityTax      c5
+  0084 2028-04 incomeTaxWithholding         -2835.675728 cash  withheldIncomeTax      c6
   0085 2028-04 transfer                    -15634.324272 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0086 2028-05 ficaWithholding              -1530.000000 cash  socialSecurityTax      c4
-  0087 2028-05 incomeTaxWithholding         -2835.675728 cash  withheldIncomeTax      c5
+  0086 2028-05 ficaWithholding              -1530.000000 cash  socialSecurityTax      c5
+  0087 2028-05 incomeTaxWithholding         -2835.675728 cash  withheldIncomeTax      c6
   0088 2028-05 transfer                    -15634.324272 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0089 2028-06 ficaWithholding              -1530.000000 cash  socialSecurityTax      c4
-  0090 2028-06 incomeTaxWithholding         -2835.675728 cash  withheldIncomeTax      c5
+  0089 2028-06 ficaWithholding              -1530.000000 cash  socialSecurityTax      c5
+  0090 2028-06 incomeTaxWithholding         -2835.675728 cash  withheldIncomeTax      c6
   0091 2028-06 transfer                    -15634.324272 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0092 2028-07 ficaWithholding              -1530.000000 cash  socialSecurityTax      c4
-  0093 2028-07 incomeTaxWithholding         -2835.675728 cash  withheldIncomeTax      c5
+  0092 2028-07 ficaWithholding              -1530.000000 cash  socialSecurityTax      c5
+  0093 2028-07 incomeTaxWithholding         -2835.675728 cash  withheldIncomeTax      c6
   0094 2028-07 transfer                    -15634.324272 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0095 2028-08 ficaWithholding              -1530.000000 cash  socialSecurityTax      c4
-  0096 2028-08 incomeTaxWithholding         -2835.675728 cash  withheldIncomeTax      c5
+  0095 2028-08 ficaWithholding              -1530.000000 cash  socialSecurityTax      c5
+  0096 2028-08 incomeTaxWithholding         -2835.675728 cash  withheldIncomeTax      c6
   0097 2028-08 transfer                    -15634.324272 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0098 2028-09 ficaWithholding              -1530.000000 cash  socialSecurityTax      c4
-  0099 2028-09 incomeTaxWithholding         -2835.675728 cash  withheldIncomeTax      c5
+  0098 2028-09 ficaWithholding              -1530.000000 cash  socialSecurityTax      c5
+  0099 2028-09 incomeTaxWithholding         -2835.675728 cash  withheldIncomeTax      c6
   0100 2028-09 transfer                    -15634.324272 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0101 2028-10 ficaWithholding              -1289.210879 cash  socialSecurityTax      c4
-  0102 2028-10 incomeTaxWithholding         -2835.675728 cash  withheldIncomeTax      c5
+  0101 2028-10 ficaWithholding              -1289.210879 cash  socialSecurityTax      c5
+  0102 2028-10 incomeTaxWithholding         -2835.675728 cash  withheldIncomeTax      c6
   0103 2028-10 transfer                    -15875.113393 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0104 2028-11 ficaWithholding               -290.000000 cash  socialSecurityTax      c4
-  0105 2028-11 incomeTaxWithholding         -2835.675728 cash  withheldIncomeTax      c5
+  0104 2028-11 ficaWithholding               -290.000000 cash  socialSecurityTax      c5
+  0105 2028-11 incomeTaxWithholding         -2835.675728 cash  withheldIncomeTax      c6
   0106 2028-11 transfer                    -16874.324272 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0107 2028-12 ficaWithholding               -290.000000 cash  socialSecurityTax      c4
-  0108 2028-12 incomeTaxWithholding         -2835.675728 cash  withheldIncomeTax      c5
+  0107 2028-12 ficaWithholding               -290.000000 cash  socialSecurityTax      c5
+  0108 2028-12 incomeTaxWithholding         -2835.675728 cash  withheldIncomeTax      c6
   0109 2028-12 transfer                    -16874.324272 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0110 2028-12 incomeGrowth                     0.000000 cash  income                 c8
-  0111 2029-01 ficaWithholding              -1530.000000 cash  socialSecurityTax      c4
-  0112 2029-01 incomeTaxWithholding         -2787.181676 cash  withheldIncomeTax      c5
+  0110 2028-12 incomeGrowth                     0.000000 cash  income                 c9
+  0111 2029-01 ficaWithholding              -1530.000000 cash  socialSecurityTax      c5
+  0112 2029-01 incomeTaxWithholding         -2787.181676 cash  withheldIncomeTax      c6
   0113 2029-01 transfer                    -15682.818324 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0114 2029-02 ficaWithholding              -1530.000000 cash  socialSecurityTax      c4
-  0115 2029-02 incomeTaxWithholding         -2787.181676 cash  withheldIncomeTax      c5
+  0114 2029-02 ficaWithholding              -1530.000000 cash  socialSecurityTax      c5
+  0115 2029-02 incomeTaxWithholding         -2787.181676 cash  withheldIncomeTax      c6
   0116 2029-02 transfer                    -15682.818324 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0117 2029-03 ficaWithholding              -1530.000000 cash  socialSecurityTax      c4
-  0118 2029-03 incomeTaxWithholding         -2787.181676 cash  withheldIncomeTax      c5
+  0117 2029-03 ficaWithholding              -1530.000000 cash  socialSecurityTax      c5
+  0118 2029-03 incomeTaxWithholding         -2787.181676 cash  withheldIncomeTax      c6
   0119 2029-03 transfer                    -15682.818324 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0120 2029-04 ficaWithholding              -1530.000000 cash  socialSecurityTax      c4
-  0121 2029-04 incomeTaxWithholding         -2787.181676 cash  withheldIncomeTax      c5
+  0120 2029-04 ficaWithholding              -1530.000000 cash  socialSecurityTax      c5
+  0121 2029-04 incomeTaxWithholding         -2787.181676 cash  withheldIncomeTax      c6
   0122 2029-04 transfer                    -15682.818324 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0123 2029-05 ficaWithholding              -1530.000000 cash  socialSecurityTax      c4
-  0124 2029-05 incomeTaxWithholding         -2787.181676 cash  withheldIncomeTax      c5
+  0123 2029-05 ficaWithholding              -1530.000000 cash  socialSecurityTax      c5
+  0124 2029-05 incomeTaxWithholding         -2787.181676 cash  withheldIncomeTax      c6
   0125 2029-05 transfer                    -15682.818324 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0126 2029-06 ficaWithholding              -1530.000000 cash  socialSecurityTax      c4
-  0127 2029-06 incomeTaxWithholding         -2787.181676 cash  withheldIncomeTax      c5
+  0126 2029-06 ficaWithholding              -1530.000000 cash  socialSecurityTax      c5
+  0127 2029-06 incomeTaxWithholding         -2787.181676 cash  withheldIncomeTax      c6
   0128 2029-06 transfer                    -15682.818324 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0129 2029-07 ficaWithholding              -1530.000000 cash  socialSecurityTax      c4
-  0130 2029-07 incomeTaxWithholding         -2787.181676 cash  withheldIncomeTax      c5
+  0129 2029-07 ficaWithholding              -1530.000000 cash  socialSecurityTax      c5
+  0130 2029-07 incomeTaxWithholding         -2787.181676 cash  withheldIncomeTax      c6
   0131 2029-07 transfer                    -15682.818324 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0132 2029-08 ficaWithholding              -1530.000000 cash  socialSecurityTax      c4
-  0133 2029-08 incomeTaxWithholding         -2787.181676 cash  withheldIncomeTax      c5
+  0132 2029-08 ficaWithholding              -1530.000000 cash  socialSecurityTax      c5
+  0133 2029-08 incomeTaxWithholding         -2787.181676 cash  withheldIncomeTax      c6
   0134 2029-08 transfer                    -15682.818324 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0135 2029-09 ficaWithholding              -1530.000000 cash  socialSecurityTax      c4
-  0136 2029-09 incomeTaxWithholding         -2787.181676 cash  withheldIncomeTax      c5
+  0135 2029-09 ficaWithholding              -1530.000000 cash  socialSecurityTax      c5
+  0136 2029-09 incomeTaxWithholding         -2787.181676 cash  withheldIncomeTax      c6
   0137 2029-09 transfer                    -15682.818324 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0138 2029-10 ficaWithholding              -1530.000000 cash  socialSecurityTax      c4
-  0139 2029-10 incomeTaxWithholding         -2787.181676 cash  withheldIncomeTax      c5
+  0138 2029-10 ficaWithholding              -1530.000000 cash  socialSecurityTax      c5
+  0139 2029-10 incomeTaxWithholding         -2787.181676 cash  withheldIncomeTax      c6
   0140 2029-10 transfer                    -15682.818324 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0141 2029-11 ficaWithholding               -426.146416 cash  socialSecurityTax      c4
-  0142 2029-11 incomeTaxWithholding         -2787.181676 cash  withheldIncomeTax      c5
+  0141 2029-11 ficaWithholding               -426.146416 cash  socialSecurityTax      c5
+  0142 2029-11 incomeTaxWithholding         -2787.181676 cash  withheldIncomeTax      c6
   0143 2029-11 transfer                    -16786.671908 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0144 2029-12 ficaWithholding               -290.000000 cash  socialSecurityTax      c4
-  0145 2029-12 incomeTaxWithholding         -2787.181676 cash  withheldIncomeTax      c5
+  0144 2029-12 ficaWithholding               -290.000000 cash  socialSecurityTax      c5
+  0145 2029-12 incomeTaxWithholding         -2787.181676 cash  withheldIncomeTax      c6
   0146 2029-12 transfer                    -16922.818324 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0147 2029-12 incomeGrowth                     0.000000 cash  income                 c9
-  0148 2030-01 ficaWithholding              -1530.000000 cash  socialSecurityTax      c4
-  0149 2030-01 incomeTaxWithholding         -2737.184308 cash  withheldIncomeTax      c5
+  0147 2029-12 incomeGrowth                     0.000000 cash  income                 c10
+  0148 2030-01 ficaWithholding              -1530.000000 cash  socialSecurityTax      c5
+  0149 2030-01 incomeTaxWithholding         -2737.184308 cash  withheldIncomeTax      c6
   0150 2030-01 transfer                    -15732.815692 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0151 2030-02 ficaWithholding              -1530.000000 cash  socialSecurityTax      c4
-  0152 2030-02 incomeTaxWithholding         -2737.184308 cash  withheldIncomeTax      c5
+  0151 2030-02 ficaWithholding              -1530.000000 cash  socialSecurityTax      c5
+  0152 2030-02 incomeTaxWithholding         -2737.184308 cash  withheldIncomeTax      c6
   0153 2030-02 transfer                    -15732.815692 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0154 2030-03 ficaWithholding              -1530.000000 cash  socialSecurityTax      c4
-  0155 2030-03 incomeTaxWithholding         -2737.184308 cash  withheldIncomeTax      c5
+  0154 2030-03 ficaWithholding              -1530.000000 cash  socialSecurityTax      c5
+  0155 2030-03 incomeTaxWithholding         -2737.184308 cash  withheldIncomeTax      c6
   0156 2030-03 transfer                    -15732.815692 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0157 2030-04 ficaWithholding              -1530.000000 cash  socialSecurityTax      c4
-  0158 2030-04 incomeTaxWithholding         -2737.184308 cash  withheldIncomeTax      c5
+  0157 2030-04 ficaWithholding              -1530.000000 cash  socialSecurityTax      c5
+  0158 2030-04 incomeTaxWithholding         -2737.184308 cash  withheldIncomeTax      c6
   0159 2030-04 transfer                    -15732.815692 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0160 2030-05 ficaWithholding              -1530.000000 cash  socialSecurityTax      c4
-  0161 2030-05 incomeTaxWithholding         -2737.184308 cash  withheldIncomeTax      c5
+  0160 2030-05 ficaWithholding              -1530.000000 cash  socialSecurityTax      c5
+  0161 2030-05 incomeTaxWithholding         -2737.184308 cash  withheldIncomeTax      c6
   0162 2030-05 transfer                    -15732.815692 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0163 2030-06 ficaWithholding              -1530.000000 cash  socialSecurityTax      c4
-  0164 2030-06 incomeTaxWithholding         -2737.184308 cash  withheldIncomeTax      c5
+  0163 2030-06 ficaWithholding              -1530.000000 cash  socialSecurityTax      c5
+  0164 2030-06 incomeTaxWithholding         -2737.184308 cash  withheldIncomeTax      c6
   0165 2030-06 transfer                    -15732.815692 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0166 2030-07 ficaWithholding              -1530.000000 cash  socialSecurityTax      c4
-  0167 2030-07 incomeTaxWithholding         -2737.184308 cash  withheldIncomeTax      c5
+  0166 2030-07 ficaWithholding              -1530.000000 cash  socialSecurityTax      c5
+  0167 2030-07 incomeTaxWithholding         -2737.184308 cash  withheldIncomeTax      c6
   0168 2030-07 transfer                    -15732.815692 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0169 2030-08 ficaWithholding              -1530.000000 cash  socialSecurityTax      c4
-  0170 2030-08 incomeTaxWithholding         -2737.184308 cash  withheldIncomeTax      c5
+  0169 2030-08 ficaWithholding              -1530.000000 cash  socialSecurityTax      c5
+  0170 2030-08 incomeTaxWithholding         -2737.184308 cash  withheldIncomeTax      c6
   0171 2030-08 transfer                    -15732.815692 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0172 2030-09 ficaWithholding              -1530.000000 cash  socialSecurityTax      c4
-  0173 2030-09 incomeTaxWithholding         -2737.184308 cash  withheldIncomeTax      c5
+  0172 2030-09 ficaWithholding              -1530.000000 cash  socialSecurityTax      c5
+  0173 2030-09 incomeTaxWithholding         -2737.184308 cash  withheldIncomeTax      c6
   0174 2030-09 transfer                    -15732.815692 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0175 2030-10 ficaWithholding              -1530.000000 cash  socialSecurityTax      c4
-  0176 2030-10 incomeTaxWithholding         -2737.184308 cash  withheldIncomeTax      c5
+  0175 2030-10 ficaWithholding              -1530.000000 cash  socialSecurityTax      c5
+  0176 2030-10 incomeTaxWithholding         -2737.184308 cash  withheldIncomeTax      c6
   0177 2030-10 transfer                    -15732.815692 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0178 2030-11 ficaWithholding               -814.766955 cash  socialSecurityTax      c4
-  0179 2030-11 incomeTaxWithholding         -2737.184308 cash  withheldIncomeTax      c5
+  0178 2030-11 ficaWithholding               -814.766955 cash  socialSecurityTax      c5
+  0179 2030-11 incomeTaxWithholding         -2737.184308 cash  withheldIncomeTax      c6
   0180 2030-11 transfer                    -16448.048737 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0181 2030-12 ficaWithholding               -290.000000 cash  socialSecurityTax      c4
-  0182 2030-12 incomeTaxWithholding         -2737.184308 cash  withheldIncomeTax      c5
+  0181 2030-12 ficaWithholding               -290.000000 cash  socialSecurityTax      c5
+  0182 2030-12 incomeTaxWithholding         -2737.184308 cash  withheldIncomeTax      c6
   0183 2030-12 transfer                    -16972.815692 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
 
 [history] Salary
@@ -673,18 +674,18 @@
   0045 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-8984.866334 medicareTax=-290.000000 incomeTax=-2787.181676 value=2475742.458396
   0046 employedIncome=20000.000000 socialSecurityTax=-136.146416 expense=-9008.077239 medicareTax=-290.000000 incomeTax=-2787.181676 value=2483497.782199
   0047 employedIncome=20000.000000 expense=-9031.348105 medicareTax=-290.000000 incomeTax=-2787.181676 value=2491365.921436
-  0048 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9054.679087 medicareTax=-290.000000 incomeTax=-2737.184308 value=2471527.220126
-  0049 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9078.070342 medicareTax=-290.000000 incomeTax=-2737.184308 value=2478158.513794
-  0050 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9101.522023 medicareTax=-290.000000 incomeTax=-2737.184308 value=2484766.295198
-  0051 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9125.034289 medicareTax=-290.000000 incomeTax=-2737.184308 value=2491350.503596
-  0052 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9148.607294 medicareTax=-290.000000 incomeTax=-2737.184308 value=2497911.078092
-  0053 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9172.241196 medicareTax=-290.000000 incomeTax=-2737.184308 value=2504447.957632
-  0054 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9195.936152 medicareTax=-290.000000 incomeTax=-2737.184308 value=2510961.081004
-  0055 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9219.692321 medicareTax=-290.000000 incomeTax=-2737.184308 value=2517450.386836
-  0056 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9243.509859 medicareTax=-290.000000 incomeTax=-2737.184308 value=2523915.813602
-  0057 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9267.388926 medicareTax=-290.000000 incomeTax=-2737.184308 value=2530357.299613
-  0058 employedIncome=20000.000000 socialSecurityTax=-524.766955 expense=-9291.329681 medicareTax=-290.000000 incomeTax=-2737.184308 value=2537490.016067
-  0059 employedIncome=20000.000000 expense=-9315.332283 medicareTax=-290.000000 incomeTax=-2737.184308 value=2545123.434868
+  0048 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9054.679087 medicareTax=-290.000000 incomeTax=-2737.184308 value=2393396.735024
+  0049 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9078.070342 medicareTax=-290.000000 incomeTax=-2737.184308 value=2400028.028693
+  0050 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9101.522023 medicareTax=-290.000000 incomeTax=-2737.184308 value=2406635.810096
+  0051 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9125.034289 medicareTax=-290.000000 incomeTax=-2737.184308 value=2413220.018495
+  0052 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9148.607294 medicareTax=-290.000000 incomeTax=-2737.184308 value=2419780.592991
+  0053 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9172.241196 medicareTax=-290.000000 incomeTax=-2737.184308 value=2426317.472530
+  0054 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9195.936152 medicareTax=-290.000000 incomeTax=-2737.184308 value=2432830.595902
+  0055 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9219.692321 medicareTax=-290.000000 incomeTax=-2737.184308 value=2439319.901735
+  0056 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9243.509859 medicareTax=-290.000000 incomeTax=-2737.184308 value=2445785.328500
+  0057 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9267.388926 medicareTax=-290.000000 incomeTax=-2737.184308 value=2452226.814511
+  0058 employedIncome=20000.000000 socialSecurityTax=-524.766955 expense=-9291.329681 medicareTax=-290.000000 incomeTax=-2737.184308 value=2459359.530965
+  0059 employedIncome=20000.000000 expense=-9315.332283 medicareTax=-290.000000 incomeTax=-2737.184308 value=2466992.949766
 
 [priceIndex]
   [0000]         1.002583         1.005173         1.007770         1.010373         1.012984         1.015600
@@ -702,7 +703,7 @@
   (no findings)
 
 [traces]
-  scopes = 1444
+  scopes = 1446
   unattributedEvents = 0
   1x 2027 annual pass
   1x 2027 tax true-up
@@ -760,6 +761,7 @@
   7x May 2028
   7x May 2029
   7x May 2030
+  1x Net investment income tax
   7x November 2026
   7x November 2027
   7x November 2028
@@ -787,7 +789,7 @@
   7x September 2028
   7x September 2029
   7x September 2030
-  61x Settle from Checking
+  62x Settle from Checking
   1x Transfer Brokerage → Checking
   60x Transfer Salary → Checking
   42x Withholding: Brokerage
@@ -800,10 +802,11 @@
   c1 = Transfer Salary → Checking
   c2 = Pay Living > Settle from Checking
   c3 = 2030 annual pass > 2030 tax true-up > Settle from Checking
-  c4 = Payroll: Salary
-  c5 = Withholding: Salary
-  c6 = 2027 annual pass > Annual growth: Salary
-  c7 = 2028 annual pass > Annual growth: Salary
-  c8 = 2029 annual pass > Annual growth: Salary
-  c9 = 2030 annual pass > Annual growth: Salary
+  c4 = 2030 annual pass > Net investment income tax > Settle from Checking
+  c5 = Payroll: Salary
+  c6 = Withholding: Salary
+  c7 = 2027 annual pass > Annual growth: Salary
+  c8 = 2028 annual pass > Annual growth: Salary
+  c9 = 2029 annual pass > Annual growth: Salary
+  c10 = 2030 annual pass > Annual growth: Salary
 
