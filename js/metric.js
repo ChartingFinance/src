@@ -348,6 +348,38 @@ export const PARENT_METRICS = new Set(
   Object.values(MetricRollups).flat()
 );
 
+/**
+ * Every tax the household actually pays, as leaf metrics — the engine's own
+ * definition, derived from the rollup DAG rather than typed out.
+ *
+ * A metric qualifies if it reaches TAXES and nothing rolls into it. Parents like
+ * INCOME_TAX and FEDERAL_TAXES are excluded: they are sums of these, so a
+ * consumer that added them too would double-count.
+ *
+ * DERIVED, not hardcoded, on purpose. This list was written out by hand in three
+ * places — the tax breakdown column, and twice inside the Visualizer's tax
+ * drain — and when NIIT was added in 2026-08 every one of them silently kept
+ * summing the old seven. The Visualizer simply reported a smaller tax bill than
+ * the household paid, with nothing to indicate a metric was missing. Anything
+ * that means "all the taxes" should import this and get the next one for free.
+ *
+ * TAX_TREE in asset-list.js still needs a hand-written row per tax, because a
+ * row carries a label, an emoji and its highlight set — but
+ * tests/unit/tax-tree-coverage.test.js checks it against this list.
+ */
+export const LEAF_TAX_METRICS = Object.freeze(
+  Object.values(Metric).filter((m) => {
+    if (m === Metric.TAXES || PARENT_METRICS.has(m)) return false;
+    const reaches = (x, seen = new Set()) => {
+      if (x === Metric.TAXES) return true;
+      if (seen.has(x)) return false;
+      seen.add(x);
+      return (MetricRollups[x] ?? []).some((p) => reaches(p, seen));
+    };
+    return reaches(m);
+  })
+);
+
 // ── TrackedMetric & MetricSet ─────────────────────────────────────────
 // (merged from tracked-metric.js)
 //

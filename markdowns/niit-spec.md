@@ -387,6 +387,7 @@ at the Taxes column, and NIIT was not there.
 | `report-view.js` | hardcoded rows | No — fixed in #38 |
 | `asset-list.js` `TAX_TREE` | **hardcoded** | No — fixed here |
 | `spreadsheet-view.js` | **hardcoded** columns | No — fixed here |
+| `hydraulic-visualizer.js` tax drain | **hardcoded, TWICE** | No — fixed in §11 |
 | `graph-mapper.js` sinks | hardcoded | No — Sankey toggle is hidden pending design; left alone deliberately |
 
 The two DAG-driven surfaces were right the whole time, which is exactly why the
@@ -422,3 +423,41 @@ trailing window clears.
 **Generalisation:** a metric's *cadence* is part of its display contract. Any
 new once-a-year charge needs `annualCadence`, or it will be both invisible and
 overstated — a combination no totals check can detect.
+
+---
+
+## 11. Documentation, and a sixth surface — added 2026-08-20
+
+Writing NIIT into `rules.html` and `help.html` turned up one more place the tax
+was missing, and one stale claim.
+
+**The Visualizer's tax drain omitted it.** `hydraulic-visualizer.js` summed the
+seven tax metrics by hand, in TWO places, and neither knew about `niit`. The
+drain simply reported a smaller tax bill than the household paid — measured on
+Early Career at the first charge month, **$15,710.55 shown against $18,343.25
+actually paid**, understated by exactly the $2,632.70 charged. §10's inventory
+listed five surfaces; there were six. The lesson from §10 was right and I had
+still not applied it exhaustively.
+
+Fixed by deriving the set instead of typing it: `LEAF_TAX_METRICS` in
+`metric.js` is computed once from the rollup DAG — every metric that reaches
+`TAXES` with nothing rolling into it. Both Visualizer sums and
+`tax-tree-coverage.test.js` now import it, so they cannot disagree, and the next
+tax is picked up with no edit. `TAX_TREE` still needs a hand-written row per tax
+(a row carries a label, an emoji and a highlight set) but the test checks it
+against this list.
+
+**A stale claim in rules.html.** The Tax Rates section said the primary-home
+exclusion was "the single exception" to inflation indexing. Since #37 there are
+two: the §1411 threshold is equally unindexed, and for the same reason. Corrected
+rather than appended to, because the original sentence was now false.
+
+**What the docs say.** `rules.html` gains a Net Investment Income Tax section
+covering the `min` of the two numbers, the $200k/$250k thresholds measured
+against AGI rather than taxable income, and the IRA/Roth-conversion asymmetry
+called out as the thing worth planning around. Two honest gaps join "What This
+Engine Does Not Model": no rental income (a landlord's NII is understated) and
+investment expenses not deducted (NII is gross). `help.html` names NIIT in the
+Taxes column and the Visualizer drain, and explains why that one row shows a
+trailing twelve months while its neighbours show the month annualised —
+otherwise a reader would reasonably think it was inconsistent.
