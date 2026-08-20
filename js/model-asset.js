@@ -498,6 +498,7 @@ export class ModelAsset {
   get monthlyFour01KDistributions()  { return this.#metrics.get(Metric.FOUR_01K_DISTRIBUTION).history; }
   get monthlyInterestIncomes()       { return this.#metrics.get(Metric.INTEREST_INCOME).history; }
   get monthlyCapitalGainsTaxes()     { return this.#metrics.get(Metric.CAPITAL_GAIN_TAX).history; }
+  get monthlyNIIT()                  { return this.#metrics.get(Metric.NIIT).history; }
   get monthlyCredits()               { return this.#metrics.get(Metric.CREDIT).history; }
 
 

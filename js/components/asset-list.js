@@ -41,7 +41,7 @@ const HORIZONTAL_GROUP_ORDER = [
  *
  * Amounts and highlights are computed per-node; zero-amount nodes are pruned.
  */
-const TAX_TREE = [
+export const TAX_TREE = [
     {
         id: 'fica',
         label: 'FICA / Medicare',
@@ -86,6 +86,29 @@ const TAX_TREE = [
               amountMetrics: ['shortTermCapitalGainTax'],
               highlightMetrics: ['shortTermCapitalGainTax', 'shortTermCapitalGain'] },
         ],
+    },
+    {
+        // IRC §1411. A sibling of Income Tax and Capital Gains, not a child of
+        // either: it is a separate levy on its own base, which is why
+        // Metric.NIIT rolls straight to FEDERAL_TAXES rather than through
+        // INCOME_TAX. Nesting it under one of them here would contradict the
+        // rollup DAG and double-count the total the parent shows.
+        //
+        // Absent until 2026-08-20, which meant the engine collected NIIT and
+        // this tree — the household's own tax breakdown — never mentioned it.
+        // The user found that by reading the screen. THIS LIST IS HARDCODED:
+        // a new tax metric does not appear here on its own, unlike the asset
+        // View modal, which builds itself from MetricRollups.
+        id: 'niit',
+        label: 'Net Investment Income',
+        emoji: '📊',
+        // Booked once a year by applyAnnualNIIT, never monthly — so this node
+        // must be summed over the trailing year rather than extrapolated from
+        // the cursor month. See trailingYear() in _taxTree().
+        annualCadence: true,
+        amountMetrics: ['niit'],
+        highlightMetrics: ['niit', 'qualifiedDividend', 'nonQualifiedDividend',
+                           'interestIncome', 'longTermCapitalGain', 'shortTermCapitalGain'],
     },
     {
         id: 'propertyTax',
@@ -302,6 +325,29 @@ class AssetList extends LitElement {
             return (h && idx < h.length) ? (h[idx] ?? 0) : 0;
         };
 
+        /**
+         * Sum the trailing twelve months, inclusive of the cursor.
+         *
+         * For a charge booked ONCE A YEAR, the `× 12` below is wrong twice over:
+         * the row is pruned to nothing in the eleven months where the metric is
+         * zero, and in the twelfth it reports twelve times the amount actually
+         * charged. Measured 2026-08-20 on Early Career, whose $38,662 of NIIT
+         * lands in 16 single months across a 665-month plan — the row was
+         * invisible 97% of the time and overstated by 12× the rest.
+         */
+        const trailingYear = (metrics) => {
+            let total = 0;
+            const lo = Math.max(0, idx - 11);
+            for (const a of assets) {
+                for (const m of metrics) {
+                    const h = a.getHistory?.(m);
+                    if (!h) continue;
+                    for (let i = lo; i <= Math.min(idx, h.length - 1); i++) total += (h[i] ?? 0);
+                }
+            }
+            return total;
+        };
+
         // Sum a list of metrics across all assets, annualized.
         const sumMetrics = (metrics) => {
             let total = 0;
@@ -312,8 +358,15 @@ class AssetList extends LitElement {
         };
 
         // Walk the tree, compute amounts, prune zero nodes and zero children.
+        //
+        // `annualCadence` nodes are summed over the trailing year instead of
+        // extrapolated from one month. Only the metrics that are genuinely
+        // booked once a year carry it; a monthly flow annualises correctly by
+        // multiplication and is left alone so no existing figure moves.
         const walk = (node) => {
-            const amount = sumMetrics(node.amountMetrics);
+            const amount = node.annualCadence
+                ? trailingYear(node.amountMetrics)
+                : sumMetrics(node.amountMetrics);
             if (amount === 0) return null;
             const out = { ...node, amount };
             if (node.children) {

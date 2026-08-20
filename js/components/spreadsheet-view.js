@@ -36,6 +36,7 @@ const metrics = [
     { key: 'monthlyFour01KDistributions',  label: '401K Distrib' },
     { key: 'monthlyInterestIncomes',       label: 'Interest Inc' },
     { key: 'monthlyCapitalGainsTaxes',     label: 'Cap Gains Tax' },
+    { key: 'monthlyNIIT',                  label: 'NIIT' },
     { key: 'monthlyCredits',               label: 'Credit' },
 ];
 
