@@ -22,6 +22,9 @@ and one section was wrong:
 - **§9 added 2026-08-20** after the engine work shipped: NIIT was collected
   correctly and *reported* nowhere. The spec covered the engine and stopped
   there, which is why the gap existed.
+- **§10 added 2026-08-20**, after the user read the actual screen and found the
+  tax breakdown still did not mention NIIT. §9 fixed one presentation surface
+  and assumed it was the only one. It was not.
 
 ---
 
@@ -366,3 +369,56 @@ literals, so no pre-existing simulated value moved.
 in `relevantMetrics()`. Any new metric needs a fixture that reaches it AND an
 assertion that the value was stored — "the engine charged it" and "the user can
 see it" are different claims, and only the first one was ever in this spec.
+
+---
+
+## 10. The presentation surfaces, enumerated — added 2026-08-20
+
+§9 fixed `report-view.js` and stopped, on the assumption it was *the* place tax
+is shown to the user. It was one of five. The user opened Your Portfolio, looked
+at the Taxes column, and NIIT was not there.
+
+**Every surface that presents tax, and how each behaves:**
+
+| Surface | Driven by | Picks up a new tax metric? |
+| --- | --- | --- |
+| `asset-view-modal.js` | `MetricRollups` DAG | **Yes, automatically** |
+| Projections metric picker | `MetricLabel` | **Yes, automatically** |
+| `report-view.js` | hardcoded rows | No — fixed in #38 |
+| `asset-list.js` `TAX_TREE` | **hardcoded** | No — fixed here |
+| `spreadsheet-view.js` | **hardcoded** columns | No — fixed here |
+| `graph-mapper.js` sinks | hardcoded | No — Sankey toggle is hidden pending design; left alone deliberately |
+
+The two DAG-driven surfaces were right the whole time, which is exactly why the
+gap was easy to miss: two of the five screens showed NIIT correctly from the
+moment the metric existed.
+
+`tests/unit/tax-tree-coverage.test.js` closes the loop for the important one: it
+derives the set of taxes from the rollup DAG — the engine's own definition — and
+asserts the hardcoded `TAX_TREE` covers it. A new leaf metric reaching
+`Metric.TAXES` now fails a test instead of quietly missing the UI.
+
+### 10.1 A once-a-year charge cannot be annualised by multiplication
+
+Found only by running the app, not by reading the code.
+
+`_computeTaxTree()` reads the metric at **one month** and multiplies by twelve.
+That is right for withholding and FICA, which accrue monthly. It is wrong twice
+over for NIIT, which `applyAnnualNIIT` books in a single month each year:
+
+- pruned to nothing in the eleven months the metric is zero;
+- **12× the real charge** in the twelfth.
+
+Measured on Early Career: $38,662 of NIIT lands in **16 single months of a
+665-month plan** — the row would have been invisible 97% of the time and wrong
+whenever visible.
+
+Fixed with an `annualCadence` flag that sums the trailing twelve months instead.
+Only metrics genuinely booked once a year carry it, so no existing figure moves.
+Verified in the running app at the charge month and two months after it: the row
+persists across the year at the correct $2,632.70, and disappears once the
+trailing window clears.
+
+**Generalisation:** a metric's *cadence* is part of its display contract. Any
+new once-a-year charge needs `annualCadence`, or it will be both invisible and
+overstated — a combination no totals check can detect.
