@@ -137,7 +137,7 @@ import {
     util_loadLocalScenarioPreview,
     util_loadStoryNames,
     util_deleteScenario,
-} from './utils/util.js';
+} from './ui/util.js';
 
 // ── DOM refs ────────────────────────────────────────────────
 const assetList         = document.getElementById('finplanAssetList');
