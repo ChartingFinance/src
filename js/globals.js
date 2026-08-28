@@ -450,6 +450,16 @@ export function global_workerSnapshot() {
         userFinishAge: global_user_finishAge,
         backtestYear: global_backtestYear,
         simDataMode: global_simDataMode,
+        // Added by Spec 9 step 5c. These three are READ BY THE ENGINE
+        // (tax-engine, payroll-engine x2) but were never in the payload, so a
+        // worker ran on its own defaults for them. Latent rather than live —
+        // all three sit at their defaults today, so a worker booting on
+        // defaults happened to agree — but toggling spec 4a on would have
+        // silently given Monte Carlo a different tax regime than the chart
+        // beside it.
+        allocateHouseholdTax: global_allocate_household_tax,
+        pensionWithholdingRate: global_pension_withholding_rate,
+        socialSecurityWithholdingRate: global_social_security_withholding_rate,
     };
 }
 
@@ -466,6 +476,11 @@ export function global_applyWorkerSnapshot(s) {
     global_user_finishAge = s.userFinishAge;
     global_backtestYear = s.backtestYear;
     global_simDataMode = s.simDataMode;
+    // `??` so a payload from an older client still applies cleanly.
+    global_allocate_household_tax = s.allocateHouseholdTax ?? global_allocate_household_tax;
+    global_pension_withholding_rate = s.pensionWithholdingRate ?? global_pension_withholding_rate;
+    global_social_security_withholding_rate =
+        s.socialSecurityWithholdingRate ?? global_social_security_withholding_rate;
 }
 
 export function global_divBy100(strValue) {

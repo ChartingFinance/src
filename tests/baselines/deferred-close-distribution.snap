@@ -17,18 +17,18 @@
 # first one's distribution.
 
 [config]
+  allocateHouseholdTax = false
   backtestYear = current
   filingAs = Single
   inflationRate = 0.031
+  pensionWithholdingRate = 0.1
   propertyTaxDeductionMax = 40000
   simDataMode = calibrated
+  socialSecurityWithholdingRate = 0
   userFinishAge = 87
   userRetirementAge = 67
   userStartAge = 62
-  allocateHouseholdTax = false
   homeSaleExclusion = 250000
-  pensionWithholdingRate = 0.1
-  socialSecurityWithholdingRate = 0
   retirementWithholdingRate = 0.1
 
 [totals]
