@@ -213,6 +213,39 @@ survives as sugar for *build env from globals → construct → `addAssets`*, so
 becomes the explicit path for `run-plan.js`, `mc-compute.js` and the app.
 Migrating the test sites is then optional, and can happen later or never.
 
+### 4.6 Where the globals end up
+
+**The globals survive, and so does their UI.** They are not the problem; the
+engine *reading* them is. After this spec they are the browser-side settings
+store — the persistence behind the settings editor — and their job is to supply
+the values a Portfolio captures when one is created. `globals.html` keeps its
+controls, `finplan-app.js` keeps its 134 references, and `globals.js` keeps
+`localStorage`, which for a settings store is the right medium.
+
+What changes is only this: **`globals.js` leaves the engine's import closure.**
+
+That has a consequence step 6 has to be explicit about. If `Portfolio` itself
+defaults to `simConfigFromGlobals()`, then `Portfolio` imports `globals.js`, and
+`globals.js` stays in the closure *forever* — which means the
+`tests/layer-boundary.mjs` exemption could never be deleted, and step 6 loses
+the signal that says the work is done. So the layers split like this:
+
+| module | layer | knows about |
+| :--- | :--- | :--- |
+| `js/sim-config.js` | engine | the frozen value type, validation, `simConfigFromPlanSpec()`. Imports no globals. |
+| `simConfigFromGlobals()` | UI | reads the settings store and builds a config. Lives with `globals.js`, not with the engine. |
+| `run-plan.js` | MCP | builds a config from the plan spec. Never touches globals. |
+
+Under that split the exemption is deleted not because `globals.js` changed, but
+because the engine no longer reaches it.
+
+**The cost is that the globals-default is temporary.** It exists to keep the 45
+test sites working while behaviour moves (§7.3, §7.5); removing it at step 6
+makes `config` a required argument, and those 45 sites migrate then — as a
+mechanical change, with no behaviour in flight and a bit-identical snapshot to
+prove it. That is the safe moment to do it, and it is the whole reason for
+deferring it. §7.5's rule is *not simultaneously*, not *never*.
+
 ## 5. Steps
 
 | # | Step | Size |
@@ -261,7 +294,8 @@ part of the baseline contract** — worth remembering for step 1, which adds to
 it.
 
 **Step 1 — Introduce SimConfig; change no behaviour.** New `js/sim-config.js`:
-the frozen shape, `simConfigFromGlobals()`, `simConfigFromPlanSpec(spec)`.
+the frozen shape and `simConfigFromPlanSpec(spec)`. `simConfigFromGlobals()`
+lives on the UI side, not here (§4.6).
 `Portfolio` gains an optional `config` argument defaulting to
 `simConfigFromGlobals()`, exposed as `this.config`. **Nothing reads it yet** —
 the object exists and is inert, and the snapshot must be untouched.
@@ -285,11 +319,17 @@ and **deletes `applySettings` entirely** — 32 global references go with it.
 `finplan-app.js` builds one from UI state. Workers already ship a snapshot; they
 now ship a config. **This is where behaviour actually changes** (§7.3).
 
-**Step 6 — Remove the mirror.** Delete the `localStorage` read/write pairs for
-everything now carried by config, delete `js/mcp/polyfill.js`, and **delete the
-`globals.js` exemption from `tests/layer-boundary.mjs`** — that test fails while
-a stale exemption remains, so it reports when this step is genuinely complete
-rather than merely believed complete.
+**Step 6 — Cut the engine's last link to the settings store.** Drop the
+globals-default from `Portfolio` so `config` is required, migrate the 45 test
+sites to pass one (mechanical; snapshot must stay bit-identical), delete
+`js/mcp/polyfill.js`, and **delete the `globals.js` exemption from
+`tests/layer-boundary.mjs`** — that test fails while a stale exemption remains,
+so it reports when this step is genuinely complete rather than merely believed
+complete.
+
+**`globals.js` itself survives, `localStorage` and all**, as the UI's settings
+store (§4.6). Nothing about the settings pages changes. The engine simply stops
+importing it, which is what drops it from the closure.
 
 **Step 7 — Stateless MCP, now nearly free.** Every tool call constructs its own
 config, so concurrent calls share nothing and the handle cache stops being a
@@ -360,7 +400,9 @@ written down first.
 required lands a 45-file diff across every golden-master suite *simultaneously
 with* the behaviour change it is supposed to be verifying — a full green suite
 proving nothing because the baseline moved underneath it. Hence §4.5's rule that
-the old signature survives as sugar.
+the old signature survives as sugar. **This defers the migration, it does not
+cancel it** — step 6 removes the globals-default and those 45 sites migrate
+then, with no behaviour in flight and a bit-identical snapshot as the check.
 
 ## 8. Explicitly out of scope
 
