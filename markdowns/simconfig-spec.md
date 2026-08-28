@@ -1,8 +1,9 @@
 # Spec 9 — SimConfig: the engine stops reading `localStorage`
 
-**Status:** spec, not started. Prerequisite landed 2026-08-27 on
-`refactor/layer-boundary`: `tests/layer-boundary.mjs` + `js/utils/util.js` →
-`js/ui/util.js`.
+**Status: COMPLETE.** Steps 0-7 shipped 2026-08-27/28 on `refactor/layer-boundary`
+([PR #41](https://github.com/ChartingFinance/src/pull/41)). `engine closure: 35
+files, 0 exempt` — the engine takes its configuration as a value, and a full
+plan, report and causal chain run with no `localStorage` defined at all.
 
 ---
 
@@ -521,7 +522,28 @@ complete.
 store (§4.6). Nothing about the settings pages changes. The engine simply stops
 importing it, which is what drops it from the closure.
 
-**Step 7 — Stateless MCP, now nearly free.** Every tool call constructs its own
+**Step 7 — SHIPPED 2026-08-28.** The server keeps the plan **spec**, not the
+finished Portfolio. Both halves of the old "handles are a correctness
+requirement" argument turned out to be gone: a re-run is byte-identical
+(traceIds included) now that two plans share no configuration, and
+`resetTraces()` *rebinds* `_scopes = []` rather than emptying it, so a finished
+portfolio keeps its own scope list regardless — the old comment assumed the
+opposite.
+
+Handles are content-addressed (sha1 of `{spec, opts}`), so the same plan always
+yields the same handle. `getRun` is async; a miss re-runs. Measured over six
+live handles:
+
+| | held |
+| :--- | :--- |
+| before | 152,830 trace scopes + 77,286 events, **evicting at four** — two of those six handles would already be dead |
+| after | 55 KB of plan specs, plus at most two memoised runs |
+
+Cold-handle resolve: **34 ms**. `tests/mcp-stateless.mjs` (13 assertions)
+carries the argument; the load-bearing one renders a chain, evicts the memo,
+re-runs from the spec and compares the markdown character for character.
+
+**Step 7 — original plan.** Every tool call constructs its own
 config, so concurrent calls share nothing and the handle cache stops being a
 correctness requirement. Handles become an honest cache: store the **spec**, not
 the finished Portfolio. A miss re-runs in ~47ms instead of erroring, and
