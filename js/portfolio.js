@@ -4,7 +4,7 @@ import { MonthsSpan } from './utils/months-span.js';
 import { logger, LogCategory } from './utils/logger.js';
 import { ModelLifeEvent } from './life-event.js';
 import { User } from './user.js';
-import { global_user_startAge } from './globals.js';
+import { global_user_startAge, simConfigFromGlobals } from './globals.js';
 import { FundTransfer } from './fund-transfer.js';
 import { EventType, ShortfallOrigin } from './sim-event.js';
 import { withTrace, TraceKind } from './trace.js';
@@ -186,9 +186,28 @@ function conservationBucket(event, bucket) {
 }
 
 export class Portfolio {
-    constructor(modelAssets, reports) {
+    constructor(modelAssets, reports, config = null) {
         this.modelAssets = this.sortModelAssets(modelAssets);
         this.reports = !!reports;
+
+        /**
+         * The run's configuration (Spec 9). **Nothing reads this yet** — every
+         * engine site still reads the module globals, and steps 2 and 3 move
+         * those across one file at a time.
+         *
+         * Optional, defaulting to a capture of the current globals, because
+         * `new Portfolio(...)` appears at 57 sites and 45 of them are tests. A
+         * required argument would land a 45-file diff across every
+         * golden-master suite at the same moment as the behaviour change it is
+         * supposed to be verifying. The default is a migration crutch with a
+         * removal date: step 6 drops it, `config` becomes required, and those
+         * sites migrate then — mechanically, with nothing else in flight.
+         *
+         * Captured, not forwarded: it is frozen, so a second plan in this
+         * process cannot reach back and change this run's settings.
+         */
+        this.config = config ?? simConfigFromGlobals();
+
         this.generatedReports = [];
         this.firstDateInt = firstDateInt(this.modelAssets);
         this.lastDateInt = lastDateInt(this.modelAssets);
@@ -254,7 +273,9 @@ export class Portfolio {
     copy() {
 
         let modelAssets = this.modelAssets.map(modelAsset => modelAsset.copy());
-        let portfolio = new Portfolio(modelAssets);
+        // Same run, same configuration — a copy that recaptured the globals
+        // would silently diverge from its source if a setting had changed.
+        let portfolio = new Portfolio(modelAssets, false, this.config);
 
         portfolio.monthly = this.monthly.copy();
         portfolio.yearly  = this.yearly.copy();

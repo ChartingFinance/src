@@ -1,6 +1,8 @@
 import { DateInt } from './utils/date-int.js';
 // logger.js imports nothing, so this cannot cycle back through globals.
 import { logger, LogCategory } from './utils/logger.js';
+import { FilingStatus, FILING_STATUSES, isFilingStatus, asFilingStatus } from './filing-status.js';
+import { makeSimConfig } from './sim-config.js';
 
 // S&P 500 annual total returns (price + dividends), 2000–2025
 // Source: https://www.slickcharts.com/sp500/returns
@@ -260,30 +262,10 @@ export const global_default_inflationRate = 0.031;
  * household jointly. FILING_TYPE_KEY in taxes.js maps these to the table keys,
  * so the table vocabulary stays an implementation detail of the tables.
  */
-export const FilingStatus = Object.freeze({
-    SINGLE: 'Single',
-    MARRIED_FILING_JOINTLY: 'MFJ',
-});
-
-export const FILING_STATUSES = Object.freeze(Object.values(FilingStatus));
-
-export function isFilingStatus(value) {
-    return FILING_STATUSES.includes(value);
-}
-
-/**
- * Coerce UNTRUSTED input — localStorage, an imported portfolio — to a known
- * status, falling back rather than throwing. Code paths should call
- * global_setFilingAs directly and get an exception if they are wrong.
- */
-export function asFilingStatus(value, fallback = FilingStatus.SINGLE) {
-    if (isFilingStatus(value)) return value;
-    if (value != null) {
-        logger.log(LogCategory.GENERAL,
-            `unrecognised filing status ${JSON.stringify(value)} — using ${fallback}`);
-    }
-    return fallback;
-}
+// Moved to filing-status.js (Spec 9 step 1) so sim-config.js can validate a
+// status without importing this module — see §4.6. Re-exported here because
+// finplan-app.js, taxes.js and run-plan.js all import it from globals.
+export { FilingStatus, FILING_STATUSES, isFilingStatus, asFilingStatus };
 
 export const global_default_filingAs = FilingStatus.SINGLE;
 
@@ -427,6 +409,33 @@ export function global_reset() {
 // must carry global_workerSnapshot() from the main thread, and every worker
 // message handler must call global_applyWorkerSnapshot(payload.settings)
 // BEFORE constructing a TaxTable or touching model objects.
+
+/**
+ * Capture the current settings as a SimConfig.
+ *
+ * This lives HERE, not in sim-config.js, and the direction is the point. The
+ * globals are the browser-side settings store — the persistence behind the
+ * settings editor — so reading them is this module's job. sim-config.js must
+ * import nothing from here, or globals.js can never leave the engine's import
+ * closure and the layer-boundary exemption can never be deleted (Spec 9 §4.6).
+ *
+ * `taxTable` is deliberately absent; step 2 attaches it.
+ */
+export function simConfigFromGlobals() {
+    return makeSimConfig({
+        inflationRate: global_inflationRate,
+        filingAs: asFilingStatus(global_filingAs, global_default_filingAs),
+        startAge: global_user_startAge,
+        retirementAge: global_user_retirementAge,
+        finishAge: global_user_finishAge,
+        propertyTaxDeductionMax: global_propertyTaxDeductionMax,
+        allocateHouseholdTax: global_allocate_household_tax,
+        pensionWithholdingRate: global_pension_withholding_rate,
+        socialSecurityWithholdingRate: global_social_security_withholding_rate,
+        backtestYear: global_backtestYear,
+        simDataMode: global_simDataMode,
+    });
+}
 
 export function global_workerSnapshot() {
     return {
