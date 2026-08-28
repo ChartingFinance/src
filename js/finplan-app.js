@@ -115,6 +115,7 @@ import {
     global_simDataMode,
     global_setSimDataMode,
     global_showEngineDiagnostics,
+    simConfigFromGlobals,
 } from './globals.js';
 import { detectIssues, alertAssetNames } from './portfolio-issues.js';
 import { logger, LogCategory } from './utils/logger.js';
@@ -138,6 +139,24 @@ import {
     util_loadStoryNames,
     util_deleteScenario,
 } from './ui/util.js';
+
+/**
+ * Bind assets to an editing environment before the UI reads them.
+ *
+ * Spec 9 step 4b. `classifyAssets` reads `effectiveFinishDateInt` — a derived
+ * getter needing the plan's ages — and the two lists it renders (Quick Start,
+ * and a scenario loaded from localStorage) never pass through a Portfolio, so
+ * an unbound read would throw the moment the asset list rendered.
+ *
+ * Editing environment, not a run's: it shows what the current settings say. A
+ * Portfolio captures its own config and rebinds everything it owns, so nothing
+ * here can reach a simulation.
+ */
+function bindForEditing(assets) {
+    const config = simConfigFromGlobals();
+    for (const asset of assets ?? []) asset.bindEnv?.(config);
+    return assets;
+}
 
 // ── DOM refs ────────────────────────────────────────────────
 const assetList         = document.getElementById('finplanAssetList');
@@ -490,7 +509,9 @@ function loadQuickStartProfile(profile) {
     store.setRetirementDate(global_getRetirementDateInt());
 
     const qs = buildQuickStart(profile);
-    assetList.modelAssets = qs.assets;
+    // Bind before the list renders: classifyAssets reads effectiveFinishDateInt,
+    // a derived getter, and these assets never pass through a Portfolio.
+    assetList.modelAssets = bindForEditing(qs.assets);
     appState.lifeEvents = qs.lifeEvents;
     calculate();
 }
@@ -1007,7 +1028,7 @@ function initiateActiveData() {
 function loadLocalData() {
     const slotName = appState.storyName;
     const assetModelsRaw = util_loadLocalAssetModels(appState.storyArc, slotName);
-    assetList.modelAssets = membrane_rawDataToModelAssets(assetModelsRaw);
+    assetList.modelAssets = bindForEditing(membrane_rawDataToModelAssets(assetModelsRaw));
 
     // Load life events (or create defaults)
     const savedEvents = util_loadLocalLifeEvents(appState.storyArc, slotName);

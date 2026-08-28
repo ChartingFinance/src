@@ -40,7 +40,6 @@ export class CreditMemo {
 }
 import { colorRange }    from './utils/html.js';
 import { getBehavior }   from './instruments/instrument-behavior.js';
-import { global_getFinishDateInt, global_inflationRate } from './globals.js';
 import { finishDateIntFor } from './plan-dates.js';
 import { Metric, METRIC_NAMES, MetricLabel, MetricRollups, PARENT_METRICS } from './metric.js';
 import { SimEvent, EventType, renderNote } from './sim-event.js';
@@ -162,20 +161,37 @@ export class ModelAsset {
     return this;
   }
 
+  /**
+   * The environment, or a thrown error naming what to do about it.
+   *
+   * Step 4b. There used to be a `?? global_…` fallback here, and removing it is
+   * the entire point of this step: a fallback makes a missed binding INVISIBLE.
+   * The asset would quietly answer from module state — plausible numbers from
+   * an unaccountable source, which is the failure this migration exists to
+   * remove, and which no snapshot can detect because the numbers are the same
+   * ones the globals would have given.
+   *
+   * A throw makes the same mistake a stack trace on the first read.
+   */
+  get #boundEnv() {
+    if (!this.env) {
+      throw new Error(
+        `ModelAsset "${this.displayName}" has no environment. Derived values `
+        + `(finish date, expense inflation) need the plan's configuration. `
+        + `Assets are bound by Portfolio.bindEnvironment(); one reached a `
+        + `derived getter without passing through a Portfolio.`);
+    }
+    return this.env;
+  }
+
   get effectiveFinishDateInt() {
-    // `?? global_…` is the step 4a fallback: it keeps every path bit-identical
-    // while the bindings go in. Step 4b removes it so an unbound read throws,
-    // because a fallback makes a missed binding invisible — plausible numbers
-    // from an unaccountable source, which is the failure this migration exists
-    // to remove.
-    return this.finishDateInt
-        ?? (this.env ? finishDateIntFor(this.env) : global_getFinishDateInt());
+    return this.finishDateInt ?? finishDateIntFor(this.#boundEnv);
   }
 
   /** For expense instruments, fall back to plan inflation when no rate is set. */
   get effectiveAnnualReturnRate() {
     if (InstrumentType.isMonthlyExpense(this.instrument) && this.annualReturnRate.rate === 0) {
-      return new ARR(this.env?.inflationRate ?? global_inflationRate);
+      return new ARR(this.#boundEnv.inflationRate);
     }
     return this.annualReturnRate;
   }

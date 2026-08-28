@@ -210,6 +210,13 @@ export class Portfolio {
         this.config = config ?? simConfigFromGlobals();
 
         this.generatedReports = [];
+        // Bind before the two lines below, because `lastDateInt()` reads
+        // `effectiveFinishDateInt` — a DERIVED getter — on every asset. Under
+        // step 4b an unbound read throws, so binding only in initializeChron
+        // would make every Portfolio construction fail. initializeChron rebinds
+        // afterwards, once the tax table has been attached to the config.
+        this.bindEnvironment();
+
         this.firstDateInt = firstDateInt(this.modelAssets);
         this.lastDateInt = lastDateInt(this.modelAssets);
 
@@ -344,7 +351,9 @@ export class Portfolio {
      */
     bindEnvironment() {
         for (const modelAsset of this.modelAssets) modelAsset.bindEnv(this.config);
-        for (const event of this.lifeEvents) event.bindEnv(this.config);
+        // `?? []` because the constructor calls this before lifeEvents is
+        // assigned — see the call site there.
+        for (const event of this.lifeEvents ?? []) event.bindEnv(this.config);
     }
 
     initializeChron() {

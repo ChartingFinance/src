@@ -11,6 +11,8 @@
  *   metricName, microMetric, portfolioView.
  */
 
+import { simConfigFromGlobals } from './globals.js';
+
 const STORAGE_KEY_STORY_ARC  = 'activeStoryArc';
 const STORAGE_KEY_STORY_NAME = 'activeStoryName';
 
@@ -86,7 +88,29 @@ export class AppState {
   set portfolio(v) { this.#portfolio = v; this.#emit('portfolio', v); }
 
   get lifeEvents() { return this.#lifeEvents; }
-  set lifeEvents(v) { this.#lifeEvents = v; this.#emit('lifeEvents', v); }
+
+  /**
+   * Life events are bound to an editing environment as they arrive (Spec 9
+   * step 4b).
+   *
+   * `triggerDateInt` is a DERIVED getter — it needs the plan's start age — and
+   * under 4b an unbound read throws. Events reach the app from four places
+   * (Quick Start, localStorage, defaultTimeline, the legacy quick-start
+   * helper) and NONE of them passes through a Portfolio, so binding at the one
+   * setter they all funnel through is the single place that covers every route.
+   *
+   * This environment is the EDITING one, captured from the current settings so
+   * the timeline renders what the user has configured. It is deliberately not
+   * the same object as a run's: `Portfolio` captures its own at construction
+   * and rebinds everything it owns, so a run can never be affected by whatever
+   * the editor happens to be showing.
+   */
+  set lifeEvents(v) {
+    const config = simConfigFromGlobals();
+    for (const event of v ?? []) event.bindEnv?.(config);
+    this.#lifeEvents = v;
+    this.#emit('lifeEvents', v);
+  }
 
   get phaseIndex() { return this.#phaseIndex; }
   set phaseIndex(v) { this.#phaseIndex = v; this.#emit('phaseIndex', v); }

@@ -20,6 +20,7 @@ import {
     setActiveTaxTable,
     global_workerSnapshot,
     global_applyWorkerSnapshot,
+    simConfigFromGlobals,
 } from '../js/globals.js';
 import { DateInt } from '../js/utils/date-int.js';
 import { computeMonteCarlo, applyRandomRates, buildYearPool } from '../js/mc-compute.js';
@@ -279,9 +280,16 @@ assert.ok(mcCal.bandData[2][lastM] < mcHist.bandData[2][lastM],
 //
 // Workers boot with default globals (no localStorage). The snapshot pair
 // must carry the main thread's settings across — the sharpest consequence
-// of NOT doing so is that life-event trigger dates derive from
-// global_user_startAge, so every phase (Retire!) fires shifted by
+// of NOT doing so is that life-event trigger dates derive from the plan's
+// start age, so every phase (Retire!) fires shifted by
 // (actualAge − defaultAge) years inside the worker.
+//
+// Since Spec 9 step 4b the chain has one more link, and this test follows it
+// deliberately rather than around it: snapshot → globals → simConfigFromGlobals
+// → the config a Portfolio captures → bound onto each life event. `rebind()`
+// below is what mc-worker.js gets for free by constructing a Portfolio after
+// applying the payload. triggerDateInt THROWS on an unbound event, so a test
+// that skipped this would fail loudly rather than silently read module state.
 
 const originalSnapshot = global_workerSnapshot();
 assert.equal(originalSnapshot.userStartAge, 50, 'Node boots on the default age (50), like a worker');
@@ -291,6 +299,10 @@ const retireEvent = ModelLifeEvent.fromJSON({
     type: LifeEvent.RETIRE, displayName: 'Retire', triggerAge: 65,
     closes: [], phaseTransfers: {},
 });
+/** What a Portfolio does on construction, done directly so the chain is visible. */
+const rebind = () => retireEvent.bindEnv(simConfigFromGlobals());
+
+rebind();
 const triggerAtDefault = retireEvent.triggerDateInt.year;
 
 // A 55-year-old's snapshot: born 5 years earlier, so age-65 arrives 5 years sooner
@@ -300,6 +312,7 @@ const triggerAtDefault = retireEvent.triggerDateInt.year;
 // checked — the assertion below was passing on a value the engine never
 // accepted.
 global_applyWorkerSnapshot({ ...originalSnapshot, userStartAge: 55, filingAs: 'MFJ' });
+rebind();
 const triggerAt55 = retireEvent.triggerDateInt.year;
 assert.equal(triggerAtDefault - triggerAt55, 5,
     `snapshot shifts life-event triggers (${triggerAtDefault} → ${triggerAt55})`);
@@ -311,6 +324,7 @@ assert.ok(JSON.stringify(originalSnapshot), 'snapshot is JSON-serializable (work
 
 // Restore so earlier compute results in this file stay comparable on re-runs
 global_applyWorkerSnapshot(originalSnapshot);
+rebind();
 assert.equal(retireEvent.triggerDateInt.year, triggerAtDefault, 'restore returns triggers to baseline');
 
 console.log(`mc-worker-sanity OK — 100 sims in ${elapsed}ms, ` +
