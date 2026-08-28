@@ -284,6 +284,11 @@ export class Portfolio {
         portfolio.total   = this.total.copy();
         portfolio.lifeEvents = this.lifeEvents.map(e => e.copy());
 
+        // Both collections arrive unbound — see bindEnvironment(). Without
+        // this, a copy's derived getters fall back to module state under 4a
+        // and throw under 4b.
+        portfolio.bindEnvironment();
+
         // Snapshot the trace/summary arrays so consumers of the copy observe
         // the state produced by the run being copied. Subsequent mutations on
         // the source portfolio (next chronometer run populating its own
@@ -321,6 +326,27 @@ export class Portfolio {
 
     }
 
+    /**
+     * Hand every asset and life event this run's environment (Spec 9 step 4a).
+     *
+     * The Portfolio owns exactly one config; assets and life events borrow it.
+     * They cannot hold their own, because both are plan data — serialised to
+     * share URLs, hydrated from localStorage, copied — while the config is run
+     * state. N independently-held copies would be N things that must agree,
+     * and a single stale one is a wrong number in one Monte Carlo iteration
+     * out of a thousand rather than an error anybody sees.
+     *
+     * Called from initializeChron (every run, and the GA re-runs it thousands
+     * of times on one Portfolio, so it must be idempotent — it is) and from
+     * copy(), where both collections come back unbound: ModelAsset.copy() is
+     * an explicit allowlist that omits env, and ModelLifeEvent.copy() round-
+     * trips through JSON, which drops it.
+     */
+    bindEnvironment() {
+        for (const modelAsset of this.modelAssets) modelAsset.bindEnv(this.config);
+        for (const event of this.lifeEvents) event.bindEnv(this.config);
+    }
+
     initializeChron() {
 
         // Bind the run's tax table into the config (Spec 9 step 2).
@@ -338,6 +364,12 @@ export class Portfolio {
         // one as the globals-backed config default. Step 5 hands the table in
         // with the config and this read goes away.
         this.config = withSimConfig(this.config, { taxTable: activeTaxTable });
+
+        // Now that the config is final for this run, hand it to the assets and
+        // life events. Must follow the taxTable binding above: withSimConfig
+        // returns a NEW frozen object, so binding earlier would hand out a
+        // config without the table.
+        this.bindEnvironment();
 
         // Rewind the user to their starting age. Every other piece of run
         // state is rebuilt below; the user must rewind too or successive
