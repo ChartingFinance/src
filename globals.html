@@ -71,15 +71,24 @@
     <!-- ═══ Tax Settings ═══ -->
     <div class="glass-card p-8 sm:p-12 mb-6">
         <h2 class="text-2xl font-bold tracking-tight mb-2">Tax Settings</h2>
-        <p class="text-gray-600 leading-relaxed mb-4">Every run starts from the <strong>2026 federal tables</strong> &mdash; brackets, capital gains bands, the standard deduction, the Social Security wage base and the contribution limits &mdash; selected by your filing status. From the second simulated year onward each of those figures is indexed forward by your inflation rate. The one exception is the primary-home sale exclusion, which is fixed in statute at $250,000&thinsp;/&thinsp;$500,000 and is deliberately never indexed.</p>
-        <p class="text-gray-600 leading-relaxed mb-6 text-sm">Tax Year below is <strong>recorded with your settings but does not currently select a different table</strong>. It is saved, shared and passed to background workers; no part of the engine reads it. See <a href="rules.html#taxes" class="underline hover:text-gray-900">Rules &rarr; Tax Rates</a> for what the simulation actually applies.</p>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <p class="text-gray-600 leading-relaxed mb-4">Every run starts from one published set of federal tables &mdash; brackets, capital gains bands, the standard deduction, the Social Security wage base and the contribution limits &mdash; selected by your filing status. From the second simulated year onward each of those figures is indexed forward by your inflation rate. The one exception is the primary-home sale exclusion, which is fixed in statute at $250,000&thinsp;/&thinsp;$500,000 and is deliberately never indexed.</p>
+        <p class="text-gray-600 leading-relaxed mb-6 text-sm">This is not a setting &mdash; it is what the engine loaded, read back from the table set itself. See <a href="rules.html#taxes" class="underline hover:text-gray-900">Rules &rarr; Tax Rates</a> for the full detail.</p>
+        <dl class="grid grid-cols-1 sm:grid-cols-3 gap-6">
             <div>
-                <label for="taxYear" class="block text-sm font-medium text-gray-500 mb-1">Tax Year</label>
-                <input id="taxYear" type="number" value="2025" step="1" min="2020" max="2040"
-                       class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-transparent" />
+                <dt class="block text-sm font-medium text-gray-500 mb-1">Base tax year</dt>
+                <dd id="taxBaseYear" class="text-lg font-semibold tabular-nums">&mdash;</dd>
             </div>
-        </div>
+            <div>
+                <dt class="block text-sm font-medium text-gray-500 mb-1">Standard deduction</dt>
+                <dd id="taxStdDeduction" class="text-lg font-semibold tabular-nums">&mdash;</dd>
+                <p id="taxFilingNote" class="text-xs text-gray-500 mt-1"></p>
+            </div>
+            <div>
+                <dt class="block text-sm font-medium text-gray-500 mb-1">Indexed forward at</dt>
+                <dd id="taxIndexRate" class="text-lg font-semibold tabular-nums">&mdash;</dd>
+                <p class="text-xs text-gray-500 mt-1">Your inflation rate, applied from the second simulated year.</p>
+            </div>
+        </dl>
     </div>
 
     <!-- ═══ Advanced ═══ -->
@@ -124,18 +133,38 @@
             global_initialize, global_reset,
             global_user_startAge, global_user_retirementAge, global_user_finishAge,
             global_setUserStartAge, global_setUserRetirementAge, global_setUserFinishAge,
-            global_taxYear, global_setTaxYear,
             global_showEngineDiagnostics, global_setShowEngineDiagnostics, global_getShowEngineDiagnostics,
+            global_filingAs, global_inflationRate,
         } from './js/globals.js';
+        import { TaxTable } from './js/taxes.js';
 
         function valuesToElements() {
             document.getElementById('startAge').value = global_user_startAge;
             document.getElementById('retirementAge').value = global_user_retirementAge;
             document.getElementById('finishAge').value = global_user_finishAge;
-            document.getElementById('taxYear').value = global_taxYear;
             // Read through the getter: the imported binding is only refreshed
             // when the getter runs (see the paired-accessor pattern in globals.js).
             document.getElementById('showEngineDiagnostics').checked = global_getShowEngineDiagnostics();
+            taxBasisToElements();
+        }
+
+        /**
+         * The tax panel is DERIVED, never stored. Building a real TaxTable is
+         * the point: whatever the engine would load is what the page reports,
+         * so the two cannot drift. The old page hardcoded "2026" in prose next
+         * to a Tax Year input that selected nothing.
+         */
+        function taxBasisToElements() {
+            const t = new TaxTable();
+            const joint = global_filingAs !== 'Single';
+            document.getElementById('taxBaseYear').textContent = t.baseYear;
+            document.getElementById('taxStdDeduction').textContent =
+                t.activeStandardDeduction.toLocaleString('en-US',
+                    { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+            document.getElementById('taxFilingNote').textContent =
+                joint ? 'Married filing jointly' : 'Single';
+            document.getElementById('taxIndexRate').textContent =
+                (global_inflationRate * 100).toFixed(1) + '%';
         }
 
         global_initialize();
@@ -149,9 +178,6 @@
         });
         document.getElementById('finishAge').addEventListener('change', (e) => {
             global_setUserFinishAge(parseInt(e.target.value));
-        });
-        document.getElementById('taxYear').addEventListener('change', (e) => {
-            global_setTaxYear(parseInt(e.target.value));
         });
         document.getElementById('showEngineDiagnostics').addEventListener('change', (e) => {
             global_setShowEngineDiagnostics(e.target.checked);

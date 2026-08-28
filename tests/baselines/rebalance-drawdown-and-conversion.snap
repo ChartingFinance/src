@@ -29,7 +29,6 @@
   inflationRate = 0.031
   propertyTaxDeductionMax = 40000
   simDataMode = calibrated
-  taxYear = 2025
   userFinishAge = 87
   userRetirementAge = 65
   userStartAge = 70

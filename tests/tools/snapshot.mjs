@@ -340,8 +340,9 @@ const coerce = (raw) => {
  * real, throws nothing, and changes no simulated number — the tool reports "no
  * drift" and the reader concludes the flag does nothing.
  *
- * That was true here for four of the eight knobs below (filingAs, inflationRate,
- * taxYear, propertyTaxRate) until 2026-08-06. `--set global_inflationRate=0.02`
+ * That was true here for four of the then-eight knobs below (filingAs,
+ * inflationRate, taxYear, propertyTaxRate) until 2026-08-06. taxYear and
+ * propertyTaxRate have since been deleted as dead; the discipline stands. `--set global_inflationRate=0.02`
  * on a 46-year plan reported "No simulated number moved", against a probe-
  * measured ~$6M swing.
  *
@@ -357,10 +358,6 @@ const SETTERS = {
   global_inflationRate: {
     apply: (v) => { G.global_setInflationRate(v); G.global_getInflationRate(); },
     read: () => G.global_inflationRate,
-  },
-  global_taxYear: {
-    apply: (v) => { G.global_setTaxYear(v); G.global_getTaxYear(); },
-    read: () => G.global_taxYear,
   },
   global_filingAs: {
     apply: (v) => { G.global_setFilingAs(v); G.global_getFilingAs(); },

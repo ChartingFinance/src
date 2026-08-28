@@ -326,6 +326,13 @@ export class TaxTable {
         
         this.activeTaxTables = JSON.parse(JSON.stringify(us_2026_taxtables));
 
+        // The base year the run is indexed FORWARD from, read off the table set
+        // itself rather than restated anywhere. globals.html used to hardcode
+        // "2026" in prose beside a Tax Year input that selected nothing; both
+        // are gone, and the page now reads this. Swapping the table set above is
+        // then the only edit a new tax year needs.
+        this.baseYear = this.activeTaxTables.year;
+
         // Selected BY KEY, not by array index and an else. The old form made
         // every unrecognised status file jointly by falling through, so 'MFJ'
         // worked by accident and a future 'MFS' would have too.

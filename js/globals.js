@@ -249,8 +249,6 @@ export const global_cpi_annual_inflation = Object.freeze({
 
 export const global_default_inflationRate = 0.031;
 
-export const global_default_taxYear = 2025;
-
 /**
  * The filing statuses this engine models. One vocabulary, validated at the door.
  *
@@ -389,8 +387,6 @@ export function global_setSocialSecurityWithholdingRate(value) {
 
 export let global_inflationRate = global_default_inflationRate;
 
-export let global_taxYear = global_default_taxYear;
-
 export let global_filingAs = global_default_filingAs;
 
 export let global_propertyTaxDeductionMax = global_default_propertyTaxDeductionMax;
@@ -406,7 +402,6 @@ export function setActiveTaxTable(t) { activeTaxTable = t; }
 
 export function global_reset() {
     global_inflationRate = global_default_inflationRate;
-    global_taxYear = global_default_taxYear;
     global_filingAs = global_default_filingAs;
     global_propertyTaxDeductionMax = global_default_propertyTaxDeductionMax;
     global_user_startAge = global_default_user_startAge;
@@ -414,7 +409,6 @@ export function global_reset() {
     global_user_finishAge = global_default_user_finishAge;
 
     global_setInflationRate(global_inflationRate);
-    global_setTaxYear(global_taxYear);
     global_setFilingAs(global_filingAs);
     global_setPropertyTaxDeductionMax(global_propertyTaxDeductionMax);
     global_setUserStartAge(global_user_startAge);
@@ -437,7 +431,6 @@ export function global_reset() {
 export function global_workerSnapshot() {
     return {
         inflationRate: global_inflationRate,
-        taxYear: global_taxYear,
         filingAs: global_filingAs,
         propertyTaxDeductionMax: global_propertyTaxDeductionMax,
         userStartAge: global_user_startAge,
@@ -451,7 +444,6 @@ export function global_workerSnapshot() {
 export function global_applyWorkerSnapshot(s) {
     if (!s) return;
     global_inflationRate = s.inflationRate;
-    global_taxYear = s.taxYear;
     // Workers boot on defaults and receive this payload; a status the main
     // thread never validated would otherwise reach TaxTable and throw inside a
     // worker, where the failure is far harder to see.
@@ -484,18 +476,6 @@ export function global_getInflationRate() {
         localIR = global_inflationRate.toFixed(4);
 
     global_inflationRate = parseFloat(localIR);
-}
-
-export function global_setTaxYear(value) {
-    localStorage.setItem('taxYear', value.toString());
-}
-
-export function global_getTaxYear() {
-    let localTY = localStorage.getItem('taxYear');
-    if (localTY == null)
-        localTY = global_taxYear.toString();
-
-    global_taxYear = parseInt(localTY);
 }
 
 export function global_setFilingAs(value) {
@@ -681,7 +661,6 @@ export function global_getGuardrailAdjustment() {
 
 export function global_initialize() {
     global_getInflationRate();
-    global_getTaxYear();
     global_getFilingAs();
     global_getPropertyTaxDeductionMax();
     global_getUserStartAge();
