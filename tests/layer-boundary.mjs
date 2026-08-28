@@ -52,7 +52,7 @@
  */
 
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { dirname, resolve, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -354,6 +354,42 @@ check('util.js is host code and stays out of the engine', () => {
         (closure.get('js/ui/util.js') ? [...closure.get('js/ui/util.js').importers].join(', ') : '?'));
     assert.ok(!closure.has('js/utils/util.js'), 'js/utils/util.js should no longer exist');
 });
+
+console.log('\n── The shipped HTML pages call the engine correctly ──\n');
+
+check('no page constructs an engine object with the arity it used to have', () => {
+    // Narrow on purpose, and added because it happened.
+    //
+    // Spec 9 step 6 made TaxTable's arguments required. The migration script
+    // that rewrote 57 construction sites globbed `--include=*.js --include=*.mjs`
+    // and never saw globals.html, whose inline module script had one. The page
+    // then threw on load, so its change listeners were never attached — the
+    // Globals settings page silently stopped SAVING ANYTHING, and the whole
+    // suite stayed green because nothing here loads an HTML page.
+    //
+    // This does not test the pages. It catches the one class of breakage a
+    // JS-only sweep leaves behind: a shipped page calling a constructor whose
+    // signature moved underneath it.
+    const pages = readdirSync(SRC).filter(f => f.endsWith('.html'));
+    assert.ok(pages.length >= 5, `expected the shipped pages, found ${pages.length}`);
+
+    const violations = [];
+    for (const page of pages) {
+        const code = stripComments(readFileSync(resolve(SRC, page), 'utf8'));
+
+        for (const m of code.matchAll(/new TaxTable\(\s*\)/g)) {
+            violations.push(`${page}: ${m[0]} — needs (filingAs, propertyTaxDeductionMax); `
+                + `use makeActiveTaxTable()`);
+        }
+        for (const m of code.matchAll(/new Portfolio\(([^)]*)\)/g)) {
+            if (m[1].split(',').length < 3) {
+                violations.push(`${page}: ${m[0].slice(0, 44)} — needs a SimConfig as its third argument`);
+            }
+        }
+    }
+    assert.deepEqual(violations, [], '\n      ' + violations.join('\n      '));
+});
+
 
 console.log('\n── The exemption list is the migration backlog ──\n');
 

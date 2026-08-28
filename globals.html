@@ -136,7 +136,7 @@
             global_showEngineDiagnostics, global_setShowEngineDiagnostics, global_getShowEngineDiagnostics,
             global_filingAs, global_inflationRate,
         } from './js/globals.js';
-        import { TaxTable } from './js/taxes.js';
+        import { makeActiveTaxTable } from './js/globals.js';
 
         function valuesToElements() {
             document.getElementById('startAge').value = global_user_startAge;
@@ -155,7 +155,7 @@
          * to a Tax Year input that selected nothing.
          */
         function taxBasisToElements() {
-            const t = new TaxTable();
+            const t = makeActiveTaxTable();
             const joint = global_filingAs !== 'Single';
             document.getElementById('taxBaseYear').textContent = t.baseYear;
             document.getElementById('taxStdDeduction').textContent =
