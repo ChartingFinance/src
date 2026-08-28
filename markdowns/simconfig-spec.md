@@ -275,7 +275,26 @@ They are not the same step.**
 `propertyTaxRate` is superseded rather than unwired: property tax is computed
 per-asset from `modelAsset.annualTaxRate` in `applyPropertyTaxEscrow`.
 
-**`global_taxYear` was NOT deleted.** The claim that all five were unused came
+**`global_taxYear` was deleted separately, 2026-08-27, after investigation.**
+The control was inert *and documented as inert* — the page carried a paragraph
+saying the value "does not currently select a different table". Wiring it up was
+rejected: a table set is a **base year** the engine indexes forward from once per
+simulated year (`inflateTaxes`), so selecting 2025 for a plan starting 2026 would
+apply 2025 brackets to 2026 income unless base-year-to-plan-start reconciliation
+were added too. The correct base is always the most recently published table — a
+data-vintage detail, not a planning lever.
+
+Instead the control was replaced by a derived read-only panel: `TaxTable` now
+exposes `baseYear` off the loaded table set (both sets already carried a `year`
+field), and `globals.html` constructs a real `TaxTable` to report base year,
+standard deduction, filing status and index rate. That also removed a hardcoded
+"2026" from the page's prose, which would have gone stale silently at the next
+table roll-forward. Mutation-verified: pointing `TaxTable` at `us_2025_taxtables`
+makes the page report 2025 / $15,000.
+
+The original note, kept because the lesson is the reusable part:
+
+**`global_taxYear` was NOT deleted in step 0 itself.** The claim that all five were unused came
 from a grep scoped to `js/`. It has a live control on `globals.html` — a page
 listed in `vite.config.js` and shipped to `dist/` — which reads it into a
 `#taxYear` input. Nothing in the engine reads it back, so it is a **dead
