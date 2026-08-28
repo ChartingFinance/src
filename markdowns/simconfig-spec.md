@@ -254,7 +254,8 @@ deferring it. §7.5's rule is *not simultaneously*, not *never*.
 | 1 | `SimConfig` exists, inert, optional on `Portfolio` | ½ day |
 | 2 | `taxTable` onto the config — the 51-reference block | 2 days |
 | 3 | The scalar values, file by file | 2–3 days |
-| 4 | The bound environment + Portfolio-first + asset-list reroute | 2 days |
+| 4a | Bind the environment everywhere, fallbacks intact | 1.5 days |
+| 4b | Flip to throw-on-unbound; asset-list reroute | 1 day |
 | 5 | Flip the callers | 1 day |
 | 6 | Remove the mirror | ½ day |
 | 7 | Stateless MCP | 1 day |
@@ -346,8 +347,67 @@ brackets beside it. `global_retirement_withholding_rate` and
 `global_deferred_allocation_age` stay module imports: both are `export const`,
 not settings state.
 
-**Step 4 — The bound environment.** §4.3 through §4.5. Reroute the asset list
-through `appState.portfolio` first (§7.1), then bind, then switch rule 3 on.
+**Step 4 — The bound environment. Split in two, and the split is the point.**
+
+Steps 1–3 were safe because every change used `X ?? global_X`. That fallback is
+*why* each commit could be bit-identical: the new path and the old one provably
+agree, and the snapshot proves it. Rule 3 of §4.3 — an unbound read throws — is
+the exact opposite, and the two cannot share a commit. A fallback makes a missed
+binding invisible; a throw makes the snapshot irrelevant, because the result is
+a crash rather than a diff. They answer different questions and need different
+gates.
+
+**Step 4a — bind everywhere, fallbacks intact.** Every derived getter reads
+`this.env?.X ?? global_X`. Gate: **bit-identical snapshot**. Answers *did I wire
+it correctly?*
+
+Bind in `Portfolio.initializeChron()`, which at `portfolio.js:357` already loops
+`modelAsset.initializeChron()`. Not the constructor — the same lesson as the tax
+table in step 2, and it matters more here, because `initializeChron` is
+re-entrant by design (the GA re-runs it thousands of times on one Portfolio), so
+binding there is idempotent and survives a config change between runs.
+
+**The mechanism serves two classes, not one.** §4.3 was written about
+`ModelAsset`; `ModelLifeEvent` needs the same thing. Its `triggerDateInt` getter
+calls `ageToDateInt`, which reads `global_user_startAge` — a derived getter on
+an object with no config reference, which is the same shape. Design it once.
+
+**A crash is already visible in `ModelLifeEvent.copy()`:**
+
+```js
+copy() { return ModelLifeEvent.fromJSON(JSON.parse(JSON.stringify(this.toJSON()))); }
+```
+
+It round-trips through JSON, so an `env` field is dropped automatically — rule 2
+satisfied for free. But that means **every copied life event is unbound**, and
+`Portfolio.copy()` maps `e.copy()`. Under 4b, `triggerDateInt` on those throws
+unless `Portfolio.copy()` rebinds them. Findable now rather than at runtime.
+
+**Step 4a needs its own test, because the snapshot cannot see its failure mode.**
+Step 1 demonstrated the gate's blind spot by construction: a live-forwarding
+config failed three assertions in `tests/sim-config.mjs` while the snapshot
+reported "28 fixtures unchanged". The exposure here is the same shape — if
+`copy()` wrongly carried the env, or every asset shared one mutable reference,
+the numbers would be identical and the snapshot silent. Assert the semantics
+directly: env absent from `toJSON`, not carried by `copy()`, rebound by
+`Portfolio.copy()`, one env per run shared by every asset.
+
+**Step 4b — flip to throw.** Remove the fallbacks; an unbound read raises. The
+only possible outcomes are "crashes somewhere" or "nothing", which is what makes
+it a different question: *did I wire it everywhere?*
+
+Reroute the asset list through `appState.portfolio` first (§7.1) — and note that
+§7.1 understates the window. `quick-start` builds **life events** before any
+Portfolio too, so the audit covers both classes' derived getters, not just
+assets'.
+
+**Deliberately not in step 4:** both `global_getFinishDateInt()` and
+`ageToDateInt()` call `new Date().getFullYear()` *inside* the derived getter, so
+a plan's finish date and every life-event trigger depend on wall-clock time at
+read. Capturing the current year into the env would remove that nondeterminism
+and is tempting while touching exactly these getters — but it changes behaviour
+across a year boundary, which is a behavioural change wearing a refactor's
+clothes. Out of scope, on its own.
 
 **Step 5 — Flip the callers.** `run-plan.js` builds a config from the plan spec
 and **deletes `applySettings` entirely** — 32 global references go with it.
