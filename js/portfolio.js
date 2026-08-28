@@ -4,7 +4,8 @@ import { MonthsSpan } from './utils/months-span.js';
 import { logger, LogCategory } from './utils/logger.js';
 import { ModelLifeEvent } from './life-event.js';
 import { User } from './user.js';
-import { global_user_startAge, simConfigFromGlobals } from './globals.js';
+import { global_user_startAge, simConfigFromGlobals, activeTaxTable } from './globals.js';
+import { withSimConfig } from './sim-config.js';
 import { FundTransfer } from './fund-transfer.js';
 import { EventType, ShortfallOrigin } from './sim-event.js';
 import { withTrace, TraceKind } from './trace.js';
@@ -321,6 +322,22 @@ export class Portfolio {
 
     initializeChron() {
 
+        // Bind the run's tax table into the config (Spec 9 step 2).
+        //
+        // HERE, and not at construction, because this is the one moment the
+        // table is guaranteed to be the right one: all four callers —
+        // chronometer_run and the three entry points in mc-compute — call
+        // `activeTaxTable.initializeChron()` on the line immediately above
+        // `portfolio.initializeChron()`. Reading it at Portfolio construction
+        // would instead capture whatever table happened to be installed when
+        // the assets were hydrated, which for the app is a different moment
+        // entirely.
+        //
+        // Reading the module global at all is the migration crutch, the same
+        // one as the globals-backed config default. Step 5 hands the table in
+        // with the config and this read goes away.
+        this.config = withSimConfig(this.config, { taxTable: activeTaxTable });
+
         // Rewind the user to their starting age. Every other piece of run
         // state is rebuilt below; the user must rewind too or successive
         // chronometer runs on the same Portfolio simulate different worlds
@@ -350,10 +367,12 @@ export class Portfolio {
             this.applyPhaseTransfers(this.lifeEvents[0]);
         }
 
-        this.taxes = new TaxEngine(this.modelAssets, this.monthly, this.yearly, this.activeUser);
-        this.payroll = new PayrollEngine(this.modelAssets, this.monthly, this.yearly, this.activeUser, this.taxes);
-        this.expenses = new ExpenseEngine(this.modelAssets, this.monthly, this.activeUser);
-        this.rebalance = new RebalanceEngine(this.modelAssets, this.monthly, this.yearly, this.activeUser);
+        // The single construction site, which is why the config reaches all four
+        // engines with one edit rather than 28.
+        this.taxes = new TaxEngine(this.modelAssets, this.monthly, this.yearly, this.activeUser, this.config);
+        this.payroll = new PayrollEngine(this.modelAssets, this.monthly, this.yearly, this.activeUser, this.taxes, this.config);
+        this.expenses = new ExpenseEngine(this.modelAssets, this.monthly, this.activeUser, this.config);
+        this.rebalance = new RebalanceEngine(this.modelAssets, this.monthly, this.yearly, this.activeUser, this.config);
     }
 
     /**

@@ -14,7 +14,7 @@ import { InstrumentType } from '../instruments/instrument.js';
 import { Metric } from '../metric.js';
 import { FundTransferOneSided, FundTransfer } from '../fund-transfer.js';
 import { MonthsSpan } from '../utils/months-span.js';
-import { activeTaxTable, global_retirement_withholding_rate, global_allocate_household_tax } from '../globals.js';
+import { global_retirement_withholding_rate, global_allocate_household_tax } from '../globals.js';
 import { basisThisMonth, basisOverMonths, isAllocationEligible, planAllocation, NII_BASIS_METRICS } from '../tax-allocation.js';
 import { logger, LogCategory } from '../utils/logger.js';
 import { EventType, ShortfallOrigin } from '../sim-event.js';
@@ -23,8 +23,9 @@ import { taxableBasis } from '../tax-basis.js';
 
 export class TaxEngine {
 
-    constructor(modelAssets, monthly, yearly, activeUser) {
+    constructor(modelAssets, monthly, yearly, activeUser, config) {
         this.modelAssets = modelAssets;
+        this.config = config;   // Spec 9 step 2 — carries the run's tax table
         this.monthly = monthly;
         this.yearly = yearly;
         this.activeUser = activeUser;
@@ -315,7 +316,7 @@ export class TaxEngine {
         const isRealEstate = InstrumentType.isRealEstate(modelAsset.instrument);
         const isPrimaryHome = isRealEstate && modelAsset.isPrimaryHome;
 
-        const result = activeTaxTable.calculateCapitalGainsTax(
+        const result = this.config.taxTable.calculateCapitalGainsTax(
             capitalGains, monthsSpan.totalMonths, isPrimaryHome, ltcgStackBase
         );
 
@@ -442,9 +443,9 @@ export class TaxEngine {
         // − tax(income). A standalone tax(distribution) would walk the
         // brackets from $0 and understate the marginal cost whenever other
         // income exists — the same flaw the short-term-gains path has.
-        const taxWith = activeTaxTable.calculateYearlyIncomeTax(
+        const taxWith = this.config.taxTable.calculateYearlyIncomeTax(
             new Currency(annualizedIncome.amount + distribution.amount));
-        const taxWithout = activeTaxTable.calculateYearlyIncomeTax(annualizedIncome.copy());
+        const taxWithout = this.config.taxTable.calculateYearlyIncomeTax(annualizedIncome.copy());
         const amountToTax = new Currency(-(taxWith.amount - taxWithout.amount));
 
         if (amountToTax.amount !== 0) {
@@ -492,7 +493,7 @@ export class TaxEngine {
 
         // Compute total tax liability across ALL income (salary + capital gains + dividends + interest)
         const { ordinaryTaxable } = taxableBasis(this.monthly, this.activeUser, { annualise: true });
-        let totalIncomeTax = activeTaxTable.calculateYearlyIncomeTax(ordinaryTaxable).divide(12.0).flipSign();
+        let totalIncomeTax = this.config.taxTable.calculateYearlyIncomeTax(ordinaryTaxable).divide(12.0).flipSign();
 
         // What was already withheld from payroll on Day 1? (negative value)
         const alreadyWithheld = this.monthly.incomeTax.copy();
@@ -669,7 +670,7 @@ export class TaxEngine {
     applyAnnualNIIT(settledYearMonths) {
 
         const { netInvestmentIncome, magi } = taxableBasis(this.yearly, this.activeUser);
-        const niit = activeTaxTable.calculateNIIT(netInvestmentIncome, magi);
+        const niit = this.config.taxTable.calculateNIIT(netInvestmentIncome, magi);
 
         // Same $1 materiality gate the true-up uses. Returns BEFORE any trace
         // scope is opened — see the note at the call site in portfolio.js.
@@ -685,18 +686,18 @@ export class TaxEngine {
 
         logger.log(LogCategory.TAX,
             `NIIT: ${niit.toString()} on NII ${netInvestmentIncome.toString()}, `
-            + `MAGI ${magi.toString()} vs threshold $${activeTaxTable.activeNIITThreshold}`);
+            + `MAGI ${magi.toString()} vs threshold $${this.config.taxTable.activeNIITThreshold}`);
 
         // What the 3.8% was actually charged on — the binding side of the min.
         // Derived here and carried on the event so the ledger can say which
         // constraint bound without recomputing it.
-        const taxedBase = niit.amount / activeTaxTable.niitRate;
+        const taxedBase = niit.amount / this.config.taxTable.niitRate;
         const eventData = {
             taxedBase,
             nii: netInvestmentIncome.amount,
             magi: magi.amount,
-            threshold: activeTaxTable.activeNIITThreshold,
-            bound: netInvestmentIncome.amount <= (magi.amount - activeTaxTable.activeNIITThreshold)
+            threshold: this.config.taxTable.activeNIITThreshold,
+            bound: netInvestmentIncome.amount <= (magi.amount - this.config.taxTable.activeNIITThreshold)
                 ? 'nii' : 'magi',
         };
 
@@ -794,7 +795,7 @@ export class TaxEngine {
         // same way.
         const { ordinaryTaxable: actualTaxableIncome, capitalGains: yearlyCapitalGains } =
             taxableBasis(this.yearly, this.activeUser);
-        const actualIncomeTax = activeTaxTable.calculateYearlyIncomeTax(actualTaxableIncome);
+        const actualIncomeTax = this.config.taxTable.calculateYearlyIncomeTax(actualTaxableIncome);
 
         // The exclusion can never exceed the gains it came from, so a zero base
         // against nonzero gains means the two accumulators may have drifted
@@ -805,7 +806,7 @@ export class TaxEngine {
             logger.log(LogCategory.TAX,
                 'applyAnnualTaxTrueUp: excluded gains exceed realised gains — clamped to 0');
         }
-        const actualCapitalGainsTax = activeTaxTable.calculateYearlyLongTermCapitalGainsTax(
+        const actualCapitalGainsTax = this.config.taxTable.calculateYearlyLongTermCapitalGainsTax(
             actualTaxableIncome, yearlyCapitalGains
         );
 

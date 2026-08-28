@@ -316,7 +316,15 @@ const CONTRIBUTION_LIMITS = Object.freeze({
 });
 
 export class TaxTable {
-    constructor() {
+    /**
+     * @param {string|null} filingAs  Spec 9 step 2. When given, this table is
+     *   pinned to that status for its whole life. When null it re-reads
+     *   `global_filingAs` on every initializeChron(), which is what every
+     *   caller did before a config existed — kept so the default path stays
+     *   bit-identical while callers migrate.
+     */
+    constructor(filingAs = null) {
+        this.filingAs = filingAs;
         this.taxes = null;     
         this.initializeChron();
         this.singleContributionLimitBelow50
@@ -336,9 +344,10 @@ export class TaxTable {
         // Selected BY KEY, not by array index and an else. The old form made
         // every unrecognised status file jointly by falling through, so 'MFJ'
         // worked by accident and a future 'MFS' would have too.
-        const key = FILING_TYPE_KEY[global_filingAs];
+        const filingAs = this.filingAs ?? global_filingAs;
+        const key = FILING_TYPE_KEY[filingAs];
         if (!key) {
-            throw new Error(`TaxTable: filing status ${JSON.stringify(global_filingAs)} `
+            throw new Error(`TaxTable: filing status ${JSON.stringify(filingAs)} `
                 + `is not one of ${FILING_STATUSES.join(', ')}`);
         }
         const byKey = (tables) => {
