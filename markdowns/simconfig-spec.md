@@ -326,9 +326,25 @@ instead of reading the global, which dissolves §1's ordering constraint.
 `tax-basis.js` already accepts `{ taxTable }` as an option — this finishes that
 seam rather than inventing one.
 
-**Step 3 — The scalar values, file by file.** chronometer, tax-engine,
-payroll-engine, financial-package, taxes, portfolio, rule-notes, life-event.
-~55 references. One commit and one snapshot check per file (§7.2).
+**Step 3 — The scalar values, file by file. SHIPPED 2026-08-28.** chronometer,
+tax-engine, payroll-engine, financial-package, taxes, portfolio. One snapshot
+check per group, each mutation-verified.
+
+Two files listed here turned out not to belong:
+
+- **`life-event.js` moves to step 4.** Its `global_user_startAge` read is inside
+  `ageToDateInt`, reached only from `ModelLifeEvent`'s `triggerDateInt` getter —
+  a *derived getter on an object with no config reference*, which is exactly the
+  `ModelAsset` shape §4.3 exists to solve. Threading it here would mean inventing
+  a second mechanism for the same problem a step later.
+- **`rule-notes.js` moves to step 4** for the sibling reason: its only caller is
+  `asset-view-modal`, a Lit component holding no portfolio.
+
+`propertyTaxDeductionMax` landed on `TaxTable` rather than in a threaded
+parameter — a cap on a deduction is a parameter of the tax regime, like the
+brackets beside it. `global_retirement_withholding_rate` and
+`global_deferred_allocation_age` stay module imports: both are `export const`,
+not settings state.
 
 **Step 4 — The bound environment.** §4.3 through §4.5. Reroute the asset list
 through `appState.portfolio` first (§7.1), then bind, then switch rule 3 on.

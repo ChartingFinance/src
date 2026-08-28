@@ -4,7 +4,7 @@ import { MonthsSpan } from './utils/months-span.js';
 import { logger, LogCategory } from './utils/logger.js';
 import { ModelLifeEvent } from './life-event.js';
 import { User } from './user.js';
-import { global_user_startAge, simConfigFromGlobals, activeTaxTable } from './globals.js';
+import { simConfigFromGlobals, activeTaxTable } from './globals.js';
 import { withSimConfig } from './sim-config.js';
 import { FundTransfer } from './fund-transfer.js';
 import { EventType, ShortfallOrigin } from './sim-event.js';
@@ -213,8 +213,9 @@ export class Portfolio {
         this.firstDateInt = firstDateInt(this.modelAssets);
         this.lastDateInt = lastDateInt(this.modelAssets);
 
-        const birthYear = this.firstDateInt ? this.firstDateInt.year - global_user_startAge : undefined;
-        this.activeUser = new User(global_user_startAge, birthYear);
+        const birthYear = this.firstDateInt
+            ? this.firstDateInt.year - this.config.startAge : undefined;
+        this.activeUser = new User(this.config.startAge, birthYear);
 
         // Construction-time age snapshot, restored by initializeChron. The
         // chronometer ages activeUser one year per simulated year, and the GA
