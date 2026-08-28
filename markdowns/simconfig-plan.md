@@ -111,6 +111,13 @@ the current globals. Every existing test passes unchanged at every step. The
 globals become a *source* for the default rather than the engine's reading
 surface, and only the final step removes them.
 
+The same constraint governs the Portfolio-first inversion in step 4. Do not
+invert the constructor in place. `new Portfolio(assets, reports)` survives as
+sugar for *build env from globals → construct → `addAssets`*, so the 45 test
+sites keep working, while `new Portfolio({ config })` + `addAssets(assets)`
+becomes the explicit path that `run-plan.js`, `mc-compute.js` and the app use.
+Migrating the test sites is then optional and can happen later, or never.
+
 ## Steps
 
 Each step is independently landable and independently verifiable. The gate for
@@ -146,25 +153,109 @@ payroll-engine, financial-package, taxes, portfolio, rule-notes, life-event.
 ~55 references. Each file is its own commit with its own snapshot check.
 *Two to three days.*
 
-**Step 4 — Resolve the two files that do not fit.** These need a decision, not
-just an edit, and are called out separately for that reason:
+**Step 4 — The bound environment, and the Portfolio-first rule.**
 
-- `model-asset.js` reads `global_inflationRate` (4 refs) and has **no reference
-  to a Portfolio.** Either config is passed to the specific methods, or the
-  asset holds a back-reference. Cheapest is probably passing it at the call
-  site, but it is a genuine design choice.
-- `generators/finplan-ai.js` reads six globals (14 refs) and is a **formatter**,
-  not engine code. It sits inside the engine closure only because the MCP server
-  imports it. It should take config as an explicit argument and move to a
-  presentation layer. Note that `generatePortfolioMarkdown` — the function the
-  MCP server actually calls — reads *no* globals; the six reads are in
-  `generateTimelineMarkdown`, which the MCP report does not currently include.
-  **This is also a latent bug:** those reads happen after the `await`, so adding
-  the plan-settings section to the MCP report (a natural thing to want, since
-  the report never states filing status or ages) would make a concurrent
-  interleave print one plan's settings on another plan's report.
+### The environment is a captured copy, not a live reference
 
-*One day, plus the design conversation.*
+An object that *forwards* reads to the globals (getters over the live module
+bindings) would work in JS and would be a trap. It preserves the coupling and
+merely renames it — two concurrent plans still read the same cell — and worse,
+it is **unverifiable**: the gate for these steps is "the snapshot is
+bit-identical", and a live view is trivially bit-identical because it is the
+same value read through one more layer. Every step would pass while proving
+nothing.
+
+So: values captured at a defined moment, frozen. Which is `SimConfig` — one
+concept, not two. `taxTable` is built in its constructor from `filingAs`, so
+the ordering constraint `applySettings` documents becomes an invariant of the
+object rather than a duty of every caller.
+
+### Portfolio owns the environment; assets borrow it
+
+`ModelAsset` has no Portfolio back-reference, and its two global reads are both
+in **derived getters** — `effectiveAnnualReturnRate` (inflation fallback for
+expense instruments) and `effectiveFinishDateInt` (falls back to the plan's
+finish age). Read on demand during a run, not captured at construction.
+
+Binding an env to each asset is right, but ownership must be singular: **one
+environment per run, held by the Portfolio, bound onto assets by the Portfolio.**
+Otherwise there are N copies that must agree, and a single stale one produces a
+silently divergent run — concretely, Monte Carlo builds a Portfolio per
+iteration, so a missed rebind is a wrong number in one iteration out of a
+thousand.
+
+Three rules, two of which the class already supports:
+
+1. **Excluded from `toJSON()`.** Already the convention there — the existing
+   comment draws the config-vs-run-state line explicitly. Env is a third
+   category on the run-state side.
+2. **Not carried by `copy()`.** `copy()` is an explicit allowlist rather than a
+   spread, so this is a decision made once. **`Portfolio.copy()` (portfolio.js:254)
+   maps `modelAsset.copy()` and must rebind** — that is the concrete site.
+3. **A read through an unbound env throws.** The failure mode this project keeps
+   hitting is plausible numbers from the wrong source; a fallback to the global
+   makes a missed rebind invisible, a throw makes it a stack trace on the first
+   run. See the blocker below before making this unconditional.
+
+### Portfolio-first is already how Quick Start works
+
+`buildQuickStart` resolves ages → `dateAnchors(startAge, retirementAge,
+finishAge)` → `profile.assets(d)`. **Config first, dates derived from it, then
+assets.** It does not need reworking to support the rule; it is the existing
+proof the rule is natural. The historical MCP defect — age overrides that moved
+no date — was caused precisely by violating it, setting globals *after* assets
+were built.
+
+The obstacle is in `Portfolio`'s constructor, which derives
+`birthYear = firstDateInt.year - global_user_startAge` and builds `activeUser`,
+so it currently needs assets to exist. Note this is a **duplicate derivation**:
+`dateAnchors` already computes `birthYear = currentYear - startAge` from config
+directly. Under Portfolio-first the config-direct derivation is the honest one
+and the asset-derived one goes away — the inversion removes a redundancy rather
+than adding work. `activeUser` construction moves to `addAssets`, before
+`initializeChron`, which already resets its age.
+
+### `addAssets`, not `Portfolio.createAsset`
+
+Binding is not constructing. Assets are produced by `ModelAsset.fromJSON` and
+`membrane_rawDataToModelAssets` when hydrating a share URL or localStorage, and
+those should not need a Portfolio. `portfolio.addAssets(assets)` gets the rule —
+no asset is ever *used* unbound — while leaving hydration a free function.
+`createAsset` would close the construction-to-binding window by construction;
+`addAssets` closes it by convention plus rule 3. The latter is far less invasive
+and, given the blocker below, rule 3 needs scoping anyway.
+
+### Blocker found while checking this: the UI reads derived getters on unbound assets
+
+`finplan-app.js:493` (`assetList.modelAssets = qs.assets`) and
+`finplan-app.js:1010` (`= membrane_rawDataToModelAssets(...)`) hand the asset
+list raw assets that **never pass through a Portfolio**. `asset-list.js:194`
+then calls `classifyAssets`, which reads `asset.effectiveFinishDateInt` at
+`asset-groups.js:211`. Unconditional throw-on-unbound crashes the asset list on
+page load.
+
+This is not an argument against the rule — it is the rule catching a real
+existing problem. That column is *already* silently config-dependent: it renders
+whatever `global_user_finishAge` happens to be. The fix is small and in the
+spirit of the change, because `appState.portfolio` already exists (referenced at
+`finplan-app.js:340`): route the asset list through `portfolio.modelAssets` so
+it renders bound assets. Do that first, then rule 3 can be unconditional.
+
+`charting.js:78` is fine — it iterates `portfolio.modelAssets`, always bound.
+
+### And the formatter
+
+`generators/finplan-ai.js` reads six globals (14 refs) and is a **formatter**,
+not engine code, inside the engine closure only because the MCP server imports
+it. It should take config explicitly and move to a presentation layer.
+`generatePortfolioMarkdown` — what MCP actually calls — reads *no* globals; the
+six reads are in `generateTimelineMarkdown`, which the MCP report omits. **This
+is a latent bug:** those reads happen after the `await`, so adding the
+plan-settings section to the MCP report (natural to want, since the report never
+states filing status or ages) would make a concurrent interleave print one
+plan's settings on another plan's report.
+
+*Two days, including the asset-list reroute.*
 
 **Step 5 — Flip the callers.** `run-plan.js` builds a config from the plan spec
 and **deletes `applySettings` entirely** (32 global references go with it).
@@ -185,8 +276,9 @@ store the *spec*, not the finished Portfolio; a cache miss re-runs in ~47ms
 instead of erroring. Re-running is byte-identical including `traceId`s
 (verified), so chains resolve identically. *One day.*
 
-**Total: roughly two weeks.** Steps 0–2 are ~60% of the value and can land
-before anyone commits to the rest.
+**Total: roughly two and a half weeks.** Steps 0–2 are ~60% of the value and can
+land before anyone commits to the rest. Step 4 carries the design risk, not the
+line count — read it before scheduling the others.
 
 ## What this plan does not do
 
