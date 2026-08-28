@@ -216,7 +216,9 @@ server.tool(
   + "engine operations that produced it, plus everything else that happened in the same step. "
   + "Requires a run handle from quick_start_report or run_plan.",
   {
-    handle: z.string().describe("Run handle, e.g. 'plan_1', from a report."),
+    handle: z.string().describe('Run handle from a report, e.g. plan_3f9c1a2b04. Stable: the '
+        + 'same plan always yields the same handle, and an older one still works — '
+        + 'the server re-runs it if needed.'),
     issueId: z.string()
         .describe("Finding id, e.g. 'plan-exhaustion', 'unfunded-obligation', 'funding-ran-dry', "
                 + "'contribution-capped'. The report lists the ids present in that run."),
@@ -226,7 +228,7 @@ server.tool(
         .describe("How many occurrences to explain, earliest first."),
   },
   guard(async ({ handle, issueId, assetName, limit }) => {
-    const result = explainIssue(getRun(handle), issueId, { assetName, limit });
+    const result = explainIssue(await getRun(handle), issueId, { assetName, limit });
     return { content: [{ type: "text", text: explainIssueMarkdown(result) }] };
   })
 );
@@ -239,7 +241,7 @@ server.tool(
   + "Use this to investigate a month that looks surprising in the projection table. "
   + "Requires a run handle from quick_start_report or run_plan.",
   {
-    handle: z.string().describe("Run handle, e.g. 'plan_1', from a report."),
+    handle: z.string().describe('Run handle from a report, e.g. plan_3f9c1a2b04.'),
     date: z.string().optional()
         .describe("Month to inspect as 'YYYY-MM', e.g. '2051-11'. Omit to search the whole plan "
                 + "(pair with assetName or eventType so the result stays useful)."),
@@ -250,7 +252,7 @@ server.tool(
     limit: z.number().int().min(1).max(50).default(10),
   },
   guard(async ({ handle, date, assetName, eventType, limit }) => {
-    const result = explainAt(getRun(handle), { date, assetName, eventType, limit });
+    const result = explainAt(await getRun(handle), { date, assetName, eventType, limit });
     return { content: [{ type: "text", text: explainAtMarkdown(result) }] };
   })
 );

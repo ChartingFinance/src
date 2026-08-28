@@ -181,61 +181,112 @@ export async function runProfile(profileKey, ageOverrides = null, opts = {}) {
     return runPlan(planFromProfile(profileKey, ageOverrides), opts);
 }
 
-// ── Run cache ────────────────────────────────────────────────────────
+// ── Run handles ──────────────────────────────────────────────────────
 //
-// A handle exists so a client can run once and then ask several questions
-// about that run. It is not an optimisation — it is a CORRECTNESS
-// requirement for explain.js.
+// This block used to open by saying a handle is "not an optimisation — it is a
+// CORRECTNESS requirement", because trace scopes are run state and a server
+// that re-ran the plan would resolve chains against a different run than the
+// one it was describing.
 //
-// Trace scopes are run state: chronometer_run calls resetTraces() at the top,
-// so running a second plan wipes the first one's scope list. A stateless
-// server that re-ran the plan on every explain call would resolve chains
-// against a different run than the one it is describing. Holding the finished
-// Portfolio — traceScopes and all — is what makes a chain resolvable at all,
-// and it is the same rule as "reads take the scope list explicitly", one
-// level up.
+// That was true, and Spec 9 made it false. It rested on the engine reading its
+// configuration from module state, so a second plan in the process changed what
+// the first one meant. The engine now takes a SimConfig as a value: two plans
+// share nothing, and a re-run of the same spec is BYTE-IDENTICAL — same events,
+// same amounts, same traceIds — so a chain resolved against a re-run is the
+// same chain. Measured, not assumed; tests/mcp-stateless.mjs asserts it.
 //
-// Bounded because a 666-month plan holds tens of thousands of events and
-// scopes; four of those is already a lot of memory for a stdio server that
-// may sit open all day.
+// The other half of the old argument also turns out to be wrong on inspection:
+// `resetTraces()` REBINDS `_scopes = []` rather than emptying it, so a finished
+// portfolio keeps its own array regardless of what runs later.
+//
+// So handles are now an honest cache. What is kept is the SPEC — a few KB of
+// JSON — rather than the finished Portfolio, which for one Quick Start profile
+// is 23,276 trace scopes and 12,290 events. A miss re-runs in ~36ms instead of
+// erroring, which is the difference between a handle that expires and one that
+// merely goes cold.
+//
+// Handles are CONTENT-ADDRESSED. The same plan always produces the same handle,
+// so a client that runs the same report twice can keep using the handle it
+// already has, and an agent that guesses a handle from an earlier transcript is
+// right rather than unlucky.
 
-const MAX_CACHED_RUNS = 4;
-const RUNS = new Map();
-let runCounter = 0;
+import { createHash } from 'node:crypto';
 
-/** Cache a completed run and return its handle. Oldest is evicted first. */
-export function cacheRun(result) {
-    const handle = `plan_${++runCounter}`;
-    RUNS.set(handle, result);
-    while (RUNS.size > MAX_CACHED_RUNS) {
-        // Map preserves insertion order, so the first key is the oldest.
-        RUNS.delete(RUNS.keys().next().value);
-    }
+/**
+ * Finished runs held for speed only. Small, because a miss is cheap now — the
+ * old cache held four because eviction meant a dead handle; this one holds two
+ * because eviction means a 36ms re-run.
+ */
+const MAX_MEMO = 2;
+const MEMO = new Map();
+
+/**
+ * handle → { spec, opts }. This is what makes a handle resolvable, and it is
+ * the whole of the server's session state.
+ */
+const SPECS = new Map();
+
+/** A handle that depends only on what was asked for. */
+function handleFor(spec, opts) {
+    const digest = createHash('sha1')
+        .update(JSON.stringify({ spec, opts }))
+        .digest('hex').slice(0, 10);
+    return `plan_${digest}`;
+}
+
+function memoize(handle, result) {
+    MEMO.set(handle, result);
+    while (MEMO.size > MAX_MEMO) MEMO.delete(MEMO.keys().next().value);
+}
+
+/** Register a spec under its content-addressed handle. */
+export function cacheRun(spec, opts, result) {
+    const handle = handleFor(spec, opts);
+    SPECS.set(handle, { spec, opts });
+    if (result) memoize(handle, result);
     return handle;
 }
 
-/** Look up a cached run, or throw naming the handles that are still live. */
-export function getRun(handle) {
-    const run = RUNS.get(handle);
-    if (!run) {
-        const live = [...RUNS.keys()];
+/**
+ * The run behind a handle, re-running it if it is no longer in memory.
+ *
+ * ASYNC, because a miss re-runs. Callers await it; the alternative was keeping
+ * every finished run alive forever so this could stay synchronous, which is the
+ * memory profile the change exists to remove.
+ */
+export async function getRun(handle) {
+    const memo = MEMO.get(handle);
+    if (memo) return memo;
+
+    const known = SPECS.get(handle);
+    if (!known) {
+        const live = [...SPECS.keys()];
         throw new Error(
             `No run "${handle}". ${live.length
-                ? `Live handles: ${live.join(', ')}. Only the ${MAX_CACHED_RUNS} most recent are kept.`
-                : 'No runs are cached — run a plan first.'}`);
+                ? `Known handles: ${live.join(', ')}.`
+                : 'No plan has been run yet — call quick_start_report or run_plan first.'}`);
     }
-    return run;
+
+    const result = await runPlan(known.spec, known.opts);
+    memoize(handle, result);
+    return result;
 }
 
-/** Run a plan and cache it. Returns the handle alongside the result. */
+/** Run a plan and register it. Returns the handle alongside the result. */
 export async function runPlanCached(spec, opts = {}) {
     const result = await runPlan(spec, opts);
-    return { handle: cacheRun(result), ...result };
+    return { handle: cacheRun(spec, opts, result), ...result };
 }
 
-/** Test seam: drop every cached run. */
+/** Test seam: forget every handle. */
 export function clearRuns() {
-    RUNS.clear();
+    SPECS.clear();
+    MEMO.clear();
+}
+
+/** Test seam: drop finished runs but keep the handles resolvable. */
+export function evictMemo() {
+    MEMO.clear();
 }
 
 /** Profile keys and labels, for a tool that needs to offer a choice. */
