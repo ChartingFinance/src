@@ -374,10 +374,6 @@ const SETTERS = {
     apply: (v) => { G.global_setUserRetirementAge(v); G.global_getUserRetirementAge(); },
     read: () => G.global_user_retirementAge,
   },
-  global_propertyTaxRate: {
-    apply: (v) => { G.global_setPropertyTaxRate(v); G.global_getPropertyTaxRate(); },
-    read: () => G.global_propertyTaxRate,
-  },
   global_backtestYear: {
     apply: (v) => G.global_setBacktestYearDirect(v),
     read: () => G.global_backtestYear,

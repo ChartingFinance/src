@@ -84,8 +84,9 @@ Three facts in that table shape everything below.
   site**, `portfolio.js:332-335`.
 - **`finplan-app.js`'s 145 references do not move.** That file is the settings
   *editor*; reading them is its job.
-- **Five globals are dead** outside `globals.js`: `global_taxYear`,
-  `global_propertyTaxRate`, and the three `global_equity_*`.
+- **Four globals are dead** outside `globals.js`: `global_propertyTaxRate` and
+  the three `global_equity_*`. A fifth, `global_taxYear`, is *engine*-dead but
+  has a live UI control — see step 0.
 
 The `const` data tables — `global_sp500_annual_returns`,
 `global_cpi_annual_inflation`, and friends — are immutable reference data, not
@@ -231,10 +232,33 @@ They are not the same step.**
 
 ---
 
-**Step 0 — Delete the five dead globals.** `global_taxYear`,
+**Step 0 — Delete the dead globals. SHIPPED 2026-08-27.** Four, not five:
 `global_propertyTaxRate`, `global_equity_dividend_allocation`,
-`global_equity_growth_allocation`, `global_equity_dividend_average_annual_rate`.
-Zero uses outside `globals.js`. Remove them from `global_workerSnapshot()` too.
+`global_equity_growth_allocation`, `global_equity_dividend_average_annual_rate`
+— removed along with `global_default_propertyTaxRate`, the
+`global_set/getPropertyTaxRate` accessor pair, their `global_reset()` and
+`global_initialize()` calls, their `global_workerSnapshot()` round-trip, and the
+`global_propertyTaxRate` probe knob in `tests/tools/snapshot.mjs`.
+`propertyTaxRate` is superseded rather than unwired: property tax is computed
+per-asset from `modelAsset.annualTaxRate` in `applyPropertyTaxEscrow`.
+
+**`global_taxYear` was NOT deleted.** The claim that all five were unused came
+from a grep scoped to `js/`. It has a live control on `globals.html` — a page
+listed in `vite.config.js` and shipped to `dist/` — which reads it into a
+`#taxYear` input. Nothing in the engine reads it back, so it is a **dead
+control**: the user can set a tax year and it changes nothing. That is a
+user-facing decision (wire it up, or remove the control), not a silent cleanup,
+and it belongs with the dead-controls item in the 2026-07-25 UI review.
+
+Outcome against prediction: the predicted "no simulated number moved" held
+exactly — the complete diff was **112 deletions across 28 baselines, four
+`[config]` lines each, zero additions.** The prediction was wrong in one
+respect worth recording: it said the baselines would be *unchanged*, but the
+snapshot's `[config]` block is generated from `global_workerSnapshot()`
+(`snapshot.mjs:432`), so removing fields from the snapshot necessarily rewrites
+that preamble in every baseline. **A field's presence in `workerSnapshot()` is
+part of the baseline contract** — worth remembering for step 1, which adds to
+it.
 
 **Step 1 — Introduce SimConfig; change no behaviour.** New `js/sim-config.js`:
 the frozen shape, `simConfigFromGlobals()`, `simConfigFromPlanSpec(spec)`.

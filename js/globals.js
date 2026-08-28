@@ -289,8 +289,6 @@ export function asFilingStatus(value, fallback = FilingStatus.SINGLE) {
 
 export const global_default_filingAs = FilingStatus.SINGLE;
 
-export const global_default_propertyTaxRate = 0.01;
-
 export const global_default_propertyTaxDeductionMax = 40000.0;
 
 export const global_default_user_startAge = 50;
@@ -395,18 +393,11 @@ export let global_taxYear = global_default_taxYear;
 
 export let global_filingAs = global_default_filingAs;
 
-export let global_propertyTaxRate = global_default_propertyTaxRate;
-
 export let global_propertyTaxDeductionMax = global_default_propertyTaxDeductionMax;
 
 export let global_user_startAge = global_default_user_startAge;
 export let global_user_retirementAge = global_default_user_retirementAge;
 export let global_user_finishAge = global_default_user_finishAge;
-
-export let global_equity_dividend_allocation = 0.5;
-export let global_equity_growth_allocation = 0.5;
-
-export let global_equity_dividend_average_annual_rate = 0.025;
 
 export let global_backtestYear = 'current';
 
@@ -417,7 +408,6 @@ export function global_reset() {
     global_inflationRate = global_default_inflationRate;
     global_taxYear = global_default_taxYear;
     global_filingAs = global_default_filingAs;
-    global_propertyTaxRate = global_default_propertyTaxRate;
     global_propertyTaxDeductionMax = global_default_propertyTaxDeductionMax;
     global_user_startAge = global_default_user_startAge;
     global_user_retirementAge = global_default_user_retirementAge;
@@ -426,7 +416,6 @@ export function global_reset() {
     global_setInflationRate(global_inflationRate);
     global_setTaxYear(global_taxYear);
     global_setFilingAs(global_filingAs);
-    global_setPropertyTaxRate(global_propertyTaxRate);
     global_setPropertyTaxDeductionMax(global_propertyTaxDeductionMax);
     global_setUserStartAge(global_user_startAge);
     global_setUserRetirementAge(global_user_retirementAge);
@@ -450,14 +439,10 @@ export function global_workerSnapshot() {
         inflationRate: global_inflationRate,
         taxYear: global_taxYear,
         filingAs: global_filingAs,
-        propertyTaxRate: global_propertyTaxRate,
         propertyTaxDeductionMax: global_propertyTaxDeductionMax,
         userStartAge: global_user_startAge,
         userRetirementAge: global_user_retirementAge,
         userFinishAge: global_user_finishAge,
-        equityDividendAllocation: global_equity_dividend_allocation,
-        equityGrowthAllocation: global_equity_growth_allocation,
-        equityDividendAverageAnnualRate: global_equity_dividend_average_annual_rate,
         backtestYear: global_backtestYear,
         simDataMode: global_simDataMode,
     };
@@ -471,14 +456,10 @@ export function global_applyWorkerSnapshot(s) {
     // thread never validated would otherwise reach TaxTable and throw inside a
     // worker, where the failure is far harder to see.
     global_filingAs = asFilingStatus(s.filingAs, global_default_filingAs);
-    global_propertyTaxRate = s.propertyTaxRate;
     global_propertyTaxDeductionMax = s.propertyTaxDeductionMax;
     global_user_startAge = s.userStartAge;
     global_user_retirementAge = s.userRetirementAge;
     global_user_finishAge = s.userFinishAge;
-    global_equity_dividend_allocation = s.equityDividendAllocation;
-    global_equity_growth_allocation = s.equityGrowthAllocation;
-    global_equity_dividend_average_annual_rate = s.equityDividendAverageAnnualRate;
     global_backtestYear = s.backtestYear;
     global_simDataMode = s.simDataMode;
 }
@@ -532,18 +513,6 @@ export function global_getFilingAs() {
     // localStorage is untrusted — it can hold a value written by an older
     // version — so this coerces where the setter throws.
     global_filingAs = asFilingStatus(stored ?? global_filingAs, global_default_filingAs);
-}
-
-export function global_setPropertyTaxRate(value) {
-    localStorage.setItem('propertyTaxRate', value.toFixed(4));
-}
-
-export function global_getPropertyTaxRate(value) {
-    let localPTR = localStorage.getItem('propertyTaxRate');
-    if (localPTR == null)
-        localPTR = global_propertyTaxRate.toFixed(4);
-
-    global_propertyTaxRate = parseFloat(localPTR);
 }
 
 export function global_setPropertyTaxDeductionMax(value) {
@@ -714,7 +683,6 @@ export function global_initialize() {
     global_getInflationRate();
     global_getTaxYear();
     global_getFilingAs();
-    global_getPropertyTaxRate();
     global_getPropertyTaxDeductionMax();
     global_getUserStartAge();
     global_getUserRetirementAge();
