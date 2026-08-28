@@ -48,8 +48,9 @@
     <div class="glass-card p-8 sm:p-12 mb-6">
         <h2 class="text-2xl font-bold tracking-tight mb-2">User Information</h2>
         <p class="text-gray-600 leading-relaxed mb-6">These three ages define the whole simulation. <strong>Start Age</strong> sets the year the plan begins and fixes your birth year, which is what Social Security timing, the RMD start age (72, 73 or 75 under SECURE&nbsp;2.0), catch-up contribution eligibility, and the age-60 gate on deferred-account tax attribution are all measured against. <strong>Retirement Age</strong> is where the Accumulate phase ends and the Retire phase begins &mdash; every life event trigger, asset start date and fund transfer switch derives from it. <strong>Finish Age</strong> ends the run.</p>
-        <p class="text-gray-600 leading-relaxed mb-6 text-sm">These are the same three fields as the Settings Row on the main page &mdash; changing them here changes them everywhere. <strong>Filing status</strong>, <strong>inflation</strong> and <strong>backtest year</strong> live on the main page only.</p>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <p class="text-gray-600 leading-relaxed mb-6"><strong>Inflation Rate</strong> is what every indexed figure moves by from the second simulated year onward &mdash; tax brackets, the standard deduction, contribution limits and the Social Security wage base &mdash; and it is the rate the real-dollar view deflates by. It does not change your assets&rsquo; own return rates.</p>
+        <p class="text-gray-600 leading-relaxed mb-6 text-sm">These are the same four fields as the Settings Row on the main page &mdash; changing them here changes them everywhere. <strong>Filing status</strong> and <strong>backtest year</strong> live on the main page only.</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <div>
                 <label for="startAge" class="block text-sm font-medium text-gray-500 mb-1">Start Age</label>
                 <input id="startAge" type="number" value="50" step="1"
@@ -63,6 +64,11 @@
             <div>
                 <label for="finishAge" class="block text-sm font-medium text-gray-500 mb-1">Finish Age</label>
                 <input id="finishAge" type="number" value="87" step="1"
+                       class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-transparent" />
+            </div>
+            <div>
+                <label for="inflationRate" class="block text-sm font-medium text-gray-500 mb-1">Inflation Rate (%)</label>
+                <input id="inflationRate" type="number" value="3.1" step="0.1" min="0" max="15"
                        class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-transparent" />
             </div>
         </div>
@@ -135,6 +141,8 @@
             global_setUserStartAge, global_setUserRetirementAge, global_setUserFinishAge,
             global_showEngineDiagnostics, global_setShowEngineDiagnostics, global_getShowEngineDiagnostics,
             global_filingAs, global_inflationRate,
+            global_setInflationRate, global_getInflationRate,
+            global_multBy100, global_divBy100,
         } from './js/globals.js';
         import { makeActiveTaxTable } from './js/globals.js';
 
@@ -142,6 +150,9 @@
             document.getElementById('startAge').value = global_user_startAge;
             document.getElementById('retirementAge').value = global_user_retirementAge;
             document.getElementById('finishAge').value = global_user_finishAge;
+            // Stored as a decimal, shown as a percent — the same convention as the
+            // Settings Row, so the two surfaces cannot disagree about what "3.1" means.
+            document.getElementById('inflationRate').value = global_multBy100(global_inflationRate);
             // Read through the getter: the imported binding is only refreshed
             // when the getter runs (see the paired-accessor pattern in globals.js).
             document.getElementById('showEngineDiagnostics').checked = global_getShowEngineDiagnostics();
@@ -178,6 +189,14 @@
         });
         document.getElementById('finishAge').addEventListener('change', (e) => {
             global_setUserFinishAge(parseInt(e.target.value));
+        });
+        document.getElementById('inflationRate').addEventListener('change', (e) => {
+            global_setInflationRate(global_divBy100(e.target.value));
+            global_getInflationRate();
+            // The Tax Settings panel reports what the tables are indexed forward by,
+            // so it has to follow. Without this the page would show the old rate
+            // beside the new one and neither would be obviously wrong.
+            taxBasisToElements();
         });
         document.getElementById('showEngineDiagnostics').addEventListener('change', (e) => {
             global_setShowEngineDiagnostics(e.target.checked);

@@ -237,6 +237,26 @@ await check('it populates the derived tax panel rather than leaving placeholders
     assert.match(el('taxIndexRate').textContent, /^\d+(\.\d+)?%$/);
 });
 
+await check('the inflation rate round-trips as a percent', () => {
+    // Stored as a decimal, shown as a percent. The two surfaces that edit it —
+    // this page and the Settings Row — must agree about what "3.1" means, or a
+    // user who edits it here sees a 310% plan on the main page.
+    const el = globalThis.document.getElementById('inflationRate');
+    assert.equal(el.value, '3.1', `shown as ${el.value}, expected the percent form`);
+
+    el.value = '2.4';
+    el.dispatch('change');
+    assert.equal(globalThis.localStorage.getItem('inflationRate'), '0.0240',
+        'stored in the wrong scale — the engine reads a decimal');
+});
+
+await check('editing inflation re-renders the derived tax panel', () => {
+    // The panel reports what the tables are indexed forward by. If it did not
+    // follow, the page would show the old rate beside the new one and neither
+    // would look wrong.
+    assert.equal(globalThis.document.getElementById('taxIndexRate').textContent, '2.4%');
+});
+
 await check('changing a control writes it to localStorage', () => {
     // The behaviour that silently disappeared: listeners attached, and wired to
     // something that persists.
