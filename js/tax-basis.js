@@ -164,7 +164,7 @@ export function taxableBasis(pkg, activeUser, { annualise = false, taxTable = nu
     // first, THEN cap the deductions. Capping a monthly contribution against an
     // annual limit and only then multiplying by twelve would let twelve times
     // the limit through.
-    yearly.limitDeductions(activeUser);
+    yearly.limitDeductions(activeUser, table);
 
     const ordinaryTaxable = table.calculateYearlyTaxableIncome(yearly);
 

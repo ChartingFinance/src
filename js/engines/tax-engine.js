@@ -781,7 +781,7 @@ export class TaxEngine {
 
         // 1. Compute exact tax liability from the yearly accumulator
         const yearlySnapshot = this.yearly.copy();
-        yearlySnapshot.limitDeductions(this.activeUser);
+        yearlySnapshot.limitDeductions(this.activeUser, this.config.taxTable);
 
         // Both bases from ONE call. This site used to recompute the gains base
         // inline — gross gains less §121, clamped — which was a correct copy of

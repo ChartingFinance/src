@@ -38,15 +38,22 @@ export class FinancialPackage {
         return this;
     }
 
-    limitDeductions(activeUser) {
+    /**
+     * @param {User} activeUser
+     * @param {TaxTable} [taxTable]  the run's table (Spec 9 step 2). Falls back
+     *   to the module global while callers migrate; step 6 makes it required.
+     */
+    limitDeductions(activeUser, taxTable = null) {
 
-        let maxIRADeduction = activeTaxTable.limitFor(ContributionKind.IRA, activeUser);
+        const table = taxTable ?? activeTaxTable;
+
+        let maxIRADeduction = table.limitFor(ContributionKind.IRA, activeUser);
         if (this.tradIRAContribution.amount + this.rothIRAContribution.amount > maxIRADeduction.amount) {
             // TODO: figure out how to split this up between traditional and roth
             //this.iraContribution.amount = maxIRADeduction.amount;
         }
 
-        let max401KDeduction = activeTaxTable.limitFor(ContributionKind.FOUR01K, activeUser);
+        let max401KDeduction = table.limitFor(ContributionKind.FOUR01K, activeUser);
         if (this.four01KContribution.amount > max401KDeduction.amount)
             this.four01KContribution.amount = max401KDeduction.amount;
 
