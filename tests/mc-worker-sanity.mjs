@@ -15,11 +15,11 @@ globalThis.window = globalThis;
 
 import { ModelAsset } from '../js/model-asset.js';
 import { ModelLifeEvent, LifeEvent } from '../js/life-event.js';
-import { TaxTable } from '../js/taxes.js';
 import {
     setActiveTaxTable,
     global_workerSnapshot,
     global_applyWorkerSnapshot,
+    simConfigFromGlobals,
 } from '../js/globals.js';
 import { DateInt } from '../js/utils/date-int.js';
 import { computeMonteCarlo, applyRandomRates, buildYearPool } from '../js/mc-compute.js';
@@ -107,7 +107,7 @@ const QUICK_START_DATA = [
 ];
 
 // Worker-style rehydration: through JSON, then fromJSON
-setActiveTaxTable(new TaxTable());
+setActiveTaxTable(makeActiveTaxTable());
 const serialized = JSON.parse(JSON.stringify(QUICK_START_DATA));
 const assets = serialized.map(o => ModelAsset.fromJSON(o));
 
@@ -115,6 +115,7 @@ const t0 = Date.now();
 const interims = [];
 const checkpoints = [];
 const results = await computeMonteCarlo(assets, {
+    config: simConfigFromGlobals(),
     numSimulations: 100,
     retirementDateInt: new DateInt(DateInt.from(2036, 12).toInt()),
     onProgress: (c, t) => process.stdout.write(`  progress ${c}/${t}\n`),
@@ -164,6 +165,7 @@ assert.ok(JSON.stringify(results), 'results are JSON-serializable');
 
 const grT0 = Date.now();
 const grResults = await computeGuardrails(assets, {
+    config: simConfigFromGlobals(),
     params: { withdrawalRate: 4, preservation: 20, prosperity: 20, adjustment: 10 },
     retirementDateInt: new DateInt(DateInt.from(2030, 1).toInt()),
     lifeEvents: [],
@@ -190,10 +192,12 @@ assert.ok(JSON.stringify(grResults), 'guardrails results are JSON-serializable')
 
 const retirement = DateInt.from(2030, 1);   // sims span 2026-01 … 2036-12
 const mcPlain = await computeMonteCarlo(assets, {
+    config: simConfigFromGlobals(),
     numSimulations: 5,
     retirementDateInt: new DateInt(retirement.toInt()),
 });
 const mcGuarded = await computeMonteCarlo(assets, {
+    config: simConfigFromGlobals(),
     numSimulations: 5,
     guardrailParams: { withdrawalRate: 4, preservation: 20, prosperity: 20, adjustment: 10 },
     retirementDateInt: new DateInt(retirement.toInt()),
@@ -244,7 +248,7 @@ const calAsset = makeEquity('CalEquity', false);
 const baseRates = new Map([[calAsset, calAsset.annualReturnRate.rate]]);
 const isPoolDeviation = (d) => poolValues.some(v => Math.abs((v - fullPool.means.sp500) - d) < 1e-12);
 for (let i = 0; i < 20; i++) {
-    applyRandomRates([calAsset], fullPool, 'calibrated', baseRates);
+    applyRandomRates([calAsset], fullPool, 'calibrated', baseRates, 0.031);
     const deviation = calAsset.annualReturnRate.rate - 0.09;
     assert.ok(isPoolDeviation(deviation),
         `calibrated: rate is configured 9% plus a pool deviation (got dev ${deviation})`);
@@ -262,6 +266,7 @@ assert.ok(buildYearPool(9999).years.length === fullPool.years.length,
 // ── End-to-end mode ordering: calibrated (9%) medians below historical (~11%) ──
 
 const mkOpts = (dataMode) => ({
+    config: simConfigFromGlobals(),
     numSimulations: 100,
     retirementDateInt: new DateInt(DateInt.from(2030, 1).toInt()),
     dataMode,
@@ -279,9 +284,16 @@ assert.ok(mcCal.bandData[2][lastM] < mcHist.bandData[2][lastM],
 //
 // Workers boot with default globals (no localStorage). The snapshot pair
 // must carry the main thread's settings across — the sharpest consequence
-// of NOT doing so is that life-event trigger dates derive from
-// global_user_startAge, so every phase (Retire!) fires shifted by
+// of NOT doing so is that life-event trigger dates derive from the plan's
+// start age, so every phase (Retire!) fires shifted by
 // (actualAge − defaultAge) years inside the worker.
+//
+// Since Spec 9 step 4b the chain has one more link, and this test follows it
+// deliberately rather than around it: snapshot → globals → simConfigFromGlobals
+// → the config a Portfolio captures → bound onto each life event. `rebind()`
+// below is what mc-worker.js gets for free by constructing a Portfolio after
+// applying the payload. triggerDateInt THROWS on an unbound event, so a test
+// that skipped this would fail loudly rather than silently read module state.
 
 const originalSnapshot = global_workerSnapshot();
 assert.equal(originalSnapshot.userStartAge, 50, 'Node boots on the default age (50), like a worker');
@@ -291,6 +303,10 @@ const retireEvent = ModelLifeEvent.fromJSON({
     type: LifeEvent.RETIRE, displayName: 'Retire', triggerAge: 65,
     closes: [], phaseTransfers: {},
 });
+/** What a Portfolio does on construction, done directly so the chain is visible. */
+const rebind = () => retireEvent.bindEnv(simConfigFromGlobals());
+
+rebind();
 const triggerAtDefault = retireEvent.triggerDateInt.year;
 
 // A 55-year-old's snapshot: born 5 years earlier, so age-65 arrives 5 years sooner
@@ -300,6 +316,7 @@ const triggerAtDefault = retireEvent.triggerDateInt.year;
 // checked — the assertion below was passing on a value the engine never
 // accepted.
 global_applyWorkerSnapshot({ ...originalSnapshot, userStartAge: 55, filingAs: 'MFJ' });
+rebind();
 const triggerAt55 = retireEvent.triggerDateInt.year;
 assert.equal(triggerAtDefault - triggerAt55, 5,
     `snapshot shifts life-event triggers (${triggerAtDefault} → ${triggerAt55})`);
@@ -311,9 +328,12 @@ assert.ok(JSON.stringify(originalSnapshot), 'snapshot is JSON-serializable (work
 
 // Restore so earlier compute results in this file stay comparable on re-runs
 global_applyWorkerSnapshot(originalSnapshot);
+rebind();
 assert.equal(retireEvent.triggerDateInt.year, triggerAtDefault, 'restore returns triggers to baseline');
 
 console.log(`mc-worker-sanity OK — 100 sims in ${elapsed}ms, ` +
     `successRate=${results.successRate}, months=${results.labels.length}; ` +
     `guardrails in ${grElapsed}ms, events=${grResults.events.length}; ` +
     `MC guardrail gate verified over ${retirementIdx} pre-retirement months`);
+
+import { makeActiveTaxTable } from '../js/globals.js';

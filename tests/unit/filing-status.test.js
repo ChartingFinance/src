@@ -11,6 +11,7 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
+import { makeActiveTaxTable } from '../../js/globals.js';
 
 const store = {};
 globalThis.localStorage = {
@@ -73,7 +74,7 @@ describe('untrusted input — coerces, never throws', () => {
 describe('TaxTable selects by key, not by falling through', () => {
   it('picks the single tables for Single', () => {
     G.global_setFilingAs('Single'); G.global_getFilingAs();
-    const t = new TaxTable();
+    const t = makeActiveTaxTable();
     expect(t.activeIncomeTable.filingType).toBe('single');
     expect(t.activeCapitalGainsTable.filingType).toBe('single');
     expect(t.activeStandardDeduction).toBe(16100);
@@ -82,7 +83,7 @@ describe('TaxTable selects by key, not by falling through', () => {
 
   it('picks the married tables for MFJ', () => {
     G.global_setFilingAs('MFJ'); G.global_getFilingAs();
-    const t = new TaxTable();
+    const t = makeActiveTaxTable();
     expect(t.activeIncomeTable.filingType).toBe('married');
     expect(t.activeCapitalGainsTable.filingType).toBe('married');
     expect(t.activeStandardDeduction).toBe(32200);
@@ -98,13 +99,13 @@ describe('TaxTable selects by key, not by falling through', () => {
     const snap = G.global_workerSnapshot();
     G.global_applyWorkerSnapshot({ ...snap, filingAs: 'Married' });
     expect(G.global_filingAs).toBe('Single');
-    expect(() => new TaxTable()).not.toThrow();
+    expect(() => makeActiveTaxTable()).not.toThrow();
   });
 
   it('still carries a valid status through a worker snapshot', () => {
     G.global_setFilingAs('MFJ'); G.global_getFilingAs();
     G.global_applyWorkerSnapshot(G.global_workerSnapshot());
     expect(G.global_filingAs).toBe('MFJ');
-    expect(new TaxTable().activeIncomeTable.filingType).toBe('married');
+    expect(makeActiveTaxTable().activeIncomeTable.filingType).toBe('married');
   });
 });

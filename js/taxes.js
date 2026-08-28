@@ -24,8 +24,7 @@ export class WithholdingResult {
   }
 }
 import { logger, LogCategory } from './utils/logger.js';
-import { global_filingAs, global_inflationRate, global_propertyTaxDeductionMax,
-         FilingStatus, FILING_STATUSES } from './globals.js';
+import { FilingStatus, FILING_STATUSES } from './filing-status.js';
 import { taxableBasis } from './tax-basis.js';
 
 /**
@@ -316,7 +315,31 @@ const CONTRIBUTION_LIMITS = Object.freeze({
 });
 
 export class TaxTable {
-    constructor() {
+    /**
+     * @param {string} filingAs  selects the brackets, limits and exclusion
+     * @param {number} propertyTaxDeductionMax  the SALT-style cap
+     *
+     * Both REQUIRED as of Spec 9 step 6. They were optional through steps 2-5,
+     * falling back to `global_filingAs` and `global_propertyTaxDeductionMax` so
+     * that ~58 existing `new TaxTable()` sites kept working while the engine
+     * migrated. Removing the fallbacks is what makes taxes.js free of the
+     * settings store — and taxes.js had to go first, because globals.js cannot
+     * import TaxTable to build one until it does, or the two form a cycle.
+     */
+    constructor(filingAs, propertyTaxDeductionMax) {
+        if (!filingAs || typeof propertyTaxDeductionMax !== 'number') {
+            throw new Error(
+                'TaxTable requires (filingAs, propertyTaxDeductionMax). Build one '
+                + 'with makeActiveTaxTable() from globals, or from a SimConfig. '
+                + 'The globals fallback was removed in Spec 9 step 6.');
+        }
+        this.filingAs = filingAs;
+        // A cap on a deduction is a parameter of the tax regime, like the
+        // brackets beside it — so it lives on the table rather than being
+        // threaded through every method that applies it. Null re-reads the
+        // global, keeping the default path bit-identical until step 5 hands
+        // the value in from the config.
+        this.configuredPropertyTaxDeductionMax = propertyTaxDeductionMax;
         this.taxes = null;     
         this.initializeChron();
         this.singleContributionLimitBelow50
@@ -326,12 +349,21 @@ export class TaxTable {
         
         this.activeTaxTables = JSON.parse(JSON.stringify(us_2026_taxtables));
 
+        // The base year the run is indexed FORWARD from, read off the table set
+        // itself rather than restated anywhere. globals.html used to hardcode
+        // "2026" in prose beside a Tax Year input that selected nothing; both
+        // are gone, and the page now reads this. Swapping the table set above is
+        // then the only edit a new tax year needs.
+        this.baseYear = this.activeTaxTables.year;
+        this.propertyTaxDeductionMax = this.configuredPropertyTaxDeductionMax;
+
         // Selected BY KEY, not by array index and an else. The old form made
         // every unrecognised status file jointly by falling through, so 'MFJ'
         // worked by accident and a future 'MFS' would have too.
-        const key = FILING_TYPE_KEY[global_filingAs];
+        const filingAs = this.filingAs;
+        const key = FILING_TYPE_KEY[filingAs];
         if (!key) {
-            throw new Error(`TaxTable: filing status ${JSON.stringify(global_filingAs)} `
+            throw new Error(`TaxTable: filing status ${JSON.stringify(filingAs)} `
                 + `is not one of ${FILING_STATUSES.join(', ')}`);
         }
         const byKey = (tables) => {
@@ -404,7 +436,14 @@ export class TaxTable {
 
     inflateTaxes(inflationOverride) {
 
-        const r = 1.0 + (inflationOverride != null ? inflationOverride : global_inflationRate);
+        // Required since step 6: every caller — chronometer, mc-compute and the
+        // unit tests — passes the run's rate. A fallback here would have been
+        // the settings store reaching into a value the run already knows.
+        if (typeof inflationOverride !== 'number' || !Number.isFinite(inflationOverride)) {
+            throw new Error('TaxTable.inflateTaxes needs the run inflation rate; got '
+                + JSON.stringify(inflationOverride));
+        }
+        const r = 1.0 + inflationOverride;
         this.activeTaxTables.fica.maxSSEarnings *= r;
         this.inflateTaxRows(this.activeTaxTables.income.tables, r);
         this.inflateTaxRows(this.activeTaxTables.capitalGains.tables, r);
@@ -754,8 +793,8 @@ export class TaxTable {
             propertyTaxDeduction.flipSign();
 
         // maximum property tax deduction
-        if (propertyTaxDeduction.amount > global_propertyTaxDeductionMax)
-            propertyTaxDeduction.amount = global_propertyTaxDeductionMax;
+        if (propertyTaxDeduction.amount > this.propertyTaxDeductionMax)
+            propertyTaxDeduction.amount = this.propertyTaxDeductionMax;
 
         if (propertyTaxDeduction.amount > 0)
             propertyTaxDeduction.flipSign();

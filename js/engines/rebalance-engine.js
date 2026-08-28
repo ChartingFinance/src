@@ -22,14 +22,14 @@
 import { Currency } from '../utils/currency.js';
 import { InstrumentType } from '../instruments/instrument.js';
 import { Metric } from '../metric.js';
-import { activeTaxTable } from '../globals.js';
 import { logger, LogCategory } from '../utils/logger.js';
 import { ContributionKind } from '../taxes.js';
 
 export class RebalanceEngine {
 
-    constructor(modelAssets, monthly, yearly, activeUser) {
+    constructor(modelAssets, monthly, yearly, activeUser, config) {
         this.modelAssets = modelAssets;
+        this.config = config;   // Spec 9 step 2 — carries the run's tax table
         this.monthly = monthly;
         this.yearly = yearly;
         this.activeUser = activeUser;
@@ -100,7 +100,7 @@ export class RebalanceEngine {
         const targetInst = ft.toModel.instrument;
 
         if (InstrumentType.is401K(targetInst)) {
-            const limit = activeTaxTable.limitFor(ContributionKind.FOUR01K, this.activeUser);
+            const limit = this.config.taxTable.limitFor(ContributionKind.FOUR01K, this.activeUser);
             const used = this.yearly.four01KContribution.amount + this.monthly.four01KContribution.amount;
             const remaining = limit.amount - used;
             if (remaining <= 0) return Currency.zero();
@@ -108,7 +108,7 @@ export class RebalanceEngine {
         }
 
         else if (InstrumentType.isIRA(targetInst) && !InstrumentType.isRothIRA(targetInst)) {
-            const limit = activeTaxTable.limitFor(ContributionKind.IRA, this.activeUser);
+            const limit = this.config.taxTable.limitFor(ContributionKind.IRA, this.activeUser);
             const used = this.yearly.tradIRAContribution.amount + this.monthly.tradIRAContribution.amount;
             const remaining = limit.amount - used;
             if (remaining <= 0) return Currency.zero();
@@ -117,7 +117,7 @@ export class RebalanceEngine {
 
         else if (InstrumentType.isRothIRA(targetInst)) {
             // Roth IRA shares the combined IRA limit with traditional IRA
-            const limit = activeTaxTable.limitFor(ContributionKind.IRA, this.activeUser);
+            const limit = this.config.taxTable.limitFor(ContributionKind.IRA, this.activeUser);
             const used = this.yearly.tradIRAContribution.amount + this.yearly.rothIRAContribution.amount
                        + this.monthly.tradIRAContribution.amount + this.monthly.rothIRAContribution.amount;
             const remaining = limit.amount - used;

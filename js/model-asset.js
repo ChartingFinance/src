@@ -40,7 +40,7 @@ export class CreditMemo {
 }
 import { colorRange }    from './utils/html.js';
 import { getBehavior }   from './instruments/instrument-behavior.js';
-import { global_getFinishDateInt, global_inflationRate } from './globals.js';
+import { finishDateIntFor } from './plan-dates.js';
 import { Metric, METRIC_NAMES, MetricLabel, MetricRollups, PARENT_METRICS } from './metric.js';
 import { SimEvent, EventType, renderNote } from './sim-event.js';
 import { currentTraceId } from './trace.js';
@@ -137,14 +137,61 @@ export class ModelAsset {
     this.#metrics = new MetricSet(this.behavior.relevantMetrics());
   }
 
-  get effectiveFinishDateInt() {
-    return this.finishDateInt ?? global_getFinishDateInt();
+  /**
+   * Bind the run's environment (Spec 9 step 4a).
+   *
+   * An asset has no back-reference to its Portfolio, but two of its properties
+   * are DERIVED from plan-level configuration and read on demand during a run
+   * — so the configuration has to be reachable from the instance.
+   *
+   * Ownership stays singular: one environment per run, held by the Portfolio,
+   * bound onto assets by `Portfolio.initializeChron()`. Assets borrow it, they
+   * do not own it. Otherwise there are N copies that must agree, and one stale
+   * copy is a wrong number in one Monte Carlo iteration out of a thousand.
+   *
+   * NON-ENUMERABLE on purpose. `toJSON()` is an explicit allowlist and would
+   * not have leaked it anyway, but the config is run state, not plan data, and
+   * a spread or a bare `JSON.stringify(asset)` elsewhere must not turn it into
+   * something that gets shared in a URL or written to localStorage.
+   */
+  bindEnv(config) {
+    Object.defineProperty(this, 'env', {
+      value: config, writable: true, enumerable: false, configurable: true,
+    });
+    return this;
   }
 
-  /** For expense instruments, fall back to global inflation when no rate is set. */
+  /**
+   * The environment, or a thrown error naming what to do about it.
+   *
+   * Step 4b. There used to be a `?? global_…` fallback here, and removing it is
+   * the entire point of this step: a fallback makes a missed binding INVISIBLE.
+   * The asset would quietly answer from module state — plausible numbers from
+   * an unaccountable source, which is the failure this migration exists to
+   * remove, and which no snapshot can detect because the numbers are the same
+   * ones the globals would have given.
+   *
+   * A throw makes the same mistake a stack trace on the first read.
+   */
+  get #boundEnv() {
+    if (!this.env) {
+      throw new Error(
+        `ModelAsset "${this.displayName}" has no environment. Derived values `
+        + `(finish date, expense inflation) need the plan's configuration. `
+        + `Assets are bound by Portfolio.bindEnvironment(); one reached a `
+        + `derived getter without passing through a Portfolio.`);
+    }
+    return this.env;
+  }
+
+  get effectiveFinishDateInt() {
+    return this.finishDateInt ?? finishDateIntFor(this.#boundEnv);
+  }
+
+  /** For expense instruments, fall back to plan inflation when no rate is set. */
   get effectiveAnnualReturnRate() {
     if (InstrumentType.isMonthlyExpense(this.instrument) && this.annualReturnRate.rate === 0) {
-      return new ARR(global_inflationRate);
+      return new ARR(this.#boundEnv.inflationRate);
     }
     return this.annualReturnRate;
   }

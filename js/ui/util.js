@@ -5,7 +5,7 @@
  * and other helpers. Extracted from util-compat.js (duplicates removed).
  */
 
-import { logger, LogCategory } from './logger.js';
+import { logger, LogCategory } from '../utils/logger.js';
 import { findByName } from '../portfolio.js';
 
 // ── Constants ──────────────────────────────────────────────────────────

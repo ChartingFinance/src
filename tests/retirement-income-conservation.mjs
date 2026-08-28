@@ -36,8 +36,9 @@ globalThis.window = globalThis;
 import { ModelAsset } from '../js/model-asset.js';
 import { Portfolio } from '../js/portfolio.js';
 import { chronometer_run } from '../js/chronometer.js';
-import { TaxTable } from '../js/taxes.js';
 import { setActiveTaxTable } from '../js/globals.js';
+import { simConfigFromGlobals } from '../js/globals.js';
+import { makeActiveTaxTable } from '../js/globals.js';
 
 // ── Scenario builders ─────────────────────────────────────────────────
 // One year, no growth anywhere, no salary. The bank is present so tax
@@ -82,9 +83,9 @@ function buildAssets(incomeInstrument, incomeName) {
 }
 
 async function run(incomeInstrument, incomeName) {
-  setActiveTaxTable(new TaxTable());
+  setActiveTaxTable(makeActiveTaxTable());
   const modelAssets = buildAssets(incomeInstrument, incomeName).map(o => ModelAsset.fromJSON(o));
-  const portfolio = new Portfolio(modelAssets, false);
+  const portfolio = new Portfolio(modelAssets, false, simConfigFromGlobals());
   await chronometer_run(portfolio);
   return portfolio;
 }

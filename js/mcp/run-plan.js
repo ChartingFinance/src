@@ -54,16 +54,8 @@ import { membrane_rawDataToModelAssets } from '../membrane.js';
 import { ModelLifeEvent } from '../life-event.js';
 import { detectIssues } from '../portfolio-issues.js';
 import { buildQuickStart, quickStartProfiles } from '../quick-start.js';
-import {
-    setActiveTaxTable, asFilingStatus,
-    global_reset, global_initialize,
-    global_setInflationRate, global_getInflationRate,
-    global_setFilingAs, global_getFilingAs,
-    global_setUserStartAge, global_getUserStartAge,
-    global_setUserRetirementAge, global_getUserRetirementAge,
-    global_setUserFinishAge, global_getUserFinishAge,
-    global_default_inflationRate, global_default_filingAs,
-} from '../globals.js';
+import { asFilingStatus } from '../filing-status.js';
+import { makeSimConfig, SIM_CONFIG_DEFAULTS } from '../sim-config.js';
 
 /**
  * Build a plan spec from a Quick Start profile key.
@@ -87,7 +79,7 @@ export function planFromProfile(profileKey, ageOverrides = null) {
     return {
         name: profile.label,
         settings: {
-            inflationRate: global_default_inflationRate,
+            inflationRate: SIM_CONFIG_DEFAULTS.inflationRate,
             // From the profile, never assumed. A joint profile that files Single
             // gets the wrong brackets, the wrong contribution limits and half
             // the home-sale exclusion.
@@ -101,33 +93,56 @@ export function planFromProfile(profileKey, ageOverrides = null) {
 }
 
 /**
- * Apply a spec's settings to the module-level globals.
+ * Build this run's configuration from the plan spec.
  *
- * Resets FIRST. These are module state shared by every plan this process runs,
- * and a server handling two plans in sequence would otherwise leak the first
- * one's filing status and inflation into the second — the same hazard as a Web
- * Worker booting on defaults, and the reason global_workerSnapshot() exists.
+ * Spec 9 step 5b. This replaces `applySettings()`, which mutated eight module
+ * globals and then built a TaxTable that read one of them back. That function
+ * carried a comment explaining that the TaxTable had to be constructed AFTER
+ * filingAs — a six-step sequence with an ordering constraint, which every
+ * headless caller had to perform correctly. Here the ordering is structural:
+ * `filingAs` is resolved before it is handed to the table, in one expression.
+ *
+ * It lives in this file rather than in sim-config.js because it needs the
+ * `global_default_*` values, and sim-config.js must import nothing from
+ * globals.js (§4.6). This is the MCP layer building a config from an MCP
+ * payload, which is exactly where §4.6's table puts it.
+ *
+ * Nothing here writes to a global, so two plans in one process no longer share
+ * a configuration — which is the whole point of the migration, and the reason
+ * the run-handle cache stops being a correctness requirement.
  */
-function applySettings(settings = {}) {
-    global_reset();
-
-    const inflationRate = settings.inflationRate ?? global_default_inflationRate;
-    global_setInflationRate(inflationRate);
-    global_getInflationRate();
+export function simConfigFromPlanSpec(spec) {
+    const settings = spec?.settings ?? {};
 
     // Untrusted: a spec can arrive from an agent or an old share URL. Coerce
     // rather than throw, matching how the app treats an imported portfolio.
-    global_setFilingAs(asFilingStatus(settings.filingAs, global_default_filingAs));
-    global_getFilingAs();
+    const D = SIM_CONFIG_DEFAULTS;
+    const filingAs = asFilingStatus(settings.filingAs, D.filingAs);
+    const propertyTaxDeductionMax = D.propertyTaxDeductionMax;
 
-    if (settings.startAge != null)      { global_setUserStartAge(settings.startAge);           global_getUserStartAge(); }
-    if (settings.retirementAge != null) { global_setUserRetirementAge(settings.retirementAge); global_getUserRetirementAge(); }
-    if (settings.finishAge != null)     { global_setUserFinishAge(settings.finishAge);         global_getUserFinishAge(); }
+    return makeSimConfig({
+        inflationRate: settings.inflationRate ?? D.inflationRate,
+        filingAs,
+        startAge: settings.startAge ?? D.startAge,
+        retirementAge: settings.retirementAge ?? D.retirementAge,
+        finishAge: settings.finishAge ?? D.finishAge,
+        propertyTaxDeductionMax,
 
-    // AFTER filingAs. TaxTable.initializeChron() reads global_filingAs at
-    // construction and throws on an unknown one; building it earlier would
-    // silently pin the previous plan's tables.
-    setActiveTaxTable(new TaxTable());
+        // Not carried by the share format, and deliberately taken from the
+        // defaults rather than from whatever this process happens to hold. A
+        // plan spec describes a plan; it must not inherit ambient state from a
+        // previous caller. In a fresh server process these ARE the current
+        // values, so this is identical to what applySettings produced.
+        allocateHouseholdTax: D.allocateHouseholdTax,
+        pensionWithholdingRate: D.pensionWithholdingRate,
+        socialSecurityWithholdingRate: D.socialSecurityWithholdingRate,
+        backtestYear: D.backtestYear,
+        simDataMode: D.simDataMode,
+
+        // Built from the resolved status, not from a global it might disagree
+        // with. This is the ordering constraint, dissolved.
+        taxTable: new TaxTable(filingAs, propertyTaxDeductionMax),
+    });
 }
 
 /**
@@ -143,11 +158,11 @@ export async function runPlan(spec, { includeReconciliation = false } = {}) {
         throw new Error('Plan spec has no modelAssets — nothing to simulate.');
     }
 
-    applySettings(spec.settings);
+    const config = simConfigFromPlanSpec(spec);
 
     const assets = membrane_rawDataToModelAssets(spec.modelAssets);
 
-    const portfolio = new Portfolio(assets, false);
+    const portfolio = new Portfolio(assets, false, config);
 
     // Not optional. With no life events nothing ever transitions: salary never
     // closes, retirement-phase transfers never activate, and the run reports an
@@ -166,61 +181,112 @@ export async function runProfile(profileKey, ageOverrides = null, opts = {}) {
     return runPlan(planFromProfile(profileKey, ageOverrides), opts);
 }
 
-// ── Run cache ────────────────────────────────────────────────────────
+// ── Run handles ──────────────────────────────────────────────────────
 //
-// A handle exists so a client can run once and then ask several questions
-// about that run. It is not an optimisation — it is a CORRECTNESS
-// requirement for explain.js.
+// This block used to open by saying a handle is "not an optimisation — it is a
+// CORRECTNESS requirement", because trace scopes are run state and a server
+// that re-ran the plan would resolve chains against a different run than the
+// one it was describing.
 //
-// Trace scopes are run state: chronometer_run calls resetTraces() at the top,
-// so running a second plan wipes the first one's scope list. A stateless
-// server that re-ran the plan on every explain call would resolve chains
-// against a different run than the one it is describing. Holding the finished
-// Portfolio — traceScopes and all — is what makes a chain resolvable at all,
-// and it is the same rule as "reads take the scope list explicitly", one
-// level up.
+// That was true, and Spec 9 made it false. It rested on the engine reading its
+// configuration from module state, so a second plan in the process changed what
+// the first one meant. The engine now takes a SimConfig as a value: two plans
+// share nothing, and a re-run of the same spec is BYTE-IDENTICAL — same events,
+// same amounts, same traceIds — so a chain resolved against a re-run is the
+// same chain. Measured, not assumed; tests/mcp-stateless.mjs asserts it.
 //
-// Bounded because a 666-month plan holds tens of thousands of events and
-// scopes; four of those is already a lot of memory for a stdio server that
-// may sit open all day.
+// The other half of the old argument also turns out to be wrong on inspection:
+// `resetTraces()` REBINDS `_scopes = []` rather than emptying it, so a finished
+// portfolio keeps its own array regardless of what runs later.
+//
+// So handles are now an honest cache. What is kept is the SPEC — a few KB of
+// JSON — rather than the finished Portfolio, which for one Quick Start profile
+// is 23,276 trace scopes and 12,290 events. A miss re-runs in ~36ms instead of
+// erroring, which is the difference between a handle that expires and one that
+// merely goes cold.
+//
+// Handles are CONTENT-ADDRESSED. The same plan always produces the same handle,
+// so a client that runs the same report twice can keep using the handle it
+// already has, and an agent that guesses a handle from an earlier transcript is
+// right rather than unlucky.
 
-const MAX_CACHED_RUNS = 4;
-const RUNS = new Map();
-let runCounter = 0;
+import { createHash } from 'node:crypto';
 
-/** Cache a completed run and return its handle. Oldest is evicted first. */
-export function cacheRun(result) {
-    const handle = `plan_${++runCounter}`;
-    RUNS.set(handle, result);
-    while (RUNS.size > MAX_CACHED_RUNS) {
-        // Map preserves insertion order, so the first key is the oldest.
-        RUNS.delete(RUNS.keys().next().value);
-    }
+/**
+ * Finished runs held for speed only. Small, because a miss is cheap now — the
+ * old cache held four because eviction meant a dead handle; this one holds two
+ * because eviction means a 36ms re-run.
+ */
+const MAX_MEMO = 2;
+const MEMO = new Map();
+
+/**
+ * handle → { spec, opts }. This is what makes a handle resolvable, and it is
+ * the whole of the server's session state.
+ */
+const SPECS = new Map();
+
+/** A handle that depends only on what was asked for. */
+function handleFor(spec, opts) {
+    const digest = createHash('sha1')
+        .update(JSON.stringify({ spec, opts }))
+        .digest('hex').slice(0, 10);
+    return `plan_${digest}`;
+}
+
+function memoize(handle, result) {
+    MEMO.set(handle, result);
+    while (MEMO.size > MAX_MEMO) MEMO.delete(MEMO.keys().next().value);
+}
+
+/** Register a spec under its content-addressed handle. */
+export function cacheRun(spec, opts, result) {
+    const handle = handleFor(spec, opts);
+    SPECS.set(handle, { spec, opts });
+    if (result) memoize(handle, result);
     return handle;
 }
 
-/** Look up a cached run, or throw naming the handles that are still live. */
-export function getRun(handle) {
-    const run = RUNS.get(handle);
-    if (!run) {
-        const live = [...RUNS.keys()];
+/**
+ * The run behind a handle, re-running it if it is no longer in memory.
+ *
+ * ASYNC, because a miss re-runs. Callers await it; the alternative was keeping
+ * every finished run alive forever so this could stay synchronous, which is the
+ * memory profile the change exists to remove.
+ */
+export async function getRun(handle) {
+    const memo = MEMO.get(handle);
+    if (memo) return memo;
+
+    const known = SPECS.get(handle);
+    if (!known) {
+        const live = [...SPECS.keys()];
         throw new Error(
             `No run "${handle}". ${live.length
-                ? `Live handles: ${live.join(', ')}. Only the ${MAX_CACHED_RUNS} most recent are kept.`
-                : 'No runs are cached — run a plan first.'}`);
+                ? `Known handles: ${live.join(', ')}.`
+                : 'No plan has been run yet — call quick_start_report or run_plan first.'}`);
     }
-    return run;
+
+    const result = await runPlan(known.spec, known.opts);
+    memoize(handle, result);
+    return result;
 }
 
-/** Run a plan and cache it. Returns the handle alongside the result. */
+/** Run a plan and register it. Returns the handle alongside the result. */
 export async function runPlanCached(spec, opts = {}) {
     const result = await runPlan(spec, opts);
-    return { handle: cacheRun(result), ...result };
+    return { handle: cacheRun(spec, opts, result), ...result };
 }
 
-/** Test seam: drop every cached run. */
+/** Test seam: forget every handle. */
 export function clearRuns() {
-    RUNS.clear();
+    SPECS.clear();
+    MEMO.clear();
+}
+
+/** Test seam: drop finished runs but keep the handles resolvable. */
+export function evictMemo() {
+    MEMO.clear();
 }
 
 /** Profile keys and labels, for a tool that needs to offer a choice. */
@@ -233,6 +299,3 @@ export function listProfiles() {
         tagline: p.tagline,
     }));
 }
-
-/** `global_initialize` is re-exported so a host can prime localStorage first. */
-export { global_initialize };

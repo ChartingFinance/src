@@ -89,7 +89,6 @@ import { fileURLToPath } from 'node:url';
 import { Portfolio } from '../../js/portfolio.js';
 import { FINANCIAL_FIELDS } from '../../js/financial-package.js';
 import { chronometer_run } from '../../js/chronometer.js';
-import { TaxTable } from '../../js/taxes.js';
 import { METRIC_NAMES, DERIVED_METRICS } from '../../js/metric.js';
 import { MONTH_NAMES_LONG } from '../../js/utils/date-int.js';
 import { EventType } from '../../js/sim-event.js';
@@ -97,6 +96,8 @@ import { chainFor } from '../../js/trace.js';
 import { logger, LogCategory } from '../../js/utils/logger.js';
 import * as G from '../../js/globals.js';
 import { SNAPSHOT_FIXTURES } from './fixtures.mjs';
+import { simConfigFromGlobals } from '../../js/globals.js';
+import { makeActiveTaxTable } from '../../js/globals.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BASELINE_DIR = join(HERE, '..', 'baselines');
@@ -274,13 +275,10 @@ function historyDigestLine(name, values) {
  * hole in the baseline's config header.
  */
 const EXTRA_CONFIG = [
-  ['allocateHouseholdTax', () => G.global_allocate_household_tax],
   // Derived from filingAs rather than set directly, so it is recorded as the
   // EFFECTIVE value — a reader should not have to know the mapping to see that
   // an MFJ fixture excludes $500,000 and a single one $250,000.
   ['homeSaleExclusion', () => G.activeTaxTable?.activeHomeSaleExclusion],
-  ['pensionWithholdingRate', () => G.global_pension_withholding_rate],
-  ['socialSecurityWithholdingRate', () => G.global_social_security_withholding_rate],
   ['retirementWithholdingRate', () => G.global_retirement_withholding_rate],
 ];
 
@@ -320,7 +318,7 @@ function applyConfig(fixture) {
   }
 
   // A fresh table every fixture: TaxTable caches bracket state across years.
-  G.setActiveTaxTable(new TaxTable());
+  G.setActiveTaxTable(makeActiveTaxTable());
 }
 
 const coerce = (raw) => {
@@ -340,8 +338,9 @@ const coerce = (raw) => {
  * real, throws nothing, and changes no simulated number — the tool reports "no
  * drift" and the reader concludes the flag does nothing.
  *
- * That was true here for four of the eight knobs below (filingAs, inflationRate,
- * taxYear, propertyTaxRate) until 2026-08-06. `--set global_inflationRate=0.02`
+ * That was true here for four of the then-eight knobs below (filingAs,
+ * inflationRate, taxYear, propertyTaxRate) until 2026-08-06. taxYear and
+ * propertyTaxRate have since been deleted as dead; the discipline stands. `--set global_inflationRate=0.02`
  * on a 46-year plan reported "No simulated number moved", against a probe-
  * measured ~$6M swing.
  *
@@ -358,10 +357,6 @@ const SETTERS = {
     apply: (v) => { G.global_setInflationRate(v); G.global_getInflationRate(); },
     read: () => G.global_inflationRate,
   },
-  global_taxYear: {
-    apply: (v) => { G.global_setTaxYear(v); G.global_getTaxYear(); },
-    read: () => G.global_taxYear,
-  },
   global_filingAs: {
     apply: (v) => { G.global_setFilingAs(v); G.global_getFilingAs(); },
     read: () => G.global_filingAs,
@@ -373,10 +368,6 @@ const SETTERS = {
   global_user_retirementAge: {
     apply: (v) => { G.global_setUserRetirementAge(v); G.global_getUserRetirementAge(); },
     read: () => G.global_user_retirementAge,
-  },
-  global_propertyTaxRate: {
-    apply: (v) => { G.global_setPropertyTaxRate(v); G.global_getPropertyTaxRate(); },
-    read: () => G.global_propertyTaxRate,
   },
   global_backtestYear: {
     apply: (v) => G.global_setBacktestYearDirect(v),
@@ -401,7 +392,7 @@ async function runFixture(fixture) {
   applyConfig(fixture);
 
   const built = fixture.build();
-  const portfolio = new Portfolio(built.assets, false);
+  const portfolio = new Portfolio(built.assets, false, simConfigFromGlobals());
   if (built.lifeEvents) portfolio.lifeEvents = built.lifeEvents;
   if (built.guardrails) portfolio.guardrailsParams = built.guardrails;
 

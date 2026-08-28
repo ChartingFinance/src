@@ -35,9 +35,10 @@ globalThis.window = globalThis;
 import { ModelAsset } from '../js/model-asset.js';
 import { Portfolio } from '../js/portfolio.js';
 import { chronometer_run } from '../js/chronometer.js';
-import { TaxTable } from '../js/taxes.js';
 import { setActiveTaxTable } from '../js/globals.js';
 import { Metric } from '../js/metric.js';
+import { simConfigFromGlobals } from '../js/globals.js';
+import { makeActiveTaxTable } from '../js/globals.js';
 
 // ── Helpers ───────────────────────────────────────────────────────────
 const fmt = (n) => {
@@ -60,7 +61,7 @@ const START = 300000;
 
 /** One retirement account drawn down monthly AND closed part-way through. */
 async function scenario(instrument, name) {
-  setActiveTaxTable(new TaxTable());
+  setActiveTaxTable(makeActiveTaxTable());
   const p = new Portfolio([
     {
       instrument, displayName: name,
@@ -81,7 +82,7 @@ async function scenario(instrument, name) {
       startCurrency: { amount: 1000 }, startBasisCurrency: { amount: 1000 },
       annualReturnRate: { rate: 0 },
     },
-  ].map(o => ModelAsset.fromJSON(o)), true);
+  ].map(o => ModelAsset.fromJSON(o)), true, simConfigFromGlobals());
   await chronometer_run(p);
   return { portfolio: p, asset: p.modelAssets.find(a => a.displayName === name) };
 }

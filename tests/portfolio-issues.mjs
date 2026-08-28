@@ -38,7 +38,6 @@ globalThis.window = globalThis;
 import { ModelAsset } from '../js/model-asset.js';
 import { Portfolio } from '../js/portfolio.js';
 import { chronometer_run } from '../js/chronometer.js';
-import { TaxTable } from '../js/taxes.js';
 import {
   setActiveTaxTable,
   global_setUserStartAge, global_getUserStartAge,
@@ -48,6 +47,8 @@ import {
   detectIssues, DETECTORS, MEMO_PATTERNS, monthLabel,
   planExhaustion, issuesForAsset, alertAssetNames, issueCounts,
 } from '../js/portfolio-issues.js';
+import { simConfigFromGlobals } from '../js/globals.js';
+import { makeActiveTaxTable } from '../js/globals.js';
 
 // ── Helpers ───────────────────────────────────────────────────────────
 let passed = 0;
@@ -66,7 +67,7 @@ function check(label, fn) {
 }
 
 async function run(data, ages) {
-  setActiveTaxTable(new TaxTable());
+  setActiveTaxTable(makeActiveTaxTable());
   if (ages) {
     // set writes localStorage; get refreshes the module-level mutable var that
     // Portfolio actually reads — both halves are required (see globals.js).
@@ -75,7 +76,7 @@ async function run(data, ages) {
     global_setUserRetirementAge(ages.retire);
     global_getUserRetirementAge();
   }
-  const p = new Portfolio(data.map(o => ModelAsset.fromJSON(o)), true);
+  const p = new Portfolio(data.map(o => ModelAsset.fromJSON(o)), true, simConfigFromGlobals());
   await chronometer_run(p);
   return p;
 }

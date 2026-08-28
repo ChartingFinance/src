@@ -13,7 +13,6 @@ import { Currency } from '../utils/currency.js';
 import { InstrumentType } from '../instruments/instrument.js';
 import { Metric } from '../metric.js';
 import { FundTransferOneSided, FundTransfer } from '../fund-transfer.js';
-import { activeTaxTable } from '../globals.js';
 import { logger, LogCategory } from '../utils/logger.js';
 import { EventType, ShortfallOrigin } from '../sim-event.js';
 import { withTrace, TraceKind } from '../trace.js';
@@ -21,8 +20,9 @@ import { taxableBasis } from '../tax-basis.js';
 
 export class ExpenseEngine {
 
-    constructor(modelAssets, monthly, activeUser) {
+    constructor(modelAssets, monthly, activeUser, config) {
         this.modelAssets = modelAssets;
+        this.config = config;   // Spec 9 step 2 — carries the run's tax table
         this.monthly = monthly;
         this.activeUser = activeUser;
     }
@@ -388,10 +388,10 @@ export class ExpenseEngine {
 
         // 1. Estimate current marginal LTCG bracket based strictly on base income (W-2, etc)
         const { ordinaryTaxable: taxableIncome } =
-            taxableBasis(this.monthly, this.activeUser, { annualise: true });
+            taxableBasis(this.monthly, this.activeUser, { annualise: true, taxTable: this.config.taxTable });
 
         // Quick heuristic for marginal LTCG rate (0%, 15%, 20%)
-        const ltcgRate = activeTaxTable.getMarginalLTCGRate(taxableIncome);
+        const ltcgRate = this.config.taxTable.getMarginalLTCGRate(taxableIncome);
 
         // 2. Get the asset's gain ratio (g)
         const gainRatio = modelAsset.getUnrealizedGainRatio();

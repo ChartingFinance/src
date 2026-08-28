@@ -28,14 +28,15 @@ import { Currency } from '../js/utils/currency.js';
 import { DateInt } from '../js/utils/date-int.js';
 import { ARR } from '../js/utils/arr.js';
 import { Metric } from '../js/metric.js';
-import { TaxTable } from '../js/taxes.js';
 import { setActiveTaxTable } from '../js/globals.js';
 import { chronometer_run } from '../js/chronometer.js';
 import { ModelLifeEvent, LifeEvent } from '../js/life-event.js';
+import { simConfigFromGlobals } from '../js/globals.js';
+import { makeActiveTaxTable } from '../js/globals.js';
 
 // ── Setup ────────────────────────────────────────────────────────────
 
-setActiveTaxTable(new TaxTable());
+setActiveTaxTable(makeActiveTaxTable());
 
 let passed = 0;
 let failed = 0;
@@ -119,7 +120,7 @@ Object.defineProperty(retire, 'triggerDateInt', {
 
 // ── Build portfolio and run ──────────────────────────────────────────
 
-const portfolio = new Portfolio([salary, four01k, brokerage, expenses], false);
+const portfolio = new Portfolio([salary, four01k, brokerage, expenses], false, simConfigFromGlobals());
 portfolio.lifeEvents = [accumulate, retire];
 portfolio.firstDateInt = DateInt.parse('2026-01');
 portfolio.lastDateInt = DateInt.parse('2026-12');

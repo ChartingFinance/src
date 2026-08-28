@@ -43,7 +43,6 @@ globalThis.window = globalThis;
 import { ModelAsset } from '../js/model-asset.js';
 import { Portfolio } from '../js/portfolio.js';
 import { chronometer_run } from '../js/chronometer.js';
-import { TaxTable } from '../js/taxes.js';
 import { DateInt } from '../js/utils/date-int.js';
 import {
   setActiveTaxTable,
@@ -51,6 +50,8 @@ import {
   global_setUserStartAge, global_getUserStartAge,
   global_setFilingAs, global_getFilingAs,
 } from '../js/globals.js';
+import { simConfigFromGlobals } from '../js/globals.js';
+import { makeActiveTaxTable } from '../js/globals.js';
 
 global_setInflationRate(0); global_getInflationRate();
 global_setUserStartAge(50); global_getUserStartAge();  // well under RMD age
@@ -82,7 +83,7 @@ const near = (a, b, eps = 0.05) => Math.abs(a - b) <= eps;
  * A bank account drained by a flat monthly expense, over [start, finish].
  */
 async function run(start, finish) {
-  setActiveTaxTable(new TaxTable());
+  setActiveTaxTable(makeActiveTaxTable());
   const assetData = [
     {
       instrument: 'bank',
@@ -107,7 +108,7 @@ async function run(start, finish) {
     },
   ];
 
-  const portfolio = new Portfolio(assetData.map(o => ModelAsset.fromJSON(o)), false);
+  const portfolio = new Portfolio(assetData.map(o => ModelAsset.fromJSON(o)), false, simConfigFromGlobals());
   portfolio.guardrailsParams = {
     withdrawalRate: 4,
     preservation: 20,

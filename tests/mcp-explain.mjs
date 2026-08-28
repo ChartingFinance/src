@@ -122,24 +122,31 @@ await check('a handle survives other runs and resolves to its own plan', async (
   const a = await runPlanCached(planFromProfile('midCareer', { startAge: 57, retirementAge: 58, finishAge: 95 }));
   await runPlanCached(planFromProfile('dualIncome'));
 
-  const fromHandle = explainIssue(getRun(a.handle), 'plan-exhaustion', { limit: 1 });
+  const fromHandle = explainIssue(await getRun(a.handle), 'plan-exhaustion', { limit: 1 });
   assert.match(fromHandle.chains[0].chainLabel, /Pay /,
     'the handle resolved against the wrong run');
 });
 
-await check('an unknown handle names the live ones', () => {
-  assert.throws(() => getRun('plan_nope'), /No run "plan_nope"[\s\S]*Live handles:/);
+await check('an unknown handle names the known ones', async () => {
+  await assert.rejects(() => getRun('plan_nope'), /No run "plan_nope"[\s\S]*Known handles:/);
 });
 
-await check('only the most recent runs are kept', async () => {
+await check('handles no longer expire — the opposite of what this used to assert', async () => {
+  // This test used to require that the oldest of six runs had been EVICTED and
+  // its handle was dead. Spec 9 step 7 inverted that: the server keeps the
+  // plan spec rather than the finished Portfolio, so a handle goes cold rather
+  // than dying and a miss costs a ~36ms re-run.
+  //
+  // Kept here, inverted, rather than deleted — a reader who remembers the old
+  // behaviour should find the contradiction in the place they look for it.
+  // tests/mcp-stateless.mjs carries the full argument.
   clearRuns();
   const handles = [];
-  for (let i = 0; i < 6; i++) {
-    const r = await runPlanCached(planFromProfile('midCareer'));
-    handles.push(r.handle);
+  for (const key of ['midCareer', 'dualIncome', 'earlyCareer', 'retired', 'youngCouple', 'preRetirement']) {
+    handles.push((await runPlanCached(planFromProfile(key))).handle);
   }
-  assert.throws(() => getRun(handles[0]), /No run/, 'the oldest run was not evicted');
-  assert.ok(getRun(handles.at(-1)), 'the newest run was evicted');
+  assert.ok((await getRun(handles[0])).portfolio, 'the oldest handle died');
+  assert.ok((await getRun(handles.at(-1))).portfolio, 'the newest handle died');
 });
 
 // ── Honesty about absent causes ──────────────────────────────────────

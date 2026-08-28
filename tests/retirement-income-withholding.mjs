@@ -47,7 +47,6 @@ globalThis.Date = class extends RealDate {
 // ── Imports ───────────────────────────────────────────────────────────
 import { Portfolio } from '../js/portfolio.js';
 import { chronometer_run } from '../js/chronometer.js';
-import { TaxTable } from '../js/taxes.js';
 import { Metric } from '../js/metric.js';
 import { EventType } from '../js/sim-event.js';
 import { InstrumentType, Instrument } from '../js/instruments/instrument.js';
@@ -69,6 +68,8 @@ import {
   global_setUserFinishAge, global_getUserFinishAge,
   global_setBacktestYear, global_getBacktestYear,
 } from '../js/globals.js';
+import { simConfigFromGlobals } from '../js/globals.js';
+import { makeActiveTaxTable } from '../js/globals.js';
 
 // Snapshot the SHIPPED defaults at load, before any test moves them.
 // These are `export let` live bindings, so reading them later returns whatever
@@ -96,9 +97,9 @@ function buildProfile(profile) {
   global_setUserRetirementAge(profile.retirementAge); global_getUserRetirementAge();
   global_setUserFinishAge(profile.finishAge);         global_getUserFinishAge();
   global_setFilingAs('Single');                       global_getFilingAs();
-  setActiveTaxTable(new TaxTable());
+  setActiveTaxTable(makeActiveTaxTable());
   const { assets, lifeEvents } = buildQuickStart(profile);
-  const portfolio = new Portfolio(assets, false);
+  const portfolio = new Portfolio(assets, false, simConfigFromGlobals());
   portfolio.lifeEvents = lifeEvents;
   return portfolio;
 }
@@ -113,14 +114,14 @@ function buildReference() {
   global_setUserRetirementAge(S.retirementAge); global_getUserRetirementAge();
   global_setUserFinishAge(S.finishAge); global_getUserFinishAge();
   if (S.backtestYear != null) { global_setBacktestYear(S.backtestYear); global_getBacktestYear(); }
-  setActiveTaxTable(new TaxTable());
+  setActiveTaxTable(makeActiveTaxTable());
   const modelAssets = membrane_rawDataToModelAssets(refData.modelAssets);
   let lifeEvents = (refData.lifeEvents ?? []).map(ModelLifeEvent.fromJSON);
   if (S.startAge >= S.retirementAge) {
     const i = lifeEvents.findIndex(e => e.type === LifeEvent.ACCUMULATE);
     if (i !== -1) lifeEvents.splice(i, 1);
   }
-  const portfolio = new Portfolio(modelAssets, false);
+  const portfolio = new Portfolio(modelAssets, false, simConfigFromGlobals());
   portfolio.lifeEvents = lifeEvents.map(e => e.copy());
   return portfolio;
 }

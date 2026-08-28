@@ -4,7 +4,7 @@ import { MonthsSpan } from './utils/months-span.js';
 import { logger, LogCategory } from './utils/logger.js';
 import { ModelLifeEvent } from './life-event.js';
 import { User } from './user.js';
-import { global_user_startAge } from './globals.js';
+import { withSimConfig } from './sim-config.js';
 import { FundTransfer } from './fund-transfer.js';
 import { EventType, ShortfallOrigin } from './sim-event.js';
 import { withTrace, TraceKind } from './trace.js';
@@ -186,15 +186,48 @@ function conservationBucket(event, bucket) {
 }
 
 export class Portfolio {
-    constructor(modelAssets, reports) {
+    constructor(modelAssets, reports, config) {
         this.modelAssets = this.sortModelAssets(modelAssets);
         this.reports = !!reports;
+
+        /**
+         * The run's configuration (Spec 9). REQUIRED as of step 6.
+         *
+         * It defaulted to a capture of the current globals through steps 1-5,
+         * so that `new Portfolio(...)` kept working at 57 sites while the
+         * engine's reads moved across one file at a time. That crutch is now
+         * gone, and with it the engine's last import of the settings store:
+         * globals.js is no longer reachable from `portfolio.js`, which is what
+         * lets the layer-boundary exemption be deleted.
+         *
+         * Callers capture their own — `simConfigFromGlobals()` in the app and
+         * the tests, `simConfigFromPlanSpec()` in the MCP server. Frozen, so a
+         * second plan in this process cannot reach back and change this run's
+         * settings.
+         */
+        if (!config) {
+            throw new Error(
+                'Portfolio requires a SimConfig. Build one with '
+                + 'simConfigFromGlobals() (app, tests) or simConfigFromPlanSpec() '
+                + '(MCP). It used to default to a capture of the module globals; '
+                + 'that default was removed in Spec 9 step 6.');
+        }
+        this.config = config;
+
         this.generatedReports = [];
+        // Bind before the two lines below, because `lastDateInt()` reads
+        // `effectiveFinishDateInt` — a DERIVED getter — on every asset. Under
+        // step 4b an unbound read throws, so binding only in initializeChron
+        // would make every Portfolio construction fail. initializeChron rebinds
+        // afterwards, once the tax table has been attached to the config.
+        this.bindEnvironment();
+
         this.firstDateInt = firstDateInt(this.modelAssets);
         this.lastDateInt = lastDateInt(this.modelAssets);
 
-        const birthYear = this.firstDateInt ? this.firstDateInt.year - global_user_startAge : undefined;
-        this.activeUser = new User(global_user_startAge, birthYear);
+        const birthYear = this.firstDateInt
+            ? this.firstDateInt.year - this.config.startAge : undefined;
+        this.activeUser = new User(this.config.startAge, birthYear);
 
         // Construction-time age snapshot, restored by initializeChron. The
         // chronometer ages activeUser one year per simulated year, and the GA
@@ -254,12 +287,19 @@ export class Portfolio {
     copy() {
 
         let modelAssets = this.modelAssets.map(modelAsset => modelAsset.copy());
-        let portfolio = new Portfolio(modelAssets);
+        // Same run, same configuration — a copy that recaptured the globals
+        // would silently diverge from its source if a setting had changed.
+        let portfolio = new Portfolio(modelAssets, false, this.config);
 
         portfolio.monthly = this.monthly.copy();
         portfolio.yearly  = this.yearly.copy();
         portfolio.total   = this.total.copy();
         portfolio.lifeEvents = this.lifeEvents.map(e => e.copy());
+
+        // Both collections arrive unbound — see bindEnvironment(). Without
+        // this, a copy's derived getters fall back to module state under 4a
+        // and throw under 4b.
+        portfolio.bindEnvironment();
 
         // Snapshot the trace/summary arrays so consumers of the copy observe
         // the state produced by the run being copied. Subsequent mutations on
@@ -298,7 +338,58 @@ export class Portfolio {
 
     }
 
+    /**
+     * Hand every asset and life event this run's environment (Spec 9 step 4a).
+     *
+     * The Portfolio owns exactly one config; assets and life events borrow it.
+     * They cannot hold their own, because both are plan data — serialised to
+     * share URLs, hydrated from localStorage, copied — while the config is run
+     * state. N independently-held copies would be N things that must agree,
+     * and a single stale one is a wrong number in one Monte Carlo iteration
+     * out of a thousand rather than an error anybody sees.
+     *
+     * Called from initializeChron (every run, and the GA re-runs it thousands
+     * of times on one Portfolio, so it must be idempotent — it is) and from
+     * copy(), where both collections come back unbound: ModelAsset.copy() is
+     * an explicit allowlist that omits env, and ModelLifeEvent.copy() round-
+     * trips through JSON, which drops it.
+     */
+    bindEnvironment() {
+        for (const modelAsset of this.modelAssets) modelAsset.bindEnv(this.config);
+        // `?? []` because the constructor calls this before lifeEvents is
+        // assigned — see the call site there.
+        for (const event of this.lifeEvents ?? []) event.bindEnv(this.config);
+    }
+
     initializeChron() {
+
+        // Resolve the run's tax table onto the config, and reset it (Spec 9
+        // step 5a).
+        //
+        // Both halves used to live at the call sites: every caller ran
+        // `activeTaxTable.initializeChron()` on the line immediately above
+        // `portfolio.initializeChron()`, which is a sequence a caller can get
+        // wrong and three of them had to repeat. Owning it here means the
+        // table is reset exactly when the rest of the run state is, and the
+        // relative order is unchanged — this runs before the engines are
+        // built, as it did before.
+        // Every config now arrives with its own table — simConfigFromGlobals()
+        // builds one, and so does simConfigFromPlanSpec(). The `?? activeTaxTable`
+        // fallback that stood here through step 5 is gone, and with it this
+        // file's last import of the settings store.
+        //
+        // Reset it where the rest of the run state is reset. Relative order is
+        // unchanged: still before the engines are built.
+        if (!this.config.taxTable) {
+            throw new Error('Portfolio: the run config has no tax table.');
+        }
+        this.config.taxTable.initializeChron();
+
+        // Now that the config is final for this run, hand it to the assets and
+        // life events. Must follow the taxTable binding above: withSimConfig
+        // returns a NEW frozen object, so binding earlier would hand out a
+        // config without the table.
+        this.bindEnvironment();
 
         // Rewind the user to their starting age. Every other piece of run
         // state is rebuilt below; the user must rewind too or successive
@@ -329,10 +420,12 @@ export class Portfolio {
             this.applyPhaseTransfers(this.lifeEvents[0]);
         }
 
-        this.taxes = new TaxEngine(this.modelAssets, this.monthly, this.yearly, this.activeUser);
-        this.payroll = new PayrollEngine(this.modelAssets, this.monthly, this.yearly, this.activeUser, this.taxes);
-        this.expenses = new ExpenseEngine(this.modelAssets, this.monthly, this.activeUser);
-        this.rebalance = new RebalanceEngine(this.modelAssets, this.monthly, this.yearly, this.activeUser);
+        // The single construction site, which is why the config reaches all four
+        // engines with one edit rather than 28.
+        this.taxes = new TaxEngine(this.modelAssets, this.monthly, this.yearly, this.activeUser, this.config);
+        this.payroll = new PayrollEngine(this.modelAssets, this.monthly, this.yearly, this.activeUser, this.taxes, this.config);
+        this.expenses = new ExpenseEngine(this.modelAssets, this.monthly, this.activeUser, this.config);
+        this.rebalance = new RebalanceEngine(this.modelAssets, this.monthly, this.yearly, this.activeUser, this.config);
     }
 
     /**

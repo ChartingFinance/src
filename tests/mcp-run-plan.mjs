@@ -178,48 +178,72 @@ console.log('\n── Filing status selects the tables ──\n');
 
 const joint = await runProfile('dualIncome');
 
-await check('an MFJ profile sets MFJ, not the Single default', () => {
-  assert.equal(globals.global_filingAs, 'MFJ',
+await check('an MFJ profile runs on MFJ, not the Single default', () => {
+  // Asserted on the RUN'S OWN CONFIG since Spec 9 step 5b, not on
+  // global_filingAs. run-plan no longer writes a module global — that is the
+  // point of the step — so the old assertion would have been reading a value
+  // nothing sets, and passing or failing for reasons unrelated to the plan.
+  // This is also the stronger claim: the run used MFJ, rather than the process
+  // happened to hold MFJ.
+  assert.equal(joint.portfolio.config.filingAs, 'MFJ',
     'a joint profile ran on Single — wrong brackets, limits and exclusion');
 });
 
 await check('the MFJ home-sale exclusion is the joint figure', () => {
   // $500,000 and never inflation-indexed, so this is a safe literal.
-  assert.equal(globals.activeTaxTable.activeHomeSaleExclusion, 500000,
+  assert.equal(joint.portfolio.config.taxTable.activeHomeSaleExclusion, 500000,
     'joint filers got the single $250,000 exclusion');
 });
 
 await check('a Single profile run AFTER a joint one is not still joint', async () => {
-  // Every run sets filing status explicitly, so this passes with or without the
-  // reset. It is here as a regression guard on the ORDERING — the TaxTable is
-  // built after filingAs, and swapping those two lines pins the previous plan's
-  // tables while leaving global_filingAs looking correct.
-  await runProfile('midCareer');
-  assert.equal(globals.global_filingAs, 'Single',
+  // Still a regression guard on the ORDERING: the TaxTable is built FROM the
+  // resolved filing status inside simConfigFromPlanSpec, so handing it the
+  // wrong one pins the previous plan's tables. Under the old globals sequence
+  // the two lines could be swapped; now they are one expression, and this
+  // asserts the result.
+  const single = await runProfile('midCareer');
+  assert.equal(single.portfolio.config.filingAs, 'Single',
     'filing status leaked from the previous plan');
-  assert.equal(globals.activeTaxTable.activeHomeSaleExclusion, 250000,
+  assert.equal(single.portfolio.config.taxTable.activeHomeSaleExclusion, 250000,
     'the tax table leaked from the previous plan');
+
+  // The two runs held DIFFERENT tables — the sharpest statement that a config
+  // is per-run rather than ambient. Under the old design both read one module
+  // global, so this could not have been asserted at all.
+  assert.notEqual(single.portfolio.config.taxTable,
+                  joint.portfolio.config.taxTable,
+                  'both runs shared one tax table');
 });
 
 await check('a setting the spec OMITS falls back to the default, not the last plan', async () => {
-  // What global_reset() is actually for, and the only assertion that makes it
-  // load-bearing. Filing status and inflation are re-set explicitly on every
-  // run, so they survive without a reset; the AGES are set conditionally, so a
-  // spec that omits one inherits the previous plan's value.
-  //
-  // Found by mutation: commenting out global_reset() left all 18 other
-  // assertions green, which meant the reset was decoration. It fails this one.
+  // What global_reset() used to be for. It is now structural: every run builds
+  // its own config from its own spec, so there is no channel through which the
+  // previous plan could reach this one. The assertion survives the mechanism
+  // change because what it protects — an omitted age must not inherit — is a
+  // property of the result, not of the implementation.
   const explicit = planFromProfile('midCareer');
   explicit.settings.startAge = 61;
-  await runPlan(explicit);
-  assert.equal(globals.global_user_startAge, 61, 'fixture did not set the age it claims to');
+  const explicitRun = await runPlan(explicit);
+  assert.equal(explicitRun.portfolio.config.startAge, 61,
+    'fixture did not set the age it claims to');
 
   const silent = planFromProfile('midCareer');
   delete silent.settings.startAge;
-  await runPlan(silent);
+  const silentRun = await runPlan(silent);
 
-  assert.equal(globals.global_user_startAge, globals.global_default_user_startAge,
-    'an omitted start age inherited the previous plan — globals leak between runs');
+  assert.equal(silentRun.portfolio.config.startAge, globals.global_default_user_startAge,
+    'an omitted start age inherited the previous plan');
+});
+
+await check('running a plan writes NOTHING to the module globals', async () => {
+  // The migration's actual claim, and it could not be made before. Two plans in
+  // one process no longer share a configuration, which is why the run-handle
+  // cache stops being a correctness requirement.
+  const before = globals.global_workerSnapshot();
+  await runProfile('dualIncome');          // MFJ, different ages from the default
+  const after = globals.global_workerSnapshot();
+  assert.deepEqual(after, before,
+    'runPlan mutated module state: ' + JSON.stringify({ before, after }));
 });
 
 // ── Issues come back ─────────────────────────────────────────────────

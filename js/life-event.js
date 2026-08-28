@@ -23,7 +23,7 @@ import { DateInt }        from './utils/date-int.js';
 /** Inline to avoid circular dep with portfolio.js */
 function findByName(assets, name) { return assets.find(a => a.displayName === name); }
 import { logger, LogCategory } from './utils/logger.js';
-import { global_user_startAge } from './globals.js';
+import { ageToDateIntFor } from './plan-dates.js';
 
 // ── Event type enum ─────────────────────────────────────────────
 
@@ -96,11 +96,8 @@ export const LifeEventType = Object.freeze({
 
 // ── Utility: age → DateInt ──────────────────────────────────────
 
-function ageToDateInt(triggerAge) {
-  const currentYear = new Date().getFullYear();
-  const birthYear = currentYear - global_user_startAge;
-  const triggerYear = birthYear + triggerAge;
-  return DateInt.from(triggerYear, 1);
+function ageToDateInt(triggerAge, env) {
+  return ageToDateIntFor(env, triggerAge);
 }
 
 // ── ModelLifeEvent (instance) ───────────────────────────────────
@@ -137,8 +134,32 @@ export class ModelLifeEvent {
 
   // ── Computed ──────────────────────────────────────────────────
 
+  /**
+   * Bind the run's environment (Spec 9 step 4a). Same contract as
+   * ModelAsset.bindEnv: one environment per run, owned by the Portfolio,
+   * borrowed here. Non-enumerable so it cannot reach toJSON()/copy().
+   *
+   * copy() round-trips through JSON, so a COPIED life event is unbound by
+   * construction — Portfolio.copy() rebinds it. Under 4b that is the
+   * difference between a working copy and a throw on triggerDateInt.
+   */
+  bindEnv(config) {
+    Object.defineProperty(this, 'env', {
+      value: config, writable: true, enumerable: false, configurable: true,
+    });
+    return this;
+  }
+
   get triggerDateInt() {
-    return ageToDateInt(this.triggerAge);
+    // See the note on ModelAsset's #boundEnv: the fallback is gone on purpose.
+    if (!this.env) {
+      throw new Error(
+        `ModelLifeEvent "${this.displayName ?? this.type}" has no environment. `
+        + `triggerDateInt is derived from the plan's start age. Events are `
+        + `bound by Portfolio.bindEnvironment() for a run, and by AppState's `
+        + `lifeEvents setter for the editor; this one went through neither.`);
+    }
+    return ageToDateInt(this.triggerAge, this.env);
   }
 
   get meta() {
@@ -209,7 +230,7 @@ export class ModelLifeEvent {
 
   /**
    * Build the default two-event timeline: Accumulate + Retire.
-   * Uses global_user_startAge and global_user_retirementAge.
+   * Takes the ages as arguments; reads no globals.
    */
   static defaultTimeline(startAge, retirementAge) {
     return [

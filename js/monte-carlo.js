@@ -9,7 +9,7 @@
 
 import { Chart } from 'chart.js';
 import { DateInt } from './utils/date-int.js';
-import { global_backtestYear, global_simDataMode, global_workerSnapshot } from './globals.js';
+import { global_backtestYear, global_simDataMode, global_workerSnapshot, simConfigFromGlobals } from './globals.js';
 import { ensureLayout, setStatus } from './sim-panel.js';
 
 // 'Backtest from year' restricts the MC sampling pool to that era, keeping
@@ -144,6 +144,7 @@ export function runMonteCarlo(sourceAssets, container, numSimulations = 1000, gu
                     runFromStart, lifeEvents,
                     dataMode: global_simDataMode,
                     backtestFromYear: backtestFromYear(),
+                    config: simConfigFromGlobals(),
                 });
                 resolve(render(results));
             }, 50);

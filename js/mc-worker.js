@@ -16,13 +16,14 @@
 //   { action: 'complete', results }   compute module output
 //   { action: 'error', message }
 
-import { setActiveTaxTable, global_setBacktestYearDirect, global_applyWorkerSnapshot } from './globals.js';
-import { TaxTable } from './taxes.js';
+import { setActiveTaxTable, global_setBacktestYearDirect, global_applyWorkerSnapshot,
+         simConfigFromGlobals } from './globals.js';
 import { ModelAsset } from './model-asset.js';
 import { ModelLifeEvent } from './life-event.js';
 import { DateInt } from './utils/date-int.js';
 import { computeMonteCarlo } from './mc-compute.js';
 import { computeGuardrails } from './gr-compute.js';
+import { makeActiveTaxTable } from './globals.js';
 
 // Guard so Node-side tests can import this module without a Worker context.
 const isWorker = typeof self !== 'undefined' && typeof self.postMessage === 'function';
@@ -55,7 +56,7 @@ if (isWorker) self.onmessage = async function (event) {
         // trigger dates, filing status, RMD ages, and tax-bracket inflation
         // all depend on these.
         global_applyWorkerSnapshot(payload.settings);
-        setActiveTaxTable(new TaxTable());
+        setActiveTaxTable(makeActiveTaxTable());
         if (payload.backtestYear) {
             global_setBacktestYearDirect(payload.backtestYear);
         }
@@ -70,6 +71,9 @@ if (isWorker) self.onmessage = async function (event) {
                 params: payload.params,
                 retirementDateInt,
                 lifeEvents,
+                // Built AFTER global_applyWorkerSnapshot above, so it captures
+                // the main thread's settings rather than the worker defaults.
+                config: simConfigFromGlobals(),
             });
         } else {
             results = await computeMonteCarlo(modelAssets, {
@@ -83,6 +87,7 @@ if (isWorker) self.onmessage = async function (event) {
                 onInterim: (results) => self.postMessage({ action: 'interim', results }),
                 dataMode: payload.dataMode || 'historical',
                 backtestFromYear: payload.backtestFromYear ?? null,
+                config: simConfigFromGlobals(),
                 checkpoint: async (completed) => {
                     // Macrotask yield: lets queued pause/resume messages run
                     await new Promise((resolve) => setTimeout(resolve, 0));

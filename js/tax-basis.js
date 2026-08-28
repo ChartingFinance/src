@@ -135,7 +135,6 @@
  */
 
 import { Currency } from './utils/currency.js';
-import { activeTaxTable } from './globals.js';
 
 /**
  * @param {import('./financial-package.js').FinancialPackage} pkg
@@ -155,7 +154,7 @@ import { activeTaxTable } from './globals.js';
  */
 export function taxableBasis(pkg, activeUser, { annualise = false, taxTable = null } = {}) {
 
-    const table = taxTable ?? activeTaxTable;
+    const table = taxTable;
 
     const yearly = pkg.copy();
     if (annualise) yearly.multiply(12.0);
@@ -164,7 +163,7 @@ export function taxableBasis(pkg, activeUser, { annualise = false, taxTable = nu
     // first, THEN cap the deductions. Capping a monthly contribution against an
     // annual limit and only then multiplying by twelve would let twelve times
     // the limit through.
-    yearly.limitDeductions(activeUser);
+    yearly.limitDeductions(activeUser, table);
 
     const ordinaryTaxable = table.calculateYearlyTaxableIncome(yearly);
 

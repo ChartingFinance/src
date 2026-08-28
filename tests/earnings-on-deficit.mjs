@@ -39,9 +39,10 @@ globalThis.window = globalThis;
 import { ModelAsset } from '../js/model-asset.js';
 import { Portfolio } from '../js/portfolio.js';
 import { chronometer_run } from '../js/chronometer.js';
-import { TaxTable } from '../js/taxes.js';
 import { setActiveTaxTable } from '../js/globals.js';
 import { Metric } from '../js/metric.js';
+import { simConfigFromGlobals } from '../js/globals.js';
+import { makeActiveTaxTable } from '../js/globals.js';
 
 // ── Helpers ───────────────────────────────────────────────────────────
 const fmt = (n) => {
@@ -61,7 +62,7 @@ const hist = (a, m) => (a.getHistory(m) ?? []).map(hv);
 
 /** One funding account, one expense far larger than it — forced overdraft. */
 async function overdraw(instrument, name, rate = 0.06) {
-  setActiveTaxTable(new TaxTable());
+  setActiveTaxTable(makeActiveTaxTable());
   const p = new Portfolio([
     {
       instrument, displayName: name,
@@ -75,7 +76,7 @@ async function overdraw(instrument, name, rate = 0.06) {
       startCurrency: { amount: 3000 }, startBasisCurrency: { amount: 0 },
       annualReturnRate: { rate: 0 },
     },
-  ].map(o => ModelAsset.fromJSON(o)), true);
+  ].map(o => ModelAsset.fromJSON(o)), true, simConfigFromGlobals());
   await chronometer_run(p);
   return { portfolio: p, account: p.modelAssets.find(a => a.displayName === name) };
 }
@@ -130,7 +131,7 @@ for (const [instrument, name] of FUNDING) {
 console.log('\n── Debt still accrues its interest ──\n');
 
 // Guard the exemption: the fix must not silence real debt interest.
-setActiveTaxTable(new TaxTable());
+setActiveTaxTable(makeActiveTaxTable());
 const debtPortfolio = new Portfolio([
   {
     instrument: 'debt', displayName: 'Card',
@@ -138,7 +139,7 @@ const debtPortfolio = new Portfolio([
     startCurrency: { amount: -20000 }, startBasisCurrency: { amount: 0 },
     annualReturnRate: { rate: 0.18 },
   },
-].map(o => ModelAsset.fromJSON(o)), true);
+].map(o => ModelAsset.fromJSON(o)), true, simConfigFromGlobals());
 await chronometer_run(debtPortfolio);
 const card = debtPortfolio.modelAssets.find(a => a.displayName === 'Card');
 

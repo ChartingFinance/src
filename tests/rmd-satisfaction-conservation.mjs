@@ -40,13 +40,14 @@ globalThis.window = globalThis;
 import { ModelAsset, Metric } from '../js/model-asset.js';
 import { Portfolio } from '../js/portfolio.js';
 import { chronometer_run } from '../js/chronometer.js';
-import { TaxTable } from '../js/taxes.js';
 import {
   setActiveTaxTable,
   global_setUserStartAge, global_getUserStartAge,
   global_setInflationRate, global_getInflationRate,
   global_setFilingAs, global_getFilingAs,
 } from '../js/globals.js';
+import { simConfigFromGlobals } from '../js/globals.js';
+import { makeActiveTaxTable } from '../js/globals.js';
 
 // Age 76 in 2026 → birth year 1950 → RMD age 72 → RMDs required.
 // Uniform lifetime divisor at 76: 23.8. IRA $238,000 → RMD $10,000/yr,
@@ -94,9 +95,9 @@ function buildAssets(deferredInstrument, monthlyExpense) {
 }
 
 async function run(deferredInstrument, monthlyExpense) {
-  setActiveTaxTable(new TaxTable());
+  setActiveTaxTable(makeActiveTaxTable());
   const modelAssets = buildAssets(deferredInstrument, monthlyExpense).map(o => ModelAsset.fromJSON(o));
-  const portfolio = new Portfolio(modelAssets, false);
+  const portfolio = new Portfolio(modelAssets, false, simConfigFromGlobals());
   await chronometer_run(portfolio);
   return portfolio;
 }

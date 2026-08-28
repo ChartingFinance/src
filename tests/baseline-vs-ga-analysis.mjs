@@ -23,7 +23,6 @@ if (typeof globalThis.self === 'undefined') {
 import { ModelAsset } from '../js/model-asset.js';
 import { Portfolio } from '../js/portfolio.js';
 import { chronometer_run } from '../js/chronometer.js';
-import { TaxTable } from '../js/taxes.js';
 import {
   setActiveTaxTable,
   global_setUserStartAge,
@@ -35,6 +34,8 @@ import {
 } from '../js/globals.js';
 import { ModelLifeEvent, LifeEvent, LifeEventType } from '../js/life-event.js';
 import { Instrument, InstrumentType } from '../js/instruments/instrument.js';
+import { simConfigFromGlobals } from '../js/globals.js';
+import { makeActiveTaxTable } from '../js/globals.js';
 
 // ── Set global age settings ────────────────────────────────────────────
 global_setUserStartAge(50);
@@ -606,10 +607,10 @@ console.log(`Age settings: Start=50, Retirement=62, Finish=87`);
 console.log(`Portfolio dates: ${d.now.year}-${d.now.month} to ${finishYear}-1\n`);
 
 // ── 1. Run Baseline Simulation ─────────────────────────────────────────
-setActiveTaxTable(new TaxTable());
+setActiveTaxTable(makeActiveTaxTable());
 
 const baselineAssets = QUICK_START_DATA.map(obj => ModelAsset.fromJSON(obj));
-const baselinePortfolio = new Portfolio(baselineAssets, false);
+const baselinePortfolio = new Portfolio(baselineAssets, false, simConfigFromGlobals());
 baselinePortfolio.lifeEvents = buildLifeEvents();
 
 console.log('Running baseline simulation...');
@@ -624,10 +625,10 @@ const gaFitnessBalance = 0; // 1 - (slider/100) where slider=100
 
 console.log('Running GA optimizer (pop=30, gen=100, 100% terminal value objective)...');
 
-setActiveTaxTable(new TaxTable());
+setActiveTaxTable(makeActiveTaxTable());
 
 const gaAssets = QUICK_START_DATA.map(obj => ModelAsset.fromJSON(obj));
-const gaPortfolio = new Portfolio(gaAssets, false);
+const gaPortfolio = new Portfolio(gaAssets, false, simConfigFromGlobals());
 gaPortfolio.lifeEvents = buildLifeEvents();
 
 const simulator = new InlineSimulator(gaPortfolio, gaGuardrailParams, gaFitnessBalance);
@@ -638,10 +639,10 @@ console.log(`\n  GA complete. Best terminal value: ${fmt(bestPortfolio.finishVal
 
 // ── 3. Re-run best portfolio with yearly capture ─────────────────────────
 console.log('Re-running optimized portfolio for yearly snapshots...');
-setActiveTaxTable(new TaxTable());
+setActiveTaxTable(makeActiveTaxTable());
 
 const gaFinalAssets = QUICK_START_DATA.map(obj => ModelAsset.fromJSON(obj));
-const gaFinalPortfolio = new Portfolio(gaFinalAssets, false);
+const gaFinalPortfolio = new Portfolio(gaFinalAssets, false, simConfigFromGlobals());
 gaFinalPortfolio.lifeEvents = bestPortfolio.lifeEvents.map(e => e.copy());
 gaFinalPortfolio.guardrailsParams = simulator.bestGuardrailParams;
 

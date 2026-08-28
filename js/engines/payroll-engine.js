@@ -13,11 +13,6 @@ import { Currency } from '../utils/currency.js';
 import { InstrumentType } from '../instruments/instrument.js';
 import { Metric } from '../metric.js';
 import { FundTransfer } from '../fund-transfer.js';
-import {
-    activeTaxTable,
-    global_pension_withholding_rate,
-    global_social_security_withholding_rate,
-} from '../globals.js';
 import { logger, LogCategory } from '../utils/logger.js';
 import { EventType, ShortfallOrigin } from '../sim-event.js';
 import { withTrace, TraceKind } from '../trace.js';
@@ -26,8 +21,9 @@ import { ContributionKind, TaxOwner } from '../taxes.js';
 
 export class PayrollEngine {
 
-    constructor(modelAssets, monthly, yearly, activeUser, taxEngine) {
+    constructor(modelAssets, monthly, yearly, activeUser, taxEngine, config) {
         this.modelAssets = modelAssets;
+        this.config = config;   // Spec 9 step 2 — carries the run's tax table
         this.monthly = monthly;
         this.yearly = yearly;
         this.activeUser = activeUser;
@@ -99,8 +95,8 @@ export class PayrollEngine {
                 // Owner is explicit at both sites so the per-person spec adds a
                 // second identity rather than rewriting this call.
                 const owner = TaxOwner.PRIMARY;
-                let withholding = activeTaxTable.calculateFICATax(modelAsset.isSelfEmployed, modelAsset.incomeCurrency.copy(), owner);
-                activeTaxTable.addYearlySocialSecurity(withholding.socialSecurityTax, owner);
+                let withholding = this.config.taxTable.calculateFICATax(modelAsset.isSelfEmployed, modelAsset.incomeCurrency.copy(), owner);
+                this.config.taxTable.addYearlySocialSecurity(withholding.socialSecurityTax, owner);
 
                 this.taxEngine.recordFICAWithholding(modelAsset, withholding);
 
@@ -117,8 +113,8 @@ export class PayrollEngine {
      * @returns {{ householdTax: Currency, totalWorkingIncome: Currency }}
      */
     computeHouseholdIncomeTax() {
-        const { ordinaryTaxable } = taxableBasis(this.monthly, this.activeUser, { annualise: true });
-        let householdTax = activeTaxTable.calculateYearlyIncomeTax(ordinaryTaxable).divide(12.0);
+        const { ordinaryTaxable } = taxableBasis(this.monthly, this.activeUser, { annualise: true, taxTable: this.config.taxTable });
+        let householdTax = this.config.taxTable.calculateYearlyIncomeTax(ordinaryTaxable).divide(12.0);
 
         // Sum working income across all active assets for proportional allocation
         let totalWorkingIncome = Currency.zero();
@@ -170,8 +166,8 @@ export class PayrollEngine {
 
         const isPension = InstrumentType.isPension(modelAsset.instrument);
         const rate = isPension
-            ? global_pension_withholding_rate
-            : global_social_security_withholding_rate;
+            ? this.config.pensionWithholdingRate
+            : this.config.socialSecurityWithholdingRate;
 
         if (!(rate > 0)) return;
 
@@ -278,7 +274,7 @@ export class PayrollEngine {
 
         if (this.activeUser.rmdRequired()) {
             // if the user is 73 or older, then they must take RMDs
-            let rmd = activeTaxTable.calculateMonthlyRMD(currentDateInt, this.activeUser, modelAsset);
+            let rmd = this.config.taxTable.calculateMonthlyRMD(currentDateInt, this.activeUser, modelAsset);
             modelAsset.addToMetric(Metric.RMD, rmd);
         }
 
@@ -340,7 +336,7 @@ export class PayrollEngine {
 
                     if (InstrumentType.is401K(toModelInstrument)) {
 
-                        let contributionLimit = activeTaxTable.limitFor(ContributionKind.FOUR01K, this.activeUser);
+                        let contributionLimit = this.config.taxTable.limitFor(ContributionKind.FOUR01K, this.activeUser);
                         if (this.yearly.four01KContribution.amount + this. monthly.four01KContribution.amount + total401KContribution.amount + contribution.amount > contributionLimit.amount) {
                             const requested = contribution.copy();
                             contribution = new Currency(contributionLimit.amount - this.yearly.four01KContribution.amount - this.monthly.four01KContribution.amount - total401KContribution.amount);
@@ -353,7 +349,7 @@ export class PayrollEngine {
 
                     else if (InstrumentType.isIRA(toModelInstrument) && !InstrumentType.isRothIRA(toModelInstrument)) {
 
-                        let contributionLimit = activeTaxTable.limitFor(ContributionKind.IRA, this.activeUser);
+                        let contributionLimit = this.config.taxTable.limitFor(ContributionKind.IRA, this.activeUser);
                         if (this.yearly.tradIRAContribution.amount + this. monthly.tradIRAContribution.amount + totalIRAContribution.amount + contribution.amount > contributionLimit.amount) {
                             const requested = contribution.copy();
                             contribution = new Currency(contributionLimit.amount - this.yearly.tradIRAContribution.amount - this.monthly.tradIRAContribution.amount - totalIRAContribution.amount);
@@ -392,7 +388,7 @@ export class PayrollEngine {
 
         if (!InstrumentType.isWorkingIncome(modelAsset.instrument)) return;
 
-        const contributionLimit = activeTaxTable.limitFor(ContributionKind.IRA, this.activeUser);
+        const contributionLimit = this.config.taxTable.limitFor(ContributionKind.IRA, this.activeUser);
         let totalContribution = Currency.zero();
 
         for (let fundTransfer of modelAsset.fundTransfers) {

@@ -3,8 +3,7 @@ import { InstrumentType } from './instruments/instrument.js';
 import { AssetAppreciationResult, MortgageResult, IncomeResult, RetirementIncomeResult, ExpenseResult, InterestResult } from './instruments/instrument-behavior.js';
 import { WithholdingResult, ContributionKind } from './taxes.js';
 import { logger, LogCategory } from './utils/logger.js';
-import { activeTaxTable } from './globals.js';
-import { global_propertyTaxDeductionMax } from './globals.js';
+import { SIM_CONFIG_DEFAULTS } from './sim-config.js';
 
 export const FINANCIAL_FIELDS = [
     'employedIncome', 'selfIncome', 'socialSecurityTax', 'socialSecurityIncome', 'pensionIncome', 'assetAppreciation',
@@ -38,20 +37,27 @@ export class FinancialPackage {
         return this;
     }
 
-    limitDeductions(activeUser) {
+    /**
+     * @param {User} activeUser
+     * @param {TaxTable} [taxTable]  the run's table (Spec 9 step 2). Falls back
+     *   to the module global while callers migrate; step 6 makes it required.
+     */
+    limitDeductions(activeUser, taxTable = null) {
 
-        let maxIRADeduction = activeTaxTable.limitFor(ContributionKind.IRA, activeUser);
+        const table = taxTable;
+
+        let maxIRADeduction = table.limitFor(ContributionKind.IRA, activeUser);
         if (this.tradIRAContribution.amount + this.rothIRAContribution.amount > maxIRADeduction.amount) {
             // TODO: figure out how to split this up between traditional and roth
             //this.iraContribution.amount = maxIRADeduction.amount;
         }
 
-        let max401KDeduction = activeTaxTable.limitFor(ContributionKind.FOUR01K, activeUser);
+        let max401KDeduction = table.limitFor(ContributionKind.FOUR01K, activeUser);
         if (this.four01KContribution.amount > max401KDeduction.amount)
             this.four01KContribution.amount = max401KDeduction.amount;
 
-        if (this.propertyTaxes.amount > global_propertyTaxDeductionMax)
-            this.propertyTaxes.amount = global_propertyTaxDeductionMax;
+        if (this.propertyTaxes.amount > table.propertyTaxDeductionMax)
+            this.propertyTaxes.amount = table.propertyTaxDeductionMax;
 
     }
 
@@ -127,11 +133,25 @@ export class FinancialPackage {
         return total;
     }
 
-    deductiblePropertyTaxes() {
+    /**
+     * @param {TaxTable} [taxTable]  the run's table. Optional because the
+     *   remaining callers are display and logging paths (report-view, the
+     *   dump helpers) that hold no config; those keep the module global until
+     *   the UI carries one.
+     */
+    deductiblePropertyTaxes(taxTable = null) {
 
+        // Display-only path: `deductions()` reaches here, and its callers are
+        // report-view and two log dumps — never the engine, which goes through
+        // limitDeductions() with the run's table. The fallback comes from the
+        // engine's own defaults rather than the settings store, so this file
+        // does not import globals.js; the cap has no UI and is constant, so the
+        // two are the same number.
+        const cap = taxTable?.propertyTaxDeductionMax
+            ?? SIM_CONFIG_DEFAULTS.propertyTaxDeductionMax;
         let ptDeduction = this.propertyTaxes.copy().flipSign();
-        if (ptDeduction.amount > global_propertyTaxDeductionMax)
-            ptDeduction.amount = global_propertyTaxDeductionMax;
+        if (ptDeduction.amount > cap)
+            ptDeduction.amount = cap;
         return ptDeduction.flipSign();
 
     }

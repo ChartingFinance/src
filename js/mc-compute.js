@@ -14,14 +14,12 @@ import { ModelAsset } from './model-asset.js';
 import { Metric } from './metric.js';
 import { DateInt, MONTH_NAMES } from './utils/date-int.js';
 import { InstrumentType, Instrument } from './instruments/instrument.js';
-import { activeTaxTable } from './globals.js';
 import {
-    global_inflationRate,
     global_sp500_annual_returns,
     global_10yr_treasury_rates,
     global_cpi_annual_inflation,
     global_wage_growth_annual,
-} from './globals.js';
+} from './market-data.js';
 import { PriceIndex } from './utils/price-index.js';
 
 // ── Historical year pool (correlated sampling) ──────────────────
@@ -69,7 +67,23 @@ export function buildYearPool(fromYear = null) {
  *   added to the asset's configured rate (baseRates) — the user's assumptions
  *   carrying history's turbulence and correlation.
  */
-export function applyRandomRates(modelAssets, pool, dataMode = 'historical', baseRates = null) {
+export function applyRandomRates(modelAssets, pool, dataMode = 'historical', baseRates = null,
+                                 inflationRate = null) {
+    // Calibrated mode re-centres the drawn CPI on the PLAN'S rate, so it needs
+    // that rate. Required rather than defaulted: `null + deviation` is a
+    // number, so a caller that forgot would get a quietly wrong inflation path
+    // instead of an error — and the only assertion on this function today
+    // reads the asset rates, not the returned inflation, so nothing would have
+    // noticed. Historical mode never uses it.
+    const calibrationBase = dataMode === 'calibrated'
+        ? (() => {
+            if (typeof inflationRate !== 'number' || !Number.isFinite(inflationRate)) {
+                throw new Error('applyRandomRates: calibrated mode needs the plan inflationRate; '
+                    + 'got ' + JSON.stringify(inflationRate));
+            }
+            return inflationRate;
+        })()
+        : 0;
     // Returns the draw so callers can build a matching real-dollar deflator;
     // existing callers that ignore the return are unaffected.
     const year = pool.years[Math.floor(Math.random() * pool.years.length)];
@@ -120,22 +134,21 @@ export function applyRandomRates(modelAssets, pool, dataMode = 'historical', bas
         year,
         sp500, treasury, wage,
         cpi,
-        inflationRate: calibrated ? global_inflationRate + (cpi - pool.means.cpi) : cpi,
+        inflationRate: calibrated ? calibrationBase + (cpi - pool.means.cpi) : cpi,
     };
 }
 
 // ── Single simulation run ────────────────────────────────────────
 
-function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, pool, dataMode) {
+function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, pool, dataMode, config) {
     const assets = ModelAsset.cloneArray(sourceAssets);
-    const portfolio = new Portfolio(assets, false);
+    const portfolio = new Portfolio(assets, false, config);
     if (lifeEvents) portfolio.lifeEvents = lifeEvents.map(e => e.copy());
 
     if (guardrailParams) {
         portfolio.guardrailsParams = guardrailParams;
     }
 
-    activeTaxTable.initializeChron();
     portfolio.initializeChron();
 
     // Calibrated mode re-centers deviations on each asset's configured rate —
@@ -153,10 +166,11 @@ function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, p
     // cannot be deflated after the fact. Percentiles of deflated values are
     // not deflated percentiles. Deflate here, per run, then take percentiles
     // over the real series separately.
-    const priceIndex = new PriceIndex(global_inflationRate);
+    const priceIndex = new PriceIndex(portfolio.config.inflationRate);
 
     if (withdrawalPhase) {
-        const draw = applyRandomRates(portfolio.modelAssets, pool, dataMode, baseRates);
+        const draw = applyRandomRates(portfolio.modelAssets, pool, dataMode, baseRates,
+                                      portfolio.config.inflationRate);
         priceIndex.setAnnualRate(draw.inflationRate);
     }
 
@@ -174,7 +188,7 @@ function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, p
 
         if (currentDateInt.day === 1) {
             portfolio.monthlyChron(currentDateInt);
-            activeTaxTable.monthlyChron(currentDateInt);
+            portfolio.config.taxTable.monthlyChron(currentDateInt);
 
             let total = 0;
             for (const asset of portfolio.modelAssets) {
@@ -193,19 +207,20 @@ function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, p
                 withdrawalPhase = true;
             }
             if (withdrawalPhase) {
-                const draw = applyRandomRates(portfolio.modelAssets, pool, dataMode, baseRates);
+                const draw = applyRandomRates(portfolio.modelAssets, pool, dataMode, baseRates,
+                                      portfolio.config.inflationRate);
                 priceIndex.setAnnualRate(draw.inflationRate);
             }
             portfolio.applyGuardrails(currentDateInt);
             portfolio.applyYear(currentDateInt);
-            activeTaxTable.applyYear(portfolio.yearly, portfolio.activeUser);
+            portfolio.config.taxTable.applyYear(portfolio.yearly, portfolio.activeUser);
             portfolio.yearlyChron(currentDateInt);
-            activeTaxTable.yearlyChron(undefined);
+            portfolio.config.taxTable.yearlyChron(portfolio.config.inflationRate);
         }
     }
 
     portfolio.finalizeChron();
-    activeTaxTable.finalizeChron();
+    portfolio.config.taxTable.finalizeChron();
 
     return { nominal: monthlyTotals, real: monthlyReal };
 }
@@ -222,12 +237,11 @@ function percentile(sortedArr, p) {
 
 // ── Deterministic baseline run ───────────────────────────────────
 
-function computeBaseline(sourceAssets, guardrailParams, lifeEvents) {
+function computeBaseline(sourceAssets, guardrailParams, lifeEvents, config) {
     const baseAssets = ModelAsset.cloneArray(sourceAssets);
-    const basePf = new Portfolio(baseAssets, false);
+    const basePf = new Portfolio(baseAssets, false, config);
     if (lifeEvents.length) basePf.lifeEvents = lifeEvents.map(e => e.copy());
     if (guardrailParams) basePf.guardrailsParams = guardrailParams;
-    activeTaxTable.initializeChron();
     basePf.initializeChron();
 
     let bd = new DateInt(basePf.firstDateInt.toInt());
@@ -236,7 +250,7 @@ function computeBaseline(sourceAssets, guardrailParams, lifeEvents) {
     const baselineDataReal = [];
     // The baseline runs on the CONFIGURED rates, never randomized, so its
     // price path is the plan's own general inflation rate throughout.
-    const priceIndex = new PriceIndex(global_inflationRate);
+    const priceIndex = new PriceIndex(basePf.config.inflationRate);
 
     while (bd.toInt() <= bLast.toInt()) {
         if (bd.day === 1) {
@@ -246,7 +260,7 @@ function computeBaseline(sourceAssets, guardrailParams, lifeEvents) {
         bd.next();
         if (bd.day === 1) {
             basePf.monthlyChron(bd);
-            activeTaxTable.monthlyChron(bd);
+            basePf.config.taxTable.monthlyChron(bd);
 
             let total = 0;
             for (const asset of basePf.modelAssets) {
@@ -259,13 +273,13 @@ function computeBaseline(sourceAssets, guardrailParams, lifeEvents) {
         if (bd.isNewYearsDay()) {
             basePf.applyGuardrails(bd);
             basePf.applyYear(bd);
-            activeTaxTable.applyYear(basePf.yearly, basePf.activeUser);
+            basePf.config.taxTable.applyYear(basePf.yearly, basePf.activeUser);
             basePf.yearlyChron(bd);
-            activeTaxTable.yearlyChron(undefined);
+            basePf.config.taxTable.yearlyChron(basePf.config.inflationRate);
         }
     }
     basePf.finalizeChron();
-    activeTaxTable.finalizeChron();
+    basePf.config.taxTable.finalizeChron();
 
     return { nominal: baselineData, real: baselineDataReal };
 }
@@ -305,12 +319,13 @@ export async function computeMonteCarlo(sourceAssets, {
     checkpoint = null,
     dataMode = 'historical',
     backtestFromYear = null,
+    // See the note in gr-compute: supplied by the caller as of step 6.
+    config,
 } = {}) {
     // Determine number of months from a reference run
     const refAssets = ModelAsset.cloneArray(sourceAssets);
-    const refPortfolio = new Portfolio(refAssets, false);
+    const refPortfolio = new Portfolio(refAssets, false, config);
     if (lifeEvents.length) refPortfolio.lifeEvents = lifeEvents.map(e => e.copy());
-    activeTaxTable.initializeChron();
     refPortfolio.initializeChron();
 
     let d = new DateInt(refPortfolio.firstDateInt.toInt());
@@ -346,7 +361,7 @@ export async function computeMonteCarlo(sourceAssets, {
     const grParams = guardrailParams ? { ...guardrailParams, retirementDateInt } : null;
 
     // Deterministic baseline — computed up front so interim snapshots carry it too
-    const { nominal: baselineData, real: baselineDataReal } = computeBaseline(sourceAssets, grParams, lifeEvents);
+    const { nominal: baselineData, real: baselineDataReal } = computeBaseline(sourceAssets, grParams, lifeEvents, config);
 
     // Retirement trigger index for chart annotation
     let retirementMonthIndex = null;
@@ -421,7 +436,7 @@ export async function computeMonteCarlo(sourceAssets, {
     };
 
     for (let i = 0; i < numSimulations; i++) {
-        const { nominal, real } = runOnce(sourceAssets, grParams, runFromStart ? null : retirementDateInt, lifeEvents, pool, dataMode);
+        const { nominal, real } = runOnce(sourceAssets, grParams, runFromStart ? null : retirementDateInt, lifeEvents, pool, dataMode, config);
         allRuns.push(fit(nominal));
         allRunsReal.push(fit(real));
         // An interim snapshot supersedes the plain progress ping at the same

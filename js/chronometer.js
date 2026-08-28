@@ -1,7 +1,7 @@
 import { DateInt } from './utils/date-int.js';
 import { logger, LogCategory } from './utils/logger.js';
 import { resetTraces, traceScopes, assertNoOpenScopes } from './trace.js';
-import { activeTaxTable, global_backtestYear, global_inflationRate, global_sp500_annual_returns, global_10yr_treasury_rates, global_cpi_annual_inflation, global_wage_growth_annual } from './globals.js';
+import { global_sp500_annual_returns, global_10yr_treasury_rates, global_cpi_annual_inflation, global_wage_growth_annual } from './market-data.js';
 import { Instrument, InstrumentType } from './instruments/instrument.js';
 import { PriceIndex } from './utils/price-index.js';
 
@@ -54,11 +54,11 @@ function applyBacktestRates(portfolio, calendarYear) {
  * assets' configured rates — so the deflator must fall back to the general
  * inflation rate rather than flattening the real line to zero growth.
  */
-function inflationRateForYear(backtesting, backtestStartYear, simStartYear, simulationYear) {
-    if (!backtesting) return global_inflationRate;
+function inflationRateForYear(backtesting, backtestStartYear, simStartYear, simulationYear, inflationRate) {
+    if (!backtesting) return inflationRate;
     const dataYear = backtestStartYear + (simulationYear - simStartYear);
     const cpi = global_cpi_annual_inflation[dataYear];
-    return cpi != null ? cpi / 100 : global_inflationRate;
+    return cpi != null ? cpi / 100 : inflationRate;
 }
 
 function applyBacktestForYear(portfolio, simulationYear, backtestStartYear, simStartYear, savedRates) {
@@ -95,12 +95,12 @@ export async function chronometer_run(portfolio) {
     }
 
     let totalMonths = 0;
-    activeTaxTable.initializeChron();
+    // The table is reset inside portfolio.initializeChron() as of step 5a.
     portfolio.initializeChron();
 
-    const backtesting = global_backtestYear !== 'current';
+    const backtesting = portfolio.config.backtestYear !== 'current';
     const savedRates = backtesting ? saveOriginalRates(portfolio) : null;
-    const backtestStartYear = backtesting ? parseInt(global_backtestYear) : 0;
+    const backtestStartYear = backtesting ? parseInt(portfolio.config.backtestYear) : 0;
 
     if (backtesting) {
         applyBacktestRates(portfolio, backtestStartYear);
@@ -111,7 +111,7 @@ export async function chronometer_run(portfolio) {
     // Real-dollar deflator. Stepped on the same tick as monthlyChron so its
     // history lines up index-for-index with every asset metric history.
     const priceIndex = new PriceIndex(
-        inflationRateForYear(backtesting, backtestStartYear, simStartYear, simStartYear)
+        inflationRateForYear(backtesting, backtestStartYear, simStartYear, simStartYear, portfolio.config.inflationRate)
     );
     portfolio.monthlyPriceIndex = priceIndex.history;
 
@@ -130,7 +130,7 @@ export async function chronometer_run(portfolio) {
 
         if (currentDateInt.day == 1) {
             portfolio.monthlyChron(currentDateInt);
-            activeTaxTable.monthlyChron(currentDateInt);
+            portfolio.config.taxTable.monthlyChron(currentDateInt);
             priceIndex.stepAndRecord();
         }
 
@@ -140,12 +140,12 @@ export async function chronometer_run(portfolio) {
             }
             // Same data year the asset rates and tax tables just moved to.
             priceIndex.setAnnualRate(
-                inflationRateForYear(backtesting, backtestStartYear, simStartYear, currentDateInt.year)
+                inflationRateForYear(backtesting, backtestStartYear, simStartYear, currentDateInt.year, portfolio.config.inflationRate)
             );
 
             portfolio.applyGuardrails(currentDateInt);
             portfolio.applyYear(currentDateInt);
-            activeTaxTable.applyYear(portfolio.yearly, portfolio.activeUser);
+            portfolio.config.taxTable.applyYear(portfolio.yearly, portfolio.activeUser);
 
             portfolio.yearlyChron(currentDateInt);
 
@@ -153,7 +153,7 @@ export async function chronometer_run(portfolio) {
             const cpiRate = backtesting
                 ? global_cpi_annual_inflation[backtestStartYear + (currentDateInt.year - simStartYear)]
                 : undefined;
-            activeTaxTable.yearlyChron(cpiRate != null ? cpiRate / 100 : undefined);
+            portfolio.config.taxTable.yearlyChron(cpiRate != null ? cpiRate / 100 : portfolio.config.inflationRate);
         }
 
         portfolio.totalMonths = totalMonths;
@@ -192,7 +192,7 @@ export async function chronometer_run(portfolio) {
     portfolio.finalSanityCheck(currentDateInt);
 
     portfolio.finalizeChron();
-    activeTaxTable.finalizeChron();
+    portfolio.config.taxTable.finalizeChron();
 
     // Hand the causal scopes to the portfolio so any consumer can answer
     // "why did this happen?" without reaching into module state.

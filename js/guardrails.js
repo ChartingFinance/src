@@ -13,7 +13,7 @@
  */
 
 import { Chart } from 'chart.js';
-import { global_backtestYear, global_workerSnapshot } from './globals.js';
+import { global_backtestYear, global_workerSnapshot, simConfigFromGlobals } from './globals.js';
 import { ensureLayout, setStatus } from './sim-panel.js';
 
 // ── Chart instance ───────────────────────────────────────────────
@@ -78,7 +78,8 @@ export function runGuardrails(sourceAssets, container, params, retirementDateInt
         return new Promise((resolve) => {
             setTimeout(async () => {
                 const { computeGuardrails } = await import('./gr-compute.js');
-                const results = await computeGuardrails(sourceAssets, { params, retirementDateInt, lifeEvents });
+                const results = await computeGuardrails(sourceAssets,
+                    { params, retirementDateInt, lifeEvents, config: simConfigFromGlobals() });
                 resolve(render(results));
             }, 50);
         });

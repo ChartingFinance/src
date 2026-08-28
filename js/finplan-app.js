@@ -22,7 +22,6 @@ import { DateInt, MONTH_NAMES } from './utils/date-int.js';
 import { InstrumentType } from './instruments/instrument.js';
 import { chronometer_run } from './chronometer.js';
 import { Portfolio } from './portfolio.js';
-import { TaxTable } from './taxes.js';
 
 // ── Data loading ────────────────────────────────────────────
 import { membrane_rawDataToModelAssets } from './membrane.js';
@@ -115,6 +114,7 @@ import {
     global_simDataMode,
     global_setSimDataMode,
     global_showEngineDiagnostics,
+    simConfigFromGlobals,
 } from './globals.js';
 import { detectIssues, alertAssetNames } from './portfolio-issues.js';
 import { logger, LogCategory } from './utils/logger.js';
@@ -137,7 +137,26 @@ import {
     util_loadLocalScenarioPreview,
     util_loadStoryNames,
     util_deleteScenario,
-} from './utils/util.js';
+} from './ui/util.js';
+import { makeActiveTaxTable } from './globals.js';
+
+/**
+ * Bind assets to an editing environment before the UI reads them.
+ *
+ * Spec 9 step 4b. `classifyAssets` reads `effectiveFinishDateInt` — a derived
+ * getter needing the plan's ages — and the two lists it renders (Quick Start,
+ * and a scenario loaded from localStorage) never pass through a Portfolio, so
+ * an unbound read would throw the moment the asset list rendered.
+ *
+ * Editing environment, not a run's: it shows what the current settings say. A
+ * Portfolio captures its own config and rebinds everything it owns, so nothing
+ * here can reach a simulation.
+ */
+function bindForEditing(assets) {
+    const config = simConfigFromGlobals();
+    for (const asset of assets ?? []) asset.bindEnv?.(config);
+    return assets;
+}
 
 // ── DOM refs ────────────────────────────────────────────────
 const assetList         = document.getElementById('finplanAssetList');
@@ -250,7 +269,7 @@ function getAssetDisplayOrder() {
 // ── Init ────────────────────────────────────────────────────
 
 global_initialize();
-setActiveTaxTable(new TaxTable());
+setActiveTaxTable(makeActiveTaxTable());
 
 // The engine's own reconciliation verdict goes to the console only when the
 // user has asked for diagnostics — the same advanced flag that reveals the
@@ -485,12 +504,14 @@ function loadQuickStartProfile(profile) {
     // construction.
     global_setFilingAs(profile.filingAs);
     global_getFilingAs();
-    setActiveTaxTable(new TaxTable());
+    setActiveTaxTable(makeActiveTaxTable());
     syncGlobalsToSettings();
     store.setRetirementDate(global_getRetirementDateInt());
 
     const qs = buildQuickStart(profile);
-    assetList.modelAssets = qs.assets;
+    // Bind before the list renders: classifyAssets reads effectiveFinishDateInt,
+    // a derived getter, and these assets never pass through a Portfolio.
+    assetList.modelAssets = bindForEditing(qs.assets);
     appState.lifeEvents = qs.lifeEvents;
     calculate();
 }
@@ -959,7 +980,7 @@ function connectSettings() {
     document.getElementById('setting-filingAs').addEventListener('change', function() {
         global_setFilingAs(this.value);
         global_getFilingAs();
-        setActiveTaxTable(new TaxTable());
+        setActiveTaxTable(makeActiveTaxTable());
         // The welcome grid offers one set per filing status, so it follows the
         // setting. Harmless when a portfolio is already loaded and the grid is
         // hidden — the next new-scenario view gets the right cards.
@@ -1007,7 +1028,7 @@ function initiateActiveData() {
 function loadLocalData() {
     const slotName = appState.storyName;
     const assetModelsRaw = util_loadLocalAssetModels(appState.storyArc, slotName);
-    assetList.modelAssets = membrane_rawDataToModelAssets(assetModelsRaw);
+    assetList.modelAssets = bindForEditing(membrane_rawDataToModelAssets(assetModelsRaw));
 
     // Load life events (or create defaults)
     const savedEvents = util_loadLocalLifeEvents(appState.storyArc, slotName);
@@ -1087,7 +1108,7 @@ function calculate() {
         }
     }
 
-    const portfolio = new Portfolio(modelAssets, true);
+    const portfolio = new Portfolio(modelAssets, true, simConfigFromGlobals());
     portfolio.lifeEvents = appState.lifeEvents.map(e => e.copy());
 
     chronometer_run(portfolio);
@@ -2085,7 +2106,7 @@ function applyImportedPortfolio(data, persist) {
         global_setUserRetirementAge(data.settings.retirementAge);
         global_setUserFinishAge(data.settings.finishAge);
         if (data.settings.backtestYear != null) global_setBacktestYear(data.settings.backtestYear);
-        setActiveTaxTable(new TaxTable());
+        setActiveTaxTable(makeActiveTaxTable());
         syncGlobalsToSettings();
         store.setRetirementDate(global_getRetirementDateInt());
     }

@@ -87,7 +87,6 @@ const PRINT_MODE = process.argv.includes('--print-actual');
 
 import { Portfolio, EVENT_RECONCILIATION } from '../js/portfolio.js';
 import { chronometer_run } from '../js/chronometer.js';
-import { TaxTable } from '../js/taxes.js';
 import { quickStartProfiles, buildQuickStart } from '../js/quick-start.js';
 import { EventType, ShortfallOrigin } from '../js/sim-event.js';
 import {
@@ -99,6 +98,8 @@ import {
   global_setUserRetirementAge, global_getUserRetirementAge,
   global_setUserFinishAge, global_getUserFinishAge,
 } from '../js/globals.js';
+import { simConfigFromGlobals } from '../js/globals.js';
+import { makeActiveTaxTable } from '../js/globals.js';
 
 // ── Profile, and a guard on its shape ─────────────────────────────────
 const profile = quickStartProfiles.find(p => p.key === 'earlyCareer');
@@ -223,7 +224,7 @@ const qs = buildQuickStart(profile);
 global_setUserStartAge(qs.ages.startAge); global_getUserStartAge();
 global_setUserRetirementAge(qs.ages.retirementAge); global_getUserRetirementAge();
 global_setUserFinishAge(qs.ages.finishAge); global_getUserFinishAge();
-setActiveTaxTable(new TaxTable());
+setActiveTaxTable(makeActiveTaxTable());
 
 // Layer C instrumentation: capture conservation per month while the run
 // happens, since monthlySanityCheck reports into a dead logger.
@@ -258,7 +259,7 @@ Portfolio.prototype.monthlySanityCheck = function (currentDateInt) {
   }
 };
 
-const portfolio = new Portfolio(qs.assets, false);
+const portfolio = new Portfolio(qs.assets, false, simConfigFromGlobals());
 portfolio.lifeEvents = qs.lifeEvents.map(e => e.copy());
 await chronometer_run(portfolio);
 Portfolio.prototype.monthlySanityCheck = origCheck;

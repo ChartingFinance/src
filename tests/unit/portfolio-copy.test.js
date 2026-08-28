@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeAll } from 'vitest';
+import { simConfigFromGlobals } from '../../js/globals.js';
 
 beforeAll(() => {
   const store = {};
@@ -27,7 +28,7 @@ function makePortfolio() {
     startBasisCurrency: new Currency(1000),
     annualReturnRate: new ARR(0),
   });
-  return new Portfolio([asset], false);
+  return new Portfolio([asset], false, simConfigFromGlobals());
 }
 
 describe('Portfolio.copy — snapshot of trace + summary fields', () => {

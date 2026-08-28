@@ -17,9 +17,10 @@ import { LifeEventType } from './life-event.js';
 import { ModelAsset } from './model-asset.js';
 import { chronometer_run } from './chronometer.js';
 import { setActiveTaxTable, global_setBacktestYearDirect, global_applyWorkerSnapshot } from './globals.js';
-import { TaxTable } from './taxes.js';
 import { Portfolio } from './portfolio.js';
 import { ModelLifeEvent } from './life-event.js';
+import { simConfigFromGlobals } from './globals.js';
+import { makeActiveTaxTable } from './globals.js';
 
 // Theoretical maximums for normalization (scaling to 0.0–1.0)
 const THEORETICAL_MAX_CASHFLOW = 10_000_000;
@@ -75,7 +76,7 @@ if (isWorker) self.onmessage = function(event) {
     // filing status, RMD ages, tax-bracket inflation).
     global_applyWorkerSnapshot(payload.settings);
 
-    setActiveTaxTable(new TaxTable());
+    setActiveTaxTable(makeActiveTaxTable());
 
     // Apply backtest year so chronometer uses historical returns
     if (payload.backtestYear) {
@@ -101,7 +102,7 @@ if (isWorker) self.onmessage = function(event) {
         self.postMessage(msg);
     }
 
-    const portfolio = new Portfolio(assetModels, false);
+    const portfolio = new Portfolio(assetModels, false, simConfigFromGlobals());
     if (payload.lifeEvents) {
         portfolio.lifeEvents = payload.lifeEvents.map(e => ModelLifeEvent.fromJSON(e));
         // console.log('[Simulator Worker] Received', portfolio.lifeEvents.length, 'life events:',
