@@ -57,6 +57,7 @@ import {
   global_setInflationRate, global_getInflationRate,
   global_setFilingAs, global_getFilingAs,
 } from '../js/globals.js';
+import { simConfigFromGlobals } from '../js/globals.js';
 
 global_setUserStartAge(50); global_getUserStartAge();
 global_setInflationRate(0); global_getInflationRate();
@@ -93,7 +94,7 @@ const sum = (arr, upTo = Infinity) =>
 async function run(assets) {
   setActiveTaxTable(new TaxTable());
   const modelAssets = assets.map(o => ModelAsset.fromJSON(o));
-  const portfolio = new Portfolio(modelAssets, false);
+  const portfolio = new Portfolio(modelAssets, false, simConfigFromGlobals());
   await chronometer_run(portfolio);
   return portfolio;
 }

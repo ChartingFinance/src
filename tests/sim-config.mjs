@@ -141,7 +141,7 @@ console.log('\n── Portfolio carries one ──\n');
 check('a Portfolio built without a config captures the globals', () => {
     global_reset();
     global_setInflationRate(0.031); global_getInflationRate();
-    const p = new Portfolio([], false);
+    const p = new Portfolio([], false, simConfigFromGlobals());
     assert.ok(p.config, 'no config on the portfolio');
     assert.equal(p.config.inflationRate, 0.031);
 });

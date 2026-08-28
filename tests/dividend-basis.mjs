@@ -21,6 +21,7 @@ import { Portfolio } from '../js/portfolio.js';
 import { TaxTable } from '../js/taxes.js';
 import { setActiveTaxTable } from '../js/globals.js';
 import { chronometer_run } from '../js/chronometer.js';
+import { simConfigFromGlobals } from '../js/globals.js';
 
 let passed = 0;
 function ok(cond, label) {
@@ -79,7 +80,7 @@ const assets = [
       fundTransfers: [{ toDisplayName: 'Brokerage', monthlyMoveValue: 100, closeMoveValue: 0 }] },
 ].map(o => ModelAsset.fromJSON(o));
 
-const portfolio = new Portfolio(assets, false);
+const portfolio = new Portfolio(assets, false, simConfigFromGlobals());
 portfolio.lifeEvents = [];
 await chronometer_run(portfolio);
 

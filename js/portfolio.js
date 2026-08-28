@@ -4,7 +4,7 @@ import { MonthsSpan } from './utils/months-span.js';
 import { logger, LogCategory } from './utils/logger.js';
 import { ModelLifeEvent } from './life-event.js';
 import { User } from './user.js';
-import { simConfigFromGlobals, activeTaxTable } from './globals.js';
+import { activeTaxTable } from './globals.js';
 import { withSimConfig } from './sim-config.js';
 import { FundTransfer } from './fund-transfer.js';
 import { EventType, ShortfallOrigin } from './sim-event.js';
@@ -187,27 +187,33 @@ function conservationBucket(event, bucket) {
 }
 
 export class Portfolio {
-    constructor(modelAssets, reports, config = null) {
+    constructor(modelAssets, reports, config) {
         this.modelAssets = this.sortModelAssets(modelAssets);
         this.reports = !!reports;
 
         /**
-         * The run's configuration (Spec 9). **Nothing reads this yet** — every
-         * engine site still reads the module globals, and steps 2 and 3 move
-         * those across one file at a time.
+         * The run's configuration (Spec 9). REQUIRED as of step 6.
          *
-         * Optional, defaulting to a capture of the current globals, because
-         * `new Portfolio(...)` appears at 57 sites and 45 of them are tests. A
-         * required argument would land a 45-file diff across every
-         * golden-master suite at the same moment as the behaviour change it is
-         * supposed to be verifying. The default is a migration crutch with a
-         * removal date: step 6 drops it, `config` becomes required, and those
-         * sites migrate then — mechanically, with nothing else in flight.
+         * It defaulted to a capture of the current globals through steps 1-5,
+         * so that `new Portfolio(...)` kept working at 57 sites while the
+         * engine's reads moved across one file at a time. That crutch is now
+         * gone, and with it the engine's last import of the settings store:
+         * globals.js is no longer reachable from `portfolio.js`, which is what
+         * lets the layer-boundary exemption be deleted.
          *
-         * Captured, not forwarded: it is frozen, so a second plan in this
-         * process cannot reach back and change this run's settings.
+         * Callers capture their own — `simConfigFromGlobals()` in the app and
+         * the tests, `simConfigFromPlanSpec()` in the MCP server. Frozen, so a
+         * second plan in this process cannot reach back and change this run's
+         * settings.
          */
-        this.config = config ?? simConfigFromGlobals();
+        if (!config) {
+            throw new Error(
+                'Portfolio requires a SimConfig. Build one with '
+                + 'simConfigFromGlobals() (app, tests) or simConfigFromPlanSpec() '
+                + '(MCP). It used to default to a capture of the module globals; '
+                + 'that default was removed in Spec 9 step 6.');
+        }
+        this.config = config;
 
         this.generatedReports = [];
         // Bind before the two lines below, because `lastDateInt()` reads

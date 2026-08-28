@@ -71,6 +71,7 @@ import {
   global_setUserFinishAge, global_getUserFinishAge,
   global_setBacktestYear, global_getBacktestYear,
 } from '../js/globals.js';
+import { simConfigFromGlobals } from '../js/globals.js';
 
 let checks = 0;
 const check = (cond, msg) => { checks++; assert.ok(cond, msg); };
@@ -94,7 +95,7 @@ function buildProfile(profile) {
   global_setFilingAs('Single');                       global_getFilingAs();
   setActiveTaxTable(new TaxTable());
   const { assets, lifeEvents } = buildQuickStart(profile);
-  const portfolio = new Portfolio(assets, false);
+  const portfolio = new Portfolio(assets, false, simConfigFromGlobals());
   portfolio.lifeEvents = lifeEvents;
   return portfolio;
 }
@@ -116,7 +117,7 @@ function buildReference() {
     const i = lifeEvents.findIndex(e => e.type === LifeEvent.ACCUMULATE);
     if (i !== -1) lifeEvents.splice(i, 1);
   }
-  const portfolio = new Portfolio(modelAssets, false);
+  const portfolio = new Portfolio(modelAssets, false, simConfigFromGlobals());
   portfolio.lifeEvents = lifeEvents.map(e => e.copy());
   return portfolio;
 }

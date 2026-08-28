@@ -13,6 +13,7 @@ import { Metric } from './metric.js';
 import { DateInt, MONTH_NAMES } from './utils/date-int.js';
 import { chronometer_run } from './chronometer.js';
 import { PriceIndex } from './utils/price-index.js';
+import { simConfigFromGlobals } from './globals.js';
 
 // ── Helpers ──────────────────────────────────────────────────────
 
@@ -72,7 +73,7 @@ export async function computeGuardrails(sourceAssets, {
     lifeEvents = [],
 } = {}) {
     const assets = ModelAsset.cloneArray(sourceAssets);
-    const portfolio = new Portfolio(assets, false);
+    const portfolio = new Portfolio(assets, false, simConfigFromGlobals());
     if (lifeEvents.length) portfolio.lifeEvents = lifeEvents.map(e => e.copy());
 
     // Activate guardrails on this portfolio

@@ -39,6 +39,7 @@ import {
 import { EventType, kindOf, EventKind, ShortfallOrigin } from '../js/sim-event.js';
 import { FundTransfer } from '../js/fund-transfer.js';
 import { logger, LogCategory } from '../js/utils/logger.js';
+import { simConfigFromGlobals } from '../js/globals.js';
 
 let passed = 0, failed = 0;
 function check(label, fn) {
@@ -77,7 +78,7 @@ check('EVENT_RECONCILIATION has no entries for types that do not exist', () => {
 
 check('an unmapped event type throws instead of being swallowed', () => {
   // The whole point: the old default: branch made this case invisible.
-  const portfolio = new Portfolio([], false);
+  const portfolio = new Portfolio([], false, simConfigFromGlobals());
   portfolio.modelAssets = [{
     eventsCheckedIndex: 0,
     events: [{ type: 'somethingNobodyDeclared', kind: 'cash', amount: { amount: 100 } }],
@@ -155,7 +156,7 @@ async function run(assets, ages) {
   setActiveTaxTable(new TaxTable());
   global_setUserStartAge(ages.start); global_getUserStartAge();
   global_setUserRetirementAge(ages.retire); global_getUserRetirementAge();
-  const p = new Portfolio(assets.map(o => ModelAsset.fromJSON(o)), true);
+  const p = new Portfolio(assets.map(o => ModelAsset.fromJSON(o)), true, simConfigFromGlobals());
   await chronometer_run(p);
   return p;
 }
@@ -279,7 +280,7 @@ check('the trailing pass files findings under the month the events happened', ()
   logger.enable(LogCategory.SANITY);
 
   const stub = () => {
-    const p = new Portfolio([], false);
+    const p = new Portfolio([], false, simConfigFromGlobals());
     p.modelAssets = [{
       displayName: 'Stub',
       eventsCheckedIndex: 0,

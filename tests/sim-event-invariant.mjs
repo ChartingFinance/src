@@ -39,6 +39,7 @@ import {
 } from '../js/globals.js';
 import { EventType, renderNote, kindOf } from '../js/sim-event.js';
 import { InstrumentType } from '../js/instruments/instrument.js';
+import { simConfigFromGlobals } from '../js/globals.js';
 
 let passed = 0;
 let failed = 0;
@@ -108,7 +109,7 @@ async function run(assets, ages) {
   setActiveTaxTable(new TaxTable());
   global_setUserStartAge(ages.start); global_getUserStartAge();
   global_setUserRetirementAge(ages.retire); global_getUserRetirementAge();
-  const p = new Portfolio(assets.map(o => ModelAsset.fromJSON(o)), true);
+  const p = new Portfolio(assets.map(o => ModelAsset.fromJSON(o)), true, simConfigFromGlobals());
   await chronometer_run(p);
   return p;
 }

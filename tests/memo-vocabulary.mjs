@@ -60,6 +60,7 @@ import {
   global_setUserRetirementAge, global_getUserRetirementAge,
 } from '../js/globals.js';
 import { MEMO_PATTERNS } from '../js/portfolio-issues.js';
+import { simConfigFromGlobals } from '../js/globals.js';
 
 let passed = 0;
 let failed = 0;
@@ -222,7 +223,7 @@ async function run(assets, ages) {
   global_getUserStartAge();
   global_setUserRetirementAge(ages.retire);
   global_getUserRetirementAge();
-  const p = new Portfolio(assets.map(o => ModelAsset.fromJSON(o)), true);
+  const p = new Portfolio(assets.map(o => ModelAsset.fromJSON(o)), true, simConfigFromGlobals());
   await chronometer_run(p);
   return p;
 }

@@ -50,6 +50,7 @@ import {
   global_setInflationRate, global_getInflationRate,
   global_setBacktestYear, global_getBacktestYear,
 } from '../js/globals.js';
+import { simConfigFromGlobals } from '../js/globals.js';
 
 global_setUserStartAge(50); global_getUserStartAge();
 
@@ -88,7 +89,7 @@ async function run({ inflation = 0.031, backtestYear = 'current', years = 3 } = 
   global_setInflationRate(inflation); global_getInflationRate();
   global_setBacktestYear(backtestYear); global_getBacktestYear();
   setActiveTaxTable(new TaxTable());
-  const portfolio = new Portfolio(assets(finishAfter(years)), false);
+  const portfolio = new Portfolio(assets(finishAfter(years)), false, simConfigFromGlobals());
   await chronometer_run(portfolio);
   return portfolio;
 }

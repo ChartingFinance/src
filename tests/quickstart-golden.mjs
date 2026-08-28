@@ -66,6 +66,7 @@ import {
   global_setUserRetirementAge, global_getUserRetirementAge,
 } from '../js/globals.js';
 import { quickStartProfiles, buildQuickStart } from '../js/quick-start.js';
+import { simConfigFromGlobals } from '../js/globals.js';
 
 const PRINT_MODE = process.argv.includes('--print-actual');
 
@@ -964,7 +965,7 @@ for (const profile of quickStartProfiles) {
 
   stage0(profile, built, rawAssets);
 
-  const portfolio = new Portfolio(built.assets, true);
+  const portfolio = new Portfolio(built.assets, true, simConfigFromGlobals());
   portfolio.lifeEvents = built.lifeEvents;
   await chronometer_run(portfolio);
 

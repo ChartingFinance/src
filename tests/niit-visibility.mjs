@@ -33,6 +33,7 @@
  */
 
 import assert from 'node:assert/strict';
+import { simConfigFromGlobals } from '../js/globals.js';
 
 const store = {};
 globalThis.localStorage = {
@@ -68,7 +69,7 @@ async function buildFixture(fixture) {
   G.setActiveTaxTable(new TaxTable());
 
   const built = fixture.build();
-  const portfolio = new Portfolio(built.assets, false);
+  const portfolio = new Portfolio(built.assets, false, simConfigFromGlobals());
   if (built.lifeEvents) portfolio.lifeEvents = built.lifeEvents;
   if (built.guardrails) portfolio.guardrailsParams = built.guardrails;
   await chronometer_run(portfolio);

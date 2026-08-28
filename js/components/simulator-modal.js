@@ -25,6 +25,7 @@ import {
     charting_buildPortfolioMetric,
     charting_buildDateMarkers,
 } from '../charting.js';
+import { simConfigFromGlobals } from '../globals.js';
 
 // Mirrors the generation count simulator.js runs (runGeneticAlgorithm call).
 const TOTAL_GENERATIONS = 200;
@@ -170,7 +171,7 @@ class SimulatorModal extends LitElement {
         if (!canvas) return;
 
         // Build initial chart from current portfolio
-        const portfolio = new Portfolio(this.modelAssets, false);
+        const portfolio = new Portfolio(this.modelAssets, false, simConfigFromGlobals());
         if (this.lifeEvents?.length > 0) {
             portfolio.lifeEvents = this.lifeEvents.map(e => e.copy());
         }
@@ -271,7 +272,7 @@ class SimulatorModal extends LitElement {
         if (guardrailParams) this._bestGuardrailParams = guardrailParams;
 
         const assetModels = membrane_jsonObjectsToModelAssets(assets);
-        const p = new Portfolio(assetModels, false);
+        const p = new Portfolio(assetModels, false, simConfigFromGlobals());
         if (lifeEvents) {
             p.lifeEvents = lifeEvents.map(e => ModelLifeEvent.fromJSON(e));
         }

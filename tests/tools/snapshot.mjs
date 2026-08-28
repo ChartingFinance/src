@@ -97,6 +97,7 @@ import { chainFor } from '../../js/trace.js';
 import { logger, LogCategory } from '../../js/utils/logger.js';
 import * as G from '../../js/globals.js';
 import { SNAPSHOT_FIXTURES } from './fixtures.mjs';
+import { simConfigFromGlobals } from '../../js/globals.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BASELINE_DIR = join(HERE, '..', 'baselines');
@@ -391,7 +392,7 @@ async function runFixture(fixture) {
   applyConfig(fixture);
 
   const built = fixture.build();
-  const portfolio = new Portfolio(built.assets, false);
+  const portfolio = new Portfolio(built.assets, false, simConfigFromGlobals());
   if (built.lifeEvents) portfolio.lifeEvents = built.lifeEvents;
   if (built.guardrails) portfolio.guardrailsParams = built.guardrails;
 

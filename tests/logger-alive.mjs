@@ -46,6 +46,7 @@ import {
   global_setUserStartAge, global_getUserStartAge,
   global_setUserRetirementAge, global_getUserRetirementAge,
 } from '../js/globals.js';
+import { simConfigFromGlobals } from '../js/globals.js';
 
 let passed = 0, failed = 0;
 function check(label, fn) {
@@ -155,7 +156,7 @@ async function run(assets, ages) {
   setActiveTaxTable(new TaxTable());
   global_setUserStartAge(ages.start); global_getUserStartAge();
   global_setUserRetirementAge(ages.retire); global_getUserRetirementAge();
-  const p = new Portfolio(assets.map(o => ModelAsset.fromJSON(o)), false);
+  const p = new Portfolio(assets.map(o => ModelAsset.fromJSON(o)), false, simConfigFromGlobals());
   await chronometer_run(p);
   return p;
 }
@@ -190,7 +191,7 @@ logger.enable(LogCategory.SANITY);
 const broken = logger.capture(LogCategory.SANITY);
 let brokenLines = [];
 try {
-  const p = new Portfolio([], false);
+  const p = new Portfolio([], false, simConfigFromGlobals());
   p.modelAssets = [{
     eventsCheckedIndex: 0,
     events: [{ type: EventType.TRANSFER, kind: 'cash', amount: { amount: 1234.56 }, data: {} }],

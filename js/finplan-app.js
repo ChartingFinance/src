@@ -1108,7 +1108,7 @@ function calculate() {
         }
     }
 
-    const portfolio = new Portfolio(modelAssets, true);
+    const portfolio = new Portfolio(modelAssets, true, simConfigFromGlobals());
     portfolio.lifeEvents = appState.lifeEvents.map(e => e.copy());
 
     chronometer_run(portfolio);

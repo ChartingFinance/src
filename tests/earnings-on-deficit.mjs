@@ -42,6 +42,7 @@ import { chronometer_run } from '../js/chronometer.js';
 import { TaxTable } from '../js/taxes.js';
 import { setActiveTaxTable } from '../js/globals.js';
 import { Metric } from '../js/metric.js';
+import { simConfigFromGlobals } from '../js/globals.js';
 
 // ── Helpers ───────────────────────────────────────────────────────────
 const fmt = (n) => {
@@ -75,7 +76,7 @@ async function overdraw(instrument, name, rate = 0.06) {
       startCurrency: { amount: 3000 }, startBasisCurrency: { amount: 0 },
       annualReturnRate: { rate: 0 },
     },
-  ].map(o => ModelAsset.fromJSON(o)), true);
+  ].map(o => ModelAsset.fromJSON(o)), true, simConfigFromGlobals());
   await chronometer_run(p);
   return { portfolio: p, account: p.modelAssets.find(a => a.displayName === name) };
 }
@@ -138,7 +139,7 @@ const debtPortfolio = new Portfolio([
     startCurrency: { amount: -20000 }, startBasisCurrency: { amount: 0 },
     annualReturnRate: { rate: 0.18 },
   },
-].map(o => ModelAsset.fromJSON(o)), true);
+].map(o => ModelAsset.fromJSON(o)), true, simConfigFromGlobals());
 await chronometer_run(debtPortfolio);
 const card = debtPortfolio.modelAssets.find(a => a.displayName === 'Card');
 

@@ -35,6 +35,7 @@ import {
 } from '../js/globals.js';
 import { ModelLifeEvent, LifeEvent, LifeEventType } from '../js/life-event.js';
 import { Instrument, InstrumentType } from '../js/instruments/instrument.js';
+import { simConfigFromGlobals } from '../js/globals.js';
 
 // ── Set global age settings ────────────────────────────────────────────
 global_setUserStartAge(50);
@@ -609,7 +610,7 @@ console.log(`Portfolio dates: ${d.now.year}-${d.now.month} to ${finishYear}-1\n`
 setActiveTaxTable(new TaxTable());
 
 const baselineAssets = QUICK_START_DATA.map(obj => ModelAsset.fromJSON(obj));
-const baselinePortfolio = new Portfolio(baselineAssets, false);
+const baselinePortfolio = new Portfolio(baselineAssets, false, simConfigFromGlobals());
 baselinePortfolio.lifeEvents = buildLifeEvents();
 
 console.log('Running baseline simulation...');
@@ -627,7 +628,7 @@ console.log('Running GA optimizer (pop=30, gen=100, 100% terminal value objectiv
 setActiveTaxTable(new TaxTable());
 
 const gaAssets = QUICK_START_DATA.map(obj => ModelAsset.fromJSON(obj));
-const gaPortfolio = new Portfolio(gaAssets, false);
+const gaPortfolio = new Portfolio(gaAssets, false, simConfigFromGlobals());
 gaPortfolio.lifeEvents = buildLifeEvents();
 
 const simulator = new InlineSimulator(gaPortfolio, gaGuardrailParams, gaFitnessBalance);
@@ -641,7 +642,7 @@ console.log('Re-running optimized portfolio for yearly snapshots...');
 setActiveTaxTable(new TaxTable());
 
 const gaFinalAssets = QUICK_START_DATA.map(obj => ModelAsset.fromJSON(obj));
-const gaFinalPortfolio = new Portfolio(gaFinalAssets, false);
+const gaFinalPortfolio = new Portfolio(gaFinalAssets, false, simConfigFromGlobals());
 gaFinalPortfolio.lifeEvents = bestPortfolio.lifeEvents.map(e => e.copy());
 gaFinalPortfolio.guardrailsParams = simulator.bestGuardrailParams;
 

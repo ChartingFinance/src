@@ -99,6 +99,7 @@ import {
   global_setUserRetirementAge, global_getUserRetirementAge,
   global_setUserFinishAge, global_getUserFinishAge,
 } from '../js/globals.js';
+import { simConfigFromGlobals } from '../js/globals.js';
 
 // ── Profile, and a guard on its shape ─────────────────────────────────
 const profile = quickStartProfiles.find(p => p.key === 'earlyCareer');
@@ -258,7 +259,7 @@ Portfolio.prototype.monthlySanityCheck = function (currentDateInt) {
   }
 };
 
-const portfolio = new Portfolio(qs.assets, false);
+const portfolio = new Portfolio(qs.assets, false, simConfigFromGlobals());
 portfolio.lifeEvents = qs.lifeEvents.map(e => e.copy());
 await chronometer_run(portfolio);
 Portfolio.prototype.monthlySanityCheck = origCheck;

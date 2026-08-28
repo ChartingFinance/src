@@ -42,6 +42,7 @@ import { Portfolio } from '../js/portfolio.js';
 import { chronometer_run } from '../js/chronometer.js';
 import { TaxTable, ContributionKind } from '../js/taxes.js';
 import { setActiveTaxTable, activeTaxTable } from '../js/globals.js';
+import { simConfigFromGlobals } from '../js/globals.js';
 
 // ── Helpers ───────────────────────────────────────────────────────────
 const fmt = (n) => {
@@ -74,7 +75,7 @@ const memoSum = (asset, match) =>
 async function runPortfolio(assetData) {
   setActiveTaxTable(new TaxTable());
   const modelAssets = assetData.map(obj => ModelAsset.fromJSON(obj));
-  const portfolio = new Portfolio(modelAssets, true);
+  const portfolio = new Portfolio(modelAssets, true, simConfigFromGlobals());
   const iraLimit = activeTaxTable.limitFor(ContributionKind.IRA, portfolio.activeUser).amount;
   await chronometer_run(portfolio);
   return { portfolio, iraLimit };

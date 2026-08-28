@@ -51,6 +51,7 @@ import {
   global_setUserStartAge, global_getUserStartAge,
   global_setFilingAs, global_getFilingAs,
 } from '../js/globals.js';
+import { simConfigFromGlobals } from '../js/globals.js';
 
 global_setInflationRate(0); global_getInflationRate();
 global_setUserStartAge(50); global_getUserStartAge();  // well under RMD age
@@ -107,7 +108,7 @@ async function run(start, finish) {
     },
   ];
 
-  const portfolio = new Portfolio(assetData.map(o => ModelAsset.fromJSON(o)), false);
+  const portfolio = new Portfolio(assetData.map(o => ModelAsset.fromJSON(o)), false, simConfigFromGlobals());
   portfolio.guardrailsParams = {
     withdrawalRate: 4,
     preservation: 20,

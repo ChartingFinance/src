@@ -21,6 +21,7 @@ import {
     global_wage_growth_annual,
 } from './market-data.js';
 import { PriceIndex } from './utils/price-index.js';
+import { simConfigFromGlobals } from './globals.js';
 
 // ── Historical year pool (correlated sampling) ──────────────────
 
@@ -142,7 +143,7 @@ export function applyRandomRates(modelAssets, pool, dataMode = 'historical', bas
 
 function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, pool, dataMode) {
     const assets = ModelAsset.cloneArray(sourceAssets);
-    const portfolio = new Portfolio(assets, false);
+    const portfolio = new Portfolio(assets, false, simConfigFromGlobals());
     if (lifeEvents) portfolio.lifeEvents = lifeEvents.map(e => e.copy());
 
     if (guardrailParams) {
@@ -239,7 +240,7 @@ function percentile(sortedArr, p) {
 
 function computeBaseline(sourceAssets, guardrailParams, lifeEvents) {
     const baseAssets = ModelAsset.cloneArray(sourceAssets);
-    const basePf = new Portfolio(baseAssets, false);
+    const basePf = new Portfolio(baseAssets, false, simConfigFromGlobals());
     if (lifeEvents.length) basePf.lifeEvents = lifeEvents.map(e => e.copy());
     if (guardrailParams) basePf.guardrailsParams = guardrailParams;
     basePf.initializeChron();
@@ -322,7 +323,7 @@ export async function computeMonteCarlo(sourceAssets, {
 } = {}) {
     // Determine number of months from a reference run
     const refAssets = ModelAsset.cloneArray(sourceAssets);
-    const refPortfolio = new Portfolio(refAssets, false);
+    const refPortfolio = new Portfolio(refAssets, false, simConfigFromGlobals());
     if (lifeEvents.length) refPortfolio.lifeEvents = lifeEvents.map(e => e.copy());
     refPortfolio.initializeChron();
 

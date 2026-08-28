@@ -52,6 +52,7 @@ import { chronometer_run } from '../js/chronometer.js';
 import { TaxTable } from '../js/taxes.js';
 import { setActiveTaxTable } from '../js/globals.js';
 import { Metric } from '../js/metric.js';
+import { simConfigFromGlobals } from '../js/globals.js';
 
 // ── Helpers ───────────────────────────────────────────────────────────
 const fmt = (n) => {
@@ -106,7 +107,7 @@ function buildPortfolio(selfEmployed) {
       annualReturnRate: { rate: 0 },
     },
   ];
-  const portfolio = new Portfolio(data.map(o => ModelAsset.fromJSON(o)), true);
+  const portfolio = new Portfolio(data.map(o => ModelAsset.fromJSON(o)), true, simConfigFromGlobals());
   return portfolio;
 }
 
@@ -264,7 +265,7 @@ const pC = new Portfolio([
     startBasisCurrency: { amount: 1000 },
     annualReturnRate: { rate: 0 },
   },
-].map(o => ModelAsset.fromJSON(o)), true);
+].map(o => ModelAsset.fromJSON(o)), true, simConfigFromGlobals());
 await chronometer_run(pC);
 const flip = pC.modelAssets.find(a => a.displayName === 'Flip');
 const monthsC = pC.monthlyPackages.length;

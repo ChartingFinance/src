@@ -32,6 +32,7 @@ import { chronometer_run } from '../js/chronometer.js';
 import { TaxTable } from '../js/taxes.js';
 import { setActiveTaxTable } from '../js/globals.js';
 import { generatePortfolioMarkdown } from '../js/generators/finplan-ai.js';
+import { simConfigFromGlobals } from '../js/globals.js';
 
 // ── QuickStart data ───────────────────────────────────────────────────
 const QUICK_START_DATA = [
@@ -133,7 +134,7 @@ function check(label, fn) {
 setActiveTaxTable(new TaxTable());
 
 const modelAssets = QUICK_START_DATA.map(obj => ModelAsset.fromJSON(obj));
-const portfolio = new Portfolio(modelAssets, true);
+const portfolio = new Portfolio(modelAssets, true, simConfigFromGlobals());
 await chronometer_run(portfolio);
 
 const md = generatePortfolioMarkdown(portfolio);

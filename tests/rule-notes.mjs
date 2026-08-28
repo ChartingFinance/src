@@ -35,6 +35,7 @@ import {
   global_setUserRetirementAge, global_getUserRetirementAge,
 } from '../js/globals.js';
 import { makeRuleContext, ruleNotesFor, RULES } from '../js/rule-notes.js';
+import { simConfigFromGlobals } from '../js/globals.js';
 
 // ── Helpers ───────────────────────────────────────────────────────────
 let passed = 0;
@@ -88,7 +89,7 @@ async function run(data, ages) {
     global_setUserRetirementAge(ages.retire);
     global_getUserRetirementAge();
   }
-  const p = new Portfolio(data.map(o => ModelAsset.fromJSON(o)), true);
+  const p = new Portfolio(data.map(o => ModelAsset.fromJSON(o)), true, simConfigFromGlobals());
   await chronometer_run(p);
   return p;
 }
