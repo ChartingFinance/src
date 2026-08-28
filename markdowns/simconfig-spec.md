@@ -347,7 +347,7 @@ brackets beside it. `global_retirement_withholding_rate` and
 `global_deferred_allocation_age` stay module imports: both are `export const`,
 not settings state.
 
-**Step 4 — The bound environment. Split in two, and the split is the point.**
+**Step 4 — The bound environment. SHIPPED 2026-08-28. Split in two, and the split is the point.**
 
 Steps 1–3 were safe because every change used `X ?? global_X`. That fallback is
 *why* each commit could be bit-identical: the new path and the old one provably
@@ -408,6 +408,26 @@ read. Capturing the current year into the env would remove that nondeterminism
 and is tempting while touching exactly these getters — but it changes behaviour
 across a year boundary, which is a behavioural change wearing a refactor's
 clothes. Out of scope, on its own.
+
+**Step 4 outcome.** 4a was bit-identical, as designed. 4b produced exactly one
+failure — `tests/mc-worker-sanity.mjs`, which read `triggerDateInt` off a bare
+event to prove a worker snapshot shifts life-event triggers; the chain now has
+one more link and the test follows it. Three binding gaps the audit found that
+§7.1 had not listed:
+
+1. **The Portfolio constructor itself reads a derived getter.** `lastDateInt()`
+   maps `effectiveFinishDateInt` over every asset, and ran before binding — so
+   4b would have thrown on every Portfolio ever constructed. Binding now happens
+   in the constructor too; `initializeChron` rebinds once the tax table is on
+   the config.
+2. **`appState.lifeEvents` arrives from four places**, none through a Portfolio.
+   Bound in AppState's single setter, the one point all four funnel through.
+3. The two UI asset lists (§7.1's original finding), via `bindForEditing`.
+
+The UI binds an *editing* environment captured from current settings; a
+Portfolio still captures its own and rebinds everything it owns, so nothing the
+editor holds can reach a simulation. `model-asset.js` and `life-event.js` now
+import nothing from `globals.js`.
 
 **Step 5 — Flip the callers.** `run-plan.js` builds a config from the plan spec
 and **deletes `applySettings` entirely** — 32 global references go with it.
