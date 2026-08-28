@@ -13,10 +13,6 @@ import { Currency } from '../utils/currency.js';
 import { InstrumentType } from '../instruments/instrument.js';
 import { Metric } from '../metric.js';
 import { FundTransfer } from '../fund-transfer.js';
-import {
-    global_pension_withholding_rate,
-    global_social_security_withholding_rate,
-} from '../globals.js';
 import { logger, LogCategory } from '../utils/logger.js';
 import { EventType, ShortfallOrigin } from '../sim-event.js';
 import { withTrace, TraceKind } from '../trace.js';
@@ -170,8 +166,8 @@ export class PayrollEngine {
 
         const isPension = InstrumentType.isPension(modelAsset.instrument);
         const rate = isPension
-            ? global_pension_withholding_rate
-            : global_social_security_withholding_rate;
+            ? this.config.pensionWithholdingRate
+            : this.config.socialSecurityWithholdingRate;
 
         if (!(rate > 0)) return;
 

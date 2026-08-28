@@ -57,8 +57,8 @@ export class FinancialPackage {
         if (this.four01KContribution.amount > max401KDeduction.amount)
             this.four01KContribution.amount = max401KDeduction.amount;
 
-        if (this.propertyTaxes.amount > global_propertyTaxDeductionMax)
-            this.propertyTaxes.amount = global_propertyTaxDeductionMax;
+        if (this.propertyTaxes.amount > table.propertyTaxDeductionMax)
+            this.propertyTaxes.amount = table.propertyTaxDeductionMax;
 
     }
 
@@ -134,11 +134,18 @@ export class FinancialPackage {
         return total;
     }
 
-    deductiblePropertyTaxes() {
+    /**
+     * @param {TaxTable} [taxTable]  the run's table. Optional because the
+     *   remaining callers are display and logging paths (report-view, the
+     *   dump helpers) that hold no config; those keep the module global until
+     *   the UI carries one.
+     */
+    deductiblePropertyTaxes(taxTable = null) {
 
+        const cap = taxTable?.propertyTaxDeductionMax ?? global_propertyTaxDeductionMax;
         let ptDeduction = this.propertyTaxes.copy().flipSign();
-        if (ptDeduction.amount > global_propertyTaxDeductionMax)
-            ptDeduction.amount = global_propertyTaxDeductionMax;
+        if (ptDeduction.amount > cap)
+            ptDeduction.amount = cap;
         return ptDeduction.flipSign();
 
     }

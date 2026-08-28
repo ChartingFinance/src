@@ -200,7 +200,7 @@ function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, p
             portfolio.applyYear(currentDateInt);
             portfolio.config.taxTable.applyYear(portfolio.yearly, portfolio.activeUser);
             portfolio.yearlyChron(currentDateInt);
-            portfolio.config.taxTable.yearlyChron(undefined);
+            portfolio.config.taxTable.yearlyChron(portfolio.config.inflationRate);
         }
     }
 
@@ -261,7 +261,7 @@ function computeBaseline(sourceAssets, guardrailParams, lifeEvents) {
             basePf.applyYear(bd);
             basePf.config.taxTable.applyYear(basePf.yearly, basePf.activeUser);
             basePf.yearlyChron(bd);
-            basePf.config.taxTable.yearlyChron(undefined);
+            basePf.config.taxTable.yearlyChron(basePf.config.inflationRate);
         }
     }
     basePf.finalizeChron();

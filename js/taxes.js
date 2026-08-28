@@ -323,8 +323,14 @@ export class TaxTable {
      *   caller did before a config existed — kept so the default path stays
      *   bit-identical while callers migrate.
      */
-    constructor(filingAs = null) {
+    constructor(filingAs = null, propertyTaxDeductionMax = null) {
         this.filingAs = filingAs;
+        // A cap on a deduction is a parameter of the tax regime, like the
+        // brackets beside it — so it lives on the table rather than being
+        // threaded through every method that applies it. Null re-reads the
+        // global, keeping the default path bit-identical until step 5 hands
+        // the value in from the config.
+        this.configuredPropertyTaxDeductionMax = propertyTaxDeductionMax;
         this.taxes = null;     
         this.initializeChron();
         this.singleContributionLimitBelow50
@@ -340,6 +346,8 @@ export class TaxTable {
         // are gone, and the page now reads this. Swapping the table set above is
         // then the only edit a new tax year needs.
         this.baseYear = this.activeTaxTables.year;
+        this.propertyTaxDeductionMax =
+            this.configuredPropertyTaxDeductionMax ?? global_propertyTaxDeductionMax;
 
         // Selected BY KEY, not by array index and an else. The old form made
         // every unrecognised status file jointly by falling through, so 'MFJ'
@@ -770,8 +778,8 @@ export class TaxTable {
             propertyTaxDeduction.flipSign();
 
         // maximum property tax deduction
-        if (propertyTaxDeduction.amount > global_propertyTaxDeductionMax)
-            propertyTaxDeduction.amount = global_propertyTaxDeductionMax;
+        if (propertyTaxDeduction.amount > this.propertyTaxDeductionMax)
+            propertyTaxDeduction.amount = this.propertyTaxDeductionMax;
 
         if (propertyTaxDeduction.amount > 0)
             propertyTaxDeduction.flipSign();

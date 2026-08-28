@@ -14,7 +14,9 @@ import { InstrumentType } from '../instruments/instrument.js';
 import { Metric } from '../metric.js';
 import { FundTransferOneSided, FundTransfer } from '../fund-transfer.js';
 import { MonthsSpan } from '../utils/months-span.js';
-import { global_retirement_withholding_rate, global_allocate_household_tax } from '../globals.js';
+// global_retirement_withholding_rate is an `export const`, not settings state,
+// so it stays a module constant — see Spec 9 §3.
+import { global_retirement_withholding_rate } from '../globals.js';
 import { basisThisMonth, basisOverMonths, isAllocationEligible, planAllocation, NII_BASIS_METRICS } from '../tax-allocation.js';
 import { logger, LogCategory } from '../utils/logger.js';
 import { EventType, ShortfallOrigin } from '../sim-event.js';
@@ -592,7 +594,7 @@ export class TaxEngine {
      * @param {(asset) => number} basisOf
      */
     #planTaxAllocation(payment, basisOf) {
-        if (!global_allocate_household_tax) return [];
+        if (!this.config.allocateHouseholdTax) return [];
         if (!payment || payment.amount <= 0) return [];
 
         const age = this.activeUser?.age ?? 0;
