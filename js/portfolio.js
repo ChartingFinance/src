@@ -368,7 +368,13 @@ export class Portfolio {
         // table is reset exactly when the rest of the run state is, and the
         // relative order is unchanged — this runs before the engines are
         // built, as it did before.
-        this.config = withSimConfig(this.config, { taxTable: activeTaxTable });
+        // A config that ARRIVED with a table keeps it (Spec 9 step 5b): the MCP
+        // server now builds its own and never installs a module-level one, so
+        // preferring the global here would overwrite the run's table with null.
+        // Callers that still install one — the app, the workers, the tests —
+        // land on the fallback and are unchanged.
+        this.config = withSimConfig(this.config,
+            { taxTable: this.config.taxTable ?? activeTaxTable });
         this.config.taxTable.initializeChron();
 
         // Now that the config is final for this run, hand it to the assets and

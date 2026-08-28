@@ -388,7 +388,7 @@ export class ExpenseEngine {
 
         // 1. Estimate current marginal LTCG bracket based strictly on base income (W-2, etc)
         const { ordinaryTaxable: taxableIncome } =
-            taxableBasis(this.monthly, this.activeUser, { annualise: true });
+            taxableBasis(this.monthly, this.activeUser, { annualise: true, taxTable: this.config.taxTable });
 
         // Quick heuristic for marginal LTCG rate (0%, 15%, 20%)
         const ltcgRate = this.config.taxTable.getMarginalLTCGRate(taxableIncome);

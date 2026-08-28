@@ -314,7 +314,7 @@ export class TaxEngine {
         // that is what a true-up is for. Revisit when the close path gets a
         // stack base worth trusting: it currently stacks from $0 income, which
         // the 2026-07-25 review already has open.
-        const { ltcgStackBase } = taxableBasis(this.monthly, this.activeUser, { annualise: true });
+        const { ltcgStackBase } = taxableBasis(this.monthly, this.activeUser, { annualise: true, taxTable: this.config.taxTable });
         const isRealEstate = InstrumentType.isRealEstate(modelAsset.instrument);
         const isPrimaryHome = isRealEstate && modelAsset.isPrimaryHome;
 
@@ -429,7 +429,7 @@ export class TaxEngine {
         // Captured BEFORE the distribution is booked below, so the marginal
         // computation does not count it twice.
         const { ordinaryTaxable: annualizedIncome } =
-            taxableBasis(this.monthly, this.activeUser, { annualise: true });
+            taxableBasis(this.monthly, this.activeUser, { annualise: true, taxTable: this.config.taxTable });
 
         // Book the full balance as a taxable distribution, classified by the
         // source instrument (recordTransfer routes IRA vs 401K), plus the
@@ -494,7 +494,7 @@ export class TaxEngine {
     applyMonthlyTaxTrueUp() {
 
         // Compute total tax liability across ALL income (salary + capital gains + dividends + interest)
-        const { ordinaryTaxable } = taxableBasis(this.monthly, this.activeUser, { annualise: true });
+        const { ordinaryTaxable } = taxableBasis(this.monthly, this.activeUser, { annualise: true, taxTable: this.config.taxTable });
         let totalIncomeTax = this.config.taxTable.calculateYearlyIncomeTax(ordinaryTaxable).divide(12.0).flipSign();
 
         // What was already withheld from payroll on Day 1? (negative value)
@@ -671,7 +671,7 @@ export class TaxEngine {
      */
     applyAnnualNIIT(settledYearMonths) {
 
-        const { netInvestmentIncome, magi } = taxableBasis(this.yearly, this.activeUser);
+        const { netInvestmentIncome, magi } = taxableBasis(this.yearly, this.activeUser, { taxTable: this.config.taxTable });
         const niit = this.config.taxTable.calculateNIIT(netInvestmentIncome, magi);
 
         // Same $1 materiality gate the true-up uses. Returns BEFORE any trace
@@ -796,7 +796,7 @@ export class TaxEngine {
         // balancing against an untouched accumulator; taxableBasis does it the
         // same way.
         const { ordinaryTaxable: actualTaxableIncome, capitalGains: yearlyCapitalGains } =
-            taxableBasis(this.yearly, this.activeUser);
+            taxableBasis(this.yearly, this.activeUser, { taxTable: this.config.taxTable });
         const actualIncomeTax = this.config.taxTable.calculateYearlyIncomeTax(actualTaxableIncome);
 
         // The exclusion can never exceed the gains it came from, so a zero base

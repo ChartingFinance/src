@@ -306,7 +306,8 @@ export const global_retirement_withholding_rate = 0.10;
  * neutrality assertion in tests/tax-allocation.mjs, and it is what makes the
  * flag a real rollback rather than a decoration.
  */
-export let global_allocate_household_tax = false;
+export const global_default_allocate_household_tax = false;
+export let global_allocate_household_tax = global_default_allocate_household_tax;
 
 export function global_setAllocateHouseholdTax(value) {
     global_allocate_household_tax = !!value;
@@ -342,7 +343,8 @@ export const global_deferred_allocation_age = 60;
  * debiting an account afterwards the way IRA/401(K) withholding does. A pension
  * is a flow with no balance to debit — see markdowns/retirement-income-withholding-spec.md.
  */
-export let global_pension_withholding_rate = 0.10;
+export const global_default_pension_withholding_rate = 0.10;
+export let global_pension_withholding_rate = global_default_pension_withholding_rate;
 
 export function global_setPensionWithholdingRate(value) {
     global_pension_withholding_rate = Number(value) || 0;
@@ -361,7 +363,8 @@ export function global_setPensionWithholdingRate(value) {
  * unattributed unless a rate is elected, which is over half of taxable income in
  * a fully-retired plan. The mechanism is there the moment someone chooses it.
  */
-export let global_social_security_withholding_rate = 0.0;
+export const global_default_social_security_withholding_rate = 0.0;
+export let global_social_security_withholding_rate = global_default_social_security_withholding_rate;
 
 export function global_setSocialSecurityWithholdingRate(value) {
     global_social_security_withholding_rate = Number(value) || 0;

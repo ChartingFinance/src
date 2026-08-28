@@ -55,15 +55,18 @@ import { ModelLifeEvent } from '../life-event.js';
 import { detectIssues } from '../portfolio-issues.js';
 import { buildQuickStart, quickStartProfiles } from '../quick-start.js';
 import {
-    setActiveTaxTable, asFilingStatus,
-    global_reset, global_initialize,
-    global_setInflationRate, global_getInflationRate,
-    global_setFilingAs, global_getFilingAs,
-    global_setUserStartAge, global_getUserStartAge,
-    global_setUserRetirementAge, global_getUserRetirementAge,
-    global_setUserFinishAge, global_getUserFinishAge,
+    asFilingStatus,
+    global_initialize,
     global_default_inflationRate, global_default_filingAs,
+    global_default_propertyTaxDeductionMax,
+    global_default_user_startAge, global_default_user_retirementAge,
+    global_default_user_finishAge,
+    global_default_allocate_household_tax,
+    global_default_pension_withholding_rate,
+    global_default_social_security_withholding_rate,
+    global_default_simDataMode,
 } from '../globals.js';
+import { makeSimConfig } from '../sim-config.js';
 
 /**
  * Build a plan spec from a Quick Start profile key.
@@ -101,33 +104,55 @@ export function planFromProfile(profileKey, ageOverrides = null) {
 }
 
 /**
- * Apply a spec's settings to the module-level globals.
+ * Build this run's configuration from the plan spec.
  *
- * Resets FIRST. These are module state shared by every plan this process runs,
- * and a server handling two plans in sequence would otherwise leak the first
- * one's filing status and inflation into the second — the same hazard as a Web
- * Worker booting on defaults, and the reason global_workerSnapshot() exists.
+ * Spec 9 step 5b. This replaces `applySettings()`, which mutated eight module
+ * globals and then built a TaxTable that read one of them back. That function
+ * carried a comment explaining that the TaxTable had to be constructed AFTER
+ * filingAs — a six-step sequence with an ordering constraint, which every
+ * headless caller had to perform correctly. Here the ordering is structural:
+ * `filingAs` is resolved before it is handed to the table, in one expression.
+ *
+ * It lives in this file rather than in sim-config.js because it needs the
+ * `global_default_*` values, and sim-config.js must import nothing from
+ * globals.js (§4.6). This is the MCP layer building a config from an MCP
+ * payload, which is exactly where §4.6's table puts it.
+ *
+ * Nothing here writes to a global, so two plans in one process no longer share
+ * a configuration — which is the whole point of the migration, and the reason
+ * the run-handle cache stops being a correctness requirement.
  */
-function applySettings(settings = {}) {
-    global_reset();
-
-    const inflationRate = settings.inflationRate ?? global_default_inflationRate;
-    global_setInflationRate(inflationRate);
-    global_getInflationRate();
+export function simConfigFromPlanSpec(spec) {
+    const settings = spec?.settings ?? {};
 
     // Untrusted: a spec can arrive from an agent or an old share URL. Coerce
     // rather than throw, matching how the app treats an imported portfolio.
-    global_setFilingAs(asFilingStatus(settings.filingAs, global_default_filingAs));
-    global_getFilingAs();
+    const filingAs = asFilingStatus(settings.filingAs, global_default_filingAs);
+    const propertyTaxDeductionMax = global_default_propertyTaxDeductionMax;
 
-    if (settings.startAge != null)      { global_setUserStartAge(settings.startAge);           global_getUserStartAge(); }
-    if (settings.retirementAge != null) { global_setUserRetirementAge(settings.retirementAge); global_getUserRetirementAge(); }
-    if (settings.finishAge != null)     { global_setUserFinishAge(settings.finishAge);         global_getUserFinishAge(); }
+    return makeSimConfig({
+        inflationRate: settings.inflationRate ?? global_default_inflationRate,
+        filingAs,
+        startAge: settings.startAge ?? global_default_user_startAge,
+        retirementAge: settings.retirementAge ?? global_default_user_retirementAge,
+        finishAge: settings.finishAge ?? global_default_user_finishAge,
+        propertyTaxDeductionMax,
 
-    // AFTER filingAs. TaxTable.initializeChron() reads global_filingAs at
-    // construction and throws on an unknown one; building it earlier would
-    // silently pin the previous plan's tables.
-    setActiveTaxTable(new TaxTable());
+        // Not carried by the share format, and deliberately taken from the
+        // defaults rather than from whatever this process happens to hold. A
+        // plan spec describes a plan; it must not inherit ambient state from a
+        // previous caller. In a fresh server process these ARE the current
+        // values, so this is identical to what applySettings produced.
+        allocateHouseholdTax: global_default_allocate_household_tax,
+        pensionWithholdingRate: global_default_pension_withholding_rate,
+        socialSecurityWithholdingRate: global_default_social_security_withholding_rate,
+        backtestYear: 'current',
+        simDataMode: global_default_simDataMode,
+
+        // Built from the resolved status, not from a global it might disagree
+        // with. This is the ordering constraint, dissolved.
+        taxTable: new TaxTable(filingAs, propertyTaxDeductionMax),
+    });
 }
 
 /**
@@ -143,11 +168,11 @@ export async function runPlan(spec, { includeReconciliation = false } = {}) {
         throw new Error('Plan spec has no modelAssets — nothing to simulate.');
     }
 
-    applySettings(spec.settings);
+    const config = simConfigFromPlanSpec(spec);
 
     const assets = membrane_rawDataToModelAssets(spec.modelAssets);
 
-    const portfolio = new Portfolio(assets, false);
+    const portfolio = new Portfolio(assets, false, config);
 
     // Not optional. With no life events nothing ever transitions: salary never
     // closes, retirement-phase transfers never activate, and the run reports an
