@@ -429,7 +429,41 @@ Portfolio still captures its own and rebinds everything it owns, so nothing the
 editor holds can reach a simulation. `model-asset.js` and `life-event.js` now
 import nothing from `globals.js`.
 
-**Step 5 — Flip the callers.** `run-plan.js` builds a config from the plan spec
+**Step 5 — Flip the callers. SHIPPED 2026-08-28**, in three parts.
+
+**5a** moved `taxTable.initializeChron()` inside `Portfolio.initializeChron()`.
+Every caller had been running it on the line immediately above — a two-line
+sequence repeated at four sites that a caller can get wrong. Bit-identical.
+
+**5b** replaced `applySettings` with `simConfigFromPlanSpec`. It lives in
+`run-plan.js`, not `sim-config.js`, because it needs the `global_default_*`
+values — which is where §4.6's table puts it. Three of those defaults had no
+name and are now consts.
+
+Removing the module-level install is what exposed the remaining ambient reads,
+which is the point of the step: `Portfolio.initializeChron` overwrote a supplied
+table with the global, and seven `taxableBasis` calls across the three engines
+relied on the ambient one. Both crashed on a null table immediately. Four
+assertions in `mcp-run-plan` read `global_filingAs`/`activeTaxTable` and now
+read the run's own config — the stronger claim, and one of them can now assert
+something previously impossible: that two runs held *different* tax tables.
+
+**Verified concurrent.** Two plans running at once keep their filing statuses
+and tables apart and produce byte-identical results to running them
+sequentially. That is the hazard §1 opens with, now closed rather than unlikely.
+
+**5c** added `allocateHouseholdTax` and both withholding rates to
+`global_workerSnapshot()`. All three are read by the engine and none was in the
+payload, so a Monte Carlo worker ran on its own defaults for them. Latent — they
+all sit at defaults today — but turning spec 4a on would have given MC a
+different tax regime than the projection beside it.
+
+**Not done here:** the app and the remaining worker sites still rely on
+`Portfolio`'s globals-backed config default. Passing `simConfigFromGlobals()`
+explicitly is cosmetic while that default exists, so it belongs with step 6,
+which removes it.
+
+**Step 5 — original plan.** `run-plan.js` builds a config from the plan spec
 and **deletes `applySettings` entirely** — 32 global references go with it.
 `finplan-app.js` builds one from UI state. Workers already ship a snapshot; they
 now ship a config. **This is where behaviour actually changes** (§7.3).
