@@ -245,7 +245,7 @@ const calAsset = makeEquity('CalEquity', false);
 const baseRates = new Map([[calAsset, calAsset.annualReturnRate.rate]]);
 const isPoolDeviation = (d) => poolValues.some(v => Math.abs((v - fullPool.means.sp500) - d) < 1e-12);
 for (let i = 0; i < 20; i++) {
-    applyRandomRates([calAsset], fullPool, 'calibrated', baseRates);
+    applyRandomRates([calAsset], fullPool, 'calibrated', baseRates, 0.031);
     const deviation = calAsset.annualReturnRate.rate - 0.09;
     assert.ok(isPoolDeviation(deviation),
         `calibrated: rate is configured 9% plus a pool deviation (got dev ${deviation})`);

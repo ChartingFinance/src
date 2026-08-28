@@ -16,7 +16,7 @@ import { FundTransferOneSided, FundTransfer } from '../fund-transfer.js';
 import { MonthsSpan } from '../utils/months-span.js';
 // global_retirement_withholding_rate is an `export const`, not settings state,
 // so it stays a module constant — see Spec 9 §3.
-import { global_retirement_withholding_rate } from '../globals.js';
+import { global_retirement_withholding_rate } from '../policy-constants.js';
 import { basisThisMonth, basisOverMonths, isAllocationEligible, planAllocation, NII_BASIS_METRICS } from '../tax-allocation.js';
 import { logger, LogCategory } from '../utils/logger.js';
 import { EventType, ShortfallOrigin } from '../sim-event.js';

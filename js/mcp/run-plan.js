@@ -54,19 +54,8 @@ import { membrane_rawDataToModelAssets } from '../membrane.js';
 import { ModelLifeEvent } from '../life-event.js';
 import { detectIssues } from '../portfolio-issues.js';
 import { buildQuickStart, quickStartProfiles } from '../quick-start.js';
-import {
-    asFilingStatus,
-    global_initialize,
-    global_default_inflationRate, global_default_filingAs,
-    global_default_propertyTaxDeductionMax,
-    global_default_user_startAge, global_default_user_retirementAge,
-    global_default_user_finishAge,
-    global_default_allocate_household_tax,
-    global_default_pension_withholding_rate,
-    global_default_social_security_withholding_rate,
-    global_default_simDataMode,
-} from '../globals.js';
-import { makeSimConfig } from '../sim-config.js';
+import { asFilingStatus } from '../filing-status.js';
+import { makeSimConfig, SIM_CONFIG_DEFAULTS } from '../sim-config.js';
 
 /**
  * Build a plan spec from a Quick Start profile key.
@@ -90,7 +79,7 @@ export function planFromProfile(profileKey, ageOverrides = null) {
     return {
         name: profile.label,
         settings: {
-            inflationRate: global_default_inflationRate,
+            inflationRate: SIM_CONFIG_DEFAULTS.inflationRate,
             // From the profile, never assumed. A joint profile that files Single
             // gets the wrong brackets, the wrong contribution limits and half
             // the home-sale exclusion.
@@ -127,15 +116,16 @@ export function simConfigFromPlanSpec(spec) {
 
     // Untrusted: a spec can arrive from an agent or an old share URL. Coerce
     // rather than throw, matching how the app treats an imported portfolio.
-    const filingAs = asFilingStatus(settings.filingAs, global_default_filingAs);
-    const propertyTaxDeductionMax = global_default_propertyTaxDeductionMax;
+    const D = SIM_CONFIG_DEFAULTS;
+    const filingAs = asFilingStatus(settings.filingAs, D.filingAs);
+    const propertyTaxDeductionMax = D.propertyTaxDeductionMax;
 
     return makeSimConfig({
-        inflationRate: settings.inflationRate ?? global_default_inflationRate,
+        inflationRate: settings.inflationRate ?? D.inflationRate,
         filingAs,
-        startAge: settings.startAge ?? global_default_user_startAge,
-        retirementAge: settings.retirementAge ?? global_default_user_retirementAge,
-        finishAge: settings.finishAge ?? global_default_user_finishAge,
+        startAge: settings.startAge ?? D.startAge,
+        retirementAge: settings.retirementAge ?? D.retirementAge,
+        finishAge: settings.finishAge ?? D.finishAge,
         propertyTaxDeductionMax,
 
         // Not carried by the share format, and deliberately taken from the
@@ -143,11 +133,11 @@ export function simConfigFromPlanSpec(spec) {
         // plan spec describes a plan; it must not inherit ambient state from a
         // previous caller. In a fresh server process these ARE the current
         // values, so this is identical to what applySettings produced.
-        allocateHouseholdTax: global_default_allocate_household_tax,
-        pensionWithholdingRate: global_default_pension_withholding_rate,
-        socialSecurityWithholdingRate: global_default_social_security_withholding_rate,
-        backtestYear: 'current',
-        simDataMode: global_default_simDataMode,
+        allocateHouseholdTax: D.allocateHouseholdTax,
+        pensionWithholdingRate: D.pensionWithholdingRate,
+        socialSecurityWithholdingRate: D.socialSecurityWithholdingRate,
+        backtestYear: D.backtestYear,
+        simDataMode: D.simDataMode,
 
         // Built from the resolved status, not from a global it might disagree
         // with. This is the ordering constraint, dissolved.
@@ -258,6 +248,3 @@ export function listProfiles() {
         tagline: p.tagline,
     }));
 }
-
-/** `global_initialize` is re-exported so a host can prime localStorage first. */
-export { global_initialize };

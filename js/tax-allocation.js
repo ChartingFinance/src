@@ -26,7 +26,7 @@
 
 import { Metric } from './metric.js';
 import { InstrumentType } from './instruments/instrument.js';
-import { global_deferred_allocation_age } from './globals.js';
+import { global_deferred_allocation_age } from './policy-constants.js';
 
 /**
  * The metrics that make up an asset's contribution to federal taxable income.

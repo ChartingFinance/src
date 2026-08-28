@@ -24,8 +24,9 @@ export class WithholdingResult {
   }
 }
 import { logger, LogCategory } from './utils/logger.js';
-import { global_filingAs, global_inflationRate, global_propertyTaxDeductionMax,
-         FilingStatus, FILING_STATUSES } from './globals.js';
+import { FilingStatus, FILING_STATUSES } from './filing-status.js';
+import { global_filingAs, global_inflationRate,
+         global_propertyTaxDeductionMax } from './globals.js';
 import { taxableBasis } from './tax-basis.js';
 
 /**

@@ -15,12 +15,11 @@ import { Metric } from './metric.js';
 import { DateInt, MONTH_NAMES } from './utils/date-int.js';
 import { InstrumentType, Instrument } from './instruments/instrument.js';
 import {
-    global_inflationRate,
     global_sp500_annual_returns,
     global_10yr_treasury_rates,
     global_cpi_annual_inflation,
     global_wage_growth_annual,
-} from './globals.js';
+} from './market-data.js';
 import { PriceIndex } from './utils/price-index.js';
 
 // ── Historical year pool (correlated sampling) ──────────────────
@@ -68,7 +67,23 @@ export function buildYearPool(fromYear = null) {
  *   added to the asset's configured rate (baseRates) — the user's assumptions
  *   carrying history's turbulence and correlation.
  */
-export function applyRandomRates(modelAssets, pool, dataMode = 'historical', baseRates = null) {
+export function applyRandomRates(modelAssets, pool, dataMode = 'historical', baseRates = null,
+                                 inflationRate = null) {
+    // Calibrated mode re-centres the drawn CPI on the PLAN'S rate, so it needs
+    // that rate. Required rather than defaulted: `null + deviation` is a
+    // number, so a caller that forgot would get a quietly wrong inflation path
+    // instead of an error — and the only assertion on this function today
+    // reads the asset rates, not the returned inflation, so nothing would have
+    // noticed. Historical mode never uses it.
+    const calibrationBase = dataMode === 'calibrated'
+        ? (() => {
+            if (typeof inflationRate !== 'number' || !Number.isFinite(inflationRate)) {
+                throw new Error('applyRandomRates: calibrated mode needs the plan inflationRate; '
+                    + 'got ' + JSON.stringify(inflationRate));
+            }
+            return inflationRate;
+        })()
+        : 0;
     // Returns the draw so callers can build a matching real-dollar deflator;
     // existing callers that ignore the return are unaffected.
     const year = pool.years[Math.floor(Math.random() * pool.years.length)];
@@ -119,7 +134,7 @@ export function applyRandomRates(modelAssets, pool, dataMode = 'historical', bas
         year,
         sp500, treasury, wage,
         cpi,
-        inflationRate: calibrated ? global_inflationRate + (cpi - pool.means.cpi) : cpi,
+        inflationRate: calibrated ? calibrationBase + (cpi - pool.means.cpi) : cpi,
     };
 }
 
@@ -151,10 +166,11 @@ function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, p
     // cannot be deflated after the fact. Percentiles of deflated values are
     // not deflated percentiles. Deflate here, per run, then take percentiles
     // over the real series separately.
-    const priceIndex = new PriceIndex(global_inflationRate);
+    const priceIndex = new PriceIndex(portfolio.config.inflationRate);
 
     if (withdrawalPhase) {
-        const draw = applyRandomRates(portfolio.modelAssets, pool, dataMode, baseRates);
+        const draw = applyRandomRates(portfolio.modelAssets, pool, dataMode, baseRates,
+                                      portfolio.config.inflationRate);
         priceIndex.setAnnualRate(draw.inflationRate);
     }
 
@@ -191,7 +207,8 @@ function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, p
                 withdrawalPhase = true;
             }
             if (withdrawalPhase) {
-                const draw = applyRandomRates(portfolio.modelAssets, pool, dataMode, baseRates);
+                const draw = applyRandomRates(portfolio.modelAssets, pool, dataMode, baseRates,
+                                      portfolio.config.inflationRate);
                 priceIndex.setAnnualRate(draw.inflationRate);
             }
             portfolio.applyGuardrails(currentDateInt);
@@ -233,7 +250,7 @@ function computeBaseline(sourceAssets, guardrailParams, lifeEvents) {
     const baselineDataReal = [];
     // The baseline runs on the CONFIGURED rates, never randomized, so its
     // price path is the plan's own general inflation rate throughout.
-    const priceIndex = new PriceIndex(global_inflationRate);
+    const priceIndex = new PriceIndex(basePf.config.inflationRate);
 
     while (bd.toInt() <= bLast.toInt()) {
         if (bd.day === 1) {

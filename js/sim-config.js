@@ -42,7 +42,36 @@
  * store lives.
  */
 
-import { isFilingStatus } from './filing-status.js';
+import { FilingStatus, isFilingStatus } from './filing-status.js';
+
+/**
+ * The engine's own defaults (Spec 9 step 6).
+ *
+ * They used to live in globals.js as `global_default_*`, which made the
+ * settings store the source of truth for what the engine does when told
+ * nothing. That is backwards, and it was the last thing keeping globals.js in
+ * the engine's import closure: `run-plan.js` needed these to build a config
+ * from a plan spec, and importing them dragged the whole settings store in
+ * behind them.
+ *
+ * The direction is now right: the engine owns its defaults, and globals.js —
+ * the browser-side settings store — imports them to seed what it persists.
+ * globals.js re-exports each under its old `global_default_*` name, so every
+ * existing caller is unaffected.
+ */
+export const SIM_CONFIG_DEFAULTS = Object.freeze({
+    inflationRate: 0.031,
+    filingAs: FilingStatus.SINGLE,
+    startAge: 50,
+    retirementAge: 67,
+    finishAge: 87,
+    propertyTaxDeductionMax: 40000.0,
+    allocateHouseholdTax: false,
+    pensionWithholdingRate: 0.10,
+    socialSecurityWithholdingRate: 0.0,
+    backtestYear: 'current',
+    simDataMode: 'calibrated',
+});
 
 /**
  * Every field the engine reads. Deliberately a superset of
