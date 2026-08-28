@@ -468,7 +468,48 @@ and **deletes `applySettings` entirely** — 32 global references go with it.
 `finplan-app.js` builds one from UI state. Workers already ship a snapshot; they
 now ship a config. **This is where behaviour actually changes** (§7.3).
 
-**Step 6 — Cut the engine's last link to the settings store.** Drop the
+**Step 6 — Cut the engine's last link to the settings store. PARTLY SHIPPED
+2026-08-28.**
+
+**6a — separate the three things living in globals.js.** Only one was a setting.
+`js/market-data.js` took the four historical series (immutable, year-keyed, no
+setter); `js/policy-constants.js` took `global_retirement_withholding_rate` and
+`global_deferred_allocation_age` (both `export const`); `SIM_CONFIG_DEFAULTS`
+moved into `sim-config.js`, with globals.js now deriving its ten
+`global_default_*` from it. That last one mattered most: the settings store had
+been the source of truth for what the engine does when told nothing, which is
+backwards, and it was what kept `run-plan.js` importing globals.
+
+Two things fell out. `mc-compute` still read `global_inflationRate` at three
+sites steps 3 and 5 had missed. And `applyRandomRates`'s new rate argument is
+**required in calibrated mode rather than defaulted** — `null + deviation` is a
+number, so a caller that forgot would get a quietly wrong inflation path, and
+the only test touching that function reads the asset rates rather than the
+returned inflation.
+
+`chronometer`, `mc-compute`, `tax-engine`, `tax-allocation` and `run-plan` no
+longer import globals.js at all.
+
+**6b — `config` is now required on `Portfolio`.** 55 sites across 42 files pass
+`simConfigFromGlobals()` explicitly. Provably behaviour-neutral, since the value
+passed is exactly what the default computed; bit-identical snapshot confirms.
+
+**Still open before the exemption can go.** `globals.js` remains in the closure
+through four files, all holding fallbacks:
+
+| file | holds | needs |
+| :--- | :--- | :--- |
+| `portfolio.js` | `activeTaxTable` | `simConfigFromGlobals()` to build a table |
+| `taxes.js` | `filingAs`, `inflationRate`, `propertyTaxDeductionMax` | `TaxTable` args required (~58 sites) |
+| `financial-package.js` | `activeTaxTable`, `propertyTaxDeductionMax` | callers to pass them |
+| `tax-basis.js` | `activeTaxTable` | callers to pass it |
+
+The order is forced: `taxes.js` must stop importing globals.js **first**, or
+`globals.js` cannot import `TaxTable` to build one without a cycle. Then
+`simConfigFromGlobals()` builds the table, and the other three fallbacks drop
+out. Only then can `js/mcp/polyfill.js` and the exemption be deleted.
+
+**Step 6 — original plan.** Drop the
 globals-default from `Portfolio` so `config` is required, migrate the 45 test
 sites to pass one (mechanical; snapshot must stay bit-identical), delete
 `js/mcp/polyfill.js`, and **delete the `globals.js` exemption from
