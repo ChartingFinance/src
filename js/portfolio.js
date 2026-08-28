@@ -358,21 +358,18 @@ export class Portfolio {
 
     initializeChron() {
 
-        // Bind the run's tax table into the config (Spec 9 step 2).
+        // Resolve the run's tax table onto the config, and reset it (Spec 9
+        // step 5a).
         //
-        // HERE, and not at construction, because this is the one moment the
-        // table is guaranteed to be the right one: all four callers —
-        // chronometer_run and the three entry points in mc-compute — call
+        // Both halves used to live at the call sites: every caller ran
         // `activeTaxTable.initializeChron()` on the line immediately above
-        // `portfolio.initializeChron()`. Reading it at Portfolio construction
-        // would instead capture whatever table happened to be installed when
-        // the assets were hydrated, which for the app is a different moment
-        // entirely.
-        //
-        // Reading the module global at all is the migration crutch, the same
-        // one as the globals-backed config default. Step 5 hands the table in
-        // with the config and this read goes away.
+        // `portfolio.initializeChron()`, which is a sequence a caller can get
+        // wrong and three of them had to repeat. Owning it here means the
+        // table is reset exactly when the rest of the run state is, and the
+        // relative order is unchanged — this runs before the engines are
+        // built, as it did before.
         this.config = withSimConfig(this.config, { taxTable: activeTaxTable });
+        this.config.taxTable.initializeChron();
 
         // Now that the config is final for this run, hand it to the assets and
         // life events. Must follow the taxTable binding above: withSimConfig

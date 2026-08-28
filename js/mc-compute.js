@@ -14,7 +14,6 @@ import { ModelAsset } from './model-asset.js';
 import { Metric } from './metric.js';
 import { DateInt, MONTH_NAMES } from './utils/date-int.js';
 import { InstrumentType, Instrument } from './instruments/instrument.js';
-import { activeTaxTable } from './globals.js';
 import {
     global_inflationRate,
     global_sp500_annual_returns,
@@ -135,7 +134,6 @@ function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, p
         portfolio.guardrailsParams = guardrailParams;
     }
 
-    activeTaxTable.initializeChron();
     portfolio.initializeChron();
 
     // Calibrated mode re-centers deviations on each asset's configured rate —
@@ -227,7 +225,6 @@ function computeBaseline(sourceAssets, guardrailParams, lifeEvents) {
     const basePf = new Portfolio(baseAssets, false);
     if (lifeEvents.length) basePf.lifeEvents = lifeEvents.map(e => e.copy());
     if (guardrailParams) basePf.guardrailsParams = guardrailParams;
-    activeTaxTable.initializeChron();
     basePf.initializeChron();
 
     let bd = new DateInt(basePf.firstDateInt.toInt());
@@ -310,7 +307,6 @@ export async function computeMonteCarlo(sourceAssets, {
     const refAssets = ModelAsset.cloneArray(sourceAssets);
     const refPortfolio = new Portfolio(refAssets, false);
     if (lifeEvents.length) refPortfolio.lifeEvents = lifeEvents.map(e => e.copy());
-    activeTaxTable.initializeChron();
     refPortfolio.initializeChron();
 
     let d = new DateInt(refPortfolio.firstDateInt.toInt());

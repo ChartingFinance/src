@@ -1,7 +1,7 @@
 import { DateInt } from './utils/date-int.js';
 import { logger, LogCategory } from './utils/logger.js';
 import { resetTraces, traceScopes, assertNoOpenScopes } from './trace.js';
-import { activeTaxTable, global_backtestYear, global_inflationRate, global_sp500_annual_returns, global_10yr_treasury_rates, global_cpi_annual_inflation, global_wage_growth_annual } from './globals.js';
+import { global_sp500_annual_returns, global_10yr_treasury_rates, global_cpi_annual_inflation, global_wage_growth_annual } from './globals.js';
 import { Instrument, InstrumentType } from './instruments/instrument.js';
 import { PriceIndex } from './utils/price-index.js';
 
@@ -95,7 +95,7 @@ export async function chronometer_run(portfolio) {
     }
 
     let totalMonths = 0;
-    activeTaxTable.initializeChron();
+    // The table is reset inside portfolio.initializeChron() as of step 5a.
     portfolio.initializeChron();
 
     const backtesting = portfolio.config.backtestYear !== 'current';
