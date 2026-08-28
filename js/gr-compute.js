@@ -13,7 +13,6 @@ import { Metric } from './metric.js';
 import { DateInt, MONTH_NAMES } from './utils/date-int.js';
 import { chronometer_run } from './chronometer.js';
 import { PriceIndex } from './utils/price-index.js';
-import { simConfigFromGlobals } from './globals.js';
 
 // ── Helpers ──────────────────────────────────────────────────────
 
@@ -71,9 +70,13 @@ export async function computeGuardrails(sourceAssets, {
     params,
     retirementDateInt = null,
     lifeEvents = [],
+    // Supplied by the caller (Spec 9 step 6): the worker builds one from the
+    // settings payload, the app from its own. This module no longer reaches
+    // for the settings store itself.
+    config,
 } = {}) {
     const assets = ModelAsset.cloneArray(sourceAssets);
-    const portfolio = new Portfolio(assets, false, simConfigFromGlobals());
+    const portfolio = new Portfolio(assets, false, config);
     if (lifeEvents.length) portfolio.lifeEvents = lifeEvents.map(e => e.copy());
 
     // Activate guardrails on this portfolio

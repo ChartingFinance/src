@@ -27,7 +27,7 @@
 
 import assert from 'node:assert/strict';
 
-import '../js/mcp/polyfill.js';
+import './tools/localstorage-polyfill.js';
 import { makeSimConfig, withSimConfig, SIM_CONFIG_FIELDS } from '../js/sim-config.js';
 import { Portfolio } from '../js/portfolio.js';
 import {
@@ -170,10 +170,20 @@ check('copy() carries the source run\'s config, not a fresh capture', () => {
 
 console.log('\n── Shape ──\n');
 
-check('taxTable is present and null — step 2 fills it', () => {
-    const config = makeSimConfig(complete());
-    assert.ok('taxTable' in config, 'taxTable missing from the shape');
-    assert.equal(config.taxTable, null);
+check('simConfigFromGlobals builds a table from the current filing status', () => {
+    // Since step 6. `makeSimConfig` still accepts a config without one — it is
+    // a shape, not a policy — but a Portfolio rejects it, and every real
+    // builder supplies one. Two captures get two tables, which is what makes
+    // the table per-run rather than a module-level singleton.
+    global_reset();
+    global_setFilingAs('Single'); global_getFilingAs();
+    const single = simConfigFromGlobals();
+    global_setFilingAs('MFJ'); global_getFilingAs();
+    const joint = simConfigFromGlobals();
+
+    assert.equal(single.taxTable.activeHomeSaleExclusion, 250000);
+    assert.equal(joint.taxTable.activeHomeSaleExclusion, 500000);
+    assert.notEqual(single.taxTable, joint.taxTable, 'both captures shared one table');
 });
 
 check('withSimConfig returns a new frozen config and leaves the original alone', () => {

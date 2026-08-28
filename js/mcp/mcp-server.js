@@ -15,13 +15,15 @@
  * constraint, and the previous version of this file got three of them
  * wrong by doing it inline. See the module comment in run-plan.js.
  *
+ * As of Spec 9 step 6 this server needs no localStorage polyfill. The engine
+ * takes its configuration as a value, so nothing on the run path reaches for
+ * browser storage — verified by running a full plan, report and causal chain
+ * with no localStorage defined at all.
+ *
  * NOTHING MAY WRITE TO STDOUT. StdioServerTransport owns it for JSON-RPC;
  * a stray console.log corrupts the protocol mid-session. logger.js already
  * routes to stderr under Node for exactly this reason.
  */
-
-// Polyfill must run before any static imports touch globals.js
-import './polyfill.js';
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";

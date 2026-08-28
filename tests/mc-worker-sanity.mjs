@@ -15,7 +15,6 @@ globalThis.window = globalThis;
 
 import { ModelAsset } from '../js/model-asset.js';
 import { ModelLifeEvent, LifeEvent } from '../js/life-event.js';
-import { TaxTable } from '../js/taxes.js';
 import {
     setActiveTaxTable,
     global_workerSnapshot,
@@ -108,7 +107,7 @@ const QUICK_START_DATA = [
 ];
 
 // Worker-style rehydration: through JSON, then fromJSON
-setActiveTaxTable(new TaxTable());
+setActiveTaxTable(makeActiveTaxTable());
 const serialized = JSON.parse(JSON.stringify(QUICK_START_DATA));
 const assets = serialized.map(o => ModelAsset.fromJSON(o));
 
@@ -116,6 +115,7 @@ const t0 = Date.now();
 const interims = [];
 const checkpoints = [];
 const results = await computeMonteCarlo(assets, {
+    config: simConfigFromGlobals(),
     numSimulations: 100,
     retirementDateInt: new DateInt(DateInt.from(2036, 12).toInt()),
     onProgress: (c, t) => process.stdout.write(`  progress ${c}/${t}\n`),
@@ -165,6 +165,7 @@ assert.ok(JSON.stringify(results), 'results are JSON-serializable');
 
 const grT0 = Date.now();
 const grResults = await computeGuardrails(assets, {
+    config: simConfigFromGlobals(),
     params: { withdrawalRate: 4, preservation: 20, prosperity: 20, adjustment: 10 },
     retirementDateInt: new DateInt(DateInt.from(2030, 1).toInt()),
     lifeEvents: [],
@@ -191,10 +192,12 @@ assert.ok(JSON.stringify(grResults), 'guardrails results are JSON-serializable')
 
 const retirement = DateInt.from(2030, 1);   // sims span 2026-01 … 2036-12
 const mcPlain = await computeMonteCarlo(assets, {
+    config: simConfigFromGlobals(),
     numSimulations: 5,
     retirementDateInt: new DateInt(retirement.toInt()),
 });
 const mcGuarded = await computeMonteCarlo(assets, {
+    config: simConfigFromGlobals(),
     numSimulations: 5,
     guardrailParams: { withdrawalRate: 4, preservation: 20, prosperity: 20, adjustment: 10 },
     retirementDateInt: new DateInt(retirement.toInt()),
@@ -263,6 +266,7 @@ assert.ok(buildYearPool(9999).years.length === fullPool.years.length,
 // ── End-to-end mode ordering: calibrated (9%) medians below historical (~11%) ──
 
 const mkOpts = (dataMode) => ({
+    config: simConfigFromGlobals(),
     numSimulations: 100,
     retirementDateInt: new DateInt(DateInt.from(2030, 1).toInt()),
     dataMode,
@@ -331,3 +335,5 @@ console.log(`mc-worker-sanity OK — 100 sims in ${elapsed}ms, ` +
     `successRate=${results.successRate}, months=${results.labels.length}; ` +
     `guardrails in ${grElapsed}ms, events=${grResults.events.length}; ` +
     `MC guardrail gate verified over ${retirementIdx} pre-retirement months`);
+
+import { makeActiveTaxTable } from '../js/globals.js';

@@ -33,17 +33,20 @@
  * include it, and the browser scan then fails on it. You cannot widen
  * the engine by accident.
  *
- * ── The one exemption is the work item ───────────────────────────────
+ * ── The exemption list is empty, and that is the result ──────────────
  *
- * `globals.js` is knowingly exempt and is the ONLY entry in EXEMPT. It
- * is the localStorage leak, and the SimConfig migration exists to remove
- * it. When config is threaded through the engine instead of mirrored out
- * of browser storage, DELETE THE EXEMPTION — this test is then the proof
- * the leak is gone, not a description of it.
+ * `globals.js` was the one entry, because engine configuration was
+ * mirrored out of localStorage. Spec 9 removed that: the engine takes a
+ * SimConfig as a value, and globals.js is now the browser-side settings
+ * store that nothing on the run path imports.
  *
- * Do not add a second exemption to make a change pass. An exemption here
- * means "the engine needs a browser", which is the exact claim this file
- * exists to refute.
+ * The entry was written as a work item rather than a description, and the
+ * obsolescence check below is why that mattered — it FAILED the moment the
+ * exemption stopped being needed, so the migration announced its own
+ * completion instead of waiting for someone to notice.
+ *
+ * Do not add an entry to make a change pass. One here means "the engine
+ * needs a browser", which is the exact claim this file exists to refute.
  *
  * Usage:  node tests/layer-boundary.mjs   (from src/)
  */
@@ -74,9 +77,18 @@ const ENTRY_POINTS = [
  * See the module comment. This list shrinks to empty; it never grows.
  */
 const EXEMPT = new Map([
-    ['js/globals.js',
-     'Engine configuration is mirrored out of localStorage. This is THE leak — '
-   + 'the reason js/mcp/polyfill.js exists. Removed by the SimConfig migration.'],
+    // EMPTY, as of Spec 9 step 6 (2026-08-28). `js/globals.js` was the one
+    // entry: the engine read its configuration out of localStorage, and this
+    // list existed to say so out loud until that stopped being true.
+    //
+    // It stopped. The engine takes a SimConfig as a value, globals.js is the
+    // browser-side settings store and nothing on the run path imports it — a
+    // full plan, report and causal chain run with no localStorage defined at
+    // all. The check below turned this from a description into a deadline: it
+    // FAILED once the exemption stopped being needed, which is how the
+    // migration reported its own completion rather than waiting to be believed.
+    //
+    // Adding an entry here means "the engine needs a browser". Do not.
 ]);
 
 /**
@@ -345,9 +357,9 @@ check('util.js is host code and stays out of the engine', () => {
 
 console.log('\n── The exemption list is the migration backlog ──\n');
 
-check('globals.js is the only exemption', () => {
-    assert.deepEqual([...EXEMPT.keys()], ['js/globals.js'],
-        'a second exemption means someone made the engine need a browser to pass a test');
+check('the exemption list is empty — the engine needs no browser at all', () => {
+    assert.deepEqual([...EXEMPT.keys()], [],
+        'an exemption means someone made the engine need a browser to pass a test');
 });
 
 check('every exemption is real — an obsolete one must be deleted, not kept', () => {

@@ -34,6 +34,7 @@
 
 import assert from 'node:assert/strict';
 import { simConfigFromGlobals } from '../js/globals.js';
+import { makeActiveTaxTable } from '../js/globals.js';
 
 const store = {};
 globalThis.localStorage = {
@@ -66,7 +67,7 @@ async function buildFixture(fixture) {
   if (c.filingAs != null) { G.global_setFilingAs(c.filingAs); G.global_getFilingAs(); }
 
   // A fresh table every fixture: TaxTable caches bracket state across years.
-  G.setActiveTaxTable(new TaxTable());
+  G.setActiveTaxTable(makeActiveTaxTable());
 
   const built = fixture.build();
   const portfolio = new Portfolio(built.assets, false, simConfigFromGlobals());

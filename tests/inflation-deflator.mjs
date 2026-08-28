@@ -42,7 +42,6 @@ import { Portfolio } from '../js/portfolio.js';
 import { chronometer_run } from '../js/chronometer.js';
 import { computeMonteCarlo } from '../js/mc-compute.js';
 import { PriceIndex } from '../js/utils/price-index.js';
-import { TaxTable } from '../js/taxes.js';
 import {
   setActiveTaxTable,
   global_cpi_annual_inflation,
@@ -51,6 +50,7 @@ import {
   global_setBacktestYear, global_getBacktestYear,
 } from '../js/globals.js';
 import { simConfigFromGlobals } from '../js/globals.js';
+import { makeActiveTaxTable } from '../js/globals.js';
 
 global_setUserStartAge(50); global_getUserStartAge();
 
@@ -88,7 +88,7 @@ function assets(finish) {
 async function run({ inflation = 0.031, backtestYear = 'current', years = 3 } = {}) {
   global_setInflationRate(inflation); global_getInflationRate();
   global_setBacktestYear(backtestYear); global_getBacktestYear();
-  setActiveTaxTable(new TaxTable());
+  setActiveTaxTable(makeActiveTaxTable());
   const portfolio = new Portfolio(assets(finishAfter(years)), false, simConfigFromGlobals());
   await chronometer_run(portfolio);
   return portfolio;
@@ -226,9 +226,10 @@ console.log('\n── 5. Monte Carlo per-run deflation ────────�
 {
   global_setInflationRate(0.031); global_getInflationRate();
   global_setBacktestYear('current'); global_getBacktestYear();
-  setActiveTaxTable(new TaxTable());
+  setActiveTaxTable(makeActiveTaxTable());
 
   const mc = await computeMonteCarlo(assets(finishAfter(10)), {
+    config: simConfigFromGlobals(),
     numSimulations: 120, dataMode: 'historical', retirementDateInt: null,
   });
   const last = mc.labels.length - 1;

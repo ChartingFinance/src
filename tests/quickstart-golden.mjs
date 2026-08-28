@@ -59,7 +59,6 @@ globalThis.Date = class extends RealDate {
 // ── Imports ───────────────────────────────────────────────────────────
 import { Portfolio, FINANCIAL_FIELDS } from '../js/portfolio.js';
 import { chronometer_run } from '../js/chronometer.js';
-import { TaxTable } from '../js/taxes.js';
 import {
   setActiveTaxTable,
   global_setUserStartAge, global_getUserStartAge,
@@ -67,6 +66,7 @@ import {
 } from '../js/globals.js';
 import { quickStartProfiles, buildQuickStart } from '../js/quick-start.js';
 import { simConfigFromGlobals } from '../js/globals.js';
+import { makeActiveTaxTable } from '../js/globals.js';
 
 const PRINT_MODE = process.argv.includes('--print-actual');
 
@@ -958,7 +958,7 @@ for (const profile of quickStartProfiles) {
   global_getUserStartAge();
   global_setUserRetirementAge(profile.retirementAge);
   global_getUserRetirementAge();
-  setActiveTaxTable(new TaxTable());
+  setActiveTaxTable(makeActiveTaxTable());
 
   const built = buildQuickStart(profile);
   const rawAssets = profile.assets(anchorsFor(profile));

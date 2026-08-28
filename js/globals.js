@@ -9,6 +9,7 @@ export {
     global_wage_growth_annual, global_cpi_annual_inflation,
 } from './market-data.js';
 import { makeSimConfig, SIM_CONFIG_DEFAULTS } from './sim-config.js';
+import { TaxTable } from './taxes.js';
 // Moved to policy-constants.js (Spec 9 step 6): fixed tax policy, not settings.
 export { global_retirement_withholding_rate, global_deferred_allocation_age }
     from './policy-constants.js';
@@ -167,6 +168,12 @@ export function global_reset() {
  *
  * `taxTable` is deliberately absent; step 2 attaches it.
  */
+export function makeActiveTaxTable() {
+    return new TaxTable(
+        asFilingStatus(global_filingAs, global_default_filingAs),
+        global_propertyTaxDeductionMax);
+}
+
 export function simConfigFromGlobals() {
     return makeSimConfig({
         inflationRate: global_inflationRate,
@@ -180,6 +187,12 @@ export function simConfigFromGlobals() {
         socialSecurityWithholdingRate: global_social_security_withholding_rate,
         backtestYear: global_backtestYear,
         simDataMode: global_simDataMode,
+
+        // Built here as of step 6, so a config from the app carries its own
+        // table exactly as one from a plan spec does. Portfolio no longer needs
+        // to reach for the module-level `activeTaxTable`, which is what lets it
+        // stop importing this file.
+        taxTable: makeActiveTaxTable(),
     });
 }
 

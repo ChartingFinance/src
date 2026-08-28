@@ -3,8 +3,7 @@ import { InstrumentType } from './instruments/instrument.js';
 import { AssetAppreciationResult, MortgageResult, IncomeResult, RetirementIncomeResult, ExpenseResult, InterestResult } from './instruments/instrument-behavior.js';
 import { WithholdingResult, ContributionKind } from './taxes.js';
 import { logger, LogCategory } from './utils/logger.js';
-import { activeTaxTable } from './globals.js';
-import { global_propertyTaxDeductionMax } from './globals.js';
+import { SIM_CONFIG_DEFAULTS } from './sim-config.js';
 
 export const FINANCIAL_FIELDS = [
     'employedIncome', 'selfIncome', 'socialSecurityTax', 'socialSecurityIncome', 'pensionIncome', 'assetAppreciation',
@@ -45,7 +44,7 @@ export class FinancialPackage {
      */
     limitDeductions(activeUser, taxTable = null) {
 
-        const table = taxTable ?? activeTaxTable;
+        const table = taxTable;
 
         let maxIRADeduction = table.limitFor(ContributionKind.IRA, activeUser);
         if (this.tradIRAContribution.amount + this.rothIRAContribution.amount > maxIRADeduction.amount) {
@@ -142,7 +141,14 @@ export class FinancialPackage {
      */
     deductiblePropertyTaxes(taxTable = null) {
 
-        const cap = taxTable?.propertyTaxDeductionMax ?? global_propertyTaxDeductionMax;
+        // Display-only path: `deductions()` reaches here, and its callers are
+        // report-view and two log dumps — never the engine, which goes through
+        // limitDeductions() with the run's table. The fallback comes from the
+        // engine's own defaults rather than the settings store, so this file
+        // does not import globals.js; the cap has no UI and is constant, so the
+        // two are the same number.
+        const cap = taxTable?.propertyTaxDeductionMax
+            ?? SIM_CONFIG_DEFAULTS.propertyTaxDeductionMax;
         let ptDeduction = this.propertyTaxes.copy().flipSign();
         if (ptDeduction.amount > cap)
             ptDeduction.amount = cap;

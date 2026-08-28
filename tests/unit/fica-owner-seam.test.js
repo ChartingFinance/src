@@ -17,6 +17,7 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
+import { makeActiveTaxTable } from '../../js/globals.js';
 
 const store = {};
 globalThis.localStorage = {
@@ -39,7 +40,7 @@ let table;
 beforeEach(() => {
   for (const k of Object.keys(store)) delete store[k];
   G.global_reset();
-  table = new TaxTable();
+  table = makeActiveTaxTable();
 });
 
 describe('one owner', () => {

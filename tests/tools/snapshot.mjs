@@ -89,7 +89,6 @@ import { fileURLToPath } from 'node:url';
 import { Portfolio } from '../../js/portfolio.js';
 import { FINANCIAL_FIELDS } from '../../js/financial-package.js';
 import { chronometer_run } from '../../js/chronometer.js';
-import { TaxTable } from '../../js/taxes.js';
 import { METRIC_NAMES, DERIVED_METRICS } from '../../js/metric.js';
 import { MONTH_NAMES_LONG } from '../../js/utils/date-int.js';
 import { EventType } from '../../js/sim-event.js';
@@ -98,6 +97,7 @@ import { logger, LogCategory } from '../../js/utils/logger.js';
 import * as G from '../../js/globals.js';
 import { SNAPSHOT_FIXTURES } from './fixtures.mjs';
 import { simConfigFromGlobals } from '../../js/globals.js';
+import { makeActiveTaxTable } from '../../js/globals.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BASELINE_DIR = join(HERE, '..', 'baselines');
@@ -318,7 +318,7 @@ function applyConfig(fixture) {
   }
 
   // A fresh table every fixture: TaxTable caches bracket state across years.
-  G.setActiveTaxTable(new TaxTable());
+  G.setActiveTaxTable(makeActiveTaxTable());
 }
 
 const coerce = (raw) => {

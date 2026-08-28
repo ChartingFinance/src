@@ -48,7 +48,6 @@ globalThis.window = globalThis;
 import { ModelAsset, Metric } from '../js/model-asset.js';
 import { Portfolio } from '../js/portfolio.js';
 import { chronometer_run } from '../js/chronometer.js';
-import { TaxTable } from '../js/taxes.js';
 import { Currency } from '../js/utils/currency.js';
 import { FundTransfer } from '../js/fund-transfer.js';
 import {
@@ -58,6 +57,7 @@ import {
   global_setFilingAs, global_getFilingAs,
 } from '../js/globals.js';
 import { simConfigFromGlobals } from '../js/globals.js';
+import { makeActiveTaxTable } from '../js/globals.js';
 
 global_setUserStartAge(50); global_getUserStartAge();
 global_setInflationRate(0); global_getInflationRate();
@@ -92,7 +92,7 @@ const sum = (arr, upTo = Infinity) =>
   (arr ?? []).slice(0, upTo).reduce((s, v) => s + (v ?? 0), 0);
 
 async function run(assets) {
-  setActiveTaxTable(new TaxTable());
+  setActiveTaxTable(makeActiveTaxTable());
   const modelAssets = assets.map(o => ModelAsset.fromJSON(o));
   const portfolio = new Portfolio(modelAssets, false, simConfigFromGlobals());
   await chronometer_run(portfolio);

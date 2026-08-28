@@ -16,6 +16,7 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
+import { makeActiveTaxTable } from '../../js/globals.js';
 
 function mockLocalStorage() {
   const store = {};
@@ -35,7 +36,7 @@ function tableFor(filingAs) {
   G.global_reset();
   G.global_setFilingAs(filingAs);
   G.global_getFilingAs();
-  const t = new TaxTable();
+  const t = makeActiveTaxTable();
   G.setActiveTaxTable(t);
   return t;
 }

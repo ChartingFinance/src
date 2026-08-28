@@ -49,10 +49,10 @@ globalThis.window = globalThis;
 import { ModelAsset } from '../js/model-asset.js';
 import { Portfolio } from '../js/portfolio.js';
 import { chronometer_run } from '../js/chronometer.js';
-import { TaxTable } from '../js/taxes.js';
 import { setActiveTaxTable } from '../js/globals.js';
 import { Metric } from '../js/metric.js';
 import { simConfigFromGlobals } from '../js/globals.js';
+import { makeActiveTaxTable } from '../js/globals.js';
 
 // ── Helpers ───────────────────────────────────────────────────────────
 const fmt = (n) => {
@@ -111,7 +111,7 @@ function buildPortfolio(selfEmployed) {
   return portfolio;
 }
 
-setActiveTaxTable(new TaxTable());
+setActiveTaxTable(makeActiveTaxTable());
 
 // ══ Scenario W — W2 employee ═════════════════════════════════════════
 console.log('\n── Scenario W: W2 employee (FICA + withheld income tax) ──\n');

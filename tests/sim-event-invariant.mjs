@@ -31,7 +31,6 @@ globalThis.window = globalThis;
 import { ModelAsset } from '../js/model-asset.js';
 import { Portfolio } from '../js/portfolio.js';
 import { chronometer_run } from '../js/chronometer.js';
-import { TaxTable } from '../js/taxes.js';
 import {
   setActiveTaxTable,
   global_setUserStartAge, global_getUserStartAge,
@@ -40,6 +39,7 @@ import {
 import { EventType, renderNote, kindOf } from '../js/sim-event.js';
 import { InstrumentType } from '../js/instruments/instrument.js';
 import { simConfigFromGlobals } from '../js/globals.js';
+import { makeActiveTaxTable } from '../js/globals.js';
 
 let passed = 0;
 let failed = 0;
@@ -106,7 +106,7 @@ const SCENARIOS = {
 };
 
 async function run(assets, ages) {
-  setActiveTaxTable(new TaxTable());
+  setActiveTaxTable(makeActiveTaxTable());
   global_setUserStartAge(ages.start); global_getUserStartAge();
   global_setUserRetirementAge(ages.retire); global_getUserRetirementAge();
   const p = new Portfolio(assets.map(o => ModelAsset.fromJSON(o)), true, simConfigFromGlobals());

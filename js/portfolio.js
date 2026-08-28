@@ -4,7 +4,6 @@ import { MonthsSpan } from './utils/months-span.js';
 import { logger, LogCategory } from './utils/logger.js';
 import { ModelLifeEvent } from './life-event.js';
 import { User } from './user.js';
-import { activeTaxTable } from './globals.js';
 import { withSimConfig } from './sim-config.js';
 import { FundTransfer } from './fund-transfer.js';
 import { EventType, ShortfallOrigin } from './sim-event.js';
@@ -374,13 +373,16 @@ export class Portfolio {
         // table is reset exactly when the rest of the run state is, and the
         // relative order is unchanged — this runs before the engines are
         // built, as it did before.
-        // A config that ARRIVED with a table keeps it (Spec 9 step 5b): the MCP
-        // server now builds its own and never installs a module-level one, so
-        // preferring the global here would overwrite the run's table with null.
-        // Callers that still install one — the app, the workers, the tests —
-        // land on the fallback and are unchanged.
-        this.config = withSimConfig(this.config,
-            { taxTable: this.config.taxTable ?? activeTaxTable });
+        // Every config now arrives with its own table — simConfigFromGlobals()
+        // builds one, and so does simConfigFromPlanSpec(). The `?? activeTaxTable`
+        // fallback that stood here through step 5 is gone, and with it this
+        // file's last import of the settings store.
+        //
+        // Reset it where the rest of the run state is reset. Relative order is
+        // unchanged: still before the engines are built.
+        if (!this.config.taxTable) {
+            throw new Error('Portfolio: the run config has no tax table.');
+        }
         this.config.taxTable.initializeChron();
 
         // Now that the config is final for this run, hand it to the assets and

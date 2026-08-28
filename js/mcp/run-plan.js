@@ -3,7 +3,7 @@
  *
  * ── Why this file exists ─────────────────────────────────────────────
  *
- * Running a plan is not `new Portfolio(assets, false, simConfigFromGlobals())` + `chronometer_run`. It is a
+ * Running a plan is not `new Portfolio(assets)` + `chronometer_run`. It is a
  * SEQUENCE, and every step of it is load-bearing:
  *
  *   1. reset globals          — they are module state; plan N+1 inherits plan N
@@ -56,7 +56,6 @@ import { detectIssues } from '../portfolio-issues.js';
 import { buildQuickStart, quickStartProfiles } from '../quick-start.js';
 import { asFilingStatus } from '../filing-status.js';
 import { makeSimConfig, SIM_CONFIG_DEFAULTS } from '../sim-config.js';
-import { simConfigFromGlobals } from '../globals.js';
 
 /**
  * Build a plan spec from a Quick Start profile key.

@@ -28,7 +28,6 @@ globalThis.window = globalThis;
 import { ModelAsset } from '../js/model-asset.js';
 import { Portfolio } from '../js/portfolio.js';
 import { chronometer_run } from '../js/chronometer.js';
-import { TaxTable } from '../js/taxes.js';
 import {
   setActiveTaxTable,
   global_setUserStartAge, global_getUserStartAge,
@@ -36,6 +35,7 @@ import {
 } from '../js/globals.js';
 import { makeRuleContext, ruleNotesFor, RULES } from '../js/rule-notes.js';
 import { simConfigFromGlobals } from '../js/globals.js';
+import { makeActiveTaxTable } from '../js/globals.js';
 
 // ── Helpers ───────────────────────────────────────────────────────────
 let passed = 0;
@@ -80,7 +80,7 @@ function notesFor(portfolio, name, from = 0, to = null) {
 }
 
 async function run(data, ages) {
-  setActiveTaxTable(new TaxTable());
+  setActiveTaxTable(makeActiveTaxTable());
   if (ages) {
     // set writes localStorage; get refreshes the module-level mutable var that
     // Portfolio actually reads — both halves are required (see globals.js).

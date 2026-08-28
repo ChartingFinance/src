@@ -22,7 +22,6 @@ import { DateInt, MONTH_NAMES } from './utils/date-int.js';
 import { InstrumentType } from './instruments/instrument.js';
 import { chronometer_run } from './chronometer.js';
 import { Portfolio } from './portfolio.js';
-import { TaxTable } from './taxes.js';
 
 // ── Data loading ────────────────────────────────────────────
 import { membrane_rawDataToModelAssets } from './membrane.js';
@@ -139,6 +138,7 @@ import {
     util_loadStoryNames,
     util_deleteScenario,
 } from './ui/util.js';
+import { makeActiveTaxTable } from './globals.js';
 
 /**
  * Bind assets to an editing environment before the UI reads them.
@@ -269,7 +269,7 @@ function getAssetDisplayOrder() {
 // ── Init ────────────────────────────────────────────────────
 
 global_initialize();
-setActiveTaxTable(new TaxTable());
+setActiveTaxTable(makeActiveTaxTable());
 
 // The engine's own reconciliation verdict goes to the console only when the
 // user has asked for diagnostics — the same advanced flag that reveals the
@@ -504,7 +504,7 @@ function loadQuickStartProfile(profile) {
     // construction.
     global_setFilingAs(profile.filingAs);
     global_getFilingAs();
-    setActiveTaxTable(new TaxTable());
+    setActiveTaxTable(makeActiveTaxTable());
     syncGlobalsToSettings();
     store.setRetirementDate(global_getRetirementDateInt());
 
@@ -980,7 +980,7 @@ function connectSettings() {
     document.getElementById('setting-filingAs').addEventListener('change', function() {
         global_setFilingAs(this.value);
         global_getFilingAs();
-        setActiveTaxTable(new TaxTable());
+        setActiveTaxTable(makeActiveTaxTable());
         // The welcome grid offers one set per filing status, so it follows the
         // setting. Harmless when a portfolio is already loaded and the grid is
         // hidden — the next new-scenario view gets the right cards.
@@ -2106,7 +2106,7 @@ function applyImportedPortfolio(data, persist) {
         global_setUserRetirementAge(data.settings.retirementAge);
         global_setUserFinishAge(data.settings.finishAge);
         if (data.settings.backtestYear != null) global_setBacktestYear(data.settings.backtestYear);
-        setActiveTaxTable(new TaxTable());
+        setActiveTaxTable(makeActiveTaxTable());
         syncGlobalsToSettings();
         store.setRetirementDate(global_getRetirementDateInt());
     }

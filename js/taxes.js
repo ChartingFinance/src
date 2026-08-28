@@ -25,8 +25,6 @@ export class WithholdingResult {
 }
 import { logger, LogCategory } from './utils/logger.js';
 import { FilingStatus, FILING_STATUSES } from './filing-status.js';
-import { global_filingAs, global_inflationRate,
-         global_propertyTaxDeductionMax } from './globals.js';
 import { taxableBasis } from './tax-basis.js';
 
 /**
@@ -318,13 +316,23 @@ const CONTRIBUTION_LIMITS = Object.freeze({
 
 export class TaxTable {
     /**
-     * @param {string|null} filingAs  Spec 9 step 2. When given, this table is
-     *   pinned to that status for its whole life. When null it re-reads
-     *   `global_filingAs` on every initializeChron(), which is what every
-     *   caller did before a config existed — kept so the default path stays
-     *   bit-identical while callers migrate.
+     * @param {string} filingAs  selects the brackets, limits and exclusion
+     * @param {number} propertyTaxDeductionMax  the SALT-style cap
+     *
+     * Both REQUIRED as of Spec 9 step 6. They were optional through steps 2-5,
+     * falling back to `global_filingAs` and `global_propertyTaxDeductionMax` so
+     * that ~58 existing `new TaxTable()` sites kept working while the engine
+     * migrated. Removing the fallbacks is what makes taxes.js free of the
+     * settings store — and taxes.js had to go first, because globals.js cannot
+     * import TaxTable to build one until it does, or the two form a cycle.
      */
-    constructor(filingAs = null, propertyTaxDeductionMax = null) {
+    constructor(filingAs, propertyTaxDeductionMax) {
+        if (!filingAs || typeof propertyTaxDeductionMax !== 'number') {
+            throw new Error(
+                'TaxTable requires (filingAs, propertyTaxDeductionMax). Build one '
+                + 'with makeActiveTaxTable() from globals, or from a SimConfig. '
+                + 'The globals fallback was removed in Spec 9 step 6.');
+        }
         this.filingAs = filingAs;
         // A cap on a deduction is a parameter of the tax regime, like the
         // brackets beside it — so it lives on the table rather than being
@@ -347,13 +355,12 @@ export class TaxTable {
         // are gone, and the page now reads this. Swapping the table set above is
         // then the only edit a new tax year needs.
         this.baseYear = this.activeTaxTables.year;
-        this.propertyTaxDeductionMax =
-            this.configuredPropertyTaxDeductionMax ?? global_propertyTaxDeductionMax;
+        this.propertyTaxDeductionMax = this.configuredPropertyTaxDeductionMax;
 
         // Selected BY KEY, not by array index and an else. The old form made
         // every unrecognised status file jointly by falling through, so 'MFJ'
         // worked by accident and a future 'MFS' would have too.
-        const filingAs = this.filingAs ?? global_filingAs;
+        const filingAs = this.filingAs;
         const key = FILING_TYPE_KEY[filingAs];
         if (!key) {
             throw new Error(`TaxTable: filing status ${JSON.stringify(filingAs)} `
@@ -429,7 +436,14 @@ export class TaxTable {
 
     inflateTaxes(inflationOverride) {
 
-        const r = 1.0 + (inflationOverride != null ? inflationOverride : global_inflationRate);
+        // Required since step 6: every caller — chronometer, mc-compute and the
+        // unit tests — passes the run's rate. A fallback here would have been
+        // the settings store reaching into a value the run already knows.
+        if (typeof inflationOverride !== 'number' || !Number.isFinite(inflationOverride)) {
+            throw new Error('TaxTable.inflateTaxes needs the run inflation rate; got '
+                + JSON.stringify(inflationOverride));
+        }
+        const r = 1.0 + inflationOverride;
         this.activeTaxTables.fica.maxSSEarnings *= r;
         this.inflateTaxRows(this.activeTaxTables.income.tables, r);
         this.inflateTaxRows(this.activeTaxTables.capitalGains.tables, r);

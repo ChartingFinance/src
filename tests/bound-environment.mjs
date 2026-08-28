@@ -36,12 +36,12 @@
 
 import assert from 'node:assert/strict';
 
-import '../js/mcp/polyfill.js';
+import './tools/localstorage-polyfill.js';
 import { Portfolio } from '../js/portfolio.js';
 import { ModelAsset } from '../js/model-asset.js';
 import { ModelLifeEvent, LifeEvent } from '../js/life-event.js';
 import { makeSimConfig } from '../js/sim-config.js';
-import { global_reset, setActiveTaxTable } from '../js/globals.js';
+import { global_reset } from '../js/globals.js';
 import { TaxTable } from '../js/taxes.js';
 import { Currency } from '../js/utils/currency.js';
 import { DateInt } from '../js/utils/date-int.js';
@@ -54,13 +54,22 @@ function check(label, fn) {
     catch (e) { console.log(`  ✗ ${label}`); console.log(`    ${e.message}`); failed++; }
 }
 
-const cfg = (over = {}) => makeSimConfig({
-    inflationRate: 0.031, filingAs: 'Single',
-    startAge: 45, retirementAge: 67, finishAge: 90,
-    propertyTaxDeductionMax: 40000, allocateHouseholdTax: false,
-    pensionWithholdingRate: 0.1, socialSecurityWithholdingRate: 0,
-    backtestYear: 'current', simDataMode: 'calibrated', ...over,
-});
+const cfg = (over = {}) => {
+    const base = {
+        inflationRate: 0.031, filingAs: 'Single',
+        startAge: 45, retirementAge: 67, finishAge: 90,
+        propertyTaxDeductionMax: 40000, allocateHouseholdTax: false,
+        pensionWithholdingRate: 0.1, socialSecurityWithholdingRate: 0,
+        backtestYear: 'current', simDataMode: 'calibrated', ...over,
+    };
+    // Every config carries its own table as of Spec 9 step 6 — a Portfolio
+    // rejects one without. Built from THIS config's filing status, which is
+    // what makes the table per-run rather than ambient.
+    return makeSimConfig({
+        ...base,
+        taxTable: new TaxTable(base.filingAs, base.propertyTaxDeductionMax),
+    });
+};
 
 const anAsset = (name = 'Brokerage') => new ModelAsset({
     instrument: Instrument.TAXABLE_EQUITY,
@@ -78,7 +87,6 @@ const anEvent = () => new ModelLifeEvent({
 
 function aPortfolio(config = cfg()) {
     global_reset();
-    setActiveTaxTable(new TaxTable());
     const p = new Portfolio([anAsset()], false, config);
     p.lifeEvents = [anEvent()];
     p.initializeChron();

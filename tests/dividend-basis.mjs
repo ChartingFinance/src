@@ -18,10 +18,10 @@ globalThis.window = globalThis;
 
 import { ModelAsset } from '../js/model-asset.js';
 import { Portfolio } from '../js/portfolio.js';
-import { TaxTable } from '../js/taxes.js';
 import { setActiveTaxTable } from '../js/globals.js';
 import { chronometer_run } from '../js/chronometer.js';
 import { simConfigFromGlobals } from '../js/globals.js';
+import { makeActiveTaxTable } from '../js/globals.js';
 
 let passed = 0;
 function ok(cond, label) {
@@ -39,7 +39,7 @@ const makeAsset = (instrument) => ModelAsset.fromJSON({
     annualReturnRate: { rate: 0.0 }, annualDividendRate: { rate: 0.02 },
 });
 
-setActiveTaxTable(new TaxTable());
+setActiveTaxTable(makeActiveTaxTable());
 
 {
     const a = makeAsset('taxableEquity');
@@ -67,7 +67,7 @@ setActiveTaxTable(new TaxTable());
 // preserve the gain ratio; dividends add equal $ to value and basis, which
 // lowers it. Pre-fix (no basis credit) the ratio ROSE instead.
 
-setActiveTaxTable(new TaxTable());
+setActiveTaxTable(makeActiveTaxTable());
 const assets = [
     { instrument: 'taxableEquity', displayName: 'Brokerage',
       startDateInt: { year: 2026, month: 1 }, finishDateInt: { year: 2026, month: 12 },

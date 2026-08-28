@@ -39,7 +39,6 @@ import { ModelAsset } from '../js/model-asset.js';
 import { quickStartProfiles, buildQuickStart } from '../js/quick-start.js';
 import { Portfolio } from '../js/portfolio.js';
 import { chronometer_run } from '../js/chronometer.js';
-import { TaxTable } from '../js/taxes.js';
 import { renderNote, EventType } from '../js/sim-event.js';
 import {
   withTrace, TraceKind, currentTraceId, traceScopes, resetTraces,
@@ -51,6 +50,7 @@ import {
   global_setUserRetirementAge, global_getUserRetirementAge,
 } from '../js/globals.js';
 import { simConfigFromGlobals } from '../js/globals.js';
+import { makeActiveTaxTable } from '../js/globals.js';
 
 let passed = 0, failed = 0;
 function check(label, fn) {
@@ -99,7 +99,7 @@ check('resetTraces clears scopes and ids', () => {
 // ── On a real simulation ─────────────────────────────────────────────
 
 async function run(assets, ages) {
-  setActiveTaxTable(new TaxTable());
+  setActiveTaxTable(makeActiveTaxTable());
   global_setUserStartAge(ages.start); global_getUserStartAge();
   global_setUserRetirementAge(ages.retire); global_getUserRetirementAge();
   const p = new Portfolio(assets.map(o => ModelAsset.fromJSON(o)), false, simConfigFromGlobals());
@@ -171,7 +171,7 @@ check('a re-run rebuilds traces rather than accumulating them', () => {
 const phased = await (async () => {
   const profile = quickStartProfiles.find(p => p.key === 'earlyCareer');
   const qs = buildQuickStart(profile);
-  setActiveTaxTable(new TaxTable());
+  setActiveTaxTable(makeActiveTaxTable());
   global_setUserStartAge(qs.ages.startAge); global_getUserStartAge();
   global_setUserRetirementAge(qs.ages.retirementAge); global_getUserRetirementAge();
   const p = new Portfolio(qs.assets, false, simConfigFromGlobals());

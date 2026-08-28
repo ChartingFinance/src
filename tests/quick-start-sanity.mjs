@@ -25,9 +25,9 @@ globalThis.window = globalThis;
 import { ModelAsset } from '../js/model-asset.js';
 import { Portfolio } from '../js/portfolio.js';
 import { chronometer_run } from '../js/chronometer.js';
-import { TaxTable } from '../js/taxes.js';
 import { setActiveTaxTable } from '../js/globals.js';
 import { simConfigFromGlobals } from '../js/globals.js';
+import { makeActiveTaxTable } from '../js/globals.js';
 
 // ── QuickStart data (inline to avoid Lit import from quick-start.js) ──
 const QUICK_START_DATA = [
@@ -131,7 +131,7 @@ function check(label, fn) {
 }
 
 // ── Run simulation ───────────────────────────────────────────────────
-setActiveTaxTable(new TaxTable());
+setActiveTaxTable(makeActiveTaxTable());
 
 const modelAssets = QUICK_START_DATA.map(obj => ModelAsset.fromJSON(obj));
 const portfolio = new Portfolio(modelAssets, true, simConfigFromGlobals());

@@ -21,7 +21,6 @@ import {
     global_wage_growth_annual,
 } from './market-data.js';
 import { PriceIndex } from './utils/price-index.js';
-import { simConfigFromGlobals } from './globals.js';
 
 // ── Historical year pool (correlated sampling) ──────────────────
 
@@ -141,9 +140,9 @@ export function applyRandomRates(modelAssets, pool, dataMode = 'historical', bas
 
 // ── Single simulation run ────────────────────────────────────────
 
-function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, pool, dataMode) {
+function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, pool, dataMode, config) {
     const assets = ModelAsset.cloneArray(sourceAssets);
-    const portfolio = new Portfolio(assets, false, simConfigFromGlobals());
+    const portfolio = new Portfolio(assets, false, config);
     if (lifeEvents) portfolio.lifeEvents = lifeEvents.map(e => e.copy());
 
     if (guardrailParams) {
@@ -238,9 +237,9 @@ function percentile(sortedArr, p) {
 
 // ── Deterministic baseline run ───────────────────────────────────
 
-function computeBaseline(sourceAssets, guardrailParams, lifeEvents) {
+function computeBaseline(sourceAssets, guardrailParams, lifeEvents, config) {
     const baseAssets = ModelAsset.cloneArray(sourceAssets);
-    const basePf = new Portfolio(baseAssets, false, simConfigFromGlobals());
+    const basePf = new Portfolio(baseAssets, false, config);
     if (lifeEvents.length) basePf.lifeEvents = lifeEvents.map(e => e.copy());
     if (guardrailParams) basePf.guardrailsParams = guardrailParams;
     basePf.initializeChron();
@@ -320,10 +319,12 @@ export async function computeMonteCarlo(sourceAssets, {
     checkpoint = null,
     dataMode = 'historical',
     backtestFromYear = null,
+    // See the note in gr-compute: supplied by the caller as of step 6.
+    config,
 } = {}) {
     // Determine number of months from a reference run
     const refAssets = ModelAsset.cloneArray(sourceAssets);
-    const refPortfolio = new Portfolio(refAssets, false, simConfigFromGlobals());
+    const refPortfolio = new Portfolio(refAssets, false, config);
     if (lifeEvents.length) refPortfolio.lifeEvents = lifeEvents.map(e => e.copy());
     refPortfolio.initializeChron();
 
@@ -360,7 +361,7 @@ export async function computeMonteCarlo(sourceAssets, {
     const grParams = guardrailParams ? { ...guardrailParams, retirementDateInt } : null;
 
     // Deterministic baseline — computed up front so interim snapshots carry it too
-    const { nominal: baselineData, real: baselineDataReal } = computeBaseline(sourceAssets, grParams, lifeEvents);
+    const { nominal: baselineData, real: baselineDataReal } = computeBaseline(sourceAssets, grParams, lifeEvents, config);
 
     // Retirement trigger index for chart annotation
     let retirementMonthIndex = null;
@@ -435,7 +436,7 @@ export async function computeMonteCarlo(sourceAssets, {
     };
 
     for (let i = 0; i < numSimulations; i++) {
-        const { nominal, real } = runOnce(sourceAssets, grParams, runFromStart ? null : retirementDateInt, lifeEvents, pool, dataMode);
+        const { nominal, real } = runOnce(sourceAssets, grParams, runFromStart ? null : retirementDateInt, lifeEvents, pool, dataMode, config);
         allRuns.push(fit(nominal));
         allRunsReal.push(fit(real));
         // An interim snapshot supersedes the plain progress ping at the same
