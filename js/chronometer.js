@@ -130,7 +130,7 @@ export async function chronometer_run(portfolio) {
 
         if (currentDateInt.day == 1) {
             portfolio.monthlyChron(currentDateInt);
-            activeTaxTable.monthlyChron(currentDateInt);
+            portfolio.config.taxTable.monthlyChron(currentDateInt);
             priceIndex.stepAndRecord();
         }
 
@@ -145,7 +145,7 @@ export async function chronometer_run(portfolio) {
 
             portfolio.applyGuardrails(currentDateInt);
             portfolio.applyYear(currentDateInt);
-            activeTaxTable.applyYear(portfolio.yearly, portfolio.activeUser);
+            portfolio.config.taxTable.applyYear(portfolio.yearly, portfolio.activeUser);
 
             portfolio.yearlyChron(currentDateInt);
 
@@ -153,7 +153,7 @@ export async function chronometer_run(portfolio) {
             const cpiRate = backtesting
                 ? global_cpi_annual_inflation[backtestStartYear + (currentDateInt.year - simStartYear)]
                 : undefined;
-            activeTaxTable.yearlyChron(cpiRate != null ? cpiRate / 100 : undefined);
+            portfolio.config.taxTable.yearlyChron(cpiRate != null ? cpiRate / 100 : undefined);
         }
 
         portfolio.totalMonths = totalMonths;
@@ -192,7 +192,7 @@ export async function chronometer_run(portfolio) {
     portfolio.finalSanityCheck(currentDateInt);
 
     portfolio.finalizeChron();
-    activeTaxTable.finalizeChron();
+    portfolio.config.taxTable.finalizeChron();
 
     // Hand the causal scopes to the portfolio so any consumer can answer
     // "why did this happen?" without reaching into module state.

@@ -174,7 +174,7 @@ function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, p
 
         if (currentDateInt.day === 1) {
             portfolio.monthlyChron(currentDateInt);
-            activeTaxTable.monthlyChron(currentDateInt);
+            portfolio.config.taxTable.monthlyChron(currentDateInt);
 
             let total = 0;
             for (const asset of portfolio.modelAssets) {
@@ -198,14 +198,14 @@ function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, p
             }
             portfolio.applyGuardrails(currentDateInt);
             portfolio.applyYear(currentDateInt);
-            activeTaxTable.applyYear(portfolio.yearly, portfolio.activeUser);
+            portfolio.config.taxTable.applyYear(portfolio.yearly, portfolio.activeUser);
             portfolio.yearlyChron(currentDateInt);
-            activeTaxTable.yearlyChron(undefined);
+            portfolio.config.taxTable.yearlyChron(undefined);
         }
     }
 
     portfolio.finalizeChron();
-    activeTaxTable.finalizeChron();
+    portfolio.config.taxTable.finalizeChron();
 
     return { nominal: monthlyTotals, real: monthlyReal };
 }
@@ -246,7 +246,7 @@ function computeBaseline(sourceAssets, guardrailParams, lifeEvents) {
         bd.next();
         if (bd.day === 1) {
             basePf.monthlyChron(bd);
-            activeTaxTable.monthlyChron(bd);
+            basePf.config.taxTable.monthlyChron(bd);
 
             let total = 0;
             for (const asset of basePf.modelAssets) {
@@ -259,13 +259,13 @@ function computeBaseline(sourceAssets, guardrailParams, lifeEvents) {
         if (bd.isNewYearsDay()) {
             basePf.applyGuardrails(bd);
             basePf.applyYear(bd);
-            activeTaxTable.applyYear(basePf.yearly, basePf.activeUser);
+            basePf.config.taxTable.applyYear(basePf.yearly, basePf.activeUser);
             basePf.yearlyChron(bd);
-            activeTaxTable.yearlyChron(undefined);
+            basePf.config.taxTable.yearlyChron(undefined);
         }
     }
     basePf.finalizeChron();
-    activeTaxTable.finalizeChron();
+    basePf.config.taxTable.finalizeChron();
 
     return { nominal: baselineData, real: baselineDataReal };
 }
