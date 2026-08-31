@@ -9,12 +9,21 @@
 import { InstrumentMeta, InstrumentType } from '../instruments/instrument.js';
 import { classifyAssetGroup, AssetGroupMeta } from '../asset-groups.js';
 import { Metric, MetricLabel } from '../metric.js';
-import {
-    global_user_startAge, global_user_retirementAge, global_user_finishAge,
-    global_filingAs, global_inflationRate, global_backtestYear,
-} from '../globals.js';
-import { getMonteCarloResults } from '../monte-carlo.js';
-import { getGuardrailsResults } from '../guardrails.js';
+// No globals.js import. The lifecycle table reads `portfolio.config` — the
+// SimConfig the run actually used — so the report describes the plan in front
+// of it rather than whatever the settings store happens to hold. It also keeps
+// localStorage out of the closure of everything that renders a report.
+// Monte Carlo and Guardrails results arrive as ARGUMENTS, not imports.
+//
+// monte-carlo.js and guardrails.js are browser adapters: they marshal work to a
+// Web Worker and cache the answer in module state. Importing them for the two
+// getters pulled `new Worker` — undefined in Node — into the closure of every
+// headless caller that wanted a markdown report, including mcp-server.js.
+//
+// The compute is not browser-bound at all; it lives in mc-compute.js and
+// gr-compute.js and runs fine under Node (tests/mc-worker-sanity.mjs). Only the
+// transport was. Taking results as a parameter also removes a module-state read
+// from a rendering path, same rule as reads-take-scopes-explicitly in trace.js.
 
 const fmt = (val) =>
     new Intl.NumberFormat('en-US', {
@@ -60,18 +69,25 @@ export function generateTimelineMarkdown(portfolio, lifeEvents) {
     let md = `# Your Timeline\n\n`;
     md += `This section shows the user's life phases and financial timeline.\n\n`;
 
-    md += `## Lifecycle\n`;
-    md += `| Parameter | Value |\n`;
-    md += `| :--- | :--- |\n`;
-    md += `| Current Age | ${global_user_startAge} |\n`;
-    md += `| Retirement Age | ${global_user_retirementAge} |\n`;
-    md += `| Plan Through Age | ${global_user_finishAge} |\n`;
-    md += `| Filing Status | ${global_filingAs} |\n`;
-    md += `| Inflation Rate | ${pct(global_inflationRate)} |\n`;
-    if (global_backtestYear && global_backtestYear !== 'current') {
-        md += `| Backtest From | ${global_backtestYear} |\n`;
+    // From THIS RUN's config, not the settings store. Spec 9 made the config a
+    // value the Portfolio owns; reading globals here would have reported the
+    // browser's current settings for a plan that was run with different ones —
+    // and in a headless host, module defaults for every plan.
+    const cfg = portfolio?.config ?? null;
+    if (cfg) {
+        md += `## Lifecycle\n`;
+        md += `| Parameter | Value |\n`;
+        md += `| :--- | :--- |\n`;
+        md += `| Current Age | ${cfg.startAge} |\n`;
+        md += `| Retirement Age | ${cfg.retirementAge} |\n`;
+        md += `| Plan Through Age | ${cfg.finishAge} |\n`;
+        md += `| Filing Status | ${cfg.filingAs} |\n`;
+        md += `| Inflation Rate | ${pct(cfg.inflationRate)} |\n`;
+        if (cfg.backtestYear && cfg.backtestYear !== 'current') {
+            md += `| Backtest From | ${cfg.backtestYear} |\n`;
+        }
+        md += '\n';
     }
-    md += '\n';
 
     if (portfolio) {
         md += `## Simulation Span\n`;
@@ -225,12 +241,11 @@ export function generateProjectionsSectionMarkdown(portfolio, metricName) {
 
 // ── Simulations ─────────────────────────────────────────────────
 
-export function generateMonteCarloSectionMarkdown(portfolio) {
+export function generateMonteCarloSectionMarkdown(portfolio, mcResults = null) {
     if (!portfolio) return `# Monte Carlo\n\nNo simulation has been run yet.\n` + GENERATOR_LINE;
 
     let md = `# Monte Carlo\n\n`;
 
-    const mcResults = getMonteCarloResults();
     if (mcResults) {
         md += `*${mcResults.numSimulations.toLocaleString()} simulations*`;
         if (mcResults.withGuardrails) md += ` *with guardrails active*`;
@@ -261,12 +276,11 @@ export function generateMonteCarloSectionMarkdown(portfolio) {
     return md;
 }
 
-export function generateGuardrailsSectionMarkdown(portfolio) {
+export function generateGuardrailsSectionMarkdown(portfolio, gr = null) {
     if (!portfolio) return `# Guardrails\n\nNo simulation has been run yet.\n` + GENERATOR_LINE;
 
     let md = `# Guardrails\n\n`;
 
-    const gr = getGuardrailsResults();
     if (gr) {
         md += `Target withdrawal: ${gr.params.withdrawalRate}%, `;
         md += `preservation: ${gr.params.preservation}%, `;

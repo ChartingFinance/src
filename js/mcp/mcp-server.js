@@ -29,9 +29,9 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 
-import { runPlanCached, getRun, planFromProfile, listProfiles } from './run-plan.js';
+import { runPlanCached, getRun, planFromProfile, listProfiles, runMonteCarloFor } from './run-plan.js';
 import { explainIssue, explainAt, explainIssueMarkdown, explainAtMarkdown } from './explain.js';
-import { generatePortfolioMarkdown } from '../generators/finplan-ai.js';
+import { generatePortfolioMarkdown, generateMonteCarloSectionMarkdown } from '../generators/finplan-ai.js';
 import { planExhaustion } from '../portfolio-issues.js';
 import { EventType } from '../sim-event.js';
 
@@ -110,7 +110,7 @@ function issuesMarkdown(issues) {
  * Findings carry their own ids so `explain_issue` can be called without the
  * agent having to guess one.
  */
-function reportFor(handle, portfolio, issues) {
+function reportFor(handle, portfolio, issues, mcResults = null) {
   const ids = [...new Set(issues.map(i => i.id))];
   const followUp = [
     `**Run handle:** \`${handle}\``,
@@ -124,7 +124,13 @@ function reportFor(handle, portfolio, issues) {
     '',
   ].join('\n');
 
-  return `${followUp}${issuesMarkdown(issues)}\n\n---\n\n${generatePortfolioMarkdown(portfolio)}`;
+  // Monte Carlo is appended only when it was asked for. It is stochastic, so it
+  // is not part of the deterministic report body — see runMonteCarloFor.
+  const mc = mcResults
+    ? `\n\n---\n\n${generateMonteCarloSectionMarkdown(portfolio, mcResults)}`
+    : '';
+
+  return `${followUp}${issuesMarkdown(issues)}\n\n---\n\n${generatePortfolioMarkdown(portfolio)}${mc}`;
 }
 
 // ── list_profiles ─────────────────────────────────────────────────
@@ -163,13 +169,18 @@ server.tool(
     includeReconciliation: z.boolean().default(false)
         .describe("Include engine-diagnostic findings (bookkeeping that does not reconcile). "
                 + "These are notes about the engine, not about the finances."),
+    monteCarlo: z.number().int().min(100).max(5000).optional()
+        .describe("Number of Monte Carlo simulations to run. Omit for none. Adds a percentile "
+                + "table to the report. Sampling is random and unseeded, so these figures "
+                + "change between calls while the rest of the report does not."),
   },
-  guard(async ({ profile, startAge, retirementAge, finishAge, inflationRate, includeReconciliation }) => {
+  guard(async ({ profile, startAge, retirementAge, finishAge, inflationRate, includeReconciliation, monteCarlo }) => {
     const spec = planFromProfile(profile, { startAge, retirementAge, finishAge });
     if (inflationRate != null) spec.settings.inflationRate = inflationRate;
 
     const { handle, portfolio, issues } = await runPlanCached(spec, { includeReconciliation });
-    return { content: [{ type: "text", text: reportFor(handle, portfolio, issues) }] };
+    const mc = monteCarlo ? await runMonteCarloFor(spec, { numSimulations: monteCarlo }) : null;
+    return { content: [{ type: "text", text: reportFor(handle, portfolio, issues, mc) }] };
   })
 );
 
@@ -201,10 +212,14 @@ server.tool(
                   + "transitions: salary never closes and retirement transfers never activate."),
     }).describe("A plan in the app's share format."),
     includeReconciliation: z.boolean().default(false),
+    monteCarlo: z.number().int().min(100).max(5000).optional()
+        .describe("Number of Monte Carlo simulations to run. Omit for none. Sampling is random "
+                + "and unseeded, so these figures change between calls."),
   },
-  guard(async ({ plan, includeReconciliation }) => {
+  guard(async ({ plan, includeReconciliation, monteCarlo }) => {
     const { handle, portfolio, issues } = await runPlanCached(plan, { includeReconciliation });
-    return { content: [{ type: "text", text: reportFor(handle, portfolio, issues) }] };
+    const mc = monteCarlo ? await runMonteCarloFor(plan, { numSimulations: monteCarlo }) : null;
+    return { content: [{ type: "text", text: reportFor(handle, portfolio, issues, mc) }] };
   })
 );
 
