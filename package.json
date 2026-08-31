@@ -8,7 +8,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:sanity": "node tests/quick-start-sanity.mjs"
+    "test:sanity": "node tests/quick-start-sanity.mjs",
+    "build:plugin": "node tools/build-plugin.mjs"
   },
   "author": "John Milan",
   "license": "ISC",
@@ -23,6 +24,7 @@
   "devDependencies": {
     "@tailwindcss/cli": "^4.2.2",
     "@tailwindcss/vite": "^4.2.2",
+    "esbuild": "^0.27.3",
     "tailwindcss": "^4.2.2",
     "vite": "^7.3.1",
     "vitest": "^4.1.4"
