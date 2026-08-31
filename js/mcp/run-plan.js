@@ -56,6 +56,8 @@ import { detectIssues } from '../portfolio-issues.js';
 import { buildQuickStart, quickStartProfiles } from '../quick-start.js';
 import { asFilingStatus } from '../filing-status.js';
 import { makeSimConfig, SIM_CONFIG_DEFAULTS } from '../sim-config.js';
+import { computeMonteCarlo } from '../mc-compute.js';
+import { ageToDateIntFor } from '../plan-dates.js';
 
 /**
  * Build a plan spec from a Quick Start profile key.
@@ -179,6 +181,54 @@ export async function runPlan(spec, { includeReconciliation = false } = {}) {
 /** Convenience: profile key straight to a completed run. */
 export async function runProfile(profileKey, ageOverrides = null, opts = {}) {
     return runPlan(planFromProfile(profileKey, ageOverrides), opts);
+}
+
+// ── Monte Carlo ──────────────────────────────────────────────────────
+//
+// Deliberately OUTSIDE runPlan, and outside the handle cache.
+//
+// `computeMonteCarlo` samples with an unseeded `Math.random()`, so two runs of
+// one spec do not agree. runPlan's result is memoized under a content-addressed
+// handle and RE-RUN on a cache miss, and tests/mcp-stateless.mjs asserts that a
+// re-run is byte-identical. Folding a stochastic result into that would make one
+// handle answer differently depending on whether it happened to still be in
+// memory — the exact class of bug the handle rework was done to remove.
+//
+// So Monte Carlo is a separate call the caller opts into, and its output is
+// never cached. A deterministic report and a probabilistic one are different
+// questions; only the first one is a plan.
+//
+// No Web Worker is involved. monte-carlo.js is the browser transport; the
+// computation lives in mc-compute.js and is headless — tests/mc-worker-sanity.mjs
+// has exercised exactly this path outside a Worker since before this seam existed.
+
+/**
+ * Run Monte Carlo over a plan spec, headless.
+ *
+ * @param {object} spec   the same plan spec runPlan takes
+ * @param {object} [opts]
+ * @param {number} [opts.numSimulations]
+ * @returns {Promise<object>} results, JSON-serializable (see mc-compute.js)
+ */
+export async function runMonteCarloFor(spec, { numSimulations = 500 } = {}) {
+    if (!spec?.modelAssets?.length) {
+        throw new Error('Plan spec has no modelAssets — nothing to simulate.');
+    }
+
+    const config = simConfigFromPlanSpec(spec);
+    const assets = membrane_rawDataToModelAssets(spec.modelAssets);
+    const lifeEvents = (spec.lifeEvents ?? []).map(ModelLifeEvent.fromJSON);
+
+    return computeMonteCarlo(assets, {
+        numSimulations,
+        lifeEvents,
+        config,
+        // A spec that carries no guardrail parameters must not silently acquire
+        // a withdrawal policy: that would change the plan, not just describe it.
+        guardrailParams: spec.guardrailParams ?? null,
+        retirementDateInt: ageToDateIntFor(config, config.retirementAge),
+        dataMode: config.simDataMode ?? SIM_CONFIG_DEFAULTS.simDataMode,
+    });
 }
 
 // ── Run handles ──────────────────────────────────────────────────────

@@ -69,8 +69,10 @@ import './components/plan-issues-panel.js';
 
 // ── AI Summary generators ──────────────────────────────────
 // generators/finplan-ai.js is code-split: dynamically imported on the first
-// AI-FAB click. It eagerly imports monte-carlo.js and guardrails.js, so a
-// static import here would drag both back into the initial bundle.
+// AI-FAB click. It no longer imports monte-carlo.js or guardrails.js — their
+// results are passed in — so it is now a leaf as far as the simulations go,
+// and a static import here would no longer drag them into the initial bundle.
+// It stays dynamic anyway: the generators are only reachable from the FAB.
 
 // ── Store ───────────────────────────────────────────────────
 import { store } from './finplan-store.js';
@@ -387,14 +389,16 @@ function openAiSummary(title, content) {
     aiPopup.style.display = 'flex';
 }
 
-// The generator module loads on first FAB click (code-split — it also pulls
-// in monte-carlo and guardrails for its simulation sections).
+// The generator module loads on first FAB click (code-split). The simulation
+// sections read from whichever adapter has already been loaded by a Run click;
+// before that the modules are null and the sections render their "not yet run"
+// state, exactly as they did when the generator read the caches itself.
 const aiGenerators = (ai) => ({
     timeline:    () => ai.generateTimelineMarkdown(appState.portfolio, appState.lifeEvents),
     portfolio:   () => ai.generatePortfolioSectionMarkdown(appState.portfolio),
     projections: () => ai.generateProjectionsSectionMarkdown(appState.portfolio, appState.metricName),
-    montecarlo:  () => ai.generateMonteCarloSectionMarkdown(appState.portfolio),
-    guardrails:  () => ai.generateGuardrailsSectionMarkdown(appState.portfolio),
+    montecarlo:  () => ai.generateMonteCarloSectionMarkdown(appState.portfolio, mcModule?.getMonteCarloResults() ?? null),
+    guardrails:  () => ai.generateGuardrailsSectionMarkdown(appState.portfolio, guardrailsModule?.getGuardrailsResults() ?? null),
     creditmemos: () => ai.generateCreditMemosSectionMarkdown(appState.portfolio),
     reports:     () => ai.generateReportsSectionMarkdown(appState.portfolio),
     spreadsheet: () => ai.generateSpreadsheetSectionMarkdown(appState.portfolio),

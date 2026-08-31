@@ -65,9 +65,18 @@ const rel = (abs) => relative(SRC, abs).split(sep).join('/');
  * single supported way to run a plan outside the browser, so its closure
  * is the engine. The other two are named directly so that deleting
  * run-plan.js could never silently empty this test.
+ *
+ * `mcp-server.js` is here because it is what actually SHIPS. Guarding only
+ * run-plan.js left a seam: the server reaches the report generators, which
+ * reached monte-carlo.js and guardrails.js for two cached getters, and those
+ * are Web Worker adapters carrying `new Worker` — undefined under Node. The
+ * guarded closure was 35 files while the shipped one was 44, and the five-file
+ * difference was the part that could not run. A headless entry point that is
+ * not the thing you ship guards the wrong closure.
  */
 const ENTRY_POINTS = [
     'js/mcp/run-plan.js',
+    'js/mcp/mcp-server.js',
     'js/chronometer.js',
     'js/portfolio.js',
 ];
