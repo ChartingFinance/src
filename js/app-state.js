@@ -7,11 +7,11 @@
  * instead of being hand-wired after every mutation.
  *
  * Persisted fields: storyArc, storyName.
- * Ephemeral fields (per session): portfolio, lifeEvents, phaseIndex,
- *   metricName, microMetric, portfolioView.
+ * Ephemeral fields (per session): portfolio, lifeEvents, editingConfig,
+ *   phaseIndex, metricName, microMetric, portfolioView.
  */
 
-import { simConfigFromGlobals } from './globals.js';
+import { editingConfigFor } from './editing-env.js';
 
 const STORAGE_KEY_STORY_ARC  = 'activeStoryArc';
 const STORAGE_KEY_STORY_NAME = 'activeStoryName';
@@ -25,6 +25,7 @@ export class AppState {
   #metricName    = null;
   #microMetric   = null;
   #portfolioView = 'assets';
+  #editingConfig = null;
 
   #listeners = new Map();
 
@@ -106,10 +107,36 @@ export class AppState {
    * the editor happens to be showing.
    */
   set lifeEvents(v) {
-    const config = simConfigFromGlobals();
+    const config = this.editingConfig;
     for (const event of v ?? []) event.bindEnv?.(config);
     this.#lifeEvents = v;
     this.#emit('lifeEvents', v);
+  }
+
+  /**
+   * The environment the editor's derived dates resolve against — see
+   * editing-env.js for why it must be anchored to the plan rather than to the
+   * clock.
+   *
+   * The app pushes a fresh one whenever the asset list changes, because the
+   * anchor is derived from the assets and this object never sees them. Setting
+   * it REBINDS the events already held: the two collections do not arrive in a
+   * fixed order (loading a shared scenario sets the events first, so it can
+   * migrate legacy per-asset transfers onto the accumulate phase before the
+   * assets exist), and an anchor that only applied to whatever arrived last
+   * would leave the other half resolving against a stale plan.
+   *
+   * The default is the empty plan's anchor, which is what a first-run app with
+   * nothing loaded actually has.
+   */
+  get editingConfig() {
+    return this.#editingConfig ??= editingConfigFor([]);
+  }
+
+  set editingConfig(config) {
+    this.#editingConfig = config;
+    for (const event of this.#lifeEvents ?? []) event.bindEnv?.(config);
+    this.#emit('editingConfig', config);
   }
 
   get phaseIndex() { return this.#phaseIndex; }
