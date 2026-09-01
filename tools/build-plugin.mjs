@@ -27,11 +27,73 @@ import { build } from 'esbuild';
 import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const SRC = resolve(HERE, '..');
 const OUT = resolve(SRC, 'plugin/server/mcp-server.mjs');
+
+/**
+ * Produce the bundle's exact text, without writing it.
+ *
+ * Exported because `tests/plugin-bundle-fresh.mjs` compares the committed
+ * artifact against this. If the test built with its own copy of these options
+ * it would be checking freshness against something other than what ships —
+ * a second implementation of the build, guarding the first. One definition,
+ * two callers.
+ */
+export async function bundleText() {
+    const pkg = JSON.parse(readFileSync(resolve(SRC, 'package.json'), 'utf8'));
+    const manifest = JSON.parse(
+        readFileSync(resolve(SRC, 'plugin/.claude-plugin/plugin.json'), 'utf8'),
+    );
+
+    const result = await build({
+        entryPoints: [resolve(SRC, 'js/mcp/mcp-server.js')],
+        bundle: true,
+        platform: 'node',
+        format: 'esm',
+        target: 'node20',
+        banner: {
+            js: [
+                // No shebang here: esbuild preserves the entry file's own, and a
+                // second one on line 2 is a syntax error, not a comment.
+                '// GENERATED FILE — do not edit.',
+                '// Built from ChartingFinance/src by tools/build-plugin.mjs.',
+                `// Plugin version ${manifest.version}; engine deps `
+                    + `@modelcontextprotocol/sdk ${pkg.dependencies['@modelcontextprotocol/sdk']}, `
+                    + `zod ${pkg.dependencies.zod}.`,
+                '// Rebuild with: npm run build:plugin',
+            ].join('\n'),
+        },
+        // In memory. The caller decides whether this becomes a file.
+        write: false,
+    });
+    return result.outputFiles[0].text;
+}
+
+/**
+ * The banner names the plugin version, and `plugin.json` is rewritten by this
+ * script — so read the version BEFORE the tool-list sync, or a rebuild could
+ * disagree with itself about what it just built. It does not today (the sync
+ * touches `tools`, not `version`), and this note is here so it stays that way.
+ */
+
+// ── Script ───────────────────────────────────────────────────────────
+//
+// Everything below runs ONLY when this file is executed, never when it is
+// imported. That distinction is load-bearing, and it was found by mutation
+// rather than by design: `tests/plugin-bundle-fresh.mjs` imports `bundleText`,
+// and while this body ran on import the test REBUILT AND OVERWROTE the artifact
+// before comparing it. The comparison could not fail — and running the test
+// suite quietly modified a committed file.
+//
+// A module that does work when you import it is not a module. Guard it.
+
+const isMain = process.argv[1]
+    && pathToFileURL(resolve(process.argv[1])).href === import.meta.url;
+
+if (isMain) {
 
 // The boundary test is the precondition, so it runs first and its failure
 // is this script's failure. Bundling a closure that needs a browser would
@@ -42,35 +104,15 @@ execFileSync(process.execPath, [resolve(SRC, 'tests/layer-boundary.mjs')], {
     stdio: ['ignore', 'inherit', 'inherit'],
 });
 
-const pkg = JSON.parse(readFileSync(resolve(SRC, 'package.json'), 'utf8'));
+console.error('→ bundling mcp-server.js → plugin/server/mcp-server.mjs');
+const text = await bundleText();
+writeFileSync(OUT, text);
+
 const manifest = JSON.parse(
     readFileSync(resolve(SRC, 'plugin/.claude-plugin/plugin.json'), 'utf8'),
 );
+const bytes = Buffer.byteLength(text);
 
-console.error(`→ bundling mcp-server.js → plugin/server/mcp-server.mjs`);
-const result = await build({
-    entryPoints: [resolve(SRC, 'js/mcp/mcp-server.js')],
-    outfile: OUT,
-    bundle: true,
-    platform: 'node',
-    format: 'esm',
-    target: 'node20',
-    banner: {
-        js: [
-            // No shebang here: esbuild preserves the entry file's own, and a
-            // second one on line 2 is a syntax error, not a comment.
-            '// GENERATED FILE — do not edit.',
-            `// Built from ChartingFinance/src by tools/build-plugin.mjs.`,
-            `// Plugin version ${manifest.version}; engine deps ` +
-                `@modelcontextprotocol/sdk ${pkg.dependencies['@modelcontextprotocol/sdk']}, ` +
-                `zod ${pkg.dependencies.zod}.`,
-            '// Rebuild with: npm run build:plugin',
-        ].join('\n'),
-    },
-    metafile: true,
-});
-
-const bytes = Object.values(result.metafile.outputs)[0].bytes;
 console.error(`✓ wrote ${(bytes / 1024 / 1024).toFixed(2)} MB`);
 
 // A bundle that cannot answer tools/list is not a build product, it is a
@@ -99,3 +141,5 @@ writeFileSync(
     JSON.stringify(manifest, null, 2) + '\n',
 );
 console.error('✓ plugin.json tool list synced');
+
+}
