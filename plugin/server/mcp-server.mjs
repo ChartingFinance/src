@@ -30093,6 +30093,13 @@ var StdioServerTransport = class {
 };
 
 // js/utils/currency.js
+function assertCurrency(other, op) {
+  if (!(other instanceof Currency)) {
+    throw new TypeError(
+      `Currency.${op}: expected a Currency, got ${typeof other} (${String(other)}). Passing \`x.amount\` is the usual slip \u2014 pass \`x\`. This used to be ignored silently, which is how a tax deduction went unapplied for months.`
+    );
+  }
+}
 var Currency = class _Currency {
   /**
    * @param {number} [amount=0]
@@ -30113,11 +30120,13 @@ var Currency = class _Currency {
   }
   // ── Mutating arithmetic (chainable, matches original API) ────────
   add(other) {
-    if (other instanceof _Currency) this.amount += other.amount;
+    assertCurrency(other, "add");
+    this.amount += other.amount;
     return this;
   }
   subtract(other) {
-    if (other instanceof _Currency) this.amount -= other.amount;
+    assertCurrency(other, "subtract");
+    this.amount -= other.amount;
     return this;
   }
   multiply(factor) {
@@ -30662,7 +30671,12 @@ if (typeof window !== "undefined") {
 
 // js/plan-dates.js
 function birthYearFor(env) {
-  return (/* @__PURE__ */ new Date()).getFullYear() - env.startAge;
+  if (!Number.isInteger(env?.birthYear)) {
+    throw new Error(
+      `plan-dates: config has no birthYear. It is attached by the Portfolio constructor from the plan's first month; a config that reaches a derived date getter without one was never bound. Got ${JSON.stringify(env?.birthYear)}.`
+    );
+  }
+  return env.birthYear;
 }
 function finishDateIntFor(env) {
   return DateInt.from(birthYearFor(env) + env.finishAge, 12);
@@ -30965,8 +30979,10 @@ var FIELDS = Object.freeze([
   "socialSecurityWithholdingRate",
   "backtestYear",
   "simDataMode",
-  "taxTable"
+  "taxTable",
+  "birthYear"
 ]);
+var ATTACHED = Object.freeze(["taxTable", "birthYear"]);
 var NUMERIC = Object.freeze([
   "inflationRate",
   "startAge",
@@ -30980,7 +30996,7 @@ function makeSimConfig(values) {
   if (!values || typeof values !== "object") {
     throw new Error("makeSimConfig: expected an object of settings.");
   }
-  const missing = FIELDS.filter((f) => f !== "taxTable" && !(f in values));
+  const missing = FIELDS.filter((f) => !ATTACHED.includes(f) && !(f in values));
   if (missing.length) {
     throw new Error(`makeSimConfig: missing ${missing.join(", ")}.`);
   }
@@ -30999,9 +31015,15 @@ function makeSimConfig(values) {
   if (typeof values.allocateHouseholdTax !== "boolean") {
     throw new Error("makeSimConfig: allocateHouseholdTax must be a boolean.");
   }
+  if (values.birthYear !== void 0 && values.birthYear !== null && !Number.isInteger(values.birthYear)) {
+    throw new Error(`makeSimConfig: birthYear must be an integer year, got ${String(values.birthYear)}.`);
+  }
   const config2 = {};
   for (const f of FIELDS) config2[f] = values[f] ?? null;
   return Object.freeze(config2);
+}
+function withSimConfig(config2, changes) {
+  return makeSimConfig({ ...config2, ...changes });
 }
 
 // js/metric.js
@@ -32785,7 +32807,7 @@ var TaxTable = class {
   calculateYearlyIncomeTax(income, deduction) {
     let adjusted = new Currency(income.amount);
     if (deduction)
-      adjusted.subtract(deduction.amount);
+      adjusted.subtract(deduction);
     let tax = 0;
     for (const taxRow of this.activeIncomeTable.taxRows) {
       if (adjusted.amount < taxRow.fromAmount)
@@ -34968,8 +34990,12 @@ var Portfolio = class _Portfolio {
     this.generatedReports = [];
     this.bindEnvironment();
     this.firstDateInt = firstDateInt(this.modelAssets);
-    this.lastDateInt = lastDateInt(this.modelAssets);
     const birthYear = this.firstDateInt ? this.firstDateInt.year - this.config.startAge : void 0;
+    if (birthYear !== void 0) {
+      this.config = withSimConfig(this.config, { birthYear });
+      this.bindEnvironment();
+    }
+    this.lastDateInt = lastDateInt(this.modelAssets);
     this.activeUser = new User(this.config.startAge, birthYear);
     this.startUserAge = this.activeUser.age;
     this.guardrailsParams = null;
@@ -39372,6 +39398,580 @@ function generatePortfolioMarkdown(portfolio) {
   ].join("\n\n");
 }
 
+// js/mcp/build-plan.js
+var PlanRefusal = class extends Error {
+  constructor(reason, { question = null, options = null, field = null } = {}) {
+    super(reason);
+    this.name = "PlanRefusal";
+    this.reason = reason;
+    this.question = question;
+    this.options = options;
+    this.field = field;
+  }
+};
+var PLAN_DEFAULT_GLOSS = Object.freeze([
+  Object.freeze({
+    field: "startAge",
+    value: SIM_CONFIG_DEFAULTS.startAge,
+    gloss: "how old you are now"
+  }),
+  Object.freeze({
+    field: "retirementAge",
+    value: SIM_CONFIG_DEFAULTS.retirementAge,
+    gloss: "when work income stops"
+  }),
+  Object.freeze({
+    field: "finishAge",
+    value: SIM_CONFIG_DEFAULTS.finishAge,
+    gloss: "how far out to project"
+  }),
+  Object.freeze({
+    field: "inflationRate",
+    value: SIM_CONFIG_DEFAULTS.inflationRate,
+    gloss: "annual inflation applied to expenses"
+  }),
+  Object.freeze({
+    field: "filingAs",
+    value: SIM_CONFIG_DEFAULTS.filingAs,
+    gloss: "tax filing status"
+  })
+]);
+function planDefaults() {
+  return PLAN_DEFAULT_GLOSS.map((d) => ({ ...d }));
+}
+var ACCOUNT_WORDS = Object.freeze([
+  ["roth ira", Instrument.ROTH_IRA],
+  ["roth", Instrument.ROTH_IRA],
+  ["traditional ira", Instrument.IRA],
+  ["ira", Instrument.IRA],
+  ["401k", Instrument.FOUR_01K],
+  ["401(k)", Instrument.FOUR_01K],
+  ["brokerage", Instrument.TAXABLE_EQUITY],
+  ["taxable", Instrument.TAXABLE_EQUITY],
+  ["after-tax", Instrument.TAXABLE_EQUITY],
+  ["savings account", Instrument.BANK],
+  ["savings", Instrument.BANK],
+  ["bank", Instrument.BANK],
+  ["cash account", Instrument.BANK],
+  ["checking", Instrument.BANK],
+  ["pension", Instrument.PENSION]
+]);
+var ACCOUNT_CATEGORIES = Object.freeze({
+  retirement: [Instrument.FOUR_01K, Instrument.IRA, Instrument.ROTH_IRA],
+  capital: [Instrument.TAXABLE_EQUITY, Instrument.BANK]
+});
+var INCOME_KINDS = Object.freeze({
+  working: Instrument.WORKING_INCOME,
+  pension: Instrument.PENSION,
+  socialSecurity: Instrument.RETIREMENT_INCOME
+});
+var DEFAULT_RATES = Object.freeze({
+  [Instrument.BANK]: 0.02,
+  [Instrument.TAXABLE_EQUITY]: 0.085,
+  [Instrument.FOUR_01K]: 0.085,
+  [Instrument.IRA]: 0.085,
+  [Instrument.ROTH_IRA]: 0.085,
+  [Instrument.PENSION]: 0.025,
+  [Instrument.WORKING_INCOME]: 0.025,
+  [Instrument.RETIREMENT_INCOME]: 0.025
+});
+var RESIDUAL_EXPENSE_LABEL = "Living Expenses";
+function withholdingFor(incomeAssets, { filingAs, propertyTaxDeductionMax }) {
+  const taxTable = new TaxTable(filingAs, propertyTaxDeductionMax);
+  const fica = /* @__PURE__ */ new Map();
+  for (const a of incomeAssets) {
+    fica.set(a.displayName, a.instrument === Instrument.WORKING_INCOME ? taxTable.calculateFICATax(
+      false,
+      new Currency(a.startCurrency.amount),
+      TaxOwner.PRIMARY
+    ).fica().amount : 0);
+  }
+  const annualOrdinary = incomeAssets.reduce((sum, a) => sum + a.startCurrency.amount * 12 * (a.instrument === Instrument.RETIREMENT_INCOME ? 0.85 : 1), 0);
+  const taxable = Math.max(0, annualOrdinary - taxTable.activeStandardDeduction);
+  const householdMonthlyTax = taxTable.calculateYearlyIncomeTax(new Currency(taxable)).amount / 12;
+  const totalWorking = incomeAssets.filter((a) => a.instrument === Instrument.WORKING_INCOME).reduce((n, a) => n + a.startCurrency.amount, 0);
+  const net = /* @__PURE__ */ new Map();
+  for (const a of incomeAssets) {
+    const share = totalWorking > 0 && a.instrument === Instrument.WORKING_INCOME ? a.startCurrency.amount / totalWorking : 0;
+    const incomeTax = householdMonthlyTax * share;
+    net.set(
+      a.displayName,
+      Math.max(0, a.startCurrency.amount - fica.get(a.displayName) - incomeTax)
+    );
+  }
+  return { net, taxTable, householdMonthlyTax };
+}
+var Provenance = Object.freeze({
+  STATED: "stated",
+  // the user said it
+  INFERRED: "inferred",
+  // resolved from wording
+  DERIVED: "derived",
+  // computed from something stated
+  DEFAULT: "default"
+  // SIM_CONFIG_DEFAULTS, untouched
+});
+var AssetOrigin = Object.freeze({
+  STATED: "stated",
+  // "add a brokerage account"
+  IMPLIED: "implied",
+  // "5% to a brokerage" — named in the request itself
+  STRUCTURAL: "structural"
+  // a construction rule produced it
+});
+var Ledger = class {
+  constructor() {
+    this.fields = [];
+    this.assets = [];
+  }
+  field(name, value, provenance, note = null) {
+    this.fields.push({ field: name, value, provenance, note });
+    return value;
+  }
+  asset(label, origin, note = null) {
+    this.assets.push({ label, origin, note });
+  }
+  /**
+   * §6: a field with no declared provenance is a BUILD ERROR, not a blank.
+   * Same shape as EVENT_RECONCILIATION throwing on an undeclared event type —
+   * the failure being defended against is documented and specific: an agent
+   * handed a number and a footnote reports the number.
+   */
+  assertComplete(settings, assetLabels) {
+    const declared = new Set(this.fields.map((f) => f.field));
+    const missing = Object.keys(settings).filter((k) => !declared.has(k));
+    if (missing.length) {
+      throw new Error(`build_plan: settings field(s) ${missing.join(", ")} reached the spec with no declared provenance. Every field carries one; see \xA76.`);
+    }
+    const withOrigin = new Set(this.assets.map((a) => a.label));
+    const unattributed = assetLabels.filter((l) => !withOrigin.has(l));
+    if (unattributed.length) {
+      throw new Error(`build_plan: asset(s) ${unattributed.join(", ")} carry no origin. An unattributed asset is indistinguishable from one the user supplied; see \xA79.2.`);
+    }
+  }
+};
+var monthlyFrom = ({ annual, monthly }, what) => {
+  if (monthly != null && annual != null) {
+    throw new PlanRefusal(
+      `${what} gives both a monthly and an annual amount.`,
+      { question: `Is ${what} ${monthly}/month or ${annual}/year?`, field: what }
+    );
+  }
+  if (monthly != null) return monthly;
+  if (annual != null) return annual / 12;
+  throw new PlanRefusal(
+    `${what} has no amount.`,
+    { question: `How much is ${what}? Monthly or annual is fine.`, field: what }
+  );
+};
+var labelFor = (key) => InstrumentMeta.get(key)?.label ?? key;
+function resolveAccountInstrument(account) {
+  if (account.kind) {
+    if (!Object.values(Instrument).includes(account.kind)) {
+      throw new PlanRefusal(
+        `"${account.kind}" is not an instrument this engine has.`,
+        {
+          question: `What kind of account is ${account.label}?`,
+          options: ACCOUNT_CATEGORIES,
+          field: account.label
+        }
+      );
+    }
+    return { instrument: account.kind, provenance: Provenance.STATED };
+  }
+  const hay = String(account.label ?? "").toLowerCase();
+  const hit = [...ACCOUNT_WORDS].sort((a, b) => b[0].length - a[0].length).find(([word]) => hay.includes(word));
+  if (hit) return { instrument: hit[1], provenance: Provenance.INFERRED };
+  throw new PlanRefusal(
+    `"${account.label}" does not name an account type I can resolve.`,
+    {
+      question: `What kind of account is "${account.label}" \u2014 retirement (401K, IRA, Roth IRA) or capital (Taxable Account, Savings)?`,
+      options: ACCOUNT_CATEGORIES,
+      field: account.label
+    }
+  );
+}
+function buildPlan(intent = {}) {
+  const ledger = new Ledger();
+  const notes = [];
+  if (!Array.isArray(intent.income) || intent.income.length === 0) {
+    throw new PlanRefusal("A plan needs at least one income source.", {
+      question: "What income should the plan start from \u2014 a salary, a pension, Social Security?",
+      field: "income"
+    });
+  }
+  const o = intent.settingsOverrides ?? {};
+  const D = SIM_CONFIG_DEFAULTS;
+  const startAge = ledger.field(
+    "startAge",
+    o.startAge ?? D.startAge,
+    o.startAge != null ? Provenance.STATED : Provenance.DEFAULT,
+    o.startAge != null ? null : "nobody said how old you are"
+  );
+  const retirementAge = ledger.field(
+    "retirementAge",
+    o.retirementAge ?? D.retirementAge,
+    o.retirementAge != null ? Provenance.STATED : Provenance.DEFAULT
+  );
+  if (intent.horizonYears != null && o.finishAge != null) {
+    throw new PlanRefusal(
+      "The plan has both a horizon and a finish age, and they may disagree.",
+      { question: `Project for ${intent.horizonYears} years, or out to age ${o.finishAge}?`, field: "finishAge" }
+    );
+  }
+  let finishAge;
+  if (o.finishAge != null) {
+    finishAge = ledger.field("finishAge", o.finishAge, Provenance.STATED);
+  } else if (intent.horizonYears != null) {
+    finishAge = ledger.field(
+      "finishAge",
+      startAge + intent.horizonYears,
+      Provenance.DERIVED,
+      `${intent.horizonYears} years from a start age of ${startAge}`
+    );
+  } else {
+    finishAge = ledger.field(
+      "finishAge",
+      D.finishAge,
+      Provenance.DEFAULT,
+      "no horizon given, so the plan runs to the default finish age"
+    );
+  }
+  if (finishAge <= startAge) {
+    throw new PlanRefusal(
+      `The plan finishes at ${finishAge}, at or before it starts (${startAge}).`,
+      { question: "How far out should the plan project?", field: "finishAge" }
+    );
+  }
+  const inflationRate = ledger.field(
+    "inflationRate",
+    o.inflationRate ?? D.inflationRate,
+    o.inflationRate != null ? Provenance.STATED : Provenance.DEFAULT
+  );
+  const filingAs = ledger.field(
+    "filingAs",
+    o.filingAs != null ? asFilingStatus(o.filingAs, D.filingAs) : D.filingAs,
+    o.filingAs != null ? Provenance.STATED : Provenance.DEFAULT
+  );
+  const reachesRetirement = finishAge >= retirementAge;
+  if (reachesRetirement) {
+    notes.push(`This plan runs past your retirement age (${retirementAge}), so it includes a drawdown: work income stops and expenses are paid from the accounts.`);
+  }
+  const now = /* @__PURE__ */ new Date();
+  const startMonth = DateInt.from(now.getFullYear(), now.getMonth() + 1);
+  const birthYear = now.getFullYear() - startAge;
+  const retireMonth = DateInt.from(birthYear + retirementAge, 1);
+  const finishMonth = DateInt.from(birthYear + finishAge, 12);
+  const raw = [];
+  const seen = /* @__PURE__ */ new Set();
+  const claim = (label, what) => {
+    if (seen.has(label)) {
+      throw new PlanRefusal(
+        `Two things in this plan are called "${label}".`,
+        {
+          question: `Rename one of them \u2014 which "${label}" is the ${what}?`,
+          field: label
+        }
+      );
+    }
+    seen.add(label);
+  };
+  const incomeLabels = [];
+  for (const src of intent.income) {
+    const label = src.label ?? "Salary";
+    claim(label, "income source");
+    incomeLabels.push(label);
+    const kind = src.kind ?? "working";
+    const instrument = INCOME_KINDS[kind];
+    if (!instrument) {
+      throw new PlanRefusal(`"${kind}" is not an income kind I have.`, {
+        question: `Is ${label} working income, a pension, or Social Security?`,
+        options: { kind: Object.keys(INCOME_KINDS) },
+        field: label
+      });
+    }
+    const monthly = monthlyFrom(src, label);
+    const rate = src.growthRate ?? DEFAULT_RATES[instrument];
+    if (src.growthRate == null) {
+      ledger.asset(
+        label,
+        AssetOrigin.STATED,
+        `grows ${(rate * 100).toFixed(1)}%/yr \u2014 you did not say, so this is a default`
+      );
+    } else {
+      ledger.asset(label, AssetOrigin.STATED);
+    }
+    raw.push({
+      instrument,
+      displayName: label,
+      startDateInt: startMonth,
+      // Working income stops at retirement — but never AFTER the plan
+      // itself ends. A ten-year plan from age 50 finishes at 60 while
+      // retirement is 67, and an unclamped salary pushes lastDateInt out
+      // to 2043 on a plan the user asked to end in 2036. The run then
+      // spans years the plan does not cover, which is a different plan
+      // reported as the requested one.
+      ...instrument === Instrument.WORKING_INCOME ? { finishDateInt: retireMonth.isBefore(finishMonth) ? retireMonth : finishMonth } : {},
+      startCurrency: { amount: monthly },
+      annualReturnRate: { rate }
+    });
+  }
+  const accountLabels = [];
+  for (const acct of intent.accounts ?? []) {
+    const label = acct.label ?? "Savings";
+    claim(label, "account");
+    accountLabels.push(label);
+    const { instrument, provenance } = resolveAccountInstrument(acct);
+    const balance = acct.startingBalance ?? 0;
+    const rate = acct.growthRate ?? DEFAULT_RATES[instrument] ?? 0;
+    ledger.asset(
+      label,
+      AssetOrigin.STATED,
+      provenance === Provenance.INFERRED ? `read as a ${labelFor(instrument)} from what you called it` : null
+    );
+    const asset = {
+      instrument,
+      displayName: label,
+      startDateInt: startMonth,
+      startCurrency: { amount: balance },
+      annualReturnRate: { rate }
+    };
+    if (isBasisBearing(instrument) && balance > 0) {
+      asset.startBasisCurrency = { amount: balance };
+      ledger.asset(
+        label,
+        AssetOrigin.STATED,
+        "treated as all cost basis \u2014 you did not say what you paid, and assuming zero would tax the whole balance as gain"
+      );
+    }
+    raw.push(asset);
+  }
+  const expenseLabels = [];
+  for (const exp of intent.expenses ?? []) {
+    const label = exp.label ?? "Expenses";
+    claim(label, "expense");
+    expenseLabels.push(label);
+    const monthly = monthlyFrom(exp, label);
+    ledger.asset(label, AssetOrigin.STATED);
+    raw.push({
+      instrument: Instrument.MONTHLY_EXPENSE,
+      displayName: label,
+      startDateInt: startMonth,
+      startCurrency: { amount: -Math.abs(monthly) }
+    });
+  }
+  const splits = intent.savingsSplit ?? [];
+  for (const s of splits) {
+    if (!incomeLabels.includes(s.from)) {
+      throw new PlanRefusal(
+        `Nothing called "${s.from}" produces income in this plan.`,
+        { question: `Which income should the ${s.percent}% come from? I have: ${incomeLabels.join(", ")}.`, field: "savingsSplit" }
+      );
+    }
+    if (!accountLabels.includes(s.to) && !expenseLabels.includes(s.to)) {
+      throw new PlanRefusal(
+        `Nothing called "${s.to}" can receive money in this plan.`,
+        {
+          question: `Where should ${s.from}'s ${s.percent}% go? I have: ${[...accountLabels, ...expenseLabels].join(", ") || "no accounts yet"}.`,
+          field: "savingsSplit"
+        }
+      );
+    }
+    if (!(s.percent > 0)) {
+      throw new PlanRefusal(
+        `A split of ${s.percent}% from ${s.from} moves nothing.`,
+        {
+          question: `What share of ${s.from} should go to ${s.to}?`,
+          field: "savingsSplit"
+        }
+      );
+    }
+  }
+  const incomeAssets = raw.filter((a) => incomeLabels.includes(a.displayName));
+  const { net: netByIncome, householdMonthlyTax } = withholdingFor(incomeAssets, {
+    filingAs,
+    propertyTaxDeductionMax: D.propertyTaxDeductionMax
+  });
+  const spendingAccount = pickSpendingAccount(raw, accountLabels);
+  const phaseTransfers = {};
+  let residualExpense = null;
+  for (const label of incomeLabels) {
+    const legs = splits.filter((s) => s.from === label);
+    const stated = legs.reduce((n, s) => n + s.percent, 0);
+    if (stated > 100) {
+      throw new PlanRefusal(
+        `${label} is split ${stated}%, which is more than all of it.`,
+        { question: `The shares of ${label} add up to ${stated}%. What should they be?`, field: "savingsSplit" }
+      );
+    }
+    const outbound = legs.map((s) => ({
+      toDisplayName: s.to,
+      monthlyMoveValue: s.percent,
+      closeMoveValue: 0
+    }));
+    const residual = 100 - stated;
+    if (residual > 0) {
+      if (!spendingAccount) {
+        throw new PlanRefusal(
+          "This plan has income to spend but no account to spend it from.",
+          {
+            question: `Where should the ${residual}% of ${label} you are not saving be held \u2014 a savings or a brokerage account?`,
+            options: ACCOUNT_CATEGORIES,
+            field: "accounts"
+          }
+        );
+      }
+      if (!residualExpense) {
+        if (seen.has(RESIDUAL_EXPENSE_LABEL)) {
+          residualExpense = RESIDUAL_EXPENSE_LABEL;
+        } else {
+          claim(RESIDUAL_EXPENSE_LABEL, "residual spending");
+          residualExpense = RESIDUAL_EXPENSE_LABEL;
+          raw.push({
+            instrument: Instrument.MONTHLY_EXPENSE,
+            displayName: RESIDUAL_EXPENSE_LABEL,
+            startDateInt: startMonth,
+            startCurrency: { amount: 0 }
+            // summed below
+          });
+          expenseLabels.push(RESIDUAL_EXPENSE_LABEL);
+        }
+      }
+      const target = raw.find((a) => a.displayName === RESIDUAL_EXPENSE_LABEL);
+      target.startCurrency.amount -= netByIncome.get(label) * (residual / 100);
+      outbound.push({
+        toDisplayName: spendingAccount,
+        monthlyMoveValue: residual,
+        closeMoveValue: 0
+      });
+    }
+    const merged = [];
+    for (const leg of outbound) {
+      const prior = merged.find((m) => m.toDisplayName === leg.toDisplayName);
+      if (prior) prior.monthlyMoveValue += leg.monthlyMoveValue;
+      else merged.push({ ...leg });
+    }
+    outbound.length = 0;
+    outbound.push(...merged);
+    const total = outbound.reduce((n, t) => n + t.monthlyMoveValue, 0);
+    if (Math.abs(total - 100) > 1e-9) {
+      throw new Error(`build_plan: ${label} routes ${total}%, not 100%. Every dollar of income must be routed; see \xA75.3.`);
+    }
+    phaseTransfers[label] = outbound;
+  }
+  for (const label of expenseLabels) {
+    if (!spendingAccount) {
+      throw new PlanRefusal(
+        `Nothing in this plan can pay for ${label}.`,
+        {
+          question: `Which account should cover ${label}?`,
+          options: ACCOUNT_CATEGORIES,
+          field: "accounts"
+        }
+      );
+    }
+    phaseTransfers[label] = [{
+      toDisplayName: spendingAccount,
+      monthlyMoveValue: 100,
+      closeMoveValue: 0
+    }];
+  }
+  if (residualExpense) {
+    const amt = raw.find((a) => a.displayName === RESIDUAL_EXPENSE_LABEL).startCurrency.amount;
+    ledger.asset(
+      RESIDUAL_EXPENSE_LABEL,
+      AssetOrigin.STRUCTURAL,
+      `added to absorb the income you are not saving \u2014 $${Math.abs(Math.round(amt * 12)).toLocaleString()}/yr. You never mentioned spending.`
+    );
+    notes.push(`${RESIDUAL_EXPENSE_LABEL} \u2014 $${Math.abs(Math.round(amt * 12)).toLocaleString()}/yr \u2014 added to absorb the income you are not saving, after tax. You never mentioned spending.`);
+  }
+  if (splits.length > 1) {
+    notes.push("Percentages are shares of the income they come from, not of each other: 5% to one account and 5% to another is 10% saved, not 10% each.");
+  }
+  const accumulate = ModelLifeEvent.createDefault(LifeEvent.ACCUMULATE, startAge);
+  accumulate.phaseTransfers = phaseTransfers;
+  const lifeEvents = [accumulate];
+  ledger.field(
+    "lifeEvent:accumulate",
+    startAge,
+    Provenance.DERIVED,
+    "the accumulate phase triggers at the plan's start age"
+  );
+  if (reachesRetirement) {
+    const fundingAccount = pickDrawdownAccount(raw, accountLabels);
+    if (!fundingAccount) {
+      throw new PlanRefusal(
+        "This plan reaches retirement but has no account to pay expenses from.",
+        { question: `Work income stops at ${retirementAge}. Which account should cover spending after that?`, field: "accounts" }
+      );
+    }
+    const retire = ModelLifeEvent.createDefault(LifeEvent.RETIRE, retirementAge);
+    retire.phaseTransfers = Object.fromEntries(
+      expenseLabels.map((l) => [l, [{
+        toDisplayName: fundingAccount,
+        monthlyMoveValue: 100,
+        closeMoveValue: 0
+      }]])
+    );
+    lifeEvents.push(retire);
+    ledger.field(
+      "lifeEvent:retire",
+      retirementAge,
+      Provenance.DERIVED,
+      `spending is drawn from ${fundingAccount} once work income stops`
+    );
+    notes.push(`After ${retirementAge}, spending is drawn from ${fundingAccount} \u2014 you did not say which account should fund retirement, so I used the largest taxable one.`);
+  }
+  const settings = { inflationRate, filingAs, startAge, retirementAge, finishAge };
+  ledger.assertComplete(settings, raw.map((a) => a.displayName));
+  const assets = raw.map((r) => ModelAsset.fromJSON(r));
+  const spec = {
+    name: intent.name ?? "Conversational plan",
+    settings,
+    modelAssets: assets.map((a) => a.toJSON()),
+    lifeEvents: lifeEvents.map((e) => e.toJSON()),
+    guardrailParams: null
+  };
+  return {
+    spec,
+    ledger: { fields: ledger.fields, assets: ledger.assets },
+    notes,
+    horizon: {
+      firstMonth: String(startMonth),
+      lastMonth: String(finishMonth),
+      years: finishAge - startAge
+    }
+  };
+}
+function isBasisBearing(instrument) {
+  return instrument === Instrument.TAXABLE_EQUITY;
+}
+function pickSpendingAccount(raw, accountLabels) {
+  const candidates = raw.filter((a) => accountLabels.includes(a.displayName));
+  for (const want of [Instrument.BANK, Instrument.TAXABLE_EQUITY]) {
+    const hit = candidates.find((a) => a.instrument === want);
+    if (hit) return hit.displayName;
+  }
+  return candidates[0]?.displayName ?? null;
+}
+function pickDrawdownAccount(raw, accountLabels) {
+  const candidates = raw.filter((a) => accountLabels.includes(a.displayName));
+  const byPreference = [
+    Instrument.TAXABLE_EQUITY,
+    Instrument.BANK,
+    Instrument.FOUR_01K,
+    Instrument.IRA,
+    Instrument.ROTH_IRA
+  ];
+  for (const want of byPreference) {
+    const hits = candidates.filter((a) => a.instrument === want);
+    if (hits.length) {
+      return hits.reduce((big, a) => a.startCurrency.amount > big.startCurrency.amount ? a : big).displayName;
+    }
+  }
+  return candidates[0]?.displayName ?? null;
+}
+
 // js/mcp/mcp-server.js
 var server = new McpServer({
   name: "ChartingFinance-Local",
@@ -39526,6 +40126,78 @@ server.tool(
   guard(async ({ handle, date: date5, assetName, eventType, limit }) => {
     const result = explainAt(await getRun(handle), { date: date5, assetName, eventType, limit });
     return { content: [{ type: "text", text: explainAtMarkdown(result) }] };
+  })
+);
+server.tool(
+  "plan_defaults",
+  "The assumptions a new plan starts from \u2014 age, retirement age, horizon, inflation and filing status \u2014 with a plain-language gloss for each. Call this ONCE at the start of a planning conversation and state them back to the user before building anything, because a plan built on unstated defaults is a plan about someone else. Not needed for quick_start_report.",
+  {},
+  guard(async () => ({
+    content: [{ type: "text", text: JSON.stringify(planDefaults(), null, 2) }]
+  }))
+);
+var buildPlanShape = {
+  horizonYears: external_exports3.number().int().min(1).max(80).optional().describe("How many years to project, e.g. 10. Derives finishAge from startAge. Mutually exclusive with settingsOverrides.finishAge."),
+  name: external_exports3.string().optional(),
+  income: external_exports3.array(external_exports3.object({
+    label: external_exports3.string().describe("What to call it, e.g. 'Salary'."),
+    annual: external_exports3.number().optional().describe("Gross annual amount. Give this OR monthly."),
+    monthly: external_exports3.number().optional(),
+    kind: external_exports3.enum(["working", "pension", "socialSecurity"]).optional().default("working"),
+    growthRate: external_exports3.number().optional().describe("Annual raise rate as a decimal, e.g. 0.025.")
+  })).min(1).describe("Income sources. At least one is required."),
+  accounts: external_exports3.array(external_exports3.object({
+    label: external_exports3.string().describe("What to call it. The wording is read for the account type: 'brokerage', 'savings', '401k', 'IRA', 'Roth' all resolve."),
+    kind: external_exports3.string().optional().describe("Explicit instrument key, when the label does not say."),
+    startingBalance: external_exports3.number().optional(),
+    growthRate: external_exports3.number().optional()
+  })).optional(),
+  savingsSplit: external_exports3.array(external_exports3.object({
+    from: external_exports3.string().describe("An income label."),
+    to: external_exports3.string().describe("An account label."),
+    percent: external_exports3.number().describe("Share OF THAT INCOME, not of the other splits. 5 to one account and 5 to another is 10% saved, not 10% each.")
+  })).optional(),
+  expenses: external_exports3.array(external_exports3.object({
+    label: external_exports3.string(),
+    monthly: external_exports3.number().optional(),
+    annual: external_exports3.number().optional()
+  })).optional(),
+  settingsOverrides: external_exports3.object({
+    startAge: external_exports3.number().int().optional(),
+    retirementAge: external_exports3.number().int().optional(),
+    finishAge: external_exports3.number().int().optional(),
+    inflationRate: external_exports3.number().optional(),
+    filingAs: external_exports3.enum(["Single", "MFJ"]).optional()
+  }).optional().describe("Anything the user stated. Whatever is omitted comes from plan_defaults and is reported as a default in the ledger.")
+};
+server.tool(
+  "build_plan",
+  "Turns a described situation into a plan spec that run_plan can simulate \u2014 you supply meaning (income, accounts, what share is saved) and this supplies instruments, dates, rates and phases. It RUNS NOTHING: pass the returned spec to run_plan for numbers. It refuses or asks a question when the description does not determine a plan, and that refusal is the point \u2014 relay the question rather than guessing past it. Every value it supplied is listed in the ledger with where it came from; state the structural additions and the assumptions to the user when you show the plan.",
+  buildPlanShape,
+  guard(async (intent) => {
+    try {
+      const { spec, ledger, notes, horizon } = buildPlan(intent);
+      return { content: [{ type: "text", text: JSON.stringify(
+        {
+          spec,
+          ledger,
+          notes,
+          horizon,
+          nextStep: "Pass `spec` to run_plan to simulate it."
+        },
+        null,
+        2
+      ) }] };
+    } catch (err) {
+      if (!(err instanceof PlanRefusal)) throw err;
+      return { content: [{ type: "text", text: JSON.stringify({
+        refused: err.reason,
+        question: err.question,
+        options: err.options,
+        field: err.field,
+        guidance: "Ask the user this question. Do not pick a value on their behalf."
+      }, null, 2) }] };
+    }
   })
 );
 var transport = new StdioServerTransport();

@@ -38,9 +38,11 @@ are what the user actually meant.
 
 | tool | use it for |
 | :--- | :--- |
+| `plan_defaults` | the assumptions a new plan inherits — call ONCE, first |
+| `build_plan` | turn a described situation into a plan spec |
 | `list_profiles` | the eight built-in starting points |
 | `quick_start_report` | run a built-in profile, optionally re-aged |
-| `run_plan` | run a caller-supplied portfolio (the app's Share format) |
+| `run_plan` | run a profile-free or built plan (the app's Share format) |
 | `explain_month` | what happened to an asset in one month, and why |
 | `explain_issue` | the causal chain behind one flagged issue |
 
@@ -51,6 +53,45 @@ is a real edit, not a relabeling.
 
 `run_plan` takes exactly what the Charting Finance app's Share link encodes, so a
 portfolio exported from the app can be passed straight in.
+
+### Building a plan from a description
+
+When someone describes their situation rather than picking a profile —
+*"I make $100K, if I save 10% what do I have in 10 years?"* — the path is
+`plan_defaults` → `build_plan` → `run_plan`.
+
+**Call `plan_defaults` once, at the start, and say the defaults back.** A plan
+inherits a start age of 50, retirement at 67, and a finish age of 87 unless
+someone says otherwise, so an unanswered question silently produces a plan about
+a person the user is not. Ten years from 50 lands at 60 and never reaches
+retirement; the same ten years from 60 crosses it and becomes a different plan
+with a drawdown in it. State the assumptions before building, not after.
+
+`build_plan` returns a **spec and runs nothing**. Pass the spec to `run_plan`
+for numbers.
+
+**A refusal is the tool working, not failing.** `build_plan` returns a
+`question` when the description does not determine a plan — an account whose
+type cannot be read, splits that exceed 100%, a horizon and a finish age that
+disagree. Relay that question to the user. Do not pick a value on their behalf
+and re-call; the whole reason this step exists is that the engine cannot tell
+you a plan is wrong, only what it computes.
+
+**Report what it built and what it assumed.** The response carries a `ledger`:
+every setting with where it came from (`stated`, `inferred`, `derived`,
+`default`) and every asset with its origin (`stated`, `implied`, `structural`).
+The `notes` are not footnotes — they name assets the tool created that nobody
+asked for. The common one is a Living Expenses line absorbing the income that
+is not being saved, which is usually the largest number in the plan and was
+never stated by the user. Say so in the reply.
+
+Two things worth stating plainly when they come up:
+
+- **Percentages are shares of the income they come from.** 5% to one account
+  and 5% to another is 10% saved, not 10% each.
+- **Nothing built here reaches the user's saved portfolio.** A plan made in
+  conversation lives in the conversation. Importing it into the app at
+  charting.finance is always the user's own action.
 
 ### Handles and causal chains
 

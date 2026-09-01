@@ -34,10 +34,13 @@ bundled file with no dependencies to install.
 | :--- | :--- |
 | `/simulate` | run a profile or a described plan |
 | `/explain` | ask why the engine produced a number, from recorded history |
-| 5 MCP tools | `list_profiles`, `quick_start_report`, `run_plan`, `explain_month`, `explain_issue` |
+| 7 MCP tools | `plan_defaults`, `build_plan`, `list_profiles`, `quick_start_report`, `run_plan`, `explain_month`, `explain_issue` |
 
-Portfolios built at [charting.finance](https://charting.finance/) can be passed to
-`run_plan` directly — it takes exactly what the app's Share link encodes.
+Describe a situation in a sentence — *"I make $100K, if I save 10% what do I
+have in 10 years?"* — and `build_plan` compiles it into a plan the engine can
+run, or asks you the question that sentence left open. Portfolios built at
+[charting.finance](https://charting.finance/) can be passed to `run_plan`
+directly.
 
 ## Building from source
 

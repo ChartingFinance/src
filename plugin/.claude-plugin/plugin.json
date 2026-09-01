@@ -22,6 +22,8 @@
     "quick_start_report",
     "run_plan",
     "explain_issue",
-    "explain_month"
+    "explain_month",
+    "plan_defaults",
+    "build_plan"
   ]
 }
