@@ -25,13 +25,71 @@
 
 import { build } from 'esbuild';
 import { execFileSync } from 'node:child_process';
-import { readFileSync, writeFileSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname, relative, resolve, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const SRC = resolve(HERE, '..');
 const OUT = resolve(SRC, 'plugin/server/mcp-server.mjs');
+
+/**
+ * The checkout whose `node_modules` this build resolves against.
+ *
+ * At the repository root that is `SRC` itself. In a git worktree there is no
+ * local `node_modules`, so Node walks up to the parent checkout's — the same
+ * walk, spelled out here because the answer decides how esbuild labels every
+ * bundled dependency, and therefore whether two checkouts at one commit
+ * produce the same file.
+ */
+function dependencyRoot() {
+    let dir = SRC;
+    for (;;) {
+        if (existsSync(resolve(dir, 'node_modules'))) return dir;
+        const up = dirname(dir);
+        if (up === dir) return SRC;
+        dir = up;
+    }
+}
+
+/**
+ * Relabel bundled dependencies relative to the checkout that owns them.
+ *
+ * esbuild records each module's path relative to the build's working
+ * directory — twice: once as a `// path` comment, and once as the
+ * `__commonJS` label that surfaces in stack traces. `absWorkingDir` pins that
+ * directory to `SRC`, which settles the engine's own files. It does not
+ * settle the dependencies: a worktree has no `node_modules`, so resolution
+ * reaches the parent checkout's and all ~280 of them come out as
+ * `../../../node_modules/...`.
+ *
+ * That prefix is a fact about the machine, not about what was bundled. Left
+ * alone it makes two builds of one commit differ in 560 lines — which
+ * `tests/plugin-bundle-fresh.mjs` can only read as staleness, and which puts
+ * one developer's directory layout into a file everybody installs. It has
+ * already been committed once, in 91ce700.
+ *
+ * So that prefix, and only that exact prefix, is removed. Anything else
+ * pointing out of tree stops the build instead: a remaining `../` would mean
+ * a dependency arrived from somewhere this has not accounted for, and a guess
+ * about it would ship.
+ */
+function canonicaliseDependencyPaths(text) {
+    const prefix = relative(SRC, dependencyRoot()).split(sep).join('/');
+    const canonical = prefix
+        ? text.split(`${prefix}/node_modules/`).join('node_modules/')
+        : text;
+
+    const leaked = canonical.match(/(?:\.\.\/)+node_modules\/\S*/);
+    if (leaked) {
+        throw new Error(
+            `the bundle labels a dependency with a path outside the checkout: `
+            + `${leaked[0]}\nThat describes this machine, not the build. Resolve `
+            + `it, or teach canonicaliseDependencyPaths about it — do not commit `
+            + `the artifact as it stands.`);
+    }
+    return canonical;
+}
 
 /**
  * Produce the bundle's exact text, without writing it.
@@ -50,6 +108,10 @@ export async function bundleText() {
 
     const result = await build({
         entryPoints: [resolve(SRC, 'js/mcp/mcp-server.js')],
+        // Every path esbuild writes into the output is relative to this. Left
+        // unset it is `process.cwd()`, so `npm run build:plugin` and the same
+        // script run from a subdirectory would disagree about the artifact.
+        absWorkingDir: SRC,
         bundle: true,
         platform: 'node',
         format: 'esm',
@@ -69,7 +131,7 @@ export async function bundleText() {
         // In memory. The caller decides whether this becomes a file.
         write: false,
     });
-    return result.outputFiles[0].text;
+    return canonicaliseDependencyPaths(result.outputFiles[0].text);
 }
 
 /**
