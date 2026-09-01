@@ -10,6 +10,38 @@
  *   fractional capital-gains splits, monthly growth).
  */
 
+/**
+ * Reject anything that is not a Currency, loudly.
+ *
+ * ── Why this throws instead of ignoring ──────────────────────────────
+ *
+ * `add` and `subtract` used to read `if (other instanceof Currency)` and
+ * silently do NOTHING otherwise. That is the engine's documented failure mode
+ * — numbers, never errors — expressed at the type level: pass a number where a
+ * Currency belongs and the arithmetic quietly does not happen, the value stays
+ * plausible, and the report is clean.
+ *
+ * It hid a real one. `TaxTable.calculateYearlyIncomeTax(income, deduction)`
+ * called `adjusted.subtract(deduction.amount)` — a number — so the deduction
+ * parameter never subtracted anything for any caller since it was written.
+ * Passing the standard deduction returned the UNDEDUCTED tax: $16,712 instead
+ * of $13,170 on $100K.
+ *
+ * `divide` already throws on division by zero, so this is the class's own
+ * precedent rather than a new policy. Measured before switching it on: across
+ * five profiles there was exactly ONE call site passing a non-Currency, out of
+ * 215 in js/, and no site anywhere passes a numeric literal.
+ */
+function assertCurrency(other, op) {
+  if (!(other instanceof Currency)) {
+    throw new TypeError(
+      `Currency.${op}: expected a Currency, got ${typeof other} `
+      + `(${String(other)}). Passing \`x.amount\` is the usual slip — pass \`x\`. `
+      + 'This used to be ignored silently, which is how a tax deduction went '
+      + 'unapplied for months.');
+  }
+}
+
 export class Currency {
   /**
    * @param {number} [amount=0]
@@ -35,12 +67,14 @@ export class Currency {
   // ── Mutating arithmetic (chainable, matches original API) ────────
 
   add(other) {
-    if (other instanceof Currency) this.amount += other.amount;
+    assertCurrency(other, 'add');
+    this.amount += other.amount;
     return this;
   }
 
   subtract(other) {
-    if (other instanceof Currency) this.amount -= other.amount;
+    assertCurrency(other, 'subtract');
+    this.amount -= other.amount;
     return this;
   }
 
