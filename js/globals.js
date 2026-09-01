@@ -9,6 +9,8 @@ export {
     global_wage_growth_annual, global_cpi_annual_inflation,
 } from './market-data.js';
 import { makeSimConfig, SIM_CONFIG_DEFAULTS } from './sim-config.js';
+// plan-dates.js imports only DateInt, so this cannot cycle back through globals.
+import { birthYearFor } from './plan-dates.js';
 import { TaxTable } from './taxes.js';
 // Moved to policy-constants.js (Spec 9 step 6): fixed tax policy, not settings.
 export { global_retirement_withholding_rate, global_deferred_allocation_age }
@@ -326,18 +328,38 @@ export function global_getUserFinishAge() {
     global_user_finishAge = parseInt(localUA);
 }
 
-export function global_getRetirementDateInt() {
-    const currentYear = new Date().getFullYear();
-    const birthYear = currentYear - global_user_startAge;
-    const retirementYear = birthYear + global_user_retirementAge;
-    return DateInt.from(retirementYear, 1);
+/**
+ * The month the user retires in, resolved against a PLAN.
+ *
+ * Both of these used to derive their own birth year from the wall clock —
+ * `new Date().getFullYear() - global_user_startAge` — the same second
+ * derivation Spec 10 step 0 removed from `plan-dates.js`, surviving here
+ * because these read the settings rather than a config. It is not cosmetic:
+ * the retirement date returned here is handed to Monte Carlo and Guardrails,
+ * which compare it against months the ENGINE produced from `config.birthYear`.
+ * The gap is however many years have passed since the plan's first month, so a
+ * scenario saved in one year and reopened in the next started withdrawing a
+ * year late, and a five-year-old plan five years late — measured, on a
+ * mid-career plan starting Aug 2021: guardrails switched regime in Jan 2048,
+ * the plan retires in Jan 2043.
+ *
+ * So the anchor comes in now, read by `birthYearFor()` — the same reader the
+ * engine uses, throwing on an unanchored config for the same reason a fallback
+ * here would be the original bug wearing a guard clause. Only the anchor: the
+ * AGES stay module state, because these are settings accessors and the
+ * settings form is what moves them.
+ *
+ * @param {object} env a SimConfig carrying `birthYear` — a run's
+ *   `portfolio.config`, or the editor's `appState.editingConfig`, which is
+ *   itself the plan's anchor, or the clock's when there is no plan to ask.
+ */
+export function global_getRetirementDateInt(env) {
+    return DateInt.from(birthYearFor(env) + global_user_retirementAge, 1);
 }
 
-export function global_getFinishDateInt() {
-    const currentYear = new Date().getFullYear();
-    const birthYear = currentYear - global_user_startAge;
-    const finishYear = birthYear + global_user_finishAge;
-    return DateInt.from(finishYear, 12);
+/** December of the year the user turns `finishAge`, on the same anchor. */
+export function global_getFinishDateInt(env) {
+    return DateInt.from(birthYearFor(env) + global_user_finishAge, 12);
 }
 
 export function global_setBacktestYear(value) {

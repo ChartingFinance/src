@@ -44,7 +44,14 @@ const PLOT_W = ARC_W - PAD_L - PAD_R;
 const PLOT_H = ARC_H - PAD_T - PAD_B;
 const BASE_Y = ARC_H - PAD_B;
 
-class FinplanTimeline extends LitElement {
+// Exported so tests/editing-anchor.mjs can borrow the prototype and check the
+// age↔year mapping headlessly. A custom element cannot be constructed under
+// node, but every method here is a pure function of a handful of fields, so a
+// test can call them on an `Object.create(FinplanTimeline.prototype)`. That
+// checks THIS code rather than a copy of it, which for an anchor bug matters:
+// the two errors cancel in the round trip through `_ageAtIndex` and a
+// re-implementation would likely cancel them too.
+export class FinplanTimeline extends LitElement {
 
     static properties = {
         startAge:       { type: Number, attribute: 'start-age' },
@@ -125,8 +132,31 @@ class FinplanTimeline extends LitElement {
 
     // ── Timeline span ───────────────────────────────────────────────
 
+    /**
+     * The birth year every age↔year mapping on this arc runs through: the axis
+     * labels, the phase bands, the mortgage payoff marker, the scrub cursor.
+     *
+     * It has to be the PLAN's anchor, because everything it maps is the plan's:
+     * `_ageAtIndex` walks months forward from `portfolio.firstDateInt`, and the
+     * label under the arc turns the result back into a calendar year. Deriving
+     * a second birth year from `new Date()` — as this did — agreed with the
+     * engine only while the plan's first month fell in the current year, which
+     * is true of every freshly built Quick Start plan and false the January
+     * after one is saved.
+     *
+     * The two errors cancel in the round trip through `_ageAtIndex`, so the
+     * curve stayed right while the axis under it, the band edges and the payoff
+     * marker all slid — by however old the plan was, not by one year, because
+     * `_timelineStartAge` mins against `firstDateInt.year - birthYear` too. A
+     * plan starting Aug 2021, read in 2026, labelled its axis 2021–2072 where
+     * the engine runs Aug 2021 – Dec 2066.
+     *
+     * The clock is consulted only with no portfolio, when there are no months
+     * to label and `startAge` is all there is.
+     */
     get _birthYear() {
-        return new Date().getFullYear() - this.startAge;
+        return this.portfolio?.config?.birthYear
+            ?? (DateInt.today().year - this.startAge);
     }
 
     get _timelineStartAge() {
