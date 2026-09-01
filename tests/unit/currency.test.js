@@ -8,6 +8,39 @@ describe('Currency', () => {
     expect(c.amount).toBe(115);
   });
 
+  // ── Strictness ────────────────────────────────────────────────
+  //
+  // These used to be `if (other instanceof Currency)` with no else, so a
+  // non-Currency argument silently did nothing. That is the engine's failure
+  // mode — numbers, never errors — at the type level, and it hid a real bug:
+  // TaxTable.calculateYearlyIncomeTax passed `deduction.amount`, so its
+  // deduction parameter never subtracted anything for any caller.
+
+  it('add rejects a non-Currency instead of ignoring it', () => {
+    expect(() => new Currency(100).add(25)).toThrow(TypeError);
+    expect(() => new Currency(100).add(25)).toThrow(/expected a Currency/);
+  });
+
+  it('subtract rejects a non-Currency instead of ignoring it', () => {
+    expect(() => new Currency(100).subtract(25)).toThrow(TypeError);
+  });
+
+  it('names the `.amount` slip, because that is how it always happens', () => {
+    const other = new Currency(25);
+    expect(() => new Currency(100).subtract(other.amount)).toThrow(/x\.amount/);
+  });
+
+  it('rejects null and undefined rather than treating them as zero', () => {
+    expect(() => new Currency(100).add(null)).toThrow(TypeError);
+    expect(() => new Currency(100).subtract(undefined)).toThrow(TypeError);
+  });
+
+  it('a bad argument leaves the value untouched', () => {
+    const c = new Currency(100);
+    try { c.subtract(25); } catch { /* expected */ }
+    expect(c.amount).toBe(100);
+  });
+
   it('plus and minus return new instances without mutating', () => {
     const a = new Currency(100);
     const b = new Currency(25);

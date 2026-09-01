@@ -557,9 +557,14 @@ export class TaxTable {
     
     calculateYearlyIncomeTax(income, deduction) {
 
+        // `deduction`, not `deduction.amount`. Currency.subtract takes a
+        // Currency; handing it a number was silently ignored, so this
+        // parameter subtracted nothing for any caller from the day it was
+        // written. Callers that needed a deduction pre-subtracted it instead,
+        // which is why nothing looked wrong.
         let adjusted = new Currency(income.amount);
         if (deduction)
-            adjusted.subtract(deduction.amount);
+            adjusted.subtract(deduction);
 
         let tax = 0.0;
         for (const taxRow of this.activeIncomeTable.taxRows) {
