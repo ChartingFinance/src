@@ -141,6 +141,7 @@ import {
     util_deleteScenario,
 } from './ui/util.js';
 import { makeActiveTaxTable } from './globals.js';
+import { editingConfigFor } from './editing-env.js';
 
 /**
  * Bind assets to an editing environment before the UI reads them.
@@ -153,11 +154,40 @@ import { makeActiveTaxTable } from './globals.js';
  * Editing environment, not a run's: it shows what the current settings say. A
  * Portfolio captures its own config and rebinds everything it owns, so nothing
  * here can reach a simulation.
+ *
+ * The assets are also where the editor's anchor comes from, so this is the one
+ * place that can build it — see editing-env.js. It is handed to appState too,
+ * which rebinds the life events onto it: events and assets must resolve ages
+ * against the same plan or the phase markers land on a different month than
+ * the regime change they label.
  */
 function bindForEditing(assets) {
-    const config = simConfigFromGlobals();
+    const config = editingConfigFor(assets);
     for (const asset of assets ?? []) asset.bindEnv?.(config);
+    appState.editingConfig = config;
     return assets;
+}
+
+/**
+ * The config a DISPLAY surface resolves an age against.
+ *
+ * The run's if there has been one, because the charts and badges are labelling
+ * months the run produced; the editor's otherwise, which is the plan's anchor
+ * or — with no plan yet — the clock's. Either way it is an anchor the plan
+ * chose, never one derived here from `new Date()`. Three surfaces used to do
+ * exactly that (`currentPhaseEvent`, `global_get*DateInt`, and the timeline's
+ * `_birthYear`) and so disagreed with the engine for any scenario reopened in
+ * a later year than the one it was built in — by as many years as had passed.
+ * On a plan starting Aug 2021 the badge went on saying "Accumulate" until Jan
+ * 2048; the engine retires it in Jan 2043.
+ *
+ * The anchor is checked rather than the portfolio, because a Portfolio built
+ * on an empty asset list has no first month to derive one from and leaves
+ * `config.birthYear` undefined — which `birthYearFor()` throws on, correctly.
+ */
+function displayConfig() {
+    const run = appState.portfolio?.config;
+    return Number.isInteger(run?.birthYear) ? run : appState.editingConfig;
 }
 
 // ── DOM refs ────────────────────────────────────────────────
@@ -510,7 +540,6 @@ function loadQuickStartProfile(profile) {
     global_getFilingAs();
     setActiveTaxTable(makeActiveTaxTable());
     syncGlobalsToSettings();
-    store.setRetirementDate(global_getRetirementDateInt());
 
     const qs = buildQuickStart(profile);
     // Bind before the list renders: classifyAssets reads effectiveFinishDateInt,
@@ -852,14 +881,18 @@ function updateMetricDropdown() {
     }
 }
 
-// Wire store
-store.setRetirementDate(global_getRetirementDateInt());
+// Wire store. Nothing is loaded yet, so this is the empty plan's anchor;
+// calculate() re-derives it against the real one after every mutation.
+store.setRetirementDate(global_getRetirementDateInt(displayConfig()));
 store.setSelectedDate(DateInt.today());
 
 
 /** Determine which life event phase the given year/month falls within. */
 function currentPhaseEvent(year, month) {
-    const birthYear = new Date().getFullYear() - global_user_startAge;
+    // The year/month came off a chart the engine drew, so the age it maps to
+    // has to be read on the engine's anchor — otherwise the badge names the
+    // phase either side of a trigger age a year early or a year late.
+    const birthYear = displayConfig().birthYear;
     const age = (year - birthYear) + (month - 1) / 12;
     for (let i = appState.lifeEvents.length - 1; i >= 0; i--) {
         if (age >= appState.lifeEvents[i].triggerAge) return appState.lifeEvents[i];
@@ -970,7 +1003,6 @@ function connectSettings() {
         this.value = val;
         global_setUserRetirementAge(val);
         global_getUserRetirementAge();
-        store.setRetirementDate(global_getRetirementDateInt());
         calculate();
     });
     document.getElementById('setting-finishAge').addEventListener('change', function() {
@@ -1076,6 +1108,13 @@ function loadLocalData() {
 function calculate() {
     const modelAssets = assetList.modelAssets || [];
 
+    // Re-anchor the editor before anything reads a derived date. The plan and
+    // the settings both reach here having changed — a new asset can become the
+    // plan's earliest month, and the ages come straight off the settings form
+    // — and the anchor is derived from both. Cheap, and it means no caller has
+    // to remember which mutations move it.
+    bindForEditing(modelAssets);
+
     // When no assets, keep phase trigger ages in sync with global settings
     if (modelAssets.length === 0) {
         const accum = appState.lifeEvents.find(e => e.type === LifeEvent.ACCUMULATE);
@@ -1117,6 +1156,19 @@ function calculate() {
 
     chronometer_run(portfolio);
     appState.portfolio = portfolio;
+
+    // On the same anchor, for the same reason. This used to be set from three
+    // call sites, two of which ran BEFORE the assets they were about to load —
+    // loadQuickStartProfile and the imported-settings block — so the date the
+    // guardrails switch regime on was derived from the outgoing plan.
+    //
+    // AFTER the assignment above, not before it: `displayConfig()` prefers
+    // `appState.portfolio.config`, so running it at the top of calculate() read
+    // the PREVIOUS run and reintroduced the same one-plan lag this line moved
+    // here to remove. It survived a green suite because nothing reads
+    // `store.isRetirementPhase` today — the getter is defined and never called
+    // — so the stale month sat there with no surface to be wrong on.
+    store.setRetirementDate(global_getRetirementDateInt(displayConfig()));
 
     // What needs attention. Detected once and distributed from here: the panel,
     // the ⚠️ on the cards and the View modal must never disagree about what is
@@ -1244,7 +1296,7 @@ async function doMonteCarlo() {
     const chart = await mcModule.runMonteCarlo(
         appState.portfolio.modelAssets, mcContainer, 1000,
         withGuardrails ? getGuardrailParams() : null,
-        global_getRetirementDateInt(),
+        global_getRetirementDateInt(displayConfig()),
         false, appState.lifeEvents, applyMarkers
     ).catch(() => null);
     btn.dataset.simState = 'idle';
@@ -1281,7 +1333,7 @@ async function doGuardrails() {
     };
     const chart = await guardrailsModule.runGuardrails(
         appState.portfolio.modelAssets, guardrailsContainer, getGuardrailParams(),
-        global_getRetirementDateInt(), appState.lifeEvents, applyMarkers
+        global_getRetirementDateInt(displayConfig()), appState.lifeEvents, applyMarkers
     ).catch(() => null);
 
     // Plan summary in the section footer
@@ -1586,14 +1638,15 @@ function connectAssetListEvents() {
             loadQuickStartProfile(profile);
         } else {
             // Fallback: default Mid Career
-            assetList.modelAssets = quickStartAssets();
+            assetList.modelAssets = bindForEditing(quickStartAssets());
             appState.lifeEvents = quickStartLifeEvents();
             calculate();
         }
     });
 
     assetList.addEventListener('remove-asset', (ev) => {
-        assetList.modelAssets = assetList.modelAssets.filter(a => a !== ev.detail.modelAsset);
+        assetList.modelAssets = bindForEditing(
+            assetList.modelAssets.filter(a => a !== ev.detail.modelAsset));
         calculate();
     });
 
@@ -1638,7 +1691,7 @@ function connectAssetFormModal() {
                 fundingModal.open = true;
                 return;
             }
-            assetList.modelAssets = [...(assetList.modelAssets || []), newAsset];
+            assetList.modelAssets = bindForEditing([...(assetList.modelAssets || []), newAsset]);
         } else if (mode === 'edit' && editingModelAsset) {
             editingModelAsset.instrument = newAsset.instrument;
             editingModelAsset.displayName = newAsset.displayName;
@@ -1704,7 +1757,7 @@ function connectFundingModal() {
 
         // Attach funding config and save the real estate asset
         asset.fundingConfig = ev.detail;
-        assetList.modelAssets = [...(assetList.modelAssets || []), asset];
+        assetList.modelAssets = bindForEditing([...(assetList.modelAssets || []), asset]);
 
         // Chain: if down payment, open pre-filled mortgage form for the remaining balance
         if (asset.fundingConfig.purchaseType === 'downPayment') {
@@ -2112,7 +2165,6 @@ function applyImportedPortfolio(data, persist) {
         if (data.settings.backtestYear != null) global_setBacktestYear(data.settings.backtestYear);
         setActiveTaxTable(makeActiveTaxTable());
         syncGlobalsToSettings();
-        store.setRetirementDate(global_getRetirementDateInt());
     }
 
     // Load guardrail params
@@ -2148,7 +2200,9 @@ function applyImportedPortfolio(data, persist) {
             }
         }
 
-        assetList.modelAssets = assets;
+        // Anchors the editor on the imported plan, and rebinds the life events
+        // set above — they arrive first here so the migration can reach them.
+        assetList.modelAssets = bindForEditing(assets);
     }
 
     if (persist) {
