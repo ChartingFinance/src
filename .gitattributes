@@ -24,3 +24,16 @@ tests/baselines/README.md text eol=lf
 # a claim. Do NOT reach for `-diff` or `binary` here — that would take the diff
 # away locally too, and the diff is the entire point of committing them.
 tests/baselines/*.snap linguist-generated=true
+
+# The plugin bundle is generated and committed, and tests/plugin-bundle-fresh.mjs
+# compares it against a fresh build. Same reasoning as the baselines above: with
+# core.autocrlf=true a clean clone would rewrite it to CRLF and the freshness
+# check would report drift with no engine change behind it. The test normalises
+# line endings too — this attribute is the fix, that normalisation is the
+# seatbelt.
+plugin/server/mcp-server.mjs text eol=lf
+
+# Collapse it in GitHub's diff view and keep it out of language statistics. It
+# is 39,000 lines of generated output; a one-line engine change reads as a
+# whole-file rewrite otherwise, which buries the actual review.
+plugin/server/mcp-server.mjs linguist-generated=true

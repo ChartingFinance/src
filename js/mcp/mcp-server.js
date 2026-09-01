@@ -34,6 +34,7 @@ import { explainIssue, explainAt, explainIssueMarkdown, explainAtMarkdown } from
 import { generatePortfolioMarkdown, generateMonteCarloSectionMarkdown } from '../generators/finplan-ai.js';
 import { planExhaustion } from '../portfolio-issues.js';
 import { EventType } from '../sim-event.js';
+import { buildPlan, planDefaults, PlanRefusal } from './build-plan.js';
 
 // ── Server ────────────────────────────────────────────────────────
 
@@ -269,6 +270,103 @@ server.tool(
   guard(async ({ handle, date, assetName, eventType, limit }) => {
     const result = explainAt(await getRun(handle), { date, assetName, eventType, limit });
     return { content: [{ type: "text", text: explainAtMarkdown(result) }] };
+  })
+);
+
+
+// ── plan_defaults ─────────────────────────────────────────────────
+//
+// Spec 10 step 1 (§7). The smallest addition in the spec and the
+// highest-leverage one: it turns the largest class of silent wrongness — a plan
+// about a person the user is not — into a visible sentence. Call it ONCE per
+// conversation, not once per plan.
+
+server.tool(
+  "plan_defaults",
+  "The assumptions a new plan starts from — age, retirement age, horizon, inflation and filing "
+  + "status — with a plain-language gloss for each. Call this ONCE at the start of a planning "
+  + "conversation and state them back to the user before building anything, because a plan "
+  + "built on unstated defaults is a plan about someone else. Not needed for quick_start_report.",
+  {},
+  guard(async () => ({
+    content: [{ type: "text", text: JSON.stringify(planDefaults(), null, 2) }],
+  }))
+);
+
+// ── build_plan ────────────────────────────────────────────────────
+//
+// Spec 10 step 2. The compiler in front of runPlan. It returns a SPEC and runs
+// nothing (§14 q1, decided 2026-08-31) — pass the spec to run_plan to get a
+// handle. Its most valuable output is a refusal.
+
+const buildPlanShape = {
+  horizonYears: z.number().int().min(1).max(80).optional()
+      .describe("How many years to project, e.g. 10. Derives finishAge from startAge. "
+              + "Mutually exclusive with settingsOverrides.finishAge."),
+  name: z.string().optional(),
+  income: z.array(z.object({
+    label: z.string().describe("What to call it, e.g. 'Salary'."),
+    annual: z.number().optional().describe("Gross annual amount. Give this OR monthly."),
+    monthly: z.number().optional(),
+    kind: z.enum(['working', 'pension', 'socialSecurity']).optional().default('working'),
+    growthRate: z.number().optional().describe("Annual raise rate as a decimal, e.g. 0.025."),
+  })).min(1).describe("Income sources. At least one is required."),
+  accounts: z.array(z.object({
+    label: z.string().describe("What to call it. The wording is read for the account type: "
+        + "'brokerage', 'savings', '401k', 'IRA', 'Roth' all resolve."),
+    kind: z.string().optional().describe("Explicit instrument key, when the label does not say."),
+    startingBalance: z.number().optional(),
+    growthRate: z.number().optional(),
+  })).optional(),
+  savingsSplit: z.array(z.object({
+    from: z.string().describe("An income label."),
+    to: z.string().describe("An account label."),
+    percent: z.number().describe("Share OF THAT INCOME, not of the other splits. "
+        + "5 to one account and 5 to another is 10% saved, not 10% each."),
+  })).optional(),
+  expenses: z.array(z.object({
+    label: z.string(),
+    monthly: z.number().optional(),
+    annual: z.number().optional(),
+  })).optional(),
+  settingsOverrides: z.object({
+    startAge: z.number().int().optional(),
+    retirementAge: z.number().int().optional(),
+    finishAge: z.number().int().optional(),
+    inflationRate: z.number().optional(),
+    filingAs: z.enum(['Single', 'MFJ']).optional(),
+  }).optional().describe("Anything the user stated. Whatever is omitted comes from "
+      + "plan_defaults and is reported as a default in the ledger."),
+};
+
+server.tool(
+  "build_plan",
+  "Turns a described situation into a plan spec that run_plan can simulate — you supply meaning "
+  + "(income, accounts, what share is saved) and this supplies instruments, dates, rates and "
+  + "phases. It RUNS NOTHING: pass the returned spec to run_plan for numbers. "
+  + "It refuses or asks a question when the description does not determine a plan, and that "
+  + "refusal is the point — relay the question rather than guessing past it. "
+  + "Every value it supplied is listed in the ledger with where it came from; state the "
+  + "structural additions and the assumptions to the user when you show the plan.",
+  buildPlanShape,
+  guard(async (intent) => {
+    try {
+      const { spec, ledger, notes, horizon } = buildPlan(intent);
+      return { content: [{ type: "text", text: JSON.stringify(
+        { spec, ledger, notes, horizon,
+          nextStep: 'Pass `spec` to run_plan to simulate it.' }, null, 2) }] };
+    } catch (err) {
+      if (!(err instanceof PlanRefusal)) throw err;
+      // NOT an error result. A question is this tool working, not failing, and
+      // flagging it isError invites the caller to retry with a guess.
+      return { content: [{ type: "text", text: JSON.stringify({
+        refused: err.reason,
+        question: err.question,
+        options: err.options,
+        field: err.field,
+        guidance: 'Ask the user this question. Do not pick a value on their behalf.',
+      }, null, 2) }] };
+    }
   })
 );
 

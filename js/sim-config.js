@@ -74,6 +74,22 @@ export const SIM_CONFIG_DEFAULTS = Object.freeze({
 });
 
 /**
+ * `birthYear` and `taxTable` are the two ATTACHED fields: optional here,
+ * filled in by `Portfolio` through `withSimConfig` once it knows something the
+ * config builder could not.
+ *
+ * For `birthYear` that something is the plan's own first month. The engine used
+ * to derive the year from `new Date()` inside a getter, which made a frozen
+ * plan's finish date and every life-event trigger depend on WHEN IT WAS READ:
+ * one spec replayed across a New Year moved 5.4% in ending net worth and grew
+ * by twelve months, from nothing but the calendar. `Portfolio` anchors it to
+ * `firstDateInt.year - startAge` instead — a property of the plan, so a spec
+ * run today and in 2030 is the same run.
+ *
+ * Both are absent rather than defaulted when unattached, and `birthYearFor()`
+ * throws on absence. A default here would be a year nobody chose, which is the
+ * failure this whole migration is about.
+ *
  * Every field the engine reads. Deliberately a superset of
  * `global_workerSnapshot()`, which is missing three the engine does read —
  * `allocate_household_tax` and the two withholding rates. That gap is latent
@@ -94,7 +110,15 @@ const FIELDS = Object.freeze([
     'backtestYear',
     'simDataMode',
     'taxTable',
+    'birthYear',
 ]);
+
+/**
+ * Fields `Portfolio` attaches later, so absent is legal at build time. See the
+ * FIELDS comment; `birthYear` needs the plan's first month and `taxTable` needs
+ * the resolved filing status, neither of which a config builder holds.
+ */
+const ATTACHED = Object.freeze(['taxTable', 'birthYear']);
 
 const NUMERIC = Object.freeze([
     'inflationRate',
@@ -115,12 +139,14 @@ const NUMERIC = Object.freeze([
  * failure this whole migration is about: a plausible number from an
  * unaccountable source.
  *
- * `taxTable` is the exception, and is optional here. Step 2 gives `TaxTable` a
- * `filingAs` constructor argument and fills this in; building one now would
- * mean a second TaxTable constructed off the module global, which is precisely
- * the ordering hazard the config exists to remove.
+ * `taxTable` and `birthYear` are the exceptions, and are optional here — see
+ * ATTACHED. Step 2 gives `TaxTable` a `filingAs` constructor argument and fills
+ * the first in; building one now would mean a second TaxTable constructed off
+ * the module global, which is precisely the ordering hazard the config exists
+ * to remove. The second needs the plan's own first month, which only
+ * `Portfolio` has.
  *
- * @param {object} values  every entry of FIELDS except taxTable
+ * @param {object} values  every entry of FIELDS except those in ATTACHED
  * @returns {Readonly<object>}
  */
 export function makeSimConfig(values) {
@@ -128,7 +154,7 @@ export function makeSimConfig(values) {
         throw new Error('makeSimConfig: expected an object of settings.');
     }
 
-    const missing = FIELDS.filter(f => f !== 'taxTable' && !(f in values));
+    const missing = FIELDS.filter(f => !ATTACHED.includes(f) && !(f in values));
     if (missing.length) {
         throw new Error(`makeSimConfig: missing ${missing.join(', ')}.`);
     }
@@ -154,6 +180,19 @@ export function makeSimConfig(values) {
 
     if (typeof values.allocateHouseholdTax !== 'boolean') {
         throw new Error('makeSimConfig: allocateHouseholdTax must be a boolean.');
+    }
+
+    // Attached, so absent is legal; present and nonsensical is not. A birth
+    // year that arrived as a string or a float would flow into DateInt.from()
+    // and produce a plausible date, which is the shape of bug this field
+    // exists to remove.
+    if (values.birthYear !== undefined && values.birthYear !== null
+        && !Number.isInteger(values.birthYear)) {
+        // String(), not JSON.stringify(): NaN stringifies to "null", which
+        // sends the reader looking for a null that is not there. NaN is the
+        // likely value here — it is what an arithmetic slip upstream produces.
+        throw new Error('makeSimConfig: birthYear must be an integer year, got '
+            + `${String(values.birthYear)}.`);
     }
 
     const config = {};

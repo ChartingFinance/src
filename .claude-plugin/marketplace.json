@@ -1,0 +1,22 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "charting-finance",
+  "description": "The Charting Finance portfolio simulator, as a local Claude Code plugin.",
+  "owner": {
+    "name": "Charting Finance, LLC",
+    "email": "john@charting.finance"
+  },
+  "plugins": [
+    {
+      "name": "charting-finance",
+      "description": "Run long-horizon personal finance simulations locally and ask why the engine produced a given number. Not financial advice.",
+      "author": {
+        "name": "John Milan",
+        "email": "john@charting.finance"
+      },
+      "category": "productivity",
+      "source": "./plugin",
+      "homepage": "https://charting.finance/"
+    }
+  ]
+}
