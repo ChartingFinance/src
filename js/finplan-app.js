@@ -1115,12 +1115,6 @@ function calculate() {
     // to remember which mutations move it.
     bindForEditing(modelAssets);
 
-    // And on the same anchor, for the same reason. This used to be set from
-    // three call sites, two of which ran BEFORE the assets they were about to
-    // load — loadQuickStartProfile and the imported-settings block — so the
-    // date the guardrails switch regime on was derived from the outgoing plan.
-    store.setRetirementDate(global_getRetirementDateInt(displayConfig()));
-
     // When no assets, keep phase trigger ages in sync with global settings
     if (modelAssets.length === 0) {
         const accum = appState.lifeEvents.find(e => e.type === LifeEvent.ACCUMULATE);
@@ -1162,6 +1156,19 @@ function calculate() {
 
     chronometer_run(portfolio);
     appState.portfolio = portfolio;
+
+    // On the same anchor, for the same reason. This used to be set from three
+    // call sites, two of which ran BEFORE the assets they were about to load —
+    // loadQuickStartProfile and the imported-settings block — so the date the
+    // guardrails switch regime on was derived from the outgoing plan.
+    //
+    // AFTER the assignment above, not before it: `displayConfig()` prefers
+    // `appState.portfolio.config`, so running it at the top of calculate() read
+    // the PREVIOUS run and reintroduced the same one-plan lag this line moved
+    // here to remove. It survived a green suite because nothing reads
+    // `store.isRetirementPhase` today — the getter is defined and never called
+    // — so the stale month sat there with no surface to be wrong on.
+    store.setRetirementDate(global_getRetirementDateInt(displayConfig()));
 
     // What needs attention. Detected once and distributed from here: the panel,
     // the ⚠️ on the cards and the View modal must never disagree about what is
