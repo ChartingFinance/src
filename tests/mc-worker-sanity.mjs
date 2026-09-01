@@ -23,6 +23,8 @@ import {
 } from '../js/globals.js';
 import { DateInt } from '../js/utils/date-int.js';
 import { computeMonteCarlo, applyRandomRates, buildYearPool } from '../js/mc-compute.js';
+import { firstDateInt } from '../js/portfolio.js';
+import { withSimConfig } from '../js/sim-config.js';
 import { computeGuardrails } from '../js/gr-compute.js';
 import { global_sp500_annual_returns } from '../js/globals.js';
 import '../js/mc-worker.js'; // must import cleanly outside a Worker
@@ -303,8 +305,25 @@ const retireEvent = ModelLifeEvent.fromJSON({
     type: LifeEvent.RETIRE, displayName: 'Retire', triggerAge: 65,
     closes: [], phaseTransfers: {},
 });
-/** What a Portfolio does on construction, done directly so the chain is visible. */
-const rebind = () => retireEvent.bindEnv(simConfigFromGlobals());
+/**
+ * What a Portfolio does on construction, done directly so the chain is visible.
+ *
+ * Since Spec 10 step 0 that includes ATTACHING THE ANCHOR. A config from
+ * `simConfigFromGlobals()` carries no `birthYear` — only a Portfolio can supply
+ * one, because only it knows the plan's first month — and `triggerDateInt`
+ * throws without it rather than falling back to the wall clock.
+ *
+ * Anchoring from this file's own assets is not incidental: it is what makes the
+ * assertion below mean what it says. The trigger year now moves because the
+ * SNAPSHOT's start age moved, against a fixed plan, rather than because the
+ * calendar happened to read a certain way. Before, this test would have shifted
+ * with the date it was run on and nobody would have seen it.
+ */
+const planFirstYear = firstDateInt(assets).year;
+const rebind = () => {
+    const cfg = simConfigFromGlobals();
+    retireEvent.bindEnv(withSimConfig(cfg, { birthYear: planFirstYear - cfg.startAge }));
+};
 
 rebind();
 const triggerAtDefault = retireEvent.triggerDateInt.year;
