@@ -188,8 +188,11 @@ export function makeSimConfig(values) {
     // exists to remove.
     if (values.birthYear !== undefined && values.birthYear !== null
         && !Number.isInteger(values.birthYear)) {
+        // String(), not JSON.stringify(): NaN stringifies to "null", which
+        // sends the reader looking for a null that is not there. NaN is the
+        // likely value here — it is what an arithmetic slip upstream produces.
         throw new Error('makeSimConfig: birthYear must be an integer year, got '
-            + `${JSON.stringify(values.birthYear)}.`);
+            + `${String(values.birthYear)}.`);
     }
 
     const config = {};
