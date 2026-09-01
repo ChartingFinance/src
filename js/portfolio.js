@@ -222,11 +222,35 @@ export class Portfolio {
         // afterwards, once the tax table has been attached to the config.
         this.bindEnvironment();
 
+        // ── The plan's anchor (Spec 10 step 0) ───────────────────────
+        //
+        // Order matters, and the three statements below are why. `firstDateInt`
+        // reads only `startDateInt`, which is absolute — safe before anything
+        // is anchored. `lastDateInt` reads `effectiveFinishDateInt`, a DERIVED
+        // getter that needs the anchor. So the anchor is derived in between.
+        //
+        // This constructor already held the correct derivation, and used it for
+        // one thing only: the User. Meanwhile plan-dates.js derived a second
+        // birth year from `new Date()`, so the engine ran on two anchors that
+        // agreed only while a plan was read in the year it was built. Attaching
+        // it to the config makes it one anchor, and makes a frozen spec mean the
+        // same thing in 2030 as it does today.
+        //
+        // `withSimConfig` rather than mutation because the config is frozen —
+        // the same refinement the tax table gets in initializeChron.
         this.firstDateInt = firstDateInt(this.modelAssets);
-        this.lastDateInt = lastDateInt(this.modelAssets);
 
         const birthYear = this.firstDateInt
             ? this.firstDateInt.year - this.config.startAge : undefined;
+        if (birthYear !== undefined) {
+            this.config = withSimConfig(this.config, { birthYear });
+            // Rebind: the assets and life events are holding the pre-anchor
+            // config, and every derived date getter reads it.
+            this.bindEnvironment();
+        }
+
+        this.lastDateInt = lastDateInt(this.modelAssets);
+
         this.activeUser = new User(this.config.startAge, birthYear);
 
         // Construction-time age snapshot, restored by initializeChron. The
