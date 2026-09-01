@@ -141,6 +141,7 @@ import {
     util_deleteScenario,
 } from './ui/util.js';
 import { makeActiveTaxTable } from './globals.js';
+import { editingConfigFor } from './editing-env.js';
 
 /**
  * Bind assets to an editing environment before the UI reads them.
@@ -153,10 +154,17 @@ import { makeActiveTaxTable } from './globals.js';
  * Editing environment, not a run's: it shows what the current settings say. A
  * Portfolio captures its own config and rebinds everything it owns, so nothing
  * here can reach a simulation.
+ *
+ * The assets are also where the editor's anchor comes from, so this is the one
+ * place that can build it — see editing-env.js. It is handed to appState too,
+ * which rebinds the life events onto it: events and assets must resolve ages
+ * against the same plan or the phase markers land on a different month than
+ * the regime change they label.
  */
 function bindForEditing(assets) {
-    const config = simConfigFromGlobals();
+    const config = editingConfigFor(assets);
     for (const asset of assets ?? []) asset.bindEnv?.(config);
+    appState.editingConfig = config;
     return assets;
 }
 
@@ -1076,6 +1084,13 @@ function loadLocalData() {
 function calculate() {
     const modelAssets = assetList.modelAssets || [];
 
+    // Re-anchor the editor before anything reads a derived date. The plan and
+    // the settings both reach here having changed — a new asset can become the
+    // plan's earliest month, and the ages come straight off the settings form
+    // — and the anchor is derived from both. Cheap, and it means no caller has
+    // to remember which mutations move it.
+    bindForEditing(modelAssets);
+
     // When no assets, keep phase trigger ages in sync with global settings
     if (modelAssets.length === 0) {
         const accum = appState.lifeEvents.find(e => e.type === LifeEvent.ACCUMULATE);
@@ -1586,14 +1601,15 @@ function connectAssetListEvents() {
             loadQuickStartProfile(profile);
         } else {
             // Fallback: default Mid Career
-            assetList.modelAssets = quickStartAssets();
+            assetList.modelAssets = bindForEditing(quickStartAssets());
             appState.lifeEvents = quickStartLifeEvents();
             calculate();
         }
     });
 
     assetList.addEventListener('remove-asset', (ev) => {
-        assetList.modelAssets = assetList.modelAssets.filter(a => a !== ev.detail.modelAsset);
+        assetList.modelAssets = bindForEditing(
+            assetList.modelAssets.filter(a => a !== ev.detail.modelAsset));
         calculate();
     });
 
@@ -1638,7 +1654,7 @@ function connectAssetFormModal() {
                 fundingModal.open = true;
                 return;
             }
-            assetList.modelAssets = [...(assetList.modelAssets || []), newAsset];
+            assetList.modelAssets = bindForEditing([...(assetList.modelAssets || []), newAsset]);
         } else if (mode === 'edit' && editingModelAsset) {
             editingModelAsset.instrument = newAsset.instrument;
             editingModelAsset.displayName = newAsset.displayName;
@@ -1704,7 +1720,7 @@ function connectFundingModal() {
 
         // Attach funding config and save the real estate asset
         asset.fundingConfig = ev.detail;
-        assetList.modelAssets = [...(assetList.modelAssets || []), asset];
+        assetList.modelAssets = bindForEditing([...(assetList.modelAssets || []), asset]);
 
         // Chain: if down payment, open pre-filled mortgage form for the remaining balance
         if (asset.fundingConfig.purchaseType === 'downPayment') {
@@ -2148,7 +2164,9 @@ function applyImportedPortfolio(data, persist) {
             }
         }
 
-        assetList.modelAssets = assets;
+        // Anchors the editor on the imported plan, and rebinds the life events
+        // set above — they arrive first here so the migration can reach them.
+        assetList.modelAssets = bindForEditing(assets);
     }
 
     if (persist) {
