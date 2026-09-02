@@ -164,7 +164,19 @@ export async function runPlan(spec, { includeReconciliation = false } = {}) {
 
     const assets = membrane_rawDataToModelAssets(spec.modelAssets);
 
-    const portfolio = new Portfolio(assets, false, config);
+    // `reports` = true, the second argument. It gates reportMonthly() and
+    // reportYearly() in Portfolio, which are the only things that fill
+    // `generatedReports` — and the markdown report's Annual Cash Flow table is
+    // generated from exactly those. It was false from this file's first commit,
+    // so every plan ever run through this server emitted a Lifetime Tax Summary
+    // and then nothing until the per-month event log: no annual table, no
+    // monthly packages, and no error saying either was missing.
+    //
+    // Invisible from both sides. The app has always passed true
+    // (finplan-app.js), and tests/markdown-report-sanity.mjs builds its own
+    // portfolio with true — so the generator was exercised, the app showed the
+    // table, and only the server's output lacked it.
+    const portfolio = new Portfolio(assets, true, config);
 
     // Not optional. With no life events nothing ever transitions: salary never
     // closes, retirement-phase transfers never activate, and the run reports an

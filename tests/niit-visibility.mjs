@@ -51,6 +51,7 @@ const { Portfolio } = await import('../js/portfolio.js');
 const { TaxTable } = await import('../js/taxes.js');
 const { chronometer_run } = await import('../js/chronometer.js');
 const { SNAPSHOT_FIXTURES } = await import('./tools/fixtures.mjs');
+const { generateReportsSectionMarkdown } = await import('../js/generators/finplan-ai.js');
 
 /**
  * Mirrors snapshot.mjs's applyConfig. Kept here rather than imported because
@@ -169,5 +170,60 @@ for (const { fixture, portfolio } of silent) {
     + 'without being reported.');
 }
 console.log(`  ok  ${silent.length} fixture(s) owe none and report none`);
+
+// ── 5. The REPORT names it ────────────────────────────────────────────
+//
+// The fourth surface, and the one that stayed broken longest. Spec 8 fixed the
+// metric, the package and federalTaxes(); the markdown report's Lifetime Tax
+// Summary still listed five rows and a Total that included a sixth. On the
+// preRetirement profile that was $702,722 of labelled rows under a $704,001
+// Total — the surtax present in the arithmetic and absent from the table.
+//
+// So this asserts the property that omission violates: the itemised rows must
+// SUM to the Total. A component added to federalTaxes() without a row fails
+// here, by name, instead of reappearing as an unexplained gap that only shows
+// up if a reader happens to add the column by hand.
+const parseMoney = (s) => Number(String(s).replace(/[$,]/g, ''));
+
+function lifetimeTaxTable(md) {
+  const start = md.indexOf('## Lifetime Tax Summary');
+  if (start < 0) return null;
+  const section = md.slice(start, md.indexOf('\n\n', start) + 1);
+  const rows = new Map();
+  let total = null;
+  for (const line of section.split('\n')) {
+    let m = /^\| \*\*Total\*\* \| \*\*\$([\d,.-]+)\*\* \|$/.exec(line);
+    if (m) { total = parseMoney(m[1]); continue; }
+    // A row may be NEGATIVE — `estimatedTaxes` contributes against the others —
+    // and Intl currency formatting puts the minus outside the sign: -$824.
+    m = /^\| ([^|*]+?) \| (-?\$[\d,.]+) \|$/.exec(line);
+    if (m) rows.set(m[1].trim(), parseMoney(m[2]));
+  }
+  return { rows, total };
+}
+
+for (const { fixture, portfolio, events } of results) {
+  const md = generateReportsSectionMarkdown(portfolio);
+  const table = lifetimeTaxTable(md);
+
+  check(table !== null, `${fixture.name}: the report has no Lifetime Tax Summary to check`);
+  check(table.rows.has('NIIT'),
+    `${fixture.name}: Lifetime Tax Summary has no NIIT row — rows present: `
+    + [...table.rows.keys()].join(', '));
+
+  const pkgNIIT = Math.abs(portfolio.total?.niit?.amount ?? 0);
+  check(near(table.rows.get('NIIT'), pkgNIIT, 0.51),
+    `${fixture.name}: the NIIT row reads ${fmt(table.rows.get('NIIT'))} but the package `
+    + `holds ${fmt(pkgNIIT)} — the table is showing a different number than the one collected`);
+
+  const summed = [...table.rows.values()].reduce((t, v) => t + v, 0);
+  check(near(summed, table.total, 1.0),
+    `${fixture.name}: the itemised rows sum to ${fmt(summed)} under a ${fmt(table.total)} `
+    + `Total — ${fmt(Math.abs(table.total - summed))} of tax is inside the Total with no row `
+    + 'naming it. Add a row for whatever component of federalTaxes() is missing.');
+
+  const charged = events.length > 0 ? 'owes' : 'owes no';
+  console.log(`  ok  ${fixture.name} — report rows sum to Total, NIIT row present (${charged} NIIT)`);
+}
 
 console.log(`\nPASS — ${checks} assertions\n`);

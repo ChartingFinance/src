@@ -130,6 +130,34 @@ eligible account. That is a structural problem with the plan and outranks any
 headline number below it. "No issues detected" means every obligation was paid
 and every required distribution met; it does *not* mean the plan is good.
 
+### Annual by default, monthly when the question is a detail
+
+The report is written at two granularities and holds a third. **Lifetime Tax
+Summary** is the whole run in one column; **Annual Cash Flow** is one row per
+year; and behind both, the run records a package for every month and an event
+log finer still. Report the annual figures by default — a year is the unit a
+person plans in, and thirty rows is already a lot of table.
+
+Reach for the monthly data whenever the question is about a *detail*, and say
+that you are doing so:
+
+- **A year that does not look like its neighbours.** An annual row is a sum, and
+  a sum is silent about its own shape. A home sale, an inherited lump, a Roth
+  conversion, a large December true-up — each lands in one month and is spread
+  invisibly across twelve in the annual view. If a user asks why one year is
+  different, the annual row cannot answer it; the months can.
+- **Any "why" about a specific number.** `explain_month` returns recorded events
+  with their causal chains — `explain_month(handle, date: 'YYYY-MM')` for one
+  month, or `explain_month(handle, eventType: '...')` with no date to find every
+  occurrence across the plan. That second form is how you locate *which* month a
+  charge landed in before you go read it.
+- **A total that seems too round.** Query the events before repeating the total.
+
+Tell the user the finer view exists rather than leaving them with the annual
+row. They cannot ask for a month they do not know was recorded — and the annual
+table, read alone, invites the assumption that a year was uniform when the whole
+reason it stands out is that one month in it was not.
+
 ### When nothing is flagged
 
 A run with no ⚠️ is the easy report to get wrong. Everything above is guidance

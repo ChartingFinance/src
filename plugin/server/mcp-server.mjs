@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.2.0; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.2.1; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -33373,6 +33373,7 @@ var FinancialPackage = class _FinancialPackage {
     logger.log(category, "  incomeTax:                 " + this.incomeTax.toString());
     logger.log(category, "  longTermCapitalGainsTax:   " + this.longTermCapitalGainsTax.toString());
     logger.log(category, "  estimatedTaxes:            " + this.estimatedTaxes.toString());
+    logger.log(category, "  niit:                      " + this.niit.toString());
     logger.log(category, "State/Local taxes:           " + this.saltTaxes().toString());
     logger.log(category, "  propertyTaxes:             " + this.propertyTaxes.toString());
     logger.log(category, "contributions:               " + this.contributions().toString());
@@ -35572,11 +35573,26 @@ var Portfolio = class _Portfolio {
     }
     this.assertions();
   }
+  /**
+   * The monthly dataset. One FinancialPackage per month for the whole run,
+   * kept alongside the yearly ones in `generatedReports` — the finer of the
+   * two granularities a reader can ask for, and the one that can answer what
+   * a year with an outlier in it actually did.
+   *
+   * The logging is guarded separately from the recording. `report()` builds
+   * about thirty-five formatted strings per call, and it builds them as
+   * ARGUMENTS — so `logger.log` discarding them for a disabled category costs
+   * the whole formatting pass anyway. MONTHLY and YEARLY are both off by
+   * default, and the MCP server now runs with `reports` on over 400-month
+   * plans, so this is ~15,000 strings per run formatted for nobody.
+   */
   reportMonthly(currentDateInt) {
     if (this.reports) {
-      logger.log(LogCategory.MONTHLY, " -------  Begin Monthly (" + currentDateInt.toString() + " ) Report -------");
-      this.monthly.report(LogCategory.MONTHLY);
-      logger.log(LogCategory.MONTHLY, " -------   End Monthly (" + currentDateInt.toString() + " ) Report  -------");
+      if (logger.isEnabled(LogCategory.MONTHLY)) {
+        logger.log(LogCategory.MONTHLY, " -------  Begin Monthly (" + currentDateInt.toString() + " ) Report -------");
+        this.monthly.report(LogCategory.MONTHLY);
+        logger.log(LogCategory.MONTHLY, " -------   End Monthly (" + currentDateInt.toString() + " ) Report  -------");
+      }
       this.generatedReports.push({
         type: "monthly",
         dateLabel: currentDateInt.toString(),
@@ -35584,14 +35600,18 @@ var Portfolio = class _Portfolio {
       });
     }
   }
+  /** The annual dataset — the default granularity of the markdown report. */
   reportYearly(currentDateInt) {
     if (this.reports) {
-      logger.log(LogCategory.YEARLY, " -------  Begin Yearly (" + currentDateInt.toString() + " ) Report -------");
-      this.yearly.report(LogCategory.YEARLY);
-      logger.log(LogCategory.YEARLY, " -------   End Yearly  (" + currentDateInt.toString() + " ) Report  -------");
+      if (logger.isEnabled(LogCategory.YEARLY)) {
+        logger.log(LogCategory.YEARLY, " -------  Begin Yearly (" + currentDateInt.toString() + " ) Report -------");
+        this.yearly.report(LogCategory.YEARLY);
+        logger.log(LogCategory.YEARLY, " -------   End Yearly  (" + currentDateInt.toString() + " ) Report  -------");
+      }
       this.generatedReports.push({
         type: "yearly",
         dateLabel: currentDateInt.toString(),
+        coversYear: currentDateInt.year - 1,
         pkg: new FinancialPackage().add(this.yearly)
       });
     }
@@ -38635,7 +38655,7 @@ async function runPlan(spec, { includeReconciliation = false } = {}) {
   }
   const config2 = simConfigFromPlanSpec(spec);
   const assets = membrane_rawDataToModelAssets(spec.modelAssets);
-  const portfolio = new Portfolio(assets, false, config2);
+  const portfolio = new Portfolio(assets, true, config2);
   portfolio.lifeEvents = (spec.lifeEvents ?? []).map(ModelLifeEvent.fromJSON);
   await chronometer_run(portfolio);
   const issues = detectIssues(portfolio, { includeReconciliation });
@@ -39336,6 +39356,12 @@ No simulation has been run yet.
 `;
     md += `| LT Capital Gains Tax | ${fmt(Math.abs(total.longTermCapitalGainsTax.amount))} |
 `;
+    md += `| NIIT | ${fmt(Math.abs(total.niit.amount))} |
+`;
+    if (Math.abs(total.estimatedTaxes.amount) >= 5e-3) {
+      md += `| Estimated Taxes | ${fmt(-total.estimatedTaxes.amount)} |
+`;
+    }
     md += `| Property Taxes | ${fmt(Math.abs(total.propertyTaxes.amount))} |
 `;
     md += `| **Total** | **${fmt(Math.abs(total.totalTaxes().amount))}** |
@@ -39356,10 +39382,19 @@ No simulation has been run yet.
       const taxes = Math.abs(p.totalTaxes().amount);
       const expenses = Math.abs(p.expense.amount);
       const surplus = income - taxes - expenses;
-      md += `| ${report.dateLabel} | ${fmt(income)} | ${fmt(taxes)} | ${fmt(expenses)} | ${fmt(surplus)} |
+      md += `| ${report.coversYear ?? report.dateLabel} | ${fmt(income)} | ${fmt(taxes)} | ${fmt(expenses)} | ${fmt(surplus)} |
 `;
     }
     md += "\n";
+    md += `> **Granularity.** The rows above are annual totals; the simulation runs monthly and records every charge in the month it happened. A year containing a home sale, a one-time distribution or a large tax true-up looks ordinary in its annual row. When a year looks unusual, read its months \u2014 do not infer the shape of a year from its total.
+
+`;
+  } else {
+    md += `## Annual Cash Flow
+`;
+    md += `_Not recorded for this run \u2014 only the lifetime totals above. Per-month and per-year reporting is produced when the Portfolio is built with its \`reports\` flag set._
+
+`;
   }
   md += directionalNotes("reports");
   md += GENERATOR_LINE;
@@ -40034,7 +40069,9 @@ function reportFor(handle, portfolio, issues, mcResults = null) {
   const followUp = [
     `**Run handle:** \`${handle}\``,
     "",
-    ids.length ? `Ask why any of these happened with \`explain_issue\` \u2014 finding ids in this run: ` + ids.map((i) => `\`${i}\``).join(", ") + "." : `Nothing needs attention in this run. Use \`explain_month\` to look at any month anyway.`,
+    ids.length ? `Ask why any of these happened with \`explain_issue\` \u2014 finding ids in this run: ` + ids.map((i) => `\`${i}\``).join(", ") + "." : `Nothing needs attention in this run.`,
+    "",
+    `Figures below are annual and lifetime totals. The simulation is monthly, and every charge is recorded in the month it happened \u2014 so for anything finer, or for a year whose total looks unusual, call \`explain_month\` with that month (\`YYYY-MM\`), or with an \`eventType\` to scan the whole plan.`,
     "",
     "---",
     ""

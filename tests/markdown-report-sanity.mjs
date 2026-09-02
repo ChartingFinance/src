@@ -242,10 +242,39 @@ check('Tax breakdown includes property taxes', () => {
         'Missing Property Taxes in breakdown');
 });
 
-check('Annual cash flow table has multiple year rows', () => {
-    const yearRows = md.match(/\| 20\d{2}-\d{2} \|/g);
+check('Tax summary names NIIT', () => {
+    // It was inside the Total and absent from the rows for the whole life of
+    // spec 8. tests/niit-visibility.mjs owns the arithmetic — rows must sum to
+    // the Total, across fixtures that actually owe some. This asserts only that
+    // the row survives in the generator's output.
+    assert.ok(md.includes('| NIIT |'),
+        'Missing NIIT row in Lifetime Tax Summary');
+});
+
+check('Annual cash flow declares its granularity', () => {
+    // An annual row read alone invites the assumption that the year was
+    // uniform. The note is the only thing in the report that says a finer
+    // dataset exists, so it is part of the contract, not decoration.
+    assert.ok(md.includes('**Granularity.**'),
+        'Annual Cash Flow has no granularity note');
+    assert.ok(/read its\s+months/.test(md),
+        'the granularity note does not tell the reader to go to the months');
+});
+
+check('Annual cash flow rows are labelled by the year they COVER', () => {
+    // Not `2027-01`. The yearly package fires on New Year's Day for the year
+    // that just closed, so labelling rows with the firing date put every row
+    // one year ahead of its contents — under a column headed "Year".
+    const yearRows = md.match(/\n\| 20\d{2} \|/g);
     assert.ok(yearRows && yearRows.length >= 5,
         `Expected at least 5 annual rows, found ${yearRows ? yearRows.length : 0}`);
+    assert.ok(!/\n\| 20\d{2}-\d{2} \| \$/.test(md),
+        'an annual row is still labelled with its firing month rather than its year');
+
+    // The fixture runs 2026-01 → 2036-12, so the first closed year is 2026 and
+    // the last is 2036. A row for 2037 would be the off-by-one back again.
+    assert.ok(md.includes('\n| 2026 |'), 'no row for the first year of the plan');
+    assert.ok(!md.includes('\n| 2037 |'), 'a row exists for a year after the plan ends');
 });
 
 check('Asset summary table lists every asset with start/end values', () => {

@@ -46,6 +46,7 @@ globalThis.window = globalThis;
 
 import { runPlan, runProfile, planFromProfile, listProfiles } from '../js/mcp/run-plan.js';
 import { LifeEventType } from '../js/life-event.js';
+import { generatePortfolioMarkdown } from '../js/generators/finplan-ai.js';
 import * as globals from '../js/globals.js';
 
 let passed = 0, failed = 0;
@@ -266,6 +267,43 @@ await check('a plan that cannot pay reports an obligation finding', () => {
       assert.ok(issues.some(i => i.category === 'obligation'),
         'an underfunded plan produced no obligation finding');
     });
+});
+
+// ── Granularity ──────────────────────────────────────────────────────
+//
+// The seam constructs the Portfolio, and the second constructor argument
+// decides whether the run records anything between "lifetime" and "one event".
+// It was false here from this file's first commit, so every report this server
+// produced skipped the Annual Cash Flow table silently — the generator emits
+// the section only when yearly reports exist, and no test built a portfolio
+// through runPlan to notice. These assert the datasets, then the surface.
+console.log('\n── Annual and monthly datasets ──\n');
+
+await check('a run records the ANNUAL dataset', () => {
+  const yearly = mid.portfolio.generatedReports.filter(r => r.type === 'yearly');
+  assert.ok(yearly.length > 1,
+    `runPlan produced ${yearly.length} yearly report(s) — the Annual Cash Flow table `
+    + 'is generated from these, so the report has no annual granularity at all');
+});
+
+await check('a run records the MONTHLY dataset alongside it', () => {
+  const monthly = mid.portfolio.generatedReports.filter(r => r.type === 'monthly');
+  const yearly = mid.portfolio.generatedReports.filter(r => r.type === 'yearly');
+  // The count first: `>= yearly * 11` alone is satisfied by 0 >= 0, which is
+  // exactly the state this is meant to catch. Verified by mutation — with the
+  // flag off it passed while its two siblings failed.
+  assert.ok(monthly.length > 12, `only ${monthly.length} monthly package(s) recorded`);
+  assert.ok(monthly.length >= yearly.length * 11,
+    `${monthly.length} monthly package(s) against ${yearly.length} yearly — the finer `
+    + 'dataset the report points readers at is not being recorded');
+});
+
+await check('the report actually renders the Annual Cash Flow table', () => {
+  const md = generatePortfolioMarkdown(mid.portfolio);
+  assert.ok(md.includes('## Annual Cash Flow'), 'no Annual Cash Flow section');
+  assert.ok(!md.includes('_Not recorded for this run'),
+    'the section rendered its empty-state placeholder — generatedReports was empty');
+  assert.ok(/\n\| 20\d{2} \|/.test(md), 'the Annual Cash Flow table has no year rows');
 });
 
 console.log(`\n${'─'.repeat(55)}`);

@@ -340,6 +340,7 @@ export class FinancialPackage {
         logger.log(category, '  incomeTax:                 ' + this.incomeTax.toString());
         logger.log(category, '  longTermCapitalGainsTax:   ' + this.longTermCapitalGainsTax.toString());        
         logger.log(category, '  estimatedTaxes:            ' + this.estimatedTaxes.toString());
+        logger.log(category, '  niit:                      ' + this.niit.toString());
         logger.log(category, 'State/Local taxes:           ' + this.saltTaxes().toString());
         logger.log(category, '  propertyTaxes:             ' + this.propertyTaxes.toString());
         logger.log(category, 'contributions:               ' + this.contributions().toString());
