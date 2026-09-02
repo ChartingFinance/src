@@ -29,6 +29,32 @@
  * recording when no account can receive the distribution. Explaining those
  * would mean inventing a chain. There is a test that they refuse to.
  *
+ * ── The fixture is built on a PINNED clock ─────────────────────────────────
+ *
+ * Spec 10 step 0 took the wall clock out of the ENGINE, not out of the plan
+ * BUILDER: `quick-start.js` still starts every asset in the month `new Date()`
+ * happens to name, so `planFromProfile` returns a DIFFERENT plan each month and
+ * the assertions below — which name one specific occurrence — held only in some
+ * of them. Measured on unchanged code, first `plan-exhaustion` occurrence:
+ *
+ *     built 2026-07 → Aug 2029, Living Expenses → Brokerage, -$1,010
+ *     built 2026-08 → Aug 2029, Living Expenses → Brokerage,   -$443
+ *     built 2026-09 → Aug 2029, Income tax withholding,          -$4
+ *     built 2026-10 → Sep 2029, Living Expenses → Brokerage, -$1,414
+ *
+ * In a September-anchored plan a $4 withholding shortfall is the earliest
+ * unfunded event of the exhaustion month, so it sorts first and displaces the
+ * transfer. Nothing was wrong with it — `August 2029 > Settle from Brokerage` is
+ * a true causal claim about a true event — the suite was simply asserting
+ * against whichever occurrence this month's calendar put in front.
+ *
+ * So every spec here is built at one fixed instant, the same one
+ * `tests/plan-anchoring.mjs` freezes, and RUN under the real clock. The pin is
+ * part of the fixture: move it and the amounts below move with it. That the pin
+ * is actually taking effect is asserted, not assumed — a stub that silently
+ * stopped working would restore the month-dependence and stay green for most of
+ * the year.
+ *
  * Usage:  node src/tests/mcp-explain.mjs   (from repo root)
  */
 
@@ -43,7 +69,7 @@ globalThis.localStorage = {
 globalThis.window = globalThis;
 
 import {
-  runProfile, runPlanCached, planFromProfile, getRun, clearRuns,
+  runPlan, runPlanCached, planFromProfile, getRun, clearRuns,
 } from '../js/mcp/run-plan.js';
 import {
   explainIssue, explainAt, explainIssueMarkdown, explainAtMarkdown, parseDate, ISSUE_EVENT_TYPE,
@@ -56,15 +82,45 @@ async function check(label, fn) {
   catch (e) { console.log(`  ✗ ${label}`); console.log(`    ${e.message}`); failed++; }
 }
 
+/** The day these fixtures are built — see the header. */
+const PINNED = '2026-08-31T12:00:00Z';
+const PINNED_MONTH = '2026-08';
+const RealDate = Date;
+
+/**
+ * A plan spec as of one fixed day, so the fixture is the same in every month.
+ *
+ * Only the BUILD is pinned. The run happens on the real clock, because a
+ * frozen spec meaning the same thing on any calendar day is the property
+ * tests/plan-anchoring.mjs establishes — leaning on it here rather than
+ * re-asserting it.
+ */
+function frozenPlan(profileKey, ageOverrides = null) {
+  const fixed = new RealDate(PINNED);
+  globalThis.Date = class extends RealDate {
+    constructor(...a) { return a.length ? new RealDate(...a) : new RealDate(fixed); }
+    static now() { return fixed.getTime(); }
+  };
+  try { return planFromProfile(profileKey, ageOverrides); }
+  finally { globalThis.Date = RealDate; }
+}
+
 /** A plan that fails: retiring at 58 on Mid Career balances cannot be funded. */
-const broke = await runProfile('midCareer', { startAge: 57, retirementAge: 58, finishAge: 95 });
+const broke = await runPlan(frozenPlan('midCareer', { startAge: 57, retirementAge: 58, finishAge: 95 }));
 /** A plan that works, for the silence checks. */
-const healthy = await runProfile('midCareer');
+const healthy = await runPlan(frozenPlan('midCareer'));
 
 // ── The chain is right ───────────────────────────────────────────────
 console.log('\n── The chain is a correct causal claim ──\n');
 
 const exhaustion = explainIssue(broke, 'plan-exhaustion', { limit: 1 });
+
+await check('the fixture is pinned to a fixed month, not to today', () => {
+  // Without this the suite is a different test every month, which is how the
+  // four assertions below spent a year passing and failing by season.
+  assert.equal(String(broke.portfolio.firstDateInt), PINNED_MONTH,
+    'the clock stub did not take — the fixture is being built from today again');
+});
 
 await check('the fixture actually produced the failure we mean to explain', () => {
   assert.ok(broke.issues.some(i => i.id === 'plan-exhaustion'),
@@ -108,7 +164,7 @@ await check('a cached run can still explain itself after a LATER run', async () 
   // resetTraces() runs at the top of every chronometer_run, so `broke`'s scopes
   // are gone from module state by now — `healthy` ran after it, and so will
   // this. Resolution must use the run's OWN traceScopes.
-  await runProfile('dualIncome');
+  await runPlan(frozenPlan('dualIncome'));
 
   const again = explainIssue(broke, 'plan-exhaustion', { limit: 1 });
   assert.ok(again.chains[0].chainLabel,
@@ -119,8 +175,8 @@ await check('a cached run can still explain itself after a LATER run', async () 
 
 await check('a handle survives other runs and resolves to its own plan', async () => {
   clearRuns();
-  const a = await runPlanCached(planFromProfile('midCareer', { startAge: 57, retirementAge: 58, finishAge: 95 }));
-  await runPlanCached(planFromProfile('dualIncome'));
+  const a = await runPlanCached(frozenPlan('midCareer', { startAge: 57, retirementAge: 58, finishAge: 95 }));
+  await runPlanCached(frozenPlan('dualIncome'));
 
   const fromHandle = explainIssue(await getRun(a.handle), 'plan-exhaustion', { limit: 1 });
   assert.match(fromHandle.chains[0].chainLabel, /Pay /,
@@ -143,7 +199,7 @@ await check('handles no longer expire — the opposite of what this used to asse
   clearRuns();
   const handles = [];
   for (const key of ['midCareer', 'dualIncome', 'earlyCareer', 'retired', 'youngCouple', 'preRetirement']) {
-    handles.push((await runPlanCached(planFromProfile(key))).handle);
+    handles.push((await runPlanCached(frozenPlan(key))).handle);
   }
   assert.ok((await getRun(handles[0])).portfolio, 'the oldest handle died');
   assert.ok((await getRun(handles.at(-1))).portfolio, 'the newest handle died');
