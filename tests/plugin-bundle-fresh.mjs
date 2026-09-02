@@ -34,6 +34,16 @@
  * attribute, and this test normalises anyway — the attribute is the fix, the
  * normalisation is the seatbelt. Same arrangement, same reasons.
  *
+ * ── Where it was built is not part of it ─────────────────────────────
+ *
+ * The comparison only means "stale" if one commit builds to one file from any
+ * checkout. It did not: a git worktree has no `node_modules`, so esbuild
+ * labelled every dependency `../../../node_modules/...` and this test reported
+ * staleness in the place most of the work happens — for a reason that has
+ * nothing to do with staleness, which is how a guard gets worked around. The
+ * build now canonicalises those labels; the last check below holds the
+ * committed artifact to the same standard.
+ *
  * Usage:  node tests/plugin-bundle-fresh.mjs   (from src/)
  */
 
@@ -51,7 +61,9 @@ const BUNDLE = resolve(SRC, 'plugin/server/mcp-server.mjs');
 const normalise = (s) => s.replace(/\r\n/g, '\n');
 
 let failures = 0;
+let ran = 0;
 const check = (label, fn) => {
+    ran++;
     try { fn(); console.log(`  ok   ${label}`); }
     catch (err) { failures++; console.log(`  FAIL ${label}\n       ${err.message}`); }
 };
@@ -108,7 +120,24 @@ check('the committed manifest lists what the server actually serves', () => {
     }
 });
 
+// The artifact is the same file from every checkout, or the comparison above
+// is measuring the builder rather than the build. esbuild labels each bundled
+// module with its path relative to the build directory, and a git worktree —
+// which has no `node_modules` of its own — resolves dependencies through the
+// parent checkout, so those labels come out as `../../../node_modules/...`.
+// `bundleText()` refuses to produce that; this is the same claim about the
+// file that is actually committed, which no build has to have touched.
+check('the committed bundle records nothing about the machine that built it', () => {
+    const machinePath = committed.match(/(?:\.\.\/)+node_modules\/\S*/)
+        ?? committed.match(/^\/\/ [A-Za-z]:[\\/]\S*/m);
+    assert.ok(!machinePath,
+        `the committed bundle carries a build-machine path: ${machinePath?.[0]}\n`
+        + `       It was built somewhere whose layout leaked into the artifact — `
+        + `a worktree, or a checkout without its own node_modules.\n`
+        + `       Fix: npm run build:plugin, then commit the result.`);
+});
+
 console.log('\n───────────────────────────────────────────────────────');
-console.log(`  ${3 - failures} passed, ${failures} failed`);
+console.log(`  ${ran - failures} passed, ${failures} failed`);
 console.log('───────────────────────────────────────────────────────');
 process.exit(failures ? 1 : 0);
