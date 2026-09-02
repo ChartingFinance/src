@@ -25,13 +25,19 @@
 
 import { build } from 'esbuild';
 import { execFileSync } from 'node:child_process';
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, relative, resolve, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const SRC = resolve(HERE, '..');
 const OUT = resolve(SRC, 'plugin/server/mcp-server.mjs');
+const PAYLOAD = resolve(SRC, 'plugin');
+const LOCK = resolve(SRC, 'tools/plugin-payload.lock.json');
+
+/** The oldest Node the bundle is built for, and the floor the guard enforces. */
+const NODE_FLOOR = 20;
 
 /**
  * The checkout whose `node_modules` this build resolves against.
@@ -126,6 +132,29 @@ export async function bundleText() {
                     + `@modelcontextprotocol/sdk ${pkg.dependencies['@modelcontextprotocol/sdk']}, `
                     + `zod ${pkg.dependencies.zod}.`,
                 '// Rebuild with: npm run build:plugin',
+                //
+                // The runtime floor, checked before anything else in the bundle
+                // runs. It is emitted HERE rather than written in the entry
+                // module because esbuild puts the banner ahead of every bundled
+                // dependency: a check inside the entry would run after ~280
+                // modules had already been evaluated, which is too late if one
+                // of them is what a too-old Node chokes on.
+                //
+                // Deliberately ES5: this is the one piece of the bundle that has
+                // to survive the runtime it exists to reject.
+                //
+                // This cannot cover a MISSING Node — `.mcp.json` says
+                // `"command": "node"`, so the spawn fails before a line of ours
+                // runs, and the client reports nothing. plugin/README.md states
+                // the requirement for that case; this covers "present but old",
+                // which is the half we can turn into a sentence.
+                'var __cfNode = (process.versions && process.versions.node) || "0";',
+                `if (!(parseInt(__cfNode.split(".")[0], 10) >= ${NODE_FLOOR})) {`,
+                '    process.stderr.write(',
+                `        "charting-finance: needs Node.js ${NODE_FLOOR} or newer, found " + __cfNode + ".\\n"`,
+                '        + "Install a current Node from https://nodejs.org and restart Claude.\\n");',
+                '    process.exit(1);',
+                '}',
             ].join('\n'),
         },
         // In memory. The caller decides whether this becomes a file.
@@ -140,6 +169,44 @@ export async function bundleText() {
  * disagree with itself about what it just built. It does not today (the sync
  * touches `tools`, not `version`), and this note is here so it stays that way.
  */
+
+/**
+ * A hash of everything under `plugin/` — the bytes a user actually installs.
+ *
+ * Exported so `tests/plugin-bundle-fresh.mjs` can check the committed lock
+ * against the committed payload without running a build.
+ *
+ * Line endings are normalised before hashing, for the reason `.gitattributes`
+ * spells out one file over: this repo is used with `core.autocrlf=true`, and
+ * the markdown under `plugin/` is not pinned to LF. Hashing raw bytes would
+ * make the fingerprint a fact about the checkout rather than about the
+ * payload — which is the same defect PR #50 removed from the bundle itself.
+ *
+ * Everything under `plugin/` is text today. If that stops being true, this has
+ * to learn the difference before it silently mangles a binary.
+ */
+export function payloadFingerprint() {
+    const files = [];
+    (function walk(dir) {
+        for (const entry of readdirSync(dir, { withFileTypes: true }).sort(
+            (a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0))) {
+            const full = resolve(dir, entry.name);
+            if (entry.isDirectory()) walk(full);
+            else files.push(full);
+        }
+    })(PAYLOAD);
+
+    const hash = createHash('sha256');
+    for (const file of files.sort()) {
+        // The path is hashed too: moving a file without editing it is a change
+        // to what ships, and a content-only hash would call that identical.
+        hash.update(relative(SRC, file).split(sep).join('/'));
+        hash.update('\0');
+        hash.update(readFileSync(file, 'utf8').replace(/\r\n/g, '\n'));
+        hash.update('\0');
+    }
+    return hash.digest('hex');
+}
 
 // ── Script ───────────────────────────────────────────────────────────
 //
@@ -203,5 +270,47 @@ writeFileSync(
     JSON.stringify(manifest, null, 2) + '\n',
 );
 console.error('✓ plugin.json tool list synced');
+
+// ── The version is the update key ────────────────────────────────────
+//
+// `claude plugin update` compares the INSTALLED version string against the
+// marketplace's. It does not look at the commit. Measured 2026-09-02: with the
+// marketplace clone correctly fetched to a newer commit, `update` printed
+// "already at the latest version (0.1.0)" and copied nothing — the cached
+// skill kept its old text and the install record kept its old SHA.
+//
+// So a payload change that does not bump `plugin.json.version` reaches nobody
+// who already installed the plugin, and says so to no one. It is invisible in
+// development, because a source checkout is always current.
+//
+// This is the guard. The fingerprint of what shipped is recorded against the
+// version that shipped it; a payload that moves under a version that did not
+// stops the build.
+//
+// It is a REMINDER, not a proof. It fires on the second build within one
+// version, which is exactly what iterating on an unreleased bump looks like —
+// so `--relock` re-points the lock at the current version deliberately. What
+// that costs is worth being plain about: anyone can pass it, including on a
+// change that really is going out. Catching THAT needs a check against the
+// merge base, which knows what has already been published and this does not.
+const fingerprint = payloadFingerprint();
+const lock = existsSync(LOCK) ? JSON.parse(readFileSync(LOCK, 'utf8')) : null;
+const relock = process.argv.includes('--relock');
+
+if (!relock && lock && lock.payload !== fingerprint
+    && lock.version === manifest.version) {
+    throw new Error(
+        `the plugin payload changed but plugin.json is still ${manifest.version}.\n`
+        + `Users on ${manifest.version} would never receive this: \`claude plugin `
+        + `update\` keys on the version string, reports "already at the latest `
+        + `version", and copies nothing.\n`
+        + `Bump plugin.json.version and rebuild — or, if ${manifest.version} has `
+        + `not shipped yet and you are still iterating on it:\n`
+        + `    npm run build:plugin -- --relock`);
+}
+
+writeFileSync(LOCK, JSON.stringify(
+    { version: manifest.version, payload: fingerprint }, null, 2) + '\n');
+console.error(`✓ payload locked at ${manifest.version} (${fingerprint.slice(0, 12)}…)`);
 
 }

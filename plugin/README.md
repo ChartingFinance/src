@@ -28,6 +28,12 @@ tax — and instructs Claude to disclose them alongside the numbers.
 Requires **Node.js 20+** on your PATH. Nothing else — the server ships as a single
 bundled file with no dependencies to install.
 
+Claude Code does not provide a Node runtime to plugins, so this has to be your
+own. If Node is present but older than 20, the server exits with a message
+saying so. If Node is missing entirely the server cannot start at all, and
+Claude Code reports nothing — the plugin will simply have no tools. Check with
+`node --version` before assuming something else is wrong.
+
 ## What you get
 
 | | |

@@ -52,7 +52,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { bundleText } from '../tools/build-plugin.mjs';
+import { bundleText, payloadFingerprint } from '../tools/build-plugin.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const SRC = resolve(HERE, '..');
@@ -135,6 +135,39 @@ check('the committed bundle records nothing about the machine that built it', ()
         + `       It was built somewhere whose layout leaked into the artifact — `
         + `a worktree, or a checkout without its own node_modules.\n`
         + `       Fix: npm run build:plugin, then commit the result.`);
+});
+
+// `claude plugin update` keys on the version string, not the commit — a payload
+// change under an unbumped version reaches nobody who already installed, and
+// the CLI says "already at the latest version" while copying nothing. The build
+// records the fingerprint of what shipped against the version that shipped it;
+// this asserts the committed pair still agree, so a payload edited and
+// committed without a rebuild is caught without running one.
+check('the committed payload matches the version it is locked to', () => {
+    const lock = JSON.parse(
+        readFileSync(resolve(SRC, 'tools/plugin-payload.lock.json'), 'utf8'));
+    const manifest = JSON.parse(
+        readFileSync(resolve(SRC, 'plugin/.claude-plugin/plugin.json'), 'utf8'));
+
+    assert.equal(lock.version, manifest.version,
+        `the lock records ${lock.version} but plugin.json says ${manifest.version}`);
+    assert.equal(payloadFingerprint(), lock.payload,
+        `the plugin payload does not hash to what ${lock.version} locked.\n`
+        + `       Something under plugin/ changed without a rebuild — and if the `
+        + `change is meant to ship,\n       plugin.json.version has to move or no `
+        + `installed user will ever receive it.\n`
+        + `       Fix: npm run build:plugin (it will refuse until the version is bumped).`);
+});
+
+// The floor exists to turn "present but too old" into a sentence instead of a
+// stack trace. It has to be in the committed artifact, and it has to be ahead
+// of the bundled modules — a guard that runs after them cannot do its job.
+check('the committed bundle checks its Node floor before anything else runs', () => {
+    const guard = committed.indexOf('charting-finance: needs Node.js');
+    assert.ok(guard !== -1, 'the committed bundle carries no Node version guard');
+    const firstRequire = committed.indexOf('__commonJS');
+    assert.ok(firstRequire === -1 || guard < firstRequire,
+        'the Node guard sits after the first bundled module, so it runs too late');
 });
 
 console.log('\n───────────────────────────────────────────────────────');

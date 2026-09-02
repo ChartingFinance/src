@@ -1,8 +1,15 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.1.0; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.2.0; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
+var __cfNode = (process.versions && process.versions.node) || "0";
+if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
+    process.stderr.write(
+        "charting-finance: needs Node.js 20 or newer, found " + __cfNode + ".\n"
+        + "Install a current Node from https://nodejs.org and restart Claude.\n");
+    process.exit(1);
+}
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;

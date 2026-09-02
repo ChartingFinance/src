@@ -13,6 +13,9 @@
   },
   "author": "John Milan",
   "license": "ISC",
+  "engines": {
+    "node": ">=20"
+  },
   "description": "",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.27.1",
