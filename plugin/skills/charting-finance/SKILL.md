@@ -130,6 +130,34 @@ eligible account. That is a structural problem with the plan and outranks any
 headline number below it. "No issues detected" means every obligation was paid
 and every required distribution met; it does *not* mean the plan is good.
 
+### When nothing is flagged
+
+A run with no ⚠️ is the easy report to get wrong. Everything above is guidance
+for explaining problems, and when there are none the honest content is mostly
+the model's limits — so a clean run legitimately reads as a headline number
+followed by caveats. Do not pad it back toward reassurance to compensate.
+
+Three things make that report useful rather than merely hedged:
+
+- **Say what “no issues” actually asserts** — every obligation was payable from an
+  eligible account and every required distribution was met. That is a claim about
+  the plan's internal consistency, not about whether the outcome is good or the
+  assumptions are right.
+- **Rank the disclosures by their effect on THIS run, and stop at two or three.**
+  Over a long horizon nearly every number leans on the compounding convention, so
+  “disclose what a number depends on” otherwise expands into the whole list and
+  reads as boilerplate. Lead with the limit that moves the largest number in the
+  report.
+- **Interrogate the suspiciously clean number.** A zero is the easiest thing to
+  pass through unexamined — a $0 lifetime capital gains tax on a large taxable
+  account, a tax line that never appears at all. Query the handle before
+  repeating it, and report what the recorded events show rather than what the
+  total implies.
+
+Naming an input worth confirming is in scope and is not advice. The built-in
+profiles encode specific strategies — a savings split, a withdrawal order — that
+the user never chose; point at the ones driving the result and let them decide.
+
 ## What the model does not do
 
 Disclose these when a number leans on one. All verified against the current source.
