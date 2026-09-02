@@ -110,6 +110,13 @@ function issuesMarkdown(issues) {
  * the only place the client learns that follow-up questions are possible at all.
  * Findings carry their own ids so `explain_issue` can be called without the
  * agent having to guess one.
+ *
+ * The granularity line is here for the same reason. The report body is annual
+ * and lifetime totals; the run also holds a package for every month and an
+ * event log finer than that, and nothing in a table of yearly rows says so. An
+ * annual row reads as though the year were uniform, so a home sale or a single
+ * large true-up becomes a question about a whole year instead of a question
+ * about one month — which the caller can only ask if it knows the month exists.
  */
 function reportFor(handle, portfolio, issues, mcResults = null) {
   const ids = [...new Set(issues.map(i => i.id))];
@@ -119,7 +126,12 @@ function reportFor(handle, portfolio, issues, mcResults = null) {
     ids.length
       ? `Ask why any of these happened with \`explain_issue\` — finding ids in this run: `
         + ids.map(i => `\`${i}\``).join(', ') + '.'
-      : `Nothing needs attention in this run. Use \`explain_month\` to look at any month anyway.`,
+      : `Nothing needs attention in this run.`,
+    '',
+    `Figures below are annual and lifetime totals. The simulation is monthly, and `
+      + `every charge is recorded in the month it happened — so for anything finer, `
+      + `or for a year whose total looks unusual, call \`explain_month\` with that `
+      + `month (\`YYYY-MM\`), or with an \`eventType\` to scan the whole plan.`,
     '',
     '---',
     '',

@@ -1121,13 +1121,28 @@ export class Portfolio {
 
     }
 
+    /**
+     * The monthly dataset. One FinancialPackage per month for the whole run,
+     * kept alongside the yearly ones in `generatedReports` — the finer of the
+     * two granularities a reader can ask for, and the one that can answer what
+     * a year with an outlier in it actually did.
+     *
+     * The logging is guarded separately from the recording. `report()` builds
+     * about thirty-five formatted strings per call, and it builds them as
+     * ARGUMENTS — so `logger.log` discarding them for a disabled category costs
+     * the whole formatting pass anyway. MONTHLY and YEARLY are both off by
+     * default, and the MCP server now runs with `reports` on over 400-month
+     * plans, so this is ~15,000 strings per run formatted for nobody.
+     */
     reportMonthly(currentDateInt) {
 
         if (this.reports) {
 
-            logger.log(LogCategory.MONTHLY, ' -------  Begin Monthly (' + currentDateInt.toString() + ' ) Report -------');
-            this.monthly.report(LogCategory.MONTHLY);
-            logger.log(LogCategory.MONTHLY, ' -------   End Monthly (' + currentDateInt.toString() + ' ) Report  -------');
+            if (logger.isEnabled(LogCategory.MONTHLY)) {
+                logger.log(LogCategory.MONTHLY, ' -------  Begin Monthly (' + currentDateInt.toString() + ' ) Report -------');
+                this.monthly.report(LogCategory.MONTHLY);
+                logger.log(LogCategory.MONTHLY, ' -------   End Monthly (' + currentDateInt.toString() + ' ) Report  -------');
+            }
 
             // NEW: Push directly to internal array
             this.generatedReports.push({ 
@@ -1140,18 +1155,31 @@ export class Portfolio {
 
     }
 
+    /** The annual dataset — the default granularity of the markdown report. */
     reportYearly(currentDateInt) {
 
         if (this.reports) {
 
-            logger.log(LogCategory.YEARLY, ' -------  Begin Yearly (' + currentDateInt.toString() + ' ) Report -------');
-            this.yearly.report(LogCategory.YEARLY);
-            logger.log(LogCategory.YEARLY, ' -------   End Yearly  (' + currentDateInt.toString() + ' ) Report  -------');
+            if (logger.isEnabled(LogCategory.YEARLY)) {
+                logger.log(LogCategory.YEARLY, ' -------  Begin Yearly (' + currentDateInt.toString() + ' ) Report -------');
+                this.yearly.report(LogCategory.YEARLY);
+                logger.log(LogCategory.YEARLY, ' -------   End Yearly  (' + currentDateInt.toString() + ' ) Report  -------');
+            }
 
-            // NEW: Push directly to internal array
+            // `dateLabel` is when the report FIRED, `coversYear` is what it is
+            // about, and they are never the same year. chronometer.js calls
+            // yearlyChron only on New Year's Day, after applyYear has settled
+            // the year that just ended — so the package pushed at 2027-01 holds
+            // 2026. Reported under its firing date in a column headed "Year",
+            // every row is one year ahead of its own contents, which sends
+            // anyone drilling into an unusual year into the wrong twelve months.
+            //
+            // dateLabel is left alone: the app's report-view shows these as
+            // dated reports, where the firing date is the right label.
             this.generatedReports.push({ 
                 type: 'yearly', 
                 dateLabel: currentDateInt.toString(), 
+                coversYear: currentDateInt.year - 1,
                 pkg: new FinancialPackage().add(this.yearly) 
             });
 

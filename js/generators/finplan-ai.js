@@ -341,7 +341,30 @@ export function generateReportsSectionMarkdown(portfolio) {
 
     let md = `# Reports\n\n`;
 
-    // Tax summary from portfolio total
+    // Tax summary from portfolio total.
+    //
+    // These rows must EXHAUST totalTaxes(). NIIT was missing here from the day
+    // spec 8 shipped it: `federalTaxes()` added it, the Total included it, and
+    // no row named it — so on the preRetirement profile the five itemised rows
+    // summed to $702,722 under a $704,001 Total and the $1,279 gap was the
+    // surtax, sitting in the table with no label. Same defect the rest of spec 8
+    // kept producing: the money moves, the total is right, and the number is
+    // reported nowhere a reader can see it.
+    //
+    // `estimatedTaxes` is the other component, and it is NOT dead. Two live
+    // sites in expense-engine book it when the funding backstop grosses up a
+    // withdrawal that realized a gain (the third site, the per-asset annual
+    // charge, is the commented-out one). It arrives POSITIVE into a package
+    // whose taxes are negative — so federalTaxes() adding it SUBTRACTS from the
+    // tax owed, while the per-asset Metric.ESTIMATED_INCOME_TAX gets the flipped
+    // copy. Whether that is an offset against double-counting the same gain or a
+    // sign inversion is not settled here, so this table shows the number with the
+    // sign it actually contributes rather than asserting a reading of it. It is
+    // omitted when zero, which is every built-in profile.
+    //
+    // tests/niit-visibility.mjs asserts these rows sum to the Total, so a
+    // component added to federalTaxes() and not to this table fails there rather
+    // than silently reappearing as an unexplained gap.
     const total = portfolio.total;
     if (total) {
         md += `## Lifetime Tax Summary\n`;
@@ -351,11 +374,23 @@ export function generateReportsSectionMarkdown(portfolio) {
         md += `| SS Tax | ${fmt(Math.abs(total.socialSecurityTax.amount))} |\n`;
         md += `| Medicare Tax | ${fmt(Math.abs(total.medicareTax.amount))} |\n`;
         md += `| LT Capital Gains Tax | ${fmt(Math.abs(total.longTermCapitalGainsTax.amount))} |\n`;
+        md += `| NIIT | ${fmt(Math.abs(total.niit.amount))} |\n`;
+        if (Math.abs(total.estimatedTaxes.amount) >= 0.005) {
+            md += `| Estimated Taxes | ${fmt(-total.estimatedTaxes.amount)} |\n`;
+        }
         md += `| Property Taxes | ${fmt(Math.abs(total.propertyTaxes.amount))} |\n`;
         md += `| **Total** | **${fmt(Math.abs(total.totalTaxes().amount))}** |\n\n`;
     }
 
-    // Yearly cash flow from reports
+    // Yearly cash flow from reports.
+    //
+    // Annual is the DEFAULT granularity here, not the only one that exists.
+    // `reportMonthly()` records a full FinancialPackage for every month of the
+    // run alongside these yearly ones. A year is a sum, and a sum hides its own
+    // outliers — a home sale, a one-time distribution, a December true-up — so
+    // the note below says the finer dataset is there. Without it an annual row
+    // reads as though the year were uniform, which is the reading that turns a
+    // one-month event into a mystery about a whole year.
     const yearlyReports = portfolio.generatedReports.filter(r => r.type === 'yearly');
     if (yearlyReports.length > 0) {
         md += `## Annual Cash Flow\n`;
@@ -367,9 +402,20 @@ export function generateReportsSectionMarkdown(portfolio) {
             const taxes = Math.abs(p.totalTaxes().amount);
             const expenses = Math.abs(p.expense.amount);
             const surplus = income - taxes - expenses;
-            md += `| ${report.dateLabel} | ${fmt(income)} | ${fmt(taxes)} | ${fmt(expenses)} | ${fmt(surplus)} |\n`;
+            // coversYear, not dateLabel — see Portfolio.reportYearly.
+            md += `| ${report.coversYear ?? report.dateLabel} | ${fmt(income)} | ${fmt(taxes)} | ${fmt(expenses)} | ${fmt(surplus)} |\n`;
         }
         md += '\n';
+        md += `> **Granularity.** The rows above are annual totals; the simulation runs `
+            + `monthly and records every charge in the month it happened. A year `
+            + `containing a home sale, a one-time distribution or a large tax true-up `
+            + `looks ordinary in its annual row. When a year looks unusual, read its `
+            + `months — do not infer the shape of a year from its total.\n\n`;
+    } else {
+        md += `## Annual Cash Flow\n`;
+        md += `_Not recorded for this run — only the lifetime totals above. Per-month `
+            + `and per-year reporting is produced when the Portfolio is built with its `
+            + `\`reports\` flag set._\n\n`;
     }
 
     md += directionalNotes('reports');
