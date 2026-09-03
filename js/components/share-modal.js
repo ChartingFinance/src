@@ -16,7 +16,7 @@
  */
 
 import { LitElement, html } from 'lit';
-import LZString from 'lz-string';
+import { shareUrlFromPlan } from '../share-link.js';
 
 class ShareModal extends LitElement {
 
@@ -58,8 +58,13 @@ class ShareModal extends LitElement {
         }
     }
 
+    /**
+     * The encoding lives in share-link.js, which the MCP server also imports.
+     * Two encoders would be two definitions of the share format; this component
+     * supplies the assets and the origin, and nothing else.
+     */
     _buildShareUrl() {
-        const payload = {
+        const spec = {
             name: this._name,
             settings: this.globalSettings,
             modelAssets: (this.modelAssets || []).map(a => a.toJSON()),
@@ -67,10 +72,8 @@ class ShareModal extends LitElement {
             guardrailParams: this.guardrailParams,
         };
 
-        const json = JSON.stringify(payload);
-        const compressed = LZString.compressToEncodedURIComponent(json);
-        const base = window.location.origin + window.location.pathname;
-        return `${base}?portfolio=${compressed}`;
+        const origin = window.location.origin + window.location.pathname;
+        return shareUrlFromPlan(spec, { origin, name: this._name }).url;
     }
 
     _onGenerate(ev) {

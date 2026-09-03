@@ -40,13 +40,20 @@ Claude Code reports nothing — the plugin will simply have no tools. Check with
 | :--- | :--- |
 | `/simulate` | run a profile or a described plan |
 | `/explain` | ask why the engine produced a number, from recorded history |
-| 7 MCP tools | `plan_defaults`, `build_plan`, `list_profiles`, `quick_start_report`, `run_plan`, `explain_month`, `explain_issue` |
+| 8 MCP tools | `plan_defaults`, `build_plan`, `list_profiles`, `quick_start_report`, `run_plan`, `explain_month`, `explain_issue`, `share_link` |
 
 Describe a situation in a sentence — *"I make $100K, if I save 10% what do I
 have in 10 years?"* — and `build_plan` compiles it into a plan the engine can
 run, or asks you the question that sentence left open. Portfolios built at
 [charting.finance](https://charting.finance/) can be passed to `run_plan`
-directly.
+directly, and `share_link` sends one back the other way — a link that opens the
+plan in the web app for the charts a transcript cannot show.
+
+That link keeps the promise above. The plan rides in the URL **fragment**, which
+browsers never transmit, so opening it sends nothing to the website's server;
+the page reads it locally and asks before importing over anything you have
+saved. The portfolio is inside the link itself, so a link is exactly as private
+as wherever you paste it.
 
 ## Building from source
 

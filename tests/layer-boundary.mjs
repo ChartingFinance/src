@@ -296,6 +296,55 @@ for (const entry of ENTRY_POINTS) visit(resolve(SRC, entry), null);
 const isMcp = (p) => p.startsWith('js/mcp/');
 const engineFiles = [...closure.keys()].filter(p => !isMcp(p)).sort();
 
+/**
+ * The RUN PATH: what a simulation actually loads.
+ *
+ * The closure above is the union of two questions that were the same question
+ * until they weren't. `mcp-server.js` is an entry point because it is what
+ * ships, and that was the right fix for HEADLESSNESS — it caught worker
+ * adapters that could not run under Node. But it also drags in everything the
+ * server needs to answer a request, which is a wider set than everything the
+ * engine needs to compute a month.
+ *
+ * `share-link.js` is where the two came apart. It encodes a plan into a share
+ * URL using lz-string; the browser needed it and then the server needed the
+ * identical bytes, so it sits between them and belongs to neither. Nothing on
+ * the run path imports it — a plan runs, reports and explains itself without it
+ * ever being loaded — but it is reachable from the shipped binary, so the flat
+ * "no third-party package" rule failed on a file the engine never touches.
+ *
+ * The resolution is not an exemption for that file. It is that the two checks
+ * have different scopes, which they always did:
+ *
+ *   - browser globals    → the WHOLE shipped closure. Anything the server can
+ *     load must run under Node. This is what mcp-server.js was added for and it
+ *     is unchanged; share-link.js is checked exactly as before.
+ *   - third-party imports → the RUN PATH only. The guarantee is that computing
+ *     a plan needs nothing but this repository, and that is still asserted at
+ *     full strength below.
+ *
+ * The vacuity guard matters more than the rule here: a filter that quietly
+ * matched nothing would turn the check green while asserting nothing at all,
+ * which is this project's signature failure. So the run path is asserted to
+ * contain the engine before anything is filtered by it.
+ */
+const RUN_PATH_ENTRIES = ['js/mcp/run-plan.js', 'js/chronometer.js', 'js/portfolio.js'];
+
+const forwardEdges = new Map();
+for (const [path, node] of closure) {
+    for (const importer of node.importers) {
+        if (!forwardEdges.has(importer)) forwardEdges.set(importer, new Set());
+        forwardEdges.get(importer).add(path);
+    }
+}
+const runPath = new Set();
+for (const queue = RUN_PATH_ENTRIES.filter(p => closure.has(p)); queue.length; ) {
+    const path = queue.shift();
+    if (runPath.has(path)) continue;
+    runPath.add(path);
+    for (const next of (forwardEdges.get(path) ?? [])) queue.push(next);
+}
+
 // ── Harness ──────────────────────────────────────────────────────────
 
 let passed = 0, failed = 0;
@@ -340,8 +389,21 @@ check('no engine file touches a browser or worker global', () => {
         `engine files reaching for the browser:\n      ` + violations.join('\n      '));
 });
 
-check('the engine imports no third-party package', () => {
-    const engineBare = bareHits.filter(h => !isMcp(h.from));
+check('the run path is the engine — this filter is not silently empty', () => {
+    // Guards the check below. If runPath ever stopped matching, that check would
+    // pass by examining nothing, which is worse than the rule being absent.
+    for (const must of ['js/portfolio.js', 'js/chronometer.js', 'js/taxes.js',
+                        'js/model-asset.js', 'js/engines/tax-engine.js']) {
+        assert.ok(runPath.has(must), `${must} is not on the run path — the walk is broken`);
+    }
+    assert.ok(runPath.size >= 25, `run path has only ${runPath.size} files`);
+    assert.ok(!runPath.has('js/share-link.js'),
+        'share-link.js is now on the run path — the engine has taken a dependency on the '
+        + 'share format, and the scoping below no longer describes anything');
+});
+
+check('the run path imports no third-party package', () => {
+    const engineBare = bareHits.filter(h => !isMcp(h.from) && runPath.has(h.from));
     assert.deepEqual(engineBare, [],
         'bare imports: ' + engineBare.map(h => `${h.specifier} (from ${h.from})`).join(', '));
 });

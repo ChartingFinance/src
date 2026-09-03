@@ -310,6 +310,26 @@ export function cacheRun(spec, opts, result) {
 }
 
 /**
+ * The SPEC behind a handle, without running anything.
+ *
+ * getRun() re-runs on a memo miss, which is right when the caller wants results
+ * and wrong when it wants the plan itself. Building a share link is the second
+ * case: the link is a function of what was asked for, not of what came back, so
+ * asking for one should never cost a simulation.
+ */
+export function specForHandle(handle) {
+    const known = SPECS.get(handle);
+    if (!known) {
+        const live = [...SPECS.keys()];
+        throw new Error(
+            `No run "${handle}". ${live.length
+                ? `Known handles: ${live.join(', ')}.`
+                : 'No plan has been run yet — call quick_start_report or run_plan first.'}`);
+    }
+    return known.spec;
+}
+
+/**
  * The run behind a handle, re-running it if it is no longer in memory.
  *
  * ASYNC, because a miss re-runs. Callers await it; the alternative was keeping
