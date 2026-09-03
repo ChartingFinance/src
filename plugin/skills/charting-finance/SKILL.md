@@ -45,6 +45,7 @@ are what the user actually meant.
 | `run_plan` | run a profile-free or built plan (the app's Share format) |
 | `explain_month` | what happened to an asset in one month, and why |
 | `explain_issue` | the causal chain behind one flagged issue |
+| `share_link` | a link that opens the same plan in the web app, for charts |
 
 Start with `quick_start_report` when the user has no portfolio in hand. The
 `startAge` / `retirementAge` / `finishAge` arguments genuinely reshape the plan —
@@ -105,6 +106,31 @@ speculate about why — ask the engine. `explain_month` returns the recorded eve
 chain, e.g. `November 2051 > Pay Living Expenses > Transfer Living Expenses → Roth IRA`.
 Derive explanations from that recorded history; never recompute them yourself, and
 never narrate a mechanism the chain does not show.
+
+### Seeing the plan, not just reading it
+
+`share_link` turns a run handle into a URL that opens the same plan in the
+Charting Finance web app — the timeline, the projection charts, the interactive
+views this transcript cannot show. Offer it when someone wants to *look* at a
+plan rather than ask about a number, and after a long report when the next
+useful thing is a picture.
+
+Three things to say when you hand one over, because "share" usually means upload
+and here it does not:
+
+- **The plan is in the URL fragment**, after the `#`. Browsers never transmit a
+  fragment, so opening the link does not send the portfolio to the website's
+  server or to anyone else. It travels only in the link itself — which means a
+  link pasted into a chat or an email carries the whole portfolio inside it, and
+  is exactly as private as the place you paste it.
+- **The site asks before importing.** The page reads the link, then shows an
+  import prompt; nothing already saved there is touched until the user agrees.
+- **Opening it is theirs to do.** Give them the link. Do not try to open a
+  browser, and do not treat the link as the plan having been "saved" anywhere —
+  a plan made in conversation still lives in the conversation.
+
+The link is a function of the plan, not of the run, so asking for one never
+costs a simulation and an old handle works as well as a fresh one.
 
 ### Monte Carlo
 

@@ -29,7 +29,8 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 
-import { runPlanCached, getRun, planFromProfile, listProfiles, runMonteCarloFor } from './run-plan.js';
+import { runPlanCached, getRun, specForHandle, planFromProfile, listProfiles, runMonteCarloFor } from './run-plan.js';
+import { shareUrlFromPlan, SHARE_URL_SOFT_LIMIT } from '../share-link.js';
 import { explainIssue, explainAt, explainIssueMarkdown, explainAtMarkdown } from './explain.js';
 import { generatePortfolioMarkdown, generateMonteCarloSectionMarkdown } from '../generators/finplan-ai.js';
 import { planExhaustion } from '../portfolio-issues.js';
@@ -285,6 +286,58 @@ server.tool(
   })
 );
 
+
+// ── share_link ────────────────────────────────────────────────────
+//
+// The one tool here whose output leaves the machine, and only if someone clicks
+// it. Everything else in this server answers in the transcript; this hands back
+// a URL that carries the whole plan.
+//
+// It is built on the FRAGMENT (`#portfolio=`), which browsers do not transmit,
+// so opening it does not send the portfolio to charting.finance's server — see
+// share-link.js. The page reads the fragment locally and shows an import prompt
+// before touching anything the user has saved. Both halves of that matter, and
+// both are stated in the result, because "share" is a word that usually means
+// upload and here it does not.
+//
+// specForHandle, not getRun: a link is a function of the plan, so asking for one
+// must not cost a simulation.
+
+server.tool(
+  "share_link",
+  "Turns a run into a link that opens the same plan in the Charting Finance web app for full "
+  + "interactive visualization — charts, timeline, projections. The plan is encoded in the URL "
+  + "fragment, which browsers never send to the server, so opening the link does not upload the "
+  + "portfolio anywhere; the page reads it locally and asks before importing. Give the link to "
+  + "the user and let them open it. Requires a run handle from quick_start_report or run_plan.",
+  {
+    handle: z.string().describe('Run handle from a report, e.g. plan_3f9c1a2b04.'),
+    name: z.string().optional()
+        .describe("Name the shared portfolio arrives under. Defaults to the plan's own name."),
+    origin: z.string().optional()
+        .describe('Where the link points. Defaults to https://charting.finance/ — override only '
+                + 'to target a local dev server.'),
+  },
+  guard(async ({ handle, name, origin }) => {
+    const link = shareUrlFromPlan(specForHandle(handle), { name, origin });
+
+    const lines = [
+      `**Open this plan in Charting Finance:**`,
+      '',
+      link.url,
+      '',
+      `${link.assetCount} asset(s), as "${link.name}". Opening it does not upload anything — the `
+      + `plan travels in the URL fragment, which the browser keeps to itself, and the site asks `
+      + `before it imports over anything already saved there.`,
+    ];
+    if (link.oversize) {
+      lines.push('', `⚠️ This link is ${link.length.toLocaleString()} characters, past the `
+        + `${SHARE_URL_SOFT_LIMIT.toLocaleString()} where mail clients and address bars start `
+        + `truncating. It will work if it arrives intact; sending it as a file is safer.`);
+    }
+    return { content: [{ type: "text", text: lines.join('\n') }] };
+  })
+);
 
 // ── plan_defaults ─────────────────────────────────────────────────
 //

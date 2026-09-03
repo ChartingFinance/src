@@ -10,9 +10,11 @@
  *   - Sacred x-axis alignment via forced y-axis width on all Chart.js instances
  */
 
-// ── Chart.js + lz-string ─────────────────────────────────────
+// ── Chart.js ────────────────────────────────────────────────
 import { Chart } from 'chart.js';
-import LZString from 'lz-string';
+
+// The share format, shared with <share-modal> and the MCP server.
+import { sharePayloadParamFrom, decodeSharePayload } from './share-link.js';
 
 // ── Core types ──────────────────────────────────────────────
 import { Metric, MetricLabel, PINNED_METRICS, MACRO_METRICS, isTopLevelMetric } from './metric.js';
@@ -1041,6 +1043,19 @@ function connectSettings() {
 }
 
 // ── Data Loading ────────────────────────────────────────────
+
+/**
+ * A fragment link that arrives while the app is ALREADY open.
+ *
+ * The query form used to make this free: `?portfolio=…` is a different document,
+ * so pasting one into a loaded tab reloaded the page and init ran again. Changing
+ * only the fragment does not — the browser fires `hashchange` and nothing else.
+ * Measured, not reasoned about: with the app open, navigating to a fragment link
+ * left the URL carrying a 446-character payload and no import prompt at all.
+ *
+ * So the arrival is handled explicitly. Same function, same prompt, same consent.
+ */
+window.addEventListener('hashchange', () => { loadSharedPortfolio(); });
 
 function initiateActiveData() {
     // Check for shared portfolio in URL first
@@ -2121,30 +2136,42 @@ function deleteScenario(storyName) {
 // Monthly snapshots are now written by saveLocalData() on every calculate(),
 // always reflecting the latest state for the current month.
 
+/**
+ * Read a shared portfolio out of the URL — fragment first, query second.
+ *
+ * New links carry the payload in `#portfolio=`, which the browser never sends to
+ * the server; see share-link.js for why. Query links are still read, because
+ * every link mailed before that change is one, and a share link that stops
+ * working is worse than one that shares too much.
+ */
 function loadSharedPortfolio() {
-    const params = new URLSearchParams(window.location.search);
-    const compressed = params.get('portfolio');
+    const compressed = sharePayloadParamFrom(window.location.search, window.location.hash);
     if (!compressed) return false;
 
     try {
-        const json = LZString.decompressFromEncodedURIComponent(compressed);
-        if (!json) return false;
-        const data = JSON.parse(json);
+        const data = decodeSharePayload(compressed);
+        if (!data) return false;
 
         // Store parsed data for import popup
         _pendingImport = data;
 
-        // Show import popup with sender's info
+        // Show import popup with sender's info.
+        //
+        // `name` is what share-link.js writes and what the share modal has always
+        // written; `portfolioName` was read here and produced by nothing, so every
+        // shared portfolio arrived titled "Shared Portfolio". Both are accepted
+        // now — a link in flight may carry either.
         const titleInput = document.getElementById('import-title-input');
         const noteInput = document.getElementById('import-note-input');
-        titleInput.value = data.portfolioName || 'Shared Portfolio';
+        titleInput.value = data.name || data.portfolioName || 'Shared Portfolio';
         noteInput.value = data.note || '';
 
         const popup = document.getElementById('popupImportPortfolio');
         popup.classList.remove('hidden');
         popup.style.display = 'flex';
 
-        // Clean URL without reloading
+        // Clean URL without reloading — pathname alone drops both the query and
+        // the fragment, so a reload does not re-offer the same import.
         window.history.replaceState({}, '', window.location.pathname);
         return true;
     } catch (e) {
