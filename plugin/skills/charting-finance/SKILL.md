@@ -123,11 +123,29 @@ and here it does not:
   server or to anyone else. It travels only in the link itself — which means a
   link pasted into a chat or an email carries the whole portfolio inside it, and
   is exactly as private as the place you paste it.
-- **The site asks before importing.** The page reads the link, then shows an
-  import prompt; nothing already saved there is touched until the user agrees.
-- **Opening it is theirs to do.** Give them the link. Do not try to open a
-  browser, and do not treat the link as the plan having been "saved" anywhere —
-  a plan made in conversation still lives in the conversation.
+- **The site asks, and it offers two different answers.** The page reads the
+  link and prompts: *Dismiss*, *Open*, *Open & Save*. **Open** views the plan
+  without writing it into their saved scenarios; **Open & Save** keeps it.
+  Nothing already there changes until one is chosen. Name the distinction —
+  looking at a modeled plan is not the same as adopting it, and the prompt is
+  the only place that difference is offered.
+- **Opening it is theirs to do.** Give them the link rather than navigating
+  anywhere on their behalf, and do not treat the link as the plan having been
+  "saved" somewhere — a plan made in conversation still lives in the
+  conversation.
+
+**Prefer a pane beside the conversation over sending them out of it.** Some
+clients — Claude Code among them — can open a URL in a browser pane next to the
+transcript. Where that exists, offer it first and open the link there on request:
+the user sees the real app, with the charts, without leaving the conversation
+they are having. Where it does not, hand over the URL and let them open it.
+
+Two things worth knowing before offering it. A pane's browser profile is
+separate from the user's own browser, so an import there does **not** touch what
+they have saved in their normal one — which makes it right for looking and wrong
+for keeping, and worth saying out loud when someone is about to click *Open &
+Save*. And a link that arrives in a tab already showing the app is handled, so
+pointing an open pane at a new plan works.
 
 The link is a function of the plan, not of the run, so asking for one never
 costs a simulation and an old handle works as well as a fresh one.

@@ -326,9 +326,10 @@ server.tool(
       '',
       link.url,
       '',
-      `${link.assetCount} asset(s), as "${link.name}". Opening it does not upload anything — the `
-      + `plan travels in the URL fragment, which the browser keeps to itself, and the site asks `
-      + `before it imports over anything already saved there.`,
+      `${link.assetCount} asset(s), as "${link.name}". Opening it uploads nothing — the plan `
+      + `travels in the URL fragment, which the browser keeps to itself. On arrival the site `
+      + `prompts with **Open** (view it, saved scenarios untouched) and **Open & Save** (keep `
+      + `it); nothing already there changes until one is chosen.`,
     ];
     if (link.oversize) {
       lines.push('', `⚠️ This link is ${link.length.toLocaleString()} characters, past the `

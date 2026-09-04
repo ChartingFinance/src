@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.2.2; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.2.3; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -40686,7 +40686,7 @@ server.tool(
       "",
       link.url,
       "",
-      `${link.assetCount} asset(s), as "${link.name}". Opening it does not upload anything \u2014 the plan travels in the URL fragment, which the browser keeps to itself, and the site asks before it imports over anything already saved there.`
+      `${link.assetCount} asset(s), as "${link.name}". Opening it uploads nothing \u2014 the plan travels in the URL fragment, which the browser keeps to itself. On arrival the site prompts with **Open** (view it, saved scenarios untouched) and **Open & Save** (keep it); nothing already there changes until one is chosen.`
     ];
     if (link.oversize) {
       lines.push("", `\u26A0\uFE0F This link is ${link.length.toLocaleString()} characters, past the ${SHARE_URL_SOFT_LIMIT.toLocaleString()} where mail clients and address bars start truncating. It will work if it arrives intact; sending it as a file is safer.`);
