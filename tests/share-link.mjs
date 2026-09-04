@@ -38,7 +38,7 @@ globalThis.window = globalThis;
 const {
   shareUrlFromPlan, planFromShareUrl, sharePayloadParamFrom,
   decodeSharePayload, encodeSharePayload, sharePayloadFromPlan,
-  SHARE_PARAM, DEFAULT_ORIGIN,
+  SHARE_PARAM, DEFAULT_ORIGIN, classifyPlanReference,
 } = await import('../js/share-link.js');
 const { planFromProfile, listProfiles, cacheRun, specForHandle, clearRuns } =
   await import('../js/mcp/run-plan.js');
@@ -128,6 +128,40 @@ check('garbage decodes to null rather than throwing', () => {
   assert.equal(decodeSharePayload('not-a-real-payload'), null);
   assert.equal(decodeSharePayload(''), null);
   assert.equal(planFromShareUrl('https://charting.finance/#portfolio=%%%'), null);
+});
+
+// ── Telling the three shapes apart ───────────────────────────────────
+console.log('\n── A pasted reference is classified without ambiguity ──\n');
+
+check('a handle is recognised, and a payload is never mistaken for one', () => {
+  assert.equal(classifyPlanReference('plan_688bcae498').kind, 'handle');
+  assert.equal(classifyPlanReference('  plan_37511aab01  ').kind, 'handle');
+  // The premise the whole discrimination rests on, asserted rather than assumed:
+  // `_` is not in lz-string's URI-safe alphabet, so no payload can look like a
+  // handle. If that ever changes, this fails before anything silently misroutes.
+  for (const p of listProfiles()) {
+    const payload = encodeSharePayload(sharePayloadFromPlan(planFromProfile(p.key)));
+    assert.ok(!payload.includes('_'), `${p.key}'s payload contains an underscore`);
+    assert.equal(classifyPlanReference(payload).kind, 'payload');
+  }
+});
+
+check('a near-miss handle is not treated as one', () => {
+  // Anchored and exact-length: a truncated or over-long id is a typo, not a
+  // handle, and must not be sent to the resolver as if it were.
+  assert.notEqual(classifyPlanReference('plan_688bcae4').kind, 'handle');
+  assert.notEqual(classifyPlanReference('plan_688bcae4980').kind, 'handle');
+  assert.notEqual(classifyPlanReference('plan_688bcaeZZZ').kind, 'handle');
+  assert.notEqual(classifyPlanReference('PLAN_688bcae498').kind, 'handle');
+});
+
+check('links are recognised in every form they get pasted in', () => {
+  assert.equal(classifyPlanReference('https://charting.finance/#portfolio=abc').kind, 'url');
+  assert.equal(classifyPlanReference('http://localhost:5173/#portfolio=abc').kind, 'url');
+  assert.equal(classifyPlanReference('#portfolio=abc').kind, 'url');
+  assert.equal(classifyPlanReference('?portfolio=abc').kind, 'url');
+  assert.equal(classifyPlanReference('').kind, 'empty');
+  assert.equal(classifyPlanReference(null).kind, 'empty');
 });
 
 // ── Refusals ─────────────────────────────────────────────────────────

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.2.4; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.2.5; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -39193,6 +39193,14 @@ function listProfiles() {
 // js/share-link.js
 var import_lz_string = __toESM(require_lz_string(), 1);
 var SHARE_PARAM = "portfolio";
+var PLAN_HANDLE_RE = /^plan_[0-9a-f]{10}$/;
+function classifyPlanReference(text) {
+  const s = String(text ?? "").trim();
+  if (!s) return { kind: "empty", value: s };
+  if (PLAN_HANDLE_RE.test(s)) return { kind: "handle", value: s };
+  if (s.includes("://") || s.startsWith("#") || s.startsWith("?")) return { kind: "url", value: s };
+  return { kind: "payload", value: s };
+}
 var DEFAULT_ORIGIN = "https://charting.finance/";
 var SHARE_URL_SOFT_LIMIT = 16e3;
 function sharePayloadFromPlan(spec, { name } = {}) {
@@ -39210,6 +39218,17 @@ function sharePayloadFromPlan(spec, { name } = {}) {
 function encodeSharePayload(payload) {
   return import_lz_string.default.compressToEncodedURIComponent(JSON.stringify(payload));
 }
+function decodeSharePayload(compressed) {
+  if (!compressed) return null;
+  try {
+    const json2 = import_lz_string.default.decompressFromEncodedURIComponent(compressed);
+    if (!json2) return null;
+    const data = JSON.parse(json2);
+    return data && typeof data === "object" ? data : null;
+  } catch {
+    return null;
+  }
+}
 function shareUrlFromPlan(spec, { origin = DEFAULT_ORIGIN, name } = {}) {
   const payload = sharePayloadFromPlan(spec, { name });
   const compressed = encodeSharePayload(payload);
@@ -39221,6 +39240,51 @@ function shareUrlFromPlan(spec, { origin = DEFAULT_ORIGIN, name } = {}) {
     assetCount: payload.modelAssets.length,
     name: payload.name
   };
+}
+function sharePayloadParamFrom(search = "", hash2 = "") {
+  const fromHash = String(hash2).replace(/^#/, "");
+  for (const part of fromHash.split("&")) {
+    const eq = part.indexOf("=");
+    if (eq > 0 && part.slice(0, eq) === SHARE_PARAM) return part.slice(eq + 1);
+  }
+  const params = new URLSearchParams(String(search));
+  return params.get(SHARE_PARAM);
+}
+function planFromShareUrl(url2) {
+  const hashAt = String(url2).indexOf("#");
+  const queryAt = String(url2).indexOf("?");
+  const hash2 = hashAt >= 0 ? url2.slice(hashAt) : "";
+  const search = queryAt >= 0 ? url2.slice(queryAt, hashAt >= 0 ? hashAt : void 0) : "";
+  return decodeSharePayload(sharePayloadParamFrom(search, hash2));
+}
+
+// js/mcp/plan-reference.js
+function planFromReference(text) {
+  const { kind, value } = classifyPlanReference(text);
+  switch (kind) {
+    case "handle":
+      return specForHandle(value);
+    case "url": {
+      const payload = planFromShareUrl(value);
+      if (!payload) {
+        throw new Error(
+          'That looks like a share link, but no plan could be read out of it. The payload lives after the "#" \u2014 if the link was pasted from an email or a chat it may have been truncated or line-wrapped.'
+        );
+      }
+      return payload;
+    }
+    case "payload": {
+      const payload = decodeSharePayload(value);
+      if (!payload) {
+        throw new Error(
+          'That is not a plan, a share link, or a run handle. A handle looks like "plan_688bcae498"; a share link contains "#portfolio=" followed by a long compressed string.'
+        );
+      }
+      return payload;
+    }
+    default:
+      throw new Error("No plan reference given \u2014 pass a share link, a share payload, or a run handle.");
+  }
 }
 
 // js/mcp/explain.js
@@ -40627,7 +40691,7 @@ server.tool(
 );
 server.tool(
   "run_plan",
-  "Runs a caller-supplied portfolio through the full simulation and returns the same Markdown report as quick_start_report. The plan format is exactly what the Charting Finance app's Share link encodes, so a portfolio exported from the app can be passed straight in.",
+  "Runs a caller-supplied portfolio through the full simulation and returns the same Markdown report as quick_start_report. The plan format is exactly what the Charting Finance app's Share link encodes, so a portfolio exported from the app can be passed straight in \u2014 as a `plan` object, or via `shareUrl` for a link, payload or run handle the user already has. That is the return leg of share_link: hand someone a plan, let them edit it in the browser, and read back exactly what they are looking at.",
   {
     plan: external_exports3.object({
       name: external_exports3.string().optional(),
@@ -40643,13 +40707,21 @@ server.tool(
       // tools/list failure rather than an error here.
       modelAssets: external_exports3.array(external_exports3.record(external_exports3.string(), external_exports3.any())).describe("Assets in the app's serialized form (ModelAsset.toJSON())."),
       lifeEvents: external_exports3.array(external_exports3.record(external_exports3.string(), external_exports3.any())).optional().describe("Life events (ModelLifeEvent.toJSON()). Omitting these means no phase ever transitions: salary never closes and retirement transfers never activate.")
-    }).describe("A plan in the app's share format."),
+    }).describe("A plan in the app's share format. Give this OR shareUrl, not both.").optional(),
+    shareUrl: external_exports3.string().optional().describe("A plan someone already has, in any of the three shapes it comes in: a share link from the app or from share_link (the payload is after the '#'), the bare compressed payload on its own, or a run handle like 'plan_688bcae498'. Use this to read back a plan the user edited in the browser. A handle only resolves while this server is running; a link always works."),
     includeReconciliation: external_exports3.boolean().default(false),
     monteCarlo: external_exports3.number().int().min(100).max(5e3).optional().describe("Number of Monte Carlo simulations to run. Omit for none. Sampling is random and unseeded, so these figures change between calls.")
   },
-  guard(async ({ plan, includeReconciliation, monteCarlo }) => {
-    const { handle, portfolio, issues } = await runPlanCached(plan, { includeReconciliation });
-    const mc = monteCarlo ? await runMonteCarloFor(plan, { numSimulations: monteCarlo }) : null;
+  guard(async ({ plan, shareUrl, includeReconciliation, monteCarlo }) => {
+    if (plan && shareUrl) {
+      throw new Error("Pass a plan or a shareUrl, not both \u2014 they may describe different plans.");
+    }
+    if (!plan && !shareUrl) {
+      throw new Error("run_plan needs a plan: pass `plan` for a portfolio you have built, or `shareUrl` for a share link, payload or run handle.");
+    }
+    const spec = plan ?? planFromReference(shareUrl);
+    const { handle, portfolio, issues } = await runPlanCached(spec, { includeReconciliation });
+    const mc = monteCarlo ? await runMonteCarloFor(spec, { numSimulations: monteCarlo }) : null;
     return { content: [{ type: "text", text: reportFor(handle, portfolio, issues, mc) }] };
   })
 );

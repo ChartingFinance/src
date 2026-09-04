@@ -31,6 +31,7 @@ import { z } from "zod";
 
 import { runPlanCached, getRun, specForHandle, planFromProfile, listProfiles, runMonteCarloFor } from './run-plan.js';
 import { shareUrlFromPlan, SHARE_URL_SOFT_LIMIT } from '../share-link.js';
+import { planFromReference } from './plan-reference.js';
 import { explainIssue, explainAt, explainIssueMarkdown, explainAtMarkdown } from './explain.js';
 import { generatePortfolioMarkdown, generateMonteCarloSectionMarkdown } from '../generators/finplan-ai.js';
 import { planExhaustion } from '../portfolio-issues.js';
@@ -204,7 +205,10 @@ server.tool(
   "run_plan",
   "Runs a caller-supplied portfolio through the full simulation and returns the same Markdown "
   + "report as quick_start_report. The plan format is exactly what the Charting Finance app's "
-  + "Share link encodes, so a portfolio exported from the app can be passed straight in.",
+  + "Share link encodes, so a portfolio exported from the app can be passed straight in — as a "
+  + "`plan` object, or via `shareUrl` for a link, payload or run handle the user already has. "
+  + "That is the return leg of share_link: hand someone a plan, let them edit it in the browser, "
+  + "and read back exactly what they are looking at.",
   {
     plan: z.object({
       name: z.string().optional(),
@@ -224,15 +228,33 @@ server.tool(
       lifeEvents: z.array(z.record(z.string(), z.any())).optional()
           .describe("Life events (ModelLifeEvent.toJSON()). Omitting these means no phase ever "
                   + "transitions: salary never closes and retirement transfers never activate."),
-    }).describe("A plan in the app's share format."),
+    }).describe("A plan in the app's share format. Give this OR shareUrl, not both.").optional(),
+    shareUrl: z.string().optional()
+        .describe("A plan someone already has, in any of the three shapes it comes in: a share "
+                + "link from the app or from share_link (the payload is after the '#'), the bare "
+                + "compressed payload on its own, or a run handle like 'plan_688bcae498'. Use "
+                + "this to read back a plan the user edited in the browser. A handle only "
+                + "resolves while this server is running; a link always works."),
     includeReconciliation: z.boolean().default(false),
     monteCarlo: z.number().int().min(100).max(5000).optional()
         .describe("Number of Monte Carlo simulations to run. Omit for none. Sampling is random "
                 + "and unseeded, so these figures change between calls."),
   },
-  guard(async ({ plan, includeReconciliation, monteCarlo }) => {
-    const { handle, portfolio, issues } = await runPlanCached(plan, { includeReconciliation });
-    const mc = monteCarlo ? await runMonteCarloFor(plan, { numSimulations: monteCarlo }) : null;
+  guard(async ({ plan, shareUrl, includeReconciliation, monteCarlo }) => {
+    // Exactly one. Silently preferring one over the other is how a caller ends
+    // up reading a report about the plan it did not pass — the same class of
+    // divergence the round-trip exists to close.
+    if (plan && shareUrl) {
+      throw new Error('Pass a plan or a shareUrl, not both — they may describe different plans.');
+    }
+    if (!plan && !shareUrl) {
+      throw new Error('run_plan needs a plan: pass `plan` for a portfolio you have built, or '
+                    + '`shareUrl` for a share link, payload or run handle.');
+    }
+
+    const spec = plan ?? planFromReference(shareUrl);
+    const { handle, portfolio, issues } = await runPlanCached(spec, { includeReconciliation });
+    const mc = monteCarlo ? await runMonteCarloFor(spec, { numSimulations: monteCarlo }) : null;
     return { content: [{ type: "text", text: reportFor(handle, portfolio, issues, mc) }] };
   })
 );
