@@ -251,8 +251,39 @@ export function global_multBy100(value) {
     return value * 100.0;
 }
 
+/**
+ * ── Setters adopt what they set ──────────────────────────────────────
+ *
+ * Every setter below writes localStorage AND assigns its exported binding.
+ * That was not always true. Seven of them wrote storage only, and the binding
+ * was updated by the matching `global_getX()` — a "getter" that returns nothing
+ * and loads module state. So a caller that set a value without calling the
+ * getter stored the new value and kept running on the old one.
+ *
+ * That is exactly what share-link import did. Measured on main, importing a
+ * plan built for ages 55/65/85: localStorage held 55/65/85, the settings inputs
+ * showed the 50/67/87 defaults, and the timeline read "Sep 2026 · Age 50" —
+ * because `applyImportedPortfolio` called the setters, then `syncGlobalsToSettings()`
+ * read the STALE bindings and wrote the defaults back over the DOM. Nothing was
+ * discarded; it was stored and ignored.
+ *
+ * The convention was already here and already correct in the newer half of the
+ * file — the guardrail setters, simDataMode, showEngineDiagnostics all assign.
+ * The app's own callers knew too: the quick-start loader and all six settings
+ * listeners pair every setter with its getter, and `tests/niit-visibility.mjs`
+ * does the same. One call site out of twenty-five did not, and only that one
+ * was broken. A convention that must be remembered at every call site is a
+ * defect with a workaround, so the setters now do it themselves.
+ *
+ * Each assigns what the getter WOULD read back — parsed, and rounded the same
+ * way it is stored — so memory and storage cannot disagree in the fourth
+ * decimal. The paired `global_getX()` calls already in the codebase are now
+ * redundant, and harmless; they are not worth churning.
+ */
+
 export function global_setInflationRate(value) {
     localStorage.setItem('inflationRate', value.toFixed(4));
+    global_inflationRate = parseFloat(value.toFixed(4));
 }
 
 export function global_getInflationRate() {
@@ -271,6 +302,7 @@ export function global_setFilingAs(value) {
         throw new Error(`global_setFilingAs: ${JSON.stringify(value)} is not one of ${FILING_STATUSES.join(', ')}`);
     }
     localStorage.setItem('filingAs', value);
+    global_filingAs = value;   // validated above, so no coercion needed here
 }
 
 export function global_getFilingAs() {
@@ -282,6 +314,7 @@ export function global_getFilingAs() {
 
 export function global_setPropertyTaxDeductionMax(value) {
     localStorage.setItem('propertyTaxDeductionMax', value.toFixed(2));
+    global_propertyTaxDeductionMax = parseFloat(value.toFixed(2));
 }
 
 export function global_getPropertyTaxDeductionMax() {
@@ -294,6 +327,7 @@ export function global_getPropertyTaxDeductionMax() {
 
 export function global_setUserStartAge(value) {
     localStorage.setItem('userStartAge', value.toString());
+    global_user_startAge = parseInt(value.toString(), 10);
 }
 
 export function global_getUserStartAge() {
@@ -306,6 +340,7 @@ export function global_getUserStartAge() {
 
 export function global_setUserRetirementAge(value) {
     localStorage.setItem('userRetirementAge', value.toString());
+    global_user_retirementAge = parseInt(value.toString(), 10);
 }
 
 export function global_getUserRetirementAge() {
@@ -318,6 +353,7 @@ export function global_getUserRetirementAge() {
 
 export function global_setUserFinishAge(value) {
     localStorage.setItem('userFinishAge', value.toString());
+    global_user_finishAge = parseInt(value.toString(), 10);
 }
 
 export function global_getUserFinishAge() {
@@ -364,6 +400,7 @@ export function global_getFinishDateInt(env) {
 
 export function global_setBacktestYear(value) {
     localStorage.setItem('backtestYear', value);
+    global_backtestYear = String(value);
 }
 
 export function global_getBacktestYear() {

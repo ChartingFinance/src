@@ -414,6 +414,31 @@ export function buildPlan(intent = {}) {
             { question: 'How far out should the plan project?', field: 'finishAge' });
     }
 
+    // The collision, and it is EQUALITY only.
+    //
+    // A plan that finishes BEFORE retirement is legitimate and is the §5.1
+    // example this tool was built for — "how much in 10 years" from 50 lands at
+    // 60, retirement never fires, and an accumulation-only answer is the right
+    // answer. Refusing that would block the most common question asked here.
+    //
+    // Finishing exactly AT retirement is the incoherent one. `reachesRetirement`
+    // below is `>=`, so the plan declares a drawdown, transitions into it, and
+    // then ends with no months on the other side — a retirement phase that
+    // models nothing, reported as though it did.
+    //
+    // It is checked against the DERIVED value, not the stated field, because
+    // that is how it is reached in practice: `horizonYears: 10` at startAge 55
+    // derives exactly 65, which is the preRetirement retirement age. The most
+    // natural way to say "a ten-year plan" walks straight into it.
+    if (finishAge === retirementAge) {
+        throw new PlanRefusal(
+            `The plan finishes at ${finishAge}, the same age it retires (${retirementAge}), `
+            + 'so it would model a retirement with no months in it.',
+            { question: `Project past retirement — say, to age ${finishAge + 20} — `
+                + `or stop before it and ask only about the years up to ${retirementAge}?`,
+              field: 'finishAge' });
+    }
+
     const inflationRate = ledger.field('inflationRate',
         o.inflationRate ?? D.inflationRate,
         o.inflationRate != null ? Provenance.STATED : Provenance.DEFAULT);
@@ -425,11 +450,18 @@ export function buildPlan(intent = {}) {
     // §5.1's note: from 50, ten years lands at 60 and retirement never fires.
     // The same question from a 60-year-old crosses the boundary and quietly
     // becomes a different plan with a drawdown in it. Say so.
-    const reachesRetirement = finishAge >= retirementAge;
+    const reachesRetirement = finishAge > retirementAge;   // equality refused above
     if (reachesRetirement) {
         notes.push(`This plan runs past your retirement age (${retirementAge}), `
             + 'so it includes a drawdown: work income stops and expenses are '
             + 'paid from the accounts.');
+    } else {
+        // The other half of §5.1's point, which was never said out loud. A plan
+        // that stops before retirement answers a narrower question than the user
+        // probably thinks they asked, and silence reads as coverage.
+        notes.push(`This plan ends at ${finishAge}, before your retirement age `
+            + `(${retirementAge}), so it models accumulation only — no drawdown, `
+            + 'and nothing about whether the money lasts.');
     }
 
     // ── Dates ────────────────────────────────────────────────────

@@ -1,6 +1,6 @@
 {
   "name": "charting-finance",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Run long-horizon personal finance simulations locally and ask why the engine produced a given number. Eight built-in profiles or your own portfolio; monthly simulation through retirement with federal tax, RMDs, NIIT and optional Monte Carlo. Every run happens on your machine — no portfolio data leaves it. Not financial advice.",
   "author": {
     "name": "John Milan",

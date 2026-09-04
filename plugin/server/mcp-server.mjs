@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.2.3; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.2.4; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -40184,6 +40184,15 @@ function buildPlan(intent = {}) {
       { question: "How far out should the plan project?", field: "finishAge" }
     );
   }
+  if (finishAge === retirementAge) {
+    throw new PlanRefusal(
+      `The plan finishes at ${finishAge}, the same age it retires (${retirementAge}), so it would model a retirement with no months in it.`,
+      {
+        question: `Project past retirement \u2014 say, to age ${finishAge + 20} \u2014 or stop before it and ask only about the years up to ${retirementAge}?`,
+        field: "finishAge"
+      }
+    );
+  }
   const inflationRate = ledger.field(
     "inflationRate",
     o.inflationRate ?? D.inflationRate,
@@ -40194,9 +40203,11 @@ function buildPlan(intent = {}) {
     o.filingAs != null ? asFilingStatus(o.filingAs, D.filingAs) : D.filingAs,
     o.filingAs != null ? Provenance.STATED : Provenance.DEFAULT
   );
-  const reachesRetirement = finishAge >= retirementAge;
+  const reachesRetirement = finishAge > retirementAge;
   if (reachesRetirement) {
     notes.push(`This plan runs past your retirement age (${retirementAge}), so it includes a drawdown: work income stops and expenses are paid from the accounts.`);
+  } else {
+    notes.push(`This plan ends at ${finishAge}, before your retirement age (${retirementAge}), so it models accumulation only \u2014 no drawdown, and nothing about whether the money lasts.`);
   }
   const now = /* @__PURE__ */ new Date();
   const startMonth = DateInt.from(now.getFullYear(), now.getMonth() + 1);
