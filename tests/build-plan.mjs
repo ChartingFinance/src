@@ -195,6 +195,53 @@ await check('§5.1 a horizon AND a finish age is a contradiction, not a preceden
     assert.match(r.question, /10 years|90/);
 });
 
+await check('a horizon that lands exactly on retirement is refused', () => {
+    // The case that came back from a real session, and the reason this check
+    // sits on the DERIVED value: nobody typed a finish age. "A ten-year plan"
+    // from 55 derives 65, which is the preRetirement retirement age, and the
+    // engine happily produced a report for a retirement with no months in it.
+    const r = refusalFrom({
+        ...TURN_ONE,
+        settingsOverrides: { startAge: 55, retirementAge: 65 },
+    });
+    assert.ok(r, 'finishAge == retirementAge was accepted');
+    assert.match(r.reason, /same age it retires|no months/i);
+    assert.match(r.question, /85|before it/i);
+});
+
+await check('a STATED finish age equal to retirement is refused the same way', () => {
+    const r = refusalFrom({
+        income: TURN_ONE.income,
+        accounts: TURN_ONE.accounts,
+        savingsSplit: TURN_ONE.savingsSplit,
+        settingsOverrides: { startAge: 55, retirementAge: 65, finishAge: 65 },
+    });
+    assert.ok(r, 'the collision is only caught on the derived path');
+});
+
+await check('a plan that stops BEFORE retirement is allowed, and says so', () => {
+    // Not a collision. This is §5.1's own example — ten years from 50 lands at
+    // 60, retirement never fires, and an accumulation-only answer is correct.
+    // Refusing it would block the most common question this tool exists for.
+    const built = buildPlan({ ...TURN_ONE, settingsOverrides: { startAge: 50, retirementAge: 67 } });
+    assert.equal(built.spec.settings.finishAge, 60);
+    assert.ok(built.notes.some(n => /accumulation only/i.test(n)),
+        'a plan that never reaches retirement said nothing about it: ' + JSON.stringify(built.notes));
+    assert.ok(!built.notes.some(n => /includes a drawdown/i.test(n)),
+        'a plan that never retires claimed to include a drawdown');
+});
+
+await check('a plan that crosses retirement still declares its drawdown', () => {
+    const built = buildPlan({
+        ...TURN_ONE,
+        horizonYears: 30,
+        settingsOverrides: { startAge: 50, retirementAge: 67 },
+    });
+    assert.equal(built.spec.settings.finishAge, 80);
+    assert.ok(built.notes.some(n => /includes a drawdown/i.test(n)),
+        'the drawdown note went missing: ' + JSON.stringify(built.notes));
+});
+
 await check('a plan with no income is refused', () => {
     const r = refusalFrom({ horizonYears: 10, income: [] });
     assert.ok(r);
