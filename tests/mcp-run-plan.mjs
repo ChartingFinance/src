@@ -306,6 +306,57 @@ await check('the report actually renders the Annual Cash Flow table', () => {
   assert.ok(/\n\| 20\d{2} \|/.test(md), 'the Annual Cash Flow table has no year rows');
 });
 
+// ── The round trip ───────────────────────────────────────────────────
+//
+// The outbound leg shipped first, and for a while a session could hand out a
+// link and then be unable to read its own link back. These assert the loop
+// actually closes, and they use the HANDLE to say so: it is a content address,
+// so two specs that hash the same are the same plan, field for field. An
+// assertion on asset counts would pass while the settings quietly changed.
+console.log('\n── A plan survives the round trip ──\n');
+
+const { shareUrlFromPlan } = await import('../js/share-link.js');
+const { planFromReference } = await import('../js/mcp/plan-reference.js');
+const { cacheRun } = await import('../js/mcp/run-plan.js');
+
+const handleOf = (spec) => cacheRun(spec, { includeReconciliation: false }, null);
+
+for (const key of ['preRetirement', 'youngCouple', 'retired']) {
+  await check(`${key}: link out, plan back, same content address`, () => {
+    const spec = planFromProfile(key);
+    const there = handleOf(spec);
+    const back = planFromReference(shareUrlFromPlan(spec).url);
+    assert.equal(handleOf(back), there,
+      'the plan that came back is not the plan that went out');
+  });
+}
+
+await check('a bare payload works without the URL around it', () => {
+  // What you get when someone copies the part after the "#".
+  const spec = planFromProfile('midCareer');
+  const url = shareUrlFromPlan(spec).url;
+  const payload = url.slice(url.indexOf('#portfolio=') + '#portfolio='.length);
+  assert.equal(handleOf(planFromReference(payload)), handleOf(spec));
+});
+
+await check('a run handle resolves to the plan it was minted from', () => {
+  const spec = planFromProfile('dualIncome');
+  const handle = handleOf(spec);
+  assert.equal(handleOf(planFromReference(handle)), handle);
+});
+
+await check('a dead handle names the ones that are live', () => {
+  assert.throws(() => planFromReference('plan_0000000000'), /Known handles|No plan has been run/);
+});
+
+await check('garbage is refused by naming the shapes that work', () => {
+  // Not "could not read that". A dead handle, a truncated link and a typo each
+  // have a different fix, and one flat message hides which one you have.
+  assert.throws(() => planFromReference('hello world'), /plan_688bcae498|#portfolio=/);
+  assert.throws(() => planFromReference('https://charting.finance/#portfolio=%%%'), /share link/);
+  assert.throws(() => planFromReference(''), /No plan reference/);
+});
+
 console.log(`\n${'─'.repeat(55)}`);
 console.log(`  ${passed} passed, ${failed} failed`);
 console.log(`${'─'.repeat(55)}\n`);

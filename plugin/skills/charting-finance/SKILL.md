@@ -46,6 +46,7 @@ are what the user actually meant.
 | `explain_month` | what happened to an asset in one month, and why |
 | `explain_issue` | the causal chain behind one flagged issue |
 | `share_link` | a link that opens the same plan in the web app, for charts |
+| `run_plan` (shareUrl) | read a link, payload or handle back — the return leg |
 
 Start with `quick_start_report` when the user has no portfolio in hand. The
 `startAge` / `retirementAge` / `finishAge` arguments genuinely reshape the plan —
@@ -149,6 +150,29 @@ pointing an open pane at a new plan works.
 
 The link is a function of the plan, not of the run, so asking for one never
 costs a simulation and an old handle works as well as a fresh one.
+
+### Reading a plan back
+
+The loop closes: `run_plan({ shareUrl })` takes what the user has and returns a
+report on exactly that plan. Three shapes are accepted and told apart for you —
+a share link, the bare compressed payload after the `#`, or a run handle like
+`plan_688bcae498`.
+
+This is the move when someone edits in the browser. They drag a life event,
+change a contribution, hit **Share**, and paste. You then explain the plan they
+are actually looking at rather than the one you last built, which are not the
+same plan and have no reason to be.
+
+Two things about it:
+
+- **A round trip is verifiable.** Handles are content addresses, so a plan sent
+  out as a link and read back yields the *same handle*. If it does not, the plan
+  changed in between — which is usually the point, and worth saying: "that is a
+  different plan from the one I ran, so here is what it does now."
+- **A handle only lives as long as the server.** It resolves from memory, so it
+  is the cheap way to refer to a plan inside one conversation and useless after
+  a restart or on someone else's machine. A share link always works. Prefer the
+  handle when both are to hand, and never ask a user to keep one.
 
 ### Monte Carlo
 

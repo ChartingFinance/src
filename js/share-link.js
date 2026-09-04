@@ -44,6 +44,33 @@ import LZString from 'lz-string';
 /** The parameter name, in both the fragment and the legacy query. */
 export const SHARE_PARAM = 'portfolio';
 
+/**
+ * A run handle: `plan_` followed by ten hex characters (mcp/run-plan.js mints
+ * these from a sha1 of the spec).
+ *
+ * Anchored, and it has to be: this is what tells a handle apart from a
+ * compressed payload, and the separation only holds because `_` is not in
+ * lz-string's URI-safe alphabet. tests/share-link.mjs asserts that premise
+ * rather than trusting it.
+ */
+export const PLAN_HANDLE_RE = /^plan_[0-9a-f]{10}$/;
+
+/**
+ * What did the user paste?
+ *
+ * Handle first — it is the strictest pattern and cannot collide. Then anything
+ * carrying a scheme or starting at the fragment or query is a URL. Everything
+ * else is treated as a bare payload, which is the shape you get when someone
+ * copies the part after the "#" by itself.
+ */
+export function classifyPlanReference(text) {
+    const s = String(text ?? '').trim();
+    if (!s) return { kind: 'empty', value: s };
+    if (PLAN_HANDLE_RE.test(s)) return { kind: 'handle', value: s };
+    if (s.includes('://') || s.startsWith('#') || s.startsWith('?')) return { kind: 'url', value: s };
+    return { kind: 'payload', value: s };
+}
+
 /** Where a link points when the caller does not say. */
 export const DEFAULT_ORIGIN = 'https://charting.finance/';
 
