@@ -33,7 +33,7 @@ import { runPlanCached, getRun, specForHandle, planFromProfile, listProfiles, ru
 import { shareUrlFromPlan, SHARE_URL_SOFT_LIMIT } from '../share-link.js';
 import { planFromReference } from './plan-reference.js';
 import { explainIssue, explainAt, explainIssueMarkdown, explainAtMarkdown } from './explain.js';
-import { generatePortfolioMarkdown, generateMonteCarloSectionMarkdown } from '../generators/finplan-ai.js';
+import { generatePortfolioMarkdown, generateMonteCarloSectionMarkdown, REPORT_SECTIONS } from '../generators/finplan-ai.js';
 import { planExhaustion } from '../portfolio-issues.js';
 import { EventType } from '../sim-event.js';
 import { buildPlan, planDefaults, PlanRefusal } from './build-plan.js';
@@ -120,20 +120,40 @@ function issuesMarkdown(issues) {
  * large true-up becomes a question about a whole year instead of a question
  * about one month — which the caller can only ask if it knows the month exists.
  */
-function reportFor(handle, portfolio, issues, mcResults = null) {
+/**
+ * The plan in one line: who it is about, and under what assumptions.
+ *
+ * The report has never said this anywhere, which is why the round-trip notes
+ * had to read `setting-startAge` out of the DOM to find out what the app was
+ * simulating. Ages are the single most common way a plan turns out to be about
+ * a person the user is not, and they cost one line to state.
+ */
+function planLine(portfolio) {
+  const c = portfolio?.config;
+  if (!c) return null;
+  return `${c.filingAs} · ages ${c.startAge} → retires ${c.retirementAge} → ends ${c.finishAge} · `
+       + `inflation ${(c.inflationRate * 100).toFixed(1)}%`;
+}
+
+function reportFor(handle, portfolio, issues, mcResults = null, sections = null) {
   const ids = [...new Set(issues.map(i => i.id))];
+  const hasReports = !sections || [].concat(sections).includes('reports');
   const followUp = [
     `**Run handle:** \`${handle}\``,
+    planLine(portfolio) ? `**Plan:** ${planLine(portfolio)}` : '',
     '',
     ids.length
       ? `Ask why any of these happened with \`explain_issue\` — finding ids in this run: `
         + ids.map(i => `\`${i}\``).join(', ') + '.'
       : `Nothing needs attention in this run.`,
     '',
-    `Figures below are annual and lifetime totals. The simulation is monthly, and `
-      + `every charge is recorded in the month it happened — so for anything finer, `
-      + `or for a year whose total looks unusual, call \`explain_month\` with that `
-      + `month (\`YYYY-MM\`), or with an \`eventType\` to scan the whole plan.`,
+    hasReports
+      ? `Figures below are annual and lifetime totals. The simulation is monthly, and `
+        + `every charge is recorded in the month it happened — so for anything finer, `
+        + `or for a year whose total looks unusual, call \`explain_month\` with that `
+        + `month (\`YYYY-MM\`), or with an \`eventType\` to scan the whole plan.`
+      : `This is a partial report. Ask for more with \`sections\` against this same handle, `
+        + `or call \`explain_month\` for what a single month did.`,
     '',
     '---',
     '',
@@ -145,7 +165,12 @@ function reportFor(handle, portfolio, issues, mcResults = null) {
     ? `\n\n---\n\n${generateMonteCarloSectionMarkdown(portfolio, mcResults)}`
     : '';
 
-  return `${followUp}${issuesMarkdown(issues)}\n\n---\n\n${generatePortfolioMarkdown(portfolio)}${mc}`;
+  // What Needs Attention is NOT selectable. A caller asking for one section is
+  // asking to read less, not to be told less about whether the plan can pay its
+  // bills — and an unpayable obligation outranks any headline number, including
+  // the one they came for.
+  const body = generatePortfolioMarkdown(portfolio, sections ? { sections } : {});
+  return `${followUp}${issuesMarkdown(issues)}\n\n---\n\n${body}${mc}`;
 }
 
 // ── list_profiles ─────────────────────────────────────────────────
@@ -188,14 +213,19 @@ server.tool(
         .describe("Number of Monte Carlo simulations to run. Omit for none. Adds a percentile "
                 + "table to the report. Sampling is random and unseeded, so these figures "
                 + "change between calls while the rest of the report does not."),
+    sections: z.array(z.enum(REPORT_SECTIONS)).optional()
+        .describe("Which parts of the report to return. Omit for all of it. The full report runs "
+                + "to several thousand tokens; ['portfolio'] is the headline — net worth, assets "
+                + "and transfers — and the rest can be pulled later against the same handle. "
+                + "What Needs Attention and the plan's ages are always included."),
   },
-  guard(async ({ profile, startAge, retirementAge, finishAge, inflationRate, includeReconciliation, monteCarlo }) => {
+  guard(async ({ profile, startAge, retirementAge, finishAge, inflationRate, includeReconciliation, monteCarlo, sections }) => {
     const spec = planFromProfile(profile, { startAge, retirementAge, finishAge });
     if (inflationRate != null) spec.settings.inflationRate = inflationRate;
 
     const { handle, portfolio, issues } = await runPlanCached(spec, { includeReconciliation });
     const mc = monteCarlo ? await runMonteCarloFor(spec, { numSimulations: monteCarlo }) : null;
-    return { content: [{ type: "text", text: reportFor(handle, portfolio, issues, mc) }] };
+    return { content: [{ type: "text", text: reportFor(handle, portfolio, issues, mc, sections) }] };
   })
 );
 
@@ -239,8 +269,13 @@ server.tool(
     monteCarlo: z.number().int().min(100).max(5000).optional()
         .describe("Number of Monte Carlo simulations to run. Omit for none. Sampling is random "
                 + "and unseeded, so these figures change between calls."),
+    sections: z.array(z.enum(REPORT_SECTIONS)).optional()
+        .describe("Which parts of the report to return. Omit for all of it. The full report runs "
+                + "to several thousand tokens; ['portfolio'] is the headline — net worth, assets "
+                + "and transfers — and the rest can be pulled later against the same handle. "
+                + "What Needs Attention and the plan's ages are always included."),
   },
-  guard(async ({ plan, shareUrl, includeReconciliation, monteCarlo }) => {
+  guard(async ({ plan, shareUrl, includeReconciliation, monteCarlo, sections }) => {
     // Exactly one. Silently preferring one over the other is how a caller ends
     // up reading a report about the plan it did not pass — the same class of
     // divergence the round-trip exists to close.
@@ -255,7 +290,7 @@ server.tool(
     const spec = plan ?? planFromReference(shareUrl);
     const { handle, portfolio, issues } = await runPlanCached(spec, { includeReconciliation });
     const mc = monteCarlo ? await runMonteCarloFor(spec, { numSimulations: monteCarlo }) : null;
-    return { content: [{ type: "text", text: reportFor(handle, portfolio, issues, mc) }] };
+    return { content: [{ type: "text", text: reportFor(handle, portfolio, issues, mc, sections) }] };
   })
 );
 

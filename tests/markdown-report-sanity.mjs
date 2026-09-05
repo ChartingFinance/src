@@ -30,7 +30,7 @@ import { ModelAsset } from '../js/model-asset.js';
 import { Portfolio } from '../js/portfolio.js';
 import { chronometer_run } from '../js/chronometer.js';
 import { setActiveTaxTable } from '../js/globals.js';
-import { generatePortfolioMarkdown } from '../js/generators/finplan-ai.js';
+import { generatePortfolioMarkdown, REPORT_SECTIONS } from '../js/generators/finplan-ai.js';
 import { simConfigFromGlobals } from '../js/globals.js';
 import { makeActiveTaxTable } from '../js/globals.js';
 
@@ -287,6 +287,47 @@ check('Asset summary table lists every asset with start/end values', () => {
 // Tax-Deferred / Tax-Free status and emitted an Observations section for
 // negative balances. finplan-ai.js does not — those checks were removed,
 // not relaxed. If those features return, re-assert them here.
+
+// ── Sections ─────────────────────────────────────────────────────────
+
+console.log('\n── Asking for part of the report ──────────────────────\n');
+
+check('the default is byte-identical to asking for everything', () => {
+    // tests/mcp-stateless compares two runs of one plan for exact equality, so a
+    // default that drifted when sections were added would surface there as a
+    // phantom nondeterminism rather than as this change.
+    const explicit = generatePortfolioMarkdown(portfolio, { sections: REPORT_SECTIONS });
+    assert.equal(explicit, md, 'naming every section produced different bytes than the default');
+});
+
+check('a subset contains that section and no other', () => {
+    const only = generatePortfolioMarkdown(portfolio, { sections: ['portfolio'] });
+    assert.ok(only.includes('# Your Portfolio'), 'the requested section is missing');
+    for (const absent of ['# Projections', '# Credit Memos', '# Reports', '# Spreadsheet']) {
+        assert.ok(!only.includes(absent), `${absent} came back uninvited`);
+    }
+    assert.ok(only.length < md.length / 2, 'a one-section report is not meaningfully smaller');
+});
+
+check('a partial report does not claim absent sections are above or below it', () => {
+    // The directional notes are load-bearing prose: "refer to Projections below
+    // this section" is false when Projections was not generated, and points a
+    // reader at content that is not there.
+    const only = generatePortfolioMarkdown(portfolio, { sections: ['portfolio'] });
+    assert.ok(!/above this section|below this section/.test(only),
+        'a partial report still describes sections it does not contain');
+    assert.ok(/Not in this report:/.test(only), 'nothing tells the reader what is missing');
+    assert.ok(/sections/.test(only), 'the reader is not told how to ask for the rest');
+});
+
+check('an unknown or empty selection is refused, not quietly dropped', () => {
+    // Silently ignoring a name returns a report missing exactly what was asked
+    // for, which reads as the data not existing.
+    assert.throws(() => generatePortfolioMarkdown(portfolio, { sections: ['taxes'] }),
+        /Unknown report section/);
+    assert.throws(() => generatePortfolioMarkdown(portfolio, { sections: [] }),
+        /No sections requested/);
+});
 
 // ── Summary ──────────────────────────────────────────────────────────
 console.log(`\n${'─'.repeat(55)}`);

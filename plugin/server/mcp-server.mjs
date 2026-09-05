@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.2.6; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.2.7; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -39671,9 +39671,19 @@ var SECTIONS = [
   { key: "reports", label: "Reports" },
   { key: "spreadsheet", label: "Spreadsheet" }
 ];
-function directionalNotes(sectionKey) {
+var REPORT_SECTIONS = ["portfolio", "projections", "creditmemos", "reports", "spreadsheet"];
+function directionalNotes(sectionKey, included = null) {
   const idx = SECTIONS.findIndex((s) => s.key === sectionKey);
   let md = "";
+  if (included && REPORT_SECTIONS.some((k) => !included.has(k))) {
+    const absent = SECTIONS.filter((s) => REPORT_SECTIONS.includes(s.key) && !included.has(s.key)).map((s) => `**${s.label}**`);
+    if (absent.length) {
+      md += `> Not in this report: ${absent.join(", ")} \u2014 ask for them with \`sections\`, against this same run handle.
+
+`;
+    }
+    return md;
+  }
   if (idx > 0) {
     const above = SECTIONS.slice(0, idx).map((s) => `**${s.label}**`);
     md += `> For broader context, refer to: ${above.join(", ")} (above this section).
@@ -39688,7 +39698,7 @@ function directionalNotes(sectionKey) {
   }
   return md;
 }
-function generatePortfolioSectionMarkdown(portfolio) {
+function generatePortfolioSectionMarkdown(portfolio, included = null) {
   if (!portfolio) return `# Your Portfolio
 
 No simulation has been run yet.
@@ -39753,11 +39763,11 @@ No simulation has been run yet.
     }
     md += "\n";
   }
-  md += directionalNotes("portfolio");
+  md += directionalNotes("portfolio", included);
   md += GENERATOR_LINE;
   return md;
 }
-function generateProjectionsSectionMarkdown(portfolio, metricName) {
+function generateProjectionsSectionMarkdown(portfolio, metricName, included = null) {
   if (!portfolio) return `# Projections
 
 No simulation has been run yet.
@@ -39777,7 +39787,7 @@ No simulation has been run yet.
     md += `No assets track the **${label}** metric.
 
 `;
-    md += directionalNotes("projections");
+    md += directionalNotes("projections", included);
     md += GENERATOR_LINE;
     return md;
   }
@@ -39830,7 +39840,7 @@ No simulation has been run yet.
     }
     md += "\n";
   }
-  md += directionalNotes("projections");
+  md += directionalNotes("projections", included);
   md += GENERATOR_LINE;
   return md;
 }
@@ -39874,7 +39884,7 @@ No simulation has been run yet.
   md += GENERATOR_LINE;
   return md;
 }
-function generateCreditMemosSectionMarkdown(portfolio) {
+function generateCreditMemosSectionMarkdown(portfolio, included = null) {
   if (!portfolio) return `# Credit Memos
 
 No simulation has been run yet.
@@ -39900,11 +39910,11 @@ No simulation has been run yet.
     }
     md += "\n";
   }
-  md += directionalNotes("creditmemos");
+  md += directionalNotes("creditmemos", included);
   md += GENERATOR_LINE;
   return md;
 }
-function generateReportsSectionMarkdown(portfolio) {
+function generateReportsSectionMarkdown(portfolio, included = null) {
   if (!portfolio) return `# Reports
 
 No simulation has been run yet.
@@ -39968,11 +39978,11 @@ No simulation has been run yet.
 
 `;
   }
-  md += directionalNotes("reports");
+  md += directionalNotes("reports", included);
   md += GENERATOR_LINE;
   return md;
 }
-function generateSpreadsheetSectionMarkdown(portfolio) {
+function generateSpreadsheetSectionMarkdown(portfolio, included = null) {
   if (!portfolio) return `# Spreadsheet
 
 No simulation has been run yet.
@@ -39998,18 +40008,33 @@ No simulation has been run yet.
 `;
   }
   md += "\n";
-  md += directionalNotes("spreadsheet");
+  md += directionalNotes("spreadsheet", included);
   md += GENERATOR_LINE;
   return md;
 }
-function generatePortfolioMarkdown(portfolio) {
-  return [
-    generatePortfolioSectionMarkdown(portfolio),
-    generateProjectionsSectionMarkdown(portfolio, "value"),
-    generateCreditMemosSectionMarkdown(portfolio),
-    generateReportsSectionMarkdown(portfolio),
-    generateSpreadsheetSectionMarkdown(portfolio)
-  ].join("\n\n");
+function generatePortfolioMarkdown(portfolio, { sections } = {}) {
+  let included;
+  if (sections == null) {
+    included = new Set(REPORT_SECTIONS);
+  } else {
+    const wanted = [].concat(sections);
+    const unknown2 = wanted.filter((k) => !REPORT_SECTIONS.includes(k));
+    if (unknown2.length) {
+      throw new Error(`Unknown report section(s): ${unknown2.join(", ")}. Known sections: ${REPORT_SECTIONS.join(", ")}.`);
+    }
+    if (!wanted.length) {
+      throw new Error(`No sections requested. Omit \`sections\` for the whole report, or name some of: ${REPORT_SECTIONS.join(", ")}.`);
+    }
+    included = new Set(wanted);
+  }
+  const notes = included.size === REPORT_SECTIONS.length ? null : included;
+  const parts = [];
+  if (included.has("portfolio")) parts.push(generatePortfolioSectionMarkdown(portfolio, notes));
+  if (included.has("projections")) parts.push(generateProjectionsSectionMarkdown(portfolio, "value", notes));
+  if (included.has("creditmemos")) parts.push(generateCreditMemosSectionMarkdown(portfolio, notes));
+  if (included.has("reports")) parts.push(generateReportsSectionMarkdown(portfolio, notes));
+  if (included.has("spreadsheet")) parts.push(generateSpreadsheetSectionMarkdown(portfolio, notes));
+  return parts.join("\n\n");
 }
 
 // js/mcp/build-plan.js
@@ -40647,14 +40672,21 @@ No issues detected. Every obligation in this plan was paid from an eligible acco
   }
   return lines.join("\n");
 }
-function reportFor(handle, portfolio, issues, mcResults = null) {
+function planLine(portfolio) {
+  const c = portfolio?.config;
+  if (!c) return null;
+  return `${c.filingAs} \xB7 ages ${c.startAge} \u2192 retires ${c.retirementAge} \u2192 ends ${c.finishAge} \xB7 inflation ${(c.inflationRate * 100).toFixed(1)}%`;
+}
+function reportFor(handle, portfolio, issues, mcResults = null, sections = null) {
   const ids = [...new Set(issues.map((i) => i.id))];
+  const hasReports = !sections || [].concat(sections).includes("reports");
   const followUp = [
     `**Run handle:** \`${handle}\``,
+    planLine(portfolio) ? `**Plan:** ${planLine(portfolio)}` : "",
     "",
     ids.length ? `Ask why any of these happened with \`explain_issue\` \u2014 finding ids in this run: ` + ids.map((i) => `\`${i}\``).join(", ") + "." : `Nothing needs attention in this run.`,
     "",
-    `Figures below are annual and lifetime totals. The simulation is monthly, and every charge is recorded in the month it happened \u2014 so for anything finer, or for a year whose total looks unusual, call \`explain_month\` with that month (\`YYYY-MM\`), or with an \`eventType\` to scan the whole plan.`,
+    hasReports ? `Figures below are annual and lifetime totals. The simulation is monthly, and every charge is recorded in the month it happened \u2014 so for anything finer, or for a year whose total looks unusual, call \`explain_month\` with that month (\`YYYY-MM\`), or with an \`eventType\` to scan the whole plan.` : `This is a partial report. Ask for more with \`sections\` against this same handle, or call \`explain_month\` for what a single month did.`,
     "",
     "---",
     ""
@@ -40664,11 +40696,12 @@ function reportFor(handle, portfolio, issues, mcResults = null) {
 ---
 
 ${generateMonteCarloSectionMarkdown(portfolio, mcResults)}` : "";
+  const body = generatePortfolioMarkdown(portfolio, sections ? { sections } : {});
   return `${followUp}${issuesMarkdown(issues)}
 
 ---
 
-${generatePortfolioMarkdown(portfolio)}${mc}`;
+${body}${mc}`;
 }
 server.tool(
   "list_profiles",
@@ -40688,14 +40721,15 @@ server.tool(
     finishAge: external_exports3.number().int().min(40).max(110).optional().describe("Override the profile's finish age. Sets where the simulation ends."),
     inflationRate: external_exports3.number().min(0).max(0.15).optional().describe("Annual inflation as a decimal (e.g. 0.031 for 3.1%). Defaults to 3.1%."),
     includeReconciliation: external_exports3.boolean().default(false).describe("Include engine-diagnostic findings (bookkeeping that does not reconcile). These are notes about the engine, not about the finances."),
-    monteCarlo: external_exports3.number().int().min(100).max(5e3).optional().describe("Number of Monte Carlo simulations to run. Omit for none. Adds a percentile table to the report. Sampling is random and unseeded, so these figures change between calls while the rest of the report does not.")
+    monteCarlo: external_exports3.number().int().min(100).max(5e3).optional().describe("Number of Monte Carlo simulations to run. Omit for none. Adds a percentile table to the report. Sampling is random and unseeded, so these figures change between calls while the rest of the report does not."),
+    sections: external_exports3.array(external_exports3.enum(REPORT_SECTIONS)).optional().describe("Which parts of the report to return. Omit for all of it. The full report runs to several thousand tokens; ['portfolio'] is the headline \u2014 net worth, assets and transfers \u2014 and the rest can be pulled later against the same handle. What Needs Attention and the plan's ages are always included.")
   },
-  guard(async ({ profile, startAge, retirementAge, finishAge, inflationRate, includeReconciliation, monteCarlo }) => {
+  guard(async ({ profile, startAge, retirementAge, finishAge, inflationRate, includeReconciliation, monteCarlo, sections }) => {
     const spec = planFromProfile(profile, { startAge, retirementAge, finishAge });
     if (inflationRate != null) spec.settings.inflationRate = inflationRate;
     const { handle, portfolio, issues } = await runPlanCached(spec, { includeReconciliation });
     const mc = monteCarlo ? await runMonteCarloFor(spec, { numSimulations: monteCarlo }) : null;
-    return { content: [{ type: "text", text: reportFor(handle, portfolio, issues, mc) }] };
+    return { content: [{ type: "text", text: reportFor(handle, portfolio, issues, mc, sections) }] };
   })
 );
 server.tool(
@@ -40719,9 +40753,10 @@ server.tool(
     }).describe("A plan in the app's share format. Give this OR shareUrl, not both.").optional(),
     shareUrl: external_exports3.string().optional().describe("A plan someone already has, in any of the three shapes it comes in: a share link from the app or from share_link (the payload is after the '#'), the bare compressed payload on its own, or a run handle like 'plan_688bcae498'. Use this to read back a plan the user edited in the browser. A handle only resolves while this server is running; a link always works."),
     includeReconciliation: external_exports3.boolean().default(false),
-    monteCarlo: external_exports3.number().int().min(100).max(5e3).optional().describe("Number of Monte Carlo simulations to run. Omit for none. Sampling is random and unseeded, so these figures change between calls.")
+    monteCarlo: external_exports3.number().int().min(100).max(5e3).optional().describe("Number of Monte Carlo simulations to run. Omit for none. Sampling is random and unseeded, so these figures change between calls."),
+    sections: external_exports3.array(external_exports3.enum(REPORT_SECTIONS)).optional().describe("Which parts of the report to return. Omit for all of it. The full report runs to several thousand tokens; ['portfolio'] is the headline \u2014 net worth, assets and transfers \u2014 and the rest can be pulled later against the same handle. What Needs Attention and the plan's ages are always included.")
   },
-  guard(async ({ plan, shareUrl, includeReconciliation, monteCarlo }) => {
+  guard(async ({ plan, shareUrl, includeReconciliation, monteCarlo, sections }) => {
     if (plan && shareUrl) {
       throw new Error("Pass a plan or a shareUrl, not both \u2014 they may describe different plans.");
     }
@@ -40731,7 +40766,7 @@ server.tool(
     const spec = plan ?? planFromReference(shareUrl);
     const { handle, portfolio, issues } = await runPlanCached(spec, { includeReconciliation });
     const mc = monteCarlo ? await runMonteCarloFor(spec, { numSimulations: monteCarlo }) : null;
-    return { content: [{ type: "text", text: reportFor(handle, portfolio, issues, mc) }] };
+    return { content: [{ type: "text", text: reportFor(handle, portfolio, issues, mc, sections) }] };
   })
 );
 server.tool(
