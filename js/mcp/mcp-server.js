@@ -32,6 +32,7 @@ import { z } from "zod";
 import { runPlanCached, getRun, specForHandle, planFromProfile, listProfiles, runMonteCarloFor } from './run-plan.js';
 import { shareUrlFromPlan, SHARE_URL_SOFT_LIMIT } from '../share-link.js';
 import { planFromReference } from './plan-reference.js';
+import { diffSpecs, diffOutcomes, diffMarkdown } from './plan-diff.js';
 import { explainIssue, explainAt, explainIssueMarkdown, explainAtMarkdown } from './explain.js';
 import { generatePortfolioMarkdown, generateMonteCarloSectionMarkdown, REPORT_SECTIONS } from '../generators/finplan-ai.js';
 import { planExhaustion } from '../portfolio-issues.js';
@@ -396,6 +397,43 @@ server.tool(
         + `truncating. It will work if it arrives intact; sending it as a file is safer.`);
     }
     return { content: [{ type: "text", text: lines.join('\n') }] };
+  })
+);
+
+// ── diff_plans ────────────────────────────────────────────────────
+//
+// The question that follows the round trip. Both bugs in the notes that
+// prompted this work were two documents disagreeing about the same plan, with
+// nothing putting the two numbers side by side — a fifteen-year age gap went
+// unseen across two reports that each looked fine.
+
+server.tool(
+  "diff_plans",
+  "Compares two plans and what the engine did with them: settings, assets, life events, then "
+  + "ending net worth, lifetime tax and findings. Takes anything run_plan's shareUrl takes — a "
+  + "run handle, a share link, or a share payload — so it works on a plan the user edited in "
+  + "the browser against the one you started from. Use it after a share link comes back, or to "
+  + "answer 'what would change if…' with two runs instead of two reports.",
+  {
+    a: z.string().describe("The baseline: a run handle, share link, or share payload."),
+    b: z.string().describe("What to compare against it, in any of the same three shapes."),
+    includeReconciliation: z.boolean().default(false)
+        .describe("Count engine-diagnostic findings too. Notes about the engine, not the finances."),
+  },
+  guard(async ({ a, b, includeReconciliation }) => {
+    const specA = planFromReference(a);
+    const specB = planFromReference(b);
+
+    const runA = await runPlanCached(specA, { includeReconciliation });
+    const runB = await runPlanCached(specB, { includeReconciliation });
+
+    const md = diffMarkdown({
+      handleA: runA.handle,
+      handleB: runB.handle,
+      spec: diffSpecs(specA, specB),
+      outcome: diffOutcomes(runA, runB),
+    });
+    return { content: [{ type: "text", text: md }] };
   })
 );
 
