@@ -393,16 +393,45 @@ export class ExpenseEngine {
         // Quick heuristic for marginal LTCG rate (0%, 15%, 20%)
         const ltcgRate = this.config.taxTable.getMarginalLTCGRate(taxableIncome);
 
-        // 2. Get the asset's gain ratio (g)
-        const gainRatio = modelAsset.getUnrealizedGainRatio();
+        // 2. Solve for the withdrawal whose AFTER-TAX proceeds are the shortfall.
+        //
+        // The old formula was W = X / (1 - t*g) with g = getUnrealizedGainRatio(),
+        // the account's headline gain fraction. That is not the rule the account
+        // actually applies: ModelAsset.planWithdrawal draws this month's fresh
+        // deposits first at ZERO gain, and only sells the remainder pro-rata.
+        // A backstop that receives income and pays expenses in the same month
+        // therefore realizes almost nothing while its headline ratio reads 80%,
+        // and the gross-up withdrew for a tax that was never going to come due.
+        // Measured before this change: the premium ran 3x to 8x the gain the
+        // withdrawal actually realized.
+        //
+        // So the gain is asked for rather than modelled. gain(W) is linear in W
+        // once W exceeds the fresh-deposit balance, so two probes give the slope
+        // and intercept exactly — no iteration, no tolerance, and no second copy
+        // of the realization rule to drift.
+        const atShortfall = modelAsset.planWithdrawal(netShortfall);
+        if (atShortfall.realizedGain.amount <= 0) return netShortfall.copy();
 
-        // 3. Apply the Gross-Up Formula: W = X / (1 - (t * g))
-        const denominator = 1.0 - (ltcgRate * gainRatio);
+        const probe = new Currency(netShortfall.amount + 1);
+        const slope = modelAsset.planWithdrawal(probe).realizedGain.amount
+                    - atShortfall.realizedGain.amount;
+        const intercept = atShortfall.realizedGain.amount - slope * netShortfall.amount;
 
-        // Prevent division by zero or negative bounds
+        // 3. W = X + t * gain(W), solved: W = (X + t*intercept) / (1 - t*slope)
+        const denominator = 1.0 - (ltcgRate * slope);
+
+        // A non-positive denominator means the marginal tax on the next dollar
+        // withdrawn is a dollar or more, so no finite withdrawal nets the
+        // shortfall. Ask for the shortfall itself and let the settlement's
+        // spillover handle what the account cannot cover.
         if (denominator <= 0) return netShortfall.copy();
 
-        return new Currency(netShortfall.amount / denominator);
+        const grossed = (netShortfall.amount + ltcgRate * intercept) / denominator;
+
+        // Never less than the shortfall: the gross-up exists to withdraw MORE,
+        // and a rounding artefact that returned less would silently underpay
+        // the obligation this draw is settling.
+        return new Currency(Math.max(grossed, netShortfall.amount));
     }
 
 }

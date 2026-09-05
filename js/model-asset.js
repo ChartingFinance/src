@@ -849,26 +849,29 @@ export class ModelAsset {
     } else {
       
       // ── WITHDRAWAL ──
+      //
+      // The split is computed by planWithdrawal() and merely APPLIED here. It
+      // used to be computed inline, which meant anything that needed to predict
+      // a withdrawal's tax consequence — the expense engine's gross-up — had to
+      // model the rule a second time, and modelled it wrongly: it used the
+      // whole account's gain ratio and never knew that fresh deposits are drawn
+      // first at zero gain. One definition, two callers.
       const withdrawal = new Currency(Math.abs(amount.amount));
+      const plan = this.planWithdrawal(withdrawal);
 
-      // Draw from fresh deposits first (no capital gains)
-      let fromCredit = Currency.zero();
-      if (isTaxable && this.monthlyCreditBalance.amount > 0) {
-        fromCredit = new Currency(Math.min(withdrawal.amount, this.monthlyCreditBalance.amount));
+      let fromCredit = plan.fromCredit;
+      if (fromCredit.amount > 0) {
         this.monthlyCreditBalance.subtract(fromCredit);
         this.finishCurrency.subtract(fromCredit);
         this.monthlyValueChange.subtract(fromCredit);
-        this.finishBasisCurrency.subtract(fromCredit);        
+        this.finishBasisCurrency.subtract(fromCredit);
       }
 
-      // Remainder from vested holdings (fraction-sold, triggers gains)
-      const fromVested = new Currency(withdrawal.amount - fromCredit.amount);
+      const fromVested = plan.fromVested;
       if (fromVested.amount > 0) {
-        if (isTaxable && this.finishCurrency.amount > 0) {
-          const fractionSold = Math.min(fromVested.amount / this.finishCurrency.amount, 1.0);
-          const basisWithdrawn = this.finishBasisCurrency.amount * fractionSold;
-          realizedGain = new Currency(fromVested.amount - basisWithdrawn);
-          this.finishBasisCurrency.amount -= basisWithdrawn;
+        if (plan.realizesGain) {
+          realizedGain = plan.realizedGain.copy();
+          this.finishBasisCurrency.amount -= plan.basisWithdrawn.amount;
         }
         this.finishCurrency.subtract(fromVested);
         this.monthlyValueChange.subtract(fromVested);
@@ -1002,6 +1005,49 @@ export class ModelAsset {
   /*
     Unrealized Gain Ratio of the asset 1 - (basis / currentValue)
   */
+  /**
+   * What a withdrawal of `amount` would do to this account, without doing it.
+   *
+   * THE definition of the realization rule — `#transact` applies exactly this
+   * and computes nothing of its own, so a caller that needs to predict the tax
+   * consequence of a draw cannot drift away from what the draw will actually do.
+   *
+   * Two stages, and the first one is the one everybody forgets. Deposits made
+   * THIS MONTH sit in `monthlyCreditBalance` and are drawn first at zero gain —
+   * money that arrived and left without ever being invested has no gain to
+   * realize. Only the remainder is sold pro-rata out of vested holdings, and
+   * the ratio that matters there is the one AFTER the fresh deposits are gone,
+   * not the account's headline gain ratio.
+   *
+   * The difference is not academic: a backstop account that receives income and
+   * pays expenses in the same month realizes almost nothing, while its headline
+   * ratio can read 80%.
+   */
+  planWithdrawal(amount) {
+    const withdrawal = Math.abs(amount?.amount ?? amount ?? 0);
+    const isTaxable = InstrumentType.isTaxableAccount(this.instrument);
+
+    const fromCredit = (isTaxable && this.monthlyCreditBalance.amount > 0)
+      ? Math.min(withdrawal, this.monthlyCreditBalance.amount)
+      : 0;
+
+    const valueAfterCredit = this.finishCurrency.amount - fromCredit;
+    const basisAfterCredit = this.finishBasisCurrency.amount - fromCredit;
+    const fromVested = withdrawal - fromCredit;
+
+    const realizesGain = fromVested > 0 && isTaxable && valueAfterCredit > 0;
+    const fractionSold = realizesGain ? Math.min(fromVested / valueAfterCredit, 1.0) : 0;
+    const basisWithdrawn = realizesGain ? basisAfterCredit * fractionSold : 0;
+
+    return {
+      fromCredit:     new Currency(fromCredit),
+      fromVested:     new Currency(fromVested),
+      realizesGain,
+      basisWithdrawn: new Currency(basisWithdrawn),
+      realizedGain:   new Currency(realizesGain ? fromVested - basisWithdrawn : 0),
+    };
+  }
+
   getUnrealizedGainRatio() {
     if (this.finishCurrency.amount <= 0) return 0;
     const basisRatio = this.finishBasisCurrency.amount / this.finishCurrency.amount;
