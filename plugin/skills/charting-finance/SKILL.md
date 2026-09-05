@@ -192,6 +192,15 @@ The report is long — portfolio, projections, credit memos, lifetime tax, per-a
 summary. Do not paste it back wholesale. Lead with what the user asked about,
 then offer the rest.
 
+**Ask for less when you need less.** `sections` takes any of `portfolio`,
+`projections`, `creditmemos`, `reports`, `spreadsheet`; omit it for all of them.
+The full report is several thousand tokens and most questions want one number
+out of it — `sections: ['portfolio']` is the headline at roughly a sixth the
+size, and the rest is still there against the same handle. The plan's ages and
+What Needs Attention appear in every report regardless, because a smaller report
+is a request to read less, not to be told less about whether the plan can pay
+its bills.
+
 "**What Needs Attention**" is the section to check first. A ⚠️ there means an
 unpayable obligation — an expense or mortgage the plan could not fund from any
 eligible account. That is a structural problem with the plan and outranks any

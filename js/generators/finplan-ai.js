@@ -47,9 +47,39 @@ const SECTIONS = [
     { key: 'spreadsheet', label: 'Spreadsheet' },
 ];
 
-function directionalNotes(sectionKey) {
+/**
+ * The sections generatePortfolioMarkdown composes, in the order it composes them.
+ *
+ * A caller may ask for a subset. The ORDER is not theirs to choose: the
+ * directional notes below describe what sits above and below each section, so a
+ * report assembled in the caller's order would describe itself incorrectly.
+ */
+export const REPORT_SECTIONS = ['portfolio', 'projections', 'creditmemos', 'reports', 'spreadsheet'];
+
+/**
+ * @param {string} sectionKey
+ * @param {Set<string>|null} included  the sections actually being emitted, or
+ *        null when this section is being generated on its own (the app does
+ *        this) — in which case the full-report wording is correct as written.
+ */
+function directionalNotes(sectionKey, included = null) {
     const idx = SECTIONS.findIndex(s => s.key === sectionKey);
     let md = '';
+
+    // A partial report cannot say "above" and "below" about sections that are
+    // not there. Naming what is missing is the more useful sentence anyway: the
+    // reader of a one-section report is exactly the reader who needs to know
+    // the rest exists and how to ask for it.
+    if (included && REPORT_SECTIONS.some(k => !included.has(k))) {
+        const absent = SECTIONS
+            .filter(s => REPORT_SECTIONS.includes(s.key) && !included.has(s.key))
+            .map(s => `**${s.label}**`);
+        if (absent.length) {
+            md += `> Not in this report: ${absent.join(', ')} — ask for them with \`sections\`, `
+                + 'against this same run handle.\n\n';
+        }
+        return md;
+    }
 
     if (idx > 0) {
         const above = SECTIONS.slice(0, idx).map(s => `**${s.label}**`);
@@ -111,7 +141,7 @@ export function generateTimelineMarkdown(portfolio, lifeEvents) {
 
 // ── Portfolio ───────────────────────────────────────────────────
 
-export function generatePortfolioSectionMarkdown(portfolio) {
+export function generatePortfolioSectionMarkdown(portfolio, included = null) {
     if (!portfolio) return `# Your Portfolio\n\nNo simulation has been run yet.\n` + GENERATOR_LINE;
 
     const assets = portfolio.modelAssets;
@@ -166,14 +196,14 @@ export function generatePortfolioSectionMarkdown(portfolio) {
         md += '\n';
     }
 
-    md += directionalNotes('portfolio');
+    md += directionalNotes('portfolio', included);
     md += GENERATOR_LINE;
     return md;
 }
 
 // ── Projections ─────────────────────────────────────────────────
 
-export function generateProjectionsSectionMarkdown(portfolio, metricName) {
+export function generateProjectionsSectionMarkdown(portfolio, metricName, included = null) {
     if (!portfolio) return `# Projections\n\nNo simulation has been run yet.\n` + GENERATOR_LINE;
 
     const label = MetricLabel[metricName] || metricName;
@@ -187,7 +217,7 @@ export function generateProjectionsSectionMarkdown(portfolio, metricName) {
 
     if (assets.length === 0) {
         md += `No assets track the **${label}** metric.\n\n`;
-        md += directionalNotes('projections');
+        md += directionalNotes('projections', included);
         md += GENERATOR_LINE;
         return md;
     }
@@ -234,7 +264,7 @@ export function generateProjectionsSectionMarkdown(portfolio, metricName) {
         md += '\n';
     }
 
-    md += directionalNotes('projections');
+    md += directionalNotes('projections', included);
     md += GENERATOR_LINE;
     return md;
 }
@@ -309,7 +339,7 @@ export function generateGuardrailsSectionMarkdown(portfolio, gr = null) {
 
 // ── Details ─────────────────────────────────────────────────────
 
-export function generateCreditMemosSectionMarkdown(portfolio) {
+export function generateCreditMemosSectionMarkdown(portfolio, included = null) {
     if (!portfolio) return `# Credit Memos\n\nNo simulation has been run yet.\n` + GENERATOR_LINE;
 
     let md = `# Credit Memos\n\n`;
@@ -331,12 +361,12 @@ export function generateCreditMemosSectionMarkdown(portfolio) {
         md += '\n';
     }
 
-    md += directionalNotes('creditmemos');
+    md += directionalNotes('creditmemos', included);
     md += GENERATOR_LINE;
     return md;
 }
 
-export function generateReportsSectionMarkdown(portfolio) {
+export function generateReportsSectionMarkdown(portfolio, included = null) {
     if (!portfolio) return `# Reports\n\nNo simulation has been run yet.\n` + GENERATOR_LINE;
 
     let md = `# Reports\n\n`;
@@ -418,14 +448,14 @@ export function generateReportsSectionMarkdown(portfolio) {
             + `\`reports\` flag set._\n\n`;
     }
 
-    md += directionalNotes('reports');
+    md += directionalNotes('reports', included);
     md += GENERATOR_LINE;
     return md;
 }
 
 // ── Spreadsheet ─────────────────────────────────────────────────
 
-export function generateSpreadsheetSectionMarkdown(portfolio) {
+export function generateSpreadsheetSectionMarkdown(portfolio, included = null) {
     if (!portfolio) return `# Spreadsheet\n\nNo simulation has been run yet.\n` + GENERATOR_LINE;
 
     let md = `# Spreadsheet\n\n`;
@@ -445,7 +475,7 @@ export function generateSpreadsheetSectionMarkdown(portfolio) {
     }
     md += '\n';
 
-    md += directionalNotes('spreadsheet');
+    md += directionalNotes('spreadsheet', included);
     md += GENERATOR_LINE;
     return md;
 }
@@ -458,12 +488,50 @@ export function generateSpreadsheetSectionMarkdown(portfolio) {
  * @param {Portfolio} portfolio - A portfolio that has been through chronometer_run()
  * @returns {string} Full markdown report
  */
-export function generatePortfolioMarkdown(portfolio) {
-    return [
-        generatePortfolioSectionMarkdown(portfolio),
-        generateProjectionsSectionMarkdown(portfolio, 'value'),
-        generateCreditMemosSectionMarkdown(portfolio),
-        generateReportsSectionMarkdown(portfolio),
-        generateSpreadsheetSectionMarkdown(portfolio),
-    ].join('\n\n');
+/**
+ * The report, whole or in part.
+ *
+ * `sections` is opt-in and the default is every section in the canonical order,
+ * byte for byte what this returned before it took an argument — tests/mcp-stateless
+ * compares two runs of the same plan for exact equality, so a default that
+ * drifted would surface there as a phantom nondeterminism.
+ *
+ * Asking for a subset is not a formatting preference. The full report runs to
+ * several thousand tokens and a caller usually wants one number out of it; the
+ * shape the rest of this server already has — a handle you interrogate
+ * afterwards — simply never reached the reports.
+ *
+ * Unknown keys are refused rather than ignored. A silently-dropped section name
+ * would return a report missing exactly what was asked for, which reads as the
+ * data not existing.
+ */
+export function generatePortfolioMarkdown(portfolio, { sections } = {}) {
+    let included;
+    if (sections == null) {
+        included = new Set(REPORT_SECTIONS);
+    } else {
+        const wanted = [].concat(sections);
+        const unknown = wanted.filter(k => !REPORT_SECTIONS.includes(k));
+        if (unknown.length) {
+            throw new Error(`Unknown report section(s): ${unknown.join(', ')}. `
+                          + `Known sections: ${REPORT_SECTIONS.join(', ')}.`);
+        }
+        if (!wanted.length) {
+            throw new Error('No sections requested. Omit `sections` for the whole report, '
+                          + `or name some of: ${REPORT_SECTIONS.join(', ')}.`);
+        }
+        included = new Set(wanted);
+    }
+
+    // Full selection passes `null` down, so every directional note is worded
+    // exactly as it was before sections existed.
+    const notes = included.size === REPORT_SECTIONS.length ? null : included;
+
+    const parts = [];
+    if (included.has('portfolio'))   parts.push(generatePortfolioSectionMarkdown(portfolio, notes));
+    if (included.has('projections')) parts.push(generateProjectionsSectionMarkdown(portfolio, 'value', notes));
+    if (included.has('creditmemos')) parts.push(generateCreditMemosSectionMarkdown(portfolio, notes));
+    if (included.has('reports'))     parts.push(generateReportsSectionMarkdown(portfolio, notes));
+    if (included.has('spreadsheet')) parts.push(generateSpreadsheetSectionMarkdown(portfolio, notes));
+    return parts.join('\n\n');
 }
