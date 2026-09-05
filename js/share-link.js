@@ -94,17 +94,53 @@ export const SHARE_URL_SOFT_LIMIT = 16000;
  * the spec is dropped rather than shipped, because the importer would ignore it
  * and a link should not carry what it cannot deliver.
  */
-export function sharePayloadFromPlan(spec, { name } = {}) {
+/**
+ * The five keys that ARE the plan.
+ *
+ * Load-bearing, because a run handle is a content address over the spec: any
+ * extra key changes the hash. A link may carry more than a plan — see `handle`
+ * below — and everything outside this set has to be stripped before the spec
+ * reaches the engine, or a plan sent out and read back would report a different
+ * handle than the one it left with, which is precisely the divergence the round
+ * trip exists to disprove.
+ */
+export const SPEC_KEYS = ['name', 'settings', 'modelAssets', 'lifeEvents', 'guardrailParams'];
+
+export function sharePayloadFromPlan(spec, { name, handle } = {}) {
     if (!spec?.modelAssets?.length) {
         throw new Error('Cannot build a share link for a plan with no assets.');
     }
-    return {
+    const payload = {
         name:            name ?? spec.name ?? 'Shared Portfolio',
         settings:        spec.settings ?? {},
         modelAssets:     spec.modelAssets,
         lifeEvents:      spec.lifeEvents ?? [],
         guardrailParams: spec.guardrailParams ?? null,
     };
+
+    // PROVENANCE, not identity. The handle names the run this link was minted
+    // from, so the app can say which report it corresponds to — the check that
+    // would have caught both bugs in the round-trip notes at a glance. It is
+    // deliberately not part of the spec: edit the plan after importing and the
+    // handle still describes where it came from, not what it is now. Omitted
+    // entirely when absent, so a link from the app's own Share button — which
+    // has no handle to give — stays exactly the five keys it always was.
+    if (handle) payload.handle = handle;
+
+    return payload;
+}
+
+/**
+ * The spec inside a payload, with anything that is not the plan removed.
+ *
+ * Call this on the way IN. `planFromShareUrl` returns what the link carried,
+ * which the app wants whole; the engine must only ever see the five keys.
+ */
+export function specFromPayload(payload) {
+    if (!payload) return payload;
+    const spec = {};
+    for (const k of SPEC_KEYS) if (k in payload) spec[k] = payload[k];
+    return spec;
 }
 
 export function encodeSharePayload(payload) {
@@ -130,8 +166,8 @@ export function decodeSharePayload(compressed) {
  * Returns the length alongside the URL so a caller can say something about it
  * instead of discovering the size in a truncated mail client.
  */
-export function shareUrlFromPlan(spec, { origin = DEFAULT_ORIGIN, name } = {}) {
-    const payload = sharePayloadFromPlan(spec, { name });
+export function shareUrlFromPlan(spec, { origin = DEFAULT_ORIGIN, name, handle } = {}) {
+    const payload = sharePayloadFromPlan(spec, { name, handle });
     const compressed = encodeSharePayload(payload);
     const url = `${origin}#${SHARE_PARAM}=${compressed}`;
     return {

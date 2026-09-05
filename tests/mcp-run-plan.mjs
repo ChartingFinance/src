@@ -315,7 +315,7 @@ await check('the report actually renders the Annual Cash Flow table', () => {
 // assertion on asset counts would pass while the settings quietly changed.
 console.log('\n── A plan survives the round trip ──\n');
 
-const { shareUrlFromPlan } = await import('../js/share-link.js');
+const { shareUrlFromPlan, planFromShareUrl } = await import('../js/share-link.js');
 const { planFromReference } = await import('../js/mcp/plan-reference.js');
 const { cacheRun } = await import('../js/mcp/run-plan.js');
 
@@ -330,6 +330,24 @@ for (const key of ['preRetirement', 'youngCouple', 'retired']) {
       'the plan that came back is not the plan that went out');
   });
 }
+
+await check('a link carrying its own handle still round-trips to that handle', () => {
+  // The trap in shipping provenance inside the payload: a handle is a hash OVER
+  // the spec, so a `handle` field that reached the engine would give the same
+  // plan a different content address every trip — quietly turning the round-trip
+  // guarantee into its opposite. The link carries it; the spec must not.
+  const spec = planFromProfile('preRetirement');
+  const there = handleOf(spec);
+  const url = shareUrlFromPlan(spec, { handle: there }).url;
+
+  assert.equal(planFromShareUrl(url).handle, there,
+    'the link did not carry the run it was minted from');
+
+  const back = planFromReference(url);
+  assert.ok(!('handle' in back), 'provenance leaked into the spec handed to the engine');
+  assert.equal(handleOf(back), there,
+    'carrying the handle changed the plan content address');
+});
 
 await check('a bare payload works without the URL around it', () => {
   // What you get when someone copies the part after the "#".

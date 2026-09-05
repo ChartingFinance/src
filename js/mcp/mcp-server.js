@@ -341,7 +341,9 @@ server.tool(
                 + 'to target a local dev server.'),
   },
   guard(async ({ handle, name, origin }) => {
-    const link = shareUrlFromPlan(specForHandle(handle), { name, origin });
+    // The handle rides along so the app can say which run the plan on screen
+    // came from — see share-link.js. It is provenance; the spec is unchanged.
+    const link = shareUrlFromPlan(specForHandle(handle), { name, origin, handle });
 
     const lines = [
       `**Open this plan in Charting Finance:**`,

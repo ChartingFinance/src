@@ -43,7 +43,8 @@
  * to guess why a handle from yesterday is gone.
  */
 
-import { classifyPlanReference, planFromShareUrl, decodeSharePayload } from '../share-link.js';
+import { classifyPlanReference, planFromShareUrl, decodeSharePayload, specFromPayload }
+    from '../share-link.js';
 import { specForHandle } from './run-plan.js';
 
 /**
@@ -70,7 +71,11 @@ export function planFromReference(text) {
                     + 'The payload lives after the "#" — if the link was pasted from an email '
                     + 'or a chat it may have been truncated or line-wrapped.');
             }
-            return payload;
+            // specFromPayload, not the payload: a link may carry provenance —
+            // the handle it was minted from — and the handle is a hash OVER the
+            // spec, so shipping that field into the engine would give the same
+            // plan a different content address every trip.
+            return specFromPayload(payload);
         }
 
         case 'payload': {
@@ -81,7 +86,7 @@ export function planFromReference(text) {
                     + '"plan_688bcae498"; a share link contains "#portfolio=" followed by a '
                     + 'long compressed string.');
             }
-            return payload;
+            return specFromPayload(payload);
         }
 
         default:
