@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.2.7; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.2.8; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -37728,9 +37728,9 @@ function makeIssueContext(portfolio) {
     if (!len) return 0;
     return aggregateMetric(history, metric, 0, len - 1);
   };
-  const byName = (name) => modelAssets.find((a) => a.displayName === name) ?? null;
+  const byName2 = (name) => modelAssets.find((a) => a.displayName === name) ?? null;
   const allMatching = (pattern) => modelAssets.map((asset) => ({ asset, memos: memosMatching(asset, pattern) })).filter((e) => e.memos.length > 0);
-  return { portfolio, modelAssets, total, byName, allMatching };
+  return { portfolio, modelAssets, total, byName: byName2, allMatching };
 }
 var DETECTORS = [
   {
@@ -39296,6 +39296,187 @@ function planFromReference(text) {
   }
 }
 
+// js/mcp/plan-diff.js
+var SETTING_LABELS = {
+  startAge: "Start age",
+  retirementAge: "Retirement age",
+  finishAge: "Finish age",
+  filingAs: "Filing status",
+  inflationRate: "Inflation"
+};
+var fmtSetting = (key, v) => {
+  if (v == null) return "\u2014";
+  if (key === "inflationRate") return `${(v * 100).toFixed(1)}%`;
+  return String(v);
+};
+var same = (a, b) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
+function byName(assets) {
+  const m = /* @__PURE__ */ new Map();
+  for (const a of assets ?? []) m.set(a.displayName ?? "(unnamed)", a);
+  return m;
+}
+function diffSpecs(a, b) {
+  const settings = [];
+  const sa = a?.settings ?? {}, sb = b?.settings ?? {};
+  for (const key of Object.keys(SETTING_LABELS)) {
+    if (!same(sa[key], sb[key])) {
+      settings.push({ key, label: SETTING_LABELS[key], from: sa[key], to: sb[key] });
+    }
+  }
+  for (const key of /* @__PURE__ */ new Set([...Object.keys(sa), ...Object.keys(sb)])) {
+    if (key in SETTING_LABELS) continue;
+    if (!same(sa[key], sb[key])) settings.push({ key, label: key, from: sa[key], to: sb[key] });
+  }
+  const ma = byName(a?.modelAssets), mb = byName(b?.modelAssets);
+  const added = [...mb.keys()].filter((n) => !ma.has(n));
+  const removed = [...ma.keys()].filter((n) => !mb.has(n));
+  const changed = [];
+  for (const [name, assetA] of ma) {
+    const assetB = mb.get(name);
+    if (!assetB) continue;
+    const fields = [];
+    for (const key of /* @__PURE__ */ new Set([...Object.keys(assetA), ...Object.keys(assetB)])) {
+      if (!same(assetA[key], assetB[key])) {
+        fields.push({ key, from: assetA[key], to: assetB[key] });
+      }
+    }
+    if (fields.length) changed.push({ name, fields });
+  }
+  const la = a?.lifeEvents ?? [], lb = b?.lifeEvents ?? [];
+  const lifeEvents = { countFrom: la.length, countTo: lb.length, changed: !same(la, lb) };
+  const identical = settings.length === 0 && !added.length && !removed.length && !changed.length && !lifeEvents.changed && same(a?.name, b?.name);
+  return { settings, assets: { added, removed, changed }, lifeEvents, identical };
+}
+function diffOutcomes(runA, runB) {
+  const of = (run) => ({
+    endingNetWorth: run.portfolio.finishValue?.().amount ?? null,
+    lifetimeTax: Math.abs(run.portfolio.total?.totalTaxes?.().amount ?? 0),
+    issues: run.issues.filter((i) => i.category === "obligation").length,
+    findings: run.issues.length
+  });
+  const a = of(runA), b = of(runB);
+  return {
+    rows: [
+      { label: "Ending net worth", from: a.endingNetWorth, to: b.endingNetWorth, money: true },
+      { label: "Lifetime tax", from: a.lifetimeTax, to: b.lifetimeTax, money: true },
+      { label: "Unpayable obligations", from: a.issues, to: b.issues, money: false },
+      { label: "Findings, all categories", from: a.findings, to: b.findings, money: false }
+    ]
+  };
+}
+var money = (n) => n == null ? "\u2014" : new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(n);
+function deltaCell(from, to, isMoney) {
+  if (from == null || to == null) return "\u2014";
+  const d = to - from;
+  if (d === 0) return "unchanged";
+  const sign = d > 0 ? "+" : "\u2212";
+  const mag = isMoney ? money(Math.abs(d)) : String(Math.abs(d));
+  const pct2 = isMoney && from !== 0 ? ` (${sign}${Math.abs(d / from * 100).toFixed(1)}%)` : "";
+  return `${sign}${mag}${pct2}`;
+}
+function fieldValue(v) {
+  if (v == null) return "\u2014";
+  if (typeof v === "object") {
+    if ("amount" in v) return money(v.amount);
+    if ("rate" in v) return `${(v.rate * 100).toFixed(2)}%`;
+    if ("year" in v && "month" in v) return `${v.year}-${String(v.month).padStart(2, "0")}`;
+    const s = JSON.stringify(v);
+    return s.length > 60 ? s.slice(0, 57) + "\u2026" : s;
+  }
+  return String(v);
+}
+function diffMarkdown({ handleA, handleB, spec, outcome }) {
+  let md = `# Plan diff
+
+`;
+  md += `**A:** \`${handleA}\`  \u2192  **B:** \`${handleB}\`
+
+`;
+  if (handleA === handleB) {
+    md += `These are the same plan \u2014 identical content address, so nothing was changed.
+`;
+    return md;
+  }
+  md += `## What changed in the plan
+
+`;
+  if (spec.identical) {
+    md += `Nothing. The two specs are field-for-field identical but hash differently, which should not happen \u2014 treat it as a bug in the handle, not a finding about the plans.
+
+`;
+  } else {
+    if (spec.settings.length) {
+      md += `### Settings
+
+| | A | B |
+| :--- | ---: | ---: |
+`;
+      for (const s of spec.settings) {
+        md += `| ${s.label} | ${fmtSetting(s.key, s.from)} | ${fmtSetting(s.key, s.to)} |
+`;
+      }
+      md += "\n";
+    }
+    const { added, removed, changed } = spec.assets;
+    if (added.length) md += `### Added
+
+${added.map((n) => `- ${n}`).join("\n")}
+
+`;
+    if (removed.length) md += `### Removed
+
+${removed.map((n) => `- ${n}`).join("\n")}
+
+`;
+    if (changed.length) {
+      md += `### Changed
+
+| Asset | Field | A | B |
+| :--- | :--- | ---: | ---: |
+`;
+      for (const c of changed) {
+        for (const f of c.fields) {
+          md += `| ${c.name} | ${f.key} | ${fieldValue(f.from)} | ${fieldValue(f.to)} |
+`;
+        }
+      }
+      md += "\n";
+    }
+    if (spec.lifeEvents.changed) {
+      md += `### Life events
+
+Changed \u2014 ${spec.lifeEvents.countFrom} in A, ${spec.lifeEvents.countTo} in B. Phase boundaries move what the engine does in every month after them, so expect the outcome table below to move too.
+
+`;
+    }
+    if (removed.length && added.length) {
+      md += `> An asset renamed between the two plans appears above as one removal and one addition: plans are compared by display name, which cannot tell a rename from a swap.
+
+`;
+    }
+  }
+  md += `## What it did to the numbers
+
+`;
+  md += `| | A | B | Change |
+| :--- | ---: | ---: | ---: |
+`;
+  for (const r of outcome.rows) {
+    const fmt2 = r.money ? money : (v) => String(v ?? "\u2014");
+    md += `| ${r.label} | ${fmt2(r.from)} | ${fmt2(r.to)} | ${deltaCell(r.from, r.to, r.money)} |
+`;
+  }
+  md += "\n";
+  if (spec.identical) {
+    md += `> The plans are identical and the outcomes are shown anyway: if any row above moved, the engine is not deterministic, which is a much larger finding than anything about these two plans.
+
+`;
+  }
+  md += `Ask \`explain_month\` against either handle for why a particular month differs. A diff says what moved; only the recorded events say why.
+`;
+  return md;
+}
+
 // js/mcp/explain.js
 var ISSUE_EVENT_TYPE = Object.freeze({
   "plan-exhaustion": EventType.UNFUNDED,
@@ -40819,6 +41000,28 @@ server.tool(
       lines.push("", `\u26A0\uFE0F This link is ${link.length.toLocaleString()} characters, past the ${SHARE_URL_SOFT_LIMIT.toLocaleString()} where mail clients and address bars start truncating. It will work if it arrives intact; sending it as a file is safer.`);
     }
     return { content: [{ type: "text", text: lines.join("\n") }] };
+  })
+);
+server.tool(
+  "diff_plans",
+  "Compares two plans and what the engine did with them: settings, assets, life events, then ending net worth, lifetime tax and findings. Takes anything run_plan's shareUrl takes \u2014 a run handle, a share link, or a share payload \u2014 so it works on a plan the user edited in the browser against the one you started from. Use it after a share link comes back, or to answer 'what would change if\u2026' with two runs instead of two reports.",
+  {
+    a: external_exports3.string().describe("The baseline: a run handle, share link, or share payload."),
+    b: external_exports3.string().describe("What to compare against it, in any of the same three shapes."),
+    includeReconciliation: external_exports3.boolean().default(false).describe("Count engine-diagnostic findings too. Notes about the engine, not the finances.")
+  },
+  guard(async ({ a, b, includeReconciliation }) => {
+    const specA = planFromReference(a);
+    const specB = planFromReference(b);
+    const runA = await runPlanCached(specA, { includeReconciliation });
+    const runB = await runPlanCached(specB, { includeReconciliation });
+    const md = diffMarkdown({
+      handleA: runA.handle,
+      handleB: runB.handle,
+      spec: diffSpecs(specA, specB),
+      outcome: diffOutcomes(runA, runB)
+    });
+    return { content: [{ type: "text", text: md }] };
   })
 );
 server.tool(

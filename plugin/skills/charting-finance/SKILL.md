@@ -47,6 +47,7 @@ are what the user actually meant.
 | `explain_issue` | the causal chain behind one flagged issue |
 | `share_link` | a link that opens the same plan in the web app, for charts |
 | `run_plan` (shareUrl) | read a link, payload or handle back — the return leg |
+| `diff_plans` | what changed between two plans, and what it did to the numbers |
 
 Start with `quick_start_report` when the user has no portfolio in hand. The
 `startAge` / `retirementAge` / `finishAge` arguments genuinely reshape the plan —
@@ -234,6 +235,31 @@ Tell the user the finer view exists rather than leaving them with the annual
 row. They cannot ask for a month they do not know was recorded — and the annual
 table, read alone, invites the assumption that a year was uniform when the whole
 reason it stands out is that one month in it was not.
+
+### Comparing two plans
+
+`diff_plans(a, b)` takes the same three shapes `shareUrl` does, so it compares a
+plan the user edited in the browser against the one you started from. It reports
+what moved in the plan — settings, assets, life events — and then what the engine
+did with it: ending net worth, lifetime tax, findings.
+
+Reach for it instead of narrating a comparison yourself. Two full reports read in
+sequence is exactly how a fifteen-year difference in retirement age went unnoticed
+across two documents that each looked fine.
+
+Three things to say when you report one:
+
+- **Lead with the change, not the delta.** "Retiring at 62 instead of 65" is the
+  finding; "−$1.4M" is its size. A number without its cause invites the reading
+  that the model disapproves of retiring early.
+- **A new ⚠️ outranks the headline.** If the obligations row goes from 0 to 1,
+  the second plan cannot pay for something — say that before any net worth
+  figure, and use `explain_issue` on the second handle to say what.
+- **Same handle means the same plan.** If a link comes back and diffs to zero,
+  the user changed nothing; say so plainly rather than presenting an empty table.
+
+The diff says what moved. Only `explain_month` says why, and it needs one of the
+two handles.
 
 ### When nothing is flagged
 
