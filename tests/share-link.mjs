@@ -38,7 +38,7 @@ globalThis.window = globalThis;
 const {
   shareUrlFromPlan, planFromShareUrl, sharePayloadParamFrom,
   decodeSharePayload, encodeSharePayload, sharePayloadFromPlan,
-  SHARE_PARAM, DEFAULT_ORIGIN, classifyPlanReference,
+  SHARE_PARAM, DEFAULT_ORIGIN, classifyPlanReference, SPEC_KEYS, specFromPayload,
 } = await import('../js/share-link.js');
 const { planFromProfile, listProfiles, cacheRun, specForHandle, clearRuns } =
   await import('../js/mcp/run-plan.js');
@@ -215,6 +215,50 @@ check('the app reads the URL through the shared module', () => {
     'finplan-app.js does not use sharePayloadParamFrom — it may still read only location.search');
   assert.ok(/window\.location\.hash/.test(src),
     'finplan-app.js never looks at the fragment, so no fragment link can open');
+});
+
+check('a link omits the handle unless one is given', () => {
+  // The app's own Share button has no handle to give, and a `handle: null` in
+  // the payload would be a field claiming provenance it does not have.
+  const spec = planFromProfile('retired');
+  const plain = planFromShareUrl(shareUrlFromPlan(spec).url);
+  assert.ok(!('handle' in plain), 'a handle-less link carries a handle key anyway');
+  assert.deepEqual(Object.keys(plain).sort(), [...SPEC_KEYS].sort());
+
+  const withRun = planFromShareUrl(shareUrlFromPlan(spec, { handle: 'plan_abc1234567' }).url);
+  assert.equal(withRun.handle, 'plan_abc1234567');
+  assert.ok(!('handle' in specFromPayload(withRun)), 'specFromPayload left the provenance in');
+});
+
+check('the app shows which run an imported plan came from', () => {
+  const html = readFileSync('index.html', 'utf8');
+  assert.ok(/id="importedRunBadge"/.test(html), 'no run badge on the portfolio header');
+  assert.ok(/id="import-run-provenance"/.test(html), 'the import dialog says nothing about the run');
+
+  const src = readFileSync('js/finplan-app.js', 'utf8');
+
+  // The badge is set by the IMPORT, the dialog line by the OFFER. Setting both
+  // when the dialog opens put a run handle on the portfolio header while the
+  // user was still deciding — caught in a screenshot, not by an assertion,
+  // because both surfaces did get set. So the two sites are asserted apart.
+  const offer = src.slice(src.indexOf('function loadSharedPortfolio'));
+  assert.ok(/setImportDialogRun\(data\.handle\)/.test(offer.slice(0, 1600)),
+    'the import dialog never says which run the link came from');
+  assert.ok(!/setImportedRunBadge/.test(offer.slice(0, 1600)),
+    'the portfolio badge is set while the user is still deciding whether to import');
+
+  const applied = src.slice(src.indexOf('function applyImportedPortfolio'));
+  assert.ok(/setImportedRunBadge\(data\.handle\)/.test(applied.slice(0, 400)),
+    'importing a plan does not record which run it came from');
+
+  // Cleared when the plan on screen is no longer the imported one.
+  assert.ok(/setImportedRunBadge\(null\)/.test(src),
+    'nothing ever clears the badge, so it outlives the plan it describes');
+
+  // "from run", not "run": it stays true after the plan is edited, and claiming
+  // a live identity it cannot maintain is worse than claiming nothing.
+  assert.ok(/from run \$\{handle\}/.test(src),
+    'the badge asserts a live identity rather than provenance');
 });
 
 check('the app handles a fragment link arriving in an already-open tab', () => {

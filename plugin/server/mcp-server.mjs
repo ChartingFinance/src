@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.2.5; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.2.6; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -39203,17 +39203,26 @@ function classifyPlanReference(text) {
 }
 var DEFAULT_ORIGIN = "https://charting.finance/";
 var SHARE_URL_SOFT_LIMIT = 16e3;
-function sharePayloadFromPlan(spec, { name } = {}) {
+var SPEC_KEYS = ["name", "settings", "modelAssets", "lifeEvents", "guardrailParams"];
+function sharePayloadFromPlan(spec, { name, handle } = {}) {
   if (!spec?.modelAssets?.length) {
     throw new Error("Cannot build a share link for a plan with no assets.");
   }
-  return {
+  const payload = {
     name: name ?? spec.name ?? "Shared Portfolio",
     settings: spec.settings ?? {},
     modelAssets: spec.modelAssets,
     lifeEvents: spec.lifeEvents ?? [],
     guardrailParams: spec.guardrailParams ?? null
   };
+  if (handle) payload.handle = handle;
+  return payload;
+}
+function specFromPayload(payload) {
+  if (!payload) return payload;
+  const spec = {};
+  for (const k of SPEC_KEYS) if (k in payload) spec[k] = payload[k];
+  return spec;
 }
 function encodeSharePayload(payload) {
   return import_lz_string.default.compressToEncodedURIComponent(JSON.stringify(payload));
@@ -39229,8 +39238,8 @@ function decodeSharePayload(compressed) {
     return null;
   }
 }
-function shareUrlFromPlan(spec, { origin = DEFAULT_ORIGIN, name } = {}) {
-  const payload = sharePayloadFromPlan(spec, { name });
+function shareUrlFromPlan(spec, { origin = DEFAULT_ORIGIN, name, handle } = {}) {
+  const payload = sharePayloadFromPlan(spec, { name, handle });
   const compressed = encodeSharePayload(payload);
   const url2 = `${origin}#${SHARE_PARAM}=${compressed}`;
   return {
@@ -39271,7 +39280,7 @@ function planFromReference(text) {
           'That looks like a share link, but no plan could be read out of it. The payload lives after the "#" \u2014 if the link was pasted from an email or a chat it may have been truncated or line-wrapped.'
         );
       }
-      return payload;
+      return specFromPayload(payload);
     }
     case "payload": {
       const payload = decodeSharePayload(value);
@@ -39280,7 +39289,7 @@ function planFromReference(text) {
           'That is not a plan, a share link, or a run handle. A handle looks like "plan_688bcae498"; a share link contains "#portfolio=" followed by a long compressed string.'
         );
       }
-      return payload;
+      return specFromPayload(payload);
     }
     default:
       throw new Error("No plan reference given \u2014 pass a share link, a share payload, or a run handle.");
@@ -40763,7 +40772,7 @@ server.tool(
     origin: external_exports3.string().optional().describe("Where the link points. Defaults to https://charting.finance/ \u2014 override only to target a local dev server.")
   },
   guard(async ({ handle, name, origin }) => {
-    const link = shareUrlFromPlan(specForHandle(handle), { name, origin });
+    const link = shareUrlFromPlan(specForHandle(handle), { name, origin, handle });
     const lines = [
       `**Open this plan in Charting Finance:**`,
       "",

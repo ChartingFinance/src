@@ -1077,6 +1077,11 @@ function initiateActiveData() {
 }
 
 function loadLocalData() {
+    // Loading a stored scenario means the plan on screen is no longer the
+    // imported one, so its provenance stops being true. A badge that outlives
+    // what it describes is worse than no badge.
+    setImportedRunBadge(null);
+
     const slotName = appState.storyName;
     const assetModelsRaw = util_loadLocalAssetModels(appState.storyArc, slotName);
     assetList.modelAssets = bindForEditing(membrane_rawDataToModelAssets(assetModelsRaw));
@@ -2166,6 +2171,11 @@ function loadSharedPortfolio() {
         titleInput.value = data.name || data.portfolioName || 'Shared Portfolio';
         noteInput.value = data.note || '';
 
+        // A link minted by the MCP server carries the run it came from. Saying
+        // so here is the cheapest possible answer to "are the report and the app
+        // looking at the same plan?" — both name the same handle, or they do not.
+        setImportDialogRun(data.handle);
+
         const popup = document.getElementById('popupImportPortfolio');
         popup.classList.remove('hidden');
         popup.style.display = 'flex';
@@ -2180,7 +2190,40 @@ function loadSharedPortfolio() {
     }
 }
 
+/**
+ * Which run an imported plan came from.
+ *
+ * Provenance, deliberately, not a live identity. The handle is a content address
+ * over the plan, so the moment someone edits an imported plan it stops
+ * describing what is on screen — but it never stops being true about where the
+ * plan came from. Hence "from run", and hence no attempt to recompute it here:
+ * a wrong handle shown confidently is worse than no handle at all.
+ *
+ * Two surfaces, and they are set at DIFFERENT moments. The dialog line is
+ * provenance about an OFFER — here is the run this link came from, before you
+ * decide. The badge is provenance about the plan you are now looking at, so it
+ * must wait for the import to actually happen. The first draft set both from
+ * `loadSharedPortfolio`, which put a run handle on the portfolio header while
+ * the user was still deciding whether to open it — visible in a screenshot,
+ * invisible to every assertion, because both surfaces did get set.
+ */
+function setImportDialogRun(handle) {
+    const line = document.getElementById('import-run-provenance');
+    if (!line) return;
+    line.textContent = handle
+        ? `Simulated as ${handle} — the same run the report describes.` : '';
+    line.hidden = !handle;
+}
+
+function setImportedRunBadge(handle) {
+    const badge = document.getElementById('importedRunBadge');
+    if (!badge) return;
+    badge.textContent = handle ? `from run ${handle}` : '';
+    badge.hidden = !handle;
+}
+
 function applyImportedPortfolio(data, persist) {
+    setImportedRunBadge(data.handle);
     // Apply global settings
     if (data.settings) {
         global_setInflationRate(data.settings.inflationRate);

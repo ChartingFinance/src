@@ -738,6 +738,7 @@
                     <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Note</label>
                     <textarea class="fin-input w-full mt-1" id="import-note-input" rows="3"></textarea>
                 </div>
+                <div id="import-run-provenance" class="text-xs text-gray-500" hidden></div>
                 <div class="flex gap-3 justify-end">
                     <button class="btn-modern outline" id="btn-import-dismiss">Dismiss</button>
                     <button class="btn-modern outline" id="btn-import-open">Open</button>
@@ -892,6 +893,13 @@
                 <!--<button data-pview="sankey" class="pv-btn">Sankey</button>-->
             </div>
             <span class="badge-phase ml-auto" id="viewingBadge">Viewing: Mar 2026</span>
+            <!--
+              Which run this plan arrived from. Hidden until a shared plan is
+              imported that carries one. It is PROVENANCE, not a live identity:
+              it keeps naming the run the plan came from after the plan is
+              edited, which is why it reads "from run" rather than "run".
+            -->
+            <span class="badge-phase ml-2" id="importedRunBadge" hidden></span>
             <a href="help.html#portfolio" class="text-gray-300 hover:text-gray-500 transition" title="Help" style="font-size: 14px; font-weight: 500; text-decoration: none;">?</a>
         </h2>
 
