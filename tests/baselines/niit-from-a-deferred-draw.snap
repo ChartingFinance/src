@@ -42,6 +42,7 @@
   total.nonQualifiedDividends = 32897.179147
   total.qualifiedDividends = 76760.084676
   total.niit = -3021.647161
+  total.taxTrueUp = -8349.288209
   total.value = 159686166.097519
 
 [assetOrder]
@@ -830,7 +831,7 @@
   0009 assetAppreciation=10488.132485 expense=-6140.950223 incomeTax=-5089.851685 tradIRADistribution=22949.756235 nonQualifiedDividends=370.236675 qualifiedDividends=863.885576 value=2635709.514122
   0010 assetAppreciation=10477.813312 expense=-6156.814344 incomeTax=-5036.976065 tradIRADistribution=22789.426688 nonQualifiedDividends=379.493022 qualifiedDividends=885.483718 value=2636242.608661
   0011 assetAppreciation=10467.768991 expense=-6172.719448 incomeTax=-4984.483190 tradIRADistribution=22630.217221 nonQualifiedDividends=388.722847 qualifiedDividends=907.019976 value=2636832.971645
-  0012 assetAppreciation=10451.644003 expense=-6188.665640 incomeTax=-4852.567677 tradIRADistribution=22472.120009 nonQualifiedDividends=396.731065 qualifiedDividends=925.705819 niit=-506.554319 value=2635643.587945
+  0012 assetAppreciation=10451.644003 expense=-6188.665640 incomeTax=-4852.567677 tradIRADistribution=22472.120009 nonQualifiedDividends=396.731065 qualifiedDividends=925.705819 niit=-506.554319 taxTrueUp=-1399.689565 value=2635643.587945
   0013 assetAppreciation=10442.376827 expense=-6204.653026 incomeTax=-4805.280790 tradIRADistribution=22315.127281 nonQualifiedDividends=405.952271 qualifiedDividends=947.221965 value=2636413.176505
   0014 assetAppreciation=10433.366847 expense=-6220.681713 incomeTax=-4758.335840 tradIRADistribution=22159.231323 nonQualifiedDividends=415.145261 qualifiedDividends=968.672276 value=2637235.273242
   0015 assetAppreciation=10424.612761 expense=-6236.751807 incomeTax=-4711.730469 tradIRADistribution=22004.424471 nonQualifiedDividends=424.310327 qualifiedDividends=990.057429 value=2638109.659874
@@ -842,7 +843,7 @@
   0021 assetAppreciation=10377.390339 expense=-6334.047940 incomeTax=-4439.099343 tradIRADistribution=21098.032211 nonQualifiedDividends=478.730319 qualifiedDividends=1117.037410 value=2644442.081997
   0022 assetAppreciation=10370.391887 expense=-6350.410897 incomeTax=-4394.806340 tradIRADistribution=20950.639014 nonQualifiedDividends=487.707883 qualifiedDividends=1137.985061 value=2645676.544362
   0023 assetAppreciation=10363.639272 expense=-6366.816125 incomeTax=-4350.834630 tradIRADistribution=20804.275522 nonQualifiedDividends=496.659780 qualifiedDividends=1158.872819 value=2646961.617869
-  0024 assetAppreciation=10348.609583 expense=-6383.263734 incomeTax=-4230.239586 tradIRADistribution=20658.934542 nonQualifiedDividends=503.983138 qualifiedDividends=1175.960655 niit=-679.352250 value=2645803.668045
+  0024 assetAppreciation=10348.609583 expense=-6383.263734 incomeTax=-4230.239586 tradIRADistribution=20658.934542 nonQualifiedDividends=503.983138 qualifiedDividends=1175.960655 niit=-679.352250 taxTrueUp=-1877.157533 value=2645803.668045
   0025 assetAppreciation=10342.555273 expense=-6399.753832 incomeTax=-4186.916490 tradIRADistribution=20514.608930 nonQualifiedDividends=512.924074 qualifiedDividends=1196.822840 value=2647252.767214
   0026 assetAppreciation=10336.744291 expense=-6416.286529 incomeTax=-4143.908156 tradIRADistribution=20371.291592 nonQualifiedDividends=521.840368 qualifiedDividends=1217.627525 value=2648752.209306
   0027 assetAppreciation=10331.175461 expense=-6432.861936 incomeTax=-4101.212416 tradIRADistribution=20228.975486 nonQualifiedDividends=530.732289 qualifiedDividends=1238.375340 value=2650301.799817
@@ -854,7 +855,7 @@
   0033 assetAppreciation=10302.782923 expense=-6533.217475 incomeTax=-3851.482991 tradIRADistribution=19395.716392 nonQualifiedDividends=583.586929 qualifiedDividends=1361.702835 value=2660641.788967
   0034 assetAppreciation=10298.876984 expense=-6550.094953 incomeTax=-3810.915990 tradIRADistribution=19260.215762 nonQualifiedDividends=592.315679 qualifiedDividends=1382.069918 value=2662537.119526
   0035 assetAppreciation=10295.204117 expense=-6567.016032 incomeTax=-3770.644782 tradIRADistribution=19125.661755 nonQualifiedDividends=601.022162 qualifiedDividends=1402.385045 value=2664481.105244
-  0036 assetAppreciation=10281.224749 expense=-6583.980823 incomeTax=-3675.065783 tradIRADistribution=18992.047757 nonQualifiedDividends=607.724083 qualifiedDividends=1418.022860 niit=-840.130673 value=2663350.477338
+  0036 assetAppreciation=10281.224749 expense=-6583.980823 incomeTax=-3675.065783 tradIRADistribution=18992.047757 nonQualifiedDividends=607.724083 qualifiedDividends=1418.022860 niit=-840.130673 taxTrueUp=-2321.413702 value=2663350.477338
   0037 assetAppreciation=10278.142939 expense=-6600.989440 incomeTax=-3645.307289 tradIRADistribution=18859.367201 nonQualifiedDividends=616.410914 qualifiedDividends=1438.292133 value=2665419.974039
   0038 assetAppreciation=10275.258554 expense=-6618.041996 incomeTax=-3615.764633 tradIRADistribution=18727.613566 nonQualifiedDividends=625.070148 qualifiedDividends=1458.497013 value=2667527.896516
   0039 assetAppreciation=10272.570598 expense=-6635.138605 incomeTax=-3586.436324 tradIRADistribution=18596.780377 nonQualifiedDividends=633.702051 qualifiedDividends=1478.638118 value=2669674.091579
@@ -866,7 +867,7 @@
   0045 assetAppreciation=10260.513061 expense=-6738.649750 incomeTax=-3414.885599 tradIRADistribution=17830.753626 nonQualifiedDividends=684.934112 qualifiedDividends=1598.179594 value=2683346.564601
   0046 assetAppreciation=10259.172859 expense=-6756.057929 incomeTax=-3387.016853 tradIRADistribution=17706.186000 nonQualifiedDividends=693.381965 qualifiedDividends=1617.891251 value=2685756.482744
   0047 assetAppreciation=10258.021389 expense=-6773.511079 incomeTax=-3359.350900 tradIRADistribution=17582.488617 nonQualifiedDividends=701.804543 qualifiedDividends=1637.543935 value=2688203.492396
-  0048 assetAppreciation=10244.568930 expense=-6791.009315 incomeTax=-3299.427208 tradIRADistribution=17459.655398 nonQualifiedDividends=707.852644 qualifiedDividends=1651.656170 niit=-995.609919 value=2686952.952848
+  0048 assetAppreciation=10244.568930 expense=-6791.009315 incomeTax=-3299.427208 tradIRADistribution=17459.655398 nonQualifiedDividends=707.852644 qualifiedDividends=1651.656170 niit=-995.609919 taxTrueUp=-2751.027409 value=2686952.952848
   0049 assetAppreciation=10243.832606 expense=-6808.552756 incomeTax=-3272.164480 tradIRADistribution=17337.680306 nonQualifiedDividends=716.233035 qualifiedDividends=1671.210416 value=2689485.922907
   0050 assetAppreciation=10243.282459 expense=-6826.141518 incomeTax=-3245.100386 tradIRADistribution=17216.557345 nonQualifiedDividends=724.588937 qualifiedDividends=1690.707519 value=2692055.625720
   0051 assetAppreciation=10242.917584 expense=-6843.775716 incomeTax=-3218.233556 tradIRADistribution=17096.280562 nonQualifiedDividends=732.920594 qualifiedDividends=1710.148054 value=2694661.922926

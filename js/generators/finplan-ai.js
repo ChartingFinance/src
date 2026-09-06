@@ -373,43 +373,54 @@ export function generateReportsSectionMarkdown(portfolio, included = null) {
 
     // Tax summary from portfolio total.
     //
-    // These rows must EXHAUST totalTaxes(). NIIT was missing here from the day
-    // spec 8 shipped it: `federalTaxes()` added it, the Total included it, and
-    // no row named it — so on the preRetirement profile the five itemised rows
-    // summed to $702,722 under a $704,001 Total and the $1,279 gap was the
-    // surtax, sitting in the table with no label. Same defect the rest of spec 8
-    // kept producing: the money moves, the total is right, and the number is
-    // reported nowhere a reader can see it.
+    // Every row is rendered as MINUS the stored value, not Math.abs() of it.
     //
-    // `estimatedTaxes` is the other component, and it is NOT dead. Two live
-    // sites in expense-engine book it when the funding backstop grosses up a
-    // withdrawal that realized a gain (the third site, the per-asset annual
-    // charge, is the commented-out one). It arrives POSITIVE into a package
-    // whose taxes are negative — so federalTaxes() adding it SUBTRACTS from the
-    // tax owed, while the per-asset Metric.ESTIMATED_INCOME_TAX gets the flipped
-    // copy. Whether that is an offset against double-counting the same gain or a
-    // sign inversion is not settled here, so this table shows the number with the
-    // sign it actually contributes rather than asserting a reading of it. It is
-    // omitted when zero, which is every built-in profile.
+    // That is the whole convention made visible. Tax fields are stored negative
+    // — money leaving — so negating gives the cost, and the rows then sum to the
+    // Total by construction rather than by coincidence. Math.abs() would render
+    // a field with the WRONG sign as though it were right, which is exactly how
+    // `estimatedTaxes` spent the life of the feature reporting a positive number
+    // into a negative-signed total and quietly SHRINKING the reported tax bill
+    // as more money was withheld.
+    //
+    // So a negative row here is information, not a formatting bug: it means a
+    // credit. `Tax True-Up` is legitimately negative in a year the household was
+    // refunded more than it paid.
     //
     // tests/niit-visibility.mjs asserts these rows sum to the Total, so a
-    // component added to federalTaxes() and not to this table fails there rather
-    // than silently reappearing as an unexplained gap.
+    // component added to federalTaxes() and not to this table fails there.
     const total = portfolio.total;
     if (total) {
-        md += `## Lifetime Tax Summary\n`;
-        md += `| Category | Amount |\n`;
-        md += `| :--- | ---: |\n`;
-        md += `| Income Tax | ${fmt(Math.abs(total.incomeTax.amount))} |\n`;
-        md += `| SS Tax | ${fmt(Math.abs(total.socialSecurityTax.amount))} |\n`;
-        md += `| Medicare Tax | ${fmt(Math.abs(total.medicareTax.amount))} |\n`;
-        md += `| LT Capital Gains Tax | ${fmt(Math.abs(total.longTermCapitalGainsTax.amount))} |\n`;
-        md += `| NIIT | ${fmt(Math.abs(total.niit.amount))} |\n`;
+        const cost = (c) => fmt(-(c?.amount ?? 0));
+        md += `## Lifetime Tax Summary
+`;
+        md += `| Category | Amount |
+`;
+        md += `| :--- | ---: |
+`;
+        md += `| Income Tax | ${cost(total.incomeTax)} |
+`;
+        md += `| SS Tax | ${cost(total.socialSecurityTax)} |
+`;
+        md += `| Medicare Tax | ${cost(total.medicareTax)} |
+`;
+        md += `| LT Capital Gains Tax | ${cost(total.longTermCapitalGainsTax)} |
+`;
+        md += `| NIIT | ${cost(total.niit)} |
+`;
         if (Math.abs(total.estimatedTaxes.amount) >= 0.005) {
-            md += `| Estimated Taxes | ${fmt(-total.estimatedTaxes.amount)} |\n`;
+            md += `| Withheld on Gains | ${cost(total.estimatedTaxes)} |
+`;
         }
-        md += `| Property Taxes | ${fmt(Math.abs(total.propertyTaxes.amount))} |\n`;
-        md += `| **Total** | **${fmt(Math.abs(total.totalTaxes().amount))}** |\n\n`;
+        if (Math.abs(total.taxTrueUp.amount) >= 0.005) {
+            md += `| Annual True-Up | ${cost(total.taxTrueUp)} |
+`;
+        }
+        md += `| Property Taxes | ${cost(total.propertyTaxes)} |
+`;
+        md += `| **Total** | **${cost(total.totalTaxes())}** |
+
+`;
     }
 
     // Yearly cash flow from reports.

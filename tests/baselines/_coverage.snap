@@ -29,6 +29,7 @@
   propertyTaxEscrow
   settlement
   spillover
+  taxProvision
   taxTrueUp
   transfer
   unfunded
@@ -71,6 +72,7 @@
     interestIncome
     oneTime
     spillover
+    taxProvision
     taxTrueUp
     transfer
   gain-harvest-under-the-deduction:
@@ -91,6 +93,7 @@
     incomeTaxWithholding
     interestIncome
     spillover
+    taxProvision
     taxTrueUp
     transfer
   housing-carrying-costs:

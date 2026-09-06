@@ -99,6 +99,15 @@ export const EventType = Object.freeze({
     SETTLEMENT:              'settlement',        // one-sided draw; data: { from, to, label }
     SPILLOVER:               'spillover',         // data: { depleted }
     GROSS_UP:                'grossUp',           // data: { forAsset, overflow: boolean }
+
+    // The part of a GROSS_UP that was withdrawn to cover capital-gains tax
+    // rather than to pay the obligation. No cash moves for this event — the
+    // money already left under the GROSS_UP above — it names a portion of that
+    // draw so the provision is answerable instead of implicit. It exists
+    // because the provision used to be recorded only when a gain was realized
+    // while being WITHDRAWN unconditionally, so the books under-counted their
+    // own damage by an amount nothing could see. data: { forAsset }
+    TAX_PROVISION:           'taxProvision',
     ONE_TIME:                'oneTime',           // data: { note }
 
     // ── Engine reports (no money moved) ──
@@ -217,6 +226,9 @@ export function renderNote(event) {
         case EventType.INCOME_TAX_WITHHOLDING:  return 'Income tax withholding';
         case EventType.CAPITAL_GAINS_TAX:       return 'Capital gains tax withholding';
         case EventType.TAX_TRUE_UP:             return `Annual tax true-up (${d.direction})`;
+        case EventType.TAX_PROVISION:           return d.forAsset
+            ? `Withheld for capital gains tax on the draw for ${d.forAsset}`
+            : 'Withheld for capital gains tax on this draw';
         // Says WHICH side of the min bound, because that is the whole
         // question a reader has: too much investment income, or too much
         // total income? No currency formatting — this module imports

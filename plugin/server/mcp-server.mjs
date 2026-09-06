@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.2.9; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.3.0; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -31928,6 +31928,14 @@ var EventType = Object.freeze({
   // data: { depleted }
   GROSS_UP: "grossUp",
   // data: { forAsset, overflow: boolean }
+  // The part of a GROSS_UP that was withdrawn to cover capital-gains tax
+  // rather than to pay the obligation. No cash moves for this event — the
+  // money already left under the GROSS_UP above — it names a portion of that
+  // draw so the provision is answerable instead of implicit. It exists
+  // because the provision used to be recorded only when a gain was realized
+  // while being WITHDRAWN unconditionally, so the books under-counted their
+  // own damage by an amount nothing could see. data: { forAsset }
+  TAX_PROVISION: "taxProvision",
   ONE_TIME: "oneTime",
   // data: { note }
   // ── Engine reports (no money moved) ──
@@ -32018,6 +32026,8 @@ function renderNote(event) {
       return "Capital gains tax withholding";
     case EventType.TAX_TRUE_UP:
       return `Annual tax true-up (${d.direction})`;
+    case EventType.TAX_PROVISION:
+      return d.forAsset ? `Withheld for capital gains tax on the draw for ${d.forAsset}` : "Withheld for capital gains tax on this draw";
     // Says WHICH side of the min bound, because that is the whole
     // question a reader has: too much investment income, or too much
     // total income? No currency formatting — this module imports
@@ -33588,6 +33598,7 @@ var FINANCIAL_FIELDS = [
   "interestIncome",
   "longTermCapitalGainsTax",
   "niit",
+  "taxTrueUp",
   "value"
 ];
 var FinancialPackage = class _FinancialPackage {
@@ -33726,6 +33737,7 @@ var FinancialPackage = class _FinancialPackage {
     taxes.add(this.longTermCapitalGainsTax);
     taxes.add(this.estimatedTaxes);
     taxes.add(this.niit);
+    taxes.add(this.taxTrueUp);
     return taxes;
   }
   saltTaxes() {
@@ -33830,6 +33842,7 @@ var FinancialPackage = class _FinancialPackage {
     logger.log(category, "  longTermCapitalGainsTax:   " + this.longTermCapitalGainsTax.toString());
     logger.log(category, "  estimatedTaxes:            " + this.estimatedTaxes.toString());
     logger.log(category, "  niit:                      " + this.niit.toString());
+    logger.log(category, "  taxTrueUp:                 " + this.taxTrueUp.toString());
     logger.log(category, "State/Local taxes:           " + this.saltTaxes().toString());
     logger.log(category, "  propertyTaxes:             " + this.propertyTaxes.toString());
     logger.log(category, "contributions:               " + this.contributions().toString());
@@ -34342,11 +34355,11 @@ var ExpenseEngine = class {
             grossWithdrawal,
             { type: EventType.GROSS_UP, data: { forAsset: modelAsset.displayName, overflow: true } }
           );
-          if (settled.realizedGain && settled.realizedGain.amount > 0) {
-            const taxLiability = new Currency(grossWithdrawal.amount - netShortfall.amount);
-            this.monthly.estimatedTaxes.add(taxLiability);
-            targetAsset.addToMetric(Metric.ESTIMATED_INCOME_TAX, taxLiability.copy().flipSign());
-          }
+          this.#bookTaxProvision(
+            targetAsset,
+            modelAsset,
+            grossWithdrawal.amount - netShortfall.amount
+          );
         } else {
           FundTransfer.reportUnfunded(modelAsset, netShortfall, "expense overflow", ShortfallOrigin.STANDALONE);
         }
@@ -34363,11 +34376,11 @@ var ExpenseEngine = class {
           grossWithdrawal,
           { type: EventType.GROSS_UP, data: { forAsset: modelAsset.displayName, overflow: false } }
         );
-        if (settled.realizedGain && settled.realizedGain.amount > 0) {
-          const taxLiability = new Currency(grossWithdrawal.amount - netShortfall.amount);
-          this.monthly.estimatedTaxes.add(taxLiability);
-          targetAsset.addToMetric(Metric.ESTIMATED_INCOME_TAX, taxLiability.copy().flipSign());
-        }
+        this.#bookTaxProvision(
+          targetAsset,
+          modelAsset,
+          grossWithdrawal.amount - netShortfall.amount
+        );
       } else {
         FundTransfer.reportUnfunded(modelAsset, netShortfall, "expense", ShortfallOrigin.STANDALONE);
       }
@@ -34566,6 +34579,39 @@ var ExpenseEngine = class {
       this.monthly.recordTransfer(settled.spilloverInstrument, settled.spillover, settled.spilloverGain);
     }
     return settled;
+  }
+  /**
+   * Record the part of a gross-up that was withdrawn to cover tax.
+   *
+   * ── Two things this fixes, both of them sign-shaped ──────────────
+   *
+   * It is booked NEGATIVE, like every other tax field. It used to be positive,
+   * alone among them, which meant `federalTaxes()` — the number the report
+   * shows and effectiveTaxRate() divides by — got SMALLER as more money was
+   * withheld. On one measured plan it reported $87,662 of federal tax against
+   * $136,053 actually charged. Nothing failed, because the only other reader
+   * defended itself with Math.abs(); see TaxEngine.applyAnnualTaxTrueUp, where
+   * that call has been removed so this sign is now load-bearing arithmetic
+   * rather than a display convention.
+   *
+   * And it is recorded whether or not a gain was realized. The old guard was
+   * `realizedGain > 0` while the WITHDRAWAL had no guard at all, so a draw that
+   * realized nothing still took a premium and booked none of it — the field
+   * under-counted its own damage, and a scoping pass over it found two
+   * affected fixtures when the answer was four. The premium is now zero in
+   * that case by construction (see calculateGrossWithdrawal), and if it ever
+   * stops being zero this records it instead of hiding it.
+   */
+  #bookTaxProvision(fundingAsset, forAsset, premiumAmount) {
+    if (!(premiumAmount > 5e-3)) return;
+    const provision = new Currency(premiumAmount).flipSign();
+    this.monthly.estimatedTaxes.add(provision);
+    fundingAsset.addToMetric(Metric.ESTIMATED_INCOME_TAX, provision.copy());
+    fundingAsset.recordEvent(
+      EventType.TAX_PROVISION,
+      provision.copy(),
+      { data: { forAsset: forAsset.displayName } }
+    );
   }
   calculateGrossWithdrawal(netShortfall, modelAsset) {
     if (!InstrumentType.isTaxableAccount(modelAsset.instrument)) return netShortfall.copy();
@@ -35035,6 +35081,22 @@ var TaxEngine = class {
    * through this.yearly. Grossing up here would tax it twice. See
    * markdowns/tax-allocation-spec.md section 3.2.1.
    */
+  /**
+   * Tell the household package what the annual settlement did.
+   *
+   * Every site below settles cash against an ACCOUNT and updates a per-asset
+   * metric. None of them used to touch the package, in either direction, so
+   * `federalTaxes()` reported the same number for a household that paid an
+   * April bill, one that got a refund, and one that did neither. Routed
+   * through here so there is one place to look and one convention to keep:
+   * NEGATIVE when the household paid, POSITIVE when it was refunded.
+   */
+  #bookTrueUp(amount, direction) {
+    if (!(Math.abs(amount?.amount ?? 0) > 5e-3)) return;
+    const signed = new Currency(Math.abs(amount.amount));
+    if (direction === "underpayment") signed.flipSign();
+    this.monthly.taxTrueUp.add(signed);
+  }
   #settleAllocatedLeg(leg, eventType, metric, extraData = {}) {
     const { modelAsset, amount, share } = leg;
     const draw = new Currency(amount);
@@ -35182,7 +35244,7 @@ var TaxEngine = class {
       yearlyCapitalGains
     );
     const totalActualTax = actualIncomeTax.amount + actualCapitalGainsTax.amount;
-    const totalWithheld = Math.abs(this.yearly.incomeTax.amount) + Math.abs(this.yearly.estimatedTaxes.amount) + Math.abs(this.yearly.longTermCapitalGainsTax.amount);
+    const totalWithheld = -(this.yearly.incomeTax.amount + this.yearly.estimatedTaxes.amount + this.yearly.longTermCapitalGainsTax.amount);
     const taxDifference = totalActualTax - totalWithheld;
     if (Math.abs(taxDifference) < 1) return;
     const referenceHistory = this.modelAssets[0]?.getHistory(Metric.VALUE) ?? [];
@@ -35195,12 +35257,16 @@ var TaxEngine = class {
       if (legs.length > 0) {
         logger.log(LogCategory.TAX, `Annual True-Up: Underpaid by $${taxDifference.toFixed(0)}. Allocating across ${legs.length} account(s) by income share.`);
         for (const leg of legs) {
-          this.#settleAllocatedLeg(
+          const settled = this.#settleAllocatedLeg(
             leg,
             EventType.TAX_TRUE_UP,
             Metric.ESTIMATED_INCOME_TAX,
             { direction: "underpayment" }
           );
+          this.#bookTrueUp(settled.supplied, "underpayment");
+          if (settled.spilloverInstrument) {
+            this.#bookTrueUp(settled.spillover, "underpayment");
+          }
         }
         return;
       }
@@ -35216,6 +35282,7 @@ var TaxEngine = class {
             data: { direction: "refund", basis: "proportional", share: leg.share }
           });
           leg.modelAsset.addToMetric(Metric.ESTIMATED_INCOME_TAX, credit);
+          this.#bookTrueUp(credit, "refund");
         }
         return;
       }
@@ -35237,6 +35304,7 @@ var TaxEngine = class {
             data: { direction: "refund", basis: "backstop" }
           });
           target.addToMetric(Metric.ESTIMATED_INCOME_TAX, refund);
+          this.#bookTrueUp(refund, "refund");
           logger.log(
             LogCategory.TAX,
             `Annual True-Up: Overpaid by $${refund.amount.toFixed(0)}. Crediting ${target.displayName}.`
@@ -35261,6 +35329,8 @@ var TaxEngine = class {
         this.modelAssets
       );
       liquidAsset.addToMetric(Metric.ESTIMATED_INCOME_TAX, settled.supplied.copy().flipSign());
+      this.#bookTrueUp(settled.supplied, "underpayment");
+      if (settled.spilloverInstrument) this.#bookTrueUp(settled.spillover, "underpayment");
       this.monthly.recordTransfer(liquidAsset.instrument, settled.supplied, settled.realizedGain);
       if (settled.spillover.amount > 0 && settled.spilloverInstrument) {
         this.monthly.recordTransfer(settled.spilloverInstrument, settled.spillover, settled.spilloverGain);
@@ -35272,6 +35342,7 @@ var TaxEngine = class {
       logger.log(LogCategory.TAX, `Annual True-Up: Overpaid by $${Math.abs(taxDifference).toFixed(0)}. Refunding to ${liquidAsset.displayName}.`);
       liquidAsset.credit(taxRefund, { type: EventType.TAX_TRUE_UP, data: { direction: "refund" } });
       liquidAsset.addToMetric(Metric.ESTIMATED_INCOME_TAX, taxRefund);
+      this.#bookTrueUp(taxRefund, "refund");
     }
   }
 };
@@ -35408,6 +35479,10 @@ var EVENT_RECONCILIATION = Object.freeze({
   [EventType.GROSS_UP]: "oneSided",
   [EventType.ONE_TIME]: "oneSided",
   [EventType.TAX_TRUE_UP]: "oneSided",
+  // Info-only, and it MUST be: the cash it describes already reconciled as
+  // part of the GROSS_UP that carried it. Counting it again would book the
+  // same dollars twice.
+  [EventType.TAX_PROVISION]: "excluded",
   [EventType.NIIT_ASSESSED]: "oneSided",
   // Info-kind: no money moved, so they reach neither total. Routed here
   // rather than to `excluded` so the kind guard stays the thing that
@@ -40144,29 +40219,34 @@ No simulation has been run yet.
 `;
   const total = portfolio.total;
   if (total) {
+    const cost = (c) => fmt(-(c?.amount ?? 0));
     md += `## Lifetime Tax Summary
 `;
     md += `| Category | Amount |
 `;
     md += `| :--- | ---: |
 `;
-    md += `| Income Tax | ${fmt(Math.abs(total.incomeTax.amount))} |
+    md += `| Income Tax | ${cost(total.incomeTax)} |
 `;
-    md += `| SS Tax | ${fmt(Math.abs(total.socialSecurityTax.amount))} |
+    md += `| SS Tax | ${cost(total.socialSecurityTax)} |
 `;
-    md += `| Medicare Tax | ${fmt(Math.abs(total.medicareTax.amount))} |
+    md += `| Medicare Tax | ${cost(total.medicareTax)} |
 `;
-    md += `| LT Capital Gains Tax | ${fmt(Math.abs(total.longTermCapitalGainsTax.amount))} |
+    md += `| LT Capital Gains Tax | ${cost(total.longTermCapitalGainsTax)} |
 `;
-    md += `| NIIT | ${fmt(Math.abs(total.niit.amount))} |
+    md += `| NIIT | ${cost(total.niit)} |
 `;
     if (Math.abs(total.estimatedTaxes.amount) >= 5e-3) {
-      md += `| Estimated Taxes | ${fmt(-total.estimatedTaxes.amount)} |
+      md += `| Withheld on Gains | ${cost(total.estimatedTaxes)} |
 `;
     }
-    md += `| Property Taxes | ${fmt(Math.abs(total.propertyTaxes.amount))} |
+    if (Math.abs(total.taxTrueUp.amount) >= 5e-3) {
+      md += `| Annual True-Up | ${cost(total.taxTrueUp)} |
 `;
-    md += `| **Total** | **${fmt(Math.abs(total.totalTaxes().amount))}** |
+    }
+    md += `| Property Taxes | ${cost(total.propertyTaxes)} |
+`;
+    md += `| **Total** | **${cost(total.totalTaxes())}** |
 
 `;
   }

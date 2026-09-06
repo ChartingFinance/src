@@ -37,6 +37,7 @@
   total.tradIRADistribution = 862607.745340
   total.four01KDistribution = 4668197.652761
   total.rothIRADistribution = 538224.492683
+  total.taxTrueUp = 702.051256
   total.value = 3579984684.034179
 
 [assetOrder]
@@ -11622,7 +11623,7 @@
   0129 socialSecurityIncome=5100.000000 assetAppreciation=25282.680633 expense=-7671.931310 incomeTax=-385.172402 four01KDistribution=2983.528843 rothIRADistribution=1150.789697 value=3591625.376592
   0130 socialSecurityIncome=5100.000000 assetAppreciation=25440.679751 expense=-7691.750466 incomeTax=-386.097296 four01KDistribution=2991.236292 rothIRADistribution=1153.762570 value=3614068.338226
   0131 socialSecurityIncome=5100.000000 assetAppreciation=25599.650729 expense=-7711.620821 incomeTax=-387.024579 four01KDistribution=2998.963653 rothIRADistribution=1156.743123 value=3636649.421867
-  0132 socialSecurityIncome=5227.500000 assetAppreciation=25765.476060 expense=-7731.542508 incomeTax=-385.674675 four01KDistribution=3006.710976 rothIRADistribution=1159.731376 value=3660334.758848
+  0132 socialSecurityIncome=5227.500000 assetAppreciation=25765.476060 expense=-7731.542508 incomeTax=-385.674675 four01KDistribution=3006.710976 rothIRADistribution=1159.731376 taxTrueUp=702.051256 value=3660334.758848
   0133 socialSecurityIncome=5227.500000 assetAppreciation=25927.371209 expense=-7751.515660 incomeTax=-386.606755 four01KDistribution=3014.478312 rothIRADistribution=1162.727349 value=3683331.482892
   0134 socialSecurityIncome=5227.500000 assetAppreciation=26090.264670 expense=-7771.540409 incomeTax=-387.541244 four01KDistribution=3022.265715 rothIRADistribution=1165.731061 value=3706470.089431
   0135 socialSecurityIncome=5227.500000 assetAppreciation=26254.163133 expense=-7791.616888 incomeTax=-388.478146 four01KDistribution=3030.073234 rothIRADistribution=1168.742533 value=3729751.529187

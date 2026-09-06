@@ -36,6 +36,7 @@
   total.incomeTax = -22651.918400
   total.tradIRADistribution = 132408.291129
   total.longTermCapitalGains = 188963.825569
+  total.taxTrueUp = -15291.266447
   total.value = 61208176.214894
 
 [assetOrder]
@@ -899,7 +900,7 @@
   0009 socialSecurityIncome=3000.000000 assetAppreciation=2501.384033 expense=-7164.441927 incomeTax=-393.227076 tradIRADistribution=2240.781189 longTermCapitalGains=2875.901159 value=1078026.551135
   0010 socialSecurityIncome=3000.000000 assetAppreciation=2502.213973 expense=-7182.950068 incomeTax=-393.227076 tradIRADistribution=2240.781189 longTermCapitalGains=2884.522020 value=1075934.032009
   0011 socialSecurityIncome=3000.000000 assetAppreciation=2502.955283 expense=-7201.506023 incomeTax=-393.227076 tradIRADistribution=2240.781189 longTermCapitalGains=2893.178516 value=1073823.650303
-  0012 socialSecurityIncome=3000.000000 assetAppreciation=2485.080312 expense=-7220.109913 incomeTax=-386.256377 tradIRADistribution=2229.622588 longTermCapitalGains=4194.723274 value=1067978.318589
+  0012 socialSecurityIncome=3000.000000 assetAppreciation=2485.080312 expense=-7220.109913 incomeTax=-386.256377 tradIRADistribution=2229.622588 longTermCapitalGains=4194.723274 taxTrueUp=-3705.393786 value=1067978.318589
   0013 socialSecurityIncome=3000.000000 assetAppreciation=2485.528735 expense=-7238.761864 incomeTax=-386.256377 tradIRADistribution=2229.622588 longTermCapitalGains=2921.153760 value=1065820.128948
   0014 socialSecurityIncome=3000.000000 assetAppreciation=2485.885900 expense=-7257.461999 incomeTax=-386.256377 tradIRADistribution=2229.622588 longTermCapitalGains=2929.814910 value=1063643.548029
   0015 socialSecurityIncome=3000.000000 assetAppreciation=2486.151108 expense=-7276.210442 incomeTax=-386.256377 tradIRADistribution=2229.622588 longTermCapitalGains=2938.510329 value=1061448.435441
@@ -911,7 +912,7 @@
   0021 socialSecurityIncome=3000.000000 assetAppreciation=2485.771674 expense=-7389.722597 incomeTax=-386.256377 tradIRADistribution=2229.622588 longTermCapitalGains=2991.385784 value=1047880.628264
   0022 socialSecurityIncome=3000.000000 assetAppreciation=2485.373300 expense=-7408.812713 incomeTax=-386.256377 tradIRADistribution=2229.622588 longTermCapitalGains=3000.312621 value=1045551.793041
   0023 socialSecurityIncome=3000.000000 assetAppreciation=2484.877237 expense=-7427.952146 incomeTax=-386.256377 tradIRADistribution=2229.622588 longTermCapitalGains=3009.271242 value=1043203.272878
-  0024 socialSecurityIncome=3000.000000 assetAppreciation=2464.345683 expense=-7447.141023 incomeTax=-377.983589 tradIRADistribution=2209.068090 longTermCapitalGains=4489.929701 value=1036835.842313
+  0024 socialSecurityIncome=3000.000000 assetAppreciation=2464.345683 expense=-7447.141023 incomeTax=-377.983589 tradIRADistribution=2209.068090 longTermCapitalGains=4489.929701 taxTrueUp=-3987.413189 value=1036835.842313
   0025 socialSecurityIncome=3000.000000 assetAppreciation=2463.490937 expense=-7466.379470 incomeTax=-377.983589 tradIRADistribution=2209.068090 longTermCapitalGains=3038.358260 value=1034435.682043
   0026 socialSecurityIncome=3000.000000 assetAppreciation=2462.535476 expense=-7485.667617 incomeTax=-377.983589 tradIRADistribution=2209.068090 longTermCapitalGains=3047.345793 value=1032015.228338
   0027 socialSecurityIncome=3000.000000 assetAppreciation=2461.478548 expense=-7505.005592 incomeTax=-377.983589 tradIRADistribution=2209.068090 longTermCapitalGains=3056.363086 value=1029574.329773
@@ -923,7 +924,7 @@
   0033 socialSecurityIncome=3000.000000 assetAppreciation=2452.963458 expense=-7622.087054 incomeTax=-377.983589 tradIRADistribution=2209.068090 longTermCapitalGains=3111.070292 value=1014491.004361
   0034 socialSecurityIncome=3000.000000 assetAppreciation=2451.174811 expense=-7641.777445 incomeTax=-377.983589 tradIRADistribution=2209.068090 longTermCapitalGains=3120.284988 value=1011902.676879
   0035 socialSecurityIncome=3000.000000 assetAppreciation=2449.278514 expense=-7661.518704 incomeTax=-377.983589 tradIRADistribution=2209.068090 longTermCapitalGains=3129.526230 value=1009292.660844
-  0036 socialSecurityIncome=3000.000000 assetAppreciation=2427.891755 expense=-7681.310960 incomeTax=-369.453575 tradIRADistribution=2187.869992 longTermCapitalGains=4526.944200 value=1002773.540929
+  0036 socialSecurityIncome=3000.000000 assetAppreciation=2427.891755 expense=-7681.310960 incomeTax=-369.453575 tradIRADistribution=2187.869992 longTermCapitalGains=4526.944200 taxTrueUp=-3876.403748 value=1002773.540929
   0037 socialSecurityIncome=3000.000000 assetAppreciation=2425.617525 expense=-7701.154347 incomeTax=-369.453575 tradIRADistribution=2187.869992 longTermCapitalGains=3159.697117 value=1000108.655882
   0038 socialSecurityIncome=3000.000000 assetAppreciation=2423.232449 expense=-7721.048996 incomeTax=-369.453575 tradIRADistribution=2187.869992 longTermCapitalGains=3168.950658 value=997421.439717
   0039 socialSecurityIncome=3000.000000 assetAppreciation=2420.735718 expense=-7740.995039 incomeTax=-369.453575 tradIRADistribution=2187.869992 longTermCapitalGains=3178.228187 value=994711.729251
@@ -935,7 +936,7 @@
   0045 socialSecurityIncome=3000.000000 assetAppreciation=2403.364541 expense=-7861.758042 incomeTax=-369.453575 tradIRADistribution=2187.869992 longTermCapitalGains=3234.368882 value=977971.827663
   0046 socialSecurityIncome=3000.000000 assetAppreciation=2400.063108 expense=-7882.067584 incomeTax=-369.453575 tradIRADistribution=2187.869992 longTermCapitalGains=3243.799992 value=975100.007604
   0047 socialSecurityIncome=3000.000000 assetAppreciation=2396.643358 expense=-7902.429592 incomeTax=-369.453575 tradIRADistribution=2187.869992 longTermCapitalGains=3253.250861 value=972204.353185
-  0048 socialSecurityIncome=3000.000000 assetAppreciation=2374.494157 expense=-7922.844201 incomeTax=-360.654933 tradIRADistribution=2165.979770 longTermCapitalGains=4541.477515 value=965552.825135
+  0048 socialSecurityIncome=3000.000000 assetAppreciation=2374.494157 expense=-7922.844201 incomeTax=-360.654933 tradIRADistribution=2165.979770 longTermCapitalGains=4541.477515 taxTrueUp=-3722.055725 value=965552.825135
   0049 socialSecurityIncome=3000.000000 assetAppreciation=2370.676694 expense=-7943.311549 incomeTax=-360.654933 tradIRADistribution=2165.979770 longTermCapitalGains=3284.461795 value=962599.015125
   0050 socialSecurityIncome=3000.000000 assetAppreciation=2366.737543 expense=-7963.831770 incomeTax=-360.654933 tradIRADistribution=2165.979770 longTermCapitalGains=3293.903675 value=959620.692732
   0051 socialSecurityIncome=3000.000000 assetAppreciation=2362.675830 expense=-7984.405002 incomeTax=-360.654933 tradIRADistribution=2165.979770 longTermCapitalGains=3303.362028 value=956617.682247

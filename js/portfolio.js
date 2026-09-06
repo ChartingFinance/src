@@ -86,6 +86,11 @@ export const EVENT_RECONCILIATION = Object.freeze({
     [EventType.GROSS_UP]:                'oneSided',
     [EventType.ONE_TIME]:                'oneSided',
     [EventType.TAX_TRUE_UP]:             'oneSided',
+
+    // Info-only, and it MUST be: the cash it describes already reconciled as
+    // part of the GROSS_UP that carried it. Counting it again would book the
+    // same dollars twice.
+    [EventType.TAX_PROVISION]:           'excluded',
     [EventType.NIIT_ASSESSED]:           'oneSided',
 
     // Info-kind: no money moved, so they reach neither total. Routed here
