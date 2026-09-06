@@ -45,6 +45,7 @@ const DATA = {
   [EventType.SETTLEMENT]:              { from: 'Checking', to: 'Living', label: 'Living' },
   [EventType.SPILLOVER]:               { depleted: 'Checking' },
   [EventType.GROSS_UP]:                { forAsset: 'IRA', overflow: false },
+  [EventType.TAX_PROVISION]:           { forAsset: 'Living' },
   [EventType.ONE_TIME]:                { note: 'Windfall' },
   [EventType.UNFUNDED]:                { cause: 'Living', origin: 'oneSided' },
   [EventType.CONTRIBUTION_CAPPED]:     { limitName: '401(k)' },

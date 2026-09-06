@@ -204,6 +204,14 @@ function stage0(profile, built, rawAssets) {
 // engine was already collecting. PURELY ADDITIVE — every pre-existing value is
 // byte-identical, verified by stripping the new lines and comparing literals,
 // and all 16 new entries are 0.00 because no profile owes NIIT by month 13.
+// Extended 2026-09-05 by the estimatedTaxes sign fix: FinancialPackage gained a
+// `taxTrueUp` field, because the annual true-up settled cash against the
+// accounts in BOTH directions and told the household package about neither, so
+// federalTaxes() reported the same number whether a plan paid an April bill,
+// received a refund, or did neither. PURELY ADDITIVE — all 742 pre-existing
+// lines are byte-identical, verified by stripping the new field and comparing
+// literals line by line, and 12 of the 16 new entries are 0.00 because most
+// profiles have not settled a year by month 13.
 const EXPECTED = {
   earlyCareer: {
     month1: {
@@ -248,6 +256,7 @@ const EXPECTED = {
         interestIncome: 0.00,
         longTermCapitalGainsTax: 0.00,
         niit: 0.00,
+        taxTrueUp: 0.00,
         value: 155095.27,
       },
     },
@@ -293,6 +302,7 @@ const EXPECTED = {
         interestIncome: 0.00,
         longTermCapitalGainsTax: 0.00,
         niit: 0.00,
+        taxTrueUp: 512.27,
         value: 176855.53,
       },
     },
@@ -340,6 +350,7 @@ const EXPECTED = {
         interestIncome: 0.00,
         longTermCapitalGainsTax: 0.00,
         niit: 0.00,
+        taxTrueUp: 0.00,
         value: 286644.98,
       },
     },
@@ -385,6 +396,7 @@ const EXPECTED = {
         interestIncome: 0.00,
         longTermCapitalGainsTax: 0.00,
         niit: 0.00,
+        taxTrueUp: 646.80,
         value: 320938.58,
       },
     },
@@ -430,6 +442,7 @@ const EXPECTED = {
         interestIncome: 0.00,
         longTermCapitalGainsTax: 0.00,
         niit: 0.00,
+        taxTrueUp: 0.00,
         value: 660286.34,
       },
     },
@@ -473,6 +486,7 @@ const EXPECTED = {
         interestIncome: 0.00,
         longTermCapitalGainsTax: 0.00,
         niit: 0.00,
+        taxTrueUp: 0.00,
         value: 745016.25,
       },
     },
@@ -518,6 +532,7 @@ const EXPECTED = {
         interestIncome: 0.00,
         longTermCapitalGainsTax: 0.00,
         niit: 0.00,
+        taxTrueUp: 0.00,
         value: 1058190.11,
       },
     },
@@ -561,6 +576,7 @@ const EXPECTED = {
         interestIncome: 0.00,
         longTermCapitalGainsTax: 0.00,
         niit: 0.00,
+        taxTrueUp: 0.00,
         value: 1151546.17,
       },
     },
@@ -611,6 +627,7 @@ const EXPECTED = {
         interestIncome: 0.00,
         longTermCapitalGainsTax: 0.00,
         niit: 0.00,
+        taxTrueUp: 0.00,
         value: 209710.87,
       },
     },
@@ -659,6 +676,7 @@ const EXPECTED = {
         interestIncome: 0.00,
         longTermCapitalGainsTax: 0.00,
         niit: 0.00,
+        taxTrueUp: 1126.98,
         value: 266564.38,
       },
     },
@@ -708,6 +726,7 @@ const EXPECTED = {
         interestIncome: 0.00,
         longTermCapitalGainsTax: 0.00,
         niit: 0.00,
+        taxTrueUp: 0.00,
         value: 629254.13,
       },
     },
@@ -755,6 +774,7 @@ const EXPECTED = {
         interestIncome: 0.00,
         longTermCapitalGainsTax: 0.00,
         niit: 0.00,
+        taxTrueUp: 1609.98,
         value: 739197.48,
       },
     },
@@ -803,6 +823,7 @@ const EXPECTED = {
         interestIncome: 0.00,
         longTermCapitalGainsTax: 0.00,
         niit: 0.00,
+        taxTrueUp: 0.00,
         value: 979811.22,
       },
     },
@@ -849,6 +870,7 @@ const EXPECTED = {
         interestIncome: 0.00,
         longTermCapitalGainsTax: 0.00,
         niit: 0.00,
+        taxTrueUp: 0.00,
         value: 1127584.52,
       },
     },
@@ -896,6 +918,7 @@ const EXPECTED = {
         interestIncome: 0.00,
         longTermCapitalGainsTax: 0.00,
         niit: 0.00,
+        taxTrueUp: 0.00,
         value: 1472264.64,
       },
     },
@@ -941,6 +964,7 @@ const EXPECTED = {
         interestIncome: 0.00,
         longTermCapitalGainsTax: 0.00,
         niit: 0.00,
+        taxTrueUp: 0.00,
         value: 1605272.35,
       },
     },

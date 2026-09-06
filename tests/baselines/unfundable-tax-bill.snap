@@ -42,6 +42,7 @@
   total.expense = -453666.688967
   total.incomeTax = -3368.001673
   total.longTermCapitalGains = 107052.225693
+  total.taxTrueUp = -2168.789355
   total.value = 1492332.084613
 
 [assetOrder]
@@ -571,7 +572,7 @@
   0009 socialSecurityIncome=3000.000000 assetAppreciation=277.143635 expense=-7164.441927 incomeTax=-124.333333 longTermCapitalGains=3595.137000 value=79112.950611
   0010 socialSecurityIncome=3000.000000 assetAppreciation=263.709835 expense=-7182.950068 incomeTax=-124.333333 longTermCapitalGains=3612.965860 value=75050.821090
   0011 socialSecurityIncome=3000.000000 assetAppreciation=250.169404 expense=-7201.506023 incomeTax=-124.333333 longTermCapitalGains=3630.847020 value=70956.547248
-  0012 socialSecurityIncome=3000.000000 assetAppreciation=233.629427 expense=-7220.109913 incomeTax=-118.701667 longTermCapitalGains=4372.808489 value=65964.993967
+  0012 socialSecurityIncome=3000.000000 assetAppreciation=233.629427 expense=-7220.109913 incomeTax=-118.701667 longTermCapitalGains=4372.808489 taxTrueUp=-867.719177 value=65964.993967
   0013 socialSecurityIncome=3000.000000 assetAppreciation=219.883313 expense=-7238.761864 incomeTax=-118.701667 longTermCapitalGains=3662.030886 value=61808.713615
   0014 socialSecurityIncome=3000.000000 assetAppreciation=206.029045 expense=-7257.461999 incomeTax=-118.701667 longTermCapitalGains=3680.066612 value=57619.830551
   0015 socialSecurityIncome=3000.000000 assetAppreciation=192.066102 expense=-7276.210442 incomeTax=-118.701667 longTermCapitalGains=3698.155078 value=53398.187667
@@ -583,7 +584,7 @@
   0021 socialSecurityIncome=3000.000000 assetAppreciation=105.976772 expense=-7389.722597 incomeTax=-118.701667 longTermCapitalGains=3807.799506 value=27371.493954
   0022 socialSecurityIncome=3000.000000 assetAppreciation=91.238313 expense=-7408.812713 incomeTax=-118.701667 longTermCapitalGains=3826.260206 value=22916.078454
   0023 socialSecurityIncome=3000.000000 assetAppreciation=76.386928 expense=-7427.952146 incomeTax=-118.701667 longTermCapitalGains=3844.774525 value=18426.622693
-  0024 socialSecurityIncome=3000.000000 assetAppreciation=57.085175 expense=-7447.141023 incomeTax=-112.895418 longTermCapitalGains=4959.297136 value=12603.362802
+  0024 socialSecurityIncome=3000.000000 assetAppreciation=57.085175 expense=-7447.141023 incomeTax=-112.895418 longTermCapitalGains=4959.297136 taxTrueUp=-1301.070177 value=12603.362802
   0025 socialSecurityIncome=3000.000000 assetAppreciation=42.011209 expense=-7466.379470 incomeTax=-112.895418 longTermCapitalGains=3877.045712 value=8046.810976
   0026 socialSecurityIncome=3000.000000 assetAppreciation=26.822703 expense=-7485.667617 incomeTax=-112.895418 longTermCapitalGains=3895.718605 value=3455.732669
   0027 socialSecurityIncome=3000.000000 assetAppreciation=11.519109 expense=-7505.005592 incomeTax=-112.895418 longTermCapitalGains=3914.445574 value=-1170.037163

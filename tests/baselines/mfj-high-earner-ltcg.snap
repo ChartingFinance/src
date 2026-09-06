@@ -47,6 +47,7 @@
   total.longTermCapitalGains = 2066065.397415
   total.longTermCapitalGainsTax = -363327.129237
   total.niit = -78130.485102
+  total.taxTrueUp = -26493.446661
   total.value = 145977716.612361
 
 [assetOrder]
@@ -671,7 +672,7 @@
   0045 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-8984.866334 medicareTax=-290.000000 incomeTax=-2787.181676 value=2475742.458396
   0046 employedIncome=20000.000000 socialSecurityTax=-136.146416 expense=-9008.077239 medicareTax=-290.000000 incomeTax=-2787.181676 value=2483497.782199
   0047 employedIncome=20000.000000 expense=-9031.348105 medicareTax=-290.000000 incomeTax=-2787.181676 value=2491365.921436
-  0048 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9054.679087 medicareTax=-290.000000 incomeTax=-2737.184308 niit=-78130.485102 value=2393396.735024
+  0048 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9054.679087 medicareTax=-290.000000 incomeTax=-2737.184308 niit=-78130.485102 taxTrueUp=-26493.446661 value=2393396.735024
   0049 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9078.070342 medicareTax=-290.000000 incomeTax=-2737.184308 value=2400028.028693
   0050 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9101.522023 medicareTax=-290.000000 incomeTax=-2737.184308 value=2406635.810096
   0051 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9125.034289 medicareTax=-290.000000 incomeTax=-2737.184308 value=2413220.018495

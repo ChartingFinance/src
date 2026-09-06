@@ -623,6 +623,23 @@ export class TaxEngine {
      * through this.yearly. Grossing up here would tax it twice. See
      * markdowns/tax-allocation-spec.md section 3.2.1.
      */
+    /**
+     * Tell the household package what the annual settlement did.
+     *
+     * Every site below settles cash against an ACCOUNT and updates a per-asset
+     * metric. None of them used to touch the package, in either direction, so
+     * `federalTaxes()` reported the same number for a household that paid an
+     * April bill, one that got a refund, and one that did neither. Routed
+     * through here so there is one place to look and one convention to keep:
+     * NEGATIVE when the household paid, POSITIVE when it was refunded.
+     */
+    #bookTrueUp(amount, direction) {
+        if (!(Math.abs(amount?.amount ?? 0) > 0.005)) return;
+        const signed = new Currency(Math.abs(amount.amount));
+        if (direction === 'underpayment') signed.flipSign();
+        this.monthly.taxTrueUp.add(signed);
+    }
+
     #settleAllocatedLeg(leg, eventType, metric, extraData = {}) {
         const { modelAsset, amount, share } = leg;
         const draw = new Currency(amount);
@@ -815,11 +832,23 @@ export class TaxEngine {
         // Total actual liability (positive = tax owed)
         const totalActualTax = actualIncomeTax.amount + actualCapitalGainsTax.amount;
 
-        // 2. What was already withheld/estimated throughout the year?
-        // These are stored as negative values (outflows), so negate to get positive totals.
-        const totalWithheld = Math.abs(this.yearly.incomeTax.amount)
-                            + Math.abs(this.yearly.estimatedTaxes.amount)
-                            + Math.abs(this.yearly.longTermCapitalGainsTax.amount);
+        // 2. What was already withheld or provisioned during the year?
+        //
+        // NEGATED, not Math.abs()'d. These are outflows and are stored negative,
+        // so one negation of the sum is what turns them into a positive
+        // "already paid" figure. Math.abs() used to be applied per field, which
+        // made this arithmetic agree with itself no matter which sign each field
+        // carried — and estimatedTaxes carried the wrong one for the life of the
+        // feature without a single check failing. Do not put it back: the whole
+        // point is that a field with the wrong sign now produces a wrong number
+        // here, loudly, instead of being quietly absorbed.
+        //
+        // taxTrueUp is deliberately NOT in this sum. It is the settlement of
+        // this very calculation; including it would make each year's true-up
+        // depend on the previous year's, which ratchets.
+        const totalWithheld = -(this.yearly.incomeTax.amount
+                              + this.yearly.estimatedTaxes.amount
+                              + this.yearly.longTermCapitalGainsTax.amount);
 
         // 3. Compute the difference
         const taxDifference = totalActualTax - totalWithheld;
@@ -843,8 +872,23 @@ export class TaxEngine {
             if (legs.length > 0) {
                 logger.log(LogCategory.TAX, `Annual True-Up: Underpaid by $${taxDifference.toFixed(0)}. Allocating across ${legs.length} account(s) by income share.`);
                 for (const leg of legs) {
-                    this.#settleAllocatedLeg(leg, EventType.TAX_TRUE_UP,
+                    const settled = this.#settleAllocatedLeg(leg, EventType.TAX_TRUE_UP,
                         Metric.ESTIMATED_INCOME_TAX, { direction: 'underpayment' });
+                    // What the account actually supplied, not what it was asked
+                    // for — the difference is the spillover, and claiming the
+                    // full bill regardless is the defect this site already
+                    // learned once.
+                    this.#bookTrueUp(settled.supplied, 'underpayment');
+                    // Only when a fallback actually took it. `spillover` is the
+                    // part the allocated account could not supply; whether any
+                    // account paid it is what `spilloverInstrument` says. This
+                    // mirrors the condition the metric booking below already
+                    // uses — book it unconditionally and the package claims tax
+                    // that nothing paid, which is the defect this site fixed
+                    // once already in the other direction.
+                    if (settled.spilloverInstrument) {
+                        this.#bookTrueUp(settled.spillover, 'underpayment');
+                    }
                 }
                 return;
             }
@@ -866,6 +910,7 @@ export class TaxEngine {
                         data: { direction: 'refund', basis: 'proportional', share: leg.share },
                     });
                     leg.modelAsset.addToMetric(Metric.ESTIMATED_INCOME_TAX, credit);
+                    this.#bookTrueUp(credit, 'refund');
                 }
                 return;
             }
@@ -911,6 +956,7 @@ export class TaxEngine {
                         data: { direction: 'refund', basis: 'backstop' },
                     });
                     target.addToMetric(Metric.ESTIMATED_INCOME_TAX, refund);
+                    this.#bookTrueUp(refund, 'refund');
                     logger.log(LogCategory.TAX,
                         `Annual True-Up: Overpaid by $${refund.amount.toFixed(0)}. `
                         + `Crediting ${target.displayName}.`);
@@ -948,6 +994,8 @@ export class TaxEngine {
                 this.modelAssets);
 
             liquidAsset.addToMetric(Metric.ESTIMATED_INCOME_TAX, settled.supplied.copy().flipSign());
+            this.#bookTrueUp(settled.supplied, 'underpayment');
+            if (settled.spilloverInstrument) this.#bookTrueUp(settled.spillover, 'underpayment');
             this.monthly.recordTransfer(liquidAsset.instrument, settled.supplied, settled.realizedGain);
 
             if (settled.spillover.amount > 0 && settled.spilloverInstrument) {
@@ -964,6 +1012,7 @@ export class TaxEngine {
             logger.log(LogCategory.TAX, `Annual True-Up: Overpaid by $${Math.abs(taxDifference).toFixed(0)}. Refunding to ${liquidAsset.displayName}.`);
             liquidAsset.credit(taxRefund, { type: EventType.TAX_TRUE_UP, data: { direction: 'refund' } });
             liquidAsset.addToMetric(Metric.ESTIMATED_INCOME_TAX, taxRefund);
+            this.#bookTrueUp(taxRefund, 'refund');
         }
 
     }

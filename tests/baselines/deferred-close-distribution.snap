@@ -46,6 +46,7 @@
   total.incomeTax = -644886.823584
   total.tradIRADistribution = 476325.275790
   total.four01KDistribution = 357243.956842
+  total.taxTrueUp = 293558.142864
   total.value = 50957453.876847
 
 [assetOrder]
@@ -738,7 +739,7 @@
   0045 employedIncome=9000.000000 socialSecurityTax=-558.000000 expense=-6738.649750 medicareTax=-130.500000 incomeTax=-1173.590838 value=655590.888878
   0046 employedIncome=9000.000000 socialSecurityTax=-558.000000 expense=-6756.057929 medicareTax=-130.500000 incomeTax=-1173.590838 value=655955.286961
   0047 employedIncome=9000.000000 socialSecurityTax=-558.000000 expense=-6773.511079 medicareTax=-130.500000 incomeTax=-1173.590838 value=656302.186808
-  0048 employedIncome=9000.000000 socialSecurityTax=-558.000000 expense=-6791.009315 medicareTax=-130.500000 incomeTax=-1148.592154 value=950214.684762
+  0048 employedIncome=9000.000000 socialSecurityTax=-558.000000 expense=-6791.009315 medicareTax=-130.500000 incomeTax=-1148.592154 taxTrueUp=293558.142864 value=950214.684762
   0049 employedIncome=9000.000000 socialSecurityTax=-558.000000 expense=-6808.552756 medicareTax=-130.500000 incomeTax=-1148.592154 value=950551.451091
   0050 employedIncome=9000.000000 socialSecurityTax=-558.000000 expense=-6826.141518 medicareTax=-130.500000 incomeTax=-1148.592154 value=950870.583220
   0051 employedIncome=9000.000000 socialSecurityTax=-558.000000 expense=-6843.775716 medicareTax=-130.500000 incomeTax=-1148.592154 value=951172.035596

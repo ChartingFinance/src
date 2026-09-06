@@ -93,12 +93,8 @@ export class ExpenseEngine {
                         modelAsset, targetAsset, grossWithdrawal,
                         { type: EventType.GROSS_UP, data: { forAsset: modelAsset.displayName, overflow: true } });
 
-                    if (settled.realizedGain && settled.realizedGain.amount > 0) {
-                        // Isolate tax liability to prevent the death-spiral loop
-                        const taxLiability = new Currency(grossWithdrawal.amount - netShortfall.amount);
-                        this.monthly.estimatedTaxes.add(taxLiability);
-                        targetAsset.addToMetric(Metric.ESTIMATED_INCOME_TAX, taxLiability.copy().flipSign());
-                    }
+                    this.#bookTaxProvision(targetAsset, modelAsset,
+                        grossWithdrawal.amount - netShortfall.amount);
                 } else {
                     FundTransfer.reportUnfunded(modelAsset, netShortfall, 'expense overflow', ShortfallOrigin.STANDALONE);
                 }
@@ -118,12 +114,8 @@ export class ExpenseEngine {
                     modelAsset, targetAsset, grossWithdrawal,
                     { type: EventType.GROSS_UP, data: { forAsset: modelAsset.displayName, overflow: false } });
 
-                if (settled.realizedGain && settled.realizedGain.amount > 0) {
-                    // Isolate tax liability to prevent the death-spiral loop
-                    const taxLiability = new Currency(grossWithdrawal.amount - netShortfall.amount);
-                    this.monthly.estimatedTaxes.add(taxLiability);
-                    targetAsset.addToMetric(Metric.ESTIMATED_INCOME_TAX, taxLiability.copy().flipSign());
-                }
+                this.#bookTaxProvision(targetAsset, modelAsset,
+                    grossWithdrawal.amount - netShortfall.amount);
             } else {
                 FundTransfer.reportUnfunded(modelAsset, netShortfall, 'expense', ShortfallOrigin.STANDALONE);
             }
@@ -377,6 +369,38 @@ export class ExpenseEngine {
             this.monthly.recordTransfer(settled.spilloverInstrument, settled.spillover, settled.spilloverGain);
         }
         return settled;
+    }
+
+    /**
+     * Record the part of a gross-up that was withdrawn to cover tax.
+     *
+     * ── Two things this fixes, both of them sign-shaped ──────────────
+     *
+     * It is booked NEGATIVE, like every other tax field. It used to be positive,
+     * alone among them, which meant `federalTaxes()` — the number the report
+     * shows and effectiveTaxRate() divides by — got SMALLER as more money was
+     * withheld. On one measured plan it reported $87,662 of federal tax against
+     * $136,053 actually charged. Nothing failed, because the only other reader
+     * defended itself with Math.abs(); see TaxEngine.applyAnnualTaxTrueUp, where
+     * that call has been removed so this sign is now load-bearing arithmetic
+     * rather than a display convention.
+     *
+     * And it is recorded whether or not a gain was realized. The old guard was
+     * `realizedGain > 0` while the WITHDRAWAL had no guard at all, so a draw that
+     * realized nothing still took a premium and booked none of it — the field
+     * under-counted its own damage, and a scoping pass over it found two
+     * affected fixtures when the answer was four. The premium is now zero in
+     * that case by construction (see calculateGrossWithdrawal), and if it ever
+     * stops being zero this records it instead of hiding it.
+     */
+    #bookTaxProvision(fundingAsset, forAsset, premiumAmount) {
+        if (!(premiumAmount > 0.005)) return;
+
+        const provision = new Currency(premiumAmount).flipSign();
+        this.monthly.estimatedTaxes.add(provision);
+        fundingAsset.addToMetric(Metric.ESTIMATED_INCOME_TAX, provision.copy());
+        fundingAsset.recordEvent(EventType.TAX_PROVISION, provision.copy(),
+            { data: { forAsset: forAsset.displayName } });
     }
 
     calculateGrossWithdrawal(netShortfall, modelAsset) {

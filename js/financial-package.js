@@ -13,9 +13,45 @@ export const FINANCIAL_FIELDS = [
     'mortgageInterest', 'mortgagePrincipal', 'propertyTaxes',
     'shortTermCapitalGains', 'longTermCapitalGains', 'excludedCapitalGains',
     'nonQualifiedDividends', 'qualifiedDividends', "maintenance", "insurance",
-    'interestIncome', 'longTermCapitalGainsTax', 'niit',
+    'interestIncome', 'longTermCapitalGainsTax', 'niit', 'taxTrueUp',
     'value',
 ];
+
+/**
+ * The tax fields, and which way each one is allowed to point.
+ *
+ * ── Why this is data ─────────────────────────────────────────────────
+ *
+ * "Taxes are stored negative" was a convention nobody had written down and
+ * nothing enforced. `estimatedTaxes` broke it from the day it was added and no
+ * check failed for the life of the feature, because the only other reader
+ * defended itself with Math.abs() and the one place the sign mattered was a
+ * display total nobody reconciled. A convention that cannot be violated
+ * accidentally is worth more than a paragraph describing one, so this is a list
+ * a test can read.
+ *
+ * FEDERAL_TAX_FIELDS is also what federalTaxes() sums. A component added to one
+ * and not the other is the defect NIIT shipped with — collected correctly,
+ * reported nowhere — and tests/tax-sign-convention.mjs compares them.
+ */
+export const FEDERAL_TAX_FIELDS = [
+    'incomeTax', 'socialSecurityTax', 'medicareTax',
+    'longTermCapitalGainsTax', 'estimatedTaxes', 'niit', 'taxTrueUp',
+];
+
+export const SALT_TAX_FIELDS = ['propertyTaxes'];
+
+/**
+ * Tax fields that may legitimately be POSITIVE.
+ *
+ * Exactly one, and it earns it: `taxTrueUp` is the annual settlement, so it is
+ * negative in a year the household paid an April bill and positive in a year it
+ * was refunded more than it had provisioned. Everything else only ever leaves.
+ *
+ * A fixture must actually reach this case or the exception is decoration — see
+ * the last check in tests/tax-sign-convention.mjs.
+ */
+export const BIDIRECTIONAL_TAX_FIELDS = ['taxTrueUp'];
 
 export class FinancialPackage {
     constructor() {
@@ -201,6 +237,17 @@ export class FinancialPackage {
         // more federal tax than the package that was meant to total it. It also
         // made effectiveTaxRate() understate for every household that owed any.
         taxes.add(this.niit);
+
+        // The annual settlement, in whichever direction it went. It was booked
+        // nowhere in this package for the life of the true-up: both branches
+        // settled cash against the accounts and updated a per-asset metric, and
+        // the household's own tax total never heard about it. So a plan that
+        // paid an April bill and a plan that received a refund reported the same
+        // federal tax as one that did neither.
+        //
+        // Negative when collected, positive when refunded — the same convention
+        // as every field above it, which is what lets them simply be summed.
+        taxes.add(this.taxTrueUp);
         return taxes;
 
     }
@@ -341,6 +388,7 @@ export class FinancialPackage {
         logger.log(category, '  longTermCapitalGainsTax:   ' + this.longTermCapitalGainsTax.toString());        
         logger.log(category, '  estimatedTaxes:            ' + this.estimatedTaxes.toString());
         logger.log(category, '  niit:                      ' + this.niit.toString());
+        logger.log(category, '  taxTrueUp:                 ' + this.taxTrueUp.toString());
         logger.log(category, 'State/Local taxes:           ' + this.saltTaxes().toString());
         logger.log(category, '  propertyTaxes:             ' + this.propertyTaxes.toString());
         logger.log(category, 'contributions:               ' + this.contributions().toString());
