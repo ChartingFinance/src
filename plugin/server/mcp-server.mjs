@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.3.0; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.3.1; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -34837,46 +34837,54 @@ var TaxEngine = class {
       const escrow = modelAsset.applyMonthlyTaxEscrow();
       modelAsset.recordEvent(EventType.PROPERTY_TAX_ESCROW, escrow);
       if (modelAsset.monthlyTaxEscrow.amount) {
-        let preFlights = [];
-        const payment = escrow.flipSign();
-        let remaining = payment.copy();
-        for (const fundTransfer of modelAsset.fundTransfers) {
-          if (!fundTransfer.hasRecurring) continue;
-          fundTransfer.bind(modelAsset, this.modelAssets);
-          if (!fundTransfer.toModel) continue;
-          if (remaining.amount == 0) break;
-          let preFlight = new FundTransferOneSided(fundTransfer, payment);
-          remaining.subtract(preFlight.amount);
-          if (remaining.amount < 0) {
-            preFlight.amount.add(remaining);
-            remaining.zero();
-          }
-          preFlights.push(preFlight);
-        }
-        if (remaining.amount > 0) {
-          let fundingSource = FundTransfer.resolveFunding(this.modelAssets);
-          if (fundingSource) {
-            let preFlight = new FundTransferOneSided(null, remaining);
-            preFlight.fromModel = modelAsset;
-            preFlight.toModel = fundingSource;
-            preFlights.push(preFlight);
-          } else {
-            FundTransfer.reportUnfunded(modelAsset, remaining, "property tax", ShortfallOrigin.STANDALONE);
-          }
-        }
-        for (const oneSided of preFlights) {
-          const event = { type: EventType.SETTLEMENT, data: {
-            from: modelAsset.displayName,
-            to: oneSided.toModel.displayName,
-            label: "property tax"
-          } };
-          const settled = FundTransfer.settleOneSided(oneSided, event, this.modelAssets);
-          this.monthly.recordTransfer(oneSided.toModel.instrument, settled.supplied, settled.realizedGain);
-          if (settled.spillover.amount > 0 && settled.spilloverInstrument) {
-            this.monthly.recordTransfer(settled.spilloverInstrument, settled.spillover, settled.spilloverGain);
-          }
-        }
+        withTrace(
+          TraceKind.CARRYING_COST,
+          `${modelAsset.displayName} property tax`,
+          _currentDateInt,
+          () => this.#drawPropertyTaxEscrow(modelAsset, escrow)
+        );
         modelAsset.clearMonthlyTaxEscrow();
+      }
+    }
+  }
+  #drawPropertyTaxEscrow(modelAsset, escrow) {
+    let preFlights = [];
+    const payment = escrow.flipSign();
+    let remaining = payment.copy();
+    for (const fundTransfer of modelAsset.fundTransfers) {
+      if (!fundTransfer.hasRecurring) continue;
+      fundTransfer.bind(modelAsset, this.modelAssets);
+      if (!fundTransfer.toModel) continue;
+      if (remaining.amount == 0) break;
+      let preFlight = new FundTransferOneSided(fundTransfer, payment);
+      remaining.subtract(preFlight.amount);
+      if (remaining.amount < 0) {
+        preFlight.amount.add(remaining);
+        remaining.zero();
+      }
+      preFlights.push(preFlight);
+    }
+    if (remaining.amount > 0) {
+      let fundingSource = FundTransfer.resolveFunding(this.modelAssets);
+      if (fundingSource) {
+        let preFlight = new FundTransferOneSided(null, remaining);
+        preFlight.fromModel = modelAsset;
+        preFlight.toModel = fundingSource;
+        preFlights.push(preFlight);
+      } else {
+        FundTransfer.reportUnfunded(modelAsset, remaining, "property tax", ShortfallOrigin.STANDALONE);
+      }
+    }
+    for (const oneSided of preFlights) {
+      const event = { type: EventType.SETTLEMENT, data: {
+        from: modelAsset.displayName,
+        to: oneSided.toModel.displayName,
+        label: "property tax"
+      } };
+      const settled = FundTransfer.settleOneSided(oneSided, event, this.modelAssets);
+      this.monthly.recordTransfer(oneSided.toModel.instrument, settled.supplied, settled.realizedGain);
+      if (settled.spillover.amount > 0 && settled.spilloverInstrument) {
+        this.monthly.recordTransfer(settled.spilloverInstrument, settled.spillover, settled.spilloverGain);
       }
     }
   }

@@ -210,59 +210,77 @@ export class TaxEngine {
 
             if (modelAsset.monthlyTaxEscrow.amount) {
 
-                let preFlights = [];
-                const payment = escrow.flipSign(); // escrow is negative, flip to positive for debit
-                let remaining = payment.copy();
-
-                for (const fundTransfer of modelAsset.fundTransfers) {
-
-                    // so we don't blow up
-                    if (!fundTransfer.hasRecurring) continue;
-                    fundTransfer.bind(modelAsset, this.modelAssets);
-                    if (!fundTransfer.toModel) continue;
-                    if (remaining.amount == 0) break;
-                    
-                    // passed the tests so load into the array
-                    let preFlight = new FundTransferOneSided(fundTransfer, payment);
-                    remaining.subtract(preFlight.amount);
-                    if (remaining.amount < 0) {
-                        // last minute patch
-                        preFlight.amount.add(remaining);
-                        remaining.zero();
-                    }                    
-                    preFlights.push(preFlight);
-
-                }
-
-                // Backstop: whatever the user did not route explicitly
-                if (remaining.amount > 0) {
-                    let fundingSource = FundTransfer.resolveFunding(this.modelAssets);
-                    if (fundingSource) {
-                        let preFlight = new FundTransferOneSided(null, remaining);
-                        preFlight.fromModel = modelAsset;
-                        preFlight.toModel = fundingSource;
-                        preFlights.push(preFlight);
-                    } else {
-                        FundTransfer.reportUnfunded(modelAsset, remaining, 'property tax', ShortfallOrigin.STANDALONE);
-                    }
-                }
-
-                // One-sided withdrawal: escrow already adjusted the home's balance.
-                // Only debit the funding source (toModel).
-                for (const oneSided of preFlights) {
-                    const event = { type: EventType.SETTLEMENT, data: {
-                        from: modelAsset.displayName, to: oneSided.toModel.displayName, label: 'property tax' } };
-                    const settled = FundTransfer.settleOneSided(oneSided, event, this.modelAssets);
-                    this.monthly.recordTransfer(oneSided.toModel.instrument, settled.supplied, settled.realizedGain);
-                    if (settled.spillover.amount > 0 && settled.spilloverInstrument) {
-                        this.monthly.recordTransfer(settled.spilloverInstrument, settled.spillover, settled.spilloverGain);
-                    }
-                }
+                // Root of the escrow draw's causal chain. Every other obligation
+                // payer opens a scope — applyExpenseTransfers opens EXPENSE,
+                // applyMortgageTransfers opens MORTGAGE, _debitCarryingCost opens
+                // CARRYING_COST — and this one did not, so the settlement it
+                // produced hung off the bare month and no consumer could tell it
+                // apart from an unrelated draw on the same account.
+                //
+                // Scoped at the DRAW, not the accrual, which is where
+                // maintenance and insurance put theirs: their MAINTENANCE /
+                // INSURANCE events are recorded by instrument-behavior.js
+                // outside _debitCarryingCost, and only the funding leg is inside.
+                // PROPERTY_TAX_ESCROW above is the matching accrual and stays out.
+                withTrace(TraceKind.CARRYING_COST, `${modelAsset.displayName} property tax`, _currentDateInt,
+                    () => this.#drawPropertyTaxEscrow(modelAsset, escrow));
 
                 modelAsset.clearMonthlyTaxEscrow();
 
             }
 
+        }
+    }
+
+    #drawPropertyTaxEscrow(modelAsset, escrow) {
+
+        let preFlights = [];
+        const payment = escrow.flipSign(); // escrow is negative, flip to positive for debit
+        let remaining = payment.copy();
+
+        for (const fundTransfer of modelAsset.fundTransfers) {
+
+            // so we don't blow up
+            if (!fundTransfer.hasRecurring) continue;
+            fundTransfer.bind(modelAsset, this.modelAssets);
+            if (!fundTransfer.toModel) continue;
+            if (remaining.amount == 0) break;
+            
+            // passed the tests so load into the array
+            let preFlight = new FundTransferOneSided(fundTransfer, payment);
+            remaining.subtract(preFlight.amount);
+            if (remaining.amount < 0) {
+                // last minute patch
+                preFlight.amount.add(remaining);
+                remaining.zero();
+            }                    
+            preFlights.push(preFlight);
+
+        }
+
+        // Backstop: whatever the user did not route explicitly
+        if (remaining.amount > 0) {
+            let fundingSource = FundTransfer.resolveFunding(this.modelAssets);
+            if (fundingSource) {
+                let preFlight = new FundTransferOneSided(null, remaining);
+                preFlight.fromModel = modelAsset;
+                preFlight.toModel = fundingSource;
+                preFlights.push(preFlight);
+            } else {
+                FundTransfer.reportUnfunded(modelAsset, remaining, 'property tax', ShortfallOrigin.STANDALONE);
+            }
+        }
+
+        // One-sided withdrawal: escrow already adjusted the home's balance.
+        // Only debit the funding source (toModel).
+        for (const oneSided of preFlights) {
+            const event = { type: EventType.SETTLEMENT, data: {
+                from: modelAsset.displayName, to: oneSided.toModel.displayName, label: 'property tax' } };
+            const settled = FundTransfer.settleOneSided(oneSided, event, this.modelAssets);
+            this.monthly.recordTransfer(oneSided.toModel.instrument, settled.supplied, settled.realizedGain);
+            if (settled.spillover.amount > 0 && settled.spilloverInstrument) {
+                this.monthly.recordTransfer(settled.spilloverInstrument, settled.spillover, settled.spilloverGain);
+            }
         }
     }
 

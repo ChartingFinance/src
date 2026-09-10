@@ -569,6 +569,15 @@
         .timeline-month-card .tmc-val { font-variant-numeric: tabular-nums; font-weight: 500; color: #374151; }
         .timeline-month-card .tmc-nw .tmc-val { font-weight: 700; color: #111827; font-size: 12.5px; }
         .timeline-month-card .tmc-delta { font-size: 10px; font-weight: 600; margin-left: 2px; }
+        /* "Withdrawn to meet obligations" — a trailing-12-month block, so it is
+           labelled with its own span to keep it from reading as a monthly figure
+           alongside the rows above. */
+        .timeline-month-card .tmc-drawn-head { color: #111827; font-weight: 600; padding-bottom: 4px; }
+        .timeline-month-card .tmc-span { font-size: 10px; font-weight: 600; color: #9ca3af; white-space: nowrap; }
+        .timeline-month-card .tmc-drawn-total { color: #111827; }
+        .timeline-month-card .tmc-drawn-total .tmc-val { font-weight: 700; color: #111827; }
+        .timeline-month-card .tmc-unfunded,
+        .timeline-month-card .tmc-unfunded .tmc-val { color: #db2777; font-weight: 600; }
         .timeline-month-card hr { border: none; border-top: 1px solid #f3f4f6; margin: 8px 0; }
         .timeline-month-card .tmc-link {
             display: block; width: 100%; text-align: left;
