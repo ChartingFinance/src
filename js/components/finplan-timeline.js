@@ -27,6 +27,7 @@ import { store } from '../finplan-store.js';
 import { LifeEvent, LifeEventType } from '../life-event.js';
 import { InstrumentType } from '../instruments/instrument.js';
 import { MetricLabel, hasRealDollarLine } from '../metric.js';
+import { trailingYearExpenditure } from '../annual-expenditure.js';
 import { PriceIndex } from '../utils/price-index.js';
 import { DateInt, MONTH_NAMES } from '../utils/date-int.js';
 
@@ -477,6 +478,15 @@ export class FinplanTimeline extends LitElement {
             netChange: this._metricAtIndexFor('netWorthChange', idx),
             valueReal: PriceIndex.deflateAt(
                 this._metricAtIndexFor('value', idx), this.portfolio.monthlyPriceIndex, idx),
+
+            // What actually left the household's accounts over the twelve
+            // months ending here — NOT a 12x of the month above. See
+            // annual-expenditure.js: the monthly Expenses row is the accounting
+            // expense and excludes mortgage principal and property tax, and a
+            // month with a mortgage payoff or a life event is nothing like a
+            // typical one. Trailing rather than calendar-year so the figure is
+            // a full twelve months wherever the cursor sits.
+            drawn: trailingYearExpenditure(this.portfolio, idx),
         };
     }
 
@@ -968,6 +978,7 @@ export class FinplanTimeline extends LitElement {
                         <span class="tmc-val ${totals.cashFlow >= 0 ? 'text-green-600' : 'text-pink-600'}">${this._formatSignedCurrency(totals.cashFlow)}</span></div>
                     <div class="tmc-row"><span>Asset growth</span>
                         <span class="tmc-val ${totals.growth >= 0 ? 'text-green-600' : 'text-pink-600'}">${this._formatSignedCurrency(totals.growth)}</span></div>
+                    ${this._renderDrawnRows(totals.drawn)}
                 ` : html`
                     <div class="tmc-row"><span class="text-gray-400">No simulation data for this month</span></div>
                 `}
@@ -975,6 +986,42 @@ export class FinplanTimeline extends LitElement {
                 <button class="tmc-link" @click=${() => this._onJumpToView('spreadsheet')}>Open in Spreadsheet →</button>
                 <button class="tmc-link" @click=${() => this._onJumpToView('creditmemos')}>Credit memos →</button>
             </div>
+        `;
+    }
+
+    /**
+     * "Withdrawn to meet obligations" over the trailing twelve months.
+     *
+     * Split rather than blended, because the split IS the finding: while a
+     * salary is coming in, tax is withheld at source and never passes through
+     * an account, so this reads $0 even in a year with a five-figure tax bill.
+     * In retirement there is no paycheck to withhold from and nearly the whole
+     * bill becomes a withdrawal. A single total would move sharply at
+     * retirement with nothing on screen to say why.
+     *
+     * The unfunded line only appears when the plan could not pay, and it is the
+     * honest counterpart to the draw: the accrued obligation is drawn + unfunded.
+     */
+    _renderDrawnRows(drawn) {
+        if (!drawn || drawn.months === 0) return nothing;
+        const span = drawn.complete ? 'trailing 12 mo' : `${drawn.months} mo so far`;
+        return html`
+            <hr>
+            <div class="tmc-row tmc-drawn-head">
+                <span>Withdrawn to meet obligations</span>
+                <span class="tmc-span">${span}</span>
+            </div>
+            <div class="tmc-row"><span>Spending</span>
+                <span class="tmc-val">${this._formatCurrency(drawn.spending)}</span></div>
+            <div class="tmc-row"><span>Tax</span>
+                <span class="tmc-val">${this._formatCurrency(drawn.tax)}</span></div>
+            <div class="tmc-row tmc-drawn-total"><span>Total</span>
+                <span class="tmc-val">${this._formatCurrency(drawn.total)}</span></div>
+            ${drawn.unfunded > 0 ? html`
+                <div class="tmc-row tmc-unfunded">
+                    <span title="Obligations the plan could not fund from any account">Could not fund</span>
+                    <span class="tmc-val">${this._formatCurrency(drawn.unfunded)}</span></div>
+            ` : nothing}
         `;
     }
 
