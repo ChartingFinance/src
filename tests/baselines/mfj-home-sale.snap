@@ -985,7 +985,7 @@
   (no findings)
 
 [traces]
-  scopes = 1652
+  scopes = 1693
   unattributedEvents = 0
   1x 2027 annual pass
   1x 2027 tax true-up
@@ -1020,6 +1020,7 @@
   7x February 2030
   42x Home insurance
   42x Home maintenance
+  41x Home property tax
   7x January 2026
   7x January 2027
   7x January 2028
@@ -1085,7 +1086,7 @@
   c1 = Pay Living > Settle from Checking
   c2 = Home maintenance > Settle from Checking
   c3 = Home insurance > Settle from Checking
-  c4 = Settle from Checking
+  c4 = Home property tax > Settle from Checking
   c5 = Transfer Home → Checking
   c6 = Payroll: Salary
   c7 = Withholding: Salary

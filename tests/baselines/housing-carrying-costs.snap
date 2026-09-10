@@ -1218,7 +1218,7 @@
   (no findings)
 
 [traces]
-  scopes = 1809
+  scopes = 1868
   unattributedEvents = 0
   1x 2027 annual pass
   1x 2027 tax true-up
@@ -1252,6 +1252,7 @@
   7x February 2030
   60x Home insurance
   60x Home maintenance
+  59x Home property tax
   7x January 2026
   7x January 2027
   7x January 2028
@@ -1315,10 +1316,10 @@
   c0 = Pay Mortgage > Pay Mortgage > Settle from Checking
   c1 = Home maintenance > Settle from Brokerage
   c2 = Home insurance > Settle from Brokerage
-  c3 = Settle from Brokerage
+  c3 = Home property tax > Settle from Brokerage
   c4 = Pay Mortgage > Pay Mortgage > Settle from Brokerage
   c5 = Home maintenance > Settle from Checking
   c6 = Home insurance > Settle from Checking
-  c7 = Settle from Checking
+  c7 = Home property tax > Settle from Checking
   c8 = Payroll: Mortgage
 
