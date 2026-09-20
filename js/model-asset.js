@@ -597,6 +597,15 @@ export class ModelAsset {
     // this is to track this.finishCurrency changes through the month with a check on the last day
     this.monthlyValueChange = Currency.zero();
 
+    // The month's opening balance. applyFirstDayOfMonth overwrites this with
+    // the real value every month; the initializer exists because an asset can
+    // be CLOSED before it is ever handed a month. Portfolio.applyFirstDayOfMonth
+    // closes past-finish assets and paid-off mortgages before the per-asset
+    // loop runs, and life events fire earlier still — so a mortgage entered
+    // with monthsRemaining: 0, or a "sell the house" event at the plan's start
+    // age, reached close() with this undefined and took the run down.
+    this.firstDayOfMonthValue = Currency.zero();
+
   }
 
   handleCurrentDateInt(currentDateInt) {

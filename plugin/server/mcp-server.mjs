@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.3.1; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.3.2; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -37409,6 +37409,7 @@ var ModelAsset = class _ModelAsset {
     this.monthlyTaxEscrow = Currency.zero();
     this.#metrics.initializeAll();
     this.monthlyValueChange = Currency.zero();
+    this.firstDayOfMonthValue = Currency.zero();
   }
   handleCurrentDateInt(currentDateInt) {
     this.currentDateInt = currentDateInt.copy();
