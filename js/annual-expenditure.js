@@ -107,10 +107,22 @@ export const EXPENDITURE_TREATMENT = Object.freeze({
     //
     // KNOWN IMPRECISION: because of that, the tax portion of a grossed-up
     // withdrawal lands in `spending` rather than `tax`. The TOTAL is right
-    // either way — it is the same withdrawal — only the split is slightly off.
-    // Moving it would need a fixture that produces a material provision, and
-    // none of the current corpus does (the largest across all eight profiles
-    // rounds to $0), so the split is left unbuilt rather than built blind.
+    // either way — it is the same withdrawal — only the split is off.
+    //
+    // It now has a witness, which it did not when this was written. The
+    // original note said no fixture produced a material provision; that was
+    // measured across the eight quick-start profiles, where the premium is
+    // $0.00 to the cent, and it did not hold for the corpus.
+    // grossup-at-the-ltcg-boundary provisions $32,896 with an expenditure tax
+    // line of $0, and brokerage-only-retirement — added for this — takes a
+    // premium every month and reports $11,475 of tax in 2027 where $33,048
+    // left the account for tax. 65% low, on a plausible retirement.
+    //
+    // Still unfixed, and now a choice rather than a gap: moving the premium
+    // means splitting one debit across two buckets, since the gross-up is a
+    // single withdrawal and the TAX_PROVISION only names a portion of it.
+    // tests/annual-expenditure.mjs pins the current behaviour and the size of
+    // the gap, so this cannot drift in silence while it waits.
     [EventType.TAX_PROVISION]:           'excluded',
 
     // Growth and yield: credits, never draws.

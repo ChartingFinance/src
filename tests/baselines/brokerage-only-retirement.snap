@@ -1,0 +1,884 @@
+# fixture: brokerage-only-retirement  (adversarial)
+#
+# a gross-up premium on EVERY monthly draw, in a plan whose tax line is not
+# made of premium. It exists for the annual-expenditure split: a grossed-up
+# withdrawal is one debit carrying both the bill and the tax on the gain it
+# realises, its causal chain roots in EXPENSE, so the whole thing is counted
+# as spending, and the TAX_PROVISION naming the premium is excluded to avoid
+# booking the same dollars twice. The total is right; the split is not.
+# COMPLEMENTARY TO grossup-at-the-ltcg-boundary, not redundant with it. That
+# fixture provisions $32,896 and its expenditure tax line reads $0 — every
+# tax dollar it withdraws IS premium, so it cannot tell a correct split from
+# one that moved ALL spending into tax. This one carries an annual true-up
+# (correctly counted as tax) alongside the premium (currently counted as
+# spending) in the same years, so it discriminates a partial fix and a
+# double count. Measured 2027: tax reads $11,475 where $33,048 left the
+# account for tax — 65% low. THE SHAPE IS LOAD-BEARING, all three parts. No
+# cash and no bank: fundingBackstopPriority puts both ahead of
+# taxableEquity, and the gross-up only fires on a taxable account. A pension
+# large enough to carry ordinary income past the 0% LTCG band: at $2,000/mo
+# instead of $8,000 the marginal rate is 0%, so t*gain is 0 and the premium
+# vanishes entirely (measured). Spending well above that income:
+# planWithdrawal draws the fresh deposits of the month FIRST at zero gain,
+# and the pension lands in the brokerage on its own because resolveDeposit
+# picks the same backstop. A $20,000 draw against an $8,000 deposit is what
+# leaves a taxable remainder to realise; at a $10,000 expense the premium
+# falls to a fifth.
+
+[config]
+  allocateHouseholdTax = false
+  backtestYear = current
+  filingAs = Single
+  inflationRate = 0.031
+  pensionWithholdingRate = 0.1
+  propertyTaxDeductionMax = 40000
+  simDataMode = calibrated
+  socialSecurityWithholdingRate = 0
+  userFinishAge = 87
+  userRetirementAge = 65
+  userStartAge = 70
+  homeSaleExclusion = 250000
+  retirementWithholdingRate = 0.1
+
+[totals]
+  months = 180
+  firstDate = 2026-01
+  lastDate = 2030-12
+  startValue = 3000000.000000
+  finishValue = 2730746.496714
+  accumulated = -163045.166854
+  total.socialSecurityIncome = 480000.000000
+  total.assetAppreciation = 719754.275301
+  total.expense = -1296190.539906
+  total.incomeTax = -42786.520273
+  total.estimatedTaxes = -115038.504768
+  total.longTermCapitalGains = 811312.331959
+  total.niit = -5912.698303
+  total.taxTrueUp = -5220.141813
+  total.value = 172598454.795206
+
+[assetOrder]
+  0 Pension
+  1 Brokerage
+  2 Living
+
+[asset] Brokerage
+  instrument = taxableEquity
+  start = 2026-01  finish = 2030-12
+  startCurrency = 3000000.000000
+  finishCurrency = 2730746.496714
+  startBasis = 600000.000000
+  finishBasis = 425562.477966
+  isClosed = no  isDepleted = no
+  closedDate = -  closedValue = -
+  events = 440  reconciled = 440
+
+[events] Brokerage
+  0000 2026-01 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0001 2026-01 grossUp                     -21636.363636 cash  -                      c1 {forAsset=Living overflow=false}
+  0002 2026-01 capitalGainRecognized        10909.090909 info  longTermCapitalGain    c1 {spillover=false}
+  0003 2026-01 taxProvision                 -1636.363636 cash  -                      c2 {forAsset=Living}
+  0004 2026-01 assetGrowth                  12443.181818 cash  growth                 c-
+  0005 2026-01 incomeTaxWithholding          -760.166667 cash  -                      c3
+  0006 2026-01 capitalGainRecognized          608.764177 info  longTermCapitalGain    c3 {spillover=false}
+  0007 2026-02 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0008 2026-02 grossUp                     -21697.013283 cash  -                      c1 {forAsset=Living overflow=false}
+  0009 2026-02 capitalGainRecognized        10968.977442 info  longTermCapitalGain    c1 {spillover=false}
+  0010 2026-02 taxProvision                 -1645.346616 cash  -                      c2 {forAsset=Living}
+  0011 2026-02 assetGrowth                  12434.790159 cash  growth                 c-
+  0012 2026-02 incomeTaxWithholding          -760.166667 cash  -                      c3
+  0013 2026-02 capitalGainRecognized          609.392403 info  longTermCapitalGain    c3 {spillover=false}
+  0014 2026-03 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0015 2026-03 grossUp                     -21757.823731 cash  -                      c1 {forAsset=Living overflow=false}
+  0016 2026-03 capitalGainRecognized        11029.046173 info  longTermCapitalGain    c1 {spillover=false}
+  0017 2026-03 taxProvision                 -1654.356926 cash  -                      c2 {forAsset=Living}
+  0018 2026-03 assetGrowth                  12426.110158 cash  growth                 c-
+  0019 2026-03 incomeTaxWithholding          -760.166667 cash  -                      c3
+  0020 2026-03 capitalGainRecognized          610.018022 info  longTermCapitalGain    c3 {spillover=false}
+  0021 2026-04 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0022 2026-04 grossUp                     -21818.795368 cash  -                      c1 {forAsset=Living overflow=false}
+  0023 2026-04 capitalGainRecognized        11089.297378 info  longTermCapitalGain    c1 {spillover=false}
+  0024 2026-04 taxProvision                 -1663.394607 cash  -                      c2 {forAsset=Living}
+  0025 2026-04 assetGrowth                  12417.139942 cash  growth                 c-
+  0026 2026-04 incomeTaxWithholding          -760.166667 cash  -                      c3
+  0027 2026-04 capitalGainRecognized          610.641046 info  longTermCapitalGain    c3 {spillover=false}
+  0028 2026-05 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0029 2026-05 grossUp                     -21879.928581 cash  -                      c1 {forAsset=Living overflow=false}
+  0030 2026-05 capitalGainRecognized        11149.731338 info  longTermCapitalGain    c1 {spillover=false}
+  0031 2026-05 taxProvision                 -1672.459701 cash  -                      c2 {forAsset=Living}
+  0032 2026-05 assetGrowth                  12407.877628 cash  growth                 c-
+  0033 2026-05 incomeTaxWithholding          -760.166667 cash  -                      c3
+  0034 2026-05 capitalGainRecognized          611.261484 info  longTermCapitalGain    c3 {spillover=false}
+  0035 2026-06 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0036 2026-06 grossUp                     -21941.223758 cash  -                      c1 {forAsset=Living overflow=false}
+  0037 2026-06 capitalGainRecognized        11210.348334 info  longTermCapitalGain    c1 {spillover=false}
+  0038 2026-06 taxProvision                 -1681.552250 cash  -                      c2 {forAsset=Living}
+  0039 2026-06 assetGrowth                  12398.321325 cash  growth                 c-
+  0040 2026-06 incomeTaxWithholding          -760.166667 cash  -                      c3
+  0041 2026-06 capitalGainRecognized          611.879348 info  longTermCapitalGain    c3 {spillover=false}
+  0042 2026-07 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0043 2026-07 grossUp                     -22002.681290 cash  -                      c1 {forAsset=Living overflow=false}
+  0044 2026-07 capitalGainRecognized        11271.148649 info  longTermCapitalGain    c1 {spillover=false}
+  0045 2026-07 taxProvision                 -1690.672297 cash  -                      c2 {forAsset=Living}
+  0046 2026-07 assetGrowth                  12388.469131 cash  growth                 c-
+  0047 2026-07 incomeTaxWithholding          -760.166667 cash  -                      c3
+  0048 2026-07 capitalGainRecognized          612.494648 info  longTermCapitalGain    c3 {spillover=false}
+  0049 2026-08 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0050 2026-08 grossUp                     -22064.301568 cash  -                      c1 {forAsset=Living overflow=false}
+  0051 2026-08 capitalGainRecognized        11332.132566 info  longTermCapitalGain    c1 {spillover=false}
+  0052 2026-08 taxProvision                 -1699.819885 cash  -                      c2 {forAsset=Living}
+  0053 2026-08 assetGrowth                  12378.319134 cash  growth                 c-
+  0054 2026-08 incomeTaxWithholding          -760.166667 cash  -                      c3
+  0055 2026-08 capitalGainRecognized          613.107395 info  longTermCapitalGain    c3 {spillover=false}
+  0056 2026-09 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0057 2026-09 grossUp                     -22126.084983 cash  -                      c1 {forAsset=Living overflow=false}
+  0058 2026-09 capitalGainRecognized        11393.300372 info  longTermCapitalGain    c1 {spillover=false}
+  0059 2026-09 taxProvision                 -1708.995056 cash  -                      c2 {forAsset=Living}
+  0060 2026-09 assetGrowth                  12367.869416 cash  growth                 c-
+  0061 2026-09 incomeTaxWithholding          -760.166667 cash  -                      c3
+  0062 2026-09 capitalGainRecognized          613.717599 info  longTermCapitalGain    c3 {spillover=false}
+  0063 2026-10 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0064 2026-10 grossUp                     -22188.031929 cash  -                      c1 {forAsset=Living overflow=false}
+  0065 2026-10 capitalGainRecognized        11454.652353 info  longTermCapitalGain    c1 {spillover=false}
+  0066 2026-10 taxProvision                 -1718.197853 cash  -                      c2 {forAsset=Living}
+  0067 2026-10 assetGrowth                  12357.118044 cash  growth                 c-
+  0068 2026-10 incomeTaxWithholding          -760.166667 cash  -                      c3
+  0069 2026-10 capitalGainRecognized          614.325272 info  longTermCapitalGain    c3 {spillover=false}
+  0070 2026-11 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0071 2026-11 grossUp                     -22250.142800 cash  -                      c1 {forAsset=Living overflow=false}
+  0072 2026-11 capitalGainRecognized        11516.188798 info  longTermCapitalGain    c1 {spillover=false}
+  0073 2026-11 taxProvision                 -1727.428320 cash  -                      c2 {forAsset=Living}
+  0074 2026-11 assetGrowth                  12346.063080 cash  growth                 c-
+  0075 2026-11 incomeTaxWithholding          -760.166667 cash  -                      c3
+  0076 2026-11 capitalGainRecognized          614.930423 info  longTermCapitalGain    c3 {spillover=false}
+  0077 2026-12 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0078 2026-12 grossUp                     -22312.417993 cash  -                      c1 {forAsset=Living overflow=false}
+  0079 2026-12 capitalGainRecognized        11577.909998 info  longTermCapitalGain    c1 {spillover=false}
+  0080 2026-12 taxProvision                 -1736.686500 cash  -                      c2 {forAsset=Living}
+  0081 2026-12 assetGrowth                  12334.702573 cash  growth                 c-
+  0082 2026-12 incomeTaxWithholding          -760.166667 cash  -                      c3
+  0083 2026-12 capitalGainRecognized          615.533063 info  longTermCapitalGain    c3 {spillover=false}
+  0084 2026-12 taxTrueUp                    -1101.909732 cash  -                      c4 {direction=underpayment}
+  0085 2026-12 capitalGainRecognized          892.254163 info  longTermCapitalGain    c4 {spillover=false}
+  0086 2026-12 niitAssessed                  -906.219789 cash  -                      c5 {bound=magi magi=223847.889193 nii=142247.889193 taxedBase=23847.889193 threshold=200000}
+  0087 2026-12 capitalGainRecognized          733.797294 info  longTermCapitalGain    c5 {spillover=false}
+  0088 2027-01 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0089 2027-01 grossUp                     -22374.857903 cash  -                      c1 {forAsset=Living overflow=false}
+  0090 2027-01 capitalGainRecognized        11639.816244 info  longTermCapitalGain    c1 {spillover=false}
+  0091 2027-01 taxProvision                 -1745.972437 cash  -                      c2 {forAsset=Living}
+  0092 2027-01 assetGrowth                  12314.667359 cash  growth                 c-
+  0093 2027-01 incomeTaxWithholding          -737.355833 cash  -                      c3
+  0094 2027-01 capitalGainRecognized          597.644478 info  longTermCapitalGain    c3 {spillover=false}
+  0095 2027-02 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0096 2027-02 grossUp                     -22437.462928 cash  -                      c1 {forAsset=Living overflow=false}
+  0097 2027-02 capitalGainRecognized        11701.907830 info  longTermCapitalGain    c1 {spillover=false}
+  0098 2027-02 taxProvision                 -1755.286175 cash  -                      c2 {forAsset=Living}
+  0099 2027-02 assetGrowth                  12302.750061 cash  growth                 c-
+  0100 2027-02 incomeTaxWithholding          -737.355833 cash  -                      c3
+  0101 2027-02 capitalGainRecognized          598.224193 info  longTermCapitalGain    c3 {spillover=false}
+  0102 2027-03 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0103 2027-03 grossUp                     -22500.233468 cash  -                      c1 {forAsset=Living overflow=false}
+  0104 2027-03 capitalGainRecognized        11764.185050 info  longTermCapitalGain    c1 {spillover=false}
+  0105 2027-03 taxProvision                 -1764.627758 cash  -                      c2 {forAsset=Living}
+  0106 2027-03 assetGrowth                  12290.521564 cash  growth                 c-
+  0107 2027-03 incomeTaxWithholding          -737.355833 cash  -                      c3
+  0108 2027-03 capitalGainRecognized          598.801503 info  longTermCapitalGain    c3 {spillover=false}
+  0109 2027-04 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0110 2027-04 grossUp                     -22563.169922 cash  -                      c1 {forAsset=Living overflow=false}
+  0111 2027-04 capitalGainRecognized        11826.648202 info  longTermCapitalGain    c1 {spillover=false}
+  0112 2027-04 taxProvision                 -1773.997230 cash  -                      c2 {forAsset=Living}
+  0113 2027-04 assetGrowth                  12277.979880 cash  growth                 c-
+  0114 2027-04 incomeTaxWithholding          -737.355833 cash  -                      c3
+  0115 2027-04 capitalGainRecognized          599.376417 info  longTermCapitalGain    c3 {spillover=false}
+  0116 2027-05 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0117 2027-05 grossUp                     -22626.272692 cash  -                      c1 {forAsset=Living overflow=false}
+  0118 2027-05 capitalGainRecognized        11889.297581 info  longTermCapitalGain    c1 {spillover=false}
+  0119 2027-05 taxProvision                 -1783.394637 cash  -                      c2 {forAsset=Living}
+  0120 2027-05 assetGrowth                  12265.123011 cash  growth                 c-
+  0121 2027-05 incomeTaxWithholding          -737.355833 cash  -                      c3
+  0122 2027-05 capitalGainRecognized          599.948946 info  longTermCapitalGain    c3 {spillover=false}
+  0123 2027-06 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0124 2027-06 grossUp                     -22689.542179 cash  -                      c1 {forAsset=Living overflow=false}
+  0125 2027-06 capitalGainRecognized        11952.133490 info  longTermCapitalGain    c1 {spillover=false}
+  0126 2027-06 taxProvision                 -1792.820023 cash  -                      c2 {forAsset=Living}
+  0127 2027-06 assetGrowth                  12251.948948 cash  growth                 c-
+  0128 2027-06 incomeTaxWithholding          -737.355833 cash  -                      c3
+  0129 2027-06 capitalGainRecognized          600.519099 info  longTermCapitalGain    c3 {spillover=false}
+  0130 2027-07 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0131 2027-07 grossUp                     -22752.978789 cash  -                      c1 {forAsset=Living overflow=false}
+  0132 2027-07 capitalGainRecognized        12015.156227 info  longTermCapitalGain    c1 {spillover=false}
+  0133 2027-07 taxProvision                 -1802.273434 cash  -                      c2 {forAsset=Living}
+  0134 2027-07 assetGrowth                  12238.455675 cash  growth                 c-
+  0135 2027-07 incomeTaxWithholding          -737.355833 cash  -                      c3
+  0136 2027-07 capitalGainRecognized          601.086886 info  longTermCapitalGain    c3 {spillover=false}
+  0137 2027-08 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0138 2027-08 grossUp                     -22816.582925 cash  -                      c1 {forAsset=Living overflow=false}
+  0139 2027-08 capitalGainRecognized        12078.366096 info  longTermCapitalGain    c1 {spillover=false}
+  0140 2027-08 taxProvision                 -1811.754914 cash  -                      c2 {forAsset=Living}
+  0141 2027-08 assetGrowth                  12224.641162 cash  growth                 c-
+  0142 2027-08 incomeTaxWithholding          -737.355833 cash  -                      c3
+  0143 2027-08 capitalGainRecognized          601.652318 info  longTermCapitalGain    c3 {spillover=false}
+  0144 2027-09 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0145 2027-09 grossUp                     -22880.354993 cash  -                      c1 {forAsset=Living overflow=false}
+  0146 2027-09 capitalGainRecognized        12141.763401 info  longTermCapitalGain    c1 {spillover=false}
+  0147 2027-09 taxProvision                 -1821.264510 cash  -                      c2 {forAsset=Living}
+  0148 2027-09 assetGrowth                  12210.503372 cash  growth                 c-
+  0149 2027-09 incomeTaxWithholding          -737.355833 cash  -                      c3
+  0150 2027-09 capitalGainRecognized          602.215403 info  longTermCapitalGain    c3 {spillover=false}
+  0151 2027-10 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0152 2027-10 grossUp                     -22944.295400 cash  -                      c1 {forAsset=Living overflow=false}
+  0153 2027-10 capitalGainRecognized        12205.348447 info  longTermCapitalGain    c1 {spillover=false}
+  0154 2027-10 taxProvision                 -1830.802267 cash  -                      c2 {forAsset=Living}
+  0155 2027-10 assetGrowth                  12196.040255 cash  growth                 c-
+  0156 2027-10 incomeTaxWithholding          -737.355833 cash  -                      c3
+  0157 2027-10 capitalGainRecognized          602.776152 info  longTermCapitalGain    c3 {spillover=false}
+  0158 2027-11 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0159 2027-11 grossUp                     -23008.404555 cash  -                      c1 {forAsset=Living overflow=false}
+  0160 2027-11 capitalGainRecognized        12269.121542 info  longTermCapitalGain    c1 {spillover=false}
+  0161 2027-11 taxProvision                 -1840.368231 cash  -                      c2 {forAsset=Living}
+  0162 2027-11 assetGrowth                  12181.249755 cash  growth                 c-
+  0163 2027-11 incomeTaxWithholding          -737.355833 cash  -                      c3
+  0164 2027-11 capitalGainRecognized          603.334573 info  longTermCapitalGain    c3 {spillover=false}
+  0165 2027-12 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0166 2027-12 grossUp                     -23072.682867 cash  -                      c1 {forAsset=Living overflow=false}
+  0167 2027-12 capitalGainRecognized        12333.082994 info  longTermCapitalGain    c1 {spillover=false}
+  0168 2027-12 taxProvision                 -1849.962449 cash  -                      c2 {forAsset=Living}
+  0169 2027-12 assetGrowth                  12166.129801 cash  growth                 c-
+  0170 2027-12 incomeTaxWithholding          -737.355833 cash  -                      c3
+  0171 2027-12 capitalGainRecognized          603.890678 info  longTermCapitalGain    c3 {spillover=false}
+  0172 2027-12 taxTrueUp                    -1325.328316 cash  -                      c6 {direction=underpayment}
+  0173 2027-12 capitalGainRecognized         1085.437152 info  longTermCapitalGain    c6 {spillover=false}
+  0174 2027-12 niitAssessed                 -1301.589270 cash  -                      c7 {bound=magi magi=234252.349208 nii=152652.349208 taxedBase=34252.349208 threshold=200000}
+  0175 2027-12 capitalGainRecognized         1065.994994 info  longTermCapitalGain    c7 {spillover=false}
+  0176 2028-01 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0177 2028-01 grossUp                     -23137.130746 cash  -                      c1 {forAsset=Living overflow=false}
+  0178 2028-01 capitalGainRecognized        12397.233113 info  longTermCapitalGain    c1 {spillover=false}
+  0179 2028-01 taxProvision                 -1859.584967 cash  -                      c2 {forAsset=Living}
+  0180 2028-01 assetGrowth                  12139.732824 cash  growth                 c-
+  0181 2028-01 incomeTaxWithholding          -713.837864 cash  -                      c3
+  0182 2028-01 capitalGainRecognized          585.165715 info  longTermCapitalGain    c3 {spillover=false}
+  0183 2028-02 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0184 2028-02 grossUp                     -23201.748604 cash  -                      c1 {forAsset=Living overflow=false}
+  0185 2028-02 capitalGainRecognized        12461.572212 info  longTermCapitalGain    c1 {spillover=false}
+  0186 2028-02 taxProvision                 -1869.235832 cash  -                      c2 {forAsset=Living}
+  0187 2028-02 assetGrowth                  12124.000101 cash  growth                 c-
+  0188 2028-02 incomeTaxWithholding          -713.837864 cash  -                      c3
+  0189 2028-02 capitalGainRecognized          585.699624 info  longTermCapitalGain    c3 {spillover=false}
+  0190 2028-03 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0191 2028-03 grossUp                     -23266.536854 cash  -                      c1 {forAsset=Living overflow=false}
+  0192 2028-03 capitalGainRecognized        12526.100604 info  longTermCapitalGain    c1 {spillover=false}
+  0193 2028-03 taxProvision                 -1878.915091 cash  -                      c2 {forAsset=Living}
+  0194 2028-03 assetGrowth                  12107.931873 cash  growth                 c-
+  0195 2028-03 incomeTaxWithholding          -713.837864 cash  -                      c3
+  0196 2028-03 capitalGainRecognized          586.231318 info  longTermCapitalGain    c3 {spillover=false}
+  0197 2028-04 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0198 2028-04 grossUp                     -23331.495910 cash  -                      c1 {forAsset=Living overflow=false}
+  0199 2028-04 capitalGainRecognized        12590.818603 info  longTermCapitalGain    c1 {spillover=false}
+  0200 2028-04 taxProvision                 -1888.622790 cash  -                      c2 {forAsset=Living}
+  0201 2028-04 assetGrowth                  12091.526032 cash  growth                 c-
+  0202 2028-04 incomeTaxWithholding          -713.837864 cash  -                      c3
+  0203 2028-04 capitalGainRecognized          586.760806 info  longTermCapitalGain    c3 {spillover=false}
+  0204 2028-05 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0205 2028-05 grossUp                     -23396.626187 cash  -                      c1 {forAsset=Living overflow=false}
+  0206 2028-05 capitalGainRecognized        12655.726526 info  longTermCapitalGain    c1 {spillover=false}
+  0207 2028-05 taxProvision                 -1898.358979 cash  -                      c2 {forAsset=Living}
+  0208 2028-05 assetGrowth                  12074.780457 cash  growth                 c-
+  0209 2028-05 incomeTaxWithholding          -713.837864 cash  -                      c3
+  0210 2028-05 capitalGainRecognized          587.288097 info  longTermCapitalGain    c3 {spillover=false}
+  0211 2028-06 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0212 2028-06 grossUp                     -23461.928102 cash  -                      c1 {forAsset=Living overflow=false}
+  0213 2028-06 capitalGainRecognized        12720.824691 info  longTermCapitalGain    c1 {spillover=false}
+  0214 2028-06 taxProvision                 -1908.123704 cash  -                      c2 {forAsset=Living}
+  0215 2028-06 assetGrowth                  12057.693017 cash  growth                 c-
+  0216 2028-06 incomeTaxWithholding          -713.837864 cash  -                      c3
+  0217 2028-06 capitalGainRecognized          587.813200 info  longTermCapitalGain    c3 {spillover=false}
+  0218 2028-07 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0219 2028-07 grossUp                     -23527.402073 cash  -                      c1 {forAsset=Living overflow=false}
+  0220 2028-07 capitalGainRecognized        12786.113418 info  longTermCapitalGain    c1 {spillover=false}
+  0221 2028-07 taxProvision                 -1917.917013 cash  -                      c2 {forAsset=Living}
+  0222 2028-07 assetGrowth                  12040.261572 cash  growth                 c-
+  0223 2028-07 incomeTaxWithholding          -713.837864 cash  -                      c3
+  0224 2028-07 capitalGainRecognized          588.336123 info  longTermCapitalGain    c3 {spillover=false}
+  0225 2028-08 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0226 2028-08 grossUp                     -23593.048517 cash  -                      c1 {forAsset=Living overflow=false}
+  0227 2028-08 capitalGainRecognized        12851.593027 info  longTermCapitalGain    c1 {spillover=false}
+  0228 2028-08 taxProvision                 -1927.738954 cash  -                      c2 {forAsset=Living}
+  0229 2028-08 assetGrowth                  12022.483968 cash  growth                 c-
+  0230 2028-08 incomeTaxWithholding          -713.837864 cash  -                      c3
+  0231 2028-08 capitalGainRecognized          588.856878 info  longTermCapitalGain    c3 {spillover=false}
+  0232 2028-09 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0233 2028-09 grossUp                     -23658.867856 cash  -                      c1 {forAsset=Living overflow=false}
+  0234 2028-09 capitalGainRecognized        12917.263842 info  longTermCapitalGain    c1 {spillover=false}
+  0235 2028-09 taxProvision                 -1937.589576 cash  -                      c2 {forAsset=Living}
+  0236 2028-09 assetGrowth                  12004.358045 cash  growth                 c-
+  0237 2028-09 incomeTaxWithholding          -713.837864 cash  -                      c3
+  0238 2028-09 capitalGainRecognized          589.375471 info  longTermCapitalGain    c3 {spillover=false}
+  0239 2028-10 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0240 2028-10 grossUp                     -23724.860510 cash  -                      c1 {forAsset=Living overflow=false}
+  0241 2028-10 capitalGainRecognized        12983.126187 info  longTermCapitalGain    c1 {spillover=false}
+  0242 2028-10 taxProvision                 -1947.468928 cash  -                      c2 {forAsset=Living}
+  0243 2028-10 assetGrowth                  11985.881626 cash  growth                 c-
+  0244 2028-10 incomeTaxWithholding          -713.837864 cash  -                      c3
+  0245 2028-10 capitalGainRecognized          589.891912 info  longTermCapitalGain    c3 {spillover=false}
+  0246 2028-11 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0247 2028-11 grossUp                     -23791.026901 cash  -                      c1 {forAsset=Living overflow=false}
+  0248 2028-11 capitalGainRecognized        13049.180388 info  longTermCapitalGain    c1 {spillover=false}
+  0249 2028-11 taxProvision                 -1957.377058 cash  -                      c2 {forAsset=Living}
+  0250 2028-11 assetGrowth                  11967.052530 cash  growth                 c-
+  0251 2028-11 incomeTaxWithholding          -713.837864 cash  -                      c3
+  0252 2028-11 capitalGainRecognized          590.406211 info  longTermCapitalGain    c3 {spillover=false}
+  0253 2028-12 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0254 2028-12 grossUp                     -23857.367454 cash  -                      c1 {forAsset=Living overflow=false}
+  0255 2028-12 capitalGainRecognized        13115.426771 info  longTermCapitalGain    c1 {spillover=false}
+  0256 2028-12 taxProvision                 -1967.314016 cash  -                      c2 {forAsset=Living}
+  0257 2028-12 assetGrowth                  11947.868560 cash  growth                 c-
+  0258 2028-12 incomeTaxWithholding          -713.837864 cash  -                      c3
+  0259 2028-12 capitalGainRecognized          590.918375 info  longTermCapitalGain    c3 {spillover=false}
+  0260 2028-12 taxTrueUp                    -1381.226381 cash  -                      c8 {direction=underpayment}
+  0261 2028-12 capitalGainRecognized         1143.385761 info  longTermCapitalGain    c8 {spillover=false}
+  0262 2028-12 niitAssessed                 -1666.799900 cash  -                      c9 {bound=magi magi=243863.155259 nii=162263.155259 taxedBase=43863.155259 threshold=200000}
+  0263 2028-12 capitalGainRecognized         1379.784876 info  longTermCapitalGain    c9 {spillover=false}
+  0264 2029-01 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0265 2029-01 grossUp                     -23923.882593 cash  -                      c1 {forAsset=Living overflow=false}
+  0266 2029-01 capitalGainRecognized        13181.865666 info  longTermCapitalGain    c1 {spillover=false}
+  0267 2029-01 taxProvision                 -1977.279850 cash  -                      c2 {forAsset=Living}
+  0268 2029-01 assetGrowth                  11915.627401 cash  growth                 c-
+  0269 2029-01 incomeTaxWithholding          -689.590838 cash  -                      c3
+  0270 2029-01 capitalGainRecognized          571.339287 info  longTermCapitalGain    c3 {spillover=false}
+  0271 2029-02 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0272 2029-02 grossUp                     -23990.572745 cash  -                      c1 {forAsset=Living overflow=false}
+  0273 2029-02 capitalGainRecognized        13248.497404 info  longTermCapitalGain    c1 {spillover=false}
+  0274 2029-02 taxProvision                 -1987.274611 cash  -                      c2 {forAsset=Living}
+  0275 2029-02 assetGrowth                  11895.775167 cash  growth                 c-
+  0276 2029-02 incomeTaxWithholding          -689.590838 cash  -                      c3
+  0277 2029-02 capitalGainRecognized          571.829957 info  longTermCapitalGain    c3 {spillover=false}
+  0278 2029-03 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0279 2029-03 grossUp                     -24057.438335 cash  -                      c1 {forAsset=Living overflow=false}
+  0280 2029-03 capitalGainRecognized        13315.322317 info  longTermCapitalGain    c1 {spillover=false}
+  0281 2029-03 taxProvision                 -1997.298347 cash  -                      c2 {forAsset=Living}
+  0282 2029-03 assetGrowth                  11875.561609 cash  growth                 c-
+  0283 2029-03 incomeTaxWithholding          -689.590838 cash  -                      c3
+  0284 2029-03 capitalGainRecognized          572.318591 info  longTermCapitalGain    c3 {spillover=false}
+  0285 2029-04 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0286 2029-04 grossUp                     -24124.479793 cash  -                      c1 {forAsset=Living overflow=false}
+  0287 2029-04 capitalGainRecognized        13382.340737 info  longTermCapitalGain    c1 {spillover=false}
+  0288 2029-04 taxProvision                 -2007.351111 cash  -                      c2 {forAsset=Living}
+  0289 2029-04 assetGrowth                  11854.984488 cash  growth                 c-
+  0290 2029-04 incomeTaxWithholding          -689.590838 cash  -                      c3
+  0291 2029-04 capitalGainRecognized          572.805198 info  longTermCapitalGain    c3 {spillover=false}
+  0292 2029-05 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0293 2029-05 grossUp                     -24191.697548 cash  -                      c1 {forAsset=Living overflow=false}
+  0294 2029-05 capitalGainRecognized        13449.553002 info  longTermCapitalGain    c1 {spillover=false}
+  0295 2029-05 taxProvision                 -2017.432950 cash  -                      c2 {forAsset=Living}
+  0296 2029-05 assetGrowth                  11834.041555 cash  growth                 c-
+  0297 2029-05 incomeTaxWithholding          -689.590838 cash  -                      c3
+  0298 2029-05 capitalGainRecognized          573.289786 info  longTermCapitalGain    c3 {spillover=false}
+  0299 2029-06 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0300 2029-06 grossUp                     -24259.092032 cash  -                      c1 {forAsset=Living overflow=false}
+  0301 2029-06 capitalGainRecognized        13516.959447 info  longTermCapitalGain    c1 {spillover=false}
+  0302 2029-06 taxProvision                 -2027.543917 cash  -                      c2 {forAsset=Living}
+  0303 2029-06 assetGrowth                  11812.730549 cash  growth                 c-
+  0304 2029-06 incomeTaxWithholding          -689.590838 cash  -                      c3
+  0305 2029-06 capitalGainRecognized          573.772363 info  longTermCapitalGain    c3 {spillover=false}
+  0306 2029-07 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0307 2029-07 grossUp                     -24326.663676 cash  -                      c1 {forAsset=Living overflow=false}
+  0308 2029-07 capitalGainRecognized        13584.560411 info  longTermCapitalGain    c1 {spillover=false}
+  0309 2029-07 taxProvision                 -2037.684062 cash  -                      c2 {forAsset=Living}
+  0310 2029-07 assetGrowth                  11791.049199 cash  growth                 c-
+  0311 2029-07 incomeTaxWithholding          -689.590838 cash  -                      c3
+  0312 2029-07 capitalGainRecognized          574.252938 info  longTermCapitalGain    c3 {spillover=false}
+  0313 2029-08 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0314 2029-08 grossUp                     -24394.412913 cash  -                      c1 {forAsset=Living overflow=false}
+  0315 2029-08 capitalGainRecognized        13652.356233 info  longTermCapitalGain    c1 {spillover=false}
+  0316 2029-08 taxProvision                 -2047.853435 cash  -                      c2 {forAsset=Living}
+  0317 2029-08 assetGrowth                  11768.995222 cash  growth                 c-
+  0318 2029-08 incomeTaxWithholding          -689.590838 cash  -                      c3
+  0319 2029-08 capitalGainRecognized          574.731518 info  longTermCapitalGain    c3 {spillover=false}
+  0320 2029-09 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0321 2029-09 grossUp                     -24462.340179 cash  -                      c1 {forAsset=Living overflow=false}
+  0322 2029-09 capitalGainRecognized        13720.347257 info  longTermCapitalGain    c1 {spillover=false}
+  0323 2029-09 taxProvision                 -2058.052089 cash  -                      c2 {forAsset=Living}
+  0324 2029-09 assetGrowth                  11746.566323 cash  growth                 c-
+  0325 2029-09 incomeTaxWithholding          -689.590838 cash  -                      c3
+  0326 2029-09 capitalGainRecognized          575.208113 info  longTermCapitalGain    c3 {spillover=false}
+  0327 2029-10 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0328 2029-10 grossUp                     -24530.445908 cash  -                      c1 {forAsset=Living overflow=false}
+  0329 2029-10 capitalGainRecognized        13788.533824 info  longTermCapitalGain    c1 {spillover=false}
+  0330 2029-10 taxProvision                 -2068.280074 cash  -                      c2 {forAsset=Living}
+  0331 2029-10 assetGrowth                  11723.760196 cash  growth                 c-
+  0332 2029-10 incomeTaxWithholding          -689.590838 cash  -                      c3
+  0333 2029-10 capitalGainRecognized          575.682730 info  longTermCapitalGain    c3 {spillover=false}
+  0334 2029-11 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0335 2029-11 grossUp                     -24598.730538 cash  -                      c1 {forAsset=Living overflow=false}
+  0336 2029-11 capitalGainRecognized        13856.916279 info  longTermCapitalGain    c1 {spillover=false}
+  0337 2029-11 taxProvision                 -2078.537442 cash  -                      c2 {forAsset=Living}
+  0338 2029-11 assetGrowth                  11700.574525 cash  growth                 c-
+  0339 2029-11 incomeTaxWithholding          -689.590838 cash  -                      c3
+  0340 2029-11 capitalGainRecognized          576.155378 info  longTermCapitalGain    c3 {spillover=false}
+  0341 2029-12 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0342 2029-12 grossUp                     -24667.194507 cash  -                      c1 {forAsset=Living overflow=false}
+  0343 2029-12 capitalGainRecognized        13925.494970 info  longTermCapitalGain    c1 {spillover=false}
+  0344 2029-12 taxProvision                 -2088.824245 cash  -                      c2 {forAsset=Living}
+  0345 2029-12 assetGrowth                  11677.006980 cash  growth                 c-
+  0346 2029-12 incomeTaxWithholding          -689.590838 cash  -                      c3
+  0347 2029-12 capitalGainRecognized          576.626064 info  longTermCapitalGain    c3 {spillover=false}
+  0348 2029-12 taxTrueUp                    -1411.677384 cash  -                      c10 {direction=underpayment}
+  0349 2029-12 capitalGainRecognized         1180.424578 info  longTermCapitalGain    c10 {spillover=false}
+  0350 2029-12 niitAssessed                 -2038.089344 cash  -                      c11 {bound=magi magi=253633.930106 nii=172033.930106 taxedBase=53633.930106 threshold=200000}
+  0351 2029-12 capitalGainRecognized         1704.221362 info  longTermCapitalGain    c11 {spillover=false}
+  0352 2030-01 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0353 2030-01 grossUp                     -24735.838255 cash  -                      c1 {forAsset=Living overflow=false}
+  0354 2030-01 capitalGainRecognized        13994.270243 info  longTermCapitalGain    c1 {spillover=false}
+  0355 2030-01 taxProvision                 -2099.140536 cash  -                      c2 {forAsset=Living}
+  0356 2030-01 assetGrowth                  11638.681193 cash  growth                 c-
+  0357 2030-01 incomeTaxWithholding          -664.592154 cash  -                      c3
+  0358 2030-01 capitalGainRecognized          556.174261 info  longTermCapitalGain    c3 {spillover=false}
+  0359 2030-02 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0360 2030-02 grossUp                     -24804.662221 cash  -                      c1 {forAsset=Living overflow=false}
+  0361 2030-02 capitalGainRecognized        14063.242449 info  longTermCapitalGain    c1 {spillover=false}
+  0362 2030-02 taxProvision                 -2109.486367 cash  -                      c2 {forAsset=Living}
+  0363 2030-02 assetGrowth                  11614.387138 cash  growth                 c-
+  0364 2030-02 incomeTaxWithholding          -664.592154 cash  -                      c3
+  0365 2030-02 capitalGainRecognized          556.624128 info  longTermCapitalGain    c3 {spillover=false}
+  0366 2030-03 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0367 2030-03 grossUp                     -24873.666849 cash  -                      c1 {forAsset=Living overflow=false}
+  0368 2030-03 capitalGainRecognized        14132.411938 info  longTermCapitalGain    c1 {spillover=false}
+  0369 2030-03 taxProvision                 -2119.861791 cash  -                      c2 {forAsset=Living}
+  0370 2030-03 assetGrowth                  11589.704338 cash  growth                 c-
+  0371 2030-03 incomeTaxWithholding          -664.592154 cash  -                      c3
+  0372 2030-03 capitalGainRecognized          557.072128 info  longTermCapitalGain    c3 {spillover=false}
+  0373 2030-04 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0374 2030-04 grossUp                     -24942.852581 cash  -                      c1 {forAsset=Living overflow=false}
+  0375 2030-04 capitalGainRecognized        14201.779064 info  longTermCapitalGain    c1 {spillover=false}
+  0376 2030-04 taxProvision                 -2130.266860 cash  -                      c2 {forAsset=Living}
+  0377 2030-04 assetGrowth                  11564.630420 cash  growth                 c-
+  0378 2030-04 incomeTaxWithholding          -664.592154 cash  -                      c3
+  0379 2030-04 capitalGainRecognized          557.518269 info  longTermCapitalGain    c3 {spillover=false}
+  0380 2030-05 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0381 2030-05 grossUp                     -25012.219862 cash  -                      c1 {forAsset=Living overflow=false}
+  0382 2030-05 capitalGainRecognized        14271.344180 info  longTermCapitalGain    c1 {spillover=false}
+  0383 2030-05 taxProvision                 -2140.701627 cash  -                      c2 {forAsset=Living}
+  0384 2030-05 assetGrowth                  11539.162997 cash  growth                 c-
+  0385 2030-05 incomeTaxWithholding          -664.592154 cash  -                      c3
+  0386 2030-05 capitalGainRecognized          557.962559 info  longTermCapitalGain    c3 {spillover=false}
+  0387 2030-06 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0388 2030-06 grossUp                     -25081.769136 cash  -                      c1 {forAsset=Living overflow=false}
+  0389 2030-06 capitalGainRecognized        14341.107643 info  longTermCapitalGain    c1 {spillover=false}
+  0390 2030-06 taxProvision                 -2151.166147 cash  -                      c2 {forAsset=Living}
+  0391 2030-06 assetGrowth                  11513.299670 cash  growth                 c-
+  0392 2030-06 incomeTaxWithholding          -664.592154 cash  -                      c3
+  0393 2030-06 capitalGainRecognized          558.405005 info  longTermCapitalGain    c3 {spillover=false}
+  0394 2030-07 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0395 2030-07 grossUp                     -25151.500853 cash  -                      c1 {forAsset=Living overflow=false}
+  0396 2030-07 capitalGainRecognized        14411.069811 info  longTermCapitalGain    c1 {spillover=false}
+  0397 2030-07 taxProvision                 -2161.660472 cash  -                      c2 {forAsset=Living}
+  0398 2030-07 assetGrowth                  11487.038032 cash  growth                 c-
+  0399 2030-07 incomeTaxWithholding          -664.592154 cash  -                      c3
+  0400 2030-07 capitalGainRecognized          558.845616 info  longTermCapitalGain    c3 {spillover=false}
+  0401 2030-08 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0402 2030-08 grossUp                     -25221.415458 cash  -                      c1 {forAsset=Living overflow=false}
+  0403 2030-08 capitalGainRecognized        14481.231041 info  longTermCapitalGain    c1 {spillover=false}
+  0404 2030-08 taxProvision                 -2172.184656 cash  -                      c2 {forAsset=Living}
+  0405 2030-08 assetGrowth                  11460.375658 cash  growth                 c-
+  0406 2030-08 incomeTaxWithholding          -664.592154 cash  -                      c3
+  0407 2030-08 capitalGainRecognized          559.284398 info  longTermCapitalGain    c3 {spillover=false}
+  0408 2030-09 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0409 2030-09 grossUp                     -25291.513403 cash  -                      c1 {forAsset=Living overflow=false}
+  0410 2030-09 capitalGainRecognized        14551.591696 info  longTermCapitalGain    c1 {spillover=false}
+  0411 2030-09 taxProvision                 -2182.738754 cash  -                      c2 {forAsset=Living}
+  0412 2030-09 assetGrowth                  11433.310117 cash  growth                 c-
+  0413 2030-09 incomeTaxWithholding          -664.592154 cash  -                      c3
+  0414 2030-09 capitalGainRecognized          559.721360 info  longTermCapitalGain    c3 {spillover=false}
+  0415 2030-10 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0416 2030-10 grossUp                     -25361.795137 cash  -                      c1 {forAsset=Living overflow=false}
+  0417 2030-10 capitalGainRecognized        14622.152138 info  longTermCapitalGain    c1 {spillover=false}
+  0418 2030-10 taxProvision                 -2193.322821 cash  -                      c2 {forAsset=Living}
+  0419 2030-10 assetGrowth                  11405.838962 cash  growth                 c-
+  0420 2030-10 incomeTaxWithholding          -664.592154 cash  -                      c3
+  0421 2030-10 capitalGainRecognized          560.156508 info  longTermCapitalGain    c3 {spillover=false}
+  0422 2030-11 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0423 2030-11 grossUp                     -25432.261112 cash  -                      c1 {forAsset=Living overflow=false}
+  0424 2030-11 capitalGainRecognized        14692.912730 info  longTermCapitalGain    c1 {spillover=false}
+  0425 2030-11 taxProvision                 -2203.936910 cash  -                      c2 {forAsset=Living}
+  0426 2030-11 assetGrowth                  11377.959736 cash  growth                 c-
+  0427 2030-11 incomeTaxWithholding          -664.592154 cash  -                      c3
+  0428 2030-11 capitalGainRecognized          560.589851 info  longTermCapitalGain    c3 {spillover=false}
+  0429 2030-12 transfer                      8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0430 2030-12 grossUp                     -25502.911783 cash  -                      c1 {forAsset=Living overflow=false}
+  0431 2030-12 capitalGainRecognized        14763.873839 info  longTermCapitalGain    c1 {spillover=false}
+  0432 2030-12 taxProvision                 -2214.581076 cash  -                      c2 {forAsset=Living}
+  0433 2030-12 assetGrowth                  11349.669968 cash  growth                 c-
+  0434 2030-12 incomeTaxWithholding          -664.592154 cash  -                      c3
+  0435 2030-12 capitalGainRecognized          561.021396 info  longTermCapitalGain    c3 {spillover=false}
+  0436 2030-12 taxTrueUp                    -1438.203213 cash  -                      c12 {direction=underpayment}
+  0437 2030-12 capitalGainRecognized         1214.072074 info  longTermCapitalGain    c12 {spillover=false}
+  0438 2030-12 niitAssessed                 -2421.170311 cash  -                      c13 {bound=magi magi=263715.008193 nii=182115.008193 taxedBase=63715.008193 threshold=200000}
+  0439 2030-12 capitalGainRecognized         2043.852520 info  longTermCapitalGain    c13 {spillover=false}
+
+[history] Brokerage
+  value                        n=  60 first=  2998046.650000 last=  2734605.870000 min=  2734605.870000 max=  2998046.650000 sum=  173417993.820000 #011046ed
+  growth                       n=  60 first=    12443.180000 last=    11349.670000 min=    11349.670000 max=    12443.180000 sum=     719754.270000 #f410a3af
+  income                       n=  60 first=    11517.860000 last=    15324.900000 min=    11517.860000 max=    17435.090000 sum=     811312.350000 #5972bf21
+  estimatedIncomeTax           n=  60 first=    -2396.530000 last=    -2879.170000 min=    -4175.410000 max=    -2396.530000 sum=    -163045.120000 #24f2ee80
+  niit                         n=  60 first=        0.000000 last=        0.000000 min=    -2038.090000 max=        0.000000 sum=      -5912.700000 #0e2b02c4
+  incomeTax                    n=  60 first=    -2396.530000 last=    -2879.170000 min=    -4175.410000 max=    -2396.530000 sum=    -163045.120000 #24f2ee80
+  federalTaxes                 n=  60 first=    -2396.530000 last=    -2879.170000 min=    -6213.500000 max=    -2396.530000 sum=    -168957.820000 #bb3d7307
+  taxes                        n=  60 first=    -2396.530000 last=    -2879.170000 min=    -6213.500000 max=    -2396.530000 sum=    -168957.820000 #bb3d7307
+  cashFlow                     n=  60 first=    -2396.530000 last=    -2879.170000 min=    -4175.410000 max=    -2396.530000 sum=    -163045.120000 #24f2ee80
+  cashFlowAccumulated          n=  60 first=    -2396.530000 last=  -163045.170000 min=  -163045.170000 max=    -2396.530000 sum=   -4822451.400000 #6558fafc
+  longTermCapitalGain          n=  60 first=    11517.860000 last=    15324.900000 min=    11517.860000 max=    17435.090000 sum=     811312.350000 #5972bf21
+  capitalGain                  n=  60 first=    11517.860000 last=    15324.900000 min=    11517.860000 max=    17435.090000 sum=     811312.350000 #5972bf21
+
+[asset] Living
+  instrument = monthlyExpense
+  start = 2026-01  finish = 2030-12
+  startCurrency = -20000.000000
+  finishCurrency = -23348.492228
+  startBasis = 0.000000
+  finishBasis = 0.000000
+  isClosed = no  isDepleted = no
+  closedDate = -  closedValue = -
+  events = 60  reconciled = 60
+
+[events] Living
+  0000 2026-01 expenseInflation               -51.666667 cash  -                      c-
+  0001 2026-02 expenseInflation               -51.800139 cash  -                      c-
+  0002 2026-03 expenseInflation               -51.933956 cash  -                      c-
+  0003 2026-04 expenseInflation               -52.068119 cash  -                      c-
+  0004 2026-05 expenseInflation               -52.202628 cash  -                      c-
+  0005 2026-06 expenseInflation               -52.337485 cash  -                      c-
+  0006 2026-07 expenseInflation               -52.472690 cash  -                      c-
+  0007 2026-08 expenseInflation               -52.608244 cash  -                      c-
+  0008 2026-09 expenseInflation               -52.744149 cash  -                      c-
+  0009 2026-10 expenseInflation               -52.880405 cash  -                      c-
+  0010 2026-11 expenseInflation               -53.017012 cash  -                      c-
+  0011 2026-12 expenseInflation               -53.153973 cash  -                      c-
+  0012 2027-01 expenseInflation               -53.291287 cash  -                      c-
+  0013 2027-02 expenseInflation               -53.428957 cash  -                      c-
+  0014 2027-03 expenseInflation               -53.566981 cash  -                      c-
+  0015 2027-04 expenseInflation               -53.705363 cash  -                      c-
+  0016 2027-05 expenseInflation               -53.844102 cash  -                      c-
+  0017 2027-06 expenseInflation               -53.983199 cash  -                      c-
+  0018 2027-07 expenseInflation               -54.122656 cash  -                      c-
+  0019 2027-08 expenseInflation               -54.262472 cash  -                      c-
+  0020 2027-09 expenseInflation               -54.402650 cash  -                      c-
+  0021 2027-10 expenseInflation               -54.543191 cash  -                      c-
+  0022 2027-11 expenseInflation               -54.684094 cash  -                      c-
+  0023 2027-12 expenseInflation               -54.825361 cash  -                      c-
+  0024 2028-01 expenseInflation               -54.966993 cash  -                      c-
+  0025 2028-02 expenseInflation               -55.108991 cash  -                      c-
+  0026 2028-03 expenseInflation               -55.251356 cash  -                      c-
+  0027 2028-04 expenseInflation               -55.394089 cash  -                      c-
+  0028 2028-05 expenseInflation               -55.537190 cash  -                      c-
+  0029 2028-06 expenseInflation               -55.680661 cash  -                      c-
+  0030 2028-07 expenseInflation               -55.824503 cash  -                      c-
+  0031 2028-08 expenseInflation               -55.968716 cash  -                      c-
+  0032 2028-09 expenseInflation               -56.113302 cash  -                      c-
+  0033 2028-10 expenseInflation               -56.258262 cash  -                      c-
+  0034 2028-11 expenseInflation               -56.403595 cash  -                      c-
+  0035 2028-12 expenseInflation               -56.549305 cash  -                      c-
+  0036 2029-01 expenseInflation               -56.695390 cash  -                      c-
+  0037 2029-02 expenseInflation               -56.841854 cash  -                      c-
+  0038 2029-03 expenseInflation               -56.988695 cash  -                      c-
+  0039 2029-04 expenseInflation               -57.135916 cash  -                      c-
+  0040 2029-05 expenseInflation               -57.283517 cash  -                      c-
+  0041 2029-06 expenseInflation               -57.431499 cash  -                      c-
+  0042 2029-07 expenseInflation               -57.579864 cash  -                      c-
+  0043 2029-08 expenseInflation               -57.728612 cash  -                      c-
+  0044 2029-09 expenseInflation               -57.877744 cash  -                      c-
+  0045 2029-10 expenseInflation               -58.027262 cash  -                      c-
+  0046 2029-11 expenseInflation               -58.177165 cash  -                      c-
+  0047 2029-12 expenseInflation               -58.327457 cash  -                      c-
+  0048 2030-01 expenseInflation               -58.478136 cash  -                      c-
+  0049 2030-02 expenseInflation               -58.629204 cash  -                      c-
+  0050 2030-03 expenseInflation               -58.780663 cash  -                      c-
+  0051 2030-04 expenseInflation               -58.932513 cash  -                      c-
+  0052 2030-05 expenseInflation               -59.084755 cash  -                      c-
+  0053 2030-06 expenseInflation               -59.237391 cash  -                      c-
+  0054 2030-07 expenseInflation               -59.390421 cash  -                      c-
+  0055 2030-08 expenseInflation               -59.543846 cash  -                      c-
+  0056 2030-09 expenseInflation               -59.697668 cash  -                      c-
+  0057 2030-10 expenseInflation               -59.851887 cash  -                      c-
+  0058 2030-11 expenseInflation               -60.006504 cash  -                      c-
+  0059 2030-12 expenseInflation               -60.161521 cash  -                      c-
+
+[history] Living
+  value                        n=  60 first=   -20051.670000 last=   -23348.490000 min=   -23348.490000 max=   -20051.670000 sum=   -1299539.040000 #830970a2
+  expense                      n=  60 first=   -20000.000000 last=   -23288.330000 min=   -23288.330000 max=   -20000.000000 sum=   -1296190.550000 #cea6ebd9
+  cashFlow                     n=  60 first=   -20000.000000 last=   -23288.330000 min=   -23288.330000 max=   -20000.000000 sum=   -1296190.550000 #cea6ebd9
+  cashFlowAccumulated          n=  60 first=   -20000.000000 last= -1296190.540000 min= -1296190.540000 max=   -20000.000000 sum=  -38531238.220000 #3fc52844
+  livingExpense                n=  60 first=   -20000.000000 last=   -23288.330000 min=   -23288.330000 max=   -20000.000000 sum=   -1296190.550000 #cea6ebd9
+
+[asset] Pension
+  instrument = retirementIncome
+  start = 2026-01  finish = 2030-12
+  startCurrency = 8000.000000
+  finishCurrency = 8000.000000
+  startBasis = 0.000000
+  finishBasis = 0.000000
+  isClosed = no  isDepleted = no
+  closedDate = -  closedValue = -
+  events = 64  reconciled = 64
+
+[events] Pension
+  0000 2026-01 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0001 2026-02 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0002 2026-03 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0003 2026-04 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0004 2026-05 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0005 2026-06 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0006 2026-07 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0007 2026-08 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0008 2026-09 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0009 2026-10 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0010 2026-11 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0011 2026-12 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0012 2026-12 incomeGrowth                     0.000000 cash  income                 c14
+  0013 2027-01 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0014 2027-02 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0015 2027-03 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0016 2027-04 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0017 2027-05 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0018 2027-06 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0019 2027-07 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0020 2027-08 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0021 2027-09 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0022 2027-10 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0023 2027-11 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0024 2027-12 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0025 2027-12 incomeGrowth                     0.000000 cash  income                 c15
+  0026 2028-01 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0027 2028-02 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0028 2028-03 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0029 2028-04 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0030 2028-05 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0031 2028-06 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0032 2028-07 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0033 2028-08 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0034 2028-09 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0035 2028-10 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0036 2028-11 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0037 2028-12 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0038 2028-12 incomeGrowth                     0.000000 cash  income                 c16
+  0039 2029-01 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0040 2029-02 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0041 2029-03 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0042 2029-04 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0043 2029-05 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0044 2029-06 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0045 2029-07 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0046 2029-08 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0047 2029-09 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0048 2029-10 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0049 2029-11 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0050 2029-12 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0051 2029-12 incomeGrowth                     0.000000 cash  income                 c17
+  0052 2030-01 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0053 2030-02 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0054 2030-03 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0055 2030-04 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0056 2030-05 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0057 2030-06 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0058 2030-07 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0059 2030-08 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0060 2030-09 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0061 2030-10 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0062 2030-11 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+  0063 2030-12 transfer                     -8000.000000 cash  -                      c0 {cadence=monthly from=Pension to=Brokerage}
+
+[history] Pension
+  value                        n=  60 first=     8000.000000 last=     8000.000000 min=     8000.000000 max=     8000.000000 sum=     480000.000000 #bec5b9e5
+  ordinaryIncome               n=  60 first=     8000.000000 last=     8000.000000 min=     8000.000000 max=     8000.000000 sum=     480000.000000 #bec5b9e5
+  income                       n=  60 first=     8000.000000 last=     8000.000000 min=     8000.000000 max=     8000.000000 sum=     480000.000000 #bec5b9e5
+  netIncome                    n=  60 first=     8000.000000 last=     8000.000000 min=     8000.000000 max=     8000.000000 sum=     480000.000000 #bec5b9e5
+  cashFlow                     n=  60 first=     8000.000000 last=     8000.000000 min=     8000.000000 max=     8000.000000 sum=     480000.000000 #bec5b9e5
+  cashFlowAccumulated          n=  60 first=     8000.000000 last=   480000.000000 min=     8000.000000 max=   480000.000000 sum=   14640000.000000 #f71dbe7d
+  socialSecurityIncome         n=  60 first=     8000.000000 last=     8000.000000 min=     8000.000000 max=     8000.000000 sum=     480000.000000 #bec5b9e5
+
+[packages]
+  0000 socialSecurityIncome=8000.000000 assetAppreciation=12443.181818 expense=-20000.000000 incomeTax=-760.166667 estimatedTaxes=-1636.363636 longTermCapitalGains=11517.855086 value=2985994.984848
+  0001 socialSecurityIncome=8000.000000 assetAppreciation=12434.790159 expense=-20051.666667 incomeTax=-760.166667 estimatedTaxes=-1645.346616 longTermCapitalGains=11578.369846 value=2983920.794919
+  0002 socialSecurityIncome=8000.000000 assetAppreciation=12426.110158 expense=-20103.466806 incomeTax=-760.166667 estimatedTaxes=-1654.356926 longTermCapitalGains=11639.064195 value=2981776.980723
+  0003 socialSecurityIncome=8000.000000 assetAppreciation=12417.139942 expense=-20155.400761 incomeTax=-760.166667 estimatedTaxes=-1663.394607 longTermCapitalGains=11699.938424 value=2979563.090512
+  0004 socialSecurityIncome=8000.000000 assetAppreciation=12407.877628 expense=-20207.468880 incomeTax=-760.166667 estimatedTaxes=-1672.459701 longTermCapitalGains=11760.992823 value=2977278.670265
+  0005 socialSecurityIncome=8000.000000 assetAppreciation=12398.321325 expense=-20259.671508 incomeTax=-760.166667 estimatedTaxes=-1681.552250 longTermCapitalGains=11822.227682 value=2974923.263680
+  0006 socialSecurityIncome=8000.000000 assetAppreciation=12388.469131 expense=-20312.008993 incomeTax=-760.166667 estimatedTaxes=-1690.672297 longTermCapitalGains=11883.643297 value=2972496.412165
+  0007 socialSecurityIncome=8000.000000 assetAppreciation=12378.319134 expense=-20364.481683 incomeTax=-760.166667 estimatedTaxes=-1699.819885 longTermCapitalGains=11945.239961 value=2969997.654820
+  0008 socialSecurityIncome=8000.000000 assetAppreciation=12367.869416 expense=-20417.089927 incomeTax=-760.166667 estimatedTaxes=-1708.995056 longTermCapitalGains=12007.017971 value=2967426.528438
+  0009 socialSecurityIncome=8000.000000 assetAppreciation=12357.118044 expense=-20469.834076 incomeTax=-760.166667 estimatedTaxes=-1718.197853 longTermCapitalGains=12068.977625 value=2964782.567482
+  0010 socialSecurityIncome=8000.000000 assetAppreciation=12346.063080 expense=-20522.714481 incomeTax=-760.166667 estimatedTaxes=-1727.428320 longTermCapitalGains=12131.119221 value=2962065.304082
+  0011 socialSecurityIncome=8000.000000 assetAppreciation=12334.702573 expense=-20575.731493 incomeTax=-760.166667 estimatedTaxes=-1736.686500 longTermCapitalGains=12193.443061 value=2959274.268023
+  0012 socialSecurityIncome=8000.000000 assetAppreciation=12314.667359 expense=-20628.885466 incomeTax=-737.355833 estimatedTaxes=-1745.972437 longTermCapitalGains=13863.512179 niit=-906.219789 taxTrueUp=-1101.909732 value=2954415.300836
+  0013 socialSecurityIncome=8000.000000 assetAppreciation=12302.750061 expense=-20682.176754 incomeTax=-737.355833 estimatedTaxes=-1755.286175 longTermCapitalGains=12300.132024 value=2951489.803179
+  0014 socialSecurityIncome=8000.000000 assetAppreciation=12290.521564 expense=-20735.605710 incomeTax=-737.355833 estimatedTaxes=-1764.627758 longTermCapitalGains=12362.986554 value=2948489.168461
+  0015 socialSecurityIncome=8000.000000 assetAppreciation=12277.979880 expense=-20789.172692 incomeTax=-737.355833 estimatedTaxes=-1773.997230 longTermCapitalGains=12426.024619 value=2945412.917223
+  0016 socialSecurityIncome=8000.000000 assetAppreciation=12265.123011 expense=-20842.878054 incomeTax=-737.355833 estimatedTaxes=-1783.394637 longTermCapitalGains=12489.246528 value=2942260.567607
+  0017 socialSecurityIncome=8000.000000 assetAppreciation=12251.948948 expense=-20896.722156 incomeTax=-737.355833 estimatedTaxes=-1792.820023 longTermCapitalGains=12552.652589 value=2939031.635344
+  0018 socialSecurityIncome=8000.000000 assetAppreciation=12238.455675 expense=-20950.705355 incomeTax=-737.355833 estimatedTaxes=-1802.273434 longTermCapitalGains=12616.243113 value=2935725.633741
+  0019 socialSecurityIncome=8000.000000 assetAppreciation=12224.641162 expense=-21004.828010 incomeTax=-737.355833 estimatedTaxes=-1811.754914 longTermCapitalGains=12680.018414 value=2932342.073672
+  0020 socialSecurityIncome=8000.000000 assetAppreciation=12210.503372 expense=-21059.090483 incomeTax=-737.355833 estimatedTaxes=-1821.264510 longTermCapitalGains=12743.978804 value=2928880.463567
+  0021 socialSecurityIncome=8000.000000 assetAppreciation=12196.040255 expense=-21113.493133 incomeTax=-737.355833 estimatedTaxes=-1830.802267 longTermCapitalGains=12808.124599 value=2925340.309398
+  0022 socialSecurityIncome=8000.000000 assetAppreciation=12181.249755 expense=-21168.036324 incomeTax=-737.355833 estimatedTaxes=-1840.368231 longTermCapitalGains=12872.456115 value=2921721.114671
+  0023 socialSecurityIncome=8000.000000 assetAppreciation=12166.129801 expense=-21222.720418 incomeTax=-737.355833 estimatedTaxes=-1849.962449 longTermCapitalGains=12936.973672 value=2918022.380410
+  0024 socialSecurityIncome=8000.000000 assetAppreciation=12139.732824 expense=-21277.545779 incomeTax=-713.837864 estimatedTaxes=-1859.584967 longTermCapitalGains=15133.830974 niit=-1301.589270 taxTrueUp=-1325.328316 value=2911629.260046
+  0025 socialSecurityIncome=8000.000000 assetAppreciation=12124.000101 expense=-21332.512772 incomeTax=-713.837864 estimatedTaxes=-1869.235832 longTermCapitalGains=13047.271837 value=2907782.564688
+  0026 socialSecurityIncome=8000.000000 assetAppreciation=12107.931873 expense=-21387.621763 incomeTax=-713.837864 estimatedTaxes=-1878.915091 longTermCapitalGains=13112.331922 value=2903854.870487
+  0027 socialSecurityIncome=8000.000000 assetAppreciation=12091.526032 expense=-21442.873120 incomeTax=-713.837864 estimatedTaxes=-1888.622790 longTermCapitalGains=13177.579409 value=2899845.668656
+  0028 socialSecurityIncome=8000.000000 assetAppreciation=12074.780457 expense=-21498.267208 incomeTax=-713.837864 estimatedTaxes=-1898.358979 longTermCapitalGains=13243.014623 value=2895754.447871
+  0029 socialSecurityIncome=8000.000000 assetAppreciation=12057.693017 expense=-21553.804399 incomeTax=-713.837864 estimatedTaxes=-1908.123704 longTermCapitalGains=13308.637891 value=2891580.694260
+  0030 socialSecurityIncome=8000.000000 assetAppreciation=12040.261572 expense=-21609.485060 incomeTax=-713.837864 estimatedTaxes=-1917.917013 longTermCapitalGains=13374.449541 value=2887323.891392
+  0031 socialSecurityIncome=8000.000000 assetAppreciation=12022.483968 expense=-21665.309563 incomeTax=-713.837864 estimatedTaxes=-1927.738954 longTermCapitalGains=13440.449905 value=2882983.520263
+  0032 socialSecurityIncome=8000.000000 assetAppreciation=12004.358045 expense=-21721.278280 incomeTax=-713.837864 estimatedTaxes=-1937.589576 longTermCapitalGains=13506.639313 value=2878559.059285
+  0033 socialSecurityIncome=8000.000000 assetAppreciation=11985.881626 expense=-21777.391582 incomeTax=-713.837864 estimatedTaxes=-1947.468928 longTermCapitalGains=13573.018100 value=2874049.984276
+  0034 socialSecurityIncome=8000.000000 assetAppreciation=11967.052530 expense=-21833.649843 incomeTax=-713.837864 estimatedTaxes=-1957.377058 longTermCapitalGains=13639.586599 value=2869455.768445
+  0035 socialSecurityIncome=8000.000000 assetAppreciation=11947.868560 expense=-21890.053439 incomeTax=-713.837864 estimatedTaxes=-1967.314016 longTermCapitalGains=13706.345146 value=2864775.882382
+  0036 socialSecurityIncome=8000.000000 assetAppreciation=11915.627401 expense=-21946.602743 incomeTax=-689.590838 estimatedTaxes=-1977.279850 longTermCapitalGains=16276.375590 niit=-1666.799900 taxTrueUp=-1381.226381 value=2856973.314680
+  0037 socialSecurityIncome=8000.000000 assetAppreciation=11895.775167 expense=-22003.298134 incomeTax=-689.590838 estimatedTaxes=-1987.274611 longTermCapitalGains=13820.327361 value=2852132.084411
+  0038 socialSecurityIncome=8000.000000 assetAppreciation=11875.561609 expense=-22060.139987 incomeTax=-689.590838 estimatedTaxes=-1997.298347 longTermCapitalGains=13887.640908 value=2847203.628152
+  0039 socialSecurityIncome=8000.000000 assetAppreciation=11854.984488 expense=-22117.128682 incomeTax=-689.590838 estimatedTaxes=-2007.351111 longTermCapitalGains=13955.145936 value=2842187.406093
+  0040 socialSecurityIncome=8000.000000 assetAppreciation=11834.041555 expense=-22174.264598 incomeTax=-689.590838 estimatedTaxes=-2017.432950 longTermCapitalGains=14022.842788 value=2837082.875744
+  0041 socialSecurityIncome=8000.000000 assetAppreciation=11812.730549 expense=-22231.548115 incomeTax=-689.590838 estimatedTaxes=-2027.543917 longTermCapitalGains=14090.731810 value=2831889.491924
+  0042 socialSecurityIncome=8000.000000 assetAppreciation=11791.049199 expense=-22288.979614 incomeTax=-689.590838 estimatedTaxes=-2037.684062 longTermCapitalGains=14158.813348 value=2826606.706746
+  0043 socialSecurityIncome=8000.000000 assetAppreciation=11768.995222 expense=-22346.559478 incomeTax=-689.590838 estimatedTaxes=-2047.853435 longTermCapitalGains=14227.087751 value=2821233.969604
+  0044 socialSecurityIncome=8000.000000 assetAppreciation=11746.566323 expense=-22404.288090 incomeTax=-689.590838 estimatedTaxes=-2058.052089 longTermCapitalGains=14295.555369 value=2815770.727166
+  0045 socialSecurityIncome=8000.000000 assetAppreciation=11723.760196 expense=-22462.165835 incomeTax=-689.590838 estimatedTaxes=-2068.280074 longTermCapitalGains=14364.216554 value=2810216.423355
+  0046 socialSecurityIncome=8000.000000 assetAppreciation=11700.574525 expense=-22520.193096 incomeTax=-689.590838 estimatedTaxes=-2078.537442 longTermCapitalGains=14433.071657 value=2804570.499338
+  0047 socialSecurityIncome=8000.000000 assetAppreciation=11677.006980 expense=-22578.370262 incomeTax=-689.590838 estimatedTaxes=-2088.824245 longTermCapitalGains=14502.121034 value=2798832.393516
+  0048 socialSecurityIncome=8000.000000 assetAppreciation=11638.681193 expense=-22636.697718 incomeTax=-664.592154 estimatedTaxes=-2099.140536 longTermCapitalGains=17435.090444 niit=-2038.089344 taxTrueUp=-1411.677384 value=2789562.399436
+  0049 socialSecurityIncome=8000.000000 assetAppreciation=11614.387138 expense=-22695.175854 incomeTax=-664.592154 estimatedTaxes=-2109.486367 longTermCapitalGains=14619.866576 value=2783648.902994
+  0050 socialSecurityIncome=8000.000000 assetAppreciation=11589.704338 expense=-22753.805058 incomeTax=-664.592154 estimatedTaxes=-2119.861791 longTermCapitalGains=14689.484066 value=2777641.567666
+  0051 socialSecurityIncome=8000.000000 assetAppreciation=11564.630420 expense=-22812.585721 incomeTax=-664.592154 estimatedTaxes=-2130.266860 longTermCapitalGains=14759.297333 value=2771539.820838
+  0052 socialSecurityIncome=8000.000000 assetAppreciation=11539.162997 expense=-22871.518235 incomeTax=-664.592154 estimatedTaxes=-2140.701627 longTermCapitalGains=14829.306739 value=2765343.087064
+  0053 socialSecurityIncome=8000.000000 assetAppreciation=11513.299670 expense=-22930.602990 incomeTax=-664.592154 estimatedTaxes=-2151.166147 longTermCapitalGains=14899.512649 value=2759050.788053
+  0054 socialSecurityIncome=8000.000000 assetAppreciation=11487.038032 expense=-22989.840381 incomeTax=-664.592154 estimatedTaxes=-2161.660472 longTermCapitalGains=14969.915427 value=2752662.342657
+  0055 socialSecurityIncome=8000.000000 assetAppreciation=11460.375658 expense=-23049.230802 incomeTax=-664.592154 estimatedTaxes=-2172.184656 longTermCapitalGains=15040.515440 value=2746177.166857
+  0056 socialSecurityIncome=8000.000000 assetAppreciation=11433.310117 expense=-23108.774648 incomeTax=-664.592154 estimatedTaxes=-2182.738754 longTermCapitalGains=15111.313056 value=2739594.673750
+  0057 socialSecurityIncome=8000.000000 assetAppreciation=11405.838962 expense=-23168.472316 incomeTax=-664.592154 estimatedTaxes=-2193.322821 longTermCapitalGains=15182.308647 value=2732914.273534
+  0058 socialSecurityIncome=8000.000000 assetAppreciation=11377.959736 expense=-23228.324203 incomeTax=-664.592154 estimatedTaxes=-2203.936910 longTermCapitalGains=15253.502582 value=2726135.373500
+  0059 socialSecurityIncome=8000.000000 assetAppreciation=11349.669968 expense=-23288.330707 incomeTax=-664.592154 estimatedTaxes=-2214.581076 longTermCapitalGains=15324.895235 value=2719257.378010
+
+[priceIndex]
+  [0000]         1.002583         1.005173         1.007770         1.010373         1.012984         1.015600
+  [0006]         1.018224         1.020854         1.023492         1.026136         1.028787         1.031444
+  [0012]         1.034109         1.036780         1.039459         1.042144         1.044836         1.047535
+  [0018]         1.050241         1.052955         1.055675         1.058402         1.061136         1.063877
+  [0024]         1.066626         1.069381         1.072144         1.074913         1.077690         1.080474
+  [0030]         1.083265         1.086064         1.088870         1.091682         1.094503         1.097330
+  [0036]         1.100165         1.103007         1.105856         1.108713         1.111577         1.114449
+  [0042]         1.117328         1.120214         1.123108         1.126010         1.128919         1.131835
+  [0048]         1.134759         1.137690         1.140629         1.143576         1.146530         1.149492
+  [0054]         1.152462         1.155439         1.158424         1.161416         1.164417         1.167425
+
+[sanity]
+  (no findings)
+
+[traces]
+  scopes = 1349
+  unattributedEvents = 0
+  1x 2027 annual pass
+  1x 2027 tax true-up
+  1x 2028 annual pass
+  1x 2028 tax true-up
+  1x 2029 annual pass
+  1x 2029 tax true-up
+  1x 2030 annual pass
+  1x 2030 tax true-up
+  1x 2031 annual pass
+  1x 2031 tax true-up
+  4x Annual growth: Pension
+  7x April 2026
+  7x April 2027
+  7x April 2028
+  7x April 2029
+  7x April 2030
+  7x August 2026
+  7x August 2027
+  7x August 2028
+  7x August 2029
+  7x August 2030
+  7x December 2026
+  7x December 2027
+  7x December 2028
+  7x December 2029
+  7x December 2030
+  7x February 2026
+  7x February 2027
+  7x February 2028
+  7x February 2029
+  7x February 2030
+  7x January 2026
+  7x January 2027
+  7x January 2028
+  7x January 2029
+  7x January 2030
+  7x July 2026
+  7x July 2027
+  7x July 2028
+  7x July 2029
+  7x July 2030
+  7x June 2026
+  7x June 2027
+  7x June 2028
+  7x June 2029
+  7x June 2030
+  7x March 2026
+  7x March 2027
+  7x March 2028
+  7x March 2029
+  7x March 2030
+  7x May 2026
+  7x May 2027
+  7x May 2028
+  7x May 2029
+  7x May 2030
+  5x Net investment income tax
+  7x November 2026
+  7x November 2027
+  7x November 2028
+  7x November 2029
+  7x November 2030
+  7x October 2026
+  7x October 2027
+  7x October 2028
+  7x October 2029
+  7x October 2030
+  60x Pay Brokerage
+  60x Pay Living
+  60x Pay Pension
+  60x Payroll: Brokerage
+  60x Payroll: Living
+  60x Payroll: Pension
+  60x Required distribution from Brokerage
+  60x Required distribution from Living
+  60x Required distribution from Pension
+  7x September 2026
+  7x September 2027
+  7x September 2028
+  7x September 2029
+  7x September 2030
+  130x Settle from Brokerage
+  60x Transfer Pension → Brokerage
+  60x Withholding: Brokerage
+  60x Withholding: Living
+  60x Withholding: Pension
+
+[traceLegend]
+  c0 = Transfer Pension → Brokerage
+  c1 = Pay Living > Settle from Brokerage
+  c2 = Pay Living
+  c3 = Settle from Brokerage
+  c4 = 2027 annual pass > 2027 tax true-up > Settle from Brokerage
+  c5 = 2027 annual pass > Net investment income tax > Settle from Brokerage
+  c6 = 2028 annual pass > 2028 tax true-up > Settle from Brokerage
+  c7 = 2028 annual pass > Net investment income tax > Settle from Brokerage
+  c8 = 2029 annual pass > 2029 tax true-up > Settle from Brokerage
+  c9 = 2029 annual pass > Net investment income tax > Settle from Brokerage
+  c10 = 2030 annual pass > 2030 tax true-up > Settle from Brokerage
+  c11 = 2030 annual pass > Net investment income tax > Settle from Brokerage
+  c12 = 2031 annual pass > 2031 tax true-up > Settle from Brokerage
+  c13 = 2031 annual pass > Net investment income tax > Settle from Brokerage
+  c14 = 2027 annual pass > Annual growth: Pension
+  c15 = 2028 annual pass > Annual growth: Pension
+  c16 = 2029 annual pass > Annual growth: Pension
+  c17 = 2030 annual pass > Annual growth: Pension
+

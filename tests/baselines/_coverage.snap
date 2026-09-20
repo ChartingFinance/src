@@ -49,6 +49,17 @@
     spillover
     taxTrueUp
     transfer
+  brokerage-only-retirement:
+    assetGrowth
+    capitalGainRecognized
+    expenseInflation
+    grossUp
+    incomeGrowth
+    incomeTaxWithholding
+    niitAssessed
+    taxProvision
+    taxTrueUp
+    transfer
   deferred-close-distribution:
     assetGrowth
     expenseInflation
