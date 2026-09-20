@@ -1078,7 +1078,12 @@ export class ModelAsset {
     this.propertyTaxCurrency.zero();
 
     this.isClosed = true;
-    if (dateInt) this.closedDateInt = dateInt;
+    // COPY, for the same reason SimEvent copies its Currency: the chronometer
+    // runs ONE DateInt for the whole plan and calls .next() on it, so holding
+    // the caller's object means every closed asset ends up reporting the month
+    // after the plan's last. Measured on midCareer: Salary, Home and Mortgage
+    // all read 2064-01 and were the same object.
+    if (dateInt) this.closedDateInt = dateInt.copy();
 
   }
 

@@ -23,7 +23,10 @@
  * ── What keeps these assertions from being vacuous ───────────────────
  *
  * "the run completes" alone would pass on an engine that quietly stopped
- * closing anything, so each case also asserts the close actually HAPPENED.
+ * closing anything, so each case also asserts the close actually HAPPENED,
+ * and that it is dated the first month. That date assertion is not padding:
+ * it is what caught closedDateInt holding the chronometer's live clock, so
+ * that every closed asset in every plan reported the month after the last.
  *
  * The last test guards the fix itself rather than the bug. Initializing
  * `firstDayOfMonthValue` to zero means that deleting its real assignment in
@@ -113,10 +116,12 @@ test('a mortgage with monthsRemaining 0 does not take the run down', () => {
         `run threw: ${paidOff.error?.message}`);
 });
 
-test('and it is closed for real, rather than skipped', () => {
+test('and it is closed for real, dated that first month', () => {
     const mortgage = byName(paidOff.portfolio, 'Mortgage');
     assert.ok(mortgage, 'mortgage missing from the portfolio');
     assert.equal(mortgage.isClosed, true, 'mortgage was not closed');
+    assert.equal(mortgage.closedDateInt?.year, START.year);
+    assert.equal(mortgage.closedDateInt?.month, START.month);
 });
 
 // ── 2. a life event closing an asset in month one ────────────────────
@@ -142,10 +147,12 @@ test('a life event may close an asset in the plan\'s first month', () => {
         `run threw: ${soldAtOnce.error?.message}`);
 });
 
-test('and that close happens, rather than being skipped', () => {
+test('and that close happens, on that same first month', () => {
     const home = byName(soldAtOnce.portfolio, 'Home');
     assert.ok(home, 'home missing from the portfolio');
     assert.equal(home.isClosed, true, 'home was not closed');
+    assert.equal(home.closedDateInt?.year, START.year);
+    assert.equal(home.closedDateInt?.month, START.month);
 });
 
 // ── 3. the initializer must not stand in for the real assignment ─────

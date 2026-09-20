@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.3.2; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.3.3; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -37724,7 +37724,7 @@ var ModelAsset = class _ModelAsset {
     this.monthlyValueChange.zero();
     this.propertyTaxCurrency.zero();
     this.isClosed = true;
-    if (dateInt) this.closedDateInt = dateInt;
+    if (dateInt) this.closedDateInt = dateInt.copy();
   }
   // ── Display data (for charting) ──────────────────────────────────
   buildDisplayData(monthsSpan, metricName, outputArrayName) {
