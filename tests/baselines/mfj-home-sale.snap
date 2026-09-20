@@ -381,7 +381,7 @@
   startBasis = 400000.000000
   finishBasis = 888452.065309
   isClosed = yes  isDepleted = no
-  closedDate = 2031-01  closedValue = 888452.065309
+  closedDate = 2029-07  closedValue = 888452.065309
   events = 213  reconciled = 213
 
 [events] Home

@@ -64,7 +64,7 @@
   startBasis = 400000.000000
   finishBasis = 0.000000
   isClosed = yes  isDepleted = no
-  closedDate = 2031-01  closedValue = 2102738.268178
+  closedDate = 2029-07  closedValue = 2102738.268178
   events = 45  reconciled = 45
 
 [events] Brokerage
