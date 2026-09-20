@@ -671,6 +671,47 @@ const adversarialFixtures = [
       ].map(ModelAsset.fromJSON),
     }),
   },
+  {
+    name: 'brokerage-only-retirement',
+    kind: 'adversarial',
+    reaches:
+      'a gross-up premium on EVERY monthly draw, in a plan whose tax line is ' +
+      'not made of premium. It exists for the annual-expenditure split: a ' +
+      'grossed-up withdrawal is one debit carrying both the bill and the tax ' +
+      'on the gain it realises, its causal chain roots in EXPENSE, so the ' +
+      'whole thing is counted as spending, and the TAX_PROVISION naming the ' +
+      'premium is excluded to avoid booking the same dollars twice. The total ' +
+      'is right; the split is not.\n' +
+      '      COMPLEMENTARY TO grossup-at-the-ltcg-boundary, not redundant ' +
+      'with it. That fixture provisions $32,896 and its expenditure tax line ' +
+      'reads $0 — every tax dollar it withdraws IS premium, so it cannot tell ' +
+      'a correct split from one that moved ALL spending into tax. This one ' +
+      'carries an annual true-up (correctly counted as tax) alongside the ' +
+      'premium (currently counted as spending) in the same years, so it ' +
+      'discriminates a partial fix and a double count. Measured 2027: tax ' +
+      'reads $11,475 where $33,048 left the account for tax — 65% low.\n' +
+      '      THE SHAPE IS LOAD-BEARING, all three parts.\n' +
+      '      No cash and no bank: fundingBackstopPriority puts both ahead of ' +
+      'taxableEquity, and the gross-up only fires on a taxable account.\n' +
+      '      A pension large enough to carry ordinary income past the 0% LTCG ' +
+      'band: at $2,000/mo instead of $8,000 the marginal rate is 0%, so ' +
+      't*gain is 0 and the premium vanishes entirely (measured).\n' +
+      '      Spending well above that income: planWithdrawal draws the ' +
+      'fresh deposits of the month FIRST at zero gain, and the pension lands ' +
+      'in the brokerage on its own because resolveDeposit picks the same ' +
+      'backstop. A $20,000 draw against an $8,000 deposit is what leaves a ' +
+      'taxable remainder to realise; at a $10,000 expense the premium falls ' +
+      'to a fifth.',
+    config: { startAge: 70, retirementAge: 65, filingAs: 'Single' },
+    build: () => ({
+      assets: [
+        // 20% basis: the embedded gain is the whole point.
+        equity('Brokerage', 3000000, 600000, { annualReturnRate: { rate: 0.05 } }),
+        benefit('Pension', 8000),
+        expense('Living', 20000),
+      ].map(ModelAsset.fromJSON),
+    }),
+  },
 ];
 
 export const SNAPSHOT_FIXTURES = [...realFixtures, ...adversarialFixtures];

@@ -350,6 +350,113 @@ const main = async () => {
             { spending: 0, tax: 0, total: 0, unfunded: 0, months: 0, complete: false });
     });
 
+    // ---- the gross-up premium: a known imprecision, now with a witness ----
+    //
+    // A grossed-up withdrawal is ONE debit carrying two things: the bill, and
+    // the tax on the gain the withdrawal itself realises. Its causal chain
+    // roots in EXPENSE, so all of it is counted as spending; the TAX_PROVISION
+    // that names the premium is 'excluded', because that cash already left
+    // under the gross-up and counting it twice would be the worse error.
+    //
+    // So the TOTAL is right and the SPLIT is not. The eight quick-start
+    // profiles cannot show it — their premium is $0.00 to the cent — which is
+    // why this shipped as a note rather than a test. brokerage-only-retirement
+    // exists to be the witness; its `reaches:` note says why its shape is what
+    // it is, and why it is not redundant with grossup-at-the-ltcg-boundary.
+
+    const { SNAPSHOT_FIXTURES } = await import('./tools/fixtures.mjs');
+    const G = await import('../js/globals.js');
+
+    const fixture = SNAPSHOT_FIXTURES.find((f) => f.name === 'brokerage-only-retirement');
+    assert.ok(fixture, 'brokerage-only-retirement is missing from the corpus');
+
+    G.global_reset();
+    G.global_setUserStartAge(fixture.config.startAge);
+    G.global_setUserRetirementAge(fixture.config.retirementAge);
+    G.global_setFilingAs(fixture.config.filingAs);
+    G.setActiveTaxTable(G.makeActiveTaxTable());
+    const brokerageOnly = new Portfolio(fixture.build().assets, false, simConfigFromGlobals());
+    await chronometer_run(brokerageOnly);
+
+    /** Premium withdrawn to cover capital-gains tax, over an inclusive window. */
+    const premiumOver = (portfolio, from, to) => {
+        const start = dateAt(portfolio, from), end = dateAt(portfolio, to);
+        let total = 0;
+        for (const asset of portfolio.modelAssets) {
+            for (const ev of (asset.events ?? [])) {
+                if (ev.type !== EventType.TAX_PROVISION) continue;
+                const when = ev.dateInt?.toInt();
+                if (when == null || when < start || when > end) continue;
+                total += Math.abs(ev.amount.amount);
+            }
+        }
+        return total;
+    };
+
+    const premJan   = janIndex(brokerageOnly, 2027);
+    const prem2027  = premiumOver(brokerageOnly, premJan, premJan + 11);
+    const exp2027   = expenditureOverWindow(brokerageOnly, premJan, premJan + 11);
+
+    test('the witness is not vacuous — this plan takes a real premium', () => {
+        // Guards the fixture itself. If a change to the gross-up sizing drives
+        // the premium back to zero, every assertion below becomes a tautology,
+        // and this is the one that says so instead of passing quietly.
+        assert.ok(prem2027 > 1000,
+            `premium in 2027 is only $${prem2027.toFixed(2)} — the fixture no longer `
+            + `reaches the branch it exists for, so the checks below prove nothing`);
+    });
+
+    test('the total still holds: spending + tax is what left the accounts', () => {
+        // True whichever bucket the premium lands in. This is the property the
+        // feature actually promises, and it is why the imprecision is a split
+        // problem and not a wrong number.
+        near(exp2027.spending + exp2027.tax, exp2027.total, 0.01, '2027 spending + tax');
+    });
+
+    test('KNOWN IMPRECISION: the premium is counted as spending, not tax', () => {
+        // The tax types are written out here rather than read from
+        // EXPENDITURE_TREATMENT on purpose. Deriving them from the table under
+        // test would make this pass on the very mutation it exists to catch:
+        // flipping TAX_PROVISION to 'tax' would grow the bucket AND the
+        // expectation together, in step, silently. TAX_PROVISION is a CASH
+        // event on a fundable account, so that flip is live, not theoretical.
+        const TAX_TYPES = new Set([
+            EventType.FICA_WITHHOLDING,
+            EventType.INCOME_TAX_WITHHOLDING,
+            EventType.CAPITAL_GAINS_TAX,
+            EventType.TAX_TRUE_UP,
+            EventType.NIIT_ASSESSED,
+        ]);
+
+        const start = dateAt(brokerageOnly, premJan), end = dateAt(brokerageOnly, premJan + 11);
+        let taxTyped = 0;
+        for (const asset of brokerageOnly.modelAssets) {
+            if (!InstrumentType.isFundable(asset.instrument)) continue;
+            for (const ev of (asset.events ?? [])) {
+                if (!TAX_TYPES.has(ev.type)) continue;
+                if (ev.kind !== EventKind.CASH || ev.amount.amount >= 0) continue;
+                const when = ev.dateInt?.toInt();
+                if (when == null || when < start || when > end) continue;
+                taxTyped += -ev.amount.amount;
+            }
+        }
+
+        near(exp2027.tax, taxTyped, 0.01,
+            '2027 tax bucket is the tax-typed debits and nothing else');
+
+        // The size of the gap, stated rather than left implied: the household
+        // withdrew taxTyped + prem2027 to pay tax, and the card says taxTyped.
+        //
+        // If you are reading this because it failed, you have most likely moved
+        // the premium into the tax bucket on purpose. This assertion is then
+        // the one to update, and this fixture's baseline is the rest of the
+        // evidence that you moved it without moving any money.
+        assert.ok(exp2027.tax < taxTyped + prem2027 - 1,
+            `the premium appears to have moved into the tax bucket: tax reads `
+            + `$${exp2027.tax.toFixed(2)} against $${taxTyped.toFixed(2)} of tax-typed `
+            + `debits plus $${prem2027.toFixed(2)} of premium`);
+    });
+
     console.log(`\n${'─'.repeat(55)}`);
     console.log(`  ${passed} passed, ${failed} failed`);
     console.log(`${'─'.repeat(55)}\n`);
