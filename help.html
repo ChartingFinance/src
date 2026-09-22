@@ -83,8 +83,8 @@
                 <div class="text-sm text-gray-500">A vertical line with a chip showing the selected date, your age, and the portfolio value at that moment. <strong>Drag anywhere on the arc</strong> to scrub through time &mdash; or focus the arc and use <strong>&larr; / &rarr;</strong> to step by month (<strong>Shift</strong> for a year). Every chart, badge, and view on the page follows the cursor.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">&#x22EF; Month Card</div>
-                <div class="text-sm text-gray-500">The <strong>&#x22EF;</strong> button on the cursor chip opens a detail card for the selected month: net worth with its month-over-month delta, income, expenses, taxes, cash flow, and asset growth. Cash flow can run negative in retirement while asset growth offsets it &mdash; the card shows both so the pair reads together. Jump links open that month in the Spreadsheet or Credit Memos.</div>
+                <div class="font-semibold text-sm mb-1">Month Details</div>
+                <div class="text-sm text-gray-500">The section directly beneath the timeline shows the month the cursor is on, always: net worth with its month-over-month delta, income, expenses, taxes, cash flow, and asset growth, plus what was withdrawn from your accounts over the past twelve months. Cash flow can run negative in retirement while asset growth offsets it &mdash; the section shows both so the pair reads together. <a href="#monthdetails" class="underline">More on reading it</a>.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Phase Chips &amp; Edit Popover</div>
@@ -139,28 +139,28 @@
                 </div>
             </div>
 
-            <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-2">Inspect a single month</div>
+            <div id="monthdetails" class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-2">Inspect a single month &mdash; Month Details</div>
                 <div class="space-y-2">
                     <div class="flex items-start gap-3">
                         <span class="step-number">1</span>
-                        <span class="text-sm text-gray-700">Scrub the cursor to the month you're curious about, then click the <strong>&#x22EF;</strong> button on the cursor chip to open the month card.</span>
+                        <span class="text-sm text-gray-700">Scrub the cursor to the month you're curious about. The <strong>Month Details</strong> section directly beneath the timeline always shows the month the cursor is on &mdash; there is nothing to open.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">2</span>
-                        <span class="text-sm text-gray-700">Read the rows together: in retirement, <strong>Cash flow</strong> often runs negative while <strong>Asset growth</strong> offsets it &mdash; the delta beside <strong>Net worth</strong> shows the net result for the month. The card stays open while you scrub, so you can watch the flows change across the retirement boundary.</span>
+                        <span class="text-sm text-gray-700">Read the rows together: in retirement, <strong>Cash flow</strong> often runs negative while <strong>Asset growth</strong> offsets it &mdash; the delta beside <strong>Net worth</strong> shows the net result for the month. The section updates as you scrub, so you can watch the flows change across the retirement boundary.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">3</span>
-                        <span class="text-sm text-gray-700"><strong>Withdrawn to meet obligations</strong> is the odd one out: it covers the <strong>trailing twelve months</strong>, not the single month above it, so it answers &ldquo;what is this plan actually costing me per year?&rdquo; It is money that genuinely left an account &mdash; living expenses, rent, the <em>full</em> mortgage payment including principal, property tax, maintenance and insurance. That makes it larger than twelve times the monthly <strong>Expenses</strong> row, which is an accounting figure that leaves mortgage principal and property tax out.</span>
+                        <span class="text-sm text-gray-700"><strong>Withdrawn to meet obligations</strong>, on the right, is the odd one out: it covers the <strong>trailing twelve months</strong>, not the single month beside it, so it answers &ldquo;what is this plan actually costing me per year?&rdquo; It is money that genuinely left an account &mdash; living expenses, rent, the <em>full</em> mortgage payment including principal, property tax, maintenance and insurance. That makes it larger than twelve times the monthly <strong>Expenses</strong> row, which is an accounting figure that leaves mortgage principal and property tax out.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">4</span>
-                        <span class="text-sm text-gray-700">The <strong>Tax</strong> line beneath it is usually <strong>$0 while you are working</strong>, and that is correct: withholding comes out of your paycheck and never passes through one of your accounts, so you never withdrew it. Once the paycheck stops there is nothing to withhold from, and almost the whole tax bill turns into a withdrawal &mdash; which is why the figure jumps at retirement. If a pink <strong>Could not fund</strong> line appears, the plan owed more than any account could supply that year; the obligation was accrued but the money was never there.</span>
+                        <span class="text-sm text-gray-700">The <strong>Tax</strong> line beneath it is usually <strong>$0 while you are working</strong>, and that is correct: withholding comes out of your paycheck and never passes through one of your accounts, so you never withdrew it. When that is why it reads $0, the section says so &mdash; <em>withheld at source</em> appears beside it &mdash; and hovering the <strong>&#x24D8;</strong> explains the rule. Once the paycheck stops there is nothing to withhold from, and almost the whole tax bill turns into a withdrawal &mdash; which is why the figure jumps at retirement. If a pink <strong>Could not fund</strong> line appears, the plan owed more than any account could supply that year; the obligation was accrued but the money was never there.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">5</span>
-                        <span class="text-sm text-gray-700">Use <strong>Open in Spreadsheet</strong> or <strong>Credit memos</strong> to jump to that month's row in the detail views &mdash; both are already positioned at the cursor date.</span>
+                        <span class="text-sm text-gray-700">Use <strong>Spreadsheet &rarr;</strong> or <strong>Credit memos &rarr;</strong> in the section heading to jump to that month's row in the detail views &mdash; both are already positioned at the cursor date.</span>
                     </div>
                 </div>
             </div>

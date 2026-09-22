@@ -27,7 +27,7 @@ import { store } from '../finplan-store.js';
 import { LifeEvent, LifeEventType } from '../life-event.js';
 import { InstrumentType } from '../instruments/instrument.js';
 import { MetricLabel, hasRealDollarLine } from '../metric.js';
-import { trailingYearExpenditure } from '../annual-expenditure.js';
+import { metricAtIndex } from '../month-summary.js';
 import { PriceIndex } from '../utils/price-index.js';
 import { DateInt, MONTH_NAMES } from '../utils/date-int.js';
 
@@ -65,7 +65,6 @@ export class FinplanTimeline extends LitElement {
         selectedMonth:  { type: Number },
         selectedIndex:  { type: Number },
         _playing:       { state: true },
-        _monthCardOpen: { state: true },
         _phasePopIndex: { state: true },
     };
 
@@ -85,19 +84,16 @@ export class FinplanTimeline extends LitElement {
         this._playing = false;
         this._playInterval = null;
         this._scrubbing = false;
-        this._monthCardOpen = false;
         this._phasePopIndex = null;
 
-        // Close popovers on outside click / Escape (listeners live for the
-        // component's lifetime; cheap no-ops while nothing is open)
+        // Close the phase popover on outside click / Escape (listeners live for
+        // the component's lifetime; cheap no-ops while nothing is open)
         this._onDocClick = (e) => {
             if (this.contains(e.target)) return;
-            if (this._monthCardOpen) this._monthCardOpen = false;
             if (this._phasePopIndex != null) this._phasePopIndex = null;
         };
         this._onDocKeydown = (e) => {
             if (e.key !== 'Escape') return;
-            this._monthCardOpen = false;
             this._phasePopIndex = null;
         };
 
@@ -448,46 +444,7 @@ export class FinplanTimeline extends LitElement {
      * Compute portfolio metric total at a specific history index.
      */
     _metricAtIndex(idx) {
-        return this._metricAtIndexFor(this.metricName, idx);
-    }
-
-    _metricAtIndexFor(metricName, idx) {
-        if (!this.portfolio || idx < 0) return 0;
-        let total = 0;
-        for (const asset of this.portfolio.modelAssets) {
-            const history = asset.getHistory(metricName);
-            if (history && idx >= 0 && idx < history.length) {
-                total += history[idx] ?? 0;
-            }
-        }
-        return total;
-    }
-
-    /** The cursor month's flow metrics for the month card. */
-    _cursorMonthTotals() {
-        if (!this.portfolio?.firstDateInt) return null;
-        const idx = DateInt.diffMonths(this.portfolio.firstDateInt, DateInt.from(this.selectedYear, this.selectedMonth));
-        if (idx < 0 || idx > this._lastHistoryIndex()) return null;
-        return {
-            value:     this._metricAtIndexFor('value', idx),
-            income:    this._metricAtIndexFor('income', idx),
-            expense:   this._metricAtIndexFor('expense', idx),
-            taxes:     this._metricAtIndexFor('taxes', idx),
-            cashFlow:  this._metricAtIndexFor('cashFlow', idx),
-            growth:    this._metricAtIndexFor('growth', idx),
-            netChange: this._metricAtIndexFor('netWorthChange', idx),
-            valueReal: PriceIndex.deflateAt(
-                this._metricAtIndexFor('value', idx), this.portfolio.monthlyPriceIndex, idx),
-
-            // What actually left the household's accounts over the twelve
-            // months ending here — NOT a 12x of the month above. See
-            // annual-expenditure.js: the monthly Expenses row is the accounting
-            // expense and excludes mortgage principal and property tax, and a
-            // month with a mortgage payoff or a life event is nothing like a
-            // typical one. Trailing rather than calendar-year so the figure is
-            // a full twelve months wherever the cursor sits.
-            drawn: trailingYearExpenditure(this.portfolio, idx),
-        };
+        return metricAtIndex(this.portfolio, this.metricName, idx);
     }
 
     /**
@@ -927,7 +884,13 @@ export class FinplanTimeline extends LitElement {
         `;
     }
 
-    /** HTML overlay chip above the cursor: date · age — value, plus the ⋯ month card. */
+    /**
+     * HTML overlay chip above the cursor: date · age — value.
+     *
+     * It used to carry a ⋯ that opened a month-detail popover. That detail is
+     * now the Month Details section directly beneath the timeline, always on
+     * screen, so the chip no longer needs a way in to it.
+     */
     _renderCursorChip(sAge, fAge) {
         if (!this.portfolio?.firstDateInt) return nothing;
         const age = Math.max(sAge, Math.min(fAge, this._selectedAge));
@@ -942,101 +905,10 @@ export class FinplanTimeline extends LitElement {
                 ${this._cursorRealMetric() != null ? html`
                     <span style="font-size: 10.5px; font-weight: 600; color: #9ca3af;">${this._formatCurrency(this._cursorRealMetric())} today’s $</span>
                 ` : nothing}
-                <button class="timeline-more-btn"
-                        title="Month details"
-                        aria-label="Month details"
-                        aria-expanded=${this._monthCardOpen}
-                        @pointerdown=${(e) => e.stopPropagation()}
-                        @click=${this._onToggleMonthCard}>⋯</button>
-            </div>
-            ${this._renderMonthCard(pct)}
-        `;
-    }
-
-    /** Month detail popover under the cursor chip (review point 5). */
-    _renderMonthCard(pct) {
-        if (!this._monthCardOpen) return nothing;
-        const totals = this._cursorMonthTotals();
-        return html`
-            <div class="timeline-month-card"
-                 style="left: clamp(125px, ${pct}%, calc(100% - 125px));"
-                 @pointerdown=${(e) => e.stopPropagation()}>
-                <div class="tmc-head">${MONTH_NAMES[this.selectedMonth - 1]} ${this.selectedYear} · Age ${Math.floor(this._selectedAge)}</div>
-                ${totals ? html`
-                    <div class="tmc-row tmc-nw"><span>Net worth</span>
-                        <span class="tmc-val" style="display: flex; flex-direction: column; align-items: flex-end; line-height: 1.25;">
-                            <span>${this._formatCurrency(totals.value)}
-                                <span class="tmc-delta ${totals.netChange >= 0 ? 'text-green-600' : 'text-pink-600'}">${this._formatSignedCurrency(totals.netChange)}</span></span>
-                            ${totals.valueReal != null ? html`
-                                <span style="font-size: 10.5px; font-weight: 600; color: #9ca3af;">${this._formatCurrency(totals.valueReal)} today’s $</span>
-                            ` : nothing}
-                        </span></div>
-                    <div class="tmc-row"><span>Income</span><span class="tmc-val">${this._formatSignedCurrency(totals.income)}</span></div>
-                    <div class="tmc-row"><span>Expenses</span><span class="tmc-val">${this._formatSignedCurrency(totals.expense)}</span></div>
-                    <div class="tmc-row"><span>Taxes</span><span class="tmc-val">${this._formatSignedCurrency(totals.taxes)}</span></div>
-                    <div class="tmc-row"><span>Cash flow</span>
-                        <span class="tmc-val ${totals.cashFlow >= 0 ? 'text-green-600' : 'text-pink-600'}">${this._formatSignedCurrency(totals.cashFlow)}</span></div>
-                    <div class="tmc-row"><span>Asset growth</span>
-                        <span class="tmc-val ${totals.growth >= 0 ? 'text-green-600' : 'text-pink-600'}">${this._formatSignedCurrency(totals.growth)}</span></div>
-                    ${this._renderDrawnRows(totals.drawn)}
-                ` : html`
-                    <div class="tmc-row"><span class="text-gray-400">No simulation data for this month</span></div>
-                `}
-                <hr>
-                <button class="tmc-link" @click=${() => this._onJumpToView('spreadsheet')}>Open in Spreadsheet →</button>
-                <button class="tmc-link" @click=${() => this._onJumpToView('creditmemos')}>Credit memos →</button>
             </div>
         `;
     }
 
-    /**
-     * "Withdrawn to meet obligations" over the trailing twelve months.
-     *
-     * Split rather than blended, because the split IS the finding: while a
-     * salary is coming in, tax is withheld at source and never passes through
-     * an account, so this reads $0 even in a year with a five-figure tax bill.
-     * In retirement there is no paycheck to withhold from and nearly the whole
-     * bill becomes a withdrawal. A single total would move sharply at
-     * retirement with nothing on screen to say why.
-     *
-     * The unfunded line only appears when the plan could not pay, and it is the
-     * honest counterpart to the draw: the accrued obligation is drawn + unfunded.
-     */
-    _renderDrawnRows(drawn) {
-        if (!drawn || drawn.months === 0) return nothing;
-        const span = drawn.complete ? 'trailing 12 mo' : `${drawn.months} mo so far`;
-        return html`
-            <hr>
-            <div class="tmc-row tmc-drawn-head">
-                <span>Withdrawn to meet obligations</span>
-                <span class="tmc-span">${span}</span>
-            </div>
-            <div class="tmc-row"><span>Spending</span>
-                <span class="tmc-val">${this._formatCurrency(drawn.spending)}</span></div>
-            <div class="tmc-row"><span>Tax</span>
-                <span class="tmc-val">${this._formatCurrency(drawn.tax)}</span></div>
-            <div class="tmc-row tmc-drawn-total"><span>Total</span>
-                <span class="tmc-val">${this._formatCurrency(drawn.total)}</span></div>
-            ${drawn.unfunded > 0 ? html`
-                <div class="tmc-row tmc-unfunded">
-                    <span title="Obligations the plan could not fund from any account">Could not fund</span>
-                    <span class="tmc-val">${this._formatCurrency(drawn.unfunded)}</span></div>
-            ` : nothing}
-        `;
-    }
-
-    _onToggleMonthCard(e) {
-        e.stopPropagation();
-        this._monthCardOpen = !this._monthCardOpen;
-    }
-
-    _onJumpToView(view) {
-        this._monthCardOpen = false;
-        this.dispatchEvent(new CustomEvent('jump-to-view', {
-            bubbles: true, composed: true,
-            detail: { view },
-        }));
-    }
 
     // ── Phase chips ────────────────────────────────────────────────
 
