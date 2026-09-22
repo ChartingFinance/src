@@ -60,6 +60,7 @@ import './components/funding-modal.js';
 import './components/one-time-modal.js';
 import './components/event-form-modal.js';
 import './components/finplan-timeline.js';
+import './components/month-details.js';
 // simulator-modal is code-split: imported on the first Maximizer Run click
 // (doMaximize) — the <simulator-modal> tag stays inert until then.
 import './components/spreadsheet-view.js';
@@ -214,6 +215,8 @@ const microMetricSelect = document.getElementById('finplan-micro-metric-select')
 const shareModal        = document.getElementById('shareModal');
 const issuesModal       = document.getElementById('issuesModal');
 const planIssuesPanel   = document.getElementById('planIssuesPanel');
+const monthDetails      = document.getElementById('monthDetails');
+const monthDetailsBadge = document.getElementById('monthDetailsBadge');
 const scenarioChip      = document.getElementById('scenario-chip');
 const scenarioChipName  = document.getElementById('scenario-chip-name');
 const scenarioMenu      = document.getElementById('scenario-menu');
@@ -337,16 +340,23 @@ timeline.addEventListener('edit-asset', (ev) => {
     openEditAssetModal(ev.detail.modelAsset);
 });
 
-// Wire timeline month-card jump links — the target views already track the
-// cursor date via store 'date-change', so scrolling the page there suffices.
-// Scroll to the view's card, not the tall view element itself: scrollIntoView
-// on the element would also reset its container's scrollToDate row position.
-timeline.addEventListener('jump-to-view', (ev) => {
-    const target = ev.detail.view === 'creditmemos' ? creditMemoView : spreadsheetView;
+// Month Details jump links — the target views already track the cursor date
+// via store 'date-change', so scrolling the page there suffices. Scroll to the
+// view's card, not the tall view element itself: scrollIntoView on the element
+// would also reset its container's scrollToDate row position.
+//
+// These used to live in the timeline's month popover and reach here as a
+// bubbling 'jump-to-view' event bound to the TIMELINE. Moving the links without
+// moving this would have left them doing nothing, with no error to say so.
+function jumpToView(view) {
+    const target = view === 'creditmemos' ? creditMemoView : spreadsheetView;
     const card = target?.closest('.glass-card') ?? target;
     const behavior = matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
     card?.scrollIntoView({ behavior, block: 'start' });
-});
+}
+for (const btn of document.querySelectorAll('.md-jump[data-jump]')) {
+    btn.addEventListener('click', () => jumpToView(btn.dataset.jump));
+}
 
 // Wire timeline edit event
 timeline.addEventListener('event-edit', (ev) => {
@@ -427,6 +437,7 @@ function openAiSummary(title, content) {
 // state, exactly as they did when the generator read the caches itself.
 const aiGenerators = (ai) => ({
     timeline:    () => ai.generateTimelineMarkdown(appState.portfolio, appState.lifeEvents),
+    monthdetails: () => ai.generateMonthDetailsSectionMarkdown(appState.portfolio, store.selectedYear, store.selectedMonth, monthDetailsBadge?.textContent ?? ''),
     portfolio:   () => ai.generatePortfolioSectionMarkdown(appState.portfolio),
     projections: () => ai.generateProjectionsSectionMarkdown(appState.portfolio, appState.metricName),
     montecarlo:  () => ai.generateMonteCarloSectionMarkdown(appState.portfolio, mcModule?.getMonteCarloResults() ?? null),
@@ -437,7 +448,7 @@ const aiGenerators = (ai) => ({
 });
 
 const aiLabels = {
-    timeline: 'Your Timeline', portfolio: 'Your Portfolio', projections: 'Projections',
+    timeline: 'Your Timeline', monthdetails: 'Month Details', portfolio: 'Your Portfolio', projections: 'Projections',
     montecarlo: 'Monte Carlo', guardrails: 'Guardrails', creditmemos: 'Credit Memos', reports: 'Reports', spreadsheet: 'Spreadsheet',
 };
 
@@ -917,6 +928,15 @@ function updateViewingBadge(year, month) {
     };
     if (viewingBadge) applyBadge(viewingBadge);
     document.querySelectorAll('.viewing-badge').forEach(applyBadge);
+
+    if (monthDetailsBadge) {
+        // Same derivation as the timeline's cursor chip, so the two agree.
+        const birthYear = appState.portfolio?.config?.birthYear
+            ?? (DateInt.today().year - global_user_startAge);
+        monthDetailsBadge.textContent = `${MONTH_NAMES[month - 1]} ${year} · Age ${year - birthYear}`;
+        monthDetailsBadge.style.background = bg;
+        monthDetailsBadge.style.color = fg;
+    }
 }
 
 function cycleMetric() {
@@ -967,6 +987,10 @@ document.querySelectorAll('.viewing-badge').forEach(el => el.addEventListener('c
 
 store.addEventListener('date-change', (e) => {
     updateViewingBadge(e.detail.year, e.detail.month);
+    if (monthDetails) {
+        monthDetails.selectedYear = e.detail.year;
+        monthDetails.selectedMonth = e.detail.month;
+    }
     updateProjectionCursor();
     syncAssetListToDate(e.detail.year, e.detail.month);
     refreshPipelines();
@@ -1195,6 +1219,16 @@ function calculate() {
     // wrong with the plan.
     const issues = detectIssues(portfolio, { includeReconciliation: global_showEngineDiagnostics });
     if (planIssuesPanel) planIssuesPanel.issues = issues;
+
+    // The selected month of the run just finished. Set on EVERY run, empty
+    // plans included, so it can never show the previous run's numbers.
+    if (monthDetails) {
+        monthDetails.portfolio = portfolio;
+        monthDetails.selectedYear = store.selectedYear;
+        monthDetails.selectedMonth = store.selectedMonth;
+    }
+    // The age in the badge reads the portfolio's anchor, which just changed.
+    updateViewingBadge(store.selectedYear, store.selectedMonth);
 
     // Update sidebar
     assetList.modelAssets = [...portfolio.modelAssets];
