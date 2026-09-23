@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.3.11; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.3.12; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -33174,12 +33174,7 @@ var TaxTable = class {
    * @param {string} filingAs  selects the brackets, limits and exclusion
    * @param {number} propertyTaxDeductionMax  the SALT-style cap
    *
-   * Both REQUIRED as of Spec 9 step 6. They were optional through steps 2-5,
-   * falling back to `global_filingAs` and `global_propertyTaxDeductionMax` so
-   * that ~58 existing `new TaxTable()` sites kept working while the engine
-   * migrated. Removing the fallbacks is what makes taxes.js free of the
-   * settings store — and taxes.js had to go first, because globals.js cannot
-   * import TaxTable to build one until it does, or the two form a cycle.
+   * Both required: this file reads nothing from the settings store.
    */
   constructor(filingAs, propertyTaxDeductionMax) {
     if (!filingAs || typeof propertyTaxDeductionMax !== "number") {
@@ -33383,18 +33378,11 @@ var TaxTable = class {
    *
    *     0.038 × min( netInvestmentIncome , MAGI − threshold )
    *
-   * BOTH arguments matter, and taking either alone is wrong in a direction a
-   * fixture already demonstrates: a household with $432k of wages and no
-   * investment income owes nothing despite clearing the threshold by far
-   * (mfj-two-earners), and a household living on gains below the threshold
-   * owes nothing despite its income being almost entirely investment income
-   * (gain-harvest-under-the-deduction). Those two fail in OPPOSITE
-   * directions, which is what makes them worth keeping.
+   * Both arguments matter. A household with large wages and no investment
+   * income owes nothing (fixture mfj-two-earners); so does one living on
+   * gains below the threshold (gain-harvest-under-the-deduction).
    *
-   * Floored at zero here rather than by the caller, so a MAGI under the
-   * threshold produces no tax instead of a negative one — `magi` itself is
-   * deliberately unfloored (see tax-basis.js), and this is where that has to
-   * be resolved.
+   * Floored at zero here, because `magi` is deliberately unfloored.
    *
    * @param {Currency} netInvestmentIncome  from taxableBasis
    * @param {Currency} magi                 from taxableBasis — AGI, gross of the deduction
@@ -33445,21 +33433,13 @@ var TaxTable = class {
     return new Currency(0);
   }
   /**
-   * Every dollar this package may deduct, as a POSITIVE Currency: the greater
-   * of the standard or the itemised deduction, plus the deductible pre-tax
-   * contribution.
+   * Every dollar this package may deduct, as a positive Currency: the greater
+   * of the standard or itemised deduction, plus the deductible pre-tax
+   * contribution. taxableBasis() needs the total, because a deduction larger
+   * than ordinary income shelters capital gains (IRC §1(h)).
    *
-   * Extracted from `applyYearlyDeductions`, which used to compute it inline
-   * and immediately spend it. The total has to be VISIBLE, not just applied,
-   * because a deduction larger than ordinary income is not wasted — under IRC
-   * §1(h) the remainder shelters net capital gain, and nothing could work that
-   * out from a taxable income that had already been floored at zero. See
-   * `taxableBasis`, which is the only thing that needs the number.
-   *
-   * The property-tax sign-normalising below looks redundant and is not: the
-   * accumulator carries expenses negative, but a package assembled by hand in
-   * a test may carry it positive, and both have always meant the same thing
-   * here. Preserved exactly as it was.
+   * Property tax is accepted with either sign: the engine stores it negative,
+   * a package built by hand in a test may not.
    */
   totalYearlyDeduction(yearly, age = NO_AGE_DEDUCTIONS) {
     const { base, preTax, senior } = this.deductionComponents(yearly, age);
@@ -33483,9 +33463,6 @@ var TaxTable = class {
    * plan's birthYear is its first year minus the start age (Portfolio) and
    * the age advances on each New Year's Day, after that year's settlement.
    *
-   * Before 2026-09-23 neither existed; the standard deduction was one flat
-   * number for every age.
-   *
    * @param {import('./user.js').User} activeUser
    * @param {Currency} magi  AGI — the senior deduction phases out on it
    * @returns {{additionalStandard: number, senior: number}}
@@ -33504,16 +33481,10 @@ var TaxTable = class {
     return { additionalStandard, senior };
   }
   /**
-   * The deduction split into the two pieces `applyYearlyDeductions` has always
-   * subtracted SEPARATELY. Kept separate on purpose: Currency is raw IEEE-754
-   * with no rounding, and `x − base − preTax` is not `x − (base + preTax)` for
-   * about a third of operand triples. Collapsing them into one subtraction
-   * changed nothing any household would notice — every committed baseline's
-   * totals stayed bit-identical — but it silently deleted a handful of
-   * −$0.000000 withholding events in years where income and deduction cancel,
-   * which is a snapshot diff that has nothing to do with any tax rule. The
-   * extraction is meant to be provably behaviour-neutral, so it subtracts in
-   * the original order and leaves the noise where it was.
+   * The deduction as the two pieces `applyYearlyDeductions` subtracts
+   * separately. Keep them separate: Currency is raw floating point, and
+   * `x − base − preTax` differs from `x − (base + preTax)` in the last bit,
+   * which changes the snapshot for no tax reason.
    */
   deductionComponents(yearly, age = NO_AGE_DEDUCTIONS) {
     let propertyTaxDeduction = new Currency(yearly.propertyTaxes.amount);
@@ -33542,20 +33513,10 @@ var TaxTable = class {
     return taxableIncome;
   }
   /**
-   * VESTIGIAL. Logs three self-checks and returns an empty Currency; nothing
-   * reads its result and no caller branches on it.
-   *
-   * The middle check is worse than useless: it compares POST-deduction
-   * taxable income against GROSS wages (`selfIncome + employedIncome`), which
-   * cannot agree except by coincidence, so its "check PASSED" branch is
-   * effectively unreachable and its failure branch logs on every run. It has
-   * no recorded taxable-income field to compare against — the FinancialPackage
-   * does not carry one — so the check cannot be repaired without first
-   * deciding what it was meant to assert.
-   *
-   * Left in place deliberately: spec 6 step 6 must not change behaviour, and
-   * deleting it is a separate decision with its own (small) log-output
-   * consequences. Flagged rather than quietly removed.
+   * Vestigial. Logs three self-checks and returns an empty Currency that
+   * nothing reads. The middle check compares post-deduction taxable income
+   * with gross wages, so it reports a failure on every run. Listed for
+   * deletion in markdowns/code-issues-from-comments.md.
    */
   reconcileYearlyTax(yearly, activeUser) {
     let yearlyFICA = this.calculateYearlyFICATax(yearly);
@@ -33596,16 +33557,12 @@ var TaxTable = class {
   /**
    * The annual contribution ceiling for one kind of account.
    *
-   * ONE helper, because there used to be two methods called from eight sites,
-   * and the IRA limit had been doubled for married filers while the 401(k)
-   * limit had not. Nobody chose that; it is what happens when the same policy
-   * lives in several places. This is also the seam the per-person spec needs:
-   * it already takes a user, so a second User slots in without touching a
-   * single call site.
+   * One helper for every contribution limit, so the policy lives in one
+   * place. It takes a user, so a second (per-person) User can be added later
+   * without changing call sites.
    *
-   * The figure is a HOUSEHOLD ceiling — every caller compares it against a
-   * household aggregate — so married values are the statutory per-person
-   * amounts doubled.
+   * The figure is a household ceiling — every caller compares it with a
+   * household total — so married values are the per-person amounts doubled.
    *
    * @param {'ira'|'401k'} kind  ContributionKind
    * @param {import('./user.js').User} activeUser
@@ -35497,40 +35454,32 @@ var EVENT_RECONCILIATION = Object.freeze({
   [EventType.MORTGAGE_INTEREST]: "mortgageInterest",
   [EventType.MORTGAGE_PRINCIPAL]: "mortgagePrincipal",
   [EventType.PROPERTY_TAX]: "propertyTax",
-  // Info-only: §121 removes gain from the TAX base without moving cash and
-  // without changing the gain the household realised, so it must not land in
-  // the capitalGains bucket — that one balances against
-  // monthly.longTermCapitalGains, which stays gross on both sides.
+  // §121 removes gain from the tax base without moving cash or changing the
+  // gain realised, so it stays out of the capitalGains bucket, which balances
+  // against the gross monthly.longTermCapitalGains.
   [EventType.CAPITAL_GAIN_EXCLUDED]: "excluded",
   [EventType.ASSET_GROWTH]: "excluded",
   [EventType.EXPENSE_INFLATION]: "excluded",
   [EventType.INCOME_GROWTH]: "excluded",
   [EventType.DIVIDEND]: "excluded",
   [EventType.INTEREST_INCOME]: "excluded",
-  // Genuinely two-sided: execute() debits one account and credits another by
-  // the same amount, so these MUST net to zero and a residue is a real
-  // defect. Determined empirically (2026-07-29), not assumed — a probe summed
-  // every cash event type over a full run and TRANSFER was the only one that
-  // came to zero.
+  // Two-sided: execute() debits one account and credits another by the same
+  // amount, so these must net to zero, and a residue is a real defect.
   [EventType.TRANSFER]: "paired",
-  // Single-legged BY DESIGN. settleOneSided debits the funding account and
+  // Single-legged by design: settleOneSided debits the funding account and
   // books nothing on the obligation it pays; a windfall credits one account
-  // with no counterparty; the annual true-up debits one account. Expecting
-  // these to net to zero is what made the transfer check fail every month on
-  // any plan with an expense — the deltas were exactly the monthly expense.
+  // with no counterparty; the annual true-up debits one account.
   [EventType.SETTLEMENT]: "oneSided",
   [EventType.SPILLOVER]: "oneSided",
   [EventType.GROSS_UP]: "oneSided",
   [EventType.ONE_TIME]: "oneSided",
   [EventType.TAX_TRUE_UP]: "oneSided",
-  // Info-only, and it MUST be: the cash it describes already reconciled as
-  // part of the GROSS_UP that carried it. Counting it again would book the
-  // same dollars twice.
+  // Names part of a GROSS_UP that already reconciled; counting it again would
+  // book the same dollars twice.
   [EventType.TAX_PROVISION]: "excluded",
   [EventType.NIIT_ASSESSED]: "oneSided",
-  // Info-kind: no money moved, so they reach neither total. Routed here
-  // rather than to `excluded` so the kind guard stays the thing that
-  // excludes them, and behaviour cannot drift if a kind ever changes.
+  // Info-kind: no money moved, so the kind check keeps them out of every
+  // total.
   [EventType.PROPERTY_TAX_ESCROW]: "oneSided",
   [EventType.MAINTENANCE]: "oneSided",
   [EventType.INSURANCE]: "oneSided",
@@ -35645,20 +35594,14 @@ var Portfolio = class _Portfolio {
     return result;
   }
   /**
-   * Hand every asset and life event this run's environment (Spec 9 step 4a).
+   * Hand every asset and life event this run's config.
    *
-   * The Portfolio owns exactly one config; assets and life events borrow it.
-   * They cannot hold their own, because both are plan data — serialised to
-   * share URLs, hydrated from localStorage, copied — while the config is run
-   * state. N independently-held copies would be N things that must agree,
-   * and a single stale one is a wrong number in one Monte Carlo iteration
-   * out of a thousand rather than an error anybody sees.
+   * The Portfolio owns the one config; assets and life events borrow it. They
+   * are plan data — serialised, stored, copied — while the config is run
+   * state, and copies that each held their own could silently disagree.
    *
-   * Called from initializeChron (every run, and the GA re-runs it thousands
-   * of times on one Portfolio, so it must be idempotent — it is) and from
-   * copy(), where both collections come back unbound: ModelAsset.copy() is
-   * an explicit allowlist that omits env, and ModelLifeEvent.copy() round-
-   * trips through JSON, which drops it.
+   * Idempotent. Called from the constructor, from initializeChron (every
+   * run), and from copy(), because both collections copy unbound.
    */
   bindEnvironment() {
     for (const modelAsset of this.modelAssets) modelAsset.bindEnv(this.config);
@@ -35692,10 +35635,9 @@ var Portfolio = class _Portfolio {
     this.rebalance = new RebalanceEngine(this.modelAssets, this.monthly, this.yearly, this.activeUser, this.config);
   }
   /**
-   * Check and apply any life events whose triggerDateInt matches
-  * the current simulation month. Called at day=1 of each month
-  * by the chronometer, BEFORE applyMonth.
-  */
+   * Apply any life events whose trigger falls in the current month. Called on
+   * day 1 by the chronometer, before applyMonth.
+   */
   applyLifeEvents(currentDateInt) {
     for (const event of this.lifeEvents) {
       if (event.applied) continue;
@@ -35768,31 +35710,19 @@ var Portfolio = class _Portfolio {
     }
   }
   /**
-   * Reconcile whatever the loop left behind. Called once, after the last
+   * Reconcile the events the loop left behind. Called once, after the last
    * iteration.
    *
-   * monthlySanityCheck runs from monthlyChron, but chronometer_run calls
-   * applyYear AFTER monthlyChron in the same iteration, so the annual tax
-   * true-up's events are always emitted past the scan index. Mid-run that is
-   * harmless and in fact correct: monthlyChron zeroes this.monthly before
-   * applyYear, so the true-up's package bookings land in the SAME month's
-   * package as the next pass's events, and the two sides stay aligned.
+   * chronometer_run calls applyYear after monthlyChron, so the annual
+   * true-up's events always fall after the scan. Mid-run the next month's pass
+   * picks them up, which is correct: monthlyChron zeroes this.monthly before
+   * applyYear, so the true-up's package bookings land in that same next month.
+   * The final year has no next pass, so its true-up events need this one —
+   * including the check that throws on an undeclared event type.
    *
-   * The final year has no next pass. Its true-up events were never classified,
-   * never counted, and — worse — never put through the undeclared-EventType
-   * throw, so a new event type emitted only there could ship unmapped.
-   *
-   * Measured 2026-08-05: a retired plan ending in December leaves the annual
-   * true-up's taxTrueUp and capitalGainRecognized events unscanned. Not an
-   * allocation bug — it reproduces with global_allocate_household_tax off, on
-   * any plan whose true-up settles a non-zero residual; turning allocation on
-   * merely gave an existing fixture a residual to settle.
-   *
-   * Deliberately NOT a scan after every applyYear. That variant consumes the
-   * true-up's events a month before its package bookings are compared, and the
-   * following month then sees a package the events no longer explain: 4 false
-   * "Capital gains" findings on a retired plan drawing its tax bill from a
-   * brokerage, each exactly the size of that year's realized gain.
+   * Not a scan after every applyYear: that consumes the true-up's events a
+   * month before its package bookings are compared, and produces false
+   * findings the following month.
    */
   finalSanityCheck(currentDateInt) {
     this.monthlySanityCheck(
@@ -36154,17 +36084,13 @@ var Portfolio = class _Portfolio {
     this.assertions();
   }
   /**
-   * The monthly dataset. One FinancialPackage per month for the whole run,
-   * kept alongside the yearly ones in `generatedReports` — the finer of the
-   * two granularities a reader can ask for, and the one that can answer what
-   * a year with an outlier in it actually did.
+   * The monthly dataset: one FinancialPackage per month, kept in
+   * `generatedReports` beside the yearly ones, for when a year with an outlier
+   * needs explaining.
    *
-   * The logging is guarded separately from the recording. `report()` builds
-   * about thirty-five formatted strings per call, and it builds them as
-   * ARGUMENTS — so `logger.log` discarding them for a disabled category costs
-   * the whole formatting pass anyway. MONTHLY and YEARLY are both off by
-   * default, and the MCP server now runs with `reports` on over 400-month
-   * plans, so this is ~15,000 strings per run formatted for nobody.
+   * The logging is guarded separately: report() formats about thirty-five
+   * strings per call as arguments, which costs the same whether or not the
+   * logger then discards them.
    */
   reportMonthly(currentDateInt) {
     if (this.reports) {

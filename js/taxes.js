@@ -28,27 +28,13 @@ import { FilingStatus, FILING_STATUSES } from './filing-status.js';
 import { taxableBasis } from './tax-basis.js';
 
 /**
- * Bracket rows are HALF-OPEN: `[fromAmount, toAmount)`. Each row's `fromAmount`
- * is exactly the previous row's `toAmount`, so the bands tile with no gap and no
- * overlap.
+ * Bracket rows are half-open, `[fromAmount, toAmount)`: each row's `fromAmount`
+ * equals the previous row's `toAmount`, so the bands tile with no gap and no
+ * overlap. `calculateYearlyIncomeTax` depends on that.
  *
- * The IRS publishes them the other way — "$12,401 to $50,400" — and this file
- * used to copy that literally. But `calculateYearlyIncomeTax` charges
- * `(toAmount − fromAmount)` for a fully-spanned band, so every published `+1`
- * boundary lost a dollar of base, and income landing in the one-dollar gap was
- * taxed at no rate at all. Measured by an independent hand calculation on
- * 2026-08-06 (spec 6 post-test T5): a $90,355.80 taxable income crossing three
- * boundaries under-taxed by $0.37.
- *
- * Do not "correct" these back to the published figures. If a boundary needs
- * checking, check the `toAmount` against the IRS release — those are the
- * authoritative numbers here, and the `fromAmount` is derived from them.
- *
- * Two transcription errors surfaced when the bands were made to tile: the 2025
- * single table had 250,556 where the IRS says the 35% band starts at 250,526,
- * and 626,251 where the 37% band starts at 626,351. The first left 31 dollars
- * untaxed; the second made the rows OVERLAP by 99 dollars, which the loop taxed
- * at 35% and 37% both. Deriving `fromAmount` from `toAmount` repairs both.
+ * The IRS publishes bands as "$12,401 to $50,400". Do not copy the `+1` starts:
+ * each would lose a dollar of base. When checking a boundary, check `toAmount`
+ * against the IRS release; `fromAmount` is derived from it.
  */
 export const us_2026_taxtables = {
     "year": 2026,
@@ -334,25 +320,18 @@ const FILING_TYPE_KEY = Object.freeze({
 /**
  * Annual contribution limits, by filing-table key.
  *
- * HOUSEHOLD figures, not per-person — spec 5 scoped MFJ to the household level,
- * and every limit is enforced against a household aggregate (payroll-engine
- * compares against this.yearly.four01KContribution, summed across all income
- * assets). So a married limit is the per-person statutory figure DOUBLED, and
- * saying that here is the point of the table: the previous code doubled the IRA
- * limit and left the 401(k) one alone, which is not a policy anyone chose.
+ * Household figures, not per person: every limit is enforced against a
+ * household total (payroll compares against this.yearly.four01KContribution,
+ * summed over all income). So a married limit is the per-person statutory
+ * figure doubled — for the IRA and the 401(k) alike.
  */
 /**
  * Whose Social Security wage base is being consumed.
  *
- * ONE key today — spec 5 scoped MFJ to the household level, so there is a single
- * User and a single earner identity. The seam exists because the wage base is
- * the one FICA figure that is irreducibly PER PERSON: two spouses each get their
- * own $184,500, and this engine gave them one between them. That is a real bug
- * (spec 5 §3.3, visible in the mfj-two-earners fixture) and it cannot be fixed
- * without somewhere to put the second identity.
- *
- * Adding SPOUSE here plus a second User is the whole of the change; no call site
- * moves, because every one of them already passes an owner.
+ * One key today, because the household has a single User. The wage base is per
+ * person, so a married couple currently shares one $184,500 base where each
+ * spouse should have their own (visible in the mfj-two-earners fixture). Adding
+ * SPOUSE and a second User fixes it; every call site already passes an owner.
  */
 export const TaxOwner = Object.freeze({
     PRIMARY: 'primary',
@@ -379,12 +358,7 @@ export class TaxTable {
      * @param {string} filingAs  selects the brackets, limits and exclusion
      * @param {number} propertyTaxDeductionMax  the SALT-style cap
      *
-     * Both REQUIRED as of Spec 9 step 6. They were optional through steps 2-5,
-     * falling back to `global_filingAs` and `global_propertyTaxDeductionMax` so
-     * that ~58 existing `new TaxTable()` sites kept working while the engine
-     * migrated. Removing the fallbacks is what makes taxes.js free of the
-     * settings store — and taxes.js had to go first, because globals.js cannot
-     * import TaxTable to build one until it does, or the two form a cycle.
+     * Both required: this file reads nothing from the settings store.
      */
     constructor(filingAs, propertyTaxDeductionMax) {
         if (!filingAs || typeof propertyTaxDeductionMax !== 'number') {
@@ -407,17 +381,14 @@ export class TaxTable {
         
         this.activeTaxTables = JSON.parse(JSON.stringify(us_2026_taxtables));
 
-        // The base year the run is indexed FORWARD from, read off the table set
-        // itself rather than restated anywhere. globals.html used to hardcode
-        // "2026" in prose beside a Tax Year input that selected nothing; both
-        // are gone, and the page now reads this. Swapping the table set above is
-        // then the only edit a new tax year needs.
+        // The base year the run is indexed forward from, read off the table set
+        // itself (globals.html displays it). Swapping the table set above is the
+        // only edit a new tax year needs.
         this.baseYear = this.activeTaxTables.year;
         this.propertyTaxDeductionMax = this.configuredPropertyTaxDeductionMax;
 
-        // Selected BY KEY, not by array index and an else. The old form made
-        // every unrecognised status file jointly by falling through, so 'MFJ'
-        // worked by accident and a future 'MFS' would have too.
+        // Selected by key, so an unrecognised filing status fails rather than
+        // silently filing jointly.
         const filingAs = this.filingAs;
         const key = FILING_TYPE_KEY[filingAs];
         if (!key) {
@@ -439,10 +410,10 @@ export class TaxTable {
         this.activeAdditionalStandardDeduction65 = this.activeTaxTables.additionalStandardDeduction65[key];
         const senior = this.activeTaxTables.seniorDeduction;
         this.activeSeniorDeduction = { ...senior, threshold: senior[key] };
-        // The age-based deductions are PER PERSON. The model is household-level
-        // with one age (see User), so a married household is assumed to be two
-        // people of that age — the same convention limitFor() uses when it
-        // doubles the per-person contribution limits.
+        // The age-based deductions are per person. The household has one age
+        // (see User), so a married household counts as two people of that age —
+        // both qualify at 65 together. limitFor() doubles its limits the same
+        // way.
         this.householdPersons = key === 'married' ? 2 : 1;
         this.niitRate = this.activeTaxTables.niit.rate;
 
@@ -503,9 +474,7 @@ export class TaxTable {
 
     inflateTaxes(inflationOverride) {
 
-        // Required since step 6: every caller — chronometer, mc-compute and the
-        // unit tests — passes the run's rate. A fallback here would have been
-        // the settings store reaching into a value the run already knows.
+        // Required: every caller passes the run's inflation rate.
         if (typeof inflationOverride !== 'number' || !Number.isFinite(inflationOverride)) {
             throw new Error('TaxTable.inflateTaxes needs the run inflation rate; got '
                 + JSON.stringify(inflationOverride));
@@ -516,25 +485,14 @@ export class TaxTable {
         this.inflateTaxRows(this.activeTaxTables.capitalGains.tables, r);
         this.activeStandardDeduction *= r;
         this.activeAdditionalStandardDeduction65 *= r;
-        // activeSeniorDeduction is deliberately absent: the OBBBA amount and
-        // phase-out threshold are fixed dollars for the four years it exists.
-        // activeNIITThreshold is deliberately absent, for the same reason and
-        // with more consequence. IRC §1411 fixed it at $200,000 / $250,000 in
-        // 2013 and has never indexed it, so it catches more households every
-        // year by standing still — that is what the statute does, and a plan
-        // that inflated it would model a tax that quietly stops applying.
-        //
-        // activeSocialSecurityThresholds is deliberately absent too. IRC §86's
-        // base and adjusted base amounts have never been indexed; inflating
-        // them would model benefits becoming LESS taxable over time, the
-        // opposite of what the statute does.
-        //
-        // activeHomeSaleExclusion is deliberately absent. IRC §121 fixed it at
-        // $250,000 / $500,000 in 1997 with no inflation indexing, so a plan that
-        // inflated it would under-tax every long-held home — by a factor of 2.4
-        // over a 30-year plan at 3.1%. Everything else in this method is indexed
-        // by statute; this one is the exception, so it is called out rather than
-        // looking like an omission.
+        // Not indexed here, because the statutes do not index them:
+        //   activeSeniorDeduction           OBBBA: fixed dollars, 2025–2028 only.
+        //   activeNIITThreshold             IRC §1411: fixed since 2013, so it
+        //                                   catches more households each year.
+        //   activeSocialSecurityThresholds  IRC §86: fixed since 1984/1993, so
+        //                                   more of each benefit is taxable.
+        //   activeHomeSaleExclusion         IRC §121: fixed since 1997.
+        // Inflating any of them would model a tax that quietly fades away.
         this.iraContributionLimitBelow50 *= r;
         this.iraContributionLimit50AndOver *= r;
         this.four01KContributionLimitBelow50 *= r;
@@ -606,18 +564,13 @@ export class TaxTable {
         else
             c = new Currency(income.amount * this.activeTaxTables.fica.medicareHalfRate);
 
-        //modelAsset.addMonthlyMedicare(c);
         return c;
 
     }
 
     calculateYearlyIncomeTax(income, deduction) {
 
-        // `deduction`, not `deduction.amount`. Currency.subtract takes a
-        // Currency; handing it a number was silently ignored, so this
-        // parameter subtracted nothing for any caller from the day it was
-        // written. Callers that needed a deduction pre-subtracted it instead,
-        // which is why nothing looked wrong.
+        // `deduction` is a Currency; Currency.subtract throws on a number.
         let adjusted = new Currency(income.amount);
         if (deduction)
             adjusted.subtract(deduction);
@@ -678,16 +631,12 @@ export class TaxTable {
                 taxableGains.amount -= this.activeHomeSaleExclusion;
                 if (taxableGains.amount < 0) taxableGains.zero();
             }
-            // How much §121 actually removed — the difference, not the headline
-            // exclusion, because a gain smaller than the exclusion only uses
-            // part of it. The caller has to tell the annual true-up, which
-            // otherwise recomputes the year from the gross gain and hands the
-            // exclusion straight back. Derived here rather than recomputed
-            // there so the clamp above cannot be applied twice differently.
+            // How much §121 actually removed — a gain smaller than the
+            // exclusion uses only part of it. The caller passes this to the
+            // annual true-up, which would otherwise tax the gross gain.
             //
-            // This is withholding, not liability: the §63 deduction overflow
-            // that tax-basis.js computes is NOT applied here. See the note at
-            // the call site in tax-engine.js for the measurement behind that.
+            // This is withholding, not liability, so the §63 deduction overflow
+            // is not applied here (see the call site in tax-engine.js).
             const excluded = capitalGains.amount - taxableGains.amount;
 
             const tax = this.calculateYearlyLongTermCapitalGainsTax(annualizedIncome, taxableGains);
@@ -714,18 +663,11 @@ export class TaxTable {
      *
      *     0.038 × min( netInvestmentIncome , MAGI − threshold )
      *
-     * BOTH arguments matter, and taking either alone is wrong in a direction a
-     * fixture already demonstrates: a household with $432k of wages and no
-     * investment income owes nothing despite clearing the threshold by far
-     * (mfj-two-earners), and a household living on gains below the threshold
-     * owes nothing despite its income being almost entirely investment income
-     * (gain-harvest-under-the-deduction). Those two fail in OPPOSITE
-     * directions, which is what makes them worth keeping.
+     * Both arguments matter. A household with large wages and no investment
+     * income owes nothing (fixture mfj-two-earners); so does one living on
+     * gains below the threshold (gain-harvest-under-the-deduction).
      *
-     * Floored at zero here rather than by the caller, so a MAGI under the
-     * threshold produces no tax instead of a negative one — `magi` itself is
-     * deliberately unfloored (see tax-basis.js), and this is where that has to
-     * be resolved.
+     * Floored at zero here, because `magi` is deliberately unfloored.
      *
      * @param {Currency} netInvestmentIncome  from taxableBasis
      * @param {Currency} magi                 from taxableBasis — AGI, gross of the deduction
@@ -775,16 +717,9 @@ export class TaxTable {
                 index = 0;
             let value = modelAsset.monthlyValues[index];
 
-            // IRS rule: RMD divides the prior-year December 31 balance, which
-            // the index above finds in the VALUE metric history. But history
-            // tracking is disabled during GA fitness runs (Simulator
-            // _setTrackHistory) — the lookup then returns undefined, and
-            // undefined/divisor is NaN, which Currency coerces to $0. That
-            // silently removed RMDs from every fitness world while the real
-            // run kept them, so the optimizer scored candidates against rules
-            // the recommendation would never face. Fall back to the live
-            // balance: an approximation of prior-Dec-31, but it keeps
-            // history-less runs in the same tax regime as tracked runs.
+            // The RMD divides the prior December 31 balance, found in the VALUE
+            // history. GA fitness runs disable history, so fall back to the live
+            // balance — an approximation, but it keeps RMDs in those runs.
             if (!Number.isFinite(value)) {
                 value = modelAsset.finishCurrency.amount;
             }
@@ -798,21 +733,13 @@ export class TaxTable {
     }
 
     /**
-     * Every dollar this package may deduct, as a POSITIVE Currency: the greater
-     * of the standard or the itemised deduction, plus the deductible pre-tax
-     * contribution.
+     * Every dollar this package may deduct, as a positive Currency: the greater
+     * of the standard or itemised deduction, plus the deductible pre-tax
+     * contribution. taxableBasis() needs the total, because a deduction larger
+     * than ordinary income shelters capital gains (IRC §1(h)).
      *
-     * Extracted from `applyYearlyDeductions`, which used to compute it inline
-     * and immediately spend it. The total has to be VISIBLE, not just applied,
-     * because a deduction larger than ordinary income is not wasted — under IRC
-     * §1(h) the remainder shelters net capital gain, and nothing could work that
-     * out from a taxable income that had already been floored at zero. See
-     * `taxableBasis`, which is the only thing that needs the number.
-     *
-     * The property-tax sign-normalising below looks redundant and is not: the
-     * accumulator carries expenses negative, but a package assembled by hand in
-     * a test may carry it positive, and both have always meant the same thing
-     * here. Preserved exactly as it was.
+     * Property tax is accepted with either sign: the engine stores it negative,
+     * a package built by hand in a test may not.
      */
     totalYearlyDeduction(yearly, age = NO_AGE_DEDUCTIONS) {
 
@@ -839,9 +766,6 @@ export class TaxTable {
      * plan's birthYear is its first year minus the start age (Portfolio) and
      * the age advances on each New Year's Day, after that year's settlement.
      *
-     * Before 2026-09-23 neither existed; the standard deduction was one flat
-     * number for every age.
-     *
      * @param {import('./user.js').User} activeUser
      * @param {Currency} magi  AGI — the senior deduction phases out on it
      * @returns {{additionalStandard: number, senior: number}}
@@ -864,16 +788,10 @@ export class TaxTable {
     }
 
     /**
-     * The deduction split into the two pieces `applyYearlyDeductions` has always
-     * subtracted SEPARATELY. Kept separate on purpose: Currency is raw IEEE-754
-     * with no rounding, and `x − base − preTax` is not `x − (base + preTax)` for
-     * about a third of operand triples. Collapsing them into one subtraction
-     * changed nothing any household would notice — every committed baseline's
-     * totals stayed bit-identical — but it silently deleted a handful of
-     * −$0.000000 withholding events in years where income and deduction cancel,
-     * which is a snapshot diff that has nothing to do with any tax rule. The
-     * extraction is meant to be provably behaviour-neutral, so it subtracts in
-     * the original order and leaves the noise where it was.
+     * The deduction as the two pieces `applyYearlyDeductions` subtracts
+     * separately. Keep them separate: Currency is raw floating point, and
+     * `x − base − preTax` differs from `x − (base + preTax)` in the last bit,
+     * which changes the snapshot for no tax reason.
      */
     deductionComponents(yearly, age = NO_AGE_DEDUCTIONS) {
 
@@ -892,8 +810,7 @@ export class TaxTable {
         let itemised = new Currency(yearly.mortgageInterest.amount + propertyTaxDeduction.amount);
         itemised.flipSign();
 
-        // `+ 0` for anyone under 65, so their deduction is bit-identical to
-        // what it was before the age-based deductions existed.
+        // `+ 0` for anyone under 65.
         const standard = this.activeStandardDeduction + age.additionalStandard;
         const base = itemised.amount > standard
             ? itemised
@@ -924,20 +841,10 @@ export class TaxTable {
     }
 
     /**
-     * VESTIGIAL. Logs three self-checks and returns an empty Currency; nothing
-     * reads its result and no caller branches on it.
-     *
-     * The middle check is worse than useless: it compares POST-deduction
-     * taxable income against GROSS wages (`selfIncome + employedIncome`), which
-     * cannot agree except by coincidence, so its "check PASSED" branch is
-     * effectively unreachable and its failure branch logs on every run. It has
-     * no recorded taxable-income field to compare against — the FinancialPackage
-     * does not carry one — so the check cannot be repaired without first
-     * deciding what it was meant to assert.
-     *
-     * Left in place deliberately: spec 6 step 6 must not change behaviour, and
-     * deleting it is a separate decision with its own (small) log-output
-     * consequences. Flagged rather than quietly removed.
+     * Vestigial. Logs three self-checks and returns an empty Currency that
+     * nothing reads. The middle check compares post-deduction taxable income
+     * with gross wages, so it reports a failure on every run. Listed for
+     * deletion in markdowns/code-issues-from-comments.md.
      */
     reconcileYearlyTax(yearly, activeUser) {
 
@@ -993,16 +900,12 @@ export class TaxTable {
     /**
      * The annual contribution ceiling for one kind of account.
      *
-     * ONE helper, because there used to be two methods called from eight sites,
-     * and the IRA limit had been doubled for married filers while the 401(k)
-     * limit had not. Nobody chose that; it is what happens when the same policy
-     * lives in several places. This is also the seam the per-person spec needs:
-     * it already takes a user, so a second User slots in without touching a
-     * single call site.
+     * One helper for every contribution limit, so the policy lives in one
+     * place. It takes a user, so a second (per-person) User can be added later
+     * without changing call sites.
      *
-     * The figure is a HOUSEHOLD ceiling — every caller compares it against a
-     * household aggregate — so married values are the statutory per-person
-     * amounts doubled.
+     * The figure is a household ceiling — every caller compares it with a
+     * household total — so married values are the per-person amounts doubled.
      *
      * @param {'ira'|'401k'} kind  ContributionKind
      * @param {import('./user.js').User} activeUser
