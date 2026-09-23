@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.3.7; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.3.8; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -32677,7 +32677,7 @@ var ExpenseBehavior = Object.freeze({
     asset.ensureNegativeStart();
     const expense = asset.finishCurrency.copy();
     asset.addToMetric(Metric.LIVING_EXPENSE, expense);
-    const inflation = new Currency(expense.amount * asset.effectiveAnnualReturnRate.asMonthly());
+    const inflation = new Currency(expense.amount * asset.effectiveAnnualReturnRate.asMonthlyEffective());
     asset.finishCurrency.add(inflation);
     asset.monthlyValueChange.add(inflation);
     if (inflation.amount !== 0) {
@@ -32703,7 +32703,7 @@ var MortgageBehavior = Object.freeze({
   },
   applyMonthly(asset) {
     asset.ensureNegativeStart();
-    const rate = asset.annualReturnRate.asMonthly();
+    const rate = asset.annualReturnRate.asMonthlyNominal();
     const n = asset.monthsRemainingDynamic;
     if (n <= 0) {
       return new MortgageResult();
@@ -32776,7 +32776,8 @@ var CapitalBehavior = Object.freeze({
       return new AssetAppreciationResult(Currency.zero(), Currency.zero(), Currency.zero(), Currency.zero());
     }
     const earns = InstrumentType.isDebt(asset.instrument) || asset.finishCurrency.amount > 0;
-    const growth = earns ? new Currency(asset.finishCurrency.amount * asset.annualReturnRate.asMonthly()) : Currency.zero();
+    const monthlyRate = InstrumentType.isDebt(asset.instrument) ? asset.annualReturnRate.asMonthlyNominal() : asset.annualReturnRate.asMonthlyEffective();
+    const growth = earns ? new Currency(asset.finishCurrency.amount * monthlyRate) : Currency.zero();
     asset.growthCurrency.add(growth);
     asset.finishCurrency.add(growth);
     asset.monthlyValueChange.add(growth);
@@ -32784,7 +32785,7 @@ var CapitalBehavior = Object.freeze({
     let qualifiedDiv = Currency.zero();
     let nonQualifiedDiv = Currency.zero();
     if (asset.annualDividendRate.rate != 0 && earns) {
-      const totalDiv = asset.finishCurrency.amount * asset.annualDividendRate.asMonthly();
+      const totalDiv = asset.finishCurrency.amount * asset.annualDividendRate.asMonthlyNominal();
       const qualifiedRatio = asset.dividendQualifiedRatio;
       qualifiedDiv = new Currency(totalDiv * qualifiedRatio);
       nonQualifiedDiv = new Currency(totalDiv * (1 - qualifiedRatio));
@@ -32833,17 +32834,17 @@ var RealEstateBehavior = Object.freeze({
     ];
   },
   applyMonthly(asset) {
-    const growth = new Currency(asset.finishCurrency.amount * asset.annualReturnRate.asMonthly());
+    const growth = new Currency(asset.finishCurrency.amount * asset.annualReturnRate.asMonthlyEffective());
     asset.growthCurrency.add(growth);
     asset.finishCurrency.add(growth);
     asset.monthlyValueChange.add(growth);
     asset.recordEvent(EventType.ASSET_GROWTH, growth, { metric: Metric.GROWTH });
-    const tax = new Currency(asset.finishCurrency.amount * asset.annualTaxRate.asMonthly());
+    const tax = new Currency(asset.finishCurrency.amount * asset.annualTaxRate.asMonthlyNominal());
     tax.flipSign();
     asset.addToMetric(Metric.PROPERTY_TAX, tax);
     asset.recordEvent(EventType.PROPERTY_TAX, tax, { metric: Metric.PROPERTY_TAX });
     if (asset.annualMaintenanceRate.rate !== 0) {
-      const maint = new Currency(asset.finishCurrency.amount * asset.annualMaintenanceRate.asMonthly());
+      const maint = new Currency(asset.finishCurrency.amount * asset.annualMaintenanceRate.asMonthlyNominal());
       maint.flipSign();
       asset.addToMetric(Metric.MAINTENANCE, maint);
       asset.recordEvent(EventType.MAINTENANCE, maint, { metric: Metric.MAINTENANCE });
@@ -32882,7 +32883,7 @@ var IncomeAccountBehavior = Object.freeze({
   },
   applyMonthly(asset) {
     asset.ensurePositiveStart();
-    const income = asset.finishCurrency.amount > 0 ? new Currency(asset.finishCurrency.amount * asset.annualReturnRate.asMonthly()) : Currency.zero();
+    const income = asset.finishCurrency.amount > 0 ? new Currency(asset.finishCurrency.amount * asset.annualReturnRate.asMonthlyEffective()) : Currency.zero();
     asset.addToMetric(Metric.INTEREST_INCOME, income);
     asset.netIncomeCurrency.add(income);
     asset.finishCurrency.add(income);
@@ -36553,6 +36554,96 @@ var global_cpi_annual_inflation = Object.freeze({
   2025: 2.6
 });
 
+// js/utils/arr.js
+var ARR = class _ARR {
+  /**
+   * @param {number} rate  Decimal rate, e.g. 0.07 for 7%
+   */
+  constructor(rate = 0) {
+    this.rate = typeof rate === "number" && Number.isFinite(rate) ? rate : 0;
+  }
+  // ── Backwards-compat alias (used throughout the codebase) ────────
+  get annualReturnRate() {
+    return this.rate;
+  }
+  set annualReturnRate(v) {
+    this.rate = v;
+  }
+  // ── Parsing ──────────────────────────────────────────────────────
+  /**
+   * Parse a percentage string like "7" or "7%" → 0.07.
+   *
+   * Anything unparseable becomes 0, matching Currency.parse. This used to
+   * return ARR(NaN), and the failure was silent rather than loud: an asset
+   * whose annualTaxRate is NaN is charged NO property tax at all, and the run
+   * completes without a warning. Measured on a 2-year plan — the same
+   * portfolio ended with the backstop at $42,099 with a 1% rate and at $50,000
+   * untouched with NaN.
+   *
+   * The only caller is ModelAsset.fromHTML, where an optional rate field that
+   * exists but was left blank is exactly the case that produced it.
+   */
+  static parse(str) {
+    const cleaned = String(str).replace("%", "");
+    const value = parseFloat(cleaned) / 100;
+    return new _ARR(Number.isFinite(value) ? value : 0);
+  }
+  /** Build from a percentage number: ARR.fromPercent(7) → 0.07 */
+  static fromPercent(pct2) {
+    return new _ARR(pct2 / 100);
+  }
+  // ── Queries ──────────────────────────────────────────────────────
+  // ── Monthly conversions ──────────────────────────────────────────
+  //
+  // There is no plain `asMonthly()`, on purpose. An annual rate means one of
+  // two things, and the monthly step differs:
+  //
+  //   MEASURED  an annual change observed start-to-end — a market return,
+  //             inflation, a savings APY, home appreciation. It already
+  //             includes the year's compounding, so twelve monthly steps
+  //             must compound back to exactly `rate`: asMonthlyEffective().
+  //
+  //   NOMINAL   a contract APR (a mortgage, a loan), or an annual CHARGE
+  //             prorated — property tax, maintenance, a dividend yield. The
+  //             month's figure is defined as one twelfth: asMonthlyNominal().
+  //
+  // Until 2026-09-23 there was one `asMonthly()` returning rate/12 for both,
+  // so a stated 8.5% return realized 8.839% a year and a 30-year plan ended
+  // ~9.8% richer than its own assumptions. The calibrated Monte Carlo draws
+  // measured annual returns, so it could not agree with the plan either.
+  /** Monthly step that compounds to exactly `rate` over twelve months. */
+  asMonthlyEffective() {
+    return Math.pow(1 + this.rate, 1 / 12) - 1;
+  }
+  /** One twelfth of the annual rate — a contract APR, or a prorated annual charge. */
+  asMonthlyNominal() {
+    return this.rate / 12;
+  }
+  hasMonthly() {
+    return this.rate !== 0;
+  }
+  hasMonthlyAmount() {
+    return false;
+  }
+  asPercent() {
+    return this.rate * 100;
+  }
+  // ── Formatting ───────────────────────────────────────────────────
+  toString() {
+    return `${this.asPercent()}%`;
+  }
+  /** For HTML input value (no % sign) */
+  toHTML() {
+    return String(this.asPercent());
+  }
+  copy() {
+    return new _ARR(this.rate);
+  }
+  toJSON() {
+    return { annualReturnRate: this.rate };
+  }
+};
+
 // js/utils/price-index.js
 var PriceIndex = class {
   /** @param {number} annualRate  decimal, e.g. 0.031 */
@@ -36570,7 +36661,7 @@ var PriceIndex = class {
    * that calls portfolio.monthlyChron(), so the arrays stay aligned.
    */
   stepAndRecord() {
-    this.level *= 1 + this.annualRate / 12;
+    this.level *= 1 + new ARR(this.annualRate).asMonthlyEffective();
     this.history.push(this.level);
     return this.level;
   }
@@ -36723,73 +36814,6 @@ async function chronometer_run(portfolio) {
     );
   }
 }
-
-// js/utils/arr.js
-var ARR = class _ARR {
-  /**
-   * @param {number} rate  Decimal rate, e.g. 0.07 for 7%
-   */
-  constructor(rate = 0) {
-    this.rate = typeof rate === "number" && Number.isFinite(rate) ? rate : 0;
-  }
-  // ── Backwards-compat alias (used throughout the codebase) ────────
-  get annualReturnRate() {
-    return this.rate;
-  }
-  set annualReturnRate(v) {
-    this.rate = v;
-  }
-  // ── Parsing ──────────────────────────────────────────────────────
-  /**
-   * Parse a percentage string like "7" or "7%" → 0.07.
-   *
-   * Anything unparseable becomes 0, matching Currency.parse. This used to
-   * return ARR(NaN), and the failure was silent rather than loud: an asset
-   * whose annualTaxRate is NaN is charged NO property tax at all, and the run
-   * completes without a warning. Measured on a 2-year plan — the same
-   * portfolio ended with the backstop at $42,099 with a 1% rate and at $50,000
-   * untouched with NaN.
-   *
-   * The only caller is ModelAsset.fromHTML, where an optional rate field that
-   * exists but was left blank is exactly the case that produced it.
-   */
-  static parse(str) {
-    const cleaned = String(str).replace("%", "");
-    const value = parseFloat(cleaned) / 100;
-    return new _ARR(Number.isFinite(value) ? value : 0);
-  }
-  /** Build from a percentage number: ARR.fromPercent(7) → 0.07 */
-  static fromPercent(pct2) {
-    return new _ARR(pct2 / 100);
-  }
-  // ── Queries ──────────────────────────────────────────────────────
-  asMonthly() {
-    return this.rate / 12;
-  }
-  hasMonthly() {
-    return this.rate !== 0;
-  }
-  hasMonthlyAmount() {
-    return false;
-  }
-  asPercent() {
-    return this.rate * 100;
-  }
-  // ── Formatting ───────────────────────────────────────────────────
-  toString() {
-    return `${this.asPercent()}%`;
-  }
-  /** For HTML input value (no % sign) */
-  toHTML() {
-    return String(this.asPercent());
-  }
-  copy() {
-    return new _ARR(this.rate);
-  }
-  toJSON() {
-    return { annualReturnRate: this.rate };
-  }
-};
 
 // js/one-time.js
 var OneTimeEvent = class _OneTimeEvent {

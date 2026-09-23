@@ -293,10 +293,15 @@ the user never chose; point at the ones driving the result and let them decide.
 
 Disclose these when a number leans on one. All verified against the current source.
 
-- **Returns compound optimistically.** `ARR.asMonthly()` is `rate / 12`
-  ([js/utils/arr.js:54](js/utils/arr.js:54)), so a stated 8.5% realizes about
-  8.839% annually. Over a 30-year horizon the ending balance runs roughly 10%
-  rich. Every long projection carries this.
+- **Rates mean what they say — two conventions, by design.** A return,
+  interest rate, home appreciation or inflation rate is a MEASURED annual rate:
+  twelve months compound to exactly the stated figure
+  (`ARR.asMonthlyEffective()`, [js/utils/arr.js](js/utils/arr.js)). A mortgage
+  or debt rate is a contract APR, and property tax, maintenance and a dividend
+  yield are annual charges; those are one twelfth a month
+  (`asMonthlyNominal()`). Until 2026-09-23 every rate was rate/12, so a stated
+  8.5% realized 8.839% and 30-year plans ran ~10% rich; a plan's numbers from
+  before then are not comparable with today's.
 - **No early-withdrawal penalty.** There is no 10% penalty and no concept of age
   59.5 anywhere in the engine — it cannot express a half-year, so it uses 60 as a
   conservative gate for tax *attribution* only

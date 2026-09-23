@@ -36,19 +36,19 @@
   firstDate = 2026-01
   lastDate = 2030-12
   startValue = 2025000.000000
-  finishValue = 2456332.346658
+  finishValue = 2446522.084590
   accumulated = -26493.446661
   total.employedIncome = 1200000.000000
   total.socialSecurityTax = -60852.733250
-  total.assetAppreciation = 466065.397415
-  total.expense = -518476.215962
+  total.assetAppreciation = 452452.045600
+  total.expense = -517913.103947
   total.medicareTax = -17400.000000
   total.incomeTax = -170053.040545
-  total.longTermCapitalGains = 2066065.397415
-  total.longTermCapitalGainsTax = -363327.129237
-  total.niit = -78130.485102
+  total.longTermCapitalGains = 2052452.045600
+  total.longTermCapitalGainsTax = -360604.458874
+  total.niit = -77613.177733
   total.taxTrueUp = -26493.446661
-  total.value = 145977716.612361
+  total.value = 145525667.752649
 
 [assetOrder]
   0 Salary
@@ -64,71 +64,71 @@
   startBasis = 400000.000000
   finishBasis = 0.000000
   isClosed = yes  isDepleted = no
-  closedDate = 2029-07  closedValue = 2102738.268178
+  closedDate = 2029-07  closedValue = 2091847.586726
   events = 45  reconciled = 45
 
 [events] Brokerage
-  0000 2026-01 assetGrowth                  10000.000000 cash  growth                 c-
-  0001 2026-02 assetGrowth                  10050.000000 cash  growth                 c-
-  0002 2026-03 assetGrowth                  10100.250000 cash  growth                 c-
-  0003 2026-04 assetGrowth                  10150.751250 cash  growth                 c-
-  0004 2026-05 assetGrowth                  10201.505006 cash  growth                 c-
-  0005 2026-06 assetGrowth                  10252.512531 cash  growth                 c-
-  0006 2026-07 assetGrowth                  10303.775094 cash  growth                 c-
-  0007 2026-08 assetGrowth                  10355.293969 cash  growth                 c-
-  0008 2026-09 assetGrowth                  10407.070439 cash  growth                 c-
-  0009 2026-10 assetGrowth                  10459.105791 cash  growth                 c-
-  0010 2026-11 assetGrowth                  10511.401320 cash  growth                 c-
-  0011 2026-12 assetGrowth                  10563.958327 cash  growth                 c-
-  0012 2027-01 assetGrowth                  10616.778119 cash  growth                 c-
-  0013 2027-02 assetGrowth                  10669.862009 cash  growth                 c-
-  0014 2027-03 assetGrowth                  10723.211319 cash  growth                 c-
-  0015 2027-04 assetGrowth                  10776.827376 cash  growth                 c-
-  0016 2027-05 assetGrowth                  10830.711513 cash  growth                 c-
-  0017 2027-06 assetGrowth                  10884.865070 cash  growth                 c-
-  0018 2027-07 assetGrowth                  10939.289396 cash  growth                 c-
-  0019 2027-08 assetGrowth                  10993.985843 cash  growth                 c-
-  0020 2027-09 assetGrowth                  11048.955772 cash  growth                 c-
-  0021 2027-10 assetGrowth                  11104.200551 cash  growth                 c-
-  0022 2027-11 assetGrowth                  11159.721553 cash  growth                 c-
-  0023 2027-12 assetGrowth                  11215.520161 cash  growth                 c-
-  0024 2028-01 assetGrowth                  11271.597762 cash  growth                 c-
-  0025 2028-02 assetGrowth                  11327.955751 cash  growth                 c-
-  0026 2028-03 assetGrowth                  11384.595530 cash  growth                 c-
-  0027 2028-04 assetGrowth                  11441.518507 cash  growth                 c-
-  0028 2028-05 assetGrowth                  11498.726100 cash  growth                 c-
-  0029 2028-06 assetGrowth                  11556.219730 cash  growth                 c-
-  0030 2028-07 assetGrowth                  11614.000829 cash  growth                 c-
-  0031 2028-08 assetGrowth                  11672.070833 cash  growth                 c-
-  0032 2028-09 assetGrowth                  11730.431187 cash  growth                 c-
-  0033 2028-10 assetGrowth                  11789.083343 cash  growth                 c-
-  0034 2028-11 assetGrowth                  11848.028760 cash  growth                 c-
-  0035 2028-12 assetGrowth                  11907.268904 cash  growth                 c-
-  0036 2029-01 assetGrowth                  11966.805248 cash  growth                 c-
-  0037 2029-02 assetGrowth                  12026.639274 cash  growth                 c-
-  0038 2029-03 assetGrowth                  12086.772471 cash  growth                 c-
-  0039 2029-04 assetGrowth                  12147.206333 cash  growth                 c-
-  0040 2029-05 assetGrowth                  12207.942365 cash  growth                 c-
-  0041 2029-06 assetGrowth                  12268.982077 cash  growth                 c-
-  0042 2029-07 capitalGainRecognized      2066065.397415 info  longTermCapitalGain    c- {spillover=false}
-  0043 2029-07 capitalGainsTax            -363327.129237 cash  longTermCapitalGainTax c-
-  0044 2029-07 transfer                  -2102738.268178 cash  -                      c0 {cadence=monthly from=Brokerage to=Checking}
+  0000 2026-01 assetGrowth                   9735.101131 cash  growth                 c-
+  0001 2026-02 assetGrowth                   9782.487228 cash  growth                 c-
+  0002 2026-03 assetGrowth                   9830.103979 cash  growth                 c-
+  0003 2026-04 assetGrowth                   9877.952507 cash  growth                 c-
+  0004 2026-05 assetGrowth                   9926.033940 cash  growth                 c-
+  0005 2026-06 assetGrowth                   9974.349413 cash  growth                 c-
+  0006 2026-07 assetGrowth                  10022.900063 cash  growth                 c-
+  0007 2026-08 assetGrowth                  10071.687036 cash  growth                 c-
+  0008 2026-09 assetGrowth                  10120.711481 cash  growth                 c-
+  0009 2026-10 assetGrowth                  10169.974556 cash  growth                 c-
+  0010 2026-11 assetGrowth                  10219.477422 cash  growth                 c-
+  0011 2026-12 assetGrowth                  10269.221245 cash  growth                 c-
+  0012 2027-01 assetGrowth                  10319.207199 cash  growth                 c-
+  0013 2027-02 assetGrowth                  10369.436461 cash  growth                 c-
+  0014 2027-03 assetGrowth                  10419.910218 cash  growth                 c-
+  0015 2027-04 assetGrowth                  10470.629658 cash  growth                 c-
+  0016 2027-05 assetGrowth                  10521.595977 cash  growth                 c-
+  0017 2027-06 assetGrowth                  10572.810377 cash  growth                 c-
+  0018 2027-07 assetGrowth                  10624.274066 cash  growth                 c-
+  0019 2027-08 assetGrowth                  10675.988258 cash  growth                 c-
+  0020 2027-09 assetGrowth                  10727.954170 cash  growth                 c-
+  0021 2027-10 assetGrowth                  10780.173030 cash  growth                 c-
+  0022 2027-11 assetGrowth                  10832.646067 cash  growth                 c-
+  0023 2027-12 assetGrowth                  10885.374520 cash  growth                 c-
+  0024 2028-01 assetGrowth                  10938.359630 cash  growth                 c-
+  0025 2028-02 assetGrowth                  10991.602649 cash  growth                 c-
+  0026 2028-03 assetGrowth                  11045.104831 cash  growth                 c-
+  0027 2028-04 assetGrowth                  11098.867437 cash  growth                 c-
+  0028 2028-05 assetGrowth                  11152.891735 cash  growth                 c-
+  0029 2028-06 assetGrowth                  11207.179000 cash  growth                 c-
+  0030 2028-07 assetGrowth                  11261.730510 cash  growth                 c-
+  0031 2028-08 assetGrowth                  11316.547553 cash  growth                 c-
+  0032 2028-09 assetGrowth                  11371.631421 cash  growth                 c-
+  0033 2028-10 assetGrowth                  11426.983412 cash  growth                 c-
+  0034 2028-11 assetGrowth                  11482.604831 cash  growth                 c-
+  0035 2028-12 assetGrowth                  11538.496991 cash  growth                 c-
+  0036 2029-01 assetGrowth                  11594.661208 cash  growth                 c-
+  0037 2029-02 assetGrowth                  11651.098808 cash  growth                 c-
+  0038 2029-03 assetGrowth                  11707.811121 cash  growth                 c-
+  0039 2029-04 assetGrowth                  11764.799483 cash  growth                 c-
+  0040 2029-05 assetGrowth                  11822.065240 cash  growth                 c-
+  0041 2029-06 assetGrowth                  11879.609740 cash  growth                 c-
+  0042 2029-07 capitalGainRecognized      2052452.045600 info  longTermCapitalGain    c- {spillover=false}
+  0043 2029-07 capitalGainsTax            -360604.458874 cash  longTermCapitalGainTax c-
+  0044 2029-07 transfer                  -2091847.586726 cash  -                      c0 {cadence=monthly from=Brokerage to=Checking}
 
 [history] Brokerage
-  value                        n=  60 first=  2010000.000000 last=        0.000000 min=        0.000000 max=  2466065.400000 sum=   93679144.880000 #43df9e5a
-  growth                       n=  60 first=    10000.000000 last=        0.000000 min=        0.000000 max=    12268.980000 sum=     466065.430000 #b73da5f2
-  income                       n=  60 first=        0.000000 last=        0.000000 min=        0.000000 max=  2066065.400000 sum=    2066065.400000 #34ad3d5c
-  federalTaxes                 n=  60 first=        0.000000 last=        0.000000 min=  -363327.130000 max=        0.000000 sum=    -363327.130000 #bcdf52e4
-  taxes                        n=  60 first=        0.000000 last=        0.000000 min=  -363327.130000 max=        0.000000 sum=    -363327.130000 #bcdf52e4
-  longTermCapitalGain          n=  60 first=        0.000000 last=        0.000000 min=        0.000000 max=  2066065.400000 sum=    2066065.400000 #34ad3d5c
-  capitalGain                  n=  60 first=        0.000000 last=        0.000000 min=        0.000000 max=  2066065.400000 sum=    2066065.400000 #34ad3d5c
-  longTermCapitalGainTax       n=  60 first=        0.000000 last=        0.000000 min=  -363327.130000 max=        0.000000 sum=    -363327.130000 #bcdf52e4
+  value                        n=  60 first=  2009735.100000 last=        0.000000 min=        0.000000 max=  2452452.050000 sum=   93405168.110000 #a1505202
+  growth                       n=  60 first=     9735.100000 last=        0.000000 min=        0.000000 max=    11879.610000 sum=     452452.030000 #d96475a6
+  income                       n=  60 first=        0.000000 last=        0.000000 min=        0.000000 max=  2052452.050000 sum=    2052452.050000 #7c83c892
+  federalTaxes                 n=  60 first=        0.000000 last=        0.000000 min=  -360604.460000 max=        0.000000 sum=    -360604.460000 #85d41077
+  taxes                        n=  60 first=        0.000000 last=        0.000000 min=  -360604.460000 max=        0.000000 sum=    -360604.460000 #85d41077
+  longTermCapitalGain          n=  60 first=        0.000000 last=        0.000000 min=        0.000000 max=  2052452.050000 sum=    2052452.050000 #7c83c892
+  capitalGain                  n=  60 first=        0.000000 last=        0.000000 min=        0.000000 max=  2052452.050000 sum=    2052452.050000 #7c83c892
+  longTermCapitalGainTax       n=  60 first=        0.000000 last=        0.000000 min=  -360604.460000 max=        0.000000 sum=    -360604.460000 #85d41077
 
 [asset] Checking
   instrument = bank
   start = 2026-01  finish = 2030-12
   startCurrency = 25000.000000
-  finishCurrency = 2456332.346658
+  finishCurrency = 2446522.084590
   startBasis = 25000.000000
   finishBasis = 25000.000000
   isClosed = no  isDepleted = no
@@ -140,193 +140,193 @@
   0001 2026-01 grossUp                      -8000.000000 cash  -                      c2 {forAsset=Living overflow=false}
   0002 2026-01 interestIncome                   0.000000 cash  interestIncome         c-
   0003 2026-02 transfer                     15541.666667 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0004 2026-02 grossUp                      -8020.666667 cash  -                      c2 {forAsset=Living overflow=false}
+  0004 2026-02 grossUp                      -8020.378715 cash  -                      c2 {forAsset=Living overflow=false}
   0005 2026-02 interestIncome                   0.000000 cash  interestIncome         c-
   0006 2026-03 transfer                     15541.666667 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0007 2026-03 grossUp                      -8041.386722 cash  -                      c2 {forAsset=Living overflow=false}
+  0007 2026-03 grossUp                      -8040.809342 cash  -                      c2 {forAsset=Living overflow=false}
   0008 2026-03 interestIncome                   0.000000 cash  interestIncome         c-
   0009 2026-04 transfer                     15541.666667 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0010 2026-04 grossUp                      -8062.160305 cash  -                      c2 {forAsset=Living overflow=false}
+  0010 2026-04 grossUp                      -8061.292012 cash  -                      c2 {forAsset=Living overflow=false}
   0011 2026-04 interestIncome                   0.000000 cash  interestIncome         c-
   0012 2026-05 transfer                     15541.666667 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0013 2026-05 grossUp                      -8082.987552 cash  -                      c2 {forAsset=Living overflow=false}
+  0013 2026-05 grossUp                      -8081.826859 cash  -                      c2 {forAsset=Living overflow=false}
   0014 2026-05 interestIncome                   0.000000 cash  interestIncome         c-
   0015 2026-06 transfer                     15541.666667 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0016 2026-06 grossUp                      -8103.868603 cash  -                      c2 {forAsset=Living overflow=false}
+  0016 2026-06 grossUp                      -8102.414015 cash  -                      c2 {forAsset=Living overflow=false}
   0017 2026-06 interestIncome                   0.000000 cash  interestIncome         c-
   0018 2026-07 transfer                     15541.666667 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0019 2026-07 grossUp                      -8124.803597 cash  -                      c2 {forAsset=Living overflow=false}
+  0019 2026-07 grossUp                      -8123.053613 cash  -                      c2 {forAsset=Living overflow=false}
   0020 2026-07 interestIncome                   0.000000 cash  interestIncome         c-
   0021 2026-08 transfer                     15541.666667 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0022 2026-08 grossUp                      -8145.792673 cash  -                      c2 {forAsset=Living overflow=false}
+  0022 2026-08 grossUp                      -8143.745787 cash  -                      c2 {forAsset=Living overflow=false}
   0023 2026-08 interestIncome                   0.000000 cash  interestIncome         c-
   0024 2026-09 transfer                     15541.666667 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0025 2026-09 grossUp                      -8166.835971 cash  -                      c2 {forAsset=Living overflow=false}
+  0025 2026-09 grossUp                      -8164.490672 cash  -                      c2 {forAsset=Living overflow=false}
   0026 2026-09 interestIncome                   0.000000 cash  interestIncome         c-
   0027 2026-10 transfer                     16502.666667 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0028 2026-10 grossUp                      -8187.933630 cash  -                      c2 {forAsset=Living overflow=false}
+  0028 2026-10 grossUp                      -8185.288401 cash  -                      c2 {forAsset=Living overflow=false}
   0029 2026-10 interestIncome                   0.000000 cash  interestIncome         c-
   0030 2026-11 transfer                     16781.666667 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0031 2026-11 grossUp                      -8209.085792 cash  -                      c2 {forAsset=Living overflow=false}
+  0031 2026-11 grossUp                      -8206.139108 cash  -                      c2 {forAsset=Living overflow=false}
   0032 2026-11 interestIncome                   0.000000 cash  interestIncome         c-
   0033 2026-12 transfer                     16781.666667 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0034 2026-12 grossUp                      -8230.292597 cash  -                      c2 {forAsset=Living overflow=false}
+  0034 2026-12 grossUp                      -8227.042929 cash  -                      c2 {forAsset=Living overflow=false}
   0035 2026-12 interestIncome                   0.000000 cash  interestIncome         c-
   0036 2027-01 transfer                     15587.288333 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0037 2027-01 grossUp                      -8251.554186 cash  -                      c2 {forAsset=Living overflow=false}
+  0037 2027-01 grossUp                      -8248.000000 cash  -                      c2 {forAsset=Living overflow=false}
   0038 2027-01 interestIncome                   0.000000 cash  interestIncome         c-
   0039 2027-02 transfer                     15587.288333 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0040 2027-02 grossUp                      -8272.870701 cash  -                      c2 {forAsset=Living overflow=false}
+  0040 2027-02 grossUp                      -8269.010455 cash  -                      c2 {forAsset=Living overflow=false}
   0041 2027-02 interestIncome                   0.000000 cash  interestIncome         c-
   0042 2027-03 transfer                     15587.288333 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0043 2027-03 grossUp                      -8294.242284 cash  -                      c2 {forAsset=Living overflow=false}
+  0043 2027-03 grossUp                      -8290.074431 cash  -                      c2 {forAsset=Living overflow=false}
   0044 2027-03 interestIncome                   0.000000 cash  interestIncome         c-
   0045 2027-04 transfer                     15587.288333 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0046 2027-04 grossUp                      -8315.669077 cash  -                      c2 {forAsset=Living overflow=false}
+  0046 2027-04 grossUp                      -8311.192064 cash  -                      c2 {forAsset=Living overflow=false}
   0047 2027-04 interestIncome                   0.000000 cash  interestIncome         c-
   0048 2027-05 transfer                     15587.288333 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0049 2027-05 grossUp                      -8337.151222 cash  -                      c2 {forAsset=Living overflow=false}
+  0049 2027-05 grossUp                      -8332.363491 cash  -                      c2 {forAsset=Living overflow=false}
   0050 2027-05 interestIncome                   0.000000 cash  interestIncome         c-
   0051 2027-06 transfer                     15587.288333 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0052 2027-06 grossUp                      -8358.688862 cash  -                      c2 {forAsset=Living overflow=false}
+  0052 2027-06 grossUp                      -8353.588849 cash  -                      c2 {forAsset=Living overflow=false}
   0053 2027-06 interestIncome                   0.000000 cash  interestIncome         c-
   0054 2027-07 transfer                     15587.288333 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0055 2027-07 grossUp                      -8380.282142 cash  -                      c2 {forAsset=Living overflow=false}
+  0055 2027-07 grossUp                      -8374.868275 cash  -                      c2 {forAsset=Living overflow=false}
   0056 2027-07 interestIncome                   0.000000 cash  interestIncome         c-
   0057 2027-08 transfer                     15587.288333 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0058 2027-08 grossUp                      -8401.931204 cash  -                      c2 {forAsset=Living overflow=false}
+  0058 2027-08 grossUp                      -8396.201907 cash  -                      c2 {forAsset=Living overflow=false}
   0059 2027-08 interestIncome                   0.000000 cash  interestIncome         c-
   0060 2027-09 transfer                     15587.288333 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0061 2027-09 grossUp                      -8423.636193 cash  -                      c2 {forAsset=Living overflow=false}
+  0061 2027-09 grossUp                      -8417.589883 cash  -                      c2 {forAsset=Living overflow=false}
   0062 2027-09 interestIncome                   0.000000 cash  interestIncome         c-
   0063 2027-10 transfer                     16193.679333 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0064 2027-10 grossUp                      -8445.397253 cash  -                      c2 {forAsset=Living overflow=false}
+  0064 2027-10 grossUp                      -8439.032341 cash  -                      c2 {forAsset=Living overflow=false}
   0065 2027-10 interestIncome                   0.000000 cash  interestIncome         c-
   0066 2027-11 transfer                     16827.288333 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0067 2027-11 grossUp                      -8467.214530 cash  -                      c2 {forAsset=Living overflow=false}
+  0067 2027-11 grossUp                      -8460.529420 cash  -                      c2 {forAsset=Living overflow=false}
   0068 2027-11 interestIncome                   0.000000 cash  interestIncome         c-
   0069 2027-12 transfer                     16827.288333 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0070 2027-12 grossUp                      -8489.088167 cash  -                      c2 {forAsset=Living overflow=false}
+  0070 2027-12 grossUp                      -8482.081260 cash  -                      c2 {forAsset=Living overflow=false}
   0071 2027-12 interestIncome                   0.000000 cash  interestIncome         c-
   0072 2028-01 transfer                     15634.324272 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0073 2028-01 grossUp                      -8511.018311 cash  -                      c2 {forAsset=Living overflow=false}
+  0073 2028-01 grossUp                      -8503.688000 cash  -                      c2 {forAsset=Living overflow=false}
   0074 2028-01 interestIncome                   0.000000 cash  interestIncome         c-
   0075 2028-02 transfer                     15634.324272 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0076 2028-02 grossUp                      -8533.005109 cash  -                      c2 {forAsset=Living overflow=false}
+  0076 2028-02 grossUp                      -8525.349779 cash  -                      c2 {forAsset=Living overflow=false}
   0077 2028-02 interestIncome                   0.000000 cash  interestIncome         c-
   0078 2028-03 transfer                     15634.324272 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0079 2028-03 grossUp                      -8555.048705 cash  -                      c2 {forAsset=Living overflow=false}
+  0079 2028-03 grossUp                      -8547.066739 cash  -                      c2 {forAsset=Living overflow=false}
   0080 2028-03 interestIncome                   0.000000 cash  interestIncome         c-
   0081 2028-04 transfer                     15634.324272 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0082 2028-04 grossUp                      -8577.149248 cash  -                      c2 {forAsset=Living overflow=false}
+  0082 2028-04 grossUp                      -8568.839018 cash  -                      c2 {forAsset=Living overflow=false}
   0083 2028-04 interestIncome                   0.000000 cash  interestIncome         c-
   0084 2028-05 transfer                     15634.324272 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0085 2028-05 grossUp                      -8599.306883 cash  -                      c2 {forAsset=Living overflow=false}
+  0085 2028-05 grossUp                      -8590.666760 cash  -                      c2 {forAsset=Living overflow=false}
   0086 2028-05 interestIncome                   0.000000 cash  interestIncome         c-
   0087 2028-06 transfer                     15634.324272 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0088 2028-06 grossUp                      -8621.521759 cash  -                      c2 {forAsset=Living overflow=false}
+  0088 2028-06 grossUp                      -8612.550103 cash  -                      c2 {forAsset=Living overflow=false}
   0089 2028-06 interestIncome                   0.000000 cash  interestIncome         c-
   0090 2028-07 transfer                     15634.324272 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0091 2028-07 grossUp                      -8643.794024 cash  -                      c2 {forAsset=Living overflow=false}
+  0091 2028-07 grossUp                      -8634.489192 cash  -                      c2 {forAsset=Living overflow=false}
   0092 2028-07 interestIncome                   0.000000 cash  interestIncome         c-
   0093 2028-08 transfer                     15634.324272 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0094 2028-08 grossUp                      -8666.123825 cash  -                      c2 {forAsset=Living overflow=false}
+  0094 2028-08 grossUp                      -8656.484166 cash  -                      c2 {forAsset=Living overflow=false}
   0095 2028-08 interestIncome                   0.000000 cash  interestIncome         c-
   0096 2028-09 transfer                     15634.324272 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0097 2028-09 grossUp                      -8688.511312 cash  -                      c2 {forAsset=Living overflow=false}
+  0097 2028-09 grossUp                      -8678.535169 cash  -                      c2 {forAsset=Living overflow=false}
   0098 2028-09 interestIncome                   0.000000 cash  interestIncome         c-
   0099 2028-10 transfer                     15875.113393 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0100 2028-10 grossUp                      -8710.956633 cash  -                      c2 {forAsset=Living overflow=false}
+  0100 2028-10 grossUp                      -8700.642344 cash  -                      c2 {forAsset=Living overflow=false}
   0101 2028-10 interestIncome                   0.000000 cash  interestIncome         c-
   0102 2028-11 transfer                     16874.324272 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0103 2028-11 grossUp                      -8733.459937 cash  -                      c2 {forAsset=Living overflow=false}
+  0103 2028-11 grossUp                      -8722.805832 cash  -                      c2 {forAsset=Living overflow=false}
   0104 2028-11 interestIncome                   0.000000 cash  interestIncome         c-
   0105 2028-12 transfer                     16874.324272 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0106 2028-12 grossUp                      -8756.021376 cash  -                      c2 {forAsset=Living overflow=false}
+  0106 2028-12 grossUp                      -8745.025779 cash  -                      c2 {forAsset=Living overflow=false}
   0107 2028-12 interestIncome                   0.000000 cash  interestIncome         c-
   0108 2029-01 transfer                     15682.818324 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0109 2029-01 grossUp                      -8778.641097 cash  -                      c2 {forAsset=Living overflow=false}
+  0109 2029-01 grossUp                      -8767.302328 cash  -                      c2 {forAsset=Living overflow=false}
   0110 2029-01 interestIncome                   0.000000 cash  interestIncome         c-
   0111 2029-02 transfer                     15682.818324 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0112 2029-02 grossUp                      -8801.319254 cash  -                      c2 {forAsset=Living overflow=false}
+  0112 2029-02 grossUp                      -8789.635623 cash  -                      c2 {forAsset=Living overflow=false}
   0113 2029-02 interestIncome                   0.000000 cash  interestIncome         c-
   0114 2029-03 transfer                     15682.818324 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0115 2029-03 grossUp                      -8824.055995 cash  -                      c2 {forAsset=Living overflow=false}
+  0115 2029-03 grossUp                      -8812.025808 cash  -                      c2 {forAsset=Living overflow=false}
   0116 2029-03 interestIncome                   0.000000 cash  interestIncome         c-
   0117 2029-04 transfer                     15682.818324 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0118 2029-04 grossUp                      -8846.851473 cash  -                      c2 {forAsset=Living overflow=false}
+  0118 2029-04 grossUp                      -8834.473028 cash  -                      c2 {forAsset=Living overflow=false}
   0119 2029-04 interestIncome                   0.000000 cash  interestIncome         c-
   0120 2029-05 transfer                     15682.818324 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0121 2029-05 grossUp                      -8869.705839 cash  -                      c2 {forAsset=Living overflow=false}
+  0121 2029-05 grossUp                      -8856.977429 cash  -                      c2 {forAsset=Living overflow=false}
   0122 2029-05 interestIncome                   0.000000 cash  interestIncome         c-
   0123 2029-06 transfer                     15682.818324 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0124 2029-06 grossUp                      -8892.619246 cash  -                      c2 {forAsset=Living overflow=false}
+  0124 2029-06 grossUp                      -8879.539157 cash  -                      c2 {forAsset=Living overflow=false}
   0125 2029-06 interestIncome                   0.000000 cash  interestIncome         c-
-  0126 2029-07 transfer                   2102738.268178 cash  -                      c0 {cadence=monthly from=Brokerage to=Checking}
+  0126 2029-07 transfer                   2091847.586726 cash  -                      c0 {cadence=monthly from=Brokerage to=Checking}
   0127 2029-07 transfer                     15682.818324 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0128 2029-07 grossUp                      -8915.591846 cash  -                      c2 {forAsset=Living overflow=false}
+  0128 2029-07 grossUp                      -8902.158356 cash  -                      c2 {forAsset=Living overflow=false}
   0129 2029-07 interestIncome                   0.000000 cash  interestIncome         c-
   0130 2029-08 transfer                     15682.818324 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0131 2029-08 grossUp                      -8938.623791 cash  -                      c2 {forAsset=Living overflow=false}
+  0131 2029-08 grossUp                      -8924.835175 cash  -                      c2 {forAsset=Living overflow=false}
   0132 2029-08 interestIncome                   0.000000 cash  interestIncome         c-
   0133 2029-09 transfer                     15682.818324 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0134 2029-09 grossUp                      -8961.715236 cash  -                      c2 {forAsset=Living overflow=false}
+  0134 2029-09 grossUp                      -8947.569759 cash  -                      c2 {forAsset=Living overflow=false}
   0135 2029-09 interestIncome                   0.000000 cash  interestIncome         c-
   0136 2029-10 transfer                     15682.818324 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0137 2029-10 grossUp                      -8984.866334 cash  -                      c2 {forAsset=Living overflow=false}
+  0137 2029-10 grossUp                      -8970.362256 cash  -                      c2 {forAsset=Living overflow=false}
   0138 2029-10 interestIncome                   0.000000 cash  interestIncome         c-
   0139 2029-11 transfer                     16786.671908 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0140 2029-11 grossUp                      -9008.077239 cash  -                      c2 {forAsset=Living overflow=false}
+  0140 2029-11 grossUp                      -8993.212813 cash  -                      c2 {forAsset=Living overflow=false}
   0141 2029-11 interestIncome                   0.000000 cash  interestIncome         c-
   0142 2029-12 transfer                     16922.818324 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0143 2029-12 grossUp                      -9031.348105 cash  -                      c2 {forAsset=Living overflow=false}
+  0143 2029-12 grossUp                      -9016.121579 cash  -                      c2 {forAsset=Living overflow=false}
   0144 2029-12 interestIncome                   0.000000 cash  interestIncome         c-
   0145 2029-12 taxTrueUp                   -26493.446661 cash  -                      c3 {direction=underpayment}
-  0146 2029-12 niitAssessed                -78130.485102 cash  -                      c4 {bound=magi magi=2306065.397415 nii=2066065.397415 taxedBase=2056065.397415 threshold=250000}
+  0146 2029-12 niitAssessed                -77613.177733 cash  -                      c4 {bound=magi magi=2292452.045600 nii=2052452.045600 taxedBase=2042452.045600 threshold=250000}
   0147 2030-01 transfer                     15732.815692 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0148 2030-01 grossUp                      -9054.679087 cash  -                      c2 {forAsset=Living overflow=false}
+  0148 2030-01 grossUp                      -9039.088700 cash  -                      c2 {forAsset=Living overflow=false}
   0149 2030-01 interestIncome                   0.000000 cash  interestIncome         c-
   0150 2030-02 transfer                     15732.815692 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0151 2030-02 grossUp                      -9078.070342 cash  -                      c2 {forAsset=Living overflow=false}
+  0151 2030-02 grossUp                      -9062.114327 cash  -                      c2 {forAsset=Living overflow=false}
   0152 2030-02 interestIncome                   0.000000 cash  interestIncome         c-
   0153 2030-03 transfer                     15732.815692 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0154 2030-03 grossUp                      -9101.522023 cash  -                      c2 {forAsset=Living overflow=false}
+  0154 2030-03 grossUp                      -9085.198608 cash  -                      c2 {forAsset=Living overflow=false}
   0155 2030-03 interestIncome                   0.000000 cash  interestIncome         c-
   0156 2030-04 transfer                     15732.815692 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0157 2030-04 grossUp                      -9125.034289 cash  -                      c2 {forAsset=Living overflow=false}
+  0157 2030-04 grossUp                      -9108.341692 cash  -                      c2 {forAsset=Living overflow=false}
   0158 2030-04 interestIncome                   0.000000 cash  interestIncome         c-
   0159 2030-05 transfer                     15732.815692 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0160 2030-05 grossUp                      -9148.607294 cash  -                      c2 {forAsset=Living overflow=false}
+  0160 2030-05 grossUp                      -9131.543729 cash  -                      c2 {forAsset=Living overflow=false}
   0161 2030-05 interestIncome                   0.000000 cash  interestIncome         c-
   0162 2030-06 transfer                     15732.815692 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0163 2030-06 grossUp                      -9172.241196 cash  -                      c2 {forAsset=Living overflow=false}
+  0163 2030-06 grossUp                      -9154.804870 cash  -                      c2 {forAsset=Living overflow=false}
   0164 2030-06 interestIncome                   0.000000 cash  interestIncome         c-
   0165 2030-07 transfer                     15732.815692 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0166 2030-07 grossUp                      -9195.936152 cash  -                      c2 {forAsset=Living overflow=false}
+  0166 2030-07 grossUp                      -9178.125266 cash  -                      c2 {forAsset=Living overflow=false}
   0167 2030-07 interestIncome                   0.000000 cash  interestIncome         c-
   0168 2030-08 transfer                     15732.815692 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0169 2030-08 grossUp                      -9219.692321 cash  -                      c2 {forAsset=Living overflow=false}
+  0169 2030-08 grossUp                      -9201.505066 cash  -                      c2 {forAsset=Living overflow=false}
   0170 2030-08 interestIncome                   0.000000 cash  interestIncome         c-
   0171 2030-09 transfer                     15732.815692 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0172 2030-09 grossUp                      -9243.509859 cash  -                      c2 {forAsset=Living overflow=false}
+  0172 2030-09 grossUp                      -9224.944422 cash  -                      c2 {forAsset=Living overflow=false}
   0173 2030-09 interestIncome                   0.000000 cash  interestIncome         c-
   0174 2030-10 transfer                     15732.815692 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0175 2030-10 grossUp                      -9267.388926 cash  -                      c2 {forAsset=Living overflow=false}
+  0175 2030-10 grossUp                      -9248.443486 cash  -                      c2 {forAsset=Living overflow=false}
   0176 2030-10 interestIncome                   0.000000 cash  interestIncome         c-
   0177 2030-11 transfer                     16448.048737 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0178 2030-11 grossUp                      -9291.329681 cash  -                      c2 {forAsset=Living overflow=false}
+  0178 2030-11 grossUp                      -9272.002411 cash  -                      c2 {forAsset=Living overflow=false}
   0179 2030-11 interestIncome                   0.000000 cash  interestIncome         c-
   0180 2030-12 transfer                     16972.815692 cash  -                      c1 {cadence=monthly from=Salary to=Checking}
-  0181 2030-12 grossUp                      -9315.332283 cash  -                      c2 {forAsset=Living overflow=false}
+  0181 2030-12 grossUp                      -9295.621347 cash  -                      c2 {forAsset=Living overflow=false}
   0182 2030-12 interestIncome                   0.000000 cash  interestIncome         c-
 
 [history] Checking
-  value                        n=  60 first=    32541.670000 last=  2456332.350000 min=    32541.670000 max=  2480420.600000 sum=   51618387.360000 #e0e5bb7a
+  value                        n=  60 first=    32541.670000 last=  2446522.080000 min=    32541.670000 max=  2469881.420000 sum=   51439732.050000 #9a9783de
   estimatedIncomeTax           n=  60 first=        0.000000 last=        0.000000 min=   -26493.450000 max=        0.000000 sum=     -26493.450000 #631f5c67
-  niit                         n=  60 first=        0.000000 last=        0.000000 min=   -78130.490000 max=        0.000000 sum=     -78130.490000 #b7d1c80c
+  niit                         n=  60 first=        0.000000 last=        0.000000 min=   -77613.180000 max=        0.000000 sum=     -77613.180000 #d47dc65d
   incomeTax                    n=  60 first=        0.000000 last=        0.000000 min=   -26493.450000 max=        0.000000 sum=     -26493.450000 #631f5c67
-  federalTaxes                 n=  60 first=        0.000000 last=        0.000000 min=  -104623.930000 max=        0.000000 sum=    -104623.930000 #28cb9f8c
-  taxes                        n=  60 first=        0.000000 last=        0.000000 min=  -104623.930000 max=        0.000000 sum=    -104623.930000 #28cb9f8c
+  federalTaxes                 n=  60 first=        0.000000 last=        0.000000 min=  -104106.620000 max=        0.000000 sum=    -104106.620000 #1b7f9c68
+  taxes                        n=  60 first=        0.000000 last=        0.000000 min=  -104106.620000 max=        0.000000 sum=    -104106.620000 #1b7f9c68
   cashFlow                     n=  60 first=        0.000000 last=        0.000000 min=   -26493.450000 max=        0.000000 sum=     -26493.450000 #631f5c67
   cashFlowAccumulated          n=  60 first=        0.000000 last=   -26493.450000 min=   -26493.450000 max=        0.000000 sum=    -317921.400000 #a752452d
 
@@ -334,7 +334,7 @@
   instrument = monthlyExpense
   start = 2026-01  finish = 2030-12
   startCurrency = -8000.000000
-  finishCurrency = -9339.396891
+  finishCurrency = -9319.300450
   startBasis = 0.000000
   finishBasis = 0.000000
   isClosed = no  isDepleted = no
@@ -342,73 +342,73 @@
   events = 60  reconciled = 60
 
 [events] Living
-  0000 2026-01 expenseInflation               -20.666667 cash  -                      c-
-  0001 2026-02 expenseInflation               -20.720056 cash  -                      c-
-  0002 2026-03 expenseInflation               -20.773582 cash  -                      c-
-  0003 2026-04 expenseInflation               -20.827247 cash  -                      c-
-  0004 2026-05 expenseInflation               -20.881051 cash  -                      c-
-  0005 2026-06 expenseInflation               -20.934994 cash  -                      c-
-  0006 2026-07 expenseInflation               -20.989076 cash  -                      c-
-  0007 2026-08 expenseInflation               -21.043298 cash  -                      c-
-  0008 2026-09 expenseInflation               -21.097660 cash  -                      c-
-  0009 2026-10 expenseInflation               -21.152162 cash  -                      c-
-  0010 2026-11 expenseInflation               -21.206805 cash  -                      c-
-  0011 2026-12 expenseInflation               -21.261589 cash  -                      c-
-  0012 2027-01 expenseInflation               -21.316515 cash  -                      c-
-  0013 2027-02 expenseInflation               -21.371583 cash  -                      c-
-  0014 2027-03 expenseInflation               -21.426793 cash  -                      c-
-  0015 2027-04 expenseInflation               -21.482145 cash  -                      c-
-  0016 2027-05 expenseInflation               -21.537641 cash  -                      c-
-  0017 2027-06 expenseInflation               -21.593280 cash  -                      c-
-  0018 2027-07 expenseInflation               -21.649062 cash  -                      c-
-  0019 2027-08 expenseInflation               -21.704989 cash  -                      c-
-  0020 2027-09 expenseInflation               -21.761060 cash  -                      c-
-  0021 2027-10 expenseInflation               -21.817276 cash  -                      c-
-  0022 2027-11 expenseInflation               -21.873638 cash  -                      c-
-  0023 2027-12 expenseInflation               -21.930144 cash  -                      c-
-  0024 2028-01 expenseInflation               -21.986797 cash  -                      c-
-  0025 2028-02 expenseInflation               -22.043597 cash  -                      c-
-  0026 2028-03 expenseInflation               -22.100542 cash  -                      c-
-  0027 2028-04 expenseInflation               -22.157636 cash  -                      c-
-  0028 2028-05 expenseInflation               -22.214876 cash  -                      c-
-  0029 2028-06 expenseInflation               -22.272265 cash  -                      c-
-  0030 2028-07 expenseInflation               -22.329801 cash  -                      c-
-  0031 2028-08 expenseInflation               -22.387487 cash  -                      c-
-  0032 2028-09 expenseInflation               -22.445321 cash  -                      c-
-  0033 2028-10 expenseInflation               -22.503305 cash  -                      c-
-  0034 2028-11 expenseInflation               -22.561438 cash  -                      c-
-  0035 2028-12 expenseInflation               -22.619722 cash  -                      c-
-  0036 2029-01 expenseInflation               -22.678156 cash  -                      c-
-  0037 2029-02 expenseInflation               -22.736741 cash  -                      c-
-  0038 2029-03 expenseInflation               -22.795478 cash  -                      c-
-  0039 2029-04 expenseInflation               -22.854366 cash  -                      c-
-  0040 2029-05 expenseInflation               -22.913407 cash  -                      c-
-  0041 2029-06 expenseInflation               -22.972600 cash  -                      c-
-  0042 2029-07 expenseInflation               -23.031946 cash  -                      c-
-  0043 2029-08 expenseInflation               -23.091445 cash  -                      c-
-  0044 2029-09 expenseInflation               -23.151098 cash  -                      c-
-  0045 2029-10 expenseInflation               -23.210905 cash  -                      c-
-  0046 2029-11 expenseInflation               -23.270866 cash  -                      c-
-  0047 2029-12 expenseInflation               -23.330983 cash  -                      c-
-  0048 2030-01 expenseInflation               -23.391254 cash  -                      c-
-  0049 2030-02 expenseInflation               -23.451682 cash  -                      c-
-  0050 2030-03 expenseInflation               -23.512265 cash  -                      c-
-  0051 2030-04 expenseInflation               -23.573005 cash  -                      c-
-  0052 2030-05 expenseInflation               -23.633902 cash  -                      c-
-  0053 2030-06 expenseInflation               -23.694956 cash  -                      c-
-  0054 2030-07 expenseInflation               -23.756168 cash  -                      c-
-  0055 2030-08 expenseInflation               -23.817538 cash  -                      c-
-  0056 2030-09 expenseInflation               -23.879067 cash  -                      c-
-  0057 2030-10 expenseInflation               -23.940755 cash  -                      c-
-  0058 2030-11 expenseInflation               -24.002602 cash  -                      c-
-  0059 2030-12 expenseInflation               -24.064608 cash  -                      c-
+  0000 2026-01 expenseInflation               -20.378715 cash  -                      c-
+  0001 2026-02 expenseInflation               -20.430627 cash  -                      c-
+  0002 2026-03 expenseInflation               -20.482670 cash  -                      c-
+  0003 2026-04 expenseInflation               -20.534847 cash  -                      c-
+  0004 2026-05 expenseInflation               -20.587156 cash  -                      c-
+  0005 2026-06 expenseInflation               -20.639598 cash  -                      c-
+  0006 2026-07 expenseInflation               -20.692174 cash  -                      c-
+  0007 2026-08 expenseInflation               -20.744884 cash  -                      c-
+  0008 2026-09 expenseInflation               -20.797729 cash  -                      c-
+  0009 2026-10 expenseInflation               -20.850708 cash  -                      c-
+  0010 2026-11 expenseInflation               -20.903821 cash  -                      c-
+  0011 2026-12 expenseInflation               -20.957071 cash  -                      c-
+  0012 2027-01 expenseInflation               -21.010455 cash  -                      c-
+  0013 2027-02 expenseInflation               -21.063976 cash  -                      c-
+  0014 2027-03 expenseInflation               -21.117633 cash  -                      c-
+  0015 2027-04 expenseInflation               -21.171427 cash  -                      c-
+  0016 2027-05 expenseInflation               -21.225358 cash  -                      c-
+  0017 2027-06 expenseInflation               -21.279426 cash  -                      c-
+  0018 2027-07 expenseInflation               -21.333632 cash  -                      c-
+  0019 2027-08 expenseInflation               -21.387976 cash  -                      c-
+  0020 2027-09 expenseInflation               -21.442458 cash  -                      c-
+  0021 2027-10 expenseInflation               -21.497079 cash  -                      c-
+  0022 2027-11 expenseInflation               -21.551840 cash  -                      c-
+  0023 2027-12 expenseInflation               -21.606740 cash  -                      c-
+  0024 2028-01 expenseInflation               -21.661779 cash  -                      c-
+  0025 2028-02 expenseInflation               -21.716959 cash  -                      c-
+  0026 2028-03 expenseInflation               -21.772280 cash  -                      c-
+  0027 2028-04 expenseInflation               -21.827741 cash  -                      c-
+  0028 2028-05 expenseInflation               -21.883344 cash  -                      c-
+  0029 2028-06 expenseInflation               -21.939088 cash  -                      c-
+  0030 2028-07 expenseInflation               -21.994974 cash  -                      c-
+  0031 2028-08 expenseInflation               -22.051003 cash  -                      c-
+  0032 2028-09 expenseInflation               -22.107174 cash  -                      c-
+  0033 2028-10 expenseInflation               -22.163489 cash  -                      c-
+  0034 2028-11 expenseInflation               -22.219947 cash  -                      c-
+  0035 2028-12 expenseInflation               -22.276549 cash  -                      c-
+  0036 2029-01 expenseInflation               -22.333295 cash  -                      c-
+  0037 2029-02 expenseInflation               -22.390185 cash  -                      c-
+  0038 2029-03 expenseInflation               -22.447220 cash  -                      c-
+  0039 2029-04 expenseInflation               -22.504401 cash  -                      c-
+  0040 2029-05 expenseInflation               -22.561727 cash  -                      c-
+  0041 2029-06 expenseInflation               -22.619200 cash  -                      c-
+  0042 2029-07 expenseInflation               -22.676819 cash  -                      c-
+  0043 2029-08 expenseInflation               -22.734584 cash  -                      c-
+  0044 2029-09 expenseInflation               -22.792497 cash  -                      c-
+  0045 2029-10 expenseInflation               -22.850557 cash  -                      c-
+  0046 2029-11 expenseInflation               -22.908765 cash  -                      c-
+  0047 2029-12 expenseInflation               -22.967122 cash  -                      c-
+  0048 2030-01 expenseInflation               -23.025627 cash  -                      c-
+  0049 2030-02 expenseInflation               -23.084281 cash  -                      c-
+  0050 2030-03 expenseInflation               -23.143084 cash  -                      c-
+  0051 2030-04 expenseInflation               -23.202038 cash  -                      c-
+  0052 2030-05 expenseInflation               -23.261141 cash  -                      c-
+  0053 2030-06 expenseInflation               -23.320395 cash  -                      c-
+  0054 2030-07 expenseInflation               -23.379800 cash  -                      c-
+  0055 2030-08 expenseInflation               -23.439356 cash  -                      c-
+  0056 2030-09 expenseInflation               -23.499064 cash  -                      c-
+  0057 2030-10 expenseInflation               -23.558924 cash  -                      c-
+  0058 2030-11 expenseInflation               -23.618937 cash  -                      c-
+  0059 2030-12 expenseInflation               -23.679102 cash  -                      c-
 
 [history] Living
-  value                        n=  60 first=    -8020.670000 last=    -9339.400000 min=    -9339.400000 max=    -8020.670000 sum=    -519815.630000 #48946509
-  expense                      n=  60 first=    -8000.000000 last=    -9315.330000 min=    -9315.330000 max=    -8000.000000 sum=    -518476.230000 #29f63401
-  cashFlow                     n=  60 first=    -8000.000000 last=    -9315.330000 min=    -9315.330000 max=    -8000.000000 sum=    -518476.230000 #29f63401
-  cashFlowAccumulated          n=  60 first=    -8000.000000 last=  -518476.220000 min=  -518476.220000 max=    -8000.000000 sum=  -15412495.290000 #2197fb7d
-  livingExpense                n=  60 first=    -8000.000000 last=    -9315.330000 min=    -9315.330000 max=    -8000.000000 sum=    -518476.230000 #29f63401
+  value                        n=  60 first=    -8020.380000 last=    -9319.300000 min=    -9319.300000 max=    -8020.380000 sum=    -519232.400000 #07e1d5c3
+  expense                      n=  60 first=    -8000.000000 last=    -9295.620000 min=    -9295.620000 max=    -8000.000000 sum=    -517913.100000 #2746ed56
+  cashFlow                     n=  60 first=    -8000.000000 last=    -9295.620000 min=    -9295.620000 max=    -8000.000000 sum=    -517913.100000 #2746ed56
+  cashFlowAccumulated          n=  60 first=    -8000.000000 last=  -517913.100000 min=  -517913.100000 max=    -8000.000000 sum=  -15401325.980000 #bca4fcec
+  livingExpense                n=  60 first=    -8000.000000 last=    -9295.620000 min=    -9295.620000 max=    -8000.000000 sum=    -517913.100000 #2746ed56
 
 [asset] Salary
   instrument = workingIncome
@@ -624,78 +624,78 @@
   medicareTax                  n=  60 first=     -290.000000 last=     -290.000000 min=     -290.000000 max=     -290.000000 sum=     -17400.000000 #2504f645
 
 [packages]
-  0000 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10000.000000 expense=-8000.000000 medicareTax=-290.000000 incomeTax=-2928.333333 value=2054521.000000
-  0001 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10050.000000 expense=-8020.666667 medicareTax=-290.000000 incomeTax=-2928.333333 value=2072071.279944
-  0002 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10100.250000 expense=-8041.386722 medicareTax=-290.000000 incomeTax=-2928.333333 value=2089651.036307
-  0003 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10150.751250 expense=-8062.160305 medicareTax=-290.000000 incomeTax=-2928.333333 value=2107260.466671
-  0004 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10201.505006 expense=-8082.987552 medicareTax=-290.000000 incomeTax=-2928.333333 value=2124899.769741
-  0005 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10252.512531 expense=-8103.868603 medicareTax=-290.000000 incomeTax=-2928.333333 value=2142569.145342
-  0006 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10303.775094 expense=-8124.803597 medicareTax=-290.000000 incomeTax=-2928.333333 value=2160268.794429
-  0007 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10355.293969 expense=-8145.792673 medicareTax=-290.000000 incomeTax=-2928.333333 value=2177998.919094
-  0008 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10407.070439 expense=-8166.835971 medicareTax=-290.000000 incomeTax=-2928.333333 value=2195759.722570
-  0009 employedIncome=20000.000000 socialSecurityTax=-279.000000 assetAppreciation=10459.105791 expense=-8187.933630 medicareTax=-290.000000 incomeTax=-2928.333333 value=2214512.409236
-  0010 employedIncome=20000.000000 assetAppreciation=10511.401320 expense=-8209.085792 medicareTax=-290.000000 incomeTax=-2928.333333 value=2233575.184626
-  0011 employedIncome=20000.000000 assetAppreciation=10563.958327 expense=-8230.292597 medicareTax=-290.000000 incomeTax=-2928.333333 value=2252669.255433
-  0012 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10616.778119 expense=-8251.554186 medicareTax=-290.000000 incomeTax=-2882.711667 value=2270600.451183
-  0013 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10669.862009 expense=-8272.870701 medicareTax=-290.000000 incomeTax=-2882.711667 value=2288563.359242
-  0014 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10723.211319 expense=-8294.242284 medicareTax=-290.000000 incomeTax=-2882.711667 value=2306558.189818
-  0015 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10776.827376 expense=-8315.669077 medicareTax=-290.000000 incomeTax=-2882.711667 value=2324585.154305
-  0016 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10830.711513 expense=-8337.151222 medicareTax=-290.000000 incomeTax=-2882.711667 value=2342644.465289
-  0017 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10884.865070 expense=-8358.688862 medicareTax=-290.000000 incomeTax=-2882.711667 value=2360736.336551
-  0018 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10939.289396 expense=-8380.282142 medicareTax=-290.000000 incomeTax=-2882.711667 value=2378860.983076
-  0019 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10993.985843 expense=-8401.931204 medicareTax=-290.000000 incomeTax=-2882.711667 value=2397018.621058
-  0020 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=11048.955772 expense=-8423.636193 medicareTax=-290.000000 incomeTax=-2882.711667 value=2415209.467910
-  0021 employedIncome=20000.000000 socialSecurityTax=-633.609000 assetAppreciation=11104.200551 expense=-8445.397253 medicareTax=-290.000000 incomeTax=-2882.711667 value=2434040.133265
-  0022 employedIncome=20000.000000 assetAppreciation=11159.721553 expense=-8467.214530 medicareTax=-290.000000 incomeTax=-2882.711667 value=2453538.054985
-  0023 employedIncome=20000.000000 assetAppreciation=11215.520161 expense=-8489.088167 medicareTax=-290.000000 incomeTax=-2882.711667 value=2473069.845168
-  0024 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=11271.597762 expense=-8511.018311 medicareTax=-290.000000 incomeTax=-2835.675728 value=2491442.762093
-  0025 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=11327.955751 expense=-8533.005109 medicareTax=-290.000000 incomeTax=-2835.675728 value=2509849.993410
-  0026 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=11384.595530 expense=-8555.048705 medicareTax=-290.000000 incomeTax=-2835.675728 value=2528291.763963
-  0027 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=11441.518507 expense=-8577.149248 medicareTax=-290.000000 incomeTax=-2835.675728 value=2546768.299859
-  0028 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=11498.726100 expense=-8599.306883 medicareTax=-290.000000 incomeTax=-2835.675728 value=2565279.828471
-  0029 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=11556.219730 expense=-8621.521759 medicareTax=-290.000000 incomeTax=-2835.675728 value=2583826.578449
-  0030 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=11614.000829 expense=-8643.794024 medicareTax=-290.000000 incomeTax=-2835.675728 value=2602408.779724
-  0031 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=11672.070833 expense=-8666.123825 medicareTax=-290.000000 incomeTax=-2835.675728 value=2621026.663517
-  0032 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=11730.431187 expense=-8688.511312 medicareTax=-290.000000 incomeTax=-2835.675728 value=2639680.462343
-  0033 employedIncome=20000.000000 socialSecurityTax=-999.210879 assetAppreciation=11789.083343 expense=-8710.956633 medicareTax=-290.000000 incomeTax=-2835.675728 value=2658611.199142
-  0034 employedIncome=20000.000000 assetAppreciation=11848.028760 expense=-8733.459937 medicareTax=-290.000000 incomeTax=-2835.675728 value=2678577.530798
-  0035 employedIncome=20000.000000 assetAppreciation=11907.268904 expense=-8756.021376 medicareTax=-290.000000 incomeTax=-2835.675728 value=2698580.482876
-  0036 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=11966.805248 expense=-8778.641097 medicareTax=-290.000000 incomeTax=-2787.181676 value=2717428.787195
-  0037 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=12026.639274 expense=-8801.319254 medicareTax=-290.000000 incomeTax=-2787.181676 value=2736314.188798
-  0038 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=12086.772471 expense=-8824.055995 medicareTax=-290.000000 incomeTax=-2787.181676 value=2755236.928120
-  0039 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=12147.206333 expense=-8846.851473 medicareTax=-290.000000 incomeTax=-2787.181676 value=2774197.246938
-  0040 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=12207.942365 expense=-8869.705839 medicareTax=-290.000000 incomeTax=-2787.181676 value=2793195.388381
-  0041 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=12268.982077 expense=-8892.619246 medicareTax=-290.000000 incomeTax=-2787.181676 value=2812231.596936
-  0042 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-8915.591846 medicareTax=-290.000000 incomeTax=-2787.181676 longTermCapitalGains=2066065.397415 longTermCapitalGainsTax=-363327.129237 value=2455648.662232
-  0043 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-8938.623791 medicareTax=-290.000000 incomeTax=-2787.181676 value=2462369.765320
-  0044 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-8961.715236 medicareTax=-290.000000 incomeTax=-2787.181676 value=2469067.717311
-  0045 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-8984.866334 medicareTax=-290.000000 incomeTax=-2787.181676 value=2475742.458396
-  0046 employedIncome=20000.000000 socialSecurityTax=-136.146416 expense=-9008.077239 medicareTax=-290.000000 incomeTax=-2787.181676 value=2483497.782199
-  0047 employedIncome=20000.000000 expense=-9031.348105 medicareTax=-290.000000 incomeTax=-2787.181676 value=2491365.921436
-  0048 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9054.679087 medicareTax=-290.000000 incomeTax=-2737.184308 niit=-78130.485102 taxTrueUp=-26493.446661 value=2393396.735024
-  0049 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9078.070342 medicareTax=-290.000000 incomeTax=-2737.184308 value=2400028.028693
-  0050 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9101.522023 medicareTax=-290.000000 incomeTax=-2737.184308 value=2406635.810096
-  0051 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9125.034289 medicareTax=-290.000000 incomeTax=-2737.184308 value=2413220.018495
-  0052 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9148.607294 medicareTax=-290.000000 incomeTax=-2737.184308 value=2419780.592991
-  0053 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9172.241196 medicareTax=-290.000000 incomeTax=-2737.184308 value=2426317.472530
-  0054 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9195.936152 medicareTax=-290.000000 incomeTax=-2737.184308 value=2432830.595902
-  0055 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9219.692321 medicareTax=-290.000000 incomeTax=-2737.184308 value=2439319.901735
-  0056 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9243.509859 medicareTax=-290.000000 incomeTax=-2737.184308 value=2445785.328500
-  0057 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9267.388926 medicareTax=-290.000000 incomeTax=-2737.184308 value=2452226.814511
-  0058 employedIncome=20000.000000 socialSecurityTax=-524.766955 expense=-9291.329681 medicareTax=-290.000000 incomeTax=-2737.184308 value=2459359.530965
-  0059 employedIncome=20000.000000 expense=-9315.332283 medicareTax=-290.000000 incomeTax=-2737.184308 value=2466992.949766
+  0000 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=9735.101131 expense=-8000.000000 medicareTax=-290.000000 incomeTax=-2928.333333 value=2054256.389082
+  0001 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=9782.487228 expense=-8020.378715 medicareTax=-290.000000 incomeTax=-2928.333333 value=2071539.733635
+  0002 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=9830.103979 expense=-8040.809342 medicareTax=-290.000000 incomeTax=-2928.333333 value=2088850.212268
+  0003 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=9877.952507 expense=-8061.292012 medicareTax=-290.000000 incomeTax=-2928.333333 value=2106188.004583
+  0004 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=9926.033940 expense=-8081.826859 medicareTax=-290.000000 incomeTax=-2928.333333 value=2123553.291176
+  0005 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=9974.349413 expense=-8102.414015 medicareTax=-290.000000 incomeTax=-2928.333333 value=2140946.253642
+  0006 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10022.900063 expense=-8123.053613 medicareTax=-290.000000 incomeTax=-2928.333333 value=2158367.074584
+  0007 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10071.687036 expense=-8143.745787 medicareTax=-290.000000 incomeTax=-2928.333333 value=2175815.937614
+  0008 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10120.711481 expense=-8164.490672 medicareTax=-290.000000 incomeTax=-2928.333333 value=2193293.027362
+  0009 employedIncome=20000.000000 socialSecurityTax=-279.000000 assetAppreciation=10169.974556 expense=-8185.288401 medicareTax=-290.000000 incomeTax=-2928.333333 value=2211759.529477
+  0010 employedIncome=20000.000000 assetAppreciation=10219.477422 expense=-8206.139108 medicareTax=-290.000000 incomeTax=-2928.333333 value=2230533.630636
+  0011 employedIncome=20000.000000 assetAppreciation=10269.221245 expense=-8227.042929 medicareTax=-290.000000 incomeTax=-2928.333333 value=2249336.518547
+  0012 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10319.207199 expense=-8248.000000 medicareTax=-290.000000 incomeTax=-2882.711667 value=2266974.003624
+  0013 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10369.436461 expense=-8269.010455 medicareTax=-290.000000 incomeTax=-2882.711667 value=2284640.653987
+  0014 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10419.910218 expense=-8290.074431 medicareTax=-290.000000 incomeTax=-2882.711667 value=2302336.660474
+  0015 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10470.629658 expense=-8311.192064 medicareTax=-290.000000 incomeTax=-2882.711667 value=2320062.214973
+  0016 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10521.595977 expense=-8332.363491 medicareTax=-290.000000 incomeTax=-2882.711667 value=2337817.510434
+  0017 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10572.810377 expense=-8353.588849 medicareTax=-290.000000 incomeTax=-2882.711667 value=2355602.740870
+  0018 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10624.274066 expense=-8374.868275 medicareTax=-290.000000 incomeTax=-2882.711667 value=2373418.101363
+  0019 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10675.988258 expense=-8396.201907 medicareTax=-290.000000 incomeTax=-2882.711667 value=2391263.788071
+  0020 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10727.954170 expense=-8417.589883 medicareTax=-290.000000 incomeTax=-2882.711667 value=2409139.998234
+  0021 employedIncome=20000.000000 socialSecurityTax=-633.609000 assetAppreciation=10780.173030 expense=-8439.032341 medicareTax=-290.000000 incomeTax=-2882.711667 value=2427653.321176
+  0022 employedIncome=20000.000000 assetAppreciation=10832.646067 expense=-8460.529420 medicareTax=-290.000000 incomeTax=-2882.711667 value=2446831.174316
+  0023 employedIncome=20000.000000 assetAppreciation=10885.374520 expense=-8482.081260 medicareTax=-290.000000 incomeTax=-2882.711667 value=2466040.149169
+  0024 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10938.359630 expense=-8503.688000 medicareTax=-290.000000 incomeTax=-2835.675728 value=2484087.483292
+  0025 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10991.602649 expense=-8525.349779 medicareTax=-290.000000 incomeTax=-2835.675728 value=2502166.343474
+  0026 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=11045.104831 expense=-8547.066739 medicareTax=-290.000000 incomeTax=-2835.675728 value=2520276.933558
+  0027 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=11098.867437 expense=-8568.839018 medicareTax=-290.000000 incomeTax=-2835.675728 value=2538419.458507
+  0028 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=11152.891735 expense=-8590.666760 medicareTax=-290.000000 incomeTax=-2835.675728 value=2556594.124411
+  0029 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=11207.179000 expense=-8612.550103 medicareTax=-290.000000 incomeTax=-2835.675728 value=2574801.138491
+  0030 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=11261.730510 expense=-8634.489192 medicareTax=-290.000000 incomeTax=-2835.675728 value=2593040.709107
+  0031 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=11316.547553 expense=-8656.484166 medicareTax=-290.000000 incomeTax=-2835.675728 value=2611313.045763
+  0032 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=11371.631421 expense=-8678.535169 medicareTax=-290.000000 incomeTax=-2835.675728 value=2629618.359111
+  0033 employedIncome=20000.000000 socialSecurityTax=-999.210879 assetAppreciation=11426.983412 expense=-8700.642344 medicareTax=-290.000000 incomeTax=-2835.675728 value=2648197.650083
+  0034 employedIncome=20000.000000 assetAppreciation=11482.604831 expense=-8722.805832 medicareTax=-290.000000 incomeTax=-2835.675728 value=2667809.553406
+  0035 employedIncome=20000.000000 assetAppreciation=11538.496991 expense=-8745.025779 medicareTax=-290.000000 incomeTax=-2835.675728 value=2687455.072341
+  0036 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=11594.661208 expense=-8767.302328 medicareTax=-290.000000 incomeTax=-2787.181676 value=2705942.916251
+  0037 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=11651.098808 expense=-8789.635623 medicareTax=-290.000000 incomeTax=-2787.181676 value=2724464.807575
+  0038 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=11707.811121 expense=-8812.025808 medicareTax=-290.000000 incomeTax=-2787.181676 value=2743020.963992
+  0039 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=11764.799483 expense=-8834.473028 medicareTax=-290.000000 incomeTax=-2787.181676 value=2761611.604370
+  0040 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=11822.065240 expense=-8856.977429 medicareTax=-290.000000 incomeTax=-2787.181676 value=2780236.948777
+  0041 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=11879.609740 expense=-8879.539157 medicareTax=-290.000000 incomeTax=-2787.181676 value=2798897.218484
+  0042 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-8902.158356 medicareTax=-290.000000 incomeTax=-2787.181676 longTermCapitalGains=2052452.045600 longTermCapitalGainsTax=-360604.458874 value=2445050.742760
+  0043 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-8924.835175 medicareTax=-290.000000 incomeTax=-2787.181676 value=2451785.991325
+  0044 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-8947.569759 medicareTax=-290.000000 incomeTax=-2787.181676 value=2458498.447392
+  0045 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-8970.362256 medicareTax=-290.000000 incomeTax=-2787.181676 value=2465188.052903
+  0046 employedIncome=20000.000000 socialSecurityTax=-136.146416 expense=-8993.212813 medicareTax=-290.000000 incomeTax=-2787.181676 value=2472958.603233
+  0047 employedIncome=20000.000000 expense=-9016.121579 medicareTax=-290.000000 incomeTax=-2787.181676 value=2480842.332856
+  0048 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9039.088700 medicareTax=-290.000000 incomeTax=-2737.184308 niit=-77613.177733 taxTrueUp=-26493.446661 value=2383406.409828
+  0049 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9062.114327 medicareTax=-290.000000 incomeTax=-2737.184308 value=2390054.026912
+  0050 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9085.198608 medicareTax=-290.000000 incomeTax=-2737.184308 value=2396678.500913
+  0051 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9108.341692 medicareTax=-290.000000 incomeTax=-2737.184308 value=2403279.772875
+  0052 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9131.543729 medicareTax=-290.000000 incomeTax=-2737.184308 value=2409857.783697
+  0053 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9154.804870 medicareTax=-290.000000 incomeTax=-2737.184308 value=2416412.474124
+  0054 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9178.125266 medicareTax=-290.000000 incomeTax=-2737.184308 value=2422943.784750
+  0055 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9201.505066 medicareTax=-290.000000 incomeTax=-2737.184308 value=2429451.656020
+  0056 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9224.944422 medicareTax=-290.000000 incomeTax=-2737.184308 value=2435936.028226
+  0057 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9248.443486 medicareTax=-290.000000 incomeTax=-2737.184308 value=2442396.841508
+  0058 employedIncome=20000.000000 socialSecurityTax=-524.766955 expense=-9272.002411 medicareTax=-290.000000 incomeTax=-2737.184308 value=2449549.268898
+  0059 employedIncome=20000.000000 expense=-9295.621347 medicareTax=-290.000000 incomeTax=-2737.184308 value=2457202.784140
 
 [priceIndex]
-  [0000]         1.002583         1.005173         1.007770         1.010373         1.012984         1.015600
-  [0006]         1.018224         1.020854         1.023492         1.026136         1.028787         1.031444
-  [0012]         1.034109         1.036780         1.039459         1.042144         1.044836         1.047535
-  [0018]         1.050241         1.052955         1.055675         1.058402         1.061136         1.063877
-  [0024]         1.066626         1.069381         1.072144         1.074913         1.077690         1.080474
-  [0030]         1.083265         1.086064         1.088870         1.091682         1.094503         1.097330
-  [0036]         1.100165         1.103007         1.105856         1.108713         1.111577         1.114449
-  [0042]         1.117328         1.120214         1.123108         1.126010         1.128919         1.131835
-  [0048]         1.134759         1.137690         1.140629         1.143576         1.146530         1.149492
-  [0054]         1.152462         1.155439         1.158424         1.161416         1.164417         1.167425
+  [0000]         1.002547         1.005101         1.007662         1.010228         1.012802         1.015382
+  [0006]         1.017968         1.020561         1.023161         1.025767         1.028380         1.031000
+  [0012]         1.033626         1.036259         1.038899         1.041545         1.044199         1.046859
+  [0018]         1.049525         1.052199         1.054879         1.057566         1.060260         1.062961
+  [0024]         1.065669         1.068383         1.071105         1.073833         1.076569         1.079311
+  [0030]         1.082061         1.084817         1.087580         1.090351         1.093128         1.095913
+  [0036]         1.098704         1.101503         1.104309         1.107122         1.109942         1.112770
+  [0042]         1.115604         1.118446         1.121295         1.124152         1.127015         1.129886
+  [0048]         1.132764         1.135650         1.138543         1.141443         1.144351         1.147266
+  [0054]         1.150188         1.153118         1.156055         1.159000         1.161953         1.164913
 
 [sanity]
   (no findings)

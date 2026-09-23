@@ -147,11 +147,13 @@ const A = anchors();
 const rateOf = (a) => a.annualReturnRate?.rate ?? 0;
 
 // ── Layer A: clean-room law model ─────────────────────────────────────
-// Independent of every simulator module. Conventions matched to the engine's
-// documented ones: monthly rate is annual/12 (see the compounding-convention
-// note in memory — the engine's ARR.asMonthly() is rate/12, not the true
-// twelfth root, and this oracle deliberately mirrors that so a band failure
-// means a real divergence rather than a known convention gap).
+// Independent of every simulator module. Monthly steps follow what each rate
+// MEANS, not the engine's code: a measured annual rate (appreciation,
+// inflation) compounds by its twelfth root, so twelve months give exactly the
+// stated rate; a contract APR (the mortgage) and an annual charge prorated
+// (property tax) are one twelfth. Until 2026-09-23 this oracle mirrored the
+// engine's rate/12 for everything — a known 0.34-point-a-year gap it agreed
+// to ignore. It now states the rule the engine is meant to follow.
 function runOracle() {
   const first = A.now;                       // 2026-07
   const finishYear = A.finish.year;          // 2081
@@ -176,7 +178,7 @@ function runOracle() {
   // Home: compounds monthly, and accrues property tax on the post-growth
   // value. Sold at plus(25), so the oracle reports the value AT SALE.
   const hCfg = cfg('Home');
-  const hG = rateOf(hCfg) / 12;
+  const hG = Math.pow(1 + rateOf(hCfg), 1 / 12) - 1;
   const hTax = (hCfg.annualTaxRate?.rate ?? 0) / 12;
   const monthsHeld = (A.plus(25).year - first.year) * 12 + (A.plus(25).month - first.month);
   let home = hCfg.startCurrency.amount;
@@ -195,7 +197,7 @@ function runOracle() {
   // Expenses inflate monthly from their own start date to the plan's end.
   const inflateFrom = (start, amount) => {
     const months = (finishYear - start.year) * 12 + (12 - start.month);
-    return amount * Math.pow(1 + INFL / 12, months);
+    return amount * Math.pow(1 + INFL, months / 12);
   };
   const livingMonthly = inflateFrom(first, Math.abs(cfg('Living Expenses').startCurrency.amount));
   const rentMonthly = inflateFrom(A.plus(25), Math.abs(cfg('Rent').startCurrency.amount));
@@ -323,31 +325,43 @@ const engine = {
 // fatter Brokerage realises a different gain on each proportional-basis
 // withdrawal. Layer A (clean-room law vs engine) still passes. IRC §86 moved
 // nothing here — this household's IRA draws keep it at the 85% ceiling.
+// Moved 2026-09-23 by measured growth rates: a stated annual return now
+// compounds to exactly that rate a year, not the 8.839% that rate/12 realised
+// from 8.5%. Balances fall: 401K -15.0%, Roth -13.8%, Brokerage -14.2%,
+// portfolioTotal $18.44M -> $15.80M (-14.3%). Living Expenses and Rent inflate
+// at exactly 3.1% instead of 3.144%. Second-order: four01KDistribution and
+// incomeTax fall with the smaller 401K; propertyTaxes -$894 because the home is
+// assessed on a slightly lower value. UNCHANGED, as predicted before the change:
+// Social Security, employedIncome, socialSecurityIncome, four01KContribution,
+// mortgageInterest — none depends on a measured rate (the mortgage is a contract
+// APR and stays rate/12). Layer A moved to the same convention and passes.
 const EXPECTED_ENGINE = {
   "Social Security": 3882.14,
-  "401K": 4330365.45,
-  "Roth IRA": 4991289.04,
-  "Brokerage": 9121950.66,
+  "401K": 3678638.09,
+  "Roth IRA": 4300031.74,
+  "Brokerage": 7824332.04,
   "Home": 0.00,
   "Mortgage": 0.00,
-  "Living Expenses": -13937.35,
-  "Rent": -6427.41,
-  "portfolioTotal": 18443605.15,
+  "Living Expenses": -13608.05,
+  "Rent": -6343.51,
+  "portfolioTotal": 15803001.87,
   "employedIncome": 3432182.06,
   "socialSecurityIncome": 854014.60,
   "four01KContribution": 274574.57,
-  "four01KDistribution": 4373405.30,
-  "longTermCapitalGains": 1823247.82,
+  "four01KDistribution": 3838752.41,
+  "longTermCapitalGains": 1775459.42,
   "mortgageInterest": -287174.02,
-  "propertyTaxes": -157235.10,
-  "incomeTax": -718854.22,
+  "propertyTaxes": -156340.65,
+  "incomeTax": -645817.03,
 };
 
 // Frozen: how often Early Career's transfers legitimately fail to balance on
 // their own, i.e. how often its single funding-backstop account runs dry and
 // the shortfall terms do the work. A statement about the plan, not a defect.
+// 158 -> 151 on 2026-09-23: expenses inflating at exactly 3.1% ask a little
+// less of the backstop, so it runs dry in seven fewer months.
 const CONSERVATION_BASELINE = {
-  pairedAloneFails: 158,
+  pairedAloneFails: 151,
 };
 
 if (PRINT_MODE) {

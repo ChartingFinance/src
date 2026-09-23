@@ -217,7 +217,12 @@ for (const { fixture, portfolio, events } of results) {
     + `holds ${fmt(pkgNIIT)} — the table is showing a different number than the one collected`);
 
   const summed = [...table.rows.values()].reduce((t, v) => t + v, 0);
-  check(near(summed, table.total, 1.0),
+  // Every row and the Total are rounded to the dollar, so honest rounding can
+  // put them up to $0.50 apart per figure. A flat $1 held by luck until
+  // 2026-09-23: Mid Career's seven rows then all rounded the same way and sat
+  // $2 over a Total their exact values matched to the cent.
+  const rounding = 0.5 * (table.rows.size + 1);
+  check(near(summed, table.total, rounding),
     `${fixture.name}: the itemised rows sum to ${fmt(summed)} under a ${fmt(table.total)} `
     + `Total — ${fmt(Math.abs(table.total - summed))} of tax is inside the Total with no row `
     + 'naming it. Add a row for whatever component of federalTaxes() is missing.');

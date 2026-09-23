@@ -120,9 +120,11 @@ const byName = (n) => data.modelAssets.find(a => a.displayName === n);
 const rate = (a) => a.annualReturnRate.annualReturnRate ?? a.annualReturnRate.rate ?? 0;
 
 // ── Clean-room oracle (independent of all simulator code above) ──────
-// Conventions matched to the engine's documented ones (monthly ARR/12,
-// withdraw-then-grow, escrow in arrears); tax law computed exactly and
-// annually. See the 2026-07-21 audit for the full derivation.
+// Conventions: a measured annual rate (returns, interest, appreciation,
+// inflation) compounds by its twelfth root; a contract APR (the mortgage), a
+// dividend yield and the home's annual charges are one twelfth. Then
+// withdraw-then-grow and escrow in arrears, matched to the engine; tax law
+// computed exactly and annually. (Until 2026-09-23 every rate was ARR/12.) See the 2026-07-21 audit for the full derivation.
 function runOracle({ withNIIT }) {
   const ORD_2026 = [
     [0, 12400, 0.10], [12400, 50400, 0.12], [50400, 105700, 0.22],
@@ -175,11 +177,12 @@ function runOracle({ withNIIT }) {
   let home = byName('Home').startCurrency.amount;
   let mortgage = -byName('Mortgage').startCurrency.amount;
 
+  const measured = (r) => Math.pow(1 + r, 1 / 12) - 1;
   const g = {
-    ira: rate(byName('IRA')) / 12, roth: rate(byName('Roth')) / 12,
-    brok: rate(byName('Brokerage')) / 12, tc: rate(byName('CompanyStock')) / 12,
-    home: rate(byName('Home')) / 12, sav: rate(byName('Savings')) / 12,
-    tre: rate(byName('Treasuries')) / 12,
+    ira: measured(rate(byName('IRA'))), roth: measured(rate(byName('Roth'))),
+    brok: measured(rate(byName('Brokerage'))), tc: measured(rate(byName('CompanyStock'))),
+    home: measured(rate(byName('Home'))), sav: measured(rate(byName('Savings'))),
+    tre: measured(rate(byName('Treasuries'))),
     div: (byName('Brokerage').annualDividendRate.annualReturnRate ?? 0) / 12,
   };
   const homeCfg = byName('Home');
@@ -247,7 +250,7 @@ function runOracle({ withNIIT }) {
       brokOutflow += principal + interest;
     }
 
-    const livingExp = exp0 * Math.pow(1 + INFL / 12, i);
+    const livingExp = exp0 * Math.pow(1 + INFL, i / 12);
     const homePostGrowth = home * (1 + g.home);
     const propTax = prevHomeTaxAccrual;                 // escrow in arrears
     const maint = homePostGrowth * homeMaintM;
@@ -372,7 +375,7 @@ function runOracle({ withNIIT }) {
     savings, ira, roth, brokerage, brokerageBasis, companyStock, treasuries, home,
     mortgage: -mortgage,
     ssMonthly: ssBenefit,
-    livingExpMonthly: -(exp0 * Math.pow(1 + INFL / 12, MONTHS)),
+    livingExpMonthly: -(exp0 * Math.pow(1 + INFL, MONTHS / 12)),
     total: savings + ira + roth + brokerage + companyStock + treasuries + home - mortgage,
     totals,
   };
@@ -470,24 +473,33 @@ const engine = {
 // more; longTermCapitalGains -$12,569 second-order, from the same larger
 // balance changing what each withdrawal realises. The oracle comparisons above
 // still pass. IRC §86 moved nothing here: 85% ceiling every year.
+// Moved 2026-09-23 by measured growth rates (a stated annual return compounds
+// to exactly that rate). Roth, untouched for 30.6 years at 8.5%, -9.1% — the
+// pure ratio (1.085/1.088391)^30.6. Home -0.55% at 2%. portfolioTotal $16.84M ->
+// $15.00M. The IRA falls furthest, $604,533 -> $205,135, because it is a
+// residual: fixed draws against a smaller balance. qualifiedDividends and
+// interestIncome fall with the balances they are paid on. UNCHANGED, as
+// predicted: Social Security, socialSecurityIncome, mortgageInterest. The
+// oracle moved to the same convention and its comparisons pass; the IRA band
+// became absolute (see there).
 const EXPECTED_ENGINE = {
   "Social Security": 4021.09,
   "Savings": 0.00,
-  "IRA": 604532.76,
-  "Roth": 4028947.93,
-  "Brokerage": 9781188.34,
+  "IRA": 205135.11,
+  "Roth": 3661282.38,
+  "Brokerage": 8727555.05,
   "CompanyStock": 0.00,
-  "Treasuries": 116821.90,
-  "Home": 2307042.36,
+  "Treasuries": 114876.37,
+  "Home": 2294291.59,
   "Mortgage": 0.00,
-  "Living Expenses": -11682.19,
-  "portfolioTotal": 16838533.29,
+  "Living Expenses": -11487.64,
+  "portfolioTotal": 15003140.51,
   "employedIncome": 0.00,
   "socialSecurityIncome": 950908.99,
-  "tradIRADistribution": 3096090.49,
-  "qualifiedDividends": 1053966.88,
-  "longTermCapitalGains": 1266963.22,
-  "interestIncome": 76892.34,
+  "tradIRADistribution": 3071923.44,
+  "qualifiedDividends": 971527.26,
+  "longTermCapitalGains": 1232004.31,
+  "interestIncome": 74945.70,
   "mortgageInterest": -247134.01,
 };
 
@@ -560,7 +572,14 @@ band('Lifetime IRA distributions', engine.tradIRADistribution, oracle.totals.ira
 // splits it 75/25 with the IRA. That simplification is load-bearing: routing it
 // faithfully drains the oracle's IRA to $0 (tried, reverted, see the note at
 // the mortgage block). Tighten this when the oracle models mortgage routing.
-band('IRA balance', engine['IRA'], oracle.ira, 0, 0.025);
+//
+// DOLLARS, not percent, since 2026-09-23. The gap is a fixed amount from one
+// simplification, and the balance it sits on is a residual: measured growth
+// rates took the IRA from $604,533 to $205,135 at 2056-12, and the same gap
+// ($12,476 then, $11,266 now, engine above oracle both times) went from 2.1%
+// to 5.8% of it. A percentage band would have to triple to hold a gap that did
+// not grow. $15k is the known gap plus room; a new divergence would exceed it.
+band('IRA balance', engine['IRA'], oracle.ira, 15000, 0);
 
 // Tax-collection timing, all-LT booking, and the stranded-Savings finding
 // legitimately separate the sides — wider bands. SS-as-wages moved the

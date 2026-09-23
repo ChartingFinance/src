@@ -186,7 +186,9 @@ const ExpenseBehavior = Object.freeze({
     asset.addToMetric(M.LIVING_EXPENSE, expense);
     // EXPENSE populated by DAG: LIVING_EXPENSE → EXPENSE
 
-    const inflation = new Currency(expense.amount * asset.effectiveAnnualReturnRate.asMonthly());
+    // Inflation is a measured annual change: twelve steps compound to exactly
+    // the stated rate. See ARR.asMonthlyEffective().
+    const inflation = new Currency(expense.amount * asset.effectiveAnnualReturnRate.asMonthlyEffective());
     asset.finishCurrency.add(inflation);
     asset.monthlyValueChange.add(inflation);
     
@@ -214,7 +216,9 @@ const MortgageBehavior = Object.freeze({
 
   applyMonthly(asset) {
     asset.ensureNegativeStart();
-    const rate = asset.annualReturnRate.asMonthly();
+    // A mortgage rate is a contract APR: the month's interest is defined as
+    // APR/12 of the balance, which is what the lender's amortization uses.
+    const rate = asset.annualReturnRate.asMonthlyNominal();
     const n = asset.monthsRemainingDynamic;
 
     // Mortgage fully amortized — nothing left to compute
@@ -298,8 +302,13 @@ const CapitalBehavior = Object.freeze({
     // interest accruing on that balance.
     const earns = InstrumentType.isDebt(asset.instrument) || asset.finishCurrency.amount > 0;
 
+    // Debt accrues at a contract APR (rate/12). Every other capital asset's
+    // rate is a measured annual return, so it compounds to exactly that rate.
+    const monthlyRate = InstrumentType.isDebt(asset.instrument)
+      ? asset.annualReturnRate.asMonthlyNominal()
+      : asset.annualReturnRate.asMonthlyEffective();
     const growth = earns
-      ? new Currency(asset.finishCurrency.amount * asset.annualReturnRate.asMonthly())
+      ? new Currency(asset.finishCurrency.amount * monthlyRate)
       : Currency.zero();
 
     asset.growthCurrency.add(growth);
@@ -310,7 +319,9 @@ const CapitalBehavior = Object.freeze({
     let qualifiedDiv = Currency.zero();
     let nonQualifiedDiv = Currency.zero();
     if (asset.annualDividendRate.rate != 0.0 && earns) {
-      const totalDiv = asset.finishCurrency.amount * asset.annualDividendRate.asMonthly();
+      // A dividend yield is an annual payout as a share of value; a month pays
+      // one twelfth of it. Proration, not compounding.
+      const totalDiv = asset.finishCurrency.amount * asset.annualDividendRate.asMonthlyNominal();
       const qualifiedRatio = asset.dividendQualifiedRatio;
       qualifiedDiv = new Currency(totalDiv * qualifiedRatio);
       nonQualifiedDiv = new Currency(totalDiv * (1 - qualifiedRatio));
@@ -363,14 +374,15 @@ const RealEstateBehavior = Object.freeze({
   applyMonthly(asset) {
 
     // Real estate appreciates like capital but typically has no dividends
-    const growth = new Currency(asset.finishCurrency.amount * asset.annualReturnRate.asMonthly());
+    const growth = new Currency(asset.finishCurrency.amount * asset.annualReturnRate.asMonthlyEffective());
 
     asset.growthCurrency.add(growth);
     asset.finishCurrency.add(growth);
     asset.monthlyValueChange.add(growth);
     asset.recordEvent(EventType.ASSET_GROWTH, growth, { metric: M.GROWTH });
 
-    const tax = new Currency(asset.finishCurrency.amount * asset.annualTaxRate.asMonthly());
+    // Property tax and maintenance are annual charges, prorated monthly.
+    const tax = new Currency(asset.finishCurrency.amount * asset.annualTaxRate.asMonthlyNominal());
     tax.flipSign(); // taxes are negative
 
     // Property tax / maintenance / insurance are paid from funding accounts
@@ -381,7 +393,7 @@ const RealEstateBehavior = Object.freeze({
 
     // Maintenance: percentage of home value (e.g. 1% annual rule of thumb)
     if (asset.annualMaintenanceRate.rate !== 0) {
-      const maint = new Currency(asset.finishCurrency.amount * asset.annualMaintenanceRate.asMonthly());
+      const maint = new Currency(asset.finishCurrency.amount * asset.annualMaintenanceRate.asMonthlyNominal());
       maint.flipSign();
       asset.addToMetric(M.MAINTENANCE, maint);   // leaf → EXPENSE
       asset.recordEvent(EventType.MAINTENANCE, maint, { metric: M.MAINTENANCE });
@@ -424,7 +436,7 @@ const IncomeAccountBehavior = Object.freeze({
     // Interest never accrues on a deficit — see CapitalBehavior. A savings
     // account drawn below zero is not a loan against itself.
     const income = asset.finishCurrency.amount > 0
-      ? new Currency(asset.finishCurrency.amount * asset.annualReturnRate.asMonthly())
+      ? new Currency(asset.finishCurrency.amount * asset.annualReturnRate.asMonthlyEffective())
       : Currency.zero();
 
     asset.addToMetric(M.INTEREST_INCOME, income);

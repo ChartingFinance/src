@@ -51,7 +51,32 @@ export class ARR {
 
   // ── Queries ──────────────────────────────────────────────────────
 
-  asMonthly() {
+  // ── Monthly conversions ──────────────────────────────────────────
+  //
+  // There is no plain `asMonthly()`, on purpose. An annual rate means one of
+  // two things, and the monthly step differs:
+  //
+  //   MEASURED  an annual change observed start-to-end — a market return,
+  //             inflation, a savings APY, home appreciation. It already
+  //             includes the year's compounding, so twelve monthly steps
+  //             must compound back to exactly `rate`: asMonthlyEffective().
+  //
+  //   NOMINAL   a contract APR (a mortgage, a loan), or an annual CHARGE
+  //             prorated — property tax, maintenance, a dividend yield. The
+  //             month's figure is defined as one twelfth: asMonthlyNominal().
+  //
+  // Until 2026-09-23 there was one `asMonthly()` returning rate/12 for both,
+  // so a stated 8.5% return realized 8.839% a year and a 30-year plan ended
+  // ~9.8% richer than its own assumptions. The calibrated Monte Carlo draws
+  // measured annual returns, so it could not agree with the plan either.
+
+  /** Monthly step that compounds to exactly `rate` over twelve months. */
+  asMonthlyEffective() {
+    return Math.pow(1 + this.rate, 1 / 12) - 1;
+  }
+
+  /** One twelfth of the annual rate — a contract APR, or a prorated annual charge. */
+  asMonthlyNominal() {
     return this.rate / 12;
   }
 
