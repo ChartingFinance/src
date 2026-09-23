@@ -396,9 +396,7 @@ export class TaxTable {
         this.filingAs = filingAs;
         // A cap on a deduction is a parameter of the tax regime, like the
         // brackets beside it — so it lives on the table rather than being
-        // threaded through every method that applies it. Null re-reads the
-        // global, keeping the default path bit-identical until step 5 hands
-        // the value in from the config.
+        // threaded through every method that applies it.
         this.configuredPropertyTaxDeductionMax = propertyTaxDeductionMax;
         this.taxes = null;     
         this.initializeChron();
@@ -572,10 +570,6 @@ export class TaxTable {
         else if (result.fica().amount / income.amount > 0.08) {
             logger.log(LogCategory.TAX, 'TaxTable.calculateFICATax: ratio over 8%?');
         }
-        //else {
-        //    let ratio = result.fica().amount / income.amount;
-        //    logger.log(LogCategory.TAX, 'TaxTable.calculateFICATax: ratio is ' + ratio.toString());
-        //}
 
         return result;
 
@@ -617,21 +611,6 @@ export class TaxTable {
 
     }
 
-    /*
-    estimateMonthlyIncomeTax(monthly, income) {
-
-        let yearly = monthly.copy();
-        yearly.multiply(12.0);
-        let yearlyIncome = new Currency(income.amount * 12.0);
-
-        yearlyIncome = this.applyYearlyDeductions(yearly, yearlyIncome);
-        let yearlyTax = this.calculateYearlyIncomeTax(yearlyIncome);
-        let monthlyTax = new Currency(yearlyTax.amount / 12.0);
-        return monthlyTax;
-
-    }
-    */
-    
     calculateYearlyIncomeTax(income, deduction) {
 
         // `deduction`, not `deduction.amount`. Currency.subtract takes a
@@ -658,19 +637,6 @@ export class TaxTable {
         return new Currency(tax);
 
     }
-
-    /*
-    estimateMonthlyLongTermCapitalGainsTax(taxableIncome, capitalGains) {
-
-        let yearlyIncome = new Currency(income.amount * 12.0);
-        let yearlyCapitalGains = new Currency(capitalGains.amount * 12.0);
-        
-        let yearlyTax = this.calculateYearlyLongTermCapitalGainsTax(yearlyIncome, yearlyCapitalGains);
-        let monthlyTax = new Currency(yearlyTax.amount / 12.0);
-        return monthlyTax;
-
-    }
-    */
 
     calculateYearlyLongTermCapitalGainsTax(taxableIncome, capitalGains) {          
         
@@ -1011,18 +977,6 @@ export class TaxTable {
         return this.applyYearlyDeductions(yearly, taxableIncome, age);
 
     }
-
-    /*
-    calculateYearlyNonFICATaxableIncome(yearly) {
-
-        let nonFICATaxableIncome = new Currency(yearly.selfIncome.amount + yearly.employedIncome.amount);
-        nonFICATaxableIncome.add(yearly.tradIRADistribution);
-        nonFICATaxableIncome.add(yearly.shortTermCapitalGains);   
-        nonFICATaxableIncome.add(yearly.interest);
-        return this.applyYearlyDeductions(yearly, nonFICATaxableIncome);
-
-    }
-    */
 
     applyYear(yearly, activeUser) {
         this.reconcileYearlyTax(yearly, activeUser);

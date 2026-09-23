@@ -1,11 +1,12 @@
 /**
  * quick-start.js — Demographic Quick Start portfolios for new users
  *
- * Four profiles targeting different life stages:
- *   - Early Career (30-40): Accumulation-heavy, long runway to retirement
- *   - Mid Career (40-50): Balanced accumulation and retirement planning
- *   - Pre-Retirement (50-60): Lighter accumulation, focus on retirement readiness
- *   - Retired (60+): Already retired, living off investments + Social Security
+ * Eight profiles: four life stages, each as a Single household and as a
+ * married couple filing jointly.
+ *   - Early Career / Young Couple: accumulation-heavy, long runway to retirement
+ *   - Mid Career / Dual Income: balanced accumulation and retirement planning
+ *   - Pre-Retirement / Couple Nearing Retirement: focus on retirement readiness
+ *   - Retired / Retired Couple: living off investments + Social Security
  *
  * All dates are computed dynamically from the profile's age settings.
  * Fund transfers are owned by life events (phases), not assets.

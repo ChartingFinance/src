@@ -1,18 +1,12 @@
 /**
  * sim-config.js — the engine's configuration, as a value.
  *
- * Spec 9 step 1. **Nothing reads this yet.** The type exists, `Portfolio`
- * carries one, and every engine site still reads the module globals exactly as
- * before. Steps 2 and 3 move those reads across, one file at a time, with a
- * bit-identical snapshot as the gate for each.
+ * Every engine read of a setting goes through the config a `Portfolio` is
+ * constructed with. Before Spec 9 the engine read module globals backed by
+ * localStorage, so a headless caller had to fake browser storage and two plans
+ * in one process shared one configuration.
  *
  * ── What this is for ─────────────────────────────────────────────────
- *
- * The engine reads its configuration out of localStorage: `global_setX` writes
- * only to storage and `global_getX` reloads the module variable as a side
- * effect. That is why `js/mcp/polyfill.js` has to fake a browser storage API
- * before a headless caller can state its own filing status, and why two plans
- * in one process share one configuration.
  *
  * A config is a VALUE: captured at a known moment, frozen, and passed
  * explicitly.
@@ -30,12 +24,10 @@
  *
  * ── It imports no globals, on purpose ────────────────────────────────
  *
- * Not stylistic. `globals.js` is the one exemption in tests/layer-boundary.mjs,
- * and that exemption is deleted when the engine stops reaching it — which is
- * the signal that says this migration is done. A config type that imported
- * globals.js would keep it in the engine's import closure permanently and
- * remove the finish line. `filing-status.js` was lifted out of globals.js for
- * exactly this reason; it is a frozen enum with no state.
+ * Not stylistic. tests/layer-boundary.mjs asserts that nothing on the engine's
+ * run path imports `globals.js`, the browser-side settings store, and this file
+ * is on that path. `filing-status.js` was lifted out of globals.js for exactly
+ * this reason; it is a frozen enum with no state.
  *
  * Building a config FROM the globals is therefore not this module's job — see
  * `simConfigFromGlobals()` in globals.js, which is UI-side, where the settings
@@ -74,11 +66,13 @@ export const SIM_CONFIG_DEFAULTS = Object.freeze({
 });
 
 /**
- * `birthYear` and `taxTable` are the two ATTACHED fields: optional here,
- * filled in by `Portfolio` through `withSimConfig` once it knows something the
- * config builder could not.
+ * `birthYear` and `taxTable` are the two ATTACHED fields: optional here, and
+ * added with `withSimConfig` rather than passed to `makeSimConfig`.
  *
- * For `birthYear` that something is the plan's own first month. The engine used
+ * `taxTable` is built by the config builders — `simConfigFromGlobals()` and
+ * `simConfigFromPlanSpec()` — and `Portfolio` throws if a config arrives without
+ * one. `birthYear` is attached by `Portfolio`, because it needs the plan's own
+ * first month, which no builder has. The engine used
  * to derive the year from `new Date()` inside a getter, which made a frozen
  * plan's finish date and every life-event trigger depend on WHEN IT WAS READ:
  * one spec replayed across a New Year moved 5.4% in ending net worth and grew
@@ -90,12 +84,8 @@ export const SIM_CONFIG_DEFAULTS = Object.freeze({
  * throws on absence. A default here would be a year nobody chose, which is the
  * failure this whole migration is about.
  *
- * Every field the engine reads. Deliberately a superset of
- * `global_workerSnapshot()`, which is missing three the engine does read —
- * `allocate_household_tax` and the two withholding rates. That gap is latent
- * rather than live (all three sit at their defaults today, so a worker booting
- * on defaults happens to agree), and it closes on its own at step 5 when
- * workers ship a config instead of a snapshot.
+ * Every field the engine reads. `global_workerSnapshot()` must carry each of
+ * them too: workers boot on defaults and rebuild a config from the snapshot.
  */
 const FIELDS = Object.freeze([
     'inflationRate',
@@ -140,11 +130,7 @@ const NUMERIC = Object.freeze([
  * unaccountable source.
  *
  * `taxTable` and `birthYear` are the exceptions, and are optional here — see
- * ATTACHED. Step 2 gives `TaxTable` a `filingAs` constructor argument and fills
- * the first in; building one now would mean a second TaxTable constructed off
- * the module global, which is precisely the ordering hazard the config exists
- * to remove. The second needs the plan's own first month, which only
- * `Portfolio` has.
+ * ATTACHED.
  *
  * @param {object} values  every entry of FIELDS except those in ATTACHED
  * @returns {Readonly<object>}

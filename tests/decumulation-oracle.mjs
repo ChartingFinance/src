@@ -25,9 +25,9 @@
  *          node src/tests/decumulation-oracle.mjs --print-actual
  *      and paste the printed literal, reviewing the diff line by line.
  *
- * THE CLOCK IS PINNED to 2026-07-15: the simulation window is derived from
- * `new Date()` (global_getFinishDateInt), so without pinning these values
- * would rot every January.
+ * THE CLOCK IS PINNED to 2026-07-15, as a precaution only. The engine anchors
+ * to the plan's own dates (Spec 10), so these values no longer depend on the
+ * clock — checked 2026-09-23 by running with it set to 2031.
  *
  * Known open findings the bands still absorb (tighten when fixed):
  *   - longTermCapitalHoldingPercentage is unread (F5): oracle books 80/20
@@ -59,7 +59,7 @@ globalThis.localStorage = {
 };
 globalThis.window = globalThis;
 
-// ── Pin the clock (window derivation uses `new Date()` at run time) ──
+// ── Pin the clock (a precaution; see the header) ──
 const RealDate = Date;
 const PINNED = new RealDate(2026, 6, 15);
 globalThis.Date = class extends RealDate {
@@ -243,9 +243,9 @@ function runOracle({ withNIIT }) {
       // NOTE: the engine routes the mortgage 75% IRA / 25% brokerage like every
       // other obligation; this model charges it wholly to the brokerage.
       // Deliberate — moving it into `fundable` (tried 2026-08-04) drains the
-      // oracle's IRA to $0 against the engine's $604,533, so the simplification
-      // is load-bearing in this model's overall calibration, not a stray
-      // shortcut. It is the main reason the IRA-balance band below is wider
+      // oracle's IRA to $0 while the engine's keeps a large balance, so the
+      // simplification is load-bearing in this model's overall calibration, not
+      // a stray shortcut. It is the main reason the IRA-balance band below is wider
       // than the others.
       brokOutflow += principal + interest;
     }

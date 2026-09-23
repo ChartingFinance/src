@@ -76,8 +76,7 @@ export class FinancialPackage {
 
     /**
      * @param {User} activeUser
-     * @param {TaxTable} [taxTable]  the run's table (Spec 9 step 2). Falls back
-     *   to the module global while callers migrate; step 6 makes it required.
+     * @param {TaxTable} taxTable  the run's table. Required: there is no fallback.
      */
     limitDeductions(activeUser, taxTable = null) {
 

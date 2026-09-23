@@ -104,7 +104,7 @@ export const TAX_TREE = [
         emoji: '📊',
         // Booked once a year by applyAnnualNIIT, never monthly — so this node
         // must be summed over the trailing year rather than extrapolated from
-        // the cursor month. See trailingYear() in _taxTree().
+        // the cursor month. See trailingYear() in _computeTaxTree().
         annualCadence: true,
         amountMetrics: ['niit'],
         highlightMetrics: ['niit', 'qualifiedDividend', 'nonQualifiedDividend',

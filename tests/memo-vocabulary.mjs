@@ -103,10 +103,9 @@ const PASS_THROUGH = [
   { id: 'one-time',            owner: 'monthlySanityCheck (transferNet)',  re: /^One-Time: .*$/ },
 ];
 
-// NOT listed, deliberately: 'Estimated tax'. Its only write site
-// (expense-engine.js, `addCreditMemo(tax, 'Estimated tax')`) sits inside a
-// commented-out block behind a TODO, so the engine cannot emit it. A grep for
-// call sites counts it; this test proved it dead.
+// NOT listed, deliberately: 'Estimated tax'. Nothing in the engine writes it.
+// Its only write site was a commented-out block in expense-engine.js, deleted
+// 2026-09-23.
 
 // ── Scenarios: chosen to exercise as many memo sites as possible ──────
 

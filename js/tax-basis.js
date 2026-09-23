@@ -184,12 +184,9 @@ export function taxableSocialSecurity(benefits, otherIncome, { base, adjusted })
  *        caller remembering to copy would be one refactor away from corrupting
  *        the live monthly package.
  * @param {import('./user.js').User} activeUser  for the age-banded deduction limits
- * @param {{annualise?: boolean, taxTable?: object}} [opts]
- *        `taxTable` defaults to the active one. TaxTable's own methods pass
- *        `this`, because a table that is not the active one would otherwise be
- *        asked for a basis and silently get the active table's brackets —
- *        currently unreachable, since every caller sets the active table first,
- *        but it is the kind of mismatch this module exists to prevent.
+ * @param {{annualise?: boolean, taxTable: object}} opts
+ *        `taxTable` is required — the run's own table, never a module default.
+ *        TaxTable's own methods pass `this`.
  * @returns {{ordinaryTaxable: Currency, capitalGains: Currency, ltcgStackBase: Currency,
  *            unusedDeduction: Currency, netInvestmentIncome: Currency, magi: Currency}}
  */

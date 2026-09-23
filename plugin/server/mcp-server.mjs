@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.3.8; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.3.9; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -33316,20 +33316,6 @@ var TaxTable = class {
       c = new Currency(income.amount * this.activeTaxTables.fica.medicareHalfRate);
     return c;
   }
-  /*
-      estimateMonthlyIncomeTax(monthly, income) {
-  
-          let yearly = monthly.copy();
-          yearly.multiply(12.0);
-          let yearlyIncome = new Currency(income.amount * 12.0);
-  
-          yearlyIncome = this.applyYearlyDeductions(yearly, yearlyIncome);
-          let yearlyTax = this.calculateYearlyIncomeTax(yearlyIncome);
-          let monthlyTax = new Currency(yearlyTax.amount / 12.0);
-          return monthlyTax;
-  
-      }
-      */
   calculateYearlyIncomeTax(income, deduction) {
     let adjusted = new Currency(income.amount);
     if (deduction)
@@ -33347,18 +33333,6 @@ var TaxTable = class {
     }
     return new Currency(tax);
   }
-  /*
-      estimateMonthlyLongTermCapitalGainsTax(taxableIncome, capitalGains) {
-  
-          let yearlyIncome = new Currency(income.amount * 12.0);
-          let yearlyCapitalGains = new Currency(capitalGains.amount * 12.0);
-          
-          let yearlyTax = this.calculateYearlyLongTermCapitalGainsTax(yearlyIncome, yearlyCapitalGains);
-          let monthlyTax = new Currency(yearlyTax.amount / 12.0);
-          return monthlyTax;
-  
-      }
-      */
   calculateYearlyLongTermCapitalGainsTax(taxableIncome, capitalGains) {
     let tax = 0;
     let combinedIncome = taxableIncome.copy().add(capitalGains);
@@ -33610,17 +33584,6 @@ var TaxTable = class {
     let taxableIncome = yearly.irsTaxableGrossIncome(this);
     return this.applyYearlyDeductions(yearly, taxableIncome, age);
   }
-  /*
-      calculateYearlyNonFICATaxableIncome(yearly) {
-  
-          let nonFICATaxableIncome = new Currency(yearly.selfIncome.amount + yearly.employedIncome.amount);
-          nonFICATaxableIncome.add(yearly.tradIRADistribution);
-          nonFICATaxableIncome.add(yearly.shortTermCapitalGains);   
-          nonFICATaxableIncome.add(yearly.interest);
-          return this.applyYearlyDeductions(yearly, nonFICATaxableIncome);
-  
-      }
-      */
   applyYear(yearly, activeUser) {
     this.reconcileYearlyTax(yearly, activeUser);
     let yearlyFICATax = this.calculateYearlyFICATax(yearly);
@@ -33712,8 +33675,7 @@ var FinancialPackage = class _FinancialPackage {
   }
   /**
    * @param {User} activeUser
-   * @param {TaxTable} [taxTable]  the run's table (Spec 9 step 2). Falls back
-   *   to the module global while callers migrate; step 6 makes it required.
+   * @param {TaxTable} taxTable  the run's table. Required: there is no fallback.
    */
   limitDeductions(activeUser, taxTable = null) {
     const table = taxTable;
@@ -37814,9 +37776,6 @@ var ModelAsset = class _ModelAsset {
     }
     return this.finishCurrency;
   }
-  /*
-    Unrealized Gain Ratio of the asset 1 - (basis / currentValue)
-  */
   /**
    * What a withdrawal of `amount` would do to this account, without doing it.
    *
@@ -37853,6 +37812,7 @@ var ModelAsset = class _ModelAsset {
       realizedGain: new Currency(realizesGain ? fromVested - basisWithdrawn : 0)
     };
   }
+  /** Unrealized gain ratio of the account: 1 − (basis / currentValue). */
   getUnrealizedGainRatio() {
     if (this.finishCurrency.amount <= 0) return 0;
     const basisRatio = this.finishBasisCurrency.amount / this.finishCurrency.amount;
@@ -37878,18 +37838,6 @@ var ModelAsset = class _ModelAsset {
       this[outputArrayName].push(total);
     }
   }
-  /** Legacy method kept for backwards compatibility with charting code that expects `displayValueData`. 
-    monthlyAssetDataToDisplayAssetData(monthsSpan) {
-      this.displayAssetData = [];
-      for (let i = monthsSpan.offsetMonths; i < this.monthlyValues.length; i += monthsSpan.combineMonths) {
-        this.displayAssetData.push(this.monthlyValues[i]);
-      }
-    }
-  
-    monthlyCashFlowDataToDisplayCashFlowData(monthsSpan) {
-      this.buildDisplayData(monthsSpan, 'monthlyCashFlows', 'displayCashFlowData');
-    }
-    */
   monthlyDataArrayToDisplayData(monthsSpan, monthlyArrayName, displayArrayName) {
     this.buildDisplayData(monthsSpan, monthlyArrayName, displayArrayName);
   }

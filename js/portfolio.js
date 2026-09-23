@@ -392,23 +392,10 @@ export class Portfolio {
 
     initializeChron() {
 
-        // Resolve the run's tax table onto the config, and reset it (Spec 9
-        // step 5a).
-        //
-        // Both halves used to live at the call sites: every caller ran
-        // `activeTaxTable.initializeChron()` on the line immediately above
-        // `portfolio.initializeChron()`, which is a sequence a caller can get
-        // wrong and three of them had to repeat. Owning it here means the
-        // table is reset exactly when the rest of the run state is, and the
-        // relative order is unchanged — this runs before the engines are
-        // built, as it did before.
-        // Every config now arrives with its own table — simConfigFromGlobals()
-        // builds one, and so does simConfigFromPlanSpec(). The `?? activeTaxTable`
-        // fallback that stood here through step 5 is gone, and with it this
-        // file's last import of the settings store.
-        //
-        // Reset it where the rest of the run state is reset. Relative order is
-        // unchanged: still before the engines are built.
+        // Reset the run's tax table here, with the rest of the run state and
+        // before the engines are built, rather than leaving every caller to do
+        // it first. Every config arrives with its own table —
+        // simConfigFromGlobals() and simConfigFromPlanSpec() both build one.
         if (!this.config.taxTable) {
             throw new Error('Portfolio: the run config has no tax table.');
         }
@@ -779,12 +766,6 @@ export class Portfolio {
 
     #applyMonthInScope(currentDateInt) {
 
-        /*
-        leaving this in to test a specific test data case when selling a house
-        if (currentDateInt.year == 2029 && currentDateInt.month == 7) {
-            debugger;
-        }
-        */
         
         if (currentDateInt.day == 1) {
 

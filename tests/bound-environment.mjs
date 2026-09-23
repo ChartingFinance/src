@@ -9,7 +9,7 @@
  * harness, which is the migration's usual gate. If `copy()` wrongly carried the
  * environment, or every asset held its own clone instead of sharing the
  * Portfolio's, or the env leaked into `toJSON()` — the simulated numbers would
- * be **identical** and all 28 baselines would report "no simulated number
+ * be **identical** and every baseline would report "no simulated number
  * moved". Step 1 proved that blind spot by construction: a live-forwarding
  * config passed the snapshot while failing three assertions in
  * tests/sim-config.mjs.

@@ -1,8 +1,8 @@
 /**
  * quickstart-golden.mjs
  *
- * Golden-master (characterization) test over the four Quick Start profiles
- * (js/quick-start.js: Early Career, Mid Career, Pre-Retirement, Retired).
+ * Golden-master (characterization) test over the eight Quick Start profiles
+ * in js/quick-start.js (four life stages, Single and MFJ).
  * Three stages per profile:
  *
  *   Stage 0  — load fidelity: the in-memory ModelAssets built by

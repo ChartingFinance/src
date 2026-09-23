@@ -28,8 +28,8 @@
  *      tables produces smaller numbers, not an error. This asserts the TABLE,
  *      because that is where the wrongness actually lives.
  *
- * Plus the leak that a server (unlike the app) is uniquely exposed to: globals
- * are module state, so plan N+1 inherits plan N unless every run resets.
+ * Plus the leak a server (unlike the app) is uniquely exposed to: one plan's
+ * settings reaching the next run in the same process.
  *
  * Usage:  node src/tests/mcp-run-plan.mjs   (from repo root)
  */

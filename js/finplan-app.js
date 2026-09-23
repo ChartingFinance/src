@@ -1,8 +1,7 @@
 /**
  * finplan-app.js
  *
- * Orchestrator for finplan.html — the new single-page FinPlan layout.
- * Follows the same pattern as app.js but targets the finplan layout:
+ * Orchestrator for the single-page app (index.html):
  *   - Globals init + settings wiring
  *   - Load assets + life events from localStorage
  *   - Build portfolio, run chronometer

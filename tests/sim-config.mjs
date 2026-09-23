@@ -15,7 +15,7 @@
  * INVISIBLE TO THE MIGRATION'S OWN GATE. Every step of Spec 9 is verified by a
  * bit-identical snapshot, and a forwarding view is trivially bit-identical
  * because it is the same value read through one more layer. Someone could
- * rewrite makeSimConfig as a proxy tomorrow, and all 28 baselines plus 450
+ * rewrite makeSimConfig as a proxy tomorrow, and every baseline plus 450
  * assertions would stay green while the entire point was lost.
  *
  * So the capture is asserted directly: build a config, change the global

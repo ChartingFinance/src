@@ -57,10 +57,10 @@
  * single seam to cut. (rule-notes.js still carries its own copies of the
  * `Unfunded` and `Contribution capped` patterns; unifying them is part of it.)
  *
- * Three of the seven LogCategory.SANITY sites cannot be detected at all yet —
- * they compute their answer and discard it, and `logger.log()` is currently a
- * no-op — so the `reconciliation` category ships empty by design. Those land
- * when the study does.
+ * The `reconciliation` category ships empty by design. The engine's own
+ * reconciliation findings go to the logger (LogCategory.SANITY), not to an
+ * event, so there is nothing here to read them from. They land when the study
+ * does.
  */
 
 import { Metric, aggregateMetric } from './metric.js';

@@ -51,6 +51,7 @@ import { Portfolio } from '../js/portfolio.js';
 import { chronometer_run } from '../js/chronometer.js';
 import { setActiveTaxTable } from '../js/globals.js';
 import { Metric } from '../js/metric.js';
+import { EventType } from '../js/sim-event.js';
 import { simConfigFromGlobals } from '../js/globals.js';
 import { makeActiveTaxTable } from '../js/globals.js';
 
@@ -300,19 +301,34 @@ check('C4: the tax metric equals what the close actually deducted', () => {
 });
 
 check('C5: DAG TAXES agrees with FinancialPackage totalTaxes() in the close month', () => {
-  // Scoped to the close month on purpose. A separate, unrelated gap breaks the
-  // all-months form here: applyAnnualTaxTrueUp records the settlement on the
-  // asset metric and the balance (tax-engine.js:335-342) but never on the
-  // package, so any month a true-up fires diverges by the settled amount. That
-  // is why scenarios W and S — steady salary, withholding exact, true-up
-  // returns early under its $1 threshold — can assert every month and this one
-  // cannot. Widen this to all months once the true-up is booked to the package.
   const closeMonth = 8; // Jan 2026 + 8 = Sep 2026, the finishDateInt
   let dag = 0;
   for (const a of pC.modelAssets) dag += at(a, Metric.TAXES, closeMonth);
   const fp = pC.monthlyPackages[closeMonth].totalTaxes().amount;
   assert.ok(Math.abs(dag - fp) < TOL,
     `close month: DAG ${fmt(dag)} vs FP ${fmt(fp)} — residual ${fmt(dag - fp)}`);
+});
+
+check('C6: ...and every month, including the annual true-up', () => {
+  // This used to be close-month only: the annual true-up settled cash against
+  // an account but never told the package, so its month diverged by the
+  // settled amount. The package has carried `taxTrueUp` since 2026-09-05.
+  // Counted from the engine's events, not from the package, so the guard
+  // cannot be satisfied by the very field this check is about.
+  const trueUps = pC.modelAssets.flatMap(a => a.events)
+    .filter(e => e.type === EventType.TAX_TRUE_UP && Math.abs(e.amount.amount) > TOL);
+  assert.ok(trueUps.length > 0, 'no true-up settled any cash — this check would be vacuous');
+
+  const bad = [];
+  for (let i = 0; i < pC.monthlyPackages.length; i++) {
+    let dag = 0;
+    for (const a of pC.modelAssets) dag += at(a, Metric.TAXES, i);
+    const fp = pC.monthlyPackages[i].totalTaxes().amount;
+    if (Math.abs(dag - fp) > TOL) {
+      bad.push(`month ${i}: DAG ${fmt(dag)} vs FP ${fmt(fp)} — residual ${fmt(dag - fp)}`);
+    }
+  }
+  assert.equal(bad.length, 0, `${bad.length} divergence(s):\n      ` + bad.slice(0, 5).join('\n      '));
 });
 
 // ── Summary ──────────────────────────────────────────────────────────
