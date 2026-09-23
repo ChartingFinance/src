@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.3.9; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.3.10; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -40595,28 +40595,55 @@ var DEFAULT_RATES = Object.freeze({
   [Instrument.RETIREMENT_INCOME]: 0.025
 });
 var RESIDUAL_EXPENSE_LABEL = "Living Expenses";
-function withholdingFor(incomeAssets, { filingAs, propertyTaxDeductionMax }) {
+function withholdingFor(incomeAssets, deferrals, {
+  filingAs,
+  propertyTaxDeductionMax,
+  startAge,
+  birthYear,
+  pensionWithholdingRate,
+  socialSecurityWithholdingRate
+}) {
   const taxTable = new TaxTable(filingAs, propertyTaxDeductionMax);
+  const pkg = new FinancialPackage();
   const fica = /* @__PURE__ */ new Map();
+  const deferred = /* @__PURE__ */ new Map();
   for (const a of incomeAssets) {
-    fica.set(a.displayName, a.instrument === Instrument.WORKING_INCOME ? taxTable.calculateFICATax(
-      false,
-      new Currency(a.startCurrency.amount),
-      TaxOwner.PRIMARY
-    ).fica().amount : 0);
+    const gross = new Currency(a.startCurrency.amount);
+    if (a.instrument === Instrument.WORKING_INCOME) {
+      fica.set(
+        a.displayName,
+        taxTable.calculateFICATax(false, gross, TaxOwner.PRIMARY).fica().amount
+      );
+      pkg.employedIncome.add(gross);
+      const d = deferrals.get(a.displayName) ?? { four01K: 0, ira: 0 };
+      pkg.four01KContribution.add(new Currency(gross.amount * d.four01K));
+      pkg.tradIRAContribution.add(new Currency(gross.amount * d.ira));
+      deferred.set(a.displayName, gross.amount * (d.four01K + d.ira));
+    } else if (a.instrument === Instrument.RETIREMENT_INCOME) {
+      pkg.socialSecurityIncome.add(gross);
+    } else if (a.instrument === Instrument.PENSION) {
+      pkg.pensionIncome.add(gross);
+    }
   }
-  const annualOrdinary = incomeAssets.reduce((sum, a) => sum + a.startCurrency.amount * 12 * (a.instrument === Instrument.RETIREMENT_INCOME ? 0.85 : 1), 0);
-  const taxable = Math.max(0, annualOrdinary - taxTable.activeStandardDeduction);
-  const householdMonthlyTax = taxTable.calculateYearlyIncomeTax(new Currency(taxable)).amount / 12;
-  const totalWorking = incomeAssets.filter((a) => a.instrument === Instrument.WORKING_INCOME).reduce((n, a) => n + a.startCurrency.amount, 0);
+  const { ordinaryTaxable } = taxableBasis(
+    pkg,
+    new User(startAge, birthYear),
+    { annualise: true, taxTable }
+  );
+  const householdMonthlyTax = taxTable.calculateYearlyIncomeTax(ordinaryTaxable).amount / 12;
+  const totalWorking = pkg.employedIncome.amount;
   const net = /* @__PURE__ */ new Map();
   for (const a of incomeAssets) {
-    const share = totalWorking > 0 && a.instrument === Instrument.WORKING_INCOME ? a.startCurrency.amount / totalWorking : 0;
-    const incomeTax = householdMonthlyTax * share;
-    net.set(
-      a.displayName,
-      Math.max(0, a.startCurrency.amount - fica.get(a.displayName) - incomeTax)
-    );
+    const gross = a.startCurrency.amount;
+    let takeHome;
+    if (a.instrument === Instrument.WORKING_INCOME) {
+      const incomeTax = totalWorking > 0 ? householdMonthlyTax * gross / totalWorking : 0;
+      takeHome = gross - fica.get(a.displayName) - incomeTax - deferred.get(a.displayName);
+    } else {
+      const rate = a.instrument === Instrument.PENSION ? pensionWithholdingRate : socialSecurityWithholdingRate;
+      takeHome = gross * (1 - rate);
+    }
+    net.set(a.displayName, Math.max(0, takeHome));
   }
   return { net, taxTable, householdMonthlyTax };
 }
@@ -40918,9 +40945,22 @@ function buildPlan(intent = {}) {
     }
   }
   const incomeAssets = raw.filter((a) => incomeLabels.includes(a.displayName));
-  const { net: netByIncome, householdMonthlyTax } = withholdingFor(incomeAssets, {
+  const deferrals = /* @__PURE__ */ new Map();
+  for (const s of splits) {
+    const to = raw.find((a) => a.displayName === s.to);
+    const kind = to?.instrument === Instrument.FOUR_01K ? "four01K" : to?.instrument === Instrument.IRA ? "ira" : null;
+    if (!kind) continue;
+    const d = deferrals.get(s.from) ?? { four01K: 0, ira: 0 };
+    d[kind] += s.percent / 100;
+    deferrals.set(s.from, d);
+  }
+  const { net: netByIncome, householdMonthlyTax } = withholdingFor(incomeAssets, deferrals, {
     filingAs,
-    propertyTaxDeductionMax: D.propertyTaxDeductionMax
+    propertyTaxDeductionMax: D.propertyTaxDeductionMax,
+    startAge,
+    birthYear,
+    pensionWithholdingRate: D.pensionWithholdingRate,
+    socialSecurityWithholdingRate: D.socialSecurityWithholdingRate
   });
   const spendingAccount = pickSpendingAccount(raw, accountLabels);
   const phaseTransfers = {};
