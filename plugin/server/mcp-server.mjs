@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.3.6; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.3.7; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -39068,6 +39068,9 @@ function applyRandomRates(modelAssets, pool, dataMode = "historical", baseRates 
     inflationRate: calibrated ? calibrationBase + (cpi - pool.means.cpi) : cpi
   };
 }
+function calibrationBaseRates(modelAssets) {
+  return new Map(modelAssets.map((a) => [a, a.effectiveAnnualReturnRate.rate]));
+}
 function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, pool, dataMode, config2) {
   const assets = ModelAsset.cloneArray(sourceAssets);
   const portfolio = new Portfolio(assets, false, config2);
@@ -39076,7 +39079,7 @@ function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, p
     portfolio.guardrailsParams = guardrailParams;
   }
   portfolio.initializeChron();
-  const baseRates = dataMode === "calibrated" ? new Map(portfolio.modelAssets.map((a) => [a, a.annualReturnRate?.rate ?? 0])) : null;
+  const baseRates = dataMode === "calibrated" ? calibrationBaseRates(portfolio.modelAssets) : null;
   const retirementInt = retirementDateInt ? retirementDateInt.toInt() : 0;
   let withdrawalPhase = !retirementDateInt;
   const priceIndex = new PriceIndex(portfolio.config.inflationRate);

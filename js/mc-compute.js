@@ -138,6 +138,30 @@ export function applyRandomRates(modelAssets, pool, dataMode = 'historical', bas
     };
 }
 
+/**
+ * The base a calibrated draw adds its deviation to: the rate each asset grows
+ * at in the DETERMINISTIC plan, read through `effectiveAnnualReturnRate`.
+ *
+ * NOT `annualReturnRate`. An expense left at the default rate stores 0, and
+ * `effectiveAnnualReturnRate` reads that 0 as "use the plan's inflation"
+ * (model-asset.js). Until 2026-09-23 this captured the raw 0, added the year's
+ * CPI deviation to it, and wrote the result back — a small NONZERO number, so
+ * the fallback never fired again and the expense grew by the deviation alone:
+ * roughly 0% a year instead of the plan's 3.1% plus the deviation. A
+ * retirement whose costs never rose made the calibrated median 1.75x the plan
+ * on inflation alone (Mid Career), and every quick-start profile leaves that
+ * rate at the default.
+ *
+ * It hid because the obvious sanity check — zero deviation must reproduce the
+ * plan — could not see it: at zero, the written rate is 0 again and the
+ * fallback still works. tests/mc-calibration-base.mjs uses real, nonzero draws.
+ *
+ * Exported for that test.
+ */
+export function calibrationBaseRates(modelAssets) {
+    return new Map(modelAssets.map((a) => [a, a.effectiveAnnualReturnRate.rate]));
+}
+
 // ── Single simulation run ────────────────────────────────────────
 
 function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, pool, dataMode, config) {
@@ -151,10 +175,10 @@ function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, p
 
     portfolio.initializeChron();
 
-    // Calibrated mode re-centers deviations on each asset's configured rate —
-    // capture those rates now, before applyRandomRates starts overwriting them.
+    // Calibrated mode re-centers deviations on the rate each asset grows at in
+    // the plan — capture those now, before applyRandomRates overwrites them.
     const baseRates = dataMode === 'calibrated'
-        ? new Map(portfolio.modelAssets.map(a => [a, a.annualReturnRate?.rate ?? 0]))
+        ? calibrationBaseRates(portfolio.modelAssets)
         : null;
 
     // Two-phase simulation: deterministic rates before retirement, randomized after
