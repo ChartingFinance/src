@@ -50,6 +50,9 @@ import { FilingStatus, asFilingStatus } from '../filing-status.js';
 import { DateInt } from '../utils/date-int.js';
 import { TaxTable, TaxOwner } from '../taxes.js';
 import { Currency } from '../utils/currency.js';
+import { FinancialPackage } from '../financial-package.js';
+import { taxableBasis } from '../tax-basis.js';
+import { User } from '../user.js';
 
 // ── Refusals ─────────────────────────────────────────────────────────
 
@@ -191,53 +194,73 @@ const RESIDUAL_EXPENSE_LABEL = 'Living Expenses';
  *
  * So the residual has to be sized from net, and net is a tax question.
  *
- * **Nothing here invents a rate.** `calculateFICATax` and
- * `calculateYearlyIncomeTax` are the engine's own, called with the engine's own
- * table; the only thing this function contributes is the ORDER, which mirrors
- * `payroll-engine.js`: FICA per asset, household income tax on the annualised
- * total less the standard deduction, then allocated across earners in
- * proportion to income.
+ * **Nothing here decides what is taxed.** The household tax comes from the
+ * engine's own `taxableBasis()` and `calculateYearlyIncomeTax()`, given the same
+ * one-month package payroll builds — wages, benefits and pre-tax deferrals — so
+ * §86, the age-65 deductions and the deferral all apply exactly as they do in a
+ * run. This function contributes only the ORDER, which mirrors
+ * `payroll-engine.js`: FICA per earner, the household tax allocated across
+ * earners in proportion to wages, and the on-arrival withholding on a pension or
+ * Social Security.
  *
- * That order is nevertheless a SECOND implementation of a sequence the payroll
- * engine owns, which is the cost of keeping §5.3 as written. It is pinned by
- * `tests/build-plan.mjs`, which compares this estimate against the withholding
- * a real run actually books, to the cent. If the payroll pass changes and this
- * does not, that test fails — which is the whole reason it exists.
+ * Take-home is what payroll actually deposits: gross less FICA, income tax and
+ * any pre-tax deferral. The residual is a share of THAT — a 401(k) leg takes
+ * gross, every other leg takes take-home.
+ *
+ * Until 2026-09-23 this computed the tax by hand, and missed every rule added
+ * to the engine after it was written: Social Security at a flat 85%, no age-65
+ * deductions, no deferral, no pension withholding. Each made the residual
+ * expense wrong, and a 401(k) plan never funded itself. `tests/build-plan.mjs`
+ * compares this estimate with what a real run books, to the cent, for each.
  */
-function withholdingFor(incomeAssets, { filingAs, propertyTaxDeductionMax }) {
+function withholdingFor(incomeAssets, deferrals, { filingAs, propertyTaxDeductionMax,
+    startAge, birthYear, pensionWithholdingRate, socialSecurityWithholdingRate }) {
     const taxTable = new TaxTable(filingAs, propertyTaxDeductionMax);
 
-    // FICA is per asset and applies to WORKING income only — the same guard
-    // `applyPreTaxWithholding` uses. A pension is not wages.
+    // One month of the household package, as payroll has it when it estimates
+    // the household tax.
+    const pkg = new FinancialPackage();
     const fica = new Map();
+    const deferred = new Map();
     for (const a of incomeAssets) {
-        fica.set(a.displayName, a.instrument === Instrument.WORKING_INCOME
-            ? taxTable.calculateFICATax(false,
-                new Currency(a.startCurrency.amount), TaxOwner.PRIMARY).fica().amount
-            : 0);
+        const gross = new Currency(a.startCurrency.amount);
+        if (a.instrument === Instrument.WORKING_INCOME) {
+            // FICA applies to wages only, and is not reduced by a deferral.
+            fica.set(a.displayName,
+                taxTable.calculateFICATax(false, gross, TaxOwner.PRIMARY).fica().amount);
+            pkg.employedIncome.add(gross);
+            const d = deferrals.get(a.displayName) ?? { four01K: 0, ira: 0 };
+            pkg.four01KContribution.add(new Currency(gross.amount * d.four01K));
+            pkg.tradIRAContribution.add(new Currency(gross.amount * d.ira));
+            deferred.set(a.displayName, gross.amount * (d.four01K + d.ira));
+        } else if (a.instrument === Instrument.RETIREMENT_INCOME) {
+            pkg.socialSecurityIncome.add(gross);
+        } else if (a.instrument === Instrument.PENSION) {
+            pkg.pensionIncome.add(gross);
+        }
     }
 
-    // Social Security enters the IRS base at a flat 85% (financial-package.js:69),
-    // so it must not be annualised at face value here either.
-    const annualOrdinary = incomeAssets.reduce((sum, a) => sum + a.startCurrency.amount * 12
-        * (a.instrument === Instrument.RETIREMENT_INCOME ? 0.85 : 1), 0);
+    const { ordinaryTaxable } = taxableBasis(pkg, new User(startAge, birthYear),
+        { annualise: true, taxTable });
+    const householdMonthlyTax = taxTable.calculateYearlyIncomeTax(ordinaryTaxable).amount / 12;
 
-    const taxable = Math.max(0, annualOrdinary - taxTable.activeStandardDeduction);
-    const householdMonthlyTax =
-        taxTable.calculateYearlyIncomeTax(new Currency(taxable)).amount / 12;
-
-    // Allocated in proportion to income, exactly as applyNetIncome does.
-    const totalWorking = incomeAssets
-        .filter(a => a.instrument === Instrument.WORKING_INCOME)
-        .reduce((n, a) => n + a.startCurrency.amount, 0);
+    // Allocated across earners in proportion to wages, exactly as applyNetIncome does.
+    const totalWorking = pkg.employedIncome.amount;
 
     const net = new Map();
     for (const a of incomeAssets) {
-        const share = totalWorking > 0 && a.instrument === Instrument.WORKING_INCOME
-            ? a.startCurrency.amount / totalWorking : 0;
-        const incomeTax = householdMonthlyTax * share;
-        net.set(a.displayName,
-            Math.max(0, a.startCurrency.amount - fica.get(a.displayName) - incomeTax));
+        const gross = a.startCurrency.amount;
+        let takeHome;
+        if (a.instrument === Instrument.WORKING_INCOME) {
+            const incomeTax = totalWorking > 0 ? householdMonthlyTax * gross / totalWorking : 0;
+            takeHome = gross - fica.get(a.displayName) - incomeTax - deferred.get(a.displayName);
+        } else {
+            // Benefits withhold on arrival at a flat rate (payroll-engine.js).
+            const rate = a.instrument === Instrument.PENSION
+                ? pensionWithholdingRate : socialSecurityWithholdingRate;
+            takeHome = gross * (1 - rate);
+        }
+        net.set(a.displayName, Math.max(0, takeHome));
     }
     return { net, taxTable, householdMonthlyTax };
 }
@@ -612,9 +635,26 @@ export function buildPlan(intent = {}) {
     // Withholding is needed before any residual can be sized, and it depends on
     // every income asset at once (the household tax is allocated across them).
     const incomeAssets = raw.filter(a => incomeLabels.includes(a.displayName));
+
+    // Pre-tax deferrals: the share of each wage routed to a 401(k) or a
+    // traditional IRA. Payroll takes these from GROSS pay, before tax.
+    const deferrals = new Map();
+    for (const s of splits) {
+        const to = raw.find(a => a.displayName === s.to);
+        const kind = to?.instrument === Instrument.FOUR_01K ? 'four01K'
+            : to?.instrument === Instrument.IRA ? 'ira' : null;
+        if (!kind) continue;
+        const d = deferrals.get(s.from) ?? { four01K: 0, ira: 0 };
+        d[kind] += s.percent / 100;
+        deferrals.set(s.from, d);
+    }
+
     const { net: netByIncome, householdMonthlyTax } =
-        withholdingFor(incomeAssets, { filingAs,
-            propertyTaxDeductionMax: D.propertyTaxDeductionMax });
+        withholdingFor(incomeAssets, deferrals, { filingAs,
+            propertyTaxDeductionMax: D.propertyTaxDeductionMax,
+            startAge, birthYear,
+            pensionWithholdingRate: D.pensionWithholdingRate,
+            socialSecurityWithholdingRate: D.socialSecurityWithholdingRate });
 
     // ── Which account holds the money that gets spent ────────────
     //

@@ -401,6 +401,78 @@ await check('withholding estimate matches what the run books, to the cent', asyn
         + `withholding in build-plan.js has drifted from payroll-engine.js.`);
 });
 
+// ── The estimate follows every rule the engine applies ──────────────
+//
+// The pin above uses the one household the old hand-rolled estimate happened
+// to get right: a 50-year-old on wages alone. Each case below exercises a rule
+// that estimate did not know about, and each was measured wrong before
+// 2026-09-23 — by $161, $120, $200 a month, and a 401(k) plan that was
+// unfunded 65 months of 120.
+
+/** What the run deposits, and what build_plan planned to spend, in month one. */
+async function firstMonth(intent) {
+    const { spec } = buildPlan(intent);
+    const { portfolio } = await runPlan(spec);
+    const month = String(portfolio.firstDateInt);
+    const booked = (name, type) => (portfolio.modelAssets.find(a => a.displayName === name)?.events ?? [])
+        .filter(e => e.type === type && String(e.dateInt) === month)
+        .reduce((n, e) => n + e.amount.amount, 0);
+    const le = Math.abs(spec.modelAssets.find(a => a.displayName === 'Living Expenses').startCurrency.amount);
+    const unfundedMonths = new Set(portfolio.modelAssets.flatMap(a => a.events)
+        .filter(e => e.type === 'unfunded').map(e => String(e.dateInt))).size;
+    return { spec, portfolio, booked, le, unfundedMonths };
+}
+
+/** Salary take-home as payroll books it: gross less FICA, income tax and any deferral. */
+const salaryTakeHome = (r, deferral = 0) =>
+    r.portfolio.modelAssets.find(a => a.displayName === 'Salary').startCurrency.amount
+    + r.booked('Salary', 'ficaWithholding') + r.booked('Salary', 'incomeTaxWithholding') - deferral;
+
+const SAVE_10 = { horizonYears: 10, accounts: [{ label: 'Savings', startingBalance: 0 }],
+    savingsSplit: [{ from: 'Salary', to: 'Savings', percent: 10 }] };
+
+await check('Social Security is taxed by §86, not at a flat 85%', async () => {
+    // $20k of wages and $24k of benefits: provisional income $32,000, so §86
+    // taxes $3,500 of the benefit where a flat 85% taxed $20,400.
+    const r = await firstMonth({ ...SAVE_10, income: [{ label: 'Salary', annual: 20000 },
+        { label: 'Social Security', annual: 24000, kind: 'socialSecurity' }] });
+    const planned = 0.9 * salaryTakeHome(r) + 2000;      // SS withholds nothing by default
+    assert.ok(Math.abs(r.le - planned) < 0.01,
+        `Living Expenses ${r.le.toFixed(2)}, but the run deposits for ${planned.toFixed(2)}`);
+});
+
+await check('a household of 65+ gets the age deductions in the estimate', async () => {
+    const r = await firstMonth({ ...SAVE_10, settingsOverrides: { startAge: 66, retirementAge: 70 },
+        income: [{ label: 'Salary', annual: 100000 }] });
+    const planned = 0.9 * salaryTakeHome(r);
+    assert.ok(Math.abs(r.le - planned) < 0.01,
+        `Living Expenses ${r.le.toFixed(2)}, but the run deposits for ${planned.toFixed(2)}`);
+});
+
+await check('a pension withholds on arrival, and the plan spends what arrives', async () => {
+    const r = await firstMonth({ ...SAVE_10, income: [{ label: 'Salary', annual: 40000 },
+        { label: 'Pension', annual: 24000, kind: 'pension' }] });
+    const pensionTakeHome = 2000 + r.booked('Pension', 'incomeTaxWithholding');
+    assert.ok(pensionTakeHome < 2000, 'the pension withheld nothing — this case would be vacuous');
+    const planned = 0.9 * salaryTakeHome(r) + pensionTakeHome;
+    assert.ok(Math.abs(r.le - planned) < 0.01,
+        `Living Expenses ${r.le.toFixed(2)}, but the run deposits for ${planned.toFixed(2)}`);
+});
+
+await check('a 401(k) deferral is taken before tax, and the plan still funds itself', async () => {
+    const r = await firstMonth({ horizonYears: 10,
+        income: [{ label: 'Salary', annual: 100000 }],
+        accounts: [{ label: 'Savings', startingBalance: 0 }, { label: '401k', startingBalance: 0 }],
+        savingsSplit: [{ from: 'Salary', to: '401k', percent: 10 }] });
+    const deferral = r.portfolio.modelAssets.find(a => a.displayName === '401k')
+        .getHistory('four01KContribution')[0];
+    assert.ok(deferral > 0, 'no deferral was booked — this case would be vacuous');
+    const planned = 0.9 * salaryTakeHome(r, deferral);
+    assert.ok(Math.abs(r.le - planned) < 0.01,
+        `Living Expenses ${r.le.toFixed(2)}, but the run deposits for ${planned.toFixed(2)}`);
+    assert.equal(r.unfundedMonths, 0, `${r.unfundedMonths} unfunded months — the plan does not fund itself`);
+});
+
 await check('the emitted spec is anchored — it does not move with the clock', async () => {
     // Ties step 2 to step 0. A compiler whose output means something different
     // next January is a compiler with a nondeterministic target.
