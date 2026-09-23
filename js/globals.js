@@ -32,19 +32,11 @@ export { global_retirement_withholding_rate, global_deferred_allocation_age }
 export const global_default_inflationRate = SIM_CONFIG_DEFAULTS.inflationRate;
 
 /**
- * The filing statuses this engine models. One vocabulary, validated at the door.
- *
- * There used to be three: 'Single' here, 'MFJ' in the settings <select>, and
- * "single" / "married" as the filingType keys inside the tax tables — with
- * `global_filingAs != 'Single'` as the only branch that read any of them. MFJ
- * therefore worked by falling through an else, which means a corrupted
- * localStorage value or a future 'MFS' option would have silently filed the
- * household jointly. FILING_TYPE_KEY in taxes.js maps these to the table keys,
- * so the table vocabulary stays an implementation detail of the tables.
+ * The filing statuses this engine models: one vocabulary, validated where it
+ * enters. FILING_TYPE_KEY in taxes.js maps them to the tax tables' own keys.
  */
-// Moved to filing-status.js (Spec 9 step 1) so sim-config.js can validate a
-// status without importing this module — see §4.6. Re-exported here because
-// finplan-app.js, taxes.js and run-plan.js all import it from globals.
+// Defined in filing-status.js, so sim-config.js can validate a status without
+// importing this module; re-exported for existing importers.
 export { FilingStatus, FILING_STATUSES, isFilingStatus, asFilingStatus };
 
 export const global_default_filingAs = SIM_CONFIG_DEFAULTS.filingAs;
@@ -60,13 +52,11 @@ export const global_default_fica = 7.65;
 
 /**
  * Split the residual household tax across the accounts that generated the
- * income, instead of billing the whole thing to the funding backstop.
+ * income, instead of billing all of it to the funding backstop.
  *
- * OFF until the golden masters are re-blessed against the predictions in
- * markdowns/tax-allocation-spec.md §7.6. With this false the engine must be
- * event-for-event identical to one built without the feature — that is the
- * neutrality assertion in tests/tax-allocation.mjs, and it is what makes the
- * flag a real rollback rather than a decoration.
+ * Off until the baselines are re-blessed against the predictions in
+ * markdowns/tax-allocation-spec.md §7.6. Off, the engine is event-for-event
+ * identical to one without the feature (tests/tax-allocation.mjs asserts it).
  */
 export const global_default_allocate_household_tax = SIM_CONFIG_DEFAULTS.allocateHouseholdTax;
 export let global_allocate_household_tax = global_default_allocate_household_tax;
@@ -77,17 +67,12 @@ export function global_setAllocateHouseholdTax(value) {
 
 
 /**
- * Federal withholding on a periodic pension payment.
+ * Federal withholding on a periodic pension payment: 10%, the Form W-4P
+ * default. Like every withholding rate, it decides which account pays, not how
+ * much: the true-ups settle any over- or under-withholding.
  *
- * 10% stands in for the Form W-4P default, which is to withhold on periodic
- * payments unless the recipient elects otherwise. Like every rate in this file
- * it governs ATTRIBUTION, not correctness — the monthly and annual true-ups
- * reconcile over- and under-withholding in either direction, so a wrong rate
- * misplaces cash between accounts without changing the household's total tax.
- *
- * Withheld ON ARRIVAL: it reduces what the pension pays out, rather than
- * debiting an account afterwards the way IRA/401(K) withholding does. A pension
- * is a flow with no balance to debit — see markdowns/retirement-income-withholding-spec.md.
+ * Withheld on arrival — it reduces what the pension pays out — because a
+ * pension is a flow with no balance to debit afterwards.
  */
 export const global_default_pension_withholding_rate = SIM_CONFIG_DEFAULTS.pensionWithholdingRate;
 export let global_pension_withholding_rate = global_default_pension_withholding_rate;
@@ -97,17 +82,10 @@ export function global_setPensionWithholdingRate(value) {
 }
 
 /**
- * Federal withholding on Social Security.
- *
- * ZERO by default, and that is the faithful modelling choice rather than a
- * placeholder. Form W-4V is ELECTIVE — 7, 10, 12 or 22 percent, with no default
- * — and not filing one is the common case, so most recipients have nothing
- * withheld. Withholding by default would model a decision the household never
- * made.
- *
- * The consequence is deliberate and worth stating: Social Security stays
- * unattributed unless a rate is elected, which is over half of taxable income in
- * a fully-retired plan. The mechanism is there the moment someone chooses it.
+ * Federal withholding on Social Security: zero by default. Form W-4V is
+ * elective (7, 10, 12 or 22%, no default) and most recipients never file one.
+ * So by default the tax on Social Security is paid by the true-up from the
+ * funding account, not withheld from the benefit.
  */
 export const global_default_social_security_withholding_rate = SIM_CONFIG_DEFAULTS.socialSecurityWithholdingRate;
 export let global_social_security_withholding_rate = global_default_social_security_withholding_rate;
@@ -152,12 +130,10 @@ export function global_reset() {
 // ── Worker settings snapshot ──────────────────────────────────
 //
 // Web Workers have no localStorage, so their copy of this module boots with
-// DEFAULTS — a simulation run in a worker would use the wrong age, filing
-// status, inflation, etc. (life-event trigger dates derive from
-// global_user_startAge, so even phase timing shifts). Every worker payload
-// must carry global_workerSnapshot() from the main thread, and every worker
-// message handler must call global_applyWorkerSnapshot(payload.settings)
-// BEFORE constructing a TaxTable or touching model objects.
+// defaults. Every worker payload must carry global_workerSnapshot(), and every
+// worker handler must call global_applyWorkerSnapshot(payload.settings) before
+// building a TaxTable or a config, or the worker simulates the wrong ages,
+// filing status and inflation.
 
 /** A TaxTable for the current settings' filing status and property-tax cap. */
 export function makeActiveTaxTable() {
@@ -205,13 +181,8 @@ export function global_workerSnapshot() {
         userFinishAge: global_user_finishAge,
         backtestYear: global_backtestYear,
         simDataMode: global_simDataMode,
-        // Added by Spec 9 step 5c. These three are READ BY THE ENGINE
-        // (tax-engine, payroll-engine x2) but were never in the payload, so a
-        // worker ran on its own defaults for them. Latent rather than live —
-        // all three sit at their defaults today, so a worker booting on
-        // defaults happened to agree — but toggling spec 4a on would have
-        // silently given Monte Carlo a different tax regime than the chart
-        // beside it.
+        // The engine reads these too (tax-engine, payroll-engine), so a
+        // worker must not fall back to its defaults for them.
         allocateHouseholdTax: global_allocate_household_tax,
         pensionWithholdingRate: global_pension_withholding_rate,
         socialSecurityWithholdingRate: global_social_security_withholding_rate,
@@ -249,33 +220,12 @@ export function global_multBy100(value) {
 }
 
 /**
- * ── Setters adopt what they set ──────────────────────────────────────
+ * ── Setters ──────────────────────────────────────────────────────────
  *
- * Every setter below writes localStorage AND assigns its exported binding.
- * That was not always true. Seven of them wrote storage only, and the binding
- * was updated by the matching `global_getX()` — a "getter" that returns nothing
- * and loads module state. So a caller that set a value without calling the
- * getter stored the new value and kept running on the old one.
- *
- * That is exactly what share-link import did. Measured on main, importing a
- * plan built for ages 55/65/85: localStorage held 55/65/85, the settings inputs
- * showed the 50/67/87 defaults, and the timeline read "Sep 2026 · Age 50" —
- * because `applyImportedPortfolio` called the setters, then `syncGlobalsToSettings()`
- * read the STALE bindings and wrote the defaults back over the DOM. Nothing was
- * discarded; it was stored and ignored.
- *
- * The convention was already here and already correct in the newer half of the
- * file — the guardrail setters, simDataMode, showEngineDiagnostics all assign.
- * The app's own callers knew too: the quick-start loader and all six settings
- * listeners pair every setter with its getter, and `tests/niit-visibility.mjs`
- * does the same. One call site out of twenty-five did not, and only that one
- * was broken. A convention that must be remembered at every call site is a
- * defect with a workaround, so the setters now do it themselves.
- *
- * Each assigns what the getter WOULD read back — parsed, and rounded the same
- * way it is stored — so memory and storage cannot disagree in the fourth
- * decimal. The paired `global_getX()` calls already in the codebase are now
- * redundant, and harmless; they are not worth churning.
+ * Every setter writes localStorage AND assigns its exported binding, storing
+ * exactly what the getter would read back (parsed and rounded the same way), so
+ * memory and storage cannot disagree. A caller never has to call the matching
+ * `global_getX()` afterwards; the calls that still do are harmless.
  */
 
 export function global_setInflationRate(value) {
@@ -292,9 +242,8 @@ export function global_getInflationRate() {
 }
 
 export function global_setFilingAs(value) {
-    // Throws rather than coerces: every caller is code with a known value — the
-    // settings <select>, a quick-start profile, a test harness. A silent
-    // fallback here is how 'MFJ' came to work by accident in the first place.
+    // Throws rather than coerces: every caller passes a known value (the
+    // settings <select>, a quick-start profile, a test).
     if (!isFilingStatus(value)) {
         throw new Error(`global_setFilingAs: ${JSON.stringify(value)} is not one of ${FILING_STATUSES.join(', ')}`);
     }
@@ -362,25 +311,13 @@ export function global_getUserFinishAge() {
 }
 
 /**
- * The month the user retires in, resolved against a PLAN.
+ * The month the user retires in, resolved against a plan.
  *
- * Both of these used to derive their own birth year from the wall clock —
- * `new Date().getFullYear() - global_user_startAge` — the same second
- * derivation Spec 10 step 0 removed from `plan-dates.js`, surviving here
- * because these read the settings rather than a config. It is not cosmetic:
- * the retirement date returned here is handed to Monte Carlo and Guardrails,
- * which compare it against months the ENGINE produced from `config.birthYear`.
- * The gap is however many years have passed since the plan's first month, so a
- * scenario saved in one year and reopened in the next started withdrawing a
- * year late, and a five-year-old plan five years late — measured, on a
- * mid-career plan starting Aug 2021: guardrails switched regime in Jan 2048,
- * the plan retires in Jan 2043.
- *
- * So the anchor comes in now, read by `birthYearFor()` — the same reader the
- * engine uses, throwing on an unanchored config for the same reason a fallback
- * here would be the original bug wearing a guard clause. Only the anchor: the
- * AGES stay module state, because these are settings accessors and the
- * settings form is what moves them.
+ * Monte Carlo and Guardrails compare this date with months the engine produced
+ * from `config.birthYear`, so it must use the same anchor: `birthYearFor()`,
+ * which throws on an unanchored config. A birth year from the clock would put
+ * the retirement date off by however many years the plan has been saved. The
+ * ages still come from the settings.
  *
  * @param {object} env a SimConfig carrying `birthYear` — a run's
  *   `portfolio.config`, or the editor's `appState.editingConfig`, which is
@@ -431,10 +368,8 @@ export function global_getSimDataMode() {
 }
 
 // ── Engine diagnostics ────────────────────────────────────────
-// Off by default, and deliberately so. The reconciliation findings this
-// unlocks say "these numbers may not add up", which is an honest signal but
-// reads as self-doubt printed beside someone's retirement projection. It is a
-// firehose for getting into the weeds, not a default experience.
+// Off by default. The reconciliation findings it reveals ("these numbers may
+// not add up") are for debugging, not for someone reading their projection.
 
 export const global_default_showEngineDiagnostics = false;
 

@@ -1,7 +1,7 @@
 /**
- * <finplan-timeline>  — rev B: "the timeline becomes the chart"
+ * <finplan-timeline> — the timeline as a chart.
  *
- * One SVG wealth arc replaces the old band + labels + cursor rows:
+ * One SVG wealth arc:
  *  - Phase tint bands with the phase growth rate as the headline label
  *  - Total-metric value curve with per-phase area fills
  *  - Asset milestones pinned to the curve (buy/sell, payoff, income starts)
@@ -9,7 +9,7 @@
  *    phase boundaries (e.g. value at retirement)
  *  - Scrubbable "you are here" cursor (pointer drag + arrow keys) that drives
  *    the app-wide viewing date through the store
- *  - Year/month dropdown controls + play-through (unchanged behavior)
+ *  - Year/month dropdown controls + play-through
  *  - Slim phase chips below the arc: name + age range + edit
  *
  * Phase visibility rules:
@@ -36,22 +36,17 @@ const ARC_W = 1000;
 const ARC_H = 210;
 const PAD_L = 10;
 const PAD_R = 10;
-const PAD_T = 42;   // room for band labels and pins — the cursor chip used to
-                    // live in here too, which is why this was 70; it now has
-                    // its own row above the arc, so the reserve came back as
-                    // dead space between the start/end values and the bands.
+const PAD_T = 42;   // room for band labels and pins (the cursor chip has its
+                    // own row above the arc)
 const PAD_B = 30;   // room for the age axis
 const PLOT_W = ARC_W - PAD_L - PAD_R;
 const PLOT_H = ARC_H - PAD_T - PAD_B;
 const BASE_Y = ARC_H - PAD_B;
 
-// Exported so tests/editing-anchor.mjs can borrow the prototype and check the
-// age↔year mapping headlessly. A custom element cannot be constructed under
-// node, but every method here is a pure function of a handful of fields, so a
-// test can call them on an `Object.create(FinplanTimeline.prototype)`. That
-// checks THIS code rather than a copy of it, which for an anchor bug matters:
-// the two errors cancel in the round trip through `_ageAtIndex` and a
-// re-implementation would likely cancel them too.
+// Exported so tests/editing-anchor.mjs can check the age↔year mapping under
+// node: a custom element cannot be constructed there, but these methods are pure
+// functions of a few fields, so the test calls them on
+// `Object.create(FinplanTimeline.prototype)` — the shipped code, not a copy.
 export class FinplanTimeline extends LitElement {
 
     static properties = {
@@ -130,26 +125,14 @@ export class FinplanTimeline extends LitElement {
     // ── Timeline span ───────────────────────────────────────────────
 
     /**
-     * The birth year every age↔year mapping on this arc runs through: the axis
-     * labels, the phase bands, the mortgage payoff marker, the scrub cursor.
+     * The birth year every age↔year mapping on this arc uses: the axis labels,
+     * the phase bands, the mortgage payoff marker, the scrub cursor.
      *
-     * It has to be the PLAN's anchor, because everything it maps is the plan's:
-     * `_ageAtIndex` walks months forward from `portfolio.firstDateInt`, and the
-     * label under the arc turns the result back into a calendar year. Deriving
-     * a second birth year from `new Date()` — as this did — agreed with the
-     * engine only while the plan's first month fell in the current year, which
-     * is true of every freshly built Quick Start plan and false the January
-     * after one is saved.
-     *
-     * The two errors cancel in the round trip through `_ageAtIndex`, so the
-     * curve stayed right while the axis under it, the band edges and the payoff
-     * marker all slid — by however old the plan was, not by one year, because
-     * `_timelineStartAge` mins against `firstDateInt.year - birthYear` too. A
-     * plan starting Aug 2021, read in 2026, labelled its axis 2021–2072 where
-     * the engine runs Aug 2021 – Dec 2066.
-     *
-     * The clock is consulted only with no portfolio, when there are no months
-     * to label and `startAge` is all there is.
+     * It must be the plan's anchor, because everything drawn here comes from
+     * the plan: `_ageAtIndex` walks months from `portfolio.firstDateInt`. A birth
+     * year from `new Date()` would shift the axis and markers for any plan
+     * reopened in a later year, while the curve (which round-trips through
+     * `_ageAtIndex`) stayed right. The clock is used only with no portfolio.
      */
     get _birthYear() {
         return this.portfolio?.config?.birthYear
@@ -480,9 +463,8 @@ export class FinplanTimeline extends LitElement {
     }
 
     /**
-     * Same span, in today's dollars. The pair reads as "7.2%/yr · 4.0% real"
-     * — the single most honest number on this screen, since a nominal growth
-     * rate quietly includes the inflation the plan also assumes.
+     * Same span, in today's dollars. The pair reads "7.2%/yr · 4.0% real":
+     * a nominal rate includes the inflation the plan also assumes.
      * Returns null when a real rate isn't meaningful (sign change, no index).
      */
     _computeRealCAGRBetween(startIdx, endIdx) {
@@ -654,10 +636,8 @@ export class FinplanTimeline extends LitElement {
                 const safeEnd = Math.max(startIdx + 1, endIdx);
                 const cagr = this._computeCAGRBetween(startIdx, safeEnd);
                 const realCagr = this._computeRealCAGRBetween(startIdx, safeEnd);
-                // Centred on the phase it measures. Anchored at the left edge
-                // it read as a property of the boundary it sat next to; the
-                // rate describes the whole span, so it belongs over the middle
-                // of it. The name stays at the edge — that IS a boundary label.
+                // The rate is centred over the phase it describes; the name
+                // stays at the edge, where the boundary is.
                 const rateX = (x0 + x1) / 2;
                 parts.push(svg`
                     <text x=${rateX.toFixed(1)} y=${PAD_T + 16} font-size="16" font-weight="700"
@@ -766,10 +746,8 @@ export class FinplanTimeline extends LitElement {
 
     /** Open/close values on the curve endpoints. */
     /**
-     * Endpoint DOTS only. The values themselves live in the header row above
-     * the arc (_renderEndpointValues): stacking a nominal and a real figure on
-     * the curve put four numbers inside the plot area and made the whole thing
-     * hard to read.
+     * Endpoint dots only. The values are in the header row above the arc
+     * (_renderEndpointValues), which keeps numbers out of the plot area.
      */
     _svgEndpoints(series, Y) {
         const { vals, lastIdx } = series;
@@ -885,11 +863,8 @@ export class FinplanTimeline extends LitElement {
     }
 
     /**
-     * HTML overlay chip above the cursor: date · age — value.
-     *
-     * It used to carry a ⋯ that opened a month-detail popover. That detail is
-     * now the Month Details section directly beneath the timeline, always on
-     * screen, so the chip no longer needs a way in to it.
+     * HTML overlay chip above the cursor: date · age — value. The month's
+     * detail is in the Month Details section below the timeline.
      */
     _renderCursorChip(sAge, fAge) {
         if (!this.portfolio?.firstDateInt) return nothing;
@@ -955,7 +930,7 @@ export class FinplanTimeline extends LitElement {
     }
 
     /**
-     * Edit/Remove popover for a phase chip (review point 4).
+     * Edit/Remove popover for a phase chip.
      * Phases are structural, so Remove is an explanation rather than an action;
      * when removable (non-phase) life events join the chips row, a live Remove
      * item slots in here.
