@@ -315,24 +315,32 @@ const engine = {
 // changes what each later proportional-basis withdrawal realises. The final
 // balances are unchanged because the Brokerage is depleted again by the end;
 // only the realised gain along the way differs.
+// Moved 2026-09-23 by the age-65 deductions (IRC §63(f) and the OBBBA senior
+// deduction), which did not exist before: the standard deduction was one flat
+// number for every age. incomeTax -$15,369 over the plan; Brokerage +$99,973
+// and portfolioTotal +$100,390 as the retained tax compounds; Roth +$417.
+// longTermCapitalGains -$2,716 is SECOND-ORDER, like the 2026-08-06 move: a
+// fatter Brokerage realises a different gain on each proportional-basis
+// withdrawal. Layer A (clean-room law vs engine) still passes. IRC §86 moved
+// nothing here — this household's IRA draws keep it at the 85% ceiling.
 const EXPECTED_ENGINE = {
   "Social Security": 3882.14,
   "401K": 4330365.45,
-  "Roth IRA": 4990872.31,
-  "Brokerage": 9021977.34,
+  "Roth IRA": 4991289.04,
+  "Brokerage": 9121950.66,
   "Home": 0.00,
   "Mortgage": 0.00,
   "Living Expenses": -13937.35,
   "Rent": -6427.41,
-  "portfolioTotal": 18343215.09,
+  "portfolioTotal": 18443605.15,
   "employedIncome": 3432182.06,
   "socialSecurityIncome": 854014.60,
   "four01KContribution": 274574.57,
   "four01KDistribution": 4373405.30,
-  "longTermCapitalGains": 1825963.66,
+  "longTermCapitalGains": 1823247.82,
   "mortgageInterest": -287174.02,
   "propertyTaxes": -157235.10,
-  "incomeTax": -734223.67,
+  "incomeTax": -718854.22,
 };
 
 // Frozen: how often Early Career's transfers legitimately fail to balance on

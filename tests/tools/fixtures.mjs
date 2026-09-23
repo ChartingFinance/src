@@ -689,7 +689,7 @@ const adversarialFixtures = [
       'carries an annual true-up (correctly counted as tax) alongside the ' +
       'premium (currently counted as spending) in the same years, so it ' +
       'discriminates a partial fix and a double count. Measured 2027: tax ' +
-      'reads $11,475 where $33,048 left the account for tax — 65% low.\n' +
+      'reads $4,929 where $27,837 left the account for tax — 82% low.\n' +
       '      THE SHAPE IS LOAD-BEARING, all three parts.\n' +
       '      No cash and no bank: fundingBackstopPriority puts both ahead of ' +
       'taxableEquity, and the gross-up only fires on a taxable account.\n' +
@@ -707,7 +707,17 @@ const adversarialFixtures = [
       assets: [
         // 20% basis: the embedded gain is the whole point.
         equity('Brokerage', 3000000, 600000, { annualReturnRate: { rate: 0.05 } }),
-        benefit('Pension', 8000),
+        // A PENSION, not Social Security. Until 2026-09-23 this was
+        // benefit('Pension', …), which builds a `retirementIncome` asset — the
+        // SOCIAL SECURITY instrument, whatever its display name says. That
+        // mattered the moment Social Security got IRC §86: the gross-up sizes
+        // its rate from a part-built month, before the draw's own gain is
+        // booked, and §86 then found a 0% LTCG rate. The premium this fixture
+        // exists to witness fell from $115,038 to $7,682 and the split it
+        // guards went from 65% low to 5%. A pension is fully taxable ordinary
+        // income, which is what the shape below always meant.
+        asset(DEC)({ instrument: 'pension', displayName: 'Pension',
+          startCurrency: { amount: 8000 }, startBasisCurrency: { amount: 0 } }),
         expense('Living', 20000),
       ].map(ModelAsset.fromJSON),
     }),

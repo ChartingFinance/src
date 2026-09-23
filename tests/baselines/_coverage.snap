@@ -172,6 +172,7 @@
     incomeGrowth
     incomeTaxWithholding
     interestIncome
+    taxTrueUp
     transfer
   niit-from-a-deferred-draw:
     assetGrowth
@@ -263,6 +264,7 @@
     incomeGrowth
     incomeTaxWithholding
     spillover
+    taxTrueUp
     transfer
   quickstart-retiredCouple:
     assetGrowth
@@ -270,6 +272,7 @@
     grossUp
     incomeGrowth
     incomeTaxWithholding
+    taxTrueUp
     transfer
   quickstart-youngCouple:
     assetGrowth
@@ -305,6 +308,7 @@
     incomeGrowth
     incomeTaxWithholding
     interestIncome
+    taxTrueUp
     transfer
   settlement-exhausts-fallback:
     assetGrowth

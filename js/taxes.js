@@ -122,6 +122,39 @@ export const us_2026_taxtables = {
         "single": 250000.0,
         "married": 500000.0
     },
+    // IRC §63(f) — the additional standard deduction for a filer aged 65 or
+    // older, PER PERSON: a married couple where both qualify gets it twice.
+    // Indexed, like the standard deduction it adds to, and — also like it —
+    // lost entirely by a household that itemises.
+    "additionalStandardDeduction65": {
+        "url": "https://www.irs.gov/newsroom/irs-releases-tax-inflation-adjustments-for-tax-year-2026-including-amendments-from-the-one-big-beautiful-bill",
+        "single": 2050.0,
+        "married": 1650.0
+    },
+    // The One Big Beautiful Bill Act's senior deduction: $6,000 per person
+    // aged 65 or older, for tax years 2025 through 2028 only, each person's
+    // $6,000 reduced by 6% of MAGI over the threshold. NOT indexed, and taken
+    // whether the household itemises or not — it is not part of the standard
+    // deduction. Fully phased out at $175,000 single, $250,000 joint.
+    "seniorDeduction": {
+        "url": "https://www.irs.gov/newsroom/one-big-beautiful-bill-provisions",
+        "amount": 6000.0,
+        "phaseOutRate": 0.06,
+        "single": 75000.0,
+        "married": 150000.0,
+        "firstYear": 2025,
+        "lastYear": 2028
+    },
+    // IRC §86 — how much of a Social Security benefit is taxable. The base
+    // amount ($25,000 / $32,000) has been fixed since 1984 and the adjusted
+    // base amount ($34,000 / $44,000) since 1993. Neither is indexed, so a
+    // larger share of benefits becomes taxable every year — the same kind of
+    // statutory stealth tax as the NIIT threshold below. See inflateTaxes().
+    "socialSecurityBenefits": {
+        "url": "https://www.irs.gov/publications/p915",
+        "single":  { "base": 25000.0, "adjusted": 34000.0 },
+        "married": { "base": 32000.0, "adjusted": 44000.0 }
+    },
     // IRC §1411 net investment income tax. The RATE and the THRESHOLDS have
     // both been fixed since 2013 and neither is inflation-indexed — see the
     // note in inflateTaxes(). This is a deliberate stealth tax: the threshold
@@ -204,6 +237,27 @@ export const us_2025_taxtables = {
         "url": "https://www.irs.gov/taxtopics/tc701",
         "single": 250000.0,
         "married": 500000.0
+    },
+    // IRC §63(f) and the OBBBA senior deduction — see the 2026 table.
+    "additionalStandardDeduction65": {
+        "url": "https://www.irs.gov/newsroom/irs-releases-tax-inflation-adjustments-for-tax-year-2025",
+        "single": 2000.0,
+        "married": 1600.0
+    },
+    "seniorDeduction": {
+        "url": "https://www.irs.gov/newsroom/one-big-beautiful-bill-provisions",
+        "amount": 6000.0,
+        "phaseOutRate": 0.06,
+        "single": 75000.0,
+        "married": 150000.0,
+        "firstYear": 2025,
+        "lastYear": 2028
+    },
+    // IRC §86 — same figures as 2026: never indexed.
+    "socialSecurityBenefits": {
+        "url": "https://www.irs.gov/publications/p915",
+        "single":  { "base": 25000.0, "adjusted": 34000.0 },
+        "married": { "base": 32000.0, "adjusted": 44000.0 }
     },
     // IRC §1411 — same figures as 2026, and for the same reason: never indexed.
     "niit": {
@@ -314,6 +368,12 @@ const CONTRIBUTION_LIMITS = Object.freeze({
     married: { iraBelow50: 15000, ira50AndOver: 17200, four01KBelow50: 49000, four01K50AndOver: 65000 },
 });
 
+/** Age from which the §63(f) and OBBBA senior deductions apply. */
+const SENIOR_AGE = 65;
+
+/** No age-based deductions — the default for every caller that has no user. */
+const NO_AGE_DEDUCTIONS = Object.freeze({ additionalStandard: 0, senior: 0 });
+
 export class TaxTable {
     /**
      * @param {string} filingAs  selects the brackets, limits and exclusion
@@ -377,6 +437,15 @@ export class TaxTable {
         this.activeStandardDeduction = this.activeTaxTables.standardDeduction[key];
         this.activeHomeSaleExclusion = this.activeTaxTables.homeSaleExclusion[key];
         this.activeNIITThreshold = this.activeTaxTables.niit[key];
+        this.activeSocialSecurityThresholds = this.activeTaxTables.socialSecurityBenefits[key];
+        this.activeAdditionalStandardDeduction65 = this.activeTaxTables.additionalStandardDeduction65[key];
+        const senior = this.activeTaxTables.seniorDeduction;
+        this.activeSeniorDeduction = { ...senior, threshold: senior[key] };
+        // The age-based deductions are PER PERSON. The model is household-level
+        // with one age (see User), so a married household is assumed to be two
+        // people of that age — the same convention limitFor() uses when it
+        // doubles the per-person contribution limits.
+        this.householdPersons = key === 'married' ? 2 : 1;
         this.niitRate = this.activeTaxTables.niit.rate;
 
         const limits = CONTRIBUTION_LIMITS[key];
@@ -448,11 +517,19 @@ export class TaxTable {
         this.inflateTaxRows(this.activeTaxTables.income.tables, r);
         this.inflateTaxRows(this.activeTaxTables.capitalGains.tables, r);
         this.activeStandardDeduction *= r;
+        this.activeAdditionalStandardDeduction65 *= r;
+        // activeSeniorDeduction is deliberately absent: the OBBBA amount and
+        // phase-out threshold are fixed dollars for the four years it exists.
         // activeNIITThreshold is deliberately absent, for the same reason and
         // with more consequence. IRC §1411 fixed it at $200,000 / $250,000 in
         // 2013 and has never indexed it, so it catches more households every
         // year by standing still — that is what the statute does, and a plan
         // that inflated it would model a tax that quietly stops applying.
+        //
+        // activeSocialSecurityThresholds is deliberately absent too. IRC §86's
+        // base and adjusted base amounts have never been indexed; inflating
+        // them would model benefits becoming LESS taxable over time, the
+        // opposite of what the statute does.
         //
         // activeHomeSaleExclusion is deliberately absent. IRC §121 fixed it at
         // $250,000 / $500,000 in 1997 with no inflation indexing, so a plan that
@@ -771,11 +848,53 @@ export class TaxTable {
      * a test may carry it positive, and both have always meant the same thing
      * here. Preserved exactly as it was.
      */
-    totalYearlyDeduction(yearly) {
+    totalYearlyDeduction(yearly, age = NO_AGE_DEDUCTIONS) {
 
-        const { base, preTax } = this.deductionComponents(yearly);
-        return base.copy().add(preTax);
+        const { base, preTax, senior } = this.deductionComponents(yearly, age);
+        return base.copy().add(preTax).add(senior);
 
+    }
+
+    /**
+     * The deductions that depend on being 65 or older, for one tax year.
+     *
+     * Two of them, and they behave differently on purpose:
+     *
+     *   additionalStandard  IRC §63(f). Raises the STANDARD deduction, so it
+     *                       competes with itemising and is lost to a household
+     *                       that itemises. Indexed.
+     *   senior              The OBBBA senior deduction, 2025-2028. Stands on its
+     *                       own — taken whether the household itemises or not —
+     *                       and phases out on MAGI. Not indexed.
+     *
+     * "65 or older" is `activeUser.age >= 65`, the same reading of age the
+     * engine already uses for the 50+ catch-up and for RMDs: the age reached in
+     * this tax year. The tax year itself is `birthYear + age`, because the
+     * plan's birthYear is its first year minus the start age (Portfolio) and
+     * the age advances on each New Year's Day, after that year's settlement.
+     *
+     * Before 2026-09-23 neither existed; the standard deduction was one flat
+     * number for every age.
+     *
+     * @param {import('./user.js').User} activeUser
+     * @param {Currency} magi  AGI — the senior deduction phases out on it
+     * @returns {{additionalStandard: number, senior: number}}
+     */
+    ageDeductions(activeUser, magi) {
+        if (!activeUser || !(activeUser.age >= SENIOR_AGE)) return NO_AGE_DEDUCTIONS;
+        const persons = this.householdPersons;
+        const additionalStandard = this.activeAdditionalStandardDeduction65 * persons;
+
+        const s = this.activeSeniorDeduction;
+        const taxYear = activeUser.birthYear + activeUser.age;
+        let senior = 0;
+        if (taxYear >= s.firstYear && taxYear <= s.lastYear) {
+            // Each person's $6,000 loses 6% of the excess, so a couple's pair is
+            // gone at the same MAGI a single filer's one is: $100,000 over.
+            const excess = Math.max(0, magi.amount - s.threshold);
+            senior = persons * Math.max(0, s.amount - s.phaseOutRate * excess);
+        }
+        return { additionalStandard, senior };
     }
 
     /**
@@ -790,7 +909,7 @@ export class TaxTable {
      * extraction is meant to be provably behaviour-neutral, so it subtracts in
      * the original order and leaves the noise where it was.
      */
-    deductionComponents(yearly) {
+    deductionComponents(yearly, age = NO_AGE_DEDUCTIONS) {
 
         let propertyTaxDeduction = new Currency(yearly.propertyTaxes.amount);
 
@@ -807,23 +926,27 @@ export class TaxTable {
         let itemised = new Currency(yearly.mortgageInterest.amount + propertyTaxDeduction.amount);
         itemised.flipSign();
 
-        const base = itemised.amount > this.activeStandardDeduction
+        // `+ 0` for anyone under 65, so their deduction is bit-identical to
+        // what it was before the age-based deductions existed.
+        const standard = this.activeStandardDeduction + age.additionalStandard;
+        const base = itemised.amount > standard
             ? itemised
-            : new Currency(this.activeStandardDeduction);
+            : new Currency(standard);
 
         const preTax = new Currency(yearly.four01KContribution.amount > 0
             ? yearly.four01KContribution.amount
             : yearly.tradIRAContribution.amount);
 
-        return { base, preTax };
+        return { base, preTax, senior: new Currency(age.senior) };
 
     }
 
-    applyYearlyDeductions(yearly, taxableIncome) {
+    applyYearlyDeductions(yearly, taxableIncome, age = NO_AGE_DEDUCTIONS) {
 
-        const { base, preTax } = this.deductionComponents(yearly);
+        const { base, preTax, senior } = this.deductionComponents(yearly, age);
         taxableIncome.subtract(base);
         taxableIncome.subtract(preTax);
+        taxableIncome.subtract(senior);
 
         if (taxableIncome.amount < 0) {
             logger.log(LogCategory.TAX, 'TaxTable.applyYearlyDeductions: taxable income < 0, setting to 0');
@@ -882,10 +1005,10 @@ export class TaxTable {
 
     }
 
-    calculateYearlyTaxableIncome(yearly) {
+    calculateYearlyTaxableIncome(yearly, age = NO_AGE_DEDUCTIONS) {
         
-        let taxableIncome = yearly.irsTaxableGrossIncome();
-        return this.applyYearlyDeductions(yearly, taxableIncome);
+        let taxableIncome = yearly.irsTaxableGrossIncome(this);
+        return this.applyYearlyDeductions(yearly, taxableIncome, age);
 
     }
 

@@ -2,6 +2,7 @@ import { Currency } from './utils/currency.js';
 import { InstrumentType } from './instruments/instrument.js';
 import { AssetAppreciationResult, MortgageResult, IncomeResult, RetirementIncomeResult, ExpenseResult, InterestResult } from './instruments/instrument-behavior.js';
 import { WithholdingResult, ContributionKind } from './taxes.js';
+import { taxableSocialSecurity } from './tax-basis.js';
 import { logger, LogCategory } from './utils/logger.js';
 import { SIM_CONFIG_DEFAULTS } from './sim-config.js';
 
@@ -97,12 +98,38 @@ export class FinancialPackage {
 
     }
 
-    irsTaxableGrossIncome() {
-        // IRS taxable = ordinary income with SS at 85% (max taxable portion)
+    /**
+     * Gross income taxed at the ordinary rates: ordinary income with Social
+     * Security replaced by its §86 taxable portion.
+     *
+     * `table` is REQUIRED. §86's thresholds depend on filing status, and the
+     * provisional-income test needs the deductible contribution as the engine
+     * books it (`deductionComponents`), so a caller without a table cannot get
+     * the right answer — and a silent default is how this function spent years
+     * returning a flat 85% for everyone.
+     *
+     * The subtract-then-add order is kept from the flat-85% version: at the 85%
+     * ceiling it reproduces the old result bit for bit, so only households the
+     * rule actually changes move.
+     */
+    irsTaxableGrossIncome(table) {
+        if (!table?.activeSocialSecurityThresholds) {
+            throw new Error('FinancialPackage.irsTaxableGrossIncome needs the TaxTable: '
+                + '§86 thresholds depend on filing status.');
+        }
+        const benefits = this.socialSecurityIncome.amount;
+        const { preTax } = table.deductionComponents(this);
+        // AGI without the benefits: everything §86 counts as "other income".
+        const otherIncome = this.ordinaryIncome().amount - benefits
+            + this.longTermCapitalGains.amount
+            + this.qualifiedDividends.amount
+            - this.excludedCapitalGains.amount
+            - preTax.amount;
+
         let irsIncome = this.ordinaryIncome().copy();
-        // Undo the full SS and add back at 85%
         irsIncome.subtract(this.socialSecurityIncome);
-        irsIncome.add(this.socialSecurityIncome.copy().multiply(0.85));
+        irsIncome.add(new Currency(taxableSocialSecurity(benefits, otherIncome,
+            table.activeSocialSecurityThresholds)));
         return irsIncome;
     }
 

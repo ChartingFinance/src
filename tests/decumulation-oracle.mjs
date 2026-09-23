@@ -464,23 +464,29 @@ const engine = {
 // no band loses a dollar of base at a crossed boundary. More tax, smaller
 // balances, and a slightly different realised gain because the brokerage it is
 // drawn from is smaller.
+// Moved 2026-09-23 by the age-65 deductions (IRC §63(f) and the OBBBA senior
+// deduction). Less tax every retired year leaves Brokerage and portfolioTotal
+// +$46,183; qualifiedDividends +$2,884 because the larger brokerage yields
+// more; longTermCapitalGains -$12,569 second-order, from the same larger
+// balance changing what each withdrawal realises. The oracle comparisons above
+// still pass. IRC §86 moved nothing here: 85% ceiling every year.
 const EXPECTED_ENGINE = {
   "Social Security": 4021.09,
   "Savings": 0.00,
   "IRA": 604532.76,
   "Roth": 4028947.93,
-  "Brokerage": 9735005.50,
+  "Brokerage": 9781188.34,
   "CompanyStock": 0.00,
   "Treasuries": 116821.90,
   "Home": 2307042.36,
   "Mortgage": 0.00,
   "Living Expenses": -11682.19,
-  "portfolioTotal": 16792350.46,
+  "portfolioTotal": 16838533.29,
   "employedIncome": 0.00,
   "socialSecurityIncome": 950908.99,
   "tradIRADistribution": 3096090.49,
-  "qualifiedDividends": 1051083.33,
-  "longTermCapitalGains": 1279531.73,
+  "qualifiedDividends": 1053966.88,
+  "longTermCapitalGains": 1266963.22,
   "interestIncome": 76892.34,
   "mortgageInterest": -247134.01,
 };

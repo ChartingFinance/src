@@ -131,7 +131,7 @@ check('Roth: booking the distribution creates no tax', () => {
 
 check('Roth: taxable gross income is untouched by a tax-free distribution', () => {
   const taxable = rothPortfolio.monthlyPackages
-    .reduce((s, pk) => s + pk.irsTaxableGrossIncome().amount, 0);
+    .reduce((s, pk) => s + pk.irsTaxableGrossIncome(rothPortfolio.config.taxTable).amount, 0);
   assert.ok(Math.abs(taxable) < TOL,
     `a tax-free distribution must not enter taxable income, got ${fmt(taxable)}`);
 });

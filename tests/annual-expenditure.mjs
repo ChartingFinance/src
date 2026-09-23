@@ -397,13 +397,17 @@ const main = async () => {
     const prem2027  = premiumOver(brokerageOnly, premJan, premJan + 11);
     const exp2027   = expenditureOverWindow(brokerageOnly, premJan, premJan + 11);
 
-    test('the witness is not vacuous — this plan takes a real premium', () => {
-        // Guards the fixture itself. If a change to the gross-up sizing drives
-        // the premium back to zero, every assertion below becomes a tautology,
-        // and this is the one that says so instead of passing quietly.
-        assert.ok(prem2027 > 1000,
-            `premium in 2027 is only $${prem2027.toFixed(2)} — the fixture no longer `
-            + `reaches the branch it exists for, so the checks below prove nothing`);
+    test('the witness is not vacuous — the premium is most of the tax withdrawn', () => {
+        // Guards the fixture itself. RELATIVE, not an absolute floor: the first
+        // version asked for more than $1,000 and kept passing at $1,746 when
+        // IRC §86 collapsed the premium seventeen-fold (2026-09-23) and the
+        // split it guards went from 65% low to 5%. A witness that barely
+        // differs from the truth proves nothing about the difference.
+        const share = prem2027 / (exp2027.tax + prem2027);
+        assert.ok(share > 0.5,
+            `the premium is only ${(100 * share).toFixed(0)}% of the tax withdrawn in 2027 `
+            + `($${prem2027.toFixed(2)} of $${(exp2027.tax + prem2027).toFixed(2)}) — the fixture `
+            + `no longer reaches the branch it exists for, so the checks below prove little`);
     });
 
     test('the total still holds: spending + tax is what left the accounts', () => {
