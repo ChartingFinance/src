@@ -1,138 +1,60 @@
 /**
- * tax-basis.js — the single definition of what a package owes tax on.
+ * tax-basis.js — what a FinancialPackage owes tax on, defined once.
  *
- * ── Why this exists ──────────────────────────────────────────────────
+ * Every tax site reads its base from taxableBasis(). When sites computed their
+ * own, two of them disagreed about the same income: correct formulas, fed
+ * different inputs.
  *
- * The engine used to answer "what is taxed?" in nine places, and they did not
- * agree. Two bugs on 2026-08-06 came from that and nothing else:
+ * ── The fields ───────────────────────────────────────────────────────
  *
- *   - IRC §121 was applied when a home closed and handed straight back by the
- *     April true-up, because the close path taxed the post-exclusion gain while
- *     the annual path recomputed the year from the gross one.
- *   - The bracket that long-term gains land in was measured against ordinary
- *     taxable income at the annual site, and against `monthly.totalIncome() ×
- *     12` at the close site — a gross rollup containing the gains themselves,
- *     tax-free Roth distributions and qualified dividends, with no deduction
- *     removed.
+ *   ordinaryTaxable  Taxed at the ordinary brackets. Ordinary income, counting
+ *                    only the §86 taxable part of Social Security, less the
+ *                    larger of the standard or itemised deduction, the age-65
+ *                    deductions and deductible pre-tax contributions. Excludes
+ *                    long-term gains and qualified dividends. Floored at 0.
+ *                    IRC §1(a)-(d), §63, §86.
  *
- * Neither was a wrong formula. Both were two right formulas fed different
- * inputs. A new tax rule had to be threaded through every site by hand, and the
- * second site got missed.
+ *   capitalGains     Taxed at the 0/15/20% rates. Long-term gains plus
+ *                    qualified dividends, less any §121 home-sale exclusion, less
+ *                    any deduction ordinary income was too small to use.
+ *                    Floored at 0. IRC §1(h), §121.
  *
- * ── The semantics, fixed before the code was written ─────────────────
+ *   ltcgStackBase    The income capitalGains sits on top of to find its rate
+ *                    band. Equal to ordinaryTaxable, because §1(h) counts gains
+ *                    last; named separately so call sites say what they mean.
  *
- * Spec 6 precondition P2: these are decided and cited here so that migrating a
- * call site cannot quietly canonise whichever site happened to be copied first.
+ *   unusedDeduction  Deduction left over after both of the above. No engine site
+ *                    reads it. It is kept as gain-harvesting headroom for a future
+ *                    household-level view. It is a household figure: do not
+ *                    attribute it to individual assets.
  *
- *   ordinaryTaxable  Income taxed at the ordinary rate schedule. Gross ordinary
- *                    income with the §86 taxable portion of Social Security
- *                    (see taxableSocialSecurity below — NOT a flat 85%), less the
- *                    greater of the standard or itemised deduction, less
- *                    deductible pre-tax contributions. Floored at zero.
- *                    Long-term gains and qualified dividends are NOT in it —
- *                    they have their own schedule. IRC §1(a)-(d), §63, §86.
+ *   netInvestmentIncome  The NIIT base: interest, dividends and capital gains,
+ *                    less the §121 exclusion. Not wages, Social Security,
+ *                    pensions or IRA/401(k) distributions. IRC §1411(c).
  *
- *   capitalGains     Income taxed at the preferential schedule: long-term
- *                    capital gains plus qualified dividends, less any §121
- *                    primary-home exclusion already applied at close, less any
- *                    deduction ordinary income was too small to absorb. Floored
- *                    at zero. IRC §1(h), §121, §63.
+ *   magi             AGI: before the standard deduction, after pre-tax
+ *                    contributions. The NIIT threshold and the senior
+ *                    deduction's phase-out are measured against it. Not
+ *                    floored. An IRA distribution raises magi without being
+ *                    investment income, so it can push other income into NIIT
+ *                    without being taxed by NIIT itself. IRC §1411(d).
  *
- *   ltcgStackBase    What `capitalGains` is stacked ON to find its 0/15/20%
- *                    band. Equal to `ordinaryTaxable`, because the §1(h)
- *                    breakpoints are measured against taxable income with net
- *                    capital gain counted last.
+ * ── How the deduction reaches the gains ──────────────────────────────
  *
- *   unusedDeduction  Deduction left over after BOTH of the above have taken
- *                    what they can. Nonzero only when the deduction exceeds
- *                    ordinary income plus net capital gain combined.
+ * §63 takes the deduction off all taxable income, gains included, and §1(h)
+ * counts gains last. So the deduction is used against ordinary income first and
+ * only the excess reduces capitalGains — the same order as the IRS Qualified
+ * Dividends and Capital Gain Tax Worksheet. It matters most for an early retiree
+ * living off a brokerage account, whose gains may owe nothing.
  *
- *                    NO ENGINE SITE READS THIS TODAY. Its ONE justification is
- *                    the double-counting invariant below: a site that taxes a
- *                    gain not yet in this package must subtract the RESIDUAL,
- *                    not the raw overflow. The only caller that wanted it — the
- *                    close path — was measured and turned down (tax-engine.js
- *                    records why), so the invariant currently has no site to
- *                    protect.
+ * A site that taxes a gain not yet in this package must use unusedDeduction —
+ * what is left AFTER capitalGains — or it will spend the same deduction twice.
  *
- *                    It does NOT serve NIIT or IRMAA, contrary to what this
- *                    comment claimed on 2026-08-18. Both key off MAGI, which is
- *                    AGI — measured BEFORE the standard deduction — so neither
- *                    can ever consult a leftover deduction. Do not keep this
- *                    field alive on that argument.
+ * ── For callers ──────────────────────────────────────────────────────
  *
- *                    KEPT ANYWAY, by an explicit decision on 2026-08-18: this
- *                    number is gain-harvesting headroom ("you can realise
- *                    $6,100 more long-term gain at zero tax"), and surfacing it
- *                    was parked pending a household income-optimization surface
- *                    rather than dropped. It cannot become a rule note as
- *                    things stand — rule-notes Rule 1 forbids recomputing an
- *                    unbooked amount, Rule 2 forbids allocating a household
- *                    fact to one asset, and every explanation surface here is
- *                    per-asset. Do not attribute it to individual assets to get
- *                    around that.
- *
- *   netInvestmentIncome  Income subject to the 3.8% net investment income tax:
- *                    interest, both kinds of dividend, and both kinds of
- *                    capital gain, less any §121 exclusion. Wages, Social
- *                    Security, pensions and qualified-plan distributions are
- *                    NOT in it. Gross of allocable deductions, which this model
- *                    does not track. Floored at zero. IRC §1411(c).
- *
- *   magi             Modified adjusted gross income, the figure the §1411
- *                    threshold is measured against. This is AGI — BEFORE the
- *                    standard or itemised deduction, AFTER the deductible
- *                    pre-tax contribution. NOT floored: a MAGI below the
- *                    threshold must stay below it, and the 3.8% calculation
- *                    floors its own result. IRC §1411(d).
- *
- *                    The asymmetry between these two is the point, not an
- *                    accident: an IRA or 401(k) distribution is OUT of
- *                    netInvestmentIncome but IN magi, so a withdrawal or Roth
- *                    conversion can never be taxed by NIIT itself and can still
- *                    drag other investment income into it. Roth distributions
- *                    raise neither.
- *
- * ── Why the deduction reaches the gains at all ───────────────────────
- *
- * This module originally floored `ordinaryTaxable` at zero and stopped, which
- * silently discarded the unabsorbed remainder. That is not what §63 does. The
- * standard deduction comes off TAXABLE INCOME, which includes capital gain;
- * §1(h) then splits taxable income into an ordinary part and a preferential
- * part, with the gain counted LAST. Counting it last is exactly why the
- * deduction lands on ordinary income first and only the excess reaches the
- * gain — it is not a separate rule, it is the same rule read in order. The IRS
- * mechanises it as the Qualified Dividends and Capital Gain Tax Worksheet,
- * where line 9 caps the 0% band at `min(taxable income, threshold)` — against
- * taxable income, not against gross gains.
- *
- * Discarding the remainder over-taxed exactly the household this simulator is
- * most often pointed at: an early retiree with little ordinary income living
- * off a brokerage account. Measured 2026-08-18 on the 2026 Single table — $0
- * ordinary income and $60,000 of long-term gain was billed $1,582.50 where the
- * worksheet says $0, because $43,900 of taxable income sits below the $49,450
- * top of the 0% band. The whole bill was an artifact of the floor.
- *
- * ── The double-counting trap, for whoever wires this up next ─────────
- *
- * `unusedDeduction` is what remains AFTER `capitalGains` has absorbed what it
- * can, not the raw ordinary-income overflow. Any site that taxes a gain not yet
- * added to this package must use it in that form, or it will spend the same
- * deduction dollars twice — once here against the gains already accumulated,
- * once there against the new one.
- *
- * `ltcgStackBase` is a named field rather than an alias for `ordinaryTaxable`
- * on purpose: it states the intent at the call site, and it gives a future
- * threshold rule (NIIT, IRMAA) somewhere to live instead of creating the tenth
- * disagreeing definition.
- *
- * ── Rules for callers ────────────────────────────────────────────────
- *
- * Pass `annualise: true` for a MONTHLY package and false for a yearly one. The
- * ×12 that annualising performs is a known modelling gap — a one-off month is
- * extrapolated as though it recurred all year — and it is deliberately
- * preserved here rather than fixed, so that unifying the base is a refactor and
- * not two changes at once. See spec 6 §8.
+ * Pass `annualise: true` for a monthly package. Annualising multiplies the month
+ * by 12, so a one-off month is treated as if it recurred all year. That is a
+ * known modelling gap, left as it is so that this module changes no numbers.
  */
 
 import { Currency } from './utils/currency.js';
@@ -140,13 +62,8 @@ import { Currency } from './utils/currency.js';
 /**
  * IRC §86 — the part of a year's Social Security benefits that is taxable.
  *
- * Until 2026-09-23 the engine included 85% of every benefit, always. 85% is
- * §86's CEILING, not its rule, so every retiree below the thresholds was taxed
- * on income the IRS does not tax: a single retiree living on $3,500/month of
- * Social Security was billed $2,104 a year where §86 says $0.
- *
- * The test works on PROVISIONAL INCOME — everything else in AGI plus half the
- * benefits (Pub. 915, worksheet 1):
+ * Based on provisional income: everything else in AGI plus half the benefits
+ * (IRS Pub. 915, worksheet 1).
  *
  *     provisional ≤ base              nothing taxable
  *     base < provisional ≤ adjusted   min(½ benefits, ½ (provisional − base))
@@ -154,12 +71,8 @@ import { Currency } from './utils/currency.js';
  *                                         85% (provisional − adjusted)
  *                                         + min(½ benefits, ½ (adjusted − base)))
  *
- * `otherIncome` MUST include long-term gains and qualified dividends. They are
- * outside ordinary income here only because they have their own rate schedule;
- * they are inside AGI, and leaving them out would under-tax exactly the retiree
- * who lives off a brokerage account.
- *
- * Pure and unit-tested against the worksheet (tests/social-security-taxation.mjs).
+ * `otherIncome` must include long-term gains and qualified dividends: they have
+ * their own rates, but they are part of AGI.
  *
  * @param {number} benefits     the year's gross benefits
  * @param {number} otherIncome  AGI excluding benefits
@@ -178,15 +91,16 @@ export function taxableSocialSecurity(benefits, otherIncome, { base, adjusted })
 }
 
 /**
+ * The tax bases for one package. See the module header for what each field
+ * means.
+ *
  * @param {import('./financial-package.js').FinancialPackage} pkg
- *        NOT mutated. Copied internally — `limitDeductions` and
- *        `applyYearlyDeductions` both mutate, and a helper that relied on every
- *        caller remembering to copy would be one refactor away from corrupting
- *        the live monthly package.
- * @param {import('./user.js').User} activeUser  for the age-banded deduction limits
+ *        Not mutated: it is copied, because the deduction helpers mutate.
+ * @param {import('./user.js').User} activeUser  age drives the deduction limits
+ *        and the age-65 deductions
  * @param {{annualise?: boolean, taxTable: object}} opts
- *        `taxTable` is required — the run's own table, never a module default.
- *        TaxTable's own methods pass `this`.
+ *        `taxTable` is required — the run's own table. TaxTable's own methods
+ *        pass `this`.
  * @returns {{ordinaryTaxable: Currency, capitalGains: Currency, ltcgStackBase: Currency,
  *            unusedDeduction: Currency, netInvestmentIncome: Currency, magi: Currency}}
  */
@@ -197,15 +111,15 @@ export function taxableBasis(pkg, activeUser, { annualise = false, taxTable = nu
     const yearly = pkg.copy();
     if (annualise) yearly.multiply(12.0);
 
-    // Order is load-bearing and matches every pre-existing call site: annualise
-    // first, THEN cap the deductions. Capping a monthly contribution against an
-    // annual limit and only then multiplying by twelve would let twelve times
-    // the limit through.
+    // Annualise first, then cap the deductions. The other order would cap a
+    // monthly contribution against an annual limit and then multiply it by 12.
     yearly.limitDeductions(activeUser, table);
 
-    // MAGI first. It sits above every deduction line, so it depends on none of
-    // them — and the senior deduction phases out ON it, so it has to exist
-    // before the deductions are taken. See the §1411 notes below for what it is.
+    // MAGI before any deduction: it sits above them all, and the senior
+    // deduction phases out on it. `preTax` is the deductible contribution as
+    // this engine books it — the 401(k) if there is one, otherwise the
+    // traditional IRA — so MAGI and taxable income agree about it. (Real AGI
+    // subtracts both; changing that is separate work.)
     const { preTax } = table.deductionComponents(yearly);
     const magi = new Currency(
         yearly.irsTaxableGrossIncome(table).amount
@@ -220,11 +134,9 @@ export function taxableBasis(pkg, activeUser, { annualise = false, taxTable = nu
 
     const ordinaryTaxable = table.calculateYearlyTaxableIncome(yearly, age);
 
-    // Measured, not inferred from `ordinaryTaxable` — by the time that is
-    // floored at zero the overflow is gone. Ordinary income is clamped at zero
-    // too: a negative gross cannot buy MORE shelter than the deduction itself.
-    // The age-based deductions overflow onto the gains exactly like the
-    // standard deduction does: §1(h) counts net capital gain last either way.
+    // The overflow is computed from gross figures: ordinaryTaxable is already
+    // floored at zero, so the overflow cannot be read back from it. Age
+    // deductions overflow onto the gains the same way the standard one does.
     const deduction = table.totalYearlyDeduction(yearly, age);
     const grossOrdinary = Math.max(0, yearly.irsTaxableGrossIncome(table).amount);
     const deductionOverflow = Math.max(0, deduction.amount - grossOrdinary);
@@ -239,13 +151,10 @@ export function taxableBasis(pkg, activeUser, { annualise = false, taxTable = nu
     const capitalGains = new Currency(Math.max(0, grossGains - deductionOverflow));
     const unusedDeduction = new Currency(Math.max(0, deductionOverflow - grossGains));
 
-    // ── IRC §1411 bases ──────────────────────────────────────────────
+    // ── NIIT (§1411) ─────────────────────────────────────────────────
     //
-    // BOTH sit ABOVE the deduction line. Neither is derived from
-    // `ordinaryTaxable` and neither consults `unusedDeduction` — §1411 keys off
-    // AGI (Form 1040 line 11), and the standard deduction is line 12. Deriving
-    // MAGI from ordinaryTaxable would under-state it by the whole deduction and
-    // put households under the threshold that are genuinely over it.
+    // Its bases sit above the deduction line (Form 1040 line 11, before line
+    // 12), so neither uses ordinaryTaxable or unusedDeduction.
 
     const netInvestmentIncome = new Currency(Math.max(0,
         yearly.interestIncome.amount
@@ -256,15 +165,6 @@ export function taxableBasis(pkg, activeUser, { annualise = false, taxTable = nu
         // §121-excluded gain is out of NII as well as out of gross income.
         - yearly.excludedCapitalGains.amount
     ));
-
-    // `magi` was computed above, before the deductions. `preTax` there is the
-    // deductible contribution as THIS ENGINE books it — 401(k) if there is one,
-    // otherwise the traditional IRA. NOT `pkg.preTaxContribution()`, which sums
-    // both: real AGI subtracts both, but `applyYearlyDeductions` has always
-    // taken one or the other, and MAGI disagreeing with taxable income about the
-    // same contribution is precisely the tenth-definition failure this module
-    // exists to prevent. The either/or is a pre-existing simplification; fixing
-    // it is its own change, not a side effect of adding NIIT.
 
     return {
         ordinaryTaxable,
