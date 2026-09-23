@@ -7,10 +7,14 @@
  * Three things here are easy to get wrong, and each has a test that fails
  * loudly when it happens:
  *
- *   1. THE MONTHLY CONVENTION. The engine compounds every annual rate as
- *      simple `rate / 12` per month. A deflator using (1+r)^(1/12) looks more
- *      correct and is wrong here — it drifts out of step with the engine's own
- *      expense inflation and compounds over a 30-year plan.
+ *   1. THE MONTHLY CONVENTION. The index must step exactly as the engine's
+ *      own expenses inflate, or the real line drifts out of step with the cost
+ *      of living and the error compounds over a 30-year plan. Inflation is a
+ *      measured annual rate, so both compound by the twelfth root: twelve
+ *      months give exactly the stated rate. (Until 2026-09-23 both used
+ *      rate/12; this section asserted that, and they changed together.) The
+ *      lock-step is asserted against the engine's expense directly, not only
+ *      against a formula, so the two cannot drift apart again.
  *
  *   2. BACKTEST DATA RUNNING OUT. CPI covers 1970-2025. A long plan backtested
  *      from a recent year runs off the end, where the engine restores the
@@ -42,6 +46,7 @@ import { Portfolio } from '../js/portfolio.js';
 import { chronometer_run } from '../js/chronometer.js';
 import { computeMonteCarlo } from '../js/mc-compute.js';
 import { PriceIndex } from '../js/utils/price-index.js';
+import { Metric } from '../js/metric.js';
 import {
   setActiveTaxTable,
   global_cpi_annual_inflation,
@@ -97,7 +102,7 @@ async function run({ inflation = 0.031, backtestYear = 'current', years = 3 } = 
 console.log('\n══ Real-dollar deflator ═══════════════════════════════════\n');
 
 // ══════════════════════════════════════════════════════════════════════
-// 1. The monthly convention — simple rate/12, matching ARR.asMonthly()
+// 1. The monthly convention — (1+r)^(1/12), in step with expense inflation
 // ══════════════════════════════════════════════════════════════════════
 console.log('── 1. Monthly convention ────────────────────────────────\n');
 {
@@ -111,16 +116,32 @@ console.log('── 1. Monthly convention ────────────�
       `index has ${idx.length} entries, VALUE history has ${valueHistory.length}`);
   });
 
-  check('index[i] === (1 + rate/12)^(i+1) — simple rate/12, NOT (1+r)^(1/12)', () => {
+  check('index[i] === (1 + rate)^((i+1)/12) — a year compounds to exactly the rate', () => {
     for (let i = 0; i < idx.length; i++) {
-      const expected = Math.pow(1 + RATE / 12, i + 1);
+      const expected = Math.pow(1 + RATE, (i + 1) / 12);
       assert.ok(near(idx[i], expected, 1e-12),
         `index[${i}] = ${idx[i]}, expected ${expected}`);
     }
   });
 
+  check('the index moves in lock-step with the engine\'s own expense inflation', () => {
+    // Month i charges the expense BEFORE that month's inflation is applied, and
+    // index[i] is recorded AFTER a month has elapsed — so charge[i+1]/charge[0]
+    // is the cost of living the index must match.
+    const charges = p.modelAssets.find((a) => a.displayName === 'Living Expenses').getHistory(Metric.LIVING_EXPENSE);
+    assert.ok(charges.length > 24, `only ${charges.length} expense months`);
+    // Metric history is kept to the cent, so compare in dollars: the index
+    // applied to the first charge must land on each recorded charge within
+    // half a cent. The two conventions differ by 7 cents in the first month.
+    for (let i = 0; i + 1 < charges.length; i++) {
+      const predicted = charges[0] * idx[i];
+      assert.ok(Math.abs(predicted - charges[i + 1]) <= 0.005 + 1e-9,
+        `month ${i}: index predicts ${predicted.toFixed(4)}, the expense charged ${charges[i + 1]}`);
+    }
+  });
+
   check('the wrong convention would be visibly different by year 3', () => {
-    const wrong = Math.pow(Math.pow(1 + RATE, 1 / 12), idx.length);
+    const wrong = Math.pow(1 + RATE / 12, idx.length);
     const right = idx[idx.length - 1];
     assert.ok(Math.abs(wrong - right) > 1e-4,
       `conventions agree to ${Math.abs(wrong - right)} — this test cannot detect the bug`);
@@ -165,7 +186,7 @@ console.log('\n── 3. Backtest tracks historical CPI ────────
 
   check('year one compounds at the 1974 CPI, not the general rate', () => {
     const rate = global_cpi_annual_inflation[FROM] / 100;
-    const expected = Math.pow(1 + rate / 12, 12);
+    const expected = 1 + rate;
     assert.ok(near(idx[11], expected, 1e-12),
       `index after 12 months = ${idx[11]}, expected ${expected} (CPI ${(rate * 100).toFixed(1)}%)`);
   });
@@ -175,7 +196,7 @@ console.log('\n── 3. Backtest tracks historical CPI ────────
     for (let y = 0; y < 3; y++) {
       const rate = global_cpi_annual_inflation[FROM + y] / 100;
       for (let m = 0; m < 12; m++) {
-        level *= (1 + rate / 12);
+        level *= Math.pow(1 + rate, 1 / 12);
         const i = y * 12 + m;
         assert.ok(near(idx[i], level, 1e-12),
           `index[${i}] (sim year ${y + 1}, CPI ${FROM + y}) = ${idx[i]}, expected ${level}`);
@@ -184,7 +205,7 @@ console.log('\n── 3. Backtest tracks historical CPI ────────
   });
 
   check('high-inflation backtest deflates much harder than the 3.1% default', () => {
-    assert.ok(idx[35] > Math.pow(1 + 0.031 / 12, 36) * 1.15,
+    assert.ok(idx[35] > Math.pow(1 + 0.031, 3) * 1.15,
       `1974-76 index ${idx[35]} is not meaningfully above the default-rate index`);
   });
 }
@@ -208,7 +229,7 @@ console.log('\n── 4. Backtest running off the end of the data ────�
   check('years past the data compound at the general rate, not zero', () => {
     // Year 3 (index 24..35) has no CPI data → general rate.
     const growthYear3 = idx[35] / idx[23];
-    const expected = Math.pow(1 + GENERAL / 12, 12);
+    const expected = 1 + GENERAL;
     assert.ok(near(growthYear3, expected, 1e-9),
       `year 3 grew ${growthYear3}, expected ${expected} (the general ${GENERAL * 100}%)`);
   });

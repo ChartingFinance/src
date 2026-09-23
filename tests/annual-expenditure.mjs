@@ -220,7 +220,10 @@ const main = async () => {
         const from = janIndex(pre, 2055);
         const taxesPaid = -sumMetric(pre, Metric.TAXES, from, from + 11);
 
-        assert.ok(taxesPaid > 40000, 'fixture no longer pays material tax');
+        // A floor, not a pin: it keeps the 2% comparison below meaningful. It was
+        // $40k until measured growth rates (2026-09-23) took this year's bill
+        // from $42,171 to $37,184.
+        assert.ok(taxesPaid > 30000, `fixture no longer pays material tax (${taxesPaid.toFixed(0)})`);
         near(got.tax, taxesPaid, taxesPaid * 0.02,
             'tax drawn from accounts vs tax paid, in a year with no paycheck');
     });

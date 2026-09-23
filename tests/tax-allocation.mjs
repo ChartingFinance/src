@@ -403,19 +403,60 @@ console.log('spec 4a — proportional allocation of the residual household tax')
     return total;
   };
 
-  const offTax = collected(off), onTax = collected(on);
+  // Compare only the years in which BOTH runs still hold deferred money.
+  //
+  // Allocation empties the IRA sooner, because the tax it pays is itself a
+  // distribution. After that year the allocated run has no deferred income
+  // left to tax while the other run still does — and at the horizon the other
+  // run leaves a pre-tax balance behind, carrying tax no one has paid yet. A
+  // whole-plan total compares those two, and whether it rises or falls says
+  // only WHEN the IRA ran dry. It passed until 2026-09-23 because the IRA
+  // happened to empty in the plan's final year; measured returns (PR #73)
+  // moved that to 2054 and the total fell $25k with nothing wrong.
+  const firstDryYear = (pf) => {
+    const deferred = pf.modelAssets.filter((a) => InstrumentType.isTaxDeferred(a.instrument));
+    const n = Math.max(...deferred.map((a) => a.getHistory(Metric.VALUE).length));
+    const start = pf.firstDateInt;
+    for (let i = 0; i < n; i++) {
+      const held = deferred.reduce((s, a) => s + (a.getHistory(Metric.VALUE)[i] ?? 0), 0);
+      if (held <= 0) return Math.floor((start.year * 12 + start.month - 1 + i) / 12);
+    }
+    return Infinity;
+  };
+  const dry = Math.min(firstDryYear(on), firstDryYear(off));
+  const collectedBefore = (pf) => {
+    let total = 0;
+    for (const a of pf.modelAssets) {
+      for (const e of (a.events ?? [])) {
+        if (e.dateInt.year >= dry) continue;
+        const amt = Math.abs(e.amount?.amount ?? 0);
+        if (e.type === EventType.INCOME_TAX_WITHHOLDING || e.type === EventType.FICA_WITHHOLDING) total += amt;
+        else if (e.type === EventType.TAX_TRUE_UP) total += (e.data?.direction === 'refund' ? -amt : amt);
+      }
+    }
+    return total;
+  };
+  const years = dry === Infinity ? Infinity : dry - off.firstDateInt.year;
+  check(years >= 10,
+    `the comparison window is only ${years} years (the deferred money runs out in ${dry}); ` +
+    'too short to show a lifetime effect — the fixture no longer exercises this');
+  const offTax = collectedBefore(off), onTax = collectedBefore(on);
   check(onTax > offTax,
-    `lifetime tax must RISE with allocation on (${offTax.toFixed(2)} → ${onTax.toFixed(2)}). ` +
-    'A flat or falling total means the deferred draws were not booked as ' +
-    'distributions, so the engine spent IRA money without recognising the income.');
+    `tax must RISE with allocation on, over the ${years} years both runs hold deferred money ` +
+    `(${offTax.toFixed(2)} → ${onTax.toFixed(2)}). A flat or falling total means the deferred ` +
+    'draws were not booked as distributions, so the engine spent IRA money without recognising the income.');
 
-  // The rise must be explained by more deferred distribution, not by nothing.
+  // The rise must be explained by more deferred distribution, not by nothing —
+  // over the same window, for the same reason: past it the other run is still
+  // distributing an IRA that has had longer to compound.
+  const monthsBeforeDry = (pf) => (dry - pf.firstDateInt.year) * 12 - (pf.firstDateInt.month - 1);
   const deferredDistribution = (pf) => {
     let total = 0;
+    const n = monthsBeforeDry(pf);
     for (const a of pf.modelAssets) {
       if (!InstrumentType.isTaxDeferred(a.instrument)) continue;
       for (const m of [Metric.TRAD_IRA_DISTRIBUTION, Metric.FOUR_01K_DISTRIBUTION]) {
-        for (const v of (a.getHistory(m) ?? [])) total += (v ?? 0);
+        (a.getHistory(m) ?? []).slice(0, n).forEach((v) => { total += (v ?? 0); });
       }
     }
     return total;
@@ -426,7 +467,7 @@ console.log('spec 4a — proportional allocation of the residual household tax')
     `(delta ${dDist.toFixed(2)}). settleOneSided calls recordDistribution; if this ` +
     'is 0 that path was bypassed and the income is invisible to the tax table.');
 
-  console.log(`  ok  tax identity — lifetime tax +$${(onTax - offTax).toFixed(2)}, ` +
+  console.log(`  ok  tax identity — tax +$${(onTax - offTax).toFixed(2)} over ${years} years (deferred money runs dry ${dry}), ` +
               `explained by +$${dDist.toFixed(2)} of deferred distribution`);
 }
 

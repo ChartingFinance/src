@@ -2,12 +2,12 @@
  * price-index.js — cumulative price level, for converting nominal
  * simulation output into real ("today's dollars") output.
  *
- * CONVENTION, and it is not negotiable: the engine compounds every annual
- * rate as simple `rate / 12` per month (`ARR.asMonthly()`), and expenses
- * inflate that way in instrument-behavior.js. This index MUST use the same
- * step or the real line drifts out of step with the engine's own cost of
- * living, and the error compounds across a 30-year plan. Do not "fix" this
- * to (1 + rate)^(1/12).
+ * CONVENTION, and it is not negotiable: this index MUST step exactly as
+ * expenses inflate in instrument-behavior.js, or the real line drifts out of
+ * step with the engine's own cost of living and the error compounds across a
+ * 30-year plan. Both use `ARR.asMonthlyEffective()` — inflation is a measured
+ * annual rate, so twelve months compound to exactly `rate`. (Until 2026-09-23
+ * both used rate/12; they changed together.)
  *
  * BASE: the plan's first month, before any month has elapsed — so index 1.0
  * is the value of a dollar on the plan's start date. History is recorded on
@@ -15,6 +15,8 @@
  * growth has been applied. So history[i] covers i+1 elapsed months and lines
  * up index-for-index with every asset metric history.
  */
+
+import { ARR } from './arr.js';
 
 export class PriceIndex {
 
@@ -35,7 +37,7 @@ export class PriceIndex {
    * that calls portfolio.monthlyChron(), so the arrays stay aligned.
    */
   stepAndRecord() {
-    this.level *= (1 + this.annualRate / 12);
+    this.level *= (1 + new ARR(this.annualRate).asMonthlyEffective());
     this.history.push(this.level);
     return this.level;
   }

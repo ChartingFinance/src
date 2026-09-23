@@ -332,7 +332,7 @@ export class ExpenseEngine {
             // TODO: revisit and see if this is the best spot to log capital gains
             // Compute estimated tax for non-Home capital assets (Home property tax is handled on day 15)
             if (InstrumentType.isCapital(modelAsset.instrument) && !InstrumentType.isRealEstate(modelAsset.instrument) && modelAsset.annualTaxRate.rate !== 0) {
-                const tax = new Currency(modelAsset.finishCurrency.amount * modelAsset.annualTaxRate.asMonthly()).flipSign();
+                const tax = new Currency(modelAsset.finishCurrency.amount * modelAsset.annualTaxRate.asMonthlyNominal()).flipSign();
                 modelAsset.estimatedTaxCurrency.add(tax);
                 modelAsset.addCreditMemo(tax, 'Estimated tax');
                 this.monthly.estimatedTaxes.add(tax);

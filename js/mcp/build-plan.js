@@ -159,8 +159,8 @@ const INCOME_KINDS = Object.freeze({
  * looks: 8.5% on a savings account is not a rounding error, it is a different
  * plan.
  *
- * Note the compounding convention while reading these — `ARR.asMonthly()` is
- * `rate / 12`, so a stated 8.5% realizes about 8.839% a year. The rates are
+ * These are measured annual rates: the engine compounds each to exactly the
+ * stated figure a year (`ARR.asMonthlyEffective()`). The rates are
  * quick-start's, kept identical on purpose: a plan built here and a profile
  * built there should not disagree about what a brokerage account does.
  */
