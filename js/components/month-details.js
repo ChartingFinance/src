@@ -7,8 +7,8 @@
  * position starts 343px below the chip, where under Your Portfolio it would
  * start 882px below — more than a screen away from the thing that moves it.
  *
- * Laid out as ONE horizontal band so it costs Your Portfolio as little height as
- * possible. Three groups, and the grouping carries meaning:
+ * Three EQUAL regions side by side, each its own tinted panel, so the three
+ * kinds of number cannot run together — and the grouping carries meaning:
  *
  *   Net worth          the balance, with the month's change and today's dollars
  *   This month         the single month's flows
@@ -56,24 +56,29 @@ export class MonthDetails extends LitElement {
         }
 
         const d = s.drawn;
-        const span = d.complete ? 'past 12 months' : `${d.months} mo so far`;
+        const span = d.complete ? 'Past 12 months'
+            : `${d.months} ${d.months === 1 ? 'month' : 'months'} so far`;
         // "$0" is correct in a working year and looks like a bug. Say why — but
         // only when it is true; see zeroTaxWasWithheld for the three conditions.
         const withheld = zeroTaxWasWithheld(s);
 
+        // Three equal regions, each led by its own time frame. They are three
+        // different kinds of number — a balance, one month's flows, and a
+        // trailing twelve months — and sharing a row made the third read as
+        // more of the second.
         return html`
             <div class="glass-card md-card">
-                <div class="md-row">
-                    <div class="md-group md-nw">
+                <div class="md-regions">
+                    <section class="md-region md-nw" aria-label="Net worth">
                         <div class="md-eyebrow">Net worth</div>
-                        <div class="md-nw-val">${money(s.value)}
-                            <span class="md-delta ${tone(s.netChange)}">${signed(s.netChange)}</span></div>
+                        <div class="md-nw-val">${money(s.value)}</div>
+                        <div class="md-nw-delta ${tone(s.netChange)}">${signed(s.netChange)} this month</div>
                         ${s.valueReal != null ? html`
-                            <div class="md-sub">${money(s.valueReal)} today’s $</div>
+                            <div class="md-sub">${money(s.valueReal)} in today’s $</div>
                         ` : nothing}
-                    </div>
+                    </section>
 
-                    <div class="md-group">
+                    <section class="md-region" aria-label="This month">
                         <div class="md-eyebrow">This month</div>
                         <div class="md-cells">
                             ${cell('Income', signed(s.income))}
@@ -82,16 +87,17 @@ export class MonthDetails extends LitElement {
                             ${cell('Cash flow', signed(s.cashFlow), tone(s.cashFlow))}
                             ${cell('Asset growth', signed(s.growth), tone(s.growth))}
                         </div>
-                    </div>
+                    </section>
 
-                    <div class="md-group md-drawn">
-                        <div class="md-eyebrow">Withdrawn to meet obligations · ${span}</div>
+                    <section class="md-region md-drawn" aria-label="Withdrawn to meet obligations, ${span.toLowerCase()}">
+                        <div class="md-eyebrow">${span}</div>
+                        <div class="md-region-title">Withdrawn to meet obligations</div>
                         <div class="md-cells">
                             ${cell('Spending', money(d.spending))}
                             <div class="md-cell" title=${WITHHELD_TOOLTIP}>
                                 <div class="md-label">Tax <span class="md-info" aria-label=${WITHHELD_TOOLTIP}>ⓘ</span></div>
-                                <div class="md-val">${money(d.tax)}${withheld
-                                    ? html`<span class="md-hint">withheld at source</span>` : nothing}</div>
+                                <div class="md-val">${money(d.tax)}</div>
+                                ${withheld ? html`<div class="md-hint">withheld at source</div>` : nothing}
                             </div>
                             ${cell('Total', money(d.total), 'md-strong')}
                             ${d.unfunded > 0 ? html`
@@ -101,7 +107,7 @@ export class MonthDetails extends LitElement {
                                 </div>
                             ` : nothing}
                         </div>
-                    </div>
+                    </section>
                 </div>
             </div>
         `;
