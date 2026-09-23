@@ -122,6 +122,16 @@ export const us_2026_taxtables = {
         "single": 250000.0,
         "married": 500000.0
     },
+    // IRC §86 — how much of a Social Security benefit is taxable. The base
+    // amount ($25,000 / $32,000) has been fixed since 1984 and the adjusted
+    // base amount ($34,000 / $44,000) since 1993. Neither is indexed, so a
+    // larger share of benefits becomes taxable every year — the same kind of
+    // statutory stealth tax as the NIIT threshold below. See inflateTaxes().
+    "socialSecurityBenefits": {
+        "url": "https://www.irs.gov/publications/p915",
+        "single":  { "base": 25000.0, "adjusted": 34000.0 },
+        "married": { "base": 32000.0, "adjusted": 44000.0 }
+    },
     // IRC §1411 net investment income tax. The RATE and the THRESHOLDS have
     // both been fixed since 2013 and neither is inflation-indexed — see the
     // note in inflateTaxes(). This is a deliberate stealth tax: the threshold
@@ -204,6 +214,12 @@ export const us_2025_taxtables = {
         "url": "https://www.irs.gov/taxtopics/tc701",
         "single": 250000.0,
         "married": 500000.0
+    },
+    // IRC §86 — same figures as 2026: never indexed.
+    "socialSecurityBenefits": {
+        "url": "https://www.irs.gov/publications/p915",
+        "single":  { "base": 25000.0, "adjusted": 34000.0 },
+        "married": { "base": 32000.0, "adjusted": 44000.0 }
     },
     // IRC §1411 — same figures as 2026, and for the same reason: never indexed.
     "niit": {
@@ -377,6 +393,7 @@ export class TaxTable {
         this.activeStandardDeduction = this.activeTaxTables.standardDeduction[key];
         this.activeHomeSaleExclusion = this.activeTaxTables.homeSaleExclusion[key];
         this.activeNIITThreshold = this.activeTaxTables.niit[key];
+        this.activeSocialSecurityThresholds = this.activeTaxTables.socialSecurityBenefits[key];
         this.niitRate = this.activeTaxTables.niit.rate;
 
         const limits = CONTRIBUTION_LIMITS[key];
@@ -453,6 +470,11 @@ export class TaxTable {
         // 2013 and has never indexed it, so it catches more households every
         // year by standing still — that is what the statute does, and a plan
         // that inflated it would model a tax that quietly stops applying.
+        //
+        // activeSocialSecurityThresholds is deliberately absent too. IRC §86's
+        // base and adjusted base amounts have never been indexed; inflating
+        // them would model benefits becoming LESS taxable over time, the
+        // opposite of what the statute does.
         //
         // activeHomeSaleExclusion is deliberately absent. IRC §121 fixed it at
         // $250,000 / $500,000 in 1997 with no inflation indexing, so a plan that
@@ -884,7 +906,7 @@ export class TaxTable {
 
     calculateYearlyTaxableIncome(yearly) {
         
-        let taxableIncome = yearly.irsTaxableGrossIncome();
+        let taxableIncome = yearly.irsTaxableGrossIncome(this);
         return this.applyYearlyDeductions(yearly, taxableIncome);
 
     }

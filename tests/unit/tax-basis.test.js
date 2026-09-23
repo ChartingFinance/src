@@ -79,10 +79,19 @@ describe('ordinaryTaxable', () => {
     expect(b.ordinaryTaxable.amount).toBeCloseTo(67800, 6);
   });
 
-  it('counts Social Security at 85%', () => {
-    // 40,000 × 0.85 = 34,000, less 16,100
+  // IRC §86, not a flat 85%. These two pinned the flat rule until 2026-09-23,
+  // which is why it survived: the test agreed with the bug.
+  it('does not tax Social Security alone below the §86 base', () => {
+    // provisional = 0 + 20,000 < 25,000 → nothing taxable
     const b = basis(pkg({ socialSecurityIncome: 40000 }), USER);
-    expect(b.ordinaryTaxable.amount).toBeCloseTo(17900, 6);
+    expect(b.ordinaryTaxable.amount).toBe(0);
+  });
+
+  it('taxes Social Security at 85% once provisional income is high', () => {
+    // provisional = 100,000 + 20,000 = 120,000 → min(34,000, 0.85×86,000 + 4,500)
+    // = 34,000; 100,000 + 34,000 − 16,100
+    const b = basis(pkg({ socialSecurityIncome: 40000, employedIncome: 100000 }), USER);
+    expect(b.ordinaryTaxable.amount).toBeCloseTo(117900, 6);
   });
 
   it('floors at zero when the deduction exceeds income', () => {
@@ -318,9 +327,12 @@ describe('magi', () => {
     expect(b.magi.amount).toBeCloseTo(175500, 6);
   });
 
-  it('counts Social Security at 85%', () => {
-    const b = basis(pkg({ socialSecurityIncome: 40000 }), USER);
-    expect(b.magi.amount).toBeCloseTo(34000, 6);
+  it('counts only the §86 taxable portion of Social Security', () => {
+    // below the base: none of it is in AGI
+    expect(basis(pkg({ socialSecurityIncome: 40000 }), USER).magi.amount).toBe(0);
+    // above the adjusted base: the 85% ceiling, 34,000, on top of 100,000
+    const b = basis(pkg({ socialSecurityIncome: 40000, employedIncome: 100000 }), USER);
+    expect(b.magi.amount).toBeCloseTo(134000, 6);
   });
 
   it('includes long-term gains and qualified dividends', () => {

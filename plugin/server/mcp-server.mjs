@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.3.4; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.3.5; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -32920,6 +32920,16 @@ function getBehavior(instrument) {
 }
 
 // js/tax-basis.js
+function taxableSocialSecurity(benefits, otherIncome, { base, adjusted }) {
+  if (!(benefits > 0)) return 0;
+  const provisional = otherIncome + 0.5 * benefits;
+  if (provisional <= base) return 0;
+  if (provisional <= adjusted) return Math.min(0.5 * benefits, 0.5 * (provisional - base));
+  return Math.min(
+    0.85 * benefits,
+    0.85 * (provisional - adjusted) + Math.min(0.5 * benefits, 0.5 * (adjusted - base))
+  );
+}
 function taxableBasis(pkg, activeUser, { annualise = false, taxTable = null } = {}) {
   const table = taxTable;
   const yearly = pkg.copy();
@@ -32927,7 +32937,7 @@ function taxableBasis(pkg, activeUser, { annualise = false, taxTable = null } = 
   yearly.limitDeductions(activeUser, table);
   const ordinaryTaxable = table.calculateYearlyTaxableIncome(yearly);
   const deduction = table.totalYearlyDeduction(yearly);
-  const grossOrdinary = Math.max(0, yearly.irsTaxableGrossIncome().amount);
+  const grossOrdinary = Math.max(0, yearly.irsTaxableGrossIncome(table).amount);
   const deductionOverflow = Math.max(0, deduction.amount - grossOrdinary);
   const grossGains = Math.max(
     0,
@@ -32941,7 +32951,7 @@ function taxableBasis(pkg, activeUser, { annualise = false, taxTable = null } = 
   ));
   const { preTax } = table.deductionComponents(yearly);
   const magi = new Currency(
-    yearly.irsTaxableGrossIncome().amount + yearly.longTermCapitalGains.amount + yearly.qualifiedDividends.amount - yearly.excludedCapitalGains.amount - preTax.amount
+    yearly.irsTaxableGrossIncome(table).amount + yearly.longTermCapitalGains.amount + yearly.qualifiedDividends.amount - yearly.excludedCapitalGains.amount - preTax.amount
   );
   return {
     ordinaryTaxable,
@@ -33044,6 +33054,16 @@ var us_2026_taxtables = {
     "url": "https://www.irs.gov/taxtopics/tc701",
     "single": 25e4,
     "married": 5e5
+  },
+  // IRC §86 — how much of a Social Security benefit is taxable. The base
+  // amount ($25,000 / $32,000) has been fixed since 1984 and the adjusted
+  // base amount ($34,000 / $44,000) since 1993. Neither is indexed, so a
+  // larger share of benefits becomes taxable every year — the same kind of
+  // statutory stealth tax as the NIIT threshold below. See inflateTaxes().
+  "socialSecurityBenefits": {
+    "url": "https://www.irs.gov/publications/p915",
+    "single": { "base": 25e3, "adjusted": 34e3 },
+    "married": { "base": 32e3, "adjusted": 44e3 }
   },
   // IRC §1411 net investment income tax. The RATE and the THRESHOLDS have
   // both been fixed since 2013 and neither is inflation-indexed — see the
@@ -33165,6 +33185,7 @@ var TaxTable = class {
     this.activeStandardDeduction = this.activeTaxTables.standardDeduction[key];
     this.activeHomeSaleExclusion = this.activeTaxTables.homeSaleExclusion[key];
     this.activeNIITThreshold = this.activeTaxTables.niit[key];
+    this.activeSocialSecurityThresholds = this.activeTaxTables.socialSecurityBenefits[key];
     this.niitRate = this.activeTaxTables.niit.rate;
     const limits = CONTRIBUTION_LIMITS[key];
     this.iraContributionLimitBelow50 = limits.iraBelow50;
@@ -33514,7 +33535,7 @@ var TaxTable = class {
     return new Currency(ficaTaxSelf.amount + ficaTaxEmployed.amount);
   }
   calculateYearlyTaxableIncome(yearly) {
-    let taxableIncome = yearly.irsTaxableGrossIncome();
+    let taxableIncome = yearly.irsTaxableGrossIncome(this);
     return this.applyYearlyDeductions(yearly, taxableIncome);
   }
   /*
@@ -33633,10 +33654,34 @@ var FinancialPackage = class _FinancialPackage {
     if (this.propertyTaxes.amount > table.propertyTaxDeductionMax)
       this.propertyTaxes.amount = table.propertyTaxDeductionMax;
   }
-  irsTaxableGrossIncome() {
+  /**
+   * Gross income taxed at the ordinary rates: ordinary income with Social
+   * Security replaced by its §86 taxable portion.
+   *
+   * `table` is REQUIRED. §86's thresholds depend on filing status, and the
+   * provisional-income test needs the deductible contribution as the engine
+   * books it (`deductionComponents`), so a caller without a table cannot get
+   * the right answer — and a silent default is how this function spent years
+   * returning a flat 85% for everyone.
+   *
+   * The subtract-then-add order is kept from the flat-85% version: at the 85%
+   * ceiling it reproduces the old result bit for bit, so only households the
+   * rule actually changes move.
+   */
+  irsTaxableGrossIncome(table) {
+    if (!table?.activeSocialSecurityThresholds) {
+      throw new Error("FinancialPackage.irsTaxableGrossIncome needs the TaxTable: \xA786 thresholds depend on filing status.");
+    }
+    const benefits = this.socialSecurityIncome.amount;
+    const { preTax } = table.deductionComponents(this);
+    const otherIncome = this.ordinaryIncome().amount - benefits + this.longTermCapitalGains.amount + this.qualifiedDividends.amount - this.excludedCapitalGains.amount - preTax.amount;
     let irsIncome = this.ordinaryIncome().copy();
     irsIncome.subtract(this.socialSecurityIncome);
-    irsIncome.add(this.socialSecurityIncome.copy().multiply(0.85));
+    irsIncome.add(new Currency(taxableSocialSecurity(
+      benefits,
+      otherIncome,
+      table.activeSocialSecurityThresholds
+    )));
     return irsIncome;
   }
   // ── Income rollups (aligned with Metric DAG) ─────────────────────
@@ -39997,8 +40042,8 @@ var EXPENDITURE_TREATMENT = Object.freeze({
   // $0.00 to the cent, and it did not hold for the corpus.
   // grossup-at-the-ltcg-boundary provisions $32,896 with an expenditure tax
   // line of $0, and brokerage-only-retirement — added for this — takes a
-  // premium every month and reports $11,475 of tax in 2027 where $33,048
-  // left the account for tax. 65% low, on a plausible retirement.
+  // premium every month and reports $4,929 of tax in 2027 where $27,837
+  // left the account for tax. 82% low, on a plausible retirement.
   //
   // Still unfixed, and now a choice rather than a gap: moving the premium
   // means splitting one debit across two buckets, since the gross-up is a

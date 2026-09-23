@@ -115,8 +115,8 @@ export const EXPENDITURE_TREATMENT = Object.freeze({
     // $0.00 to the cent, and it did not hold for the corpus.
     // grossup-at-the-ltcg-boundary provisions $32,896 with an expenditure tax
     // line of $0, and brokerage-only-retirement — added for this — takes a
-    // premium every month and reports $11,475 of tax in 2027 where $33,048
-    // left the account for tax. 65% low, on a plausible retirement.
+    // premium every month and reports $4,929 of tax in 2027 where $27,837
+    // left the account for tax. 82% low, on a plausible retirement.
     //
     // Still unfixed, and now a choice rather than a gap: moving the premium
     // means splitting one debit across two buckets, since the gross-up is a

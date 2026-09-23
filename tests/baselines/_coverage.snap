@@ -263,6 +263,7 @@
     incomeGrowth
     incomeTaxWithholding
     spillover
+    taxTrueUp
     transfer
   quickstart-retiredCouple:
     assetGrowth

@@ -25,7 +25,8 @@
  * call site cannot quietly canonise whichever site happened to be copied first.
  *
  *   ordinaryTaxable  Income taxed at the ordinary rate schedule. Gross ordinary
- *                    income with Social Security included at 85%, less the
+ *                    income with the §86 taxable portion of Social Security
+ *                    (see taxableSocialSecurity below — NOT a flat 85%), less the
  *                    greater of the standard or itemised deduction, less
  *                    deductible pre-tax contributions. Floored at zero.
  *                    Long-term gains and qualified dividends are NOT in it —
@@ -137,6 +138,46 @@
 import { Currency } from './utils/currency.js';
 
 /**
+ * IRC §86 — the part of a year's Social Security benefits that is taxable.
+ *
+ * Until 2026-09-23 the engine included 85% of every benefit, always. 85% is
+ * §86's CEILING, not its rule, so every retiree below the thresholds was taxed
+ * on income the IRS does not tax: a single retiree living on $3,500/month of
+ * Social Security was billed $2,104 a year where §86 says $0.
+ *
+ * The test works on PROVISIONAL INCOME — everything else in AGI plus half the
+ * benefits (Pub. 915, worksheet 1):
+ *
+ *     provisional ≤ base              nothing taxable
+ *     base < provisional ≤ adjusted   min(½ benefits, ½ (provisional − base))
+ *     provisional > adjusted          min(85% benefits,
+ *                                         85% (provisional − adjusted)
+ *                                         + min(½ benefits, ½ (adjusted − base)))
+ *
+ * `otherIncome` MUST include long-term gains and qualified dividends. They are
+ * outside ordinary income here only because they have their own rate schedule;
+ * they are inside AGI, and leaving them out would under-tax exactly the retiree
+ * who lives off a brokerage account.
+ *
+ * Pure and unit-tested against the worksheet (tests/social-security-taxation.mjs).
+ *
+ * @param {number} benefits     the year's gross benefits
+ * @param {number} otherIncome  AGI excluding benefits
+ * @param {{base: number, adjusted: number}} thresholds  by filing status, never indexed
+ * @returns {number}
+ */
+export function taxableSocialSecurity(benefits, otherIncome, { base, adjusted }) {
+    if (!(benefits > 0)) return 0;
+    const provisional = otherIncome + 0.5 * benefits;
+    if (provisional <= base) return 0;
+    if (provisional <= adjusted) return Math.min(0.5 * benefits, 0.5 * (provisional - base));
+    return Math.min(
+        0.85 * benefits,
+        0.85 * (provisional - adjusted) + Math.min(0.5 * benefits, 0.5 * (adjusted - base)),
+    );
+}
+
+/**
  * @param {import('./financial-package.js').FinancialPackage} pkg
  *        NOT mutated. Copied internally — `limitDeductions` and
  *        `applyYearlyDeductions` both mutate, and a helper that relied on every
@@ -171,7 +212,7 @@ export function taxableBasis(pkg, activeUser, { annualise = false, taxTable = nu
     // floored at zero the overflow is gone. Ordinary income is clamped at zero
     // too: a negative gross cannot buy MORE shelter than the deduction itself.
     const deduction = table.totalYearlyDeduction(yearly);
-    const grossOrdinary = Math.max(0, yearly.irsTaxableGrossIncome().amount);
+    const grossOrdinary = Math.max(0, yearly.irsTaxableGrossIncome(table).amount);
     const deductionOverflow = Math.max(0, deduction.amount - grossOrdinary);
 
     const grossGains = Math.max(0,
@@ -212,7 +253,7 @@ export function taxableBasis(pkg, activeUser, { annualise = false, taxTable = nu
     const { preTax } = table.deductionComponents(yearly);
 
     const magi = new Currency(
-        yearly.irsTaxableGrossIncome().amount
+        yearly.irsTaxableGrossIncome(table).amount
         + yearly.longTermCapitalGains.amount
         + yearly.qualifiedDividends.amount
         - yearly.excludedCapitalGains.amount
