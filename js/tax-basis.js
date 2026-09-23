@@ -206,12 +206,29 @@ export function taxableBasis(pkg, activeUser, { annualise = false, taxTable = nu
     // the limit through.
     yearly.limitDeductions(activeUser, table);
 
-    const ordinaryTaxable = table.calculateYearlyTaxableIncome(yearly);
+    // MAGI first. It sits above every deduction line, so it depends on none of
+    // them — and the senior deduction phases out ON it, so it has to exist
+    // before the deductions are taken. See the §1411 notes below for what it is.
+    const { preTax } = table.deductionComponents(yearly);
+    const magi = new Currency(
+        yearly.irsTaxableGrossIncome(table).amount
+        + yearly.longTermCapitalGains.amount
+        + yearly.qualifiedDividends.amount
+        - yearly.excludedCapitalGains.amount
+        - preTax.amount
+    );
+
+    // §63(f) and the OBBBA senior deduction. Zero for anyone under 65.
+    const age = table.ageDeductions(activeUser, magi);
+
+    const ordinaryTaxable = table.calculateYearlyTaxableIncome(yearly, age);
 
     // Measured, not inferred from `ordinaryTaxable` — by the time that is
     // floored at zero the overflow is gone. Ordinary income is clamped at zero
     // too: a negative gross cannot buy MORE shelter than the deduction itself.
-    const deduction = table.totalYearlyDeduction(yearly);
+    // The age-based deductions overflow onto the gains exactly like the
+    // standard deduction does: §1(h) counts net capital gain last either way.
+    const deduction = table.totalYearlyDeduction(yearly, age);
     const grossOrdinary = Math.max(0, yearly.irsTaxableGrossIncome(table).amount);
     const deductionOverflow = Math.max(0, deduction.amount - grossOrdinary);
 
@@ -243,22 +260,14 @@ export function taxableBasis(pkg, activeUser, { annualise = false, taxTable = nu
         - yearly.excludedCapitalGains.amount
     ));
 
-    // The deductible contribution as THIS ENGINE books it — 401(k) if there is
-    // one, otherwise the traditional IRA. NOT `pkg.preTaxContribution()`, which
-    // sums both: real AGI subtracts both, but `applyYearlyDeductions` has always
+    // `magi` was computed above, before the deductions. `preTax` there is the
+    // deductible contribution as THIS ENGINE books it — 401(k) if there is one,
+    // otherwise the traditional IRA. NOT `pkg.preTaxContribution()`, which sums
+    // both: real AGI subtracts both, but `applyYearlyDeductions` has always
     // taken one or the other, and MAGI disagreeing with taxable income about the
     // same contribution is precisely the tenth-definition failure this module
     // exists to prevent. The either/or is a pre-existing simplification; fixing
     // it is its own change, not a side effect of adding NIIT.
-    const { preTax } = table.deductionComponents(yearly);
-
-    const magi = new Currency(
-        yearly.irsTaxableGrossIncome(table).amount
-        + yearly.longTermCapitalGains.amount
-        + yearly.qualifiedDividends.amount
-        - yearly.excludedCapitalGains.amount
-        - preTax.amount
-    );
 
     return {
         ordinaryTaxable,

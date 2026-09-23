@@ -302,9 +302,11 @@ Disclose these when a number leans on one. All verified against the current sour
   conservative gate for tax *attribution* only
   ([js/policy-constants.js:39](js/policy-constants.js:39)). A modeled early
   retirement will understate tax owed.
-- **Social Security is taxed at a flat 85%** of benefits
-  ([js/financial-package.js:69](js/financial-package.js:69)), skipping the
-  provisional-income phase-in. Low-income retirees are overtaxed by the model.
+- **A married household has one age.** Age-based rules — the deductions from
+  65, catch-up contribution limits, RMDs — treat both spouses as the entered age
+  ([js/taxes.js](js/taxes.js), `householdPersons`). A couple where only one
+  spouse is 65 or older gets both spouses' age deductions, so their tax is
+  understated.
 - **The NIIT threshold is never indexed** to inflation — correct to statute, but
   it means the 3.8% surtax reaches further into later decades than a
   cost-of-living-adjusted threshold would.

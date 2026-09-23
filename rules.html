@@ -388,8 +388,8 @@
     <!-- ═══ Tax Rates ═══ -->
     <div id="taxes" class="glass-card p-8 sm:p-12 mb-8">
         <h2 class="text-2xl font-bold tracking-tight mb-4">Tax Rates</h2>
-        <p class="text-gray-600 mb-4 leading-relaxed">The IRS is the source of truth &mdash; and so is this simulator. Every run is built from the <strong>2026 federal tables</strong>, selected by your filing status: income brackets, capital gains bands, the standard deduction, the Social Security wage base, and the retirement contribution limits.</p>
-        <p class="text-gray-600 mb-6 leading-relaxed">From the second simulated year onward, all of those figures are <strong>indexed forward by your inflation rate</strong> &mdash; brackets widen, the deduction rises, the wage base climbs. That keeps a 30-year projection from quietly pushing you into the top bracket through inflation alone. Two figures are deliberately held fixed, because Congress never indexed them: the primary-home sale exclusion at $250,000&thinsp;/&thinsp;$500,000, and the Net Investment Income Tax threshold at $200,000&thinsp;/&thinsp;$250,000. Both catch more households every year by standing still, and a simulator that quietly inflated them would model a tax that fades away. Here are the publications we reference:</p>
+        <p class="text-gray-600 mb-4 leading-relaxed">The IRS is the source of truth &mdash; and so is this simulator. Every run is built from the <strong>2026 federal tables</strong>, selected by your filing status: income brackets, capital gains bands, the standard deduction, the Social Security wage base, and the retirement contribution limits. From age 65 the standard deduction grows by the <strong>additional deduction for age 65 or older</strong> ($2,050 single, $1,650 per spouse in 2026), and for tax years 2025 through 2028 the <strong>senior deduction</strong> adds $6,000 per person on top, phasing out at 6% of income over $75,000&thinsp;/&thinsp;$150,000. A household that itemises keeps the senior deduction but not the additional standard deduction.</p>
+        <p class="text-gray-600 mb-6 leading-relaxed">From the second simulated year onward, all of those figures are <strong>indexed forward by your inflation rate</strong> &mdash; brackets widen, the deduction rises, the wage base climbs. That keeps a 30-year projection from quietly pushing you into the top bracket through inflation alone. Some figures are deliberately held fixed, because Congress never indexed them: the primary-home sale exclusion at $250,000&thinsp;/&thinsp;$500,000, the Net Investment Income Tax threshold at $200,000&thinsp;/&thinsp;$250,000, the Social Security provisional-income thresholds, and the senior deduction. The thresholds catch more households every year by standing still, and a simulator that quietly inflated them would model a tax that fades away. Here are the publications we reference:</p>
 
         <div class="grid gap-3">
             <a href="https://www.irs.gov/filing/federal-income-tax-rates-and-brackets" target="_blank"
@@ -522,7 +522,7 @@
                 </div>
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 5</span>
-                    <span class="text-sm text-gray-700">Social Security is included in taxable income at a <strong>flat 85%</strong>. The real rule steps 0%, 50% and 85% against provisional-income thresholds, so a household with modest other income is taxed more here than it would be in practice.</span>
+                    <span class="text-sm text-gray-700">Social Security is taxed by the IRS <strong>provisional-income test</strong>: your other income plus half your benefits. Below $25,000 single&thinsp;/&thinsp;$32,000 joint none of the benefit is taxable; up to $34,000&thinsp;/&thinsp;$44,000 at most half of it is; above that at most 85%. Capital gains count toward provisional income. The thresholds have never been indexed, so a growing share of benefits becomes taxable in later decades.</span>
                 </div>
             </div>
         </div>
@@ -534,7 +534,7 @@
                 <h2 class="text-xl font-bold tracking-tight">Pension</h2>
                 <span class="text-xs text-gray-400 font-medium ml-1">FERS &middot; CSRS &middot; Military &middot; State/Local</span>
             </div>
-            <p class="text-gray-600 mb-4 leading-relaxed">Model defined-benefit pension payments separately from Social Security. Pensions have their own COLA schedule and are kept distinct so future tax treatment differences (MAGI thresholds, the Social Security 85% rule) can be modeled accurately.</p>
+            <p class="text-gray-600 mb-4 leading-relaxed">Model defined-benefit pension payments separately from Social Security. Pensions have their own COLA schedule, and they are taxed differently: a pension is fully taxable income, while only part of a Social Security benefit is (see Rule&nbsp;5).</p>
             <div class="space-y-2">
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 1</span>
@@ -648,8 +648,8 @@
                 <div class="text-sm text-gray-500">Federal only. Property tax is modelled; state income tax, local tax and state-specific retirement-income exemptions are not. <span class="text-gray-400">Optimistic in most states.</span></div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Social Security taxed at a flat 85%</div>
-                <div class="text-sm text-gray-500">The provisional-income thresholds that step the taxable share through 0% and 50% are not implemented. <span class="text-gray-400">Pessimistic for households with modest other income.</span></div>
+                <div class="font-semibold text-sm mb-1">A married household has one age</div>
+                <div class="text-sm text-gray-500">Age-based rules &mdash; the deductions from 65, catch-up contribution limits and RMDs &mdash; treat both spouses as the age you enter. A couple where only one is 65 or older gets both spouses&rsquo; age deductions here. <span class="text-gray-400">Optimistic for couples with an age gap.</span></div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Monthly compounding is rate &divide; 12</div>

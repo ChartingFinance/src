@@ -186,8 +186,11 @@ const A = (x) => ({ startDateInt: START, finishDateInt: DEC, annualReturnRate: {
 
 async function yearOfRetirement(ssMonthly, pensionMonthly) {
     G.global_reset();
-    G.global_setUserStartAge(70);
-    G.global_setUserRetirementAge(65);
+    // 64, not 70: Social Security can start at 62, and under 65 the age-based
+    // deductions (tests/age-65-deductions.mjs) stay out of it, so these two
+    // cases measure §86 and nothing else.
+    G.global_setUserStartAge(64);
+    G.global_setUserRetirementAge(62);
     G.global_setFilingAs('Single');
     G.setActiveTaxTable(G.makeActiveTaxTable());
     const assets = [
@@ -201,7 +204,10 @@ async function yearOfRetirement(ssMonthly, pensionMonthly) {
     await chronometer_run(p);
     // The liability the annual true-up enforces, on the 2026 table.
     const fresh = new TaxTable('Single', p.config.taxTable.configuredPropertyTaxDeductionMax);
-    const b = taxableBasis(p.total, p.activeUser, { taxTable: fresh });
+    // The age DURING the tax year. p.activeUser has already been advanced by the
+    // run's final New Year step, so reading it here would tax 2026 at 65.
+    const user = { age: p.config.startAge, birthYear: p.config.birthYear };
+    const b = taxableBasis(p.total, user, { taxTable: fresh });
     return fresh.calculateYearlyIncomeTax(b.ordinaryTaxable).amount;
 }
 
