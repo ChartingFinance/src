@@ -1,0 +1,25 @@
+# Code issues found during the comment rework
+
+A running list. Rewriting a comment means checking it against the code, and
+sometimes the code is what's wrong. Each issue found that way is recorded here,
+in the same PR as the comment work that found it.
+
+**Status:** `open` · `open (suspected)` (found by reading the code, not yet
+reproduced) · `fixed` (with the PR) · `known` (already tracked elsewhere; listed
+so the picture is complete) · `won't fix` (with the reason).
+
+| # | Status | Where | Issue | Found by |
+|---|---|---|---|---|
+| 1 | fixed #75 | `js/mcp/build-plan.js` | `build_plan` sized a plan's spending from a hand-written take-home estimate that missed four engine rules: Social Security taxed at a flat 85% instead of §86, no age-65 deductions, no pension withholding, and 401(k) deferrals ignored. A 401(k) plan was short of money 65 of 120 months. | A comment citing "a flat 85%" after §86 shipped |
+| 2 | open | `js/mcp/build-plan.js` | A plan whose only account is a 401(k) makes the 401(k) its spending account. The annual limit caps what goes in, and the rest of the paycheck has "nowhere to deposit" for 80 of 120 months. It should refuse and ask for an everyday account. | Measuring #1 |
+| 3 | open | `js/taxes.js` `reconcileYearlyTax()` | Dead in effect. Runs every year, logs three self-checks, and returns a value nothing reads. The middle check compares post-deduction taxable income with gross wages, so it reports a failure on every run. Delete it (a small change in log output). | Its own comment calls it VESTIGIAL |
+| 4 | open | `js/mcp/mcp-client.js` | Nothing imports this file. Its usage example pointed at a path that didn't exist (comment fixed in #74). Confirm it is unused and delete it. | A broken path in its example |
+| 5 | open | `js/finplan-store.js` `isRetirementPhase` | The getter is defined and never called; a comment in `finplan-app.js` says so. Delete it, or use it. | A comment admitting it |
+| 6 | open | `js/tax-basis.js`, `js/financial-package.js` | `taxableBasis()` and `limitDeductions()` default `taxTable` to `null`, so the signature says "optional", but `null` crashes. The table is required; the default should go. | Stale comments about a fallback that no longer exists (#74) |
+| 7 | open | `js/tax-basis.js` | MAGI and taxable income subtract only one pre-tax contribution — the 401(k) if there is one, otherwise the traditional IRA. Real AGI subtracts both, so a household contributing to both is over-taxed. | The MAGI comment |
+| 8 | known | every monthly tax site | Monthly withholding annualises one month × 12, so a one-off month (a bonus, a home sale) is taxed as if it recurred all year. The annual true-up corrects the total. | The `annualise` note in `tax-basis.js` |
+| 9 | known | `js/engines/tax-engine.js` close path | Capital gains on closing an asset are withheld as if stacked on ~$0 of income, so withholding at close runs low. The annual true-up corrects it. Open since the 2026-07-25 review. | The close-path comment |
+| 10 | known | `js/portfolio-issues.js`, `js/rule-notes.js` | User-facing alerts are still found by matching memo prose, so renaming a memo silently removes an alert. `tests/memo-vocabulary.mjs` guards it; the fix is reading event types. | The "Known seam" note |
+| 11 | open | `js/taxes.js` `calculateCapitalGainsTax()` | A short-term gain realised when an asset closes is withheld at ordinary rates walked from $0, as if the gain were the year's only income. For a household with other income the withholding runs low (and for a small gain it ignores the deduction). The annual true-up corrects the total. | The close-path comment in `tax-engine.js` ("the same flaw the short-term-gains path has") |
+| 12 | open (suspected) | `js/engines/tax-engine.js`, three sites | After a spill, the spilled tax is booked on whatever `resolveFunding()` returns *after* the draw. If the draw emptied the fallback account, that is the next account, not the one that paid. `settleOneSided` returns only the fallback's instrument, not the account. Needs a fixture to confirm. | A comment claiming "the account that actually supplied the spilled leg" |
+| 13 | open (suspected) | `js/engines/tax-engine.js` `applyMonthlyTaxTrueUp()` | The single-account path books the whole monthly bill before the draw. If part of it goes unfunded, the package still counts it as collected, so the annual true-up never collects it. The allocated path and the annual true-up book only what was supplied. The old comment said this path "rarely trips"; the code does not cap the bill. | A comment that did not match the code |

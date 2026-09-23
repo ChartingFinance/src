@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.3.10; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.3.11; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -34798,42 +34798,23 @@ var TaxEngine = class {
   }
   // ── Last day of month: withholding on deferred distributions ──────
   /**
-   * Withhold federal tax at the SOURCE of every traditional IRA / 401(K)
+   * Withhold federal tax at the source of every traditional IRA / 401(k)
    * distribution taken this month.
    *
-   * WHY THIS IS A MONTHLY SWEEP AND NOT A PER-DRAW HOOK
-   * ---------------------------------------------------
-   * Six code paths book a deferred distribution: expense fund transfers,
-   * the RMD top-up, rebalancing, close distributions, settleOneSided, and
-   * its spillover leg. Hanging a withholding call off each one means the
-   * rule is correct only while all six are remembered — and a missed site
-   * fails SILENTLY, booking a distribution with no tax. That is the same
-   * shape as the provenance-tag bug that shipped with a green suite.
+   * A monthly sweep over the distribution metric, not a hook on each draw.
+   * Six code paths book deferred distributions, and a hook missed on any one
+   * of them would skip the tax without an error. Every path writes the metric,
+   * so the sweep also covers paths added later.
    *
-   * Reading the distribution METRIC instead makes the sweep total by
-   * construction: every path already writes it (recordDistribution and the
-   * two direct addToMetric sites), so a path added later is covered without
-   * anyone remembering this file exists.
+   * `distributed` is net of tax, so the withholding is `net × r/(1−r)`: at 10%,
+   * a $9,000 net draw withholds $1,000 of a $10,000 gross. The withheld amount
+   * is itself a distribution, so it is booked as one on the asset and in the
+   * household package. The rate is flat, so there is no feedback loop; the
+   * true-up settles any difference.
    *
-   * THE GROSS-UP
-   * ------------
-   * `distributed` is what the account paid out NET of tax. Withholding is
-   * `net × r/(1−r)`, not `net × r`, so that the withheld amount is r of the
-   * GROSS: at 10%, a $9,000 net draw withholds $1,000 against a $10,000
-   * gross. The withheld amount is itself a distribution — it left the
-   * account and is ordinary income — so it is added to both the asset metric
-   * and the household package, exactly as the net draw was.
-   *
-   * Because the rate is flat rather than a function of the liability, there
-   * is no iteration and no feedback loop; next month's true-up settles the
-   * difference either way.
-   *
-   * NOT APPLIED ON CLOSE. applyDeferredCloseDistribution already withholds
-   * the incremental marginal tax on a full distribution, which is strictly
-   * better than a flat 10%. It books ESTIMATED_INCOME_TAX and adds to
-   * monthly.incomeTax itself. This sweep would double-withhold, so the close
-   * path zeroes finishCurrency before month end and is excluded by the
-   * isClosed check below.
+   * Not applied on close: applyDeferredCloseDistribution withholds the
+   * marginal tax on the whole balance itself, and closed accounts are skipped
+   * below.
    */
   withholdOnDeferredDistributions() {
     for (const modelAsset of this.modelAssets) {
@@ -35020,21 +35001,10 @@ var TaxEngine = class {
   }
   // ── On Close: Tax-Free Full Distribution ──────────────────────────
   /**
-   * Closing a Roth is a full distribution like closing any other retirement
-   * account — it simply isn't taxable. It still has to be BOOKED: the cash
-   * leaves via the close fund transfers either way, and if nothing records it
-   * the account's own ledger shows a balance vanishing with no distribution
-   * and no income, while the household's totalIncome() silently drops the
-   * same amount.
-   *
-   * The asymmetry this removes was visible inside a single account: a Roth
-   * that drew $91,459 monthly and closed with $208,541 booked only the first
-   * — the monthly path records distributions (expense-engine, settleOneSided)
-   * and the close path did not.
-   *
-   * Recording only. No tax arises, and none is deducted from the balance:
-   * taxFreeDistribution is not part of ordinaryIncome() or
-   * irsTaxableGrossIncome(), so taxable income cannot move.
+   * Closing a Roth is a full distribution that isn't taxable. Book it anyway,
+   * so the account's ledger and the household's income both show where the
+   * balance went. No tax results: taxFreeDistribution is outside
+   * ordinaryIncome() and irsTaxableGrossIncome().
    */
   applyTaxFreeCloseDistribution(modelAsset) {
     const distribution = modelAsset.finishCurrency.copy();
@@ -35126,13 +35096,12 @@ var TaxEngine = class {
       this.monthly.recordTransfer(settled.spilloverInstrument, settled.spillover, settled.spilloverGain);
     }
   }
-  // ── Spec 4a: billing the tax to the income that caused it ─────────
+  // ── Tax allocation: billing tax to the income that caused it ──────
   /**
    * Split `payment` across the accounts that generated this period's taxable
    * income. Returns [] when the feature is off or nothing qualifies, and the
-   * caller then takes the single-backstop path unchanged — which is what makes
-   * the flag a true no-op rather than a different code path that happens to
-   * agree.
+   * caller then takes the single-backstop path unchanged, so turning the flag
+   * off really is a no-op.
    *
    * `basisOf` differs between the two true-up sites: the monthly one reads
    * live accumulators, the annual one reads history. See tax-allocation.js.
@@ -35153,30 +35122,9 @@ var TaxEngine = class {
     return planAllocation(payment.amount, candidates);
   }
   /**
-   * Collect one allocated leg from the account that earned the income.
-   *
-   * Deliberately the same settleOneSided path the single backstop draw uses,
-   * so a leg inherits the $0 clamp, the spillover re-sourcing and the unfunded
-   * report without restating any of it. An account billed for more than it
-   * holds pays what it has and the rest spills — the same outcome as today,
-   * just starting from a different account.
-   *
-   * NO GROSS-UP on a tax-deferred leg. settleOneSided already calls
-   * recordDistribution (fund-transfer.js), and recordTransfer below books the
-   * household half, so the draw is ordinary income by the same machinery every
-   * other deferred withdrawal uses. The annual true-up charges tax on it
-   * through this.yearly. Grossing up here would tax it twice. See
-   * markdowns/tax-allocation-spec.md section 3.2.1.
-   */
-  /**
-   * Tell the household package what the annual settlement did.
-   *
-   * Every site below settles cash against an ACCOUNT and updates a per-asset
-   * metric. None of them used to touch the package, in either direction, so
-   * `federalTaxes()` reported the same number for a household that paid an
-   * April bill, one that got a refund, and one that did neither. Routed
-   * through here so there is one place to look and one convention to keep:
-   * NEGATIVE when the household paid, POSITIVE when it was refunded.
+   * Record in the household package what the annual settlement did: negative
+   * when the household paid, positive when it was refunded. Every settlement
+   * site goes through here, so federalTaxes() reflects the true-up.
    */
   #bookTrueUp(amount, direction) {
     if (!(Math.abs(amount?.amount ?? 0) > 5e-3)) return;
@@ -35184,6 +35132,16 @@ var TaxEngine = class {
     if (direction === "underpayment") signed.flipSign();
     this.monthly.taxTrueUp.add(signed);
   }
+  /**
+   * Collect one allocated leg from the account that earned the income.
+   *
+   * Uses the same settleOneSided path as the single backstop draw, so a leg
+   * gets the $0 clamp, spillover re-sourcing and unfunded reporting.
+   *
+   * No gross-up on a tax-deferred leg: settleOneSided already books the draw
+   * as a distribution, and the annual true-up taxes it. Grossing up here would
+   * tax it twice. See markdowns/tax-allocation-spec.md §3.2.1.
+   */
   #settleAllocatedLeg(leg, eventType, metric, extraData = {}) {
     const { modelAsset, amount, share } = leg;
     const draw = new Currency(amount);
@@ -35225,7 +35183,7 @@ var TaxEngine = class {
    * is not withheld at source in reality either — it is settled on the return.
    *
    * @param {number} settledYearMonths months of the settled year inside the
-   *   plan, for the same history window spec 4a's allocation uses.
+   *   plan, for the allocation's history window.
    */
   applyAnnualNIIT(settledYearMonths) {
     const { netInvestmentIncome, magi } = taxableBasis(this.yearly, this.activeUser, { taxTable: this.config.taxTable });
@@ -35304,16 +35262,15 @@ var TaxEngine = class {
     if (collected.amount > 0) this.monthly.niit.add(collected.flipSign());
   }
   // ── Year-End: Annual Tax True-Up ──────────────────────────────────
-  // Compares exact yearly tax liability against total withheld/estimated
-  // amounts accumulated in this.yearly. Debits underpayment or credits
-  // overpayment to the first liquid account.
+  // Compares the year's exact liability with what was withheld or
+  // provisioned during it, then collects an underpayment or refunds an
+  // overpayment.
   /**
-   * @param {number} settledYearMonths How many months of the year being
-   *   settled fell inside the plan. Needed only by spec 4a's allocation, which
-   *   reads per-asset history rather than the live accumulators: this pass
-   *   runs on January 1 of the FOLLOWING year, by which point every month of
-   *   the settled year — December included — has been snapshotted and zeroed.
-   *   Portfolio.monthsInPlanYear() owns the short first/last year arithmetic.
+   * @param {number} settledYearMonths How many months of the settled year fell
+   *   inside the plan. Used only by tax allocation, which reads per-asset
+   *   history: this pass runs on January 1 of the following year, when every
+   *   month of the settled year has already been snapshotted and zeroed.
+   *   Portfolio.monthsInPlanYear() computes it.
    */
   applyAnnualTaxTrueUp(settledYearMonths) {
     const yearlySnapshot = this.yearly.copy();

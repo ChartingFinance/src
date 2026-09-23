@@ -1,8 +1,8 @@
 /**
  * tax-engine.js
  *
- * Tax payment scheduling and execution: records tax amounts to the
- * monthly package, pushes CreditMemos, and executes debits/credits.
+ * Tax payment scheduling and execution: records tax amounts in the monthly
+ * package, records the events, and moves the cash.
  *
  * The companion TaxTable (taxes.js) owns the pure math — bracket walks,
  * rate calculations, contribution limits. TaxEngine is the "cashier"
@@ -14,8 +14,8 @@ import { InstrumentType } from '../instruments/instrument.js';
 import { Metric } from '../metric.js';
 import { FundTransferOneSided, FundTransfer } from '../fund-transfer.js';
 import { MonthsSpan } from '../utils/months-span.js';
-// global_retirement_withholding_rate is an `export const`, not settings state,
-// so it stays a module constant — see Spec 9 §3.
+// A fixed policy constant, not a setting, so it is imported rather than read
+// from the run's config.
 import { global_retirement_withholding_rate } from '../policy-constants.js';
 import { basisThisMonth, basisOverMonths, isAllocationEligible, planAllocation, NII_BASIS_METRICS } from '../tax-allocation.js';
 import { logger, LogCategory } from '../utils/logger.js';
@@ -27,7 +27,7 @@ export class TaxEngine {
 
     constructor(modelAssets, monthly, yearly, activeUser, config) {
         this.modelAssets = modelAssets;
-        this.config = config;   // Spec 9 step 2 — carries the run's tax table
+        this.config = config;   // carries the run's tax table
         this.monthly = monthly;
         this.yearly = yearly;
         this.activeUser = activeUser;
@@ -61,42 +61,23 @@ export class TaxEngine {
     // ── Last day of month: withholding on deferred distributions ──────
 
     /**
-     * Withhold federal tax at the SOURCE of every traditional IRA / 401(K)
+     * Withhold federal tax at the source of every traditional IRA / 401(k)
      * distribution taken this month.
      *
-     * WHY THIS IS A MONTHLY SWEEP AND NOT A PER-DRAW HOOK
-     * ---------------------------------------------------
-     * Six code paths book a deferred distribution: expense fund transfers,
-     * the RMD top-up, rebalancing, close distributions, settleOneSided, and
-     * its spillover leg. Hanging a withholding call off each one means the
-     * rule is correct only while all six are remembered — and a missed site
-     * fails SILENTLY, booking a distribution with no tax. That is the same
-     * shape as the provenance-tag bug that shipped with a green suite.
+     * A monthly sweep over the distribution metric, not a hook on each draw.
+     * Six code paths book deferred distributions, and a hook missed on any one
+     * of them would skip the tax without an error. Every path writes the metric,
+     * so the sweep also covers paths added later.
      *
-     * Reading the distribution METRIC instead makes the sweep total by
-     * construction: every path already writes it (recordDistribution and the
-     * two direct addToMetric sites), so a path added later is covered without
-     * anyone remembering this file exists.
+     * `distributed` is net of tax, so the withholding is `net × r/(1−r)`: at 10%,
+     * a $9,000 net draw withholds $1,000 of a $10,000 gross. The withheld amount
+     * is itself a distribution, so it is booked as one on the asset and in the
+     * household package. The rate is flat, so there is no feedback loop; the
+     * true-up settles any difference.
      *
-     * THE GROSS-UP
-     * ------------
-     * `distributed` is what the account paid out NET of tax. Withholding is
-     * `net × r/(1−r)`, not `net × r`, so that the withheld amount is r of the
-     * GROSS: at 10%, a $9,000 net draw withholds $1,000 against a $10,000
-     * gross. The withheld amount is itself a distribution — it left the
-     * account and is ordinary income — so it is added to both the asset metric
-     * and the household package, exactly as the net draw was.
-     *
-     * Because the rate is flat rather than a function of the liability, there
-     * is no iteration and no feedback loop; next month's true-up settles the
-     * difference either way.
-     *
-     * NOT APPLIED ON CLOSE. applyDeferredCloseDistribution already withholds
-     * the incremental marginal tax on a full distribution, which is strictly
-     * better than a flat 10%. It books ESTIMATED_INCOME_TAX and adds to
-     * monthly.incomeTax itself. This sweep would double-withhold, so the close
-     * path zeroes finishCurrency before month end and is excluded by the
-     * isClosed check below.
+     * Not applied on close: applyDeferredCloseDistribution withholds the
+     * marginal tax on the whole balance itself, and closed accounts are skipped
+     * below.
      */
     withholdOnDeferredDistributions() {
 
@@ -165,11 +146,8 @@ export class TaxEngine {
         if (result.spillover.amount > 0) {
             const fallback = FundTransfer.resolveFunding(this.modelAssets);
             if (fallback) {
-                // `cause` distinguishes this from every other one-sided spill.
-                // Without it a withholding spill is indistinguishable in the
-                // ledger from a property-tax or expense settlement spill, which
-                // made a $796 tax payment look like an uncollected gap during
-                // reconciliation (probed 2026-08-03).
+                // `cause` marks this spill as a tax payment, so reconciliation
+                // counts it as income tax rather than as an unpaid settlement.
                 const spillResult = fallback.debit(result.spillover,
                     { type: EventType.SPILLOVER,
                       data: { depleted: modelAsset.displayName,
@@ -205,23 +183,14 @@ export class TaxEngine {
         if (modelAsset.annualTaxRate.rate != 0) {
 
             const escrow = modelAsset.applyMonthlyTaxEscrow();
-            //this.monthly.propertyTaxes.subtract(escrow);
             modelAsset.recordEvent(EventType.PROPERTY_TAX_ESCROW, escrow);
 
             if (modelAsset.monthlyTaxEscrow.amount) {
 
-                // Root of the escrow draw's causal chain. Every other obligation
-                // payer opens a scope — applyExpenseTransfers opens EXPENSE,
-                // applyMortgageTransfers opens MORTGAGE, _debitCarryingCost opens
-                // CARRYING_COST — and this one did not, so the settlement it
-                // produced hung off the bare month and no consumer could tell it
-                // apart from an unrelated draw on the same account.
-                //
-                // Scoped at the DRAW, not the accrual, which is where
-                // maintenance and insurance put theirs: their MAINTENANCE /
-                // INSURANCE events are recorded by instrument-behavior.js
-                // outside _debitCarryingCost, and only the funding leg is inside.
-                // PROPERTY_TAX_ESCROW above is the matching accrual and stays out.
+                // The causal scope for the escrow draw, as every other obligation
+                // payer opens one, so the settlement traces back to the property
+                // tax. Scoped at the draw, not the accrual: PROPERTY_TAX_ESCROW
+                // above stays outside, the same as maintenance and insurance.
                 withTrace(TraceKind.CARRYING_COST, `${modelAsset.displayName} property tax`, _currentDateInt,
                     () => this.#drawPropertyTaxEscrow(modelAsset, escrow));
 
@@ -240,17 +209,16 @@ export class TaxEngine {
 
         for (const fundTransfer of modelAsset.fundTransfers) {
 
-            // so we don't blow up
+            // Only recurring transfers with a resolvable target pay escrow.
             if (!fundTransfer.hasRecurring) continue;
             fundTransfer.bind(modelAsset, this.modelAssets);
             if (!fundTransfer.toModel) continue;
             if (remaining.amount == 0) break;
             
-            // passed the tests so load into the array
             let preFlight = new FundTransferOneSided(fundTransfer, payment);
             remaining.subtract(preFlight.amount);
             if (remaining.amount < 0) {
-                // last minute patch
+                // The last source pays only what remains.
                 preFlight.amount.add(remaining);
                 remaining.zero();
             }                    
@@ -287,20 +255,15 @@ export class TaxEngine {
     // ── On Close: Capital Gains Tax ───────────────────────────────────
 
     applyCapitalGainsTax(modelAsset) {
-        // A Roth owes no tax on close — but distribution RECORDING used to ride
-        // on this early return, so closing one booked nothing at all while the
-        // same account's monthly draws booked normally. Book first, then leave.
+        // A Roth owes no tax on close, but the distribution must still be booked.
         if (InstrumentType.isTaxFree(modelAsset.instrument)) {
             this.applyTaxFreeCloseDistribution(modelAsset);
             return;
         }
 
-        // Closing a traditional IRA/401K is a FULL DISTRIBUTION: the entire
-        // balance is ordinary income — inside the deferred wrapper there is
-        // no basis and no capital-gains treatment. Falling through to the
-        // LTCG path below (the old behavior) taxed only finish − basis at
-        // capital-gains rates, understating the tax on a large close by
-        // tens of thousands of dollars.
+        // Closing a traditional IRA/401(k) distributes the whole balance as
+        // ordinary income: inside the wrapper there is no basis and no
+        // capital-gains treatment.
         if (InstrumentType.isTaxDeferred(modelAsset.instrument)) {
             this.applyDeferredCloseDistribution(modelAsset);
             return;
@@ -310,28 +273,13 @@ export class TaxEngine {
         logger.log(LogCategory.TAX, 'capital gains of ' + capitalGains.toString());
 
         const monthsSpan = MonthsSpan.build(modelAsset.startDateInt, modelAsset.effectiveFinishDateInt);
-        // The band a gain lands in is measured against TAXABLE income with the
-        // gain stacked last (IRC §1(h)). This used to pass totalIncome() × 12 —
-        // a gross rollup that already contained the gains being taxed, plus
-        // tax-free Roth distributions, with no deduction removed — so gains
-        // were pushed into a higher band than they belong in, and the annual
-        // true-up disagreed with this site about the same liability.
-        // Deliberately does NOT apply `basis.unusedDeduction`, though the §63
-        // overflow rule is real and the annual true-up does apply it. Measured
-        // 2026-08-18: this package is ONE MONTH annualised, and at close time it
-        // reads as roughly zero ordinary income, so the whole (inflated)
-        // standard deduction looks unused — to a household earning $108k in the
-        // single-home-sale fixture and far more in mfj-high-earner-ltcg. Wiring
-        // it in cut withholding here by exactly what December then billed back
-        // (2,646.63 and 7,057.68, equal to the cent in both directions), which
-        // buys no accuracy and enlarges the true-up that unfundable-tax-bill
-        // exists to watch.
-        //
-        // This is the same ×12 gap tax-basis.js documents, not a disagreement
-        // about the RULE — withholding is allowed to differ from liability;
-        // that is what a true-up is for. Revisit when the close path gets a
-        // stack base worth trusting: it currently stacks from $0 income, which
-        // the 2026-07-25 review already has open.
+        // The gain is stacked on taxable income to find its band (IRC §1(h)).
+        // At close this package is one month annualised and usually holds
+        // almost no ordinary income, so the stack base is near $0 and the
+        // withholding here runs low; the annual true-up settles the real
+        // liability. unusedDeduction is deliberately not applied: on a nearly
+        // empty month the whole deduction looks unused, and applying it only
+        // moves tax from here to the December bill.
         const { ltcgStackBase } = taxableBasis(this.monthly, this.activeUser, { annualise: true, taxTable: this.config.taxTable });
         const isRealEstate = InstrumentType.isRealEstate(modelAsset.instrument);
         const isPrimaryHome = isRealEstate && modelAsset.isPrimaryHome;
@@ -348,13 +296,10 @@ export class TaxEngine {
 
             modelAsset.recordEvent(EventType.CAPITAL_GAIN_RECOGNIZED, capitalGains.copy(), { metric: Metric.LONG_TERM_CAPITAL_GAIN, data: { spillover: false } });
 
-            // §121 removed some of that gain from the tax base. Record it so
-            // applyAnnualTaxTrueUp can subtract it; without this the true-up
-            // recomputes the year from the gross gain, finds more tax than was
-            // withheld, and bills the difference — handing the exclusion back.
-            // The gain itself stays gross above: the household really did
-            // realise it, and reconciliation balances the recognised event
-            // against monthly.longTermCapitalGains on both sides.
+            // Record the §121 exclusion so the annual true-up subtracts it;
+            // otherwise it recomputes the year from the gross gain and bills the
+            // exclusion back. The gain itself stays gross: the household did
+            // realise it, and reconciliation balances against that figure.
             if (result.excluded > 0) {
                 const excluded = new Currency(result.excluded);
                 this.monthly.excludedCapitalGains.add(excluded);
@@ -371,12 +316,13 @@ export class TaxEngine {
             this.monthly.shortTermCapitalGains.add(capitalGains);
             modelAsset.addToMetric(Metric.SHORT_TERM_CAPITAL_GAIN, capitalGains);
 
-            // flipSign() mutates, so amountToTax is negative from here on — the
-            // sign the metric wants, and the sign the `finishCurrency.add()` at
-            // the end of this method needs to deduct the tax from the closing
-            // balance. This used to pass `capitalGains`, putting the GAIN in a
-            // tax metric: positive, many times the size of the tax, and counted
-            // a second time in INCOME via SHORT_TERM_CAPITAL_GAIN.
+            // Short-term gains are taxed at ordinary rates, and
+            // calculateCapitalGainsTax walks the brackets from $0 for them — as
+            // if the gain were the year's only income. The true-up settles the
+            // real liability.
+            //
+            // flipSign() mutates: amountToTax is negative from here on, the
+            // sign both the metric and the closing-balance deduction below need.
             this.monthly.incomeTax.add(amountToTax.flipSign());
             modelAsset.addToMetric(Metric.SHORT_TERM_CAPITAL_GAIN_TAX, amountToTax);
 
@@ -397,21 +343,10 @@ export class TaxEngine {
     // ── On Close: Tax-Free Full Distribution ──────────────────────────
 
     /**
-     * Closing a Roth is a full distribution like closing any other retirement
-     * account — it simply isn't taxable. It still has to be BOOKED: the cash
-     * leaves via the close fund transfers either way, and if nothing records it
-     * the account's own ledger shows a balance vanishing with no distribution
-     * and no income, while the household's totalIncome() silently drops the
-     * same amount.
-     *
-     * The asymmetry this removes was visible inside a single account: a Roth
-     * that drew $91,459 monthly and closed with $208,541 booked only the first
-     * — the monthly path records distributions (expense-engine, settleOneSided)
-     * and the close path did not.
-     *
-     * Recording only. No tax arises, and none is deducted from the balance:
-     * taxFreeDistribution is not part of ordinaryIncome() or
-     * irsTaxableGrossIncome(), so taxable income cannot move.
+     * Closing a Roth is a full distribution that isn't taxable. Book it anyway,
+     * so the account's ledger and the household's income both show where the
+     * balance went. No tax results: taxFreeDistribution is outside
+     * ordinaryIncome() and irsTaxableGrossIncome().
      */
     applyTaxFreeCloseDistribution(modelAsset) {
 
@@ -435,17 +370,10 @@ export class TaxEngine {
         const distribution = modelAsset.finishCurrency.copy();
         if (distribution.amount <= 0) return;
 
-        // Baseline income BEFORE the distribution is booked, so the
-        // marginal computation below doesn't count it twice. (At close time
-        // this.monthly is usually freshly zeroed — the same weak baseline
-        // the capital-gains close path uses; the annual true-up settles the
-        // exact liability since ordinaryIncome() includes distributions.)
-        // Ordinary tax must be measured against ORDINARY taxable income. This
-        // used to pass totalIncome() × 12, a rollup carrying long-term gains,
-        // qualified dividends and tax-free Roth distributions — none of which
-        // belong in an ordinary-rate calculation — and carrying no deduction.
-        // Captured BEFORE the distribution is booked below, so the marginal
-        // computation does not count it twice.
+        // Ordinary taxable income BEFORE the distribution is booked, so the
+        // marginal tax below does not count it twice. At close this package is
+        // usually nearly empty — the same weak baseline as the capital-gains
+        // path — and the annual true-up settles the exact liability.
         const { ordinaryTaxable: annualizedIncome } =
             taxableBasis(this.monthly, this.activeUser, { annualise: true, taxTable: this.config.taxTable });
 
@@ -459,10 +387,8 @@ export class TaxEngine {
             modelAsset.addToMetric(Metric.FOUR_01K_DISTRIBUTION, distribution);
         }
 
-        // Withhold the INCREMENTAL ordinary tax: tax(income + distribution)
-        // − tax(income). A standalone tax(distribution) would walk the
-        // brackets from $0 and understate the marginal cost whenever other
-        // income exists — the same flaw the short-term-gains path has.
+        // Withhold the incremental tax: tax(income + distribution) − tax(income).
+        // Taxing the distribution alone would walk the brackets from $0.
         const taxWith = this.config.taxTable.calculateYearlyIncomeTax(
             new Currency(annualizedIncome.amount + distribution.amount));
         const taxWithout = this.config.taxTable.calculateYearlyIncomeTax(annualizedIncome.copy());
@@ -477,10 +403,10 @@ export class TaxEngine {
         logger.log(LogCategory.TAX, 'applyDeferredCloseDistribution: ' + modelAsset.displayName
             + ' distributed ' + distribution.toString() + ', withholding ' + amountToTax.toString());
 
-        // Collect the withholding from the closing balance itself (book-and-
-        // collect stay atomic), so the close fund transfers move the post-tax
-        // remainder. Basis tracks the post-tax value for the same reason as
-        // the capital-gains path: close transfers must not re-realize.
+        // Collect the withholding from the closing balance itself, so booking
+        // and collecting happen together and the close transfers move the
+        // post-tax remainder. Basis follows the post-tax value so the close
+        // transfers do not realise a gain again.
         modelAsset.finishCurrency.add(amountToTax);
         modelAsset.monthlyValueChange.add(amountToTax);
         modelAsset.finishBasisCurrency = modelAsset.finishCurrency.copy();
@@ -524,16 +450,14 @@ export class TaxEngine {
 
         if (additionalTax.amount >= 0) return;
 
-        // Additional tax owed beyond payroll withholding (e.g., interest,
-        // dividends, IRA/401K distributions, pensions).
+        // Tax owed beyond what payroll withheld (interest, dividends,
+        // distributions, pensions).
         //
-        // Book-and-collect must be atomic. monthly.incomeTax rolls up into
-        // yearly.incomeTax, which the annual true-up treats as cash already
-        // collected (totalWithheld). Booking the liability without debiting an
-        // account would therefore make the year-end settlement believe the tax
-        // was paid, and it would never be collected from any balance. So: no
-        // funding account, no booking — the annual true-up then sees the full
-        // shortfall and collects it in its April settlement instead.
+        // Booking and collecting must happen together. monthly.incomeTax rolls
+        // into the annual true-up's "already collected" figure, so tax booked
+        // without debiting an account would never be collected. With no funding
+        // account nothing is booked, and the annual true-up collects the whole
+        // shortfall instead.
         const payment = additionalTax.copy().flipSign();
 
         // Who generated the income this tax is on? Empty when the feature is
@@ -542,20 +466,10 @@ export class TaxEngine {
         const legs = this.#planTaxAllocation(payment, (asset) => basisThisMonth(asset));
 
         if (legs.length > 0) {
-            // Book what the accounts ACTUALLY supplied, not what they were
-            // billed. An allocated leg is sized by income share, so an account
-            // that earned a lot this month but holds little cash is billed more
-            // than it can pay; settleOneSided then supplies what it has and
-            // spills the rest, and the spilled leg books a SPILLOVER event which
-            // reconciliation counts in a different bucket.
-            //
-            // Adding the full bill here instead made the package claim income
-            // tax that no incomeTax event backed — probed 2026-08-05 on the
-            // reference portfolio, "2056-04 Income tax: events=0.00,
-            // package=-431.79", an account billed $431.79 with nothing left to
-            // pay it. Same book-and-collect rule the comment above states; the
-            // difference is that the single-backstop path is billed only what
-            // one already-chosen liquid account can cover, so it rarely trips.
+            // Book what the accounts actually supplied, not what they were
+            // billed. A leg is sized by income share, so an account can be
+            // billed more than it holds; the unpaid part spills to the backstop
+            // and is counted through settled.spillover.
             let collected = Currency.zero();
             for (const leg of legs) {
                 const settled = this.#settleAllocatedLeg(leg, EventType.INCOME_TAX_WITHHOLDING,
@@ -576,15 +490,17 @@ export class TaxEngine {
         this.monthly.incomeTax.add(additionalTax);
         liquidAsset.addToMetric(Metric.ESTIMATED_INCOME_TAX, additionalTax);
 
-        // Route through settleOneSided rather than a raw debit: it clamps the
-        // account at $0, re-sources the remainder from the next backstop, and
-        // reports whatever nothing can cover. A raw debit books the tax as paid
-        // no matter what the account actually held. It also books the realized
-        // gain — paying tax from a brokerage sells shares — so that must NOT be
-        // duplicated here. recordTransfer is a no-op for CASH/BANK sources.
+        // settleOneSided, not a raw debit: it clamps the account at $0,
+        // re-sources the rest from the next backstop, and reports what nothing
+        // can cover. It also books the realized gain (paying tax from a
+        // brokerage sells shares), so that is not repeated here.
+        // recordTransfer is a no-op for cash and bank sources.
         //
-        // No single asset "owes" household tax, so fromModel stays null and
-        // reportUnfunded falls back to naming the account that could not pay.
+        // The full bill is booked above, before the draw. If part of it goes
+        // unfunded, the package still counts it as collected.
+        //
+        // No single asset owes household tax, so fromModel stays null and
+        // reportUnfunded names the account that could not pay.
         const oneSided = new FundTransferOneSided(null, payment);
         oneSided.toModel = liquidAsset;
         const settled = FundTransfer.settleOneSided(oneSided, { type: EventType.INCOME_TAX_WITHHOLDING }, this.modelAssets);
@@ -596,14 +512,13 @@ export class TaxEngine {
 
     }
 
-    // ── Spec 4a: billing the tax to the income that caused it ─────────
+    // ── Tax allocation: billing tax to the income that caused it ──────
 
     /**
      * Split `payment` across the accounts that generated this period's taxable
      * income. Returns [] when the feature is off or nothing qualifies, and the
-     * caller then takes the single-backstop path unchanged — which is what makes
-     * the flag a true no-op rather than a different code path that happens to
-     * agree.
+     * caller then takes the single-backstop path unchanged, so turning the flag
+     * off really is a no-op.
      *
      * `basisOf` differs between the two true-up sites: the monthly one reads
      * live accumulators, the annual one reads history. See tax-allocation.js.
@@ -626,30 +541,9 @@ export class TaxEngine {
     }
 
     /**
-     * Collect one allocated leg from the account that earned the income.
-     *
-     * Deliberately the same settleOneSided path the single backstop draw uses,
-     * so a leg inherits the $0 clamp, the spillover re-sourcing and the unfunded
-     * report without restating any of it. An account billed for more than it
-     * holds pays what it has and the rest spills — the same outcome as today,
-     * just starting from a different account.
-     *
-     * NO GROSS-UP on a tax-deferred leg. settleOneSided already calls
-     * recordDistribution (fund-transfer.js), and recordTransfer below books the
-     * household half, so the draw is ordinary income by the same machinery every
-     * other deferred withdrawal uses. The annual true-up charges tax on it
-     * through this.yearly. Grossing up here would tax it twice. See
-     * markdowns/tax-allocation-spec.md section 3.2.1.
-     */
-    /**
-     * Tell the household package what the annual settlement did.
-     *
-     * Every site below settles cash against an ACCOUNT and updates a per-asset
-     * metric. None of them used to touch the package, in either direction, so
-     * `federalTaxes()` reported the same number for a household that paid an
-     * April bill, one that got a refund, and one that did neither. Routed
-     * through here so there is one place to look and one convention to keep:
-     * NEGATIVE when the household paid, POSITIVE when it was refunded.
+     * Record in the household package what the annual settlement did: negative
+     * when the household paid, positive when it was refunded. Every settlement
+     * site goes through here, so federalTaxes() reflects the true-up.
      */
     #bookTrueUp(amount, direction) {
         if (!(Math.abs(amount?.amount ?? 0) > 0.005)) return;
@@ -658,6 +552,16 @@ export class TaxEngine {
         this.monthly.taxTrueUp.add(signed);
     }
 
+    /**
+     * Collect one allocated leg from the account that earned the income.
+     *
+     * Uses the same settleOneSided path as the single backstop draw, so a leg
+     * gets the $0 clamp, spillover re-sourcing and unfunded reporting.
+     *
+     * No gross-up on a tax-deferred leg: settleOneSided already books the draw
+     * as a distribution, and the annual true-up taxes it. Grossing up here would
+     * tax it twice. See markdowns/tax-allocation-spec.md §3.2.1.
+     */
     #settleAllocatedLeg(leg, eventType, metric, extraData = {}) {
         const { modelAsset, amount, share } = leg;
         const draw = new Currency(amount);
@@ -672,9 +576,8 @@ export class TaxEngine {
                     { type: eventType, data: { ...extraData, basis: 'proportional', share } },
                     this.modelAssets);
 
-                // Each payer carries its own share on its own ledger. Booking the
-                // whole bill against one account is the thing this spec exists to
-                // stop, and it would also make the rule note lie about who paid.
+                // Each payer carries its own share on its own ledger; the rule
+                // note reads it from there to say who paid.
                 modelAsset.addToMetric(metric, settled.supplied.copy().flipSign());
                 this.monthly.recordTransfer(modelAsset.instrument, settled.supplied, settled.realizedGain);
 
@@ -702,7 +605,7 @@ export class TaxEngine {
      * is not withheld at source in reality either — it is settled on the return.
      *
      * @param {number} settledYearMonths months of the settled year inside the
-     *   plan, for the same history window spec 4a's allocation uses.
+     *   plan, for the allocation's history window.
      */
     applyAnnualNIIT(settledYearMonths) {
 
@@ -738,8 +641,8 @@ export class TaxEngine {
                 ? 'nii' : 'magi',
         };
 
-        // Spec 4a window — identical to applyAnnualTaxTrueUp's, because this
-        // pass runs immediately after it on the same January 1.
+        // The allocation window, identical to applyAnnualTaxTrueUp's: this pass
+        // runs right after it, on the same January 1.
         const referenceHistory = this.modelAssets[0]?.getHistory(Metric.VALUE) ?? [];
         const hiIndex = referenceHistory.length - 1;
         const loIndex = hiIndex - (Math.max(1, settledYearMonths ?? 12) - 1);
@@ -750,11 +653,8 @@ export class TaxEngine {
         if (legs.length > 0) {
             logger.log(LogCategory.TAX,
                 `NIIT: allocating ${niit.toString()} across ${legs.length} account(s) by NII share.`);
-            // Book what the accounts ACTUALLY supplied, not what they were
-            // billed — the same rule applyMonthlyTaxTrueUp follows. An account
-            // billed more than it holds spills, and the spilled leg is counted
-            // through settled.spillover; adding the full bill here would make
-            // the package claim tax no balance ever paid.
+            // Book what the accounts actually supplied, not what they were
+            // billed; the spilled part is counted through settled.spillover.
             const collected = Currency.zero();
             for (const leg of legs) {
                 const settled = this.#settleAllocatedLeg(
@@ -802,17 +702,16 @@ export class TaxEngine {
     }
 
     // ── Year-End: Annual Tax True-Up ──────────────────────────────────
-    // Compares exact yearly tax liability against total withheld/estimated
-    // amounts accumulated in this.yearly. Debits underpayment or credits
-    // overpayment to the first liquid account.
+    // Compares the year's exact liability with what was withheld or
+    // provisioned during it, then collects an underpayment or refunds an
+    // overpayment.
 
     /**
-     * @param {number} settledYearMonths How many months of the year being
-     *   settled fell inside the plan. Needed only by spec 4a's allocation, which
-     *   reads per-asset history rather than the live accumulators: this pass
-     *   runs on January 1 of the FOLLOWING year, by which point every month of
-     *   the settled year — December included — has been snapshotted and zeroed.
-     *   Portfolio.monthsInPlanYear() owns the short first/last year arithmetic.
+     * @param {number} settledYearMonths How many months of the settled year fell
+     *   inside the plan. Used only by tax allocation, which reads per-asset
+     *   history: this pass runs on January 1 of the following year, when every
+     *   month of the settled year has already been snapshotted and zeroed.
+     *   Portfolio.monthsInPlanYear() computes it.
      */
     applyAnnualTaxTrueUp(settledYearMonths) {
 
@@ -820,16 +719,10 @@ export class TaxEngine {
         const yearlySnapshot = this.yearly.copy();
         yearlySnapshot.limitDeductions(this.activeUser, this.config.taxTable);
 
-        // Both bases from ONE call. This site used to recompute the gains base
-        // inline — gross gains less §121, clamped — which was a correct copy of
-        // taxableBasis on the day it was written and a tenth disagreeing
-        // definition the moment the §63 deduction overflow was added to one and
-        // not the other. Subtracting §121 rather than reducing
-        // longTermCapitalGains at the source keeps the recognised gain honest (a
-        // household that sold a home for a $488,452 gain should see $488,452 in
-        // its ledger) and leaves the capitalGains reconciliation bucket
-        // balancing against an untouched accumulator; taxableBasis does it the
-        // same way.
+        // Both bases from one taxableBasis() call, so this site cannot drift from
+        // the others. §121 is subtracted there rather than taken off
+        // longTermCapitalGains, so the ledger still shows the gain the household
+        // actually realised.
         const { ordinaryTaxable: actualTaxableIncome, capitalGains: yearlyCapitalGains } =
             taxableBasis(this.yearly, this.activeUser, { taxTable: this.config.taxTable });
         const actualIncomeTax = this.config.taxTable.calculateYearlyIncomeTax(actualTaxableIncome);
@@ -852,18 +745,13 @@ export class TaxEngine {
 
         // 2. What was already withheld or provisioned during the year?
         //
-        // NEGATED, not Math.abs()'d. These are outflows and are stored negative,
-        // so one negation of the sum is what turns them into a positive
-        // "already paid" figure. Math.abs() used to be applied per field, which
-        // made this arithmetic agree with itself no matter which sign each field
-        // carried — and estimatedTaxes carried the wrong one for the life of the
-        // feature without a single check failing. Do not put it back: the whole
-        // point is that a field with the wrong sign now produces a wrong number
-        // here, loudly, instead of being quietly absorbed.
+        // The sum is negated, never Math.abs()'d per field: every field here is
+        // stored negative, so a field with the wrong sign produces a wrong number
+        // instead of being silently absorbed. tests/tax-sign-convention.mjs
+        // guards this.
         //
-        // taxTrueUp is deliberately NOT in this sum. It is the settlement of
-        // this very calculation; including it would make each year's true-up
-        // depend on the previous year's, which ratchets.
+        // taxTrueUp is not in the sum: it is the result of this calculation, and
+        // including it would make each year depend on the last.
         const totalWithheld = -(this.yearly.incomeTax.amount
                               + this.yearly.estimatedTaxes.amount
                               + this.yearly.longTermCapitalGainsTax.amount);
@@ -874,10 +762,9 @@ export class TaxEngine {
         // Only act if the discrepancy is material (> $1)
         if (Math.abs(taxDifference) < 1) return;
 
-        // Spec 4a basis window. VALUE is in COMMON_METRICS so every instrument
-        // tracks it, and every asset is snapshotted every month, so all
-        // histories share a length and an index origin. December of the settled
-        // year is therefore the last entry.
+        // Allocation window. Every asset tracks VALUE and is snapshotted every
+        // month, so all histories share one length; the settled December is the
+        // last entry.
         const referenceHistory = this.modelAssets[0]?.getHistory(Metric.VALUE) ?? [];
         const hiIndex = referenceHistory.length - 1;
         const loIndex = hiIndex - (Math.max(1, settledYearMonths ?? 12) - 1);
@@ -892,18 +779,9 @@ export class TaxEngine {
                 for (const leg of legs) {
                     const settled = this.#settleAllocatedLeg(leg, EventType.TAX_TRUE_UP,
                         Metric.ESTIMATED_INCOME_TAX, { direction: 'underpayment' });
-                    // What the account actually supplied, not what it was asked
-                    // for — the difference is the spillover, and claiming the
-                    // full bill regardless is the defect this site already
-                    // learned once.
+                    // Book what the account actually supplied, and the spilled
+                    // part only if a fallback account actually paid it.
                     this.#bookTrueUp(settled.supplied, 'underpayment');
-                    // Only when a fallback actually took it. `spillover` is the
-                    // part the allocated account could not supply; whether any
-                    // account paid it is what `spilloverInstrument` says. This
-                    // mirrors the condition the metric booking below already
-                    // uses — book it unconditionally and the package claims tax
-                    // that nothing paid, which is the defect this site fixed
-                    // once already in the other direction.
                     if (settled.spilloverInstrument) {
                         this.#bookTrueUp(settled.spillover, 'underpayment');
                     }
@@ -914,12 +792,10 @@ export class TaxEngine {
             const refund = new Currency(Math.abs(taxDifference));
             const legs = this.#planTaxAllocation(refund, yearBasis);
             if (legs.length > 0) {
-                // Refunds follow the same basis as collections. Sending every
-                // refund to the backstop while billing the earners would ratchet
-                // cash out of the income generators over repeated over/under
-                // cycles — a slow version of the bug this spec exists to fix.
-                // credit() adds a taxable deposit to finishBasisCurrency, so this
-                // manufactures no untaxed future gain.
+                // Refunds follow the same shares as collections. Sending every
+                // refund to the backstop would slowly move cash out of the
+                // accounts that earn the income. credit() adds basis, so no
+                // untaxed gain is created.
                 logger.log(LogCategory.TAX, `Annual True-Up: Overpaid by $${refund.amount.toFixed(0)}. Refunding across ${legs.length} account(s) by income share.`);
                 for (const leg of legs) {
                     const credit = new Currency(leg.amount);
@@ -935,37 +811,22 @@ export class TaxEngine {
         }
 
         if (!liquidAsset) {
-            // NOTHING everyday can pay this. Report it — never return in
-            // silence, which books no tax, moves no cash and raises no issue,
-            // so a plan that cannot pay its April bill looks identical to one
-            // that has none. resolveFunding's own contract says as much: an
-            // obligation with no funding account is an UNFUNDED obligation,
-            // "never a silent skip".
+            // No everyday account can pay. Report it rather than return
+            // silently, or a plan that cannot pay its April bill looks like one
+            // that owes nothing. This is the last line of defence: the monthly
+            // true-up defers to here.
             //
-            // This is the LAST line of defence. applyMonthlyTaxTrueUp may also
-            // find no backstop, but it logs and defers here; this site has
-            // nowhere left to defer to.
-            //
-            // Note that "no liquid asset" is not the same as "no money".
-            // resolveFunding considers everyday accounts only, by deliberate
-            // policy — the engine will not raid a 401(k) implicitly — so a
-            // household with a large deferred balance and an empty current
-            // account lands here too. The obligation is just as real, and the
-            // user is the one who decides which account pays it.
+            // "No everyday account" is not "no money". The engine never draws a
+            // 401(k) implicitly, so a household with a large deferred balance
+            // can land here; the user decides which account pays.
             if (taxDifference > 0) {
                 FundTransfer.reportUnfunded(this.#unfundedTaxAnchor(),
                     new Currency(taxDifference), 'annual tax true-up',
                     ShortfallOrigin.ONE_SIDED);
             } else {
-                // A refund is money owed TO the household, so it is not an
-                // unfunded obligation — but dropping it is the same defect
-                // wearing the other hat, and it fires on a SHIPPED profile:
-                // Early Career is owed $2,018.62 across six refunds it never
-                // received.
-                //
-                // resolveFunding said no only because every everyday account
-                // was empty, and emptiness is a reason to RECEIVE a refund, not
-                // a reason to refuse one. resolveDeposit drops that filter.
+                // A refund owed to the household must not be dropped either.
+                // Empty accounts are a reason to receive a refund, not to refuse
+                // one, so resolveDeposit skips the positive-balance filter.
                 const refund = new Currency(Math.abs(taxDifference));
                 const target = FundTransfer.resolveDeposit(this.modelAssets);
                 if (target) {
@@ -988,20 +849,9 @@ export class TaxEngine {
         }
 
         if (taxDifference > 0) {
-            // Underpaid — collect the shortfall (April tax bill).
-            //
-            // Routed through settleOneSided rather than a raw debit, for the
-            // same reason applyMonthlyTaxTrueUp is: a raw debit CLAMPS at $0 and
-            // returns the overshoot in `spillover`, which this site used to
-            // discard — booking ESTIMATED_INCOME_TAX for the full bill while
-            // that cash never left any account. Probed 2026-08-03: the April
-            // 2029 bill asked Savings for $3,462.57 against a $791.98 balance
-            // and silently "collected" the missing $2,670.59.
-            //
-            // settleOneSided re-sources the remainder from the next backstop and
-            // reports what nothing can cover, so the books only ever claim tax
-            // that a balance actually paid. Each leg is booked against the
-            // account that really supplied it.
+            // Underpaid: collect the shortfall (the April bill) through
+            // settleOneSided, so a clamped account's shortfall is re-sourced or
+            // reported and the books claim only tax a balance actually paid.
             const taxBill = new Currency(taxDifference);
             logger.log(LogCategory.TAX, `Annual True-Up: Underpaid by $${taxDifference.toFixed(0)}. Debiting ${liquidAsset.displayName}.`);
 
@@ -1018,9 +868,10 @@ export class TaxEngine {
 
             if (settled.spillover.amount > 0 && settled.spilloverInstrument) {
                 this.monthly.recordTransfer(settled.spilloverInstrument, settled.spillover, settled.spilloverGain);
-                // The account that actually supplied the spilled leg carries its
-                // tax on its own ledger; booking it all against liquidAsset
-                // would show a depleted account paying tax it never held.
+                // Attribute the spilled leg's tax to the backstop account rather
+                // than to the depleted one. resolveFunding is asked again AFTER
+                // the draw, so if the draw emptied the fallback this names the
+                // next account instead.
                 const payer = FundTransfer.resolveFunding(this.modelAssets);
                 if (payer) payer.addToMetric(Metric.ESTIMATED_INCOME_TAX, settled.spillover.copy().flipSign());
             }
