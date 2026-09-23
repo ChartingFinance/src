@@ -51,7 +51,7 @@
  *
  * `pairedAloneFails` is also tracked and frozen: the count of months where
  * TRANSFER alone does not net, i.e. where the shortfall terms are doing real
- * work. On Early Career that is 158 of 666 months, which is a statement about
+ * work. On Early Career that is 151 of 666 months, which is a statement about
  * how often its single funding account runs dry — not a defect.
  *
  * THE CLOCK IS PINNED to 2026-07-15: quick-start dates derive from `new Date()`
@@ -443,12 +443,10 @@ check('the run actually exercised conservation', () => {
   assert.ok(conservation.months > 600, `only ${conservation.months} months checked`);
 });
 
-// The narrower check the ENGINE currently applies. Early Career trips it
-// because its Brokerage is the only funding-backstop account in the plan, so
-// when it empties there is nothing to spill to and the shortfall is UNFUNDED —
-// a term monthlySanityCheck does not yet include. Frozen, not asserted to be
-// zero: when the engine adopts the three-term law this should drop to 0 and
-// this baseline must be updated deliberately.
+// Months where TRANSFER alone does not net. Early Career's Brokerage is its only
+// funding-backstop account, so when it empties the shortfall is UNFUNDED and the
+// three-term law above carries the difference. Frozen as a statement about the
+// plan (see CONSERVATION_BASELINE), not asserted to be zero.
 check('months where transfers alone do not balance match the baseline', () => {
   assert.equal(conservation.pairedAloneFails, CONSERVATION_BASELINE.pairedAloneFails,
     `moved from ${CONSERVATION_BASELINE.pairedAloneFails} to ${conservation.pairedAloneFails}. ` +

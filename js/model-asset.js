@@ -734,15 +734,6 @@ export class ModelAsset {
 
   applyLastDayOfMonth(currentDateInt) {  
 
-    /*
-     * clamping retirement accounts now causes this to fire. 
-     * proper fix is to back out the monthly change.
-    const expected = this.firstDayOfMonthValue.plus(this.monthlyValueChange);
-    if (expected.toFixed() !== this.finishCurrency.toFixed()) {
-      console.warn('Value mismatch! finishValue: ' + this.finishCurrency.toFixed() + '   expected: ' + expected.toFixed());
-      debugger;
-    }
-    */
 
   }
 
@@ -1011,9 +1002,6 @@ export class ModelAsset {
     return this.finishCurrency;
   }
 
-  /*
-    Unrealized Gain Ratio of the asset 1 - (basis / currentValue)
-  */
   /**
    * What a withdrawal of `amount` would do to this account, without doing it.
    *
@@ -1057,6 +1045,7 @@ export class ModelAsset {
     };
   }
 
+  /** Unrealized gain ratio of the account: 1 − (basis / currentValue). */
   getUnrealizedGainRatio() {
     if (this.finishCurrency.amount <= 0) return 0;
     const basisRatio = this.finishBasisCurrency.amount / this.finishCurrency.amount;
@@ -1103,19 +1092,6 @@ export class ModelAsset {
     }
     
   }
-
-  /** Legacy method kept for backwards compatibility with charting code that expects `displayValueData`. 
-  monthlyAssetDataToDisplayAssetData(monthsSpan) {
-    this.displayAssetData = [];
-    for (let i = monthsSpan.offsetMonths; i < this.monthlyValues.length; i += monthsSpan.combineMonths) {
-      this.displayAssetData.push(this.monthlyValues[i]);
-    }
-  }
-
-  monthlyCashFlowDataToDisplayCashFlowData(monthsSpan) {
-    this.buildDisplayData(monthsSpan, 'monthlyCashFlows', 'displayCashFlowData');
-  }
-  */
 
   monthlyDataArrayToDisplayData(monthsSpan, monthlyArrayName, displayArrayName) {
     this.buildDisplayData(monthsSpan, monthlyArrayName, displayArrayName);

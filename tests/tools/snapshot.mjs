@@ -331,12 +331,11 @@ const coerce = (raw) => {
 /**
  * Only globals that actually change a simulation are exposed to --set.
  *
- * Each entry is {apply, read}, and `read` is not decoration — it is the whole
- * point. Several of these globals are localStorage-backed: `global_setX` writes
- * the key and DOES NOT assign the module variable, which only `global_getX`
- * copies back. A `--set` wired to the setter alone therefore writes somewhere
- * real, throws nothing, and changes no simulated number — the tool reports "no
- * drift" and the reader concludes the flag does nothing.
+ * Each entry is {apply, read}, and `read` is not decoration — it verifies the
+ * write landed. Until 2026-09-04 several setters wrote localStorage without
+ * assigning the module variable (globals.js now assigns in every setter), so a
+ * `--set` wired to the setter alone changed no simulated number — the tool
+ * reported "no drift" and the reader concluded the flag did nothing.
  *
  * That was true here for four of the then-eight knobs below (filingAs,
  * inflationRate, taxYear, propertyTaxRate) until 2026-08-06. taxYear and

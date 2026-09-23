@@ -4,21 +4,17 @@
  * ── Why this file exists ─────────────────────────────────────────────
  *
  * Running a plan is not `new Portfolio(assets)` + `chronometer_run`. It is a
- * SEQUENCE, and every step of it is load-bearing:
+ * SEQUENCE, and each step matters:
  *
- *   1. reset globals          — they are module state; plan N+1 inherits plan N
- *   2. apply settings         — including filingAs, which nothing else infers
- *   3. build the TaxTable     — AFTER filingAs, because it reads it at construction
- *   4. hydrate assets AND life events
- *   5. run
- *   6. read the issues back
+ *   1. build the config from the spec's settings — filingAs and the tax table
+ *      included (`simConfigFromPlanSpec`)
+ *   2. hydrate assets AND life events
+ *   3. run
+ *   4. read the issues back
  *
- * mcp-server.js previously did an ad-hoc subset of that, and got three of the
- * six wrong: it never set filingAs (so an MFJ plan simulated on Single brackets,
- * Single contribution limits and a $250k home exclusion), it dropped the life
- * events on the floor (so no phase ever transitioned and no retirement transfer
- * ever fired), and it set global ages that quick-start does not read (so the
- * `startAge` parameter it advertised moved nothing).
+ * mcp-server.js once did an ad-hoc subset of this and got it wrong in three
+ * ways: an MFJ plan simulated on Single brackets, life events were dropped so
+ * no phase ever transitioned, and the advertised `startAge` moved nothing.
  *
  * That is what a second client of the engine costs when it reimplements setup.
  * The fix is the same one this codebase applies everywhere else — recordEvent()

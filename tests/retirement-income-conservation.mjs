@@ -15,7 +15,8 @@
  *   1. Lifetime employedIncome and selfIncome are exactly $0.
  *   2. Benefits land once: socialSecurityIncome / pensionIncome == 12 × benefit.
  *   3. A benefit fully under the standard deduction generates ZERO income tax
- *      (SS at 85% of $12,000 = $10,200 < $16,100; pension $12,000 < $16,100).
+ *      (SS: $12,000 alone is below the §86 base amount, so none of it is
+ *      taxable; pension: $12,000 < the $16,100 standard deduction).
  *   4. The bank account that would fund tax true-ups is untouched.
  *
  * Usage:  node src/tests/retirement-income-conservation.mjs   (from repo root)
@@ -130,7 +131,7 @@ console.log('\n── Social Security ($1,000/mo, one year) ──────�
     assert.ok(near(T.socialSecurityIncome.amount, 12000),
       `total.socialSecurityIncome = ${fmt(T.socialSecurityIncome.amount)}, expected $12,000.00`);
   });
-  check('no income tax: 85% of $12,000 sits under the standard deduction', () => {
+  check('no income tax: $12,000 of Social Security alone is not taxable under §86', () => {
     assert.ok(near(T.incomeTax.amount, 0),
       `total.incomeTax = ${fmt(T.incomeTax.amount)}, expected $0.00`);
   });

@@ -12,12 +12,10 @@
  * files under engines/ import nothing but each other, utils/ and
  * globals.js. Not one of them touches the DOM.
  *
- * "Almost" is the problem. Nothing enforced it, so the boundary held by
- * habit, and habit is not a constraint. `js/mcp/polyfill.js` exists
- * because the engine reads its configuration out of localStorage — the
- * headless caller has to fake a browser storage API to tell the engine
- * its own filing status. That is the one real leak, and it got there
- * without anyone deciding to add it.
+ * "Almost" was the problem. Nothing enforced it, so the boundary held by
+ * habit, and habit is not a constraint. The one real leak — the engine reading
+ * its configuration out of localStorage, so a headless caller had to fake
+ * browser storage — got there without anyone deciding to add it.
  *
  * ── The manifest is DERIVED, not written down ────────────────────────
  *

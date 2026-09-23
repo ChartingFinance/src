@@ -5,11 +5,11 @@
  *
  * `recordEvent()` appends a structured event and the memo rendered from it, in
  * that order, one for one. That pairing is load-bearing rather than tidy:
- * `monthlySanityCheck` scans memos incrementally from
- * `creditMemosCheckedIndex`, so anything that lets the two arrays drift —
+ * `monthlySanityCheck` scans incrementally from
+ * `eventsCheckedIndex`, so anything that lets the two arrays drift —
  * a stray `creditMemos.push`, an event recorded without a memo, a reordered
  * append — could double-count or skip a month's reconciliation, and the
- * complaint would go to `logger.log()`, which is a no-op.
+ * complaint would only reach the logger, where no test reads it.
  *
  * This also proves the migration itself: as long as index i of one array
  * matches index i of the other on amount, date and rendered note, the ledger

@@ -17,9 +17,9 @@
  * paid-off debt at $0 to avoid reverse interest; this is the same idea applied
  * to accounts that are supposed to be positive.
  *
- * NOTE: this suite does not assert that balances stay above zero. Nothing
- * floors funding-backstop accounts yet — that is the other half of the
- * overdraft work. This pins only that a deficit does not COMPOUND.
+ * NOTE: this suite pins only that a deficit does not COMPOUND. The $0 floor
+ * on funding accounts — the other half of the overdraft work — is guarded by
+ * funding-backstop.mjs and the decumulation oracle.
  *
  * Usage:  node src/tests/earnings-on-deficit.mjs   (from repo root)
  */

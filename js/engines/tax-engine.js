@@ -372,11 +372,11 @@ export class TaxEngine {
             modelAsset.addToMetric(Metric.SHORT_TERM_CAPITAL_GAIN, capitalGains);
 
             // flipSign() mutates, so amountToTax is negative from here on — the
-            // sign the metric wants, and the sign line 178 needs to deduct the
-            // tax from the closing balance. This used to pass `capitalGains`,
-            // putting the GAIN in a tax metric: positive, many times the size of
-            // the tax, and counted a second time in INCOME via
-            // SHORT_TERM_CAPITAL_GAIN. The long-term branch above never had it.
+            // sign the metric wants, and the sign the `finishCurrency.add()` at
+            // the end of this method needs to deduct the tax from the closing
+            // balance. This used to pass `capitalGains`, putting the GAIN in a
+            // tax metric: positive, many times the size of the tax, and counted
+            // a second time in INCOME via SHORT_TERM_CAPITAL_GAIN.
             this.monthly.incomeTax.add(amountToTax.flipSign());
             modelAsset.addToMetric(Metric.SHORT_TERM_CAPITAL_GAIN_TAX, amountToTax);
 

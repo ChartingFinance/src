@@ -159,23 +159,22 @@ export function global_reset() {
 // message handler must call global_applyWorkerSnapshot(payload.settings)
 // BEFORE constructing a TaxTable or touching model objects.
 
-/**
- * Capture the current settings as a SimConfig.
- *
- * This lives HERE, not in sim-config.js, and the direction is the point. The
- * globals are the browser-side settings store — the persistence behind the
- * settings editor — so reading them is this module's job. sim-config.js must
- * import nothing from here, or globals.js can never leave the engine's import
- * closure and the layer-boundary exemption can never be deleted (Spec 9 §4.6).
- *
- * `taxTable` is deliberately absent; step 2 attaches it.
- */
+/** A TaxTable for the current settings' filing status and property-tax cap. */
 export function makeActiveTaxTable() {
     return new TaxTable(
         asFilingStatus(global_filingAs, global_default_filingAs),
         global_propertyTaxDeductionMax);
 }
 
+/**
+ * Capture the current settings as a SimConfig, tax table included.
+ *
+ * This lives HERE, not in sim-config.js, and the direction is the point. The
+ * globals are the browser-side settings store — the persistence behind the
+ * settings editor — so reading them is this module's job. sim-config.js is on
+ * the engine's run path and must import nothing from here; tests/layer-boundary.mjs
+ * enforces that.
+ */
 export function simConfigFromGlobals() {
     return makeSimConfig({
         inflationRate: global_inflationRate,
@@ -190,10 +189,8 @@ export function simConfigFromGlobals() {
         backtestYear: global_backtestYear,
         simDataMode: global_simDataMode,
 
-        // Built here as of step 6, so a config from the app carries its own
-        // table exactly as one from a plan spec does. Portfolio no longer needs
-        // to reach for the module-level `activeTaxTable`, which is what lets it
-        // stop importing this file.
+        // A config from the app carries its own table exactly as one from a
+        // plan spec does, so Portfolio never reaches for a module-level table.
         taxTable: makeActiveTaxTable(),
     });
 }

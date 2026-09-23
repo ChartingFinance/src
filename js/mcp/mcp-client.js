@@ -131,7 +131,7 @@ export const mcpServer = new MCPServer();
 
 How to test
 
-import { mcpServer } from './js/mcp-client.js';
+import { mcpServer } from './js/mcp/mcp-client.js';
 
 // List available tools
 await mcpServer.handleRequest({ method: 'tools/list', params: {} });
