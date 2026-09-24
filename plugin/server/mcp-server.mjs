@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.3.12; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.3.13; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -36779,21 +36779,12 @@ var ModelAsset = class _ModelAsset {
     this.#metrics = new MetricSet(this.behavior.relevantMetrics());
   }
   /**
-   * Bind the run's environment (Spec 9 step 4a).
+   * Bind the run's config. Two properties are derived from plan-level settings
+   * and read during a run, and an asset has no reference to its Portfolio. The
+   * Portfolio owns the one config and binds it onto its assets; assets borrow it.
    *
-   * An asset has no back-reference to its Portfolio, but two of its properties
-   * are DERIVED from plan-level configuration and read on demand during a run
-   * — so the configuration has to be reachable from the instance.
-   *
-   * Ownership stays singular: one environment per run, held by the Portfolio,
-   * bound onto assets by `Portfolio.initializeChron()`. Assets borrow it, they
-   * do not own it. Otherwise there are N copies that must agree, and one stale
-   * copy is a wrong number in one Monte Carlo iteration out of a thousand.
-   *
-   * NON-ENUMERABLE on purpose. `toJSON()` is an explicit allowlist and would
-   * not have leaked it anyway, but the config is run state, not plan data, and
-   * a spread or a bare `JSON.stringify(asset)` elsewhere must not turn it into
-   * something that gets shared in a URL or written to localStorage.
+   * Non-enumerable: the config is run state, and a spread or
+   * `JSON.stringify(asset)` must not carry it into a share link or storage.
    */
   bindEnv(config2) {
     Object.defineProperty(this, "env", {
@@ -36805,16 +36796,8 @@ var ModelAsset = class _ModelAsset {
     return this;
   }
   /**
-   * The environment, or a thrown error naming what to do about it.
-   *
-   * Step 4b. There used to be a `?? global_…` fallback here, and removing it is
-   * the entire point of this step: a fallback makes a missed binding INVISIBLE.
-   * The asset would quietly answer from module state — plausible numbers from
-   * an unaccountable source, which is the failure this migration exists to
-   * remove, and which no snapshot can detect because the numbers are the same
-   * ones the globals would have given.
-   *
-   * A throw makes the same mistake a stack trace on the first read.
+   * The bound config, or an error saying how to bind one. There is no fallback
+   * to module settings: a fallback would make a missed binding invisible.
    */
   get #boundEnv() {
     if (!this.env) {
@@ -37480,26 +37463,15 @@ var ModelAsset = class _ModelAsset {
     return null;
   }
   /**
-   * Record something the engine did. The ONLY write path for the ledger.
+   * Record something the engine did. The only write path for the ledger.
    *
-   * Appends a structured SimEvent and, from it, the rendered CreditMemo — in
-   * that order, one for one. The pairing is an invariant
-   * (`tests/sim-event-invariant.mjs`): monthlySanityCheck scans memos
-   * incrementally from eventsCheckedIndex, so anything that let the two
-   * arrays drift apart could double-count or skip a month's reconciliation.
+   * Appends a SimEvent and the CreditMemo rendered from it, one for one
+   * (`tests/sim-event-invariant.mjs` asserts the pairing; reconciliation scans
+   * incrementally from eventsCheckedIndex).
    *
-   * `traceId` is read from the ambient scope stack in trace.js — maintained by
-   * `withTrace()` — rather than passed by callers. That was the whole point of
-   * putting it here: causality landed as a change to the scope-openers (fifteen
-   * of them, in the engines, fund-transfer.js and portfolio.js) rather than a
-   * second migration across every event write site.
-   *
-   * READING a chain back does NOT work this way. Resolution must take the scope
-   * list explicitly — `portfolio.traceScopes`, from the run that produced the
-   * event — because `calculate()` re-runs on every edit and `resetTraces()`
-   * empties the module state. Resolving from module state instead looks correct
-   * and silently finds nothing after the next run. See the note above
-   * `scopeById` in trace.js, where that was found the hard way.
+   * `traceId` comes from the ambient scope stack in trace.js (`withTrace()`),
+   * not from callers. Reading a chain back is different: pass the run's own
+   * `portfolio.traceScopes`, because the next run resets the module state.
    *
    * @param {string}   type    EventType key
    * @param {Currency} amount
@@ -37521,12 +37493,8 @@ var ModelAsset = class _ModelAsset {
   }
   // ── Credit / Debit (fund transfer interface) ─────────────────────
   /**
-   * `event` is a descriptor — `{ type, data }` — not a note string.
-   *
-   * The note used to be built by the caller and passed through to the ledger,
-   * which made the wording of a reconciliation-critical record the property of
-   * whichever engine happened to call. Callers now say what HAPPENED and
-   * sim-event.js decides how it reads.
+   * `event` is a descriptor — `{ type, data }` — not a note string: callers say
+   * what happened, and sim-event.js decides how it reads.
    */
   credit(amount, event = null) {
     logger.log(
@@ -37661,21 +37629,12 @@ var ModelAsset = class _ModelAsset {
   }
   /**
    * What a withdrawal of `amount` would do to this account, without doing it.
+   * The one definition of the realization rule: `#transact` applies exactly this.
    *
-   * THE definition of the realization rule — `#transact` applies exactly this
-   * and computes nothing of its own, so a caller that needs to predict the tax
-   * consequence of a draw cannot drift away from what the draw will actually do.
-   *
-   * Two stages, and the first one is the one everybody forgets. Deposits made
-   * THIS MONTH sit in `monthlyCreditBalance` and are drawn first at zero gain —
-   * money that arrived and left without ever being invested has no gain to
-   * realize. Only the remainder is sold pro-rata out of vested holdings, and
-   * the ratio that matters there is the one AFTER the fresh deposits are gone,
-   * not the account's headline gain ratio.
-   *
-   * The difference is not academic: a backstop account that receives income and
-   * pays expenses in the same month realizes almost nothing, while its headline
-   * ratio can read 80%.
+   * Two stages. This month's deposits (`monthlyCreditBalance`) are drawn first,
+   * at zero gain. Only the remainder is sold pro-rata from the older holdings,
+   * at their gain ratio — not the account's overall ratio. An account that
+   * receives income and pays expenses in the same month realizes almost nothing.
    */
   planWithdrawal(amount) {
     const withdrawal = Math.abs(amount?.amount ?? amount ?? 0);
@@ -40561,10 +40520,8 @@ var Ledger = class {
     this.assets.push({ label, origin, note });
   }
   /**
-   * §6: a field with no declared provenance is a BUILD ERROR, not a blank.
-   * Same shape as EVENT_RECONCILIATION throwing on an undeclared event type —
-   * the failure being defended against is documented and specific: an agent
-   * handed a number and a footnote reports the number.
+   * §6: a field with no declared provenance is a build error, not a blank —
+   * an agent handed a number without its source reports the number.
    */
   assertComplete(settings, assetLabels) {
     const declared = new Set(this.fields.map((f) => f.field));
@@ -40745,12 +40702,9 @@ function buildPlan(intent = {}) {
       instrument,
       displayName: label,
       startDateInt: startMonth,
-      // Working income stops at retirement — but never AFTER the plan
-      // itself ends. A ten-year plan from age 50 finishes at 60 while
-      // retirement is 67, and an unclamped salary pushes lastDateInt out
-      // to 2043 on a plan the user asked to end in 2036. The run then
-      // spans years the plan does not cover, which is a different plan
-      // reported as the requested one.
+      // Working income stops at retirement, or at the plan's end if that
+      // comes first; otherwise the salary would extend the run past the
+      // requested finish.
       ...instrument === Instrument.WORKING_INCOME ? { finishDateInt: retireMonth.isBefore(finishMonth) ? retireMonth : finishMonth } : {},
       startCurrency: { amount: monthly },
       annualReturnRate: { rate }
