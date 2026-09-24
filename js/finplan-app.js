@@ -70,11 +70,8 @@ import './components/issues-modal.js';
 import './components/plan-issues-panel.js';
 
 // ── AI Summary generators ──────────────────────────────────
-// generators/finplan-ai.js is code-split: dynamically imported on the first
-// AI-FAB click. It no longer imports monte-carlo.js or guardrails.js — their
-// results are passed in — so it is now a leaf as far as the simulations go,
-// and a static import here would no longer drag them into the initial bundle.
-// It stays dynamic anyway: the generators are only reachable from the FAB.
+// generators/finplan-ai.js is code-split: imported on the first AI-FAB click,
+// the only place it is reachable from.
 
 // ── Store ───────────────────────────────────────────────────
 import { store } from './finplan-store.js';
@@ -146,22 +143,17 @@ import { makeActiveTaxTable } from './globals.js';
 import { editingConfigFor } from './editing-env.js';
 
 /**
- * Bind assets to an editing environment before the UI reads them.
+ * Bind assets to the editing config before the UI reads them.
  *
- * Spec 9 step 4b. `classifyAssets` reads `effectiveFinishDateInt` — a derived
- * getter needing the plan's ages — and the two lists it renders (Quick Start,
- * and a scenario loaded from localStorage) never pass through a Portfolio, so
- * an unbound read would throw the moment the asset list rendered.
+ * `classifyAssets` reads the derived `effectiveFinishDateInt`, and assets from
+ * Quick Start or localStorage never pass through a Portfolio, so an unbound read
+ * would throw. This is the editor's config, built from the current settings; a
+ * Portfolio binds its own, so nothing here reaches a simulation.
  *
- * Editing environment, not a run's: it shows what the current settings say. A
- * Portfolio captures its own config and rebinds everything it owns, so nothing
- * here can reach a simulation.
- *
- * The assets are also where the editor's anchor comes from, so this is the one
- * place that can build it — see editing-env.js. It is handed to appState too,
- * which rebinds the life events onto it: events and assets must resolve ages
- * against the same plan or the phase markers land on a different month than
- * the regime change they label.
+ * The editor's anchor comes from these assets (see editing-env.js), so it is
+ * built here and handed to appState, which rebinds the life events to it.
+ * Events and assets must share one anchor, or phase markers land on the wrong
+ * month.
  */
 function bindForEditing(assets) {
     const config = editingConfigFor(assets);
@@ -171,21 +163,15 @@ function bindForEditing(assets) {
 }
 
 /**
- * The config a DISPLAY surface resolves an age against.
+ * The config a display surface converts ages with.
  *
- * The run's if there has been one, because the charts and badges are labelling
- * months the run produced; the editor's otherwise, which is the plan's anchor
- * or — with no plan yet — the clock's. Either way it is an anchor the plan
- * chose, never one derived here from `new Date()`. Three surfaces used to do
- * exactly that (`currentPhaseEvent`, `global_get*DateInt`, and the timeline's
- * `_birthYear`) and so disagreed with the engine for any scenario reopened in
- * a later year than the one it was built in — by as many years as had passed.
- * On a plan starting Aug 2021 the badge went on saying "Accumulate" until Jan
- * 2048; the engine retires it in Jan 2043.
+ * The run's, when there has been one, because the charts label months the run
+ * produced; otherwise the editor's (the plan's anchor, or the clock's when there
+ * is no plan). Never a birth year derived here from `new Date()`, which drifts
+ * from the engine for any plan reopened in a later year.
  *
- * The anchor is checked rather than the portfolio, because a Portfolio built
- * on an empty asset list has no first month to derive one from and leaves
- * `config.birthYear` undefined — which `birthYearFor()` throws on, correctly.
+ * Checks the anchor rather than the portfolio: a Portfolio of no assets has no
+ * first month, so its `config.birthYear` is undefined.
  */
 function displayConfig() {
     const run = appState.portfolio?.config;
@@ -343,10 +329,6 @@ timeline.addEventListener('edit-asset', (ev) => {
 // via store 'date-change', so scrolling the page there suffices. Scroll to the
 // view's card, not the tall view element itself: scrollIntoView on the element
 // would also reset its container's scrollToDate row position.
-//
-// These used to live in the timeline's month popover and reach here as a
-// bubbling 'jump-to-view' event bound to the TIMELINE. Moving the links without
-// moving this would have left them doing nothing, with no error to say so.
 function jumpToView(view) {
     const target = view === 'creditmemos' ? creditMemoView : spreadsheetView;
     const card = target?.closest('.glass-card') ?? target;
@@ -381,12 +363,7 @@ eventFormModal.addEventListener('save-life-event', (ev) => {
 });
 
 eventFormModal.addEventListener('delete-life-event', (ev) => {
-    // console.log('[FinPlan] Deleting life event index', ev.detail.index,
-    //     'was:', appState.lifeEvents[ev.detail.index]?.type,
-    //     'total before:', appState.lifeEvents.length);
     appState.lifeEvents.splice(ev.detail.index, 1);
-    // console.log('[FinPlan] After delete, appState.lifeEvents:', appState.lifeEvents.length,
-    //     appState.lifeEvents.map(e => e.type));
     calculate();
 });
 
@@ -542,12 +519,10 @@ function loadQuickStartProfile(profile) {
     global_getUserRetirementAge();
     global_setUserFinishAge(profile.finishAge);
     global_getUserFinishAge();
-    // Redundant now that the grid only offers profiles matching the current
-    // status, and kept anyway: a profile is a complete starting point, and
-    // loading one from anywhere else — an import, a future deep link — must not
-    // leave a couple filed as a single earner. Filing status moves these shapes
-    // by up to 49%. The tax table is rebuilt because it caches its brackets at
-    // construction.
+    // A profile sets its own filing status, even though the grid already
+    // offers only matching profiles: a profile loaded any other way must not
+    // leave a couple filed as single. The tax table is rebuilt because it
+    // caches its brackets at construction.
     global_setFilingAs(profile.filingAs);
     global_getFilingAs();
     setActiveTaxTable(makeActiveTaxTable());
@@ -1068,15 +1043,9 @@ function connectSettings() {
 // ── Data Loading ────────────────────────────────────────────
 
 /**
- * A fragment link that arrives while the app is ALREADY open.
- *
- * The query form used to make this free: `?portfolio=…` is a different document,
- * so pasting one into a loaded tab reloaded the page and init ran again. Changing
- * only the fragment does not — the browser fires `hashchange` and nothing else.
- * Measured, not reasoned about: with the app open, navigating to a fragment link
- * left the URL carrying a 446-character payload and no import prompt at all.
- *
- * So the arrival is handled explicitly. Same function, same prompt, same consent.
+ * A share link that arrives while the app is already open. Changing only the
+ * fragment does not reload the page — the browser fires `hashchange` and
+ * nothing else — so the import prompt is shown from here.
  */
 window.addEventListener('hashchange', () => { loadSharedPortfolio(); });
 
@@ -1113,10 +1082,7 @@ function loadLocalData() {
     const savedEvents = util_loadLocalLifeEvents(appState.storyArc, slotName);
     if (savedEvents) {
         appState.lifeEvents = savedEvents.map(ModelLifeEvent.fromJSON);
-        // console.log('[FinPlan] Loaded', appState.lifeEvents.length, 'life events from localStorage:',
-        //     appState.lifeEvents.map(e => `${e.type}@${e.triggerAge}`));
     } else {
-        // console.log('[FinPlan] No saved life events, creating defaultTimeline');
         appState.lifeEvents = ModelLifeEvent.defaultTimeline(
             global_user_startAge, global_user_retirementAge
         );
@@ -1200,17 +1166,10 @@ function calculate() {
     chronometer_run(portfolio);
     appState.portfolio = portfolio;
 
-    // On the same anchor, for the same reason. This used to be set from three
-    // call sites, two of which ran BEFORE the assets they were about to load —
-    // loadQuickStartProfile and the imported-settings block — so the date the
-    // guardrails switch regime on was derived from the outgoing plan.
-    //
-    // AFTER the assignment above, not before it: `displayConfig()` prefers
-    // `appState.portfolio.config`, so running it at the top of calculate() read
-    // the PREVIOUS run and reintroduced the same one-plan lag this line moved
-    // here to remove. It survived a green suite because nothing reads
-    // `store.isRetirementPhase` today — the getter is defined and never called
-    // — so the stale month sat there with no surface to be wrong on.
+    // The retirement month, on the same anchor. After the portfolio assignment
+    // above: `displayConfig()` prefers the new run's config, so setting it
+    // earlier would use the previous plan. (Nothing reads
+    // `store.isRetirementPhase` yet.)
     store.setRetirementDate(global_getRetirementDateInt(displayConfig()));
 
     // What needs attention. Detected once and distributed from here: the panel,
@@ -1470,8 +1429,6 @@ async function doMaximize() {
     await import('./components/simulator-modal.js');
     const sim = document.getElementById('simulator-inline');
     if (!sim) return;
-    // console.log('[FinPlan] doMaximize: appState.lifeEvents:', appState.lifeEvents.length,
-    //     appState.lifeEvents.map(e => `${e.type}@${e.triggerAge}`));
     sim.modelAssets = assetList.modelAssets || [];
     sim.lifeEvents = appState.lifeEvents;
     sim.guardrailParams = getGuardrailParams();
@@ -2171,16 +2128,13 @@ function deleteScenario(storyName) {
     loadLocalData();
 }
 
-// Monthly snapshots are now written by saveLocalData() on every calculate(),
-// always reflecting the latest state for the current month.
+// Monthly snapshots are written by saveLocalData() on every calculate().
 
 /**
  * Read a shared portfolio out of the URL — fragment first, query second.
  *
- * New links carry the payload in `#portfolio=`, which the browser never sends to
- * the server; see share-link.js for why. Query links are still read, because
- * every link mailed before that change is one, and a share link that stops
- * working is worse than one that shares too much.
+ * Links carry the payload in `#portfolio=`, which the browser never sends to
+ * the server (see share-link.js). Older `?portfolio=` links are still read.
  */
 function loadSharedPortfolio() {
     const compressed = sharePayloadParamFrom(window.location.search, window.location.hash);
@@ -2193,12 +2147,8 @@ function loadSharedPortfolio() {
         // Store parsed data for import popup
         _pendingImport = data;
 
-        // Show import popup with sender's info.
-        //
-        // `name` is what share-link.js writes and what the share modal has always
-        // written; `portfolioName` was read here and produced by nothing, so every
-        // shared portfolio arrived titled "Shared Portfolio". Both are accepted
-        // now — a link in flight may carry either.
+        // Show import popup with sender's info. Links carry `name`; the older
+        // `portfolioName` is accepted too.
         const titleInput = document.getElementById('import-title-input');
         const noteInput = document.getElementById('import-note-input');
         titleInput.value = data.name || data.portfolioName || 'Shared Portfolio';
@@ -2226,19 +2176,13 @@ function loadSharedPortfolio() {
 /**
  * Which run an imported plan came from.
  *
- * Provenance, deliberately, not a live identity. The handle is a content address
- * over the plan, so the moment someone edits an imported plan it stops
- * describing what is on screen — but it never stops being true about where the
- * plan came from. Hence "from run", and hence no attempt to recompute it here:
- * a wrong handle shown confidently is worse than no handle at all.
+ * Provenance, not a live identity: the handle is a content address over the
+ * plan, so after an edit it no longer describes what is on screen, but it stays
+ * true about where the plan came from. Hence "from run", and no recomputing.
  *
- * Two surfaces, and they are set at DIFFERENT moments. The dialog line is
- * provenance about an OFFER — here is the run this link came from, before you
- * decide. The badge is provenance about the plan you are now looking at, so it
- * must wait for the import to actually happen. The first draft set both from
- * `loadSharedPortfolio`, which put a run handle on the portfolio header while
- * the user was still deciding whether to open it — visible in a screenshot,
- * invisible to every assertion, because both surfaces did get set.
+ * Two surfaces, set at different moments. The dialog line describes the offer,
+ * before the user decides. The badge describes the plan on screen, so it is set
+ * only once the import happens.
  */
 function setImportDialogRun(handle) {
     const line = document.getElementById('import-run-provenance');
