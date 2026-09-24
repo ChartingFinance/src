@@ -5,12 +5,10 @@
  * Early Career quick-start profile (age 35 -> 67 -> 90). Companion to
  * decumulation-oracle.mjs, which does the same job for a retiree drawdown.
  *
- * Early Career is the profile that historically breaks first: it drove its
- * Brokerage to -$13.4M before the overdraft fix, and it was the profile whose
- * transfer conservation appeared to fail 158 months — the finding that led to
- * the provenance fix described under Layer C. It had no oracle. It does now.
+ * Early Career is the profile that tends to break first: it exposed the
+ * overdraft bug and the conservation-provenance rule described under Layer C.
  *
- * ── Scope, stated honestly ───────────────────────────────────────────
+ * ── Scope ────────────────────────────────────────────────────────────
  *
  * The decumulation oracle models federal tax law in full, because that
  * dataset's whole risk was tax collection. Accumulation's risks are different:
@@ -26,7 +24,7 @@
  *   Layer B — frozen engine values. Balances are tax-coupled, so they are
  *             pinned for stability rather than derived. Any formula change
  *             moves them BY DESIGN; regenerate with --print-actual and review.
- *   Layer C — CONSERVATION. The reason this file exists now.
+ *   Layer C — conservation of two-sided transfers.
  *
  * ── Layer C: conservation, with provenance ───────────────────────────
  *
@@ -39,23 +37,20 @@
  * the shortfall either re-sources from another account (SPILLOVER) or cannot be
  * sourced at all (UNFUNDED).
  *
- * THE `origin` QUALIFIER IS LOAD-BEARING. An earlier version of this file
- * asserted the sum WITHOUT it, on the evidence that it held to the cent across
- * all four quick-start profiles. That was an overgeneralisation: those four
- * never spill from a one-sided settlement. A home whose carrying costs drain
- * its funding account breaks the unqualified sum by up to $2,265 a month.
- * SPILLOVER and UNFUNDED are emitted from both the two-sided `execute()` path
- * and the one-sided `settleOneSided` path, and only the two-sided total is
- * expected to balance — so each shortfall must follow the movement that
- * produced it.
+ * The `origin` qualifier is required. SPILLOVER and UNFUNDED are emitted from
+ * both the two-sided `execute()` path and the one-sided `settleOneSided` path,
+ * and only the two-sided total balances. The four quick-start profiles never
+ * spill from a one-sided settlement, so the unqualified sum holds on them by
+ * luck; a home whose carrying costs drain its funding account breaks it by up
+ * to $2,265 a month.
  *
  * `pairedAloneFails` is also tracked and frozen: the count of months where
  * TRANSFER alone does not net, i.e. where the shortfall terms are doing real
- * work. On Early Career that is 151 of 666 months, which is a statement about
- * how often its single funding account runs dry — not a defect.
+ * work: how often Early Career's single funding account runs dry. Not a
+ * defect.
  *
- * THE CLOCK IS PINNED to 2026-07-15: quick-start dates derive from `new Date()`
- * via dateAnchors(), so without pinning every value here would rot monthly.
+ * The clock is pinned to 2026-07-15: quick-start dates derive from `new Date()`
+ * via dateAnchors(), so without pinning every value here would change monthly.
  *
  * Usage:  node src/tests/accumulation-oracle.mjs                (assert)
  *         node src/tests/accumulation-oracle.mjs --print-actual (regen B)
@@ -151,9 +146,7 @@ const rateOf = (a) => a.annualReturnRate?.rate ?? 0;
 // MEANS, not the engine's code: a measured annual rate (appreciation,
 // inflation) compounds by its twelfth root, so twelve months give exactly the
 // stated rate; a contract APR (the mortgage) and an annual charge prorated
-// (property tax) are one twelfth. Until 2026-09-23 this oracle mirrored the
-// engine's rate/12 for everything — a known 0.34-point-a-year gap it agreed
-// to ignore. It now states the rule the engine is meant to follow.
+// (property tax) are one twelfth.
 function runOracle() {
   const first = A.now;                       // 2026-07
   const finishYear = A.finish.year;          // 2081
@@ -288,53 +281,14 @@ const engine = {
 };
 
 // ── Layer B literal ───────────────────────────────────────────────────
-// Generated with --print-actual under the pinned 2026-07-15 clock.
-// Established 2026-07-29 as the baseline BEFORE the transfer-conservation
-// terms are adopted by the engine, so that change shows as a reviewable diff.
+// Generated with --print-actual under the pinned clock. Regenerate only after
+// an intentional calculation change, predict the diff first, and review it line
+// by line. Each past move is explained in the commit that made it
+// (git log -p on this file).
 //
-// Moved 2026-08-06 by spec 5 step 2b, and only these three. Early Career's Home
-// is a primary residence that closes with a $392,107 gain, so the annual
-// true-up used to re-tax the $250,000 that IRC 121 had already excluded at
-// close. It no longer does, which leaves the household richer: Brokerage
-// +$472,511 and portfolioTotal by the same, after decades of compounding on the
-// tax it stopped paying. longTermCapitalGains rises $12,593 as a SECOND-ORDER
-// effect -- a fatter Brokerage means each proportional-basis withdrawal
-// realises a different gain -- which is why it moved without any gain
-// recognition changing. Predicted and cross-checked against
-// tests/baselines/single-home-sale.snap, where the same rule is isolated.
-// Moved again 2026-08-07 by the bracket-gap fix, and by very little: incomeTax
-// -18.01, portfolioTotal -97.15. Every bracket row's fromAmount used to sit one
-// dollar above the previous row's toAmount, copying how the IRS publishes them,
-// so calculateYearlyIncomeTax charged (to - from) for a fully-spanned band and
-// lost a dollar of base at every crossed boundary. The bands now tile exactly.
-// Tax goes UP everywhere and balances down, which is the whole expected shape of
-// this change.
-// Moved 2026-08-07 by the unfundable-true-up fix, and by one value only:
-// longTermCapitalGains +621.69. Early Career is owed six annual tax refunds that
-// used to vanish because resolveFunding refused to name an account with a zero
-// balance -- a positive-balance test that is a precondition for taking money
-// OUT, applied to money coming IN. The refunds now land in the Brokerage, which
-// changes what each later proportional-basis withdrawal realises. The final
-// balances are unchanged because the Brokerage is depleted again by the end;
-// only the realised gain along the way differs.
-// Moved 2026-09-23 by the age-65 deductions (IRC §63(f) and the OBBBA senior
-// deduction), which did not exist before: the standard deduction was one flat
-// number for every age. incomeTax -$15,369 over the plan; Brokerage +$99,973
-// and portfolioTotal +$100,390 as the retained tax compounds; Roth +$417.
-// longTermCapitalGains -$2,716 is SECOND-ORDER, like the 2026-08-06 move: a
-// fatter Brokerage realises a different gain on each proportional-basis
-// withdrawal. Layer A (clean-room law vs engine) still passes. IRC §86 moved
-// nothing here — this household's IRA draws keep it at the 85% ceiling.
-// Moved 2026-09-23 by measured growth rates: a stated annual return now
-// compounds to exactly that rate a year, not the 8.839% that rate/12 realised
-// from 8.5%. Balances fall: 401K -15.0%, Roth -13.8%, Brokerage -14.2%,
-// portfolioTotal $18.44M -> $15.80M (-14.3%). Living Expenses and Rent inflate
-// at exactly 3.1% instead of 3.144%. Second-order: four01KDistribution and
-// incomeTax fall with the smaller 401K; propertyTaxes -$894 because the home is
-// assessed on a slightly lower value. UNCHANGED, as predicted before the change:
-// Social Security, employedIncome, socialSecurityIncome, four01KContribution,
-// mortgageInterest — none depends on a measured rate (the mortgage is a contract
-// APR and stays rate/12). Layer A moved to the same convention and passes.
+// Expect second-order moves: a change that leaves more or less in the
+// Brokerage also moves longTermCapitalGains, because each proportional-basis
+// withdrawal then realises a different gain.
 const EXPECTED_ENGINE = {
   "Social Security": 3882.14,
   "401K": 3678638.09,
@@ -358,8 +312,6 @@ const EXPECTED_ENGINE = {
 // Frozen: how often Early Career's transfers legitimately fail to balance on
 // their own, i.e. how often its single funding-backstop account runs dry and
 // the shortfall terms do the work. A statement about the plan, not a defect.
-// 158 -> 151 on 2026-09-23: expenses inflating at exactly 3.1% ask a little
-// less of the backstop, so it runs dry in seven fewer months.
 const CONSERVATION_BASELINE = {
   pairedAloneFails: 151,
 };

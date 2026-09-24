@@ -7,13 +7,12 @@
  * projection built from the dataset's configuration plus federal tax law,
  * then asserts the two agree within documented tolerance bands.
  *
- * The conservation suites prove the books balance; quickstart-golden proves
- * results are stable. Neither can catch the engine being self-consistent
- * and WRONG — this test exists because two such bugs survived every suite:
- * Social Security taxed at 185% (benefits double-booked as wages) and RMDs
- * forced on top of distributions that already satisfied them. Both were
- * found by exactly this oracle comparison (2026-07-21 audit) and both would
- * trip these bands loudly if reintroduced (+$209k tax / −$1.38M IRA).
+ * The conservation suites prove the books balance and quickstart-golden
+ * proves results are stable; neither catches the engine being self-consistent
+ * and wrong. Two such bugs were found this way — Social Security taxed at 185%
+ * (benefits double-booked as wages) and RMDs forced on top of distributions
+ * that already satisfied them — and both would trip these bands loudly if
+ * reintroduced (+$209k tax / −$1.38M IRA).
  *
  * Two layers:
  *   A. ORACLE BANDS — engine vs clean-room law model. Wide where the two
@@ -25,23 +24,15 @@
  *          node src/tests/decumulation-oracle.mjs --print-actual
  *      and paste the printed literal, reviewing the diff line by line.
  *
- * THE CLOCK IS PINNED to 2026-07-15, as a precaution only. The engine anchors
- * to the plan's own dates (Spec 10), so these values no longer depend on the
- * clock — checked 2026-09-23 by running with it set to 2031.
+ * The clock is pinned to 2026-07-15 as a precaution only: the engine anchors
+ * to the plan's own dates, so these values do not depend on it.
  *
- * Known open findings the bands still absorb (tighten when fixed):
+ * Known finding the bands still absorb (tighten when fixed):
  *   - longTermCapitalHoldingPercentage is unread (F5): oracle books 80/20
  *     LT/ST per config, engine books all gains long-term.
  *
- * CLOSED: F8 (NIIT not modeled) - fixed 2026-08-18, spec 8. The oracle's own
- * 1411 model was written from the statute before the engine had one, so it is
- * a genuinely independent check rather than a restatement; the banded model
- * switched from withNIIT:false to withNIIT:true when the engine started
- * charging it.
- *
- * CLOSED: F4 (Savings overdrawn and stranded) — fixed 2026-07-28. Funding
- * accounts floor at $0 and the shortfall re-sources through the backstop
- * chain, so that band tightened from a $25,000 window to exact agreement.
+ * The oracle's NIIT (IRC §1411) model was written from the statute before the
+ * engine had one, so it is an independent check, not a restatement.
  *
  * Usage:  node src/tests/decumulation-oracle.mjs                (assert)
  *         node src/tests/decumulation-oracle.mjs --print-actual (regen B)
@@ -124,7 +115,7 @@ const rate = (a) => a.annualReturnRate.annualReturnRate ?? a.annualReturnRate.ra
 // inflation) compounds by its twelfth root; a contract APR (the mortgage), a
 // dividend yield and the home's annual charges are one twelfth. Then
 // withdraw-then-grow and escrow in arrears, matched to the engine; tax law
-// computed exactly and annually. (Until 2026-09-23 every rate was ARR/12.) See the 2026-07-21 audit for the full derivation.
+// computed exactly and annually.
 function runOracle({ withNIIT }) {
   const ORD_2026 = [
     [0, 12400, 0.10], [12400, 50400, 0.12], [50400, 105700, 0.22],
@@ -240,13 +231,11 @@ function runOracle({ withNIIT }) {
       mortgage -= principal;
       Y.mortInt += interest;
       totals.mortInterest += interest;
-      // NOTE: the engine routes the mortgage 75% IRA / 25% brokerage like every
-      // other obligation; this model charges it wholly to the brokerage.
-      // Deliberate — moving it into `fundable` (tried 2026-08-04) drains the
-      // oracle's IRA to $0 while the engine's keeps a large balance, so the
-      // simplification is load-bearing in this model's overall calibration, not
-      // a stray shortcut. It is the main reason the IRA-balance band below is wider
-      // than the others.
+      // The engine routes the mortgage 75% IRA / 25% brokerage like every
+      // other obligation; this model charges it wholly to the brokerage. On
+      // purpose: moving it into `fundable` drains the oracle's IRA to $0 while
+      // the engine's keeps a large balance, so the rest of the model is
+      // calibrated around it. It is the main reason the IRA band is wider.
       brokOutflow += principal + interest;
     }
 
@@ -423,65 +412,16 @@ const engine = {
 };
 
 // ── Layer B literal ───────────────────────────────────────────────────
-// Generated with --print-actual under the pinned 2026-07-15 clock.
-// Regenerate DELIBERATELY after intentional calculation changes and
-// review the diff line by line.
+// Generated with --print-actual under the pinned clock. Regenerate only after
+// an intentional calculation change, predict the diff first, and review it line
+// by line. Each past move is explained in the commit that made it
+// (git log -p on this file).
 //
-// Regenerated 2026-07-28 across the two-step overdraft fix. Both diffs were
-// predicted before applying and reviewed line by line.
-//
-// Step 1, earnings no longer accrue on a deficit:
-//   Savings         -6,048.12 -> -2,095.15   (+3,952.97)
-//   interestIncome  72,935.79 -> 76,888.75   (+3,952.96)
-// Matching to the cent — the whole Savings improvement IS the phantom negative
-// interest no longer subtracted from a below-zero balance.
-//
-// Step 2, funding accounts now floor at $0:
-//   Savings         -2,095.15 ->     0.00    (exactly as predicted here)
-//   Brokerage    8,893,804.28 -> 8,858,591.13  (-35,213.15)
-// Savings can no longer finance spending by going negative, so the shortfall
-// spills to the Brokerage and is actually PAID. That draw realizes gains,
-// which are taxed, which draws again — hence the movement being larger than
-// the 2,095 it replaces. qualifiedDividends (-3,568.12) follows the smaller
-// brokerage balance; longTermCapitalGains (+954.50) is the realized gain.
-// portfolioTotal drops 33,118.01: the household now settles a debt it used to
-// carry as a negative savings balance. Less flattering, more true.
-//
-// Moved again 2026-08-06 by spec 6 step 4, and by very little: Brokerage and
-// portfolioTotal +708.83, qualifiedDividends +81.26, longTermCapitalGains
-// +307.79. The close path now stacks capital gains on taxable income rather
-// than on monthly.totalIncome() x 12. THIS SUITE IS THE ONLY THING IN THE
-// PROJECT THAT NOTICES. At CompanyStock's close the old base was $6,883 and the
-// new one is $0 -- the standard deduction wipes it -- so ~$6,883 of gain moves
-// from the 15% band to the 0% band and the household keeps about $1,032, which
-// compounds to the +708.83 above.
-//
-// Every fixture in the snapshot corpus sees a base of EXACTLY ZERO at a close,
-// because closeAsset runs at the top of applyFirstDayOfMonth, before any income
-// is booked, and monthly was zeroed at the previous month-end. Do not "simplify"
-// this scenario: its non-zero base is an accident of asset ordering that the
-// corpus could not reproduce despite a fixture built specifically to try.
-// Moved again 2026-08-07 by the bracket-gap fix: Brokerage and portfolioTotal
-// -83.02, qualifiedDividends -6.80, longTermCapitalGains +13.06. Bracket rows
-// now tile exactly instead of starting a dollar above the previous row's end, so
-// no band loses a dollar of base at a crossed boundary. More tax, smaller
-// balances, and a slightly different realised gain because the brokerage it is
-// drawn from is smaller.
-// Moved 2026-09-23 by the age-65 deductions (IRC §63(f) and the OBBBA senior
-// deduction). Less tax every retired year leaves Brokerage and portfolioTotal
-// +$46,183; qualifiedDividends +$2,884 because the larger brokerage yields
-// more; longTermCapitalGains -$12,569 second-order, from the same larger
-// balance changing what each withdrawal realises. The oracle comparisons above
-// still pass. IRC §86 moved nothing here: 85% ceiling every year.
-// Moved 2026-09-23 by measured growth rates (a stated annual return compounds
-// to exactly that rate). Roth, untouched for 30.6 years at 8.5%, -9.1% — the
-// pure ratio (1.085/1.088391)^30.6. Home -0.55% at 2%. portfolioTotal $16.84M ->
-// $15.00M. The IRA falls furthest, $604,533 -> $205,135, because it is a
-// residual: fixed draws against a smaller balance. qualifiedDividends and
-// interestIncome fall with the balances they are paid on. UNCHANGED, as
-// predicted: Social Security, socialSecurityIncome, mortgageInterest. The
-// oracle moved to the same convention and its comparisons pass; the IRA band
-// became absolute (see there).
+// Do not "simplify" this scenario. It is the only one in the project where a
+// capital gain at an asset's close is stacked on a non-zero taxable base: every
+// snapshot fixture closes assets at the top of the month, before any income is
+// booked, so their base is exactly zero. Here the non-zero base is an accident
+// of asset ordering that a fixture built to reproduce it could not.
 const EXPECTED_ENGINE = {
   "Social Security": 4021.09,
   "Savings": 0.00,
@@ -533,12 +473,10 @@ function check(label, fn) {
 }
 
 // ── Layer A: oracle bands ─────────────────────────────────────────────
-// F8 CLOSED 2026-08-18 (spec 8): the engine charges NIIT, so the banded model
-// is now the full-law one. This flipped from `withNIIT: false` - leaving it
-// would have made the oracle assert that the engine does NOT charge 1411,
-// quietly turning an independent cross-check into a guard against the feature.
+// The banded model is the full-law one, including NIIT, since the engine
+// charges it.
 const oracle = runOracle({ withNIIT: true });
-const oracleNoNIIT = runOracle({ withNIIT: false }); // informational: the old engine scope
+const oracleNoNIIT = runOracle({ withNIIT: false }); // informational: the gap NIIT accounts for
 
 console.log('\n── Oracle vs engine (2056-12) ───────────────────────────\n');
 
@@ -564,21 +502,14 @@ band('Lifetime mortgage interest', Math.abs(engine.mortgageInterest), oracle.tot
 // home-cost formulas, and the RMD never binds — tight band. The RMD
 // double-count bug moved this by +$736k (26%).
 band('Lifetime IRA distributions', engine.tradIRADistribution, oracle.totals.iraDist, 100, 0.005);
-// Widened 2% → 2.5% on 2026-08-04 for source withholding. The oracle models
-// the rule (gross-up, month-end timing, over-withholding refunds) and that
-// closed the bulk of the gap — lifetime distributions and the brokerage went
-// from $310k/$1.31M out to inside their bands. What remains is $12,476 (2.1%)
-// from this model charging the whole mortgage to the brokerage while the engine
-// splits it 75/25 with the IRA. That simplification is load-bearing: routing it
-// faithfully drains the oracle's IRA to $0 (tried, reverted, see the note at
-// the mortgage block). Tighten this when the oracle models mortgage routing.
+// The oracle models source withholding (gross-up, month-end timing,
+// over-withholding refunds). The remaining gap, about $11k with the engine
+// above, comes from this model charging the whole mortgage to the brokerage
+// (see the mortgage block). Tighten when the oracle models mortgage routing.
 //
-// DOLLARS, not percent, since 2026-09-23. The gap is a fixed amount from one
-// simplification, and the balance it sits on is a residual: measured growth
-// rates took the IRA from $604,533 to $205,135 at 2056-12, and the same gap
-// ($12,476 then, $11,266 now, engine above oracle both times) went from 2.1%
-// to 5.8% of it. A percentage band would have to triple to hold a gap that did
-// not grow. $15k is the known gap plus room; a new divergence would exceed it.
+// A dollar band, not a percentage: the gap is a fixed amount, and the IRA
+// balance it sits on is a small residual, so a percentage band would have to be
+// loose enough to hide a real divergence. $15k is the known gap plus room.
 band('IRA balance', engine['IRA'], oracle.ira, 15000, 0);
 
 // Tax-collection timing, all-LT booking, and the stranded-Savings finding
@@ -586,9 +517,8 @@ band('IRA balance', engine['IRA'], oracle.ira, 15000, 0);
 // total by −4% and Brokerage by −11%; these still catch that class.
 band('Brokerage balance', engine['Brokerage'], oracle.brokerage, 0, 0.08);
 band('Portfolio total', engine.portfolioTotal, oracle.total, 0, 0.05);
-// F4 (stranded overdraft) FIXED 2026-07-28: funding accounts now floor at $0
-// and the shortfall re-sources through the backstop chain, so the engine and
-// the oracle agree exactly instead of needing a $25,000 window.
+// Funding accounts floor at $0 and the shortfall re-sources through the
+// backstop chain, so the engine and the oracle agree exactly.
 check('Savings floors at $0, matching the oracle exactly', () => {
   assert.ok(Math.abs(engine['Savings'] - oracle.savings) <= 0.01,
     `engine ${fmt(engine['Savings'])} vs oracle ${fmt(oracle.savings)}`);
