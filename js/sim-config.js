@@ -2,25 +2,15 @@
  * sim-config.js — the engine's configuration, as a value.
  *
  * Every engine read of a setting goes through the config a `Portfolio` is
- * constructed with. Before Spec 9 the engine read module globals backed by
- * localStorage, so a headless caller had to fake browser storage and two plans
- * in one process shared one configuration.
- *
- * ── What this is for ─────────────────────────────────────────────────
- *
- * A config is a VALUE: captured at a known moment, frozen, and passed
- * explicitly.
+ * constructed with: a value, captured at a known moment, frozen, and passed
+ * explicitly. So a headless caller needs no browser storage, and two plans in
+ * one process share nothing.
  *
  * ── A captured copy, never a live view ───────────────────────────────
  *
- * The tempting shortcut is an object whose getters forward to the live module
- * bindings. It would work, and it would be a trap: it preserves the coupling
- * under a new name — two concurrent plans still read the same cell — and it is
- * unverifiable, because the migration's gate is a bit-identical snapshot and a
- * forwarding view is trivially bit-identical. Every step would pass while
- * proving nothing.
- *
- * So `Object.freeze`, and values copied in.
+ * An object whose getters forwarded to the settings store would keep two plans
+ * coupled, and no snapshot test could tell (a forwarding view gives identical
+ * numbers). So values are copied in and frozen; tests/sim-config.mjs checks.
  *
  * ── It imports no globals, on purpose ────────────────────────────────
  *
@@ -29,27 +19,15 @@
  * is on that path. `filing-status.js` was lifted out of globals.js for exactly
  * this reason; it is a frozen enum with no state.
  *
- * Building a config FROM the globals is therefore not this module's job — see
- * `simConfigFromGlobals()` in globals.js, which is UI-side, where the settings
- * store lives.
+ * Building a config from the app's settings is done UI-side, by
+ * `simConfigFromGlobals()` in globals.js.
  */
 
 import { FilingStatus, isFilingStatus } from './filing-status.js';
 
 /**
- * The engine's own defaults (Spec 9 step 6).
- *
- * They used to live in globals.js as `global_default_*`, which made the
- * settings store the source of truth for what the engine does when told
- * nothing. That is backwards, and it was the last thing keeping globals.js in
- * the engine's import closure: `run-plan.js` needed these to build a config
- * from a plan spec, and importing them dragged the whole settings store in
- * behind them.
- *
- * The direction is now right: the engine owns its defaults, and globals.js —
- * the browser-side settings store — imports them to seed what it persists.
- * globals.js re-exports each under its old `global_default_*` name, so every
- * existing caller is unaffected.
+ * The engine's own defaults. The engine owns them; globals.js imports them to
+ * seed the app's settings and re-exports each as `global_default_*`.
  */
 export const SIM_CONFIG_DEFAULTS = Object.freeze({
     inflationRate: 0.031,
@@ -66,26 +44,8 @@ export const SIM_CONFIG_DEFAULTS = Object.freeze({
 });
 
 /**
- * `birthYear` and `taxTable` are the two ATTACHED fields: optional here, and
- * added with `withSimConfig` rather than passed to `makeSimConfig`.
- *
- * `taxTable` is built by the config builders — `simConfigFromGlobals()` and
- * `simConfigFromPlanSpec()` — and `Portfolio` throws if a config arrives without
- * one. `birthYear` is attached by `Portfolio`, because it needs the plan's own
- * first month, which no builder has. The engine used
- * to derive the year from `new Date()` inside a getter, which made a frozen
- * plan's finish date and every life-event trigger depend on WHEN IT WAS READ:
- * one spec replayed across a New Year moved 5.4% in ending net worth and grew
- * by twelve months, from nothing but the calendar. `Portfolio` anchors it to
- * `firstDateInt.year - startAge` instead — a property of the plan, so a spec
- * run today and in 2030 is the same run.
- *
- * Both are absent rather than defaulted when unattached, and `birthYearFor()`
- * throws on absence. A default here would be a year nobody chose, which is the
- * failure this whole migration is about.
- *
- * Every field the engine reads. `global_workerSnapshot()` must carry each of
- * them too: workers boot on defaults and rebuild a config from the snapshot.
+ * Every field the engine reads. `global_workerSnapshot()` must carry each
+ * setting too: workers boot on defaults and rebuild a config from the snapshot.
  */
 const FIELDS = Object.freeze([
     'inflationRate',
@@ -104,9 +64,15 @@ const FIELDS = Object.freeze([
 ]);
 
 /**
- * Fields `Portfolio` attaches later, so absent is legal at build time. See the
- * FIELDS comment; `birthYear` needs the plan's first month and `taxTable` needs
- * the resolved filing status, neither of which a config builder holds.
+ * Fields that may be absent when makeSimConfig runs.
+ *
+ * `taxTable`: the builders (`simConfigFromGlobals()`, `simConfigFromPlanSpec()`)
+ * supply it, and `Portfolio` throws if a config arrives without one.
+ *
+ * `birthYear`: attached by `Portfolio` with `withSimConfig`, from the plan's own
+ * first month (`firstDateInt.year - startAge`) — never from the clock, so a
+ * saved plan runs the same in any year. When absent, `birthYearFor()` throws
+ * rather than invent one.
  */
 const ATTACHED = Object.freeze(['taxTable', 'birthYear']);
 
@@ -123,11 +89,9 @@ const NUMERIC = Object.freeze([
 /**
  * Build a frozen config.
  *
- * Throws on anything missing or malformed rather than defaulting. Defaults
- * belong to whoever owns the setting — `globals.js` for the app, the plan spec
- * for MCP — and a config that quietly substituted its own would reintroduce the
- * failure this whole migration is about: a plausible number from an
- * unaccountable source.
+ * Throws on anything missing or malformed rather than defaulting: defaults
+ * belong to the caller (the app's settings, or the plan spec for MCP), and a
+ * silent substitute would be a plausible number from nowhere.
  *
  * `taxTable` and `birthYear` are the exceptions, and are optional here — see
  * ATTACHED.
@@ -168,10 +132,8 @@ export function makeSimConfig(values) {
         throw new Error('makeSimConfig: allocateHouseholdTax must be a boolean.');
     }
 
-    // Attached, so absent is legal; present and nonsensical is not. A birth
-    // year that arrived as a string or a float would flow into DateInt.from()
-    // and produce a plausible date, which is the shape of bug this field
-    // exists to remove.
+    // Absent is legal; present and malformed is not — a string or a float
+    // would flow into DateInt.from() and produce a plausible wrong date.
     if (values.birthYear !== undefined && values.birthYear !== null
         && !Number.isInteger(values.birthYear)) {
         // String(), not JSON.stringify(): NaN stringifies to "null", which
@@ -190,9 +152,9 @@ export function makeSimConfig(values) {
 export const SIM_CONFIG_FIELDS = FIELDS;
 
 /**
- * A copy with some fields replaced. The config is frozen, so this is how step 2
- * attaches the `taxTable` once it has one, and how a what-if would vary a
- * setting without mutating the run that is already using it.
+ * A copy with some fields replaced. The config is frozen, so this is how
+ * Portfolio attaches `birthYear`, and how a what-if would vary a setting
+ * without touching a run already using the original.
  */
 export function withSimConfig(config, changes) {
     return makeSimConfig({ ...config, ...changes });
