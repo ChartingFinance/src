@@ -3,54 +3,33 @@
  *
  * "I withdrew this much from my accounts to meet my obligations."
  *
- * ── Why this is not the EXPENSE metric ───────────────────────────────
+ * ── Why not the EXPENSE metric, or the sum of debits ─────────────────
  *
- * `Metric.EXPENSE` is an ACCOUNTING expense: LIVING_EXPENSE + MORTGAGE_INTEREST
- * + MAINTENANCE + INSURANCE. It deliberately excludes mortgage principal (which
- * nets out through credit memos) and property tax (which rolls into SALT_TAXES).
- * Both of those are real cash leaving a real account, so on a mortgaged plan the
- * metric understates what the household actually paid out by 8-17%:
+ * `Metric.EXPENSE` is an accounting expense (living expense, mortgage interest,
+ * maintenance, insurance). It leaves out mortgage principal and property tax,
+ * which are real cash out, so on a mortgaged plan it understates what was paid.
+ * Summing every debit is wrong the other way: money moves between the
+ * household's own accounts (an RMD sweeps a 401(k) into a brokerage that then
+ * pays an expense), so both legs would count.
  *
- *     dualIncome 2026   EXPENSE $78,149   cash actually drawn $91,422
+ * ── What it measures ─────────────────────────────────────────────────
  *
- * Nor is it the sum of every debit. Money moves between a household's own
- * accounts constantly — an RMD sweeps 401K -> Brokerage before the brokerage
- * funds an expense — and both legs are debits on fundable accounts. Summing
- * them all reports roughly double:
+ * Every cash debit on a fundable account, classified by why it happened, from
+ * the causal scopes trace.js records. A draw counts when its chain roots in an
+ * obligation (an expense, a mortgage, a carrying cost, a tax), and not when the
+ * household is moving its own money around. So:
  *
- *     preRetirement 2055   obligations $162,796   all debits $347,434
+ *   Tax counts only when it was withdrawn. Payroll withholding never passes
+ *   through an account, so a working year shows little tax drawn; in
+ *   retirement nearly all tax is a withdrawal.
  *
- * ── What this measures instead ───────────────────────────────────────
- *
- * Every CASH debit on a FUNDABLE account, classified by WHY it happened, using
- * the causal scope trace.js already records. A draw counts when its chain roots
- * in an obligation — paying an expense, a mortgage, a carrying cost, a tax —
- * and does not when it is the household moving its own money around.
- *
- * Two properties fall out of measuring the funding side rather than the accrual
- * side, and both are the point:
- *
- *   TAXES ARE COUNTED ONLY WHEN THEY WERE ACTUALLY WITHDRAWN. Payroll
- *   withholding is deducted at source and never passes through an account, so a
- *   working year shows $0 of tax drawn even while $39,553 was paid. In
- *   retirement there is no paycheck to withhold from, so nearly all tax becomes
- *   a withdrawal. The number tracks that shift on its own; no deduction or
- *   bracket arithmetic enters into it. It counts dollars that left an account.
- *
- *   A FAILING PLAN REPORTS WHAT IT COULD PAY, NOT WHAT IT OWED. earlyCareer
- *   2060 accrues $127,396 of living expense against depleted accounts; the draw
- *   is $64,721 and the remaining $62,675 is recorded as UNFUNDED. The two sum
- *   back to the accrual exactly. An accrual-side figure would go on reporting
- *   $127k of spending that never happened.
+ *   A failing plan reports what it could pay. The unpaid part is reported
+ *   separately as unfunded; drawn + unfunded equals the obligation.
  *
  * ── The declaration table ────────────────────────────────────────────
  *
- * EXPENDITURE_TREATMENT declares every EventType, and classify() THROWS on one
- * it has never heard of. That shape is borrowed from EVENT_RECONCILIATION in
- * portfolio.js for the same reason it was adopted there: the old default:
- * branch swallowed unmapped types into a bucket, which is how a rename
- * corrupted the books in silence. Adding an EventType should break this file
- * loudly rather than quietly leave money out of a total.
+ * EXPENDITURE_TREATMENT declares every EventType, and classify() throws on an
+ * unknown one, so a new EventType cannot quietly drop out of a total.
  */
 
 import { EventType, EventKind } from './sim-event.js';
@@ -88,10 +67,8 @@ export const EXPENDITURE_TREATMENT = Object.freeze({
     [EventType.SPILLOVER]:               'byScope',
     [EventType.GROSS_UP]:                'byScope',
 
-    // A one-time debit on an account is a one-off purchase. It is applied in
-    // the month scope with no obligation parent, so 'byScope' would file it as
-    // internal — which would be wrong, and wrong in the direction that hides
-    // spending. Declared directly.
+    // A one-time debit is a one-off purchase. It has no obligation scope, so
+    // 'byScope' would file it as internal; declared as spending directly.
     [EventType.ONE_TIME]:                'spending',
 
     // Tax that came out of an account.
@@ -101,28 +78,14 @@ export const EXPENDITURE_TREATMENT = Object.freeze({
     [EventType.TAX_TRUE_UP]:             'tax',
     [EventType.NIIT_ASSESSED]:           'tax',
 
-    // Info-only, and it MUST be: the cash it describes already left under the
-    // GROSS_UP that carried it, and that gross-up is counted as spending.
-    // Counting this too would book the same dollars twice.
+    // Excluded: the cash already left under the GROSS_UP, which counts as
+    // spending, so counting this too would double it.
     //
-    // KNOWN IMPRECISION: because of that, the tax portion of a grossed-up
-    // withdrawal lands in `spending` rather than `tax`. The TOTAL is right
-    // either way — it is the same withdrawal — only the split is off.
-    //
-    // It now has a witness, which it did not when this was written. The
-    // original note said no fixture produced a material provision; that was
-    // measured across the eight quick-start profiles, where the premium is
-    // $0.00 to the cent, and it did not hold for the corpus.
-    // grossup-at-the-ltcg-boundary provisions $32,896 with an expenditure tax
-    // line of $0, and brokerage-only-retirement — added for this — takes a
-    // premium every month and reports $4,929 of tax in 2027 where $27,837
-    // left the account for tax. 82% low, on a plausible retirement.
-    //
-    // Still unfixed, and now a choice rather than a gap: moving the premium
-    // means splitting one debit across two buckets, since the gross-up is a
-    // single withdrawal and the TAX_PROVISION only names a portion of it.
-    // tests/annual-expenditure.mjs pins the current behaviour and the size of
-    // the gap, so this cannot drift in silence while it waits.
+    // Known imprecision, kept by choice: the tax part of a grossed-up
+    // withdrawal therefore lands in `spending`, not `tax`. The total is right;
+    // only the split is off, and on a brokerage-funded retirement the tax line
+    // can read far too low. Fixing it means splitting one debit across two
+    // buckets. tests/annual-expenditure.mjs pins the current behaviour.
     [EventType.TAX_PROVISION]:           'excluded',
 
     // Growth and yield: credits, never draws.
@@ -146,9 +109,8 @@ export const EXPENDITURE_TREATMENT = Object.freeze({
     [EventType.CAPITAL_GAIN_RECOGNIZED]: 'excluded',
     [EventType.CAPITAL_GAIN_EXCLUDED]:   'excluded',
 
-    // Engine reports. UNFUNDED is the obligation the plan could NOT pay — it is
-    // reported separately by this module rather than counted, because a dollar
-    // that never left an account was never withdrawn.
+    // Engine reports. UNFUNDED — what the plan could not pay — is reported
+    // separately rather than counted: it never left an account.
     [EventType.UNFUNDED]:                'excluded',
     [EventType.CONTRIBUTION_CAPPED]:     'excluded',
 });
@@ -165,21 +127,16 @@ const OBLIGATION_SCOPES = new Set([
  * not a draw at all.
  *
  * @param {SimEvent} event
- * @param {Array}    scopes  portfolio.traceScopes — passed EXPLICITLY. Resolving
- *                           from trace.js module state finds nothing after the
- *                           next calculate(), which is a silent wrong answer.
+ * @param {Array}    scopes  portfolio.traceScopes, passed explicitly: trace.js
+ *                           module state is reset by the next run.
  * @param {Map}      [memo]  traceId -> bucket, for one pass over many events
  */
 export function classify(event, scopes, memo = null) {
     if (event.kind !== EventKind.CASH) return null;
 
-    // Credits are not withdrawals. This is GROSS, deliberately: the annual tax
-    // true-up settles in both directions, and in a refund year it credits the
-    // funding account. That refund is money coming back, not money drawn, so a
-    // year that withheld nothing and got $1,610 back reports $0 of tax drawn —
-    // which is the literal answer to "what did I have to take out". Netting it
-    // would answer a different question, and would let a large refund mask a
-    // large draw earlier in the same window.
+    // Credits are not withdrawals, and are not netted against them: a tax
+    // refund is money coming back, and netting it would let a refund hide an
+    // earlier draw in the same window.
     if (event.amount.amount >= 0) return null;
 
     const treatment = EXPENDITURE_TREATMENT[event.type];
@@ -211,8 +168,7 @@ export function classify(event, scopes, memo = null) {
  * What the household withdrew over the inclusive month window
  * [fromIndex, toIndex], where index 0 is the plan's first month.
  *
- * Amounts come back POSITIVE — this is a "how much went out" figure, and a
- * caller rendering "$91,422 withdrawn" should not have to flip a sign first.
+ * Amounts are positive: this is a "how much went out" figure.
  *
  * @returns {{spending: number, tax: number, total: number,
  *            unfunded: number, months: number, complete: boolean}}

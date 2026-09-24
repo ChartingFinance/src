@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.3.13; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.3.14; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -32255,16 +32255,14 @@ var FundTransfer = class _FundTransfer {
    * list (cash → savings → brokerage → treasuries → corporate bonds) holding
    * a positive balance.
    *
-   * This is the ONE policy for every implicit money movement the engine makes
-   * on the user's behalf: paying an expense or mortgage no fund transfer
-   * covers, escrowing property tax, sweeping unallocated take-home pay,
-   * settling a tax true-up, landing sale proceeds and RMDs, and covering
-   * spillover from a depleted account. Retirement accounts are not eligible —
-   * see `FUNDING_BACKSTOP_PRIORITY` in instrument.js for why.
+   * The one policy for every implicit money movement the engine makes for the
+   * user: an expense or mortgage no transfer covers, property-tax escrow,
+   * unallocated take-home pay, tax true-ups, sale proceeds, RMDs, and spillover.
+   * Retirement accounts are not eligible (see `FUNDING_BACKSTOP_PRIORITY` in
+   * instrument.js).
    *
-   * Returns null when nothing qualifies. Callers must treat that as an
-   * UNFUNDED obligation and report it via `reportUnfunded()` — never as a
-   * silent skip, which books the obligation while no cash leaves any account.
+   * Returns null when nothing qualifies; callers must then call
+   * `reportUnfunded()`, never skip silently.
    */
   static resolveFunding(modelAssets) {
     for (const key of InstrumentType.fundingBackstopPriority) {
@@ -32274,14 +32272,11 @@ var FundTransfer = class _FundTransfer {
     return null;
   }
   /**
-   * Record an obligation the funding backstop could not cover. The memo is
-   * `info` kind — no money moved, so it must stay out of cash reconciliation —
-   * and lands on the asset that owes, where the UI already shows its ledger.
+   * Record an obligation the funding backstop could not cover, as an info
+   * event (no money moved) on the asset that owes.
    *
-   * `origin` is REQUIRED and has no default on purpose. It decides which
-   * conservation total this shortfall belongs to, and a wrong answer silently
-   * mis-buckets money — the exact failure class this whole line of work exists
-   * to remove. An omitted origin throws instead.
+   * `origin` is required: it decides which conservation total the shortfall
+   * belongs to, so an omitted origin throws rather than defaulting.
    *
    * @param {ModelAsset} modelAsset  The obligation's own asset (expense, mortgage, home)
    * @param {Currency}   amount      Positive amount that went unpaid
@@ -32289,17 +32284,10 @@ var FundTransfer = class _FundTransfer {
    * @param {string}     origin      ShortfallOrigin — which movement this is the remainder of
    */
   /**
-   * Where money COMING IN should land when no account was named.
-   *
-   * Same priority list as resolveFunding, minus the positive-balance filter —
-   * that filter is a precondition for taking money OUT, and applying it to a
-   * deposit is what made an annual tax refund vanish when the household had
-   * spent everything. A depleted current account is a perfectly good place to
-   * receive a refund; being empty is the reason it needs one.
-   *
-   * Deferred and tax-free accounts stay out for the same reason they do on the
-   * debit side: a deposit into a 401(k) is a contribution with plan rules
-   * attached, not somewhere to park a cheque.
+   * Where money coming in lands when no account was named: resolveFunding's
+   * priority list without its positive-balance filter, since an empty account
+   * can still receive a deposit. Retirement accounts stay out — a deposit into
+   * a 401(k) is a contribution, with rules attached.
    */
   static resolveDeposit(modelAssets) {
     for (const key of InstrumentType.fundingBackstopPriority) {
@@ -32321,20 +32309,12 @@ var FundTransfer = class _FundTransfer {
   }
   // ── One-Sided Settlement ───────────────────────────────────────
   /**
-   * Settle a one-sided withdrawal (mortgage payment, property tax escrow,
-   * carrying cost): debit the funding account and, when that account is
-   * tax-advantaged and clamps at $0, source the shortfall from a fallback.
+   * Settle a one-sided withdrawal (mortgage payment, property-tax escrow,
+   * carrying cost, tax): debit the funding account and, if it clamps at $0,
+   * source the shortfall from a fallback, reporting what nothing can cover.
    *
-   * These paths call debit() directly rather than execute(), so they never
-   * reached execute()'s spillover handling: the clamped remainder was
-   * reported and then dropped — the obligation was booked but the cash never
-   * left any account. They also booked the FULL requested amount against the
-   * named account, recording phantom IRA/401K distributions for money the
-   * account never held.
-   *
-   * `supplied` is what the named account actually paid; `spillover` is what
-   * the fallback paid. Callers book each leg against the account that really
-   * supplied the cash.
+   * `supplied` is what the named account paid; `spillover` is what the
+   * fallback paid. Callers book each leg against the account that paid it.
    *
    * @param {FundTransferOneSided} oneSided
    * @param {string}      memo
@@ -34066,29 +34046,18 @@ var PayrollEngine = class {
     );
   }
   /**
-   * Withhold federal tax ON ARRIVAL from Social Security or a pension.
+   * Withhold federal tax on arrival from Social Security or a pension, by
+   * reducing what lands. These are flows with no balance to debit afterwards,
+   * the way IRA/401(k) withholding does — the same shape payroll uses for a
+   * salary.
    *
-   * WHY ON ARRIVAL, AND NOT THE 4b SHAPE
-   * ------------------------------------
-   * IRA/401(K) withholding debits the account after the fact. That cannot work
-   * here: these are FLOWS, and ModelAsset#transact short-circuits for flow
-   * instruments — it records the event, changes no balance, and returns
-   * spillover ZERO, so the caller is told the money was collected when nothing
-   * moved. Reducing what lands is the only shape that actually withholds, and
-   * it is what payroll already does for a salary a few lines below.
+   * No gross-up: a benefit is already gross, and adding the withholding to it
+   * would inflate taxable income. The income metrics are booked by the
+   * behavior and not touched here.
    *
-   * NO GROSS-UP. A balance grossed up because the withheld dollars are
-   * themselves a distribution; a flow's benefit is already gross. Adding to it
-   * would inflate taxable income and RAISE the household's bill — the failure
-   * this spec's predictions are built to catch. SOCIAL_SECURITY_INCOME and
-   * PENSION_INCOME are booked by the behavior and are not touched here.
-   *
-   * RATES DIFFER BY INSTRUMENT ON PURPOSE. A pension mirrors Form W-4P, whose
-   * default is to withhold. Social Security mirrors Form W-4V, which is
-   * elective with NO default and which most recipients never file — so its
-   * rate is 0 unless someone chooses otherwise, and SS stays unattributed by
-   * default. Modelling a withholding the household never elected would be
-   * inventing policy.
+   * Rates differ by instrument: a pension follows Form W-4P, which withholds
+   * by default; Social Security follows Form W-4V, elective with no default,
+   * so its rate is 0 unless set.
    */
   #withholdOnRetirementIncome(modelAsset) {
     const isPension = InstrumentType.isPension(modelAsset.instrument);
@@ -34144,18 +34113,10 @@ var PayrollEngine = class {
     }
   }
   /**
-   * Record that an IRS annual limit reduced a contribution below what the
-   * user's transfer asked for.
-   *
-   * Without this the clamp leaves no trace at all: the books show a smaller
-   * contribution and nothing anywhere says why, so "my 15% election only put
-   * in $8,000" is unanswerable. The absence of money IS the event, so this is
-   * an `info` memo — no cash moved that otherwise would have, and it must stay
-   * out of reconciliation. Same shape and reasoning as
-   * FundTransfer.reportUnfunded.
-   *
-   * Lands on the DESTINATION account, where the contribution metrics live and
-   * where someone reading a too-small balance goes looking.
+   * Record that an IRS annual limit cut a contribution below what the user's
+   * transfer asked for, so a too-small contribution can be explained. An
+   * info event (no cash moved), on the destination account, where the
+   * contribution metrics are.
    *
    * @param {ModelAsset} toModel   destination account
    * @param {Currency}   requested what the transfer computed before the clamp
@@ -39905,10 +39866,8 @@ var EXPENDITURE_TREATMENT = Object.freeze({
   [EventType.SETTLEMENT]: "byScope",
   [EventType.SPILLOVER]: "byScope",
   [EventType.GROSS_UP]: "byScope",
-  // A one-time debit on an account is a one-off purchase. It is applied in
-  // the month scope with no obligation parent, so 'byScope' would file it as
-  // internal — which would be wrong, and wrong in the direction that hides
-  // spending. Declared directly.
+  // A one-time debit is a one-off purchase. It has no obligation scope, so
+  // 'byScope' would file it as internal; declared as spending directly.
   [EventType.ONE_TIME]: "spending",
   // Tax that came out of an account.
   [EventType.FICA_WITHHOLDING]: "tax",
@@ -39916,28 +39875,14 @@ var EXPENDITURE_TREATMENT = Object.freeze({
   [EventType.CAPITAL_GAINS_TAX]: "tax",
   [EventType.TAX_TRUE_UP]: "tax",
   [EventType.NIIT_ASSESSED]: "tax",
-  // Info-only, and it MUST be: the cash it describes already left under the
-  // GROSS_UP that carried it, and that gross-up is counted as spending.
-  // Counting this too would book the same dollars twice.
+  // Excluded: the cash already left under the GROSS_UP, which counts as
+  // spending, so counting this too would double it.
   //
-  // KNOWN IMPRECISION: because of that, the tax portion of a grossed-up
-  // withdrawal lands in `spending` rather than `tax`. The TOTAL is right
-  // either way — it is the same withdrawal — only the split is off.
-  //
-  // It now has a witness, which it did not when this was written. The
-  // original note said no fixture produced a material provision; that was
-  // measured across the eight quick-start profiles, where the premium is
-  // $0.00 to the cent, and it did not hold for the corpus.
-  // grossup-at-the-ltcg-boundary provisions $32,896 with an expenditure tax
-  // line of $0, and brokerage-only-retirement — added for this — takes a
-  // premium every month and reports $4,929 of tax in 2027 where $27,837
-  // left the account for tax. 82% low, on a plausible retirement.
-  //
-  // Still unfixed, and now a choice rather than a gap: moving the premium
-  // means splitting one debit across two buckets, since the gross-up is a
-  // single withdrawal and the TAX_PROVISION only names a portion of it.
-  // tests/annual-expenditure.mjs pins the current behaviour and the size of
-  // the gap, so this cannot drift in silence while it waits.
+  // Known imprecision, kept by choice: the tax part of a grossed-up
+  // withdrawal therefore lands in `spending`, not `tax`. The total is right;
+  // only the split is off, and on a brokerage-funded retirement the tax line
+  // can read far too low. Fixing it means splitting one debit across two
+  // buckets. tests/annual-expenditure.mjs pins the current behaviour.
   [EventType.TAX_PROVISION]: "excluded",
   // Growth and yield: credits, never draws.
   [EventType.ASSET_GROWTH]: "excluded",
@@ -39957,9 +39902,8 @@ var EXPENDITURE_TREATMENT = Object.freeze({
   // Recognition, not cash.
   [EventType.CAPITAL_GAIN_RECOGNIZED]: "excluded",
   [EventType.CAPITAL_GAIN_EXCLUDED]: "excluded",
-  // Engine reports. UNFUNDED is the obligation the plan could NOT pay — it is
-  // reported separately by this module rather than counted, because a dollar
-  // that never left an account was never withdrawn.
+  // Engine reports. UNFUNDED — what the plan could not pay — is reported
+  // separately rather than counted: it never left an account.
   [EventType.UNFUNDED]: "excluded",
   [EventType.CONTRIBUTION_CAPPED]: "excluded"
 });

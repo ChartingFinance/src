@@ -19,13 +19,12 @@ export class FundTransferResult {
     this.toMemo = toMemo;
     this.realizedGain = realizedGain instanceof Currency ? realizedGain.copy() : new Currency(realizedGain);
 
-    // Spillover leg: when a tax-advantaged account is clamped at $0 mid-
-    // withdrawal, execute() sources the shortfall from a taxable fallback and
-    // reports it here so callers can book each leg against the account that
-    // actually supplied the cash. fromAssetChange/toAssetChange report the
-    // REQUESTED amounts; subtract `spillover` to get what the nominal account
-    // really supplied. spilloverGain is kept separate from realizedGain to
-    // make double-booking impossible.
+    // The spillover leg: when an account clamps at $0 mid-withdrawal, execute()
+    // sources the shortfall from a fallback and reports it here, so callers can
+    // book each leg against the account that paid. fromAssetChange/toAssetChange
+    // are the REQUESTED amounts; subtract `spillover` for what the named account
+    // supplied. spilloverGain is separate from realizedGain so neither is
+    // booked twice.
     this.spillover = Currency.zero();           // amount supplied by the fallback
     this.spilloverGain = Currency.zero();       // realized gain on the fallback debit
     this.spilloverInstrument = null;            // fallback account's instrument
@@ -36,9 +35,8 @@ import { EventType, ShortfallOrigin, renderNote } from './sim-event.js';
 import { withTrace, TraceKind } from './trace.js';
 
 /**
- * This is to handle one-sided debits or credits. For example, a tax payment. Here we simply
- * debit the toModel without crediting the fromModel since there is not credit for a tax payment--
- * other than continuing to possess the asset.
+ * A one-sided movement, such as a tax payment: toModel is debited and nothing
+ * is credited, because nothing is received in return.
  */
 export class FundTransferOneSided {
 
@@ -151,16 +149,14 @@ export class FundTransfer {
    * list (cash → savings → brokerage → treasuries → corporate bonds) holding
    * a positive balance.
    *
-   * This is the ONE policy for every implicit money movement the engine makes
-   * on the user's behalf: paying an expense or mortgage no fund transfer
-   * covers, escrowing property tax, sweeping unallocated take-home pay,
-   * settling a tax true-up, landing sale proceeds and RMDs, and covering
-   * spillover from a depleted account. Retirement accounts are not eligible —
-   * see `FUNDING_BACKSTOP_PRIORITY` in instrument.js for why.
+   * The one policy for every implicit money movement the engine makes for the
+   * user: an expense or mortgage no transfer covers, property-tax escrow,
+   * unallocated take-home pay, tax true-ups, sale proceeds, RMDs, and spillover.
+   * Retirement accounts are not eligible (see `FUNDING_BACKSTOP_PRIORITY` in
+   * instrument.js).
    *
-   * Returns null when nothing qualifies. Callers must treat that as an
-   * UNFUNDED obligation and report it via `reportUnfunded()` — never as a
-   * silent skip, which books the obligation while no cash leaves any account.
+   * Returns null when nothing qualifies; callers must then call
+   * `reportUnfunded()`, never skip silently.
    */
   static resolveFunding(modelAssets) {
     for (const key of InstrumentType.fundingBackstopPriority) {
@@ -171,14 +167,11 @@ export class FundTransfer {
   }
 
   /**
-   * Record an obligation the funding backstop could not cover. The memo is
-   * `info` kind — no money moved, so it must stay out of cash reconciliation —
-   * and lands on the asset that owes, where the UI already shows its ledger.
+   * Record an obligation the funding backstop could not cover, as an info
+   * event (no money moved) on the asset that owes.
    *
-   * `origin` is REQUIRED and has no default on purpose. It decides which
-   * conservation total this shortfall belongs to, and a wrong answer silently
-   * mis-buckets money — the exact failure class this whole line of work exists
-   * to remove. An omitted origin throws instead.
+   * `origin` is required: it decides which conservation total the shortfall
+   * belongs to, so an omitted origin throws rather than defaulting.
    *
    * @param {ModelAsset} modelAsset  The obligation's own asset (expense, mortgage, home)
    * @param {Currency}   amount      Positive amount that went unpaid
@@ -186,17 +179,10 @@ export class FundTransfer {
    * @param {string}     origin      ShortfallOrigin — which movement this is the remainder of
    */
   /**
-   * Where money COMING IN should land when no account was named.
-   *
-   * Same priority list as resolveFunding, minus the positive-balance filter —
-   * that filter is a precondition for taking money OUT, and applying it to a
-   * deposit is what made an annual tax refund vanish when the household had
-   * spent everything. A depleted current account is a perfectly good place to
-   * receive a refund; being empty is the reason it needs one.
-   *
-   * Deferred and tax-free accounts stay out for the same reason they do on the
-   * debit side: a deposit into a 401(k) is a contribution with plan rules
-   * attached, not somewhere to park a cheque.
+   * Where money coming in lands when no account was named: resolveFunding's
+   * priority list without its positive-balance filter, since an empty account
+   * can still receive a deposit. Retirement accounts stay out — a deposit into
+   * a 401(k) is a contribution, with rules attached.
    */
   static resolveDeposit(modelAssets) {
     for (const key of InstrumentType.fundingBackstopPriority) {
@@ -220,20 +206,12 @@ export class FundTransfer {
   // ── One-Sided Settlement ───────────────────────────────────────
 
   /**
-   * Settle a one-sided withdrawal (mortgage payment, property tax escrow,
-   * carrying cost): debit the funding account and, when that account is
-   * tax-advantaged and clamps at $0, source the shortfall from a fallback.
+   * Settle a one-sided withdrawal (mortgage payment, property-tax escrow,
+   * carrying cost, tax): debit the funding account and, if it clamps at $0,
+   * source the shortfall from a fallback, reporting what nothing can cover.
    *
-   * These paths call debit() directly rather than execute(), so they never
-   * reached execute()'s spillover handling: the clamped remainder was
-   * reported and then dropped — the obligation was booked but the cash never
-   * left any account. They also booked the FULL requested amount against the
-   * named account, recording phantom IRA/401K distributions for money the
-   * account never held.
-   *
-   * `supplied` is what the named account actually paid; `spillover` is what
-   * the fallback paid. Callers book each leg against the account that really
-   * supplied the cash.
+   * `supplied` is what the named account paid; `spillover` is what the
+   * fallback paid. Callers book each leg against the account that paid it.
    *
    * @param {FundTransferOneSided} oneSided
    * @param {string}      memo
@@ -271,11 +249,8 @@ export class FundTransfer {
     if (result.spillover.amount > 0) {
       const fallback = resolveFallback(allModels);
       if (fallback) {
-        // `cause` carries WHICH obligation this spill was settling. Without it
-        // every one-sided spill reads alike, so a tax payment re-sourced from
-        // the backstop is indistinguishable from a mortgage or property-tax
-        // spill — which made a genuinely-collected $2,670 tax bill look like an
-        // uncollected gap during reconciliation (probed 2026-08-03).
+        // `cause` records which obligation this spill settled, so a tax payment
+        // re-sourced from the backstop reconciles as tax.
         const spillResult = fallback.debit(result.spillover,
           { type: EventType.SPILLOVER,
             data: { depleted: oneSided.toModel.displayName,
@@ -345,9 +320,9 @@ export class FundTransfer {
 
     const pct = (useClosePercent ? this.closeMoveValue : this.monthlyMoveValue) / 100;
 
-    // Old -- Determine the base amount for the transfer:
-    // New -- introduce flags set by callers (that have context) on where to pull funds from
-    // On close: always use finishCurrency (full asset value)
+    // The base the percentage applies to: the full value on close, else net
+    // income or property tax when a caller sets useNetIncome / usePropertyTax,
+    // else the full value (for an income asset, the gross).
     let base;
     if (useClosePercent) {
       base = this.fromModel.finishCurrency;
@@ -372,10 +347,8 @@ export class FundTransfer {
   execute({ useClosePercent = false } = {}) {
     if (!this.fromModel || !this.toModel) return new FundTransferResult();
 
-    // One causal scope for the whole movement. Everything recorded inside —
-    // both legs, any realized gain, a clamp's spillover, an unfunded remainder
-    // — becomes attributable to this one transfer rather than floating loose in
-    // the month.
+    // One causal scope for the whole movement: both legs, any realized gain,
+    // spillover and unfunded remainder are attributed to this transfer.
     return withTrace(TraceKind.TRANSFER,
       `Transfer ${this.fromModel.displayName} → ${this.toDisplayName}`,
       this.fromModel.currentDateInt,
@@ -409,16 +382,15 @@ export class FundTransfer {
       this.toModel.recordEvent(EventType.CAPITAL_GAIN_RECOGNIZED, toResult.realizedGain.copy(), { metric: Metric.LONG_TERM_CAPITAL_GAIN, data: { spillover: false } });
     }
 
-    // Tax-advantaged account depleted: the overshoot must come from a taxable
-    // account — you can't withdraw more than the account holds. The clamped
-    // WITHDRAWAL can sit on either side of a transfer:
+    // A clamped account: the shortfall comes from a fallback. The clamped
+    // withdrawal can be on either side:
     //   - debit(amount > 0) on fromModel (e.g. an RMD top-up from an IRA), or
-    //   - credit(amount < 0) on toModel — "credit-as-withdrawal", which is how
-    //     expense transfers pull from their funding account.
-    // The two are mutually exclusive (opposite signs of `amount`). Handling
-    // only the from side (the old code) silently discarded the to-side
-    // spillover: a depleted IRA "paid" expenses in full with money that never
-    // existed, and the books recorded the phantom as a taxable distribution.
+    //   - credit(amount < 0) on toModel — "credit-as-withdrawal", how expense
+    //     transfers pull from their funding account.
+    // Opposite signs of `amount`, so at most one side spills.
+    //
+    // The fallback is assumed to supply the whole shortfall: if it clamps too,
+    // the rest is neither re-sourced nor reported.
     const spillSource = fromResult.spillover?.amount > 0 ? this.fromModel
                       : toResult.spillover?.amount > 0 ? this.toModel
                       : null;
@@ -440,9 +412,9 @@ export class FundTransfer {
           fallback.recordEvent(EventType.CAPITAL_GAIN_RECOGNIZED, spilloverGain.copy(), { metric: Metric.LONG_TERM_CAPITAL_GAIN, data: { spillover: true } });
         }
       } else {
-        // No backstop account can cover the shortfall. Nothing at this layer
-        // can conjure the cash; surface it instead of failing silently — the
-        // requested amount was still credited in full to the target.
+        // No backstop can cover the shortfall: report it as unfunded. The
+        // target was still credited the full requested amount above, so that
+        // part of its balance was paid by no one.
         FundTransfer.reportUnfunded(spillSource, spillAmount, `${memo} (account depleted, no backstop)`, ShortfallOrigin.PAIRED);
       }
     }
