@@ -9,20 +9,13 @@
  *
  * ── Thin by design ───────────────────────────────────────────────────
  *
- * Every tool here goes through runPlan() in run-plan.js and formats the
- * result. Nothing in this file constructs a Portfolio, sets a global or
- * builds a TaxTable — that sequence has six steps and an ordering
- * constraint, and the previous version of this file got three of them
- * wrong by doing it inline. See the module comment in run-plan.js.
+ * Every tool goes through runPlan() in run-plan.js and formats the result;
+ * nothing here builds a Portfolio, config or TaxTable. No localStorage is
+ * needed: the engine takes its configuration as a value.
  *
- * As of Spec 9 step 6 this server needs no localStorage polyfill. The engine
- * takes its configuration as a value, so nothing on the run path reaches for
- * browser storage — verified by running a full plan, report and causal chain
- * with no localStorage defined at all.
- *
- * NOTHING MAY WRITE TO STDOUT. StdioServerTransport owns it for JSON-RPC;
- * a stray console.log corrupts the protocol mid-session. logger.js already
- * routes to stderr under Node for exactly this reason.
+ * Nothing may write to stdout: StdioServerTransport owns it for JSON-RPC, and a
+ * stray console.log corrupts the protocol. logger.js writes to stderr under
+ * Node for this reason.
  */
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -65,11 +58,8 @@ function guard(fn) {
 /**
  * Render findings as their own section.
  *
- * These lead rather than trail. An agent handed a net-worth table with no
- * mention that the plan stopped being able to pay its bills in 2049 will
- * summarise the table — the number it was given — and the omission becomes
- * advice. Exhaustion gets called out first for the same reason the UI panel
- * does it: it is the headline fact about the whole run.
+ * Findings come first, and exhaustion first among them: an agent summarises
+ * what it is given, and a plan that cannot pay its bills is the headline.
  */
 function issuesMarkdown(issues) {
   if (!issues.length) {
@@ -109,25 +99,18 @@ function issuesMarkdown(issues) {
 /**
  * The report, headed by the handle.
  *
- * The handle is stated up front and in the imperative, because a tool result is
- * the only place the client learns that follow-up questions are possible at all.
- * Findings carry their own ids so `explain_issue` can be called without the
- * agent having to guess one.
+ * The handle is stated first, because the result is the only place a client
+ * learns it can ask follow-up questions. Findings carry ids for
+ * `explain_issue`.
  *
- * The granularity line is here for the same reason. The report body is annual
- * and lifetime totals; the run also holds a package for every month and an
- * event log finer than that, and nothing in a table of yearly rows says so. An
- * annual row reads as though the year were uniform, so a home sale or a single
- * large true-up becomes a question about a whole year instead of a question
- * about one month — which the caller can only ask if it knows the month exists.
+ * The granularity line says the run also holds monthly packages and an event
+ * log, so a caller knows it can ask about one month instead of a whole year.
  */
 /**
  * The plan in one line: who it is about, and under what assumptions.
  *
- * The report has never said this anywhere, which is why the round-trip notes
- * had to read `setting-startAge` out of the DOM to find out what the app was
- * simulating. Ages are the single most common way a plan turns out to be about
- * a person the user is not, and they cost one line to state.
+ * Ages are the most common way a plan turns out to be about someone other
+ * than the user, and they cost one line to state.
  */
 function planLine(portfolio) {
   const c = portfolio?.config;
@@ -166,10 +149,8 @@ function reportFor(handle, portfolio, issues, mcResults = null, sections = null)
     ? `\n\n---\n\n${generateMonteCarloSectionMarkdown(portfolio, mcResults)}`
     : '';
 
-  // What Needs Attention is NOT selectable. A caller asking for one section is
-  // asking to read less, not to be told less about whether the plan can pay its
-  // bills — and an unpayable obligation outranks any headline number, including
-  // the one they came for.
+  // What Needs Attention is always included: asking for one section means
+  // reading less, not being told less about whether the plan can pay its bills.
   const body = generatePortfolioMarkdown(portfolio, sections ? { sections } : {});
   return `${followUp}${issuesMarkdown(issues)}\n\n---\n\n${body}${mc}`;
 }
@@ -347,19 +328,12 @@ server.tool(
 
 // ── share_link ────────────────────────────────────────────────────
 //
-// The one tool here whose output leaves the machine, and only if someone clicks
-// it. Everything else in this server answers in the transcript; this hands back
-// a URL that carries the whole plan.
+// Returns a URL carrying the whole plan. The plan is in the fragment
+// (`#portfolio=`), which browsers never send to the server (see share-link.js),
+// and the app asks before importing it. The result says both, since "share"
+// usually means upload.
 //
-// It is built on the FRAGMENT (`#portfolio=`), which browsers do not transmit,
-// so opening it does not send the portfolio to charting.finance's server — see
-// share-link.js. The page reads the fragment locally and shows an import prompt
-// before touching anything the user has saved. Both halves of that matter, and
-// both are stated in the result, because "share" is a word that usually means
-// upload and here it does not.
-//
-// specForHandle, not getRun: a link is a function of the plan, so asking for one
-// must not cost a simulation.
+// specForHandle, not getRun: a link needs the plan, not a run.
 
 server.tool(
   "share_link",
@@ -402,10 +376,8 @@ server.tool(
 
 // ── diff_plans ────────────────────────────────────────────────────
 //
-// The question that follows the round trip. Both bugs in the notes that
-// prompted this work were two documents disagreeing about the same plan, with
-// nothing putting the two numbers side by side — a fifteen-year age gap went
-// unseen across two reports that each looked fine.
+// Puts two plans side by side, so a difference (in ages, say) cannot hide in
+// two reports that each look fine.
 
 server.tool(
   "diff_plans",
@@ -439,10 +411,8 @@ server.tool(
 
 // ── plan_defaults ─────────────────────────────────────────────────
 //
-// Spec 10 step 1 (§7). The smallest addition in the spec and the
-// highest-leverage one: it turns the largest class of silent wrongness — a plan
-// about a person the user is not — into a visible sentence. Call it ONCE per
-// conversation, not once per plan.
+// The defaults, stated (planDefaults() in build-plan.js). Meant to be called
+// once per conversation, not per plan.
 
 server.tool(
   "plan_defaults",
@@ -458,9 +428,9 @@ server.tool(
 
 // ── build_plan ────────────────────────────────────────────────────
 //
-// Spec 10 step 2. The compiler in front of runPlan. It returns a SPEC and runs
-// nothing (§14 q1, decided 2026-08-31) — pass the spec to run_plan to get a
-// handle. Its most valuable output is a refusal.
+// The compiler in front of runPlan (build-plan.js). It returns a spec and runs
+// nothing; pass the spec to run_plan for a handle. Its most valuable output is
+// a refusal.
 
 const buildPlanShape = {
   horizonYears: z.number().int().min(1).max(80).optional()

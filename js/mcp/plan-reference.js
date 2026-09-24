@@ -1,23 +1,12 @@
 /**
  * plan-reference.js — the return leg.
  *
- * ── Why this exists ──────────────────────────────────────────────────
+ * Reads a plan back from what a user pastes: a share link from the app, a
+ * bare payload, or a run handle.
  *
- * `run_plan`'s description has always said its format "is exactly what the
- * Charting Finance app's Share link encodes". The outbound leg shipped with
- * `share_link`; the inbound one did not, so a session could hand out a link and
- * then be unable to read its own link back. Someone drags a life event in the
- * browser, hits Share, pastes the URL — and until now there was nothing to pass
- * it to.
- *
- * ── Why it lives here and not in run-plan.js ─────────────────────────
- *
- * `js/mcp/run-plan.js` is a layer-boundary ENTRY POINT: its import closure is
- * the run path, and the run path is asserted to import no third-party package.
- * Reaching share-link.js from there would pull lz-string onto the run path and
- * fail that check — correctly, because decoding a share link is not something
- * computing a plan should ever need to do. So the two are joined here, one
- * level out, where the server already depends on both.
+ * It lives here, not in run-plan.js: run-plan.js is on the engine's run path,
+ * which must import no third-party package (tests/layer-boundary.mjs), and
+ * decoding a link needs lz-string.
  *
  * ── Three shapes, told apart by one character ────────────────────────
  *
@@ -28,19 +17,14 @@
  *   https://…#portfolio=N4Igdg…     a URL       contains a scheme or starts at the fragment
  *   N4Igdghgtgpi…       a payload   anything else
  *
- * The discrimination is safe because `_` is not in lz-string's URI-safe
- * alphabet at all — measured across all eight profiles and 3,000 random
- * payloads, zero occurrences — so no compressed payload can ever match the
- * handle pattern. Checked in tests/share-link.mjs, including the premise.
+ * `_` is not in lz-string's URI-safe alphabet, so no payload can look like a
+ * handle (tests/share-link.mjs checks this).
  *
  * ── Handles are session-scoped, and that is the real limit ───────────
  *
- * A handle resolves out of the server's in-memory SPECS map, so it is valid for
- * as long as the process lives and meaningless afterwards or on anyone else's
- * machine. A share URL carries the whole plan and always works. Callers should
- * prefer the handle inside a session for its size, and the URL for anything
- * that has to survive one — the error below says so rather than leaving someone
- * to guess why a handle from yesterday is gone.
+ * A handle lives in the server's memory, so it works only in the process that
+ * made it. A share URL carries the whole plan and always works. Use the handle
+ * within a session and the URL across sessions; the error below says so.
  */
 
 import { classifyPlanReference, planFromShareUrl, decodeSharePayload, specFromPayload }
@@ -50,9 +34,8 @@ import { specForHandle } from './run-plan.js';
 /**
  * Anything a user can paste, to a plan spec.
  *
- * Throws with the reason rather than returning null: every failure here has a
- * different fix, and "could not read that" would flatten a dead handle, a
- * truncated link and a typo into one unhelpful sentence.
+ * Throws with the reason rather than returning null: a dead handle, a
+ * truncated link and a typo each need a different fix.
  */
 export function planFromReference(text) {
     const { kind, value } = classifyPlanReference(text);
@@ -71,10 +54,9 @@ export function planFromReference(text) {
                     + 'The payload lives after the "#" — if the link was pasted from an email '
                     + 'or a chat it may have been truncated or line-wrapped.');
             }
-            // specFromPayload, not the payload: a link may carry provenance —
-            // the handle it was minted from — and the handle is a hash OVER the
-            // spec, so shipping that field into the engine would give the same
-            // plan a different content address every trip.
+            // specFromPayload, not the payload: the link's provenance handle
+            // must not reach the spec, or the plan's own handle (a hash of the
+            // spec) would change on every round trip.
             return specFromPayload(payload);
         }
 
