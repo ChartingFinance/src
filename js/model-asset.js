@@ -1,14 +1,12 @@
 /**
- * model-asset.js
+ * model-asset.js — one account, income or expense in a plan.
  *
- * Refactored ModelAsset. Key changes:
- *
- *  1. 25+ currency/array pairs replaced by MetricSet (~120 lines → ~10 lines of declaration)
- *  2. 15 identical addMonthlyXxx() methods replaced by a single generic `addToMetric()`
- *  3. Instrument classification uses InstrumentType instead of loose functions
- *  4. Parsing (fromJSON, fromHTML) uses static factory methods
- *  5. All dependencies are explicit ES module imports
- *  6. Financial logic (applyMonthly*) kept intact — just cleaner
+ * A ModelAsset holds its configuration (plan data: instrument, dates, rates,
+ * fund transfers) and its run state (balances, metric histories, events).
+ * Monthly behaviour is delegated to its instrument's behavior object
+ * (instrument-behavior.js); metrics are tracked by a MetricSet and written
+ * through `addToMetric()`, which rolls them up the metric DAG (metric.js).
+ * Every ledger entry goes through `recordEvent()`.
  */
 
 import { Currency }       from './utils/currency.js';
@@ -138,21 +136,12 @@ export class ModelAsset {
   }
 
   /**
-   * Bind the run's environment (Spec 9 step 4a).
+   * Bind the run's config. Two properties are derived from plan-level settings
+   * and read during a run, and an asset has no reference to its Portfolio. The
+   * Portfolio owns the one config and binds it onto its assets; assets borrow it.
    *
-   * An asset has no back-reference to its Portfolio, but two of its properties
-   * are DERIVED from plan-level configuration and read on demand during a run
-   * — so the configuration has to be reachable from the instance.
-   *
-   * Ownership stays singular: one environment per run, held by the Portfolio,
-   * bound onto assets by `Portfolio.initializeChron()`. Assets borrow it, they
-   * do not own it. Otherwise there are N copies that must agree, and one stale
-   * copy is a wrong number in one Monte Carlo iteration out of a thousand.
-   *
-   * NON-ENUMERABLE on purpose. `toJSON()` is an explicit allowlist and would
-   * not have leaked it anyway, but the config is run state, not plan data, and
-   * a spread or a bare `JSON.stringify(asset)` elsewhere must not turn it into
-   * something that gets shared in a URL or written to localStorage.
+   * Non-enumerable: the config is run state, and a spread or
+   * `JSON.stringify(asset)` must not carry it into a share link or storage.
    */
   bindEnv(config) {
     Object.defineProperty(this, 'env', {
@@ -162,16 +151,8 @@ export class ModelAsset {
   }
 
   /**
-   * The environment, or a thrown error naming what to do about it.
-   *
-   * Step 4b. There used to be a `?? global_…` fallback here, and removing it is
-   * the entire point of this step: a fallback makes a missed binding INVISIBLE.
-   * The asset would quietly answer from module state — plausible numbers from
-   * an unaccountable source, which is the failure this migration exists to
-   * remove, and which no snapshot can detect because the numbers are the same
-   * ones the globals would have given.
-   *
-   * A throw makes the same mistake a stack trace on the first read.
+   * The bound config, or an error saying how to bind one. There is no fallback
+   * to module settings: a fallback would make a missed binding invisible.
    */
   get #boundEnv() {
     if (!this.env) {
@@ -597,13 +578,10 @@ export class ModelAsset {
     // this is to track this.finishCurrency changes through the month with a check on the last day
     this.monthlyValueChange = Currency.zero();
 
-    // The month's opening balance. applyFirstDayOfMonth overwrites this with
-    // the real value every month; the initializer exists because an asset can
-    // be CLOSED before it is ever handed a month. Portfolio.applyFirstDayOfMonth
-    // closes past-finish assets and paid-off mortgages before the per-asset
-    // loop runs, and life events fire earlier still — so a mortgage entered
-    // with monthsRemaining: 0, or a "sell the house" event at the plan's start
-    // age, reached close() with this undefined and took the run down.
+    // The month's opening balance, overwritten by applyFirstDayOfMonth every
+    // month. Initialised because an asset can close before its first month (a
+    // mortgage with monthsRemaining: 0, or a sale at the plan's start age), and
+    // close() reads it.
     this.firstDayOfMonthValue = Currency.zero();
 
   }
@@ -707,16 +685,10 @@ export class ModelAsset {
 
     else if (this.onStartDate) {
 
-      // Liability/outflow instruments live as negative balances, but the UI
-      // and saved datasets enter them as positive amounts. Normalize at the
-      // moment the live balance is seeded — engines read finishCurrency later
-      // in this same tick, BEFORE the behavior's lazy ensureNegativeStart in
-      // applyMonthly can run. Relying on the lazy call made correctness an
-      // ordering accident per instrument: a positive expense made its first
-      // month's transfer flow backwards (depositing into the funding account,
-      // because day-30 transfers execute before ExpenseBehavior.applyMonthly),
-      // and a positive debt was erased outright by CapitalBehavior's paid-off
-      // clamp on day 1 (debt has no lazy normalizer at all).
+      // Liabilities and outflows are negative balances, but the UI and saved
+      // plans enter them as positive amounts. Normalise the sign here, when the
+      // balance is seeded: engines read it later in this same tick, before any
+      // behavior's applyMonthly runs.
       if (InstrumentType.isMortgage(this.instrument) ||
           InstrumentType.isDebt(this.instrument) ||
           InstrumentType.isMonthlyExpense(this.instrument)) {
@@ -766,26 +738,15 @@ export class ModelAsset {
   }
 
   /**
-   * Record something the engine did. The ONLY write path for the ledger.
+   * Record something the engine did. The only write path for the ledger.
    *
-   * Appends a structured SimEvent and, from it, the rendered CreditMemo — in
-   * that order, one for one. The pairing is an invariant
-   * (`tests/sim-event-invariant.mjs`): monthlySanityCheck scans memos
-   * incrementally from eventsCheckedIndex, so anything that let the two
-   * arrays drift apart could double-count or skip a month's reconciliation.
+   * Appends a SimEvent and the CreditMemo rendered from it, one for one
+   * (`tests/sim-event-invariant.mjs` asserts the pairing; reconciliation scans
+   * incrementally from eventsCheckedIndex).
    *
-   * `traceId` is read from the ambient scope stack in trace.js — maintained by
-   * `withTrace()` — rather than passed by callers. That was the whole point of
-   * putting it here: causality landed as a change to the scope-openers (fifteen
-   * of them, in the engines, fund-transfer.js and portfolio.js) rather than a
-   * second migration across every event write site.
-   *
-   * READING a chain back does NOT work this way. Resolution must take the scope
-   * list explicitly — `portfolio.traceScopes`, from the run that produced the
-   * event — because `calculate()` re-runs on every edit and `resetTraces()`
-   * empties the module state. Resolving from module state instead looks correct
-   * and silently finds nothing after the next run. See the note above
-   * `scopeById` in trace.js, where that was found the hard way.
+   * `traceId` comes from the ambient scope stack in trace.js (`withTrace()`),
+   * not from callers. Reading a chain back is different: pass the run's own
+   * `portfolio.traceScopes`, because the next run resets the module state.
    *
    * @param {string}   type    EventType key
    * @param {Currency} amount
@@ -808,12 +769,8 @@ export class ModelAsset {
   // ── Credit / Debit (fund transfer interface) ─────────────────────
 
   /**
-   * `event` is a descriptor — `{ type, data }` — not a note string.
-   *
-   * The note used to be built by the caller and passed through to the ledger,
-   * which made the wording of a reconciliation-critical record the property of
-   * whichever engine happened to call. Callers now say what HAPPENED and
-   * sim-event.js decides how it reads.
+   * `event` is a descriptor — `{ type, data }` — not a note string: callers say
+   * what happened, and sim-event.js decides how it reads.
    */
   credit(amount, event = null) {
     logger.log(LogCategory.TRANSFER,
@@ -850,12 +807,8 @@ export class ModelAsset {
       
       // ── WITHDRAWAL ──
       //
-      // The split is computed by planWithdrawal() and merely APPLIED here. It
-      // used to be computed inline, which meant anything that needed to predict
-      // a withdrawal's tax consequence — the expense engine's gross-up — had to
-      // model the rule a second time, and modelled it wrongly: it used the
-      // whole account's gain ratio and never knew that fresh deposits are drawn
-      // first at zero gain. One definition, two callers.
+      // The split is computed by planWithdrawal() and applied here, so the
+      // gross-up's prediction and the actual draw share one rule.
       const withdrawal = new Currency(Math.abs(amount.amount));
       const plan = this.planWithdrawal(withdrawal);
 
@@ -877,14 +830,9 @@ export class ModelAsset {
         this.monthlyValueChange.subtract(fromVested);
       }
 
-      // Clamp to a $0 floor. Negative balances are nonsensical for every
-      // account a household spends FROM — an overdrawn savings account is not
-      // a loan against itself — and they distort RMD calculations and growth.
-      // The overshoot (spillover) must be re-sourced by the caller; every
-      // backstop draw goes through FundTransfer.settleOneSided, which does it.
-      //
-      // DEBT and MORTGAGE are absent on purpose: they are the accounts that are
-      // SUPPOSED to be negative. Real estate too — you cannot overdraw a house.
+      // Clamp at $0: an account a household spends from cannot go negative.
+      // The caller re-sources the overshoot (spillover); settleOneSided does.
+      // Debt, mortgage and real estate are not clamped.
       if (this.finishCurrency.amount < 0 &&
           (InstrumentType.isTaxDeferred(this.instrument)
            || InstrumentType.isTaxFree(this.instrument)
@@ -897,14 +845,9 @@ export class ModelAsset {
     }
 
     if (event) {
-      // Record what MOVED, not what was asked for. When a withdrawal clamps at
-      // the $0 floor the account supplies less than requested, and the caller
-      // re-sources the shortfall from somewhere else — which records its own
-      // event there. Booking the full request here would count the spillover
-      // twice and claim more money left this account than it ever held:
-      // probed 2026-07-29, a $5,000 Checking account whose ledger said $8,010
-      // had gone out. `amount` is negative on a withdrawal and `spillover` a
-      // positive magnitude, so adding them yields what actually left.
+      // Record what moved, not what was asked for: the shortfall is recorded
+      // where it is re-sourced. `amount` is negative on a withdrawal and
+      // `spillover` a positive magnitude, so their sum is what left.
       this.recordEvent(event.type, amount.plus(spillover), { data: event.data });
     }
 
@@ -1004,21 +947,12 @@ export class ModelAsset {
 
   /**
    * What a withdrawal of `amount` would do to this account, without doing it.
+   * The one definition of the realization rule: `#transact` applies exactly this.
    *
-   * THE definition of the realization rule — `#transact` applies exactly this
-   * and computes nothing of its own, so a caller that needs to predict the tax
-   * consequence of a draw cannot drift away from what the draw will actually do.
-   *
-   * Two stages, and the first one is the one everybody forgets. Deposits made
-   * THIS MONTH sit in `monthlyCreditBalance` and are drawn first at zero gain —
-   * money that arrived and left without ever being invested has no gain to
-   * realize. Only the remainder is sold pro-rata out of vested holdings, and
-   * the ratio that matters there is the one AFTER the fresh deposits are gone,
-   * not the account's headline gain ratio.
-   *
-   * The difference is not academic: a backstop account that receives income and
-   * pays expenses in the same month realizes almost nothing, while its headline
-   * ratio can read 80%.
+   * Two stages. This month's deposits (`monthlyCreditBalance`) are drawn first,
+   * at zero gain. Only the remainder is sold pro-rata from the older holdings,
+   * at their gain ratio — not the account's overall ratio. An account that
+   * receives income and pays expenses in the same month realizes almost nothing.
    */
   planWithdrawal(amount) {
     const withdrawal = Math.abs(amount?.amount ?? amount ?? 0);
@@ -1067,11 +1001,8 @@ export class ModelAsset {
     this.propertyTaxCurrency.zero();
 
     this.isClosed = true;
-    // COPY, for the same reason SimEvent copies its Currency: the chronometer
-    // runs ONE DateInt for the whole plan and calls .next() on it, so holding
-    // the caller's object means every closed asset ends up reporting the month
-    // after the plan's last. Measured on midCareer: Salary, Home and Mortgage
-    // all read 2064-01 and were the same object.
+    // A copy: the chronometer advances one shared DateInt, so holding the
+    // caller's object would move the close date with the clock.
     if (dateInt) this.closedDateInt = dateInt.copy();
 
   }
