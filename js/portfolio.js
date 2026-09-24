@@ -18,35 +18,21 @@ import { RebalanceEngine } from './engines/rebalance-engine.js';
 export { FinancialPackage, FINANCIAL_FIELDS } from './financial-package.js';
 
 /**
- * How each kind of engine event participates in monthly reconciliation.
+ * How each kind of engine event takes part in monthly reconciliation.
  *
- * This was a `switch (memo.note)` over English prose, which meant the engine
- * decided whether its own books balanced by string-matching — and the switch's
- * `default:` swallowed anything unrecognised instead of rejecting it. Renaming
- * 'Asset growth' to 'Asset Growth' silently emptied the growth bucket,
- * corrupted the transfer total, and passed all 162 assertions (2026-07-29).
+ * Keyed on EventType, not on memo text: a renamed type is an error at load
+ * time rather than a wrong number at run time, and monthlySanityCheck throws on
+ * a type missing from this table.
  *
- * Keying on EventType removes the failure mode rather than guarding it: the
- * types are enum constants, so a rename is a reference error at load time
- * instead of a wrong number at runtime.
+ * The named buckets (`fica`, `incomeTax`, …) are compared with the matching
+ * FinancialPackage field. The others:
  *
- * Two buckets are not accumulators:
- *
- *   `excluded`     — CASH events that must stay out of the transfer total.
- *                    Growth and dividends move a balance without being a
- *                    transfer. These were four separate accumulators that
- *                    nothing ever read: an exclusion list wearing the costume
- *                    of an accumulator.
- *
- *   `passThrough`  — transfers, settlements and engine reports, which count
- *                    toward the transfer total ONLY when they moved cash. The
- *                    `kind` check is deliberately kept rather than hardcoding
- *                    which of these are info, so the behaviour cannot drift if
- *                    an event's kind ever changes.
- *
- * MEMO_RECONCILIATION (the old note→bucket map) is retained below purely so
- * `tests/memo-vocabulary.mjs` can keep asserting that the rendered vocabulary
- * has not drifted. Nothing in the engine reads it.
+ *   `excluded`  events that move a balance without being a transfer (growth,
+ *               dividends, interest), or that name cash already counted.
+ *   `paired`    two-sided transfers, which must net to zero.
+ *   `oneSided`  single-legged movements, not expected to net to zero. Only
+ *               cash-kind events count; info-kind events land here so the kind
+ *               check, not this table, is what excludes them.
  */
 export const EVENT_RECONCILIATION = Object.freeze({
     [EventType.FICA_WITHHOLDING]:        'fica',
@@ -57,10 +43,9 @@ export const EVENT_RECONCILIATION = Object.freeze({
     [EventType.MORTGAGE_PRINCIPAL]:      'mortgagePrincipal',
     [EventType.PROPERTY_TAX]:            'propertyTax',
 
-    // Info-only: §121 removes gain from the TAX base without moving cash and
-    // without changing the gain the household realised, so it must not land in
-    // the capitalGains bucket — that one balances against
-    // monthly.longTermCapitalGains, which stays gross on both sides.
+    // §121 removes gain from the tax base without moving cash or changing the
+    // gain realised, so it stays out of the capitalGains bucket, which balances
+    // against the gross monthly.longTermCapitalGains.
     [EventType.CAPITAL_GAIN_EXCLUDED]:   'excluded',
 
     [EventType.ASSET_GROWTH]:            'excluded',
@@ -69,33 +54,26 @@ export const EVENT_RECONCILIATION = Object.freeze({
     [EventType.DIVIDEND]:                'excluded',
     [EventType.INTEREST_INCOME]:         'excluded',
 
-    // Genuinely two-sided: execute() debits one account and credits another by
-    // the same amount, so these MUST net to zero and a residue is a real
-    // defect. Determined empirically (2026-07-29), not assumed — a probe summed
-    // every cash event type over a full run and TRANSFER was the only one that
-    // came to zero.
+    // Two-sided: execute() debits one account and credits another by the same
+    // amount, so these must net to zero, and a residue is a real defect.
     [EventType.TRANSFER]:                'paired',
 
-    // Single-legged BY DESIGN. settleOneSided debits the funding account and
+    // Single-legged by design: settleOneSided debits the funding account and
     // books nothing on the obligation it pays; a windfall credits one account
-    // with no counterparty; the annual true-up debits one account. Expecting
-    // these to net to zero is what made the transfer check fail every month on
-    // any plan with an expense — the deltas were exactly the monthly expense.
+    // with no counterparty; the annual true-up debits one account.
     [EventType.SETTLEMENT]:              'oneSided',
     [EventType.SPILLOVER]:               'oneSided',
     [EventType.GROSS_UP]:                'oneSided',
     [EventType.ONE_TIME]:                'oneSided',
     [EventType.TAX_TRUE_UP]:             'oneSided',
 
-    // Info-only, and it MUST be: the cash it describes already reconciled as
-    // part of the GROSS_UP that carried it. Counting it again would book the
-    // same dollars twice.
+    // Names part of a GROSS_UP that already reconciled; counting it again would
+    // book the same dollars twice.
     [EventType.TAX_PROVISION]:           'excluded',
     [EventType.NIIT_ASSESSED]:           'oneSided',
 
-    // Info-kind: no money moved, so they reach neither total. Routed here
-    // rather than to `excluded` so the kind guard stays the thing that
-    // excludes them, and behaviour cannot drift if a kind ever changes.
+    // Info-kind: no money moved, so the kind check keeps them out of every
+    // total.
     [EventType.PROPERTY_TAX_ESCROW]:     'oneSided',
     [EventType.MAINTENANCE]:             'oneSided',
     [EventType.INSURANCE]:               'oneSided',
@@ -104,10 +82,9 @@ export const EVENT_RECONCILIATION = Object.freeze({
 });
 
 /**
- * Legacy note→bucket map. NOT read by the engine any more — kept only so
- * tests/memo-vocabulary.mjs can go on locking the rendered vocabulary against
- * drift while notes are still matched by portfolio-issues and rule-notes.
- * Delete this when those consumers move to event types.
+ * The old note→bucket map. The engine does not read it; tests/memo-vocabulary.mjs
+ * uses it to lock the memo wording, which portfolio-issues and rule-notes still
+ * match on. Delete it when they read event types instead.
  */
 export const MEMO_RECONCILIATION = Object.freeze({
     'FICA withholding':              'fica',
@@ -128,54 +105,28 @@ export const MEMO_RECONCILIATION = Object.freeze({
 });
 
 /**
- * Which reconciliation total an event belongs to, or null for "none".
+ * Which reconciliation total an event belongs to, or null for none.
  *
- * Most of this is a table lookup, but SPILLOVER and UNFUNDED cannot be
- * classified statically: both are "the part of a movement one account could not
- * supply", and both are emitted from the two-sided `execute()` path AND the
- * one-sided `settleOneSided` path. Only the two-sided total is expected to net
- * to zero, so the shortfall has to follow its PROVENANCE.
- *
- * Getting this wrong is not academic. A probe over the four quick-start
- * profiles showed TRANSFER + SPILLOVER + UNFUNDED === 0 and it looked like a
- * law; it is not. Those profiles simply never spill from a settlement. A home
- * whose carrying costs drain its funding account breaks that naive sum by up to
- * $2,265 a month (measured 2026-07-29).
+ * Mostly a table lookup. SPILLOVER and UNFUNDED are the exception: both mean
+ * "the part of a movement one account could not supply", and both come from the
+ * two-sided execute() path and the one-sided settleOneSided path. Only the
+ * two-sided total nets to zero, so each shortfall follows the movement that
+ * produced it (`data.origin`).
  */
 function conservationBucket(event, bucket) {
-    // A shortfall completes whatever movement produced it.
+    // A shortfall completes whatever movement produced it. UNFUNDED is
+    // info-kind (no cash moved) but still counts: it is the gap between what a
+    // movement asked for and what it delivered.
     if (event.type === EventType.SPILLOVER || event.type === EventType.UNFUNDED) {
-        // ...except a spill that PAID INCOME TAX, which belongs to the income-tax
-        // total no matter which account ended up supplying it.
-        //
-        // TaxEngine.#withholdInScope books monthly.incomeTax for the spilled leg
-        // — the tax was genuinely collected, just not from the account that owed
-        // it — while the only cash event is this SPILLOVER. Filing it under
-        // oneSided left the incomeTax bucket short by exactly the spill and the
-        // package claiming tax no event backed: "2056-04 Income tax: events=0.00,
-        // package=-431.81" on the reference portfolio, once an IRA was drained
-        // hard enough for its withholding to spill.
-        //
-        // The alternatives were worse. A second INCOME_TAX_WITHHOLDING event on
-        // the fallback would be a second CASH event for one movement and break
-        // the `start + Σ cash events == finish` invariant, since `kind` is a
-        // property of the type and cannot be info for one instance. Replacing the
-        // SPILLOVER outright would discard the depleted/origin provenance. Both
-        // change the engine to satisfy a check; this changes only the check, and
-        // the event keeps saying which account ran dry.
-        //
-        // Safe because `cause: 'withholding'` is set in exactly one place, and
-        // that same block is the only writer of monthly.incomeTax for a spill —
-        // one event, one booking. oneSided is explicitly not asserted to balance,
-        // so moving a term out of it cannot break a conservation law.
+        // Except a spill that paid income tax. TaxEngine.#withholdInScope books
+        // monthly.incomeTax for the spilled leg, and this SPILLOVER is its only
+        // cash event, so it belongs to the income-tax total. `cause:
+        // 'withholding'` is set in exactly one place, by the same block that
+        // books the tax.
         if (event.type === EventType.SPILLOVER && event.data?.cause === 'withholding') {
             return 'incomeTax';
         }
         return event.data?.origin === ShortfallOrigin.PAIRED ? 'paired' : 'oneSided';
-        // UNFUNDED is info-kind — no cash moved — but it IS a conservation
-        // term: it is the acknowledged gap between what a movement asked for
-        // and what it delivered. Excluding it is what left the transfer check
-        // short by exactly the unpaid amount.
     }
 
     // Movement totals take cash only. Recognition and attribution moved no
@@ -196,19 +147,10 @@ export class Portfolio {
         this.reports = !!reports;
 
         /**
-         * The run's configuration (Spec 9). REQUIRED as of step 6.
-         *
-         * It defaulted to a capture of the current globals through steps 1-5,
-         * so that `new Portfolio(...)` kept working at 57 sites while the
-         * engine's reads moved across one file at a time. That crutch is now
-         * gone, and with it the engine's last import of the settings store:
-         * globals.js is no longer reachable from `portfolio.js`, which is what
-         * lets the layer-boundary exemption be deleted.
-         *
-         * Callers capture their own — `simConfigFromGlobals()` in the app and
-         * the tests, `simConfigFromPlanSpec()` in the MCP server. Frozen, so a
-         * second plan in this process cannot reach back and change this run's
-         * settings.
+         * The run's configuration. Required, and frozen, so another plan in the
+         * same process cannot change this run's settings. Callers build their
+         * own: `simConfigFromGlobals()` in the app and tests,
+         * `simConfigFromPlanSpec()` in the MCP server.
          */
         if (!config) {
             throw new Error(
@@ -220,29 +162,18 @@ export class Portfolio {
         this.config = config;
 
         this.generatedReports = [];
-        // Bind before the two lines below, because `lastDateInt()` reads
-        // `effectiveFinishDateInt` — a DERIVED getter — on every asset. Under
-        // step 4b an unbound read throws, so binding only in initializeChron
-        // would make every Portfolio construction fail. initializeChron rebinds
-        // afterwards, once the tax table has been attached to the config.
+        // Bind first: `lastDateInt()` below reads each asset's derived
+        // `effectiveFinishDateInt`, which throws on an unbound asset.
         this.bindEnvironment();
 
-        // ── The plan's anchor (Spec 10 step 0) ───────────────────────
+        // ── The plan's anchor ────────────────────────────────────────
         //
-        // Order matters, and the three statements below are why. `firstDateInt`
-        // reads only `startDateInt`, which is absolute — safe before anything
-        // is anchored. `lastDateInt` reads `effectiveFinishDateInt`, a DERIVED
-        // getter that needs the anchor. So the anchor is derived in between.
-        //
-        // This constructor already held the correct derivation, and used it for
-        // one thing only: the User. Meanwhile plan-dates.js derived a second
-        // birth year from `new Date()`, so the engine ran on two anchors that
-        // agreed only while a plan was read in the year it was built. Attaching
-        // it to the config makes it one anchor, and makes a frozen spec mean the
-        // same thing in 2030 as it does today.
-        //
-        // `withSimConfig` rather than mutation because the config is frozen —
-        // the same refinement the tax table gets in initializeChron.
+        // The birth year every age↔date conversion uses, taken from the plan's
+        // own first month and never from the clock, so a saved plan means the
+        // same thing whenever it is run. Order matters: `firstDateInt` reads
+        // only absolute start dates, while `lastDateInt` reads derived finish
+        // dates that need the anchor — so the anchor is set in between.
+        // `withSimConfig`, because the config is frozen.
         this.firstDateInt = firstDateInt(this.modelAssets);
 
         const birthYear = this.firstDateInt
@@ -258,12 +189,9 @@ export class Portfolio {
 
         this.activeUser = new User(this.config.startAge, birthYear);
 
-        // Construction-time age snapshot, restored by initializeChron. The
-        // chronometer ages activeUser one year per simulated year, and the GA
-        // optimizer re-runs the chronometer on this same Portfolio thousands
-        // of times — without the reset, each fitness evaluation starts where
-        // the previous one ended (run 3 of a 30-year sim starts at age 100),
-        // flipping RMD and catch-up regimes mid-optimization.
+        // The starting age, restored by initializeChron. The chronometer ages
+        // activeUser a year per simulated year, and the GA optimizer re-runs
+        // one Portfolio thousands of times; each run must start at this age.
         this.startUserAge = this.activeUser.age;
 
         // Guardrails (Guyton-Klinger) — set before chronometer_run to activate
@@ -295,10 +223,8 @@ export class Portfolio {
     }
 
     sortModelAssets(modelAssets) {
-        // INIT, not GENERAL: this runs in every Portfolio constructor, and Monte
-        // Carlo builds one per iteration. As a GENERAL line carrying no
-        // information it would put thousands of entries in the worker console
-        // the moment the logger came back to life.
+        // INIT, not GENERAL: this runs in every constructor, and Monte Carlo
+        // builds a Portfolio per iteration.
         logger.log(LogCategory.INIT, 'Portfolio.sortModelAssets');
     
         modelAssets.sort(function (a, b) {
@@ -316,8 +242,7 @@ export class Portfolio {
     copy() {
 
         let modelAssets = this.modelAssets.map(modelAsset => modelAsset.copy());
-        // Same run, same configuration — a copy that recaptured the globals
-        // would silently diverge from its source if a setting had changed.
+        // The same config as the source, never a fresh capture of the settings.
         let portfolio = new Portfolio(modelAssets, false, this.config);
 
         portfolio.monthly = this.monthly.copy();
@@ -325,9 +250,8 @@ export class Portfolio {
         portfolio.total   = this.total.copy();
         portfolio.lifeEvents = this.lifeEvents.map(e => e.copy());
 
-        // Both collections arrive unbound — see bindEnvironment(). Without
-        // this, a copy's derived getters fall back to module state under 4a
-        // and throw under 4b.
+        // Copies arrive unbound (see bindEnvironment), and their derived getters
+        // would throw.
         portfolio.bindEnvironment();
 
         // Snapshot the trace/summary arrays so consumers of the copy observe
@@ -368,20 +292,14 @@ export class Portfolio {
     }
 
     /**
-     * Hand every asset and life event this run's environment (Spec 9 step 4a).
+     * Hand every asset and life event this run's config.
      *
-     * The Portfolio owns exactly one config; assets and life events borrow it.
-     * They cannot hold their own, because both are plan data — serialised to
-     * share URLs, hydrated from localStorage, copied — while the config is run
-     * state. N independently-held copies would be N things that must agree,
-     * and a single stale one is a wrong number in one Monte Carlo iteration
-     * out of a thousand rather than an error anybody sees.
+     * The Portfolio owns the one config; assets and life events borrow it. They
+     * are plan data — serialised, stored, copied — while the config is run
+     * state, and copies that each held their own could silently disagree.
      *
-     * Called from initializeChron (every run, and the GA re-runs it thousands
-     * of times on one Portfolio, so it must be idempotent — it is) and from
-     * copy(), where both collections come back unbound: ModelAsset.copy() is
-     * an explicit allowlist that omits env, and ModelLifeEvent.copy() round-
-     * trips through JSON, which drops it.
+     * Idempotent. Called from the constructor, from initializeChron (every
+     * run), and from copy(), because both collections copy unbound.
      */
     bindEnvironment() {
         for (const modelAsset of this.modelAssets) modelAsset.bindEnv(this.config);
@@ -392,27 +310,19 @@ export class Portfolio {
 
     initializeChron() {
 
-        // Reset the run's tax table here, with the rest of the run state and
-        // before the engines are built, rather than leaving every caller to do
-        // it first. Every config arrives with its own table —
-        // simConfigFromGlobals() and simConfigFromPlanSpec() both build one.
+        // Reset the run's tax table with the rest of the run state, before the
+        // engines are built.
         if (!this.config.taxTable) {
             throw new Error('Portfolio: the run config has no tax table.');
         }
         this.config.taxTable.initializeChron();
 
-        // Now that the config is final for this run, hand it to the assets and
-        // life events. Must follow the taxTable binding above: withSimConfig
-        // returns a NEW frozen object, so binding earlier would hand out a
-        // config without the table.
+        // Rebind, so assets and life events hold the config this run uses.
         this.bindEnvironment();
 
-        // Rewind the user to their starting age. Every other piece of run
-        // state is rebuilt below; the user must rewind too or successive
-        // chronometer runs on the same Portfolio simulate different worlds
-        // (fitness evaluations stop being comparable — same chromosome,
-        // different RMD/contribution-limit regime). Mutate in place rather
-        // than replacing the object: engines and callers hold references.
+        // Rewind the user to the starting age, or successive runs of one
+        // Portfolio simulate different ages. Mutated in place: engines and
+        // callers hold references to it.
         this.activeUser.setAge(this.startUserAge);
         this.activeUser.month = 0;
 
@@ -436,8 +346,7 @@ export class Portfolio {
             this.applyPhaseTransfers(this.lifeEvents[0]);
         }
 
-        // The single construction site, which is why the config reaches all four
-        // engines with one edit rather than 28.
+        // The one place the engines are built.
         this.taxes = new TaxEngine(this.modelAssets, this.monthly, this.yearly, this.activeUser, this.config);
         this.payroll = new PayrollEngine(this.modelAssets, this.monthly, this.yearly, this.activeUser, this.taxes, this.config);
         this.expenses = new ExpenseEngine(this.modelAssets, this.monthly, this.activeUser, this.config);
@@ -445,19 +354,16 @@ export class Portfolio {
     }
 
     /**
-     * Check and apply any life events whose triggerDateInt matches
-    * the current simulation month. Called at day=1 of each month
-    * by the chronometer, BEFORE applyMonth.
-    */
+     * Apply any life events whose trigger falls in the current month. Called on
+     * day 1 by the chronometer, before applyMonth.
+     */
     applyLifeEvents(currentDateInt) {
         for (const event of this.lifeEvents) {
             if (event.applied) continue;
             const trigger = event.triggerDateInt;
             if (trigger.year === currentDateInt.year && trigger.month === currentDateInt.month) {
-                // Its own causal root. Life events fire from chronometer_run
-                // BEFORE applyMonth, so without a scope here the asset closes
-                // and close-transfers a phase triggers would be the only events
-                // in the run with no attribution at all.
+                // Its own causal root: life events fire before applyMonth
+                // opens the month's scope.
                 withTrace(TraceKind.MONTH, `Life event: ${event.displayName}`, currentDateInt,
                     () => event.apply(this, currentDateInt));
             }
@@ -492,10 +398,8 @@ export class Portfolio {
                 const event = modelAsset.events[i];
                 const bucket = EVENT_RECONCILIATION[event.type];
 
-                // An unmapped type is a programming error — someone added an
-                // event and did not say how it reconciles. The old default:
-                // branch swallowed exactly this case into transferNet, which
-                // is how a rename corrupted the books in silence.
+                // An unmapped type is a programming error: someone added an
+                // event without saying how it reconciles.
                 if (!bucket) {
                     throw new Error(
                         `monthlySanityCheck: event type "${event.type}" has no entry in ` +
@@ -508,11 +412,9 @@ export class Portfolio {
             modelAsset.eventsCheckedIndex = modelAsset.events.length;
         }
 
-        // Label the month whose events are being reconciled, not the date this
-        // pass runs on. chronometer_run advances currentDateInt BEFORE calling
-        // monthlyChron, so the raw value is one month ahead of the events in the
-        // buckets — a finding reported as "2056-04" is about March's events.
-        // Cost a full forensic pass on the wrong month before it was noticed.
+        // Label findings with the month whose events are reconciled.
+        // chronometer_run advances currentDateInt before monthlyChron, so the
+        // raw value is a month ahead of the events.
         let settled = settledOverride;
         if (!settled) {
             settled = DateInt.from(currentDateInt.year, currentDateInt.month);
@@ -529,71 +431,48 @@ export class Portfolio {
         check('FICA', buckets.fica, this.monthly.fica().amount);
         check('Income tax', buckets.incomeTax, this.monthly.incomeTax.amount);
         check('Mortgage interest', buckets.mortgageInterest, this.monthly.mortgageInterest.amount);
-        // NEGATED, deliberately. The event tracks the mortgage BALANCE moving
-        // toward zero — positive, because a mortgage is held as a negative
-        // balance — while FinancialPackage.mortgagePrincipal tracks household
-        // CASH GOING OUT, which is negative. Both are right about different
-        // things, and comparing them raw reported a false mismatch every month
-        // a mortgage was active (+271.20 against -271.20). Negating here fixes
-        // the comparison without changing either number.
+        // Negated: the event tracks the mortgage balance moving toward zero
+        // (positive), while the package tracks household cash going out
+        // (negative). Both are right about different things.
         check('Mortgage principal', buckets.mortgagePrincipal, -this.monthly.mortgagePrincipal.amount);
         check('Property taxes', buckets.propertyTax, this.monthly.propertyTaxes.amount);
         check('Capital gains', buckets.capitalGains, this.monthly.longTermCapitalGains.amount);
         check('Capital gains tax', buckets.capitalGainsTax, this.monthly.longTermCapitalGainsTax.amount);
 
-        // Two-sided conservation, in full:
+        // Two-sided conservation:
         //
         //     TRANSFER + SPILLOVER(paired) + UNFUNDED(paired) === 0
         //
-        // execute() debits one account and credits another by the same amount,
-        // so the two legs must cancel. They legitimately differ when the debited
-        // account cannot supply what was asked and clamps at $0 — and the
-        // difference is then carried by exactly one of two terms: the shortfall
-        // was re-sourced from another account (SPILLOVER) or it could not be
-        // sourced at all (UNFUNDED). Both are folded in above by provenance, so
-        // a residue here means money genuinely appeared or vanished.
+        // A transfer's two legs cancel unless the debited account clamps at $0;
+        // then the shortfall is either re-sourced (SPILLOVER) or not sourced at
+        // all (UNFUNDED). A residue means money appeared or vanished.
+        // One-sided settlements are not expected to balance and are excluded.
         //
-        // One-sided settlements are excluded and are not expected to balance:
-        // settleOneSided books the debit on the funding account and nothing on
-        // the obligation it pays. Asserting they net to zero made this check
-        // fail every month on any plan with an expense, by exactly the expense
-        // amount.
+        // This finding is labelled with currentDateInt, not `settled` like the
+        // checks above, so it reads one month late.
         if (Math.abs(buckets.paired) > tolerance) {
             logger.log(LogCategory.SANITY, `${currentDateInt} Transfer conservation broken: ${buckets.paired.toFixed(2)}`);
         }
     }
 
     /**
-     * Reconcile whatever the loop left behind. Called once, after the last
+     * Reconcile the events the loop left behind. Called once, after the last
      * iteration.
      *
-     * monthlySanityCheck runs from monthlyChron, but chronometer_run calls
-     * applyYear AFTER monthlyChron in the same iteration, so the annual tax
-     * true-up's events are always emitted past the scan index. Mid-run that is
-     * harmless and in fact correct: monthlyChron zeroes this.monthly before
-     * applyYear, so the true-up's package bookings land in the SAME month's
-     * package as the next pass's events, and the two sides stay aligned.
+     * chronometer_run calls applyYear after monthlyChron, so the annual
+     * true-up's events always fall after the scan. Mid-run the next month's pass
+     * picks them up, which is correct: monthlyChron zeroes this.monthly before
+     * applyYear, so the true-up's package bookings land in that same next month.
+     * The final year has no next pass, so its true-up events need this one —
+     * including the check that throws on an undeclared event type.
      *
-     * The final year has no next pass. Its true-up events were never classified,
-     * never counted, and — worse — never put through the undeclared-EventType
-     * throw, so a new event type emitted only there could ship unmapped.
-     *
-     * Measured 2026-08-05: a retired plan ending in December leaves the annual
-     * true-up's taxTrueUp and capitalGainRecognized events unscanned. Not an
-     * allocation bug — it reproduces with global_allocate_household_tax off, on
-     * any plan whose true-up settles a non-zero residual; turning allocation on
-     * merely gave an existing fixture a residual to settle.
-     *
-     * Deliberately NOT a scan after every applyYear. That variant consumes the
-     * true-up's events a month before its package bookings are compared, and the
-     * following month then sees a package the events no longer explain: 4 false
-     * "Capital gains" findings on a retired plan drawing its tax bill from a
-     * brokerage, each exactly the size of that year's realized gain.
+     * Not a scan after every applyYear: that consumes the true-up's events a
+     * month before its package bookings are compared, and produces false
+     * findings the following month.
      */
     finalSanityCheck(currentDateInt) {
-        // The trailing events happened ON currentDateInt, not the month before
-        // it, so the usual -1 label would file them under the month the previous
-        // pass already reported — two different findings on one label.
+        // The trailing events happened on currentDateInt itself, so they are
+        // labelled with it rather than the month before.
         this.monthlySanityCheck(currentDateInt,
             DateInt.from(currentDateInt.year, currentDateInt.month));
     }
@@ -603,10 +482,6 @@ export class Portfolio {
         this.reportMonthly(currentDateInt);
 
         this.monthlySanityCheck(currentDateInt);
-
-        //this.monthlyPropertyTaxes.push(this.monthly.propertyTaxes.toCurrency());
-        //this.monthlyIncomeTaxes.push(this.monthly.incomeTax.toCurrency());
-        //this.monthlyCapitalGainsTaxes.push(this.monthly.longTermCapitalGainsTax.toCurrency());
 
         this.computePerAssetCashFlow();
 
@@ -756,10 +631,9 @@ export class Portfolio {
     }
     
     applyMonth(currentDateInt) {
-        // Root of every causal chain: the month. applyMonth is called once per
-        // day-tick (1, 15, 30), so a month opens three roots with the same
-        // label — an implementation detail that does not surface, since a chain
-        // renders as "November 2051 > Pay Living Expenses > ...".
+        // Root of every causal chain: the month. applyMonth runs on days 1, 15
+        // and 30, so a month opens three roots with the same label; a chain
+        // still reads "November 2051 > Pay Living Expenses > ...".
         return withTrace(TraceKind.MONTH, monthLabel(currentDateInt), currentDateInt,
             () => this.#applyMonthInScope(currentDateInt));
     }
@@ -910,18 +784,16 @@ export class Portfolio {
             }
         }
 
-        // recognize asset gains
-        // Doing this after applying expenses is pessimistic
-        // Maybe an optimistic option to do this prior to expenses?
+        // Recognise asset growth after expenses are paid, so a month's
+        // withdrawals do not earn that month's return.
         for (let modelAsset of this.modelAssets) {
             if (!modelAsset.isClosed) {
                 this.expenses.applyAssetGrowth(modelAsset, currentDateInt);
             }
         }
 
-        // ensure RMDs are handled — after growth, because carrying-cost
-        // transfers inside applyAssetGrowth are distributions too and must
-        // be credited against the month's RMD before any top-up fires
+        // RMDs after growth: carrying-cost transfers inside applyAssetGrowth are
+        // distributions too, and count toward the month's RMD before any top-up.
         for (let modelAsset of this.modelAssets) {
             if (!modelAsset.isClosed) {
                 this.expenses.ensureRMDs(modelAsset);
@@ -934,9 +806,8 @@ export class Portfolio {
             }
         }
 
-        // Withhold at the source BEFORE the true-up: the true-up collects
-        // liability minus what was already withheld, so a sweep running after
-        // it would collect the same tax twice.
+        // Withhold at the source before the true-up, which collects liability
+        // minus what was already withheld.
         this.taxes.withholdOnDeferredDistributions();
 
         this.taxes.applyMonthlyTaxTrueUp();
@@ -1045,10 +916,7 @@ export class Portfolio {
     }
 
     applyYear(currentDateInt) {
-        // The annual pass runs OUTSIDE applyMonth, so without its own root the
-        // events it emits — annual income growth and the tax true-up — are the
-        // only ones in a run the engine cannot explain. Found by asserting that
-        // every event is attributable: 73 orphans on the Early Career profile.
+        // Its own causal root: the annual pass runs outside applyMonth.
         return withTrace(TraceKind.YEAR, `${currentDateInt.year} annual pass`, currentDateInt,
             () => this.#applyYearInScope(currentDateInt));
     }
@@ -1063,29 +931,20 @@ export class Portfolio {
             }
         }
 
-        // Annual tax true-up: reconcile exact liability vs. withheld amounts.
-        // This pass runs on January 1, so the year being settled is the previous
-        // one; its month count is what spec 4a's allocation needs to size the
-        // history window it reads the income basis from.
+        // Annual tax true-up. This pass runs on January 1, so it settles the
+        // previous year; tax allocation needs that year's month count to size
+        // its history window.
         const settledYear = currentDateInt.year - 1;
         withTrace(TraceKind.TAX_TRUE_UP, `${currentDateInt.year} tax true-up`, currentDateInt,
             () => this.taxes.applyAnnualTaxTrueUp(this.monthsInPlanYear(settledYear)));
 
-        // NIIT is settled AFTER the true-up and as a separate pass, not folded
-        // into it. Two reasons, both load-bearing:
-        //
-        //  - applyAnnualTaxTrueUp derives what was already withheld from
-        //    this.yearly.incomeTax / estimatedTaxes / longTermCapitalGainsTax.
-        //    A NIIT charge booked before it runs would look like withholding
-        //    against income tax and shrink the April bill by its own amount.
-        //  - That method has six early returns. Anything appended inside it is
-        //    skipped on most paths, which is the quietest possible way for a
-        //    tax to go uncollected.
-        // NOT wrapped in withTrace here. The scope is opened INSIDE, only once
-        // the tax is known to be due: opening one unconditionally allocates a
-        // trace id every year for every household, which renumbered the causal
-        // chains of all 27 fixtures — including the ones that owe nothing. A
-        // scope should describe work that happened.
+        // NIIT is a separate pass after the true-up, not part of it:
+        //  - the true-up reads what was withheld from this.yearly, so a NIIT
+        //    charge booked first would shrink the April bill by its own amount;
+        //  - the true-up has six early returns, which would skip NIIT on most
+        //    paths.
+        // Not wrapped in withTrace here: applyAnnualNIIT opens its scope only
+        // when tax is due, so households that owe none get no empty scope.
         this.taxes.applyAnnualNIIT(this.monthsInPlanYear(settledYear));
 
     }
@@ -1095,8 +954,7 @@ export class Portfolio {
     }
 
     buildChartingDisplayData() {
-        // asset and cash flow data will be handled by charting
-        // portfolio will coelsece cashflow data
+        // Builds each asset's display histories for the charts.
 
         let monthsSpan = MonthsSpan.build(this.firstDateInt, this.lastDateInt);
         for (let modelAsset of this.modelAssets) {
@@ -1108,17 +966,13 @@ export class Portfolio {
     }
 
     /**
-     * The monthly dataset. One FinancialPackage per month for the whole run,
-     * kept alongside the yearly ones in `generatedReports` — the finer of the
-     * two granularities a reader can ask for, and the one that can answer what
-     * a year with an outlier in it actually did.
+     * The monthly dataset: one FinancialPackage per month, kept in
+     * `generatedReports` beside the yearly ones, for when a year with an outlier
+     * needs explaining.
      *
-     * The logging is guarded separately from the recording. `report()` builds
-     * about thirty-five formatted strings per call, and it builds them as
-     * ARGUMENTS — so `logger.log` discarding them for a disabled category costs
-     * the whole formatting pass anyway. MONTHLY and YEARLY are both off by
-     * default, and the MCP server now runs with `reports` on over 400-month
-     * plans, so this is ~15,000 strings per run formatted for nobody.
+     * The logging is guarded separately: report() formats about thirty-five
+     * strings per call as arguments, which costs the same whether or not the
+     * logger then discards them.
      */
     reportMonthly(currentDateInt) {
 
@@ -1130,7 +984,6 @@ export class Portfolio {
                 logger.log(LogCategory.MONTHLY, ' -------   End Monthly (' + currentDateInt.toString() + ' ) Report  -------');
             }
 
-            // NEW: Push directly to internal array
             this.generatedReports.push({ 
                 type: 'monthly', 
                 dateLabel: currentDateInt.toString(), 
@@ -1152,16 +1005,11 @@ export class Portfolio {
                 logger.log(LogCategory.YEARLY, ' -------   End Yearly  (' + currentDateInt.toString() + ' ) Report  -------');
             }
 
-            // `dateLabel` is when the report FIRED, `coversYear` is what it is
-            // about, and they are never the same year. chronometer.js calls
-            // yearlyChron only on New Year's Day, after applyYear has settled
-            // the year that just ended — so the package pushed at 2027-01 holds
-            // 2026. Reported under its firing date in a column headed "Year",
-            // every row is one year ahead of its own contents, which sends
-            // anyone drilling into an unusual year into the wrong twelve months.
-            //
-            // dateLabel is left alone: the app's report-view shows these as
-            // dated reports, where the firing date is the right label.
+            // `dateLabel` is when the report fired and `coversYear` is the year
+            // it describes; they always differ. yearlyChron runs on New Year's
+            // Day, so the package pushed at 2027-01 holds 2026. A "Year" column
+            // must use coversYear; report-view shows dated reports and uses
+            // dateLabel.
             this.generatedReports.push({ 
                 type: 'yearly', 
                 dateLabel: currentDateInt.toString(), 
@@ -1205,7 +1053,6 @@ export class Portfolio {
 }
 
 // ── Asset Queries ─────────────────────────────────────────────────────
-// (merged from asset-queries.js)
 
 
 export function firstDateInt(assets) {
