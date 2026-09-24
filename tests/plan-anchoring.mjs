@@ -5,34 +5,22 @@
  *
  * ── Why this test exists ─────────────────────────────────────────────
  *
- * Spec 10 step 0. Until this change the engine derived a plan's birth year
- * from `new Date().getFullYear()` inside two derived getters —
- * `ModelAsset.effectiveFinishDateInt` and `ModelLifeEvent.triggerDateInt`. A
- * plan's finish date and every life-event trigger therefore depended on when
- * they were READ, not on anything the plan recorded. One frozen midCareer spec,
- * replayed:
- *
- *     2026-08-31 → last month 2071-12, 12,290 events, $4,661,966
- *     2027-01-01 → last month 2072-12, 12,517 events, $4,914,376   +5.4%
- *     2028-06-15 → last month 2073-12, 12,729 events, $5,100,596   +9.4%
- *
- * The plan grew twelve months every January and nobody had touched it.
+ * A plan's finish date and life-event triggers are derived from its birth
+ * year. If that birth year comes from the clock (`new Date()`) rather than from
+ * the plan, a frozen plan grows twelve months, and about 5% in ending value,
+ * every January.
  *
  * ── Why counts are not the assertion ─────────────────────────────────
  *
- * This project keeps rediscovering that a green check on an aggregate proves
- * very little: a one-letter memo rename once passed 162 assertions. Two runs can
- * agree on event COUNT and on ending balance while every event inside sits in a
- * different month — which is exactly what a date bug produces. So the
- * comparison is a digest of the full event stream, in order: asset, sequence,
- * type, month, metric, amount. Spec 10 §12 asks for event streams; this is
- * that, and it is why the test can catch a shift that conserves totals.
+ * Two runs can agree on event count and ending balance while every event sits
+ * in a different month, which is what a date bug produces. So the comparison
+ * is a digest of the full event stream, in order: asset, sequence, type, month,
+ * metric, amount.
  *
  * ── Why the clock is faked rather than the spec re-dated ─────────────
  *
- * Re-dating the spec would test that different plans differ, which is not the
- * claim. The claim is that ONE plan is stable, so the plan is held fixed and
- * the world moves. Each clock gets a fresh module graph (cache-busted import),
+ * Re-dating the spec would test that different plans differ. The claim is
+ * that one plan is stable, so the plan is held fixed and the clock moves. Each clock gets a fresh module graph (cache-busted import),
  * because a module that captured a year at load time would otherwise hide the
  * very coupling under test.
  *

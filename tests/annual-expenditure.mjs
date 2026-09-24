@@ -220,9 +220,7 @@ const main = async () => {
         const from = janIndex(pre, 2055);
         const taxesPaid = -sumMetric(pre, Metric.TAXES, from, from + 11);
 
-        // A floor, not a pin: it keeps the 2% comparison below meaningful. It was
-        // $40k until measured growth rates (2026-09-23) took this year's bill
-        // from $42,171 to $37,184.
+        // A floor, not a pin: it keeps the 2% comparison below meaningful.
         assert.ok(taxesPaid > 30000, `fixture no longer pays material tax (${taxesPaid.toFixed(0)})`);
         near(got.tax, taxesPaid, taxesPaid * 0.02,
             'tax drawn from accounts vs tax paid, in a year with no paycheck');
@@ -401,11 +399,10 @@ const main = async () => {
     const exp2027   = expenditureOverWindow(brokerageOnly, premJan, premJan + 11);
 
     test('the witness is not vacuous — the premium is most of the tax withdrawn', () => {
-        // Guards the fixture itself. RELATIVE, not an absolute floor: the first
-        // version asked for more than $1,000 and kept passing at $1,746 when
-        // IRC §86 collapsed the premium seventeen-fold (2026-09-23) and the
-        // split it guards went from 65% low to 5%. A witness that barely
-        // differs from the truth proves nothing about the difference.
+        // Guards the fixture itself. Relative, not an absolute floor: an
+        // absolute floor kept passing after the premium shrank to a sliver of
+        // the tax, and a witness that barely differs from the truth proves
+        // nothing about the difference.
         const share = prem2027 / (exp2027.tax + prem2027);
         assert.ok(share > 0.5,
             `the premium is only ${(100 * share).toFixed(0)}% of the tax withdrawn in 2027 `

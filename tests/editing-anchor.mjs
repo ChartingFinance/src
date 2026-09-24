@@ -1,39 +1,26 @@
 /**
  * editing-anchor.mjs
  *
- * The editor and the run resolve a plan's ages to the SAME months.
+ * The editor and the run resolve a plan's ages to the same months.
  *
- * ── Why this test exists ─────────────────────────────────────────────
+ * The run anchors derived dates to `config.birthYear`, taken from the plan's
+ * first month, and `birthYearFor()` throws when it is missing. The editor binds
+ * assets and life events to its own config, so it needs a birth year too.
  *
- * Spec 10 step 0 anchored derived dates to `config.birthYear`, attached by
- * `Portfolio` from the plan's first month, and made `birthYearFor()` throw
- * rather than fall back. It fixed the run and it broke the editor: the app
- * binds assets and life events to `simConfigFromGlobals()`, a builder with no
- * plan to read a first month from, so `birthYear` stayed null and the first
- * read of `triggerDateInt` took the app down. Loading any Quick Start profile
- * on charting.finance threw before the charts drew.
+ * "It does not throw" is not enough. Anchoring the editor to the clock
+ * (`new Date().getFullYear() - startAge`) avoids the throw but makes the editor
+ * and the run agree only while a plan is read in the year it was built.
+ * `charting_buildPhaseMarkers` plots the editor's `ev.triggerDateInt` against
+ * the run's `portfolio.firstDateInt`, so a disagreement draws the "Retire"
+ * marker on a month the engine did not change regime in.
  *
- * ── Why "it does not throw" is not the assertion ─────────────────────
+ * So the assertions are that the two anchors are equal, on a plan whose first
+ * month is not this year, under a clock set well away from both.
  *
- * Putting `new Date().getFullYear() - startAge` back in the UI layer stops the
- * crash and passes any test that only checks for an exception. It also
- * restores, exactly, the divergence step 0 removed — the editor anchored to
- * the clock and the run anchored to the plan, agreeing only while a plan is
- * read in the year it was built.
+ * ── The display surfaces ─────────────────────────────────────────────
  *
- * That divergence is not cosmetic. `charting_buildPhaseMarkers` plots the
- * EDITOR's `ev.triggerDateInt` against the RUN's `portfolio.firstDateInt`, so
- * a one-year disagreement draws the "Retire" marker on a month the engine did
- * not change regime in. Nothing errors and the picture is wrong.
- *
- * So the assertions are: the two anchors are EQUAL, on a plan whose first
- * month is not this year, under a clock set well away from both. A revert to
- * the wall clock passes the crash test and fails these.
- *
- * -- The display surfaces (added after the editor fix) ----------------
- *
- * Three more sites derived their own birth year from `new Date()` and were
- * missed the first time, because none of them binds anything - they only draw:
+ * Three sites that only draw (and bind nothing) also need the plan's birth
+ * year:
  *
  *   - `<finplan-timeline>`'s `_birthYear`, behind the axis year labels, the
  *     phase band edges, the mortgage payoff marker and the scrub cursor;
@@ -47,11 +34,10 @@
  * verified in the browser instead; it is three lines reading the same
  * `displayConfig()` the second one is called with.
  *
- * Note the divergence is NOT capped at one year. `_timelineStartAge` takes a
- * min against `portfolio.firstDateInt.year - birthYear`, so a clock anchor
- * shifts the axis by however old the saved plan is: the fixture below reads
- * 2020-2067 on the plan's anchor and 2021-2072 on a clock set to 2026 (and
- * 2021-2077 on one set to 2031 - measured, by reverting the fix).
+ * The divergence is not capped at one year. `_timelineStartAge` takes a min
+ * against `portfolio.firstDateInt.year - birthYear`, so a clock anchor shifts
+ * the axis by however old the saved plan is: the fixture below reads 2020-2067
+ * on the plan's anchor, but 2021-2077 on a clock anchor set to 2031.
  *
  * Usage:  node tests/editing-anchor.mjs   (from src/)
  */

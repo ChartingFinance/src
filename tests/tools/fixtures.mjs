@@ -4,24 +4,22 @@
  * A shared, deliberately-chosen set of portfolios for tools/snapshot.mjs. Two
  * kinds, and both are needed:
  *
- *   REAL      the four quick-start profiles the product actually ships. Phased,
+ *   REAL      the eight quick-start profiles the product ships. Phased,
  *             with life events, salaries, mortgages and retirement transitions.
  *             These are the shapes users see; a change that moves them is a
  *             change that matters.
  *
  *   ADVERSARIAL  small synthetic plans built to reach a specific branch that the
- *             real profiles never touch. Every one of these exists because a bug
- *             hid in that branch, or because a test was found to be vacuous
- *             without it. Each carries a `reaches:` note saying what it is for —
- *             if you are tempted to delete or "simplify" one, that note is the
- *             reason not to.
+ *             real profiles never touch, because a bug hid there or a test was
+ *             vacuous without it. Each carries a `reaches:` note saying what it
+ *             is for; read it before deleting or simplifying one.
  *
  * Adding a fixture is cheap and almost always right. The snapshot's coverage
  * section reports which EventTypes no fixture emits, so gaps are visible rather
  * than assumed.
  *
- * IMPORTANT: fixtures must be pure data plus a builder. No wall-clock reads, no
- * randomness — see the clock pin in snapshot.mjs.
+ * Fixtures must be pure data plus a builder: no wall-clock reads and no
+ * randomness (see the clock pin in snapshot.mjs).
  */
 
 import { ModelAsset } from '../../js/model-asset.js';
@@ -51,14 +49,12 @@ const JUN29 = { year: 2029, month: 6 };  // closes BEFORE the plan end, so it cl
 /**
  * Instrument shorthands.
  *
- * These exist to delete boilerplate, NOT to make fixtures cheap to generate.
- * Every adversarial fixture in this file earns its place by a tuned specific —
- * a balance that must be large enough for a true-up to be collectible, a
- * taxable income parked next to a bracket edge, a finish date that precedes the
- * plan end. A helper cannot know any of that, and a corpus of quickly-generated
- * plans would reach code without discriminating it, which is this project's
- * signature failure. So: the skeleton is shared, the specifics stay written out
- * where a reader can see and question them.
+ * These remove boilerplate; they are not a way to generate fixtures cheaply.
+ * Each adversarial fixture depends on tuned specifics (a balance large enough
+ * for a true-up to be collectible, income parked next to a bracket edge, a
+ * finish date before the plan end) that a helper cannot know, and generated
+ * plans tend to reach code without testing it. The skeleton is shared; the
+ * specifics stay written out where a reader can question them.
  *
  * Each builds on `asset(DEC)`, so it inherits the START date and the zero
  * default return rate, and the trailing `x` spread overrides anything —
@@ -116,7 +112,7 @@ const by = (finish, a) => (Array.isArray(a)
  * @property {() => {assets, lifeEvents, guardrails}} build
  */
 
-/** The four shipped profiles, snapshotted under a pinned clock. */
+/** The shipped quick-start profiles, snapshotted under a pinned clock. */
 const realFixtures = quickStartProfiles.map((profile) => ({
   name: `quickstart-${profile.key}`,
   kind: 'real',
@@ -358,12 +354,10 @@ const adversarialFixtures = [
       ].map(ModelAsset.fromJSON),
     }),
   },
-  // ── Married Filing Jointly (spec 5) ────────────────────────────────
-  // Every fixture below declares `filingAs: 'MFJ'`. They exist because the
-  // Single-filer corpus cannot reach the branches MFJ changes — measured, not
-  // assumed: under `--set global_filingAs=MFJ` the entire 13-fixture corpus
-  // showed byte-identical socialSecurityTax and LOST capitalGainsTax from
-  // coverage altogether.
+  // ── Married Filing Jointly ─────────────────────────────────────────
+  // Every fixture below declares `filingAs: 'MFJ'`. The Single-filer fixtures
+  // cannot reach the branches MFJ changes: run under MFJ, they show identical
+  // socialSecurityTax and no capital-gains tax at all.
   {
     name: 'mfj-two-earners',
     kind: 'adversarial',
@@ -707,15 +701,11 @@ const adversarialFixtures = [
       assets: [
         // 20% basis: the embedded gain is the whole point.
         equity('Brokerage', 3000000, 600000, { annualReturnRate: { rate: 0.05 } }),
-        // A PENSION, not Social Security. Until 2026-09-23 this was
-        // benefit('Pension', …), which builds a `retirementIncome` asset — the
-        // SOCIAL SECURITY instrument, whatever its display name says. That
-        // mattered the moment Social Security got IRC §86: the gross-up sizes
-        // its rate from a part-built month, before the draw's own gain is
-        // booked, and §86 then found a 0% LTCG rate. The premium this fixture
-        // exists to witness fell from $115,038 to $7,682 and the split it
-        // guards went from 65% low to 5%. A pension is fully taxable ordinary
-        // income, which is what the shape below always meant.
+        // A pension, not Social Security: benefit() builds the Social
+        // Security instrument whatever its display name, and IRC §86 would
+        // then tax little of it, leaving the gross-up at a 0% LTCG rate and
+        // shrinking the premium this fixture exists to witness. A pension is
+        // fully taxable ordinary income.
         asset(DEC)({ instrument: 'pension', displayName: 'Pension',
           startCurrency: { amount: 8000 }, startBasisCurrency: { amount: 0 } }),
         expense('Living', 20000),

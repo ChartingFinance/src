@@ -29,24 +29,13 @@
  * recording when no account can receive the distribution. Explaining those
  * would mean inventing a chain. There is a test that they refuse to.
  *
- * ── The fixture is built on a PINNED clock ─────────────────────────────────
+ * ── The fixture is built on a pinned clock ─────────────────────────
  *
- * Spec 10 step 0 took the wall clock out of the ENGINE, not out of the plan
- * BUILDER: `quick-start.js` still starts every asset in the month `new Date()`
- * happens to name, so `planFromProfile` returns a DIFFERENT plan each month and
- * the assertions below — which name one specific occurrence — held only in some
- * of them. Measured on unchanged code, first `plan-exhaustion` occurrence:
- *
- *     built 2026-07 → Aug 2029, Living Expenses → Brokerage, -$1,010
- *     built 2026-08 → Aug 2029, Living Expenses → Brokerage,   -$443
- *     built 2026-09 → Aug 2029, Income tax withholding,          -$4
- *     built 2026-10 → Sep 2029, Living Expenses → Brokerage, -$1,414
- *
- * In a September-anchored plan a $4 withholding shortfall is the earliest
- * unfunded event of the exhaustion month, so it sorts first and displaces the
- * transfer. Nothing was wrong with it — `August 2029 > Settle from Brokerage` is
- * a true causal claim about a true event — the suite was simply asserting
- * against whichever occurrence this month's calendar put in front.
+ * The engine does not read the clock, but the plan builder does:
+ * `quick-start.js` starts every asset in the current month, so
+ * `planFromProfile` returns a different plan each month. The assertions below
+ * name one specific occurrence (for example, which unfunded event comes first
+ * in the exhaustion month), and that changes with the build month.
  *
  * So every spec here is built at one fixed instant, the same one
  * `tests/plan-anchoring.mjs` freezes, and RUN under the real clock. The pin is
@@ -188,14 +177,11 @@ await check('an unknown handle names the known ones', async () => {
 });
 
 await check('handles no longer expire — the opposite of what this used to assert', async () => {
-  // This test used to require that the oldest of six runs had been EVICTED and
-  // its handle was dead. Spec 9 step 7 inverted that: the server keeps the
-  // plan spec rather than the finished Portfolio, so a handle goes cold rather
-  // than dying and a miss costs a ~36ms re-run.
-  //
-  // Kept here, inverted, rather than deleted — a reader who remembers the old
-  // behaviour should find the contradiction in the place they look for it.
-  // tests/mcp-stateless.mjs carries the full argument.
+  // The server keeps the plan spec rather than the finished Portfolio, so an
+  // old handle goes cold rather than dying, and a miss costs a ~36ms re-run.
+  // This test once asserted the opposite (eviction); it is kept, inverted,
+  // where a reader who remembers that would look. tests/mcp-stateless.mjs has
+  // the full argument.
   clearRuns();
   const handles = [];
   for (const key of ['midCareer', 'dualIncome', 'earlyCareer', 'retired', 'youngCouple', 'preRetirement']) {

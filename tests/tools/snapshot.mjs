@@ -34,9 +34,9 @@
  *     6. node tests/tools/snapshot.mjs --bless    → the diff lands in the PR
  *
  * Because the baselines are COMMITTED, step 6 puts the behavioural change in the
- * pull request as reviewable text. A reviewer no longer has to take "no
- * behaviour change" on trust; an empty baseline diff is the proof, and a
- * surprising one is the conversation.
+ * pull request as reviewable text. A reviewer need not take "no behaviour
+ * change" on trust: an empty baseline diff is the proof, and a surprising one
+ * is the conversation.
  *
  * ── Commands ─────────────────────────────────────────────────────────
  *
@@ -331,21 +331,12 @@ const coerce = (raw) => {
 /**
  * Only globals that actually change a simulation are exposed to --set.
  *
- * Each entry is {apply, read}, and `read` is not decoration — it verifies the
- * write landed. Until 2026-09-04 several setters wrote localStorage without
- * assigning the module variable (globals.js now assigns in every setter), so a
- * `--set` wired to the setter alone changed no simulated number — the tool
- * reported "no drift" and the reader concluded the flag did nothing.
- *
- * That was true here for four of the then-eight knobs below (filingAs,
- * inflationRate, taxYear, propertyTaxRate) until 2026-08-06. taxYear and
- * propertyTaxRate have since been deleted as dead; the discipline stands. `--set global_inflationRate=0.02`
- * on a 46-year plan reported "No simulated number moved", against a probe-
- * measured ~$6M swing.
- *
- * So every entry now declares how to read the value back, and applyConfig
- * verifies the write landed. A future knob added without its getter fails loudly
- * on first use instead of quietly reporting that nothing happened.
+ * Each entry is {apply, read}, and applyConfig uses `read` to verify the write
+ * landed. A setter that stored the value without assigning the module variable
+ * would make `--set` change nothing, and the tool would report "No simulated
+ * number moved" as if the knob had no effect. (That has happened: an inflation
+ * change worth ~$6M on a 46-year plan reported no drift.) A knob added without
+ * its getter fails on first use instead.
  */
 const SETTERS = {
   global_allocate_household_tax: {

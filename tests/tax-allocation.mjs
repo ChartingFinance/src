@@ -1,5 +1,5 @@
 /**
- * tax-allocation.mjs — spec 4a
+ * tax-allocation.mjs
  *
  * Bills the residual household tax to the accounts that generated the income
  * instead of to whichever account resolveFunding returns first.
@@ -181,8 +181,8 @@ console.log('spec 4a — proportional allocation of the residual household tax')
   console.log(`  ok  fires — ${fired.join(', ')}, reference ${allocatedLegs(refOn).length}`);
 }
 
-// ── 3. THE ANNUAL SITE READS HISTORY ──────────────────────────────────
-// Guards the silent-degradation trap. The annual true-up settles on January 1
+// ── 3. The annual site reads history ──────────────────────────────────
+// The annual true-up settles on January 1
 // of the following year, so every month of the settled year is already
 // snapshotted and zeroed; reading live accumulators yields nothing eligible.
 {
@@ -202,15 +202,13 @@ console.log('spec 4a — proportional allocation of the residual household tax')
 // Protected TWICE: the eligibility gate excludes tax-free instruments, and
 // TAX_FREE_DISTRIBUTION is outside the basis. Neither mutation alone can be
 // turned into a failure — widening the gate leaves the basis at zero, adding
-// tax-free to the basis leaves the gate closed — so this asserts the OUTCOME
-// and both guards were mutation-checked together on 2026-08-05.
+// tax-free to the basis leaves the gate closed — so this asserts the outcome,
+// and both guards were mutation-checked together.
 //
-// FIXTURE CHOICE IS LOAD-BEARING. The first version of this test ran Early
-// Career and the reference portfolio, which are the only two scenarios that
-// never distribute their Roth at all. With a $0 distribution the basis is zero
-// for trivial reasons, so removing BOTH guards still allocated nothing and the
-// test stayed green. Mid Career, Pre-Retirement and Retired draw $418k, $395k
-// and $359k respectively, and all three run past the age threshold.
+// The fixtures must distribute their Roth. Early Career and the reference
+// portfolio never do, so their basis is zero for trivial reasons and removing
+// both guards still allocates nothing. Mid Career, Pre-Retirement and Retired
+// all draw on the Roth and run past the age threshold; the loop checks it.
 {
   const drawsRoth = ['Mid Career', 'Pre-Retirement', 'Retired'];
   let checkedDistribution = 0;
@@ -237,11 +235,9 @@ console.log('spec 4a — proportional allocation of the residual household tax')
 }
 
 // ── 5. Nothing reaches a deferred account below the age threshold ─────
-// MUST use the reference portfolio, not a Quick Start profile. Those retire at
-// 65-67, so their 401K has no taxable income at all before the threshold — the
-// basis is zero, nothing is a candidate, and the assertion passes whether the
-// age gate exists or not. Deleting the gate entirely left every Quick Start
-// assertion green.
+// Uses the reference portfolio, not a Quick Start profile. Those retire at
+// 65-67, so their 401K has no taxable income before the threshold, nothing is
+// a candidate, and the assertion passes whether the age gate exists or not.
 //
 // The reference portfolio retires at 57 and takes IRA distributions from month
 // one, so the IRA carries real basis for three years while under age 60. That is
@@ -410,9 +406,8 @@ console.log('spec 4a — proportional allocation of the residual household tax')
   // left to tax while the other run still does — and at the horizon the other
   // run leaves a pre-tax balance behind, carrying tax no one has paid yet. A
   // whole-plan total compares those two, and whether it rises or falls says
-  // only WHEN the IRA ran dry. It passed until 2026-09-23 because the IRA
-  // happened to empty in the plan's final year; measured returns (PR #73)
-  // moved that to 2054 and the total fell $25k with nothing wrong.
+  // only when the IRA ran dry, so the comparison is windowed to the years
+  // before it does.
   const firstDryYear = (pf) => {
     const deferred = pf.modelAssets.filter((a) => InstrumentType.isTaxDeferred(a.instrument));
     const n = Math.max(...deferred.map((a) => a.getHistory(Metric.VALUE).length));
@@ -476,8 +471,8 @@ console.log('spec 4a — proportional allocation of the residual household tax')
 // declares, so no bucket should change shape and monthlySanityCheck must not
 // throw on an undeclared type.
 {
-  // NIIT_ASSESSED joined this list on 2026-08-18 (spec 8). It is allocated by a
-  // DIFFERENT basis from the other two — NII_BASIS_METRICS rather than
+  // NIIT_ASSESSED is allocated by a different basis from the other two —
+  // NII_BASIS_METRICS rather than
   // BASIS_METRICS, because wages cannot trigger §1411 — but it settles through
   // the same #settleAllocatedLeg path, so it lands here and needs its own
   // EVENT_RECONCILIATION entry ('oneSided') exactly as the assertion says.
@@ -524,11 +519,10 @@ console.log('spec 4a — proportional allocation of the residual household tax')
       seen.push(cap.lines.length);
       const findings = cap.lines.filter(l => /events=.*package=/.test(l.message));
 
-      // Clean either way. A withholding spill — a depleted IRA whose source
-      // withholding is paid by the backstop — used to leave the incomeTax bucket
-      // short by exactly the spill, because the only cash event was a SPILLOVER
-      // filed under 'oneSided'. conservationBucket now files a
-      // cause:'withholding' spill under incomeTax.
+      // Clean either way. A withholding spill (a depleted IRA whose source
+      // withholding is paid by the backstop) is a SPILLOVER with
+      // cause:'withholding', which conservationBucket files under incomeTax, so
+      // that bucket still balances.
       eq(findings.length, 0,
         `${label} (allocation ${flag ? 'on' : 'off'}): reconciliation mismatch — ` +
         `${findings.map(f => f.message).join(' | ')}`);
