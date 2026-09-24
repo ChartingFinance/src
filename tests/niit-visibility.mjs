@@ -3,8 +3,8 @@
  *
  * WHY THIS EXISTS
  *
- * Spec 8 shipped NIIT correctly as cash and incorrectly as information. The
- * engine debited the right accounts by the right amount, and then:
+ * NIIT was once right as cash and wrong as information. The engine debited
+ * the right accounts by the right amount, and then:
  *
  *   - `addToMetric(Metric.NIIT, ...)` was a silent no-op on every instrument,
  *     because no `relevantMetrics()` listed it. `MetricSet.get()` falls back to
@@ -110,8 +110,8 @@ const silent = results.filter((r) => r.events.length === 0);
 
 console.log(`\n  ${charged.length} fixture(s) owe NIIT, ${silent.length} owe none\n`);
 
-// The suite is worthless if nothing exercises it — the exact trap spec 8 hit
-// when 26 fixtures were bit-identical and the rule had no witness.
+// The suite is worthless if nothing exercises it: a rule that no fixture
+// reaches has no witness.
 check(charged.length > 0,
   'NO fixture charges NIIT — this suite proves nothing. Add one that reaches it.');
 
@@ -173,14 +173,12 @@ console.log(`  ok  ${silent.length} fixture(s) owe none and report none`);
 
 // ── 5. The REPORT names it ────────────────────────────────────────────
 //
-// The fourth surface, and the one that stayed broken longest. Spec 8 fixed the
-// metric, the package and federalTaxes(); the markdown report's Lifetime Tax
-// Summary still listed five rows and a Total that included a sixth. On the
-// preRetirement profile that was $702,722 of labelled rows under a $704,001
-// Total — the surtax present in the arithmetic and absent from the table.
+// The fourth surface. The markdown report's Lifetime Tax Summary once listed
+// five rows under a Total that included a sixth: the surtax was in the
+// arithmetic and missing from the table.
 //
 // So this asserts the property that omission violates: the itemised rows must
-// SUM to the Total. A component added to federalTaxes() without a row fails
+// sum to the Total. A component added to federalTaxes() without a row fails
 // here, by name, instead of reappearing as an unexplained gap that only shows
 // up if a reader happens to add the column by hand.
 const parseMoney = (s) => Number(String(s).replace(/[$,]/g, ''));
@@ -218,9 +216,8 @@ for (const { fixture, portfolio, events } of results) {
 
   const summed = [...table.rows.values()].reduce((t, v) => t + v, 0);
   // Every row and the Total are rounded to the dollar, so honest rounding can
-  // put them up to $0.50 apart per figure. A flat $1 held by luck until
-  // 2026-09-23: Mid Career's seven rows then all rounded the same way and sat
-  // $2 over a Total their exact values matched to the cent.
+  // put them up to $0.50 apart per figure. A flat $1 is not enough: seven rows
+  // can all round the same way.
   const rounding = 0.5 * (table.rows.size + 1);
   check(near(summed, table.total, rounding),
     `${fixture.name}: the itemised rows sum to ${fmt(summed)} under a ${fmt(table.total)} `

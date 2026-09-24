@@ -5,18 +5,15 @@
  *
  * ── Why this test exists ─────────────────────────────────────────────
  *
- * Spec 9 §4.2. The tempting way to build this object is getters that forward to
- * the live module bindings:
+ * The tempting way to build this object is getters that forward to the live
+ * module bindings:
  *
  *     const env = { get inflationRate() { return global_inflationRate; } };
  *
- * That works in JavaScript, preserves the exact coupling the migration exists to
- * remove — two concurrent plans still read the same cell — and, worst of all, is
- * INVISIBLE TO THE MIGRATION'S OWN GATE. Every step of Spec 9 is verified by a
- * bit-identical snapshot, and a forwarding view is trivially bit-identical
- * because it is the same value read through one more layer. Someone could
- * rewrite makeSimConfig as a proxy tomorrow, and every baseline plus 450
- * assertions would stay green while the entire point was lost.
+ * That keeps the coupling a config exists to remove (two concurrent plans still
+ * read the same cell), and the snapshot harness cannot see it: a forwarding
+ * view reads the same value through one more layer, so every baseline stays
+ * bit-identical.
  *
  * So the capture is asserted directly: build a config, change the global
  * afterwards, and require that the config does not move. That is the one
@@ -171,8 +168,8 @@ check('copy() carries the source run\'s config, not a fresh capture', () => {
 console.log('\n── Shape ──\n');
 
 check('simConfigFromGlobals builds a table from the current filing status', () => {
-    // Since step 6. `makeSimConfig` still accepts a config without one — it is
-    // a shape, not a policy — but a Portfolio rejects it, and every real
+    // `makeSimConfig` accepts a config without one (it is a shape, not a
+    // policy), but a Portfolio rejects it, and every real
     // builder supplies one. Two captures get two tables, which is what makes
     // the table per-run rather than a module-level singleton.
     global_reset();

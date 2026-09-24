@@ -1,7 +1,7 @@
 /**
  * build-plan.mjs
  *
- * Spec 10 steps 1 and 2: the compiler in front of the runtime.
+ * `build_plan`: the compiler in front of the runtime.
  *
  * ── What this guards ─────────────────────────────────────────────────
  *
@@ -15,10 +15,9 @@
  *
  * ── The pin ──────────────────────────────────────────────────────────
  *
- * §5.3's residual expense has to be sized from NET income, because fund
- * transfers take their percentage after withholding. Sizing it from gross made
- * every plan short by exactly the tax, every month, for ever — 125 unfunded
- * months on the scenario's own example.
+ * The residual expense has to be sized from net income, because fund
+ * transfers take their percentage after withholding. Sized from gross, every
+ * plan is short by exactly the tax, every month.
  *
  * So `build_plan` computes withholding at build time. It calls the engine's own
  * `calculateFICATax` and `calculateYearlyIncomeTax` and invents no rate, but
@@ -403,11 +402,11 @@ await check('withholding estimate matches what the run books, to the cent', asyn
 
 // ── The estimate follows every rule the engine applies ──────────────
 //
-// The pin above uses the one household the old hand-rolled estimate happened
-// to get right: a 50-year-old on wages alone. Each case below exercises a rule
-// that estimate did not know about, and each was measured wrong before
-// 2026-09-23 — by $161, $120, $200 a month, and a 401(k) plan that was
-// unfunded 65 months of 120.
+// The pin above uses the simplest household: a 50-year-old on wages alone.
+// Each case below exercises a rule a wages-only estimate would miss (Social
+// Security under §86, the age-65 deductions, pension withholding, 401(k)
+// deferral). Missing any of them is off by hundreds of dollars a month, or
+// leaves a 401(k) plan unfunded for most of its months.
 
 /** What the run deposits, and what build_plan planned to spend, in month one. */
 async function firstMonth(intent) {
@@ -474,8 +473,8 @@ await check('a 401(k) deferral is taken before tax, and the plan still funds its
 });
 
 await check('the emitted spec is anchored — it does not move with the clock', async () => {
-    // Ties step 2 to step 0. A compiler whose output means something different
-    // next January is a compiler with a nondeterministic target.
+    // Ties the compiler to plan anchoring. A compiler whose output means
+    // something different next January has a nondeterministic target.
     const { spec } = buildPlan(TURN_ONE);
     const frozen = JSON.parse(JSON.stringify(spec));
     const a = await runPlan(frozen);

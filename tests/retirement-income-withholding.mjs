@@ -1,23 +1,22 @@
 /**
- * retirement-income-withholding.mjs — spec 4c
+ * retirement-income-withholding.mjs
  *
- * Withholds federal tax ON ARRIVAL from Social Security and pension, the only
- * taxable income the engine had no attribution mechanism for at all.
+ * Withholding of federal tax on arrival from Social Security and pension.
  *
  * The two assertions that carry this file:
  *
  *  1. GROSS INCOME IS UNCHANGED at every rate. A balance is grossed up because
- *     the withheld dollars are themselves a distribution (spec 4b); a flow's
- *     benefit is already gross. Booking the withheld amount as extra income —
- *     the natural thing to copy from 4b — inflates taxable income and RAISES the
- *     household bill. Paired with (2) that failure cannot hide.
+ *     the withheld dollars are themselves a distribution; a flow's benefit is
+ *     already gross. Booking the withheld amount as extra income (as the
+ *     balance path does) would inflate taxable income and raise the household
+ *     bill. Paired with (2) that failure cannot hide.
  *
- *  2. LIFETIME TAX DOES NOT RISE. Opposite of spec 4a, where paying tax from an
- *     IRA genuinely created new taxable income. Redirecting a flow creates none.
+ *  2. LIFETIME TAX DOES NOT RISE. Unlike paying tax from an IRA, which creates
+ *     new taxable income, redirecting a flow creates none.
  *
- * Plus the silent-failure guard: PensionBehavior carried NO tax metrics before
- * this spec, so a withholding booked to WITHHELD_INCOME_TAX resolved to
- * NULL_METRIC and vanished while every total still looked plausible.
+ * Plus a guard that PensionBehavior tracks the tax metrics: without them a
+ * withholding booked to WITHHELD_INCOME_TAX resolves to NULL_METRIC and
+ * vanishes while every total still looks plausible.
  *
  * Usage:  node src/tests/retirement-income-withholding.mjs
  */
@@ -269,7 +268,7 @@ console.log('spec 4c — withholding on arrival for retirement income');
 }
 
 // ── 5. Lifetime tax does not RISE ─────────────────────────────────────
-// The opposite of spec 4a, and the discriminator against double-counting.
+// Unlike tax paid from an IRA, and the discriminator against double-counting.
 {
   const off = await runAt({ pension: 0, socialSecurity: 0 }, () => buildProfile(RETIRED));
   const on  = await runAt({ pension: 0.10, socialSecurity: 0.10 }, () => buildProfile(RETIRED));
@@ -307,7 +306,7 @@ console.log('spec 4c — withholding on arrival for retirement income');
 // so the true-up stops asking the backstop for it — meaning that if
 // netIncomeCurrency is never reduced, the brokerage still looks "relieved" while
 // no cash was withheld from anything. Money from nowhere, and test 6 passes.
-// Measured here at the only place it shows: what the flow actually paid out.
+// So this checks the only place it shows: what the flow actually paid out.
 {
   const paidOut = (pf) => {
     let total = 0;
@@ -357,7 +356,7 @@ console.log('spec 4c — withholding on arrival for retirement income');
 }
 
 // ── 8. Reconciliation stays clean ─────────────────────────────────────
-// Spec 4a's withholding-spill bucketing fix is recent; this must not reopen it.
+// Must not reopen the withholding-spill bucketing (see tax-allocation §9).
 // The capture is asserted to have EMITTED before its silence is trusted — a
 // probe that captures nothing reports zero findings and looks identical to a
 // clean run.

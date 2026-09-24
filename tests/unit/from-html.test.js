@@ -2,23 +2,19 @@
  * from-html.test.js — the UI → domain boundary.
  *
  * ModelAsset.fromHTML turns what someone typed into a form into the object the
- * whole simulation runs on. It was, at cyclomatic complexity 16, the most
- * complex function in the engine with NO test of any kind: a mutation sweep on
- * 2026-08-07 stubbed it out entirely and the snapshot corpus, all 34 integration
- * suites and every unit test stayed green. FundTransfer.fromHTML (cx 8) was the
- * same.
+ * whole simulation runs on. Nothing else tests it: stubbing it out entirely
+ * leaves the snapshot corpus and every other suite green. The same is true of
+ * FundTransfer.fromHTML.
  *
  * Nothing here needs a DOM. fromHTML reads `.name`, `.value`, `.type`,
  * `.checked` and `.getAttribute`, so plain objects are a truthful stand-in —
  * and a faster, clearer one than a headless browser.
  *
- * The bug this file was written around: an optional rate field that EXISTS but
- * is blank used to produce ARR(NaN), because the guard tested whether the
- * element was present rather than whether it had a value. NaN did not throw. It
- * silently removed the charge — a home with a NaN annualTaxRate pays no
- * property tax and the run completes clean. Measured over two years on one
- * portfolio: the backstop ended at $42,099 with a 1% rate, and at $50,000
- * untouched with NaN.
+ * The main regression guarded: an optional rate field that exists but is
+ * blank must not produce ARR(NaN). A guard that tests whether the element is
+ * present, rather than whether it has a value, lets NaN through, and NaN does
+ * not throw: a home with a NaN annualTaxRate pays no property tax and the run
+ * completes clean.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -98,8 +94,8 @@ describe('the fields every form supplies', () => {
 });
 
 describe('a field that exists but was left blank', () => {
-  // The regression this file exists for. Each of these used to be NaN, and NaN
-  // does not announce itself — it removes the charge and the run looks fine.
+  // The regression this file exists for. NaN does not announce itself: it
+  // removes the charge and the run looks fine.
   const BLANK = [
     el('annualReturnRate', ''),
     el('dividendRate', ''),
@@ -159,10 +155,9 @@ describe('a field that is absent entirely', () => {
   });
 
   it('defaults isPrimaryHome TRUE and isSelfEmployed FALSE', () => {
-    // Deliberately asserted together, because the asymmetry is real and has
-    // already cost this project: isPrimaryHome defaulting to true is why a
-    // blast-radius scan on 2026-08-06 concluded the quick-start homes were not
-    // primary residences when they are.
+    // Asserted together because the asymmetry is easy to get wrong:
+    // isPrimaryHome defaults to true, and assuming otherwise once led to the
+    // conclusion that the quick-start homes were not primary residences.
     const a = build();
     expect(a.isPrimaryHome).toBe(true);
     expect(a.isSelfEmployed).toBe(false);
@@ -251,9 +246,8 @@ describe('FundTransfer.fromHTML', () => {
   });
 
   it('is a PERCENTAGE of the source, not an amount', () => {
-    // Worth pinning at the boundary: two fixture notes claimed these were
-    // dollars and were wrong, which is how a predicted cap-removal failed to
-    // happen on 2026-08-07.
+    // Worth pinning at the boundary: fixture notes have claimed these were
+    // dollars, and a prediction built on that claim was wrong.
     const t = FundTransfer.fromHTML([
       el('toDisplayName', 'Brokerage'),
       el('monthlyMoveValue', '100'),

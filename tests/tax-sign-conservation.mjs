@@ -4,8 +4,7 @@
  * The metric DAG and the FinancialPackage must agree on TAXES, and every tax
  * metric must obey the codebase's sign convention: negative == money out.
  *
- * The bug this guards against (present since the DAG migration of 2026-03-20,
- * commit 3ddebd1): FICA is flipped negative IN PLACE before its metric write
+ * The bug this guards against: FICA is flipped negative IN PLACE before its metric write
  * (tax-engine.recordFICAWithholding), while withheld/estimated income tax is
  * flipped only on a COPY for the FinancialPackage and the credit memo
  * (tax-engine.recordIncomeTaxWithholding), leaving the asset metric positive
@@ -310,11 +309,10 @@ check('C5: DAG TAXES agrees with FinancialPackage totalTaxes() in the close mont
 });
 
 check('C6: ...and every month, including the annual true-up', () => {
-  // This used to be close-month only: the annual true-up settled cash against
-  // an account but never told the package, so its month diverged by the
-  // settled amount. The package has carried `taxTrueUp` since 2026-09-05.
-  // Counted from the engine's events, not from the package, so the guard
-  // cannot be satisfied by the very field this check is about.
+  // Every month, including true-up months: the package books the annual
+  // true-up as `taxTrueUp`. Counted from the engine's events, not from the
+  // package, so the guard cannot be satisfied by the very field this check is
+  // about.
   const trueUps = pC.modelAssets.flatMap(a => a.events)
     .filter(e => e.type === EventType.TAX_TRUE_UP && Math.abs(e.amount.amount) > TOL);
   assert.ok(trueUps.length > 0, 'no true-up settled any cash — this check would be vacuous');

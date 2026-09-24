@@ -3,12 +3,10 @@
  *
  * The engine's own books are classified by event TYPE, not by prose.
  *
- * `monthlySanityCheck` used to `switch (memo.note)` over English literals, with
- * a `default:` that swallowed anything unrecognised into the transfer total.
- * That is how renaming 'Asset growth' to 'Asset Growth' corrupted
- * reconciliation while passing every test in the suite. Keying on EventType
- * removes the failure mode instead of guarding it — but only as long as every
- * type stays declared, which is what this file enforces.
+ * Switching on memo prose with a catch-all `default:` lets a one-letter rename
+ * ('Asset growth' → 'Asset Growth') corrupt reconciliation while every test
+ * passes. Keying on EventType removes that failure mode, as long as every type
+ * stays declared, which is what this file enforces.
  *
  * The load-bearing assertion is COMPLETENESS: every EventType the engine can
  * emit must appear in EVENT_RECONCILIATION. An unmapped type now throws mid-run
@@ -194,7 +192,7 @@ const scenarios = [
   // The two scenarios above cannot catch a regression here. `housing`'s true-up
   // never fires at all, and `retired`'s only fires when tax allocation is on —
   // so with the shipped flag state, deleting the trailing reconciliation passed
-  // every assertion in this file. Verified by mutation 2026-08-05: remove
+  // every assertion in this file. Verified by mutation: remove
   // Portfolio.finalSanityCheck's call site and only this scenario goes red.
   ['retired, tax bill drawn from a taxable account', { start: 75, retire: 65 }, [
     base({ instrument: 'retirementIncome', displayName: 'Social Security', startCurrency: { amount: 3000 }, startBasisCurrency: { amount: 0 } }),

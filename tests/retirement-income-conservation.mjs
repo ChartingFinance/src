@@ -3,7 +3,7 @@
  *
  * Guards against retirement income leaking into the WAGE ledger.
  *
- * Bug (found 2026-07-21 end-result audit): RetirementIncomeBehavior and
+ * The bug guarded: RetirementIncomeBehavior and
  * PensionBehavior returned `IncomeResult(zero, income)` — whose second
  * constructor argument is employedIncome — and PayrollEngine fed that to
  * monthly.addResult(), booking every benefit check as WAGES on top of the
@@ -165,11 +165,10 @@ console.log('\n── Pension ($1,000/mo, one year) ─────────�
     assert.ok(near(T.socialSecurityIncome.amount, 0),
       `total.socialSecurityIncome = ${fmt(T.socialSecurityIncome.amount)}, expected $0.00`);
   });
-  // Spec 4c withholds 10% on arrival from a pension, mirroring the Form W-4P
-  // default. $12,000 still sits under the standard deduction, so the household
+  // A pension withholds 10% on arrival, mirroring the Form W-4P default. $12,000 still sits under the standard deduction, so the household
   // OWES nothing — but $1,200 is withheld during the year and refunded at the
   // annual true-up. That over-withhold-then-refund cycle is what really happens
-  // to a retiree who never adjusts their W-4P, so the invariant is no longer
+  // to a retiree who never adjusts their W-4P, so the invariant is not
   // "nothing was withheld" but "nothing was ultimately kept".
   check('withholding is refunded in full: $12,000 pension owes no tax', () => {
     const withheld = Math.abs(T.incomeTax.amount);
