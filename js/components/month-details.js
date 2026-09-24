@@ -1,20 +1,14 @@
 /**
  * <month-details> — the selected month, always on screen.
  *
- * Replaces the popover that used to open from the ⋯ on the timeline's cursor
- * chip. It sits directly under the timeline rather than further down the page
- * on purpose: the cursor drives it, and measured on Mid Career at 1024×768 this
- * position starts 343px below the chip, where under Your Portfolio it would
- * start 882px below — more than a screen away from the thing that moves it.
- *
- * Three EQUAL regions side by side, each its own tinted panel, so the three
- * kinds of number cannot run together — and the grouping carries meaning:
+ * It sits directly under the timeline because the timeline's cursor drives
+ * it. Three equal regions, each its own panel, so the three kinds of number
+ * cannot run together:
  *
  *   Net worth          the balance, with the month's change and today's dollars
  *   This month         the single month's flows
- *   Withdrawn …        the TRAILING TWELVE MONTHS — a different cadence, so it
- *                      gets its own group and its own label. Side by side
- *                      without one, a yearly total reads as a monthly figure.
+ *   Withdrawn …        the trailing twelve months — a different cadence, so it
+ *                      gets its own label
  *
  * The numbers come from month-summary.js, which is headless and tested; this
  * file only lays them out. The section heading, date badge, jump links and AI

@@ -196,11 +196,9 @@ class SimulatorModal extends LitElement {
         }
 
         try {
-            // new URL(..., import.meta.url) is the Vite worker idiom: the
-            // bundler sees the dependency and emits simulator.js (plus its
-            // imports) as a real worker chunk in dist/. The old root-relative
-            // string 'js/simulator.js' worked only in dev — production builds
-            // shipped no such file, so the Maximizer 404'd.
+            // new URL(..., import.meta.url) is the Vite worker idiom, so the
+            // production build emits simulator.js as a worker chunk. A plain
+            // path string works in dev only.
             this._worker = new Worker(new URL('../simulator.js', import.meta.url), { type: 'module' });
         } catch (e) {
             console.error('Module Worker not supported:', e);

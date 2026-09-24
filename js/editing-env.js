@@ -1,38 +1,14 @@
 /**
  * editing-env.js — the environment the EDITOR binds to.
  *
- * ── Why this exists ──────────────────────────────────────────────────
+ * The editor reads derived dates (phase markers, asset finish dates) on
+ * objects that never pass through a Portfolio, so it needs its own config with
+ * a `birthYear`. It must be the same anchor the run uses — derived from the
+ * plan's earliest asset, as Portfolio does — or a saved plan's markers would be
+ * drawn a year (or more) away from the engine's regime changes.
  *
- * Spec 10 step 0 took the wall clock out of `plan-dates.js`: a derived date is
- * now anchored to `config.birthYear`, which `Portfolio` attaches from the
- * plan's own first month. That fixed the run, and it broke the editor.
- *
- * The editor reads the same derived getters — `ModelLifeEvent.triggerDateInt`
- * for the phase markers on the projection charts, `ModelAsset`'s
- * `effectiveFinishDateInt` for the asset list — on objects that never pass
- * through a `Portfolio`. They are bound to a config built by
- * `simConfigFromGlobals()`, and that builder has no plan to read a first month
- * from, so it leaves `birthYear` null. `birthYearFor()` throws on null, by
- * design. Loading any quick-start profile took the app down on startup.
- *
- * ── The anchor has to be the SAME anchor ─────────────────────────────
- *
- * The cheap repair is to put `new Date().getFullYear() - startAge` back, here
- * in the UI where a clock is legal. It restores the pre-step-0 behaviour
- * exactly, including the divergence step 0 existed to remove.
- *
- * The projection chart plots `ev.triggerDateInt` against
- * `portfolio.firstDateInt`. The portfolio's events are anchored to the plan;
- * clock-anchored editor events are not. Replay a scenario saved last year and
- * the two disagree by twelve months: the engine changes regime in Jan 2042 and
- * the "Retire" marker is drawn on Jan 2043. Nothing errors, and the picture
- * asserts something false about the run beside it.
- *
- * So the editor derives its anchor the way `Portfolio` does — from the plan's
- * earliest asset — and the clock is consulted only when there is no plan yet
- * to ask. That case is a genuinely new portfolio, whose assets Quick Start is
- * about to create starting this month, so the two agree the moment there is
- * anything to disagree about.
+ * The clock is used only when there is no plan yet; Quick Start then creates
+ * assets starting this month, so the two agree.
  */
 
 import { firstDateInt } from './portfolio.js';

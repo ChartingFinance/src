@@ -1,24 +1,14 @@
 /**
  * <plan-issues-panel>
  *
- * What needs attention about the PLAN — not to be confused with <issues-modal>,
- * which is the 🐛 "report a bug to us" form. This one is about the user's own
- * numbers.
+ * What needs attention in the plan (not <issues-modal>, the "report a bug"
+ * form). Findings come from portfolio-issues.js; this file only shows them.
  *
- * A thin consumer: every finding is computed by portfolio-issues.js, which is
- * testable without a DOM. This file decides only how they look and when the
- * panel opens.
+ *   It opens itself once, when the plan goes from nothing wrong to something
+ *   wrong — calculate() runs on every edit, and reopening each time would
+ *   fight the user. After that the badge is the reminder.
  *
- * Two deliberate behaviours:
- *
- *   NO AUTO-POPUP ON EVERY RUN. calculate() fires on every edit, so a panel
- *   that reopened each time would fight the user while they typed. It opens
- *   itself exactly once per transition from "nothing wrong" to "something
- *   wrong", and after that the badge is the only nag.
- *
- *   EXHAUSTION LEADS. The month the plan runs out of money is the headline
- *   number of the whole projection, so it gets its own callout above the list
- *   rather than being one row among many.
+ *   The month the plan runs out of money gets its own callout above the list.
  *
  * Properties:
  *   issues     - Issue[] from detectIssues()
