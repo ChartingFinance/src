@@ -23,8 +23,8 @@
  * literal below. Review the diff — every changed number should be explained
  * by the change you just made.
  *
- * THE CLOCK IS PINNED to 2026-01-15: quick-start.js anchors all dates to
- * "today", so without pinning, the golden values would rot every month.
+ * The clock is pinned to 2026-01-15: quick-start.js anchors all dates to
+ * "today", so without pinning the golden values would change every month.
  *
  * Usage:  node src/tests/quickstart-golden.mjs                (assert)
  *         node src/tests/quickstart-golden.mjs --print-actual (regenerate)
@@ -189,37 +189,11 @@ function stage0(profile, built, rawAssets) {
 }
 
 // ── Golden values ─────────────────────────────────────────────────────
-// Generated with --print-actual under the pinned 2026-01-15 clock.
-// Regenerate DELIBERATELY after intentional calculation changes and review
-// the diff line by line.
-// Values moved 2026-08-07 by the bracket-gap fix: 34 of 376, none by more than
-// $0.66. Bracket rows now tile exactly rather than each starting a dollar above
-// the previous row's end, so no crossed boundary loses a dollar of base. Tax up,
-// balances down, everywhere.
-// Extended 2026-08-07 with the three new MFJ profiles. Purely additive: all 376
-// values across the five existing profiles are byte-identical, checked
-// key-by-key before pasting, so nothing structural hid inside a regeneration.
-// Extended 2026-08-20 by the NIIT visibility fix: FinancialPackage gained a
-// `niit` field so federalTaxes() and the report view can show the tax the
-// engine was already collecting. PURELY ADDITIVE — every pre-existing value is
-// byte-identical, verified by stripping the new lines and comparing literals,
-// and all 16 new entries are 0.00 because no profile owes NIIT by month 13.
-// Extended 2026-09-05 by the estimatedTaxes sign fix: FinancialPackage gained a
-// `taxTrueUp` field, because the annual true-up settled cash against the
-// accounts in BOTH directions and told the household package about neither, so
-// federalTaxes() reported the same number whether a plan paid an April bill,
-// received a refund, or did neither. PURELY ADDITIVE — all 742 pre-existing
-// lines are byte-identical, verified by stripping the new field and comparing
-// literals line by line, and 12 of the 16 new entries are 0.00 because most
-// profiles have not settled a year by month 13.
-// Moved 2026-09-23 by measured growth rates: a stated annual return, interest
-// rate or inflation rate now compounds to exactly that rate a year, instead of
-// the rate/12 monthly step that realised 8.839% from 8.5%. After one month every
-// growing balance is slightly SMALLER (401K, Roth, Brokerage, Home, bank) and
-// every default-rate expense inflates slightly less. Wages, FICA, and the
-// mortgage payment, interest and principal do not move: the mortgage is a
-// contract APR and stays rate/12. 148 of 644 values moved; wages, FICA,
-// pensions, Social Security and every mortgage field are byte-identical.
+// Generated with --print-actual under the pinned clock. Regenerate only after
+// an intentional calculation change and review the diff line by line. When a
+// change adds a field or profile, check every pre-existing value is
+// byte-identical before pasting. Each past move is explained in the commit that
+// made it (git log -p on this file).
 const EXPECTED = {
   earlyCareer: {
     month1: {
