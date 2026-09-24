@@ -15,8 +15,7 @@
  *     resolveFunding chose Brokerage
  *     debit Brokerage $1,847, realized gain $412
  *
- * A user reading that gets a log and has to do the stitching. The answer is the
- * CHAIN, and a chain needs edges.
+ * The answer is the chain, and a chain needs edges.
  *
  * ── The mechanism ────────────────────────────────────────────────────
  *
@@ -24,22 +23,17 @@
  * Scopes nest — a settlement inside an expense payment inside a month — and
  * every event recorded while a scope is open carries that scope's id.
  *
- * `recordEvent` reads the id from AMBIENT context here rather than taking it as
- * a parameter. That was a deliberate decision when SimEvent landed: it means
- * adding causality is a change to the scope-openers, not a second migration
- * across all 29 event write sites.
+ * `recordEvent` reads the id from this ambient context rather than taking it
+ * as a parameter, so only the scope-openers know about tracing, not every
+ * event write site.
  *
  * ── Why a module-level stack is safe ─────────────────────────────────
  *
- * `chronometer_run` is async, but its per-month work is entirely synchronous —
- * verified, no `await` inside the month loop. So no two scopes can interleave
- * within a run, and a plain array behaves as a call stack. Monte Carlo and the
- * GA optimizer run in separate Worker contexts with their own module instance.
- *
- * If an `await` is ever introduced inside the month loop this assumption breaks
- * and scopes will attribute events to the wrong parent. `assertNoOpenScopes()`
- * exists so a leak is caught at the end of a run rather than silently
- * misattributing months of history.
+ * `chronometer_run` is async, but its per-month work has no `await`, so scopes
+ * cannot interleave within a run and a plain array works as a call stack.
+ * Monte Carlo and the GA optimizer run in Workers with their own module
+ * instance. An `await` inside the month loop would break this;
+ * `assertNoOpenScopes()` catches a leaked scope at the end of a run.
  */
 
 /** What kind of operation a scope represents. */
@@ -119,14 +113,9 @@ export function assertNoOpenScopes() {
 
 // ── Reading the chain back ───────────────────────────────────────────
 //
-// READS TAKE THE SCOPE LIST EXPLICITLY. The ambient stack above exists so
-// recording needs no plumbing, but resolution must NOT use module state: a
-// second run calls resetTraces(), and any chain resolved afterwards would look
-// up ids that no longer exist. `calculate()` re-runs on every edit, so that is
-// the normal case, not an edge one. Pass `portfolio.traceScopes`.
-//
-// Found the hard way — a test that resolved a chain after a later run silently
-// stopped finding it.
+// Reads take the scope list explicitly — pass `portfolio.traceScopes`. The
+// ambient stack is for recording only: the next run calls resetTraces(), and
+// `calculate()` re-runs on every edit.
 
 /** Scope by id within a given scope list, or null. */
 export function scopeById(id, scopes) {
@@ -158,9 +147,9 @@ export function chainFor(traceId, scopes) {
  * Explain one recorded event: the chain that produced it, plus everything else
  * that happened in the same scope.
  *
- * "Everything else" matters as much as the chain. A brokerage debit on its own
- * looks arbitrary; seen beside the clamped IRA transfer and the realized gain in
- * the same scope, it is obviously the third step of one story.
+ * The rest of the scope matters as much as the chain: a brokerage debit alone
+ * looks arbitrary; beside the clamped IRA transfer and the realized gain, it
+ * reads as one story.
  *
  * @param {SimEvent}     event
  * @param {ModelAsset[]} modelAssets  to gather siblings across accounts

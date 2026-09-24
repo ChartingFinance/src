@@ -69,12 +69,9 @@ export function buildYearPool(fromYear = null) {
  */
 export function applyRandomRates(modelAssets, pool, dataMode = 'historical', baseRates = null,
                                  inflationRate = null) {
-    // Calibrated mode re-centres the drawn CPI on the PLAN'S rate, so it needs
-    // that rate. Required rather than defaulted: `null + deviation` is a
-    // number, so a caller that forgot would get a quietly wrong inflation path
-    // instead of an error — and the only assertion on this function today
-    // reads the asset rates, not the returned inflation, so nothing would have
-    // noticed. Historical mode never uses it.
+    // Calibrated mode re-centres the drawn CPI on the plan's inflation rate, so
+    // it is required: `null + deviation` would silently be a number. Historical
+    // mode does not use it.
     const calibrationBase = dataMode === 'calibrated'
         ? (() => {
             if (typeof inflationRate !== 'number' || !Number.isFinite(inflationRate)) {
@@ -140,21 +137,12 @@ export function applyRandomRates(modelAssets, pool, dataMode = 'historical', bas
 
 /**
  * The base a calibrated draw adds its deviation to: the rate each asset grows
- * at in the DETERMINISTIC plan, read through `effectiveAnnualReturnRate`.
+ * at in the deterministic plan, via `effectiveAnnualReturnRate`.
  *
- * NOT `annualReturnRate`. An expense left at the default rate stores 0, and
- * `effectiveAnnualReturnRate` reads that 0 as "use the plan's inflation"
- * (model-asset.js). Until 2026-09-23 this captured the raw 0, added the year's
- * CPI deviation to it, and wrote the result back — a small NONZERO number, so
- * the fallback never fired again and the expense grew by the deviation alone:
- * roughly 0% a year instead of the plan's 3.1% plus the deviation. A
- * retirement whose costs never rose made the calibrated median 1.75x the plan
- * on inflation alone (Mid Career), and every quick-start profile leaves that
- * rate at the default.
- *
- * It hid because the obvious sanity check — zero deviation must reproduce the
- * plan — could not see it: at zero, the written rate is 0 again and the
- * fallback still works. tests/mc-calibration-base.mjs uses real, nonzero draws.
+ * Not `annualReturnRate`: an expense left at the default rate stores 0, which
+ * means "use the plan's inflation". Adding a deviation to the raw 0 would give
+ * a small non-zero rate, and the expense would stop inflating. A zero-deviation
+ * check cannot see this; tests/mc-calibration-base.mjs uses real draws.
  *
  * Exported for that test.
  */
@@ -327,7 +315,7 @@ function computeBaseline(sourceAssets, guardrailParams, lifeEvents, config) {
  *                     boundary — lets a worker host yield its event loop to
  *                     process pause/abort control messages mid-run
  *   dataMode          {'historical'|'calibrated'}  raw sampled returns, or
- *                     deviations re-centered on each asset's configured rate
+ *                     deviations re-centered on each asset's plan rate
  *   backtestFromYear  {number|null}  restrict the sampling pool to this year onward
  * @returns Promise of results object (JSON-serializable; DateInts carried as ints)
  */

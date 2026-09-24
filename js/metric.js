@@ -166,17 +166,12 @@ export const MetricRollups = {
     [Metric.SOCIAL_SECURITY_TAX]:         [Metric.WITHHELD_FICA_TAX],
 
     // --- TAX ROLLUPS ---
-    // Retirement income DOES have a per-asset tax leaf as of spec 4c: a pension
-    // and Social Security withhold on arrival and book WITHHELD_INCOME_TAX on
-    // their own asset (PayrollEngine.#withholdOnRetirementIncome). The writer
-    // came with it, as the older version of this comment required.
-    //
-    // Two things still hold. Whatever a flow does NOT withhold is settled by the
-    // monthly/annual true-up against the funding account, which books
-    // ESTIMATED_INCOME_TAX there — and for Social Security that is everything by
-    // default, because Form W-4V is elective. And the metrics have to be
-    // REGISTERED on the behavior (instrument-behavior.js) or the write lands in
-    // NULL_METRIC and disappears without error.
+    // A pension or Social Security books WITHHELD_INCOME_TAX on its own asset
+    // (PayrollEngine.#withholdOnRetirementIncome). Tax a benefit does not
+    // withhold — for Social Security, all of it by default — is settled by the
+    // true-ups as ESTIMATED_INCOME_TAX on the funding account. A metric must be
+    // registered on the behavior (instrument-behavior.js), or writes to it land
+    // on NULL_METRIC and disappear.
     [Metric.WITHHELD_FICA_TAX]:           [Metric.INCOME_TAX],
     [Metric.WITHHELD_INCOME_TAX]:         [Metric.INCOME_TAX],
     [Metric.ESTIMATED_INCOME_TAX]:        [Metric.INCOME_TAX],
@@ -247,14 +242,10 @@ export function isTopLevelMetric(m) { return _macroSet.has(m); }
 /**
  * Metrics that get an inflation-adjusted companion line.
  *
- * Every metric in the enum is a currency amount, so this is a SCOPE decision
- * rather than a type check. Net worth is a stock measure — a balance carried
- * decades into the future — which is exactly where nominal dollars mislead,
- * and where one extra line reads clearly. Monthly flows are small, noisy and
- * near-term; a second line there costs legibility and buys little.
- *
- * Shared by the Timeline arc and the Projections chart so the two can never
- * disagree about what "today's dollars" applies to.
+ * A choice of scope: net worth, a balance carried decades ahead, is where
+ * nominal dollars mislead; monthly flows are noisy and near-term, and a second
+ * line there costs more than it shows. Shared by the Timeline and Projections
+ * charts.
  */
 const _realDollarSet = new Set([Metric.VALUE]);
 export function hasRealDollarLine(metricName) { return _realDollarSet.has(metricName); }
@@ -267,9 +258,8 @@ export function hasRealDollarLine(metricName) { return _realDollarSet.has(metric
 // running total double-counts every month before the last.  Any view that
 // offers a window wider than a single month has to know which is which.
 //
-// The distinction is already implicit in monthlyChron() / KEEP_ON_SNAPSHOT in
-// model-asset.js.  This makes it explicit and shared, so the answer lives in
-// one place rather than being re-derived (or guessed) per view.
+// This matches monthlyChron() / KEEP_ON_SNAPSHOT in model-asset.js, stated in
+// one place for every view.
 
 export const MetricKind = Object.freeze({
   /** A balance at a point in time.  Snapshot, never summed. */
@@ -287,9 +277,9 @@ const _levelMetrics = new Set([Metric.VALUE]);
  * CASH_FLOW_ACCUMULATED is in KEEP_ON_SNAPSHOT and never zeroed, so each entry
  * is the lifetime total to that month.
  *
- * PROPERTY_TAX is deliberately NOT here: it is also in KEEP_ON_SNAPSHOT, but
- * the escrow run on day 15 (portfolio.js) zeroes it before the day-30 accrual,
- * so each snapshot still holds a single month's tax.  It is a FLOW.
+ * PROPERTY_TAX is not here: it is also in KEEP_ON_SNAPSHOT, but the day-15
+ * escrow (TaxEngine.applyPropertyTaxEscrow) clears it each month, so each
+ * snapshot holds one month's tax. It is a flow.
  */
 const _runningMetrics = new Set([Metric.CASH_FLOW_ACCUMULATED]);
 
@@ -356,12 +346,8 @@ export const PARENT_METRICS = new Set(
  * INCOME_TAX and FEDERAL_TAXES are excluded: they are sums of these, so a
  * consumer that added them too would double-count.
  *
- * DERIVED, not hardcoded, on purpose. This list was written out by hand in three
- * places — the tax breakdown column, and twice inside the Visualizer's tax
- * drain — and when NIIT was added in 2026-08 every one of them silently kept
- * summing the old seven. The Visualizer simply reported a smaller tax bill than
- * the household paid, with nothing to indicate a metric was missing. Anything
- * that means "all the taxes" should import this and get the next one for free.
+ * Derived, not written out by hand, so a new tax metric is included
+ * automatically. Anything that means "all the taxes" should use this list.
  *
  * TAX_TREE in asset-list.js still needs a hand-written row per tax, because a
  * row carries a label, an emoji and its highlight set — but
@@ -381,7 +367,6 @@ export const LEAF_TAX_METRICS = Object.freeze(
 );
 
 // ── TrackedMetric & MetricSet ─────────────────────────────────────────
-// (merged from tracked-metric.js)
 //
 // TrackedMetric encapsulates one Currency accumulator + its history array.
 // MetricSet manages the full collection so initializeChron/monthlyChron
