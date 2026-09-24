@@ -1,38 +1,24 @@
 /**
  * plan-diff.js — what changed, and what it did.
  *
- * ── Why this is a tool and not a paragraph ───────────────────────────
- *
- * Ask #5 of the round-trip notes: once a plan can go out to the browser and
- * come back, the very next question is "what did they change, and what did it
- * do?" Answering it by re-reading two full reports and eyeballing them is how
- * the two bugs in those notes stayed invisible — the ages differed by fifteen
- * years across two documents and nobody saw it, because nothing put the two
- * numbers next to each other.
- *
- * So the comparison is mechanical. Every field is compared; the ones that moved
- * are listed. Nothing is summarised away, and there is no threshold below which
- * a difference is deemed uninteresting — that judgement is exactly what missed
- * a fifteen-year age gap.
+ * Once a plan can go to the browser and come back, the next question is "what
+ * changed, and what did it do?" The comparison is mechanical: every field is
+ * compared and every change listed, with no threshold below which a difference
+ * is ignored.
  *
  * ── Two halves, deliberately separated ───────────────────────────────
  *
  * `diffSpecs` compares the PLANS: settings, assets, life events. It is pure and
  * runs nothing, so it answers "what did they change?" for free.
  *
- * `diffOutcomes` compares what the engine DID with them, and needs both runs.
- * Keeping them apart matters because the interesting failure is a large outcome
- * difference with an empty spec difference — two runs of the same plan should
- * be identical, and if they are not, the engine is not deterministic. The
- * renderer says so out loud rather than presenting it as a finding about money.
+ * `diffOutcomes` compares what the engine did with them, and needs both runs.
+ * An outcome difference with no plan difference means the engine is not
+ * deterministic, and the renderer says so rather than reporting it as money.
  *
  * ── Assets are keyed by displayName ──────────────────────────────────
  *
- * Which is the repository's known latent foreign-key problem, and it shows here
- * as its most honest symptom: renaming an asset reads as one deletion and one
- * addition. That is not wrong — this cannot tell a rename from a swap — and it
- * is better than silently pairing two assets that are not the same account. It
- * gets better when stableId lands, and not before.
+ * So renaming an asset reads as one deletion and one addition — this cannot
+ * tell a rename from a swap. It improves when assets get stable ids.
  */
 
 const SETTING_LABELS = {

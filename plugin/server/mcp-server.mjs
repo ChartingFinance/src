@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.3.14; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.3.15; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -39107,18 +39107,14 @@ function simConfigFromPlanSpec(spec) {
     retirementAge: settings.retirementAge ?? D.retirementAge,
     finishAge: settings.finishAge ?? D.finishAge,
     propertyTaxDeductionMax,
-    // Not carried by the share format, and deliberately taken from the
-    // defaults rather than from whatever this process happens to hold. A
-    // plan spec describes a plan; it must not inherit ambient state from a
-    // previous caller. In a fresh server process these ARE the current
-    // values, so this is identical to what applySettings produced.
+    // Not carried by the share format, so taken from the defaults — a spec
+    // must not inherit settings from an earlier caller.
     allocateHouseholdTax: D.allocateHouseholdTax,
     pensionWithholdingRate: D.pensionWithholdingRate,
     socialSecurityWithholdingRate: D.socialSecurityWithholdingRate,
     backtestYear: D.backtestYear,
     simDataMode: D.simDataMode,
-    // Built from the resolved status, not from a global it might disagree
-    // with. This is the ordering constraint, dissolved.
+    // Built from the resolved status.
     taxTable: new TaxTable(filingAs, propertyTaxDeductionMax)
   });
 }

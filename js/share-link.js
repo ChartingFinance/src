@@ -1,42 +1,23 @@
 /**
  * share-link.js — the portfolio share link, in one place.
  *
- * ── Why this module exists ───────────────────────────────────────────
- *
- * The encoding used to live inside `<share-modal>`, next to a mailto: form and
- * a Lit render tree. That was fine while a link could only ever be made by a
- * person clicking a button in the browser. It stopped being fine when the MCP
- * server needed to hand back the same link for a plan it had just run: a second
- * encoder would have been a second definition of the share format, guarding the
- * first, which is the failure this repository keeps finding in itself. So the
- * format lives here, and both callers import it.
- *
- * It is deliberately DOM-free — no window, no document, no localStorage — so the
- * headless server can import it without dragging the app in behind it.
+ * The one definition of the share format, used by both the app's Share button
+ * and the MCP server. DOM-free (no window, document or localStorage), so the
+ * headless server can import it.
  *
  * ── The fragment, not the query ──────────────────────────────────────
  *
  * Links are built as `#portfolio=…`, not `?portfolio=…`.
  *
- * A query string is part of the HTTP request line. Sharing a plan that way
- * sends the whole portfolio — every balance, every date — to the web server,
- * and to whatever CDN or proxy logs sit in front of it. That is a strange thing
- * for a tool whose first promise is that nothing leaves your machine.
- *
- * A fragment is never transmitted. The browser keeps it, the page reads it from
- * `location.hash`, and the portfolio stays on the two machines that already had
- * it. Same link, same behaviour on arrival, one fewer party.
- *
- * Query links are still ACCEPTED — every link mailed before this change is one —
- * but no new link is built that way.
+ * A query string is sent to the web server (and any proxy logs); a fragment is
+ * never transmitted, so the portfolio stays on the machines that already had
+ * it. Older query links are still accepted, but none are built.
  *
  * ── About `+` ────────────────────────────────────────────────────────
  *
- * `compressToEncodedURIComponent` emits `+` (32–64 of them in a typical plan).
- * Read back through `URLSearchParams`, those become spaces — and it still works,
- * because lz-string turns spaces back into `+` on the way in. Verified against
- * three profiles rather than assumed, since it looks exactly like a bug. Do not
- * "fix" it by escaping the payload: that breaks the links already in the world.
+ * `compressToEncodedURIComponent` emits `+`, which `URLSearchParams` reads back
+ * as spaces; lz-string turns them back into `+`, so it works. Do not escape the
+ * payload to "fix" it: that would break existing links.
  */
 
 import LZString from 'lz-string';
@@ -48,10 +29,8 @@ export const SHARE_PARAM = 'portfolio';
  * A run handle: `plan_` followed by ten hex characters (mcp/run-plan.js mints
  * these from a sha1 of the spec).
  *
- * Anchored, and it has to be: this is what tells a handle apart from a
- * compressed payload, and the separation only holds because `_` is not in
- * lz-string's URI-safe alphabet. tests/share-link.mjs asserts that premise
- * rather than trusting it.
+ * Anchored: this tells a handle from a payload, which works because `_` is not
+ * in lz-string's URI-safe alphabet (tests/share-link.mjs checks this).
  */
 export const PLAN_HANDLE_RE = /^plan_[0-9a-f]{10}$/;
 
@@ -77,12 +56,9 @@ export const DEFAULT_ORIGIN = 'https://charting.finance/';
 /**
  * A length past which a link is worth mentioning, NOT refusing.
  *
- * An earlier draft refused above ~8 KB, reasoning about the request-line limits
- * that make a long query 414. The fragment removed that ceiling — nothing is
- * sent — so what is left is soft: address bars, and mail clients that truncate a
- * long mailto:. The eight built-in profiles measure 3.5–5.4 KB, roughly 450
- * chars per asset, so this is far above any plan seen so far and exists to make
- * a genuinely enormous one visible rather than to stop it.
+ * The fragment has no hard length limit (it is never sent); only address bars
+ * and mail clients may truncate a long link. Built-in profiles are a few KB, so
+ * this flags only a genuinely enormous plan.
  */
 export const SHARE_URL_SOFT_LIMIT = 16000;
 
@@ -97,12 +73,9 @@ export const SHARE_URL_SOFT_LIMIT = 16000;
 /**
  * The five keys that ARE the plan.
  *
- * Load-bearing, because a run handle is a content address over the spec: any
- * extra key changes the hash. A link may carry more than a plan — see `handle`
- * below — and everything outside this set has to be stripped before the spec
- * reaches the engine, or a plan sent out and read back would report a different
- * handle than the one it left with, which is precisely the divergence the round
- * trip exists to disprove.
+ * A run handle is a hash of the spec, so anything else a link carries (such as
+ * `handle` below) is stripped before the spec reaches the engine — otherwise a
+ * plan sent out and read back would get a different handle.
  */
 export const SPEC_KEYS = ['name', 'settings', 'modelAssets', 'lifeEvents', 'guardrailParams'];
 
@@ -118,13 +91,9 @@ export function sharePayloadFromPlan(spec, { name, handle } = {}) {
         guardrailParams: spec.guardrailParams ?? null,
     };
 
-    // PROVENANCE, not identity. The handle names the run this link was minted
-    // from, so the app can say which report it corresponds to — the check that
-    // would have caught both bugs in the round-trip notes at a glance. It is
-    // deliberately not part of the spec: edit the plan after importing and the
-    // handle still describes where it came from, not what it is now. Omitted
-    // entirely when absent, so a link from the app's own Share button — which
-    // has no handle to give — stays exactly the five keys it always was.
+    // Provenance, not identity: the run this link was made from, so the app
+    // can show which report it matches. Not part of the spec, and omitted when
+    // absent (the app's own Share button has none).
     if (handle) payload.handle = handle;
 
     return payload;

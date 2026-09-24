@@ -1,10 +1,10 @@
 /**
- * run-plan.js — the ONE way to run a plan outside the browser.
+ * run-plan.js — the one way to run a plan outside the browser.
  *
  * ── Why this file exists ─────────────────────────────────────────────
  *
- * Running a plan is not `new Portfolio(assets)` + `chronometer_run`. It is a
- * SEQUENCE, and each step matters:
+ * Running a plan is not just `new Portfolio(assets)` + `chronometer_run`. It is
+ * a sequence, and each step matters:
  *
  *   1. build the config from the spec's settings — filingAs and the tax table
  *      included (`simConfigFromPlanSpec`)
@@ -12,20 +12,14 @@
  *   3. run
  *   4. read the issues back
  *
- * mcp-server.js once did an ad-hoc subset of this and got it wrong in three
- * ways: an MFJ plan simulated on Single brackets, life events were dropped so
- * no phase ever transitioned, and the advertised `startAge` moved nothing.
- *
- * That is what a second client of the engine costs when it reimplements setup.
- * The fix is the same one this codebase applies everywhere else — recordEvent()
- * is the only ledger write path, taxableBasis() is the only tax base, one
- * funding resolver — so: one runPlan(), every headless caller goes through it.
+ * Every headless caller goes through runPlan(), so none can get the sequence
+ * wrong: a caller that skipped a step once simulated an MFJ plan on Single
+ * brackets and dropped the life events.
  *
  * ── The plan spec ────────────────────────────────────────────────────
  *
- * Deliberately the SAME shape share-modal.js already emits, so an agent can
- * paste a shared portfolio straight in and the app can consume anything built
- * here. Reusing it is why "bring your own portfolio" costs nothing extra:
+ * The same shape the app's Share link encodes, so a shared portfolio can be
+ * run here and anything built here can be opened in the app:
  *
  *   {
  *     name,
@@ -37,10 +31,9 @@
  *
  * ── What this file does NOT do ───────────────────────────────────────
  *
- * It does not format anything. Callers decide whether they want markdown, JSON
- * or a causal chain; this returns the live Portfolio (traceScopes included) so
- * `explainEvent` can resolve against the run that produced it rather than
- * against module state a later run will have reset.
+ * It does not format anything. It returns the live Portfolio (traceScopes
+ * included), so `explainEvent` can resolve chains against the run that
+ * produced them.
  */
 
 import { Portfolio } from '../portfolio.js';
@@ -58,9 +51,8 @@ import { ageToDateIntFor } from '../plan-dates.js';
 /**
  * Build a plan spec from a Quick Start profile key.
  *
- * `ageOverrides` is threaded into buildQuickStart, NOT applied to globals
- * afterwards — asset dates and life-event triggers are derived at build time,
- * so a global set later moves nothing. See the note on buildQuickStart.
+ * `ageOverrides` is passed into buildQuickStart, because asset dates and
+ * life-event triggers are derived from the ages at build time.
  *
  * @param {string} profileKey  e.g. 'midCareer', 'dualIncome'
  * @param {object} [ageOverrides] partial {startAge, retirementAge, finishAge}
@@ -93,21 +85,10 @@ export function planFromProfile(profileKey, ageOverrides = null) {
 /**
  * Build this run's configuration from the plan spec.
  *
- * Spec 9 step 5b. This replaces `applySettings()`, which mutated eight module
- * globals and then built a TaxTable that read one of them back. That function
- * carried a comment explaining that the TaxTable had to be constructed AFTER
- * filingAs — a six-step sequence with an ordering constraint, which every
- * headless caller had to perform correctly. Here the ordering is structural:
- * `filingAs` is resolved before it is handed to the table, in one expression.
- *
- * It lives in this file rather than in sim-config.js because it needs the
- * `global_default_*` values, and sim-config.js must import nothing from
- * globals.js (§4.6). This is the MCP layer building a config from an MCP
- * payload, which is exactly where §4.6's table puts it.
- *
- * Nothing here writes to a global, so two plans in one process no longer share
- * a configuration — which is the whole point of the migration, and the reason
- * the run-handle cache stops being a correctness requirement.
+ * Settings the spec leaves out take SIM_CONFIG_DEFAULTS. `filingAs` is
+ * resolved first and handed to the TaxTable, so the two cannot disagree.
+ * Nothing here writes to module state, so two plans in one process share
+ * nothing.
  */
 export function simConfigFromPlanSpec(spec) {
     const settings = spec?.settings ?? {};
@@ -126,19 +107,15 @@ export function simConfigFromPlanSpec(spec) {
         finishAge: settings.finishAge ?? D.finishAge,
         propertyTaxDeductionMax,
 
-        // Not carried by the share format, and deliberately taken from the
-        // defaults rather than from whatever this process happens to hold. A
-        // plan spec describes a plan; it must not inherit ambient state from a
-        // previous caller. In a fresh server process these ARE the current
-        // values, so this is identical to what applySettings produced.
+        // Not carried by the share format, so taken from the defaults — a spec
+        // must not inherit settings from an earlier caller.
         allocateHouseholdTax: D.allocateHouseholdTax,
         pensionWithholdingRate: D.pensionWithholdingRate,
         socialSecurityWithholdingRate: D.socialSecurityWithholdingRate,
         backtestYear: D.backtestYear,
         simDataMode: D.simDataMode,
 
-        // Built from the resolved status, not from a global it might disagree
-        // with. This is the ordering constraint, dissolved.
+        // Built from the resolved status.
         taxTable: new TaxTable(filingAs, propertyTaxDeductionMax),
     });
 }
@@ -160,18 +137,9 @@ export async function runPlan(spec, { includeReconciliation = false } = {}) {
 
     const assets = membrane_rawDataToModelAssets(spec.modelAssets);
 
-    // `reports` = true, the second argument. It gates reportMonthly() and
-    // reportYearly() in Portfolio, which are the only things that fill
-    // `generatedReports` — and the markdown report's Annual Cash Flow table is
-    // generated from exactly those. It was false from this file's first commit,
-    // so every plan ever run through this server emitted a Lifetime Tax Summary
-    // and then nothing until the per-month event log: no annual table, no
-    // monthly packages, and no error saying either was missing.
-    //
-    // Invisible from both sides. The app has always passed true
-    // (finplan-app.js), and tests/markdown-report-sanity.mjs builds its own
-    // portfolio with true — so the generator was exercised, the app showed the
-    // table, and only the server's output lacked it.
+    // `reports` = true (the second argument): it fills `generatedReports`,
+    // which the markdown report's Annual Cash Flow table and the monthly
+    // packages are built from. Without it those sections are silently empty.
     const portfolio = new Portfolio(assets, true, config);
 
     // Not optional. With no life events nothing ever transitions: salary never
@@ -193,22 +161,12 @@ export async function runProfile(profileKey, ageOverrides = null, opts = {}) {
 
 // ── Monte Carlo ──────────────────────────────────────────────────────
 //
-// Deliberately OUTSIDE runPlan, and outside the handle cache.
+// Outside runPlan and outside the handle cache. Monte Carlo uses an unseeded
+// `Math.random()`, while a cached run is re-run on a miss and must come out
+// byte-identical (tests/mcp-stateless.mjs). So it is a separate, uncached call.
 //
-// `computeMonteCarlo` samples with an unseeded `Math.random()`, so two runs of
-// one spec do not agree. runPlan's result is memoized under a content-addressed
-// handle and RE-RUN on a cache miss, and tests/mcp-stateless.mjs asserts that a
-// re-run is byte-identical. Folding a stochastic result into that would make one
-// handle answer differently depending on whether it happened to still be in
-// memory — the exact class of bug the handle rework was done to remove.
-//
-// So Monte Carlo is a separate call the caller opts into, and its output is
-// never cached. A deterministic report and a probabilistic one are different
-// questions; only the first one is a plan.
-//
-// No Web Worker is involved. monte-carlo.js is the browser transport; the
-// computation lives in mc-compute.js and is headless — tests/mc-worker-sanity.mjs
-// has exercised exactly this path outside a Worker since before this seam existed.
+// No Web Worker: the computation (mc-compute.js) is headless; monte-carlo.js is
+// only the browser's transport.
 
 /**
  * Run Monte Carlo over a plan spec, headless.
@@ -241,40 +199,16 @@ export async function runMonteCarloFor(spec, { numSimulations = 500 } = {}) {
 
 // ── Run handles ──────────────────────────────────────────────────────
 //
-// This block used to open by saying a handle is "not an optimisation — it is a
-// CORRECTNESS requirement", because trace scopes are run state and a server
-// that re-ran the plan would resolve chains against a different run than the
-// one it was describing.
+// A handle is a cache key, not a session. Re-running a spec is byte-identical
+// (same events, amounts and traceIds; tests/mcp-stateless.mjs), so the server
+// keeps each handle's spec — a few KB — and re-runs a finished run on a cache
+// miss (tens of milliseconds) rather than holding every Portfolio.
 //
-// That was true, and Spec 9 made it false. It rested on the engine reading its
-// configuration from module state, so a second plan in the process changed what
-// the first one meant. The engine now takes a SimConfig as a value: two plans
-// share nothing, and a re-run of the same spec is BYTE-IDENTICAL — same events,
-// same amounts, same traceIds — so a chain resolved against a re-run is the
-// same chain. Measured, not assumed; tests/mcp-stateless.mjs asserts it.
-//
-// The other half of the old argument also turns out to be wrong on inspection:
-// `resetTraces()` REBINDS `_scopes = []` rather than emptying it, so a finished
-// portfolio keeps its own array regardless of what runs later.
-//
-// So handles are now an honest cache. What is kept is the SPEC — a few KB of
-// JSON — rather than the finished Portfolio, which for one Quick Start profile
-// is 23,276 trace scopes and 12,290 events. A miss re-runs in ~36ms instead of
-// erroring, which is the difference between a handle that expires and one that
-// merely goes cold.
-//
-// Handles are CONTENT-ADDRESSED. The same plan always produces the same handle,
-// so a client that runs the same report twice can keep using the handle it
-// already has, and an agent that guesses a handle from an earlier transcript is
-// right rather than unlucky.
+// Handles are content-addressed: the same plan always gets the same handle.
 
 import { createHash } from 'node:crypto';
 
-/**
- * Finished runs held for speed only. Small, because a miss is cheap now — the
- * old cache held four because eviction meant a dead handle; this one holds two
- * because eviction means a 36ms re-run.
- */
+/** Finished runs held for speed only; small, because a miss just re-runs. */
 const MAX_MEMO = 2;
 const MEMO = new Map();
 
@@ -308,10 +242,8 @@ export function cacheRun(spec, opts, result) {
 /**
  * The SPEC behind a handle, without running anything.
  *
- * getRun() re-runs on a memo miss, which is right when the caller wants results
- * and wrong when it wants the plan itself. Building a share link is the second
- * case: the link is a function of what was asked for, not of what came back, so
- * asking for one should never cost a simulation.
+ * For callers that need the plan, not results — a share link — so they never
+ * trigger a re-run.
  */
 export function specForHandle(handle) {
     const known = SPECS.get(handle);
@@ -328,9 +260,7 @@ export function specForHandle(handle) {
 /**
  * The run behind a handle, re-running it if it is no longer in memory.
  *
- * ASYNC, because a miss re-runs. Callers await it; the alternative was keeping
- * every finished run alive forever so this could stay synchronous, which is the
- * memory profile the change exists to remove.
+ * Async, because a miss re-runs.
  */
 export async function getRun(handle) {
     const memo = MEMO.get(handle);

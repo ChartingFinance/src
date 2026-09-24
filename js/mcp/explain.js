@@ -3,12 +3,9 @@
  *
  * ── What this is for ─────────────────────────────────────────────────
  *
- * Running a projection is commodity. What this engine has that a spreadsheet
- * does not is a RECORD OF ITS OWN REASONING: every event carries the causal
- * scope it happened inside (trace.js), so a brokerage debit can be walked back
- * to the expense that caused it. An LLM client is the ideal consumer of that —
- * it can read a chain and turn it into a sentence — which is why this is the
- * tool worth having and not another table of numbers.
+ * Every event carries the causal scope it happened in (trace.js), so a
+ * brokerage debit can be walked back to the expense that caused it. This module
+ * turns that record into chains an agent can put into words.
  *
  * ── Two ways in, because there are two questions ─────────────────────
  *
@@ -27,18 +24,13 @@
  * therefore no chain. `no-funding-accounts` is a statement about the plan's
  * configuration, not about a moment in it.
  *
- * Those return `{ chains: [], why: '...' }` and SAY SO. Inventing a plausible
- * chain for a finding whose cause was never recorded would be worse than the
- * silence — it would be a false causal claim, which is the one thing the trace
- * machinery exists to avoid.
+ * Those return `{ chains: [], why: '...' }` and say so, rather than invent a
+ * chain — a false causal claim is worse than none.
  *
  * ── Reads take the scope list explicitly ─────────────────────────────
  *
- * Every call here threads `portfolio.traceScopes` into chainFor/explainEvent.
- * Never the ambient module state: `resetTraces()` runs at the top of every
- * chronometer_run, so a second plan in the same process wipes the first one's
- * scopes and every chain resolved afterwards would silently come back empty.
- * That is exactly why runPlan hands back the live Portfolio.
+ * Every call passes `portfolio.traceScopes` to chainFor/explainEvent, never
+ * the module state, which the next run resets.
  */
 
 import { chainFor, chainLabel, explainEvent } from '../trace.js';
@@ -49,13 +41,9 @@ import { formatCurrency } from '../utils/html.js';
 /**
  * Which recorded event a finding is ABOUT.
  *
- * Keyed on EventType rather than on the memo prose that portfolio-issues.js
- * matches. The detectors have to read memos — that is the known seam documented
- * there — but nothing forces this file to inherit the fragility, and an
- * EventType cannot be broken by a copy edit.
- *
- * `null` means the finding has no event behind it. That is a fact about the
- * engine, not a gap in this table — see the module comment.
+ * Keyed on EventType, not on the memo text portfolio-issues.js matches, so a
+ * wording change cannot break it. `null` means the finding has no event behind
+ * it (see the module comment).
  */
 const ISSUE_EVENT_TYPE = Object.freeze({
     'plan-exhaustion':      EventType.UNFUNDED,
@@ -102,9 +90,9 @@ function allEvents(portfolio) {
 /**
  * One event, rendered with its chain and everything that happened alongside it.
  *
- * The siblings are not padding. A brokerage debit on its own looks arbitrary;
- * seen next to the clamped transfer and the realized gain from the same scope,
- * it is obviously the third step of one story. That is the whole point.
+ * The siblings matter: a brokerage debit alone looks arbitrary; beside the
+ * clamped transfer and the realized gain from the same scope, it reads as one
+ * story.
  */
 function describe(entry, portfolio) {
     const { asset, event } = entry;
