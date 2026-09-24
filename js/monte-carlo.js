@@ -79,8 +79,8 @@ function showLoading(container, completed, total) {
 const INTERIM_EVERY = 50;
 
 /**
- * Same signature as before, but now resolves a Promise once the final fan
- * chart has rendered (or resolves null if there was nothing to run).
+ * Resolves once the final fan chart has rendered (or null if there was
+ * nothing to run).
  * Renders progressively: a repaint every INTERIM_EVERY sims, then the final.
  * `onRender(chart)` fires after every paint so callers can apply chart
  * decorations without setTimeout guesswork.

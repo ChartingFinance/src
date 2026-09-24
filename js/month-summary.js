@@ -2,12 +2,8 @@
  * month-summary.js — one month of a finished run, as the Month Details section
  * shows it.
  *
- * This used to live inside <finplan-timeline> as `_cursorMonthTotals()`, feeding
- * a popover that opened from the ⋯ on the cursor chip. It moved out when the
- * month got a section of its own, and it moved out HEADLESS: the numbers are
- * the part worth testing, and a Lit component cannot be run under node. The
- * section, the timeline chip and the AI summary all read from here, so they
- * cannot disagree about what a month contained.
+ * Headless, so it can be tested under node. The section, the timeline chip and
+ * the AI summary all read from here, so they cannot disagree about a month.
  *
  * Two cadences live in the result, and they must not be confused:
  *
@@ -49,17 +45,13 @@ export function lastHistoryIndex(portfolio) {
  * Tax withheld at source over an inclusive window — from a paycheck, a pension
  * or Social Security. Returned as a positive amount.
  *
- * It exists to explain a $0, and it is only safe to read as "paid but never
- * withdrawn" WHEN the trailing-year Tax line is $0. Withholding on an IRA or
- * 401(k) distribution books here too, and that one IS debited from an account:
- * midCareer June 2055 shows $4,641 withheld and $4,641 drawn — the same
- * dollars. When nothing was drawn for tax, whatever was withheld must have come
- * from a paycheck, a pension or Social Security, none of which pass through an
- * account. Measured: midCareer June 2030, $14,044 withheld, $0 drawn.
+ * It explains a $0 Tax line, and only then: withholding on an IRA or 401(k)
+ * distribution books here too, and that one is debited from an account. When
+ * nothing was drawn for tax, what was withheld came from a paycheck, pension or
+ * Social Security, none of which pass through an account.
  *
- * Deliberately NOT the TAXES rollup: that includes property tax through
- * SALT_TAXES, and a retired homeowner with no withholding at all would then be
- * told their $0 was "withheld at source".
+ * Not the TAXES rollup, which includes property tax: a retired homeowner would
+ * be told their $0 was "withheld at source".
  */
 function withheldAtSource(portfolio, from, to) {
     let total = 0;
@@ -76,13 +68,9 @@ function withheldAtSource(portfolio, from, to) {
 /**
  * May a $0 trailing-year Tax line be explained as "withheld at source"?
  *
- * Only when all three hold: nothing was drawn for tax, tax WAS withheld, and
- * the plan was not short. The last clause is not decorative — earlyCareer in
- * December 2029 withholds $11,090, draws $0 for tax, and falls $7,144 short of
- * its obligations; without it, the section would call that $0 routine.
- *
- * One definition, read by the section and by its AI summary, so the two cannot
- * disagree and the test exercises the rule that ships.
+ * Only when nothing was drawn for tax, tax was withheld, and the plan was not
+ * short of money (a short plan also draws $0 for tax). Read by both the section
+ * and its AI summary.
  */
 export function zeroTaxWasWithheld(summary) {
     if (!summary) return false;

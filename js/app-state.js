@@ -1,10 +1,9 @@
 /**
  * app-state.js
  *
- * Single source of truth for app-level state previously held as module-scope
- * `active*` vars in finplan-app.js. Setters write through to localStorage for
- * persisted fields and fire a simple event emitter so views can subscribe
- * instead of being hand-wired after every mutation.
+ * The app-level state. Setters write persisted fields through to localStorage
+ * and notify subscribers, so views subscribe rather than being refreshed by
+ * hand after every change.
  *
  * Persisted fields: storyArc, storyName.
  * Ephemeral fields (per session): portfolio, lifeEvents, editingConfig,
@@ -91,20 +90,12 @@ export class AppState {
   get lifeEvents() { return this.#lifeEvents; }
 
   /**
-   * Life events are bound to an editing environment as they arrive (Spec 9
-   * step 4b).
+   * Life events are bound to the editing config as they arrive: their derived
+   * `triggerDateInt` throws when unbound, and events arrive from several places
+   * that never pass through a Portfolio, all of them through this setter.
    *
-   * `triggerDateInt` is a DERIVED getter — it needs the plan's start age — and
-   * under 4b an unbound read throws. Events reach the app from four places
-   * (Quick Start, localStorage, defaultTimeline, the legacy quick-start
-   * helper) and NONE of them passes through a Portfolio, so binding at the one
-   * setter they all funnel through is the single place that covers every route.
-   *
-   * This environment is the EDITING one, captured from the current settings so
-   * the timeline renders what the user has configured. It is deliberately not
-   * the same object as a run's: `Portfolio` captures its own at construction
-   * and rebinds everything it owns, so a run can never be affected by whatever
-   * the editor happens to be showing.
+   * This is the editor's config, not a run's; a Portfolio binds its own, so a
+   * run is never affected by what the editor shows.
    */
   set lifeEvents(v) {
     const config = this.editingConfig;
@@ -114,20 +105,11 @@ export class AppState {
   }
 
   /**
-   * The environment the editor's derived dates resolve against — see
-   * editing-env.js for why it must be anchored to the plan rather than to the
-   * clock.
-   *
-   * The app pushes a fresh one whenever the asset list changes, because the
-   * anchor is derived from the assets and this object never sees them. Setting
-   * it REBINDS the events already held: the two collections do not arrive in a
-   * fixed order (loading a shared scenario sets the events first, so it can
-   * migrate legacy per-asset transfers onto the accumulate phase before the
-   * assets exist), and an anchor that only applied to whatever arrived last
-   * would leave the other half resolving against a stale plan.
-   *
-   * The default is the empty plan's anchor, which is what a first-run app with
-   * nothing loaded actually has.
+   * The config the editor's derived dates resolve against (see
+   * editing-env.js). The app sets a new one whenever the assets change, since
+   * the anchor comes from them. Setting it rebinds the events already held,
+   * because events and assets can arrive in either order. Defaults to the empty
+   * plan's anchor.
    */
   get editingConfig() {
     return this.#editingConfig ??= editingConfigFor([]);
