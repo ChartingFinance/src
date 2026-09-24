@@ -10,21 +10,11 @@ import { InstrumentMeta, InstrumentType } from '../instruments/instrument.js';
 import { classifyAssetGroup, AssetGroupMeta } from '../asset-groups.js';
 import { Metric, MetricLabel } from '../metric.js';
 import { monthSummary, zeroTaxWasWithheld } from '../month-summary.js';
-// No globals.js import. The lifecycle table reads `portfolio.config` — the
-// SimConfig the run actually used — so the report describes the plan in front
-// of it rather than whatever the settings store happens to hold. It also keeps
-// localStorage out of the closure of everything that renders a report.
-// Monte Carlo and Guardrails results arrive as ARGUMENTS, not imports.
-//
-// monte-carlo.js and guardrails.js are browser adapters: they marshal work to a
-// Web Worker and cache the answer in module state. Importing them for the two
-// getters pulled `new Worker` — undefined in Node — into the closure of every
-// headless caller that wanted a markdown report, including mcp-server.js.
-//
-// The compute is not browser-bound at all; it lives in mc-compute.js and
-// gr-compute.js and runs fine under Node (tests/mc-worker-sanity.mjs). Only the
-// transport was. Taking results as a parameter also removes a module-state read
-// from a rendering path, same rule as reads-take-scopes-explicitly in trace.js.
+// No globals.js import: settings come from `portfolio.config`, the config the
+// run actually used. Monte Carlo and Guardrails results arrive as arguments,
+// not imports: monte-carlo.js and guardrails.js are browser adapters (Web
+// Workers), and importing them would break every headless caller, including
+// mcp-server.js.
 
 const fmt = (val) =>
     new Intl.NumberFormat('en-US', {
@@ -52,9 +42,8 @@ const SECTIONS = [
 /**
  * The sections generatePortfolioMarkdown composes, in the order it composes them.
  *
- * A caller may ask for a subset. The ORDER is not theirs to choose: the
- * directional notes below describe what sits above and below each section, so a
- * report assembled in the caller's order would describe itself incorrectly.
+ * A caller may ask for a subset but not reorder them: each section's notes
+ * say what sits above and below it.
  */
 export const REPORT_SECTIONS = ['portfolio', 'projections', 'creditmemos', 'reports', 'spreadsheet'];
 
@@ -68,10 +57,8 @@ function directionalNotes(sectionKey, included = null) {
     const idx = SECTIONS.findIndex(s => s.key === sectionKey);
     let md = '';
 
-    // A partial report cannot say "above" and "below" about sections that are
-    // not there. Naming what is missing is the more useful sentence anyway: the
-    // reader of a one-section report is exactly the reader who needs to know
-    // the rest exists and how to ask for it.
+    // In a partial report, name the missing sections (and how to ask for them)
+    // instead of pointing "above" or "below".
     if (included && REPORT_SECTIONS.some(k => !included.has(k))) {
         const absent = SECTIONS
             .filter(s => REPORT_SECTIONS.includes(s.key) && !included.has(s.key))
@@ -101,10 +88,8 @@ export function generateTimelineMarkdown(portfolio, lifeEvents) {
     let md = `# Your Timeline\n\n`;
     md += `This section shows the user's life phases and financial timeline.\n\n`;
 
-    // From THIS RUN's config, not the settings store. Spec 9 made the config a
-    // value the Portfolio owns; reading globals here would have reported the
-    // browser's current settings for a plan that was run with different ones —
-    // and in a headless host, module defaults for every plan.
+    // From this run's config, not the settings store, which may hold different
+    // settings (or, headless, only defaults).
     const cfg = portfolio?.config ?? null;
     if (cfg) {
         md += `## Lifecycle\n`;
@@ -436,22 +421,11 @@ export function generateReportsSectionMarkdown(portfolio, included = null) {
 
     // Tax summary from portfolio total.
     //
-    // Every row is rendered as MINUS the stored value, not Math.abs() of it.
-    //
-    // That is the whole convention made visible. Tax fields are stored negative
-    // — money leaving — so negating gives the cost, and the rows then sum to the
-    // Total by construction rather than by coincidence. Math.abs() would render
-    // a field with the WRONG sign as though it were right, which is exactly how
-    // `estimatedTaxes` spent the life of the feature reporting a positive number
-    // into a negative-signed total and quietly SHRINKING the reported tax bill
-    // as more money was withheld.
-    //
-    // So a negative row here is information, not a formatting bug: it means a
-    // credit. `Tax True-Up` is legitimately negative in a year the household was
-    // refunded more than it paid.
-    //
-    // tests/niit-visibility.mjs asserts these rows sum to the Total, so a
-    // component added to federalTaxes() and not to this table fails there.
+    // Each row is minus the stored value, never Math.abs(): tax fields are
+    // stored negative, so the rows sum to the Total, and a field with the wrong
+    // sign shows up wrong instead of being hidden. A negative row is a credit —
+    // the true-up in a refund year. tests/niit-visibility.mjs checks the rows
+    // sum to the Total.
     const total = portfolio.total;
     if (total) {
         const cost = (c) => fmt(-(c?.amount ?? 0));
@@ -488,13 +462,8 @@ export function generateReportsSectionMarkdown(portfolio, included = null) {
 
     // Yearly cash flow from reports.
     //
-    // Annual is the DEFAULT granularity here, not the only one that exists.
-    // `reportMonthly()` records a full FinancialPackage for every month of the
-    // run alongside these yearly ones. A year is a sum, and a sum hides its own
-    // outliers — a home sale, a one-time distribution, a December true-up — so
-    // the note below says the finer dataset is there. Without it an annual row
-    // reads as though the year were uniform, which is the reading that turns a
-    // one-month event into a mystery about a whole year.
+    // Annual rows by default; the note below says monthly packages also exist,
+    // since a year's sum hides one-month events like a home sale.
     const yearlyReports = portfolio.generatedReports.filter(r => r.type === 'yearly');
     if (yearlyReports.length > 0) {
         md += `## Annual Cash Flow\n`;
@@ -558,26 +527,16 @@ export function generateSpreadsheetSectionMarkdown(portfolio, included = null) {
 
 /**
  * Generates a single self-contained markdown report combining all sections.
- * Drop-in replacement for the old assets-ai.js generatePortfolioMarkdown.
  * @param {Portfolio} portfolio - A portfolio that has been through chronometer_run()
  * @returns {string} Full markdown report
  */
 /**
  * The report, whole or in part.
  *
- * `sections` is opt-in and the default is every section in the canonical order,
- * byte for byte what this returned before it took an argument — tests/mcp-stateless
- * compares two runs of the same plan for exact equality, so a default that
- * drifted would surface there as a phantom nondeterminism.
- *
- * Asking for a subset is not a formatting preference. The full report runs to
- * several thousand tokens and a caller usually wants one number out of it; the
- * shape the rest of this server already has — a handle you interrogate
- * afterwards — simply never reached the reports.
- *
- * Unknown keys are refused rather than ignored. A silently-dropped section name
- * would return a report missing exactly what was asked for, which reads as the
- * data not existing.
+ * `sections` defaults to every section in canonical order (the output must be
+ * deterministic; tests/mcp-stateless.mjs compares runs exactly). A subset keeps
+ * the report short when a caller wants one figure. Unknown section names are
+ * refused, not ignored.
  */
 export function generatePortfolioMarkdown(portfolio, { sections } = {}) {
     let included;

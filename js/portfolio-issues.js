@@ -3,64 +3,42 @@
  *
  * What went wrong with the plan, in the user's language.
  *
- * Companion to rule-notes.js, and the same idiom — a descriptor with a
- * detect() — with one structural difference. A rule note answers *for one
- * asset over one window*, because the modal that shows it already knows both.
- * An issue has to carry its own asset and its own dates, because the surface
- * that shows it is portfolio-wide and spans the whole run.
+ * The same idiom as rule-notes.js (a descriptor with a detect()), except that
+ * an issue carries its own asset and dates, because the panel that shows it
+ * covers the whole run.
  *
  * ── Rules for issues ─────────────────────────────────────────────────
  *
- *  1. DERIVE, NEVER RECOMPUTE. Same contract as rule-notes. Every issue here
- *     is anchored on an event the engine actually recorded — not on a balance
- *     that looks suspicious. See §Exhaustion below for why that matters.
+ *  1. Derive, never recompute. Every issue is anchored on an event the engine
+ *     recorded, not on a balance that looks suspicious.
  *
- *  2. SILENCE IS THE CONTRACT. A false "you could not pay your mortgage" is
- *     far worse than no surface at all. Every detector is tested for when it
- *     stays quiet.
+ *  2. Silence is part of the contract. A false "you could not pay your
+ *     mortgage" is worse than none; every detector is tested for staying quiet.
  *
- *  3. DEPLETION IS NOT AN ALARM. A retiree's accounts are *supposed* to draw
- *     down; that is the scenario being modelled, not a fault. The failure is
- *     an obligation that could not be paid. Nothing here fires on a zero
- *     balance alone.
+ *  3. Depletion is not an alarm. A retiree's accounts are meant to draw down;
+ *     the failure is an obligation that could not be paid. Nothing fires on a
+ *     zero balance alone.
  *
- *  4. ENGINE DOUBT IS NOT A FINANCIAL FINDING. `reconciliation` issues say
- *     "these numbers may not add up", which is a real signal but reads as
- *     self-doubt printed beside a projection. They are a separate category,
- *     hidden unless the caller asks for them.
+ *  4. Engine doubt is not a financial finding. `reconciliation` issues ("these
+ *     numbers may not add up") are a separate category, hidden unless asked for.
  *
  * ── Exhaustion ───────────────────────────────────────────────────────
  *
- * The date the plan runs out of money is arguably the headline number of the
- * whole projection, and it is tempting to compute it by scanning balances for
- * the first month where no funding account holds anything. Don't. That needs
- * heuristics for accounts that have not started yet, for months where nothing
- * was due, and for a sweep-to-savings that legitimately empties an account
- * every single month.
- *
- * All of it is unnecessary. `FundTransfer.resolveFunding` returns null exactly
- * when no open backstop account has a positive balance, and every caller of
- * that null path calls `reportUnfunded`. So exhaustion is simply the first
- * `Unfunded —` memo: a recorded failure rather than an inference. Accounts
- * that are closed or not yet started are already excluded by resolveFunding, a
- * month with nothing due cannot false-fire because there was no failure, and a
- * sweep cannot trigger it because `monthlyMoveValue` is a percentage of source
- * value — it moves only what is there and can never overdraw.
+ * The month the plan runs out of money is the first `Unfunded —` memo: a
+ * recorded failure, not an inference from balances. Scanning balances would
+ * need heuristics for accounts not yet open, months with nothing due, and
+ * sweeps that empty an account every month; the recorded failure needs none.
  *
  * ── Known seam ───────────────────────────────────────────────────────
  *
- * Every engine event below is recovered by matching prose in a credit memo.
- * Renaming a memo string silently kills a user-facing alert. That fragility is
- * the subject of a parked study into the overlap between CreditMemo and this
- * feedback surface — `info` memos already mean "no money moved", so CreditMemo
- * is doing two jobs. The patterns live here, in one place, so that study has a
- * single seam to cut. (rule-notes.js still carries its own copies of the
- * `Unfunded` and `Contribution capped` patterns; unifying them is part of it.)
+ * The detectors find engine events by matching credit-memo text, so renaming
+ * a memo would silently remove an alert (tests/memo-vocabulary.mjs guards the
+ * wording). The patterns are kept here in one place; rule-notes.js has its own
+ * copies of `Unfunded` and `Contribution capped`. Moving both to event types is
+ * open (markdowns/code-issues-from-comments.md).
  *
- * The `reconciliation` category ships empty by design. The engine's own
- * reconciliation findings go to the logger (LogCategory.SANITY), not to an
- * event, so there is nothing here to read them from. They land when the study
- * does.
+ * The `reconciliation` category is empty: the engine's reconciliation findings
+ * go to the logger (LogCategory.SANITY), not to events.
  */
 
 import { Metric, aggregateMetric } from './metric.js';
@@ -93,8 +71,8 @@ function asDateInt(raw) {
 /**
  * Collapse many memos into one issue's worth of facts.
  *
- * Occurrences counts DISTINCT MONTHS, not memos: three failures in one month
- * is one bad month, and "in 14 months" is a sentence a person can act on.
+ * Occurrences counts distinct months, not memos: three failures in one month
+ * is one bad month.
  */
 function summarize(memos) {
     let first = null;
@@ -156,12 +134,10 @@ export function makeIssueContext(portfolio) {
 export const DETECTORS = [
 
     {
-        // Checked first, and it suppresses the exhaustion headline. With no
-        // backstop account configured anywhere, resolveFunding returns null on
-        // month one and every obligation in the plan reports unfunded — which
-        // renders as "your plan failed immediately" when the truth is "you
-        // never said where your money is". The per-asset marks stay: they are
-        // accurate, and they point straight at the gap.
+        // Checked first, and it suppresses the exhaustion headline: with no
+        // funding account at all, every obligation is unfunded from month one,
+        // and the real message is "you never said where your money is". The
+        // per-asset marks stay.
         id: 'no-funding-accounts',
         scope: 'plan',
         category: 'configuration',
@@ -200,12 +176,9 @@ export const DETECTORS = [
                 occurrences: s.occurrences,
                 amount: s.amount,
                 headline: `The plan runs out of money in ${monthLabel(s.first)}`,
-                // "$X of payments could not be made" and NOT "you were short
-                // $X". One month can fail several payments — a single expense
-                // funded by three transfers fails three times — so the total is
-                // a count of failed payments, not a net shortfall. Netting them
-                // would mean reconstructing what the plan "really" needed,
-                // which is exactly the recomputation rule 1 forbids.
+                // "$X of payments could not be made", not "you were short $X":
+                // one expense funded by three transfers can fail three times,
+                // and netting them would mean recomputing (rule 1).
                 detail: `From ${monthLabel(s.first)} onward, no eligible account — cash, savings, brokerage or bonds — held a positive balance when a payment came due. ${formatCurrency(s.amount)} of payments could not be made across ${s.occurrences} ${s.occurrences === 1 ? 'month' : 'months'}.`,
             };
         },
@@ -222,10 +195,8 @@ export const DETECTORS = [
                 const s = summarize(memos);
                 const months = `${s.occurrences} ${s.occurrences === 1 ? 'month' : 'months'}`;
 
-                // Some unfunded events carry no amount — an expense overflow
-                // records the failure without a figure. "$0 could not be
-                // funded" is worse than saying nothing about the amount, so
-                // the headline only leads with money when there is money.
+                // Some unfunded events carry no amount; the headline leads with
+                // money only when there is some.
                 const headline = s.amount > 0.01
                     ? `${formatCurrency(s.amount)} could not be funded`
                     : `Payments could not be funded`;
@@ -238,11 +209,9 @@ export const DETECTORS = [
                     amount: s.amount,
                     headline,
                     detail: `Starting ${monthLabel(s.first)}, ${months} of payments from this asset could not be made. No eligible account held a positive balance, so the plan's books and its cash no longer agree.`,
-                    // reportUnfunded covers two different events — an obligation
-                    // nothing could pay, and take-home pay with nowhere to land
-                    // — so the engine's own reason is carried verbatim rather
-                    // than one story being asserted for both. It is raw engine
-                    // prose, so the panel renders it as subordinate detail.
+                    // reportUnfunded covers two cases (an obligation nothing
+                    // could pay, take-home pay with nowhere to go), so its own
+                    // reason is carried as detail.
                     reasons: s.reasons,
                 };
             });
@@ -251,9 +220,8 @@ export const DETECTORS = [
 
     {
         // The leading indicator: an account clamped at $0 and the shortfall was
-        // re-sourced (the PR #14 machinery). The memo lands on the account that
-        // COVERED the shortfall and names the one that ran dry, so attribution
-        // is deliberately flipped — the issue belongs to the depleted account.
+        // re-sourced. The memo is on the account that covered it and names the
+        // one that ran dry; the issue is filed under the one that ran dry.
         id: 'funding-ran-dry',
         scope: 'asset',
         category: 'obligation',
@@ -313,10 +281,8 @@ export const DETECTORS = [
     },
 
     {
-        // The requirement was missed. WHY is not available: the site that gives
-        // up when no account can receive the distribution (expense-engine.js)
-        // returns without recording anything, so this states the shortfall and
-        // stops rather than guessing a cause.
+        // The RMD was missed. The cause is not recorded (expense-engine.js gives
+        // up silently when no account can receive it), so none is guessed.
         id: 'rmd-unsatisfied',
         scope: 'asset',
         category: 'configuration',
@@ -419,8 +385,7 @@ export function issuesForAsset(issues, displayName) {
 /**
  * Assets that earn the ⚠️ on their card: an ALERT only.
  *
- * Not depletion — see rule 3. Drawing an account down is the plan working, and
- * marking it would cry wolf on the exact scenario this tool exists to model.
+ * Not depletion (rule 3): drawing an account down is the plan working.
  */
 export function alertAssetNames(issues) {
     return new Set(

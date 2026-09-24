@@ -21,19 +21,10 @@ export const FINANCIAL_FIELDS = [
 /**
  * The tax fields, and which way each one is allowed to point.
  *
- * ── Why this is data ─────────────────────────────────────────────────
- *
- * "Taxes are stored negative" was a convention nobody had written down and
- * nothing enforced. `estimatedTaxes` broke it from the day it was added and no
- * check failed for the life of the feature, because the only other reader
- * defended itself with Math.abs() and the one place the sign mattered was a
- * display total nobody reconciled. A convention that cannot be violated
- * accidentally is worth more than a paragraph describing one, so this is a list
- * a test can read.
- *
- * FEDERAL_TAX_FIELDS is also what federalTaxes() sums. A component added to one
- * and not the other is the defect NIIT shipped with — collected correctly,
- * reported nowhere — and tests/tax-sign-convention.mjs compares them.
+ * Taxes are stored negative (money out). This is a list, not just a
+ * convention, so tests/tax-sign-convention.mjs can enforce it — including that
+ * federalTaxes() sums exactly FEDERAL_TAX_FIELDS, so a new tax cannot be
+ * collected and then left out of the total.
  */
 export const FEDERAL_TAX_FIELDS = [
     'incomeTax', 'socialSecurityTax', 'medicareTax',
@@ -45,12 +36,9 @@ export const SALT_TAX_FIELDS = ['propertyTaxes'];
 /**
  * Tax fields that may legitimately be POSITIVE.
  *
- * Exactly one, and it earns it: `taxTrueUp` is the annual settlement, so it is
- * negative in a year the household paid an April bill and positive in a year it
- * was refunded more than it had provisioned. Everything else only ever leaves.
- *
- * A fixture must actually reach this case or the exception is decoration — see
- * the last check in tests/tax-sign-convention.mjs.
+ * Only `taxTrueUp`, the annual settlement: negative in a year with an April
+ * bill, positive in a refund year. tests/tax-sign-convention.mjs checks that a
+ * fixture actually reaches the positive case.
  */
 export const BIDIRECTIONAL_TAX_FIELDS = ['taxTrueUp'];
 
@@ -101,15 +89,12 @@ export class FinancialPackage {
      * Gross income taxed at the ordinary rates: ordinary income with Social
      * Security replaced by its §86 taxable portion.
      *
-     * `table` is REQUIRED. §86's thresholds depend on filing status, and the
+     * `table` is required: §86's thresholds depend on filing status, and the
      * provisional-income test needs the deductible contribution as the engine
-     * books it (`deductionComponents`), so a caller without a table cannot get
-     * the right answer — and a silent default is how this function spent years
-     * returning a flat 85% for everyone.
+     * books it (`deductionComponents`).
      *
-     * The subtract-then-add order is kept from the flat-85% version: at the 85%
-     * ceiling it reproduces the old result bit for bit, so only households the
-     * rule actually changes move.
+     * Subtract-then-add keeps results bit-identical for households at the 85%
+     * ceiling.
      */
     irsTaxableGrossIncome(table) {
         if (!table?.activeSocialSecurityThresholds) {
@@ -135,20 +120,9 @@ export class FinancialPackage {
     // ── Income rollups (aligned with Metric DAG) ─────────────────────
 
     /**
-     * Every dollar that arrived, for REPORTING. Not a tax base — see below.
-     *
-     * This includes tax-free Roth distributions and long-term capital gains,
-     * so it is wrong for an ordinary-rate calculation (it contains money that
-     * is not ordinary income, and money that is not taxable at all) and wrong
-     * as the base capital gains are stacked on (it already contains those
-     * gains, and carries no deduction).
-     *
-     * It was used as both for a long time, which is how the close path and the
-     * annual true-up came to disagree about the same liability. Spec 6 moved
-     * every tax site to `taxableBasis()` in js/tax-basis.js; the only remaining
-     * callers are report-view.js and finplan-ai.js, which want exactly what the
-     * name says. If a tax calculation needs a number from here, it needs
-     * taxableBasis instead.
+     * Every dollar that arrived, for reporting only. Not a tax base: it
+     * includes tax-free Roth distributions and long-term gains, and no
+     * deduction. Tax calculations use `taxableBasis()` (js/tax-basis.js).
      */
     totalIncome() {
         let income = this.ordinaryIncome().copy();
@@ -196,19 +170,15 @@ export class FinancialPackage {
     }
 
     /**
-     * @param {TaxTable} [taxTable]  the run's table. Optional because the
-     *   remaining callers are display and logging paths (report-view, the
-     *   dump helpers) that hold no config; those keep the module global until
-     *   the UI carries one.
+     * @param {TaxTable} [taxTable]  the run's table. Optional because the only
+     *   callers without one are display and logging paths; they get the default
+     *   cap.
      */
     deductiblePropertyTaxes(taxTable = null) {
 
-        // Display-only path: `deductions()` reaches here, and its callers are
-        // report-view and two log dumps — never the engine, which goes through
-        // limitDeductions() with the run's table. The fallback comes from the
-        // engine's own defaults rather than the settings store, so this file
-        // does not import globals.js; the cap has no UI and is constant, so the
-        // two are the same number.
+        // Without a table (display and logging only; the engine always passes
+        // one) the cap is SIM_CONFIG_DEFAULTS', which is also the only value the
+        // app ever uses.
         const cap = taxTable?.propertyTaxDeductionMax
             ?? SIM_CONFIG_DEFAULTS.propertyTaxDeductionMax;
         let ptDeduction = this.propertyTaxes.copy().flipSign();
@@ -257,22 +227,11 @@ export class FinancialPackage {
         taxes.add(this.fica());
         taxes.add(this.longTermCapitalGainsTax);
         taxes.add(this.estimatedTaxes);
-        // IRC §1411. Omitted here until 2026-08-20, which left the household
-        // package disagreeing with its own assets: the per-asset FEDERAL_TAXES
-        // metric already included NIIT through the rollup, so an account showed
-        // more federal tax than the package that was meant to total it. It also
-        // made effectiveTaxRate() understate for every household that owed any.
+        // IRC §1411, which the per-asset FEDERAL_TAXES rollup also includes.
         taxes.add(this.niit);
 
-        // The annual settlement, in whichever direction it went. It was booked
-        // nowhere in this package for the life of the true-up: both branches
-        // settled cash against the accounts and updated a per-asset metric, and
-        // the household's own tax total never heard about it. So a plan that
-        // paid an April bill and a plan that received a refund reported the same
-        // federal tax as one that did neither.
-        //
-        // Negative when collected, positive when refunded — the same convention
-        // as every field above it, which is what lets them simply be summed.
+        // The annual settlement: negative when collected, positive when
+        // refunded, like every field above, so they can simply be summed.
         taxes.add(this.taxTrueUp);
         return taxes;
 
@@ -348,8 +307,8 @@ export class FinancialPackage {
     }
 
     /**
-     * Record the tax consequence of a fund movement from the given source instrument.
-     * Centralizes the classification that was previously scattered across engines.
+     * Record the tax consequence of a fund movement from the given source
+     * instrument: the one place movements are classified for tax.
      *
      * @param {string} sourceInstrument - instrument key of the account being debited
      * @param {Currency} amount - positive withdrawal amount

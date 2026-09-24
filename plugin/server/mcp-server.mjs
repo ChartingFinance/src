@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.3.16; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.3.17; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -33617,15 +33617,12 @@ var FinancialPackage = class _FinancialPackage {
    * Gross income taxed at the ordinary rates: ordinary income with Social
    * Security replaced by its §86 taxable portion.
    *
-   * `table` is REQUIRED. §86's thresholds depend on filing status, and the
+   * `table` is required: §86's thresholds depend on filing status, and the
    * provisional-income test needs the deductible contribution as the engine
-   * books it (`deductionComponents`), so a caller without a table cannot get
-   * the right answer — and a silent default is how this function spent years
-   * returning a flat 85% for everyone.
+   * books it (`deductionComponents`).
    *
-   * The subtract-then-add order is kept from the flat-85% version: at the 85%
-   * ceiling it reproduces the old result bit for bit, so only households the
-   * rule actually changes move.
+   * Subtract-then-add keeps results bit-identical for households at the 85%
+   * ceiling.
    */
   irsTaxableGrossIncome(table) {
     if (!table?.activeSocialSecurityThresholds) {
@@ -33645,20 +33642,9 @@ var FinancialPackage = class _FinancialPackage {
   }
   // ── Income rollups (aligned with Metric DAG) ─────────────────────
   /**
-   * Every dollar that arrived, for REPORTING. Not a tax base — see below.
-   *
-   * This includes tax-free Roth distributions and long-term capital gains,
-   * so it is wrong for an ordinary-rate calculation (it contains money that
-   * is not ordinary income, and money that is not taxable at all) and wrong
-   * as the base capital gains are stacked on (it already contains those
-   * gains, and carries no deduction).
-   *
-   * It was used as both for a long time, which is how the close path and the
-   * annual true-up came to disagree about the same liability. Spec 6 moved
-   * every tax site to `taxableBasis()` in js/tax-basis.js; the only remaining
-   * callers are report-view.js and finplan-ai.js, which want exactly what the
-   * name says. If a tax calculation needs a number from here, it needs
-   * taxableBasis instead.
+   * Every dollar that arrived, for reporting only. Not a tax base: it
+   * includes tax-free Roth distributions and long-term gains, and no
+   * deduction. Tax calculations use `taxableBasis()` (js/tax-basis.js).
    */
   totalIncome() {
     let income = this.ordinaryIncome().copy();
@@ -33699,10 +33685,9 @@ var FinancialPackage = class _FinancialPackage {
     return total;
   }
   /**
-   * @param {TaxTable} [taxTable]  the run's table. Optional because the
-   *   remaining callers are display and logging paths (report-view, the
-   *   dump helpers) that hold no config; those keep the module global until
-   *   the UI carries one.
+   * @param {TaxTable} [taxTable]  the run's table. Optional because the only
+   *   callers without one are display and logging paths; they get the default
+   *   cap.
    */
   deductiblePropertyTaxes(taxTable = null) {
     const cap = taxTable?.propertyTaxDeductionMax ?? SIM_CONFIG_DEFAULTS.propertyTaxDeductionMax;
@@ -33787,8 +33772,8 @@ var FinancialPackage = class _FinancialPackage {
     return ratio;
   }
   /**
-   * Record the tax consequence of a fund movement from the given source instrument.
-   * Centralizes the classification that was previously scattered across engines.
+   * Record the tax consequence of a fund movement from the given source
+   * instrument: the one place movements are classified for tax.
    *
    * @param {string} sourceInstrument - instrument key of the account being debited
    * @param {Currency} amount - positive withdrawal amount
@@ -37720,12 +37705,10 @@ function makeIssueContext(portfolio) {
 }
 var DETECTORS = [
   {
-    // Checked first, and it suppresses the exhaustion headline. With no
-    // backstop account configured anywhere, resolveFunding returns null on
-    // month one and every obligation in the plan reports unfunded — which
-    // renders as "your plan failed immediately" when the truth is "you
-    // never said where your money is". The per-asset marks stay: they are
-    // accurate, and they point straight at the gap.
+    // Checked first, and it suppresses the exhaustion headline: with no
+    // funding account at all, every obligation is unfunded from month one,
+    // and the real message is "you never said where your money is". The
+    // per-asset marks stay.
     id: "no-funding-accounts",
     scope: "plan",
     category: "configuration",
@@ -37759,12 +37742,9 @@ var DETECTORS = [
         occurrences: s.occurrences,
         amount: s.amount,
         headline: `The plan runs out of money in ${monthLabel(s.first)}`,
-        // "$X of payments could not be made" and NOT "you were short
-        // $X". One month can fail several payments — a single expense
-        // funded by three transfers fails three times — so the total is
-        // a count of failed payments, not a net shortfall. Netting them
-        // would mean reconstructing what the plan "really" needed,
-        // which is exactly the recomputation rule 1 forbids.
+        // "$X of payments could not be made", not "you were short $X":
+        // one expense funded by three transfers can fail three times,
+        // and netting them would mean recomputing (rule 1).
         detail: `From ${monthLabel(s.first)} onward, no eligible account \u2014 cash, savings, brokerage or bonds \u2014 held a positive balance when a payment came due. ${formatCurrency(s.amount)} of payments could not be made across ${s.occurrences} ${s.occurrences === 1 ? "month" : "months"}.`
       };
     }
@@ -37788,11 +37768,9 @@ var DETECTORS = [
           amount: s.amount,
           headline,
           detail: `Starting ${monthLabel(s.first)}, ${months} of payments from this asset could not be made. No eligible account held a positive balance, so the plan's books and its cash no longer agree.`,
-          // reportUnfunded covers two different events — an obligation
-          // nothing could pay, and take-home pay with nowhere to land
-          // — so the engine's own reason is carried verbatim rather
-          // than one story being asserted for both. It is raw engine
-          // prose, so the panel renders it as subordinate detail.
+          // reportUnfunded covers two cases (an obligation nothing
+          // could pay, take-home pay with nowhere to go), so its own
+          // reason is carried as detail.
           reasons: s.reasons
         };
       });
@@ -37800,9 +37778,8 @@ var DETECTORS = [
   },
   {
     // The leading indicator: an account clamped at $0 and the shortfall was
-    // re-sourced (the PR #14 machinery). The memo lands on the account that
-    // COVERED the shortfall and names the one that ran dry, so attribution
-    // is deliberately flipped — the issue belongs to the depleted account.
+    // re-sourced. The memo is on the account that covered it and names the
+    // one that ran dry; the issue is filed under the one that ran dry.
     id: "funding-ran-dry",
     scope: "asset",
     category: "obligation",
@@ -37858,10 +37835,8 @@ var DETECTORS = [
     }
   },
   {
-    // The requirement was missed. WHY is not available: the site that gives
-    // up when no account can receive the distribution (expense-engine.js)
-    // returns without recording anything, so this states the shortfall and
-    // stops rather than guessing a cause.
+    // The RMD was missed. The cause is not recorded (expense-engine.js gives
+    // up silently when no account can receive it), so none is guessed.
     id: "rmd-unsatisfied",
     scope: "asset",
     category: "configuration",
