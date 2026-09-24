@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.3.15; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.3.16; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -31641,17 +31641,12 @@ var MetricRollups = {
   [Metric.MEDICARE_TAX]: [Metric.WITHHELD_FICA_TAX],
   [Metric.SOCIAL_SECURITY_TAX]: [Metric.WITHHELD_FICA_TAX],
   // --- TAX ROLLUPS ---
-  // Retirement income DOES have a per-asset tax leaf as of spec 4c: a pension
-  // and Social Security withhold on arrival and book WITHHELD_INCOME_TAX on
-  // their own asset (PayrollEngine.#withholdOnRetirementIncome). The writer
-  // came with it, as the older version of this comment required.
-  //
-  // Two things still hold. Whatever a flow does NOT withhold is settled by the
-  // monthly/annual true-up against the funding account, which books
-  // ESTIMATED_INCOME_TAX there — and for Social Security that is everything by
-  // default, because Form W-4V is elective. And the metrics have to be
-  // REGISTERED on the behavior (instrument-behavior.js) or the write lands in
-  // NULL_METRIC and disappears without error.
+  // A pension or Social Security books WITHHELD_INCOME_TAX on its own asset
+  // (PayrollEngine.#withholdOnRetirementIncome). Tax a benefit does not
+  // withhold — for Social Security, all of it by default — is settled by the
+  // true-ups as ESTIMATED_INCOME_TAX on the funding account. A metric must be
+  // registered on the behavior (instrument-behavior.js), or writes to it land
+  // on NULL_METRIC and disappear.
   [Metric.WITHHELD_FICA_TAX]: [Metric.INCOME_TAX],
   [Metric.WITHHELD_INCOME_TAX]: [Metric.INCOME_TAX],
   [Metric.ESTIMATED_INCOME_TAX]: [Metric.INCOME_TAX],
@@ -31928,13 +31923,9 @@ var EventType = Object.freeze({
   // data: { depleted }
   GROSS_UP: "grossUp",
   // data: { forAsset, overflow: boolean }
-  // The part of a GROSS_UP that was withdrawn to cover capital-gains tax
-  // rather than to pay the obligation. No cash moves for this event — the
-  // money already left under the GROSS_UP above — it names a portion of that
-  // draw so the provision is answerable instead of implicit. It exists
-  // because the provision used to be recorded only when a gain was realized
-  // while being WITHDRAWN unconditionally, so the books under-counted their
-  // own damage by an amount nothing could see. data: { forAsset }
+  // The part of a GROSS_UP withdrawn to cover capital-gains tax rather than
+  // the obligation. No cash moves for this event (it left under the
+  // GROSS_UP); it names that portion so it can be reported. data: { forAsset }
   TAX_PROVISION: "taxProvision",
   ONE_TIME: "oneTime",
   // data: { note }
@@ -32028,21 +32019,18 @@ function renderNote(event) {
       return `Annual tax true-up (${d.direction})`;
     case EventType.TAX_PROVISION:
       return d.forAsset ? `Withheld for capital gains tax on the draw for ${d.forAsset}` : "Withheld for capital gains tax on this draw";
-    // Says WHICH side of the min bound, because that is the whole
-    // question a reader has: too much investment income, or too much
-    // total income? No currency formatting — this module imports
-    // nothing, and reaching for a helper here is what put an
-    // undefined formatCurrency in this line on 2026-08-18.
+    // Says which side of the min bound: too much investment income, or
+    // too much total income. No currency helper — this module imports
+    // nothing.
     case EventType.NIIT_ASSESSED:
       return d.bound === "nii" ? "Net investment income tax (3.8% of net investment income)" : "Net investment income tax (3.8% of MAGI over the threshold)";
     case EventType.CAPITAL_GAIN_RECOGNIZED:
       return d.spillover ? "Capital gains (spillover)" : "Capital gains";
     case EventType.CAPITAL_GAIN_EXCLUDED:
       return "Primary home gain excluded";
-    // Transfers and settlements share a shape but not a format: property
-    // tax settles as "Home property tax" while maintenance settles as
-    // "Home → Checking (maintenance)". Same operation, two wordings —
-    // preserved verbatim here, worth unifying once nothing parses them.
+    // Property tax settles as "Home property tax" but maintenance as
+    // "Home → Checking (maintenance)": two wordings for one operation,
+    // kept because consumers still match them.
     case EventType.TRANSFER:
       return `${d.from} \u2192 ${d.to} (${d.cadence})`;
     case EventType.SETTLEMENT:
@@ -34557,11 +34545,9 @@ var ExpenseEngine = class {
    * Draw from a funding account through settleOneSided rather than a raw
    * debit.
    *
-   * A raw debit books the expense as paid whatever the account actually held,
-   * and silently discards the clamped remainder. settleOneSided caps the
-   * account at $0, re-sources the shortfall from the next backstop, and
-   * reports whatever nothing can cover — and it books the realized gain and
-   * its memo itself, so callers must not duplicate that.
+   * settleOneSided clamps the account at $0, re-sources the shortfall, reports
+   * what nothing can cover, and books the realized gain itself — callers must
+   * not book it again.
    *
    * @param {ModelAsset} owingAsset  the expense/obligation this pays for
    * @param {ModelAsset} fundingAsset the account being drawn
@@ -34580,24 +34566,10 @@ var ExpenseEngine = class {
   /**
    * Record the part of a gross-up that was withdrawn to cover tax.
    *
-   * ── Two things this fixes, both of them sign-shaped ──────────────
-   *
-   * It is booked NEGATIVE, like every other tax field. It used to be positive,
-   * alone among them, which meant `federalTaxes()` — the number the report
-   * shows and effectiveTaxRate() divides by — got SMALLER as more money was
-   * withheld. On one measured plan it reported $87,662 of federal tax against
-   * $136,053 actually charged. Nothing failed, because the only other reader
-   * defended itself with Math.abs(); see TaxEngine.applyAnnualTaxTrueUp, where
-   * that call has been removed so this sign is now load-bearing arithmetic
-   * rather than a display convention.
-   *
-   * And it is recorded whether or not a gain was realized. The old guard was
-   * `realizedGain > 0` while the WITHDRAWAL had no guard at all, so a draw that
-   * realized nothing still took a premium and booked none of it — the field
-   * under-counted its own damage, and a scoping pass over it found two
-   * affected fixtures when the answer was four. The premium is now zero in
-   * that case by construction (see calculateGrossWithdrawal), and if it ever
-   * stops being zero this records it instead of hiding it.
+   * Booked negative, like every tax field; the annual true-up relies on the
+   * sign (tests/tax-sign-convention.mjs). Recorded whenever the premium is
+   * non-zero, gain or no gain — calculateGrossWithdrawal makes it zero when
+   * nothing is realised.
    */
   #bookTaxProvision(fundingAsset, forAsset, premiumAmount) {
     if (!(premiumAmount > 5e-3)) return;

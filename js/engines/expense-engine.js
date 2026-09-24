@@ -1,12 +1,8 @@
 /**
  * expense-engine.js
  *
- * Day 15 property tax escrow and Day 30 expense pipeline:
- * expense fund transfers, shortfall gross-up, RMD enforcement,
- * and asset growth recognition.
- *
- * Extracted from Portfolio to separate expense/outflow concerns
- * from the simulation orchestrator.
+ * The day-30 expense pipeline: expense fund transfers, the shortfall
+ * gross-up, RMD enforcement, and asset growth.
  */
 
 import { Currency } from '../utils/currency.js';
@@ -59,14 +55,10 @@ export class ExpenseEngine {
                 const expenseAmount = fundTransfer.calculate();
                 const fundTransferResult = fundTransfer.execute();
 
-                // Book tax consequences against what each account ACTUALLY
-                // supplied. toAssetChange is the REQUESTED withdrawal; if the
-                // funding account was clamped at $0 (tax-advantaged accounts
-                // can't go negative), execute() sourced the remainder from a
-                // taxable fallback and reports that leg separately. Booking
-                // the full request against the funding account (the old code)
-                // recorded phantom IRA distributions for money the IRA never
-                // held.
+                // Book tax consequences against what each account actually
+                // supplied. toAssetChange is the requested withdrawal; if the
+                // funding account clamped at $0, execute() sourced the rest
+                // from a fallback and reports that leg separately.
                 const withdrawalAmount = fundTransferResult.toAssetChange.copy().flipSign();
                 withdrawalAmount.subtract(fundTransferResult.spillover);
                 this.monthly.recordTransfer(fundTransfer.toModel.instrument, withdrawalAmount, fundTransferResult.realizedGain);
@@ -78,10 +70,8 @@ export class ExpenseEngine {
                 runningExpenseAmount.add(expenseAmount);
             }
 
-            // =========================================================================
-            // INSERTION POINT 1: Expense Overflow (Partial Shortfall)
-            // Replaces the old "const extraAmount = ..." logic
-            // =========================================================================
+            // The transfers covered part of the expense: draw the rest from the
+            // funding backstop, grossed up for the tax the draw realises.
             const netShortfall = new Currency(runningExpenseAmount.amount - modelAssetExpense.amount);
             if (netShortfall.amount > 0) {
                 logger.log(LogCategory.TRANSFER, `ExpenseEngine.applyExpenseTransfers: ${modelAsset.displayName} expensing ${netShortfall.toString()} from the funding backstop (Grossed Up)`);
@@ -100,10 +90,8 @@ export class ExpenseEngine {
                 }
             }
         } else {
-            // =========================================================================
-            // INSERTION POINT 2: Full Expense (Total Shortfall)
-            // Replaces the old "this.debitFromFirstTaxableAccount" fallback
-            // =========================================================================
+            // No transfer covers the expense: draw all of it from the funding
+            // backstop, grossed up.
             const netShortfall = modelAssetExpense.copy().flipSign();
             logger.log(LogCategory.TRANSFER, `ExpenseEngine.applyExpenseTransfers: ${modelAsset.displayName} expensing ${netShortfall.toString()} from the funding backstop (Grossed Up)`);
 
@@ -277,12 +265,8 @@ export class ExpenseEngine {
 
             let remains = new Currency(rmd.amount - distributions.amount);
 
-            // Execute first, book after — book what actually moved, not what
-            // was requested. The old order booked `remains` as a distribution
-            // before (and regardless of) the transfer: with no expensable
-            // target the income was recorded but no cash ever left the IRA,
-            // and when the IRA held less than the RMD the spillover portion
-            // (sourced from a taxable account) was booked as IRA income too.
+            // Execute first, then book what actually moved: the target may be
+            // missing, and a spilled portion came from another account.
             const target = FundTransfer.resolveFunding(this.modelAssets);
             if (!target) {
                 logger.log(LogCategory.SANITY,
@@ -338,11 +322,9 @@ export class ExpenseEngine {
      * Draw from a funding account through settleOneSided rather than a raw
      * debit.
      *
-     * A raw debit books the expense as paid whatever the account actually held,
-     * and silently discards the clamped remainder. settleOneSided caps the
-     * account at $0, re-sources the shortfall from the next backstop, and
-     * reports whatever nothing can cover — and it books the realized gain and
-     * its memo itself, so callers must not duplicate that.
+     * settleOneSided clamps the account at $0, re-sources the shortfall, reports
+     * what nothing can cover, and books the realized gain itself — callers must
+     * not book it again.
      *
      * @param {ModelAsset} owingAsset  the expense/obligation this pays for
      * @param {ModelAsset} fundingAsset the account being drawn
@@ -364,24 +346,10 @@ export class ExpenseEngine {
     /**
      * Record the part of a gross-up that was withdrawn to cover tax.
      *
-     * ── Two things this fixes, both of them sign-shaped ──────────────
-     *
-     * It is booked NEGATIVE, like every other tax field. It used to be positive,
-     * alone among them, which meant `federalTaxes()` — the number the report
-     * shows and effectiveTaxRate() divides by — got SMALLER as more money was
-     * withheld. On one measured plan it reported $87,662 of federal tax against
-     * $136,053 actually charged. Nothing failed, because the only other reader
-     * defended itself with Math.abs(); see TaxEngine.applyAnnualTaxTrueUp, where
-     * that call has been removed so this sign is now load-bearing arithmetic
-     * rather than a display convention.
-     *
-     * And it is recorded whether or not a gain was realized. The old guard was
-     * `realizedGain > 0` while the WITHDRAWAL had no guard at all, so a draw that
-     * realized nothing still took a premium and booked none of it — the field
-     * under-counted its own damage, and a scoping pass over it found two
-     * affected fixtures when the answer was four. The premium is now zero in
-     * that case by construction (see calculateGrossWithdrawal), and if it ever
-     * stops being zero this records it instead of hiding it.
+     * Booked negative, like every tax field; the annual true-up relies on the
+     * sign (tests/tax-sign-convention.mjs). Recorded whenever the premium is
+     * non-zero, gain or no gain — calculateGrossWithdrawal makes it zero when
+     * nothing is realised.
      */
     #bookTaxProvision(fundingAsset, forAsset, premiumAmount) {
         if (!(premiumAmount > 0.005)) return;
@@ -407,22 +375,13 @@ export class ExpenseEngine {
         // Quick heuristic for marginal LTCG rate (0%, 15%, 20%)
         const ltcgRate = this.config.taxTable.getMarginalLTCGRate(taxableIncome);
 
-        // 2. Solve for the withdrawal whose AFTER-TAX proceeds are the shortfall.
+        // 2. Solve for the withdrawal whose after-tax proceeds are the shortfall.
         //
-        // The old formula was W = X / (1 - t*g) with g = getUnrealizedGainRatio(),
-        // the account's headline gain fraction. That is not the rule the account
-        // actually applies: ModelAsset.planWithdrawal draws this month's fresh
-        // deposits first at ZERO gain, and only sells the remainder pro-rata.
-        // A backstop that receives income and pays expenses in the same month
-        // therefore realizes almost nothing while its headline ratio reads 80%,
-        // and the gross-up withdrew for a tax that was never going to come due.
-        // Measured before this change: the premium ran 3x to 8x the gain the
-        // withdrawal actually realized.
-        //
-        // So the gain is asked for rather than modelled. gain(W) is linear in W
-        // once W exceeds the fresh-deposit balance, so two probes give the slope
-        // and intercept exactly — no iteration, no tolerance, and no second copy
-        // of the realization rule to drift.
+        // The gain is taken from ModelAsset.planWithdrawal — the rule the draw
+        // will actually apply (this month's deposits first, at zero gain) — not
+        // from the account's overall gain ratio. gain(W) is linear once W
+        // exceeds the fresh deposits, so two probes give it exactly: no
+        // iteration, and no second copy of the rule.
         const atShortfall = modelAsset.planWithdrawal(netShortfall);
         if (atShortfall.realizedGain.amount <= 0) return netShortfall.copy();
 

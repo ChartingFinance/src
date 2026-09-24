@@ -3,60 +3,38 @@
  *
  * What the engine did, as structured data instead of prose.
  *
- * ── Why ──────────────────────────────────────────────────────────────
+ * ── The rule ─────────────────────────────────────────────────────────
  *
- * Credit-memo notes were the engine's only record of its own reasoning, and
- * three systems read them by matching English: `monthlySanityCheck` decided
- * whether the books balanced with a `switch` over string literals,
- * `portfolio-issues.js` recovered user-facing alerts by regex, and
- * `rule-notes.js` did the same for the View modal. Renaming 'Asset growth' to
- * 'Asset Growth' — one capital letter — corrupted reconciliation and passed
- * every test in the suite.
- *
- * The rule that fixes it, and the only one that matters here:
- *
- *     A NOTE IS GENERATED FROM AN EVENT FOR DISPLAY, AND NEVER PARSED BACK.
- *
- * One direction. `renderNote()` below is the single place prose is produced.
- * Nothing downstream may read it to decide anything.
+ * A note is generated from an event for display, and never parsed back.
+ * `renderNote()` is the one place prose is produced; code decides things from
+ * the event's type and data, so rewording a note cannot change a result.
+ * (portfolio-issues.js and rule-notes.js still match some note text — see
+ * markdowns/code-issues-from-comments.md.)
  *
  * ── Sensors and collectors ───────────────────────────────────────────
  *
- * A SimEvent is a sensor reading: raw, dumb, high-volume, no judgement. It
- * says an account was debited, not that anything is wrong. Deciding what is
- * *actionable* belongs to a collector — `portfolio-issues.js` — which reads
- * the bus with the surrounding context needed to tell a fault from normal
- * operation. An account hitting $0 is a reading; whether that is a retiree
- * drawing down as planned or a plan that has failed is a judgement, and the
- * two live in different files on purpose.
+ * A SimEvent is a sensor reading: raw, high-volume, no judgement. It says an
+ * account was debited, not that anything is wrong. Deciding what is actionable
+ * belongs to a collector (`portfolio-issues.js`), which has the context to tell
+ * a retiree drawing down as planned from a plan that has failed.
  *
  * ── Answering "why did the engine do that?" ──────────────────────────
  *
- * That question is answered by a CHAIN, not by a leaf. A $1,847 brokerage
- * withdrawal is the end of a story that starts with an expense coming due and
- * runs through a depleted IRA and a backstop policy choosing this account over
- * three others. Each of those is recorded; two fields say they are the same
- * story:
+ * By a chain, not a single event: a brokerage withdrawal is the end of a story
+ * that starts with an expense coming due. Two fields connect the story:
  *
- *   `metric`  — which Metric this event moved, where there is one. Turns "why
- *               is my capital-gains number $412?" into "show every event that
- *               wrote to that metric". Nearly free to capture, because the
- *               engine already writes the metric and the memo side by side.
+ *   `metric`  — the Metric this event moved, if any, so "why is my
+ *               capital-gains number $412?" becomes "show every event that
+ *               wrote to that metric".
  *
- *   `traceId` — the enclosing causal scope, read from AMBIENT context inside
- *               recordEvent() and never passed by callers. Shaping it that way
- *               is why causality (trace.js) landed as scope-openers around
- *               existing operations rather than a second migration across every
- *               write site. Read chains back with `chainFor` / `explainEvent`,
- *               passing `portfolio.traceScopes` — never the module state, which
- *               the next run resets.
+ *   `traceId` — the enclosing causal scope (trace.js), read from ambient
+ *               context inside recordEvent(), never passed by callers. Read
+ *               chains back with `chainFor` / `explainEvent`, passing
+ *               `portfolio.traceScopes`.
  *
- * Freeze frames — the decision context captured at the moment of a choice, the
- * way OBD-II stores sensor values with a fault code — are NOT here yet.
- * `resolveFunding` knows why it picked an account only while it is picking;
- * one line later that is unrecoverable. Recording it at the site is what makes
- * "why this account?" answerable without recomputing engine logic at render
- * time. That work belongs with the decision sites themselves.
+ * Not yet recorded: why a decision was made at the moment it was made (which
+ * account `resolveFunding` chose, and why). That has to be captured at the
+ * decision site; it cannot be recovered afterwards.
  */
 
 import { Currency } from './utils/currency.js';
@@ -64,10 +42,8 @@ import { Currency } from './utils/currency.js';
 /**
  * Every kind of thing the engine can record.
  *
- * Finer-grained than reconciliation buckets on purpose: ASSET_GROWTH,
- * EXPENSE_INFLATION and INCOME_GROWTH all reconcile the same way but are
- * different events, and collapsing them here would throw away the distinction
- * permanently to save a mapping.
+ * Finer-grained than reconciliation buckets: ASSET_GROWTH, EXPENSE_INFLATION
+ * and INCOME_GROWTH reconcile the same way but are different events.
  */
 export const EventType = Object.freeze({
     // ── Growth and yield ──
@@ -100,13 +76,9 @@ export const EventType = Object.freeze({
     SPILLOVER:               'spillover',         // data: { depleted }
     GROSS_UP:                'grossUp',           // data: { forAsset, overflow: boolean }
 
-    // The part of a GROSS_UP that was withdrawn to cover capital-gains tax
-    // rather than to pay the obligation. No cash moves for this event — the
-    // money already left under the GROSS_UP above — it names a portion of that
-    // draw so the provision is answerable instead of implicit. It exists
-    // because the provision used to be recorded only when a gain was realized
-    // while being WITHDRAWN unconditionally, so the books under-counted their
-    // own damage by an amount nothing could see. data: { forAsset }
+    // The part of a GROSS_UP withdrawn to cover capital-gains tax rather than
+    // the obligation. No cash moves for this event (it left under the
+    // GROSS_UP); it names that portion so it can be reported. data: { forAsset }
     TAX_PROVISION:           'taxProvision',
     ONE_TIME:                'oneTime',           // data: { note }
 
@@ -116,17 +88,12 @@ export const EventType = Object.freeze({
 });
 
 /**
- * Where a shortfall came from. SPILLOVER and UNFUNDED are both "the part of a
- * movement that one account could not supply", and they are emitted from BOTH
- * the two-sided `execute()` path and the one-sided `settleOneSided` path.
- * Conservation has to know which, because only the two-sided total is expected
- * to net to zero.
- *
- * Learned the hard way: a probe over the four quick-start profiles showed
- * TRANSFER + SPILLOVER + UNFUNDED === 0 and that looked like a law. It is not —
- * those four profiles simply never spill from a settlement. Scenarios where a
- * home's carrying costs drain their funding account break the naive sum by up
- * to $2,265 a month.
+ * Where a shortfall came from. SPILLOVER and UNFUNDED ("the part of a movement
+ * one account could not supply") are emitted from both the two-sided
+ * `execute()` path and the one-sided `settleOneSided` path, and only the
+ * two-sided total nets to zero, so conservation needs to know which. (The
+ * quick-start profiles never spill from a settlement; a home whose carrying
+ * costs drain its funding account does.)
  */
 export const ShortfallOrigin = Object.freeze({
     /** Remainder of a two-sided transfer. Participates in conservation. */
@@ -144,9 +111,8 @@ export const EventKind = Object.freeze({
 });
 
 /**
- * Which events moved money. Mirrors the `kind` argument every call site used
- * to pass by hand — now a property of the event type, so it cannot disagree
- * with itself between two sites emitting the same thing.
+ * Which events moved money. A property of the event type, so two sites
+ * emitting the same event cannot disagree.
  */
 const INFO_TYPES = new Set([
     EventType.MORTGAGE_INTEREST,
@@ -178,11 +144,8 @@ export class SimEvent {
      */
     constructor(type, amount, dateInt, { metric = null, data = null, seq = 0, traceId = null } = {}) {
         this.type    = type;
-        // COPY, do not hold the caller's Currency. Several engines mutate an
-        // amount after recording it — tax-engine calls escrow.flipSign() one
-        // line after booking the escrow — and a stored reference would let
-        // that rewrite history after the fact. CreditMemo has always copied;
-        // an event that did not would silently disagree with its own memo.
+        // A copy: several engines mutate an amount after recording it
+        // (tax-engine flips the escrow's sign right after booking it).
         this.amount  = amount instanceof Currency ? amount.copy() : new Currency(amount ?? 0);
         this.dateInt = dateInt;
         this.kind    = kindOf(type);
@@ -194,13 +157,10 @@ export class SimEvent {
 }
 
 /**
- * The ONLY place a credit-memo note is produced.
+ * The only place a credit-memo note is produced.
  *
- * Every string below is byte-identical to what the engine wrote before this
- * module existed, because consumers still match on them and
- * `tests/memo-vocabulary.mjs` locks the whole vocabulary. Wording changes are
- * a separate, deliberate PR once nothing parses these any more — normalising
- * them here would hide a real regression inside a cosmetic diff.
+ * The wording is locked by `tests/memo-vocabulary.mjs`, because some consumers
+ * still match on it. Change wording in its own PR, once nothing parses it.
  *
  * @param {SimEvent} event
  * @returns {string}
@@ -229,21 +189,18 @@ export function renderNote(event) {
         case EventType.TAX_PROVISION:           return d.forAsset
             ? `Withheld for capital gains tax on the draw for ${d.forAsset}`
             : 'Withheld for capital gains tax on this draw';
-        // Says WHICH side of the min bound, because that is the whole
-        // question a reader has: too much investment income, or too much
-        // total income? No currency formatting — this module imports
-        // nothing, and reaching for a helper here is what put an
-        // undefined formatCurrency in this line on 2026-08-18.
+        // Says which side of the min bound: too much investment income, or
+        // too much total income. No currency helper — this module imports
+        // nothing.
         case EventType.NIIT_ASSESSED:           return d.bound === 'nii'
             ? 'Net investment income tax (3.8% of net investment income)'
             : 'Net investment income tax (3.8% of MAGI over the threshold)';
         case EventType.CAPITAL_GAIN_RECOGNIZED: return d.spillover ? 'Capital gains (spillover)' : 'Capital gains';
         case EventType.CAPITAL_GAIN_EXCLUDED:   return 'Primary home gain excluded';
 
-        // Transfers and settlements share a shape but not a format: property
-        // tax settles as "Home property tax" while maintenance settles as
-        // "Home → Checking (maintenance)". Same operation, two wordings —
-        // preserved verbatim here, worth unifying once nothing parses them.
+        // Property tax settles as "Home property tax" but maintenance as
+        // "Home → Checking (maintenance)": two wordings for one operation,
+        // kept because consumers still match them.
         case EventType.TRANSFER:                return `${d.from} → ${d.to} (${d.cadence})`;
         case EventType.SETTLEMENT:              return d.label === 'property tax'
                                                     ? `${d.from} property tax`
