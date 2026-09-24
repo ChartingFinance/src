@@ -1,8 +1,7 @@
 /**
  * age-65-deductions.mjs
  *
- * The two deductions that depend on being 65 or older, neither of which existed
- * before 2026-09-23 — the standard deduction was one flat number for every age:
+ * The two deductions that depend on being 65 or older:
  *
  *   IRC §63(f)       the additional standard deduction. $2,050 single, $1,650
  *                    per spouse (2026), indexed. Part of the STANDARD deduction,

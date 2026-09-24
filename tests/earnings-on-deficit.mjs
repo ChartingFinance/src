@@ -8,7 +8,7 @@
  * compounding at the account's own return rate, as though being overdrawn at a
  * brokerage were a margin loan priced at the equity return.
  *
- * Found 2026-07-28 in the shipped Early Career quick start: the Brokerage dips
+ * Found in the shipped Early Career quick start: the Brokerage dips
  * to -$424 in month 34 and compounds to -$11.5M by plan end, of which
  * -$9,506,467 — 82% — is this phantom negative growth.
  *

@@ -11,10 +11,9 @@
  *      own expenses inflate, or the real line drifts out of step with the cost
  *      of living and the error compounds over a 30-year plan. Inflation is a
  *      measured annual rate, so both compound by the twelfth root: twelve
- *      months give exactly the stated rate. (Until 2026-09-23 both used
- *      rate/12; this section asserted that, and they changed together.) The
- *      lock-step is asserted against the engine's expense directly, not only
- *      against a formula, so the two cannot drift apart again.
+ *      months give exactly the stated rate. The lock-step is asserted against
+ *      the engine's expense directly, not only against a formula, so the two
+ *      cannot drift apart.
  *
  *   2. BACKTEST DATA RUNNING OUT. CPI covers 1970-2025. A long plan backtested
  *      from a recent year runs off the end, where the engine restores the

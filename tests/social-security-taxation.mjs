@@ -3,12 +3,11 @@
  *
  * IRC §86 — how much of a Social Security benefit is taxable.
  *
- * Until 2026-09-23 the engine included 85% of every benefit, always. 85% is
- * §86's CEILING. A single retiree living on $3,500/month of Social Security was
- * billed $2,104 a year where the IRS says $0; one with $2,500 of Social Security
- * and a $2,500 pension, $4,480 where it says $3,082. It survived three code
- * reviews partly because two unit tests pinned the flat rule — the tests agreed
- * with the bug.
+ * 85% is §86's ceiling, not a flat rate. Including 85% of every benefit bills
+ * a single retiree living on $3,500/month of Social Security $2,104 a year where
+ * the IRS says $0, and one with $2,500 of Social Security and a $2,500 pension
+ * $4,480 where it says $3,082. Those are the two households checked end to end
+ * below.
  *
  * ── What makes these non-vacuous ─────────────────────────────────────
  *

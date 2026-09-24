@@ -5,7 +5,7 @@
  * distribution on that account's own ledger — whether it leaves monthly or all
  * at once when the account closes.
  *
- * The bug this guards (fixed 2026-07-28): distribution RECORDING rode on the
+ * The bug this guards: distribution RECORDING rode on the
  * tax path. applyCapitalGainsTax returns early for tax-free instruments, which
  * is correct for tax — a Roth owes none — but that early return was also the
  * gate for the booking its tax-deferred siblings get from

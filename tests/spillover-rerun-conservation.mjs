@@ -1,7 +1,7 @@
 /**
  * spillover-rerun-conservation.mjs
  *
- * Regression tests for two bugs fixed 2026-06-12:
+ * Regression tests for two bugs:
  *
  *   F6 — Expenses funded from a depleted tax-advantaged account must not
  *        create money. Before the fix, expense withdrawals clamp the funding

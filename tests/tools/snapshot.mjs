@@ -723,12 +723,10 @@ for (const fixture of selected) {
 // otherwise record a corpus-wide claim it did not measure.
 //
 // `--bless --only` therefore rewrites the filtered baselines and leaves
-// _coverage.snap describing the corpus as it used to be. That is a quiet way to
+// _coverage.snap describing the corpus as it was. That is a quiet way to
 // lose exactly what this file is for: the coverage report is how a branch going
-// unreached gets noticed, and a stale one still reads as green. Caught while
-// building the MFJ fixtures, where a partial bless left the coverage entry
-// describing a fixture two revisions old. Say so rather than assume the next
-// full run will clean it up.
+// unreached gets noticed, and a stale one still reads as green. So say so,
+// rather than assume the next full run will clean it up.
 if (ONLY && BLESS) {
   console.log(
     `\n  NOTE  _coverage.snap was NOT updated — coverage is corpus-wide and this\n` +

@@ -4,7 +4,7 @@
  * Guards the IRS rule that ANY distribution from a tax-deferred account
  * counts toward its Required Minimum Distribution.
  *
- * Bug (found 2026-07-21 end-result audit): expense-, escrow- and
+ * The bug guarded: expense-, escrow- and
  * carrying-cost-funded withdrawals from IRA/401K accounts were booked only
  * on the household FinancialPackage (recordTransfer); nothing wrote the
  * asset-level TRAD_IRA_DISTRIBUTION / FOUR_01K_DISTRIBUTION metric that

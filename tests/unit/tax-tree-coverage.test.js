@@ -8,12 +8,9 @@
  * asset View modal, which builds itself from `MetricRollups` and therefore picks
  * up a new tax metric on its own.
  *
- * That difference cost a release. NIIT shipped in #37, its reporting was fixed
- * in #38, and the tax breakdown a user actually reads STILL did not mention it,
- * because nothing connects a new tax metric to this list. The engine collected
- * the tax, the report view showed it, the asset modal showed it, and this
- * screen — the one the user was looking at — did not. It was found by reading
- * the screen, which is not a test strategy.
+ * That difference has cost a release: NIIT was collected and the report view
+ * and asset modal showed it, but this screen, the one the user reads, did not,
+ * because nothing connects a new tax metric to this list.
  *
  * So: derive the set of taxes from the rollup DAG (the engine's own definition
  * of what a tax is) and assert the hardcoded list covers it. A new leaf metric
@@ -88,8 +85,7 @@ describe('TAX_TREE covers every tax the engine charges', () => {
     // The Taxes column reads ONE month and multiplies by 12. NIIT is booked
     // once a year by applyAnnualNIIT, so without this flag the row is pruned in
     // the eleven months the metric is zero and reports 12x the real charge in
-    // the twelfth. Measured on Early Career: $38,662 of NIIT lands in 16 single
-    // months of a 665-month plan — invisible 97% of the time, wrong the rest.
+    // the twelfth.
     const niitNode = TAX_TREE.find((n) => (n.amountMetrics ?? []).includes(Metric.NIIT));
     expect(niitNode?.annualCadence).toBe(true);
   });

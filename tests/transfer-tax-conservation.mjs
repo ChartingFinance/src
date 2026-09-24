@@ -1,8 +1,7 @@
 /**
  * transfer-tax-conservation.mjs
  *
- * Books-equal-balances regression tests for two transfer-engine bugs fixed
- * 2026-06-12:
+ * Books-equal-balances regression tests for two transfer-engine bugs:
  *
  *   F3 — Roth IRA annual limit must be enforced on the EXECUTED cash flows.
  *        Before the fix: the clamp formula subtracted the proposed
@@ -259,7 +258,7 @@ check('conservation: pure transfer, Δ(IRA + Roth) == 0 (±$1)', () => {
 
 // ══════════════════════════════════════════════════════════════════════
 // Scenario K — closing a traditional IRA is a FULL ordinary-income
-// distribution (fixed 2026-06-12)
+// distribution
 //
 // $50k IRA (zero growth) closes at its finish date mid-run, sweeping 100%
 // to the brokerage. The ENTIRE balance must be booked as tradIRADistribution
