@@ -9,14 +9,13 @@
  *  3. LifeEventType   — Set-based O(1) classifiers
  *  4. ModelLifeEvent   — instance class with apply(), toJSON(), fromJSON()
  *
- * A ModelLifeEvent represents a user decision that rewires the portfolio:
- *   - Closing assets (e.g. stop salary)
- *   - Creating assets (e.g. Social Security income)
- *   - Owning fund transfers for assets during this phase
- *   - Overriding global parameters (e.g. inflation assumptions)
+ * A ModelLifeEvent is a user decision that rewires the portfolio when it
+ * fires: it closes named assets (e.g. the salary at retirement) and installs
+ * this phase's fund transfers. `globalOverrides` is stored and saved but not
+ * applied (see markdowns/code-issues-from-comments.md).
  *
- * The chronometer checks portfolio.lifeEvents each month and calls
- * event.apply(portfolio) when triggerDateInt matches.
+ * Portfolio.applyLifeEvents calls event.apply(portfolio) in the month
+ * triggerDateInt falls in.
  */
 
 import { DateInt }        from './utils/date-int.js';
@@ -135,13 +134,9 @@ export class ModelLifeEvent {
   // ── Computed ──────────────────────────────────────────────────
 
   /**
-   * Bind the run's environment (Spec 9 step 4a). Same contract as
-   * ModelAsset.bindEnv: one environment per run, owned by the Portfolio,
-   * borrowed here. Non-enumerable so it cannot reach toJSON()/copy().
-   *
-   * copy() round-trips through JSON, so a COPIED life event is unbound by
-   * construction — Portfolio.copy() rebinds it. Under 4b that is the
-   * difference between a working copy and a throw on triggerDateInt.
+   * Bind the run's config — the same contract as ModelAsset.bindEnv: owned by
+   * the Portfolio, borrowed here, non-enumerable. copy() goes through JSON, so a
+   * copy is unbound until Portfolio.copy() rebinds it.
    */
   bindEnv(config) {
     Object.defineProperty(this, 'env', {
@@ -183,11 +178,9 @@ export class ModelLifeEvent {
     if (this.applied) return;
     this.applied = true;
 
-    // MONTHLY, not GENERAL: this is per-month simulation detail, and the GA
-    // optimizer re-runs the chronometer thousands of times per analysis. As a
-    // GENERAL line it put 3,078 entries on stderr the moment the logger came
-    // back to life. GENERAL stays on by default and is reserved for the rare
-    // and the important, so that a newly added log line is still visible.
+    // MONTHLY, not GENERAL: per-month detail, and the GA re-runs the
+    // chronometer thousands of times. GENERAL is kept for rare, important
+    // lines.
     logger.log(LogCategory.MONTHLY,
       `LifeEvent.apply: "${this.displayName}" (${this.type}) at ${currentDateInt}`);
 

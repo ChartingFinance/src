@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.3.17; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.3.18; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -30888,7 +30888,6 @@ var DateInt = class _DateInt {
   // ── Arithmetic ───────────────────────────────────────────────────
   /**
    * Absolute month count between two DateInts.
-   * Replaces the old `util_totalMonths` while-loop.
    */
   static diffMonths(start, finish) {
     if (!start || !finish) return 0;
@@ -30915,8 +30914,8 @@ var DateInt = class _DateInt {
     this.month = totalMonths % 12 + 1;
   }
   /**
-   * Sub-month stepping used by the chronometer.
-   * The original alternates day between 1→5→1→5 to model two "ticks" per month.
+   * Sub-month stepping used by the chronometer: days 1, 5, 10, … 30, then the
+   * 1st of the next month. Portfolio.applyMonth acts on days 1, 15 and 30.
    */
   next() {
     this.day = this.day === 1 ? 5 : this.day + 5;
@@ -31059,8 +31058,7 @@ var logger = class _logger {
    * Collect output instead of printing it, for tests and probes. Replaces the
    * sinks for the duration; `stop()` restores the default.
    *
-   * Exists so tests stop monkey-patching `logger.log` — several probes did
-   * exactly that, which breaks silently the moment the signature changes.
+   * Use this rather than monkey-patching `logger.log`.
    *
    * @param {string} [category] only capture this category
    * @returns {{lines: Array<{category: string, message: string}>, stop: Function}}
@@ -31235,13 +31233,9 @@ var ModelLifeEvent = class _ModelLifeEvent {
   }
   // ── Computed ──────────────────────────────────────────────────
   /**
-   * Bind the run's environment (Spec 9 step 4a). Same contract as
-   * ModelAsset.bindEnv: one environment per run, owned by the Portfolio,
-   * borrowed here. Non-enumerable so it cannot reach toJSON()/copy().
-   *
-   * copy() round-trips through JSON, so a COPIED life event is unbound by
-   * construction — Portfolio.copy() rebinds it. Under 4b that is the
-   * difference between a working copy and a throw on triggerDateInt.
+   * Bind the run's config — the same contract as ModelAsset.bindEnv: owned by
+   * the Portfolio, borrowed here, non-enumerable. copy() goes through JSON, so a
+   * copy is unbound until Portfolio.copy() rebinds it.
    */
   bindEnv(config2) {
     Object.defineProperty(this, "env", {
@@ -32588,10 +32582,8 @@ var RetirementIncomeBehavior = Object.freeze({
       Metric.NET_INCOME,
       Metric.GROWTH,
       Metric.SOCIAL_SECURITY_INCOME,
-      // Withholding on arrival books here. Without these the tax is deducted
-      // from the benefit and shown nowhere: MetricSet.get() falls back to
-      // NULL_METRIC, whose add() is a no-op, so the write succeeds silently and
-      // the asset's own ledger disagrees with the household package.
+      // Withholding on arrival books here; an unregistered metric would land
+      // on NULL_METRIC and disappear.
       Metric.WITHHELD_INCOME_TAX,
       Metric.INCOME_TAX,
       Metric.FEDERAL_TAXES,
@@ -32715,11 +32707,8 @@ var CapitalBehavior = Object.freeze({
       // Federal withholding at the source of a deferred distribution books here.
       // Without it the tax is deducted from the account and never shown on it.
       Metric.WITHHELD_INCOME_TAX,
-      // IRC §1411 books here. Without it the charge still reaches FEDERAL_TAXES
-      // through the rollup, but the NIIT line itself resolves to NULL_METRIC and
-      // the write is a silent no-op — the tax is collected and shown nowhere by
-      // name. Measured 2026-08-20: every fixture that owed NIIT had it folded
-      // anonymously into federalTaxes.
+      // IRC §1411 books here; unregistered, the NIIT line would land on
+      // NULL_METRIC and the tax would appear in no row by name.
       Metric.NIIT,
       Metric.INCOME_TAX,
       Metric.FEDERAL_TAXES,
@@ -36336,15 +36325,8 @@ var ARR = class _ARR {
   /**
    * Parse a percentage string like "7" or "7%" → 0.07.
    *
-   * Anything unparseable becomes 0, matching Currency.parse. This used to
-   * return ARR(NaN), and the failure was silent rather than loud: an asset
-   * whose annualTaxRate is NaN is charged NO property tax at all, and the run
-   * completes without a warning. Measured on a 2-year plan — the same
-   * portfolio ended with the backstop at $42,099 with a 1% rate and at $50,000
-   * untouched with NaN.
-   *
-   * The only caller is ModelAsset.fromHTML, where an optional rate field that
-   * exists but was left blank is exactly the case that produced it.
+   * Anything unparseable becomes 0, like Currency.parse. The caller is
+   * ModelAsset.fromHTML, where an optional rate field may be left blank.
    */
   static parse(str) {
     const cleaned = String(str).replace("%", "");
@@ -36370,10 +36352,9 @@ var ARR = class _ARR {
   //             prorated — property tax, maintenance, a dividend yield. The
   //             month's figure is defined as one twelfth: asMonthlyNominal().
   //
-  // Until 2026-09-23 there was one `asMonthly()` returning rate/12 for both,
-  // so a stated 8.5% return realized 8.839% a year and a 30-year plan ended
-  // ~9.8% richer than its own assumptions. The calibrated Monte Carlo draws
-  // measured annual returns, so it could not agree with the plan either.
+  // Treating a measured rate as nominal would realise more than stated (8.5%
+  // becomes 8.839% a year), and the plan would no longer agree with the
+  // calibrated Monte Carlo, which draws measured annual returns.
   /** Monthly step that compounds to exactly `rate` over twelve months. */
   asMonthlyEffective() {
     return Math.pow(1 + this.rate, 1 / 12) - 1;

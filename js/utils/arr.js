@@ -10,12 +10,8 @@ export class ARR {
    * @param {number} rate  Decimal rate, e.g. 0.07 for 7%
    */
   constructor(rate = 0) {
-    // NaN-safe, matching Currency. ARR used to store whatever it was handed,
-    // and that asymmetry is why a blank rate field could reach the simulation
-    // as NaN while a blank money field could not: Currency guards here, ARR did
-    // not. A NaN rate does not throw — it silently removes the charge, so an
-    // asset with a NaN annualTaxRate pays no property tax and the run looks
-    // clean.
+    // NaN-safe, like Currency: a NaN rate would not throw — it would silently
+    // remove the charge (a NaN property-tax rate charges nothing).
     this.rate = typeof rate === 'number' && Number.isFinite(rate) ? rate : 0;
   }
 
@@ -28,15 +24,8 @@ export class ARR {
   /**
    * Parse a percentage string like "7" or "7%" → 0.07.
    *
-   * Anything unparseable becomes 0, matching Currency.parse. This used to
-   * return ARR(NaN), and the failure was silent rather than loud: an asset
-   * whose annualTaxRate is NaN is charged NO property tax at all, and the run
-   * completes without a warning. Measured on a 2-year plan — the same
-   * portfolio ended with the backstop at $42,099 with a 1% rate and at $50,000
-   * untouched with NaN.
-   *
-   * The only caller is ModelAsset.fromHTML, where an optional rate field that
-   * exists but was left blank is exactly the case that produced it.
+   * Anything unparseable becomes 0, like Currency.parse. The caller is
+   * ModelAsset.fromHTML, where an optional rate field may be left blank.
    */
   static parse(str) {
     const cleaned = String(str).replace('%', '');
@@ -65,10 +54,9 @@ export class ARR {
   //             prorated — property tax, maintenance, a dividend yield. The
   //             month's figure is defined as one twelfth: asMonthlyNominal().
   //
-  // Until 2026-09-23 there was one `asMonthly()` returning rate/12 for both,
-  // so a stated 8.5% return realized 8.839% a year and a 30-year plan ended
-  // ~9.8% richer than its own assumptions. The calibrated Monte Carlo draws
-  // measured annual returns, so it could not agree with the plan either.
+  // Treating a measured rate as nominal would realise more than stated (8.5%
+  // becomes 8.839% a year), and the plan would no longer agree with the
+  // calibrated Monte Carlo, which draws measured annual returns.
 
   /** Monthly step that compounds to exactly `rate` over twelve months. */
   asMonthlyEffective() {

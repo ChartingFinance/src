@@ -1,19 +1,9 @@
 /**
  * market-data.js — historical series, for backtesting.
  *
- * Spec 9 step 6. Lifted out of globals.js unchanged. These are not settings:
- * they are immutable reference data, keyed by year, with no setter, no
- * localStorage and nothing to reset between runs. They only lived in globals.js
- * because that file had become the place things went.
- *
- * The move is what lets globals.js leave the engine's import closure.
- * `chronometer.js` and `mc-compute.js` need these series and nothing else from
- * globals, so while the series lived there the engine could never stop
- * importing the settings store — and the layer-boundary exemption could never
- * be deleted, which is the signal that says this migration is finished.
- *
- * globals.js re-exports all four, so any caller outside the engine is
- * unaffected.
+ * Immutable reference data keyed by year, not settings. Kept out of
+ * globals.js so the engine (chronometer.js, mc-compute.js) never imports the
+ * settings store; globals.js re-exports all four.
  */
 
 export const global_sp500_annual_returns = Object.freeze({

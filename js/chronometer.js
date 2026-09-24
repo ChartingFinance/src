@@ -77,10 +77,8 @@ function applyBacktestForYear(portfolio, simulationYear, backtestStartYear, simS
 
 export async function chronometer_run(portfolio) {
 
-    // Clear the logger's per-run output cap. SANITY fires once a month, so a
-    // 666-month plan with a real reconciliation problem can emit thousands of
-    // lines; without a per-run reset the cap would silence the second run of a
-    // session instead of the tail of the first.
+    // Reset the logger's per-run output cap, so it limits each run rather than
+    // the whole session.
     logger.reset();
     resetTraces();
 
@@ -162,12 +160,9 @@ export async function chronometer_run(portfolio) {
 
     // Capture the plan's trailing stub year for guardrails.
     //
-    // The loop above snapshots a year on each New Year's rollover and then
-    // zeroes portfolio.yearly (yearlyChron). A plan ending in December has
-    // therefore already been snapshotted in full — currentDateInt sits on the
-    // following New Year's Day — and appending here would duplicate that year
-    // with an empty accumulator ($0 spend, 0% withdrawal rate). Only a plan
-    // that ends mid-year leaves unaccumulated months in portfolio.yearly.
+    // The loop snapshots each year at the New Year rollover. A plan ending in
+    // December is already complete, and appending would duplicate the year
+    // with an empty accumulator; only a mid-year ending leaves months to add.
     if (portfolio.guardrailsParams && !currentDateInt.isNewYearsDay()) {
         const investable = portfolio.getTotalInvestableAssets().amount;
         const annualExpense = Math.abs(portfolio.yearly.expense.amount);

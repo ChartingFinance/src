@@ -3,41 +3,28 @@
  *
  * Category-based logging with pluggable sinks.
  *
- * ── Why this was dead, and why it is not just uncommented ────────────
+ * ── Sinks ────────────────────────────────────────────────────────────
  *
- * The whole body of this file sat commented out behind
- * `// TODO: move off of console.log because we will try mcp-server over stdio`.
- * That TODO was RIGHT, not an excuse: `js/mcp/mcp-server.js` speaks MCP over
- * `StdioServerTransport`, which owns **stdout** for JSON-RPC. A single
- * `console.log` from deep inside the engine corrupts that protocol.
- *
- * So the fix is a SINK, not a console call. The default sink is chosen by
- * environment:
+ * Output goes to a sink chosen by environment:
  *
  *   browser  → console.log
- *   Node     → process.stderr  (NEVER stdout — see above)
+ *   Node     → process.stderr  (never stdout: mcp-server.js speaks MCP over
+ *              stdio, and anything else on stdout corrupts the protocol)
  *
- * The cost of leaving it dead was high and hidden. `monthlySanityCheck` spent
- * months reporting that the engine's own books did not balance — 293 findings
- * across five healthy scenarios — into a function with an empty body. The only
- * reason anyone found out was a probe that re-implemented the check to see its
- * output. Correct checks that report nowhere are indistinguishable from checks
- * that pass.
+ * tests/logger-alive.mjs asserts the logger actually emits: a silent logger
+ * and a passing check look the same.
  *
  * ── Volume ───────────────────────────────────────────────────────────
  *
- * SANITY fires per month per portfolio. A 666-month plan with a real problem
- * can emit thousands of lines, which will lock a browser tab. Output is capped
- * (MAX_LINES) with a single notice when the cap is hit; `logger.reset()` clears
- * it and `chronometer_run` calls that at the start of every run.
+ * SANITY can fire every month, enough to lock a browser tab. Output is capped
+ * (MAX_LINES) with one notice at the cap; `chronometer_run` calls
+ * `logger.reset()` at the start of every run.
  *
  * ── Categories are opt-in ────────────────────────────────────────────
  *
- * Only GENERAL is enabled by default. SANITY — the engine's own reconciliation
- * verdict — is switched on by the app when `global_showEngineDiagnostics` is
- * set, the same advanced flag that reveals the reconciliation category in the
- * issues panel. This module deliberately does NOT import globals.js: the app
- * wires that, so the logger stays dependency-free and trivially testable.
+ * Only GENERAL is on by default. The app turns SANITY (the engine's
+ * reconciliation findings) on with `global_showEngineDiagnostics`; this module
+ * imports nothing, so the app does the wiring.
  */
 
 export const LogCategory = Object.freeze({
@@ -115,8 +102,7 @@ export class logger {
      * Collect output instead of printing it, for tests and probes. Replaces the
      * sinks for the duration; `stop()` restores the default.
      *
-     * Exists so tests stop monkey-patching `logger.log` — several probes did
-     * exactly that, which breaks silently the moment the signature changes.
+     * Use this rather than monkey-patching `logger.log`.
      *
      * @param {string} [category] only capture this category
      * @returns {{lines: Array<{category: string, message: string}>, stop: Function}}

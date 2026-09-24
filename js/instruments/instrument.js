@@ -1,11 +1,8 @@
 /**
  * instrument.js
  *
- * Replaces: sInstrumentNames, sInstrumentsIDs, sInstrumentSortOrder,
- *           sIntrumentDisplayNames, and ~30 loose isXxx() classifier functions.
- *
- * Each instrument is defined once. Classification (isCapital, isFundable, etc.)
- * is expressed as Set membership, making it O(1), exhaustive, and easy to extend.
+ * Each instrument is defined once. Classification (isCapital, isFundable, …)
+ * is Set membership: O(1), exhaustive, and easy to extend.
  */
 
 export const Instrument = Object.freeze({
@@ -126,12 +123,10 @@ const EXPENSABLE = new Set([
 // fund transfer covers an obligation: cash, savings, brokerage, then bonds.
 // Ordered — first match with a positive balance wins.
 //
-// Retirement accounts (401K, IRA, Roth IRA) are deliberately ABSENT. Spending
-// them carries consequences the engine cannot choose on the user's behalf —
-// ordinary-income tax, early-withdrawal penalties, Roth ordering rules — so a
-// plan that means to spend retirement money says so with an explicit fund
-// transfer. Real estate is absent for the obvious reason: you cannot pay the
-// electric bill with a fraction of a house.
+// Retirement accounts are absent: spending them has consequences (tax,
+// penalties, Roth ordering) the engine should not choose for the user, so a
+// plan that spends retirement money says so with an explicit transfer. Real
+// estate is absent because it cannot pay a bill.
 const FUNDING_BACKSTOP_PRIORITY = [
   Instrument.CASH,
   Instrument.BANK,
