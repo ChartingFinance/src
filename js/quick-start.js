@@ -365,14 +365,9 @@ const YOUNG_COUPLE = {
 // ══════════════════════════════
 // Profile: Dual Income Couple (40-50), filing jointly
 //
-// The first profile that is not one person. Two salaries, two 401(k)s and two
-// Social Security benefits, filing jointly — the most common real household
-// shape, and the only shipped profile that exercises MFJ at all.
-//
-// Incomes are deliberately ordinary. The extreme case, where both earners clear
-// the Social Security wage base and the engine's single shared accumulator stops
-// withholding early, belongs to the adversarial fixture mfj-two-earners; a
-// shipped profile should look like a household someone recognises.
+// Two salaries, two 401(k)s and two Social Security benefits, filing jointly.
+// Incomes are deliberately ordinary; the extreme case (both earners above the
+// Social Security wage base) is the test fixture mfj-two-earners.
 // ══════════════════════════════
 
 const DUAL_INCOME = {
@@ -574,9 +569,7 @@ const RETIRED_COUPLE = {
  * Ordered list of all Quick Start profiles.
  *
  * Four Single, then four MFJ, one pair per life stage. The welcome grid shows
- * only the set matching the current filing status, so the two are alternatives
- * rather than a list of eight — and the pairing is why each MFJ profile mirrors
- * the age band of a Single one instead of inventing new stages.
+ * the set matching the current filing status.
  */
 export const quickStartProfiles = [
     EARLY_CAREER, MID_CAREER, PRE_RETIREMENT, RETIRED,
@@ -586,13 +579,10 @@ export const quickStartProfiles = [
 /**
  * Build assets + life events for a given profile.
  *
- * `ageOverrides` exists because the ages are not decoration — every asset date
- * and every life-event trigger is derived from them by dateAnchors(). A caller
- * that wants a 57-year-old's version of Mid Career has to say so HERE; setting
- * global_user_startAge afterwards does not move a single date, which is exactly
- * the bug the MCP server shipped with.
- *
- * Defaults to the profile's own ages, so every existing caller is unchanged.
+ * Every asset date and life-event trigger is derived from the ages here (by
+ * dateAnchors()), so a caller wanting different ages must pass `ageOverrides`;
+ * changing the settings afterwards moves nothing. Defaults to the profile's
+ * own ages.
  *
  * @param {object} profile - one of the quickStartProfiles entries
  * @param {object} [ageOverrides] - partial {startAge, retirementAge, finishAge}

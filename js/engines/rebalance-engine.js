@@ -73,15 +73,11 @@ export class RebalanceEngine {
             // ── Execute ──────────────────────────────────────────────
             const result = ft.execute();
 
-            // Record tax consequences against the SOURCE of the funds, with
-            // the positive amount that was debited. recordTransfer classifies
-            // by where the money CAME FROM: realized gains for a taxable
-            // source, distribution income for a tax-deferred/Roth source
-            // (e.g. a Roth conversion's IRA side is ordinary income). The old
-            // call passed the DESTINATION instrument and a negative amount,
-            // which booked phantom negative distributions against the target
-            // account and dropped the realized gain from the tax base
-            // entirely.
+            // Record the tax consequence against the source of the funds, with
+            // the positive amount debited: recordTransfer classifies by where
+            // the money came from (realized gain from a taxable account,
+            // ordinary income from a tax-deferred one — as in a Roth
+            // conversion).
             this.monthly.recordTransfer(modelAsset.instrument, amount, result.realizedGain);
 
             // Record contribution metric on target (for retirement accounts)
@@ -138,11 +134,9 @@ export class RebalanceEngine {
     _trackDistribution(sourceAsset, amount, targetAsset = null) {
         sourceAsset.recordDistribution(amount);
 
-        // A conversion (IRA → Roth, IRA → 401K) is a taxable distribution but
-        // the cash never leaves the shelter, so it is NOT withheld at the
-        // source: the user asked to convert a specific amount and withholding
-        // would silently shrink it, breaking the pure-transfer conservation
-        // that tests/transfer-tax-conservation asserts.
+        // A conversion (IRA → Roth, IRA → 401(k)) is taxable but stays in a
+        // shelter, so it is not withheld at the source: withholding would shrink
+        // the amount the user asked to convert.
         if (targetAsset && (InstrumentType.isTaxDeferred(targetAsset.instrument)
                          || InstrumentType.isTaxFree(targetAsset.instrument))) {
             sourceAsset.monthlyShelteredDistribution.add(amount);

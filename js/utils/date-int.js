@@ -1,13 +1,8 @@
 /**
  * date-int.js
  *
- * A compact year-month date encoded as an integer (YYYYMM).
- *
- * Changes from original:
- *  - `diffMonths()` added (replaces the loose `util_totalMonths` loop)
- *  - `addMonths()` uses arithmetic instead of a while-loop
- *  - `equals()`, `isBefore()`, `isAfter()` for clearer comparisons
- *  - `next()` / `prev()` day-stepping logic preserved for chronometer compatibility
+ * A year-month date (serialised as YYYYMM), plus a day used only by the
+ * chronometer's sub-month ticks.
  */
 
 export const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -82,7 +77,6 @@ export class DateInt {
 
   /**
    * Absolute month count between two DateInts.
-   * Replaces the old `util_totalMonths` while-loop.
    */
   static diffMonths(start, finish) {
     if (!start || !finish) return 0;
@@ -107,8 +101,8 @@ export class DateInt {
   }
 
   /**
-   * Sub-month stepping used by the chronometer.
-   * The original alternates day between 1→5→1→5 to model two "ticks" per month.
+   * Sub-month stepping used by the chronometer: days 1, 5, 10, … 30, then the
+   * 1st of the next month. Portfolio.applyMonth acts on days 1, 15 and 30.
    */
   next() {
     this.day = this.day === 1 ? 5 : this.day + 5;

@@ -2,12 +2,9 @@
  * price-index.js — cumulative price level, for converting nominal
  * simulation output into real ("today's dollars") output.
  *
- * CONVENTION, and it is not negotiable: this index MUST step exactly as
- * expenses inflate in instrument-behavior.js, or the real line drifts out of
- * step with the engine's own cost of living and the error compounds across a
- * 30-year plan. Both use `ARR.asMonthlyEffective()` — inflation is a measured
- * annual rate, so twelve months compound to exactly `rate`. (Until 2026-09-23
- * both used rate/12; they changed together.)
+ * This index must step exactly as expenses inflate (instrument-behavior.js),
+ * or the real line drifts from the engine's own cost of living. Both use
+ * `ARR.asMonthlyEffective()`; tests/inflation-deflator.mjs checks they agree.
  *
  * BASE: the plan's first month, before any month has elapsed — so index 1.0
  * is the value of a dollar on the plan's start date. History is recorded on

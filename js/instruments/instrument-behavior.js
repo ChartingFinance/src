@@ -3,8 +3,8 @@
  *
  * Strategy objects for each instrument family. Each behavior defines:
  *   - relevantMetrics()  — which metrics this instrument actually uses
- *   - applyMonthly(asset) — monthly simulation logic (lifted from ModelAsset)
- *   - computeCashFlow(asset) — per-asset cash flow calculation (lifted from Portfolio)
+ *   - applyMonthly(asset) — the month's simulation step
+ *   - computeCashFlow(asset) — the asset's cash flow for the month
  *
  * ModelAsset delegates to its behavior instead of branching on instrument type.
  */
@@ -120,10 +120,8 @@ const RetirementIncomeBehavior = Object.freeze({
       ...COMMON_METRICS,
       M.INCOME, M.ORDINARY_INCOME, M.NET_INCOME, M.GROWTH,
       M.SOCIAL_SECURITY_INCOME,
-      // Withholding on arrival books here. Without these the tax is deducted
-      // from the benefit and shown nowhere: MetricSet.get() falls back to
-      // NULL_METRIC, whose add() is a no-op, so the write succeeds silently and
-      // the asset's own ledger disagrees with the household package.
+      // Withholding on arrival books here; an unregistered metric would land
+      // on NULL_METRIC and disappear.
       M.WITHHELD_INCOME_TAX, M.INCOME_TAX, M.FEDERAL_TAXES, M.TAXES,
     ];
   },
@@ -272,11 +270,8 @@ const CapitalBehavior = Object.freeze({
       // Federal withholding at the source of a deferred distribution books here.
       // Without it the tax is deducted from the account and never shown on it.
       M.WITHHELD_INCOME_TAX,
-      // IRC §1411 books here. Without it the charge still reaches FEDERAL_TAXES
-      // through the rollup, but the NIIT line itself resolves to NULL_METRIC and
-      // the write is a silent no-op — the tax is collected and shown nowhere by
-      // name. Measured 2026-08-20: every fixture that owed NIIT had it folded
-      // anonymously into federalTaxes.
+      // IRC §1411 books here; unregistered, the NIIT line would land on
+      // NULL_METRIC and the tax would appear in no row by name.
       M.NIIT,
       M.INCOME_TAX, M.FEDERAL_TAXES, M.TAXES,
       M.CONTRIBUTION, M.PRETAX_CONTRIBUTION, M.POSTTAX_CONTRIBUTION,
@@ -294,12 +289,9 @@ const CapitalBehavior = Object.freeze({
       return new AssetAppreciationResult(Currency.zero(), Currency.zero(), Currency.zero(), Currency.zero());
     }
 
-    // Earnings never accrue on a deficit. An overdrawn account is not a margin
-    // loan: compounding a negative balance at the asset's own return rate is
-    // what turned a -$424 overdraft into -$11.5M across one shipped profile's
-    // lifetime, 82% of the hole. Debt is exempt: it reaches here only while
-    // still owed (the paid-off case returned above), and its "growth" IS the
-    // interest accruing on that balance.
+    // No earnings on a negative balance: an overdrawn account is not a loan
+    // at its own return rate. Debt is exempt — it reaches here only while still
+    // owed, and its "growth" is the interest accruing.
     const earns = InstrumentType.isDebt(asset.instrument) || asset.finishCurrency.amount > 0;
 
     // Debt accrues at a contract APR (rate/12). Every other capital asset's
