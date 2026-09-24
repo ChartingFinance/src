@@ -1,5 +1,5 @@
 /**
- * tax-basis.test.js — spec 6 post-test T1.
+ * tax-basis.test.js
  *
  * Every expected value below is computed BY HAND from the 2026 tables in
  * taxes.js, not copied from what the implementation printed. A test written
@@ -49,10 +49,9 @@ function setFiling(filingAs) {
 /**
  * taxableBasis() with this suite's table.
  *
- * It used to fall back to the module-level active table when given none. Spec 9
- * step 6 removed that fallback — the tax base must come from the run's own
- * table, not from whatever was installed last — so the table is passed here
- * once rather than at 49 call sites.
+ * The tax base must come from the run's own table, not from whatever was
+ * installed last, so taxableBasis() requires one. It is passed here once rather
+ * than at every call site.
  */
 const basis = (p, u, opts = {}) => taxableBasis(p, u, { taxTable: TABLE, ...opts });
 
@@ -79,8 +78,8 @@ describe('ordinaryTaxable', () => {
     expect(b.ordinaryTaxable.amount).toBeCloseTo(67800, 6);
   });
 
-  // IRC §86, not a flat 85%. These two pinned the flat rule until 2026-09-23,
-  // which is why it survived: the test agreed with the bug.
+  // IRC §86, not a flat 85%. Hand-computed, so they cannot simply agree with
+  // the implementation.
   it('does not tax Social Security alone below the §86 base', () => {
     // provisional = 0 + 20,000 < 25,000 → nothing taxable
     const b = basis(pkg({ socialSecurityIncome: 40000 }), USER);
@@ -168,10 +167,9 @@ describe('capitalGains', () => {
 /**
  * IRC §63 takes the deduction off TAXABLE INCOME, which includes capital gain;
  * §1(h) then counts the gain LAST. So the deduction lands on ordinary income
- * first and only what ordinary income cannot absorb reaches the gain. The
- * engine used to floor ordinary taxable income at zero and discard the
- * remainder, over-taxing exactly the early retiree living off a brokerage
- * account.
+ * first and only what ordinary income cannot absorb reaches the gain.
+ * Flooring ordinary taxable income at zero and discarding the remainder would
+ * over-tax exactly the early retiree living off a brokerage account.
  *
  * Every figure below is hand-computed from the 2026 Single table (standard
  * deduction $16,100, 0% capital-gains band to $49,450) against the IRS

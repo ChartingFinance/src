@@ -262,10 +262,9 @@ check('the app shows which run an imported plan came from', () => {
 });
 
 check('the app handles a fragment link arriving in an already-open tab', () => {
-  // The query form got this free — a different query string is a different
-  // document, so the page reloaded and init ran. A fragment change fires
-  // `hashchange` and nothing else. Measured in the browser: with the app open,
-  // the URL carried a 446-character payload and no prompt appeared.
+  // A different query string is a different document, so the page reloads
+  // and init runs. A fragment change fires `hashchange` and nothing else, so
+  // without a listener a link pasted into an open tab shows no prompt.
   const src = readFileSync('js/finplan-app.js', 'utf8');
   assert.ok(/addEventListener\(\s*['"]hashchange['"]/.test(src),
     'no hashchange listener: a share link pasted into an open tab silently does nothing');

@@ -12,10 +12,9 @@
  * files under engines/ import nothing but each other, utils/ and
  * globals.js. Not one of them touches the DOM.
  *
- * "Almost" was the problem. Nothing enforced it, so the boundary held by
- * habit, and habit is not a constraint. The one real leak — the engine reading
- * its configuration out of localStorage, so a headless caller had to fake
- * browser storage — got there without anyone deciding to add it.
+ * Without a test the boundary holds only by habit, and leaks arrive without
+ * anyone deciding to add them (the engine once read its configuration out of
+ * localStorage, so a headless caller had to fake browser storage).
  *
  * ── The manifest is DERIVED, not written down ────────────────────────
  *
@@ -33,18 +32,13 @@
  *
  * ── The exemption list is empty, and that is the result ──────────────
  *
- * `globals.js` was the one entry, because engine configuration was
- * mirrored out of localStorage. Spec 9 removed that: the engine takes a
- * SimConfig as a value, and globals.js is now the browser-side settings
- * store that nothing on the run path imports.
- *
- * The entry was written as a work item rather than a description, and the
- * obsolescence check below is why that mattered — it FAILED the moment the
- * exemption stopped being needed, so the migration announced its own
- * completion instead of waiting for someone to notice.
+ * The engine takes a SimConfig as a value; globals.js is the browser-side
+ * settings store and nothing on the run path imports it. An obsolescence
+ * check fails any exemption that is no longer needed, so the list cannot
+ * quietly keep stale entries.
  *
  * Do not add an entry to make a change pass. One here means "the engine
- * needs a browser", which is the exact claim this file exists to refute.
+ * needs a browser", which is the claim this file exists to refute.
  *
  * Usage:  node tests/layer-boundary.mjs   (from src/)
  */
@@ -84,18 +78,9 @@ const ENTRY_POINTS = [
  * See the module comment. This list shrinks to empty; it never grows.
  */
 const EXEMPT = new Map([
-    // EMPTY, as of Spec 9 step 6 (2026-08-28). `js/globals.js` was the one
-    // entry: the engine read its configuration out of localStorage, and this
-    // list existed to say so out loud until that stopped being true.
-    //
-    // It stopped. The engine takes a SimConfig as a value, globals.js is the
-    // browser-side settings store and nothing on the run path imports it — a
-    // full plan, report and causal chain run with no localStorage defined at
-    // all. The check below turned this from a description into a deadline: it
-    // FAILED once the exemption stopped being needed, which is how the
-    // migration reported its own completion rather than waiting to be believed.
-    //
-    // Adding an entry here means "the engine needs a browser". Do not.
+    // Empty: a full plan, report and causal chain run with no localStorage
+    // defined at all. The check below fails any entry that is no longer
+    // needed. Adding one here means "the engine needs a browser". Do not.
 ]);
 
 /**
@@ -427,18 +412,13 @@ check('util.js is host code and stays out of the engine', () => {
 console.log('\n── The shipped HTML pages call the engine correctly ──\n');
 
 check('no page constructs an engine object with the arity it used to have', () => {
-    // Narrow on purpose, and added because it happened.
+    // Narrow on purpose. A codemod that globs only .js/.mjs misses the inline
+    // module scripts in the HTML pages; when TaxTable's arguments became
+    // required, globals.html threw on load and its settings page stopped
+    // saving, with every suite green because nothing here loads a page.
     //
-    // Spec 9 step 6 made TaxTable's arguments required. The migration script
-    // that rewrote 57 construction sites globbed `--include=*.js --include=*.mjs`
-    // and never saw globals.html, whose inline module script had one. The page
-    // then threw on load, so its change listeners were never attached — the
-    // Globals settings page silently stopped SAVING ANYTHING, and the whole
-    // suite stayed green because nothing here loads an HTML page.
-    //
-    // This does not test the pages. It catches the one class of breakage a
-    // JS-only sweep leaves behind: a shipped page calling a constructor whose
-    // signature moved underneath it.
+    // This does not test the pages. It catches a shipped page calling a
+    // constructor whose signature moved underneath it.
     const pages = readdirSync(SRC).filter(f => f.endsWith('.html'));
     assert.ok(pages.length >= 5, `expected the shipped pages, found ${pages.length}`);
 

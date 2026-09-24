@@ -150,9 +150,9 @@ const retirement = await run([
   bank('Savings', 50000),
 ]);
 
-// Spec 4c: a pension withholds its own tax on arrival at the W-4P default rate,
-// so "settled somewhere else" no longer describes it. The note it gets instead
-// must explain the smaller deposit — non-optional withholding the household
+// A pension withholds its own tax on arrival at the W-4P default rate, so
+// "settled somewhere else" does not describe it. Its note must explain the
+// smaller deposit — non-optional withholding the household
 // never chose is exactly the case where silence reads as a bug.
 check('pension explains its own withholding', () => {
   const notes = notesFor(retirement, 'Pension');
@@ -281,7 +281,7 @@ check('SILENCE: an account with no RMD obligation says nothing about RMDs', () =
 console.log('\n── Account depleted ──\n');
 
 // Checking is too small for the mortgage and clamps at $0; Brokerage covers
-// the rest. The card no longer marks this with ⚠️ — the fact lives here.
+// the rest. The card does not mark this with ⚠️; the rule note carries it.
 const drained = await run([
   { instrument: 'realEstate', displayName: 'Home', isPrimaryHome: true,
     startDateInt: { year: 2026, month: 1 }, finishDateInt: { year: 2029, month: 12 },

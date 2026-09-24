@@ -290,9 +290,9 @@ assert.ok(mcCal.bandData[2][lastM] < mcHist.bandData[2][lastM],
 // start age, so every phase (Retire!) fires shifted by
 // (actualAge − defaultAge) years inside the worker.
 //
-// Since Spec 9 step 4b the chain has one more link, and this test follows it
-// deliberately rather than around it: snapshot → globals → simConfigFromGlobals
-// → the config a Portfolio captures → bound onto each life event. `rebind()`
+// The test follows the whole chain rather than around it: snapshot → globals
+// → simConfigFromGlobals → the config a Portfolio captures → bound onto each
+// life event. `rebind()`
 // below is what mc-worker.js gets for free by constructing a Portfolio after
 // applying the payload. triggerDateInt THROWS on an unbound event, so a test
 // that skipped this would fail loudly rather than silently read module state.
@@ -308,16 +308,13 @@ const retireEvent = ModelLifeEvent.fromJSON({
 /**
  * What a Portfolio does on construction, done directly so the chain is visible.
  *
- * Since Spec 10 step 0 that includes ATTACHING THE ANCHOR. A config from
- * `simConfigFromGlobals()` carries no `birthYear` — only a Portfolio can supply
- * one, because only it knows the plan's first month — and `triggerDateInt`
- * throws without it rather than falling back to the wall clock.
+ * That includes attaching the anchor. A config from `simConfigFromGlobals()`
+ * carries no `birthYear` (only a Portfolio knows the plan's first month), and
+ * `triggerDateInt` throws without it rather than falling back to the clock.
  *
- * Anchoring from this file's own assets is not incidental: it is what makes the
- * assertion below mean what it says. The trigger year now moves because the
- * SNAPSHOT's start age moved, against a fixed plan, rather than because the
- * calendar happened to read a certain way. Before, this test would have shifted
- * with the date it was run on and nobody would have seen it.
+ * Anchoring from this file's own assets makes the assertion below mean what it
+ * says: the trigger year moves because the snapshot's start age moved, against
+ * a fixed plan, not because of the date the test runs on.
  */
 const planFirstYear = firstDateInt(assets).year;
 const rebind = () => {
@@ -329,11 +326,9 @@ rebind();
 const triggerAtDefault = retireEvent.triggerDateInt.year;
 
 // A 55-year-old's snapshot: born 5 years earlier, so age-65 arrives 5 years sooner
-// 'MFJ', not 'Married': filing status has a validated domain since spec 5 step
-// 3, and global_applyWorkerSnapshot coerces anything outside it to the default.
-// This line used to say 'Married' and round-tripped only because nothing
-// checked — the assertion below was passing on a value the engine never
-// accepted.
+// 'MFJ', not 'Married': filing status is validated, and
+// global_applyWorkerSnapshot coerces anything outside the domain to the
+// default, so an invalid value here would test the default instead.
 global_applyWorkerSnapshot({ ...originalSnapshot, userStartAge: 55, filingAs: 'MFJ' });
 rebind();
 const triggerAt55 = retireEvent.triggerDateInt.year;

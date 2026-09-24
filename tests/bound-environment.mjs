@@ -5,14 +5,12 @@
  *
  * ── Why this test exists ─────────────────────────────────────────────
  *
- * Spec 9 step 4a. Everything asserted here is invisible to the snapshot
- * harness, which is the migration's usual gate. If `copy()` wrongly carried the
- * environment, or every asset held its own clone instead of sharing the
- * Portfolio's, or the env leaked into `toJSON()` — the simulated numbers would
- * be **identical** and every baseline would report "no simulated number
- * moved". Step 1 proved that blind spot by construction: a live-forwarding
- * config passed the snapshot while failing three assertions in
- * tests/sim-config.mjs.
+ * Everything asserted here is invisible to the snapshot harness. If `copy()`
+ * wrongly carried the environment, or every asset held its own clone instead
+ * of sharing the Portfolio's, or the env leaked into `toJSON()`, the simulated
+ * numbers would be identical and every baseline would report "no simulated
+ * number moved". (tests/sim-config.mjs covers the same blind spot for the
+ * config itself.)
  *
  * So the semantics are asserted directly, not inferred from arithmetic.
  *
@@ -25,8 +23,8 @@
  *  2. Not carried by copy(). ModelAsset.copy() is an explicit allowlist and
  *     ModelLifeEvent.copy() round-trips through JSON, so both drop it for free
  *     — which means a copy is UNBOUND, and Portfolio.copy() has to rebind.
- *     That is the assertion with the sharpest edge: under step 4b an unbound
- *     read throws, so a missing rebind is a crash on a Monte Carlo copy.
+ *     That is the assertion with the sharpest edge: an unbound read throws,
+ *     so a missing rebind is a crash on a Monte Carlo copy.
  *
  *  3. One env per run, shared. Not N clones that must agree. Ownership is what
  *     makes a stale binding impossible rather than merely unlikely.
@@ -62,8 +60,7 @@ const cfg = (over = {}) => {
         pensionWithholdingRate: 0.1, socialSecurityWithholdingRate: 0,
         backtestYear: 'current', simDataMode: 'calibrated', ...over,
     };
-    // Every config carries its own table as of Spec 9 step 6 — a Portfolio
-    // rejects one without. Built from THIS config's filing status, which is
+    // Every config carries its own table; a Portfolio rejects one without. Built from THIS config's filing status, which is
     // what makes the table per-run rather than ambient.
     return makeSimConfig({
         ...base,

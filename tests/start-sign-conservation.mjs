@@ -1,12 +1,12 @@
 /**
  * start-sign-conservation.mjs
  *
- * Regression tests for the month-one start-sign bug fixed 2026-06-12:
+ * Regression tests for the month-one start-sign bug.
  *
  * Liability/outflow instruments (expense, mortgage, debt) live as negative
  * balances, but the UI and saved datasets enter them as positive amounts.
- * Sign normalization used to happen lazily inside each behavior's
- * applyMonthly, so correctness depended on tick ordering per instrument:
+ * Normalizing the sign lazily inside each behavior's applyMonthly makes
+ * correctness depend on tick ordering per instrument:
  *
  *   - Expense: day-30 transfers run BEFORE ExpenseBehavior.applyMonthly, so
  *     the first month's transfer read a POSITIVE balance and flowed
@@ -123,10 +123,9 @@ check('conservation: ΔBrokerage == expense recorded (±$1)', () => {
 // ══════════════════════════════════════════════════════════════════════
 // Scenario J — POSITIVE-entered debt is a liability, not erased
 //
-// A $10,000 debt entered as +10000. CapitalBehavior's paid-off clamp
-// (balance >= 0 → zero) used to erase it on day 1 of month one because
-// debt had no sign normalizer at all. Zero interest rate so the balance
-// is exact.
+// A $10,000 debt entered as +10000. Without a sign normalizer,
+// CapitalBehavior's paid-off clamp (balance >= 0 → zero) erases it on day 1
+// of month one. Zero interest rate so the balance is exact.
 // ══════════════════════════════════════════════════════════════════════
 
 console.log('\n── Scenario J: positive-entered debt (not erased) ──────\n');

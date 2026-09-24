@@ -180,12 +180,10 @@ console.log('\n── Filing status selects the tables ──\n');
 const joint = await runProfile('dualIncome');
 
 await check('an MFJ profile runs on MFJ, not the Single default', () => {
-  // Asserted on the RUN'S OWN CONFIG since Spec 9 step 5b, not on
-  // global_filingAs. run-plan no longer writes a module global — that is the
-  // point of the step — so the old assertion would have been reading a value
-  // nothing sets, and passing or failing for reasons unrelated to the plan.
-  // This is also the stronger claim: the run used MFJ, rather than the process
-  // happened to hold MFJ.
+  // Asserted on the run's own config, not on global_filingAs: run-plan does
+  // not write module globals, so a global would be a value nothing sets. It is
+  // also the stronger claim: the run used MFJ, not that the process happened
+  // to hold MFJ.
   assert.equal(joint.portfolio.config.filingAs, 'MFJ',
     'a joint profile ran on Single — wrong brackets, limits and exclusion');
 });
@@ -217,11 +215,9 @@ await check('a Single profile run AFTER a joint one is not still joint', async (
 });
 
 await check('a setting the spec OMITS falls back to the default, not the last plan', async () => {
-  // What global_reset() used to be for. It is now structural: every run builds
-  // its own config from its own spec, so there is no channel through which the
-  // previous plan could reach this one. The assertion survives the mechanism
-  // change because what it protects — an omitted age must not inherit — is a
-  // property of the result, not of the implementation.
+  // Every run builds its own config from its own spec, so there is no channel
+  // through which the previous plan could reach this one. The assertion is on
+  // the result (an omitted age must not inherit), not on the mechanism.
   const explicit = planFromProfile('midCareer');
   explicit.settings.startAge = 61;
   const explicitRun = await runPlan(explicit);
@@ -237,9 +233,8 @@ await check('a setting the spec OMITS falls back to the default, not the last pl
 });
 
 await check('running a plan writes NOTHING to the module globals', async () => {
-  // The migration's actual claim, and it could not be made before. Two plans in
-  // one process no longer share a configuration, which is why the run-handle
-  // cache stops being a correctness requirement.
+  // Two plans in one process do not share a configuration, which is why the
+  // run-handle cache is not a correctness requirement.
   const before = globals.global_workerSnapshot();
   await runProfile('dualIncome');          // MFJ, different ages from the default
   const after = globals.global_workerSnapshot();
