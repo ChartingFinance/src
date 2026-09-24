@@ -1,8 +1,8 @@
 /**
  * util.js - ES6 Module
  *
- * Utility functions for storage, story arcs, cookies, JSON encoding,
- * and other helpers. Extracted from util-compat.js (duplicates removed).
+ * Helpers for localStorage scenarios (story arcs), JSON encoding and dates.
+ * The UUID and cookie helpers at the bottom are unused.
  */
 
 import { logger, LogCategory } from '../utils/logger.js';

@@ -186,9 +186,7 @@ export class HydraulicVisualizer {
         }
 
         // Compute taxes. LEAF_TAX_METRICS is derived from the rollup DAG, so a
-        // tax added later lands here without an edit — this sum was hand-written
-        // and quietly omitted NIIT, under-reporting the drain by the whole
-        // amount charged.
+        // new tax is included without an edit here.
         let totalTaxes = 0;
         for (const a of this.portfolio.modelAssets) {
             for (const m of LEAF_TAX_METRICS) totalTaxes += Math.abs(atIdx(a, m, historyIndex));

@@ -6,7 +6,7 @@
  *
  * Usage:
  *   <report-view></report-view>
- *   document.querySelector('report-view').reports = getReports();
+ *   document.querySelector('report-view').reports = portfolio.generatedReports;
  */
 
 import { LitElement, html, css } from 'lit';

@@ -8,8 +8,10 @@
  * Properties:
  *   open            - boolean
  *   modelAssets     - ModelAsset[]
+ *   lifeEvents      - ModelLifeEvent[]
  *   portfolioName   - string
- *   globalSettings  - { inflationRate, taxYear, filingAs, startAge, retirementAge, finishAge }
+ *   globalSettings  - { inflationRate, filingAs, startAge, retirementAge, finishAge, backtestYear }
+ *   guardrailParams - { withdrawalRate, preservation, prosperity, adjustment } | null
  *
  * Dispatches:
  *   'close'

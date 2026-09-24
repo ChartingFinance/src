@@ -1,10 +1,9 @@
 /**
  * <asset-view-modal>
  *
- * READ SURFACE for a single asset — the counterpart to <asset-form-modal>,
- * which is write-only.  Nothing here is editable, and nothing here is ever fed
- * back into a ModelAsset: every number is simulation output, read from metric
- * history at the date the user is exploring.
+ * Read-only view of a single asset (the edit form is <asset-form-modal>).
+ * Every number is simulation output, read from metric history at the date the
+ * user is exploring; nothing is written back to the ModelAsset.
  *
  * Three nested windows over the same metric set, all ending at the month the
  * user is exploring:
@@ -95,10 +94,9 @@ class AssetViewModal extends LitElement {
     }
 
     updated(changed) {
-        // Always open on the month tab.  The modal is anchored to the date the
-        // user is exploring, so the narrowest window is the natural entry point;
-        // silently reopening on a window they chose several assets ago makes the
-        // headline numbers look wrong.
+        // Always open on the month tab: the modal is anchored to the date the
+        // user is exploring, and reopening on a window chosen for an earlier
+        // asset makes the headline numbers look wrong.
         if (changed.has('open') && this.open) this._tab = 'month';
     }
 
@@ -140,11 +138,9 @@ class AssetViewModal extends LitElement {
      * propagates along — so a total and its parts stack up visually instead of
      * repeating the same figure on four unrelated-looking lines.
      *
-     * Two shapes in the table need care: a metric may declare several parents
-     * (it is a DAG, not a tree), so a row is nested under the first parent that
-     * is on screen and appears once. Self-edges and cycles are skipped — the
-     * table has none today, but a walk that trusts it would hang rather than
-     * misrender, so the guards stay.
+     * A metric may have several parents (it is a DAG, not a tree), so a row is
+     * nested under the first parent on screen and appears once. Self-edges and
+     * cycles are skipped so a bad table misrenders instead of hanging.
      */
     _tree(rows) {
         const shown = new Map(rows.map(r => [r.name, r]));
@@ -308,10 +304,10 @@ class AssetViewModal extends LitElement {
             </div>
         `;
 
-        // A balance is always "as of this month", never "during the window" —
-        // so it reads from plan start on every tab.  For a LEVEL that is the
-        // same number either way; for a RUNNING total it is the difference
-        // between a lifetime figure and one month's delta.
+        // A balance is "as of this month", not "during the window", so it
+        // reads from plan start on every tab. For a level that makes no
+        // difference; for a running total it is the lifetime figure rather than
+        // one month's change.
         const activityTitle =
             this._tab === 'month' ? 'Activity this month'
             : this._tab === 'year' ? `Activity · ${this._yearRangeLabel}`

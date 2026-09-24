@@ -70,9 +70,8 @@ export async function computeGuardrails(sourceAssets, {
     params,
     retirementDateInt = null,
     lifeEvents = [],
-    // Supplied by the caller (Spec 9 step 6): the worker builds one from the
-    // settings payload, the app from its own. This module no longer reaches
-    // for the settings store itself.
+    // Supplied by the caller: the worker builds it from the settings payload,
+    // the app from its own settings.
     config,
 } = {}) {
     const assets = ModelAsset.cloneArray(sourceAssets);
