@@ -1,40 +1,27 @@
 /**
  * rule-notes.js
  *
- * Runtime confirmation that an engine rule fired.
- *
- * A rule that works silently is indistinguishable from a rule that never ran.
- * A Roth showing no tax looks identical to a bug; a pension showing no tax
- * looks identical to evasion; a home sale posting a six-figure gain against $0
- * of tax looks broken until you know about the exclusion. The engine is right
- * in all three cases — only the silence is wrong. These notes say which it is,
- * in the place the number is missing.
+ * Notes that confirm an engine rule fired, shown where a number might
+ * otherwise look wrong: a Roth with no tax, a pension paying less than it is
+ * worth, a home sale with a large gain and $0 of tax.
  *
  * ── Rules for rules ──────────────────────────────────────────────────
  *
- *  1. DERIVE, NEVER RECOMPUTE. A note may only describe an amount the engine
- *     actually booked. Reconstructing the engine's arithmetic to explain it is
- *     how a display change quietly becomes an unreviewed modelling change.
+ *  1. Derive, never recompute. A note describes only amounts the engine
+ *     booked; re-deriving its arithmetic turns a display change into an
+ *     unreviewed modelling change.
  *
- *  2. DON'T INVENT ALLOCATIONS. A split may only be shown if the engine booked
- *     it. When global_allocate_household_tax is on, the true-up IS split across
- *     the accounts that generated the income and each payer's share is a real
- *     booked amount on its own ledger — say that, and read it from the event
- *     rather than recomputing the proportion. When it is off, the whole bill
- *     lands on one account: name the counterparty and stop.
+ *  2. Don't invent allocations. Show a split only if the engine booked one.
+ *     With tax allocation on, each payer's share is booked on its own ledger —
+ *     read it from the event. With it off, the bill lands on one account: name
+ *     it and stop. Either way, never imply what a single asset "owes": brackets
+ *     are not additive, so that number does not exist.
  *
- *     What stays unsayable either way is what any single asset "owes". Brackets
- *     are not additive, so a per-asset liability is not a number the engine
- *     has — the allocation is a share OF A HOUSEHOLD BILL, not a computation of
- *     that account's own tax. A note must not imply otherwise.
+ *  3. Resolve from history, not present state. resolveFunding() answers for
+ *     today, not for a month thirty years ago; read what was recorded then.
  *
- *  3. RESOLVE FROM HISTORY, NOT PRESENT STATE. Asking resolveFunding() who the
- *     funding account is answers for TODAY, which is wrong for a month thirty
- *     years ago. Read what was recorded at the time instead.
- *
- *  4. SILENCE IS PART OF THE CONTRACT. A note that fires when it shouldn't is
- *     worse than no note at all — a false "unfunded" claim is alarming. Every
- *     rule is tested for when it stays quiet as well as when it speaks.
+ *  4. Silence is part of the contract. A note that fires wrongly is worse than
+ *     none, so every rule is tested for staying quiet as well as for speaking.
  *
  * Each rule is a descriptor:
  *   id         stable key, used by `suppresses` and by tests
@@ -89,10 +76,8 @@ export function makeRuleContext({ asset, modelAssets = [], firstDateInt = null, 
     /**
      * SimEvents on this asset inside the window.
      *
-     * Same windowing as memos(), but reading the structured record rather than
-     * the rendered note. Rules that need to tell two settlements apart — a
-     * backstop draw from an allocated share, say — cannot do it from prose,
-     * because both render identically.
+     * Same window as memos(), but the structured record: some settlements (a
+     * backstop draw and an allocated share) render identically as prose.
      */
     const events = () => {
         const all = asset?.events ?? [];
@@ -123,10 +108,9 @@ function allocatedTaxLegs(ctx) {
 // ── Rules ────────────────────────────────────────────────────────────
 
 /**
- * Assets that paid estimated income tax in this window. The monthly/annual
- * true-up debits the funding account and books ESTIMATED_INCOME_TAX there, so a
- * non-zero value IS the settlement — resolved per month rather than guessed
- * from today's account list (rule 3).
+ * Assets that paid estimated income tax in this window: the true-ups book
+ * ESTIMATED_INCOME_TAX on the account they debit, so this reads history rather
+ * than today's account list (rule 3).
  */
 function settlingAccounts(ctx) {
     const out = [];
@@ -154,10 +138,8 @@ export const RULES = [
     },
 
     {
-        // Only reachable after 24 months (taxes.js), and only visible once a
-        // gain has actually been realised. It explains a MISSING tax only when
-        // the gain fell entirely inside the exclusion — a larger gain is taxed,
-        // and then the general note was never going to fire anyway.
+        // The exclusion needs 24 months of ownership (taxes.js). This note
+        // explains a missing tax only when the whole gain fell inside it.
         id: 'primary-home-exclusion',
         suppresses: ['tax-settled-elsewhere'],
         evaluate(ctx) {
@@ -166,10 +148,7 @@ export const RULES = [
             if (ctx.total(Metric.LONG_TERM_CAPITAL_GAIN) === 0) return null;
             return {
                 emoji: '\u{1F3E1}',
-                // Read from the tax table, not a global: the exclusion is
-                // $250,000 filing single and $500,000 filing jointly, and this
-                // note previously quoted the single figure to everyone — telling
-                // an MFJ household the wrong number as well as taxing on it.
+                // From the tax table: $250,000 single, $500,000 jointly.
                 text: `Primary home sold after more than two years — the first ${formatCurrency(activeTaxTable.activeHomeSaleExclusion)} of gain is excluded before capital gains tax.`,
                 // A taxed gain still gets the explanation, but must not silence
                 // the counterparty note, which is then describing a real tax.
@@ -179,16 +158,9 @@ export const RULES = [
     },
 
     {
-        // Why a benefit pays out less than it is worth.
-        //
-        // Non-optional for a pension, so it MUST be visible: the household never
-        // chose this and a smaller deposit with no explanation reads as a bug.
-        // Before spec 4c a retirement-income asset showed no tax at all and the
-        // tax-settled-elsewhere note below covered it; once the benefit withholds
-        // its own, that note correctly stops applying and would leave silence.
-        //
-        // Rule 1 — the amount is read from what was booked, never recomputed
-        // from the rate.
+        // Why a benefit pays out less than it is worth: withholding on arrival,
+        // which the household did not choose for a pension. The amount is read
+        // from what was booked (rule 1).
         id: 'retirement-income-withholding',
         suppresses: ['tax-settled-elsewhere'],
         evaluate(ctx) {
@@ -230,20 +202,16 @@ export const RULES = [
     },
 
     {
-        // The failure path already records itself: reportUnfunded writes an
-        // 'info' memo on the asset that owes (fund-transfer.js). Surface it —
-        // an obligation the plan could not pay is the single most important
-        // thing this modal can tell anyone.
+        // An obligation the plan could not pay: reportUnfunded records it on the
+        // asset that owes (fund-transfer.js).
         id: 'unfunded-obligation',
         evaluate(ctx) {
             const unfunded = ctx.memos().filter(m => /^Unfunded\b/.test(m.note ?? ''));
             if (unfunded.length === 0) return null;
 
             const shortfall = unfunded.reduce((s, m) => s + Math.abs(m.amount?.amount ?? 0), 0);
-            // reportUnfunded covers two different events and the wording has to
-            // follow: an obligation nothing could pay, and take-home pay with
-            // nowhere to be deposited. Quote the engine's own reason rather than
-            // asserting one story for both.
+            // reportUnfunded covers two cases — an obligation nothing could pay,
+            // and take-home pay with nowhere to go — so quote its own reason.
             const reasons = [...new Set(
                 unfunded.map(m => m.note.split('—')[1]?.trim()).filter(Boolean)
             )];
@@ -258,16 +226,9 @@ export const RULES = [
     },
 
     {
-        // Why this account was billed for tax on income it earned.
-        //
-        // Without this an allocated payer is silent, and silence reads as a bug
-        // — especially on an IRA, which the funding-backstop note below can
-        // never explain because a retirement account is not in the backstop.
-        //
-        // Rule 2: the SHARE is read off the event, where the engine booked it.
-        // It is a share of a HOUSEHOLD bill, and the wording must not suggest
-        // the engine computed what this account alone owes — brackets are not
-        // additive and that number does not exist.
+        // Why this account was billed tax on income it earned (tax allocation).
+        // The share is read from the event, and the wording presents it as a
+        // share of the household bill, not this account's own tax (rule 2).
         id: 'tax-allocated-by-income',
         suppresses: ['funding-backstop'],
         evaluate(ctx) {
@@ -297,14 +258,10 @@ export const RULES = [
     },
 
     {
-        // Why money leaves an account the user never wired up. A policy
-        // statement, not a claim about an amount — which is what makes it safe
-        // to show on every month the account actually settled something.
-        //
-        // Must NOT fire for an account that only paid an allocated share: that
-        // account was chosen because it earned the income, not because it is the
-        // household's default source, and calling it the automatic funding
-        // account would describe a mechanism that did not run.
+        // Why money leaves an account the user never wired up: it is the
+        // funding backstop. A statement of policy, not an amount. Not shown for
+        // an account that only paid an allocated share — it was chosen because
+        // it earned the income, not as the backstop.
         id: 'funding-backstop',
         evaluate(ctx) {
             const { asset } = ctx;
@@ -324,11 +281,8 @@ export const RULES = [
     },
 
     {
-        // Why a contribution came in under what the transfer asked for.
-        // PayrollEngine.recordContributionCap writes the shortfall as an `info`
-        // memo at the clamp site — before that the reduction left no trace, and
-        // only "you reached the limit" was sayable, which cannot tell a cap
-        // apart from a deliberate election of exactly the limit.
+        // Why a contribution came in under what the transfer asked for:
+        // PayrollEngine.recordContributionCap records the cap where it applies.
         id: 'contribution-capped',
         evaluate(ctx) {
             const capped = ctx.memos().filter(m => /^Contribution capped\b/.test(m.note ?? ''));
@@ -347,18 +301,11 @@ export const RULES = [
     },
 
     {
-        // Where depletion went when it lost the ⚠️.
-        //
-        // The card icon used to mean isDepleted, which fires on every retiree
-        // whose accounts draw down — i.e. on the exact scenario this tool
-        // exists to model. The icon now means an unpayable obligation, and the
-        // fact that an account emptied lives here, stated plainly and without
-        // alarm.
-        //
-        // isDepleted is present state — true forever once set — so it cannot
-        // date the event on its own (rule 3). The month comes from the VALUE
-        // history, and the note stays silent unless that month falls inside
-        // the window being viewed.
+        // An account ran dry. Stated plainly, not as a warning: drawing
+        // accounts down is what a retirement does (the ⚠️ is for unpayable
+        // obligations). isDepleted stays true once set, so the month comes from
+        // the VALUE history (rule 3), and the note shows only when that month is
+        // inside the window.
         id: 'account-depleted',
         evaluate(ctx) {
             const { asset } = ctx;
@@ -390,19 +337,10 @@ export const RULES = [
     },
 
     {
-        // Federal withholding at the source of a deferred distribution is
-        // non-optional and has no UI, so without this note a user watching
-        // their IRA shrink by more than they spent has no way to tell a policy
-        // from a bug.
-        //
-        // Derived, never recomputed (rule 1): the withheld total is read from
-        // WITHHELD_INCOME_TAX, which the engine booked. Recomputing it as
-        // rate × distribution would keep reporting a number even if the writer
-        // were deleted — the note would survive the feature.
-        //
-        // The rate is stated as booked, not read from the current constant
-        // (rule 3): a window thirty years ago must not re-render at whatever
-        // rate is configured today.
+        // Federal withholding on deferred distributions: automatic and not in
+        // the UI, so an IRA shrinking by more than was spent needs explaining.
+        // The amount is read from WITHHELD_INCOME_TAX (rule 1), and the rate is
+        // derived from what was booked, not the current constant (rule 3).
         id: 'retirement-withholding',
         evaluate(ctx) {
             if (!InstrumentType.isTaxDeferred(ctx.asset.instrument)) return null;

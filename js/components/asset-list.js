@@ -88,17 +88,11 @@ export const TAX_TREE = [
         ],
     },
     {
-        // IRC §1411. A sibling of Income Tax and Capital Gains, not a child of
-        // either: it is a separate levy on its own base, which is why
-        // Metric.NIIT rolls straight to FEDERAL_TAXES rather than through
-        // INCOME_TAX. Nesting it under one of them here would contradict the
-        // rollup DAG and double-count the total the parent shows.
-        //
-        // Absent until 2026-08-20, which meant the engine collected NIIT and
-        // this tree — the household's own tax breakdown — never mentioned it.
-        // The user found that by reading the screen. THIS LIST IS HARDCODED:
-        // a new tax metric does not appear here on its own, unlike the asset
-        // View modal, which builds itself from MetricRollups.
+        // IRC §1411: a sibling of Income Tax and Capital Gains, not a child,
+        // because it is a separate levy — Metric.NIIT rolls straight to
+        // FEDERAL_TAXES. This tree is written by hand, so a new tax metric needs
+        // a row here; tests/unit/tax-tree-coverage.test.js checks it against the
+        // derived list of taxes.
         id: 'niit',
         label: 'Net Investment Income',
         emoji: '📊',
@@ -328,12 +322,9 @@ class AssetList extends LitElement {
         /**
          * Sum the trailing twelve months, inclusive of the cursor.
          *
-         * For a charge booked ONCE A YEAR, the `× 12` below is wrong twice over:
-         * the row is pruned to nothing in the eleven months where the metric is
-         * zero, and in the twelfth it reports twelve times the amount actually
-         * charged. Measured 2026-08-20 on Early Career, whose $38,662 of NIIT
-         * lands in 16 single months across a 665-month plan — the row was
-         * invisible 97% of the time and overstated by 12× the rest.
+         * For a charge booked once a year, the `× 12` below would be wrong
+         * twice: zero in eleven months, and twelve times the charge in the
+         * twelfth.
          */
         const trailingYear = (metrics) => {
             let total = 0;
@@ -359,10 +350,8 @@ class AssetList extends LitElement {
 
         // Walk the tree, compute amounts, prune zero nodes and zero children.
         //
-        // `annualCadence` nodes are summed over the trailing year instead of
-        // extrapolated from one month. Only the metrics that are genuinely
-        // booked once a year carry it; a monthly flow annualises correctly by
-        // multiplication and is left alone so no existing figure moves.
+        // `annualCadence` nodes are summed over the trailing year; everything
+        // else is the cursor month × 12.
         const walk = (node) => {
             const amount = node.annualCadence
                 ? trailingYear(node.amountMetrics)

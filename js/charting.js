@@ -1,8 +1,7 @@
-// Selective registration: the app renders only bar and line charts, so
-// registering `...registerables` (every controller, scale, and plugin
-// Chart.js ships) wasted ~30 KB of bundle. If a new chart type or option
-// is added, its controller/scale/plugin must be registered here — a missing
-// piece fails at RUNTIME ("not a registered controller"), not at build.
+// Only the Chart.js pieces the app uses (bar and line charts) are registered,
+// to keep the bundle small. A new chart type or option needs its controller,
+// scale or plugin registered here; a missing one fails at run time ("not a
+// registered controller"), not at build.
 import {
   Chart,
   BarController, BarElement,
@@ -276,9 +275,6 @@ export function setModelAssetColorIds(modelAssets) {
 export function charting_reducedModelAssetsForMetric(modelAssets, metricName) {
   let results = [];
   for (const modelAsset of modelAssets) {
-      //if (assetStackedBarChartExclusions.includes(modelAsset.instrument))
-      //    results.push(null);
-      //else
           results.push(modelAsset);
   }
   return results;
@@ -358,8 +354,6 @@ export function charting_buildPortfolioMetric(portfolio, metricName, buildNewDat
  * Builds a stacked bar chart config with grouped datasets and stable colors.
  * Collapsed groups → single dataset (summed values) in group color.
  * Expanded groups → individual datasets per asset in shade colors.
- * Same chart type as the legacy charting_buildPortfolioMetric, just with
- * group-aware colors and collapse/expand support.
  */
 export function charting_buildGroupedMetric(portfolio, metricName, expandedGroups, groupOrder) {
   if (!portfolio?.firstDateInt) return { type: 'bar', data: { labels: [], datasets: [] }, options: {} };
