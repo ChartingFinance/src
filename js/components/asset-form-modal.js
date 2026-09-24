@@ -4,11 +4,11 @@
  * Lit component for creating and editing financial assets.
  * Handles both create and edit modes via the `mode` property.
  *
- * WRITE SURFACE ONLY.  Every field here is plan config that round-trips through
- * membrane_htmlElementToAssetModel() on save.  Simulation output — balances,
- * basis, countdowns — belongs to the read surface, never to this form: a
- * disabled input showing run state reads as an editable field the user can't
- * reach, and any as-of value rendered here risks being saved back as config.
+ * Plan config only: every field round-trips through
+ * membrane_htmlElementToAssetModel() on save. Simulation output (balances,
+ * basis, countdowns) belongs in <asset-view-modal>: here a disabled input would
+ * look like an unreachable field, and an as-of value could be saved back as
+ * config.
  *
  * Properties:
  *   mode        - 'create' | 'edit'

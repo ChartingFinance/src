@@ -17,7 +17,7 @@
  *  - If currentAge >= retirementAge → only Retire visible
  *
  * Timeline span:
- *  - S = min(startAge - 1, portfolio start age)
+ *  - S = min(min(startAge, retirementAge) - 1, portfolio start age)
  *  - F = finishAge + 1
  *  - Everything positions proportionally within S–F
  */
