@@ -5,17 +5,12 @@
  *
  * ── Why this test exists ─────────────────────────────────────────────
  *
- * Six pages ship to `dist/` and NOTHING tested any of them. Spec 9 step 6 made
- * `TaxTable`'s arguments required and rewrote 57 construction sites with a
- * script that globbed `--include=*.js --include=*.mjs` — so it never saw the
- * inline module script in globals.html.
- *
- * That page then threw on load. The throw landed inside `valuesToElements()`,
- * above the `addEventListener` calls, so the change listeners were never
- * attached: **the Globals settings page silently stopped saving anything.**
- * Every setting a user changed there was discarded. 493 assertions stayed
- * green, `vite build` was clean, and the only reason it surfaced was somebody
- * asking whether browser storage still worked.
+ * Six pages ship to `dist/`, and a JS-only change can break them unseen. When
+ * `TaxTable`'s arguments became required, the codemod that rewrote its
+ * construction sites globbed only .js/.mjs and missed the inline module script
+ * in globals.html. That page then threw inside `valuesToElements()`, above the
+ * `addEventListener` calls, so the Globals settings page silently stopped
+ * saving anything while every suite and `vite build` stayed green.
  *
  * ── What is covered, and what is not ─────────────────────────────────
  *

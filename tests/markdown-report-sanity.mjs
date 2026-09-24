@@ -7,9 +7,7 @@
  *
  * Section names assert the CURRENT finplan-ai.js contract (Your Portfolio /
  * Net Worth / Assets by Group / Fund Transfer Topology / Reports /
- * Lifetime Tax Summary / Annual Cash Flow / Spreadsheet). The original
- * version of this test targeted the retired assets-ai.js generator, whose
- * section names no longer exist.
+ * Lifetime Tax Summary / Annual Cash Flow / Spreadsheet).
  *
  * Usage:  node src/tests/markdown-report-sanity.mjs   (from repo root)
  */
@@ -243,8 +241,7 @@ check('Tax breakdown includes property taxes', () => {
 });
 
 check('Tax summary names NIIT', () => {
-    // It was inside the Total and absent from the rows for the whole life of
-    // spec 8. tests/niit-visibility.mjs owns the arithmetic — rows must sum to
+    // tests/niit-visibility.mjs owns the arithmetic — rows must sum to
     // the Total, across fixtures that actually owe some. This asserts only that
     // the row survives in the generator's output.
     assert.ok(md.includes('| NIIT |'),

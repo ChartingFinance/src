@@ -1,7 +1,7 @@
 /**
  * fica-owner-seam.test.js — the Social Security wage base is per person.
  *
- * Spec 5 shipped MFJ at the household level, so there is one User and the
+ * MFJ is modelled at the household level, so there is one User and the
  * accumulator has exactly ONE key. That makes the seam invisible to the snapshot
  * corpus: it was added under an empty baseline diff, which is also what a
  * cosmetic rename would produce.

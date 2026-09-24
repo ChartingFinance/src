@@ -39,10 +39,9 @@
  *
  * The `origin` qualifier is required. SPILLOVER and UNFUNDED are emitted from
  * both the two-sided `execute()` path and the one-sided `settleOneSided` path,
- * and only the two-sided total balances. The four quick-start profiles never
- * spill from a one-sided settlement, so the unqualified sum holds on them by
- * luck; a home whose carrying costs drain its funding account breaks it by up
- * to $2,265 a month.
+ * and only the two-sided total balances. A plan that never spills from a
+ * one-sided settlement satisfies the unqualified sum by luck; a home whose
+ * carrying costs drain its funding account breaks it by up to $2,265 a month.
  *
  * `pairedAloneFails` is also tracked and frozen: the count of months where
  * TRANSFER alone does not net, i.e. where the shortfall terms are doing real

@@ -10,13 +10,12 @@
  *             (property tax, maintenance, a dividend yield). The month's
  *             figure is one twelfth.
  *
- * Until 2026-09-23 the engine used rate/12 for both, so a stated 8.5% return
- * realised 8.839% a year and a 30-year plan ended ~9.8% richer than its own
- * assumptions — and the calibrated Monte Carlo, which draws measured annual
- * returns, could not agree with the plan.
+ * Using rate/12 for both makes a stated 8.5% return realise 8.839% a year, so
+ * a 30-year plan ends ~9.8% richer than its own assumptions, and the calibrated
+ * Monte Carlo, which draws measured annual returns, cannot agree with the plan.
  *
- * Every expected value below is ANALYTIC — written from the rule, before the
- * change, not read back from the engine. One per conversion site, so moving
+ * Every expected value below is analytic: written from the rule, not read
+ * back from the engine. One per conversion site, so moving
  * any site to the other convention fails exactly one named check.
  *
  * Run: node tests/measured-growth-rates.mjs   (from src/)

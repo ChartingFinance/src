@@ -22,9 +22,7 @@
  *      The booking is guarded by `realizedGain > 0`; the withdrawal is not. So
  *      the cash left and `estimatedTaxes` recorded nothing — the field
  *      under-counted its own damage, and a fixture could lose money with every
- *      tax figure looking untouched. Measured: four snapshot fixtures gained
- *      $4,850–$13,352 of ending net worth when this was fixed, with expenses
- *      unchanged to the cent.
+ *      tax figure looking untouched.
  *   2. Where a gain WAS realized, the premium could still be far too large.
  *      `grossup-at-the-ltcg-boundary` provisioned 26.9% of the gain it realized;
  *      the correct figure is a marginal LTCG rate.
@@ -40,8 +38,7 @@
  * The corpus check is an upper bound rather than an equality. The marginal rate
  * varies by year and by fixture, so the honest invariant is that a provision for
  * capital-gains tax cannot exceed the highest rate that tax has — anything above
- * that is provisioning for a liability that cannot exist. It caught all three
- * over-sized fixtures at 269%, 297% and 790%.
+ * that is provisioning for a liability that cannot exist.
  *
  * Run: node tests/grossup-premium.mjs
  */

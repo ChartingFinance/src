@@ -11,7 +11,7 @@
  *     before: expense booked -$36,000 → Savings $300,000 → $300,000   nothing paid
  *
  * Worse on a mortgage: principal fell, interest booked, net worth ROSE from
- * the paydown, and no account was debited (review_code_2026_07_25 finding #1).
+ * the paydown, and no account was debited.
  *
  * The replacement is ONE policy — `FundTransfer.resolveFunding()` — walking
  * the everyday accounts in order: cash → savings → brokerage → treasuries →

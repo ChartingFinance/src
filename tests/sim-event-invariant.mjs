@@ -159,8 +159,8 @@ check('each memo is the rendering of the event at its own index', () => {
 });
 
 check('cash/info is decided by event type, not by the call site', () => {
-  // Every site used to pass `kind` by hand, so two sites emitting the same
-  // thing could disagree. It is now a property of the type.
+  // `kind` is a property of the type, not passed by each site, so two sites
+  // emitting the same thing cannot disagree.
   eachAsset((a, s) => {
     for (const e of a.events) {
       assert.equal(e.kind, kindOf(e.type),
@@ -203,11 +203,9 @@ check('a balance-sheet asset\'s cash events account for its whole balance change
   // the strongest single statement available about whether the ledger can be
   // trusted.
   //
-  // It failed before 2026-07-29: a clamped withdrawal recorded the FULL
-  // requested amount, so a $5,000 Checking account's ledger claimed $8,010.33
-  // had left it. The spillover was booked twice — once inside the overstated
-  // debit, once as the fallback account's SPILLOVER event. #transact now
-  // records what actually moved.
+  // It catches a clamped withdrawal recording the full requested amount rather
+  // than what moved: the spillover is then booked twice, once inside the
+  // overstated debit and once as the fallback account's SPILLOVER event.
   //
   // BALANCE-SHEET ASSETS ONLY. On an income or expense, finishCurrency is the
   // recurring monthly amount — a rate, not a stock — and #transact deliberately

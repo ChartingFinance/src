@@ -295,11 +295,9 @@ console.log('spec 4a — proportional allocation of the residual household tax')
 // ── 6. Explicit IRA fund transfers are still honoured ─────────────────
 // The reference portfolio routes Living Expenses 75% from the IRA.
 //
-// "Event-for-event identical over the whole run" is the WRONG assertion and the
-// first draft of this file used it: allocation changes balances, so an account
-// depletes or survives on a different month and downstream transfer timing
-// legitimately diverges. Measured 368 vs 377 IRA transfers — a real consequence,
-// not a regression.
+// "Event-for-event identical over the whole run" is the wrong assertion:
+// allocation changes balances, so an account depletes or survives on a
+// different month and downstream transfer timing legitimately diverges.
 //
 // Two assertions that do isolate the claim:
 //   (a) Before the first allocated leg, nothing can have diverged yet, so IRA

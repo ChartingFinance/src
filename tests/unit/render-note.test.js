@@ -7,8 +7,7 @@
  * produces that event yet, and the failure waits for the first real plan that
  * does.
  *
- * That is not hypothetical. Added 2026-08-18 after the NIIT_ASSESSED case was
- * written with `formatCurrency(...)` in its template — a helper this module does
+ * That is not hypothetical: the NIIT_ASSESSED case was once written with `formatCurrency(...)` in its template — a helper this module does
  * not import, because sim-event.js imports NOTHING at all. 280 tests passed
  * over it.
  *

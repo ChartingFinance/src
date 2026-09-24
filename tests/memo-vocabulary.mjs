@@ -5,20 +5,19 @@
  *
  * WHY THIS EXISTS
  *
- * Credit-memo notes are prose, and three different systems read that prose:
+ * Credit-memo notes are prose, and two systems still read that prose:
  *
- *   1. `Portfolio.monthlySanityCheck` classifies memos via MEMO_RECONCILIATION
- *      to decide whether the engine's own books balance.
- *   2. `portfolio-issues.js` recovers user-facing alerts — including "your plan
+ *   1. `portfolio-issues.js` recovers user-facing alerts — including "your plan
  *      runs out of money in October 2029" — by regex over note text.
- *   3. `rule-notes.js` does the same for the asset View modal.
+ *   2. `rule-notes.js` does the same for the asset View modal.
  *
- * None of that coupling is visible from a memo's write site. Verified
- * 2026-07-29: renaming 'Asset growth' to 'Asset Growth' — one capital letter,
- * two call sites — passed all 11 node suites and 162 assertions, including the
- * golden master, while silently emptying the growth bucket and corrupting the
- * transfer-conservation total. The classifier does not throw on an unknown
- * note; it quietly files it under "transfer".
+ * Reconciliation keys on EventType; MEMO_RECONCILIATION survives only as this
+ * file's inventory of the wording, and some `owner` labels below still name
+ * monthlySanityCheck.
+ *
+ * None of that coupling is visible from a memo's write site: a one-letter
+ * rename ('Asset growth' → 'Asset Growth') once passed every suite while
+ * corrupting reconciliation.
  *
  * The other suites are coupled to prose too, but they use memo sums as terms in
  * an equation, so a rename makes them fail loudly. That protection is real but
@@ -26,15 +25,15 @@
  * to name. This file makes it systematic: it asserts that EVERY note the engine
  * emits is one some consumer knows about.
  *
- * This is a guard, not a fix. The fix is a typed event stream where notes are
- * generated for display and never parsed back; see the CreditMemo → SimEvent
- * study. Until then, this fails loudly the moment the vocabulary drifts.
+ * This is a guard, not a fix. The fix is for those consumers to read SimEvent
+ * types, as reconciliation does; until then, this fails loudly the moment the
+ * vocabulary drifts.
  *
  * WHEN THIS FAILS
  *
  * You renamed a memo, or added one. Do not just add the string here — check
- * whether monthlySanityCheck, portfolio-issues.js or rule-notes.js needed to
- * know about it, fix those, then record it below.
+ * whether portfolio-issues.js or rule-notes.js needed to know about it, fix
+ * those, then record it below.
  *
  * Usage:  node src/tests/memo-vocabulary.mjs   (from repo root)
  */
@@ -86,8 +85,7 @@ const PASS_THROUGH = [
   { id: 'transfer',            owner: 'monthlySanityCheck (transferNet)',  re: /^.+ → .+ \((monthly|on close|funding|maintenance|insurance)\)$/ },
   // Property tax settles through the same one-sided path as maintenance and
   // insurance but does NOT use the arrow format — tax-engine.js writes
-  // `${home} property tax`. Same operation, different wording; worth
-  // unifying when the event stream lands.
+  // `${home} property tax`. Same operation, different wording.
   { id: 'property-tax-settle', owner: 'monthlySanityCheck (transferNet)',  re: /^.+ property tax$/ },
   { id: 'grossed-up-debit',    owner: 'monthlySanityCheck (transferNet)',  re: /^Grossed-up expense (debit|overflow) for .+$/ },
   { id: 'spillover',           owner: 'portfolio-issues funding-ran-dry',  re: MEMO_PATTERNS.ranDry },
@@ -104,8 +102,8 @@ const PASS_THROUGH = [
 ];
 
 // NOT listed, deliberately: 'Estimated tax'. Nothing in the engine writes it.
-// Its only write site was a commented-out block in expense-engine.js, deleted
-// 2026-09-23.
+// Its only write site was a commented-out block in expense-engine.js, since
+// deleted.
 
 // ── Scenarios: chosen to exercise as many memo sites as possible ──────
 

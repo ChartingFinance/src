@@ -11,10 +11,9 @@
  * the one it was describing.
  *
  * That was true of an engine whose configuration lived in module state: a
- * second plan in the process changed what the first one meant. Spec 9 made the
- * configuration a value, so it stopped being true — and a claim that stops
- * being true silently is worse than one that was never made. This file is the
- * evidence for the new claim.
+ * second plan in the process changed what the first one meant. The
+ * configuration is now a value, so it is no longer true, and this file is the
+ * evidence.
  *
  * The load-bearing assertion is the LAST one: a chain resolved from a re-run is
  * IDENTICAL to the chain resolved from the original run. Everything else here

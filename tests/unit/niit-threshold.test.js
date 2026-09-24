@@ -1,5 +1,5 @@
 /**
- * niit-threshold.test.js — spec 8, the §1411 threshold and its non-indexing.
+ * niit-threshold.test.js — the §1411 threshold and its non-indexing.
  *
  * The threshold is the whole rule. IRC §1411 fixed it at $200,000 single /
  * $250,000 MFJ in 2013 and has never indexed it, which is not an oversight in

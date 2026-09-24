@@ -5,7 +5,7 @@
  * not expense cards: they are funded from the asset's OWN fundTransfers, and
  * they settle by calling debit() directly rather than FundTransfer.execute().
  *
- * Bug (found 2026-07-25): that meant they never reached execute()'s spillover
+ * The bug guarded: that meant they never reached execute()'s spillover
  * handling. When the named funding account was tax-advantaged, #transact
  * clamped it at $0 and returned the shortfall as `spillover` — which these
  * three loops recorded and then DROPPED. The obligation was booked, the
@@ -15,7 +15,7 @@
  *
  * They also passed the FULL requested amount to FinancialPackage.recordTransfer,
  * booking phantom IRA/401K/Roth distributions for money the account never held
- * — the same double-booking the expense path fixed on 2026-06-12.
+ * — the same double-booking the expense path once had.
  *
  * Invariants (zero growth, zero inflation, no RMD age):
  *   1. Books === balances: the cash that leaves liquid accounts equals the
@@ -27,7 +27,7 @@
  *
  * Scope note: this suite covers the SPILLOVER mechanics only — who supplies
  * the shortfall once a named funding account clamps at $0. Which accounts the
- * engine may draft in the first place is one shared policy now
+ * engine may draft in the first place is one shared policy
  * (`FundTransfer.resolveFunding`); see funding-backstop.mjs.
  *
  * Usage:  node src/tests/one-sided-spillover-conservation.mjs   (from repo root)

@@ -174,7 +174,7 @@ check('counts are all zero on a solvent plan', () => {
 console.log('\n── Ran dry, but nothing went unpaid ──\n');
 
 // Checking is too small for the mortgage; the shortfall re-sources from
-// Brokerage. This is the PR #14 machinery working correctly.
+// Brokerage. This is the backstop working correctly.
 const ranDry = await run([
   { instrument: 'realEstate', displayName: 'Home', isPrimaryHome: true,
     startDateInt: { year: 2026, month: 1 }, finishDateInt: { year: 2029, month: 12 },

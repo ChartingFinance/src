@@ -6,11 +6,11 @@
  * that rate is the plan's inflation — the asset stores 0, and
  * `effectiveAnnualReturnRate` reads 0 as "use plan inflation".
  *
- * Until 2026-09-23 the base was captured from the raw `annualReturnRate`, i.e.
- * 0. Adding the year's CPI deviation to 0 wrote back a small NONZERO rate, the
- * fallback never fired again, and the expense grew by the deviation alone —
- * about 0% a year instead of 3.1% plus the deviation. On Mid Career that alone
- * put the calibrated median at 1.75x the plan, and the shipped median at 2.45x.
+ * The bug guarded: capturing the base from the raw `annualReturnRate` (0) and
+ * adding the year's CPI deviation writes back a small nonzero rate, so the
+ * fallback never fires again and the expense grows by the deviation alone —
+ * about 0% a year instead of 3.1% plus the deviation. On Mid Career that put
+ * the calibrated median at 1.75x the plan.
  *
  * ── Why these assertions and not a zero-deviation check ─────────────
  *
@@ -25,7 +25,7 @@
  *   THE OUTCOME      a plan whose ending depends ONLY on how its expense
  *                    inflates — a bank earning nothing, one expense at the
  *                    default rate — must end, at the median, where the plan
- *                    does. Measured before and after the fix.
+ *                    does.
  *
  * Run: node tests/mc-calibration-base.mjs   (from src/)
  */

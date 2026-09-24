@@ -1,7 +1,7 @@
 /**
  * payroll-tax-conservation.mjs
  *
- * Money-conservation regression tests for two formula bugs fixed 2026-06-12:
+ * Money-conservation regression tests for two formula bugs:
  *
  *   F2 — Pre-tax 401K/IRA payroll deferrals must reduce the paycheck.
  *        Before the fix, the 401K was credited with the contribution AND the

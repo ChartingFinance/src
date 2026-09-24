@@ -2,11 +2,11 @@
  * bracket-tiling.test.js — the bands must tile.
  *
  * Every bracket row's `fromAmount` has to equal the previous row's `toAmount`.
- * The IRS publishes them a dollar apart ("$12,401 to $50,400") and this file
- * used to copy that literally, which cost a dollar of base at every crossed
- * boundary and left the dollar in each gap taxed at no rate at all. Two
- * transcription errors were hiding in the same rows: a 31-dollar gap, and a
- * 99-dollar OVERLAP that was taxed at two rates simultaneously.
+ * The IRS publishes them a dollar apart ("$12,401 to $50,400"). Copying that
+ * literally costs a dollar of base at every crossed boundary and leaves the
+ * dollar in each gap taxed at no rate at all. Two transcription errors once hid
+ * in the same rows: a 31-dollar gap, and a 99-dollar overlap taxed at two rates
+ * at once.
  *
  * That is the kind of defect a total is far too coarse to catch — it cost $0.37
  * on a $49,851 liability, found only by an independent hand calculation. So the
