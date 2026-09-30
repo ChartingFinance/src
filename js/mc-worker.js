@@ -87,6 +87,7 @@ if (isWorker) self.onmessage = async function (event) {
                 onInterim: (results) => self.postMessage({ action: 'interim', results }),
                 dataMode: payload.dataMode || 'historical',
                 backtestFromYear: payload.backtestFromYear ?? null,
+                seed: payload.seed ?? null,
                 config: simConfigFromGlobals(),
                 checkpoint: async (completed) => {
                     // Macrotask yield: lets queued pause/resume messages run

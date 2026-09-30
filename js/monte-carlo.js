@@ -73,6 +73,12 @@ function showLoading(container, completed, total) {
 
 // ── Main entry point ─────────────────────────────────────────────
 
+// The app's Monte Carlo is seeded, so re-running an unchanged plan gives the
+// same bands and re-running an edited one changes them only by the edit. The
+// simulations re-run on every plan change; unseeded, the success rate would
+// drift a point or two on edits that change nothing.
+const MC_SEED = 1;
+
 // The fan chart repaints after every batch of this many sims; the run pool
 // only grows, so the user watches the bands converge instead of seeing one
 // chart replaced by a contradicting one.
@@ -144,6 +150,7 @@ export function runMonteCarlo(sourceAssets, container, numSimulations = 1000, gu
                     runFromStart, lifeEvents,
                     dataMode: global_simDataMode,
                     backtestFromYear: backtestFromYear(),
+                    seed: MC_SEED,
                     config: simConfigFromGlobals(),
                 });
                 resolve(render(results));
@@ -196,6 +203,7 @@ export function runMonteCarlo(sourceAssets, container, numSimulations = 1000, gu
             interimEvery: INTERIM_EVERY,
             dataMode: global_simDataMode,
             backtestFromYear: backtestFromYear(),
+            seed: MC_SEED,
         });
     });
 }

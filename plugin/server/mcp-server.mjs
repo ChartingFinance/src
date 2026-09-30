@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.3.18; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.3.19; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -38733,14 +38733,25 @@ function buildYearPool(fromYear = null) {
     }
   };
 }
-function applyRandomRates(modelAssets, pool, dataMode = "historical", baseRates = null, inflationRate = null) {
+function runRandom(seed, runIndex) {
+  if (seed == null) return Math.random;
+  let a = (Math.imul(seed | 0, 2654435761) ^ Math.imul(runIndex + 1, 2246822519)) >>> 0;
+  return () => {
+    a = a + 1831565813 >>> 0;
+    let t = a;
+    t = Math.imul(t ^ t >>> 15, t | 1);
+    t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+function applyRandomRates(modelAssets, pool, dataMode = "historical", baseRates = null, inflationRate = null, random = Math.random) {
   const calibrationBase = dataMode === "calibrated" ? (() => {
     if (typeof inflationRate !== "number" || !Number.isFinite(inflationRate)) {
       throw new Error("applyRandomRates: calibrated mode needs the plan inflationRate; got " + JSON.stringify(inflationRate));
     }
     return inflationRate;
   })() : 0;
-  const year = pool.years[Math.floor(Math.random() * pool.years.length)];
+  const year = pool.years[Math.floor(random() * pool.years.length)];
   const sp500 = global_sp500_annual_returns[year] / 100;
   const treasury = global_10yr_treasury_rates[year] / 100;
   const cpi = global_cpi_annual_inflation[year] / 100;
@@ -38774,7 +38785,7 @@ function applyRandomRates(modelAssets, pool, dataMode = "historical", baseRates 
 function calibrationBaseRates(modelAssets) {
   return new Map(modelAssets.map((a) => [a, a.effectiveAnnualReturnRate.rate]));
 }
-function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, pool, dataMode, config2) {
+function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, pool, dataMode, config2, random) {
   const assets = ModelAsset.cloneArray(sourceAssets);
   const portfolio = new Portfolio(assets, false, config2);
   if (lifeEvents) portfolio.lifeEvents = lifeEvents.map((e) => e.copy());
@@ -38792,7 +38803,8 @@ function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, p
       pool,
       dataMode,
       baseRates,
-      portfolio.config.inflationRate
+      portfolio.config.inflationRate,
+      random
     );
     priceIndex.setAnnualRate(draw.inflationRate);
   }
@@ -38829,7 +38841,8 @@ function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, p
           pool,
           dataMode,
           baseRates,
-          portfolio.config.inflationRate
+          portfolio.config.inflationRate,
+          random
         );
         priceIndex.setAnnualRate(draw.inflationRate);
       }
@@ -38903,7 +38916,8 @@ async function computeMonteCarlo(sourceAssets, {
   checkpoint = null,
   dataMode = "historical",
   backtestFromYear = null,
-  // See the note in gr-compute: supplied by the caller as of step 6.
+  seed = null,
+  // Supplied by the caller, as in gr-compute.
   config: config2
 } = {}) {
   const refAssets = ModelAsset.cloneArray(sourceAssets);
@@ -38983,7 +38997,16 @@ async function computeMonteCarlo(sourceAssets, {
     return series;
   };
   for (let i = 0; i < numSimulations; i++) {
-    const { nominal, real } = runOnce(sourceAssets, grParams, runFromStart ? null : retirementDateInt, lifeEvents, pool, dataMode, config2);
+    const { nominal, real } = runOnce(
+      sourceAssets,
+      grParams,
+      runFromStart ? null : retirementDateInt,
+      lifeEvents,
+      pool,
+      dataMode,
+      config2,
+      runRandom(seed, i)
+    );
     allRuns.push(fit(nominal));
     allRunsReal.push(fit(real));
     const emitInterim = onInterim && interimEvery && (i + 1) % interimEvery === 0 && i + 1 < numSimulations;
