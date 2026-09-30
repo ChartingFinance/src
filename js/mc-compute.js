@@ -57,6 +57,31 @@ export function buildYearPool(fromYear = null) {
     };
 }
 
+// ── Seeded draws ─────────────────────────────────────────────────
+
+/**
+ * The random source for one simulation run: `Math.random` when no seed is
+ * given, otherwise a generator seeded from (seed, runIndex).
+ *
+ * Seeding per run, rather than one stream across the whole batch, keeps run
+ * i's sequence of historical years the same whatever the plan. A plan that
+ * retires a year earlier takes one more draw per run; with a single stream
+ * that would shift every later run onto different years, and two versions of
+ * a plan would differ by sampling noise as well as by the edit.
+ */
+export function runRandom(seed, runIndex) {
+    if (seed == null) return Math.random;
+    // mulberry32, with the run index mixed into the seed.
+    let a = (Math.imul(seed | 0, 0x9E3779B1) ^ Math.imul(runIndex + 1, 0x85EBCA77)) >>> 0;
+    return () => {
+        a = (a + 0x6D2B79F5) >>> 0;
+        let t = a;
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+}
+
 // ── Apply random rates for one year ──────────────────────────────
 
 /**
@@ -68,7 +93,7 @@ export function buildYearPool(fromYear = null) {
  *   carrying history's turbulence and correlation.
  */
 export function applyRandomRates(modelAssets, pool, dataMode = 'historical', baseRates = null,
-                                 inflationRate = null) {
+                                 inflationRate = null, random = Math.random) {
     // Calibrated mode re-centres the drawn CPI on the plan's inflation rate, so
     // it is required: `null + deviation` would silently be a number. Historical
     // mode does not use it.
@@ -83,7 +108,7 @@ export function applyRandomRates(modelAssets, pool, dataMode = 'historical', bas
         : 0;
     // Returns the draw so callers can build a matching real-dollar deflator;
     // existing callers that ignore the return are unaffected.
-    const year = pool.years[Math.floor(Math.random() * pool.years.length)];
+    const year = pool.years[Math.floor(random() * pool.years.length)];
     const sp500 = global_sp500_annual_returns[year] / 100;
     const treasury = global_10yr_treasury_rates[year] / 100;
     const cpi = global_cpi_annual_inflation[year] / 100;
@@ -152,7 +177,7 @@ export function calibrationBaseRates(modelAssets) {
 
 // ── Single simulation run ────────────────────────────────────────
 
-function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, pool, dataMode, config) {
+function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, pool, dataMode, config, random) {
     const assets = ModelAsset.cloneArray(sourceAssets);
     const portfolio = new Portfolio(assets, false, config);
     if (lifeEvents) portfolio.lifeEvents = lifeEvents.map(e => e.copy());
@@ -182,7 +207,7 @@ function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, p
 
     if (withdrawalPhase) {
         const draw = applyRandomRates(portfolio.modelAssets, pool, dataMode, baseRates,
-                                      portfolio.config.inflationRate);
+                                      portfolio.config.inflationRate, random);
         priceIndex.setAnnualRate(draw.inflationRate);
     }
 
@@ -220,7 +245,7 @@ function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, p
             }
             if (withdrawalPhase) {
                 const draw = applyRandomRates(portfolio.modelAssets, pool, dataMode, baseRates,
-                                      portfolio.config.inflationRate);
+                                      portfolio.config.inflationRate, random);
                 priceIndex.setAnnualRate(draw.inflationRate);
             }
             portfolio.applyGuardrails(currentDateInt);
@@ -317,6 +342,8 @@ function computeBaseline(sourceAssets, guardrailParams, lifeEvents, config) {
  *   dataMode          {'historical'|'calibrated'}  raw sampled returns, or
  *                     deviations re-centered on each asset's plan rate
  *   backtestFromYear  {number|null}  restrict the sampling pool to this year onward
+ *   seed              {number|null}  seed the draws (see runRandom); null uses
+ *                     Math.random, so two calls give different samples
  * @returns Promise of results object (JSON-serializable; DateInts carried as ints)
  */
 export async function computeMonteCarlo(sourceAssets, {
@@ -331,7 +358,8 @@ export async function computeMonteCarlo(sourceAssets, {
     checkpoint = null,
     dataMode = 'historical',
     backtestFromYear = null,
-    // See the note in gr-compute: supplied by the caller as of step 6.
+    seed = null,
+    // Supplied by the caller, as in gr-compute.
     config,
 } = {}) {
     // Determine number of months from a reference run
@@ -448,7 +476,8 @@ export async function computeMonteCarlo(sourceAssets, {
     };
 
     for (let i = 0; i < numSimulations; i++) {
-        const { nominal, real } = runOnce(sourceAssets, grParams, runFromStart ? null : retirementDateInt, lifeEvents, pool, dataMode, config);
+        const { nominal, real } = runOnce(sourceAssets, grParams, runFromStart ? null : retirementDateInt,
+            lifeEvents, pool, dataMode, config, runRandom(seed, i));
         allRuns.push(fit(nominal));
         allRunsReal.push(fit(real));
         // An interim snapshot supersedes the plain progress ping at the same

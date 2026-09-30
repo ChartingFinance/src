@@ -258,7 +258,11 @@ let expandedGroups      = new Set([
     AssetGroup.RETIREMENT, AssetGroup.EXPENSES, AssetGroup.TAXES,
 ]);
 let expandedPipelines   = new Set();
-let simAutoRunDone      = false;  // one-shot simulations auto-run per page load
+// Pending simulation re-runs (see scheduleSimulationsSync). Declared up here
+// because the init code below calls calculate() during module evaluation.
+let _simSyncTimer       = null;   // both simulations, after a plan change
+let _mcSyncTimer        = null;   // Monte Carlo only, after an MC-only setting
+const SIM_SYNC_DELAY_MS = 400;
 
 // Maximizer fitness bias: 0 = maximize spending, 100 = maximize terminal value.
 // Lives here rather than inside <simulator-modal> because that element is
@@ -581,12 +585,8 @@ document.getElementById('simulator-inline').addEventListener('apply-optimized', 
         syncGuardrailsToDOM();
     }
 
+    // Re-runs both simulations with the optimized transfers and params.
     calculate();
-
-    // The optimizer changed both simulation inputs (phase transfers, and
-    // possibly guardrail params) — refresh both charts to match.
-    doGuardrails();
-    scheduleMonteCarloSync();
 });
 
 // ── Portfolio view toggle (Assets / Flows / Sankey) ──────
@@ -652,10 +652,44 @@ document.getElementById('btn-close-guardrail-editor').addEventListener('click', 
 // relaunch the full run to keep the two visuals in sync. Debounced so spinner
 // mashing doesn't restart the 1,000-sim run on every click; the in-flight
 // cancellation in runMonteCarlo handles any overlap.
-let _mcSyncTimer = null;
 function scheduleMonteCarloSync() {
+    markStale('mc-summary');
     clearTimeout(_mcSyncTimer);
-    _mcSyncTimer = setTimeout(() => doMonteCarlo(), 400);
+    _mcSyncTimer = setTimeout(() => doMonteCarlo(), SIM_SYNC_DELAY_MS);
+}
+
+// The simulations follow the plan: every recalculation re-runs both. Debounced
+// because one action can recalculate more than once (loading a scenario, an
+// asset save that also opens its mortgage), and Monte Carlo is the expensive
+// part. Until the new results paint, the old stat cards are marked stale
+// rather than presented as the answer for the plan on screen.
+function scheduleSimulationsSync() {
+    markStale('mc-summary', 'guardrails-summary');
+    clearTimeout(_mcSyncTimer);   // covered by this run
+    clearTimeout(_simSyncTimer);
+    _simSyncTimer = setTimeout(() => {
+        doGuardrails();
+        doMonteCarlo();
+    }, SIM_SYNC_DELAY_MS);
+}
+
+function cancelSimulationsSync() {
+    clearTimeout(_mcSyncTimer);
+    clearTimeout(_simSyncTimer);
+}
+
+/**
+ * Dim a section's stat cards until its next completed run replaces them. A run
+ * that fails leaves them dimmed, which is why the title does not promise an
+ * update.
+ */
+function markStale(...ids) {
+    for (const id of ids) {
+        const el = document.getElementById(id);
+        if (!el || !el.childElementCount) continue;   // nothing shown yet
+        el.classList.add('is-stale');
+        el.title = 'From before your latest change';
+    }
 }
 
 document.getElementById('mc-with-guardrails').addEventListener('change', () => scheduleMonteCarloSync());
@@ -1031,12 +1065,10 @@ function connectSettings() {
     document.getElementById('setting-backtestYear').addEventListener('change', function() {
         global_setBacktestYear(this.value);
         global_getBacktestYear();
+        // Backtest era feeds the simulations too (guardrails replays it, the MC
+        // sampling pool is restricted to it); calculate() re-runs both.
         calculate();
-        // Backtest era feeds the simulations too: guardrails replays it, the
-        // MC sampling pool is restricted to it — refresh both and the caption.
         updateSimDataModeUI();
-        doGuardrails();
-        scheduleMonteCarloSync();
     });
 }
 
@@ -1246,14 +1278,10 @@ function calculate() {
         biasStrip.style.pointerEvents = hasAssets ? '' : 'none';
     }
 
-    // One-shot simulations auto-run so the regions aren't blank on first
-    // load. Compute happens in workers (Monte Carlo with a progressive first
-    // paint); subsequent recalcs leave re-running to the user via Run.
-    if (hasAssets && !simAutoRunDone) {
-        simAutoRunDone = true;
-        doMonteCarlo();
-        doGuardrails();
-    }
+    // The simulations re-run for the plan just calculated, so their answers
+    // never describe a previous version of it.
+    if (hasAssets) scheduleSimulationsSync();
+    else cancelSimulationsSync();
 
     const banner = document.getElementById('welcome-banner');
     if (banner) {
@@ -1281,6 +1309,8 @@ function getGuardrailParams() {
 
 /** Render a row of compact stat cards into a footer summary element. */
 function renderStatCards(el, cards) {
+    el.classList.remove('is-stale');
+    el.removeAttribute('title');
     el.innerHTML = cards.map(c =>
         `<div class="stat-card${c.tone ? ` tone-${c.tone}` : ''}"${c.title ? ` title="${c.title}"` : ''}>` +
         `<span class="stat-label">${c.label}</span>` +
