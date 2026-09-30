@@ -118,6 +118,7 @@ import {
     simConfigFromGlobals,
 } from './globals.js';
 import { detectIssues, alertAssetNames } from './portfolio-issues.js';
+import { moveRetirement, describeRetirementMove } from './retirement-move.js';
 import { logger, LogCategory } from './utils/logger.js';
 import { buildYearPool } from './mc-compute.js';
 import { formatCompactCurrency } from './utils/html.js';
@@ -258,11 +259,13 @@ let expandedGroups      = new Set([
     AssetGroup.RETIREMENT, AssetGroup.EXPENSES, AssetGroup.TAXES,
 ]);
 let expandedPipelines   = new Set();
-// Pending simulation re-runs (see scheduleSimulationsSync). Declared up here
-// because the init code below calls calculate() during module evaluation.
+// State that calculate() touches. Declared up here because the init code below
+// calls calculate() during module evaluation, and a `let` declared further down
+// would still be uninitialized then (a ReferenceError that stops the app).
 let _simSyncTimer       = null;   // both simulations, after a plan change
 let _mcSyncTimer        = null;   // Monte Carlo only, after an MC-only setting
 const SIM_SYNC_DELAY_MS = 400;
+let _settingsNoteFor    = null;   // asset list the settings note describes
 
 // Maximizer fitness bias: 0 = maximize spending, 100 = maximize terminal value.
 // Lives here rather than inside <simulator-modal> because that element is
@@ -1037,6 +1040,13 @@ function connectSettings() {
         this.value = val;
         global_setUserRetirementAge(val);
         global_getUserRetirementAge();
+        // On a loaded plan the setting moves the plan: its Retire phase, and
+        // the income dated at the old retirement month (see retirement-move.js).
+        const modelAssets = assetList.modelAssets || [];
+        if (modelAssets.length) {
+            showSettingsNote(describeRetirementMove(
+                moveRetirement(modelAssets, appState.lifeEvents, val)), modelAssets);
+        }
         calculate();
     });
     document.getElementById('setting-finishAge').addEventListener('change', function() {
@@ -1070,6 +1080,22 @@ function connectSettings() {
         calculate();
         updateSimDataModeUI();
     });
+}
+
+// A one-line note under the settings row saying what a setting changed in the
+// plan. It belongs to the asset list it describes (_settingsNoteFor), so it
+// clears itself once a different list is on screen (another scenario, an asset
+// added or removed).
+function showSettingsNote(text, modelAssets) {
+    const el = document.getElementById('settings-note');
+    if (!el) return;
+    el.textContent = text ?? '';
+    el.hidden = !text;
+    _settingsNoteFor = text ? modelAssets : null;
+}
+
+function clearStaleSettingsNote(modelAssets) {
+    if (_settingsNoteFor && _settingsNoteFor !== modelAssets) showSettingsNote(null, null);
 }
 
 // ── Data Loading ────────────────────────────────────────────
@@ -1156,13 +1182,22 @@ function calculate() {
     // to remember which mutations move it.
     bindForEditing(modelAssets);
 
-    // When no assets, keep phase trigger ages in sync with global settings
+    // With no assets, the phases follow the settings. With a plan, the setting
+    // follows the plan's Retire phase: that is when the plan retires, and the
+    // simulations take their retirement date from the setting, so the two must
+    // not disagree. They can arrive disagreeing from a loaded or shared plan,
+    // or from an edit to the phase itself.
+    const retire = appState.lifeEvents.find(e => e.type === LifeEvent.RETIRE);
     if (modelAssets.length === 0) {
         const accum = appState.lifeEvents.find(e => e.type === LifeEvent.ACCUMULATE);
-        const retire = appState.lifeEvents.find(e => e.type === LifeEvent.RETIRE);
         if (accum) accum.triggerAge = global_user_startAge;
         if (retire) retire.triggerAge = global_user_retirementAge;
+    } else if (retire && retire.triggerAge !== global_user_retirementAge) {
+        global_setUserRetirementAge(retire.triggerAge);
+        global_getUserRetirementAge();
+        document.getElementById('setting-retirementAge').value = global_user_retirementAge;
     }
+    clearStaleSettingsNote(modelAssets);
 
     // Remove Accumulate phase when current age >= retirement age (already retired)
     if (global_user_startAge >= global_user_retirementAge) {
