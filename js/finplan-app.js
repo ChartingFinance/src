@@ -60,6 +60,7 @@ import './components/one-time-modal.js';
 import './components/event-form-modal.js';
 import './components/finplan-timeline.js';
 import './components/month-details.js';
+import './components/outcome-strip.js';
 // simulator-modal is code-split: imported on the first Maximizer Run click
 // (doMaximize) — the <simulator-modal> tag stays inert until then.
 import './components/spreadsheet-view.js';
@@ -119,6 +120,7 @@ import {
 } from './globals.js';
 import { detectIssues, alertAssetNames } from './portfolio-issues.js';
 import { moveRetirement, describeRetirementMove } from './retirement-move.js';
+import { planOutcome, simulationOutcome, guardrailsOutcome } from './outcome-summary.js';
 import { logger, LogCategory } from './utils/logger.js';
 import { buildYearPool } from './mc-compute.js';
 import { formatCompactCurrency } from './utils/html.js';
@@ -188,6 +190,8 @@ const fundingModal      = document.getElementById('fundingModal');
 const oneTimeModal      = document.getElementById('oneTimeModal');
 const eventFormModal    = document.getElementById('eventFormModal');
 const timeline          = document.getElementById('finplanTimeline');
+const outcomeStrip      = document.getElementById('outcomeStrip');
+const sectionNav        = document.getElementById('sectionNav');
 const viewingBadge      = document.getElementById('viewingBadge');
 const macroCanvas       = document.getElementById('finplan-macro-canvas');
 const microCanvas       = document.getElementById('finplan-micro-canvas');
@@ -266,6 +270,7 @@ let _simSyncTimer       = null;   // both simulations, after a plan change
 let _mcSyncTimer        = null;   // Monte Carlo only, after an MC-only setting
 const SIM_SYNC_DELAY_MS = 400;
 let _settingsNoteFor    = null;   // asset list the settings note describes
+let _visualizerDirty    = true;   // the plan changed while the Visualizer was collapsed
 
 // Maximizer fitness bias: 0 = maximize spending, 100 = maximize terminal value.
 // Lives here rather than inside <simulator-modal> because that element is
@@ -337,6 +342,7 @@ timeline.addEventListener('edit-asset', (ev) => {
 // view's card, not the tall view element itself: scrollIntoView on the element
 // would also reset its container's scrollToDate row position.
 function jumpToView(view) {
+    if (view === 'spreadsheet') setSectionExpanded('spreadsheet', true);
     const target = view === 'creditmemos' ? creditMemoView : spreadsheetView;
     const card = target?.closest('.glass-card') ?? target;
     const behavior = matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
@@ -345,6 +351,97 @@ function jumpToView(view) {
 for (const btn of document.querySelectorAll('.md-jump[data-jump]')) {
     btn.addEventListener('click', () => jumpToView(btn.dataset.jump));
 }
+
+// ── Collapsible sections (Spreadsheet, Visualizer) ─────────
+// Collapsed by default: they are for exploring, not for getting the answer.
+// Whether each is open is a per-viewer convenience kept in localStorage.
+// The DOM is the state, so this works however early calculate() asks.
+
+function isSectionExpanded(key) {
+    const body = document.getElementById(`${key}-body`);
+    return !!body && !body.hidden;
+}
+
+function setSectionExpanded(key, open) {
+    const body = document.getElementById(`${key}-body`);
+    if (!body || body.hidden === !open) return;
+    body.hidden = !open;
+    const btn = document.querySelector(`.section-toggle[data-collapse="${key}"]`);
+    if (btn) {
+        btn.textContent = open ? 'Hide' : 'Show';
+        btn.setAttribute('aria-expanded', String(open));
+    }
+    try {
+        const saved = new Set(JSON.parse(localStorage.getItem('finplan.expandedSections') || '[]'));
+        if (open) saved.add(key); else saved.delete(key);
+        localStorage.setItem('finplan.expandedSections', JSON.stringify([...saved]));
+    } catch { /* storage unavailable: the section still opens */ }
+    if (open && key === 'visualizer' && _visualizerDirty) initVisualizer();
+    if (open && key === 'spreadsheet' && spreadsheetView) {
+        requestAnimationFrame(() => spreadsheetView.scrollToDate(store.selectedYear, store.selectedMonth));
+    }
+}
+
+for (const btn of document.querySelectorAll('.section-toggle[data-collapse]')) {
+    btn.addEventListener('click', () => setSectionExpanded(btn.dataset.collapse, !isSectionExpanded(btn.dataset.collapse)));
+}
+try {
+    for (const key of JSON.parse(localStorage.getItem('finplan.expandedSections') || '[]')) setSectionExpanded(key, true);
+} catch { /* nothing saved */ }
+
+// ── Section nav and Outcome strip jumps ─────────────────────
+// Scrolls without touching location.hash: a fragment is how share links
+// arrive, and the app re-imports on every hashchange.
+
+function scrollToSection(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const collapsible = el.querySelector('.section-toggle[data-collapse]');
+    if (collapsible) setSectionExpanded(collapsible.dataset.collapse, true);
+    const behavior = matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+    el.scrollIntoView({ behavior, block: 'start' });
+}
+
+sectionNav?.addEventListener('click', (ev) => {
+    const link = ev.target.closest('a[data-nav]');
+    if (!link) return;
+    ev.preventDefault();
+    scrollToSection(link.dataset.nav);
+    updateCurrentSection(link);   // at once; scrolling refines it
+});
+
+const OUTCOME_TARGET = { timeline: 'sec-timeline', simulations: 'sec-simulations', guardrails: 'sec-guardrails' };
+outcomeStrip?.addEventListener('outcome-jump', (ev) => scrollToSection(OUTCOME_TARGET[ev.detail.section]));
+
+// Scroll-spy: the last section whose top has passed under the nav is current.
+function updateCurrentSection(current = null) {
+    if (!sectionNav || sectionNav.hidden) return;
+    const links = [...sectionNav.querySelectorAll('a[data-nav]')];
+    if (!current) {
+        // Below the sections' scroll-margin-top (64px), so a section the nav
+        // just scrolled to counts as reached.
+        const line = sectionNav.getBoundingClientRect().bottom + 40;
+        current = links[0];
+        for (const link of links) {
+            const el = document.getElementById(link.dataset.nav);
+            if (el && el.offsetParent !== null && el.getBoundingClientRect().top <= line) current = link;
+        }
+        // The last sections are too short to reach the line; at the bottom of
+        // the page, the last one wins.
+        if (innerHeight + scrollY >= document.documentElement.scrollHeight - 2) current = links.at(-1);
+    }
+    for (const link of links) {
+        const on = link === current;
+        link.classList.toggle('is-current', on);
+        if (on) link.setAttribute('aria-current', 'true'); else link.removeAttribute('aria-current');
+    }
+}
+let _spyTimer = 0;
+addEventListener('scroll', () => {
+    if (_spyTimer) return;
+    _spyTimer = setTimeout(() => { _spyTimer = 0; updateCurrentSection(); }, 80);
+}, { passive: true });
+updateCurrentSection();
 
 // Wire timeline edit event
 timeline.addEventListener('event-edit', (ev) => {
@@ -686,12 +783,15 @@ function cancelSimulationsSync() {
  * that fails leaves them dimmed, which is why the title does not promise an
  * update.
  */
+const STRIP_TILE_FOR = { 'mc-summary': 'simulations', 'guardrails-summary': 'guardrails' };
 function markStale(...ids) {
     for (const id of ids) {
         const el = document.getElementById(id);
         if (!el || !el.childElementCount) continue;   // nothing shown yet
         el.classList.add('is-stale');
         el.title = 'From before your latest change';
+        const tile = STRIP_TILE_FOR[id];
+        if (tile && outcomeStrip) outcomeStrip.stale = { ...outcomeStrip.stale, [tile]: true };
     }
 }
 
@@ -1245,6 +1345,17 @@ function calculate() {
     const issues = detectIssues(portfolio, { includeReconciliation: global_showEngineDiagnostics });
     if (planIssuesPanel) planIssuesPanel.issues = issues;
 
+    // The answer on the first screen. The plan tile is this run's; the
+    // simulation tiles are filled in when their runs finish.
+    if (outcomeStrip) {
+        const hasPlan = modelAssets.length > 0;
+        outcomeStrip.plan = hasPlan ? planOutcome(portfolio, issues) : null;
+        outcomeStrip.finishAge = global_user_finishAge;
+        outcomeStrip.hidden = !hasPlan;
+        if (sectionNav) sectionNav.hidden = !hasPlan;
+        updateCurrentSection();
+    }
+
     // The selected month of the run just finished. Set on EVERY run, empty
     // plans included, so it can never show the previous run's numbers.
     if (monthDetails) {
@@ -1383,18 +1494,20 @@ async function doMonteCarlo() {
     // (a failed run would otherwise show the previous run's cached numbers).
     const res = chart ? mcModule.getMonteCarloResults() : null;
     const mcSummary = document.getElementById('mc-summary');
-    if (res && mcSummary) {
-        const last = res.labels.length - 1;
-        const pct = Math.round(res.successRate * 100);
+    const sim = simulationOutcome(res);
+    if (sim && mcSummary) {
         renderStatCards(mcSummary, [
-            { label: 'Success', value: `${pct}%`,
-              tone: pct >= 90 ? 'good' : pct >= 70 ? 'warn' : 'bad',
+            { label: 'Success', value: sim.value, tone: sim.tone,
               title: 'Share of simulations that never dipped below $0 from retirement onward' },
-            { label: 'Median', value: formatCompactCurrency(res.bandData[2][last]) },
-            { label: 'P10', value: formatCompactCurrency(res.bandData[0][last]) },
-            { label: 'P90', value: formatCompactCurrency(res.bandData[4][last]) },
-            { label: 'Horizon', value: res.labels[last] },
+            { label: 'Median', value: formatCompactCurrency(sim.median) },
+            { label: 'P10', value: formatCompactCurrency(sim.p10) },
+            { label: 'P90', value: formatCompactCurrency(sim.p90) },
+            { label: 'Horizon', value: sim.horizon },
         ]);
+    }
+    if (sim && outcomeStrip) {
+        outcomeStrip.simulations = sim;
+        outcomeStrip.stale = { ...outcomeStrip.stale, simulations: false };
     }
 }
 
@@ -1414,30 +1527,31 @@ async function doGuardrails() {
     ).catch(() => null);
 
     // Plan summary in the section footer
-    const gr = chart ? guardrailsModule.getGuardrailsResults() : null;
+    const gr = guardrailsOutcome(chart ? guardrailsModule.getGuardrailsResults() : null);
     const grSummaryEl = document.getElementById('guardrails-summary');
     if (gr && grSummaryEl) {
-        const last = gr.portfolioValues.length - 1;
-        const endVal = gr.portfolioValues[last];
-        const cuts = gr.events.filter(e => e.type === 'preservation').length;
-        const raises = gr.events.length - cuts;
-        const finalWithdrawal = gr.withdrawalSteps[last];
         renderStatCards(grSummaryEl, [
-            { label: 'Ends', value: formatCompactCurrency(endVal),
-              tone: endVal > 0 ? undefined : 'bad' },
-            ...(finalWithdrawal ? [{ label: 'Withdrawal', value: `${formatCompactCurrency(finalWithdrawal)}/yr`,
+            { label: 'Ends', value: gr.value, tone: gr.tone },
+            ...(gr.finalWithdrawal ? [{ label: 'Withdrawal', value: `${formatCompactCurrency(gr.finalWithdrawal)}/yr`,
               title: 'Annual withdrawal in the final simulated year' }] : []),
-            { label: 'Cuts', value: String(cuts), tone: cuts ? 'warn' : undefined,
+            { label: 'Cuts', value: String(gr.cuts), tone: gr.cuts ? 'warn' : undefined,
               title: 'Preservation events: spending reduced to protect the portfolio' },
-            { label: 'Raises', value: String(raises), tone: raises ? 'good' : undefined,
+            { label: 'Raises', value: String(gr.raises), tone: gr.raises ? 'good' : undefined,
               title: 'Prosperity events: spending increased when the plan ran ahead' },
-            { label: 'Horizon', value: gr.labels[last] },
+            { label: 'Horizon', value: gr.horizon },
         ]);
+    }
+    if (gr && outcomeStrip) {
+        outcomeStrip.guardrails = gr;
+        outcomeStrip.stale = { ...outcomeStrip.stale, guardrails: false };
     }
 }
 
 async function initVisualizer() {
     if (!appState.portfolio) return;
+    // Collapsed by default: build it when it is opened, not on every recalc.
+    if (!isSectionExpanded('visualizer')) { _visualizerDirty = true; return; }
+    _visualizerDirty = false;
     const { HydraulicVisualizer } = await import('./hydraulic-visualizer.js');
     hydraulicViz = new HydraulicVisualizer('finplan-hydraulic-container');
     hydraulicViz.init(appState.portfolio);
