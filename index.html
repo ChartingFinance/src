@@ -402,6 +402,42 @@
         .stat-card.tone-good .stat-value { color: #16a34a; }
         .stat-card.tone-warn .stat-value { color: #d97706; }
         .stat-card.tone-bad  .stat-value { color: #dc2626; }
+        /* Outcome strip: the three answers on the first screen */
+        outcome-strip { display: block; padding: 16px 20px; }
+        outcome-strip[hidden] { display: none; }
+        .outcome-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; }
+        .outcome-question { font-size: 18px; font-weight: 700; margin: 0; }
+        .outcome-horizon { font-size: 13px; color: #6b7280; }
+        .outcome-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+        .outcome-tile { display: grid; gap: 2px; text-align: left; background: #f9fafb; border: 1px solid #f3f4f6;
+            border-radius: 12px; padding: 10px 14px; cursor: pointer; font: inherit; color: inherit; }
+        .outcome-tile:hover { border-color: #d1d5db; }
+        .outcome-tile:focus-visible { outline: 2px solid #7e22ce; outline-offset: 2px; }
+        .outcome-label { font-size: 12px; font-weight: 600; color: #6b7280; }
+        .outcome-value { font-size: 24px; font-weight: 700; color: #111827; font-variant-numeric: tabular-nums; line-height: 1.2; }
+        .outcome-detail { font-size: 12px; color: #6b7280; }
+        .outcome-tile.tone-good .outcome-value { color: #16a34a; }
+        .outcome-tile.tone-warn .outcome-value { color: #d97706; }
+        .outcome-tile.tone-bad  .outcome-value { color: #dc2626; }
+        .outcome-tile.is-stale { opacity: 0.45; }
+        @media (max-width: 640px) { .outcome-tiles { grid-template-columns: 1fr; } }
+
+        /* Section nav: sticky, scrolls sideways when it doesn't fit */
+        .section-nav { position: sticky; top: 0; z-index: 30; display: flex; gap: 4px; overflow-x: auto;
+            margin: 0 0 16px; padding: 6px; background: rgba(250, 250, 250, 0.94); backdrop-filter: blur(6px);
+            border: 1px solid #f3f4f6; border-radius: 12px; scrollbar-width: none; }
+        .section-nav[hidden] { display: none; }
+        .section-nav a { flex: none; padding: 4px 10px; border-radius: 8px; font-size: 12.5px; font-weight: 500;
+            color: #6b7280; text-decoration: none; white-space: nowrap; }
+        .section-nav a:hover { color: #111827; background: #f3f4f6; }
+        .section-nav a.is-current { background: #111827; color: #fff; }
+        [id^="sec-"], #outcomeStrip { scroll-margin-top: 64px; }
+        /* A collapsed section's body. Explicit, because a Tailwind display class would beat [hidden]. */
+        [id$="-body"][hidden] { display: none; }
+        .section-toggle { margin-left: 8px; font: 500 12px inherit; color: #4b5563; background: #fff;
+            border: 1px solid #e5e7eb; border-radius: 8px; padding: 2px 10px; cursor: pointer; }
+        .section-toggle:hover { border-color: #d1d5db; color: #111827; }
+
         /* Results from before the latest plan change, until the re-run lands */
         .sim-summary-cards.is-stale { opacity: 0.45; }
 
@@ -845,6 +881,25 @@
         <p id="settings-note" class="text-sm text-gray-600 mt-4" role="status" aria-live="polite" hidden></p>
     </div>
 
+    <!-- ═══ Section nav ═══ -->
+    <!-- Sticky. The section in view is highlighted (scroll-spy in finplan-app.js). -->
+    <nav class="section-nav" id="sectionNav" aria-label="Sections" hidden>
+        <a href="#outcomeStrip" data-nav="outcomeStrip">Outcome</a>
+        <a href="#sec-timeline" data-nav="sec-timeline">Timeline</a>
+        <a href="#sec-month" data-nav="sec-month">This month</a>
+        <a href="#sec-portfolio" data-nav="sec-portfolio">Portfolio</a>
+        <a href="#sec-simulations" data-nav="sec-simulations">Simulations</a>
+        <a href="#sec-projections" data-nav="sec-projections">Projections</a>
+        <a href="#sec-details" data-nav="sec-details">Details</a>
+        <a href="#sec-spreadsheet" data-nav="sec-spreadsheet">Spreadsheet</a>
+        <a href="#sec-visualizer" data-nav="sec-visualizer">Visualizer</a>
+        <a href="#sec-maximizer" data-nav="sec-maximizer">Maximizer</a>
+    </nav>
+
+    <!-- ═══ Outcome ═══ -->
+    <!-- The answer, on the first screen. See js/components/outcome-strip.js. -->
+    <outcome-strip id="outcomeStrip" class="glass-card mb-8" hidden></outcome-strip>
+
     <!-- ═══ Welcome Banner (shown when no assets) ═══ -->
     <div id="welcome-banner" class="glass-card p-8 mb-8 hidden">
         <div class="text-center mb-6">
@@ -860,7 +915,7 @@
     </div>
 
     <!-- ═══ Your Timeline ═══ -->
-    <div class="finplan-timeline-section mb-8">
+    <div id="sec-timeline" class="finplan-timeline-section mb-8">
         <h2 class="text-lg font-bold flex items-center gap-2 flex-shrink-0 mb-4">🕐 Your Timeline
             <span class="relative ml-auto" id="scenario-anchor">
                 <button class="scenario-chip" id="scenario-chip" aria-haspopup="true" aria-expanded="false" title="Switch scenario">
@@ -884,7 +939,7 @@
       ⋯ on the timeline's cursor chip. It sits directly under the timeline
       because the cursor drives it — see js/components/month-details.js.
     -->
-    <div class="finplan-month-section mb-8">
+    <div id="sec-month" class="finplan-month-section mb-8">
         <h2 class="md-heading text-lg font-bold flex items-center gap-2 flex-shrink-0 mb-4">📅 Month Details
             <span class="badge-phase ml-auto" id="monthDetailsBadge"></span>
             <button class="md-jump" data-jump="spreadsheet" title="Jump to this month in the spreadsheet">Spreadsheet →</button>
@@ -896,7 +951,7 @@
     </div>
 
     <!-- ═══ Your Portfolio ═══ -->
-    <div class="finplan-portfolio-section mb-8">
+    <div id="sec-portfolio" class="finplan-portfolio-section mb-8">
         <h2 class="text-lg font-bold flex items-center gap-2 flex-shrink-0 mb-4">💼 Your Portfolio
             <div id="portfolioViewToggle" class="portfolio-view-toggle ml-4">
                 <button data-pview="assets" class="pv-btn active">Assets</button>
@@ -926,62 +981,8 @@
         </div>
     </div>
 
-    <!-- ═══ Projections (full width) ═══ -->
-    <div class="mb-8">
-        <h2 class="text-lg font-bold flex items-center gap-2 mb-4">📊 Projections
-            <span class="badge-phase ml-auto viewing-badge"></span>
-            <a href="help.html#projections" class="text-gray-300 hover:text-gray-500 transition" title="Help" style="font-size: 14px; font-weight: 500; text-decoration: none;">?</a>
-        </h2>
-
-        <div class="glass-card p-6 relative">
-            <!-- Macro + Micro side by side -->
-            <div class="flex gap-6">
-                <div class="finplan-chart-slot flex-1 min-w-0" id="finplan-macro-slot" style="border-bottom: none;">
-                    <div class="slot-heading" style="display: flex; align-items: center; gap: 8px;">
-                        Macro Projection
-                        <select class="fin-input text-xs cursor-pointer font-medium"
-                            style="width: auto; padding: 4px 8px; margin-left: auto;"
-                            id="finplan-metric-select"></select>
-                    </div>
-                    <button class="chart-expand-btn" id="btn-macro-expand" title="Fullscreen">⛶</button>
-                    <div class="finplan-chart-canvas-wrap">
-                        <canvas id="finplan-macro-canvas"></canvas>
-                    </div>
-                </div>
-
-                <div class="finplan-chart-slot flex-1 min-w-0" id="finplan-micro-slot" style="border-bottom: none;">
-                    <div class="slot-heading" style="display: flex; align-items: center; gap: 8px;">
-                        Micro Projection
-                        <select class="fin-input text-xs cursor-pointer font-medium"
-                            style="width: auto; padding: 4px 8px; margin-left: auto; display: none;"
-                            id="finplan-micro-metric-select"></select>
-                    </div>
-                    <button class="chart-expand-btn" id="btn-micro-expand" title="Fullscreen">⛶</button>
-                    <div class="finplan-chart-canvas-wrap">
-                        <canvas id="finplan-micro-canvas"></canvas>
-                    </div>
-                </div>
-            </div>
-            <div class="section-footer">
-                <button class="ai-fab" data-section="projections" title="AI Summary">⚡</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- ═══ Visualizer ═══ -->
-    <div class="mb-8">
-        <h2 class="text-lg font-bold flex items-center gap-2 mb-4">🚰 Visualizer
-            <span class="badge-phase ml-auto viewing-badge"></span>
-            <a href="help.html#visualizer" class="text-gray-300 hover:text-gray-500 transition" title="Help" style="font-size: 14px; font-weight: 500; text-decoration: none;">?</a>
-        </h2>
-
-        <div class="glass-card p-6">
-            <div id="finplan-hydraulic-container" style="width: 100%; height: 600px; background: #1e1e2e; border-radius: 12px; overflow: hidden;"></div>
-        </div>
-    </div>
-
     <!-- ═══ Simulations ═══ -->
-    <div class="mb-8">
+    <div id="sec-simulations" class="mb-8">
         <h2 class="text-lg font-bold flex items-center gap-2 mb-4">🎲 Simulations
             <span class="badge-phase ml-auto viewing-badge"></span>
             <a href="help.html#simulations" class="text-gray-300 hover:text-gray-500 transition" title="Help" style="font-size: 14px; font-weight: 500; text-decoration: none;">?</a>
@@ -1018,7 +1019,7 @@
             </div>
 
             <!-- Guardrails -->
-            <div class="glass-card p-6 flex-1 min-w-0" style="position: relative;">
+            <div id="sec-guardrails" class="glass-card p-6 flex-1 min-w-0" style="position: relative;">
                 <div class="finplan-chart-slot" style="border-bottom: none;">
                     <div class="flex items-center justify-between mb-3 w-full">
                         <div class="slot-heading" style="margin-bottom: 0;">Guardrails</div>
@@ -1073,8 +1074,50 @@
         </div>
     </div>
 
+    <!-- ═══ Projections (full width) ═══ -->
+    <div id="sec-projections" class="mb-8">
+        <h2 class="text-lg font-bold flex items-center gap-2 mb-4">📊 Projections
+            <span class="badge-phase ml-auto viewing-badge"></span>
+            <a href="help.html#projections" class="text-gray-300 hover:text-gray-500 transition" title="Help" style="font-size: 14px; font-weight: 500; text-decoration: none;">?</a>
+        </h2>
+
+        <div class="glass-card p-6 relative">
+            <!-- Macro + Micro side by side -->
+            <div class="flex gap-6">
+                <div class="finplan-chart-slot flex-1 min-w-0" id="finplan-macro-slot" style="border-bottom: none;">
+                    <div class="slot-heading" style="display: flex; align-items: center; gap: 8px;">
+                        Macro Projection
+                        <select class="fin-input text-xs cursor-pointer font-medium"
+                            style="width: auto; padding: 4px 8px; margin-left: auto;"
+                            id="finplan-metric-select"></select>
+                    </div>
+                    <button class="chart-expand-btn" id="btn-macro-expand" title="Fullscreen">⛶</button>
+                    <div class="finplan-chart-canvas-wrap">
+                        <canvas id="finplan-macro-canvas"></canvas>
+                    </div>
+                </div>
+
+                <div class="finplan-chart-slot flex-1 min-w-0" id="finplan-micro-slot" style="border-bottom: none;">
+                    <div class="slot-heading" style="display: flex; align-items: center; gap: 8px;">
+                        Micro Projection
+                        <select class="fin-input text-xs cursor-pointer font-medium"
+                            style="width: auto; padding: 4px 8px; margin-left: auto; display: none;"
+                            id="finplan-micro-metric-select"></select>
+                    </div>
+                    <button class="chart-expand-btn" id="btn-micro-expand" title="Fullscreen">⛶</button>
+                    <div class="finplan-chart-canvas-wrap">
+                        <canvas id="finplan-micro-canvas"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="section-footer">
+                <button class="ai-fab" data-section="projections" title="AI Summary">⚡</button>
+            </div>
+        </div>
+    </div>
+
     <!-- ═══ Details ═══ -->
-    <div class="mb-8">
+    <div id="sec-details" class="mb-8">
         <h2 class="text-lg font-bold flex items-center gap-2 mb-4">📋 Details
             <span class="badge-phase ml-auto viewing-badge"></span>
             <a href="help.html#details" class="text-gray-300 hover:text-gray-500 transition" title="Help" style="font-size: 14px; font-weight: 500; text-decoration: none;">?</a>
@@ -1110,17 +1153,18 @@
     </div>
 
     <!-- ═══ Spreadsheet ═══ -->
-    <div class="mb-8">
+    <div id="sec-spreadsheet" class="mb-8">
         <h2 class="text-lg font-bold flex items-center gap-2 mb-4">📊 Spreadsheet
             <span class="flex items-center gap-2 ml-auto">
                 <button class="btn-modern outline text-xs" id="btn-spreadsheet-copy" style="padding: 4px 8px;" title="Copy to clipboard">📋</button>
                 <button class="btn-modern outline text-xs" id="btn-spreadsheet-download" style="padding: 4px 8px;" title="Download CSV">⬇️</button>
             </span>
             <span class="badge-phase viewing-badge"></span>
+            <button type="button" class="section-toggle" data-collapse="spreadsheet" aria-expanded="false" aria-controls="spreadsheet-body">Show</button>
             <a href="help.html#spreadsheet" class="text-gray-300 hover:text-gray-500 transition" title="Help" style="font-size: 14px; font-weight: 500; text-decoration: none;">?</a>
         </h2>
 
-        <div class="glass-card p-6 flex flex-col" style="max-height: 600px;">
+        <div id="spreadsheet-body" hidden class="glass-card p-6 flex flex-col" style="max-height: 600px;">
             <div class="overflow-auto flex-1 min-h-0">
                 <spreadsheet-view id="finplanSpreadsheet"></spreadsheet-view>
             </div>
@@ -1130,8 +1174,21 @@
         </div>
     </div>
 
+    <!-- ═══ Visualizer ═══ -->
+    <div id="sec-visualizer" class="mb-8">
+        <h2 class="text-lg font-bold flex items-center gap-2 mb-4">🚰 Visualizer
+            <span class="badge-phase ml-auto viewing-badge"></span>
+            <button type="button" class="section-toggle" data-collapse="visualizer" aria-expanded="false" aria-controls="visualizer-body">Show</button>
+            <a href="help.html#visualizer" class="text-gray-300 hover:text-gray-500 transition" title="Help" style="font-size: 14px; font-weight: 500; text-decoration: none;">?</a>
+        </h2>
+
+        <div id="visualizer-body" hidden class="glass-card p-6">
+            <div id="finplan-hydraulic-container" style="width: 100%; height: 600px; background: #1e1e2e; border-radius: 12px; overflow: hidden;"></div>
+        </div>
+    </div>
+
     <!-- ═══ Maximizer ═══ -->
-    <div class="mb-8">
+    <div id="sec-maximizer" class="mb-8">
         <h2 class="text-lg font-bold flex items-center gap-2 mb-4">🔮 Maximizer
             <a href="help.html#maximizer" class="ml-auto text-gray-300 hover:text-gray-500 transition" title="Help" style="font-size: 14px; font-weight: 500; text-decoration: none;">?</a>
         </h2>
