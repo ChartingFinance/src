@@ -16,9 +16,14 @@
  *                    and full tooltips, including the Projections charts,
  *                    which set neither.
  *
- *   NO PRIVATE COPIES   display code may not format money itself. The app
- *                    once had five formats because each surface wrote its own.
- *                    Engine logs and MCP text for agents are outside this rule.
+ *   CURRENCY TEXT    Currency.toString() is the full format with cents, so
+ *                    every log line and report that prints a Currency object
+ *                    inherits it rather than writing $-1234.5.
+ *
+ *   NO PRIVATE COPIES   no code may format money itself: not the app, not the
+ *                    engine's log lines, not the MCP server's text for agents.
+ *                    The app once had five formats because each surface wrote
+ *                    its own.
  *
  * Run: node tests/money-format.mjs   (from src/)
  */
@@ -30,6 +35,7 @@ import { join, relative } from 'node:path';
 import {
     formatCompactCurrency, formatCurrency, formatSignedCurrency, MINUS,
 } from '../js/utils/html.js';
+import { Currency } from '../js/utils/currency.js';
 
 let passed = 0, failed = 0;
 async function test(name, fn) {
@@ -92,6 +98,51 @@ await test('no output ever contains an ASCII hyphen-minus', () => {
     }
 });
 
+await test('Currency.toString() is the full format with cents', () => {
+    assert.equal(new Currency(-1_234.5).toString(), `${MINUS}$1,234.50`);
+    assert.equal(new Currency(1_234_567.891).toString(), '$1,234,567.89');
+    assert.equal(new Currency(0).toString(), '$0.00');
+    assert.equal(`${new Currency(-0.001)}`, '$0.00', 'template interpolation uses it too');
+});
+
+await test('the Reports panel formats through the shared function', () => {
+    const src = readFileSync('js/components/report-view.js', 'utf8');
+    assert.match(src, /_fmt\(currency\) \{\s*return formatCurrency\(/,
+        'report-view _fmt no longer calls formatCurrency');
+});
+
+// ── what formatting costs a run ──────────────────────────────────────
+
+console.log('\n── Formatting does not slow the engine ──\n');
+
+// Log messages are assembled before the logger decides whether to keep them.
+// When Currency.toString became the full en-US format, the per-transaction
+// TRANSFER lines in credit()/debit() formatted ~7,900 amounts per Mid Career
+// run with logging off, and a run took 3.5x as long. Counted, not timed, so
+// the check is deterministic.
+await test('a run with logging off formats few amounts', async () => {
+    await import('./tools/localstorage-polyfill.js');
+    const { runPlan, planFromProfile } = await import('../js/mcp/run-plan.js');
+    let calls = 0;
+    const toString = Currency.prototype.toString;
+    Currency.prototype.toString = function () { calls++; return toString.call(this); };
+    try { await runPlan(planFromProfile('midCareer')); }
+    finally { Currency.prototype.toString = toString; }
+    assert.ok(calls < 1500, `${calls} Currency.toString() calls in one run with logging off`);
+});
+
+await test('the credit/debit TRANSFER lines still appear when that logging is on', async () => {
+    const { logger, LogCategory } = await import('../js/utils/logger.js');
+    const { runPlan, planFromProfile } = await import('../js/mcp/run-plan.js');
+    logger.enable(LogCategory.TRANSFER);
+    const cap = logger.capture(LogCategory.TRANSFER);
+    try { await runPlan(planFromProfile('midCareer')); }
+    finally { cap.stop(); logger.disable(LogCategory.TRANSFER); }
+    const lines = cap.lines.map((l) => l.message);
+    assert.ok(lines.some((m) => /\.credit\(\$[\d,]+\.\d{2}, /.test(m)), 'no credit() line in the shared format');
+    assert.ok(lines.some((m) => /\.debit\(\$[\d,]+\.\d{2}, /.test(m)), 'no debit() line in the shared format');
+});
+
 // ── the charts ───────────────────────────────────────────────────────
 
 console.log('\n── Chart defaults ──\n');
@@ -112,11 +163,10 @@ await test('charting.js sets compact axes and full tooltips for every chart', as
 
 // ── no private copies ────────────────────────────────────────────────
 
-console.log('\n── No private money formatters in display code ──\n');
+console.log('\n── No private money formatters anywhere in js/ ──\n');
 
-// Outside the rule: the formatter itself, the engine (log lines), the MCP
-// server (text for agents), and Currency.toString (debugging).
-const EXEMPT = [/^js\/utils\/html\.js$/, /^js\/engines\//, /^js\/mcp\//, /^js\/utils\/currency\.js$/];
+// The formatter itself is the only exemption.
+const EXEMPT = [/^js\/utils\/html\.js$/];
 
 const PATTERNS = [
     [/'\$' *\+|"\$" *\+/, "'$' + …"],
@@ -151,7 +201,7 @@ export function privateFormatters(root = 'js') {
     return hits;
 }
 
-await test('display code formats money only through utils/html.js', () => {
+await test('all code formats money only through utils/html.js', () => {
     const hits = privateFormatters();
     assert.equal(hits.length, 0, `\n         ${hits.join('\n         ')}`);
 });

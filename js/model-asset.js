@@ -772,15 +772,21 @@ export class ModelAsset {
    * `event` is a descriptor — `{ type, data }` — not a note string: callers say
    * what happened, and sim-event.js decides how it reads.
    */
+  // The busiest log lines in the engine (every transaction), so the message is
+  // built only when TRANSFER logging is on.
   credit(amount, event = null) {
-    logger.log(LogCategory.TRANSFER,
-      `${this.displayName}.credit(${amount.toString()}, '${event?.type ?? ''}')`);
+    if (logger.isEnabled(LogCategory.TRANSFER)) {
+      logger.log(LogCategory.TRANSFER,
+        `${this.displayName}.credit(${amount.toString()}, '${event?.type ?? ''}')`);
+    }
     return this.#transact(amount.copy(), event);
   }
 
   debit(amount, event = null) {
-    logger.log(LogCategory.TRANSFER,
-      `${this.displayName}.debit(${amount.toString()}, '${event?.type ?? ''}')`);
+    if (logger.isEnabled(LogCategory.TRANSFER)) {
+      logger.log(LogCategory.TRANSFER,
+        `${this.displayName}.debit(${amount.toString()}, '${event?.type ?? ''}')`);
+    }
     return this.#transact(amount.copy().flipSign(), event);
   }
 

@@ -40,6 +40,7 @@ import { Currency } from '../utils/currency.js';
 import { FinancialPackage } from '../financial-package.js';
 import { taxableBasis } from '../tax-basis.js';
 import { User } from '../user.js';
+import { formatCurrency } from '../utils/html.js';
 
 // ── Refusals ─────────────────────────────────────────────────────────
 
@@ -688,10 +689,10 @@ export function buildPlan(intent = {}) {
             .startCurrency.amount;
         ledger.asset(RESIDUAL_EXPENSE_LABEL, AssetOrigin.STRUCTURAL,
             'added to absorb the income you are not saving — '
-            + `$${Math.abs(Math.round(amt * 12)).toLocaleString()}/yr. `
+            + `${formatCurrency(Math.abs(amt * 12))}/yr. `
             + 'You never mentioned spending.');
         notes.push(`${RESIDUAL_EXPENSE_LABEL} — `
-            + `$${Math.abs(Math.round(amt * 12)).toLocaleString()}/yr — added to `
+            + `${formatCurrency(Math.abs(amt * 12))}/yr — added to `
             + 'absorb the income you are not saving, after tax. '
             + 'You never mentioned spending.');
     }

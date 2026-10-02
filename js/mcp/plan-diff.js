@@ -21,6 +21,8 @@
  * tell a rename from a swap. It improves when assets get stable ids.
  */
 
+import { formatCurrency } from '../utils/html.js';
+
 const SETTING_LABELS = {
     startAge:       'Start age',
     retirementAge:  'Retirement age',
@@ -109,8 +111,7 @@ export function diffOutcomes(runA, runB) {
     };
 }
 
-const money = (n) => (n == null ? '—'
-    : new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n));
+const money = (n) => (n == null ? '—' : formatCurrency(n));
 
 function deltaCell(from, to, isMoney) {
     if (from == null || to == null) return '—';

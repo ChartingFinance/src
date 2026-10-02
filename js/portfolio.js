@@ -10,6 +10,7 @@ import { EventType, ShortfallOrigin } from './sim-event.js';
 import { withTrace, TraceKind } from './trace.js';
 import { monthLabel, DateInt } from './utils/date-int.js';
 import { FinancialPackage } from './financial-package.js';
+import { formatCurrency } from './utils/html.js';
 import { PayrollEngine } from './engines/payroll-engine.js';
 import { ExpenseEngine } from './engines/expense-engine.js';
 import { TaxEngine } from './engines/tax-engine.js';
@@ -424,7 +425,7 @@ export class Portfolio {
         const tolerance = 0.01;
         const check = (label, eventTotal, packageTotal) => {
             if (Math.abs(eventTotal - packageTotal) > tolerance) {
-                logger.log(LogCategory.SANITY, `${settled} ${label}: events=${eventTotal.toFixed(2)}, package=${packageTotal.toFixed(2)}`);
+                logger.log(LogCategory.SANITY, `${settled} ${label}: events=${formatCurrency(eventTotal, { cents: true })}, package=${formatCurrency(packageTotal, { cents: true })}`);
             }
         };
 
@@ -451,7 +452,7 @@ export class Portfolio {
         // This finding is labelled with currentDateInt, not `settled` like the
         // checks above, so it reads one month late.
         if (Math.abs(buckets.paired) > tolerance) {
-            logger.log(LogCategory.SANITY, `${currentDateInt} Transfer conservation broken: ${buckets.paired.toFixed(2)}`);
+            logger.log(LogCategory.SANITY, `${currentDateInt} Transfer conservation broken: ${formatCurrency(buckets.paired, { cents: true })}`);
         }
     }
 

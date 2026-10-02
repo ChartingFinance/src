@@ -19,6 +19,7 @@ import { MonthsSpan } from '../utils/months-span.js';
 import { global_retirement_withholding_rate } from '../policy-constants.js';
 import { basisThisMonth, basisOverMonths, isAllocationEligible, planAllocation, NII_BASIS_METRICS } from '../tax-allocation.js';
 import { logger, LogCategory } from '../utils/logger.js';
+import { formatCurrency } from '../utils/html.js';
 import { EventType, ShortfallOrigin } from '../sim-event.js';
 import { withTrace, TraceKind } from '../trace.js';
 import { taxableBasis } from '../tax-basis.js';
@@ -626,7 +627,7 @@ export class TaxEngine {
 
         logger.log(LogCategory.TAX,
             `NIIT: ${niit.toString()} on NII ${netInvestmentIncome.toString()}, `
-            + `MAGI ${magi.toString()} vs threshold $${this.config.taxTable.activeNIITThreshold}`);
+            + `MAGI ${magi.toString()} vs threshold ${formatCurrency(this.config.taxTable.activeNIITThreshold)}`);
 
         // What the 3.8% was actually charged on — the binding side of the min.
         // Derived here and carried on the event so the ledger can say which
@@ -775,7 +776,7 @@ export class TaxEngine {
         if (taxDifference > 0) {
             const legs = this.#planTaxAllocation(new Currency(taxDifference), yearBasis);
             if (legs.length > 0) {
-                logger.log(LogCategory.TAX, `Annual True-Up: Underpaid by $${taxDifference.toFixed(0)}. Allocating across ${legs.length} account(s) by income share.`);
+                logger.log(LogCategory.TAX, `Annual True-Up: Underpaid by ${formatCurrency(taxDifference)}. Allocating across ${legs.length} account(s) by income share.`);
                 for (const leg of legs) {
                     const settled = this.#settleAllocatedLeg(leg, EventType.TAX_TRUE_UP,
                         Metric.ESTIMATED_INCOME_TAX, { direction: 'underpayment' });
@@ -796,7 +797,7 @@ export class TaxEngine {
                 // refund to the backstop would slowly move cash out of the
                 // accounts that earn the income. credit() adds basis, so no
                 // untaxed gain is created.
-                logger.log(LogCategory.TAX, `Annual True-Up: Overpaid by $${refund.amount.toFixed(0)}. Refunding across ${legs.length} account(s) by income share.`);
+                logger.log(LogCategory.TAX, `Annual True-Up: Overpaid by ${formatCurrency(refund.amount)}. Refunding across ${legs.length} account(s) by income share.`);
                 for (const leg of legs) {
                     const credit = new Currency(leg.amount);
                     leg.modelAsset.credit(credit, {
@@ -837,7 +838,7 @@ export class TaxEngine {
                     target.addToMetric(Metric.ESTIMATED_INCOME_TAX, refund);
                     this.#bookTrueUp(refund, 'refund');
                     logger.log(LogCategory.TAX,
-                        `Annual True-Up: Overpaid by $${refund.amount.toFixed(0)}. `
+                        `Annual True-Up: Overpaid by ${formatCurrency(refund.amount)}. `
                         + `Crediting ${target.displayName}.`);
                 } else {
                     logger.log(LogCategory.SANITY,
@@ -853,7 +854,7 @@ export class TaxEngine {
             // settleOneSided, so a clamped account's shortfall is re-sourced or
             // reported and the books claim only tax a balance actually paid.
             const taxBill = new Currency(taxDifference);
-            logger.log(LogCategory.TAX, `Annual True-Up: Underpaid by $${taxDifference.toFixed(0)}. Debiting ${liquidAsset.displayName}.`);
+            logger.log(LogCategory.TAX, `Annual True-Up: Underpaid by ${formatCurrency(taxDifference)}. Debiting ${liquidAsset.displayName}.`);
 
             const oneSided = new FundTransferOneSided(null, taxBill);
             oneSided.toModel = liquidAsset;
@@ -878,7 +879,7 @@ export class TaxEngine {
         } else {
             // Overpaid — credit the refund
             const taxRefund = new Currency(Math.abs(taxDifference));
-            logger.log(LogCategory.TAX, `Annual True-Up: Overpaid by $${Math.abs(taxDifference).toFixed(0)}. Refunding to ${liquidAsset.displayName}.`);
+            logger.log(LogCategory.TAX, `Annual True-Up: Overpaid by ${formatCurrency(Math.abs(taxDifference))}. Refunding to ${liquidAsset.displayName}.`);
             liquidAsset.credit(taxRefund, { type: EventType.TAX_TRUE_UP, data: { direction: 'refund' } });
             liquidAsset.addToMetric(Metric.ESTIMATED_INCOME_TAX, taxRefund);
             this.#bookTrueUp(taxRefund, 'refund');

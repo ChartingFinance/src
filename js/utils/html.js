@@ -31,6 +31,14 @@ function toAmount(amount) {
 
 const signed = (negative, body) => (negative && /[1-9]/.test(body) ? MINUS : '') + '$' + body;
 
+// Built once. toLocaleString builds a formatter on every call, and these run
+// thousands of times per plan (Currency.toString in log messages that are
+// assembled whether or not the category is on): per call, it tripled the time
+// of a whole run.
+const WHOLE = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 });
+const CENTS = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const TENTHS = new Intl.NumberFormat('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+
 /**
  * Compact currency for tight UI: $2.4M, $610K, $42.
  *
@@ -44,7 +52,7 @@ export function formatCompactCurrency(amount) {
     if (Math.round(abs) < 1000) body = String(Math.round(abs));
     else if (Math.round(abs / 1e3) < 1000) body = Math.round(abs / 1e3) + 'K';
     else if (Number((abs / 1e6).toFixed(1)) < 1000) body = (abs / 1e6).toFixed(1) + 'M';
-    else body = Number((abs / 1e9).toFixed(1)).toLocaleString('en-US', { minimumFractionDigits: 1 }) + 'B';
+    else body = TENTHS.format(Number((abs / 1e9).toFixed(1))) + 'B';
     return signed(num < 0, body);
 }
 
@@ -57,9 +65,7 @@ export function formatCompactCurrency(amount) {
 export function formatCurrency(amount, { cents = false } = {}) {
     const num = toAmount(amount);
     const abs = Math.abs(num);
-    const body = cents
-        ? abs.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-        : Math.round(abs).toLocaleString('en-US');
+    const body = cents ? CENTS.format(abs) : WHOLE.format(Math.round(abs));
     return signed(num < 0, body);
 }
 
