@@ -16,16 +16,9 @@
 import { classifyAssetGroup, AssetGroup, AssetGroupMeta } from './asset-groups.js';
 import { buildPipelines } from './flow-pipelines.js';
 import { Metric, MetricLabel, LEAF_TAX_METRICS } from './metric.js';
+import { formatCompactCurrency, formatSignedCurrency } from './utils/html.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
-
-function formatCompact(amount) {
-    const abs = Math.abs(amount);
-    const sign = amount < 0 ? '-' : '';
-    if (abs >= 1000000) return sign + '$' + (abs / 1000000).toFixed(1) + 'M';
-    if (abs >= 1000) return sign + '$' + Math.round(abs / 1000).toLocaleString() + 'K';
-    return sign + '$' + Math.round(abs);
-}
 
 function flowWidth(amount, maxW = 18) {
     if (amount <= 0) return 0;
@@ -124,19 +117,19 @@ export class HydraulicVisualizer {
             totalPositive = result.totalInflow;
             totalNegative = result.totalOutflow;
             const net = result.totalInflow - result.totalOutflow;
-            wealthLabel = (net >= 0 ? '+' : '') + formatCompact(net) + '/mo';
+            wealthLabel = formatSignedCurrency(net, { compact: true }) + '/mo';
         } else if (metricName === Metric.VALUE) {
             const result = this._updateValue(historyIndex);
             totalPositive = result.portfolioValue;
             totalNegative = 0;
-            wealthLabel = formatCompact(result.portfolioValue);
+            wealthLabel = formatCompactCurrency(result.portfolioValue);
         } else {
             // Generic metric mode: read metric history per asset, show positive/negative
             const result = this._updateGenericMetric(historyIndex, metricName);
             totalPositive = result.totalPositive;
             totalNegative = result.totalNegative;
             const net = result.totalPositive - result.totalNegative;
-            wealthLabel = (net >= 0 ? '+' : '') + formatCompact(net) + '/mo';
+            wealthLabel = formatSignedCurrency(net, { compact: true }) + '/mo';
         }
 
         // Update conduit blend and tooltip
@@ -155,14 +148,14 @@ export class HydraulicVisualizer {
                 prevTotal += atIdx(a, 'value', historyIndex - 1);
             }
             const delta = curTotal - prevTotal;
-            const deltaStr = (delta >= 0 ? '+' : '') + formatCompact(delta);
+            const deltaStr = formatSignedCurrency(delta, { compact: true });
 
             // Update tooltip on the hit-target overlay
             if (this._conduitHit) {
                 const existing = this._conduitHit.querySelector('title');
                 if (existing) existing.remove();
                 const title = document.createElementNS(SVG_NS, 'title');
-                title.textContent = `Net change since last month: ${deltaStr}\nPortfolio: ${formatCompact(curTotal)}`;
+                title.textContent = `Net change since last month: ${deltaStr}\nPortfolio: ${formatCompactCurrency(curTotal)}`;
                 this._conduitHit.appendChild(title);
             }
         }
@@ -193,7 +186,7 @@ export class HydraulicVisualizer {
         }
 
         const taxEl = this._elements.get('Taxes');
-        if (taxEl) taxEl.valueText.textContent = totalTaxes > 0 ? formatCompact(totalTaxes) + '/mo' : '';
+        if (taxEl) taxEl.valueText.textContent = totalTaxes > 0 ? formatCompactCurrency(totalTaxes) + '/mo' : '';
 
         // Per-asset flow totals and route details
         const assetInflow = new Map();
@@ -219,7 +212,7 @@ export class HydraulicVisualizer {
             const outAmt = assetOutflow.get(asset.displayName) || 0;
             const net = inAmt - outAmt;
             if (inAmt > 0 || outAmt > 0) {
-                el.valueText.textContent = (net >= 0 ? '+' : '') + formatCompact(net) + '/mo';
+                el.valueText.textContent = formatSignedCurrency(net, { compact: true }) + '/mo';
             } else {
                 el.valueText.textContent = '';
             }
@@ -243,14 +236,14 @@ export class HydraulicVisualizer {
 
             if (inAmt > 0) {
                 const inRoutes = assetInRoutes.get(assetName) || [];
-                const tip = `${assetName}: +${formatCompact(inAmt)}/mo inflow\n` +
-                    inRoutes.map(r => `  ${r.from} → ${assetName}: ${formatCompact(r.amount)}`).join('\n');
+                const tip = `${assetName}: ${formatSignedCurrency(inAmt, { compact: true })}/mo inflow\n` +
+                    inRoutes.map(r => `  ${r.from} → ${assetName}: ${formatCompactCurrency(r.amount)}`).join('\n');
                 this._drawFlowLine(pos, conduitX, isHorizontal, -LINE_OFFSET, inAmt, '#43e97b', tip);
             }
             if (outAmt > 0) {
                 const outRoutes = assetOutRoutes.get(assetName) || [];
-                const tip = `${assetName}: -${formatCompact(outAmt)}/mo outflow\n` +
-                    outRoutes.map(r => `  ${assetName} → ${r.to}: ${formatCompact(r.amount)}`).join('\n');
+                const tip = `${assetName}: ${formatCompactCurrency(-outAmt)}/mo outflow\n` +
+                    outRoutes.map(r => `  ${assetName} → ${r.to}: ${formatCompactCurrency(r.amount)}`).join('\n');
                 this._drawFlowLine(pos, conduitX, isHorizontal, LINE_OFFSET, outAmt, '#ff6b6b', tip);
             }
         }
@@ -261,7 +254,7 @@ export class HydraulicVisualizer {
             if (taxPos) {
                 totalOutflow += totalTaxes;
                 const conduitX = Math.max(this._conduitX0, Math.min(this._conduitX1, taxPos.cx));
-                this._drawFlowLine(taxPos, conduitX, false, 0, totalTaxes, '#ff6b6b', `Taxes: ${formatCompact(totalTaxes)}/mo`);
+                this._drawFlowLine(taxPos, conduitX, false, 0, totalTaxes, '#ff6b6b', `Taxes: ${formatCompactCurrency(totalTaxes)}/mo`);
             }
         }
 
@@ -280,7 +273,7 @@ export class HydraulicVisualizer {
             portfolioValue += val;
 
             const el = this._elements.get(asset.displayName);
-            if (el) el.valueText.textContent = formatCompact(val);
+            if (el) el.valueText.textContent = formatCompactCurrency(val);
         }
 
         const taxEl = this._elements.get('Taxes');
@@ -302,7 +295,7 @@ export class HydraulicVisualizer {
                 : Math.max(this._conduitX0, Math.min(this._conduitX1, pos.cx));
 
             this._drawFlowLine(pos, conduitX, pos.zone === 'left', 0, null, color,
-                `${assetName}: ${formatCompact(val)} (${(share * 100).toFixed(1)}%)`, w);
+                `${assetName}: ${formatCompactCurrency(val)} (${(share * 100).toFixed(1)}%)`, w);
         }
 
         return { portfolioValue };
@@ -325,7 +318,7 @@ export class HydraulicVisualizer {
         }
 
         const taxEl = this._elements.get('Taxes');
-        if (taxEl) taxEl.valueText.textContent = totalTaxes > 0 ? '-' + formatCompact(totalTaxes) + '/mo' : '';
+        if (taxEl) taxEl.valueText.textContent = totalTaxes > 0 ? formatCompactCurrency(-totalTaxes) + '/mo' : '';
 
         // Read metric value per asset
         const assetMetric = new Map();
@@ -346,7 +339,7 @@ export class HydraulicVisualizer {
             const el = this._elements.get(asset.displayName);
             if (el) {
                 if (val !== 0) {
-                    el.valueText.textContent = (val >= 0 ? '+' : '') + formatCompact(val) + '/mo';
+                    el.valueText.textContent = formatSignedCurrency(val, { compact: true }) + '/mo';
                 } else {
                     el.valueText.textContent = '';
                 }
@@ -371,11 +364,11 @@ export class HydraulicVisualizer {
 
             if (val > 0) {
                 this._drawFlowLine(pos, conduitX, isHorizontal, -LINE_OFFSET, absVal, '#43e97b',
-                    `${assetName}: +${formatCompact(val)}/mo ${metricLabel}`);
+                    `${assetName}: ${formatSignedCurrency(val, { compact: true })}/mo ${metricLabel}`);
             }
             if (val < 0) {
                 this._drawFlowLine(pos, conduitX, isHorizontal, LINE_OFFSET, absVal, '#ff6b6b',
-                    `${assetName}: ${formatCompact(val)}/mo ${metricLabel}`);
+                    `${assetName}: ${formatCompactCurrency(val)}/mo ${metricLabel}`);
             }
         }
 
@@ -386,7 +379,7 @@ export class HydraulicVisualizer {
             if (taxPos) {
                 const conduitX = Math.max(this._conduitX0, Math.min(this._conduitX1, taxPos.cx));
                 this._drawFlowLine(taxPos, conduitX, false, 0, totalTaxes, '#ff6b6b',
-                    `Taxes: -${formatCompact(totalTaxes)}/mo`);
+                    `Taxes: ${formatCompactCurrency(-totalTaxes)}/mo`);
             }
         }
 

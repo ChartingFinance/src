@@ -11,6 +11,7 @@ import { Chart } from 'chart.js';
 import { DateInt } from './utils/date-int.js';
 import { global_backtestYear, global_simDataMode, global_workerSnapshot, simConfigFromGlobals } from './globals.js';
 import { ensureLayout, setStatus } from './sim-panel.js';
+import { formatCompactCurrency, formatCurrency } from './utils/html.js';
 
 // 'Backtest from year' restricts the MC sampling pool to that era, keeping
 // the backtest story coherent across projections, guardrails, and MC.
@@ -221,8 +222,6 @@ function renderFanChart(chartEl, labels, bands, bandData, baselineData, withGuar
         monteCarloChart = null;
     }
 
-    const fmt = (v) => '$' + Math.round(v).toLocaleString();
-
     const step = Math.max(1, Math.floor(labels.length / 12));
     const thinLabels = labels.map((l, i) => i % step === 0 ? l : '');
 
@@ -346,13 +345,13 @@ function renderFanChart(chartEl, labels, bands, bandData, baselineData, withGuar
                 },
                 tooltip: {
                     callbacks: {
-                        label: (ctx) => `${ctx.dataset.label}: ${fmt(ctx.parsed.y)}`,
+                        label: (ctx) => `${ctx.dataset.label}: ${formatCurrency(ctx.parsed.y)}`,
                     },
                 },
             },
             scales: {
                 y: {
-                    ticks: { callback: (v) => fmt(v) },
+                    ticks: { callback: (v) => formatCompactCurrency(v) },
                     grid: { color: 'rgba(0,0,0,0.04)' },
                 },
                 x: {

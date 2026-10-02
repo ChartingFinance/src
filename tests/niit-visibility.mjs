@@ -181,7 +181,8 @@ console.log(`  ok  ${silent.length} fixture(s) owe none and report none`);
 // sum to the Total. A component added to federalTaxes() without a row fails
 // here, by name, instead of reappearing as an unexplained gap that only shows
 // up if a reader happens to add the column by hand.
-const parseMoney = (s) => Number(String(s).replace(/[$,]/g, ''));
+// Reads the app's money format: $1,234, or −$1,234 with the U+2212 minus.
+const parseMoney = (s) => Number(String(s).replace(/[−]/g, '-').replace(/[$,]/g, ''));
 
 function lifetimeTaxTable(md) {
   const start = md.indexOf('## Lifetime Tax Summary');
@@ -190,11 +191,12 @@ function lifetimeTaxTable(md) {
   const rows = new Map();
   let total = null;
   for (const line of section.split('\n')) {
-    let m = /^\| \*\*Total\*\* \| \*\*\$([\d,.-]+)\*\* \|$/.exec(line);
+    let m = /^\| \*\*Total\*\* \| \*\*([-−]?\$[\d,.]+)\*\* \|$/.exec(line);
     if (m) { total = parseMoney(m[1]); continue; }
-    // A row may be NEGATIVE — `estimatedTaxes` contributes against the others —
-    // and Intl currency formatting puts the minus outside the sign: -$824.
-    m = /^\| ([^|*]+?) \| (-?\$[\d,.]+) \|$/.exec(line);
+    // A row may be NEGATIVE (`estimatedTaxes` contributes against the
+    // others), written −$824. A row the pattern skips silently drops out of the
+    // sum, so the sign must be read, not assumed.
+    m = /^\| ([^|*]+?) \| ([-−]?\$[\d,.]+) \|$/.exec(line);
     if (m) rows.set(m[1].trim(), parseMoney(m[2]));
   }
   return { rows, total };

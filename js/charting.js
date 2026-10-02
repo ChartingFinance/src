@@ -15,9 +15,20 @@ Chart.register(
   CategoryScale, LinearScale,
   Tooltip, Legend, Filler,
 );
+// Every chart in the app plots dollars, so the value axis and the tooltip
+// default to the shared money formats: compact on the axis, full in the
+// tooltip. A chart can still set its own.
+Chart.defaults.scales.linear.ticks.callback = (value) => formatCompactCurrency(value);
+Chart.defaults.plugins.tooltip.callbacks.label = (ctx) => {
+  const value = ctx.chart.options.indexAxis === 'y' ? ctx.parsed.x : ctx.parsed.y;
+  return `${ctx.dataset.label ? ctx.dataset.label + ': ' : ''}${formatCurrency(value)}`;
+};
 import { MonthsSpan } from './utils/months-span.js';
 import { DateInt } from './utils/date-int.js';
-import { colorRange, positiveBackgroundColor, negativeBackgroundColor } from './utils/html.js';
+import {
+    colorRange, positiveBackgroundColor, negativeBackgroundColor,
+    formatCompactCurrency, formatCurrency,
+} from './utils/html.js';
 import { logger, LogCategory } from './utils/logger.js';
 import { findByName } from './portfolio.js';
 import { Metric } from './metric.js';

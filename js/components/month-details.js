@@ -18,6 +18,7 @@
 
 import { LitElement, html, nothing } from 'lit';
 import { monthSummary, zeroTaxWasWithheld } from '../month-summary.js';
+import { formatCurrency, formatSignedCurrency } from '../utils/html.js';
 
 const WITHHELD_TOOLTIP =
     'Tax that left one of your accounts. Tax withheld at source — from a ' +
@@ -65,21 +66,21 @@ export class MonthDetails extends LitElement {
                 <div class="md-regions">
                     <section class="md-region md-nw" aria-label="Net worth">
                         <div class="md-eyebrow">Net worth</div>
-                        <div class="md-nw-val">${money(s.value)}</div>
-                        <div class="md-nw-delta ${tone(s.netChange)}">${signed(s.netChange)} this month</div>
+                        <div class="md-nw-val">${formatCurrency(s.value)}</div>
+                        <div class="md-nw-delta ${tone(s.netChange)}">${formatSignedCurrency(s.netChange)} this month</div>
                         ${s.valueReal != null ? html`
-                            <div class="md-sub">${money(s.valueReal)} in today’s $</div>
+                            <div class="md-sub">${formatCurrency(s.valueReal)} in today’s $</div>
                         ` : nothing}
                     </section>
 
                     <section class="md-region" aria-label="This month">
                         <div class="md-eyebrow">This month</div>
                         <div class="md-cells">
-                            ${cell('Income', signed(s.income))}
-                            ${cell('Expenses', signed(s.expense))}
-                            ${cell('Taxes', signed(s.taxes))}
-                            ${cell('Cash flow', signed(s.cashFlow), tone(s.cashFlow))}
-                            ${cell('Asset growth', signed(s.growth), tone(s.growth))}
+                            ${cell('Income', formatSignedCurrency(s.income))}
+                            ${cell('Expenses', formatSignedCurrency(s.expense))}
+                            ${cell('Taxes', formatSignedCurrency(s.taxes))}
+                            ${cell('Cash flow', formatSignedCurrency(s.cashFlow), tone(s.cashFlow))}
+                            ${cell('Asset growth', formatSignedCurrency(s.growth), tone(s.growth))}
                         </div>
                     </section>
 
@@ -87,17 +88,17 @@ export class MonthDetails extends LitElement {
                         <div class="md-eyebrow">${span}</div>
                         <div class="md-region-title">Withdrawn to meet obligations</div>
                         <div class="md-cells">
-                            ${cell('Spending', money(d.spending))}
+                            ${cell('Spending', formatCurrency(d.spending))}
                             <div class="md-cell" title=${WITHHELD_TOOLTIP}>
                                 <div class="md-label">Tax <span class="md-info" aria-label=${WITHHELD_TOOLTIP}>ⓘ</span></div>
-                                <div class="md-val">${money(d.tax)}</div>
+                                <div class="md-val">${formatCurrency(d.tax)}</div>
                                 ${withheld ? html`<div class="md-hint">withheld at source</div>` : nothing}
                             </div>
-                            ${cell('Total', money(d.total), 'md-strong')}
+                            ${cell('Total', formatCurrency(d.total), 'md-strong')}
                             ${d.unfunded > 0 ? html`
                                 <div class="md-cell md-unfunded" title="Obligations the plan could not fund from any account">
                                     <div class="md-label">Could not fund</div>
-                                    <div class="md-val">${money(d.unfunded)}</div>
+                                    <div class="md-val">${formatCurrency(d.unfunded)}</div>
                                 </div>
                             ` : nothing}
                         </div>
@@ -115,20 +116,7 @@ function cell(label, value, cls = '') {
     </div>`;
 }
 
-/**
- * Whole dollars. The popover abbreviated ($705K) because it was 236px wide;
- * this is the detail view, and it has the room.
- */
-function money(amount) {
-    const v = Math.round(Number(amount) || 0);
-    const s = `$${Math.abs(v).toLocaleString('en-US')}`;
-    return v < 0 ? `−${s}` : s;
-}
-
-function signed(amount) {
-    const v = Math.round(Number(amount) || 0);
-    return v > 0 ? `+${money(v)}` : money(v);
-}
+// Whole dollars throughout: this is the detail view, and it has the room.
 
 function tone(amount) {
     const v = Math.round(Number(amount) || 0);

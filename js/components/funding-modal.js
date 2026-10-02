@@ -18,7 +18,7 @@
 
 import { LitElement, html } from 'lit';
 import { InstrumentType, InstrumentMeta } from '../instruments/instrument.js';
-import { colorRange } from '../utils/html.js';
+import { colorRange, formatCurrency } from '../utils/html.js';
 
 class FundingModal extends LitElement {
 
@@ -75,7 +75,7 @@ class FundingModal extends LitElement {
                             🏡 Purchase Funding
                         </h2>
                         <p class="text-gray-500 text-sm mt-1">
-                            Purchase price: <strong>$${this.purchasePrice.toLocaleString()}</strong>
+                            Purchase price: <strong>${formatCurrency(this.purchasePrice)}</strong>
                             ${this.startDate ? html` &middot; Starting: <strong>${this.startDate}</strong>` : ''}
                         </p>
                     </div>
@@ -113,8 +113,8 @@ class FundingModal extends LitElement {
                                 <span class="text-sm text-gray-400">%</span>
                             </div>
                             <div class="flex justify-between mt-2 text-sm">
-                                <span class="text-gray-500">Down payment: <strong>$${downAmount.toLocaleString(undefined, { maximumFractionDigits: 0 })}</strong></span>
-                                <span class="text-gray-500">Mortgage: <strong>$${mortgageAmount.toLocaleString(undefined, { maximumFractionDigits: 0 })}</strong></span>
+                                <span class="text-gray-500">Down payment: <strong>${formatCurrency(downAmount)}</strong></span>
+                                <span class="text-gray-500">Mortgage: <strong>${formatCurrency(mortgageAmount)}</strong></span>
                             </div>
                         </div>
                     ` : ''}

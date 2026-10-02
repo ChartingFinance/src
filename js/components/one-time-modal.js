@@ -17,6 +17,7 @@ import { LitElement, html } from 'lit';
 import { OneTimeEvent } from '../one-time.js';
 import { Currency } from '../utils/currency.js';
 import { DateInt } from '../utils/date-int.js';
+import { formatCurrency } from '../utils/html.js';
 
 // Row shape:
 //   event:      OneTimeEvent | null   (null = new, uncommitted row)
@@ -82,7 +83,7 @@ class OneTimeModal extends LitElement {
                         </h2>
                         <p class="text-gray-500 text-sm mt-1">
                             ${ma.displayName}
-                            ${net !== 0 ? html` · Net: <strong class="${net >= 0 ? '' : 'text-red-600'}">$${net.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>` : ''}
+                            ${net !== 0 ? html` · Net: <strong class="${net >= 0 ? '' : 'text-red-600'}>${formatCurrency(net, { cents: true })}</strong>` : ''}
                         </p>
                     </div>
 
@@ -120,7 +121,7 @@ class OneTimeModal extends LitElement {
             <div class="flex items-center gap-3 p-3 rounded-xl bg-gray-50 border border-gray-100">
                 <div class="flex-1 min-w-0">
                     <div class="text-sm font-semibold ${isNeg ? 'text-red-600' : 'text-gray-800'}">
-                        $${e.amount.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        ${formatCurrency(e.amount.amount, { cents: true })}
                     </div>
                     <div class="text-xs text-gray-400">
                         ${e.dateInt.toHTML()}${e.note ? html` · ${e.note}` : ''}

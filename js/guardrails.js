@@ -15,6 +15,7 @@
 import { Chart } from 'chart.js';
 import { global_backtestYear, global_workerSnapshot, simConfigFromGlobals } from './globals.js';
 import { ensureLayout, setStatus } from './sim-panel.js';
+import { formatCompactCurrency, formatCurrency } from './utils/html.js';
 
 // ── Chart instance ───────────────────────────────────────────────
 
@@ -137,8 +138,6 @@ function renderChart(chartEl, results) {
         guardrailsChart.destroy();
         guardrailsChart = null;
     }
-
-    const fmt = (v) => '$' + Math.round(v).toLocaleString();
 
     // Custom plugin: vertical "Retirement" line
     const retirementLinePlugin = {
@@ -294,7 +293,7 @@ function renderChart(chartEl, results) {
                 },
                 tooltip: {
                     callbacks: {
-                        label: (ctx) => `${ctx.dataset.label}: ${fmt(ctx.parsed.y)}`,
+                        label: (ctx) => `${ctx.dataset.label}: ${formatCurrency(ctx.parsed.y)}`,
                     },
                 },
             },
@@ -303,14 +302,14 @@ function renderChart(chartEl, results) {
                     type: 'linear',
                     position: 'left',
                     title: { display: true, text: 'Portfolio Value', font: { weight: '600' } },
-                    ticks: { callback: (v) => fmt(v) },
+                    ticks: { callback: (v) => formatCompactCurrency(v) },
                     grid: { color: 'rgba(0,0,0,0.04)' },
                 },
                 yWithdrawal: {
                     type: 'linear',
                     position: 'right',
                     title: { display: true, text: 'Annual Withdrawal', font: { weight: '600' } },
-                    ticks: { callback: (v) => fmt(v) },
+                    ticks: { callback: (v) => formatCompactCurrency(v) },
                     grid: { drawOnChartArea: false },
                 },
                 x: {

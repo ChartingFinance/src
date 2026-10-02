@@ -10,16 +10,14 @@ import { InstrumentMeta, InstrumentType } from '../instruments/instrument.js';
 import { classifyAssetGroup, AssetGroupMeta } from '../asset-groups.js';
 import { Metric, MetricLabel } from '../metric.js';
 import { monthSummary, zeroTaxWasWithheld } from '../month-summary.js';
+import { formatCurrency } from '../utils/html.js';
 // No globals.js import: settings come from `portfolio.config`, the config the
 // run actually used. Monte Carlo and Guardrails results arrive as arguments,
 // not imports: monte-carlo.js and guardrails.js are browser adapters (Web
 // Workers), and importing them would break every headless caller, including
 // mcp-server.js.
 
-const fmt = (val) =>
-    new Intl.NumberFormat('en-US', {
-        style: 'currency', currency: 'USD', maximumFractionDigits: 0,
-    }).format(val || 0);
+const fmt = formatCurrency;
 
 const pct = (val, decimals = 1) => (val * 100).toFixed(decimals) + '%';
 

@@ -26,6 +26,7 @@ import {
     charting_buildDateMarkers,
 } from '../charting.js';
 import { simConfigFromGlobals } from '../globals.js';
+import { formatCurrency } from '../utils/html.js';
 
 // Mirrors the generation count simulator.js runs (runGeneticAlgorithm call).
 const TOTAL_GENERATIONS = 200;
@@ -296,12 +297,8 @@ class SimulatorModal extends LitElement {
         this._chart.data.labels = newData.labels;
         this._chart.update();
 
-        const money = (v) => '$' + v.toLocaleString(undefined, {
-            minimumFractionDigits: 0, maximumFractionDigits: 0
-        });
-
         const bestVal = p.finishValue().amount;
-        this._bestValue = 'Best Terminal: ' + money(bestVal);
+        this._bestValue = 'Best Terminal: ' + formatCurrency(bestVal);
 
         // Spending side of the slider. The headline is the final year's spend
         // (the end-state counterpart to terminal value); the GA's cash-flow
@@ -317,10 +314,10 @@ class SimulatorModal extends LitElement {
         if (lastFull) {
             // Sum over every snapshot, matching Simulator.calculateFitness.
             const lifetimeSpend = snapshots.reduce((sum, s) => sum + s.annualExpense, 0);
-            this._bestSpending = 'Best Spending: ' + money(lastFull.annualExpense) + '/yr';
+            this._bestSpending = 'Best Spending: ' + formatCurrency(lastFull.annualExpense) + '/yr';
             this._bestSpendingTitle =
                 `Spend in ${lastFull.year}, the last full year of the plan. ` +
-                `Lifetime spending: ${money(lifetimeSpend)} — that total, not the ` +
+                `Lifetime spending: ${formatCurrency(lifetimeSpend)} — that total, not the ` +
                 `final year, is what the fitness function maximizes.`;
         } else {
             this._bestSpending = '';

@@ -123,7 +123,7 @@ import { moveRetirement, describeRetirementMove } from './retirement-move.js';
 import { planOutcome, simulationOutcome, guardrailsOutcome } from './outcome-summary.js';
 import { logger, LogCategory } from './utils/logger.js';
 import { buildYearPool } from './mc-compute.js';
-import { formatCompactCurrency } from './utils/html.js';
+import { formatCompactCurrency, formatCurrency } from './utils/html.js';
 
 // ── Util ────────────────────────────────────────────────────
 import {
@@ -2101,7 +2101,7 @@ function loadScenarioList() {
         nameEl.textContent = meta?.title || name;
         const noteEl = document.createElement('span');
         noteEl.className = 'scenario-menu-note';
-        const endLabel = preview?.end != null ? `ends ${formatShortCurrency(preview.end)}` : '';
+        const endLabel = preview?.end != null ? `ends ${formatCompactCurrency(preview.end)}` : '';
         noteEl.textContent = [meta?.note || '', endLabel].filter(Boolean).join(' · ');
         noteEl.title = noteEl.textContent;
         text.appendChild(nameEl);
@@ -2154,16 +2154,6 @@ function loadScenarioList() {
         openScenarioPopup('create');
     });
     scenarioMenu.appendChild(addBtn);
-}
-
-/** Compact $ label for menu rows: $1.9M / $287K / $950. */
-function formatShortCurrency(amount) {
-    const val = parseFloat(amount) || 0;
-    const abs = Math.abs(val);
-    const sign = val < 0 ? '-' : '';
-    if (abs >= 1000000) return `${sign}$${(abs / 1000000).toFixed(1)}M`;
-    if (abs >= 1000) return `${sign}$${Math.round(abs / 1000).toLocaleString()}K`;
-    return `${sign}$${Math.round(abs)}`;
 }
 
 /** Tiny polyline preview for a scenario menu row (cached series or flat placeholder). */
