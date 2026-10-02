@@ -10,6 +10,8 @@
  *   fractional capital-gains splits, monthly growth).
  */
 
+import { formatCurrency } from './html.js';
+
 /**
  * Reject anything that is not a Currency, loudly.
  *
@@ -119,8 +121,9 @@ export class Currency {
     return this.toFixed();
   }
 
+  /** The app's full money format, with cents: −$1,234.56. Logs and reports inherit it. */
   toString() {
-    return `$${this.toFixed()}`;
+    return formatCurrency(this.amount, { cents: true });
   }
 
   /** For HTML input value attributes (no dollar sign) */

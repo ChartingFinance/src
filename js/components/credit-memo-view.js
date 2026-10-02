@@ -7,6 +7,7 @@
  */
 
 import { LitElement, html } from 'lit';
+import { formatCurrency } from '../utils/html.js';
 
 class CreditMemoView extends LitElement {
 
@@ -50,7 +51,7 @@ class CreditMemoView extends LitElement {
                         const dateStr = row.dateInt ? row.dateInt.toHTML() : '\u2014';
                         const val = row.amount ? row.amount.amount : 0;
                         const formatted = val !== 0
-                            ? val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                            ? formatCurrency(val, { cents: true })
                             : '\u2014';
                         // Info memos (gain recognition, attributed costs, escrow
                         // accruals) moved no cash on this asset \u2014 mute the amount

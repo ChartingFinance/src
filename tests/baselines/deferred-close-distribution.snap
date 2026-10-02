@@ -765,7 +765,7 @@
   [0054]         1.150188         1.153118         1.156055         1.159000         1.161953         1.164913
 
 [sanity]
-  applyNetIncome: Salary pre-tax deferrals exceed after-tax pay by $297612.02; net income clamped to $0
+  applyNetIncome: Salary pre-tax deferrals exceed after-tax pay by $297,612.02; net income clamped to $0
 
 [traces]
   scopes = 1611

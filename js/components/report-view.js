@@ -11,6 +11,7 @@
 
 import { LitElement, html, css } from 'lit';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
+import { formatCurrency } from '../utils/html.js';
 
 class ReportView extends LitElement {
 
@@ -126,9 +127,9 @@ class ReportView extends LitElement {
         }
     }
 
+    /** Full, with cents, like the ledger and the spreadsheet it sits beside. */
     _fmt(currency) {
-        if (currency && typeof currency.toString === 'function') return currency.toString();
-        return String(currency);
+        return formatCurrency(currency?.amount ?? currency, { cents: true });
     }
 }
 

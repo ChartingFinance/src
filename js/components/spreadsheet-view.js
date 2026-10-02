@@ -6,6 +6,7 @@
  */
 
 import { LitElement, html } from 'lit';
+import { formatCurrency } from '../utils/html.js';
 
 const metrics = [
     { key: 'monthlyValues',                label: 'Value' },
@@ -92,7 +93,7 @@ class SpreadsheetView extends LitElement {
                                 const arr = ac.asset[m.key];
                                 const val = (arr && i < arr.length) ? arr[i] : 0;
                                 const formatted = val !== 0
-                                    ? val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                                    ? formatCurrency(val, { cents: true })
                                     : '\u2014';
                                 return html`<td class="${val < 0 ? 'spreadsheet-negative' : ''}">${formatted}</td>`;
                             }))}

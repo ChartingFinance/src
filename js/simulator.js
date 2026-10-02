@@ -21,6 +21,7 @@ import { Portfolio } from './portfolio.js';
 import { ModelLifeEvent } from './life-event.js';
 import { simConfigFromGlobals } from './globals.js';
 import { makeActiveTaxTable } from './globals.js';
+import { formatCurrency, formatSignedCurrency } from './utils/html.js';
 
 // Theoretical maximums for normalization (scaling to 0.0–1.0)
 const THEORETICAL_MAX_CASHFLOW = 10_000_000;
@@ -247,7 +248,6 @@ export class Simulator {
         const bestEvents = this.bestPortfolio.lifeEvents;
         const spendingPct = Math.round(this.fitnessBalance * 100);
         const terminalPct = 100 - spendingPct;
-        const fmt = (v) => '$' + Math.round(v).toLocaleString();
         const pctChange = (from, to) => from === 0
             ? (to > 0 ? '+100' : '0')
             : ((to - from) / Math.abs(from) * 100).toFixed(0);
@@ -268,7 +268,7 @@ export class Simulator {
         md += '## Bottom Line\n\n';
         md += `| | Baseline | Optimized | Change |\n`;
         md += `| :--- | ---: | ---: | ---: |\n`;
-        md += `| Terminal Value | ${fmt(baseTerminal)} | ${fmt(bestTerminal)} | ${fmt(terminalDelta)} (${terminalPctChg}%) |\n\n`;
+        md += `| Terminal Value | ${formatCurrency(baseTerminal)} | ${formatCurrency(bestTerminal)} | ${formatCurrency(terminalDelta)} (${terminalPctChg}%) |\n\n`;
 
         // ── Per-Asset Comparison ─────────────────────────────────────
         const bestAssets = this.bestPortfolio.modelAssets;
@@ -305,8 +305,7 @@ export class Simulator {
             md += '| Asset | Baseline End | Optimized End | Impact |\n';
             md += '| :--- | ---: | ---: | ---: |\n';
             for (const a of meaningful) {
-                const sign = a.delta >= 0 ? '+' : '';
-                md += `| ${a.emoji} ${a.name} | ${fmt(a.baseEnd)} | ${fmt(a.optEnd)} | ${sign}${fmt(a.delta)} |\n`;
+                md += `| ${a.emoji} ${a.name} | ${formatCurrency(a.baseEnd)} | ${formatCurrency(a.optEnd)} | ${formatSignedCurrency(a.delta)} |\n`;
             }
             md += '\n';
 
@@ -427,7 +426,7 @@ export class Simulator {
             md += 'No significant changes recommended. Current allocations are near-optimal.\n';
         }
 
-        md += `\n---\n*Optimized terminal value: ${fmt(bestTerminal)}*\n`;
+        md += `\n---\n*Optimized terminal value: ${formatCurrency(bestTerminal)}*\n`;
 
         return md;
     }
@@ -481,9 +480,7 @@ export class Simulator {
             }
 
             // Build the callout
-            const fmt = (v) => '$' + Math.round(v).toLocaleString();
-            const sign = asset.delta >= 0 ? '+' : '';
-            let callout = `**${asset.emoji} ${asset.name}** (${sign}${fmt(asset.delta)}): `;
+            let callout = `**${asset.emoji} ${asset.name}** (${formatSignedCurrency(asset.delta)}): `;
 
             if (reasons.length > 0) {
                 callout += reasons.join('; ') + '.';

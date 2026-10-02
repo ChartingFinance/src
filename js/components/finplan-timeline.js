@@ -30,6 +30,7 @@ import { MetricLabel, hasRealDollarLine } from '../metric.js';
 import { metricAtIndex } from '../month-summary.js';
 import { PriceIndex } from '../utils/price-index.js';
 import { DateInt, MONTH_NAMES } from '../utils/date-int.js';
+import { formatCompactCurrency } from '../utils/html.js';
 
 // ── Arc geometry (viewBox units; the SVG scales to container width) ──
 const ARC_W = 1000;
@@ -490,21 +491,6 @@ export class FinplanTimeline extends LitElement {
         return 0;
     }
 
-    _formatCurrency(amount) {
-        const val = parseFloat(amount) || 0;
-        const abs = Math.abs(val);
-        const sign = val < 0 ? '-' : '';
-        if (abs >= 1000000) return `${sign}$${(abs / 1000000).toFixed(1)}M`;
-        if (abs >= 1000) return `${sign}$${Math.round(abs / 1000).toLocaleString()}K`;
-        return `${sign}$${Math.round(abs)}`;
-    }
-
-    /** Like _formatCurrency but with an explicit + on positive values. */
-    _formatSignedCurrency(amount) {
-        const s = this._formatCurrency(amount);
-        return amount > 0 ? `+${s}` : s;
-    }
-
     // ── Render ─────────────────────────────────────────────────────
 
     render() {
@@ -579,7 +565,7 @@ export class FinplanTimeline extends LitElement {
                  aria-valuemin=${this._birthYear + sAge}
                  aria-valuemax=${this._birthYear + fAge}
                  aria-valuenow=${this.selectedYear}
-                 aria-valuetext="${MONTH_NAMES[this.selectedMonth - 1]} ${this.selectedYear}, ${this._formatCurrency(this._computeCursorMetric())}"
+                 aria-valuetext="${MONTH_NAMES[this.selectedMonth - 1]} ${this.selectedYear}, ${formatCompactCurrency(this._computeCursorMetric())}"
                  @pointerdown=${this._onArcPointerDown}
                  @pointermove=${this._onArcPointerMove}
                  @pointerup=${this._onArcPointerUp}
@@ -770,9 +756,9 @@ export class FinplanTimeline extends LitElement {
         const { vals, realVals, lastIdx } = series;
         const pair = (nominal, real, align) => html`
             <div style="display: flex; flex-direction: column; align-items: ${align}; line-height: 1.25;">
-                <span style="font-size: 13px; font-weight: 700; color: #111827;">${this._formatCurrency(nominal)}</span>
+                <span style="font-size: 13px; font-weight: 700; color: #111827;">${formatCompactCurrency(nominal)}</span>
                 ${real != null ? html`
-                    <span style="font-size: 10.5px; font-weight: 600; color: #9ca3af;">${this._formatCurrency(real)} today’s $</span>
+                    <span style="font-size: 10.5px; font-weight: 600; color: #9ca3af;">${formatCompactCurrency(real)} today’s $</span>
                 ` : nothing}
             </div>
         `;
@@ -796,7 +782,7 @@ export class FinplanTimeline extends LitElement {
             parts.push(svg`
                 <circle cx=${cx.toFixed(1)} cy=${cy.toFixed(1)} r="3.5" fill="#fff" stroke="${accent}" stroke-width="1.5"></circle>
                 <text x=${(cx + 8).toFixed(1)} y=${(cy - 8).toFixed(1)} font-size="10.5" font-weight="600"
-                      fill="${accent}">${this._formatCurrency(series.vals[idx])}</text>
+                      fill="${accent}">${formatCompactCurrency(series.vals[idx])}</text>
             `);
         }
         return parts;
@@ -876,9 +862,9 @@ export class FinplanTimeline extends LitElement {
             <div class="timeline-cursor-chip"
                  style="left: clamp(80px, ${pct}%, calc(100% - 80px)); background: #ffffff; border: 1px solid ${color}40; color: ${accent};">
                 ${MONTH_NAMES[this.selectedMonth - 1]} ${this.selectedYear} · Age ${Math.floor(this._selectedAge)}
-                — <strong>${this._formatCurrency(this._computeCursorMetric())}</strong>
+                — <strong>${formatCompactCurrency(this._computeCursorMetric())}</strong>
                 ${this._cursorRealMetric() != null ? html`
-                    <span style="font-size: 10.5px; font-weight: 600; color: #9ca3af;">${this._formatCurrency(this._cursorRealMetric())} today’s $</span>
+                    <span style="font-size: 10.5px; font-weight: 600; color: #9ca3af;">${formatCompactCurrency(this._cursorRealMetric())} today’s $</span>
                 ` : nothing}
             </div>
         `;

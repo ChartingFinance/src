@@ -8,6 +8,7 @@
  */
 
 import { Currency } from '../utils/currency.js';
+import { formatCurrency } from '../utils/html.js';
 import { InstrumentType } from '../instruments/instrument.js';
 import { Metric } from '../metric.js';
 import { FundTransfer } from '../fund-transfer.js';
@@ -178,7 +179,7 @@ export class PayrollEngine {
         this.taxEngine.recordIncomeTaxWithholding(modelAsset, withheld);
 
         logger.log(LogCategory.TAX,
-            `withholdOnRetirementIncome: ${modelAsset.displayName} gross ${gross.toFixed(2)} ` +
+            `withholdOnRetirementIncome: ${modelAsset.displayName} gross ${formatCurrency(gross, { cents: true })} ` +
             `at ${(rate * 100).toFixed(0)}% withheld ${withheld.toString()}`);
     }
 
@@ -275,7 +276,7 @@ export class PayrollEngine {
 
         logger.log(LogCategory.SANITY,
             `Contribution capped: ${toModel.displayName} requested ${requested.toString()}, ` +
-            `${limitName} allowed ${granted.toFixed(2)}`);
+            `${limitName} allowed ${formatCurrency(granted, { cents: true })}`);
         toModel.recordEvent(EventType.CONTRIBUTION_CAPPED, new Currency(-shortfall), { data: { limitName } });
     }
 

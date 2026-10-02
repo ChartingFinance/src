@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.3.19; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.3.20; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -30555,6 +30555,24 @@ var StdioServerTransport = class {
   }
 };
 
+// js/utils/html.js
+var MINUS = "\u2212";
+function toAmount(amount) {
+  const num = typeof amount === "number" ? amount : parseFloat(amount);
+  return Number.isFinite(num) ? num : 0;
+}
+var signed = (negative, body) => (negative && /[1-9]/.test(body) ? MINUS : "") + "$" + body;
+var WHOLE = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
+var CENTS = new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+var TENTHS = new Intl.NumberFormat("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+function formatCurrency(amount, { cents = false } = {}) {
+  const num = toAmount(amount);
+  const abs = Math.abs(num);
+  const body = cents ? CENTS.format(abs) : WHOLE.format(Math.round(abs));
+  return signed(num < 0, body);
+}
+var colorRange = ["#3366cc", "#dc3912", "#ff9900", "#109618", "#990099", "#3b3eac", "#0099c6", "#dd4477", "#66aa00", "#b82e2e", "#316395", "#994499", "#22aa99", "#aaaa11", "#6633cc", "#e67300", "#8b0707", "#329262", "#5574a6", "#651067"];
+
 // js/utils/currency.js
 function assertCurrency(other, op) {
   if (!(other instanceof Currency)) {
@@ -30650,8 +30668,9 @@ var Currency = class _Currency {
   toCurrency() {
     return this.toFixed();
   }
+  /** The app's full money format, with cents: −$1,234.56. Logs and reports inherit it. */
   toString() {
-    return `$${this.toFixed()}`;
+    return formatCurrency(this.amount, { cents: true });
   }
   /** For HTML input value attributes (no dollar sign) */
   toHTML() {
@@ -34033,7 +34052,7 @@ var PayrollEngine = class {
     this.taxEngine.recordIncomeTaxWithholding(modelAsset, withheld);
     logger.log(
       LogCategory.TAX,
-      `withholdOnRetirementIncome: ${modelAsset.displayName} gross ${gross.toFixed(2)} at ${(rate * 100).toFixed(0)}% withheld ${withheld.toString()}`
+      `withholdOnRetirementIncome: ${modelAsset.displayName} gross ${formatCurrency(gross, { cents: true })} at ${(rate * 100).toFixed(0)}% withheld ${withheld.toString()}`
     );
   }
   #applyNetIncomeInScope(modelAsset, householdTax, totalWorkingIncome) {
@@ -34092,7 +34111,7 @@ var PayrollEngine = class {
     if (shortfall <= 0.01) return;
     logger.log(
       LogCategory.SANITY,
-      `Contribution capped: ${toModel.displayName} requested ${requested.toString()}, ${limitName} allowed ${granted.toFixed(2)}`
+      `Contribution capped: ${toModel.displayName} requested ${requested.toString()}, ${limitName} allowed ${formatCurrency(granted, { cents: true })}`
     );
     toModel.recordEvent(EventType.CONTRIBUTION_CAPPED, new Currency(-shortfall), { data: { limitName } });
   }
@@ -34992,9 +35011,9 @@ var TaxEngine = class {
    */
   #bookTrueUp(amount, direction) {
     if (!(Math.abs(amount?.amount ?? 0) > 5e-3)) return;
-    const signed = new Currency(Math.abs(amount.amount));
-    if (direction === "underpayment") signed.flipSign();
-    this.monthly.taxTrueUp.add(signed);
+    const signed2 = new Currency(Math.abs(amount.amount));
+    if (direction === "underpayment") signed2.flipSign();
+    this.monthly.taxTrueUp.add(signed2);
   }
   /**
    * Collect one allocated leg from the account that earned the income.
@@ -35063,7 +35082,7 @@ var TaxEngine = class {
   #applyAnnualNIITInScope(niit, netInvestmentIncome, magi, settledYearMonths) {
     logger.log(
       LogCategory.TAX,
-      `NIIT: ${niit.toString()} on NII ${netInvestmentIncome.toString()}, MAGI ${magi.toString()} vs threshold $${this.config.taxTable.activeNIITThreshold}`
+      `NIIT: ${niit.toString()} on NII ${netInvestmentIncome.toString()}, MAGI ${magi.toString()} vs threshold ${formatCurrency(this.config.taxTable.activeNIITThreshold)}`
     );
     const taxedBase = niit.amount / this.config.taxTable.niitRate;
     const eventData = {
@@ -35163,7 +35182,7 @@ var TaxEngine = class {
     if (taxDifference > 0) {
       const legs = this.#planTaxAllocation(new Currency(taxDifference), yearBasis);
       if (legs.length > 0) {
-        logger.log(LogCategory.TAX, `Annual True-Up: Underpaid by $${taxDifference.toFixed(0)}. Allocating across ${legs.length} account(s) by income share.`);
+        logger.log(LogCategory.TAX, `Annual True-Up: Underpaid by ${formatCurrency(taxDifference)}. Allocating across ${legs.length} account(s) by income share.`);
         for (const leg of legs) {
           const settled = this.#settleAllocatedLeg(
             leg,
@@ -35182,7 +35201,7 @@ var TaxEngine = class {
       const refund = new Currency(Math.abs(taxDifference));
       const legs = this.#planTaxAllocation(refund, yearBasis);
       if (legs.length > 0) {
-        logger.log(LogCategory.TAX, `Annual True-Up: Overpaid by $${refund.amount.toFixed(0)}. Refunding across ${legs.length} account(s) by income share.`);
+        logger.log(LogCategory.TAX, `Annual True-Up: Overpaid by ${formatCurrency(refund.amount)}. Refunding across ${legs.length} account(s) by income share.`);
         for (const leg of legs) {
           const credit = new Currency(leg.amount);
           leg.modelAsset.credit(credit, {
@@ -35215,7 +35234,7 @@ var TaxEngine = class {
           this.#bookTrueUp(refund, "refund");
           logger.log(
             LogCategory.TAX,
-            `Annual True-Up: Overpaid by $${refund.amount.toFixed(0)}. Crediting ${target.displayName}.`
+            `Annual True-Up: Overpaid by ${formatCurrency(refund.amount)}. Crediting ${target.displayName}.`
           );
         } else {
           logger.log(
@@ -35228,7 +35247,7 @@ var TaxEngine = class {
     }
     if (taxDifference > 0) {
       const taxBill = new Currency(taxDifference);
-      logger.log(LogCategory.TAX, `Annual True-Up: Underpaid by $${taxDifference.toFixed(0)}. Debiting ${liquidAsset.displayName}.`);
+      logger.log(LogCategory.TAX, `Annual True-Up: Underpaid by ${formatCurrency(taxDifference)}. Debiting ${liquidAsset.displayName}.`);
       const oneSided = new FundTransferOneSided(null, taxBill);
       oneSided.toModel = liquidAsset;
       const settled = FundTransfer.settleOneSided(
@@ -35247,7 +35266,7 @@ var TaxEngine = class {
       }
     } else {
       const taxRefund = new Currency(Math.abs(taxDifference));
-      logger.log(LogCategory.TAX, `Annual True-Up: Overpaid by $${Math.abs(taxDifference).toFixed(0)}. Refunding to ${liquidAsset.displayName}.`);
+      logger.log(LogCategory.TAX, `Annual True-Up: Overpaid by ${formatCurrency(Math.abs(taxDifference))}. Refunding to ${liquidAsset.displayName}.`);
       liquidAsset.credit(taxRefund, { type: EventType.TAX_TRUE_UP, data: { direction: "refund" } });
       liquidAsset.addToMetric(Metric.ESTIMATED_INCOME_TAX, taxRefund);
       this.#bookTrueUp(taxRefund, "refund");
@@ -35602,7 +35621,7 @@ var Portfolio = class _Portfolio {
     const tolerance = 0.01;
     const check2 = (label, eventTotal, packageTotal) => {
       if (Math.abs(eventTotal - packageTotal) > tolerance) {
-        logger.log(LogCategory.SANITY, `${settled} ${label}: events=${eventTotal.toFixed(2)}, package=${packageTotal.toFixed(2)}`);
+        logger.log(LogCategory.SANITY, `${settled} ${label}: events=${formatCurrency(eventTotal, { cents: true })}, package=${formatCurrency(packageTotal, { cents: true })}`);
       }
     };
     check2("FICA", buckets.fica, this.monthly.fica().amount);
@@ -35613,7 +35632,7 @@ var Portfolio = class _Portfolio {
     check2("Capital gains", buckets.capitalGains, this.monthly.longTermCapitalGains.amount);
     check2("Capital gains tax", buckets.capitalGainsTax, this.monthly.longTermCapitalGainsTax.amount);
     if (Math.abs(buckets.paired) > tolerance) {
-      logger.log(LogCategory.SANITY, `${currentDateInt} Transfer conservation broken: ${buckets.paired.toFixed(2)}`);
+      logger.log(LogCategory.SANITY, `${currentDateInt} Transfer conservation broken: ${formatCurrency(buckets.paired, { cents: true })}`);
     }
   }
   /**
@@ -36578,15 +36597,6 @@ var OneTimeEvent = class _OneTimeEvent {
   }
 };
 
-// js/utils/html.js
-function formatCurrency(amount) {
-  const num = typeof amount === "number" ? amount : parseFloat(amount);
-  if (isNaN(num)) return "$0";
-  const sign = num < 0 ? "-" : "";
-  return sign + "$" + Math.round(Math.abs(num)).toLocaleString();
-}
-var colorRange = ["#3366cc", "#dc3912", "#ff9900", "#109618", "#990099", "#3b3eac", "#0099c6", "#dd4477", "#66aa00", "#b82e2e", "#316395", "#994499", "#22aa99", "#aaaa11", "#6633cc", "#e67300", "#8b0707", "#329262", "#5574a6", "#651067"];
-
 // js/model-asset.js
 var CreditMemo = class {
   /**
@@ -37395,18 +37405,24 @@ var ModelAsset = class _ModelAsset {
    * `event` is a descriptor — `{ type, data }` — not a note string: callers say
    * what happened, and sim-event.js decides how it reads.
    */
+  // The busiest log lines in the engine (every transaction), so the message is
+  // built only when TRANSFER logging is on.
   credit(amount, event = null) {
-    logger.log(
-      LogCategory.TRANSFER,
-      `${this.displayName}.credit(${amount.toString()}, '${event?.type ?? ""}')`
-    );
+    if (logger.isEnabled(LogCategory.TRANSFER)) {
+      logger.log(
+        LogCategory.TRANSFER,
+        `${this.displayName}.credit(${amount.toString()}, '${event?.type ?? ""}')`
+      );
+    }
     return this.#transact(amount.copy(), event);
   }
   debit(amount, event = null) {
-    logger.log(
-      LogCategory.TRANSFER,
-      `${this.displayName}.debit(${amount.toString()}, '${event?.type ?? ""}')`
-    );
+    if (logger.isEnabled(LogCategory.TRANSFER)) {
+      logger.log(
+        LogCategory.TRANSFER,
+        `${this.displayName}.debit(${amount.toString()}, '${event?.type ?? ""}')`
+      );
+    }
     return this.#transact(amount.copy().flipSign(), event);
   }
   #transact(amount, event) {
@@ -39328,7 +39344,7 @@ function diffOutcomes(runA, runB) {
     ]
   };
 }
-var money = (n) => n == null ? "\u2014" : new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(n);
+var money = (n) => n == null ? "\u2014" : formatCurrency(n);
 function deltaCell(from, to, isMoney) {
   if (from == null || to == null) return "\u2014";
   const d = to - from;
@@ -39861,11 +39877,7 @@ var OBLIGATION_SCOPES = /* @__PURE__ */ new Set([
 ]);
 
 // js/generators/finplan-ai.js
-var fmt = (val) => new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  maximumFractionDigits: 0
-}).format(val || 0);
+var fmt = formatCurrency;
 var pct = (val, decimals = 1) => (val * 100).toFixed(decimals) + "%";
 var GENERATOR_LINE = "\n---\n*Generated by https://Charting.Finance/ portfolio simulator*\n";
 var SECTIONS = [
@@ -40779,9 +40791,9 @@ function buildPlan(intent = {}) {
     ledger.asset(
       RESIDUAL_EXPENSE_LABEL,
       AssetOrigin.STRUCTURAL,
-      `added to absorb the income you are not saving \u2014 $${Math.abs(Math.round(amt * 12)).toLocaleString()}/yr. You never mentioned spending.`
+      `added to absorb the income you are not saving \u2014 ${formatCurrency(Math.abs(amt * 12))}/yr. You never mentioned spending.`
     );
-    notes.push(`${RESIDUAL_EXPENSE_LABEL} \u2014 $${Math.abs(Math.round(amt * 12)).toLocaleString()}/yr \u2014 added to absorb the income you are not saving, after tax. You never mentioned spending.`);
+    notes.push(`${RESIDUAL_EXPENSE_LABEL} \u2014 ${formatCurrency(Math.abs(amt * 12))}/yr \u2014 added to absorb the income you are not saving, after tax. You never mentioned spending.`);
   }
   if (splits.length > 1) {
     notes.push("Percentages are shares of the income they come from, not of each other: 5% to one account and 5% to another is 10% saved, not 10% each.");

@@ -209,7 +209,7 @@ check('an UNBALANCED transfer produces a complaint that names the amount', () =>
   assert.equal(brokenLines.length, 1,
     `expected exactly one complaint, got ${brokenLines.length}`);
   assert.match(brokenLines[0].message, /Transfer conservation broken/);
-  assert.match(brokenLines[0].message, /1234\.56/,
+  assert.match(brokenLines[0].message, /\$1,234\.56/,
     `the complaint must quantify the gap: "${brokenLines[0].message}"`);
 });
 
