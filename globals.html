@@ -47,12 +47,12 @@
     <!-- ═══ User Information ═══ -->
     <div class="glass-card p-8 sm:p-12 mb-6">
         <h2 class="text-2xl font-bold tracking-tight mb-2">User Information</h2>
-        <p class="text-gray-600 leading-relaxed mb-6">These three ages define the whole simulation. <strong>Start Age</strong> sets the year the plan begins and fixes your birth year, which is what Social Security timing, the RMD start age (72, 73 or 75 under SECURE&nbsp;2.0), catch-up contribution eligibility, and the age-60 gate on deferred-account tax attribution are all measured against. <strong>Retirement Age</strong> is where the Accumulate phase ends and the Retire phase begins &mdash; every life event trigger, asset start date and fund transfer switch derives from it. <strong>Finish Age</strong> ends the run.</p>
-        <p class="text-gray-600 leading-relaxed mb-6"><strong>Inflation Rate</strong> is what every indexed figure moves by from the second simulated year onward &mdash; tax brackets, the standard deduction, contribution limits and the Social Security wage base &mdash; and it is the rate the real-dollar view deflates by. It does not change your assets&rsquo; own return rates.</p>
-        <p class="text-gray-600 leading-relaxed mb-6 text-sm">These are the same four fields as the Settings Row on the main page &mdash; changing them here changes them everywhere. <strong>Filing status</strong> and <strong>backtest year</strong> live on the main page only.</p>
+        <p class="text-gray-600 leading-relaxed mb-6"><strong>Current Age</strong> is your age in the plan&rsquo;s first month. Together with that month it fixes your birth year, which Social Security timing, the RMD start age (72, 73 or 75 under SECURE&nbsp;2.0) and catch-up contribution eligibility are measured against. <strong>Retirement Age</strong> is where the Accumulate phase ends and the Retire phase begins. <strong>Finish Age</strong> is the plan&rsquo;s last year.</p>
+        <p class="text-gray-600 leading-relaxed mb-6"><strong>Inflation Rate</strong> indexes the tax tables from the second simulated year on &mdash; brackets, the standard deduction, contribution limits and the Social Security wage base &mdash; and today&rsquo;s-dollar figures are deflated by it. Expenses left at their default rate grow with it; every other asset keeps its own rate.</p>
+        <p class="text-gray-600 leading-relaxed mb-6 text-sm">These are the same four fields as the settings row on the main page, and changing one here changes it there. Once a plan is loaded, though, its Retire phase sets the Retirement Age, so change that on the main page, where it also moves the salary and benefit dates tied to retirement. <strong>Filing status</strong> and <strong>backtest year</strong> are set on the main page only.</p>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <div>
-                <label for="startAge" class="block text-sm font-medium text-gray-500 mb-1">Start Age</label>
+                <label for="startAge" class="block text-sm font-medium text-gray-500 mb-1">Current Age</label>
                 <input id="startAge" type="number" value="50" step="1"
                        class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-transparent" />
             </div>
@@ -77,8 +77,8 @@
     <!-- ═══ Tax Settings ═══ -->
     <div class="glass-card p-8 sm:p-12 mb-6">
         <h2 class="text-2xl font-bold tracking-tight mb-2">Tax Settings</h2>
-        <p class="text-gray-600 leading-relaxed mb-4">Every run starts from one published set of federal tables &mdash; brackets, capital gains bands, the standard deduction, the Social Security wage base and the contribution limits &mdash; selected by your filing status. From the second simulated year onward each of those figures is indexed forward by your inflation rate. The exceptions are figures the statute itself fixes, and they are deliberately never indexed: the primary-home sale exclusion ($250,000&thinsp;/&thinsp;$500,000), the net investment income tax threshold, the Social Security provisional-income thresholds, and the 2025&ndash;2028 senior deduction.</p>
-        <p class="text-gray-600 leading-relaxed mb-6 text-sm">This is not a setting &mdash; it is what the engine loaded, read back from the table set itself. See <a href="rules.html#taxes" class="underline hover:text-gray-900">Rules &rarr; Tax Rates</a> for the full detail.</p>
+        <p class="text-gray-600 leading-relaxed mb-4">Every run starts from one published set of federal tables, chosen by your filing status: brackets, capital-gains bands, the standard deduction, the Social Security wage base and the contribution limits. From the second simulated year each is indexed by your inflation rate, except the figures the law itself fixes, which are never indexed: the primary-home sale exclusion ($250,000&thinsp;/&thinsp;$500,000), the net investment income tax threshold, the Social Security provisional-income thresholds and the 2025&ndash;2028 senior deduction.</p>
+        <p class="text-gray-600 leading-relaxed mb-6 text-sm">This is not a setting; it shows what the engine loaded. See <a href="rules.html#taxes" class="underline hover:text-gray-900">Rules &rarr; Tax Rates</a> for the full detail.</p>
         <dl class="grid grid-cols-1 sm:grid-cols-3 gap-6">
             <div>
                 <dt class="block text-sm font-medium text-gray-500 mb-1">Base tax year</dt>
@@ -100,7 +100,7 @@
     <!-- ═══ Advanced ═══ -->
     <div class="glass-card p-8 sm:p-12 mb-6">
         <h2 class="text-2xl font-bold tracking-tight mb-2">Advanced</h2>
-        <p class="text-gray-600 leading-relaxed mb-6">Engine diagnostics add a third category &mdash; <strong>&#x1F9EA; Engine diagnostics</strong> &mdash; to the &ldquo;What needs attention&rdquo; panel above your asset list, alongside <strong>&#x1F4B8; Paying for the plan</strong> and <strong>&#x1F527; Needs setting up</strong>. It reports where the simulation&rsquo;s own bookkeeping does not reconcile. These are notes about the engine, not about your finances &mdash; most people should leave this off.</p>
+        <p class="text-gray-600 leading-relaxed mb-6">This adds a third category, <strong>&#x1F9EA; Engine diagnostics</strong>, to the &ldquo;What needs attention&rdquo; panel above your asset list, next to <strong>&#x1F4B8; Paying for the plan</strong> and <strong>&#x1F527; Needs setting up</strong>. It reports where the simulation&rsquo;s own bookkeeping doesn&rsquo;t reconcile. These are notes about the engine, not your finances; most people should leave this off.</p>
         <label class="flex items-center gap-3 text-sm text-gray-700 cursor-pointer">
             <input id="showEngineDiagnostics" type="checkbox" class="accent-[#993C1D] w-4 h-4" />
             Show engine diagnostics
@@ -109,7 +109,7 @@
 
     <!-- ═══ Privacy ═══ -->
     <div class="glass-card p-8 sm:p-12 mb-6">
-        <p class="font-bold text-gray-900 leading-relaxed">Charting Finance does not store any user data on its server! All user information is stored only on your computer in your web browser's Local Storage.</p>
+        <p class="font-bold text-gray-900 leading-relaxed">Charting Finance doesn&rsquo;t keep your plans on a server. Everything you enter is stored in this browser&rsquo;s local storage, on your computer. A share link carries the plan inside the link itself.</p>
     </div>
 
     <!-- ═══ Reset ═══ -->
@@ -118,7 +118,7 @@
                 class="px-6 py-2.5 rounded-xl bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 transition">
             Reset to Defaults
         </button>
-        <p class="text-xs text-gray-500 mt-3">Restores ages, tax year, filing status, inflation, property tax and engine diagnostics. Your assets, scenarios, guardrail parameters and backtest year are untouched.</p>
+        <p class="text-xs text-gray-500 mt-3">Restores the ages, filing status, inflation rate, property-tax deduction cap and engine diagnostics. Your assets, scenarios, guardrail parameters and backtest year are untouched.</p>
     </div>
 
     <!-- ═══ Footer ═══ -->
@@ -145,6 +145,7 @@
             global_multBy100, global_divBy100,
         } from './js/globals.js';
         import { makeActiveTaxTable } from './js/globals.js';
+        import { formatCurrency } from './js/utils/html.js';
 
         function valuesToElements() {
             document.getElementById('startAge').value = global_user_startAge;
@@ -160,18 +161,15 @@
         }
 
         /**
-         * The tax panel is DERIVED, never stored. Building a real TaxTable is
-         * the point: whatever the engine would load is what the page reports,
-         * so the two cannot drift. The old page hardcoded "2026" in prose next
-         * to a Tax Year input that selected nothing.
+         * The tax panel is derived, never stored: it builds the TaxTable the
+         * engine would load and reports from it, so the two cannot drift.
          */
         function taxBasisToElements() {
             const t = makeActiveTaxTable();
             const joint = global_filingAs !== 'Single';
             document.getElementById('taxBaseYear').textContent = t.baseYear;
             document.getElementById('taxStdDeduction').textContent =
-                t.activeStandardDeduction.toLocaleString('en-US',
-                    { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+                formatCurrency(t.activeStandardDeduction);
             document.getElementById('taxFilingNote').textContent =
                 joint ? 'Married filing jointly' : 'Single';
             document.getElementById('taxIndexRate').textContent =
