@@ -48,7 +48,36 @@
 
     <!-- ═══ Intro ═══ -->
     <div class="glass-card p-8 sm:p-12 mb-8">
-        <p class="text-gray-600 leading-relaxed">A section-by-section guide to using the Charting Finance simulator. Click the <strong style="font-size: 14px; color: #9ca3af;">?</strong> icon in any section header to jump directly to its help entry.</p>
+        <p class="text-gray-600 leading-relaxed">A section-by-section guide to the simulator. The <strong style="font-size: 14px; color: #6b7280;">?</strong> in each section&rsquo;s heading links to its entry here.</p>
+    </div>
+
+    <!-- ═══ The top of the page ═══ -->
+    <div id="outcome" class="glass-card p-8 sm:p-12 mb-8">
+        <div class="flex items-center gap-3 mb-6">
+            <span class="text-2xl">&#x1F9ED;</span>
+            <h2 class="text-2xl font-bold tracking-tight">The Top of the Page</h2>
+        </div>
+        <p class="text-gray-600 mb-6 leading-relaxed">The settings row holds the assumptions every section shares. Under it, the Outcome strip answers the question most people come with &mdash; will my money last? &mdash; and the section bar takes you anywhere on the page.</p>
+
+        <h3 class="text-lg font-bold mb-4">Elements</h3>
+        <div class="grid sm:grid-cols-2 gap-4">
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">Settings Row</div>
+                <div class="text-sm text-gray-500"><strong>Current Age</strong>, <strong>Retirement Age</strong>, <strong>Finish Age</strong>, <strong>Filing As</strong>, <strong>Inflation</strong> and <strong>Backtest from Year</strong>. On a loaded plan, changing Retirement Age moves the plan&rsquo;s retirement: the Retire phase, and any salary that ends or Social Security or pension that starts on the old retirement date. A note under the row says what moved, and changing the age back moves it all back.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">Will My Money Last?</div>
+                <div class="text-sm text-gray-500">Three answers side by side, each labelled with what it assumes: <strong>Plan as entered</strong> (the ending net worth, in today&rsquo;s dollars too, and whether the plan ever runs out), <strong>In 1,000 simulated markets</strong> (the Monte Carlo success rate and median) and <strong>With spending guardrails</strong>. They should differ: the simulations vary the markets and the guardrails vary spending. Click a tile to jump to its section.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">Section Bar</div>
+                <div class="text-sm text-gray-500">The bar stays at the top of the window as you scroll and highlights the section you are reading. Click a name to jump there.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">Collapsed Sections</div>
+                <div class="text-sm text-gray-500"><strong>Spreadsheet</strong> and <strong>Visualizer</strong> start collapsed, since they are for exploring rather than for the answer. <strong>Show</strong> in a section&rsquo;s heading opens it, and the page remembers your choice.</div>
+            </div>
+        </div>
     </div>
 
     <!-- ═══ Your Timeline ═══ -->
@@ -57,42 +86,42 @@
             <span class="text-2xl">&#x1F550;</span>
             <h2 class="text-2xl font-bold tracking-tight">Your Timeline</h2>
         </div>
-        <p class="text-gray-600 mb-6 leading-relaxed">The Timeline is the control center for your financial plan. One chart &mdash; the wealth arc &mdash; draws your money's path across your life phases, pins the milestones that shape it, and carries a scrubbable cursor that drives every other section of the page. The scenario menu in the section heading switches between the independent portfolios that hold your data.</p>
+        <p class="text-gray-600 mb-6 leading-relaxed">The Timeline draws your money&rsquo;s path across your life phases on one chart, the wealth arc. It marks the milestones along the way, and its cursor sets the month every other section shows. The scenario menu in its heading switches between your saved plans.</p>
 
         <!-- Elements -->
         <h3 class="text-lg font-bold mb-4">Elements</h3>
         <div class="grid sm:grid-cols-2 gap-4 mb-8">
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">The Wealth Arc</div>
-                <div class="text-sm text-gray-500">The curve plots your total portfolio across the full simulation, using the currently selected metric. The starting value sits on the left endpoint, the ending value in bold on the right, and a checkpoint marks the value where the curve crosses into retirement. The age axis runs beneath, with calendar years at the extremes.</div>
+                <div class="text-sm text-gray-500">The curve plots the selected metric (Net Worth unless you choose another) for the whole plan. The starting value sits at the left end, the ending value in bold at the right, and a checkpoint marks the value at retirement. Ages run along the axis, with calendar years at each end.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Phase Bands &amp; Growth Rates</div>
-                <div class="text-sm text-gray-500">Tinted background bands mark your life phases &mdash; <strong style="color: #1D9E75;">Accumulate</strong> in green, <strong style="color: #D85A30;">Retire</strong> in coral. Each band is headlined with that phase's annualized growth rate over its own span, as a pair: nominal and real (<em>7.2%/yr &middot; 4.0% real</em>). A dashed line marks the retirement boundary.</div>
+                <div class="text-sm text-gray-500">Tinted bands mark your phases &mdash; <strong style="color: #1D9E75;">Accumulate</strong> in green, <strong style="color: #D85A30;">Retire</strong> in coral. Each band is labelled with that phase&rsquo;s annual growth rate, nominal and real (<em>7.2%/yr &middot; 4.0% real</em>). A dashed line marks retirement.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Today's Dollars</div>
-                <div class="text-sm text-gray-500">A faint companion curve tracks the arc in <strong>inflation-adjusted dollars</strong>, and the start, end and cursor values each carry a smaller <em>today's&nbsp;$</em> figure beneath them. It appears only for metrics where deflating means something &mdash; a balance, not a rate. This is the honest read on a long projection: a $4M portfolio in 2056 is not $4M of groceries.</div>
+                <div class="text-sm text-gray-500">A fainter curve follows the arc in <strong>today&rsquo;s dollars</strong>, and the start, end and cursor values each show a <em>today&rsquo;s&nbsp;$</em> figure beneath them. It appears only where that makes sense &mdash; for a balance, not a rate. Over a long plan it is the honest number: $4M in 2056 buys far less than $4M today.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Milestone Pins</div>
-                <div class="text-sm text-gray-500">Emoji pins anchored to the curve show asset lifecycle events &mdash; real estate buy/sell, mortgage open and payoff, Social Security and pension starts. Pins stack vertically when events cluster at the same age. Click any pin to open the edit modal for that asset.</div>
+                <div class="text-sm text-gray-500">Pins on the curve mark asset milestones &mdash; buying or selling real estate, a mortgage opening or paid off, Social Security and pension starts. Pins stack when events fall at the same age. Click a pin to edit that asset.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">"You are Here" Cursor</div>
-                <div class="text-sm text-gray-500">A vertical line with a chip showing the selected date, your age, and the portfolio value at that moment. <strong>Drag anywhere on the arc</strong> to scrub through time &mdash; or focus the arc and use <strong>&larr; / &rarr;</strong> to step by month (<strong>Shift</strong> for a year). Every chart, badge, and view on the page follows the cursor.</div>
+                <div class="text-sm text-gray-500">A vertical line with a chip showing the date, your age and the value at that moment. <strong>Drag anywhere on the arc</strong> to move through time, or focus the arc and use <strong>&larr; / &rarr;</strong> to step a month (<strong>Shift</strong> for a year). Every chart, badge and view on the page follows it.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Month Details</div>
-                <div class="text-sm text-gray-500">The section directly beneath the timeline shows the month the cursor is on, always: net worth with its month-over-month delta, income, expenses, taxes, cash flow, and asset growth, plus what was withdrawn from your accounts over the past twelve months. Cash flow can run negative in retirement while asset growth offsets it &mdash; the section shows both so the pair reads together. <a href="#monthdetails" class="underline">More on reading it</a>.</div>
+                <div class="text-sm text-gray-500">The section directly under the timeline always shows the cursor&rsquo;s month: net worth and its change from the month before, income, expenses, taxes, cash flow and asset growth, plus what was withdrawn from your accounts over the past twelve months. In retirement, cash flow often runs negative while asset growth offsets it; the section shows both so you can read them together. <a href="#monthdetails" class="underline">More on reading it</a>.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Phase Chips &amp; Edit Popover</div>
-                <div class="text-sm text-gray-500">Below the arc, one chip per life phase showing its name and age range. Click a chip &mdash; or its colored dot on the arc's axis &mdash; to open a popover with <strong>Edit</strong> (opens the life event modal). The <strong>+ Life event</strong> button adds a new event.</div>
+                <div class="text-sm text-gray-500">Below the arc, one chip per phase shows its name and age range. Click a chip, or its dot on the axis, and choose <strong>Edit</strong> to open the life event form. <strong>+ Life event</strong> adds a new one.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Scenario Menu</div>
-                <div class="text-sm text-gray-500">The chip in the section heading names the active scenario &mdash; a complete, independent portfolio with its own assets, fund transfers, life events, and guardrail settings. Click it to open the menu: each row shows a preview curve of that scenario's trajectory (green if it grew, red if it shrank), its note, and its ending value. The active row carries rename (&#x270F;&#xFE0F;) and delete (&#x1F5D1;&#xFE0F;) actions.</div>
+                <div class="text-sm text-gray-500">The chip in the section heading names the active scenario &mdash; a complete, independent plan with its own assets, fund transfers, life events and guardrail settings. Click it to open the menu: each row shows a preview curve of that scenario (green if it grew, red if it shrank), its note and its ending value. The active row can be renamed (&#x270F;&#xFE0F;) or deleted (&#x1F5D1;&#xFE0F;).</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Date Controls &amp; &#x26A1; AI Summary</div>
@@ -108,7 +137,7 @@
                 <div class="space-y-2">
                     <div class="flex items-start gap-3">
                         <span class="step-number">1</span>
-                        <span class="text-sm text-gray-700">Set your <strong>Current Age</strong>, <strong>Retirement Age</strong>, and <strong>Finish Age</strong> in the Settings Row at the top of the page. The timeline automatically creates Accumulate and Retire phases from these ages.</span>
+                        <span class="text-sm text-gray-700">Set your <strong>Current Age</strong>, <strong>Retirement Age</strong> and <strong>Finish Age</strong> in the settings row at the top of the page. On a new plan the Accumulate and Retire phases follow these ages; on a loaded plan, Retirement Age moves the plan&rsquo;s retirement (see <a href="#outcome" class="underline">Settings Row</a>).</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">2</span>
@@ -116,7 +145,7 @@
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">3</span>
-                        <span class="text-sm text-gray-700">Open an asset's <strong>fund transfer modal</strong> (via the portfolio section). The transfers shown are specific to the currently selected phase &mdash; configure different allocations for Accumulate vs. Retire.</span>
+                        <span class="text-sm text-gray-700">Open an asset&rsquo;s fund transfers (<strong>&#x21C4;</strong> on its card). The transfers shown belong to the selected phase, so Accumulate and Retire can route money differently.</span>
                     </div>
                 </div>
             </div>
@@ -188,7 +217,7 @@
                 <div class="space-y-2">
                     <div class="flex items-start gap-3">
                         <span class="step-number">1</span>
-                        <span class="text-sm text-gray-700">If you have no assets yet, a <strong>welcome banner</strong> offers four life-stage starting portfolios &mdash; each with salary or retirement income, accounts, a home, expenses, and realistic fund transfers for both phases. Or choose <strong>Start from Scratch</strong>.</span>
+                        <span class="text-sm text-gray-700">If you have no assets yet, the <strong>welcome banner</strong> offers four starting plans for different life stages, each with income, accounts, a home, expenses and fund transfers for both phases. Or choose <strong>Start from Scratch</strong>.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">2</span>
@@ -196,7 +225,7 @@
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">3</span>
-                        <span class="text-sm text-gray-700">Quick Start data adapts to your <strong>Current Age</strong> and <strong>Retirement Age</strong> settings &mdash; all asset dates, life event triggers, and fund transfer routing are computed dynamically.</span>
+                        <span class="text-sm text-gray-700">A profile sets its own ages and filing status when you load it &mdash; Mid Career, for example, starts at 45 and retires at 67. Change Retirement Age afterwards to move its retirement.</span>
                     </div>
                 </div>
             </div>
@@ -209,7 +238,7 @@
             <span class="text-2xl">&#x1F4BC;</span>
             <h2 class="text-2xl font-bold tracking-tight">Your Portfolio</h2>
         </div>
-        <p class="text-gray-600 mb-6 leading-relaxed">Your Portfolio shows every asset in your financial plan, organized into horizontal group columns. Two views &mdash; <strong>Assets</strong> and <strong>Flows</strong> &mdash; give you both a snapshot of what you own and a map of where your money goes.</p>
+        <p class="text-gray-600 mb-6 leading-relaxed">Your Portfolio shows every asset in the plan, grouped into columns. Two views: <strong>Assets</strong>, what you own, and <strong>Flows</strong>, where your money goes.</p>
 
         <!-- Elements -->
         <h3 class="text-lg font-bold mb-4">Elements</h3>
@@ -228,7 +257,7 @@
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Asset Columns</div>
-                <div class="text-sm text-gray-500">Assets are displayed in six horizontal columns: <strong>Income</strong>, <strong>Capital</strong>, <strong>Real Estate</strong>, <strong>Retirement</strong>, <strong>Expenses</strong>, and <strong>Taxes</strong>. Each column header shows the group total. All groups start expanded.</div>
+                <div class="text-sm text-gray-500">Assets sit in six columns: <strong>Income</strong>, <strong>Capital</strong>, <strong>Real Estate</strong>, <strong>Retirement</strong>, <strong>Expenses</strong> and <strong>Taxes</strong>, each headed by its total. All start expanded.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Asset Cards</div>
@@ -276,7 +305,7 @@
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">2</span>
-                        <span class="text-sm text-gray-700">Select an <strong>asset type</strong> (e.g., Monthly Salary, Taxable Equity, Mortgage). The asset type determines the asset's behavior in the simulation &mdash; how it grows, how it's taxed, and what transfers are valid.</span>
+                        <span class="text-sm text-gray-700">Choose an <strong>asset type</strong> (for example Working Income, Taxable Account or Mortgage). The type decides how the asset behaves: how it grows, how it is taxed and which transfers it can take part in.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">3</span>
@@ -363,80 +392,28 @@
         </div>
     </div>
 
-    <!-- ═══ Projections ═══ -->
-    <div id="projections" class="glass-card p-8 sm:p-12 mb-8">
-        <div class="flex items-center gap-3 mb-6">
-            <span class="text-2xl">&#x1F4CA;</span>
-            <h2 class="text-2xl font-bold tracking-tight">Projections</h2>
-        </div>
-        <p class="text-gray-600 mb-6 leading-relaxed">The Projections section displays two side-by-side charts that visualize your portfolio's trajectory over the full simulation period. The Macro chart shows the big picture; the Micro chart shows the detail for the currently selected date.</p>
-
-        <!-- Elements -->
-        <h3 class="text-lg font-bold mb-4">Elements</h3>
-        <div class="grid sm:grid-cols-2 gap-4 mb-8">
-            <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Macro Projection Chart</div>
-                <div class="text-sm text-gray-500">A stacked area chart showing every asset's trajectory over the full simulation timeline. Color-coded by asset group. Driven by the current metric (the same one shown in every viewing badge).</div>
-            </div>
-            <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Micro Projection Chart</div>
-                <div class="text-sm text-gray-500">A companion chart showing the individual assets from the currently expanded portfolio groups. Updates as you expand or collapse groups in Your Portfolio.</div>
-            </div>
-            <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Metric Selector</div>
-                <div class="text-sm text-gray-500">A dropdown on the Macro chart that lets you switch the displayed metric. Options include <strong>Value</strong> (balance), <strong>Net Worth Change</strong> (month-over-month delta), <strong>Growth</strong> (appreciation), <strong>Cash Flow</strong> (wallet flows), <strong>Income</strong>, <strong>Expense</strong>, <strong>Taxes</strong>, and more. Changing the metric updates every section of the page.</div>
-            </div>
-            <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Click-to-cycle Badges</div>
-                <div class="text-sm text-gray-500">Every <strong>Viewing: Apr 2026 &middot; Value</strong> badge (Portfolio, Projections, Visualizer, Simulations, Details, Spreadsheet) is clickable. Click any badge to cycle through the macro metrics &mdash; the dropdown, timeline, asset cards, charts, and visualizer all update together.</div>
-            </div>
-            <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Phase Date Markers</div>
-                <div class="text-sm text-gray-500">Vertical dashed lines on the Macro chart marking the boundaries between life event phases (e.g., the transition from Accumulate to Retire). Helps you see how your portfolio behaves across phases.</div>
-            </div>
-            <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Fullscreen Button</div>
-                <div class="text-sm text-gray-500">Click the <strong>&#x26F6;</strong> in the upper-right of the Macro or Micro chart to expand it to fullscreen. Press Escape or click <strong>&times;</strong> to exit.</div>
-            </div>
-        </div>
-
-        <!-- How to -->
-        <h3 class="text-lg font-bold mb-4">How To</h3>
-        <div class="space-y-3">
-            <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-2">Analyze your portfolio trajectory</div>
-                <div class="space-y-2">
-                    <div class="flex items-start gap-3">
-                        <span class="step-number">1</span>
-                        <span class="text-sm text-gray-700">Review the <strong>Macro Projection</strong> chart for the overall shape of your plan &mdash; steady growth during accumulation, drawdown during retirement.</span>
-                    </div>
-                    <div class="flex items-start gap-3">
-                        <span class="step-number">2</span>
-                        <span class="text-sm text-gray-700">Cycle through metrics by clicking any <strong>viewing badge</strong> (or use the metric dropdown). <em>Value</em> shows the balance curve. <em>Net Worth Change</em> shows how fast wealth is changing month by month &mdash; when cash flow exceeds growth, the delta goes negative even if you still have money. <em>Growth</em>, <em>Cash Flow</em>, <em>Income</em>, and <em>Expense</em> isolate specific contributors.</span>
-                    </div>
-                    <div class="flex items-start gap-3">
-                        <span class="step-number">3</span>
-                        <span class="text-sm text-gray-700">Click on the timeline or use the date selectors to move the cursor. The <strong>Micro chart</strong>, asset cards, visualizer, and every reactive element update to show that specific month.</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- ═══ Simulations ═══ -->
     <div id="simulations" class="glass-card p-8 sm:p-12 mb-8">
         <div class="flex items-center gap-3 mb-6">
             <span class="text-2xl">&#x1F3B2;</span>
             <h2 class="text-2xl font-bold tracking-tight">Simulations</h2>
         </div>
-        <p class="text-gray-600 mb-6 leading-relaxed">The Simulations section contains two tools for stress-testing your financial plan: Monte Carlo simulation for probability analysis, and Guardrails for dynamic withdrawal strategy testing.</p>
+        <p class="text-gray-600 mb-6 leading-relaxed">Two ways to stress-test the plan: <strong>Monte Carlo</strong>, which runs it through 1,000 simulated markets, and <strong>Guardrails</strong>, which adjusts spending as the portfolio rises and falls. Both re-run on their own whenever the plan changes; until a new result arrives, the previous one is dimmed.</p>
 
         <!-- Elements -->
         <h3 class="text-lg font-bold mb-4">Elements</h3>
         <div class="grid sm:grid-cols-2 gap-4 mb-8">
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Monte Carlo Chart</div>
-                <div class="text-sm text-gray-500">Runs <strong>1,000</strong> randomized simulations drawn from historical market data. Displays percentile bands (10th, 25th, 50th, 75th, 90th) showing the range of possible outcomes for your portfolio, with your deterministic baseline overlaid.</div>
+                <div class="text-sm text-gray-500">Runs <strong>1,000</strong> simulations with returns drawn from market history (1970&ndash;2025, or from your backtest year on), and shows the 10th, 25th, 50th, 75th and 90th percentile bands with your plan&rsquo;s own path overlaid. The draws are seeded, so the same plan always gives the same answer.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">Calibrated / Historical</div>
+                <div class="text-sm text-gray-500"><strong>Calibrated</strong>, the default, keeps your own return and inflation rates and adds each drawn year&rsquo;s swing around its long-run average. <strong>Historical</strong> uses the drawn years&rsquo; actual returns, as they happened.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">Summary Cards</div>
+                <div class="text-sm text-gray-500">Under Monte Carlo: the <strong>success rate</strong> (the share of runs that never fall to $0 after retirement), the median, the 10th and 90th percentile endings and the horizon. Under Guardrails: the ending value, the final year&rsquo;s withdrawal, and how many spending cuts and raises fired.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">With Guardrails Checkbox</div>
@@ -460,7 +437,7 @@
                 <div class="space-y-2">
                     <div class="flex items-start gap-3">
                         <span class="step-number">1</span>
-                        <span class="text-sm text-gray-700">Click <strong>Run</strong> in the Monte Carlo panel. The simulator runs hundreds of trials with randomized returns drawn from historical distributions.</span>
+                        <span class="text-sm text-gray-700">Monte Carlo runs on its own when a plan loads and after every change. Its button pauses and resumes a run in progress, or starts a fresh one.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">2</span>
@@ -468,7 +445,7 @@
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">3</span>
-                        <span class="text-sm text-gray-700">Check <strong>With Guardrails</strong> and re-run to see how dynamic withdrawal adjustments affect the range of outcomes.</span>
+                        <span class="text-sm text-gray-700">Check <strong>With Guardrails</strong> to apply your guardrail rules in every run; the simulation re-runs on its own.</span>
                     </div>
                 </div>
             </div>
@@ -490,7 +467,67 @@
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">4</span>
-                        <span class="text-sm text-gray-700">Click <strong>Run</strong> to see the guardrail strategy applied to a single deterministic simulation. The chart shows spending adjustments over time.</span>
+                        <span class="text-sm text-gray-700">The chart updates after each change, showing one run with the guardrails applied and marking each spending cut or raise.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ Projections ═══ -->
+    <div id="projections" class="glass-card p-8 sm:p-12 mb-8">
+        <div class="flex items-center gap-3 mb-6">
+            <span class="text-2xl">&#x1F4CA;</span>
+            <h2 class="text-2xl font-bold tracking-tight">Projections</h2>
+        </div>
+        <p class="text-gray-600 mb-6 leading-relaxed">The Projections section displays two side-by-side charts that visualize your portfolio's trajectory over the full simulation period. The Macro chart shows the big picture; the Micro chart shows the detail for the currently selected date.</p>
+
+        <!-- Elements -->
+        <h3 class="text-lg font-bold mb-4">Elements</h3>
+        <div class="grid sm:grid-cols-2 gap-4 mb-8">
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">Macro Projection Chart</div>
+                <div class="text-sm text-gray-500">A stacked bar chart of every asset over the whole plan, colored by asset group, for the current metric (the one shown in every viewing badge).</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">Micro Projection Chart</div>
+                <div class="text-sm text-gray-500">A companion chart showing the individual assets from the currently expanded portfolio groups. Updates as you expand or collapse groups in Your Portfolio.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">Metric Selector</div>
+                <div class="text-sm text-gray-500">A dropdown on the Macro chart that switches the metric. Options include <strong>Net Worth</strong> (balances), <strong>Net Worth Change</strong> (month-over-month change), <strong>Growth</strong>, <strong>Cash Flow</strong>, <strong>Income</strong>, <strong>Expense</strong>, <strong>Taxes</strong> and more. Changing it updates every section of the page.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">Click-to-cycle Badges</div>
+                <div class="text-sm text-gray-500">Every <strong>Viewing: Oct 2026 &middot; Net Worth</strong> badge (Portfolio, Projections, Visualizer, Simulations, Details, Spreadsheet) is clickable: click one to step through the main metrics, and the dropdown, timeline, asset cards, charts and visualizer all follow.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">Phase Date Markers</div>
+                <div class="text-sm text-gray-500">Vertical dashed lines on the Macro chart marking the boundaries between life event phases (e.g., the transition from Accumulate to Retire). Helps you see how your portfolio behaves across phases.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">Fullscreen Button</div>
+                <div class="text-sm text-gray-500">Click the <strong>&#x26F6;</strong> in the upper-right of the Macro or Micro chart to expand it to fullscreen. Press Escape or click <strong>&times;</strong> to exit.</div>
+            </div>
+        </div>
+
+        <!-- How to -->
+        <h3 class="text-lg font-bold mb-4">How To</h3>
+        <div class="space-y-3">
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-2">Analyze your portfolio trajectory</div>
+                <div class="space-y-2">
+                    <div class="flex items-start gap-3">
+                        <span class="step-number">1</span>
+                        <span class="text-sm text-gray-700">Review the <strong>Macro Projection</strong> chart for the overall shape of your plan &mdash; steady growth during accumulation, drawdown during retirement.</span>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <span class="step-number">2</span>
+                        <span class="text-sm text-gray-700">Step through metrics by clicking any <strong>viewing badge</strong>, or use the dropdown. <em>Net Worth</em> shows balances. <em>Net Worth Change</em> shows how fast wealth is changing month by month &mdash; when spending outpaces growth it turns negative even while you still have money. <em>Growth</em>, <em>Cash Flow</em>, <em>Income</em> and <em>Expense</em> isolate one contributor each.</span>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <span class="step-number">3</span>
+                        <span class="text-sm text-gray-700">Click on the timeline or use the date selectors to move the cursor. The <strong>Micro chart</strong>, asset cards, visualizer, and every reactive element update to show that specific month.</span>
                     </div>
                 </div>
             </div>
@@ -510,15 +547,15 @@
         <div class="grid sm:grid-cols-2 gap-4 mb-8">
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Credit Memos</div>
-                <div class="text-sm text-gray-500">A scrollable ledger of every financial transaction at the selected date &mdash; income receipts, fund transfers, expense debits, tax withholdings, asset appreciation, and more. Each memo shows the source, destination, amount, and transaction type. Every line is written by the engine at the moment it acted, so the ledger is the record of what happened rather than a summary assembled afterwards.</div>
+                <div class="text-sm text-gray-500">A ledger of every transaction in the selected month &mdash; income, transfers, expense payments, tax withholding, growth and more. Each row shows the date, the asset, the amount and a note describing it. The engine writes each line as it acts, so the ledger records what happened rather than a summary built afterwards.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Memos Worth Looking For</div>
-                <div class="text-sm text-gray-500"><strong>Unfunded &mdash;</strong> an obligation nothing could pay; the first one in the plan is the month you ran out of money. <strong>Spillover from depleted &hellip;</strong> &mdash; an account hit $0 mid-payment and another covered the rest. <strong>Contribution capped &mdash;</strong> a transfer asked for more than the annual limit allows. <strong>Federal withholding</strong> &mdash; tax taken at the source of a retirement distribution or pension payment. Each of these is also surfaced in plain language by &ldquo;What needs attention&rdquo; and by the asset's <strong>&#x1F453;</strong> view.</div>
+                <div class="text-sm text-gray-500"><strong>Unfunded &mdash;</strong> an obligation nothing could pay; the first one in the plan is the month you ran out of money. <strong>Spillover from depleted &hellip;</strong> &mdash; an account hit $0 mid-payment and another covered the rest. <strong>Contribution capped &mdash;</strong> a transfer asked for more than the annual limit allows. <strong>Income tax withholding</strong> &mdash; tax withheld from a paycheck, a retirement distribution or a pension payment. Each of these is also explained in plain language by &ldquo;What needs attention&rdquo; and by the asset&rsquo;s <strong>&#x1F453;</strong> view.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Reports</div>
-                <div class="text-sm text-gray-500">Aggregated financial summaries for the selected date. Includes income statements, balance sheets, tax summaries, and cash flow analysis. Reports condense hundreds of credit memos into actionable financial statements.</div>
+                <div class="text-sm text-gray-500">Monthly and yearly summaries for the selected date: income by type, deductions, contributions, debt paydown, cash flow, taxes and growth.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">&#x26A1; AI Summaries</div>
@@ -559,18 +596,18 @@
             <span class="text-2xl">&#x1F4CA;</span>
             <h2 class="text-2xl font-bold tracking-tight">Spreadsheet</h2>
         </div>
-        <p class="text-gray-600 mb-6 leading-relaxed">The Spreadsheet provides a tabular view of your entire simulation &mdash; every asset, every month, in a familiar grid format. Ideal for detailed analysis, comparison, and data export.</p>
+        <p class="text-gray-600 mb-6 leading-relaxed">The Spreadsheet is a table of the whole simulation &mdash; every asset, every month. It starts collapsed; <strong>Show</strong> in its heading opens it.</p>
 
         <!-- Elements -->
         <h3 class="text-lg font-bold mb-4">Elements</h3>
         <div class="grid sm:grid-cols-2 gap-4 mb-8">
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Data Grid</div>
-                <div class="text-sm text-gray-500">A scrollable table with rows for each month and columns for each asset. Cell values show the asset's balance at that point in time. The grid covers the entire simulation from start to finish.</div>
+                <div class="text-sm text-gray-500">A table with a row for each month and columns for each asset&rsquo;s metrics, with amounts to the cent. It covers the whole plan.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Copy &amp; Download</div>
-                <div class="text-sm text-gray-500">Two action buttons in the section header: <strong>Copy</strong> (&#x1F4CB;) copies the spreadsheet data to your clipboard for pasting into Excel or Google Sheets. <strong>Download</strong> (&#x2B07;&#xFE0F;) exports the data as a CSV file.</div>
+                <div class="text-sm text-gray-500">Two buttons in the section heading: <strong>Copy</strong> (&#x1F4CB;) puts the table on your clipboard for Excel or Google Sheets, and <strong>Download</strong> (&#x2B07;&#xFE0F;) saves it as a CSV file. Both write plain numbers, without $ signs, so a spreadsheet can calculate with them.</div>
             </div>
         </div>
 
@@ -603,7 +640,7 @@
             <span class="text-2xl">&#x1F6B0;</span>
             <h2 class="text-2xl font-bold tracking-tight">Visualizer</h2>
         </div>
-        <p class="text-gray-600 mb-6 leading-relaxed">The Visualizer renders a hydraulic-style flow diagram of your portfolio laid out as a horizontal conduit. Income feeds in from the left, capital and retirement accounts sit above, expenses, housing, and taxes drain below, and a wealth tank on the right shows your total net worth. The view is reactive &mdash; it follows the timeline cursor and the currently selected metric automatically, no button press required.</p>
+        <p class="text-gray-600 mb-6 leading-relaxed">The Visualizer draws your plan as plumbing: income feeds in from the left, capital and retirement accounts sit above a central pipe, expenses, housing and taxes drain below, and a tank on the right holds your net worth. It follows the timeline cursor and the selected metric. It starts collapsed; <strong>Show</strong> in its heading opens it.</p>
 
         <!-- Elements -->
         <h3 class="text-lg font-bold mb-4">Elements</h3>
@@ -663,7 +700,7 @@
             <span class="text-2xl">&#x1F52E;</span>
             <h2 class="text-2xl font-bold tracking-tight">Maximizer</h2>
         </div>
-        <p class="text-gray-600 mb-6 leading-relaxed">The Maximizer uses a genetic algorithm to find optimal fund transfer allocations and guardrail parameters for your portfolio. It evolves hundreds of candidate solutions over 200 generations, balancing your preference between maximizing spending and maximizing terminal value.</p>
+        <p class="text-gray-600 mb-6 leading-relaxed">The Maximizer searches for the fund transfer percentages and guardrail settings that best serve your goal. It uses a genetic algorithm: 50 candidate plans evolve over 200 generations, balanced between spending more and leaving more at the end.</p>
 
         <!-- Elements -->
         <h3 class="text-lg font-bold mb-4">Elements</h3>
@@ -674,7 +711,7 @@
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Evolution Chart</div>
-                <div class="text-sm text-gray-500">A live-updating stacked area chart showing the fittest portfolio found so far. Updates every time the genetic algorithm discovers a better solution. Renders the full simulation timeline with phase markers.</div>
+                <div class="text-sm text-gray-500">A live stacked bar chart of the best plan found so far. Updates every time the genetic algorithm discovers a better solution. Renders the full simulation timeline with phase markers.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Generation Counter</div>
@@ -686,11 +723,11 @@
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Recommendations Button</div>
-                <div class="text-sm text-gray-500">Appears after a run completes. Opens a popup showing the optimized fund transfer percentages, guardrail parameters, and a comparison to your current settings &mdash; actionable instructions you can apply manually.</div>
+                <div class="text-sm text-gray-500">Appears when a run completes. It compares the optimized fund transfers and guardrail settings with your current ones, and <strong>Apply to Baseline</strong> writes them into your plan.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Real-World Constraints</div>
-                <div class="text-sm text-gray-500">The optimizer respects real-world rules: mortgages and real estate are immutable, expenses are partially adjustable, retirement contributions are capped (25% accumulation, 10% retirement), and negative balances incur fitness penalties.</div>
+                <div class="text-sm text-gray-500">The optimizer keeps to real-world limits: mortgage, real estate and debt transfers are fixed, expenses can move by up to &plusmn;25%, contributions to retirement accounts are capped (25% of income while working, 10% in retirement), and a negative balance counts against a candidate.</div>
             </div>
         </div>
 
@@ -710,7 +747,7 @@
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">3</span>
-                        <span class="text-sm text-gray-700">When "Complete" appears, click <strong>Recommendations</strong> to see the optimized fund transfer allocations and guardrail settings. The popup shows what to change in your portfolio to approach the optimized result.</span>
+                        <span class="text-sm text-gray-700">When &ldquo;Complete&rdquo; appears, click <strong>Recommendations</strong> to see the optimized fund transfers and guardrail settings next to your own.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">4</span>
@@ -724,15 +761,15 @@
                 <div class="space-y-2">
                     <div class="flex items-start gap-3">
                         <span class="step-number">1</span>
-                        <span class="text-sm text-gray-700">Open the <strong>Recommendations</strong> popup after a completed run. Review the suggested fund transfer changes for each phase (Accumulate and Retire).</span>
+                        <span class="text-sm text-gray-700">Open the <strong>Recommendations</strong> popup after a completed run and review the suggested changes for each phase.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">2</span>
-                        <span class="text-sm text-gray-700">Navigate to your <strong>Portfolio</strong>, select an asset, and open its fund transfer modal. Manually adjust the percentages to match the recommendations.</span>
+                        <span class="text-sm text-gray-700">Click <strong>Apply to Baseline</strong> to write them into your plan. The simulations re-run with them straight away.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">3</span>
-                        <span class="text-sm text-gray-700">Update the <strong>Guardrail parameters</strong> in the Simulations section if the Maximizer suggests different withdrawal rate, preservation, prosperity, or adjustment values.</span>
+                        <span class="text-sm text-gray-700">To take only some of the changes, set them yourself instead: fund transfers through an asset&rsquo;s <strong>&#x21C4;</strong>, and guardrail settings in the Simulations section.</span>
                     </div>
                 </div>
             </div>
