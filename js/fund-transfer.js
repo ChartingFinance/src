@@ -198,7 +198,7 @@ export class FundTransfer {
     }
     if (!amount || amount.amount <= 0) return;
     logger.log(LogCategory.SANITY,
-      `Unfunded: ${modelAsset?.displayName ?? '?'} ${memo} ${amount.toString()} — ` +
+      () => `Unfunded: ${modelAsset?.displayName ?? '?'} ${memo} ${amount.toString()} — ` +
       `no eligible funding account (cash, savings, brokerage or bonds with a positive balance)`);
     modelAsset?.recordEvent(EventType.UNFUNDED, amount.copy().flipSign(), { data: { cause: memo, origin } });
   }

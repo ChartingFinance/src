@@ -139,13 +139,20 @@ export class logger {
     /**
      * Log a message under a category. Called with one argument, falls back to
      * GENERAL for backward compatibility with legacy call sites.
+     *
+     * A message that interpolates anything is passed as a function,
+     * `() => \`…${x}…\``, and built only when the category is on. Arguments are
+     * evaluated before log() can check: a template string built eagerly costs
+     * the same whether or not it is printed, and the engine logs about a
+     * thousand times per simulation (tests/sim-overhead.mjs enforces this).
      */
     static log(messageOrCategory, message) {
         const category = message === undefined ? LogCategory.GENERAL : messageOrCategory;
-        const text     = message === undefined ? messageOrCategory : message;
+        const raw      = message === undefined ? messageOrCategory : message;
 
         if (!_enabled.has(category)) return;
         if (_sinks.length === 0) return;
+        const text = typeof raw === 'function' ? raw() : raw;
 
         if (_emitted >= MAX_LINES) {
             if (!_cappedNoticeSent) {

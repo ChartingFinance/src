@@ -708,7 +708,7 @@ export class TaxTable {
                 }
             }
             if (divisor == 0) {
-                logger.log(LogCategory.TAX, 'TaxTable.calculateRMD: could not find divisor for age ' + activeUser.age);
+                logger.log(LogCategory.TAX, () => 'TaxTable.calculateRMD: could not find divisor for age ' + activeUser.age);
                 return new Currency(0);
             }
 
@@ -885,7 +885,13 @@ export class TaxTable {
 
     }
 
+    /**
+     * Computes the year's taxes and logs them; nothing reads a result, and the
+     * calculations are pure. So it runs only when TAX logging is on: otherwise
+     * every simulated year recomputed the whole tax for a discarded line.
+     */
     applyYear(yearly, activeUser) {
+        if (!logger.isEnabled(LogCategory.TAX)) return;
         this.reconcileYearlyTax(yearly, activeUser);
 
         let yearlyFICATax = this.calculateYearlyFICATax(yearly);
@@ -894,7 +900,7 @@ export class TaxTable {
         let yearlyIncomeTax = this.calculateYearlyIncomeTax(yearlyTaxableIncome);
 
         let yearlyLongTermCapitalGainsAndQualifiedDividendsTax = this.calculateYearlyLongTermCapitalGainsTax(yearlyTaxableIncome, basis.capitalGains);
-        logger.log(LogCategory.TAX, 'Taxes.applyYear|yearlyLongTermCapitalGainsAndQualifiedDividendsTax: ' + yearlyLongTermCapitalGainsAndQualifiedDividendsTax.toString());
+        logger.log(LogCategory.TAX, () => 'Taxes.applyYear|yearlyLongTermCapitalGainsAndQualifiedDividendsTax: ' + yearlyLongTermCapitalGainsAndQualifiedDividendsTax.toString());
     }
 
     /**

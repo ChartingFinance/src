@@ -55,7 +55,7 @@ export class TaxEngine {
         this.monthly.incomeTax.add(withheldTax);
         modelAsset.recordEvent(EventType.INCOME_TAX_WITHHOLDING, withheldTax.copy(), { metric: Metric.WITHHELD_INCOME_TAX });
 
-        logger.log(LogCategory.TRANSFER, `recordIncomeTaxWithholding: ${modelAsset.displayName} tax=${assetTax.toString()}`);
+        logger.log(LogCategory.TRANSFER, () => `recordIncomeTaxWithholding: ${modelAsset.displayName} tax=${assetTax.toString()}`);
 
     }
 
@@ -271,7 +271,7 @@ export class TaxEngine {
         }
 
         const capitalGains = new Currency(modelAsset.finishCurrency.amount - modelAsset.finishBasisCurrency.amount);
-        logger.log(LogCategory.TAX, 'capital gains of ' + capitalGains.toString());
+        logger.log(LogCategory.TAX, () => 'capital gains of ' + capitalGains.toString());
 
         const monthsSpan = MonthsSpan.build(modelAsset.startDateInt, modelAsset.effectiveFinishDateInt);
         // The gain is stacked on taxable income to find its band (IRC §1(h)).
@@ -332,7 +332,7 @@ export class TaxEngine {
             }
         }
 
-        logger.log(LogCategory.TAX, 'applyCapitalGainsTax: ' + modelAsset.displayName + ' generated tax of ' + amountToTax.toString() + ' to deduct from closure');
+        logger.log(LogCategory.TAX, () => 'applyCapitalGainsTax: ' + modelAsset.displayName + ' generated tax of ' + amountToTax.toString() + ' to deduct from closure');
         modelAsset.finishCurrency.add(amountToTax);
         modelAsset.monthlyValueChange.add(amountToTax);
 
@@ -360,7 +360,7 @@ export class TaxEngine {
         // instrument. Both halves are required — see its docstring.
         modelAsset.recordDistribution(distribution);
 
-        logger.log(LogCategory.TAX, 'applyTaxFreeCloseDistribution: ' + modelAsset.displayName
+        logger.log(LogCategory.TAX, () => 'applyTaxFreeCloseDistribution: ' + modelAsset.displayName
             + ' distributed ' + distribution.toString() + ' tax-free');
     }
 
@@ -401,7 +401,7 @@ export class TaxEngine {
             modelAsset.recordEvent(EventType.INCOME_TAX_WITHHOLDING, amountToTax.copy(), { metric: Metric.ESTIMATED_INCOME_TAX });
         }
 
-        logger.log(LogCategory.TAX, 'applyDeferredCloseDistribution: ' + modelAsset.displayName
+        logger.log(LogCategory.TAX, () => 'applyDeferredCloseDistribution: ' + modelAsset.displayName
             + ' distributed ' + distribution.toString() + ', withholding ' + amountToTax.toString());
 
         // Collect the withholding from the closing balance itself, so booking
@@ -484,7 +484,7 @@ export class TaxEngine {
 
         const liquidAsset = FundTransfer.resolveFunding(this.modelAssets);
         if (!liquidAsset) {
-            logger.log(LogCategory.TAX, `Monthly True-Up: no backstop account to pay ${additionalTax.toString()}; deferring to annual true-up`);
+            logger.log(LogCategory.TAX, () => `Monthly True-Up: no backstop account to pay ${additionalTax.toString()}; deferring to annual true-up`);
             return;
         }
 
@@ -626,7 +626,7 @@ export class TaxEngine {
     #applyAnnualNIITInScope(niit, netInvestmentIncome, magi, settledYearMonths) {
 
         logger.log(LogCategory.TAX,
-            `NIIT: ${niit.toString()} on NII ${netInvestmentIncome.toString()}, `
+            () => `NIIT: ${niit.toString()} on NII ${netInvestmentIncome.toString()}, `
             + `MAGI ${magi.toString()} vs threshold ${formatCurrency(this.config.taxTable.activeNIITThreshold)}`);
 
         // What the 3.8% was actually charged on — the binding side of the min.
@@ -653,7 +653,7 @@ export class TaxEngine {
         const legs = this.#planTaxAllocation(niit, niiBasis);
         if (legs.length > 0) {
             logger.log(LogCategory.TAX,
-                `NIIT: allocating ${niit.toString()} across ${legs.length} account(s) by NII share.`);
+                () => `NIIT: allocating ${niit.toString()} across ${legs.length} account(s) by NII share.`);
             // Book what the accounts actually supplied, not what they were
             // billed; the spilled part is counted through settled.spillover.
             const collected = Currency.zero();
@@ -776,7 +776,7 @@ export class TaxEngine {
         if (taxDifference > 0) {
             const legs = this.#planTaxAllocation(new Currency(taxDifference), yearBasis);
             if (legs.length > 0) {
-                logger.log(LogCategory.TAX, `Annual True-Up: Underpaid by ${formatCurrency(taxDifference)}. Allocating across ${legs.length} account(s) by income share.`);
+                logger.log(LogCategory.TAX, () => `Annual True-Up: Underpaid by ${formatCurrency(taxDifference)}. Allocating across ${legs.length} account(s) by income share.`);
                 for (const leg of legs) {
                     const settled = this.#settleAllocatedLeg(leg, EventType.TAX_TRUE_UP,
                         Metric.ESTIMATED_INCOME_TAX, { direction: 'underpayment' });
@@ -797,7 +797,7 @@ export class TaxEngine {
                 // refund to the backstop would slowly move cash out of the
                 // accounts that earn the income. credit() adds basis, so no
                 // untaxed gain is created.
-                logger.log(LogCategory.TAX, `Annual True-Up: Overpaid by ${formatCurrency(refund.amount)}. Refunding across ${legs.length} account(s) by income share.`);
+                logger.log(LogCategory.TAX, () => `Annual True-Up: Overpaid by ${formatCurrency(refund.amount)}. Refunding across ${legs.length} account(s) by income share.`);
                 for (const leg of legs) {
                     const credit = new Currency(leg.amount);
                     leg.modelAsset.credit(credit, {
@@ -838,11 +838,11 @@ export class TaxEngine {
                     target.addToMetric(Metric.ESTIMATED_INCOME_TAX, refund);
                     this.#bookTrueUp(refund, 'refund');
                     logger.log(LogCategory.TAX,
-                        `Annual True-Up: Overpaid by ${formatCurrency(refund.amount)}. `
+                        () => `Annual True-Up: Overpaid by ${formatCurrency(refund.amount)}. `
                         + `Crediting ${target.displayName}.`);
                 } else {
                     logger.log(LogCategory.SANITY,
-                        `Annual True-Up: refund of ${refund.toString()} could not be `
+                        () => `Annual True-Up: refund of ${refund.toString()} could not be `
                         + `credited — the plan has no everyday account at all`);
                 }
             }
@@ -854,7 +854,7 @@ export class TaxEngine {
             // settleOneSided, so a clamped account's shortfall is re-sourced or
             // reported and the books claim only tax a balance actually paid.
             const taxBill = new Currency(taxDifference);
-            logger.log(LogCategory.TAX, `Annual True-Up: Underpaid by ${formatCurrency(taxDifference)}. Debiting ${liquidAsset.displayName}.`);
+            logger.log(LogCategory.TAX, () => `Annual True-Up: Underpaid by ${formatCurrency(taxDifference)}. Debiting ${liquidAsset.displayName}.`);
 
             const oneSided = new FundTransferOneSided(null, taxBill);
             oneSided.toModel = liquidAsset;
@@ -879,7 +879,7 @@ export class TaxEngine {
         } else {
             // Overpaid — credit the refund
             const taxRefund = new Currency(Math.abs(taxDifference));
-            logger.log(LogCategory.TAX, `Annual True-Up: Overpaid by ${formatCurrency(Math.abs(taxDifference))}. Refunding to ${liquidAsset.displayName}.`);
+            logger.log(LogCategory.TAX, () => `Annual True-Up: Overpaid by ${formatCurrency(Math.abs(taxDifference))}. Refunding to ${liquidAsset.displayName}.`);
             liquidAsset.credit(taxRefund, { type: EventType.TAX_TRUE_UP, data: { direction: 'refund' } });
             liquidAsset.addToMetric(Metric.ESTIMATED_INCOME_TAX, taxRefund);
             this.#bookTrueUp(taxRefund, 'refund');

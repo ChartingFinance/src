@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.3.20; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.3.21; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -31124,12 +31124,19 @@ var logger = class _logger {
   /**
    * Log a message under a category. Called with one argument, falls back to
    * GENERAL for backward compatibility with legacy call sites.
+   *
+   * A message that interpolates anything is passed as a function,
+   * `() => \`…${x}…\``, and built only when the category is on. Arguments are
+   * evaluated before log() can check: a template string built eagerly costs
+   * the same whether or not it is printed, and the engine logs about a
+   * thousand times per simulation (tests/sim-overhead.mjs enforces this).
    */
   static log(messageOrCategory, message) {
     const category = message === void 0 ? LogCategory.GENERAL : messageOrCategory;
-    const text = message === void 0 ? messageOrCategory : message;
+    const raw = message === void 0 ? messageOrCategory : message;
     if (!_enabled.has(category)) return;
     if (_sinks.length === 0) return;
+    const text = typeof raw === "function" ? raw() : raw;
     if (_emitted >= MAX_LINES) {
       if (!_cappedNoticeSent) {
         _cappedNoticeSent = true;
@@ -31292,14 +31299,14 @@ var ModelLifeEvent = class _ModelLifeEvent {
     this.applied = true;
     logger.log(
       LogCategory.MONTHLY,
-      `LifeEvent.apply: "${this.displayName}" (${this.type}) at ${currentDateInt}`
+      () => `LifeEvent.apply: "${this.displayName}" (${this.type}) at ${currentDateInt}`
     );
     for (const name of this.closes) {
       const asset = findByName(portfolio.modelAssets, name);
       if (asset && !asset.isClosed) {
         logger.log(
           LogCategory.TRANSFER,
-          `LifeEvent closing asset: ${name}`
+          () => `LifeEvent closing asset: ${name}`
         );
         portfolio.closeAsset(asset, currentDateInt);
       }
@@ -31423,7 +31430,7 @@ function asFilingStatus(value, fallback = FilingStatus.SINGLE) {
   if (value != null) {
     logger.log(
       LogCategory.GENERAL,
-      `unrecognised filing status ${JSON.stringify(value)} \u2014 using ${fallback}`
+      () => `unrecognised filing status ${JSON.stringify(value)} \u2014 using ${fallback}`
     );
   }
   return fallback;
@@ -32091,7 +32098,9 @@ var TraceKind = Object.freeze({
 var _stack = [];
 var _scopes = [];
 var _nextId = 0;
+var _recording = true;
 function withTrace(kind, label, dateInt, fn) {
+  if (!_recording) return fn();
   const parent = _stack.length ? _stack[_stack.length - 1] : null;
   const scope = {
     id: ++_nextId,
@@ -32114,6 +32123,15 @@ function currentTraceId() {
 }
 function traceScopes() {
   return _scopes;
+}
+function withoutTracing(fn) {
+  const was = _recording;
+  _recording = false;
+  try {
+    return fn();
+  } finally {
+    _recording = was;
+  }
 }
 function resetTraces() {
   _stack = [];
@@ -32304,7 +32322,7 @@ var FundTransfer = class _FundTransfer {
     if (!amount || amount.amount <= 0) return;
     logger.log(
       LogCategory.SANITY,
-      `Unfunded: ${modelAsset?.displayName ?? "?"} ${memo} ${amount.toString()} \u2014 no eligible funding account (cash, savings, brokerage or bonds with a positive balance)`
+      () => `Unfunded: ${modelAsset?.displayName ?? "?"} ${memo} ${amount.toString()} \u2014 no eligible funding account (cash, savings, brokerage or bonds with a positive balance)`
     );
     modelAsset?.recordEvent(EventType.UNFUNDED, amount.copy().flipSign(), { data: { cause: memo, origin } });
   }
@@ -33392,7 +33410,7 @@ var TaxTable = class {
         }
       }
       if (divisor == 0) {
-        logger.log(LogCategory.TAX, "TaxTable.calculateRMD: could not find divisor for age " + activeUser.age);
+        logger.log(LogCategory.TAX, () => "TaxTable.calculateRMD: could not find divisor for age " + activeUser.age);
         return new Currency(0);
       }
       let index = modelAsset.monthlyValues.length - currentDateInt.month;
@@ -33521,14 +33539,20 @@ var TaxTable = class {
     let taxableIncome = yearly.irsTaxableGrossIncome(this);
     return this.applyYearlyDeductions(yearly, taxableIncome, age);
   }
+  /**
+   * Computes the year's taxes and logs them; nothing reads a result, and the
+   * calculations are pure. So it runs only when TAX logging is on: otherwise
+   * every simulated year recomputed the whole tax for a discarded line.
+   */
   applyYear(yearly, activeUser) {
+    if (!logger.isEnabled(LogCategory.TAX)) return;
     this.reconcileYearlyTax(yearly, activeUser);
     let yearlyFICATax = this.calculateYearlyFICATax(yearly);
     const basis = taxableBasis(yearly, activeUser, { taxTable: this });
     let yearlyTaxableIncome = basis.ordinaryTaxable;
     let yearlyIncomeTax = this.calculateYearlyIncomeTax(yearlyTaxableIncome);
     let yearlyLongTermCapitalGainsAndQualifiedDividendsTax = this.calculateYearlyLongTermCapitalGainsTax(yearlyTaxableIncome, basis.capitalGains);
-    logger.log(LogCategory.TAX, "Taxes.applyYear|yearlyLongTermCapitalGainsAndQualifiedDividendsTax: " + yearlyLongTermCapitalGainsAndQualifiedDividendsTax.toString());
+    logger.log(LogCategory.TAX, () => "Taxes.applyYear|yearlyLongTermCapitalGainsAndQualifiedDividendsTax: " + yearlyLongTermCapitalGainsAndQualifiedDividendsTax.toString());
   }
   /**
    * The annual contribution ceiling for one kind of account.
@@ -33812,49 +33836,49 @@ var FinancialPackage = class _FinancialPackage {
     return this;
   }
   report(category = LogCategory.GENERAL) {
-    logger.log(category, "income:                      " + this.totalIncome().toString());
-    logger.log(category, "  ordinaryIncome:            " + this.ordinaryIncome().toString());
-    logger.log(category, "    employedIncome:          " + this.employedIncome.toString());
-    logger.log(category, "    selfIncome:              " + this.selfIncome.toString());
-    logger.log(category, "    socialSecurity:          " + this.socialSecurityIncome.toString());
-    logger.log(category, "    pensionIncome:           " + this.pensionIncome.toString());
-    logger.log(category, "    interestIncome:          " + this.interestIncome.toString());
-    logger.log(category, "    shortTermCapitalGains:   " + this.shortTermCapitalGains.toString());
-    logger.log(category, "    nonQualifiedDividends:   " + this.nonQualifiedDividends.toString());
-    logger.log(category, "    taxableDistribution:     " + this.taxableDistribution().toString());
-    logger.log(category, "      iraDistribution:       " + this.tradIRADistribution.toString());
-    logger.log(category, "      401KDistribution:      " + this.four01KDistribution.toString());
-    logger.log(category, "  capitalGain:               " + this.capitalGain().toString());
-    logger.log(category, "  taxFreeDistribution:       " + this.taxFreeDistribution().toString());
-    logger.log(category, "    rothDistribution:        " + this.rothIRADistribution.toString());
-    logger.log(category, "  qualifiedDividends:        " + this.qualifiedDividends.toString());
-    logger.log(category, "deductions:                  " + this.deductions().toString());
-    logger.log(category, "  iraContribution:           " + this.tradIRAContribution.toString());
-    logger.log(category, "  401KContribution:          " + this.four01KContribution.toString());
-    logger.log(category, "  mortgageInterest:          " + this.mortgageInterest.toString());
-    logger.log(category, "  propertyTaxes:             " + this.deductiblePropertyTaxes().toString());
-    logger.log(category, "federal taxes:               " + this.federalTaxes().toString());
-    logger.log(category, "  fica:                      " + this.fica().toString());
-    logger.log(category, "  incomeTax:                 " + this.incomeTax.toString());
-    logger.log(category, "  longTermCapitalGainsTax:   " + this.longTermCapitalGainsTax.toString());
-    logger.log(category, "  estimatedTaxes:            " + this.estimatedTaxes.toString());
-    logger.log(category, "  niit:                      " + this.niit.toString());
-    logger.log(category, "  taxTrueUp:                 " + this.taxTrueUp.toString());
-    logger.log(category, "State/Local taxes:           " + this.saltTaxes().toString());
-    logger.log(category, "  propertyTaxes:             " + this.propertyTaxes.toString());
-    logger.log(category, "contributions:               " + this.contributions().toString());
-    logger.log(category, "  preTaxContribution:        " + this.preTaxContribution().toString());
-    logger.log(category, "    401KContribution:        " + this.four01KContribution.toString());
-    logger.log(category, "    iraContribution:         " + this.tradIRAContribution.toString());
-    logger.log(category, "  postTaxContribution:       " + this.postTaxContribution().toString());
-    logger.log(category, "    rothContribution:        " + this.rothIRAContribution.toString());
-    logger.log(category, "expenses:                    " + this.expense.toString());
-    logger.log(category, "assetAppreciation:           " + this.assetAppreciation.toString());
-    logger.log(category, "mortgagePrincipal:           " + this.mortgagePrincipal.toString());
-    logger.log(category, "cashInFlow:                  " + this.cashInFlow().toString());
-    logger.log(category, "cashOutFlow:                 " + this.cashOutFlow().toString());
-    logger.log(category, "cashFlow:                    " + this.cashFlow().toString());
-    logger.log(category, "effectTaxRate:               " + this.effectiveTaxRate().toFixed(2));
+    logger.log(category, () => "income:                      " + this.totalIncome().toString());
+    logger.log(category, () => "  ordinaryIncome:            " + this.ordinaryIncome().toString());
+    logger.log(category, () => "    employedIncome:          " + this.employedIncome.toString());
+    logger.log(category, () => "    selfIncome:              " + this.selfIncome.toString());
+    logger.log(category, () => "    socialSecurity:          " + this.socialSecurityIncome.toString());
+    logger.log(category, () => "    pensionIncome:           " + this.pensionIncome.toString());
+    logger.log(category, () => "    interestIncome:          " + this.interestIncome.toString());
+    logger.log(category, () => "    shortTermCapitalGains:   " + this.shortTermCapitalGains.toString());
+    logger.log(category, () => "    nonQualifiedDividends:   " + this.nonQualifiedDividends.toString());
+    logger.log(category, () => "    taxableDistribution:     " + this.taxableDistribution().toString());
+    logger.log(category, () => "      iraDistribution:       " + this.tradIRADistribution.toString());
+    logger.log(category, () => "      401KDistribution:      " + this.four01KDistribution.toString());
+    logger.log(category, () => "  capitalGain:               " + this.capitalGain().toString());
+    logger.log(category, () => "  taxFreeDistribution:       " + this.taxFreeDistribution().toString());
+    logger.log(category, () => "    rothDistribution:        " + this.rothIRADistribution.toString());
+    logger.log(category, () => "  qualifiedDividends:        " + this.qualifiedDividends.toString());
+    logger.log(category, () => "deductions:                  " + this.deductions().toString());
+    logger.log(category, () => "  iraContribution:           " + this.tradIRAContribution.toString());
+    logger.log(category, () => "  401KContribution:          " + this.four01KContribution.toString());
+    logger.log(category, () => "  mortgageInterest:          " + this.mortgageInterest.toString());
+    logger.log(category, () => "  propertyTaxes:             " + this.deductiblePropertyTaxes().toString());
+    logger.log(category, () => "federal taxes:               " + this.federalTaxes().toString());
+    logger.log(category, () => "  fica:                      " + this.fica().toString());
+    logger.log(category, () => "  incomeTax:                 " + this.incomeTax.toString());
+    logger.log(category, () => "  longTermCapitalGainsTax:   " + this.longTermCapitalGainsTax.toString());
+    logger.log(category, () => "  estimatedTaxes:            " + this.estimatedTaxes.toString());
+    logger.log(category, () => "  niit:                      " + this.niit.toString());
+    logger.log(category, () => "  taxTrueUp:                 " + this.taxTrueUp.toString());
+    logger.log(category, () => "State/Local taxes:           " + this.saltTaxes().toString());
+    logger.log(category, () => "  propertyTaxes:             " + this.propertyTaxes.toString());
+    logger.log(category, () => "contributions:               " + this.contributions().toString());
+    logger.log(category, () => "  preTaxContribution:        " + this.preTaxContribution().toString());
+    logger.log(category, () => "    401KContribution:        " + this.four01KContribution.toString());
+    logger.log(category, () => "    iraContribution:         " + this.tradIRAContribution.toString());
+    logger.log(category, () => "  postTaxContribution:       " + this.postTaxContribution().toString());
+    logger.log(category, () => "    rothContribution:        " + this.rothIRAContribution.toString());
+    logger.log(category, () => "expenses:                    " + this.expense.toString());
+    logger.log(category, () => "assetAppreciation:           " + this.assetAppreciation.toString());
+    logger.log(category, () => "mortgagePrincipal:           " + this.mortgagePrincipal.toString());
+    logger.log(category, () => "cashInFlow:                  " + this.cashInFlow().toString());
+    logger.log(category, () => "cashOutFlow:                 " + this.cashOutFlow().toString());
+    logger.log(category, () => "cashFlow:                    " + this.cashFlow().toString());
+    logger.log(category, () => "effectTaxRate:               " + this.effectiveTaxRate().toFixed(2));
   }
   reportHTML(currentDateInt) {
     let html = "<div>";
@@ -34052,7 +34076,7 @@ var PayrollEngine = class {
     this.taxEngine.recordIncomeTaxWithholding(modelAsset, withheld);
     logger.log(
       LogCategory.TAX,
-      `withholdOnRetirementIncome: ${modelAsset.displayName} gross ${formatCurrency(gross, { cents: true })} at ${(rate * 100).toFixed(0)}% withheld ${withheld.toString()}`
+      () => `withholdOnRetirementIncome: ${modelAsset.displayName} gross ${formatCurrency(gross, { cents: true })} at ${(rate * 100).toFixed(0)}% withheld ${withheld.toString()}`
     );
   }
   #applyNetIncomeInScope(modelAsset, householdTax, totalWorkingIncome) {
@@ -34078,7 +34102,7 @@ var PayrollEngine = class {
     if (netIncome.amount < 0) {
       logger.log(
         LogCategory.SANITY,
-        `applyNetIncome: ${modelAsset.displayName} pre-tax deferrals exceed after-tax pay by ${netIncome.copy().flipSign().toString()}; net income clamped to $0`
+        () => `applyNetIncome: ${modelAsset.displayName} pre-tax deferrals exceed after-tax pay by ${netIncome.copy().flipSign().toString()}; net income clamped to $0`
       );
       netIncome.zero();
     }
@@ -34111,7 +34135,7 @@ var PayrollEngine = class {
     if (shortfall <= 0.01) return;
     logger.log(
       LogCategory.SANITY,
-      `Contribution capped: ${toModel.displayName} requested ${requested.toString()}, ${limitName} allowed ${formatCurrency(granted, { cents: true })}`
+      () => `Contribution capped: ${toModel.displayName} requested ${requested.toString()}, ${limitName} allowed ${formatCurrency(granted, { cents: true })}`
     );
     toModel.recordEvent(EventType.CONTRIBUTION_CAPPED, new Currency(-shortfall), { data: { limitName } });
   }
@@ -34323,7 +34347,7 @@ var ExpenseEngine = class {
       }
       const netShortfall = new Currency(runningExpenseAmount.amount - modelAssetExpense.amount);
       if (netShortfall.amount > 0) {
-        logger.log(LogCategory.TRANSFER, `ExpenseEngine.applyExpenseTransfers: ${modelAsset.displayName} expensing ${netShortfall.toString()} from the funding backstop (Grossed Up)`);
+        logger.log(LogCategory.TRANSFER, () => `ExpenseEngine.applyExpenseTransfers: ${modelAsset.displayName} expensing ${netShortfall.toString()} from the funding backstop (Grossed Up)`);
         const targetAsset = FundTransfer.resolveFunding(this.modelAssets);
         if (targetAsset) {
           const grossWithdrawal = this.calculateGrossWithdrawal(netShortfall, targetAsset);
@@ -34344,7 +34368,7 @@ var ExpenseEngine = class {
       }
     } else {
       const netShortfall = modelAssetExpense.copy().flipSign();
-      logger.log(LogCategory.TRANSFER, `ExpenseEngine.applyExpenseTransfers: ${modelAsset.displayName} expensing ${netShortfall.toString()} from the funding backstop (Grossed Up)`);
+      logger.log(LogCategory.TRANSFER, () => `ExpenseEngine.applyExpenseTransfers: ${modelAsset.displayName} expensing ${netShortfall.toString()} from the funding backstop (Grossed Up)`);
       const targetAsset = FundTransfer.resolveFunding(this.modelAssets);
       if (targetAsset) {
         const grossWithdrawal = this.calculateGrossWithdrawal(netShortfall, targetAsset);
@@ -34501,7 +34525,7 @@ var ExpenseEngine = class {
       if (!target) {
         logger.log(
           LogCategory.SANITY,
-          `ExpenseEngine.ensureRMDs: no backstop account to receive ${modelAsset.displayName} RMD of ${remains.toString()}`
+          () => `ExpenseEngine.ensureRMDs: no backstop account to receive ${modelAsset.displayName} RMD of ${remains.toString()}`
         );
         return;
       }
@@ -34677,7 +34701,7 @@ var TaxEngine = class {
     const withheldTax = assetTax.copy().flipSign();
     this.monthly.incomeTax.add(withheldTax);
     modelAsset.recordEvent(EventType.INCOME_TAX_WITHHOLDING, withheldTax.copy(), { metric: Metric.WITHHELD_INCOME_TAX });
-    logger.log(LogCategory.TRANSFER, `recordIncomeTaxWithholding: ${modelAsset.displayName} tax=${assetTax.toString()}`);
+    logger.log(LogCategory.TRANSFER, () => `recordIncomeTaxWithholding: ${modelAsset.displayName} tax=${assetTax.toString()}`);
   }
   // ── Last day of month: withholding on deferred distributions ──────
   /**
@@ -34842,7 +34866,7 @@ var TaxEngine = class {
       return;
     }
     const capitalGains = new Currency(modelAsset.finishCurrency.amount - modelAsset.finishBasisCurrency.amount);
-    logger.log(LogCategory.TAX, "capital gains of " + capitalGains.toString());
+    logger.log(LogCategory.TAX, () => "capital gains of " + capitalGains.toString());
     const monthsSpan = MonthsSpan.build(modelAsset.startDateInt, modelAsset.effectiveFinishDateInt);
     const { ltcgStackBase } = taxableBasis(this.monthly, this.activeUser, { annualise: true, taxTable: this.config.taxTable });
     const isRealEstate = InstrumentType.isRealEstate(modelAsset.instrument);
@@ -34877,7 +34901,7 @@ var TaxEngine = class {
         modelAsset.recordEvent(EventType.INCOME_TAX_WITHHOLDING, amountToTax.copy(), { metric: Metric.SHORT_TERM_CAPITAL_GAIN_TAX });
       }
     }
-    logger.log(LogCategory.TAX, "applyCapitalGainsTax: " + modelAsset.displayName + " generated tax of " + amountToTax.toString() + " to deduct from closure");
+    logger.log(LogCategory.TAX, () => "applyCapitalGainsTax: " + modelAsset.displayName + " generated tax of " + amountToTax.toString() + " to deduct from closure");
     modelAsset.finishCurrency.add(amountToTax);
     modelAsset.monthlyValueChange.add(amountToTax);
     modelAsset.finishBasisCurrency = modelAsset.finishCurrency.copy();
@@ -34894,7 +34918,7 @@ var TaxEngine = class {
     if (distribution.amount <= 0) return;
     this.monthly.recordTransfer(modelAsset.instrument, distribution, Currency.zero());
     modelAsset.recordDistribution(distribution);
-    logger.log(LogCategory.TAX, "applyTaxFreeCloseDistribution: " + modelAsset.displayName + " distributed " + distribution.toString() + " tax-free");
+    logger.log(LogCategory.TAX, () => "applyTaxFreeCloseDistribution: " + modelAsset.displayName + " distributed " + distribution.toString() + " tax-free");
   }
   // ── On Close: Tax-Deferred Full Distribution ──────────────────────
   applyDeferredCloseDistribution(modelAsset) {
@@ -34917,7 +34941,7 @@ var TaxEngine = class {
       modelAsset.addToMetric(Metric.ESTIMATED_INCOME_TAX, amountToTax);
       modelAsset.recordEvent(EventType.INCOME_TAX_WITHHOLDING, amountToTax.copy(), { metric: Metric.ESTIMATED_INCOME_TAX });
     }
-    logger.log(LogCategory.TAX, "applyDeferredCloseDistribution: " + modelAsset.displayName + " distributed " + distribution.toString() + ", withholding " + amountToTax.toString());
+    logger.log(LogCategory.TAX, () => "applyDeferredCloseDistribution: " + modelAsset.displayName + " distributed " + distribution.toString() + ", withholding " + amountToTax.toString());
     modelAsset.finishCurrency.add(amountToTax);
     modelAsset.monthlyValueChange.add(amountToTax);
     modelAsset.finishBasisCurrency = modelAsset.finishCurrency.copy();
@@ -34966,7 +34990,7 @@ var TaxEngine = class {
     }
     const liquidAsset = FundTransfer.resolveFunding(this.modelAssets);
     if (!liquidAsset) {
-      logger.log(LogCategory.TAX, `Monthly True-Up: no backstop account to pay ${additionalTax.toString()}; deferring to annual true-up`);
+      logger.log(LogCategory.TAX, () => `Monthly True-Up: no backstop account to pay ${additionalTax.toString()}; deferring to annual true-up`);
       return;
     }
     this.monthly.incomeTax.add(additionalTax);
@@ -35082,7 +35106,7 @@ var TaxEngine = class {
   #applyAnnualNIITInScope(niit, netInvestmentIncome, magi, settledYearMonths) {
     logger.log(
       LogCategory.TAX,
-      `NIIT: ${niit.toString()} on NII ${netInvestmentIncome.toString()}, MAGI ${magi.toString()} vs threshold ${formatCurrency(this.config.taxTable.activeNIITThreshold)}`
+      () => `NIIT: ${niit.toString()} on NII ${netInvestmentIncome.toString()}, MAGI ${magi.toString()} vs threshold ${formatCurrency(this.config.taxTable.activeNIITThreshold)}`
     );
     const taxedBase = niit.amount / this.config.taxTable.niitRate;
     const eventData = {
@@ -35100,7 +35124,7 @@ var TaxEngine = class {
     if (legs.length > 0) {
       logger.log(
         LogCategory.TAX,
-        `NIIT: allocating ${niit.toString()} across ${legs.length} account(s) by NII share.`
+        () => `NIIT: allocating ${niit.toString()} across ${legs.length} account(s) by NII share.`
       );
       const collected2 = Currency.zero();
       for (const leg of legs) {
@@ -35182,7 +35206,7 @@ var TaxEngine = class {
     if (taxDifference > 0) {
       const legs = this.#planTaxAllocation(new Currency(taxDifference), yearBasis);
       if (legs.length > 0) {
-        logger.log(LogCategory.TAX, `Annual True-Up: Underpaid by ${formatCurrency(taxDifference)}. Allocating across ${legs.length} account(s) by income share.`);
+        logger.log(LogCategory.TAX, () => `Annual True-Up: Underpaid by ${formatCurrency(taxDifference)}. Allocating across ${legs.length} account(s) by income share.`);
         for (const leg of legs) {
           const settled = this.#settleAllocatedLeg(
             leg,
@@ -35201,7 +35225,7 @@ var TaxEngine = class {
       const refund = new Currency(Math.abs(taxDifference));
       const legs = this.#planTaxAllocation(refund, yearBasis);
       if (legs.length > 0) {
-        logger.log(LogCategory.TAX, `Annual True-Up: Overpaid by ${formatCurrency(refund.amount)}. Refunding across ${legs.length} account(s) by income share.`);
+        logger.log(LogCategory.TAX, () => `Annual True-Up: Overpaid by ${formatCurrency(refund.amount)}. Refunding across ${legs.length} account(s) by income share.`);
         for (const leg of legs) {
           const credit = new Currency(leg.amount);
           leg.modelAsset.credit(credit, {
@@ -35234,12 +35258,12 @@ var TaxEngine = class {
           this.#bookTrueUp(refund, "refund");
           logger.log(
             LogCategory.TAX,
-            `Annual True-Up: Overpaid by ${formatCurrency(refund.amount)}. Crediting ${target.displayName}.`
+            () => `Annual True-Up: Overpaid by ${formatCurrency(refund.amount)}. Crediting ${target.displayName}.`
           );
         } else {
           logger.log(
             LogCategory.SANITY,
-            `Annual True-Up: refund of ${refund.toString()} could not be credited \u2014 the plan has no everyday account at all`
+            () => `Annual True-Up: refund of ${refund.toString()} could not be credited \u2014 the plan has no everyday account at all`
           );
         }
       }
@@ -35247,7 +35271,7 @@ var TaxEngine = class {
     }
     if (taxDifference > 0) {
       const taxBill = new Currency(taxDifference);
-      logger.log(LogCategory.TAX, `Annual True-Up: Underpaid by ${formatCurrency(taxDifference)}. Debiting ${liquidAsset.displayName}.`);
+      logger.log(LogCategory.TAX, () => `Annual True-Up: Underpaid by ${formatCurrency(taxDifference)}. Debiting ${liquidAsset.displayName}.`);
       const oneSided = new FundTransferOneSided(null, taxBill);
       oneSided.toModel = liquidAsset;
       const settled = FundTransfer.settleOneSided(
@@ -35266,7 +35290,7 @@ var TaxEngine = class {
       }
     } else {
       const taxRefund = new Currency(Math.abs(taxDifference));
-      logger.log(LogCategory.TAX, `Annual True-Up: Overpaid by ${formatCurrency(Math.abs(taxDifference))}. Refunding to ${liquidAsset.displayName}.`);
+      logger.log(LogCategory.TAX, () => `Annual True-Up: Overpaid by ${formatCurrency(Math.abs(taxDifference))}. Refunding to ${liquidAsset.displayName}.`);
       liquidAsset.credit(taxRefund, { type: EventType.TAX_TRUE_UP, data: { direction: "refund" } });
       liquidAsset.addToMetric(Metric.ESTIMATED_INCOME_TAX, taxRefund);
       this.#bookTrueUp(taxRefund, "refund");
@@ -35310,7 +35334,7 @@ var RebalanceEngine = class {
       this._trackContribution(ft.toModel, amount);
       logger.log(
         LogCategory.TRANSFER,
-        `Rebalance: ${modelAsset.displayName} \u2192 ${ft.toModel.displayName} ${amount.toString()}`
+        () => `Rebalance: ${modelAsset.displayName} \u2192 ${ft.toModel.displayName} ${amount.toString()}`
       );
     }
   }
@@ -35621,7 +35645,7 @@ var Portfolio = class _Portfolio {
     const tolerance = 0.01;
     const check2 = (label, eventTotal, packageTotal) => {
       if (Math.abs(eventTotal - packageTotal) > tolerance) {
-        logger.log(LogCategory.SANITY, `${settled} ${label}: events=${formatCurrency(eventTotal, { cents: true })}, package=${formatCurrency(packageTotal, { cents: true })}`);
+        logger.log(LogCategory.SANITY, () => `${settled} ${label}: events=${formatCurrency(eventTotal, { cents: true })}, package=${formatCurrency(packageTotal, { cents: true })}`);
       }
     };
     check2("FICA", buckets.fica, this.monthly.fica().amount);
@@ -35632,7 +35656,7 @@ var Portfolio = class _Portfolio {
     check2("Capital gains", buckets.capitalGains, this.monthly.longTermCapitalGains.amount);
     check2("Capital gains tax", buckets.capitalGainsTax, this.monthly.longTermCapitalGainsTax.amount);
     if (Math.abs(buckets.paired) > tolerance) {
-      logger.log(LogCategory.SANITY, `${currentDateInt} Transfer conservation broken: ${formatCurrency(buckets.paired, { cents: true })}`);
+      logger.log(LogCategory.SANITY, () => `${currentDateInt} Transfer conservation broken: ${formatCurrency(buckets.paired, { cents: true })}`);
     }
   }
   /**
@@ -35903,12 +35927,12 @@ var Portfolio = class _Portfolio {
   }
   closeAsset(modelAsset, currentDateInt) {
     if (InstrumentType.isMonthlyIncome(modelAsset.instrument) || InstrumentType.isMonthlyExpense(modelAsset.instrument)) {
-      logger.log(LogCategory.TRANSFER, "closing " + modelAsset.displayName + " with monthly income or expense, skipping fund transfers");
+      logger.log(LogCategory.TRANSFER, () => "closing " + modelAsset.displayName + " with monthly income or expense, skipping fund transfers");
       modelAsset.close(currentDateInt);
       return;
     }
     const amountToTransfer = new Currency(modelAsset.finishCurrency.amount);
-    logger.log(LogCategory.TRANSFER, "close asset: " + modelAsset.displayName + " valued at " + amountToTransfer.toString());
+    logger.log(LogCategory.TRANSFER, () => "close asset: " + modelAsset.displayName + " valued at " + amountToTransfer.toString());
     if (InstrumentType.isCapital(modelAsset.instrument)) {
       this.taxes.applyCapitalGainsTax(modelAsset);
     }
@@ -35926,7 +35950,7 @@ var Portfolio = class _Portfolio {
         fundTransfer.bind(modelAsset, this.modelAssets);
         if (!fundTransfer.toModel) continue;
         if (!InstrumentType.isExpensable(fundTransfer.toModel.instrument)) {
-          logger.log(LogCategory.TRANSFER, "Portfolio.applyAssetCloseFundTransfers: cannot transfer to " + fundTransfer.toModel.displayName + " because not an expensable account");
+          logger.log(LogCategory.TRANSFER, () => "Portfolio.applyAssetCloseFundTransfers: cannot transfer to " + fundTransfer.toModel.displayName + " because not an expensable account");
           continue;
         }
         let transferAmount = fundTransfer.calculate({ useClosePercent: true });
@@ -35935,7 +35959,7 @@ var Portfolio = class _Portfolio {
       }
       let extraAmount = new Currency(modelAssetValue.amount - runningTransferAmount.amount);
       if (extraAmount.amount > 0) {
-        logger.log(LogCategory.TRANSFER, "Portfolio.applyAssetCloseFundTransfers: " + modelAsset.displayName + " funding " + extraAmount.toString() + " to the funding backstop");
+        logger.log(LogCategory.TRANSFER, () => "Portfolio.applyAssetCloseFundTransfers: " + modelAsset.displayName + " funding " + extraAmount.toString() + " to the funding backstop");
         const target = FundTransfer.resolveFunding(this.modelAssets);
         if (target) {
           FundTransfer.system(modelAsset, target, extraAmount, this.modelAssets).execute();
@@ -35944,7 +35968,7 @@ var Portfolio = class _Portfolio {
         }
       }
     } else {
-      logger.log(LogCategory.TRANSFER, "Portfolio.applyAssetCloseFundTransfers: " + modelAsset.displayName + " funding " + modelAssetValue.toString() + " to the funding backstop");
+      logger.log(LogCategory.TRANSFER, () => "Portfolio.applyAssetCloseFundTransfers: " + modelAsset.displayName + " funding " + modelAssetValue.toString() + " to the funding backstop");
       const target = FundTransfer.resolveFunding(this.modelAssets);
       if (target) {
         FundTransfer.system(modelAsset, target, modelAssetValue, this.modelAssets).execute();
@@ -35957,7 +35981,7 @@ var Portfolio = class _Portfolio {
     const config2 = modelAsset.fundingConfig;
     const source = findByName2(this.modelAssets, config2.sourceDisplayName);
     if (!source || source.isClosed) {
-      logger.log(LogCategory.TRANSFER, 'Portfolio.applyAssetOpenFundTransfer: funding source "' + config2.sourceDisplayName + '" not found or closed');
+      logger.log(LogCategory.TRANSFER, () => 'Portfolio.applyAssetOpenFundTransfer: funding source "' + config2.sourceDisplayName + '" not found or closed');
       return;
     }
     const percent = config2.downPaymentPercent ?? 100;
@@ -35967,7 +35991,7 @@ var Portfolio = class _Portfolio {
       to: modelAsset.displayName,
       cadence: "funding"
     } };
-    logger.log(LogCategory.TRANSFER, "Portfolio.applyAssetOpenFundTransfer: " + source.displayName + " funding " + amount.toString() + " for " + modelAsset.displayName);
+    logger.log(LogCategory.TRANSFER, () => "Portfolio.applyAssetOpenFundTransfer: " + source.displayName + " funding " + amount.toString() + " for " + modelAsset.displayName);
     source.debit(amount, event);
   }
   applyYear(currentDateInt) {
@@ -36021,9 +36045,9 @@ var Portfolio = class _Portfolio {
   reportMonthly(currentDateInt) {
     if (this.reports) {
       if (logger.isEnabled(LogCategory.MONTHLY)) {
-        logger.log(LogCategory.MONTHLY, " -------  Begin Monthly (" + currentDateInt.toString() + " ) Report -------");
+        logger.log(LogCategory.MONTHLY, () => " -------  Begin Monthly (" + currentDateInt.toString() + " ) Report -------");
         this.monthly.report(LogCategory.MONTHLY);
-        logger.log(LogCategory.MONTHLY, " -------   End Monthly (" + currentDateInt.toString() + " ) Report  -------");
+        logger.log(LogCategory.MONTHLY, () => " -------   End Monthly (" + currentDateInt.toString() + " ) Report  -------");
       }
       this.generatedReports.push({
         type: "monthly",
@@ -36036,9 +36060,9 @@ var Portfolio = class _Portfolio {
   reportYearly(currentDateInt) {
     if (this.reports) {
       if (logger.isEnabled(LogCategory.YEARLY)) {
-        logger.log(LogCategory.YEARLY, " -------  Begin Yearly (" + currentDateInt.toString() + " ) Report -------");
+        logger.log(LogCategory.YEARLY, () => " -------  Begin Yearly (" + currentDateInt.toString() + " ) Report -------");
         this.yearly.report(LogCategory.YEARLY);
-        logger.log(LogCategory.YEARLY, " -------   End Yearly  (" + currentDateInt.toString() + " ) Report  -------");
+        logger.log(LogCategory.YEARLY, () => " -------   End Yearly  (" + currentDateInt.toString() + " ) Report  -------");
       }
       this.generatedReports.push({
         type: "yearly",
@@ -37405,24 +37429,18 @@ var ModelAsset = class _ModelAsset {
    * `event` is a descriptor — `{ type, data }` — not a note string: callers say
    * what happened, and sim-event.js decides how it reads.
    */
-  // The busiest log lines in the engine (every transaction), so the message is
-  // built only when TRANSFER logging is on.
   credit(amount, event = null) {
-    if (logger.isEnabled(LogCategory.TRANSFER)) {
-      logger.log(
-        LogCategory.TRANSFER,
-        `${this.displayName}.credit(${amount.toString()}, '${event?.type ?? ""}')`
-      );
-    }
+    logger.log(
+      LogCategory.TRANSFER,
+      () => `${this.displayName}.credit(${amount.toString()}, '${event?.type ?? ""}')`
+    );
     return this.#transact(amount.copy(), event);
   }
   debit(amount, event = null) {
-    if (logger.isEnabled(LogCategory.TRANSFER)) {
-      logger.log(
-        LogCategory.TRANSFER,
-        `${this.displayName}.debit(${amount.toString()}, '${event?.type ?? ""}')`
-      );
-    }
+    logger.log(
+      LogCategory.TRANSFER,
+      () => `${this.displayName}.debit(${amount.toString()}, '${event?.type ?? ""}')`
+    );
     return this.#transact(amount.copy().flipSign(), event);
   }
   #transact(amount, event) {
@@ -38958,7 +38976,7 @@ async function computeMonteCarlo(sourceAssets, {
   }
   const pool = buildYearPool(backtestFromYear);
   const grParams = guardrailParams ? { ...guardrailParams, retirementDateInt } : null;
-  const { nominal: baselineData, real: baselineDataReal } = computeBaseline(sourceAssets, grParams, lifeEvents, config2);
+  const { nominal: baselineData, real: baselineDataReal } = withoutTracing(() => computeBaseline(sourceAssets, grParams, lifeEvents, config2));
   let retirementMonthIndex = null;
   if (retirementDateInt) {
     const retirementLabel = `${MONTH_NAMES[retirementDateInt.month - 1]} ${retirementDateInt.year}`;
@@ -39013,7 +39031,7 @@ async function computeMonteCarlo(sourceAssets, {
     return series;
   };
   for (let i = 0; i < numSimulations; i++) {
-    const { nominal, real } = runOnce(
+    const { nominal, real } = withoutTracing(() => runOnce(
       sourceAssets,
       grParams,
       runFromStart ? null : retirementDateInt,
@@ -39022,7 +39040,7 @@ async function computeMonteCarlo(sourceAssets, {
       dataMode,
       config2,
       runRandom(seed, i)
-    );
+    ));
     allRuns.push(fit(nominal));
     allRunsReal.push(fit(real));
     const emitInterim = onInterim && interimEvery && (i + 1) % interimEvery === 0 && i + 1 < numSimulations;

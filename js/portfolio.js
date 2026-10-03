@@ -425,7 +425,7 @@ export class Portfolio {
         const tolerance = 0.01;
         const check = (label, eventTotal, packageTotal) => {
             if (Math.abs(eventTotal - packageTotal) > tolerance) {
-                logger.log(LogCategory.SANITY, `${settled} ${label}: events=${formatCurrency(eventTotal, { cents: true })}, package=${formatCurrency(packageTotal, { cents: true })}`);
+                logger.log(LogCategory.SANITY, () => `${settled} ${label}: events=${formatCurrency(eventTotal, { cents: true })}, package=${formatCurrency(packageTotal, { cents: true })}`);
             }
         };
 
@@ -452,7 +452,7 @@ export class Portfolio {
         // This finding is labelled with currentDateInt, not `settled` like the
         // checks above, so it reads one month late.
         if (Math.abs(buckets.paired) > tolerance) {
-            logger.log(LogCategory.SANITY, `${currentDateInt} Transfer conservation broken: ${formatCurrency(buckets.paired, { cents: true })}`);
+            logger.log(LogCategory.SANITY, () => `${currentDateInt} Transfer conservation broken: ${formatCurrency(buckets.paired, { cents: true })}`);
         }
     }
 
@@ -819,13 +819,13 @@ export class Portfolio {
 
         if (InstrumentType.isMonthlyIncome(modelAsset.instrument) ||
             InstrumentType.isMonthlyExpense(modelAsset.instrument)) {
-            logger.log(LogCategory.TRANSFER, 'closing ' + modelAsset.displayName + ' with monthly income or expense, skipping fund transfers');
+            logger.log(LogCategory.TRANSFER, () => 'closing ' + modelAsset.displayName + ' with monthly income or expense, skipping fund transfers');
             modelAsset.close(currentDateInt);
             return;
         }
 
         const amountToTransfer = new Currency(modelAsset.finishCurrency.amount);
-        logger.log(LogCategory.TRANSFER, 'close asset: ' + modelAsset.displayName + ' valued at ' + amountToTransfer.toString());
+        logger.log(LogCategory.TRANSFER, () => 'close asset: ' + modelAsset.displayName + ' valued at ' + amountToTransfer.toString());
 
         if (InstrumentType.isCapital(modelAsset.instrument)) {
 
@@ -858,7 +858,7 @@ export class Portfolio {
 
                 // can only send money to an expensable account
                 if (!InstrumentType.isExpensable(fundTransfer.toModel.instrument)) {
-                    logger.log(LogCategory.TRANSFER, 'Portfolio.applyAssetCloseFundTransfers: cannot transfer to ' + fundTransfer.toModel.displayName + ' because not an expensable account');
+                    logger.log(LogCategory.TRANSFER, () => 'Portfolio.applyAssetCloseFundTransfers: cannot transfer to ' + fundTransfer.toModel.displayName + ' because not an expensable account');
                     continue;
                 }
 
@@ -870,7 +870,7 @@ export class Portfolio {
 
             let extraAmount = new Currency(modelAssetValue.amount - runningTransferAmount.amount);
             if (extraAmount.amount > 0) {
-                logger.log(LogCategory.TRANSFER, 'Portfolio.applyAssetCloseFundTransfers: ' + modelAsset.displayName + ' funding ' + extraAmount.toString() + ' to the funding backstop');
+                logger.log(LogCategory.TRANSFER, () => 'Portfolio.applyAssetCloseFundTransfers: ' + modelAsset.displayName + ' funding ' + extraAmount.toString() + ' to the funding backstop');
 
                 const target = FundTransfer.resolveFunding(this.modelAssets);
                 if (target) {
@@ -883,7 +883,7 @@ export class Portfolio {
         }
         else {
 
-            logger.log(LogCategory.TRANSFER, 'Portfolio.applyAssetCloseFundTransfers: ' + modelAsset.displayName + ' funding ' + modelAssetValue.toString() + ' to the funding backstop');
+            logger.log(LogCategory.TRANSFER, () => 'Portfolio.applyAssetCloseFundTransfers: ' + modelAsset.displayName + ' funding ' + modelAssetValue.toString() + ' to the funding backstop');
 
             const target = FundTransfer.resolveFunding(this.modelAssets);
             if (target) {
@@ -900,7 +900,7 @@ export class Portfolio {
         const config = modelAsset.fundingConfig;
         const source = findByName(this.modelAssets, config.sourceDisplayName);
         if (!source || source.isClosed) {
-            logger.log(LogCategory.TRANSFER, 'Portfolio.applyAssetOpenFundTransfer: funding source "' + config.sourceDisplayName + '" not found or closed');
+            logger.log(LogCategory.TRANSFER, () => 'Portfolio.applyAssetOpenFundTransfer: funding source "' + config.sourceDisplayName + '" not found or closed');
             return;
         }
 
@@ -909,7 +909,7 @@ export class Portfolio {
         const event = { type: EventType.TRANSFER, data: {
             from: source.displayName, to: modelAsset.displayName, cadence: 'funding' } };
 
-        logger.log(LogCategory.TRANSFER, 'Portfolio.applyAssetOpenFundTransfer: ' + source.displayName + ' funding ' + amount.toString() + ' for ' + modelAsset.displayName);
+        logger.log(LogCategory.TRANSFER, () => 'Portfolio.applyAssetOpenFundTransfer: ' + source.displayName + ' funding ' + amount.toString() + ' for ' + modelAsset.displayName);
 
         // Debit-only: real estate already has its value via finishCurrency = startCurrency.
         // A two-sided execute() would double-credit the real estate.
@@ -980,9 +980,9 @@ export class Portfolio {
         if (this.reports) {
 
             if (logger.isEnabled(LogCategory.MONTHLY)) {
-                logger.log(LogCategory.MONTHLY, ' -------  Begin Monthly (' + currentDateInt.toString() + ' ) Report -------');
+                logger.log(LogCategory.MONTHLY, () => ' -------  Begin Monthly (' + currentDateInt.toString() + ' ) Report -------');
                 this.monthly.report(LogCategory.MONTHLY);
-                logger.log(LogCategory.MONTHLY, ' -------   End Monthly (' + currentDateInt.toString() + ' ) Report  -------');
+                logger.log(LogCategory.MONTHLY, () => ' -------   End Monthly (' + currentDateInt.toString() + ' ) Report  -------');
             }
 
             this.generatedReports.push({ 
@@ -1001,9 +1001,9 @@ export class Portfolio {
         if (this.reports) {
 
             if (logger.isEnabled(LogCategory.YEARLY)) {
-                logger.log(LogCategory.YEARLY, ' -------  Begin Yearly (' + currentDateInt.toString() + ' ) Report -------');
+                logger.log(LogCategory.YEARLY, () => ' -------  Begin Yearly (' + currentDateInt.toString() + ' ) Report -------');
                 this.yearly.report(LogCategory.YEARLY);
-                logger.log(LogCategory.YEARLY, ' -------   End Yearly  (' + currentDateInt.toString() + ' ) Report  -------');
+                logger.log(LogCategory.YEARLY, () => ' -------   End Yearly  (' + currentDateInt.toString() + ' ) Report  -------');
             }
 
             // `dateLabel` is when the report fired and `coversYear` is the year
