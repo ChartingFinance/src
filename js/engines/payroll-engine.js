@@ -179,7 +179,7 @@ export class PayrollEngine {
         this.taxEngine.recordIncomeTaxWithholding(modelAsset, withheld);
 
         logger.log(LogCategory.TAX,
-            `withholdOnRetirementIncome: ${modelAsset.displayName} gross ${formatCurrency(gross, { cents: true })} ` +
+            () => `withholdOnRetirementIncome: ${modelAsset.displayName} gross ${formatCurrency(gross, { cents: true })} ` +
             `at ${(rate * 100).toFixed(0)}% withheld ${withheld.toString()}`);
     }
 
@@ -231,7 +231,7 @@ export class PayrollEngine {
         // reverse transfers), and surface the gap rather than hiding it.
         if (netIncome.amount < 0) {
             logger.log(LogCategory.SANITY,
-                `applyNetIncome: ${modelAsset.displayName} pre-tax deferrals exceed after-tax pay by ${netIncome.copy().flipSign().toString()}; net income clamped to $0`);
+                () => `applyNetIncome: ${modelAsset.displayName} pre-tax deferrals exceed after-tax pay by ${netIncome.copy().flipSign().toString()}; net income clamped to $0`);
             netIncome.zero();
         }
 
@@ -275,7 +275,7 @@ export class PayrollEngine {
         if (shortfall <= 0.01) return;
 
         logger.log(LogCategory.SANITY,
-            `Contribution capped: ${toModel.displayName} requested ${requested.toString()}, ` +
+            () => `Contribution capped: ${toModel.displayName} requested ${requested.toString()}, ` +
             `${limitName} allowed ${formatCurrency(granted, { cents: true })}`);
         toModel.recordEvent(EventType.CONTRIBUTION_CAPPED, new Currency(-shortfall), { data: { limitName } });
     }

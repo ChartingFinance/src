@@ -308,7 +308,7 @@ export function charting_buildPortfolioMetric(portfolio, metricName, buildNewDat
   let cachedConfig = chartMetricConfigCache.get(metricName);
 
   if (!buildNewDataSet && cachedConfig == null) {
-    logger.log(LogCategory.CHARTING, 'charting_buildPortfolioMetric - attempting to reuse null config for ' + metricName + '. Building new data set.');
+    logger.log(LogCategory.CHARTING, () => 'charting_buildPortfolioMetric - attempting to reuse null config for ' + metricName + '. Building new data set.');
     buildNewDataSet = true;
   }
 

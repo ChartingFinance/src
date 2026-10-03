@@ -182,14 +182,14 @@ export class ModelLifeEvent {
     // chronometer thousands of times. GENERAL is kept for rare, important
     // lines.
     logger.log(LogCategory.MONTHLY,
-      `LifeEvent.apply: "${this.displayName}" (${this.type}) at ${currentDateInt}`);
+      () => `LifeEvent.apply: "${this.displayName}" (${this.type}) at ${currentDateInt}`);
 
     // 1. Close named assets
     for (const name of this.closes) {
       const asset = findByName(portfolio.modelAssets, name);
       if (asset && !asset.isClosed) {
         logger.log(LogCategory.TRANSFER,
-          `LifeEvent closing asset: ${name}`);
+          () => `LifeEvent closing asset: ${name}`);
         portfolio.closeAsset(asset, currentDateInt);
       }
     }

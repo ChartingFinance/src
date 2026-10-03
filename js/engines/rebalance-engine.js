@@ -84,7 +84,7 @@ export class RebalanceEngine {
             this._trackContribution(ft.toModel, amount);
 
             logger.log(LogCategory.TRANSFER,
-                `Rebalance: ${modelAsset.displayName} → ${ft.toModel.displayName} ${amount.toString()}`);
+                () => `Rebalance: ${modelAsset.displayName} → ${ft.toModel.displayName} ${amount.toString()}`);
         }
     }
 

@@ -22,6 +22,7 @@ import { ModelLifeEvent } from './life-event.js';
 import { simConfigFromGlobals } from './globals.js';
 import { makeActiveTaxTable } from './globals.js';
 import { formatCurrency, formatSignedCurrency } from './utils/html.js';
+import { withoutTracing } from './trace.js';
 
 // Theoretical maximums for normalization (scaling to 0.0–1.0)
 const THEORETICAL_MAX_CASHFLOW = 10_000_000;
@@ -127,7 +128,7 @@ export class Simulator {
 
         // Initial baseline run with history (for first chart render)
         portfolio.guardrailsParams = this.guardrailParams;
-        chronometer_run(portfolio);
+        withoutTracing(() => chronometer_run(portfolio));
 
         this.portfolio = portfolio;
         this.bestPortfolio = portfolio.copy();
@@ -731,7 +732,7 @@ export class Simulator {
         this.portfolio.yearlySnapshots = [];
         this.portfolio.generatedReports = [];
 
-        chronometer_run(this.portfolio);        
+        withoutTracing(() => chronometer_run(this.portfolio));        
         //console.log('Current history count: ' + this.portfolio.getHistoryCount());
 
         const fitness = this.calculateFitness(this.portfolio);
@@ -744,7 +745,7 @@ export class Simulator {
             this.portfolio.guardrailEvents = [];
             this.portfolio.yearlySnapshots = [];
             this.portfolio.generatedReports = [];
-            chronometer_run(this.portfolio);
+            withoutTracing(() => chronometer_run(this.portfolio));
             this._setTrackHistory(false);
 
             this.bestPortfolio = this.portfolio.copy();

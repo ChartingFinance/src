@@ -32,7 +32,7 @@ export function asFilingStatus(value, fallback = FilingStatus.SINGLE) {
     if (isFilingStatus(value)) return value;
     if (value != null) {
         logger.log(LogCategory.GENERAL,
-            `unrecognised filing status ${JSON.stringify(value)} — using ${fallback}`);
+            () => `unrecognised filing status ${JSON.stringify(value)} — using ${fallback}`);
     }
     return fallback;
 }

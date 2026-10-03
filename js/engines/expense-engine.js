@@ -74,7 +74,7 @@ export class ExpenseEngine {
             // funding backstop, grossed up for the tax the draw realises.
             const netShortfall = new Currency(runningExpenseAmount.amount - modelAssetExpense.amount);
             if (netShortfall.amount > 0) {
-                logger.log(LogCategory.TRANSFER, `ExpenseEngine.applyExpenseTransfers: ${modelAsset.displayName} expensing ${netShortfall.toString()} from the funding backstop (Grossed Up)`);
+                logger.log(LogCategory.TRANSFER, () => `ExpenseEngine.applyExpenseTransfers: ${modelAsset.displayName} expensing ${netShortfall.toString()} from the funding backstop (Grossed Up)`);
 
                 const targetAsset = FundTransfer.resolveFunding(this.modelAssets);
                 if (targetAsset) {
@@ -93,7 +93,7 @@ export class ExpenseEngine {
             // No transfer covers the expense: draw all of it from the funding
             // backstop, grossed up.
             const netShortfall = modelAssetExpense.copy().flipSign();
-            logger.log(LogCategory.TRANSFER, `ExpenseEngine.applyExpenseTransfers: ${modelAsset.displayName} expensing ${netShortfall.toString()} from the funding backstop (Grossed Up)`);
+            logger.log(LogCategory.TRANSFER, () => `ExpenseEngine.applyExpenseTransfers: ${modelAsset.displayName} expensing ${netShortfall.toString()} from the funding backstop (Grossed Up)`);
 
             const targetAsset = FundTransfer.resolveFunding(this.modelAssets);
             if (targetAsset) {
@@ -270,7 +270,7 @@ export class ExpenseEngine {
             const target = FundTransfer.resolveFunding(this.modelAssets);
             if (!target) {
                 logger.log(LogCategory.SANITY,
-                    `ExpenseEngine.ensureRMDs: no backstop account to receive ${modelAsset.displayName} RMD of ${remains.toString()}`);
+                    () => `ExpenseEngine.ensureRMDs: no backstop account to receive ${modelAsset.displayName} RMD of ${remains.toString()}`);
                 return;
             }
 

@@ -13,6 +13,7 @@ import { Metric } from './metric.js';
 import { DateInt, MONTH_NAMES } from './utils/date-int.js';
 import { chronometer_run } from './chronometer.js';
 import { PriceIndex } from './utils/price-index.js';
+import { withoutTracing } from './trace.js';
 
 // ── Helpers ──────────────────────────────────────────────────────
 
@@ -87,7 +88,8 @@ export async function computeGuardrails(sourceAssets, {
         retirementDateInt,
     };
 
-    await chronometer_run(portfolio);
+    // Never explained, so no causal chain is recorded.
+    await withoutTracing(() => chronometer_run(portfolio));
 
     // Collect monthly portfolio value from metric histories
     const numMonths = getMonthCount(portfolio);

@@ -21,6 +21,7 @@ import {
     global_wage_growth_annual,
 } from './market-data.js';
 import { PriceIndex } from './utils/price-index.js';
+import { withoutTracing } from './trace.js';
 
 // ── Historical year pool (correlated sampling) ──────────────────
 
@@ -401,7 +402,9 @@ export async function computeMonteCarlo(sourceAssets, {
     const grParams = guardrailParams ? { ...guardrailParams, retirementDateInt } : null;
 
     // Deterministic baseline — computed up front so interim snapshots carry it too
-    const { nominal: baselineData, real: baselineDataReal } = computeBaseline(sourceAssets, grParams, lifeEvents, config);
+    // No causal chain is ever read from a simulation, so none is recorded.
+    const { nominal: baselineData, real: baselineDataReal } =
+        withoutTracing(() => computeBaseline(sourceAssets, grParams, lifeEvents, config));
 
     // Retirement trigger index for chart annotation
     let retirementMonthIndex = null;
@@ -476,8 +479,8 @@ export async function computeMonteCarlo(sourceAssets, {
     };
 
     for (let i = 0; i < numSimulations; i++) {
-        const { nominal, real } = runOnce(sourceAssets, grParams, runFromStart ? null : retirementDateInt,
-            lifeEvents, pool, dataMode, config, runRandom(seed, i));
+        const { nominal, real } = withoutTracing(() => runOnce(sourceAssets, grParams,
+            runFromStart ? null : retirementDateInt, lifeEvents, pool, dataMode, config, runRandom(seed, i)));
         allRuns.push(fit(nominal));
         allRunsReal.push(fit(real));
         // An interim snapshot supersedes the plain progress ping at the same

@@ -54,6 +54,7 @@ export const TraceKind = Object.freeze({
 let _stack = [];
 let _scopes = [];
 let _nextId = 0;
+let _recording = true;
 
 /**
  * Run `fn` inside a new causal scope. Every event recorded during it — at any
@@ -65,6 +66,7 @@ let _nextId = 0;
  * @param {Function} fn
  */
 export function withTrace(kind, label, dateInt, fn) {
+    if (!_recording) return fn();
     const parent = _stack.length ? _stack[_stack.length - 1] : null;
     const scope = {
         id: ++_nextId,
@@ -93,6 +95,35 @@ export function currentTraceId() {
 /** Every scope opened during this run, in creation order. */
 export function traceScopes() {
     return _scopes;
+}
+
+/**
+ * Run `fn` with tracing off: withTrace still runs its function but opens no
+ * scope, so nothing is allocated or kept and events carry no trace id.
+ *
+ * For the batch runs (Monte Carlo, Guardrails, the Maximizer), which never
+ * read a causal chain. Monte Carlo steps months itself and never calls
+ * chronometer_run, so with tracing on it kept every simulation's ~23,600
+ * scopes: about 3 GB over a 1,000-run batch.
+ *
+ * Synchronous on purpose. Module state is shared (the MCP server answers
+ * explain requests between runs), so the switch must not stay off across
+ * an await. If `fn` is async, tracing comes back on at its first await:
+ * the safe direction.
+ */
+export function withoutTracing(fn) {
+    const was = _recording;
+    _recording = false;
+    try {
+        return fn();
+    } finally {
+        _recording = was;
+    }
+}
+
+/** Whether withTrace is recording scopes. */
+export function isTracing() {
+    return _recording;
 }
 
 /** Called by chronometer_run. Traces are run state, rebuilt every time. */

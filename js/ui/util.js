@@ -73,9 +73,9 @@ export function util_ensureStoryNames(storyArc, storyName) {
 
         if (ii > 0) {
             let storyArcNameKey = util_buildStoryArcKey(storyArc, storyName)
-            logger.log(LogCategory.STORAGE, 'util-ensureStoryNames - copy most recent dataset to ' + storyArcNameKey);
+            logger.log(LogCategory.STORAGE, () => 'util-ensureStoryNames - copy most recent dataset to ' + storyArcNameKey);
             let previousStoryArcNameKey = util_buildStoryArcKey(storyArc, storyNames[ii -1]);
-            logger.log(LogCategory.STORAGE, 'util-ensureStoryNames - previous key to use ' + previousStoryArcNameKey);
+            logger.log(LogCategory.STORAGE, () => 'util-ensureStoryNames - previous key to use ' + previousStoryArcNameKey);
             let previousStoryArcNameData = localStorage.getItem(previousStoryArcNameKey);
             localStorage.setItem(storyArcNameKey, previousStoryArcNameData);
         }
