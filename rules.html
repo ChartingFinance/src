@@ -47,7 +47,7 @@
 
     <!-- ═══ Intro ═══ -->
     <div class="glass-card p-8 sm:p-12 mb-8">
-        <p class="text-gray-600 leading-relaxed mb-6">Every asset card in your portfolio follows a set of simulation rules. Below you'll find exactly how each asset type behaves month-by-month &mdash; so you can build scenarios with confidence, not guesswork.</p>
+        <p class="text-gray-600 leading-relaxed mb-6">Every asset in your plan follows a set of simulation rules. This page describes how each asset type behaves month by month, so you know what the engine will do with the numbers you give it.</p>
         <div class="flex flex-wrap gap-2 text-sm">
             <a href="#taxes" class="px-4 py-2 rounded-xl bg-gray-50 hover:bg-gray-100 transition text-gray-700 no-underline">Tax Rates</a>
             <a href="#filing-status" class="px-4 py-2 rounded-xl bg-gray-50 hover:bg-gray-100 transition text-gray-700 no-underline">Filing Status</a>
@@ -65,7 +65,7 @@
                 <span class="text-2xl">🏡</span>
                 <h2 class="text-xl font-bold tracking-tight">Home</h2>
             </div>
-            <p class="text-gray-600 mb-4 leading-relaxed">Your largest asset deserves the sharpest model. The simulator tracks your home's market value month over month, applying your chosen annual return rate as steady appreciation (or depreciation). When it's time to sell, the engine handles the tax math so you don't have to.</p>
+            <p class="text-gray-600 mb-4 leading-relaxed">The simulator tracks your home&rsquo;s market value month by month, growing it at the annual rate you set (or shrinking it, if the rate is negative). When you sell, it works out the tax on the gain.</p>
             <div class="space-y-2">
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 1</span>
@@ -77,11 +77,11 @@
                 </div>
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 3</span>
-                    <span class="text-sm text-gray-700"><strong>Carrying costs</strong> &mdash; maintenance (percentage of home value) and insurance (fixed annual cost) &mdash; are computed monthly and debited from your first expensable account, or from the funding account specified via fund transfers.</span>
+                    <span class="text-sm text-gray-700"><strong>Carrying costs</strong> &mdash; maintenance (a percentage of the home&rsquo;s value) and insurance (a fixed annual cost) &mdash; are charged monthly to the funding account set in the home&rsquo;s fund transfers. If none is set, the funding backstop pays them (see <a href="#transfers" class="underline">Fund Transfers</a>).</span>
                 </div>
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 4</span>
-                    <span class="text-sm text-gray-700">When you sell, capital gains are computed against your cost basis &mdash; with the primary residence exclusion applied automatically if you've owned for <strong>more than 24 months</strong>. The exclusion follows your filing status: <strong>$250,000 filing Single, $500,000 filing jointly</strong>. Unlike every other figure in the tax tables it is <strong>never indexed for inflation</strong>, because IRC&nbsp;&sect;121 has not moved it since 1997 &mdash; so a long-held home is progressively less sheltered the further out you project.</span>
+                    <span class="text-sm text-gray-700">When you sell, the gain is measured against your cost basis, and the <strong>primary-residence exclusion</strong> is applied automatically if the home has been held <strong>more than 24 months</strong>. Those months count from the home&rsquo;s start date in the plan, so a home entered at the plan&rsquo;s first month is treated as newly bought (see <a href="#limits" class="underline">What This Engine Does Not Model</a>). The exclusion follows your filing status: <strong>$250,000 filing Single, $500,000 filing jointly</strong>. Unlike most figures in the tax tables it is <strong>never indexed for inflation</strong>: IRC &sect;121 has not changed it since 1997, so a long-held home is less sheltered the further out you project.</span>
                 </div>
             </div>
         </div>
@@ -92,7 +92,7 @@
                 <span class="text-2xl">🏦</span>
                 <h2 class="text-xl font-bold tracking-tight">Mortgage</h2>
             </div>
-            <p class="text-gray-600 mb-4 leading-relaxed">A proper amortization schedule &mdash; not a rough estimate. Enter your remaining balance, rate, and months left (check your statement), and the simulator builds your payment plan down to the penny.</p>
+            <p class="text-gray-600 mb-4 leading-relaxed">A full amortization schedule. Enter your remaining balance, rate and months left (from your statement), and the simulator builds the payment plan to the penny.</p>
             <div class="space-y-2">
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 1</span>
@@ -109,13 +109,13 @@
             </div>
         </div>
 
-        <!-- ── Monthly Salary ── -->
+        <!-- ── Working Income ── -->
         <div class="glass-card p-8">
             <div class="flex items-center gap-3 mb-4">
                 <span class="text-2xl">💰</span>
-                <h2 class="text-xl font-bold tracking-tight">Monthly Salary</h2>
+                <h2 class="text-xl font-bold tracking-tight">Working Income</h2>
             </div>
-            <p class="text-gray-600 mb-4 leading-relaxed">Income is the engine of your financial plan. The simulator credits your paycheck on the first of the month and handles withholding, so what flows into your accounts is the real take-home number.</p>
+            <p class="text-gray-600 mb-4 leading-relaxed">Your salary drives the plan. It is credited on the first of the month with withholding taken out, so what reaches your accounts is your take-home pay.</p>
             <div class="space-y-2">
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 1</span>
@@ -127,7 +127,7 @@
                 </div>
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 3</span>
-                    <span class="text-sm text-gray-700">Estimated federal income tax withholding is computed from your <strong>filing status and tax bracket</strong>, keeping your simulation aligned with real-world payroll.</span>
+                    <span class="text-sm text-gray-700">Federal income tax withholding is estimated from your <strong>filing status and tax bracket</strong>, as a payroll department would.</span>
                 </div>
             </div>
         </div>
@@ -138,7 +138,7 @@
                 <span class="text-2xl">📉</span>
                 <h2 class="text-xl font-bold tracking-tight">Monthly Expense</h2>
             </div>
-            <p class="text-gray-600 mb-4 leading-relaxed">Bills don't stay flat &mdash; and neither does your simulation. Expenses grow with inflation so you can stress-test whether your plan holds up in 10, 20, or 30 years.</p>
+            <p class="text-gray-600 mb-4 leading-relaxed">Bills don&rsquo;t stay flat. Expenses grow with inflation, so you can test whether your plan holds up over 10, 20 or 30 years.</p>
             <div class="space-y-2">
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 1</span>
@@ -150,7 +150,7 @@
                 </div>
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 3</span>
-                    <span class="text-sm text-gray-700">Unlike salary (which compounds yearly), expense inflation compounds <strong>monthly</strong> &mdash; a subtle but meaningful difference over long horizons.</span>
+                    <span class="text-sm text-gray-700">Salary rises once a year; expenses rise a little every month. Over a full year both reach their annual rate &mdash; the difference is only in when the increase arrives.</span>
                 </div>
             </div>
         </div>
@@ -165,7 +165,7 @@
                 <h2 class="text-xl font-bold tracking-tight">Retirement Accounts</h2>
                 <span class="text-xs text-gray-400 font-medium ml-1">401(k) &middot; IRA &middot; Roth</span>
             </div>
-            <p class="text-gray-600 mb-4 leading-relaxed">Three flavors, one goal. Whether you're deferring taxes now, paying them later, or never &mdash; the simulator enforces IRS contribution limits and withdrawal rules so your projections stay realistic.</p>
+            <p class="text-gray-600 mb-4 leading-relaxed">Whether you defer tax now, pay it later or never pay it, the simulator enforces the IRS contribution limits and withdrawal rules.</p>
             <div class="space-y-2">
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 1</span>
@@ -190,13 +190,13 @@
             </div>
         </div>
 
-        <!-- ── Brokerage Account ── -->
+        <!-- ── Taxable Account ── -->
         <div class="glass-card p-8">
             <div class="flex items-center gap-3 mb-4">
                 <span class="text-2xl">📊</span>
-                <h2 class="text-xl font-bold tracking-tight">Brokerage Account</h2>
+                <h2 class="text-xl font-bold tracking-tight">Taxable Account (Brokerage)</h2>
             </div>
-            <p class="text-gray-600 mb-4 leading-relaxed">Your taxable investment account &mdash; flexible, liquid, and tax-aware. The simulator tracks your cost basis and holding period so capital gains are classified correctly when you withdraw.</p>
+            <p class="text-gray-600 mb-4 leading-relaxed">Your taxable investment account. The simulator tracks your cost basis, so the gain on each withdrawal is measured and taxed correctly.</p>
             <div class="space-y-2">
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 1</span>
@@ -208,7 +208,7 @@
                 </div>
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 3</span>
-                    <span class="text-sm text-gray-700">Capital gains are classified as <strong>long-term (held 12+ months)</strong> or <strong>short-term</strong>, each taxed at their respective rates &mdash; because timing matters.</span>
+                    <span class="text-sm text-gray-700">Gains realized by withdrawals are taxed at <strong>long-term capital-gains rates</strong>. Short-term rates apply only when the whole account closes within 12 months of its start date (see <a href="#limits" class="underline">What This Engine Does Not Model</a>).</span>
                 </div>
             </div>
         </div>
@@ -231,7 +231,7 @@
                 </div>
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 3</span>
-                    <span class="text-sm text-gray-700">Cash is the <strong>default destination for fund transfers</strong> and acts as your portfolio's liquidity buffer between income and expenses.</span>
+                    <span class="text-sm text-gray-700">Cash is the <strong>first account the funding backstop draws on</strong>, and where leftover take-home pay and sale proceeds land when no fund transfer says otherwise.</span>
                 </div>
             </div>
         </div>
@@ -327,9 +327,9 @@
     </div>
 
     <!-- ═══ Fund Transfers ═══ -->
-    <div class="glass-card p-8 sm:p-12 mb-8">
+    <div id="transfers" class="glass-card p-8 sm:p-12 mb-8">
         <h2 class="text-2xl font-bold tracking-tight mb-4">Fund Transfers</h2>
-        <p class="text-gray-600 mb-6 leading-relaxed">Money doesn't sit still &mdash; it flows. Fund transfers let you wire a percentage of one asset's value into another on a schedule you control. Pair your salary with your 401(k), your brokerage with your cash reserves, or set up a one-time sweep when an asset closes.</p>
+        <p class="text-gray-600 mb-6 leading-relaxed">Fund transfers move a percentage of one asset&rsquo;s value into another on a schedule you control: salary into a 401(k), a brokerage account into cash, or a one-time sweep when an asset closes.</p>
         <div class="grid sm:grid-cols-2 gap-4">
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Recurring Transfers</div>
@@ -364,12 +364,12 @@
         <p class="text-gray-600 mb-6 leading-relaxed">Every asset tracks a rich set of metrics each month &mdash; balances, flows, taxes, and returns. Four of them are <strong>pinned</strong> so they always appear first wherever you cycle metrics (timeline, projections, visualizer, asset cards).</p>
         <div class="grid sm:grid-cols-2 gap-4">
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">&#x1F4B0; Value</div>
-                <div class="text-sm text-gray-500">The asset's balance at the end of the month &mdash; the canonical "how much is this worth right now" number. Snapshotted from <code>finishCurrency</code> on the last day of each month.</div>
+                <div class="font-semibold text-sm mb-1">&#x1F4B0; Net Worth</div>
+                <div class="text-sm text-gray-500">The balance at the end of the month. Added up across your assets it is your <strong>net worth</strong>, which is how it is labelled in the metric menus and badges.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">&#x1F4CA; Net Worth Change <span class="text-xs text-gray-400 font-normal">(derived)</span></div>
-                <div class="text-sm text-gray-500">Month-over-month change in Value: <code>value[i] &minus; value[i&minus;1]</code>. Captures the combined effect of growth <em>and</em> cash flow in a single number &mdash; so you can immediately see when negative cash flow is consuming your growth. Computed on demand from the Value history, no separate storage.</div>
+                <div class="text-sm text-gray-500">The change in Net Worth from one month to the next. It combines growth <em>and</em> cash flow in one number, so you can see when spending is outpacing growth.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">&#x1F4C8; Growth</div>
@@ -388,7 +388,7 @@
     <!-- ═══ Tax Rates ═══ -->
     <div id="taxes" class="glass-card p-8 sm:p-12 mb-8">
         <h2 class="text-2xl font-bold tracking-tight mb-4">Tax Rates</h2>
-        <p class="text-gray-600 mb-4 leading-relaxed">The IRS is the source of truth &mdash; and so is this simulator. Every run is built from the <strong>2026 federal tables</strong>, selected by your filing status: income brackets, capital gains bands, the standard deduction, the Social Security wage base, and the retirement contribution limits. From age 65 the standard deduction grows by the <strong>additional deduction for age 65 or older</strong> ($2,050 single, $1,650 per spouse in 2026), and for tax years 2025 through 2028 the <strong>senior deduction</strong> adds $6,000 per person on top, phasing out at 6% of income over $75,000&thinsp;/&thinsp;$150,000. A household that itemises keeps the senior deduction but not the additional standard deduction.</p>
+        <p class="text-gray-600 mb-4 leading-relaxed">Every run starts from the <strong>2026 federal tables</strong> for your filing status: income brackets, capital-gains bands, the standard deduction, the Social Security wage base and the retirement contribution limits. From age 65 the standard deduction grows by the additional deduction for age 65 or older ($2,050 single, $1,650 per spouse in 2026), and for tax years 2025 through 2028 the senior deduction adds <strong>$6,000 per person</strong> on top, phasing out at 6% of income over $75,000 / $150,000. A household that itemizes keeps the senior deduction but not the additional standard deduction.</p>
         <p class="text-gray-600 mb-6 leading-relaxed">From the second simulated year onward, all of those figures are <strong>indexed forward by your inflation rate</strong> &mdash; brackets widen, the deduction rises, the wage base climbs. That keeps a 30-year projection from quietly pushing you into the top bracket through inflation alone. Some figures are deliberately held fixed, because Congress never indexed them: the primary-home sale exclusion at $250,000&thinsp;/&thinsp;$500,000, the Net Investment Income Tax threshold at $200,000&thinsp;/&thinsp;$250,000, the Social Security provisional-income thresholds, and the senior deduction. The thresholds catch more households every year by standing still, and a simulator that quietly inflated them would model a tax that fades away. Here are the publications we reference:</p>
 
         <div class="grid gap-3">
@@ -460,7 +460,7 @@
             <div class="text-sm text-gray-600 leading-relaxed">A withdrawal or Roth conversion from an IRA or 401(k) can never be taxed by this surcharge &mdash; but it <em>does</em> raise your adjusted gross income, and by doing so it can drag your investment income over the threshold. So a large conversion can trigger 3.8% on gains and dividends you were not otherwise going to be surcharged on. Roth <em>distributions</em> raise neither number and are safe on both counts. If you are sizing a conversion, this is often the constraint that binds first.</div>
         </div>
 
-        <p class="text-gray-600 leading-relaxed">The simulator charges it in one payment each year, alongside the annual tax true-up &mdash; there is no withholding for it in real life either. You will find it in the <strong>Taxes</strong> column of Your Portfolio, on the Reports tab, and as its own line in the Spreadsheet. When the accounts that earned the investment income are being billed individually, it is charged to those accounts specifically, never to salary or pension assets, because their income cannot trigger it.</p>
+        <p class="text-gray-600 leading-relaxed">The simulator charges it once a year, with the annual tax true-up; real life has no withholding for it either. You will find it in the Taxes column of Your Portfolio, in Reports and as its own line in the Spreadsheet.</p>
     </div>
 
     <!-- ═══ Filing Status ═══ -->
@@ -482,7 +482,7 @@
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Two incomes, one plan</div>
-                <div class="text-sm text-gray-500">Model a second earner by adding a second Monthly Salary asset. The joint Quick Start profiles do exactly this &mdash; <strong>Salary A</strong> and <strong>Salary B</strong>, each with its own rate and retirement date.</div>
+                <div class="text-sm text-gray-500">Model a second earner by adding a second Working Income asset. The joint Quick Start profiles do exactly this &mdash; <strong>Salary A</strong> and <strong>Salary B</strong>, each with its own rate and retirement date.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Quick Start follows your status</div>
@@ -585,11 +585,11 @@
             </div>
             <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
                 <span class="rule-chip">Color-Coded Timeline</span>
-                <span class="text-sm text-gray-700">The interactive timeline shows each phase as a colored segment &mdash; <strong style="color: #1D9E75;">green for Accumulate</strong>, <strong style="color: #D85A30;">coral for Retire</strong>. Click any phase dot to jump to that date. The "You are Here" indicator, year/month selectors, and viewing badges all reflect the current phase's color.</span>
+                <span class="text-sm text-gray-700">The timeline shows each phase as a colored band &mdash; <strong style="color: #1D9E75;">green for Accumulate</strong>, <strong style="color: #D85A30;">coral for Retire</strong>. Click a phase&rsquo;s chip, or its dot on the axis, to edit it.</span>
             </div>
             <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
                 <span class="rule-chip">Age-Driven</span>
-                <span class="text-sm text-gray-700">Phases are triggered by age, not fixed dates. Set your <strong>Current Age, Retirement Age, and Finish Age</strong> in the global settings, and the entire timeline &mdash; phase boundaries, asset start/end dates, and fund transfer activation &mdash; adapts automatically.</span>
+                <span class="text-sm text-gray-700">Phases are triggered by age, not fixed dates. On a new plan they follow the <strong>Current Age, Retirement Age and Finish Age</strong> in the settings row. On a loaded plan, changing Retirement Age moves the Retire phase together with the salary end and benefit start dates tied to it, and Finish Age sets the plan&rsquo;s last year.</span>
             </div>
         </div>
 
@@ -614,7 +614,7 @@
             </div>
             <div class="p-4 rounded-xl bg-white/70">
                 <div class="font-semibold text-sm mb-1">&#x1F4D6; Rule notes on an asset</div>
-                <div class="text-sm text-gray-500">Open any asset card to read its metrics over <strong>this month</strong>, <strong>this year</strong> and <strong>life to date</strong>, with plain-language notes explaining the rules that fired on it &mdash; why a Roth paid no tax, where the tax on untaxed income was actually settled, what was withheld from a pension, why a contribution was capped.</div>
+                <div class="text-sm text-gray-500">Open any asset&rsquo;s <strong>&#x1F453;</strong> view to read its metrics over <strong>this month</strong>, <strong>this year</strong> and <strong>life to date</strong>, with plain-language notes on the rules that fired: why a Roth paid no tax, where the tax on untaxed income was settled, what was withheld from a pension, why a contribution was capped.</div>
             </div>
         </div>
 
@@ -652,8 +652,12 @@
                 <div class="text-sm text-gray-500">Age-based rules &mdash; the deductions from 65, catch-up contribution limits and RMDs &mdash; treat both spouses as the age you enter. A couple where only one is 65 or older gets both spouses&rsquo; age deductions here. <span class="text-gray-400">Optimistic for couples with an age gap.</span></div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Monthly compounding is rate &divide; 12</div>
-                <div class="text-sm text-gray-500">A stated 8.5% return compounds to about 8.84% realized, because a twelfth of the annual rate is applied each month rather than the twelfth root. Over 30 years that ends a plan meaningfully richer than the rate you typed. <span class="text-gray-400">Optimistic.</span></div>
+                <div class="font-semibold text-sm mb-1">A home&rsquo;s holding period starts in the plan</div>
+                <div class="text-sm text-gray-500">The 24 months the primary-residence exclusion needs are counted from the home&rsquo;s start date in the plan, not from when you bought it. A home you have owned for years, entered at the plan&rsquo;s first month and sold within two years, is taxed without the exclusion. <span class="text-gray-400">Pessimistic.</span></div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">Withdrawals are always long-term</div>
+                <div class="text-sm text-gray-500">Gains realized by withdrawing from a taxable account are taxed at long-term rates however recently the money went in. Short-term rates apply only when an account closes within 12 months of its start. <span class="text-gray-400">Optimistic for recent purchases.</span></div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">One Social Security wage base per household</div>
@@ -677,11 +681,11 @@
     <!-- ═══ Projections & Analysis ═══ -->
     <div class="glass-card p-8 sm:p-12 mb-8">
         <h2 class="text-2xl font-bold tracking-tight mb-4">Projections &amp; Analysis</h2>
-        <p class="text-gray-600 mb-6 leading-relaxed">A single projection is a starting point &mdash; not the whole story. The simulator gives you several ways to interrogate your financial future, from a deterministic baseline to full stochastic analysis and AI-driven optimization.</p>
+        <p class="text-gray-600 mb-6 leading-relaxed">A single projection is a starting point, not the whole story. The simulator offers several ways to test your plan, from the deterministic projection to Monte Carlo simulation and an optimizer.</p>
         <div class="grid sm:grid-cols-3 gap-4">
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">📈 Value Projections</div>
-                <div class="text-sm text-gray-500">Your deterministic baseline &mdash; a line chart of any metric across every asset, month by month, for the full simulation horizon.</div>
+                <div class="font-semibold text-sm mb-1">📈 Projections</div>
+                <div class="text-sm text-gray-500">Your deterministic projection: stacked bar charts of any metric, asset by asset, month by month, for the whole plan.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">🎲 Monte Carlo</div>
@@ -697,7 +701,7 @@
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">🧾 Credit Memos</div>
-                <div class="text-sm text-gray-500">A complete audit trail of every transaction &mdash; every credit, debit, and transfer, with timestamps and descriptions.</div>
+                <div class="text-sm text-gray-500">A complete record of every transaction &mdash; every credit, debit and transfer, with its date and a note describing it.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">📊 30+ Metrics</div>
@@ -725,11 +729,15 @@
             </div>
             <div class="p-4 rounded-xl bg-white/70">
                 <div class="font-semibold text-sm mb-1">Optional Guardrails</div>
-                <div class="text-sm text-gray-500">Toggle "With Guardrails" to re-run all 1,000 simulations with dynamic withdrawal adjustments active &mdash; and see how adaptive spending changes the shape of your outcomes.</div>
+                <div class="text-sm text-gray-500">Check &ldquo;With Guardrails&rdquo; to apply your guardrail rules in all 1,000 simulations and see how adaptive spending changes the range of outcomes.</div>
             </div>
             <div class="p-4 rounded-xl bg-white/70">
-                <div class="font-semibold text-sm mb-1">Historical Data Foundation</div>
-                <div class="text-sm text-gray-500">Draws from the same FRED dataset as backtesting (1970&ndash;2025), so every random trial is grounded in decades of actual economic history &mdash; not fabricated distributions.</div>
+                <div class="font-semibold text-sm mb-1">Calibrated or Historical</div>
+                <div class="text-sm text-gray-500">Each trial draws years from FRED data for 1970&ndash;2025 (or from your backtest year on). <strong>Calibrated</strong>, the default, keeps your own return and inflation rates and adds each drawn year&rsquo;s swing around its long-run average. <strong>Historical</strong> uses the drawn years&rsquo; actual returns.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-white/70">
+                <div class="font-semibold text-sm mb-1">Always Current, Always Repeatable</div>
+                <div class="text-sm text-gray-500">The simulations re-run whenever the plan changes, and the draws are seeded, so the same plan always gives the same answer. When a result moves, it is because the plan did.</div>
             </div>
         </div>
 
@@ -745,12 +753,12 @@
             <span class="text-2xl">🛡️</span>
             <h2 class="text-2xl font-bold tracking-tight">Guyton-Klinger Guardrails</h2>
         </div>
-        <p class="text-gray-600 mb-6 leading-relaxed">The 4% rule is a starting point &mdash; not a strategy. Guyton-Klinger guardrails give your retirement withdrawals an <strong>adaptive immune system</strong>: when markets drop, spending tightens automatically; when markets soar, you get a raise. The result is a plan that bends with reality instead of breaking against it.</p>
+        <p class="text-gray-600 mb-6 leading-relaxed">The 4% rule is a starting point, not a strategy. Guyton-Klinger guardrails adjust retirement spending as your portfolio moves: when your withdrawal rate drifts too high, spending is cut; when it drifts low, spending rises.</p>
 
         <div class="grid sm:grid-cols-2 gap-4 mb-6">
             <div class="p-4 rounded-xl bg-white/70">
-                <div class="font-semibold text-sm mb-1">Initial Withdrawal Rate</div>
-                <div class="text-sm text-gray-500">Your starting withdrawal as a percentage of portfolio value. This sets the baseline &mdash; guardrails adjust it from here.</div>
+                <div class="font-semibold text-sm mb-1">Target Rate</div>
+                <div class="text-sm text-gray-500">Your starting withdrawal as a percentage of the portfolio. The guardrails adjust spending from here.</div>
             </div>
             <div class="p-4 rounded-xl bg-white/70">
                 <div class="font-semibold text-sm mb-1">Preservation Band</div>
@@ -818,7 +826,7 @@
             <h2 class="text-2xl font-bold tracking-tight">Maximizer</h2>
             <span class="text-xs text-gray-400 font-medium ml-1">Genetic Algorithm Optimizer</span>
         </div>
-        <p class="text-gray-600 mb-6 leading-relaxed">Stop guessing your fund transfer percentages and withdrawal parameters. The Maximizer uses a <strong>genetic algorithm</strong> &mdash; inspired by natural selection &mdash; to evolve the best combination of fund allocations and guardrail settings for your specific portfolio. It runs directly inside the Maximizer section, updating the chart in real time as it discovers better solutions.</p>
+        <p class="text-gray-600 mb-6 leading-relaxed">The Maximizer searches for the fund transfer percentages and guardrail settings that best serve your goal. It uses a <strong>genetic algorithm</strong>, modelled on natural selection, and runs inside the Maximizer section, updating the chart as it finds better solutions.</p>
 
         <div class="grid sm:grid-cols-2 gap-4 mb-6">
             <div class="p-4 rounded-xl bg-white/70">
@@ -873,7 +881,7 @@
         </div>
 
         <h3 class="text-lg font-bold tracking-tight mb-3">Recommendations</h3>
-        <p class="text-gray-600 mb-4 leading-relaxed">When the optimizer completes, click <strong>Recommendations</strong> to see a detailed comparison of your current fund transfers and guardrail settings versus the optimizer's best solution &mdash; organized by phase, with exact percentage changes for every transfer.</p>
+        <p class="text-gray-600 mb-4 leading-relaxed">When the optimizer finishes, click <strong>Recommendations</strong> to compare your current fund transfers and guardrail settings with the best solution found, phase by phase, with the change for every transfer. <strong>Apply to Baseline</strong> writes them into your plan.</p>
 
         <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
             <span class="rule-chip">How it works</span>
@@ -929,19 +937,19 @@
         <div class="grid sm:grid-cols-2 gap-4">
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Multiple Scenarios</div>
-                <div class="text-sm text-gray-500">Create parallel scenarios with different assumptions &mdash; each with its own assets, fund transfers, and guardrail parameters &mdash; and switch between them with a dropdown.</div>
+                <div class="text-sm text-gray-500">Create scenarios with different assumptions &mdash; each with its own assets, fund transfers, life events and guardrail parameters &mdash; and switch between them from the scenario menu in the Timeline heading.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Instant Sharing</div>
-                <div class="text-sm text-gray-500">Compress your entire portfolio into a URL and share it via email. The recipient loads your exact scenario &mdash; assets, transfers, settings, and guardrails &mdash; in one click.</div>
+                <div class="text-sm text-gray-500">Share your plan as a link, by email or by copying it. The recipient opens your exact scenario &mdash; assets, transfers, settings and guardrails.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Auto-Persistence</div>
                 <div class="text-sm text-gray-500">Every change is automatically saved to your browser's local storage. Close the tab, come back tomorrow &mdash; your portfolio is exactly where you left it.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Portfolio Ledger</div>
-                <div class="text-sm text-gray-500">A real-time summary showing opening value, closing value, and <strong>CAGR</strong> (Compound Annual Growth Rate) across any metric &mdash; so you can benchmark performance at a glance.</div>
+                <div class="font-semibold text-sm mb-1">Growth at a Glance</div>
+                <div class="text-sm text-gray-500">The timeline shows the plan&rsquo;s opening and closing values, in nominal and today&rsquo;s dollars, and each phase&rsquo;s annual growth rate.</div>
             </div>
         </div>
     </div>
