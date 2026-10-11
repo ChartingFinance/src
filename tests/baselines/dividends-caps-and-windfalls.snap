@@ -1166,6 +1166,13 @@
   [0048]         1.132764         1.135650         1.138543         1.141443         1.144351         1.147266
   [0054]         1.150188         1.153118         1.156055         1.159000         1.161953         1.164913
 
+[taxYears]
+  2026 months=12 age=40 agi=152270.797132 niit=152270.797132 seniorDeduction=152270.797132 irmaa=152270.797132 iraDeduction=152270.797132 rothContribution=152270.797132 aca=152270.797132 nii=8770.797132 taxableSS=0.000000 ordinaryTaxable=130031.239140 capitalGains=6139.557992
+  2027 months=12 age=41 agi=155602.430959 niit=155602.430959 seniorDeduction=155602.430959 irmaa=155602.430959 iraDeduction=155602.430959 rothContribution=155602.430959 aca=155602.430959 nii=12861.930959 taxableSS=0.000000 ordinaryTaxable=129434.803975 capitalGains=9568.526984
+  2028 months=12 age=42 agi=155684.574267 niit=155684.574267 seniorDeduction=155684.574267 irmaa=155684.574267 iraDeduction=155684.574267 rothContribution=155684.574267 aca=155684.574267 nii=13727.118767 taxableSS=0.000000 ordinaryTaxable=128961.919030 capitalGains=9608.983137
+  2029 months=12 age=43 agi=158598.028027 niit=158598.028027 seniorDeduction=158598.028027 irmaa=158598.028027 iraDeduction=158598.028027 rothContribution=158598.028027 aca=158598.028027 nii=17447.891407 taxableSS=0.000000 ordinaryTaxable=128213.082419 capitalGains=12740.749673
+  2030 months=12 age=44 agi=159878.173968 niit=159878.173968 seniorDeduction=159878.173968 irmaa=159878.173968 iraDeduction=159878.173968 rothContribution=159878.173968 aca=159878.173968 nii=19560.383112 taxableSS=0.000000 ordinaryTaxable=127441.869695 capitalGains=14245.138265
+
 [sanity]
   Contribution capped: 401K requested $560,000.00, annual 401(k) limit allowed $24,500.00
   applyNetIncome: Salary pre-tax deferrals exceed after-tax pay by $13,502.17; net income clamped to $0

@@ -961,6 +961,13 @@
   [0048]         1.132764         1.135650         1.138543         1.141443         1.144351         1.147266
   [0054]         1.150188         1.153118         1.156055         1.159000         1.161953         1.164913
 
+[taxYears]
+  2026 months=12 age=75 agi=90202.393614 niit=90202.393614 seniorDeduction=90202.393614 irmaa=90202.393614 iraDeduction=90202.393614 rothContribution=90202.393614 aca=95602.393614 nii=32704.587759 taxableSS=30600.000000 ordinaryTaxable=34259.949472 capitalGains=32704.587759
+  2027 months=12 age=76 agi=93238.368116 niit=93238.368116 seniorDeduction=93238.368116 irmaa=93238.368116 iraDeduction=93238.368116 rothContribution=93238.368116 aca=98638.368116 nii=35882.897061 taxableSS=30600.000000 ordinaryTaxable=33737.123142 capitalGains=35882.897061
+  2028 months=12 age=77 agi=94411.112411 niit=94411.112411 seniorDeduction=94411.112411 irmaa=94411.112411 iraDeduction=94411.112411 rothContribution=94411.112411 aca=99811.112411 nii=37302.295331 taxableSS=30600.000000 ordinaryTaxable=32980.741674 capitalGains=37302.295331
+  2029 months=12 age=78 agi=95459.401607 niit=95459.401607 seniorDeduction=95459.401607 irmaa=95459.401607 iraDeduction=95459.401607 rothContribution=95459.401607 aca=100859.401607 nii=38604.961708 taxableSS=30600.000000 ordinaryTaxable=36963.622742 capitalGains=38604.961708
+  2030 months=12 age=79 agi=97044.983665 niit=97044.983665 seniorDeduction=97044.983665 irmaa=97044.983665 iraDeduction=97044.983665 rothContribution=97044.983665 aca=102444.983665 nii=40453.226424 taxableSS=30600.000000 ordinaryTaxable=36084.324752 capitalGains=40453.226424
+
 [sanity]
   (no findings)
 

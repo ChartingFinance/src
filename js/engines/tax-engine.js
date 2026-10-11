@@ -22,7 +22,7 @@ import { logger, LogCategory } from '../utils/logger.js';
 import { formatCurrency } from '../utils/html.js';
 import { EventType, ShortfallOrigin } from '../sim-event.js';
 import { withTrace, TraceKind } from '../trace.js';
-import { taxableBasis } from '../tax-basis.js';
+import { taxableBasis, MagiPurpose } from '../tax-basis.js';
 
 export class TaxEngine {
 
@@ -610,7 +610,9 @@ export class TaxEngine {
      */
     applyAnnualNIIT(settledYearMonths) {
 
-        const { netInvestmentIncome, magi } = taxableBasis(this.yearly, this.activeUser, { taxTable: this.config.taxTable });
+        const basis = taxableBasis(this.yearly, this.activeUser, { taxTable: this.config.taxTable });
+        const { netInvestmentIncome } = basis;
+        const magi = basis.magi[MagiPurpose.NIIT];
         const niit = this.config.taxTable.calculateNIIT(netInvestmentIncome, magi);
 
         // Same $1 materiality gate the true-up uses. Returns BEFORE any trace

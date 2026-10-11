@@ -443,6 +443,13 @@
   [0048]         1.132764         1.135650         1.138543         1.141443         1.144351         1.147266
   [0054]         1.150188         1.153118         1.156055         1.159000         1.161953         1.164913
 
+[taxYears]
+  2026 months=12 age=50 agi=2322.330917 niit=2322.330917 seniorDeduction=2322.330917 irmaa=2322.330917 iraDeduction=2322.330917 rothContribution=2322.330917 aca=2322.330917 nii=2322.330917 taxableSS=0.000000 ordinaryTaxable=0.000000 capitalGains=0.000000
+  2027 months=12 age=51 agi=0.000000 niit=0.000000 seniorDeduction=0.000000 irmaa=0.000000 iraDeduction=0.000000 rothContribution=0.000000 aca=0.000000 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=0.000000 capitalGains=0.000000
+  2028 months=12 age=52 agi=0.000000 niit=0.000000 seniorDeduction=0.000000 irmaa=0.000000 iraDeduction=0.000000 rothContribution=0.000000 aca=0.000000 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=0.000000 capitalGains=0.000000
+  2029 months=12 age=53 agi=0.000000 niit=0.000000 seniorDeduction=0.000000 irmaa=0.000000 iraDeduction=0.000000 rothContribution=0.000000 aca=0.000000 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=0.000000 capitalGains=0.000000
+  2030 months=12 age=54 agi=0.000000 niit=0.000000 seniorDeduction=0.000000 irmaa=0.000000 iraDeduction=0.000000 rothContribution=0.000000 aca=0.000000 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=0.000000 capitalGains=0.000000
+
 [sanity]
   Unfunded: Brokerage Living → Brokerage (monthly) (account depleted, no backstop) $2,322.33 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
   Unfunded: Brokerage Living → Brokerage (monthly) (account depleted, no backstop) $6,107.81 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)

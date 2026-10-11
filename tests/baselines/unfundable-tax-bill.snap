@@ -642,6 +642,13 @@
   [0048]         1.132764         1.135650         1.138543         1.141443         1.144351         1.147266
   [0054]         1.150188         1.153118         1.156055         1.159000         1.161953         1.164913
 
+[taxYears]
+  2026 months=12 age=68 agi=64174.467083 niit=64174.467083 seniorDeduction=64174.467083 irmaa=64174.467083 iraDeduction=64174.467083 rothContribution=64174.467083 aca=75607.820045 nii=39607.820045 taxableSS=24566.647038 ordinaryTaxable=416.647038 capitalGains=39607.820045
+  2027 months=12 age=69 agi=72069.517729 niit=72069.517729 seniorDeduction=72069.517729 irmaa=72069.517729 iraDeduction=72069.517729 rothContribution=72069.517729 aca=79875.414989 nii=43875.414989 taxableSS=28194.102740 ordinaryTaxable=3481.452740 capitalGains=43875.414989
+  2028 months=12 age=70 agi=33504.914032 niit=33504.914032 seniorDeduction=33504.914032 irmaa=33504.914032 iraDeduction=33504.914032 rothContribution=33504.914032 aca=59029.683260 nii=23029.683260 taxableSS=10475.230771 ordinaryTaxable=0.000000 capitalGains=8212.171882
+  2029 months=12 age=71 agi=0.000000 niit=0.000000 seniorDeduction=0.000000 irmaa=0.000000 iraDeduction=0.000000 rothContribution=0.000000 aca=36000.000000 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=0.000000 capitalGains=0.000000
+  2030 months=12 age=72 agi=0.000000 niit=0.000000 seniorDeduction=0.000000 irmaa=0.000000 iraDeduction=0.000000 rothContribution=0.000000 aca=36000.000000 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=0.000000 capitalGains=0.000000
+
 [sanity]
   Unfunded: Living Grossed-up expense debit for Living $521.24 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
   Unfunded: Social Security unallocated take-home pay (nowhere to deposit) $3,000.00 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)

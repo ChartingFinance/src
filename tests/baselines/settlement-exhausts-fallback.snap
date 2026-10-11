@@ -711,6 +711,13 @@
   [0048]         1.132764         1.135650         1.138543         1.141443         1.144351         1.147266
   [0054]         1.150188         1.153118         1.156055         1.159000         1.161953         1.164913
 
+[taxYears]
+  2026 months=12 age=50 agi=1312.331349 niit=1312.331349 seniorDeduction=1312.331349 irmaa=1312.331349 iraDeduction=1312.331349 rothContribution=1312.331349 aca=1312.331349 nii=1312.331349 taxableSS=0.000000 ordinaryTaxable=0.000000 capitalGains=0.000000
+  2027 months=12 age=51 agi=0.000000 niit=0.000000 seniorDeduction=0.000000 irmaa=0.000000 iraDeduction=0.000000 rothContribution=0.000000 aca=0.000000 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=0.000000 capitalGains=0.000000
+  2028 months=12 age=52 agi=0.000000 niit=0.000000 seniorDeduction=0.000000 irmaa=0.000000 iraDeduction=0.000000 rothContribution=0.000000 aca=0.000000 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=0.000000 capitalGains=0.000000
+  2029 months=12 age=53 agi=0.000000 niit=0.000000 seniorDeduction=0.000000 irmaa=0.000000 iraDeduction=0.000000 rothContribution=0.000000 aca=0.000000 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=0.000000 capitalGains=0.000000
+  2030 months=12 age=54 agi=0.000000 niit=0.000000 seniorDeduction=0.000000 irmaa=0.000000 iraDeduction=0.000000 rothContribution=0.000000 aca=0.000000 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=0.000000 capitalGains=0.000000
+
 [sanity]
   Unfunded: Home Home → Wallet (maintenance) $1,312.33 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
   Unfunded: Home insurance $2,000.00 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
