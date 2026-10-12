@@ -14,19 +14,17 @@
  * the MCP server runs a plan with. A setting the link leaves out takes the
  * engine's default, so the app opens a link on the settings its report used.
  *
+ * Whether applying them stores them is the caller's choice: Open holds them in
+ * memory and Open & Save stores them with a new scenario (scenario-store.js).
+ *
  * DOM-free, so tests/share-link.mjs runs it on real links.
  */
 
-import { planSettingsFrom } from './sim-config.js';
+import { planSettingsFrom, SIM_CONFIG_DEFAULTS } from './sim-config.js';
 import { membrane_rawDataToModelAssets } from './membrane.js';
 import { ModelLifeEvent } from './life-event.js';
+import { putSettingsInForce } from './scenario-store.js';
 import {
-    global_setInflationRate,
-    global_setFilingAs,
-    global_setUserStartAge,
-    global_setUserRetirementAge,
-    global_setUserFinishAge,
-    global_setBacktestYear,
     global_setGuardrailWithdrawalRate,
     global_setGuardrailPreservation,
     global_setGuardrailProsperity,
@@ -35,8 +33,6 @@ import {
     global_default_guardrail_preservation,
     global_default_guardrail_prosperity,
     global_default_guardrail_adjustment,
-    setActiveTaxTable,
-    makeActiveTaxTable,
 } from './globals.js';
 
 /**
@@ -64,8 +60,11 @@ export function readSharedPlan(payload) {
 
     return {
         settings,
-        // Not one of the plan's settings: a link without it keeps the viewer's.
-        backtestYear: payload.settings?.backtestYear ?? null,
+        // Not one of planSettingsFrom's five, which are the ones the MCP server
+        // reads, but one of the six a scenario keeps. The server's links leave
+        // it out and the server ran them with no backtest, so that is how they
+        // open; a scenario that kept the viewer's would show other numbers.
+        backtestYear: payload.settings?.backtestYear ?? SIM_CONFIG_DEFAULTS.backtestYear,
         guardrailParams: payload.guardrailParams ? guardrailParamsFrom(payload.guardrailParams) : null,
         modelAssets,
         lifeEvents,
@@ -74,19 +73,13 @@ export function readSharedPlan(payload) {
 }
 
 /**
- * Write a read plan's settings to the settings store, tax table included.
+ * Put a read plan's settings in force, tax table included.
  *
  * Takes what `readSharedPlan` returned, so every value is one its setter
  * accepts.
  */
 export function applySharedSettings({ settings, backtestYear, guardrailParams }) {
-    global_setInflationRate(settings.inflationRate);
-    global_setFilingAs(settings.filingAs);
-    global_setUserStartAge(settings.startAge);
-    global_setUserRetirementAge(settings.retirementAge);
-    global_setUserFinishAge(settings.finishAge);
-    if (backtestYear != null) global_setBacktestYear(backtestYear);
-    setActiveTaxTable(makeActiveTaxTable());
+    putSettingsInForce({ ...settings, backtestYear });
 
     if (guardrailParams) {
         global_setGuardrailWithdrawalRate(guardrailParams.withdrawalRate);

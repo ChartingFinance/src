@@ -147,6 +147,20 @@ export function util_loadLocalScenarioPreview(storyArc, storyName) {
     return raw ? JSON.parse(raw) : null;
 }
 
+// The settings a scenario runs on — the settings row: { inflationRate, filingAs,
+// startAge, retirementAge, finishAge, backtestYear }. See scenario-store.js.
+
+export function util_saveLocalScenarioSettings(storyArc, storyName, settings) {
+    const key = util_buildStoryArcKey(storyArc, storyName) + '+settings';
+    localStorage.setItem(key, JSON.stringify(settings));
+}
+
+export function util_loadLocalScenarioSettings(storyArc, storyName) {
+    const key = util_buildStoryArcKey(storyArc, storyName) + '+settings';
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : null;
+}
+
 export function util_loadStoryNames(storyArc) {
     const storyArcNamesKey = util_buildStoryArcKey(storyArc, storyNamesKey);
     const raw = localStorage.getItem(storyArcNamesKey);
@@ -164,6 +178,7 @@ export function util_deleteScenario(storyArc, storyName) {
     localStorage.removeItem(baseKey + '+guardrails');           // guardrail params
     localStorage.removeItem(baseKey + '+meta');                 // scenario metadata
     localStorage.removeItem(baseKey + '+preview');              // cached preview curve
+    localStorage.removeItem(baseKey + '+settings');             // settings row
 }
 
 export function util_loadFromStorage(key) {

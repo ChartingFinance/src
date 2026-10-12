@@ -215,26 +215,93 @@ export function global_divBy100(strValue) {
     return asFloat;
 }
 
+/**
+ * A stored rate as the percent the settings show. Rounded past any digit a
+ * stored rate carries, because the float product is not: 0.035 * 100 is
+ * 3.5000000000000004, which is what the settings row would show.
+ */
 export function global_multBy100(value) {
-    return value * 100.0;
+    return parseFloat((value * 100.0).toFixed(10));
+}
+
+// ── Where the settings are kept ───────────────────────────────
+//
+// In localStorage, except while a plan's settings are held. A shared plan
+// opened with Open runs on its own settings without becoming one of the
+// viewer's scenarios (see scenario-store.js), and every stored setting is one
+// the viewer's own plans run on, so its settings must not be stored. While they
+// are held they live in memory, and the getters read them back from there, so
+// a setter followed by its getter still agrees with itself.
+
+/**
+ * The stored settings that belong to a plan: the settings row and the guardrail
+ * parameters. Holding keeps these in memory. The rest (the property-tax cap,
+ * the sampling mode, engine diagnostics) are the viewer's, stored as usual.
+ */
+const PLAN_SETTING_KEYS = new Set([
+    'inflationRate', 'filingAs', 'userStartAge', 'userRetirementAge', 'userFinishAge',
+    'backtestYear',
+    'guardrailWithdrawalRate', 'guardrailPreservation', 'guardrailProsperity', 'guardrailAdjustment',
+]);
+
+/** The held plan settings, as the strings localStorage would hold; null when not held. */
+let heldPlanSettings = null;
+
+function storedSetting(key) {
+    return heldPlanSettings?.has(key) ? heldPlanSettings.get(key) : localStorage.getItem(key);
+}
+
+function storeSetting(key, value) {
+    if (heldPlanSettings && PLAN_SETTING_KEYS.has(key)) heldPlanSettings.set(key, String(value));
+    else localStorage.setItem(key, value);
+}
+
+/**
+ * Keep the plan settings in memory from now on. The setters work as usual and
+ * nothing stored changes; a setting not set since reads as stored. Holding
+ * while already held changes nothing.
+ */
+export function global_holdPlanSettings() {
+    heldPlanSettings ??= new Map();
+}
+
+export function global_planSettingsHeld() {
+    return heldPlanSettings !== null;
+}
+
+/**
+ * Stop holding the plan settings. Dropped, the stored ones come back into
+ * force; kept, the held ones are stored first. Either way every setting is read
+ * again and the tax table rebuilt, since the filing status may have changed.
+ */
+export function global_releasePlanSettings({ keep = false } = {}) {
+    if (heldPlanSettings === null) return;
+    const held = heldPlanSettings;
+    heldPlanSettings = null;
+    if (keep) {
+        for (const [key, value] of held) localStorage.setItem(key, value);
+    }
+    global_initialize();
+    setActiveTaxTable(makeActiveTaxTable());
 }
 
 /**
  * ── Setters ──────────────────────────────────────────────────────────
  *
- * Every setter writes localStorage AND assigns its exported binding, storing
- * exactly what the getter would read back (parsed and rounded the same way), so
- * memory and storage cannot disagree. A caller never has to call the matching
- * `global_getX()` afterwards; the calls that still do are harmless.
+ * Every setter stores its value (see storeSetting) AND assigns its exported
+ * binding, storing exactly what the getter would read back (parsed and rounded
+ * the same way), so memory and storage cannot disagree. A caller never has to
+ * call the matching `global_getX()` afterwards; the calls that still do are
+ * harmless.
  */
 
 export function global_setInflationRate(value) {
-    localStorage.setItem('inflationRate', value.toFixed(4));
+    storeSetting('inflationRate', value.toFixed(4));
     global_inflationRate = parseFloat(value.toFixed(4));
 }
 
 export function global_getInflationRate() {
-    let localIR = localStorage.getItem('inflationRate');
+    let localIR = storedSetting('inflationRate');
     if (localIR == null)
         localIR = global_inflationRate.toFixed(4);
 
@@ -247,24 +314,24 @@ export function global_setFilingAs(value) {
     if (!isFilingStatus(value)) {
         throw new Error(`global_setFilingAs: ${JSON.stringify(value)} is not one of ${FILING_STATUSES.join(', ')}`);
     }
-    localStorage.setItem('filingAs', value);
+    storeSetting('filingAs', value);
     global_filingAs = value;   // validated above, so no coercion needed here
 }
 
 export function global_getFilingAs() {
-    const stored = localStorage.getItem('filingAs');
+    const stored = storedSetting('filingAs');
     // localStorage is untrusted — it can hold a value written by an older
     // version — so this coerces where the setter throws.
     global_filingAs = asFilingStatus(stored ?? global_filingAs, global_default_filingAs);
 }
 
 export function global_setPropertyTaxDeductionMax(value) {
-    localStorage.setItem('propertyTaxDeductionMax', value.toFixed(2));
+    storeSetting('propertyTaxDeductionMax', value.toFixed(2));
     global_propertyTaxDeductionMax = parseFloat(value.toFixed(2));
 }
 
 export function global_getPropertyTaxDeductionMax() {
-    let localPTDM = localStorage.getItem('propertyTaxDeductionMax');
+    let localPTDM = storedSetting('propertyTaxDeductionMax');
     if (localPTDM == null)
         localPTDM = global_propertyTaxDeductionMax.toFixed(2);
 
@@ -272,12 +339,12 @@ export function global_getPropertyTaxDeductionMax() {
 }
 
 export function global_setUserStartAge(value) {
-    localStorage.setItem('userStartAge', value.toString());
+    storeSetting('userStartAge', value.toString());
     global_user_startAge = parseInt(value.toString(), 10);
 }
 
 export function global_getUserStartAge() {
-    let localUA = localStorage.getItem('userStartAge');
+    let localUA = storedSetting('userStartAge');
     if (localUA == null)
         localUA = global_user_startAge.toString();
 
@@ -285,12 +352,12 @@ export function global_getUserStartAge() {
 }
 
 export function global_setUserRetirementAge(value) {
-    localStorage.setItem('userRetirementAge', value.toString());
+    storeSetting('userRetirementAge', value.toString());
     global_user_retirementAge = parseInt(value.toString(), 10);
 }
 
 export function global_getUserRetirementAge() {
-    let localUA = localStorage.getItem('userRetirementAge');
+    let localUA = storedSetting('userRetirementAge');
     if (localUA == null)
         localUA = global_user_retirementAge.toString();
 
@@ -298,12 +365,12 @@ export function global_getUserRetirementAge() {
 }
 
 export function global_setUserFinishAge(value) {
-    localStorage.setItem('userFinishAge', value.toString());
+    storeSetting('userFinishAge', value.toString());
     global_user_finishAge = parseInt(value.toString(), 10);
 }
 
 export function global_getUserFinishAge() {
-    let localUA = localStorage.getItem('userFinishAge');
+    let localUA = storedSetting('userFinishAge');
     if (localUA == null)
         localUA = global_user_finishAge.toString();
 
@@ -333,12 +400,12 @@ export function global_getFinishDateInt(env) {
 }
 
 export function global_setBacktestYear(value) {
-    localStorage.setItem('backtestYear', value);
+    storeSetting('backtestYear', value);
     global_backtestYear = String(value);
 }
 
 export function global_getBacktestYear() {
-    let local = localStorage.getItem('backtestYear');
+    let local = storedSetting('backtestYear');
     if (local == null) local = 'current';
     global_backtestYear = local;
 }
@@ -359,11 +426,11 @@ export const global_default_simDataMode = SIM_CONFIG_DEFAULTS.simDataMode;
 export let global_simDataMode = global_default_simDataMode;
 
 export function global_setSimDataMode(value) {
-    localStorage.setItem('simDataMode', value);
+    storeSetting('simDataMode', value);
     global_simDataMode = value;
 }
 export function global_getSimDataMode() {
-    const v = localStorage.getItem('simDataMode');
+    const v = storedSetting('simDataMode');
     global_simDataMode = v != null ? v : global_default_simDataMode;
 }
 
@@ -376,11 +443,11 @@ export const global_default_showEngineDiagnostics = false;
 export let global_showEngineDiagnostics = global_default_showEngineDiagnostics;
 
 export function global_setShowEngineDiagnostics(value) {
-    localStorage.setItem('showEngineDiagnostics', value ? 'true' : 'false');
+    storeSetting('showEngineDiagnostics', value ? 'true' : 'false');
     global_showEngineDiagnostics = !!value;
 }
 export function global_getShowEngineDiagnostics() {
-    const v = localStorage.getItem('showEngineDiagnostics');
+    const v = storedSetting('showEngineDiagnostics');
     global_showEngineDiagnostics = v != null ? v === 'true' : global_default_showEngineDiagnostics;
     return global_showEngineDiagnostics;
 }
@@ -398,38 +465,38 @@ export let global_guardrail_prosperity = global_default_guardrail_prosperity;
 export let global_guardrail_adjustment = global_default_guardrail_adjustment;
 
 export function global_setGuardrailWithdrawalRate(value) {
-    localStorage.setItem('guardrailWithdrawalRate', value.toString());
+    storeSetting('guardrailWithdrawalRate', value.toString());
     global_guardrail_withdrawalRate = parseFloat(value);
 }
 export function global_getGuardrailWithdrawalRate() {
-    const v = localStorage.getItem('guardrailWithdrawalRate');
+    const v = storedSetting('guardrailWithdrawalRate');
     global_guardrail_withdrawalRate = v != null ? parseFloat(v) : global_default_guardrail_withdrawalRate;
 }
 
 export function global_setGuardrailPreservation(value) {
-    localStorage.setItem('guardrailPreservation', value.toString());
+    storeSetting('guardrailPreservation', value.toString());
     global_guardrail_preservation = parseFloat(value);
 }
 export function global_getGuardrailPreservation() {
-    const v = localStorage.getItem('guardrailPreservation');
+    const v = storedSetting('guardrailPreservation');
     global_guardrail_preservation = v != null ? parseFloat(v) : global_default_guardrail_preservation;
 }
 
 export function global_setGuardrailProsperity(value) {
-    localStorage.setItem('guardrailProsperity', value.toString());
+    storeSetting('guardrailProsperity', value.toString());
     global_guardrail_prosperity = parseFloat(value);
 }
 export function global_getGuardrailProsperity() {
-    const v = localStorage.getItem('guardrailProsperity');
+    const v = storedSetting('guardrailProsperity');
     global_guardrail_prosperity = v != null ? parseFloat(v) : global_default_guardrail_prosperity;
 }
 
 export function global_setGuardrailAdjustment(value) {
-    localStorage.setItem('guardrailAdjustment', value.toString());
+    storeSetting('guardrailAdjustment', value.toString());
     global_guardrail_adjustment = parseFloat(value);
 }
 export function global_getGuardrailAdjustment() {
-    const v = localStorage.getItem('guardrailAdjustment');
+    const v = storedSetting('guardrailAdjustment');
     global_guardrail_adjustment = v != null ? parseFloat(v) : global_default_guardrail_adjustment;
 }
 

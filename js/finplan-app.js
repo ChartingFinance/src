@@ -15,6 +15,16 @@ import { Chart } from 'chart.js';
 // The share format, shared with <share-modal> and the MCP server.
 import { sharePayloadParamFrom, decodeSharePayload } from './share-link.js';
 import { readSharedPlan, applySharedSettings } from './shared-plan.js';
+// What a scenario keeps, and the shared plan opened without saving.
+import {
+    saveScenario,
+    saveScenarioPreview,
+    restoreScenarioSettings,
+    stampScenarioSettings,
+    openUnsaved,
+    closeUnsaved,
+    unsavedPlan,
+} from './scenario-store.js';
 
 // ── Core types ──────────────────────────────────────────────
 import { Metric, MetricLabel, PINNED_METRICS, MACRO_METRICS, isTopLevelMetric } from './metric.js';
@@ -129,15 +139,11 @@ import { formatCompactCurrency, formatCurrency } from './utils/html.js';
 import {
     util_YYYYmm,
     util_ensureStoryNames,
-    util_saveLocalAssetModels,
     util_loadLocalAssetModels,
-    util_saveLocalLifeEvents,
     util_loadLocalLifeEvents,
-    util_saveLocalGuardrailParams,
     util_loadLocalGuardrailParams,
     util_saveLocalScenarioMeta,
     util_loadLocalScenarioMeta,
-    util_saveLocalScenarioPreview,
     util_loadLocalScenarioPreview,
     util_loadStoryNames,
     util_deleteScenario,
@@ -482,7 +488,9 @@ document.getElementById('btn-share').addEventListener('click', () => {
     if (shareModal) {
         shareModal.modelAssets = appState.portfolio?.modelAssets || [];
         shareModal.lifeEvents = appState.lifeEvents;
-        shareModal.portfolioName = appState.storyName || '';
+        // An unsaved plan is not the active scenario, which is still the
+        // viewer's own underneath it.
+        shareModal.portfolioName = unsavedPlan()?.title || appState.storyName || '';
         shareModal.globalSettings = {
             inflationRate: global_inflationRate,
             filingAs: global_filingAs,
@@ -805,6 +813,9 @@ function connectGuardrailInput(input, setter) {
             return;
         }
         setter(v);
+        // Saved with the scenario, whose own parameters are what loading it
+        // puts back. Stored only as the setting in force, a reload undoes it.
+        saveLocalData();
         grSummaryText.textContent = guardrailSummaryText();
         doGuardrails();
         if (document.getElementById('mc-with-guardrails')?.checked) {
@@ -854,7 +865,7 @@ simModeToggle.addEventListener('click', (ev) => {
 updateSimDataModeUI();
 
 // ── Scenario UI events ─────────────────────────────────────
-let _scenarioPopupMode = 'create'; // 'create' or 'edit'
+let _scenarioPopupMode = 'create'; // 'create', 'edit', or 'save' (the unsaved plan)
 
 function openScenarioPopup(mode) {
     _scenarioPopupMode = mode;
@@ -863,6 +874,12 @@ function openScenarioPopup(mode) {
         document.getElementById('scenario-popup-title').textContent = 'Edit Scenario';
         document.getElementById('scenario-title-input').value = meta?.title || '';
         document.getElementById('scenario-note-input').value = meta?.note || '';
+        document.getElementById('scenario-copy-label').style.display = 'none';
+    } else if (mode === 'save') {
+        const unsaved = unsavedPlan();
+        document.getElementById('scenario-popup-title').textContent = 'Save as Scenario';
+        document.getElementById('scenario-title-input').value = unsaved?.title || '';
+        document.getElementById('scenario-note-input').value = unsaved?.note || '';
         document.getElementById('scenario-copy-label').style.display = 'none';
     } else {
         document.getElementById('scenario-popup-title').textContent = 'New Scenario';
@@ -902,6 +919,8 @@ document.getElementById('btn-scenario-create').addEventListener('click', () => {
     if (_scenarioPopupMode === 'edit') {
         util_saveLocalScenarioMeta(appState.storyArc, appState.storyName, { title, note });
         loadScenarioList();
+    } else if (_scenarioPopupMode === 'save') {
+        saveUnsavedAsScenario(title, note);
     } else {
         const copyData = document.getElementById('scenario-copy-check').checked;
         createScenario(title, note, copyData);
@@ -919,25 +938,20 @@ createScenarioPopup.addEventListener('click', (e) => { if (e.target === createSc
 
 // Import popup events
 const importPopup = document.getElementById('popupImportPortfolio');
-function fallbackToLocalStory() {
-    appState.load();
-    if (!appState.storyName) appState.storyName = util_YYYYmm();
-    util_ensureStoryNames(appState.storyArc, appState.storyName);
-    loadScenarioList();
-    loadLocalData();
+
+/**
+ * Dismiss the import dialog, or close it. A link that arrived over a plan
+ * leaves that plan on screen, saved or not; one that arrived with the page has
+ * nothing under it yet, so the viewer's own scenario opens.
+ */
+function dismissImport() {
+    importPopup.style.display = 'none';
+    _pendingImport = null;
+    if (!appState.portfolio) openLocalStory();
 }
 
-importPopup.querySelector('.closeBtn').addEventListener('click', () => {
-    importPopup.style.display = 'none';
-    _pendingImport = null;
-    fallbackToLocalStory();
-});
-
-document.getElementById('btn-import-dismiss').addEventListener('click', () => {
-    importPopup.style.display = 'none';
-    _pendingImport = null;
-    fallbackToLocalStory();
-});
+importPopup.querySelector('.closeBtn').addEventListener('click', () => dismissImport());
+document.getElementById('btn-import-dismiss').addEventListener('click', () => dismissImport());
 
 document.getElementById('btn-import-open').addEventListener('click', () => {
     importPopup.style.display = 'none';
@@ -1208,10 +1222,20 @@ function clearStaleSettingsNote(modelAssets) {
 window.addEventListener('hashchange', () => { loadSharedPortfolio(); });
 
 function initiateActiveData() {
+    appState.load();
+    // A scenario saved before scenarios kept their own settings keeps the ones
+    // in force, which it has always run on. Done before a link is read, since
+    // Open & Save puts the link's settings in force.
+    stampScenarioSettings(appState.storyArc);
+
     // Check for shared portfolio in URL first
     if (loadSharedPortfolio()) return;
 
-    appState.load();
+    openLocalStory();
+}
+
+/** Show the viewer's active scenario, starting a Default one if there is none. */
+function openLocalStory() {
     if (!appState.storyName) {
         appState.storyName = util_YYYYmm();
         util_ensureStoryNames(appState.storyArc, appState.storyName);
@@ -2039,24 +2063,17 @@ function connectChartExpandButtons() {
 
 // ── Persistence ─────────────────────────────────────────────
 
+/**
+ * Save the plan on screen as the active scenario, with the settings and
+ * guardrail parameters in force. Writes nothing while the plan on screen is a
+ * shared one opened without saving (scenario-store.js).
+ */
 function saveLocalData() {
-    const slotName = appState.storyName;
-    const assets = assetList.modelAssets || [];
-    const lifeEvents = appState.lifeEvents.map(e => e.toJSON());
-    const guardrails = getGuardrailParams();
-
-    util_saveLocalAssetModels(appState.storyArc, slotName, assets);
-    util_saveLocalLifeEvents(appState.storyArc, slotName, lifeEvents);
-    util_saveLocalGuardrailParams(appState.storyArc, slotName, guardrails);
-    // appState.storyName setter keeps localStorage in sync — no explicit write needed here
-
-    // Monthly snapshot — always overwrite so it reflects the last state for this month
-    const snapshotKey = slotName + '@' + util_YYYYmm();
-    localStorage.setItem(snapshotKey, JSON.stringify({
-        assets,
-        lifeEvents,
-        guardrails,
-    }));
+    saveScenario(appState.storyArc, appState.storyName, {
+        assets: assetList.modelAssets || [],
+        lifeEvents: appState.lifeEvents.map(e => e.toJSON()),
+        guardrails: getGuardrailParams(),
+    });
 }
 
 // ── Scenario Management ──────────────────────────────────────
@@ -2068,22 +2085,32 @@ function saveLocalData() {
  * Also refreshes the chip label.
  */
 function loadScenarioList() {
+    // A shared plan opened without saving is on screen instead of a scenario:
+    // the chip says so, no row is active, and every row leads back.
+    const unsaved = unsavedPlan();
     const storyNames = util_loadStoryNames(appState.storyArc);
 
-    // Ensure current appState.storyName is in the list
-    if (storyNames.length === 0) {
+    // Ensure current appState.storyName is in the list. Not under an unsaved
+    // plan, which writes nothing; a viewer with no scenarios sees no rows.
+    if (storyNames.length === 0 && !unsaved) {
         storyNames.push(appState.storyName);
         util_ensureStoryNames(appState.storyArc, appState.storyName);
     }
 
     const activeMeta = util_loadLocalScenarioMeta(appState.storyArc, appState.storyName);
-    scenarioChipName.textContent = activeMeta?.title || appState.storyName;
+    scenarioChipName.textContent = unsaved
+        ? `${unsaved.title} · not saved`
+        : activeMeta?.title || appState.storyName;
+    scenarioChip.classList.toggle('is-unsaved', !!unsaved);
+    scenarioChip.title = unsaved
+        ? 'Not saved. Save it from this menu, or pick a scenario to go back to it.'
+        : 'Switch scenario';
 
     scenarioMenu.innerHTML = '';
     for (const name of storyNames) {
         const meta = util_loadLocalScenarioMeta(appState.storyArc, name);
         const preview = util_loadLocalScenarioPreview(appState.storyArc, name);
-        const isActive = name === appState.storyName;
+        const isActive = !unsaved && name === appState.storyName;
 
         const row = document.createElement('div');
         row.className = 'scenario-menu-item' + (isActive ? ' active' : '');
@@ -2145,15 +2172,23 @@ function loadScenarioList() {
         scenarioMenu.appendChild(row);
     }
 
-    const addBtn = document.createElement('button');
-    addBtn.className = 'scenario-menu-new';
-    addBtn.textContent = '＋ New scenario';
-    addBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        closeScenarioMenu();
-        openScenarioPopup('create');
-    });
-    scenarioMenu.appendChild(addBtn);
+    const footerButton = (label, onClick) => {
+        const btn = document.createElement('button');
+        btn.className = 'scenario-menu-new';
+        btn.textContent = label;
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            closeScenarioMenu();
+            onClick();
+        });
+        scenarioMenu.appendChild(btn);
+    };
+    if (unsaved) {
+        footerButton('＋ Save as scenario', () => openScenarioPopup('save'));
+        footerButton('Close without saving', () => leaveUnsavedPlan());
+    } else {
+        footerButton('＋ New scenario', () => openScenarioPopup('create'));
+    }
 }
 
 /** Tiny polyline preview for a scenario menu row (cached series or flat placeholder). */
@@ -2225,7 +2260,8 @@ function cacheScenarioPreview() {
     }
     if ((histLen - 1) % step !== 0) series.push(Math.round(endTotal));
 
-    util_saveLocalScenarioPreview(appState.storyArc, appState.storyName, {
+    // Not under an unsaved plan, whose curve would replace the active row's.
+    saveScenarioPreview(appState.storyArc, appState.storyName, {
         series,
         end: Math.round(endTotal),
         ts: Date.now(),
@@ -2233,22 +2269,22 @@ function cacheScenarioPreview() {
 }
 
 function switchScenario(storyName) {
-    if (storyName === appState.storyName) return;
+    if (unsavedPlan()) {
+        // Leaving a shared plan nobody saved. Nothing of it is kept; even the
+        // scenario it was opened over is switched to, not skipped as current.
+        closeUnsaved();
+    } else {
+        if (storyName === appState.storyName) return;
 
-    // Save current scenario before switching
-    saveLocalData();
-
-    // Switch
-    appState.storyName = storyName;
-
-    // Load guardrail params for new scenario
-    const gp = util_loadLocalGuardrailParams(appState.storyArc, storyName);
-    if (gp) {
-        global_setGuardrailWithdrawalRate(gp.withdrawalRate);
-        global_setGuardrailPreservation(gp.preservation);
-        global_setGuardrailProsperity(gp.prosperity);
-        global_setGuardrailAdjustment(gp.adjustment);
+        // Save current scenario before switching
+        saveLocalData();
     }
+
+    // Switch, onto the scenario's own settings. Its plan and guardrail
+    // parameters come with loadLocalData().
+    appState.storyName = storyName;
+    restoreScenarioSettings(appState.storyArc, storyName);
+    showSettingsInForce();
 
     // Load data and recalculate
     loadLocalData();
@@ -2256,7 +2292,7 @@ function switchScenario(storyName) {
 }
 
 function createScenario(title, note, copyData = true) {
-    // Save current scenario first
+    // Save current scenario first. The new one starts on the same settings.
     saveLocalData();
 
     // Generate a unique story name key from timestamp
@@ -2289,15 +2325,30 @@ function deleteScenario(storyName) {
 
     util_deleteScenario(appState.storyArc, storyName);
 
-    // Switch to first remaining scenario
+    // Switch to first remaining scenario, on its own settings
     const remaining = util_loadStoryNames(appState.storyArc);
     appState.storyName = remaining[0] || util_YYYYmm();
+    restoreScenarioSettings(appState.storyArc, appState.storyName);
+    showSettingsInForce();
 
     loadScenarioList();
     loadLocalData();
 }
 
-// Monthly snapshots are written by saveLocalData() on every calculate().
+/**
+ * Show the settings in force wherever they appear, after they change all at
+ * once: the settings row, the guardrail editor, the Quick Start cards (one set
+ * per filing status) and the backtest caption.
+ */
+function showSettingsInForce() {
+    syncGlobalsToSettings();
+    syncGuardrailsToDOM();
+    renderQuickStartProfiles();
+    updateSimDataModeUI();
+}
+
+// Monthly snapshots are written by saveLocalData() on every calculate(), except
+// while an unsaved shared plan is on screen.
 
 /**
  * Read a shared portfolio out of the URL — fragment first, query second.
@@ -2406,12 +2457,25 @@ function showImportProblem(problem) {
     document.getElementById('btn-import-save').disabled = !!problem;
 }
 
-/** Open a plan `readSharedPlan` has read. Reading is where a link is refused. */
+/**
+ * Open a plan `readSharedPlan` has read. Reading is where a link is refused.
+ *
+ * Open & Save makes it a new scenario, on its own settings. Open shows it
+ * without making it one: until it is saved from the scenario menu or left,
+ * nothing is written and its settings are held in memory (scenario-store.js).
+ */
 function applyImportedPortfolio(plan, persist) {
     setImportedRunBadge(plan.handle);
+    const title = document.getElementById('import-title-input').value || 'Shared Portfolio';
+    const note = document.getElementById('import-note-input').value || '';
+
+    // Before a setting moves, since one applied unheld is stored. A plan
+    // opened earlier and never saved goes either way.
+    if (persist) closeUnsaved();
+    else openUnsaved({ title, note });
+
     applySharedSettings(plan);
-    syncGlobalsToSettings();
-    syncGuardrailsToDOM();
+    showSettingsInForce();
 
     // Load life events
     appState.lifeEvents = plan.lifeEvents ?? ModelLifeEvent.defaultTimeline(
@@ -2433,22 +2497,32 @@ function applyImportedPortfolio(plan, persist) {
     // set above — they arrive first here so the migration can reach them.
     assetList.modelAssets = bindForEditing(assets);
 
-    if (persist) {
-        // Create a new scenario for the imported portfolio
-        appState.load();
-        const title = document.getElementById('import-title-input').value || 'Shared Portfolio';
-        const note = document.getElementById('import-note-input').value || '';
-        const newStoryName = util_YYYYmm() + '-' + Date.now().toString(36);
-        util_ensureStoryNames(appState.storyArc, newStoryName);
-        util_saveLocalScenarioMeta(appState.storyArc, newStoryName, { title, note });
-        appState.storyName = newStoryName;
-        loadScenarioList();
-    } else {
-        // Temporary load — init arc/name but don't persist as scenario
-        appState.load();
-        if (!appState.storyName) appState.storyName = util_YYYYmm();
-        loadScenarioList();
-    }
-
+    if (persist) addScenarioForPlanOnScreen(title, note);
     calculate();
+}
+
+/**
+ * Make the plan on screen a new scenario, and the active one. The settings in
+ * force become its own when calculate() saves it.
+ */
+function addScenarioForPlanOnScreen(title, note) {
+    const storyName = util_YYYYmm() + '-' + Date.now().toString(36);
+    util_ensureStoryNames(appState.storyArc, storyName);
+    util_saveLocalScenarioMeta(appState.storyArc, storyName, { title, note });
+    appState.storyName = storyName;
+}
+
+/** Save the unsaved plan on screen, edits and all, as a new scenario. */
+function saveUnsavedAsScenario(title, note) {
+    // Its settings are stored as the ones in force, then saved with it.
+    closeUnsaved({ keep: true });
+    addScenarioForPlanOnScreen(title, note);
+    calculate();
+}
+
+/** Close the unsaved plan on screen, back to the scenario it was opened over. */
+function leaveUnsavedPlan() {
+    closeUnsaved();
+    showSettingsInForce();
+    openLocalStory();
 }
