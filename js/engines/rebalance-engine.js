@@ -79,6 +79,8 @@ export class RebalanceEngine {
             // ordinary income from a tax-deferred one — as in a Roth
             // conversion).
             this.monthly.recordTransfer(modelAsset.instrument, amount, result.realizedGain);
+            // Of that distribution, the part that is a Roth conversion.
+            this.monthly.recordConversion(modelAsset.instrument, ft.toModel.instrument, amount);
 
             // Record contribution metric on target (for retirement accounts)
             this._trackContribution(ft.toModel, amount);

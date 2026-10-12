@@ -749,6 +749,12 @@
   2029 months=12 partial=no investable=910882.453569 expense=48612.550940 rate=0.053369
   2030 months=7 partial=yes investable=903485.256636 expense=26145.264000 rate=0.028938
 
+[taxYears]
+  2026 months=12 age=75 agi=57247.920856 niit=57247.920856 seniorDeduction=57247.920856 irmaa=57247.920856 iraDeduction=57247.920856 rothContribution=57247.920856 aca=71863.741003 nii=0.000000 taxableSS=21384.179853 ordinaryTaxable=33097.920856 capitalGains=0.000000
+  2027 months=12 age=76 agi=56896.829178 niit=56896.829178 seniorDeduction=56896.829178 irmaa=56896.829178 iraDeduction=56896.829178 rothContribution=56896.829178 aca=71673.961718 nii=0.000000 taxableSS=21222.867460 ordinaryTaxable=32184.179178 capitalGains=0.000000
+  2028 months=12 age=77 agi=56288.416060 niit=56288.416060 seniorDeduction=56288.416060 irmaa=56288.416060 iraDeduction=56288.416060 rothContribution=56288.416060 aca=71345.089762 nii=0.000000 taxableSS=20943.326298 ordinaryTaxable=30995.673910 capitalGains=0.000000
+  2029 months=12 age=78 agi=55660.951439 niit=55660.951439 seniorDeduction=55660.951439 irmaa=55660.951439 iraDeduction=55660.951439 rothContribution=55660.951439 aca=71005.919697 nii=0.000000 taxableSS=20655.031742 ordinaryTaxable=35770.134283 capitalGains=0.000000
+
 [guardrailEvents]
   2026 preservation rate=0.062637 adjustedTo=0.05637370502865523
   2027 preservation rate=0.059598 adjustedTo=0.053638040486212644

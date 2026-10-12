@@ -10,6 +10,7 @@ import { EventType, ShortfallOrigin } from './sim-event.js';
 import { withTrace, TraceKind } from './trace.js';
 import { monthLabel, DateInt } from './utils/date-int.js';
 import { FinancialPackage } from './financial-package.js';
+import { taxableBasis, MagiPurpose } from './tax-basis.js';
 import { formatCurrency } from './utils/html.js';
 import { PayrollEngine } from './engines/payroll-engine.js';
 import { ExpenseEngine } from './engines/expense-engine.js';
@@ -200,6 +201,10 @@ export class Portfolio {
         this.guardrailEvents = [];    // [{ year, type, rate, adjustedTo }]
         this.yearlySnapshots = [];    // [{ year, months, partial, investableAssets, annualExpense, withdrawalRate }]
 
+        // One TaxYear per settled year: AGI, each MAGI, the bases the annual
+        // passes charge on. See #recordTaxYear.
+        this.taxYears = [];
+
         // Life events timeline
         this.lifeEvents = [];
 
@@ -261,6 +266,7 @@ export class Portfolio {
         // guardrailEvents, yearlySnapshots, etc.) must not leak in.
         portfolio.guardrailEvents         = [...this.guardrailEvents];
         portfolio.yearlySnapshots         = [...this.yearlySnapshots];
+        portfolio.taxYears                = [...this.taxYears];   // records are frozen
         portfolio.generatedReports        = [...this.generatedReports];
         portfolio.monthlyPackages         = this.monthlyPackages.map(p => p.copy());
         portfolio.monthlyPriceIndex       = [...this.monthlyPriceIndex];
@@ -332,6 +338,7 @@ export class Portfolio {
         this.total = new FinancialPackage();
         this.monthlyPackages = [];
         this.monthlyPriceIndex = [];
+        this.taxYears = [];
 
         for (let modelAsset of this.modelAssets) {
             modelAsset.initializeChron();
@@ -873,6 +880,11 @@ export class Portfolio {
                 let transferAmount = fundTransfer.calculate({ useClosePercent: true });
                 fundTransfer.execute({ useClosePercent: true });
 
+                // A closing IRA or 401(k) was taxed in full by the close; what
+                // it sends to a Roth is a conversion.
+                this.monthly.recordConversion(modelAsset.instrument,
+                    fundTransfer.toModel.instrument, transferAmount);
+
                 runningTransferAmount.add(transferAmount);
             }
 
@@ -944,6 +956,10 @@ export class Portfolio {
         // previous year; tax allocation needs that year's month count to size
         // its history window.
         const settledYear = currentDateInt.year - 1;
+
+        // The year's tax basis, recorded from the package the passes below read.
+        this.#recordTaxYear(settledYear);
+
         withTrace(TraceKind.TAX_TRUE_UP, `${currentDateInt.year} tax true-up`, currentDateInt,
             () => this.taxes.applyAnnualTaxTrueUp(this.monthsInPlanYear(settledYear)));
 
@@ -956,6 +972,46 @@ export class Portfolio {
         // when tax is due, so households that owe none get no empty scope.
         this.taxes.applyAnnualNIIT(this.monthsInPlanYear(settledYear));
 
+    }
+
+    /**
+     * Record the settled year's tax basis: AGI, every MAGI, and the bases the
+     * annual passes charge on. Every settled year gets one, whether or not
+     * anything is charged on it.
+     *
+     * Household figures, so they live on the portfolio, not on an asset. Plain
+     * numbers in a frozen record, so a record can be serialised and nothing can
+     * change it through a shared Currency. A plan that ends mid-year leaves its
+     * last months unsettled, so they have no record, as they have no true-up.
+     *
+     * @typedef {object} TaxYear
+     * @property {number} year       the calendar year settled
+     * @property {number} months     months of that year inside the plan
+     * @property {number} age        the household's age that year
+     * @property {number} agi
+     * @property {Readonly<Record<string, number>>} magi  keyed by MagiPurpose
+     * @property {number} netInvestmentIncome
+     * @property {number} taxableSocialSecurity
+     * @property {number} ordinaryTaxable
+     * @property {number} capitalGains
+     *
+     * @param {number} year
+     */
+    #recordTaxYear(year) {
+        const basis = taxableBasis(this.yearly, this.activeUser, { taxTable: this.config.taxTable });
+        const magi = {};
+        for (const purpose of Object.values(MagiPurpose)) magi[purpose] = basis.magi[purpose].amount;
+        this.taxYears.push(Object.freeze({
+            year,
+            months: this.monthsInPlanYear(year),
+            age: this.activeUser.age,
+            agi: basis.agi.amount,
+            magi: Object.freeze(magi),
+            netInvestmentIncome: basis.netInvestmentIncome.amount,
+            taxableSocialSecurity: basis.taxableSocialSecurity.amount,
+            ordinaryTaxable: basis.ordinaryTaxable.amount,
+            capitalGains: basis.capitalGains.amount,
+        }));
     }
 
     modelMetricsToDisplayData(monthsSpan, modelAsset) {

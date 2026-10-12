@@ -88,6 +88,7 @@ import { fileURLToPath } from 'node:url';
 
 import { Portfolio } from '../../js/portfolio.js';
 import { FINANCIAL_FIELDS } from '../../js/financial-package.js';
+import { MagiPurpose } from '../../js/tax-basis.js';
 import { chronometer_run } from '../../js/chronometer.js';
 import { METRIC_NAMES, DERIVED_METRICS } from '../../js/metric.js';
 import { MONTH_NAMES_LONG } from '../../js/utils/date-int.js';
@@ -519,6 +520,19 @@ function render(fixture, portfolio, sanity, coverage) {
       L.push(`  ${s.year} months=${s.months} partial=${bool(s.partial)} ` +
              `investable=${money(s.investableAssets)} expense=${money(s.annualExpense)} ` +
              `rate=${s.withdrawalRate.toFixed(6)}`);
+    }
+    L.push('');
+  }
+
+  // One line per settled year. Every MagiPurpose is printed, so a purpose added
+  // later shows up here without editing this renderer.
+  if (portfolio.taxYears?.length) {
+    L.push('[taxYears]');
+    for (const t of portfolio.taxYears) {
+      const magi = Object.values(MagiPurpose).map((p) => `${p}=${money(t.magi[p])}`).join(' ');
+      L.push(`  ${t.year} months=${t.months} age=${t.age} agi=${money(t.agi)} ${magi} ` +
+             `nii=${money(t.netInvestmentIncome)} taxableSS=${money(t.taxableSocialSecurity)} ` +
+             `ordinaryTaxable=${money(t.ordinaryTaxable)} capitalGains=${money(t.capitalGains)}`);
     }
     L.push('');
   }

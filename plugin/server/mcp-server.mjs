@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.3.23; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.3.24; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -32936,6 +32936,14 @@ function getBehavior(instrument) {
 }
 
 // js/tax-basis.js
+var MagiPurpose = Object.freeze({
+  NIIT: "niit",
+  SENIOR_DEDUCTION: "seniorDeduction",
+  IRMAA: "irmaa",
+  IRA_DEDUCTION: "iraDeduction",
+  ROTH_CONTRIBUTION: "rothContribution",
+  ACA: "aca"
+});
 function taxableSocialSecurity(benefits, otherIncome, { base, adjusted }) {
   if (!(benefits > 0)) return 0;
   const provisional = otherIncome + 0.5 * benefits;
@@ -32946,16 +32954,50 @@ function taxableSocialSecurity(benefits, otherIncome, { base, adjusted }) {
     0.85 * (provisional - adjusted) + Math.min(0.5 * benefits, 0.5 * (adjusted - base))
   );
 }
+function magiAmount(purpose, { agi, socialSecurity, iraDeduction, rothConversion, thresholds }) {
+  const { benefits, otherIncome, taxable } = socialSecurity;
+  switch (purpose) {
+    case MagiPurpose.NIIT:
+    case MagiPurpose.SENIOR_DEDUCTION:
+    case MagiPurpose.IRMAA:
+      return agi;
+    case MagiPurpose.IRA_DEDUCTION:
+    case MagiPurpose.ROTH_CONTRIBUTION: {
+      const taxableBeforeIRA = taxableSocialSecurity(
+        benefits,
+        otherIncome + iraDeduction,
+        thresholds
+      );
+      const beforeIRADeduction = agi + iraDeduction + (taxableBeforeIRA - taxable);
+      return purpose === MagiPurpose.IRA_DEDUCTION ? beforeIRADeduction : beforeIRADeduction - rothConversion;
+    }
+    case MagiPurpose.ACA:
+      return agi + (benefits - taxable);
+    default:
+      throw new Error(`tax-basis: unknown MAGI purpose ${JSON.stringify(purpose)}`);
+  }
+}
 function taxableBasis(pkg, activeUser, { annualise = false, taxTable = null } = {}) {
   const table = taxTable;
   const yearly = pkg.copy();
   if (annualise) yearly.multiply(12);
   yearly.limitDeductions(activeUser, table);
-  const { preTax } = table.deductionComponents(yearly);
-  const magi = new Currency(
-    yearly.irsTaxableGrossIncome(table).amount + yearly.longTermCapitalGains.amount + yearly.qualifiedDividends.amount - yearly.excludedCapitalGains.amount - preTax.amount
+  const { preTax, iraDeduction } = table.deductionComponents(yearly);
+  const socialSecurity = yearly.socialSecurityTaxation(table);
+  const agi = new Currency(
+    yearly.irsTaxableGrossIncome(table, socialSecurity).amount + yearly.longTermCapitalGains.amount + yearly.qualifiedDividends.amount - yearly.excludedCapitalGains.amount - preTax.amount
   );
-  const age = table.ageDeductions(activeUser, magi);
+  const magiParts = {
+    agi: agi.amount,
+    socialSecurity,
+    iraDeduction: iraDeduction.amount,
+    rothConversion: yearly.rothConversion.amount,
+    thresholds: table.activeSocialSecurityThresholds
+  };
+  const age = table.ageDeductions(
+    activeUser,
+    new Currency(magiAmount(MagiPurpose.SENIOR_DEDUCTION, magiParts))
+  );
   const ordinaryTaxable = table.calculateYearlyTaxableIncome(yearly, age);
   const deduction = table.totalYearlyDeduction(yearly, age);
   const grossOrdinary = Math.max(0, yearly.irsTaxableGrossIncome(table).amount);
@@ -32970,11 +33012,16 @@ function taxableBasis(pkg, activeUser, { annualise = false, taxTable = null } = 
     0,
     yearly.interestIncome.amount + yearly.nonQualifiedDividends.amount + yearly.qualifiedDividends.amount + yearly.shortTermCapitalGains.amount + yearly.longTermCapitalGains.amount - yearly.excludedCapitalGains.amount
   ));
+  const magi = annualise ? null : Object.freeze(Object.fromEntries(
+    Object.values(MagiPurpose).map((purpose) => [purpose, new Currency(magiAmount(purpose, magiParts))])
+  ));
   return {
     ordinaryTaxable,
     capitalGains,
     unusedDeduction,
     netInvestmentIncome,
+    taxableSocialSecurity: new Currency(socialSecurity.taxable),
+    agi,
     magi,
     // Copy, so a caller mutating one cannot silently move the other.
     ltcgStackBase: ordinaryTaxable.copy()
@@ -33496,10 +33543,14 @@ var TaxTable = class {
     return { additionalStandard, senior };
   }
   /**
-   * The deduction as the two pieces `applyYearlyDeductions` subtracts
+   * The deduction as the pieces `applyYearlyDeductions` subtracts
    * separately. Keep them separate: Currency is raw floating point, and
    * `x − base − preTax` differs from `x − (base + preTax)` in the last bit,
    * which changes the snapshot for no tax reason.
+   *
+   * `preTax` is one contribution, not both: the 401(k) if there is one,
+   * otherwise the traditional IRA. `iraDeduction` is the traditional-IRA part
+   * of it, which some MAGI definitions add back (see tax-basis.js).
    */
   deductionComponents(yearly, age = NO_AGE_DEDUCTIONS) {
     let propertyTaxDeduction = new Currency(yearly.propertyTaxes.amount);
@@ -33513,8 +33564,10 @@ var TaxTable = class {
     itemised.flipSign();
     const standard = this.activeStandardDeduction + age.additionalStandard;
     const base = itemised.amount > standard ? itemised : new Currency(standard);
-    const preTax = new Currency(yearly.four01KContribution.amount > 0 ? yearly.four01KContribution.amount : yearly.tradIRAContribution.amount);
-    return { base, preTax, senior: new Currency(age.senior) };
+    const deducts401K = yearly.four01KContribution.amount > 0;
+    const preTax = new Currency(deducts401K ? yearly.four01KContribution.amount : yearly.tradIRAContribution.amount);
+    const iraDeduction = new Currency(deducts401K ? 0 : yearly.tradIRAContribution.amount);
+    return { base, preTax, iraDeduction, senior: new Currency(age.senior) };
   }
   applyYearlyDeductions(yearly, taxableIncome, age = NO_AGE_DEDUCTIONS) {
     const { base, preTax, senior } = this.deductionComponents(yearly, age);
@@ -33619,6 +33672,7 @@ var FINANCIAL_FIELDS = [
   "tradIRADistribution",
   "four01KDistribution",
   "rothIRADistribution",
+  "rothConversion",
   "mortgageInterest",
   "mortgagePrincipal",
   "propertyTaxes",
@@ -33667,30 +33721,45 @@ var FinancialPackage = class _FinancialPackage {
       this.propertyTaxes.amount = table.propertyTaxDeductionMax;
   }
   /**
-   * Gross income taxed at the ordinary rates: ordinary income with Social
-   * Security replaced by its §86 taxable portion.
+   * Social Security under IRC §86: the benefits, the "other income" they are
+   * tested against, and the taxable part.
    *
    * `table` is required: §86's thresholds depend on filing status, and the
    * provisional-income test needs the deductible contribution as the engine
    * books it (`deductionComponents`).
    *
-   * Subtract-then-add keeps results bit-identical for households at the 85%
-   * ceiling.
+   * @returns {{benefits: number, otherIncome: number, taxable: number}}
    */
-  irsTaxableGrossIncome(table) {
+  socialSecurityTaxation(table) {
     if (!table?.activeSocialSecurityThresholds) {
-      throw new Error("FinancialPackage.irsTaxableGrossIncome needs the TaxTable: \xA786 thresholds depend on filing status.");
+      throw new Error("FinancialPackage.socialSecurityTaxation needs the TaxTable: \xA786 thresholds depend on filing status.");
     }
     const benefits = this.socialSecurityIncome.amount;
     const { preTax } = table.deductionComponents(this);
     const otherIncome = this.ordinaryIncome().amount - benefits + this.longTermCapitalGains.amount + this.qualifiedDividends.amount - this.excludedCapitalGains.amount - preTax.amount;
-    let irsIncome = this.ordinaryIncome().copy();
-    irsIncome.subtract(this.socialSecurityIncome);
-    irsIncome.add(new Currency(taxableSocialSecurity(
+    const taxable = taxableSocialSecurity(
       benefits,
       otherIncome,
       table.activeSocialSecurityThresholds
-    )));
+    );
+    return { benefits, otherIncome, taxable };
+  }
+  /**
+   * Gross income taxed at the ordinary rates: ordinary income with Social
+   * Security replaced by its §86 taxable portion.
+   *
+   * Subtract-then-add keeps results bit-identical for households at the 85%
+   * ceiling.
+   *
+   * @param {TaxTable} table
+   * @param {{taxable: number}} [socialSecurity]  this package's
+   *        socialSecurityTaxation(table), for a caller that already has it
+   */
+  irsTaxableGrossIncome(table, socialSecurity = this.socialSecurityTaxation(table)) {
+    const { taxable } = socialSecurity;
+    let irsIncome = this.ordinaryIncome().copy();
+    irsIncome.subtract(this.socialSecurityIncome);
+    irsIncome.add(new Currency(taxable));
     return irsIncome;
   }
   // ── Income rollups (aligned with Metric DAG) ─────────────────────
@@ -33845,6 +33914,26 @@ var FinancialPackage = class _FinancialPackage {
       }
     } else if (T.isTaxFree(sourceInstrument)) {
       this.rothIRADistribution.add(amount);
+    }
+  }
+  /**
+   * Record the part of a traditional IRA / 401(k) distribution that went
+   * into a Roth: a Roth conversion (IRC §408A(d)(3)).
+   *
+   * `rothConversion` is an "of which" figure. The same dollars are already in
+   * tradIRADistribution or four01KDistribution through recordTransfer, so it
+   * is never income in its own right. It exists because the Roth contribution
+   * limit measures MAGI without conversion income (§408A(c)(3)(B)).
+   *
+   * @param {string} sourceInstrument  account the money left
+   * @param {string} targetInstrument  account the money entered
+   * @param {Currency} amount          positive amount that arrived in the Roth
+   */
+  recordConversion(sourceInstrument, targetInstrument, amount) {
+    const T = InstrumentType;
+    if (!(amount.amount > 0)) return;
+    if (T.isTaxDeferred(sourceInstrument) && T.isTaxFree(targetInstrument)) {
+      this.rothConversion.add(amount);
     }
   }
   copy() {
@@ -35185,7 +35274,9 @@ var TaxEngine = class {
    *   plan, for the allocation's history window.
    */
   applyAnnualNIIT(settledYearMonths) {
-    const { netInvestmentIncome, magi } = taxableBasis(this.yearly, this.activeUser, { taxTable: this.config.taxTable });
+    const basis = taxableBasis(this.yearly, this.activeUser, { taxTable: this.config.taxTable });
+    const { netInvestmentIncome } = basis;
+    const magi = basis.magi[MagiPurpose.NIIT];
     const niit = this.config.taxTable.calculateNIIT(netInvestmentIncome, magi);
     if (niit.amount < 1) return;
     return withTrace(
@@ -35423,6 +35514,7 @@ var RebalanceEngine = class {
       this._trackDistribution(modelAsset, amount, ft.toModel);
       const result = ft.execute();
       this.monthly.recordTransfer(modelAsset.instrument, amount, result.realizedGain);
+      this.monthly.recordConversion(modelAsset.instrument, ft.toModel.instrument, amount);
       this._trackContribution(ft.toModel, amount);
       logger.log(
         LogCategory.TRANSFER,
@@ -35580,6 +35672,7 @@ var Portfolio = class _Portfolio {
     this.guardrailsParams = null;
     this.guardrailEvents = [];
     this.yearlySnapshots = [];
+    this.taxYears = [];
     this.lifeEvents = [];
     this.monthly = new FinancialPackage();
     this.yearly = new FinancialPackage();
@@ -35613,6 +35706,7 @@ var Portfolio = class _Portfolio {
     portfolio.bindEnvironment();
     portfolio.guardrailEvents = [...this.guardrailEvents];
     portfolio.yearlySnapshots = [...this.yearlySnapshots];
+    portfolio.taxYears = [...this.taxYears];
     portfolio.generatedReports = [...this.generatedReports];
     portfolio.monthlyPackages = this.monthlyPackages.map((p) => p.copy());
     portfolio.monthlyPriceIndex = [...this.monthlyPriceIndex];
@@ -35662,6 +35756,7 @@ var Portfolio = class _Portfolio {
     this.total = new FinancialPackage();
     this.monthlyPackages = [];
     this.monthlyPriceIndex = [];
+    this.taxYears = [];
     for (let modelAsset of this.modelAssets) {
       modelAsset.initializeChron();
     }
@@ -36052,6 +36147,11 @@ var Portfolio = class _Portfolio {
         }
         let transferAmount = fundTransfer.calculate({ useClosePercent: true });
         fundTransfer.execute({ useClosePercent: true });
+        this.monthly.recordConversion(
+          modelAsset.instrument,
+          fundTransfer.toModel.instrument,
+          transferAmount
+        );
         runningTransferAmount.add(transferAmount);
       }
       let extraAmount = new Currency(modelAssetValue.amount - runningTransferAmount.amount);
@@ -36112,6 +36212,7 @@ var Portfolio = class _Portfolio {
       }
     }
     const settledYear = currentDateInt.year - 1;
+    this.#recordTaxYear(settledYear);
     withTrace(
       TraceKind.TAX_TRUE_UP,
       `${currentDateInt.year} tax true-up`,
@@ -36119,6 +36220,45 @@ var Portfolio = class _Portfolio {
       () => this.taxes.applyAnnualTaxTrueUp(this.monthsInPlanYear(settledYear))
     );
     this.taxes.applyAnnualNIIT(this.monthsInPlanYear(settledYear));
+  }
+  /**
+   * Record the settled year's tax basis: AGI, every MAGI, and the bases the
+   * annual passes charge on. Every settled year gets one, whether or not
+   * anything is charged on it.
+   *
+   * Household figures, so they live on the portfolio, not on an asset. Plain
+   * numbers in a frozen record, so a record can be serialised and nothing can
+   * change it through a shared Currency. A plan that ends mid-year leaves its
+   * last months unsettled, so they have no record, as they have no true-up.
+   *
+   * @typedef {object} TaxYear
+   * @property {number} year       the calendar year settled
+   * @property {number} months     months of that year inside the plan
+   * @property {number} age        the household's age that year
+   * @property {number} agi
+   * @property {Readonly<Record<string, number>>} magi  keyed by MagiPurpose
+   * @property {number} netInvestmentIncome
+   * @property {number} taxableSocialSecurity
+   * @property {number} ordinaryTaxable
+   * @property {number} capitalGains
+   *
+   * @param {number} year
+   */
+  #recordTaxYear(year) {
+    const basis = taxableBasis(this.yearly, this.activeUser, { taxTable: this.config.taxTable });
+    const magi = {};
+    for (const purpose of Object.values(MagiPurpose)) magi[purpose] = basis.magi[purpose].amount;
+    this.taxYears.push(Object.freeze({
+      year,
+      months: this.monthsInPlanYear(year),
+      age: this.activeUser.age,
+      agi: basis.agi.amount,
+      magi: Object.freeze(magi),
+      netInvestmentIncome: basis.netInvestmentIncome.amount,
+      taxableSocialSecurity: basis.taxableSocialSecurity.amount,
+      ordinaryTaxable: basis.ordinaryTaxable.amount,
+      capitalGains: basis.capitalGains.amount
+    }));
   }
   modelMetricsToDisplayData(monthsSpan, modelAsset) {
     modelAsset.buildAllDisplayHistories(monthsSpan);
