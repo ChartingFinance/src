@@ -31,7 +31,7 @@ globalThis.window = globalThis;
 const G = await import('../../js/globals.js');
 const { TaxTable } = await import('../../js/taxes.js');
 const { FinancialPackage } = await import('../../js/financial-package.js');
-const { taxableBasis } = await import('../../js/tax-basis.js');
+const { taxableBasis, MagiPurpose } = await import('../../js/tax-basis.js');
 
 /** Under 50, so no catch-up applies to the contribution limits. */
 const USER = { age: 45 };
@@ -301,36 +301,36 @@ describe('netInvestmentIncome', () => {
   });
 });
 
-describe('magi', () => {
+describe('agi', () => {
   it('is gross of the standard deduction — unlike ordinaryTaxable', () => {
-    // The single most likely wrong assumption: MAGI is AGI (line 11), the
+    // The single most likely wrong assumption: AGI is line 11, the
     // deduction is line 12. These must differ by exactly 16,100.
     const b = basis(pkg({ employedIncome: 100000 }), USER);
-    expect(b.magi.amount).toBeCloseTo(100000, 6);
+    expect(b.agi.amount).toBeCloseTo(100000, 6);
     expect(b.ordinaryTaxable.amount).toBeCloseTo(83900, 6);
-    expect(b.magi.amount - b.ordinaryTaxable.amount).toBeCloseTo(16100, 6);
+    expect(b.agi.amount - b.ordinaryTaxable.amount).toBeCloseTo(16100, 6);
   });
 
   it('subtracts the deductible pre-tax contribution', () => {
     // 100,000 − 20,000 deferral. Contributions are above the line.
     const b = basis(
       pkg({ employedIncome: 100000, four01KContribution: 20000 }), USER);
-    expect(b.magi.amount).toBeCloseTo(80000, 6);
+    expect(b.agi.amount).toBeCloseTo(80000, 6);
   });
 
   it('caps that contribution at the annual limit, like the deduction does', () => {
     // 40,000 requested, capped to 24,500.
     const b = basis(
       pkg({ employedIncome: 200000, four01KContribution: 40000 }), USER);
-    expect(b.magi.amount).toBeCloseTo(175500, 6);
+    expect(b.agi.amount).toBeCloseTo(175500, 6);
   });
 
   it('counts only the §86 taxable portion of Social Security', () => {
     // below the base: none of it is in AGI
-    expect(basis(pkg({ socialSecurityIncome: 40000 }), USER).magi.amount).toBe(0);
+    expect(basis(pkg({ socialSecurityIncome: 40000 }), USER).agi.amount).toBe(0);
     // above the adjusted base: the 85% ceiling, 34,000, on top of 100,000
     const b = basis(pkg({ socialSecurityIncome: 40000, employedIncome: 100000 }), USER);
-    expect(b.magi.amount).toBeCloseTo(134000, 6);
+    expect(b.agi.amount).toBeCloseTo(134000, 6);
   });
 
   it('includes long-term gains and qualified dividends', () => {
@@ -338,20 +338,20 @@ describe('magi', () => {
     const b = basis(pkg({
       employedIncome: 100000, longTermCapitalGains: 40000, qualifiedDividends: 5000,
     }), USER);
-    expect(b.magi.amount).toBeCloseTo(145000, 6);
+    expect(b.agi.amount).toBeCloseTo(145000, 6);
   });
 
   it('subtracts the §121 exclusion', () => {
     const b = basis(
       pkg({ longTermCapitalGains: 400000, excludedCapitalGains: 250000 }), USER);
-    expect(b.magi.amount).toBeCloseTo(150000, 6);
+    expect(b.agi.amount).toBeCloseTo(150000, 6);
   });
 
   it('ignores Roth distributions — they raise neither base', () => {
     const withRoth = basis(
       pkg({ employedIncome: 100000, rothIRADistribution: 80000 }), USER);
     const without = basis(pkg({ employedIncome: 100000 }), USER);
-    expect(withRoth.magi.amount).toBeCloseTo(without.magi.amount, 6);
+    expect(withRoth.agi.amount).toBeCloseTo(without.agi.amount, 6);
     expect(withRoth.netInvestmentIncome.amount).toBe(0);
   });
 });
@@ -366,27 +366,176 @@ describe('magi', () => {
 describe('the §1411 asymmetry', () => {
   it('puts an IRA distribution in MAGI but not in NII', () => {
     const b = basis(pkg({ tradIRADistribution: 120000 }), USER);
-    expect(b.magi.amount).toBeCloseTo(120000, 6);
+    expect(b.magi[MagiPurpose.NIIT].amount).toBeCloseTo(120000, 6);
     expect(b.netInvestmentIncome.amount).toBe(0);
   });
 
   it('puts a 401(k) distribution in MAGI but not in NII', () => {
     const b = basis(pkg({ four01KDistribution: 120000 }), USER);
-    expect(b.magi.amount).toBeCloseTo(120000, 6);
+    expect(b.magi[MagiPurpose.NIIT].amount).toBeCloseTo(120000, 6);
     expect(b.netInvestmentIncome.amount).toBe(0);
   });
 
   it('lets a distribution carry gains over the threshold it cannot itself cross', () => {
     // 30,000 of gain is far below the 200,000 single threshold on its own.
     const gainsOnly = basis(pkg({ longTermCapitalGains: 30000 }), USER);
-    expect(gainsOnly.magi.amount).toBeCloseTo(30000, 6);
+    expect(gainsOnly.magi[MagiPurpose.NIIT].amount).toBeCloseTo(30000, 6);
 
     // Add a 250,000 conversion: MAGI clears the threshold, and the amount
     // exposed is the GAIN, not the conversion.
     const withDraw = basis(
       pkg({ longTermCapitalGains: 30000, tradIRADistribution: 250000 }), USER);
-    expect(withDraw.magi.amount).toBeCloseTo(280000, 6);
+    expect(withDraw.magi[MagiPurpose.NIIT].amount).toBeCloseTo(280000, 6);
     expect(withDraw.netInvestmentIncome.amount).toBeCloseTo(30000, 6);
+  });
+});
+
+/**
+ * Each rule's MAGI starts from AGI and adds or removes what its statute names.
+ * Every case below is built so the purpose under test DIFFERS from AGI: a
+ * family whose members all equalled agi would pass a test that only checked
+ * they exist.
+ */
+describe('magi by purpose', () => {
+  const magiOf = (b, purpose) => b.magi[purpose].amount;
+
+  it('has one member per MagiPurpose, and no others', () => {
+    const b = basis(pkg({ employedIncome: 100000 }), USER);
+    expect(Object.keys(b.magi).sort()).toEqual(Object.values(MagiPurpose).sort());
+  });
+
+  it('is absent for an annualised month — every MAGI rule is annual', () => {
+    // One month × 12 is not a year's income; a threshold rule read from it
+    // charges a one-off month as if it recurred. agi is still there for the
+    // senior deduction's monthly estimate.
+    const b = basis(pkg({ employedIncome: 10000 }), USER, { annualise: true });
+    expect(b.magi).toBeNull();
+    expect(b.agi.amount).toBeCloseTo(120000, 6);
+  });
+
+  it('uses agi itself for NIIT, the senior deduction and IRMAA', () => {
+    // 100,000 + 20,000. None of the three has an add-back this model can reach
+    // (foreign income, tax-exempt interest).
+    const b = basis(pkg({ employedIncome: 100000, longTermCapitalGains: 20000 }), USER);
+    expect(b.agi.amount).toBeCloseTo(120000, 6);
+    for (const p of [MagiPurpose.NIIT, MagiPurpose.SENIOR_DEDUCTION, MagiPurpose.IRMAA]) {
+      expect(magiOf(b, p)).toBe(b.agi.amount);
+    }
+  });
+
+  it('gives every member its own Currency', () => {
+    const b = basis(pkg({ employedIncome: 100000 }), USER);
+    b.magi[MagiPurpose.NIIT].add(new b.agi.constructor(1));
+    expect(b.agi.amount).toBe(100000);
+    expect(magiOf(b, MagiPurpose.IRMAA)).toBe(100000);
+    expect(() => { b.magi[MagiPurpose.ACA] = null; }).toThrow();
+  });
+
+  it('adds the untaxed Social Security back for the ACA', () => {
+    // Below the §86 base none of 40,000 is taxable: agi 0, ACA MAGI 40,000.
+    const low = basis(pkg({ socialSecurityIncome: 40000 }), USER);
+    expect(low.agi.amount).toBe(0);
+    expect(low.taxableSocialSecurity.amount).toBe(0);
+    expect(magiOf(low, MagiPurpose.ACA)).toBeCloseTo(40000, 6);
+
+    // With 100,000 of wages, 85% (34,000) is taxable and 6,000 is not.
+    const high = basis(pkg({ socialSecurityIncome: 40000, employedIncome: 100000 }), USER);
+    expect(high.taxableSocialSecurity.amount).toBeCloseTo(34000, 6);
+    expect(magiOf(high, MagiPurpose.ACA)).toBeCloseTo(140000, 6);
+  });
+
+  it('takes conversion income out of the Roth contribution MAGI, and only there', () => {
+    // 100,000 of wages and a 50,000 conversion. The conversion is ordinary
+    // income, so it is in agi and in the NIIT MAGI; §408A(c)(3)(B)(i) leaves it
+    // out of the Roth limit's.
+    const b = basis(pkg({
+      employedIncome: 100000, tradIRADistribution: 50000, rothConversion: 50000,
+    }), USER);
+    expect(b.agi.amount).toBeCloseTo(150000, 6);
+    expect(magiOf(b, MagiPurpose.NIIT)).toBeCloseTo(150000, 6);
+    expect(magiOf(b, MagiPurpose.ROTH_CONTRIBUTION)).toBeCloseTo(100000, 6);
+  });
+
+  it('adds back the traditional-IRA deduction the package takes', () => {
+    // 60,000 of wages, 7,500 to a traditional IRA and no 401(k): the IRA is
+    // deducted, agi 52,500. §219(g) and the Roth limit both measure 60,000.
+    const b = basis(pkg({ employedIncome: 60000, tradIRAContribution: 7500 }), USER);
+    expect(b.agi.amount).toBeCloseTo(52500, 6);
+    expect(magiOf(b, MagiPurpose.IRA_DEDUCTION)).toBeCloseTo(60000, 6);
+    expect(magiOf(b, MagiPurpose.ROTH_CONTRIBUTION)).toBeCloseTo(60000, 6);
+  });
+
+  it('adds back nothing when the 401(k) is the deduction taken', () => {
+    // The engine deducts the 401(k) instead of the IRA, so no IRA deduction
+    // is inside agi: 60,000 − 3,000.
+    const b = basis(pkg({
+      employedIncome: 60000, four01KContribution: 3000, tradIRAContribution: 7500,
+    }), USER);
+    expect(b.agi.amount).toBeCloseTo(57000, 6);
+    expect(magiOf(b, MagiPurpose.IRA_DEDUCTION)).toBeCloseTo(57000, 6);
+  });
+
+  it('re-runs §86 without the IRA deduction for §219(g)', () => {
+    // Single: 30,000 wages, 20,000 Social Security, 7,000 deducted to an IRA.
+    //   With the deduction:    other income 23,000, provisional 33,000,
+    //                          taxable min(10,000, ½ × 8,000) = 4,000.
+    //                          agi = 30,000 + 4,000 − 7,000 = 27,000.
+    //   Without it (§219(g)):  other income 30,000, provisional 40,000,
+    //                          taxable min(17,000, 0.85 × 6,000 + 4,500) = 9,600.
+    //                          MAGI = 30,000 + 9,600 = 39,600.
+    // Adding the 7,000 back alone would give 34,000.
+    const b = basis(pkg({
+      employedIncome: 30000, socialSecurityIncome: 20000, tradIRAContribution: 7000,
+    }), USER);
+    expect(b.taxableSocialSecurity.amount).toBeCloseTo(4000, 6);
+    expect(b.agi.amount).toBeCloseTo(27000, 6);
+    expect(magiOf(b, MagiPurpose.IRA_DEDUCTION)).toBeCloseTo(39600, 6);
+    expect(magiOf(b, MagiPurpose.ROTH_CONTRIBUTION)).toBeCloseTo(39600, 6);
+    expect(magiOf(b, MagiPurpose.ACA)).toBeCloseTo(43000, 6);
+  });
+
+  it('phases the senior deduction out on agi, not on the ACA figure', () => {
+    // 70 in 2026, single: 60,000 pension + 30,000 Social Security.
+    //   §86: other income 60,000, provisional 75,000, taxable
+    //   min(25,500, 0.85 × 41,000 + 4,500) = 25,500. agi 85,500; ACA 90,000.
+    //   Senior deduction 6,000 − 6% × (85,500 − 75,000) = 5,370.
+    //   ordinaryTaxable = 85,500 − 16,100 − 2,050 − 5,370 = 61,980.
+    // Phased out on the ACA figure it would be 5,100, and 62,250.
+    const senior = { age: 70, birthYear: 1956 };
+    const b = basis(pkg({ pensionIncome: 60000, socialSecurityIncome: 30000 }), senior);
+    expect(b.agi.amount).toBeCloseTo(85500, 6);
+    expect(b.magi[MagiPurpose.ACA].amount).toBeCloseTo(90000, 6);
+    expect(b.ordinaryTaxable.amount).toBeCloseTo(61980, 6);
+  });
+
+  it('measures MFJ Social Security against the joint thresholds', () => {
+    setFiling('MFJ');
+    // 30,000 wages + 40,000 benefits: provisional 50,000, over the 44,000
+    // adjusted base. taxable = min(34,000, 0.85 × 6,000 + 6,000) = 11,100.
+    const b = basis(pkg({ employedIncome: 30000, socialSecurityIncome: 40000 }), USER);
+    expect(b.taxableSocialSecurity.amount).toBeCloseTo(11100, 6);
+    expect(b.agi.amount).toBeCloseTo(41100, 6);
+    expect(magiOf(b, MagiPurpose.ACA)).toBeCloseTo(70000, 6);
+  });
+});
+
+describe('recordConversion', () => {
+  const conv = (from, to, amount = 1000) => {
+    const p = new FinancialPackage();
+    p.recordConversion(from, to, new p.value.constructor(amount));
+    return p.rothConversion.amount;
+  };
+
+  it('books a traditional IRA or 401(k) moving into a Roth', () => {
+    expect(conv('ira', 'rothIRA')).toBe(1000);
+    expect(conv('401K', 'rothIRA')).toBe(1000);
+  });
+
+  it('ignores moves that are not conversions', () => {
+    expect(conv('ira', '401K')).toBe(0);         // between deferred accounts
+    expect(conv('taxableEquity', 'rothIRA')).toBe(0);
+    expect(conv('rothIRA', 'rothIRA')).toBe(0);
+    expect(conv('ira', 'rothIRA', 0)).toBe(0);
   });
 });
 

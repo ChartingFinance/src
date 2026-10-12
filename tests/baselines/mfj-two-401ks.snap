@@ -1287,6 +1287,13 @@
   [0048]         1.132764         1.135650         1.138543         1.141443         1.144351         1.147266
   [0054]         1.150188         1.153118         1.156055         1.159000         1.161953         1.164913
 
+[taxYears]
+  2026 months=12 age=45 agi=241920.000000 niit=241920.000000 seniorDeduction=241920.000000 irmaa=241920.000000 iraDeduction=241920.000000 rothContribution=241920.000000 aca=241920.000000 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=209720.000000 capitalGains=0.000000
+  2027 months=12 age=46 agi=241920.000000 niit=241920.000000 seniorDeduction=241920.000000 irmaa=241920.000000 iraDeduction=241920.000000 rothContribution=241920.000000 aca=241920.000000 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=208721.800000 capitalGains=0.000000
+  2028 months=12 age=47 agi=241920.000000 niit=241920.000000 seniorDeduction=241920.000000 irmaa=241920.000000 iraDeduction=241920.000000 rothContribution=241920.000000 aca=241920.000000 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=207692.655800 capitalGains=0.000000
+  2029 months=12 age=48 agi=241920.000000 niit=241920.000000 seniorDeduction=241920.000000 irmaa=241920.000000 iraDeduction=241920.000000 rothContribution=241920.000000 aca=241920.000000 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=206631.608130 capitalGains=0.000000
+  2030 months=12 age=49 agi=241920.000000 niit=241920.000000 seniorDeduction=241920.000000 irmaa=241920.000000 iraDeduction=241920.000000 rothContribution=241920.000000 aca=241920.000000 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=205537.667982 capitalGains=0.000000
+
 [sanity]
   (no findings)
 

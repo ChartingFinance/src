@@ -10,7 +10,7 @@ export const FINANCIAL_FIELDS = [
     'employedIncome', 'selfIncome', 'socialSecurityTax', 'socialSecurityIncome', 'pensionIncome', 'assetAppreciation',
     'expense', 'medicareTax', 'incomeTax', 'estimatedTaxes',
     'tradIRAContribution', 'four01KContribution', 'rothIRAContribution',
-    'tradIRADistribution', 'four01KDistribution', 'rothIRADistribution',
+    'tradIRADistribution', 'four01KDistribution', 'rothIRADistribution', 'rothConversion',
     'mortgageInterest', 'mortgagePrincipal', 'propertyTaxes',
     'shortTermCapitalGains', 'longTermCapitalGains', 'excludedCapitalGains',
     'nonQualifiedDividends', 'qualifiedDividends', "maintenance", "insurance",
@@ -86,19 +86,18 @@ export class FinancialPackage {
     }
 
     /**
-     * Gross income taxed at the ordinary rates: ordinary income with Social
-     * Security replaced by its §86 taxable portion.
+     * Social Security under IRC §86: the benefits, the "other income" they are
+     * tested against, and the taxable part.
      *
      * `table` is required: §86's thresholds depend on filing status, and the
      * provisional-income test needs the deductible contribution as the engine
      * books it (`deductionComponents`).
      *
-     * Subtract-then-add keeps results bit-identical for households at the 85%
-     * ceiling.
+     * @returns {{benefits: number, otherIncome: number, taxable: number}}
      */
-    irsTaxableGrossIncome(table) {
+    socialSecurityTaxation(table) {
         if (!table?.activeSocialSecurityThresholds) {
-            throw new Error('FinancialPackage.irsTaxableGrossIncome needs the TaxTable: '
+            throw new Error('FinancialPackage.socialSecurityTaxation needs the TaxTable: '
                 + '§86 thresholds depend on filing status.');
         }
         const benefits = this.socialSecurityIncome.amount;
@@ -109,11 +108,27 @@ export class FinancialPackage {
             + this.qualifiedDividends.amount
             - this.excludedCapitalGains.amount
             - preTax.amount;
+        const taxable = taxableSocialSecurity(benefits, otherIncome,
+            table.activeSocialSecurityThresholds);
+        return { benefits, otherIncome, taxable };
+    }
 
+    /**
+     * Gross income taxed at the ordinary rates: ordinary income with Social
+     * Security replaced by its §86 taxable portion.
+     *
+     * Subtract-then-add keeps results bit-identical for households at the 85%
+     * ceiling.
+     *
+     * @param {TaxTable} table
+     * @param {{taxable: number}} [socialSecurity]  this package's
+     *        socialSecurityTaxation(table), for a caller that already has it
+     */
+    irsTaxableGrossIncome(table, socialSecurity = this.socialSecurityTaxation(table)) {
+        const { taxable } = socialSecurity;
         let irsIncome = this.ordinaryIncome().copy();
         irsIncome.subtract(this.socialSecurityIncome);
-        irsIncome.add(new Currency(taxableSocialSecurity(benefits, otherIncome,
-            table.activeSocialSecurityThresholds)));
+        irsIncome.add(new Currency(taxable));
         return irsIncome;
     }
 
@@ -328,6 +343,27 @@ export class FinancialPackage {
             }
         } else if (T.isTaxFree(sourceInstrument)) {
             this.rothIRADistribution.add(amount);
+        }
+    }
+
+    /**
+     * Record the part of a traditional IRA / 401(k) distribution that went
+     * into a Roth: a Roth conversion (IRC §408A(d)(3)).
+     *
+     * `rothConversion` is an "of which" figure. The same dollars are already in
+     * tradIRADistribution or four01KDistribution through recordTransfer, so it
+     * is never income in its own right. It exists because the Roth contribution
+     * limit measures MAGI without conversion income (§408A(c)(3)(B)).
+     *
+     * @param {string} sourceInstrument  account the money left
+     * @param {string} targetInstrument  account the money entered
+     * @param {Currency} amount          positive amount that arrived in the Roth
+     */
+    recordConversion(sourceInstrument, targetInstrument, amount) {
+        const T = InstrumentType;
+        if (!(amount.amount > 0)) return;
+        if (T.isTaxDeferred(sourceInstrument) && T.isTaxFree(targetInstrument)) {
+            this.rothConversion.add(amount);
         }
     }
 
