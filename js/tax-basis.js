@@ -32,12 +32,39 @@
  *                    less the §121 exclusion. Not wages, Social Security,
  *                    pensions or IRA/401(k) distributions. IRC §1411(c).
  *
- *   magi             AGI: before the standard deduction, after pre-tax
- *                    contributions. The NIIT threshold and the senior
- *                    deduction's phase-out are measured against it. Not
- *                    floored. An IRA distribution raises magi without being
- *                    investment income, so it can push other income into NIIT
- *                    without being taxed by NIIT itself. IRC §1411(d).
+ *   taxableSocialSecurity  The §86 taxable part of the year's benefits: the
+ *                    amount ordinaryTaxable and agi count.
+ *
+ *   agi              Adjusted gross income (Form 1040 line 11): before the
+ *                    standard deduction, after pre-tax contributions. Not
+ *                    floored. IRC §62.
+ *
+ *   magi             The modified AGI each rule measures against, keyed by
+ *                    MagiPurpose. Each starts from agi and adds or removes
+ *                    what that rule's statute names. The model has no foreign
+ *                    income and no tax-exempt interest, so those add-backs are
+ *                    always zero.
+ *
+ *     niit              agi. IRC §1411(d). An IRA distribution raises it
+ *                       without being investment income, so it can push other
+ *                       income into NIIT without being taxed by NIIT itself.
+ *     seniorDeduction   agi. The OBBBA senior deduction phases out on it.
+ *     irmaa             agi. 42 U.S.C. §1395r(i)(4). Medicare applies a
+ *                       year's figure to the premiums two years later.
+ *     iraDeduction      agi before the traditional-IRA deduction, with §86
+ *                       recomputed without it. IRC §219(g)(3); the order of
+ *                       Pub. 590-A appendix B.
+ *     rothContribution  the iraDeduction figure less Roth conversion income.
+ *                       IRC §408A(c)(3)(B)(i). Pub. 590-A worksheet 2-1 adds
+ *                       the IRA deduction back without recomputing §86, so the
+ *                       two differ when a household with Social Security also
+ *                       deducts an IRA contribution.
+ *     aca               agi plus the benefits §86 leaves untaxed.
+ *                       IRC §36B(d)(2)(B).
+ *
+ *                    Every MAGI rule is annual, so magi is null when the
+ *                    package is an annualised month. Portfolio.taxYears
+ *                    records the family once per settled year.
  *
  * ── How the deduction reaches the gains ──────────────────────────────
  *
@@ -58,6 +85,16 @@
  */
 
 import { Currency } from './utils/currency.js';
+
+/** The rules that measure income against a modified AGI. See the module header. */
+export const MagiPurpose = Object.freeze({
+    NIIT: 'niit',
+    SENIOR_DEDUCTION: 'seniorDeduction',
+    IRMAA: 'irmaa',
+    IRA_DEDUCTION: 'iraDeduction',
+    ROTH_CONTRIBUTION: 'rothContribution',
+    ACA: 'aca',
+});
 
 /**
  * IRC §86 — the part of a year's Social Security benefits that is taxable.
@@ -91,6 +128,47 @@ export function taxableSocialSecurity(benefits, otherIncome, { base, adjusted })
 }
 
 /**
+ * One rule's MAGI. The module header gives each definition.
+ *
+ * With no IRA deduction the §219(g) figure is agi exactly, not agi plus a
+ * rounding error: §86 is re-run on the same inputs.
+ *
+ * @param {string} purpose  a MagiPurpose
+ * @param {object} parts
+ * @param {number} parts.agi
+ * @param {{benefits: number, otherIncome: number, taxable: number}} parts.socialSecurity
+ *        from FinancialPackage.socialSecurityTaxation()
+ * @param {number} parts.iraDeduction    the traditional-IRA deduction inside agi
+ * @param {number} parts.rothConversion  the conversion income inside agi
+ * @param {{base: number, adjusted: number}} parts.thresholds  §86, by filing status
+ * @returns {number}
+ */
+function magiAmount(purpose, { agi, socialSecurity, iraDeduction, rothConversion, thresholds }) {
+    const { benefits, otherIncome, taxable } = socialSecurity;
+    switch (purpose) {
+        case MagiPurpose.NIIT:
+        case MagiPurpose.SENIOR_DEDUCTION:
+        case MagiPurpose.IRMAA:
+            return agi;
+        case MagiPurpose.IRA_DEDUCTION:
+        case MagiPurpose.ROTH_CONTRIBUTION: {
+            // §219(g)(3) measures income as if the IRA deduction did not
+            // exist, and the §86 test inside it moves with it.
+            const taxableBeforeIRA = taxableSocialSecurity(benefits,
+                otherIncome + iraDeduction, thresholds);
+            const beforeIRADeduction = agi + iraDeduction + (taxableBeforeIRA - taxable);
+            return purpose === MagiPurpose.IRA_DEDUCTION
+                ? beforeIRADeduction
+                : beforeIRADeduction - rothConversion;
+        }
+        case MagiPurpose.ACA:
+            return agi + (benefits - taxable);
+        default:
+            throw new Error(`tax-basis: unknown MAGI purpose ${JSON.stringify(purpose)}`);
+    }
+}
+
+/**
  * The tax bases for one package. See the module header for what each field
  * means.
  *
@@ -102,7 +180,9 @@ export function taxableSocialSecurity(benefits, otherIncome, { base, adjusted })
  *        `taxTable` is required — the run's own table. TaxTable's own methods
  *        pass `this`.
  * @returns {{ordinaryTaxable: Currency, capitalGains: Currency, ltcgStackBase: Currency,
- *            unusedDeduction: Currency, netInvestmentIncome: Currency, magi: Currency}}
+ *            unusedDeduction: Currency, netInvestmentIncome: Currency,
+ *            taxableSocialSecurity: Currency, agi: Currency,
+ *            magi: ?Readonly<Record<string, Currency>>}}  magi is null when annualised
  */
 export function taxableBasis(pkg, activeUser, { annualise = false, taxTable = null } = {}) {
 
@@ -115,22 +195,33 @@ export function taxableBasis(pkg, activeUser, { annualise = false, taxTable = nu
     // monthly contribution against an annual limit and then multiply it by 12.
     yearly.limitDeductions(activeUser, table);
 
-    // MAGI before any deduction: it sits above them all, and the senior
-    // deduction phases out on it. `preTax` is the deductible contribution as
-    // this engine books it — the 401(k) if there is one, otherwise the
-    // traditional IRA — so MAGI and taxable income agree about it. (Real AGI
-    // subtracts both; changing that is separate work.)
-    const { preTax } = table.deductionComponents(yearly);
-    const magi = new Currency(
-        yearly.irsTaxableGrossIncome(table).amount
+    // AGI sits above every deduction, and the senior deduction phases out on a
+    // MAGI built from it. `preTax` is the deductible contribution as this
+    // engine books it (the 401(k) if there is one, otherwise the traditional
+    // IRA), so AGI and taxable income agree about it. Real AGI also subtracts a
+    // traditional-IRA contribution whenever §219(g) allows the deduction; see
+    // markdowns/code-issues-from-comments.md #7.
+    const { preTax, iraDeduction } = table.deductionComponents(yearly);
+    const socialSecurity = yearly.socialSecurityTaxation(table);
+    const agi = new Currency(
+        yearly.irsTaxableGrossIncome(table, socialSecurity).amount
         + yearly.longTermCapitalGains.amount
         + yearly.qualifiedDividends.amount
         - yearly.excludedCapitalGains.amount
         - preTax.amount
     );
+    // What the MAGI definitions draw on, beyond agi itself.
+    const magiParts = {
+        agi: agi.amount,
+        socialSecurity,
+        iraDeduction: iraDeduction.amount,
+        rothConversion: yearly.rothConversion.amount,
+        thresholds: table.activeSocialSecurityThresholds,
+    };
 
     // §63(f) and the OBBBA senior deduction. Zero for anyone under 65.
-    const age = table.ageDeductions(activeUser, magi);
+    const age = table.ageDeductions(activeUser,
+        new Currency(magiAmount(MagiPurpose.SENIOR_DEDUCTION, magiParts)));
 
     const ordinaryTaxable = table.calculateYearlyTaxableIncome(yearly, age);
 
@@ -166,11 +257,21 @@ export function taxableBasis(pkg, activeUser, { annualise = false, taxTable = nu
         - yearly.excludedCapitalGains.amount
     ));
 
+    // Every MAGI rule is annual, so the family exists only for a full-year
+    // package: an annualised month has none to misread, and the monthly sites
+    // skip the cost of building it. Each member is its own Currency, so
+    // mutating one cannot move another.
+    const magi = annualise ? null : Object.freeze(Object.fromEntries(
+        Object.values(MagiPurpose).map((purpose) =>
+            [purpose, new Currency(magiAmount(purpose, magiParts))])));
+
     return {
         ordinaryTaxable,
         capitalGains,
         unusedDeduction,
         netInvestmentIncome,
+        taxableSocialSecurity: new Currency(socialSecurity.taxable),
+        agi,
         magi,
         // Copy, so a caller mutating one cannot silently move the other.
         ltcgStackBase: ordinaryTaxable.copy(),

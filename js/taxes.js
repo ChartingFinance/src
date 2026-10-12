@@ -788,10 +788,14 @@ export class TaxTable {
     }
 
     /**
-     * The deduction as the two pieces `applyYearlyDeductions` subtracts
+     * The deduction as the pieces `applyYearlyDeductions` subtracts
      * separately. Keep them separate: Currency is raw floating point, and
      * `x − base − preTax` differs from `x − (base + preTax)` in the last bit,
      * which changes the snapshot for no tax reason.
+     *
+     * `preTax` is one contribution, not both: the 401(k) if there is one,
+     * otherwise the traditional IRA. `iraDeduction` is the traditional-IRA part
+     * of it, which some MAGI definitions add back (see tax-basis.js).
      */
     deductionComponents(yearly, age = NO_AGE_DEDUCTIONS) {
 
@@ -816,11 +820,13 @@ export class TaxTable {
             ? itemised
             : new Currency(standard);
 
-        const preTax = new Currency(yearly.four01KContribution.amount > 0
+        const deducts401K = yearly.four01KContribution.amount > 0;
+        const preTax = new Currency(deducts401K
             ? yearly.four01KContribution.amount
             : yearly.tradIRAContribution.amount);
+        const iraDeduction = new Currency(deducts401K ? 0 : yearly.tradIRAContribution.amount);
 
-        return { base, preTax, senior: new Currency(age.senior) };
+        return { base, preTax, iraDeduction, senior: new Currency(age.senior) };
 
     }
 
