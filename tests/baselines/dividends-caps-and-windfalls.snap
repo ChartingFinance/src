@@ -27,21 +27,21 @@
   firstDate = 2026-01
   lastDate = 2030-12
   startValue = 575000.000000
-  finishValue = 1225310.746920
-  accumulated = 78670.457547
+  finishValue = 1135084.147264
+  accumulated = 68490.740339
   total.employedIncome = 840000.000000
   total.socialSecurityTax = -52080.000000
-  total.assetAppreciation = 194282.103883
+  total.assetAppreciation = 184802.411398
   total.expense = -388434.827960
   total.medicareTax = -12180.000000
-  total.incomeTax = -143876.542546
-  total.estimatedTaxes = -812.809987
+  total.incomeTax = -138247.651279
+  total.estimatedTaxes = -1742.740525
   total.four01KContribution = 130334.117024
-  total.longTermCapitalGains = 5484.236956
-  total.nonQualifiedDividends = 20065.165326
-  total.qualifiedDividends = 46818.719095
-  total.taxTrueUp = 17415.022791
-  total.value = 54895424.143397
+  total.longTermCapitalGains = 12878.508026
+  total.nonQualifiedDividends = 18333.804551
+  total.qualifiedDividends = 42778.877286
+  total.taxTrueUp = 13520.912118
+  total.value = 52010527.118906
 
 [assetOrder]
   0 Salary
@@ -54,579 +54,606 @@
   instrument = 401K
   start = 2026-01  finish = 2030-12
   startCurrency = 250000.000000
-  finishCurrency = 469858.163582
+  finishCurrency = 469417.718389
   startBasis = 0.000000
   finishBasis = 0.000000
   isClosed = no  isDepleted = no
   closedDate = -  closedValue = -
-  events = 180  reconciled = 180
+  events = 190  reconciled = 190
 
 [events] 401K
   0000 2026-01 contributionCapped         -535500.000000 info  -                      c0 {limitName=annual 401(k) limit}
-  0001 2026-01 transfer                     24500.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0002 2026-01 assetGrowth                   1118.346979 cash  growth                 c-
-  0003 2026-02 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
-  0004 2026-02 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0005 2026-02 assetGrowth                   1122.903263 cash  growth                 c-
-  0006 2026-03 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
-  0007 2026-03 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0008 2026-03 assetGrowth                   1127.478110 cash  growth                 c-
-  0009 2026-04 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
-  0010 2026-04 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0011 2026-04 assetGrowth                   1132.071595 cash  growth                 c-
-  0012 2026-05 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
-  0013 2026-05 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0014 2026-05 assetGrowth                   1136.683795 cash  growth                 c-
-  0015 2026-06 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
-  0016 2026-06 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0017 2026-06 assetGrowth                   1141.314785 cash  growth                 c-
-  0018 2026-07 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
-  0019 2026-07 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0020 2026-07 assetGrowth                   1145.964643 cash  growth                 c-
-  0021 2026-08 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
-  0022 2026-08 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0023 2026-08 assetGrowth                   1150.633445 cash  growth                 c-
-  0024 2026-09 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
-  0025 2026-09 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0026 2026-09 assetGrowth                   1155.321268 cash  growth                 c-
-  0027 2026-10 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
-  0028 2026-10 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0029 2026-10 assetGrowth                   1160.028190 cash  growth                 c-
-  0030 2026-11 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
-  0031 2026-11 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0032 2026-11 assetGrowth                   1164.754288 cash  growth                 c-
-  0033 2026-12 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
-  0034 2026-12 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0035 2026-12 assetGrowth                   1169.499641 cash  growth                 c-
-  0036 2027-01 contributionCapped         -534740.500000 info  -                      c0 {limitName=annual 401(k) limit}
-  0037 2027-01 transfer                     25259.500000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0038 2027-01 assetGrowth                   1277.174657 cash  growth                 c-
-  0039 2027-02 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
-  0040 2027-02 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0041 2027-02 assetGrowth                   1282.378025 cash  growth                 c-
-  0042 2027-03 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
-  0043 2027-03 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0044 2027-03 assetGrowth                   1287.602592 cash  growth                 c-
-  0045 2027-04 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
-  0046 2027-04 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0047 2027-04 assetGrowth                   1292.848444 cash  growth                 c-
-  0048 2027-05 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
-  0049 2027-05 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0050 2027-05 assetGrowth                   1298.115669 cash  growth                 c-
-  0051 2027-06 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
-  0052 2027-06 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0053 2027-06 assetGrowth                   1303.404353 cash  growth                 c-
-  0054 2027-07 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
-  0055 2027-07 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0056 2027-07 assetGrowth                   1308.714583 cash  growth                 c-
-  0057 2027-08 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
-  0058 2027-08 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0059 2027-08 assetGrowth                   1314.046448 cash  growth                 c-
-  0060 2027-09 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
-  0061 2027-09 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0062 2027-09 assetGrowth                   1319.400036 cash  growth                 c-
-  0063 2027-10 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
-  0064 2027-10 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0065 2027-10 assetGrowth                   1324.775435 cash  growth                 c-
-  0066 2027-11 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
-  0067 2027-11 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0068 2027-11 assetGrowth                   1330.172735 cash  growth                 c-
-  0069 2027-12 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
-  0070 2027-12 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0071 2027-12 assetGrowth                   1335.592023 cash  growth                 c-
-  0072 2028-01 contributionCapped         -533957.455500 info  -                      c0 {limitName=annual 401(k) limit}
-  0073 2028-01 transfer                     26042.544500 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0074 2028-01 assetGrowth                   1447.133940 cash  growth                 c-
-  0075 2028-02 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
-  0076 2028-02 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0077 2028-02 assetGrowth                   1453.029743 cash  growth                 c-
-  0078 2028-03 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
-  0079 2028-03 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0080 2028-03 assetGrowth                   1458.949566 cash  growth                 c-
-  0081 2028-04 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
-  0082 2028-04 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0083 2028-04 assetGrowth                   1464.893507 cash  growth                 c-
-  0084 2028-05 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
-  0085 2028-05 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0086 2028-05 assetGrowth                   1470.861664 cash  growth                 c-
-  0087 2028-06 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
-  0088 2028-06 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0089 2028-06 assetGrowth                   1476.854137 cash  growth                 c-
-  0090 2028-07 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
-  0091 2028-07 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0092 2028-07 assetGrowth                   1482.871024 cash  growth                 c-
-  0093 2028-08 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
-  0094 2028-08 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0095 2028-08 assetGrowth                   1488.912424 cash  growth                 c-
-  0096 2028-09 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
-  0097 2028-09 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0098 2028-09 assetGrowth                   1494.978437 cash  growth                 c-
-  0099 2028-10 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
-  0100 2028-10 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0101 2028-10 assetGrowth                   1501.069164 cash  growth                 c-
-  0102 2028-11 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
-  0103 2028-11 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0104 2028-11 assetGrowth                   1507.184706 cash  growth                 c-
-  0105 2028-12 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
-  0106 2028-12 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0107 2028-12 assetGrowth                   1513.325163 cash  growth                 c-
-  0108 2029-01 contributionCapped         -533150.136621 info  -                      c0 {limitName=annual 401(k) limit}
-  0109 2029-01 transfer                     26849.863379 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0110 2029-01 assetGrowth                   1628.880304 cash  growth                 c-
-  0111 2029-02 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
-  0112 2029-02 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0113 2029-02 assetGrowth                   1635.516564 cash  growth                 c-
-  0114 2029-03 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
-  0115 2029-03 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0116 2029-03 assetGrowth                   1642.179861 cash  growth                 c-
-  0117 2029-04 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
-  0118 2029-04 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0119 2029-04 assetGrowth                   1648.870305 cash  growth                 c-
-  0120 2029-05 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
-  0121 2029-05 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0122 2029-05 assetGrowth                   1655.588007 cash  growth                 c-
-  0123 2029-06 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
-  0124 2029-06 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0125 2029-06 assetGrowth                   1662.333077 cash  growth                 c-
-  0126 2029-07 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
-  0127 2029-07 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0128 2029-07 assetGrowth                   1669.105628 cash  growth                 c-
-  0129 2029-08 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
-  0130 2029-08 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0131 2029-08 assetGrowth                   1675.905771 cash  growth                 c-
-  0132 2029-09 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
-  0133 2029-09 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0134 2029-09 assetGrowth                   1682.733618 cash  growth                 c-
-  0135 2029-10 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
-  0136 2029-10 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0137 2029-10 assetGrowth                   1689.589283 cash  growth                 c-
-  0138 2029-11 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
-  0139 2029-11 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0140 2029-11 assetGrowth                   1696.472879 cash  growth                 c-
-  0141 2029-12 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
-  0142 2029-12 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0143 2029-12 assetGrowth                   1703.384520 cash  growth                 c-
-  0144 2030-01 contributionCapped         -532317.790856 info  -                      c0 {limitName=annual 401(k) limit}
-  0145 2030-01 transfer                     27682.209144 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0146 2030-01 assetGrowth                   1823.105066 cash  growth                 c-
-  0147 2030-02 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
-  0148 2030-02 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0149 2030-02 assetGrowth                   1830.532622 cash  growth                 c-
-  0150 2030-03 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
-  0151 2030-03 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0152 2030-03 assetGrowth                   1837.990438 cash  growth                 c-
-  0153 2030-04 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
-  0154 2030-04 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0155 2030-04 assetGrowth                   1845.478639 cash  growth                 c-
-  0156 2030-05 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
-  0157 2030-05 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0158 2030-05 assetGrowth                   1852.997347 cash  growth                 c-
-  0159 2030-06 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
-  0160 2030-06 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0161 2030-06 assetGrowth                   1860.546688 cash  growth                 c-
-  0162 2030-07 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
-  0163 2030-07 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0164 2030-07 assetGrowth                   1868.126785 cash  growth                 c-
-  0165 2030-08 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
-  0166 2030-08 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0167 2030-08 assetGrowth                   1875.737765 cash  growth                 c-
-  0168 2030-09 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
-  0169 2030-09 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0170 2030-09 assetGrowth                   1883.379753 cash  growth                 c-
-  0171 2030-10 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
-  0172 2030-10 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0173 2030-10 assetGrowth                   1891.052875 cash  growth                 c-
-  0174 2030-11 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
-  0175 2030-11 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0176 2030-11 assetGrowth                   1898.757258 cash  growth                 c-
-  0177 2030-12 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
-  0178 2030-12 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0179 2030-12 assetGrowth                   1906.493031 cash  growth                 c-
+  0001 2026-01 contributionCapped          -13502.166667 info  -                      c0 {limitName=pay left after taxes}
+  0002 2026-01 transfer                     10997.833333 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0003 2026-01 assetGrowth                   1063.337480 cash  growth                 c-
+  0004 2026-02 contributionCapped         -546497.833333 info  -                      c0 {limitName=annual 401(k) limit}
+  0005 2026-02 contributionCapped           -2504.333333 info  -                      c0 {limitName=pay left after taxes}
+  0006 2026-02 transfer                     10997.833333 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0007 2026-02 assetGrowth                   1112.476183 cash  growth                 c-
+  0008 2026-03 contributionCapped         -557495.666667 info  -                      c0 {limitName=annual 401(k) limit}
+  0009 2026-03 transfer                      2504.333333 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0010 2026-03 assetGrowth                   1127.211513 cash  growth                 c-
+  0011 2026-04 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
+  0012 2026-04 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0013 2026-04 assetGrowth                   1131.803912 cash  growth                 c-
+  0014 2026-05 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
+  0015 2026-05 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0016 2026-05 assetGrowth                   1136.415021 cash  growth                 c-
+  0017 2026-06 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
+  0018 2026-06 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0019 2026-06 assetGrowth                   1141.044917 cash  growth                 c-
+  0020 2026-07 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
+  0021 2026-07 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0022 2026-07 assetGrowth                   1145.693675 cash  growth                 c-
+  0023 2026-08 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
+  0024 2026-08 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0025 2026-08 assetGrowth                   1150.361373 cash  growth                 c-
+  0026 2026-09 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
+  0027 2026-09 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0028 2026-09 assetGrowth                   1155.048087 cash  growth                 c-
+  0029 2026-10 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
+  0030 2026-10 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0031 2026-10 assetGrowth                   1159.753896 cash  growth                 c-
+  0032 2026-11 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
+  0033 2026-11 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0034 2026-11 assetGrowth                   1164.478877 cash  growth                 c-
+  0035 2026-12 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
+  0036 2026-12 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0037 2026-12 assetGrowth                   1169.223108 cash  growth                 c-
+  0038 2027-01 contributionCapped         -534740.500000 info  -                      c0 {limitName=annual 401(k) limit}
+  0039 2027-01 contributionCapped          -14217.372833 info  -                      c0 {limitName=pay left after taxes}
+  0040 2027-01 transfer                     11042.127167 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0041 2027-01 assetGrowth                   1218.973661 cash  growth                 c-
+  0042 2027-02 contributionCapped         -545782.627167 info  -                      c0 {limitName=annual 401(k) limit}
+  0043 2027-02 contributionCapped           -3175.245667 info  -                      c0 {limitName=pay left after taxes}
+  0044 2027-02 transfer                     11042.127167 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0045 2027-02 assetGrowth                   1268.926903 cash  growth                 c-
+  0046 2027-03 contributionCapped         -556824.754333 info  -                      c0 {limitName=annual 401(k) limit}
+  0047 2027-03 transfer                      3175.245667 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0048 2027-03 assetGrowth                   1287.033013 cash  growth                 c-
+  0049 2027-04 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
+  0050 2027-04 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0051 2027-04 assetGrowth                   1292.276544 cash  growth                 c-
+  0052 2027-05 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
+  0053 2027-05 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0054 2027-05 assetGrowth                   1297.541439 cash  growth                 c-
+  0055 2027-06 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
+  0056 2027-06 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0057 2027-06 assetGrowth                   1302.827783 cash  growth                 c-
+  0058 2027-07 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
+  0059 2027-07 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0060 2027-07 assetGrowth                   1308.135665 cash  growth                 c-
+  0061 2027-08 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
+  0062 2027-08 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0063 2027-08 assetGrowth                   1313.465172 cash  growth                 c-
+  0064 2027-09 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
+  0065 2027-09 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0066 2027-09 assetGrowth                   1318.816391 cash  growth                 c-
+  0067 2027-10 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
+  0068 2027-10 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0069 2027-10 assetGrowth                   1324.189413 cash  growth                 c-
+  0070 2027-11 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
+  0071 2027-11 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0072 2027-11 assetGrowth                   1329.584324 cash  growth                 c-
+  0073 2027-12 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
+  0074 2027-12 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0075 2027-12 assetGrowth                   1335.001215 cash  growth                 c-
+  0076 2028-01 contributionCapped         -533957.455500 info  -                      c0 {limitName=annual 401(k) limit}
+  0077 2028-01 contributionCapped          -14954.750391 info  -                      c0 {limitName=pay left after taxes}
+  0078 2028-01 transfer                     11087.794109 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0079 2028-01 assetGrowth                   1385.613221 cash  growth                 c-
+  0080 2028-02 contributionCapped         -545045.249609 info  -                      c0 {limitName=annual 401(k) limit}
+  0081 2028-02 contributionCapped           -3866.956282 info  -                      c0 {limitName=pay left after taxes}
+  0082 2028-02 transfer                     11087.794109 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0083 2028-02 assetGrowth                   1436.431427 cash  growth                 c-
+  0084 2028-03 contributionCapped         -556133.043718 info  -                      c0 {limitName=annual 401(k) limit}
+  0085 2028-03 transfer                      3866.956282 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0086 2028-03 assetGrowth                   1458.038085 cash  growth                 c-
+  0087 2028-04 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
+  0088 2028-04 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0089 2028-04 assetGrowth                   1463.978312 cash  growth                 c-
+  0090 2028-05 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
+  0091 2028-05 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0092 2028-05 assetGrowth                   1469.942741 cash  growth                 c-
+  0093 2028-06 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
+  0094 2028-06 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0095 2028-06 assetGrowth                   1475.931470 cash  growth                 c-
+  0096 2028-07 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
+  0097 2028-07 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0098 2028-07 assetGrowth                   1481.944597 cash  growth                 c-
+  0099 2028-08 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
+  0100 2028-08 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0101 2028-08 assetGrowth                   1487.982223 cash  growth                 c-
+  0102 2028-09 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
+  0103 2028-09 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0104 2028-09 assetGrowth                   1494.044447 cash  growth                 c-
+  0105 2028-10 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
+  0106 2028-10 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0107 2028-10 assetGrowth                   1500.131369 cash  growth                 c-
+  0108 2028-11 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
+  0109 2028-11 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0110 2028-11 assetGrowth                   1506.243090 cash  growth                 c-
+  0111 2028-12 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
+  0112 2028-12 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0113 2028-12 assetGrowth                   1512.379711 cash  growth                 c-
+  0114 2029-01 contributionCapped         -533150.136621 info  -                      c0 {limitName=annual 401(k) limit}
+  0115 2029-01 contributionCapped          -15714.986653 info  -                      c0 {limitName=pay left after taxes}
+  0116 2029-01 transfer                     11134.876726 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0117 2029-01 assetGrowth                   1563.906199 cash  growth                 c-
+  0118 2029-02 contributionCapped         -544285.013347 info  -                      c0 {limitName=annual 401(k) limit}
+  0119 2029-02 contributionCapped           -4580.109927 info  -                      c0 {limitName=pay left after taxes}
+  0120 2029-02 transfer                     11134.876726 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0121 2029-02 assetGrowth                   1615.642612 cash  growth                 c-
+  0122 2029-03 contributionCapped         -555419.890073 info  -                      c0 {limitName=annual 401(k) limit}
+  0123 2029-03 transfer                      4580.109927 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0124 2029-03 assetGrowth                   1640.884875 cash  growth                 c-
+  0125 2029-04 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
+  0126 2029-04 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0127 2029-04 assetGrowth                   1647.570043 cash  growth                 c-
+  0128 2029-05 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
+  0129 2029-05 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0130 2029-05 assetGrowth                   1654.282448 cash  growth                 c-
+  0131 2029-06 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
+  0132 2029-06 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0133 2029-06 assetGrowth                   1661.022199 cash  growth                 c-
+  0134 2029-07 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
+  0135 2029-07 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0136 2029-07 assetGrowth                   1667.789409 cash  growth                 c-
+  0137 2029-08 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
+  0138 2029-08 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0139 2029-08 assetGrowth                   1674.584190 cash  growth                 c-
+  0140 2029-09 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
+  0141 2029-09 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0142 2029-09 assetGrowth                   1681.406653 cash  growth                 c-
+  0143 2029-10 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
+  0144 2029-10 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0145 2029-10 assetGrowth                   1688.256912 cash  growth                 c-
+  0146 2029-11 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
+  0147 2029-11 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0148 2029-11 assetGrowth                   1695.135079 cash  growth                 c-
+  0149 2029-12 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
+  0150 2029-12 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0151 2029-12 assetGrowth                   1702.041269 cash  growth                 c-
+  0152 2030-01 contributionCapped         -532317.790856 info  -                      c0 {limitName=annual 401(k) limit}
+  0153 2030-01 contributionCapped          -16498.790240 info  -                      c0 {limitName=pay left after taxes}
+  0154 2030-01 transfer                     11183.418905 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0155 2030-01 assetGrowth                   1754.538229 cash  growth                 c-
+  0156 2030-02 contributionCapped         -543501.209760 info  -                      c0 {limitName=annual 401(k) limit}
+  0157 2030-02 contributionCapped           -5315.371335 info  -                      c0 {limitName=pay left after taxes}
+  0158 2030-02 transfer                     11183.418905 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0159 2030-02 assetGrowth                   1807.249068 cash  growth                 c-
+  0160 2030-03 contributionCapped         -554684.628665 info  -                      c0 {limitName=annual 401(k) limit}
+  0161 2030-03 transfer                      5315.371335 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0162 2030-03 assetGrowth                   1836.267505 cash  growth                 c-
+  0163 2030-04 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
+  0164 2030-04 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0165 2030-04 assetGrowth                   1843.748686 cash  growth                 c-
+  0166 2030-05 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
+  0167 2030-05 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0168 2030-05 assetGrowth                   1851.260347 cash  growth                 c-
+  0169 2030-06 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
+  0170 2030-06 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0171 2030-06 assetGrowth                   1858.802611 cash  growth                 c-
+  0172 2030-07 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
+  0173 2030-07 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0174 2030-07 assetGrowth                   1866.375602 cash  growth                 c-
+  0175 2030-08 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
+  0176 2030-08 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0177 2030-08 assetGrowth                   1873.979448 cash  growth                 c-
+  0178 2030-09 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
+  0179 2030-09 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0180 2030-09 assetGrowth                   1881.614272 cash  growth                 c-
+  0181 2030-10 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
+  0182 2030-10 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0183 2030-10 assetGrowth                   1889.280201 cash  growth                 c-
+  0184 2030-11 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
+  0185 2030-11 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0186 2030-11 assetGrowth                   1896.977363 cash  growth                 c-
+  0187 2030-12 contributionCapped         -560000.000000 info  -                      c0 {limitName=annual 401(k) limit}
+  0188 2030-12 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0189 2030-12 assetGrowth                   1904.705883 cash  growth                 c-
 
 [history] 401K
-  value                        n=  60 first=   275618.350000 last=   469858.160000 min=   275618.350000 max=   469858.160000 sum=   22063340.050000 #06a3a0dd
-  growth                       n=  60 first=     1118.350000 last=     1906.490000 min=     1118.350000 max=     1906.490000 sum=      89524.020000 #df4eff60
-  contribution                 n=  60 first=    24500.000000 last=        0.000000 min=        0.000000 max=    27682.210000 sum=     130334.110000 #8c5461d0
-  preTaxContribution           n=  60 first=    24500.000000 last=        0.000000 min=        0.000000 max=    27682.210000 sum=     130334.110000 #8c5461d0
-  four01KContribution          n=  60 first=    24500.000000 last=        0.000000 min=        0.000000 max=    27682.210000 sum=     130334.110000 #8c5461d0
+  value                        n=  60 first=   262061.170000 last=   469417.720000 min=   262061.170000 max=   469417.720000 sum=   21954791.690000 #c0815429
+  growth                       n=  60 first=     1063.340000 last=     1904.710000 min=     1063.340000 max=     1904.710000 sum=      89083.590000 #36954a10
+  contribution                 n=  60 first=    10997.830000 last=        0.000000 min=        0.000000 max=    11183.420000 sum=     130334.120000 #646a63fa
+  preTaxContribution           n=  60 first=    10997.830000 last=        0.000000 min=        0.000000 max=    11183.420000 sum=     130334.120000 #646a63fa
+  four01KContribution          n=  60 first=    10997.830000 last=        0.000000 min=        0.000000 max=    11183.420000 sum=     130334.120000 #646a63fa
 
 [asset] Brokerage
   instrument = taxableEquity
   start = 2026-01  finish = 2030-12
   startCurrency = 300000.000000
-  finishCurrency = 755452.583337
+  finishCurrency = 665666.428875
   startBasis = 200000.000000
-  finishBasis = 556178.762969
+  finishBasis = 482826.126867
   isClosed = no  isDepleted = no
   closedDate = -  closedValue = -
-  events = 349  reconciled = 349
+  events = 366  reconciled = 366
 
 [events] Brokerage
   0000 2026-01 transfer                         0.000000 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
   0001 2026-01 assetGrowth                    982.121935 cash  growth                 c-
   0002 2026-01 dividend                       438.932261 cash  qualifiedDividend      c- {qualified=true}
   0003 2026-01 dividend                       188.113826 cash  nonQualifiedDividend   c- {qualified=false}
-  0004 2026-02 transfer                     10507.833333 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
-  0005 2026-02 assetGrowth                   1021.789844 cash  growth                 c-
-  0006 2026-02 dividend                       456.660737 cash  qualifiedDividend      c- {qualified=true}
-  0007 2026-02 dividend                       195.711744 cash  nonQualifiedDividend   c- {qualified=false}
-  0008 2026-03 transfer                     10507.833333 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
-  0009 2026-03 assetGrowth                   1061.670528 cash  growth                 c-
-  0010 2026-03 dividend                       474.484307 cash  qualifiedDividend      c- {qualified=true}
-  0011 2026-03 dividend                       203.350417 cash  nonQualifiedDividend   c- {qualified=false}
+  0004 2026-02 transfer                         0.000000 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0005 2026-02 assetGrowth                    987.389932 cash  growth                 c-
+  0006 2026-02 dividend                       441.286647 cash  qualifiedDividend      c- {qualified=true}
+  0007 2026-02 dividend                       189.122849 cash  nonQualifiedDividend   c- {qualified=false}
+  0008 2026-03 transfer                      8493.500000 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0009 2026-03 assetGrowth                   1020.491695 cash  growth                 c-
+  0010 2026-03 dividend                       456.080565 cash  qualifiedDividend      c- {qualified=true}
+  0011 2026-03 dividend                       195.463099 cash  nonQualifiedDividend   c- {qualified=false}
   0012 2026-04 transfer                     10507.833333 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
-  0013 2026-04 assetGrowth                   1101.765127 cash  growth                 c-
-  0014 2026-04 dividend                       492.403480 cash  qualifiedDividend      c- {qualified=true}
-  0015 2026-04 dividend                       211.030063 cash  nonQualifiedDividend   c- {qualified=false}
+  0013 2026-04 assetGrowth                   1060.365416 cash  growth                 c-
+  0014 2026-04 dividend                       473.901023 cash  qualifiedDividend      c- {qualified=true}
+  0015 2026-04 dividend                       203.100438 cash  nonQualifiedDividend   c- {qualified=false}
   0016 2026-05 transfer                     10507.833333 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
-  0017 2026-05 spillover                    -5344.799648 cash  -                      c3 {cause=grossUp depleted=Checking origin=oneSided}
-  0018 2026-05 assetGrowth                   1124.577307 cash  growth                 c-
-  0019 2026-05 dividend                       502.598754 cash  qualifiedDividend      c- {qualified=true}
-  0020 2026-05 dividend                       215.399466 cash  nonQualifiedDividend   c- {qualified=false}
-  0021 2026-05 incomeTaxWithholding           -51.695872 cash  -                      c4
+  0017 2026-05 spillover                    -5339.422247 cash  -                      c3 {cause=grossUp depleted=Checking origin=oneSided}
+  0018 2026-05 assetGrowth                   1082.973136 cash  growth                 c-
+  0019 2026-05 dividend                       484.004919 cash  qualifiedDividend      c- {qualified=true}
+  0020 2026-05 dividend                       207.430680 cash  nonQualifiedDividend   c- {qualified=false}
+  0021 2026-05 incomeTaxWithholding           -49.783363 cash  -                      c4
   0022 2026-06 transfer                     10507.833333 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
   0023 2026-06 grossUp                      -6076.810511 cash  -                      c5 {forAsset=Living overflow=false}
-  0024 2026-06 assetGrowth                   1144.946197 cash  growth                 c-
-  0025 2026-06 dividend                       511.702066 cash  qualifiedDividend      c- {qualified=true}
-  0026 2026-06 dividend                       219.300885 cash  nonQualifiedDividend   c- {qualified=false}
-  0027 2026-06 incomeTaxWithholding           -52.632212 cash  -                      c4
+  0024 2026-06 assetGrowth                   1103.125126 cash  growth                 c-
+  0025 2026-06 dividend                       493.011294 cash  qualifiedDividend      c- {qualified=true}
+  0026 2026-06 dividend                       211.290555 cash  nonQualifiedDividend   c- {qualified=false}
+  0027 2026-06 incomeTaxWithholding           -50.709733 cash  -                      c4
   0028 2026-07 transfer                     10507.833333 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
   0029 2026-07 grossUp                      -6092.290210 cash  -                      c5 {forAsset=Living overflow=false}
-  0030 2026-07 assetGrowth                   1165.370601 cash  growth                 c-
-  0031 2026-07 dividend                       520.830189 cash  qualifiedDividend      c- {qualified=true}
-  0032 2026-07 dividend                       223.212938 cash  nonQualifiedDividend   c- {qualified=false}
-  0033 2026-07 incomeTaxWithholding           -53.571105 cash  -                      c4
+  0030 2026-07 assetGrowth                   1123.331501 cash  growth                 c-
+  0031 2026-07 dividend                       502.041975 cash  qualifiedDividend      c- {qualified=true}
+  0032 2026-07 dividend                       215.160846 cash  nonQualifiedDividend   c- {qualified=false}
+  0033 2026-07 incomeTaxWithholding           -51.638603 cash  -                      c4
   0034 2026-08 transfer                     10507.833333 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
   0035 2026-08 grossUp                      -6107.809341 cash  -                      c5 {forAsset=Living overflow=false}
-  0036 2026-08 assetGrowth                   1185.850680 cash  growth                 c-
-  0037 2026-08 dividend                       529.983195 cash  qualifiedDividend      c- {qualified=true}
-  0038 2026-08 dividend                       227.135655 cash  nonQualifiedDividend   c- {qualified=false}
-  0039 2026-08 incomeTaxWithholding           -54.512557 cash  -                      c4
+  0036 2026-08 assetGrowth                   1143.592413 cash  growth                 c-
+  0037 2026-08 dividend                       511.097030 cash  qualifiedDividend      c- {qualified=true}
+  0038 2026-08 dividend                       219.041584 cash  nonQualifiedDividend   c- {qualified=false}
+  0039 2026-08 incomeTaxWithholding           -52.569980 cash  -                      c4
   0040 2026-09 transfer                     10507.833333 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
   0041 2026-09 grossUp                      -6123.368004 cash  -                      c5 {forAsset=Living overflow=false}
-  0042 2026-09 assetGrowth                   1206.386596 cash  growth                 c-
-  0043 2026-09 dividend                       539.161155 cash  qualifiedDividend      c- {qualified=true}
-  0044 2026-09 dividend                       231.069066 cash  nonQualifiedDividend   c- {qualified=false}
-  0045 2026-09 incomeTaxWithholding           -55.456576 cash  -                      c4
+  0042 2026-09 assetGrowth                   1163.908019 cash  growth                 c-
+  0043 2026-09 dividend                       520.176529 cash  qualifiedDividend      c- {qualified=true}
+  0044 2026-09 dividend                       222.932798 cash  nonQualifiedDividend   c- {qualified=false}
+  0045 2026-09 incomeTaxWithholding           -53.503872 cash  -                      c4
   0046 2026-10 transfer                     10507.833333 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
   0047 2026-10 grossUp                      -6138.966300 cash  -                      c5 {forAsset=Living overflow=false}
-  0048 2026-10 assetGrowth                   1226.978508 cash  growth                 c-
-  0049 2026-10 dividend                       548.364141 cash  qualifiedDividend      c- {qualified=true}
-  0050 2026-10 dividend                       235.013203 cash  nonQualifiedDividend   c- {qualified=false}
-  0051 2026-10 incomeTaxWithholding           -56.403169 cash  -                      c4
+  0048 2026-10 assetGrowth                   1184.278474 cash  growth                 c-
+  0049 2026-10 dividend                       529.280540 cash  qualifiedDividend      c- {qualified=true}
+  0050 2026-10 dividend                       226.834517 cash  nonQualifiedDividend   c- {qualified=false}
+  0051 2026-10 incomeTaxWithholding           -54.440284 cash  -                      c4
   0052 2026-11 transfer                     10507.833333 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
   0053 2026-11 grossUp                      -6154.604331 cash  -                      c5 {forAsset=Living overflow=false}
-  0054 2026-11 assetGrowth                   1247.626580 cash  growth                 c-
-  0055 2026-11 dividend                       557.592226 cash  qualifiedDividend      c- {qualified=true}
-  0056 2026-11 dividend                       238.968097 cash  nonQualifiedDividend   c- {qualified=false}
-  0057 2026-11 incomeTaxWithholding           -57.352343 cash  -                      c4
+  0054 2026-11 assetGrowth                   1204.703933 cash  growth                 c-
+  0055 2026-11 dividend                       538.409135 cash  qualifiedDividend      c- {qualified=true}
+  0056 2026-11 dividend                       230.746772 cash  nonQualifiedDividend   c- {qualified=false}
+  0057 2026-11 incomeTaxWithholding           -55.379225 cash  -                      c4
   0058 2026-12 transfer                     10507.833333 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
   0059 2026-12 grossUp                      -6170.282197 cash  -                      c5 {forAsset=Living overflow=false}
-  0060 2026-12 assetGrowth                   1268.330973 cash  growth                 c-
-  0061 2026-12 dividend                       566.845482 cash  qualifiedDividend      c- {qualified=true}
-  0062 2026-12 dividend                       242.933778 cash  nonQualifiedDividend   c- {qualified=false}
-  0063 2026-12 incomeTaxWithholding           -58.304107 cash  -                      c4
-  0064 2026-12 taxTrueUp                     4469.066301 cash  -                      c6 {direction=refund}
+  0060 2026-12 assetGrowth                   1225.184553 cash  growth                 c-
+  0061 2026-12 dividend                       547.562382 cash  qualifiedDividend      c- {qualified=true}
+  0062 2026-12 dividend                       234.669592 cash  nonQualifiedDividend   c- {qualified=false}
+  0063 2026-12 incomeTaxWithholding           -56.320702 cash  -                      c4
+  0064 2026-12 taxTrueUp                     3519.632355 cash  -                      c6 {direction=refund}
   0065 2027-01 transfer                         0.000000 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
-  0066 2027-01 grossUp                      -6466.047325 cash  -                      c5 {forAsset=Living overflow=false}
-  0067 2027-01 capitalGainRecognized         1866.982164 info  longTermCapitalGain    c5 {spillover=false}
-  0068 2027-01 taxProvision                  -280.047325 cash  -                      c7 {forAsset=Living}
-  0069 2027-01 assetGrowth                   1268.405696 cash  growth                 c-
-  0070 2027-01 dividend                       566.878878 cash  qualifiedDividend      c- {qualified=true}
-  0071 2027-01 dividend                       242.948091 cash  nonQualifiedDividend   c- {qualified=false}
-  0072 2027-01 incomeTaxWithholding           -58.307542 cash  -                      c4
-  0073 2027-01 capitalGainRecognized           16.935543 info  longTermCapitalGain    c4 {spillover=false}
-  0074 2027-02 transfer                     10536.937167 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
-  0075 2027-02 grossUp                      -6201.757841 cash  -                      c5 {forAsset=Living overflow=false}
-  0076 2027-02 assetGrowth                   1289.210654 cash  growth                 c-
-  0077 2027-02 dividend                       576.177079 cash  qualifiedDividend      c- {qualified=true}
-  0078 2027-02 dividend                       246.933034 cash  nonQualifiedDividend   c- {qualified=false}
-  0079 2027-02 incomeTaxWithholding           -59.263928 cash  -                      c4
-  0080 2027-03 transfer                     10536.937167 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
-  0081 2027-03 grossUp                      -6217.555823 cash  -                      c5 {forAsset=Living overflow=false}
-  0082 2027-03 assetGrowth                   1310.072359 cash  growth                 c-
-  0083 2027-03 dividend                       585.500641 cash  qualifiedDividend      c- {qualified=true}
-  0084 2027-03 dividend                       250.928846 cash  nonQualifiedDividend   c- {qualified=false}
-  0085 2027-03 incomeTaxWithholding           -60.222923 cash  -                      c4
-  0086 2027-04 transfer                     10536.937167 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
-  0087 2027-04 grossUp                      -6233.394048 cash  -                      c5 {forAsset=Living overflow=false}
-  0088 2027-04 assetGrowth                   1330.990973 cash  growth                 c-
-  0089 2027-04 dividend                       594.849638 cash  qualifiedDividend      c- {qualified=true}
-  0090 2027-04 dividend                       254.935559 cash  nonQualifiedDividend   c- {qualified=false}
-  0091 2027-04 incomeTaxWithholding           -61.184534 cash  -                      c4
-  0092 2027-05 transfer                     10536.937167 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
-  0093 2027-05 grossUp                      -6249.272619 cash  -                      c5 {forAsset=Living overflow=false}
-  0094 2027-05 assetGrowth                   1351.966663 cash  growth                 c-
-  0095 2027-05 dividend                       604.224143 cash  qualifiedDividend      c- {qualified=true}
-  0096 2027-05 dividend                       258.953204 cash  nonQualifiedDividend   c- {qualified=false}
-  0097 2027-05 incomeTaxWithholding           -62.148769 cash  -                      c4
-  0098 2027-06 transfer                     10536.937167 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
-  0099 2027-06 assetGrowth                   1393.510200 cash  growth                 c-
-  0100 2027-06 dividend                       622.790879 cash  qualifiedDividend      c- {qualified=true}
-  0101 2027-06 dividend                       266.910377 cash  nonQualifiedDividend   c- {qualified=false}
-  0102 2027-07 transfer                     10536.937167 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
-  0103 2027-07 assetGrowth                   1435.480030 cash  growth                 c-
-  0104 2027-07 dividend                       641.548135 cash  qualifiedDividend      c- {qualified=true}
-  0105 2027-07 dividend                       274.949201 cash  nonQualifiedDividend   c- {qualified=false}
-  0106 2027-08 transfer                     10536.937167 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
-  0107 2027-08 assetGrowth                   1477.674982 cash  growth                 c-
-  0108 2027-08 dividend                       660.406003 cash  qualifiedDividend      c- {qualified=true}
-  0109 2027-08 dividend                       283.031144 cash  nonQualifiedDividend   c- {qualified=false}
-  0110 2027-09 transfer                     10536.937167 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
-  0111 2027-09 assetGrowth                   1520.096264 cash  growth                 c-
-  0112 2027-09 dividend                       679.365023 cash  qualifiedDividend      c- {qualified=true}
-  0113 2027-09 dividend                       291.156438 cash  nonQualifiedDividend   c- {qualified=false}
-  0114 2027-10 transfer                     10536.937167 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
-  0115 2027-10 assetGrowth                   1562.745089 cash  growth                 c-
-  0116 2027-10 dividend                       698.425736 cash  qualifiedDividend      c- {qualified=true}
-  0117 2027-10 dividend                       299.325316 cash  nonQualifiedDividend   c- {qualified=false}
-  0118 2027-11 transfer                     10536.937167 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
-  0119 2027-11 assetGrowth                   1605.622677 cash  growth                 c-
-  0120 2027-11 dividend                       717.588690 cash  qualifiedDividend      c- {qualified=true}
-  0121 2027-11 dividend                       307.538010 cash  nonQualifiedDividend   c- {qualified=false}
-  0122 2027-12 transfer                     10536.937167 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
-  0123 2027-12 assetGrowth                   1648.730256 cash  growth                 c-
-  0124 2027-12 dividend                       736.854431 cash  qualifiedDividend      c- {qualified=true}
-  0125 2027-12 dividend                       315.794756 cash  nonQualifiedDividend   c- {qualified=false}
-  0126 2028-01 transfer                         0.000000 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
-  0127 2028-01 assetGrowth                   1657.573870 cash  growth                 c-
-  0128 2028-01 dividend                       740.806840 cash  qualifiedDividend      c- {qualified=true}
-  0129 2028-01 dividend                       317.488646 cash  nonQualifiedDividend   c- {qualified=false}
-  0130 2028-02 transfer                     10566.943219 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
-  0131 2028-02 spillover                    -3128.325542 cash  -                      c3 {cause=grossUp depleted=Checking origin=oneSided}
-  0132 2028-02 assetGrowth                   1690.817018 cash  growth                 c-
-  0133 2028-02 dividend                       755.663946 cash  qualifiedDividend      c- {qualified=true}
-  0134 2028-02 dividend                       323.855977 cash  nonQualifiedDividend   c- {qualified=false}
-  0135 2028-02 incomeTaxWithholding           -77.725434 cash  -                      c4
-  0136 2028-03 transfer                     10566.943219 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
-  0137 2028-03 grossUp                      -6410.300054 cash  -                      c5 {forAsset=Living overflow=false}
-  0138 2028-03 assetGrowth                   1713.239695 cash  growth                 c-
-  0139 2028-03 dividend                       765.685142 cash  qualifiedDividend      c- {qualified=true}
-  0140 2028-03 dividend                       328.150775 cash  nonQualifiedDividend   c- {qualified=false}
-  0141 2028-03 incomeTaxWithholding           -78.756186 cash  -                      c4
-  0142 2028-04 transfer                     10566.943219 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
-  0143 2028-04 grossUp                      -6426.629264 cash  -                      c5 {forAsset=Living overflow=false}
-  0144 2028-04 assetGrowth                   1735.725814 cash  growth                 c-
-  0145 2028-04 dividend                       775.734692 cash  qualifiedDividend      c- {qualified=true}
-  0146 2028-04 dividend                       332.457725 cash  nonQualifiedDividend   c- {qualified=false}
-  0147 2028-04 incomeTaxWithholding           -79.789854 cash  -                      c4
-  0148 2028-05 transfer                     10566.943219 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
-  0149 2028-05 grossUp                      -6443.000070 cash  -                      c5 {forAsset=Living overflow=false}
-  0150 2028-05 assetGrowth                   1758.275567 cash  growth                 c-
-  0151 2028-05 dividend                       785.812681 cash  qualifiedDividend      c- {qualified=true}
-  0152 2028-05 dividend                       336.776863 cash  nonQualifiedDividend   c- {qualified=false}
-  0153 2028-05 incomeTaxWithholding           -80.826447 cash  -                      c4
-  0154 2028-06 transfer                     10566.943219 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
-  0155 2028-06 grossUp                      -6459.412578 cash  -                      c5 {forAsset=Living overflow=false}
-  0156 2028-06 assetGrowth                   1780.889152 cash  growth                 c-
-  0157 2028-06 dividend                       795.919198 cash  qualifiedDividend      c- {qualified=true}
-  0158 2028-06 dividend                       341.108228 cash  nonQualifiedDividend   c- {qualified=false}
-  0159 2028-06 incomeTaxWithholding           -81.865975 cash  -                      c4
-  0160 2028-07 transfer                     10566.943219 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
-  0161 2028-07 grossUp                      -6475.866894 cash  -                      c5 {forAsset=Living overflow=false}
-  0162 2028-07 assetGrowth                   1803.566763 cash  growth                 c-
-  0163 2028-07 dividend                       806.054329 cash  qualifiedDividend      c- {qualified=true}
-  0164 2028-07 dividend                       345.451855 cash  nonQualifiedDividend   c- {qualified=false}
-  0165 2028-07 incomeTaxWithholding           -82.908445 cash  -                      c4
-  0166 2028-08 transfer                     10566.943219 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
-  0167 2028-08 grossUp                      -6492.363124 cash  -                      c5 {forAsset=Living overflow=false}
-  0168 2028-08 assetGrowth                   1826.308597 cash  growth                 c-
-  0169 2028-08 dividend                       816.218164 cash  qualifiedDividend      c- {qualified=true}
-  0170 2028-08 dividend                       349.807784 cash  nonQualifiedDividend   c- {qualified=false}
-  0171 2028-08 incomeTaxWithholding           -83.953868 cash  -                      c4
-  0172 2028-09 transfer                     10566.943219 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
-  0173 2028-09 grossUp                      -6508.901377 cash  -                      c5 {forAsset=Living overflow=false}
-  0174 2028-09 assetGrowth                   1849.114852 cash  growth                 c-
-  0175 2028-09 dividend                       826.410789 cash  qualifiedDividend      c- {qualified=true}
-  0176 2028-09 dividend                       354.176052 cash  nonQualifiedDividend   c- {qualified=false}
-  0177 2028-09 incomeTaxWithholding           -85.002253 cash  -                      c4
-  0178 2028-10 transfer                     10566.943219 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
-  0179 2028-10 grossUp                      -6525.481758 cash  -                      c5 {forAsset=Living overflow=false}
-  0180 2028-10 assetGrowth                   1871.985724 cash  growth                 c-
-  0181 2028-10 dividend                       836.632294 cash  qualifiedDividend      c- {qualified=true}
-  0182 2028-10 dividend                       358.556697 cash  nonQualifiedDividend   c- {qualified=false}
-  0183 2028-10 incomeTaxWithholding           -86.053607 cash  -                      c4
-  0184 2028-11 transfer                     10566.943219 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
-  0185 2028-11 grossUp                      -6542.104374 cash  -                      c5 {forAsset=Living overflow=false}
-  0186 2028-11 assetGrowth                   1894.921414 cash  growth                 c-
-  0187 2028-11 dividend                       846.882766 cash  qualifiedDividend      c- {qualified=true}
-  0188 2028-11 dividend                       362.949757 cash  nonQualifiedDividend   c- {qualified=false}
-  0189 2028-11 incomeTaxWithholding           -87.107942 cash  -                      c4
-  0190 2028-12 transfer                     10566.943219 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
-  0191 2028-12 grossUp                      -6558.769335 cash  -                      c5 {forAsset=Living overflow=false}
-  0192 2028-12 assetGrowth                   1917.922120 cash  growth                 c-
-  0193 2028-12 dividend                       857.162296 cash  qualifiedDividend      c- {qualified=true}
-  0194 2028-12 dividend                       367.355270 cash  nonQualifiedDividend   c- {qualified=false}
-  0195 2028-12 incomeTaxWithholding           -88.165265 cash  -                      c4
-  0196 2028-12 taxTrueUp                     4288.012319 cash  -                      c8 {direction=refund}
-  0197 2029-01 transfer                         0.000000 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
-  0198 2029-01 grossUp                      -6835.705147 cash  -                      c5 {forAsset=Living overflow=false}
-  0199 2029-01 capitalGainRecognized         1734.856009 info  longTermCapitalGain    c5 {spillover=false}
-  0200 2029-01 taxProvision                  -260.228401 cash  -                      c7 {forAsset=Living}
-  0201 2029-01 assetGrowth                   1919.580537 cash  growth                 c-
-  0202 2029-01 dividend                       857.903480 cash  qualifiedDividend      c- {qualified=true}
-  0203 2029-01 dividend                       367.672920 cash  nonQualifiedDividend   c- {qualified=false}
-  0204 2029-01 incomeTaxWithholding           -88.241501 cash  -                      c4
-  0205 2029-01 capitalGainRecognized           22.562954 info  longTermCapitalGain    c4 {spillover=false}
-  0206 2029-02 transfer                     10597.879459 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
-  0207 2029-02 grossUp                      -6592.226717 cash  -                      c5 {forAsset=Living overflow=false}
-  0208 2029-02 assetGrowth                   1942.701547 cash  growth                 c-
-  0209 2029-02 dividend                       868.236777 cash  qualifiedDividend      c- {qualified=true}
-  0210 2029-02 dividend                       372.101476 cash  nonQualifiedDividend   c- {qualified=false}
-  0211 2029-02 incomeTaxWithholding           -89.304354 cash  -                      c4
-  0212 2029-03 transfer                     10597.879459 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
-  0213 2029-03 grossUp                      -6609.019356 cash  -                      c5 {forAsset=Living overflow=false}
-  0214 2029-03 assetGrowth                   1965.888122 cash  growth                 c-
-  0215 2029-03 dividend                       878.599376 cash  qualifiedDividend      c- {qualified=true}
-  0216 2029-03 dividend                       376.542590 cash  nonQualifiedDividend   c- {qualified=false}
-  0217 2029-03 incomeTaxWithholding           -90.370221 cash  -                      c4
-  0218 2029-04 transfer                     10597.879459 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
-  0219 2029-04 grossUp                      -6625.854771 cash  -                      c5 {forAsset=Living overflow=false}
-  0220 2029-04 assetGrowth                   1989.140463 cash  growth                 c-
-  0221 2029-04 dividend                       888.991367 cash  qualifiedDividend      c- {qualified=true}
-  0222 2029-04 dividend                       380.996300 cash  nonQualifiedDividend   c- {qualified=false}
-  0223 2029-04 incomeTaxWithholding           -91.439112 cash  -                      c4
-  0224 2029-05 transfer                     10597.879459 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
-  0225 2029-05 grossUp                      -6642.733072 cash  -                      c5 {forAsset=Living overflow=false}
-  0226 2029-05 assetGrowth                   2012.458772 cash  growth                 c-
-  0227 2029-05 dividend                       899.412841 cash  qualifiedDividend      c- {qualified=true}
-  0228 2029-05 dividend                       385.462646 cash  nonQualifiedDividend   c- {qualified=false}
-  0229 2029-05 incomeTaxWithholding           -92.511035 cash  -                      c4
-  0230 2029-06 transfer                     10597.879459 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
-  0231 2029-06 grossUp                      -6659.654367 cash  -                      c5 {forAsset=Living overflow=false}
-  0232 2029-06 assetGrowth                   2035.843254 cash  growth                 c-
-  0233 2029-06 dividend                       909.863889 cash  qualifiedDividend      c- {qualified=true}
-  0234 2029-06 dividend                       389.941667 cash  nonQualifiedDividend   c- {qualified=false}
-  0235 2029-06 incomeTaxWithholding           -93.586000 cash  -                      c4
-  0236 2029-07 transfer                     10597.879459 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
-  0237 2029-07 grossUp                      -6676.618767 cash  -                      c5 {forAsset=Living overflow=false}
-  0238 2029-07 assetGrowth                   2059.294111 cash  growth                 c-
-  0239 2029-07 dividend                       920.344601 cash  qualifiedDividend      c- {qualified=true}
-  0240 2029-07 dividend                       394.433401 cash  nonQualifiedDividend   c- {qualified=false}
-  0241 2029-07 incomeTaxWithholding           -94.664016 cash  -                      c4
-  0242 2029-08 transfer                     10597.879459 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
-  0243 2029-08 grossUp                      -6693.626381 cash  -                      c5 {forAsset=Living overflow=false}
-  0244 2029-08 assetGrowth                   2082.811548 cash  growth                 c-
-  0245 2029-08 dividend                       930.855070 cash  qualifiedDividend      c- {qualified=true}
-  0246 2029-08 dividend                       398.937887 cash  nonQualifiedDividend   c- {qualified=false}
-  0247 2029-08 incomeTaxWithholding           -95.745093 cash  -                      c4
-  0248 2029-09 transfer                     10597.879459 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
-  0249 2029-09 grossUp                      -6710.677319 cash  -                      c5 {forAsset=Living overflow=false}
-  0250 2029-09 assetGrowth                   2106.395771 cash  growth                 c-
-  0251 2029-09 dividend                       941.395387 cash  qualifiedDividend      c- {qualified=true}
-  0252 2029-09 dividend                       403.455166 cash  nonQualifiedDividend   c- {qualified=false}
-  0253 2029-09 incomeTaxWithholding           -96.829240 cash  -                      c4
-  0254 2029-10 transfer                     10597.879459 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
-  0255 2029-10 grossUp                      -6727.771692 cash  -                      c5 {forAsset=Living overflow=false}
-  0256 2029-10 assetGrowth                   2130.046986 cash  growth                 c-
-  0257 2029-10 dividend                       951.965644 cash  qualifiedDividend      c- {qualified=true}
-  0258 2029-10 dividend                       407.985276 cash  nonQualifiedDividend   c- {qualified=false}
-  0259 2029-10 incomeTaxWithholding           -97.916466 cash  -                      c4
-  0260 2029-11 transfer                     10597.879459 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
-  0261 2029-11 grossUp                      -6744.909610 cash  -                      c5 {forAsset=Living overflow=false}
-  0262 2029-11 assetGrowth                   2153.765398 cash  growth                 c-
-  0263 2029-11 dividend                       962.565933 cash  qualifiedDividend      c- {qualified=true}
-  0264 2029-11 dividend                       412.528257 cash  nonQualifiedDividend   c- {qualified=false}
-  0265 2029-11 incomeTaxWithholding           -99.006782 cash  -                      c4
-  0266 2029-12 transfer                     10597.879459 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
-  0267 2029-12 grossUp                      -6762.091184 cash  -                      c5 {forAsset=Living overflow=false}
-  0268 2029-12 assetGrowth                   2177.551216 cash  growth                 c-
-  0269 2029-12 dividend                       973.196347 cash  qualifiedDividend      c- {qualified=true}
-  0270 2029-12 dividend                       417.084149 cash  nonQualifiedDividend   c- {qualified=false}
-  0271 2029-12 incomeTaxWithholding          -100.100196 cash  -                      c4
-  0272 2029-12 taxTrueUp                     4256.085894 cash  -                      c9 {direction=refund}
-  0273 2030-01 transfer                         0.000000 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
-  0274 2030-01 grossUp                      -7051.850786 cash  -                      c5 {forAsset=Living overflow=false}
-  0275 2030-01 capitalGainRecognized         1816.895075 info  longTermCapitalGain    c5 {spillover=false}
-  0276 2030-01 taxProvision                  -272.534261 cash  -                      c7 {forAsset=Living}
-  0277 2030-01 assetGrowth                   2179.751060 cash  growth                 c-
-  0278 2030-01 dividend                       974.179507 cash  qualifiedDividend      c- {qualified=true}
-  0279 2030-01 dividend                       417.505503 cash  nonQualifiedDividend   c- {qualified=false}
-  0280 2030-01 incomeTaxWithholding          -100.201321 cash  -                      c4
-  0281 2030-01 capitalGainRecognized           26.005211 info  longTermCapitalGain    c4 {spillover=false}
-  0282 2030-02 transfer                     10629.774722 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
-  0283 2030-02 grossUp                      -6796.585745 cash  -                      c5 {forAsset=Living overflow=false}
-  0284 2030-02 assetGrowth                   2203.663843 cash  growth                 c-
-  0285 2030-02 dividend                       984.866664 cash  qualifiedDividend      c- {qualified=true}
-  0286 2030-02 dividend                       422.085713 cash  nonQualifiedDividend   c- {qualified=false}
-  0287 2030-02 incomeTaxWithholding          -101.300571 cash  -                      c4
-  0288 2030-03 transfer                     10629.774722 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
-  0289 2030-03 grossUp                      -6813.898956 cash  -                      c5 {forAsset=Living overflow=false}
-  0290 2030-03 assetGrowth                   2227.644613 cash  growth                 c-
-  0291 2030-03 dividend                       995.584207 cash  qualifiedDividend      c- {qualified=true}
-  0292 2030-03 dividend                       426.678946 cash  nonQualifiedDividend   c- {qualified=false}
-  0293 2030-03 incomeTaxWithholding          -102.402947 cash  -                      c4
-  0294 2030-04 transfer                     10629.774722 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
-  0295 2030-04 grossUp                      -6831.256269 cash  -                      c5 {forAsset=Living overflow=false}
-  0296 2030-04 assetGrowth                   2251.693582 cash  growth                 c-
-  0297 2030-04 dividend                      1006.332229 cash  qualifiedDividend      c- {qualified=true}
-  0298 2030-04 dividend                       431.285241 cash  nonQualifiedDividend   c- {qualified=false}
-  0299 2030-04 incomeTaxWithholding          -103.508458 cash  -                      c4
-  0300 2030-05 transfer                     10629.774722 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
-  0301 2030-05 grossUp                      -6848.657797 cash  -                      c5 {forAsset=Living overflow=false}
-  0302 2030-05 assetGrowth                   2275.810960 cash  growth                 c-
-  0303 2030-05 dividend                      1017.110824 cash  qualifiedDividend      c- {qualified=true}
-  0304 2030-05 dividend                       435.904639 cash  nonQualifiedDividend   c- {qualified=false}
-  0305 2030-05 incomeTaxWithholding          -104.617113 cash  -                      c4
-  0306 2030-06 transfer                     10629.774722 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
-  0307 2030-06 grossUp                      -6866.103653 cash  -                      c5 {forAsset=Living overflow=false}
-  0308 2030-06 assetGrowth                   2299.996957 cash  growth                 c-
-  0309 2030-06 dividend                      1027.920088 cash  qualifiedDividend      c- {qualified=true}
-  0310 2030-06 dividend                       440.537180 cash  nonQualifiedDividend   c- {qualified=false}
-  0311 2030-06 incomeTaxWithholding          -105.728923 cash  -                      c4
-  0312 2030-07 transfer                     10629.774722 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
-  0313 2030-07 grossUp                      -6883.593949 cash  -                      c5 {forAsset=Living overflow=false}
-  0314 2030-07 assetGrowth                   2324.251788 cash  growth                 c-
-  0315 2030-07 dividend                      1038.760114 cash  qualifiedDividend      c- {qualified=true}
-  0316 2030-07 dividend                       445.182906 cash  nonQualifiedDividend   c- {qualified=false}
-  0317 2030-07 incomeTaxWithholding          -106.843897 cash  -                      c4
-  0318 2030-08 transfer                     10629.774722 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
-  0319 2030-08 grossUp                      -6901.128799 cash  -                      c5 {forAsset=Living overflow=false}
-  0320 2030-08 assetGrowth                   2348.575664 cash  growth                 c-
-  0321 2030-08 dividend                      1049.630998 cash  qualifiedDividend      c- {qualified=true}
-  0322 2030-08 dividend                       449.841856 cash  nonQualifiedDividend   c- {qualified=false}
-  0323 2030-08 incomeTaxWithholding          -107.962046 cash  -                      c4
-  0324 2030-09 transfer                     10629.774722 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
-  0325 2030-09 grossUp                      -6918.708316 cash  -                      c5 {forAsset=Living overflow=false}
-  0326 2030-09 assetGrowth                   2372.968800 cash  growth                 c-
-  0327 2030-09 dividend                      1060.532836 cash  qualifiedDividend      c- {qualified=true}
-  0328 2030-09 dividend                       454.514073 cash  nonQualifiedDividend   c- {qualified=false}
-  0329 2030-09 incomeTaxWithholding          -109.083377 cash  -                      c4
-  0330 2030-10 transfer                     10629.774722 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
-  0331 2030-10 grossUp                      -6936.332615 cash  -                      c5 {forAsset=Living overflow=false}
-  0332 2030-10 assetGrowth                   2397.431409 cash  growth                 c-
-  0333 2030-10 dividend                      1071.465724 cash  qualifiedDividend      c- {qualified=true}
-  0334 2030-10 dividend                       459.199596 cash  nonQualifiedDividend   c- {qualified=false}
-  0335 2030-10 incomeTaxWithholding          -110.207903 cash  -                      c4
-  0336 2030-11 transfer                     10629.774722 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
-  0337 2030-11 grossUp                      -6954.001808 cash  -                      c5 {forAsset=Living overflow=false}
-  0338 2030-11 assetGrowth                   2421.963708 cash  growth                 c-
-  0339 2030-11 dividend                      1082.429757 cash  qualifiedDividend      c- {qualified=true}
-  0340 2030-11 dividend                       463.898467 cash  nonQualifiedDividend   c- {qualified=false}
-  0341 2030-11 incomeTaxWithholding          -111.335632 cash  -                      c4
-  0342 2030-12 transfer                     10629.774722 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
-  0343 2030-12 grossUp                      -6971.716011 cash  -                      c5 {forAsset=Living overflow=false}
-  0344 2030-12 assetGrowth                   2446.565911 cash  growth                 c-
-  0345 2030-12 dividend                      1093.425032 cash  qualifiedDividend      c- {qualified=true}
-  0346 2030-12 dividend                       468.610728 cash  nonQualifiedDividend   c- {qualified=false}
-  0347 2030-12 incomeTaxWithholding          -112.466575 cash  -                      c4
-  0348 2030-12 taxTrueUp                     4225.849533 cash  -                      c10 {direction=refund}
+  0066 2027-01 grossUp                      -6475.789696 cash  -                      c5 {forAsset=Living overflow=false}
+  0067 2027-01 capitalGainRecognized         1931.931309 info  longTermCapitalGain    c5 {spillover=false}
+  0068 2027-01 taxProvision                  -289.789696 cash  -                      c7 {forAsset=Living}
+  0069 2027-01 assetGrowth                   1221.894243 cash  growth                 c-
+  0070 2027-01 dividend                       546.091869 cash  qualifiedDividend      c- {qualified=true}
+  0071 2027-01 dividend                       234.039372 cash  nonQualifiedDividend   c- {qualified=false}
+  0072 2027-01 incomeTaxWithholding           -56.169449 cash  -                      c4
+  0073 2027-01 capitalGainRecognized           16.850609 info  longTermCapitalGain    c4 {spillover=false}
+  0074 2027-02 transfer                         0.000000 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0075 2027-02 grossUp                      -6493.983166 cash  -                      c5 {forAsset=Living overflow=false}
+  0076 2027-02 capitalGainRecognized         1948.168833 info  longTermCapitalGain    c5 {spillover=false}
+  0077 2027-02 taxProvision                  -292.225325 cash  -                      c7 {forAsset=Living}
+  0078 2027-02 assetGrowth                   1207.004858 cash  growth                 c-
+  0079 2027-02 dividend                       539.437470 cash  qualifiedDividend      c- {qualified=true}
+  0080 2027-02 dividend                       231.187487 cash  nonQualifiedDividend   c- {qualified=false}
+  0081 2027-02 incomeTaxWithholding           -55.484997 cash  -                      c4
+  0082 2027-02 capitalGainRecognized           16.737143 info  longTermCapitalGain    c4 {spillover=false}
+  0083 2027-03 transfer                      7866.881500 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0084 2027-03 grossUp                      -6217.555823 cash  -                      c5 {forAsset=Living overflow=false}
+  0085 2027-03 assetGrowth                   1218.696923 cash  growth                 c-
+  0086 2027-03 dividend                       544.662915 cash  qualifiedDividend      c- {qualified=true}
+  0087 2027-03 dividend                       233.426964 cash  nonQualifiedDividend   c- {qualified=false}
+  0088 2027-03 incomeTaxWithholding           -56.022471 cash  -                      c4
+  0089 2027-04 transfer                     10536.937167 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0090 2027-04 grossUp                      -6233.394048 cash  -                      c5 {forAsset=Living overflow=false}
+  0091 2027-04 assetGrowth                   1239.139161 cash  growth                 c-
+  0092 2027-04 dividend                       553.799009 cash  qualifiedDividend      c- {qualified=true}
+  0093 2027-04 dividend                       237.342432 cash  nonQualifiedDividend   c- {qualified=false}
+  0094 2027-04 incomeTaxWithholding           -56.962184 cash  -                      c4
+  0095 2027-05 transfer                     10536.937167 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0096 2027-05 grossUp                      -6249.272619 cash  -                      c5 {forAsset=Living overflow=false}
+  0097 2027-05 assetGrowth                   1259.635990 cash  growth                 c-
+  0098 2027-05 dividend                       562.959500 cash  qualifiedDividend      c- {qualified=true}
+  0099 2027-05 dividend                       241.268357 cash  nonQualifiedDividend   c- {qualified=false}
+  0100 2027-05 incomeTaxWithholding           -57.904406 cash  -                      c4
+  0101 2027-06 transfer                     10536.937167 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0102 2027-06 assetGrowth                   1300.698170 cash  growth                 c-
+  0103 2027-06 dividend                       581.311107 cash  qualifiedDividend      c- {qualified=true}
+  0104 2027-06 dividend                       249.133331 cash  nonQualifiedDividend   c- {qualified=false}
+  0105 2027-07 transfer                     10536.937167 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0106 2027-07 assetGrowth                   1342.170167 cash  growth                 c-
+  0107 2027-07 dividend                       599.845870 cash  qualifiedDividend      c- {qualified=true}
+  0108 2027-07 dividend                       257.076801 cash  nonQualifiedDividend   c- {qualified=false}
+  0109 2027-08 transfer                     10536.937167 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0110 2027-08 assetGrowth                   1383.864615 cash  growth                 c-
+  0111 2027-08 dividend                       618.480051 cash  qualifiedDividend      c- {qualified=true}
+  0112 2027-08 dividend                       265.062879 cash  nonQualifiedDividend   c- {qualified=false}
+  0113 2027-09 transfer                     10536.937167 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0114 2027-09 assetGrowth                   1425.782707 cash  growth                 c-
+  0115 2027-09 dividend                       637.214184 cash  qualifiedDividend      c- {qualified=true}
+  0116 2027-09 dividend                       273.091793 cash  nonQualifiedDividend   c- {qualified=false}
+  0117 2027-10 transfer                     10536.937167 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0118 2027-10 assetGrowth                   1467.925644 cash  growth                 c-
+  0119 2027-10 dividend                       656.048806 cash  qualifiedDividend      c- {qualified=true}
+  0120 2027-10 dividend                       281.163774 cash  nonQualifiedDividend   c- {qualified=false}
+  0121 2027-11 transfer                     10536.937167 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0122 2027-11 assetGrowth                   1510.294631 cash  growth                 c-
+  0123 2027-11 dividend                       674.984454 cash  qualifiedDividend      c- {qualified=true}
+  0124 2027-11 dividend                       289.279052 cash  nonQualifiedDividend   c- {qualified=false}
+  0125 2027-12 transfer                     10536.937167 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0126 2027-12 assetGrowth                   1552.890881 cash  growth                 c-
+  0127 2027-12 dividend                       694.021670 cash  qualifiedDividend      c- {qualified=true}
+  0128 2027-12 dividend                       297.437859 cash  nonQualifiedDividend   c- {qualified=false}
+  0129 2028-01 transfer                         0.000000 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0130 2028-01 assetGrowth                   1561.220422 cash  growth                 c-
+  0131 2028-01 dividend                       697.744329 cash  qualifiedDividend      c- {qualified=true}
+  0132 2028-01 dividend                       299.033284 cash  nonQualifiedDividend   c- {qualified=false}
+  0133 2028-02 transfer                         0.000000 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0134 2028-02 spillover                    -4035.060890 cash  -                      c3 {cause=grossUp depleted=Checking origin=oneSided}
+  0135 2028-02 capitalGainRecognized         1069.331013 info  longTermCapitalGain    c3 {spillover=true}
+  0136 2028-02 assetGrowth                   1556.384903 cash  growth                 c-
+  0137 2028-02 dividend                       695.583227 cash  qualifiedDividend      c- {qualified=true}
+  0138 2028-02 dividend                       298.107097 cash  nonQualifiedDividend   c- {qualified=false}
+  0139 2028-02 incomeTaxWithholding           -71.545703 cash  -                      c4
+  0140 2028-02 capitalGainRecognized           19.092132 info  longTermCapitalGain    c4 {spillover=false}
+  0141 2028-03 transfer                      7220.837827 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0142 2028-03 grossUp                      -6410.300054 cash  -                      c5 {forAsset=Living overflow=false}
+  0143 2028-03 assetGrowth                   1567.152453 cash  growth                 c-
+  0144 2028-03 dividend                       700.395486 cash  qualifiedDividend      c- {qualified=true}
+  0145 2028-03 dividend                       300.169494 cash  nonQualifiedDividend   c- {qualified=false}
+  0146 2028-03 incomeTaxWithholding           -72.040679 cash  -                      c4
+  0147 2028-04 transfer                     10566.943219 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0148 2028-04 grossUp                      -6426.629264 cash  -                      c5 {forAsset=Living overflow=false}
+  0149 2028-04 assetGrowth                   1588.876960 cash  growth                 c-
+  0150 2028-04 dividend                       710.104654 cash  qualifiedDividend      c- {qualified=true}
+  0151 2028-04 dividend                       304.330566 cash  nonQualifiedDividend   c- {qualified=false}
+  0152 2028-04 incomeTaxWithholding           -73.039336 cash  -                      c4
+  0153 2028-05 transfer                     10566.943219 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0154 2028-05 grossUp                      -6443.000070 cash  -                      c5 {forAsset=Living overflow=false}
+  0155 2028-05 assetGrowth                   1610.661132 cash  growth                 c-
+  0156 2028-05 dividend                       719.840488 cash  qualifiedDividend      c- {qualified=true}
+  0157 2028-05 dividend                       308.503066 cash  nonQualifiedDividend   c- {qualified=false}
+  0158 2028-05 incomeTaxWithholding           -74.040736 cash  -                      c4
+  0159 2028-06 transfer                     10566.943219 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0160 2028-06 grossUp                      -6459.412578 cash  -                      c5 {forAsset=Living overflow=false}
+  0161 2028-06 assetGrowth                   1632.505143 cash  growth                 c-
+  0162 2028-06 dividend                       729.603065 cash  qualifiedDividend      c- {qualified=true}
+  0163 2028-06 dividend                       312.687028 cash  nonQualifiedDividend   c- {qualified=false}
+  0164 2028-06 incomeTaxWithholding           -75.044887 cash  -                      c4
+  0165 2028-07 transfer                     10566.943219 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0166 2028-07 grossUp                      -6475.866894 cash  -                      c5 {forAsset=Living overflow=false}
+  0167 2028-07 assetGrowth                   1654.409168 cash  growth                 c-
+  0168 2028-07 dividend                       739.392464 cash  qualifiedDividend      c- {qualified=true}
+  0169 2028-07 dividend                       316.882484 cash  nonQualifiedDividend   c- {qualified=false}
+  0170 2028-07 incomeTaxWithholding           -76.051796 cash  -                      c4
+  0171 2028-08 transfer                     10566.943219 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0172 2028-08 grossUp                      -6492.363124 cash  -                      c5 {forAsset=Living overflow=false}
+  0173 2028-08 assetGrowth                   1676.373384 cash  growth                 c-
+  0174 2028-08 dividend                       749.208763 cash  qualifiedDividend      c- {qualified=true}
+  0175 2028-08 dividend                       321.089470 cash  nonQualifiedDividend   c- {qualified=false}
+  0176 2028-08 incomeTaxWithholding           -77.061473 cash  -                      c4
+  0177 2028-09 transfer                     10566.943219 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0178 2028-09 grossUp                      -6508.901377 cash  -                      c5 {forAsset=Living overflow=false}
+  0179 2028-09 assetGrowth                   1698.397966 cash  growth                 c-
+  0180 2028-09 dividend                       759.052041 cash  qualifiedDividend      c- {qualified=true}
+  0181 2028-09 dividend                       325.308018 cash  nonQualifiedDividend   c- {qualified=false}
+  0182 2028-09 incomeTaxWithholding           -78.073924 cash  -                      c4
+  0183 2028-10 transfer                     10566.943219 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0184 2028-10 grossUp                      -6525.481758 cash  -                      c5 {forAsset=Living overflow=false}
+  0185 2028-10 assetGrowth                   1720.483091 cash  growth                 c-
+  0186 2028-10 dividend                       768.922378 cash  qualifiedDividend      c- {qualified=true}
+  0187 2028-10 dividend                       329.538162 cash  nonQualifiedDividend   c- {qualified=false}
+  0188 2028-10 incomeTaxWithholding           -79.089159 cash  -                      c4
+  0189 2028-11 transfer                     10566.943219 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0190 2028-11 grossUp                      -6542.104374 cash  -                      c5 {forAsset=Living overflow=false}
+  0191 2028-11 assetGrowth                   1742.628936 cash  growth                 c-
+  0192 2028-11 dividend                       778.819852 cash  qualifiedDividend      c- {qualified=true}
+  0193 2028-11 dividend                       333.779936 cash  nonQualifiedDividend   c- {qualified=false}
+  0194 2028-11 incomeTaxWithholding           -80.107185 cash  -                      c4
+  0195 2028-12 transfer                     10566.943219 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0196 2028-12 grossUp                      -6558.769335 cash  -                      c5 {forAsset=Living overflow=false}
+  0197 2028-12 assetGrowth                   1764.835680 cash  growth                 c-
+  0198 2028-12 dividend                       788.744542 cash  qualifiedDividend      c- {qualified=true}
+  0199 2028-12 dividend                       338.033375 cash  nonQualifiedDividend   c- {qualified=false}
+  0200 2028-12 incomeTaxWithholding           -81.128010 cash  -                      c4
+  0201 2028-12 taxTrueUp                     3198.782845 cash  -                      c8 {direction=refund}
+  0202 2029-01 transfer                         0.000000 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0203 2029-01 grossUp                      -6847.146527 cash  -                      c5 {forAsset=Living overflow=false}
+  0204 2029-01 capitalGainRecognized         1811.131876 info  longTermCapitalGain    c5 {spillover=false}
+  0205 2029-01 taxProvision                  -271.669781 cash  -                      c7 {forAsset=Living}
+  0206 2029-01 assetGrowth                   1762.092686 cash  growth                 c-
+  0207 2029-01 dividend                       787.518636 cash  qualifiedDividend      c- {qualified=true}
+  0208 2029-01 dividend                       337.507987 cash  nonQualifiedDividend   c- {qualified=false}
+  0209 2029-01 incomeTaxWithholding           -81.001917 cash  -                      c4
+  0210 2029-01 capitalGainRecognized           21.575188 info  longTermCapitalGain    c4 {spillover=false}
+  0211 2029-02 transfer                         0.000000 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0212 2029-02 grossUp                      -6866.567417 cash  -                      c5 {forAsset=Living overflow=false}
+  0213 2029-02 capitalGainRecognized         1828.938002 info  longTermCapitalGain    c5 {spillover=false}
+  0214 2029-02 taxProvision                  -274.340700 cash  -                      c7 {forAsset=Living}
+  0215 2029-02 assetGrowth                   1748.799829 cash  growth                 c-
+  0216 2029-02 dividend                       781.577761 cash  qualifiedDividend      c- {qualified=true}
+  0217 2029-02 dividend                       334.961898 cash  nonQualifiedDividend   c- {qualified=false}
+  0218 2029-02 incomeTaxWithholding           -80.390855 cash  -                      c4
+  0219 2029-02 capitalGainRecognized           21.559963 info  longTermCapitalGain    c4 {spillover=false}
+  0220 2029-03 transfer                      6554.766799 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0221 2029-03 grossUp                      -6611.293327 cash  -                      c5 {forAsset=Living overflow=false}
+  0222 2029-03 capitalGainRecognized           15.159807 info  longTermCapitalGain    c5 {spillover=false}
+  0223 2029-03 taxProvision                    -2.273971 cash  -                      c7 {forAsset=Living}
+  0224 2029-03 assetGrowth                   1757.731973 cash  growth                 c-
+  0225 2029-03 dividend                       785.569736 cash  qualifiedDividend      c- {qualified=true}
+  0226 2029-03 dividend                       336.672744 cash  nonQualifiedDividend   c- {qualified=false}
+  0227 2029-03 incomeTaxWithholding           -80.801459 cash  -                      c4
+  0228 2029-03 capitalGainRecognized           21.817578 info  longTermCapitalGain    c4 {spillover=false}
+  0229 2029-04 transfer                     10597.879459 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0230 2029-04 grossUp                      -6625.854771 cash  -                      c5 {forAsset=Living overflow=false}
+  0231 2029-04 assetGrowth                   1779.899112 cash  growth                 c-
+  0232 2029-04 dividend                       795.476727 cash  qualifiedDividend      c- {qualified=true}
+  0233 2029-04 dividend                       340.918597 cash  nonQualifiedDividend   c- {qualified=false}
+  0234 2029-04 incomeTaxWithholding           -81.820463 cash  -                      c4
+  0235 2029-05 transfer                     10597.879459 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0236 2029-05 grossUp                      -6642.733072 cash  -                      c5 {forAsset=Living overflow=false}
+  0237 2029-05 assetGrowth                   1802.126562 cash  growth                 c-
+  0238 2029-05 dividend                       805.410671 cash  qualifiedDividend      c- {qualified=true}
+  0239 2029-05 dividend                       345.176002 cash  nonQualifiedDividend   c- {qualified=false}
+  0240 2029-05 incomeTaxWithholding           -82.842240 cash  -                      c4
+  0241 2029-06 transfer                     10597.879459 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0242 2029-06 grossUp                      -6659.654367 cash  -                      c5 {forAsset=Living overflow=false}
+  0243 2029-06 assetGrowth                   1824.414497 cash  growth                 c-
+  0244 2029-06 dividend                       815.371648 cash  qualifiedDividend      c- {qualified=true}
+  0245 2029-06 dividend                       349.444992 cash  nonQualifiedDividend   c- {qualified=false}
+  0246 2029-06 incomeTaxWithholding           -83.866798 cash  -                      c4
+  0247 2029-07 transfer                     10597.879459 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0248 2029-07 grossUp                      -6676.618767 cash  -                      c5 {forAsset=Living overflow=false}
+  0249 2029-07 assetGrowth                   1846.763091 cash  growth                 c-
+  0250 2029-07 dividend                       825.359735 cash  qualifiedDividend      c- {qualified=true}
+  0251 2029-07 dividend                       353.725601 cash  nonQualifiedDividend   c- {qualified=false}
+  0252 2029-07 incomeTaxWithholding           -84.894144 cash  -                      c4
+  0253 2029-08 transfer                     10597.879459 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0254 2029-08 grossUp                      -6693.626381 cash  -                      c5 {forAsset=Living overflow=false}
+  0255 2029-08 assetGrowth                   1869.172519 cash  growth                 c-
+  0256 2029-08 dividend                       835.375009 cash  qualifiedDividend      c- {qualified=true}
+  0257 2029-08 dividend                       358.017861 cash  nonQualifiedDividend   c- {qualified=false}
+  0258 2029-08 incomeTaxWithholding           -85.924287 cash  -                      c4
+  0259 2029-09 transfer                     10597.879459 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0260 2029-09 grossUp                      -6710.677319 cash  -                      c5 {forAsset=Living overflow=false}
+  0261 2029-09 assetGrowth                   1891.642955 cash  growth                 c-
+  0262 2029-09 dividend                       845.417550 cash  qualifiedDividend      c- {qualified=true}
+  0263 2029-09 dividend                       362.321807 cash  nonQualifiedDividend   c- {qualified=false}
+  0264 2029-09 incomeTaxWithholding           -86.957234 cash  -                      c4
+  0265 2029-10 transfer                     10597.879459 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0266 2029-10 grossUp                      -6727.771692 cash  -                      c5 {forAsset=Living overflow=false}
+  0267 2029-10 assetGrowth                   1914.174577 cash  growth                 c-
+  0268 2029-10 dividend                       855.487436 cash  qualifiedDividend      c- {qualified=true}
+  0269 2029-10 dividend                       366.637472 cash  nonQualifiedDividend   c- {qualified=false}
+  0270 2029-10 incomeTaxWithholding           -87.992993 cash  -                      c4
+  0271 2029-11 transfer                     10597.879459 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0272 2029-11 grossUp                      -6744.909610 cash  -                      c5 {forAsset=Living overflow=false}
+  0273 2029-11 assetGrowth                   1936.767560 cash  growth                 c-
+  0274 2029-11 dividend                       865.584745 cash  qualifiedDividend      c- {qualified=true}
+  0275 2029-11 dividend                       370.964891 cash  nonQualifiedDividend   c- {qualified=false}
+  0276 2029-11 incomeTaxWithholding           -89.031574 cash  -                      c4
+  0277 2029-12 transfer                     10597.879459 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0278 2029-12 grossUp                      -6762.091184 cash  -                      c5 {forAsset=Living overflow=false}
+  0279 2029-12 assetGrowth                   1959.422081 cash  growth                 c-
+  0280 2029-12 dividend                       875.709557 cash  qualifiedDividend      c- {qualified=true}
+  0281 2029-12 dividend                       375.304096 cash  nonQualifiedDividend   c- {qualified=false}
+  0282 2029-12 incomeTaxWithholding           -90.072983 cash  -                      c4
+  0283 2029-12 taxTrueUp                     3342.153617 cash  -                      c9 {direction=refund}
+  0284 2030-01 transfer                         0.000000 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0285 2030-01 grossUp                      -7064.023934 cash  -                      c5 {forAsset=Living overflow=false}
+  0286 2030-01 capitalGainRecognized         1898.049391 info  longTermCapitalGain    c5 {spillover=false}
+  0287 2030-01 taxProvision                  -284.707409 cash  -                      c7 {forAsset=Living}
+  0288 2030-01 assetGrowth                   1957.452902 cash  growth                 c-
+  0289 2030-01 dividend                       874.829487 cash  qualifiedDividend      c- {qualified=true}
+  0290 2030-01 dividend                       374.926923 cash  nonQualifiedDividend   c- {qualified=false}
+  0291 2030-01 incomeTaxWithholding           -89.982462 cash  -                      c4
+  0292 2030-01 capitalGainRecognized           24.341615 info  longTermCapitalGain    c4 {spillover=false}
+  0293 2030-02 transfer                         0.000000 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0294 2030-02 grossUp                      -7084.036579 cash  -                      c5 {forAsset=Living overflow=false}
+  0295 2030-02 capitalGainRecognized         1916.338891 info  longTermCapitalGain    c5 {spillover=false}
+  0296 2030-02 taxProvision                  -287.450834 cash  -                      c7 {forAsset=Living}
+  0297 2030-02 assetGrowth                   1944.466599 cash  growth                 c-
+  0298 2030-02 dividend                       869.025618 cash  qualifiedDividend      c- {qualified=true}
+  0299 2030-02 dividend                       372.439551 cash  nonQualifiedDividend   c- {qualified=false}
+  0300 2030-02 incomeTaxWithholding           -89.385492 cash  -                      c4
+  0301 2030-02 capitalGainRecognized           24.342182 info  longTermCapitalGain    c4 {spillover=false}
+  0302 2030-03 transfer                      5868.047570 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0303 2030-03 grossUp                      -6854.181764 cash  -                      c5 {forAsset=Living overflow=false}
+  0304 2030-03 capitalGainRecognized          268.552056 info  longTermCapitalGain    c5 {spillover=false}
+  0305 2030-03 taxProvision                   -40.282808 cash  -                      c7 {forAsset=Living}
+  0306 2030-03 assetGrowth                   1951.375539 cash  growth                 c-
+  0307 2030-03 dividend                       872.113378 cash  qualifiedDividend      c- {qualified=true}
+  0308 2030-03 dividend                       373.762876 cash  nonQualifiedDividend   c- {qualified=false}
+  0309 2030-03 incomeTaxWithholding           -89.703090 cash  -                      c4
+  0310 2030-03 capitalGainRecognized           24.590437 info  longTermCapitalGain    c4 {spillover=false}
+  0311 2030-04 transfer                     10629.774722 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0312 2030-04 grossUp                      -6831.256269 cash  -                      c5 {forAsset=Living overflow=false}
+  0313 2030-04 assetGrowth                   1973.984206 cash  growth                 c-
+  0314 2030-04 dividend                       882.217697 cash  qualifiedDividend      c- {qualified=true}
+  0315 2030-04 dividend                       378.093299 cash  nonQualifiedDividend   c- {qualified=false}
+  0316 2030-04 incomeTaxWithholding           -90.742392 cash  -                      c4
+  0317 2030-05 transfer                     10629.774722 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0318 2030-05 grossUp                      -6848.657797 cash  -                      c5 {forAsset=Living overflow=false}
+  0319 2030-05 assetGrowth                   1996.653773 cash  growth                 c-
+  0320 2030-05 dividend                       892.349233 cash  qualifiedDividend      c- {qualified=true}
+  0321 2030-05 dividend                       382.435386 cash  nonQualifiedDividend   c- {qualified=false}
+  0322 2030-05 incomeTaxWithholding           -91.784493 cash  -                      c4
+  0323 2030-06 transfer                     10629.774722 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0324 2030-06 grossUp                      -6866.103653 cash  -                      c5 {forAsset=Living overflow=false}
+  0325 2030-06 assetGrowth                   2019.384412 cash  growth                 c-
+  0326 2030-06 dividend                       902.508064 cash  qualifiedDividend      c- {qualified=true}
+  0327 2030-06 dividend                       386.789170 cash  nonQualifiedDividend   c- {qualified=false}
+  0328 2030-06 incomeTaxWithholding           -92.829401 cash  -                      c4
+  0329 2030-07 transfer                     10629.774722 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0330 2030-07 grossUp                      -6883.593949 cash  -                      c5 {forAsset=Living overflow=false}
+  0331 2030-07 assetGrowth                   2042.176296 cash  growth                 c-
+  0332 2030-07 dividend                       912.694267 cash  qualifiedDividend      c- {qualified=true}
+  0333 2030-07 dividend                       391.154686 cash  nonQualifiedDividend   c- {qualified=false}
+  0334 2030-07 incomeTaxWithholding           -93.877125 cash  -                      c4
+  0335 2030-08 transfer                     10629.774722 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0336 2030-08 grossUp                      -6901.128799 cash  -                      c5 {forAsset=Living overflow=false}
+  0337 2030-08 assetGrowth                   2065.029599 cash  growth                 c-
+  0338 2030-08 dividend                       922.907920 cash  qualifiedDividend      c- {qualified=true}
+  0339 2030-08 dividend                       395.531966 cash  nonQualifiedDividend   c- {qualified=false}
+  0340 2030-08 incomeTaxWithholding           -94.927672 cash  -                      c4
+  0341 2030-09 transfer                     10629.774722 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0342 2030-09 grossUp                      -6918.708316 cash  -                      c5 {forAsset=Living overflow=false}
+  0343 2030-09 assetGrowth                   2087.944495 cash  growth                 c-
+  0344 2030-09 dividend                       933.149099 cash  qualifiedDividend      c- {qualified=true}
+  0345 2030-09 dividend                       399.921042 cash  nonQualifiedDividend   c- {qualified=false}
+  0346 2030-09 incomeTaxWithholding           -95.981050 cash  -                      c4
+  0347 2030-10 transfer                     10629.774722 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0348 2030-10 grossUp                      -6936.332615 cash  -                      c5 {forAsset=Living overflow=false}
+  0349 2030-10 assetGrowth                   2110.921158 cash  growth                 c-
+  0350 2030-10 dividend                       943.417884 cash  qualifiedDividend      c- {qualified=true}
+  0351 2030-10 dividend                       404.321950 cash  nonQualifiedDividend   c- {qualified=false}
+  0352 2030-10 incomeTaxWithholding           -97.037268 cash  -                      c4
+  0353 2030-11 transfer                     10629.774722 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0354 2030-11 grossUp                      -6954.001808 cash  -                      c5 {forAsset=Living overflow=false}
+  0355 2030-11 assetGrowth                   2133.959764 cash  growth                 c-
+  0356 2030-11 dividend                       953.714352 cash  qualifiedDividend      c- {qualified=true}
+  0357 2030-11 dividend                       408.734722 cash  nonQualifiedDividend   c- {qualified=false}
+  0358 2030-11 incomeTaxWithholding           -98.096333 cash  -                      c4
+  0359 2030-12 transfer                     10629.774722 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0360 2030-12 grossUp                      -6971.716011 cash  -                      c5 {forAsset=Living overflow=false}
+  0361 2030-12 assetGrowth                   2157.060487 cash  growth                 c-
+  0362 2030-12 dividend                       964.038582 cash  qualifiedDividend      c- {qualified=true}
+  0363 2030-12 dividend                       413.159392 cash  nonQualifiedDividend   c- {qualified=false}
+  0364 2030-12 incomeTaxWithholding           -99.158254 cash  -                      c4
+  0365 2030-12 taxTrueUp                     3333.361674 cash  -                      c10 {direction=refund}
 
 [history] Brokerage
-  value                        n=  60 first=   301609.170000 last=   751226.730000 min=   301609.170000 max=   751226.730000 sum=   32167089.820000 #a817c8ea
-  growth                       n=  60 first=      982.120000 last=     2446.570000 min=      982.120000 max=     2446.570000 sum=     104758.080000 #253c06cf
-  qualifiedDividend            n=  60 first=      438.930000 last=     1093.430000 min=      438.930000 max=     1093.430000 sum=      46818.710000 #4d105e19
-  nonQualifiedDividend         n=  60 first=      188.110000 last=      468.610000 min=      188.110000 max=      468.610000 sum=      20065.190000 #95d3a41f
-  ordinaryIncome               n=  60 first=      188.110000 last=      468.610000 min=      188.110000 max=      468.610000 sum=      20065.190000 #95d3a41f
-  income                       n=  60 first=      627.050000 last=     1562.040000 min=      627.050000 max=     3234.590000 sum=      72368.170000 #420c0ea3
-  estimatedIncomeTax           n=  60 first=        0.000000 last=     -112.470000 min=     -112.470000 max=     4130.710000 sum=       8141.760000 #1f9ab1f7
-  incomeTax                    n=  60 first=        0.000000 last=     -112.470000 min=     -112.470000 max=     4130.710000 sum=       8141.760000 #1f9ab1f7
-  federalTaxes                 n=  60 first=        0.000000 last=     -112.470000 min=     -112.470000 max=     4130.710000 sum=       8141.760000 #1f9ab1f7
-  taxes                        n=  60 first=        0.000000 last=     -112.470000 min=     -112.470000 max=     4130.710000 sum=       8141.760000 #1f9ab1f7
-  cashFlow                     n=  60 first=      627.050000 last=     1449.570000 min=      627.050000 max=     5275.040000 sum=      75025.640000 #8c64bb3f
-  cashFlowAccumulated          n=  60 first=      627.050000 last=    75025.660000 min=      627.050000 max=    75025.660000 sum=    2009239.590000 #ca306d78
-  longTermCapitalGain          n=  60 first=        0.000000 last=        0.000000 min=        0.000000 max=     1883.920000 sum=       5484.240000 #8963e422
-  capitalGain                  n=  60 first=        0.000000 last=        0.000000 min=        0.000000 max=     1883.920000 sum=       5484.240000 #8963e422
+  value                        n=  60 first=   301609.170000 last=   662333.070000 min=   301609.170000 max=   662333.070000 sum=   29391516.740000 #11d9e075
+  growth                       n=  60 first=      982.120000 last=     2157.060000 min=      982.120000 max=     2157.060000 sum=      95718.770000 #d9457f2a
+  qualifiedDividend            n=  60 first=      438.930000 last=      964.040000 min=      438.930000 max=      964.040000 sum=      42778.860000 #ff371555
+  nonQualifiedDividend         n=  60 first=      188.110000 last=      413.160000 min=      188.110000 max=      413.160000 sum=      18333.770000 #621e3aff
+  ordinaryIncome               n=  60 first=      188.110000 last=      413.160000 min=      188.110000 max=      413.160000 sum=      18333.770000 #621e3aff
+  income                       n=  60 first=      627.050000 last=     1377.200000 min=      627.050000 max=     3182.150000 sum=      73991.190000 #476d0808
+  estimatedIncomeTax           n=  60 first=        0.000000 last=      -99.160000 min=     -376.840000 max=     3173.670000 sum=       4634.620000 #c6c382a7
+  incomeTax                    n=  60 first=        0.000000 last=      -99.160000 min=     -376.840000 max=     3173.670000 sum=       4634.620000 #c6c382a7
+  federalTaxes                 n=  60 first=        0.000000 last=      -99.160000 min=     -376.840000 max=     3173.670000 sum=       4634.620000 #c6c382a7
+  taxes                        n=  60 first=        0.000000 last=      -99.160000 min=     -376.840000 max=     3173.670000 sum=       4634.620000 #c6c382a7
+  cashFlow                     n=  60 first=      627.050000 last=     1278.040000 min=      422.910000 max=     4217.220000 sum=      65747.260000 #b0a8bbaf
+  cashFlowAccumulated          n=  60 first=      627.050000 last=    65747.300000 min=      627.050000 max=    65747.300000 sum=    1788889.610000 #6e3f91b4
+  longTermCapitalGain          n=  60 first=        0.000000 last=        0.000000 min=        0.000000 max=     1964.910000 sum=      12878.510000 #7c8ae29f
+  capitalGain                  n=  60 first=        0.000000 last=        0.000000 min=        0.000000 max=     1964.910000 sum=      12878.510000 #7c8ae29f
 
 [asset] Checking
   instrument = bank
@@ -645,14 +672,14 @@
   0002 2026-01 incomeTaxWithholding           -45.147318 cash  -                      c11
   0003 2026-02 grossUp                      -6015.284036 cash  -                      c3 {forAsset=Living overflow=false}
   0004 2026-02 interestIncome                   0.000000 cash  interestIncome         c-
-  0005 2026-02 incomeTaxWithholding           -46.970819 cash  -                      c11
+  0005 2026-02 incomeTaxWithholding           -45.389484 cash  -                      c11
   0006 2026-03 grossUp                      -6030.607006 cash  -                      c3 {forAsset=Living overflow=false}
   0007 2026-03 interestIncome                   0.000000 cash  interestIncome         c-
-  0008 2026-03 incomeTaxWithholding           -48.804100 cash  -                      c11
+  0008 2026-03 incomeTaxWithholding           -46.911144 cash  -                      c11
   0009 2026-04 grossUp                      -6045.969009 cash  -                      c3 {forAsset=Living overflow=false}
   0010 2026-04 interestIncome                   0.000000 cash  interestIncome         c-
-  0011 2026-04 incomeTaxWithholding           -50.647215 cash  -                      c11
-  0012 2026-05 grossUp                       -716.570496 cash  -                      c3 {forAsset=Living overflow=false}
+  0011 2026-04 incomeTaxWithholding           -48.744105 cash  -                      c11
+  0012 2026-05 grossUp                       -721.947897 cash  -                      c3 {forAsset=Living overflow=false}
   0013 2026-05 interestIncome                   0.000000 cash  interestIncome         c-
   0014 2026-06 interestIncome                   0.000000 cash  interestIncome         c-
   0015 2026-07 interestIncome                   0.000000 cash  interestIncome         c-
@@ -669,30 +696,30 @@
   0026 2027-06 oneTime                      50000.000000 cash  -                      c- {note=Inheritance}
   0027 2027-06 grossUp                      -6265.191637 cash  -                      c3 {forAsset=Living overflow=false}
   0028 2027-06 interestIncome                   0.000000 cash  interestIncome         c-
-  0029 2027-06 incomeTaxWithholding           -64.058490 cash  -                      c11
+  0029 2027-06 incomeTaxWithholding           -59.792000 cash  -                      c11
   0030 2027-07 grossUp                      -6281.151206 cash  -                      c3 {forAsset=Living overflow=false}
   0031 2027-07 interestIncome                   0.000000 cash  interestIncome         c-
-  0032 2027-07 incomeTaxWithholding           -65.987808 cash  -                      c11
+  0032 2027-07 incomeTaxWithholding           -61.698432 cash  -                      c11
   0033 2027-08 grossUp                      -6297.151430 cash  -                      c3 {forAsset=Living overflow=false}
   0034 2027-08 interestIncome                   0.000000 cash  interestIncome         c-
-  0035 2027-08 incomeTaxWithholding           -67.927475 cash  -                      c11
+  0035 2027-08 incomeTaxWithholding           -63.615091 cash  -                      c11
   0036 2027-09 grossUp                      -6313.192412 cash  -                      c3 {forAsset=Living overflow=false}
   0037 2027-09 interestIncome                   0.000000 cash  interestIncome         c-
-  0038 2027-09 incomeTaxWithholding           -69.877545 cash  -                      c11
+  0038 2027-09 incomeTaxWithholding           -65.542030 cash  -                      c11
   0039 2027-10 grossUp                      -6329.274256 cash  -                      c3 {forAsset=Living overflow=false}
   0040 2027-10 interestIncome                   0.000000 cash  interestIncome         c-
-  0041 2027-10 incomeTaxWithholding           -71.838076 cash  -                      c11
+  0041 2027-10 incomeTaxWithholding           -67.479306 cash  -                      c11
   0042 2027-11 grossUp                      -6345.397065 cash  -                      c3 {forAsset=Living overflow=false}
   0043 2027-11 interestIncome                   0.000000 cash  interestIncome         c-
-  0044 2027-11 incomeTaxWithholding           -73.809122 cash  -                      c11
+  0044 2027-11 incomeTaxWithholding           -69.426972 cash  -                      c11
   0045 2027-12 grossUp                      -6361.560945 cash  -                      c3 {forAsset=Living overflow=false}
   0046 2027-12 interestIncome                   0.000000 cash  interestIncome         c-
-  0047 2027-12 incomeTaxWithholding           -75.790741 cash  -                      c11
-  0048 2027-12 taxTrueUp                     4401.858277 cash  -                      c12 {direction=refund}
+  0047 2027-12 incomeTaxWithholding           -71.385086 cash  -                      c11
+  0048 2027-12 taxTrueUp                     3460.343301 cash  -                      c12 {direction=refund}
   0049 2028-01 grossUp                      -6377.766000 cash  -                      c3 {forAsset=Living overflow=false}
   0050 2028-01 interestIncome                   0.000000 cash  interestIncome         c-
-  0051 2028-01 incomeTaxWithholding           -76.197275 cash  -                      c11
-  0052 2028-02 grossUp                      -3265.686793 cash  -                      c3 {forAsset=Living overflow=false}
+  0051 2028-01 incomeTaxWithholding           -71.767988 cash  -                      c11
+  0052 2028-02 grossUp                      -2358.951444 cash  -                      c3 {forAsset=Living overflow=false}
   0053 2028-02 interestIncome                   0.000000 cash  interestIncome         c-
   0054 2028-03 interestIncome                   0.000000 cash  interestIncome         c-
   0055 2028-04 interestIncome                   0.000000 cash  interestIncome         c-
@@ -731,13 +758,13 @@
   0088 2030-12 interestIncome                   0.000000 cash  interestIncome         c-
 
 [history] Checking
-  value                        n=  60 first=    18954.850000 last=        0.000000 min=        0.000000 max=    43670.750000 sum=     214418.530000 #c4ae5154
-  estimatedIncomeTax           n=  60 first=      -45.150000 last=        0.000000 min=      -75.790000 max=     4325.660000 sum=       3644.790000 #86faae5d
-  incomeTax                    n=  60 first=      -45.150000 last=        0.000000 min=      -75.790000 max=     4325.660000 sum=       3644.790000 #86faae5d
-  federalTaxes                 n=  60 first=      -45.150000 last=        0.000000 min=      -75.790000 max=     4325.660000 sum=       3644.790000 #86faae5d
-  taxes                        n=  60 first=      -45.150000 last=        0.000000 min=      -75.790000 max=     4325.660000 sum=       3644.790000 #86faae5d
-  cashFlow                     n=  60 first=      -45.150000 last=        0.000000 min=      -75.790000 max=     4325.660000 sum=       3644.790000 #86faae5d
-  cashFlowAccumulated          n=  60 first=      -45.150000 last=     3644.800000 min=     -680.860000 max=     3644.800000 sum=     125009.230000 #ed81a079
+  value                        n=  60 first=    18954.850000 last=        0.000000 min=        0.000000 max=    43675.020000 sum=     213642.990000 #35af4b1b
+  estimatedIncomeTax           n=  60 first=      -45.150000 last=        0.000000 min=      -71.390000 max=     3388.580000 sum=       2743.440000 #ae7cc4a2
+  incomeTax                    n=  60 first=      -45.150000 last=        0.000000 min=      -71.390000 max=     3388.580000 sum=       2743.440000 #ae7cc4a2
+  federalTaxes                 n=  60 first=      -45.150000 last=        0.000000 min=      -71.390000 max=     3388.580000 sum=       2743.440000 #ae7cc4a2
+  taxes                        n=  60 first=      -45.150000 last=        0.000000 min=      -71.390000 max=     3388.580000 sum=       2743.440000 #ae7cc4a2
+  cashFlow                     n=  60 first=      -45.150000 last=        0.000000 min=      -71.390000 max=     3388.580000 sum=       2743.440000 #ae7cc4a2
+  cashFlowAccumulated          n=  60 first=      -45.150000 last=     2743.440000 min=     -645.130000 max=     2743.440000 sum=      92799.040000 #f6d6456b
 
 [asset] Living
   instrument = monthlyExpense
@@ -832,17 +859,17 @@
 
 [events] Salary
   0000 2026-01 ficaWithholding              -1071.000000 cash  socialSecurityTax      c0
-  0001 2026-01 transfer                    -24500.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0001 2026-01 transfer                    -10997.833333 cash  -                      c1 {cadence=monthly from=Salary to=401K}
   0002 2026-01 incomeTaxWithholding         -1931.166667 cash  withheldIncomeTax      c13
   0003 2026-01 transfer                         0.000000 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
   0004 2026-02 ficaWithholding              -1071.000000 cash  socialSecurityTax      c0
-  0005 2026-02 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0006 2026-02 incomeTaxWithholding         -2421.166667 cash  withheldIncomeTax      c13
-  0007 2026-02 transfer                    -10507.833333 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0005 2026-02 transfer                    -10997.833333 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0006 2026-02 incomeTaxWithholding         -1931.166667 cash  withheldIncomeTax      c13
+  0007 2026-02 transfer                         0.000000 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
   0008 2026-03 ficaWithholding              -1071.000000 cash  socialSecurityTax      c0
-  0009 2026-03 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0010 2026-03 incomeTaxWithholding         -2421.166667 cash  withheldIncomeTax      c13
-  0011 2026-03 transfer                    -10507.833333 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0009 2026-03 transfer                     -2504.333333 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0010 2026-03 incomeTaxWithholding         -1931.166667 cash  withheldIncomeTax      c13
+  0011 2026-03 transfer                     -8493.500000 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
   0012 2026-04 ficaWithholding              -1071.000000 cash  socialSecurityTax      c0
   0013 2026-04 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
   0014 2026-04 incomeTaxWithholding         -2421.166667 cash  withheldIncomeTax      c13
@@ -881,17 +908,17 @@
   0047 2026-12 transfer                    -10507.833333 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
   0048 2026-12 incomeGrowth                     0.000000 cash  income                 c14
   0049 2027-01 ficaWithholding              -1071.000000 cash  socialSecurityTax      c0
-  0050 2027-01 transfer                    -25259.500000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0050 2027-01 transfer                    -11042.127167 cash  -                      c1 {cadence=monthly from=Salary to=401K}
   0051 2027-01 incomeTaxWithholding         -1886.872833 cash  withheldIncomeTax      c13
   0052 2027-01 transfer                         0.000000 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
   0053 2027-02 ficaWithholding              -1071.000000 cash  socialSecurityTax      c0
-  0054 2027-02 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0055 2027-02 incomeTaxWithholding         -2392.062833 cash  withheldIncomeTax      c13
-  0056 2027-02 transfer                    -10536.937167 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0054 2027-02 transfer                    -11042.127167 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0055 2027-02 incomeTaxWithholding         -1886.872833 cash  withheldIncomeTax      c13
+  0056 2027-02 transfer                         0.000000 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
   0057 2027-03 ficaWithholding              -1071.000000 cash  socialSecurityTax      c0
-  0058 2027-03 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0059 2027-03 incomeTaxWithholding         -2392.062833 cash  withheldIncomeTax      c13
-  0060 2027-03 transfer                    -10536.937167 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0058 2027-03 transfer                     -3175.245667 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0059 2027-03 incomeTaxWithholding         -1886.872833 cash  withheldIncomeTax      c13
+  0060 2027-03 transfer                     -7866.881500 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
   0061 2027-04 ficaWithholding              -1071.000000 cash  socialSecurityTax      c0
   0062 2027-04 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
   0063 2027-04 incomeTaxWithholding         -2392.062833 cash  withheldIncomeTax      c13
@@ -930,17 +957,17 @@
   0096 2027-12 transfer                    -10536.937167 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
   0097 2027-12 incomeGrowth                     0.000000 cash  income                 c15
   0098 2028-01 ficaWithholding              -1071.000000 cash  socialSecurityTax      c0
-  0099 2028-01 transfer                    -26042.544500 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0099 2028-01 transfer                    -11087.794109 cash  -                      c1 {cadence=monthly from=Salary to=401K}
   0100 2028-01 incomeTaxWithholding         -1841.205891 cash  withheldIncomeTax      c13
   0101 2028-01 transfer                         0.000000 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
   0102 2028-02 ficaWithholding              -1071.000000 cash  socialSecurityTax      c0
-  0103 2028-02 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0104 2028-02 incomeTaxWithholding         -2362.056781 cash  withheldIncomeTax      c13
-  0105 2028-02 transfer                    -10566.943219 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0103 2028-02 transfer                    -11087.794109 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0104 2028-02 incomeTaxWithholding         -1841.205891 cash  withheldIncomeTax      c13
+  0105 2028-02 transfer                         0.000000 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
   0106 2028-03 ficaWithholding              -1071.000000 cash  socialSecurityTax      c0
-  0107 2028-03 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0108 2028-03 incomeTaxWithholding         -2362.056781 cash  withheldIncomeTax      c13
-  0109 2028-03 transfer                    -10566.943219 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0107 2028-03 transfer                     -3866.956282 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0108 2028-03 incomeTaxWithholding         -1841.205891 cash  withheldIncomeTax      c13
+  0109 2028-03 transfer                     -7220.837827 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
   0110 2028-04 ficaWithholding              -1071.000000 cash  socialSecurityTax      c0
   0111 2028-04 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
   0112 2028-04 incomeTaxWithholding         -2362.056781 cash  withheldIncomeTax      c13
@@ -979,17 +1006,17 @@
   0145 2028-12 transfer                    -10566.943219 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
   0146 2028-12 incomeGrowth                     0.000000 cash  income                 c16
   0147 2029-01 ficaWithholding              -1071.000000 cash  socialSecurityTax      c0
-  0148 2029-01 transfer                    -26849.863379 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0148 2029-01 transfer                    -11134.876726 cash  -                      c1 {cadence=monthly from=Salary to=401K}
   0149 2029-01 incomeTaxWithholding         -1794.123274 cash  withheldIncomeTax      c13
   0150 2029-01 transfer                         0.000000 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
   0151 2029-02 ficaWithholding              -1071.000000 cash  socialSecurityTax      c0
-  0152 2029-02 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0153 2029-02 incomeTaxWithholding         -2331.120541 cash  withheldIncomeTax      c13
-  0154 2029-02 transfer                    -10597.879459 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0152 2029-02 transfer                    -11134.876726 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0153 2029-02 incomeTaxWithholding         -1794.123274 cash  withheldIncomeTax      c13
+  0154 2029-02 transfer                         0.000000 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
   0155 2029-03 ficaWithholding              -1071.000000 cash  socialSecurityTax      c0
-  0156 2029-03 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0157 2029-03 incomeTaxWithholding         -2331.120541 cash  withheldIncomeTax      c13
-  0158 2029-03 transfer                    -10597.879459 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0156 2029-03 transfer                     -4580.109927 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0157 2029-03 incomeTaxWithholding         -1794.123274 cash  withheldIncomeTax      c13
+  0158 2029-03 transfer                     -6554.766799 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
   0159 2029-04 ficaWithholding              -1071.000000 cash  socialSecurityTax      c0
   0160 2029-04 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
   0161 2029-04 incomeTaxWithholding         -2331.120541 cash  withheldIncomeTax      c13
@@ -1028,17 +1055,17 @@
   0194 2029-12 transfer                    -10597.879459 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
   0195 2029-12 incomeGrowth                     0.000000 cash  income                 c17
   0196 2030-01 ficaWithholding              -1071.000000 cash  socialSecurityTax      c0
-  0197 2030-01 transfer                    -27682.209144 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0197 2030-01 transfer                    -11183.418905 cash  -                      c1 {cadence=monthly from=Salary to=401K}
   0198 2030-01 incomeTaxWithholding         -1745.581095 cash  withheldIncomeTax      c13
   0199 2030-01 transfer                         0.000000 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
   0200 2030-02 ficaWithholding              -1071.000000 cash  socialSecurityTax      c0
-  0201 2030-02 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0202 2030-02 incomeTaxWithholding         -2299.225278 cash  withheldIncomeTax      c13
-  0203 2030-02 transfer                    -10629.774722 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0201 2030-02 transfer                    -11183.418905 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0202 2030-02 incomeTaxWithholding         -1745.581095 cash  withheldIncomeTax      c13
+  0203 2030-02 transfer                         0.000000 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
   0204 2030-03 ficaWithholding              -1071.000000 cash  socialSecurityTax      c0
-  0205 2030-03 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
-  0206 2030-03 incomeTaxWithholding         -2299.225278 cash  withheldIncomeTax      c13
-  0207 2030-03 transfer                    -10629.774722 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
+  0205 2030-03 transfer                     -5315.371335 cash  -                      c1 {cadence=monthly from=Salary to=401K}
+  0206 2030-03 incomeTaxWithholding         -1745.581095 cash  withheldIncomeTax      c13
+  0207 2030-03 transfer                     -5868.047570 cash  -                      c2 {cadence=monthly from=Salary to=Brokerage}
   0208 2030-04 ficaWithholding              -1071.000000 cash  socialSecurityTax      c0
   0209 2030-04 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
   0210 2030-04 incomeTaxWithholding         -2299.225278 cash  withheldIncomeTax      c13
@@ -1082,77 +1109,77 @@
   employedIncome               n=  60 first=    14000.000000 last=    14000.000000 min=    14000.000000 max=    14000.000000 sum=     840000.000000 #90246449
   income                       n=  60 first=    14000.000000 last=    14000.000000 min=    14000.000000 max=    14000.000000 sum=     840000.000000 #90246449
   withheldFicaTax              n=  60 first=    -1071.000000 last=    -1071.000000 min=    -1071.000000 max=    -1071.000000 sum=     -64260.000000 #0aa533d5
-  withheldIncomeTax            n=  60 first=    -1931.170000 last=    -2299.230000 min=    -2421.170000 max=    -1745.580000 sum=    -139060.990000 #a88a8c6f
-  incomeTax                    n=  60 first=    -3002.170000 last=    -3370.230000 min=    -3492.170000 max=    -2816.580000 sum=    -203320.990000 #04c34ee4
-  federalTaxes                 n=  60 first=    -3002.170000 last=    -3370.230000 min=    -3492.170000 max=    -2816.580000 sum=    -203320.990000 #04c34ee4
-  taxes                        n=  60 first=    -3002.170000 last=    -3370.230000 min=    -3492.170000 max=    -2816.580000 sum=    -203320.990000 #04c34ee4
-  netIncome                    n=  60 first=        0.000000 last=    10629.770000 min=        0.000000 max=    10629.770000 sum=     581232.960000 #79846752
-  cashFlow                     n=  60 first=    10997.830000 last=    10629.770000 min=    10507.830000 max=    11183.420000 sum=     636679.010000 #7a1852c2
-  cashFlowAccumulated          n=  60 first=    10997.830000 last=   636679.100000 min=    10997.830000 max=   636679.100000 sum=   19387245.270000 #fb9c69d5
+  withheldIncomeTax            n=  60 first=    -1931.170000 last=    -2299.230000 min=    -2421.170000 max=    -1745.580000 sum=    -133847.610000 #b4f845bf
+  incomeTax                    n=  60 first=    -3002.170000 last=    -3370.230000 min=    -3492.170000 max=    -2816.580000 sum=    -198107.610000 #a7a0656e
+  federalTaxes                 n=  60 first=    -3002.170000 last=    -3370.230000 min=    -3492.170000 max=    -2816.580000 sum=    -198107.610000 #a7a0656e
+  taxes                        n=  60 first=    -3002.170000 last=    -3370.230000 min=    -3492.170000 max=    -2816.580000 sum=    -198107.610000 #a7a0656e
+  netIncome                    n=  60 first=        0.000000 last=    10629.770000 min=        0.000000 max=    10629.770000 sum=     511558.280000 #68e31035
+  cashFlow                     n=  60 first=    10997.830000 last=    10629.770000 min=    10507.830000 max=    11183.420000 sum=     641892.390000 #d7e08018
+  cashFlowAccumulated          n=  60 first=    10997.830000 last=   641892.460000 min=    10997.830000 max=   641892.460000 sum=   19563288.020000 #60775b88
   socialSecurityTax            n=  60 first=     -868.000000 last=     -868.000000 min=     -868.000000 max=     -868.000000 sum=     -52080.000000 #b08ec5a5
   medicareTax                  n=  60 first=     -203.000000 last=     -203.000000 min=     -203.000000 max=     -203.000000 sum=     -12180.000000 #69a0a605
 
 [packages]
-  0000 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=2100.468913 expense=-6000.000000 medicareTax=-203.000000 incomeTax=-1976.313985 four01KContribution=24500.000000 nonQualifiedDividends=188.113826 qualifiedDividends=438.932261 value=604167.083646
-  0001 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=2144.693107 expense=-6015.284036 medicareTax=-203.000000 incomeTax=-2468.137485 nonQualifiedDividends=195.711744 qualifiedDividends=456.660737 value=611394.404743
-  0002 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=2189.148637 expense=-6030.607006 medicareTax=-203.000000 incomeTax=-2469.970767 nonQualifiedDividends=203.350417 qualifiedDividends=474.484307 value=618674.448328
-  0003 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=2233.836722 expense=-6045.969009 medicareTax=-203.000000 incomeTax=-2471.813882 nonQualifiedDividends=211.030063 qualifiedDividends=492.403480 value=626007.534568
-  0004 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=2261.261102 expense=-6061.370144 medicareTax=-203.000000 incomeTax=-2472.862538 nonQualifiedDividends=215.399466 qualifiedDividends=502.598754 value=633366.120839
-  0005 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=2286.260982 expense=-6076.810511 medicareTax=-203.000000 incomeTax=-2473.798879 nonQualifiedDividends=219.300885 qualifiedDividends=511.702066 value=640746.295683
-  0006 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=2311.335244 expense=-6092.290210 medicareTax=-203.000000 incomeTax=-2474.737772 nonQualifiedDividends=223.212938 qualifiedDividends=520.830189 value=648148.126942
-  0007 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=2336.484125 expense=-6107.809341 medicareTax=-203.000000 incomeTax=-2475.679224 nonQualifiedDividends=227.135655 qualifiedDividends=529.983195 value=655571.682689
-  0008 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=2361.707863 expense=-6123.368004 medicareTax=-203.000000 incomeTax=-2476.623243 nonQualifiedDividends=231.069066 qualifiedDividends=539.161155 value=663017.031230
-  0009 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=2387.006698 expense=-6138.966300 medicareTax=-203.000000 incomeTax=-2477.569835 nonQualifiedDividends=235.013203 qualifiedDividends=548.364141 value=670484.241106
-  0010 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=2412.380868 expense=-6154.604331 medicareTax=-203.000000 incomeTax=-2478.519010 nonQualifiedDividends=238.968097 qualifiedDividends=557.592226 value=677973.381089
-  0011 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=2437.830614 expense=-6170.282197 medicareTax=-203.000000 incomeTax=-2479.470773 nonQualifiedDividends=242.933778 qualifiedDividends=566.845482 value=685484.520190
-  0012 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=2545.580353 expense=-6186.000000 medicareTax=-203.000000 incomeTax=-1945.180375 estimatedTaxes=-280.047325 four01KContribution=25259.500000 longTermCapitalGains=1883.917707 nonQualifiedDividends=242.948091 qualifiedDividends=566.878878 taxTrueUp=4469.066301 value=712028.381106
-  0013 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=2571.588679 expense=-6201.757841 medicareTax=-203.000000 incomeTax=-2451.326761 nonQualifiedDividends=246.933034 qualifiedDividends=576.177079 value=719683.197313
-  0014 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=2597.674951 expense=-6217.555823 medicareTax=-203.000000 incomeTax=-2452.285756 nonQualifiedDividends=250.928846 qualifiedDividends=585.500641 value=727360.621947
-  0015 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=2623.839418 expense=-6233.394048 medicareTax=-203.000000 incomeTax=-2453.247368 nonQualifiedDividends=254.935559 qualifiedDividends=594.849638 value=735060.726576
-  0016 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=2650.082332 expense=-6249.272619 medicareTax=-203.000000 incomeTax=-2454.211602 nonQualifiedDividends=258.953204 qualifiedDividends=604.224143 value=742783.583015
-  0017 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=2696.914552 expense=-6265.191637 medicareTax=-203.000000 incomeTax=-2456.121324 nonQualifiedDividends=266.910377 qualifiedDividends=622.790879 value=800561.926293
-  0018 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=2744.194613 expense=-6281.151206 medicareTax=-203.000000 incomeTax=-2458.050641 nonQualifiedDividends=274.949201 qualifiedDividends=641.548135 value=808396.416170
-  0019 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=2791.721431 expense=-6297.151430 medicareTax=-203.000000 incomeTax=-2459.990308 nonQualifiedDividends=283.031144 qualifiedDividends=660.406003 value=816287.392028
-  0020 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=2839.496300 expense=-6313.192412 medicareTax=-203.000000 incomeTax=-2461.940379 nonQualifiedDividends=291.156438 qualifiedDividends=679.365023 value=824235.195155
-  0021 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=2887.520524 expense=-6329.274256 medicareTax=-203.000000 incomeTax=-2463.900909 nonQualifiedDividends=299.325316 qualifiedDividends=698.425736 value=832240.168756
-  0022 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=2935.795411 expense=-6345.397065 medicareTax=-203.000000 incomeTax=-2465.871956 nonQualifiedDividends=307.538010 qualifiedDividends=717.588690 value=840302.657966
-  0023 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=2984.322279 expense=-6361.560945 medicareTax=-203.000000 incomeTax=-2467.853575 nonQualifiedDividends=315.794756 qualifiedDividends=736.854431 value=848423.009858
-  0024 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=3104.707810 expense=-6377.766000 medicareTax=-203.000000 incomeTax=-1917.403166 four01KContribution=26042.544500 nonQualifiedDividends=317.488646 qualifiedDividends=740.806840 taxTrueUp=4401.858277 value=876560.206320
-  0025 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=3143.846761 expense=-6394.012335 medicareTax=-203.000000 incomeTax=-2439.782216 nonQualifiedDividends=323.855977 qualifiedDividends=755.663946 value=884862.490734
-  0026 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=3172.189261 expense=-6410.300054 medicareTax=-203.000000 incomeTax=-2440.812967 nonQualifiedDividends=328.150775 qualifiedDividends=765.685142 value=893190.073682
-  0027 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=3200.619321 expense=-6426.629264 medicareTax=-203.000000 incomeTax=-2441.846635 nonQualifiedDividends=332.457725 qualifiedDividends=775.734692 value=901543.038714
-  0028 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=3229.137232 expense=-6443.000070 medicareTax=-203.000000 incomeTax=-2442.883228 nonQualifiedDividends=336.776863 qualifiedDividends=785.812681 value=909921.469685
-  0029 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=3257.743289 expense=-6459.412578 medicareTax=-203.000000 incomeTax=-2443.922756 nonQualifiedDividends=341.108228 qualifiedDividends=795.919198 value=918325.450749
-  0030 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=3286.437786 expense=-6475.866894 medicareTax=-203.000000 incomeTax=-2444.965226 nonQualifiedDividends=345.451855 qualifiedDividends=806.054329 value=926755.066369
-  0031 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=3315.221021 expense=-6492.363124 medicareTax=-203.000000 incomeTax=-2446.010649 nonQualifiedDividends=349.807784 qualifiedDividends=816.218164 value=935210.401312
-  0032 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=3344.093289 expense=-6508.901377 medicareTax=-203.000000 incomeTax=-2447.059034 nonQualifiedDividends=354.176052 qualifiedDividends=826.410789 value=943691.540651
-  0033 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=3373.054889 expense=-6525.481758 medicareTax=-203.000000 incomeTax=-2448.110389 nonQualifiedDividends=358.556697 qualifiedDividends=836.632294 value=952198.569767
-  0034 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=3402.106120 expense=-6542.104374 medicareTax=-203.000000 incomeTax=-2449.164723 nonQualifiedDividends=362.949757 qualifiedDividends=846.882766 value=960731.574354
-  0035 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=3431.247283 expense=-6558.769335 medicareTax=-203.000000 incomeTax=-2450.222046 nonQualifiedDividends=367.355270 qualifiedDividends=857.162296 value=969290.640411
-  0036 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=3548.460841 expense=-6575.476746 medicareTax=-203.000000 incomeTax=-1882.364775 estimatedTaxes=-260.228401 four01KContribution=26849.863379 longTermCapitalGains=1757.418963 nonQualifiedDividends=367.672920 qualifiedDividends=857.903480 taxTrueUp=4288.012319 value=998261.856732
-  0037 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=3578.218111 expense=-6592.226717 medicareTax=-203.000000 incomeTax=-2420.424896 nonQualifiedDividends=372.101476 qualifiedDividends=868.236777 value=1006979.968844
-  0038 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=3608.067983 expense=-6609.019356 medicareTax=-203.000000 incomeTax=-2421.490763 nonQualifiedDividends=376.542590 qualifiedDividends=878.599376 value=1015724.833257
-  0039 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=3638.010768 expense=-6625.854771 medicareTax=-203.000000 incomeTax=-2422.559653 nonQualifiedDividends=380.996300 qualifiedDividends=888.991367 value=1024496.538967
-  0040 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=3668.046779 expense=-6642.733072 medicareTax=-203.000000 incomeTax=-2423.631576 nonQualifiedDividends=385.462646 qualifiedDividends=899.412841 value=1033295.175289
-  0041 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=3698.176331 expense=-6659.654367 medicareTax=-203.000000 incomeTax=-2424.706541 nonQualifiedDividends=389.941667 qualifiedDividends=909.863889 value=1042120.831867
-  0042 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=3728.399739 expense=-6676.618767 medicareTax=-203.000000 incomeTax=-2425.784558 nonQualifiedDividends=394.433401 qualifiedDividends=920.344601 value=1050973.598669
-  0043 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=3758.717319 expense=-6693.626381 medicareTax=-203.000000 incomeTax=-2426.865634 nonQualifiedDividends=398.937887 qualifiedDividends=930.855070 value=1059853.565991
-  0044 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=3789.129390 expense=-6710.677319 medicareTax=-203.000000 incomeTax=-2427.949781 nonQualifiedDividends=403.455166 qualifiedDividends=941.395387 value=1068760.824461
-  0045 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=3819.636269 expense=-6727.771692 medicareTax=-203.000000 incomeTax=-2429.037008 nonQualifiedDividends=407.985276 qualifiedDividends=951.965644 value=1077695.465032
-  0046 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=3850.238278 expense=-6744.909610 medicareTax=-203.000000 incomeTax=-2430.127323 nonQualifiedDividends=412.528257 qualifiedDividends=962.565933 value=1086657.578992
-  0047 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=3880.935736 expense=-6762.091184 medicareTax=-203.000000 incomeTax=-2431.220737 nonQualifiedDividends=417.084149 qualifiedDividends=973.196347 value=1095647.257962
-  0048 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=4002.856126 expense=-6779.316525 medicareTax=-203.000000 incomeTax=-1845.782416 estimatedTaxes=-272.534261 four01KContribution=27682.209144 longTermCapitalGains=1842.900286 nonQualifiedDividends=417.505503 qualifiedDividends=974.179507 taxTrueUp=4256.085894 value=1125810.772809
-  0049 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=4034.196464 expense=-6796.585745 medicareTax=-203.000000 incomeTax=-2400.525849 nonQualifiedDividends=422.085713 qualifiedDividends=984.866664 value=1134966.496845
-  0050 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=4065.635052 expense=-6813.898956 medicareTax=-203.000000 incomeTax=-2401.628225 nonQualifiedDividends=426.678946 qualifiedDividends=995.584207 value=1144150.510555
-  0051 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=4097.172221 expense=-6831.256269 medicareTax=-203.000000 incomeTax=-2402.733736 nonQualifiedDividends=431.285241 qualifiedDividends=1006.332229 value=1153362.908712
-  0052 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=4128.808307 expense=-6848.657797 medicareTax=-203.000000 incomeTax=-2403.842392 nonQualifiedDividends=435.904639 qualifiedDividends=1017.110824 value=1162603.786438
-  0053 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=4160.543645 expense=-6866.103653 medicareTax=-203.000000 incomeTax=-2404.954201 nonQualifiedDividends=440.537180 qualifiedDividends=1027.920088 value=1171873.239200
-  0054 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=4192.378573 expense=-6883.593949 medicareTax=-203.000000 incomeTax=-2406.069176 nonQualifiedDividends=445.182906 qualifiedDividends=1038.760114 value=1181171.362819
-  0055 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=4224.313429 expense=-6901.128799 medicareTax=-203.000000 incomeTax=-2407.187324 nonQualifiedDividends=449.841856 qualifiedDividends=1049.630998 value=1190498.253462
-  0056 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=4256.348553 expense=-6918.708316 medicareTax=-203.000000 incomeTax=-2408.308656 nonQualifiedDividends=454.514073 qualifiedDividends=1060.532836 value=1199854.007654
-  0057 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=4288.484284 expense=-6936.332615 medicareTax=-203.000000 incomeTax=-2409.433181 nonQualifiedDividends=459.199596 qualifiedDividends=1071.465724 value=1209238.722268
-  0058 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=4320.720966 expense=-6954.001808 medicareTax=-203.000000 incomeTax=-2410.560910 nonQualifiedDividends=463.898467 qualifiedDividends=1082.429757 value=1218652.494538
-  0059 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=4353.058942 expense=-6971.716011 medicareTax=-203.000000 incomeTax=-2411.691853 nonQualifiedDividends=468.610728 qualifiedDividends=1093.425032 value=1228095.422049
+  0000 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=2045.459415 expense=-6000.000000 medicareTax=-203.000000 incomeTax=-1976.313985 four01KContribution=10997.833333 nonQualifiedDividends=188.113826 qualifiedDividends=438.932261 value=590609.907481
+  0001 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=2099.866115 expense=-6015.284036 medicareTax=-203.000000 incomeTax=-1976.556150 four01KContribution=10997.833333 nonQualifiedDividends=189.122849 qualifiedDividends=441.286647 value=598262.019935
+  0002 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=2147.703208 expense=-6030.607006 medicareTax=-203.000000 incomeTax=-1978.077811 four01KContribution=2504.333333 nonQualifiedDividends=195.463099 qualifiedDividends=456.080565 value=605966.219989
+  0003 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=2192.169328 expense=-6045.969009 medicareTax=-203.000000 incomeTax=-2469.910772 nonQualifiedDividends=203.100438 qualifiedDividends=473.901023 value=613233.109862
+  0004 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=2219.388157 expense=-6061.370144 medicareTax=-203.000000 incomeTax=-2470.950030 nonQualifiedDividends=207.430680 qualifiedDividends=484.004919 value=620525.173077
+  0005 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=2244.170043 expense=-6076.810511 medicareTax=-203.000000 incomeTax=-2471.876400 nonQualifiedDividends=211.290555 qualifiedDividends=493.011294 value=627838.478359
+  0006 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=2269.025176 expense=-6092.290210 medicareTax=-203.000000 incomeTax=-2472.805270 nonQualifiedDividends=215.160846 qualifiedDividends=502.041975 value=635173.091746
+  0007 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=2293.953786 expense=-6107.809341 medicareTax=-203.000000 incomeTax=-2473.736647 nonQualifiedDividends=219.041584 qualifiedDividends=511.097030 value=642529.079495
+  0008 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=2318.956107 expense=-6123.368004 medicareTax=-203.000000 incomeTax=-2474.670538 nonQualifiedDividends=222.932798 qualifiedDividends=520.176529 value=649906.508090
+  0009 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=2344.032370 expense=-6138.966300 medicareTax=-203.000000 incomeTax=-2475.606951 nonQualifiedDividends=226.834517 qualifiedDividends=529.280540 value=657305.444236
+  0010 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=2369.182810 expense=-6154.604331 medicareTax=-203.000000 incomeTax=-2476.545892 nonQualifiedDividends=230.746772 qualifiedDividends=538.409135 value=664725.954864
+  0011 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=2394.407661 expense=-6170.282197 medicareTax=-203.000000 incomeTax=-2477.487369 nonQualifiedDividends=234.669592 qualifiedDividends=547.562382 value=672168.107131
+  0012 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=2440.867904 expense=-6186.000000 medicareTax=-203.000000 incomeTax=-1943.042283 estimatedTaxes=-289.789696 four01KContribution=11042.127167 longTermCapitalGains=1948.781918 nonQualifiedDividends=234.039372 qualifiedDividends=546.091869 taxTrueUp=3519.632355 value=683403.148812
+  0013 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=2475.931762 expense=-6201.757841 medicareTax=-203.000000 incomeTax=-1942.357830 estimatedTaxes=-292.225325 four01KContribution=11042.127167 longTermCapitalGains=1964.905976 nonQualifiedDividends=231.187487 qualifiedDividends=539.437470 value=691126.566552
+  0014 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=2505.729936 expense=-6217.555823 medicareTax=-203.000000 incomeTax=-1942.895305 four01KContribution=3175.245667 nonQualifiedDividends=233.426964 qualifiedDividends=544.662915 value=699163.097014
+  0015 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=2531.415706 expense=-6233.394048 medicareTax=-203.000000 incomeTax=-2449.025017 nonQualifiedDividends=237.342432 qualifiedDividends=553.799009 value=706716.356525
+  0016 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=2557.177429 expense=-6249.272619 medicareTax=-203.000000 incomeTax=-2449.967239 nonQualifiedDividends=241.268357 qualifiedDividends=562.959500 value=714291.602936
+  0017 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=2603.525953 expense=-6265.191637 medicareTax=-203.000000 incomeTax=-2451.854833 nonQualifiedDividends=249.133331 qualifiedDividends=581.311107 value=771921.567288
+  0018 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=2650.305832 expense=-6281.151206 medicareTax=-203.000000 incomeTax=-2453.761266 nonQualifiedDividends=257.076801 qualifiedDividends=599.845870 value=779606.883095
+  0019 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=2697.329786 expense=-6297.151430 medicareTax=-203.000000 incomeTax=-2455.677924 nonQualifiedDividends=265.062879 qualifiedDividends=618.480051 value=787347.885475
+  0020 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=2744.599099 expense=-6313.192412 medicareTax=-203.000000 incomeTax=-2457.604864 nonQualifiedDividends=273.091793 qualifiedDividends=637.214184 value=795144.911432
+  0021 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=2792.115057 expense=-6329.274256 medicareTax=-203.000000 incomeTax=-2459.542139 nonQualifiedDividends=281.163774 qualifiedDividends=656.048806 value=802998.299864
+  0022 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=2839.878955 expense=-6345.397065 medicareTax=-203.000000 incomeTax=-2461.489806 nonQualifiedDividends=289.279052 qualifiedDividends=674.984454 value=810908.391574
+  0023 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=2887.892096 expense=-6361.560945 medicareTax=-203.000000 incomeTax=-2463.447919 nonQualifiedDividends=297.437859 qualifiedDividends=694.021670 value=818875.529280
+  0024 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=2946.833643 expense=-6377.766000 medicareTax=-203.000000 incomeTax=-1912.973879 four01KContribution=11087.794109 nonQualifiedDividends=299.033284 qualifiedDividends=697.744329 taxTrueUp=3460.343301 value=830901.497623
+  0025 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=2992.816329 expense=-6394.012335 medicareTax=-203.000000 incomeTax=-1912.751595 four01KContribution=11087.794109 longTermCapitalGains=1088.423146 nonQualifiedDividends=298.107097 qualifiedDividends=695.583227 value=839493.952629
+  0026 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=3025.190538 expense=-6410.300054 medicareTax=-203.000000 incomeTax=-1913.246570 four01KContribution=3866.956282 nonQualifiedDividends=300.169494 qualifiedDividends=700.395486 value=848108.832313
+  0027 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=3052.855272 expense=-6426.629264 medicareTax=-203.000000 incomeTax=-2435.096117 nonQualifiedDividends=304.330566 qualifiedDividends=710.104654 value=856227.026619
+  0028 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=3080.603873 expense=-6443.000070 medicareTax=-203.000000 incomeTax=-2436.097517 nonQualifiedDividends=308.503066 qualifiedDividends=719.840488 value=864369.463951
+  0029 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=3108.436612 expense=-6459.412578 medicareTax=-203.000000 incomeTax=-2437.101668 nonQualifiedDividends=312.687028 qualifiedDividends=729.603065 value=872536.222094
+  0030 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=3136.353765 expense=-6475.866894 medicareTax=-203.000000 incomeTax=-2438.108577 nonQualifiedDividends=316.882484 qualifiedDividends=739.392464 value=880727.379106
+  0031 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=3164.355607 expense=-6492.363124 medicareTax=-203.000000 incomeTax=-2439.118254 nonQualifiedDividends=321.089470 qualifiedDividends=749.208763 value=888943.013315
+  0032 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=3192.442412 expense=-6508.901377 medicareTax=-203.000000 incomeTax=-2440.130705 nonQualifiedDividends=325.308018 qualifiedDividends=759.052041 value=897183.203323
+  0033 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=3220.614460 expense=-6525.481758 medicareTax=-203.000000 incomeTax=-2441.145940 nonQualifiedDividends=329.538162 qualifiedDividends=768.922378 value=905448.028008
+  0034 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=3248.872026 expense=-6542.104374 medicareTax=-203.000000 incomeTax=-2442.163966 nonQualifiedDividends=333.779936 qualifiedDividends=778.819852 value=913737.566522
+  0035 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=3277.215391 expense=-6558.769335 medicareTax=-203.000000 incomeTax=-2443.184791 nonQualifiedDividends=338.033375 qualifiedDividends=788.744542 value=922051.898293
+  0036 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=3325.998884 expense=-6575.476746 medicareTax=-203.000000 incomeTax=-1875.125191 estimatedTaxes=-271.669781 four01KContribution=11134.876726 longTermCapitalGains=1832.707064 nonQualifiedDividends=337.507987 qualifiedDividends=787.518636 taxTrueUp=3198.782845 value=933891.684957
+  0037 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=3364.442441 expense=-6592.226717 medicareTax=-203.000000 incomeTax=-1874.514129 estimatedTaxes=-274.340700 four01KContribution=11134.876726 longTermCapitalGains=1850.497965 nonQualifiedDividends=334.961898 qualifiedDividends=781.577761 value=942543.792872
+  0038 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=3398.616848 expense=-6609.019356 medicareTax=-203.000000 incomeTax=-1874.924732 estimatedTaxes=-2.273971 four01KContribution=4580.109927 longTermCapitalGains=36.977385 nonQualifiedDividends=336.672744 qualifiedDividends=785.569736 value=951490.598726
+  0039 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=3427.469155 expense=-6625.854771 medicareTax=-203.000000 incomeTax=-2412.941005 nonQualifiedDividends=340.918597 qualifiedDividends=795.476727 value=959927.789128
+  0040 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=3456.409010 expense=-6642.733072 medicareTax=-203.000000 incomeTax=-2413.962782 nonQualifiedDividends=345.176002 qualifiedDividends=805.410671 value=968390.167662
+  0041 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=3485.436696 expense=-6659.654367 medicareTax=-203.000000 incomeTax=-2414.987339 nonQualifiedDividends=349.444992 qualifiedDividends=815.371648 value=976877.814892
+  0042 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=3514.552500 expense=-6676.618767 medicareTax=-203.000000 incomeTax=-2416.014686 nonQualifiedDividends=353.725601 qualifiedDividends=825.359735 value=985390.811661
+  0043 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=3543.756708 expense=-6693.626381 medicareTax=-203.000000 incomeTax=-2417.044828 nonQualifiedDividends=358.017861 qualifiedDividends=835.375009 value=993929.239092
+  0044 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=3573.049608 expense=-6710.677319 medicareTax=-203.000000 incomeTax=-2418.077775 nonQualifiedDividends=362.321807 qualifiedDividends=845.417550 value=1002493.178590
+  0045 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=3602.431489 expense=-6727.771692 medicareTax=-203.000000 incomeTax=-2419.113535 nonQualifiedDividends=366.637472 qualifiedDividends=855.487436 value=1011082.711842
+  0046 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=3631.902639 expense=-6744.909610 medicareTax=-203.000000 incomeTax=-2420.152115 nonQualifiedDividends=370.964891 qualifiedDividends=865.584745 value=1019697.920818
+  0047 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=3661.463351 expense=-6762.091184 medicareTax=-203.000000 incomeTax=-2421.193524 nonQualifiedDividends=375.304096 qualifiedDividends=875.709557 value=1028338.887772
+  0048 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=3711.991131 expense=-6779.316525 medicareTax=-203.000000 incomeTax=-1835.563557 estimatedTaxes=-284.707409 four01KContribution=11183.418905 longTermCapitalGains=1922.391006 nonQualifiedDividends=374.926923 qualifiedDividends=874.829487 taxTrueUp=3342.153617 value=1040654.932220
+  0049 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=3751.715667 expense=-6796.585745 medicareTax=-203.000000 incomeTax=-1834.966587 estimatedTaxes=-287.450834 four01KContribution=11183.418905 longTermCapitalGains=1940.681073 nonQualifiedDividends=372.439551 qualifiedDividends=869.025618 value=1049640.796679
+  0050 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=3787.643044 expense=-6813.898956 medicareTax=-203.000000 incomeTax=-1835.284186 estimatedTaxes=-40.282808 four01KContribution=5315.371335 longTermCapitalGains=293.142493 nonQualifiedDividends=373.762876 qualifiedDividends=872.113378 value=1058896.492714
+  0051 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=3817.732892 expense=-6831.256269 medicareTax=-203.000000 incomeTax=-2389.967670 nonQualifiedDividends=378.093299 qualifiedDividends=882.217697 value=1067664.911134
+  0052 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=3847.914119 expense=-6848.657797 medicareTax=-203.000000 incomeTax=-2391.009771 nonQualifiedDividends=382.435386 qualifiedDividends=892.349233 value=1076459.496449
+  0053 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=3878.187022 expense=-6866.103653 medicareTax=-203.000000 incomeTax=-2392.054679 nonQualifiedDividends=386.789170 qualifiedDividends=902.508064 value=1085280.332078
+  0054 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=3908.551899 expense=-6883.593949 medicareTax=-203.000000 incomeTax=-2393.102403 nonQualifiedDividends=391.154686 qualifiedDividends=912.694267 value=1094127.501728
+  0055 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=3939.009047 expense=-6901.128799 medicareTax=-203.000000 incomeTax=-2394.152950 nonQualifiedDividends=395.531966 qualifiedDividends=922.907920 value=1103001.089394
+  0056 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=3969.558767 expense=-6918.708316 medicareTax=-203.000000 incomeTax=-2395.206328 nonQualifiedDividends=399.921042 qualifiedDividends=933.149099 value=1111901.179360
+  0057 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=4000.201360 expense=-6936.332615 medicareTax=-203.000000 incomeTax=-2396.262546 nonQualifiedDividends=404.321950 qualifiedDividends=943.417884 value=1120827.856199
+  0058 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=4030.937127 expense=-6954.001808 medicareTax=-203.000000 incomeTax=-2397.321611 nonQualifiedDividends=408.734722 qualifiedDividends=953.714352 value=1129781.204778
+  0059 employedIncome=14000.000000 socialSecurityTax=-868.000000 assetAppreciation=4061.766370 expense=-6971.716011 medicareTax=-203.000000 incomeTax=-2398.383532 nonQualifiedDividends=413.159392 qualifiedDividends=964.038582 value=1138761.310252
 
 [priceIndex]
   [0000]         1.002547         1.005101         1.007662         1.010228         1.012802         1.015382
@@ -1167,17 +1194,18 @@
   [0054]         1.150188         1.153118         1.156055         1.159000         1.161953         1.164913
 
 [taxYears]
-  2026 months=12 age=40 agi=152270.797132 niit=152270.797132 seniorDeduction=152270.797132 irmaa=152270.797132 iraDeduction=152270.797132 rothContribution=152270.797132 aca=152270.797132 nii=8770.797132 taxableSS=0.000000 ordinaryTaxable=130031.239140 capitalGains=6139.557992
-  2027 months=12 age=41 agi=155602.430959 niit=155602.430959 seniorDeduction=155602.430959 irmaa=155602.430959 iraDeduction=155602.430959 rothContribution=155602.430959 aca=155602.430959 nii=12861.930959 taxableSS=0.000000 ordinaryTaxable=129434.803975 capitalGains=9568.526984
-  2028 months=12 age=42 agi=155684.574267 niit=155684.574267 seniorDeduction=155684.574267 irmaa=155684.574267 iraDeduction=155684.574267 rothContribution=155684.574267 aca=155684.574267 nii=13727.118767 taxableSS=0.000000 ordinaryTaxable=128961.919030 capitalGains=9608.983137
-  2029 months=12 age=43 agi=158598.028027 niit=158598.028027 seniorDeduction=158598.028027 irmaa=158598.028027 iraDeduction=158598.028027 rothContribution=158598.028027 aca=158598.028027 nii=17447.891407 taxableSS=0.000000 ordinaryTaxable=128213.082419 capitalGains=12740.749673
-  2030 months=12 age=44 agi=159878.173968 niit=159878.173968 seniorDeduction=159878.173968 irmaa=159878.173968 iraDeduction=159878.173968 rothContribution=159878.173968 aca=159878.173968 nii=19560.383112 taxableSS=0.000000 ordinaryTaxable=127441.869695 capitalGains=14245.138265
+  2026 months=12 age=40 agi=151979.691858 niit=151979.691858 seniorDeduction=151979.691858 irmaa=151979.691858 iraDeduction=151979.691858 rothContribution=151979.691858 aca=151979.691858 nii=8479.691858 taxableSS=0.000000 ordinaryTaxable=129943.907557 capitalGains=5935.784301
+  2027 months=12 age=41 agi=156952.554902 niit=156952.554902 seniorDeduction=156952.554902 irmaa=156952.554902 iraDeduction=156952.554902 rothContribution=156952.554902 aca=156952.554902 nii=14212.054902 taxableSS=0.000000 ordinaryTaxable=129230.910102 capitalGains=11122.544800
+  2028 months=12 age=42 agi=155670.751914 niit=155670.751914 seniorDeduction=155670.751914 irmaa=155670.751914 iraDeduction=155670.751914 rothContribution=155670.751914 aca=155670.751914 nii=13713.296414 taxableSS=0.000000 ordinaryTaxable=128631.245381 capitalGains=9925.834434
+  2029 months=12 age=43 agi=158975.832194 niit=158975.832194 seniorDeduction=158975.832194 irmaa=158975.832194 iraDeduction=158975.832194 rothContribution=158975.832194 aca=158975.832194 nii=17825.695574 taxableSS=0.000000 ordinaryTaxable=127737.594634 capitalGains=13594.041626
+  2030 months=12 age=44 agi=160078.241970 niit=160078.241970 seniorDeduction=160078.241970 irmaa=160078.241970 iraDeduction=160078.241970 rothContribution=160078.241970 aca=160078.241970 nii=19760.451114 taxableSS=0.000000 ordinaryTaxable=126807.895809 capitalGains=15079.180152
 
 [sanity]
   Contribution capped: 401K requested $560,000.00, annual 401(k) limit allowed $24,500.00
-  applyNetIncome: Salary pre-tax deferrals exceed after-tax pay by $13,502.17; net income clamped to $0
-  Contribution capped: 401K requested $560,000.00, annual 401(k) limit allowed $0.00
-  Contribution capped: 401K requested $560,000.00, annual 401(k) limit allowed $0.00
+  Contribution capped: 401K requested $24,500.00, pay left after taxes allowed $10,997.83
+  Contribution capped: 401K requested $560,000.00, annual 401(k) limit allowed $13,502.17
+  Contribution capped: 401K requested $13,502.17, pay left after taxes allowed $10,997.83
+  Contribution capped: 401K requested $560,000.00, annual 401(k) limit allowed $2,504.33
   Contribution capped: 401K requested $560,000.00, annual 401(k) limit allowed $0.00
   Contribution capped: 401K requested $560,000.00, annual 401(k) limit allowed $0.00
   Contribution capped: 401K requested $560,000.00, annual 401(k) limit allowed $0.00
@@ -1188,9 +1216,10 @@
   Contribution capped: 401K requested $560,000.00, annual 401(k) limit allowed $0.00
   Contribution capped: 401K requested $560,000.00, annual 401(k) limit allowed $0.00
   Contribution capped: 401K requested $560,000.00, annual 401(k) limit allowed $25,259.50
-  applyNetIncome: Salary pre-tax deferrals exceed after-tax pay by $14,217.37; net income clamped to $0
-  Contribution capped: 401K requested $560,000.00, annual 401(k) limit allowed $0.00
-  Contribution capped: 401K requested $560,000.00, annual 401(k) limit allowed $0.00
+  Contribution capped: 401K requested $25,259.50, pay left after taxes allowed $11,042.13
+  Contribution capped: 401K requested $560,000.00, annual 401(k) limit allowed $14,217.37
+  Contribution capped: 401K requested $14,217.37, pay left after taxes allowed $11,042.13
+  Contribution capped: 401K requested $560,000.00, annual 401(k) limit allowed $3,175.25
   Contribution capped: 401K requested $560,000.00, annual 401(k) limit allowed $0.00
   Contribution capped: 401K requested $560,000.00, annual 401(k) limit allowed $0.00
   Contribution capped: 401K requested $560,000.00, annual 401(k) limit allowed $0.00
@@ -1201,9 +1230,10 @@
   Contribution capped: 401K requested $560,000.00, annual 401(k) limit allowed $0.00
   Contribution capped: 401K requested $560,000.00, annual 401(k) limit allowed $0.00
   Contribution capped: 401K requested $560,000.00, annual 401(k) limit allowed $26,042.54
-  applyNetIncome: Salary pre-tax deferrals exceed after-tax pay by $14,954.75; net income clamped to $0
-  Contribution capped: 401K requested $560,000.00, annual 401(k) limit allowed $0.00
-  Contribution capped: 401K requested $560,000.00, annual 401(k) limit allowed $0.00
+  Contribution capped: 401K requested $26,042.54, pay left after taxes allowed $11,087.79
+  Contribution capped: 401K requested $560,000.00, annual 401(k) limit allowed $14,954.75
+  Contribution capped: 401K requested $14,954.75, pay left after taxes allowed $11,087.79
+  Contribution capped: 401K requested $560,000.00, annual 401(k) limit allowed $3,866.96
   Contribution capped: 401K requested $560,000.00, annual 401(k) limit allowed $0.00
   Contribution capped: 401K requested $560,000.00, annual 401(k) limit allowed $0.00
   Contribution capped: 401K requested $560,000.00, annual 401(k) limit allowed $0.00
@@ -1214,9 +1244,10 @@
   Contribution capped: 401K requested $560,000.00, annual 401(k) limit allowed $0.00
   Contribution capped: 401K requested $560,000.00, annual 401(k) limit allowed $0.00
   Contribution capped: 401K requested $560,000.00, annual 401(k) limit allowed $26,849.86
-  applyNetIncome: Salary pre-tax deferrals exceed after-tax pay by $15,714.99; net income clamped to $0
-  Contribution capped: 401K requested $560,000.00, annual 401(k) limit allowed $0.00
-  Contribution capped: 401K requested $560,000.00, annual 401(k) limit allowed $0.00
+  Contribution capped: 401K requested $26,849.86, pay left after taxes allowed $11,134.88
+  Contribution capped: 401K requested $560,000.00, annual 401(k) limit allowed $15,714.99
+  Contribution capped: 401K requested $15,714.99, pay left after taxes allowed $11,134.88
+  Contribution capped: 401K requested $560,000.00, annual 401(k) limit allowed $4,580.11
   Contribution capped: 401K requested $560,000.00, annual 401(k) limit allowed $0.00
   Contribution capped: 401K requested $560,000.00, annual 401(k) limit allowed $0.00
   Contribution capped: 401K requested $560,000.00, annual 401(k) limit allowed $0.00
@@ -1227,9 +1258,10 @@
   Contribution capped: 401K requested $560,000.00, annual 401(k) limit allowed $0.00
   Contribution capped: 401K requested $560,000.00, annual 401(k) limit allowed $0.00
   Contribution capped: 401K requested $560,000.00, annual 401(k) limit allowed $27,682.21
-  applyNetIncome: Salary pre-tax deferrals exceed after-tax pay by $16,498.79; net income clamped to $0
-  Contribution capped: 401K requested $560,000.00, annual 401(k) limit allowed $0.00
-  Contribution capped: 401K requested $560,000.00, annual 401(k) limit allowed $0.00
+  Contribution capped: 401K requested $27,682.21, pay left after taxes allowed $11,183.42
+  Contribution capped: 401K requested $560,000.00, annual 401(k) limit allowed $16,498.79
+  Contribution capped: 401K requested $16,498.79, pay left after taxes allowed $11,183.42
+  Contribution capped: 401K requested $560,000.00, annual 401(k) limit allowed $5,315.37
   Contribution capped: 401K requested $560,000.00, annual 401(k) limit allowed $0.00
   Contribution capped: 401K requested $560,000.00, annual 401(k) limit allowed $0.00
   Contribution capped: 401K requested $560,000.00, annual 401(k) limit allowed $0.00
@@ -1241,7 +1273,7 @@
   Contribution capped: 401K requested $560,000.00, annual 401(k) limit allowed $0.00
 
 [traces]
-  scopes = 1874
+  scopes = 1884
   unattributedEvents = 0
   1x 2027 annual pass
   1x 2027 tax true-up
@@ -1318,7 +1350,7 @@
   60x Payroll: Brokerage
   60x Payroll: Checking
   60x Payroll: Living
-  60x Payroll: Salary
+  70x Payroll: Salary
   60x Required distribution from 401K
   60x Required distribution from Brokerage
   60x Required distribution from Checking

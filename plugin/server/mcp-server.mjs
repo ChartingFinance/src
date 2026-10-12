@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.3.22; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.3.23; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -31924,6 +31924,8 @@ var EventType = Object.freeze({
   INSURANCE: "insurance",
   // ── Tax ──
   FICA_WITHHOLDING: "ficaWithholding",
+  // data.estimate: payroll's estimate, when the paycheck could not cover it;
+  // data: { rate, source } on a retirement distribution.
   INCOME_TAX_WITHHOLDING: "incomeTaxWithholding",
   CAPITAL_GAINS_TAX: "capitalGainsTax",
   TAX_TRUE_UP: "taxTrueUp",
@@ -31955,6 +31957,7 @@ var EventType = Object.freeze({
   CONTRIBUTION_CAPPED: "contributionCapped"
   // data: { limitName }
 });
+var PAY_LEFT_AFTER_TAXES = "pay left after taxes";
 var ShortfallOrigin = Object.freeze({
   /** Remainder of a two-sided transfer. Participates in conservation. */
   PAIRED: "paired",
@@ -34127,6 +34130,57 @@ var PayrollEngine = class {
     }
     return { householdTax, totalWorkingIncome };
   }
+  /** One working-income asset's share of the household estimate, by income. */
+  #taxShare(modelAsset, householdTax, totalWorkingIncome) {
+    const proportion = totalWorkingIncome.amount > 0 ? modelAsset.incomeCurrency.amount / totalWorkingIncome.amount : 0;
+    return new Currency(householdTax.amount * proportion);
+  }
+  /** Gross pay less FICA. FICA is stored negative on the asset, so adding subtracts. */
+  #payAfterFICA(modelAsset) {
+    return modelAsset.incomeCurrency.copy().add(modelAsset.socialSecurityTaxCurrency).add(modelAsset.medicareTaxCurrency);
+  }
+  /**
+   * Cut each pre-tax deferral to what its paycheck has left after FICA and
+   * income-tax withholding. Runs after computeHouseholdIncomeTax and before
+   * applyPreTaxTransfers, which executes the approved amounts.
+   *
+   * The annual limit alone would let one paycheck defer the whole year's
+   * limit, crediting the account with money the paycheck never paid. A cut
+   * leaves the limit unused, so later paychecks in the year can still reach
+   * it. The estimate counted the deferral as requested; the monthly true-up
+   * settles the tax on the part that was cut.
+   */
+  capPreTaxContributionsToPay(modelAsset, householdTax, totalWorkingIncome) {
+    if (!InstrumentType.isWorkingIncome(modelAsset.instrument)) return;
+    const taxes = this.#taxShare(modelAsset, householdTax, totalWorkingIncome);
+    let room = Math.max(0, this.#payAfterFICA(modelAsset).amount - taxes.amount);
+    const cuts = [];
+    for (const fundTransfer of modelAsset.fundTransfers) {
+      if (!fundTransfer.toModel || !InstrumentType.isTaxDeferred(fundTransfer.toModel.instrument)) continue;
+      const approved = fundTransfer.approvedAmount;
+      if (!approved || approved.amount <= 0) continue;
+      if (approved.amount <= room) {
+        room -= approved.amount;
+        continue;
+      }
+      cuts.push({ fundTransfer, requested: approved.copy(), allowed: new Currency(room) });
+      room = 0;
+    }
+    if (cuts.length === 0) return;
+    withTrace(TraceKind.PAYROLL, `Payroll: ${modelAsset.displayName}`, modelAsset.currentDateInt, () => {
+      for (const { fundTransfer, requested, allowed } of cuts) {
+        const cut = requested.minus(allowed);
+        fundTransfer.approvedAmount = allowed.copy();
+        this.preTaxDeductions.get(modelAsset)?.subtract(cut);
+        if (InstrumentType.is401K(fundTransfer.toModel.instrument)) {
+          this.monthly.four01KContribution.subtract(cut);
+        } else {
+          this.monthly.tradIRAContribution.subtract(cut);
+        }
+        this.recordContributionCap(fundTransfer.toModel, requested, allowed, PAY_LEFT_AFTER_TAXES);
+      }
+    });
+  }
   /**
    * Phase 2: Apply proportional share of household income tax to one asset,
    * then compute its net income.
@@ -34175,28 +34229,38 @@ var PayrollEngine = class {
     if (!InstrumentType.isWorkingIncome(modelAsset.instrument)) {
       return;
     }
-    let netIncome = modelAsset.incomeCurrency.copy();
-    netIncome.add(modelAsset.socialSecurityTaxCurrency);
-    netIncome.add(modelAsset.medicareTaxCurrency);
+    let netIncome = this.#payAfterFICA(modelAsset);
     const preTaxDeduction = this.preTaxDeductions.get(modelAsset);
     this.preTaxDeductions.delete(modelAsset);
     if (preTaxDeduction && preTaxDeduction.amount > 0) {
       netIncome.subtract(preTaxDeduction);
     }
-    const proportion = totalWorkingIncome.amount > 0 ? modelAsset.incomeCurrency.amount / totalWorkingIncome.amount : 0;
-    const assetTax = new Currency(householdTax.amount * proportion);
-    netIncome.subtract(assetTax);
+    const estimate = this.#taxShare(modelAsset, householdTax, totalWorkingIncome);
+    const withheld = new Currency(Math.min(estimate.amount, Math.max(0, netIncome.amount)));
+    netIncome.subtract(withheld);
+    if (Math.abs(netIncome.amount) < 5e-3) netIncome.zero();
     const taxMetric = modelAsset.isSelfEmployed ? Metric.ESTIMATED_INCOME_TAX : Metric.WITHHELD_INCOME_TAX;
-    modelAsset.addToMetric(taxMetric, assetTax.copy().flipSign());
+    modelAsset.addToMetric(taxMetric, withheld.copy().flipSign());
     if (netIncome.amount < 0) {
       logger.log(
         LogCategory.SANITY,
-        () => `applyNetIncome: ${modelAsset.displayName} pre-tax deferrals exceed after-tax pay by ${netIncome.copy().flipSign().toString()}; net income clamped to $0`
+        () => `applyNetIncome: ${modelAsset.displayName} FICA and pre-tax deferrals exceed gross pay by ${netIncome.copy().flipSign().toString()}; net income clamped to $0`
       );
       netIncome.zero();
     }
     modelAsset.netIncomeCurrency = netIncome;
-    this.taxEngine.recordIncomeTaxWithholding(modelAsset, assetTax);
+    const short = estimate.amount - withheld.amount > 5e-3;
+    if (short) {
+      logger.log(
+        LogCategory.TAX,
+        () => `applyNetIncome: ${modelAsset.displayName} withheld ${withheld.toString()} of a ${estimate.toString()} estimate; the paycheck had no more after FICA and deferrals, so the monthly true-up collects the rest`
+      );
+    }
+    this.taxEngine.recordIncomeTaxWithholding(
+      modelAsset,
+      withheld,
+      short ? { estimate: estimate.amount } : void 0
+    );
   }
   calculateRMDs(currentDateInt, modelAsset) {
     if (!InstrumentType.isTaxDeferred(modelAsset.instrument))
@@ -34786,10 +34850,20 @@ var TaxEngine = class {
     modelAsset.recordEvent(EventType.FICA_WITHHOLDING, withholding.fica(), { metric: Metric.SOCIAL_SECURITY_TAX });
   }
   // ── Day 1: Income Tax Withholding Recording ───────────────────────
-  recordIncomeTaxWithholding(modelAsset, assetTax) {
+  /**
+   * @param {ModelAsset} modelAsset
+   * @param {Currency}   assetTax  positive; what was actually withheld
+   * @param {object}     [data]    event payload, e.g. { estimate } when the
+   *                               paycheck covered less than payroll estimated
+   */
+  recordIncomeTaxWithholding(modelAsset, assetTax, data = void 0) {
     const withheldTax = assetTax.copy().flipSign();
     this.monthly.incomeTax.add(withheldTax);
-    modelAsset.recordEvent(EventType.INCOME_TAX_WITHHOLDING, withheldTax.copy(), { metric: Metric.WITHHELD_INCOME_TAX });
+    modelAsset.recordEvent(
+      EventType.INCOME_TAX_WITHHOLDING,
+      withheldTax.copy(),
+      { metric: Metric.WITHHELD_INCOME_TAX, ...data ? { data } : {} }
+    );
     logger.log(LogCategory.TRANSFER, () => `recordIncomeTaxWithholding: ${modelAsset.displayName} tax=${assetTax.toString()}`);
   }
   // ── Last day of month: withholding on deferred distributions ──────
@@ -35961,6 +36035,12 @@ var Portfolio = class _Portfolio {
         this.payroll.applyPreTaxCalculations(modelAsset, currentDateInt);
       }
     }
+    const { householdTax, totalWorkingIncome } = this.payroll.computeHouseholdIncomeTax();
+    for (let modelAsset of this.modelAssets) {
+      if (!modelAsset.isClosed) {
+        this.payroll.capPreTaxContributionsToPay(modelAsset, householdTax, totalWorkingIncome);
+      }
+    }
     for (let modelAsset of this.modelAssets) {
       if (!modelAsset.isClosed) {
         this.payroll.applyPreTaxTransfers(modelAsset);
@@ -35971,7 +36051,6 @@ var Portfolio = class _Portfolio {
         this.payroll.calculateRMDs(currentDateInt, modelAsset);
       }
     }
-    const { householdTax, totalWorkingIncome } = this.payroll.computeHouseholdIncomeTax();
     for (let modelAsset of this.modelAssets) {
       if (!modelAsset.isClosed) {
         this.payroll.applyNetIncome(modelAsset, householdTax, totalWorkingIncome);
@@ -37820,6 +37899,14 @@ var MEMO_PATTERNS = Object.freeze({
 function reasonOf(note) {
   return note?.split("\u2014")[1]?.trim() ?? null;
 }
+function capReasonPhrase(reasons) {
+  const limits = [...new Set(reasons)].filter((r) => r !== PAY_LEFT_AFTER_TAXES);
+  const parts = [];
+  if (limits.length === 1) parts.push(`the ${limits[0]}`);
+  else if (limits.length > 1) parts.push("the annual contribution limits");
+  if (reasons.includes(PAY_LEFT_AFTER_TAXES)) parts.push(`the ${PAY_LEFT_AFTER_TAXES}`);
+  return parts.join(" and by ");
+}
 function asDateInt(raw) {
   if (!raw || raw.year == null) return null;
   return DateInt.from(raw.year, raw.month);
@@ -37976,15 +38063,16 @@ var DETECTORS = [
     detect(ctx) {
       return ctx.allMatching(MEMO_PATTERNS.contributionCapped).map(({ asset, memos }) => {
         const s = summarize(memos);
-        const which = s.reasons.length === 1 ? s.reasons[0] : "the annual contribution limits";
+        const which = capReasonPhrase(s.reasons);
+        const byPay = s.reasons.includes(PAY_LEFT_AFTER_TAXES);
         return {
           assetName: asset.displayName,
           firstDateInt: s.first,
           lastDateInt: s.last,
           occurrences: s.occurrences,
           amount: s.amount,
-          headline: `${formatCurrency(s.amount)} of contributions hit the limit`,
-          detail: `Contributions were capped by the ${which}. That much of what your transfers asked for could not be contributed, and stayed in the source account instead.`
+          headline: byPay ? `${formatCurrency(s.amount)} of contributions were capped` : `${formatCurrency(s.amount)} of contributions hit the limit`,
+          detail: byPay ? `Contributions were capped by ${which}. A paycheck pays its taxes before any deferral, so in some months a deferral got only what was left; that much of what your transfers asked for could not be contributed.` : `Contributions were capped by ${which}. That much of what your transfers asked for could not be contributed, and stayed in the source account instead.`
         };
       });
     }
