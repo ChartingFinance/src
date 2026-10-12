@@ -156,6 +156,12 @@ This is the ×12 annualisation listed as out of scope in §8, and it stays out o
 scope — but it is no longer invisible, and this fixture is where a fix would be
 measured. It had never been reachable before today.
 
+> **Correction, 2026-10-11.** "Clamped away" was wrong. The clamp zeroed net
+> pay, but the full withholding stayed booked as collected, and the annual
+> true-up refunded the uncollected part in cash: money created, $297,612 in this
+> fixture's baseline. Payroll now books only what the paycheck covers and the
+> monthly true-up collects the rest (code-issues #28).
+
 ## 4. Design
 
 One module, `js/tax-basis.js`, one exported function.
