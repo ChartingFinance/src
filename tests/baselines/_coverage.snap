@@ -378,6 +378,7 @@
     unfunded
   withholding-exceeds-paycheck:
     assetGrowth
+    contributionCapped
     expenseInflation
     ficaWithholding
     grossUp

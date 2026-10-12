@@ -534,15 +534,17 @@ const adversarialFixtures = [
       'that closes mid-plan books its whole balance as income on day 1, before ' +
       'payroll runs, and payroll sizes the household withholding from that ' +
       'month x12, so the close month asks one $6,000 paycheck for a six-figure ' +
-      'withholding. The paycheck can supply only what is left after FICA and ' +
-      'the IRA deferral. The rest must reach the true-ups as unpaid; booked as ' +
-      'withheld, they count it as paid and refund it in cash.\n' +
-      '      The deferral is load-bearing: without it, "what is left" and "what ' +
-      'is left after FICA" are the same number, and a cap that forgot deferrals ' +
-      'would not move this baseline. So is the salary running past the close: ' +
-      'end it first and there is nothing to over-withhold. Every rate is zero, ' +
-      'so the money can be followed by hand. deferred-close-distribution ' +
-      'reaches the same month with growth and no deferral; ' +
+      'withholding. A paycheck pays taxes first and deferrals from what is ' +
+      'left, so it withholds everything after FICA, the IRA deferral gets ' +
+      'nothing, and the rest of the estimate goes to the true-ups as unpaid. ' +
+      'Booked as withheld instead, it would count as paid and be refunded in ' +
+      'cash.\n' +
+      '      The deferral is load-bearing: it is what a paycheck short of its ' +
+      'taxes gives up, so a pipeline that paid deferrals before taxes would ' +
+      'move this baseline. So is the salary running past the close: end it ' +
+      'first and there is nothing to over-withhold. Every rate is zero, so the ' +
+      'money can be followed by hand. deferred-close-distribution reaches the ' +
+      'same month with growth and no deferral; ' +
       'tests/payroll-withholding-conservation.mjs holds the conservation law.',
     config: { startAge: 60, retirementAge: 67, finishAge: 65, filingAs: 'Single' },
     build: () => ({
