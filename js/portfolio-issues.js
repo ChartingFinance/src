@@ -45,6 +45,7 @@ import { Metric, aggregateMetric } from './metric.js';
 import { InstrumentType } from './instruments/instrument.js';
 import { DateInt, monthLabel } from './utils/date-int.js';
 import { formatCurrency } from './utils/html.js';
+import { PAY_LEFT_AFTER_TAXES } from './sim-event.js';
 
 export { monthLabel };
 
@@ -61,6 +62,22 @@ export const MEMO_PATTERNS = Object.freeze({
 /** The text after the em dash — the engine's own reason, not one we invent. */
 function reasonOf(note) {
     return note?.split('—')[1]?.trim() ?? null;
+}
+
+/**
+ * What capped a contribution, for "capped by …", from the reasons the engine
+ * recorded. A paycheck too small for its taxes and a deferral is not an annual
+ * limit, so it is named separately. Shared with rule-notes.js.
+ *
+ * @param {string[]} reasons  limit names from the cap memos
+ */
+export function capReasonPhrase(reasons) {
+    const limits = [...new Set(reasons)].filter((r) => r !== PAY_LEFT_AFTER_TAXES);
+    const parts = [];
+    if (limits.length === 1) parts.push(`the ${limits[0]}`);
+    else if (limits.length > 1) parts.push('the annual contribution limits');
+    if (reasons.includes(PAY_LEFT_AFTER_TAXES)) parts.push(`the ${PAY_LEFT_AFTER_TAXES}`);
+    return parts.join(' and by ');
 }
 
 function asDateInt(raw) {
@@ -266,15 +283,22 @@ export const DETECTORS = [
         detect(ctx) {
             return ctx.allMatching(MEMO_PATTERNS.contributionCapped).map(({ asset, memos }) => {
                 const s = summarize(memos);
-                const which = s.reasons.length === 1 ? s.reasons[0] : 'the annual contribution limits';
+                const which = capReasonPhrase(s.reasons);
+                // Pay over an annual limit stays in the source account; a
+                // deferral cut for taxes was never paid out at all.
+                const byPay = s.reasons.includes(PAY_LEFT_AFTER_TAXES);
                 return {
                     assetName: asset.displayName,
                     firstDateInt: s.first,
                     lastDateInt: s.last,
                     occurrences: s.occurrences,
                     amount: s.amount,
-                    headline: `${formatCurrency(s.amount)} of contributions hit the limit`,
-                    detail: `Contributions were capped by the ${which}. That much of what your transfers asked for could not be contributed, and stayed in the source account instead.`,
+                    headline: byPay
+                        ? `${formatCurrency(s.amount)} of contributions were capped`
+                        : `${formatCurrency(s.amount)} of contributions hit the limit`,
+                    detail: byPay
+                        ? `Contributions were capped by ${which}. A paycheck pays its taxes before any deferral, so in some months a deferral got only what was left; that much of what your transfers asked for could not be contributed.`
+                        : `Contributions were capped by ${which}. That much of what your transfers asked for could not be contributed, and stayed in the source account instead.`,
                 };
             });
         },

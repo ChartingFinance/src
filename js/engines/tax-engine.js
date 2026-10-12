@@ -49,11 +49,18 @@ export class TaxEngine {
 
     // ── Day 1: Income Tax Withholding Recording ───────────────────────
 
-    recordIncomeTaxWithholding(modelAsset, assetTax) {
+    /**
+     * @param {ModelAsset} modelAsset
+     * @param {Currency}   assetTax  positive; what was actually withheld
+     * @param {object}     [data]    event payload, e.g. { estimate } when the
+     *                               paycheck covered less than payroll estimated
+     */
+    recordIncomeTaxWithholding(modelAsset, assetTax, data = undefined) {
 
         const withheldTax = assetTax.copy().flipSign();
         this.monthly.incomeTax.add(withheldTax);
-        modelAsset.recordEvent(EventType.INCOME_TAX_WITHHOLDING, withheldTax.copy(), { metric: Metric.WITHHELD_INCOME_TAX });
+        modelAsset.recordEvent(EventType.INCOME_TAX_WITHHOLDING, withheldTax.copy(),
+            { metric: Metric.WITHHELD_INCOME_TAX, ...(data ? { data } : {}) });
 
         logger.log(LogCategory.TRANSFER, () => `recordIncomeTaxWithholding: ${modelAsset.displayName} tax=${assetTax.toString()}`);
 

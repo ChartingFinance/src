@@ -36,7 +36,8 @@ import { InstrumentType } from './instruments/instrument.js';
 import { activeTaxTable } from './globals.js';
 import { DateInt, monthLabel } from './utils/date-int.js';
 import { formatCurrency } from './utils/html.js';
-import { EventType } from './sim-event.js';
+import { EventType, PAY_LEFT_AFTER_TAXES } from './sim-event.js';
+import { capReasonPhrase } from './portfolio-issues.js';
 
 /**
  * Build the evaluation context for one asset over one inclusive month window.
@@ -289,13 +290,14 @@ export const RULES = [
             if (capped.length === 0) return null;
 
             const shortfall = capped.reduce((s, m) => s + Math.abs(m.amount?.amount ?? 0), 0);
-            // Every memo carries its limit's name; if they all agree, use it.
-            const names = new Set(capped.map(m => m.note.split('—')[1]?.trim()).filter(Boolean));
-            const which = names.size === 1 ? [...names][0] : 'the annual contribution limits';
+            // Every memo carries its limit's name.
+            const names = capped.map(m => m.note.split('—')[1]?.trim()).filter(Boolean);
+            const byPay = names.includes(PAY_LEFT_AFTER_TAXES);
 
             return {
                 emoji: '\u{1F4CA}',
-                text: `Contributions were capped by the ${which} — ${formatCurrency(shortfall)} of what your transfers asked for could not be contributed.`,
+                text: `Contributions were capped by ${capReasonPhrase(names)} — ${formatCurrency(shortfall)} of what your transfers asked for could not be contributed.`
+                    + (byPay ? ' A paycheck pays its taxes before any deferral.' : ''),
             };
         },
     },
