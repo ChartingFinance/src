@@ -502,6 +502,9 @@
         }
         .scenario-chip:hover { background: #e5e7eb; }
         .scenario-chip .scenario-chip-caret { color: #9ca3af; font-size: 9px; }
+        /* A shared plan opened without saving: on screen, but not a scenario. */
+        .scenario-chip.is-unsaved { background: #FAECE7; color: #993C1D; }
+        .scenario-chip.is-unsaved:hover { background: #F5DDD3; }
 
         .scenario-menu {
             position: absolute; top: calc(100% + 6px); right: 0; z-index: 60;
@@ -535,6 +538,7 @@
             color: #6b7280; cursor: pointer;
         }
         .scenario-menu-new:hover { color: #111827; }
+        .scenario-menu-new + .scenario-menu-new { border-top: none; margin-top: 0; padding-top: 4px; }
 
         .ai-fab-sm { width: 28px; height: 28px; font-size: 13px; }
 
@@ -768,6 +772,7 @@
                 </div>
                 <div id="import-run-provenance" class="text-xs text-gray-500" hidden></div>
                 <p id="import-problem" class="text-sm text-red-700" role="alert" hidden></p>
+                <p class="text-xs text-gray-500"><strong>Open</strong> shows the plan without saving anything; your scenarios stay as they are. <strong>Open &amp; Save</strong> adds it as a new scenario, on its own settings.</p>
                 <div class="flex gap-3 justify-end">
                     <button class="btn-modern outline" id="btn-import-dismiss">Dismiss</button>
                     <button class="btn-modern outline" id="btn-import-open">Open</button>

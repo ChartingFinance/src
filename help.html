@@ -63,7 +63,7 @@
         <div class="grid sm:grid-cols-2 gap-4">
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Settings Row</div>
-                <div class="text-sm text-gray-500"><strong>Current Age</strong>, <strong>Retirement Age</strong>, <strong>Finish Age</strong>, <strong>Filing As</strong>, <strong>Inflation</strong> and <strong>Backtest from Year</strong>. On a loaded plan, changing Retirement Age moves the plan&rsquo;s retirement: the Retire phase, and any salary that ends or Social Security or pension that starts on the old retirement date. A note under the row says what moved, and changing the age back moves it all back.</div>
+                <div class="text-sm text-gray-500"><strong>Current Age</strong>, <strong>Retirement Age</strong>, <strong>Finish Age</strong>, <strong>Filing As</strong>, <strong>Inflation</strong> and <strong>Backtest from Year</strong>. On a loaded plan, changing Retirement Age moves the plan&rsquo;s retirement: the Retire phase, and any salary that ends or Social Security or pension that starts on the old retirement date. A note under the row says what moved, and changing the age back moves it all back. Each scenario keeps its own settings, so switching scenarios switches them too.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Will My Money Last?</div>
@@ -121,7 +121,7 @@
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Scenario Menu</div>
-                <div class="text-sm text-gray-500">The chip in the section heading names the active scenario &mdash; a complete, independent plan with its own assets, fund transfers, life events and guardrail settings. Click it to open the menu: each row shows a preview curve of that scenario (green if it grew, red if it shrank), its note and its ending value. The active row can be renamed (&#x270F;&#xFE0F;) or deleted (&#x1F5D1;&#xFE0F;).</div>
+                <div class="text-sm text-gray-500">The chip in the section heading names the active scenario &mdash; a complete, independent plan with its own assets, fund transfers, life events, settings and guardrail parameters. Click it to open the menu: each row shows a preview curve of that scenario (green if it grew, red if it shrank), its note and its ending value. The active row can be renamed (&#x270F;&#xFE0F;) or deleted (&#x1F5D1;&#xFE0F;). A shared plan opened with <strong>Open</strong> shows in the chip as <em>not saved</em>: nothing of it is stored, and your scenarios are as you left them. Save it from the menu with <strong>＋ Save as scenario</strong>, or pick one of your scenarios, choose <strong>Close without saving</strong> or reload to go back.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Date Controls &amp; &#x26A1; AI Summary</div>
@@ -199,11 +199,11 @@
                 <div class="space-y-2">
                     <div class="flex items-start gap-3">
                         <span class="step-number">1</span>
-                        <span class="text-sm text-gray-700">Click the <strong>scenario chip</strong> in the section heading and choose <strong>＋ New scenario</strong>. Pick a name and note, and choose whether to start blank or copy the current scenario's data.</span>
+                        <span class="text-sm text-gray-700">Click the <strong>scenario chip</strong> in the section heading and choose <strong>＋ New scenario</strong>. Pick a name and note, and choose whether to start blank or copy the current scenario's data. Either way it starts on the current scenario's settings.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">2</span>
-                        <span class="text-sm text-gray-700">Switch scenarios by clicking a row in the menu. Each row's <strong>preview curve</strong> and ending value show where that scenario lands. Scenarios are fully independent &mdash; assets, life events, fund transfers, and guardrail parameters are all scenario-specific.</span>
+                        <span class="text-sm text-gray-700">Switch scenarios by clicking a row in the menu. Each row's <strong>preview curve</strong> and ending value show where that scenario lands. Scenarios are fully independent &mdash; assets, life events, fund transfers, settings and guardrail parameters are all scenario-specific.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">3</span>
