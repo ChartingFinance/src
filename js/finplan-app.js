@@ -1425,7 +1425,10 @@ function calculate() {
 
     // Update details
     if (spreadsheetView) spreadsheetView.portfolio = portfolio;
-    if (reportView) reportView.reports = portfolio.generatedReports;
+    if (reportView) {
+        reportView.taxYears = portfolio.taxYears;
+        reportView.reports = portfolio.generatedReports;
+    }
     if (creditMemoView) creditMemoView.portfolio = portfolio;
 
     // Update timeline

@@ -107,8 +107,8 @@ await test('Currency.toString() is the full format with cents', () => {
 
 await test('the Reports panel formats through the shared function', () => {
     const src = readFileSync('js/components/report-view.js', 'utf8');
-    assert.match(src, /_fmt\(currency\) \{\s*return formatCurrency\(/,
-        'report-view _fmt no longer calls formatCurrency');
+    assert.match(src, /function fmt\(currency\) \{\s*return formatCurrency\(/,
+        'report-view fmt no longer calls formatCurrency');
 });
 
 // ── what formatting costs a run ──────────────────────────────────────
