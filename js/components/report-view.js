@@ -78,6 +78,21 @@ export function reportRows({ type, coversYear, pkg }, taxYears = []) {
 }
 
 /**
+ * What a report is headed by and matched on: the month or year its package
+ * holds. Never `dateLabel`, which is when the report fired, the first of the
+ * following month (see Portfolio.reportMonthly and reportYearly).
+ */
+export function coverLabel(report) {
+    return report.type === 'yearly' ? String(report.coversYear) : report.coversMonth;
+}
+
+/** The index of the monthly report holding a month, or -1. */
+export function monthlyReportIndex(reports, year, month) {
+    const target = `${year}-${String(month).padStart(2, '0')}`;
+    return reports.findIndex((r) => r.type === 'monthly' && r.coversMonth === target);
+}
+
+/**
  * NIIT, IRMAA and the senior deduction all measure AGI unchanged in this model,
  * so they share one row; tests/report-agi-rows.mjs fails if they ever differ.
  * The other three each add or remove something (see tax-basis.js). A yearly
@@ -143,7 +158,7 @@ class ReportView extends LitElement {
         }
 
         return html`${this.reports.map((report) => {
-            const { type, dateLabel } = report;
+            const { type } = report;
             const badgeColor = type === 'yearly' ? '#7c3aed' : '#2563eb';
             const badgeLabel = type === 'yearly' ? 'YEARLY' : 'MONTHLY';
 
@@ -153,7 +168,7 @@ class ReportView extends LitElement {
                 <details style="margin-bottom: 8px; border-bottom: 1px solid #f3f4f6; padding-bottom: 8px;">
                     <summary style="cursor: pointer; font-weight: 600; padding: 4px 0;">
                         <span style="background:${badgeColor};color:#fff;padding:1px 8px;border-radius:6px;font-size:10px;font-weight:600;margin-right:6px;">${badgeLabel}</span>
-                        ${type === 'yearly' ? report.coversYear : dateLabel}
+                        ${coverLabel(report)}
                     </summary>
                     <table class="spreadsheet-table" style="margin-top: 4px;">
                         ${rows.map(([label, value]) => {
@@ -174,22 +189,18 @@ class ReportView extends LitElement {
         })}`;
     }
 
+    /** Open and centre the monthly report holding the selected month. */
     scrollToDate(year, month) {
-        const target = `${year}-${String(month).padStart(2, '0')}`;
+        // One <details> per report, in the same order.
+        const el = this.querySelectorAll('details')[monthlyReportIndex(this.reports, year, month)];
+        if (!el) return;
+        el.open = true;
         const container = this.closest('.overflow-auto');
-        const details = this.querySelectorAll('details');
-        for (const el of details) {
-            const summary = el.querySelector('summary');
-            if (summary && summary.textContent.includes(target)) {
-                el.open = true;
-                if (container) {
-                    container.scrollTop = el.offsetTop - container.offsetTop - container.clientHeight / 2;
-                }
-                el.style.background = '#FAECE7';
-                setTimeout(() => el.style.background = '', 1500);
-                return;
-            }
+        if (container) {
+            container.scrollTop = el.offsetTop - container.offsetTop - container.clientHeight / 2;
         }
+        el.style.background = '#FAECE7';
+        setTimeout(() => el.style.background = '', 1500);
     }
 }
 
