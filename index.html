@@ -572,43 +572,67 @@
         }
         .timeline-cursor-chip strong { font-weight: 700; font-variant-numeric: tabular-nums; }
 
-        /* ─── Month Details — the selected month, three equal regions ───
-           Net worth, this month, and the trailing twelve months are three
-           different kinds of number; each gets an equal, tinted panel so they
-           cannot read as one row. Stacks when the CARD is narrow (a container
-           query, so it holds wherever the card is). */
+        /* ─── Month & Year Details — the selected month and its year ───
+           Two rows over the same columns, so a figure reads the same over one
+           month and over twelve; the tax year sits under them. Each row is its
+           own tinted panel. Stacks when the CARD is narrow (a container query,
+           so it holds wherever the card is). */
         .md-card { padding: 12px; container-type: inline-size; }
-        .md-regions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
-        .md-region { background: #f9fafb; border-radius: 14px; padding: 10px 14px; min-width: 0; }
+        .md-row { display: grid; grid-template-columns: 96px repeat(7, minmax(0, 1fr)); gap: 8px 10px; align-items: start; }
+        .md-row:not(.md-head) { background: #f9fafb; border-radius: 14px; padding: 10px 14px; margin-top: 8px; }
+        .md-head { padding: 0 14px; }
+        .md-colhead { font-size: 10.5px; font-weight: 600; color: #9ca3af; white-space: nowrap; }
+        .md-colhead.md-key { color: #374151; }
+        /* The header row names the columns; a cell's own label shows only
+           when the rows stack and there is no header. */
+        .md-row:not(.md-head) > .md-cell > .md-label { display: none; }
+        .md-rowtitle { font-size: 13px; font-weight: 700; color: #111827; white-space: nowrap; }
         .md-eyebrow { font-size: 10.5px; font-weight: 600; color: #9ca3af; margin-bottom: 5px; white-space: nowrap; }
-        .md-region-title { font-size: 11.5px; font-weight: 600; color: #111827; margin: -2px 0 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        /* auto-fit, not a fixed 3: This month's five figures wrap 3 + 2 in a
-           third of a 1024px page, but fit on one line once a third is wide
-           enough — and that one line is what sets the section's height. */
-        .md-cells { display: grid; grid-template-columns: repeat(auto-fit, minmax(70px, 1fr)); gap: 8px 10px; }
         .md-label { font-size: 10.5px; color: #6b7280; white-space: nowrap; }
         .md-val { font-size: 13px; font-weight: 500; color: #374151; font-variant-numeric: tabular-nums; white-space: nowrap; }
-        .md-nw-val { font-size: 20px; font-weight: 700; color: #111827; font-variant-numeric: tabular-nums; white-space: nowrap; line-height: 1.25; }
-        .md-nw-delta { font-size: 11px; font-weight: 600; margin-top: 2px; white-space: nowrap; }
-        .md-sub { font-size: 10.5px; font-weight: 600; color: #9ca3af; white-space: nowrap; margin-top: 2px; }
+        .md-delta { font-size: 11px; font-weight: 600; margin-top: 2px; white-space: nowrap; }
+        .md-sub { font-size: 10.5px; font-weight: 600; color: #9ca3af; margin-top: 2px; }
         .md-pos, .md-cell.md-pos .md-val { color: #16a34a; }
         .md-neg, .md-cell.md-neg .md-val { color: #db2777; }
         .md-strong .md-val { font-weight: 700; color: #111827; }
-        .md-unfunded .md-label, .md-unfunded .md-val { color: #db2777; font-weight: 600; }
-        .md-info { color: #9ca3af; cursor: help; font-size: 10px; }
         .md-hint { font-size: 10px; font-weight: 600; color: #9ca3af; white-space: nowrap; }
         .md-empty { font-size: 12px; color: #9ca3af; }
+        /* Withdrawn: the total opens the list of obligations it paid. */
+        .md-pop-anchor { position: relative; }
+        .md-drawn-btn {
+            background: none; border: none; border-bottom: 1px dashed #9ca3af; padding: 0; cursor: pointer;
+            font: inherit; font-size: 13px; font-weight: 500; color: #374151; font-variant-numeric: tabular-nums; white-space: nowrap;
+        }
+        .md-drawn-btn:hover, .md-drawn-btn[aria-expanded="true"] { color: #111827; border-bottom-color: #374151; }
+        .md-caret { font-size: 9px; margin-left: 3px; color: #9ca3af; }
+        .md-pop {
+            position: absolute; top: calc(100% + 6px); left: 0; z-index: 30;
+            width: 280px; max-width: 90vw; background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12); padding: 12px 14px;
+        }
+        .md-pop-title { font-size: 12px; font-weight: 700; color: #111827; }
+        .md-pop-row { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; color: #374151; font-variant-numeric: tabular-nums; }
+        .md-pop-group { font-weight: 600; margin-top: 8px; }
+        .md-pop-item { padding-left: 10px; color: #6b7280; }
+        .md-pop-total { font-weight: 700; color: #111827; border-top: 1px solid #e5e7eb; margin-top: 8px; padding-top: 6px; }
+        .md-pop-note { font-size: 11px; color: #6b7280; margin-top: 8px; line-height: 1.4; }
+        /* The tax year: owed first, then AGI, MAGI and the two rates. */
+        .md-taxyear { background: #f9fafb; border-radius: 14px; padding: 10px 14px; margin-top: 8px; }
+        .md-tax-cells { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px 10px; }
         .md-jump {
             background: none; border: none; padding: 0 2px; cursor: pointer;
             font-family: 'Poppins', sans-serif; font-size: 11.5px; font-weight: 600; color: #6b7280;
         }
         .md-jump:hover { color: #111827; }
         .md-heading { flex-wrap: wrap; row-gap: 6px; }
-        /* Stack only when a third would be too narrow to hold two figures side
-           by side. At 760px this stacked an 800px page into a 336px-tall
-           section; kept in thirds there it is about half that. */
-        @container (max-width: 600px) {
-            .md-regions { grid-template-columns: minmax(0, 1fr); }
+        /* Below this the seven columns are too narrow for a balance; each row
+           wraps its cells instead, labelled, and the header goes. */
+        @container (max-width: 760px) {
+            .md-head { display: none; }
+            .md-row { grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); }
+            .md-rowhead { grid-column: 1 / -1; }
+            .md-row:not(.md-head) > .md-cell > .md-label { display: block; }
+            .md-tax-cells { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
         }
 
         /* Phase chip edit popover */
@@ -892,7 +916,7 @@
     <nav class="section-nav" id="sectionNav" aria-label="Sections" hidden>
         <a href="#outcomeStrip" data-nav="outcomeStrip">Outcome</a>
         <a href="#sec-timeline" data-nav="sec-timeline">Timeline</a>
-        <a href="#sec-month" data-nav="sec-month">This month</a>
+        <a href="#sec-month" data-nav="sec-month">Month &amp; year</a>
         <a href="#sec-portfolio" data-nav="sec-portfolio">Portfolio</a>
         <a href="#sec-simulations" data-nav="sec-simulations">Simulations</a>
         <a href="#sec-projections" data-nav="sec-projections">Projections</a>
@@ -939,14 +963,14 @@
         </div>
     </div>
 
-    <!-- ═══ Month Details ═══ -->
+    <!-- ═══ Month & Year Details ═══ -->
     <!--
-      The selected month, always on screen. It used to be a popover behind the
-      ⋯ on the timeline's cursor chip. It sits directly under the timeline
-      because the cursor drives it — see js/components/month-details.js.
+      The selected month and its calendar year, always on screen. It sits
+      directly under the timeline because the cursor drives it — see
+      js/components/month-details.js.
     -->
     <div id="sec-month" class="finplan-month-section mb-8">
-        <h2 class="md-heading text-lg font-bold flex items-center gap-2 flex-shrink-0 mb-4">📅 Month Details
+        <h2 class="md-heading text-lg font-bold flex items-center gap-2 flex-shrink-0 mb-4">📅 Month &amp; Year Details
             <span class="badge-phase ml-auto" id="monthDetailsBadge"></span>
             <button class="md-jump" data-jump="spreadsheet" title="Jump to this month in the spreadsheet">Spreadsheet →</button>
             <button class="md-jump" data-jump="creditmemos" title="Jump to this month's credit memos">Credit memos →</button>

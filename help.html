@@ -112,8 +112,8 @@
                 <div class="text-sm text-gray-500">A vertical line with a chip showing the date, your age and the value at that moment. <strong>Drag anywhere on the arc</strong> to move through time, or focus the arc and use <strong>&larr; / &rarr;</strong> to step a month (<strong>Shift</strong> for a year). Every chart, badge and view on the page follows it.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Month Details</div>
-                <div class="text-sm text-gray-500">The section directly under the timeline always shows the cursor&rsquo;s month: net worth and its change from the month before, income, expenses, taxes, cash flow and asset growth, plus what was withdrawn from your accounts over the past twelve months. In retirement, cash flow often runs negative while asset growth offsets it; the section shows both so you can read them together. <a href="#monthdetails" class="underline">More on reading it</a>.</div>
+                <div class="font-semibold text-sm mb-1">Month &amp; Year Details</div>
+                <div class="text-sm text-gray-500">The section directly under the timeline always shows the cursor&rsquo;s month and its calendar year, in two rows with the same columns: income, expenses, taxes and cash flow first, then what was withdrawn from your accounts, asset growth and net worth. Under them, the year&rsquo;s taxes as a tax return would see them. <a href="#monthdetails" class="underline">More on reading it</a>.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Phase Chips &amp; Edit Popover</div>
@@ -169,23 +169,23 @@
             </div>
 
             <div id="monthdetails" class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-2">Inspect a single month &mdash; Month Details</div>
+                <div class="font-semibold text-sm mb-2">Inspect a month and its year &mdash; Month &amp; Year Details</div>
                 <div class="space-y-2">
                     <div class="flex items-start gap-3">
                         <span class="step-number">1</span>
-                        <span class="text-sm text-gray-700">Scrub the cursor to the month you're curious about. The <strong>Month Details</strong> section directly beneath the timeline always shows the month the cursor is on &mdash; there is nothing to open.</span>
+                        <span class="text-sm text-gray-700">Scrub the cursor to the month you're curious about. The <strong>Month &amp; Year Details</strong> section directly beneath the timeline always shows that month and the calendar year it falls in &mdash; there is nothing to open.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">2</span>
-                        <span class="text-sm text-gray-700">Read the rows together: in retirement, <strong>Cash flow</strong> often runs negative while <strong>Asset growth</strong> offsets it &mdash; the delta beside <strong>Net worth</strong> shows the net result for the month. The section updates as you scrub, so you can watch the flows change across the retirement boundary.</span>
+                        <span class="text-sm text-gray-700">The two rows share their columns, and the year is its months added up, so <strong>Income</strong>, <strong>Expenses</strong>, <strong>Taxes</strong> and <strong>Cash flow</strong> mean the same thing over one month and over twelve. <strong>Cash flow</strong> is income less expenses and taxes, so the four always reconcile. <strong>Net worth</strong> is a balance, not a sum: the year shows where it ended and how much it changed. A plan&rsquo;s first and last years can be short; the row says which months it covers.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">3</span>
-                        <span class="text-sm text-gray-700"><strong>Withdrawn to meet obligations</strong>, on the right, is the odd one out: it covers the <strong>trailing twelve months</strong>, not the single month beside it, so it answers &ldquo;what is this plan actually costing me per year?&rdquo; It is money that genuinely left an account &mdash; living expenses, rent, the <em>full</em> mortgage payment including principal, property tax, maintenance and insurance. That makes it larger than twelve times the monthly <strong>Expenses</strong> row, which is an accounting figure that leaves mortgage principal and property tax out.</span>
+                        <span class="text-sm text-gray-700"><strong>Withdrawn</strong> is money that genuinely left an account to meet an obligation &mdash; living expenses, rent, the <em>full</em> mortgage payment including principal, property tax, maintenance, insurance, and tax paid from an account. That makes it larger than the <strong>Expenses</strong> column, an accounting figure that leaves mortgage principal and property tax out. Click the amount for the list of obligations it paid, each with its amount. While you are working, its tax is usually <strong>$0</strong>, and that is correct: withholding comes out of your paycheck and never passes through an account, and the list says so. If a pink <strong>unfunded</strong> amount appears, the plan owed more than any account could supply.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">4</span>
-                        <span class="text-sm text-gray-700">The <strong>Tax</strong> line beneath it is usually <strong>$0 while you are working</strong>, and that is correct: withholding comes out of your paycheck and never passes through one of your accounts, so you never withdrew it. When that is why it reads $0, the section says so &mdash; <em>withheld at source</em> appears beside it &mdash; and hovering the <strong>&#x24D8;</strong> explains the rule. Once the paycheck stops there is nothing to withhold from, and almost the whole tax bill turns into a withdrawal &mdash; which is why the figure jumps at retirement. If a pink <strong>Could not fund</strong> line appears, the plan owed more than any account could supply that year; the obligation was accrued but the money was never there.</span>
+                        <span class="text-sm text-gray-700"><strong>Tax year</strong>, under the rows, is the year as a tax return sees it: <strong>Federal taxes owed</strong> on that year&rsquo;s income (FICA, income and capital-gains tax, and the Net Investment Income Tax), then <strong>AGI</strong>, <strong>MAGI</strong>, and the effective rate on income and on AGI. It differs from the <strong>Taxes</strong> column, which is what was <em>paid</em> during the year: the true-up and NIIT for a year are settled the following January, so a year&rsquo;s Taxes include the previous year&rsquo;s settlement. The line under the amount owed says what January settled. A year the plan ends before December was never settled and has no tax-year figures.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">5</span>
