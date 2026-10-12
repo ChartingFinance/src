@@ -21,6 +21,9 @@
  *                  purpose would pass.
  *   YEARLY ONLY    a monthly report has none of the rows.
  *   NO RECORD      a yearly report with no record shows dashes, not $0.00.
+ *   TAXES PAID     in every report the federal tax sub-rows sum to the heading,
+ *                  and the Prior-Year Settlement holds only the previous tax
+ *                  year: each NIIT it shows was assessed the December before.
  *
  * Run: node tests/report-agi-rows.mjs   (from src/)
  */
@@ -51,6 +54,7 @@ const { simConfigFromGlobals } = G;
 const { Portfolio } = await import('../js/portfolio.js');
 const { chronometer_run } = await import('../js/chronometer.js');
 const { MagiPurpose } = await import('../js/tax-basis.js');
+const { EventType } = await import('../js/sim-event.js');
 const { formatCurrency } = await import('../js/utils/html.js');
 const { runPlan } = await import('../js/mcp/run-plan.js');
 const { reportRows } = await import('../js/components/report-view.js');
@@ -70,6 +74,24 @@ const ACA = '  MAGI (ACA Premium Credit)';
 const LABELS = [AGI, SHARED, IRA, ROTH, ACA];
 
 const money = (n) => formatCurrency(n, { cents: true });
+
+/** A formatted amount back to a number: "−$1,234.50" → -1234.5. */
+const amountOf = (s) => Number(s.replace('−', '-').replace(/[$,]/g, ''));
+
+const PAID = 'Federal Taxes Paid';
+const PAID_PARTS = ['  FICA', '  Income Tax', '  LT Cap Gains Tax', '  Estimated Taxes', '  Prior-Year Settlement'];
+const SETTLEMENT = '  Prior-Year Settlement';
+const SETTLEMENT_PARTS = ['    Annual True-Up', '    Net Investment Income Tax'];
+
+/** Each heading equals the sum of its parts, to the cent-rounding of the parts. */
+function assertSums(shown, heading, parts, where) {
+  for (const l of [heading, ...parts]) assert.ok(shown.has(l), `${where}: no "${l.trim()}" row`);
+  const sum = parts.reduce((s, l) => s + amountOf(shown.get(l)), 0);
+  assert.ok(Math.abs(sum - amountOf(shown.get(heading))) <= 0.01 * parts.length,
+    `${where}: "${heading.trim()}" ${shown.get(heading)} but its rows sum to ${sum.toFixed(2)}`);
+}
+
+let settlementsShown = 0, niitSettlementsShown = 0;
 
 /** The snapshot harness's configuration for a fixture, then a run with reports on. */
 async function runFixture(fixture) {
@@ -134,6 +156,35 @@ async function checkPortfolio(name, p) {
       for (const l of LABELS) assert.ok(!labels.includes(l), `${r.dateLabel} shows "${l.trim()}"`);
     }
   });
+
+  await check(`${name}: in every report the federal tax rows sum to Federal Taxes Paid`, () => {
+    for (const r of p.generatedReports) {
+      const shown = new Map(reportRows(r, p.taxYears));
+      assertSums(shown, PAID, PAID_PARTS, `${r.type} ${r.dateLabel}`);
+      assertSums(shown, SETTLEMENT, SETTLEMENT_PARTS, `${r.type} ${r.dateLabel}`);
+    }
+  });
+
+  // NIIT_ASSESSED is dated December of the year it settles, while the charge
+  // is booked on the January 1 after it.
+  const niitByYear = new Map();
+  for (const e of p.modelAssets.flatMap((a) => a.events)) {
+    if (e.type !== EventType.NIIT_ASSESSED) continue;
+    niitByYear.set(e.dateInt.year, (niitByYear.get(e.dateInt.year) ?? 0) + Math.abs(e.amount.amount));
+  }
+
+  await check(`${name}: a yearly report's settlement is the year before it`, () => {
+    for (const r of yearly) {
+      const shown = new Map(reportRows(r, p.taxYears));
+      if (amountOf(shown.get(SETTLEMENT)) !== 0) settlementsShown++;
+      const niit = -amountOf(shown.get('    Net Investment Income Tax'));
+      if (niit === 0) continue;
+      niitSettlementsShown++;
+      const assessed = niitByYear.get(r.coversYear - 1) ?? 0;
+      assert.ok(Math.abs(niit - assessed) < 0.01,
+        `${r.coversYear} shows NIIT ${niit.toFixed(2)}; ${r.coversYear - 1} assessed ${assessed.toFixed(2)}`);
+    }
+  });
 }
 
 // ── Every yearly report, every fixture ───────────────────────────────
@@ -190,7 +241,12 @@ await check('the rows sit between deductions and federal taxes', () => {
   const at = labels.indexOf(AGI);
   assert.equal(labels[at - 1], '  Property Tax (Deductible)');
   assert.deepEqual(labels.slice(at, at + LABELS.length), LABELS);
-  assert.equal(labels[at + LABELS.length], 'Federal Taxes');
+  assert.equal(labels[at + LABELS.length], PAID);
+});
+
+await check('the corpus shows settlements, and some of them carry NIIT', () => {
+  assert.ok(settlementsShown > 0, 'no yearly report has a settlement, so the sum check on it is vacuous');
+  assert.ok(niitSettlementsShown > 0, 'no yearly report shows NIIT, so the prior-year check is vacuous');
 });
 
 await check('a yearly report with no record shows dashes, not $0.00', () => {

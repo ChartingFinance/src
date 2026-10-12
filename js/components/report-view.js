@@ -55,12 +55,7 @@ export function reportRows({ type, coversYear, pkg }, taxYears = []) {
         ['  Mortgage Interest', fmt(pkg.mortgageInterest)],
         ['  Property Tax (Deductible)', fmt(pkg.deductiblePropertyTaxes())],
         ...(type === 'yearly' ? agiRows(taxYears.find((t) => t.year === coversYear)) : []),
-        ['Federal Taxes', fmt(pkg.federalTaxes())],
-        ['  FICA', fmt(pkg.fica())],
-        ['  Income Tax', fmt(pkg.incomeTax)],
-        ['  LT Cap Gains Tax', fmt(pkg.longTermCapitalGainsTax)],
-        ['  Net Investment Income Tax', fmt(pkg.niit)],
-        ['  Estimated Taxes', fmt(pkg.estimatedTaxes)],
+        ...federalTaxRows(pkg),
         ['Local Taxes', fmt(pkg.saltTaxes())],
         ['  Property Tax (Total)', fmt(pkg.propertyTaxes)],
         ['Contributions', fmt(pkg.contributions())],
@@ -96,6 +91,26 @@ function agiRows(taxYear) {
         ['  MAGI (IRA Deduction)', show(taxYear?.magi[MagiPurpose.IRA_DEDUCTION])],
         ['  MAGI (Roth Contribution)', show(taxYear?.magi[MagiPurpose.ROTH_CONTRIBUTION])],
         ['  MAGI (ACA Premium Credit)', show(taxYear?.magi[MagiPurpose.ACA])],
+    ];
+}
+
+/**
+ * What the period paid, which is not what its income owed. The annual pass
+ * settles a year on the following January 1, so the true-up and NIIT in a
+ * package always belong to the previous tax year: a yearly report shows them
+ * beside the next year's AGI. They get their own sub-total for that reason.
+ * The sub-rows sum to the heading, as federalTaxes() sums FEDERAL_TAX_FIELDS.
+ */
+function federalTaxRows(pkg) {
+    return [
+        ['Federal Taxes Paid', fmt(pkg.federalTaxes())],
+        ['  FICA', fmt(pkg.fica())],
+        ['  Income Tax', fmt(pkg.incomeTax)],
+        ['  LT Cap Gains Tax', fmt(pkg.longTermCapitalGainsTax)],
+        ['  Estimated Taxes', fmt(pkg.estimatedTaxes)],
+        ['  Prior-Year Settlement', fmt(pkg.taxTrueUp.amount + pkg.niit.amount)],
+        ['    Annual True-Up', fmt(pkg.taxTrueUp)],
+        ['    Net Investment Income Tax', fmt(pkg.niit)],
     ];
 }
 
@@ -138,7 +153,7 @@ class ReportView extends LitElement {
                 <details style="margin-bottom: 8px; border-bottom: 1px solid #f3f4f6; padding-bottom: 8px;">
                     <summary style="cursor: pointer; font-weight: 600; padding: 4px 0;">
                         <span style="background:${badgeColor};color:#fff;padding:1px 8px;border-radius:6px;font-size:10px;font-weight:600;margin-right:6px;">${badgeLabel}</span>
-                        ${dateLabel}
+                        ${type === 'yearly' ? report.coversYear : dateLabel}
                     </summary>
                     <table class="spreadsheet-table" style="margin-top: 4px;">
                         ${rows.map(([label, value]) => {

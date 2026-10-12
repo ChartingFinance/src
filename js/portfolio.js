@@ -1073,8 +1073,8 @@ export class Portfolio {
             // `dateLabel` is when the report fired and `coversYear` is the year
             // it describes; they always differ. yearlyChron runs on New Year's
             // Day, so the package pushed at 2027-01 holds 2026. A "Year" column
-            // must use coversYear; report-view shows dated reports and uses
-            // dateLabel.
+            // must use coversYear, as report-view does for a yearly report's
+            // heading and its TaxYear.
             this.generatedReports.push({ 
                 type: 'yearly', 
                 dateLabel: currentDateInt.toString(), 
