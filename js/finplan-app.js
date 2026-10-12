@@ -14,6 +14,7 @@ import { Chart } from 'chart.js';
 
 // The share format, shared with <share-modal> and the MCP server.
 import { sharePayloadParamFrom, decodeSharePayload } from './share-link.js';
+import { readSharedPlan, applySharedSettings } from './shared-plan.js';
 
 // ── Core types ──────────────────────────────────────────────
 import { Metric, MetricLabel, PINNED_METRICS, MACRO_METRICS, isTopLevelMetric } from './metric.js';
@@ -95,7 +96,6 @@ import {
     global_getInflationRate,
     global_setFilingAs,
     global_getFilingAs,
-    asFilingStatus,
     global_setUserStartAge,
     global_getUserStartAge,
     global_setUserRetirementAge,
@@ -2310,11 +2310,10 @@ function loadSharedPortfolio() {
     if (!compressed) return false;
 
     try {
-        const data = decodeSharePayload(compressed);
-        if (!data) return false;
-
-        // Store parsed data for import popup
-        _pendingImport = data;
+        // A link that does not decode is offered anyway, with the reason.
+        // Ignored, it would leave the previous plan on screen looking shared.
+        const decoded = decodeSharePayload(compressed);
+        const data = decoded ?? {};
 
         // Show import popup with sender's info. Links carry `name`; the older
         // `portfolioName` is accepted too.
@@ -2327,6 +2326,10 @@ function loadSharedPortfolio() {
         // so here is the cheapest possible answer to "are the report and the app
         // looking at the same plan?" — both name the same handle, or they do not.
         setImportDialogRun(data.handle);
+
+        const { plan, problem } = readPendingImport(decoded);
+        _pendingImport = plan ?? null;
+        showImportProblem(problem);
 
         const popup = document.getElementById('popupImportPortfolio');
         popup.classList.remove('hidden');
@@ -2368,58 +2371,67 @@ function setImportedRunBadge(handle) {
     badge.hidden = !handle;
 }
 
-function applyImportedPortfolio(data, persist) {
-    setImportedRunBadge(data.handle);
-    // Apply global settings
-    if (data.settings) {
-        global_setInflationRate(data.settings.inflationRate);
-        // Imported data is untrusted — it may carry a status an older version wrote.
-        global_setFilingAs(asFilingStatus(data.settings.filingAs));
-        global_setUserStartAge(data.settings.startAge);
-        global_setUserRetirementAge(data.settings.retirementAge);
-        global_setUserFinishAge(data.settings.finishAge);
-        if (data.settings.backtestYear != null) global_setBacktestYear(data.settings.backtestYear);
-        setActiveTaxTable(makeActiveTaxTable());
-        syncGlobalsToSettings();
+/**
+ * The plan a decoded link opens, or the reason it cannot be opened.
+ *
+ * Runs when the link arrives, so the dialog says why before anyone chooses
+ * Open, and nothing has been applied. `decoded` is null for a link with no
+ * readable payload, which is usually one cut short in transit.
+ */
+function readPendingImport(decoded) {
+    if (!decoded) {
+        return { problem: 'Nothing could be read from the link; it may have been cut short '
+            + 'when it was copied or sent.' };
     }
+    try {
+        return { plan: readSharedPlan(decoded) };
+    } catch (e) {
+        console.warn('Shared portfolio cannot be opened:', e);
+        return { problem: e.message };
+    }
+}
 
-    // Load guardrail params
-    if (data.guardrailParams) {
-        const gp = data.guardrailParams;
-        global_setGuardrailWithdrawalRate(gp.withdrawalRate);
-        global_setGuardrailPreservation(gp.preservation);
-        global_setGuardrailProsperity(gp.prosperity);
-        global_setGuardrailAdjustment(gp.adjustment);
+/**
+ * Say in the import dialog why its link cannot be opened, or clear the line.
+ * With a problem only Dismiss is left, which returns to the user's own plan
+ * untouched.
+ */
+function showImportProblem(problem) {
+    const line = document.getElementById('import-problem');
+    if (line) {
+        line.textContent = problem ? `This plan can't be opened. ${problem}` : '';
+        line.hidden = !problem;
     }
+    document.getElementById('btn-import-open').disabled = !!problem;
+    document.getElementById('btn-import-save').disabled = !!problem;
+}
+
+/** Open a plan `readSharedPlan` has read. Reading is where a link is refused. */
+function applyImportedPortfolio(plan, persist) {
+    setImportedRunBadge(plan.handle);
+    applySharedSettings(plan);
+    syncGlobalsToSettings();
     syncGuardrailsToDOM();
 
     // Load life events
-    if (data.lifeEvents?.length) {
-        appState.lifeEvents = data.lifeEvents.map(ModelLifeEvent.fromJSON);
-    } else {
-        appState.lifeEvents = ModelLifeEvent.defaultTimeline(
-            global_user_startAge, global_user_retirementAge
-        );
-    }
+    appState.lifeEvents = plan.lifeEvents ?? ModelLifeEvent.defaultTimeline(
+        global_user_startAge, global_user_retirementAge
+    );
 
-    // Load assets
-    if (data.modelAssets) {
-        const assets = membrane_rawDataToModelAssets(data.modelAssets);
-
-        // Migration: copy legacy per-asset transfers to accumulate phase
-        const accEvent = appState.lifeEvents.find(e => LifeEventType.isAccumulation(e.type));
-        if (accEvent && Object.keys(accEvent.phaseTransfers).length === 0) {
-            for (const asset of assets) {
-                if (asset.fundTransfers?.length > 0) {
-                    accEvent.phaseTransfers[asset.displayName] = asset.fundTransfers.map(ft => ft.toJSON());
-                }
+    // Migration: copy legacy per-asset transfers to accumulate phase
+    const assets = plan.modelAssets;
+    const accEvent = appState.lifeEvents.find(e => LifeEventType.isAccumulation(e.type));
+    if (accEvent && Object.keys(accEvent.phaseTransfers).length === 0) {
+        for (const asset of assets) {
+            if (asset.fundTransfers?.length > 0) {
+                accEvent.phaseTransfers[asset.displayName] = asset.fundTransfers.map(ft => ft.toJSON());
             }
         }
-
-        // Anchors the editor on the imported plan, and rebinds the life events
-        // set above — they arrive first here so the migration can reach them.
-        assetList.modelAssets = bindForEditing(assets);
     }
+
+    // Anchors the editor on the imported plan, and rebinds the life events
+    // set above — they arrive first here so the migration can reach them.
+    assetList.modelAssets = bindForEditing(assets);
 
     if (persist) {
         // Create a new scenario for the imported portfolio
