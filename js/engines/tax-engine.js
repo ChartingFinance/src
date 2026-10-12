@@ -614,6 +614,7 @@ export class TaxEngine {
      *
      * @param {number} settledYearMonths months of the settled year inside the
      *   plan, for the allocation's history window.
+     * @returns {number} the NIIT the year owed, positive; 0 under the $1 gate
      */
     applyAnnualNIIT(settledYearMonths) {
 
@@ -624,11 +625,12 @@ export class TaxEngine {
 
         // Same $1 materiality gate the true-up uses. Returns BEFORE any trace
         // scope is opened — see the note at the call site in portfolio.js.
-        if (niit.amount < 1) return;
+        if (niit.amount < 1) return 0;
 
-        return withTrace(TraceKind.TAX_TRUE_UP, 'Net investment income tax',
+        withTrace(TraceKind.TAX_TRUE_UP, 'Net investment income tax',
             this.#unfundedTaxAnchor()?.currentDateInt ?? null,
             () => this.#applyAnnualNIITInScope(niit, netInvestmentIncome, magi, settledYearMonths));
+        return niit.amount;
 
     }
 
@@ -722,8 +724,23 @@ export class TaxEngine {
      *   history: this pass runs on January 1 of the following year, when every
      *   month of the settled year has already been snapshotted and zeroed.
      *   Portfolio.monthsInPlanYear() computes it.
+     * @returns {{incomeTax: number, capitalGainsTax: number}}  the year's
+     *   liability, positive, whatever the settlement could collect
      */
     applyAnnualTaxTrueUp(settledYearMonths) {
+        const liability = this.#annualLiability();
+        this.#settleAnnualDifference(liability.incomeTax + liability.capitalGainsTax, settledYearMonths);
+        return liability;
+    }
+
+    /**
+     * The settled year's exact income and capital-gains tax, from the yearly
+     * accumulator. Returned by applyAnnualTaxTrueUp so the year's record holds
+     * what was owed, whether or not the settlement could be paid.
+     *
+     * @returns {{incomeTax: number, capitalGainsTax: number}}  positive, owed
+     */
+    #annualLiability() {
 
         // 1. Compute exact tax liability from the yearly accumulator
         const yearlySnapshot = this.yearly.copy();
@@ -750,8 +767,16 @@ export class TaxEngine {
             actualTaxableIncome, yearlyCapitalGains
         );
 
-        // Total actual liability (positive = tax owed)
-        const totalActualTax = actualIncomeTax.amount + actualCapitalGainsTax.amount;
+        return { incomeTax: actualIncomeTax.amount, capitalGainsTax: actualCapitalGainsTax.amount };
+    }
+
+    /**
+     * Collect the year's underpayment or refund its overpayment.
+     *
+     * @param {number} totalActualTax     the year's liability, positive = owed
+     * @param {number} settledYearMonths  for the allocation's history window
+     */
+    #settleAnnualDifference(totalActualTax, settledYearMonths) {
 
         // 2. What was already withheld or provisioned during the year?
         //

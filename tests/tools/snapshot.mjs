@@ -532,7 +532,10 @@ function render(fixture, portfolio, sanity, coverage) {
       const magi = Object.values(MagiPurpose).map((p) => `${p}=${money(t.magi[p])}`).join(' ');
       L.push(`  ${t.year} months=${t.months} age=${t.age} agi=${money(t.agi)} ${magi} ` +
              `nii=${money(t.netInvestmentIncome)} taxableSS=${money(t.taxableSocialSecurity)} ` +
-             `ordinaryTaxable=${money(t.ordinaryTaxable)} capitalGains=${money(t.capitalGains)}`);
+             `ordinaryTaxable=${money(t.ordinaryTaxable)} capitalGains=${money(t.capitalGains)} ` +
+             `fica=${money(t.fica)} incomeTax=${money(t.incomeTax)} capitalGainsTax=${money(t.capitalGainsTax)} ` +
+             `niit=${money(t.niit)} federalTax=${money(t.federalTax)} ` +
+             `settledTrueUp=${money(t.settledTrueUp)} settledNIIT=${money(t.settledNIIT)}`);
     }
     L.push('');
   }

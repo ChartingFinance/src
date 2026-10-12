@@ -957,10 +957,15 @@ export class Portfolio {
         // its history window.
         const settledYear = currentDateInt.year - 1;
 
-        // The year's tax basis, recorded from the package the passes below read.
-        this.#recordTaxYear(settledYear);
+        // The year's tax basis, read from the package the passes below read.
+        const basis = taxableBasis(this.yearly, this.activeUser, { taxTable: this.config.taxTable });
 
-        withTrace(TraceKind.TAX_TRUE_UP, `${currentDateInt.year} tax true-up`, currentDateInt,
+        // The passes book the settlement into this January's package. Measured
+        // as a difference, so nothing else booked this month can pass for it.
+        const trueUpBefore = this.monthly.taxTrueUp.amount;
+        const niitBefore = this.monthly.niit.amount;
+
+        const liability = withTrace(TraceKind.TAX_TRUE_UP, `${currentDateInt.year} tax true-up`, currentDateInt,
             () => this.taxes.applyAnnualTaxTrueUp(this.monthsInPlanYear(settledYear)));
 
         // NIIT is a separate pass after the true-up, not part of it:
@@ -970,14 +975,27 @@ export class Portfolio {
         //    paths.
         // Not wrapped in withTrace here: applyAnnualNIIT opens its scope only
         // when tax is due, so households that owe none get no empty scope.
-        this.taxes.applyAnnualNIIT(this.monthsInPlanYear(settledYear));
+        const niit = this.taxes.applyAnnualNIIT(this.monthsInPlanYear(settledYear));
+
+        this.#recordTaxYear(settledYear, basis, {
+            liability,
+            niit,
+            settledTrueUp: this.monthly.taxTrueUp.amount - trueUpBefore,
+            settledNIIT: this.monthly.niit.amount - niitBefore,
+        });
 
     }
 
     /**
-     * Record the settled year's tax basis: AGI, every MAGI, and the bases the
-     * annual passes charge on. Every settled year gets one, whether or not
-     * anything is charged on it.
+     * Record the settled year: its tax basis (AGI, every MAGI, the bases the
+     * annual passes charge on), what it owed, and how the January settlement
+     * paid it. Every settled year gets one, whether or not anything is charged.
+     *
+     * Owed and paid are different numbers. `federalTax` is what the year's
+     * income owed, from the liability the true-up computed; the settlement
+     * fields are what the passes actually booked, which is less when an account
+     * could not pay. A package shows the settlement in the following year, so
+     * a year's tax cannot be read from its own package (see report-view.js).
      *
      * Household figures, so they live on the portfolio, not on an asset. Plain
      * numbers in a frozen record, so a record can be serialised and nothing can
@@ -994,13 +1012,23 @@ export class Portfolio {
      * @property {number} taxableSocialSecurity
      * @property {number} ordinaryTaxable
      * @property {number} capitalGains
+     * @property {number} fica             owed, positive: payroll tax has no true-up
+     * @property {number} incomeTax        owed, positive: the true-up's liability
+     * @property {number} capitalGainsTax  owed, positive: the true-up's liability
+     * @property {number} niit             owed, positive; 0 under the $1 gate
+     * @property {number} federalTax       the sum of the four above
+     * @property {number} settledTrueUp    booked in January: + refund, − bill
+     * @property {number} settledNIIT      booked in January: − paid
      *
      * @param {number} year
+     * @param {object} basis  taxableBasis() of the settled year's package
+     * @param {{liability: {incomeTax: number, capitalGainsTax: number},
+     *          niit: number, settledTrueUp: number, settledNIIT: number}} settled
      */
-    #recordTaxYear(year) {
-        const basis = taxableBasis(this.yearly, this.activeUser, { taxTable: this.config.taxTable });
+    #recordTaxYear(year, basis, { liability, niit, settledTrueUp, settledNIIT }) {
         const magi = {};
         for (const purpose of Object.values(MagiPurpose)) magi[purpose] = basis.magi[purpose].amount;
+        const fica = -this.yearly.fica().amount;
         this.taxYears.push(Object.freeze({
             year,
             months: this.monthsInPlanYear(year),
@@ -1011,6 +1039,13 @@ export class Portfolio {
             taxableSocialSecurity: basis.taxableSocialSecurity.amount,
             ordinaryTaxable: basis.ordinaryTaxable.amount,
             capitalGains: basis.capitalGains.amount,
+            fica,
+            incomeTax: liability.incomeTax,
+            capitalGainsTax: liability.capitalGainsTax,
+            niit,
+            federalTax: fica + liability.incomeTax + liability.capitalGainsTax + niit,
+            settledTrueUp,
+            settledNIIT,
         }));
     }
 
