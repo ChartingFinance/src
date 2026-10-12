@@ -43,8 +43,7 @@ import { membrane_rawDataToModelAssets } from '../membrane.js';
 import { ModelLifeEvent } from '../life-event.js';
 import { detectIssues } from '../portfolio-issues.js';
 import { buildQuickStart, quickStartProfiles } from '../quick-start.js';
-import { asFilingStatus } from '../filing-status.js';
-import { makeSimConfig, SIM_CONFIG_DEFAULTS } from '../sim-config.js';
+import { makeSimConfig, planSettingsFrom, SIM_CONFIG_DEFAULTS } from '../sim-config.js';
 import { computeMonteCarlo } from '../mc-compute.js';
 import { ageToDateIntFor } from '../plan-dates.js';
 
@@ -91,20 +90,15 @@ export function planFromProfile(profileKey, ageOverrides = null) {
  * nothing.
  */
 export function simConfigFromPlanSpec(spec) {
-    const settings = spec?.settings ?? {};
-
-    // Untrusted: a spec can arrive from an agent or an old share URL. Coerce
-    // rather than throw, matching how the app treats an imported portfolio.
+    // Untrusted: a spec can arrive from an agent or an old share URL. The app
+    // reads an imported link's settings through the same function, so a link
+    // opens there on the settings it ran on here.
+    const settings = planSettingsFrom(spec);
     const D = SIM_CONFIG_DEFAULTS;
-    const filingAs = asFilingStatus(settings.filingAs, D.filingAs);
     const propertyTaxDeductionMax = D.propertyTaxDeductionMax;
 
     return makeSimConfig({
-        inflationRate: settings.inflationRate ?? D.inflationRate,
-        filingAs,
-        startAge: settings.startAge ?? D.startAge,
-        retirementAge: settings.retirementAge ?? D.retirementAge,
-        finishAge: settings.finishAge ?? D.finishAge,
+        ...settings,
         propertyTaxDeductionMax,
 
         // Not carried by the share format, so taken from the defaults — a spec
@@ -116,7 +110,7 @@ export function simConfigFromPlanSpec(spec) {
         simDataMode: D.simDataMode,
 
         // Built from the resolved status.
-        taxTable: new TaxTable(filingAs, propertyTaxDeductionMax),
+        taxTable: new TaxTable(settings.filingAs, propertyTaxDeductionMax),
     });
 }
 

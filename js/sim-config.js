@@ -23,7 +23,7 @@
  * `simConfigFromGlobals()` in globals.js.
  */
 
-import { FilingStatus, isFilingStatus } from './filing-status.js';
+import { FilingStatus, isFilingStatus, asFilingStatus } from './filing-status.js';
 
 /**
  * The engine's own defaults. The engine owns them; globals.js imports them to
@@ -42,6 +42,40 @@ export const SIM_CONFIG_DEFAULTS = Object.freeze({
     backtestYear: 'current',
     simDataMode: 'calibrated',
 });
+
+/**
+ * The five settings a plan spec or share link carries, every one present.
+ *
+ * Both readers of a link use this: `simConfigFromPlanSpec()` in the MCP server
+ * and the app's import (shared-plan.js). A setting the plan leaves out takes
+ * its SIM_CONFIG_DEFAULTS value, so the app opens a link on the settings the
+ * server ran it on. An unrecognised filing status falls back to the default,
+ * as untrusted input does everywhere. A setting that is present but not a
+ * number is refused, not replaced: a default in its place would run a
+ * different plan from the one that was sent.
+ *
+ * @param {object} [spec] a plan spec or share payload; only `settings` is read
+ * @returns {Readonly<{inflationRate, filingAs, startAge, retirementAge, finishAge}>}
+ */
+export function planSettingsFrom(spec) {
+    const given = spec?.settings ?? {};
+    const number = (field) => {
+        const value = given[field] ?? SIM_CONFIG_DEFAULTS[field];
+        if (typeof value !== 'number' || !Number.isFinite(value)) {
+            // String() for numbers: JSON.stringify(NaN) is "null".
+            const shown = typeof value === 'number' ? String(value) : JSON.stringify(value);
+            throw new Error(`The plan's ${field} setting is ${shown}, not a number.`);
+        }
+        return value;
+    };
+    return Object.freeze({
+        inflationRate: number('inflationRate'),
+        filingAs: asFilingStatus(given.filingAs, SIM_CONFIG_DEFAULTS.filingAs),
+        startAge: number('startAge'),
+        retirementAge: number('retirementAge'),
+        finishAge: number('finishAge'),
+    });
+}
 
 /**
  * Every field the engine reads. `global_workerSnapshot()` must carry each

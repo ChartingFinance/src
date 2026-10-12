@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.3.23; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.3.24; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -31450,6 +31450,24 @@ var SIM_CONFIG_DEFAULTS = Object.freeze({
   backtestYear: "current",
   simDataMode: "calibrated"
 });
+function planSettingsFrom(spec) {
+  const given = spec?.settings ?? {};
+  const number4 = (field) => {
+    const value = given[field] ?? SIM_CONFIG_DEFAULTS[field];
+    if (typeof value !== "number" || !Number.isFinite(value)) {
+      const shown = typeof value === "number" ? String(value) : JSON.stringify(value);
+      throw new Error(`The plan's ${field} setting is ${shown}, not a number.`);
+    }
+    return value;
+  };
+  return Object.freeze({
+    inflationRate: number4("inflationRate"),
+    filingAs: asFilingStatus(given.filingAs, SIM_CONFIG_DEFAULTS.filingAs),
+    startAge: number4("startAge"),
+    retirementAge: number4("retirementAge"),
+    finishAge: number4("finishAge")
+  });
+}
 var FIELDS = Object.freeze([
   "inflationRate",
   "filingAs",
@@ -39309,16 +39327,11 @@ function planFromProfile(profileKey, ageOverrides = null) {
   };
 }
 function simConfigFromPlanSpec(spec) {
-  const settings = spec?.settings ?? {};
+  const settings = planSettingsFrom(spec);
   const D = SIM_CONFIG_DEFAULTS;
-  const filingAs = asFilingStatus(settings.filingAs, D.filingAs);
   const propertyTaxDeductionMax = D.propertyTaxDeductionMax;
   return makeSimConfig({
-    inflationRate: settings.inflationRate ?? D.inflationRate,
-    filingAs,
-    startAge: settings.startAge ?? D.startAge,
-    retirementAge: settings.retirementAge ?? D.retirementAge,
-    finishAge: settings.finishAge ?? D.finishAge,
+    ...settings,
     propertyTaxDeductionMax,
     // Not carried by the share format, so taken from the defaults — a spec
     // must not inherit settings from an earlier caller.
@@ -39328,7 +39341,7 @@ function simConfigFromPlanSpec(spec) {
     backtestYear: D.backtestYear,
     simDataMode: D.simDataMode,
     // Built from the resolved status.
-    taxTable: new TaxTable(filingAs, propertyTaxDeductionMax)
+    taxTable: new TaxTable(settings.filingAs, propertyTaxDeductionMax)
   });
 }
 async function runPlan(spec, { includeReconciliation = false } = {}) {

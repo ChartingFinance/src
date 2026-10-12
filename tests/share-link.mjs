@@ -21,6 +21,11 @@
  * repository keeps finding in itself. The import check below is what keeps that
  * from drifting back.
  *
+ * The third is that a link opens in the app as the plan it carries, on the
+ * settings the MCP server ran it with, or the import dialog says why it cannot.
+ * A failure in between leaves the previous plan on screen looking like the
+ * shared one, and nothing about that screen says otherwise.
+ *
  * Run: node tests/share-link.mjs
  */
 
@@ -40,8 +45,11 @@ const {
   decodeSharePayload, encodeSharePayload, sharePayloadFromPlan,
   SHARE_PARAM, DEFAULT_ORIGIN, classifyPlanReference, SPEC_KEYS, specFromPayload,
 } = await import('../js/share-link.js');
-const { planFromProfile, listProfiles, cacheRun, specForHandle, clearRuns } =
+const { planFromProfile, listProfiles, cacheRun, specForHandle, clearRuns, simConfigFromPlanSpec } =
   await import('../js/mcp/run-plan.js');
+const { readSharedPlan, applySharedSettings } = await import('../js/shared-plan.js');
+const { SIM_CONFIG_DEFAULTS } = await import('../js/sim-config.js');
+const G = await import('../js/globals.js');
 
 let passed = 0, failed = 0;
 function check(label, fn) {
@@ -248,7 +256,7 @@ check('the app shows which run an imported plan came from', () => {
     'the portfolio badge is set while the user is still deciding whether to import');
 
   const applied = src.slice(src.indexOf('function applyImportedPortfolio'));
-  assert.ok(/setImportedRunBadge\(data\.handle\)/.test(applied.slice(0, 400)),
+  assert.ok(/setImportedRunBadge\(plan\.handle\)/.test(applied.slice(0, 400)),
     'importing a plan does not record which run it came from');
 
   // Cleared when the plan on screen is no longer the imported one.
@@ -271,6 +279,138 @@ check('the app handles a fragment link arriving in an already-open tab', () => {
   const listener = src.slice(src.indexOf("addEventListener('hashchange'"));
   assert.ok(/loadSharedPortfolio\(\)/.test(listener.slice(0, 200)),
     'the hashchange listener does not call loadSharedPortfolio');
+});
+
+// ── Opening a link ───────────────────────────────────────────────────
+console.log('\n── A link opens as the plan it carries, or says why it cannot ──\n');
+
+/** A link's payload, decoded the way the app decodes its own address. */
+const arrive = (url) => {
+  const u = new URL(url);
+  return decodeSharePayload(sharePayloadParamFrom(u.search, u.hash));
+};
+
+/**
+ * Settings the viewer already had, none of them a default, so a setting the
+ * import fails to move shows up as the viewer's rather than passing unnoticed.
+ */
+function viewerHasOtherSettings() {
+  for (const k of Object.keys(store)) delete store[k];
+  G.global_setInflationRate(0.05);
+  G.global_setFilingAs('MFJ');
+  G.global_setUserStartAge(45);
+  G.global_setUserRetirementAge(62);
+  G.global_setUserFinishAge(90);
+  G.global_setGuardrailPreservation(20);
+}
+
+// The link a run_plan spec with partial settings shares: no inflationRate.
+const partial = planFromProfile('preRetirement');
+partial.settings = { filingAs: 'Single', startAge: 60, retirementAge: 67, finishAge: 65 };
+const partialLink = shareUrlFromPlan(partial, { origin: 'http://localhost:5173/' }).url;
+
+check('a link that leaves a setting out is read with the engine default in its place', () => {
+  const payload = arrive(partialLink);
+  assert.ok(!('inflationRate' in payload.settings),
+    'the link carries an inflationRate, so this check no longer tests anything');
+  assert.deepEqual({ ...readSharedPlan(payload).settings }, {
+    inflationRate: SIM_CONFIG_DEFAULTS.inflationRate,
+    filingAs: 'Single', startAge: 60, retirementAge: 67, finishAge: 65,
+  });
+});
+
+check('opening it moves every setting, including the one it left out', () => {
+  // The import used to pass the payload's undefined inflationRate to
+  // global_setInflationRate, which threw and left the previous plan on screen.
+  viewerHasOtherSettings();
+  applySharedSettings(readSharedPlan(arrive(partialLink)));
+  assert.equal(G.global_inflationRate, SIM_CONFIG_DEFAULTS.inflationRate,
+    "inflation is still the viewer's 5%, so the plan on screen is not the link's");
+  assert.equal(store.inflationRate, '0.0310', 'the stored inflation rate did not move');
+  assert.deepEqual(
+    [G.global_filingAs, G.global_user_startAge, G.global_user_retirementAge, G.global_user_finishAge],
+    ['Single', 60, 67, 65]);
+});
+
+check('the app opens a link on the settings the MCP server runs it on', () => {
+  // One reading of a link's settings, used by both. If either side grows its
+  // own defaulting, a shared plan and its report describe different plans.
+  const base = sharePayloadFromPlan(partial);
+  const { settings: _, ...withoutSettings } = base;
+  const payloads = {
+    'one left out': base,
+    'all present': { ...base, settings: { inflationRate: 0.042, filingAs: 'MFJ',
+                                          startAge: 55, retirementAge: 65, finishAge: 85 } },
+    'sent as null': { ...base, settings: { ...partial.settings, inflationRate: null } },
+    'empty': { ...base, settings: {} },
+    'absent': withoutSettings,
+    'unknown filing status': { ...base, settings: { filingAs: 'Married', startAge: 58 } },
+  };
+  for (const [label, payload] of Object.entries(payloads)) {
+    const app = readSharedPlan(payload).settings;
+    const server = simConfigFromPlanSpec(specFromPayload(payload));
+    for (const key of ['inflationRate', 'filingAs', 'startAge', 'retirementAge', 'finishAge']) {
+      assert.equal(app[key], server[key],
+        `${label}: the app opens ${key} as ${app[key]}, the server ran ${server[key]}`);
+    }
+  }
+});
+
+check('a link that cannot be opened is refused with its reason, and nothing is applied', () => {
+  const base = sharePayloadFromPlan(partial);
+  const refused = [
+    [{ ...base, settings: { ...partial.settings, inflationRate: '3%' } }, /inflationRate setting is "3%"/],
+    [{ ...base, modelAssets: [] }, /no assets/],
+    [{ name: 'Settings only', settings: partial.settings }, /no assets/],
+    [{ ...base, modelAssets: [{ displayName: 'Half an asset' }] }, /An asset in the link/],
+    [{ ...base, lifeEvents: [null] }, /A life event in the link/],
+  ];
+  viewerHasOtherSettings();
+  const before = JSON.stringify(store);
+  for (const [payload, reason] of refused) {
+    assert.throws(() => readSharedPlan(payload), reason);
+  }
+  assert.equal(JSON.stringify(store), before, 'reading a link changed the stored settings');
+});
+
+check('guardrail parameters a link leaves out take the defaults instead of throwing', () => {
+  viewerHasOtherSettings();
+  const plan = readSharedPlan({ ...sharePayloadFromPlan(partial), guardrailParams: { withdrawalRate: 4 } });
+  applySharedSettings(plan);
+  assert.equal(G.global_guardrail_withdrawalRate, 4);
+  assert.equal(G.global_guardrail_preservation, G.global_default_guardrail_preservation,
+    "preservation kept the viewer's 20%");
+  assert.equal(G.global_guardrail_prosperity, G.global_default_guardrail_prosperity);
+  assert.equal(G.global_guardrail_adjustment, G.global_default_guardrail_adjustment);
+});
+
+check('the app reads a link when it arrives and applies only what was read', () => {
+  // finplan-app.js needs a browser, so its half is asserted from the source.
+  // Normalised because '\n}\n' (a function's closing brace) is the end marker.
+  const src = readFileSync('js/finplan-app.js', 'utf8').replace(/\r\n/g, '\n');
+  const between = (from, to) => src.slice(src.indexOf(from), src.indexOf(to, src.indexOf(from)));
+
+  assert.ok(/readPendingImport\(decoded\)/.test(between('function loadSharedPortfolio', '\n}\n')),
+    'the dialog is shown without reading the link, so a bad one fails only after Open');
+  assert.ok(/readSharedPlan\(/.test(between('function readPendingImport', '\n}\n')),
+    'the arriving link is not read by readSharedPlan');
+
+  const apply = between('function applyImportedPortfolio', '\n}\n');
+  assert.ok(/applySharedSettings\(plan\)/.test(apply), 'the import does not apply the read settings');
+  assert.ok(!/global_set\w+\(/.test(apply),
+    'the import calls a settings setter itself, with a value readSharedPlan never checked');
+  assert.ok(!/\.settings\b/.test(apply), 'the import reads settings off the raw payload');
+});
+
+check('a link that cannot be opened says why, and leaves only Dismiss', () => {
+  const html = readFileSync('index.html', 'utf8');
+  assert.ok(/id="import-problem"/.test(html), 'the import dialog has nowhere to say why');
+
+  const src = readFileSync('js/finplan-app.js', 'utf8').replace(/\r\n/g, '\n');
+  const shown = src.slice(src.indexOf('function showImportProblem'));
+  const body = shown.slice(0, shown.indexOf('\n}\n'));
+  assert.ok(/btn-import-open'\)\.disabled = !!problem/.test(body), 'Open stays enabled on a refused link');
+  assert.ok(/btn-import-save'\)\.disabled = !!problem/.test(body), 'Open & Save stays enabled on a refused link');
 });
 
 console.log(`\n${'─'.repeat(55)}`);
