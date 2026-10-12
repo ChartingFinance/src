@@ -54,8 +54,9 @@ const { chronometer_run } = await import('../js/chronometer.js');
 const { quickStartProfiles, buildQuickStart } = await import('../js/quick-start.js');
 const { Metric } = await import('../js/metric.js');
 const { DateInt } = await import('../js/utils/date-int.js');
-const { trailingYearExpenditure } = await import('../js/annual-expenditure.js');
-const { monthSummary, metricAtIndex, lastHistoryIndex, zeroTaxWasWithheld } = await import('../js/month-summary.js');
+const { expenditureOverWindow } = await import('../js/annual-expenditure.js');
+const { formatCurrency } = await import('../js/utils/html.js');
+const { monthSummary, yearSummary, metricAtIndex, lastHistoryIndex, zeroTaxWasWithheld } = await import('../js/month-summary.js');
 const { generateMonthDetailsSectionMarkdown, generatePortfolioSectionMarkdown } =
     await import('../js/generators/finplan-ai.js');
 const { SNAPSHOT_FIXTURES } = await import('./tools/fixtures.mjs');
@@ -121,6 +122,8 @@ const house = await runFixture('housing-carrying-costs');
 
 console.log('\n── The month figures are the asset histories, summed ──\n');
 
+let cashFlowDiffersFromMetric = 0;
+
 for (const [y, m] of [[2030, 6], [2055, 6]]) {
     test(`midCareer ${y}-${String(m).padStart(2, '0')}: every month field matches an independent sum`, () => {
         const s = monthSummary(mid, y, m);
@@ -129,8 +132,7 @@ for (const [y, m] of [[2030, 6], [2055, 6]]) {
         assert.equal(s.index, idx);
         const fields = {
             value: Metric.VALUE, income: Metric.INCOME, expense: Metric.EXPENSE,
-            taxes: Metric.TAXES, cashFlow: Metric.CASH_FLOW, growth: Metric.GROWTH,
-            netChange: Metric.NET_WORTH_CHANGE,
+            taxes: Metric.TAXES, growth: Metric.GROWTH, netChange: Metric.NET_WORTH_CHANGE,
         };
         for (const [field, metric] of Object.entries(fields)) {
             assert.equal(s[field], rawSum(mid, metric, idx), `${field} disagrees with ${metric}`);
@@ -139,11 +141,23 @@ for (const [y, m] of [[2030, 6], [2055, 6]]) {
         assert.ok(s.value > 100000, `net worth ${s.value} is implausibly small`);
         assert.notEqual(s.income, 0);
     });
+
+    test(`midCareer ${y}-${String(m).padStart(2, '0')}: cash flow is income less expenses and taxes`, () => {
+        const s = monthSummary(mid, y, m);
+        const idx = idxOf(mid, y, m);
+        const want = rawSum(mid, Metric.INCOME, idx) + rawSum(mid, Metric.EXPENSE, idx) + rawSum(mid, Metric.TAXES, idx);
+        assert.ok(Math.abs(s.cashFlow - want) < 1e-6, `cash flow ${s.cashFlow}, want ${want}`);
+        if (Math.abs(rawSum(mid, Metric.CASH_FLOW, idx) - want) > 1) cashFlowDiffersFromMetric++;
+    });
 }
 
-test('the trailing-year block is trailingYearExpenditure at the same index', () => {
-    const s = monthSummary(mid, 2055, 6);
-    assert.deepEqual(s.drawn, trailingYearExpenditure(mid, idxOf(mid, 2055, 6)));
+test('the per-account CASH_FLOW metric differs somewhere, so reading it would fail', () => {
+    assert.ok(cashFlowDiffersFromMetric > 0, 'Metric.CASH_FLOW equals income less expenses and taxes in every month tested');
+});
+
+test('the month\'s withdrawals are expenditureOverWindow over that month alone', () => {
+    const idx = idxOf(mid, 2055, 6);
+    assert.deepEqual(monthSummary(mid, 2055, 6).drawn, expenditureOverWindow(mid, idx, idx));
 });
 
 test('metricAtIndex is the independent sum too — the timeline chip reads it', () => {
@@ -163,20 +177,119 @@ test('a month outside the run is null, not a row of zeroes', () => {
     assert.ok(monthSummary(mid, mid.firstDateInt.year, mid.firstDateInt.month), 'first month is inside');
 });
 
+// ── the year figures ─────────────────────────────────────────────────
+
+console.log('\n── The year is its months added up ──\n');
+
+const firstYear = mid.firstDateInt.year;
+const lastIdx = lastHistoryIndex(mid);
+const lastDate = DateInt.from(mid.firstDateInt.year, mid.firstDateInt.month);
+lastDate.addMonths(lastIdx);
+
+/** The months of a year inside the run, as monthSummary sees them. */
+function monthsOf(p, year) {
+    const out = [];
+    for (let m = 1; m <= 12; m++) { const s = monthSummary(p, year, m); if (s) out.push(s); }
+    return out;
+}
+
+const near = (got, want, what, tol = 0.005) =>
+    assert.ok(Math.abs(got - want) <= tol, `${what}: got ${got}, want ${want}`);
+
+for (const year of [firstYear, 2030, 2055, lastDate.year]) {
+    test(`midCareer ${year}: each flow is the sum of its months, by the month's definition`, () => {
+        const y = yearSummary(mid, year);
+        const months = monthsOf(mid, year);
+        assert.ok(y, `${year} outside the run`);
+        assert.equal(y.months, months.length);
+        for (const field of ['income', 'expense', 'taxes', 'cashFlow', 'growth', 'netChange', 'withheldAtSource']) {
+            near(y[field], months.reduce((t, s) => t + s[field], 0), `${year} ${field}`);
+        }
+        for (const field of ['spending', 'tax', 'total', 'unfunded']) {
+            near(y.drawn[field], months.reduce((t, s) => t + s.drawn[field], 0), `${year} drawn.${field}`);
+        }
+        // Itemised the same way: each obligation is its months' sum.
+        const byLabel = new Map();
+        for (const s of months) for (const it of s.drawn.items) {
+            byLabel.set(`${it.bucket}:${it.label}`, (byLabel.get(`${it.bucket}:${it.label}`) ?? 0) + it.amount);
+        }
+        assert.equal(y.drawn.items.length, byLabel.size, `${year} obligation count`);
+        for (const it of y.drawn.items) near(it.amount, byLabel.get(`${it.bucket}:${it.label}`), `${year} ${it.label}`);
+
+        // A balance is not summed: the year ends where its last month ends.
+        const lastMonth = months[months.length - 1];
+        assert.equal(y.value, lastMonth.value);
+        assert.equal(y.lastMonth, y.firstMonth + months.length - 1);
+    });
+}
+
+test('a full year begins where the December before it ended', () => {
+    const y = yearSummary(mid, 2055);
+    near(y.valueStart, monthSummary(mid, 2054, 12).value, '2055 opening balance', 0.01);
+});
+
+test('the plan\'s first year is short, and says so', () => {
+    const y = yearSummary(mid, firstYear);
+    assert.equal(y.firstMonth, mid.firstDateInt.month);
+    assert.equal(y.months, 13 - mid.firstDateInt.month);
+});
+
+test('a year outside the run is null', () => {
+    assert.equal(yearSummary(mid, firstYear - 1), null);
+    assert.equal(yearSummary(mid, lastDate.year + 1), null);
+    assert.equal(yearSummary(null, 2030), null);
+});
+
+test('the itemised withdrawals add up to the total, and name the obligations', () => {
+    const y = yearSummary(mid, 2055);
+    near(y.drawn.items.reduce((t, it) => t + it.amount, 0), y.drawn.total, '2055 items', 0.01);
+    assert.ok(y.drawn.items.some((it) => it.label === 'Living Expenses' && it.bucket === 'spending'),
+        `no Living Expenses item: ${y.drawn.items.map((it) => it.label).join(', ')}`);
+    assert.ok(y.drawn.items.some((it) => it.bucket === 'tax'), 'a retired year draws no tax');
+    for (const it of y.drawn.items) assert.ok(it.label && !it.label.startsWith('Pay '), `label "${it.label}"`);
+});
+
+// ── the tax year ─────────────────────────────────────────────────────
+
+console.log('\n── The tax year is the year\'s record ──\n');
+
+test('a settled year carries its TaxYear and both effective rates', () => {
+    const y = yearSummary(mid, 2055);
+    const t = mid.taxYears.find((r) => r.year === 2055);
+    assert.equal(y.taxYear, t);
+    assert.ok(t.federalTax > 0, 'nothing owed: the rates are vacuous');
+    near(y.effectiveRateOnIncome, t.federalTax / y.income, 'rate on income', 1e-12);
+    near(y.effectiveRateOnAGI, t.federalTax / t.agi, 'rate on AGI', 1e-12);
+    assert.notEqual(y.effectiveRateOnIncome.toFixed(4), y.effectiveRateOnAGI.toFixed(4),
+        'income and AGI are equal, so the two rates cannot be told apart');
+});
+
+test('a year the plan never settled has no record and no rates', () => {
+    // The fixture ends in a month other than December, or the last year settles.
+    const y = yearSummary(mid, lastDate.year);
+    const settled = mid.taxYears.some((r) => r.year === lastDate.year);
+    assert.equal(y.taxYear !== null, settled);
+    if (!settled) {
+        assert.equal(y.effectiveRateOnIncome, null);
+        assert.equal(y.effectiveRateOnAGI, null);
+    }
+});
+
 // ── "withheld at source" ─────────────────────────────────────────────
 
 console.log('\n── When a $0 Tax line may be explained as withheld ──\n');
 
-test('working year: $0 drawn for tax, withholding real — the hint is ON', () => {
-    const s = monthSummary(mid, 2030, 6);
-    assert.equal(s.drawn.tax, 0, 'a working year should draw no tax from accounts');
-    assert.ok(s.withheldAtSource > 1000,
-        `withheld $${s.withheldAtSource.toFixed(2)} — a salaried year withholds thousands`);
-    assert.equal(hintOn(s), true);
+test('working year: $0 drawn for tax, withholding real — the hint is ON for the month and the year', () => {
+    for (const s of [monthSummary(mid, 2030, 6), yearSummary(mid, 2030)]) {
+        assert.equal(s.drawn.tax, 0, 'a working year should draw no tax from accounts');
+        assert.ok(s.withheldAtSource > 1000,
+            `withheld $${s.withheldAtSource.toFixed(2)} — a salaried month withholds thousands`);
+        assert.equal(hintOn(s), true);
+    }
 });
 
 test('retired year: tax IS drawn — the hint is OFF', () => {
-    const s = monthSummary(mid, 2055, 6);
+    const s = yearSummary(mid, 2055);
     assert.ok(s.drawn.tax > 1000, `retired tax drawn $${s.drawn.tax.toFixed(2)}`);
     assert.equal(hintOn(s), false);
 });
@@ -184,24 +297,18 @@ test('retired year: tax IS drawn — the hint is OFF', () => {
 test('a homeowner with property tax and no paycheck: taxes paid, NOTHING withheld', () => {
     // The reason withheldAtSource is not the TAXES rollup. Both halves matter:
     // without the first, this passes on a plan that simply pays no tax.
-    const idx = lastHistoryIndex(house);
-    const y = house.firstDateInt.year + Math.floor((house.firstDateInt.month - 1 + idx) / 12);
-    const m = ((house.firstDateInt.month - 1 + idx) % 12) + 1;
-    const s = monthSummary(house, y, m);
-    let taxesInWindow = 0;
-    for (let i = idx - s.drawn.months + 1; i <= idx; i++) taxesInWindow += rawSum(house, Metric.TAXES, i);
-    assert.ok(taxesInWindow < -1000,
-        `expected property tax in the TAXES rollup, found ${taxesInWindow.toFixed(2)}`);
+    const s = yearSummary(house, house.firstDateInt.year);
+    assert.ok(s.taxes < -1000, `expected property tax in the TAXES rollup, found ${s.taxes.toFixed(2)}`);
     assert.equal(s.withheldAtSource, 0, 'property tax was reported as withheld');
 });
 
 test('a shortfall year never gets the hint, even with withholding and $0 drawn', () => {
-    // earlyCareer Dec 2029 is the case the unfunded clause exists for. The
-    // other two conditions HOLD — tax withheld, nothing drawn — so without the
-    // clause the section would explain a $0 as "withheld at source" in a year
-    // the plan could not pay its bills. Asserting them first is what makes the
-    // clause, and only the clause, responsible for the hint being off.
-    const s = monthSummary(early, 2029, 12);
+    // earlyCareer 2029 is the case the unfunded clause exists for. The other
+    // two conditions HOLD — tax withheld, nothing drawn — so without the clause
+    // the section would explain a $0 as "withheld at source" in a year the plan
+    // could not pay its bills. Asserting them first is what makes the clause,
+    // and only the clause, responsible for the hint being off.
+    const s = yearSummary(early, 2029);
     assert.ok(s, 'earlyCareer 2029 outside the run');
     assert.ok(s.drawn.unfunded > 1000, `expected a shortfall, unfunded $${s.drawn.unfunded.toFixed(2)}`);
     assert.equal(s.drawn.tax, 0, 'precondition: nothing drawn for tax');
@@ -209,36 +316,44 @@ test('a shortfall year never gets the hint, even with withholding and $0 drawn',
     assert.equal(hintOn(s), false);
 });
 
-test('in a plan\'s first months the withholding window matches the drawn window', () => {
-    const f = mid.firstDateInt;
-    const third = DateInt.from(f.year, f.month); third.addMonths(2);
-    const s = monthSummary(mid, third.year, third.month);
-    assert.equal(s.drawn.months, 3);
+test('in a plan\'s first year the withholding window matches the drawn window', () => {
+    const s = yearSummary(mid, firstYear);
     let withheld = 0;
-    for (let i = 0; i <= 2; i++) {
+    for (let i = 0; i < s.months; i++) {
         withheld -= rawSum(mid, Metric.WITHHELD_INCOME_TAX, i) + rawSum(mid, Metric.WITHHELD_FICA_TAX, i);
     }
     assert.ok(withheld > 0, 'midCareer withholds from its first month');
-    assert.equal(s.withheldAtSource, withheld);
+    near(s.withheldAtSource, withheld, 'first-year withholding', 1e-6);
+    assert.equal(s.drawn.months, s.months);
 });
 
 // ── the AI summary ───────────────────────────────────────────────────
 
-console.log('\n── The ⚡ summary describes the same month ──\n');
+console.log('\n── The ⚡ summary describes the same month and year ──\n');
+
+const usd = (v) => formatCurrency(v);
 
 test('working year: figures, the withheld sentence, and the heading', () => {
     const md = generateMonthDetailsSectionMarkdown(mid, 2030, 6, 'Jun 2030 · Age 49');
     const s = monthSummary(mid, 2030, 6);
-    assert.ok(md.startsWith('# Month Details — Jun 2030 · Age 49'), md.split('\n')[0]);
-    const usd = (v) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(v);
-    assert.ok(md.includes(`| Net worth | ${usd(s.value)} |`), 'net worth row missing or wrong');
-    assert.ok(md.includes(`| **Total** | **${usd(s.drawn.total)}** |`), 'trailing total missing or wrong');
+    const y = yearSummary(mid, 2030);
+    assert.ok(md.startsWith('# Month & Year Details — Jun 2030 · Age 49'), md.split('\n')[0]);
+    assert.ok(md.includes(`| Net worth | ${usd(s.value)} | ${usd(y.value)} |`), 'net worth row missing or wrong');
+    assert.ok(md.includes(`| **Total** | **${usd(s.drawn.total)}** | **${usd(y.drawn.total)}** |`), 'withdrawn total missing or wrong');
     assert.ok(md.includes('withheld at source'), 'working-year $0 left unexplained');
 });
 
-test('retired year: no withheld sentence', () => {
+test('retired year: the tax year in the order shown, and no withheld sentence', () => {
     const md = generateMonthDetailsSectionMarkdown(mid, 2055, 6, 'Jun 2055 · Age 74');
+    const t = mid.taxYears.find((r) => r.year === 2055);
     assert.ok(!md.includes('withheld at source'));
+    const owed = md.indexOf(`| Federal taxes owed | ${usd(t.federalTax)} |`);
+    const agi = md.indexOf(`| AGI | ${usd(t.agi)} |`);
+    const magi = md.indexOf('| MAGI');
+    const onIncome = md.indexOf('| Effective rate on income |');
+    const onAGI = md.indexOf('| Effective rate on AGI |');
+    assert.ok(owed > 0 && agi > owed && magi > agi && onIncome > magi && onAGI > onIncome,
+        `tax-year rows missing or out of order: ${[owed, agi, magi, onIncome, onAGI]}`);
 });
 
 test('outside the run: says so rather than printing zeroes', () => {
@@ -247,12 +362,12 @@ test('outside the run: says so rather than printing zeroes', () => {
     assert.ok(!md.includes('| Net worth |'));
 });
 
-test('other sections point to Month Details in page order', () => {
+test('other sections point to Month & Year Details in page order', () => {
     // SECTIONS drives the "above / below this section" notes. The section sits
     // under the timeline, so Your Portfolio must list it above itself.
     const md = generatePortfolioSectionMarkdown(mid);
-    assert.ok(/refer to: \*\*Your Timeline\*\*, \*\*Month Details\*\* \(above/.test(md),
-        'Your Portfolio does not name Month Details as the section above it');
+    assert.ok(/refer to: \*\*Your Timeline\*\*, \*\*Month & Year Details\*\* \(above/.test(md),
+        'Your Portfolio does not name Month & Year Details as the section above it');
 });
 
 console.log(`\n${'─'.repeat(55)}`);

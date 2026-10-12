@@ -1,24 +1,34 @@
 /**
- * month-summary.js — one month of a finished run, as the Month Details section
- * shows it.
+ * month-summary.js — a month and its calendar year of a finished run, as the
+ * Month & Year Details section shows them.
  *
  * Headless, so it can be tested under node. The section, the timeline chip and
  * the AI summary all read from here, so they cannot disagree about a month.
  *
- * Two cadences live in the result, and they must not be confused:
+ * One definition for both rows. A year's income, expenses, taxes, growth and
+ * withdrawals are its months added up, so a figure means the same thing over
+ * one month and over twelve. Two things are not sums:
  *
- *   the month       value, income, expense, taxes, cashFlow, growth, netChange —
- *                   what happened in the single selected month
+ *   net worth       a balance: the year shows where it ended and the change
  *
- *   trailing year   `drawn` — what left the household's accounts over the twelve
- *                   months ENDING at the selected month. See annual-expenditure.js
- *                   for why that is not twelve times the monthly Expenses figure.
+ *   the tax year    what the year's income owed, AGI and MAGI, read from the
+ *                   year's TaxYear record. The year's Taxes figure is what was
+ *                   PAID in it, which includes the previous year's settlement.
+ *
+ * Cash flow here is income less expenses and taxes, so the four headline
+ * figures always reconcile. It is not Metric.CASH_FLOW, which is per account
+ * and is what the Projections and Spreadsheet views plot.
+ *
+ * `drawn` is what left the household's accounts to meet obligations over the
+ * same window, itemised; see annual-expenditure.js for why that is not the
+ * Expenses figure.
  */
 
 import { Metric } from './metric.js';
-import { trailingYearExpenditure } from './annual-expenditure.js';
+import { expenditureOverWindow } from './annual-expenditure.js';
+import { MagiPurpose } from './tax-basis.js';
 import { PriceIndex } from './utils/price-index.js';
-import { DateInt } from './utils/date-int.js';
+import { DateInt, MONTH_NAMES } from './utils/date-int.js';
 
 /** Sum a metric across every asset at one history index. */
 export function metricAtIndex(portfolio, metricName, idx) {
@@ -66,7 +76,7 @@ function withheldAtSource(portfolio, from, to) {
 }
 
 /**
- * May a $0 trailing-year Tax line be explained as "withheld at source"?
+ * May a $0 withdrawn-for-tax line be explained as "withheld at source"?
  *
  * Only when nothing was drawn for tax, tax was withheld, and the plan was not
  * short of money (a short plan also draws $0 for tax). Read by both the section
@@ -79,8 +89,34 @@ export function zeroTaxWasWithheld(summary) {
 }
 
 /**
- * Everything the Month Details section shows for one calendar month, or null
- * when the month is outside the run.
+ * The flows both rows show, over an inclusive window of month indexes. The one
+ * definition the month and the year share.
+ */
+function flowsOver(portfolio, from, to) {
+    const sum = (metric) => {
+        let total = 0;
+        for (let i = from; i <= to; i++) total += metricAtIndex(portfolio, metric, i);
+        return total;
+    };
+    const income = sum(Metric.INCOME);
+    const expense = sum(Metric.EXPENSE);
+    const taxes = sum(Metric.TAXES);
+    return {
+        income,
+        expense,
+        taxes,
+        // Expenses and taxes are stored negative, so this is income less both.
+        cashFlow:  income + expense + taxes,
+        growth:    sum(Metric.GROWTH),
+        netChange: sum(Metric.NET_WORTH_CHANGE),
+        drawn:     expenditureOverWindow(portfolio, from, to),
+        // Over the SAME window as `drawn`, so the two can be read together.
+        withheldAtSource: withheldAtSource(portfolio, from, to),
+    };
+}
+
+/**
+ * One calendar month, or null when it is outside the run.
  *
  * @param {Portfolio} portfolio  a portfolio that has been through chronometer_run
  * @param {number}    year
@@ -92,20 +128,99 @@ export function monthSummary(portfolio, year, month) {
     if (idx < 0 || idx > lastHistoryIndex(portfolio)) return null;
 
     const value = metricAtIndex(portfolio, Metric.VALUE, idx);
-    const drawn = trailingYearExpenditure(portfolio, idx);
-
     return {
         index:     idx,
         value,
-        income:    metricAtIndex(portfolio, Metric.INCOME, idx),
-        expense:   metricAtIndex(portfolio, Metric.EXPENSE, idx),
-        taxes:     metricAtIndex(portfolio, Metric.TAXES, idx),
-        cashFlow:  metricAtIndex(portfolio, Metric.CASH_FLOW, idx),
-        growth:    metricAtIndex(portfolio, Metric.GROWTH, idx),
-        netChange: metricAtIndex(portfolio, Metric.NET_WORTH_CHANGE, idx),
         valueReal: PriceIndex.deflateAt(value, portfolio.monthlyPriceIndex, idx),
-        drawn,
-        // Over the SAME window as `drawn`, so the two can be read together.
-        withheldAtSource: withheldAtSource(portfolio, idx - drawn.months + 1, idx),
+        ...flowsOver(portfolio, idx, idx),
     };
+}
+
+/**
+ * One calendar year: its months inside the run added up, the balance at its
+ * last month, and its TaxYear record. Null when no month of it is in the run.
+ *
+ * A plan's first and last years can be short; `firstMonth`, `lastMonth` and
+ * `months` say so. A year that ends before December was never settled, so it
+ * has no TaxYear and no effective rates.
+ *
+ * @param {Portfolio} portfolio
+ * @param {number}    year
+ */
+export function yearSummary(portfolio, year) {
+    if (!portfolio?.firstDateInt) return null;
+    const first = portfolio.firstDateInt;
+    const from = Math.max(0, DateInt.diffMonths(first, DateInt.from(year, 1)));
+    const to = Math.min(lastHistoryIndex(portfolio), DateInt.diffMonths(first, DateInt.from(year, 12)));
+    if (to < from) return null;
+
+    const flows = flowsOver(portfolio, from, to);
+    const value = metricAtIndex(portfolio, Metric.VALUE, to);
+    const taxYear = portfolio.taxYears?.find((t) => t.year === year) ?? null;
+    const rateOn = (base) => (taxYear && base > 0 ? taxYear.federalTax / base : null);
+    const monthAt = (i) => { const d = DateInt.from(first.year, first.month); d.addMonths(i); return d.month; };
+
+    return {
+        year,
+        firstMonth: monthAt(from),
+        lastMonth:  monthAt(to),
+        months:     to - from + 1,
+        value,
+        // NET_WORTH_CHANGE is each month's change, so the year's sum is the
+        // year's change and this is where the year began.
+        valueStart: value - flows.netChange,
+        valueReal:  PriceIndex.deflateAt(value, portfolio.monthlyPriceIndex, to),
+        ...flows,
+        taxYear,
+        effectiveRateOnIncome: rateOn(flows.income),
+        effectiveRateOnAGI:    rateOn(taxYear?.agi),
+    };
+}
+
+// ── Wording the section and its AI summary share ─────────────────────
+
+/** The months a year covers: "Jan–Dec", or "Oct–Dec" for a short year. */
+export function yearSpan(summary) {
+    const first = MONTH_NAMES[summary.firstMonth - 1];
+    return summary.months === 1 ? first : `${first}–${MONTH_NAMES[summary.lastMonth - 1]}`;
+}
+
+const MAGI_NAME = Object.freeze({
+    [MagiPurpose.NIIT]:              'NIIT',
+    [MagiPurpose.IRMAA]:             'IRMAA',
+    [MagiPurpose.SENIOR_DEDUCTION]:  'senior deduction',
+    [MagiPurpose.IRA_DEDUCTION]:     'IRA deduction',
+    [MagiPurpose.ROTH_CONTRIBUTION]: 'Roth contribution',
+    [MagiPurpose.ACA]:               'ACA',
+});
+
+/**
+ * A year's MAGI, one line per distinct figure: the rules that measure the same
+ * amount share a line. NIIT's line comes first; it is AGI in this model.
+ *
+ * @returns {Array<{amount: number, purposes: string[]}>}
+ */
+export function magiLines(taxYear) {
+    const lines = [];
+    for (const purpose of Object.values(MagiPurpose)) {
+        const amount = taxYear.magi[purpose];
+        const line = lines.find((l) => Math.abs(l.amount - amount) < 0.5);
+        if (line) line.purposes.push(MAGI_NAME[purpose]);
+        else lines.push({ amount, purposes: [MAGI_NAME[purpose]] });
+    }
+    return lines;
+}
+
+/**
+ * What the January after a year settled, as positive amounts: a refund or a
+ * bill from the true-up, and NIIT. Empty when nothing was settled.
+ *
+ * @returns {Array<{label: string, amount: number}>}
+ */
+export function settlementParts(taxYear) {
+    const parts = [];
+    if (taxYear.settledTrueUp > 0.5) parts.push({ label: 'refund', amount: taxYear.settledTrueUp });
+    if (taxYear.settledTrueUp < -0.5) parts.push({ label: 'bill', amount: -taxYear.settledTrueUp });
+    if (taxYear.settledNIIT < -0.5) parts.push({ label: 'NIIT', amount: -taxYear.settledNIIT });
+    return parts;
 }

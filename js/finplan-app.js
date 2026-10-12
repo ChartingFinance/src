@@ -536,7 +536,7 @@ const aiGenerators = (ai) => ({
 });
 
 const aiLabels = {
-    timeline: 'Your Timeline', monthdetails: 'Month Details', portfolio: 'Your Portfolio', projections: 'Projections',
+    timeline: 'Your Timeline', monthdetails: 'Month & Year Details', portfolio: 'Your Portfolio', projections: 'Projections',
     montecarlo: 'Monte Carlo', guardrails: 'Guardrails', creditmemos: 'Credit Memos', reports: 'Reports', spreadsheet: 'Spreadsheet',
 };
 
