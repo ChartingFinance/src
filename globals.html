@@ -49,7 +49,7 @@
         <h2 class="text-2xl font-bold tracking-tight mb-2">User Information</h2>
         <p class="text-gray-600 leading-relaxed mb-6"><strong>Current Age</strong> is your age in the plan&rsquo;s first month. Together with that month it fixes your birth year, which Social Security timing, the RMD start age (72, 73 or 75 under SECURE&nbsp;2.0) and catch-up contribution eligibility are measured against. <strong>Retirement Age</strong> is where the Accumulate phase ends and the Retire phase begins. <strong>Finish Age</strong> is the plan&rsquo;s last year.</p>
         <p class="text-gray-600 leading-relaxed mb-6"><strong>Inflation Rate</strong> indexes the tax tables from the second simulated year on &mdash; brackets, the standard deduction, contribution limits and the Social Security wage base &mdash; and today&rsquo;s-dollar figures are deflated by it. Expenses left at their default rate grow with it; every other asset keeps its own rate.</p>
-        <p class="text-gray-600 leading-relaxed mb-6 text-sm">These are the same four fields as the settings row on the main page, and changing one here changes it there. Once a plan is loaded, though, its Retire phase sets the Retirement Age, so change that on the main page, where it also moves the salary and benefit dates tied to retirement. <strong>Filing status</strong> and <strong>backtest year</strong> are set on the main page only.</p>
+        <p class="text-gray-600 leading-relaxed mb-6 text-sm">These are the same four fields as the settings row on the main page, for the scenario open there, and changing one here changes it for that scenario. Each scenario keeps its own. Once a plan is loaded, though, its Retire phase sets the Retirement Age, so change that on the main page, where it also moves the salary and benefit dates tied to retirement. <strong>Filing status</strong> and <strong>backtest year</strong> are set on the main page only.</p>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <div>
                 <label for="startAge" class="block text-sm font-medium text-gray-500 mb-1">Current Age</label>
@@ -118,7 +118,7 @@
                 class="px-6 py-2.5 rounded-xl bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 transition">
             Reset to Defaults
         </button>
-        <p class="text-xs text-gray-500 mt-3">Restores the ages, filing status, inflation rate, property-tax deduction cap and engine diagnostics. Your assets, scenarios, guardrail parameters and backtest year are untouched.</p>
+        <p class="text-xs text-gray-500 mt-3">Restores the open scenario&rsquo;s ages, filing status and inflation rate, and the property-tax deduction cap and engine diagnostics. Your other scenarios, your assets, guardrail parameters and backtest year are untouched.</p>
     </div>
 
     <!-- ═══ Footer ═══ -->
