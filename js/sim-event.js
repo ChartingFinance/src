@@ -63,6 +63,8 @@ export const EventType = Object.freeze({
 
     // ── Tax ──
     FICA_WITHHOLDING:        'ficaWithholding',
+    // data.estimate: payroll's estimate, when the paycheck could not cover it;
+    // data: { rate, source } on a retirement distribution.
     INCOME_TAX_WITHHOLDING:  'incomeTaxWithholding',
     CAPITAL_GAINS_TAX:       'capitalGainsTax',
     TAX_TRUE_UP:             'taxTrueUp',         // data.direction: 'underpayment' | 'refund'
@@ -86,6 +88,14 @@ export const EventType = Object.freeze({
     UNFUNDED:                'unfunded',          // data: { cause, origin }
     CONTRIBUTION_CAPPED:     'contributionCapped',// data: { limitName }
 });
+
+/**
+ * CONTRIBUTION_CAPPED's limitName when a pre-tax deferral was cut because its
+ * paycheck had too little left after FICA and income-tax withholding. The
+ * annual limits carry their own names. Shared so the notes that explain a cap
+ * can tell this reason from a limit.
+ */
+export const PAY_LEFT_AFTER_TAXES = 'pay left after taxes';
 
 /**
  * Where a shortfall came from. SPILLOVER and UNFUNDED ("the part of a movement

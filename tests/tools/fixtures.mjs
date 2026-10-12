@@ -527,6 +527,39 @@ const adversarialFixtures = [
     }),
   },
   {
+    name: 'withholding-exceeds-paycheck',
+    kind: 'adversarial',
+    reaches:
+      'payroll withholding larger than the paycheck it comes out of. A 401(k) ' +
+      'that closes mid-plan books its whole balance as income on day 1, before ' +
+      'payroll runs, and payroll sizes the household withholding from that ' +
+      'month x12, so the close month asks one $6,000 paycheck for a six-figure ' +
+      'withholding. A paycheck pays taxes first and deferrals from what is ' +
+      'left, so it withholds everything after FICA, the IRA deferral gets ' +
+      'nothing, and the rest of the estimate goes to the true-ups as unpaid. ' +
+      'Booked as withheld instead, it would count as paid and be refunded in ' +
+      'cash.\n' +
+      '      The deferral is load-bearing: it is what a paycheck short of its ' +
+      'taxes gives up, so a pipeline that paid deferrals before taxes would ' +
+      'move this baseline. So is the salary running past the close: end it ' +
+      'first and there is nothing to over-withhold. Every rate is zero, so the ' +
+      'money can be followed by hand. deferred-close-distribution reaches the ' +
+      'same month with growth and no deferral; ' +
+      'tests/payroll-withholding-conservation.mjs holds the conservation law.',
+    config: { startAge: 60, retirementAge: 67, finishAge: 65, filingAs: 'Single' },
+    build: () => ({
+      assets: [
+        // 10% of pay, under the $8,600 IRA limit at 50+, so it is never capped.
+        salary('Salary', 6000, { fundTransfers: [xfer('IRA', 10)] }),
+        bank('Checking', 400000),
+        expense('Living', 4000),
+        deferred('ira', 'IRA', 1000),
+        by({ year: 2027, month: 6 }, deferred('401K', '401K', 400000,
+          { fundTransfers: [xfer('Checking', 0, 100)] })),
+      ].map(ModelAsset.fromJSON),
+    }),
+  },
+  {
     name: 'grossup-at-the-ltcg-boundary',
     kind: 'adversarial',
     reaches:

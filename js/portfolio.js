@@ -732,9 +732,19 @@ export class Portfolio {
             }
         }
 
+        // The household tax is computed once, then allocated by income share.
+        // It comes before the deferral transfers because a paycheck pays its
+        // taxes first, and each deferral gets only what its paycheck has left.
+        const { householdTax, totalWorkingIncome } = this.payroll.computeHouseholdIncomeTax();
         for (let modelAsset of this.modelAssets) {
             if (!modelAsset.isClosed) {
-                this.payroll.applyPreTaxTransfers(modelAsset);                
+                this.payroll.capPreTaxContributionsToPay(modelAsset, householdTax, totalWorkingIncome);
+            }
+        }
+
+        for (let modelAsset of this.modelAssets) {
+            if (!modelAsset.isClosed) {
+                this.payroll.applyPreTaxTransfers(modelAsset);
             }
         }
 
@@ -744,8 +754,6 @@ export class Portfolio {
             }
         }
 
-        // Two-phase net income: compute household tax once, then allocate proportionally
-        const { householdTax, totalWorkingIncome } = this.payroll.computeHouseholdIncomeTax();
         for (let modelAsset of this.modelAssets) {
             if (!modelAsset.isClosed) {
                 this.payroll.applyNetIncome(modelAsset, householdTax, totalWorkingIncome);

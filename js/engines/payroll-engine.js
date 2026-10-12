@@ -5,6 +5,12 @@
  * contribution caps, Roth IRA limits, net income, and the pre- and post-tax
  * fund transfers. It runs as a series of passes over all assets, because the
  * household tax needs every income first.
+ *
+ * A paycheck pays out exactly what it earns, in the order real payroll uses:
+ * FICA, then income-tax withholding, then pre-tax deferrals from what is left,
+ * then take-home pay. Neither the withholding nor a deferral is ever booked
+ * beyond what the paycheck had; whatever the paycheck cannot cover is left to
+ * the true-ups, which collect it from the funding accounts.
  */
 
 import { Currency } from '../utils/currency.js';
@@ -13,7 +19,7 @@ import { InstrumentType } from '../instruments/instrument.js';
 import { Metric } from '../metric.js';
 import { FundTransfer } from '../fund-transfer.js';
 import { logger, LogCategory } from '../utils/logger.js';
-import { EventType, ShortfallOrigin } from '../sim-event.js';
+import { EventType, ShortfallOrigin, PAY_LEFT_AFTER_TAXES } from '../sim-event.js';
 import { withTrace, TraceKind } from '../trace.js';
 import { taxableBasis } from '../tax-basis.js';
 import { ContributionKind, TaxOwner } from '../taxes.js';
@@ -122,6 +128,70 @@ export class PayrollEngine {
         return { householdTax, totalWorkingIncome };
     }
 
+    /** One working-income asset's share of the household estimate, by income. */
+    #taxShare(modelAsset, householdTax, totalWorkingIncome) {
+        const proportion = totalWorkingIncome.amount > 0
+            ? modelAsset.incomeCurrency.amount / totalWorkingIncome.amount
+            : 0;
+        return new Currency(householdTax.amount * proportion);
+    }
+
+    /** Gross pay less FICA. FICA is stored negative on the asset, so adding subtracts. */
+    #payAfterFICA(modelAsset) {
+        return modelAsset.incomeCurrency.copy()
+            .add(modelAsset.socialSecurityTaxCurrency)
+            .add(modelAsset.medicareTaxCurrency);
+    }
+
+    /**
+     * Cut each pre-tax deferral to what its paycheck has left after FICA and
+     * income-tax withholding. Runs after computeHouseholdIncomeTax and before
+     * applyPreTaxTransfers, which executes the approved amounts.
+     *
+     * The annual limit alone would let one paycheck defer the whole year's
+     * limit, crediting the account with money the paycheck never paid. A cut
+     * leaves the limit unused, so later paychecks in the year can still reach
+     * it. The estimate counted the deferral as requested; the monthly true-up
+     * settles the tax on the part that was cut.
+     */
+    capPreTaxContributionsToPay(modelAsset, householdTax, totalWorkingIncome) {
+
+        if (!InstrumentType.isWorkingIncome(modelAsset.instrument)) return;
+
+        const taxes = this.#taxShare(modelAsset, householdTax, totalWorkingIncome);
+        let room = Math.max(0, this.#payAfterFICA(modelAsset).amount - taxes.amount);
+
+        // Earlier transfers come first, as with the take-home budget.
+        const cuts = [];
+        for (const fundTransfer of modelAsset.fundTransfers) {
+            if (!fundTransfer.toModel || !InstrumentType.isTaxDeferred(fundTransfer.toModel.instrument)) continue;
+            const approved = fundTransfer.approvedAmount;
+            if (!approved || approved.amount <= 0) continue;
+            if (approved.amount <= room) {
+                room -= approved.amount;
+                continue;
+            }
+            cuts.push({ fundTransfer, requested: approved.copy(), allowed: new Currency(room) });
+            room = 0;
+        }
+        if (cuts.length === 0) return;
+
+        // Scoped only when something is cut, so ordinary months add no scope.
+        withTrace(TraceKind.PAYROLL, `Payroll: ${modelAsset.displayName}`, modelAsset.currentDateInt, () => {
+            for (const { fundTransfer, requested, allowed } of cuts) {
+                const cut = requested.minus(allowed);
+                fundTransfer.approvedAmount = allowed.copy();
+                this.preTaxDeductions.get(modelAsset)?.subtract(cut);
+                if (InstrumentType.is401K(fundTransfer.toModel.instrument)) {
+                    this.monthly.four01KContribution.subtract(cut);
+                } else {
+                    this.monthly.tradIRAContribution.subtract(cut);
+                }
+                this.recordContributionCap(fundTransfer.toModel, requested, allowed, PAY_LEFT_AFTER_TAXES);
+            }
+        });
+    }
+
     /**
      * Phase 2: Apply proportional share of household income tax to one asset,
      * then compute its net income.
@@ -193,11 +263,7 @@ export class PayrollEngine {
             return;
         }
 
-        let netIncome = modelAsset.incomeCurrency.copy();
-
-        // subtract per-asset FICA (Social Security + Medicare, stored as negative values on model asset)
-        netIncome.add(modelAsset.socialSecurityTaxCurrency);  // negative, so add subtracts
-        netIncome.add(modelAsset.medicareTaxCurrency);
+        let netIncome = this.#payAfterFICA(modelAsset);
 
         // Subtract this asset's pre-tax deferrals, from preTaxDeductions — not
         // from the asset's contribution metrics, which read zero on an income
@@ -208,37 +274,48 @@ export class PayrollEngine {
             netIncome.subtract(preTaxDeduction);
         }
 
-        // Proportional share of household income tax for this asset
-        const proportion = totalWorkingIncome.amount > 0
-            ? modelAsset.incomeCurrency.amount / totalWorkingIncome.amount
-            : 0;
-        const assetTax = new Currency(householdTax.amount * proportion);
+        // A paycheck can only withhold what it pays. The estimate is the month
+        // ×12, so a month whose income includes a one-off (a 401(k) cashed out
+        // on day 1, say) can ask for more than the whole paycheck. Book what
+        // the paycheck covers and leave the rest to the monthly true-up: tax
+        // booked as withheld counts as paid, and the annual true-up would
+        // refund what was never collected.
+        const estimate = this.#taxShare(modelAsset, householdTax, totalWorkingIncome);
+        const withheld = new Currency(Math.min(estimate.amount, Math.max(0, netIncome.amount)));
+        netIncome.subtract(withheld);
 
-        netIncome.subtract(assetTax);
+        // A remainder under half a cent is rounding left by a deferral cut, not
+        // pay; sweeping it would book an empty transfer.
+        if (Math.abs(netIncome.amount) < 0.005) netIncome.zero();
 
-        // Negative, like every tax metric. Flip a copy: assetTax must stay
-        // positive for the net-income arithmetic and for
-        // recordIncomeTaxWithholding below.
+        // Negative, like every tax metric. Flip a copy: withheld must stay
+        // positive for recordIncomeTaxWithholding below.
         const taxMetric = modelAsset.isSelfEmployed
             ? Metric.ESTIMATED_INCOME_TAX
             : Metric.WITHHELD_INCOME_TAX;
-        modelAsset.addToMetric(taxMetric, assetTax.copy().flipSign());
+        modelAsset.addToMetric(taxMetric, withheld.copy().flipSign());
 
-        // Deferrals exceeding after-tax pay are a configuration problem the
-        // pipeline can't fully honor: the 401K/IRA transfers have already
-        // executed for the full amount. Clamp to zero so downstream post-tax
-        // clamps can't compute negative contributions (which would execute
-        // reverse transfers), and surface the gap rather than hiding it.
+        // FICA is a fraction of gross pay and capPreTaxContributionsToPay holds
+        // the deferrals to what is left, so this fires only if that invariant
+        // breaks. The clamp keeps the post-tax transfers from computing
+        // negative contributions, which would execute as reverse transfers.
         if (netIncome.amount < 0) {
             logger.log(LogCategory.SANITY,
-                () => `applyNetIncome: ${modelAsset.displayName} pre-tax deferrals exceed after-tax pay by ${netIncome.copy().flipSign().toString()}; net income clamped to $0`);
+                () => `applyNetIncome: ${modelAsset.displayName} FICA and pre-tax deferrals exceed gross pay by ${netIncome.copy().flipSign().toString()}; net income clamped to $0`);
             netIncome.zero();
         }
 
         // INCOME_TAX populated by DAG: WITHHELD/ESTIMATED_INCOME_TAX → INCOME_TAX
         modelAsset.netIncomeCurrency = netIncome;
 
-        this.taxEngine.recordIncomeTaxWithholding(modelAsset, assetTax);
+        const short = estimate.amount - withheld.amount > 0.005;
+        if (short) {
+            logger.log(LogCategory.TAX,
+                () => `applyNetIncome: ${modelAsset.displayName} withheld ${withheld.toString()} of a ${estimate.toString()} estimate; ` +
+                'the paycheck had no more after FICA and deferrals, so the monthly true-up collects the rest');
+        }
+        this.taxEngine.recordIncomeTaxWithholding(modelAsset, withheld,
+            short ? { estimate: estimate.amount } : undefined);
 
     }
 
