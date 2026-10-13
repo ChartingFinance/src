@@ -15,9 +15,13 @@
  *                   year's TaxYear record. The year's Taxes figure is what was
  *                   PAID in it, which includes the previous year's settlement.
  *
- * Cash flow here is income less expenses and taxes, so the four headline
- * figures always reconcile. It is not Metric.CASH_FLOW, which is per account
- * and is what the Projections and Spreadsheet views plot.
+ * Cash flow is income received less expenses and taxes, so the four headline
+ * figures always reconcile. Income received is money from outside the
+ * household's accounts; a withdrawal from its own IRA or brokerage is not
+ * income here, it shows under `drawn`. Expenses include mortgage principal.
+ * That is the rule Metric.CASH_FLOW applies to each account and
+ * FinancialPackage.cashFlow() applies to the household (Reports), so all three
+ * agree.
  *
  * `drawn` is what left the household's accounts to meet obligations over the
  * same window, itemised; see annual-expenditure.js for why that is not the
@@ -25,6 +29,7 @@
  */
 
 import { Metric } from './metric.js';
+import { RECEIVED_INCOME_METRICS } from './instruments/instrument-behavior.js';
 import { expenditureOverWindow } from './annual-expenditure.js';
 import { MagiPurpose } from './tax-basis.js';
 import { PriceIndex } from './utils/price-index.js';
@@ -98,11 +103,14 @@ function flowsOver(portfolio, from, to) {
         for (let i = from; i <= to; i++) total += metricAtIndex(portfolio, metric, i);
         return total;
     };
-    const income = sum(Metric.INCOME);
-    const expense = sum(Metric.EXPENSE);
+    const income = RECEIVED_INCOME_METRICS.reduce((total, metric) => total + sum(metric), 0);
+    const expense = sum(Metric.EXPENSE) + sum(Metric.MORTGAGE_PRINCIPAL);
     const taxes = sum(Metric.TAXES);
     return {
         income,
+        // Every income, withdrawals from the household's own accounts included:
+        // what tax is levied on, so the effective rate's base.
+        totalIncome: sum(Metric.INCOME),
         expense,
         taxes,
         // Expenses and taxes are stored negative, so this is income less both.
@@ -172,7 +180,7 @@ export function yearSummary(portfolio, year) {
         valueReal:  PriceIndex.deflateAt(value, portfolio.monthlyPriceIndex, to),
         ...flows,
         taxYear,
-        effectiveRateOnIncome: rateOn(flows.income),
+        effectiveRateOnIncome: rateOn(flows.totalIncome),
         effectiveRateOnAGI:    rateOn(taxYear?.agi),
     };
 }

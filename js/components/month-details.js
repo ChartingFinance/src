@@ -5,8 +5,8 @@
  * it. Two rows over the same columns, so a figure reads the same over one month
  * and over twelve:
  *
- *   Income · Expenses · Taxes · Cash flow   first, and they reconcile: cash
- *                                           flow is income less the other two
+ *   Income received · Expenses · Taxes ·    first, and they reconcile: cash
+ *   Cash flow                               flow is income less the other two
  *   Withdrawn                               what left the accounts to meet
  *                                           obligations; click it for the list
  *   Asset growth · Net worth                net worth is a balance, not a sum
@@ -28,7 +28,7 @@ import { formatCurrency, formatSignedCurrency } from '../utils/html.js';
 import { MONTH_NAMES } from '../utils/date-int.js';
 
 /** The column headings. The first four are the headline figures. */
-const COLUMNS = ['Income', 'Expenses', 'Taxes', 'Cash flow', 'Withdrawn', 'Asset growth', 'Net worth'];
+const COLUMNS = ['Income received', 'Expenses', 'Taxes', 'Cash flow', 'Withdrawn', 'Asset growth', 'Net worth'];
 const HEADLINE = 4;
 
 export class MonthDetails extends LitElement {
@@ -121,7 +121,7 @@ export class MonthDetails extends LitElement {
                     <div class="md-rowtitle">${title}</div>
                     <div class="md-sub">${span}</div>
                 </div>
-                ${cell('Income', formatSignedCurrency(s.income))}
+                ${cell('Income received', formatSignedCurrency(s.income))}
                 ${cell('Expenses', formatSignedCurrency(s.expense))}
                 ${cell('Taxes', formatSignedCurrency(s.taxes))}
                 ${cell('Cash flow', formatSignedCurrency(s.cashFlow), tone(s.cashFlow))}
@@ -212,7 +212,11 @@ export class MonthDetails extends LitElement {
                         <div class="md-val">${formatCurrency(main.amount)}</div>
                         ${others.map((l) => html`<div class="md-sub">${l.purposes.join(', ')}: ${formatCurrency(l.amount)}</div>`)}
                     </div>
-                    ${cell('Effective rate on income', pct(y.effectiveRateOnIncome), '', false)}
+                    <div class="md-cell">
+                        <div class="md-label">Effective rate on total income</div>
+                        <div class="md-val">${pct(y.effectiveRateOnIncome)}</div>
+                        <div class="md-sub">of ${formatCurrency(y.totalIncome)}, withdrawals included</div>
+                    </div>
                     ${cell('Effective rate on AGI', pct(y.effectiveRateOnAGI), '', false)}
                 </div>
             </section>`;

@@ -46,7 +46,7 @@
   lastDate = 2030-12
   startValue = 3000000.000000
   finishValue = 2692607.973684
-  accumulated = -131494.540144
+  accumulated = -140034.409866
   total.pensionIncome = 480000.000000
   total.assetAppreciation = 699019.360779
   total.expense = -1294782.759867
@@ -524,8 +524,8 @@
   incomeTax                    n=  60 first=    -1932.040000 last=    -2406.760000 min=    -2810.630000 max=    -1932.040000 sum=    -131494.540000 #8a92a4b4
   federalTaxes                 n=  60 first=    -1932.040000 last=    -2406.760000 min=    -5496.120000 max=    -1932.040000 sum=    -140034.410000 #bd10eb4d
   taxes                        n=  60 first=    -1932.040000 last=    -2406.760000 min=    -5496.120000 max=    -1932.040000 sum=    -140034.410000 #bd10eb4d
-  cashFlow                     n=  60 first=    -1932.040000 last=    -2406.760000 min=    -2810.630000 max=    -1932.040000 sum=    -131494.540000 #8a92a4b4
-  cashFlowAccumulated          n=  60 first=    -1932.040000 last=  -131494.540000 min=  -131494.540000 max=    -1932.040000 sum=   -3865784.370000 #c9c35caf
+  cashFlow                     n=  60 first=    -1932.040000 last=    -2406.760000 min=    -5496.120000 max=    -1932.040000 sum=    -140034.410000 #bd10eb4d
+  cashFlowAccumulated          n=  60 first=    -1932.040000 last=  -140034.410000 min=  -140034.410000 max=    -1932.040000 sum=   -4099818.490000 #428678b6
   longTermCapitalGain          n=  60 first=    11785.780000 last=    15543.540000 min=    11785.780000 max=    17456.020000 sum=     825326.170000 #1d7873cc
   capitalGain                  n=  60 first=    11785.780000 last=    15543.540000 min=    11785.780000 max=    17456.020000 sum=     825326.170000 #1d7873cc
 
@@ -755,8 +755,8 @@
   federalTaxes                 n=  60 first=     -800.000000 last=     -800.000000 min=     -800.000000 max=     -800.000000 sum=     -48000.000000 #d384ec55
   taxes                        n=  60 first=     -800.000000 last=     -800.000000 min=     -800.000000 max=     -800.000000 sum=     -48000.000000 #d384ec55
   netIncome                    n=  60 first=     7200.000000 last=     7200.000000 min=     7200.000000 max=     7200.000000 sum=     432000.000000 #d5df488d
-  cashFlow                     n=  60 first=     8000.000000 last=     8000.000000 min=     8000.000000 max=     8000.000000 sum=     480000.000000 #bec5b9e5
-  cashFlowAccumulated          n=  60 first=     8000.000000 last=   480000.000000 min=     8000.000000 max=   480000.000000 sum=   14640000.000000 #f71dbe7d
+  cashFlow                     n=  60 first=     7200.000000 last=     7200.000000 min=     7200.000000 max=     7200.000000 sum=     432000.000000 #d5df488d
+  cashFlowAccumulated          n=  60 first=     7200.000000 last=   432000.000000 min=     7200.000000 max=   432000.000000 sum=   13176000.000000 #717bceae
   pensionIncome                n=  60 first=     8000.000000 last=     8000.000000 min=     8000.000000 max=     8000.000000 sum=     480000.000000 #bec5b9e5
 
 [packages]

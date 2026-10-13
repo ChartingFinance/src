@@ -37,7 +37,7 @@
   lastDate = 2030-12
   startValue = 2025000.000000
   finishValue = 2446522.084590
-  accumulated = -26493.446661
+  accumulated = -464711.083267
   total.employedIncome = 1200000.000000
   total.socialSecurityTax = -60852.733250
   total.assetAppreciation = 452452.045600
@@ -120,6 +120,8 @@
   income                       n=  60 first=        0.000000 last=        0.000000 min=        0.000000 max=  2052452.050000 sum=    2052452.050000 #7c83c892
   federalTaxes                 n=  60 first=        0.000000 last=        0.000000 min=  -360604.460000 max=        0.000000 sum=    -360604.460000 #85d41077
   taxes                        n=  60 first=        0.000000 last=        0.000000 min=  -360604.460000 max=        0.000000 sum=    -360604.460000 #85d41077
+  cashFlow                     n=  60 first=        0.000000 last=        0.000000 min=  -360604.460000 max=        0.000000 sum=    -360604.460000 #85d41077
+  cashFlowAccumulated          n=  60 first=        0.000000 last=  -360604.460000 min=  -360604.460000 max=        0.000000 sum=   -6490880.280000 #a6feabd1
   longTermCapitalGain          n=  60 first=        0.000000 last=        0.000000 min=        0.000000 max=  2052452.050000 sum=    2052452.050000 #7c83c892
   capitalGain                  n=  60 first=        0.000000 last=        0.000000 min=        0.000000 max=  2052452.050000 sum=    2052452.050000 #7c83c892
   longTermCapitalGainTax       n=  60 first=        0.000000 last=        0.000000 min=  -360604.460000 max=        0.000000 sum=    -360604.460000 #85d41077
@@ -327,8 +329,8 @@
   incomeTax                    n=  60 first=        0.000000 last=        0.000000 min=   -26493.450000 max=        0.000000 sum=     -26493.450000 #631f5c67
   federalTaxes                 n=  60 first=        0.000000 last=        0.000000 min=  -104106.620000 max=        0.000000 sum=    -104106.620000 #1b7f9c68
   taxes                        n=  60 first=        0.000000 last=        0.000000 min=  -104106.620000 max=        0.000000 sum=    -104106.620000 #1b7f9c68
-  cashFlow                     n=  60 first=        0.000000 last=        0.000000 min=   -26493.450000 max=        0.000000 sum=     -26493.450000 #631f5c67
-  cashFlowAccumulated          n=  60 first=        0.000000 last=   -26493.450000 min=   -26493.450000 max=        0.000000 sum=    -317921.400000 #a752452d
+  cashFlow                     n=  60 first=        0.000000 last=        0.000000 min=  -104106.620000 max=        0.000000 sum=    -104106.620000 #1b7f9c68
+  cashFlowAccumulated          n=  60 first=        0.000000 last=  -104106.620000 min=  -104106.620000 max=        0.000000 sum=   -1249279.440000 #e009da49
 
 [asset] Living
   instrument = monthlyExpense

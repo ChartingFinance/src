@@ -271,7 +271,19 @@ export class FinancialPackage {
 
         // Subtract liabilities and outflows (all stored as negative values)
         let e = this.totalTaxes();
-        e.add(this.expense);
+        e.add(this.cashExpenses());
+        return e;
+
+    }
+
+    /**
+     * Expenses as cash flow counts them: living expenses, the whole mortgage
+     * payment (principal as well as interest), maintenance and insurance.
+     * Negative. The Expenses figure in Reports and in Month & Year Details.
+     */
+    cashExpenses() {
+
+        let e = this.expense.copy();
         e.add(this.mortgagePrincipal);
         e.add(this.mortgageInterest);
         e.add(this.maintenance);

@@ -24,7 +24,7 @@
   lastDate = 2051-12
   startValue = 1050000.000000
   finishValue = 7909981.382005
-  accumulated = -205393.896068
+  accumulated = -391693.987394
   total.socialSecurityIncome = 1296421.489124
   total.pensionIncome = 888911.910947
   total.assetAppreciation = 7295752.372982
@@ -1243,6 +1243,8 @@
   incomeTax                    n= 312 first=     -150.000000 last=     -810.810000 min=     -810.810000 max=     -150.000000 sum=    -128709.680000 #0008cc49
   federalTaxes                 n= 312 first=     -150.000000 last=     -810.810000 min=     -810.810000 max=     -150.000000 sum=    -128709.680000 #0008cc49
   taxes                        n= 312 first=     -150.000000 last=     -810.810000 min=     -810.810000 max=     -150.000000 sum=    -128709.680000 #0008cc49
+  cashFlow                     n= 312 first=     -150.000000 last=     -810.810000 min=     -810.810000 max=     -150.000000 sum=    -128709.680000 #0008cc49
+  cashFlowAccumulated          n= 312 first=     -150.000000 last=  -128709.850000 min=  -128709.850000 max=     -150.000000 sum=  -14369655.660000 #38577509
   rmd                          n= 312 first=        0.000000 last=     7297.330000 min=        0.000000 max=     7297.330000 sum=    1051852.680000 #5f6fac2d
   taxableDistribution          n= 312 first=     1500.000000 last=     8108.140000 min=     1500.000000 max=     8108.140000 sum=    1287098.530000 #b0297d4b
   four01KDistribution          n= 312 first=     1500.000000 last=     8108.140000 min=     1500.000000 max=     8108.140000 sum=    1287098.530000 #b0297d4b
@@ -4020,8 +4022,8 @@
   federalTaxes                 n= 312 first=     -220.000000 last=     -360.930000 min=     -360.930000 max=     -220.000000 sum=     -88891.440000 #05fc27d5
   taxes                        n= 312 first=     -220.000000 last=     -360.930000 min=     -360.930000 max=     -220.000000 sum=     -88891.440000 #05fc27d5
   netIncome                    n= 312 first=     1980.000000 last=     3248.400000 min=     1980.000000 max=     3248.400000 sum=     800021.040000 #7a42407d
-  cashFlow                     n= 312 first=     2200.000000 last=     3609.330000 min=     2200.000000 max=     3609.330000 sum=     888911.760000 #39f1bfc5
-  cashFlowAccumulated          n= 312 first=     2200.000000 last=   888911.910000 min=     2200.000000 max=   888911.910000 sum=  127285074.030000 #567938b2
+  cashFlow                     n= 312 first=     1980.000000 last=     3248.400000 min=     1980.000000 max=     3248.400000 sum=     800021.040000 #7a42407d
+  cashFlowAccumulated          n= 312 first=     1980.000000 last=   800020.720000 min=     1980.000000 max=   800020.720000 sum=  114556566.550000 #025264b3
   pensionIncome                n= 312 first=     2200.000000 last=     3609.330000 min=     2200.000000 max=     3609.330000 sum=     888911.760000 #39f1bfc5
 
 [asset] IRA
@@ -4838,6 +4840,8 @@
   incomeTax                    n= 312 first=        0.000000 last=     -400.190000 min=     -400.190000 max=        0.000000 sum=     -57590.400000 #cc641e3d
   federalTaxes                 n= 312 first=        0.000000 last=     -400.190000 min=     -400.190000 max=        0.000000 sum=     -57590.400000 #cc641e3d
   taxes                        n= 312 first=        0.000000 last=     -400.190000 min=     -400.190000 max=        0.000000 sum=     -57590.400000 #cc641e3d
+  cashFlow                     n= 312 first=        0.000000 last=     -400.190000 min=     -400.190000 max=        0.000000 sum=     -57590.400000 #cc641e3d
+  cashFlowAccumulated          n= 312 first=        0.000000 last=   -57590.240000 min=   -57590.240000 max=        0.000000 sum=   -5470066.630000 #4bf9f7e8
   rmd                          n= 312 first=        0.000000 last=     3601.730000 min=        0.000000 max=     3601.730000 sum=     518312.160000 #41351bad
   taxableDistribution          n= 312 first=        0.000000 last=     4001.920000 min=        0.000000 max=     4001.920000 sum=     575902.440000 #4b61de8d
   tradIRADistribution          n= 312 first=        0.000000 last=     4001.920000 min=        0.000000 max=     4001.920000 sum=     575902.440000 #4b61de8d

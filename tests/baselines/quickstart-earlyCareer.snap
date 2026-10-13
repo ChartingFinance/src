@@ -24,7 +24,7 @@
   lastDate = 2081-12
   startValue = 150000.000000
   finishValue = 16285581.968591
-  accumulated = -765113.735036
+  accumulated = -1204486.566440
   total.employedIncome = 3465182.062507
   total.socialSecurityTax = -214841.287875
   total.socialSecurityIncome = 854014.602759
@@ -1902,6 +1902,8 @@
   incomeTax                    n= 672 first=        0.000000 last=    -2930.260000 min=    -2930.260000 max=        0.000000 sum=    -398227.200000 #c037971b
   federalTaxes                 n= 672 first=        0.000000 last=    -2930.260000 min=    -2930.260000 max=        0.000000 sum=    -398227.200000 #c037971b
   taxes                        n= 672 first=        0.000000 last=    -2930.260000 min=    -2930.260000 max=        0.000000 sum=    -398227.200000 #c037971b
+  cashFlow                     n= 672 first=        0.000000 last=    -2930.260000 min=    -2930.260000 max=        0.000000 sum=    -398227.200000 #c037971b
+  cashFlowAccumulated          n= 672 first=        0.000000 last=  -398227.310000 min=  -398227.310000 max=        0.000000 sum=  -36845637.470000 #73995603
   rmd                          n= 672 first=        0.000000 last=    26372.320000 min=        0.000000 max=    26372.320000 sum=    3295569.840000 #37c797dd
   contribution                 n= 672 first=      440.000000 last=        0.000000 min=        0.000000 max=     1100.040000 sum=     277214.520000 #cd0b2c55
   preTaxContribution           n= 672 first=      440.000000 last=        0.000000 min=        0.000000 max=     1100.040000 sum=     277214.520000 #cd0b2c55
@@ -6698,8 +6700,8 @@
   incomeTax                    n= 672 first=        0.000000 last=      -96.170000 min=   -13892.610000 max=     3302.460000 sum=     -41599.060000 #541a1d72
   federalTaxes                 n= 672 first=        0.000000 last=      -96.170000 min=   -16240.420000 max=     3302.460000 sum=     -78462.120000 #c7ea204a
   taxes                        n= 672 first=        0.000000 last=      -96.170000 min=   -16240.420000 max=     3302.460000 sum=     -78462.120000 #c7ea204a
-  cashFlow                     n= 672 first=        0.000000 last=      -96.170000 min=   -13892.610000 max=     3302.460000 sum=     -41599.060000 #541a1d72
-  cashFlowAccumulated          n= 672 first=        0.000000 last=   -41599.070000 min=   -41599.070000 max=    23674.460000 sum=    1344358.660000 #90c4dc6f
+  cashFlow                     n= 672 first=        0.000000 last=      -96.170000 min=   -16240.420000 max=     3302.460000 sum=     -78462.120000 #c7ea204a
+  cashFlowAccumulated          n= 672 first=        0.000000 last=   -78462.130000 min=   -78462.130000 max=    15151.970000 sum=   -2229739.120000 #510fd026
   longTermCapitalGain          n= 672 first=      130.100000 last=     7527.720000 min=        0.000000 max=     7527.720000 sum=    1431982.800000 #ae99a9b1
   capitalGain                  n= 672 first=      130.100000 last=     7527.720000 min=        0.000000 max=     7527.720000 sum=    1431982.800000 #ae99a9b1
 
@@ -7630,8 +7632,8 @@
   federalTaxes                 n= 672 first=        0.000000 last=        0.000000 min=    -4282.460000 max=        0.000000 sum=      -4282.460000 #3350e498
   saltTaxes                    n= 672 first=     -350.860000 last=        0.000000 min=     -734.630000 max=        0.000000 sum=    -156340.680000 #02dcb89f
   taxes                        n= 672 first=     -350.860000 last=        0.000000 min=    -4282.460000 max=        0.000000 sum=    -160623.140000 #c20cefae
-  cashFlow                     n= 672 first=     -350.860000 last=        0.000000 min=     -734.630000 max=        0.000000 sum=    -156340.680000 #02dcb89f
-  cashFlowAccumulated          n= 672 first=     -350.860000 last=  -156340.650000 min=  -156340.650000 max=     -350.860000 sum=  -78728582.590000 #d828bdb1
+  cashFlow                     n= 672 first=     -350.860000 last=        0.000000 min=    -4282.460000 max=        0.000000 sum=    -160623.140000 #c20cefae
+  cashFlowAccumulated          n= 672 first=     -350.860000 last=  -160623.110000 min=  -160623.110000 max=     -350.860000 sum=  -80317375.250000 #a8769b9b
   longTermCapitalGain          n= 672 first=        0.000000 last=        0.000000 min=        0.000000 max=   384629.610000 sum=     384629.610000 #ac51e54c
   capitalGain                  n= 672 first=        0.000000 last=        0.000000 min=        0.000000 max=   384629.610000 sum=     384629.610000 #ac51e54c
   propertyTax                  n= 672 first=     -350.860000 last=        0.000000 min=     -734.630000 max=        0.000000 sum=    -156340.680000 #02dcb89f

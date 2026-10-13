@@ -27,7 +27,7 @@
   lastDate = 2030-07
   startValue = 1000000.000000
   finishValue = 903485.256636
-  accumulated = -848.140893
+  accumulated = -17058.593220
   total.socialSecurityIncome = 165000.000000
   total.expense = -244456.150144
   total.incomeTax = -17137.235655
@@ -227,6 +227,8 @@
   incomeTax                    n=  55 first=     -299.900000 last=     -288.800000 min=     -299.900000 max=     -288.800000 sum=     -16210.450000 #c401f9f2
   federalTaxes                 n=  55 first=     -299.900000 last=     -288.800000 min=     -299.900000 max=     -288.800000 sum=     -16210.450000 #c401f9f2
   taxes                        n=  55 first=     -299.900000 last=     -288.800000 min=     -299.900000 max=     -288.800000 sum=     -16210.450000 #c401f9f2
+  cashFlow                     n=  55 first=     -299.900000 last=     -288.800000 min=     -299.900000 max=     -288.800000 sum=     -16210.450000 #c401f9f2
+  cashFlowAccumulated          n=  55 first=     -299.900000 last=   -16210.450000 min=   -16210.450000 max=     -299.900000 sum=    -456783.380000 #91792f61
   rmd                          n=  55 first=     2699.060000 last=     2599.180000 min=     2599.180000 max=     2699.060000 sum=     145894.100000 #ca605cd4
   taxableDistribution          n=  55 first=     2998.950000 last=     2887.970000 min=     2887.970000 max=     2998.950000 sum=     162104.470000 #4e8728da
   tradIRADistribution          n=  55 first=     2998.950000 last=     2887.970000 min=     2887.970000 max=     2998.950000 sum=     162104.470000 #4e8728da

@@ -66,11 +66,13 @@ export function reportRows({ type, coversYear, pkg }, taxYears = []) {
         ['    Roth IRA', fmt(pkg.rothIRAContribution)],
         ['Debt Paydown', fmt(pkg.totalDebtPaydown())],
         ['  Mortgage Principal', fmt(pkg.mortgagePrincipal)],
+        // Income received less expenses and taxes: the rule Month & Year
+        // Details and the per-account Cash Flow metric use too.
         ['Cash Flow', fmt(pkg.cashFlow())],
-        ['  Cash In', fmt(pkg.cashInFlow())],
+        ['  Income Received', fmt(pkg.cashInFlow())],
         ['  Cash Out', fmt(pkg.cashOutFlow())],
         ['    Taxes', fmt(pkg.totalTaxes())],
-        ['    Expenses', fmt(pkg.expense)],
+        ['    Expenses', fmt(pkg.cashExpenses())],
         ['Effective Tax Rate', pkg.effectiveTaxRate().toFixed(2) + '%'],
         ['Asset Growth', fmt(pkg.growth())],
         ['Wealth Growth', fmt(pkg.wealth())],

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.3.26; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.3.27; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -30839,6 +30839,935 @@ var InstrumentType = Object.freeze({
   fundingBackstopPriority: FUNDING_BACKSTOP_PRIORITY
 });
 
+// js/metric.js
+var Metric = Object.freeze({
+  VALUE: "value",
+  NET_WORTH_CHANGE: "netWorthChange",
+  // derived: value[i] - value[i-1]
+  GROWTH: "growth",
+  QUALIFIED_DIVIDEND: "qualifiedDividend",
+  NON_QUALIFIED_DIVIDEND: "nonQualifiedDividend",
+  INTEREST_INCOME: "interestIncome",
+  ORDINARY_INCOME: "ordinaryIncome",
+  EMPLOYED_INCOME: "employedIncome",
+  SELF_INCOME: "selfIncome",
+  INCOME: "income",
+  WITHHELD_FICA_TAX: "withheldFicaTax",
+  ESTIMATED_FICA_TAX: "estimatedFicaTax",
+  // reserved: future self-employment enhancement
+  WITHHELD_INCOME_TAX: "withheldIncomeTax",
+  ESTIMATED_INCOME_TAX: "estimatedIncomeTax",
+  NIIT: "niit",
+  ESTIMATED_TAX: "estimatedTax",
+  // reserved: future self-employment enhancement
+  INCOME_TAX: "incomeTax",
+  FEDERAL_TAXES: "federalTaxes",
+  SALT_TAXES: "saltTaxes",
+  TAXES: "taxes",
+  NET_INCOME: "netIncome",
+  EXPENSE: "expense",
+  CASH_FLOW: "cashFlow",
+  CASH_FLOW_ACCUMULATED: "cashFlowAccumulated",
+  SHORT_TERM_CAPITAL_GAIN: "shortTermCapitalGain",
+  LONG_TERM_CAPITAL_GAIN: "longTermCapitalGain",
+  CAPITAL_GAIN: "capitalGain",
+  // only long term
+  RMD: "rmd",
+  SOCIAL_SECURITY_TAX: "socialSecurityTax",
+  SOCIAL_SECURITY_INCOME: "socialSecurityIncome",
+  PENSION_INCOME: "pensionIncome",
+  MEDICARE_TAX: "medicareTax",
+  MORTGAGE_PAYMENT: "mortgagePayment",
+  MORTGAGE_INTEREST: "mortgageInterest",
+  MORTGAGE_PRINCIPAL: "mortgagePrincipal",
+  PROPERTY_TAX: "propertyTax",
+  CONTRIBUTION: "contribution",
+  PRETAX_CONTRIBUTION: "preTaxContribution",
+  POSTTAX_CONTRIBUTION: "postTaxContribution",
+  TRAD_IRA_CONTRIBUTION: "tradIRAContribution",
+  ROTH_IRA_CONTRIBUTION: "rothIRAContribution",
+  FOUR_01K_CONTRIBUTION: "four01KContribution",
+  TAX_FREE_DISTRIBUTION: "taxFreeDistribution",
+  // from roth IRA or post tax cash
+  TAXABLE_DISTRIBUTION: "taxableDistribution",
+  // these are distributions from IRA and 401K accounts
+  TRAD_IRA_DISTRIBUTION: "tradIRADistribution",
+  ROTH_IRA_DISTRIBUTION: "rothIRADistribution",
+  FOUR_01K_DISTRIBUTION: "four01KDistribution",
+  SHORT_TERM_CAPITAL_GAIN_TAX: "shortTermCapitalGainTax",
+  LONG_TERM_CAPITAL_GAIN_TAX: "longTermCapitalGainTax",
+  LIVING_EXPENSE: "livingExpense",
+  INTEREST_EXPENSE: "interestExpense",
+  MAINTENANCE: "maintenance",
+  INSURANCE: "insurance",
+  CREDIT: "credit"
+});
+var METRIC_NAMES = Object.values(Metric);
+var MetricLabel = Object.freeze({
+  [Metric.VALUE]: "Net Worth",
+  [Metric.NET_WORTH_CHANGE]: "Net Worth Change",
+  [Metric.GROWTH]: "Growth",
+  [Metric.QUALIFIED_DIVIDEND]: "Qualified Dividend",
+  [Metric.NON_QUALIFIED_DIVIDEND]: "Non-Qualified Dividend",
+  [Metric.INTEREST_INCOME]: "Interest Income",
+  [Metric.ORDINARY_INCOME]: "Ordinary Income",
+  [Metric.EMPLOYED_INCOME]: "Employed Income",
+  [Metric.SELF_INCOME]: "Self-Employment Income",
+  [Metric.INCOME]: "Income",
+  [Metric.WITHHELD_FICA_TAX]: "Withheld FICA / Medicare",
+  [Metric.ESTIMATED_FICA_TAX]: "Estimated FICA / Medicare",
+  [Metric.WITHHELD_INCOME_TAX]: "Withheld Income Tax",
+  [Metric.ESTIMATED_INCOME_TAX]: "Estimated Income Tax",
+  [Metric.NIIT]: "Net Investment Income Tax",
+  [Metric.ESTIMATED_TAX]: "Estimated Tax",
+  [Metric.INCOME_TAX]: "Income Tax",
+  [Metric.FEDERAL_TAXES]: "Federal Taxes",
+  [Metric.SALT_TAXES]: "State and Local Taxes",
+  [Metric.TAXES]: "All Taxes",
+  [Metric.NET_INCOME]: "Net Income",
+  [Metric.EXPENSE]: "Expense",
+  [Metric.CASH_FLOW]: "Cash Flow",
+  [Metric.CASH_FLOW_ACCUMULATED]: "Cash Flow Accumulated",
+  [Metric.SHORT_TERM_CAPITAL_GAIN]: "Short Term Capital Gain",
+  [Metric.LONG_TERM_CAPITAL_GAIN]: "Long Term Capital Gain",
+  [Metric.CAPITAL_GAIN]: "Capital Gain",
+  [Metric.RMD]: "Required Min. Distribution",
+  [Metric.SOCIAL_SECURITY_TAX]: "Social Security Tax",
+  [Metric.SOCIAL_SECURITY_INCOME]: "Social Security Income",
+  [Metric.PENSION_INCOME]: "Pension Income",
+  [Metric.MEDICARE_TAX]: "Medicare Tax",
+  [Metric.MORTGAGE_PAYMENT]: "Mortgage Payment",
+  [Metric.MORTGAGE_INTEREST]: "Mortgage Interest",
+  [Metric.MORTGAGE_PRINCIPAL]: "Mortgage Principal",
+  [Metric.CONTRIBUTION]: "Contribution",
+  [Metric.PRETAX_CONTRIBUTION]: "Pre Tax Contribution",
+  [Metric.POSTTAX_CONTRIBUTION]: "Post Tax Contribution",
+  [Metric.TRAD_IRA_CONTRIBUTION]: "Traditional IRA Contribution",
+  [Metric.ROTH_IRA_CONTRIBUTION]: "Roth IRA Contribution",
+  [Metric.FOUR_01K_CONTRIBUTION]: "401K Contribution",
+  [Metric.TAX_FREE_DISTRIBUTION]: "Tax Free Distribution",
+  [Metric.TAXABLE_DISTRIBUTION]: "Taxable Distribution",
+  [Metric.TRAD_IRA_DISTRIBUTION]: "Traditional IRA Distribution",
+  [Metric.ROTH_IRA_DISTRIBUTION]: "Roth IRA Distribution",
+  [Metric.FOUR_01K_DISTRIBUTION]: "401K Distribution",
+  [Metric.SHORT_TERM_CAPITAL_GAIN_TAX]: "Short Term Capital Gain Tax",
+  [Metric.LONG_TERM_CAPITAL_GAIN_TAX]: "Long Term Capital Gain Tax",
+  [Metric.PROPERTY_TAX]: "Property Tax",
+  [Metric.LIVING_EXPENSE]: "Living Expense",
+  [Metric.INTEREST_EXPENSE]: "Interest Expense",
+  [Metric.MAINTENANCE]: "Maintenance",
+  [Metric.INSURANCE]: "Insurance",
+  [Metric.CREDIT]: "Credit"
+});
+var MetricRollups = {
+  // --- FOUNDATIONAL INCOME TO ORDINARY INCOME ---
+  [Metric.TRAD_IRA_DISTRIBUTION]: [Metric.TAXABLE_DISTRIBUTION],
+  [Metric.FOUR_01K_DISTRIBUTION]: [Metric.TAXABLE_DISTRIBUTION],
+  // RMD is informational only — no rollup. Income is captured by the distribution leaves.
+  [Metric.TAXABLE_DISTRIBUTION]: [Metric.ORDINARY_INCOME],
+  [Metric.EMPLOYED_INCOME]: [Metric.ORDINARY_INCOME],
+  [Metric.SELF_INCOME]: [Metric.ORDINARY_INCOME],
+  [Metric.INTEREST_INCOME]: [Metric.ORDINARY_INCOME],
+  [Metric.SOCIAL_SECURITY_INCOME]: [Metric.ORDINARY_INCOME],
+  [Metric.PENSION_INCOME]: [Metric.ORDINARY_INCOME],
+  [Metric.SHORT_TERM_CAPITAL_GAIN]: [Metric.ORDINARY_INCOME],
+  // Taxed at ordinary rates
+  // --- FOUNDATIONAL GAINS TO CAPITAL GAINS ---
+  [Metric.LONG_TERM_CAPITAL_GAIN]: [Metric.CAPITAL_GAIN],
+  // --- MASTER COMBINATIONS TO RETIREMENT PLANS ---
+  [Metric.FOUR_01K_CONTRIBUTION]: [Metric.PRETAX_CONTRIBUTION],
+  [Metric.TRAD_IRA_CONTRIBUTION]: [Metric.PRETAX_CONTRIBUTION],
+  [Metric.ROTH_IRA_CONTRIBUTION]: [Metric.POSTTAX_CONTRIBUTION],
+  [Metric.PRETAX_CONTRIBUTION]: [Metric.CONTRIBUTION],
+  [Metric.POSTTAX_CONTRIBUTION]: [Metric.CONTRIBUTION],
+  // --- MASTER COMBINATIONS TO TOTAL INCOME ---
+  [Metric.ORDINARY_INCOME]: [Metric.INCOME],
+  [Metric.CAPITAL_GAIN]: [Metric.INCOME],
+  [Metric.ROTH_IRA_DISTRIBUTION]: [Metric.TAX_FREE_DISTRIBUTION],
+  // Non-taxable, but still cash flow income
+  [Metric.TAX_FREE_DISTRIBUTION]: [Metric.INCOME],
+  [Metric.NON_QUALIFIED_DIVIDEND]: [Metric.ORDINARY_INCOME],
+  [Metric.QUALIFIED_DIVIDEND]: [Metric.INCOME],
+  [Metric.MEDICARE_TAX]: [Metric.WITHHELD_FICA_TAX],
+  [Metric.SOCIAL_SECURITY_TAX]: [Metric.WITHHELD_FICA_TAX],
+  // --- TAX ROLLUPS ---
+  // A pension or Social Security books WITHHELD_INCOME_TAX on its own asset
+  // (PayrollEngine.#withholdOnRetirementIncome). Tax a benefit does not
+  // withhold — for Social Security, all of it by default — is settled by the
+  // true-ups as ESTIMATED_INCOME_TAX on the funding account. A metric must be
+  // registered on the behavior (instrument-behavior.js), or writes to it land
+  // on NULL_METRIC and disappear.
+  [Metric.WITHHELD_FICA_TAX]: [Metric.INCOME_TAX],
+  [Metric.WITHHELD_INCOME_TAX]: [Metric.INCOME_TAX],
+  [Metric.ESTIMATED_INCOME_TAX]: [Metric.INCOME_TAX],
+  [Metric.SHORT_TERM_CAPITAL_GAIN_TAX]: [Metric.INCOME_TAX],
+  [Metric.INCOME_TAX]: [Metric.FEDERAL_TAXES],
+  [Metric.LONG_TERM_CAPITAL_GAIN_TAX]: [Metric.FEDERAL_TAXES],
+  // Straight to FEDERAL_TAXES, NOT via INCOME_TAX: NIIT is a separate
+  // levy on a separate base, and rolling it through income tax would
+  // make the income-tax line disagree with what the brackets produced.
+  [Metric.NIIT]: [Metric.FEDERAL_TAXES],
+  // --- EXPENSE & DEBT ROLLUPS ---
+  // MORTGAGE_PAYMENT and MORTGAGE_PRINCIPAL are informational only (like RMD) — no rollup.
+  // Principal nets to zero via credit memos; payment is interest + principal for display.
+  [Metric.LIVING_EXPENSE]: [Metric.EXPENSE],
+  [Metric.MORTGAGE_INTEREST]: [Metric.INTEREST_EXPENSE],
+  [Metric.INTEREST_EXPENSE]: [Metric.EXPENSE],
+  [Metric.MAINTENANCE]: [Metric.EXPENSE],
+  [Metric.INSURANCE]: [Metric.EXPENSE],
+  [Metric.PROPERTY_TAX]: [Metric.SALT_TAXES],
+  [Metric.FEDERAL_TAXES]: [Metric.TAXES],
+  [Metric.SALT_TAXES]: [Metric.TAXES]
+};
+var PINNED_METRICS = [Metric.VALUE, Metric.NET_WORTH_CHANGE, Metric.GROWTH, Metric.CASH_FLOW];
+var DERIVED_METRICS = /* @__PURE__ */ new Set([Metric.NET_WORTH_CHANGE]);
+var MACRO_METRICS = [
+  ...PINNED_METRICS,
+  Metric.INCOME,
+  Metric.NET_INCOME,
+  Metric.CONTRIBUTION,
+  Metric.EXPENSE,
+  Metric.TAXES,
+  Metric.CREDIT
+];
+var _macroSet = new Set(MACRO_METRICS);
+var _realDollarSet = /* @__PURE__ */ new Set([Metric.VALUE]);
+var MetricKind = Object.freeze({
+  /** A balance at a point in time.  Snapshot, never summed. */
+  LEVEL: "level",
+  /** An amount that occurred during that month.  Sums across a window. */
+  FLOW: "flow",
+  /** Already a running total since plan start.  Differenced, never summed. */
+  RUNNING: "running"
+});
+var _levelMetrics = /* @__PURE__ */ new Set([Metric.VALUE]);
+var _runningMetrics = /* @__PURE__ */ new Set([Metric.CASH_FLOW_ACCUMULATED]);
+function metricKind(metricName) {
+  if (_levelMetrics.has(metricName)) return MetricKind.LEVEL;
+  if (_runningMetrics.has(metricName)) return MetricKind.RUNNING;
+  return MetricKind.FLOW;
+}
+function aggregateMetric(history, metricName, fromIndex, toIndex) {
+  if (!history || history.length === 0) return 0;
+  const last = history.length - 1;
+  const to = Math.min(toIndex, last);
+  const from = Math.max(fromIndex, 0);
+  if (to < 0 || from > last || from > to) return 0;
+  switch (metricKind(metricName)) {
+    case MetricKind.LEVEL:
+      return history[to] ?? 0;
+    case MetricKind.RUNNING: {
+      const before = from > 0 ? history[from - 1] ?? 0 : 0;
+      return (history[to] ?? 0) - before;
+    }
+    default: {
+      let sum = 0;
+      for (let i = from; i <= to; i++) sum += history[i] ?? 0;
+      return sum;
+    }
+  }
+}
+var PARENT_METRICS = new Set(
+  Object.values(MetricRollups).flat()
+);
+var LEAF_TAX_METRICS = Object.freeze(
+  Object.values(Metric).filter((m) => {
+    if (m === Metric.TAXES || PARENT_METRICS.has(m)) return false;
+    const reaches = (x, seen = /* @__PURE__ */ new Set()) => {
+      if (x === Metric.TAXES) return true;
+      if (seen.has(x)) return false;
+      seen.add(x);
+      return (MetricRollups[x] ?? []).some((p) => reaches(p, seen));
+    };
+    return reaches(m);
+  })
+);
+var TrackedMetric = class {
+  constructor(name) {
+    this.name = name;
+    this.current = new Currency();
+    this.history = [];
+    this.displayHistory = [];
+    this.trackHistory = true;
+  }
+  initialize() {
+    this.current = new Currency();
+    this.history = [];
+    this.displayHistory = [];
+  }
+  snapshot() {
+    if (this.trackHistory) this.history.push(this.current.toCurrency());
+    this.current.zero();
+  }
+  snapshotKeep() {
+    if (this.trackHistory) this.history.push(this.current.toCurrency());
+  }
+  add(amount) {
+    if (amount instanceof Currency) {
+      this.current.add(amount);
+    }
+    return this.current.copy();
+  }
+  subtract(amount) {
+    if (amount instanceof Currency) {
+      this.current.subtract(amount);
+    }
+    return this.current.copy();
+  }
+  get amount() {
+    return this.current.amount;
+  }
+  set amount(v) {
+    this.current.amount = v;
+  }
+  copy() {
+    return this.current.copy();
+  }
+  zero() {
+    this.current.zero();
+    return this;
+  }
+  toFixed() {
+    return this.current.toFixed();
+  }
+  toCurrency() {
+    return this.current.toCurrency();
+  }
+  displayName() {
+    return "display" + this.name.charAt(0).toUpperCase() + this.name.slice(1) + "s";
+  }
+  buildDisplayHistory(monthsSpan) {
+    this.displayHistory = [];
+    for (let ii = monthsSpan.offsetMonths; ii < this.history.length; ii += monthsSpan.combineMonths) {
+      this.displayHistory.push(this.history[ii]);
+    }
+    return this.displayHistory;
+  }
+};
+var NULL_CURRENCY = Object.freeze({ amount: 0, add() {
+}, subtract() {
+}, copy() {
+  return new Currency();
+}, zero() {
+}, toCurrency() {
+  return 0;
+}, toFixed() {
+  return "0.00";
+}, toHTML() {
+  return "0.00";
+}, toString() {
+  return "$0.00";
+} });
+var EMPTY_ARRAY = Object.freeze([]);
+var NULL_METRIC = Object.freeze({
+  name: "_null",
+  current: NULL_CURRENCY,
+  history: EMPTY_ARRAY,
+  displayHistory: EMPTY_ARRAY,
+  initialize() {
+  },
+  snapshot() {
+  },
+  snapshotKeep() {
+  },
+  add() {
+    return new Currency();
+  },
+  subtract() {
+    return new Currency();
+  },
+  get amount() {
+    return 0;
+  },
+  set amount(_v) {
+  },
+  copy() {
+    return new Currency();
+  },
+  zero() {
+    return this;
+  },
+  toFixed() {
+    return "0.00";
+  },
+  toCurrency() {
+    return 0;
+  },
+  displayName() {
+    return "_null";
+  },
+  buildDisplayHistory() {
+    return EMPTY_ARRAY;
+  }
+});
+var MetricSet = class {
+  constructor(names) {
+    this._map = /* @__PURE__ */ new Map();
+    for (const name of names) {
+      this._map.set(name, new TrackedMetric(name));
+    }
+  }
+  get(name) {
+    return this._map.get(name) || NULL_METRIC;
+  }
+  has(name) {
+    return this._map.has(name);
+  }
+  initializeAll() {
+    for (const m of this._map.values()) m.initialize();
+  }
+  setTrackHistory(enabled) {
+    for (const m of this._map.values()) m.trackHistory = enabled;
+  }
+  snapshotAll(keepNames) {
+    for (const [name, m] of this._map) {
+      if (keepNames?.has(name)) {
+        m.snapshotKeep();
+      } else {
+        m.snapshot();
+      }
+    }
+  }
+  [Symbol.iterator]() {
+    return this._map.values();
+  }
+  entries() {
+    return this._map.entries();
+  }
+};
+
+// js/sim-event.js
+var EventType = Object.freeze({
+  // ── Growth and yield ──
+  ASSET_GROWTH: "assetGrowth",
+  EXPENSE_INFLATION: "expenseInflation",
+  INCOME_GROWTH: "incomeGrowth",
+  DIVIDEND: "dividend",
+  // data.qualified: boolean
+  INTEREST_INCOME: "interestIncome",
+  // ── Housing ──
+  MORTGAGE_PRINCIPAL: "mortgagePrincipal",
+  MORTGAGE_INTEREST: "mortgageInterest",
+  PROPERTY_TAX: "propertyTax",
+  PROPERTY_TAX_ESCROW: "propertyTaxEscrow",
+  MAINTENANCE: "maintenance",
+  INSURANCE: "insurance",
+  // ── Tax ──
+  FICA_WITHHOLDING: "ficaWithholding",
+  // data.estimate: payroll's estimate, when the paycheck could not cover it;
+  // data: { rate, source } on a retirement distribution.
+  INCOME_TAX_WITHHOLDING: "incomeTaxWithholding",
+  CAPITAL_GAINS_TAX: "capitalGainsTax",
+  TAX_TRUE_UP: "taxTrueUp",
+  // data.direction: 'underpayment' | 'refund'
+  CAPITAL_GAIN_RECOGNIZED: "capitalGainRecognized",
+  // data.spillover: boolean
+  CAPITAL_GAIN_EXCLUDED: "capitalGainExcluded",
+  // IRC §121 primary-home exclusion
+  NIIT_ASSESSED: "niitAssessed",
+  // IRC §1411; data: { nii, magi, threshold }
+  // ── Movement ──
+  TRANSFER: "transfer",
+  // data: { from, to, cadence }
+  SETTLEMENT: "settlement",
+  // one-sided draw; data: { from, to, label }
+  SPILLOVER: "spillover",
+  // data: { depleted }
+  GROSS_UP: "grossUp",
+  // data: { forAsset, overflow: boolean }
+  // The part of a GROSS_UP withdrawn to cover capital-gains tax rather than
+  // the obligation. No cash moves for this event (it left under the
+  // GROSS_UP); it names that portion so it can be reported. data: { forAsset }
+  TAX_PROVISION: "taxProvision",
+  ONE_TIME: "oneTime",
+  // data: { note }
+  // ── Engine reports (no money moved) ──
+  UNFUNDED: "unfunded",
+  // data: { cause, origin }
+  CONTRIBUTION_CAPPED: "contributionCapped"
+  // data: { limitName }
+});
+var PAY_LEFT_AFTER_TAXES = "pay left after taxes";
+var ShortfallOrigin = Object.freeze({
+  /** Remainder of a two-sided transfer. Participates in conservation. */
+  PAIRED: "paired",
+  /** Remainder of a one-sided settlement. Has no second leg to balance. */
+  ONE_SIDED: "oneSided",
+  /** An obligation that never moved money at all — a pre-flight failure. */
+  STANDALONE: "standalone"
+});
+var EventKind = Object.freeze({
+  CASH: "cash",
+  INFO: "info"
+});
+var INFO_TYPES = /* @__PURE__ */ new Set([
+  EventType.MORTGAGE_INTEREST,
+  EventType.PROPERTY_TAX,
+  EventType.PROPERTY_TAX_ESCROW,
+  EventType.MAINTENANCE,
+  EventType.INSURANCE,
+  EventType.CAPITAL_GAIN_RECOGNIZED,
+  EventType.CAPITAL_GAIN_EXCLUDED,
+  EventType.UNFUNDED,
+  EventType.CONTRIBUTION_CAPPED
+]);
+function kindOf(type) {
+  return INFO_TYPES.has(type) ? EventKind.INFO : EventKind.CASH;
+}
+var SimEvent = class {
+  /**
+   * @param {string}   type      EventType key
+   * @param {Currency} amount
+   * @param {DateInt}  dateInt
+   * @param {object}   [opts]
+   * @param {string}   [opts.metric]   Metric this event moved, if any
+   * @param {object}   [opts.data]     type-specific payload
+   * @param {number}   [opts.seq]      monotonic within a run
+   * @param {number}   [opts.traceId]  enclosing causal scope; read from
+   *                                   ambient context, never passed by callers
+   */
+  constructor(type, amount, dateInt, { metric = null, data = null, seq = 0, traceId = null } = {}) {
+    this.type = type;
+    this.amount = amount instanceof Currency ? amount.copy() : new Currency(amount ?? 0);
+    this.dateInt = dateInt;
+    this.kind = kindOf(type);
+    this.metric = metric;
+    this.data = data;
+    this.seq = seq;
+    this.traceId = traceId;
+  }
+};
+function renderNote(event) {
+  const d = event.data ?? {};
+  switch (event.type) {
+    case EventType.ASSET_GROWTH:
+      return "Asset growth";
+    case EventType.EXPENSE_INFLATION:
+      return "Expense inflation";
+    case EventType.INCOME_GROWTH:
+      return "Annual income growth";
+    case EventType.DIVIDEND:
+      return d.qualified ? "Qualified dividend" : "Non-qualified dividend";
+    case EventType.INTEREST_INCOME:
+      return "Interest income";
+    case EventType.MORTGAGE_PRINCIPAL:
+      return "Mortgage Principal";
+    case EventType.MORTGAGE_INTEREST:
+      return "Mortgage Interest";
+    case EventType.PROPERTY_TAX:
+      return "Property tax";
+    case EventType.PROPERTY_TAX_ESCROW:
+      return "Property tax escrow";
+    case EventType.MAINTENANCE:
+      return "Maintenance";
+    case EventType.INSURANCE:
+      return "Insurance";
+    case EventType.FICA_WITHHOLDING:
+      return "FICA withholding";
+    case EventType.INCOME_TAX_WITHHOLDING:
+      return "Income tax withholding";
+    case EventType.CAPITAL_GAINS_TAX:
+      return "Capital gains tax withholding";
+    case EventType.TAX_TRUE_UP:
+      return `Annual tax true-up (${d.direction})`;
+    case EventType.TAX_PROVISION:
+      return d.forAsset ? `Withheld for capital gains tax on the draw for ${d.forAsset}` : "Withheld for capital gains tax on this draw";
+    // Says which side of the min bound: too much investment income, or
+    // too much total income. No currency helper — this module imports
+    // nothing.
+    case EventType.NIIT_ASSESSED:
+      return d.bound === "nii" ? "Net investment income tax (3.8% of net investment income)" : "Net investment income tax (3.8% of MAGI over the threshold)";
+    case EventType.CAPITAL_GAIN_RECOGNIZED:
+      return d.spillover ? "Capital gains (spillover)" : "Capital gains";
+    case EventType.CAPITAL_GAIN_EXCLUDED:
+      return "Primary home gain excluded";
+    // Property tax settles as "Home property tax" but maintenance as
+    // "Home → Checking (maintenance)": two wordings for one operation,
+    // kept because consumers still match them.
+    case EventType.TRANSFER:
+      return `${d.from} \u2192 ${d.to} (${d.cadence})`;
+    case EventType.SETTLEMENT:
+      return d.label === "property tax" ? `${d.from} property tax` : `${d.from} \u2192 ${d.to} (${d.label})`;
+    case EventType.SPILLOVER:
+      return `Spillover from depleted ${d.depleted}`;
+    case EventType.GROSS_UP:
+      return `Grossed-up expense ${d.overflow ? "overflow" : "debit"} for ${d.forAsset}`;
+    case EventType.ONE_TIME:
+      return `One-Time: ${d.note || "one-time event"}`;
+    case EventType.UNFUNDED:
+      return `Unfunded \u2014 ${d.cause}`;
+    case EventType.CONTRIBUTION_CAPPED:
+      return `Contribution capped \u2014 ${d.limitName}`;
+    default:
+      throw new Error(`renderNote: unknown event type "${event.type}"`);
+  }
+}
+
+// js/instruments/instrument-behavior.js
+var AssetAppreciationResult = class {
+  constructor(principal = Currency.zero(), growth = Currency.zero(), qualifiedDividend = Currency.zero(), nonQualifiedDividend = Currency.zero(), tax = Currency.zero()) {
+    this.principal = principal instanceof Currency ? principal.copy() : new Currency(principal);
+    this.growth = growth instanceof Currency ? growth.copy() : new Currency(growth);
+    this.qualifiedDividend = qualifiedDividend instanceof Currency ? qualifiedDividend.copy() : new Currency(qualifiedDividend);
+    this.nonQualifiedDividend = nonQualifiedDividend instanceof Currency ? nonQualifiedDividend.copy() : new Currency(nonQualifiedDividend);
+    this.tax = tax instanceof Currency ? tax.copy() : new Currency(tax);
+  }
+};
+var MortgageResult = class {
+  constructor(principal = Currency.zero(), interest = Currency.zero()) {
+    this.principal = principal instanceof Currency ? principal.copy() : new Currency(principal);
+    this.interest = interest instanceof Currency ? interest.copy() : new Currency(interest);
+  }
+  payment() {
+    return new Currency(this.principal.amount + this.interest.amount);
+  }
+};
+var IncomeResult = class {
+  constructor(selfIncome = Currency.zero(), employedIncome = Currency.zero()) {
+    this.selfIncome = selfIncome instanceof Currency ? selfIncome.copy() : new Currency(selfIncome);
+    this.employedIncome = employedIncome instanceof Currency ? employedIncome.copy() : new Currency(employedIncome);
+  }
+};
+var RetirementIncomeResult = class {
+  constructor(socialSecurityIncome = Currency.zero(), pensionIncome = Currency.zero()) {
+    this.socialSecurityIncome = socialSecurityIncome instanceof Currency ? socialSecurityIncome.copy() : new Currency(socialSecurityIncome);
+    this.pensionIncome = pensionIncome instanceof Currency ? pensionIncome.copy() : new Currency(pensionIncome);
+  }
+};
+var ExpenseResult = class {
+  constructor(expense = Currency.zero(), nextExpense = Currency.zero()) {
+    this.expense = expense instanceof Currency ? expense.copy() : new Currency(expense);
+    this.nextExpense = nextExpense instanceof Currency ? nextExpense.copy() : new Currency(nextExpense);
+  }
+};
+var InterestResult = class {
+  constructor(income = Currency.zero()) {
+    this.income = income instanceof Currency ? income.copy() : new Currency(income);
+  }
+};
+var COMMON_METRICS = [Metric.VALUE, Metric.CASH_FLOW, Metric.CASH_FLOW_ACCUMULATED, Metric.CREDIT];
+var WorkingIncomeBehavior = Object.freeze({
+  relevantMetrics() {
+    return [
+      ...COMMON_METRICS,
+      Metric.INCOME,
+      Metric.EMPLOYED_INCOME,
+      Metric.SELF_INCOME,
+      Metric.ORDINARY_INCOME,
+      Metric.NET_INCOME,
+      Metric.GROWTH,
+      Metric.SOCIAL_SECURITY_TAX,
+      Metric.MEDICARE_TAX,
+      Metric.WITHHELD_FICA_TAX,
+      Metric.WITHHELD_INCOME_TAX,
+      Metric.ESTIMATED_INCOME_TAX,
+      Metric.INCOME_TAX,
+      Metric.FEDERAL_TAXES,
+      Metric.TAXES
+    ];
+  },
+  applyMonthly(asset) {
+    asset.ensurePositiveStart();
+    const income = asset.finishCurrency.copy();
+    if (asset.isSelfEmployed) {
+      asset.addToMetric(Metric.SELF_INCOME, income);
+    } else {
+      asset.addToMetric(Metric.EMPLOYED_INCOME, income);
+    }
+    asset.netIncomeCurrency.add(income);
+    return asset.isSelfEmployed ? new IncomeResult(income, Currency.zero()) : new IncomeResult(Currency.zero(), income);
+  }
+});
+var RetirementIncomeBehavior = Object.freeze({
+  relevantMetrics() {
+    return [
+      ...COMMON_METRICS,
+      Metric.INCOME,
+      Metric.ORDINARY_INCOME,
+      Metric.NET_INCOME,
+      Metric.GROWTH,
+      Metric.SOCIAL_SECURITY_INCOME,
+      // Withholding on arrival books here; an unregistered metric would land
+      // on NULL_METRIC and disappear.
+      Metric.WITHHELD_INCOME_TAX,
+      Metric.INCOME_TAX,
+      Metric.FEDERAL_TAXES,
+      Metric.TAXES
+    ];
+  },
+  applyMonthly(asset) {
+    asset.ensurePositiveStart();
+    const income = asset.finishCurrency.copy();
+    asset.addToMetric(Metric.SOCIAL_SECURITY_INCOME, income);
+    asset.netIncomeCurrency.add(income);
+    return new RetirementIncomeResult(income, Currency.zero());
+  }
+});
+var PensionBehavior = Object.freeze({
+  relevantMetrics() {
+    return [
+      ...COMMON_METRICS,
+      Metric.INCOME,
+      Metric.ORDINARY_INCOME,
+      Metric.NET_INCOME,
+      Metric.GROWTH,
+      Metric.PENSION_INCOME,
+      // See RetirementIncomeBehavior above — a pension carried no tax metrics
+      // at all, so withholding booked here would have vanished into NULL_METRIC.
+      Metric.WITHHELD_INCOME_TAX,
+      Metric.INCOME_TAX,
+      Metric.FEDERAL_TAXES,
+      Metric.TAXES
+    ];
+  },
+  applyMonthly(asset) {
+    asset.ensurePositiveStart();
+    const income = asset.finishCurrency.copy();
+    asset.addToMetric(Metric.PENSION_INCOME, income);
+    asset.netIncomeCurrency.add(income);
+    return new RetirementIncomeResult(Currency.zero(), income);
+  }
+});
+var ExpenseBehavior = Object.freeze({
+  relevantMetrics() {
+    return [...COMMON_METRICS, Metric.LIVING_EXPENSE, Metric.EXPENSE, Metric.GROWTH];
+  },
+  applyMonthly(asset) {
+    asset.ensureNegativeStart();
+    const expense = asset.finishCurrency.copy();
+    asset.addToMetric(Metric.LIVING_EXPENSE, expense);
+    const inflation = new Currency(expense.amount * asset.effectiveAnnualReturnRate.asMonthlyEffective());
+    asset.finishCurrency.add(inflation);
+    asset.monthlyValueChange.add(inflation);
+    if (inflation.amount !== 0) {
+      asset.recordEvent(EventType.EXPENSE_INFLATION, inflation);
+    }
+    return new ExpenseResult(expense, asset.finishCurrency.copy());
+  }
+});
+var MortgageBehavior = Object.freeze({
+  relevantMetrics() {
+    return [
+      ...COMMON_METRICS,
+      Metric.MORTGAGE_PAYMENT,
+      Metric.MORTGAGE_INTEREST,
+      Metric.MORTGAGE_PRINCIPAL,
+      Metric.INTEREST_EXPENSE,
+      Metric.EXPENSE,
+      Metric.GROWTH
+    ];
+  },
+  applyMonthly(asset) {
+    asset.ensureNegativeStart();
+    const rate = asset.annualReturnRate.asMonthlyNominal();
+    const n = asset.monthsRemainingDynamic;
+    if (n <= 0) {
+      return new MortgageResult();
+    }
+    const payment = asset.finishCurrency.amount * rate * Math.pow(1 + rate, n) / (Math.pow(1 + rate, n) - 1);
+    const paymentCurrency = new Currency(payment);
+    const interest = new Currency(asset.finishCurrency.amount * rate);
+    const principal = new Currency(payment - interest.amount);
+    asset.mortgagePaymentCurrency.add(paymentCurrency);
+    asset.addToMetric(Metric.MORTGAGE_INTEREST, interest);
+    asset.mortgagePrincipalCurrency.add(principal);
+    asset.monthsRemainingDynamic--;
+    asset.finishCurrency.subtract(principal);
+    asset.growthCurrency.subtract(principal);
+    asset.monthlyValueChange.subtract(principal);
+    asset.recordEvent(EventType.MORTGAGE_PRINCIPAL, principal.copy().flipSign(), { metric: Metric.MORTGAGE_PRINCIPAL });
+    asset.recordEvent(EventType.MORTGAGE_INTEREST, interest, { metric: Metric.MORTGAGE_INTEREST });
+    return new MortgageResult(principal, interest, Currency.zero());
+  }
+});
+var CapitalBehavior = Object.freeze({
+  relevantMetrics() {
+    return [
+      ...COMMON_METRICS,
+      Metric.GROWTH,
+      Metric.QUALIFIED_DIVIDEND,
+      Metric.NON_QUALIFIED_DIVIDEND,
+      Metric.INCOME,
+      Metric.ORDINARY_INCOME,
+      Metric.SHORT_TERM_CAPITAL_GAIN,
+      Metric.LONG_TERM_CAPITAL_GAIN,
+      Metric.CAPITAL_GAIN,
+      Metric.SHORT_TERM_CAPITAL_GAIN_TAX,
+      Metric.LONG_TERM_CAPITAL_GAIN_TAX,
+      Metric.ESTIMATED_INCOME_TAX,
+      // Federal withholding at the source of a deferred distribution books here.
+      // Without it the tax is deducted from the account and never shown on it.
+      Metric.WITHHELD_INCOME_TAX,
+      // IRC §1411 books here; unregistered, the NIIT line would land on
+      // NULL_METRIC and the tax would appear in no row by name.
+      Metric.NIIT,
+      Metric.INCOME_TAX,
+      Metric.FEDERAL_TAXES,
+      Metric.TAXES,
+      Metric.CONTRIBUTION,
+      Metric.PRETAX_CONTRIBUTION,
+      Metric.POSTTAX_CONTRIBUTION,
+      Metric.TAX_FREE_DISTRIBUTION,
+      Metric.TAXABLE_DISTRIBUTION,
+      Metric.TRAD_IRA_CONTRIBUTION,
+      Metric.ROTH_IRA_CONTRIBUTION,
+      Metric.FOUR_01K_CONTRIBUTION,
+      Metric.TRAD_IRA_DISTRIBUTION,
+      Metric.ROTH_IRA_DISTRIBUTION,
+      Metric.FOUR_01K_DISTRIBUTION,
+      Metric.RMD
+    ];
+  },
+  applyMonthly(asset) {
+    if (InstrumentType.isDebt(asset.instrument) && asset.finishCurrency.amount >= 0) {
+      asset.finishCurrency.zero();
+      return new AssetAppreciationResult(Currency.zero(), Currency.zero(), Currency.zero(), Currency.zero());
+    }
+    const earns = InstrumentType.isDebt(asset.instrument) || asset.finishCurrency.amount > 0;
+    const monthlyRate = InstrumentType.isDebt(asset.instrument) ? asset.annualReturnRate.asMonthlyNominal() : asset.annualReturnRate.asMonthlyEffective();
+    const growth = earns ? new Currency(asset.finishCurrency.amount * monthlyRate) : Currency.zero();
+    asset.growthCurrency.add(growth);
+    asset.finishCurrency.add(growth);
+    asset.monthlyValueChange.add(growth);
+    asset.recordEvent(EventType.ASSET_GROWTH, growth, { metric: Metric.GROWTH });
+    let qualifiedDiv = Currency.zero();
+    let nonQualifiedDiv = Currency.zero();
+    if (asset.annualDividendRate.rate != 0 && earns) {
+      const totalDiv = asset.finishCurrency.amount * asset.annualDividendRate.asMonthlyNominal();
+      const qualifiedRatio = asset.dividendQualifiedRatio;
+      qualifiedDiv = new Currency(totalDiv * qualifiedRatio);
+      nonQualifiedDiv = new Currency(totalDiv * (1 - qualifiedRatio));
+      asset.addToMetric(Metric.QUALIFIED_DIVIDEND, qualifiedDiv);
+      asset.addToMetric(Metric.NON_QUALIFIED_DIVIDEND, nonQualifiedDiv);
+      const totalDivCurrency = qualifiedDiv.plus(nonQualifiedDiv);
+      asset.finishCurrency.add(totalDivCurrency);
+      asset.monthlyValueChange.add(totalDivCurrency);
+      if (InstrumentType.isTaxableAccount(asset.instrument)) {
+        asset.finishBasisCurrency.add(totalDivCurrency);
+      }
+      if (qualifiedDiv.amount !== 0) asset.recordEvent(EventType.DIVIDEND, qualifiedDiv, { metric: Metric.QUALIFIED_DIVIDEND, data: { qualified: true } });
+      if (nonQualifiedDiv.amount !== 0) asset.recordEvent(EventType.DIVIDEND, nonQualifiedDiv, { metric: Metric.NON_QUALIFIED_DIVIDEND, data: { qualified: false } });
+    }
+    return new AssetAppreciationResult(asset.finishCurrency.copy(), growth, qualifiedDiv, nonQualifiedDiv);
+  }
+});
+var RealEstateBehavior = Object.freeze({
+  relevantMetrics() {
+    return [
+      ...COMMON_METRICS,
+      Metric.GROWTH,
+      Metric.INCOME,
+      Metric.ORDINARY_INCOME,
+      Metric.EXPENSE,
+      Metric.SHORT_TERM_CAPITAL_GAIN,
+      Metric.LONG_TERM_CAPITAL_GAIN,
+      Metric.CAPITAL_GAIN,
+      Metric.SHORT_TERM_CAPITAL_GAIN_TAX,
+      Metric.LONG_TERM_CAPITAL_GAIN_TAX,
+      // A home sale's gain is net investment income above the §121 exclusion.
+      Metric.NIIT,
+      Metric.INCOME_TAX,
+      Metric.FEDERAL_TAXES,
+      Metric.SALT_TAXES,
+      Metric.TAXES,
+      Metric.PROPERTY_TAX,
+      Metric.MAINTENANCE,
+      Metric.INSURANCE
+    ];
+  },
+  applyMonthly(asset) {
+    const growth = new Currency(asset.finishCurrency.amount * asset.annualReturnRate.asMonthlyEffective());
+    asset.growthCurrency.add(growth);
+    asset.finishCurrency.add(growth);
+    asset.monthlyValueChange.add(growth);
+    asset.recordEvent(EventType.ASSET_GROWTH, growth, { metric: Metric.GROWTH });
+    const tax = new Currency(asset.finishCurrency.amount * asset.annualTaxRate.asMonthlyNominal());
+    tax.flipSign();
+    asset.addToMetric(Metric.PROPERTY_TAX, tax);
+    asset.recordEvent(EventType.PROPERTY_TAX, tax, { metric: Metric.PROPERTY_TAX });
+    if (asset.annualMaintenanceRate.rate !== 0) {
+      const maint = new Currency(asset.finishCurrency.amount * asset.annualMaintenanceRate.asMonthlyNominal());
+      maint.flipSign();
+      asset.addToMetric(Metric.MAINTENANCE, maint);
+      asset.recordEvent(EventType.MAINTENANCE, maint, { metric: Metric.MAINTENANCE });
+    }
+    if (asset.annualInsuranceCost.amount !== 0) {
+      const ins = new Currency(asset.annualInsuranceCost.amount / -12);
+      asset.addToMetric(Metric.INSURANCE, ins);
+      asset.recordEvent(EventType.INSURANCE, ins, { metric: Metric.INSURANCE });
+    }
+    return new AssetAppreciationResult(asset.finishCurrency.copy(), growth, Currency.zero(), Currency.zero(), tax);
+  }
+});
+var IncomeAccountBehavior = Object.freeze({
+  relevantMetrics() {
+    return [
+      ...COMMON_METRICS,
+      Metric.INTEREST_INCOME,
+      Metric.ORDINARY_INCOME,
+      Metric.INCOME,
+      Metric.NET_INCOME,
+      Metric.GROWTH,
+      // Interest is net investment income, and a bank is the usual NIIT
+      // backstop and spillover payer — see the note in CapitalBehavior.
+      Metric.NIIT,
+      Metric.ESTIMATED_INCOME_TAX,
+      Metric.INCOME_TAX,
+      Metric.FEDERAL_TAXES,
+      Metric.TAXES
+    ];
+  },
+  applyMonthly(asset) {
+    asset.ensurePositiveStart();
+    const income = asset.finishCurrency.amount > 0 ? new Currency(asset.finishCurrency.amount * asset.annualReturnRate.asMonthlyEffective()) : Currency.zero();
+    asset.addToMetric(Metric.INTEREST_INCOME, income);
+    asset.netIncomeCurrency.add(income);
+    asset.finishCurrency.add(income);
+    asset.monthlyValueChange.add(income);
+    asset.recordEvent(EventType.INTEREST_INCOME, income, { metric: Metric.INTEREST_INCOME });
+    return new InterestResult(income);
+  }
+});
+var RECEIVED_INCOME_METRICS = Object.freeze([
+  Metric.EMPLOYED_INCOME,
+  Metric.SELF_INCOME,
+  Metric.SOCIAL_SECURITY_INCOME,
+  Metric.PENSION_INCOME,
+  Metric.INTEREST_INCOME,
+  Metric.QUALIFIED_DIVIDEND,
+  Metric.NON_QUALIFIED_DIVIDEND
+]);
+function computeCashFlow(asset) {
+  let cf = 0;
+  for (const metric of RECEIVED_INCOME_METRICS) cf += asset.getMetricAmount(metric);
+  cf += asset.getMetricAmount(Metric.EXPENSE);
+  cf += asset.getMetricAmount(Metric.MORTGAGE_PRINCIPAL);
+  cf += asset.getMetricAmount(Metric.TAXES);
+  return new Currency(cf);
+}
+var BEHAVIOR_MAP = /* @__PURE__ */ new Map([
+  [Instrument.WORKING_INCOME, WorkingIncomeBehavior],
+  [Instrument.RETIREMENT_INCOME, RetirementIncomeBehavior],
+  [Instrument.PENSION, PensionBehavior],
+  [Instrument.MONTHLY_EXPENSE, ExpenseBehavior],
+  [Instrument.MORTGAGE, MortgageBehavior],
+  [Instrument.TAXABLE_EQUITY, CapitalBehavior],
+  [Instrument.IRA, CapitalBehavior],
+  [Instrument.FOUR_01K, CapitalBehavior],
+  [Instrument.ROTH_IRA, CapitalBehavior],
+  [Instrument.CASH, CapitalBehavior],
+  [Instrument.DEBT, CapitalBehavior],
+  [Instrument.REAL_ESTATE, RealEstateBehavior],
+  [Instrument.US_BOND, IncomeAccountBehavior],
+  [Instrument.CORP_BOND, IncomeAccountBehavior],
+  [Instrument.BANK, IncomeAccountBehavior]
+]);
+function getBehavior(instrument) {
+  const b = BEHAVIOR_MAP.get(instrument);
+  if (!b) throw new Error(`No behavior registered for instrument: "${instrument}"`);
+  return b;
+}
+
 // js/utils/date-int.js
 var MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 var MONTH_NAMES_LONG = [
@@ -31527,570 +32456,6 @@ function withSimConfig(config2, changes) {
   return makeSimConfig({ ...config2, ...changes });
 }
 
-// js/metric.js
-var Metric = Object.freeze({
-  VALUE: "value",
-  NET_WORTH_CHANGE: "netWorthChange",
-  // derived: value[i] - value[i-1]
-  GROWTH: "growth",
-  QUALIFIED_DIVIDEND: "qualifiedDividend",
-  NON_QUALIFIED_DIVIDEND: "nonQualifiedDividend",
-  INTEREST_INCOME: "interestIncome",
-  ORDINARY_INCOME: "ordinaryIncome",
-  EMPLOYED_INCOME: "employedIncome",
-  SELF_INCOME: "selfIncome",
-  INCOME: "income",
-  WITHHELD_FICA_TAX: "withheldFicaTax",
-  ESTIMATED_FICA_TAX: "estimatedFicaTax",
-  // reserved: future self-employment enhancement
-  WITHHELD_INCOME_TAX: "withheldIncomeTax",
-  ESTIMATED_INCOME_TAX: "estimatedIncomeTax",
-  NIIT: "niit",
-  ESTIMATED_TAX: "estimatedTax",
-  // reserved: future self-employment enhancement
-  INCOME_TAX: "incomeTax",
-  FEDERAL_TAXES: "federalTaxes",
-  SALT_TAXES: "saltTaxes",
-  TAXES: "taxes",
-  NET_INCOME: "netIncome",
-  EXPENSE: "expense",
-  CASH_FLOW: "cashFlow",
-  CASH_FLOW_ACCUMULATED: "cashFlowAccumulated",
-  SHORT_TERM_CAPITAL_GAIN: "shortTermCapitalGain",
-  LONG_TERM_CAPITAL_GAIN: "longTermCapitalGain",
-  CAPITAL_GAIN: "capitalGain",
-  // only long term
-  RMD: "rmd",
-  SOCIAL_SECURITY_TAX: "socialSecurityTax",
-  SOCIAL_SECURITY_INCOME: "socialSecurityIncome",
-  PENSION_INCOME: "pensionIncome",
-  MEDICARE_TAX: "medicareTax",
-  MORTGAGE_PAYMENT: "mortgagePayment",
-  MORTGAGE_INTEREST: "mortgageInterest",
-  MORTGAGE_PRINCIPAL: "mortgagePrincipal",
-  PROPERTY_TAX: "propertyTax",
-  CONTRIBUTION: "contribution",
-  PRETAX_CONTRIBUTION: "preTaxContribution",
-  POSTTAX_CONTRIBUTION: "postTaxContribution",
-  TRAD_IRA_CONTRIBUTION: "tradIRAContribution",
-  ROTH_IRA_CONTRIBUTION: "rothIRAContribution",
-  FOUR_01K_CONTRIBUTION: "four01KContribution",
-  TAX_FREE_DISTRIBUTION: "taxFreeDistribution",
-  // from roth IRA or post tax cash
-  TAXABLE_DISTRIBUTION: "taxableDistribution",
-  // these are distributions from IRA and 401K accounts
-  TRAD_IRA_DISTRIBUTION: "tradIRADistribution",
-  ROTH_IRA_DISTRIBUTION: "rothIRADistribution",
-  FOUR_01K_DISTRIBUTION: "four01KDistribution",
-  SHORT_TERM_CAPITAL_GAIN_TAX: "shortTermCapitalGainTax",
-  LONG_TERM_CAPITAL_GAIN_TAX: "longTermCapitalGainTax",
-  LIVING_EXPENSE: "livingExpense",
-  INTEREST_EXPENSE: "interestExpense",
-  MAINTENANCE: "maintenance",
-  INSURANCE: "insurance",
-  CREDIT: "credit"
-});
-var METRIC_NAMES = Object.values(Metric);
-var MetricLabel = Object.freeze({
-  [Metric.VALUE]: "Net Worth",
-  [Metric.NET_WORTH_CHANGE]: "Net Worth Change",
-  [Metric.GROWTH]: "Growth",
-  [Metric.QUALIFIED_DIVIDEND]: "Qualified Dividend",
-  [Metric.NON_QUALIFIED_DIVIDEND]: "Non-Qualified Dividend",
-  [Metric.INTEREST_INCOME]: "Interest Income",
-  [Metric.ORDINARY_INCOME]: "Ordinary Income",
-  [Metric.EMPLOYED_INCOME]: "Employed Income",
-  [Metric.SELF_INCOME]: "Self-Employment Income",
-  [Metric.INCOME]: "Income",
-  [Metric.WITHHELD_FICA_TAX]: "Withheld FICA / Medicare",
-  [Metric.ESTIMATED_FICA_TAX]: "Estimated FICA / Medicare",
-  [Metric.WITHHELD_INCOME_TAX]: "Withheld Income Tax",
-  [Metric.ESTIMATED_INCOME_TAX]: "Estimated Income Tax",
-  [Metric.NIIT]: "Net Investment Income Tax",
-  [Metric.ESTIMATED_TAX]: "Estimated Tax",
-  [Metric.INCOME_TAX]: "Income Tax",
-  [Metric.FEDERAL_TAXES]: "Federal Taxes",
-  [Metric.SALT_TAXES]: "State and Local Taxes",
-  [Metric.TAXES]: "All Taxes",
-  [Metric.NET_INCOME]: "Net Income",
-  [Metric.EXPENSE]: "Expense",
-  [Metric.CASH_FLOW]: "Cash Flow",
-  [Metric.CASH_FLOW_ACCUMULATED]: "Cash Flow Accumulated",
-  [Metric.SHORT_TERM_CAPITAL_GAIN]: "Short Term Capital Gain",
-  [Metric.LONG_TERM_CAPITAL_GAIN]: "Long Term Capital Gain",
-  [Metric.CAPITAL_GAIN]: "Capital Gain",
-  [Metric.RMD]: "Required Min. Distribution",
-  [Metric.SOCIAL_SECURITY_TAX]: "Social Security Tax",
-  [Metric.SOCIAL_SECURITY_INCOME]: "Social Security Income",
-  [Metric.PENSION_INCOME]: "Pension Income",
-  [Metric.MEDICARE_TAX]: "Medicare Tax",
-  [Metric.MORTGAGE_PAYMENT]: "Mortgage Payment",
-  [Metric.MORTGAGE_INTEREST]: "Mortgage Interest",
-  [Metric.MORTGAGE_PRINCIPAL]: "Mortgage Principal",
-  [Metric.CONTRIBUTION]: "Contribution",
-  [Metric.PRETAX_CONTRIBUTION]: "Pre Tax Contribution",
-  [Metric.POSTTAX_CONTRIBUTION]: "Post Tax Contribution",
-  [Metric.TRAD_IRA_CONTRIBUTION]: "Traditional IRA Contribution",
-  [Metric.ROTH_IRA_CONTRIBUTION]: "Roth IRA Contribution",
-  [Metric.FOUR_01K_CONTRIBUTION]: "401K Contribution",
-  [Metric.TAX_FREE_DISTRIBUTION]: "Tax Free Distribution",
-  [Metric.TAXABLE_DISTRIBUTION]: "Taxable Distribution",
-  [Metric.TRAD_IRA_DISTRIBUTION]: "Traditional IRA Distribution",
-  [Metric.ROTH_IRA_DISTRIBUTION]: "Roth IRA Distribution",
-  [Metric.FOUR_01K_DISTRIBUTION]: "401K Distribution",
-  [Metric.SHORT_TERM_CAPITAL_GAIN_TAX]: "Short Term Capital Gain Tax",
-  [Metric.LONG_TERM_CAPITAL_GAIN_TAX]: "Long Term Capital Gain Tax",
-  [Metric.PROPERTY_TAX]: "Property Tax",
-  [Metric.LIVING_EXPENSE]: "Living Expense",
-  [Metric.INTEREST_EXPENSE]: "Interest Expense",
-  [Metric.MAINTENANCE]: "Maintenance",
-  [Metric.INSURANCE]: "Insurance",
-  [Metric.CREDIT]: "Credit"
-});
-var MetricRollups = {
-  // --- FOUNDATIONAL INCOME TO ORDINARY INCOME ---
-  [Metric.TRAD_IRA_DISTRIBUTION]: [Metric.TAXABLE_DISTRIBUTION],
-  [Metric.FOUR_01K_DISTRIBUTION]: [Metric.TAXABLE_DISTRIBUTION],
-  // RMD is informational only — no rollup. Income is captured by the distribution leaves.
-  [Metric.TAXABLE_DISTRIBUTION]: [Metric.ORDINARY_INCOME],
-  [Metric.EMPLOYED_INCOME]: [Metric.ORDINARY_INCOME],
-  [Metric.SELF_INCOME]: [Metric.ORDINARY_INCOME],
-  [Metric.INTEREST_INCOME]: [Metric.ORDINARY_INCOME],
-  [Metric.SOCIAL_SECURITY_INCOME]: [Metric.ORDINARY_INCOME],
-  [Metric.PENSION_INCOME]: [Metric.ORDINARY_INCOME],
-  [Metric.SHORT_TERM_CAPITAL_GAIN]: [Metric.ORDINARY_INCOME],
-  // Taxed at ordinary rates
-  // --- FOUNDATIONAL GAINS TO CAPITAL GAINS ---
-  [Metric.LONG_TERM_CAPITAL_GAIN]: [Metric.CAPITAL_GAIN],
-  // --- MASTER COMBINATIONS TO RETIREMENT PLANS ---
-  [Metric.FOUR_01K_CONTRIBUTION]: [Metric.PRETAX_CONTRIBUTION],
-  [Metric.TRAD_IRA_CONTRIBUTION]: [Metric.PRETAX_CONTRIBUTION],
-  [Metric.ROTH_IRA_CONTRIBUTION]: [Metric.POSTTAX_CONTRIBUTION],
-  [Metric.PRETAX_CONTRIBUTION]: [Metric.CONTRIBUTION],
-  [Metric.POSTTAX_CONTRIBUTION]: [Metric.CONTRIBUTION],
-  // --- MASTER COMBINATIONS TO TOTAL INCOME ---
-  [Metric.ORDINARY_INCOME]: [Metric.INCOME],
-  [Metric.CAPITAL_GAIN]: [Metric.INCOME],
-  [Metric.ROTH_IRA_DISTRIBUTION]: [Metric.TAX_FREE_DISTRIBUTION],
-  // Non-taxable, but still cash flow income
-  [Metric.TAX_FREE_DISTRIBUTION]: [Metric.INCOME],
-  [Metric.NON_QUALIFIED_DIVIDEND]: [Metric.ORDINARY_INCOME],
-  [Metric.QUALIFIED_DIVIDEND]: [Metric.INCOME],
-  [Metric.MEDICARE_TAX]: [Metric.WITHHELD_FICA_TAX],
-  [Metric.SOCIAL_SECURITY_TAX]: [Metric.WITHHELD_FICA_TAX],
-  // --- TAX ROLLUPS ---
-  // A pension or Social Security books WITHHELD_INCOME_TAX on its own asset
-  // (PayrollEngine.#withholdOnRetirementIncome). Tax a benefit does not
-  // withhold — for Social Security, all of it by default — is settled by the
-  // true-ups as ESTIMATED_INCOME_TAX on the funding account. A metric must be
-  // registered on the behavior (instrument-behavior.js), or writes to it land
-  // on NULL_METRIC and disappear.
-  [Metric.WITHHELD_FICA_TAX]: [Metric.INCOME_TAX],
-  [Metric.WITHHELD_INCOME_TAX]: [Metric.INCOME_TAX],
-  [Metric.ESTIMATED_INCOME_TAX]: [Metric.INCOME_TAX],
-  [Metric.SHORT_TERM_CAPITAL_GAIN_TAX]: [Metric.INCOME_TAX],
-  [Metric.INCOME_TAX]: [Metric.FEDERAL_TAXES],
-  [Metric.LONG_TERM_CAPITAL_GAIN_TAX]: [Metric.FEDERAL_TAXES],
-  // Straight to FEDERAL_TAXES, NOT via INCOME_TAX: NIIT is a separate
-  // levy on a separate base, and rolling it through income tax would
-  // make the income-tax line disagree with what the brackets produced.
-  [Metric.NIIT]: [Metric.FEDERAL_TAXES],
-  // --- EXPENSE & DEBT ROLLUPS ---
-  // MORTGAGE_PAYMENT and MORTGAGE_PRINCIPAL are informational only (like RMD) — no rollup.
-  // Principal nets to zero via credit memos; payment is interest + principal for display.
-  [Metric.LIVING_EXPENSE]: [Metric.EXPENSE],
-  [Metric.MORTGAGE_INTEREST]: [Metric.INTEREST_EXPENSE],
-  [Metric.INTEREST_EXPENSE]: [Metric.EXPENSE],
-  [Metric.MAINTENANCE]: [Metric.EXPENSE],
-  [Metric.INSURANCE]: [Metric.EXPENSE],
-  [Metric.PROPERTY_TAX]: [Metric.SALT_TAXES],
-  [Metric.FEDERAL_TAXES]: [Metric.TAXES],
-  [Metric.SALT_TAXES]: [Metric.TAXES]
-};
-var PINNED_METRICS = [Metric.VALUE, Metric.NET_WORTH_CHANGE, Metric.GROWTH, Metric.CASH_FLOW];
-var DERIVED_METRICS = /* @__PURE__ */ new Set([Metric.NET_WORTH_CHANGE]);
-var MACRO_METRICS = [
-  ...PINNED_METRICS,
-  Metric.INCOME,
-  Metric.NET_INCOME,
-  Metric.CONTRIBUTION,
-  Metric.EXPENSE,
-  Metric.TAXES,
-  Metric.CREDIT
-];
-var _macroSet = new Set(MACRO_METRICS);
-var _realDollarSet = /* @__PURE__ */ new Set([Metric.VALUE]);
-var MetricKind = Object.freeze({
-  /** A balance at a point in time.  Snapshot, never summed. */
-  LEVEL: "level",
-  /** An amount that occurred during that month.  Sums across a window. */
-  FLOW: "flow",
-  /** Already a running total since plan start.  Differenced, never summed. */
-  RUNNING: "running"
-});
-var _levelMetrics = /* @__PURE__ */ new Set([Metric.VALUE]);
-var _runningMetrics = /* @__PURE__ */ new Set([Metric.CASH_FLOW_ACCUMULATED]);
-function metricKind(metricName) {
-  if (_levelMetrics.has(metricName)) return MetricKind.LEVEL;
-  if (_runningMetrics.has(metricName)) return MetricKind.RUNNING;
-  return MetricKind.FLOW;
-}
-function aggregateMetric(history, metricName, fromIndex, toIndex) {
-  if (!history || history.length === 0) return 0;
-  const last = history.length - 1;
-  const to = Math.min(toIndex, last);
-  const from = Math.max(fromIndex, 0);
-  if (to < 0 || from > last || from > to) return 0;
-  switch (metricKind(metricName)) {
-    case MetricKind.LEVEL:
-      return history[to] ?? 0;
-    case MetricKind.RUNNING: {
-      const before = from > 0 ? history[from - 1] ?? 0 : 0;
-      return (history[to] ?? 0) - before;
-    }
-    default: {
-      let sum = 0;
-      for (let i = from; i <= to; i++) sum += history[i] ?? 0;
-      return sum;
-    }
-  }
-}
-var PARENT_METRICS = new Set(
-  Object.values(MetricRollups).flat()
-);
-var LEAF_TAX_METRICS = Object.freeze(
-  Object.values(Metric).filter((m) => {
-    if (m === Metric.TAXES || PARENT_METRICS.has(m)) return false;
-    const reaches = (x, seen = /* @__PURE__ */ new Set()) => {
-      if (x === Metric.TAXES) return true;
-      if (seen.has(x)) return false;
-      seen.add(x);
-      return (MetricRollups[x] ?? []).some((p) => reaches(p, seen));
-    };
-    return reaches(m);
-  })
-);
-var TrackedMetric = class {
-  constructor(name) {
-    this.name = name;
-    this.current = new Currency();
-    this.history = [];
-    this.displayHistory = [];
-    this.trackHistory = true;
-  }
-  initialize() {
-    this.current = new Currency();
-    this.history = [];
-    this.displayHistory = [];
-  }
-  snapshot() {
-    if (this.trackHistory) this.history.push(this.current.toCurrency());
-    this.current.zero();
-  }
-  snapshotKeep() {
-    if (this.trackHistory) this.history.push(this.current.toCurrency());
-  }
-  add(amount) {
-    if (amount instanceof Currency) {
-      this.current.add(amount);
-    }
-    return this.current.copy();
-  }
-  subtract(amount) {
-    if (amount instanceof Currency) {
-      this.current.subtract(amount);
-    }
-    return this.current.copy();
-  }
-  get amount() {
-    return this.current.amount;
-  }
-  set amount(v) {
-    this.current.amount = v;
-  }
-  copy() {
-    return this.current.copy();
-  }
-  zero() {
-    this.current.zero();
-    return this;
-  }
-  toFixed() {
-    return this.current.toFixed();
-  }
-  toCurrency() {
-    return this.current.toCurrency();
-  }
-  displayName() {
-    return "display" + this.name.charAt(0).toUpperCase() + this.name.slice(1) + "s";
-  }
-  buildDisplayHistory(monthsSpan) {
-    this.displayHistory = [];
-    for (let ii = monthsSpan.offsetMonths; ii < this.history.length; ii += monthsSpan.combineMonths) {
-      this.displayHistory.push(this.history[ii]);
-    }
-    return this.displayHistory;
-  }
-};
-var NULL_CURRENCY = Object.freeze({ amount: 0, add() {
-}, subtract() {
-}, copy() {
-  return new Currency();
-}, zero() {
-}, toCurrency() {
-  return 0;
-}, toFixed() {
-  return "0.00";
-}, toHTML() {
-  return "0.00";
-}, toString() {
-  return "$0.00";
-} });
-var EMPTY_ARRAY = Object.freeze([]);
-var NULL_METRIC = Object.freeze({
-  name: "_null",
-  current: NULL_CURRENCY,
-  history: EMPTY_ARRAY,
-  displayHistory: EMPTY_ARRAY,
-  initialize() {
-  },
-  snapshot() {
-  },
-  snapshotKeep() {
-  },
-  add() {
-    return new Currency();
-  },
-  subtract() {
-    return new Currency();
-  },
-  get amount() {
-    return 0;
-  },
-  set amount(_v) {
-  },
-  copy() {
-    return new Currency();
-  },
-  zero() {
-    return this;
-  },
-  toFixed() {
-    return "0.00";
-  },
-  toCurrency() {
-    return 0;
-  },
-  displayName() {
-    return "_null";
-  },
-  buildDisplayHistory() {
-    return EMPTY_ARRAY;
-  }
-});
-var MetricSet = class {
-  constructor(names) {
-    this._map = /* @__PURE__ */ new Map();
-    for (const name of names) {
-      this._map.set(name, new TrackedMetric(name));
-    }
-  }
-  get(name) {
-    return this._map.get(name) || NULL_METRIC;
-  }
-  has(name) {
-    return this._map.has(name);
-  }
-  initializeAll() {
-    for (const m of this._map.values()) m.initialize();
-  }
-  setTrackHistory(enabled) {
-    for (const m of this._map.values()) m.trackHistory = enabled;
-  }
-  snapshotAll(keepNames) {
-    for (const [name, m] of this._map) {
-      if (keepNames?.has(name)) {
-        m.snapshotKeep();
-      } else {
-        m.snapshot();
-      }
-    }
-  }
-  [Symbol.iterator]() {
-    return this._map.values();
-  }
-  entries() {
-    return this._map.entries();
-  }
-};
-
-// js/sim-event.js
-var EventType = Object.freeze({
-  // ── Growth and yield ──
-  ASSET_GROWTH: "assetGrowth",
-  EXPENSE_INFLATION: "expenseInflation",
-  INCOME_GROWTH: "incomeGrowth",
-  DIVIDEND: "dividend",
-  // data.qualified: boolean
-  INTEREST_INCOME: "interestIncome",
-  // ── Housing ──
-  MORTGAGE_PRINCIPAL: "mortgagePrincipal",
-  MORTGAGE_INTEREST: "mortgageInterest",
-  PROPERTY_TAX: "propertyTax",
-  PROPERTY_TAX_ESCROW: "propertyTaxEscrow",
-  MAINTENANCE: "maintenance",
-  INSURANCE: "insurance",
-  // ── Tax ──
-  FICA_WITHHOLDING: "ficaWithholding",
-  // data.estimate: payroll's estimate, when the paycheck could not cover it;
-  // data: { rate, source } on a retirement distribution.
-  INCOME_TAX_WITHHOLDING: "incomeTaxWithholding",
-  CAPITAL_GAINS_TAX: "capitalGainsTax",
-  TAX_TRUE_UP: "taxTrueUp",
-  // data.direction: 'underpayment' | 'refund'
-  CAPITAL_GAIN_RECOGNIZED: "capitalGainRecognized",
-  // data.spillover: boolean
-  CAPITAL_GAIN_EXCLUDED: "capitalGainExcluded",
-  // IRC §121 primary-home exclusion
-  NIIT_ASSESSED: "niitAssessed",
-  // IRC §1411; data: { nii, magi, threshold }
-  // ── Movement ──
-  TRANSFER: "transfer",
-  // data: { from, to, cadence }
-  SETTLEMENT: "settlement",
-  // one-sided draw; data: { from, to, label }
-  SPILLOVER: "spillover",
-  // data: { depleted }
-  GROSS_UP: "grossUp",
-  // data: { forAsset, overflow: boolean }
-  // The part of a GROSS_UP withdrawn to cover capital-gains tax rather than
-  // the obligation. No cash moves for this event (it left under the
-  // GROSS_UP); it names that portion so it can be reported. data: { forAsset }
-  TAX_PROVISION: "taxProvision",
-  ONE_TIME: "oneTime",
-  // data: { note }
-  // ── Engine reports (no money moved) ──
-  UNFUNDED: "unfunded",
-  // data: { cause, origin }
-  CONTRIBUTION_CAPPED: "contributionCapped"
-  // data: { limitName }
-});
-var PAY_LEFT_AFTER_TAXES = "pay left after taxes";
-var ShortfallOrigin = Object.freeze({
-  /** Remainder of a two-sided transfer. Participates in conservation. */
-  PAIRED: "paired",
-  /** Remainder of a one-sided settlement. Has no second leg to balance. */
-  ONE_SIDED: "oneSided",
-  /** An obligation that never moved money at all — a pre-flight failure. */
-  STANDALONE: "standalone"
-});
-var EventKind = Object.freeze({
-  CASH: "cash",
-  INFO: "info"
-});
-var INFO_TYPES = /* @__PURE__ */ new Set([
-  EventType.MORTGAGE_INTEREST,
-  EventType.PROPERTY_TAX,
-  EventType.PROPERTY_TAX_ESCROW,
-  EventType.MAINTENANCE,
-  EventType.INSURANCE,
-  EventType.CAPITAL_GAIN_RECOGNIZED,
-  EventType.CAPITAL_GAIN_EXCLUDED,
-  EventType.UNFUNDED,
-  EventType.CONTRIBUTION_CAPPED
-]);
-function kindOf(type) {
-  return INFO_TYPES.has(type) ? EventKind.INFO : EventKind.CASH;
-}
-var SimEvent = class {
-  /**
-   * @param {string}   type      EventType key
-   * @param {Currency} amount
-   * @param {DateInt}  dateInt
-   * @param {object}   [opts]
-   * @param {string}   [opts.metric]   Metric this event moved, if any
-   * @param {object}   [opts.data]     type-specific payload
-   * @param {number}   [opts.seq]      monotonic within a run
-   * @param {number}   [opts.traceId]  enclosing causal scope; read from
-   *                                   ambient context, never passed by callers
-   */
-  constructor(type, amount, dateInt, { metric = null, data = null, seq = 0, traceId = null } = {}) {
-    this.type = type;
-    this.amount = amount instanceof Currency ? amount.copy() : new Currency(amount ?? 0);
-    this.dateInt = dateInt;
-    this.kind = kindOf(type);
-    this.metric = metric;
-    this.data = data;
-    this.seq = seq;
-    this.traceId = traceId;
-  }
-};
-function renderNote(event) {
-  const d = event.data ?? {};
-  switch (event.type) {
-    case EventType.ASSET_GROWTH:
-      return "Asset growth";
-    case EventType.EXPENSE_INFLATION:
-      return "Expense inflation";
-    case EventType.INCOME_GROWTH:
-      return "Annual income growth";
-    case EventType.DIVIDEND:
-      return d.qualified ? "Qualified dividend" : "Non-qualified dividend";
-    case EventType.INTEREST_INCOME:
-      return "Interest income";
-    case EventType.MORTGAGE_PRINCIPAL:
-      return "Mortgage Principal";
-    case EventType.MORTGAGE_INTEREST:
-      return "Mortgage Interest";
-    case EventType.PROPERTY_TAX:
-      return "Property tax";
-    case EventType.PROPERTY_TAX_ESCROW:
-      return "Property tax escrow";
-    case EventType.MAINTENANCE:
-      return "Maintenance";
-    case EventType.INSURANCE:
-      return "Insurance";
-    case EventType.FICA_WITHHOLDING:
-      return "FICA withholding";
-    case EventType.INCOME_TAX_WITHHOLDING:
-      return "Income tax withholding";
-    case EventType.CAPITAL_GAINS_TAX:
-      return "Capital gains tax withholding";
-    case EventType.TAX_TRUE_UP:
-      return `Annual tax true-up (${d.direction})`;
-    case EventType.TAX_PROVISION:
-      return d.forAsset ? `Withheld for capital gains tax on the draw for ${d.forAsset}` : "Withheld for capital gains tax on this draw";
-    // Says which side of the min bound: too much investment income, or
-    // too much total income. No currency helper — this module imports
-    // nothing.
-    case EventType.NIIT_ASSESSED:
-      return d.bound === "nii" ? "Net investment income tax (3.8% of net investment income)" : "Net investment income tax (3.8% of MAGI over the threshold)";
-    case EventType.CAPITAL_GAIN_RECOGNIZED:
-      return d.spillover ? "Capital gains (spillover)" : "Capital gains";
-    case EventType.CAPITAL_GAIN_EXCLUDED:
-      return "Primary home gain excluded";
-    // Property tax settles as "Home property tax" but maintenance as
-    // "Home → Checking (maintenance)": two wordings for one operation,
-    // kept because consumers still match them.
-    case EventType.TRANSFER:
-      return `${d.from} \u2192 ${d.to} (${d.cadence})`;
-    case EventType.SETTLEMENT:
-      return d.label === "property tax" ? `${d.from} property tax` : `${d.from} \u2192 ${d.to} (${d.label})`;
-    case EventType.SPILLOVER:
-      return `Spillover from depleted ${d.depleted}`;
-    case EventType.GROSS_UP:
-      return `Grossed-up expense ${d.overflow ? "overflow" : "debit"} for ${d.forAsset}`;
-    case EventType.ONE_TIME:
-      return `One-Time: ${d.note || "one-time event"}`;
-    case EventType.UNFUNDED:
-      return `Unfunded \u2014 ${d.cause}`;
-    case EventType.CONTRIBUTION_CAPPED:
-      return `Contribution capped \u2014 ${d.limitName}`;
-    default:
-      throw new Error(`renderNote: unknown event type "${event.type}"`);
-  }
-}
-
 // js/trace.js
 var TraceKind = Object.freeze({
   MONTH: "month",
@@ -32547,393 +32912,6 @@ var FundTransfer = class _FundTransfer {
     return `${from} \u2192 ${this.toDisplayName} ${dir}`;
   }
 };
-
-// js/instruments/instrument-behavior.js
-var AssetAppreciationResult = class {
-  constructor(principal = Currency.zero(), growth = Currency.zero(), qualifiedDividend = Currency.zero(), nonQualifiedDividend = Currency.zero(), tax = Currency.zero()) {
-    this.principal = principal instanceof Currency ? principal.copy() : new Currency(principal);
-    this.growth = growth instanceof Currency ? growth.copy() : new Currency(growth);
-    this.qualifiedDividend = qualifiedDividend instanceof Currency ? qualifiedDividend.copy() : new Currency(qualifiedDividend);
-    this.nonQualifiedDividend = nonQualifiedDividend instanceof Currency ? nonQualifiedDividend.copy() : new Currency(nonQualifiedDividend);
-    this.tax = tax instanceof Currency ? tax.copy() : new Currency(tax);
-  }
-};
-var MortgageResult = class {
-  constructor(principal = Currency.zero(), interest = Currency.zero()) {
-    this.principal = principal instanceof Currency ? principal.copy() : new Currency(principal);
-    this.interest = interest instanceof Currency ? interest.copy() : new Currency(interest);
-  }
-  payment() {
-    return new Currency(this.principal.amount + this.interest.amount);
-  }
-};
-var IncomeResult = class {
-  constructor(selfIncome = Currency.zero(), employedIncome = Currency.zero()) {
-    this.selfIncome = selfIncome instanceof Currency ? selfIncome.copy() : new Currency(selfIncome);
-    this.employedIncome = employedIncome instanceof Currency ? employedIncome.copy() : new Currency(employedIncome);
-  }
-};
-var RetirementIncomeResult = class {
-  constructor(socialSecurityIncome = Currency.zero(), pensionIncome = Currency.zero()) {
-    this.socialSecurityIncome = socialSecurityIncome instanceof Currency ? socialSecurityIncome.copy() : new Currency(socialSecurityIncome);
-    this.pensionIncome = pensionIncome instanceof Currency ? pensionIncome.copy() : new Currency(pensionIncome);
-  }
-};
-var ExpenseResult = class {
-  constructor(expense = Currency.zero(), nextExpense = Currency.zero()) {
-    this.expense = expense instanceof Currency ? expense.copy() : new Currency(expense);
-    this.nextExpense = nextExpense instanceof Currency ? nextExpense.copy() : new Currency(nextExpense);
-  }
-};
-var InterestResult = class {
-  constructor(income = Currency.zero()) {
-    this.income = income instanceof Currency ? income.copy() : new Currency(income);
-  }
-};
-var COMMON_METRICS = [Metric.VALUE, Metric.CASH_FLOW, Metric.CASH_FLOW_ACCUMULATED, Metric.CREDIT];
-var WorkingIncomeBehavior = Object.freeze({
-  relevantMetrics() {
-    return [
-      ...COMMON_METRICS,
-      Metric.INCOME,
-      Metric.EMPLOYED_INCOME,
-      Metric.SELF_INCOME,
-      Metric.ORDINARY_INCOME,
-      Metric.NET_INCOME,
-      Metric.GROWTH,
-      Metric.SOCIAL_SECURITY_TAX,
-      Metric.MEDICARE_TAX,
-      Metric.WITHHELD_FICA_TAX,
-      Metric.WITHHELD_INCOME_TAX,
-      Metric.ESTIMATED_INCOME_TAX,
-      Metric.INCOME_TAX,
-      Metric.FEDERAL_TAXES,
-      Metric.TAXES
-    ];
-  },
-  applyMonthly(asset) {
-    asset.ensurePositiveStart();
-    const income = asset.finishCurrency.copy();
-    if (asset.isSelfEmployed) {
-      asset.addToMetric(Metric.SELF_INCOME, income);
-    } else {
-      asset.addToMetric(Metric.EMPLOYED_INCOME, income);
-    }
-    asset.netIncomeCurrency.add(income);
-    return asset.isSelfEmployed ? new IncomeResult(income, Currency.zero()) : new IncomeResult(Currency.zero(), income);
-  },
-  computeCashFlow(asset) {
-    const cf = asset.incomeCurrency.copy();
-    cf.add(asset.socialSecurityTaxCurrency);
-    cf.add(asset.medicareTaxCurrency);
-    cf.add(asset.withheldIncomeTaxCurrency);
-    cf.add(asset.estimatedIncomeTaxCurrency);
-    return cf;
-  }
-});
-var RetirementIncomeBehavior = Object.freeze({
-  relevantMetrics() {
-    return [
-      ...COMMON_METRICS,
-      Metric.INCOME,
-      Metric.ORDINARY_INCOME,
-      Metric.NET_INCOME,
-      Metric.GROWTH,
-      Metric.SOCIAL_SECURITY_INCOME,
-      // Withholding on arrival books here; an unregistered metric would land
-      // on NULL_METRIC and disappear.
-      Metric.WITHHELD_INCOME_TAX,
-      Metric.INCOME_TAX,
-      Metric.FEDERAL_TAXES,
-      Metric.TAXES
-    ];
-  },
-  applyMonthly(asset) {
-    asset.ensurePositiveStart();
-    const income = asset.finishCurrency.copy();
-    asset.addToMetric(Metric.SOCIAL_SECURITY_INCOME, income);
-    asset.netIncomeCurrency.add(income);
-    return new RetirementIncomeResult(income, Currency.zero());
-  },
-  computeCashFlow(asset) {
-    return asset.incomeCurrency.copy();
-  }
-});
-var PensionBehavior = Object.freeze({
-  relevantMetrics() {
-    return [
-      ...COMMON_METRICS,
-      Metric.INCOME,
-      Metric.ORDINARY_INCOME,
-      Metric.NET_INCOME,
-      Metric.GROWTH,
-      Metric.PENSION_INCOME,
-      // See RetirementIncomeBehavior above — a pension carried no tax metrics
-      // at all, so withholding booked here would have vanished into NULL_METRIC.
-      Metric.WITHHELD_INCOME_TAX,
-      Metric.INCOME_TAX,
-      Metric.FEDERAL_TAXES,
-      Metric.TAXES
-    ];
-  },
-  applyMonthly(asset) {
-    asset.ensurePositiveStart();
-    const income = asset.finishCurrency.copy();
-    asset.addToMetric(Metric.PENSION_INCOME, income);
-    asset.netIncomeCurrency.add(income);
-    return new RetirementIncomeResult(Currency.zero(), income);
-  },
-  computeCashFlow(asset) {
-    return asset.incomeCurrency.copy();
-  }
-});
-var ExpenseBehavior = Object.freeze({
-  relevantMetrics() {
-    return [...COMMON_METRICS, Metric.LIVING_EXPENSE, Metric.EXPENSE, Metric.GROWTH];
-  },
-  applyMonthly(asset) {
-    asset.ensureNegativeStart();
-    const expense = asset.finishCurrency.copy();
-    asset.addToMetric(Metric.LIVING_EXPENSE, expense);
-    const inflation = new Currency(expense.amount * asset.effectiveAnnualReturnRate.asMonthlyEffective());
-    asset.finishCurrency.add(inflation);
-    asset.monthlyValueChange.add(inflation);
-    if (inflation.amount !== 0) {
-      asset.recordEvent(EventType.EXPENSE_INFLATION, inflation);
-    }
-    return new ExpenseResult(expense, asset.finishCurrency.copy());
-  },
-  computeCashFlow(asset) {
-    return asset.expenseCurrency.copy();
-  }
-});
-var MortgageBehavior = Object.freeze({
-  relevantMetrics() {
-    return [
-      ...COMMON_METRICS,
-      Metric.MORTGAGE_PAYMENT,
-      Metric.MORTGAGE_INTEREST,
-      Metric.MORTGAGE_PRINCIPAL,
-      Metric.INTEREST_EXPENSE,
-      Metric.EXPENSE,
-      Metric.GROWTH
-    ];
-  },
-  applyMonthly(asset) {
-    asset.ensureNegativeStart();
-    const rate = asset.annualReturnRate.asMonthlyNominal();
-    const n = asset.monthsRemainingDynamic;
-    if (n <= 0) {
-      return new MortgageResult();
-    }
-    const payment = asset.finishCurrency.amount * rate * Math.pow(1 + rate, n) / (Math.pow(1 + rate, n) - 1);
-    const paymentCurrency = new Currency(payment);
-    const interest = new Currency(asset.finishCurrency.amount * rate);
-    const principal = new Currency(payment - interest.amount);
-    asset.mortgagePaymentCurrency.add(paymentCurrency);
-    asset.addToMetric(Metric.MORTGAGE_INTEREST, interest);
-    asset.mortgagePrincipalCurrency.add(principal);
-    asset.monthsRemainingDynamic--;
-    asset.finishCurrency.subtract(principal);
-    asset.growthCurrency.subtract(principal);
-    asset.monthlyValueChange.subtract(principal);
-    asset.recordEvent(EventType.MORTGAGE_PRINCIPAL, principal.copy().flipSign(), { metric: Metric.MORTGAGE_PRINCIPAL });
-    asset.recordEvent(EventType.MORTGAGE_INTEREST, interest, { metric: Metric.MORTGAGE_INTEREST });
-    return new MortgageResult(principal, interest, Currency.zero());
-  },
-  computeCashFlow(asset) {
-    let cf = asset.mortgageInterestCurrency.copy();
-    cf.add(asset.mortgagePrincipalCurrency);
-    return cf;
-  }
-});
-var CapitalBehavior = Object.freeze({
-  relevantMetrics() {
-    return [
-      ...COMMON_METRICS,
-      Metric.GROWTH,
-      Metric.QUALIFIED_DIVIDEND,
-      Metric.NON_QUALIFIED_DIVIDEND,
-      Metric.INCOME,
-      Metric.ORDINARY_INCOME,
-      Metric.SHORT_TERM_CAPITAL_GAIN,
-      Metric.LONG_TERM_CAPITAL_GAIN,
-      Metric.CAPITAL_GAIN,
-      Metric.SHORT_TERM_CAPITAL_GAIN_TAX,
-      Metric.LONG_TERM_CAPITAL_GAIN_TAX,
-      Metric.ESTIMATED_INCOME_TAX,
-      // Federal withholding at the source of a deferred distribution books here.
-      // Without it the tax is deducted from the account and never shown on it.
-      Metric.WITHHELD_INCOME_TAX,
-      // IRC §1411 books here; unregistered, the NIIT line would land on
-      // NULL_METRIC and the tax would appear in no row by name.
-      Metric.NIIT,
-      Metric.INCOME_TAX,
-      Metric.FEDERAL_TAXES,
-      Metric.TAXES,
-      Metric.CONTRIBUTION,
-      Metric.PRETAX_CONTRIBUTION,
-      Metric.POSTTAX_CONTRIBUTION,
-      Metric.TAX_FREE_DISTRIBUTION,
-      Metric.TAXABLE_DISTRIBUTION,
-      Metric.TRAD_IRA_CONTRIBUTION,
-      Metric.ROTH_IRA_CONTRIBUTION,
-      Metric.FOUR_01K_CONTRIBUTION,
-      Metric.TRAD_IRA_DISTRIBUTION,
-      Metric.ROTH_IRA_DISTRIBUTION,
-      Metric.FOUR_01K_DISTRIBUTION,
-      Metric.RMD
-    ];
-  },
-  applyMonthly(asset) {
-    if (InstrumentType.isDebt(asset.instrument) && asset.finishCurrency.amount >= 0) {
-      asset.finishCurrency.zero();
-      return new AssetAppreciationResult(Currency.zero(), Currency.zero(), Currency.zero(), Currency.zero());
-    }
-    const earns = InstrumentType.isDebt(asset.instrument) || asset.finishCurrency.amount > 0;
-    const monthlyRate = InstrumentType.isDebt(asset.instrument) ? asset.annualReturnRate.asMonthlyNominal() : asset.annualReturnRate.asMonthlyEffective();
-    const growth = earns ? new Currency(asset.finishCurrency.amount * monthlyRate) : Currency.zero();
-    asset.growthCurrency.add(growth);
-    asset.finishCurrency.add(growth);
-    asset.monthlyValueChange.add(growth);
-    asset.recordEvent(EventType.ASSET_GROWTH, growth, { metric: Metric.GROWTH });
-    let qualifiedDiv = Currency.zero();
-    let nonQualifiedDiv = Currency.zero();
-    if (asset.annualDividendRate.rate != 0 && earns) {
-      const totalDiv = asset.finishCurrency.amount * asset.annualDividendRate.asMonthlyNominal();
-      const qualifiedRatio = asset.dividendQualifiedRatio;
-      qualifiedDiv = new Currency(totalDiv * qualifiedRatio);
-      nonQualifiedDiv = new Currency(totalDiv * (1 - qualifiedRatio));
-      asset.addToMetric(Metric.QUALIFIED_DIVIDEND, qualifiedDiv);
-      asset.addToMetric(Metric.NON_QUALIFIED_DIVIDEND, nonQualifiedDiv);
-      const totalDivCurrency = qualifiedDiv.plus(nonQualifiedDiv);
-      asset.finishCurrency.add(totalDivCurrency);
-      asset.monthlyValueChange.add(totalDivCurrency);
-      if (InstrumentType.isTaxableAccount(asset.instrument)) {
-        asset.finishBasisCurrency.add(totalDivCurrency);
-      }
-      if (qualifiedDiv.amount !== 0) asset.recordEvent(EventType.DIVIDEND, qualifiedDiv, { metric: Metric.QUALIFIED_DIVIDEND, data: { qualified: true } });
-      if (nonQualifiedDiv.amount !== 0) asset.recordEvent(EventType.DIVIDEND, nonQualifiedDiv, { metric: Metric.NON_QUALIFIED_DIVIDEND, data: { qualified: false } });
-    }
-    return new AssetAppreciationResult(asset.finishCurrency.copy(), growth, qualifiedDiv, nonQualifiedDiv);
-  },
-  computeCashFlow(asset) {
-    let cf = asset.qualifiedDividendCurrency.copy();
-    cf.add(asset.nonQualifiedDividendCurrency);
-    cf.add(asset.estimatedIncomeTaxCurrency);
-    return cf;
-  }
-});
-var RealEstateBehavior = Object.freeze({
-  relevantMetrics() {
-    return [
-      ...COMMON_METRICS,
-      Metric.GROWTH,
-      Metric.INCOME,
-      Metric.ORDINARY_INCOME,
-      Metric.EXPENSE,
-      Metric.SHORT_TERM_CAPITAL_GAIN,
-      Metric.LONG_TERM_CAPITAL_GAIN,
-      Metric.CAPITAL_GAIN,
-      Metric.SHORT_TERM_CAPITAL_GAIN_TAX,
-      Metric.LONG_TERM_CAPITAL_GAIN_TAX,
-      // A home sale's gain is net investment income above the §121 exclusion.
-      Metric.NIIT,
-      Metric.INCOME_TAX,
-      Metric.FEDERAL_TAXES,
-      Metric.SALT_TAXES,
-      Metric.TAXES,
-      Metric.PROPERTY_TAX,
-      Metric.MAINTENANCE,
-      Metric.INSURANCE
-    ];
-  },
-  applyMonthly(asset) {
-    const growth = new Currency(asset.finishCurrency.amount * asset.annualReturnRate.asMonthlyEffective());
-    asset.growthCurrency.add(growth);
-    asset.finishCurrency.add(growth);
-    asset.monthlyValueChange.add(growth);
-    asset.recordEvent(EventType.ASSET_GROWTH, growth, { metric: Metric.GROWTH });
-    const tax = new Currency(asset.finishCurrency.amount * asset.annualTaxRate.asMonthlyNominal());
-    tax.flipSign();
-    asset.addToMetric(Metric.PROPERTY_TAX, tax);
-    asset.recordEvent(EventType.PROPERTY_TAX, tax, { metric: Metric.PROPERTY_TAX });
-    if (asset.annualMaintenanceRate.rate !== 0) {
-      const maint = new Currency(asset.finishCurrency.amount * asset.annualMaintenanceRate.asMonthlyNominal());
-      maint.flipSign();
-      asset.addToMetric(Metric.MAINTENANCE, maint);
-      asset.recordEvent(EventType.MAINTENANCE, maint, { metric: Metric.MAINTENANCE });
-    }
-    if (asset.annualInsuranceCost.amount !== 0) {
-      const ins = new Currency(asset.annualInsuranceCost.amount / -12);
-      asset.addToMetric(Metric.INSURANCE, ins);
-      asset.recordEvent(EventType.INSURANCE, ins, { metric: Metric.INSURANCE });
-    }
-    return new AssetAppreciationResult(asset.finishCurrency.copy(), growth, Currency.zero(), Currency.zero(), tax);
-  },
-  computeCashFlow(asset) {
-    const cf = asset.propertyTaxCurrency.copy();
-    cf.add(asset.maintenanceCurrency);
-    cf.add(asset.insuranceCurrency);
-    return cf;
-  }
-});
-var IncomeAccountBehavior = Object.freeze({
-  relevantMetrics() {
-    return [
-      ...COMMON_METRICS,
-      Metric.INTEREST_INCOME,
-      Metric.ORDINARY_INCOME,
-      Metric.INCOME,
-      Metric.NET_INCOME,
-      Metric.GROWTH,
-      // Interest is net investment income, and a bank is the usual NIIT
-      // backstop and spillover payer — see the note in CapitalBehavior.
-      Metric.NIIT,
-      Metric.ESTIMATED_INCOME_TAX,
-      Metric.INCOME_TAX,
-      Metric.FEDERAL_TAXES,
-      Metric.TAXES
-    ];
-  },
-  applyMonthly(asset) {
-    asset.ensurePositiveStart();
-    const income = asset.finishCurrency.amount > 0 ? new Currency(asset.finishCurrency.amount * asset.annualReturnRate.asMonthlyEffective()) : Currency.zero();
-    asset.addToMetric(Metric.INTEREST_INCOME, income);
-    asset.netIncomeCurrency.add(income);
-    asset.finishCurrency.add(income);
-    asset.monthlyValueChange.add(income);
-    asset.recordEvent(EventType.INTEREST_INCOME, income, { metric: Metric.INTEREST_INCOME });
-    return new InterestResult(income);
-  },
-  computeCashFlow(asset) {
-    let cf = asset.interestIncomeCurrency.copy();
-    cf.add(asset.estimatedIncomeTaxCurrency);
-    return cf;
-  }
-});
-var BEHAVIOR_MAP = /* @__PURE__ */ new Map([
-  [Instrument.WORKING_INCOME, WorkingIncomeBehavior],
-  [Instrument.RETIREMENT_INCOME, RetirementIncomeBehavior],
-  [Instrument.PENSION, PensionBehavior],
-  [Instrument.MONTHLY_EXPENSE, ExpenseBehavior],
-  [Instrument.MORTGAGE, MortgageBehavior],
-  [Instrument.TAXABLE_EQUITY, CapitalBehavior],
-  [Instrument.IRA, CapitalBehavior],
-  [Instrument.FOUR_01K, CapitalBehavior],
-  [Instrument.ROTH_IRA, CapitalBehavior],
-  [Instrument.CASH, CapitalBehavior],
-  [Instrument.DEBT, CapitalBehavior],
-  [Instrument.REAL_ESTATE, RealEstateBehavior],
-  [Instrument.US_BOND, IncomeAccountBehavior],
-  [Instrument.CORP_BOND, IncomeAccountBehavior],
-  [Instrument.BANK, IncomeAccountBehavior]
-]);
-function getBehavior(instrument) {
-  const b = BEHAVIOR_MAP.get(instrument);
-  if (!b) throw new Error(`No behavior registered for instrument: "${instrument}"`);
-  return b;
-}
 
 // js/tax-basis.js
 var MagiPurpose = Object.freeze({
@@ -33862,7 +33840,16 @@ var FinancialPackage = class _FinancialPackage {
   }
   cashOutFlow() {
     let e = this.totalTaxes();
-    e.add(this.expense);
+    e.add(this.cashExpenses());
+    return e;
+  }
+  /**
+   * Expenses as cash flow counts them: living expenses, the whole mortgage
+   * payment (principal as well as interest), maintenance and insurance.
+   * Negative. The Expenses figure in Reports and in Month & Year Details.
+   */
+  cashExpenses() {
+    let e = this.expense.copy();
     e.add(this.mortgagePrincipal);
     e.add(this.mortgageInterest);
     e.add(this.maintenance);
@@ -35908,11 +35895,7 @@ var Portfolio = class _Portfolio {
   }
   computePerAssetCashFlow() {
     for (let modelAsset of this.modelAssets) {
-      if (modelAsset.isClosed) {
-        modelAsset.cashFlowCurrency = Currency.zero();
-      } else {
-        modelAsset.cashFlowCurrency = modelAsset.behavior.computeCashFlow(modelAsset);
-      }
+      modelAsset.cashFlowCurrency = computeCashFlow(modelAsset);
     }
   }
   yearlyChron(currentDateInt) {

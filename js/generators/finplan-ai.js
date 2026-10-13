@@ -150,11 +150,13 @@ export function generateMonthDetailsSectionMarkdown(portfolio, year, month, head
     let md = title;
     md += 'The month selected on the timeline, and the calendar year it falls in. The year '
         + 'is its months added up, so each figure means the same thing in both columns. '
-        + 'Cash flow is income less expenses and taxes.\n\n';
+        + 'Cash flow is income received less expenses and taxes. Income received is money '
+        + 'from outside your accounts; withdrawals from your own accounts are listed under '
+        + 'Withdrawn. Expenses include mortgage principal.\n\n';
 
     md += `| | ${monthName} | ${yearName} |\n`;
     md += `| :--- | ---: | ---: |\n`;
-    md += `| Income | ${signed(s.income)} | ${signed(y.income)} |\n`;
+    md += `| Income received | ${signed(s.income)} | ${signed(y.income)} |\n`;
     md += `| Expenses | ${signed(s.expense)} | ${signed(y.expense)} |\n`;
     md += `| Taxes paid | ${signed(s.taxes)} | ${signed(y.taxes)} |\n`;
     md += `| Cash flow | ${signed(s.cashFlow)} | ${signed(y.cashFlow)} |\n`;
@@ -202,7 +204,7 @@ export function generateMonthDetailsSectionMarkdown(portfolio, year, month, head
         md += `| Federal taxes owed | ${fmt(t.federalTax)} |\n`;
         md += `| AGI | ${fmt(t.agi)} |\n`;
         for (const line of magiLines(t)) md += `| MAGI (${line.purposes.join(', ')}) | ${fmt(line.amount)} |\n`;
-        md += `| Effective rate on income | ${pct(y.effectiveRateOnIncome)} |\n`;
+        md += `| Effective rate on total income (${fmt(y.totalIncome)}, withdrawals included) | ${pct(y.effectiveRateOnIncome)} |\n`;
         md += `| Effective rate on AGI | ${pct(y.effectiveRateOnAGI)} |\n\n`;
         const parts = settlementParts(t);
         md += `- Federal taxes owed is what ${year}'s income owed: FICA, income and capital-gains `
