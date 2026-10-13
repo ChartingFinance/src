@@ -40199,6 +40199,16 @@ var TAX_LABEL = Object.freeze({
 
 // js/month-summary.js
 var EXPENSE_PIECES = Object.freeze([...LEAF_EXPENSE_METRICS, Metric.MORTGAGE_PRINCIPAL]);
+var INCOME_LINE = Object.freeze({
+  // A paycheck, a pension or a benefit is the account itself.
+  [Metric.EMPLOYED_INCOME]: null,
+  [Metric.SELF_INCOME]: null,
+  [Metric.SOCIAL_SECURITY_INCOME]: null,
+  [Metric.PENSION_INCOME]: null,
+  [Metric.INTEREST_INCOME]: "Interest",
+  [Metric.QUALIFIED_DIVIDEND]: "Qualified dividends",
+  [Metric.NON_QUALIFIED_DIVIDEND]: "Non-qualified dividends"
+});
 var EXPENSE_LINE = Object.freeze({
   // An expense account is the expense, so its line needs no name of its own.
   [Metric.LIVING_EXPENSE]: null,

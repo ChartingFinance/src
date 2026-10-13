@@ -11,7 +11,7 @@ import { classifyAssetGroup, AssetGroupMeta } from '../asset-groups.js';
 import { Metric, MetricLabel } from '../metric.js';
 import {
     monthSummary, yearSummary, zeroTaxWasWithheld, yearSpan, magiLines, settlementParts,
-    headlineAsShown, drawnAsShown, expensesAsShown, taxesAsShown,
+    headlineAsShown, drawnAsShown, incomeAsShown, expensesAsShown, taxesAsShown,
 } from '../month-summary.js';
 import { MONTH_NAMES } from '../utils/date-int.js';
 import { formatCurrency } from '../utils/html.js';
@@ -197,6 +197,12 @@ export function generateMonthDetailsSectionMarkdown(portfolio, year, month, head
     if (s.valueReal != null) md += `| Net worth in today's dollars | ${fmt(s.valueReal)} | ${fmt(y.valueReal)} |\n`;
     md += '\n';
 
+    const im = incomeAsShown(s), iy = incomeAsShown(y);
+    md += listTable('Income received', monthName, yearName, im, iy, signed);
+    if (iy.notCounted > 0) {
+        md += `- Not counted as income received in ${year}: ${fmt(iy.notCounted)} of withdrawals and `
+            + 'realized gains from your own accounts.\n\n';
+    }
     const em = expensesAsShown(s), ey = expensesAsShown(y);
     md += listTable('Expenses', monthName, yearName, em, ey, signed);
     if ([em, ey].some((v) => v.groups.some((g) => g.items.some((it) => it.label === 'Principal')))) {

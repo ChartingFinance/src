@@ -121,6 +121,7 @@ function flowsOver(portfolio, from, to) {
         // Over the SAME window as `drawn`, so the two can be read together.
         withheldAtSource: withheldAtSource(portfolio, from, to),
         // What Expenses and Taxes are made of, for their lists.
+        incomeItems:  byAccount(portfolio, RECEIVED_INCOME_METRICS, from, to),
         expenseItems: byAccount(portfolio, EXPENSE_PIECES, from, to),
         taxItems:     byAccount(portfolio, LEAF_TAX_METRICS, from, to),
         settlement:   settlementIn(portfolio, from, to),
@@ -244,12 +245,37 @@ export function wholeDollars(amount) {
  * which shows as $43 beside figures that add to $42.
  */
 export function headlineAsShown(summary) {
-    const income = wholeDollars(summary.income);
-    // Expenses and Taxes are the totals of their lists, so a list opened from
-    // the row ends on the figure it was opened from.
+    // Each figure is the total of its list, so a list opened from the row
+    // ends on the figure it was opened from.
+    const income = incomeAsShown(summary).total;
     const expense = expensesAsShown(summary).total;
     const taxes = taxesAsShown(summary).total;
     return { income, expense, taxes, cashFlow: income + expense + taxes };
+}
+
+const INCOME_LINE = Object.freeze({
+    // A paycheck, a pension or a benefit is the account itself.
+    [Metric.EMPLOYED_INCOME]:        null,
+    [Metric.SELF_INCOME]:            null,
+    [Metric.SOCIAL_SECURITY_INCOME]: null,
+    [Metric.PENSION_INCOME]:         null,
+    [Metric.INTEREST_INCOME]:        'Interest',
+    [Metric.QUALIFIED_DIVIDEND]:     'Qualified dividends',
+    [Metric.NON_QUALIFIED_DIVIDEND]: 'Non-qualified dividends',
+});
+
+/**
+ * The Income received figure as a list, by account ("Brokerage" → its two
+ * kinds of dividend). `notCounted` is what the rest of the app calls income
+ * but this figure leaves out: withdrawals and realized gains from the
+ * household's own accounts.
+ */
+export function incomeAsShown(summary) {
+    const view = groupsAsShown(summary.incomeItems, (it) => ({
+        heading: it.account,
+        label: it.metric in INCOME_LINE ? INCOME_LINE[it.metric] : MetricLabel[it.metric],
+    }));
+    return { ...view, notCounted: wholeDollars((summary.totalIncome ?? summary.income) - summary.income) };
 }
 
 const EXPENSE_LINE = Object.freeze({

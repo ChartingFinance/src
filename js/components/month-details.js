@@ -11,8 +11,8 @@
  *                                           obligations
  *   Asset growth · Net worth                net worth is a balance, not a sum
  *
- * Expenses, Taxes and Withdrawn are buttons: each opens the list behind its
- * figure, in whole dollars that add up to it.
+ * Income received, Expenses, Taxes and Withdrawn are buttons: each opens the
+ * list behind its figure, in whole dollars that add up to it.
  *
  * Under them, the tax year: what the year's income owed, AGI, MAGI and the two
  * effective rates, from the year's TaxYear record.
@@ -26,7 +26,7 @@
 import { LitElement, html, nothing } from 'lit';
 import {
     monthSummary, yearSummary, zeroTaxWasWithheld, yearSpan, magiLines, settlementParts,
-    headlineAsShown, drawnAsShown, expensesAsShown, taxesAsShown,
+    headlineAsShown, drawnAsShown, incomeAsShown, expensesAsShown, taxesAsShown,
 } from '../month-summary.js';
 import { formatCurrency, formatSignedCurrency } from '../utils/html.js';
 import { MONTH_NAMES } from '../utils/date-int.js';
@@ -122,6 +122,7 @@ export class MonthDetails extends LitElement {
         // Whole dollars that add up: cash flow is the sum of the three beside
         // it, and each list ends on the figure it was opened from.
         const h = headlineAsShown(s);
+        const income = incomeAsShown(s);
         const expenses = expensesAsShown(s);
         const taxes = taxesAsShown(s);
         const drawn = drawnAsShown(s.drawn);
@@ -131,7 +132,8 @@ export class MonthDetails extends LitElement {
                     <div class="md-rowtitle">${title}</div>
                     <div class="md-sub">${span}</div>
                 </div>
-                ${cell('Income received', formatSignedCurrency(h.income))}
+                ${this._listCell(`${key}:income`, 'Income received', formatSignedCurrency(h.income), nothing,
+                    () => this._list('Income received', title, income, formatSignedCurrency, incomeNotes(income)))}
                 ${this._listCell(`${key}:expenses`, 'Expenses', formatSignedCurrency(h.expense), nothing,
                     () => this._list('Expenses', title, expenses, formatSignedCurrency, expenseNotes(expenses)))}
                 ${this._listCell(`${key}:taxes`, 'Taxes', formatSignedCurrency(h.taxes), nothing,
@@ -247,6 +249,14 @@ function drawnNotes(s, drawn) {
                 passed through an account.</div>` : nothing}
         ${s.drawn.items.length === 0 && !(drawn.unfunded > 0) ? html`
             <div class="md-pop-note">Nothing was withdrawn to meet obligations.</div>` : nothing}`;
+}
+
+function incomeNotes(view) {
+    return html`
+        ${view.groups.length ? nothing : html`<div class="md-pop-note">No income received.</div>`}
+        ${view.notCounted > 0 ? html`<div class="md-pop-note">Not counted: ${formatCurrency(view.notCounted)} of
+            withdrawals and realized gains from your own accounts. That is money you already had, so it
+            is not income here.</div>` : nothing}`;
 }
 
 function expenseNotes(view) {
