@@ -353,18 +353,28 @@ export const PARENT_METRICS = new Set(
  * row carries a label, an emoji and its highlight set — but
  * tests/unit/tax-tree-coverage.test.js checks it against this list.
  */
-export const LEAF_TAX_METRICS = Object.freeze(
-  Object.values(Metric).filter((m) => {
-    if (m === Metric.TAXES || PARENT_METRICS.has(m)) return false;
+export const LEAF_TAX_METRICS = leavesOf(Metric.TAXES);
+
+/**
+ * Every expense as leaf metrics (living expense, mortgage interest,
+ * maintenance, insurance), derived from the DAG for the same reason as
+ * LEAF_TAX_METRICS. Mortgage principal is not here: it rolls up to nothing.
+ */
+export const LEAF_EXPENSE_METRICS = leavesOf(Metric.EXPENSE);
+
+/** The metrics nothing rolls into that reach `target` through the DAG. */
+function leavesOf(target) {
+  return Object.freeze(Object.values(Metric).filter((m) => {
+    if (m === target || PARENT_METRICS.has(m)) return false;
     const reaches = (x, seen = new Set()) => {
-      if (x === Metric.TAXES) return true;
+      if (x === target) return true;
       if (seen.has(x)) return false;
       seen.add(x);
       return (MetricRollups[x] ?? []).some((p) => reaches(p, seen));
     };
     return reaches(m);
-  })
-);
+  }));
+}
 
 // ── TrackedMetric & MetricSet ─────────────────────────────────────────
 //

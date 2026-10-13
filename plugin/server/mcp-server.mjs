@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.3.29; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.3.30; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -31070,18 +31070,20 @@ function aggregateMetric(history, metricName, fromIndex, toIndex) {
 var PARENT_METRICS = new Set(
   Object.values(MetricRollups).flat()
 );
-var LEAF_TAX_METRICS = Object.freeze(
-  Object.values(Metric).filter((m) => {
-    if (m === Metric.TAXES || PARENT_METRICS.has(m)) return false;
+var LEAF_TAX_METRICS = leavesOf(Metric.TAXES);
+var LEAF_EXPENSE_METRICS = leavesOf(Metric.EXPENSE);
+function leavesOf(target) {
+  return Object.freeze(Object.values(Metric).filter((m) => {
+    if (m === target || PARENT_METRICS.has(m)) return false;
     const reaches = (x, seen = /* @__PURE__ */ new Set()) => {
-      if (x === Metric.TAXES) return true;
+      if (x === target) return true;
       if (seen.has(x)) return false;
       seen.add(x);
       return (MetricRollups[x] ?? []).some((p) => reaches(p, seen));
     };
     return reaches(m);
-  })
-);
+  }));
+}
 var TrackedMetric = class {
   constructor(name) {
     this.name = name;
@@ -40196,6 +40198,25 @@ var TAX_LABEL = Object.freeze({
 });
 
 // js/month-summary.js
+var EXPENSE_PIECES = Object.freeze([...LEAF_EXPENSE_METRICS, Metric.MORTGAGE_PRINCIPAL]);
+var EXPENSE_LINE = Object.freeze({
+  // An expense account is the expense, so its line needs no name of its own.
+  [Metric.LIVING_EXPENSE]: null,
+  [Metric.MORTGAGE_INTEREST]: "Interest",
+  [Metric.MORTGAGE_PRINCIPAL]: "Principal",
+  [Metric.MAINTENANCE]: "Maintenance",
+  [Metric.INSURANCE]: "Insurance"
+});
+var TAX_LINE = Object.freeze({
+  [Metric.WITHHELD_INCOME_TAX]: ["Income tax", "Withheld"],
+  [Metric.ESTIMATED_INCOME_TAX]: ["Income tax", "Estimated and true-up"],
+  [Metric.SHORT_TERM_CAPITAL_GAIN_TAX]: ["Income tax", "Short-term gains"],
+  [Metric.LONG_TERM_CAPITAL_GAIN_TAX]: ["Long-term capital gains tax", null],
+  [Metric.NIIT]: ["Net investment income tax", null],
+  [Metric.SOCIAL_SECURITY_TAX]: ["FICA", "Social Security"],
+  [Metric.MEDICARE_TAX]: ["FICA", "Medicare"],
+  [Metric.PROPERTY_TAX]: ["Property tax", "account"]
+});
 var MAGI_NAME = Object.freeze({
   [MagiPurpose.NIIT]: "NIIT",
   [MagiPurpose.IRMAA]: "IRMAA",
