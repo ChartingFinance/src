@@ -11,7 +11,7 @@ import { classifyAssetGroup, AssetGroupMeta } from '../asset-groups.js';
 import { Metric, MetricLabel } from '../metric.js';
 import {
     monthSummary, yearSummary, zeroTaxWasWithheld, yearSpan, magiLines, settlementParts,
-    headlineAsShown, drawnAsShown,
+    headlineAsShown, drawnAsShown, incomeAsShown, expensesAsShown, taxesAsShown,
 } from '../month-summary.js';
 import { MONTH_NAMES } from '../utils/date-int.js';
 import { formatCurrency } from '../utils/html.js';
@@ -55,6 +55,29 @@ export const REPORT_SECTIONS = ['portfolio', 'projections', 'creditmemos', 'repo
  *        null when this section is being generated on its own (the app does
  *        this) — in which case the full-report wording is correct as written.
  */
+/**
+ * A Month & Year Details list as a table, month beside year: a row per line,
+ * each column adding up to its total as the section shows it. Rows are the
+ * union of both columns, so a line that rounds to $0 in one still shows.
+ */
+function listTable(heading, monthName, yearName, monthView, yearView, money) {
+    const rows = new Map();
+    for (const [col, view] of [[1, yearView], [0, monthView]]) {
+        for (const g of view.groups) {
+            for (const it of g.items) {
+                const key = `${g.heading}|${it.label ?? ''}`;
+                const row = rows.get(key) ?? { label: it.label ? `${g.heading}: ${it.label}` : g.heading, amounts: [0, 0] };
+                row.amounts[col] = it.amount;
+                rows.set(key, row);
+            }
+        }
+    }
+    let md = `## ${heading}\n| | ${monthName} | ${yearName} |\n| :--- | ---: | ---: |\n`;
+    for (const r of rows.values()) md += `| ${r.label} | ${money(r.amounts[0])} | ${money(r.amounts[1])} |\n`;
+    md += `| **Total** | **${money(monthView.total)}** | **${money(yearView.total)}** |\n\n`;
+    return md;
+}
+
 function directionalNotes(sectionKey, included = null) {
     const idx = SECTIONS.findIndex(s => s.key === sectionKey);
     let md = '';
@@ -173,6 +196,25 @@ export function generateMonthDetailsSectionMarkdown(portfolio, year, month, head
     md += `| Change in net worth | ${signed(s.netChange)} | ${signed(y.netChange)} |\n`;
     if (s.valueReal != null) md += `| Net worth in today's dollars | ${fmt(s.valueReal)} | ${fmt(y.valueReal)} |\n`;
     md += '\n';
+
+    const im = incomeAsShown(s), iy = incomeAsShown(y);
+    md += listTable('Income received', monthName, yearName, im, iy, signed);
+    if (iy.notCounted > 0) {
+        md += `- Not counted as income received in ${year}: ${fmt(iy.notCounted)} of withdrawals and `
+            + 'realized gains from your own accounts.\n\n';
+    }
+    const em = expensesAsShown(s), ey = expensesAsShown(y);
+    md += listTable('Expenses', monthName, yearName, em, ey, signed);
+    if ([em, ey].some((v) => v.groups.some((g) => g.items.some((it) => it.label === 'Principal')))) {
+        md += '- Mortgage principal is counted: it is money paid out, though not an accounting expense.\n\n';
+    }
+    const tm = taxesAsShown(s), ty = taxesAsShown(y);
+    md += listTable('Taxes paid', monthName, yearName, tm, ty, signed);
+    const st = ty.settlement;
+    if (st?.parts.length) {
+        md += `- Taxes paid in ${year} include January's settlement of ${st.year}: `
+            + `${st.parts.map((p) => `${fmt(p.amount)} ${p.label}`).join(', ')}.\n\n`;
+    }
 
     md += `## Withdrawn to meet obligations\n`;
     md += `| Obligation | ${monthName} | ${yearName} |\n`;

@@ -28,7 +28,7 @@
  * Expenses figure.
  */
 
-import { Metric } from './metric.js';
+import { Metric, MetricLabel, LEAF_TAX_METRICS, LEAF_EXPENSE_METRICS } from './metric.js';
 import { RECEIVED_INCOME_METRICS } from './instruments/instrument-behavior.js';
 import { expenditureOverWindow, Expenditure } from './annual-expenditure.js';
 import { MagiPurpose } from './tax-basis.js';
@@ -120,7 +120,48 @@ function flowsOver(portfolio, from, to) {
         drawn:     expenditureOverWindow(portfolio, from, to),
         // Over the SAME window as `drawn`, so the two can be read together.
         withheldAtSource: withheldAtSource(portfolio, from, to),
+        // What Expenses and Taxes are made of, for their lists.
+        incomeItems:  byAccount(portfolio, RECEIVED_INCOME_METRICS, from, to),
+        expenseItems: byAccount(portfolio, EXPENSE_PIECES, from, to),
+        taxItems:     byAccount(portfolio, LEAF_TAX_METRICS, from, to),
+        settlement:   settlementIn(portfolio, from, to),
     };
+}
+
+/** What the Expenses figure is made of: the expense leaves, and mortgage principal. */
+const EXPENSE_PIECES = Object.freeze([...LEAF_EXPENSE_METRICS, Metric.MORTGAGE_PRINCIPAL]);
+
+/** Each account's amount of each metric over a window, where it is not zero. */
+function byAccount(portfolio, metrics, from, to) {
+    const out = [];
+    for (const asset of portfolio.modelAssets) {
+        for (const metric of metrics) {
+            const history = asset.getHistory(metric);
+            if (!history) continue;
+            let amount = 0;
+            for (let i = Math.max(0, from); i <= to && i < history.length; i++) amount += history[i] ?? 0;
+            if (amount !== 0) out.push({ account: asset.displayName, metric, amount });
+        }
+    }
+    return out;
+}
+
+/**
+ * The previous year's settlement paid inside a window. The annual pass books it
+ * in January, so a window holds one only if it holds a January.
+ *
+ * @returns {{year: number, parts: Array<{label: string, amount: number}>} | null}
+ */
+function settlementIn(portfolio, from, to) {
+    const first = portfolio.firstDateInt;
+    for (let i = Math.max(0, from); i <= to; i++) {
+        const d = DateInt.from(first.year, first.month);
+        d.addMonths(i);
+        if (d.month !== 1) continue;
+        const t = portfolio.taxYears?.find((r) => r.year === d.year - 1);
+        return t ? { year: t.year, parts: settlementParts(t) } : null;
+    }
+    return null;
 }
 
 /**
@@ -204,10 +245,114 @@ export function wholeDollars(amount) {
  * which shows as $43 beside figures that add to $42.
  */
 export function headlineAsShown(summary) {
-    const income = wholeDollars(summary.income);
-    const expense = wholeDollars(summary.expense);
-    const taxes = wholeDollars(summary.taxes);
+    // Each figure is the total of its list, so a list opened from the row
+    // ends on the figure it was opened from.
+    const income = incomeAsShown(summary).total;
+    const expense = expensesAsShown(summary).total;
+    const taxes = taxesAsShown(summary).total;
     return { income, expense, taxes, cashFlow: income + expense + taxes };
+}
+
+const INCOME_LINE = Object.freeze({
+    // A paycheck, a pension or a benefit is the account itself.
+    [Metric.EMPLOYED_INCOME]:        null,
+    [Metric.SELF_INCOME]:            null,
+    [Metric.SOCIAL_SECURITY_INCOME]: null,
+    [Metric.PENSION_INCOME]:         null,
+    [Metric.INTEREST_INCOME]:        'Interest',
+    [Metric.QUALIFIED_DIVIDEND]:     'Qualified dividends',
+    [Metric.NON_QUALIFIED_DIVIDEND]: 'Non-qualified dividends',
+});
+
+/**
+ * The Income received figure as a list, by account ("Brokerage" → its two
+ * kinds of dividend). `notCounted` is what the rest of the app calls income
+ * but this figure leaves out: withdrawals and realized gains from the
+ * household's own accounts.
+ */
+export function incomeAsShown(summary) {
+    const view = groupsAsShown(summary.incomeItems, (it) => ({
+        heading: it.account,
+        label: it.metric in INCOME_LINE ? INCOME_LINE[it.metric] : MetricLabel[it.metric],
+    }));
+    return { ...view, notCounted: wholeDollars((summary.totalIncome ?? summary.income) - summary.income) };
+}
+
+const EXPENSE_LINE = Object.freeze({
+    // An expense account is the expense, so its line needs no name of its own.
+    [Metric.LIVING_EXPENSE]:     null,
+    [Metric.MORTGAGE_INTEREST]:  'Interest',
+    [Metric.MORTGAGE_PRINCIPAL]: 'Principal',
+    [Metric.MAINTENANCE]:        'Maintenance',
+    [Metric.INSURANCE]:          'Insurance',
+});
+
+/**
+ * The Expenses figure as a list: a group per account ("Mortgage"), its pieces
+ * the lines ("Interest", "Principal"). Signed, like the row: negative is paid.
+ */
+export function expensesAsShown(summary) {
+    return groupsAsShown(summary.expenseItems, (it) => ({
+        heading: it.account,
+        label: it.metric in EXPENSE_LINE ? EXPENSE_LINE[it.metric] : MetricLabel[it.metric],
+    }));
+}
+
+/** Where each tax goes in the list: [group, line]. Line 'account' names the property. */
+const TAX_LINE = Object.freeze({
+    [Metric.WITHHELD_INCOME_TAX]:         ['Income tax', 'Withheld'],
+    [Metric.ESTIMATED_INCOME_TAX]:        ['Income tax', 'Estimated and true-up'],
+    [Metric.SHORT_TERM_CAPITAL_GAIN_TAX]: ['Income tax', 'Short-term gains'],
+    [Metric.LONG_TERM_CAPITAL_GAIN_TAX]:  ['Long-term capital gains tax', null],
+    [Metric.NIIT]:                        ['Net investment income tax', null],
+    [Metric.SOCIAL_SECURITY_TAX]:         ['FICA', 'Social Security'],
+    [Metric.MEDICARE_TAX]:                ['FICA', 'Medicare'],
+    [Metric.PROPERTY_TAX]:                ['Property tax', 'account'],
+});
+
+/**
+ * The Taxes figure as a list, grouped by kind across accounts, except property
+ * tax, which is by property. Signed, like the row: a refund is positive.
+ *
+ * Taxes are what was paid in the window, so a January holds the previous
+ * year's true-up and NIIT; `settlement` names them for a note.
+ */
+export function taxesAsShown(summary) {
+    const view = groupsAsShown(summary.taxItems, (it) => {
+        const [heading, line] = TAX_LINE[it.metric] ?? ['Other tax', MetricLabel[it.metric]];
+        return { heading, label: line === 'account' ? it.account : line };
+    });
+    return { ...view, settlement: summary.settlement };
+}
+
+/**
+ * Items into groups in whole dollars that add up: each line rounded, each group
+ * the sum of its lines, the total the sum of the groups. Items that share a
+ * group and line are added before rounding, so withholding from three accounts
+ * is one line. Largest first; a line that rounds to $0 adds nothing and is left
+ * out.
+ *
+ * @returns {{groups: Array<{heading, total, items: Array<{label, amount}>}>, total: number}}
+ */
+function groupsAsShown(items, place) {
+    const groups = new Map();
+    for (const it of items) {
+        const { heading, label } = place(it);
+        const lines = groups.get(heading) ?? new Map();
+        lines.set(label, (lines.get(label) ?? 0) + it.amount);
+        groups.set(heading, lines);
+    }
+    const bySize = (a, b) => Math.abs(b) - Math.abs(a);
+    const shown = [...groups].map(([heading, lines]) => {
+        const items = [...lines]
+            .map(([label, amount]) => ({ label, amount: wholeDollars(amount) }))
+            .filter((it) => it.amount !== 0)
+            .sort((a, b) => bySize(a.amount, b.amount));
+        return { heading, items, total: items.reduce((t, it) => t + it.amount, 0) };
+    })
+        .filter((g) => g.items.length)
+        .sort((a, b) => bySize(a.total, b.total));
+    return { groups: shown, total: shown.reduce((t, g) => t + g.total, 0) };
 }
 
 /**

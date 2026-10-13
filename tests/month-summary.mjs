@@ -52,12 +52,14 @@ const G = await import('../js/globals.js');
 const { Portfolio } = await import('../js/portfolio.js');
 const { chronometer_run } = await import('../js/chronometer.js');
 const { quickStartProfiles, buildQuickStart } = await import('../js/quick-start.js');
-const { Metric } = await import('../js/metric.js');
+const metricModule = await import('../js/metric.js');
+const { Metric } = metricModule;
 const { DateInt } = await import('../js/utils/date-int.js');
 const { expenditureOverWindow } = await import('../js/annual-expenditure.js');
 const { formatCurrency } = await import('../js/utils/html.js');
 const { monthSummary, yearSummary, metricAtIndex, lastHistoryIndex, zeroTaxWasWithheld,
-        wholeDollars, headlineAsShown, drawnAsShown } = await import('../js/month-summary.js');
+        wholeDollars, headlineAsShown, drawnAsShown, incomeAsShown, expensesAsShown, taxesAsShown, settlementParts } = await import('../js/month-summary.js');
+const behaviorModule = await import('../js/instruments/instrument-behavior.js');
 const { formatSignedCurrency } = await import('../js/utils/html.js');
 const { readFileSync } = await import('node:fs');
 const { generateMonthDetailsSectionMarkdown, generatePortfolioSectionMarkdown } =
@@ -123,6 +125,8 @@ const hintOn = zeroTaxWasWithheld;
 const mid = await runProfile('midCareer');
 const early = await runProfile('earlyCareer');
 const house = await runFixture('housing-carrying-costs');
+const dividends = await runFixture('dividends-caps-and-windfalls');
+const bonds = await runFixture('rebalance-drawdown-and-conversion');
 
 // ── the month figures ────────────────────────────────────────────────
 
@@ -401,9 +405,11 @@ test('wholeDollars rounds exactly as the display does, halves and signs included
     }
 });
 
-// Every month and year of two plans: one working, mortgaged; one with a shortfall.
+// Every month and year of four plans: one working and mortgaged, one with a
+// shortfall, one whose brokerage pays both kinds of dividend, and one with
+// bonds that pay interest.
 const windows = [];
-for (const p of [mid, early]) {
+for (const p of [mid, early, dividends, bonds]) {
     const f = p.firstDateInt;
     for (let i = 0; i <= lastHistoryIndex(p); i++) {
         const d = DateInt.from(f.year, f.month); d.addMonths(i);
@@ -419,8 +425,10 @@ test('the four headline figures add up as shown, in every month and year', () =>
         const [inc, exp, tax, cf] = [h.income, h.expense, h.taxes, h.cashFlow].map((v) => shown(formatSignedCurrency(v)));
         assert.equal(inc + exp + tax, cf, `${inc} ${exp} ${tax} shown, cash flow ${cf}`);
         // Each figure is still its own amount, rounded; cash flow stays within the parts' rounding.
-        assert.equal(inc, shown(formatSignedCurrency(s.income)));
-        assert.ok(Math.abs(h.cashFlow - s.cashFlow) <= 1.5, `cash flow ${h.cashFlow} vs ${s.cashFlow}`);
+        // Within half a dollar for each rounded line behind it.
+        const lines = [incomeAsShown(s), expensesAsShown(s), taxesAsShown(s)]
+            .reduce((n, v) => n + v.groups.reduce((m, g) => m + g.items.length, 0), 0);
+        assert.ok(Math.abs(h.cashFlow - s.cashFlow) <= 0.5 * lines + 1e-9, `cash flow ${h.cashFlow} vs ${s.cashFlow}, ${lines} lines`);
         if (wholeDollars(s.cashFlow) !== h.cashFlow) headlineWouldMiss++;
     }
 });
@@ -455,9 +463,106 @@ test('the ⚡ summary\'s tables add up as shown', () => {
     const [inc, exp, tax, cf] = ['Income received', 'Expenses', 'Taxes paid', 'Cash flow'].map(row);
     for (const col of [0, 1]) assert.equal(inc[col] + exp[col] + tax[col], cf[col], `column ${col}`);
     const lines = md.split('## Withdrawn')[1].split('\n## ')[0].split('\n').filter((l) => l.startsWith('| ') && !/Obligation|:---|Total|Could not/.test(l));
-    const total = row('**Total**');
+    // The Total row of the withdrawals table, not the first Total in the summary.
+    const totalLine = md.split('## Withdrawn')[1].split('\n').find((l) => l.startsWith('| **Total** |'));
+    const total = totalLine.split('|').slice(2, 4).map((c) => shown(c.trim().replace(/\*/g, '')));
     for (const col of [0, 1]) {
         assert.equal(lines.reduce((t, l) => t + shown(l.split('|')[2 + col].trim()), 0), total[col], `withdrawals column ${col}`);
+    }
+});
+
+// ── the Expenses and Taxes lists ─────────────────────────────────────
+
+console.log('\n── Expenses and Taxes open into lists that add up ──\n');
+
+const reachedList = { mortgageSplit: 0, propertyTax: 0, settlementNote: 0, roundingMatters: 0,
+    incomeAccountSplit: 0, withdrawalsNotCounted: 0, interest: 0 };
+
+test('each list adds up as shown, lines to groups to the figure in the row', () => {
+    for (const { s } of windows) {
+        const h = headlineAsShown(s);
+        for (const [view, figure, what, raw] of [[incomeAsShown(s), h.income, 'income', s.income],
+                [expensesAsShown(s), h.expense, 'expenses', s.expense], [taxesAsShown(s), h.taxes, 'taxes', s.taxes]]) {
+            for (const g of view.groups) {
+                assert.equal(g.items.reduce((t, it) => t + shown(formatSignedCurrency(it.amount)), 0),
+                    shown(formatSignedCurrency(g.total)), `${what} group ${g.heading}`);
+            }
+            assert.equal(view.groups.reduce((t, g) => t + shown(formatSignedCurrency(g.total)), 0),
+                shown(formatSignedCurrency(view.total)), `${what} groups`);
+            assert.equal(view.total, figure, `${what}: the list ends on ${view.total}, the row shows ${figure}`);
+            if (view.total !== wholeDollars(raw)) reachedList.roundingMatters++;
+        }
+        const ex = expensesAsShown(s);
+        if (ex.groups.some((g) => g.items.some((it) => it.label === 'Interest') && g.items.some((it) => it.label === 'Principal'))) reachedList.mortgageSplit++;
+        if (taxesAsShown(s).groups.some((g) => g.heading === 'Property tax')) reachedList.propertyTax++;
+    }
+});
+
+test('the lists are the whole figure: their parts sum to Expenses and Taxes', () => {
+    for (const { s } of windows) {
+        // Each stored history value is rounded to the cent, parts and rollup alike.
+        const tol = 0.02 * (s.months ?? 1);
+        near(s.expenseItems.reduce((t, it) => t + it.amount, 0), s.expense, 'expense parts', tol);
+        near(s.taxItems.reduce((t, it) => t + it.amount, 0), s.taxes, 'tax parts', tol);
+        near(s.incomeItems.reduce((t, it) => t + it.amount, 0), s.income, 'income parts', tol);
+        const inc = incomeAsShown(s);
+        if (inc.groups.some((g) => g.items.length > 1)) reachedList.incomeAccountSplit++;
+        if (inc.notCounted > 0) reachedList.withdrawalsNotCounted++;
+        if (s.incomeItems.some((it) => it.metric === Metric.INTEREST_INCOME && Math.abs(it.amount) >= 1)) reachedList.interest++;
+        assert.equal(inc.notCounted, wholeDollars(s.totalIncome - s.income), 'not counted');
+    }
+});
+
+test('every expense and every tax the engine books has a named place in its list', () => {
+    const { LEAF_TAX_METRICS, LEAF_EXPENSE_METRICS } = metricModule;
+    for (const metric of LEAF_TAX_METRICS) {
+        const v = taxesAsShown({ taxItems: [{ account: 'Home', metric, amount: -100 }], settlement: null });
+        assert.notEqual(v.groups[0].heading, 'Other tax', `${metric} falls into Other tax`);
+    }
+    const { RECEIVED_INCOME_METRICS } = behaviorModule;
+    for (const metric of RECEIVED_INCOME_METRICS) {
+        const v = incomeAsShown({ incomeItems: [{ account: 'Brokerage', metric, amount: 100 }], income: 100, totalIncome: 100 });
+        assert.notEqual(v.groups[0].items[0].label, undefined, `${metric} has no line name`);
+    }
+    for (const metric of [...LEAF_EXPENSE_METRICS, Metric.MORTGAGE_PRINCIPAL]) {
+        const v = expensesAsShown({ expenseItems: [{ account: 'Mortgage', metric, amount: -100 }] });
+        assert.notEqual(v.groups[0].items[0].label, undefined, `${metric} has no line name`);
+    }
+});
+
+test('a window with a January notes the settlement of the year before it', () => {
+    for (const { plan, date, s } of windows) {
+        const year = date ? date.year : s.year;
+        const hasJanuary = date ? date.month === 1 : s.firstMonth === 1;
+        const prior = plan.taxYears.find((t) => t.year === year - 1);
+        const st = taxesAsShown(s).settlement;
+        if (hasJanuary && prior) {
+            assert.deepEqual(st, { year: year - 1, parts: settlementParts(prior) }, `${year}`);
+            if (st.parts.length) reachedList.settlementNote++;
+        } else {
+            assert.equal(st, null, `${year}${date ? '-' + date.month : ''} has no January settlement`);
+        }
+    }
+});
+
+test('the windows reach split accounts, property tax, a settlement, withdrawals not counted and rounding that matters', () => {
+    for (const [what, n] of Object.entries(reachedList)) assert.ok(n > 0, `nothing reaches ${what}`);
+});
+
+test('the ⚡ summary lists Income received, Expenses and Taxes, each adding up to the row', () => {
+    const md = generateMonthDetailsSectionMarkdown(mid, 2030, 6);
+    const table = (heading) => {
+        const body = md.split(`## ${heading}\n`)[1].split('\n\n')[0].split('\n').filter((l) => l.startsWith('| ') && !/:---/.test(l));
+        const cells = (l) => l.split('|').slice(2, 4).map((c) => shown(c.trim().replace(/\*/g, '')));
+        return { lines: body.slice(1, -1).map(cells), total: cells(body[body.length - 1]) };
+    };
+    const main = (label) => md.split('\n').find((l) => l.startsWith(`| ${label} |`)).split('|').slice(2, 4).map((c) => shown(c.trim()));
+    for (const [heading, row] of [['Income received', 'Income received'], ['Expenses', 'Expenses'], ['Taxes paid', 'Taxes paid']]) {
+        const t = table(heading);
+        for (const col of [0, 1]) {
+            assert.equal(t.lines.reduce((sum, l) => sum + l[col], 0), t.total[col], `${heading} column ${col}`);
+            assert.equal(t.total[col], main(row)[col], `${heading} total vs the ${row} row, column ${col}`);
+        }
     }
 });
 
@@ -466,6 +571,9 @@ test('the section renders the reconciled figures, not the raw ones', () => {
     const src = readFileSync('js/components/month-details.js', 'utf8');
     assert.match(src, /headlineAsShown\(s\)/, 'the row does not use headlineAsShown');
     assert.match(src, /drawnAsShown\(s\.drawn\)/, 'the withdrawals do not use drawnAsShown');
+    assert.match(src, /expensesAsShown\(s\)/, 'the expenses do not use expensesAsShown');
+    assert.match(src, /taxesAsShown\(s\)/, 'the taxes do not use taxesAsShown');
+    assert.match(src, /incomeAsShown\(s\)/, 'the income does not use incomeAsShown');
     assert.doesNotMatch(src, /formatSignedCurrency\(s\.(income|expense|taxes|cashFlow)\)/, 'a headline figure is formatted raw');
 });
 

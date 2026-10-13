@@ -8,8 +8,11 @@
  *   Income received · Expenses · Taxes ·    first, and they reconcile: cash
  *   Cash flow                               flow is income less the other two
  *   Withdrawn                               what left the accounts to meet
- *                                           obligations; click it for the list
+ *                                           obligations
  *   Asset growth · Net worth                net worth is a balance, not a sum
+ *
+ * Income received, Expenses, Taxes and Withdrawn are buttons: each opens the
+ * list behind its figure, in whole dollars that add up to it.
  *
  * Under them, the tax year: what the year's income owed, AGI, MAGI and the two
  * effective rates, from the year's TaxYear record.
@@ -23,7 +26,7 @@
 import { LitElement, html, nothing } from 'lit';
 import {
     monthSummary, yearSummary, zeroTaxWasWithheld, yearSpan, magiLines, settlementParts,
-    headlineAsShown, drawnAsShown,
+    headlineAsShown, drawnAsShown, incomeAsShown, expensesAsShown, taxesAsShown,
 } from '../month-summary.js';
 import { formatCurrency, formatSignedCurrency } from '../utils/html.js';
 import { MONTH_NAMES } from '../utils/date-int.js';
@@ -37,7 +40,7 @@ export class MonthDetails extends LitElement {
         portfolio:     { attribute: false },
         selectedYear:  { type: Number },
         selectedMonth: { type: Number },
-        /** Which row's withdrawals list is open: 'month', 'year' or null. */
+        /** Which list is open, as "row:figure" ('year:taxes'), or null. */
         _open:         { state: true },
     };
 
@@ -116,19 +119,29 @@ export class MonthDetails extends LitElement {
     }
 
     _row(key, title, span, s) {
-        // Whole dollars that add up: cash flow is the sum of the three beside it.
+        // Whole dollars that add up: cash flow is the sum of the three beside
+        // it, and each list ends on the figure it was opened from.
         const h = headlineAsShown(s);
+        const income = incomeAsShown(s);
+        const expenses = expensesAsShown(s);
+        const taxes = taxesAsShown(s);
+        const drawn = drawnAsShown(s.drawn);
         return html`
             <div class="md-row" role="row">
                 <div class="md-rowhead" role="rowheader">
                     <div class="md-rowtitle">${title}</div>
                     <div class="md-sub">${span}</div>
                 </div>
-                ${cell('Income received', formatSignedCurrency(h.income))}
-                ${cell('Expenses', formatSignedCurrency(h.expense))}
-                ${cell('Taxes', formatSignedCurrency(h.taxes))}
+                ${this._listCell(`${key}:income`, 'Income received', formatSignedCurrency(h.income), nothing,
+                    () => this._list('Income received', title, income, formatSignedCurrency, incomeNotes(income)))}
+                ${this._listCell(`${key}:expenses`, 'Expenses', formatSignedCurrency(h.expense), nothing,
+                    () => this._list('Expenses', title, expenses, formatSignedCurrency, expenseNotes(expenses)))}
+                ${this._listCell(`${key}:taxes`, 'Taxes', formatSignedCurrency(h.taxes), nothing,
+                    () => this._list('Taxes paid', title, taxes, formatSignedCurrency, taxNotes(taxes)))}
                 ${cell('Cash flow', formatSignedCurrency(h.cashFlow), tone(h.cashFlow))}
-                ${this._withdrawn(key, title, s)}
+                ${this._listCell(`${key}:withdrawn`, 'Withdrawn', formatCurrency(drawn.total),
+                    drawn.unfunded > 0 ? html`<div class="md-hint md-neg">${formatCurrency(drawn.unfunded)} unfunded</div>` : nothing,
+                    () => this._list('Withdrawn to meet obligations', title, drawnView(drawn), formatCurrency, drawnNotes(s, drawn)))}
                 ${cell('Asset growth', formatSignedCurrency(s.growth), tone(s.growth))}
                 <div class="md-cell" role="cell">
                     <div class="md-label">Net worth</div>
@@ -139,47 +152,40 @@ export class MonthDetails extends LitElement {
             </div>`;
     }
 
-    /** The total, as a button that opens the list of obligations it paid. */
-    _withdrawn(key, title, s) {
-        const d = drawnAsShown(s.drawn);
-        const open = this._open === key;
+    /** A figure as a button that opens the list behind it. */
+    _listCell(id, label, value, below, list) {
+        const open = this._open === id;
         return html`
             <div class="md-cell md-pop-anchor" role="cell">
-                <div class="md-label">Withdrawn</div>
-                <button class="md-drawn-btn" aria-haspopup="dialog" aria-expanded=${open ? 'true' : 'false'}
-                        title="Withdrawn from your accounts to meet obligations. Click for the list."
-                        @click=${() => { this._open = open ? null : key; }}>
-                    ${formatCurrency(d.total)}<span class="md-caret" aria-hidden="true">▾</span>
+                <div class="md-label">${label}</div>
+                <button class="md-pop-btn" aria-haspopup="dialog" aria-expanded=${open ? 'true' : 'false'}
+                        title="${label}: click for the list"
+                        @click=${() => { this._open = open ? null : id; }}>
+                    ${value}<span class="md-caret" aria-hidden="true">▾</span>
                 </button>
-                ${d.unfunded > 0 ? html`<div class="md-hint md-neg">${formatCurrency(d.unfunded)} unfunded</div>` : nothing}
-                ${open ? this._obligations(title, s, d) : nothing}
+                ${below}
+                ${open ? list() : nothing}
             </div>`;
     }
 
-    /** The list, in whole dollars that add up: lines to groups to the total. */
-    _obligations(title, s, d) {
-        const group = (heading, { items, total }) => {
-            if (!items.length) return nothing;
-            return html`
-                <div class="md-pop-row md-pop-group"><span>${heading}</span><span>${formatCurrency(total)}</span></div>
-                ${items.map((it) => html`
-                    <div class="md-pop-row md-pop-item"><span>${it.label}</span><span>${formatCurrency(it.amount)}</span></div>`)}`;
-        };
+    /**
+     * A list in whole dollars that add up: lines to groups to the total. A
+     * group of one line is one row; a group marked `list` always shows its
+     * lines under its heading.
+     */
+    _list(title, subtitle, view, money, notes) {
+        const row = (cls, label, amount) =>
+            html`<div class="md-pop-row ${cls}"><span>${label}</span><span>${money(amount)}</span></div>`;
         return html`
-            <div class="md-pop" role="dialog" aria-label="Withdrawn to meet obligations, ${title}">
-                <div class="md-pop-title">Withdrawn to meet obligations</div>
-                <div class="md-sub">${title}</div>
-                ${group('Spending', d.spending)}
-                ${group('Tax', d.tax)}
-                <div class="md-pop-row md-pop-total"><span>Total</span><span>${formatCurrency(d.total)}</span></div>
-                ${d.unfunded > 0 ? html`
-                    <div class="md-pop-row md-neg"><span>Could not fund</span><span>${formatCurrency(d.unfunded)}</span></div>` : nothing}
-                ${zeroTaxWasWithheld(s) ? html`
-                    <div class="md-pop-note">No tax was withdrawn: the ${formatCurrency(s.withheldAtSource)} of tax
-                        paid was withheld at source, from a paycheck, a pension or Social Security, and never
-                        passed through an account.</div>` : nothing}
-                ${s.drawn.items.length === 0 && !(d.unfunded > 0) ? html`
-                    <div class="md-pop-note">Nothing was withdrawn to meet obligations.</div>` : nothing}
+            <div class="md-pop" role="dialog" aria-label="${title}, ${subtitle}">
+                <div class="md-pop-title">${title}</div>
+                <div class="md-sub">${subtitle}</div>
+                ${view.groups.map((g) => g.items.length === 1 && !g.list
+                    ? row('md-pop-group', g.items[0].label ? `${g.heading}: ${g.items[0].label}` : g.heading, g.total)
+                    : html`${row('md-pop-group', g.heading, g.total)}
+                        ${g.items.map((it) => row('md-pop-item', it.label, it.amount))}`)}
+                ${view.groups.length ? row('md-pop-total', 'Total', view.total) : nothing}
+                ${notes}
             </div>`;
     }
 
@@ -222,6 +228,51 @@ export class MonthDetails extends LitElement {
                 </div>
             </section>`;
     }
+}
+
+/** The withdrawals list in the shape _list draws: spending, then tax. */
+function drawnView(drawn) {
+    const groups = [
+        { heading: 'Spending', list: true, ...drawn.spending },
+        { heading: 'Tax', list: true, ...drawn.tax },
+    ].filter((g) => g.items.length);
+    return { groups, total: drawn.total };
+}
+
+function drawnNotes(s, drawn) {
+    return html`
+        ${drawn.unfunded > 0 ? html`
+            <div class="md-pop-row md-neg"><span>Could not fund</span><span>${formatCurrency(drawn.unfunded)}</span></div>` : nothing}
+        ${zeroTaxWasWithheld(s) ? html`
+            <div class="md-pop-note">No tax was withdrawn: the ${formatCurrency(s.withheldAtSource)} of tax
+                paid was withheld at source, from a paycheck, a pension or Social Security, and never
+                passed through an account.</div>` : nothing}
+        ${s.drawn.items.length === 0 && !(drawn.unfunded > 0) ? html`
+            <div class="md-pop-note">Nothing was withdrawn to meet obligations.</div>` : nothing}`;
+}
+
+function incomeNotes(view) {
+    return html`
+        ${view.groups.length ? nothing : html`<div class="md-pop-note">No income received.</div>`}
+        ${view.notCounted > 0 ? html`<div class="md-pop-note">Not counted: ${formatCurrency(view.notCounted)} of
+            withdrawals and realized gains from your own accounts. That is money you already had, so it
+            is not income here.</div>` : nothing}`;
+}
+
+function expenseNotes(view) {
+    const principal = view.groups.some((g) => g.items.some((it) => it.label === 'Principal'));
+    return html`
+        ${view.groups.length ? nothing : html`<div class="md-pop-note">No expenses.</div>`}
+        ${principal ? html`<div class="md-pop-note">Mortgage principal is counted: it is money paid out,
+            though not an accounting expense.</div>` : nothing}`;
+}
+
+function taxNotes(view) {
+    const st = view.settlement;
+    return html`
+        ${view.groups.length ? nothing : html`<div class="md-pop-note">No taxes paid.</div>`}
+        ${st && st.parts.length ? html`<div class="md-pop-note">Includes January’s settlement of ${st.year}:
+            ${st.parts.map((p) => `${formatCurrency(p.amount)} ${p.label}`).join(', ')}.</div>` : nothing}`;
 }
 
 function cell(label, value, cls = '', inTable = true) {
