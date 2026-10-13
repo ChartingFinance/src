@@ -24,7 +24,7 @@
   lastDate = 2061-12
   startValue = 650000.000000
   finishValue = 10581026.058107
-  accumulated = -163996.629713
+  accumulated = -493295.001979
   total.employedIncome = 985474.889976
   total.socialSecurityTax = -61099.443179
   total.socialSecurityIncome = 1209993.389849
@@ -1441,6 +1441,8 @@
   incomeTax                    n= 432 first=        0.000000 last=    -1791.030000 min=    -1791.030000 max=        0.000000 sum=    -249181.370000 #77f640eb
   federalTaxes                 n= 432 first=        0.000000 last=    -1791.030000 min=    -1791.030000 max=        0.000000 sum=    -249181.370000 #77f640eb
   taxes                        n= 432 first=        0.000000 last=    -1791.030000 min=    -1791.030000 max=        0.000000 sum=    -249181.370000 #77f640eb
+  cashFlow                     n= 432 first=        0.000000 last=    -1791.030000 min=    -1791.030000 max=        0.000000 sum=    -249181.370000 #77f640eb
+  cashFlowAccumulated          n= 432 first=        0.000000 last=  -249181.380000 min=  -249181.380000 max=        0.000000 sum=  -24174260.110000 #2c81611e
   rmd                          n= 432 first=        0.000000 last=    16119.270000 min=        0.000000 max=    16119.270000 sum=    2014401.120000 #0a9c1aed
   contribution                 n= 432 first=      750.000000 last=        0.000000 min=        0.000000 max=      896.320000 sum=      98547.360000 #2ff183d5
   preTaxContribution           n= 432 first=      750.000000 last=        0.000000 min=        0.000000 max=      896.320000 sum=      98547.360000 #2ff183d5
@@ -3793,8 +3795,8 @@
   incomeTax                    n= 432 first=        0.000000 last=    -1625.180000 min=    -2448.970000 max=     1603.370000 sum=    -163996.520000 #8c55c8e2
   federalTaxes                 n= 432 first=        0.000000 last=    -1625.180000 min=    -2657.670000 max=     1603.370000 sum=    -165365.820000 #f04a7179
   taxes                        n= 432 first=        0.000000 last=    -1625.180000 min=    -2657.670000 max=     1603.370000 sum=    -165365.820000 #f04a7179
-  cashFlow                     n= 432 first=        0.000000 last=    -1625.180000 min=    -2448.970000 max=     1603.370000 sum=    -163996.520000 #8c55c8e2
-  cashFlowAccumulated          n= 432 first=        0.000000 last=  -163996.630000 min=  -163996.630000 max=    14560.710000 sum=   -9051692.570000 #9c7b27a1
+  cashFlow                     n= 432 first=        0.000000 last=    -1625.180000 min=    -2657.670000 max=     1603.370000 sum=    -165365.820000 #f04a7179
+  cashFlowAccumulated          n= 432 first=        0.000000 last=  -165365.930000 min=  -165365.930000 max=    14560.710000 sum=   -9124425.000000 #0f244a1a
   longTermCapitalGain          n= 432 first=        0.000000 last=      555.200000 min=        0.000000 max=      555.200000 sum=      57583.890000 #34064990
   capitalGain                  n= 432 first=        0.000000 last=      555.200000 min=        0.000000 max=      555.200000 sum=      57583.890000 #34064990
 
@@ -4636,6 +4638,8 @@
   incomeTax                    n= 432 first=        0.000000 last=     -630.570000 min=     -630.570000 max=        0.000000 sum=     -78747.720000 #dac62155
   federalTaxes                 n= 432 first=        0.000000 last=     -630.570000 min=     -630.570000 max=        0.000000 sum=     -78747.720000 #dac62155
   taxes                        n= 432 first=        0.000000 last=     -630.570000 min=     -630.570000 max=        0.000000 sum=     -78747.720000 #dac62155
+  cashFlow                     n= 432 first=        0.000000 last=     -630.570000 min=     -630.570000 max=        0.000000 sum=     -78747.720000 #dac62155
+  cashFlowAccumulated          n= 432 first=        0.000000 last=   -78747.700000 min=   -78747.700000 max=        0.000000 sum=   -6277588.760000 #d7432d41
   rmd                          n= 432 first=        0.000000 last=     5675.170000 min=        0.000000 max=     5675.170000 sum=     708729.240000 #908bf615
   taxableDistribution          n= 432 first=        0.000000 last=     6305.740000 min=        0.000000 max=     6305.740000 sum=     787476.960000 #4d3cd685
   tradIRADistribution          n= 432 first=        0.000000 last=     6305.740000 min=        0.000000 max=     6305.740000 sum=     787476.960000 #4d3cd685

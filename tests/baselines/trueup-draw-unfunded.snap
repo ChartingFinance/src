@@ -38,7 +38,7 @@
   lastDate = 2027-12
   startValue = 304000.000000
   finishValue = 235865.750000
-  accumulated = 5635.000000
+  accumulated = -68134.250000
   total.incomeTax = -76769.250000
   total.four01KDistribution = 300000.000000
   total.rothConversion = 226230.750000
@@ -80,6 +80,8 @@
   incomeTax                    n=  24 first=        0.000000 last=        0.000000 min=   -73769.250000 max=        0.000000 sum=     -73769.250000 #58de6777
   federalTaxes                 n=  24 first=        0.000000 last=        0.000000 min=   -73769.250000 max=        0.000000 sum=     -73769.250000 #58de6777
   taxes                        n=  24 first=        0.000000 last=        0.000000 min=   -73769.250000 max=        0.000000 sum=     -73769.250000 #58de6777
+  cashFlow                     n=  24 first=        0.000000 last=        0.000000 min=   -73769.250000 max=        0.000000 sum=     -73769.250000 #58de6777
+  cashFlowAccumulated          n=  24 first=        0.000000 last=   -73769.250000 min=   -73769.250000 max=        0.000000 sum=   -1327846.500000 #e8747a41
   taxableDistribution          n=  24 first=        0.000000 last=        0.000000 min=        0.000000 max=   300000.000000 sum=     300000.000000 #6da1b0f6
   four01KDistribution          n=  24 first=        0.000000 last=        0.000000 min=        0.000000 max=   300000.000000 sum=     300000.000000 #6da1b0f6
 

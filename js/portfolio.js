@@ -1,5 +1,6 @@
 import { Currency } from './utils/currency.js';
 import { InstrumentType } from './instruments/instrument.js';
+import { computeCashFlow } from './instruments/instrument-behavior.js';
 import { MonthsSpan } from './utils/months-span.js';
 import { logger, LogCategory } from './utils/logger.js';
 import { ModelLifeEvent } from './life-event.js';
@@ -512,12 +513,11 @@ export class Portfolio {
     }
 
     computePerAssetCashFlow() {
+        // Closed assets too: an asset that closed this month can still have
+        // booked its last flows, such as the tax on a sale. After that month
+        // nothing is booked on it, so its cash flow is zero by itself.
         for (let modelAsset of this.modelAssets) {
-            if (modelAsset.isClosed) {
-                modelAsset.cashFlowCurrency = Currency.zero();
-            } else {
-                modelAsset.cashFlowCurrency = modelAsset.behavior.computeCashFlow(modelAsset);
-            }
+            modelAsset.cashFlowCurrency = computeCashFlow(modelAsset);
         }
     }
 

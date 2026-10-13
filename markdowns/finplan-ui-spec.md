@@ -87,7 +87,7 @@ Side-by-side in a flex row with `gap: 32px` and fixed height (360px).
 
 ### Month & Year Details (full-width, directly under the timeline)
 `<month-details>`, driven by the timeline cursor. Two rows over the same columns: the cursor's month and its calendar year. The year is its months added up (`yearSummary` in `month-summary.js`), so each column means the same thing in both rows.
-- Columns: Income · Expenses · Taxes · Cash flow (headline; cash flow = income − expenses − taxes) · Withdrawn · Asset growth · Net worth (a balance: the year shows its end and its change).
+- Columns: Income received · Expenses · Taxes · Cash flow (headline; cash flow = income received − expenses − taxes, the one definition `Metric.CASH_FLOW` and Reports use too) · Withdrawn · Asset growth · Net worth (a balance: the year shows its end and its change). Income received excludes withdrawals from the household's own accounts; Expenses include mortgage principal.
 - **Withdrawn** opens a popup listing the obligations it paid, with amounts (`drawn.items`).
 - **Tax year** strip under the rows, from the year's `TaxYear`: federal taxes owed (with what January settled), AGI, MAGI, effective rate on income, effective rate on AGI. None for a year the plan never settled.
 - Stacks below a 760px card (container query).

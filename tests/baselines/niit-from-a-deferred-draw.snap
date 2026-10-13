@@ -34,7 +34,7 @@
   lastDate = 2030-12
   startValue = 2640000.000000
   finishValue = 2709724.331831
-  accumulated = -21394.501676
+  accumulated = -144258.750841
   total.assetAppreciation = 606722.964010
   total.expense = -388434.827960
   total.incomeTax = -242504.811542
@@ -438,8 +438,8 @@
   incomeTax                    n=  60 first=        0.000000 last=    -1334.970000 min=    -4245.850000 max=        0.000000 sum=    -118950.030000 #56234cf8
   federalTaxes                 n=  60 first=        0.000000 last=    -1334.970000 min=    -5240.970000 max=        0.000000 sum=    -121971.450000 #dc657b14
   taxes                        n=  60 first=        0.000000 last=    -1334.970000 min=    -5240.970000 max=        0.000000 sum=    -121971.450000 #dc657b14
-  cashFlow                     n=  60 first=      882.040000 last=     1323.570000 min=    -2620.580000 max=     1323.570000 sum=      -9333.940000 #17444456
-  cashFlowAccumulated          n=  60 first=      882.040000 last=    -9333.920000 min=   -26007.530000 max=     3830.300000 sum=    -981599.530000 #371f6728
+  cashFlow                     n=  60 first=      882.040000 last=     1323.570000 min=    -3127.210000 max=     1323.570000 sum=     -12355.350000 #f1c439cc
+  cashFlowAccumulated          n=  60 first=      882.040000 last=   -12355.330000 min=   -28033.820000 max=     3830.300000 sum=   -1062485.550000 #852313db
 
 [asset] Checking
   instrument = bank
@@ -734,6 +734,8 @@
   incomeTax                    n=  60 first=    -2444.440000 last=    -1607.610000 min=    -2444.440000 max=    -1607.610000 sum=    -119842.850000 #0d4cca5f
   federalTaxes                 n=  60 first=    -2444.440000 last=    -1607.610000 min=    -2444.440000 max=    -1607.610000 sum=    -119842.850000 #0d4cca5f
   taxes                        n=  60 first=    -2444.440000 last=    -1607.610000 min=    -2444.440000 max=    -1607.610000 sum=    -119842.850000 #0d4cca5f
+  cashFlow                     n=  60 first=    -2444.440000 last=    -1607.610000 min=    -2444.440000 max=    -1607.610000 sum=    -119842.850000 #0d4cca5f
+  cashFlowAccumulated          n=  60 first=    -2444.440000 last=  -119842.840000 min=  -119842.840000 max=    -2444.440000 sum=   -3909735.220000 #b1441643
   rmd                          n=  60 first=        0.000000 last=     5092.530000 min=        0.000000 max=     5357.280000 sum=     125397.720000 #1ffdaab5
   taxableDistribution          n=  60 first=    24444.440000 last=    16076.080000 min=    16076.080000 max=    24444.440000 sum=    1198428.360000 #9584ef38
   tradIRADistribution          n=  60 first=    24444.440000 last=    16076.080000 min=    16076.080000 max=    24444.440000 sum=    1198428.360000 #9584ef38

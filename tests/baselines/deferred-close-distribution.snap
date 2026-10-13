@@ -37,7 +37,7 @@
   lastDate = 2030-12
   startValue = 760000.000000
   finishValue = 651807.709250
-  accumulated = -4908.908198
+  accumulated = -270794.527225
   total.employedIncome = 540000.000000
   total.socialSecurityTax = -33480.000000
   total.assetAppreciation = 130348.846631
@@ -122,6 +122,8 @@
   incomeTax                    n=  60 first=        0.000000 last=        0.000000 min=   -90326.150000 max=        0.000000 sum=     -90326.150000 #b06efc5c
   federalTaxes                 n=  60 first=        0.000000 last=        0.000000 min=   -90326.150000 max=        0.000000 sum=     -90326.150000 #b06efc5c
   taxes                        n=  60 first=        0.000000 last=        0.000000 min=   -90326.150000 max=        0.000000 sum=     -90326.150000 #b06efc5c
+  cashFlow                     n=  60 first=        0.000000 last=        0.000000 min=   -90326.150000 max=        0.000000 sum=     -90326.150000 #b06efc5c
+  cashFlowAccumulated          n=  60 first=        0.000000 last=   -90326.150000 min=   -90326.150000 max=        0.000000 sum=   -1625870.700000 #b7d427d5
   taxableDistribution          n=  60 first=        0.000000 last=        0.000000 min=        0.000000 max=   355863.790000 sum=     355863.790000 #a55729fd
   four01KDistribution          n=  60 first=        0.000000 last=        0.000000 min=        0.000000 max=   355863.790000 sum=     355863.790000 #a55729fd
 
@@ -396,6 +398,8 @@
   incomeTax                    n=  60 first=        0.000000 last=        0.000000 min=  -175559.470000 max=        0.000000 sum=    -175559.470000 #2cceebb5
   federalTaxes                 n=  60 first=        0.000000 last=        0.000000 min=  -175559.470000 max=        0.000000 sum=    -175559.470000 #2cceebb5
   taxes                        n=  60 first=        0.000000 last=        0.000000 min=  -175559.470000 max=        0.000000 sum=    -175559.470000 #2cceebb5
+  cashFlow                     n=  60 first=        0.000000 last=        0.000000 min=  -175559.470000 max=        0.000000 sum=    -175559.470000 #2cceebb5
+  cashFlowAccumulated          n=  60 first=        0.000000 last=  -175559.470000 min=  -175559.470000 max=        0.000000 sum=   -3160070.460000 #70622fa5
   taxableDistribution          n=  60 first=        0.000000 last=        0.000000 min=        0.000000 max=   474485.060000 sum=     474485.060000 #e68afbf7
   tradIRADistribution          n=  60 first=        0.000000 last=        0.000000 min=        0.000000 max=   474485.060000 sum=     474485.060000 #e68afbf7
 

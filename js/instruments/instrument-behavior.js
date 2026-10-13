@@ -4,7 +4,9 @@
  * Strategy objects for each instrument family. Each behavior defines:
  *   - relevantMetrics()  — which metrics this instrument actually uses
  *   - applyMonthly(asset) — the month's simulation step
- *   - computeCashFlow(asset) — the asset's cash flow for the month
+ *
+ * An asset's cash flow is not per-behavior: computeCashFlow() below is one rule
+ * for every instrument.
  *
  * ModelAsset delegates to its behavior instead of branching on instrument type.
  */
@@ -100,17 +102,6 @@ const WorkingIncomeBehavior = Object.freeze({
       ? new IncomeResult(income, Currency.zero())
       : new IncomeResult(Currency.zero(), income);
   },
-
-  computeCashFlow(asset) {
-    const cf = asset.incomeCurrency.copy();
-    // All four are stored negative (money out), so cash flow just adds them.
-    cf.add(asset.socialSecurityTaxCurrency);
-    cf.add(asset.medicareTaxCurrency);
-    cf.add(asset.withheldIncomeTaxCurrency);
-    cf.add(asset.estimatedIncomeTaxCurrency);
-    // Contributions are internal transfers (salary → 401K), not household cash flow
-    return cf;
-  },
 });
 
 const RetirementIncomeBehavior = Object.freeze({
@@ -136,10 +127,6 @@ const RetirementIncomeBehavior = Object.freeze({
 
     return new RetirementIncomeResult(income, Currency.zero());
   },
-
-  computeCashFlow(asset) {
-    return asset.incomeCurrency.copy();
-  },
 });
 
 const PensionBehavior = Object.freeze({
@@ -164,10 +151,6 @@ const PensionBehavior = Object.freeze({
     asset.netIncomeCurrency.add(income);
 
     return new RetirementIncomeResult(Currency.zero(), income);
-  },
-
-  computeCashFlow(asset) {
-    return asset.incomeCurrency.copy();
   },
 });
 
@@ -195,10 +178,6 @@ const ExpenseBehavior = Object.freeze({
     }
 
     return new ExpenseResult(expense, asset.finishCurrency.copy());
-  },
-
-  computeCashFlow(asset) {
-    return asset.expenseCurrency.copy();
   },
 });
 
@@ -248,14 +227,6 @@ const MortgageBehavior = Object.freeze({
     asset.recordEvent(EventType.MORTGAGE_INTEREST, interest, { metric: M.MORTGAGE_INTEREST });
 
     return new MortgageResult(principal, interest, Currency.zero());
-  },
-
-  computeCashFlow(asset) {
-    
-    let cf = asset.mortgageInterestCurrency.copy();
-    cf.add(asset.mortgagePrincipalCurrency);
-    return cf;
-
   },
 });
 
@@ -336,16 +307,6 @@ const CapitalBehavior = Object.freeze({
 
     return new AssetAppreciationResult(asset.finishCurrency.copy(), growth, qualifiedDiv, nonQualifiedDiv);
   },
-
-  computeCashFlow(asset) {
-    // Dividends are household income. Gains and distributions are
-    // portfolio restructuring (asset drawdown), not household cash flow.
-    let cf = asset.qualifiedDividendCurrency.copy();
-    cf.add(asset.nonQualifiedDividendCurrency);
-    // Estimated income tax from monthly true-up (assigned to liquid assets)
-    cf.add(asset.estimatedIncomeTaxCurrency);
-    return cf;
-  },
 });
 
 const RealEstateBehavior = Object.freeze({
@@ -401,13 +362,6 @@ const RealEstateBehavior = Object.freeze({
     return new AssetAppreciationResult(asset.finishCurrency.copy(), growth, Currency.zero(), Currency.zero(), tax);
 
   },
-
-  computeCashFlow(asset) {
-    const cf = asset.propertyTaxCurrency.copy();
-    cf.add(asset.maintenanceCurrency);
-    cf.add(asset.insuranceCurrency);
-    return cf;
-  },
 });
 
 const IncomeAccountBehavior = Object.freeze({
@@ -441,14 +395,39 @@ const IncomeAccountBehavior = Object.freeze({
 
     return new InterestResult(income);
   },
-
-  computeCashFlow(asset) {
-    let cf = asset.interestIncomeCurrency.copy();
-    // Estimated income tax from monthly true-up (assigned to liquid assets)
-    cf.add(asset.estimatedIncomeTaxCurrency);
-    return cf;
-  },
 });
+
+// ── Cash flow ───────────────────────────────────────────────────────────
+
+/**
+ * Income that came into the household from outside its own accounts. A
+ * distribution, a Roth withdrawal or a realized gain is not here: that is the
+ * household drawing on what it already had, which is not cash flow.
+ */
+export const RECEIVED_INCOME_METRICS = Object.freeze([
+  M.EMPLOYED_INCOME, M.SELF_INCOME, M.SOCIAL_SECURITY_INCOME, M.PENSION_INCOME,
+  M.INTEREST_INCOME, M.QUALIFIED_DIVIDEND, M.NON_QUALIFIED_DIVIDEND,
+]);
+
+/**
+ * An asset's cash flow for the month: income received, less expenses
+ * (living, mortgage interest, maintenance, insurance), mortgage principal and
+ * every tax booked on it. One rule for every instrument, the same one
+ * FinancialPackage.cashFlow() applies to the household, so the accounts add
+ * up to the Reports' Cash Flow and to the Month & Year Details section.
+ *
+ * Read from the month's metric amounts, which the DAG rolls up as they are
+ * written, so it must run before the month's snapshot zeroes them.
+ */
+export function computeCashFlow(asset) {
+  let cf = 0;
+  for (const metric of RECEIVED_INCOME_METRICS) cf += asset.getMetricAmount(metric);
+  // Expenses, principal and taxes are stored negative, so they simply add.
+  cf += asset.getMetricAmount(M.EXPENSE);
+  cf += asset.getMetricAmount(M.MORTGAGE_PRINCIPAL);
+  cf += asset.getMetricAmount(M.TAXES);
+  return new Currency(cf);
+}
 
 // ── Registry ────────────────────────────────────────────────────────────
 

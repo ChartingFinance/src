@@ -108,6 +108,9 @@ function rawSum(p, metric, idx) {
     return t;
 }
 
+const near = (got, want, what, tol = 0.005) =>
+    assert.ok(Math.abs(got - want) <= tol, `${what}: got ${got}, want ${want}`);
+
 const idxOf = (p, y, m) => DateInt.diffMonths(p.firstDateInt, DateInt.from(y, m));
 
 // The shipped rule, not a copy of it: a local re-implementation here would pass
@@ -122,7 +125,7 @@ const house = await runFixture('housing-carrying-costs');
 
 console.log('\n── The month figures are the asset histories, summed ──\n');
 
-let cashFlowDiffersFromMetric = 0;
+let withdrawalsLeftOut = 0, principalCounted = 0;
 
 for (const [y, m] of [[2030, 6], [2055, 6]]) {
     test(`midCareer ${y}-${String(m).padStart(2, '0')}: every month field matches an independent sum`, () => {
@@ -131,12 +134,20 @@ for (const [y, m] of [[2030, 6], [2055, 6]]) {
         assert.ok(s, 'month unexpectedly outside the run');
         assert.equal(s.index, idx);
         const fields = {
-            value: Metric.VALUE, income: Metric.INCOME, expense: Metric.EXPENSE,
-            taxes: Metric.TAXES, growth: Metric.GROWTH, netChange: Metric.NET_WORTH_CHANGE,
+            value: Metric.VALUE, taxes: Metric.TAXES, growth: Metric.GROWTH,
+            netChange: Metric.NET_WORTH_CHANGE,
         };
         for (const [field, metric] of Object.entries(fields)) {
             assert.equal(s[field], rawSum(mid, metric, idx), `${field} disagrees with ${metric}`);
         }
+        // Income received: the income leaves from outside the accounts, by name.
+        const received = [Metric.EMPLOYED_INCOME, Metric.SELF_INCOME, Metric.SOCIAL_SECURITY_INCOME,
+            Metric.PENSION_INCOME, Metric.INTEREST_INCOME, Metric.QUALIFIED_DIVIDEND, Metric.NON_QUALIFIED_DIVIDEND]
+            .reduce((t, metric) => t + rawSum(mid, metric, idx), 0);
+        near(s.income, received, 'income received', 1e-6);
+        near(s.expense, rawSum(mid, Metric.EXPENSE, idx) + rawSum(mid, Metric.MORTGAGE_PRINCIPAL, idx), 'expenses', 1e-6);
+        if (Math.abs(rawSum(mid, Metric.INCOME, idx) - received) > 1) withdrawalsLeftOut++;
+        if (Math.abs(rawSum(mid, Metric.MORTGAGE_PRINCIPAL, idx)) > 1) principalCounted++;
         // Not all zero — a summary of nothing would match a sum of nothing.
         assert.ok(s.value > 100000, `net worth ${s.value} is implausibly small`);
         assert.notEqual(s.income, 0);
@@ -145,14 +156,17 @@ for (const [y, m] of [[2030, 6], [2055, 6]]) {
     test(`midCareer ${y}-${String(m).padStart(2, '0')}: cash flow is income less expenses and taxes`, () => {
         const s = monthSummary(mid, y, m);
         const idx = idxOf(mid, y, m);
-        const want = rawSum(mid, Metric.INCOME, idx) + rawSum(mid, Metric.EXPENSE, idx) + rawSum(mid, Metric.TAXES, idx);
-        assert.ok(Math.abs(s.cashFlow - want) < 1e-6, `cash flow ${s.cashFlow}, want ${want}`);
-        if (Math.abs(rawSum(mid, Metric.CASH_FLOW, idx) - want) > 1) cashFlowDiffersFromMetric++;
+        near(s.cashFlow, s.income + s.expense + s.taxes, 'cash flow', 1e-6);
+        // The same rule the per-account metric applies, to the cent.
+        near(s.cashFlow, rawSum(mid, Metric.CASH_FLOW, idx), 'per-account Cash Flow', 0.05);
     });
 }
 
-test('the per-account CASH_FLOW metric differs somewhere, so reading it would fail', () => {
-    assert.ok(cashFlowDiffersFromMetric > 0, 'Metric.CASH_FLOW equals income less expenses and taxes in every month tested');
+test('the months tested leave withdrawals out of income and count mortgage principal', () => {
+    // Without both, income received could be the whole Income metric, and
+    // expenses could leave principal out, and the checks above would pass.
+    assert.ok(withdrawalsLeftOut > 0, 'no month tested had a withdrawal in its Income');
+    assert.ok(principalCounted > 0, 'no month tested paid mortgage principal');
 });
 
 test('the month\'s withdrawals are expenditureOverWindow over that month alone', () => {
@@ -192,9 +206,6 @@ function monthsOf(p, year) {
     for (let m = 1; m <= 12; m++) { const s = monthSummary(p, year, m); if (s) out.push(s); }
     return out;
 }
-
-const near = (got, want, what, tol = 0.005) =>
-    assert.ok(Math.abs(got - want) <= tol, `${what}: got ${got}, want ${want}`);
 
 for (const year of [firstYear, 2030, 2055, lastDate.year]) {
     test(`midCareer ${year}: each flow is the sum of its months, by the month's definition`, () => {
@@ -258,7 +269,10 @@ test('a settled year carries its TaxYear and both effective rates', () => {
     const t = mid.taxYears.find((r) => r.year === 2055);
     assert.equal(y.taxYear, t);
     assert.ok(t.federalTax > 0, 'nothing owed: the rates are vacuous');
-    near(y.effectiveRateOnIncome, t.federalTax / y.income, 'rate on income', 1e-12);
+    near(y.effectiveRateOnIncome, t.federalTax / y.totalIncome, 'rate on income', 1e-12);
+    // On total income, not income received: a retired year's tax is owed on
+    // its withdrawals too, and the two bases are far apart there.
+    assert.ok(y.totalIncome - y.income > 1000, 'income received equals total income: the base is untested');
     near(y.effectiveRateOnAGI, t.federalTax / t.agi, 'rate on AGI', 1e-12);
     assert.notEqual(y.effectiveRateOnIncome.toFixed(4), y.effectiveRateOnAGI.toFixed(4),
         'income and AGI are equal, so the two rates cannot be told apart');
@@ -350,7 +364,7 @@ test('retired year: the tax year in the order shown, and no withheld sentence', 
     const owed = md.indexOf(`| Federal taxes owed | ${usd(t.federalTax)} |`);
     const agi = md.indexOf(`| AGI | ${usd(t.agi)} |`);
     const magi = md.indexOf('| MAGI');
-    const onIncome = md.indexOf('| Effective rate on income |');
+    const onIncome = md.indexOf('| Effective rate on total income');
     const onAGI = md.indexOf('| Effective rate on AGI |');
     assert.ok(owed > 0 && agi > owed && magi > agi && onIncome > magi && onAGI > onIncome,
         `tax-year rows missing or out of order: ${[owed, agi, magi, onIncome, onAGI]}`);

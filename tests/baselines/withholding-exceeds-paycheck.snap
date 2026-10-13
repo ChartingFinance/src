@@ -37,7 +37,7 @@
   lastDate = 2030-12
   startValue = 801000.000000
   finishValue = 727867.532812
-  accumulated = -6471.596667
+  accumulated = -114272.693417
   total.employedIncome = 360000.000000
   total.socialSecurityTax = -22320.000000
   total.expense = -258956.551973
@@ -96,6 +96,8 @@
   incomeTax                    n=  60 first=        0.000000 last=        0.000000 min=  -107801.100000 max=        0.000000 sum=    -107801.100000 #e4081a62
   federalTaxes                 n=  60 first=        0.000000 last=        0.000000 min=  -107801.100000 max=        0.000000 sum=    -107801.100000 #e4081a62
   taxes                        n=  60 first=        0.000000 last=        0.000000 min=  -107801.100000 max=        0.000000 sum=    -107801.100000 #e4081a62
+  cashFlow                     n=  60 first=        0.000000 last=        0.000000 min=  -107801.100000 max=        0.000000 sum=    -107801.100000 #e4081a62
+  cashFlowAccumulated          n=  60 first=        0.000000 last=  -107801.100000 min=  -107801.100000 max=        0.000000 sum=   -4527646.200000 #b0987b4f
   taxableDistribution          n=  60 first=        0.000000 last=        0.000000 min=        0.000000 max=   400000.000000 sum=     400000.000000 #9c5a78f3
   four01KDistribution          n=  60 first=        0.000000 last=        0.000000 min=        0.000000 max=   400000.000000 sum=     400000.000000 #9c5a78f3
 
