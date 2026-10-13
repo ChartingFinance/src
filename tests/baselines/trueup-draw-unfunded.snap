@@ -36,13 +36,13 @@
   firstDate = 2026-01
   lastDate = 2027-12
   startValue = 304000.000000
-  finishValue = 265929.854167
+  finishValue = 235865.750000
   accumulated = 5635.000000
-  total.incomeTax = -106833.354167
+  total.incomeTax = -76769.250000
   total.four01KDistribution = 300000.000000
   total.rothConversion = 226230.750000
-  total.taxTrueUp = 38699.104167
-  total.value = 6378542.750000
+  total.taxTrueUp = 8635.000000
+  total.value = 6017773.500000
 
 [assetOrder]
   0 Checking
@@ -168,7 +168,7 @@
   instrument = cash
   start = 2026-01  finish = 2027-12
   startCurrency = 1000.000000
-  finishCurrency = 38699.104167
+  finishCurrency = 8635.000000
   startBasis = 1000.000000
   finishBasis = 0.000000
   isClosed = no  isDepleted = yes
@@ -178,16 +178,16 @@
 [events] Wallet
   0000 2026-07 incomeTaxWithholding         -1000.000000 cash  -                      c1
   0001 2026-07 unfunded                    -30064.104167 info  -                      c1 {cause=Income tax withholding origin=oneSided}
-  0002 2026-12 taxTrueUp                    38699.104167 cash  -                      c2 {basis=backstop direction=refund}
+  0002 2026-12 taxTrueUp                     8635.000000 cash  -                      c2 {basis=backstop direction=refund}
 
 [history] Wallet
-  value                        n=  24 first=     1000.000000 last=    38699.100000 min=        0.000000 max=    38699.100000 sum=     470389.200000 #8af88e55
-  estimatedIncomeTax           n=  24 first=        0.000000 last=        0.000000 min=   -33064.100000 max=    38699.100000 sum=       5635.000000 #a7f452b7
-  incomeTax                    n=  24 first=        0.000000 last=        0.000000 min=   -33064.100000 max=    38699.100000 sum=       5635.000000 #a7f452b7
-  federalTaxes                 n=  24 first=        0.000000 last=        0.000000 min=   -33064.100000 max=    38699.100000 sum=       5635.000000 #a7f452b7
-  taxes                        n=  24 first=        0.000000 last=        0.000000 min=   -33064.100000 max=    38699.100000 sum=       5635.000000 #a7f452b7
-  cashFlow                     n=  24 first=        0.000000 last=        0.000000 min=   -33064.100000 max=    38699.100000 sum=       5635.000000 #a7f452b7
-  cashFlowAccumulated          n=  24 first=        0.000000 last=     5635.000000 min=   -33064.100000 max=     5635.000000 sum=    -130764.600000 #ff9c9e65
+  value                        n=  24 first=     1000.000000 last=     8635.000000 min=        0.000000 max=     8635.000000 sum=     109620.000000 #ce90d4cd
+  estimatedIncomeTax           n=  24 first=        0.000000 last=        0.000000 min=    -3000.000000 max=     8635.000000 sum=       5635.000000 #7ba1f2e1
+  incomeTax                    n=  24 first=        0.000000 last=        0.000000 min=    -3000.000000 max=     8635.000000 sum=       5635.000000 #7ba1f2e1
+  federalTaxes                 n=  24 first=        0.000000 last=        0.000000 min=    -3000.000000 max=     8635.000000 sum=       5635.000000 #7ba1f2e1
+  taxes                        n=  24 first=        0.000000 last=        0.000000 min=    -3000.000000 max=     8635.000000 sum=       5635.000000 #7ba1f2e1
+  cashFlow                     n=  24 first=        0.000000 last=        0.000000 min=    -3000.000000 max=     8635.000000 sum=       5635.000000 #7ba1f2e1
+  cashFlowAccumulated          n=  24 first=        0.000000 last=     5635.000000 min=    -3000.000000 max=     5635.000000 sum=      49620.000000 #be65f09d
 
 [packages]
   0000 value=304000.000000
@@ -196,24 +196,24 @@
   0003 value=304000.000000
   0004 value=304000.000000
   0005 value=304000.000000
-  0006 incomeTax=-106833.354167 four01KDistribution=300000.000000 rothConversion=226230.750000 value=227230.750000
+  0006 incomeTax=-76769.250000 four01KDistribution=300000.000000 rothConversion=226230.750000 value=227230.750000
   0007 value=227230.750000
   0008 value=227230.750000
   0009 value=227230.750000
   0010 value=227230.750000
   0011 value=227230.750000
-  0012 taxTrueUp=38699.104167 value=265929.854167
-  0013 value=265929.854167
-  0014 value=265929.854167
-  0015 value=265929.854167
-  0016 value=265929.854167
-  0017 value=265929.854167
-  0018 value=265929.854167
-  0019 value=265929.854167
-  0020 value=265929.854167
-  0021 value=265929.854167
-  0022 value=265929.854167
-  0023 value=265929.854167
+  0012 taxTrueUp=8635.000000 value=235865.750000
+  0013 value=235865.750000
+  0014 value=235865.750000
+  0015 value=235865.750000
+  0016 value=235865.750000
+  0017 value=235865.750000
+  0018 value=235865.750000
+  0019 value=235865.750000
+  0020 value=235865.750000
+  0021 value=235865.750000
+  0022 value=235865.750000
+  0023 value=235865.750000
 
 [priceIndex]
   [0000]         1.002547         1.005101         1.007662         1.010228         1.012802         1.015382
@@ -222,12 +222,11 @@
   [0018]         1.049525         1.052199         1.054879         1.057566         1.060260         1.062961
 
 [taxYears]
-  2026 months=12 age=62 agi=300000.000000 niit=300000.000000 seniorDeduction=300000.000000 irmaa=300000.000000 iraDeduction=300000.000000 rothContribution=73769.250000 aca=300000.000000 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=283900.000000 capitalGains=0.000000 fica=0.000000 incomeTax=68134.250000 capitalGainsTax=0.000000 niit=0.000000 federalTax=68134.250000 settledTrueUp=38699.104167 settledNIIT=0.000000
+  2026 months=12 age=62 agi=300000.000000 niit=300000.000000 seniorDeduction=300000.000000 irmaa=300000.000000 iraDeduction=300000.000000 rothContribution=73769.250000 aca=300000.000000 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=283900.000000 capitalGains=0.000000 fica=0.000000 incomeTax=68134.250000 capitalGainsTax=0.000000 niit=0.000000 federalTax=68134.250000 settledTrueUp=8635.000000 settledNIIT=0.000000
   2027 months=12 age=63 agi=0.000000 niit=0.000000 seniorDeduction=0.000000 irmaa=0.000000 iraDeduction=0.000000 rothContribution=0.000000 aca=0.000000 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=0.000000 capitalGains=0.000000 fica=0.000000 incomeTax=0.000000 capitalGainsTax=0.000000 niit=0.000000 federalTax=0.000000 settledTrueUp=0.000000 settledNIIT=0.000000
 
 [sanity]
   Unfunded: Wallet Income tax withholding $30,064.10 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
-  2026-07 Income tax: events=−$74,769.25, package=−$106,833.35
 
 [traces]
   scopes = 486
