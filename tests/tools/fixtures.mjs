@@ -560,6 +560,40 @@ const adversarialFixtures = [
     }),
   },
   {
+    name: 'trueup-draw-unfunded',
+    kind: 'adversarial',
+    reaches:
+      'a monthly tax true-up that the everyday accounts cannot pay. A 401(k) ' +
+      'closed to a Roth books its whole balance as income that month, and ' +
+      'the true-up sizes the month\'s tax from that income x12, so it asks ' +
+      'for far more than the close withheld. The single-backstop draw takes ' +
+      'the Wallet, spills to Checking, Checking clamps too, and the rest is ' +
+      'reported unfunded. Only what the two accounts paid counts as ' +
+      'withheld; booked in full, the annual true-up would refund the ' +
+      'unpaid part in cash.\n' +
+      '      Both everyday accounts are load-bearing. With Checking alone the ' +
+      'named account supplies everything that is paid, so booking ' +
+      'settled.supplied would look right; the second account is what ' +
+      'separates "what the accounts paid" from both "what the first account ' +
+      'paid" and "what was handed to the fallback". The close goes to a Roth, ' +
+      'not to Checking, so no deposit lands where the true-up draws. Every ' +
+      'rate is zero and nothing runs after the close, so the year\'s refund ' +
+      'is collected minus owed, by hand. ' +
+      'tests/trueup-withholding-conservation.mjs holds the conservation law.',
+    config: { startAge: 62, retirementAge: 60, finishAge: 64, filingAs: 'Single' },
+    build: () => ({
+      assets: [
+        by({ year: 2026, month: 6 }, deferred('401K', '401K', 300000,
+          { fundTransfers: [xfer('Roth IRA', 0, 100)] })),
+        ...by({ year: 2027, month: 12 }, [
+          deferred('rothIRA', 'Roth IRA', 1000),
+          bank('Wallet', 1000, { instrument: 'cash' }),
+          bank('Checking', 2000),
+        ]),
+      ].map(ModelAsset.fromJSON),
+    }),
+  },
+  {
     name: 'grossup-at-the-ltcg-boundary',
     kind: 'adversarial',
     reaches:
