@@ -495,23 +495,27 @@ export class TaxEngine {
             return;
         }
 
-        this.monthly.incomeTax.add(additionalTax);
-        liquidAsset.addToMetric(Metric.ESTIMATED_INCOME_TAX, additionalTax);
-
         // settleOneSided, not a raw debit: it clamps the account at $0,
         // re-sources the rest from the next backstop, and reports what nothing
         // can cover. It also books the realized gain (paying tax from a
         // brokerage sells shares), so that is not repeated here.
         // recordTransfer is a no-op for cash and bank sources.
         //
-        // The full bill is booked above, before the draw. If part of it goes
-        // unfunded, the package still counts it as collected.
-        //
         // No single asset owes household tax, so fromModel stays null and
         // reportUnfunded names the account that could not pay.
         const oneSided = new FundTransferOneSided(null, payment);
         oneSided.toModel = liquidAsset;
         const settled = FundTransfer.settleOneSided(oneSided, { type: EventType.INCOME_TAX_WITHHOLDING }, this.modelAssets);
+
+        // Book what the accounts paid, after the draw. A part reported
+        // unfunded was not withheld, and booking it would have the annual
+        // true-up count it as paid and refund it. The funding account carries
+        // the whole payment, including any part a fallback covered.
+        if (settled.paid.amount > 0) {
+            const withheld = settled.paid.copy().flipSign();
+            this.monthly.incomeTax.add(withheld);
+            liquidAsset.addToMetric(Metric.ESTIMATED_INCOME_TAX, withheld);
+        }
 
         this.monthly.recordTransfer(liquidAsset.instrument, settled.supplied, settled.realizedGain);
         if (settled.spillover.amount > 0 && settled.spilloverInstrument) {

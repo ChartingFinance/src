@@ -1,0 +1,286 @@
+# fixture: trueup-draw-unfunded  (adversarial)
+#
+# a monthly tax true-up that the everyday accounts cannot pay. A 401(k)
+# closed to a Roth books its whole balance as income that month, and the
+# true-up sizes the month's tax from that income x12, so it asks for far
+# more than the close withheld. The single-backstop draw takes the Wallet,
+# spills to Checking, Checking clamps too, and the rest is reported
+# unfunded. Only what the two accounts paid counts as withheld; booked in
+# full, the annual true-up would refund the unpaid part in cash. Both
+# everyday accounts are load-bearing. With Checking alone the named account
+# supplies everything that is paid, so booking settled.supplied would look
+# right; the second account is what separates "what the accounts paid" from
+# both "what the first account paid" and "what was handed to the fallback".
+# Having a fallback, it does not reach the draw with none; the conservation
+# test's first plan does. The close goes to a Roth, not to Checking, so no
+# deposit lands where the true-up draws. Every rate is zero and nothing runs
+# after the close, so the year's refund is collected minus owed, by hand.
+# tests/trueup-withholding-conservation.mjs holds the conservation law.
+
+[config]
+  allocateHouseholdTax = false
+  backtestYear = current
+  filingAs = Single
+  inflationRate = 0.031
+  pensionWithholdingRate = 0.1
+  propertyTaxDeductionMax = 40000
+  simDataMode = calibrated
+  socialSecurityWithholdingRate = 0
+  userFinishAge = 64
+  userRetirementAge = 60
+  userStartAge = 62
+  homeSaleExclusion = 250000
+  retirementWithholdingRate = 0.1
+
+[totals]
+  months = 96
+  firstDate = 2026-01
+  lastDate = 2027-12
+  startValue = 304000.000000
+  finishValue = 235865.750000
+  accumulated = 5635.000000
+  total.incomeTax = -76769.250000
+  total.four01KDistribution = 300000.000000
+  total.rothConversion = 226230.750000
+  total.taxTrueUp = 8635.000000
+  total.value = 6017773.500000
+
+[assetOrder]
+  0 Checking
+  1 401K
+  2 Roth IRA
+  3 Wallet
+
+[asset] 401K
+  instrument = 401K
+  start = 2026-01  finish = 2026-06
+  startCurrency = 300000.000000
+  finishCurrency = 0.000000
+  startBasis = 0.000000
+  finishBasis = 226230.750000
+  isClosed = yes  isDepleted = no
+  closedDate = 2026-07  closedValue = 226230.750000
+  events = 8  reconciled = 8
+
+[events] 401K
+  0000 2026-01 assetGrowth                      0.000000 cash  growth                 c-
+  0001 2026-02 assetGrowth                      0.000000 cash  growth                 c-
+  0002 2026-03 assetGrowth                      0.000000 cash  growth                 c-
+  0003 2026-04 assetGrowth                      0.000000 cash  growth                 c-
+  0004 2026-05 assetGrowth                      0.000000 cash  growth                 c-
+  0005 2026-06 assetGrowth                      0.000000 cash  growth                 c-
+  0006 2026-07 incomeTaxWithholding        -73769.250000 cash  estimatedIncomeTax     c-
+  0007 2026-07 transfer                   -226230.750000 cash  -                      c0 {cadence=on close from=401K to=Roth IRA}
+
+[history] 401K
+  value                        n=  24 first=   300000.000000 last=        0.000000 min=        0.000000 max=   300000.000000 sum=    1800000.000000 #7dae856d
+  ordinaryIncome               n=  24 first=        0.000000 last=        0.000000 min=        0.000000 max=   300000.000000 sum=     300000.000000 #6da1b0f6
+  income                       n=  24 first=        0.000000 last=        0.000000 min=        0.000000 max=   300000.000000 sum=     300000.000000 #6da1b0f6
+  estimatedIncomeTax           n=  24 first=        0.000000 last=        0.000000 min=   -73769.250000 max=        0.000000 sum=     -73769.250000 #58de6777
+  incomeTax                    n=  24 first=        0.000000 last=        0.000000 min=   -73769.250000 max=        0.000000 sum=     -73769.250000 #58de6777
+  federalTaxes                 n=  24 first=        0.000000 last=        0.000000 min=   -73769.250000 max=        0.000000 sum=     -73769.250000 #58de6777
+  taxes                        n=  24 first=        0.000000 last=        0.000000 min=   -73769.250000 max=        0.000000 sum=     -73769.250000 #58de6777
+  taxableDistribution          n=  24 first=        0.000000 last=        0.000000 min=        0.000000 max=   300000.000000 sum=     300000.000000 #6da1b0f6
+  four01KDistribution          n=  24 first=        0.000000 last=        0.000000 min=        0.000000 max=   300000.000000 sum=     300000.000000 #6da1b0f6
+
+[asset] Checking
+  instrument = bank
+  start = 2026-01  finish = 2027-12
+  startCurrency = 2000.000000
+  finishCurrency = 0.000000
+  startBasis = 2000.000000
+  finishBasis = 0.000000
+  isClosed = no  isDepleted = yes
+  closedDate = -  closedValue = -
+  events = 25  reconciled = 25
+
+[events] Checking
+  0000 2026-01 interestIncome                   0.000000 cash  interestIncome         c-
+  0001 2026-02 interestIncome                   0.000000 cash  interestIncome         c-
+  0002 2026-03 interestIncome                   0.000000 cash  interestIncome         c-
+  0003 2026-04 interestIncome                   0.000000 cash  interestIncome         c-
+  0004 2026-05 interestIncome                   0.000000 cash  interestIncome         c-
+  0005 2026-06 interestIncome                   0.000000 cash  interestIncome         c-
+  0006 2026-07 interestIncome                   0.000000 cash  interestIncome         c-
+  0007 2026-07 spillover                    -2000.000000 cash  -                      c1 {cause=incomeTaxWithholding depleted=Wallet origin=oneSided}
+  0008 2026-08 interestIncome                   0.000000 cash  interestIncome         c-
+  0009 2026-09 interestIncome                   0.000000 cash  interestIncome         c-
+  0010 2026-10 interestIncome                   0.000000 cash  interestIncome         c-
+  0011 2026-11 interestIncome                   0.000000 cash  interestIncome         c-
+  0012 2026-12 interestIncome                   0.000000 cash  interestIncome         c-
+  0013 2027-01 interestIncome                   0.000000 cash  interestIncome         c-
+  0014 2027-02 interestIncome                   0.000000 cash  interestIncome         c-
+  0015 2027-03 interestIncome                   0.000000 cash  interestIncome         c-
+  0016 2027-04 interestIncome                   0.000000 cash  interestIncome         c-
+  0017 2027-05 interestIncome                   0.000000 cash  interestIncome         c-
+  0018 2027-06 interestIncome                   0.000000 cash  interestIncome         c-
+  0019 2027-07 interestIncome                   0.000000 cash  interestIncome         c-
+  0020 2027-08 interestIncome                   0.000000 cash  interestIncome         c-
+  0021 2027-09 interestIncome                   0.000000 cash  interestIncome         c-
+  0022 2027-10 interestIncome                   0.000000 cash  interestIncome         c-
+  0023 2027-11 interestIncome                   0.000000 cash  interestIncome         c-
+  0024 2027-12 interestIncome                   0.000000 cash  interestIncome         c-
+
+[history] Checking
+  value                        n=  24 first=     2000.000000 last=        0.000000 min=        0.000000 max=     2000.000000 sum=      12000.000000 #4193f6b5
+
+[asset] Roth IRA
+  instrument = rothIRA
+  start = 2026-01  finish = 2027-12
+  startCurrency = 1000.000000
+  finishCurrency = 227230.750000
+  startBasis = 0.000000
+  finishBasis = 0.000000
+  isClosed = no  isDepleted = no
+  closedDate = -  closedValue = -
+  events = 25  reconciled = 25
+
+[events] Roth IRA
+  0000 2026-01 assetGrowth                      0.000000 cash  growth                 c-
+  0001 2026-02 assetGrowth                      0.000000 cash  growth                 c-
+  0002 2026-03 assetGrowth                      0.000000 cash  growth                 c-
+  0003 2026-04 assetGrowth                      0.000000 cash  growth                 c-
+  0004 2026-05 assetGrowth                      0.000000 cash  growth                 c-
+  0005 2026-06 assetGrowth                      0.000000 cash  growth                 c-
+  0006 2026-07 transfer                    226230.750000 cash  -                      c0 {cadence=on close from=401K to=Roth IRA}
+  0007 2026-07 assetGrowth                      0.000000 cash  growth                 c-
+  0008 2026-08 assetGrowth                      0.000000 cash  growth                 c-
+  0009 2026-09 assetGrowth                      0.000000 cash  growth                 c-
+  0010 2026-10 assetGrowth                      0.000000 cash  growth                 c-
+  0011 2026-11 assetGrowth                      0.000000 cash  growth                 c-
+  0012 2026-12 assetGrowth                      0.000000 cash  growth                 c-
+  0013 2027-01 assetGrowth                      0.000000 cash  growth                 c-
+  0014 2027-02 assetGrowth                      0.000000 cash  growth                 c-
+  0015 2027-03 assetGrowth                      0.000000 cash  growth                 c-
+  0016 2027-04 assetGrowth                      0.000000 cash  growth                 c-
+  0017 2027-05 assetGrowth                      0.000000 cash  growth                 c-
+  0018 2027-06 assetGrowth                      0.000000 cash  growth                 c-
+  0019 2027-07 assetGrowth                      0.000000 cash  growth                 c-
+  0020 2027-08 assetGrowth                      0.000000 cash  growth                 c-
+  0021 2027-09 assetGrowth                      0.000000 cash  growth                 c-
+  0022 2027-10 assetGrowth                      0.000000 cash  growth                 c-
+  0023 2027-11 assetGrowth                      0.000000 cash  growth                 c-
+  0024 2027-12 assetGrowth                      0.000000 cash  growth                 c-
+
+[history] Roth IRA
+  value                        n=  24 first=     1000.000000 last=   227230.750000 min=     1000.000000 max=   227230.750000 sum=    4096153.500000 #3966409d
+
+[asset] Wallet
+  instrument = cash
+  start = 2026-01  finish = 2027-12
+  startCurrency = 1000.000000
+  finishCurrency = 8635.000000
+  startBasis = 1000.000000
+  finishBasis = 0.000000
+  isClosed = no  isDepleted = yes
+  closedDate = -  closedValue = -
+  events = 3  reconciled = 3
+
+[events] Wallet
+  0000 2026-07 incomeTaxWithholding         -1000.000000 cash  -                      c1
+  0001 2026-07 unfunded                    -30064.104167 info  -                      c1 {cause=Income tax withholding origin=oneSided}
+  0002 2026-12 taxTrueUp                     8635.000000 cash  -                      c2 {basis=backstop direction=refund}
+
+[history] Wallet
+  value                        n=  24 first=     1000.000000 last=     8635.000000 min=        0.000000 max=     8635.000000 sum=     109620.000000 #ce90d4cd
+  estimatedIncomeTax           n=  24 first=        0.000000 last=        0.000000 min=    -3000.000000 max=     8635.000000 sum=       5635.000000 #7ba1f2e1
+  incomeTax                    n=  24 first=        0.000000 last=        0.000000 min=    -3000.000000 max=     8635.000000 sum=       5635.000000 #7ba1f2e1
+  federalTaxes                 n=  24 first=        0.000000 last=        0.000000 min=    -3000.000000 max=     8635.000000 sum=       5635.000000 #7ba1f2e1
+  taxes                        n=  24 first=        0.000000 last=        0.000000 min=    -3000.000000 max=     8635.000000 sum=       5635.000000 #7ba1f2e1
+  cashFlow                     n=  24 first=        0.000000 last=        0.000000 min=    -3000.000000 max=     8635.000000 sum=       5635.000000 #7ba1f2e1
+  cashFlowAccumulated          n=  24 first=        0.000000 last=     5635.000000 min=    -3000.000000 max=     5635.000000 sum=      49620.000000 #be65f09d
+
+[packages]
+  0000 value=304000.000000
+  0001 value=304000.000000
+  0002 value=304000.000000
+  0003 value=304000.000000
+  0004 value=304000.000000
+  0005 value=304000.000000
+  0006 incomeTax=-76769.250000 four01KDistribution=300000.000000 rothConversion=226230.750000 value=227230.750000
+  0007 value=227230.750000
+  0008 value=227230.750000
+  0009 value=227230.750000
+  0010 value=227230.750000
+  0011 value=227230.750000
+  0012 taxTrueUp=8635.000000 value=235865.750000
+  0013 value=235865.750000
+  0014 value=235865.750000
+  0015 value=235865.750000
+  0016 value=235865.750000
+  0017 value=235865.750000
+  0018 value=235865.750000
+  0019 value=235865.750000
+  0020 value=235865.750000
+  0021 value=235865.750000
+  0022 value=235865.750000
+  0023 value=235865.750000
+
+[priceIndex]
+  [0000]         1.002547         1.005101         1.007662         1.010228         1.012802         1.015382
+  [0006]         1.017968         1.020561         1.023161         1.025767         1.028380         1.031000
+  [0012]         1.033626         1.036259         1.038899         1.041545         1.044199         1.046859
+  [0018]         1.049525         1.052199         1.054879         1.057566         1.060260         1.062961
+
+[taxYears]
+  2026 months=12 age=62 agi=300000.000000 niit=300000.000000 seniorDeduction=300000.000000 irmaa=300000.000000 iraDeduction=300000.000000 rothContribution=73769.250000 aca=300000.000000 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=283900.000000 capitalGains=0.000000 fica=0.000000 incomeTax=68134.250000 capitalGainsTax=0.000000 niit=0.000000 federalTax=68134.250000 settledTrueUp=8635.000000 settledNIIT=0.000000
+  2027 months=12 age=63 agi=0.000000 niit=0.000000 seniorDeduction=0.000000 irmaa=0.000000 iraDeduction=0.000000 rothContribution=0.000000 aca=0.000000 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=0.000000 capitalGains=0.000000 fica=0.000000 incomeTax=0.000000 capitalGainsTax=0.000000 niit=0.000000 federalTax=0.000000 settledTrueUp=0.000000 settledNIIT=0.000000
+
+[sanity]
+  Unfunded: Wallet Income tax withholding $30,064.10 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+
+[traces]
+  scopes = 486
+  unattributedEvents = 0
+  1x 2027 annual pass
+  1x 2027 tax true-up
+  1x 2028 annual pass
+  1x 2028 tax true-up
+  7x April 2026
+  7x April 2027
+  7x August 2026
+  7x August 2027
+  7x December 2026
+  7x December 2027
+  7x February 2026
+  7x February 2027
+  7x January 2026
+  7x January 2027
+  7x July 2026
+  7x July 2027
+  7x June 2026
+  7x June 2027
+  7x March 2026
+  7x March 2027
+  7x May 2026
+  7x May 2027
+  7x November 2026
+  7x November 2027
+  7x October 2026
+  7x October 2027
+  6x Pay 401K
+  24x Pay Checking
+  24x Pay Roth IRA
+  24x Pay Wallet
+  6x Payroll: 401K
+  24x Payroll: Checking
+  24x Payroll: Roth IRA
+  24x Payroll: Wallet
+  6x Required distribution from 401K
+  24x Required distribution from Checking
+  24x Required distribution from Roth IRA
+  24x Required distribution from Wallet
+  7x September 2026
+  7x September 2027
+  1x Settle from Wallet
+  1x Transfer 401K → Roth IRA
+  6x Withholding: 401K
+  24x Withholding: Checking
+  24x Withholding: Roth IRA
+  24x Withholding: Wallet
+
+[traceLegend]
+  c0 = Transfer 401K → Roth IRA
+  c1 = Settle from Wallet
+  c2 = 2027 annual pass > 2027 tax true-up
+
