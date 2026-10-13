@@ -9,7 +9,10 @@
 import { InstrumentMeta, InstrumentType } from '../instruments/instrument.js';
 import { classifyAssetGroup, AssetGroupMeta } from '../asset-groups.js';
 import { Metric, MetricLabel } from '../metric.js';
-import { monthSummary, yearSummary, zeroTaxWasWithheld, yearSpan, magiLines, settlementParts } from '../month-summary.js';
+import {
+    monthSummary, yearSummary, zeroTaxWasWithheld, yearSpan, magiLines, settlementParts,
+    headlineAsShown, drawnAsShown,
+} from '../month-summary.js';
 import { MONTH_NAMES } from '../utils/date-int.js';
 import { formatCurrency } from '../utils/html.js';
 // No globals.js import: settings come from `portfolio.config`, the config the
@@ -154,13 +157,17 @@ export function generateMonthDetailsSectionMarkdown(portfolio, year, month, head
         + 'from outside your accounts; withdrawals from your own accounts are listed under '
         + 'Withdrawn. Expenses include mortgage principal.\n\n';
 
+    // Whole dollars that add up, as the section shows them.
+    const hm = headlineAsShown(s), hy = headlineAsShown(y);
+    const dm = drawnAsShown(s.drawn), dy = drawnAsShown(y.drawn);
+
     md += `| | ${monthName} | ${yearName} |\n`;
     md += `| :--- | ---: | ---: |\n`;
-    md += `| Income received | ${signed(s.income)} | ${signed(y.income)} |\n`;
-    md += `| Expenses | ${signed(s.expense)} | ${signed(y.expense)} |\n`;
-    md += `| Taxes paid | ${signed(s.taxes)} | ${signed(y.taxes)} |\n`;
-    md += `| Cash flow | ${signed(s.cashFlow)} | ${signed(y.cashFlow)} |\n`;
-    md += `| Withdrawn to meet obligations | ${fmt(s.drawn.total)} | ${fmt(y.drawn.total)} |\n`;
+    md += `| Income received | ${signed(hm.income)} | ${signed(hy.income)} |\n`;
+    md += `| Expenses | ${signed(hm.expense)} | ${signed(hy.expense)} |\n`;
+    md += `| Taxes paid | ${signed(hm.taxes)} | ${signed(hy.taxes)} |\n`;
+    md += `| Cash flow | ${signed(hm.cashFlow)} | ${signed(hy.cashFlow)} |\n`;
+    md += `| Withdrawn to meet obligations | ${fmt(dm.total)} | ${fmt(dy.total)} |\n`;
     md += `| Asset growth | ${signed(s.growth)} | ${signed(y.growth)} |\n`;
     md += `| Net worth | ${fmt(s.value)} | ${fmt(y.value)} |\n`;
     md += `| Change in net worth | ${signed(s.netChange)} | ${signed(y.netChange)} |\n`;
@@ -170,12 +177,16 @@ export function generateMonthDetailsSectionMarkdown(portfolio, year, month, head
     md += `## Withdrawn to meet obligations\n`;
     md += `| Obligation | ${monthName} | ${yearName} |\n`;
     md += `| :--- | ---: | ---: |\n`;
-    const inMonth = new Map(s.drawn.items.map((it) => [`${it.bucket}:${it.label}`, it.amount]));
-    for (const it of y.drawn.items) {
-        md += `| ${it.label} | ${fmt(inMonth.get(`${it.bucket}:${it.label}`) ?? 0)} | ${fmt(it.amount)} |\n`;
+    // Every obligation of the month is one of the year's, so both columns
+    // list all their lines and add up to their totals.
+    for (const bucket of ['spending', 'tax']) {
+        const inMonth = new Map(dm[bucket].items.map((it) => [it.label, it.amount]));
+        for (const it of dy[bucket].items) {
+            md += `| ${it.label} | ${fmt(inMonth.get(it.label) ?? 0)} | ${fmt(it.amount)} |\n`;
+        }
     }
-    md += `| **Total** | **${fmt(s.drawn.total)}** | **${fmt(y.drawn.total)}** |\n`;
-    if (y.drawn.unfunded > 0) md += `| Could not fund | ${fmt(s.drawn.unfunded)} | ${fmt(y.drawn.unfunded)} |\n`;
+    md += `| **Total** | **${fmt(dm.total)}** | **${fmt(dy.total)}** |\n`;
+    if (dy.unfunded > 0) md += `| Could not fund | ${fmt(dm.unfunded)} | ${fmt(dy.unfunded)} |\n`;
     md += '\n';
     md += '- This is money that actually left an account: living expenses, the full mortgage '
         + 'payment including principal, property tax, maintenance, insurance, and tax drawn '
