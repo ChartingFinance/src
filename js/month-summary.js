@@ -30,7 +30,7 @@
 
 import { Metric } from './metric.js';
 import { RECEIVED_INCOME_METRICS } from './instruments/instrument-behavior.js';
-import { expenditureOverWindow } from './annual-expenditure.js';
+import { expenditureOverWindow, Expenditure } from './annual-expenditure.js';
 import { MagiPurpose } from './tax-basis.js';
 import { PriceIndex } from './utils/price-index.js';
 import { DateInt, MONTH_NAMES } from './utils/date-int.js';
@@ -183,6 +183,50 @@ export function yearSummary(portfolio, year) {
         effectiveRateOnIncome: rateOn(flows.totalIncome),
         effectiveRateOnAGI:    rateOn(taxYear?.agi),
     };
+}
+
+// ── Whole dollars that add up ────────────────────────────────────────
+
+/**
+ * An amount rounded to whole dollars exactly as formatCurrency rounds it for
+ * display: half away from zero.
+ */
+export function wholeDollars(amount) {
+    const dollars = Math.round(Math.abs(amount));
+    // Never -0: it would compare unequal to the 0 it displays as.
+    return dollars === 0 ? 0 : Math.sign(amount) * dollars;
+}
+
+/**
+ * The four headline figures as shown, in whole dollars. Cash flow is the sum
+ * of the other three AS SHOWN, so the row adds up on screen. Rounded on its
+ * own it could miss by a dollar: $6,500 − $5,022.60 − $1,434.60 is $42.80,
+ * which shows as $43 beside figures that add to $42.
+ */
+export function headlineAsShown(summary) {
+    const income = wholeDollars(summary.income);
+    const expense = wholeDollars(summary.expense);
+    const taxes = wholeDollars(summary.taxes);
+    return { income, expense, taxes, cashFlow: income + expense + taxes };
+}
+
+/**
+ * A withdrawals list as shown, in whole dollars, by the same rule: each
+ * obligation rounded, each group the sum of its lines, the total the sum of
+ * the groups.
+ *
+ * @returns {{spending: {items, total}, tax: {items, total}, total: number, unfunded: number}}
+ */
+export function drawnAsShown(drawn) {
+    const group = (bucket) => {
+        const items = drawn.items
+            .filter((it) => it.bucket === bucket)
+            .map((it) => ({ label: it.label, amount: wholeDollars(it.amount) }));
+        return { items, total: items.reduce((t, it) => t + it.amount, 0) };
+    };
+    const spending = group(Expenditure.SPENDING);
+    const tax = group(Expenditure.TAX);
+    return { spending, tax, total: spending.total + tax.total, unfunded: wholeDollars(drawn.unfunded) };
 }
 
 // ── Wording the section and its AI summary share ─────────────────────

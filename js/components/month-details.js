@@ -23,6 +23,7 @@
 import { LitElement, html, nothing } from 'lit';
 import {
     monthSummary, yearSummary, zeroTaxWasWithheld, yearSpan, magiLines, settlementParts,
+    headlineAsShown, drawnAsShown,
 } from '../month-summary.js';
 import { formatCurrency, formatSignedCurrency } from '../utils/html.js';
 import { MONTH_NAMES } from '../utils/date-int.js';
@@ -115,16 +116,18 @@ export class MonthDetails extends LitElement {
     }
 
     _row(key, title, span, s) {
+        // Whole dollars that add up: cash flow is the sum of the three beside it.
+        const h = headlineAsShown(s);
         return html`
             <div class="md-row" role="row">
                 <div class="md-rowhead" role="rowheader">
                     <div class="md-rowtitle">${title}</div>
                     <div class="md-sub">${span}</div>
                 </div>
-                ${cell('Income received', formatSignedCurrency(s.income))}
-                ${cell('Expenses', formatSignedCurrency(s.expense))}
-                ${cell('Taxes', formatSignedCurrency(s.taxes))}
-                ${cell('Cash flow', formatSignedCurrency(s.cashFlow), tone(s.cashFlow))}
+                ${cell('Income received', formatSignedCurrency(h.income))}
+                ${cell('Expenses', formatSignedCurrency(h.expense))}
+                ${cell('Taxes', formatSignedCurrency(h.taxes))}
+                ${cell('Cash flow', formatSignedCurrency(h.cashFlow), tone(h.cashFlow))}
                 ${this._withdrawn(key, title, s)}
                 ${cell('Asset growth', formatSignedCurrency(s.growth), tone(s.growth))}
                 <div class="md-cell" role="cell">
@@ -138,7 +141,7 @@ export class MonthDetails extends LitElement {
 
     /** The total, as a button that opens the list of obligations it paid. */
     _withdrawn(key, title, s) {
-        const d = s.drawn;
+        const d = drawnAsShown(s.drawn);
         const open = this._open === key;
         return html`
             <div class="md-cell md-pop-anchor" role="cell">
@@ -149,16 +152,14 @@ export class MonthDetails extends LitElement {
                     ${formatCurrency(d.total)}<span class="md-caret" aria-hidden="true">▾</span>
                 </button>
                 ${d.unfunded > 0 ? html`<div class="md-hint md-neg">${formatCurrency(d.unfunded)} unfunded</div>` : nothing}
-                ${open ? this._obligations(title, s) : nothing}
+                ${open ? this._obligations(title, s, d) : nothing}
             </div>`;
     }
 
-    _obligations(title, s) {
-        const d = s.drawn;
-        const group = (heading, bucket) => {
-            const items = d.items.filter((it) => it.bucket === bucket);
+    /** The list, in whole dollars that add up: lines to groups to the total. */
+    _obligations(title, s, d) {
+        const group = (heading, { items, total }) => {
             if (!items.length) return nothing;
-            const total = items.reduce((t, it) => t + it.amount, 0);
             return html`
                 <div class="md-pop-row md-pop-group"><span>${heading}</span><span>${formatCurrency(total)}</span></div>
                 ${items.map((it) => html`
@@ -168,8 +169,8 @@ export class MonthDetails extends LitElement {
             <div class="md-pop" role="dialog" aria-label="Withdrawn to meet obligations, ${title}">
                 <div class="md-pop-title">Withdrawn to meet obligations</div>
                 <div class="md-sub">${title}</div>
-                ${group('Spending', 'spending')}
-                ${group('Tax', 'tax')}
+                ${group('Spending', d.spending)}
+                ${group('Tax', d.tax)}
                 <div class="md-pop-row md-pop-total"><span>Total</span><span>${formatCurrency(d.total)}</span></div>
                 ${d.unfunded > 0 ? html`
                     <div class="md-pop-row md-neg"><span>Could not fund</span><span>${formatCurrency(d.unfunded)}</span></div>` : nothing}
@@ -177,7 +178,7 @@ export class MonthDetails extends LitElement {
                     <div class="md-pop-note">No tax was withdrawn: the ${formatCurrency(s.withheldAtSource)} of tax
                         paid was withheld at source, from a paycheck, a pension or Social Security, and never
                         passed through an account.</div>` : nothing}
-                ${d.items.length === 0 && !(d.unfunded > 0) ? html`
+                ${s.drawn.items.length === 0 && !(d.unfunded > 0) ? html`
                     <div class="md-pop-note">Nothing was withdrawn to meet obligations.</div>` : nothing}
             </div>`;
     }

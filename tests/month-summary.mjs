@@ -56,7 +56,10 @@ const { Metric } = await import('../js/metric.js');
 const { DateInt } = await import('../js/utils/date-int.js');
 const { expenditureOverWindow } = await import('../js/annual-expenditure.js');
 const { formatCurrency } = await import('../js/utils/html.js');
-const { monthSummary, yearSummary, metricAtIndex, lastHistoryIndex, zeroTaxWasWithheld } = await import('../js/month-summary.js');
+const { monthSummary, yearSummary, metricAtIndex, lastHistoryIndex, zeroTaxWasWithheld,
+        wholeDollars, headlineAsShown, drawnAsShown } = await import('../js/month-summary.js');
+const { formatSignedCurrency } = await import('../js/utils/html.js');
+const { readFileSync } = await import('node:fs');
 const { generateMonthDetailsSectionMarkdown, generatePortfolioSectionMarkdown } =
     await import('../js/generators/finplan-ai.js');
 const { SNAPSHOT_FIXTURES } = await import('./tools/fixtures.mjs');
@@ -353,7 +356,7 @@ test('working year: figures, the withheld sentence, and the heading', () => {
     const y = yearSummary(mid, 2030);
     assert.ok(md.startsWith('# Month & Year Details — Jun 2030 · Age 49'), md.split('\n')[0]);
     assert.ok(md.includes(`| Net worth | ${usd(s.value)} | ${usd(y.value)} |`), 'net worth row missing or wrong');
-    assert.ok(md.includes(`| **Total** | **${usd(s.drawn.total)}** | **${usd(y.drawn.total)}** |`), 'withdrawn total missing or wrong');
+    assert.ok(md.includes(`| **Total** | **${usd(drawnAsShown(s.drawn).total)}** | **${usd(drawnAsShown(y.drawn).total)}** |`), 'withdrawn total missing or wrong');
     assert.ok(md.includes('withheld at source'), 'working-year $0 left unexplained');
 });
 
@@ -382,6 +385,88 @@ test('other sections point to Month & Year Details in page order', () => {
     const md = generatePortfolioSectionMarkdown(mid);
     assert.ok(/refer to: \*\*Your Timeline\*\*, \*\*Month & Year Details\*\* \(above/.test(md),
         'Your Portfolio does not name Month & Year Details as the section above it');
+});
+
+// ── whole dollars that add up ────────────────────────────────────────
+
+console.log('\n── The figures shown add up, in whole dollars ──\n');
+
+/** A formatted amount back to a number: "−$1,234" → -1234. */
+const shown = (s) => Number(s.replace('−', '-').replace(/[+$,]/g, ''));
+
+test('wholeDollars rounds exactly as the display does, halves and signs included', () => {
+    for (const v of [0, 0.4, 0.5, 1.5, 2.5, 42.8, -0.4, -0.5, -1.5, -2.5, -5022.6, 1234567.5]) {
+        assert.equal(wholeDollars(v), shown(formatCurrency(v)), `${v}`);
+        assert.equal(shown(formatSignedCurrency(wholeDollars(v))), shown(formatSignedCurrency(v)), `${v} signed`);
+    }
+});
+
+// Every month and year of two plans: one working, mortgaged; one with a shortfall.
+const windows = [];
+for (const p of [mid, early]) {
+    const f = p.firstDateInt;
+    for (let i = 0; i <= lastHistoryIndex(p); i++) {
+        const d = DateInt.from(f.year, f.month); d.addMonths(i);
+        windows.push({ plan: p, date: d, s: monthSummary(p, d.year, d.month) });
+        if (d.month === 12 || i === 0) windows.push({ plan: p, s: yearSummary(p, d.year) });
+    }
+}
+let headlineWouldMiss = 0, drawnWouldMiss = 0;
+
+test('the four headline figures add up as shown, in every month and year', () => {
+    for (const { s } of windows) {
+        const h = headlineAsShown(s);
+        const [inc, exp, tax, cf] = [h.income, h.expense, h.taxes, h.cashFlow].map((v) => shown(formatSignedCurrency(v)));
+        assert.equal(inc + exp + tax, cf, `${inc} ${exp} ${tax} shown, cash flow ${cf}`);
+        // Each figure is still its own amount, rounded; cash flow stays within the parts' rounding.
+        assert.equal(inc, shown(formatSignedCurrency(s.income)));
+        assert.ok(Math.abs(h.cashFlow - s.cashFlow) <= 1.5, `cash flow ${h.cashFlow} vs ${s.cashFlow}`);
+        if (wholeDollars(s.cashFlow) !== h.cashFlow) headlineWouldMiss++;
+    }
+});
+
+test('the withdrawals list adds up as shown: lines to groups, groups to the total', () => {
+    for (const { s } of windows) {
+        const d = drawnAsShown(s.drawn);
+        for (const g of [d.spending, d.tax]) {
+            assert.equal(g.items.reduce((t, it) => t + shown(formatCurrency(it.amount)), 0), shown(formatCurrency(g.total)));
+        }
+        assert.equal(shown(formatCurrency(d.spending.total)) + shown(formatCurrency(d.tax.total)), shown(formatCurrency(d.total)));
+        assert.ok(Math.abs(d.total - s.drawn.total) <= 0.5 * s.drawn.items.length + 1e-9, `total ${d.total} vs ${s.drawn.total}`);
+        if (wholeDollars(s.drawn.total) !== d.total) drawnWouldMiss++;
+    }
+});
+
+test('rounding each total on its own would have missed somewhere, so the checks above can fail', () => {
+    assert.ok(headlineWouldMiss > 0, 'no month or year where a separately rounded cash flow misses its parts');
+    assert.ok(drawnWouldMiss > 0, 'no window where a separately rounded withdrawals total misses its lines');
+});
+
+test('the ⚡ summary\'s tables add up as shown', () => {
+    // A month where a separately rounded cash flow would miss.
+    const { plan, date: d } = windows.find(({ date, s }) =>
+        date && wholeDollars(s.cashFlow) !== headlineAsShown(s).cashFlow);
+    const md = generateMonthDetailsSectionMarkdown(plan, d.year, d.month);
+    const row = (label) => {
+        const line = md.split('\n').find((l) => l.startsWith(`| ${label} |`));
+        assert.ok(line, `no "${label}" row`);
+        return line.split('|').slice(2, 4).map((c) => shown(c.trim().replace(/\*/g, '')));
+    };
+    const [inc, exp, tax, cf] = ['Income received', 'Expenses', 'Taxes paid', 'Cash flow'].map(row);
+    for (const col of [0, 1]) assert.equal(inc[col] + exp[col] + tax[col], cf[col], `column ${col}`);
+    const lines = md.split('## Withdrawn')[1].split('\n## ')[0].split('\n').filter((l) => l.startsWith('| ') && !/Obligation|:---|Total|Could not/.test(l));
+    const total = row('**Total**');
+    for (const col of [0, 1]) {
+        assert.equal(lines.reduce((t, l) => t + shown(l.split('|')[2 + col].trim()), 0), total[col], `withdrawals column ${col}`);
+    }
+});
+
+test('the section renders the reconciled figures, not the raw ones', () => {
+    // The component has no DOM here; check it reads the same helpers.
+    const src = readFileSync('js/components/month-details.js', 'utf8');
+    assert.match(src, /headlineAsShown\(s\)/, 'the row does not use headlineAsShown');
+    assert.match(src, /drawnAsShown\(s\.drawn\)/, 'the withdrawals do not use drawnAsShown');
+    assert.doesNotMatch(src, /formatSignedCurrency\(s\.(income|expense|taxes|cashFlow)\)/, 'a headline figure is formatted raw');
 });
 
 console.log(`\n${'─'.repeat(55)}`);
