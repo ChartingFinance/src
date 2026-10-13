@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.3.25; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.3.26; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -35272,19 +35272,21 @@ var TaxEngine = class {
    *
    * @param {number} settledYearMonths months of the settled year inside the
    *   plan, for the allocation's history window.
+   * @returns {number} the NIIT the year owed, positive; 0 under the $1 gate
    */
   applyAnnualNIIT(settledYearMonths) {
     const basis = taxableBasis(this.yearly, this.activeUser, { taxTable: this.config.taxTable });
     const { netInvestmentIncome } = basis;
     const magi = basis.magi[MagiPurpose.NIIT];
     const niit = this.config.taxTable.calculateNIIT(netInvestmentIncome, magi);
-    if (niit.amount < 1) return;
-    return withTrace(
+    if (niit.amount < 1) return 0;
+    withTrace(
       TraceKind.TAX_TRUE_UP,
       "Net investment income tax",
       this.#unfundedTaxAnchor()?.currentDateInt ?? null,
       () => this.#applyAnnualNIITInScope(niit, netInvestmentIncome, magi, settledYearMonths)
     );
+    return niit.amount;
   }
   #applyAnnualNIITInScope(niit, netInvestmentIncome, magi, settledYearMonths) {
     logger.log(
@@ -35361,8 +35363,22 @@ var TaxEngine = class {
    *   history: this pass runs on January 1 of the following year, when every
    *   month of the settled year has already been snapshotted and zeroed.
    *   Portfolio.monthsInPlanYear() computes it.
+   * @returns {{incomeTax: number, capitalGainsTax: number}}  the year's
+   *   liability, positive, whatever the settlement could collect
    */
   applyAnnualTaxTrueUp(settledYearMonths) {
+    const liability = this.#annualLiability();
+    this.#settleAnnualDifference(liability.incomeTax + liability.capitalGainsTax, settledYearMonths);
+    return liability;
+  }
+  /**
+   * The settled year's exact income and capital-gains tax, from the yearly
+   * accumulator. Returned by applyAnnualTaxTrueUp so the year's record holds
+   * what was owed, whether or not the settlement could be paid.
+   *
+   * @returns {{incomeTax: number, capitalGainsTax: number}}  positive, owed
+   */
+  #annualLiability() {
     const yearlySnapshot = this.yearly.copy();
     yearlySnapshot.limitDeductions(this.activeUser, this.config.taxTable);
     const { ordinaryTaxable: actualTaxableIncome, capitalGains: yearlyCapitalGains } = taxableBasis(this.yearly, this.activeUser, { taxTable: this.config.taxTable });
@@ -35377,7 +35393,15 @@ var TaxEngine = class {
       actualTaxableIncome,
       yearlyCapitalGains
     );
-    const totalActualTax = actualIncomeTax.amount + actualCapitalGainsTax.amount;
+    return { incomeTax: actualIncomeTax.amount, capitalGainsTax: actualCapitalGainsTax.amount };
+  }
+  /**
+   * Collect the year's underpayment or refund its overpayment.
+   *
+   * @param {number} totalActualTax     the year's liability, positive = owed
+   * @param {number} settledYearMonths  for the allocation's history window
+   */
+  #settleAnnualDifference(totalActualTax, settledYearMonths) {
     const totalWithheld = -(this.yearly.incomeTax.amount + this.yearly.estimatedTaxes.amount + this.yearly.longTermCapitalGainsTax.amount);
     const taxDifference = totalActualTax - totalWithheld;
     if (Math.abs(taxDifference) < 1) return;
@@ -36212,19 +36236,33 @@ var Portfolio = class _Portfolio {
       }
     }
     const settledYear = currentDateInt.year - 1;
-    this.#recordTaxYear(settledYear);
-    withTrace(
+    const basis = taxableBasis(this.yearly, this.activeUser, { taxTable: this.config.taxTable });
+    const trueUpBefore = this.monthly.taxTrueUp.amount;
+    const niitBefore = this.monthly.niit.amount;
+    const liability = withTrace(
       TraceKind.TAX_TRUE_UP,
       `${currentDateInt.year} tax true-up`,
       currentDateInt,
       () => this.taxes.applyAnnualTaxTrueUp(this.monthsInPlanYear(settledYear))
     );
-    this.taxes.applyAnnualNIIT(this.monthsInPlanYear(settledYear));
+    const niit = this.taxes.applyAnnualNIIT(this.monthsInPlanYear(settledYear));
+    this.#recordTaxYear(settledYear, basis, {
+      liability,
+      niit,
+      settledTrueUp: this.monthly.taxTrueUp.amount - trueUpBefore,
+      settledNIIT: this.monthly.niit.amount - niitBefore
+    });
   }
   /**
-   * Record the settled year's tax basis: AGI, every MAGI, and the bases the
-   * annual passes charge on. Every settled year gets one, whether or not
-   * anything is charged on it.
+   * Record the settled year: its tax basis (AGI, every MAGI, the bases the
+   * annual passes charge on), what it owed, and how the January settlement
+   * paid it. Every settled year gets one, whether or not anything is charged.
+   *
+   * Owed and paid are different numbers. `federalTax` is what the year's
+   * income owed, from the liability the true-up computed; the settlement
+   * fields are what the passes actually booked, which is less when an account
+   * could not pay. A package shows the settlement in the following year, so
+   * a year's tax cannot be read from its own package (see report-view.js).
    *
    * Household figures, so they live on the portfolio, not on an asset. Plain
    * numbers in a frozen record, so a record can be serialised and nothing can
@@ -36241,13 +36279,23 @@ var Portfolio = class _Portfolio {
    * @property {number} taxableSocialSecurity
    * @property {number} ordinaryTaxable
    * @property {number} capitalGains
+   * @property {number} fica             owed, positive: payroll tax has no true-up
+   * @property {number} incomeTax        owed, positive: the true-up's liability
+   * @property {number} capitalGainsTax  owed, positive: the true-up's liability
+   * @property {number} niit             owed, positive; 0 under the $1 gate
+   * @property {number} federalTax       the sum of the four above
+   * @property {number} settledTrueUp    booked in January: + refund, − bill
+   * @property {number} settledNIIT      booked in January: − paid
    *
    * @param {number} year
+   * @param {object} basis  taxableBasis() of the settled year's package
+   * @param {{liability: {incomeTax: number, capitalGainsTax: number},
+   *          niit: number, settledTrueUp: number, settledNIIT: number}} settled
    */
-  #recordTaxYear(year) {
-    const basis = taxableBasis(this.yearly, this.activeUser, { taxTable: this.config.taxTable });
+  #recordTaxYear(year, basis, { liability, niit, settledTrueUp, settledNIIT }) {
     const magi = {};
     for (const purpose of Object.values(MagiPurpose)) magi[purpose] = basis.magi[purpose].amount;
+    const fica = -this.yearly.fica().amount;
     this.taxYears.push(Object.freeze({
       year,
       months: this.monthsInPlanYear(year),
@@ -36257,7 +36305,14 @@ var Portfolio = class _Portfolio {
       netInvestmentIncome: basis.netInvestmentIncome.amount,
       taxableSocialSecurity: basis.taxableSocialSecurity.amount,
       ordinaryTaxable: basis.ordinaryTaxable.amount,
-      capitalGains: basis.capitalGains.amount
+      capitalGains: basis.capitalGains.amount,
+      fica,
+      incomeTax: liability.incomeTax,
+      capitalGainsTax: liability.capitalGainsTax,
+      niit,
+      federalTax: fica + liability.incomeTax + liability.capitalGainsTax + niit,
+      settledTrueUp,
+      settledNIIT
     }));
   }
   modelMetricsToDisplayData(monthsSpan, modelAsset) {
@@ -40137,6 +40192,23 @@ var OBLIGATION_SCOPES = /* @__PURE__ */ new Set([
   TraceKind.MORTGAGE,
   TraceKind.CARRYING_COST
 ]);
+var TAX_LABEL = Object.freeze({
+  [EventType.FICA_WITHHOLDING]: "FICA",
+  [EventType.INCOME_TAX_WITHHOLDING]: "Income tax",
+  [EventType.CAPITAL_GAINS_TAX]: "Capital gains tax",
+  [EventType.TAX_TRUE_UP]: "Annual tax true-up",
+  [EventType.NIIT_ASSESSED]: "Net investment income tax"
+});
+
+// js/month-summary.js
+var MAGI_NAME = Object.freeze({
+  [MagiPurpose.NIIT]: "NIIT",
+  [MagiPurpose.IRMAA]: "IRMAA",
+  [MagiPurpose.SENIOR_DEDUCTION]: "senior deduction",
+  [MagiPurpose.IRA_DEDUCTION]: "IRA deduction",
+  [MagiPurpose.ROTH_CONTRIBUTION]: "Roth contribution",
+  [MagiPurpose.ACA]: "ACA"
+});
 
 // js/generators/finplan-ai.js
 var fmt = formatCurrency;
@@ -40144,7 +40216,7 @@ var pct = (val, decimals = 1) => (val * 100).toFixed(decimals) + "%";
 var GENERATOR_LINE = "\n---\n*Generated by https://Charting.Finance/ portfolio simulator*\n";
 var SECTIONS = [
   { key: "timeline", label: "Your Timeline" },
-  { key: "monthdetails", label: "Month Details" },
+  { key: "monthdetails", label: "Month & Year Details" },
   { key: "portfolio", label: "Your Portfolio" },
   { key: "projections", label: "Projections" },
   { key: "montecarlo", label: "Monte Carlo" },

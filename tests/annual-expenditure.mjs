@@ -346,9 +346,9 @@ const main = async () => {
 
     test('a portfolio with no run yields zeroes, not a crash', () => {
         assert.deepEqual(trailingYearExpenditure(null, 10),
-            { spending: 0, tax: 0, total: 0, unfunded: 0, months: 0, complete: false });
+            { spending: 0, tax: 0, total: 0, unfunded: 0, months: 0, complete: false, items: [] });
         assert.deepEqual(trailingYearExpenditure({}, 10),
-            { spending: 0, tax: 0, total: 0, unfunded: 0, months: 0, complete: false });
+            { spending: 0, tax: 0, total: 0, unfunded: 0, months: 0, complete: false, items: [] });
     });
 
     // ---- the gross-up premium: a known imprecision, now with a witness ----

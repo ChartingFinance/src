@@ -22,7 +22,13 @@
  *   CONVERSIONS      the Roth contribution MAGI leaves out exactly what arrived
  *                    in the Roth from a traditional account, on both paths
  *                    that move it: a monthly transfer and a close.
- *   RE-RUNS          a second run of one Portfolio starts a fresh list, and
+ *   OWED AND PAID    each year owes FICA plus the true-up's liability plus
+ *                    NIIT. The settlement fields equal what the next year's
+ *                    package shows, and where the settlement was paid in full
+ *                    (every corpus year), owed equals withheld plus settled.
+ *                    Where nothing can pay the bill, the record still says what
+ *                    was owed.
+ *   RE-RUNS         a second run of one Portfolio starts a fresh list, and
  *                    copy() carries the list.
  *
  * Run: node tests/tax-years.mjs   (from src/)
@@ -76,7 +82,7 @@ async function runFixture(fixture) {
   if (c.filingAs != null) { G.global_setFilingAs(c.filingAs); G.global_getFilingAs(); }
 
   const built = fixture.build();
-  const portfolio = new Portfolio(built.assets, false, simConfigFromGlobals());
+  const portfolio = new Portfolio(built.assets, true, simConfigFromGlobals());
   if (built.lifeEvents) portfolio.lifeEvents = built.lifeEvents;
   if (built.guardrails) portfolio.guardrailsParams = built.guardrails;
   await chronometer_run(portfolio);
@@ -103,6 +109,7 @@ console.log('\n── One record per settled year, across the corpus ──\n');
 let niitEvents = 0;
 let niitEventsWithUntaxedSS = 0;
 let recordsWithoutNIIT = 0;
+const reached = { bill: 0, refund: 0, fica: 0, capitalGainsTax: 0 };
 
 for (const fixture of SNAPSHOT_FIXTURES) {
   const p = await runFixture(fixture);
@@ -142,7 +149,42 @@ for (const fixture of SNAPSHOT_FIXTURES) {
       }
     });
   }
+
+  // The settlement of year Y is booked in January of Y+1, so the package
+  // covering Y+1 shows it, and the package covering Y shows what Y withheld.
+  const packageOf = new Map(p.generatedReports
+    .filter((r) => r.type === 'yearly').map((r) => [r.coversYear, r.pkg]));
+
+  await check(`${fixture.name}: each year owed what it withheld plus what January settled`, () => {
+    for (const t of p.taxYears) {
+      for (const v of [t.fica, t.incomeTax, t.capitalGainsTax, t.niit]) {
+        assert.ok(Number.isFinite(v) && v >= 0, `${t.year} owes ${v}`);
+      }
+      near(t.federalTax, t.fica + t.incomeTax + t.capitalGainsTax + t.niit, `${t.year} federalTax`);
+
+      const own = packageOf.get(t.year), next = packageOf.get(t.year + 1);
+      near(t.fica, -own.fica().amount, `${t.year} FICA`, 0.01);
+      if (!next) continue;   // the last year's settlement is in no package
+      near(t.settledTrueUp, next.taxTrueUp.amount, `${t.year} true-up`, 0.01);
+      near(t.settledNIIT, next.niit.amount, `${t.year} NIIT settled`, 0.01);
+      near(t.niit, -t.settledNIIT, `${t.year} NIIT owed vs paid`, 0.01);
+
+      // Every year in the corpus settles in full, so owed equals paid. The
+      // true-up ignores a difference under $1, hence the tolerance.
+      const withheld = -(own.incomeTax.amount + own.estimatedTaxes.amount + own.longTermCapitalGainsTax.amount);
+      near(t.federalTax, t.fica + withheld - t.settledTrueUp - t.settledNIIT, `${t.year} owed vs paid`, 1);
+
+      if (t.settledTrueUp < -1) reached.bill++;
+      if (t.settledTrueUp > 1) reached.refund++;
+      if (t.fica > 1) reached.fica++;
+      if (t.capitalGainsTax > 1) reached.capitalGainsTax++;
+    }
+  });
 }
+
+await check('the corpus reaches a bill, a refund, FICA and capital-gains tax', () => {
+  for (const [what, n] of Object.entries(reached)) assert.ok(n > 0, `no settled year has ${what}`);
+});
 
 await check('the corpus reaches NIIT, so the comparison above is not vacuous', () => {
   assert.ok(niitEvents > 0, 'no fixture charges NIIT');
@@ -214,6 +256,37 @@ for (const t of conv.taxYears) {
     assert.ok(t.agi >= converted, `${t.year} agi ${t.agi} leaves out converted income`);
   });
 }
+
+// ── Owed, not paid ───────────────────────────────────────────────────
+
+console.log('\n── A year owes its tax whether or not it can pay it ──\n');
+
+// A pension with nowhere to deposit and no everyday account: 10% is withheld
+// at source, and the April bill for the rest has no account to come from.
+const { portfolio: unpaid } = await runPlan({
+  name: 'unpaid-bill',
+  settings: { filingAs: 'Single', startAge: 62, retirementAge: 60, finishAge: 64 },
+  lifeEvents: [],
+  modelAssets: [
+    asset({ instrument: 'pension', displayName: 'Pension',
+      startCurrency: { amount: 15000 }, startBasisCurrency: { amount: 0 } }),
+    asset({ instrument: 'rothIRA', displayName: 'Roth IRA',
+      startCurrency: { amount: 1000 }, startBasisCurrency: { amount: 1000 } }),
+  ],
+});
+
+await check('the bill went unpaid, and the record still says what was owed', () => {
+  const t = unpaid.taxYears.find((r) => r.year === 2026);
+  const own = unpaid.generatedReports.find((r) => r.type === 'yearly' && r.coversYear === 2026).pkg;
+  const withheld = -own.incomeTax.amount;
+  assert.equal(t.settledTrueUp, 0, 'something paid the bill');
+  assert.ok(t.incomeTax - withheld > 1000,
+    `income tax owed ${t.incomeTax.toFixed(2)}, withheld ${withheld.toFixed(2)}: no unpaid bill to test`);
+  near(t.federalTax, t.fica + t.incomeTax + t.capitalGainsTax + t.niit, 'federalTax');
+  const reported = unpaid.modelAssets.flatMap((a) => a.events).some((e) =>
+    e.type === EventType.UNFUNDED && e.dateInt.year === 2026 && /true-up/.test(e.data?.cause ?? ''));
+  assert.ok(reported, 'the unpaid bill was not reported as unfunded');
+});
 
 // ── Re-runs and copies ───────────────────────────────────────────────
 

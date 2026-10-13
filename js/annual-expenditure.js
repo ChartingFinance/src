@@ -122,6 +122,15 @@ const OBLIGATION_SCOPES = new Set([
     TraceKind.CARRYING_COST,
 ]);
 
+/** What a tax draw paid, named by the event type that drew it. */
+const TAX_LABEL = Object.freeze({
+    [EventType.FICA_WITHHOLDING]:       'FICA',
+    [EventType.INCOME_TAX_WITHHOLDING]: 'Income tax',
+    [EventType.CAPITAL_GAINS_TAX]:      'Capital gains tax',
+    [EventType.TAX_TRUE_UP]:            'Annual tax true-up',
+    [EventType.NIIT_ASSESSED]:          'Net investment income tax',
+});
+
 /**
  * Classify one event. Returns an Expenditure bucket, or null when the event is
  * not a draw at all.
@@ -129,9 +138,21 @@ const OBLIGATION_SCOPES = new Set([
  * @param {SimEvent} event
  * @param {Array}    scopes  portfolio.traceScopes, passed explicitly: trace.js
  *                           module state is reset by the next run.
- * @param {Map}      [memo]  traceId -> bucket, for one pass over many events
+ * @param {Map}      [memo]  traceId -> obligation, for one pass over many events
  */
 export function classify(event, scopes, memo = null) {
+    return obligationOf(event, scopes, memo)?.bucket ?? null;
+}
+
+/**
+ * classify(), plus the obligation the draw paid, for an itemised list: the
+ * expense, mortgage or carrying cost its causal chain roots in ("Living
+ * Expenses", "Home property tax"), or the kind of tax.
+ *
+ * @returns {{bucket: string, label: string|null} | null}  null when the event
+ *          is not a draw; label is null for INTERNAL
+ */
+export function obligationOf(event, scopes, memo = null) {
     if (event.kind !== EventKind.CASH) return null;
 
     // Credits are not withdrawals, and are not netted against them: a tax
@@ -148,20 +169,23 @@ export function classify(event, scopes, memo = null) {
             `Defaulting would leave money out of a total that claims to be complete.`);
     }
 
-    if (treatment === 'tax')      return Expenditure.TAX;
-    if (treatment === 'spending') return Expenditure.SPENDING;
+    if (treatment === 'tax')      return { bucket: Expenditure.TAX, label: TAX_LABEL[event.type] };
+    if (treatment === 'spending') return { bucket: Expenditure.SPENDING, label: 'One-time purchases' };
     if (treatment === 'excluded') return null;
 
-    // 'byScope'
+    // 'byScope'. The innermost obligation names it: a settlement inside
+    // "Pay Living Expenses" paid Living Expenses.
     if (memo?.has(event.traceId)) return memo.get(event.traceId);
     const chain = chainFor(event.traceId, scopes);
-    const bucket = chain.some((s) => OBLIGATION_SCOPES.has(s.kind))
-        ? Expenditure.SPENDING
+    let obligation = null;
+    for (const s of chain) if (OBLIGATION_SCOPES.has(s.kind)) obligation = s;
+    const result = obligation
+        ? { bucket: Expenditure.SPENDING, label: obligation.label.replace(/^Pay /, '') }
         : chain.some((s) => s.kind === TraceKind.TAX_TRUE_UP)
-            ? Expenditure.TAX
-            : Expenditure.INTERNAL;
-    memo?.set(event.traceId, bucket);
-    return bucket;
+            ? { bucket: Expenditure.TAX, label: 'Annual tax settlement' }
+            : { bucket: Expenditure.INTERNAL, label: null };
+    memo?.set(event.traceId, result);
+    return result;
 }
 
 /**
@@ -171,12 +195,14 @@ export function classify(event, scopes, memo = null) {
  * Amounts are positive: this is a "how much went out" figure.
  *
  * @returns {{spending: number, tax: number, total: number,
- *            unfunded: number, months: number, complete: boolean}}
+ *            unfunded: number, months: number, complete: boolean,
+ *            items: Array<{label: string, bucket: string, amount: number}>}}
  *          `complete` is false when the window ran off either end of the plan,
  *          so a caller can say "8 months" rather than implying a full year.
+ *          `items` is the same total by obligation, largest first.
  */
 export function expenditureOverWindow(portfolio, fromIndex, toIndex) {
-    const empty = { spending: 0, tax: 0, total: 0, unfunded: 0, months: 0, complete: false };
+    const empty = { spending: 0, tax: 0, total: 0, unfunded: 0, months: 0, complete: false, items: [] };
     if (!portfolio?.firstDateInt) return empty;
 
     const lastIndex = lastHistoryIndex(portfolio);
@@ -193,6 +219,7 @@ export function expenditureOverWindow(portfolio, fromIndex, toIndex) {
     const memo = new Map();
 
     let spending = 0, tax = 0, unfunded = 0;
+    const items = new Map();
 
     for (const asset of portfolio.modelAssets) {
         const fundable = InstrumentType.isFundable(asset.instrument);
@@ -209,9 +236,16 @@ export function expenditureOverWindow(portfolio, fromIndex, toIndex) {
 
             if (!fundable) continue;
 
-            const bucket = classify(event, scopes, memo);
-            if (bucket === Expenditure.SPENDING) spending += -event.amount.amount;
-            else if (bucket === Expenditure.TAX)  tax      += -event.amount.amount;
+            const o = obligationOf(event, scopes, memo);
+            if (!o || o.bucket === Expenditure.INTERNAL) continue;
+            const amount = -event.amount.amount;
+            if (o.bucket === Expenditure.SPENDING) spending += amount;
+            else tax += amount;
+
+            const key = `${o.bucket}:${o.label}`;
+            const item = items.get(key) ?? { label: o.label, bucket: o.bucket, amount: 0 };
+            item.amount += amount;
+            items.set(key, item);
         }
     }
 
@@ -222,6 +256,7 @@ export function expenditureOverWindow(portfolio, fromIndex, toIndex) {
         unfunded,
         months: to - from + 1,
         complete: (to - from + 1) === (toIndex - fromIndex + 1),
+        items: [...items.values()].sort((a, b) => b.amount - a.amount),
     };
 }
 
