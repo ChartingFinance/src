@@ -575,7 +575,9 @@ const adversarialFixtures = [
       'named account supplies everything that is paid, so booking ' +
       'settled.supplied would look right; the second account is what ' +
       'separates "what the accounts paid" from both "what the first account ' +
-      'paid" and "what was handed to the fallback". The close goes to a Roth, ' +
+      'paid" and "what was handed to the fallback". Having a fallback, it ' +
+      'does not reach the draw with none; the conservation test\'s first ' +
+      'plan does. The close goes to a Roth, ' +
       'not to Checking, so no deposit lands where the true-up draws. Every ' +
       'rate is zero and nothing runs after the close, so the year\'s refund ' +
       'is collected minus owed, by hand. ' +
