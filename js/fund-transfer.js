@@ -210,15 +210,20 @@ export class FundTransfer {
    * carrying cost, tax): debit the funding account and, if it clamps at $0,
    * source the shortfall from a fallback, reporting what nothing can cover.
    *
-   * `supplied` is what the named account paid; `spillover` is what the
-   * fallback paid. Callers book each leg against the account that paid it.
+   * `supplied` is what the named account paid; `spillover` is what was asked
+   * of the fallback. Callers book each leg against the account that paid it.
+   * The fallback can clamp too, and what it could not pay is reported
+   * unfunded, so supplied + spillover can exceed what was paid. `paid` is the
+   * amount asked for less everything reported unfunded: the figure to book
+   * as collected.
    *
    * @param {FundTransferOneSided} oneSided
    * @param {string}      memo
    * @param {ModelAsset[]} allModels
    * @param {Function}    resolveFallback  Funding policy for the shortfall
    * @returns {{supplied: Currency, realizedGain: Currency, spillover: Currency,
-   *            spilloverGain: Currency, spilloverInstrument: string|null}}
+   *            spilloverGain: Currency, spilloverInstrument: string|null,
+   *            paid: Currency}}
    */
   static settleOneSided(oneSided, event, allModels, resolveFallback = FundTransfer.resolveFunding) {
     // Nested under whatever obligation asked for this draw, so the chain reads
@@ -245,6 +250,7 @@ export class FundTransfer {
     let spillover = Currency.zero();
     let spilloverGain = Currency.zero();
     let spilloverInstrument = null;
+    let unfunded = Currency.zero();
 
     if (result.spillover.amount > 0) {
       const fallback = resolveFallback(allModels);
@@ -267,14 +273,20 @@ export class FundTransfer {
         }
         // The fallback itself clamped: nothing left at this layer to draw on.
         if (spillResult.spillover?.amount > 0) {
+          unfunded = spillResult.spillover.copy();
           FundTransfer.reportUnfunded(oneSided.fromModel ?? oneSided.toModel, spillResult.spillover, memo, ShortfallOrigin.ONE_SIDED);
         }
       } else {
+        unfunded = result.spillover.copy();
         FundTransfer.reportUnfunded(oneSided.fromModel ?? oneSided.toModel, result.spillover, memo, ShortfallOrigin.ONE_SIDED);
       }
     }
 
-    return { supplied, realizedGain: result.realizedGain, spillover, spilloverGain, spilloverInstrument };
+    // Asked for less unfunded, rather than supplied + what the fallback paid,
+    // so that a settlement with nothing unfunded books exactly what it asked.
+    const paid = oneSided.amount.minus(unfunded);
+
+    return { supplied, realizedGain: result.realizedGain, spillover, spilloverGain, spilloverInstrument, paid };
   }
 
   // ── Binding ──────────────────────────────────────────────────────

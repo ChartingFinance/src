@@ -121,12 +121,15 @@ function conservationBucket(event, bucket) {
     // info-kind (no cash moved) but still counts: it is the gap between what a
     // movement asked for and what it delivered.
     if (event.type === EventType.SPILLOVER || event.type === EventType.UNFUNDED) {
-        // Except a spill that paid income tax. TaxEngine.#withholdInScope books
-        // monthly.incomeTax for the spilled leg, and this SPILLOVER is its only
-        // cash event, so it belongs to the income-tax total. `cause:
-        // 'withholding'` is set in exactly one place, by the same block that
-        // books the tax.
-        if (event.type === EventType.SPILLOVER && event.data?.cause === 'withholding') {
+        // Except a spill that paid income tax. Its tax is booked in
+        // monthly.incomeTax and this SPILLOVER is its only cash event, so it
+        // belongs to the income-tax total. Two sites spill income tax:
+        // TaxEngine.#withholdInScope (cause 'withholding') and the monthly
+        // true-up's draw (cause INCOME_TAX_WITHHOLDING, the settlement's own
+        // event type).
+        if (event.type === EventType.SPILLOVER
+            && (event.data?.cause === 'withholding'
+                || event.data?.cause === EventType.INCOME_TAX_WITHHOLDING)) {
             return 'incomeTax';
         }
         return event.data?.origin === ShortfallOrigin.PAIRED ? 'paired' : 'oneSided';

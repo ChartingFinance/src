@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.3.27; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.3.28; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -32718,15 +32718,20 @@ var FundTransfer = class _FundTransfer {
    * carrying cost, tax): debit the funding account and, if it clamps at $0,
    * source the shortfall from a fallback, reporting what nothing can cover.
    *
-   * `supplied` is what the named account paid; `spillover` is what the
-   * fallback paid. Callers book each leg against the account that paid it.
+   * `supplied` is what the named account paid; `spillover` is what was asked
+   * of the fallback. Callers book each leg against the account that paid it.
+   * The fallback can clamp too, and what it could not pay is reported
+   * unfunded, so supplied + spillover can exceed what was paid. `paid` is the
+   * amount asked for less everything reported unfunded: the figure to book
+   * as collected.
    *
    * @param {FundTransferOneSided} oneSided
    * @param {string}      memo
    * @param {ModelAsset[]} allModels
    * @param {Function}    resolveFallback  Funding policy for the shortfall
    * @returns {{supplied: Currency, realizedGain: Currency, spillover: Currency,
-   *            spilloverGain: Currency, spilloverInstrument: string|null}}
+   *            spilloverGain: Currency, spilloverInstrument: string|null,
+   *            paid: Currency}}
    */
   static settleOneSided(oneSided, event, allModels, resolveFallback = _FundTransfer.resolveFunding) {
     return withTrace(
@@ -32748,6 +32753,7 @@ var FundTransfer = class _FundTransfer {
     let spillover = Currency.zero();
     let spilloverGain = Currency.zero();
     let spilloverInstrument = null;
+    let unfunded = Currency.zero();
     if (result.spillover.amount > 0) {
       const fallback = resolveFallback(allModels);
       if (fallback) {
@@ -32771,13 +32777,16 @@ var FundTransfer = class _FundTransfer {
           fallback.recordEvent(EventType.CAPITAL_GAIN_RECOGNIZED, spilloverGain.copy(), { metric: Metric.LONG_TERM_CAPITAL_GAIN, data: { spillover: true } });
         }
         if (spillResult.spillover?.amount > 0) {
+          unfunded = spillResult.spillover.copy();
           _FundTransfer.reportUnfunded(oneSided.fromModel ?? oneSided.toModel, spillResult.spillover, memo, ShortfallOrigin.ONE_SIDED);
         }
       } else {
+        unfunded = result.spillover.copy();
         _FundTransfer.reportUnfunded(oneSided.fromModel ?? oneSided.toModel, result.spillover, memo, ShortfallOrigin.ONE_SIDED);
       }
     }
-    return { supplied, realizedGain: result.realizedGain, spillover, spilloverGain, spilloverInstrument };
+    const paid = oneSided.amount.minus(unfunded);
+    return { supplied, realizedGain: result.realizedGain, spillover, spilloverGain, spilloverInstrument, paid };
   }
   // ── Binding ──────────────────────────────────────────────────────
   /**
@@ -35161,11 +35170,14 @@ var TaxEngine = class {
       logger.log(LogCategory.TAX, () => `Monthly True-Up: no backstop account to pay ${additionalTax.toString()}; deferring to annual true-up`);
       return;
     }
-    this.monthly.incomeTax.add(additionalTax);
-    liquidAsset.addToMetric(Metric.ESTIMATED_INCOME_TAX, additionalTax);
     const oneSided = new FundTransferOneSided(null, payment);
     oneSided.toModel = liquidAsset;
     const settled = FundTransfer.settleOneSided(oneSided, { type: EventType.INCOME_TAX_WITHHOLDING }, this.modelAssets);
+    if (settled.paid.amount > 0) {
+      const withheld = settled.paid.copy().flipSign();
+      this.monthly.incomeTax.add(withheld);
+      liquidAsset.addToMetric(Metric.ESTIMATED_INCOME_TAX, withheld);
+    }
     this.monthly.recordTransfer(liquidAsset.instrument, settled.supplied, settled.realizedGain);
     if (settled.spillover.amount > 0 && settled.spilloverInstrument) {
       this.monthly.recordTransfer(settled.spilloverInstrument, settled.spillover, settled.spilloverGain);
@@ -35649,7 +35661,7 @@ var MEMO_RECONCILIATION = Object.freeze({
 });
 function conservationBucket(event, bucket) {
   if (event.type === EventType.SPILLOVER || event.type === EventType.UNFUNDED) {
-    if (event.type === EventType.SPILLOVER && event.data?.cause === "withholding") {
+    if (event.type === EventType.SPILLOVER && (event.data?.cause === "withholding" || event.data?.cause === EventType.INCOME_TAX_WITHHOLDING)) {
       return "incomeTax";
     }
     return event.data?.origin === ShortfallOrigin.PAIRED ? "paired" : "oneSided";

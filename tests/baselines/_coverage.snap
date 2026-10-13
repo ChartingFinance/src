@@ -364,6 +364,14 @@
     expenseInflation
     transfer
     unfunded
+  trueup-draw-unfunded:
+    assetGrowth
+    incomeTaxWithholding
+    interestIncome
+    spillover
+    taxTrueUp
+    transfer
+    unfunded
   unfundable-tax-bill:
     assetGrowth
     capitalGainRecognized
