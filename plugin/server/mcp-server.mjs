@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.3.24; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.3.25; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -36286,9 +36286,12 @@ var Portfolio = class _Portfolio {
         this.monthly.report(LogCategory.MONTHLY);
         logger.log(LogCategory.MONTHLY, () => " -------   End Monthly (" + currentDateInt.toString() + " ) Report  -------");
       }
+      const covers = currentDateInt.copy();
+      covers.prevMonth();
       this.generatedReports.push({
         type: "monthly",
         dateLabel: currentDateInt.toString(),
+        coversMonth: covers.toString(),
         pkg: new FinancialPackage().add(this.monthly)
       });
     }

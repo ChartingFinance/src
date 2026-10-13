@@ -1049,10 +1049,16 @@ export class Portfolio {
                 logger.log(LogCategory.MONTHLY, () => ' -------   End Monthly (' + currentDateInt.toString() + ' ) Report  -------');
             }
 
-            this.generatedReports.push({ 
-                type: 'monthly', 
-                dateLabel: currentDateInt.toString(), 
-                pkg: new FinancialPackage().add(this.monthly) 
+            // monthlyChron runs after the clock steps, so `dateLabel` is the
+            // first of the next month. The month the package holds is
+            // `coversMonth`, which is what a reader should see and match on.
+            const covers = currentDateInt.copy();
+            covers.prevMonth();
+            this.generatedReports.push({
+                type: 'monthly',
+                dateLabel: currentDateInt.toString(),
+                coversMonth: covers.toString(),
+                pkg: new FinancialPackage().add(this.monthly)
             });
 
         }
