@@ -209,6 +209,10 @@ export class Portfolio {
         // passes charge on. See #recordTaxYear.
         this.taxYears = [];
 
+        // The transfer rules in force, one record per phase change. See
+        // #recordPhaseRules.
+        this.phaseRules = [];
+
         // Life events timeline
         this.lifeEvents = [];
 
@@ -271,6 +275,7 @@ export class Portfolio {
         portfolio.guardrailEvents         = [...this.guardrailEvents];
         portfolio.yearlySnapshots         = [...this.yearlySnapshots];
         portfolio.taxYears                = [...this.taxYears];   // records are frozen
+        portfolio.phaseRules              = [...this.phaseRules]; // records are frozen
         portfolio.generatedReports        = [...this.generatedReports];
         portfolio.monthlyPackages         = this.monthlyPackages.map(p => p.copy());
         portfolio.monthlyPriceIndex       = [...this.monthlyPriceIndex];
@@ -354,8 +359,10 @@ export class Portfolio {
         }
 
         // Load first phase's transfers onto assets
+        this.phaseRules = [];
         if (this.lifeEvents.length > 0) {
             this.applyPhaseTransfers(this.lifeEvents[0]);
+            this.#recordPhaseRules(this.lifeEvents[0], 0);
         }
 
         // The one place the engines are built.
@@ -378,8 +385,41 @@ export class Portfolio {
                 // opens the month's scope.
                 withTrace(TraceKind.MONTH, `Life event: ${event.displayName}`, currentDateInt,
                     () => event.apply(this, currentDateInt));
+                this.#recordPhaseRules(event, DateInt.diffMonths(this.firstDateInt, currentDateInt));
             }
         }
+    }
+
+    /**
+     * Record every asset's transfer rules as a phase takes effect. A run leaves
+     * each asset holding the LAST phase's rules, so after it the assets cannot
+     * say what was in force at an earlier month; this record can. Read it with
+     * the last record whose `fromIndex` is at or before the month.
+     *
+     * @typedef {object} PhaseRules
+     * @property {number} fromIndex  the first month (history index) it applies to
+     * @property {string} phase      the life event's displayName
+     * @property {string} type       the life event's type
+     * @property {Readonly<Record<string, ReadonlyArray<object>>>} transfers
+     *           every asset's fund transfers as JSON, by displayName
+     */
+    #recordPhaseRules(event, fromIndex) {
+        const transfers = {};
+        for (const asset of this.modelAssets) {
+            transfers[asset.displayName] = Object.freeze((asset.fundTransfers ?? []).map((ft) => ft.toJSON()));
+        }
+        const record = Object.freeze({
+            fromIndex,
+            phase: event.displayName,
+            type: event.type,
+            transfers: Object.freeze(transfers),
+        });
+        // The first phase is installed before the run and fires again in its
+        // trigger month, usually the first; a later record for the same month
+        // replaces the earlier one.
+        const last = this.phaseRules[this.phaseRules.length - 1];
+        if (last?.fromIndex === fromIndex) this.phaseRules[this.phaseRules.length - 1] = record;
+        else this.phaseRules.push(record);
     }
 
     /**

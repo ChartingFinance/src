@@ -5,7 +5,9 @@
  * A pipeline groups fund transfers by source-group → target-group corridor.
  *
  * Three data sources:
- *  1. User-configured: modelAsset.fundTransfers (already reflect active phase)
+ *  1. User-configured: the transfer rules in force at the month shown, from
+ *     Portfolio.phaseRules. Not modelAsset.fundTransfers: after a run those
+ *     hold the LAST phase's rules, whatever month is shown.
  *  2. System/implicit: mortgage payments, property tax, carrying costs
  *  3. Close transfers: on-close fund transfers (shown when closeMoveValue > 0)
  *
@@ -17,6 +19,7 @@ import { AssetGroup, AssetGroupMeta, classifyAssetGroup } from './asset-groups.j
 import { InstrumentType } from './instruments/instrument.js';
 import { FundTransfer } from './fund-transfer.js';
 import { Metric } from './metric.js';
+import { LifeEventType } from './life-event.js';
 
 // ── Predefined pipelines ────────────────────────────────────────────
 
@@ -90,6 +93,26 @@ function isClosedAt(asset, historyIndex) {
     return asset._isClosedAtDate ?? false;
 }
 
+// ── The rules in force ──────────────────────────────────────────────
+
+/**
+ * The phase record in force at a month: the last one that took effect at or
+ * before it, or null when the run recorded none (a plan with no life events).
+ */
+export function phaseRulesAt(portfolio, historyIndex) {
+    let found = null;
+    for (const record of portfolio.phaseRules ?? []) {
+        if (record.fromIndex <= historyIndex) found = record;
+    }
+    return found;
+}
+
+/** An asset's transfer rules at a month, from the phase record when there is one. */
+function transfersAt(rules, asset) {
+    if (!rules) return asset.fundTransfers ?? [];
+    return (rules.transfers[asset.displayName] ?? []).map(FundTransfer.fromJSON);
+}
+
 // ── Build pipelines ─────────────────────────────────────────────────
 
 /**
@@ -102,6 +125,11 @@ function isClosedAt(asset, historyIndex) {
 export function buildPipelines(portfolio, historyIndex, isRetired = false) {
     const assets = portfolio.modelAssets;
     if (!assets || assets.length === 0) return [];
+
+    // The phase in force at this month decides both the rules and whether the
+    // household is retired; `isRetired` is only the fallback with no record.
+    const rules = phaseRulesAt(portfolio, historyIndex);
+    if (rules) isRetired = LifeEventType.isRetirement(rules.type);
 
     // Map of pipelineKey → { ...pipelineDef, routes: [] }
     const pipelineMap = new Map();
@@ -119,7 +147,7 @@ export function buildPipelines(portfolio, historyIndex, isRetired = false) {
         });
     }
 
-    // 1. User-configured transfers (already reflect active phase)
+    // 1. User-configured transfers, as in force at this month
     // Note: Expense and mortgage fund transfers are data-modeled as expense→fundingAccount,
     // but money flows the opposite direction (fundingAccount→expense). We reverse these
     // so pipelines reflect the direction of money flow.
@@ -136,13 +164,14 @@ export function buildPipelines(portfolio, historyIndex, isRetired = false) {
         || (InstrumentType.isFundable(inst) && !InstrumentType.isRealEstate(inst));
 
     for (const asset of assets) {
-        if (!asset.fundTransfers?.length) continue;
+        const fundTransfers = transfersAt(rules, asset);
+        if (!fundTransfers.length) continue;
 
         const assetGroup = classifyAssetGroup(asset.instrument);
         const isReversed = InstrumentType.isMonthlyExpense(asset.instrument)
                         || InstrumentType.isMortgage(asset.instrument);
 
-        for (const ft of asset.fundTransfers) {
+        for (const ft of fundTransfers) {
             // Only show recurring transfers for instruments that actually execute them
             if (!ft.hasRecurring || !MONTHLY_EXECUTABLE(asset.instrument)) continue;
 
@@ -199,7 +228,7 @@ export function buildPipelines(portfolio, historyIndex, isRetired = false) {
     }
 
     // 2. System/implicit transfers
-    addSystemTransfers(pipelineMap, assets, historyIndex);
+    addSystemTransfers(pipelineMap, assets, historyIndex, rules);
 
     // 3. Finalize: compute totals, mark active/missing
     const result = [];
@@ -250,7 +279,7 @@ function ensurePipeline(map, key, sourceGroup, targetGroup) {
     });
 }
 
-function addSystemTransfers(pipelineMap, assets, historyIndex) {
+function addSystemTransfers(pipelineMap, assets, historyIndex, rules) {
     // The funding backstop — same resolver the engines use at simulation time
     const backstop = FundTransfer.resolveFunding(assets);
 
@@ -296,7 +325,7 @@ function addSystemTransfers(pipelineMap, assets, historyIndex) {
                 if (ins > 0)     costs.push({ amount: ins,     detail: 'Insurance' });
 
                 for (const cost of costs) {
-                    const fundingSource = resolveCarryingCostSource(asset, cost.amount, assets) || backstop;
+                    const fundingSource = resolveCarryingCostSource(transfersAt(rules, asset), assets) || backstop;
                     if (!fundingSource) continue;
                     const sourceGroup = classifyAssetGroup(fundingSource.instrument);
                     const targetGroup = AssetGroup.REAL_ESTATE;
@@ -323,9 +352,8 @@ function addSystemTransfers(pipelineMap, assets, historyIndex) {
  * Mirror simulation logic: if the real estate asset has an explicit fund transfer,
  * use its target as the funding source for carrying costs / property tax.
  */
-function resolveCarryingCostSource(realEstateAsset, costAmount, allAssets) {
-    if (!realEstateAsset.fundTransfers?.length) return null;
-    for (const ft of realEstateAsset.fundTransfers) {
+function resolveCarryingCostSource(fundTransfers, allAssets) {
+    for (const ft of fundTransfers) {
         if (ft.monthlyMoveValue <= 0) continue;
         const target = allAssets.find(a => a.displayName === ft.toDisplayName && !a.isClosed);
         if (target) return target;

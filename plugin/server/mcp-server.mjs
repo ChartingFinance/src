@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.3.30; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.3.31; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -35698,6 +35698,7 @@ var Portfolio = class _Portfolio {
     this.guardrailEvents = [];
     this.yearlySnapshots = [];
     this.taxYears = [];
+    this.phaseRules = [];
     this.lifeEvents = [];
     this.monthly = new FinancialPackage();
     this.yearly = new FinancialPackage();
@@ -35732,6 +35733,7 @@ var Portfolio = class _Portfolio {
     portfolio.guardrailEvents = [...this.guardrailEvents];
     portfolio.yearlySnapshots = [...this.yearlySnapshots];
     portfolio.taxYears = [...this.taxYears];
+    portfolio.phaseRules = [...this.phaseRules];
     portfolio.generatedReports = [...this.generatedReports];
     portfolio.monthlyPackages = this.monthlyPackages.map((p) => p.copy());
     portfolio.monthlyPriceIndex = [...this.monthlyPriceIndex];
@@ -35788,8 +35790,10 @@ var Portfolio = class _Portfolio {
     for (const event of this.lifeEvents) {
       event.applied = false;
     }
+    this.phaseRules = [];
     if (this.lifeEvents.length > 0) {
       this.applyPhaseTransfers(this.lifeEvents[0]);
+      this.#recordPhaseRules(this.lifeEvents[0], 0);
     }
     this.taxes = new TaxEngine(this.modelAssets, this.monthly, this.yearly, this.activeUser, this.config);
     this.payroll = new PayrollEngine(this.modelAssets, this.monthly, this.yearly, this.activeUser, this.taxes, this.config);
@@ -35811,8 +35815,37 @@ var Portfolio = class _Portfolio {
           currentDateInt,
           () => event.apply(this, currentDateInt)
         );
+        this.#recordPhaseRules(event, DateInt.diffMonths(this.firstDateInt, currentDateInt));
       }
     }
+  }
+  /**
+   * Record every asset's transfer rules as a phase takes effect. A run leaves
+   * each asset holding the LAST phase's rules, so after it the assets cannot
+   * say what was in force at an earlier month; this record can. Read it with
+   * the last record whose `fromIndex` is at or before the month.
+   *
+   * @typedef {object} PhaseRules
+   * @property {number} fromIndex  the first month (history index) it applies to
+   * @property {string} phase      the life event's displayName
+   * @property {string} type       the life event's type
+   * @property {Readonly<Record<string, ReadonlyArray<object>>>} transfers
+   *           every asset's fund transfers as JSON, by displayName
+   */
+  #recordPhaseRules(event, fromIndex) {
+    const transfers = {};
+    for (const asset of this.modelAssets) {
+      transfers[asset.displayName] = Object.freeze((asset.fundTransfers ?? []).map((ft) => ft.toJSON()));
+    }
+    const record2 = Object.freeze({
+      fromIndex,
+      phase: event.displayName,
+      type: event.type,
+      transfers: Object.freeze(transfers)
+    });
+    const last = this.phaseRules[this.phaseRules.length - 1];
+    if (last?.fromIndex === fromIndex) this.phaseRules[this.phaseRules.length - 1] = record2;
+    else this.phaseRules.push(record2);
   }
   /**
    * Populate asset.fundTransfers from a life event's phaseTransfers map.
