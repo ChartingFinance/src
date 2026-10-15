@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.3.31; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.3.32; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -32654,6 +32654,7 @@ var FundTransfer = class _FundTransfer {
     ft.toModel = toModel;
     ft.approvedAmount = amount.copy();
     ft._allModels = allModels;
+    ft.system = true;
     return ft;
   }
   // ── Account Resolution ─────────────────────────────────────────
@@ -32852,7 +32853,8 @@ var FundTransfer = class _FundTransfer {
       data: {
         from: this.fromModel?.displayName ?? "?",
         to: this.toDisplayName,
-        cadence: useClosePercent ? "on close" : "monthly"
+        cadence: useClosePercent ? "on close" : "monthly",
+        ...this.system ? { system: true } : {}
       }
     };
     const memo = renderNote(event);

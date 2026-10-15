@@ -265,7 +265,7 @@
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Assets / Flows Toggle</div>
-                <div class="text-sm text-gray-500">Switch between the <strong>Assets</strong> view (grouped asset cards) and the <strong>Flows</strong> view (fund transfer pipelines showing where money moves between groups). Both views update as you navigate the timeline; Flows shows the transfer rules of the life-event phase in force at the selected month.</div>
+                <div class="text-sm text-gray-500">Switch between the <strong>Assets</strong> view (grouped asset cards) and the <strong>Flows</strong> view (where the money went, and the transfer rules that sent it). Both views update as you navigate the timeline; Flows shows the transfer rules of the life-event phase in force at the selected month.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Viewing Badge</div>
@@ -276,12 +276,16 @@
                 <div class="text-sm text-gray-500">A virtual group that surfaces hidden taxes: FICA, income tax, capital gains, net investment income tax, and property tax. Click any tax item to <strong>highlight the contributing assets</strong> with a pulse animation across all columns.<br><br>Most rows show the selected month annualized. <strong>Net Investment Income</strong> is the exception: it is charged once a year, so its row shows the <strong>trailing twelve months</strong> instead &mdash; otherwise it would vanish for eleven months and read twelve times too high in the twelfth. It appears only in years you actually owe it.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Flow Pipelines</div>
-                <div class="text-sm text-gray-500">In the Flows view, money movement is organized as <strong>pipelines</strong> grouped by source (From Income, From Capital, From Retirement). Each pipeline card shows the monthly aggregate and individual transfer routes. Click a route to edit it.</div>
+                <div class="font-semibold text-sm mb-1">Where the Money Went</div>
+                <div class="text-sm text-gray-500">The top of the Flows view draws <strong>one bar per source of money</strong> over the selected month, or its year with the <strong>Month | Year</strong> toggle: each paycheck, pension or benefit, each account that paid for something or sent money on, and the dividends, interest, refunds and windfalls that came in. A bar's parts are where its money went, colored by what it did: <strong>into your accounts</strong> (purple), <strong>spent</strong> (red) or paid in <strong>tax</strong> (amber). Each part carries its destination's group icon, as on the Assets view.<br><br>The bars are what actually moved, read from the ledger, not your rules' percentages applied to a balance. The tiles above them add up: <strong>Came in</strong>, less <strong>Spent</strong> and <strong>Tax paid</strong>, is what went <strong>into your accounts</strong>. They match Income received, Expenses and Taxes in Month &amp; Year Details, with two exceptions: a bill or tax that could not be paid is listed beside the bars rather than in them, and property tax is drawn the month after it accrues, while Taxes counts it when it accrues. A one-time windfall is shown but is not income.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">Rules in Force</div>
+                <div class="text-sm text-gray-500">Under the bars, each transfer rule of the phase in force, with its setting beside what it moved. A setting says what its percentage is of: a 401(k) deferral is a percentage of <strong>gross pay</strong>, a Roth or brokerage deposit of <strong>take-home pay</strong>, an expense rule of <strong>the bill</strong>. Rules for accounts that have closed, or not yet opened, are folded away.<br><br><strong>Moved automatically</strong> lists the money no rule sent: tax withheld, required minimum distributions, take-home pay no rule claims, bills no rule covers (paid by the funding backstop), an account running short and the next one paying, and sale proceeds. Hover a bar part to light the rule that made it, or a rule to light its parts. Click a rule to edit its transfers.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Fund Transfer Modal</div>
-                <div class="text-sm text-gray-500">Accessed by hovering over an asset card and clicking the <strong>&#x21C4;</strong> button, or by clicking a route in the Flows view. Configure percentage-based transfers that are <strong>phase-specific</strong> (Accumulate and Retire phases have independent configurations).</div>
+                <div class="text-sm text-gray-500">Accessed by hovering over an asset card and clicking the <strong>&#x21C4;</strong> button, or by clicking a rule in the Flows view. Configure percentage-based transfers that are <strong>phase-specific</strong> (Accumulate and Retire phases have independent configurations).</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Funding Backstop</div>
@@ -319,7 +323,7 @@
                 <div class="space-y-2">
                     <div class="flex items-start gap-3">
                         <span class="step-number">1</span>
-                        <span class="text-sm text-gray-700">Hover over an asset card and click the <strong>&#x21C4;</strong> button, or switch to the <strong>Flows</strong> view and click any transfer route to open the fund transfer modal.</span>
+                        <span class="text-sm text-gray-700">Hover over an asset card and click the <strong>&#x21C4;</strong> button, or switch to the <strong>Flows</strong> view and click any rule under Rules in force to open the fund transfer modal.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">2</span>
@@ -381,11 +385,11 @@
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">2</span>
-                        <span class="text-sm text-gray-700">Pipelines are grouped by source: <strong>From Income</strong>, <strong>From Capital</strong>, <strong>From Retirement</strong>. Each pipeline card shows the monthly total and individual routes with percentages and dollar amounts.</span>
+                        <span class="text-sm text-gray-700">Read the bars: one per source of money, its parts colored by what the money did. Switch <strong>Month | Year</strong> to see the whole year.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">3</span>
-                        <span class="text-sm text-gray-700">Click any route to open the fund transfer modal for that asset. System transfers (mortgage payments, property tax, carrying costs) appear in <em>italic</em> and are auto-configured.</span>
+                        <span class="text-sm text-gray-700">Hover a bar part to find the rule that made it under <strong>Rules in force</strong>, or the automatic flow it belongs to. Click a rule to open the fund transfer modal for its asset.</span>
                     </div>
                 </div>
             </div>

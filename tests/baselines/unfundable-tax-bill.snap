@@ -66,140 +66,140 @@
   0000 2026-01 spillover                    -2000.000000 cash  -                      c0 {cause=grossUp depleted=Checking origin=oneSided}
   0001 2026-01 capitalGainRecognized         1666.666667 info  longTermCapitalGain    c0 {spillover=true}
   0002 2026-01 assetGrowth                    386.301294 cash  growth                 c-
-  0003 2026-02 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security to=Brokerage}
+  0003 2026-02 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
   0004 2026-02 grossUp                      -7017.831376 cash  -                      c2 {forAsset=Living overflow=false}
   0005 2026-02 capitalGainRecognized         3350.377882 info  longTermCapitalGain    c2 {spillover=false}
   0006 2026-02 assetGrowth                    374.412610 cash  growth                 c-
   0007 2026-02 incomeTaxWithholding            -7.698787 cash  -                      c3
   0008 2026-02 capitalGainRecognized            6.424016 info  longTermCapitalGain    c3 {spillover=false}
-  0009 2026-03 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security to=Brokerage}
+  0009 2026-03 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
   0010 2026-03 grossUp                      -7035.708174 cash  -                      c2 {forAsset=Living overflow=false}
   0011 2026-03 capitalGainRecognized         3367.472566 info  longTermCapitalGain    c2 {spillover=false}
   0012 2026-03 assetGrowth                    362.401277 cash  growth                 c-
   0013 2026-03 incomeTaxWithholding            -9.151835 cash  -                      c3
   0014 2026-03 capitalGainRecognized            7.641412 info  longTermCapitalGain    c3 {spillover=false}
-  0015 2026-04 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security to=Brokerage}
+  0015 2026-04 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
   0016 2026-04 grossUp                      -7053.630511 cash  -                      c2 {forAsset=Living overflow=false}
   0017 2026-04 capitalGainRecognized         3384.617483 info  longTermCapitalGain    c2 {spillover=false}
   0018 2026-04 assetGrowth                    350.287192 cash  growth                 c-
   0019 2026-04 incomeTaxWithholding           -10.609153 cash  -                      c3
   0020 2026-04 capitalGainRecognized            8.863927 info  longTermCapitalGain    c3 {spillover=false}
-  0021 2026-05 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security to=Brokerage}
+  0021 2026-05 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
   0022 2026-05 grossUp                      -7071.598501 cash  -                      c2 {forAsset=Living overflow=false}
   0023 2026-05 capitalGainRecognized         3401.812733 info  longTermCapitalGain    c2 {spillover=false}
   0024 2026-05 assetGrowth                    338.069856 cash  growth                 c-
   0025 2026-05 incomeTaxWithholding           -12.070749 cash  -                      c3
   0026 2026-05 capitalGainRecognized           10.091567 info  longTermCapitalGain    c3 {spillover=false}
-  0027 2026-06 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security to=Brokerage}
+  0027 2026-06 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
   0028 2026-06 grossUp                      -7089.612263 cash  -                      c2 {forAsset=Living overflow=false}
   0029 2026-06 capitalGainRecognized         3419.058414 info  longTermCapitalGain    c2 {spillover=false}
   0030 2026-06 assetGrowth                    325.748766 cash  growth                 c-
   0031 2026-06 incomeTaxWithholding           -13.536632 cash  -                      c3
   0032 2026-06 capitalGainRecognized           11.324339 info  longTermCapitalGain    c3 {spillover=false}
-  0033 2026-07 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security to=Brokerage}
+  0033 2026-07 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
   0034 2026-07 grossUp                      -7107.671911 cash  -                      c2 {forAsset=Living overflow=false}
   0035 2026-07 capitalGainRecognized         3436.354628 info  longTermCapitalGain    c2 {spillover=false}
   0036 2026-07 assetGrowth                    313.323418 cash  growth                 c-
   0037 2026-07 incomeTaxWithholding           -15.006810 cash  -                      c3
   0038 2026-07 capitalGainRecognized           12.562248 info  longTermCapitalGain    c3 {spillover=false}
-  0039 2026-08 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security to=Brokerage}
+  0039 2026-08 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
   0040 2026-08 grossUp                      -7125.777564 cash  -                      c2 {forAsset=Living overflow=false}
   0041 2026-08 capitalGainRecognized         3453.701474 info  longTermCapitalGain    c2 {spillover=false}
   0042 2026-08 assetGrowth                    300.793307 cash  growth                 c-
   0043 2026-08 incomeTaxWithholding           -16.481292 cash  -                      c3
   0044 2026-08 capitalGainRecognized           13.805302 info  longTermCapitalGain    c3 {spillover=false}
-  0045 2026-09 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security to=Brokerage}
+  0045 2026-09 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
   0046 2026-09 grossUp                      -7143.929338 cash  -                      c2 {forAsset=Living overflow=false}
   0047 2026-09 capitalGainRecognized         3471.099053 info  longTermCapitalGain    c2 {spillover=false}
   0048 2026-09 assetGrowth                    288.157924 cash  growth                 c-
   0049 2026-09 incomeTaxWithholding           -17.960086 cash  -                      c3
   0050 2026-09 capitalGainRecognized           15.053507 info  longTermCapitalGain    c3 {spillover=false}
-  0051 2026-10 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security to=Brokerage}
+  0051 2026-10 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
   0052 2026-10 grossUp                      -7162.127350 cash  -                      c2 {forAsset=Living overflow=false}
   0053 2026-10 capitalGainRecognized         3488.547465 info  longTermCapitalGain    c2 {spillover=false}
   0054 2026-10 assetGrowth                    275.416760 cash  growth                 c-
   0055 2026-10 incomeTaxWithholding           -19.443201 cash  -                      c3
   0056 2026-10 capitalGainRecognized           16.306869 info  longTermCapitalGain    c3 {spillover=false}
-  0057 2026-11 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security to=Brokerage}
+  0057 2026-11 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
   0058 2026-11 grossUp                      -7180.371720 cash  -                      c2 {forAsset=Living overflow=false}
   0059 2026-11 capitalGainRecognized         3506.046812 info  longTermCapitalGain    c2 {spillover=false}
   0060 2026-11 assetGrowth                    262.569301 cash  growth                 c-
   0061 2026-11 incomeTaxWithholding           -20.930646 cash  -                      c3
   0062 2026-11 capitalGainRecognized           17.565395 info  longTermCapitalGain    c3 {spillover=false}
-  0063 2026-12 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security to=Brokerage}
+  0063 2026-12 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
   0064 2026-12 grossUp                      -7198.662563 cash  -                      c2 {forAsset=Living overflow=false}
   0065 2026-12 capitalGainRecognized         3523.597196 info  longTermCapitalGain    c2 {spillover=false}
   0066 2026-12 assetGrowth                    249.615035 cash  growth                 c-
   0067 2026-12 incomeTaxWithholding           -22.422428 cash  -                      c3
   0068 2026-12 capitalGainRecognized           18.829090 info  longTermCapitalGain    c3 {spillover=false}
   0069 2026-12 taxTrueUp                      123.646915 cash  -                      c4 {direction=refund}
-  0070 2027-01 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security to=Brokerage}
+  0070 2027-01 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
   0071 2027-01 grossUp                      -7217.000000 cash  -                      c2 {forAsset=Living overflow=false}
   0072 2027-01 capitalGainRecognized         3535.482441 info  longTermCapitalGain    c2 {spillover=false}
   0073 2027-01 assetGrowth                    236.958231 cash  growth                 c-
   0074 2027-01 incomeTaxWithholding           -18.743924 cash  -                      c3
   0075 2027-01 capitalGainRecognized           15.724567 info  longTermCapitalGain    c3 {spillover=false}
-  0076 2027-02 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security to=Brokerage}
+  0076 2027-02 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
   0077 2027-02 grossUp                      -7235.384148 cash  -                      c2 {forAsset=Living overflow=false}
   0078 2027-02 capitalGainRecognized         3553.129017 info  longTermCapitalGain    c2 {spillover=false}
   0079 2027-02 assetGrowth                    223.807063 cash  growth                 c-
   0080 2027-02 incomeTaxWithholding           -20.243883 cash  -                      c3
   0081 2027-02 capitalGainRecognized           16.993546 info  longTermCapitalGain    c3 {spillover=false}
-  0082 2027-03 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security to=Brokerage}
+  0082 2027-03 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
   0083 2027-03 grossUp                      -7253.815127 cash  -                      c2 {forAsset=Living overflow=false}
   0084 2027-03 capitalGainRecognized         3570.826975 info  longTermCapitalGain    c2 {spillover=false}
   0085 2027-03 assetGrowth                    210.547592 cash  growth                 c-
   0086 2027-03 incomeTaxWithholding           -21.748210 cash  -                      c3
   0087 2027-03 capitalGainRecognized           18.267734 info  longTermCapitalGain    c3 {spillover=false}
-  0088 2027-04 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security to=Brokerage}
+  0088 2027-04 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
   0089 2027-04 grossUp                      -7272.293056 cash  -                      c2 {forAsset=Living overflow=false}
   0090 2027-04 capitalGainRecognized         3588.576417 info  longTermCapitalGain    c2 {spillover=false}
   0091 2027-04 assetGrowth                    197.179296 cash  growth                 c-
   0092 2027-04 incomeTaxWithholding           -23.256912 cash  -                      c3
   0093 2027-04 capitalGainRecognized           19.547136 info  longTermCapitalGain    c3 {spillover=false}
-  0094 2027-05 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security to=Brokerage}
+  0094 2027-05 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
   0095 2027-05 grossUp                      -7290.818055 cash  -                      c2 {forAsset=Living overflow=false}
   0096 2027-05 capitalGainRecognized         3606.377447 info  longTermCapitalGain    c2 {spillover=false}
   0097 2027-05 assetGrowth                    183.701651 cash  growth                 c-
   0098 2027-05 incomeTaxWithholding           -24.770000 cash  -                      c3
   0099 2027-05 capitalGainRecognized           20.831759 info  longTermCapitalGain    c3 {spillover=false}
-  0100 2027-06 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security to=Brokerage}
+  0100 2027-06 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
   0101 2027-06 grossUp                      -7309.390243 cash  -                      c2 {forAsset=Living overflow=false}
   0102 2027-06 capitalGainRecognized         3624.230168 info  longTermCapitalGain    c2 {spillover=false}
   0103 2027-06 assetGrowth                    170.114129 cash  growth                 c-
   0104 2027-06 incomeTaxWithholding           -26.287481 cash  -                      c3
   0105 2027-06 capitalGainRecognized           22.121611 info  longTermCapitalGain    c3 {spillover=false}
-  0106 2027-07 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security to=Brokerage}
+  0106 2027-07 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
   0107 2027-07 grossUp                      -7328.009741 cash  -                      c2 {forAsset=Living overflow=false}
   0108 2027-07 capitalGainRecognized         3642.134685 info  longTermCapitalGain    c2 {spillover=false}
   0109 2027-07 assetGrowth                    156.416203 cash  growth                 c-
   0110 2027-07 incomeTaxWithholding           -27.809365 cash  -                      c3
   0111 2027-07 capitalGainRecognized           23.416697 info  longTermCapitalGain    c3 {spillover=false}
-  0112 2027-08 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security to=Brokerage}
+  0112 2027-08 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
   0113 2027-08 grossUp                      -7346.676669 cash  -                      c2 {forAsset=Living overflow=false}
   0114 2027-08 capitalGainRecognized         3660.091101 info  longTermCapitalGain    c2 {spillover=false}
   0115 2027-08 assetGrowth                    142.607340 cash  growth                 c-
   0116 2027-08 incomeTaxWithholding           -29.335660 cash  -                      c3
   0117 2027-08 capitalGainRecognized           24.717024 info  longTermCapitalGain    c3 {spillover=false}
-  0118 2027-09 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security to=Brokerage}
+  0118 2027-09 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
   0119 2027-09 grossUp                      -7365.391147 cash  -                      c2 {forAsset=Living overflow=false}
   0120 2027-09 capitalGainRecognized         3678.099521 info  longTermCapitalGain    c2 {spillover=false}
   0121 2027-09 assetGrowth                    128.687007 cash  growth                 c-
   0122 2027-09 incomeTaxWithholding           -30.866376 cash  -                      c3
   0123 2027-09 capitalGainRecognized           26.022600 info  longTermCapitalGain    c3 {spillover=false}
-  0124 2027-10 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security to=Brokerage}
+  0124 2027-10 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
   0125 2027-10 grossUp                      -7384.153298 cash  -                      c2 {forAsset=Living overflow=false}
   0126 2027-10 capitalGainRecognized         3696.160051 info  longTermCapitalGain    c2 {spillover=false}
   0127 2027-10 assetGrowth                    114.654669 cash  growth                 c-
   0128 2027-10 incomeTaxWithholding           -32.401521 cash  -                      c3
   0129 2027-10 capitalGainRecognized           27.333430 info  longTermCapitalGain    c3 {spillover=false}
-  0130 2027-11 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security to=Brokerage}
+  0130 2027-11 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
   0131 2027-11 grossUp                      -7402.963243 cash  -                      c2 {forAsset=Living overflow=false}
   0132 2027-11 capitalGainRecognized         3714.272795 info  longTermCapitalGain    c2 {spillover=false}
   0133 2027-11 assetGrowth                    100.509789 cash  growth                 c-
   0134 2027-11 incomeTaxWithholding           -33.941104 cash  -                      c3
   0135 2027-11 capitalGainRecognized           28.649522 info  longTermCapitalGain    c3 {spillover=false}
-  0136 2027-12 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security to=Brokerage}
+  0136 2027-12 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
   0137 2027-12 grossUp                      -7421.821103 cash  -                      c2 {forAsset=Living overflow=false}
   0138 2027-12 capitalGainRecognized         3732.437860 info  longTermCapitalGain    c2 {spillover=false}
   0139 2027-12 assetGrowth                     86.251826 cash  growth                 c-
@@ -207,37 +207,37 @@
   0141 2027-12 capitalGainRecognized           29.970883 info  longTermCapitalGain    c3 {spillover=false}
   0142 2027-12 taxTrueUp                      -23.255703 cash  -                      c5 {direction=underpayment}
   0143 2027-12 capitalGainRecognized           19.641858 info  longTermCapitalGain    c5 {spillover=false}
-  0144 2028-01 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security to=Brokerage}
+  0144 2028-01 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
   0145 2028-01 grossUp                      -7440.727000 cash  -                      c2 {forAsset=Living overflow=false}
   0146 2028-01 capitalGainRecognized         3750.655352 info  longTermCapitalGain    c2 {spillover=false}
   0147 2028-01 assetGrowth                     71.804105 cash  growth                 c-
   0148 2028-01 incomeTaxWithholding           -33.869078 cash  -                      c3
   0149 2028-01 capitalGainRecognized           28.623130 info  longTermCapitalGain    c3 {spillover=false}
-  0150 2028-02 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security to=Brokerage}
+  0150 2028-02 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
   0151 2028-02 grossUp                      -7459.681057 cash  -                      c2 {forAsset=Living overflow=false}
   0152 2028-02 capitalGainRecognized         3768.925377 info  longTermCapitalGain    c2 {spillover=false}
   0153 2028-02 assetGrowth                     57.328459 cash  growth                 c-
   0154 2028-02 incomeTaxWithholding           -33.752472 cash  -                      c3
   0155 2028-02 capitalGainRecognized           28.541644 info  longTermCapitalGain    c3 {spillover=false}
-  0156 2028-03 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security to=Brokerage}
+  0156 2028-03 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
   0157 2028-03 grossUp                      -7478.683396 cash  -                      c2 {forAsset=Living overflow=false}
   0158 2028-03 capitalGainRecognized         3787.248042 info  longTermCapitalGain    c2 {spillover=false}
   0159 2028-03 assetGrowth                     42.743597 cash  growth                 c-
   0160 2028-03 incomeTaxWithholding           -35.309899 cash  -                      c3
   0161 2028-03 capitalGainRecognized           29.876417 info  longTermCapitalGain    c3 {spillover=false}
-  0162 2028-04 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security to=Brokerage}
+  0162 2028-04 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
   0163 2028-04 grossUp                      -7497.734141 cash  -                      c2 {forAsset=Living overflow=false}
   0164 2028-04 capitalGainRecognized         3805.623454 info  longTermCapitalGain    c2 {spillover=false}
   0165 2028-04 assetGrowth                     28.043521 cash  growth                 c-
   0166 2028-04 incomeTaxWithholding           -37.064229 cash  -                      c3
   0167 2028-04 capitalGainRecognized           31.379402 info  longTermCapitalGain    c3 {spillover=false}
-  0168 2028-05 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security to=Brokerage}
+  0168 2028-05 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
   0169 2028-05 grossUp                      -7516.833415 cash  -                      c2 {forAsset=Living overflow=false}
   0170 2028-05 capitalGainRecognized         3824.051721 info  longTermCapitalGain    c2 {spillover=false}
   0171 2028-05 assetGrowth                     13.227053 cash  growth                 c-
   0172 2028-05 incomeTaxWithholding           -38.835186 cash  -                      c3
   0173 2028-05 capitalGainRecognized           32.898169 info  longTermCapitalGain    c3 {spillover=false}
-  0174 2028-06 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security to=Brokerage}
+  0174 2028-06 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
   0175 2028-06 grossUp                      -7014.741315 cash  -                      c2 {forAsset=Living overflow=false}
   0176 2028-06 capitalGainRecognized         3922.218697 info  longTermCapitalGain    c2 {spillover=false}
   0177 2028-06 assetGrowth                      0.000000 cash  growth                 c-
@@ -297,7 +297,7 @@
   events = 65  reconciled = 65
 
 [events] Checking
-  0000 2026-01 transfer                      3000.000000 cash  -                      c6 {cadence=monthly from=Social Security to=Checking}
+  0000 2026-01 transfer                      3000.000000 cash  -                      c6 {cadence=monthly from=Social Security system=true to=Checking}
   0001 2026-01 grossUp                      -5000.000000 cash  -                      c0 {forAsset=Living overflow=false}
   0002 2026-01 interestIncome                   0.000000 cash  interestIncome         c-
   0003 2026-02 interestIncome                   0.000000 cash  interestIncome         c-
@@ -336,7 +336,7 @@
   0036 2028-11 interestIncome                   0.000000 cash  interestIncome         c-
   0037 2028-12 interestIncome                   0.000000 cash  interestIncome         c-
   0038 2028-12 taxTrueUp                      178.830865 cash  -                      c7 {basis=backstop direction=refund}
-  0039 2029-01 transfer                      3000.000000 cash  -                      c6 {cadence=monthly from=Social Security to=Checking}
+  0039 2029-01 transfer                      3000.000000 cash  -                      c6 {cadence=monthly from=Social Security system=true to=Checking}
   0040 2029-01 grossUp                      -3178.830865 cash  -                      c0 {forAsset=Living overflow=false}
   0041 2029-01 interestIncome                   0.000000 cash  interestIncome         c-
   0042 2029-02 interestIncome                   0.000000 cash  interestIncome         c-
@@ -494,38 +494,38 @@
   events = 64  reconciled = 64
 
 [events] Social Security
-  0000 2026-01 transfer                     -3000.000000 cash  -                      c6 {cadence=monthly from=Social Security to=Checking}
-  0001 2026-02 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security to=Brokerage}
-  0002 2026-03 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security to=Brokerage}
-  0003 2026-04 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security to=Brokerage}
-  0004 2026-05 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security to=Brokerage}
-  0005 2026-06 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security to=Brokerage}
-  0006 2026-07 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security to=Brokerage}
-  0007 2026-08 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security to=Brokerage}
-  0008 2026-09 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security to=Brokerage}
-  0009 2026-10 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security to=Brokerage}
-  0010 2026-11 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security to=Brokerage}
-  0011 2026-12 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security to=Brokerage}
+  0000 2026-01 transfer                     -3000.000000 cash  -                      c6 {cadence=monthly from=Social Security system=true to=Checking}
+  0001 2026-02 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
+  0002 2026-03 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
+  0003 2026-04 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
+  0004 2026-05 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
+  0005 2026-06 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
+  0006 2026-07 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
+  0007 2026-08 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
+  0008 2026-09 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
+  0009 2026-10 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
+  0010 2026-11 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
+  0011 2026-12 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
   0012 2026-12 incomeGrowth                     0.000000 cash  income                 c9
-  0013 2027-01 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security to=Brokerage}
-  0014 2027-02 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security to=Brokerage}
-  0015 2027-03 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security to=Brokerage}
-  0016 2027-04 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security to=Brokerage}
-  0017 2027-05 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security to=Brokerage}
-  0018 2027-06 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security to=Brokerage}
-  0019 2027-07 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security to=Brokerage}
-  0020 2027-08 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security to=Brokerage}
-  0021 2027-09 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security to=Brokerage}
-  0022 2027-10 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security to=Brokerage}
-  0023 2027-11 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security to=Brokerage}
-  0024 2027-12 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security to=Brokerage}
+  0013 2027-01 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
+  0014 2027-02 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
+  0015 2027-03 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
+  0016 2027-04 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
+  0017 2027-05 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
+  0018 2027-06 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
+  0019 2027-07 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
+  0020 2027-08 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
+  0021 2027-09 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
+  0022 2027-10 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
+  0023 2027-11 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
+  0024 2027-12 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
   0025 2027-12 incomeGrowth                     0.000000 cash  income                 c10
-  0026 2028-01 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security to=Brokerage}
-  0027 2028-02 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security to=Brokerage}
-  0028 2028-03 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security to=Brokerage}
-  0029 2028-04 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security to=Brokerage}
-  0030 2028-05 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security to=Brokerage}
-  0031 2028-06 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security to=Brokerage}
+  0026 2028-01 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
+  0027 2028-02 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
+  0028 2028-03 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
+  0029 2028-04 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
+  0030 2028-05 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
+  0031 2028-06 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
   0032 2028-07 unfunded                     -3000.000000 info  -                      c- {cause=unallocated take-home pay (nowhere to deposit) origin=standalone}
   0033 2028-08 unfunded                     -3000.000000 info  -                      c- {cause=unallocated take-home pay (nowhere to deposit) origin=standalone}
   0034 2028-09 unfunded                     -3000.000000 info  -                      c- {cause=unallocated take-home pay (nowhere to deposit) origin=standalone}
@@ -533,7 +533,7 @@
   0036 2028-11 unfunded                     -3000.000000 info  -                      c- {cause=unallocated take-home pay (nowhere to deposit) origin=standalone}
   0037 2028-12 unfunded                     -3000.000000 info  -                      c- {cause=unallocated take-home pay (nowhere to deposit) origin=standalone}
   0038 2028-12 incomeGrowth                     0.000000 cash  income                 c11
-  0039 2029-01 transfer                     -3000.000000 cash  -                      c6 {cadence=monthly from=Social Security to=Checking}
+  0039 2029-01 transfer                     -3000.000000 cash  -                      c6 {cadence=monthly from=Social Security system=true to=Checking}
   0040 2029-02 unfunded                     -3000.000000 info  -                      c- {cause=unallocated take-home pay (nowhere to deposit) origin=standalone}
   0041 2029-03 unfunded                     -3000.000000 info  -                      c- {cause=unallocated take-home pay (nowhere to deposit) origin=standalone}
   0042 2029-04 unfunded                     -3000.000000 info  -                      c- {cause=unallocated take-home pay (nowhere to deposit) origin=standalone}

@@ -1,7 +1,9 @@
 /**
  * flow-pipelines.js
  *
- * Computes flow pipelines for the Flows view in Your Portfolio.
+ * Computes flow pipelines for the hydraulic visualizer and the (hidden) Sankey
+ * diagram: each rule's setting applied to a balance, not what moved. The Flows
+ * view reads what moved, from money-flows.js; it takes phaseRulesAt() from here.
  * A pipeline groups fund transfers by source-group → target-group corridor.
  *
  * Three data sources:
@@ -365,17 +367,4 @@ function hasUserRouteForTarget(pipelineMap, key, targetName) {
     const pipeline = pipelineMap.get(key);
     if (!pipeline) return false;
     return pipeline.routes.some(r => r.type === 'user' && r.targetName === targetName);
-}
-
-/**
- * Group pipelines by source group for horizontal column layout.
- * Returns Map<AssetGroup, Pipeline[]>
- */
-export function groupPipelinesBySource(pipelines) {
-    const groups = new Map();
-    for (const p of pipelines) {
-        if (!groups.has(p.sourceGroup)) groups.set(p.sourceGroup, []);
-        groups.get(p.sourceGroup).push(p);
-    }
-    return groups;
 }
