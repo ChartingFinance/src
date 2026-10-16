@@ -1,0 +1,1185 @@
+# fixture: home-bought-with-a-down-payment  (adversarial)
+#
+# a home bought in April 2027, 20% down from the brokerage: the debit-only
+# funding TRANSFER (cadence "funding") no other fixture emits.
+
+[config]
+  allocateHouseholdTax = false
+  backtestYear = current
+  filingAs = Single
+  inflationRate = 0.031
+  pensionWithholdingRate = 0.1
+  propertyTaxDeductionMax = 40000
+  simDataMode = calibrated
+  socialSecurityWithholdingRate = 0
+  userFinishAge = 87
+  userRetirementAge = 65
+  userStartAge = 40
+  homeSaleExclusion = 250000
+  retirementWithholdingRate = 0.1
+
+[totals]
+  months = 360
+  firstDate = 2026-01
+  lastDate = 2030-12
+  startValue = 420000.000000
+  finishValue = 507107.364830
+  accumulated = -133371.587555
+  total.employedIncome = 720000.000000
+  total.socialSecurityTax = -44640.000000
+  total.assetAppreciation = 18370.860635
+  total.expense = -258956.551973
+  total.medicareTax = -10440.000000
+  total.incomeTax = -105675.356276
+  total.mortgageInterest = -95401.383594
+  total.mortgagePrincipal = -18370.860635
+  total.propertyTaxes = -22500.000000
+  total.taxTrueUp = 2900.656673
+  total.value = 26277650.718563
+
+[assetOrder]
+  0 Salary
+  1 Checking
+  2 Brokerage
+  3 House
+  4 Mortgage
+  5 Living
+
+[asset] Brokerage
+  instrument = taxableEquity
+  start = 2026-01  finish = 2030-12
+  startCurrency = 300000.000000
+  finishCurrency = 200000.000000
+  startBasis = 200000.000000
+  finishBasis = 133333.333333
+  isClosed = no  isDepleted = no
+  closedDate = -  closedValue = -
+  events = 61  reconciled = 61
+
+[events] Brokerage
+  0000 2026-01 assetGrowth                      0.000000 cash  growth                 c-
+  0001 2026-02 assetGrowth                      0.000000 cash  growth                 c-
+  0002 2026-03 assetGrowth                      0.000000 cash  growth                 c-
+  0003 2026-04 assetGrowth                      0.000000 cash  growth                 c-
+  0004 2026-05 assetGrowth                      0.000000 cash  growth                 c-
+  0005 2026-06 assetGrowth                      0.000000 cash  growth                 c-
+  0006 2026-07 assetGrowth                      0.000000 cash  growth                 c-
+  0007 2026-08 assetGrowth                      0.000000 cash  growth                 c-
+  0008 2026-09 assetGrowth                      0.000000 cash  growth                 c-
+  0009 2026-10 assetGrowth                      0.000000 cash  growth                 c-
+  0010 2026-11 assetGrowth                      0.000000 cash  growth                 c-
+  0011 2026-12 assetGrowth                      0.000000 cash  growth                 c-
+  0012 2027-01 assetGrowth                      0.000000 cash  growth                 c-
+  0013 2027-02 assetGrowth                      0.000000 cash  growth                 c-
+  0014 2027-03 assetGrowth                      0.000000 cash  growth                 c-
+  0015 2027-04 transfer                   -100000.000000 cash  -                      c- {cadence=funding from=Brokerage to=House}
+  0016 2027-04 assetGrowth                      0.000000 cash  growth                 c-
+  0017 2027-05 assetGrowth                      0.000000 cash  growth                 c-
+  0018 2027-06 assetGrowth                      0.000000 cash  growth                 c-
+  0019 2027-07 assetGrowth                      0.000000 cash  growth                 c-
+  0020 2027-08 assetGrowth                      0.000000 cash  growth                 c-
+  0021 2027-09 assetGrowth                      0.000000 cash  growth                 c-
+  0022 2027-10 assetGrowth                      0.000000 cash  growth                 c-
+  0023 2027-11 assetGrowth                      0.000000 cash  growth                 c-
+  0024 2027-12 assetGrowth                      0.000000 cash  growth                 c-
+  0025 2028-01 assetGrowth                      0.000000 cash  growth                 c-
+  0026 2028-02 assetGrowth                      0.000000 cash  growth                 c-
+  0027 2028-03 assetGrowth                      0.000000 cash  growth                 c-
+  0028 2028-04 assetGrowth                      0.000000 cash  growth                 c-
+  0029 2028-05 assetGrowth                      0.000000 cash  growth                 c-
+  0030 2028-06 assetGrowth                      0.000000 cash  growth                 c-
+  0031 2028-07 assetGrowth                      0.000000 cash  growth                 c-
+  0032 2028-08 assetGrowth                      0.000000 cash  growth                 c-
+  0033 2028-09 assetGrowth                      0.000000 cash  growth                 c-
+  0034 2028-10 assetGrowth                      0.000000 cash  growth                 c-
+  0035 2028-11 assetGrowth                      0.000000 cash  growth                 c-
+  0036 2028-12 assetGrowth                      0.000000 cash  growth                 c-
+  0037 2029-01 assetGrowth                      0.000000 cash  growth                 c-
+  0038 2029-02 assetGrowth                      0.000000 cash  growth                 c-
+  0039 2029-03 assetGrowth                      0.000000 cash  growth                 c-
+  0040 2029-04 assetGrowth                      0.000000 cash  growth                 c-
+  0041 2029-05 assetGrowth                      0.000000 cash  growth                 c-
+  0042 2029-06 assetGrowth                      0.000000 cash  growth                 c-
+  0043 2029-07 assetGrowth                      0.000000 cash  growth                 c-
+  0044 2029-08 assetGrowth                      0.000000 cash  growth                 c-
+  0045 2029-09 assetGrowth                      0.000000 cash  growth                 c-
+  0046 2029-10 assetGrowth                      0.000000 cash  growth                 c-
+  0047 2029-11 assetGrowth                      0.000000 cash  growth                 c-
+  0048 2029-12 assetGrowth                      0.000000 cash  growth                 c-
+  0049 2030-01 assetGrowth                      0.000000 cash  growth                 c-
+  0050 2030-02 assetGrowth                      0.000000 cash  growth                 c-
+  0051 2030-03 assetGrowth                      0.000000 cash  growth                 c-
+  0052 2030-04 assetGrowth                      0.000000 cash  growth                 c-
+  0053 2030-05 assetGrowth                      0.000000 cash  growth                 c-
+  0054 2030-06 assetGrowth                      0.000000 cash  growth                 c-
+  0055 2030-07 assetGrowth                      0.000000 cash  growth                 c-
+  0056 2030-08 assetGrowth                      0.000000 cash  growth                 c-
+  0057 2030-09 assetGrowth                      0.000000 cash  growth                 c-
+  0058 2030-10 assetGrowth                      0.000000 cash  growth                 c-
+  0059 2030-11 assetGrowth                      0.000000 cash  growth                 c-
+  0060 2030-12 assetGrowth                      0.000000 cash  growth                 c-
+
+[history] Brokerage
+  value                        n=  60 first=   300000.000000 last=   200000.000000 min=   200000.000000 max=   300000.000000 sum=   13500000.000000 #7bcc769c
+
+[asset] Checking
+  instrument = bank
+  start = 2026-01  finish = 2030-12
+  startCurrency = 20000.000000
+  finishCurrency = 188736.504195
+  startBasis = 20000.000000
+  finishBasis = 20000.000000
+  isClosed = no  isDepleted = no
+  closedDate = -  closedValue = -
+  events = 273  reconciled = 273
+
+[events] Checking
+  0000 2026-01 transfer                      9140.833333 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0001 2026-01 grossUp                      -4000.000000 cash  -                      c1 {forAsset=Living overflow=false}
+  0002 2026-01 interestIncome                   0.000000 cash  interestIncome         c-
+  0003 2026-02 transfer                      9140.833333 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0004 2026-02 grossUp                      -4010.189358 cash  -                      c1 {forAsset=Living overflow=false}
+  0005 2026-02 interestIncome                   0.000000 cash  interestIncome         c-
+  0006 2026-03 transfer                      9140.833333 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0007 2026-03 grossUp                      -4020.404671 cash  -                      c1 {forAsset=Living overflow=false}
+  0008 2026-03 interestIncome                   0.000000 cash  interestIncome         c-
+  0009 2026-04 transfer                      9140.833333 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0010 2026-04 grossUp                      -4030.646006 cash  -                      c1 {forAsset=Living overflow=false}
+  0011 2026-04 interestIncome                   0.000000 cash  interestIncome         c-
+  0012 2026-05 transfer                      9140.833333 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0013 2026-05 grossUp                      -4040.913429 cash  -                      c1 {forAsset=Living overflow=false}
+  0014 2026-05 interestIncome                   0.000000 cash  interestIncome         c-
+  0015 2026-06 transfer                      9140.833333 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0016 2026-06 grossUp                      -4051.207007 cash  -                      c1 {forAsset=Living overflow=false}
+  0017 2026-06 interestIncome                   0.000000 cash  interestIncome         c-
+  0018 2026-07 transfer                      9140.833333 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0019 2026-07 grossUp                      -4061.526807 cash  -                      c1 {forAsset=Living overflow=false}
+  0020 2026-07 interestIncome                   0.000000 cash  interestIncome         c-
+  0021 2026-08 transfer                      9140.833333 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0022 2026-08 grossUp                      -4071.872894 cash  -                      c1 {forAsset=Living overflow=false}
+  0023 2026-08 interestIncome                   0.000000 cash  interestIncome         c-
+  0024 2026-09 transfer                      9140.833333 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0025 2026-09 grossUp                      -4082.245336 cash  -                      c1 {forAsset=Living overflow=false}
+  0026 2026-09 interestIncome                   0.000000 cash  interestIncome         c-
+  0027 2026-10 transfer                      9140.833333 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0028 2026-10 grossUp                      -4092.644200 cash  -                      c1 {forAsset=Living overflow=false}
+  0029 2026-10 interestIncome                   0.000000 cash  interestIncome         c-
+  0030 2026-11 transfer                      9140.833333 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0031 2026-11 grossUp                      -4103.069554 cash  -                      c1 {forAsset=Living overflow=false}
+  0032 2026-11 interestIncome                   0.000000 cash  interestIncome         c-
+  0033 2026-12 transfer                      9140.833333 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0034 2026-12 grossUp                      -4113.521465 cash  -                      c1 {forAsset=Living overflow=false}
+  0035 2026-12 interestIncome                   0.000000 cash  interestIncome         c-
+  0036 2027-01 transfer                      9169.937167 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0037 2027-01 grossUp                      -4124.000000 cash  -                      c1 {forAsset=Living overflow=false}
+  0038 2027-01 interestIncome                   0.000000 cash  interestIncome         c-
+  0039 2027-02 transfer                      9169.937167 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0040 2027-02 grossUp                      -4134.505228 cash  -                      c1 {forAsset=Living overflow=false}
+  0041 2027-02 interestIncome                   0.000000 cash  interestIncome         c-
+  0042 2027-03 transfer                      9169.937167 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0043 2027-03 grossUp                      -4145.037216 cash  -                      c1 {forAsset=Living overflow=false}
+  0044 2027-03 interestIncome                   0.000000 cash  interestIncome         c-
+  0045 2027-04 transfer                      9357.955167 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0046 2027-04 settlement                   -2528.272094 cash  -                      c2 {backstop=true from=Mortgage label=monthly to=Checking}
+  0047 2027-04 grossUp                      -4155.596032 cash  -                      c1 {forAsset=Living overflow=false}
+  0048 2027-04 interestIncome                   0.000000 cash  interestIncome         c-
+  0049 2027-05 transfer                      9357.485080 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0050 2027-05 settlement                    -500.000000 cash  -                      c3 {backstop=true from=House label=property tax to=Checking}
+  0051 2027-05 settlement                   -2528.272094 cash  -                      c2 {backstop=true from=Mortgage label=monthly to=Checking}
+  0052 2027-05 grossUp                      -4166.181746 cash  -                      c1 {forAsset=Living overflow=false}
+  0053 2027-05 interestIncome                   0.000000 cash  interestIncome         c-
+  0054 2027-06 transfer                      9357.012446 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0055 2027-06 settlement                    -500.000000 cash  -                      c3 {backstop=true from=House label=property tax to=Checking}
+  0056 2027-06 settlement                   -2528.272094 cash  -                      c2 {backstop=true from=Mortgage label=monthly to=Checking}
+  0057 2027-06 grossUp                      -4176.794425 cash  -                      c1 {forAsset=Living overflow=false}
+  0058 2027-06 interestIncome                   0.000000 cash  interestIncome         c-
+  0059 2027-07 transfer                      9356.537253 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0060 2027-07 settlement                    -500.000000 cash  -                      c3 {backstop=true from=House label=property tax to=Checking}
+  0061 2027-07 settlement                   -2528.272094 cash  -                      c2 {backstop=true from=Mortgage label=monthly to=Checking}
+  0062 2027-07 grossUp                      -4187.434138 cash  -                      c1 {forAsset=Living overflow=false}
+  0063 2027-07 interestIncome                   0.000000 cash  interestIncome         c-
+  0064 2027-08 transfer                      9356.059485 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0065 2027-08 settlement                    -500.000000 cash  -                      c3 {backstop=true from=House label=property tax to=Checking}
+  0066 2027-08 settlement                   -2528.272094 cash  -                      c2 {backstop=true from=Mortgage label=monthly to=Checking}
+  0067 2027-08 grossUp                      -4198.100953 cash  -                      c1 {forAsset=Living overflow=false}
+  0068 2027-08 interestIncome                   0.000000 cash  interestIncome         c-
+  0069 2027-09 transfer                      9355.579130 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0070 2027-09 settlement                    -500.000000 cash  -                      c3 {backstop=true from=House label=property tax to=Checking}
+  0071 2027-09 settlement                   -2528.272094 cash  -                      c2 {backstop=true from=Mortgage label=monthly to=Checking}
+  0072 2027-09 grossUp                      -4208.794941 cash  -                      c1 {forAsset=Living overflow=false}
+  0073 2027-09 interestIncome                   0.000000 cash  interestIncome         c-
+  0074 2027-10 transfer                      9355.096173 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0075 2027-10 settlement                    -500.000000 cash  -                      c3 {backstop=true from=House label=property tax to=Checking}
+  0076 2027-10 settlement                   -2528.272094 cash  -                      c2 {backstop=true from=Mortgage label=monthly to=Checking}
+  0077 2027-10 grossUp                      -4219.516170 cash  -                      c1 {forAsset=Living overflow=false}
+  0078 2027-10 interestIncome                   0.000000 cash  interestIncome         c-
+  0079 2027-11 transfer                      9354.610600 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0080 2027-11 settlement                    -500.000000 cash  -                      c3 {backstop=true from=House label=property tax to=Checking}
+  0081 2027-11 settlement                   -2528.272094 cash  -                      c2 {backstop=true from=Mortgage label=monthly to=Checking}
+  0082 2027-11 grossUp                      -4230.264710 cash  -                      c1 {forAsset=Living overflow=false}
+  0083 2027-11 interestIncome                   0.000000 cash  interestIncome         c-
+  0084 2027-12 transfer                      9354.122396 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0085 2027-12 settlement                    -500.000000 cash  -                      c3 {backstop=true from=House label=property tax to=Checking}
+  0086 2027-12 settlement                   -2528.272094 cash  -                      c2 {backstop=true from=Mortgage label=monthly to=Checking}
+  0087 2027-12 grossUp                      -4241.040630 cash  -                      c1 {forAsset=Living overflow=false}
+  0088 2027-12 interestIncome                   0.000000 cash  interestIncome         c-
+  0089 2027-12 taxTrueUp                       84.054000 cash  -                      c4 {direction=refund}
+  0090 2028-01 transfer                      9373.346158 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0091 2028-01 settlement                    -500.000000 cash  -                      c3 {backstop=true from=House label=property tax to=Checking}
+  0092 2028-01 settlement                   -2528.272094 cash  -                      c2 {backstop=true from=Mortgage label=monthly to=Checking}
+  0093 2028-01 grossUp                      -4251.844000 cash  -                      c1 {forAsset=Living overflow=false}
+  0094 2028-01 interestIncome                   0.000000 cash  interestIncome         c-
+  0095 2028-02 transfer                      9372.852652 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0096 2028-02 settlement                    -500.000000 cash  -                      c3 {backstop=true from=House label=property tax to=Checking}
+  0097 2028-02 settlement                   -2528.272094 cash  -                      c2 {backstop=true from=Mortgage label=monthly to=Checking}
+  0098 2028-02 grossUp                      -4262.674890 cash  -                      c1 {forAsset=Living overflow=false}
+  0099 2028-02 interestIncome                   0.000000 cash  interestIncome         c-
+  0100 2028-03 transfer                      9372.356472 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0101 2028-03 settlement                    -500.000000 cash  -                      c3 {backstop=true from=House label=property tax to=Checking}
+  0102 2028-03 settlement                   -2528.272094 cash  -                      c2 {backstop=true from=Mortgage label=monthly to=Checking}
+  0103 2028-03 grossUp                      -4273.533369 cash  -                      c1 {forAsset=Living overflow=false}
+  0104 2028-03 interestIncome                   0.000000 cash  interestIncome         c-
+  0105 2028-04 transfer                      9371.857604 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0106 2028-04 settlement                    -500.000000 cash  -                      c3 {backstop=true from=House label=property tax to=Checking}
+  0107 2028-04 settlement                   -2528.272094 cash  -                      c2 {backstop=true from=Mortgage label=monthly to=Checking}
+  0108 2028-04 grossUp                      -4284.419509 cash  -                      c1 {forAsset=Living overflow=false}
+  0109 2028-04 interestIncome                   0.000000 cash  interestIncome         c-
+  0110 2028-05 transfer                      9371.356035 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0111 2028-05 settlement                    -500.000000 cash  -                      c3 {backstop=true from=House label=property tax to=Checking}
+  0112 2028-05 settlement                   -2528.272094 cash  -                      c2 {backstop=true from=Mortgage label=monthly to=Checking}
+  0113 2028-05 grossUp                      -4295.333380 cash  -                      c1 {forAsset=Living overflow=false}
+  0114 2028-05 interestIncome                   0.000000 cash  interestIncome         c-
+  0115 2028-06 transfer                      9370.851748 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0116 2028-06 settlement                    -500.000000 cash  -                      c3 {backstop=true from=House label=property tax to=Checking}
+  0117 2028-06 settlement                   -2528.272094 cash  -                      c2 {backstop=true from=Mortgage label=monthly to=Checking}
+  0118 2028-06 grossUp                      -4306.275052 cash  -                      c1 {forAsset=Living overflow=false}
+  0119 2028-06 interestIncome                   0.000000 cash  interestIncome         c-
+  0120 2028-07 transfer                      9370.344730 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0121 2028-07 settlement                    -500.000000 cash  -                      c3 {backstop=true from=House label=property tax to=Checking}
+  0122 2028-07 settlement                   -2528.272094 cash  -                      c2 {backstop=true from=Mortgage label=monthly to=Checking}
+  0123 2028-07 grossUp                      -4317.244596 cash  -                      c1 {forAsset=Living overflow=false}
+  0124 2028-07 interestIncome                   0.000000 cash  interestIncome         c-
+  0125 2028-08 transfer                      9369.834966 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0126 2028-08 settlement                    -500.000000 cash  -                      c3 {backstop=true from=House label=property tax to=Checking}
+  0127 2028-08 settlement                   -2528.272094 cash  -                      c2 {backstop=true from=Mortgage label=monthly to=Checking}
+  0128 2028-08 grossUp                      -4328.242083 cash  -                      c1 {forAsset=Living overflow=false}
+  0129 2028-08 interestIncome                   0.000000 cash  interestIncome         c-
+  0130 2028-09 transfer                      9369.322440 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0131 2028-09 settlement                    -500.000000 cash  -                      c3 {backstop=true from=House label=property tax to=Checking}
+  0132 2028-09 settlement                   -2528.272094 cash  -                      c2 {backstop=true from=Mortgage label=monthly to=Checking}
+  0133 2028-09 grossUp                      -4339.267585 cash  -                      c1 {forAsset=Living overflow=false}
+  0134 2028-09 interestIncome                   0.000000 cash  interestIncome         c-
+  0135 2028-10 transfer                      9368.807138 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0136 2028-10 settlement                    -500.000000 cash  -                      c3 {backstop=true from=House label=property tax to=Checking}
+  0137 2028-10 settlement                   -2528.272094 cash  -                      c2 {backstop=true from=Mortgage label=monthly to=Checking}
+  0138 2028-10 grossUp                      -4350.321172 cash  -                      c1 {forAsset=Living overflow=false}
+  0139 2028-10 interestIncome                   0.000000 cash  interestIncome         c-
+  0140 2028-11 transfer                      9368.289045 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0141 2028-11 settlement                    -500.000000 cash  -                      c3 {backstop=true from=House label=property tax to=Checking}
+  0142 2028-11 settlement                   -2528.272094 cash  -                      c2 {backstop=true from=Mortgage label=monthly to=Checking}
+  0143 2028-11 grossUp                      -4361.402916 cash  -                      c1 {forAsset=Living overflow=false}
+  0144 2028-11 interestIncome                   0.000000 cash  interestIncome         c-
+  0145 2028-12 transfer                      9367.768146 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0146 2028-12 settlement                    -500.000000 cash  -                      c3 {backstop=true from=House label=property tax to=Checking}
+  0147 2028-12 settlement                   -2528.272094 cash  -                      c2 {backstop=true from=Mortgage label=monthly to=Checking}
+  0148 2028-12 grossUp                      -4372.512890 cash  -                      c1 {forAsset=Living overflow=false}
+  0149 2028-12 interestIncome                   0.000000 cash  interestIncome         c-
+  0150 2028-12 taxTrueUp                     1439.987962 cash  -                      c5 {direction=refund}
+  0151 2029-01 transfer                      9387.570188 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0152 2029-01 settlement                    -500.000000 cash  -                      c3 {backstop=true from=House label=property tax to=Checking}
+  0153 2029-01 settlement                   -2528.272094 cash  -                      c2 {backstop=true from=Mortgage label=monthly to=Checking}
+  0154 2029-01 grossUp                      -4383.651164 cash  -                      c1 {forAsset=Living overflow=false}
+  0155 2029-01 interestIncome                   0.000000 cash  interestIncome         c-
+  0156 2029-02 transfer                      9387.043631 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0157 2029-02 settlement                    -500.000000 cash  -                      c3 {backstop=true from=House label=property tax to=Checking}
+  0158 2029-02 settlement                   -2528.272094 cash  -                      c2 {backstop=true from=Mortgage label=monthly to=Checking}
+  0159 2029-02 grossUp                      -4394.817811 cash  -                      c1 {forAsset=Living overflow=false}
+  0160 2029-02 interestIncome                   0.000000 cash  interestIncome         c-
+  0161 2029-03 transfer                      9386.514221 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0162 2029-03 settlement                    -500.000000 cash  -                      c3 {backstop=true from=House label=property tax to=Checking}
+  0163 2029-03 settlement                   -2528.272094 cash  -                      c2 {backstop=true from=Mortgage label=monthly to=Checking}
+  0164 2029-03 grossUp                      -4406.012904 cash  -                      c1 {forAsset=Living overflow=false}
+  0165 2029-03 interestIncome                   0.000000 cash  interestIncome         c-
+  0166 2029-04 transfer                      9385.981943 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0167 2029-04 settlement                    -500.000000 cash  -                      c3 {backstop=true from=House label=property tax to=Checking}
+  0168 2029-04 settlement                   -2528.272094 cash  -                      c2 {backstop=true from=Mortgage label=monthly to=Checking}
+  0169 2029-04 grossUp                      -4417.236514 cash  -                      c1 {forAsset=Living overflow=false}
+  0170 2029-04 interestIncome                   0.000000 cash  interestIncome         c-
+  0171 2029-05 transfer                      9385.446782 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0172 2029-05 settlement                    -500.000000 cash  -                      c3 {backstop=true from=House label=property tax to=Checking}
+  0173 2029-05 settlement                   -2528.272094 cash  -                      c2 {backstop=true from=Mortgage label=monthly to=Checking}
+  0174 2029-05 grossUp                      -4428.488715 cash  -                      c1 {forAsset=Living overflow=false}
+  0175 2029-05 interestIncome                   0.000000 cash  interestIncome         c-
+  0176 2029-06 transfer                      9384.908723 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0177 2029-06 settlement                    -500.000000 cash  -                      c3 {backstop=true from=House label=property tax to=Checking}
+  0178 2029-06 settlement                   -2528.272094 cash  -                      c2 {backstop=true from=Mortgage label=monthly to=Checking}
+  0179 2029-06 grossUp                      -4439.769578 cash  -                      c1 {forAsset=Living overflow=false}
+  0180 2029-06 interestIncome                   0.000000 cash  interestIncome         c-
+  0181 2029-07 transfer                      9384.367749 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0182 2029-07 settlement                    -500.000000 cash  -                      c3 {backstop=true from=House label=property tax to=Checking}
+  0183 2029-07 settlement                   -2528.272094 cash  -                      c2 {backstop=true from=Mortgage label=monthly to=Checking}
+  0184 2029-07 grossUp                      -4451.079178 cash  -                      c1 {forAsset=Living overflow=false}
+  0185 2029-07 interestIncome                   0.000000 cash  interestIncome         c-
+  0186 2029-08 transfer                      9383.823845 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0187 2029-08 settlement                    -500.000000 cash  -                      c3 {backstop=true from=House label=property tax to=Checking}
+  0188 2029-08 settlement                   -2528.272094 cash  -                      c2 {backstop=true from=Mortgage label=monthly to=Checking}
+  0189 2029-08 grossUp                      -4462.417588 cash  -                      c1 {forAsset=Living overflow=false}
+  0190 2029-08 interestIncome                   0.000000 cash  interestIncome         c-
+  0191 2029-09 transfer                      9383.276994 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0192 2029-09 settlement                    -500.000000 cash  -                      c3 {backstop=true from=House label=property tax to=Checking}
+  0193 2029-09 settlement                   -2528.272094 cash  -                      c2 {backstop=true from=Mortgage label=monthly to=Checking}
+  0194 2029-09 grossUp                      -4473.784880 cash  -                      c1 {forAsset=Living overflow=false}
+  0195 2029-09 interestIncome                   0.000000 cash  interestIncome         c-
+  0196 2029-10 transfer                      9382.727182 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0197 2029-10 settlement                    -500.000000 cash  -                      c3 {backstop=true from=House label=property tax to=Checking}
+  0198 2029-10 settlement                   -2528.272094 cash  -                      c2 {backstop=true from=Mortgage label=monthly to=Checking}
+  0199 2029-10 grossUp                      -4485.181128 cash  -                      c1 {forAsset=Living overflow=false}
+  0200 2029-10 interestIncome                   0.000000 cash  interestIncome         c-
+  0201 2029-11 transfer                      9382.174391 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0202 2029-11 settlement                    -500.000000 cash  -                      c3 {backstop=true from=House label=property tax to=Checking}
+  0203 2029-11 settlement                   -2528.272094 cash  -                      c2 {backstop=true from=Mortgage label=monthly to=Checking}
+  0204 2029-11 grossUp                      -4496.606407 cash  -                      c1 {forAsset=Living overflow=false}
+  0205 2029-11 interestIncome                   0.000000 cash  interestIncome         c-
+  0206 2029-12 transfer                      9381.618606 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0207 2029-12 settlement                    -500.000000 cash  -                      c3 {backstop=true from=House label=property tax to=Checking}
+  0208 2029-12 settlement                   -2528.272094 cash  -                      c2 {backstop=true from=Mortgage label=monthly to=Checking}
+  0209 2029-12 grossUp                      -4508.060789 cash  -                      c1 {forAsset=Living overflow=false}
+  0210 2029-12 interestIncome                   0.000000 cash  interestIncome         c-
+  0211 2029-12 taxTrueUp                     1376.614712 cash  -                      c6 {direction=refund}
+  0212 2030-01 transfer                      9401.045384 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0213 2030-01 settlement                    -500.000000 cash  -                      c3 {backstop=true from=House label=property tax to=Checking}
+  0214 2030-01 settlement                   -2528.272094 cash  -                      c2 {backstop=true from=Mortgage label=monthly to=Checking}
+  0215 2030-01 grossUp                      -4519.544350 cash  -                      c1 {forAsset=Living overflow=false}
+  0216 2030-01 interestIncome                   0.000000 cash  interestIncome         c-
+  0217 2030-02 transfer                      9400.530380 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0218 2030-02 settlement                    -500.000000 cash  -                      c3 {backstop=true from=House label=property tax to=Checking}
+  0219 2030-02 settlement                   -2528.272094 cash  -                      c2 {backstop=true from=Mortgage label=monthly to=Checking}
+  0220 2030-02 grossUp                      -4531.057163 cash  -                      c1 {forAsset=Living overflow=false}
+  0221 2030-02 interestIncome                   0.000000 cash  interestIncome         c-
+  0222 2030-03 transfer                      9400.012587 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0223 2030-03 settlement                    -500.000000 cash  -                      c3 {backstop=true from=House label=property tax to=Checking}
+  0224 2030-03 settlement                   -2528.272094 cash  -                      c2 {backstop=true from=Mortgage label=monthly to=Checking}
+  0225 2030-03 grossUp                      -4542.599304 cash  -                      c1 {forAsset=Living overflow=false}
+  0226 2030-03 interestIncome                   0.000000 cash  interestIncome         c-
+  0227 2030-04 transfer                      9399.491989 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0228 2030-04 settlement                    -500.000000 cash  -                      c3 {backstop=true from=House label=property tax to=Checking}
+  0229 2030-04 settlement                   -2528.272094 cash  -                      c2 {backstop=true from=Mortgage label=monthly to=Checking}
+  0230 2030-04 grossUp                      -4554.170846 cash  -                      c1 {forAsset=Living overflow=false}
+  0231 2030-04 interestIncome                   0.000000 cash  interestIncome         c-
+  0232 2030-05 transfer                      9398.968571 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0233 2030-05 settlement                    -500.000000 cash  -                      c3 {backstop=true from=House label=property tax to=Checking}
+  0234 2030-05 settlement                   -2528.272094 cash  -                      c2 {backstop=true from=Mortgage label=monthly to=Checking}
+  0235 2030-05 grossUp                      -4565.771865 cash  -                      c1 {forAsset=Living overflow=false}
+  0236 2030-05 interestIncome                   0.000000 cash  interestIncome         c-
+  0237 2030-06 transfer                      9398.442318 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0238 2030-06 settlement                    -500.000000 cash  -                      c3 {backstop=true from=House label=property tax to=Checking}
+  0239 2030-06 settlement                   -2528.272094 cash  -                      c2 {backstop=true from=Mortgage label=monthly to=Checking}
+  0240 2030-06 grossUp                      -4577.402435 cash  -                      c1 {forAsset=Living overflow=false}
+  0241 2030-06 interestIncome                   0.000000 cash  interestIncome         c-
+  0242 2030-07 transfer                      9397.913214 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0243 2030-07 settlement                    -500.000000 cash  -                      c3 {backstop=true from=House label=property tax to=Checking}
+  0244 2030-07 settlement                   -2528.272094 cash  -                      c2 {backstop=true from=Mortgage label=monthly to=Checking}
+  0245 2030-07 grossUp                      -4589.062633 cash  -                      c1 {forAsset=Living overflow=false}
+  0246 2030-07 interestIncome                   0.000000 cash  interestIncome         c-
+  0247 2030-08 transfer                      9397.381245 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0248 2030-08 settlement                    -500.000000 cash  -                      c3 {backstop=true from=House label=property tax to=Checking}
+  0249 2030-08 settlement                   -2528.272094 cash  -                      c2 {backstop=true from=Mortgage label=monthly to=Checking}
+  0250 2030-08 grossUp                      -4600.752533 cash  -                      c1 {forAsset=Living overflow=false}
+  0251 2030-08 interestIncome                   0.000000 cash  interestIncome         c-
+  0252 2030-09 transfer                      9396.846393 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0253 2030-09 settlement                    -500.000000 cash  -                      c3 {backstop=true from=House label=property tax to=Checking}
+  0254 2030-09 settlement                   -2528.272094 cash  -                      c2 {backstop=true from=Mortgage label=monthly to=Checking}
+  0255 2030-09 grossUp                      -4612.472211 cash  -                      c1 {forAsset=Living overflow=false}
+  0256 2030-09 interestIncome                   0.000000 cash  interestIncome         c-
+  0257 2030-10 transfer                      9396.308645 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0258 2030-10 settlement                    -500.000000 cash  -                      c3 {backstop=true from=House label=property tax to=Checking}
+  0259 2030-10 settlement                   -2528.272094 cash  -                      c2 {backstop=true from=Mortgage label=monthly to=Checking}
+  0260 2030-10 grossUp                      -4624.221743 cash  -                      c1 {forAsset=Living overflow=false}
+  0261 2030-10 interestIncome                   0.000000 cash  interestIncome         c-
+  0262 2030-11 transfer                      9395.767984 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0263 2030-11 settlement                    -500.000000 cash  -                      c3 {backstop=true from=House label=property tax to=Checking}
+  0264 2030-11 settlement                   -2528.272094 cash  -                      c2 {backstop=true from=Mortgage label=monthly to=Checking}
+  0265 2030-11 grossUp                      -4636.001205 cash  -                      c1 {forAsset=Living overflow=false}
+  0266 2030-11 interestIncome                   0.000000 cash  interestIncome         c-
+  0267 2030-12 transfer                      9395.224394 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0268 2030-12 settlement                    -500.000000 cash  -                      c3 {backstop=true from=House label=property tax to=Checking}
+  0269 2030-12 settlement                   -2528.272094 cash  -                      c2 {backstop=true from=Mortgage label=monthly to=Checking}
+  0270 2030-12 grossUp                      -4647.810674 cash  -                      c1 {forAsset=Living overflow=false}
+  0271 2030-12 interestIncome                   0.000000 cash  interestIncome         c-
+  0272 2030-12 taxTrueUp                     1320.000000 cash  -                      c7 {direction=refund}
+
+[history] Checking
+  value                        n=  60 first=    25140.830000 last=   187416.500000 min=    25140.830000 max=   187416.500000 sum=    7411459.160000 #c3035a41
+  estimatedIncomeTax           n=  60 first=        0.000000 last=        0.000000 min=        0.000000 max=     1439.990000 sum=       2900.650000 #623b3b99
+  incomeTax                    n=  60 first=        0.000000 last=        0.000000 min=        0.000000 max=     1439.990000 sum=       2900.650000 #623b3b99
+  federalTaxes                 n=  60 first=        0.000000 last=        0.000000 min=        0.000000 max=     1439.990000 sum=       2900.650000 #623b3b99
+  taxes                        n=  60 first=        0.000000 last=        0.000000 min=        0.000000 max=     1439.990000 sum=       2900.650000 #623b3b99
+  cashFlow                     n=  60 first=        0.000000 last=        0.000000 min=        0.000000 max=     1439.990000 sum=       2900.650000 #623b3b99
+  cashFlowAccumulated          n=  60 first=        0.000000 last=     2900.660000 min=        0.000000 max=     2900.660000 sum=      54105.000000 #b1037e55
+
+[asset] House
+  instrument = realEstate
+  start = 2027-04  finish = 2030-12
+  startCurrency = 500000.000000
+  finishCurrency = 500000.000000
+  startBasis = 500000.000000
+  finishBasis = 500000.000000
+  isClosed = no  isDepleted = no
+  closedDate = -  closedValue = -
+  events = 135  reconciled = 135
+
+[events] House
+  0000 2027-04 propertyTaxEscrow                0.000000 info  -                      c-
+  0001 2027-04 assetGrowth                      0.000000 cash  growth                 c-
+  0002 2027-04 propertyTax                   -500.000000 info  propertyTax            c-
+  0003 2027-05 propertyTaxEscrow             -500.000000 info  -                      c-
+  0004 2027-05 assetGrowth                      0.000000 cash  growth                 c-
+  0005 2027-05 propertyTax                   -500.000000 info  propertyTax            c-
+  0006 2027-06 propertyTaxEscrow             -500.000000 info  -                      c-
+  0007 2027-06 assetGrowth                      0.000000 cash  growth                 c-
+  0008 2027-06 propertyTax                   -500.000000 info  propertyTax            c-
+  0009 2027-07 propertyTaxEscrow             -500.000000 info  -                      c-
+  0010 2027-07 assetGrowth                      0.000000 cash  growth                 c-
+  0011 2027-07 propertyTax                   -500.000000 info  propertyTax            c-
+  0012 2027-08 propertyTaxEscrow             -500.000000 info  -                      c-
+  0013 2027-08 assetGrowth                      0.000000 cash  growth                 c-
+  0014 2027-08 propertyTax                   -500.000000 info  propertyTax            c-
+  0015 2027-09 propertyTaxEscrow             -500.000000 info  -                      c-
+  0016 2027-09 assetGrowth                      0.000000 cash  growth                 c-
+  0017 2027-09 propertyTax                   -500.000000 info  propertyTax            c-
+  0018 2027-10 propertyTaxEscrow             -500.000000 info  -                      c-
+  0019 2027-10 assetGrowth                      0.000000 cash  growth                 c-
+  0020 2027-10 propertyTax                   -500.000000 info  propertyTax            c-
+  0021 2027-11 propertyTaxEscrow             -500.000000 info  -                      c-
+  0022 2027-11 assetGrowth                      0.000000 cash  growth                 c-
+  0023 2027-11 propertyTax                   -500.000000 info  propertyTax            c-
+  0024 2027-12 propertyTaxEscrow             -500.000000 info  -                      c-
+  0025 2027-12 assetGrowth                      0.000000 cash  growth                 c-
+  0026 2027-12 propertyTax                   -500.000000 info  propertyTax            c-
+  0027 2028-01 propertyTaxEscrow             -500.000000 info  -                      c-
+  0028 2028-01 assetGrowth                      0.000000 cash  growth                 c-
+  0029 2028-01 propertyTax                   -500.000000 info  propertyTax            c-
+  0030 2028-02 propertyTaxEscrow             -500.000000 info  -                      c-
+  0031 2028-02 assetGrowth                      0.000000 cash  growth                 c-
+  0032 2028-02 propertyTax                   -500.000000 info  propertyTax            c-
+  0033 2028-03 propertyTaxEscrow             -500.000000 info  -                      c-
+  0034 2028-03 assetGrowth                      0.000000 cash  growth                 c-
+  0035 2028-03 propertyTax                   -500.000000 info  propertyTax            c-
+  0036 2028-04 propertyTaxEscrow             -500.000000 info  -                      c-
+  0037 2028-04 assetGrowth                      0.000000 cash  growth                 c-
+  0038 2028-04 propertyTax                   -500.000000 info  propertyTax            c-
+  0039 2028-05 propertyTaxEscrow             -500.000000 info  -                      c-
+  0040 2028-05 assetGrowth                      0.000000 cash  growth                 c-
+  0041 2028-05 propertyTax                   -500.000000 info  propertyTax            c-
+  0042 2028-06 propertyTaxEscrow             -500.000000 info  -                      c-
+  0043 2028-06 assetGrowth                      0.000000 cash  growth                 c-
+  0044 2028-06 propertyTax                   -500.000000 info  propertyTax            c-
+  0045 2028-07 propertyTaxEscrow             -500.000000 info  -                      c-
+  0046 2028-07 assetGrowth                      0.000000 cash  growth                 c-
+  0047 2028-07 propertyTax                   -500.000000 info  propertyTax            c-
+  0048 2028-08 propertyTaxEscrow             -500.000000 info  -                      c-
+  0049 2028-08 assetGrowth                      0.000000 cash  growth                 c-
+  0050 2028-08 propertyTax                   -500.000000 info  propertyTax            c-
+  0051 2028-09 propertyTaxEscrow             -500.000000 info  -                      c-
+  0052 2028-09 assetGrowth                      0.000000 cash  growth                 c-
+  0053 2028-09 propertyTax                   -500.000000 info  propertyTax            c-
+  0054 2028-10 propertyTaxEscrow             -500.000000 info  -                      c-
+  0055 2028-10 assetGrowth                      0.000000 cash  growth                 c-
+  0056 2028-10 propertyTax                   -500.000000 info  propertyTax            c-
+  0057 2028-11 propertyTaxEscrow             -500.000000 info  -                      c-
+  0058 2028-11 assetGrowth                      0.000000 cash  growth                 c-
+  0059 2028-11 propertyTax                   -500.000000 info  propertyTax            c-
+  0060 2028-12 propertyTaxEscrow             -500.000000 info  -                      c-
+  0061 2028-12 assetGrowth                      0.000000 cash  growth                 c-
+  0062 2028-12 propertyTax                   -500.000000 info  propertyTax            c-
+  0063 2029-01 propertyTaxEscrow             -500.000000 info  -                      c-
+  0064 2029-01 assetGrowth                      0.000000 cash  growth                 c-
+  0065 2029-01 propertyTax                   -500.000000 info  propertyTax            c-
+  0066 2029-02 propertyTaxEscrow             -500.000000 info  -                      c-
+  0067 2029-02 assetGrowth                      0.000000 cash  growth                 c-
+  0068 2029-02 propertyTax                   -500.000000 info  propertyTax            c-
+  0069 2029-03 propertyTaxEscrow             -500.000000 info  -                      c-
+  0070 2029-03 assetGrowth                      0.000000 cash  growth                 c-
+  0071 2029-03 propertyTax                   -500.000000 info  propertyTax            c-
+  0072 2029-04 propertyTaxEscrow             -500.000000 info  -                      c-
+  0073 2029-04 assetGrowth                      0.000000 cash  growth                 c-
+  0074 2029-04 propertyTax                   -500.000000 info  propertyTax            c-
+  0075 2029-05 propertyTaxEscrow             -500.000000 info  -                      c-
+  0076 2029-05 assetGrowth                      0.000000 cash  growth                 c-
+  0077 2029-05 propertyTax                   -500.000000 info  propertyTax            c-
+  0078 2029-06 propertyTaxEscrow             -500.000000 info  -                      c-
+  0079 2029-06 assetGrowth                      0.000000 cash  growth                 c-
+  0080 2029-06 propertyTax                   -500.000000 info  propertyTax            c-
+  0081 2029-07 propertyTaxEscrow             -500.000000 info  -                      c-
+  0082 2029-07 assetGrowth                      0.000000 cash  growth                 c-
+  0083 2029-07 propertyTax                   -500.000000 info  propertyTax            c-
+  0084 2029-08 propertyTaxEscrow             -500.000000 info  -                      c-
+  0085 2029-08 assetGrowth                      0.000000 cash  growth                 c-
+  0086 2029-08 propertyTax                   -500.000000 info  propertyTax            c-
+  0087 2029-09 propertyTaxEscrow             -500.000000 info  -                      c-
+  0088 2029-09 assetGrowth                      0.000000 cash  growth                 c-
+  0089 2029-09 propertyTax                   -500.000000 info  propertyTax            c-
+  0090 2029-10 propertyTaxEscrow             -500.000000 info  -                      c-
+  0091 2029-10 assetGrowth                      0.000000 cash  growth                 c-
+  0092 2029-10 propertyTax                   -500.000000 info  propertyTax            c-
+  0093 2029-11 propertyTaxEscrow             -500.000000 info  -                      c-
+  0094 2029-11 assetGrowth                      0.000000 cash  growth                 c-
+  0095 2029-11 propertyTax                   -500.000000 info  propertyTax            c-
+  0096 2029-12 propertyTaxEscrow             -500.000000 info  -                      c-
+  0097 2029-12 assetGrowth                      0.000000 cash  growth                 c-
+  0098 2029-12 propertyTax                   -500.000000 info  propertyTax            c-
+  0099 2030-01 propertyTaxEscrow             -500.000000 info  -                      c-
+  0100 2030-01 assetGrowth                      0.000000 cash  growth                 c-
+  0101 2030-01 propertyTax                   -500.000000 info  propertyTax            c-
+  0102 2030-02 propertyTaxEscrow             -500.000000 info  -                      c-
+  0103 2030-02 assetGrowth                      0.000000 cash  growth                 c-
+  0104 2030-02 propertyTax                   -500.000000 info  propertyTax            c-
+  0105 2030-03 propertyTaxEscrow             -500.000000 info  -                      c-
+  0106 2030-03 assetGrowth                      0.000000 cash  growth                 c-
+  0107 2030-03 propertyTax                   -500.000000 info  propertyTax            c-
+  0108 2030-04 propertyTaxEscrow             -500.000000 info  -                      c-
+  0109 2030-04 assetGrowth                      0.000000 cash  growth                 c-
+  0110 2030-04 propertyTax                   -500.000000 info  propertyTax            c-
+  0111 2030-05 propertyTaxEscrow             -500.000000 info  -                      c-
+  0112 2030-05 assetGrowth                      0.000000 cash  growth                 c-
+  0113 2030-05 propertyTax                   -500.000000 info  propertyTax            c-
+  0114 2030-06 propertyTaxEscrow             -500.000000 info  -                      c-
+  0115 2030-06 assetGrowth                      0.000000 cash  growth                 c-
+  0116 2030-06 propertyTax                   -500.000000 info  propertyTax            c-
+  0117 2030-07 propertyTaxEscrow             -500.000000 info  -                      c-
+  0118 2030-07 assetGrowth                      0.000000 cash  growth                 c-
+  0119 2030-07 propertyTax                   -500.000000 info  propertyTax            c-
+  0120 2030-08 propertyTaxEscrow             -500.000000 info  -                      c-
+  0121 2030-08 assetGrowth                      0.000000 cash  growth                 c-
+  0122 2030-08 propertyTax                   -500.000000 info  propertyTax            c-
+  0123 2030-09 propertyTaxEscrow             -500.000000 info  -                      c-
+  0124 2030-09 assetGrowth                      0.000000 cash  growth                 c-
+  0125 2030-09 propertyTax                   -500.000000 info  propertyTax            c-
+  0126 2030-10 propertyTaxEscrow             -500.000000 info  -                      c-
+  0127 2030-10 assetGrowth                      0.000000 cash  growth                 c-
+  0128 2030-10 propertyTax                   -500.000000 info  propertyTax            c-
+  0129 2030-11 propertyTaxEscrow             -500.000000 info  -                      c-
+  0130 2030-11 assetGrowth                      0.000000 cash  growth                 c-
+  0131 2030-11 propertyTax                   -500.000000 info  propertyTax            c-
+  0132 2030-12 propertyTaxEscrow             -500.000000 info  -                      c-
+  0133 2030-12 assetGrowth                      0.000000 cash  growth                 c-
+  0134 2030-12 propertyTax                   -500.000000 info  propertyTax            c-
+
+[history] House
+  value                        n=  60 first=        0.000000 last=   500000.000000 min=        0.000000 max=   500000.000000 sum=   22500000.000000 #db1c5752
+  saltTaxes                    n=  60 first=        0.000000 last=     -500.000000 min=     -500.000000 max=        0.000000 sum=     -22500.000000 #834ae965
+  taxes                        n=  60 first=        0.000000 last=     -500.000000 min=     -500.000000 max=        0.000000 sum=     -22500.000000 #834ae965
+  cashFlow                     n=  60 first=        0.000000 last=     -500.000000 min=     -500.000000 max=        0.000000 sum=     -22500.000000 #834ae965
+  cashFlowAccumulated          n=  60 first=        0.000000 last=   -22500.000000 min=   -22500.000000 max=        0.000000 sum=    -517500.000000 #fcfa7ddd
+  propertyTax                  n=  60 first=        0.000000 last=     -500.000000 min=     -500.000000 max=        0.000000 sum=     -22500.000000 #834ae965
+
+[asset] Living
+  instrument = monthlyExpense
+  start = 2026-01  finish = 2030-12
+  startCurrency = -4000.000000
+  finishCurrency = -4659.650225
+  startBasis = 0.000000
+  finishBasis = 0.000000
+  isClosed = no  isDepleted = no
+  closedDate = -  closedValue = -
+  events = 60  reconciled = 60
+
+[events] Living
+  0000 2026-01 expenseInflation               -10.189358 cash  -                      c-
+  0001 2026-02 expenseInflation               -10.215313 cash  -                      c-
+  0002 2026-03 expenseInflation               -10.241335 cash  -                      c-
+  0003 2026-04 expenseInflation               -10.267423 cash  -                      c-
+  0004 2026-05 expenseInflation               -10.293578 cash  -                      c-
+  0005 2026-06 expenseInflation               -10.319799 cash  -                      c-
+  0006 2026-07 expenseInflation               -10.346087 cash  -                      c-
+  0007 2026-08 expenseInflation               -10.372442 cash  -                      c-
+  0008 2026-09 expenseInflation               -10.398864 cash  -                      c-
+  0009 2026-10 expenseInflation               -10.425354 cash  -                      c-
+  0010 2026-11 expenseInflation               -10.451911 cash  -                      c-
+  0011 2026-12 expenseInflation               -10.478535 cash  -                      c-
+  0012 2027-01 expenseInflation               -10.505228 cash  -                      c-
+  0013 2027-02 expenseInflation               -10.531988 cash  -                      c-
+  0014 2027-03 expenseInflation               -10.558817 cash  -                      c-
+  0015 2027-04 expenseInflation               -10.585713 cash  -                      c-
+  0016 2027-05 expenseInflation               -10.612679 cash  -                      c-
+  0017 2027-06 expenseInflation               -10.639713 cash  -                      c-
+  0018 2027-07 expenseInflation               -10.666816 cash  -                      c-
+  0019 2027-08 expenseInflation               -10.693988 cash  -                      c-
+  0020 2027-09 expenseInflation               -10.721229 cash  -                      c-
+  0021 2027-10 expenseInflation               -10.748540 cash  -                      c-
+  0022 2027-11 expenseInflation               -10.775920 cash  -                      c-
+  0023 2027-12 expenseInflation               -10.803370 cash  -                      c-
+  0024 2028-01 expenseInflation               -10.830890 cash  -                      c-
+  0025 2028-02 expenseInflation               -10.858480 cash  -                      c-
+  0026 2028-03 expenseInflation               -10.886140 cash  -                      c-
+  0027 2028-04 expenseInflation               -10.913871 cash  -                      c-
+  0028 2028-05 expenseInflation               -10.941672 cash  -                      c-
+  0029 2028-06 expenseInflation               -10.969544 cash  -                      c-
+  0030 2028-07 expenseInflation               -10.997487 cash  -                      c-
+  0031 2028-08 expenseInflation               -11.025502 cash  -                      c-
+  0032 2028-09 expenseInflation               -11.053587 cash  -                      c-
+  0033 2028-10 expenseInflation               -11.081744 cash  -                      c-
+  0034 2028-11 expenseInflation               -11.109973 cash  -                      c-
+  0035 2028-12 expenseInflation               -11.138274 cash  -                      c-
+  0036 2029-01 expenseInflation               -11.166647 cash  -                      c-
+  0037 2029-02 expenseInflation               -11.195093 cash  -                      c-
+  0038 2029-03 expenseInflation               -11.223610 cash  -                      c-
+  0039 2029-04 expenseInflation               -11.252201 cash  -                      c-
+  0040 2029-05 expenseInflation               -11.280864 cash  -                      c-
+  0041 2029-06 expenseInflation               -11.309600 cash  -                      c-
+  0042 2029-07 expenseInflation               -11.338409 cash  -                      c-
+  0043 2029-08 expenseInflation               -11.367292 cash  -                      c-
+  0044 2029-09 expenseInflation               -11.396248 cash  -                      c-
+  0045 2029-10 expenseInflation               -11.425279 cash  -                      c-
+  0046 2029-11 expenseInflation               -11.454383 cash  -                      c-
+  0047 2029-12 expenseInflation               -11.483561 cash  -                      c-
+  0048 2030-01 expenseInflation               -11.512813 cash  -                      c-
+  0049 2030-02 expenseInflation               -11.542140 cash  -                      c-
+  0050 2030-03 expenseInflation               -11.571542 cash  -                      c-
+  0051 2030-04 expenseInflation               -11.601019 cash  -                      c-
+  0052 2030-05 expenseInflation               -11.630571 cash  -                      c-
+  0053 2030-06 expenseInflation               -11.660198 cash  -                      c-
+  0054 2030-07 expenseInflation               -11.689900 cash  -                      c-
+  0055 2030-08 expenseInflation               -11.719678 cash  -                      c-
+  0056 2030-09 expenseInflation               -11.749532 cash  -                      c-
+  0057 2030-10 expenseInflation               -11.779462 cash  -                      c-
+  0058 2030-11 expenseInflation               -11.809468 cash  -                      c-
+  0059 2030-12 expenseInflation               -11.839551 cash  -                      c-
+
+[history] Living
+  value                        n=  60 first=    -4010.190000 last=    -4659.650000 min=    -4659.650000 max=    -4010.190000 sum=    -259616.160000 #576c9f3a
+  expense                      n=  60 first=    -4000.000000 last=    -4647.810000 min=    -4647.810000 max=    -4000.000000 sum=    -258956.510000 #7b04ace1
+  cashFlow                     n=  60 first=    -4000.000000 last=    -4647.810000 min=    -4647.810000 max=    -4000.000000 sum=    -258956.510000 #7b04ace1
+  cashFlowAccumulated          n=  60 first=    -4000.000000 last=  -258956.550000 min=  -258956.550000 max=    -4000.000000 sum=   -7700663.050000 #5cee1dca
+  livingExpense                n=  60 first=    -4000.000000 last=    -4647.810000 min=    -4647.810000 max=    -4000.000000 sum=    -258956.510000 #7b04ace1
+
+[asset] Mortgage
+  instrument = mortgage
+  start = 2027-04  finish = 2030-12
+  startCurrency = -400000.000000
+  finishCurrency = -381629.139365
+  startBasis = 0.000000
+  finishBasis = 0.000000
+  isClosed = no  isDepleted = no
+  closedDate = -  closedValue = -
+  events = 90  reconciled = 90
+
+[events] Mortgage
+  0000 2027-04 mortgagePrincipal              361.605427 cash  mortgagePrincipal      c8
+  0001 2027-04 mortgageInterest             -2166.666667 info  mortgageInterest       c8
+  0002 2027-05 mortgagePrincipal              363.564123 cash  mortgagePrincipal      c8
+  0003 2027-05 mortgageInterest             -2164.707971 info  mortgageInterest       c8
+  0004 2027-06 mortgagePrincipal              365.533429 cash  mortgagePrincipal      c8
+  0005 2027-06 mortgageInterest             -2162.738665 info  mortgageInterest       c8
+  0006 2027-07 mortgagePrincipal              367.513402 cash  mortgagePrincipal      c8
+  0007 2027-07 mortgageInterest             -2160.758692 info  mortgageInterest       c8
+  0008 2027-08 mortgagePrincipal              369.504099 cash  mortgagePrincipal      c8
+  0009 2027-08 mortgageInterest             -2158.767995 info  mortgageInterest       c8
+  0010 2027-09 mortgagePrincipal              371.505580 cash  mortgagePrincipal      c8
+  0011 2027-09 mortgageInterest             -2156.766514 info  mortgageInterest       c8
+  0012 2027-10 mortgagePrincipal              373.517902 cash  mortgagePrincipal      c8
+  0013 2027-10 mortgageInterest             -2154.754192 info  mortgageInterest       c8
+  0014 2027-11 mortgagePrincipal              375.541124 cash  mortgagePrincipal      c8
+  0015 2027-11 mortgageInterest             -2152.730970 info  mortgageInterest       c8
+  0016 2027-12 mortgagePrincipal              377.575305 cash  mortgagePrincipal      c8
+  0017 2027-12 mortgageInterest             -2150.696789 info  mortgageInterest       c8
+  0018 2028-01 mortgagePrincipal              379.620504 cash  mortgagePrincipal      c8
+  0019 2028-01 mortgageInterest             -2148.651590 info  mortgageInterest       c8
+  0020 2028-02 mortgagePrincipal              381.676782 cash  mortgagePrincipal      c8
+  0021 2028-02 mortgageInterest             -2146.595312 info  mortgageInterest       c8
+  0022 2028-03 mortgagePrincipal              383.744198 cash  mortgagePrincipal      c8
+  0023 2028-03 mortgageInterest             -2144.527896 info  mortgageInterest       c8
+  0024 2028-04 mortgagePrincipal              385.822812 cash  mortgagePrincipal      c8
+  0025 2028-04 mortgageInterest             -2142.449282 info  mortgageInterest       c8
+  0026 2028-05 mortgagePrincipal              387.912686 cash  mortgagePrincipal      c8
+  0027 2028-05 mortgageInterest             -2140.359408 info  mortgageInterest       c8
+  0028 2028-06 mortgagePrincipal              390.013880 cash  mortgagePrincipal      c8
+  0029 2028-06 mortgageInterest             -2138.258214 info  mortgageInterest       c8
+  0030 2028-07 mortgagePrincipal              392.126455 cash  mortgagePrincipal      c8
+  0031 2028-07 mortgageInterest             -2136.145639 info  mortgageInterest       c8
+  0032 2028-08 mortgagePrincipal              394.250473 cash  mortgagePrincipal      c8
+  0033 2028-08 mortgageInterest             -2134.021621 info  mortgageInterest       c8
+  0034 2028-09 mortgagePrincipal              396.385997 cash  mortgagePrincipal      c8
+  0035 2028-09 mortgageInterest             -2131.886097 info  mortgageInterest       c8
+  0036 2028-10 mortgagePrincipal              398.533087 cash  mortgagePrincipal      c8
+  0037 2028-10 mortgageInterest             -2129.739007 info  mortgageInterest       c8
+  0038 2028-11 mortgagePrincipal              400.691808 cash  mortgagePrincipal      c8
+  0039 2028-11 mortgageInterest             -2127.580286 info  mortgageInterest       c8
+  0040 2028-12 mortgagePrincipal              402.862222 cash  mortgagePrincipal      c8
+  0041 2028-12 mortgageInterest             -2125.409872 info  mortgageInterest       c8
+  0042 2029-01 mortgagePrincipal              405.044393 cash  mortgagePrincipal      c8
+  0043 2029-01 mortgageInterest             -2123.227701 info  mortgageInterest       c8
+  0044 2029-02 mortgagePrincipal              407.238383 cash  mortgagePrincipal      c8
+  0045 2029-02 mortgageInterest             -2121.033711 info  mortgageInterest       c8
+  0046 2029-03 mortgagePrincipal              409.444258 cash  mortgagePrincipal      c8
+  0047 2029-03 mortgageInterest             -2118.827836 info  mortgageInterest       c8
+  0048 2029-04 mortgagePrincipal              411.662081 cash  mortgagePrincipal      c8
+  0049 2029-04 mortgageInterest             -2116.610013 info  mortgageInterest       c8
+  0050 2029-05 mortgagePrincipal              413.891917 cash  mortgagePrincipal      c8
+  0051 2029-05 mortgageInterest             -2114.380177 info  mortgageInterest       c8
+  0052 2029-06 mortgagePrincipal              416.133832 cash  mortgagePrincipal      c8
+  0053 2029-06 mortgageInterest             -2112.138262 info  mortgageInterest       c8
+  0054 2029-07 mortgagePrincipal              418.387890 cash  mortgagePrincipal      c8
+  0055 2029-07 mortgageInterest             -2109.884204 info  mortgageInterest       c8
+  0056 2029-08 mortgagePrincipal              420.654158 cash  mortgagePrincipal      c8
+  0057 2029-08 mortgageInterest             -2107.617936 info  mortgageInterest       c8
+  0058 2029-09 mortgagePrincipal              422.932701 cash  mortgagePrincipal      c8
+  0059 2029-09 mortgageInterest             -2105.339393 info  mortgageInterest       c8
+  0060 2029-10 mortgagePrincipal              425.223586 cash  mortgagePrincipal      c8
+  0061 2029-10 mortgageInterest             -2103.048508 info  mortgageInterest       c8
+  0062 2029-11 mortgagePrincipal              427.526881 cash  mortgagePrincipal      c8
+  0063 2029-11 mortgageInterest             -2100.745213 info  mortgageInterest       c8
+  0064 2029-12 mortgagePrincipal              429.842651 cash  mortgagePrincipal      c8
+  0065 2029-12 mortgageInterest             -2098.429443 info  mortgageInterest       c8
+  0066 2030-01 mortgagePrincipal              432.170966 cash  mortgagePrincipal      c8
+  0067 2030-01 mortgageInterest             -2096.101128 info  mortgageInterest       c8
+  0068 2030-02 mortgagePrincipal              434.511892 cash  mortgagePrincipal      c8
+  0069 2030-02 mortgageInterest             -2093.760202 info  mortgageInterest       c8
+  0070 2030-03 mortgagePrincipal              436.865498 cash  mortgagePrincipal      c8
+  0071 2030-03 mortgageInterest             -2091.406596 info  mortgageInterest       c8
+  0072 2030-04 mortgagePrincipal              439.231853 cash  mortgagePrincipal      c8
+  0073 2030-04 mortgageInterest             -2089.040241 info  mortgageInterest       c8
+  0074 2030-05 mortgagePrincipal              441.611025 cash  mortgagePrincipal      c8
+  0075 2030-05 mortgageInterest             -2086.661069 info  mortgageInterest       c8
+  0076 2030-06 mortgagePrincipal              444.003085 cash  mortgagePrincipal      c8
+  0077 2030-06 mortgageInterest             -2084.269009 info  mortgageInterest       c8
+  0078 2030-07 mortgagePrincipal              446.408102 cash  mortgagePrincipal      c8
+  0079 2030-07 mortgageInterest             -2081.863992 info  mortgageInterest       c8
+  0080 2030-08 mortgagePrincipal              448.826146 cash  mortgagePrincipal      c8
+  0081 2030-08 mortgageInterest             -2079.445948 info  mortgageInterest       c8
+  0082 2030-09 mortgagePrincipal              451.257287 cash  mortgagePrincipal      c8
+  0083 2030-09 mortgageInterest             -2077.014807 info  mortgageInterest       c8
+  0084 2030-10 mortgagePrincipal              453.701597 cash  mortgagePrincipal      c8
+  0085 2030-10 mortgageInterest             -2074.570496 info  mortgageInterest       c8
+  0086 2030-11 mortgagePrincipal              456.159148 cash  mortgagePrincipal      c8
+  0087 2030-11 mortgageInterest             -2072.112946 info  mortgageInterest       c8
+  0088 2030-12 mortgagePrincipal              458.630010 cash  mortgagePrincipal      c8
+  0089 2030-12 mortgageInterest             -2069.642084 info  mortgageInterest       c8
+
+[history] Mortgage
+  value                        n=  60 first=        0.000000 last=  -381629.140000 min=  -399638.390000 max=        0.000000 sum=  -17594192.270000 #3a143640
+  growth                       n=  60 first=        0.000000 last=      458.630000 min=        0.000000 max=      458.630000 sum=      18370.830000 #6d6085b8
+  expense                      n=  60 first=        0.000000 last=    -2069.640000 min=    -2166.670000 max=        0.000000 sum=     -95401.410000 #8697b936
+  cashFlow                     n=  60 first=        0.000000 last=    -2528.270000 min=    -2528.270000 max=        0.000000 sum=    -113772.150000 #32254c20
+  cashFlowAccumulated          n=  60 first=        0.000000 last=  -113772.240000 min=  -113772.240000 max=        0.000000 sum=   -2616761.610000 #7d95f340
+  mortgagePayment              n=  60 first=        0.000000 last=    -2528.270000 min=    -2528.270000 max=        0.000000 sum=    -113772.150000 #32254c20
+  mortgageInterest             n=  60 first=        0.000000 last=    -2069.640000 min=    -2166.670000 max=        0.000000 sum=     -95401.410000 #8697b936
+  mortgagePrincipal            n=  60 first=        0.000000 last=     -458.630000 min=     -458.630000 max=        0.000000 sum=     -18370.830000 #e02ac01f
+  interestExpense              n=  60 first=        0.000000 last=    -2069.640000 min=    -2166.670000 max=        0.000000 sum=     -95401.410000 #8697b936
+
+[asset] Salary
+  instrument = workingIncome
+  start = 2026-01  finish = 2030-12
+  startCurrency = 12000.000000
+  finishCurrency = 12000.000000
+  startBasis = 0.000000
+  finishBasis = 0.000000
+  isClosed = no  isDepleted = no
+  closedDate = -  closedValue = -
+  events = 184  reconciled = 184
+
+[events] Salary
+  0000 2026-01 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0001 2026-01 incomeTaxWithholding         -1941.166667 cash  withheldIncomeTax      c10
+  0002 2026-01 transfer                     -9140.833333 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0003 2026-02 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0004 2026-02 incomeTaxWithholding         -1941.166667 cash  withheldIncomeTax      c10
+  0005 2026-02 transfer                     -9140.833333 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0006 2026-03 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0007 2026-03 incomeTaxWithholding         -1941.166667 cash  withheldIncomeTax      c10
+  0008 2026-03 transfer                     -9140.833333 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0009 2026-04 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0010 2026-04 incomeTaxWithholding         -1941.166667 cash  withheldIncomeTax      c10
+  0011 2026-04 transfer                     -9140.833333 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0012 2026-05 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0013 2026-05 incomeTaxWithholding         -1941.166667 cash  withheldIncomeTax      c10
+  0014 2026-05 transfer                     -9140.833333 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0015 2026-06 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0016 2026-06 incomeTaxWithholding         -1941.166667 cash  withheldIncomeTax      c10
+  0017 2026-06 transfer                     -9140.833333 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0018 2026-07 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0019 2026-07 incomeTaxWithholding         -1941.166667 cash  withheldIncomeTax      c10
+  0020 2026-07 transfer                     -9140.833333 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0021 2026-08 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0022 2026-08 incomeTaxWithholding         -1941.166667 cash  withheldIncomeTax      c10
+  0023 2026-08 transfer                     -9140.833333 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0024 2026-09 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0025 2026-09 incomeTaxWithholding         -1941.166667 cash  withheldIncomeTax      c10
+  0026 2026-09 transfer                     -9140.833333 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0027 2026-10 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0028 2026-10 incomeTaxWithholding         -1941.166667 cash  withheldIncomeTax      c10
+  0029 2026-10 transfer                     -9140.833333 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0030 2026-11 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0031 2026-11 incomeTaxWithholding         -1941.166667 cash  withheldIncomeTax      c10
+  0032 2026-11 transfer                     -9140.833333 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0033 2026-12 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0034 2026-12 incomeTaxWithholding         -1941.166667 cash  withheldIncomeTax      c10
+  0035 2026-12 transfer                     -9140.833333 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0036 2026-12 incomeGrowth                     0.000000 cash  income                 c11
+  0037 2027-01 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0038 2027-01 incomeTaxWithholding         -1912.062833 cash  withheldIncomeTax      c10
+  0039 2027-01 transfer                     -9169.937167 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0040 2027-02 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0041 2027-02 incomeTaxWithholding         -1912.062833 cash  withheldIncomeTax      c10
+  0042 2027-02 transfer                     -9169.937167 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0043 2027-03 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0044 2027-03 incomeTaxWithholding         -1912.062833 cash  withheldIncomeTax      c10
+  0045 2027-03 transfer                     -9169.937167 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0046 2027-04 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0047 2027-04 incomeTaxWithholding         -1724.044833 cash  withheldIncomeTax      c10
+  0048 2027-04 transfer                     -9357.955167 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0049 2027-05 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0050 2027-05 incomeTaxWithholding         -1724.514920 cash  withheldIncomeTax      c10
+  0051 2027-05 transfer                     -9357.485080 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0052 2027-06 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0053 2027-06 incomeTaxWithholding         -1724.987554 cash  withheldIncomeTax      c10
+  0054 2027-06 transfer                     -9357.012446 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0055 2027-07 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0056 2027-07 incomeTaxWithholding         -1725.462747 cash  withheldIncomeTax      c10
+  0057 2027-07 transfer                     -9356.537253 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0058 2027-08 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0059 2027-08 incomeTaxWithholding         -1725.940515 cash  withheldIncomeTax      c10
+  0060 2027-08 transfer                     -9356.059485 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0061 2027-09 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0062 2027-09 incomeTaxWithholding         -1726.420870 cash  withheldIncomeTax      c10
+  0063 2027-09 transfer                     -9355.579130 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0064 2027-10 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0065 2027-10 incomeTaxWithholding         -1726.903827 cash  withheldIncomeTax      c10
+  0066 2027-10 transfer                     -9355.096173 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0067 2027-11 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0068 2027-11 incomeTaxWithholding         -1727.389400 cash  withheldIncomeTax      c10
+  0069 2027-11 transfer                     -9354.610600 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0070 2027-12 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0071 2027-12 incomeTaxWithholding         -1727.877604 cash  withheldIncomeTax      c10
+  0072 2027-12 transfer                     -9354.122396 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0073 2027-12 incomeGrowth                     0.000000 cash  income                 c12
+  0074 2028-01 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0075 2028-01 incomeTaxWithholding         -1708.653842 cash  withheldIncomeTax      c10
+  0076 2028-01 transfer                     -9373.346158 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0077 2028-02 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0078 2028-02 incomeTaxWithholding         -1709.147348 cash  withheldIncomeTax      c10
+  0079 2028-02 transfer                     -9372.852652 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0080 2028-03 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0081 2028-03 incomeTaxWithholding         -1709.643528 cash  withheldIncomeTax      c10
+  0082 2028-03 transfer                     -9372.356472 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0083 2028-04 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0084 2028-04 incomeTaxWithholding         -1710.142396 cash  withheldIncomeTax      c10
+  0085 2028-04 transfer                     -9371.857604 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0086 2028-05 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0087 2028-05 incomeTaxWithholding         -1710.643965 cash  withheldIncomeTax      c10
+  0088 2028-05 transfer                     -9371.356035 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0089 2028-06 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0090 2028-06 incomeTaxWithholding         -1711.148252 cash  withheldIncomeTax      c10
+  0091 2028-06 transfer                     -9370.851748 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0092 2028-07 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0093 2028-07 incomeTaxWithholding         -1711.655270 cash  withheldIncomeTax      c10
+  0094 2028-07 transfer                     -9370.344730 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0095 2028-08 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0096 2028-08 incomeTaxWithholding         -1712.165034 cash  withheldIncomeTax      c10
+  0097 2028-08 transfer                     -9369.834966 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0098 2028-09 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0099 2028-09 incomeTaxWithholding         -1712.677560 cash  withheldIncomeTax      c10
+  0100 2028-09 transfer                     -9369.322440 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0101 2028-10 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0102 2028-10 incomeTaxWithholding         -1713.192862 cash  withheldIncomeTax      c10
+  0103 2028-10 transfer                     -9368.807138 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0104 2028-11 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0105 2028-11 incomeTaxWithholding         -1713.710955 cash  withheldIncomeTax      c10
+  0106 2028-11 transfer                     -9368.289045 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0107 2028-12 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0108 2028-12 incomeTaxWithholding         -1714.231854 cash  withheldIncomeTax      c10
+  0109 2028-12 transfer                     -9367.768146 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0110 2028-12 incomeGrowth                     0.000000 cash  income                 c13
+  0111 2029-01 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0112 2029-01 incomeTaxWithholding         -1694.429812 cash  withheldIncomeTax      c10
+  0113 2029-01 transfer                     -9387.570188 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0114 2029-02 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0115 2029-02 incomeTaxWithholding         -1694.956369 cash  withheldIncomeTax      c10
+  0116 2029-02 transfer                     -9387.043631 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0117 2029-03 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0118 2029-03 incomeTaxWithholding         -1695.485779 cash  withheldIncomeTax      c10
+  0119 2029-03 transfer                     -9386.514221 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0120 2029-04 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0121 2029-04 incomeTaxWithholding         -1696.018057 cash  withheldIncomeTax      c10
+  0122 2029-04 transfer                     -9385.981943 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0123 2029-05 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0124 2029-05 incomeTaxWithholding         -1696.553218 cash  withheldIncomeTax      c10
+  0125 2029-05 transfer                     -9385.446782 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0126 2029-06 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0127 2029-06 incomeTaxWithholding         -1697.091277 cash  withheldIncomeTax      c10
+  0128 2029-06 transfer                     -9384.908723 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0129 2029-07 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0130 2029-07 incomeTaxWithholding         -1697.632251 cash  withheldIncomeTax      c10
+  0131 2029-07 transfer                     -9384.367749 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0132 2029-08 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0133 2029-08 incomeTaxWithholding         -1698.176155 cash  withheldIncomeTax      c10
+  0134 2029-08 transfer                     -9383.823845 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0135 2029-09 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0136 2029-09 incomeTaxWithholding         -1698.723006 cash  withheldIncomeTax      c10
+  0137 2029-09 transfer                     -9383.276994 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0138 2029-10 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0139 2029-10 incomeTaxWithholding         -1699.272818 cash  withheldIncomeTax      c10
+  0140 2029-10 transfer                     -9382.727182 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0141 2029-11 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0142 2029-11 incomeTaxWithholding         -1699.825609 cash  withheldIncomeTax      c10
+  0143 2029-11 transfer                     -9382.174391 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0144 2029-12 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0145 2029-12 incomeTaxWithholding         -1700.381394 cash  withheldIncomeTax      c10
+  0146 2029-12 transfer                     -9381.618606 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0147 2029-12 incomeGrowth                     0.000000 cash  income                 c14
+  0148 2030-01 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0149 2030-01 incomeTaxWithholding         -1680.954616 cash  withheldIncomeTax      c10
+  0150 2030-01 transfer                     -9401.045384 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0151 2030-02 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0152 2030-02 incomeTaxWithholding         -1681.469620 cash  withheldIncomeTax      c10
+  0153 2030-02 transfer                     -9400.530380 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0154 2030-03 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0155 2030-03 incomeTaxWithholding         -1681.987413 cash  withheldIncomeTax      c10
+  0156 2030-03 transfer                     -9400.012587 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0157 2030-04 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0158 2030-04 incomeTaxWithholding         -1682.508011 cash  withheldIncomeTax      c10
+  0159 2030-04 transfer                     -9399.491989 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0160 2030-05 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0161 2030-05 incomeTaxWithholding         -1683.031429 cash  withheldIncomeTax      c10
+  0162 2030-05 transfer                     -9398.968571 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0163 2030-06 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0164 2030-06 incomeTaxWithholding         -1683.557682 cash  withheldIncomeTax      c10
+  0165 2030-06 transfer                     -9398.442318 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0166 2030-07 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0167 2030-07 incomeTaxWithholding         -1684.086786 cash  withheldIncomeTax      c10
+  0168 2030-07 transfer                     -9397.913214 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0169 2030-08 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0170 2030-08 incomeTaxWithholding         -1684.618755 cash  withheldIncomeTax      c10
+  0171 2030-08 transfer                     -9397.381245 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0172 2030-09 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0173 2030-09 incomeTaxWithholding         -1685.153607 cash  withheldIncomeTax      c10
+  0174 2030-09 transfer                     -9396.846393 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0175 2030-10 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0176 2030-10 incomeTaxWithholding         -1685.691355 cash  withheldIncomeTax      c10
+  0177 2030-10 transfer                     -9396.308645 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0178 2030-11 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0179 2030-11 incomeTaxWithholding         -1686.232016 cash  withheldIncomeTax      c10
+  0180 2030-11 transfer                     -9395.767984 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+  0181 2030-12 ficaWithholding               -918.000000 cash  socialSecurityTax      c9
+  0182 2030-12 incomeTaxWithholding         -1686.775606 cash  withheldIncomeTax      c10
+  0183 2030-12 transfer                     -9395.224394 cash  -                      c0 {cadence=monthly from=Salary system=true to=Checking}
+
+[history] Salary
+  value                        n=  60 first=    12000.000000 last=    12000.000000 min=    12000.000000 max=    12000.000000 sum=     720000.000000 #7f43ea89
+  ordinaryIncome               n=  60 first=    12000.000000 last=    12000.000000 min=    12000.000000 max=    12000.000000 sum=     720000.000000 #7f43ea89
+  employedIncome               n=  60 first=    12000.000000 last=    12000.000000 min=    12000.000000 max=    12000.000000 sum=     720000.000000 #7f43ea89
+  income                       n=  60 first=    12000.000000 last=    12000.000000 min=    12000.000000 max=    12000.000000 sum=     720000.000000 #7f43ea89
+  withheldFicaTax              n=  60 first=     -918.000000 last=     -918.000000 min=     -918.000000 max=     -918.000000 sum=     -55080.000000 #2f94b72d
+  withheldIncomeTax            n=  60 first=    -1941.170000 last=    -1686.780000 min=    -1941.170000 max=    -1680.950000 sum=    -105675.380000 #d6d41aa8
+  incomeTax                    n=  60 first=    -2859.170000 last=    -2604.780000 min=    -2859.170000 max=    -2598.950000 sum=    -160755.380000 #7a5606ba
+  federalTaxes                 n=  60 first=    -2859.170000 last=    -2604.780000 min=    -2859.170000 max=    -2598.950000 sum=    -160755.380000 #7a5606ba
+  taxes                        n=  60 first=    -2859.170000 last=    -2604.780000 min=    -2859.170000 max=    -2598.950000 sum=    -160755.380000 #7a5606ba
+  netIncome                    n=  60 first=     9140.830000 last=     9395.220000 min=     9140.830000 max=     9401.050000 sum=     559244.620000 #8f5efeaf
+  cashFlow                     n=  60 first=     9140.830000 last=     9395.220000 min=     9140.830000 max=     9401.050000 sum=     559244.620000 #8f5efeaf
+  cashFlowAccumulated          n=  60 first=     9140.830000 last=   559244.640000 min=     9140.830000 max=   559244.640000 sum=   16969778.780000 #57c0fc10
+  socialSecurityTax            n=  60 first=     -744.000000 last=     -744.000000 min=     -744.000000 max=     -744.000000 sum=     -44640.000000 #c9d6663d
+  medicareTax                  n=  60 first=     -174.000000 last=     -174.000000 min=     -174.000000 max=     -174.000000 sum=     -10440.000000 #82853f75
+
+[packages]
+  0000 employedIncome=12000.000000 socialSecurityTax=-744.000000 expense=-4000.000000 medicareTax=-174.000000 incomeTax=-1941.166667 value=333130.643976
+  0001 employedIncome=12000.000000 socialSecurityTax=-744.000000 expense=-4010.189358 medicareTax=-174.000000 incomeTax=-1941.166667 value=338251.072638
+  0002 employedIncome=12000.000000 socialSecurityTax=-744.000000 expense=-4020.404671 medicareTax=-174.000000 incomeTax=-1941.166667 value=343361.259966
+  0003 employedIncome=12000.000000 socialSecurityTax=-744.000000 expense=-4030.646006 medicareTax=-174.000000 incomeTax=-1941.166667 value=348461.179869
+  0004 employedIncome=12000.000000 socialSecurityTax=-744.000000 expense=-4040.913429 medicareTax=-174.000000 incomeTax=-1941.166667 value=353550.806195
+  0005 employedIncome=12000.000000 socialSecurityTax=-744.000000 expense=-4051.207007 medicareTax=-174.000000 incomeTax=-1941.166667 value=358630.112722
+  0006 employedIncome=12000.000000 socialSecurityTax=-744.000000 expense=-4061.526807 medicareTax=-174.000000 incomeTax=-1941.166667 value=363699.073162
+  0007 employedIncome=12000.000000 socialSecurityTax=-744.000000 expense=-4071.872894 medicareTax=-174.000000 incomeTax=-1941.166667 value=368757.661159
+  0008 employedIncome=12000.000000 socialSecurityTax=-744.000000 expense=-4082.245336 medicareTax=-174.000000 incomeTax=-1941.166667 value=373805.850292
+  0009 employedIncome=12000.000000 socialSecurityTax=-744.000000 expense=-4092.644200 medicareTax=-174.000000 incomeTax=-1941.166667 value=378843.614072
+  0010 employedIncome=12000.000000 socialSecurityTax=-744.000000 expense=-4103.069554 medicareTax=-174.000000 incomeTax=-1941.166667 value=383870.925940
+  0011 employedIncome=12000.000000 socialSecurityTax=-744.000000 expense=-4113.521465 medicareTax=-174.000000 incomeTax=-1941.166667 value=388887.759274
+  0012 employedIncome=12000.000000 socialSecurityTax=-744.000000 expense=-4124.000000 medicareTax=-174.000000 incomeTax=-1912.062833 value=393923.191213
+  0013 employedIncome=12000.000000 socialSecurityTax=-744.000000 expense=-4134.505228 medicareTax=-174.000000 incomeTax=-1912.062833 value=398948.091164
+  0014 employedIncome=12000.000000 socialSecurityTax=-744.000000 expense=-4145.037216 medicareTax=-174.000000 incomeTax=-1912.062833 value=403962.432298
+  0015 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=361.605427 expense=-4155.596032 medicareTax=-174.000000 incomeTax=-1724.044833 mortgageInterest=-2166.666667 mortgagePrincipal=-361.605427 propertyTaxes=-500.000000 value=406987.539052
+  0016 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=363.564123 expense=-4166.181746 medicareTax=-174.000000 incomeTax=-1724.514920 mortgageInterest=-2164.707971 mortgagePrincipal=-363.564123 propertyTaxes=-500.000000 value=409503.521737
+  0017 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=365.533429 expense=-4176.794425 medicareTax=-174.000000 incomeTax=-1724.987554 mortgageInterest=-2162.738665 mortgagePrincipal=-365.533429 propertyTaxes=-500.000000 value=412010.361381
+  0018 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=367.513402 expense=-4187.434138 medicareTax=-174.000000 incomeTax=-1725.462747 mortgageInterest=-2160.758692 mortgagePrincipal=-367.513402 propertyTaxes=-500.000000 value=414508.038988
+  0019 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=369.504099 expense=-4198.100953 medicareTax=-174.000000 incomeTax=-1725.940515 mortgageInterest=-2158.767995 mortgagePrincipal=-369.504099 propertyTaxes=-500.000000 value=416996.535537
+  0020 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=371.505580 expense=-4208.794941 medicareTax=-174.000000 incomeTax=-1726.420870 mortgageInterest=-2156.766514 mortgagePrincipal=-371.505580 propertyTaxes=-500.000000 value=419475.831983
+  0021 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=373.517902 expense=-4219.516170 medicareTax=-174.000000 incomeTax=-1726.903827 mortgageInterest=-2154.754192 mortgagePrincipal=-373.517902 propertyTaxes=-500.000000 value=421945.909253
+  0022 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=375.541124 expense=-4230.264710 medicareTax=-174.000000 incomeTax=-1727.389400 mortgageInterest=-2152.730970 mortgagePrincipal=-375.541124 propertyTaxes=-500.000000 value=424406.748252
+  0023 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=377.575305 expense=-4241.040630 medicareTax=-174.000000 incomeTax=-1727.877604 mortgageInterest=-2150.696789 mortgagePrincipal=-377.575305 propertyTaxes=-500.000000 value=426858.329859
+  0024 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=379.620504 expense=-4251.844000 medicareTax=-174.000000 incomeTax=-1708.653842 mortgageInterest=-2148.651590 mortgagePrincipal=-379.620504 propertyTaxes=-500.000000 taxTrueUp=84.054000 value=429404.403538
+  0025 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=381.676782 expense=-4262.674890 medicareTax=-174.000000 incomeTax=-1709.147348 mortgageInterest=-2146.595312 mortgagePrincipal=-381.676782 propertyTaxes=-500.000000 value=431857.127509
+  0026 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=383.744198 expense=-4273.533369 medicareTax=-174.000000 incomeTax=-1709.643528 mortgageInterest=-2144.527896 mortgagePrincipal=-383.744198 propertyTaxes=-500.000000 value=434300.536575
+  0027 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=385.822812 expense=-4284.419509 medicareTax=-174.000000 incomeTax=-1710.142396 mortgageInterest=-2142.449282 mortgagePrincipal=-385.822812 propertyTaxes=-500.000000 value=436734.611519
+  0028 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=387.912686 expense=-4295.333380 medicareTax=-174.000000 incomeTax=-1710.643965 mortgageInterest=-2140.359408 mortgagePrincipal=-387.912686 propertyTaxes=-500.000000 value=439159.333094
+  0029 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=390.013880 expense=-4306.275052 medicareTax=-174.000000 incomeTax=-1711.148252 mortgageInterest=-2138.258214 mortgagePrincipal=-390.013880 propertyTaxes=-500.000000 value=441574.682032
+  0030 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=392.126455 expense=-4317.244596 medicareTax=-174.000000 incomeTax=-1711.655270 mortgageInterest=-2136.145639 mortgagePrincipal=-392.126455 propertyTaxes=-500.000000 value=443980.639040
+  0031 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=394.250473 expense=-4328.242083 medicareTax=-174.000000 incomeTax=-1712.165034 mortgageInterest=-2134.021621 mortgagePrincipal=-394.250473 propertyTaxes=-500.000000 value=446377.184801
+  0032 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=396.385997 expense=-4339.267585 medicareTax=-174.000000 incomeTax=-1712.677560 mortgageInterest=-2131.886097 mortgagePrincipal=-396.385997 propertyTaxes=-500.000000 value=448764.299972
+  0033 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=398.533087 expense=-4350.321172 medicareTax=-174.000000 incomeTax=-1713.192862 mortgageInterest=-2129.739007 mortgagePrincipal=-398.533087 propertyTaxes=-500.000000 value=451141.965187
+  0034 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=400.691808 expense=-4361.402916 medicareTax=-174.000000 incomeTax=-1713.710955 mortgageInterest=-2127.580286 mortgagePrincipal=-400.691808 propertyTaxes=-500.000000 value=453510.161057
+  0035 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=402.862222 expense=-4372.512890 medicareTax=-174.000000 incomeTax=-1714.231854 mortgageInterest=-2125.409872 mortgagePrincipal=-402.862222 propertyTaxes=-500.000000 value=455868.868168
+  0036 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=405.044393 expense=-4383.651164 medicareTax=-174.000000 incomeTax=-1694.429812 mortgageInterest=-2123.227701 mortgagePrincipal=-405.044393 propertyTaxes=-500.000000 taxTrueUp=1439.987962 value=459678.380805
+  0037 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=407.238383 expense=-4394.817811 medicareTax=-174.000000 incomeTax=-1694.956369 mortgageInterest=-2121.033711 mortgagePrincipal=-407.238383 propertyTaxes=-500.000000 value=462038.377821
+  0038 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=409.444258 expense=-4406.012904 medicareTax=-174.000000 incomeTax=-1695.485779 mortgageInterest=-2118.827836 mortgagePrincipal=-409.444258 propertyTaxes=-500.000000 value=464388.827691
+  0039 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=411.662081 expense=-4417.236514 medicareTax=-174.000000 incomeTax=-1696.018057 mortgageInterest=-2116.610013 mortgagePrincipal=-411.662081 propertyTaxes=-500.000000 value=466729.710906
+  0040 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=413.891917 expense=-4428.488715 medicareTax=-174.000000 incomeTax=-1696.553218 mortgageInterest=-2114.380177 mortgagePrincipal=-413.891917 propertyTaxes=-500.000000 value=469061.007934
+  0041 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=416.133832 expense=-4439.769578 medicareTax=-174.000000 incomeTax=-1697.091277 mortgageInterest=-2112.138262 mortgagePrincipal=-416.133832 propertyTaxes=-500.000000 value=471382.699216
+  0042 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=418.387890 expense=-4451.079178 medicareTax=-174.000000 incomeTax=-1697.632251 mortgageInterest=-2109.884204 mortgagePrincipal=-418.387890 propertyTaxes=-500.000000 value=473694.765173
+  0043 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=420.654158 expense=-4462.417588 medicareTax=-174.000000 incomeTax=-1698.176155 mortgageInterest=-2107.617936 mortgagePrincipal=-420.654158 propertyTaxes=-500.000000 value=475997.186202
+  0044 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=422.932701 expense=-4473.784880 medicareTax=-174.000000 incomeTax=-1698.723006 mortgageInterest=-2105.339393 mortgagePrincipal=-422.932701 propertyTaxes=-500.000000 value=478289.942675
+  0045 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=425.223586 expense=-4485.181128 medicareTax=-174.000000 incomeTax=-1699.272818 mortgageInterest=-2103.048508 mortgagePrincipal=-425.223586 propertyTaxes=-500.000000 value=480573.014942
+  0046 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=427.526881 expense=-4496.606407 medicareTax=-174.000000 incomeTax=-1699.825609 mortgageInterest=-2100.745213 mortgagePrincipal=-427.526881 propertyTaxes=-500.000000 value=482846.383331
+  0047 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=429.842651 expense=-4508.060789 medicareTax=-174.000000 incomeTax=-1700.381394 mortgageInterest=-2098.429443 mortgagePrincipal=-429.842651 propertyTaxes=-500.000000 value=485110.028144
+  0048 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=432.170966 expense=-4519.544350 medicareTax=-174.000000 incomeTax=-1680.954616 mortgageInterest=-2096.101128 mortgagePrincipal=-432.170966 propertyTaxes=-500.000000 taxTrueUp=1376.614712 value=488760.529949
+  0049 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=434.511892 expense=-4531.057163 medicareTax=-174.000000 incomeTax=-1681.469620 mortgageInterest=-2093.760202 mortgagePrincipal=-434.511892 propertyTaxes=-500.000000 value=491024.700823
+  0050 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=436.865498 expense=-4542.599304 medicareTax=-174.000000 incomeTax=-1681.987413 mortgageInterest=-2091.406596 mortgagePrincipal=-436.865498 propertyTaxes=-500.000000 value=493279.135968
+  0051 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=439.231853 expense=-4554.170846 medicareTax=-174.000000 incomeTax=-1682.508011 mortgageInterest=-2089.040241 mortgagePrincipal=-439.231853 propertyTaxes=-500.000000 value=495523.815851
+  0052 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=441.611025 expense=-4565.771865 medicareTax=-174.000000 incomeTax=-1683.031429 mortgageInterest=-2086.661069 mortgagePrincipal=-441.611025 propertyTaxes=-500.000000 value=497758.720918
+  0053 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=444.003085 expense=-4577.402435 medicareTax=-174.000000 incomeTax=-1683.557682 mortgageInterest=-2084.269009 mortgagePrincipal=-444.003085 propertyTaxes=-500.000000 value=499983.831594
+  0054 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=446.408102 expense=-4589.062633 medicareTax=-174.000000 incomeTax=-1684.086786 mortgageInterest=-2081.863992 mortgagePrincipal=-446.408102 propertyTaxes=-500.000000 value=502199.128283
+  0055 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=448.826146 expense=-4600.752533 medicareTax=-174.000000 incomeTax=-1684.618755 mortgageInterest=-2079.445948 mortgagePrincipal=-448.826146 propertyTaxes=-500.000000 value=504404.591369
+  0056 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=451.257287 expense=-4612.472211 medicareTax=-174.000000 incomeTax=-1685.153607 mortgageInterest=-2077.014807 mortgagePrincipal=-451.257287 propertyTaxes=-500.000000 value=506600.201212
+  0057 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=453.701597 expense=-4624.221743 medicareTax=-174.000000 incomeTax=-1685.691355 mortgageInterest=-2074.570496 mortgagePrincipal=-453.701597 propertyTaxes=-500.000000 value=508785.938156
+  0058 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=456.159148 expense=-4636.001205 medicareTax=-174.000000 incomeTax=-1686.232016 mortgageInterest=-2072.112946 mortgagePrincipal=-456.159148 propertyTaxes=-500.000000 value=510961.782520
+  0059 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=458.630010 expense=-4647.810674 medicareTax=-174.000000 incomeTax=-1686.775606 mortgageInterest=-2069.642084 mortgagePrincipal=-458.630010 propertyTaxes=-500.000000 value=513127.714605
+
+[priceIndex]
+  [0000]         1.002547         1.005101         1.007662         1.010228         1.012802         1.015382
+  [0006]         1.017968         1.020561         1.023161         1.025767         1.028380         1.031000
+  [0012]         1.033626         1.036259         1.038899         1.041545         1.044199         1.046859
+  [0018]         1.049525         1.052199         1.054879         1.057566         1.060260         1.062961
+  [0024]         1.065669         1.068383         1.071105         1.073833         1.076569         1.079311
+  [0030]         1.082061         1.084817         1.087580         1.090351         1.093128         1.095913
+  [0036]         1.098704         1.101503         1.104309         1.107122         1.109942         1.112770
+  [0042]         1.115604         1.118446         1.121295         1.124152         1.127015         1.129886
+  [0048]         1.132764         1.135650         1.138543         1.141443         1.144351         1.147266
+  [0054]         1.150188         1.153118         1.156055         1.159000         1.161953         1.164913
+
+[taxYears]
+  2026 months=12 age=40 agi=144000.000000 niit=144000.000000 seniorDeduction=144000.000000 irmaa=144000.000000 iraDeduction=144000.000000 rothContribution=144000.000000 aca=144000.000000 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=127900.000000 capitalGains=0.000000 fica=11016.000000 incomeTax=23294.000000 capitalGainsTax=0.000000 niit=0.000000 federalTax=34310.000000 settledTrueUp=0.000000 settledNIIT=0.000000
+  2027 months=12 age=41 agi=144000.000000 niit=144000.000000 seniorDeduction=144000.000000 irmaa=144000.000000 iraDeduction=144000.000000 rothContribution=144000.000000 aca=144000.000000 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=120071.411545 capitalGains=0.000000 fica=11016.000000 incomeTax=21185.676771 capitalGainsTax=0.000000 niit=0.000000 federalTax=32201.676771 settledTrueUp=84.054000 settledNIIT=0.000000
+  2028 months=12 age=42 agi=144000.000000 niit=144000.000000 seniorDeduction=144000.000000 irmaa=144000.000000 iraDeduction=144000.000000 rothContribution=144000.000000 aca=144000.000000 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=112354.375778 capitalGains=0.000000 fica=11016.000000 incomeTax=19097.024903 capitalGainsTax=0.000000 niit=0.000000 federalTax=30113.024903 settledTrueUp=1439.987962 settledNIIT=0.000000
+  2029 months=12 age=43 agi=144000.000000 niit=144000.000000 seniorDeduction=144000.000000 irmaa=144000.000000 iraDeduction=144000.000000 rothContribution=144000.000000 aca=144000.000000 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=112668.717602 capitalGains=0.000000 fica=11016.000000 incomeTax=18991.931034 capitalGainsTax=0.000000 niit=0.000000 federalTax=30007.931034 settledTrueUp=1376.614712 settledNIIT=0.000000
+  2030 months=12 age=44 agi=144000.000000 niit=144000.000000 seniorDeduction=144000.000000 irmaa=144000.000000 iraDeduction=144000.000000 rothContribution=144000.000000 aca=144000.000000 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=113004.111480 capitalGains=0.000000 fica=11016.000000 incomeTax=18886.066895 capitalGainsTax=0.000000 niit=0.000000 federalTax=29902.066895 settledTrueUp=1320.000000 settledNIIT=0.000000
+
+[sanity]
+  2027-05 Transfer conservation broken: −$100,000.00
+
+[traces]
+  scopes = 2187
+  unattributedEvents = 0
+  1x 2027 annual pass
+  1x 2027 tax true-up
+  1x 2028 annual pass
+  1x 2028 tax true-up
+  1x 2029 annual pass
+  1x 2029 tax true-up
+  1x 2030 annual pass
+  1x 2030 tax true-up
+  1x 2031 annual pass
+  1x 2031 tax true-up
+  4x Annual growth: Salary
+  7x April 2026
+  7x April 2027
+  7x April 2028
+  7x April 2029
+  7x April 2030
+  7x August 2026
+  7x August 2027
+  7x August 2028
+  7x August 2029
+  7x August 2030
+  7x December 2026
+  7x December 2027
+  7x December 2028
+  7x December 2029
+  7x December 2030
+  7x February 2026
+  7x February 2027
+  7x February 2028
+  7x February 2029
+  7x February 2030
+  44x House property tax
+  7x January 2026
+  7x January 2027
+  7x January 2028
+  7x January 2029
+  7x January 2030
+  7x July 2026
+  7x July 2027
+  7x July 2028
+  7x July 2029
+  7x July 2030
+  7x June 2026
+  7x June 2027
+  7x June 2028
+  7x June 2029
+  7x June 2030
+  7x March 2026
+  7x March 2027
+  7x March 2028
+  7x March 2029
+  7x March 2030
+  7x May 2026
+  7x May 2027
+  7x May 2028
+  7x May 2029
+  7x May 2030
+  7x November 2026
+  7x November 2027
+  7x November 2028
+  7x November 2029
+  7x November 2030
+  7x October 2026
+  7x October 2027
+  7x October 2028
+  7x October 2029
+  7x October 2030
+  60x Pay Brokerage
+  60x Pay Checking
+  60x Pay House
+  60x Pay Living
+  120x Pay Mortgage
+  60x Pay Salary
+  60x Payroll: Brokerage
+  60x Payroll: Checking
+  60x Payroll: House
+  60x Payroll: Living
+  60x Payroll: Mortgage
+  60x Payroll: Salary
+  60x Required distribution from Brokerage
+  60x Required distribution from Checking
+  60x Required distribution from House
+  60x Required distribution from Living
+  60x Required distribution from Mortgage
+  60x Required distribution from Salary
+  7x September 2026
+  7x September 2027
+  7x September 2028
+  7x September 2029
+  7x September 2030
+  149x Settle from Checking
+  60x Transfer Salary → Checking
+  60x Withholding: Brokerage
+  60x Withholding: Checking
+  60x Withholding: House
+  60x Withholding: Living
+  60x Withholding: Mortgage
+  60x Withholding: Salary
+
+[traceLegend]
+  c0 = Transfer Salary → Checking
+  c1 = Pay Living > Settle from Checking
+  c2 = Pay Mortgage > Pay Mortgage > Settle from Checking
+  c3 = House property tax > Settle from Checking
+  c4 = 2028 annual pass > 2028 tax true-up
+  c5 = 2029 annual pass > 2029 tax true-up
+  c6 = 2030 annual pass > 2030 tax true-up
+  c7 = 2031 annual pass > 2031 tax true-up
+  c8 = Payroll: Mortgage
+  c9 = Payroll: Salary
+  c10 = Withholding: Salary
+  c11 = 2027 annual pass > Annual growth: Salary
+  c12 = 2028 annual pass > Annual growth: Salary
+  c13 = 2029 annual pass > Annual growth: Salary
+  c14 = 2030 annual pass > Annual growth: Salary
+

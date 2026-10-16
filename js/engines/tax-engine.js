@@ -241,6 +241,7 @@ export class TaxEngine {
                 let preFlight = new FundTransferOneSided(null, remaining);
                 preFlight.fromModel = modelAsset;
                 preFlight.toModel = fundingSource;
+                preFlight.backstop = true;   // said on its settlement: no rule chose this account
                 preFlights.push(preFlight);
             } else {
                 FundTransfer.reportUnfunded(modelAsset, remaining, 'property tax', ShortfallOrigin.STANDALONE);
@@ -251,7 +252,8 @@ export class TaxEngine {
         // Only debit the funding source (toModel).
         for (const oneSided of preFlights) {
             const event = { type: EventType.SETTLEMENT, data: {
-                from: modelAsset.displayName, to: oneSided.toModel.displayName, label: 'property tax' } };
+                from: modelAsset.displayName, to: oneSided.toModel.displayName, label: 'property tax',
+                ...(oneSided.backstop ? { backstop: true } : {}) } };
             const settled = FundTransfer.settleOneSided(oneSided, event, this.modelAssets);
             this.monthly.recordTransfer(oneSided.toModel.instrument, settled.supplied, settled.realizedGain);
             if (settled.spillover.amount > 0 && settled.spilloverInstrument) {

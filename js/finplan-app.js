@@ -1869,7 +1869,7 @@ function connectAssetListEvents() {
     });
 
     flowsView.addEventListener('edit-transfers', (ev) => {
-        showPopupTransfers(ev.detail.displayName);
+        showPopupTransfers(ev.detail.displayName, phaseSetting(ev.detail.phase, ev.detail.displayName));
     });
 }
 
@@ -1976,7 +1976,7 @@ function connectFundingModal() {
 function connectTransferModal() {
     transferModal.addEventListener('save-transfers', (ev) => {
         const { displayName, fundTransfers } = ev.detail;
-        const activePhase = appState.lifeEvents[appState.phaseIndex] ?? appState.lifeEvents[0];
+        const activePhase = transferPhase ?? appState.lifeEvents[appState.phaseIndex] ?? appState.lifeEvents[0];
         if (activePhase) {
             activePhase.phaseTransfers[displayName] = fundTransfers.map(ft => ft.toJSON());
         }
@@ -1984,8 +1984,25 @@ function connectTransferModal() {
     });
 }
 
-function showPopupTransfers(currentDisplayName) {
-    const activePhase = appState.lifeEvents[appState.phaseIndex] ?? appState.lifeEvents[0];
+/** The life event the open transfer modal edits: saved back to the one it showed. */
+let transferPhase = null;
+
+/**
+ * The life event that set an asset's rules as they were in force in a phase:
+ * that phase, or, when it lists no transfers for the asset, the latest earlier
+ * one that does. A phase that leaves an asset out keeps its earlier rules.
+ * Null when the phase is not found.
+ */
+function phaseSetting(phaseName, displayName) {
+    let i = appState.lifeEvents.findIndex((e) => e.displayName === phaseName);
+    if (i < 0) return null;
+    while (i > 0 && !(displayName in (appState.lifeEvents[i].phaseTransfers ?? {}))) i--;
+    return appState.lifeEvents[i];
+}
+
+function showPopupTransfers(currentDisplayName, phase = null) {
+    const activePhase = phase ?? appState.lifeEvents[appState.phaseIndex] ?? appState.lifeEvents[0];
+    transferPhase = activePhase;
     transferModal.currentDisplayName = currentDisplayName;
     transferModal.modelAssets = assetList.modelAssets || [];
     transferModal.phaseTransfers = activePhase?.phaseTransfers ?? {};

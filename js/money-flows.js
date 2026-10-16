@@ -10,40 +10,43 @@
  *
  * ── Why the ledger ───────────────────────────────────────────────────
  *
- * The view this replaces multiplied each rule's percentage by a balance, which
- * is not what moved. A paycheck's 401(k) percentage is of gross pay, its Roth
- * percentage of what is left after that, and the backstop receives whatever
- * remains, whatever its own rule says. The ledger records what each account
- * paid, so the bars are what happened.
+ * A rule's percentage applied to a balance is not what moves. A paycheck's
+ * 401(k) percentage is of gross pay, its Roth percentage of what is left after
+ * that, and the backstop receives whatever remains, whatever its own rule says.
+ * The ledger records what each account paid, so the bars are what happened.
  *
  * ── Reading each event ───────────────────────────────────────────────
  *
  * FLOW_TREATMENT declares every EventType and moneyFlows() throws on an
  * unknown one, as annual-expenditure.js does, so a new kind of movement cannot
  * quietly drop out of the bars. A movement counts once, from the account that
- * paid it: its debit. The credit on the other side is the same money.
+ * paid it: its debit. The credit on the other side is the same money. An event
+ * counts in the month its causal chain began (bookedMonthIndex in trace.js),
+ * which is the month the figures book it in.
  *
  * ── Agreement with Month & Year Details ──────────────────────────────
  *
- * Over any window the bars add up to that section's figures, and
- * tests/money-flows.mjs holds them to it across the corpus. Two rules make
- * that true:
+ * The tiles restate that section's figures for what moved: Income received,
+ * less income that had no account to go to; Expenses, less bills that could not
+ * be paid; Taxes, less property tax accrued but not yet drawn (the escrow draws
+ * a month's property tax in the month after). So where nothing needs
+ * explaining the two sections show the same dollars. The bars add up to the
+ * same totals before rounding, and tests/money-flows.mjs holds them to it
+ * across the corpus.
  *
- *   The annual pass runs on January 1 and books the previous year's true-up
- *   and NIIT into January, but its events carry December's date. They count
- *   in the month their pass ran.
+ * A gross-up draws a bill plus the capital-gains tax the draw will owe, in one
+ * debit; TAX_PROVISION names the tax part. The debit is split: the bill is
+ * spent, the provision is tax, as the section books it.
  *
- *   A gross-up draws a bill plus the capital-gains tax the draw will owe, in
- *   one debit; TAX_PROVISION names the tax part. The debit is split: the bill
- *   is spent, the provision is tax, as the section books it.
+ * Each bar's total is rounded once, and its parts are rounded to add up to it.
  */
 
 import { EventType, EventKind } from './sim-event.js';
-import { TraceKind } from './trace.js';
+import { TraceKind, chainFor, bookedMonthIndex } from './trace.js';
 import { InstrumentType } from './instruments/instrument.js';
 import { AssetGroup, classifyAssetGroup } from './asset-groups.js';
-import { wholeDollars, lastHistoryIndex } from './month-summary.js';
-import { phaseRulesAt } from './flow-pipelines.js';
+import { Metric } from './metric.js';
+import { wholeDollars, lastHistoryIndex, flowsOver, headlineAsShown } from './month-summary.js';
 import { DateInt } from './utils/date-int.js';
 
 /** What a part of a bar did with its money. */
@@ -82,17 +85,19 @@ export const SourceRole = Object.freeze({
  * made; the rest it shows as automatic.
  */
 export const FlowVia = Object.freeze({
-    RULE:       'rule',        // a transfer one of the household's rules made
-    SETTLEMENT: 'settlement',  // a mortgage payment or carrying cost, from the account its rule names or the backstop
+    RULE:       'rule',        // a transfer a rule made each month
+    RULE_AT_CLOSE: 'ruleAtClose', // a rule's close percentage, moving a closing account's balance
+    SETTLEMENT: 'settlement',  // a mortgage payment or property cost, from the account its rule names
     BACKSTOP:   'backstop',    // a bill no rule covers, drawn from the everyday accounts
     LEFTOVER:   'leftover',    // take-home pay no rule claimed
     RMD:        'rmd',
-    CLOSE:      'close',       // a closing account's balance, or sale proceeds
+    CLOSE:      'close',       // a closing account's balance no rule claimed, or sale proceeds
     OPENING:    'opening',     // paying for an asset as it starts, such as a down payment
     SPILLOVER:  'spillover',   // an account ran short and the next one paid
     PROVISION:  'provision',   // the capital-gains tax part of a gross-up
     FICA:       'fica',
-    WITHHELD:   'withheld',
+    WITHHELD:   'withheld',    // income tax withheld from pay, a pension, or a withdrawal
+    ESTIMATED:  'estimated',   // income tax paid from an account as the year goes
     CAPITAL_GAINS_TAX: 'capitalGainsTax',
     TRUE_UP:    'trueUp',
     NIIT:       'niit',
@@ -169,27 +174,6 @@ const OBLIGATION_SCOPES = new Set([TraceKind.EXPENSE, TraceKind.MORTGAGE, TraceK
 const ROLE_ORDER = [SourceRole.INCOME, SourceRole.YIELD, SourceRole.REFUND, SourceRole.ONE_TIME, SourceRole.ACCOUNT];
 const KIND_ORDER = [FlowKind.TAX, FlowKind.SPENT, FlowKind.ACCOUNTS];
 
-// ── Causal chains, read once per run ─────────────────────────────────
-
-const scopeMaps = new WeakMap();
-
-/** id → scope for a run's scope list. chainFor() searches the list per step. */
-function scopeMap(scopes) {
-    let map = scopeMaps.get(scopes);
-    if (!map) {
-        map = new Map(scopes.map((s) => [s.id, s]));
-        scopeMaps.set(scopes, map);
-    }
-    return map;
-}
-
-/** Root first, as chainFor() returns it. */
-function chainOf(traceId, map) {
-    const out = [];
-    for (let s = map.get(traceId), guard = 0; s && guard < 64; s = map.get(s.parentId), guard++) out.unshift(s);
-    return out;
-}
-
 // ── The bars ─────────────────────────────────────────────────────────
 
 /**
@@ -204,20 +188,21 @@ function chainOf(traceId, map) {
  *                            parts: Array<{id: string, to: string, toGroup: string, kind: string,
  *                                          via: string, detail: string|null, amount: number}>}>,
  *            unpaid: Array<{label: string, kind: string, amount: number}>,
- *            totals: {income: number, oneTime: number, refunds: number, spent: number,
- *                     taxes: number, unpaidSpent: number, unpaidTax: number, intoAccounts: number}}}
- *          Amounts in whole dollars, positive. A source's total is the sum of
- *          its parts, and each total the sum of the parts it counts, so every
- *          figure shown adds up.
+ *            totals: {income: number, spent: number, taxes: number, intoAccounts: number,
+ *                     refunds: number, oneTimeIn: number, oneTimeOut: number,
+ *                     unpaidSpent: number, unpaidTax: number, unplacedIncome: number,
+ *                     propertyTaxLag: number}}}
+ *          Amounts in whole dollars, positive. The tiles' figures are
+ *          `income`, `spent`, `taxes` and `intoAccounts`; see the header.
  */
 export function moneyFlows(portfolio, from, to) {
     const first = portfolio.firstDateInt;
+    const scopes = portfolio.traceScopes ?? [];
     const assets = new Map(portfolio.modelAssets.map((a) => [a.displayName, a]));
-    const map = scopeMap(portfolio.traceScopes ?? []);
 
-    const sources = new Map();        // name → { name, role, group, parts: Map }
-    const unpaid = new Map();         // label|kind → { label, kind, amount }
-    const spills = [];                // resolved after every draw is seen
+    const sources = new Map();        // role|name → { name, role, group, parts: Map }
+    const spills = [];                // resolved once every draw is seen
+    const unpaids = [];               // likewise
     const draws = new Map();          // traceId → the part a draw in that scope paid
 
     const groupOf = (name) => {
@@ -251,17 +236,15 @@ export function moneyFlows(portfolio, from, to) {
             const amount = e.amount.amount;
             // A $0 draw still names what its scope was paying: an account
             // drained to nothing leaves one, and a spillover pays the rest.
-            if (amount === 0 && treatment !== 'move') continue;
+            if (amount === 0 && treatment !== 'move' && treatment !== 'tax') continue;
 
-            // Dated by its own month, except the annual pass's events: stamped
-            // with the December it settles, they are booked in the January
-            // after, when the pass ran. (Not the pass's scope date: a scope
-            // holds the chronometer's clock, which moves on.)
+            // An event counts at most a month after its own date (see
+            // bookedMonthIndex); the cheap test first.
             const own = (e.dateInt.year - first.year) * 12 + (e.dateInt.month - first.month);
             if (own < from - 1 || own > to) continue;
-            const chain = e.traceId != null ? chainOf(e.traceId, map) : [];
-            const idx = chain[0]?.kind === TraceKind.YEAR ? own + 1 : own;
+            const idx = bookedMonthIndex(e, first, scopes);
             if (idx < from || idx > to) continue;
+            const chain = e.traceId != null ? chainFor(e.traceId, scopes) : [];
 
             const d = e.data ?? {};
             switch (treatment) {
@@ -292,9 +275,8 @@ export function moneyFlows(portfolio, from, to) {
                               via: FlowVia.REFUND, detail: null }, amount);
                         break;
                     }
-                    const { to: taxTo, via } = TAX_PART[e.type];
-                    const part = { to: taxTo, toGroup: AssetGroup.TAXES, kind: FlowKind.TAX, via, detail: null };
-                    add(source(name, roleOf(asset), groupOf(name)), part, -amount);
+                    const part = taxPart(e, asset);
+                    if (amount < 0) add(source(name, roleOf(asset), groupOf(name)), part, -amount);
                     if (e.traceId != null) draws.set(e.traceId, part);
                     break;
                 }
@@ -314,14 +296,9 @@ export function moneyFlows(portfolio, from, to) {
                               kind: FlowKind.SPENT, via: FlowVia.ONE_TIME, detail: null }, -amount);
                     }
                     break;
-                case 'unpaid': {
-                    const kind = unpaidKind(e, chain, asset);
-                    const label = d.cause ?? 'Unpaid';
-                    const key = `${label}|${kind}`;
-                    if (!unpaid.has(key)) unpaid.set(key, { label, kind, amount: 0 });
-                    unpaid.get(key).amount -= amount;
+                case 'unpaid':
+                    unpaids.push({ e, asset, chain, amount: -amount });
                     break;
-                }
             }
         }
     }
@@ -337,7 +314,16 @@ export function moneyFlows(portfolio, from, to) {
         add(source(name, roleOf(asset), groupOf(name)), { ...draw, via: FlowVia.SPILLOVER }, amount);
     }
 
-    return asShown(sources, unpaid, from, to);
+    const unpaid = new Map();         // label|kind → { label, kind, amount }
+    for (const { e, asset, chain, amount } of unpaids) {
+        const kind = unpaidKind(e, chain, asset, draws);
+        const label = e.data?.cause ?? 'unpaid';
+        const key = `${label}|${kind}`;
+        if (!unpaid.has(key)) unpaid.set(key, { label, kind, amount: 0 });
+        unpaid.get(key).amount += amount;
+    }
+
+    return asShown(portfolio, sources, unpaid, from, to);
 }
 
 /** A bar's role, from the account it is drawn from. */
@@ -352,24 +338,21 @@ function roleOf(asset) {
 function moveTarget(e, payer, chain, assets, groupOf) {
     const d = e.data ?? {};
     const to = e.type === EventType.GROSS_UP ? d.forAsset : (d.from === payer ? d.to : d.from);
-    const target = assets.get(to);
 
     let obligation = null;
     for (const s of chain) if (OBLIGATION_SCOPES.has(s.kind)) obligation = s;
-    const settling = chain.some((s) => s.kind === TraceKind.TAX_TRUE_UP);
     const propertyTax = d.label === 'property tax'
         || (obligation?.kind === TraceKind.CARRYING_COST && / property tax$/.test(obligation.label));
-    // Not a mortgage outside a payment: paying one off moves money into the
-    // household's own (negative) account, as the section counts it.
-    const owes = obligation || (target && InstrumentType.isMonthlyExpense(target.instrument));
-
-    const kind = settling || propertyTax ? FlowKind.TAX
-               : owes ? FlowKind.SPENT
+    // Paying an obligation is spending. Anything else moves money into one of
+    // the household's own accounts, including paying a mortgage off, which the
+    // section counts the same way.
+    const kind = propertyTax ? FlowKind.TAX
+               : obligation ? FlowKind.SPENT
                : FlowKind.ACCOUNTS;
 
     let via;
     if (e.type === EventType.GROSS_UP) via = FlowVia.BACKSTOP;
-    else if (e.type === EventType.SETTLEMENT) via = FlowVia.SETTLEMENT;
+    else if (e.type === EventType.SETTLEMENT) via = d.backstop ? FlowVia.BACKSTOP : FlowVia.SETTLEMENT;
     else if (d.system) {
         const payerAsset = assets.get(payer);
         via = chain.some((s) => s.kind === TraceKind.RMD) ? FlowVia.RMD
@@ -377,6 +360,7 @@ function moveTarget(e, payer, chain, assets, groupOf) {
             : FlowVia.CLOSE;
     }
     else if (d.cadence === 'funding') via = FlowVia.OPENING;
+    else if (d.cadence === 'on close') via = FlowVia.RULE_AT_CLOSE;
     else via = FlowVia.RULE;
 
     const detail = e.type === EventType.SETTLEMENT && d.label && d.label !== 'monthly' ? d.label : null;
@@ -384,58 +368,102 @@ function moveTarget(e, payer, chain, assets, groupOf) {
 }
 
 /**
- * What an unpaid amount was: a bill, a tax, income with no account to go to,
- * or a move between the household's own accounts that did not happen.
+ * Where a tax debit went. Income tax drawn from an account, rather than
+ * withheld from pay or from a withdrawal, is the year's estimated tax.
  */
-function unpaidKind(e, chain, asset) {
+function taxPart(e, asset) {
+    const { to, via } = TAX_PART[e.type];
+    const estimated = e.type === EventType.INCOME_TAX_WITHHOLDING
+        && !InstrumentType.isMonthlyIncome(asset.instrument)
+        && e.data?.source !== 'distribution';
+    return { to, toGroup: AssetGroup.TAXES, kind: FlowKind.TAX, via: estimated ? FlowVia.ESTIMATED : via, detail: null };
+}
+
+/**
+ * What an unpaid amount was: a bill, a tax, income with no account to go to,
+ * or a move between the household's own accounts that did not happen. Read
+ * from the chain and the draw it fell short of, never from the memo's words.
+ */
+function unpaidKind(e, chain, asset, draws) {
     if (chain.some((s) => s.kind === TraceKind.TAX_TRUE_UP)) return UnpaidKind.TAX;
+    const draw = draws.get(e.traceId);
+    if (draw) {
+        return draw.kind === FlowKind.TAX ? UnpaidKind.TAX
+             : draw.kind === FlowKind.SPENT ? UnpaidKind.SPENT
+             : UnpaidKind.MOVE;
+    }
     if (chain.some((s) => OBLIGATION_SCOPES.has(s.kind))) {
         return chain.some((s) => s.kind === TraceKind.CARRYING_COST && / property tax$/.test(s.label))
             ? UnpaidKind.TAX : UnpaidKind.SPENT;
     }
-    if (/tax|withholding|fica/i.test(e.data?.cause ?? '')) return UnpaidKind.TAX;
     return InstrumentType.isMonthlyIncome(asset.instrument) ? UnpaidKind.INCOME : UnpaidKind.MOVE;
 }
 
-/** Round each part to whole dollars, total what was rounded, and order it all. */
-function asShown(sourceMap, unpaidMap, from, to) {
+/**
+ * Whole dollars for amounts that must add up to `total`: each rounded down,
+ * then the dollars left over given to the largest remainders.
+ */
+export function apportion(amounts, total) {
+    const out = amounts.map((a) => Math.floor(a));
+    let left = total - out.reduce((t, a) => t + a, 0);
+    const order = amounts.map((a, i) => [a - out[i], i]).sort((x, y) => y[0] - x[0] || x[1] - y[1]);
+    for (let k = 0; left > 0 && k < order.length; k++, left--) out[order[k][1]]++;
+    return out;
+}
+
+/** Round each bar once, total what was rounded, order it all, and restate the section's figures. */
+function asShown(portfolio, sourceMap, unpaidMap, from, to) {
     const sources = [];
+    let propertyTaxDrawn = 0;
     for (const src of sourceMap.values()) {
-        const parts = [...src.parts.values()]
-            .map((p) => ({ ...p, amount: wholeDollars(p.amount),
-                           id: `${src.role}|${src.name}|${p.to}|${p.kind}|${p.via}|${p.detail ?? ''}` }))
+        const raw = [...src.parts.values()];
+        for (const p of raw) if (p.detail === 'property tax') propertyTaxDrawn += p.amount;
+        const total = wholeDollars(raw.reduce((t, p) => t + p.amount, 0));
+        const whole = apportion(raw.map((p) => p.amount), total);
+        const parts = raw
+            .map((p, i) => ({ ...p, amount: whole[i],
+                              id: `${src.role}|${src.name}|${p.to}|${p.kind}|${p.via}|${p.detail ?? ''}` }))
             .filter((p) => p.amount !== 0)
             .sort((a, b) => KIND_ORDER.indexOf(a.kind) - KIND_ORDER.indexOf(b.kind) || b.amount - a.amount);
         if (!parts.length) continue;
-        sources.push({ name: src.name, role: src.role, group: src.group,
-                       total: parts.reduce((t, p) => t + p.amount, 0), parts });
+        sources.push({ name: src.name, role: src.role, group: src.group, total, parts });
     }
     sources.sort((a, b) => ROLE_ORDER.indexOf(a.role) - ROLE_ORDER.indexOf(b.role) || b.total - a.total);
 
     const unpaid = [...unpaidMap.values()]
         .map((u) => ({ ...u, amount: wholeDollars(u.amount) }))
         .filter((u) => u.amount !== 0);
-
-    const sum = (pred) => sources.reduce((t, s) => t + s.parts.reduce((u, p) => u + (pred(s, p) ? p.amount : 0), 0), 0);
-    const roleTotal = (role) => sources.filter((s) => s.role === role).reduce((t, s) => t + s.total, 0);
-    const income = roleTotal(SourceRole.INCOME) + roleTotal(SourceRole.YIELD);
-    const oneTime = roleTotal(SourceRole.ONE_TIME);
-    const refunds = roleTotal(SourceRole.REFUND);
-    const spent = sum((s, p) => p.kind === FlowKind.SPENT);
-    const taxes = sum((s, p) => p.kind === FlowKind.TAX) - refunds;
     const unpaidOf = (kind) => unpaid.filter((u) => u.kind === kind).reduce((t, u) => t + u.amount, 0);
+    const partsOf = (pred) => sources.reduce((t, s) => t + s.parts.reduce((u, p) => u + (pred(s, p) ? p.amount : 0), 0), 0);
+
+    // The section's figures, as it shows them, restated for what moved.
+    const summary = flowsOver(portfolio, from, to);
+    const shown = headlineAsShown(summary);
+    const accrued = -summary.taxItems
+        .filter((x) => x.metric === Metric.PROPERTY_TAX)
+        .reduce((t, x) => t + x.amount, 0);
+    const propertyTaxLag = wholeDollars(accrued - propertyTaxDrawn);
+    const unplacedIncome = unpaidOf(UnpaidKind.INCOME);
+    const unpaidSpent = unpaidOf(UnpaidKind.SPENT);
+    const income = shown.income - unplacedIncome;
+    const spent = -shown.expense - unpaidSpent;
+    const taxes = -shown.taxes - propertyTaxLag;
 
     return {
         from, to, sources, unpaid,
         totals: {
-            income, oneTime, refunds, spent, taxes,
-            unpaidSpent: unpaidOf(UnpaidKind.SPENT),
+            income, spent, taxes,
+            // Money from outside the household's accounts, less what it spent
+            // and paid in tax: the section's cash flow, as moved. Moves
+            // between its own accounts cancel; one-time items are apart.
+            intoAccounts: income - spent - taxes,
+            refunds: sources.filter((s) => s.role === SourceRole.REFUND).reduce((t, s) => t + s.total, 0),
+            oneTimeIn: sources.filter((s) => s.role === SourceRole.ONE_TIME).reduce((t, s) => t + s.total, 0),
+            oneTimeOut: partsOf((s, p) => p.via === FlowVia.ONE_TIME && s.role !== SourceRole.ONE_TIME),
+            unpaidSpent,
             unpaidTax: unpaidOf(UnpaidKind.TAX),
-            unplacedIncome: unpaidOf(UnpaidKind.INCOME),
-            // What the household's accounts gained from money coming and going:
-            // everything in, less everything spent or taxed. Moves between its
-            // own accounts cancel.
-            intoAccounts: income + oneTime - spent - taxes,
+            unplacedIncome,
+            propertyTaxLag,
         },
     };
 }
@@ -461,9 +489,10 @@ export function yearWindow(portfolio, year) {
 
 /** Bar parts no rule made, grouped by what made them. The first match wins. */
 const AUTOMATIC = Object.freeze([
-    { key: 'payTax',     label: 'Tax withheld from pay',
+    { key: 'incomeTax',  label: 'Tax withheld from income',
       test: (s, p) => s.role === SourceRole.INCOME && (p.via === FlowVia.FICA || p.via === FlowVia.WITHHELD) },
     { key: 'drawTax',    label: 'Tax withheld from withdrawals', test: (s, p) => p.via === FlowVia.WITHHELD },
+    { key: 'estimated',  label: 'Estimated tax',                  test: (s, p) => p.via === FlowVia.ESTIMATED },
     { key: 'gainsTax',   label: 'Tax on capital gains',
       test: (s, p) => p.via === FlowVia.CAPITAL_GAINS_TAX || p.via === FlowVia.PROVISION },
     { key: 'settlement', label: 'Last year’s tax settlement',
@@ -471,65 +500,53 @@ const AUTOMATIC = Object.freeze([
     { key: 'refund',     label: 'Tax refund',                     test: (s, p) => p.via === FlowVia.REFUND },
     { key: 'rmd',        label: 'Required minimum distributions', test: (s, p) => p.via === FlowVia.RMD },
     { key: 'leftover',   label: 'Take-home pay no rule claims',   test: (s, p) => p.via === FlowVia.LEFTOVER },
-    { key: 'uncovered',  label: 'Bills no rule covers',
-      test: (s, p) => p.via === FlowVia.BACKSTOP || p.via === FlowVia.SETTLEMENT },
+    { key: 'uncovered',  label: 'Bills no rule covers',           test: (s, p) => p.via === FlowVia.BACKSTOP },
     { key: 'spillover',  label: 'An account ran short, the next one paid',
       test: (s, p) => p.via === FlowVia.SPILLOVER },
     { key: 'close',      label: 'Closing balances and sale proceeds', test: (s, p) => p.via === FlowVia.CLOSE },
     { key: 'opening',    label: 'Paid as an asset opened',        test: (s, p) => p.via === FlowVia.OPENING },
     { key: 'yield',      label: 'Dividends and interest',         test: (s, p) => p.via === FlowVia.YIELD },
     { key: 'oneTime',    label: 'One-time items',                 test: (s, p) => p.via === FlowVia.ONE_TIME },
-    // A rule of a phase not in force in the window. Should not happen; shown
+    // A rule's part that no rule in force claims. Should not happen; shown
     // rather than dropped if it does.
     { key: 'other',      label: 'Other transfers',                test: () => true },
 ]);
 
-/**
- * Whether an asset is open at some month of a window: from its start to its
- * close, or to its finish when it never closed. A close month counts: the
- * close moved money in it.
- */
-function openIn(asset, first, from, to) {
-    if (!asset?.startDateInt) return false;
-    const start = DateInt.diffMonths(first, asset.startDateInt);
-    const end = DateInt.diffMonths(first, asset.closedDateInt ?? asset.effectiveFinishDateInt);
-    return start <= to && end >= from;
-}
-
-/** Whether a rule's owner is paid INTO: its rule names the account that pays it. */
+/** Whether a rule's owner is paid INTO: its monthly rule names the account that pays it. */
 function paidInto(instrument) {
     return InstrumentType.isMonthlyExpense(instrument)
         || InstrumentType.isMortgage(instrument)
         || InstrumentType.isRealEstate(instrument);
 }
 
-/** A rule's setting in words: what its percentage is a percentage of. */
+const percent = (v) => `${Math.round(v * 100) / 100}%`;
+
+/** A monthly rule's setting in words: what its percentage is a percentage of. */
 export function settingText(owner, target, ft) {
-    const pct = (v) => `${Math.round(v * 100) / 100}%`;
-    const out = [];
-    if (ft.monthlyMoveValue > 0) {
-        const p = pct(ft.monthlyMoveValue);
-        const i = owner.instrument;
-        if (InstrumentType.isMonthlyIncome(i)) {
-            out.push(target && InstrumentType.isTaxDeferred(target.instrument) ? `${p} of gross pay` : `${p} of take-home pay`);
-        }
-        else if (InstrumentType.isMonthlyExpense(i)) out.push(`${p} of the bill`);
-        else if (InstrumentType.isMortgage(i)) out.push(`${p} of the payment`);
-        else if (InstrumentType.isRealEstate(i)) out.push(`${p} of property costs`);
-        else out.push(`${p} of the balance, monthly`);
+    const p = percent(ft.monthlyMoveValue);
+    const i = owner.instrument;
+    if (InstrumentType.isMonthlyIncome(i)) {
+        return target && InstrumentType.isTaxDeferred(target.instrument) ? `${p} of gross pay` : `${p} of take-home pay`;
     }
-    if (ft.closeMoveValue > 0) out.push(`${pct(ft.closeMoveValue)} at close`);
-    return out.join(', ');
+    if (InstrumentType.isMonthlyExpense(i)) return `${p} of the bill`;
+    if (InstrumentType.isMortgage(i)) return `${p} of the payment`;
+    if (InstrumentType.isRealEstate(i)) return `${p} of property costs`;
+    return `${p} of the balance, monthly`;
 }
 
 /**
  * The rules in force over a window, each beside what it moved, and the money
  * that moved by itself.
  *
- * A rule claims the bar parts its transfers made between the two accounts it
- * names. Whatever no rule claims is automatic: tax withheld, required
- * distributions, the take-home pay the backstop receives, bills no rule
- * covers. Every part of every bar lands in exactly one row.
+ * A rule's monthly half and its close half are separate rows: they move money
+ * different ways. The monthly half of a bill's, a mortgage's or a property's
+ * rule names the account that pays it, so its money runs from that account in;
+ * the close half moves a closing account's balance, so it runs out. A row
+ * claims the bar parts its half made between its two accounts: the monthly
+ * half claims what paid the owner's bill or moved by the rule, the close half
+ * what moved at close. Whatever no rule claims is automatic: tax withheld,
+ * required distributions, the take-home pay the backstop receives, bills no
+ * rule covers. Every part of every bar lands in exactly one row.
  *
  * A window that spans a phase change (a year a life event falls in) shows
  * every phase's rules; each row says which phases it belongs to.
@@ -540,11 +557,13 @@ export function settingText(owner, target, ft) {
  * @param {Portfolio} portfolio
  * @param {ReturnType<typeof moneyFlows>} flows
  * @returns {{phases: Array<{phase: string, fromIndex: number, inWindow: boolean}>,
- *            rules: Array<{key: string, owner: string, payer: string, payee: string,
- *                          payerGroup: string, payeeGroup: string, kind: string, open: boolean,
+ *            rules: Array<{key: string, owner: string, payer: string, payee: string, half: string,
+ *                          payerGroup: string, payeeGroup: string, kind: string,
  *                          setting: string, phases: string[], moved: number, partIds: string[]}>,
  *            automatic: Array<{key: string, label: string, amount: number, partIds: string[],
  *                              items: Array<{source: string, to: string, kind: string, amount: number}>}>}}
+ *          `rules` holds every rule in force, $0 ones included, those that
+ *          moved money first.
  */
 export function rulesInForce(portfolio, flows) {
     const assets = new Map(portfolio.modelAssets.map((a) => [a.displayName, a]));
@@ -563,59 +582,72 @@ export function rulesInForce(portfolio, flows) {
     const ruleSets = records.length
         ? records.filter((r, i) => phases[i].inWindow)
         : [{ phase: null, transfers: Object.fromEntries(portfolio.modelAssets.map((a) => [a.displayName, a.fundTransfers ?? []])) }];
-    if (records.length && !ruleSets.length) {
-        const at = phaseRulesAt(portfolio, flows.to);
-        if (at) ruleSets.push(at);
-    }
 
     const rows = new Map();
+    const rowFor = (key, init) => {
+        if (!rows.has(key)) {
+            rows.set(key, { key, ...init, payerGroup: groupOf(init.payer), payeeGroup: groupOf(init.payee),
+                            settings: [], phases: [], moved: 0, partIds: [], byKind: {} });
+        }
+        return rows.get(key);
+    };
+    const note = (row, text, phase) => {
+        if (!row.settings.includes(text)) row.settings.push(text);
+        if (phase && !row.phases.includes(phase)) row.phases.push(phase);
+    };
     for (const set of ruleSets) {
         for (const [owner, transfers] of Object.entries(set.transfers)) {
             const ownerAsset = assets.get(owner);
             if (!ownerAsset) continue;
             for (const ft of transfers) {
-                if (!(ft.monthlyMoveValue > 0) && !(ft.closeMoveValue > 0)) continue;
-                const reversed = paidInto(ownerAsset.instrument);
-                const payer = reversed ? ft.toDisplayName : owner;
-                const payee = reversed ? owner : ft.toDisplayName;
-                const key = `${owner}|${payer}|${payee}`;
-                if (!rows.has(key)) {
-                    rows.set(key, {
-                        key, owner, payer, payee,
-                        payerGroup: groupOf(payer), payeeGroup: groupOf(payee),
-                        kind: paidInto(assets.get(payee)?.instrument) ? FlowKind.SPENT : FlowKind.ACCOUNTS,
-                        // A rule for an account that has closed, or not yet
-                        // opened, cannot move anything in this window.
-                        open: openIn(assets.get(payer), portfolio.firstDateInt, flows.from, flows.to)
-                           && openIn(assets.get(payee), portfolio.firstDateInt, flows.from, flows.to),
-                        settings: [], phases: [], moved: 0, partIds: [],
-                    });
+                const target = ft.toDisplayName;
+                if (ft.monthlyMoveValue > 0) {
+                    const pays = paidInto(ownerAsset.instrument);
+                    const row = rowFor(`monthly|${owner}|${target}`, {
+                        owner, half: 'monthly', pays,
+                        payer: pays ? target : owner, payee: pays ? owner : target });
+                    note(row, settingText(ownerAsset, assets.get(target), ft), set.phase);
                 }
-                const row = rows.get(key);
-                const text = settingText(ownerAsset, assets.get(ft.toDisplayName), ft);
-                if (!row.settings.includes(text)) row.settings.push(text);
-                if (set.phase && !row.phases.includes(set.phase)) row.phases.push(set.phase);
+                if (ft.closeMoveValue > 0) {
+                    const row = rowFor(`close|${owner}|${target}`, {
+                        owner, half: 'close', pays: false, payer: owner, payee: target });
+                    note(row, `${percent(ft.closeMoveValue)} at close`, set.phase);
+                }
             }
         }
     }
 
-    // Each part to the rule that made it, or to an automatic group.
-    const byPair = new Map();
+    // Each part to the row that made it, or to an automatic group. A monthly
+    // row's money runs payer → payee, paying the owner's bill or moving into
+    // an account; a close row's runs either way, as the closing balance's sign
+    // has it.
+    const monthly = new Map(), close = new Map();
+    const pairOf = (a, b) => [a, b].sort().join('|');
     for (const row of rows.values()) {
-        const pair = `${row.payer}→${row.payee}`;
-        if (!byPair.has(pair)) byPair.set(pair, row);
+        if (row.half === 'close') {
+            if (!close.has(pairOf(row.owner, row.payee))) close.set(pairOf(row.owner, row.payee), row);
+        } else {
+            const key = `${row.payer}→${row.payee}|${row.pays}`;
+            if (!monthly.has(key)) monthly.set(key, row);
+        }
     }
     const automatic = new Map();
     for (const src of flows.sources) {
+        const own = src.role === SourceRole.INCOME || src.role === SourceRole.ACCOUNT;
         for (const part of src.parts) {
-            const ruled = (src.role === SourceRole.INCOME || src.role === SourceRole.ACCOUNT)
-                && (part.via === FlowVia.RULE || part.via === FlowVia.SETTLEMENT);
-            const row = ruled ? byPair.get(`${src.name}→${part.to}`) : null;
+            let row = null;
+            if (own && (part.via === FlowVia.RULE || part.via === FlowVia.SETTLEMENT)) {
+                row = monthly.get(`${src.name}→${part.to}|${part.kind !== FlowKind.ACCOUNTS}`);
+            } else if (own && part.via === FlowVia.RULE_AT_CLOSE) {
+                row = close.get(pairOf(src.name, part.to));
+                // Drawn as the money ran: a closing mortgage is paid off INTO.
+                if (row && !row.moved) { row.payer = src.name; row.payee = part.to;
+                    row.payerGroup = groupOf(src.name); row.payeeGroup = groupOf(part.to); }
+            }
             if (row) {
                 row.moved += part.amount;
                 row.partIds.push(part.id);
-                // A property's rule pays its property tax too.
-                if (part.kind === FlowKind.TAX) row.taxMoved = (row.taxMoved ?? 0) + part.amount;
+                row.byKind[part.kind] = (row.byKind[part.kind] ?? 0) + part.amount;
                 continue;
             }
             const group = AUTOMATIC.find((g) => g.test(src, part));
@@ -629,13 +661,15 @@ export function rulesInForce(portfolio, flows) {
 
     const incomeFirst = (name) => (InstrumentType.isMonthlyIncome(assets.get(name)?.instrument) ? 0 : 1);
     const rules = [...rows.values()]
-        .map(({ settings, taxMoved = 0, ...row }) => ({
+        .map(({ settings, byKind, pays, ...row }) => ({
             ...row,
-            // Colored by what it moved, when most of that was tax.
-            kind: taxMoved * 2 > row.moved ? FlowKind.TAX : row.kind,
+            // Colored by what most of its money did, or by what it pays.
+            kind: Object.entries(byKind).sort((a, b) => b[1] - a[1])[0]?.[0]
+               ?? (pays ? FlowKind.SPENT : FlowKind.ACCOUNTS),
             setting: settings.join('; '),
         }))
-        .sort((a, b) => incomeFirst(a.payer) - incomeFirst(b.payer) || a.payer.localeCompare(b.payer) || b.moved - a.moved);
+        .sort((a, b) => (b.moved > 0) - (a.moved > 0) || incomeFirst(a.payer) - incomeFirst(b.payer)
+                     || a.payer.localeCompare(b.payer) || b.moved - a.moved);
 
     return {
         phases,

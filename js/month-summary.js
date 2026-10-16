@@ -95,9 +95,10 @@ export function zeroTaxWasWithheld(summary) {
 
 /**
  * The flows both rows show, over an inclusive window of month indexes. The one
- * definition the month and the year share.
+ * definition the month and the year share, and the figures the Flows view's
+ * tiles restate (money-flows.js).
  */
-function flowsOver(portfolio, from, to) {
+export function flowsOver(portfolio, from, to) {
     const sum = (metric) => {
         let total = 0;
         for (let i = from; i <= to; i++) total += metricAtIndex(portfolio, metric, i);

@@ -33,9 +33,8 @@
  */
 
 import { EventType, EventKind } from './sim-event.js';
-import { TraceKind, chainFor } from './trace.js';
+import { TraceKind, chainFor, bookedMonthIndex } from './trace.js';
 import { InstrumentType } from './instruments/instrument.js';
-import { DateInt } from './utils/date-int.js';
 
 /** Which bucket a draw lands in. */
 export const Expenditure = Object.freeze({
@@ -212,9 +211,7 @@ export function expenditureOverWindow(portfolio, fromIndex, toIndex) {
     const to   = Math.min(toIndex, lastIndex);
     if (to < from) return empty;
 
-    const start = dateIntAt(portfolio, from).toInt();
-    const end   = dateIntAt(portfolio, to).toInt();
-
+    const first = portfolio.firstDateInt;
     const scopes = portfolio.traceScopes ?? [];
     const memo = new Map();
 
@@ -224,8 +221,15 @@ export function expenditureOverWindow(portfolio, fromIndex, toIndex) {
     for (const asset of portfolio.modelAssets) {
         const fundable = InstrumentType.isFundable(asset.instrument);
         for (const event of (asset.events ?? [])) {
-            const when = event.dateInt?.toInt();
-            if (when == null || when < start || when > end) continue;
+            if (!event.dateInt) continue;
+            // Counted in the month its chain began, as the figures book it: the
+            // annual pass's events carry December's date and count in January.
+            // An event counts at most a month after its own date; the cheap
+            // test first.
+            const own = (event.dateInt.year - first.year) * 12 + (event.dateInt.month - first.month);
+            if (own < from - 1 || own > to) continue;
+            const when = bookedMonthIndex(event, first, scopes);
+            if (when < from || when > to) continue;
 
             // The obligations the plan could not meet. Reported, never counted:
             // a dollar that never left an account was never withdrawn.
@@ -272,13 +276,7 @@ export function trailingYearExpenditure(portfolio, endIndex) {
     return expenditureOverWindow(portfolio, endIndex - 11, endIndex);
 }
 
-// ── index <-> date helpers ───────────────────────────────────────────
-
-function dateIntAt(portfolio, index) {
-    const d = new DateInt(portfolio.firstDateInt.toInt());
-    d.addMonths(index);
-    return d;
-}
+// ── index helpers ────────────────────────────────────────────────────
 
 function lastHistoryIndex(portfolio) {
     let last = -1;
