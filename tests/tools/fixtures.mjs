@@ -327,6 +327,24 @@ const adversarialFixtures = [
     }),
   },
   {
+    name: 'transfer-exhausts-fallback',
+    kind: 'adversarial',
+    reaches:
+      'DOUBLE depletion on the TWO-SIDED path: an expense rule draws a Roth ' +
+      'that runs dry in February 2026, and the backstop it spills to (Savings) ' +
+      'runs dry in the same draw. execute() took the fallback to cover the ' +
+      'whole shortfall, so $3,013 of the bill was neither paid nor reported ' +
+      'unfunded. settlement-exhausts-fallback is the one-sided twin.',
+    config: { startAge: 60, retirementAge: 60 },
+    build: () => ({
+      assets: [
+        expense('Living', 5000, { fundTransfers: [xfer('Roth', 100)] }),
+        deferred('rothIRA', 'Roth', 6000),
+        bank('Savings', 1000),
+      ].map(ModelAsset.fromJSON),
+    }),
+  },
+  {
     name: 'dividends-caps-and-windfalls',
     kind: 'adversarial',
     reaches:
