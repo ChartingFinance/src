@@ -635,7 +635,7 @@
   events = 1  reconciled = 1
 
 [events] Wallet
-  0000 2026-01 settlement                   -1200.000000 cash  -                      c0 {from=Home label=maintenance to=Wallet}
+  0000 2026-01 settlement                   -1200.000000 cash  -                      c0 {backstop=true from=Home label=maintenance to=Wallet}
 
 [packages]
   0000 assetAppreciation=2959.523727 propertyTaxes=-2004.932540 longTermCapitalGains=1312.331349 maintenance=-5012.331349 insurance=-2000.000000 value=1202959.523727

@@ -48,11 +48,11 @@
 
 [events] Checking
   0000 2026-01 interestIncome                   0.000000 cash  interestIncome         c-
-  0001 2026-01 settlement                   -1002.466270 cash  -                      c0 {from=Home label=maintenance to=Checking}
-  0002 2026-01 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Checking}
-  0003 2026-02 settlement                    -751.849702 cash  -                      c2 {from=Home label=property tax to=Checking}
+  0001 2026-01 settlement                   -1002.466270 cash  -                      c0 {backstop=true from=Home label=maintenance to=Checking}
+  0002 2026-01 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Checking}
+  0003 2026-02 settlement                    -751.849702 cash  -                      c2 {backstop=true from=Home label=property tax to=Checking}
   0004 2026-02 interestIncome                   0.000000 cash  interestIncome         c-
-  0005 2026-02 settlement                    -745.684028 cash  -                      c0 {from=Home label=maintenance to=Checking}
+  0005 2026-02 settlement                    -745.684028 cash  -                      c0 {backstop=true from=Home label=maintenance to=Checking}
   0006 2026-03 interestIncome                   0.000000 cash  interestIncome         c-
   0007 2026-04 interestIncome                   0.000000 cash  interestIncome         c-
   0008 2026-05 interestIncome                   0.000000 cash  interestIncome         c-

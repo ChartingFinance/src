@@ -55,413 +55,413 @@
   0001 2026-02 assetGrowth                   4402.119252 cash  growth                 c-
   0002 2026-02 spillover                     -259.254594 cash  -                      c0 {cause=settlement depleted=Checking origin=oneSided}
   0003 2026-02 capitalGainRecognized           88.088572 info  longTermCapitalGain    c0 {spillover=true}
-  0004 2026-02 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0004 2026-02 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0005 2026-02 capitalGainRecognized          169.888160 info  longTermCapitalGain    c1 {spillover=false}
-  0006 2026-03 settlement                    -753.703967 cash  -                      c2 {from=Home label=property tax to=Brokerage}
+  0006 2026-03 settlement                    -753.703967 cash  -                      c2 {backstop=true from=Home label=property tax to=Brokerage}
   0007 2026-03 capitalGainRecognized          256.090760 info  longTermCapitalGain    c2 {spillover=false}
   0008 2026-03 assetGrowth                   4416.182388 cash  growth                 c-
-  0009 2026-03 settlement                   -1007.417072 cash  -                      c3 {from=Home label=maintenance to=Brokerage}
+  0009 2026-03 settlement                   -1007.417072 cash  -                      c3 {backstop=true from=Home label=maintenance to=Brokerage}
   0010 2026-03 capitalGainRecognized          345.518291 info  longTermCapitalGain    c3 {spillover=false}
-  0011 2026-03 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0011 2026-03 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0012 2026-03 capitalGainRecognized          171.487213 info  longTermCapitalGain    c1 {spillover=false}
-  0013 2026-04 settlement                    -755.562804 cash  -                      c2 {from=Home label=property tax to=Brokerage}
+  0013 2026-04 settlement                    -755.562804 cash  -                      c2 {backstop=true from=Home label=property tax to=Brokerage}
   0014 2026-04 capitalGainRecognized          259.138719 info  longTermCapitalGain    c2 {spillover=false}
   0015 2026-04 assetGrowth                   4426.663210 cash  growth                 c-
-  0016 2026-04 settlement                   -1009.901634 cash  -                      c3 {from=Home label=maintenance to=Brokerage}
+  0016 2026-04 settlement                   -1009.901634 cash  -                      c3 {backstop=true from=Home label=maintenance to=Brokerage}
   0017 2026-04 capitalGainRecognized          349.584560 info  longTermCapitalGain    c3 {spillover=false}
-  0018 2026-04 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0018 2026-04 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0019 2026-04 capitalGainRecognized          173.078520 info  longTermCapitalGain    c1 {spillover=false}
-  0020 2026-05 settlement                    -757.426226 cash  -                      c2 {from=Home label=property tax to=Brokerage}
+  0020 2026-05 settlement                    -757.426226 cash  -                      c2 {backstop=true from=Home label=property tax to=Brokerage}
   0021 2026-05 capitalGainRecognized          262.188420 info  longTermCapitalGain    c2 {spillover=false}
   0022 2026-05 assetGrowth                   4437.173884 cash  growth                 c-
-  0023 2026-05 settlement                   -1012.392324 cash  -                      c3 {from=Home label=maintenance to=Brokerage}
+  0023 2026-05 settlement                   -1012.392324 cash  -                      c3 {backstop=true from=Home label=maintenance to=Brokerage}
   0024 2026-05 capitalGainRecognized          353.653175 info  longTermCapitalGain    c3 {spillover=false}
-  0025 2026-05 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0025 2026-05 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0026 2026-05 capitalGainRecognized          174.662118 info  longTermCapitalGain    c1 {spillover=false}
-  0027 2026-06 settlement                    -759.294243 cash  -                      c2 {from=Home label=property tax to=Brokerage}
+  0027 2026-06 settlement                    -759.294243 cash  -                      c2 {backstop=true from=Home label=property tax to=Brokerage}
   0028 2026-06 capitalGainRecognized          265.239882 info  longTermCapitalGain    c2 {spillover=false}
   0029 2026-06 assetGrowth                   4447.714503 cash  growth                 c-
-  0030 2026-06 settlement                   -1014.889157 cash  -                      c3 {from=Home label=maintenance to=Brokerage}
+  0030 2026-06 settlement                   -1014.889157 cash  -                      c3 {backstop=true from=Home label=maintenance to=Brokerage}
   0031 2026-06 capitalGainRecognized          357.724163 info  longTermCapitalGain    c3 {spillover=false}
-  0032 2026-06 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0032 2026-06 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0033 2026-06 capitalGainRecognized          176.238046 info  longTermCapitalGain    c1 {spillover=false}
-  0034 2026-07 settlement                    -761.166867 cash  -                      c2 {from=Home label=property tax to=Brokerage}
+  0034 2026-07 settlement                    -761.166867 cash  -                      c2 {backstop=true from=Home label=property tax to=Brokerage}
   0035 2026-07 capitalGainRecognized          268.293123 info  longTermCapitalGain    c2 {spillover=false}
   0036 2026-07 assetGrowth                   4458.285161 cash  growth                 c-
-  0037 2026-07 settlement                   -1017.392147 cash  -                      c3 {from=Home label=maintenance to=Brokerage}
+  0037 2026-07 settlement                   -1017.392147 cash  -                      c3 {backstop=true from=Home label=maintenance to=Brokerage}
   0038 2026-07 capitalGainRecognized          361.797548 info  longTermCapitalGain    c3 {spillover=false}
-  0039 2026-07 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0039 2026-07 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0040 2026-07 capitalGainRecognized          177.806340 info  longTermCapitalGain    c1 {spillover=false}
-  0041 2026-08 settlement                    -763.044110 cash  -                      c2 {from=Home label=property tax to=Brokerage}
+  0041 2026-08 settlement                    -763.044110 cash  -                      c2 {backstop=true from=Home label=property tax to=Brokerage}
   0042 2026-08 capitalGainRecognized          271.348161 info  longTermCapitalGain    c2 {spillover=false}
   0043 2026-08 assetGrowth                   4468.885950 cash  growth                 c-
-  0044 2026-08 settlement                   -1019.901310 cash  -                      c3 {from=Home label=maintenance to=Brokerage}
+  0044 2026-08 settlement                   -1019.901310 cash  -                      c3 {backstop=true from=Home label=maintenance to=Brokerage}
   0045 2026-08 capitalGainRecognized          365.873352 info  longTermCapitalGain    c3 {spillover=false}
-  0046 2026-08 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0046 2026-08 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0047 2026-08 capitalGainRecognized          179.367037 info  longTermCapitalGain    c1 {spillover=false}
-  0048 2026-09 settlement                    -764.925983 cash  -                      c2 {from=Home label=property tax to=Brokerage}
+  0048 2026-09 settlement                    -764.925983 cash  -                      c2 {backstop=true from=Home label=property tax to=Brokerage}
   0049 2026-09 capitalGainRecognized          274.405014 info  longTermCapitalGain    c2 {spillover=false}
   0050 2026-09 assetGrowth                   4479.516966 cash  growth                 c-
-  0051 2026-09 settlement                   -1022.416662 cash  -                      c3 {from=Home label=maintenance to=Brokerage}
+  0051 2026-09 settlement                   -1022.416662 cash  -                      c3 {backstop=true from=Home label=maintenance to=Brokerage}
   0052 2026-09 capitalGainRecognized          369.951601 info  longTermCapitalGain    c3 {spillover=false}
-  0053 2026-09 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0053 2026-09 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0054 2026-09 capitalGainRecognized          180.920174 info  longTermCapitalGain    c1 {spillover=false}
-  0055 2026-10 settlement                    -766.812497 cash  -                      c2 {from=Home label=property tax to=Brokerage}
+  0055 2026-10 settlement                    -766.812497 cash  -                      c2 {backstop=true from=Home label=property tax to=Brokerage}
   0056 2026-10 capitalGainRecognized          277.463701 info  longTermCapitalGain    c2 {spillover=false}
   0057 2026-10 assetGrowth                   4490.178303 cash  growth                 c-
-  0058 2026-10 settlement                   -1024.938218 cash  -                      c3 {from=Home label=maintenance to=Brokerage}
+  0058 2026-10 settlement                   -1024.938218 cash  -                      c3 {backstop=true from=Home label=maintenance to=Brokerage}
   0059 2026-10 capitalGainRecognized          374.032319 info  longTermCapitalGain    c3 {spillover=false}
-  0060 2026-10 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0060 2026-10 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0061 2026-10 capitalGainRecognized          182.465788 info  longTermCapitalGain    c1 {spillover=false}
-  0062 2026-11 settlement                    -768.703663 cash  -                      c2 {from=Home label=property tax to=Brokerage}
+  0062 2026-11 settlement                    -768.703663 cash  -                      c2 {backstop=true from=Home label=property tax to=Brokerage}
   0063 2026-11 capitalGainRecognized          280.524239 info  longTermCapitalGain    c2 {spillover=false}
   0064 2026-11 assetGrowth                   4500.870055 cash  growth                 c-
-  0065 2026-11 settlement                   -1027.465992 cash  -                      c3 {from=Home label=maintenance to=Brokerage}
+  0065 2026-11 settlement                   -1027.465992 cash  -                      c3 {backstop=true from=Home label=maintenance to=Brokerage}
   0066 2026-11 capitalGainRecognized          378.115530 info  longTermCapitalGain    c3 {spillover=false}
-  0067 2026-11 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0067 2026-11 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0068 2026-11 capitalGainRecognized          184.003915 info  longTermCapitalGain    c1 {spillover=false}
-  0069 2026-12 settlement                    -770.599494 cash  -                      c2 {from=Home label=property tax to=Brokerage}
+  0069 2026-12 settlement                    -770.599494 cash  -                      c2 {backstop=true from=Home label=property tax to=Brokerage}
   0070 2026-12 capitalGainRecognized          283.586647 info  longTermCapitalGain    c2 {spillover=false}
   0071 2026-12 assetGrowth                   4511.592318 cash  growth                 c-
-  0072 2026-12 settlement                   -1030.000000 cash  -                      c3 {from=Home label=maintenance to=Brokerage}
+  0072 2026-12 settlement                   -1030.000000 cash  -                      c3 {backstop=true from=Home label=maintenance to=Brokerage}
   0073 2026-12 capitalGainRecognized          382.201258 info  longTermCapitalGain    c3 {spillover=false}
-  0074 2026-12 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0074 2026-12 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0075 2026-12 capitalGainRecognized          185.534591 info  longTermCapitalGain    c1 {spillover=false}
-  0076 2027-01 settlement                    -772.500000 cash  -                      c2 {from=Home label=property tax to=Brokerage}
+  0076 2027-01 settlement                    -772.500000 cash  -                      c2 {backstop=true from=Home label=property tax to=Brokerage}
   0077 2027-01 capitalGainRecognized          286.650943 info  longTermCapitalGain    c2 {spillover=false}
   0078 2027-01 assetGrowth                   4522.345186 cash  growth                 c-
-  0079 2027-01 settlement                   -1032.540258 cash  -                      c3 {from=Home label=maintenance to=Brokerage}
+  0079 2027-01 settlement                   -1032.540258 cash  -                      c3 {backstop=true from=Home label=maintenance to=Brokerage}
   0080 2027-01 capitalGainRecognized          386.289527 info  longTermCapitalGain    c3 {spillover=false}
-  0081 2027-01 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0081 2027-01 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0082 2027-01 capitalGainRecognized          187.057853 info  longTermCapitalGain    c1 {spillover=false}
-  0083 2027-02 settlement                    -774.405193 cash  -                      c2 {from=Home label=property tax to=Brokerage}
+  0083 2027-02 settlement                    -774.405193 cash  -                      c2 {backstop=true from=Home label=property tax to=Brokerage}
   0084 2027-02 capitalGainRecognized          289.717146 info  longTermCapitalGain    c2 {spillover=false}
   0085 2027-02 assetGrowth                   4533.128757 cash  growth                 c-
-  0086 2027-02 settlement                   -1035.086781 cash  -                      c3 {from=Home label=maintenance to=Brokerage}
+  0086 2027-02 settlement                   -1035.086781 cash  -                      c3 {backstop=true from=Home label=maintenance to=Brokerage}
   0087 2027-02 capitalGainRecognized          390.380363 info  longTermCapitalGain    c3 {spillover=false}
-  0088 2027-02 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0088 2027-02 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0089 2027-02 capitalGainRecognized          188.573736 info  longTermCapitalGain    c1 {spillover=false}
-  0090 2027-03 settlement                    -776.315086 cash  -                      c2 {from=Home label=property tax to=Brokerage}
+  0090 2027-03 settlement                    -776.315086 cash  -                      c2 {backstop=true from=Home label=property tax to=Brokerage}
   0091 2027-03 capitalGainRecognized          292.785272 info  longTermCapitalGain    c2 {spillover=false}
   0092 2027-03 assetGrowth                   4543.943125 cash  growth                 c-
-  0093 2027-03 settlement                   -1037.639584 cash  -                      c3 {from=Home label=maintenance to=Brokerage}
+  0093 2027-03 settlement                   -1037.639584 cash  -                      c3 {backstop=true from=Home label=maintenance to=Brokerage}
   0094 2027-03 capitalGainRecognized          394.473788 info  longTermCapitalGain    c3 {spillover=false}
-  0095 2027-03 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0095 2027-03 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0096 2027-03 capitalGainRecognized          190.082276 info  longTermCapitalGain    c1 {spillover=false}
-  0097 2027-04 settlement                    -778.229688 cash  -                      c2 {from=Home label=property tax to=Brokerage}
+  0097 2027-04 settlement                    -778.229688 cash  -                      c2 {backstop=true from=Home label=property tax to=Brokerage}
   0098 2027-04 capitalGainRecognized          295.855341 info  longTermCapitalGain    c2 {spillover=false}
   0099 2027-04 assetGrowth                   4554.788387 cash  growth                 c-
-  0100 2027-04 settlement                   -1040.198683 cash  -                      c3 {from=Home label=maintenance to=Brokerage}
+  0100 2027-04 settlement                   -1040.198683 cash  -                      c3 {backstop=true from=Home label=maintenance to=Brokerage}
   0101 2027-04 capitalGainRecognized          398.569828 info  longTermCapitalGain    c3 {spillover=false}
-  0102 2027-04 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0102 2027-04 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0103 2027-04 capitalGainRecognized          191.583509 info  longTermCapitalGain    c1 {spillover=false}
-  0104 2027-05 settlement                    -780.149012 cash  -                      c2 {from=Home label=property tax to=Brokerage}
+  0104 2027-05 settlement                    -780.149012 cash  -                      c2 {backstop=true from=Home label=property tax to=Brokerage}
   0105 2027-05 capitalGainRecognized          298.927371 info  longTermCapitalGain    c2 {spillover=false}
   0106 2027-05 assetGrowth                   4565.664640 cash  growth                 c-
-  0107 2027-05 settlement                   -1042.764094 cash  -                      c3 {from=Home label=maintenance to=Brokerage}
+  0107 2027-05 settlement                   -1042.764094 cash  -                      c3 {backstop=true from=Home label=maintenance to=Brokerage}
   0108 2027-05 capitalGainRecognized          402.668506 info  longTermCapitalGain    c3 {spillover=false}
-  0109 2027-05 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0109 2027-05 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0110 2027-05 capitalGainRecognized          193.077470 info  longTermCapitalGain    c1 {spillover=false}
-  0111 2027-06 settlement                    -782.073070 cash  -                      c2 {from=Home label=property tax to=Brokerage}
+  0111 2027-06 settlement                    -782.073070 cash  -                      c2 {backstop=true from=Home label=property tax to=Brokerage}
   0112 2027-06 capitalGainRecognized          302.001380 info  longTermCapitalGain    c2 {spillover=false}
   0113 2027-06 assetGrowth                   4576.571981 cash  growth                 c-
-  0114 2027-06 settlement                   -1045.335831 cash  -                      c3 {from=Home label=maintenance to=Brokerage}
+  0114 2027-06 settlement                   -1045.335831 cash  -                      c3 {backstop=true from=Home label=maintenance to=Brokerage}
   0115 2027-06 capitalGainRecognized          406.769847 info  longTermCapitalGain    c3 {spillover=false}
-  0116 2027-06 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0116 2027-06 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0117 2027-06 capitalGainRecognized          194.564194 info  longTermCapitalGain    c1 {spillover=false}
-  0118 2027-07 settlement                    -784.001873 cash  -                      c2 {from=Home label=property tax to=Brokerage}
+  0118 2027-07 settlement                    -784.001873 cash  -                      c2 {backstop=true from=Home label=property tax to=Brokerage}
   0119 2027-07 capitalGainRecognized          305.077386 info  longTermCapitalGain    c2 {spillover=false}
   0120 2027-07 assetGrowth                   4587.510507 cash  growth                 c-
-  0121 2027-07 settlement                   -1047.913911 cash  -                      c3 {from=Home label=maintenance to=Brokerage}
+  0121 2027-07 settlement                   -1047.913911 cash  -                      c3 {backstop=true from=Home label=maintenance to=Brokerage}
   0122 2027-07 capitalGainRecognized          410.873876 info  longTermCapitalGain    c3 {spillover=false}
-  0123 2027-07 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0123 2027-07 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0124 2027-07 capitalGainRecognized          196.043717 info  longTermCapitalGain    c1 {spillover=false}
-  0125 2027-08 settlement                    -785.935434 cash  -                      c2 {from=Home label=property tax to=Brokerage}
+  0125 2027-08 settlement                    -785.935434 cash  -                      c2 {backstop=true from=Home label=property tax to=Brokerage}
   0126 2027-08 capitalGainRecognized          308.155407 info  longTermCapitalGain    c2 {spillover=false}
   0127 2027-08 assetGrowth                   4598.480317 cash  growth                 c-
-  0128 2027-08 settlement                   -1050.498350 cash  -                      c3 {from=Home label=maintenance to=Brokerage}
+  0128 2027-08 settlement                   -1050.498350 cash  -                      c3 {backstop=true from=Home label=maintenance to=Brokerage}
   0129 2027-08 capitalGainRecognized          414.980617 info  longTermCapitalGain    c3 {spillover=false}
-  0130 2027-08 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0130 2027-08 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0131 2027-08 capitalGainRecognized          197.516073 info  longTermCapitalGain    c1 {spillover=false}
-  0132 2027-09 settlement                    -787.873762 cash  -                      c2 {from=Home label=property tax to=Brokerage}
+  0132 2027-09 settlement                    -787.873762 cash  -                      c2 {backstop=true from=Home label=property tax to=Brokerage}
   0133 2027-09 capitalGainRecognized          311.235463 info  longTermCapitalGain    c2 {spillover=false}
   0134 2027-09 assetGrowth                   4609.481508 cash  growth                 c-
-  0135 2027-09 settlement                   -1053.089162 cash  -                      c3 {from=Home label=maintenance to=Brokerage}
+  0135 2027-09 settlement                   -1053.089162 cash  -                      c3 {backstop=true from=Home label=maintenance to=Brokerage}
   0136 2027-09 capitalGainRecognized          419.090093 info  longTermCapitalGain    c3 {spillover=false}
-  0137 2027-09 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0137 2027-09 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0138 2027-09 capitalGainRecognized          198.981296 info  longTermCapitalGain    c1 {spillover=false}
-  0139 2027-10 settlement                    -789.816872 cash  -                      c2 {from=Home label=property tax to=Brokerage}
+  0139 2027-10 settlement                    -789.816872 cash  -                      c2 {backstop=true from=Home label=property tax to=Brokerage}
   0140 2027-10 capitalGainRecognized          314.317570 info  longTermCapitalGain    c2 {spillover=false}
   0141 2027-10 assetGrowth                   4620.514179 cash  growth                 c-
-  0142 2027-10 settlement                   -1055.686364 cash  -                      c3 {from=Home label=maintenance to=Brokerage}
+  0142 2027-10 settlement                   -1055.686364 cash  -                      c3 {backstop=true from=Home label=maintenance to=Brokerage}
   0143 2027-10 capitalGainRecognized          423.202331 info  longTermCapitalGain    c3 {spillover=false}
-  0144 2027-10 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0144 2027-10 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0145 2027-10 capitalGainRecognized          200.439423 info  longTermCapitalGain    c1 {spillover=false}
-  0146 2027-11 settlement                    -791.764773 cash  -                      c2 {from=Home label=property tax to=Brokerage}
+  0146 2027-11 settlement                    -791.764773 cash  -                      c2 {backstop=true from=Home label=property tax to=Brokerage}
   0147 2027-11 capitalGainRecognized          317.401748 info  longTermCapitalGain    c2 {spillover=false}
   0148 2027-11 assetGrowth                   4631.578428 cash  growth                 c-
-  0149 2027-11 settlement                   -1058.289971 cash  -                      c3 {from=Home label=maintenance to=Brokerage}
+  0149 2027-11 settlement                   -1058.289971 cash  -                      c3 {backstop=true from=Home label=maintenance to=Brokerage}
   0150 2027-11 capitalGainRecognized          427.317353 info  longTermCapitalGain    c3 {spillover=false}
-  0151 2027-11 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0151 2027-11 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0152 2027-11 capitalGainRecognized          201.890486 info  longTermCapitalGain    c1 {spillover=false}
-  0153 2027-12 settlement                    -793.717479 cash  -                      c2 {from=Home label=property tax to=Brokerage}
+  0153 2027-12 settlement                    -793.717479 cash  -                      c2 {backstop=true from=Home label=property tax to=Brokerage}
   0154 2027-12 capitalGainRecognized          320.488015 info  longTermCapitalGain    c2 {spillover=false}
   0155 2027-12 assetGrowth                   4642.674355 cash  growth                 c-
-  0156 2027-12 settlement                   -1060.900000 cash  -                      c3 {from=Home label=maintenance to=Brokerage}
+  0156 2027-12 settlement                   -1060.900000 cash  -                      c3 {backstop=true from=Home label=maintenance to=Brokerage}
   0157 2027-12 capitalGainRecognized          431.435185 info  longTermCapitalGain    c3 {spillover=false}
-  0158 2027-12 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0158 2027-12 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0159 2027-12 capitalGainRecognized          203.334520 info  longTermCapitalGain    c1 {spillover=false}
-  0160 2028-01 settlement                    -795.675000 cash  -                      c2 {from=Home label=property tax to=Brokerage}
+  0160 2028-01 settlement                    -795.675000 cash  -                      c2 {backstop=true from=Home label=property tax to=Brokerage}
   0161 2028-01 capitalGainRecognized          323.576388 info  longTermCapitalGain    c2 {spillover=false}
   0162 2028-01 assetGrowth                   4653.802059 cash  growth                 c-
-  0163 2028-01 settlement                   -1063.516466 cash  -                      c3 {from=Home label=maintenance to=Brokerage}
+  0163 2028-01 settlement                   -1063.516466 cash  -                      c3 {backstop=true from=Home label=maintenance to=Brokerage}
   0164 2028-01 capitalGainRecognized          435.555850 info  longTermCapitalGain    c3 {spillover=false}
-  0165 2028-01 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0165 2028-01 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0166 2028-01 capitalGainRecognized          204.771559 info  longTermCapitalGain    c1 {spillover=false}
-  0167 2028-02 settlement                    -797.637349 cash  -                      c2 {from=Home label=property tax to=Brokerage}
+  0167 2028-02 settlement                    -797.637349 cash  -                      c2 {backstop=true from=Home label=property tax to=Brokerage}
   0168 2028-02 capitalGainRecognized          326.666888 info  longTermCapitalGain    c2 {spillover=false}
   0169 2028-02 assetGrowth                   4664.961640 cash  growth                 c-
-  0170 2028-02 settlement                   -1066.139384 cash  -                      c3 {from=Home label=maintenance to=Brokerage}
+  0170 2028-02 settlement                   -1066.139384 cash  -                      c3 {backstop=true from=Home label=maintenance to=Brokerage}
   0171 2028-02 capitalGainRecognized          439.679374 info  longTermCapitalGain    c3 {spillover=false}
-  0172 2028-02 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0172 2028-02 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0173 2028-02 capitalGainRecognized          206.201638 info  longTermCapitalGain    c1 {spillover=false}
-  0174 2028-03 settlement                    -799.604538 cash  -                      c2 {from=Home label=property tax to=Brokerage}
+  0174 2028-03 settlement                    -799.604538 cash  -                      c2 {backstop=true from=Home label=property tax to=Brokerage}
   0175 2028-03 capitalGainRecognized          329.759531 info  longTermCapitalGain    c2 {spillover=false}
   0176 2028-03 assetGrowth                   4676.153199 cash  growth                 c-
-  0177 2028-03 settlement                   -1068.768771 cash  -                      c3 {from=Home label=maintenance to=Brokerage}
+  0177 2028-03 settlement                   -1068.768771 cash  -                      c3 {backstop=true from=Home label=maintenance to=Brokerage}
   0178 2028-03 capitalGainRecognized          443.805781 info  longTermCapitalGain    c3 {spillover=false}
-  0179 2028-03 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0179 2028-03 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0180 2028-03 capitalGainRecognized          207.624789 info  longTermCapitalGain    c1 {spillover=false}
-  0181 2028-04 settlement                    -801.576579 cash  -                      c2 {from=Home label=property tax to=Brokerage}
+  0181 2028-04 settlement                    -801.576579 cash  -                      c2 {backstop=true from=Home label=property tax to=Brokerage}
   0182 2028-04 capitalGainRecognized          332.854336 info  longTermCapitalGain    c2 {spillover=false}
   0183 2028-04 assetGrowth                   4687.376835 cash  growth                 c-
-  0184 2028-04 settlement                   -1071.404644 cash  -                      c3 {from=Home label=maintenance to=Brokerage}
+  0184 2028-04 settlement                   -1071.404644 cash  -                      c3 {backstop=true from=Home label=maintenance to=Brokerage}
   0185 2028-04 capitalGainRecognized          447.935095 info  longTermCapitalGain    c3 {spillover=false}
-  0186 2028-04 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0186 2028-04 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0187 2028-04 capitalGainRecognized          209.041046 info  longTermCapitalGain    c1 {spillover=false}
-  0188 2028-05 settlement                    -803.553483 cash  -                      c2 {from=Home label=property tax to=Brokerage}
+  0188 2028-05 settlement                    -803.553483 cash  -                      c2 {backstop=true from=Home label=property tax to=Brokerage}
   0189 2028-05 capitalGainRecognized          335.951322 info  longTermCapitalGain    c2 {spillover=false}
   0190 2028-05 assetGrowth                   4698.632650 cash  growth                 c-
-  0191 2028-05 settlement                   -1074.047016 cash  -                      c3 {from=Home label=maintenance to=Brokerage}
+  0191 2028-05 settlement                   -1074.047016 cash  -                      c3 {backstop=true from=Home label=maintenance to=Brokerage}
   0192 2028-05 capitalGainRecognized          452.067342 info  longTermCapitalGain    c3 {spillover=false}
-  0193 2028-05 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0193 2028-05 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0194 2028-05 capitalGainRecognized          210.450443 info  longTermCapitalGain    c1 {spillover=false}
-  0195 2028-06 settlement                    -805.535262 cash  -                      c2 {from=Home label=property tax to=Brokerage}
+  0195 2028-06 settlement                    -805.535262 cash  -                      c2 {backstop=true from=Home label=property tax to=Brokerage}
   0196 2028-06 capitalGainRecognized          339.050506 info  longTermCapitalGain    c2 {spillover=false}
   0197 2028-06 assetGrowth                   4709.920745 cash  growth                 c-
-  0198 2028-06 settlement                   -1076.695906 cash  -                      c3 {from=Home label=maintenance to=Brokerage}
+  0198 2028-06 settlement                   -1076.695906 cash  -                      c3 {backstop=true from=Home label=maintenance to=Brokerage}
   0199 2028-06 capitalGainRecognized          456.202545 info  longTermCapitalGain    c3 {spillover=false}
-  0200 2028-06 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0200 2028-06 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0201 2028-06 capitalGainRecognized          211.853013 info  longTermCapitalGain    c1 {spillover=false}
-  0202 2028-07 settlement                    -807.521930 cash  -                      c2 {from=Home label=property tax to=Brokerage}
+  0202 2028-07 settlement                    -807.521930 cash  -                      c2 {backstop=true from=Home label=property tax to=Brokerage}
   0203 2028-07 capitalGainRecognized          342.151908 info  longTermCapitalGain    c2 {spillover=false}
   0204 2028-07 assetGrowth                   4721.241222 cash  growth                 c-
-  0205 2028-07 settlement                   -1079.351329 cash  -                      c3 {from=Home label=maintenance to=Brokerage}
+  0205 2028-07 settlement                   -1079.351329 cash  -                      c3 {backstop=true from=Home label=maintenance to=Brokerage}
   0206 2028-07 capitalGainRecognized          460.340728 info  longTermCapitalGain    c3 {spillover=false}
-  0207 2028-07 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0207 2028-07 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0208 2028-07 capitalGainRecognized          213.248789 info  longTermCapitalGain    c1 {spillover=false}
-  0209 2028-08 settlement                    -809.513497 cash  -                      c2 {from=Home label=property tax to=Brokerage}
+  0209 2028-08 settlement                    -809.513497 cash  -                      c2 {backstop=true from=Home label=property tax to=Brokerage}
   0210 2028-08 capitalGainRecognized          345.255546 info  longTermCapitalGain    c2 {spillover=false}
   0211 2028-08 assetGrowth                   4732.594182 cash  growth                 c-
-  0212 2028-08 settlement                   -1082.013300 cash  -                      c3 {from=Home label=maintenance to=Brokerage}
+  0212 2028-08 settlement                   -1082.013300 cash  -                      c3 {backstop=true from=Home label=maintenance to=Brokerage}
   0213 2028-08 capitalGainRecognized          464.481918 info  longTermCapitalGain    c3 {spillover=false}
-  0214 2028-08 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0214 2028-08 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0215 2028-08 capitalGainRecognized          214.637804 info  longTermCapitalGain    c1 {spillover=false}
-  0216 2028-09 settlement                    -811.509975 cash  -                      c2 {from=Home label=property tax to=Brokerage}
+  0216 2028-09 settlement                    -811.509975 cash  -                      c2 {backstop=true from=Home label=property tax to=Brokerage}
   0217 2028-09 capitalGainRecognized          348.361439 info  longTermCapitalGain    c2 {spillover=false}
   0218 2028-09 assetGrowth                   4743.979728 cash  growth                 c-
-  0219 2028-09 settlement                   -1084.681837 cash  -                      c3 {from=Home label=maintenance to=Brokerage}
+  0219 2028-09 settlement                   -1084.681837 cash  -                      c3 {backstop=true from=Home label=maintenance to=Brokerage}
   0220 2028-09 capitalGainRecognized          468.626138 info  longTermCapitalGain    c3 {spillover=false}
-  0221 2028-09 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0221 2028-09 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0222 2028-09 capitalGainRecognized          216.020091 info  longTermCapitalGain    c1 {spillover=false}
-  0223 2028-10 settlement                    -813.511378 cash  -                      c2 {from=Home label=property tax to=Brokerage}
+  0223 2028-10 settlement                    -813.511378 cash  -                      c2 {backstop=true from=Home label=property tax to=Brokerage}
   0224 2028-10 capitalGainRecognized          351.469604 info  longTermCapitalGain    c2 {spillover=false}
   0225 2028-10 assetGrowth                   4755.397962 cash  growth                 c-
-  0226 2028-10 settlement                   -1087.356955 cash  -                      c3 {from=Home label=maintenance to=Brokerage}
+  0226 2028-10 settlement                   -1087.356955 cash  -                      c3 {backstop=true from=Home label=maintenance to=Brokerage}
   0227 2028-10 capitalGainRecognized          472.773413 info  longTermCapitalGain    c3 {spillover=false}
-  0228 2028-10 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0228 2028-10 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0229 2028-10 capitalGainRecognized          217.395682 info  longTermCapitalGain    c1 {spillover=false}
-  0230 2028-11 settlement                    -815.517716 cash  -                      c2 {from=Home label=property tax to=Brokerage}
+  0230 2028-11 settlement                    -815.517716 cash  -                      c2 {backstop=true from=Home label=property tax to=Brokerage}
   0231 2028-11 capitalGainRecognized          354.580060 info  longTermCapitalGain    c2 {spillover=false}
   0232 2028-11 assetGrowth                   4766.848988 cash  growth                 c-
-  0233 2028-11 settlement                   -1090.038671 cash  -                      c3 {from=Home label=maintenance to=Brokerage}
+  0233 2028-11 settlement                   -1090.038671 cash  -                      c3 {backstop=true from=Home label=maintenance to=Brokerage}
   0234 2028-11 capitalGainRecognized          476.923768 info  longTermCapitalGain    c3 {spillover=false}
-  0235 2028-11 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0235 2028-11 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0236 2028-11 capitalGainRecognized          218.764609 info  longTermCapitalGain    c1 {spillover=false}
-  0237 2028-12 settlement                    -817.529003 cash  -                      c2 {from=Home label=property tax to=Brokerage}
+  0237 2028-12 settlement                    -817.529003 cash  -                      c2 {backstop=true from=Home label=property tax to=Brokerage}
   0238 2028-12 capitalGainRecognized          357.692826 info  longTermCapitalGain    c2 {spillover=false}
   0239 2028-12 assetGrowth                   4778.332909 cash  growth                 c-
-  0240 2028-12 settlement                   -1092.727000 cash  -                      c3 {from=Home label=maintenance to=Brokerage}
+  0240 2028-12 settlement                   -1092.727000 cash  -                      c3 {backstop=true from=Home label=maintenance to=Brokerage}
   0241 2028-12 capitalGainRecognized          481.077226 info  longTermCapitalGain    c3 {spillover=false}
-  0242 2028-12 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0242 2028-12 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0243 2028-12 capitalGainRecognized          220.126906 info  longTermCapitalGain    c1 {spillover=false}
-  0244 2029-01 settlement                    -819.545250 cash  -                      c2 {from=Home label=property tax to=Brokerage}
+  0244 2029-01 settlement                    -819.545250 cash  -                      c2 {backstop=true from=Home label=property tax to=Brokerage}
   0245 2029-01 capitalGainRecognized          360.807920 info  longTermCapitalGain    c2 {spillover=false}
   0246 2029-01 assetGrowth                   4789.849829 cash  growth                 c-
-  0247 2029-01 settlement                   -1095.421960 cash  -                      c3 {from=Home label=maintenance to=Brokerage}
+  0247 2029-01 settlement                   -1095.421960 cash  -                      c3 {backstop=true from=Home label=maintenance to=Brokerage}
   0248 2029-01 capitalGainRecognized          485.233814 info  longTermCapitalGain    c3 {spillover=false}
-  0249 2029-01 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0249 2029-01 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0250 2029-01 capitalGainRecognized          221.482603 info  longTermCapitalGain    c1 {spillover=false}
-  0251 2029-02 settlement                    -821.566470 cash  -                      c2 {from=Home label=property tax to=Brokerage}
+  0251 2029-02 settlement                    -821.566470 cash  -                      c2 {backstop=true from=Home label=property tax to=Brokerage}
   0252 2029-02 capitalGainRecognized          363.925361 info  longTermCapitalGain    c2 {spillover=false}
   0253 2029-02 assetGrowth                   4801.399852 cash  growth                 c-
-  0254 2029-02 settlement                   -1098.123566 cash  -                      c3 {from=Home label=maintenance to=Brokerage}
+  0254 2029-02 settlement                   -1098.123566 cash  -                      c3 {backstop=true from=Home label=maintenance to=Brokerage}
   0255 2029-02 capitalGainRecognized          489.393556 info  longTermCapitalGain    c3 {spillover=false}
-  0256 2029-02 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0256 2029-02 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0257 2029-02 capitalGainRecognized          222.831734 info  longTermCapitalGain    c1 {spillover=false}
-  0258 2029-03 settlement                    -823.592674 cash  -                      c2 {from=Home label=property tax to=Brokerage}
+  0258 2029-03 settlement                    -823.592674 cash  -                      c2 {backstop=true from=Home label=property tax to=Brokerage}
   0259 2029-03 capitalGainRecognized          367.045167 info  longTermCapitalGain    c2 {spillover=false}
   0260 2029-03 assetGrowth                   4812.983082 cash  growth                 c-
-  0261 2029-03 settlement                   -1100.831835 cash  -                      c3 {from=Home label=maintenance to=Brokerage}
+  0261 2029-03 settlement                   -1100.831835 cash  -                      c3 {backstop=true from=Home label=maintenance to=Brokerage}
   0262 2029-03 capitalGainRecognized          493.556476 info  longTermCapitalGain    c3 {spillover=false}
-  0263 2029-03 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0263 2029-03 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0264 2029-03 capitalGainRecognized          224.174329 info  longTermCapitalGain    c1 {spillover=false}
-  0265 2029-04 settlement                    -825.623876 cash  -                      c2 {from=Home label=property tax to=Brokerage}
+  0265 2029-04 settlement                    -825.623876 cash  -                      c2 {backstop=true from=Home label=property tax to=Brokerage}
   0266 2029-04 capitalGainRecognized          370.167357 info  longTermCapitalGain    c2 {spillover=false}
   0267 2029-04 assetGrowth                   4824.599625 cash  growth                 c-
-  0268 2029-04 settlement                   -1103.546783 cash  -                      c3 {from=Home label=maintenance to=Brokerage}
+  0268 2029-04 settlement                   -1103.546783 cash  -                      c3 {backstop=true from=Home label=maintenance to=Brokerage}
   0269 2029-04 capitalGainRecognized          497.722599 info  longTermCapitalGain    c3 {spillover=false}
-  0270 2029-04 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0270 2029-04 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0271 2029-04 capitalGainRecognized          225.510421 info  longTermCapitalGain    c1 {spillover=false}
-  0272 2029-05 settlement                    -827.660087 cash  -                      c2 {from=Home label=property tax to=Brokerage}
+  0272 2029-05 settlement                    -827.660087 cash  -                      c2 {backstop=true from=Home label=property tax to=Brokerage}
   0273 2029-05 capitalGainRecognized          373.291949 info  longTermCapitalGain    c2 {spillover=false}
   0274 2029-05 assetGrowth                   4836.249585 cash  growth                 c-
-  0275 2029-05 settlement                   -1106.268427 cash  -                      c3 {from=Home label=maintenance to=Brokerage}
+  0275 2029-05 settlement                   -1106.268427 cash  -                      c3 {backstop=true from=Home label=maintenance to=Brokerage}
   0276 2029-05 capitalGainRecognized          501.891951 info  longTermCapitalGain    c3 {spillover=false}
-  0277 2029-05 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0277 2029-05 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0278 2029-05 capitalGainRecognized          226.840041 info  longTermCapitalGain    c1 {spillover=false}
-  0279 2029-06 settlement                    -829.701320 cash  -                      c2 {from=Home label=property tax to=Brokerage}
+  0279 2029-06 settlement                    -829.701320 cash  -                      c2 {backstop=true from=Home label=property tax to=Brokerage}
   0280 2029-06 capitalGainRecognized          376.418963 info  longTermCapitalGain    c2 {spillover=false}
   0281 2029-06 assetGrowth                   4847.933069 cash  growth                 c-
-  0282 2029-06 settlement                   -1108.996783 cash  -                      c3 {from=Home label=maintenance to=Brokerage}
+  0282 2029-06 settlement                   -1108.996783 cash  -                      c3 {backstop=true from=Home label=maintenance to=Brokerage}
   0283 2029-06 capitalGainRecognized          506.064555 info  longTermCapitalGain    c3 {spillover=false}
-  0284 2029-06 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0284 2029-06 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0285 2029-06 capitalGainRecognized          228.163220 info  longTermCapitalGain    c1 {spillover=false}
-  0286 2029-07 settlement                    -831.747587 cash  -                      c2 {from=Home label=property tax to=Brokerage}
+  0286 2029-07 settlement                    -831.747587 cash  -                      c2 {backstop=true from=Home label=property tax to=Brokerage}
   0287 2029-07 capitalGainRecognized          379.548416 info  longTermCapitalGain    c2 {spillover=false}
   0288 2029-07 assetGrowth                   4859.650181 cash  growth                 c-
-  0289 2029-07 settlement                   -1111.731869 cash  -                      c3 {from=Home label=maintenance to=Brokerage}
+  0289 2029-07 settlement                   -1111.731869 cash  -                      c3 {backstop=true from=Home label=maintenance to=Brokerage}
   0290 2029-07 capitalGainRecognized          510.240436 info  longTermCapitalGain    c3 {spillover=false}
-  0291 2029-07 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0291 2029-07 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0292 2029-07 capitalGainRecognized          229.479990 info  longTermCapitalGain    c1 {spillover=false}
-  0293 2029-08 settlement                    -833.798901 cash  -                      c2 {from=Home label=property tax to=Brokerage}
+  0293 2029-08 settlement                    -833.798901 cash  -                      c2 {backstop=true from=Home label=property tax to=Brokerage}
   0294 2029-08 capitalGainRecognized          382.680327 info  longTermCapitalGain    c2 {spillover=false}
   0295 2029-08 assetGrowth                   4871.401030 cash  growth                 c-
-  0296 2029-08 settlement                   -1114.473699 cash  -                      c3 {from=Home label=maintenance to=Brokerage}
+  0296 2029-08 settlement                   -1114.473699 cash  -                      c3 {backstop=true from=Home label=maintenance to=Brokerage}
   0297 2029-08 capitalGainRecognized          514.419620 info  longTermCapitalGain    c3 {spillover=false}
-  0298 2029-08 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0298 2029-08 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0299 2029-08 capitalGainRecognized          230.790381 info  longTermCapitalGain    c1 {spillover=false}
-  0300 2029-09 settlement                    -835.855274 cash  -                      c2 {from=Home label=property tax to=Brokerage}
+  0300 2029-09 settlement                    -835.855274 cash  -                      c2 {backstop=true from=Home label=property tax to=Brokerage}
   0301 2029-09 capitalGainRecognized          385.814715 info  longTermCapitalGain    c2 {spillover=false}
   0302 2029-09 assetGrowth                   4883.185720 cash  growth                 c-
-  0303 2029-09 settlement                   -1117.222292 cash  -                      c3 {from=Home label=maintenance to=Brokerage}
+  0303 2029-09 settlement                   -1117.222292 cash  -                      c3 {backstop=true from=Home label=maintenance to=Brokerage}
   0304 2029-09 capitalGainRecognized          518.602132 info  longTermCapitalGain    c3 {spillover=false}
-  0305 2029-09 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0305 2029-09 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0306 2029-09 capitalGainRecognized          232.094425 info  longTermCapitalGain    c1 {spillover=false}
-  0307 2029-10 settlement                    -837.916719 cash  -                      c2 {from=Home label=property tax to=Brokerage}
+  0307 2029-10 settlement                    -837.916719 cash  -                      c2 {backstop=true from=Home label=property tax to=Brokerage}
   0308 2029-10 capitalGainRecognized          388.951599 info  longTermCapitalGain    c2 {spillover=false}
   0309 2029-10 assetGrowth                   4895.004361 cash  growth                 c-
-  0310 2029-10 settlement                   -1119.977664 cash  -                      c3 {from=Home label=maintenance to=Brokerage}
+  0310 2029-10 settlement                   -1119.977664 cash  -                      c3 {backstop=true from=Home label=maintenance to=Brokerage}
   0311 2029-10 capitalGainRecognized          522.787996 info  longTermCapitalGain    c3 {spillover=false}
-  0312 2029-10 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0312 2029-10 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0313 2029-10 capitalGainRecognized          233.392153 info  longTermCapitalGain    c1 {spillover=false}
-  0314 2029-11 settlement                    -839.983248 cash  -                      c2 {from=Home label=property tax to=Brokerage}
+  0314 2029-11 settlement                    -839.983248 cash  -                      c2 {backstop=true from=Home label=property tax to=Brokerage}
   0315 2029-11 capitalGainRecognized          392.090997 info  longTermCapitalGain    c2 {spillover=false}
   0316 2029-11 assetGrowth                   4906.857058 cash  growth                 c-
-  0317 2029-11 settlement                   -1122.739831 cash  -                      c3 {from=Home label=maintenance to=Brokerage}
+  0317 2029-11 settlement                   -1122.739831 cash  -                      c3 {backstop=true from=Home label=maintenance to=Brokerage}
   0318 2029-11 capitalGainRecognized          526.977236 info  longTermCapitalGain    c3 {spillover=false}
-  0319 2029-11 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0319 2029-11 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0320 2029-11 capitalGainRecognized          234.683594 info  longTermCapitalGain    c1 {spillover=false}
-  0321 2029-12 settlement                    -842.054873 cash  -                      c2 {from=Home label=property tax to=Brokerage}
+  0321 2029-12 settlement                    -842.054873 cash  -                      c2 {backstop=true from=Home label=property tax to=Brokerage}
   0322 2029-12 capitalGainRecognized          395.232927 info  longTermCapitalGain    c2 {spillover=false}
   0323 2029-12 assetGrowth                   4918.743920 cash  growth                 c-
-  0324 2029-12 settlement                   -1125.508810 cash  -                      c3 {from=Home label=maintenance to=Brokerage}
+  0324 2029-12 settlement                   -1125.508810 cash  -                      c3 {backstop=true from=Home label=maintenance to=Brokerage}
   0325 2029-12 capitalGainRecognized          531.169879 info  longTermCapitalGain    c3 {spillover=false}
-  0326 2029-12 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0326 2029-12 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0327 2029-12 capitalGainRecognized          235.968779 info  longTermCapitalGain    c1 {spillover=false}
-  0328 2030-01 settlement                    -844.131608 cash  -                      c2 {from=Home label=property tax to=Brokerage}
+  0328 2030-01 settlement                    -844.131608 cash  -                      c2 {backstop=true from=Home label=property tax to=Brokerage}
   0329 2030-01 capitalGainRecognized          398.377409 info  longTermCapitalGain    c2 {spillover=false}
   0330 2030-01 assetGrowth                   4930.665055 cash  growth                 c-
-  0331 2030-01 settlement                   -1128.284618 cash  -                      c3 {from=Home label=maintenance to=Brokerage}
+  0331 2030-01 settlement                   -1128.284618 cash  -                      c3 {backstop=true from=Home label=maintenance to=Brokerage}
   0332 2030-01 capitalGainRecognized          535.365949 info  longTermCapitalGain    c3 {spillover=false}
-  0333 2030-01 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0333 2030-01 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0334 2030-01 capitalGainRecognized          237.247739 info  longTermCapitalGain    c1 {spillover=false}
-  0335 2030-02 settlement                    -846.213464 cash  -                      c2 {from=Home label=property tax to=Brokerage}
+  0335 2030-02 settlement                    -846.213464 cash  -                      c2 {backstop=true from=Home label=property tax to=Brokerage}
   0336 2030-02 capitalGainRecognized          401.524462 info  longTermCapitalGain    c2 {spillover=false}
   0337 2030-02 assetGrowth                   4942.620572 cash  growth                 c-
-  0338 2030-02 settlement                   -1131.067273 cash  -                      c3 {from=Home label=maintenance to=Brokerage}
+  0338 2030-02 settlement                   -1131.067273 cash  -                      c3 {backstop=true from=Home label=maintenance to=Brokerage}
   0339 2030-02 capitalGainRecognized          539.565471 info  longTermCapitalGain    c3 {spillover=false}
-  0340 2030-02 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0340 2030-02 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0341 2030-02 capitalGainRecognized          238.520504 info  longTermCapitalGain    c1 {spillover=false}
-  0342 2030-03 settlement                    -848.300454 cash  -                      c2 {from=Home label=property tax to=Brokerage}
+  0342 2030-03 settlement                    -848.300454 cash  -                      c2 {backstop=true from=Home label=property tax to=Brokerage}
   0343 2030-03 capitalGainRecognized          404.674103 info  longTermCapitalGain    c2 {spillover=false}
   0344 2030-03 assetGrowth                   4954.610580 cash  growth                 c-
-  0345 2030-03 settlement                   -1133.856790 cash  -                      c3 {from=Home label=maintenance to=Brokerage}
+  0345 2030-03 settlement                   -1133.856790 cash  -                      c3 {backstop=true from=Home label=maintenance to=Brokerage}
   0346 2030-03 capitalGainRecognized          543.768469 info  longTermCapitalGain    c3 {spillover=false}
-  0347 2030-03 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0347 2030-03 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0348 2030-03 capitalGainRecognized          239.787103 info  longTermCapitalGain    c1 {spillover=false}
-  0349 2030-04 settlement                    -850.392592 cash  -                      c2 {from=Home label=property tax to=Brokerage}
+  0349 2030-04 settlement                    -850.392592 cash  -                      c2 {backstop=true from=Home label=property tax to=Brokerage}
   0350 2030-04 capitalGainRecognized          407.826352 info  longTermCapitalGain    c2 {spillover=false}
   0351 2030-04 assetGrowth                   4966.635188 cash  growth                 c-
-  0352 2030-04 settlement                   -1136.653186 cash  -                      c3 {from=Home label=maintenance to=Brokerage}
+  0352 2030-04 settlement                   -1136.653186 cash  -                      c3 {backstop=true from=Home label=maintenance to=Brokerage}
   0353 2030-04 capitalGainRecognized          547.974970 info  longTermCapitalGain    c3 {spillover=false}
-  0354 2030-04 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0354 2030-04 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0355 2030-04 capitalGainRecognized          241.047567 info  longTermCapitalGain    c1 {spillover=false}
-  0356 2030-05 settlement                    -852.489890 cash  -                      c2 {from=Home label=property tax to=Brokerage}
+  0356 2030-05 settlement                    -852.489890 cash  -                      c2 {backstop=true from=Home label=property tax to=Brokerage}
   0357 2030-05 capitalGainRecognized          410.981228 info  longTermCapitalGain    c2 {spillover=false}
   0358 2030-05 assetGrowth                   4978.694506 cash  growth                 c-
-  0359 2030-05 settlement                   -1139.456480 cash  -                      c3 {from=Home label=maintenance to=Brokerage}
+  0359 2030-05 settlement                   -1139.456480 cash  -                      c3 {backstop=true from=Home label=maintenance to=Brokerage}
   0360 2030-05 capitalGainRecognized          552.184998 info  longTermCapitalGain    c3 {spillover=false}
-  0361 2030-05 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0361 2030-05 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0362 2030-05 capitalGainRecognized          242.301925 info  longTermCapitalGain    c1 {spillover=false}
-  0363 2030-06 settlement                    -854.592360 cash  -                      c2 {from=Home label=property tax to=Brokerage}
+  0363 2030-06 settlement                    -854.592360 cash  -                      c2 {backstop=true from=Home label=property tax to=Brokerage}
   0364 2030-06 capitalGainRecognized          414.138748 info  longTermCapitalGain    c2 {spillover=false}
   0365 2030-06 assetGrowth                   4990.788644 cash  growth                 c-
-  0366 2030-06 settlement                   -1142.266687 cash  -                      c3 {from=Home label=maintenance to=Brokerage}
+  0366 2030-06 settlement                   -1142.266687 cash  -                      c3 {backstop=true from=Home label=maintenance to=Brokerage}
   0367 2030-06 capitalGainRecognized          556.398578 info  longTermCapitalGain    c3 {spillover=false}
-  0368 2030-06 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0368 2030-06 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0369 2030-06 capitalGainRecognized          243.550208 info  longTermCapitalGain    c1 {spillover=false}
-  0370 2030-07 settlement                    -856.700015 cash  -                      c2 {from=Home label=property tax to=Brokerage}
+  0370 2030-07 settlement                    -856.700015 cash  -                      c2 {backstop=true from=Home label=property tax to=Brokerage}
   0371 2030-07 capitalGainRecognized          417.298933 info  longTermCapitalGain    c2 {spillover=false}
   0372 2030-07 assetGrowth                   5002.917713 cash  growth                 c-
-  0373 2030-07 settlement                   -1145.083825 cash  -                      c3 {from=Home label=maintenance to=Brokerage}
+  0373 2030-07 settlement                   -1145.083825 cash  -                      c3 {backstop=true from=Home label=maintenance to=Brokerage}
   0374 2030-07 capitalGainRecognized          560.615735 info  longTermCapitalGain    c3 {spillover=false}
-  0375 2030-07 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0375 2030-07 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0376 2030-07 capitalGainRecognized          244.792443 info  longTermCapitalGain    c1 {spillover=false}
-  0377 2030-08 settlement                    -858.812868 cash  -                      c2 {from=Home label=property tax to=Brokerage}
+  0377 2030-08 settlement                    -858.812868 cash  -                      c2 {backstop=true from=Home label=property tax to=Brokerage}
   0378 2030-08 capitalGainRecognized          420.461801 info  longTermCapitalGain    c2 {spillover=false}
   0379 2030-08 assetGrowth                   5015.081825 cash  growth                 c-
-  0380 2030-08 settlement                   -1147.907910 cash  -                      c3 {from=Home label=maintenance to=Brokerage}
+  0380 2030-08 settlement                   -1147.907910 cash  -                      c3 {backstop=true from=Home label=maintenance to=Brokerage}
   0381 2030-08 capitalGainRecognized          564.836494 info  longTermCapitalGain    c3 {spillover=false}
-  0382 2030-08 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0382 2030-08 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0383 2030-08 capitalGainRecognized          246.028662 info  longTermCapitalGain    c1 {spillover=false}
-  0384 2030-09 settlement                    -860.930933 cash  -                      c2 {from=Home label=property tax to=Brokerage}
+  0384 2030-09 settlement                    -860.930933 cash  -                      c2 {backstop=true from=Home label=property tax to=Brokerage}
   0385 2030-09 capitalGainRecognized          423.627370 info  longTermCapitalGain    c2 {spillover=false}
   0386 2030-09 assetGrowth                   5027.281089 cash  growth                 c-
-  0387 2030-09 settlement                   -1150.738961 cash  -                      c3 {from=Home label=maintenance to=Brokerage}
+  0387 2030-09 settlement                   -1150.738961 cash  -                      c3 {backstop=true from=Home label=maintenance to=Brokerage}
   0388 2030-09 capitalGainRecognized          569.060881 info  longTermCapitalGain    c3 {spillover=false}
-  0389 2030-09 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0389 2030-09 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0390 2030-09 capitalGainRecognized          247.258892 info  longTermCapitalGain    c1 {spillover=false}
-  0391 2030-10 settlement                    -863.054221 cash  -                      c2 {from=Home label=property tax to=Brokerage}
+  0391 2030-10 settlement                    -863.054221 cash  -                      c2 {backstop=true from=Home label=property tax to=Brokerage}
   0392 2030-10 capitalGainRecognized          426.795660 info  longTermCapitalGain    c2 {spillover=false}
   0393 2030-10 assetGrowth                   5039.515619 cash  growth                 c-
-  0394 2030-10 settlement                   -1153.576994 cash  -                      c3 {from=Home label=maintenance to=Brokerage}
+  0394 2030-10 settlement                   -1153.576994 cash  -                      c3 {backstop=true from=Home label=maintenance to=Brokerage}
   0395 2030-10 capitalGainRecognized          573.288920 info  longTermCapitalGain    c3 {spillover=false}
-  0396 2030-10 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0396 2030-10 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0397 2030-10 capitalGainRecognized          248.483163 info  longTermCapitalGain    c1 {spillover=false}
-  0398 2030-11 settlement                    -865.182745 cash  -                      c2 {from=Home label=property tax to=Brokerage}
+  0398 2030-11 settlement                    -865.182745 cash  -                      c2 {backstop=true from=Home label=property tax to=Brokerage}
   0399 2030-11 capitalGainRecognized          429.966690 info  longTermCapitalGain    c2 {spillover=false}
   0400 2030-11 assetGrowth                   5051.785525 cash  growth                 c-
-  0401 2030-11 settlement                   -1156.422026 cash  -                      c3 {from=Home label=maintenance to=Brokerage}
+  0401 2030-11 settlement                   -1156.422026 cash  -                      c3 {backstop=true from=Home label=maintenance to=Brokerage}
   0402 2030-11 capitalGainRecognized          577.520637 info  longTermCapitalGain    c3 {spillover=false}
-  0403 2030-11 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0403 2030-11 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0404 2030-11 capitalGainRecognized          249.701503 info  longTermCapitalGain    c1 {spillover=false}
-  0405 2030-12 settlement                    -867.316519 cash  -                      c2 {from=Home label=property tax to=Brokerage}
+  0405 2030-12 settlement                    -867.316519 cash  -                      c2 {backstop=true from=Home label=property tax to=Brokerage}
   0406 2030-12 capitalGainRecognized          433.140478 info  longTermCapitalGain    c2 {spillover=false}
   0407 2030-12 assetGrowth                   5064.090922 cash  growth                 c-
-  0408 2030-12 settlement                   -1159.274074 cash  -                      c3 {from=Home label=maintenance to=Brokerage}
+  0408 2030-12 settlement                   -1159.274074 cash  -                      c3 {backstop=true from=Home label=maintenance to=Brokerage}
   0409 2030-12 capitalGainRecognized          581.756057 info  longTermCapitalGain    c3 {spillover=false}
-  0410 2030-12 settlement                    -500.000000 cash  -                      c1 {from=Home label=insurance to=Brokerage}
+  0410 2030-12 settlement                    -500.000000 cash  -                      c1 {backstop=true from=Home label=insurance to=Brokerage}
   0411 2030-12 capitalGainRecognized          250.913942 info  longTermCapitalGain    c1 {spillover=false}
 
 [history] Brokerage
@@ -484,11 +484,11 @@
 
 [events] Checking
   0000 2026-01 interestIncome                   0.000000 cash  interestIncome         c-
-  0001 2026-01 settlement                   -1002.466270 cash  -                      c0 {from=Home label=maintenance to=Checking}
-  0002 2026-01 settlement                    -500.000000 cash  -                      c4 {from=Home label=insurance to=Checking}
-  0003 2026-02 settlement                    -751.849702 cash  -                      c5 {from=Home label=property tax to=Checking}
+  0001 2026-01 settlement                   -1002.466270 cash  -                      c0 {backstop=true from=Home label=maintenance to=Checking}
+  0002 2026-01 settlement                    -500.000000 cash  -                      c4 {backstop=true from=Home label=insurance to=Checking}
+  0003 2026-02 settlement                    -751.849702 cash  -                      c5 {backstop=true from=Home label=property tax to=Checking}
   0004 2026-02 interestIncome                   0.000000 cash  interestIncome         c-
-  0005 2026-02 settlement                    -745.684028 cash  -                      c0 {from=Home label=maintenance to=Checking}
+  0005 2026-02 settlement                    -745.684028 cash  -                      c0 {backstop=true from=Home label=maintenance to=Checking}
   0006 2026-03 interestIncome                   0.000000 cash  interestIncome         c-
   0007 2026-04 interestIncome                   0.000000 cash  interestIncome         c-
   0008 2026-05 interestIncome                   0.000000 cash  interestIncome         c-
