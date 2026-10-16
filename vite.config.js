@@ -22,4 +22,10 @@ export default defineConfig({
             ),
         },
     },
+    test: {
+        // Vitest's own two exclusions, plus agent worktrees: each one under
+        // .claude/worktrees/ is a whole copy of the repo, suites included, so
+        // without this a run here runs and counts every copy.
+        exclude: ['**/node_modules/**', '**/.git/**', '.claude/**'],
+    },
 });
