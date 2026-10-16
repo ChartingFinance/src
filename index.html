@@ -182,57 +182,87 @@
         }
         .pv-btn.active { background: #111827; color: white; }
 
-        /* ─── Pipeline Styles ─── */
+        /* ─── Flows — where the money went, and the rules in force ───
+           Color says what the money did: into the household's accounts, spent,
+           or paid in tax. The icon is the account group, as on the Assets
+           view; group colors are too close to tell apart as marks. The three
+           colors pass a color-vision check against each other and the card. */
+        .fl-view { --fl-accounts: #534AB7; --fl-spent: #E24B4A; --fl-tax: #EF9F27; container-type: inline-size; }
+        .fl-k-accounts { background: var(--fl-accounts); }
+        .fl-k-spent    { background: var(--fl-spent); }
+        .fl-k-tax      { background: var(--fl-tax); }
+        .fl-dot { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 6px; flex-shrink: 0; vertical-align: 0; }
+        .fl-icon { margin-right: 4px; }
+        .fl-head, .fl-rules-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .fl-rules-head { margin-top: 22px; }
+        .fl-title { font-size: 14px; font-weight: 700; color: #111827; }
+        .fl-period { font-size: 12px; font-weight: 600; color: #6b7280; font-variant-numeric: tabular-nums; }
+        .fl-toggle { margin-left: auto; display: inline-flex; border: 1px solid #e5e7eb; border-radius: 999px; overflow: hidden; font-size: 11.5px; }
+        .fl-toggle button { padding: 3px 12px; font-weight: 500; border: none; background: white; color: #6b7280; cursor: pointer; }
+        .fl-toggle button.active { background: #111827; color: white; }
+        .fl-empty { font-size: 12px; color: #9ca3af; padding: 16px 0; text-align: center; }
+        .fl-note { font-size: 11.5px; color: #6b7280; margin-top: 8px; line-height: 1.45; }
+        .fl-warn { color: #92400e; }
 
-        .pipeline-columns { display: flex; gap: 16px; width: 100%; }
-        .pipeline-source-column { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-        .pipeline-source-header {
-            display: flex; align-items: center; gap: 6px;
-            padding: 8px 10px; border-radius: 12px; user-select: none;
+        .fl-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+        .fl-tile { background: #f9fafb; border-radius: 12px; padding: 10px 12px; min-width: 0; }
+        .fl-tile-label { font-size: 10.5px; font-weight: 600; color: #6b7280; white-space: nowrap; display: flex; align-items: center; }
+        .fl-tile-val { font-size: 17px; font-weight: 700; color: #111827; font-variant-numeric: tabular-nums; margin-top: 2px; white-space: nowrap; }
+        .fl-tile-val.fl-neg { color: #db2777; }
+        .fl-tile-sub { font-size: 10.5px; color: #9ca3af; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        .fl-legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 11px; color: #6b7280; margin: 16px 0 6px; }
+        .fl-legend span { display: inline-flex; align-items: center; }
+        .fl-bars { display: flex; flex-direction: column; gap: 12px; }
+        .fl-source { display: grid; grid-template-columns: 150px minmax(0, 1fr) 84px; column-gap: 10px; row-gap: 5px; align-items: center; }
+        .fl-source-name { font-size: 12px; font-weight: 600; color: #111827; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .fl-source-total { font-size: 12px; font-weight: 600; color: #374151; text-align: right; font-variant-numeric: tabular-nums; }
+        .fl-track { height: 18px; }
+        .fl-bar { display: flex; gap: 2px; height: 100%; min-width: 4px; border-radius: 4px; overflow: hidden; }
+        .fl-seg { flex-basis: 0; min-width: 2px; transition: opacity 0.12s; }
+        .fl-chips { grid-column: 2 / 4; display: flex; flex-wrap: wrap; gap: 4px 12px; }
+        .fl-chip { display: inline-flex; align-items: center; gap: 0; font-size: 11px; color: #4b5563; white-space: nowrap; border-radius: 4px; padding: 0 2px; transition: opacity 0.12s, background 0.12s; }
+        .fl-chip b { font-weight: 600; color: #111827; margin-left: 5px; font-variant-numeric: tabular-nums; }
+        .fl-chip-note { color: #9ca3af; margin-left: 4px; }
+
+        /* Hover links a bar part and the rule that made it: the lit ones stay,
+           the rest step back. */
+        .fl-has-hot .fl-seg:not(.fl-hot), .fl-has-hot .fl-chip:not(.fl-hot) { opacity: 0.3; }
+        .fl-chip.fl-hot { background: #f3f4f6; }
+
+        .fl-phases { display: flex; gap: 6px; flex-wrap: wrap; }
+        .fl-pill { font-size: 11px; font-weight: 500; color: #6b7280; border: 1px solid #e5e7eb; border-radius: 999px; padding: 2px 10px; white-space: nowrap; }
+        .fl-pill.active { background: #111827; border-color: #111827; color: white; }
+        .fl-rules { margin-top: 8px; display: flex; flex-direction: column; }
+        .fl-rule { display: grid; grid-template-columns: 14px minmax(0, 1.3fr) minmax(0, 1fr) 84px; gap: 8px; align-items: center;
+                   font-size: 12px; color: #374151; padding: 6px 8px; border-radius: 8px; transition: background 0.12s, opacity 0.12s; }
+        .fl-rule:not(.fl-rule-head):not(.fl-auto) { cursor: pointer; }
+        .fl-rule:not(.fl-rule-head):hover, .fl-rule.fl-hot { background: #f3f4f6; }
+        .fl-rule-head { font-size: 10.5px; font-weight: 600; color: #9ca3af; padding-top: 0; padding-bottom: 2px; }
+        .fl-route { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; color: #111827; }
+        .fl-arrow { color: #9ca3af; margin: 0 6px; }
+        .fl-setting { color: #6b7280; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .fl-phase-tag { font-size: 10px; font-weight: 600; color: #9ca3af; margin-left: 4px; }
+        .fl-moved { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+        .fl-zero { opacity: 0.45; }
+        .fl-has-hot .fl-rule:not(.fl-hot):not(.fl-rule-head) { opacity: 0.45; }
+        .fl-subhead { font-size: 10.5px; font-weight: 600; color: #9ca3af; margin: 12px 8px 2px; }
+        .fl-more { background: none; border: none; padding: 6px 8px; text-align: left; font: inherit; font-size: 11.5px; color: #6b7280; cursor: pointer; }
+        .fl-more:hover { color: #111827; }
+        .fl-auto .fl-route { font-weight: 500; color: #374151; }
+
+        /* Narrow card: tiles two by two, each bar's name above it. */
+        @container (max-width: 640px) {
+            .fl-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .fl-source { grid-template-columns: minmax(0, 1fr) 84px; }
+            .fl-source-name { grid-column: 1 / 2; }
+            .fl-source-total { grid-column: 2 / 3; grid-row: 1; }
+            .fl-track { grid-column: 1 / -1; }
+            .fl-chips { grid-column: 1 / -1; }
+            .fl-rule { grid-template-columns: 14px minmax(0, 1fr) 72px; }
+            .fl-setting { grid-column: 2 / 3; grid-row: 2; }
+            .fl-rule-head .fl-setting, .fl-rule-head > span:nth-child(3) { display: none; }
         }
-        .pipeline-source-emoji { font-size: 18px; line-height: 1; }
-        .pipeline-source-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; flex: 1; white-space: nowrap; }
-        .pipeline-source-total { font-size: 12px; font-weight: 600; white-space: nowrap; }
-
-        .pipeline-card-list { display: flex; flex-direction: column; gap: 8px; padding: 8px 0 0 0; }
-
-        .pipeline-card {
-            background: white; border: 1px solid #e5e7eb; border-radius: 10px;
-            overflow: hidden; transition: box-shadow 0.2s;
-        }
-        .pipeline-card:hover { box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
-        .pipeline-card-header {
-            display: flex; align-items: center; gap: 6px;
-            padding: 8px 10px; cursor: pointer; user-select: none;
-        }
-        .pipeline-card-emoji { font-size: 16px; line-height: 1; }
-        .pipeline-card-label { font-size: 11px; font-weight: 600; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .pipeline-card-total { font-size: 12px; font-weight: 600; white-space: nowrap; color: #374151; }
-        .pipeline-card-chevron { font-size: 10px; transition: transform 0.2s; color: #9ca3af; }
-        .pipeline-card-chevron.expanded { transform: rotate(90deg); }
-
-        .pipeline-routes { padding: 0 10px 8px; display: flex; flex-direction: column; gap: 4px; }
-        .pipeline-routes.collapsed { height: 0; overflow: hidden; padding: 0; }
-
-        .pipeline-route {
-            display: flex; align-items: center; gap: 4px;
-            font-size: 11px; color: #4b5563; padding: 2px 0;
-        }
-        .pipeline-route-source { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .pipeline-route-arrow { color: #9ca3af; flex-shrink: 0; }
-        .pipeline-route-target { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .pipeline-route-pct { font-size: 10px; color: #9ca3af; flex-shrink: 0; min-width: 28px; text-align: right; }
-        .pipeline-route-amount { font-weight: 600; flex-shrink: 0; min-width: 40px; text-align: right; }
-
-        .pipeline-route-system { font-style: italic; }
-        .pipeline-route-system .pipeline-route-pct { font-style: normal; }
-        .pipeline-route-inactive { opacity: 0.4; }
-
-        .pipeline-inactive { opacity: 0.5; }
-        .pipeline-warning { border-color: #f59e0b; border-width: 2px; }
-        .pipeline-warning-text { font-size: 11px; color: #92400e; padding: 0 10px 6px; }
-        .pipeline-route-clickable { cursor: pointer; border-radius: 4px; padding: 2px 4px; margin: 0 -4px; transition: background 0.15s; }
-        .pipeline-route-clickable:hover { background: #f3f4f6; }
 
         /* ─── Sankey Diagram ─── */
         .sankey-container { padding: 8px 0; }
@@ -1002,7 +1032,7 @@
         <div class="glass-card p-6 relative flex flex-col flex-grow min-h-0">
             <plan-issues-panel id="planIssuesPanel"></plan-issues-panel>
             <asset-list class="flex-grow min-h-0" id="finplanAssetList"></asset-list>
-            <pipeline-list class="flex-grow min-h-0" id="finplanPipelineList" style="display:none"></pipeline-list>
+            <flows-view class="flex-grow min-h-0" id="finplanFlows" style="display:none"></flows-view>
             <sankey-diagram class="flex-grow min-h-0" id="finplanSankey" style="display:none"></sankey-diagram>
             <div class="section-footer">
                 <button class="ai-fab" data-section="portfolio" title="AI Summary">⚡</button>

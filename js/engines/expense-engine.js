@@ -155,6 +155,7 @@ export class ExpenseEngine {
                 let preFlight = new FundTransferOneSided(null, remaining);
                 preFlight.fromModel = modelAsset;
                 preFlight.toModel = fundingSource;
+                preFlight.backstop = true;   // said on its settlement: no rule chose this account
                 preFlights.push(preFlight);
             } else {
                 FundTransfer.reportUnfunded(modelAsset, remaining, 'mortgage payment', ShortfallOrigin.STANDALONE);
@@ -165,7 +166,8 @@ export class ExpenseEngine {
         // balance (principal) and recorded interest. Only debit the funding source.
         for (const oneSided of preFlights) {
             const event = { type: EventType.SETTLEMENT, data: {
-                from: modelAsset.displayName, to: oneSided.toModel.displayName, label: 'monthly' } };
+                from: modelAsset.displayName, to: oneSided.toModel.displayName, label: 'monthly',
+                ...(oneSided.backstop ? { backstop: true } : {}) } };
             const settled = FundTransfer.settleOneSided(oneSided, event, this.modelAssets);
             this.monthly.recordTransfer(oneSided.toModel.instrument, settled.supplied, settled.realizedGain);
             if (settled.spillover.amount > 0 && settled.spilloverInstrument) {
@@ -217,6 +219,7 @@ export class ExpenseEngine {
                 let preFlight = new FundTransferOneSided(null, remaining);
                 preFlight.fromModel = modelAsset;
                 preFlight.toModel = fundingSource;
+                preFlight.backstop = true;   // said on its settlement: no rule chose this account
                 preFlights.push(preFlight);
             } else {
                 FundTransfer.reportUnfunded(modelAsset, remaining, label, ShortfallOrigin.STANDALONE);
@@ -225,7 +228,8 @@ export class ExpenseEngine {
 
         for (const oneSided of preFlights) {
             const event = { type: EventType.SETTLEMENT, data: {
-                from: modelAsset.displayName, to: oneSided.toModel.displayName, label } };
+                from: modelAsset.displayName, to: oneSided.toModel.displayName, label,
+                ...(oneSided.backstop ? { backstop: true } : {}) } };
             const settled = FundTransfer.settleOneSided(oneSided, event, this.modelAssets);
             this.monthly.recordTransfer(oneSided.toModel.instrument, settled.supplied, settled.realizedGain);
             if (settled.spillover.amount > 0 && settled.spilloverInstrument) {

@@ -31270,9 +31270,9 @@ var EventType = Object.freeze({
   // IRC §1411; data: { nii, magi, threshold }
   // ── Movement ──
   TRANSFER: "transfer",
-  // data: { from, to, cadence }
+  // data: { from, to, cadence, system? }
   SETTLEMENT: "settlement",
-  // one-sided draw; data: { from, to, label }
+  // one-sided draw; data: { from, to, label, backstop? }
   SPILLOVER: "spillover",
   // data: { depleted }
   GROSS_UP: "grossUp",
@@ -32494,7 +32494,9 @@ function withTrace(kind, label, dateInt, fn) {
     id: ++_nextId,
     kind,
     label,
-    dateInt: dateInt ?? parent?.dateInt ?? null,
+    // A copy: callers pass the chronometer's clock, which moves on, and a
+    // scope that held it would read the run's last month.
+    dateInt: dateInt?.copy ? dateInt.copy() : dateInt ?? parent?.dateInt ?? null,
     parentId: parent ? parent.id : null,
     depth: parent ? parent.depth + 1 : 0
   };
@@ -32529,9 +32531,18 @@ function resetTraces() {
 function assertNoOpenScopes() {
   return _stack.length === 0;
 }
+var scopeIndexes = /* @__PURE__ */ new WeakMap();
+function indexOf(scopes) {
+  let index = scopeIndexes.get(scopes);
+  if (!index || index.size !== scopes.length) {
+    index = new Map(scopes.map((s) => [s.id, s]));
+    scopeIndexes.set(scopes, index);
+  }
+  return index;
+}
 function scopeById(id, scopes) {
   if (id == null || !scopes) return null;
-  return scopes.find((s) => s.id === id) ?? null;
+  return indexOf(scopes).get(id) ?? null;
 }
 function chainFor(traceId, scopes) {
   const out = [];
@@ -32654,6 +32665,7 @@ var FundTransfer = class _FundTransfer {
     ft.toModel = toModel;
     ft.approvedAmount = amount.copy();
     ft._allModels = allModels;
+    ft.system = true;
     return ft;
   }
   // ── Account Resolution ─────────────────────────────────────────
@@ -32852,7 +32864,8 @@ var FundTransfer = class _FundTransfer {
       data: {
         from: this.fromModel?.displayName ?? "?",
         to: this.toDisplayName,
-        cadence: useClosePercent ? "on close" : "monthly"
+        cadence: useClosePercent ? "on close" : "monthly",
+        ...this.system ? { system: true } : {}
       }
     };
     const memo = renderNote(event);
@@ -34594,6 +34607,7 @@ var ExpenseEngine = class {
         let preFlight = new FundTransferOneSided(null, remaining);
         preFlight.fromModel = modelAsset;
         preFlight.toModel = fundingSource;
+        preFlight.backstop = true;
         preFlights.push(preFlight);
       } else {
         FundTransfer.reportUnfunded(modelAsset, remaining, "mortgage payment", ShortfallOrigin.STANDALONE);
@@ -34603,7 +34617,8 @@ var ExpenseEngine = class {
       const event = { type: EventType.SETTLEMENT, data: {
         from: modelAsset.displayName,
         to: oneSided.toModel.displayName,
-        label: "monthly"
+        label: "monthly",
+        ...oneSided.backstop ? { backstop: true } : {}
       } };
       const settled = FundTransfer.settleOneSided(oneSided, event, this.modelAssets);
       this.monthly.recordTransfer(oneSided.toModel.instrument, settled.supplied, settled.realizedGain);
@@ -34651,6 +34666,7 @@ var ExpenseEngine = class {
         let preFlight = new FundTransferOneSided(null, remaining);
         preFlight.fromModel = modelAsset;
         preFlight.toModel = fundingSource;
+        preFlight.backstop = true;
         preFlights.push(preFlight);
       } else {
         FundTransfer.reportUnfunded(modelAsset, remaining, label, ShortfallOrigin.STANDALONE);
@@ -34660,7 +34676,8 @@ var ExpenseEngine = class {
       const event = { type: EventType.SETTLEMENT, data: {
         from: modelAsset.displayName,
         to: oneSided.toModel.displayName,
-        label
+        label,
+        ...oneSided.backstop ? { backstop: true } : {}
       } };
       const settled = FundTransfer.settleOneSided(oneSided, event, this.modelAssets);
       this.monthly.recordTransfer(oneSided.toModel.instrument, settled.supplied, settled.realizedGain);
@@ -35019,6 +35036,7 @@ var TaxEngine = class {
         let preFlight = new FundTransferOneSided(null, remaining);
         preFlight.fromModel = modelAsset;
         preFlight.toModel = fundingSource;
+        preFlight.backstop = true;
         preFlights.push(preFlight);
       } else {
         FundTransfer.reportUnfunded(modelAsset, remaining, "property tax", ShortfallOrigin.STANDALONE);
@@ -35028,7 +35046,8 @@ var TaxEngine = class {
       const event = { type: EventType.SETTLEMENT, data: {
         from: modelAsset.displayName,
         to: oneSided.toModel.displayName,
-        label: "property tax"
+        label: "property tax",
+        ...oneSided.backstop ? { backstop: true } : {}
       } };
       const settled = FundTransfer.settleOneSided(oneSided, event, this.modelAssets);
       this.monthly.recordTransfer(oneSided.toModel.instrument, settled.supplied, settled.realizedGain);
@@ -35812,6 +35831,7 @@ var Portfolio = class _Portfolio {
       if (event.applied) continue;
       const trigger = event.triggerDateInt;
       if (trigger.year === currentDateInt.year && trigger.month === currentDateInt.month) {
+        for (const modelAsset of this.modelAssets) modelAsset.handleCurrentDateInt(currentDateInt);
         withTrace(
           TraceKind.MONTH,
           `Life event: ${event.displayName}`,

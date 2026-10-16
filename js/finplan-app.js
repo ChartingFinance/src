@@ -50,7 +50,7 @@ import {
 
 import { AssetGroup, classifyAssetGroup, GROUP_ORDER_ACCUMULATE, GROUP_ORDER_RETIRE, getAssetChartColor, getGroupMetrics } from './asset-groups.js';
 import { buildPipelines } from './flow-pipelines.js';
-import './components/pipeline-list.js';
+import './components/flows-view.js';
 // sankey-diagram deliberately NOT imported: the Sankey view toggle is
 // disabled in index.html (its <sankey-diagram> tag stays an inert unknown
 // element). Re-add the import when the feature ships.
@@ -268,7 +268,6 @@ let expandedGroups      = new Set([
     AssetGroup.INCOME, AssetGroup.CAPITAL, AssetGroup.REAL_ESTATE,
     AssetGroup.RETIREMENT, AssetGroup.EXPENSES, AssetGroup.TAXES,
 ]);
-let expandedPipelines   = new Set();
 // State that calculate() touches. Declared up here because the init code below
 // calls calculate() during module evaluation, and a `let` declared further down
 // would still be uninitialized then (a ReferenceError that stops the app).
@@ -294,7 +293,7 @@ let maximizerBias = 100;
 let mcModule = null;         // ./monte-carlo.js
 let guardrailsModule = null; // ./guardrails.js
 
-const pipelineList      = document.getElementById('finplanPipelineList');
+const flowsView         = document.getElementById('finplanFlows');
 const sankeyDiagram     = document.getElementById('finplanSankey');
 
 function isRetiredPhase() {
@@ -708,16 +707,12 @@ portfolioViewToggle.addEventListener('click', (ev) => {
     });
     // Hide all, then show the active view
     assetList.style.display = 'none';
-    pipelineList.style.display = 'none';
+    flowsView.style.display = 'none';
     sankeyDiagram.style.display = 'none';
 
     if (appState.portfolioView === 'flows') {
-        pipelineList.style.display = '';
-        refreshPipelines();
-        if (expandedPipelines.size === 0 && pipelineList.pipelines?.length > 0) {
-            for (const p of pipelineList.pipelines) expandedPipelines.add(p.key);
-            pipelineList.expandedPipelines = new Set(expandedPipelines);
-        }
+        flowsView.style.display = '';
+        refreshFlows();
     } else if (appState.portfolioView === 'sankey') {
         sankeyDiagram.style.display = '';
         refreshSankey();
@@ -1086,13 +1081,11 @@ function syncAssetListToDate(year, month) {
     }
 }
 
-function refreshPipelines() {
+function refreshFlows() {
     if (!appState.portfolio || appState.portfolioView !== 'flows') return;
-    const idx = appState.portfolio.firstDateInt
-        ? DateInt.diffMonths(appState.portfolio.firstDateInt, DateInt.from(store.selectedYear, store.selectedMonth))
-        : -1;
-    pipelineList.pipelines = buildPipelines(appState.portfolio, idx, isRetiredPhase());
-    pipelineList.expandedPipelines = new Set(expandedPipelines);
+    flowsView.portfolio = appState.portfolio;
+    flowsView.selectedYear = store.selectedYear;
+    flowsView.selectedMonth = store.selectedMonth;
 }
 
 function refreshSankey() {
@@ -1118,7 +1111,7 @@ store.addEventListener('date-change', (e) => {
     }
     updateProjectionCursor();
     syncAssetListToDate(e.detail.year, e.detail.month);
-    refreshPipelines();
+    refreshFlows();
     refreshSankey();
     if (spreadsheetView) spreadsheetView.scrollToDate(e.detail.year, e.detail.month);
     if (reportView) reportView.scrollToDate(e.detail.year, e.detail.month);
@@ -1400,11 +1393,7 @@ function calculate() {
 
     // Update flows/sankey views
     if (appState.portfolioView === 'flows') {
-        refreshPipelines();
-        if (expandedPipelines.size === 0 && pipelineList.pipelines?.length > 0) {
-            for (const p of pipelineList.pipelines) expandedPipelines.add(p.key);
-            pipelineList.expandedPipelines = new Set(expandedPipelines);
-        }
+        refreshFlows();
     } else if (appState.portfolioView === 'sankey') {
         refreshSankey();
     }
@@ -1879,15 +1868,8 @@ function connectAssetListEvents() {
         setTimeout(() => { updateMetricDropdown(); rebuildMicroChart(); }, 0);
     });
 
-    pipelineList.addEventListener('pipeline-toggle', (ev) => {
-        const key = ev.detail.pipeline;
-        if (expandedPipelines.has(key)) expandedPipelines.delete(key);
-        else expandedPipelines.add(key);
-        pipelineList.expandedPipelines = new Set(expandedPipelines);
-    });
-
-    pipelineList.addEventListener('edit-transfers', (ev) => {
-        showPopupTransfers(ev.detail.displayName);
+    flowsView.addEventListener('edit-transfers', (ev) => {
+        showPopupTransfers(ev.detail.displayName, phaseSetting(ev.detail.phase, ev.detail.displayName));
     });
 }
 
@@ -1994,7 +1976,7 @@ function connectFundingModal() {
 function connectTransferModal() {
     transferModal.addEventListener('save-transfers', (ev) => {
         const { displayName, fundTransfers } = ev.detail;
-        const activePhase = appState.lifeEvents[appState.phaseIndex] ?? appState.lifeEvents[0];
+        const activePhase = transferPhase ?? appState.lifeEvents[appState.phaseIndex] ?? appState.lifeEvents[0];
         if (activePhase) {
             activePhase.phaseTransfers[displayName] = fundTransfers.map(ft => ft.toJSON());
         }
@@ -2002,8 +1984,25 @@ function connectTransferModal() {
     });
 }
 
-function showPopupTransfers(currentDisplayName) {
-    const activePhase = appState.lifeEvents[appState.phaseIndex] ?? appState.lifeEvents[0];
+/** The life event the open transfer modal edits: saved back to the one it showed. */
+let transferPhase = null;
+
+/**
+ * The life event that set an asset's rules as they were in force in a phase:
+ * that phase, or, when it lists no transfers for the asset, the latest earlier
+ * one that does. A phase that leaves an asset out keeps its earlier rules.
+ * Null when the phase is not found.
+ */
+function phaseSetting(phaseName, displayName) {
+    let i = appState.lifeEvents.findIndex((e) => e.displayName === phaseName);
+    if (i < 0) return null;
+    while (i > 0 && !(displayName in (appState.lifeEvents[i].phaseTransfers ?? {}))) i--;
+    return appState.lifeEvents[i];
+}
+
+function showPopupTransfers(currentDisplayName, phase = null) {
+    const activePhase = phase ?? appState.lifeEvents[appState.phaseIndex] ?? appState.lifeEvents[0];
+    transferPhase = activePhase;
     transferModal.currentDisplayName = currentDisplayName;
     transferModal.modelAssets = assetList.modelAssets || [];
     transferModal.phaseTransfers = activePhase?.phaseTransfers ?? {};

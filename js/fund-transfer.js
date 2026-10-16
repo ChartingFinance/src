@@ -139,6 +139,10 @@ export class FundTransfer {
     ft.toModel = toModel;
     ft.approvedAmount = amount.copy();
     ft._allModels = allModels;
+    // Marked on its events, so a reader can tell a movement the engine chose
+    // (leftover take-home, a required distribution, sale proceeds) from one a
+    // rule made between the same two accounts.
+    ft.system = true;
     return ft;
   }
 
@@ -376,6 +380,7 @@ export class FundTransfer {
         from: this.fromModel?.displayName ?? '?',
         to: this.toDisplayName,
         cadence: useClosePercent ? 'on close' : 'monthly',
+        ...(this.system ? { system: true } : {}),
       },
     };
     const memo = renderNote(event);

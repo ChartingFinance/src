@@ -82,6 +82,9 @@ Side-by-side in a flex row with `gap: 32px` and fixed height (360px).
 - Section heading with briefcase emoji
 - "Viewing: [Month] [Year]" badge centered at top of the glass-card
 - `<asset-list>` component with grouped assets (collapsible group headers)
+- **Assets | Flows** toggle. Flows is `<flows-view>`, two parts:
+  - **Where the money went**: one stacked bar per source of money over the cursor's month or its year (Month | Year toggle), from the ledger (`moneyFlows` in `money-flows.js`). Parts colored by what the money did (into accounts #534AB7, spent #E24B4A, tax #EF9F27; validated for color vision) with the destination's group emoji. Tiles: Came in · Spent · Tax paid · Into your accounts, which add up: Month & Year Details' Income received, Expenses and Taxes to the dollar, less income with nowhere to go, unpaid bills (listed beside the bars) and property tax accrued but not yet drawn. Each bar is rounded once and its parts add up to it. Events count in the month their causal chain began (`bookedMonthIndex`), as the figures book them.
+  - **Rules in force**: the phase's transfer rules (`rulesInForce`, from `Portfolio.phaseRules`), each setting beside what it moved, a rule's close percentage as its own row; rules that moved nothing folded; then "Moved automatically" (tax withheld, estimated tax, RMDs, leftover pay, bills no rule covers, spillovers, sale proceeds). Every bar part lands in exactly one row; hover or focus links a part and its row both ways; clicking a rule opens its transfers in the phase that set it.
 - Floating black circle "+" button (bottom-right) for adding assets
 - Independent vertical scroll within container
 

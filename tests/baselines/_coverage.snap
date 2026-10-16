@@ -107,6 +107,37 @@
     taxProvision
     taxTrueUp
     transfer
+  home-bought-with-a-down-payment:
+    assetGrowth
+    expenseInflation
+    ficaWithholding
+    grossUp
+    incomeGrowth
+    incomeTaxWithholding
+    interestIncome
+    mortgageInterest
+    mortgagePrincipal
+    propertyTax
+    propertyTaxEscrow
+    settlement
+    taxTrueUp
+    transfer
+  home-sold-by-its-rule:
+    assetGrowth
+    capitalGainRecognized
+    capitalGainsTax
+    expenseInflation
+    ficaWithholding
+    grossUp
+    incomeGrowth
+    incomeTaxWithholding
+    interestIncome
+    niitAssessed
+    propertyTax
+    propertyTaxEscrow
+    settlement
+    taxTrueUp
+    transfer
   housing-carrying-costs:
     assetGrowth
     capitalGainRecognized
@@ -119,6 +150,29 @@
     propertyTaxEscrow
     settlement
     spillover
+  housing-rules-cover-half:
+    assetGrowth
+    ficaWithholding
+    incomeGrowth
+    incomeTaxWithholding
+    interestIncome
+    maintenance
+    mortgageInterest
+    mortgagePrincipal
+    propertyTax
+    propertyTaxEscrow
+    settlement
+    taxTrueUp
+    transfer
+  ira-drained-by-a-bill:
+    assetGrowth
+    capitalGainRecognized
+    expenseInflation
+    incomeGrowth
+    incomeTaxWithholding
+    spillover
+    taxTrueUp
+    transfer
   mfj-high-earner-ltcg:
     assetGrowth
     capitalGainRecognized
@@ -172,6 +226,18 @@
     incomeGrowth
     incomeTaxWithholding
     interestIncome
+    taxTrueUp
+    transfer
+  mortgage-paid-and-prepaid:
+    expenseInflation
+    ficaWithholding
+    grossUp
+    incomeGrowth
+    incomeTaxWithholding
+    interestIncome
+    mortgageInterest
+    mortgagePrincipal
+    settlement
     taxTrueUp
     transfer
   niit-from-a-deferred-draw:
@@ -310,6 +376,19 @@
     interestIncome
     taxTrueUp
     transfer
+  retirement-sells-a-rental:
+    assetGrowth
+    capitalGainRecognized
+    capitalGainsTax
+    expenseInflation
+    ficaWithholding
+    incomeGrowth
+    incomeTaxWithholding
+    interestIncome
+    niitAssessed
+    propertyTax
+    taxTrueUp
+    transfer
   settlement-exhausts-fallback:
     assetGrowth
     capitalGainRecognized
@@ -389,6 +468,13 @@
     interestIncome
     spillover
     taxTrueUp
+    transfer
+    unfunded
+  unpayable-annual-true-up:
+    assetGrowth
+    expenseInflation
+    incomeTaxWithholding
+    interestIncome
     transfer
     unfunded
   withholding-exceeds-paycheck:

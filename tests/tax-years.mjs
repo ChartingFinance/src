@@ -24,10 +24,10 @@
  *                    that move it: a monthly transfer and a close.
  *   OWED AND PAID    each year owes FICA plus the true-up's liability plus
  *                    NIIT. The settlement fields equal what the next year's
- *                    package shows, and where the settlement was paid in full
- *                    (every corpus year), owed equals withheld plus settled.
- *                    Where nothing can pay the bill, the record still says what
- *                    was owed.
+ *                    package shows, and owed equals withheld plus settled plus
+ *                    what January could not collect: where nothing can pay the
+ *                    bill (unpayable-annual-true-up), the record still says
+ *                    what was owed.
  *   RE-RUNS         a second run of one Portfolio starts a fresh list, and
  *                    copy() carries the list.
  *
@@ -60,6 +60,7 @@ const { simConfigFromGlobals } = G;
 const { Portfolio } = await import('../js/portfolio.js');
 const { chronometer_run } = await import('../js/chronometer.js');
 const { EventType } = await import('../js/sim-event.js');
+const { chainFor, TraceKind } = await import('../js/trace.js');
 const { MagiPurpose } = await import('../js/tax-basis.js');
 const { runPlan } = await import('../js/mcp/run-plan.js');
 const { SNAPSHOT_FIXTURES } = await import('./tools/fixtures.mjs');
@@ -109,7 +110,7 @@ console.log('\n── One record per settled year, across the corpus ──\n');
 let niitEvents = 0;
 let niitEventsWithUntaxedSS = 0;
 let recordsWithoutNIIT = 0;
-const reached = { bill: 0, refund: 0, fica: 0, capitalGainsTax: 0 };
+const reached = { bill: 0, refund: 0, fica: 0, capitalGainsTax: 0, unpaid: 0 };
 
 for (const fixture of SNAPSHOT_FIXTURES) {
   const p = await runFixture(fixture);
@@ -155,6 +156,13 @@ for (const fixture of SNAPSHOT_FIXTURES) {
   const packageOf = new Map(p.generatedReports
     .filter((r) => r.type === 'yearly').map((r) => [r.coversYear, r.pkg]));
 
+  // What the annual pass for a year could not collect: its unfunded amounts,
+  // stamped December of that year like the rest of the pass.
+  const unpaidSettlement = (year) => p.modelAssets.flatMap((a) => a.events)
+    .filter((e) => e.type === EventType.UNFUNDED && e.dateInt.year === year && e.dateInt.month === 12
+      && chainFor(e.traceId, p.traceScopes).some((s) => s.kind === TraceKind.TAX_TRUE_UP))
+    .reduce((t, e) => t + Math.abs(e.amount.amount), 0);
+
   await check(`${fixture.name}: each year owed what it withheld plus what January settled`, () => {
     for (const t of p.taxYears) {
       for (const v of [t.fica, t.incomeTax, t.capitalGainsTax, t.niit]) {
@@ -169,10 +177,12 @@ for (const fixture of SNAPSHOT_FIXTURES) {
       near(t.settledNIIT, next.niit.amount, `${t.year} NIIT settled`, 0.01);
       near(t.niit, -t.settledNIIT, `${t.year} NIIT owed vs paid`, 0.01);
 
-      // Every year in the corpus settles in full, so owed equals paid. The
-      // true-up ignores a difference under $1, hence the tolerance.
+      // Owed is what was paid, and what could not be. The true-up ignores a
+      // difference under $1, hence the tolerance.
       const withheld = -(own.incomeTax.amount + own.estimatedTaxes.amount + own.longTermCapitalGainsTax.amount);
-      near(t.federalTax, t.fica + withheld - t.settledTrueUp - t.settledNIIT, `${t.year} owed vs paid`, 1);
+      const unpaid = unpaidSettlement(t.year);
+      near(t.federalTax, t.fica + withheld - t.settledTrueUp - t.settledNIIT + unpaid, `${t.year} owed vs paid`, 1);
+      if (unpaid > 1) reached.unpaid++;
 
       if (t.settledTrueUp < -1) reached.bill++;
       if (t.settledTrueUp > 1) reached.refund++;
