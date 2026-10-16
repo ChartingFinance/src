@@ -812,6 +812,126 @@ const adversarialFixtures = [
       ].map(ModelAsset.fromJSON),
     }),
   },
+  {
+    name: 'ira-drained-by-a-bill',
+    kind: 'adversarial',
+    reaches:
+      'an expense rule that drains an IRA. In April 2026, the month it empties, ' +
+      'the withholding on its last distribution is a $0 debit on the empty IRA ' +
+      'plus a SPILLOVER from the brokerage. A reader that skips $0 draws cannot ' +
+      'say what that spillover paid; the Flows view threw there.',
+    config: { startAge: 70, retirementAge: 65, filingAs: 'Single' },
+    build: () => ({
+      assets: [
+        benefit('Social Security', 2000),
+        deferred('ira', 'IRA', 20000),
+        equity('Brokerage', 500000, 400000),
+        expense('Living', 5000, { fundTransfers: [xfer('IRA', 100)] }),
+      ].map(ModelAsset.fromJSON),
+    }),
+  },
+  {
+    name: 'home-sold-by-its-rule',
+    kind: 'adversarial',
+    reaches:
+      'one rule with both halves: the home pays its property costs from the ' +
+      'brokerage monthly, and sends its sale to the brokerage at close (it ' +
+      'finishes in June 2027 and closes in July). The halves move money ' +
+      'opposite ways, into the home and out of it; read as one direction, the ' +
+      'sale proceeds went unclaimed.',
+    config: { startAge: 50, retirementAge: 65 },
+    build: () => ({
+      assets: [
+        salary('Salary', 10000),
+        equity('Brokerage', 100000, 80000),
+        bank('Checking', 20000),
+        by({ year: 2027, month: 6 }, home('Home', 500000, 400000, { annualReturnRate: { rate: 0.03 },
+          annualTaxRate: { rate: 0.012 }, fundTransfers: [xfer('Brokerage', 100, 100)] })),
+        expense('Living', 4000),
+      ].map(ModelAsset.fromJSON),
+    }),
+  },
+  {
+    name: 'housing-rules-cover-half',
+    kind: 'adversarial',
+    reaches:
+      'mortgage and property rules that each cover 50% from Checking, which is ' +
+      'also the backstop that pays the other 50%. The rule\'s settlement and the ' +
+      'backstop\'s name the same accounts and label, so only the backstop marker ' +
+      'on the event tells them apart.',
+    config: { startAge: 50, retirementAge: 65 },
+    build: () => ({
+      assets: [
+        salary('Salary', 9000),
+        home('Home', 500000, 500000, { annualTaxRate: { rate: 0.012 },
+          annualMaintenanceRate: { rate: 0.01 }, fundTransfers: [xfer('Checking', 50)] }),
+        asset(DEC)({ instrument: 'mortgage', displayName: 'Mortgage',
+          startCurrency: { amount: -300000 }, startBasisCurrency: { amount: 0 },
+          annualReturnRate: { rate: 0.065 }, monthsRemaining: 360,
+          fundTransfers: [xfer('Checking', 50)] }),
+        bank('Checking', 100000),
+      ].map(ModelAsset.fromJSON),
+    }),
+  },
+  {
+    name: 'mortgage-paid-and-prepaid',
+    kind: 'adversarial',
+    reaches:
+      'Checking pays the mortgage by the mortgage\'s rule AND prepays it by its ' +
+      'own: two rules between the same two accounts, one paying a bill, the ' +
+      'other moving money into a (negative) account.',
+    config: { startAge: 50, retirementAge: 65 },
+    build: () => ({
+      assets: [
+        salary('Salary', 12000),
+        asset(DEC)({ instrument: 'mortgage', displayName: 'Mortgage',
+          startCurrency: { amount: -300000 }, startBasisCurrency: { amount: 0 },
+          annualReturnRate: { rate: 0.065 }, monthsRemaining: 360,
+          fundTransfers: [xfer('Checking', 100)] }),
+        bank('Checking', 200000, { fundTransfers: [xfer('Mortgage', 1)] }),
+        expense('Living', 4000),
+      ].map(ModelAsset.fromJSON),
+    }),
+  },
+  {
+    name: 'unpayable-annual-true-up',
+    kind: 'adversarial',
+    reaches:
+      'an annual true-up nothing can pay: every dollar is in an IRA, which the ' +
+      'backstop never draws, and Checking is empty. The unpaid bill is an ' +
+      'annual-pass event, stamped December and booked in January, so a reader ' +
+      'dating events by their own month put it in the wrong year.',
+    config: { startAge: 70, retirementAge: 65, filingAs: 'Single' },
+    build: () => ({
+      assets: [
+        deferred('ira', 'IRA', 1500000),
+        bank('Checking', 0),
+        expense('Living', 12000, { fundTransfers: [xfer('IRA', 100)] }),
+      ].map(ModelAsset.fromJSON),
+    }),
+  },
+  {
+    name: 'home-bought-with-a-down-payment',
+    kind: 'adversarial',
+    reaches:
+      'a home bought in April 2027, 20% down from the brokerage: the debit-only ' +
+      'funding TRANSFER (cadence "funding") no other fixture emits.',
+    config: { startAge: 40, retirementAge: 65 },
+    build: () => ({
+      assets: [
+        salary('Salary', 12000),
+        equity('Brokerage', 300000, 200000),
+        bank('Checking', 20000),
+        home('House', 500000, 500000, { startDateInt: { year: 2027, month: 4 },
+          annualTaxRate: { rate: 0.012 },
+          fundingConfig: { purchaseType: 'mortgage', sourceDisplayName: 'Brokerage', downPaymentPercent: 20 } }),
+        asset(DEC)({ instrument: 'mortgage', displayName: 'Mortgage', startDateInt: { year: 2027, month: 4 },
+          startCurrency: { amount: -400000 }, startBasisCurrency: { amount: 0 },
+          annualReturnRate: { rate: 0.065 }, monthsRemaining: 360 }),
+        expense('Living', 4000),
+      ].map(ModelAsset.fromJSON),
+    }),
+  },
 ];
 
 export const SNAPSHOT_FIXTURES = [...realFixtures, ...adversarialFixtures];

@@ -72,7 +72,9 @@ export function withTrace(kind, label, dateInt, fn) {
         id: ++_nextId,
         kind,
         label,
-        dateInt: dateInt ?? parent?.dateInt ?? null,
+        // A copy: callers pass the chronometer's clock, which moves on, and a
+        // scope that held it would read the run's last month.
+        dateInt: dateInt?.copy ? dateInt.copy() : (dateInt ?? parent?.dateInt ?? null),
         parentId: parent ? parent.id : null,
         depth: parent ? parent.depth + 1 : 0,
     };
@@ -148,10 +150,26 @@ export function assertNoOpenScopes() {
 // ambient stack is for recording only: the next run calls resetTraces(), and
 // `calculate()` re-runs on every edit.
 
+const scopeIndexes = new WeakMap();
+
+/**
+ * id → scope for a scope list, built once: a reader that walks thousands of
+ * chains would otherwise search the list at every step. A list still being
+ * recorded grows, so the index is rebuilt when its size no longer matches.
+ */
+function indexOf(scopes) {
+    let index = scopeIndexes.get(scopes);
+    if (!index || index.size !== scopes.length) {
+        index = new Map(scopes.map(s => [s.id, s]));
+        scopeIndexes.set(scopes, index);
+    }
+    return index;
+}
+
 /** Scope by id within a given scope list, or null. */
 export function scopeById(id, scopes) {
     if (id == null || !scopes) return null;
-    return scopes.find(s => s.id === id) ?? null;
+    return indexOf(scopes).get(id) ?? null;
 }
 
 /**
@@ -202,4 +220,26 @@ export function explainEvent(event, modelAssets = [], scopes = null) {
 /** One-line rendering: "November 2051 > Pay Living Expenses > ...". */
 export function chainLabel(traceId, scopes, separator = ' > ') {
     return chainFor(traceId, scopes).map(s => s.label).join(separator);
+}
+
+/**
+ * The month an event counts in, as an index where 0 is the plan's first month:
+ * the month of its chain's root, the operation that caused it.
+ *
+ * Not the event's own date, which is the clock of the asset that recorded it.
+ * The annual pass runs on New Year's Day, before the assets' clocks reach
+ * January, so its events carry December's date, while the figures book them
+ * in January. (Life events also fire before the clocks move, but move them
+ * first; see Portfolio.applyLifeEvents.) An event recorded outside any scope
+ * has only its own date.
+ *
+ * @param {SimEvent} event
+ * @param {DateInt}  firstDateInt  the plan's first month
+ * @param {Array}    scopes        portfolio.traceScopes
+ */
+export function bookedMonthIndex(event, firstDateInt, scopes) {
+    let root = scopeById(event.traceId, scopes);
+    for (let guard = 0; root?.parentId != null && guard < 64; guard++) root = scopeById(root.parentId, scopes);
+    const d = root?.dateInt ?? event.dateInt;
+    return (d.year - firstDateInt.year) * 12 + (d.month - firstDateInt.month);
 }

@@ -73,8 +73,8 @@ export const EventType = Object.freeze({
     NIIT_ASSESSED:           'niitAssessed',      // IRC §1411; data: { nii, magi, threshold }
 
     // ── Movement ──
-    TRANSFER:                'transfer',          // data: { from, to, cadence }
-    SETTLEMENT:              'settlement',        // one-sided draw; data: { from, to, label }
+    TRANSFER:                'transfer',          // data: { from, to, cadence, system? }
+    SETTLEMENT:              'settlement',        // one-sided draw; data: { from, to, label, backstop? }
     SPILLOVER:               'spillover',         // data: { depleted }
     GROSS_UP:                'grossUp',           // data: { forAsset, overflow: boolean }
 

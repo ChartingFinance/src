@@ -65,6 +65,7 @@ import { EventType, EventKind } from '../js/sim-event.js';
 import { InstrumentType } from '../js/instruments/instrument.js';
 import { DateInt } from '../js/utils/date-int.js';
 import { Metric } from '../js/metric.js';
+import { bookedMonthIndex } from '../js/trace.js';
 import {
     expenditureOverWindow, trailingYearExpenditure, classify,
     Expenditure, EXPENDITURE_TREATMENT,
@@ -274,6 +275,9 @@ const main = async () => {
                 if (!InstrumentType.isFundable(asset.instrument)) continue;
                 for (const ev of (asset.events ?? [])) {
                     if (ev.kind !== EventKind.CASH || ev.amount.amount >= 0) continue;
+                    // The last year's settlement books into a January after
+                    // the plan: no window holds it, as no package does.
+                    if (!bookedIn(portfolio, ev, 0, last)) continue;
                     all += -ev.amount.amount;
                     const b = classify(ev, scopes);
                     if (b === Expenditure.SPENDING) spending += -ev.amount.amount;
@@ -381,13 +385,11 @@ const main = async () => {
 
     /** Premium withdrawn to cover capital-gains tax, over an inclusive window. */
     const premiumOver = (portfolio, from, to) => {
-        const start = dateAt(portfolio, from), end = dateAt(portfolio, to);
         let total = 0;
         for (const asset of portfolio.modelAssets) {
             for (const ev of (asset.events ?? [])) {
                 if (ev.type !== EventType.TAX_PROVISION) continue;
-                const when = ev.dateInt?.toInt();
-                if (when == null || when < start || when > end) continue;
+                if (!bookedIn(portfolio, ev, from, to)) continue;
                 total += Math.abs(ev.amount.amount);
             }
         }
@@ -432,15 +434,13 @@ const main = async () => {
             EventType.NIIT_ASSESSED,
         ]);
 
-        const start = dateAt(brokerageOnly, premJan), end = dateAt(brokerageOnly, premJan + 11);
         let taxTyped = 0;
         for (const asset of brokerageOnly.modelAssets) {
             if (!InstrumentType.isFundable(asset.instrument)) continue;
             for (const ev of (asset.events ?? [])) {
                 if (!TAX_TYPES.has(ev.type)) continue;
                 if (ev.kind !== EventKind.CASH || ev.amount.amount >= 0) continue;
-                const when = ev.dateInt?.toInt();
-                if (when == null || when < start || when > end) continue;
+                if (!bookedIn(brokerageOnly, ev, premJan, premJan + 11)) continue;
                 taxTyped += -ev.amount.amount;
             }
         }
@@ -477,24 +477,27 @@ function lastIndex(portfolio) {
 }
 
 function everyDebit(portfolio, from, to) {
-    const start = dateAt(portfolio, from), end = dateAt(portfolio, to);
     let total = 0;
     for (const asset of portfolio.modelAssets) {
         if (!InstrumentType.isFundable(asset.instrument)) continue;
         for (const ev of (asset.events ?? [])) {
-            const when = ev.dateInt?.toInt();
             if (ev.kind !== EventKind.CASH || ev.amount.amount >= 0) continue;
-            if (when == null || when < start || when > end) continue;
+            if (!bookedIn(portfolio, ev, from, to)) continue;
             total += -ev.amount.amount;
         }
     }
     return total;
 }
 
-function dateAt(portfolio, index) {
-    const d = new DateInt(portfolio.firstDateInt.toInt());
-    d.addMonths(index);
-    return d.toInt();
+/**
+ * Whether an event counts in an inclusive window of month indexes, by the
+ * month its chain began, as expenditureOverWindow counts it: the annual pass's
+ * events carry December's date and count in January.
+ */
+function bookedIn(portfolio, ev, from, to) {
+    if (!ev.dateInt) return false;
+    const idx = bookedMonthIndex(ev, portfolio.firstDateInt, portfolio.traceScopes ?? []);
+    return idx >= from && idx <= to;
 }
 
 await main();
