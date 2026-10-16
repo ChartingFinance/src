@@ -349,6 +349,17 @@ const shortfallScenarios = [
     base({ instrument: 'cash', displayName: 'Wallet', startCurrency: { amount: 1200 }, startBasisCurrency: { amount: 1200 } }),
     base({ instrument: 'taxableEquity', displayName: 'Brokerage', startCurrency: { amount: 2500 }, startBasisCurrency: { amount: 2500 } }),
   ]],
+  // The same DOUBLE depletion on the two-sided path: an expense rule draws a
+  // Roth that runs dry, and the backstop it spills to runs dry in the same
+  // draw. execute() took the fallback to cover the whole shortfall, so the
+  // rest was neither re-sourced nor reported, and the transfer's credit
+  // outran everything that paid it.
+  ['transfer exhausts its fallback too', { start: 60, retire: 60 }, [
+    base({ instrument: 'monthlyExpense', displayName: 'Living', startCurrency: { amount: -5000 }, startBasisCurrency: { amount: 0 },
+           fundTransfers: [{ toDisplayName: 'Roth', monthlyMoveValue: 100, closeMoveValue: 0 }] }),
+    base({ instrument: 'rothIRA', displayName: 'Roth', startCurrency: { amount: 6000 }, startBasisCurrency: { amount: 0 } }),
+    base({ instrument: 'bank', displayName: 'Savings', startCurrency: { amount: 1000 }, startBasisCurrency: { amount: 1000 } }),
+  ]],
   ['transfer goes unfunded', { start: 50, retire: 65 }, [
     base({ instrument: 'monthlyExpense', displayName: 'Living', startCurrency: { amount: -6000 }, startBasisCurrency: { amount: 0 },
            fundTransfers: [{ toDisplayName: 'Brokerage', monthlyMoveValue: 100, closeMoveValue: 0 }] }),
@@ -360,7 +371,10 @@ const shortfallScenarios = [
 // production, so this is the only way to observe monthlySanityCheck's verdict.
 const complaints = [];
 logger.log = (cat, msg) => {
-  if (typeof msg === 'string' && msg.includes('Transfer conservation broken')) complaints.push(msg);
+  // Messages are functions, so a disabled category costs nothing to build;
+  // read as strings only, this capture could never see a complaint.
+  const text = typeof msg === 'function' ? msg() : msg;
+  if (typeof text === 'string' && text.includes('Transfer conservation broken')) complaints.push(text);
 };
 
 const seenOrigins = new Set();

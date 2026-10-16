@@ -437,6 +437,13 @@
     settlement
     taxTrueUp
     transfer
+  transfer-exhausts-fallback:
+    assetGrowth
+    expenseInflation
+    interestIncome
+    spillover
+    transfer
+    unfunded
   transfer-unfunded:
     assetGrowth
     capitalGainRecognized

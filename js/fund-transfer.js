@@ -406,8 +406,9 @@ export class FundTransfer {
     //     transfers pull from their funding account.
     // Opposite signs of `amount`, so at most one side spills.
     //
-    // The fallback is assumed to supply the whole shortfall: if it clamps too,
-    // the rest is neither re-sourced nor reported.
+    // The fallback can clamp too. What it could not supply is reported
+    // unfunded, as settleOneSided reports it: the target was credited the
+    // whole amount, and that part of it was paid by no one.
     const spillSource = fromResult.spillover?.amount > 0 ? this.fromModel
                       : toResult.spillover?.amount > 0 ? this.toModel
                       : null;
@@ -427,6 +428,9 @@ export class FundTransfer {
         if (spilloverGain.amount > 0) {
           fallback.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, spilloverGain);
           fallback.recordEvent(EventType.CAPITAL_GAIN_RECOGNIZED, spilloverGain.copy(), { metric: Metric.LONG_TERM_CAPITAL_GAIN, data: { spillover: true } });
+        }
+        if (spillResult.spillover?.amount > 0) {
+          FundTransfer.reportUnfunded(spillSource, spillResult.spillover, `${memo} (account and backstop depleted)`, ShortfallOrigin.PAIRED);
         }
       } else {
         // No backstop can cover the shortfall: report it as unfunded. The
