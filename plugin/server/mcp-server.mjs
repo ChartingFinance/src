@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.3.31; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.3.33; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -35809,6 +35809,7 @@ var Portfolio = class _Portfolio {
       if (event.applied) continue;
       const trigger = event.triggerDateInt;
       if (trigger.year === currentDateInt.year && trigger.month === currentDateInt.month) {
+        for (const modelAsset of this.modelAssets) modelAsset.handleCurrentDateInt(currentDateInt);
         withTrace(
           TraceKind.MONTH,
           `Life event: ${event.displayName}`,

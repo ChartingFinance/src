@@ -381,6 +381,10 @@ export class Portfolio {
             if (event.applied) continue;
             const trigger = event.triggerDateInt;
             if (trigger.year === currentDateInt.year && trigger.month === currentDateInt.month) {
+                // The assets' clocks still read last month: applyFirstDayOfMonth
+                // moves them, after this. An asset the event closes records its
+                // sale with its own clock, so move them first.
+                for (const modelAsset of this.modelAssets) modelAsset.handleCurrentDateInt(currentDateInt);
                 // Its own causal root: life events fire before applyMonth
                 // opens the month's scope.
                 withTrace(TraceKind.MONTH, `Life event: ${event.displayName}`, currentDateInt,

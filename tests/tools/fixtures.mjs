@@ -23,6 +23,7 @@
  */
 
 import { ModelAsset } from '../../js/model-asset.js';
+import { ModelLifeEvent, LifeEvent } from '../../js/life-event.js';
 import { DateInt } from '../../js/utils/date-int.js';
 import { quickStartProfiles, buildQuickStart } from '../../js/quick-start.js';
 
@@ -495,6 +496,36 @@ const adversarialFixtures = [
         expense('Living', 6000),
       ].map(ModelAsset.fromJSON),
     }),
+  },
+  {
+    name: 'retirement-sells-a-rental',
+    kind: 'adversarial',
+    reaches:
+      'a life event that closes a capital asset: Retire, in January 2028, ends ' +
+      'the paycheck and sells a rental with a $300k gain. Life events fire on ' +
+      'the month\'s first tick, before the assets\' clocks move, so the sale ' +
+      'recorded its capital-gains tax and proceeds a month early, in December ' +
+      '2027, while the figures booked them in January. No quick-start profile ' +
+      'closes anything but a paycheck, which records nothing.',
+    config: { startAge: 58, retirementAge: 60, filingAs: 'Single' },
+    build: () => {
+      const living = { Living: [xfer('Checking', 100)] };
+      const accumulate = ModelLifeEvent.createDefault(LifeEvent.ACCUMULATE, 58);
+      accumulate.phaseTransfers = living;
+      const retire = ModelLifeEvent.createDefault(LifeEvent.RETIRE, 60);
+      retire.closes = ['Salary', 'Rental'];
+      retire.phaseTransfers = living;
+      return {
+        assets: [
+          salary('Salary', 9000),
+          asset(DEC)({ instrument: 'realEstate', displayName: 'Rental', isPrimaryHome: false,
+            startCurrency: { amount: 600000 }, startBasisCurrency: { amount: 300000 } }),
+          bank('Checking', 50000),
+          expense('Living', 5000),
+        ].map(ModelAsset.fromJSON),
+        lifeEvents: [accumulate, retire],
+      };
+    },
   },
   {
     name: 'deferred-close-distribution',

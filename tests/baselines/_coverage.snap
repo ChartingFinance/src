@@ -310,6 +310,19 @@
     interestIncome
     taxTrueUp
     transfer
+  retirement-sells-a-rental:
+    assetGrowth
+    capitalGainRecognized
+    capitalGainsTax
+    expenseInflation
+    ficaWithholding
+    incomeGrowth
+    incomeTaxWithholding
+    interestIncome
+    niitAssessed
+    propertyTax
+    taxTrueUp
+    transfer
   settlement-exhausts-fallback:
     assetGrowth
     capitalGainRecognized
