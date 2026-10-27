@@ -51,6 +51,7 @@
         <div class="flex flex-wrap gap-2 text-sm">
             <a href="#taxes" class="px-4 py-2 rounded-xl bg-gray-50 hover:bg-gray-100 transition text-gray-700 no-underline">Tax Rates</a>
             <a href="#filing-status" class="px-4 py-2 rounded-xl bg-gray-50 hover:bg-gray-100 transition text-gray-700 no-underline">Filing Status</a>
+            <a href="#aca" class="px-4 py-2 rounded-xl bg-gray-50 hover:bg-gray-100 transition text-gray-700 no-underline">ACA Health Insurance</a>
             <a href="#explanations" class="px-4 py-2 rounded-xl bg-gray-50 hover:bg-gray-100 transition text-gray-700 no-underline">Why It Did That</a>
             <a href="#limits" class="px-4 py-2 rounded-xl bg-gray-50 hover:bg-gray-100 transition text-gray-700 no-underline">What It Does Not Model</a>
         </div>
@@ -431,6 +432,16 @@
                 <span class="text-gray-400 group-hover:text-gray-600">&#8599;</span>
                 Net Investment Income Tax (IRC &sect;1411)
             </a>
+            <a href="https://www.irs.gov/affordable-care-act/individuals-and-families/the-premium-tax-credit-the-basics" target="_blank"
+               class="flex items-center gap-3 p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition text-gray-700 no-underline group">
+                <span class="text-gray-400 group-hover:text-gray-600">&#8599;</span>
+                The Premium Tax Credit (IRC &sect;36B, Form 8962)
+            </a>
+            <a href="https://aspe.hhs.gov/topics/poverty-economic-mobility/poverty-guidelines" target="_blank"
+               class="flex items-center gap-3 p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition text-gray-700 no-underline group">
+                <span class="text-gray-400 group-hover:text-gray-600">&#8599;</span>
+                HHS poverty guidelines
+            </a>
             <a href="https://www.irs.gov/pub/irs-pdf/i1040gi.pdf?os=wtmbzegmu5hwrefapp&ref=app" target="_blank"
                class="flex items-center gap-3 p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition text-gray-700 no-underline group">
                 <span class="text-gray-400 group-hover:text-gray-600">&#8599;</span>
@@ -465,6 +476,45 @@
         </div>
 
         <p class="text-gray-600 leading-relaxed">The simulator charges it once a year, with the annual tax true-up; real life has no withholding for it either. You will find it in the Taxes column of Your Portfolio, in Reports and as its own line in the Spreadsheet. Because it is paid after the year ends, a yearly report shows it under <strong>Prior-Year Settlement</strong>, the year after the income it taxes; the adjusted gross income it was measured against is in the previous year&rsquo;s report.</p>
+    </div>
+
+    <!-- ═══ ACA Health Insurance ═══ -->
+    <div id="aca" class="glass-card p-8 sm:p-12 mb-8">
+        <div class="flex items-center gap-3 mb-4">
+            <span class="text-2xl">&#129658;</span>
+            <h2 class="text-2xl font-bold tracking-tight">ACA Health Insurance</h2>
+            <span class="text-xs text-gray-400 font-medium ml-1">IRC &sect;36B &middot; Premium Tax Credit</span>
+        </div>
+        <p class="text-gray-600 mb-4 leading-relaxed">An <strong>ACA Health Insurance</strong> card is a marketplace plan&rsquo;s premium, with the premium tax credit worked out the way Form 8962 does it. It answers <em>how much is the subsidy</em> under the transfers you already have; it never changes which accounts pay.</p>
+
+        <div class="space-y-2 mb-6">
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+                <span class="rule-chip">Rule 1</span>
+                <span class="text-sm text-gray-700">Each month the credit is the <strong>benchmark premium</strong> (the second-lowest-cost silver plan for your household) less your expected contribution, never more than the premium itself. Your contribution is a percentage of your <strong>ACA MAGI</strong>: AGI plus the Social Security that is not taxed. The percentage rises with income, from 2.10% to 9.96% of it in 2026 and 2.15% to 10.22% in 2027.</span>
+            </div>
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+                <span class="rule-chip">Rule 2</span>
+                <span class="text-sm text-gray-700">The credit needs household income from <strong>100% to 400% of the poverty line</strong> for your household&rsquo;s size, which comes from your filing status unless the card names one. <strong>One dollar over 400% loses all of it</strong>: the enhanced credits that removed the cliff expired after 2025. In 2027 the cliff is $63,840 for one person and $86,560 for two. Under 100% there is no credit, unless the advance was paid on an estimate of 100% or more.</span>
+            </div>
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+                <span class="rule-chip">Rule 3</span>
+                <span class="text-sm text-gray-700">The credit is <strong>advanced each month</strong> on an estimate of the year&rsquo;s income: last year&rsquo;s ACA MAGI when you had the plan all of last year, otherwise the card&rsquo;s Estimated Income. With neither, nothing is advanced. <strong>Advance Credit %</strong> takes less in advance, as some early retirees do to lower the risk of repaying.</span>
+            </div>
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+                <span class="rule-chip">Rule 4</span>
+                <span class="text-sm text-gray-700">The year is <strong>settled on the return</strong>, booked the following January like the tax true-up: excess advance is repaid in full, with no cap from 2026, and credit still owed is paid to you. A plan that starts after January cannot see the year&rsquo;s earlier months, so its first year is settled against the card&rsquo;s estimate.</span>
+            </div>
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+                <span class="rule-chip">Rule 5</span>
+                <span class="text-sm text-gray-700">Marketplace plans are priced by calendar year, so the premium and benchmark <strong>step once a year, in January</strong>, at the card&rsquo;s growth rate. It defaults to inflation and is usually well above it; in a backtest the card keeps that excess on top of the year&rsquo;s CPI. Past 2027 the poverty line is indexed like the tax tables, and the percentages move with the card&rsquo;s growth over inflation, as the law adjusts them for premiums rising faster than incomes.</span>
+            </div>
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
+                <span class="rule-chip">Rule 6</span>
+                <span class="text-sm text-gray-700">Coverage ends at <strong>Medicare</strong>: a card with no finish date ends the December before you turn 65.</span>
+            </div>
+        </div>
+
+        <p class="text-gray-600 leading-relaxed">The premium and the advance are lines in the card&rsquo;s Expenses group in Month &amp; Year Details, and the tax-year strip shows the credit the year allowed. The January settlement is in the Taxes column, under <strong>Prior-Year Settlement</strong> in Reports, and in each yearly report&rsquo;s credit rows.</p>
     </div>
 
     <!-- ═══ Filing Status ═══ -->
@@ -678,6 +728,18 @@
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">No RMD penalty</div>
                 <div class="text-sm text-gray-500">A required minimum distribution that goes unmet is <em>reported</em> in &ldquo;What needs attention&rdquo;, but the excise tax a real shortfall would incur is not charged. <span class="text-gray-400">Optimistic.</span></div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">No Medicaid or state help with premiums</div>
+                <div class="text-sm text-gray-500">Under 100% of the poverty line a health-insurance card gets no premium tax credit, and Medicaid, which covers adults under 138% in most states, is not modelled; nor are state subsidies or the cost-sharing reductions that lower deductibles. <span class="text-gray-400">Pessimistic for low incomes.</span></div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">Premiums are not age-rated</div>
+                <div class="text-sm text-gray-500">A marketplace premium rises at the card&rsquo;s one growth rate. Real premiums also rise with age, roughly tripling between 21 and 64, and the benchmark with them. <span class="text-gray-400">Optimistic unless the rate allows for it.</span></div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">No self-employed health insurance deduction</div>
+                <div class="text-sm text-gray-500">A self-employed household can deduct its premiums above the line, which lowers ACA MAGI and raises the credit. Neither the deduction nor its interplay with the credit is modelled. <span class="text-gray-400">Pessimistic for the self-employed.</span></div>
             </div>
         </div>
     </div>

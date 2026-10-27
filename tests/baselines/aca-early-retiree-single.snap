@@ -1,0 +1,880 @@
+# fixture: aca-early-retiree-single  (adversarial)
+#
+# the ACA premium tax credit (spec 11 Part A) for a single early retiree
+# living on IRA draws. No estimated income and no year before the plan, so
+# 2026 advances nothing and the whole credit is paid on the return: the
+# positive ptcReconciliation no other fixture reaches. From 2027 the advance
+# is paid on the year before, and as income creeps up the advance runs ahead
+# of the credit and is repaid. The premium steps each January at 8%, above
+# plan inflation.
+
+[config]
+  allocateHouseholdTax = false
+  backtestYear = current
+  filingAs = Single
+  inflationRate = 0.031
+  pensionWithholdingRate = 0.1
+  propertyTaxDeductionMax = 40000
+  simDataMode = calibrated
+  socialSecurityWithholdingRate = 0
+  userFinishAge = 87
+  userRetirementAge = 60
+  userStartAge = 60
+  homeSaleExclusion = 250000
+  retirementWithholdingRate = 0.1
+
+[totals]
+  months = 240
+  firstDate = 2026-01
+  lastDate = 2030-12
+  startValue = 930000.000000
+  finishValue = 913849.425553
+  accumulated = -12213.360726
+  total.assetAppreciation = 215619.390889
+  total.expense = -220601.507533
+  total.incomeTax = -24511.278615
+  total.tradIRADistribution = 245112.786148
+  total.taxTrueUp = 5241.917889
+  total.premiumTaxCredit = 38107.211520
+  total.ptcReconciliation = 7056.000000
+  total.value = 55152524.715139
+
+[assetOrder]
+  0 Checking
+  1 IRA
+  2 Living
+  3 Marketplace Plan
+
+[asset] Checking
+  instrument = bank
+  start = 2026-01  finish = 2030-12
+  startCurrency = 30000.000000
+  finishCurrency = 43342.820812
+  startBasis = 30000.000000
+  finishBasis = 30000.000000
+  isClosed = no  isDepleted = no
+  closedDate = -  closedValue = -
+  events = 70  reconciled = 70
+
+[events] Checking
+  0000 2026-01 interestIncome                   0.000000 cash  interestIncome         c-
+  0001 2026-02 interestIncome                   0.000000 cash  interestIncome         c-
+  0002 2026-03 interestIncome                   0.000000 cash  interestIncome         c-
+  0003 2026-04 interestIncome                   0.000000 cash  interestIncome         c-
+  0004 2026-05 interestIncome                   0.000000 cash  interestIncome         c-
+  0005 2026-06 interestIncome                   0.000000 cash  interestIncome         c-
+  0006 2026-07 interestIncome                   0.000000 cash  interestIncome         c-
+  0007 2026-08 interestIncome                   0.000000 cash  interestIncome         c-
+  0008 2026-09 interestIncome                   0.000000 cash  interestIncome         c-
+  0009 2026-10 interestIncome                   0.000000 cash  interestIncome         c-
+  0010 2026-11 interestIncome                   0.000000 cash  interestIncome         c-
+  0011 2026-12 interestIncome                   0.000000 cash  interestIncome         c-
+  0012 2026-12 taxTrueUp                     1129.449589 cash  -                      c0 {direction=refund}
+  0013 2026-12 ptcReconciliation             6768.000000 cash  -                      c1 {advanced=0 allowed=6768 direction=credit percent=336}
+  0014 2027-01 interestIncome                   0.000000 cash  interestIncome         c-
+  0015 2027-02 interestIncome                   0.000000 cash  interestIncome         c-
+  0016 2027-03 interestIncome                   0.000000 cash  interestIncome         c-
+  0017 2027-04 interestIncome                   0.000000 cash  interestIncome         c-
+  0018 2027-05 interestIncome                   0.000000 cash  interestIncome         c-
+  0019 2027-06 interestIncome                   0.000000 cash  interestIncome         c-
+  0020 2027-07 interestIncome                   0.000000 cash  interestIncome         c-
+  0021 2027-08 interestIncome                   0.000000 cash  interestIncome         c-
+  0022 2027-09 interestIncome                   0.000000 cash  interestIncome         c-
+  0023 2027-10 interestIncome                   0.000000 cash  interestIncome         c-
+  0024 2027-11 interestIncome                   0.000000 cash  interestIncome         c-
+  0025 2027-12 interestIncome                   0.000000 cash  interestIncome         c-
+  0026 2027-12 taxTrueUp                     1318.889193 cash  -                      c2 {direction=refund}
+  0027 2027-12 ptcReconciliation              744.000000 cash  -                      c3 {advanced=7596 allowed=8340 direction=credit percent=291}
+  0028 2028-01 interestIncome                   0.000000 cash  interestIncome         c-
+  0029 2028-02 interestIncome                   0.000000 cash  interestIncome         c-
+  0030 2028-03 interestIncome                   0.000000 cash  interestIncome         c-
+  0031 2028-04 interestIncome                   0.000000 cash  interestIncome         c-
+  0032 2028-05 interestIncome                   0.000000 cash  interestIncome         c-
+  0033 2028-06 interestIncome                   0.000000 cash  interestIncome         c-
+  0034 2028-07 interestIncome                   0.000000 cash  interestIncome         c-
+  0035 2028-08 interestIncome                   0.000000 cash  interestIncome         c-
+  0036 2028-09 interestIncome                   0.000000 cash  interestIncome         c-
+  0037 2028-10 interestIncome                   0.000000 cash  interestIncome         c-
+  0038 2028-11 interestIncome                   0.000000 cash  interestIncome         c-
+  0039 2028-12 interestIncome                   0.000000 cash  interestIncome         c-
+  0040 2028-12 taxTrueUp                     1376.725424 cash  -                      c4 {direction=refund}
+  0041 2028-12 ptcReconciliation             -120.000000 cash  -                      c5 {advanced=9292.800000 allowed=9172.800000 direction=repayment percent=286}
+  0042 2029-01 interestIncome                   0.000000 cash  interestIncome         c-
+  0043 2029-02 interestIncome                   0.000000 cash  interestIncome         c-
+  0044 2029-03 interestIncome                   0.000000 cash  interestIncome         c-
+  0045 2029-04 interestIncome                   0.000000 cash  interestIncome         c-
+  0046 2029-05 interestIncome                   0.000000 cash  interestIncome         c-
+  0047 2029-06 interestIncome                   0.000000 cash  interestIncome         c-
+  0048 2029-07 interestIncome                   0.000000 cash  interestIncome         c-
+  0049 2029-08 interestIncome                   0.000000 cash  interestIncome         c-
+  0050 2029-09 interestIncome                   0.000000 cash  interestIncome         c-
+  0051 2029-10 interestIncome                   0.000000 cash  interestIncome         c-
+  0052 2029-11 interestIncome                   0.000000 cash  interestIncome         c-
+  0053 2029-12 interestIncome                   0.000000 cash  interestIncome         c-
+  0054 2029-12 taxTrueUp                     1416.853683 cash  -                      c6 {direction=refund}
+  0055 2029-12 ptcReconciliation             -336.000000 cash  -                      c7 {advanced=10220.544000 allowed=9884.544000 direction=repayment percent=287}
+  0056 2030-01 interestIncome                   0.000000 cash  interestIncome         c-
+  0057 2030-02 interestIncome                   0.000000 cash  interestIncome         c-
+  0058 2030-03 interestIncome                   0.000000 cash  interestIncome         c-
+  0059 2030-04 interestIncome                   0.000000 cash  interestIncome         c-
+  0060 2030-05 interestIncome                   0.000000 cash  interestIncome         c-
+  0061 2030-06 interestIncome                   0.000000 cash  interestIncome         c-
+  0062 2030-07 interestIncome                   0.000000 cash  interestIncome         c-
+  0063 2030-08 interestIncome                   0.000000 cash  interestIncome         c-
+  0064 2030-09 interestIncome                   0.000000 cash  interestIncome         c-
+  0065 2030-10 interestIncome                   0.000000 cash  interestIncome         c-
+  0066 2030-11 interestIncome                   0.000000 cash  interestIncome         c-
+  0067 2030-12 interestIncome                   0.000000 cash  interestIncome         c-
+  0068 2030-12 taxTrueUp                     1452.902924 cash  -                      c8 {direction=refund}
+  0069 2030-12 ptcReconciliation             -408.000000 cash  -                      c9 {advanced=10997.867520 allowed=10589.867520 direction=repayment percent=289}
+
+[history] Checking
+  value                        n=  60 first=    30000.000000 last=    42297.920000 min=    30000.000000 max=    42297.920000 sum=    2296473.240000 #4cb31fe5
+  estimatedIncomeTax           n=  60 first=        0.000000 last=        0.000000 min=        0.000000 max=     1416.850000 sum=       5241.920000 #00040cb5
+  ptcReconciliation            n=  60 first=        0.000000 last=        0.000000 min=     -336.000000 max=     6768.000000 sum=       7056.000000 #0c6c4534
+  incomeTax                    n=  60 first=        0.000000 last=        0.000000 min=        0.000000 max=     1416.850000 sum=       5241.920000 #00040cb5
+  federalTaxes                 n=  60 first=        0.000000 last=        0.000000 min=        0.000000 max=     7897.450000 sum=      12297.920000 #ec06396c
+  taxes                        n=  60 first=        0.000000 last=        0.000000 min=        0.000000 max=     7897.450000 sum=      12297.920000 #ec06396c
+  cashFlow                     n=  60 first=        0.000000 last=        0.000000 min=        0.000000 max=     7897.450000 sum=      12297.920000 #ec06396c
+  cashFlowAccumulated          n=  60 first=        0.000000 last=    12297.920000 min=        0.000000 max=    12297.920000 sum=     496473.240000 #ba15c325
+
+[asset] IRA
+  instrument = ira
+  start = 2026-01  finish = 2030-12
+  startCurrency = 900000.000000
+  finishCurrency = 870506.604741
+  startBasis = 0.000000
+  finishBasis = 0.000000
+  isClosed = no  isDepleted = no
+  closedDate = -  closedValue = -
+  events = 240  reconciled = 240
+
+[events] IRA
+  0000 2026-01 transfer                     -2800.000000 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0001 2026-01 transfer                     -1100.000000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0002 2026-01 assetGrowth                   3650.822323 cash  growth                 c-
+  0003 2026-01 incomeTaxWithholding          -433.333333 cash  -                      c12 {rate=0.100000 source=distribution}
+  0004 2026-02 transfer                     -2807.132550 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0005 2026-02 transfer                     -1100.000000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0006 2026-02 assetGrowth                   3648.012629 cash  growth                 c-
+  0007 2026-02 incomeTaxWithholding          -434.125839 cash  -                      c12 {rate=0.100000 source=distribution}
+  0008 2026-03 transfer                     -2814.283270 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0009 2026-03 transfer                     -1100.000000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0010 2026-03 assetGrowth                   3645.159127 cash  growth                 c-
+  0011 2026-03 incomeTaxWithholding          -434.920363 cash  -                      c12 {rate=0.100000 source=distribution}
+  0012 2026-04 transfer                     -2821.452204 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0013 2026-04 transfer                     -1100.000000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0014 2026-04 assetGrowth                   3642.261556 cash  growth                 c-
+  0015 2026-04 incomeTaxWithholding          -435.716912 cash  -                      c12 {rate=0.100000 source=distribution}
+  0016 2026-05 transfer                     -2828.639401 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0017 2026-05 transfer                     -1100.000000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0018 2026-05 assetGrowth                   3639.319652 cash  growth                 c-
+  0019 2026-05 incomeTaxWithholding          -436.515489 cash  -                      c12 {rate=0.100000 source=distribution}
+  0020 2026-06 transfer                     -2835.844905 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0021 2026-06 transfer                     -1100.000000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0022 2026-06 assetGrowth                   3636.333154 cash  growth                 c-
+  0023 2026-06 incomeTaxWithholding          -437.316101 cash  -                      c12 {rate=0.100000 source=distribution}
+  0024 2026-07 transfer                     -2843.068765 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0025 2026-07 transfer                     -1100.000000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0026 2026-07 assetGrowth                   3633.301795 cash  growth                 c-
+  0027 2026-07 incomeTaxWithholding          -438.118752 cash  -                      c12 {rate=0.100000 source=distribution}
+  0028 2026-08 transfer                     -2850.311026 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0029 2026-08 transfer                     -1100.000000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0030 2026-08 assetGrowth                   3630.225310 cash  growth                 c-
+  0031 2026-08 incomeTaxWithholding          -438.923447 cash  -                      c12 {rate=0.100000 source=distribution}
+  0032 2026-09 transfer                     -2857.571735 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0033 2026-09 transfer                     -1100.000000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0034 2026-09 assetGrowth                   3627.103432 cash  growth                 c-
+  0035 2026-09 incomeTaxWithholding          -439.730193 cash  -                      c12 {rate=0.100000 source=distribution}
+  0036 2026-10 transfer                     -2864.850940 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0037 2026-10 transfer                     -1100.000000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0038 2026-10 assetGrowth                   3623.935891 cash  growth                 c-
+  0039 2026-10 incomeTaxWithholding          -440.538993 cash  -                      c12 {rate=0.100000 source=distribution}
+  0040 2026-11 transfer                     -2872.148688 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0041 2026-11 transfer                     -1100.000000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0042 2026-11 assetGrowth                   3620.722419 cash  growth                 c-
+  0043 2026-11 incomeTaxWithholding          -441.349854 cash  -                      c12 {rate=0.100000 source=distribution}
+  0044 2026-12 transfer                     -2879.465025 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0045 2026-12 transfer                     -1100.000000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0046 2026-12 assetGrowth                   3617.462743 cash  growth                 c-
+  0047 2026-12 incomeTaxWithholding          -442.162781 cash  -                      c12 {rate=0.100000 source=distribution}
+  0048 2027-01 transfer                     -2886.800000 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0049 2027-01 transfer                      -555.000000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0050 2027-01 assetGrowth                   3616.376989 cash  growth                 c-
+  0051 2027-01 incomeTaxWithholding          -382.422222 cash  -                      c12 {rate=0.100000 source=distribution}
+  0052 2027-02 transfer                     -2894.153659 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0053 2027-02 transfer                      -555.000000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0054 2027-02 assetGrowth                   3615.500242 cash  growth                 c-
+  0055 2027-02 incomeTaxWithholding          -383.239295 cash  -                      c12 {rate=0.100000 source=distribution}
+  0056 2027-03 transfer                     -2901.526051 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0057 2027-03 transfer                      -555.000000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0058 2027-03 assetGrowth                   3614.586558 cash  growth                 c-
+  0059 2027-03 incomeTaxWithholding          -384.058450 cash  -                      c12 {rate=0.100000 source=distribution}
+  0060 2027-04 transfer                     -2908.917223 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0061 2027-04 transfer                      -555.000000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0062 2027-04 assetGrowth                   3613.635702 cash  growth                 c-
+  0063 2027-04 incomeTaxWithholding          -384.879691 cash  -                      c12 {rate=0.100000 source=distribution}
+  0064 2027-05 transfer                     -2916.327222 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0065 2027-05 transfer                      -555.000000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0066 2027-05 assetGrowth                   3612.647437 cash  growth                 c-
+  0067 2027-05 incomeTaxWithholding          -385.703025 cash  -                      c12 {rate=0.100000 source=distribution}
+  0068 2027-06 transfer                     -2923.756097 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0069 2027-06 transfer                      -555.000000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0070 2027-06 assetGrowth                   3611.621525 cash  growth                 c-
+  0071 2027-06 incomeTaxWithholding          -386.528455 cash  -                      c12 {rate=0.100000 source=distribution}
+  0072 2027-07 transfer                     -2931.203896 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0073 2027-07 transfer                      -555.000000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0074 2027-07 assetGrowth                   3610.557727 cash  growth                 c-
+  0075 2027-07 incomeTaxWithholding          -387.355988 cash  -                      c12 {rate=0.100000 source=distribution}
+  0076 2027-08 transfer                     -2938.670667 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0077 2027-08 transfer                      -555.000000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0078 2027-08 assetGrowth                   3609.455803 cash  growth                 c-
+  0079 2027-08 incomeTaxWithholding          -388.185630 cash  -                      c12 {rate=0.100000 source=distribution}
+  0080 2027-09 transfer                     -2946.156459 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0081 2027-09 transfer                      -555.000000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0082 2027-09 assetGrowth                   3608.315512 cash  growth                 c-
+  0083 2027-09 incomeTaxWithholding          -389.017384 cash  -                      c12 {rate=0.100000 source=distribution}
+  0084 2027-10 transfer                     -2953.661319 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0085 2027-10 transfer                      -555.000000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0086 2027-10 assetGrowth                   3607.136610 cash  growth                 c-
+  0087 2027-10 incomeTaxWithholding          -389.851258 cash  -                      c12 {rate=0.100000 source=distribution}
+  0088 2027-11 transfer                     -2961.185297 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0089 2027-11 transfer                      -555.000000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0090 2027-11 assetGrowth                   3605.918855 cash  growth                 c-
+  0091 2027-11 incomeTaxWithholding          -390.687255 cash  -                      c12 {rate=0.100000 source=distribution}
+  0092 2027-12 transfer                     -2968.728441 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0093 2027-12 transfer                      -555.000000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0094 2027-12 assetGrowth                   3604.662001 cash  growth                 c-
+  0095 2027-12 incomeTaxWithholding          -391.525382 cash  -                      c12 {rate=0.100000 source=distribution}
+  0096 2028-01 transfer                     -2976.290800 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0097 2028-01 transfer                      -508.640000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0098 2028-01 assetGrowth                   3603.554678 cash  growth                 c-
+  0099 2028-01 incomeTaxWithholding          -387.214533 cash  -                      c12 {rate=0.100000 source=distribution}
+  0100 2028-02 transfer                     -2983.872423 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0101 2028-02 transfer                      -508.640000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0102 2028-02 assetGrowth                   3602.429518 cash  growth                 c-
+  0103 2028-02 incomeTaxWithholding          -388.056936 cash  -                      c12 {rate=0.100000 source=distribution}
+  0104 2028-03 transfer                     -2991.473359 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0105 2028-03 transfer                      -508.640000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0106 2028-03 assetGrowth                   3601.265374 cash  growth                 c-
+  0107 2028-03 incomeTaxWithholding          -388.901484 cash  -                      c12 {rate=0.100000 source=distribution}
+  0108 2028-04 transfer                     -2999.093656 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0109 2028-04 transfer                      -508.640000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0110 2028-04 assetGrowth                   3600.062001 cash  growth                 c-
+  0111 2028-04 incomeTaxWithholding          -389.748184 cash  -                      c12 {rate=0.100000 source=distribution}
+  0112 2028-05 transfer                     -3006.733366 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0113 2028-05 transfer                      -508.640000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0114 2028-05 assetGrowth                   3598.819151 cash  growth                 c-
+  0115 2028-05 incomeTaxWithholding          -390.597041 cash  -                      c12 {rate=0.100000 source=distribution}
+  0116 2028-06 transfer                     -3014.392536 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0117 2028-06 transfer                      -508.640000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0118 2028-06 assetGrowth                   3597.536574 cash  growth                 c-
+  0119 2028-06 incomeTaxWithholding          -391.448060 cash  -                      c12 {rate=0.100000 source=distribution}
+  0120 2028-07 transfer                     -3022.071217 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0121 2028-07 transfer                      -508.640000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0122 2028-07 assetGrowth                   3596.214021 cash  growth                 c-
+  0123 2028-07 incomeTaxWithholding          -392.301246 cash  -                      c12 {rate=0.100000 source=distribution}
+  0124 2028-08 transfer                     -3029.769458 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0125 2028-08 transfer                      -508.640000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0126 2028-08 assetGrowth                   3594.851240 cash  growth                 c-
+  0127 2028-08 incomeTaxWithholding          -393.156606 cash  -                      c12 {rate=0.100000 source=distribution}
+  0128 2028-09 transfer                     -3037.487309 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0129 2028-09 transfer                      -508.640000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0130 2028-09 assetGrowth                   3593.447979 cash  growth                 c-
+  0131 2028-09 incomeTaxWithholding          -394.014145 cash  -                      c12 {rate=0.100000 source=distribution}
+  0132 2028-10 transfer                     -3045.224820 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0133 2028-10 transfer                      -508.640000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0134 2028-10 assetGrowth                   3592.003983 cash  growth                 c-
+  0135 2028-10 incomeTaxWithholding          -394.873869 cash  -                      c12 {rate=0.100000 source=distribution}
+  0136 2028-11 transfer                     -3052.982041 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0137 2028-11 transfer                      -508.640000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0138 2028-11 assetGrowth                   3590.518998 cash  growth                 c-
+  0139 2028-11 incomeTaxWithholding          -395.735782 cash  -                      c12 {rate=0.100000 source=distribution}
+  0140 2028-12 transfer                     -3060.759023 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0141 2028-12 transfer                      -508.640000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0142 2028-12 assetGrowth                   3588.992767 cash  growth                 c-
+  0143 2028-12 incomeTaxWithholding          -396.599891 cash  -                      c12 {rate=0.100000 source=distribution}
+  0144 2029-01 transfer                     -3068.555815 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0145 2029-01 transfer                      -533.971200 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0146 2029-01 assetGrowth                   3587.321830 cash  growth                 c-
+  0147 2029-01 incomeTaxWithholding          -400.280779 cash  -                      c12 {rate=0.100000 source=distribution}
+  0148 2029-02 transfer                     -3076.372468 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0149 2029-02 transfer                      -533.971200 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0150 2029-02 assetGrowth                   3585.597242 cash  growth                 c-
+  0151 2029-02 incomeTaxWithholding          -401.149296 cash  -                      c12 {rate=0.100000 source=distribution}
+  0152 2029-03 transfer                     -3084.209033 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0153 2029-03 transfer                      -533.971200 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0154 2029-03 assetGrowth                   3583.830163 cash  growth                 c-
+  0155 2029-03 incomeTaxWithholding          -402.020026 cash  -                      c12 {rate=0.100000 source=distribution}
+  0156 2029-04 transfer                     -3092.065560 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0157 2029-04 transfer                      -533.971200 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0158 2029-04 assetGrowth                   3582.020329 cash  growth                 c-
+  0159 2029-04 incomeTaxWithholding          -402.892973 cash  -                      c12 {rate=0.100000 source=distribution}
+  0160 2029-05 transfer                     -3099.942100 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0161 2029-05 transfer                      -533.971200 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0162 2029-05 assetGrowth                   3580.167475 cash  growth                 c-
+  0163 2029-05 incomeTaxWithholding          -403.768144 cash  -                      c12 {rate=0.100000 source=distribution}
+  0164 2029-06 transfer                     -3107.838705 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0165 2029-06 transfer                      -533.971200 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0166 2029-06 assetGrowth                   3578.271335 cash  growth                 c-
+  0167 2029-06 incomeTaxWithholding          -404.645545 cash  -                      c12 {rate=0.100000 source=distribution}
+  0168 2029-07 transfer                     -3115.755425 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0169 2029-07 transfer                      -533.971200 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0170 2029-07 assetGrowth                   3576.331641 cash  growth                 c-
+  0171 2029-07 incomeTaxWithholding          -405.525181 cash  -                      c12 {rate=0.100000 source=distribution}
+  0172 2029-08 transfer                     -3123.692311 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0173 2029-08 transfer                      -533.971200 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0174 2029-08 assetGrowth                   3574.348125 cash  growth                 c-
+  0175 2029-08 incomeTaxWithholding          -406.407057 cash  -                      c12 {rate=0.100000 source=distribution}
+  0176 2029-09 transfer                     -3131.649416 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0177 2029-09 transfer                      -533.971200 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0178 2029-09 assetGrowth                   3572.320517 cash  growth                 c-
+  0179 2029-09 incomeTaxWithholding          -407.291180 cash  -                      c12 {rate=0.100000 source=distribution}
+  0180 2029-10 transfer                     -3139.626790 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0181 2029-10 transfer                      -533.971200 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0182 2029-10 assetGrowth                   3570.248545 cash  growth                 c-
+  0183 2029-10 incomeTaxWithholding          -408.177554 cash  -                      c12 {rate=0.100000 source=distribution}
+  0184 2029-11 transfer                     -3147.624485 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0185 2029-11 transfer                      -533.971200 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0186 2029-11 assetGrowth                   3568.131937 cash  growth                 c-
+  0187 2029-11 incomeTaxWithholding          -409.066187 cash  -                      c12 {rate=0.100000 source=distribution}
+  0188 2029-12 transfer                     -3155.642552 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0189 2029-12 transfer                      -533.971200 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0190 2029-12 assetGrowth                   3565.970419 cash  growth                 c-
+  0191 2029-12 incomeTaxWithholding          -409.957084 cash  -                      c12 {rate=0.100000 source=distribution}
+  0192 2030-01 transfer                     -3163.681045 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0193 2030-01 transfer                      -580.048896 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0194 2030-01 assetGrowth                   3563.575989 cash  growth                 c-
+  0195 2030-01 incomeTaxWithholding          -415.969993 cash  -                      c12 {rate=0.100000 source=distribution}
+  0196 2030-02 transfer                     -3171.740014 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0197 2030-02 transfer                      -580.048896 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0198 2030-02 assetGrowth                   3561.114473 cash  growth                 c-
+  0199 2030-02 incomeTaxWithholding          -416.865434 cash  -                      c12 {rate=0.100000 source=distribution}
+  0200 2030-03 transfer                     -3179.819513 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0201 2030-03 transfer                      -580.048896 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0202 2030-03 assetGrowth                   3558.606363 cash  growth                 c-
+  0203 2030-03 incomeTaxWithholding          -417.763157 cash  -                      c12 {rate=0.100000 source=distribution}
+  0204 2030-04 transfer                     -3187.919592 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0205 2030-04 transfer                      -580.048896 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0206 2030-04 assetGrowth                   3556.051377 cash  growth                 c-
+  0207 2030-04 incomeTaxWithholding          -418.663165 cash  -                      c12 {rate=0.100000 source=distribution}
+  0208 2030-05 transfer                     -3196.040305 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0209 2030-05 transfer                      -580.048896 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0210 2030-05 assetGrowth                   3553.449230 cash  growth                 c-
+  0211 2030-05 incomeTaxWithholding          -419.565467 cash  -                      c12 {rate=0.100000 source=distribution}
+  0212 2030-06 transfer                     -3204.181705 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0213 2030-06 transfer                      -580.048896 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0214 2030-06 assetGrowth                   3550.799637 cash  growth                 c-
+  0215 2030-06 incomeTaxWithholding          -420.470067 cash  -                      c12 {rate=0.100000 source=distribution}
+  0216 2030-07 transfer                     -3212.343843 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0217 2030-07 transfer                      -580.048896 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0218 2030-07 assetGrowth                   3548.102310 cash  growth                 c-
+  0219 2030-07 incomeTaxWithholding          -421.376971 cash  -                      c12 {rate=0.100000 source=distribution}
+  0220 2030-08 transfer                     -3220.526773 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0221 2030-08 transfer                      -580.048896 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0222 2030-08 assetGrowth                   3545.356960 cash  growth                 c-
+  0223 2030-08 incomeTaxWithholding          -422.286185 cash  -                      c12 {rate=0.100000 source=distribution}
+  0224 2030-09 transfer                     -3228.730548 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0225 2030-09 transfer                      -580.048896 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0226 2030-09 assetGrowth                   3542.563298 cash  growth                 c-
+  0227 2030-09 incomeTaxWithholding          -423.197716 cash  -                      c12 {rate=0.100000 source=distribution}
+  0228 2030-10 transfer                     -3236.955220 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0229 2030-10 transfer                      -580.048896 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0230 2030-10 assetGrowth                   3539.721032 cash  growth                 c-
+  0231 2030-10 incomeTaxWithholding          -424.111568 cash  -                      c12 {rate=0.100000 source=distribution}
+  0232 2030-11 transfer                     -3245.200844 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0233 2030-11 transfer                      -580.048896 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0234 2030-11 assetGrowth                   3536.829870 cash  growth                 c-
+  0235 2030-11 incomeTaxWithholding          -425.027749 cash  -                      c12 {rate=0.100000 source=distribution}
+  0236 2030-12 transfer                     -3253.467472 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0237 2030-12 transfer                      -580.048896 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0238 2030-12 assetGrowth                   3533.889517 cash  growth                 c-
+  0239 2030-12 incomeTaxWithholding          -425.946263 cash  -                      c12 {rate=0.100000 source=distribution}
+
+[history] IRA
+  value                        n=  60 first=   899317.490000 last=   870506.600000 min=   870506.600000 max=   899317.490000 sum=   53115221.900000 #7d2d7a77
+  growth                       n=  60 first=     3650.820000 last=     3533.890000 min=     3533.890000 max=     3650.820000 sum=     215619.400000 #d08f5136
+  ordinaryIncome               n=  60 first=     4333.330000 last=     4259.460000 min=     3824.220000 max=     4421.630000 sum=     245112.750000 #1ce04a39
+  income                       n=  60 first=     4333.330000 last=     4259.460000 min=     3824.220000 max=     4421.630000 sum=     245112.750000 #1ce04a39
+  withheldIncomeTax            n=  60 first=     -433.330000 last=     -425.950000 min=     -442.160000 max=     -382.420000 sum=     -24511.340000 #a9c48705
+  incomeTax                    n=  60 first=     -433.330000 last=     -425.950000 min=     -442.160000 max=     -382.420000 sum=     -24511.340000 #a9c48705
+  federalTaxes                 n=  60 first=     -433.330000 last=     -425.950000 min=     -442.160000 max=     -382.420000 sum=     -24511.340000 #a9c48705
+  taxes                        n=  60 first=     -433.330000 last=     -425.950000 min=     -442.160000 max=     -382.420000 sum=     -24511.340000 #a9c48705
+  cashFlow                     n=  60 first=     -433.330000 last=     -425.950000 min=     -442.160000 max=     -382.420000 sum=     -24511.340000 #a9c48705
+  cashFlowAccumulated          n=  60 first=     -433.330000 last=   -24511.280000 min=   -24511.280000 max=     -433.330000 sum=    -749206.800000 #cd701d1f
+  taxableDistribution          n=  60 first=     4333.330000 last=     4259.460000 min=     3824.220000 max=     4421.630000 sum=     245112.750000 #1ce04a39
+  tradIRADistribution          n=  60 first=     4333.330000 last=     4259.460000 min=     3824.220000 max=     4421.630000 sum=     245112.750000 #1ce04a39
+
+[asset] Living
+  instrument = monthlyExpense
+  start = 2026-01  finish = 2030-12
+  startCurrency = -2800.000000
+  finishCurrency = -3261.755157
+  startBasis = 0.000000
+  finishBasis = 0.000000
+  isClosed = no  isDepleted = no
+  closedDate = -  closedValue = -
+  events = 120  reconciled = 120
+
+[events] Living
+  0000 2026-01 transfer                      2800.000000 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0001 2026-01 expenseInflation                -7.132550 cash  -                      c-
+  0002 2026-02 transfer                      2807.132550 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0003 2026-02 expenseInflation                -7.150719 cash  -                      c-
+  0004 2026-03 transfer                      2814.283270 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0005 2026-03 expenseInflation                -7.168935 cash  -                      c-
+  0006 2026-04 transfer                      2821.452204 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0007 2026-04 expenseInflation                -7.187196 cash  -                      c-
+  0008 2026-05 transfer                      2828.639401 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0009 2026-05 expenseInflation                -7.205505 cash  -                      c-
+  0010 2026-06 transfer                      2835.844905 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0011 2026-06 expenseInflation                -7.223859 cash  -                      c-
+  0012 2026-07 transfer                      2843.068765 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0013 2026-07 expenseInflation                -7.242261 cash  -                      c-
+  0014 2026-08 transfer                      2850.311026 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0015 2026-08 expenseInflation                -7.260710 cash  -                      c-
+  0016 2026-09 transfer                      2857.571735 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0017 2026-09 expenseInflation                -7.279205 cash  -                      c-
+  0018 2026-10 transfer                      2864.850940 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0019 2026-10 expenseInflation                -7.297748 cash  -                      c-
+  0020 2026-11 transfer                      2872.148688 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0021 2026-11 expenseInflation                -7.316337 cash  -                      c-
+  0022 2026-12 transfer                      2879.465025 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0023 2026-12 expenseInflation                -7.334975 cash  -                      c-
+  0024 2027-01 transfer                      2886.800000 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0025 2027-01 expenseInflation                -7.353659 cash  -                      c-
+  0026 2027-02 transfer                      2894.153659 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0027 2027-02 expenseInflation                -7.372392 cash  -                      c-
+  0028 2027-03 transfer                      2901.526051 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0029 2027-03 expenseInflation                -7.391172 cash  -                      c-
+  0030 2027-04 transfer                      2908.917223 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0031 2027-04 expenseInflation                -7.409999 cash  -                      c-
+  0032 2027-05 transfer                      2916.327222 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0033 2027-05 expenseInflation                -7.428875 cash  -                      c-
+  0034 2027-06 transfer                      2923.756097 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0035 2027-06 expenseInflation                -7.447799 cash  -                      c-
+  0036 2027-07 transfer                      2931.203896 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0037 2027-07 expenseInflation                -7.466771 cash  -                      c-
+  0038 2027-08 transfer                      2938.670667 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0039 2027-08 expenseInflation                -7.485792 cash  -                      c-
+  0040 2027-09 transfer                      2946.156459 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0041 2027-09 expenseInflation                -7.504860 cash  -                      c-
+  0042 2027-10 transfer                      2953.661319 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0043 2027-10 expenseInflation                -7.523978 cash  -                      c-
+  0044 2027-11 transfer                      2961.185297 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0045 2027-11 expenseInflation                -7.543144 cash  -                      c-
+  0046 2027-12 transfer                      2968.728441 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0047 2027-12 expenseInflation                -7.562359 cash  -                      c-
+  0048 2028-01 transfer                      2976.290800 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0049 2028-01 expenseInflation                -7.581623 cash  -                      c-
+  0050 2028-02 transfer                      2983.872423 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0051 2028-02 expenseInflation                -7.600936 cash  -                      c-
+  0052 2028-03 transfer                      2991.473359 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0053 2028-03 expenseInflation                -7.620298 cash  -                      c-
+  0054 2028-04 transfer                      2999.093656 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0055 2028-04 expenseInflation                -7.639709 cash  -                      c-
+  0056 2028-05 transfer                      3006.733366 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0057 2028-05 expenseInflation                -7.659170 cash  -                      c-
+  0058 2028-06 transfer                      3014.392536 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0059 2028-06 expenseInflation                -7.678681 cash  -                      c-
+  0060 2028-07 transfer                      3022.071217 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0061 2028-07 expenseInflation                -7.698241 cash  -                      c-
+  0062 2028-08 transfer                      3029.769458 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0063 2028-08 expenseInflation                -7.717851 cash  -                      c-
+  0064 2028-09 transfer                      3037.487309 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0065 2028-09 expenseInflation                -7.737511 cash  -                      c-
+  0066 2028-10 transfer                      3045.224820 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0067 2028-10 expenseInflation                -7.757221 cash  -                      c-
+  0068 2028-11 transfer                      3052.982041 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0069 2028-11 expenseInflation                -7.776981 cash  -                      c-
+  0070 2028-12 transfer                      3060.759023 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0071 2028-12 expenseInflation                -7.796792 cash  -                      c-
+  0072 2029-01 transfer                      3068.555815 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0073 2029-01 expenseInflation                -7.816653 cash  -                      c-
+  0074 2029-02 transfer                      3076.372468 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0075 2029-02 expenseInflation                -7.836565 cash  -                      c-
+  0076 2029-03 transfer                      3084.209033 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0077 2029-03 expenseInflation                -7.856527 cash  -                      c-
+  0078 2029-04 transfer                      3092.065560 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0079 2029-04 expenseInflation                -7.876540 cash  -                      c-
+  0080 2029-05 transfer                      3099.942100 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0081 2029-05 expenseInflation                -7.896605 cash  -                      c-
+  0082 2029-06 transfer                      3107.838705 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0083 2029-06 expenseInflation                -7.916720 cash  -                      c-
+  0084 2029-07 transfer                      3115.755425 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0085 2029-07 expenseInflation                -7.936887 cash  -                      c-
+  0086 2029-08 transfer                      3123.692311 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0087 2029-08 expenseInflation                -7.957104 cash  -                      c-
+  0088 2029-09 transfer                      3131.649416 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0089 2029-09 expenseInflation                -7.977374 cash  -                      c-
+  0090 2029-10 transfer                      3139.626790 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0091 2029-10 expenseInflation                -7.997695 cash  -                      c-
+  0092 2029-11 transfer                      3147.624485 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0093 2029-11 expenseInflation                -8.018068 cash  -                      c-
+  0094 2029-12 transfer                      3155.642552 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0095 2029-12 expenseInflation                -8.038493 cash  -                      c-
+  0096 2030-01 transfer                      3163.681045 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0097 2030-01 expenseInflation                -8.058969 cash  -                      c-
+  0098 2030-02 transfer                      3171.740014 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0099 2030-02 expenseInflation                -8.079498 cash  -                      c-
+  0100 2030-03 transfer                      3179.819513 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0101 2030-03 expenseInflation                -8.100079 cash  -                      c-
+  0102 2030-04 transfer                      3187.919592 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0103 2030-04 expenseInflation                -8.120713 cash  -                      c-
+  0104 2030-05 transfer                      3196.040305 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0105 2030-05 expenseInflation                -8.141399 cash  -                      c-
+  0106 2030-06 transfer                      3204.181705 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0107 2030-06 expenseInflation                -8.162138 cash  -                      c-
+  0108 2030-07 transfer                      3212.343843 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0109 2030-07 expenseInflation                -8.182930 cash  -                      c-
+  0110 2030-08 transfer                      3220.526773 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0111 2030-08 expenseInflation                -8.203775 cash  -                      c-
+  0112 2030-09 transfer                      3228.730548 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0113 2030-09 expenseInflation                -8.224673 cash  -                      c-
+  0114 2030-10 transfer                      3236.955220 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0115 2030-10 expenseInflation                -8.245624 cash  -                      c-
+  0116 2030-11 transfer                      3245.200844 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0117 2030-11 expenseInflation                -8.266628 cash  -                      c-
+  0118 2030-12 transfer                      3253.467472 cash  -                      c10 {cadence=monthly from=Living to=IRA}
+  0119 2030-12 expenseInflation                -8.287686 cash  -                      c-
+
+[history] Living
+  value                        n=  60 first=    -2807.130000 last=    -3261.760000 min=    -3261.760000 max=    -2807.130000 sum=    -181731.340000 #9b45dc41
+  expense                      n=  60 first=    -2800.000000 last=    -3253.470000 min=    -3253.470000 max=    -2800.000000 sum=    -181269.580000 #a873ae7a
+  cashFlow                     n=  60 first=    -2800.000000 last=    -3253.470000 min=    -3253.470000 max=    -2800.000000 sum=    -181269.580000 #a873ae7a
+  cashFlowAccumulated          n=  60 first=    -2800.000000 last=  -181269.590000 min=  -181269.590000 max=    -2800.000000 sum=   -5390464.100000 #ec38574c
+  livingExpense                n=  60 first=    -2800.000000 last=    -3253.470000 min=    -3253.470000 max=    -2800.000000 sum=    -181269.580000 #a873ae7a
+
+[asset] Marketplace Plan
+  instrument = healthInsurance
+  start = 2026-01  finish = 2030-12
+  startCurrency = -1100.000000
+  finishCurrency = -1496.537856
+  startBasis = 0.000000
+  finishBasis = 0.000000
+  isClosed = no  isDepleted = no
+  closedDate = -  closedValue = -
+  events = 112  reconciled = 112
+  benchmarkPremium = 1000.000000  householdSize = -  advanceCreditShare = 1  estimatedAcaIncome = -  premiumTaxCreditEnabled = yes
+
+[events] Marketplace Plan
+  0000 2026-01 transfer                      1100.000000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0001 2026-02 transfer                      1100.000000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0002 2026-03 transfer                      1100.000000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0003 2026-04 transfer                      1100.000000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0004 2026-05 transfer                      1100.000000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0005 2026-06 transfer                      1100.000000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0006 2026-07 transfer                      1100.000000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0007 2026-08 transfer                      1100.000000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0008 2026-09 transfer                      1100.000000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0009 2026-10 transfer                      1100.000000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0010 2026-11 transfer                      1100.000000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0011 2026-12 transfer                      1100.000000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0012 2026-12 expenseInflation               -88.000000 cash  -                      c13
+  0013 2027-01 transfer                       555.000000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0014 2027-01 premiumTaxCredit               633.000000 info  premiumTaxCredit       c- {estimate=52527.520565 percent=329 share=1}
+  0015 2027-02 transfer                       555.000000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0016 2027-02 premiumTaxCredit               633.000000 info  premiumTaxCredit       c- {estimate=52527.520565 percent=329 share=1}
+  0017 2027-03 transfer                       555.000000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0018 2027-03 premiumTaxCredit               633.000000 info  premiumTaxCredit       c- {estimate=52527.520565 percent=329 share=1}
+  0019 2027-04 transfer                       555.000000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0020 2027-04 premiumTaxCredit               633.000000 info  premiumTaxCredit       c- {estimate=52527.520565 percent=329 share=1}
+  0021 2027-05 transfer                       555.000000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0022 2027-05 premiumTaxCredit               633.000000 info  premiumTaxCredit       c- {estimate=52527.520565 percent=329 share=1}
+  0023 2027-06 transfer                       555.000000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0024 2027-06 premiumTaxCredit               633.000000 info  premiumTaxCredit       c- {estimate=52527.520565 percent=329 share=1}
+  0025 2027-07 transfer                       555.000000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0026 2027-07 premiumTaxCredit               633.000000 info  premiumTaxCredit       c- {estimate=52527.520565 percent=329 share=1}
+  0027 2027-08 transfer                       555.000000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0028 2027-08 premiumTaxCredit               633.000000 info  premiumTaxCredit       c- {estimate=52527.520565 percent=329 share=1}
+  0029 2027-09 transfer                       555.000000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0030 2027-09 premiumTaxCredit               633.000000 info  premiumTaxCredit       c- {estimate=52527.520565 percent=329 share=1}
+  0031 2027-10 transfer                       555.000000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0032 2027-10 premiumTaxCredit               633.000000 info  premiumTaxCredit       c- {estimate=52527.520565 percent=329 share=1}
+  0033 2027-11 transfer                       555.000000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0034 2027-11 premiumTaxCredit               633.000000 info  premiumTaxCredit       c- {estimate=52527.520565 percent=329 share=1}
+  0035 2027-12 transfer                       555.000000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0036 2027-12 premiumTaxCredit               633.000000 info  premiumTaxCredit       c- {estimate=52527.520565 percent=329 share=1}
+  0037 2027-12 expenseInflation               -95.040000 cash  -                      c14
+  0038 2028-01 transfer                       508.640000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0039 2028-01 premiumTaxCredit               774.400000 info  premiumTaxCredit       c- {estimate=46434.540369 percent=282 share=1}
+  0040 2028-02 transfer                       508.640000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0041 2028-02 premiumTaxCredit               774.400000 info  premiumTaxCredit       c- {estimate=46434.540369 percent=282 share=1}
+  0042 2028-03 transfer                       508.640000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0043 2028-03 premiumTaxCredit               774.400000 info  premiumTaxCredit       c- {estimate=46434.540369 percent=282 share=1}
+  0044 2028-04 transfer                       508.640000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0045 2028-04 premiumTaxCredit               774.400000 info  premiumTaxCredit       c- {estimate=46434.540369 percent=282 share=1}
+  0046 2028-05 transfer                       508.640000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0047 2028-05 premiumTaxCredit               774.400000 info  premiumTaxCredit       c- {estimate=46434.540369 percent=282 share=1}
+  0048 2028-06 transfer                       508.640000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0049 2028-06 premiumTaxCredit               774.400000 info  premiumTaxCredit       c- {estimate=46434.540369 percent=282 share=1}
+  0050 2028-07 transfer                       508.640000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0051 2028-07 premiumTaxCredit               774.400000 info  premiumTaxCredit       c- {estimate=46434.540369 percent=282 share=1}
+  0052 2028-08 transfer                       508.640000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0053 2028-08 premiumTaxCredit               774.400000 info  premiumTaxCredit       c- {estimate=46434.540369 percent=282 share=1}
+  0054 2028-09 transfer                       508.640000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0055 2028-09 premiumTaxCredit               774.400000 info  premiumTaxCredit       c- {estimate=46434.540369 percent=282 share=1}
+  0056 2028-10 transfer                       508.640000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0057 2028-10 premiumTaxCredit               774.400000 info  premiumTaxCredit       c- {estimate=46434.540369 percent=282 share=1}
+  0058 2028-11 transfer                       508.640000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0059 2028-11 premiumTaxCredit               774.400000 info  premiumTaxCredit       c- {estimate=46434.540369 percent=282 share=1}
+  0060 2028-12 transfer                       508.640000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0061 2028-12 premiumTaxCredit               774.400000 info  premiumTaxCredit       c- {estimate=46434.540369 percent=282 share=1}
+  0062 2028-12 expenseInflation              -102.643200 cash  -                      c15
+  0063 2029-01 transfer                       533.971200 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0064 2029-01 premiumTaxCredit               851.712000 info  premiumTaxCredit       c- {estimate=47026.477787 percent=277 share=1}
+  0065 2029-02 transfer                       533.971200 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0066 2029-02 premiumTaxCredit               851.712000 info  premiumTaxCredit       c- {estimate=47026.477787 percent=277 share=1}
+  0067 2029-03 transfer                       533.971200 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0068 2029-03 premiumTaxCredit               851.712000 info  premiumTaxCredit       c- {estimate=47026.477787 percent=277 share=1}
+  0069 2029-04 transfer                       533.971200 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0070 2029-04 premiumTaxCredit               851.712000 info  premiumTaxCredit       c- {estimate=47026.477787 percent=277 share=1}
+  0071 2029-05 transfer                       533.971200 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0072 2029-05 premiumTaxCredit               851.712000 info  premiumTaxCredit       c- {estimate=47026.477787 percent=277 share=1}
+  0073 2029-06 transfer                       533.971200 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0074 2029-06 premiumTaxCredit               851.712000 info  premiumTaxCredit       c- {estimate=47026.477787 percent=277 share=1}
+  0075 2029-07 transfer                       533.971200 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0076 2029-07 premiumTaxCredit               851.712000 info  premiumTaxCredit       c- {estimate=47026.477787 percent=277 share=1}
+  0077 2029-08 transfer                       533.971200 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0078 2029-08 premiumTaxCredit               851.712000 info  premiumTaxCredit       c- {estimate=47026.477787 percent=277 share=1}
+  0079 2029-09 transfer                       533.971200 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0080 2029-09 premiumTaxCredit               851.712000 info  premiumTaxCredit       c- {estimate=47026.477787 percent=277 share=1}
+  0081 2029-10 transfer                       533.971200 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0082 2029-10 premiumTaxCredit               851.712000 info  premiumTaxCredit       c- {estimate=47026.477787 percent=277 share=1}
+  0083 2029-11 transfer                       533.971200 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0084 2029-11 premiumTaxCredit               851.712000 info  premiumTaxCredit       c- {estimate=47026.477787 percent=277 share=1}
+  0085 2029-12 transfer                       533.971200 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0086 2029-12 premiumTaxCredit               851.712000 info  premiumTaxCredit       c- {estimate=47026.477787 percent=277 share=1}
+  0087 2029-12 expenseInflation              -110.854656 cash  -                      c16
+  0088 2030-01 transfer                       580.048896 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0089 2030-01 premiumTaxCredit               916.488960 info  premiumTaxCredit       c- {estimate=48611.810065 percent=278 share=1}
+  0090 2030-02 transfer                       580.048896 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0091 2030-02 premiumTaxCredit               916.488960 info  premiumTaxCredit       c- {estimate=48611.810065 percent=278 share=1}
+  0092 2030-03 transfer                       580.048896 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0093 2030-03 premiumTaxCredit               916.488960 info  premiumTaxCredit       c- {estimate=48611.810065 percent=278 share=1}
+  0094 2030-04 transfer                       580.048896 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0095 2030-04 premiumTaxCredit               916.488960 info  premiumTaxCredit       c- {estimate=48611.810065 percent=278 share=1}
+  0096 2030-05 transfer                       580.048896 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0097 2030-05 premiumTaxCredit               916.488960 info  premiumTaxCredit       c- {estimate=48611.810065 percent=278 share=1}
+  0098 2030-06 transfer                       580.048896 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0099 2030-06 premiumTaxCredit               916.488960 info  premiumTaxCredit       c- {estimate=48611.810065 percent=278 share=1}
+  0100 2030-07 transfer                       580.048896 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0101 2030-07 premiumTaxCredit               916.488960 info  premiumTaxCredit       c- {estimate=48611.810065 percent=278 share=1}
+  0102 2030-08 transfer                       580.048896 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0103 2030-08 premiumTaxCredit               916.488960 info  premiumTaxCredit       c- {estimate=48611.810065 percent=278 share=1}
+  0104 2030-09 transfer                       580.048896 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0105 2030-09 premiumTaxCredit               916.488960 info  premiumTaxCredit       c- {estimate=48611.810065 percent=278 share=1}
+  0106 2030-10 transfer                       580.048896 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0107 2030-10 premiumTaxCredit               916.488960 info  premiumTaxCredit       c- {estimate=48611.810065 percent=278 share=1}
+  0108 2030-11 transfer                       580.048896 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0109 2030-11 premiumTaxCredit               916.488960 info  premiumTaxCredit       c- {estimate=48611.810065 percent=278 share=1}
+  0110 2030-12 transfer                       580.048896 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
+  0111 2030-12 premiumTaxCredit               916.488960 info  premiumTaxCredit       c- {estimate=48611.810065 percent=278 share=1}
+
+[history] Marketplace Plan
+  value                        n=  60 first=    -1100.000000 last=    -1496.540000 min=    -1496.540000 max=    -1100.000000 sum=     -77439.120000 #cba15cc9
+  expense                      n=  60 first=    -1100.000000 last=     -580.050000 min=    -1100.000000 max=     -508.640000 sum=     -39331.920000 #3d1ca4f9
+  cashFlow                     n=  60 first=    -1100.000000 last=     -580.050000 min=    -1100.000000 max=     -508.640000 sum=     -39331.920000 #3d1ca4f9
+  cashFlowAccumulated          n=  60 first=    -1100.000000 last=   -39331.920000 min=   -39331.920000 max=    -1100.000000 sum=   -1352397.640000 #ca3cfd54
+  healthPremium                n=  60 first=    -1100.000000 last=    -1496.540000 min=    -1496.540000 max=    -1100.000000 sum=     -77439.120000 #cba15cc9
+  premiumTaxCredit             n=  60 first=        0.000000 last=      916.490000 min=        0.000000 max=      916.490000 sum=      38107.200000 #df6530a1
+
+[packages]
+  0000 assetAppreciation=3650.822323 expense=-3900.000000 incomeTax=-433.333333 tradIRADistribution=4333.333333 value=925410.356439
+  0001 assetAppreciation=3648.012629 expense=-3907.132550 incomeTax=-434.125839 tradIRADistribution=4341.258389 value=924709.959960
+  0002 assetAppreciation=3645.159127 expense=-3914.283270 incomeTax=-434.920363 tradIRADistribution=4349.203633 value=923998.746519
+  0003 assetAppreciation=3642.261556 expense=-3921.452204 incomeTax=-435.716912 tradIRADistribution=4357.169116 value=923276.651763
+  0004 assetAppreciation=3639.319652 expense=-3928.639401 incomeTax=-436.515489 tradIRADistribution=4365.154890 value=922543.611021
+  0005 assetAppreciation=3636.333154 expense=-3935.844905 incomeTax=-437.316101 tradIRADistribution=4373.161006 value=921799.559310
+  0006 assetAppreciation=3633.301795 expense=-3943.068765 incomeTax=-438.118752 tradIRADistribution=4381.187516 value=921044.431327
+  0007 assetAppreciation=3630.225310 expense=-3950.311026 incomeTax=-438.923447 tradIRADistribution=4389.234473 value=920278.161455
+  0008 assetAppreciation=3627.103432 expense=-3957.571735 incomeTax=-439.730193 tradIRADistribution=4397.301928 value=919500.683754
+  0009 assetAppreciation=3623.935891 expense=-3964.850940 incomeTax=-440.538993 tradIRADistribution=4405.389934 value=918711.931964
+  0010 assetAppreciation=3620.722419 expense=-3972.148688 incomeTax=-441.349854 tradIRADistribution=4413.498542 value=917911.839503
+  0011 assetAppreciation=3617.462743 expense=-3979.465025 incomeTax=-442.162781 tradIRADistribution=4421.627806 value=917100.339465
+  0012 assetAppreciation=3616.376989 expense=-3441.800000 incomeTax=-382.422222 tradIRADistribution=3824.222222 taxTrueUp=1129.449589 premiumTaxCredit=633.000000 ptcReconciliation=6768.000000 value=924694.590162
+  0013 assetAppreciation=3615.500242 expense=-3449.153659 incomeTax=-383.239295 tradIRADistribution=3832.392955 premiumTaxCredit=633.000000 value=924470.325057
+  0014 assetAppreciation=3614.586558 expense=-3456.526051 incomeTax=-384.058450 tradIRADistribution=3840.584501 premiumTaxCredit=633.000000 value=924236.935943
+  0015 assetAppreciation=3613.635702 expense=-3463.917223 incomeTax=-384.879691 tradIRADistribution=3848.796914 premiumTaxCredit=633.000000 value=923994.364731
+  0016 assetAppreciation=3612.647437 expense=-3471.327222 incomeTax=-385.703025 tradIRADistribution=3857.030247 premiumTaxCredit=633.000000 value=923742.553047
+  0017 assetAppreciation=3611.621525 expense=-3478.756097 incomeTax=-386.528455 tradIRADistribution=3865.284552 premiumTaxCredit=633.000000 value=923481.442220
+  0018 assetAppreciation=3610.557727 expense=-3486.203896 incomeTax=-387.355988 tradIRADistribution=3873.559885 premiumTaxCredit=633.000000 value=923210.973291
+  0019 assetAppreciation=3609.455803 expense=-3493.670667 incomeTax=-388.185630 tradIRADistribution=3881.856297 premiumTaxCredit=633.000000 value=922931.087006
+  0020 assetAppreciation=3608.315512 expense=-3501.156459 incomeTax=-389.017384 tradIRADistribution=3890.173843 premiumTaxCredit=633.000000 value=922641.723814
+  0021 assetAppreciation=3607.136610 expense=-3508.661319 incomeTax=-389.851258 tradIRADistribution=3898.512577 premiumTaxCredit=633.000000 value=922342.823870
+  0022 assetAppreciation=3605.918855 expense=-3516.185297 incomeTax=-390.687255 tradIRADistribution=3906.872552 premiumTaxCredit=633.000000 value=922034.327028
+  0023 assetAppreciation=3604.662001 expense=-3523.728441 incomeTax=-391.525382 tradIRADistribution=3915.253823 premiumTaxCredit=633.000000 value=921716.172847
+  0024 assetAppreciation=3603.554678 expense=-3484.930800 incomeTax=-387.214533 tradIRADistribution=3872.145333 taxTrueUp=1318.889193 premiumTaxCredit=774.400000 ptcReconciliation=744.000000 value=923407.849761
+  0025 assetAppreciation=3602.429518 expense=-3492.512423 incomeTax=-388.056936 tradIRADistribution=3880.569359 premiumTaxCredit=774.400000 value=923122.108984
+  0026 assetAppreciation=3601.265374 expense=-3500.113359 incomeTax=-388.901484 tradIRADistribution=3889.014843 premiumTaxCredit=774.400000 value=922826.739217
+  0027 assetAppreciation=3600.062001 expense=-3507.733656 incomeTax=-389.748184 tradIRADistribution=3897.481841 premiumTaxCredit=774.400000 value=922521.679669
+  0028 assetAppreciation=3598.819151 expense=-3515.373366 incomeTax=-390.597041 tradIRADistribution=3905.970407 premiumTaxCredit=774.400000 value=922206.869243
+  0029 assetAppreciation=3597.536574 expense=-3523.032536 incomeTax=-391.448060 tradIRADistribution=3914.480596 premiumTaxCredit=774.400000 value=921882.246541
+  0030 assetAppreciation=3596.214021 expense=-3530.711217 incomeTax=-392.301246 tradIRADistribution=3923.012463 premiumTaxCredit=774.400000 value=921547.749857
+  0031 assetAppreciation=3594.851240 expense=-3538.409458 incomeTax=-393.156606 tradIRADistribution=3931.566065 premiumTaxCredit=774.400000 value=921203.317182
+  0032 assetAppreciation=3593.447979 expense=-3546.127309 incomeTax=-394.014145 tradIRADistribution=3940.141455 premiumTaxCredit=774.400000 value=920848.886195
+  0033 assetAppreciation=3592.003983 expense=-3553.864820 incomeTax=-394.873869 tradIRADistribution=3948.738689 premiumTaxCredit=774.400000 value=920484.394268
+  0034 assetAppreciation=3590.518998 expense=-3561.622041 incomeTax=-395.735782 tradIRADistribution=3957.357824 premiumTaxCredit=774.400000 value=920109.778461
+  0035 assetAppreciation=3588.992767 expense=-3569.399023 incomeTax=-396.599891 tradIRADistribution=3965.998914 premiumTaxCredit=774.400000 value=919724.975522
+  0036 assetAppreciation=3587.321830 expense=-3602.527015 incomeTax=-400.280779 tradIRADistribution=4002.807794 taxTrueUp=1376.725424 premiumTaxCredit=851.712000 ptcReconciliation=-120.000000 value=920455.755128
+  0037 assetAppreciation=3585.597242 expense=-3610.343668 incomeTax=-401.149296 tradIRADistribution=4011.492964 premiumTaxCredit=851.712000 value=920022.022841
+  0038 assetAppreciation=3583.830163 expense=-3618.180233 incomeTax=-402.020026 tradIRADistribution=4020.200259 premiumTaxCredit=851.712000 value=919577.796219
+  0039 assetAppreciation=3582.020329 expense=-3626.036760 incomeTax=-402.892973 tradIRADistribution=4028.929733 premiumTaxCredit=851.712000 value=919123.010274
+  0040 assetAppreciation=3580.167475 expense=-3633.913300 incomeTax=-403.768144 tradIRADistribution=4037.681445 premiumTaxCredit=851.712000 value=918657.599700
+  0041 assetAppreciation=3578.271335 expense=-3641.809905 incomeTax=-404.645545 tradIRADistribution=4046.455450 premiumTaxCredit=851.712000 value=918181.498865
+  0042 assetAppreciation=3576.331641 expense=-3649.726625 incomeTax=-405.525181 tradIRADistribution=4055.251805 premiumTaxCredit=851.712000 value=917694.641814
+  0043 assetAppreciation=3574.348125 expense=-3657.663511 incomeTax=-406.407057 tradIRADistribution=4064.070568 premiumTaxCredit=851.712000 value=917196.962266
+  0044 assetAppreciation=3572.320517 expense=-3665.620616 incomeTax=-407.291180 tradIRADistribution=4072.911795 premiumTaxCredit=851.712000 value=916688.393614
+  0045 assetAppreciation=3570.248545 expense=-3673.597990 incomeTax=-408.177554 tradIRADistribution=4081.775544 premiumTaxCredit=851.712000 value=916168.868920
+  0046 assetAppreciation=3568.131937 expense=-3681.595685 incomeTax=-409.066187 tradIRADistribution=4090.661872 premiumTaxCredit=851.712000 value=915638.320917
+  0047 assetAppreciation=3565.970419 expense=-3689.613752 incomeTax=-409.957084 tradIRADistribution=4099.570836 premiumTaxCredit=851.712000 value=915096.682008
+  0048 assetAppreciation=3563.575989 expense=-3743.729941 incomeTax=-415.969993 tradIRADistribution=4159.699935 taxTrueUp=1416.853683 premiumTaxCredit=916.488960 ptcReconciliation=-336.000000 value=915462.498120
+  0049 assetAppreciation=3561.114473 expense=-3751.788910 incomeTax=-416.865434 tradIRADistribution=4168.654345 premiumTaxCredit=916.488960 value=914846.878749
+  0050 assetAppreciation=3558.606363 expense=-3759.868409 incomeTax=-417.763157 tradIRADistribution=4177.631565 premiumTaxCredit=916.488960 value=914219.753468
+  0051 assetAppreciation=3556.051377 expense=-3767.968488 incomeTax=-418.663165 tradIRADistribution=4186.631654 premiumTaxCredit=916.488960 value=913581.052478
+  0052 assetAppreciation=3553.449230 expense=-3776.089201 incomeTax=-419.565467 tradIRADistribution=4195.654668 premiumTaxCredit=916.488960 value=912930.705641
+  0053 assetAppreciation=3550.799637 expense=-3784.230601 incomeTax=-420.470067 tradIRADistribution=4204.700667 premiumTaxCredit=916.488960 value=912268.642473
+  0054 assetAppreciation=3548.102310 expense=-3792.392739 incomeTax=-421.376971 tradIRADistribution=4213.769710 premiumTaxCredit=916.488960 value=911594.792142
+  0055 assetAppreciation=3545.356960 expense=-3800.575669 incomeTax=-422.286185 tradIRADistribution=4222.861854 premiumTaxCredit=916.488960 value=910909.083473
+  0056 assetAppreciation=3542.563298 expense=-3808.779444 incomeTax=-423.197716 tradIRADistribution=4231.977160 premiumTaxCredit=916.488960 value=910211.444939
+  0057 assetAppreciation=3539.721032 expense=-3817.004116 incomeTax=-424.111568 tradIRADistribution=4241.115685 premiumTaxCredit=916.488960 value=909501.804663
+  0058 assetAppreciation=3536.829870 expense=-3825.249740 incomeTax=-425.027749 tradIRADistribution=4250.277489 premiumTaxCredit=916.488960 value=908780.090416
+  0059 assetAppreciation=3533.889517 expense=-3833.516368 incomeTax=-425.946263 tradIRADistribution=4259.462631 premiumTaxCredit=916.488960 value=908046.229616
+
+[priceIndex]
+  [0000]         1.002547         1.005101         1.007662         1.010228         1.012802         1.015382
+  [0006]         1.017968         1.020561         1.023161         1.025767         1.028380         1.031000
+  [0012]         1.033626         1.036259         1.038899         1.041545         1.044199         1.046859
+  [0018]         1.049525         1.052199         1.054879         1.057566         1.060260         1.062961
+  [0024]         1.065669         1.068383         1.071105         1.073833         1.076569         1.079311
+  [0030]         1.082061         1.084817         1.087580         1.090351         1.093128         1.095913
+  [0036]         1.098704         1.101503         1.104309         1.107122         1.109942         1.112770
+  [0042]         1.115604         1.118446         1.121295         1.124152         1.127015         1.129886
+  [0048]         1.132764         1.135650         1.138543         1.141443         1.144351         1.147266
+  [0054]         1.150188         1.153118         1.156055         1.159000         1.161953         1.164913
+
+[taxYears]
+  2026 months=12 age=60 agi=52527.520565 niit=52527.520565 seniorDeduction=52527.520565 irmaa=52527.520565 iraDeduction=52527.520565 rothContribution=52527.520565 aca=52527.520565 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=36427.520565 capitalGains=0.000000 fica=0.000000 incomeTax=4123.302468 capitalGainsTax=0.000000 niit=0.000000 federalTax=4123.302468 settledTrueUp=1129.449589 settledNIIT=0.000000 fplPercent=336 ptc=6768.000000 aptc=0.000000 settledPTC=6768.000000 onEstimate=no
+  2027 months=12 age=61 agi=46434.540369 niit=46434.540369 seniorDeduction=46434.540369 irmaa=46434.540369 iraDeduction=46434.540369 rothContribution=46434.540369 aca=46434.540369 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=29835.440369 capitalGains=0.000000 fica=0.000000 incomeTax=3324.564844 capitalGainsTax=0.000000 niit=0.000000 federalTax=3324.564844 settledTrueUp=1318.889193 settledNIIT=0.000000 fplPercent=291 ptc=8340.000000 aptc=7596.000000 settledPTC=744.000000 onEstimate=no
+  2028 months=12 age=62 agi=47026.477787 niit=47026.477787 seniorDeduction=47026.477787 irmaa=47026.477787 iraDeduction=47026.477787 rothContribution=47026.477787 aca=47026.477787 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=29912.805687 capitalGains=0.000000 fica=0.000000 incomeTax=3325.922354 capitalGainsTax=0.000000 niit=0.000000 federalTax=3325.922354 settledTrueUp=1376.725424 settledNIIT=0.000000 fplPercent=286 ptc=9172.800000 aptc=9292.800000 settledPTC=-120.000000 onEstimate=no
+  2029 months=12 age=63 agi=48611.810065 niit=48611.810065 seniorDeduction=48611.810065 irmaa=48611.810065 iraDeduction=48611.810065 rothContribution=48611.810065 aca=48611.810065 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=30967.614130 capitalGains=0.000000 fica=0.000000 incomeTax=3444.327323 capitalGainsTax=0.000000 niit=0.000000 federalTax=3444.327323 settledTrueUp=1416.853683 settledNIIT=0.000000 fplPercent=287 ptc=9884.544000 aptc=10220.544000 settledPTC=-336.000000 onEstimate=no
+  2030 months=12 age=64 agi=50512.437361 niit=50512.437361 seniorDeduction=50512.437361 irmaa=50512.437361 iraDeduction=50512.437361 rothContribution=50512.437361 aca=50512.437361 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=32321.271352 capitalGains=0.000000 fica=0.000000 incomeTax=3598.340813 capitalGainsTax=0.000000 niit=0.000000 federalTax=3598.340813 settledTrueUp=1452.902924 settledNIIT=0.000000 fplPercent=289 ptc=10589.867520 aptc=10997.867520 settledPTC=-408.000000 onEstimate=no
+
+[sanity]
+  (no findings)
+
+[traces]
+  scopes = 1582
+  unattributedEvents = 0
+  1x 2027 annual pass
+  1x 2027 tax true-up
+  1x 2028 annual pass
+  1x 2028 tax true-up
+  1x 2029 annual pass
+  1x 2029 tax true-up
+  1x 2030 annual pass
+  1x 2030 tax true-up
+  1x 2031 annual pass
+  1x 2031 tax true-up
+  4x Annual growth: Marketplace Plan
+  7x April 2026
+  7x April 2027
+  7x April 2028
+  7x April 2029
+  7x April 2030
+  7x August 2026
+  7x August 2027
+  7x August 2028
+  7x August 2029
+  7x August 2030
+  7x December 2026
+  7x December 2027
+  7x December 2028
+  7x December 2029
+  7x December 2030
+  7x February 2026
+  7x February 2027
+  7x February 2028
+  7x February 2029
+  7x February 2030
+  60x Federal withholding: IRA
+  7x January 2026
+  7x January 2027
+  7x January 2028
+  7x January 2029
+  7x January 2030
+  7x July 2026
+  7x July 2027
+  7x July 2028
+  7x July 2029
+  7x July 2030
+  7x June 2026
+  7x June 2027
+  7x June 2028
+  7x June 2029
+  7x June 2030
+  7x March 2026
+  7x March 2027
+  7x March 2028
+  7x March 2029
+  7x March 2030
+  7x May 2026
+  7x May 2027
+  7x May 2028
+  7x May 2029
+  7x May 2030
+  7x November 2026
+  7x November 2027
+  7x November 2028
+  7x November 2029
+  7x November 2030
+  7x October 2026
+  7x October 2027
+  7x October 2028
+  7x October 2029
+  7x October 2030
+  60x Pay Checking
+  60x Pay IRA
+  60x Pay Living
+  60x Pay Marketplace Plan
+  60x Payroll: Checking
+  60x Payroll: IRA
+  60x Payroll: Living
+  60x Payroll: Marketplace Plan
+  5x Premium tax credit reconciliation
+  60x Required distribution from Checking
+  60x Required distribution from IRA
+  60x Required distribution from Living
+  60x Required distribution from Marketplace Plan
+  7x September 2026
+  7x September 2027
+  7x September 2028
+  7x September 2029
+  7x September 2030
+  3x Settle from Checking
+  60x Transfer Living → IRA
+  60x Transfer Marketplace Plan → IRA
+  60x Withholding: Checking
+  60x Withholding: IRA
+  60x Withholding: Living
+  60x Withholding: Marketplace Plan
+
+[traceLegend]
+  c0 = 2027 annual pass > 2027 tax true-up
+  c1 = 2027 annual pass > Premium tax credit reconciliation
+  c2 = 2028 annual pass > 2028 tax true-up
+  c3 = 2028 annual pass > Premium tax credit reconciliation
+  c4 = 2029 annual pass > 2029 tax true-up
+  c5 = 2029 annual pass > Premium tax credit reconciliation > Settle from Checking
+  c6 = 2030 annual pass > 2030 tax true-up
+  c7 = 2030 annual pass > Premium tax credit reconciliation > Settle from Checking
+  c8 = 2031 annual pass > 2031 tax true-up
+  c9 = 2031 annual pass > Premium tax credit reconciliation > Settle from Checking
+  c10 = Pay Living > Transfer Living → IRA
+  c11 = Pay Marketplace Plan > Transfer Marketplace Plan → IRA
+  c12 = Federal withholding: IRA
+  c13 = 2027 annual pass > Annual growth: Marketplace Plan
+  c14 = 2028 annual pass > Annual growth: Marketplace Plan
+  c15 = 2029 annual pass > Annual growth: Marketplace Plan
+  c16 = 2030 annual pass > Annual growth: Marketplace Plan
+

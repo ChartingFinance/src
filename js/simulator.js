@@ -35,6 +35,7 @@ const INSTRUMENT_MUTABILITY = {
     [Instrument.MORTGAGE]:          0,
     [Instrument.DEBT]:              0,
     [Instrument.MONTHLY_EXPENSE]:   0.25,
+    [Instrument.HEALTH_INSURANCE]:  0.25,
 };
 
 // Minimum absolute flex range for partially-mutable genes, in percentage

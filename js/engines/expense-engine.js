@@ -44,7 +44,9 @@ export class ExpenseEngine {
             return;
         }
 
-        const modelAssetExpense = modelAsset.finishCurrency.copy();
+        // What the bill asks of the accounts: on a health-insurance card, the
+        // premium less the advance credit the Treasury paid toward it.
+        const modelAssetExpense = modelAsset.amountDueCurrency.copy();
         let runningExpenseAmount = new Currency(0.0);
         if (modelAsset.fundTransfers?.length > 0) {
 

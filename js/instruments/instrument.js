@@ -20,6 +20,7 @@ export const Instrument = Object.freeze({
   CASH:                'cash',
   DEBT:                'debt',
   MONTHLY_EXPENSE:     'monthlyExpense',
+  HEALTH_INSURANCE:    'healthInsurance',
   PENSION:             'pension',
 });
 
@@ -47,6 +48,7 @@ export const InstrumentMeta = new Map([
   [Instrument.DEBT,              { emoji: '💳💸', assetEmoji: '💳', label: 'Debt',              sortOrder: 13 }],
   // ── Expenses ──
   [Instrument.MONTHLY_EXPENSE,   { emoji: '💸💸', assetEmoji: '📋', label: 'Monthly Expense',   sortOrder: 14 }],
+  [Instrument.HEALTH_INSURANCE,  { emoji: '🩺💸', assetEmoji: '🩺', label: 'ACA Health Insurance', sortOrder: 15 }],
 ]);
 
 // ── Classification Sets ──────────────────────────────────────────────
@@ -58,8 +60,11 @@ const MONTHLY_INCOME = new Set([
   Instrument.PENSION,
 ]);
 
+// A marketplace premium is an expense in every respect, plus the premium tax
+// credit computed on it (premium-tax-credit.js).
 const MONTHLY_EXPENSE = new Set([
   Instrument.MONTHLY_EXPENSE,
+  Instrument.HEALTH_INSURANCE,
 ]);
 
 const MORTGAGE = new Set([
@@ -173,6 +178,7 @@ export const InstrumentType = Object.freeze({
   isRetirementIncome:   (v) => v === Instrument.RETIREMENT_INCOME || v === Instrument.PENSION,
   isPension:            (v) => v === Instrument.PENSION,
   isMonthlyExpense:     (v) => MONTHLY_EXPENSE.has(v),
+  isHealthInsurance:    (v) => v === Instrument.HEALTH_INSURANCE,
   isIRA:                (v) => v === Instrument.IRA,
   isRothIRA:            (v) => v === Instrument.ROTH_IRA,
   is401K:               (v) => v === Instrument.FOUR_01K,

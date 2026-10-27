@@ -426,6 +426,12 @@ export class TaxTable {
         // Keyed by TaxOwner, with exactly one key. See TaxOwner.
         this.yearlySocialSecurityByOwner = new Map([[TaxOwner.PRIMARY, new Currency()]]);
 
+        // How far the indexed figures have been inflated since the run began:
+        // entry k is the price level after k January indexings, relative to
+        // the plan's first year. The premium tax credit's poverty line follows
+        // it, so it moves with the brackets in a backtest as well.
+        this.priceLevels = [1.0];
+
     }
 
     monthlyChron() {
@@ -480,6 +486,7 @@ export class TaxTable {
                 + JSON.stringify(inflationOverride));
         }
         const r = 1.0 + inflationOverride;
+        this.priceLevels.push(this.priceLevels[this.priceLevels.length - 1] * r);
         this.activeTaxTables.fica.maxSSEarnings *= r;
         this.inflateTaxRows(this.activeTaxTables.income.tables, r);
         this.inflateTaxRows(this.activeTaxTables.capitalGains.tables, r);

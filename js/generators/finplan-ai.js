@@ -258,7 +258,12 @@ export function generateMonthDetailsSectionMarkdown(portfolio, year, month, head
         md += `| AGI | ${fmt(t.agi)} |\n`;
         for (const line of magiLines(t)) md += `| MAGI (${line.purposes.join(', ')}) | ${fmt(line.amount)} |\n`;
         md += `| Effective rate on total income (${fmt(y.totalIncome)}, withdrawals included) | ${pct(y.effectiveRateOnIncome)} |\n`;
-        md += `| Effective rate on AGI | ${pct(y.effectiveRateOnAGI)} |\n\n`;
+        md += `| Effective rate on AGI | ${pct(y.effectiveRateOnAGI)} |\n`;
+        if (t.fplPercent != null) {
+            md += `| Premium tax credit (${fmt(t.aptc)} advanced) | ${fmt(t.ptc)} |\n`;
+            md += `| ${t.ptcOnEstimate ? 'Estimate' : 'ACA MAGI'} as % of the poverty line | ${t.fplPercent}% |\n`;
+        }
+        md += '\n';
         const parts = settlementParts(t);
         md += `- Federal taxes owed is what ${year}'s income owed: FICA, income and capital-gains `
             + 'tax, and NIIT. Taxes paid above is what left in the year, which includes the '
@@ -536,6 +541,11 @@ export function generateReportsSectionMarkdown(portfolio, included = null) {
         }
         if (Math.abs(total.taxTrueUp.amount) >= 0.005) {
             md += `| Annual True-Up | ${cost(total.taxTrueUp)} |
+`;
+        }
+        // Excess advance repaid less credit still owed, settled each January.
+        if (Math.abs(total.ptcReconciliation.amount) >= 0.005) {
+            md += `| Premium Tax Credit Settled | ${cost(total.ptcReconciliation)} |
 `;
         }
         md += `| Property Taxes | ${cost(total.propertyTaxes)} |

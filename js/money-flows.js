@@ -101,6 +101,7 @@ export const FlowVia = Object.freeze({
     CAPITAL_GAINS_TAX: 'capitalGainsTax',
     TRUE_UP:    'trueUp',
     NIIT:       'niit',
+    PTC:        'ptc',         // excess advance premium tax credit repaid on the return
     ONE_TIME:   'oneTime',
     YIELD:      'yield',
     REFUND:     'refund',
@@ -135,6 +136,7 @@ export const FLOW_TREATMENT = Object.freeze({
     [EventType.CAPITAL_GAINS_TAX]:       'tax',
     [EventType.TAX_TRUE_UP]:             'tax',
     [EventType.NIIT_ASSESSED]:           'tax',
+    [EventType.PTC_RECONCILIATION]:      'tax',
 
     [EventType.DIVIDEND]:                'yield',
     [EventType.INTEREST_INCOME]:         'yield',
@@ -153,6 +155,9 @@ export const FLOW_TREATMENT = Object.freeze({
     [EventType.CAPITAL_GAIN_RECOGNIZED]: 'excluded',
     [EventType.CAPITAL_GAIN_EXCLUDED]:   'excluded',
     [EventType.CONTRIBUTION_CAPPED]:     'excluded',
+    // Paid by the Treasury to the insurer: the household's bars show the net
+    // premium its accounts paid.
+    [EventType.PREMIUM_TAX_CREDIT]:      'excluded',
 });
 
 /** Where a tax event's money went, and how. */
@@ -162,6 +167,7 @@ const TAX_PART = Object.freeze({
     [EventType.CAPITAL_GAINS_TAX]:      { to: 'Capital gains tax',          via: FlowVia.CAPITAL_GAINS_TAX },
     [EventType.TAX_TRUE_UP]:            { to: 'Annual tax settlement',      via: FlowVia.TRUE_UP },
     [EventType.NIIT_ASSESSED]:          { to: 'Net investment income tax',  via: FlowVia.NIIT },
+    [EventType.PTC_RECONCILIATION]:     { to: 'Premium tax credit repayment', via: FlowVia.PTC },
 });
 
 const PROVISION_TO = 'Capital gains tax on the draw';
@@ -496,7 +502,7 @@ const AUTOMATIC = Object.freeze([
     { key: 'gainsTax',   label: 'Tax on capital gains',
       test: (s, p) => p.via === FlowVia.CAPITAL_GAINS_TAX || p.via === FlowVia.PROVISION },
     { key: 'settlement', label: 'Last year’s tax settlement',
-      test: (s, p) => p.via === FlowVia.TRUE_UP || p.via === FlowVia.NIIT },
+      test: (s, p) => p.via === FlowVia.TRUE_UP || p.via === FlowVia.NIIT || p.via === FlowVia.PTC },
     { key: 'refund',     label: 'Tax refund',                     test: (s, p) => p.via === FlowVia.REFUND },
     { key: 'rmd',        label: 'Required minimum distributions', test: (s, p) => p.via === FlowVia.RMD },
     { key: 'leftover',   label: 'Take-home pay no rule claims',   test: (s, p) => p.via === FlowVia.LEFTOVER },

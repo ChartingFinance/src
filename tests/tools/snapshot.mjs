@@ -459,6 +459,12 @@ function render(fixture, portfolio, sanity, coverage) {
     L.push(`  isClosed = ${bool(a.isClosed)}  isDepleted = ${bool(a.isDepleted)}`);
     L.push(`  closedDate = ${dateStr(a.closedDateInt)}  closedValue = ${a.closedValue == null ? '-' : money(a.closedValue)}`);
     L.push(`  events = ${a.events.length}  reconciled = ${a.eventsCheckedIndex ?? 0}`);
+    if (a.instrument === 'healthInsurance') {
+      L.push(`  benchmarkPremium = ${money(a.benchmarkPremium)}  householdSize = ${a.householdSize ?? '-'}` +
+             `  advanceCreditShare = ${a.advanceCreditShare}` +
+             `  estimatedAcaIncome = ${a.estimatedAcaIncome == null ? '-' : money(a.estimatedAcaIncome)}` +
+             `  premiumTaxCreditEnabled = ${bool(a.premiumTaxCreditEnabled)}`);
+    }
     L.push('');
 
     if (a.events.length) {
@@ -535,7 +541,13 @@ function render(fixture, portfolio, sanity, coverage) {
              `ordinaryTaxable=${money(t.ordinaryTaxable)} capitalGains=${money(t.capitalGains)} ` +
              `fica=${money(t.fica)} incomeTax=${money(t.incomeTax)} capitalGainsTax=${money(t.capitalGainsTax)} ` +
              `niit=${money(t.niit)} federalTax=${money(t.federalTax)} ` +
-             `settledTrueUp=${money(t.settledTrueUp)} settledNIIT=${money(t.settledNIIT)}`);
+             `settledTrueUp=${money(t.settledTrueUp)} settledNIIT=${money(t.settledNIIT)}` +
+             // Only a year a health-insurance card covered has these, so a
+             // plan without one prints exactly what it always did.
+             (t.fplPercent != null || t.ptc || t.aptc || t.ptcReconciliation
+               ? ` fplPercent=${t.fplPercent ?? '-'} ptc=${money(t.ptc)} aptc=${money(t.aptc)} ` +
+                 `settledPTC=${money(t.ptcReconciliation)} onEstimate=${bool(t.ptcOnEstimate)}`
+               : ''));
     }
     L.push('');
   }

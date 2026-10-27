@@ -54,9 +54,16 @@ export class RetirementIncomeResult {
 }
 
 export class ExpenseResult {
-  constructor(expense = Currency.zero(), nextExpense = Currency.zero()) {
+  /**
+   * @param {Currency} expense           what the household paid, negative
+   * @param {Currency} nextExpense       next month's amount
+   * @param {Currency} premiumTaxCredit  of `expense`, the advance credit the
+   *                                     Treasury paid instead, positive
+   */
+  constructor(expense = Currency.zero(), nextExpense = Currency.zero(), premiumTaxCredit = Currency.zero()) {
     this.expense     = expense instanceof Currency ? expense.copy() : new Currency(expense);
     this.nextExpense = nextExpense instanceof Currency ? nextExpense.copy() : new Currency(nextExpense);
+    this.premiumTaxCredit = premiumTaxCredit instanceof Currency ? premiumTaxCredit.copy() : new Currency(premiumTaxCredit);
   }
 }
 
@@ -181,6 +188,38 @@ const ExpenseBehavior = Object.freeze({
   },
 });
 
+/**
+ * A marketplace health plan. Its balance is the month's gross premium, and the
+ * advance premium tax credit PremiumCreditEngine set for the month pays part of
+ * it, so the household pays the rest.
+ *
+ * Marketplace plans are priced by calendar year, so the premium does not grow
+ * monthly like other expenses: ModelAsset.applyYearly steps it each January.
+ */
+const HealthInsuranceBehavior = Object.freeze({
+
+  relevantMetrics() {
+    return [...COMMON_METRICS, M.HEALTH_PREMIUM, M.PREMIUM_TAX_CREDIT, M.EXPENSE, M.GROWTH];
+  },
+
+  applyMonthly(asset) {
+    asset.ensureNegativeStart();
+
+    const premium = asset.finishCurrency.copy();
+    asset.addToMetric(M.HEALTH_PREMIUM, premium);
+
+    const credit = asset.monthlyAdvanceCredit.copy();
+    if (credit.amount > 0) {
+      asset.addToMetric(M.PREMIUM_TAX_CREDIT, credit);
+      asset.recordEvent(EventType.PREMIUM_TAX_CREDIT, credit,
+        { metric: M.PREMIUM_TAX_CREDIT, data: asset.monthlyAdvanceData });
+    }
+    // EXPENSE populated by DAG: HEALTH_PREMIUM + PREMIUM_TAX_CREDIT → EXPENSE
+
+    return new ExpenseResult(premium.plus(credit), asset.finishCurrency.copy(), credit);
+  },
+});
+
 const MortgageBehavior = Object.freeze({
 
   relevantMetrics() {
@@ -244,6 +283,9 @@ const CapitalBehavior = Object.freeze({
       // IRC §1411 books here; unregistered, the NIIT line would land on
       // NULL_METRIC and the tax would appear in no row by name.
       M.NIIT,
+      // The premium tax credit's reconciliation is paid from, or credited to,
+      // the backstop accounts; cash and brokerage are among them.
+      M.PTC_RECONCILIATION,
       M.INCOME_TAX, M.FEDERAL_TAXES, M.TAXES,
       M.CONTRIBUTION, M.PRETAX_CONTRIBUTION, M.POSTTAX_CONTRIBUTION,
       M.TAX_FREE_DISTRIBUTION, M.TAXABLE_DISTRIBUTION,
@@ -371,8 +413,9 @@ const IncomeAccountBehavior = Object.freeze({
       ...COMMON_METRICS,
       M.INTEREST_INCOME, M.ORDINARY_INCOME, M.INCOME, M.NET_INCOME, M.GROWTH,
       // Interest is net investment income, and a bank is the usual NIIT
-      // backstop and spillover payer — see the note in CapitalBehavior.
-      M.NIIT,
+      // backstop and spillover payer — see the note in CapitalBehavior. The
+      // same goes for the premium tax credit's reconciliation.
+      M.NIIT, M.PTC_RECONCILIATION,
       M.ESTIMATED_INCOME_TAX, M.INCOME_TAX, M.FEDERAL_TAXES, M.TAXES,
     ];
   },
@@ -436,6 +479,7 @@ const BEHAVIOR_MAP = new Map([
   [Instrument.RETIREMENT_INCOME, RetirementIncomeBehavior],
   [Instrument.PENSION,           PensionBehavior],
   [Instrument.MONTHLY_EXPENSE, ExpenseBehavior],
+  [Instrument.HEALTH_INSURANCE, HealthInsuranceBehavior],
   [Instrument.MORTGAGE,        MortgageBehavior],
   [Instrument.TAXABLE_EQUITY,  CapitalBehavior],
   [Instrument.IRA,             CapitalBehavior],

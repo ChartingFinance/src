@@ -36,8 +36,10 @@ function applyBacktestRates(portfolio, calendarYear) {
         if (treasury !== undefined && asset.instrument === Instrument.US_BOND) {
             asset.annualReturnRate.rate = treasury / 100;
         }
+        // A health-insurance premium keeps its growth over plan inflation on
+        // top of the year's CPI; every other expense is zero here.
         if (cpi !== undefined && InstrumentType.isMonthlyExpense(asset.instrument)) {
-            asset.annualReturnRate.rate = cpi / 100;
+            asset.annualReturnRate.rate = cpi / 100 + (asset.premiumExcessOverInflation ?? 0);
         }
         if (wage !== undefined && InstrumentType.isMonthlyIncome(asset.instrument)) {
             asset.annualReturnRate.rate = wage / 100;
