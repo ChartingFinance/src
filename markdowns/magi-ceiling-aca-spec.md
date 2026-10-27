@@ -1,7 +1,8 @@
 # Spec 11 — A MAGI ceiling, and whether the ACA subsidy is worth it
 
 Status: **PROPOSED 2026-10-13. Decisions recorded 2026-10-26 (§13). Phase 1 is
-next. Phases 2 and 3 wait for a fallback-order spec (§6.4).**
+built in PR #117, and §5 describes what it does. Phases 2 and 3 wait for a
+fallback-order spec (§6.4).**
 
 The question this spec answers: *if I keep my income low enough from retirement
 to 65, do I come out ahead?* The cost of keeping MAGI low is real: money left in
@@ -29,8 +30,8 @@ Each part is useful on its own and they ship in that order (§12).
   settled it (PR #104).
 - Month & Year Details shows the tax year (AGI, MAGI, effective rates), and
   Reports show a yearly AGI/MAGI block.
-- **Nothing acts on MAGI.** No rule reads it except NIIT and the senior
-  deduction, and no part of the engine knows what an ACA premium is.
+- **Before #117 nothing acted on MAGI.** No rule read it except NIIT and the
+  senior deduction, and no part of the engine knew what an ACA premium was.
 - Any expense card can already carry its own inflation rate: an expense's
   `annualReturnRate` of 0 means "use plan inflation"
   (`ModelAsset.effectiveAnnualReturnRate`), and any other value is its own rate.
@@ -88,6 +89,15 @@ three times since 2021.
   Each year's table is indexed for premium growth in excess of income growth
   (IRC §36B(b)(3)(A)(ii)). From 2026 the premium measure also counts
   individual-market premiums (90 Fed. Reg. 27074).
+- **Form 8962's arithmetic.** Household income as a percentage of the poverty
+  line is rounded to a whole number (line 5), the applicable figure is the line's
+  value there to four decimals (Table 2, line 7), and the annual and monthly
+  contributions are whole dollars (lines 8a and 8b). The engine follows the form,
+  working Table 2 in whole hundredths of a percent, with a point that falls
+  exactly half way (5.395% at 175% for two people in 2026) rounded up. That tie
+  rule is to be checked against the IRS's 2026 Table 2 when it is published; the
+  other way costs about $12 a year at those points. The 100% and 400% limits are
+  tested in dollars, as the statute states them, not on the rounded percentage.
 - **The cliff is back.** The enhanced credits (ARPA 2021, extended by the IRA
   2022) removed the 400% limit and capped the contribution at 8.5%. They expired
   after 2025. As of late October 2026 no extension is law: the House passed a
@@ -173,8 +183,8 @@ Expenses list, Withdrawn.
 | Annual rate | how fast the premium and the benchmark grow | plan inflation (§13.4) |
 | Household size | people in the tax household, for the poverty line only | 1 for Single, 2 for Married Filing Jointly |
 | Advance credit | the share of the estimated credit paid to the insurer each month | 100% (§13.5) |
-| Estimated income | the ACA MAGI reported to the marketplace for the first year of coverage | none (§5.2) |
-| Start / finish | months of marketplace coverage | the Retire phase → the month the household turns 65 |
+| Estimated income | the ACA MAGI reported to the marketplace for a year the household was not on it all of the year before | none (§5.2) |
+| Start / finish | months of marketplace coverage | the start as entered → the December before the household turns 65 |
 | Credit | on / off | on |
 
 - **Premiums change once a year, in January.** Marketplace plans and the
@@ -183,8 +193,9 @@ Expenses list, Withdrawn.
   monthly. The figures entered are for the plan year the card starts in.
 - **The rate** defaults to plan inflation and is never below it by default. It
   is stored as the 0 that means "plan inflation", so it follows a change to the
-  plan's inflation, and it is shown on the card and editable, because
-  marketplace premiums usually rise much faster. One rate serves every year; a
+  plan's inflation. The form labels it Premium Growth, says it defaults to
+  inflation, and lets it be set, because marketplace premiums usually rise much
+  faster. One rate serves every year; a
   known one-year renewal increase is entered by starting the card in the
   renewal year with that year's premiums (a "next year's premium" field is in
   §11).
@@ -197,6 +208,18 @@ Expenses list, Withdrawn.
 - **Household size** comes from filing status unless the card overrides it. It
   changes only the poverty line; the model still has no dependents for anything
   else (§11).
+- **The finish.** Ages advance each January in this model, so a household is
+  65, and on Medicare, from the January of the year it turns 65. A card with no
+  finish date of its own ends the December before, or at the plan's end if that
+  is sooner. A later finish date the user enters is honored: with one household
+  age, a younger spouse's coverage can only be modeled that way.
+- **Several cards** count as one household, as Form 8962 sums a household's
+  1095-A statements: each month's premiums and benchmarks are added, the credit
+  is worked on the totals, and each card is advanced its share in proportion to
+  its premium. The household size is the largest any card names.
+- **Guardrails leave the card alone.** A spending cut or raise scales every
+  other expense, but a premium is set by the plan year, not by spending, and the
+  benchmark (and so the credit) is read from it.
 
 **Why its own card and not an expense with a higher rate:** the engine needs to
 know which expense *is* the marketplace premium, what the benchmark is, and when
@@ -207,51 +230,73 @@ close it, and lets "Worth it?" (§7) point at one thing.
 
 Modelled as people actually receive it:
 
-1. **Advance (monthly).** On each premium payment the engine computes the
-   month's credit from an *estimate* of the year's ACA MAGI, multiplies it by the
-   card's advance share, and pays only the net premium. The estimate is the
-   first of:
+1. **Advance (monthly).** Before the month's bills are paid, the engine computes
+   the month's credit from an *estimate* of the year's ACA MAGI, multiplies it by
+   the card's advance share, and the accounts pay only the net premium. The
+   estimate is the first of:
    - the ceiling, when a ceiling rule covers the year (Part B): the income the
      household tells the marketplace;
-   - the previous year's recorded `magi.aca`, when that year was a full year
-     inside the plan;
-   - the card's estimated income;
+   - the previous year's recorded `magi.aca`, when a card covered all twelve
+     months of it, as a household renewing reports its income;
+   - the card's estimated income, as a household joining the marketplace
+     states it;
    - none: nothing is advanced, and the whole credit arrives at reconciliation.
+
+   Renewing needs a full year *on the marketplace*, not just a full year inside
+   the plan. A household that retires in July has wages in that year, so
+   renewing on it would understate the next year's credit and advance nothing.
+   An estimate from 100% to 400% of FPL is advanced; any other is not, as the
+   marketplace would not.
 2. **Reconciliation (annual).** In the annual pass, after the true-up and NIIT
    and as its own pass for the same reasons NIIT is, the credit is recomputed
    from the year's actual `magi.aca`, over the months the card covered. Excess
-   advance is repaid in full (no cap from 2026), and a shortfall is credited. It
-   is booked in January of the next year, like the true-up, and the TaxYear
-   record carries it.
-   - **The plan's first year is not reconciled when it is partial.** Its TaxYear
-     covers only the months inside the plan, so its ACA MAGI is too low to test,
-     and the plan cannot see the months before it began. The advance stands as
-     that year's credit.
+   advance is repaid in full (no cap from 2026), and credit still owed is paid
+   to the household. It is booked in January of the next year, like the
+   true-up, and the TaxYear record carries it. Under the same $1 gate as NIIT,
+   nothing is booked.
+   - **The plan's first year, when partial, is settled against the estimate.**
+     Its TaxYear covers only the months inside the plan, so its ACA MAGI is too
+     low to test, and the plan cannot see the months before it began. The
+     estimate stands in for the year's income, so an advance share under 100%
+     still has the rest paid on the return. With no estimate that year gets no
+     credit.
 
 Booking:
 
-- `FinancialPackage` gains `premiumTaxCredit` (the advance, positive, offsetting
-  the premium) and `ptcReconciliation` (+ credit, − repayment).
-  `federalTaxes()` includes the reconciliation. Excess APTC is a tax (Schedule 2)
-  and net PTC is a refundable credit (Schedule 3).
-- The advance offsets the premium on the card itself, so `Metric.EXPENSE` and
-  cash flow carry the net premium the household paid, and the Expenses list
+- `FinancialPackage` gains `premiumTaxCredit` (the advance, positive) and
+  `ptcReconciliation` (+ credit, − repayment). The package's `expense` is
+  already net of the advance, so `premiumTaxCredit` is an "of which" figure,
+  like `rothConversion`, and is never added to expenses again.
+  `ptcReconciliation` is a federal tax field that may be positive, like
+  `taxTrueUp`, and `federalTaxes()` includes it. Excess APTC is a tax
+  (Schedule 2) and net PTC is a refundable credit (Schedule 3).
+- The advance offsets the premium on the card itself: `HEALTH_PREMIUM` (gross)
+  and `PREMIUM_TAX_CREDIT` (the advance) both roll up to `Metric.EXPENSE`, so it
+  and cash flow carry the net premium the household paid, and the Expenses list
   shows both lines.
-- `TaxYear` gains `ptc` (allowed), `aptc` (advanced), `fplPercent` and
-  `ptcReconciliation`, so "what did the credit come to in 2031" is read from the
-  record and never recomputed.
+- A repayment is drawn through `settleOneSided` from the funding backstop, and
+  what it books is what the accounts paid (`settled.paid`); the rest is reported
+  unfunded. Credit owed is deposited where a refund would be.
+- `TaxYear` gains `ptc` (allowed), `aptc` (advanced), `fplPercent` (null in a
+  year no card covered), `ptcReconciliation` (what January booked) and
+  `ptcOnEstimate` (a partial first year settled against the estimate), so "what
+  did the credit come to in 2031" is read from the record and never recomputed.
 - New EventTypes `PREMIUM_TAX_CREDIT` and `PTC_RECONCILIATION`, declared in
   `EVENT_RECONCILIATION` before anything emits them (an undeclared type throws
   mid-run), and named in `EXPENDITURE_TREATMENT`.
-- New metric leaves for the advance credit and the reconciliation, and they
-  **must be in the new instrument's `relevantMetrics()`**: a metric that is not
+- New metric leaves `HEALTH_PREMIUM` and `PREMIUM_TAX_CREDIT` on the card, and
+  `PTC_RECONCILIATION` (rolling straight to `FEDERAL_TAXES`, like NIIT) on the
+  account that pays or receives the settlement. Each **must be in its
+  instrument's `relevantMetrics()`**, the reconciliation in the backstop
+  accounts' (`CapitalBehavior`, `IncomeAccountBehavior`): a metric that is not
   is a silent no-op (§9).
 
 ### 5.3 Past the published tables
 
 - **Poverty line.** After the last published year it grows at the rate the run
   indexes the tax tables (plan inflation, or the year's CPI in a backtest), as
-  HHS indexes it to the CPI.
+  HHS indexes it to the CPI. `TaxTable.priceLevels` records that index, one
+  entry per January.
 - **Applicable percentages.** After the last published year each figure moves
   by (1 + the card's rate) / (1 + plan inflation) a year (decision §13). That is
   the statute's adjustment for premium growth over income growth, measured with
@@ -374,23 +419,34 @@ never applied automatically.
 ## 8. Presentation surfaces, enumerated
 
 Spec 8 (NIIT) shipped a tax that was collected correctly and shown nowhere, then
-found a sixth surface after the fix. All of these change:
+found a sixth surface after the fix. All of these change. Phase 1 (#117) covers
+every one except the parts that need the ceiling:
 
-- The asset form: the card's fields (§5.1), with the rate showing plan inflation
-  when left at the default.
+- The asset form: the card's fields (§5.1), the rate defaulting to plan
+  inflation when left empty.
 - Month & Year Details:
-  - the Expenses list (premium and advance-credit lines on the card's group);
-  - the Taxes list (the reconciliation);
-  - the tax strip (ACA MAGI against the ceiling and as % of FPL);
-  - the ⚡ summary.
-- Reports: yearly rows for the advance credit, the reconciliation and % of FPL.
+  - the Expenses list: Premium and Advance premium tax credit lines in the
+    card's group;
+  - the Taxes list: the reconciliation, as Premium tax credit;
+  - the tax-year strip: the credit allowed and advanced, and ACA MAGI as % of
+    FPL; ACA MAGI against the ceiling waits for Part B;
+  - the January settlement note, which names a credit owed or repaid;
+  - the ⚡ summary's tax-year table.
+- Reports: a yearly block from the TaxYear record (allowed, advanced, settled,
+  % of FPL), the reconciliation under Prior-Year Settlement, and the advance as
+  a row of its own.
 - The Taxes column (`TAX_TREE` in `asset-list.js`, guarded by
-  `tax-tree-coverage.test.js`).
-- Spreadsheet columns.
-- "What needs attention" (§6.3).
-- Rules: a new ACA section, and the "Does Not Model" list (§11).
+  `tax-tree-coverage.test.js`): a Premium Tax Credit row, summed over the
+  trailing year like NIIT's.
+- Spreadsheet columns: the premium, the advance and the settlement.
+- The Flows view: a repayment is tax; the advance is left out, since the
+  Treasury paid it.
+- "What needs attention": a repayment nothing can pay, through the usual
+  unfunded report; over the ceiling (§6.3) waits for Part B.
+- Rules: an ACA section, and three items in the "Does Not Model" list (§11).
 - Help.
-- The MCP `run_plan` annual table and `explain_month`.
+- The MCP: `run_plan`'s report and `explain_month`. `build_plan` cannot create a
+  card yet.
 
 ## 9. Traps this codebase has already hit
 
@@ -409,6 +465,13 @@ found a sixth surface after the fix. All of these change:
   does historical Monte Carlo. A rate the card needs must survive both (§5.1).
 - **The first year is partial.** A TaxYear with fewer than 12 months is not a
   year's income (§5.2).
+- **Guardrails scale every expense.** A rule that adjusts "expenses" must say
+  whether the card is one (§5.1).
+- **Table 2's half-way points** land either side in floating point. Work them in
+  whole hundredths of a percent (§2).
+- **The reconciliation shares the true-up's trace scope.** A reader that counts
+  unpaid tax in that scope must tell a credit repayment apart from income tax
+  (`tests/tax-years.mjs` does).
 - **Predict before blessing** the snapshot, and **mutation-test** anything
   load-bearing. Green suites have hidden real bugs here more than once.
 - **Plugin version** must be bumped in any PR that changes the bundle, and
@@ -416,30 +479,40 @@ found a sixth surface after the fix. All of these change:
 
 ## 10. Fixtures
 
-- `aca-early-retiree-single`: retires at 60 with an IRA, a brokerage and cash;
-  health-insurance card to 65; a 400% ceiling. Under the ceiling every year.
-- `aca-early-retiree-mfj`: the same, filing jointly (household of 2).
-- `aca-ceiling-breached`: the fall-backs run dry in one year. Over the ceiling,
-  the credit is repaid in full, and it is reported.
-- `aca-low-basis-brokerage`: brokerage gains alone approach the ceiling, so the
-  gain fraction matters.
-- `aca-early-social-security`: claims at 62, so the untaxed Social Security in
-  ACA MAGI is reached.
-- `aca-partial-first-year`: the plan and the card start in October, so the first
-  year is advanced and not reconciled, and the second year's advance comes from
-  the card's estimate.
-- `aca-household-of-three`: a household-size override moves the poverty line
-  and the cliff.
-- `aca-backtest`: a backtest keeps the card's excess over CPI.
-- **Silence:** every existing fixture must stay unchanged until it opts in.
-- An independent §36B model, written from the statute and Form 8962, in the
-  style of `decumulation-oracle.mjs`, so the credit is checked against something
-  that did not come from the engine. It must settle one question first: whether
-  the engine follows Form 8962's whole-percentage table or the regulation's
-  continuous line. They differ by a few dollars a year.
+Built with Phase 1 (#117), each with a `reaches:` note in
+`tests/tools/fixtures.mjs`:
 
-Fixtures for Part B (`aca-early-retiree-*` with a ceiling, `aca-ceiling-breached`)
-wait for Phase 2; Phase 1's versions carry the card without a ceiling.
+- `aca-early-retiree-single`: an early retiree on IRA draws with no estimate, so
+  the first year's whole credit comes on the return (the positive
+  `ptcReconciliation` case); renewals after it.
+- `aca-early-retiree-mfj`: a couple on a low-basis brokerage, so only the gain
+  fraction reaches ACA MAGI, with Social Security from 2030, whose untaxed part
+  is in ACA MAGI.
+- `aca-partial-first-year`: the plan and the card start in October; the three
+  months are settled on the estimate, 80% is advanced, and the renewal rule is
+  reached.
+- `aca-over-the-cliff`: a 401(k) closes in an advanced year, so that year is
+  over the cliff and the whole advance is repaid; the card has no finish date
+  and ends before 65.
+- `aca-below-the-floor`: the under-100% exception, and the coverage gap where
+  nothing was advanced.
+- `aca-household-of-three`: the household-size override.
+- `aca-repayment-unpayable`: a repayment the accounts can pay only in part; the
+  rest is reported unfunded.
+- **Silence:** every fixture without a card is unchanged. The snapshot prints
+  the credit's TaxYear fields only for years a card covered.
+- **The oracle**, `tests/aca-oracle.mjs`: an independent Form 8962, written from
+  the form's lines. It holds the engine to the form on a grid of incomes,
+  household sizes and premiums, and on every covered year and every advance of
+  every `aca-*` fixture, the indexed years included. It also checks the backtest
+  and historical-draw excess, the default finish, a card with the credit off,
+  and the JSON round trip. It settled the rounding question: the engine follows
+  the form (§2).
+
+For Part B: an early retiree held under a 400% ceiling every year;
+`aca-ceiling-breached`, where the fallbacks run dry, the year goes over the
+ceiling, and the credit is repaid in full and reported; and
+`aca-low-basis-brokerage`, where brokerage gains alone approach the ceiling.
 
 ## 11. Not in scope
 
@@ -468,7 +541,7 @@ that affect results:
 
 | Phase | Delivers | PRs | Effort |
 |---|---|---|---|
-| **1. The card and the credit** | §5. The subsidy appears in the plan under the user's existing transfers, and so does what MAGI the plan actually produces | 2 | about 4–6 engineering days, most of it the law and the oracle |
+| **1. The card and the credit** | §5. The subsidy appears in the plan under the user's existing transfers, and so does what MAGI the plan actually produces. **Built in #117** | 1 | as estimated, most of it the law and the oracle |
 | **2. The ceiling rule** | §6, with the yearly check and warning. Needs the fallback-order spec (§6.4) first | 2 | about 5–8 days |
 | **3. Worth it?** | §7, and the ceiling sweep. Needs Phase 2, and IRMAA and the penalty charged or labelled | 1–2 | about 2–4 days |
 
@@ -499,9 +572,16 @@ Also decided:
 - Future applicable percentages are indexed with the card's own inflation input
   (§5.3).
 
-Proposed in this revision for review, not yet decided: the January step and the
-backtest excess (§5.1), the estimate order and the unreconciled partial first
-year (§5.2), and the below-100% rule (§2).
+Built in #117 and still open for review:
+
+- §5.1: the January step, the backtest excess, guardrails leaving the card alone,
+  and the default finish before 65;
+- §5.2: the estimate order, renewing only after a full year on the marketplace,
+  and the partial first year settled against the estimate;
+- §2: the below-100% rule, and Table 2's half-way points rounded up.
+
+One reading to confirm: decision 4's "at least plan inflation" is taken as the
+default, not a floor, so a lower rate is accepted.
 
 ## 14. Prior art: ProjectionLab
 
