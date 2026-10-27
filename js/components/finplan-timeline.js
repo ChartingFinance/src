@@ -44,9 +44,10 @@ const PLOT_W = ARC_W - PAD_L - PAD_R;
 const PLOT_H = ARC_H - PAD_T - PAD_B;
 const BASE_Y = ARC_H - PAD_B;
 
-// Exported so tests/editing-anchor.mjs can check the age↔year mapping under
-// node: a custom element cannot be constructed there, but these methods are pure
-// functions of a few fields, so the test calls them on
+// Exported so node tests can call its methods: tests/editing-anchor.mjs checks
+// the age↔year mapping, tests/timeline-phase-rates.mjs the phase rates. A custom
+// element cannot be constructed under node, but these methods are pure functions
+// of a few fields, so the tests call them on
 // `Object.create(FinplanTimeline.prototype)` — the shipped code, not a copy.
 export class FinplanTimeline extends LitElement {
 
@@ -451,31 +452,41 @@ export class FinplanTimeline extends LitElement {
     }
 
     /**
-     * Compute CAGR between two history indices.
+     * Annual growth between two history indices, as a percent, or null when
+     * there is no rate to show (see _annualGrowth).
      */
     _computeCAGRBetween(startIdx, endIdx) {
-        const startVal = this._metricAtIndex(startIdx);
-        const endVal = this._metricAtIndex(endIdx);
-        if (!startVal || startVal === 0) return 0;
-        const months = endIdx - startIdx;
-        if (months <= 0) return 0;
-        const years = months / 12;
-        return (Math.pow(endVal / startVal, 1 / years) - 1) * 100;
+        return this._annualGrowth(
+            this._metricAtIndex(startIdx), this._metricAtIndex(endIdx), endIdx - startIdx);
     }
 
     /**
      * Same span, in today's dollars. The pair reads "7.2%/yr · 4.0% real":
      * a nominal rate includes the inflation the plan also assumes.
-     * Returns null when a real rate isn't meaningful (sign change, no index).
+     * Returns null with no price index, or when there is no rate to show.
      */
     _computeRealCAGRBetween(startIdx, endIdx) {
         const idx = this.portfolio?.monthlyPriceIndex;
         if (!hasRealDollarLine(this.metricName) || !idx?.length) return null;
         const startVal = this._metricAtIndex(startIdx) / (idx[startIdx] ?? 1);
         const endVal = this._metricAtIndex(endIdx) / (idx[endIdx] ?? idx[idx.length - 1]);
-        if (!(startVal > 0) || !(endVal > 0)) return null;
-        const months = endIdx - startIdx;
-        if (months <= 0) return null;
+        return this._annualGrowth(startVal, endVal, endIdx - startIdx);
+    }
+
+    /**
+     * Annual growth from `startVal` to `endVal` over `months`, as a percent,
+     * or null when there is none to show. Both phase rates come through here,
+     * so the nominal and real figures appear and disappear together.
+     *
+     * A rate needs a value above $0 at both ends. Across a sign change the
+     * ratio is negative, and Math.pow returns NaN for most spans and a
+     * meaningless finite figure for a whole number of years: $100k to -$50k in
+     * twelve months would read -150%/yr. Below $0 at both ends the ratio is
+     * positive but reads backwards: net worth falling from -$100k to -$200k in
+     * a year would read +100%/yr.
+     */
+    _annualGrowth(startVal, endVal, months) {
+        if (!(startVal > 0) || !(endVal > 0) || !(months > 0)) return null;
         return (Math.pow(endVal / startVal, 12 / months) - 1) * 100;
     }
 
@@ -625,10 +636,20 @@ export class FinplanTimeline extends LitElement {
                 // The rate is centred over the phase it describes; the name
                 // stays at the edge, where the boundary is.
                 const rateX = (x0 + x1) / 2;
-                parts.push(svg`
-                    <text x=${rateX.toFixed(1)} y=${PAD_T + 16} font-size="16" font-weight="700"
-                          fill="${accent}" text-anchor="middle">${cagr.toFixed(1)}%/yr</text>
-                `);
+                if (cagr === null) {
+                    // A dash rather than a blank, so the missing rate reads as
+                    // deliberate; hovering it says why.
+                    const metricLabel = MetricLabel[this.metricName] ?? this.metricName;
+                    parts.push(svg`
+                        <text x=${rateX.toFixed(1)} y=${PAD_T + 16} font-size="16" font-weight="700"
+                              fill="${accent}" text-anchor="middle"><title>No growth rate: a rate needs ${metricLabel} above $0 at both the start and the end of the phase.</title>—</text>
+                    `);
+                } else {
+                    parts.push(svg`
+                        <text x=${rateX.toFixed(1)} y=${PAD_T + 16} font-size="16" font-weight="700"
+                              fill="${accent}" text-anchor="middle">${cagr.toFixed(1)}%/yr</text>
+                    `);
+                }
                 if (realCagr !== null) {
                     // +34 clears the 16px nominal figure's descender; measured,
                     // not guessed — at +28 the two glyph boxes overlapped by 3px.
