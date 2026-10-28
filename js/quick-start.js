@@ -14,6 +14,7 @@
 
 import { ModelLifeEvent, LifeEvent } from './life-event.js';
 import { ModelAsset } from './model-asset.js';
+import { earliestSocialSecurityDateIntFor } from './plan-dates.js';
 
 // ── Date anchors (computed from explicit ages) ──────────────
 
@@ -25,10 +26,23 @@ function dateAnchors(startAge, retirementAge, finishAge) {
     const retireYear = birthYear + retirementAge;
     const finishYear = birthYear + finishAge;
 
+    const today = { year: currentYear, month: currentMonth };
+    const retire = { year: retireYear, month: 1 };
+    // Social Security can't be claimed before 62, and nothing in a plan is
+    // dated before the plan starts.
+    const claimable = earliestSocialSecurityDateIntFor({ birthYear });
+    const earliestClaim = { year: claimable.year, month: claimable.month };
+    const latest = (...dates) => dates.reduce((a, b) =>
+        (b.year * 100 + b.month > a.year * 100 + a.month ? b : a));
+
     return {
-        now:    { year: currentYear, month: currentMonth },
-        retire: { year: retireYear, month: 1 },
+        now:    today,
+        retire,
         finish: { year: finishYear, month: 1 },
+        /** Social Security claimed at retirement: not before 62, nor before the plan starts. */
+        claimAtRetirement: latest(retire, earliestClaim, today),
+        /** Social Security already being paid, or from 62 if that is still ahead. */
+        claimNow: latest(today, earliestClaim),
         /** now + N years */
         plus(years) { return { year: currentYear + years, month: currentMonth }; },
     };
@@ -59,7 +73,7 @@ const EARLY_CAREER = {
               startDateInt: d.now, finishDateInt: d.retire,
               startCurrency: { amount: 5500 }, annualReturnRate: { rate: 0.03 } },
             { instrument: 'retirementIncome', displayName: 'Social Security',
-              startDateInt: d.retire,
+              startDateInt: d.claimAtRetirement,
               startCurrency: { amount: 2200 }, annualReturnRate: { rate: 0.025 } },
             { instrument: '401K', displayName: '401K',
               startDateInt: d.now,
@@ -126,7 +140,7 @@ const MID_CAREER = {
               startDateInt: d.now, finishDateInt: d.retire,
               startCurrency: { amount: 6500 }, annualReturnRate: { rate: 0.025 } },
             { instrument: 'retirementIncome', displayName: 'Social Security',
-              startDateInt: d.retire,
+              startDateInt: d.claimAtRetirement,
               startCurrency: { amount: 2500 }, annualReturnRate: { rate: 0.025 } },
             { instrument: '401K', displayName: '401K',
               startDateInt: d.now,
@@ -193,7 +207,7 @@ const PRE_RETIREMENT = {
               startDateInt: d.now, finishDateInt: d.retire,
               startCurrency: { amount: 7500 }, annualReturnRate: { rate: 0.02 } },
             { instrument: 'retirementIncome', displayName: 'Social Security',
-              startDateInt: d.retire,
+              startDateInt: d.claimAtRetirement,
               startCurrency: { amount: 2800 }, annualReturnRate: { rate: 0.025 } },
             { instrument: '401K', displayName: '401K',
               startDateInt: d.now,
@@ -245,7 +259,7 @@ const RETIRED = {
     assets(d) {
         return [
             { instrument: 'retirementIncome', displayName: 'Social Security',
-              startDateInt: d.now,
+              startDateInt: d.claimNow,
               startCurrency: { amount: 3000 }, annualReturnRate: { rate: 0.025 } },
             { instrument: 'pension', displayName: 'FERS Pension',
               startDateInt: d.now,
@@ -306,10 +320,10 @@ const YOUNG_COUPLE = {
               startDateInt: d.now, finishDateInt: d.retire,
               startCurrency: { amount: 4500 }, annualReturnRate: { rate: 0.03 } },
             { instrument: 'retirementIncome', displayName: 'Social Security A',
-              startDateInt: d.retire,
+              startDateInt: d.claimAtRetirement,
               startCurrency: { amount: 2200 }, annualReturnRate: { rate: 0.025 } },
             { instrument: 'retirementIncome', displayName: 'Social Security B',
-              startDateInt: d.retire,
+              startDateInt: d.claimAtRetirement,
               startCurrency: { amount: 1800 }, annualReturnRate: { rate: 0.025 } },
             { instrument: '401K', displayName: '401K A',
               startDateInt: d.now,
@@ -388,10 +402,10 @@ const DUAL_INCOME = {
               startDateInt: d.now, finishDateInt: d.retire,
               startCurrency: { amount: 6500 }, annualReturnRate: { rate: 0.025 } },
             { instrument: 'retirementIncome', displayName: 'Social Security A',
-              startDateInt: d.retire,
+              startDateInt: d.claimAtRetirement,
               startCurrency: { amount: 2800 }, annualReturnRate: { rate: 0.025 } },
             { instrument: 'retirementIncome', displayName: 'Social Security B',
-              startDateInt: d.retire,
+              startDateInt: d.claimAtRetirement,
               startCurrency: { amount: 2200 }, annualReturnRate: { rate: 0.025 } },
             { instrument: '401K', displayName: '401K A',
               startDateInt: d.now,
@@ -463,10 +477,10 @@ const COUPLE_NEARING_RETIREMENT = {
               startDateInt: d.now, finishDateInt: d.retire,
               startCurrency: { amount: 6000 }, annualReturnRate: { rate: 0.02 } },
             { instrument: 'retirementIncome', displayName: 'Social Security A',
-              startDateInt: d.retire,
+              startDateInt: d.claimAtRetirement,
               startCurrency: { amount: 2800 }, annualReturnRate: { rate: 0.025 } },
             { instrument: 'retirementIncome', displayName: 'Social Security B',
-              startDateInt: d.retire,
+              startDateInt: d.claimAtRetirement,
               startCurrency: { amount: 2300 }, annualReturnRate: { rate: 0.025 } },
             { instrument: '401K', displayName: '401K A',
               startDateInt: d.now,
@@ -523,10 +537,10 @@ const RETIRED_COUPLE = {
     assets(d) {
         return [
             { instrument: 'retirementIncome', displayName: 'Social Security A',
-              startDateInt: d.now,
+              startDateInt: d.claimNow,
               startCurrency: { amount: 3000 }, annualReturnRate: { rate: 0.025 } },
             { instrument: 'retirementIncome', displayName: 'Social Security B',
-              startDateInt: d.now,
+              startDateInt: d.claimNow,
               startCurrency: { amount: 2400 }, annualReturnRate: { rate: 0.025 } },
             { instrument: 'pension', displayName: 'Pension',
               startDateInt: d.now,

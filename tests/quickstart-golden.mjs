@@ -99,10 +99,18 @@ const TOLERANCE = 0.01; // golden values are stored at cent precision
 /** Replicates quick-start.js dateAnchors() under the pinned clock. */
 function anchorsFor(profile) {
   const birthYear = PINNED_YEAR - profile.startAge;
+  const now = { year: PINNED_YEAR, month: PINNED_MONTH };
+  const retire = { year: birthYear + profile.retirementAge, month: 1 };
+  // Social Security: not before 62, and not before the plan starts.
+  const at62 = { year: birthYear + 62, month: 1 };
+  const latest = (...dates) => dates.reduce((a, b) =>
+    (b.year * 100 + b.month > a.year * 100 + a.month ? b : a));
   return {
-    now:    { year: PINNED_YEAR, month: PINNED_MONTH },
-    retire: { year: birthYear + profile.retirementAge, month: 1 },
+    now,
+    retire,
     finish: { year: birthYear + profile.finishAge, month: 1 },
+    claimAtRetirement: latest(retire, at62, now),
+    claimNow: latest(now, at62),
     plus(years) { return { year: PINNED_YEAR + years, month: PINNED_MONTH }; },
   };
 }

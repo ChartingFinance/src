@@ -50,6 +50,7 @@ const ISSUE_EVENT_TYPE = Object.freeze({
     'unfunded-obligation':  EventType.UNFUNDED,
     'funding-ran-dry':      EventType.SPILLOVER,
     'contribution-capped':  EventType.CONTRIBUTION_CAPPED,
+    'social-security-deferred': EventType.SOCIAL_SECURITY_DEFERRED,
     'rmd-unsatisfied':      null,
     'no-funding-accounts':  null,
 });

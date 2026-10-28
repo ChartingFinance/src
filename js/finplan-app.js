@@ -1916,6 +1916,7 @@ function connectAssetFormModal() {
 function openCreateAssetModal(preselectedInstrument, preselectedStartDate, preselectedStartValue) {
     assetFormModal.mode = 'create';
     assetFormModal.modelAsset = null;
+    assetFormModal.birthYear = appState.editingConfig?.birthYear ?? null;
     assetFormModal.preselectedInstrument = preselectedInstrument || null;
     assetFormModal.preselectedStartDate = preselectedStartDate || null;
     assetFormModal.preselectedStartValue = preselectedStartValue || null;
@@ -1926,6 +1927,7 @@ function openEditAssetModal(modelAsset) {
     editingModelAsset = modelAsset;
     assetFormModal.mode = 'edit';
     assetFormModal.modelAsset = modelAsset;
+    assetFormModal.birthYear = appState.editingConfig?.birthYear ?? null;
     assetFormModal.open = true;
 }
 

@@ -14,16 +14,18 @@
  *   mode        - 'create' | 'edit'
  *   open        - boolean
  *   modelAsset  - ModelAsset (for edit mode pre-fill)
+ *   birthYear   - the plan's, so Social Security can't be dated before 62
  *
  * Dispatches:
  *   'save-asset'  { detail: { modelAsset, mode } }
  *   'close'
  */
 
-import { LitElement, html } from 'lit';
+import { LitElement, html, nothing } from 'lit';
 import { Instrument, InstrumentType } from '../instruments/instrument.js';
 import { membrane_htmlElementToAssetModel } from '../membrane.js';
-import { DateInt } from '../utils/date-int.js';
+import { earliestSocialSecurityDateIntFor, SOCIAL_SECURITY_EARLIEST_AGE } from '../plan-dates.js';
+import { DateInt, monthLabel } from '../utils/date-int.js';
 
 class AssetFormModal extends LitElement {
 
@@ -31,6 +33,7 @@ class AssetFormModal extends LitElement {
         mode:           { type: String },
         open:           { type: Boolean, reflect: true },
         modelAsset:     { type: Object },
+        birthYear:      { type: Number },
         _instrument:    { state: true },
     };
 
@@ -41,6 +44,7 @@ class AssetFormModal extends LitElement {
         this.mode = 'create';
         this.open = false;
         this.modelAsset = null;
+        this.birthYear = null;
         this._instrument = null;
     }
 
@@ -75,6 +79,11 @@ class AssetFormModal extends LitElement {
         const annualReturn = isEdit && ma ? ma.annualReturnRate.toHTML() : '';
         const selectedInstrument = this._instrument || (isEdit && ma ? ma.instrument : '');
         const isExpense = InstrumentType.isMonthlyExpense(selectedInstrument);
+        // Social Security can't be claimed before 62 (plan-dates.js), so the
+        // form offers no earlier month once it knows the plan's birth year.
+        const earliestClaim = selectedInstrument === Instrument.RETIREMENT_INCOME
+            && Number.isInteger(this.birthYear)
+            ? earliestSocialSecurityDateIntFor({ birthYear: this.birthYear }) : null;
 
         return html`
             <div class="popup fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -115,7 +124,12 @@ class AssetFormModal extends LitElement {
                             <div>
                                 <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Start Date</label>
                                 <input type="month" class="fin-input" name="startDate"
-                                    .value=${startDate} required />
+                                    .value=${startDate} required
+                                    min=${earliestClaim ? earliestClaim.toHTML() : nothing}
+                                    @input=${(e) => e.target.setCustomValidity('')} />
+                                ${earliestClaim ? html`
+                                    <p class="text-xs text-gray-500 mt-1">Social Security can't be claimed before ${SOCIAL_SECURITY_EARLIEST_AGE}: the earliest start is ${monthLabel(earliestClaim)}.</p>
+                                ` : ''}
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Start Value</label>
@@ -286,6 +300,19 @@ class AssetFormModal extends LitElement {
     _onSubmit(ev) {
         ev.preventDefault();
         const form = ev.target;
+
+        // A browser that shows type="month" as a text box ignores `min`, so the
+        // earliest Social Security start is checked here too. 'YYYY-MM' strings
+        // compare in date order.
+        const start = form.elements.startDate;
+        if (start?.min && start.value && start.value < start.min) {
+            start.setCustomValidity(`Social Security can't be claimed before `
+                + `${SOCIAL_SECURITY_EARLIEST_AGE}. The earliest start is `
+                + `${monthLabel(DateInt.parse(start.min))}.`);
+            start.reportValidity();
+            return;
+        }
+
         const assetModel = membrane_htmlElementToAssetModel(form);
 
         this.dispatchEvent(new CustomEvent('save-asset', {

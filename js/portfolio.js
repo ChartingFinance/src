@@ -82,6 +82,7 @@ export const EVENT_RECONCILIATION = Object.freeze({
     [EventType.INSURANCE]:               'oneSided',
     [EventType.UNFUNDED]:                'oneSided',
     [EventType.CONTRIBUTION_CAPPED]:     'oneSided',
+    [EventType.SOCIAL_SECURITY_DEFERRED]: 'oneSided',
 });
 
 /**

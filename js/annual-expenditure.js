@@ -112,6 +112,7 @@ export const EXPENDITURE_TREATMENT = Object.freeze({
     // separately rather than counted: it never left an account.
     [EventType.UNFUNDED]:                'excluded',
     [EventType.CONTRIBUTION_CAPPED]:     'excluded',
+    [EventType.SOCIAL_SECURITY_DEFERRED]: 'excluded',
 });
 
 /** Scopes that mean "this draw was paying an obligation". */

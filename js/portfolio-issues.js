@@ -45,7 +45,7 @@ import { Metric, aggregateMetric } from './metric.js';
 import { InstrumentType } from './instruments/instrument.js';
 import { DateInt, monthLabel } from './utils/date-int.js';
 import { formatCurrency } from './utils/html.js';
-import { PAY_LEFT_AFTER_TAXES } from './sim-event.js';
+import { EventType, PAY_LEFT_AFTER_TAXES } from './sim-event.js';
 
 export { monthLabel };
 
@@ -301,6 +301,32 @@ export const DETECTORS = [
                         : `Contributions were capped by ${which}. That much of what your transfers asked for could not be contributed, and stayed in the source account instead.`,
                 };
             });
+        },
+    },
+
+    {
+        // Social Security dated before 62 starts at 62 instead (ModelAsset's
+        // activeFromDateInt). Said here, so a benefit that arrives later than
+        // entered is not a mystery. Read from the recorded event by type.
+        id: 'social-security-deferred',
+        scope: 'asset',
+        category: 'configuration',
+        severity: 'notice',
+        detect(ctx) {
+            return ctx.modelAssets.flatMap(asset => (asset.events ?? [])
+                .filter(e => e.type === EventType.SOCIAL_SECURITY_DEFERRED)
+                .map(({ data }) => {
+                    const dated = new DateInt(data.from);
+                    const starts = new DateInt(data.to);
+                    return {
+                        assetName: asset.displayName,
+                        firstDateInt: starts,
+                        lastDateInt: starts,
+                        occurrences: 1,
+                        headline: `Starts at ${data.age}`,
+                        detail: `Social Security can't be claimed before ${data.age}. This benefit is dated ${monthLabel(dated)}, so the plan starts it in ${monthLabel(starts)} instead, at the amount entered. Change its start date to ${monthLabel(starts)} or later to match.`,
+                    };
+                }));
         },
     },
 

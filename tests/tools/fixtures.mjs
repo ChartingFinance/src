@@ -950,6 +950,30 @@ const adversarialFixtures = [
       ].map(ModelAsset.fromJSON),
     }),
   },
+  {
+    name: 'social-security-dated-before-62',
+    kind: 'adversarial',
+    reaches:
+      'SOCIAL_SECURITY_DEFERRED: a benefit dated before 62 is held until January ' +
+      'of the year the household turns 62, and the deferral is recorded in the ' +
+      'month it was dated. No real profile reaches it: quick start never dates ' +
+      'a benefit before 62.\n' +
+      '      The household is 60 in 2026, so 2028 is the first claimable year, ' +
+      'and the plan runs on to show the first payment. The pension dated in the ' +
+      'same month pays from the start: the rule is Social Security\'s alone. ' +
+      'Checking covers the two years without it, so nothing goes unpaid.',
+    config: { startAge: 60, retirementAge: 60 },
+    build: () => ({
+      assets: [
+        benefit('Social Security', 2000, { fundTransfers: [xfer('Checking', 100)] }),
+        asset(DEC)({ instrument: 'pension', displayName: 'Pension',
+          startCurrency: { amount: 1500 }, startBasisCurrency: { amount: 0 },
+          fundTransfers: [xfer('Checking', 100)] }),
+        bank('Checking', 80000),
+        expense('Living', 3000),
+      ].map(ModelAsset.fromJSON),
+    }),
+  },
 ];
 
 export const SNAPSHOT_FIXTURES = [...realFixtures, ...adversarialFixtures];

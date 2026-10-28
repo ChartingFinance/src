@@ -40,3 +40,18 @@ export function finishDateIntFor(env) {
 export function ageToDateIntFor(env, triggerAge) {
     return DateInt.from(birthYearFor(env) + triggerAge, 1);
 }
+
+/**
+ * The earliest age Social Security retirement benefits can be claimed: 42 U.S.C.
+ * §402(a) entitles an insured worker who has attained age 62.
+ */
+export const SOCIAL_SECURITY_EARLIEST_AGE = 62;
+
+/**
+ * The first month Social Security can pay: January of the year the user turns
+ * 62. The plan knows only a birth year, so this is the same January every other
+ * age-derived date uses.
+ */
+export function earliestSocialSecurityDateIntFor(env) {
+    return ageToDateIntFor(env, SOCIAL_SECURITY_EARLIEST_AGE);
+}

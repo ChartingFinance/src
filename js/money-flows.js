@@ -153,6 +153,7 @@ export const FLOW_TREATMENT = Object.freeze({
     [EventType.CAPITAL_GAIN_RECOGNIZED]: 'excluded',
     [EventType.CAPITAL_GAIN_EXCLUDED]:   'excluded',
     [EventType.CONTRIBUTION_CAPPED]:     'excluded',
+    [EventType.SOCIAL_SECURITY_DEFERRED]: 'excluded',
 });
 
 /** Where a tax event's money went, and how. */

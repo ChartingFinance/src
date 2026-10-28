@@ -87,6 +87,9 @@ export const EventType = Object.freeze({
     // ── Engine reports (no money moved) ──
     UNFUNDED:                'unfunded',          // data: { cause, origin }
     CONTRIBUTION_CAPPED:     'contributionCapped',// data: { limitName }
+    // Social Security dated before it can be claimed starts later instead;
+    // recorded in the month it was dated. data: { age, from, to } (DateInt ints)
+    SOCIAL_SECURITY_DEFERRED: 'socialSecurityDeferred',
 });
 
 /**
@@ -134,6 +137,7 @@ const INFO_TYPES = new Set([
     EventType.CAPITAL_GAIN_EXCLUDED,
     EventType.UNFUNDED,
     EventType.CONTRIBUTION_CAPPED,
+    EventType.SOCIAL_SECURITY_DEFERRED,
 ]);
 
 export function kindOf(type) {
@@ -221,6 +225,7 @@ export function renderNote(event) {
 
         case EventType.UNFUNDED:                return `Unfunded — ${d.cause}`;
         case EventType.CONTRIBUTION_CAPPED:     return `Contribution capped — ${d.limitName}`;
+        case EventType.SOCIAL_SECURITY_DEFERRED: return `Social Security deferred to age ${d.age}`;
 
         default:
             // An unrenderable event is a programming error, not a data

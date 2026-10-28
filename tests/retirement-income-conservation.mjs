@@ -40,6 +40,7 @@ import { chronometer_run } from '../js/chronometer.js';
 import { setActiveTaxTable } from '../js/globals.js';
 import { simConfigFromGlobals } from '../js/globals.js';
 import { makeActiveTaxTable } from '../js/globals.js';
+import { global_setUserStartAge, global_getUserStartAge } from '../js/globals.js';
 
 // ── Scenario builders ─────────────────────────────────────────────────
 // One year, no growth anywhere, no salary. The bank is present so tax
@@ -85,6 +86,10 @@ function buildAssets(incomeInstrument, incomeName) {
 
 async function run(incomeInstrument, incomeName) {
   setActiveTaxTable(makeActiveTaxTable());
+  // A retired household of 63: Social Security can't be claimed before 62,
+  // and at 65 the age deductions would change the zero-tax checks' margins.
+  global_setUserStartAge(63);
+  global_getUserStartAge();
   const modelAssets = buildAssets(incomeInstrument, incomeName).map(o => ModelAsset.fromJSON(o));
   const portfolio = new Portfolio(modelAssets, false, simConfigFromGlobals());
   await chronometer_run(portfolio);
