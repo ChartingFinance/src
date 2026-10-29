@@ -42,6 +42,7 @@ import { FinancialPackage } from '../financial-package.js';
 import { taxableBasis } from '../tax-basis.js';
 import { User } from '../user.js';
 import { formatCurrency } from '../utils/html.js';
+import { MEDICARE_AGE } from '../plan-dates.js';
 
 // ── Refusals ─────────────────────────────────────────────────────────
 
@@ -87,6 +88,40 @@ export const PLAN_DEFAULT_GLOSS = Object.freeze([
 /** Step 1. The defaults a plan starts from, before anyone has said anything. */
 export function planDefaults() {
     return PLAN_DEFAULT_GLOSS.map(d => ({ ...d }));
+}
+
+/**
+ * What a marketplace health plan assumes when nobody says. Kept apart from the
+ * settings preamble: these apply only to a plan with a marketplace card, so
+ * they are stated when one comes up, not to everyone. The fixed values are the
+ * ones `healthInsuranceCard` emits and the age the engine ends coverage at, so
+ * the gloss cannot drift from what is built.
+ */
+const CARD_DEFAULTS = Object.freeze({ advanceShare: 1, premiumTaxCredit: true });
+
+export const HEALTH_INSURANCE_DEFAULT_GLOSS = Object.freeze([
+    Object.freeze({ field: 'benchmark', value: 'the premium itself',
+        gloss: 'the second-lowest-cost silver premium the credit is measured against' }),
+    Object.freeze({ field: 'growthRate', value: 'plan inflation',
+        gloss: 'how fast the premium and benchmark rise, stepped each January' }),
+    Object.freeze({ field: 'estimatedIncome', value: null,
+        gloss: 'the income reported to the marketplace; with none, nothing is advanced '
+            + 'until the plan has a full year on the marketplace to renew on' }),
+    Object.freeze({ field: 'householdSize', value: 'from filing status: 1 single, 2 married',
+        gloss: 'people in the tax household, for the poverty line' }),
+    Object.freeze({ field: 'advanceShare', value: CARD_DEFAULTS.advanceShare,
+        gloss: 'the share of the estimated credit paid to the insurer each month' }),
+    Object.freeze({ field: 'premiumTaxCredit', value: CARD_DEFAULTS.premiumTaxCredit,
+        gloss: 'bought on the marketplace, so the premium tax credit applies' }),
+    Object.freeze({ field: 'fromAge', value: 'the plan\'s start, for a plan that starts in retirement',
+        gloss: 'when coverage starts; a plan that starts before retirement must say' }),
+    Object.freeze({ field: 'untilAge', value: MEDICARE_AGE,
+        gloss: 'coverage ends the December before this age, when Medicare begins' }),
+]);
+
+/** The defaults a marketplace health plan starts from. */
+export function healthInsuranceDefaults() {
+    return HEALTH_INSURANCE_DEFAULT_GLOSS.map(d => ({ ...d }));
 }
 
 // ── Step 2: the intent vocabulary (§4) ───────────────────────────────
@@ -299,6 +334,15 @@ const labelFor = key => InstrumentMeta.get(key)?.label ?? key;
 
 function resolveAccountInstrument(account) {
     if (account.kind) {
+        // A card named as an account would get a balance for a premium and no
+        // credit settings, and be picked to pay the bills.
+        if (account.kind === Instrument.HEALTH_INSURANCE) {
+            throw new PlanRefusal(
+                `"${account.label}" is a health plan, not an account.`,
+                { question: `What does ${account.label} cost a month, before any premium `
+                    + 'tax credit? It goes under healthInsurance, not accounts.',
+                  field: account.label });
+        }
         if (!Object.values(Instrument).includes(account.kind)) {
             throw new PlanRefusal(
                 `"${account.kind}" is not an instrument this engine has.`,
@@ -325,6 +369,272 @@ function resolveAccountInstrument(account) {
             options: ACCOUNT_CATEGORIES,
             field: account.label,
         });
+}
+
+// ── Health insurance (IRC §36B) ──────────────────────────────────────
+
+const HEALTH_INSURANCE_LABEL = 'Health Insurance';
+
+const pct = rate => `${(rate * 100).toFixed(1)}%`;
+
+/**
+ * One marketplace health plan, from what the user said about it.
+ *
+ * The card is an expense in every respect, so it is paid as one (see the
+ * routing in `buildPlan`), and the engine works out the premium tax credit on
+ * it. Three rules decide what can be built:
+ *
+ *   - Coverage starts no earlier than retirement. Before it, every dollar of
+ *     income is routed, and the spending it leaves is sized from take-home pay
+ *     with no room for a premium (§5.3): one paid while working would be spent
+ *     on top of everything else. So a plan that starts in retirement may cover
+ *     from its first month, and any other must say when coverage starts.
+ *   - Coverage ends before 65, when Medicare ends marketplace eligibility and
+ *     the credit with it.
+ *   - Prices are today's. Coverage that starts later is priced at its start,
+ *     grown at the card's rate, and the engine steps it each January after
+ *     that, as it would have from today. An income estimate grows at plan
+ *     inflation.
+ */
+function healthInsuranceCard(card, label, ledger, { startAge, retirementAge, finishAge,
+    inflationRate, householdPersons, startMonth, finishMonth, birthYear }) {
+
+    // ── What it costs ──
+    if (card.premium?.monthly == null && card.premium?.annual == null) {
+        throw new PlanRefusal(`${label} has no premium.`, {
+            question: `What does ${label} cost a month — the full premium, before any `
+                + 'premium tax credit?',
+            field: label });
+    }
+    // A magnitude, like an expense's: the sign convention is applied once, below.
+    const premium = Math.abs(monthlyFrom(card.premium, `${label}'s premium`));
+    if (premium === 0) {
+        throw new PlanRefusal(`${label} has a premium of $0.`, {
+            question: `What does ${label} cost a month, before any premium tax credit?`,
+            field: label });
+    }
+
+    const credit = card.premiumTaxCredit ?? CARD_DEFAULTS.premiumTaxCredit;
+    if (!credit) {
+        const moot = ['benchmark', 'estimatedIncome', 'householdSize', 'advanceShare']
+            .filter(k => card[k] != null);
+        if (moot.length) {
+            throw new PlanRefusal(
+                `${label} is bought without the premium tax credit, but gives `
+                + `${moot.join(', ')}, which only the credit reads.`,
+                { question: `Is ${label} a marketplace plan with the premium tax credit, `
+                    + 'or one bought off the marketplace, with none?', field: label });
+        }
+    }
+
+    const benchmark = card.benchmark != null
+        ? Math.abs(monthlyFrom(card.benchmark, `${label}'s benchmark`)) : null;
+    if (benchmark === 0) {
+        throw new PlanRefusal(`${label} has a benchmark premium of $0.`, {
+            question: 'What is the benchmark (second-lowest-cost silver) premium for the '
+                + `household? Leave it out to measure the credit against ${label}'s own premium.`,
+            field: label });
+    }
+
+    // ModelAsset.effectiveAnnualReturnRate reads an expense's 0% as plan
+    // inflation, so a stated 0% would quietly become plan inflation.
+    if (card.growthRate === 0) {
+        throw new PlanRefusal(
+            `This engine reads a premium growth rate of 0% as plan inflation, so ${label} `
+            + 'cannot be held flat.',
+            { question: `Should ${label} rise with plan inflation (${pct(inflationRate)} a year), `
+                + 'or at some other rate?', field: label });
+    }
+    if (card.estimatedIncome != null && !(card.estimatedIncome >= 0)) {
+        throw new PlanRefusal(`An income estimate of ${card.estimatedIncome} is below zero.`, {
+            question: `What income did the household report to the marketplace for ${label}?`,
+            field: label });
+    }
+    if (card.householdSize != null
+        && !(Number.isInteger(card.householdSize) && card.householdSize >= 1)) {
+        throw new PlanRefusal(`A household of ${card.householdSize} is not a number of people.`, {
+            question: 'How many people are in the tax household?', field: label });
+    }
+    if (card.advanceShare != null && !(card.advanceShare >= 0 && card.advanceShare <= 1)) {
+        throw new PlanRefusal(`An advance share of ${card.advanceShare} is outside 0 to 1.`, {
+            question: `What share of the estimated credit is paid to ${label}'s insurer each `
+                + 'month — all of it (1), none (0), or a part?',
+            field: label });
+    }
+
+    // ── When it covers ──
+    const retiredAtStart = startAge >= retirementAge;
+    const whileWorking = 'build_plan cannot yet model a premium paid while working: it '
+        + 'sizes spending from the pay you do not save, with no room for one.';
+    if (!retiredAtStart && retirementAge >= MEDICARE_AGE) {
+        throw new PlanRefusal(
+            `This plan has work income until ${retirementAge}, and Medicare ends marketplace `
+            + `coverage at ${MEDICARE_AGE}, so ${label} has no retired years to cover.`,
+            { question: `Does work income stop before ${MEDICARE_AGE}? If so, at what age? `
+                + whileWorking, field: 'retirementAge' });
+    }
+    if (!retiredAtStart && finishAge < retirementAge) {
+        throw new PlanRefusal(
+            `This plan ends at ${finishAge}, before work income stops at ${retirementAge}, `
+            + `so ${label} has no retired years to cover.`,
+            { question: `Project past ${retirementAge}, or leave ${label} out? ${whileWorking}`,
+              field: 'finishAge' });
+    }
+    if (card.fromAge == null && !retiredAtStart) {
+        throw new PlanRefusal(
+            `${label} has no start, and this plan starts before retirement (${retirementAge}).`,
+            { question: `Does ${label} start when work income stops, at ${retirementAge}? `
+                + whileWorking,
+              options: { fromAge: [retirementAge] }, field: label });
+    }
+    // Coverage that began before the plan is coverage from its first month.
+    const fromAge = Math.max(card.fromAge ?? startAge, startAge);
+    if (!retiredAtStart && fromAge < retirementAge) {
+        throw new PlanRefusal(
+            `${label} starts at ${fromAge}, before work income stops at ${retirementAge}.`,
+            { question: `Can ${label} start at ${retirementAge} instead? ${whileWorking}`,
+              options: { fromAge: [retirementAge] }, field: label });
+    }
+    if (fromAge >= MEDICARE_AGE) {
+        throw new PlanRefusal(
+            `${label} would start at ${fromAge}, but marketplace coverage and its credit end `
+            + `at ${MEDICARE_AGE}, when Medicare begins.`,
+            { question: startAge < MEDICARE_AGE
+                ? `From what age, before ${MEDICARE_AGE}, does ${label} cover?`
+                : `Is ${label} a Medicare premium? That goes in as an ordinary expense, `
+                    + 'with no premium tax credit.',
+              field: label });
+    }
+
+    const start = fromAge > startAge ? DateInt.from(birthYear + fromAge, 1) : startMonth;
+    if (finishMonth.isBefore(start)) {
+        throw new PlanRefusal(
+            `${label} would start at ${fromAge}, after the plan ends at ${finishAge}.`,
+            { question: `Should the plan run past ${fromAge}, or leave ${label} out?`,
+              field: label });
+    }
+
+    let finish = null;
+    if (card.untilAge != null) {
+        if (card.untilAge <= fromAge) {
+            throw new PlanRefusal(
+                `${label} stops at ${card.untilAge}, no later than it starts (${fromAge}).`,
+                { question: `Until what age does ${label} cover?`, field: label });
+        }
+        if (card.untilAge > MEDICARE_AGE) {
+            throw new PlanRefusal(
+                `${label} would run to ${card.untilAge}, but marketplace coverage and its credit `
+                + `end at ${MEDICARE_AGE}, when Medicare begins.`,
+                { question: `Does ${label} stop at ${MEDICARE_AGE}, or earlier?`, field: label });
+        }
+        // Coverage stops AT that age: its last month is the December before.
+        // Never past the plan's own end, which an explicit date would extend.
+        const last = DateInt.from(birthYear + card.untilAge - 1, 12);
+        finish = finishMonth.isBefore(last) ? finishMonth : last;
+    }
+
+    // ── Today's prices, at the start ──
+    const years = start.year - startMonth.year;
+    const rate = card.growthRate ?? inflationRate;
+    const grown = (amount, r) => Math.round(amount * Math.pow(1 + r, years) * 100) / 100;
+    const premiumAtStart = grown(premium, rate);
+    const benchmarkAtStart = benchmark != null ? grown(benchmark, rate) : null;
+    const estimateAtStart = card.estimatedIncome != null
+        ? Math.round(card.estimatedIncome * Math.pow(1 + inflationRate, years)) : null;
+
+    // ── The ledger ──
+    ledger.asset(label, AssetOrigin.STATED);
+    const note = (text) => ledger.asset(label, AssetOrigin.STATED, text);
+    if (years > 0) {
+        note(`${formatCurrency(premium)}/mo today is ${formatCurrency(premiumAtStart)}/mo by `
+            + `${start.year}, when coverage starts, at ${pct(rate)}/yr`
+            + (benchmark != null
+                ? `; the benchmark grows with it, to ${formatCurrency(benchmarkAtStart)}/mo` : '')
+            + (estimateAtStart != null
+                ? `; the income estimate grows at plan inflation, to ${formatCurrency(estimateAtStart)}`
+                : ''));
+    }
+    if (card.fromAge == null) {
+        note('coverage starts with the plan, which starts in retirement — you did not say '
+            + 'when coverage starts, so this is a default');
+    }
+    const medicareYear = birthYear + MEDICARE_AGE - 1;
+    if (card.untilAge == null && medicareYear < finishMonth.year) {
+        note(`coverage ends December ${medicareYear}, the year before you turn `
+            + `${MEDICARE_AGE} and Medicare begins — you did not say when it ends, so this `
+            + 'is a default');
+    }
+    if (card.growthRate == null) {
+        note(`the premium rises with plan inflation, ${pct(inflationRate)}/yr, stepped each `
+            + 'January — you did not say, so this is a default');
+    }
+    if (credit) {
+        if (card.premiumTaxCredit == null) {
+            note('eligible for the premium tax credit: bought on the marketplace, with no '
+                + 'affordable employer coverage — you did not say otherwise, so this is a default');
+        }
+        if (benchmark == null) {
+            note(`the credit is measured against ${label}'s own premium, as if it were the `
+                + 'benchmark (second-lowest-cost silver) plan — you did not give the benchmark, '
+                + 'so this is a default');
+        }
+        if (card.householdSize == null) {
+            note(`a household of ${householdPersons} for the poverty line, from the filing `
+                + 'status — you did not say how many people the tax household covers, so this '
+                + 'is a default');
+        }
+        if (card.advanceShare == null) {
+            note('the whole estimated credit is paid to the insurer each month — you did not '
+                + 'say, so this is a default');
+        }
+        if (card.estimatedIncome == null) {
+            // PremiumCreditEngine: with no estimate, a year advances nothing
+            // until a full year on the marketplace can be renewed on, and the
+            // plan's part first year is settled against the estimate itself.
+            const first = start.year;
+            note(years === 0 && startMonth.month > 1
+                ? `no income estimate, so the months of ${first} in this plan earn no credit `
+                    + '(a part year is settled against the estimate), and '
+                    + `${first + 1}'s credit comes back on the return instead of in advance`
+                    + ' — you did not say what income you reported to the marketplace'
+                : `no income estimate, so ${first}'s credit comes back on the return instead `
+                    + 'of in advance — you did not say what income you reported to the marketplace');
+        }
+    }
+
+    return {
+        instrument: Instrument.HEALTH_INSURANCE, displayName: label,
+        startDateInt: start,
+        ...(finish ? { finishDateInt: finish } : {}),
+        startCurrency: { amount: -premiumAtStart },
+        // 0 is plan inflation (ModelAsset.effectiveAnnualReturnRate).
+        annualReturnRate: { rate: card.growthRate ?? 0 },
+        // 0 measures the credit against the premium itself (benchmarkCurrency).
+        benchmarkPremium: { amount: benchmarkAtStart ?? 0 },
+        householdSize: card.householdSize ?? null,
+        advanceCreditShare: card.advanceShare ?? CARD_DEFAULTS.advanceShare,
+        estimatedAcaIncome: estimateAtStart != null ? { amount: estimateAtStart } : null,
+        premiumTaxCreditEnabled: credit,
+    };
+}
+
+/**
+ * A household reports one income and one household size to the marketplace,
+ * and the engine reads one of each for all its cards: the first card's
+ * estimate, and the largest size. Two cards that disagree would have one
+ * silently ignored.
+ */
+function assertOneHousehold(cards) {
+    for (const [key, what] of [['estimatedIncome', 'income estimate'],
+                               ['householdSize', 'household size']]) {
+        const values = [...new Set(cards.map(c => c[key]).filter(v => v != null))];
+        if (values.length > 1) {
+            throw new PlanRefusal(
+                `The health plans give different ${what}s (${values.join(', ')}), but a `
+                + 'household reports one to the marketplace.',
+                { question: `Which ${what} did the household report?`, field: 'healthInsurance' });
+        }
+    }
 }
 
 // ── build_plan ───────────────────────────────────────────────────────
@@ -551,6 +861,27 @@ export function buildPlan(intent = {}) {
         });
     }
 
+    const cards = intent.healthInsurance ?? [];
+    const cardLabels = [];
+    // The poverty line's household when no card names one, as the engine reads it.
+    const { householdPersons } = new TaxTable(filingAs, D.propertyTaxDeductionMax);
+    for (const card of cards) {
+        const label = card.label ?? HEALTH_INSURANCE_LABEL;
+        // The residual below adopts an asset already called this, and would
+        // add the unsaved income to the premium.
+        if (label === RESIDUAL_EXPENSE_LABEL) {
+            throw new PlanRefusal(
+                `"${label}" is the name build_plan gives the spending it sizes from income.`,
+                { question: 'What should the health plan be called instead?', field: label });
+        }
+        claim(label, 'health plan');
+        cardLabels.push(label);
+        raw.push(healthInsuranceCard(card, label, ledger, {
+            startAge, retirementAge, finishAge, inflationRate, householdPersons,
+            startMonth, finishMonth, birthYear }));
+    }
+    assertOneHousehold(cards);
+
     // ── Routing (§5.3) ───────────────────────────────────────────
     //
     // Every income is routed 100%. "Save 10%" names one leg of a two-leg split;
@@ -688,8 +1019,11 @@ export function buildPlan(intent = {}) {
     }
 
     // Every expense draws from the spending account, so the payer is recorded
-    // in the spec rather than left to the funding backstop.
-    for (const label of expenseLabels) {
+    // in the spec rather than left to the funding backstop. A marketplace
+    // premium is paid the same way: the advance credit covers part of it, and
+    // the payer the rest.
+    const payees = [...expenseLabels, ...cardLabels];
+    for (const label of payees) {
         if (!spendingAccount) {
             throw new PlanRefusal(
                 `Nothing in this plan can pay for ${label}.`,
@@ -744,7 +1078,7 @@ export function buildPlan(intent = {}) {
         }
         const retire = ModelLifeEvent.createDefault(LifeEvent.RETIRE, retirementAge);
         retire.phaseTransfers = Object.fromEntries(
-            expenseLabels.map(l => [l, [{
+            payees.map(l => [l, [{
                 toDisplayName: fundingAccount, monthlyMoveValue: 100, closeMoveValue: 0,
             }]]));
         lifeEvents.push(retire);

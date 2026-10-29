@@ -131,9 +131,19 @@ build_plan({
   accounts: [{ label: "Savings", kind?: InstrumentKey, startingBalance?: number }],
   savingsSplit: [{ from: "Salary", to: "Savings", percent: 10 }],
   expenses?: [{ label, monthly | annual }],
+  healthInsurance?: [{ label, premium: { monthly | annual }, benchmark?: { monthly | annual },
+                       growthRate?, estimatedIncome?, householdSize?, advanceShare?,
+                       premiumTaxCredit?, fromAge?, untilAge? }],
   settingsOverrides?: { startAge, retirementAge, finishAge, inflationRate, filingAs },
 })
 ```
+
+`healthInsurance` is the marketplace card of spec 11 (`magi-ceiling-aca-spec.md`):
+the full premium at today's prices, and the premium tax credit's inputs. Coverage
+runs from retirement, or from the plan's first month when it starts in retirement,
+and ends the December before 65. A premium paid while working is refused, because
+the §5.3 residual leaves no room for one. `plan_defaults` returns the card's
+defaults beside the settings.
 
 Like Spec 7's adjustments, this is a **typed closed vocabulary, never a JSON
 patch**, and for the same three reasons: it must be expressible in the app,

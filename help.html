@@ -273,7 +273,11 @@
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Taxes Column</div>
-                <div class="text-sm text-gray-500">A virtual group that surfaces hidden taxes: FICA, income tax, capital gains, net investment income tax, and property tax. Click any tax item to <strong>highlight the contributing assets</strong> with a pulse animation across all columns.<br><br>Most rows show the selected month annualized. <strong>Net Investment Income</strong> is the exception: it is charged once a year, so its row shows the <strong>trailing twelve months</strong> instead &mdash; otherwise it would vanish for eleven months and read twelve times too high in the twelfth. It appears only in years you actually owe it.</div>
+                <div class="text-sm text-gray-500">A virtual group that surfaces hidden taxes: FICA, income tax, capital gains, net investment income tax, the premium tax credit settled on the return, and property tax. Click any tax item to <strong>highlight the contributing assets</strong> with a pulse animation across all columns.<br><br>Most rows show the selected month annualized. <strong>Net Investment Income</strong> and <strong>Premium Tax Credit</strong> are the exceptions: each settles once a year, so its row shows the <strong>trailing twelve months</strong> instead &mdash; otherwise it would vanish for eleven months and read twelve times too high in the twelfth. Each appears only in years with something to settle.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">&#x1FA7A; ACA Health Insurance</div>
+                <div class="text-sm text-gray-500">An expense card for a marketplace plan, with the premium tax credit worked out on it. Enter this plan year&rsquo;s <strong>monthly premium</strong> before any credit and the <strong>benchmark premium</strong> (the second-lowest-cost silver plan for your household, which healthcare.gov shows). The <strong>Premium Growth %</strong> defaults to inflation; marketplace premiums usually rise faster, so set your own. <strong>Estimated Income</strong> is the ACA MAGI you tell the marketplace for a year you were not on it all of the year before; <strong>Advance Credit %</strong> takes less of the credit monthly; <strong>Household Size</strong> overrides the one your filing status implies. Leave the finish date empty and the card ends the December before you turn 65. See <a href="rules.html#aca" class="underline">Rules</a> for how the credit is worked out.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Where the Money Went</div>
@@ -467,7 +471,7 @@
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">3</span>
-                        <span class="text-sm text-gray-700">Set the <strong>Adjustment</strong> percentage &mdash; how much spending changes when a guardrail is triggered (15% means every open Monthly Expense is scaled by that much). Adjustments only apply <strong>after your retirement date</strong>; the accumulation years are left alone.</span>
+                        <span class="text-sm text-gray-700">Set the <strong>Adjustment</strong> percentage &mdash; how much spending changes when a guardrail is triggered (15% means every open Monthly Expense is scaled by that much; an ACA Health Insurance premium is not, since its price is set by the plan year). Adjustments only apply <strong>after your retirement date</strong>; the accumulation years are left alone.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">4</span>

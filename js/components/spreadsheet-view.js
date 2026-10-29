@@ -38,6 +38,9 @@ const metrics = [
     { key: 'monthlyInterestIncomes',       label: 'Interest Inc' },
     { key: 'monthlyCapitalGainsTaxes',     label: 'Cap Gains Tax' },
     { key: 'monthlyNIIT',                  label: 'NIIT' },
+    { key: 'monthlyHealthPremiums',        label: 'Health Premium' },
+    { key: 'monthlyPremiumTaxCredits',     label: 'Advance PTC' },
+    { key: 'monthlyPTCReconciliations',    label: 'PTC Settled' },
     { key: 'monthlyCredits',               label: 'Credit' },
 ];
 

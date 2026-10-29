@@ -97,6 +97,15 @@ const home = (displayName, amount, basis, x = {}) => asset(DEC)({
   instrument: 'realEstate', displayName, isPrimaryHome: true,
   startCurrency: { amount }, startBasisCurrency: { amount: basis }, ...x });
 
+/**
+ * A marketplace health plan. Takes the monthly premium and benchmark as
+ * MAGNITUDES, like `expense`.
+ */
+const healthCard = (displayName, premium, benchmark, x = {}) => asset(DEC)({
+  instrument: 'healthInsurance', displayName,
+  startCurrency: { amount: -Math.abs(premium) }, startBasisCurrency: { amount: 0 },
+  benchmarkPremium: { amount: benchmark }, ...x });
+
 /** Re-date one asset, or a whole list, off the DEC default. */
 const by = (finish, a) => (Array.isArray(a)
   ? a.map((one) => ({ ...one, finishDateInt: finish }))
@@ -947,6 +956,162 @@ const adversarialFixtures = [
           startCurrency: { amount: -400000 }, startBasisCurrency: { amount: 0 },
           annualReturnRate: { rate: 0.065 }, monthsRemaining: 360 }),
         expense('Living', 4000),
+      ].map(ModelAsset.fromJSON),
+    }),
+  },
+  {
+    name: 'aca-early-retiree-single',
+    kind: 'adversarial',
+    reaches:
+      'the ACA premium tax credit (spec 11 Part A) for a single early retiree '
+      + 'living on IRA draws. No estimated income and no year before the plan, '
+      + 'so 2026 advances nothing and the whole credit is paid on the return: '
+      + 'the positive ptcReconciliation no other fixture reaches. From 2027 the '
+      + 'advance is paid on the year before, and as income creeps up the advance '
+      + 'runs ahead of the credit and is repaid. The premium steps each January '
+      + 'at 8%, above plan inflation.',
+    config: { startAge: 60, retirementAge: 60, filingAs: 'Single' },
+    build: () => ({
+      assets: [
+        deferred('ira', 'IRA', 900000, { annualReturnRate: { rate: 0.05 } }),
+        bank('Checking', 30000),
+        expense('Living', 2800, { fundTransfers: [xfer('IRA', 100)] }),
+        healthCard('Marketplace Plan', 1100, 1000, { annualReturnRate: { rate: 0.08 },
+          fundTransfers: [xfer('IRA', 100)] }),
+      ].map(ModelAsset.fromJSON),
+    }),
+  },
+  {
+    name: 'aca-early-retiree-mfj',
+    kind: 'adversarial',
+    reaches:
+      'the credit for a married couple living on a low-basis brokerage, so only '
+      + 'the gain fraction of each draw reaches ACA MAGI, with an estimated income '
+      + 'for the first year and Social Security from 2030. ACA MAGI counts all of '
+      + 'Social Security, so the untaxed part §86 leaves out is in it here. Filing '
+      + 'jointly makes the household two for the poverty line.',
+    config: { startAge: 58, retirementAge: 58, filingAs: 'MFJ' },
+    build: () => ({
+      assets: [
+        equity('Brokerage', 1200000, 400000, { annualReturnRate: { rate: 0.06 } }),
+        bank('Checking', 40000),
+        benefit('Social Security', 2500, { startDateInt: { year: 2030, month: 1 },
+          fundTransfers: [xfer('Checking', 100)] }),
+        expense('Living', 5000, { fundTransfers: [xfer('Brokerage', 100)] }),
+        healthCard('Marketplace Plan', 2000, 1800, { annualReturnRate: { rate: 0.07 },
+          estimatedAcaIncome: { amount: 60000 }, fundTransfers: [xfer('Brokerage', 100)] }),
+      ].map(ModelAsset.fromJSON),
+    }),
+  },
+  {
+    name: 'aca-partial-first-year',
+    kind: 'adversarial',
+    reaches:
+      'a plan that starts in October. Its first tax year holds three months, so it '
+      + 'is settled against the card\'s estimate rather than a MAGI the plan only '
+      + 'part-saw. Only 80% of the credit is advanced, so the return pays the rest. '
+      + '2027 is advanced on the estimate again, because 2026 was not a full year '
+      + 'on the marketplace; 2028 renews on 2027.',
+    config: { startAge: 62, retirementAge: 62, filingAs: 'Single' },
+    build: () => ({
+      assets: [
+        deferred('ira', 'IRA', 700000, { startDateInt: { year: 2026, month: 10 },
+          annualReturnRate: { rate: 0.05 } }),
+        bank('Checking', 25000, { startDateInt: { year: 2026, month: 10 } }),
+        expense('Living', 2600, { startDateInt: { year: 2026, month: 10 },
+          fundTransfers: [xfer('IRA', 100)] }),
+        healthCard('Marketplace Plan', 950, 900, { startDateInt: { year: 2026, month: 10 },
+          annualReturnRate: { rate: 0.06 }, estimatedAcaIncome: { amount: 40000 },
+          advanceCreditShare: 0.8, fundTransfers: [xfer('IRA', 100)] }),
+      ].map(ModelAsset.fromJSON),
+    }),
+  },
+  {
+    name: 'aca-over-the-cliff',
+    kind: 'adversarial',
+    reaches:
+      'the 400% cliff with an advance outstanding. 2027 is advanced on 2026\'s '
+      + 'income, then an old 401(k) closes in June and its whole balance is '
+      + 'ordinary income, so 2027 is over the cliff: no credit at all, and every '
+      + 'dollar advanced is repaid, with no cap. 2028 renews on 2027, which is '
+      + 'over the cliff, so nothing is advanced, and the whole 2028 credit comes '
+      + 'back on the return. The card has no finish date, so it ends in December '
+      + '2029, before the household turns 65 and Medicare takes over: 2030 has '
+      + 'no coverage and no credit.',
+    config: { startAge: 61, retirementAge: 61, filingAs: 'Single' },
+    build: () => ({
+      assets: [
+        deferred('ira', 'IRA', 800000, { annualReturnRate: { rate: 0.05 } }),
+        deferred('401K', 'Old 401K', 150000, { finishDateInt: { year: 2027, month: 6 },
+          annualReturnRate: { rate: 0.05 }, fundTransfers: [xfer('Checking', 0, 100)] }),
+        bank('Checking', 20000),
+        expense('Living', 2800, { fundTransfers: [xfer('IRA', 100)] }),
+        healthCard('Marketplace Plan', 900, 850, { finishDateInt: null,
+          fundTransfers: [xfer('IRA', 100)] }),
+      ].map(ModelAsset.fromJSON),
+    }),
+  },
+  {
+    name: 'aca-below-the-floor',
+    kind: 'adversarial',
+    reaches:
+      'the edges under 100% of the poverty line. A high-basis brokerage leaves '
+      + '2026\'s ACA MAGI under the floor, but the advance was paid on an estimate '
+      + 'over it, so the credit is kept at the lowest band (Treas. Reg. '
+      + '1.36B-2(b)(6)). The IRA closing in June 2027 puts that year over the '
+      + 'cliff, so 2028 renews on it and nothing is advanced; with no advance to '
+      + 'keep it, 2028 and 2029 under the floor get no credit at all, the coverage '
+      + 'gap. 2030 crosses 100% and the whole credit comes back on the return.',
+    config: { startAge: 61, retirementAge: 61, filingAs: 'Single' },
+    build: () => ({
+      assets: [
+        deferred('ira', 'IRA', 150000, { finishDateInt: { year: 2027, month: 6 },
+          annualReturnRate: { rate: 0.05 }, fundTransfers: [xfer('Checking', 0, 100)] }),
+        equity('Brokerage', 600000, 500000, { annualReturnRate: { rate: 0.05 } }),
+        bank('Checking', 20000),
+        expense('Living', 3000, { fundTransfers: [xfer('Brokerage', 100)] }),
+        healthCard('Marketplace Plan', 900, 850, { estimatedAcaIncome: { amount: 35000 },
+          fundTransfers: [xfer('Brokerage', 100)] }),
+      ].map(ModelAsset.fromJSON),
+    }),
+  },
+  {
+    name: 'aca-household-of-three',
+    kind: 'adversarial',
+    reaches:
+      'the household-size override. A couple with a dependent on the plan is a '
+      + 'household of three for the poverty line, which moves the applicable '
+      + 'percentage and the cliff; filing status alone would make it two. '
+      + 'Part-time wages keep income in the middle of the bands.',
+    config: { startAge: 55, retirementAge: 65, filingAs: 'MFJ' },
+    build: () => ({
+      assets: [
+        salary('Part-time Work', 4000, { fundTransfers: [xfer('Checking', 100)] }),
+        equity('Brokerage', 500000, 300000, { annualReturnRate: { rate: 0.05 } }),
+        bank('Checking', 30000),
+        expense('Living', 4000, { fundTransfers: [xfer('Checking', 100)] }),
+        healthCard('Family Plan', 2400, 2200, { householdSize: 3,
+          estimatedAcaIncome: { amount: 55000 }, fundTransfers: [xfer('Brokerage', 100)] }),
+      ].map(ModelAsset.fromJSON),
+    }),
+  },
+  {
+    name: 'aca-repayment-unpayable',
+    kind: 'adversarial',
+    reaches:
+      'an excess advance the household cannot fully repay: every dollar is in an '
+      + 'IRA, which the backstop never draws, and Checking holds only what earlier '
+      + 'tax refunds left in it. The low estimate advances too much; Checking pays '
+      + 'what it can, and the rest of the repayment is reported unfunded instead '
+      + 'of vanishing.',
+    config: { startAge: 60, retirementAge: 60, filingAs: 'Single' },
+    build: () => ({
+      assets: [
+        deferred('ira', 'IRA', 800000, { annualReturnRate: { rate: 0.04 } }),
+        bank('Checking', 0),
+        expense('Living', 3200, { fundTransfers: [xfer('IRA', 100)] }),
+        healthCard('Marketplace Plan', 1000, 950, { estimatedAcaIncome: { amount: 22000 },
+          fundTransfers: [xfer('IRA', 100)] }),
       ].map(ModelAsset.fromJSON),
     }),
   },

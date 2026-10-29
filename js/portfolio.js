@@ -17,6 +17,7 @@ import { PayrollEngine } from './engines/payroll-engine.js';
 import { ExpenseEngine } from './engines/expense-engine.js';
 import { TaxEngine } from './engines/tax-engine.js';
 import { RebalanceEngine } from './engines/rebalance-engine.js';
+import { PremiumCreditEngine } from './engines/premium-credit-engine.js';
 
 export { FinancialPackage, FINANCIAL_FIELDS } from './financial-package.js';
 
@@ -74,9 +75,11 @@ export const EVENT_RECONCILIATION = Object.freeze({
     // book the same dollars twice.
     [EventType.TAX_PROVISION]:           'excluded',
     [EventType.NIIT_ASSESSED]:           'oneSided',
+    [EventType.PTC_RECONCILIATION]:      'oneSided',
 
     // Info-kind: no money moved, so the kind check keeps them out of every
     // total.
+    [EventType.PREMIUM_TAX_CREDIT]:      'oneSided',
     [EventType.PROPERTY_TAX_ESCROW]:     'oneSided',
     [EventType.MAINTENANCE]:             'oneSided',
     [EventType.INSURANCE]:               'oneSided',
@@ -371,6 +374,11 @@ export class Portfolio {
         this.payroll = new PayrollEngine(this.modelAssets, this.monthly, this.yearly, this.activeUser, this.taxes, this.config);
         this.expenses = new ExpenseEngine(this.modelAssets, this.monthly, this.activeUser, this.config);
         this.rebalance = new RebalanceEngine(this.modelAssets, this.monthly, this.yearly, this.activeUser, this.config);
+        this.premiumCredit = new PremiumCreditEngine(this.modelAssets, this.monthly, this.config, {
+            taxYears: this.taxYears,
+            firstYear: this.firstDateInt?.year,
+            monthsInPlanYear: (year) => this.monthsInPlanYear(year),
+        });
     }
 
     /**
@@ -658,9 +666,12 @@ export class Portfolio {
         const lowerGuardrail = initialRate * (1 - prosperityThreshold);
 
         if (currentRate > upperGuardrail) {
-            // Preservation: cut expenses
+            // Preservation: cut expenses. Not a marketplace premium: it is
+            // set by the plan year, not by spending, and its benchmark (and so
+            // the credit) is read from it.
             for (const a of this.modelAssets) {
-                if (InstrumentType.isMonthlyExpense(a.instrument) && !a.isClosed) {
+                if (InstrumentType.isMonthlyExpense(a.instrument)
+                    && !InstrumentType.isHealthInsurance(a.instrument) && !a.isClosed) {
                     a.finishCurrency.multiply(1 - adjustmentPct);
                 }
             }
@@ -671,9 +682,10 @@ export class Portfolio {
                 adjustedTo: currentRate * (1 - adjustmentPct),
             });
         } else if (currentRate < lowerGuardrail) {
-            // Prosperity: raise expenses
+            // Prosperity: raise expenses, the same ones.
             for (const a of this.modelAssets) {
-                if (InstrumentType.isMonthlyExpense(a.instrument) && !a.isClosed) {
+                if (InstrumentType.isMonthlyExpense(a.instrument)
+                    && !InstrumentType.isHealthInsurance(a.instrument) && !a.isClosed) {
                     a.finishCurrency.multiply(1 + adjustmentPct);
                 }
             }
@@ -841,6 +853,10 @@ export class Portfolio {
 
     applyLastDayOfMonth(currentDateInt) {
 
+        // The advance premium tax credit pays part of each health-insurance
+        // premium, so it is set before any bill is paid.
+        this.premiumCredit.applyMonthlyAdvance(currentDateInt);
+
         // apply expenses
         for (let modelAsset of this.modelAssets) {
             if (!modelAsset.isClosed) {
@@ -994,7 +1010,10 @@ export class Portfolio {
 
         for (let modelAsset of this.modelAssets) {
             if (modelAsset.inMonth(currentDateInt)) {
-                if (InstrumentType.isMonthlyIncome(modelAsset.instrument))
+                // Income grows once a year, and so does a marketplace premium,
+                // which is priced by calendar year.
+                if (InstrumentType.isMonthlyIncome(modelAsset.instrument)
+                    || InstrumentType.isHealthInsurance(modelAsset.instrument))
                     withTrace(TraceKind.YEAR, `Annual growth: ${modelAsset.displayName}`,
                         currentDateInt, () => modelAsset.applyYearly());
             }
@@ -1025,11 +1044,19 @@ export class Portfolio {
         // when tax is due, so households that owe none get no empty scope.
         const niit = this.taxes.applyAnnualNIIT(this.monthsInPlanYear(settledYear));
 
+        // The premium tax credit settles on the same return, after NIIT for
+        // the same reasons NIIT follows the true-up. It reads ACA MAGI, which
+        // neither of them changes.
+        const ptcBefore = this.monthly.ptcReconciliation.amount;
+        const credit = this.premiumCredit.reconcile(settledYear, basis);
+
         this.#recordTaxYear(settledYear, basis, {
             liability,
             niit,
+            credit,
             settledTrueUp: this.monthly.taxTrueUp.amount - trueUpBefore,
             settledNIIT: this.monthly.niit.amount - niitBefore,
+            settledPTC: this.monthly.ptcReconciliation.amount - ptcBefore,
         });
 
     }
@@ -1067,13 +1094,23 @@ export class Portfolio {
      * @property {number} federalTax       the sum of the four above
      * @property {number} settledTrueUp    booked in January: + refund, − bill
      * @property {number} settledNIIT      booked in January: − paid
+     * @property {number} ptc              the premium tax credit the year allowed
+     * @property {number} aptc             the advance credit paid during it
+     * @property {?number} fplPercent      ACA MAGI as a whole % of the poverty
+     *                                     line; null when no card covered the year
+     * @property {number} ptcReconciliation booked in January: + credit owed,
+     *                                     − excess advance repaid
+     * @property {boolean} ptcOnEstimate   the plan's partial first year, settled
+     *                                     against the card's estimate instead
+     *                                     of a MAGI the plan only part-saw
      *
      * @param {number} year
      * @param {object} basis  taxableBasis() of the settled year's package
      * @param {{liability: {incomeTax: number, capitalGainsTax: number},
-     *          niit: number, settledTrueUp: number, settledNIIT: number}} settled
+     *          niit: number, credit: ?{ptc: number, aptc: number, fplPercent: ?number},
+     *          settledTrueUp: number, settledNIIT: number, settledPTC: number}} settled
      */
-    #recordTaxYear(year, basis, { liability, niit, settledTrueUp, settledNIIT }) {
+    #recordTaxYear(year, basis, { liability, niit, credit, settledTrueUp, settledNIIT, settledPTC }) {
         const magi = {};
         for (const purpose of Object.values(MagiPurpose)) magi[purpose] = basis.magi[purpose].amount;
         const fica = -this.yearly.fica().amount;
@@ -1094,6 +1131,11 @@ export class Portfolio {
             federalTax: fica + liability.incomeTax + liability.capitalGainsTax + niit,
             settledTrueUp,
             settledNIIT,
+            ptc: credit?.ptc ?? 0,
+            aptc: credit?.aptc ?? 0,
+            fplPercent: credit?.fplPercent ?? null,
+            ptcReconciliation: settledPTC ?? 0,
+            ptcOnEstimate: credit?.onEstimate ?? false,
         }));
     }
 

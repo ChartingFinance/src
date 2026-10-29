@@ -137,10 +137,13 @@ export function applyRandomRates(modelAssets, pool, dataMode = 'historical', bas
                 ? base + (treasury - pool.means.treasury)
                 : treasury - dividendRate;
         }
+        // Calibrated draws keep each expense's own rate as the base. A raw CPI
+        // draw would drop a health-insurance premium's growth over plan
+        // inflation, so it is added back (zero for every other expense).
         if (InstrumentType.isMonthlyExpense(asset.instrument)) {
             asset.annualReturnRate.rate = calibrated
                 ? base + (cpi - pool.means.cpi)
-                : cpi;
+                : cpi + (asset.premiumExcessOverInflation ?? 0);
         }
         if (InstrumentType.isMonthlyIncome(asset.instrument)) {
             asset.annualReturnRate.rate = calibrated

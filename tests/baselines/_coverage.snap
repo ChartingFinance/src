@@ -25,8 +25,10 @@
   mortgagePrincipal
   niitAssessed
   oneTime
+  premiumTaxCredit
   propertyTax
   propertyTaxEscrow
+  ptcReconciliation
   settlement
   socialSecurityDeferred
   spillover
@@ -39,6 +41,74 @@
   (none — every declared EventType is reached)
 
 [by fixture]
+  aca-below-the-floor:
+    assetGrowth
+    capitalGainRecognized
+    expenseInflation
+    incomeTaxWithholding
+    interestIncome
+    premiumTaxCredit
+    ptcReconciliation
+    taxTrueUp
+    transfer
+  aca-early-retiree-mfj:
+    assetGrowth
+    capitalGainRecognized
+    expenseInflation
+    incomeGrowth
+    interestIncome
+    premiumTaxCredit
+    ptcReconciliation
+    transfer
+  aca-early-retiree-single:
+    assetGrowth
+    expenseInflation
+    incomeTaxWithholding
+    interestIncome
+    premiumTaxCredit
+    ptcReconciliation
+    taxTrueUp
+    transfer
+  aca-household-of-three:
+    assetGrowth
+    capitalGainRecognized
+    expenseInflation
+    ficaWithholding
+    incomeGrowth
+    incomeTaxWithholding
+    interestIncome
+    premiumTaxCredit
+    ptcReconciliation
+    spillover
+    transfer
+  aca-over-the-cliff:
+    assetGrowth
+    expenseInflation
+    incomeTaxWithholding
+    interestIncome
+    premiumTaxCredit
+    ptcReconciliation
+    taxTrueUp
+    transfer
+  aca-partial-first-year:
+    assetGrowth
+    expenseInflation
+    incomeTaxWithholding
+    interestIncome
+    premiumTaxCredit
+    ptcReconciliation
+    taxTrueUp
+    transfer
+  aca-repayment-unpayable:
+    assetGrowth
+    expenseInflation
+    incomeTaxWithholding
+    interestIncome
+    premiumTaxCredit
+    ptcReconciliation
+    taxTrueUp
+    transfer
+    unfunded
   annual-trueup-from-brokerage:
     assetGrowth
     capitalGainRecognized

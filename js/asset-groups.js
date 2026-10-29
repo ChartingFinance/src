@@ -47,6 +47,7 @@ const RETIREMENT_SET = new Set([
 
 const EXPENSES_SET = new Set([
   Instrument.MONTHLY_EXPENSE,
+  Instrument.HEALTH_INSURANCE,
   Instrument.DEBT,
 ]);
 
@@ -77,6 +78,7 @@ export const AssetGroupMeta = new Map([
       [Instrument.CORP_BOND,         '#ACB3BA'],
       [Instrument.CASH,              '#B5BBC2'],
       [Instrument.MONTHLY_EXPENSE,   '#BEC4CA'],
+      [Instrument.HEALTH_INSURANCE,  '#C2C8CE'],
       [Instrument.DEBT,              '#C7CCD1'],
     ]),
   }],
@@ -145,6 +147,7 @@ export const AssetGroupMeta = new Map([
     headerFg:   '#791F1F',
     assetShades: new Map([
       [Instrument.MONTHLY_EXPENSE, '#E24B4A'],
+      [Instrument.HEALTH_INSURANCE, '#EB7070'],
       [Instrument.DEBT,            '#F09595'],
     ]),
   }],

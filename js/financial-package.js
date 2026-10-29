@@ -15,6 +15,7 @@ export const FINANCIAL_FIELDS = [
     'shortTermCapitalGains', 'longTermCapitalGains', 'excludedCapitalGains',
     'nonQualifiedDividends', 'qualifiedDividends', "maintenance", "insurance",
     'interestIncome', 'longTermCapitalGainsTax', 'niit', 'taxTrueUp',
+    'premiumTaxCredit', 'ptcReconciliation',
     'value',
 ];
 
@@ -29,6 +30,7 @@ export const FINANCIAL_FIELDS = [
 export const FEDERAL_TAX_FIELDS = [
     'incomeTax', 'socialSecurityTax', 'medicareTax',
     'longTermCapitalGainsTax', 'estimatedTaxes', 'niit', 'taxTrueUp',
+    'ptcReconciliation',
 ];
 
 export const SALT_TAX_FIELDS = ['propertyTaxes'];
@@ -36,11 +38,13 @@ export const SALT_TAX_FIELDS = ['propertyTaxes'];
 /**
  * Tax fields that may legitimately be POSITIVE.
  *
- * Only `taxTrueUp`, the annual settlement: negative in a year with an April
- * bill, positive in a refund year. tests/tax-sign-convention.mjs checks that a
- * fixture actually reaches the positive case.
+ * The two annual settlements: `taxTrueUp`, negative in a year with an April
+ * bill and positive in a refund year, and `ptcReconciliation`, negative when
+ * excess advance premium tax credit is repaid and positive when credit is still
+ * owed. tests/tax-sign-convention.mjs checks that a fixture actually reaches
+ * the positive case.
  */
-export const BIDIRECTIONAL_TAX_FIELDS = ['taxTrueUp'];
+export const BIDIRECTIONAL_TAX_FIELDS = ['taxTrueUp', 'ptcReconciliation'];
 
 export class FinancialPackage {
     constructor() {
@@ -245,9 +249,10 @@ export class FinancialPackage {
         // IRC §1411, which the per-asset FEDERAL_TAXES rollup also includes.
         taxes.add(this.niit);
 
-        // The annual settlement: negative when collected, positive when
+        // The annual settlements: negative when collected, positive when
         // refunded, like every field above, so they can simply be summed.
         taxes.add(this.taxTrueUp);
+        taxes.add(this.ptcReconciliation);
         return taxes;
 
     }
@@ -422,6 +427,7 @@ export class FinancialPackage {
         logger.log(category, () => '  estimatedTaxes:            ' + this.estimatedTaxes.toString());
         logger.log(category, () => '  niit:                      ' + this.niit.toString());
         logger.log(category, () => '  taxTrueUp:                 ' + this.taxTrueUp.toString());
+        logger.log(category, () => '  ptcReconciliation:         ' + this.ptcReconciliation.toString());
         logger.log(category, () => 'State/Local taxes:           ' + this.saltTaxes().toString());
         logger.log(category, () => '  propertyTaxes:             ' + this.propertyTaxes.toString());
         logger.log(category, () => 'contributions:               ' + this.contributions().toString());
@@ -431,6 +437,7 @@ export class FinancialPackage {
         logger.log(category, () => '  postTaxContribution:       ' + this.postTaxContribution().toString());
         logger.log(category, () => '    rothContribution:        ' + this.rothIRAContribution.toString());
         logger.log(category, () => 'expenses:                    ' + this.expense.toString());
+        logger.log(category, () => '  premiumTaxCredit (advance):' + this.premiumTaxCredit.toString());
         logger.log(category, () => 'assetAppreciation:           ' + this.assetAppreciation.toString());
         logger.log(category, () => 'mortgagePrincipal:           ' + this.mortgagePrincipal.toString());
         logger.log(category, () => 'cashInFlow:                  ' + this.cashInFlow().toString());
@@ -532,8 +539,14 @@ export class FinancialPackage {
         this.pensionIncome.add(retirementIncomeResult.pensionIncome);
     }
 
+    /**
+     * `expense` is what the household paid. For a marketplace premium that is
+     * net of the advance credit, and `premiumTaxCredit` records the advance:
+     * an "of which" figure, like rothConversion, never added to expenses again.
+     */
     addExpenseResult(expenseResult) {
         this.expense.add(expenseResult.expense);
+        this.premiumTaxCredit.add(expenseResult.premiumTaxCredit);
     }
 
     addInterestResult(interestResult) {

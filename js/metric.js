@@ -24,6 +24,7 @@ export const Metric = Object.freeze({
   WITHHELD_INCOME_TAX:          'withheldIncomeTax',
   ESTIMATED_INCOME_TAX:         'estimatedIncomeTax',
   NIIT:                         'niit',
+  PTC_RECONCILIATION:           'ptcReconciliation',
   ESTIMATED_TAX:                'estimatedTax',            // reserved: future self-employment enhancement
   INCOME_TAX:                   'incomeTax',
   FEDERAL_TAXES:                'federalTaxes',
@@ -59,6 +60,8 @@ export const Metric = Object.freeze({
   SHORT_TERM_CAPITAL_GAIN_TAX:  'shortTermCapitalGainTax',
   LONG_TERM_CAPITAL_GAIN_TAX:   'longTermCapitalGainTax',
   LIVING_EXPENSE:               'livingExpense',
+  HEALTH_PREMIUM:               'healthPremium',
+  PREMIUM_TAX_CREDIT:           'premiumTaxCredit',
   INTEREST_EXPENSE:             'interestExpense',
   MAINTENANCE:                  'maintenance',
   INSURANCE:                    'insurance',
@@ -85,6 +88,7 @@ export const MetricLabel = Object.freeze({
   [Metric.WITHHELD_INCOME_TAX]:         'Withheld Income Tax',
   [Metric.ESTIMATED_INCOME_TAX]:        'Estimated Income Tax',
   [Metric.NIIT]:                        'Net Investment Income Tax',
+  [Metric.PTC_RECONCILIATION]:          'Premium Tax Credit Reconciliation',
   [Metric.ESTIMATED_TAX]:               'Estimated Tax',
   [Metric.INCOME_TAX]:                  'Income Tax',
   [Metric.FEDERAL_TAXES]:               'Federal Taxes',
@@ -120,6 +124,8 @@ export const MetricLabel = Object.freeze({
   [Metric.LONG_TERM_CAPITAL_GAIN_TAX]:  'Long Term Capital Gain Tax',
   [Metric.PROPERTY_TAX]:                'Property Tax',
   [Metric.LIVING_EXPENSE]:                'Living Expense',
+  [Metric.HEALTH_PREMIUM]:              'Health Insurance Premium',
+  [Metric.PREMIUM_TAX_CREDIT]:          'Premium Tax Credit (advance)',
   [Metric.INTEREST_EXPENSE]:             'Interest Expense',
   [Metric.MAINTENANCE]:                 'Maintenance',
   [Metric.INSURANCE]:                   'Insurance',
@@ -183,11 +189,19 @@ export const MetricRollups = {
     // levy on a separate base, and rolling it through income tax would
     // make the income-tax line disagree with what the brackets produced.
     [Metric.NIIT]:                        [Metric.FEDERAL_TAXES],
+    // The premium tax credit settled on the return: a repayment of excess
+    // advance is a tax (Schedule 2), net credit a refundable credit (Schedule
+    // 3), so it carries either sign. Its own line for the same reason as NIIT.
+    [Metric.PTC_RECONCILIATION]:          [Metric.FEDERAL_TAXES],
 
     // --- EXPENSE & DEBT ROLLUPS ---
     // MORTGAGE_PAYMENT and MORTGAGE_PRINCIPAL are informational only (like RMD) — no rollup.
     // Principal nets to zero via credit memos; payment is interest + principal for display.
     [Metric.LIVING_EXPENSE]:              [Metric.EXPENSE],
+    // A marketplace premium, gross, and the advance credit the Treasury paid
+    // toward it (positive). EXPENSE carries their sum: what the household paid.
+    [Metric.HEALTH_PREMIUM]:              [Metric.EXPENSE],
+    [Metric.PREMIUM_TAX_CREDIT]:          [Metric.EXPENSE],
     [Metric.MORTGAGE_INTEREST]:           [Metric.INTEREST_EXPENSE],
     [Metric.INTEREST_EXPENSE]:            [Metric.EXPENSE],
     [Metric.MAINTENANCE]:                 [Metric.EXPENSE],

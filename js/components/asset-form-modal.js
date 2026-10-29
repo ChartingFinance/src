@@ -79,6 +79,9 @@ class AssetFormModal extends LitElement {
         const annualReturn = isEdit && ma ? ma.annualReturnRate.toHTML() : '';
         const selectedInstrument = this._instrument || (isEdit && ma ? ma.instrument : '');
         const isExpense = InstrumentType.isMonthlyExpense(selectedInstrument);
+        const isHealth = InstrumentType.isHealthInsurance(selectedInstrument);
+        const rateLabel = isHealth ? 'Premium Growth % (optional)'
+            : isExpense ? 'Inflation % (optional)' : 'Annual Return %';
         // Social Security can't be claimed before 62 (plan-dates.js), so the
         // form offers no earlier month once it knows the plan's birth year.
         const earliestClaim = selectedInstrument === Instrument.RETIREMENT_INCOME
@@ -132,7 +135,7 @@ class AssetFormModal extends LitElement {
                                 ` : ''}
                             </div>
                             <div>
-                                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Start Value</label>
+                                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">${isHealth ? 'Monthly Premium (before credit)' : 'Start Value'}</label>
                                 <input type="number" class="fin-input" name="startValue"
                                     .value=${startValue}
                                     step="0.01" placeholder="$0.00" required />
@@ -143,7 +146,7 @@ class AssetFormModal extends LitElement {
                                     .value=${finishDate} placeholder="Defaults to Finish Age" />
                             </div>
                             <div>
-                                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">${isExpense ? 'Inflation % (optional)' : 'Annual Return %'}</label>
+                                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">${rateLabel}</label>
                                 <input type="number" class="fin-input" name="annualReturnRate"
                                     .value=${annualReturn}
                                     step="0.01" placeholder=${isExpense ? 'Defaults to Inflation' : 'e.g. 50 == 50%'} ?required=${!isExpense} />
@@ -164,6 +167,50 @@ class AssetFormModal extends LitElement {
 
     _renderInstrumentFields(instrument, ma) {
         if (!instrument) return html``;
+
+        if (InstrumentType.isHealthInsurance(instrument)) {
+            const benchmarkVal = ma && ma.benchmarkPremium?.amount ? ma.benchmarkPremium.toHTML() : '';
+            const sizeVal = ma?.householdSize ? String(ma.householdSize) : '';
+            const shareVal = ma ? String(Math.round((ma.advanceCreditShare ?? 1) * 100)) : '100';
+            const estimateVal = ma?.estimatedAcaIncome ? ma.estimatedAcaIncome.toHTML() : '';
+            const creditChecked = ma ? ma.premiumTaxCreditEnabled !== false : true;
+            return html`
+                <div class="mt-6 border-t border-gray-100 pt-6">
+                    <p class="text-gray-500 text-xs mb-4">A marketplace plan, with the ACA premium tax credit
+                        computed on it. Enter this plan year's figures; premiums step each January at
+                        the growth rate, which defaults to inflation and usually runs well above it.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Benchmark Premium (monthly)</label>
+                            <input type="number" class="fin-input" name="benchmarkPremium"
+                                .value=${benchmarkVal} step="0.01" placeholder="second-lowest silver plan" />
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Premium Tax Credit</label>
+                            <label class="flex items-center gap-2 cursor-pointer fin-input">
+                                <input type="checkbox" name="premiumTaxCreditEnabled" ?checked=${creditChecked} />
+                                Bought on the marketplace
+                            </label>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Advance Credit %</label>
+                            <input type="number" class="fin-input" name="advanceCreditShare"
+                                .value=${shareVal} step="1" min="0" max="100" placeholder="% paid monthly" />
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Estimated Income (optional)</label>
+                            <input type="number" class="fin-input" name="estimatedAcaIncome"
+                                .value=${estimateVal} step="1" placeholder="ACA MAGI you tell the marketplace" />
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Household Size (optional)</label>
+                            <input type="number" class="fin-input" name="householdSize"
+                                .value=${sizeVal} step="1" min="1" placeholder="1 single, 2 married" />
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
 
         if (instrument === Instrument.WORKING_INCOME) {
             const checked = ma && ma.isSelfEmployed;

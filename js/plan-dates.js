@@ -36,6 +36,21 @@ export function finishDateIntFor(env) {
     return DateInt.from(birthYearFor(env) + env.finishAge, 12);
 }
 
+/** The age Medicare begins, which ends marketplace coverage and its credit. */
+export const MEDICARE_AGE = 65;
+
+/**
+ * December of the year before the user turns 65: a health-insurance card's last
+ * month when it has no finish date of its own. Ages advance each January, so the
+ * household is 65, and on Medicare, from the January after. Never later than the
+ * plan's own last month.
+ */
+export function marketplaceFinishDateIntFor(env) {
+    const beforeMedicare = DateInt.from(birthYearFor(env) + MEDICARE_AGE - 1, 12);
+    const planFinish = finishDateIntFor(env);
+    return beforeMedicare.toInt() < planFinish.toInt() ? beforeMedicare : planFinish;
+}
+
 /** January of the year the user turns `triggerAge` — when a life event fires. */
 export function ageToDateIntFor(env, triggerAge) {
     return DateInt.from(birthYearFor(env) + triggerAge, 1);

@@ -55,6 +55,7 @@ export function reportRows({ type, coversYear, pkg }, taxYears = []) {
         ['  Mortgage Interest', fmt(pkg.mortgageInterest)],
         ['  Property Tax (Deductible)', fmt(pkg.deductiblePropertyTaxes())],
         ...(type === 'yearly' ? agiRows(taxYears.find((t) => t.year === coversYear)) : []),
+        ...(type === 'yearly' ? creditRows(taxYears.find((t) => t.year === coversYear)) : []),
         ...federalTaxRows(pkg),
         ['Local Taxes', fmt(pkg.saltTaxes())],
         ['  Property Tax (Total)', fmt(pkg.propertyTaxes)],
@@ -66,6 +67,10 @@ export function reportRows({ type, coversYear, pkg }, taxYears = []) {
         ['    Roth IRA', fmt(pkg.rothIRAContribution)],
         ['Debt Paydown', fmt(pkg.totalDebtPaydown())],
         ['  Mortgage Principal', fmt(pkg.mortgagePrincipal)],
+        // Paid by the Treasury toward the period's premiums. Expenses below
+        // are already net of it, so it is a row of its own, not a part of them.
+        ...(pkg.premiumTaxCredit.amount !== 0
+            ? [['Premium Tax Credit Advanced', fmt(pkg.premiumTaxCredit)]] : []),
         // Income received less expenses and taxes: the rule Month & Year
         // Details and the per-account Cash Flow metric use too.
         ['Cash Flow', fmt(pkg.cashFlow())],
@@ -112,11 +117,28 @@ function agiRows(taxYear) {
 }
 
 /**
+ * The tax year's premium tax credit, from its TaxYear record, for a year a
+ * health-insurance card covered; none otherwise. What the year allowed is what
+ * was advanced during it plus what the return settled the following January.
+ */
+function creditRows(taxYear) {
+    if (taxYear?.fplPercent == null) return [];
+    return [
+        ['Premium Tax Credit (Tax Year)', fmt(taxYear.ptc)],
+        ['  Advanced During the Year', fmt(taxYear.aptc)],
+        ['  Settled on the Return', fmt(taxYear.ptcReconciliation)],
+        [taxYear.ptcOnEstimate ? '  Estimate, % of Poverty Line' : '  ACA MAGI, % of Poverty Line',
+            `${taxYear.fplPercent}%`],
+    ];
+}
+
+/**
  * What the period paid, which is not what its income owed. The annual pass
- * settles a year on the following January 1, so the true-up and NIIT in a
- * package always belong to the previous tax year: a yearly report shows them
- * beside the next year's AGI. They get their own sub-total for that reason.
- * The sub-rows sum to the heading, as federalTaxes() sums FEDERAL_TAX_FIELDS.
+ * settles a year on the following January 1, so the true-up, NIIT and the
+ * premium tax credit in a package always belong to the previous tax year: a
+ * yearly report shows them beside the next year's AGI. They get their own
+ * sub-total for that reason. The sub-rows sum to the heading, as
+ * federalTaxes() sums FEDERAL_TAX_FIELDS.
  */
 function federalTaxRows(pkg) {
     return [
@@ -125,9 +147,10 @@ function federalTaxRows(pkg) {
         ['  Income Tax', fmt(pkg.incomeTax)],
         ['  LT Cap Gains Tax', fmt(pkg.longTermCapitalGainsTax)],
         ['  Estimated Taxes', fmt(pkg.estimatedTaxes)],
-        ['  Prior-Year Settlement', fmt(pkg.taxTrueUp.amount + pkg.niit.amount)],
+        ['  Prior-Year Settlement', fmt(pkg.taxTrueUp.amount + pkg.niit.amount + pkg.ptcReconciliation.amount)],
         ['    Annual True-Up', fmt(pkg.taxTrueUp)],
         ['    Net Investment Income Tax', fmt(pkg.niit)],
+        ['    Premium Tax Credit', fmt(pkg.ptcReconciliation)],
     ];
 }
 

@@ -105,6 +105,16 @@ export const TAX_TREE = [
                            'interestIncome', 'longTermCapitalGain', 'shortTermCapitalGain'],
     },
     {
+        // IRC §36B, settled on the return each January: excess advance credit
+        // repaid (negative) or credit still owed (positive). Annual, like NIIT.
+        id: 'ptcReconciliation',
+        label: 'Premium Tax Credit',
+        emoji: '🩺',
+        annualCadence: true,
+        amountMetrics: ['ptcReconciliation'],
+        highlightMetrics: ['ptcReconciliation', 'healthPremium', 'premiumTaxCredit'],
+    },
+    {
         id: 'propertyTax',
         label: 'Property Tax',
         emoji: '🏘️',
