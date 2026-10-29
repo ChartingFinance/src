@@ -432,8 +432,10 @@ const SAVE_10 = { horizonYears: 10, accounts: [{ label: 'Savings', startingBalan
 
 await check('Social Security is taxed by §86, not at a flat 85%', async () => {
     // $20k of wages and $24k of benefits: provisional income $32,000, so §86
-    // taxes $3,500 of the benefit where a flat 85% taxed $20,400.
-    const r = await firstMonth({ ...SAVE_10, income: [{ label: 'Salary', annual: 20000 },
+    // taxes $3,500 of the benefit where a flat 85% taxed $20,400. At 63: a
+    // benefit can't be claimed before 62, and 65 would add age deductions.
+    const r = await firstMonth({ ...SAVE_10, settingsOverrides: { startAge: 63, retirementAge: 67 },
+        income: [{ label: 'Salary', annual: 20000 },
         { label: 'Social Security', annual: 24000, kind: 'socialSecurity' }] });
     const planned = 0.9 * salaryTakeHome(r) + 2000;      // SS withholds nothing by default
     assert.ok(Math.abs(r.le - planned) < 0.01,

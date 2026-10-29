@@ -48,6 +48,7 @@ const DATA = {
   [EventType.ONE_TIME]:                { note: 'Windfall' },
   [EventType.UNFUNDED]:                { cause: 'Living', origin: 'oneSided' },
   [EventType.CONTRIBUTION_CAPPED]:     { limitName: '401(k)' },
+  [EventType.SOCIAL_SECURITY_DEFERRED]: { age: 62, from: 202601, to: 203001 },
 };
 
 const ALL_TYPES = Object.values(EventType);

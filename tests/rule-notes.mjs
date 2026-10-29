@@ -32,6 +32,7 @@ import {
   setActiveTaxTable,
   global_setUserStartAge, global_getUserStartAge,
   global_setUserRetirementAge, global_getUserRetirementAge,
+  global_default_user_startAge, global_default_user_retirementAge,
 } from '../js/globals.js';
 import { makeRuleContext, ruleNotesFor, RULES } from '../js/rule-notes.js';
 import { simConfigFromGlobals } from '../js/globals.js';
@@ -78,6 +79,9 @@ function notesFor(portfolio, name, from = 0, to = null) {
     to: to == null ? len - 1 : to,
   }));
 }
+
+// The ages a scenario runs at when it has no reason to pick its own.
+const DEFAULT_AGES = { start: global_default_user_startAge, retire: global_default_user_retirementAge };
 
 async function run(data, ages) {
   setActiveTaxTable(makeActiveTaxTable());
@@ -148,7 +152,7 @@ const retirement = await run([
     startCurrency: { amount: 2500 }, startBasisCurrency: { amount: 0 }, annualReturnRate: { rate: 0 },
     fundTransfers: [{ toDisplayName: 'Savings', monthlyMoveValue: 100, closeMoveValue: 0 }] },
   bank('Savings', 50000),
-]);
+], { start: 63, retire: 63 });   // Social Security can't be claimed before 62
 
 // A pension withholds its own tax on arrival at the W-4P default rate, so
 // "settled somewhere else" does not describe it. Its note must explain the
@@ -192,7 +196,7 @@ const employed = await run([
     startCurrency: { amount: 9000 }, startBasisCurrency: { amount: 0 }, annualReturnRate: { rate: 0 },
     fundTransfers: [{ toDisplayName: 'Savings', monthlyMoveValue: 100, closeMoveValue: 0 }] },
   bank('Savings', 20000),
-]);
+], DEFAULT_AGES);
 
 check('SILENCE: a salary that withholds says nothing about settlement elsewhere', () => {
   const ids = idsFor(employed, 'Salary');
@@ -221,7 +225,7 @@ const roth = await run([
   { instrument: 'monthlyExpense', displayName: 'Living',
     startDateInt: { year: 2026, month: 1 }, finishDateInt: { year: 2028, month: 12 },
     startCurrency: { amount: 3000 }, startBasisCurrency: { amount: 0 }, annualReturnRate: { rate: 0 } },
-]);
+], DEFAULT_AGES);
 
 check('Roth reports its own exemption', () => {
   assert.ok(idsFor(roth, 'Roth IRA').includes('roth-tax-free'));
@@ -241,7 +245,7 @@ const broke = await run([
   { instrument: 'monthlyExpense', displayName: 'Rent',
     startDateInt: { year: 2026, month: 1 }, finishDateInt: { year: 2026, month: 12 },
     startCurrency: { amount: 2500 }, startBasisCurrency: { amount: 0 }, annualReturnRate: { rate: 0 } },
-]);
+], DEFAULT_AGES);
 
 check('an obligation the plan could not pay is reported', () => {
   const notes = notesFor(broke, 'Rent');

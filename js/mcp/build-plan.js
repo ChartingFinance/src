@@ -33,6 +33,7 @@ import { ModelAsset } from '../model-asset.js';
 import { ModelLifeEvent, LifeEvent } from '../life-event.js';
 import { Instrument, InstrumentMeta } from '../instruments/instrument.js';
 import { SIM_CONFIG_DEFAULTS } from '../sim-config.js';
+import { earliestSocialSecurityDateIntFor, SOCIAL_SECURITY_EARLIEST_AGE } from '../plan-dates.js';
 import { FilingStatus, asFilingStatus } from '../filing-status.js';
 import { DateInt } from '../utils/date-int.js';
 import { TaxTable, TaxOwner } from '../taxes.js';
@@ -771,6 +772,22 @@ export function buildPlan(intent = {}) {
                 options: { kind: Object.keys(INCOME_KINDS) },
                 field: label,
             });
+        }
+
+        // Every income here starts in the plan's first month, and Social
+        // Security can't be claimed before 62. Starting it later would also mean
+        // sizing the spending without it until then, which this builder does not
+        // do, so a younger household's benefit is refused rather than moved.
+        if (instrument === Instrument.RETIREMENT_INCOME
+            && startMonth.isBefore(earliestSocialSecurityDateIntFor({ birthYear }))) {
+            throw new PlanRefusal(
+                `${label} can't start now: Social Security can't be claimed before `
+                + `${SOCIAL_SECURITY_EARLIEST_AGE}, and this plan starts at ${startAge}.`, {
+                    question: `Leave ${label} out of this plan (it can be added in the app `
+                        + `with a start date at ${SOCIAL_SECURITY_EARLIEST_AGE} or later), `
+                        + `or start the plan at ${SOCIAL_SECURITY_EARLIEST_AGE} or older?`,
+                    field: label,
+                });
         }
 
         const monthly = monthlyFrom(src, label);

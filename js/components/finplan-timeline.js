@@ -240,11 +240,12 @@ export class FinplanTimeline extends LitElement {
                 }
             }
 
-            // Retirement income (Social Security) start
+            // Retirement income (Social Security) start: when it pays from,
+            // which is 62 for a benefit dated earlier (ModelAsset.activeFromDateInt)
             else if (InstrumentType.isRetirementIncome(inst) && !InstrumentType.isPension(inst)) {
                 if (asset.startDateInt) {
                     annotations.push({
-                        asset, age: ageFromDate(asset.startDateInt),
+                        asset, age: ageFromDate(asset.activeFromDateInt),
                         emoji: assetEmoji,
                         label: `${asset.displayName} starts`,
                         type: 'income-start',

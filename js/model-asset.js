@@ -12,7 +12,7 @@
 import { Currency }       from './utils/currency.js';
 import { DateInt }        from './utils/date-int.js';
 import { ARR }            from './utils/arr.js';
-import { InstrumentType } from './instruments/instrument.js';
+import { Instrument, InstrumentType } from './instruments/instrument.js';
 import { FundTransfer }   from './fund-transfer.js';
 import { OneTimeEvent }   from './one-time.js';
 import { logger, LogCategory } from './utils/logger.js';
@@ -38,7 +38,7 @@ export class CreditMemo {
 }
 import { colorRange }    from './utils/html.js';
 import { getBehavior }   from './instruments/instrument-behavior.js';
-import { finishDateIntFor, marketplaceFinishDateIntFor } from './plan-dates.js';
+import { finishDateIntFor, marketplaceFinishDateIntFor, earliestSocialSecurityDateIntFor, SOCIAL_SECURITY_EARLIEST_AGE } from './plan-dates.js';
 import { Metric, METRIC_NAMES, MetricLabel, MetricRollups, PARENT_METRICS } from './metric.js';
 import { SimEvent, EventType, renderNote } from './sim-event.js';
 import { currentTraceId } from './trace.js';
@@ -193,6 +193,21 @@ export class ModelAsset {
     return InstrumentType.isHealthInsurance(this.instrument)
       ? marketplaceFinishDateIntFor(this.#boundEnv)
       : finishDateIntFor(this.#boundEnv);
+  }
+
+  /**
+   * The first month this asset takes part in a run: its start date, except
+   * that Social Security cannot be claimed before 62 (plan-dates.js). A benefit
+   * dated earlier starts then instead, at the amount entered, as if it had been
+   * dated then, and records SOCIAL_SECURITY_DEFERRED in the month it was dated.
+   *
+   * The start date itself stays as entered: Portfolio reads the plan's first
+   * month, and so its birth year, from start dates.
+   */
+  get activeFromDateInt() {
+    if (this.instrument !== Instrument.RETIREMENT_INCOME) return this.startDateInt;
+    const earliest = earliestSocialSecurityDateIntFor(this.#boundEnv);
+    return this.startDateInt.isBefore(earliest) ? earliest : this.startDateInt;
   }
 
   /** For expense instruments, fall back to plan inflation when no rate is set. */
@@ -650,7 +665,7 @@ export class ModelAsset {
 
       this.beforeStartDate = false;      
       this.afterFinishDate = false;
-      this.onStartDate = (currentDateInt.toInt() == this.startDateInt.toInt());
+      this.onStartDate = (currentDateInt.toInt() == this.activeFromDateInt.toInt());
       this.onFinishDate = (currentDateInt.toInt() == this.effectiveFinishDateInt.toInt());
 
     } else if (this.isClosed) {
@@ -662,7 +677,7 @@ export class ModelAsset {
 
     } else {
 
-      if (currentDateInt.toInt() < this.startDateInt.toInt()) {
+      if (currentDateInt.toInt() < this.activeFromDateInt.toInt()) {
 
         this.beforeStartDate = true;
         this.onStartDate = false;
@@ -726,6 +741,19 @@ export class ModelAsset {
     if (this.beforeStartDate) {
 
       this.finishCurrency.zero();
+
+      // Dated before it can be claimed (see activeFromDateInt): say so in the
+      // month it was dated, once.
+      if (currentDateInt.toInt() === this.startDateInt.toInt()
+          && this.activeFromDateInt.toInt() !== this.startDateInt.toInt()) {
+        this.recordEvent(EventType.SOCIAL_SECURITY_DEFERRED, Currency.zero(), {
+          data: {
+            age: SOCIAL_SECURITY_EARLIEST_AGE,
+            from: this.startDateInt.toInt(),
+            to: this.activeFromDateInt.toInt(),
+          },
+        });
+      }
 
     }
 
@@ -980,7 +1008,7 @@ export class ModelAsset {
       return false;
     }
     else {
-      return dateInt.toInt() >= this.startDateInt.toInt()
+      return dateInt.toInt() >= this.activeFromDateInt.toInt()
           && dateInt.toInt() <= this.effectiveFinishDateInt.toInt();
 
     }

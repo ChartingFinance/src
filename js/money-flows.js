@@ -155,6 +155,7 @@ export const FLOW_TREATMENT = Object.freeze({
     [EventType.CAPITAL_GAIN_RECOGNIZED]: 'excluded',
     [EventType.CAPITAL_GAIN_EXCLUDED]:   'excluded',
     [EventType.CONTRIBUTION_CAPPED]:     'excluded',
+    [EventType.SOCIAL_SECURITY_DEFERRED]: 'excluded',
     // Paid by the Treasury to the insurer: the household's bars show the net
     // premium its accounts paid.
     [EventType.PREMIUM_TAX_CREDIT]:      'excluded',

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.3.36; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.3.37; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -31311,8 +31311,11 @@ var EventType = Object.freeze({
   // ── Engine reports (no money moved) ──
   UNFUNDED: "unfunded",
   // data: { cause, origin }
-  CONTRIBUTION_CAPPED: "contributionCapped"
+  CONTRIBUTION_CAPPED: "contributionCapped",
   // data: { limitName }
+  // Social Security dated before it can be claimed starts later instead;
+  // recorded in the month it was dated. data: { age, from, to } (DateInt ints)
+  SOCIAL_SECURITY_DEFERRED: "socialSecurityDeferred"
 });
 var PAY_LEFT_AFTER_TAXES = "pay left after taxes";
 var ShortfallOrigin = Object.freeze({
@@ -31337,6 +31340,7 @@ var INFO_TYPES = /* @__PURE__ */ new Set([
   EventType.CAPITAL_GAIN_EXCLUDED,
   EventType.UNFUNDED,
   EventType.CONTRIBUTION_CAPPED,
+  EventType.SOCIAL_SECURITY_DEFERRED,
   EventType.PREMIUM_TAX_CREDIT
 ]);
 function kindOf(type) {
@@ -31430,6 +31434,8 @@ function renderNote(event) {
       return `Unfunded \u2014 ${d.cause}`;
     case EventType.CONTRIBUTION_CAPPED:
       return `Contribution capped \u2014 ${d.limitName}`;
+    case EventType.SOCIAL_SECURITY_DEFERRED:
+      return `Social Security deferred to age ${d.age}`;
     default:
       throw new Error(`renderNote: unknown event type "${event.type}"`);
   }
@@ -32170,6 +32176,10 @@ function marketplaceFinishDateIntFor(env) {
 }
 function ageToDateIntFor(env, triggerAge) {
   return DateInt.from(birthYearFor(env) + triggerAge, 1);
+}
+var SOCIAL_SECURITY_EARLIEST_AGE = 62;
+function earliestSocialSecurityDateIntFor(env) {
+  return ageToDateIntFor(env, SOCIAL_SECURITY_EARLIEST_AGE);
 }
 
 // js/life-event.js
@@ -36099,7 +36109,8 @@ var EVENT_RECONCILIATION = Object.freeze({
   [EventType.MAINTENANCE]: "oneSided",
   [EventType.INSURANCE]: "oneSided",
   [EventType.UNFUNDED]: "oneSided",
-  [EventType.CONTRIBUTION_CAPPED]: "oneSided"
+  [EventType.CONTRIBUTION_CAPPED]: "oneSided",
+  [EventType.SOCIAL_SECURITY_DEFERRED]: "oneSided"
 });
 var MEMO_RECONCILIATION = Object.freeze({
   "FICA withholding": "fica",
@@ -37561,6 +37572,20 @@ var ModelAsset = class _ModelAsset {
     if (this.finishDateInt) return this.finishDateInt;
     return InstrumentType.isHealthInsurance(this.instrument) ? marketplaceFinishDateIntFor(this.#boundEnv) : finishDateIntFor(this.#boundEnv);
   }
+  /**
+   * The first month this asset takes part in a run: its start date, except
+   * that Social Security cannot be claimed before 62 (plan-dates.js). A benefit
+   * dated earlier starts then instead, at the amount entered, as if it had been
+   * dated then, and records SOCIAL_SECURITY_DEFERRED in the month it was dated.
+   *
+   * The start date itself stays as entered: Portfolio reads the plan's first
+   * month, and so its birth year, from start dates.
+   */
+  get activeFromDateInt() {
+    if (this.instrument !== Instrument.RETIREMENT_INCOME) return this.startDateInt;
+    const earliest = earliestSocialSecurityDateIntFor(this.#boundEnv);
+    return this.startDateInt.isBefore(earliest) ? earliest : this.startDateInt;
+  }
   /** For expense instruments, fall back to plan inflation when no rate is set. */
   get effectiveAnnualReturnRate() {
     if (InstrumentType.isMonthlyExpense(this.instrument) && this.annualReturnRate.rate === 0) {
@@ -38157,7 +38182,7 @@ var ModelAsset = class _ModelAsset {
     if (this.inMonth(currentDateInt)) {
       this.beforeStartDate = false;
       this.afterFinishDate = false;
-      this.onStartDate = currentDateInt.toInt() == this.startDateInt.toInt();
+      this.onStartDate = currentDateInt.toInt() == this.activeFromDateInt.toInt();
       this.onFinishDate = currentDateInt.toInt() == this.effectiveFinishDateInt.toInt();
     } else if (this.isClosed) {
       this.beforeStartDate = false;
@@ -38165,7 +38190,7 @@ var ModelAsset = class _ModelAsset {
       this.onFinishDate = false;
       this.afterFinishDate = true;
     } else {
-      if (currentDateInt.toInt() < this.startDateInt.toInt()) {
+      if (currentDateInt.toInt() < this.activeFromDateInt.toInt()) {
         this.beforeStartDate = true;
         this.onStartDate = false;
         this.onFinishDate = false;
@@ -38202,6 +38227,15 @@ var ModelAsset = class _ModelAsset {
     this.monthlyCreditBalance.zero();
     if (this.beforeStartDate) {
       this.finishCurrency.zero();
+      if (currentDateInt.toInt() === this.startDateInt.toInt() && this.activeFromDateInt.toInt() !== this.startDateInt.toInt()) {
+        this.recordEvent(EventType.SOCIAL_SECURITY_DEFERRED, Currency.zero(), {
+          data: {
+            age: SOCIAL_SECURITY_EARLIEST_AGE,
+            from: this.startDateInt.toInt(),
+            to: this.activeFromDateInt.toInt()
+          }
+        });
+      }
     } else if (this.afterFinishDate) {
       if (this.isClosed) {
       }
@@ -38380,7 +38414,7 @@ var ModelAsset = class _ModelAsset {
     if (this.isClosed) {
       return false;
     } else {
-      return dateInt.toInt() >= this.startDateInt.toInt() && dateInt.toInt() <= this.effectiveFinishDateInt.toInt();
+      return dateInt.toInt() >= this.activeFromDateInt.toInt() && dateInt.toInt() <= this.effectiveFinishDateInt.toInt();
     }
   }
   isFinishDateInt(d) {
@@ -38742,6 +38776,29 @@ var DETECTORS = [
     }
   },
   {
+    // Social Security dated before 62 starts at 62 instead (ModelAsset's
+    // activeFromDateInt). Said here, so a benefit that arrives later than
+    // entered is not a mystery. Read from the recorded event by type.
+    id: "social-security-deferred",
+    scope: "asset",
+    category: "configuration",
+    severity: "notice",
+    detect(ctx) {
+      return ctx.modelAssets.flatMap((asset) => (asset.events ?? []).filter((e) => e.type === EventType.SOCIAL_SECURITY_DEFERRED).map(({ data }) => {
+        const dated = new DateInt(data.from);
+        const starts = new DateInt(data.to);
+        return {
+          assetName: asset.displayName,
+          firstDateInt: starts,
+          lastDateInt: starts,
+          occurrences: 1,
+          headline: `Starts at ${data.age}`,
+          detail: `Social Security can't be claimed before ${data.age}. This benefit is dated ${monthLabel(dated)}, so the plan starts it in ${monthLabel(starts)} instead, at the amount entered. Change its start date to ${monthLabel(starts)} or later to match.`
+        };
+      }));
+    }
+  },
+  {
     // The RMD was missed. The cause is not recorded (expense-engine.js gives
     // up silently when no account can receive it), so none is guessed.
     id: "rmd-unsatisfied",
@@ -38821,10 +38878,19 @@ function dateAnchors(startAge, retirementAge, finishAge) {
   const birthYear = currentYear - startAge;
   const retireYear = birthYear + retirementAge;
   const finishYear = birthYear + finishAge;
+  const today = { year: currentYear, month: currentMonth };
+  const retire = { year: retireYear, month: 1 };
+  const claimable = earliestSocialSecurityDateIntFor({ birthYear });
+  const earliestClaim = { year: claimable.year, month: claimable.month };
+  const latest = (...dates) => dates.reduce((a, b) => b.year * 100 + b.month > a.year * 100 + a.month ? b : a);
   return {
-    now: { year: currentYear, month: currentMonth },
-    retire: { year: retireYear, month: 1 },
+    now: today,
+    retire,
     finish: { year: finishYear, month: 1 },
+    /** Social Security claimed at retirement: not before 62, nor before the plan starts. */
+    claimAtRetirement: latest(retire, earliestClaim, today),
+    /** Social Security already being paid, or from 62 if that is still ahead. */
+    claimNow: latest(today, earliestClaim),
     /** now + N years */
     plus(years) {
       return { year: currentYear + years, month: currentMonth };
@@ -38859,7 +38925,7 @@ var EARLY_CAREER = {
       {
         instrument: "retirementIncome",
         displayName: "Social Security",
-        startDateInt: d.retire,
+        startDateInt: d.claimAtRetirement,
         startCurrency: { amount: 2200 },
         annualReturnRate: { rate: 0.025 }
       },
@@ -38959,7 +39025,7 @@ var MID_CAREER = {
       {
         instrument: "retirementIncome",
         displayName: "Social Security",
-        startDateInt: d.retire,
+        startDateInt: d.claimAtRetirement,
         startCurrency: { amount: 2500 },
         annualReturnRate: { rate: 0.025 }
       },
@@ -39059,7 +39125,7 @@ var PRE_RETIREMENT = {
       {
         instrument: "retirementIncome",
         displayName: "Social Security",
-        startDateInt: d.retire,
+        startDateInt: d.claimAtRetirement,
         startCurrency: { amount: 2800 },
         annualReturnRate: { rate: 0.025 }
       },
@@ -39129,7 +39195,7 @@ var RETIRED = {
       {
         instrument: "retirementIncome",
         displayName: "Social Security",
-        startDateInt: d.now,
+        startDateInt: d.claimNow,
         startCurrency: { amount: 3e3 },
         annualReturnRate: { rate: 0.025 }
       },
@@ -39218,14 +39284,14 @@ var YOUNG_COUPLE = {
       {
         instrument: "retirementIncome",
         displayName: "Social Security A",
-        startDateInt: d.retire,
+        startDateInt: d.claimAtRetirement,
         startCurrency: { amount: 2200 },
         annualReturnRate: { rate: 0.025 }
       },
       {
         instrument: "retirementIncome",
         displayName: "Social Security B",
-        startDateInt: d.retire,
+        startDateInt: d.claimAtRetirement,
         startCurrency: { amount: 1800 },
         annualReturnRate: { rate: 0.025 }
       },
@@ -39342,14 +39408,14 @@ var DUAL_INCOME = {
       {
         instrument: "retirementIncome",
         displayName: "Social Security A",
-        startDateInt: d.retire,
+        startDateInt: d.claimAtRetirement,
         startCurrency: { amount: 2800 },
         annualReturnRate: { rate: 0.025 }
       },
       {
         instrument: "retirementIncome",
         displayName: "Social Security B",
-        startDateInt: d.retire,
+        startDateInt: d.claimAtRetirement,
         startCurrency: { amount: 2200 },
         annualReturnRate: { rate: 0.025 }
       },
@@ -39458,14 +39524,14 @@ var COUPLE_NEARING_RETIREMENT = {
       {
         instrument: "retirementIncome",
         displayName: "Social Security A",
-        startDateInt: d.retire,
+        startDateInt: d.claimAtRetirement,
         startCurrency: { amount: 2800 },
         annualReturnRate: { rate: 0.025 }
       },
       {
         instrument: "retirementIncome",
         displayName: "Social Security B",
-        startDateInt: d.retire,
+        startDateInt: d.claimAtRetirement,
         startCurrency: { amount: 2300 },
         annualReturnRate: { rate: 0.025 }
       },
@@ -39544,14 +39610,14 @@ var RETIRED_COUPLE = {
       {
         instrument: "retirementIncome",
         displayName: "Social Security A",
-        startDateInt: d.now,
+        startDateInt: d.claimNow,
         startCurrency: { amount: 3e3 },
         annualReturnRate: { rate: 0.025 }
       },
       {
         instrument: "retirementIncome",
         displayName: "Social Security B",
-        startDateInt: d.now,
+        startDateInt: d.claimNow,
         startCurrency: { amount: 2400 },
         annualReturnRate: { rate: 0.025 }
       },
@@ -40368,6 +40434,7 @@ var ISSUE_EVENT_TYPE = Object.freeze({
   "unfunded-obligation": EventType.UNFUNDED,
   "funding-ran-dry": EventType.SPILLOVER,
   "contribution-capped": EventType.CONTRIBUTION_CAPPED,
+  "social-security-deferred": EventType.SOCIAL_SECURITY_DEFERRED,
   "rmd-unsatisfied": null,
   "no-funding-accounts": null
 });
@@ -40781,7 +40848,8 @@ var EXPENDITURE_TREATMENT = Object.freeze({
   // Engine reports. UNFUNDED — what the plan could not pay — is reported
   // separately rather than counted: it never left an account.
   [EventType.UNFUNDED]: "excluded",
-  [EventType.CONTRIBUTION_CAPPED]: "excluded"
+  [EventType.CONTRIBUTION_CAPPED]: "excluded",
+  [EventType.SOCIAL_SECURITY_DEFERRED]: "excluded"
 });
 var OBLIGATION_SCOPES = /* @__PURE__ */ new Set([
   TraceKind.EXPENSE,
@@ -41822,6 +41890,15 @@ function buildPlan(intent = {}) {
         options: { kind: Object.keys(INCOME_KINDS) },
         field: label
       });
+    }
+    if (instrument === Instrument.RETIREMENT_INCOME && startMonth.isBefore(earliestSocialSecurityDateIntFor({ birthYear }))) {
+      throw new PlanRefusal(
+        `${label} can't start now: Social Security can't be claimed before ${SOCIAL_SECURITY_EARLIEST_AGE}, and this plan starts at ${startAge}.`,
+        {
+          question: `Leave ${label} out of this plan (it can be added in the app with a start date at ${SOCIAL_SECURITY_EARLIEST_AGE} or later), or start the plan at ${SOCIAL_SECURITY_EARLIEST_AGE} or older?`,
+          field: label
+        }
+      );
     }
     const monthly = monthlyFrom(src, label);
     const rate = src.growthRate ?? DEFAULT_RATES[instrument];

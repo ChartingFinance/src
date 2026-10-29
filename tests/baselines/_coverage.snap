@@ -30,6 +30,7 @@
   propertyTaxEscrow
   ptcReconciliation
   settlement
+  socialSecurityDeferred
   spillover
   taxProvision
   taxTrueUp
@@ -505,6 +506,15 @@
     propertyTax
     propertyTaxEscrow
     settlement
+    taxTrueUp
+    transfer
+  social-security-dated-before-62:
+    expenseInflation
+    grossUp
+    incomeGrowth
+    incomeTaxWithholding
+    interestIncome
+    socialSecurityDeferred
     taxTrueUp
     transfer
   transfer-exhausts-fallback:
