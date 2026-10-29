@@ -561,9 +561,11 @@ the rest with Phase 2:
 ## 8. How it travels
 
 - **No new key.** Phases already travel inside `lifeEvents`, in scenarios, share
-  links and plan specs.
+  links and plan specs, and spec 12's order rides inside them the same way, to
+  the workers too (its §4.7).
 - **One reader** for scenario load, share-link import and the MCP, as
-  `planSettingsFrom` is for settings: it sorts the phases, refuses duplicate names
+  `planSettingsFrom` is for settings, and the one spec 12 §4.7 asks for its order
+  too: it sorts the phases, refuses duplicate names
   with a reason the import dialog can show, keeps an unknown kind (drawn as
   Other), and leaves a missing asset to be reported rather than dropping the
   phase.
