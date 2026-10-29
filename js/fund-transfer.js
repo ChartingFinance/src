@@ -338,7 +338,8 @@ export class FundTransfer {
 
     // The base the percentage applies to: the full value on close, else net
     // income or property tax when a caller sets useNetIncome / usePropertyTax,
-    // else the full value (for an income asset, the gross).
+    // else what the month asks for: the full value (for an income asset, the
+    // gross), or a health-insurance premium less its advance credit.
     let base;
     if (useClosePercent) {
       base = this.fromModel.finishCurrency;
@@ -347,7 +348,7 @@ export class FundTransfer {
     } else if (this.usePropertyTax) {
       base = this.fromModel.propertyTaxCurrency;
     } else {
-      base = this.fromModel.finishCurrency;
+      base = this.fromModel.amountDueCurrency ?? this.fromModel.finishCurrency;
     }
 
     let amount = new Currency(base.amount * pct);

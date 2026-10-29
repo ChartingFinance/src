@@ -1,0 +1,1191 @@
+# fixture: aca-household-of-three  (adversarial)
+#
+# the household-size override. A couple with a dependent on the plan is a
+# household of three for the poverty line, which moves the applicable
+# percentage and the cliff; filing status alone would make it two. Part-time
+# wages keep income in the middle of the bands.
+
+[config]
+  allocateHouseholdTax = false
+  backtestYear = current
+  filingAs = MFJ
+  inflationRate = 0.031
+  pensionWithholdingRate = 0.1
+  propertyTaxDeductionMax = 40000
+  simDataMode = calibrated
+  socialSecurityWithholdingRate = 0
+  userFinishAge = 87
+  userRetirementAge = 65
+  userStartAge = 55
+  homeSaleExclusion = 500000
+  retirementWithholdingRate = 0.1
+
+[totals]
+  months = 300
+  firstDate = 2026-01
+  lastDate = 2030-12
+  startValue = 530000.000000
+  finishValue = 591385.433798
+  accumulated = 516.000000
+  total.employedIncome = 240000.000000
+  total.socialSecurityTax = -14880.000000
+  total.assetAppreciation = 133867.782671
+  total.expense = -286963.975682
+  total.medicareTax = -3480.000000
+  total.incomeTax = -6870.373191
+  total.longTermCapitalGains = 20075.899005
+  total.premiumTaxCredit = 125201.660793
+  total.ptcReconciliation = 516.000000
+  total.value = 33585951.873572
+
+[assetOrder]
+  0 Part-time Work
+  1 Checking
+  2 Brokerage
+  3 Living
+  4 Family Plan
+
+[asset] Brokerage
+  instrument = taxableEquity
+  start = 2026-01  finish = 2030-12
+  startCurrency = 500000.000000
+  finishCurrency = 591385.433798
+  startBasis = 300000.000000
+  finishBasis = 278019.577109
+  isClosed = no  isDepleted = no
+  closedDate = -  closedValue = -
+  events = 212  reconciled = 212
+
+[events] Brokerage
+  0000 2026-01 transfer                      -513.000000 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0001 2026-01 capitalGainRecognized          205.200000 info  longTermCapitalGain    c0 {spillover=false}
+  0002 2026-01 assetGrowth                   2034.971866 cash  growth                 c-
+  0003 2026-02 transfer                      -513.000000 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0004 2026-02 capitalGainRecognized          206.448927 info  longTermCapitalGain    c0 {spillover=false}
+  0005 2026-02 assetGrowth                   2041.172568 cash  growth                 c-
+  0006 2026-03 transfer                      -513.000000 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0007 2026-03 capitalGainRecognized          207.692786 info  longTermCapitalGain    c0 {spillover=false}
+  0008 2026-03 assetGrowth                   2047.398532 cash  growth                 c-
+  0009 2026-04 transfer                      -513.000000 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0010 2026-04 capitalGainRecognized          208.931599 info  longTermCapitalGain    c0 {spillover=false}
+  0011 2026-04 assetGrowth                   2053.649862 cash  growth                 c-
+  0012 2026-05 transfer                      -513.000000 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0013 2026-05 capitalGainRecognized          210.165384 info  longTermCapitalGain    c0 {spillover=false}
+  0014 2026-05 assetGrowth                   2059.926660 cash  growth                 c-
+  0015 2026-06 transfer                      -513.000000 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0016 2026-06 capitalGainRecognized          211.394164 info  longTermCapitalGain    c0 {spillover=false}
+  0017 2026-06 assetGrowth                   2066.229031 cash  growth                 c-
+  0018 2026-07 transfer                      -513.000000 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0019 2026-07 capitalGainRecognized          212.617958 info  longTermCapitalGain    c0 {spillover=false}
+  0020 2026-07 assetGrowth                   2072.557078 cash  growth                 c-
+  0021 2026-08 transfer                      -513.000000 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0022 2026-08 capitalGainRecognized          213.836786 info  longTermCapitalGain    c0 {spillover=false}
+  0023 2026-08 assetGrowth                   2078.910907 cash  growth                 c-
+  0024 2026-09 transfer                      -513.000000 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0025 2026-09 capitalGainRecognized          215.050668 info  longTermCapitalGain    c0 {spillover=false}
+  0026 2026-09 assetGrowth                   2085.290622 cash  growth                 c-
+  0027 2026-10 transfer                      -513.000000 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0028 2026-10 capitalGainRecognized          216.259625 info  longTermCapitalGain    c0 {spillover=false}
+  0029 2026-10 assetGrowth                   2091.696328 cash  growth                 c-
+  0030 2026-11 transfer                      -513.000000 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0031 2026-11 capitalGainRecognized          217.463677 info  longTermCapitalGain    c0 {spillover=false}
+  0032 2026-11 assetGrowth                   2098.128132 cash  growth                 c-
+  0033 2026-12 transfer                      -513.000000 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0034 2026-12 capitalGainRecognized          218.662843 info  longTermCapitalGain    c0 {spillover=false}
+  0035 2026-12 assetGrowth                   2104.586141 cash  growth                 c-
+  0036 2027-01 transfer                      -460.200000 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0037 2027-01 capitalGainRecognized          197.228571 info  longTermCapitalGain    c0 {spillover=false}
+  0038 2027-01 assetGrowth                   2111.285573 cash  growth                 c-
+  0039 2027-02 transfer                      -460.200000 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0040 2027-02 capitalGainRecognized          198.295602 info  longTermCapitalGain    c0 {spillover=false}
+  0041 2027-02 assetGrowth                   2118.012300 cash  growth                 c-
+  0042 2027-03 transfer                      -460.200000 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0043 2027-03 capitalGainRecognized          199.358304 info  longTermCapitalGain    c0 {spillover=false}
+  0044 2027-03 assetGrowth                   2124.766433 cash  growth                 c-
+  0045 2027-04 transfer                      -460.200000 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0046 2027-04 capitalGainRecognized          200.416693 info  longTermCapitalGain    c0 {spillover=false}
+  0047 2027-04 assetGrowth                   2131.548083 cash  growth                 c-
+  0048 2027-05 transfer                      -460.200000 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0049 2027-05 capitalGainRecognized          201.470788 info  longTermCapitalGain    c0 {spillover=false}
+  0050 2027-05 assetGrowth                   2138.357362 cash  growth                 c-
+  0051 2027-06 transfer                      -460.200000 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0052 2027-06 capitalGainRecognized          202.520606 info  longTermCapitalGain    c0 {spillover=false}
+  0053 2027-06 assetGrowth                   2145.194382 cash  growth                 c-
+  0054 2027-07 transfer                      -460.200000 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0055 2027-07 capitalGainRecognized          203.566164 info  longTermCapitalGain    c0 {spillover=false}
+  0056 2027-07 assetGrowth                   2152.059258 cash  growth                 c-
+  0057 2027-08 transfer                      -460.200000 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0058 2027-08 capitalGainRecognized          204.607479 info  longTermCapitalGain    c0 {spillover=false}
+  0059 2027-08 assetGrowth                   2158.952102 cash  growth                 c-
+  0060 2027-09 transfer                      -460.200000 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0061 2027-09 capitalGainRecognized          205.644570 info  longTermCapitalGain    c0 {spillover=false}
+  0062 2027-09 assetGrowth                   2165.873028 cash  growth                 c-
+  0063 2027-10 transfer                      -460.200000 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0064 2027-10 capitalGainRecognized          206.677452 info  longTermCapitalGain    c0 {spillover=false}
+  0065 2027-10 assetGrowth                   2172.822152 cash  growth                 c-
+  0066 2027-11 transfer                      -460.200000 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0067 2027-11 capitalGainRecognized          207.706143 info  longTermCapitalGain    c0 {spillover=false}
+  0068 2027-11 assetGrowth                   2179.799586 cash  growth                 c-
+  0069 2027-12 transfer                      -460.200000 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0070 2027-12 capitalGainRecognized          208.730660 info  longTermCapitalGain    c0 {spillover=false}
+  0071 2027-12 assetGrowth                   2186.805448 cash  growth                 c-
+  0072 2028-01 transfer                      -453.592200 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0073 2028-01 capitalGainRecognized          206.739302 info  longTermCapitalGain    c0 {spillover=false}
+  0074 2028-01 assetGrowth                   2193.866773 cash  growth                 c-
+  0075 2028-02 transfer                      -453.592200 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0076 2028-02 capitalGainRecognized          207.740931 info  longTermCapitalGain    c0 {spillover=false}
+  0077 2028-02 assetGrowth                   2200.956867 cash  growth                 c-
+  0078 2028-03 transfer                      -453.592200 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0079 2028-03 capitalGainRecognized          208.738495 info  longTermCapitalGain    c0 {spillover=false}
+  0080 2028-03 assetGrowth                   2208.075847 cash  growth                 c-
+  0081 2028-04 transfer                      -453.592200 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0082 2028-04 capitalGainRecognized          209.732011 info  longTermCapitalGain    c0 {spillover=false}
+  0083 2028-04 assetGrowth                   2215.223831 cash  growth                 c-
+  0084 2028-05 transfer                      -453.592200 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0085 2028-05 capitalGainRecognized          210.721497 info  longTermCapitalGain    c0 {spillover=false}
+  0086 2028-05 assetGrowth                   2222.400936 cash  growth                 c-
+  0087 2028-06 transfer                      -453.592200 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0088 2028-06 capitalGainRecognized          211.706967 info  longTermCapitalGain    c0 {spillover=false}
+  0089 2028-06 assetGrowth                   2229.607282 cash  growth                 c-
+  0090 2028-07 transfer                      -453.592200 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0091 2028-07 capitalGainRecognized          212.688439 info  longTermCapitalGain    c0 {spillover=false}
+  0092 2028-07 assetGrowth                   2236.842987 cash  growth                 c-
+  0093 2028-08 transfer                      -453.592200 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0094 2028-08 capitalGainRecognized          213.665928 info  longTermCapitalGain    c0 {spillover=false}
+  0095 2028-08 assetGrowth                   2244.108171 cash  growth                 c-
+  0096 2028-09 transfer                      -453.592200 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0097 2028-09 capitalGainRecognized          214.639451 info  longTermCapitalGain    c0 {spillover=false}
+  0098 2028-09 assetGrowth                   2251.402955 cash  growth                 c-
+  0099 2028-10 transfer                      -453.592200 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0100 2028-10 capitalGainRecognized          215.609024 info  longTermCapitalGain    c0 {spillover=false}
+  0101 2028-10 assetGrowth                   2258.727459 cash  growth                 c-
+  0102 2028-11 transfer                      -453.592200 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0103 2028-11 capitalGainRecognized          216.574663 info  longTermCapitalGain    c0 {spillover=false}
+  0104 2028-11 assetGrowth                   2266.081803 cash  growth                 c-
+  0105 2028-12 transfer                      -453.592200 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0106 2028-12 capitalGainRecognized          217.536384 info  longTermCapitalGain    c0 {spillover=false}
+  0107 2028-12 assetGrowth                   2273.466110 cash  growth                 c-
+  0108 2029-01 transfer                      -450.182558 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0109 2029-01 capitalGainRecognized          216.851786 info  longTermCapitalGain    c0 {spillover=false}
+  0110 2029-01 assetGrowth                   2280.894393 cash  growth                 c-
+  0111 2029-02 transfer                      -450.182558 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0112 2029-02 capitalGainRecognized          217.798547 info  longTermCapitalGain    c0 {spillover=false}
+  0113 2029-02 assetGrowth                   2288.352940 cash  growth                 c-
+  0114 2029-03 transfer                      -450.182558 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0115 2029-03 capitalGainRecognized          218.741467 info  longTermCapitalGain    c0 {spillover=false}
+  0116 2029-03 assetGrowth                   2295.841873 cash  growth                 c-
+  0117 2029-04 transfer                      -450.182558 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0118 2029-04 capitalGainRecognized          219.680561 info  longTermCapitalGain    c0 {spillover=false}
+  0119 2029-04 assetGrowth                   2303.361318 cash  growth                 c-
+  0120 2029-05 transfer                      -450.182558 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0121 2029-05 capitalGainRecognized          220.615844 info  longTermCapitalGain    c0 {spillover=false}
+  0122 2029-05 assetGrowth                   2310.911397 cash  growth                 c-
+  0123 2029-06 transfer                      -450.182558 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0124 2029-06 capitalGainRecognized          221.547332 info  longTermCapitalGain    c0 {spillover=false}
+  0125 2029-06 assetGrowth                   2318.492237 cash  growth                 c-
+  0126 2029-07 transfer                      -450.182558 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0127 2029-07 capitalGainRecognized          222.475041 info  longTermCapitalGain    c0 {spillover=false}
+  0128 2029-07 assetGrowth                   2326.103962 cash  growth                 c-
+  0129 2029-08 transfer                      -450.182558 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0130 2029-08 capitalGainRecognized          223.398985 info  longTermCapitalGain    c0 {spillover=false}
+  0131 2029-08 assetGrowth                   2333.746698 cash  growth                 c-
+  0132 2029-09 transfer                      -450.182558 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0133 2029-09 capitalGainRecognized          224.319181 info  longTermCapitalGain    c0 {spillover=false}
+  0134 2029-09 assetGrowth                   2341.420571 cash  growth                 c-
+  0135 2029-10 transfer                      -450.182558 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0136 2029-10 capitalGainRecognized          225.235642 info  longTermCapitalGain    c0 {spillover=false}
+  0137 2029-10 assetGrowth                   2349.125709 cash  growth                 c-
+  0138 2029-11 spillover                     -784.300548 cash  -                      c1 {depleted=Checking origin=paired}
+  0139 2029-11 capitalGainRecognized          393.991946 info  longTermCapitalGain    c1 {spillover=true}
+  0140 2029-11 transfer                      -450.182558 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0141 2029-11 capitalGainRecognized          226.148385 info  longTermCapitalGain    c0 {spillover=false}
+  0142 2029-11 assetGrowth                   2353.666901 cash  growth                 c-
+  0143 2029-12 spillover                     -919.990857 cash  -                      c1 {depleted=Checking origin=paired}
+  0144 2029-12 capitalGainRecognized          464.013433 info  longTermCapitalGain    c1 {spillover=true}
+  0145 2029-12 transfer                      -450.182558 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0146 2029-12 capitalGainRecognized          227.057424 info  longTermCapitalGain    c0 {spillover=false}
+  0147 2029-12 assetGrowth                   2357.673775 cash  growth                 c-
+  0148 2029-12 ptcReconciliation             -132.000000 cash  -                      c2 {advanced=26160.097682 allowed=26028.097682 direction=repayment percent=177}
+  0149 2029-12 capitalGainRecognized           66.841964 info  longTermCapitalGain    c2 {spillover=false}
+  0150 2030-01 spillover                     -922.358250 cash  -                      c1 {depleted=Checking origin=paired}
+  0151 2030-01 capitalGainRecognized          467.062401 info  longTermCapitalGain    c1 {spillover=true}
+  0152 2030-01 transfer                      -456.977218 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0153 2030-01 capitalGainRecognized          231.403445 info  longTermCapitalGain    c0 {spillover=false}
+  0154 2030-01 assetGrowth                   2361.121862 cash  growth                 c-
+  0155 2030-02 spillover                     -933.871063 cash  -                      c1 {depleted=Checking origin=paired}
+  0156 2030-02 capitalGainRecognized          474.762707 info  longTermCapitalGain    c1 {spillover=true}
+  0157 2030-02 transfer                      -456.977218 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0158 2030-02 capitalGainRecognized          232.318731 info  longTermCapitalGain    c0 {spillover=false}
+  0159 2030-02 assetGrowth                   2365.074877 cash  growth                 c-
+  0160 2030-03 spillover                     -945.413204 cash  -                      c1 {depleted=Checking origin=paired}
+  0161 2030-03 capitalGainRecognized          482.516415 info  longTermCapitalGain    c1 {spillover=true}
+  0162 2030-03 transfer                      -456.977218 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0163 2030-03 capitalGainRecognized          233.230304 info  longTermCapitalGain    c0 {spillover=false}
+  0164 2030-03 assetGrowth                   2368.996973 cash  growth                 c-
+  0165 2030-04 spillover                     -956.984746 cash  -                      c1 {depleted=Checking origin=paired}
+  0166 2030-04 capitalGainRecognized          490.323491 info  longTermCapitalGain    c1 {spillover=true}
+  0167 2030-04 transfer                      -456.977218 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0168 2030-04 capitalGainRecognized          234.138178 info  longTermCapitalGain    c0 {spillover=false}
+  0169 2030-04 assetGrowth                   2372.887904 cash  growth                 c-
+  0170 2030-05 spillover                     -968.585765 cash  -                      c1 {depleted=Checking origin=paired}
+  0171 2030-05 capitalGainRecognized          498.183898 info  longTermCapitalGain    c1 {spillover=true}
+  0172 2030-05 transfer                      -456.977218 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0173 2030-05 capitalGainRecognized          235.042368 info  longTermCapitalGain    c0 {spillover=false}
+  0174 2030-05 assetGrowth                   2376.747423 cash  growth                 c-
+  0175 2030-06 spillover                     -980.216335 cash  -                      c1 {depleted=Checking origin=paired}
+  0176 2030-06 capitalGainRecognized          506.097602 info  longTermCapitalGain    c1 {spillover=true}
+  0177 2030-06 transfer                      -456.977218 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0178 2030-06 capitalGainRecognized          235.942889 info  longTermCapitalGain    c0 {spillover=false}
+  0179 2030-06 assetGrowth                   2380.575281 cash  growth                 c-
+  0180 2030-07 spillover                     -991.876533 cash  -                      c1 {depleted=Checking origin=paired}
+  0181 2030-07 capitalGainRecognized          514.064569 info  longTermCapitalGain    c1 {spillover=true}
+  0182 2030-07 transfer                      -456.977218 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0183 2030-07 capitalGainRecognized          236.839756 info  longTermCapitalGain    c0 {spillover=false}
+  0184 2030-07 assetGrowth                   2384.371230 cash  growth                 c-
+  0185 2030-08 spillover                    -1003.566433 cash  -                      c1 {depleted=Checking origin=paired}
+  0186 2030-08 capitalGainRecognized          522.084765 info  longTermCapitalGain    c1 {spillover=true}
+  0187 2030-08 transfer                      -456.977218 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0188 2030-08 capitalGainRecognized          237.732984 info  longTermCapitalGain    c0 {spillover=false}
+  0189 2030-08 assetGrowth                   2388.135018 cash  growth                 c-
+  0190 2030-09 spillover                    -1015.286111 cash  -                      c1 {depleted=Checking origin=paired}
+  0191 2030-09 capitalGainRecognized          530.158157 info  longTermCapitalGain    c1 {spillover=true}
+  0192 2030-09 transfer                      -456.977218 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0193 2030-09 capitalGainRecognized          238.622588 info  longTermCapitalGain    c0 {spillover=false}
+  0194 2030-09 assetGrowth                   2391.866393 cash  growth                 c-
+  0195 2030-10 spillover                    -1027.035643 cash  -                      c1 {depleted=Checking origin=paired}
+  0196 2030-10 capitalGainRecognized          538.284714 info  longTermCapitalGain    c1 {spillover=true}
+  0197 2030-10 transfer                      -456.977218 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0198 2030-10 capitalGainRecognized          239.508582 info  longTermCapitalGain    c0 {spillover=false}
+  0199 2030-10 assetGrowth                   2395.565100 cash  growth                 c-
+  0200 2030-11 spillover                    -1038.815105 cash  -                      c1 {depleted=Checking origin=paired}
+  0201 2030-11 capitalGainRecognized          546.464404 info  longTermCapitalGain    c1 {spillover=true}
+  0202 2030-11 transfer                      -456.977218 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0203 2030-11 capitalGainRecognized          240.390982 info  longTermCapitalGain    c0 {spillover=false}
+  0204 2030-11 assetGrowth                   2399.230886 cash  growth                 c-
+  0205 2030-12 spillover                    -1050.624574 cash  -                      c1 {depleted=Checking origin=paired}
+  0206 2030-12 capitalGainRecognized          554.697196 info  longTermCapitalGain    c1 {spillover=true}
+  0207 2030-12 transfer                      -456.977218 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0208 2030-12 capitalGainRecognized          241.269800 info  longTermCapitalGain    c0 {spillover=false}
+  0209 2030-12 assetGrowth                   2402.863493 cash  growth                 c-
+  0210 2030-12 ptcReconciliation             -804.000000 cash  -                      c3 {advanced=27056.992711 allowed=26252.992711 direction=repayment percent=190}
+  0211 2030-12 capitalGainRecognized          426.026977 info  longTermCapitalGain    c3 {spillover=false}
+
+[history] Brokerage
+  value                        n=  60 first=   501521.970000 last=   592189.430000 min=   501521.970000 max=   592189.430000 sum=   32991922.610000 #f85a85a6
+  growth                       n=  60 first=     2034.970000 last=     2402.860000 min=     2034.970000 max=     2402.860000 sum=     133867.810000 #02db59fb
+  income                       n=  60 first=      205.200000 last=      795.970000 min=      197.230000 max=      795.970000 sum=      20075.940000 #fafe202a
+  ptcReconciliation            n=  60 first=        0.000000 last=        0.000000 min=     -132.000000 max=        0.000000 sum=       -132.000000 #2f62bc42
+  federalTaxes                 n=  60 first=        0.000000 last=        0.000000 min=     -132.000000 max=        0.000000 sum=       -132.000000 #2f62bc42
+  taxes                        n=  60 first=        0.000000 last=        0.000000 min=     -132.000000 max=        0.000000 sum=       -132.000000 #2f62bc42
+  cashFlow                     n=  60 first=        0.000000 last=        0.000000 min=     -132.000000 max=        0.000000 sum=       -132.000000 #2f62bc42
+  cashFlowAccumulated          n=  60 first=        0.000000 last=     -132.000000 min=     -132.000000 max=        0.000000 sum=      -1584.000000 #a951b365
+  longTermCapitalGain          n=  60 first=      205.200000 last=      795.970000 min=      197.230000 max=      795.970000 sum=      20075.940000 #fafe202a
+  capitalGain                  n=  60 first=      205.200000 last=      795.970000 min=      197.230000 max=      795.970000 sum=      20075.940000 #fafe202a
+
+[asset] Checking
+  instrument = bank
+  start = 2026-01  finish = 2030-12
+  startCurrency = 30000.000000
+  finishCurrency = 0.000000
+  startBasis = 30000.000000
+  finishBasis = 0.000000
+  isClosed = no  isDepleted = yes
+  closedDate = -  closedValue = -
+  events = 182  reconciled = 182
+
+[events] Checking
+  0000 2026-01 transfer                      3562.333333 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0001 2026-01 transfer                     -4000.000000 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0002 2026-01 interestIncome                   0.000000 cash  interestIncome         c-
+  0003 2026-02 transfer                      3562.333333 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0004 2026-02 transfer                     -4010.189358 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0005 2026-02 interestIncome                   0.000000 cash  interestIncome         c-
+  0006 2026-03 transfer                      3562.333333 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0007 2026-03 transfer                     -4020.404671 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0008 2026-03 interestIncome                   0.000000 cash  interestIncome         c-
+  0009 2026-04 transfer                      3562.333333 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0010 2026-04 transfer                     -4030.646006 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0011 2026-04 interestIncome                   0.000000 cash  interestIncome         c-
+  0012 2026-05 transfer                      3562.333333 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0013 2026-05 transfer                     -4040.913429 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0014 2026-05 interestIncome                   0.000000 cash  interestIncome         c-
+  0015 2026-06 transfer                      3562.333333 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0016 2026-06 transfer                     -4051.207007 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0017 2026-06 interestIncome                   0.000000 cash  interestIncome         c-
+  0018 2026-07 transfer                      3562.333333 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0019 2026-07 transfer                     -4061.526807 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0020 2026-07 interestIncome                   0.000000 cash  interestIncome         c-
+  0021 2026-08 transfer                      3562.333333 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0022 2026-08 transfer                     -4071.872894 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0023 2026-08 interestIncome                   0.000000 cash  interestIncome         c-
+  0024 2026-09 transfer                      3562.333333 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0025 2026-09 transfer                     -4082.245336 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0026 2026-09 interestIncome                   0.000000 cash  interestIncome         c-
+  0027 2026-10 transfer                      3562.333333 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0028 2026-10 transfer                     -4092.644200 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0029 2026-10 interestIncome                   0.000000 cash  interestIncome         c-
+  0030 2026-11 transfer                      3562.333333 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0031 2026-11 transfer                     -4103.069554 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0032 2026-11 interestIncome                   0.000000 cash  interestIncome         c-
+  0033 2026-12 transfer                      3562.333333 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0034 2026-12 transfer                     -4113.521465 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0035 2026-12 interestIncome                   0.000000 cash  interestIncome         c-
+  0036 2026-12 ptcReconciliation              660.000000 cash  -                      c5 {advanced=22644 allowed=23304 direction=credit percent=190}
+  0037 2027-01 transfer                      3570.651667 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0038 2027-01 transfer                     -4124.000000 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0039 2027-01 interestIncome                   0.000000 cash  interestIncome         c-
+  0040 2027-02 transfer                      3570.651667 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0041 2027-02 transfer                     -4134.505228 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0042 2027-02 interestIncome                   0.000000 cash  interestIncome         c-
+  0043 2027-03 transfer                      3570.651667 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0044 2027-03 transfer                     -4145.037216 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0045 2027-03 interestIncome                   0.000000 cash  interestIncome         c-
+  0046 2027-04 transfer                      3570.651667 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0047 2027-04 transfer                     -4155.596032 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0048 2027-04 interestIncome                   0.000000 cash  interestIncome         c-
+  0049 2027-05 transfer                      3570.651667 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0050 2027-05 transfer                     -4166.181746 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0051 2027-05 interestIncome                   0.000000 cash  interestIncome         c-
+  0052 2027-06 transfer                      3570.651667 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0053 2027-06 transfer                     -4176.794425 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0054 2027-06 interestIncome                   0.000000 cash  interestIncome         c-
+  0055 2027-07 transfer                      3570.651667 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0056 2027-07 transfer                     -4187.434138 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0057 2027-07 interestIncome                   0.000000 cash  interestIncome         c-
+  0058 2027-08 transfer                      3570.651667 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0059 2027-08 transfer                     -4198.100953 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0060 2027-08 interestIncome                   0.000000 cash  interestIncome         c-
+  0061 2027-09 transfer                      3570.651667 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0062 2027-09 transfer                     -4208.794941 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0063 2027-09 interestIncome                   0.000000 cash  interestIncome         c-
+  0064 2027-10 transfer                      3570.651667 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0065 2027-10 transfer                     -4219.516170 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0066 2027-10 interestIncome                   0.000000 cash  interestIncome         c-
+  0067 2027-11 transfer                      3570.651667 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0068 2027-11 transfer                     -4230.264710 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0069 2027-11 interestIncome                   0.000000 cash  interestIncome         c-
+  0070 2027-12 transfer                      3570.651667 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0071 2027-12 transfer                     -4241.040630 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0072 2027-12 interestIncome                   0.000000 cash  interestIncome         c-
+  0073 2028-01 transfer                      3579.227868 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0074 2028-01 transfer                     -4251.844000 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0075 2028-01 interestIncome                   0.000000 cash  interestIncome         c-
+  0076 2028-02 transfer                      3579.227868 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0077 2028-02 transfer                     -4262.674890 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0078 2028-02 interestIncome                   0.000000 cash  interestIncome         c-
+  0079 2028-03 transfer                      3579.227868 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0080 2028-03 transfer                     -4273.533369 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0081 2028-03 interestIncome                   0.000000 cash  interestIncome         c-
+  0082 2028-04 transfer                      3579.227868 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0083 2028-04 transfer                     -4284.419509 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0084 2028-04 interestIncome                   0.000000 cash  interestIncome         c-
+  0085 2028-05 transfer                      3579.227868 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0086 2028-05 transfer                     -4295.333380 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0087 2028-05 interestIncome                   0.000000 cash  interestIncome         c-
+  0088 2028-06 transfer                      3579.227868 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0089 2028-06 transfer                     -4306.275052 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0090 2028-06 interestIncome                   0.000000 cash  interestIncome         c-
+  0091 2028-07 transfer                      3579.227868 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0092 2028-07 transfer                     -4317.244596 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0093 2028-07 interestIncome                   0.000000 cash  interestIncome         c-
+  0094 2028-08 transfer                      3579.227868 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0095 2028-08 transfer                     -4328.242083 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0096 2028-08 interestIncome                   0.000000 cash  interestIncome         c-
+  0097 2028-09 transfer                      3579.227868 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0098 2028-09 transfer                     -4339.267585 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0099 2028-09 interestIncome                   0.000000 cash  interestIncome         c-
+  0100 2028-10 transfer                      3579.227868 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0101 2028-10 transfer                     -4350.321172 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0102 2028-10 interestIncome                   0.000000 cash  interestIncome         c-
+  0103 2028-11 transfer                      3579.227868 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0104 2028-11 transfer                     -4361.402916 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0105 2028-11 interestIncome                   0.000000 cash  interestIncome         c-
+  0106 2028-12 transfer                      3579.227868 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0107 2028-12 transfer                     -4372.512890 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0108 2028-12 interestIncome                   0.000000 cash  interestIncome         c-
+  0109 2028-12 ptcReconciliation              -12.000000 cash  -                      c6 {advanced=25170.170400 allowed=25158.170400 direction=repayment percent=179}
+  0110 2029-01 transfer                      3588.069932 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0111 2029-01 transfer                     -4383.651164 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0112 2029-01 interestIncome                   0.000000 cash  interestIncome         c-
+  0113 2029-02 transfer                      3588.069932 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0114 2029-02 transfer                     -4394.817811 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0115 2029-02 interestIncome                   0.000000 cash  interestIncome         c-
+  0116 2029-03 transfer                      3588.069932 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0117 2029-03 transfer                     -4406.012904 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0118 2029-03 interestIncome                   0.000000 cash  interestIncome         c-
+  0119 2029-04 transfer                      3588.069932 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0120 2029-04 transfer                     -4417.236514 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0121 2029-04 interestIncome                   0.000000 cash  interestIncome         c-
+  0122 2029-05 transfer                      3588.069932 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0123 2029-05 transfer                     -4428.488715 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0124 2029-05 interestIncome                   0.000000 cash  interestIncome         c-
+  0125 2029-06 transfer                      3588.069932 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0126 2029-06 transfer                     -4439.769578 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0127 2029-06 interestIncome                   0.000000 cash  interestIncome         c-
+  0128 2029-07 transfer                      3588.069932 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0129 2029-07 transfer                     -4451.079178 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0130 2029-07 interestIncome                   0.000000 cash  interestIncome         c-
+  0131 2029-08 transfer                      3588.069932 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0132 2029-08 transfer                     -4462.417588 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0133 2029-08 interestIncome                   0.000000 cash  interestIncome         c-
+  0134 2029-09 transfer                      3588.069932 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0135 2029-09 transfer                     -4473.784880 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0136 2029-09 interestIncome                   0.000000 cash  interestIncome         c-
+  0137 2029-10 transfer                      3588.069932 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0138 2029-10 transfer                     -4485.181128 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0139 2029-10 interestIncome                   0.000000 cash  interestIncome         c-
+  0140 2029-11 transfer                      3588.069932 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0141 2029-11 transfer                     -3712.305859 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0142 2029-11 interestIncome                   0.000000 cash  interestIncome         c-
+  0143 2029-12 transfer                      3588.069932 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0144 2029-12 transfer                     -3588.069932 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0145 2029-12 interestIncome                   0.000000 cash  interestIncome         c-
+  0146 2030-01 transfer                      3597.186100 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0147 2030-01 transfer                     -3597.186100 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0148 2030-01 interestIncome                   0.000000 cash  interestIncome         c-
+  0149 2030-02 transfer                      3597.186100 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0150 2030-02 transfer                     -3597.186100 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0151 2030-02 interestIncome                   0.000000 cash  interestIncome         c-
+  0152 2030-03 transfer                      3597.186100 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0153 2030-03 transfer                     -3597.186100 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0154 2030-03 interestIncome                   0.000000 cash  interestIncome         c-
+  0155 2030-04 transfer                      3597.186100 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0156 2030-04 transfer                     -3597.186100 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0157 2030-04 interestIncome                   0.000000 cash  interestIncome         c-
+  0158 2030-05 transfer                      3597.186100 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0159 2030-05 transfer                     -3597.186100 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0160 2030-05 interestIncome                   0.000000 cash  interestIncome         c-
+  0161 2030-06 transfer                      3597.186100 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0162 2030-06 transfer                     -3597.186100 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0163 2030-06 interestIncome                   0.000000 cash  interestIncome         c-
+  0164 2030-07 transfer                      3597.186100 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0165 2030-07 transfer                     -3597.186100 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0166 2030-07 interestIncome                   0.000000 cash  interestIncome         c-
+  0167 2030-08 transfer                      3597.186100 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0168 2030-08 transfer                     -3597.186100 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0169 2030-08 interestIncome                   0.000000 cash  interestIncome         c-
+  0170 2030-09 transfer                      3597.186100 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0171 2030-09 transfer                     -3597.186100 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0172 2030-09 interestIncome                   0.000000 cash  interestIncome         c-
+  0173 2030-10 transfer                      3597.186100 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0174 2030-10 transfer                     -3597.186100 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0175 2030-10 interestIncome                   0.000000 cash  interestIncome         c-
+  0176 2030-11 transfer                      3597.186100 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0177 2030-11 transfer                     -3597.186100 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0178 2030-11 interestIncome                   0.000000 cash  interestIncome         c-
+  0179 2030-12 transfer                      3597.186100 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0180 2030-12 transfer                     -3597.186100 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0181 2030-12 interestIncome                   0.000000 cash  interestIncome         c-
+
+[history] Checking
+  value                        n=  60 first=    29562.330000 last=        0.000000 min=        0.000000 max=    29562.330000 sum=     766854.550000 #1fbb38ce
+  ptcReconciliation            n=  60 first=        0.000000 last=        0.000000 min=      -12.000000 max=      660.000000 sum=        648.000000 #04b2e361
+  federalTaxes                 n=  60 first=        0.000000 last=        0.000000 min=      -12.000000 max=      660.000000 sum=        648.000000 #04b2e361
+  taxes                        n=  60 first=        0.000000 last=        0.000000 min=      -12.000000 max=      660.000000 sum=        648.000000 #04b2e361
+  cashFlow                     n=  60 first=        0.000000 last=        0.000000 min=      -12.000000 max=      660.000000 sum=        648.000000 #04b2e361
+  cashFlowAccumulated          n=  60 first=        0.000000 last=      648.000000 min=        0.000000 max=      660.000000 sum=      31392.000000 #f52153a5
+
+[asset] Family Plan
+  instrument = healthInsurance
+  start = 2026-01  finish = 2030-12
+  startCurrency = -2400.000000
+  finishCurrency = -2711.726610
+  startBasis = 0.000000
+  finishBasis = 0.000000
+  isClosed = no  isDepleted = no
+  closedDate = -  closedValue = -
+  events = 124  reconciled = 124
+  benchmarkPremium = 2200.000000  householdSize = 3  advanceCreditShare = 1  estimatedAcaIncome = 55000.000000  premiumTaxCreditEnabled = yes
+
+[events] Family Plan
+  0000 2026-01 transfer                       513.000000 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0001 2026-01 premiumTaxCredit              1887.000000 info  premiumTaxCredit       c- {estimate=55000 percent=206 share=1}
+  0002 2026-02 transfer                       513.000000 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0003 2026-02 premiumTaxCredit              1887.000000 info  premiumTaxCredit       c- {estimate=55000 percent=206 share=1}
+  0004 2026-03 transfer                       513.000000 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0005 2026-03 premiumTaxCredit              1887.000000 info  premiumTaxCredit       c- {estimate=55000 percent=206 share=1}
+  0006 2026-04 transfer                       513.000000 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0007 2026-04 premiumTaxCredit              1887.000000 info  premiumTaxCredit       c- {estimate=55000 percent=206 share=1}
+  0008 2026-05 transfer                       513.000000 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0009 2026-05 premiumTaxCredit              1887.000000 info  premiumTaxCredit       c- {estimate=55000 percent=206 share=1}
+  0010 2026-06 transfer                       513.000000 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0011 2026-06 premiumTaxCredit              1887.000000 info  premiumTaxCredit       c- {estimate=55000 percent=206 share=1}
+  0012 2026-07 transfer                       513.000000 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0013 2026-07 premiumTaxCredit              1887.000000 info  premiumTaxCredit       c- {estimate=55000 percent=206 share=1}
+  0014 2026-08 transfer                       513.000000 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0015 2026-08 premiumTaxCredit              1887.000000 info  premiumTaxCredit       c- {estimate=55000 percent=206 share=1}
+  0016 2026-09 transfer                       513.000000 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0017 2026-09 premiumTaxCredit              1887.000000 info  premiumTaxCredit       c- {estimate=55000 percent=206 share=1}
+  0018 2026-10 transfer                       513.000000 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0019 2026-10 premiumTaxCredit              1887.000000 info  premiumTaxCredit       c- {estimate=55000 percent=206 share=1}
+  0020 2026-11 transfer                       513.000000 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0021 2026-11 premiumTaxCredit              1887.000000 info  premiumTaxCredit       c- {estimate=55000 percent=206 share=1}
+  0022 2026-12 transfer                       513.000000 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0023 2026-12 premiumTaxCredit              1887.000000 info  premiumTaxCredit       c- {estimate=55000 percent=206 share=1}
+  0024 2026-12 expenseInflation               -74.400000 cash  -                      c7
+  0025 2027-01 transfer                       460.200000 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0026 2027-01 premiumTaxCredit              2014.200000 info  premiumTaxCredit       c- {estimate=50543.724416 percent=185 share=1}
+  0027 2027-02 transfer                       460.200000 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0028 2027-02 premiumTaxCredit              2014.200000 info  premiumTaxCredit       c- {estimate=50543.724416 percent=185 share=1}
+  0029 2027-03 transfer                       460.200000 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0030 2027-03 premiumTaxCredit              2014.200000 info  premiumTaxCredit       c- {estimate=50543.724416 percent=185 share=1}
+  0031 2027-04 transfer                       460.200000 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0032 2027-04 premiumTaxCredit              2014.200000 info  premiumTaxCredit       c- {estimate=50543.724416 percent=185 share=1}
+  0033 2027-05 transfer                       460.200000 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0034 2027-05 premiumTaxCredit              2014.200000 info  premiumTaxCredit       c- {estimate=50543.724416 percent=185 share=1}
+  0035 2027-06 transfer                       460.200000 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0036 2027-06 premiumTaxCredit              2014.200000 info  premiumTaxCredit       c- {estimate=50543.724416 percent=185 share=1}
+  0037 2027-07 transfer                       460.200000 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0038 2027-07 premiumTaxCredit              2014.200000 info  premiumTaxCredit       c- {estimate=50543.724416 percent=185 share=1}
+  0039 2027-08 transfer                       460.200000 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0040 2027-08 premiumTaxCredit              2014.200000 info  premiumTaxCredit       c- {estimate=50543.724416 percent=185 share=1}
+  0041 2027-09 transfer                       460.200000 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0042 2027-09 premiumTaxCredit              2014.200000 info  premiumTaxCredit       c- {estimate=50543.724416 percent=185 share=1}
+  0043 2027-10 transfer                       460.200000 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0044 2027-10 premiumTaxCredit              2014.200000 info  premiumTaxCredit       c- {estimate=50543.724416 percent=185 share=1}
+  0045 2027-11 transfer                       460.200000 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0046 2027-11 premiumTaxCredit              2014.200000 info  premiumTaxCredit       c- {estimate=50543.724416 percent=185 share=1}
+  0047 2027-12 transfer                       460.200000 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0048 2027-12 premiumTaxCredit              2014.200000 info  premiumTaxCredit       c- {estimate=50543.724416 percent=185 share=1}
+  0049 2027-12 expenseInflation               -76.706400 cash  -                      c8
+  0050 2028-01 transfer                       453.592200 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0051 2028-01 premiumTaxCredit              2097.514200 info  premiumTaxCredit       c- {estimate=50436.223032 percent=179 share=1}
+  0052 2028-02 transfer                       453.592200 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0053 2028-02 premiumTaxCredit              2097.514200 info  premiumTaxCredit       c- {estimate=50436.223032 percent=179 share=1}
+  0054 2028-03 transfer                       453.592200 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0055 2028-03 premiumTaxCredit              2097.514200 info  premiumTaxCredit       c- {estimate=50436.223032 percent=179 share=1}
+  0056 2028-04 transfer                       453.592200 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0057 2028-04 premiumTaxCredit              2097.514200 info  premiumTaxCredit       c- {estimate=50436.223032 percent=179 share=1}
+  0058 2028-05 transfer                       453.592200 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0059 2028-05 premiumTaxCredit              2097.514200 info  premiumTaxCredit       c- {estimate=50436.223032 percent=179 share=1}
+  0060 2028-06 transfer                       453.592200 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0061 2028-06 premiumTaxCredit              2097.514200 info  premiumTaxCredit       c- {estimate=50436.223032 percent=179 share=1}
+  0062 2028-07 transfer                       453.592200 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0063 2028-07 premiumTaxCredit              2097.514200 info  premiumTaxCredit       c- {estimate=50436.223032 percent=179 share=1}
+  0064 2028-08 transfer                       453.592200 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0065 2028-08 premiumTaxCredit              2097.514200 info  premiumTaxCredit       c- {estimate=50436.223032 percent=179 share=1}
+  0066 2028-09 transfer                       453.592200 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0067 2028-09 premiumTaxCredit              2097.514200 info  premiumTaxCredit       c- {estimate=50436.223032 percent=179 share=1}
+  0068 2028-10 transfer                       453.592200 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0069 2028-10 premiumTaxCredit              2097.514200 info  premiumTaxCredit       c- {estimate=50436.223032 percent=179 share=1}
+  0070 2028-11 transfer                       453.592200 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0071 2028-11 premiumTaxCredit              2097.514200 info  premiumTaxCredit       c- {estimate=50436.223032 percent=179 share=1}
+  0072 2028-12 transfer                       453.592200 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0073 2028-12 premiumTaxCredit              2097.514200 info  premiumTaxCredit       c- {estimate=50436.223032 percent=179 share=1}
+  0074 2028-12 expenseInflation               -79.084298 cash  -                      c9
+  0075 2029-01 transfer                       450.182558 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0076 2029-01 premiumTaxCredit              2180.008140 info  premiumTaxCredit       c- {estimate=50546.093092 percent=174 share=1}
+  0077 2029-02 transfer                       450.182558 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0078 2029-02 premiumTaxCredit              2180.008140 info  premiumTaxCredit       c- {estimate=50546.093092 percent=174 share=1}
+  0079 2029-03 transfer                       450.182558 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0080 2029-03 premiumTaxCredit              2180.008140 info  premiumTaxCredit       c- {estimate=50546.093092 percent=174 share=1}
+  0081 2029-04 transfer                       450.182558 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0082 2029-04 premiumTaxCredit              2180.008140 info  premiumTaxCredit       c- {estimate=50546.093092 percent=174 share=1}
+  0083 2029-05 transfer                       450.182558 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0084 2029-05 premiumTaxCredit              2180.008140 info  premiumTaxCredit       c- {estimate=50546.093092 percent=174 share=1}
+  0085 2029-06 transfer                       450.182558 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0086 2029-06 premiumTaxCredit              2180.008140 info  premiumTaxCredit       c- {estimate=50546.093092 percent=174 share=1}
+  0087 2029-07 transfer                       450.182558 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0088 2029-07 premiumTaxCredit              2180.008140 info  premiumTaxCredit       c- {estimate=50546.093092 percent=174 share=1}
+  0089 2029-08 transfer                       450.182558 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0090 2029-08 premiumTaxCredit              2180.008140 info  premiumTaxCredit       c- {estimate=50546.093092 percent=174 share=1}
+  0091 2029-09 transfer                       450.182558 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0092 2029-09 premiumTaxCredit              2180.008140 info  premiumTaxCredit       c- {estimate=50546.093092 percent=174 share=1}
+  0093 2029-10 transfer                       450.182558 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0094 2029-10 premiumTaxCredit              2180.008140 info  premiumTaxCredit       c- {estimate=50546.093092 percent=174 share=1}
+  0095 2029-11 transfer                       450.182558 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0096 2029-11 premiumTaxCredit              2180.008140 info  premiumTaxCredit       c- {estimate=50546.093092 percent=174 share=1}
+  0097 2029-12 transfer                       450.182558 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0098 2029-12 premiumTaxCredit              2180.008140 info  premiumTaxCredit       c- {estimate=50546.093092 percent=174 share=1}
+  0099 2029-12 expenseInflation               -81.535912 cash  -                      c10
+  0100 2030-01 transfer                       456.977218 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0101 2030-01 premiumTaxCredit              2254.749393 info  premiumTaxCredit       c- {estimate=51521.875575 percent=172 share=1}
+  0102 2030-02 transfer                       456.977218 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0103 2030-02 premiumTaxCredit              2254.749393 info  premiumTaxCredit       c- {estimate=51521.875575 percent=172 share=1}
+  0104 2030-03 transfer                       456.977218 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0105 2030-03 premiumTaxCredit              2254.749393 info  premiumTaxCredit       c- {estimate=51521.875575 percent=172 share=1}
+  0106 2030-04 transfer                       456.977218 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0107 2030-04 premiumTaxCredit              2254.749393 info  premiumTaxCredit       c- {estimate=51521.875575 percent=172 share=1}
+  0108 2030-05 transfer                       456.977218 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0109 2030-05 premiumTaxCredit              2254.749393 info  premiumTaxCredit       c- {estimate=51521.875575 percent=172 share=1}
+  0110 2030-06 transfer                       456.977218 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0111 2030-06 premiumTaxCredit              2254.749393 info  premiumTaxCredit       c- {estimate=51521.875575 percent=172 share=1}
+  0112 2030-07 transfer                       456.977218 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0113 2030-07 premiumTaxCredit              2254.749393 info  premiumTaxCredit       c- {estimate=51521.875575 percent=172 share=1}
+  0114 2030-08 transfer                       456.977218 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0115 2030-08 premiumTaxCredit              2254.749393 info  premiumTaxCredit       c- {estimate=51521.875575 percent=172 share=1}
+  0116 2030-09 transfer                       456.977218 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0117 2030-09 premiumTaxCredit              2254.749393 info  premiumTaxCredit       c- {estimate=51521.875575 percent=172 share=1}
+  0118 2030-10 transfer                       456.977218 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0119 2030-10 premiumTaxCredit              2254.749393 info  premiumTaxCredit       c- {estimate=51521.875575 percent=172 share=1}
+  0120 2030-11 transfer                       456.977218 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0121 2030-11 premiumTaxCredit              2254.749393 info  premiumTaxCredit       c- {estimate=51521.875575 percent=172 share=1}
+  0122 2030-12 transfer                       456.977218 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
+  0123 2030-12 premiumTaxCredit              2254.749393 info  premiumTaxCredit       c- {estimate=51521.875575 percent=172 share=1}
+
+[history] Family Plan
+  value                        n=  60 first=    -2400.000000 last=    -2711.730000 min=    -2711.730000 max=    -2400.000000 sum=    -153209.160000 #bbb841e1
+  expense                      n=  60 first=     -513.000000 last=     -456.980000 min=     -513.000000 max=     -450.180000 sum=     -28007.400000 #a50cb1a5
+  cashFlow                     n=  60 first=     -513.000000 last=     -456.980000 min=     -513.000000 max=     -450.180000 sum=     -28007.400000 #a50cb1a5
+  cashFlowAccumulated          n=  60 first=     -513.000000 last=   -28007.420000 min=   -28007.420000 max=     -513.000000 sum=    -871803.480000 #49b9410f
+  healthPremium                n=  60 first=    -2400.000000 last=    -2711.730000 min=    -2711.730000 max=    -2400.000000 sum=    -153209.160000 #bbb841e1
+  premiumTaxCredit             n=  60 first=     1887.000000 last=     2254.750000 min=     1887.000000 max=     2254.750000 sum=     125201.640000 #1ed2fcdd
+
+[asset] Living
+  instrument = monthlyExpense
+  start = 2026-01  finish = 2030-12
+  startCurrency = -4000.000000
+  finishCurrency = -4659.650225
+  startBasis = 0.000000
+  finishBasis = 0.000000
+  isClosed = no  isDepleted = no
+  closedDate = -  closedValue = -
+  events = 120  reconciled = 120
+
+[events] Living
+  0000 2026-01 transfer                      4000.000000 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0001 2026-01 expenseInflation               -10.189358 cash  -                      c-
+  0002 2026-02 transfer                      4010.189358 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0003 2026-02 expenseInflation               -10.215313 cash  -                      c-
+  0004 2026-03 transfer                      4020.404671 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0005 2026-03 expenseInflation               -10.241335 cash  -                      c-
+  0006 2026-04 transfer                      4030.646006 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0007 2026-04 expenseInflation               -10.267423 cash  -                      c-
+  0008 2026-05 transfer                      4040.913429 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0009 2026-05 expenseInflation               -10.293578 cash  -                      c-
+  0010 2026-06 transfer                      4051.207007 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0011 2026-06 expenseInflation               -10.319799 cash  -                      c-
+  0012 2026-07 transfer                      4061.526807 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0013 2026-07 expenseInflation               -10.346087 cash  -                      c-
+  0014 2026-08 transfer                      4071.872894 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0015 2026-08 expenseInflation               -10.372442 cash  -                      c-
+  0016 2026-09 transfer                      4082.245336 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0017 2026-09 expenseInflation               -10.398864 cash  -                      c-
+  0018 2026-10 transfer                      4092.644200 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0019 2026-10 expenseInflation               -10.425354 cash  -                      c-
+  0020 2026-11 transfer                      4103.069554 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0021 2026-11 expenseInflation               -10.451911 cash  -                      c-
+  0022 2026-12 transfer                      4113.521465 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0023 2026-12 expenseInflation               -10.478535 cash  -                      c-
+  0024 2027-01 transfer                      4124.000000 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0025 2027-01 expenseInflation               -10.505228 cash  -                      c-
+  0026 2027-02 transfer                      4134.505228 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0027 2027-02 expenseInflation               -10.531988 cash  -                      c-
+  0028 2027-03 transfer                      4145.037216 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0029 2027-03 expenseInflation               -10.558817 cash  -                      c-
+  0030 2027-04 transfer                      4155.596032 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0031 2027-04 expenseInflation               -10.585713 cash  -                      c-
+  0032 2027-05 transfer                      4166.181746 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0033 2027-05 expenseInflation               -10.612679 cash  -                      c-
+  0034 2027-06 transfer                      4176.794425 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0035 2027-06 expenseInflation               -10.639713 cash  -                      c-
+  0036 2027-07 transfer                      4187.434138 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0037 2027-07 expenseInflation               -10.666816 cash  -                      c-
+  0038 2027-08 transfer                      4198.100953 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0039 2027-08 expenseInflation               -10.693988 cash  -                      c-
+  0040 2027-09 transfer                      4208.794941 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0041 2027-09 expenseInflation               -10.721229 cash  -                      c-
+  0042 2027-10 transfer                      4219.516170 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0043 2027-10 expenseInflation               -10.748540 cash  -                      c-
+  0044 2027-11 transfer                      4230.264710 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0045 2027-11 expenseInflation               -10.775920 cash  -                      c-
+  0046 2027-12 transfer                      4241.040630 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0047 2027-12 expenseInflation               -10.803370 cash  -                      c-
+  0048 2028-01 transfer                      4251.844000 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0049 2028-01 expenseInflation               -10.830890 cash  -                      c-
+  0050 2028-02 transfer                      4262.674890 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0051 2028-02 expenseInflation               -10.858480 cash  -                      c-
+  0052 2028-03 transfer                      4273.533369 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0053 2028-03 expenseInflation               -10.886140 cash  -                      c-
+  0054 2028-04 transfer                      4284.419509 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0055 2028-04 expenseInflation               -10.913871 cash  -                      c-
+  0056 2028-05 transfer                      4295.333380 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0057 2028-05 expenseInflation               -10.941672 cash  -                      c-
+  0058 2028-06 transfer                      4306.275052 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0059 2028-06 expenseInflation               -10.969544 cash  -                      c-
+  0060 2028-07 transfer                      4317.244596 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0061 2028-07 expenseInflation               -10.997487 cash  -                      c-
+  0062 2028-08 transfer                      4328.242083 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0063 2028-08 expenseInflation               -11.025502 cash  -                      c-
+  0064 2028-09 transfer                      4339.267585 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0065 2028-09 expenseInflation               -11.053587 cash  -                      c-
+  0066 2028-10 transfer                      4350.321172 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0067 2028-10 expenseInflation               -11.081744 cash  -                      c-
+  0068 2028-11 transfer                      4361.402916 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0069 2028-11 expenseInflation               -11.109973 cash  -                      c-
+  0070 2028-12 transfer                      4372.512890 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0071 2028-12 expenseInflation               -11.138274 cash  -                      c-
+  0072 2029-01 transfer                      4383.651164 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0073 2029-01 expenseInflation               -11.166647 cash  -                      c-
+  0074 2029-02 transfer                      4394.817811 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0075 2029-02 expenseInflation               -11.195093 cash  -                      c-
+  0076 2029-03 transfer                      4406.012904 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0077 2029-03 expenseInflation               -11.223610 cash  -                      c-
+  0078 2029-04 transfer                      4417.236514 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0079 2029-04 expenseInflation               -11.252201 cash  -                      c-
+  0080 2029-05 transfer                      4428.488715 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0081 2029-05 expenseInflation               -11.280864 cash  -                      c-
+  0082 2029-06 transfer                      4439.769578 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0083 2029-06 expenseInflation               -11.309600 cash  -                      c-
+  0084 2029-07 transfer                      4451.079178 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0085 2029-07 expenseInflation               -11.338409 cash  -                      c-
+  0086 2029-08 transfer                      4462.417588 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0087 2029-08 expenseInflation               -11.367292 cash  -                      c-
+  0088 2029-09 transfer                      4473.784880 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0089 2029-09 expenseInflation               -11.396248 cash  -                      c-
+  0090 2029-10 transfer                      4485.181128 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0091 2029-10 expenseInflation               -11.425279 cash  -                      c-
+  0092 2029-11 transfer                      4496.606407 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0093 2029-11 expenseInflation               -11.454383 cash  -                      c-
+  0094 2029-12 transfer                      4508.060789 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0095 2029-12 expenseInflation               -11.483561 cash  -                      c-
+  0096 2030-01 transfer                      4519.544350 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0097 2030-01 expenseInflation               -11.512813 cash  -                      c-
+  0098 2030-02 transfer                      4531.057163 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0099 2030-02 expenseInflation               -11.542140 cash  -                      c-
+  0100 2030-03 transfer                      4542.599304 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0101 2030-03 expenseInflation               -11.571542 cash  -                      c-
+  0102 2030-04 transfer                      4554.170846 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0103 2030-04 expenseInflation               -11.601019 cash  -                      c-
+  0104 2030-05 transfer                      4565.771865 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0105 2030-05 expenseInflation               -11.630571 cash  -                      c-
+  0106 2030-06 transfer                      4577.402435 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0107 2030-06 expenseInflation               -11.660198 cash  -                      c-
+  0108 2030-07 transfer                      4589.062633 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0109 2030-07 expenseInflation               -11.689900 cash  -                      c-
+  0110 2030-08 transfer                      4600.752533 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0111 2030-08 expenseInflation               -11.719678 cash  -                      c-
+  0112 2030-09 transfer                      4612.472211 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0113 2030-09 expenseInflation               -11.749532 cash  -                      c-
+  0114 2030-10 transfer                      4624.221743 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0115 2030-10 expenseInflation               -11.779462 cash  -                      c-
+  0116 2030-11 transfer                      4636.001205 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0117 2030-11 expenseInflation               -11.809468 cash  -                      c-
+  0118 2030-12 transfer                      4647.810674 cash  -                      c1 {cadence=monthly from=Living to=Checking}
+  0119 2030-12 expenseInflation               -11.839551 cash  -                      c-
+
+[history] Living
+  value                        n=  60 first=    -4010.190000 last=    -4659.650000 min=    -4659.650000 max=    -4010.190000 sum=    -259616.160000 #576c9f3a
+  expense                      n=  60 first=    -4000.000000 last=    -4647.810000 min=    -4647.810000 max=    -4000.000000 sum=    -258956.510000 #7b04ace1
+  cashFlow                     n=  60 first=    -4000.000000 last=    -4647.810000 min=    -4647.810000 max=    -4000.000000 sum=    -258956.510000 #7b04ace1
+  cashFlowAccumulated          n=  60 first=    -4000.000000 last=  -258956.550000 min=  -258956.550000 max=    -4000.000000 sum=   -7700663.050000 #5cee1dca
+  livingExpense                n=  60 first=    -4000.000000 last=    -4647.810000 min=    -4647.810000 max=    -4000.000000 sum=    -258956.510000 #7b04ace1
+
+[asset] Part-time Work
+  instrument = workingIncome
+  start = 2026-01  finish = 2030-12
+  startCurrency = 4000.000000
+  finishCurrency = 4000.000000
+  startBasis = 0.000000
+  finishBasis = 0.000000
+  isClosed = no  isDepleted = no
+  closedDate = -  closedValue = -
+  events = 184  reconciled = 184
+
+[events] Part-time Work
+  0000 2026-01 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0001 2026-01 incomeTaxWithholding          -131.666667 cash  withheldIncomeTax      c12
+  0002 2026-01 transfer                     -3562.333333 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0003 2026-02 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0004 2026-02 incomeTaxWithholding          -131.666667 cash  withheldIncomeTax      c12
+  0005 2026-02 transfer                     -3562.333333 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0006 2026-03 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0007 2026-03 incomeTaxWithholding          -131.666667 cash  withheldIncomeTax      c12
+  0008 2026-03 transfer                     -3562.333333 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0009 2026-04 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0010 2026-04 incomeTaxWithholding          -131.666667 cash  withheldIncomeTax      c12
+  0011 2026-04 transfer                     -3562.333333 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0012 2026-05 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0013 2026-05 incomeTaxWithholding          -131.666667 cash  withheldIncomeTax      c12
+  0014 2026-05 transfer                     -3562.333333 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0015 2026-06 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0016 2026-06 incomeTaxWithholding          -131.666667 cash  withheldIncomeTax      c12
+  0017 2026-06 transfer                     -3562.333333 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0018 2026-07 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0019 2026-07 incomeTaxWithholding          -131.666667 cash  withheldIncomeTax      c12
+  0020 2026-07 transfer                     -3562.333333 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0021 2026-08 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0022 2026-08 incomeTaxWithholding          -131.666667 cash  withheldIncomeTax      c12
+  0023 2026-08 transfer                     -3562.333333 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0024 2026-09 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0025 2026-09 incomeTaxWithholding          -131.666667 cash  withheldIncomeTax      c12
+  0026 2026-09 transfer                     -3562.333333 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0027 2026-10 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0028 2026-10 incomeTaxWithholding          -131.666667 cash  withheldIncomeTax      c12
+  0029 2026-10 transfer                     -3562.333333 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0030 2026-11 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0031 2026-11 incomeTaxWithholding          -131.666667 cash  withheldIncomeTax      c12
+  0032 2026-11 transfer                     -3562.333333 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0033 2026-12 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0034 2026-12 incomeTaxWithholding          -131.666667 cash  withheldIncomeTax      c12
+  0035 2026-12 transfer                     -3562.333333 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0036 2026-12 incomeGrowth                     0.000000 cash  income                 c13
+  0037 2027-01 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0038 2027-01 incomeTaxWithholding          -123.348333 cash  withheldIncomeTax      c12
+  0039 2027-01 transfer                     -3570.651667 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0040 2027-02 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0041 2027-02 incomeTaxWithholding          -123.348333 cash  withheldIncomeTax      c12
+  0042 2027-02 transfer                     -3570.651667 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0043 2027-03 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0044 2027-03 incomeTaxWithholding          -123.348333 cash  withheldIncomeTax      c12
+  0045 2027-03 transfer                     -3570.651667 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0046 2027-04 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0047 2027-04 incomeTaxWithholding          -123.348333 cash  withheldIncomeTax      c12
+  0048 2027-04 transfer                     -3570.651667 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0049 2027-05 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0050 2027-05 incomeTaxWithholding          -123.348333 cash  withheldIncomeTax      c12
+  0051 2027-05 transfer                     -3570.651667 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0052 2027-06 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0053 2027-06 incomeTaxWithholding          -123.348333 cash  withheldIncomeTax      c12
+  0054 2027-06 transfer                     -3570.651667 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0055 2027-07 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0056 2027-07 incomeTaxWithholding          -123.348333 cash  withheldIncomeTax      c12
+  0057 2027-07 transfer                     -3570.651667 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0058 2027-08 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0059 2027-08 incomeTaxWithholding          -123.348333 cash  withheldIncomeTax      c12
+  0060 2027-08 transfer                     -3570.651667 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0061 2027-09 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0062 2027-09 incomeTaxWithholding          -123.348333 cash  withheldIncomeTax      c12
+  0063 2027-09 transfer                     -3570.651667 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0064 2027-10 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0065 2027-10 incomeTaxWithholding          -123.348333 cash  withheldIncomeTax      c12
+  0066 2027-10 transfer                     -3570.651667 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0067 2027-11 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0068 2027-11 incomeTaxWithholding          -123.348333 cash  withheldIncomeTax      c12
+  0069 2027-11 transfer                     -3570.651667 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0070 2027-12 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0071 2027-12 incomeTaxWithholding          -123.348333 cash  withheldIncomeTax      c12
+  0072 2027-12 transfer                     -3570.651667 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0073 2027-12 incomeGrowth                     0.000000 cash  income                 c14
+  0074 2028-01 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0075 2028-01 incomeTaxWithholding          -114.772132 cash  withheldIncomeTax      c12
+  0076 2028-01 transfer                     -3579.227868 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0077 2028-02 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0078 2028-02 incomeTaxWithholding          -114.772132 cash  withheldIncomeTax      c12
+  0079 2028-02 transfer                     -3579.227868 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0080 2028-03 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0081 2028-03 incomeTaxWithholding          -114.772132 cash  withheldIncomeTax      c12
+  0082 2028-03 transfer                     -3579.227868 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0083 2028-04 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0084 2028-04 incomeTaxWithholding          -114.772132 cash  withheldIncomeTax      c12
+  0085 2028-04 transfer                     -3579.227868 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0086 2028-05 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0087 2028-05 incomeTaxWithholding          -114.772132 cash  withheldIncomeTax      c12
+  0088 2028-05 transfer                     -3579.227868 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0089 2028-06 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0090 2028-06 incomeTaxWithholding          -114.772132 cash  withheldIncomeTax      c12
+  0091 2028-06 transfer                     -3579.227868 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0092 2028-07 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0093 2028-07 incomeTaxWithholding          -114.772132 cash  withheldIncomeTax      c12
+  0094 2028-07 transfer                     -3579.227868 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0095 2028-08 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0096 2028-08 incomeTaxWithholding          -114.772132 cash  withheldIncomeTax      c12
+  0097 2028-08 transfer                     -3579.227868 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0098 2028-09 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0099 2028-09 incomeTaxWithholding          -114.772132 cash  withheldIncomeTax      c12
+  0100 2028-09 transfer                     -3579.227868 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0101 2028-10 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0102 2028-10 incomeTaxWithholding          -114.772132 cash  withheldIncomeTax      c12
+  0103 2028-10 transfer                     -3579.227868 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0104 2028-11 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0105 2028-11 incomeTaxWithholding          -114.772132 cash  withheldIncomeTax      c12
+  0106 2028-11 transfer                     -3579.227868 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0107 2028-12 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0108 2028-12 incomeTaxWithholding          -114.772132 cash  withheldIncomeTax      c12
+  0109 2028-12 transfer                     -3579.227868 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0110 2028-12 incomeGrowth                     0.000000 cash  income                 c15
+  0111 2029-01 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0112 2029-01 incomeTaxWithholding          -105.930068 cash  withheldIncomeTax      c12
+  0113 2029-01 transfer                     -3588.069932 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0114 2029-02 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0115 2029-02 incomeTaxWithholding          -105.930068 cash  withheldIncomeTax      c12
+  0116 2029-02 transfer                     -3588.069932 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0117 2029-03 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0118 2029-03 incomeTaxWithholding          -105.930068 cash  withheldIncomeTax      c12
+  0119 2029-03 transfer                     -3588.069932 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0120 2029-04 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0121 2029-04 incomeTaxWithholding          -105.930068 cash  withheldIncomeTax      c12
+  0122 2029-04 transfer                     -3588.069932 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0123 2029-05 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0124 2029-05 incomeTaxWithholding          -105.930068 cash  withheldIncomeTax      c12
+  0125 2029-05 transfer                     -3588.069932 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0126 2029-06 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0127 2029-06 incomeTaxWithholding          -105.930068 cash  withheldIncomeTax      c12
+  0128 2029-06 transfer                     -3588.069932 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0129 2029-07 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0130 2029-07 incomeTaxWithholding          -105.930068 cash  withheldIncomeTax      c12
+  0131 2029-07 transfer                     -3588.069932 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0132 2029-08 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0133 2029-08 incomeTaxWithholding          -105.930068 cash  withheldIncomeTax      c12
+  0134 2029-08 transfer                     -3588.069932 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0135 2029-09 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0136 2029-09 incomeTaxWithholding          -105.930068 cash  withheldIncomeTax      c12
+  0137 2029-09 transfer                     -3588.069932 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0138 2029-10 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0139 2029-10 incomeTaxWithholding          -105.930068 cash  withheldIncomeTax      c12
+  0140 2029-10 transfer                     -3588.069932 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0141 2029-11 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0142 2029-11 incomeTaxWithholding          -105.930068 cash  withheldIncomeTax      c12
+  0143 2029-11 transfer                     -3588.069932 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0144 2029-12 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0145 2029-12 incomeTaxWithholding          -105.930068 cash  withheldIncomeTax      c12
+  0146 2029-12 transfer                     -3588.069932 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0147 2029-12 incomeGrowth                     0.000000 cash  income                 c16
+  0148 2030-01 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0149 2030-01 incomeTaxWithholding           -96.813900 cash  withheldIncomeTax      c12
+  0150 2030-01 transfer                     -3597.186100 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0151 2030-02 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0152 2030-02 incomeTaxWithholding           -96.813900 cash  withheldIncomeTax      c12
+  0153 2030-02 transfer                     -3597.186100 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0154 2030-03 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0155 2030-03 incomeTaxWithholding           -96.813900 cash  withheldIncomeTax      c12
+  0156 2030-03 transfer                     -3597.186100 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0157 2030-04 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0158 2030-04 incomeTaxWithholding           -96.813900 cash  withheldIncomeTax      c12
+  0159 2030-04 transfer                     -3597.186100 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0160 2030-05 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0161 2030-05 incomeTaxWithholding           -96.813900 cash  withheldIncomeTax      c12
+  0162 2030-05 transfer                     -3597.186100 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0163 2030-06 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0164 2030-06 incomeTaxWithholding           -96.813900 cash  withheldIncomeTax      c12
+  0165 2030-06 transfer                     -3597.186100 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0166 2030-07 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0167 2030-07 incomeTaxWithholding           -96.813900 cash  withheldIncomeTax      c12
+  0168 2030-07 transfer                     -3597.186100 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0169 2030-08 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0170 2030-08 incomeTaxWithholding           -96.813900 cash  withheldIncomeTax      c12
+  0171 2030-08 transfer                     -3597.186100 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0172 2030-09 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0173 2030-09 incomeTaxWithholding           -96.813900 cash  withheldIncomeTax      c12
+  0174 2030-09 transfer                     -3597.186100 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0175 2030-10 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0176 2030-10 incomeTaxWithholding           -96.813900 cash  withheldIncomeTax      c12
+  0177 2030-10 transfer                     -3597.186100 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0178 2030-11 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0179 2030-11 incomeTaxWithholding           -96.813900 cash  withheldIncomeTax      c12
+  0180 2030-11 transfer                     -3597.186100 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+  0181 2030-12 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
+  0182 2030-12 incomeTaxWithholding           -96.813900 cash  withheldIncomeTax      c12
+  0183 2030-12 transfer                     -3597.186100 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
+
+[history] Part-time Work
+  value                        n=  60 first=     4000.000000 last=     4000.000000 min=     4000.000000 max=     4000.000000 sum=     240000.000000 #527c82c5
+  ordinaryIncome               n=  60 first=     4000.000000 last=     4000.000000 min=     4000.000000 max=     4000.000000 sum=     240000.000000 #527c82c5
+  employedIncome               n=  60 first=     4000.000000 last=     4000.000000 min=     4000.000000 max=     4000.000000 sum=     240000.000000 #527c82c5
+  income                       n=  60 first=     4000.000000 last=     4000.000000 min=     4000.000000 max=     4000.000000 sum=     240000.000000 #527c82c5
+  withheldFicaTax              n=  60 first=     -306.000000 last=     -306.000000 min=     -306.000000 max=     -306.000000 sum=     -18360.000000 #2fb1bf45
+  withheldIncomeTax            n=  60 first=     -131.670000 last=      -96.810000 min=     -131.670000 max=      -96.810000 sum=      -6870.360000 #efff5579
+  incomeTax                    n=  60 first=     -437.670000 last=     -402.810000 min=     -437.670000 max=     -402.810000 sum=     -25230.360000 #2401363d
+  federalTaxes                 n=  60 first=     -437.670000 last=     -402.810000 min=     -437.670000 max=     -402.810000 sum=     -25230.360000 #2401363d
+  taxes                        n=  60 first=     -437.670000 last=     -402.810000 min=     -437.670000 max=     -402.810000 sum=     -25230.360000 #2401363d
+  netIncome                    n=  60 first=     3562.330000 last=     3597.190000 min=     3562.330000 max=     3597.190000 sum=     214769.640000 #0a9d1cdd
+  cashFlow                     n=  60 first=     3562.330000 last=     3597.190000 min=     3562.330000 max=     3597.190000 sum=     214769.640000 #0a9d1cdd
+  cashFlowAccumulated          n=  60 first=     3562.330000 last=   214769.630000 min=     3562.330000 max=   214769.630000 sum=    6537927.750000 #9ea4c5be
+  socialSecurityTax            n=  60 first=     -248.000000 last=     -248.000000 min=     -248.000000 max=     -248.000000 sum=     -14880.000000 #c37c134d
+  medicareTax                  n=  60 first=      -58.000000 last=      -58.000000 min=      -58.000000 max=      -58.000000 sum=      -3480.000000 #f6f4e4cd
+
+[packages]
+  0000 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2034.971866 expense=-4513.000000 medicareTax=-58.000000 incomeTax=-131.666667 longTermCapitalGains=205.200000 premiumTaxCredit=1887.000000 value=528674.115842
+  0001 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2041.172568 expense=-4523.189358 medicareTax=-58.000000 incomeTax=-131.666667 longTermCapitalGains=206.448927 premiumTaxCredit=1887.000000 value=529744.217073
+  0002 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2047.398532 expense=-4533.404671 medicareTax=-58.000000 incomeTax=-131.666667 longTermCapitalGains=207.692786 premiumTaxCredit=1887.000000 value=530810.302932
+  0003 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2053.649862 expense=-4543.646006 medicareTax=-58.000000 incomeTax=-131.666667 longTermCapitalGains=208.931599 premiumTaxCredit=1887.000000 value=531872.372698
+  0004 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2059.926660 expense=-4553.913429 medicareTax=-58.000000 incomeTax=-131.666667 longTermCapitalGains=210.165384 premiumTaxCredit=1887.000000 value=532930.425684
+  0005 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2066.229031 expense=-4564.207007 medicareTax=-58.000000 incomeTax=-131.666667 longTermCapitalGains=211.394164 premiumTaxCredit=1887.000000 value=533984.461242
+  0006 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2072.557078 expense=-4574.526807 medicareTax=-58.000000 incomeTax=-131.666667 longTermCapitalGains=212.617958 premiumTaxCredit=1887.000000 value=535034.478760
+  0007 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2078.910907 expense=-4584.872894 medicareTax=-58.000000 incomeTax=-131.666667 longTermCapitalGains=213.836786 premiumTaxCredit=1887.000000 value=536080.477664
+  0008 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2085.290622 expense=-4595.245336 medicareTax=-58.000000 incomeTax=-131.666667 longTermCapitalGains=215.050668 premiumTaxCredit=1887.000000 value=537122.457418
+  0009 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2091.696328 expense=-4605.644200 medicareTax=-58.000000 incomeTax=-131.666667 longTermCapitalGains=216.259625 premiumTaxCredit=1887.000000 value=538160.417526
+  0010 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2098.128132 expense=-4616.069554 medicareTax=-58.000000 incomeTax=-131.666667 longTermCapitalGains=217.463677 premiumTaxCredit=1887.000000 value=539194.357527
+  0011 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2104.586141 expense=-4626.521465 medicareTax=-58.000000 incomeTax=-131.666667 longTermCapitalGains=218.662843 premiumTaxCredit=1887.000000 value=540224.277001
+  0012 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2111.285573 expense=-4584.200000 medicareTax=-58.000000 incomeTax=-123.348333 longTermCapitalGains=197.228571 premiumTaxCredit=2014.200000 ptcReconciliation=660.000000 value=541897.109013
+  0013 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2118.012300 expense=-4594.705228 medicareTax=-58.000000 incomeTax=-123.348333 longTermCapitalGains=198.295602 premiumTaxCredit=2014.200000 value=542980.535765
+  0014 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2124.766433 expense=-4605.237216 medicareTax=-58.000000 incomeTax=-123.348333 longTermCapitalGains=199.358304 premiumTaxCredit=2014.200000 value=544060.157832
+  0015 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2131.548083 expense=-4615.796032 medicareTax=-58.000000 incomeTax=-123.348333 longTermCapitalGains=200.416693 premiumTaxCredit=2014.200000 value=545135.975836
+  0016 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2138.357362 expense=-4626.381746 medicareTax=-58.000000 incomeTax=-123.348333 longTermCapitalGains=201.470788 premiumTaxCredit=2014.200000 value=546207.990439
+  0017 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2145.194382 expense=-4636.994425 medicareTax=-58.000000 incomeTax=-123.348333 longTermCapitalGains=202.520606 premiumTaxCredit=2014.200000 value=547276.202351
+  0018 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2152.059258 expense=-4647.634138 medicareTax=-58.000000 incomeTax=-123.348333 longTermCapitalGains=203.566164 premiumTaxCredit=2014.200000 value=548340.612322
+  0019 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2158.952102 expense=-4658.300953 medicareTax=-58.000000 incomeTax=-123.348333 longTermCapitalGains=204.607479 premiumTaxCredit=2014.200000 value=549401.221150
+  0020 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2165.873028 expense=-4668.994941 medicareTax=-58.000000 incomeTax=-123.348333 longTermCapitalGains=205.644570 premiumTaxCredit=2014.200000 value=550458.029674
+  0021 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2172.822152 expense=-4679.716170 medicareTax=-58.000000 incomeTax=-123.348333 longTermCapitalGains=206.677452 premiumTaxCredit=2014.200000 value=551511.038782
+  0022 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2179.799586 expense=-4690.464710 medicareTax=-58.000000 incomeTax=-123.348333 longTermCapitalGains=207.706143 premiumTaxCredit=2014.200000 value=552560.249405
+  0023 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2186.805448 expense=-4701.240630 medicareTax=-58.000000 incomeTax=-123.348333 longTermCapitalGains=208.730660 premiumTaxCredit=2014.200000 value=553605.662519
+  0024 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2193.866773 expense=-4705.436200 medicareTax=-58.000000 incomeTax=-114.772132 longTermCapitalGains=206.739302 premiumTaxCredit=2097.514200 value=554585.783671
+  0025 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2200.956867 expense=-4716.267090 medicareTax=-58.000000 incomeTax=-114.772132 longTermCapitalGains=207.740931 premiumTaxCredit=2097.514200 value=555638.842837
+  0026 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2208.075847 expense=-4727.125569 medicareTax=-58.000000 incomeTax=-114.772132 longTermCapitalGains=208.738495 premiumTaxCredit=2097.514200 value=556688.134843
+  0027 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2215.223831 expense=-4738.011709 medicareTax=-58.000000 incomeTax=-114.772132 longTermCapitalGains=209.732011 premiumTaxCredit=2097.514200 value=557733.660962
+  0028 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2222.400936 expense=-4748.925580 medicareTax=-58.000000 incomeTax=-114.772132 longTermCapitalGains=210.721497 premiumTaxCredit=2097.514200 value=558775.422515
+  0029 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2229.607282 expense=-4759.867252 medicareTax=-58.000000 incomeTax=-114.772132 longTermCapitalGains=211.706967 premiumTaxCredit=2097.514200 value=559813.420869
+  0030 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2236.842987 expense=-4770.836796 medicareTax=-58.000000 incomeTax=-114.772132 longTermCapitalGains=212.688439 premiumTaxCredit=2097.514200 value=560847.657441
+  0031 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2244.108171 expense=-4781.834283 medicareTax=-58.000000 incomeTax=-114.772132 longTermCapitalGains=213.665928 premiumTaxCredit=2097.514200 value=561878.133696
+  0032 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2251.402955 expense=-4792.859785 medicareTax=-58.000000 incomeTax=-114.772132 longTermCapitalGains=214.639451 premiumTaxCredit=2097.514200 value=562904.851148
+  0033 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2258.727459 expense=-4803.913372 medicareTax=-58.000000 incomeTax=-114.772132 longTermCapitalGains=215.609024 premiumTaxCredit=2097.514200 value=563927.811359
+  0034 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2266.081803 expense=-4814.995116 medicareTax=-58.000000 incomeTax=-114.772132 longTermCapitalGains=216.574663 premiumTaxCredit=2097.514200 value=564947.015940
+  0035 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2273.466110 expense=-4826.105090 medicareTax=-58.000000 incomeTax=-114.772132 longTermCapitalGains=217.536384 premiumTaxCredit=2097.514200 value=565962.466555
+  0036 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2280.894393 expense=-4833.833722 medicareTax=-58.000000 incomeTax=-105.930068 longTermCapitalGains=216.851786 premiumTaxCredit=2180.008140 ptcReconciliation=-12.000000 value=566895.346212
+  0037 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2288.352940 expense=-4845.000369 medicareTax=-58.000000 incomeTax=-105.930068 longTermCapitalGains=217.798547 premiumTaxCredit=2180.008140 value=567915.573622
+  0038 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2295.841873 expense=-4856.195462 medicareTax=-58.000000 incomeTax=-105.930068 longTermCapitalGains=218.741467 premiumTaxCredit=2180.008140 value=568932.066355
+  0039 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2303.361318 expense=-4867.419072 medicareTax=-58.000000 incomeTax=-105.930068 longTermCapitalGains=219.680561 premiumTaxCredit=2180.008140 value=569944.826333
+  0040 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2310.911397 expense=-4878.671273 medicareTax=-58.000000 incomeTax=-105.930068 longTermCapitalGains=220.615844 premiumTaxCredit=2180.008140 value=570953.855526
+  0041 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2318.492237 expense=-4889.952137 medicareTax=-58.000000 incomeTax=-105.930068 longTermCapitalGains=221.547332 premiumTaxCredit=2180.008140 value=571959.155959
+  0042 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2326.103962 expense=-4901.261736 medicareTax=-58.000000 incomeTax=-105.930068 longTermCapitalGains=222.475041 premiumTaxCredit=2180.008140 value=572960.729707
+  0043 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2333.746698 expense=-4912.600146 medicareTax=-58.000000 incomeTax=-105.930068 longTermCapitalGains=223.398985 premiumTaxCredit=2180.008140 value=573958.578900
+  0044 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2341.420571 expense=-4923.967438 medicareTax=-58.000000 incomeTax=-105.930068 longTermCapitalGains=224.319181 premiumTaxCredit=2180.008140 value=574952.705717
+  0045 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2349.125709 expense=-4935.363686 medicareTax=-58.000000 incomeTax=-105.930068 longTermCapitalGains=225.235642 premiumTaxCredit=2180.008140 value=575943.112394
+  0046 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2353.666901 expense=-4946.788965 medicareTax=-58.000000 incomeTax=-105.930068 longTermCapitalGains=620.140331 premiumTaxCredit=2180.008140 value=576926.605880
+  0047 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2357.673775 expense=-4958.243347 medicareTax=-58.000000 incomeTax=-105.930068 longTermCapitalGains=691.070858 premiumTaxCredit=2180.008140 value=577902.622679
+  0048 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2361.121862 expense=-4976.521568 medicareTax=-58.000000 incomeTax=-96.813900 longTermCapitalGains=765.307810 premiumTaxCredit=2254.749393 ptcReconciliation=-132.000000 value=578659.360349
+  0049 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2365.074877 expense=-4988.034381 medicareTax=-58.000000 incomeTax=-96.813900 longTermCapitalGains=707.081438 premiumTaxCredit=2254.749393 value=579622.044805
+  0050 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2368.996973 expense=-4999.576521 medicareTax=-58.000000 incomeTax=-96.813900 longTermCapitalGains=715.746719 premiumTaxCredit=2254.749393 value=580577.079814
+  0051 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2372.887904 expense=-5011.148063 medicareTax=-58.000000 incomeTax=-96.813900 longTermCapitalGains=724.461669 premiumTaxCredit=2254.749393 value=581524.404736
+  0052 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2376.747423 expense=-5022.749082 medicareTax=-58.000000 incomeTax=-96.813900 longTermCapitalGains=733.226266 premiumTaxCredit=2254.749393 value=582463.958606
+  0053 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2380.575281 expense=-5034.379653 medicareTax=-58.000000 incomeTax=-96.813900 longTermCapitalGains=742.040491 premiumTaxCredit=2254.749393 value=583395.680137
+  0054 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2384.371230 expense=-5046.039850 medicareTax=-58.000000 incomeTax=-96.813900 longTermCapitalGains=750.904325 premiumTaxCredit=2254.749393 value=584319.507717
+  0055 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2388.135018 expense=-5057.729750 medicareTax=-58.000000 incomeTax=-96.813900 longTermCapitalGains=759.817749 premiumTaxCredit=2254.749393 value=585235.379407
+  0056 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2391.866393 expense=-5069.449428 medicareTax=-58.000000 incomeTax=-96.813900 longTermCapitalGains=768.780746 premiumTaxCredit=2254.749393 value=586143.232939
+  0057 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2395.565100 expense=-5081.198961 medicareTax=-58.000000 incomeTax=-96.813900 longTermCapitalGains=777.793297 premiumTaxCredit=2254.749393 value=587043.005717
+  0058 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2399.230886 expense=-5092.978423 medicareTax=-58.000000 incomeTax=-96.813900 longTermCapitalGains=786.855385 premiumTaxCredit=2254.749393 value=587934.634812
+  0059 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2402.863493 expense=-5104.787891 medicareTax=-58.000000 incomeTax=-96.813900 longTermCapitalGains=795.966996 premiumTaxCredit=2254.749393 value=588818.056963
+
+[priceIndex]
+  [0000]         1.002547         1.005101         1.007662         1.010228         1.012802         1.015382
+  [0006]         1.017968         1.020561         1.023161         1.025767         1.028380         1.031000
+  [0012]         1.033626         1.036259         1.038899         1.041545         1.044199         1.046859
+  [0018]         1.049525         1.052199         1.054879         1.057566         1.060260         1.062961
+  [0024]         1.065669         1.068383         1.071105         1.073833         1.076569         1.079311
+  [0030]         1.082061         1.084817         1.087580         1.090351         1.093128         1.095913
+  [0036]         1.098704         1.101503         1.104309         1.107122         1.109942         1.112770
+  [0042]         1.115604         1.118446         1.121295         1.124152         1.127015         1.129886
+  [0048]         1.132764         1.135650         1.138543         1.141443         1.144351         1.147266
+  [0054]         1.150188         1.153118         1.156055         1.159000         1.161953         1.164913
+
+[taxYears]
+  2026 months=12 age=55 agi=50543.724416 niit=50543.724416 seniorDeduction=50543.724416 irmaa=50543.724416 iraDeduction=50543.724416 rothContribution=50543.724416 aca=50543.724416 nii=2543.724416 taxableSS=0.000000 ordinaryTaxable=15800.000000 capitalGains=2543.724416 fica=3672.000000 incomeTax=1580.000000 capitalGainsTax=0.000000 niit=0.000000 federalTax=5252.000000 settledTrueUp=0.000000 settledNIIT=0.000000 fplPercent=190 ptc=23304.000000 aptc=22644.000000 settledPTC=660.000000 onEstimate=no
+  2027 months=12 age=56 agi=50436.223032 niit=50436.223032 seniorDeduction=50436.223032 irmaa=50436.223032 iraDeduction=50436.223032 rothContribution=50436.223032 aca=50436.223032 nii=2436.223032 taxableSS=0.000000 ordinaryTaxable=14801.800000 capitalGains=2436.223032 fica=3672.000000 incomeTax=1480.180000 capitalGainsTax=0.000000 niit=0.000000 federalTax=5152.180000 settledTrueUp=0.000000 settledNIIT=0.000000 fplPercent=185 ptc=24170.400000 aptc=24170.400000 settledPTC=0.000000 onEstimate=no
+  2028 months=12 age=57 agi=50546.093092 niit=50546.093092 seniorDeduction=50546.093092 irmaa=50546.093092 iraDeduction=50546.093092 rothContribution=50546.093092 aca=50546.093092 nii=2546.093092 taxableSS=0.000000 ordinaryTaxable=13772.655800 capitalGains=2546.093092 fica=3672.000000 incomeTax=1377.265580 capitalGainsTax=0.000000 niit=0.000000 federalTax=5049.265580 settledTrueUp=0.000000 settledNIIT=0.000000 fplPercent=179 ptc=25158.170400 aptc=25170.170400 settledPTC=-12.000000 onEstimate=no
+  2029 months=12 age=58 agi=51521.875575 niit=51521.875575 seniorDeduction=51521.875575 irmaa=51521.875575 iraDeduction=51521.875575 rothContribution=51521.875575 aca=51521.875575 nii=3521.875575 taxableSS=0.000000 ordinaryTaxable=12711.608130 capitalGains=3521.875575 fica=3672.000000 incomeTax=1271.160813 capitalGainsTax=0.000000 niit=0.000000 federalTax=4943.160813 settledTrueUp=0.000000 settledNIIT=0.000000 fplPercent=177 ptc=26028.097682 aptc=26160.097682 settledPTC=-132.000000 onEstimate=no
+  2030 months=12 age=59 agi=57027.982890 niit=57027.982890 seniorDeduction=57027.982890 irmaa=57027.982890 iraDeduction=57027.982890 rothContribution=57027.982890 aca=57027.982890 nii=9027.982890 taxableSS=0.000000 ordinaryTaxable=11617.667982 capitalGains=9027.982890 fica=3672.000000 incomeTax=1161.766798 capitalGainsTax=0.000000 niit=0.000000 federalTax=4833.766798 settledTrueUp=0.000000 settledNIIT=0.000000 fplPercent=190 ptc=26252.992711 aptc=27056.992711 settledPTC=-804.000000 onEstimate=no
+
+[sanity]
+  (no findings)
+
+[traces]
+  scopes = 1825
+  unattributedEvents = 0
+  1x 2027 annual pass
+  1x 2027 tax true-up
+  1x 2028 annual pass
+  1x 2028 tax true-up
+  1x 2029 annual pass
+  1x 2029 tax true-up
+  1x 2030 annual pass
+  1x 2030 tax true-up
+  1x 2031 annual pass
+  1x 2031 tax true-up
+  4x Annual growth: Family Plan
+  4x Annual growth: Part-time Work
+  7x April 2026
+  7x April 2027
+  7x April 2028
+  7x April 2029
+  7x April 2030
+  7x August 2026
+  7x August 2027
+  7x August 2028
+  7x August 2029
+  7x August 2030
+  7x December 2026
+  7x December 2027
+  7x December 2028
+  7x December 2029
+  7x December 2030
+  7x February 2026
+  7x February 2027
+  7x February 2028
+  7x February 2029
+  7x February 2030
+  7x January 2026
+  7x January 2027
+  7x January 2028
+  7x January 2029
+  7x January 2030
+  7x July 2026
+  7x July 2027
+  7x July 2028
+  7x July 2029
+  7x July 2030
+  7x June 2026
+  7x June 2027
+  7x June 2028
+  7x June 2029
+  7x June 2030
+  7x March 2026
+  7x March 2027
+  7x March 2028
+  7x March 2029
+  7x March 2030
+  7x May 2026
+  7x May 2027
+  7x May 2028
+  7x May 2029
+  7x May 2030
+  7x November 2026
+  7x November 2027
+  7x November 2028
+  7x November 2029
+  7x November 2030
+  7x October 2026
+  7x October 2027
+  7x October 2028
+  7x October 2029
+  7x October 2030
+  60x Pay Brokerage
+  60x Pay Checking
+  60x Pay Family Plan
+  60x Pay Living
+  60x Pay Part-time Work
+  60x Payroll: Brokerage
+  60x Payroll: Checking
+  60x Payroll: Family Plan
+  60x Payroll: Living
+  60x Payroll: Part-time Work
+  4x Premium tax credit reconciliation
+  60x Required distribution from Brokerage
+  60x Required distribution from Checking
+  60x Required distribution from Family Plan
+  60x Required distribution from Living
+  60x Required distribution from Part-time Work
+  7x September 2026
+  7x September 2027
+  7x September 2028
+  7x September 2029
+  7x September 2030
+  2x Settle from Brokerage
+  1x Settle from Checking
+  60x Transfer Family Plan → Brokerage
+  60x Transfer Living → Checking
+  60x Transfer Part-time Work → Checking
+  60x Withholding: Brokerage
+  60x Withholding: Checking
+  60x Withholding: Family Plan
+  60x Withholding: Living
+  60x Withholding: Part-time Work
+
+[traceLegend]
+  c0 = Pay Family Plan > Transfer Family Plan → Brokerage
+  c1 = Pay Living > Transfer Living → Checking
+  c2 = 2030 annual pass > Premium tax credit reconciliation > Settle from Brokerage
+  c3 = 2031 annual pass > Premium tax credit reconciliation > Settle from Brokerage
+  c4 = Transfer Part-time Work → Checking
+  c5 = 2027 annual pass > Premium tax credit reconciliation
+  c6 = 2029 annual pass > Premium tax credit reconciliation > Settle from Checking
+  c7 = 2027 annual pass > Annual growth: Family Plan
+  c8 = 2028 annual pass > Annual growth: Family Plan
+  c9 = 2029 annual pass > Annual growth: Family Plan
+  c10 = 2030 annual pass > Annual growth: Family Plan
+  c11 = Payroll: Part-time Work
+  c12 = Withholding: Part-time Work
+  c13 = 2027 annual pass > Annual growth: Part-time Work
+  c14 = 2028 annual pass > Annual growth: Part-time Work
+  c15 = 2029 annual pass > Annual growth: Part-time Work
+  c16 = 2030 annual pass > Annual growth: Part-time Work
+

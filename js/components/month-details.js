@@ -207,7 +207,7 @@ export class MonthDetails extends LitElement {
         return html`
             <section class="md-taxyear" aria-label="Tax year ${y.year}">
                 <div class="md-eyebrow">Tax year ${y.year}</div>
-                <div class="md-tax-cells">
+                <div class="md-tax-cells ${t.fplPercent != null ? 'md-has-credit' : ''}">
                     <div class="md-cell md-strong">
                         <div class="md-label">Federal taxes owed</div>
                         <div class="md-val">${formatCurrency(t.federalTax)}</div>
@@ -225,6 +225,13 @@ export class MonthDetails extends LitElement {
                         <div class="md-sub">of ${formatCurrency(y.totalIncome)}, withdrawals included</div>
                     </div>
                     ${cell('Effective rate on AGI', pct(y.effectiveRateOnAGI), '', false)}
+                    ${t.fplPercent != null ? html`
+                    <div class="md-cell" title="IRC §36B: advanced during the year, settled on the return">
+                        <div class="md-label">Premium tax credit</div>
+                        <div class="md-val">${formatCurrency(t.ptc)}</div>
+                        <div class="md-sub">${formatCurrency(t.aptc)} advanced</div>
+                        <div class="md-sub">${t.ptcOnEstimate ? 'Estimate' : 'ACA MAGI'} ${t.fplPercent}% of the poverty line</div>
+                    </div>` : nothing}
                 </div>
             </section>`;
     }

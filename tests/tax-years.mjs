@@ -158,9 +158,12 @@ for (const fixture of SNAPSHOT_FIXTURES) {
 
   // What the annual pass for a year could not collect: its unfunded amounts,
   // stamped December of that year like the rest of the pass.
+  // The premium tax credit settles on the same return, but it is not part of
+  // what the year's income owed, so a repayment nothing could pay is left out.
   const unpaidSettlement = (year) => p.modelAssets.flatMap((a) => a.events)
     .filter((e) => e.type === EventType.UNFUNDED && e.dateInt.year === year && e.dateInt.month === 12
-      && chainFor(e.traceId, p.traceScopes).some((s) => s.kind === TraceKind.TAX_TRUE_UP))
+      && chainFor(e.traceId, p.traceScopes).some((s) => s.kind === TraceKind.TAX_TRUE_UP)
+      && !/premium tax credit/i.test(e.data?.cause ?? ''))
     .reduce((t, e) => t + Math.abs(e.amount.amount), 0);
 
   await check(`${fixture.name}: each year owed what it withheld plus what January settled`, () => {

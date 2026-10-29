@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.3.34; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.3.35; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -30697,6 +30697,7 @@ var Instrument = Object.freeze({
   CASH: "cash",
   DEBT: "debt",
   MONTHLY_EXPENSE: "monthlyExpense",
+  HEALTH_INSURANCE: "healthInsurance",
   PENSION: "pension"
 });
 var InstrumentMeta = /* @__PURE__ */ new Map([
@@ -30718,7 +30719,8 @@ var InstrumentMeta = /* @__PURE__ */ new Map([
   [Instrument.MORTGAGE, { emoji: "\u{1F3E1}\u{1F4B8}", assetEmoji: "\u{1F511}", label: "Mortgage", sortOrder: 12 }],
   [Instrument.DEBT, { emoji: "\u{1F4B3}\u{1F4B8}", assetEmoji: "\u{1F4B3}", label: "Debt", sortOrder: 13 }],
   // ── Expenses ──
-  [Instrument.MONTHLY_EXPENSE, { emoji: "\u{1F4B8}\u{1F4B8}", assetEmoji: "\u{1F4CB}", label: "Monthly Expense", sortOrder: 14 }]
+  [Instrument.MONTHLY_EXPENSE, { emoji: "\u{1F4B8}\u{1F4B8}", assetEmoji: "\u{1F4CB}", label: "Monthly Expense", sortOrder: 14 }],
+  [Instrument.HEALTH_INSURANCE, { emoji: "\u{1FA7A}\u{1F4B8}", assetEmoji: "\u{1FA7A}", label: "ACA Health Insurance", sortOrder: 15 }]
 ]);
 var MONTHLY_INCOME = /* @__PURE__ */ new Set([
   Instrument.WORKING_INCOME,
@@ -30726,7 +30728,8 @@ var MONTHLY_INCOME = /* @__PURE__ */ new Set([
   Instrument.PENSION
 ]);
 var MONTHLY_EXPENSE = /* @__PURE__ */ new Set([
-  Instrument.MONTHLY_EXPENSE
+  Instrument.MONTHLY_EXPENSE,
+  Instrument.HEALTH_INSURANCE
 ]);
 var MORTGAGE = /* @__PURE__ */ new Set([
   Instrument.MORTGAGE
@@ -30810,6 +30813,7 @@ var InstrumentType = Object.freeze({
   isRetirementIncome: (v) => v === Instrument.RETIREMENT_INCOME || v === Instrument.PENSION,
   isPension: (v) => v === Instrument.PENSION,
   isMonthlyExpense: (v) => MONTHLY_EXPENSE.has(v),
+  isHealthInsurance: (v) => v === Instrument.HEALTH_INSURANCE,
   isIRA: (v) => v === Instrument.IRA,
   isRothIRA: (v) => v === Instrument.ROTH_IRA,
   is401K: (v) => v === Instrument.FOUR_01K,
@@ -30858,6 +30862,7 @@ var Metric = Object.freeze({
   WITHHELD_INCOME_TAX: "withheldIncomeTax",
   ESTIMATED_INCOME_TAX: "estimatedIncomeTax",
   NIIT: "niit",
+  PTC_RECONCILIATION: "ptcReconciliation",
   ESTIMATED_TAX: "estimatedTax",
   // reserved: future self-employment enhancement
   INCOME_TAX: "incomeTax",
@@ -30897,6 +30902,8 @@ var Metric = Object.freeze({
   SHORT_TERM_CAPITAL_GAIN_TAX: "shortTermCapitalGainTax",
   LONG_TERM_CAPITAL_GAIN_TAX: "longTermCapitalGainTax",
   LIVING_EXPENSE: "livingExpense",
+  HEALTH_PREMIUM: "healthPremium",
+  PREMIUM_TAX_CREDIT: "premiumTaxCredit",
   INTEREST_EXPENSE: "interestExpense",
   MAINTENANCE: "maintenance",
   INSURANCE: "insurance",
@@ -30919,6 +30926,7 @@ var MetricLabel = Object.freeze({
   [Metric.WITHHELD_INCOME_TAX]: "Withheld Income Tax",
   [Metric.ESTIMATED_INCOME_TAX]: "Estimated Income Tax",
   [Metric.NIIT]: "Net Investment Income Tax",
+  [Metric.PTC_RECONCILIATION]: "Premium Tax Credit Reconciliation",
   [Metric.ESTIMATED_TAX]: "Estimated Tax",
   [Metric.INCOME_TAX]: "Income Tax",
   [Metric.FEDERAL_TAXES]: "Federal Taxes",
@@ -30954,6 +30962,8 @@ var MetricLabel = Object.freeze({
   [Metric.LONG_TERM_CAPITAL_GAIN_TAX]: "Long Term Capital Gain Tax",
   [Metric.PROPERTY_TAX]: "Property Tax",
   [Metric.LIVING_EXPENSE]: "Living Expense",
+  [Metric.HEALTH_PREMIUM]: "Health Insurance Premium",
+  [Metric.PREMIUM_TAX_CREDIT]: "Premium Tax Credit (advance)",
   [Metric.INTEREST_EXPENSE]: "Interest Expense",
   [Metric.MAINTENANCE]: "Maintenance",
   [Metric.INSURANCE]: "Insurance",
@@ -31007,10 +31017,18 @@ var MetricRollups = {
   // levy on a separate base, and rolling it through income tax would
   // make the income-tax line disagree with what the brackets produced.
   [Metric.NIIT]: [Metric.FEDERAL_TAXES],
+  // The premium tax credit settled on the return: a repayment of excess
+  // advance is a tax (Schedule 2), net credit a refundable credit (Schedule
+  // 3), so it carries either sign. Its own line for the same reason as NIIT.
+  [Metric.PTC_RECONCILIATION]: [Metric.FEDERAL_TAXES],
   // --- EXPENSE & DEBT ROLLUPS ---
   // MORTGAGE_PAYMENT and MORTGAGE_PRINCIPAL are informational only (like RMD) — no rollup.
   // Principal nets to zero via credit memos; payment is interest + principal for display.
   [Metric.LIVING_EXPENSE]: [Metric.EXPENSE],
+  // A marketplace premium, gross, and the advance credit the Treasury paid
+  // toward it (positive). EXPENSE carries their sum: what the household paid.
+  [Metric.HEALTH_PREMIUM]: [Metric.EXPENSE],
+  [Metric.PREMIUM_TAX_CREDIT]: [Metric.EXPENSE],
   [Metric.MORTGAGE_INTEREST]: [Metric.INTEREST_EXPENSE],
   [Metric.INTEREST_EXPENSE]: [Metric.EXPENSE],
   [Metric.MAINTENANCE]: [Metric.EXPENSE],
@@ -31268,6 +31286,13 @@ var EventType = Object.freeze({
   // IRC §121 primary-home exclusion
   NIIT_ASSESSED: "niitAssessed",
   // IRC §1411; data: { nii, magi, threshold }
+  // IRC §36B. The advance credit the Treasury paid toward a month's premium,
+  // on the health-insurance card; no household money moves. data:
+  // { estimate, percent, share }
+  PREMIUM_TAX_CREDIT: "premiumTaxCredit",
+  // The year's credit settled on the return, on the account that paid or
+  // received it. data: { direction: 'repayment' | 'credit', allowed, advanced, percent }
+  PTC_RECONCILIATION: "ptcReconciliation",
   // ── Movement ──
   TRANSFER: "transfer",
   // data: { from, to, cadence, system? }
@@ -31311,7 +31336,8 @@ var INFO_TYPES = /* @__PURE__ */ new Set([
   EventType.CAPITAL_GAIN_RECOGNIZED,
   EventType.CAPITAL_GAIN_EXCLUDED,
   EventType.UNFUNDED,
-  EventType.CONTRIBUTION_CAPPED
+  EventType.CONTRIBUTION_CAPPED,
+  EventType.PREMIUM_TAX_CREDIT
 ]);
 function kindOf(type) {
   return INFO_TYPES.has(type) ? EventKind.INFO : EventKind.CASH;
@@ -31379,6 +31405,10 @@ function renderNote(event) {
     // nothing.
     case EventType.NIIT_ASSESSED:
       return d.bound === "nii" ? "Net investment income tax (3.8% of net investment income)" : "Net investment income tax (3.8% of MAGI over the threshold)";
+    case EventType.PREMIUM_TAX_CREDIT:
+      return "Premium tax credit (advance)";
+    case EventType.PTC_RECONCILIATION:
+      return d.direction === "repayment" ? "Premium tax credit repaid (excess advance)" : "Premium tax credit (on the return)";
     case EventType.CAPITAL_GAIN_RECOGNIZED:
       return d.spillover ? "Capital gains (spillover)" : "Capital gains";
     case EventType.CAPITAL_GAIN_EXCLUDED:
@@ -31437,9 +31467,16 @@ var RetirementIncomeResult = class {
   }
 };
 var ExpenseResult = class {
-  constructor(expense = Currency.zero(), nextExpense = Currency.zero()) {
+  /**
+   * @param {Currency} expense           what the household paid, negative
+   * @param {Currency} nextExpense       next month's amount
+   * @param {Currency} premiumTaxCredit  of `expense`, the advance credit the
+   *                                     Treasury paid instead, positive
+   */
+  constructor(expense = Currency.zero(), nextExpense = Currency.zero(), premiumTaxCredit2 = Currency.zero()) {
     this.expense = expense instanceof Currency ? expense.copy() : new Currency(expense);
     this.nextExpense = nextExpense instanceof Currency ? nextExpense.copy() : new Currency(nextExpense);
+    this.premiumTaxCredit = premiumTaxCredit2 instanceof Currency ? premiumTaxCredit2.copy() : new Currency(premiumTaxCredit2);
   }
 };
 var InterestResult = class {
@@ -31547,6 +31584,26 @@ var ExpenseBehavior = Object.freeze({
     return new ExpenseResult(expense, asset.finishCurrency.copy());
   }
 });
+var HealthInsuranceBehavior = Object.freeze({
+  relevantMetrics() {
+    return [...COMMON_METRICS, Metric.HEALTH_PREMIUM, Metric.PREMIUM_TAX_CREDIT, Metric.EXPENSE, Metric.GROWTH];
+  },
+  applyMonthly(asset) {
+    asset.ensureNegativeStart();
+    const premium = asset.finishCurrency.copy();
+    asset.addToMetric(Metric.HEALTH_PREMIUM, premium);
+    const credit = asset.monthlyAdvanceCredit.copy();
+    if (credit.amount > 0) {
+      asset.addToMetric(Metric.PREMIUM_TAX_CREDIT, credit);
+      asset.recordEvent(
+        EventType.PREMIUM_TAX_CREDIT,
+        credit,
+        { metric: Metric.PREMIUM_TAX_CREDIT, data: asset.monthlyAdvanceData }
+      );
+    }
+    return new ExpenseResult(premium.plus(credit), asset.finishCurrency.copy(), credit);
+  }
+});
 var MortgageBehavior = Object.freeze({
   relevantMetrics() {
     return [
@@ -31603,6 +31660,9 @@ var CapitalBehavior = Object.freeze({
       // IRC §1411 books here; unregistered, the NIIT line would land on
       // NULL_METRIC and the tax would appear in no row by name.
       Metric.NIIT,
+      // The premium tax credit's reconciliation is paid from, or credited to,
+      // the backstop accounts; cash and brokerage are among them.
+      Metric.PTC_RECONCILIATION,
       Metric.INCOME_TAX,
       Metric.FEDERAL_TAXES,
       Metric.TAXES,
@@ -31711,8 +31771,10 @@ var IncomeAccountBehavior = Object.freeze({
       Metric.NET_INCOME,
       Metric.GROWTH,
       // Interest is net investment income, and a bank is the usual NIIT
-      // backstop and spillover payer — see the note in CapitalBehavior.
+      // backstop and spillover payer — see the note in CapitalBehavior. The
+      // same goes for the premium tax credit's reconciliation.
       Metric.NIIT,
+      Metric.PTC_RECONCILIATION,
       Metric.ESTIMATED_INCOME_TAX,
       Metric.INCOME_TAX,
       Metric.FEDERAL_TAXES,
@@ -31752,6 +31814,7 @@ var BEHAVIOR_MAP = /* @__PURE__ */ new Map([
   [Instrument.RETIREMENT_INCOME, RetirementIncomeBehavior],
   [Instrument.PENSION, PensionBehavior],
   [Instrument.MONTHLY_EXPENSE, ExpenseBehavior],
+  [Instrument.HEALTH_INSURANCE, HealthInsuranceBehavior],
   [Instrument.MORTGAGE, MortgageBehavior],
   [Instrument.TAXABLE_EQUITY, CapitalBehavior],
   [Instrument.IRA, CapitalBehavior],
@@ -32098,6 +32161,12 @@ function birthYearFor(env) {
 }
 function finishDateIntFor(env) {
   return DateInt.from(birthYearFor(env) + env.finishAge, 12);
+}
+var MEDICARE_AGE = 65;
+function marketplaceFinishDateIntFor(env) {
+  const beforeMedicare = DateInt.from(birthYearFor(env) + MEDICARE_AGE - 1, 12);
+  const planFinish = finishDateIntFor(env);
+  return beforeMedicare.toInt() < planFinish.toInt() ? beforeMedicare : planFinish;
 }
 function ageToDateIntFor(env, triggerAge) {
   return DateInt.from(birthYearFor(env) + triggerAge, 1);
@@ -32838,7 +32907,7 @@ var FundTransfer = class _FundTransfer {
     } else if (this.usePropertyTax) {
       base = this.fromModel.propertyTaxCurrency;
     } else {
-      base = this.fromModel.finishCurrency;
+      base = this.fromModel.amountDueCurrency ?? this.fromModel.finishCurrency;
     }
     let amount = new Currency(base.amount * pct2);
     return amount;
@@ -33286,6 +33355,7 @@ var TaxTable = class {
     this.four01KContributionLimitBelow50 = limits.four01KBelow50;
     this.four01KContributionLimit50AndOver = limits.four01K50AndOver;
     this.yearlySocialSecurityByOwner = /* @__PURE__ */ new Map([[TaxOwner.PRIMARY, new Currency()]]);
+    this.priceLevels = [1];
   }
   monthlyChron() {
   }
@@ -33321,6 +33391,7 @@ var TaxTable = class {
       throw new Error("TaxTable.inflateTaxes needs the run inflation rate; got " + JSON.stringify(inflationOverride));
     }
     const r = 1 + inflationOverride;
+    this.priceLevels.push(this.priceLevels[this.priceLevels.length - 1] * r);
     this.activeTaxTables.fica.maxSSEarnings *= r;
     this.inflateTaxRows(this.activeTaxTables.income.tables, r);
     this.inflateTaxRows(this.activeTaxTables.capitalGains.tables, r);
@@ -33692,6 +33763,8 @@ var FINANCIAL_FIELDS = [
   "longTermCapitalGainsTax",
   "niit",
   "taxTrueUp",
+  "premiumTaxCredit",
+  "ptcReconciliation",
   "value"
 ];
 var FinancialPackage = class _FinancialPackage {
@@ -33854,6 +33927,7 @@ var FinancialPackage = class _FinancialPackage {
     taxes.add(this.estimatedTaxes);
     taxes.add(this.niit);
     taxes.add(this.taxTrueUp);
+    taxes.add(this.ptcReconciliation);
     return taxes;
   }
   saltTaxes() {
@@ -33988,6 +34062,7 @@ var FinancialPackage = class _FinancialPackage {
     logger.log(category, () => "  estimatedTaxes:            " + this.estimatedTaxes.toString());
     logger.log(category, () => "  niit:                      " + this.niit.toString());
     logger.log(category, () => "  taxTrueUp:                 " + this.taxTrueUp.toString());
+    logger.log(category, () => "  ptcReconciliation:         " + this.ptcReconciliation.toString());
     logger.log(category, () => "State/Local taxes:           " + this.saltTaxes().toString());
     logger.log(category, () => "  propertyTaxes:             " + this.propertyTaxes.toString());
     logger.log(category, () => "contributions:               " + this.contributions().toString());
@@ -33997,6 +34072,7 @@ var FinancialPackage = class _FinancialPackage {
     logger.log(category, () => "  postTaxContribution:       " + this.postTaxContribution().toString());
     logger.log(category, () => "    rothContribution:        " + this.rothIRAContribution.toString());
     logger.log(category, () => "expenses:                    " + this.expense.toString());
+    logger.log(category, () => "  premiumTaxCredit (advance):" + this.premiumTaxCredit.toString());
     logger.log(category, () => "assetAppreciation:           " + this.assetAppreciation.toString());
     logger.log(category, () => "mortgagePrincipal:           " + this.mortgagePrincipal.toString());
     logger.log(category, () => "cashInFlow:                  " + this.cashInFlow().toString());
@@ -34086,8 +34162,14 @@ var FinancialPackage = class _FinancialPackage {
     this.socialSecurityIncome.add(retirementIncomeResult.socialSecurityIncome);
     this.pensionIncome.add(retirementIncomeResult.pensionIncome);
   }
+  /**
+   * `expense` is what the household paid. For a marketplace premium that is
+   * net of the advance credit, and `premiumTaxCredit` records the advance:
+   * an "of which" figure, like rothConversion, never added to expenses again.
+   */
   addExpenseResult(expenseResult) {
     this.expense.add(expenseResult.expense);
+    this.premiumTaxCredit.add(expenseResult.premiumTaxCredit);
   }
   addInterestResult(interestResult) {
     this.interestIncome.add(interestResult.income);
@@ -34508,7 +34590,7 @@ var ExpenseEngine = class {
     if (!InstrumentType.isMonthlyExpense(modelAsset.instrument)) {
       return;
     }
-    const modelAssetExpense = modelAsset.finishCurrency.copy();
+    const modelAssetExpense = modelAsset.amountDueCurrency.copy();
     let runningExpenseAmount = new Currency(0);
     if (modelAsset.fundTransfers?.length > 0) {
       for (const fundTransfer of modelAsset.fundTransfers) {
@@ -35626,6 +35708,356 @@ var RebalanceEngine = class {
   }
 };
 
+// js/premium-tax-credit.js
+var PTC_TABLES = Object.freeze({
+  // Rev. Proc. 2025-25; 2025 HHS poverty guidelines.
+  2026: Object.freeze({
+    povertyLine: Object.freeze({ first: 15650, additional: 5500 }),
+    bands: Object.freeze([
+      Object.freeze({ upTo: 1.33, initial: 0.021, final: 0.021 }),
+      Object.freeze({ upTo: 1.5, initial: 0.0314, final: 0.0419 }),
+      Object.freeze({ upTo: 2, initial: 0.0419, final: 0.066 }),
+      Object.freeze({ upTo: 2.5, initial: 0.066, final: 0.0844 }),
+      Object.freeze({ upTo: 3, initial: 0.0844, final: 0.0996 }),
+      Object.freeze({ upTo: 4, initial: 0.0996, final: 0.0996 })
+    ]),
+    cliff: 4
+  }),
+  // Rev. Proc. 2026-26; 2026 HHS poverty guidelines.
+  2027: Object.freeze({
+    povertyLine: Object.freeze({ first: 15960, additional: 5680 }),
+    bands: Object.freeze([
+      Object.freeze({ upTo: 1.33, initial: 0.0215, final: 0.0215 }),
+      Object.freeze({ upTo: 1.5, initial: 0.0323, final: 0.043 }),
+      Object.freeze({ upTo: 2, initial: 0.043, final: 0.0678 }),
+      Object.freeze({ upTo: 2.5, initial: 0.0678, final: 0.0866 }),
+      Object.freeze({ upTo: 3, initial: 0.0866, final: 0.1022 }),
+      Object.freeze({ upTo: 4, initial: 0.1022, final: 0.1022 })
+    ]),
+    cliff: 4
+  })
+});
+var PUBLISHED_YEARS = Object.keys(PTC_TABLES).map(Number).sort((a, b) => a - b);
+var FIRST_PUBLISHED_YEAR = PUBLISHED_YEARS[0];
+var LAST_PUBLISHED_YEAR = PUBLISHED_YEARS[PUBLISHED_YEARS.length - 1];
+function ptcTableFor(year, { priceLevel = 1, percentageGrowth = 1 } = {}) {
+  if (PTC_TABLES[year]) return { year, ...PTC_TABLES[year], indexed: false };
+  if (year < FIRST_PUBLISHED_YEAR) return { year, ...PTC_TABLES[FIRST_PUBLISHED_YEAR], indexed: false };
+  const last = PTC_TABLES[LAST_PUBLISHED_YEAR];
+  const growth = Math.pow(percentageGrowth, year - LAST_PUBLISHED_YEAR);
+  return {
+    year,
+    povertyLine: {
+      first: last.povertyLine.first * priceLevel,
+      additional: last.povertyLine.additional * priceLevel
+    },
+    bands: last.bands.map((b) => ({ upTo: b.upTo, initial: b.initial * growth, final: b.final * growth })),
+    cliff: last.cliff,
+    indexed: true
+  };
+}
+function povertyLine(table, householdSize) {
+  const size = Math.max(1, Math.floor(householdSize));
+  return table.povertyLine.first + table.povertyLine.additional * (size - 1);
+}
+function fplPercent(householdIncome, table, householdSize) {
+  return Math.round(100 * householdIncome / povertyLine(table, householdSize));
+}
+function applicableFigure(table, percent) {
+  if (percent > table.cliff * 100) return null;
+  const hundredths = (rate) => Math.round(rate * 1e4);
+  let lower = 0;
+  for (let i = 0; i < table.bands.length; i++) {
+    const band = table.bands[i];
+    const upper = Math.round(band.upTo * 100);
+    const isLast = i === table.bands.length - 1;
+    if (percent < upper || isLast && percent <= upper) {
+      const initial = hundredths(band.initial);
+      const final = hundredths(band.final);
+      const position = Math.max(0, percent - lower) / (upper - lower);
+      const figure = initial + (final - initial) * position;
+      return Math.floor(figure + 0.5) / 1e4;
+    }
+    lower = upper;
+  }
+  return null;
+}
+var PtcEligibility = Object.freeze({
+  ELIGIBLE: "eligible",
+  ADVANCE_EXCEPTION: "advanceException",
+  OVER_CLIFF: "overCliff",
+  UNDER_FLOOR: "underFloor"
+});
+function premiumTaxCredit({ table, householdSize, householdIncome, months, advanceIncome = null }) {
+  const line = povertyLine(table, householdSize);
+  const percent = fplPercent(householdIncome, table, householdSize);
+  const none = (eligibility2) => ({
+    percent,
+    eligibility: eligibility2,
+    applicable: null,
+    annualContribution: 0,
+    monthlyContribution: 0,
+    monthly: months.map(() => 0),
+    total: 0
+  });
+  if (householdIncome > table.cliff * line) return none(PtcEligibility.OVER_CLIFF);
+  let eligibility = PtcEligibility.ELIGIBLE;
+  if (householdIncome < line) {
+    const advanced = advanceIncome != null && advanceIncome >= line && advanceIncome <= table.cliff * line;
+    if (!advanced) return none(PtcEligibility.UNDER_FLOOR);
+    eligibility = PtcEligibility.ADVANCE_EXCEPTION;
+  }
+  const applicable = applicableFigure(table, Math.max(0, percent));
+  const annualContribution = Math.round(Math.max(0, householdIncome) * applicable);
+  const monthlyContribution = Math.round(annualContribution / 12);
+  const monthly = months.map(({ benchmark, premium }) => Math.min(premium, Math.max(0, benchmark - monthlyContribution)));
+  const total = monthly.reduce((sum, credit) => sum + credit, 0);
+  return { percent, eligibility, applicable, annualContribution, monthlyContribution, monthly, total };
+}
+
+// js/engines/premium-credit-engine.js
+var PremiumCreditEngine = class {
+  /**
+   * @param {ModelAsset[]} modelAssets
+   * @param {FinancialPackage} monthly
+   * @param {object} config  the run's SimConfig
+   * @param {object} plan    what the engine reads from its portfolio
+   * @param {object[]} plan.taxYears  the run's TaxYear records, appended as
+   *                                  each year settles
+   * @param {number} plan.firstYear   the plan's first calendar year
+   * @param {(year: number) => number} plan.monthsInPlanYear
+   */
+  constructor(modelAssets, monthly, config2, { taxYears, firstYear, monthsInPlanYear }) {
+    this.modelAssets = modelAssets;
+    this.monthly = monthly;
+    this.config = config2;
+    this.taxYears = taxYears;
+    this.firstYear = firstYear;
+    this.monthsInPlanYear = monthsInPlanYear;
+    this.years = /* @__PURE__ */ new Map();
+  }
+  // ── Day 30: the advance ──────────────────────────────────────────
+  /**
+   * Set each card's advance credit for the month, before the month's bills
+   * are paid, and record the month's coverage for the reconciliation.
+   */
+  applyMonthlyAdvance(currentDateInt) {
+    let any2 = false;
+    for (const modelAsset of this.modelAssets) {
+      if (!InstrumentType.isHealthInsurance(modelAsset.instrument)) continue;
+      modelAsset.monthlyAdvanceCredit = Currency.zero();
+      modelAsset.monthlyAdvanceData = null;
+      any2 = true;
+    }
+    if (!any2) return;
+    const cards = this.#coveringCards(currentDateInt);
+    if (cards.length === 0) return;
+    const record2 = this.#yearRecord(currentDateInt.year, cards);
+    const premiums = cards.map((card) => Math.abs(card.finishCurrency.amount));
+    const premium = premiums.reduce((sum, p) => sum + p, 0);
+    const benchmark = cards.reduce((sum, card) => sum + card.benchmarkCurrency.amount, 0);
+    record2.months.push({ premium, benchmark });
+    if (!record2.advance || !(premium > 0)) return;
+    const credit = Math.min(premium, Math.max(0, benchmark - record2.advance.monthlyContribution));
+    cards.forEach((card, i) => {
+      const share = Math.min(1, Math.max(0, card.advanceCreditShare ?? 1));
+      const amount = credit * (premiums[i] / premium) * share;
+      if (!(amount > 0)) return;
+      card.monthlyAdvanceCredit = new Currency(amount);
+      card.monthlyAdvanceData = {
+        estimate: record2.estimate,
+        percent: record2.advance.percent,
+        share
+      };
+      record2.advanced += amount;
+    });
+  }
+  /** Health-insurance cards with the credit on that cover this month. */
+  #coveringCards(currentDateInt) {
+    return this.modelAssets.filter((a) => InstrumentType.isHealthInsurance(a.instrument) && a.premiumTaxCreditEnabled !== false && !a.isClosed && a.inMonth(currentDateInt));
+  }
+  /** This coverage year's record, created with its table and estimate on its first month. */
+  #yearRecord(year, cards) {
+    const existing = this.years.get(year);
+    if (existing) return existing;
+    const table = this.#tableFor(year, cards);
+    const size = this.#householdSize(cards);
+    const estimate = this.#estimate(year, cards);
+    let advance = null;
+    if (estimate != null) {
+      const line = povertyLine(table, size);
+      if (estimate >= line && estimate <= table.cliff * line) {
+        const percent = fplPercent(estimate, table, size);
+        const applicable = applicableFigure(table, percent);
+        const monthlyContribution = Math.round(Math.round(estimate * applicable) / 12);
+        advance = { percent, monthlyContribution };
+      }
+    }
+    const record2 = { year, table, size, estimate, advance, months: [], advanced: 0 };
+    this.years.set(year, record2);
+    return record2;
+  }
+  /** See "The estimate" in the module header. */
+  #estimate(year, cards) {
+    const prior = this.taxYears.find((t) => t.year === year - 1);
+    if (prior && prior.months === 12 && this.years.get(year - 1)?.months.length === 12) {
+      return prior.magi[MagiPurpose.ACA];
+    }
+    const card = cards.find((c) => c.estimatedAcaIncome != null);
+    return card ? card.estimatedAcaIncome.amount : null;
+  }
+  /**
+   * The household's size for the poverty line: the largest a card names, or
+   * the tax household filing status implies.
+   */
+  #householdSize(cards) {
+    const named = cards.map((c) => c.householdSize).filter((n) => Number.isFinite(n) && n >= 1);
+    return named.length ? Math.max(...named) : this.config.taxTable.householdPersons;
+  }
+  /**
+   * The year's parameters. Past the last published year the poverty line
+   * follows the price level the run indexes the tax tables by, and the
+   * percentages move with the first card's premium growth over plan
+   * inflation (premium-tax-credit.js).
+   */
+  #tableFor(year, cards) {
+    if (year <= LAST_PUBLISHED_YEAR) return ptcTableFor(year);
+    const inflation = this.config.inflationRate;
+    const excess = cards[0].premiumExcessOverInflation ?? 0;
+    return ptcTableFor(year, {
+      priceLevel: this.#priceLevel(year) / this.#priceLevel(LAST_PUBLISHED_YEAR),
+      percentageGrowth: (1 + inflation + excess) / (1 + inflation)
+    });
+  }
+  /**
+   * The tax tables' price level in `year`, relative to the plan's first year.
+   * Outside the years the run has indexed, extended at plan inflation.
+   */
+  #priceLevel(year) {
+    const levels = this.config.taxTable.priceLevels ?? [1];
+    const k = year - this.firstYear;
+    const growth = 1 + this.config.inflationRate;
+    if (k < 0) return Math.pow(growth, k);
+    if (k < levels.length) return levels[k];
+    return levels[levels.length - 1] * Math.pow(growth, k - (levels.length - 1));
+  }
+  // ── Annual pass: the reconciliation ──────────────────────────────
+  /**
+   * Settle the year's credit. Runs from the annual pass, after NIIT.
+   *
+   * @param {number} settledYear
+   * @param {object} basis  taxableBasis() of the settled year's package
+   * @returns {{ptc: number, aptc: number, fplPercent: number|null,
+   *            eligibility: string, onEstimate: boolean}|null}
+   *          null when no card covered the year; `onEstimate` when the
+   *          plan's partial first year was settled against the estimate
+   */
+  reconcile(settledYear, basis) {
+    const record2 = this.years.get(settledYear);
+    if (!record2 || record2.months.length === 0) return null;
+    const partial2 = this.monthsInPlanYear(settledYear) < 12;
+    const income = partial2 ? record2.estimate : basis.magi[MagiPurpose.ACA].amount;
+    const result = income == null ? { total: 0, percent: null, eligibility: null } : premiumTaxCredit({
+      table: record2.table,
+      householdSize: record2.size,
+      householdIncome: income,
+      months: record2.months,
+      advanceIncome: record2.advance ? record2.estimate : null
+    });
+    const allowed = result.total;
+    const net = allowed - record2.advanced;
+    const figures = {
+      ptc: allowed,
+      aptc: record2.advanced,
+      fplPercent: result.percent,
+      eligibility: result.eligibility,
+      onEstimate: partial2
+    };
+    if (Math.abs(net) < 1) return figures;
+    const anchor = this.#unfundedAnchor();
+    withTrace(
+      TraceKind.TAX_TRUE_UP,
+      "Premium tax credit reconciliation",
+      anchor?.currentDateInt ?? null,
+      () => this.#bookReconciliation(net, {
+        allowed,
+        advanced: record2.advanced,
+        percent: result.percent
+      }, anchor)
+    );
+    return figures;
+  }
+  #bookReconciliation(net, data, anchor) {
+    if (net > 0) {
+      const owed = new Currency(net);
+      const target = FundTransfer.resolveDeposit(this.modelAssets);
+      if (!target) {
+        logger.log(
+          LogCategory.SANITY,
+          () => `Premium tax credit of ${owed.toString()} could not be credited \u2014 the plan has no everyday account at all`
+        );
+        return;
+      }
+      target.credit(owed, {
+        type: EventType.PTC_RECONCILIATION,
+        data: { direction: "credit", ...data }
+      });
+      target.addToMetric(Metric.PTC_RECONCILIATION, owed.copy());
+      this.monthly.ptcReconciliation.add(owed);
+      logger.log(
+        LogCategory.TAX,
+        () => `Premium tax credit: ${formatCurrency(data.allowed)} allowed, ${formatCurrency(data.advanced)} advanced; crediting ${target.displayName}.`
+      );
+      return;
+    }
+    const repayment = new Currency(-net);
+    const liquidAsset = FundTransfer.resolveFunding(this.modelAssets);
+    if (!liquidAsset) {
+      FundTransfer.reportUnfunded(
+        anchor,
+        repayment,
+        "premium tax credit repayment",
+        ShortfallOrigin.ONE_SIDED
+      );
+      return;
+    }
+    const oneSided = new FundTransferOneSided(null, repayment);
+    oneSided.toModel = liquidAsset;
+    const settled = FundTransfer.settleOneSided(
+      oneSided,
+      { type: EventType.PTC_RECONCILIATION, data: { direction: "repayment", ...data } },
+      this.modelAssets
+    );
+    liquidAsset.addToMetric(Metric.PTC_RECONCILIATION, settled.supplied.copy().flipSign());
+    this.monthly.recordTransfer(liquidAsset.instrument, settled.supplied, settled.realizedGain);
+    if (settled.spillover.amount > 0 && settled.spilloverInstrument) {
+      this.monthly.recordTransfer(settled.spilloverInstrument, settled.spillover, settled.spilloverGain);
+      const fallbackPaid = settled.paid.minus(settled.supplied);
+      const payer = FundTransfer.resolveFunding(this.modelAssets);
+      if (payer && fallbackPaid.amount > 0) {
+        payer.addToMetric(Metric.PTC_RECONCILIATION, fallbackPaid.copy().flipSign());
+      }
+    }
+    if (settled.paid.amount > 0) this.monthly.ptcReconciliation.add(settled.paid.copy().flipSign());
+    logger.log(
+      LogCategory.TAX,
+      () => `Premium tax credit: ${formatCurrency(data.allowed)} allowed, ${formatCurrency(data.advanced)} advanced; repaying ${repayment.toString()} from ${liquidAsset.displayName}.`
+    );
+  }
+  /**
+   * Where an unpayable repayment is reported: the largest open balance, the
+   * account the household would have to draw from (TaxEngine does the same).
+   */
+  #unfundedAnchor() {
+    let best = null;
+    for (const modelAsset of this.modelAssets) {
+      if (modelAsset.isClosed) continue;
+      if (!best || modelAsset.finishCurrency.amount > best.finishCurrency.amount) best = modelAsset;
+    }
+    return best ?? this.modelAssets[0] ?? null;
+  }
+};
+
 // js/portfolio.js
 var EVENT_RECONCILIATION = Object.freeze({
   [EventType.FICA_WITHHOLDING]: "fica",
@@ -35659,8 +36091,10 @@ var EVENT_RECONCILIATION = Object.freeze({
   // book the same dollars twice.
   [EventType.TAX_PROVISION]: "excluded",
   [EventType.NIIT_ASSESSED]: "oneSided",
+  [EventType.PTC_RECONCILIATION]: "oneSided",
   // Info-kind: no money moved, so the kind check keeps them out of every
   // total.
+  [EventType.PREMIUM_TAX_CREDIT]: "oneSided",
   [EventType.PROPERTY_TAX_ESCROW]: "oneSided",
   [EventType.MAINTENANCE]: "oneSided",
   [EventType.INSURANCE]: "oneSided",
@@ -35821,6 +36255,11 @@ var Portfolio = class _Portfolio {
     this.payroll = new PayrollEngine(this.modelAssets, this.monthly, this.yearly, this.activeUser, this.taxes, this.config);
     this.expenses = new ExpenseEngine(this.modelAssets, this.monthly, this.activeUser, this.config);
     this.rebalance = new RebalanceEngine(this.modelAssets, this.monthly, this.yearly, this.activeUser, this.config);
+    this.premiumCredit = new PremiumCreditEngine(this.modelAssets, this.monthly, this.config, {
+      taxYears: this.taxYears,
+      firstYear: this.firstDateInt?.year,
+      monthsInPlanYear: (year) => this.monthsInPlanYear(year)
+    });
   }
   /**
    * Apply any life events whose trigger falls in the current month. Called on
@@ -36042,7 +36481,7 @@ var Portfolio = class _Portfolio {
     const lowerGuardrail = initialRate * (1 - prosperityThreshold);
     if (currentRate > upperGuardrail) {
       for (const a of this.modelAssets) {
-        if (InstrumentType.isMonthlyExpense(a.instrument) && !a.isClosed) {
+        if (InstrumentType.isMonthlyExpense(a.instrument) && !InstrumentType.isHealthInsurance(a.instrument) && !a.isClosed) {
           a.finishCurrency.multiply(1 - adjustmentPct);
         }
       }
@@ -36054,7 +36493,7 @@ var Portfolio = class _Portfolio {
       });
     } else if (currentRate < lowerGuardrail) {
       for (const a of this.modelAssets) {
-        if (InstrumentType.isMonthlyExpense(a.instrument) && !a.isClosed) {
+        if (InstrumentType.isMonthlyExpense(a.instrument) && !InstrumentType.isHealthInsurance(a.instrument) && !a.isClosed) {
           a.finishCurrency.multiply(1 + adjustmentPct);
         }
       }
@@ -36171,6 +36610,7 @@ var Portfolio = class _Portfolio {
     }
   }
   applyLastDayOfMonth(currentDateInt) {
+    this.premiumCredit.applyMonthlyAdvance(currentDateInt);
     for (let modelAsset of this.modelAssets) {
       if (!modelAsset.isClosed) {
         this.expenses.applyExpenseTransfers(modelAsset, currentDateInt);
@@ -36279,7 +36719,7 @@ var Portfolio = class _Portfolio {
   #applyYearInScope(currentDateInt) {
     for (let modelAsset of this.modelAssets) {
       if (modelAsset.inMonth(currentDateInt)) {
-        if (InstrumentType.isMonthlyIncome(modelAsset.instrument))
+        if (InstrumentType.isMonthlyIncome(modelAsset.instrument) || InstrumentType.isHealthInsurance(modelAsset.instrument))
           withTrace(
             TraceKind.YEAR,
             `Annual growth: ${modelAsset.displayName}`,
@@ -36299,11 +36739,15 @@ var Portfolio = class _Portfolio {
       () => this.taxes.applyAnnualTaxTrueUp(this.monthsInPlanYear(settledYear))
     );
     const niit = this.taxes.applyAnnualNIIT(this.monthsInPlanYear(settledYear));
+    const ptcBefore = this.monthly.ptcReconciliation.amount;
+    const credit = this.premiumCredit.reconcile(settledYear, basis);
     this.#recordTaxYear(settledYear, basis, {
       liability,
       niit,
+      credit,
       settledTrueUp: this.monthly.taxTrueUp.amount - trueUpBefore,
-      settledNIIT: this.monthly.niit.amount - niitBefore
+      settledNIIT: this.monthly.niit.amount - niitBefore,
+      settledPTC: this.monthly.ptcReconciliation.amount - ptcBefore
     });
   }
   /**
@@ -36339,13 +36783,23 @@ var Portfolio = class _Portfolio {
    * @property {number} federalTax       the sum of the four above
    * @property {number} settledTrueUp    booked in January: + refund, − bill
    * @property {number} settledNIIT      booked in January: − paid
+   * @property {number} ptc              the premium tax credit the year allowed
+   * @property {number} aptc             the advance credit paid during it
+   * @property {?number} fplPercent      ACA MAGI as a whole % of the poverty
+   *                                     line; null when no card covered the year
+   * @property {number} ptcReconciliation booked in January: + credit owed,
+   *                                     − excess advance repaid
+   * @property {boolean} ptcOnEstimate   the plan's partial first year, settled
+   *                                     against the card's estimate instead
+   *                                     of a MAGI the plan only part-saw
    *
    * @param {number} year
    * @param {object} basis  taxableBasis() of the settled year's package
    * @param {{liability: {incomeTax: number, capitalGainsTax: number},
-   *          niit: number, settledTrueUp: number, settledNIIT: number}} settled
+   *          niit: number, credit: ?{ptc: number, aptc: number, fplPercent: ?number},
+   *          settledTrueUp: number, settledNIIT: number, settledPTC: number}} settled
    */
-  #recordTaxYear(year, basis, { liability, niit, settledTrueUp, settledNIIT }) {
+  #recordTaxYear(year, basis, { liability, niit, credit, settledTrueUp, settledNIIT, settledPTC }) {
     const magi = {};
     for (const purpose of Object.values(MagiPurpose)) magi[purpose] = basis.magi[purpose].amount;
     const fica = -this.yearly.fica().amount;
@@ -36365,7 +36819,12 @@ var Portfolio = class _Portfolio {
       niit,
       federalTax: fica + liability.incomeTax + liability.capitalGainsTax + niit,
       settledTrueUp,
-      settledNIIT
+      settledNIIT,
+      ptc: credit?.ptc ?? 0,
+      aptc: credit?.aptc ?? 0,
+      fplPercent: credit?.fplPercent ?? null,
+      ptcReconciliation: settledPTC ?? 0,
+      ptcOnEstimate: credit?.onEstimate ?? false
     }));
   }
   modelMetricsToDisplayData(monthsSpan, modelAsset) {
@@ -36848,7 +37307,7 @@ function applyBacktestRates(portfolio, calendarYear) {
       asset.annualReturnRate.rate = treasury / 100;
     }
     if (cpi !== void 0 && InstrumentType.isMonthlyExpense(asset.instrument)) {
-      asset.annualReturnRate.rate = cpi / 100;
+      asset.annualReturnRate.rate = cpi / 100 + (asset.premiumExcessOverInflation ?? 0);
     }
     if (wage !== void 0 && InstrumentType.isMonthlyIncome(asset.instrument)) {
       asset.annualReturnRate.rate = wage / 100;
@@ -37024,7 +37483,12 @@ var ModelAsset = class _ModelAsset {
     annualMaintenanceRate = new ARR(0),
     annualInsuranceCost = Currency.zero(),
     fundingConfig = null,
-    oneTimeEvents = []
+    oneTimeEvents = [],
+    benchmarkPremium = Currency.zero(),
+    householdSize = null,
+    advanceCreditShare = 1,
+    estimatedAcaIncome = null,
+    premiumTaxCreditEnabled = true
   }) {
     this.instrument = instrument;
     this.displayName = displayName;
@@ -37046,6 +37510,11 @@ var ModelAsset = class _ModelAsset {
     this.annualInsuranceCost = annualInsuranceCost;
     this.fundingConfig = fundingConfig;
     this.oneTimeEvents = oneTimeEvents;
+    this.benchmarkPremium = benchmarkPremium;
+    this.householdSize = householdSize;
+    this.advanceCreditShare = advanceCreditShare;
+    this.estimatedAcaIncome = estimatedAcaIncome;
+    this.premiumTaxCreditEnabled = premiumTaxCreditEnabled;
     this.behavior = getBehavior(instrument);
     this.colorId = 0;
     this.beforeStartDate = false;
@@ -37089,7 +37558,8 @@ var ModelAsset = class _ModelAsset {
     return this.env;
   }
   get effectiveFinishDateInt() {
-    return this.finishDateInt ?? finishDateIntFor(this.#boundEnv);
+    if (this.finishDateInt) return this.finishDateInt;
+    return InstrumentType.isHealthInsurance(this.instrument) ? marketplaceFinishDateIntFor(this.#boundEnv) : finishDateIntFor(this.#boundEnv);
   }
   /** For expense instruments, fall back to plan inflation when no rate is set. */
   get effectiveAnnualReturnRate() {
@@ -37129,7 +37599,12 @@ var ModelAsset = class _ModelAsset {
       annualMaintenanceRate: new ARR(obj.annualMaintenanceRate?.annualReturnRate ?? obj.annualMaintenanceRate?.rate ?? 0),
       annualInsuranceCost: new Currency(obj.annualInsuranceCost?.amount ?? 0),
       fundingConfig: obj.fundingConfig ?? null,
-      oneTimeEvents: (obj.oneTimeEvents ?? obj.windfalls ?? []).map(OneTimeEvent.fromJSON)
+      oneTimeEvents: (obj.oneTimeEvents ?? obj.windfalls ?? []).map(OneTimeEvent.fromJSON),
+      benchmarkPremium: new Currency(obj.benchmarkPremium?.amount ?? 0),
+      householdSize: Number.isFinite(obj.householdSize) && obj.householdSize >= 1 ? obj.householdSize : null,
+      advanceCreditShare: Number.isFinite(obj.advanceCreditShare) ? obj.advanceCreditShare : 1,
+      estimatedAcaIncome: Number.isFinite(obj.estimatedAcaIncome?.amount) ? new Currency(obj.estimatedAcaIncome.amount) : null,
+      premiumTaxCreditEnabled: obj.premiumTaxCreditEnabled ?? true
     });
   }
   static cloneArray(sourceAssets) {
@@ -37168,7 +37643,12 @@ var ModelAsset = class _ModelAsset {
       isPrimaryHome: vals.isPrimaryHome?.type === "checkbox" ? vals.isPrimaryHome.checked : vals.isPrimaryHome?.value !== "false",
       annualTaxRate: vals.annualTaxRate ? ARR.parse(vals.annualTaxRate.value) : new ARR(0),
       annualMaintenanceRate: vals.annualMaintenanceRate ? ARR.parse(vals.annualMaintenanceRate.value) : new ARR(0),
-      annualInsuranceCost: vals.annualInsuranceCost ? Currency.parse(vals.annualInsuranceCost.value) : Currency.zero()
+      annualInsuranceCost: vals.annualInsuranceCost ? Currency.parse(vals.annualInsuranceCost.value) : Currency.zero(),
+      benchmarkPremium: vals.benchmarkPremium?.value ? Currency.parse(vals.benchmarkPremium.value) : Currency.zero(),
+      householdSize: parseInt(vals.householdSize?.value, 10) >= 1 ? parseInt(vals.householdSize.value, 10) : null,
+      advanceCreditShare: ratioOrDefault(vals.advanceCreditShare?.value, 1),
+      estimatedAcaIncome: vals.estimatedAcaIncome?.value ? Currency.parse(vals.estimatedAcaIncome.value) : null,
+      premiumTaxCreditEnabled: vals.premiumTaxCreditEnabled?.type === "checkbox" ? vals.premiumTaxCreditEnabled.checked : vals.premiumTaxCreditEnabled?.value !== "false"
     });
     if (colorElement) {
       const hex3 = rgb2hex(colorElement.style.backgroundColor);
@@ -37623,6 +38103,15 @@ var ModelAsset = class _ModelAsset {
   get monthlyNIIT() {
     return this.#metrics.get(Metric.NIIT).history;
   }
+  get monthlyHealthPremiums() {
+    return this.#metrics.get(Metric.HEALTH_PREMIUM).history;
+  }
+  get monthlyPremiumTaxCredits() {
+    return this.#metrics.get(Metric.PREMIUM_TAX_CREDIT).history;
+  }
+  get monthlyPTCReconciliations() {
+    return this.#metrics.get(Metric.PTC_RECONCILIATION).history;
+  }
   get monthlyCredits() {
     return this.#metrics.get(Metric.CREDIT).history;
   }
@@ -37656,6 +38145,9 @@ var ModelAsset = class _ModelAsset {
     this.monthlyCreditBalance = Currency.zero();
     this.monthlyShelteredDistribution = Currency.zero();
     this.monthlyTaxEscrow = Currency.zero();
+    this.monthlyAdvanceCredit = Currency.zero();
+    this.monthlyAdvanceData = null;
+    this.premiumExcessOverInflation = InstrumentType.isHealthInsurance(this.instrument) ? this.effectiveAnnualReturnRate.rate - this.#boundEnv.inflationRate : 0;
     this.#metrics.initializeAll();
     this.monthlyValueChange = Currency.zero();
     this.firstDayOfMonthValue = Currency.zero();
@@ -37733,6 +38225,13 @@ var ModelAsset = class _ModelAsset {
     return this.behavior.applyMonthly(this);
   }
   applyYearly() {
+    if (InstrumentType.isHealthInsurance(this.instrument)) {
+      const growth = new Currency(this.finishCurrency.amount * this.effectiveAnnualReturnRate.rate);
+      this.finishCurrency.add(growth);
+      this.monthlyValueChange.add(growth);
+      if (growth.amount !== 0) this.recordEvent(EventType.EXPENSE_INFLATION, growth);
+      return null;
+    }
     if (InstrumentType.isMonthlyIncome(this.instrument)) {
       const growth = new Currency(this.finishCurrency.amount * this.annualReturnRate.rate);
       this.growthCurrency.add(growth);
@@ -37900,6 +38399,28 @@ var ModelAsset = class _ModelAsset {
   isNegative() {
     return this.cashFlowAccumulatedCurrency.amount < 0;
   }
+  /**
+   * What this month's bill asks the paying accounts for: the balance, except
+   * on a health-insurance card, where the advance premium tax credit paid part
+   * of the premium. Negative for an expense, like the balance.
+   */
+  get amountDueCurrency() {
+    if (!InstrumentType.isHealthInsurance(this.instrument)) return this.finishCurrency;
+    return this.finishCurrency.plus(this.monthlyAdvanceCredit ?? Currency.zero());
+  }
+  /**
+   * A health-insurance card's monthly benchmark (SLCSP) premium this plan year,
+   * positive. It grows with the premium, at the card's one rate, so it is the
+   * entered benchmark scaled by how far the premium has grown since the start.
+   * A card with no benchmark entered uses its own premium.
+   */
+  get benchmarkCurrency() {
+    const premium = Math.abs(this.finishCurrency.amount);
+    const start = Math.abs(this.startCurrency.amount);
+    const entered = this.benchmarkPremium?.amount ?? 0;
+    if (!(entered > 0) || !(start > 0)) return new Currency(premium);
+    return new Currency(entered * premium / start);
+  }
   getFinishCurrencyForRollup() {
     const T = InstrumentType;
     const i = this.instrument;
@@ -37981,7 +38502,12 @@ var ModelAsset = class _ModelAsset {
       fundTransfers: [],
       isSelfEmployed: this.isSelfEmployed,
       isPrimaryHome: this.isPrimaryHome,
-      annualTaxRate: this.annualTaxRate
+      annualTaxRate: this.annualTaxRate,
+      benchmarkPremium: this.benchmarkPremium,
+      householdSize: this.householdSize,
+      advanceCreditShare: this.advanceCreditShare,
+      estimatedAcaIncome: this.estimatedAcaIncome,
+      premiumTaxCreditEnabled: this.premiumTaxCreditEnabled
     });
     clone2.finishCurrency = this.finishCurrency.copy();
     clone2.colorId = this.colorId;
@@ -37989,7 +38515,16 @@ var ModelAsset = class _ModelAsset {
   }
   // ── Serialization ───────────────────────────────────────────────
   toJSON() {
-    const { creditMemos, eventsCheckedIndex, events, fundTransfers, ...rest } = this;
+    const {
+      creditMemos,
+      eventsCheckedIndex,
+      events,
+      fundTransfers,
+      monthlyAdvanceCredit,
+      monthlyAdvanceData,
+      premiumExcessOverInflation,
+      ...rest
+    } = this;
     return rest;
   }
   // ── Private helpers ──────────────────────────────────────────────
@@ -39158,7 +39693,7 @@ function applyRandomRates(modelAssets, pool, dataMode = "historical", baseRates 
       asset.annualReturnRate.rate = calibrated ? base + (treasury - pool.means.treasury) : treasury - dividendRate;
     }
     if (InstrumentType.isMonthlyExpense(asset.instrument)) {
-      asset.annualReturnRate.rate = calibrated ? base + (cpi - pool.means.cpi) : cpi;
+      asset.annualReturnRate.rate = calibrated ? base + (cpi - pool.means.cpi) : cpi + (asset.premiumExcessOverInflation ?? 0);
     }
     if (InstrumentType.isMonthlyIncome(asset.instrument)) {
       asset.annualReturnRate.rate = calibrated ? base + (wage - pool.means.wage) : wage;
@@ -40032,6 +40567,7 @@ var RETIREMENT_SET = /* @__PURE__ */ new Set([
 ]);
 var EXPENSES_SET = /* @__PURE__ */ new Set([
   Instrument.MONTHLY_EXPENSE,
+  Instrument.HEALTH_INSURANCE,
   Instrument.DEBT
 ]);
 var AssetGroupMeta = /* @__PURE__ */ new Map([
@@ -40057,6 +40593,7 @@ var AssetGroupMeta = /* @__PURE__ */ new Map([
       [Instrument.CORP_BOND, "#ACB3BA"],
       [Instrument.CASH, "#B5BBC2"],
       [Instrument.MONTHLY_EXPENSE, "#BEC4CA"],
+      [Instrument.HEALTH_INSURANCE, "#C2C8CE"],
       [Instrument.DEBT, "#C7CCD1"]
     ])
   }],
@@ -40125,6 +40662,7 @@ var AssetGroupMeta = /* @__PURE__ */ new Map([
     headerFg: "#791F1F",
     assetShades: /* @__PURE__ */ new Map([
       [Instrument.MONTHLY_EXPENSE, "#E24B4A"],
+      [Instrument.HEALTH_INSURANCE, "#EB7070"],
       [Instrument.DEBT, "#F09595"]
     ])
   }],
@@ -40208,6 +40746,11 @@ var EXPENDITURE_TREATMENT = Object.freeze({
   [EventType.CAPITAL_GAINS_TAX]: "tax",
   [EventType.TAX_TRUE_UP]: "tax",
   [EventType.NIIT_ASSESSED]: "tax",
+  // A repayment of excess advance credit is tax on the return. The credit
+  // side, net credit owed to the household, is a refund and never a draw.
+  [EventType.PTC_RECONCILIATION]: "tax",
+  // The Treasury paid it to the insurer: it never left an account.
+  [EventType.PREMIUM_TAX_CREDIT]: "excluded",
   // Excluded: the cash already left under the GROSS_UP, which counts as
   // spending, so counting this too would double it.
   //
@@ -40250,7 +40793,8 @@ var TAX_LABEL = Object.freeze({
   [EventType.INCOME_TAX_WITHHOLDING]: "Income tax",
   [EventType.CAPITAL_GAINS_TAX]: "Capital gains tax",
   [EventType.TAX_TRUE_UP]: "Annual tax true-up",
-  [EventType.NIIT_ASSESSED]: "Net investment income tax"
+  [EventType.NIIT_ASSESSED]: "Net investment income tax",
+  [EventType.PTC_RECONCILIATION]: "Premium tax credit repayment"
 });
 
 // js/month-summary.js
@@ -40271,7 +40815,11 @@ var EXPENSE_LINE = Object.freeze({
   [Metric.MORTGAGE_INTEREST]: "Interest",
   [Metric.MORTGAGE_PRINCIPAL]: "Principal",
   [Metric.MAINTENANCE]: "Maintenance",
-  [Metric.INSURANCE]: "Insurance"
+  [Metric.INSURANCE]: "Insurance",
+  // A health-insurance card: the premium, and the advance credit that paid
+  // part of it, so the group adds up to what the household paid.
+  [Metric.HEALTH_PREMIUM]: "Premium",
+  [Metric.PREMIUM_TAX_CREDIT]: "Advance premium tax credit"
 });
 var TAX_LINE = Object.freeze({
   [Metric.WITHHELD_INCOME_TAX]: ["Income tax", "Withheld"],
@@ -40279,6 +40827,7 @@ var TAX_LINE = Object.freeze({
   [Metric.SHORT_TERM_CAPITAL_GAIN_TAX]: ["Income tax", "Short-term gains"],
   [Metric.LONG_TERM_CAPITAL_GAIN_TAX]: ["Long-term capital gains tax", null],
   [Metric.NIIT]: ["Net investment income tax", null],
+  [Metric.PTC_RECONCILIATION]: ["Premium tax credit", "Settled on the return"],
   [Metric.SOCIAL_SECURITY_TAX]: ["FICA", "Social Security"],
   [Metric.MEDICARE_TAX]: ["FICA", "Medicare"],
   [Metric.PROPERTY_TAX]: ["Property tax", "account"]
@@ -40583,6 +41132,10 @@ No simulation has been run yet.
     }
     if (Math.abs(total.taxTrueUp.amount) >= 5e-3) {
       md += `| Annual True-Up | ${cost(total.taxTrueUp)} |
+`;
+    }
+    if (Math.abs(total.ptcReconciliation.amount) >= 5e-3) {
+      md += `| Premium Tax Credit Settled | ${cost(total.ptcReconciliation)} |
 `;
     }
     md += `| Property Taxes | ${cost(total.propertyTaxes)} |

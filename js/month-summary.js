@@ -286,6 +286,10 @@ const EXPENSE_LINE = Object.freeze({
     [Metric.MORTGAGE_PRINCIPAL]: 'Principal',
     [Metric.MAINTENANCE]:        'Maintenance',
     [Metric.INSURANCE]:          'Insurance',
+    // A health-insurance card: the premium, and the advance credit that paid
+    // part of it, so the group adds up to what the household paid.
+    [Metric.HEALTH_PREMIUM]:     'Premium',
+    [Metric.PREMIUM_TAX_CREDIT]: 'Advance premium tax credit',
 });
 
 /**
@@ -306,6 +310,7 @@ const TAX_LINE = Object.freeze({
     [Metric.SHORT_TERM_CAPITAL_GAIN_TAX]: ['Income tax', 'Short-term gains'],
     [Metric.LONG_TERM_CAPITAL_GAIN_TAX]:  ['Long-term capital gains tax', null],
     [Metric.NIIT]:                        ['Net investment income tax', null],
+    [Metric.PTC_RECONCILIATION]:          ['Premium tax credit', 'Settled on the return'],
     [Metric.SOCIAL_SECURITY_TAX]:         ['FICA', 'Social Security'],
     [Metric.MEDICARE_TAX]:                ['FICA', 'Medicare'],
     [Metric.PROPERTY_TAX]:                ['Property tax', 'account'],
@@ -411,7 +416,8 @@ export function magiLines(taxYear) {
 
 /**
  * What the January after a year settled, as positive amounts: a refund or a
- * bill from the true-up, and NIIT. Empty when nothing was settled.
+ * bill from the true-up, NIIT, and the premium tax credit either way. Empty
+ * when nothing was settled.
  *
  * @returns {Array<{label: string, amount: number}>}
  */
@@ -420,5 +426,8 @@ export function settlementParts(taxYear) {
     if (taxYear.settledTrueUp > 0.5) parts.push({ label: 'refund', amount: taxYear.settledTrueUp });
     if (taxYear.settledTrueUp < -0.5) parts.push({ label: 'bill', amount: -taxYear.settledTrueUp });
     if (taxYear.settledNIIT < -0.5) parts.push({ label: 'NIIT', amount: -taxYear.settledNIIT });
+    const ptc = taxYear.ptcReconciliation ?? 0;
+    if (ptc > 0.5) parts.push({ label: 'premium tax credit', amount: ptc });
+    if (ptc < -0.5) parts.push({ label: 'premium tax credit repaid', amount: -ptc });
     return parts;
 }

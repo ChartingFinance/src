@@ -184,7 +184,7 @@ const stackedBarChartDataSet = {
     data: null
  };
 
-const assetStackedBarChartExclusions = ['monthlyExpense', 'workingIncome', 'retirementIncome', 'pension'];
+const assetStackedBarChartExclusions = ['monthlyExpense', 'healthInsurance', 'workingIncome', 'retirementIncome', 'pension'];
 
 const lineChartConfig = {
   type: 'line',

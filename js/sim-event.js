@@ -71,6 +71,13 @@ export const EventType = Object.freeze({
     CAPITAL_GAIN_RECOGNIZED: 'capitalGainRecognized', // data.spillover: boolean
     CAPITAL_GAIN_EXCLUDED:   'capitalGainExcluded',   // IRC §121 primary-home exclusion
     NIIT_ASSESSED:           'niitAssessed',      // IRC §1411; data: { nii, magi, threshold }
+    // IRC §36B. The advance credit the Treasury paid toward a month's premium,
+    // on the health-insurance card; no household money moves. data:
+    // { estimate, percent, share }
+    PREMIUM_TAX_CREDIT:      'premiumTaxCredit',
+    // The year's credit settled on the return, on the account that paid or
+    // received it. data: { direction: 'repayment' | 'credit', allowed, advanced, percent }
+    PTC_RECONCILIATION:      'ptcReconciliation',
 
     // ── Movement ──
     TRANSFER:                'transfer',          // data: { from, to, cadence, system? }
@@ -134,6 +141,7 @@ const INFO_TYPES = new Set([
     EventType.CAPITAL_GAIN_EXCLUDED,
     EventType.UNFUNDED,
     EventType.CONTRIBUTION_CAPPED,
+    EventType.PREMIUM_TAX_CREDIT,
 ]);
 
 export function kindOf(type) {
@@ -205,6 +213,10 @@ export function renderNote(event) {
         case EventType.NIIT_ASSESSED:           return d.bound === 'nii'
             ? 'Net investment income tax (3.8% of net investment income)'
             : 'Net investment income tax (3.8% of MAGI over the threshold)';
+        case EventType.PREMIUM_TAX_CREDIT:      return 'Premium tax credit (advance)';
+        case EventType.PTC_RECONCILIATION:      return d.direction === 'repayment'
+            ? 'Premium tax credit repaid (excess advance)'
+            : 'Premium tax credit (on the return)';
         case EventType.CAPITAL_GAIN_RECOGNIZED: return d.spillover ? 'Capital gains (spillover)' : 'Capital gains';
         case EventType.CAPITAL_GAIN_EXCLUDED:   return 'Primary home gain excluded';
 

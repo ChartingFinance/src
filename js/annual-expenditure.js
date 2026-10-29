@@ -76,6 +76,12 @@ export const EXPENDITURE_TREATMENT = Object.freeze({
     [EventType.CAPITAL_GAINS_TAX]:       'tax',
     [EventType.TAX_TRUE_UP]:             'tax',
     [EventType.NIIT_ASSESSED]:           'tax',
+    // A repayment of excess advance credit is tax on the return. The credit
+    // side, net credit owed to the household, is a refund and never a draw.
+    [EventType.PTC_RECONCILIATION]:      'tax',
+
+    // The Treasury paid it to the insurer: it never left an account.
+    [EventType.PREMIUM_TAX_CREDIT]:      'excluded',
 
     // Excluded: the cash already left under the GROSS_UP, which counts as
     // spending, so counting this too would double it.
@@ -128,6 +134,7 @@ const TAX_LABEL = Object.freeze({
     [EventType.CAPITAL_GAINS_TAX]:      'Capital gains tax',
     [EventType.TAX_TRUE_UP]:            'Annual tax true-up',
     [EventType.NIIT_ASSESSED]:          'Net investment income tax',
+    [EventType.PTC_RECONCILIATION]:     'Premium tax credit repayment',
 });
 
 /**

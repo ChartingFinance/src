@@ -38,7 +38,7 @@ export class CreditMemo {
 }
 import { colorRange }    from './utils/html.js';
 import { getBehavior }   from './instruments/instrument-behavior.js';
-import { finishDateIntFor } from './plan-dates.js';
+import { finishDateIntFor, marketplaceFinishDateIntFor } from './plan-dates.js';
 import { Metric, METRIC_NAMES, MetricLabel, MetricRollups, PARENT_METRICS } from './metric.js';
 import { SimEvent, EventType, renderNote } from './sim-event.js';
 import { currentTraceId } from './trace.js';
@@ -97,6 +97,11 @@ export class ModelAsset {
     annualInsuranceCost = Currency.zero(),
     fundingConfig = null,
     oneTimeEvents = [],
+    benchmarkPremium = Currency.zero(),
+    householdSize = null,
+    advanceCreditShare = 1,
+    estimatedAcaIncome = null,
+    premiumTaxCreditEnabled = true,
   }) {
     this.instrument      = instrument;
     this.displayName     = displayName;
@@ -118,6 +123,23 @@ export class ModelAsset {
     this.annualInsuranceCost = annualInsuranceCost;
     this.fundingConfig = fundingConfig;
     this.oneTimeEvents = oneTimeEvents;
+
+    // A health-insurance card's premium tax credit settings (IRC §36B):
+    //   benchmarkPremium         the monthly SLCSP for the household; zero means
+    //                            the same as the premium
+    //   householdSize            people in the tax household, for the poverty
+    //                            line only; null means 1 single, 2 married
+    //   advanceCreditShare       0-1, the share of the estimated credit paid
+    //                            to the insurer each month
+    //   estimatedAcaIncome       the ACA MAGI told to the marketplace when the
+    //                            household has no full year on it to renew on;
+    //                            null means none, and nothing is advanced
+    //   premiumTaxCreditEnabled  false for a plan bought off the marketplace
+    this.benchmarkPremium = benchmarkPremium;
+    this.householdSize = householdSize;
+    this.advanceCreditShare = advanceCreditShare;
+    this.estimatedAcaIncome = estimatedAcaIncome;
+    this.premiumTaxCreditEnabled = premiumTaxCreditEnabled;
 
     this.behavior      = getBehavior(instrument);
     this.colorId       = 0;
@@ -166,7 +188,11 @@ export class ModelAsset {
   }
 
   get effectiveFinishDateInt() {
-    return this.finishDateInt ?? finishDateIntFor(this.#boundEnv);
+    if (this.finishDateInt) return this.finishDateInt;
+    // Marketplace coverage, and the credit on it, end when Medicare begins.
+    return InstrumentType.isHealthInsurance(this.instrument)
+      ? marketplaceFinishDateIntFor(this.#boundEnv)
+      : finishDateIntFor(this.#boundEnv);
   }
 
   /** For expense instruments, fall back to plan inflation when no rate is set. */
@@ -212,6 +238,11 @@ export class ModelAsset {
       annualInsuranceCost: new Currency(obj.annualInsuranceCost?.amount ?? 0),
       fundingConfig: obj.fundingConfig ?? null,
       oneTimeEvents: (obj.oneTimeEvents ?? obj.windfalls ?? []).map(OneTimeEvent.fromJSON),
+      benchmarkPremium: new Currency(obj.benchmarkPremium?.amount ?? 0),
+      householdSize: Number.isFinite(obj.householdSize) && obj.householdSize >= 1 ? obj.householdSize : null,
+      advanceCreditShare: Number.isFinite(obj.advanceCreditShare) ? obj.advanceCreditShare : 1,
+      estimatedAcaIncome: Number.isFinite(obj.estimatedAcaIncome?.amount) ? new Currency(obj.estimatedAcaIncome.amount) : null,
+      premiumTaxCreditEnabled: obj.premiumTaxCreditEnabled ?? true,
     });
   }
 
@@ -259,6 +290,13 @@ export class ModelAsset {
       annualTaxRate: vals.annualTaxRate ? ARR.parse(vals.annualTaxRate.value) : new ARR(0),
       annualMaintenanceRate: vals.annualMaintenanceRate ? ARR.parse(vals.annualMaintenanceRate.value) : new ARR(0),
       annualInsuranceCost: vals.annualInsuranceCost ? Currency.parse(vals.annualInsuranceCost.value) : Currency.zero(),
+      benchmarkPremium: vals.benchmarkPremium?.value ? Currency.parse(vals.benchmarkPremium.value) : Currency.zero(),
+      householdSize: parseInt(vals.householdSize?.value, 10) >= 1 ? parseInt(vals.householdSize.value, 10) : null,
+      advanceCreditShare: ratioOrDefault(vals.advanceCreditShare?.value, 1),
+      estimatedAcaIncome: vals.estimatedAcaIncome?.value ? Currency.parse(vals.estimatedAcaIncome.value) : null,
+      premiumTaxCreditEnabled: vals.premiumTaxCreditEnabled?.type === 'checkbox'
+        ? vals.premiumTaxCreditEnabled.checked
+        : (vals.premiumTaxCreditEnabled?.value !== 'false'),
     });
 
     // Restore color
@@ -527,6 +565,9 @@ export class ModelAsset {
   get monthlyInterestIncomes()       { return this.#metrics.get(Metric.INTEREST_INCOME).history; }
   get monthlyCapitalGainsTaxes()     { return this.#metrics.get(Metric.CAPITAL_GAIN_TAX).history; }
   get monthlyNIIT()                  { return this.#metrics.get(Metric.NIIT).history; }
+  get monthlyHealthPremiums()        { return this.#metrics.get(Metric.HEALTH_PREMIUM).history; }
+  get monthlyPremiumTaxCredits()     { return this.#metrics.get(Metric.PREMIUM_TAX_CREDIT).history; }
+  get monthlyPTCReconciliations()    { return this.#metrics.get(Metric.PTC_RECONCILIATION).history; }
   get monthlyCredits()               { return this.#metrics.get(Metric.CREDIT).history; }
 
 
@@ -573,6 +614,20 @@ export class ModelAsset {
     // TaxEngine.withholdOnDeferredDistributions once per month.
     this.monthlyShelteredDistribution = Currency.zero();
     this.monthlyTaxEscrow = Currency.zero();
+
+    // A health-insurance card's advance premium tax credit for the month, set
+    // by PremiumCreditEngine before the month's bills are paid, with the
+    // figures its event records. Zero in a month the card earns none.
+    this.monthlyAdvanceCredit = Currency.zero();
+    this.monthlyAdvanceData = null;
+
+    // The card's premium growth over plan inflation, captured before a
+    // backtest or Monte Carlo draw overwrites the rate: both replace every
+    // expense's rate with a year's CPI, and the card adds this back.
+    this.premiumExcessOverInflation = InstrumentType.isHealthInsurance(this.instrument)
+      ? this.effectiveAnnualReturnRate.rate - this.#boundEnv.inflationRate
+      : 0;
+
     this.#metrics.initializeAll();
 
     // this is to track this.finishCurrency changes through the month with a check on the last day
@@ -719,6 +774,17 @@ export class ModelAsset {
   }
 
   applyYearly() {
+
+    // Marketplace plans and their benchmark are priced by calendar year: the
+    // premium steps once, each January, at the card's rate. The benchmark is
+    // read in proportion to it (benchmarkCurrency), so it steps too.
+    if (InstrumentType.isHealthInsurance(this.instrument)) {
+      const growth = new Currency(this.finishCurrency.amount * this.effectiveAnnualReturnRate.rate);
+      this.finishCurrency.add(growth);
+      this.monthlyValueChange.add(growth);
+      if (growth.amount !== 0) this.recordEvent(EventType.EXPENSE_INFLATION, growth);
+      return null;
+    }
 
     if (InstrumentType.isMonthlyIncome(this.instrument)) {
       const growth = new Currency(this.finishCurrency.amount * this.annualReturnRate.rate);
@@ -936,6 +1002,30 @@ export class ModelAsset {
   isPositive() { return this.cashFlowAccumulatedCurrency.amount > 0; }
   isNegative() { return this.cashFlowAccumulatedCurrency.amount < 0; }
 
+  /**
+   * What this month's bill asks the paying accounts for: the balance, except
+   * on a health-insurance card, where the advance premium tax credit paid part
+   * of the premium. Negative for an expense, like the balance.
+   */
+  get amountDueCurrency() {
+    if (!InstrumentType.isHealthInsurance(this.instrument)) return this.finishCurrency;
+    return this.finishCurrency.plus(this.monthlyAdvanceCredit ?? Currency.zero());
+  }
+
+  /**
+   * A health-insurance card's monthly benchmark (SLCSP) premium this plan year,
+   * positive. It grows with the premium, at the card's one rate, so it is the
+   * entered benchmark scaled by how far the premium has grown since the start.
+   * A card with no benchmark entered uses its own premium.
+   */
+  get benchmarkCurrency() {
+    const premium = Math.abs(this.finishCurrency.amount);
+    const start = Math.abs(this.startCurrency.amount);
+    const entered = this.benchmarkPremium?.amount ?? 0;
+    if (!(entered > 0) || !(start > 0)) return new Currency(premium);
+    return new Currency(entered * premium / start);
+  }
+
   getFinishCurrencyForRollup() {
     const T = InstrumentType;
     const i = this.instrument;
@@ -1047,6 +1137,11 @@ export class ModelAsset {
       isSelfEmployed:  this.isSelfEmployed,
       isPrimaryHome:   this.isPrimaryHome,
       annualTaxRate:   this.annualTaxRate,
+      benchmarkPremium: this.benchmarkPremium,
+      householdSize:   this.householdSize,
+      advanceCreditShare: this.advanceCreditShare,
+      estimatedAcaIncome: this.estimatedAcaIncome,
+      premiumTaxCreditEnabled: this.premiumTaxCreditEnabled,
     });
     clone.finishCurrency = this.finishCurrency.copy();
     clone.colorId = this.colorId;
@@ -1059,7 +1154,8 @@ export class ModelAsset {
     // events/creditMemos are run state — rebuilt by every chronometer_run.
     // Serializing them would bloat share links and worker payloads with data
     // the receiving side throws away and regenerates.
-    const { creditMemos, eventsCheckedIndex, events, fundTransfers, ...rest } = this;
+    const { creditMemos, eventsCheckedIndex, events, fundTransfers,
+            monthlyAdvanceCredit, monthlyAdvanceData, premiumExcessOverInflation, ...rest } = this;
     return rest;
   }
 

@@ -90,6 +90,7 @@ const TAX_SET = new Set([
 
 const EXPENSE_SET = new Set([
   Instrument.MONTHLY_EXPENSE,      // direct expenses
+  Instrument.HEALTH_INSURANCE,     // marketplace premium, net of the advance credit
   Instrument.REAL_ESTATE,          // maintenance, insurance, mortgage interest → expense
   Instrument.MORTGAGE,             // mortgage interest → interest expense → expense
   Instrument.DEBT,                 // interest expense
@@ -218,6 +219,7 @@ export const PropertyGroupMeta = new Map([
       [Instrument.CORP_BOND,         '#ACB3BA'],
       [Instrument.CASH,              '#B5BBC2'],
       [Instrument.MONTHLY_EXPENSE,   '#BEC4CA'],
+      [Instrument.HEALTH_INSURANCE,  '#C2C8CE'],
       [Instrument.DEBT,              '#C7CCD1'],
     ]),
   }],
@@ -257,6 +259,7 @@ export const PropertyGroupMeta = new Map([
     headerBg: '#FCEBEB',   headerFg: '#791F1F',
     assetShades: new Map([
       [Instrument.MONTHLY_EXPENSE,   '#E24B4A'],
+      [Instrument.HEALTH_INSURANCE,  '#E65F5E'],
       [Instrument.REAL_ESTATE,       '#EB7575'],
       [Instrument.MORTGAGE,          '#F09595'],
       [Instrument.DEBT,              '#F5B0B0'],

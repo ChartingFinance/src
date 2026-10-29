@@ -81,7 +81,7 @@ const amountOf = (s) => Number(s.replace('−', '-').replace(/[$,]/g, ''));
 const PAID = 'Federal Taxes Paid';
 const PAID_PARTS = ['  FICA', '  Income Tax', '  LT Cap Gains Tax', '  Estimated Taxes', '  Prior-Year Settlement'];
 const SETTLEMENT = '  Prior-Year Settlement';
-const SETTLEMENT_PARTS = ['    Annual True-Up', '    Net Investment Income Tax'];
+const SETTLEMENT_PARTS = ['    Annual True-Up', '    Net Investment Income Tax', '    Premium Tax Credit'];
 
 /** Each heading equals the sum of its parts, to the cent-rounding of the parts. */
 function assertSums(shown, heading, parts, where) {
