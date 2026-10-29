@@ -30,7 +30,7 @@ import { explainIssue, explainAt, explainIssueMarkdown, explainAtMarkdown } from
 import { generatePortfolioMarkdown, generateMonteCarloSectionMarkdown, REPORT_SECTIONS } from '../generators/finplan-ai.js';
 import { planExhaustion } from '../portfolio-issues.js';
 import { EventType } from '../sim-event.js';
-import { buildPlan, planDefaults, PlanRefusal } from './build-plan.js';
+import { buildPlan, planDefaults, healthInsuranceDefaults, PlanRefusal } from './build-plan.js';
 
 // ── Server ────────────────────────────────────────────────────────
 
@@ -411,18 +411,21 @@ server.tool(
 
 // ── plan_defaults ─────────────────────────────────────────────────
 //
-// The defaults, stated (planDefaults() in build-plan.js). Meant to be called
-// once per conversation, not per plan.
+// The defaults, stated (planDefaults() and healthInsuranceDefaults() in
+// build-plan.js). Meant to be called once per conversation, not per plan.
 
 server.tool(
   "plan_defaults",
   "The assumptions a new plan starts from — age, retirement age, horizon, inflation and filing "
   + "status — with a plain-language gloss for each. Call this ONCE at the start of a planning "
-  + "conversation and state them back to the user before building anything, because a plan "
-  + "built on unstated defaults is a plan about someone else. Not needed for quick_start_report.",
+  + "conversation and state the `settings` back to the user before building anything, because a "
+  + "plan built on unstated defaults is a plan about someone else. `healthInsurance` lists what a "
+  + "marketplace (ACA) health plan assumes; state those only when one comes up. Not needed for "
+  + "quick_start_report.",
   {},
   guard(async () => ({
-    content: [{ type: "text", text: JSON.stringify(planDefaults(), null, 2) }],
+    content: [{ type: "text", text: JSON.stringify(
+      { settings: planDefaults(), healthInsurance: healthInsuranceDefaults() }, null, 2) }],
   }))
 );
 
@@ -462,6 +465,41 @@ const buildPlanShape = {
     monthly: z.number().optional(),
     annual: z.number().optional(),
   })).optional(),
+  healthInsurance: z.array(z.object({
+    label: z.string().optional().describe("What to call it. Defaults to 'Health Insurance'."),
+    premium: z.object({
+      monthly: z.number().optional(),
+      annual: z.number().optional(),
+    }).optional().describe("The FULL premium, before any premium tax credit — what the plan "
+        + "costs, not what the household pays after the subsidy. Monthly OR annual, at today's "
+        + "prices. Required; leaving it out returns the question to ask."),
+    benchmark: z.object({
+      monthly: z.number().optional(),
+      annual: z.number().optional(),
+    }).optional().describe("The household's benchmark premium (the second-lowest-cost silver plan), "
+        + "which the credit is measured against: Form 1095-A column B, or the marketplace's tax "
+        + "tool. Today's prices. Omit to measure against the plan's own premium."),
+    growthRate: z.number().optional().describe("How fast the premium rises a year, e.g. 0.07. "
+        + "Omit for plan inflation. 0 is refused: the engine reads it as plan inflation."),
+    estimatedIncome: z.number().optional().describe("The annual household income (ACA MAGI) "
+        + "reported to the marketplace for the first year of coverage, in today's dollars. Later "
+        + "years renew on what the plan produced. Omit when unknown: nothing is then advanced "
+        + "until the plan has a full year on the marketplace to renew on."),
+    householdSize: z.number().int().optional().describe("People in the tax household, for the "
+        + "poverty line. Omit for 1 single, 2 married."),
+    advanceShare: z.number().optional().describe("Share of the estimated credit paid to the "
+        + "insurer each month, 0 to 1. Omit for all of it."),
+    premiumTaxCredit: z.boolean().optional().describe("false for a plan bought off the marketplace, "
+        + "with no credit. Omit for a marketplace plan with the credit."),
+    fromAge: z.number().int().optional().describe("Age coverage starts, from January of that year. "
+        + "Required when the plan starts before retirement, and then no earlier than the "
+        + "retirement age: a premium paid while working cannot be modeled yet. Omit when the plan "
+        + "starts in retirement and the coverage is current."),
+    untilAge: z.number().int().optional().describe("Age coverage stops; its last month is the "
+        + "December before. Omit for 65, when Medicare begins."),
+  })).optional().describe("Marketplace (ACA) health plans. Each is paid like an expense, and the "
+      + "premium tax credit is worked out on it: advanced on an income estimate, settled on each "
+      + "year's return. Coverage ends before 65."),
   settingsOverrides: z.object({
     startAge: z.number().int().optional(),
     retirementAge: z.number().int().optional(),
@@ -475,8 +513,9 @@ const buildPlanShape = {
 server.tool(
   "build_plan",
   "Turns a described situation into a plan spec that run_plan can simulate — you supply meaning "
-  + "(income, accounts, what share is saved) and this supplies instruments, dates, rates and "
-  + "phases. It RUNS NOTHING: pass the returned spec to run_plan for numbers. "
+  + "(income, accounts, what share is saved, a marketplace health plan) and this supplies "
+  + "instruments, dates, rates and phases. It RUNS NOTHING: pass the returned spec to run_plan for "
+  + "numbers. "
   + "It refuses or asks a question when the description does not determine a plan, and that "
   + "refusal is the point — relay the question rather than guessing past it. "
   + "Every value it supplied is listed in the ledger with where it came from; state the "

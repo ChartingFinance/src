@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.3.35; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.3.36; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -32898,7 +32898,7 @@ var FundTransfer = class _FundTransfer {
     if (InstrumentType.isCapital(this.fromModel.instrument) && this.fromModel.finishCurrency.amount <= 0) {
       return Currency.zero();
     }
-    const pct2 = (useClosePercent ? this.closeMoveValue : this.monthlyMoveValue) / 100;
+    const pct3 = (useClosePercent ? this.closeMoveValue : this.monthlyMoveValue) / 100;
     let base;
     if (useClosePercent) {
       base = this.fromModel.finishCurrency;
@@ -32909,7 +32909,7 @@ var FundTransfer = class _FundTransfer {
     } else {
       base = this.fromModel.amountDueCurrency ?? this.fromModel.finishCurrency;
     }
-    let amount = new Currency(base.amount * pct2);
+    let amount = new Currency(base.amount * pct3);
     return amount;
   }
   /**
@@ -37184,8 +37184,8 @@ var ARR = class _ARR {
     return new _ARR(Number.isFinite(value) ? value : 0);
   }
   /** Build from a percentage number: ARR.fromPercent(7) → 0.07 */
-  static fromPercent(pct2) {
-    return new _ARR(pct2 / 100);
+  static fromPercent(pct3) {
+    return new _ARR(pct3 / 100);
   }
   // ── Queries ──────────────────────────────────────────────────────
   // ── Monthly conversions ──────────────────────────────────────────
@@ -40256,8 +40256,8 @@ function deltaCell(from, to, isMoney) {
   if (d === 0) return "unchanged";
   const sign = d > 0 ? "+" : "\u2212";
   const mag = isMoney ? money(Math.abs(d)) : String(Math.abs(d));
-  const pct2 = isMoney && from !== 0 ? ` (${sign}${Math.abs(d / from * 100).toFixed(1)}%)` : "";
-  return `${sign}${mag}${pct2}`;
+  const pct3 = isMoney && from !== 0 ? ` (${sign}${Math.abs(d / from * 100).toFixed(1)}%)` : "";
+  return `${sign}${mag}${pct3}`;
 }
 function fieldValue(v) {
   if (v == null) return "\u2014";
@@ -41272,6 +41272,52 @@ var PLAN_DEFAULT_GLOSS = Object.freeze([
 function planDefaults() {
   return PLAN_DEFAULT_GLOSS.map((d) => ({ ...d }));
 }
+var CARD_DEFAULTS = Object.freeze({ advanceShare: 1, premiumTaxCredit: true });
+var HEALTH_INSURANCE_DEFAULT_GLOSS = Object.freeze([
+  Object.freeze({
+    field: "benchmark",
+    value: "the premium itself",
+    gloss: "the second-lowest-cost silver premium the credit is measured against"
+  }),
+  Object.freeze({
+    field: "growthRate",
+    value: "plan inflation",
+    gloss: "how fast the premium and benchmark rise, stepped each January"
+  }),
+  Object.freeze({
+    field: "estimatedIncome",
+    value: null,
+    gloss: "the income reported to the marketplace; with none, nothing is advanced until the plan has a full year on the marketplace to renew on"
+  }),
+  Object.freeze({
+    field: "householdSize",
+    value: "from filing status: 1 single, 2 married",
+    gloss: "people in the tax household, for the poverty line"
+  }),
+  Object.freeze({
+    field: "advanceShare",
+    value: CARD_DEFAULTS.advanceShare,
+    gloss: "the share of the estimated credit paid to the insurer each month"
+  }),
+  Object.freeze({
+    field: "premiumTaxCredit",
+    value: CARD_DEFAULTS.premiumTaxCredit,
+    gloss: "bought on the marketplace, so the premium tax credit applies"
+  }),
+  Object.freeze({
+    field: "fromAge",
+    value: "the plan's start, for a plan that starts in retirement",
+    gloss: "when coverage starts; a plan that starts before retirement must say"
+  }),
+  Object.freeze({
+    field: "untilAge",
+    value: MEDICARE_AGE,
+    gloss: "coverage ends the December before this age, when Medicare begins"
+  })
+]);
+function healthInsuranceDefaults() {
+  return HEALTH_INSURANCE_DEFAULT_GLOSS.map((d) => ({ ...d }));
+}
 var ACCOUNT_WORDS = Object.freeze([
   ["roth ira", Instrument.ROTH_IRA],
   ["roth", Instrument.ROTH_IRA],
@@ -41425,6 +41471,15 @@ var monthlyFrom = ({ annual, monthly }, what) => {
 var labelFor = (key) => InstrumentMeta.get(key)?.label ?? key;
 function resolveAccountInstrument(account) {
   if (account.kind) {
+    if (account.kind === Instrument.HEALTH_INSURANCE) {
+      throw new PlanRefusal(
+        `"${account.label}" is a health plan, not an account.`,
+        {
+          question: `What does ${account.label} cost a month, before any premium tax credit? It goes under healthInsurance, not accounts.`,
+          field: account.label
+        }
+      );
+    }
     if (!Object.values(Instrument).includes(account.kind)) {
       throw new PlanRefusal(
         `"${account.kind}" is not an instrument this engine has.`,
@@ -41448,6 +41503,215 @@ function resolveAccountInstrument(account) {
       field: account.label
     }
   );
+}
+var HEALTH_INSURANCE_LABEL = "Health Insurance";
+var pct2 = (rate) => `${(rate * 100).toFixed(1)}%`;
+function healthInsuranceCard(card, label, ledger, {
+  startAge,
+  retirementAge,
+  finishAge,
+  inflationRate,
+  householdPersons,
+  startMonth,
+  finishMonth,
+  birthYear
+}) {
+  if (card.premium?.monthly == null && card.premium?.annual == null) {
+    throw new PlanRefusal(`${label} has no premium.`, {
+      question: `What does ${label} cost a month \u2014 the full premium, before any premium tax credit?`,
+      field: label
+    });
+  }
+  const premium = Math.abs(monthlyFrom(card.premium, `${label}'s premium`));
+  if (premium === 0) {
+    throw new PlanRefusal(`${label} has a premium of $0.`, {
+      question: `What does ${label} cost a month, before any premium tax credit?`,
+      field: label
+    });
+  }
+  const credit = card.premiumTaxCredit ?? CARD_DEFAULTS.premiumTaxCredit;
+  if (!credit) {
+    const moot = ["benchmark", "estimatedIncome", "householdSize", "advanceShare"].filter((k) => card[k] != null);
+    if (moot.length) {
+      throw new PlanRefusal(
+        `${label} is bought without the premium tax credit, but gives ${moot.join(", ")}, which only the credit reads.`,
+        { question: `Is ${label} a marketplace plan with the premium tax credit, or one bought off the marketplace, with none?`, field: label }
+      );
+    }
+  }
+  const benchmark = card.benchmark != null ? Math.abs(monthlyFrom(card.benchmark, `${label}'s benchmark`)) : null;
+  if (benchmark === 0) {
+    throw new PlanRefusal(`${label} has a benchmark premium of $0.`, {
+      question: `What is the benchmark (second-lowest-cost silver) premium for the household? Leave it out to measure the credit against ${label}'s own premium.`,
+      field: label
+    });
+  }
+  if (card.growthRate === 0) {
+    throw new PlanRefusal(
+      `This engine reads a premium growth rate of 0% as plan inflation, so ${label} cannot be held flat.`,
+      { question: `Should ${label} rise with plan inflation (${pct2(inflationRate)} a year), or at some other rate?`, field: label }
+    );
+  }
+  if (card.estimatedIncome != null && !(card.estimatedIncome >= 0)) {
+    throw new PlanRefusal(`An income estimate of ${card.estimatedIncome} is below zero.`, {
+      question: `What income did the household report to the marketplace for ${label}?`,
+      field: label
+    });
+  }
+  if (card.householdSize != null && !(Number.isInteger(card.householdSize) && card.householdSize >= 1)) {
+    throw new PlanRefusal(`A household of ${card.householdSize} is not a number of people.`, {
+      question: "How many people are in the tax household?",
+      field: label
+    });
+  }
+  if (card.advanceShare != null && !(card.advanceShare >= 0 && card.advanceShare <= 1)) {
+    throw new PlanRefusal(`An advance share of ${card.advanceShare} is outside 0 to 1.`, {
+      question: `What share of the estimated credit is paid to ${label}'s insurer each month \u2014 all of it (1), none (0), or a part?`,
+      field: label
+    });
+  }
+  const retiredAtStart = startAge >= retirementAge;
+  const whileWorking = "build_plan cannot yet model a premium paid while working: it sizes spending from the pay you do not save, with no room for one.";
+  if (!retiredAtStart && retirementAge >= MEDICARE_AGE) {
+    throw new PlanRefusal(
+      `This plan has work income until ${retirementAge}, and Medicare ends marketplace coverage at ${MEDICARE_AGE}, so ${label} has no retired years to cover.`,
+      { question: `Does work income stop before ${MEDICARE_AGE}? If so, at what age? ` + whileWorking, field: "retirementAge" }
+    );
+  }
+  if (!retiredAtStart && finishAge < retirementAge) {
+    throw new PlanRefusal(
+      `This plan ends at ${finishAge}, before work income stops at ${retirementAge}, so ${label} has no retired years to cover.`,
+      {
+        question: `Project past ${retirementAge}, or leave ${label} out? ${whileWorking}`,
+        field: "finishAge"
+      }
+    );
+  }
+  if (card.fromAge == null && !retiredAtStart) {
+    throw new PlanRefusal(
+      `${label} has no start, and this plan starts before retirement (${retirementAge}).`,
+      {
+        question: `Does ${label} start when work income stops, at ${retirementAge}? ` + whileWorking,
+        options: { fromAge: [retirementAge] },
+        field: label
+      }
+    );
+  }
+  const fromAge = Math.max(card.fromAge ?? startAge, startAge);
+  if (!retiredAtStart && fromAge < retirementAge) {
+    throw new PlanRefusal(
+      `${label} starts at ${fromAge}, before work income stops at ${retirementAge}.`,
+      {
+        question: `Can ${label} start at ${retirementAge} instead? ${whileWorking}`,
+        options: { fromAge: [retirementAge] },
+        field: label
+      }
+    );
+  }
+  if (fromAge >= MEDICARE_AGE) {
+    throw new PlanRefusal(
+      `${label} would start at ${fromAge}, but marketplace coverage and its credit end at ${MEDICARE_AGE}, when Medicare begins.`,
+      {
+        question: startAge < MEDICARE_AGE ? `From what age, before ${MEDICARE_AGE}, does ${label} cover?` : `Is ${label} a Medicare premium? That goes in as an ordinary expense, with no premium tax credit.`,
+        field: label
+      }
+    );
+  }
+  const start = fromAge > startAge ? DateInt.from(birthYear + fromAge, 1) : startMonth;
+  if (finishMonth.isBefore(start)) {
+    throw new PlanRefusal(
+      `${label} would start at ${fromAge}, after the plan ends at ${finishAge}.`,
+      {
+        question: `Should the plan run past ${fromAge}, or leave ${label} out?`,
+        field: label
+      }
+    );
+  }
+  let finish = null;
+  if (card.untilAge != null) {
+    if (card.untilAge <= fromAge) {
+      throw new PlanRefusal(
+        `${label} stops at ${card.untilAge}, no later than it starts (${fromAge}).`,
+        { question: `Until what age does ${label} cover?`, field: label }
+      );
+    }
+    if (card.untilAge > MEDICARE_AGE) {
+      throw new PlanRefusal(
+        `${label} would run to ${card.untilAge}, but marketplace coverage and its credit end at ${MEDICARE_AGE}, when Medicare begins.`,
+        { question: `Does ${label} stop at ${MEDICARE_AGE}, or earlier?`, field: label }
+      );
+    }
+    const last = DateInt.from(birthYear + card.untilAge - 1, 12);
+    finish = finishMonth.isBefore(last) ? finishMonth : last;
+  }
+  const years = start.year - startMonth.year;
+  const rate = card.growthRate ?? inflationRate;
+  const grown = (amount, r) => Math.round(amount * Math.pow(1 + r, years) * 100) / 100;
+  const premiumAtStart = grown(premium, rate);
+  const benchmarkAtStart = benchmark != null ? grown(benchmark, rate) : null;
+  const estimateAtStart = card.estimatedIncome != null ? Math.round(card.estimatedIncome * Math.pow(1 + inflationRate, years)) : null;
+  ledger.asset(label, AssetOrigin.STATED);
+  const note = (text) => ledger.asset(label, AssetOrigin.STATED, text);
+  if (years > 0) {
+    note(`${formatCurrency(premium)}/mo today is ${formatCurrency(premiumAtStart)}/mo by ${start.year}, when coverage starts, at ${pct2(rate)}/yr` + (benchmark != null ? `; the benchmark grows with it, to ${formatCurrency(benchmarkAtStart)}/mo` : "") + (estimateAtStart != null ? `; the income estimate grows at plan inflation, to ${formatCurrency(estimateAtStart)}` : ""));
+  }
+  if (card.fromAge == null) {
+    note("coverage starts with the plan, which starts in retirement \u2014 you did not say when coverage starts, so this is a default");
+  }
+  const medicareYear = birthYear + MEDICARE_AGE - 1;
+  if (card.untilAge == null && medicareYear < finishMonth.year) {
+    note(`coverage ends December ${medicareYear}, the year before you turn ${MEDICARE_AGE} and Medicare begins \u2014 you did not say when it ends, so this is a default`);
+  }
+  if (card.growthRate == null) {
+    note(`the premium rises with plan inflation, ${pct2(inflationRate)}/yr, stepped each January \u2014 you did not say, so this is a default`);
+  }
+  if (credit) {
+    if (card.premiumTaxCredit == null) {
+      note("eligible for the premium tax credit: bought on the marketplace, with no affordable employer coverage \u2014 you did not say otherwise, so this is a default");
+    }
+    if (benchmark == null) {
+      note(`the credit is measured against ${label}'s own premium, as if it were the benchmark (second-lowest-cost silver) plan \u2014 you did not give the benchmark, so this is a default`);
+    }
+    if (card.householdSize == null) {
+      note(`a household of ${householdPersons} for the poverty line, from the filing status \u2014 you did not say how many people the tax household covers, so this is a default`);
+    }
+    if (card.advanceShare == null) {
+      note("the whole estimated credit is paid to the insurer each month \u2014 you did not say, so this is a default");
+    }
+    if (card.estimatedIncome == null) {
+      const first = start.year;
+      note(years === 0 && startMonth.month > 1 ? `no income estimate, so the months of ${first} in this plan earn no credit (a part year is settled against the estimate), and ${first + 1}'s credit comes back on the return instead of in advance \u2014 you did not say what income you reported to the marketplace` : `no income estimate, so ${first}'s credit comes back on the return instead of in advance \u2014 you did not say what income you reported to the marketplace`);
+    }
+  }
+  return {
+    instrument: Instrument.HEALTH_INSURANCE,
+    displayName: label,
+    startDateInt: start,
+    ...finish ? { finishDateInt: finish } : {},
+    startCurrency: { amount: -premiumAtStart },
+    // 0 is plan inflation (ModelAsset.effectiveAnnualReturnRate).
+    annualReturnRate: { rate: card.growthRate ?? 0 },
+    // 0 measures the credit against the premium itself (benchmarkCurrency).
+    benchmarkPremium: { amount: benchmarkAtStart ?? 0 },
+    householdSize: card.householdSize ?? null,
+    advanceCreditShare: card.advanceShare ?? CARD_DEFAULTS.advanceShare,
+    estimatedAcaIncome: estimateAtStart != null ? { amount: estimateAtStart } : null,
+    premiumTaxCreditEnabled: credit
+  };
+}
+function assertOneHousehold(cards) {
+  for (const [key, what] of [
+    ["estimatedIncome", "income estimate"],
+    ["householdSize", "household size"]
+  ]) {
+    const values = [...new Set(cards.map((c) => c[key]).filter((v) => v != null))];
+    if (values.length > 1) {
+      throw new PlanRefusal(
+        `The health plans give different ${what}s (${values.join(", ")}), but a household reports one to the marketplace.`,
+        { question: `Which ${what} did the household report?`, field: "healthInsurance" }
+      );
+    }
+  }
 }
 function buildPlan(intent = {}) {
   const ledger = new Ledger();
@@ -41626,6 +41890,31 @@ function buildPlan(intent = {}) {
       startCurrency: { amount: -Math.abs(monthly) }
     });
   }
+  const cards = intent.healthInsurance ?? [];
+  const cardLabels = [];
+  const { householdPersons } = new TaxTable(filingAs, D.propertyTaxDeductionMax);
+  for (const card of cards) {
+    const label = card.label ?? HEALTH_INSURANCE_LABEL;
+    if (label === RESIDUAL_EXPENSE_LABEL) {
+      throw new PlanRefusal(
+        `"${label}" is the name build_plan gives the spending it sizes from income.`,
+        { question: "What should the health plan be called instead?", field: label }
+      );
+    }
+    claim(label, "health plan");
+    cardLabels.push(label);
+    raw.push(healthInsuranceCard(card, label, ledger, {
+      startAge,
+      retirementAge,
+      finishAge,
+      inflationRate,
+      householdPersons,
+      startMonth,
+      finishMonth,
+      birthYear
+    }));
+  }
+  assertOneHousehold(cards);
   const splits = intent.savingsSplit ?? [];
   for (const s of splits) {
     if (!incomeLabels.includes(s.from)) {
@@ -41738,7 +42027,8 @@ function buildPlan(intent = {}) {
     }
     phaseTransfers[label] = outbound;
   }
-  for (const label of expenseLabels) {
+  const payees = [...expenseLabels, ...cardLabels];
+  for (const label of payees) {
     if (!spendingAccount) {
       throw new PlanRefusal(
         `Nothing in this plan can pay for ${label}.`,
@@ -41786,7 +42076,7 @@ function buildPlan(intent = {}) {
     }
     const retire = ModelLifeEvent.createDefault(LifeEvent.RETIRE, retirementAge);
     retire.phaseTransfers = Object.fromEntries(
-      expenseLabels.map((l) => [l, [{
+      payees.map((l) => [l, [{
         toDisplayName: fundingAccount,
         monthlyMoveValue: 100,
         closeMoveValue: 0
@@ -42074,10 +42364,14 @@ server.tool(
 );
 server.tool(
   "plan_defaults",
-  "The assumptions a new plan starts from \u2014 age, retirement age, horizon, inflation and filing status \u2014 with a plain-language gloss for each. Call this ONCE at the start of a planning conversation and state them back to the user before building anything, because a plan built on unstated defaults is a plan about someone else. Not needed for quick_start_report.",
+  "The assumptions a new plan starts from \u2014 age, retirement age, horizon, inflation and filing status \u2014 with a plain-language gloss for each. Call this ONCE at the start of a planning conversation and state the `settings` back to the user before building anything, because a plan built on unstated defaults is a plan about someone else. `healthInsurance` lists what a marketplace (ACA) health plan assumes; state those only when one comes up. Not needed for quick_start_report.",
   {},
   guard(async () => ({
-    content: [{ type: "text", text: JSON.stringify(planDefaults(), null, 2) }]
+    content: [{ type: "text", text: JSON.stringify(
+      { settings: planDefaults(), healthInsurance: healthInsuranceDefaults() },
+      null,
+      2
+    ) }]
   }))
 );
 var buildPlanShape = {
@@ -42106,6 +42400,24 @@ var buildPlanShape = {
     monthly: external_exports3.number().optional(),
     annual: external_exports3.number().optional()
   })).optional(),
+  healthInsurance: external_exports3.array(external_exports3.object({
+    label: external_exports3.string().optional().describe("What to call it. Defaults to 'Health Insurance'."),
+    premium: external_exports3.object({
+      monthly: external_exports3.number().optional(),
+      annual: external_exports3.number().optional()
+    }).optional().describe("The FULL premium, before any premium tax credit \u2014 what the plan costs, not what the household pays after the subsidy. Monthly OR annual, at today's prices. Required; leaving it out returns the question to ask."),
+    benchmark: external_exports3.object({
+      monthly: external_exports3.number().optional(),
+      annual: external_exports3.number().optional()
+    }).optional().describe("The household's benchmark premium (the second-lowest-cost silver plan), which the credit is measured against: Form 1095-A column B, or the marketplace's tax tool. Today's prices. Omit to measure against the plan's own premium."),
+    growthRate: external_exports3.number().optional().describe("How fast the premium rises a year, e.g. 0.07. Omit for plan inflation. 0 is refused: the engine reads it as plan inflation."),
+    estimatedIncome: external_exports3.number().optional().describe("The annual household income (ACA MAGI) reported to the marketplace for the first year of coverage, in today's dollars. Later years renew on what the plan produced. Omit when unknown: nothing is then advanced until the plan has a full year on the marketplace to renew on."),
+    householdSize: external_exports3.number().int().optional().describe("People in the tax household, for the poverty line. Omit for 1 single, 2 married."),
+    advanceShare: external_exports3.number().optional().describe("Share of the estimated credit paid to the insurer each month, 0 to 1. Omit for all of it."),
+    premiumTaxCredit: external_exports3.boolean().optional().describe("false for a plan bought off the marketplace, with no credit. Omit for a marketplace plan with the credit."),
+    fromAge: external_exports3.number().int().optional().describe("Age coverage starts, from January of that year. Required when the plan starts before retirement, and then no earlier than the retirement age: a premium paid while working cannot be modeled yet. Omit when the plan starts in retirement and the coverage is current."),
+    untilAge: external_exports3.number().int().optional().describe("Age coverage stops; its last month is the December before. Omit for 65, when Medicare begins.")
+  })).optional().describe("Marketplace (ACA) health plans. Each is paid like an expense, and the premium tax credit is worked out on it: advanced on an income estimate, settled on each year's return. Coverage ends before 65."),
   settingsOverrides: external_exports3.object({
     startAge: external_exports3.number().int().optional(),
     retirementAge: external_exports3.number().int().optional(),
@@ -42116,7 +42428,7 @@ var buildPlanShape = {
 };
 server.tool(
   "build_plan",
-  "Turns a described situation into a plan spec that run_plan can simulate \u2014 you supply meaning (income, accounts, what share is saved) and this supplies instruments, dates, rates and phases. It RUNS NOTHING: pass the returned spec to run_plan for numbers. It refuses or asks a question when the description does not determine a plan, and that refusal is the point \u2014 relay the question rather than guessing past it. Every value it supplied is listed in the ledger with where it came from; state the structural additions and the assumptions to the user when you show the plan.",
+  "Turns a described situation into a plan spec that run_plan can simulate \u2014 you supply meaning (income, accounts, what share is saved, a marketplace health plan) and this supplies instruments, dates, rates and phases. It RUNS NOTHING: pass the returned spec to run_plan for numbers. It refuses or asks a question when the description does not determine a plan, and that refusal is the point \u2014 relay the question rather than guessing past it. Every value it supplied is listed in the ledger with where it came from; state the structural additions and the assumptions to the user when you show the plan.",
   buildPlanShape,
   guard(async (intent) => {
     try {

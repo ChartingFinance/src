@@ -63,12 +63,14 @@ When someone describes their situation rather than picking a profile —
 *"I make $100K, if I save 10% what do I have in 10 years?"* — the path is
 `plan_defaults` → `build_plan` → `run_plan`.
 
-**Call `plan_defaults` once, at the start, and say the defaults back.** A plan
+**Call `plan_defaults` once, at the start, and say the `settings` back.** A plan
 inherits a start age of 50, retirement at 67, and a finish age of 87 unless
 someone says otherwise, so an unanswered question silently produces a plan about
 a person the user is not. Ten years from 50 lands at 60 and never reaches
 retirement; the same ten years from 60 crosses it and becomes a different plan
-with a drawdown in it. State the assumptions before building, not after.
+with a drawdown in it. State the assumptions before building, not after. Its
+`healthInsurance` list is what a marketplace health plan assumes; state those
+only when one comes up.
 
 `build_plan` returns a **spec and runs nothing**. Pass the spec to `run_plan`
 for numbers.
@@ -76,9 +78,34 @@ for numbers.
 **A refusal is the tool working, not failing.** `build_plan` returns a
 `question` when the description does not determine a plan — an account whose
 type cannot be read, splits that exceed 100%, a horizon and a finish age that
-disagree. Relay that question to the user. Do not pick a value on their behalf
+disagree, a health plan with no start in a plan that begins before retirement.
+Relay that question to the user. Do not pick a value on their behalf
 and re-call; the whole reason this step exists is that the engine cannot tell
 you a plan is wrong, only what it computes.
+
+**A marketplace (ACA) health plan goes in `healthInsurance`**, and the engine
+works the premium tax credit out on it: advanced each month on an income
+estimate, settled on each year's return. Four things decide whether the credit
+is the user's or an invention:
+
+- **The premium is the full price, before any credit.** People usually quote
+  what they pay after the subsidy. Passing that as the premium counts the credit
+  twice, so ask which it is.
+- **The benchmark is the second-lowest-cost silver plan**, on Form 1095-A
+  column B or the marketplace's tax tool. Without it the credit is measured
+  against the user's own plan, which overstates it when that plan costs more
+  than the benchmark and understates it when it costs less.
+- **The estimate is the income reported to the marketplace.** Without one,
+  nothing is advanced until the plan has a full year on the marketplace to
+  renew on, so the first year's credit arrives on the return instead.
+- **Coverage runs from retirement until the December before 65.** A plan that
+  starts in retirement covers from its first month. One that starts before
+  retirement must say when coverage starts, and not before work income stops:
+  the tool cannot yet model a premium paid while working, and refuses one.
+
+To show what the credit did, call `explain_month` with `eventType:
+'premiumTaxCredit'` for the monthly advances or `'ptcReconciliation'` for each
+January's settlement.
 
 **Report what it built and what it assumed.** The response carries a `ledger`:
 every setting with where it came from (`stated`, `inferred`, `derived`,
@@ -316,6 +343,10 @@ Disclose these when a number leans on one. All verified against the current sour
   it means the 3.8% surtax reaches further into later decades than a
   cost-of-living-adjusted threshold would.
 - **State and local income tax are not modeled at all.** Property tax is.
+- **The premium tax credit is the federal one, without the enhanced credit.**
+  The 400% cliff applies, no state subsidy is modeled, and years after 2027 index
+  the last published tables. Marketplace coverage ends at the household's one
+  age, so a married couple leaves it together.
 - **One-time income is annualized ×12** for withholding purposes, overstating
   withholding in the year it occurs.
 - Historical inputs are simulation assumptions, not forecasts. The model does not
