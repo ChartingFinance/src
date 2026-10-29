@@ -1,24 +1,28 @@
 # Spec 12 — A fallback order: who pays when the named account cannot
 
-Status: **PROPOSED 2026-10-27. Spec only, no code. Decisions for John in §11.**
-Spec 11 Part B (the MAGI ceiling) waits for Phases 1 and 2 (spec 11 §6.4).
+Status: **DECIDED 2026-10-29 (§11). Spec only, no code.** Phase 1 can start now.
+Phase 2 waits for the early-withdrawal penalty's own spec (decision §11.5), and
+spec 11 Part B (the MAGI ceiling) waits for Phases 1 and 2 (spec 11 §6.4).
 
 A bill's transfer rules say which accounts pay it. Two things can stop them: the
 named account is empty, or a rule caps what it may pay (spec 11 Part B caps IRA,
 401(k) and brokerage draws to keep MAGI under a ceiling). Either way the engine
 has to pick another account. Today it has one answer, fixed in code: cash, then
 savings, then the taxable account, then bonds, never a retirement account, and
-only one account deep. This spec lets the user write that answer as an ordered
-list of their own accounts: the **fallback order**.
+only one account deep. This spec lets the user write that answer as a ranked
+list of their own accounts, one for each life-event phase: the **fallback order**.
 
-Three rules hold throughout:
+Four rules hold throughout:
 
 - **Rules first.** The user's transfer rules stay the default split. The order
   pays only what they cannot pay, or may not.
 - **Nothing moves by default.** A plan with no order of its own runs on the
-  default order, which is today's backstop list, so existing plans do not move.
-- **Retirement accounts only by name.** An IRA, 401(k) or Roth pays from the
-  order only when the user puts it there.
+  default order, deduced from today's backstop rule, so existing plans do not
+  move.
+- **Nothing hidden.** Every account that can pay is always in the list, on or
+  off, and only an account the list shows as on pays from it.
+- **Retirement accounts by the user's hand.** An IRA, 401(k) or Roth is listed
+  off, and pays from the order only once the user switches it on.
 
 ---
 
@@ -71,17 +75,18 @@ If that fallback clamps too, the rest is reported unfunded (on the two-sided
 path since #114). A third account is never asked, so a bill can be reported
 unpaid while an everyday account still holds money.
 
-Measured 2026-10-27 on main 9c6947f, with a read-only probe over the 39 snapshot
-fixtures (the probe wraps `reportUnfunded` and checks every balance at the
-moment of each report):
+Measured with a read-only probe over the snapshot fixtures (the probe wraps
+`reportUnfunded` and checks every balance at the moment of each report): first
+on main 9c6947f (39 fixtures, 2026-10-27), and again on main 68d34bd (47
+fixtures, 2026-10-29, after #117 and #121 added eight):
 
-| Unfunded reports | Count | Amount |
-|---|---:|---:|
-| All | 712 | |
-| Made while an everyday account still held money | 0 | $0 |
-| Made while an IRA, 401(k) or Roth still held money | 184 | $151,724 |
+| Unfunded reports | 9c6947f | 68d34bd | Amount on 68d34bd |
+|---|---:|---:|---:|
+| All | 712 | 713 | |
+| Made while an everyday account still held money | 0 | 0 | $0 |
+| Made while an IRA, 401(k) or Roth still held money | 184 | 185 | $153,909 |
 
-The 184 come from three fixtures:
+The 185 come from four fixtures:
 
 - **`quickstart-earlyCareer`, a shipped profile:** 178 months of Living Expenses,
   November 2028 to December 2043 (ages 37 to 52), $63,694 in all. Its rule draws
@@ -91,6 +96,8 @@ The 184 come from three fixtures:
 - `unpayable-annual-true-up`: 5 annual true-ups, $57,966, with $1.5 million in
   an IRA.
 - `trueup-draw-unfunded`: 1 monthly true-up, $30,064, with money in a Roth.
+- `aca-repayment-unpayable` (new with #117): 1 premium tax credit repayment,
+  $2,185, with every other dollar in an IRA.
 
 So in the corpus the walk's depth has never cost a payment, while the lack of a
 user order has, in a shipped profile among others.
@@ -109,7 +116,7 @@ Accounts paying:
 | `TaxEngine.applyMonthlyTaxTrueUp` | the month's tax beyond withholding | same | yes |
 | `TaxEngine`, annual true-up | the April bill | same | yes |
 | `TaxEngine`, NIIT | the year's NIIT | same | yes |
-| Premium tax credit repayment (spec 11 Part A, PR #117, open) | excess advance credit | `resolveFunding`, then `settleOneSided` | yes, once #117 merges |
+| Premium tax credit repayment (spec 11 Part A, PR #117, merged 2026-10-29) | excess advance credit | `resolveFunding`, then `settleOneSided` | yes |
 | `settleOneSided`'s spill | the clamped part of any one-sided draw, a rule's own included | one fallback | yes |
 | `execute()`'s spill | the clamped part of a two-sided transfer | one fallback | yes, for an expense rule (§1.4) |
 | `#withholdInScope`'s spill | withholding a drained IRA or 401(k) still owes | one fallback | yes, without tax-deferred entries (§4.4) |
@@ -130,7 +137,7 @@ Looked up, no money moves:
 |---|---|---|
 | `TaxEngine.#settleAllocatedLeg`, NIIT, annual true-up, and #117's repayment | which account to book the spilled tax on, by asking `resolveFunding` again after the draw | read who paid from the walk (§5.2) |
 | `flow-pipelines.js` `addSystemTransfers` | the system route's source, from present state | the order's first payer |
-| `rule-notes.js` `funding-backstop`, `unfunded-obligation` | gated on instrument type; the prose names "cash, savings, brokerage or bonds" | name the plan's order (§6) |
+| `rule-notes.js` `funding-backstop`, `unfunded-obligation` | gated on instrument type; the prose names "cash, savings, brokerage or bonds" | name the order in force (§6) |
 | `portfolio-issues.js` `no-funding-accounts`, `plan-exhaustion`, `unfunded-obligation` | the same | the same |
 | `reportUnfunded`'s SANITY line | the same prose | the same |
 | `tax-allocation.js` `isAllocationEligible` | everyday accounts, by type | none: allocation picks payers by income share |
@@ -178,8 +185,8 @@ What the order has to give the ceiling:
 2. **The remainder, handed back.** When the order runs dry, the walk returns what
    is unpaid instead of reporting it, so the ceiling can pay it from the capped
    source past the cap. Every other caller reports it unfunded, as today.
-3. **A Roth, by name.** The default order holds no retirement account, so "Roth
-   last" exists only once the user adds the Roth (decision §11.6).
+3. **A Roth, switched on.** The default order lists retirement accounts off, so
+   "Roth last" exists only once the user switches the Roth on (decision §11.6).
 4. **Nothing for conversions.** A capped Roth conversion converts less. It is not
    a bill, so nothing is redirected.
 5. **A record of each redirect**, so `explain_month` can answer "why did the
@@ -215,13 +222,15 @@ What the order has to give the ceiling:
 
 What this spec takes from them:
 
-- one order per plan, with a reset to the default (both);
+- an order with a reset to the default (both); here there is one for each
+  life-event phase, which neither has (decision §11.1);
 - accounts, not only categories (Boldin's Customized);
-- a switch per account (Boldin's exclusion), which is also how "retirement
-  accounts only by name" shows on screen;
+- a switch per account (Boldin's exclusion), with every account always listed,
+  so a switched-off retirement account is on screen too (decision §11.3);
 - a tax target that changes which accounts pay, never how much is spent
   (ProjectionLab's shielding; here, the ceiling);
-- the penalty warning (ProjectionLab's red line) until the penalty is charged.
+- the early-withdrawal penalty, shown on the entry (ProjectionLab's red line) and
+  charged, as Boldin does since October 2026 (decision §11.5).
 
 The difference: in both products the order is the spending engine. It covers the
 gap between income and expenses. Here per-bill transfer rules come first and the
@@ -234,44 +243,73 @@ authoritative.
 
 | Field | Meaning | Default |
 |---|---|---|
-| Accounts, in order | who pays what a bill's rules cannot, first to last | every open cash, savings, taxable and bond account, in today's type order, by name within a type |
+| Accounts, ranked | who pays what a bill's rules cannot, first to last | every account that can pay: the cash, savings, taxable and bond accounts in today's type order, by name within a type, then the IRAs, 401(k)s and Roths |
 | On / off | whether the order may draw this account | on for everyday accounts, off for an IRA, 401(k) or Roth |
 | From age | the order skips this account before this age | none; 60 when a tax-deferred account is switched on (§4.4) |
 
-- **Entries are accounts, not types.** Types cannot say "Emergency Fund last" or
-  "this brokerage before that one".
+- **Entries are the plan's accounts, ranked by the user** (decision §11.2).
+  Types cannot say "Emergency Fund last" or "this brokerage before that one".
 - **Only accounts that can pay:** cash, savings, taxable, Treasury and corporate
   bonds, IRA, 401(k), Roth. Never income, pension, expense, real estate,
   mortgage or debt.
-- **The default is computed, never stored.** A plan saves an order only once the
-  user edits it, so a plan saved before this feature runs unchanged, and an
-  account added to a default plan joins the order where it belongs.
+- **Income is not an account.** Social Security, a pension or a salary pays into
+  an account and has no balance to draw. Social Security cannot start before 62
+  anywhere in the model (#121, merged 2026-10-29), so no order can bring it
+  earlier. Age rules set by law belong to the instrument (Social Security at 62,
+  the penalty before 59½); an entry's "from age" is the user's own gate on top
+  of them.
+- **The default is deduced from today's rule, and computed, never stored.**
+  Today's payer depends only on the plan's accounts: type in the backstop's
+  order, then display name within a type (§1.1). So any plan's default can be
+  written out: its everyday accounts in that order, all on, then its retirement
+  accounts, all off. Its first payer is today's in every case, the name
+  tie-break included, which is why Phase 1 predicts no drift. A plan saves an
+  order only once the user edits it, so a plan saved before this feature runs
+  unchanged.
 - **A reset** returns to the default.
 
-### 4.2 Accounts an edited order does not mention
+### 4.2 Every account, always listed
 
-An edited order is saved as a list, so an account added afterwards is not in it.
-Proposed: an everyday account the list does not mention is on, after the listed
-ones, in default order; a retirement account it does not mention is off. A new
-savings account is then never left unspent while a bill goes unpaid (the failure
-the July backstop fix was for), and a new IRA is never drawn without the user
-saying so. The editor shows every eligible account with its switch, so nothing
-is hidden. (Decision §11.3.)
+Decision §11.3: every account that can pay is in every list, on or off. Nothing
+pays from the order that the list does not show as on, and no account is out of
+view.
 
-### 4.3 Plan-wide, with an age on each entry
+- An edited order is saved as the complete list.
+- An account added later joins every saved list at once, where the user sees it:
+  an everyday account on, after the last account that is on, so a new savings
+  account is never left unspent while a bill goes unpaid (the failure the July
+  backstop fix was for); a retirement account off, at the end, so a new IRA is
+  never drawn without the user saying so. The editor marks it as new.
+- A deleted account leaves the lists, and a renamed one is rewritten in them
+  (§4.7).
+- An account not open in a month, not yet started or already closed, stays
+  listed. The walk passes over it.
 
-One order per plan, not one per life-event phase:
+### 4.3 One order per phase
 
-- The ceiling it serves is plan-wide over an age span (spec 11 decision §13.1),
-  and so are ProjectionLab's and Boldin's orders.
-- The need behind "per phase" is mostly "draw the IRA in retirement, not
-  before", and an age on the entry says exactly that.
-- A per-phase setting has the shape of `ModelLifeEvent.globalOverrides`, which is
-  saved and never applied (code-issue #24). One plan-wide value, with a test that
-  changing it changes a draw, is harder to get wrong.
+Decision §11.1: each life-event phase carries its own order, installed by
+`ModelLifeEvent.apply()` when the phase begins, beside its `phaseTransfers`.
 
-The alternative is an order on each `ModelLifeEvent`, installed by `apply()`
-beside `phaseTransfers`. It would travel in share links for free. (Decision §11.1.)
+- **An order stays in force until a later phase installs another.** Before any
+  phase installs one, the default (§4.1) is in force. A phase that keeps the
+  order before it shows that order, marked as inherited, with an action to make
+  its own.
+- **The "from age" stays on each entry.** A phase can begin at 55 while its IRA
+  waits for 60 (§4.4).
+- **The ceiling** (spec 11 Part B) is plan-wide over an age span (spec 11
+  decision §13.1). In each month it walks the order in force that month
+  (decision §11.6).
+- **Phases are being widened.** John, 2026-10-29: the phase is underused, and
+  any life change (a new job, selling a house, buying a second home) should be
+  one. That is its own spec. Today a phase is one of two `LifeEvent` types,
+  Accumulate and Retire, each with `closes` and `phaseTransfers`. Because the
+  order lives on `ModelLifeEvent`, every phase that spec adds carries an order
+  with no further work here.
+- **Stored but never applied** is this shape's known trap:
+  `ModelLifeEvent.globalOverrides` is saved and has no effect (code-issue #24).
+  The order needs a test that changing one phase's order changes a draw in that
+  phase and not before it. `ModelLifeEvent.fromJSON` copies fields by name, so
+  the order must be added there and to `toJSON`, or every load drops it.
 
 ### 4.4 Retirement accounts
 
@@ -292,25 +330,32 @@ instrument. What has to be right:
   that the sweep may or may not visit this month, depending on where the account
   sits in `modelAssets`. That walk uses cash, savings, taxable, bond and Roth
   entries only.
-- **The age gate.** The engine charges no 10% early-withdrawal penalty and has
-  no concept of 59½ (Rules, "What This Engine Does Not Model"), so an IRA in the
-  order at 45 would look free. Proposed: switching on a tax-deferred account sets
+- **The age gate** (decision §11.4). Switching on a tax-deferred account sets
   its "from age" to 60, the engine's whole-year rounding of 59½. That is
   `global_deferred_allocation_age`, which gates tax allocation for the same
-  reason. The user may lower it, and "What needs attention" then says the penalty
-  is not charged. (Decisions §11.4 and §11.5.)
+  reason. The user may lower it.
+- **Early withdrawal is allowed, at its real cost** (decision §11.5). Before 59½
+  the law allows a distribution and adds a 10% tax, with exceptions. The engine
+  charges none and has no concept of 59½ (Rules, "What This Engine Does Not
+  Model"; $27,000 uncharged on a probed retirement at 55), so an IRA in the
+  order at 45 would look free. The penalty therefore gets its own spec and is
+  built before Phase 2. It applies to every early distribution, a rule's as well
+  as the order's, and settles the exceptions (separation from service at 55,
+  72(t) payments and the rest).
 - **Roth.** Every Roth withdrawal is modelled as free of tax and penalty at any
   age. There is no contribution basis and no five-year clock: right for
   contributions, wrong for earnings before 59½. Rules' list of gaps gains that
-  line once a Roth can be in the order.
+  line once a Roth can be in the order, unless the penalty spec models earnings,
+  which needs a Roth basis first (§9).
 - **MAGI.** Without a ceiling, an IRA in the order adds its whole draw to AGI and
   can push a year over the ACA cliff. Spec 11 Part A's TaxYear records it; Part
   B is what prevents it.
 
 Early Career (§1.2) shows why the gate and the Roth line matter: its unpaid
-years are ages 37 to 52. With the gate, a 401(k) switched on would still not pay
-them. A Roth would, and the engine would charge nothing on any of it, as if all
-of it were contributions.
+years are ages 37 to 52. With the gate at 60, a 401(k) switched on would still
+not pay them; with the gate lowered, it would, and the penalty would be charged.
+A Roth would pay at any age, and until a Roth basis exists the engine treats all
+of it as contributions.
 
 ### 4.5 Rules first, then the order
 
@@ -333,28 +378,32 @@ destination: the first open everyday account with a balance, and for a refund,
 contribution, with limits, and the first account to pay is not the obvious first
 account to receive. This also leaves a known wart where it is: a savings account
 at $0 cannot receive leftover pay. A "deposit to" setting can come later.
-(Decision §11.7.)
+(Decision §11.7: unchanged.) So that this one implicit movement is not hidden
+either, the editor shows its account beside the order, read-only (§6).
 
 ### 4.7 Where it lives and how it travels
 
-- **With the plan, not the settings.** It names accounts, as transfer rules and
-  life events do, so it is plan content. It is stored per scenario by
+- **On each phase, with the plan, not the settings.** It names accounts, as
+  transfer rules and life events do, so it is plan content: a field of
+  `ModelLifeEvent`, saved with the plan's `lifeEvents` per scenario by
   `js/scenario-store.js`, the only scenario writer, and held like the other plan
   settings while an unsaved Open is on screen (#101).
-- **It reaches the engine with the plan**, beside `lifeEvents`, never from
+- **It reaches the engine with the plan**, inside `lifeEvents`, never from
   `globals.js`. Monte Carlo workers boot on defaults and see only their payload,
-  so the order rides in the plan they already receive.
-- **Share links and the MCP.** `SPEC_KEYS` in `share-link.js` gains it. The app's
-  import and `build_plan` read it through one reader, as `planSettingsFrom` does
-  for settings. `plan_defaults` reports a plan's default order, and `diff_plans`
+  so the order rides in the life events they already receive.
+- **Share links and the MCP.** `lifeEvents` is already in `SPEC_KEYS`
+  (`share-link.js`), so the order travels with no new key. The app's import and
+  `build_plan` read it through one reader, as `planSettingsFrom` does for
+  settings. `plan_defaults` reports a plan's default order, and `diff_plans`
   shows a changed one.
 - **By display name**, like `FundTransfer.toDisplayName`, until the stableId
   migration lands. A rename orphans an entry exactly as it orphans a rule today.
   At run time an entry naming no account is skipped and reported once, never
   thrown on, and the editor rewrites the order on a rename.
-- **Where it is edited** is a Phase 2 choice. A user meets the backstop in Flows'
-  "Moved automatically", in the `funding-backstop` rule note and in "What needs
-  attention", so each of those links to the editor.
+- **Where it is edited:** in each phase's editor, beside its transfers. A user
+  meets the backstop in Flows' "Moved automatically", in the `funding-backstop`
+  rule note and in "What needs attention", so each of those links to the order
+  in force that month.
 
 ## 5. The engine: one walk
 
@@ -363,8 +412,9 @@ at $0 cannot receive leftover pay. A "deposit to" setting can come later.
 One primitive replaces the three one-deep fallbacks of §1.2, for example
 `FundTransfer.drawFromFallbacks(amount, { order, skip, limitFor, origin, cause })`:
 
-1. Take the order's accounts that are on, past their age, open, with a positive
-   balance, and not in `skip` (the account that just clamped; a capped source).
+1. Take the accounts of the order in force this month (§4.3) that are on, past
+   their age, open, with a positive balance, and not in `skip` (the account
+   that just clamped; a capped source).
 2. From each in turn, draw `min(remaining, limitFor(account))` with `debit()`
    until the amount is paid.
 3. Return the legs and what is still unpaid.
@@ -401,8 +451,9 @@ meaning.
   true-up) book the spilled tax on each leg's own account, not on whichever
   account the resolver names after the draw. That also closes code-issue #30 at
   those three sites: they book what the fallbacks paid, not what was asked.
-  PR #117's repayment re-asks the same way (it already books what was paid), so
-  whichever of #117 and Phase 1 merges second converts it too.
+  PR #117's premium tax credit repayment (merged 2026-10-29) re-asks the same
+  way, though it already books what was paid. Phase 1 converts it too: four
+  sites.
 
 ### 5.3 A cap from a rule
 
@@ -436,24 +487,28 @@ For spec 11 Part B:
   before anything emits it, and each of the three tables throws mid-run if it is
   missed. A redirect must also never render as "Spillover from depleted IRA": the
   issues surface matches that prose and would report a capped IRA as run dry.
-  (Decision §11.9.)
+  (Decision §11.9: as proposed.)
 
 ## 6. Presentation surfaces, enumerated
 
 Spec 8 (NIIT) found a sixth surface after its fix. All of these change in Phase 2:
 
-- **The editor:** the accounts in order, a switch and a "from age" on each, a
-  reset, and the penalty note on a tax-deferred account under 60.
+- **The editor, in each phase:** every account, ranked, with a switch and a
+  "from age" on each; the order inherited from the phase before until the user
+  makes this phase's own; a reset; the penalty shown on a tax-deferred account
+  whose "from age" is under 60; and, read-only, where money no rule claims lands
+  (§4.6).
 - **Flows** (`money-flows.js`): "Bills no rule covers" and "An account ran
   short, the next one paid" name the order's accounts.
 - **Rule notes:** `funding-backstop` fires for an account the order drew, read
   from its events, never from present state; `unfunded-obligation` names the
-  plan's order instead of "cash, savings, brokerage or bonds".
+  order in force instead of "cash, savings, brokerage or bonds".
 - **What needs attention:** `no-funding-accounts` becomes "nothing in your
   fallback order can pay"; `plan-exhaustion` and `unfunded-obligation` name the
   order; a new notice when a bill went unpaid while an account switched off in
-  the order held money ("Your 401(k) held $412,000 but is not in your fallback
-  order"); the penalty notice of §4.4. `funding-ran-dry` stays as it is.
+  the order held money ("Your 401(k) held $412,000 but is switched off in your
+  fallback order"). `funding-ran-dry` stays as it is. The penalty's own notices
+  belong to its spec.
 - **`reportUnfunded`'s SANITY line.**
 - **`flow-pipelines.js`:** the system route's source.
 - **Month & Year Details** and its ⚡ summary.
@@ -462,8 +517,8 @@ Spec 8 (NIIT) found a sixth surface after its fix. All of these change in Phase 
 - **Help:** the "Funding Backstop" card.
 - **Rules:** the "Funding Backstop" card, the Cash rule ("the first account the
   funding backstop draws on"), the home's carrying-cost rule, and "What This
-  Engine Does Not Model" (the Roth line; the penalty line stays until the penalty
-  is charged).
+  Engine Does Not Model" (the Roth line; the penalty line goes when the penalty
+  spec lands).
 
 Phase 1 changes only the Help and Rules sentences that say the first account
 with a balance pays. After it, the accounts pay in turn until the bill is paid.
@@ -484,9 +539,9 @@ with a balance pays. After it, the accounts pay in turn until the bill is paid.
   comments on `FUNDING_BACKSTOP_PRIORITY`, `resolveFunding` and
   `global_deferred_allocation_age`, in Help and Rules, and in Claude's project
   memory, outside the repo. This spec is its written home from now on: the
-  default order, and retirement accounts only by name. The comments and both
-  static pages change in the same PR as the behavior, because no test reads
-  their prose (PR #97).
+  default order, and retirement accounts only when the user switches them on.
+  The comments and both static pages change in the same PR as the behavior,
+  because no test reads their prose (PR #97).
 - **Present state is not history.** `resolveFunding()` at render time answers for
   today, not for a month thirty years ago (rule-notes rule 3). Notes and Flows
   read the order's choice from recorded events.
@@ -495,14 +550,17 @@ with a balance pays. After it, the accounts pay in turn until the bill is paid.
   `--bless`. `--bless --only` leaves `_coverage.snap` stale; finish with an
   unfiltered bless.
 - **A fixture that does not reach a branch looks the same as a correct engine.**
-  No fixture makes the annual true-up or NIIT spill: measured 2026-10-27, the
-  one-sided spills the corpus reaches are 3 housing settlements, 8 gross-ups and
-  1 monthly true-up. Add those fixtures before the walk replaces those branches.
+  No fixture makes the annual true-up, NIIT or the premium tax credit repayment
+  spill: measured 2026-10-27 and again 2026-10-29 on main 68d34bd, the one-sided
+  spills the corpus reaches are 3 housing settlements, 8 gross-ups and 1 monthly
+  true-up. Add those fixtures before the walk replaces those branches.
 - **Conservation cannot see a policy.** "Deferrals before taxes" conserved money
   too (PR #99); only a check of the order caught it. The walk needs a check that
   its legs came in the order's order.
-- **Stored but never applied:** `globalOverrides` (code-issue #24). Whatever holds
-  the order needs a test that changing it changes a draw.
+- **Stored but never applied:** `globalOverrides` (code-issue #24), on the same
+  `ModelLifeEvent` that holds the order (§4.3). The order needs a test that
+  changing one phase's order changes a draw in that phase only, and `toJSON` and
+  `fromJSON` must carry it.
 - **The snapshot cannot see a live view of config** (spec 9). If any part of the
   order reaches the engine through config, test it as `tests/sim-config.mjs`
   does.
@@ -517,15 +575,22 @@ New fixtures:
 - `fallback-walks-on`: three everyday accounts and a bill that empties the first
   two in one month while the third has money. Today the rest is reported
   unfunded; after Phase 1 the third pays.
-- `annual-trueup-spills` and `niit-spills`: the annual true-up and NIIT drawn
-  from an account that clamps, then from a second that clamps too. Both branches
-  are unreached today.
+- `annual-trueup-spills`, `niit-spills` and `ptc-repayment-spills`: the annual
+  true-up, NIIT and a premium tax credit repayment drawn from an account that
+  clamps, then from a second that clamps too. All three branches are unreached
+  today.
 - `fallback-user-order`: brokerage before cash, the reverse of the default.
+- `fallback-order-per-phase`: brokerage first while working, cash first once
+  retired. The payer changes in the month the Retire phase begins, not before.
+- `fallback-account-added`: an account added after the order was edited joins
+  it, on after the last account that is on if it is an everyday account, off at
+  the end if it is a retirement account.
 - `fallback-roth-last`: brokerage and cash run dry and a Roth pays, with no tax
   and a Roth distribution booked.
 - `fallback-ira-at-62`: an IRA in the order pays a bill: a distribution in AGI,
-  10% withheld at source. A twin at 55 shows the age gate passing over it, and a
-  twin at 75 shows the draw counting toward the RMD.
+  10% withheld at source. A twin at 55 shows the age gate passing over it, a
+  twin at 55 with the gate lowered shows the penalty charged, and a twin at 75
+  shows the draw counting toward the RMD.
 - `fallback-ira-runs-dry-withholding`: the withholding spill passes over a
   tax-deferred entry.
 - `fallback-missing-account`: an entry naming no account, skipped and reported
@@ -549,14 +614,19 @@ Tests:
 - Mutations it must catch: reverse the walk; stop after one fallback; book what
   was asked instead of what was supplied; skip `recordDistribution` on a deferred
   leg; let the withholding walk reach a deferred entry; ignore the age gate; let
-  a destination use the order; skip an entry for a missing account silently.
+  a destination use the order; skip an entry for a missing account silently;
+  install a phase's order a month early or late; drop the order in `fromJSON`.
 - Spec 11 Part B's fixtures (`aca-early-retiree-*` with a ceiling,
   `aca-ceiling-breached`) use the order.
 
 ## 9. Not in scope
 
-- **The 10% early-withdrawal penalty.** Its own spec (decision §11.5).
-- **Roth basis:** contributions versus earnings, and the five-year rule.
+- **The 10% early-withdrawal penalty.** Its own spec, built before Phase 2
+  (decision §11.5).
+- **Phases as life changes** (a new job, selling a house, a second home). Its
+  own spec (decision §11.1); this one only puts the order on the phase.
+- **Roth basis:** contributions versus earnings, and the five-year rule. The
+  penalty spec decides whether to take it up.
 - **Choosing the order for the user:** a tax-optimal order, a Maximizer search
   over orders, "fill to the bracket" draws. The order is the user's statement;
   spec 11's ceiling is the only rule that steers it.
@@ -573,19 +643,20 @@ Tests:
 
 | Phase | Delivers | PRs | Effort |
 |---|---|---|---|
-| **1. The walk** | §5.1 and §5.2 on the default order: every fallback walks the whole list, results carry legs, and the three tax re-asks read the legs. No new setting, key or event type. | 1, or 2 with #30's booking first | about 2–3 days |
-| **2. The user's order** | §4 and §6: the order with its switches and ages, storage, share link and MCP, the editor, notes, issues, Help and Rules | 2: engine and data, then editor and pages | about 4–6 days |
+| **1. The walk** | §5.1 and §5.2 on the default order: every fallback walks the whole list, results carry legs, and the four tax re-asks read the legs. No new setting, key or event type. | 2: #30's booking first, then the walk (decision §11.8) | about 2–3 days |
+| **Before 2: the penalty** | the 10% tax on early distributions, from rules and the order alike | its own spec (decision §11.5) | its spec's |
+| **2. The user's order** | §4 and §6: an order on each phase, every account listed with its switch and age, storage, share link and MCP, the editor, notes, issues, Help and Rules | 2: engine and data, then editor and pages | about 4–6 days |
 | **3. Spec 11 Part B** | the ceiling as a limit on the walk (§5.3), and its redirect records | as spec 11 §12 | spec 11's 5–8 days |
 
 Phase 1's prediction, written before any change:
 
 - **The corpus is byte-identical.** The walk differs from today only where a
   fallback clamps while another everyday account still has money, which happened
-  in none of 712 unfunded reports, and in the three tax re-asks, which no fixture
-  reaches.
+  in none of 713 unfunded reports (main 68d34bd, 47 fixtures), and in the four
+  tax re-asks, which no fixture reaches.
 - **The new fixtures move:** `fallback-walks-on` shows the third account paying;
-  the annual true-up and NIIT spill fixtures show the spilled tax booked on the
-  accounts that paid it.
+  the annual true-up, NIIT and repayment spill fixtures show the spilled tax
+  booked on the accounts that paid it.
 
 Phase 2 also predicts the corpus byte-identical when no order is set. Each
 fixture that opts in states its own drift first.
@@ -594,40 +665,41 @@ Phase 1 is worth shipping alone. It fixes the one-deep fallback, closes #30 at
 its three sites, and gives Phases 2 and 3 the legs they need, without changing
 how any plan is set up.
 
-## 11. Decisions for John
+## 11. Decisions
 
-1. **Plan-wide or per phase.** Proposed: one order per plan, each entry with an
-   optional "from age" (§4.3). Alternative: an order on each life-event phase.
-2. **Accounts, with a switch each.** Proposed: entries are accounts, and every
-   eligible account appears with an on/off switch (§4.1). Alternative: account
-   types, as the backstop is today.
-3. **Accounts an edited order does not mention.** Proposed: everyday accounts on,
-   after the listed ones; retirement accounts off (§4.2). Alternative: the saved
-   list is exact, and an account not in it never pays.
-4. **The age gate on tax-deferred entries.** Proposed: 60 by default when the user
-   switches one on, editable, with a notice below 60; none on a Roth (§4.4).
-   Alternative: no gate, the notice only.
-5. **The early-withdrawal penalty: before or after the order.** Proposed: Phase 2
-   ships with the gate and the notice, and the penalty gets its own spec, done
-   before spec 11 Part C, which must already charge or label it (spec 11 §7).
-   Alternative: the penalty first, because an order that can name an IRA invites
-   a cost the engine does not charge.
-6. **The ceiling's order.** Proposed: the ceiling uses the plan's order, without
-   the account it is capping, limited by each account's MAGI cost (§5.3). When the
-   order has no Roth, the ceiling's card offers to add one at the end, so "Roth
-   last" is one click and still the user's choice. Alternative: the ceiling keeps
-   its own list, default brokerage, cash, Roth (spec 11's first draft).
-7. **Money coming in.** Proposed: unchanged (§4.6). Alternative: the first account
-   in the order also receives.
-8. **Phase 1 first, alone.** Proposed: yes, with #30's booking as a small PR ahead
-   of it if you prefer each prediction to make one claim (§10).
-9. **Recording a redirect.** Proposed: data on existing events, no new EventType
-   (§5.4).
+Recorded 2026-10-29 (John). The questions as first asked are in this PR's first
+commit.
 
-Taken as given rather than asked: the default order is today's backstop list, so
-existing plans do not move; and a retirement account pays from the order only
-when the user names it, which keeps the backstop policy of 2026-07-26 (the engine
-never chooses to spend retirement money). Say if either should be reopened.
+1. **Per phase.** Each life-event phase carries its own order (§4.3). The phase
+   is underused: any life change, such as a new job, selling a house or buying a
+   second home, should be one. That gets its own spec.
+2. **A ranked list of the plan's accounts** (§4.1), not account types.
+3. **Every account always listed, on or off** (§4.2), so nothing pays from a
+   hidden transfer. Asked alongside: Social Security must never pay before 62.
+   #121 enforces that everywhere (merged 2026-10-29), and Social Security is
+   income, not an account the order could draw (§4.1).
+4. **An age gate on tax-deferred accounts:** yes (§4.4).
+5. **Model reality:** early withdrawal is allowed and costs the 10% penalty. The
+   penalty gets its own spec and is built before Phase 2 (§4.4, §10).
+6. **The ceiling's order:** as proposed, walking the order in force that month,
+   without the account it is capping, limited by each account's MAGI cost
+   (§5.3). When that order has the Roth switched off, the ceiling's card offers
+   to switch it on at the end, so "Roth last" is one click and still the user's
+   choice.
+7. **Money coming in:** unchanged (§4.6).
+8. **Phase 1 first, alone:** yes, with #30's booking as a small PR ahead of it
+   (§10).
+9. **Recording a redirect:** as proposed, data on existing events (§5.4).
+
+The two points the draft took as given:
+
+- **The default order is deduced from today's rule.** It can be: today's payer
+  depends only on the plan's accounts, by type in the backstop's order and then
+  by name (§1.1), so the default is that list, computed and never stored (§4.1).
+  Existing plans do not move.
+- **Retirement accounts take the user's attention:** confirmed. One pays from the
+  order only once the user switches it on, which keeps the backstop policy of
+  2026-07-26 (the engine never chooses to spend retirement money).
 
 ## Sources
 
@@ -641,4 +713,6 @@ never chooses to spend retirement money). Say if either should be reopened.
 - Measurements in §1.2 and §7: a read-only probe wrapping
   `FundTransfer.reportUnfunded`, `resolveFunding` and `settleOneSided`, preloaded
   with `node --import` into `node tests/tools/snapshot.mjs` (which runs the corpus
-  in-process), on main 9c6947f, 2026-10-27. The snapshot stayed unchanged.
+  in-process), on main 9c6947f, 2026-10-27. Re-run on main 68d34bd, 2026-10-29,
+  with the probes' imports pointed at that checkout. Both times the snapshot
+  stayed unchanged.
