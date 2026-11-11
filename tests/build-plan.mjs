@@ -38,6 +38,19 @@ import { runPlan } from '../js/mcp/run-plan.js';
 import { SIM_CONFIG_DEFAULTS } from '../js/sim-config.js';
 import { Instrument } from '../js/instruments/instrument.js';
 
+// build_plan reads the clock for the plan's first month, and a horizon in
+// years is counted from it: built in January, the same intent ends a calendar
+// year earlier. Unpinned, this suite would be a different test every month.
+const WallClock = Date;
+function pinClock(iso) {
+    globalThis.Date = class extends WallClock {
+        constructor(...args) { return args.length ? new WallClock(...args) : new WallClock(iso); }
+        static now() { return new WallClock(iso).getTime(); }
+    };
+}
+const SUITE_CLOCK = '2026-11-15T12:00:00';
+pinClock(SUITE_CLOCK);
+
 let passed = 0, failed = 0;
 async function check(label, fn) {
     try { await fn(); passed++; console.log(`  ok   ${label}`); }
@@ -192,6 +205,208 @@ await check('§5.1 a horizon AND a finish age is a contradiction, not a preceden
     const r = refusalFrom({ ...TURN_ONE, settingsOverrides: { finishAge: 90 } });
     assert.ok(r, 'one of the two was silently preferred');
     assert.match(r.question, /10 years|90/);
+});
+
+// ── What review 2026-11-11 found the gate letting through ────────────
+//
+// Each of these once compiled to a plan that ran and reported a number.
+
+const refusedAt = (clock, intent) => {
+    pinClock(clock);
+    try { return refusalFrom(intent); } finally { pinClock(SUITE_CLOCK); }
+};
+const builtAt = (clock, intent) => {
+    pinClock(clock);
+    try { return buildPlan(intent); } finally { pinClock(SUITE_CLOCK); }
+};
+const monthsRun = (portfolio) =>
+    (portfolio.lastDateInt.year - portfolio.firstDateInt.year) * 12
+    + (portfolio.lastDateInt.month - portfolio.firstDateInt.month) + 1;
+
+await check('a share of income sent to an expense is refused', () => {
+    // It ran as 20% of take-home leaving the salary and arriving nowhere,
+    // with Rent still paid in full from savings.
+    const r = refusalFrom({ horizonYears: 5, income: [{ label: 'Salary', annual: 100000 }],
+        accounts: [{ label: 'Savings', startingBalance: 20000 }],
+        expenses: [{ label: 'Rent', monthly: 1000 }],
+        savingsSplit: [{ from: 'Salary', to: 'Rent', percent: 20 }] });
+    assert.ok(r, 'the split to an expense compiled');
+    assert.match(r.reason, /Rent is an expense/);
+    assert.match(r.question, /Savings/, 'the question should offer the accounts');
+    assert.doesNotMatch(r.question, /I have:.*Rent/, 'an expense was offered as a place to save');
+});
+
+await check('a share of income sent to a health plan is refused', () => {
+    const r = refusalFrom({ settingsOverrides: { startAge: 60, retirementAge: 60, finishAge: 70 },
+        income: [{ label: 'Pension', annual: 60000, kind: 'pension' }],
+        accounts: [{ label: 'Savings', startingBalance: 20000 }],
+        healthInsurance: [{ label: 'Marketplace', premium: { monthly: 900 } }],
+        savingsSplit: [{ from: 'Pension', to: 'Marketplace', percent: 20 }] });
+    assert.ok(r);
+    assert.match(r.reason, /Marketplace is an expense/);
+});
+
+await check('a one-year plan asked for in January runs twelve months', async () => {
+    // It ran 24: the finish age was the start age plus one, and a plan runs to
+    // December of its finish-age year.
+    const one = builtAt('2026-01-15T12:00:00', { ...TURN_ONE, horizonYears: 1 });
+    assert.deepEqual(one.horizon, { firstMonth: '2026-01', lastMonth: '2026-12', years: 1, months: 12 });
+    assert.equal(monthsRun((await runPlan(one.spec)).portfolio), 12);
+    assert.ok(!one.notes.some(n => /longer/.test(n)), 'an exact horizon needs no caveat');
+
+    const ten = builtAt('2026-01-15T12:00:00', TURN_ONE);
+    assert.equal(ten.horizon.months, 120);
+    assert.equal(ten.spec.settings.finishAge, 59, 'ten calendar years from 50 end the year of 59');
+    assert.equal(monthsRun((await runPlan(ten.spec)).portfolio), 120);
+});
+
+await check('a horizon from any other month says how much longer it runs', async () => {
+    const { spec, horizon, notes } = buildPlan(TURN_ONE);          // November 2026
+    assert.deepEqual(horizon, { firstMonth: '2026-11', lastMonth: '2036-12', years: 10, months: 122 });
+    assert.equal(monthsRun((await runPlan(spec)).portfolio), horizon.months,
+        'the reply and the run disagree about how long the plan is');
+    assert.ok(notes.some(n => /10 years/.test(n) && /2 months longer/.test(n) && /December 2036/.test(n)),
+        'the extra months were not stated: ' + notes.join(' | '));
+});
+
+await check('a rate given as a percentage is refused, wherever it is given', () => {
+    // An 8.5 growth rate ran as 850% a year: $10,000 became $1.76 billion.
+    const account = refusalFrom({ ...TURN_ONE,
+        accounts: [{ label: 'Savings', startingBalance: 10000, growthRate: 8.5 }] });
+    assert.ok(account, 'an 850% account compiled');
+    assert.match(account.reason, /850% a year/);
+    assert.deepEqual(account.options, { rate: [0.085] }, 'the offered rate is the percentage as a decimal');
+
+    const inflation = refusalFrom({ ...TURN_ONE, settingsOverrides: { inflationRate: 3 } });
+    assert.ok(inflation, '300% inflation compiled');
+    assert.equal(inflation.field, 'inflationRate');
+
+    const raise = refusalFrom({ ...TURN_ONE, income: [{ label: 'Salary', annual: 100000, growthRate: 2.5 }] });
+    assert.ok(raise, 'a 250% raise compiled');
+
+    const premium = refusalFrom({ settingsOverrides: { startAge: 60, retirementAge: 60, finishAge: 70 },
+        income: [{ label: 'Pension', annual: 60000, kind: 'pension' }],
+        accounts: [{ label: 'Savings', startingBalance: 20000 }],
+        healthInsurance: [{ premium: { monthly: 900 }, growthRate: 7 }] });
+    assert.ok(premium, 'a 700% premium rise compiled');
+
+    // The boundary, and the rates a plan really uses.
+    assert.equal(refusalFrom({ ...TURN_ONE,
+        accounts: [{ label: 'Savings', startingBalance: 0, growthRate: 0.5 }] }), null);
+    assert.ok(refusalFrom({ ...TURN_ONE,
+        accounts: [{ label: 'Savings', startingBalance: 0, growthRate: 0.51 }] }));
+    assert.ok(refusalFrom({ ...TURN_ONE,
+        accounts: [{ label: 'Savings', startingBalance: 0, growthRate: -0.51 }] }));
+    assert.equal(refusalFrom({ ...TURN_ONE, settingsOverrides: { inflationRate: 0.04 },
+        income: [{ label: 'Salary', annual: 100000, growthRate: -0.02 }] }), null);
+});
+
+await check('an income of zero or less is refused', () => {
+    // A salary of -100,000 ran untaxed and saved $460,936 in five years.
+    for (const annual of [-100000, 0]) {
+        const r = refusalFrom({ ...TURN_ONE, income: [{ label: 'Salary', annual }] });
+        assert.ok(r, `an income of ${annual} compiled`);
+        assert.match(r.reason, /above zero/);
+    }
+    assert.ok(refusalFrom({ ...TURN_ONE, income: [{ label: 'Salary', monthly: Number.NaN }] }));
+    // An expense is a magnitude, so its sign is not read; an amount that is not
+    // a number still is.
+    const rent = refusalFrom({ ...TURN_ONE, expenses: [{ label: 'Rent', monthly: Number.NaN }] });
+    assert.ok(rent, 'an expense of NaN compiled');
+    assert.match(rent.reason, /not a number/);
+});
+
+await check('an account that starts below zero is refused', () => {
+    const r = refusalFrom({ ...TURN_ONE, accounts: [{ label: 'Savings', startingBalance: -5000 }] });
+    assert.ok(r);
+    assert.match(r.reason, /below zero/);
+});
+
+await check('a pension named as an account is refused, by label or by kind', () => {
+    // "My pension pot", $200,000, resolved to the Pension INCOME instrument
+    // and paid its balance every month.
+    const byLabel = refusalFrom({ ...TURN_ONE, accounts: [{ label: 'Savings', startingBalance: 0 },
+        { label: 'My pension pot', startingBalance: 200000 }] });
+    assert.ok(byLabel, 'a pension pot compiled as an account');
+    assert.match(byLabel.reason, /income, not an account/);
+    assert.ok(byLabel.options, 'the refusal should offer what an account can be');
+
+    for (const kind of [Instrument.PENSION, Instrument.WORKING_INCOME, Instrument.RETIREMENT_INCOME]) {
+        const byKind = refusalFrom({ ...TURN_ONE, accounts: [{ label: 'Savings', startingBalance: 0 },
+            { label: 'Pot', kind, startingBalance: 200000 }] });
+        assert.ok(byKind, `an account of kind ${kind} compiled`);
+    }
+
+    // A word that does name an account still wins.
+    const { spec } = buildPlan({ ...TURN_ONE, accounts: [{ label: 'Savings', startingBalance: 0 },
+        { label: 'Pension rollover IRA', startingBalance: 200000 }] });
+    assert.equal(spec.modelAssets.find(a => a.displayName === 'Pension rollover IRA').instrument,
+        Instrument.IRA);
+    // And a pension as an income is what it always was.
+    assert.equal(refusalFrom({ ...TURN_ONE, income: [{ label: 'Salary', annual: 40000 },
+        { label: 'Pension', annual: 24000, kind: 'pension' }] }), null);
+});
+
+await check('work income in a plan that starts at or after retirement is refused', () => {
+    // "I am 70 and earn $100k": the default retirement age is 67, so the
+    // salary's last month fell before its first and it never paid.
+    const late = refusalFrom({ income: [{ label: 'Salary', annual: 100000 }],
+        accounts: [{ label: 'Savings', startingBalance: 0 }], settingsOverrides: { startAge: 70 } });
+    assert.ok(late, 'a salary that could never pay compiled');
+    assert.match(late.reason, /would never be paid/);
+    assert.match(late.reason, /default retirement age/);
+    assert.equal(late.field, 'retirementAge');
+
+    const atRetirement = refusalFrom({ income: [{ label: 'Salary', annual: 100000 }],
+        accounts: [{ label: 'Savings', startingBalance: 0 }],
+        settingsOverrides: { startAge: 65, retirementAge: 65 } });
+    assert.ok(atRetirement);
+    assert.doesNotMatch(atRetirement.reason, /default retirement age/, 'that age was stated');
+
+    // One year short of it is a plan, and so is a retired household on benefits.
+    assert.equal(refusalFrom({ income: [{ label: 'Salary', annual: 100000 }],
+        accounts: [{ label: 'Savings', startingBalance: 0 }],
+        settingsOverrides: { startAge: 66 } }), null);
+    assert.equal(refusalFrom({ income: [{ label: 'Pension', annual: 60000, kind: 'pension' }],
+        accounts: [{ label: 'Savings', startingBalance: 50000 }],
+        settingsOverrides: { startAge: 70 } }), null);
+});
+
+await check('nothing the user named is adopted as the spending build_plan sizes', () => {
+    // A stated expense of that name had the unsaved income added to it:
+    // $3,000 became $8,938.50, under "You never mentioned spending".
+    const expense = refusalFrom({ ...TURN_ONE, expenses: [{ label: 'Living Expenses', monthly: 3000 }] });
+    assert.ok(expense, 'a stated Living Expenses was merged with the residual');
+    assert.match(expense.reason, /already has an expense called that/);
+    assert.match(expense.question, /stated total for spending/);
+
+    // An account of that name had the residual taken off its balance, and no
+    // expense was created: the plan spent nothing.
+    const account = refusalFrom({ horizonYears: 5, income: [{ label: 'Salary', annual: 100000 }],
+        accounts: [{ label: 'Living Expenses', kind: 'bank', startingBalance: 20000 }],
+        savingsSplit: [{ from: 'Salary', to: 'Living Expenses', percent: 10 }] });
+    assert.ok(account, 'an account called Living Expenses was adopted as the residual');
+    assert.match(account.reason, /already has an account called that/);
+    assert.match(account.question, /account be called/);
+
+    // With every dollar of income routed there is no residual, so the name is free.
+    const { spec } = buildPlan({ horizonYears: 5, income: [{ label: 'Salary', annual: 100000 }],
+        accounts: [{ label: 'Savings', startingBalance: 20000 }],
+        expenses: [{ label: 'Living Expenses', monthly: 3000 }],
+        savingsSplit: [{ from: 'Salary', to: 'Savings', percent: 100 }] });
+    assert.equal(spec.modelAssets.find(a => a.displayName === 'Living Expenses').startCurrency.amount, -3000);
+});
+
+await check('the drawdown note describes the account it picked', () => {
+    // It said "the largest taxable one" whatever was picked, a 401(k) included.
+    const { notes } = buildPlan({ settingsOverrides: { startAge: 60, retirementAge: 62, finishAge: 70 },
+        income: [{ label: 'Salary', annual: 100000 }],
+        accounts: [{ label: '401k', startingBalance: 800000 }],
+        savingsSplit: [{ from: 'Salary', to: '401k', percent: 10 }] });
+    const note = notes.find(n => /spending is drawn from 401k/.test(n));
+    assert.ok(note, 'no drawdown note: ' + notes.join(' | '));
+    assert.doesNotMatch(note, /taxable one/);
+    assert.match(note, /brokerage account first.*Roth IRA last/);
 });
 
 await check('a horizon that lands exactly on retirement is refused', () => {

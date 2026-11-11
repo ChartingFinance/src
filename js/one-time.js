@@ -29,3 +29,22 @@ export class OneTimeEvent {
     return { dateInt: this.dateInt, amount: this.amount, note: this.note };
   }
 }
+/**
+ * What a row of the One-Time Events form holds, from its three inputs.
+ *
+ *   { event }    a date and an amount other than zero
+ *   { empty }    no amount typed: nothing to save
+ *   { problem }  an amount that cannot be an event, and why
+ *
+ * @param {{date: string, amount: string, note: string}} row  the inputs' values
+ */
+export function readOneTimeRow({ date, amount, note }) {
+  const typed = String(amount ?? '').trim();
+  if (typed === '') return { empty: true };
+  const value = parseFloat(typed);
+  if (Number.isNaN(value) || value === 0) {
+    return { problem: 'Enter an amount other than 0: negative for money out, positive for money in.' };
+  }
+  if (!date) return { problem: 'Pick the month this happens.' };
+  return { event: new OneTimeEvent(DateInt.parse(date), new Currency(value), String(note ?? '').trim()) };
+}

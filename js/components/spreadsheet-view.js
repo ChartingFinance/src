@@ -44,6 +44,16 @@ const metrics = [
     { key: 'monthlyCredits',               label: 'Credit' },
 ];
 
+/**
+ * One CSV cell (RFC 4180): quoted when it holds a comma, a quote or a line
+ * break, with quotes doubled. An asset called "Savings, joint" otherwise
+ * became two cells and shifted every column after it.
+ */
+export function csvCell(text) {
+    const s = String(text ?? '');
+    return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
 class SpreadsheetView extends LitElement {
 
     static properties = {
@@ -162,14 +172,14 @@ class SpreadsheetView extends LitElement {
         // Header row 1: Date + asset names spanning their metric columns
         const h1 = ['Date'];
         for (const ac of assetColumns) {
-            h1.push(ac.asset.displayName);
+            h1.push(csvCell(ac.asset.displayName));
             for (let i = 1; i < ac.metrics.length; i++) h1.push('');
         }
 
         // Header row 2: empty + metric labels
         const h2 = [''];
         for (const ac of assetColumns) {
-            for (const m of ac.metrics) h2.push(m.label);
+            for (const m of ac.metrics) h2.push(csvCell(m.label));
         }
 
         const rows = [h1.join(','), h2.join(',')];

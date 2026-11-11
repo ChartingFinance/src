@@ -245,8 +245,10 @@ class TransferModal extends LitElement {
 
         for (const form of forms) {
             const toDisplayName = form.querySelector('[name="toDisplayName"]').value;
-            const monthlyMoveValue = parseInt(form.querySelector('[name="monthlyMoveValue"]').value, 10) || 0;
-            const closeMoveValue = parseInt(form.querySelector('[name="closeMoveValue"]').value, 10) || 0;
+            // parseFloat: the inputs step by 0.1, and parseInt saved 12.5% as 12
+            // and dropped a 0.5% rule altogether.
+            const monthlyMoveValue = parseFloat(form.querySelector('[name="monthlyMoveValue"]').value) || 0;
+            const closeMoveValue = parseFloat(form.querySelector('[name="closeMoveValue"]').value) || 0;
 
             if (monthlyMoveValue > 0 || closeMoveValue > 0) {
                 fundTransfers.push(new FundTransfer(toDisplayName, monthlyMoveValue, closeMoveValue));

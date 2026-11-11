@@ -75,10 +75,19 @@ only when one comes up.
 `build_plan` returns a **spec and runs nothing**. Pass the spec to `run_plan`
 for numbers.
 
+**A horizon in years ends in a December.** Built in January, "10 years" runs
+exactly 120 months. Built in any other month it runs to the December after, up
+to 11 months more; `horizon.months` is the real length and a note says how much
+longer than asked. Say which month the ending figures are for, rather than
+"in 10 years".
+
 **A refusal is the tool working, not failing.** `build_plan` returns a
 `question` when the description does not determine a plan — an account whose
 type cannot be read, splits that exceed 100%, a horizon and a finish age that
-disagree, a health plan with no start in a plan that begins before retirement.
+disagree, a health plan with no start in a plan that begins before retirement,
+a rate given as a percentage (8.5 where 0.085 was meant), a share of income sent
+to an expense, a pension described as an account, or a salary in a plan that
+starts at or after its retirement age.
 Relay that question to the user. Do not pick a value on their behalf
 and re-call; the whole reason this step exists is that the engine cannot tell
 you a plan is wrong, only what it computes.
@@ -332,7 +341,7 @@ Disclose these when a number leans on one. All verified against the current sour
 - **No early-withdrawal penalty.** There is no 10% penalty and no concept of age
   59.5 anywhere in the engine — it cannot express a half-year, so it uses 60 as a
   conservative gate for tax *attribution* only
-  ([js/policy-constants.js:39](js/policy-constants.js:39)). A modeled early
+  ([js/policy-constants.js:28](js/policy-constants.js:28)). A modeled early
   retirement will understate tax owed.
 - **A married household has one age.** Age-based rules — the deductions from
   65, catch-up contribution limits, RMDs — treat both spouses as the entered age

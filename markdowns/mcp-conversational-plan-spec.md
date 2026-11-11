@@ -169,6 +169,13 @@ finishAge: 87`. "How much in 10 years" against those defaults simulates a
 `horizonYears: N` must derive `finishAge = startAge + N`, and the derivation
 must be declared, because it silently pins the user's age at 50.
 
+**Amended 2026-11-11.** A plan runs to December of its finish-age year, so
+`startAge + N` is `N` years only by luck of the month. Built in January it ran
+`N + 1` years (a one-year plan ran 24 months), so from January the finish age
+is `startAge + N - 1`: exactly `N` calendar years. From any other month no
+December is exactly `N` years on; the plan still runs to `startAge + N`, and
+the reply's `horizon.months` and a note say how many months longer that is.
+
 Note what luck is doing here: from age 50, ten years lands at 60, so retirement
 at 67 never fires and accumulation holds throughout. The same question from a
 60-year-old crosses the boundary and quietly becomes a different plan with a

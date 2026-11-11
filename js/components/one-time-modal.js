@@ -14,8 +14,7 @@
  */
 
 import { LitElement, html } from 'lit';
-import { OneTimeEvent } from '../one-time.js';
-import { Currency } from '../utils/currency.js';
+import { readOneTimeRow } from '../one-time.js';
 import { DateInt } from '../utils/date-int.js';
 import { formatCurrency } from '../utils/html.js';
 
@@ -33,6 +32,8 @@ class OneTimeModal extends LitElement {
         modelAsset:  { type: Object },
         defaultDate: { type: String },
         _rows:       { state: true },
+        /** Row index to what is wrong with it, for rows that could not be saved. */
+        _problems:   { state: true },
     };
 
     createRenderRoot() { return this; }
@@ -43,10 +44,12 @@ class OneTimeModal extends LitElement {
         this.modelAsset = null;
         this.defaultDate = null;
         this._rows = [];
+        this._problems = {};
     }
 
     updated(changed) {
         if (changed.has('open') && this.open && this.modelAsset) {
+            this._problems = {};
             const existing = (this.modelAsset.oneTimeEvents || []).map(e => ({
                 event: e,
                 editing: false,
@@ -83,7 +86,7 @@ class OneTimeModal extends LitElement {
                         </h2>
                         <p class="text-gray-500 text-sm mt-1">
                             ${ma.displayName}
-                            ${net !== 0 ? html` · Net: <strong class="${net >= 0 ? '' : 'text-red-600'}>${formatCurrency(net, { cents: true })}</strong>` : ''}
+                            ${net !== 0 ? html` · Net: <strong class="${net >= 0 ? '' : 'text-red-600'}">${formatCurrency(net, { cents: true })}</strong>` : ''}
                         </p>
                     </div>
 
@@ -158,6 +161,8 @@ class OneTimeModal extends LitElement {
                             placeholder="e.g. Year-end bonus" />
                     </div>
                 </div>
+                ${this._problems[index] ? html`
+                    <p class="text-xs text-red-600 mb-2" role="alert">${this._problems[index]}</p>` : ''}
                 <div class="flex justify-end gap-2">
                     <button type="button" class="btn-modern text-xs cursor-pointer" style="padding: 4px 10px;"
                         @click=${() => this._onCancelRow(index)}>
@@ -189,22 +194,33 @@ class OneTimeModal extends LitElement {
         );
     }
 
-    _onSaveRow(index) {
+    /** What the inputs of a row being edited hold (see readOneTimeRow). */
+    _readRow(index) {
         const container = this.querySelector(`[data-row="${index}"]`);
-        const dateVal   = container?.querySelector('[name="otDate"]')?.value;
-        const amountVal = parseFloat(container?.querySelector('[name="otAmount"]')?.value);
-        const noteVal   = container?.querySelector('[name="otNote"]')?.value?.trim() || '';
+        const value = (name) => container?.querySelector(`[name="${name}"]`)?.value ?? '';
+        return readOneTimeRow({ date: value('otDate'), amount: value('otAmount'), note: value('otNote') });
+    }
 
-        if (!dateVal || isNaN(amountVal) || amountVal === 0) return;
+    /** The row as a saved one, showing its event. */
+    _committed(event) {
+        return { event, editing: false, initDate: event.dateInt.toHTML(),
+                 initAmount: event.amount.toHTML(), initNote: event.note };
+    }
 
-        const event = new OneTimeEvent(DateInt.parse(dateVal), new Currency(amountVal), noteVal);
-        this._rows = this._rows.map((r, i) => i === index
-            ? { event, editing: false, initDate: dateVal, initAmount: String(amountVal), initNote: noteVal }
-            : r
-        );
+    _onSaveRow(index) {
+        const read = this._readRow(index);
+        if (!read.event) {
+            this._problems = { ...this._problems,
+                [index]: read.problem ?? 'Enter an amount, or remove this row.' };
+            return;
+        }
+        const { [index]: _cleared, ...rest } = this._problems;
+        this._problems = rest;
+        this._rows = this._rows.map((r, i) => i === index ? this._committed(read.event) : r);
     }
 
     _onCancelRow(index) {
+        this._problems = {};
         const row = this._rows[index];
         if (!row.event) {
             // New row — remove it
@@ -216,15 +232,34 @@ class OneTimeModal extends LitElement {
     }
 
     _onDeleteRow(index) {
+        // Indexes shift, so a message would land on the wrong row.
+        this._problems = {};
         this._rows = this._rows.filter((_, i) => i !== index);
     }
 
     // ── Modal-level actions ───────────────────────────────────
 
     _onSaveAndClose() {
-        // Collect only committed (non-editing) rows, sorted by date
-        const events = this._rows
-            .filter(r => !r.editing && r.event)
+        // A row still being edited is saved as it stands: the modal opens with
+        // one ready to fill in, and this is the button people press after
+        // filling it. A row with no amount typed is skipped (an existing event
+        // being edited keeps what it had). A row that cannot be an event stops
+        // the save and says why, rather than being dropped.
+        const problems = {};
+        const rows = this._rows.map((row, i) => {
+            if (!row.editing) return row;
+            const read = this._readRow(i);
+            if (read.event) return this._committed(read.event);
+            if (read.problem) problems[i] = read.problem;
+            return row;
+        });
+        if (Object.keys(problems).length) {
+            this._problems = problems;
+            return;
+        }
+
+        const events = rows
+            .filter(r => r.event)
             .map(r => r.event)
             .sort((a, b) => a.dateInt.toInt() - b.dateInt.toInt());
 
