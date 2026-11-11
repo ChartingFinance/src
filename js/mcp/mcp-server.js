@@ -438,25 +438,31 @@ server.tool(
 const buildPlanShape = {
   horizonYears: z.number().int().min(1).max(80).optional()
       .describe("How many years to project, e.g. 10. Derives finishAge from startAge. "
-              + "Mutually exclusive with settingsOverrides.finishAge."),
+              + "A plan ends in December: built in January it runs exactly this long, and from "
+              + "any other month it runs to the December after, which the returned `horizon` "
+              + "and `notes` state. Mutually exclusive with settingsOverrides.finishAge."),
   name: z.string().optional(),
   income: z.array(z.object({
     label: z.string().describe("What to call it, e.g. 'Salary'."),
-    annual: z.number().optional().describe("Gross annual amount. Give this OR monthly."),
+    annual: z.number().optional().describe("Gross annual amount, above zero. Give this OR monthly."),
     monthly: z.number().optional(),
     kind: z.enum(['working', 'pension', 'socialSecurity']).optional().default('working'),
-    growthRate: z.number().optional().describe("Annual raise rate as a decimal, e.g. 0.025."),
-  })).min(1).describe("Income sources. At least one is required."),
+    growthRate: z.number().optional().describe("Annual raise rate as a decimal, e.g. 0.025. "
+        + "A rate beyond 0.5 either way is refused as a percentage given by mistake."),
+  })).min(1).describe("Income sources. At least one is required. A plan that starts at or after "
+      + "its retirement age cannot have working income: that is refused."),
   accounts: z.array(z.object({
     label: z.string().describe("What to call it. The wording is read for the account type: "
         + "'brokerage', 'savings', '401k', 'IRA', 'Roth' all resolve."),
-    kind: z.string().optional().describe("Explicit instrument key, when the label does not say."),
-    startingBalance: z.number().optional(),
-    growthRate: z.number().optional(),
+    kind: z.string().optional().describe("Explicit instrument key, when the label does not say. "
+        + "An income (a pension, a salary, Social Security) is not an account and is refused."),
+    startingBalance: z.number().optional().describe("What is in it today; zero or more."),
+    growthRate: z.number().optional().describe("Annual return as a decimal, e.g. 0.085 for 8.5%."),
   })).optional(),
   savingsSplit: z.array(z.object({
     from: z.string().describe("An income label."),
-    to: z.string().describe("An account label."),
+    to: z.string().describe("An account label. An expense or a health plan is refused: money "
+        + "sent to one does not pay it."),
     percent: z.number().describe("Share OF THAT INCOME, not of the other splits. "
         + "5 to one account and 5 to another is 10% saved, not 10% each."),
   })).optional(),
@@ -504,7 +510,7 @@ const buildPlanShape = {
     startAge: z.number().int().optional(),
     retirementAge: z.number().int().optional(),
     finishAge: z.number().int().optional(),
-    inflationRate: z.number().optional(),
+    inflationRate: z.number().optional().describe("As a decimal, e.g. 0.03 for 3%."),
     filingAs: z.enum(['Single', 'MFJ']).optional(),
   }).optional().describe("Anything the user stated. Whatever is omitted comes from "
       + "plan_defaults and is reported as a default in the ledger."),

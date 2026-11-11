@@ -149,7 +149,12 @@ const ACCOUNT_WORDS = Object.freeze([
     ['bank', Instrument.BANK],
     ['cash account', Instrument.BANK],
     ['checking', Instrument.BANK],
-    ['pension', Instrument.PENSION],
+]);
+
+// What an account can be. An income, an expense or a loan given as an
+// account's `kind` would take the account's balance as its monthly amount.
+const INCOME_INSTRUMENTS = Object.freeze([
+    Instrument.WORKING_INCOME, Instrument.PENSION, Instrument.RETIREMENT_INCOME,
 ]);
 
 // "Savings" (§8.1) can mean the act of saving or the account labelled Savings.
@@ -324,11 +329,51 @@ const monthlyFrom = ({ annual, monthly }, what) => {
             `${what} gives both a monthly and an annual amount.`,
             { question: `Is ${what} ${monthly}/month or ${annual}/year?`, field: what });
     }
-    if (monthly != null) return monthly;
-    if (annual != null) return annual / 12;
-    throw new PlanRefusal(`${what} has no amount.`,
-        { question: `How much is ${what}? Monthly or annual is fine.`, field: what });
+    const given = monthly ?? annual;
+    if (given == null) {
+        throw new PlanRefusal(`${what} has no amount.`,
+            { question: `How much is ${what}? Monthly or annual is fine.`, field: what });
+    }
+    if (typeof given !== 'number' || !Number.isFinite(given)) {
+        throw new PlanRefusal(`${what} has an amount of ${String(given)}, which is not a number.`,
+            { question: `How much is ${what}? Monthly or annual is fine.`, field: what });
+    }
+    return monthly != null ? monthly : annual / 12;
 };
+
+/**
+ * The widest annual rate taken at its word. Rates are decimals (0.085 is
+ * 8.5%), and the usual mistake is to give the percentage: 8.5 would compound
+ * a $10,000 account to $1.7 billion in five years, and the engine would report
+ * it. Nothing a plan is built on moves by half in a year, every year.
+ */
+const WIDEST_RATE = 0.5;
+
+/** Refuse a rate that is not a number, or that reads as a percentage. */
+function assertRate(rate, what, field) {
+    if (rate == null) return;
+    if (typeof rate !== 'number' || !Number.isFinite(rate)) {
+        throw new PlanRefusal(`${what} is ${String(rate)}, which is not a number.`,
+            { question: `What is ${what}, as a percentage a year?`, field });
+    }
+    if (Math.abs(rate) > WIDEST_RATE) {
+        // toPrecision trims float noise: 8.5 / 100 is 0.08500000000000002.
+        const asDecimal = Number((rate / 100).toPrecision(12));
+        throw new PlanRefusal(
+            `${what} is ${rate}, which is ${Math.round(rate * 100)}% a year. Rates are `
+            + `decimals: ${rate}% is ${asDecimal}.`,
+            { question: `Is ${what} ${rate}% a year?`, options: { rate: [asDecimal] }, field });
+    }
+}
+
+/** Refuse an age that is not a whole number of years a person can be. */
+function assertAge(age, what) {
+    if (age == null) return;
+    if (!Number.isInteger(age) || age < 0 || age > 120) {
+        throw new PlanRefusal(`A ${what} of ${String(age)} is not an age in whole years.`,
+            { question: `What is the ${what}, in whole years?`, field: what });
+    }
+}
 
 const labelFor = key => InstrumentMeta.get(key)?.label ?? key;
 
@@ -349,6 +394,7 @@ function resolveAccountInstrument(account) {
                 { question: `What kind of account is ${account.label}?`,
                   options: ACCOUNT_CATEGORIES, field: account.label });
         }
+        if (INCOME_INSTRUMENTS.includes(account.kind)) throw incomeAsAccount(account.label);
         return { instrument: account.kind, provenance: Provenance.STATED };
     }
 
@@ -359,6 +405,10 @@ function resolveAccountInstrument(account) {
         .find(([word]) => hay.includes(word));
     if (hit) return { instrument: hit[1], provenance: Provenance.INFERRED };
 
+    // A pension is an income. Read as an account, its balance would become
+    // what it pays each month: a $200,000 pot would pay $200,000 a month.
+    if (hay.includes('pension')) throw incomeAsAccount(account.label);
+
     // §8: when the wording does not determine an instrument, ask.
     throw new PlanRefusal(
         `"${account.label}" does not name an account type I can resolve.`,
@@ -368,6 +418,19 @@ function resolveAccountInstrument(account) {
                 + '(Taxable Account, Savings)?',
             options: ACCOUNT_CATEGORIES,
             field: account.label,
+        });
+}
+
+/** The refusal for an income source given as an account. */
+function incomeAsAccount(label) {
+    return new PlanRefusal(
+        `"${label}" reads as an income, not an account with a balance.`,
+        {
+            question: `What does ${label} pay a month? A pension, a salary or Social Security `
+                + 'goes under income. If it is a pot of money instead, what kind of account '
+                + 'holds it — retirement (401K, IRA, Roth IRA) or capital (Taxable Account, Savings)?',
+            options: ACCOUNT_CATEGORIES,
+            field: label,
         });
 }
 
@@ -438,6 +501,7 @@ function healthInsuranceCard(card, label, ledger, { startAge, retirementAge, fin
 
     // ModelAsset.effectiveAnnualReturnRate reads an expense's 0% as plan
     // inflation, so a stated 0% would quietly become plan inflation.
+    assertRate(card.growthRate, `${label}'s premium growth rate`, label);
     if (card.growthRate === 0) {
         throw new PlanRefusal(
             `This engine reads a premium growth rate of 0% as plan inflation, so ${label} `
@@ -662,6 +726,16 @@ export function buildPlan(intent = {}) {
     const o = intent.settingsOverrides ?? {};
     const D = SIM_CONFIG_DEFAULTS;
 
+    assertAge(o.startAge, 'start age');
+    assertAge(o.retirementAge, 'retirement age');
+    assertAge(o.finishAge, 'finish age');
+    if (intent.horizonYears != null
+        && !(Number.isInteger(intent.horizonYears) && intent.horizonYears >= 1)) {
+        throw new PlanRefusal(
+            `A horizon of ${String(intent.horizonYears)} years is not a whole number of years.`,
+            { question: 'How many years should the plan project?', field: 'horizonYears' });
+    }
+
     const startAge = ledger.field('startAge',
         o.startAge ?? D.startAge,
         o.startAge != null ? Provenance.STATED : Provenance.DEFAULT,
@@ -670,6 +744,14 @@ export function buildPlan(intent = {}) {
     const retirementAge = ledger.field('retirementAge',
         o.retirementAge ?? D.retirementAge,
         o.retirementAge != null ? Provenance.STATED : Provenance.DEFAULT);
+
+    // The clock is read once, here, and the spec stores absolute months, so a
+    // spec built today runs identically in 2030.
+    const now = new Date();
+    // A DateInt, not its integer form: ModelAsset.fromJSON reads `.year` and
+    // `.month`, and an int makes the start date NaN.
+    const startMonth = DateInt.from(now.getFullYear(), now.getMonth() + 1);
+    const birthYear = now.getFullYear() - startAge;
 
     // §5.1: "how much in 10 years" sets the finish age from the start age, so
     // the derivation is declared in the ledger — it silently pins the age.
@@ -683,15 +765,27 @@ export function buildPlan(intent = {}) {
     if (o.finishAge != null) {
         finishAge = ledger.field('finishAge', o.finishAge, Provenance.STATED);
     } else if (intent.horizonYears != null) {
-        finishAge = ledger.field('finishAge', startAge + intent.horizonYears,
+        // A plan runs to December of the year of its finish age. From a
+        // January start, N whole calendar years end the December before the
+        // start age plus N: counting to that age would run a year long (a
+        // "1 year" plan would run 24 months). From any later month no December
+        // is exactly N years on, so the plan runs to the first one after, and
+        // the reply says how long that is (see `horizon` below).
+        const wholeYears = startMonth.month === 1;
+        finishAge = ledger.field('finishAge',
+            startAge + intent.horizonYears - (wholeYears ? 1 : 0),
             Provenance.DERIVED,
-            `${intent.horizonYears} years from a start age of ${startAge}`);
+            wholeYears
+                ? `${intent.horizonYears} years from January ${startMonth.year}, at ${startAge}, `
+                    + `end in December ${startMonth.year + intent.horizonYears - 1}`
+                : `${intent.horizonYears} years from a start age of ${startAge}`);
     } else {
         finishAge = ledger.field('finishAge', D.finishAge, Provenance.DEFAULT,
             'no horizon given, so the plan runs to the default finish age');
     }
 
-    if (finishAge <= startAge) {
+    // A one-year plan from January ends the same year, at the start age.
+    if (finishAge < startAge || (finishAge === startAge && intent.horizonYears == null)) {
         throw new PlanRefusal(
             `The plan finishes at ${finishAge}, at or before it starts (${startAge}).`,
             { question: 'How far out should the plan project?', field: 'finishAge' });
@@ -711,6 +805,7 @@ export function buildPlan(intent = {}) {
               field: 'finishAge' });
     }
 
+    assertRate(o.inflationRate, 'the inflation rate', 'inflationRate');
     const inflationRate = ledger.field('inflationRate',
         o.inflationRate ?? D.inflationRate,
         o.inflationRate != null ? Provenance.STATED : Provenance.DEFAULT);
@@ -735,14 +830,6 @@ export function buildPlan(intent = {}) {
     }
 
     // ── Dates ────────────────────────────────────────────────────
-    //
-    // The clock is read once, here, and the spec stores absolute months, so a
-    // spec built today runs identically in 2030.
-    const now = new Date();
-    // A DateInt, not its integer form: ModelAsset.fromJSON reads `.year` and
-    // `.month`, and an int makes the start date NaN.
-    const startMonth = DateInt.from(now.getFullYear(), now.getMonth() + 1);
-    const birthYear = now.getFullYear() - startAge;
     const retireMonth = DateInt.from(birthYear + retirementAge, 1);
     const finishMonth = DateInt.from(birthYear + finishAge, 12);
 
@@ -790,7 +877,27 @@ export function buildPlan(intent = {}) {
                 });
         }
 
+        // Work income stops at the retirement age. A plan that starts at or
+        // after it would give this income a last month before its first: it
+        // would never pay, and every bill would go unfunded.
+        if (instrument === Instrument.WORKING_INCOME && startAge >= retirementAge) {
+            throw new PlanRefusal(
+                `${label} is work income, but this plan starts at ${startAge} and work income `
+                + `stops at ${retirementAge}`
+                + (o.retirementAge == null ? ', the default retirement age' : '')
+                + `, so ${label} would never be paid.`,
+                { question: `Until what age does ${label} continue?`, field: 'retirementAge' });
+        }
+
         const monthly = monthlyFrom(src, label);
+        // An income is money coming in. Zero is no income, and a negative one
+        // ran as a salary that was never taxed.
+        if (!(monthly > 0)) {
+            throw new PlanRefusal(
+                `${label} has an amount of ${src.monthly ?? src.annual}, and an income has to be above zero.`,
+                { question: `How much does ${label} pay? Monthly or annual is fine.`, field: label });
+        }
+        assertRate(src.growthRate, `${label}'s growth rate`, label);
         const rate = src.growthRate ?? DEFAULT_RATES[instrument];
         if (src.growthRate == null) {
             ledger.asset(label, AssetOrigin.STATED,
@@ -821,6 +928,13 @@ export function buildPlan(intent = {}) {
 
         const { instrument, provenance } = resolveAccountInstrument(acct);
         const balance = acct.startingBalance ?? 0;
+        if (typeof balance !== 'number' || !Number.isFinite(balance) || balance < 0) {
+            throw new PlanRefusal(
+                `${label} has a starting balance of ${String(balance)}, and an account cannot `
+                + 'start below zero.',
+                { question: `What is in ${label} today?`, field: label });
+        }
+        assertRate(acct.growthRate, `${label}'s growth rate`, label);
         const rate = acct.growthRate ?? DEFAULT_RATES[instrument] ?? 0;
 
         ledger.asset(label, AssetOrigin.STATED,
@@ -893,10 +1007,23 @@ export function buildPlan(intent = {}) {
                 { question: `Which income should the ${s.percent}% come from? `
                     + `I have: ${incomeLabels.join(', ')}.`, field: 'savingsSplit' });
         }
-        if (!accountLabels.includes(s.to) && !expenseLabels.includes(s.to)) {
+        // A transfer into an expense does not pay it (see "Which account holds
+        // the money" below): the share would leave the income and arrive
+        // nowhere, and the expense would still be paid in full from the
+        // spending account.
+        if (expenseLabels.includes(s.to) || cardLabels.includes(s.to)) {
+            throw new PlanRefusal(
+                `${s.to} is an expense, and a share of ${s.from} sent to it would not pay it: `
+                + `${s.to} is already paid in full from the account the plan spends from.`,
+                { question: `Leave ${s.to} to be paid from the spending account, or name the `
+                    + `account ${s.from}'s ${s.percent}% should be saved in? `
+                    + `I have: ${accountLabels.join(', ') || 'no accounts yet'}.`,
+                  field: 'savingsSplit' });
+        }
+        if (!accountLabels.includes(s.to)) {
             throw new PlanRefusal(`Nothing called "${s.to}" can receive money in this plan.`,
                 { question: `Where should ${s.from}'s ${s.percent}% go? `
-                    + `I have: ${[...accountLabels, ...expenseLabels].join(', ') || 'no accounts yet'}.`,
+                    + `I have: ${accountLabels.join(', ') || 'no accounts yet'}.`,
                   field: 'savingsSplit' });
         }
         if (!(s.percent > 0)) {
@@ -1103,7 +1230,17 @@ export function buildPlan(intent = {}) {
     };
 
     // The spec's finish month is derived by the engine from finishAge; this is
-    // only for the reply, so the user sees the horizon in years, not ages.
+    // only for the reply, so the user sees how long the plan runs, not ages.
+    // `years` is whole years; `months` is the exact length.
+    const months = (finishMonth.year - startMonth.year) * 12
+        + (finishMonth.month - startMonth.month) + 1;
+    if (intent.horizonYears != null && months !== intent.horizonYears * 12) {
+        const extra = months - intent.horizonYears * 12;
+        notes.push(`You asked for ${intent.horizonYears} `
+            + `${intent.horizonYears === 1 ? 'year' : 'years'}; this plan runs ${extra} `
+            + `${extra === 1 ? 'month' : 'months'} longer, to December ${finishMonth.year}, `
+            + 'because a plan ends in December. Its ending figures are for that month.');
+    }
     return {
         spec,
         ledger: { fields: ledger.fields, assets: ledger.assets },
@@ -1111,7 +1248,8 @@ export function buildPlan(intent = {}) {
         horizon: {
             firstMonth: String(startMonth),
             lastMonth: String(finishMonth),
-            years: finishAge - startAge,
+            years: Math.floor(months / 12),
+            months,
         },
     };
 }
