@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.3.39; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.3.40; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -38539,6 +38539,16 @@ var ModelAsset = class _ModelAsset {
       isSelfEmployed: this.isSelfEmployed,
       isPrimaryHome: this.isPrimaryHome,
       annualTaxRate: this.annualTaxRate,
+      // A copy is run again (the Maximizer's page re-runs the best plan the
+      // worker sends it), so it carries everything a run reads. Without these
+      // four, that re-run had no home maintenance or insurance, no one-time
+      // events and no purchase funding, and showed a richer plan than the one
+      // the search had scored. tests/unit/model-asset-copy.test.js checks the
+      // copy against every constructor option.
+      annualMaintenanceRate: this.annualMaintenanceRate,
+      annualInsuranceCost: this.annualInsuranceCost,
+      fundingConfig: this.fundingConfig ? { ...this.fundingConfig } : null,
+      oneTimeEvents: [...this.oneTimeEvents],
       benchmarkPremium: this.benchmarkPremium,
       householdSize: this.householdSize,
       advanceCreditShare: this.advanceCreditShare,
