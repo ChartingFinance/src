@@ -641,9 +641,17 @@ export class Portfolio {
         if (investable <= 0) return;
 
         const annualExpense = Math.abs(this.yearly.expense.amount);
-        const currentRate = annualExpense / investable;
         const snapshotYear = currentDateInt.year - 1;
         const monthsElapsed = this.monthsInPlanYear(snapshotYear);
+        // The rate the guardrails test is an ANNUAL one. A plan that starts
+        // mid-year has only `monthsElapsed` months of spending in its first
+        // snapshot, so scale it to twelve: two months of a $54,000 budget is
+        // 0.85% of a $1M portfolio, which read as far under the prosperity
+        // rail and raised spending 15% in the plan's first January.
+        // `annualExpense` in the snapshot stays the amount actually spent.
+        const currentRate = monthsElapsed > 0
+            ? (annualExpense * 12 / monthsElapsed) / investable
+            : 0;
         const initialRate = this.guardrailsParams.withdrawalRate / 100;
         const preservationThreshold = this.guardrailsParams.preservation / 100;
         const prosperityThreshold = this.guardrailsParams.prosperity / 100;

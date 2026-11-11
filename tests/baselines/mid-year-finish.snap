@@ -749,7 +749,7 @@
   2027 months=12 partial=no investable=947361.360625 expense=56460.674463 rate=0.059598
   2028 months=12 partial=no investable=927436.991815 expense=52389.859834 rate=0.056489
   2029 months=12 partial=no investable=910882.453569 expense=48612.550940 rate=0.053369
-  2030 months=7 partial=yes investable=903485.256636 expense=26145.264000 rate=0.028938
+  2030 months=7 partial=yes investable=903485.256636 expense=26145.264000 rate=0.049608
 
 [taxYears]
   2026 months=12 age=75 agi=57247.920856 niit=57247.920856 seniorDeduction=57247.920856 irmaa=57247.920856 iraDeduction=57247.920856 rothContribution=57247.920856 aca=71863.741003 nii=0.000000 taxableSS=21384.179853 ordinaryTaxable=33097.920856 capitalGains=0.000000 fica=0.000000 incomeTax=3723.750503 capitalGainsTax=0.000000 niit=0.000000 federalTax=3723.750503 settledTrueUp=0.000000 settledNIIT=0.000000

@@ -179,6 +179,14 @@ export async function runMonteCarloFor(spec, { numSimulations = 500 } = {}) {
     const assets = membrane_rawDataToModelAssets(spec.modelAssets);
     const lifeEvents = (spec.lifeEvents ?? []).map(ModelLifeEvent.fromJSON);
 
+    // The retirement date is derived from the plan's birth year, and a config
+    // straight from a spec has none: a Portfolio attaches it, from the plan's
+    // first month. So bind one here and read the date off ITS config — asking
+    // the unbound config threw for every plan (tests/mcp-monte-carlo.mjs).
+    // Separate assets, because a Portfolio binds the ones it is given.
+    const bound = new Portfolio(
+        membrane_rawDataToModelAssets(spec.modelAssets), false, config).config;
+
     return computeMonteCarlo(assets, {
         numSimulations,
         lifeEvents,
@@ -186,7 +194,7 @@ export async function runMonteCarloFor(spec, { numSimulations = 500 } = {}) {
         // A spec that carries no guardrail parameters must not silently acquire
         // a withdrawal policy: that would change the plan, not just describe it.
         guardrailParams: spec.guardrailParams ?? null,
-        retirementDateInt: ageToDateIntFor(config, config.retirementAge),
+        retirementDateInt: ageToDateIntFor(bound, bound.retirementAge),
         dataMode: config.simDataMode ?? SIM_CONFIG_DEFAULTS.simDataMode,
     });
 }

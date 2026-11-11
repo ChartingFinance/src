@@ -398,6 +398,13 @@ export class FinplanTimeline extends LitElement {
             }
         }
 
+        // The scale always contains $0. A filled area drawn from a floor at
+        // the opening balance makes $1.1M -> $7.5M look like growth from
+        // nothing; anchored at zero, the height of the curve is the amount.
+        // An all-negative series (expenses, debt) hangs from zero the same way.
+        if (min > 0) min = 0;
+        if (max < 0) max = 0;
+
         if (max === min) max = min + 1;   // avoid a zero-height range
         return { vals, realVals, min, max, lastIdx, priceIndex };
     }
@@ -677,6 +684,11 @@ export class FinplanTimeline extends LitElement {
 
         const parts = [];
 
+        // The fill runs between the curve and $0, which the scale always
+        // contains (see _buildSeries) — not the bottom of the plot, which is
+        // below zero whenever the series dips negative.
+        const zeroY = Y(0).toFixed(1);
+
         // Area fill per phase (clip the curve segment falling inside the phase)
         for (const span of spans) {
             const color = LifeEventType.color(span.event.type);
@@ -692,7 +704,7 @@ export class FinplanTimeline extends LitElement {
             const x0 = this._ageToX(this._ageAtIndex(i0)).toFixed(1);
             const x1 = this._ageToX(this._ageAtIndex(i1)).toFixed(1);
             parts.push(svg`
-                <path d="M${x0},${BASE_Y} L${seg.join(' L')} L${x1},${BASE_Y} Z"
+                <path d="M${x0},${zeroY} L${seg.join(' L')} L${x1},${zeroY} Z"
                       fill="${color}1F" stroke="none"></path>
             `);
         }

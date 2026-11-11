@@ -297,7 +297,7 @@ export const uniformLifetimeTable = [
     { age: 110, divisor: 3.5 },
     { age: 111, divisor: 3.4 },
     { age: 112, divisor: 3.3 },
-    { age: 113, divisor: 2.1 },
+    { age: 113, divisor: 3.1 },
     { age: 114, divisor: 3.0 },
     { age: 115, divisor: 2.9 },
     { age: 116, divisor: 2.8 },
