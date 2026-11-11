@@ -175,7 +175,11 @@ export async function chronometer_run(portfolio) {
             partial: true,
             investableAssets: investable,
             annualExpense,
-            withdrawalRate: investable > 0 ? annualExpense / investable : 0,
+            // Annualised, like the rate applyGuardrails records for a
+            // partial first year.
+            withdrawalRate: investable > 0 && portfolio.monthsInPlanYear(finalYear) > 0
+                ? (annualExpense * 12 / portfolio.monthsInPlanYear(finalYear)) / investable
+                : 0,
         });
     }
 

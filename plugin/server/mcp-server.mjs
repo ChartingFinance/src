@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.3.37; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.3.38; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -33289,7 +33289,7 @@ var uniformLifetimeTable = [
   { age: 110, divisor: 3.5 },
   { age: 111, divisor: 3.4 },
   { age: 112, divisor: 3.3 },
-  { age: 113, divisor: 2.1 },
+  { age: 113, divisor: 3.1 },
   { age: 114, divisor: 3 },
   { age: 115, divisor: 2.9 },
   { age: 116, divisor: 2.8 },
@@ -36471,9 +36471,9 @@ var Portfolio = class _Portfolio {
     const investable = this.getTotalInvestableAssets().amount;
     if (investable <= 0) return;
     const annualExpense = Math.abs(this.yearly.expense.amount);
-    const currentRate = annualExpense / investable;
     const snapshotYear = currentDateInt.year - 1;
     const monthsElapsed = this.monthsInPlanYear(snapshotYear);
+    const currentRate = monthsElapsed > 0 ? annualExpense * 12 / monthsElapsed / investable : 0;
     const initialRate = this.guardrailsParams.withdrawalRate / 100;
     const preservationThreshold = this.guardrailsParams.preservation / 100;
     const prosperityThreshold = this.guardrailsParams.prosperity / 100;
@@ -37402,7 +37402,9 @@ async function chronometer_run(portfolio) {
       partial: true,
       investableAssets: investable,
       annualExpense,
-      withdrawalRate: investable > 0 ? annualExpense / investable : 0
+      // Annualised, like the rate applyGuardrails records for a
+      // partial first year.
+      withdrawalRate: investable > 0 && portfolio.monthsInPlanYear(finalYear) > 0 ? annualExpense * 12 / portfolio.monthsInPlanYear(finalYear) / investable : 0
     });
   }
   if (backtesting) {
@@ -40075,6 +40077,11 @@ async function runMonteCarloFor(spec, { numSimulations = 500 } = {}) {
   const config2 = simConfigFromPlanSpec(spec);
   const assets = membrane_rawDataToModelAssets(spec.modelAssets);
   const lifeEvents = (spec.lifeEvents ?? []).map(ModelLifeEvent.fromJSON);
+  const bound = new Portfolio(
+    membrane_rawDataToModelAssets(spec.modelAssets),
+    false,
+    config2
+  ).config;
   return computeMonteCarlo(assets, {
     numSimulations,
     lifeEvents,
@@ -40082,7 +40089,7 @@ async function runMonteCarloFor(spec, { numSimulations = 500 } = {}) {
     // A spec that carries no guardrail parameters must not silently acquire
     // a withdrawal policy: that would change the plan, not just describe it.
     guardrailParams: spec.guardrailParams ?? null,
-    retirementDateInt: ageToDateIntFor(config2, config2.retirementAge),
+    retirementDateInt: ageToDateIntFor(bound, bound.retirementAge),
     dataMode: config2.simDataMode ?? SIM_CONFIG_DEFAULTS.simDataMode
   });
 }
