@@ -341,7 +341,7 @@ Disclose these when a number leans on one. All verified against the current sour
 - **No early-withdrawal penalty.** There is no 10% penalty and no concept of age
   59.5 anywhere in the engine — it cannot express a half-year, so it uses 60 as a
   conservative gate for tax *attribution* only
-  ([js/policy-constants.js:39](js/policy-constants.js:39)). A modeled early
+  ([js/policy-constants.js:28](js/policy-constants.js:28)). A modeled early
   retirement will understate tax owed.
 - **A married household has one age.** Age-based rules — the deductions from
   65, catch-up contribution limits, RMDs — treat both spouses as the entered age

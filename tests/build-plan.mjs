@@ -397,6 +397,18 @@ await check('nothing the user named is adopted as the spending build_plan sizes'
     assert.equal(spec.modelAssets.find(a => a.displayName === 'Living Expenses').startCurrency.amount, -3000);
 });
 
+await check('the drawdown note describes the account it picked', () => {
+    // It said "the largest taxable one" whatever was picked, a 401(k) included.
+    const { notes } = buildPlan({ settingsOverrides: { startAge: 60, retirementAge: 62, finishAge: 70 },
+        income: [{ label: 'Salary', annual: 100000 }],
+        accounts: [{ label: '401k', startingBalance: 800000 }],
+        savingsSplit: [{ from: 'Salary', to: '401k', percent: 10 }] });
+    const note = notes.find(n => /spending is drawn from 401k/.test(n));
+    assert.ok(note, 'no drawdown note: ' + notes.join(' | '));
+    assert.doesNotMatch(note, /taxable one/);
+    assert.match(note, /brokerage account first.*Roth IRA last/);
+});
+
 await check('a horizon that lands exactly on retirement is refused', () => {
     // The case that came back from a real session, and the reason this check
     // sits on the DERIVED value: nobody typed a finish age. "A ten-year plan"

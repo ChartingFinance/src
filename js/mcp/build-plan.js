@@ -1230,7 +1230,8 @@ export function buildPlan(intent = {}) {
             `spending is drawn from ${fundingAccount} once work income stops`);
         notes.push(`After ${retirementAge}, spending is drawn from `
             + `${fundingAccount} — you did not say which account should fund `
-            + 'retirement, so I used the largest taxable one.');
+            + 'retirement, so I picked it: a brokerage account first, then savings, a '
+            + '401(k), an IRA, and a Roth IRA last, taking the largest of its kind.');
     }
 
     // ── Emit ─────────────────────────────────────────────────────

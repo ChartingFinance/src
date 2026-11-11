@@ -42271,7 +42271,7 @@ function buildPlan(intent = {}) {
       Provenance.DERIVED,
       `spending is drawn from ${fundingAccount} once work income stops`
     );
-    notes.push(`After ${retirementAge}, spending is drawn from ${fundingAccount} \u2014 you did not say which account should fund retirement, so I used the largest taxable one.`);
+    notes.push(`After ${retirementAge}, spending is drawn from ${fundingAccount} \u2014 you did not say which account should fund retirement, so I picked it: a brokerage account first, then savings, a 401(k), an IRA, and a Roth IRA last, taking the largest of its kind.`);
   }
   const settings = { inflationRate, filingAs, startAge, retirementAge, finishAge };
   ledger.assertComplete(settings, raw.map((a) => a.displayName));

@@ -40,7 +40,7 @@ Claude Code reports nothing — the plugin will simply have no tools. Check with
 | :--- | :--- |
 | `/simulate` | run a profile or a described plan |
 | `/explain` | ask why the engine produced a number, from recorded history |
-| 8 MCP tools | `plan_defaults`, `build_plan`, `list_profiles`, `quick_start_report`, `run_plan`, `explain_month`, `explain_issue`, `share_link` |
+| 9 MCP tools | `plan_defaults`, `build_plan`, `list_profiles`, `quick_start_report`, `run_plan`, `explain_month`, `explain_issue`, `share_link`, `diff_plans` |
 
 Describe a situation in a sentence — *"I make $100K, if I save 10% what do I
 have in 10 years?"* — and `build_plan` compiles it into a plan the engine can
