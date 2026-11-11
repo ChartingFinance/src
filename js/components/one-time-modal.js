@@ -83,7 +83,7 @@ class OneTimeModal extends LitElement {
                         </h2>
                         <p class="text-gray-500 text-sm mt-1">
                             ${ma.displayName}
-                            ${net !== 0 ? html` · Net: <strong class="${net >= 0 ? '' : 'text-red-600'}>${formatCurrency(net, { cents: true })}</strong>` : ''}
+                            ${net !== 0 ? html` · Net: <strong class="${net >= 0 ? '' : 'text-red-600'}">${formatCurrency(net, { cents: true })}</strong>` : ''}
                         </p>
                     </div>
 

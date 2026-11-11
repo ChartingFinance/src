@@ -150,6 +150,7 @@ import {
 } from './ui/util.js';
 import { makeActiveTaxTable } from './globals.js';
 import { editingConfigFor } from './editing-env.js';
+import { applyAssetFormEdit } from './asset-edit.js';
 
 /**
  * Bind assets to the editing config before the UI reads them.
@@ -1891,22 +1892,7 @@ function connectAssetFormModal() {
             }
             assetList.modelAssets = bindForEditing([...(assetList.modelAssets || []), newAsset]);
         } else if (mode === 'edit' && editingModelAsset) {
-            editingModelAsset.instrument = newAsset.instrument;
-            editingModelAsset.displayName = newAsset.displayName;
-            editingModelAsset.startDateInt = newAsset.startDateInt;
-            editingModelAsset.startCurrency = newAsset.startCurrency;
-            editingModelAsset.finishDateInt = newAsset.finishDateInt;
-            editingModelAsset.annualReturnRate = newAsset.annualReturnRate;
-            editingModelAsset.startBasisCurrency = newAsset.startBasisCurrency;
-            editingModelAsset.monthsRemaining = newAsset.monthsRemaining;
-            editingModelAsset.annualDividendRate = newAsset.annualDividendRate;
-            editingModelAsset.dividendQualifiedRatio = newAsset.dividendQualifiedRatio;
-            editingModelAsset.longTermCapitalHoldingPercentage = newAsset.longTermCapitalHoldingPercentage;
-            editingModelAsset.isSelfEmployed = newAsset.isSelfEmployed;
-            editingModelAsset.annualTaxRate = newAsset.annualTaxRate;
-            editingModelAsset.isPrimaryHome = newAsset.isPrimaryHome;
-            editingModelAsset.annualMaintenanceRate = newAsset.annualMaintenanceRate;
-            editingModelAsset.annualInsuranceCost = newAsset.annualInsuranceCost;
+            applyAssetFormEdit(editingModelAsset, newAsset);
             editingModelAsset = null;
         }
         calculate();
