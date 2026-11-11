@@ -15,6 +15,7 @@
  *   open        - boolean
  *   modelAsset  - ModelAsset (for edit mode pre-fill)
  *   birthYear   - the plan's, so Social Security can't be dated before 62
+ *   otherNames  - the names of the plan's other assets, which this one can't take
  *
  * Dispatches:
  *   'save-asset'  { detail: { modelAsset, mode } }
@@ -26,6 +27,7 @@ import { Instrument, InstrumentType } from '../instruments/instrument.js';
 import { membrane_htmlElementToAssetModel } from '../membrane.js';
 import { earliestSocialSecurityDateIntFor, SOCIAL_SECURITY_EARLIEST_AGE } from '../plan-dates.js';
 import { DateInt, monthLabel } from '../utils/date-int.js';
+import { assetNameProblem } from '../asset-edit.js';
 
 class AssetFormModal extends LitElement {
 
@@ -34,6 +36,7 @@ class AssetFormModal extends LitElement {
         open:           { type: Boolean, reflect: true },
         modelAsset:     { type: Object },
         birthYear:      { type: Number },
+        otherNames:     { type: Array },
         _instrument:    { state: true },
     };
 
@@ -45,6 +48,7 @@ class AssetFormModal extends LitElement {
         this.open = false;
         this.modelAsset = null;
         this.birthYear = null;
+        this.otherNames = [];
         this._instrument = null;
     }
 
@@ -54,7 +58,9 @@ class AssetFormModal extends LitElement {
             if (this.mode === 'edit' && this.modelAsset) {
                 this._instrument = this.modelAsset.instrument;
             } else {
-                this._instrument = this.preselectedInstrument || null;
+                // The first type is the one the select shows, so its fields
+                // are the ones to draw; null drew none until the type was re-picked.
+                this._instrument = this.preselectedInstrument || InstrumentType.all()[0]?.key || null;
                 this._startDate = this.preselectedStartDate || null;
                 this._startValue = this.preselectedStartValue || null;
                 this.preselectedInstrument = null;
@@ -121,7 +127,8 @@ class AssetFormModal extends LitElement {
                             <div>
                                 <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Familiar Name</label>
                                 <input type="text" class="fin-input" name="displayName"
-                                    .value=${displayName}
+                                    .value=${displayName} required
+                                    @input=${(e) => e.target.setCustomValidity('')}
                                     placeholder="e.g. Dream House" />
                             </div>
                             <div>
@@ -357,6 +364,16 @@ class AssetFormModal extends LitElement {
                 + `${SOCIAL_SECURITY_EARLIEST_AGE}. The earliest start is `
                 + `${monthLabel(DateInt.parse(start.min))}.`);
             start.reportValidity();
+            return;
+        }
+
+        // The name is what transfers and phases refer to an asset by.
+        const name = form.elements.displayName;
+        name.value = name.value.trim();
+        const problem = assetNameProblem(name.value, this.otherNames);
+        if (problem) {
+            name.setCustomValidity(problem);
+            name.reportValidity();
             return;
         }
 

@@ -372,6 +372,31 @@ await check('work income in a plan that starts at or after retirement is refused
         settingsOverrides: { startAge: 70 } }), null);
 });
 
+await check('nothing the user named is adopted as the spending build_plan sizes', () => {
+    // A stated expense of that name had the unsaved income added to it:
+    // $3,000 became $8,938.50, under "You never mentioned spending".
+    const expense = refusalFrom({ ...TURN_ONE, expenses: [{ label: 'Living Expenses', monthly: 3000 }] });
+    assert.ok(expense, 'a stated Living Expenses was merged with the residual');
+    assert.match(expense.reason, /already has an expense called that/);
+    assert.match(expense.question, /stated total for spending/);
+
+    // An account of that name had the residual taken off its balance, and no
+    // expense was created: the plan spent nothing.
+    const account = refusalFrom({ horizonYears: 5, income: [{ label: 'Salary', annual: 100000 }],
+        accounts: [{ label: 'Living Expenses', kind: 'bank', startingBalance: 20000 }],
+        savingsSplit: [{ from: 'Salary', to: 'Living Expenses', percent: 10 }] });
+    assert.ok(account, 'an account called Living Expenses was adopted as the residual');
+    assert.match(account.reason, /already has an account called that/);
+    assert.match(account.question, /account be called/);
+
+    // With every dollar of income routed there is no residual, so the name is free.
+    const { spec } = buildPlan({ horizonYears: 5, income: [{ label: 'Salary', annual: 100000 }],
+        accounts: [{ label: 'Savings', startingBalance: 20000 }],
+        expenses: [{ label: 'Living Expenses', monthly: 3000 }],
+        savingsSplit: [{ from: 'Salary', to: 'Savings', percent: 100 }] });
+    assert.equal(spec.modelAssets.find(a => a.displayName === 'Living Expenses').startCurrency.amount, -3000);
+});
+
 await check('a horizon that lands exactly on retirement is refused', () => {
     // The case that came back from a real session, and the reason this check
     // sits on the DERIVED value: nobody typed a finish age. "A ten-year plan"

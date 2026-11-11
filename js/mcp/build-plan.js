@@ -1099,19 +1099,36 @@ export function buildPlan(intent = {}) {
             // A structural asset (§9.2): created by a construction rule, not by
             // anything the user said, so the ledger records it as such.
             if (!residualExpense) {
+                // The residual once adopted whatever already had its name and
+                // added the unsaved income to it. A stated $3,000 of living
+                // expenses became $8,938 under a note saying spending was never
+                // mentioned; an account of that name had the residual taken off
+                // its balance, and the plan was left with no spending at all.
                 if (seen.has(RESIDUAL_EXPENSE_LABEL)) {
-                    residualExpense = RESIDUAL_EXPENSE_LABEL;
-                } else {
-                    claim(RESIDUAL_EXPENSE_LABEL, 'residual spending');
-                    residualExpense = RESIDUAL_EXPENSE_LABEL;
-                    raw.push({
-                        instrument: Instrument.MONTHLY_EXPENSE,
-                        displayName: RESIDUAL_EXPENSE_LABEL,
-                        startDateInt: startMonth,
-                        startCurrency: { amount: 0 },   // summed below
-                    });
-                    expenseLabels.push(RESIDUAL_EXPENSE_LABEL);
+                    const stated = expenseLabels.includes(RESIDUAL_EXPENSE_LABEL);
+                    const what = stated ? 'an expense'
+                        : accountLabels.includes(RESIDUAL_EXPENSE_LABEL) ? 'an account' : 'an income';
+                    throw new PlanRefusal(
+                        `"${RESIDUAL_EXPENSE_LABEL}" is the name build_plan gives the spending it `
+                        + `works out from the pay you do not save, and this plan already has ${what} `
+                        + 'called that.',
+                        { question: stated
+                            ? 'build_plan cannot yet take a stated total for spending: it treats all '
+                                + 'the take-home pay you do not save as spent. Leave '
+                                + `${RESIDUAL_EXPENSE_LABEL} out and let it be worked out, or, if it is `
+                                + 'one bill among others, what should it be called instead?'
+                            : `What should the ${what.slice(3)} be called instead?`,
+                          field: RESIDUAL_EXPENSE_LABEL });
                 }
+                claim(RESIDUAL_EXPENSE_LABEL, 'residual spending');
+                residualExpense = RESIDUAL_EXPENSE_LABEL;
+                raw.push({
+                    instrument: Instrument.MONTHLY_EXPENSE,
+                    displayName: RESIDUAL_EXPENSE_LABEL,
+                    startDateInt: startMonth,
+                    startCurrency: { amount: 0 },   // summed below
+                });
+                expenseLabels.push(RESIDUAL_EXPENSE_LABEL);
             }
 
             // Sized from take-home, not gross (see withholdingFor).

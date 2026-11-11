@@ -48,3 +48,26 @@ export function applyAssetFormEdit(target, edited) {
     for (const field of ASSET_FORM_FIELDS) target[field] = edited[field];
     return target;
 }
+
+/**
+ * What is wrong with a name typed into the asset form, or null.
+ *
+ * An asset's name is how everything else refers to it: fund transfers name
+ * their target, phases key their rules by it, and the asset list keys its cards
+ * by it. Two assets with one name make each of those ambiguous, and an asset
+ * with no name cannot be referred to at all, so the form takes neither.
+ * Names differing only in case or outer spaces count as the same: nobody can
+ * tell "Savings" from "savings " in a list.
+ *
+ * @param {string} name          as typed
+ * @param {string[]} otherNames  the names of the plan's other assets
+ * @returns {string|null}
+ */
+export function assetNameProblem(name, otherNames = []) {
+    const wanted = String(name ?? '').trim();
+    if (!wanted) return 'Give this asset a name.';
+    const taken = otherNames.find((n) => String(n ?? '').trim().toLowerCase() === wanted.toLowerCase());
+    return taken != null
+        ? `Another asset is already called "${taken}". Names have to differ: transfers refer to an asset by its name.`
+        : null;
+}

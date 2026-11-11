@@ -20,6 +20,16 @@ import { LitElement, html } from 'lit';
 import { InstrumentType, InstrumentMeta } from '../instruments/instrument.js';
 import { colorRange, formatCurrency } from '../utils/html.js';
 
+/**
+ * A down payment as a whole percentage from 1 to 99, or null when the text is
+ * not a number. Outside that range the rest is not a mortgage: 150% asked for
+ * a loan of minus half the price.
+ */
+export function downPaymentPercentFrom(text) {
+    const typed = parseInt(text, 10);
+    return Number.isNaN(typed) ? null : Math.min(99, Math.max(1, typed));
+}
+
 class FundingModal extends LitElement {
 
     static properties = {
@@ -105,11 +115,11 @@ class FundingModal extends LitElement {
                             <div class="flex items-center gap-4">
                                 <input type="range" class="flex-1" min="1" max="99" step="1"
                                     .value=${String(this._downPaymentPercent)}
-                                    @input=${(e) => this._downPaymentPercent = parseInt(e.target.value, 10)} />
+                                    @input=${(e) => this._downPaymentPercent = downPaymentPercentFrom(e.target.value) ?? this._downPaymentPercent} />
                                 <input type="number" class="fin-input w-20 text-center text-sm"
                                     min="1" max="99" step="1"
                                     .value=${String(this._downPaymentPercent)}
-                                    @input=${(e) => this._downPaymentPercent = parseInt(e.target.value, 10) || 20} />
+                                    @change=${this._onPercentTyped} />
                                 <span class="text-sm text-gray-400">%</span>
                             </div>
                             <div class="flex justify-between mt-2 text-sm">
@@ -147,6 +157,16 @@ class FundingModal extends LitElement {
                 </div>
             </div>
         `;
+    }
+
+    /**
+     * On change, not on input: taking each keystroke snapped an emptied field
+     * back to a number while it was being retyped. What was typed is clamped,
+     * and the field shows the figure in force.
+     */
+    _onPercentTyped(e) {
+        this._downPaymentPercent = downPaymentPercentFrom(e.target.value) ?? this._downPaymentPercent;
+        e.target.value = String(this._downPaymentPercent);
     }
 
     _getFundableAssets() {

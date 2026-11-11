@@ -42166,19 +42166,26 @@ function buildPlan(intent = {}) {
       }
       if (!residualExpense) {
         if (seen.has(RESIDUAL_EXPENSE_LABEL)) {
-          residualExpense = RESIDUAL_EXPENSE_LABEL;
-        } else {
-          claim(RESIDUAL_EXPENSE_LABEL, "residual spending");
-          residualExpense = RESIDUAL_EXPENSE_LABEL;
-          raw.push({
-            instrument: Instrument.MONTHLY_EXPENSE,
-            displayName: RESIDUAL_EXPENSE_LABEL,
-            startDateInt: startMonth,
-            startCurrency: { amount: 0 }
-            // summed below
-          });
-          expenseLabels.push(RESIDUAL_EXPENSE_LABEL);
+          const stated2 = expenseLabels.includes(RESIDUAL_EXPENSE_LABEL);
+          const what = stated2 ? "an expense" : accountLabels.includes(RESIDUAL_EXPENSE_LABEL) ? "an account" : "an income";
+          throw new PlanRefusal(
+            `"${RESIDUAL_EXPENSE_LABEL}" is the name build_plan gives the spending it works out from the pay you do not save, and this plan already has ${what} called that.`,
+            {
+              question: stated2 ? `build_plan cannot yet take a stated total for spending: it treats all the take-home pay you do not save as spent. Leave ${RESIDUAL_EXPENSE_LABEL} out and let it be worked out, or, if it is one bill among others, what should it be called instead?` : `What should the ${what.slice(3)} be called instead?`,
+              field: RESIDUAL_EXPENSE_LABEL
+            }
+          );
         }
+        claim(RESIDUAL_EXPENSE_LABEL, "residual spending");
+        residualExpense = RESIDUAL_EXPENSE_LABEL;
+        raw.push({
+          instrument: Instrument.MONTHLY_EXPENSE,
+          displayName: RESIDUAL_EXPENSE_LABEL,
+          startDateInt: startMonth,
+          startCurrency: { amount: 0 }
+          // summed below
+        });
+        expenseLabels.push(RESIDUAL_EXPENSE_LABEL);
       }
       const target = raw.find((a) => a.displayName === RESIDUAL_EXPENSE_LABEL);
       target.startCurrency.amount -= netByIncome.get(label) * (residual / 100);
