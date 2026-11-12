@@ -1,6 +1,6 @@
 # Spec 15 — The Maximizer as a question: how much can I spend, and what is left
 
-Status: **DRAFT 2026-11-12. Spec only, no code. Ten decisions pending (§14).**
+Status: **DRAFT 2026-11-12. Spec only, no code. Eleven decisions pending (§14).**
 
 The Maximizer today asks the user to pick a point between "Spending" and
 "Terminal Value" on a strip of 21 notches, then runs a genetic search for three
@@ -9,11 +9,13 @@ can I spend?", and with the limits that make the question answerable: never run
 out, leave at least so much, hold up in simulated markets. The trade-off the
 strip stood for is drawn as a real curve, and the curve is the control.
 
-Four rules hold throughout:
+Five rules hold throughout:
 
-- **One dial.** The search turns one thing: how much the plan spends. It does
-  not touch guardrail settings, and in its first phase it does not touch
-  transfer rules.
+- **One dial for spending.** How much the plan can spend is found by turning
+  one thing, and never by a search over guardrail settings.
+- **Routing is its own question.** Whether the money could be routed better is
+  answered by the genetic search (§8), on one measure, and its answer is then
+  put through the same spending question.
 - **Limits, not weights.** The user states what must stay true. Nothing is
   traded off inside a score the user cannot see.
 - **Same rules as the rest of the page.** The plan the Maximizer runs is the
@@ -130,7 +132,7 @@ and 1,000 take 28.9 s.
 |---|---|---|
 | **Never runs out** | always on | No month has an unpaid bill: `planExhaustion(detectIssues(portfolio))` is null. The definition the Outcome card and "What needs attention" already use. |
 | **Leaves at least $___** | $0 | Ending value in today's dollars, deflated by the run's own price index, as on the Timeline. |
-| **Holds up in ___% of simulated markets** | off | Monte Carlo success, as the Simulations panel defines it. Slower (§8). |
+| **Holds up in ___% of simulated markets** | off | Monte Carlo success, as the Simulations panel defines it. Slower (§7). |
 
 The limits are the "other ranges" the strip did not have. Each is a number the
 user types, in units they already see elsewhere on the page.
@@ -252,26 +254,103 @@ settings) or **Change this plan**.
 - **Never as the score of a wide search.** 10,000 candidates times 300 runs is
   more than a day.
 
-## 8. The genetic search
+## 8. The routing search
 
-It answers a different question: "is there a better way to route my money?"
-With spending out of its score, that question has one measure (what is left, at
-the spending the user entered) and can share §5's table.
+The genetic search stays, with its own question: **"is there a better way to
+route my money?"** Section 2 shows why that question matters. Mid Career's
+spending is limited by which account pays, not by how much there is, and only a
+change of routing moves that limit.
 
-Proposed (decision §14.8): Phase 1 removes it from the page. It returns as a
-second step, **"Try other routing"**, only when these hold:
+### 8.1 One measure
 
-- no guardrail genes;
-- no account-to-account genes (a 401(k) → Roth move is a conversion and wants
-  its own feature; a Roth → 401(k) move does not exist);
-- contributions within the law's limits, not a flat 25%;
-- the search is seeded;
-- the early-withdrawal penalty is charged (spec 13), since without it draining a
-  401(k) at 45 looks free;
-- the result is run through §3's limits before it is shown.
+Spending is out of its score, so no weight and no dividing constant is left. A
+candidate is ranked, in order:
 
-The alternative is to keep it under a disclosure with the first four fixes and a
-warning. The cost is a second code path with known wrong answers in it.
+1. by the bills it leaves unpaid (less is better, none is best);
+2. then by what is left at the end, in today's dollars, at the spending the
+   user entered.
+
+The best candidate is then handed to §3's solver. The result reads as the user
+would ask it: "With this routing you could spend $X a month more", as a third
+column in §5's table.
+
+### 8.2 What it may change
+
+- **In:** how each income is split across accounts, and which accounts pay each
+  expense. Home, mortgage and debt stay locked, as today.
+- **Out:** the four guardrail settings. Moves from one account to another: a
+  401(k) → Roth move is a conversion and wants its own feature, and a Roth →
+  401(k) move does not exist.
+- **Held at the user's own value until spec 13:** any draw on a retirement
+  account before 59½. The penalty is not charged yet, so the search would find
+  early draws free.
+- **Contributions** are held to the law's annual limits, in place of the flat
+  25% of income. What the engine itself enforces is checked at the start of the
+  phase.
+
+With these the search no longer waits for specs 12 and 13. Each of them widens
+what it may change when it lands.
+
+### 8.3 Against a bad valley
+
+A search over thirty percentages can settle in a local best. Today's does: the
+runs in §1.1 row 3 are 10,000 plan runs each and still disagree with each
+other. Five measures, all of them visible to the user or to a test:
+
+- **Start from the user's plan.** The first population holds the plan as
+  entered and near copies of it. Today's is entirely random, so the user's own
+  routing is never bred from.
+- **Several searches, not one.** Five restarts from different seeds. The seeds
+  are fixed, so the same plan gives the same five results.
+- **Polish.** From each restart's best, step each percentage up and down by a
+  point and keep any gain, until none is left. A genetic search is good at
+  finding the right region and poor at finishing; this finishes.
+- **Prune.** Put each changed percentage back to the user's value where that
+  costs less than 0.1% of the gain. A recommendation of 28 changes is not
+  usable; the few that carry the gain are.
+- **Say whether they agree.** If the five results are within 1% of each other:
+  "Five searches agree." If not, the best is shown with "The searches differed
+  by 6%. A longer search may find more." One answer is never presented as the
+  best when the searches did not agree on it.
+
+### 8.4 Run budget
+
+Nothing here shortens the search. A plan run costs 28 ms, so 10,000 runs take
+about five minutes on one core, and five restarts would take twenty-five. So
+the restarts run side by side, one worker each, up to the machine's cores less
+one, and a restart stops early after 30 generations without a gain. On a
+six-core machine the wall time is about today's. Progress shows each restart's
+best so far.
+
+### 8.5 Measure before building
+
+How rugged this landscape is has not been measured. The phase starts with an
+experiment on the eight profiles, on §8.2's genes and §8.1's measure, five
+seeds each:
+
+| Arm | Runs per seed |
+|---|---|
+| Polish alone, from the plan as entered | until no gain |
+| Genetic search as today (random start) | 10,000 |
+| Genetic search started from the plan | 10,000 |
+| Started from the plan, then polish | 10,000 + polish |
+
+Three outcomes, each with its consequence written now:
+
+- **The seeds agree and polish alone matches them:** the landscape is smooth.
+  Ship polish alone, in seconds, and keep the genetic search out.
+- **The genetic arms beat polish alone, and the seeds agree:** ship §8.3 as
+  written. The valleys are real and the search clears them.
+- **The seeds still disagree:** ship §8.3 with a larger population or more
+  generations, sized by the experiment, and keep the disagreement line.
+
+The experiment's table goes into this spec before the phase's code is written.
+
+### 8.6 How it reads
+
+The changes are shown as a table on the page, by phase: from, to, now,
+proposed. Not markdown in a text box. Apply follows §5.2, and applies the
+routing and the spending together or the routing alone.
 
 ## 9. Code
 
@@ -284,10 +363,12 @@ warning. The cost is a second code path with known wrong answers in it.
 - Runs go through `withoutTracing`. Exhaustion detection does not need the
   trace (checked: Mid Career ×1.04 reports September 2065 either way).
 - The page section becomes a small Lit element. `simulator-modal.js` and the
-  strip in `index.html` and `finplan-app.js` go; `simulator.js` goes or stays
-  per §14.8.
+  strip in `index.html` and `finplan-app.js` go.
+- `simulator.js` stays and changes in Phase 2: the score (§8.1), the gene map
+  (§8.2), a seeded random source, the seeded first population, polish and prune
+  (§8.3). Each restart is its own worker.
 - **MCP.** A `max_spending` tool over the same function is cheap and fits the
-  conversational plan ("how much more could I spend?"). Its own PR (§12).
+  conversational plan ("how much more could I spend?"). Its own PR (§15).
 
 ## 10. Presentation surfaces, enumerated
 
@@ -340,6 +421,13 @@ spend?" (decision §14.10).
   the samples and takes the largest passing factor below the first failure.
 - With the success limit: the same seed gives the same rate; the rate does not
   rise with spending across the samples.
+- Routing: `routing-never-worse` (the result ranks at or above the plan as
+  entered, for every profile); `routing-repeats` (same plan, same five
+  results); `routing-legal` (no result holds an account-to-account move, a
+  changed early retirement draw or a contribution over the limit);
+  `polish-finishes` (no single one-point step improves the result);
+  `prune-keeps-the-gain`; `disagreement-is-reported` (a fixture built to have
+  two separated bests shows the line).
 
 Prediction, written before any change: no existing baseline moves in Phase 1.
 The solver adds a module and a page section and changes no engine rule.
@@ -349,6 +437,7 @@ The solver adds a module and a page section and changes no engine rule.
 - Spending that differs by phase (spec 14).
 - Retirement accounts paying when the brokerage is empty (spec 12 Phase 2). The
   solver will show the gain from it once it exists, with no change here.
+- Account-to-account moves in the routing search, Roth conversions among them.
 - Roth conversions, claiming age, retirement age as dials. Each is a candidate
   second dial for the same solver, and each is its own decision.
 - The early-withdrawal penalty (spec 13).
@@ -367,22 +456,26 @@ The solver adds a module and a page section and changes no engine rule.
    makes the default answer "no change" for any plan that is funded?
 5. **Apply:** save as a new scenario by default (proposed), change the plan, or
    offer both?
-6. **The success limit:** in Phase 2 as proposed, or in Phase 1? And its
+6. **The success limit:** in Phase 3 as proposed, or in Phase 1? And its
    default when switched on: 90%?
 7. **The guardrail-rate offer** (§6): yes, or leave guardrail settings alone?
-8. **The genetic search:** remove from the page until it meets §8's list
-   (proposed), keep it under a disclosure with four fixes, or retire it?
+8. **The routing search between phases:** off the page for Phase 1 and back in
+   Phase 2 (proposed), or kept visible through Phase 1 with Apply switched off?
 9. **The MCP tool:** after Phase 1 as its own PR (proposed), or not yet?
 10. **Wording:** keep "Maximizer" with the new subtitle, or rename the section?
+11. **The routing search's safeguards** (§8.3): five restarts and a 1% agreement
+    band as proposed? And is "the searches differed" acceptable on the page, or
+    should a disagreeing search run longer before it shows anything?
 
 ## 15. Phases and cost
 
 | Phase | Delivers | Effort |
 |---|---|---|
 | **1. The solver and the curve** | §3 with the first two limits, §4, §5 without the success limit, §5.1, Apply, Help, Rules, the UI spec. The strip, the bar chart and the genetic search leave the page. | about 3–4 days |
-| **2. Simulated markets as a limit** | §7, the guardrail-rate offer | about 2 days |
-| **3. The MCP tool** | `max_spending`, README, SKILL | about 1 day |
-| **4. Routing, if kept** | §8, after specs 12 Phase 2 and 13 | its own spec |
+| **2. The routing search** | §8: the experiment (§8.5) first, then the score, the genes, restarts, polish, prune, the agreement line, the third column | about 1–2 days for the experiment, then 4–6 |
+| **3. Simulated markets as a limit** | §7, the guardrail-rate offer | about 2 days |
+| **4. The MCP tool** | `max_spending`, README, SKILL | about 1 day |
 
 Phase 1 is worth shipping alone. It removes every defect in §1.1, answers in a
-second, and takes less room than what it replaces.
+second, and takes less room than what it replaces. Phase 2 follows it directly:
+for a plan like Mid Career, routing is where the spending is.
