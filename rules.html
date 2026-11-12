@@ -885,73 +885,81 @@
         </div>
     </div>
 
-    <!-- ═══ Maximizer ═══ -->
+    <!-- ═══ Test Bench ═══ -->
     <div class="glass-card p-8 sm:p-12 mb-8" style="background: linear-gradient(135deg, #ecfdf5 0%, #eff6ff 100%);">
         <div class="flex items-center gap-3 mb-4">
-            <span class="text-2xl">🔮</span>
-            <h2 class="text-2xl font-bold tracking-tight">Maximizer</h2>
-            <span class="text-xs text-gray-400 font-medium ml-1">Genetic Algorithm Optimizer</span>
+            <span class="text-2xl">&#x1F9EA;</span>
+            <h2 class="text-2xl font-bold tracking-tight">Test Bench</h2>
+            <span class="text-xs text-gray-400 font-medium ml-1">The Spending Test</span>
         </div>
-        <p class="text-gray-600 mb-6 leading-relaxed">The Maximizer searches for the fund transfer percentages and guardrail settings that best serve your goal. It uses a <strong>genetic algorithm</strong>, modelled on natural selection, and runs inside the Maximizer section, updating the chart as it finds better solutions.</p>
+        <p class="text-gray-600 mb-6 leading-relaxed">The spending test answers &ldquo;how much can this plan spend?&rdquo; as a question with limits, not a score: <strong>spend the most that never runs out and leaves at least a stated amount</strong>. It uses no random numbers, so the same plan gives the same answer every time.</p>
 
         <div class="grid sm:grid-cols-2 gap-4 mb-6">
             <div class="p-4 rounded-xl bg-white/70">
-                <div class="font-semibold text-sm mb-1">Spending &#x2194; Terminal Value Selector</div>
-                <div class="text-sm text-gray-500">A row of discrete notches lets you set the optimization objective. All the way left maximizes <strong>lifetime cash flow</strong> (spending in retirement). All the way right maximizes <strong>ending portfolio value</strong> (wealth preservation). Pick any point in between for a blended goal.</div>
+                <div class="font-semibold text-sm mb-1">One dial</div>
+                <div class="text-sm text-gray-500">Every monthly expense is multiplied by the same factor for the whole plan, a marketplace health plan included. Income, taxes, mortgage payments, transfer rules and account balances are left as entered. The health plan&rsquo;s benchmark premium is the market&rsquo;s figure, so it does not turn with the dial.</div>
             </div>
             <div class="p-4 rounded-xl bg-white/70">
-                <div class="font-semibold text-sm mb-1">Evolvable Guardrail Genes</div>
-                <div class="text-sm text-gray-500">The optimizer doesn't just tune fund transfers &mdash; it also evolves your guardrail parameters (withdrawal rate, preservation, prosperity, adjustment) within realistic ranges to find the sweet spot for your chosen objective.</div>
+                <div class="font-semibold text-sm mb-1">Never runs out</div>
+                <div class="text-sm text-gray-500">A level fails when any month has a bill the plan could not pay. This is tested before anything else: once a bill goes unpaid, what is left at the end is no longer a guide, because money that was not paid out was not spent.</div>
             </div>
             <div class="p-4 rounded-xl bg-white/70">
-                <div class="font-semibold text-sm mb-1">Phase-Aware Optimization</div>
-                <div class="text-sm text-gray-500">The chromosome encodes fund transfers <strong>grouped by life event phase</strong>. Accumulate-phase allocations are evolved independently from retire-phase allocations, and only assets active during a phase are included &mdash; Social Security won't appear in accumulation genes.</div>
+                <div class="font-semibold text-sm mb-1">Leaves at least</div>
+                <div class="text-sm text-gray-500">What is left is net worth in the plan&rsquo;s last month, in today&rsquo;s dollars, the Outcome card&rsquo;s own figure. A level fails when it leaves less than the amount you set.</div>
             </div>
             <div class="p-4 rounded-xl bg-white/70">
-                <div class="font-semibold text-sm mb-1">Real-Time Chart Updates</div>
-                <div class="text-sm text-gray-500">Watch the portfolio projection chart update live as the optimizer discovers better solutions. The generation counter, fitness status, and best terminal value are displayed below the chart throughout the run.</div>
+                <div class="font-semibold text-sm mb-1">Spending</div>
+                <div class="text-sm text-gray-500">Spending is what the plan pays out to live on, month by month, in today&rsquo;s dollars. Taxes are not counted as spending. The monthly figure is the average over the whole plan.</div>
             </div>
         </div>
 
-        <h3 class="text-lg font-bold tracking-tight mb-3">Real-World Constraints</h3>
-        <p class="text-gray-600 mb-4 leading-relaxed">A truly useful optimizer can't just chase math &mdash; it has to respect reality. The Maximizer enforces three tiers of constraints so its recommendations are <strong>actionable, not theoretical</strong>.</p>
-
-        <div class="grid sm:grid-cols-3 gap-4 mb-6">
-            <div class="p-4 rounded-xl bg-white/70">
-                <div class="font-semibold text-sm mb-1">&#x1F512; Immutable Transfers</div>
-                <div class="text-sm text-gray-500"><strong>Real Estate, Mortgage, and Debt</strong> fund transfers are locked to their original values. You can't optimize away your mortgage payment &mdash; it's a contractual obligation.</div>
-            </div>
-            <div class="p-4 rounded-xl bg-white/70">
-                <div class="font-semibold text-sm mb-1">&#x1F50F; Partially Mutable</div>
-                <div class="text-sm text-gray-500"><strong>Monthly Expenses</strong> can vary &plusmn;25% of their original allocation. You can tighten the belt, but you can't eliminate groceries.</div>
-            </div>
-            <div class="p-4 rounded-xl bg-white/70">
-                <div class="font-semibold text-sm mb-1">&#x2705; Fully Mutable</div>
-                <div class="text-sm text-gray-500"><strong>All other transfers</strong> (salary routing, retirement account contributions, Social Security allocation) can be freely optimized from 0% to 100%.</div>
-            </div>
-        </div>
-
+        <h3 class="text-lg font-bold tracking-tight mb-3">How the answer is found</h3>
         <div class="space-y-2 mb-6">
             <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
-                <span class="rule-chip">Contribution Caps</span>
-                <span class="text-sm text-gray-700">During accumulation, no more than <strong>25% of income</strong> can flow to retirement accounts (401(k), IRA, Roth). In retirement, the cap drops to <strong>10%</strong>. This prevents the optimizer from producing unrealistic over-contributions.</span>
+                <span class="rule-chip">Find the edge</span>
+                <span class="text-sm text-gray-700">Spending is doubled until the plan first runs out, to a ceiling of eight times what was entered, and the edge is then narrowed. A plan that already runs out as entered is turned down instead, until it is funded.</span>
             </div>
             <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
-                <span class="rule-chip">Debt Penalty</span>
-                <span class="text-sm text-gray-700">Any individual asset that ends with a negative balance incurs a <strong>fitness penalty proportional to the debt</strong>. This prevents the optimizer from concentrating losses in one account while inflating others.</span>
+                <span class="rule-chip">Scan</span>
+                <span class="text-sm text-gray-700">The plan is run at 40 levels from half of what was entered (lower when the plan needs it) up to the edge. These runs are the curve.</span>
             </div>
             <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
-                <span class="rule-chip">Volatility Penalty</span>
-                <span class="text-sm text-gray-700">Portfolios that trigger frequent <strong>preservation cuts</strong> (guardrail spending reductions) are penalized &mdash; because a plan that constantly slashes your income isn't really a plan.</span>
+                <span class="rule-chip">Pick the highest</span>
+                <span class="text-sm text-gray-700">The answer starts from the highest level that keeps every limit. The whole range is tested because what is left does not always fall as spending rises: at lower spending a surplus can sit in a slow-growing account, and a plan can end with less than it would have by spending more.</span>
+            </div>
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
+                <span class="rule-chip">Refine</span>
+                <span class="text-sm text-gray-700">The gap between that level and the failing one above it is halved until it is narrower than $10 a month.</span>
             </div>
         </div>
 
-        <h3 class="text-lg font-bold tracking-tight mb-3">Recommendations</h3>
-        <p class="text-gray-600 mb-4 leading-relaxed">When the optimizer finishes, click <strong>Recommendations</strong> to compare your current fund transfers and guardrail settings with the best solution found, phase by phase, with the change for every transfer. <strong>Apply to Baseline</strong> writes them into your plan.</p>
+        <h3 class="text-lg font-bold tracking-tight mb-3">What the result reports</h3>
+        <div class="space-y-2 mb-6">
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
+                <span class="rule-chip">What stops it</span>
+                <span class="text-sm text-gray-700">The limit that the next level up would break. For an unpaid bill: the first month it happens and the balances of tax-deferred and tax-free accounts in that month, which the plan does not draw on to pay a bill.</span>
+            </div>
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
+                <span class="rule-chip">Simulated markets</span>
+                <span class="text-sm text-gray-700">The plan as entered and the solved plan are each run through 300 simulated markets with the same seed, without guardrails. The rate is the share of markets that never ran out from retirement on.</span>
+            </div>
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
+                <span class="rule-chip">Guardrails</span>
+                <span class="text-sm text-gray-700">Both plans are also run under the Guardrails section&rsquo;s settings, from retirement. Guardrails are not part of the search: on one fixed path a guardrail is only a second way to cut spending. The settings are read and never changed.</span>
+            </div>
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
+                <span class="rule-chip">Health costs at 65</span>
+                <span class="text-sm text-gray-700">A marketplace health plan ends in the December before 65. Medicare premiums are not charged by the simulator, so a plan with no health expense after 65 spends less from then on. The result says so, and shows spending before and from 65 separately.</span>
+            </div>
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
+                <span class="rule-chip">Saving</span>
+                <span class="text-sm text-gray-700">Save as a scenario writes the solved monthly expense amounts, cut to the cent toward spending less, into a new scenario. The plan as entered is not changed.</span>
+            </div>
+        </div>
 
         <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
-            <span class="rule-chip">How it works</span>
-            <span class="text-sm text-gray-700">A population of 50 candidate portfolios competes over <strong>200 generations</strong>. Each candidate encodes fund transfer percentages for every phase plus four guardrail parameters. The fittest survive, crossover, and mutate &mdash; converging on an allocation that respects real-world constraints while maximizing your chosen objective. The entire process runs in a Web Worker so the UI stays responsive.</span>
+            <span class="rule-chip">Not yet here</span>
+            <span class="text-sm text-gray-700">The genetic search for fund transfer percentages, which this section ran as the Maximizer, is off the page while it is rebuilt. It returns as the Test Bench&rsquo;s second test, Routing. A limit on the simulated-markets rate is also planned.</span>
         </div>
     </div>
 

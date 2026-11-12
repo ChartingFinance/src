@@ -1,5 +1,6 @@
 // mc-worker.js — Web Worker entry for the simulation compute modules.
-// Dispatches on payload.kind: 'monteCarlo' (default) or 'guardrails'.
+// Dispatches on payload.kind: 'monteCarlo' (default), 'guardrails' or
+// 'spending' (the Test Bench's spending solver).
 //
 // Mirrors the simulator.js worker pattern: rehydrate the payload, install a
 // fresh tax table, run the pure compute module, stream progress back.
@@ -23,6 +24,7 @@ import { ModelLifeEvent } from './life-event.js';
 import { DateInt } from './utils/date-int.js';
 import { computeMonteCarlo } from './mc-compute.js';
 import { computeGuardrails } from './gr-compute.js';
+import { solveSpending } from './spending-solver.js';
 import { makeActiveTaxTable } from './globals.js';
 
 // Guard so Node-side tests can import this module without a Worker context.
@@ -59,6 +61,19 @@ if (isWorker) self.onmessage = async function (event) {
         setActiveTaxTable(makeActiveTaxTable());
         if (payload.backtestYear) {
             global_setBacktestYearDirect(payload.backtestYear);
+        }
+
+        if (payload.kind === 'spending') {
+            // The solver builds its own portfolios from the serialized plan,
+            // one per spending level, so it takes the payload as it arrived.
+            const results = solveSpending({
+                modelAssets: payload.modelAssets,
+                lifeEvents: payload.lifeEvents || [],
+                // After global_applyWorkerSnapshot, as below.
+                config: simConfigFromGlobals(),
+            }, payload.limits || {});
+            self.postMessage({ action: 'complete', results });
+            return;
         }
 
         const modelAssets = payload.modelAssets.map(obj => ModelAsset.fromJSON(obj));

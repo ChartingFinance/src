@@ -702,40 +702,50 @@
         </div>
     </div>
 
-    <!-- ═══ Maximizer ═══ -->
-    <div id="maximizer" class="glass-card p-8 sm:p-12 mb-8">
+    <!-- ═══ Test Bench ═══ -->
+    <!-- #maximizer is the section's old name; links to it still land here. -->
+    <div id="test-bench" class="glass-card p-8 sm:p-12 mb-8">
+        <a id="maximizer"></a>
         <div class="flex items-center gap-3 mb-6">
-            <span class="text-2xl">&#x1F52E;</span>
-            <h2 class="text-2xl font-bold tracking-tight">Maximizer</h2>
+            <span class="text-2xl">&#x1F9EA;</span>
+            <h2 class="text-2xl font-bold tracking-tight">Test Bench</h2>
         </div>
-        <p class="text-gray-600 mb-6 leading-relaxed">The Maximizer searches for the fund transfer percentages and guardrail settings that best serve your goal. It uses a genetic algorithm: 50 candidate plans evolve over 200 generations, balanced between spending more and leaving more at the end.</p>
+        <p class="text-gray-600 mb-6 leading-relaxed">The Test Bench runs tests on your plan without changing it. Its first test, <strong>Spending</strong>, answers one question: how much can this plan spend? It turns every monthly expense up and down together, your health plan included, and finds the highest level at which the plan never runs out and still leaves what you ask for at the end. The Test Bench was called the Maximizer; its genetic search for fund transfers returns here as a second test.</p>
 
         <!-- Elements -->
         <h3 class="text-lg font-bold mb-4">Elements</h3>
         <div class="grid sm:grid-cols-2 gap-4 mb-8">
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Spending &harr; Terminal Value Selector</div>
-                <div class="text-sm text-gray-500">A row of discrete notches (0&ndash;100% in 5% steps) controlling the fitness objective. Left favors maximizing cash flow and spending; right favors maximizing end-of-plan portfolio value. Click any notch to set the balance.</div>
+                <div class="font-semibold text-sm mb-1">The limits</div>
+                <div class="text-sm text-gray-500">The test spends the most that keeps two limits. <strong>Never runs out</strong> is always on: no month may have a bill the plan cannot pay, the same test as the Outcome card and &ldquo;What needs attention&rdquo;. <strong>Leaves at least</strong> is the least you want left at the end, in today&rsquo;s dollars. It starts at $0.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Evolution Chart</div>
-                <div class="text-sm text-gray-500">A live stacked bar chart of the best plan found so far. Updates every time the genetic algorithm discovers a better solution. Renders the full simulation timeline with phase markers.</div>
+                <div class="font-semibold text-sm mb-1">The curve</div>
+                <div class="text-sm text-gray-500">Monthly spending across, what is left at the end up, both in today&rsquo;s dollars. Every point is your plan run at that level of spending, so nothing on it is an estimate. The hollow mark is your plan as entered, the filled mark is the most it can spend, and the hatched area is where the plan runs out. Hover for the figures at a point; click to leave at least that much, and the test runs again.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Generation Counter</div>
-                <div class="text-sm text-gray-500">Displays progress through the 200-generation run (e.g., "Running Generation 45 / 200"), centred below the chart between the two best-value readouts.</div>
+                <div class="font-semibold text-sm mb-1">The result table</div>
+                <div class="text-sm text-gray-500">Your plan as entered beside the most it can spend: monthly and lifetime spending, what is left, and whether it runs out. The first column is the Outcome card&rsquo;s figure. Spending is what the plan pays out to live on; taxes are not in it. With a marketplace health plan the table shows spending before 65 and from 65 separately, and the premium tax credit over the whole plan.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Best Spending &amp; Best Terminal</div>
-                <div class="text-sm text-gray-500">The two ends of the fitness objective, one under each end of the selector. <strong>Best Spending</strong> (left) is the annual spend in the last full year of the plan; <strong>Best Terminal</strong> (right) is the end-of-plan portfolio value. Both update in real time as better candidates are found &mdash; slide toward Spending and watch the first rise as the second falls. Hover Best Spending for lifetime spending, which is the figure the fitness function actually maximizes.</div>
+                <div class="font-semibold text-sm mb-1">In simulated markets</div>
+                <div class="text-sm text-gray-500">Each column is then run through 300 simulated markets, the same ones for both, so the two rates differ only by the spending. This row fills in a few seconds after the answer. It is a smaller run than the Simulations section&rsquo;s 1,000, so its rate can differ from that one by a point or two.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Recommendations Button</div>
-                <div class="text-sm text-gray-500">Appears when a run completes. It compares the optimized fund transfers and guardrail settings with your current ones, and <strong>Apply to Baseline</strong> writes them into your plan.</div>
+                <div class="font-semibold text-sm mb-1">With guardrails</div>
+                <div class="text-sm text-gray-500">Each column under the settings in the Guardrails section, from retirement: what is left, and how many times spending was cut or raised. The Test Bench reads those settings and never changes them.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Real-World Constraints</div>
-                <div class="text-sm text-gray-500">The optimizer keeps to real-world limits: mortgage, real estate and debt transfers are fixed, expenses can move by up to &plusmn;25%, contributions to retirement accounts are capped (25% of income while working, 10% in retirement), and a negative balance counts against a candidate.</div>
+                <div class="font-semibold text-sm mb-1">What stops it</div>
+                <div class="text-sm text-gray-500">One sentence naming the limit that stopped spending from rising. When a bill would go unpaid, it names the month and any retirement accounts that still held money then: the plan does not draw on a retirement account to pay a bill unless a transfer rule says so, so a plan can run out with money left. <strong>Show that month</strong> moves the page to that month in your plan as entered.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">Save as a scenario</div>
+                <div class="text-sm text-gray-500">Saves the solved amounts as a new scenario and switches to it. Your plan as entered stays as it is, under its own name in the scenario menu. Only monthly expense amounts differ in the new scenario; no account is added, removed or rerouted.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">Notes under the result</div>
+                <div class="text-sm text-gray-500">Two notes appear when they apply. One says that over part of the range spending more leaves more, and names the account where the unspent money sat. The other says that your health plan ends at 65 and nothing in the plan pays for health cover after it: Medicare premiums are not charged unless you add them as an expense.</div>
             </div>
         </div>
 
@@ -743,41 +753,41 @@
         <h3 class="text-lg font-bold mb-4">How To</h3>
         <div class="space-y-3">
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-2">Run the Maximizer</div>
+                <div class="font-semibold text-sm mb-2">Find how much the plan can spend</div>
                 <div class="space-y-2">
                     <div class="flex items-start gap-3">
                         <span class="step-number">1</span>
-                        <span class="text-sm text-gray-700">Set the <strong>Spending &harr; Terminal Value</strong> balance. All the way right means "maximize my ending portfolio value." All the way left means "maximize my spending/cash flow." A middle notch balances both.</span>
+                        <span class="text-sm text-gray-700">Leave <strong>leaves at least</strong> at $0 to spend down to nothing, or enter what you want left at the end, in today&rsquo;s dollars.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">2</span>
-                        <span class="text-sm text-gray-700">Click <strong>Run</strong>. The genetic algorithm launches in a Web Worker (your browser stays responsive). Watch the chart update as better solutions are discovered over 200 generations.</span>
+                        <span class="text-sm text-gray-700">Click <strong>Run</strong>. The answer appears in a few seconds; the simulated-markets row follows shortly after.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">3</span>
-                        <span class="text-sm text-gray-700">When &ldquo;Complete&rdquo; appears, click <strong>Recommendations</strong> to see the optimized fund transfers and guardrail settings next to your own.</span>
+                        <span class="text-sm text-gray-700">Read the headline for the answer, and <strong>What stops it</strong> for the reason it is not higher.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">4</span>
-                        <span class="text-sm text-gray-700">Adjust the Spending/Terminal Value selector and click <strong>Run</strong> again to explore different optimization targets. Each run is independent.</span>
+                        <span class="text-sm text-gray-700">Click along the curve to see the trade: each click sets what to leave to that point and runs the test again.</span>
                     </div>
                 </div>
             </div>
 
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-2">Apply recommendations</div>
+                <div class="font-semibold text-sm mb-2">Keep the result</div>
                 <div class="space-y-2">
                     <div class="flex items-start gap-3">
                         <span class="step-number">1</span>
-                        <span class="text-sm text-gray-700">Open the <strong>Recommendations</strong> popup after a completed run and review the suggested changes for each phase.</span>
+                        <span class="text-sm text-gray-700">Click <strong>Save as a scenario</strong> and give it a name.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">2</span>
-                        <span class="text-sm text-gray-700">Click <strong>Apply to Baseline</strong> to write them into your plan. The simulations re-run with them straight away.</span>
+                        <span class="text-sm text-gray-700">The page switches to the new scenario, with every monthly expense at the solved amount. Switch back from the scenario menu at any time.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">3</span>
-                        <span class="text-sm text-gray-700">To take only some of the changes, set them yourself instead: fund transfers through an asset&rsquo;s <strong>&#x21C4;</strong>, and guardrail settings in the Simulations section.</span>
+                        <span class="text-sm text-gray-700">After you change the plan, the result on screen is dimmed: it describes the plan before the change. Run the test again.</span>
                     </div>
                 </div>
             </div>

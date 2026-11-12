@@ -149,8 +149,9 @@ describe('a copied portfolio, run again, ends where its source did', () => {
     };
     const source = await run(membrane_rawDataToModelAssets(spec.modelAssets));
 
-    // simulator.js posts `bestPortfolio.modelAssets` as JSON; simulator-modal.js
-    // rebuilds and runs them.
+    // simulator.js posts `bestPortfolio.modelAssets` as JSON, and whatever shows
+    // the search's result rebuilds and runs them (simulator-modal.js did, until
+    // the Test Bench replaced it).
     const sent = JSON.parse(JSON.stringify(source.copy().modelAssets));
     const shown = await run(membrane_jsonObjectsToModelAssets(sent));
 
