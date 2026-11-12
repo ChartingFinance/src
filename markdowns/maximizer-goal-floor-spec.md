@@ -1,6 +1,7 @@
-# Spec 15 — The Maximizer as a question: how much can I spend, and what is left
+# Spec 15 — The Test Bench: how much can I spend, and what is left
 
-Status: **DRAFT 2026-11-12. Spec only, no code. Eleven decisions pending (§14).**
+Status: **DECIDED 2026-11-12 (§14). Spec only, no code.** Phase 1 can start now.
+The section called Maximizer today is renamed Test Bench (decision §14.10).
 
 The Maximizer today asks the user to pick a point between "Spending" and
 "Terminal Value" on a strip of 21 notches, then runs a genetic search for three
@@ -18,7 +19,7 @@ Five rules hold throughout:
   put through the same spending question.
 - **Limits, not weights.** The user states what must stay true. Nothing is
   traded off inside a score the user cannot see.
-- **Same rules as the rest of the page.** The plan the Maximizer runs is the
+- **Same rules as the rest of the page.** The plan the Test Bench runs is the
   plan the Timeline runs. Its "as entered" row is the Outcome card's number.
 - **Same answer every time.** The same plan and limits give the same result, so
   it can be tested, quoted and compared.
@@ -83,16 +84,16 @@ today's dollars, by factor (`!` = the plan runs out of money):
 Three things follow.
 
 **While the plan is funded, ending value falls steadily as spending rises.** In
-all eight profiles. So "the most spending that keeps limit L" has one answer,
-and halving the interval finds it: 14 runs give the factor to within
-0.04%.
+all eight profiles. Where that holds, "the most spending that keeps limit L"
+has one answer and halving an interval finds it. It does not hold for every
+plan (§2.1), so the solver never relies on it.
 
 **Once the plan runs out, ending value is no longer a guide.** Unpaid bills are
 not spent, so the figure can rise again (Pre-Retirement ×1.4 → ×1.6). "Never
 runs out" is therefore tested first and always, and the curve stops there.
 
-**A run costs 32 ms.** Fourteen runs take half a second, against three minutes.
-A whole curve of 16 points costs another half second.
+**A run costs 32 ms.** A scan of 40 spending levels and a dozen refining runs
+take under two seconds, against three minutes.
 
 The largest factor that never runs out, and the largest that also leaves half
 of what the plan leaves today:
@@ -120,6 +121,32 @@ Two rows need explaining, and they shape §5.
   ($36,771 unpaid) and still ends with $15.5M. The answer to "how much can I
   spend" is "7% less than entered", for the same reason.
 
+### 2.1 Where the steady fall fails
+
+A ninth plan, built for the health-cost check in §3.3 (age 60, retired, a
+$30,000 pension, Checking $30k, Brokerage $900k, IRA $600k, a marketplace
+plan, to age 85), breaks it:
+
+| Spending | ×1 | ×1.05 | ×1.1 | ×1.2 |
+|---|---|---|---|---|
+| Left at the end (today's $) | $5,056k | $5,026k | $5,200k | $5,047k |
+
+Spending 10% more leaves $144k more. The cause is routing, and it is the same
+with the health plan removed. At ×1.05 Checking ends with $1,231k that never
+earned the brokerage's return; at ×1.1 the bills keep Checking empty, the same
+money lands in Brokerage, and Brokerage ends $1.6M higher.
+
+Two consequences:
+
+- **The solver scans.** It runs the whole range of spending levels first and
+  only then refines (§3.2). Halving alone, on this plan with a floor of $5.1M,
+  can answer "below what you entered" when ×1.1 passes.
+- **The result says when the curve rises.** A rise means some lower level of
+  spending leaves money idle. The result names the account whose ending balance
+  differs most across the rise: "At lower spending, $1.2M stays in Checking."
+  That is a routing finding, and the routing search (§8) is where it is acted
+  on.
+
 Monte Carlo success falls steadily too (Mid Career, 300 runs, no guardrails):
 93% at ×1, 76% at ×1.5, 48% at ×2, 30% at ×2.5, 10% at ×3. 300 runs take 9.7 s
 and 1,000 take 28.9 s.
@@ -139,31 +166,70 @@ user types, in units they already see elsewhere on the page.
 
 ### 3.1 The dial
 
-The dial is a factor on the plan's adjustable expenses.
+The dial is a factor on the plan's monthly expenses.
 
-- **Which expenses.** The set the guardrails already adjust: every monthly
-  expense that is not health insurance. Mortgage, debt, taxes and premiums are
-  not in it. (Decision §14.2: whether the user can hold an expense fixed.)
-- **From when.** Phase 1 scales an expense for its whole life, which needs no
-  engine change: the factor multiplies its starting amount. "From retirement
-  only" needs an amount that changes at a phase, which is spec 14's subject
-  (decision §14.3).
+- **Which expenses.** Every monthly expense, the marketplace health plan
+  included (decision §14.2). Mortgage, debt and taxes are not in it. The
+  guardrails keep their own, narrower set: they still leave the health plan
+  alone.
+- **From when.** The whole plan (decision §14.3): the factor multiplies each
+  expense's starting amount, which needs no engine change. "From retirement
+  only" needs an amount that changes at a phase, which is spec 14's subject.
 - **How it reads.** Never as a factor. "Living Expenses $3,000 → $3,090 a
   month", and a total in today's dollars.
 
 ### 3.2 What the search does
 
 1. Run the plan as entered. Record it as the first row.
-2. Find the largest factor that keeps every limit that is switched on, by
-   halving an interval. Stop when the interval is narrower than $10 a month.
-3. Sample the curve (§4) between "spend nothing extra" and the factor where
-   the plan first runs out.
+2. **Scan.** Run 40 spending levels, from half of what was entered up to the
+   level where the plan first runs out (found by doubling). These runs are the
+   curve (§4).
+3. **Pick.** The answer is the highest level at which every switched-on limit
+   holds. The scan gives the highest passing sample.
+4. **Refine.** Halve the gap between that sample and the failing one above it
+   until it is narrower than $10 a month.
 
-About 30 runs, one second. No random numbers.
+About 55 runs, under two seconds. No random numbers.
 
-If the plan as entered already breaks a limit, the answer is below ×1 and the
-result says so: "This plan runs out in July 2030. Spending 7% less keeps it
-funded."
+If the plan as entered already breaks a limit, the answer is below what was
+entered and the result says so: "This plan runs out in July 2030. Spending 7%
+less keeps it funded."
+
+If the scan shows the curve rising anywhere, the result says so and names the
+account (§2.1).
+
+### 3.3 Health costs and the step at 65
+
+The dial turns the marketplace health plan with the other expenses. Four things
+about that account, and the step to Medicare, shape what the Test Bench does.
+
+- **The benchmark is not turned.** A health plan's credit is worked from the
+  benchmark premium, which is the market's and not the user's choice. The
+  engine reads it as the entered benchmark grown by the premium's own growth,
+  so scaling the starting premium leaves it where it was. Turning the dial
+  models choosing a dearer or cheaper plan; the credit is then whatever the
+  engine works out. A test pins the benchmark under the dial.
+- **Spending moves the credit.** More spending means larger draws, a higher
+  income for the credit, and a smaller credit, with a cliff at 400% of the
+  poverty line. On the plan in §2.1 the credit moved by tens of dollars a year,
+  because its income stayed near 195%. A plan near the cliff has not been
+  measured. The scan in §3.2 is what makes a cliff safe: a step down in the
+  curve is found, not assumed away. When the plan has a health plan, the result
+  table adds a row, **Premium tax credit**, for both columns.
+- **The health plan ends the December before 65.** The engine charges nothing
+  for Medicare after that: no Part B or D premium, no supplement, and IRMAA is
+  recorded but not charged. A cost after 65 exists only if the user entered an
+  expense for it. So spending steps at 65, and the result shows monthly
+  spending in two rows when the plan has a health plan: **before 65** and
+  **from 65**.
+- **A plan with no health cost from 65 reads as room to spend.** It is not. When
+  a plan has a health plan and no expense that starts within a year of its
+  end, the result carries a note: "Nothing in this plan pays for health cover
+  from 65. The figure assumes none." The Test Bench advises; it adds no
+  account.
+
+The same factor applies on both sides of 65. A different level before and after
+is a per-phase amount, and waits for spec 14 with the rest.
 
 ## 4. The curve is the control
 
@@ -199,11 +265,15 @@ A table beside the curve, Apply under it (figures illustrative):
 | In simulated markets | 93% | 91% |
 | With guardrails | … | … |
 
+With a marketplace health plan the first row becomes two, before 65 and from
+65, and a Premium tax credit row is added (§3.3).
+
 - The first column is the Outcome card's plan, to the dollar.
 - "In simulated markets" is filled by a Monte Carlo run of each column after
   the search, 300 runs each, so it appears a few seconds later.
 - "With guardrails" is the Guardrails panel's run of each column, under the
-  page's own guardrail settings, from retirement.
+  settings in the Guardrails section, from retirement. The Test Bench reads
+  those settings and never changes them (decision §14.7).
 
 ### 5.1 What stops you
 
@@ -223,12 +293,11 @@ order. The sentence links to the month in Month Details.
 
 ### 5.2 Apply
 
-Apply writes the scaled amounts into the expense accounts. It changes amounts
-the user entered, on the user's click, and creates or deletes nothing.
+Apply saves the result as a new scenario (decision §14.5). The plan as entered
+stays as it is, and the new scenario holds the scaled expense amounts with a
+copy of the plan's settings. Nothing is created or deleted in the entered plan.
 
-Two ways to apply (decision §14.5): **Save as a new scenario** (the default
-proposed here: the entered plan stays, and scenarios already keep their own
-settings) or **Change this plan**.
+The button reads "Save as a scenario", asks for a name, and switches to it.
 
 ## 6. Guardrails
 
@@ -236,11 +305,8 @@ settings) or **Change this plan**.
   path it is only a second spending dial, which is how defects 1 and 2 arise.
 - **In the result.** The "With guardrails" row shows the solved plan under the
   user's settings.
-- **One offer.** The plan's own first-year retirement withdrawal rate, at the
-  solved spending, is a figure the user otherwise guesses at (the setting
-  defaults to a round number). The result offers it: "Your plan withdraws 4.6%
-  in its first retired year. Use it as the guardrail target rate?" One click,
-  never automatic (decision §14.7).
+- **Settings left alone.** The Test Bench reads the Guardrails section's
+  settings and never proposes or writes one (decision §14.7).
 
 ## 7. Monte Carlo
 
@@ -375,13 +441,17 @@ routing and the spending together or the routing alone.
 `index.html` (section, nav label), `finplan-app.js` (launch, Apply),
 the new element, `help.html#maximizer`, `rules.html` (Maximizer section),
 `markdowns/finplan-ui-spec.md` (four mentions), the Outcome card (unchanged, but
-its figure is now the Maximizer's first column and a test pins that), the
+its figure is now the Test Bench's first column and a test pins that), the
 projections markdown export if it quotes the Maximizer, `plugin/README.md` and
 `SKILL.md` once the MCP tool exists. The static pages change in the same PR as
 the behavior.
 
-The name: "Maximizer" still fits. The subtitle becomes "How much can this plan
-spend?" (decision §14.10).
+**The name.** The section becomes **Test Bench** (decision §14.10): the nav
+label, the heading, Help, Rules and the UI spec. It holds two tests, "Spending"
+(§3) and, from Phase 2, "Routing" (§8). The section id and the Help anchor are
+renamed, and `help.html#maximizer` stays as a second anchor so existing links
+land. Code names (`simulator.js`, `max_spending`) do not change for the
+rename.
 
 ## 11. Traps this codebase has already hit
 
@@ -392,7 +462,8 @@ spend?" (decision §14.10).
 - **Clock-pinned fixtures.** Quick-start dates come from the wall clock. Every
   solver test pins it.
 - **Green is not evidence.** The limits are load-bearing: mutation-verify the
-  exhaustion test, the deflation, the halving direction and the stop rule.
+  exhaustion test, the deflation, the pick of the highest passing level and the
+  stop rule.
 - **Past the edge, the measure lies** (§2). Any later change that reads ending
   value without testing "never runs out" first reintroduces defect 3 in a new
   form. One function owns the test.
@@ -414,11 +485,20 @@ spend?" (decision §14.10).
 - `solver-names-what-stops-it`: Mid Career names September 2065 and the two
   retirement balances.
 - `curve-stops-at-the-edge`: no curve point lies beyond the first run-out.
-- `feasible-is-an-interval`: across 30 sampled factors per profile, once a
-  limit fails it keeps failing. This is the assumption the halving rests on,
-  and it is measured here on eight profiles only; the test keeps it honest as
-  the engine changes. If a plan breaks it, the solver falls back to a scan of
-  the samples and takes the largest passing factor below the first failure.
+- `solver-finds-the-highest`: on the plan in §2.1 with a floor of $5.1M the
+  answer lies above what was entered, where halving alone answers below it.
+- `rising-curve-is-named`: the same plan's result says the curve rises and
+  names Checking.
+- `steady-on-the-quick-starts`: the eight profiles' curves do not rise while
+  funded. Not a law (§2.1): a record of what was measured, so a change that
+  breaks it is seen.
+- `dial-leaves-the-benchmark`: a health plan's benchmark is the same at every
+  spending level.
+- `two-rows-at-65`: a plan with a health plan shows spending before and from
+  65, and the note when nothing follows it.
+- `credit-cliff-is-found`: a fixture whose income crosses 400% of the poverty
+  line inside the scan shows the step, and the answer respects the floor on
+  both sides of it.
 - With the success limit: the same seed gives the same rate; the rate does not
   rise with spending across the samples.
 - Routing: `routing-never-worse` (the result ranks at or above the plan as
@@ -442,30 +522,37 @@ The solver adds a module and a page section and changes no engine rule.
   second dial for the same solver, and each is its own decision.
 - The early-withdrawal penalty (spec 13).
 - Tax-aware spending (spending more in low-bracket years).
+- Charging Medicare premiums or IRMAA. The Test Bench says the plan carries no
+  health cost from 65 (§3.3); it does not add one.
+- Changing a guardrail setting.
 
-## 14. Decisions pending
+## 14. Decisions
 
-1. **The reframing itself:** replace the strip with "spend the most that keeps
-   these limits"? The rest assumes yes.
-2. **Which expenses the dial turns:** every monthly expense except health
-   insurance (proposed, the guardrails' set), or only those the user marks
-   flexible?
-3. **From when:** the whole plan in Phase 1 (proposed), with retirement-only
-   after spec 14, or wait for spec 14?
-4. **The default floor:** $0 (proposed), or what the plan leaves today, which
-   makes the default answer "no change" for any plan that is funded?
-5. **Apply:** save as a new scenario by default (proposed), change the plan, or
-   offer both?
-6. **The success limit:** in Phase 3 as proposed, or in Phase 1? And its
-   default when switched on: 90%?
-7. **The guardrail-rate offer** (§6): yes, or leave guardrail settings alone?
-8. **The routing search between phases:** off the page for Phase 1 and back in
-   Phase 2 (proposed), or kept visible through Phase 1 with Apply switched off?
-9. **The MCP tool:** after Phase 1 as its own PR (proposed), or not yet?
-10. **Wording:** keep "Maximizer" with the new subtitle, or rename the section?
-11. **The routing search's safeguards** (§8.3): five restarts and a 1% agreement
-    band as proposed? And is "the searches differed" acceptable on the page, or
-    should a disagreeing search run longer before it shows anything?
+Recorded 2026-11-12 (John). The questions as first asked are in this branch's
+second commit.
+
+1. **Replace the strip** with "spend the most that keeps these limits". Yes.
+2. **The dial turns every monthly expense, health care included,** and the
+   design is aware of the step to Medicare at 65 (§3.3). The draft proposed
+   leaving health insurance out, as the guardrails do.
+3. **The whole plan** in Phase 1. Spending that differs by phase waits for
+   spec 14.
+4. **The default floor is $0.**
+5. **Apply saves a new scenario.** There is no "change this plan" (§5.2).
+6. **The simulated-markets limit is Phase 3.**
+7. **Guardrail settings are left alone.** The "With guardrails" row copies the
+   Guardrails section's settings; nothing is offered or written (§6).
+8. **The routing search is off the page for Phase 1 and back in Phase 2.**
+9. **The MCP tool follows Phase 1** as its own PR.
+10. **The section is renamed Test Bench** (§10).
+11. **The routing search's safeguards are as proposed** (§8.3): five restarts, a
+    1% agreement band, and "the searches differed" shown on the page.
+
+Found while recording decision 2, and built into the design:
+
+- **Ending value does not always fall as spending rises** (§2.1). The draft's
+  solver halved an interval and kept a scan as a fallback. The scan is now the
+  method.
 
 ## 15. Phases and cost
 
@@ -473,9 +560,9 @@ The solver adds a module and a page section and changes no engine rule.
 |---|---|---|
 | **1. The solver and the curve** | §3 with the first two limits, §4, §5 without the success limit, §5.1, Apply, Help, Rules, the UI spec. The strip, the bar chart and the genetic search leave the page. | about 3–4 days |
 | **2. The routing search** | §8: the experiment (§8.5) first, then the score, the genes, restarts, polish, prune, the agreement line, the third column | about 1–2 days for the experiment, then 4–6 |
-| **3. Simulated markets as a limit** | §7, the guardrail-rate offer | about 2 days |
+| **3. Simulated markets as a limit** | §7 | about 2 days |
 | **4. The MCP tool** | `max_spending`, README, SKILL | about 1 day |
 
-Phase 1 is worth shipping alone. It removes every defect in §1.1, answers in a
-second, and takes less room than what it replaces. Phase 2 follows it directly:
+Phase 1 is worth shipping alone. It removes every defect in §1.1, answers in
+under two seconds, and takes less room than what it replaces. Phase 2 follows it directly:
 for a plan like Mid Career, routing is where the spending is.
