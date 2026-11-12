@@ -72,8 +72,7 @@ import './components/event-form-modal.js';
 import './components/finplan-timeline.js';
 import './components/month-details.js';
 import './components/outcome-strip.js';
-// simulator-modal is code-split: imported on the first Maximizer Run click
-// (doMaximize) — the <simulator-modal> tag stays inert until then.
+import './components/test-bench.js';
 import './components/spreadsheet-view.js';
 import './components/report-view.js';
 import './components/credit-memo-view.js';
@@ -86,6 +85,7 @@ import './components/plan-issues-panel.js';
 // the only place it is reachable from.
 
 // ── Store ───────────────────────────────────────────────────
+import { solvedAssets } from './spending-solver.js';
 import { store } from './finplan-store.js';
 import { AppState } from './app-state.js';
 
@@ -190,6 +190,7 @@ function displayConfig() {
 
 // ── DOM refs ────────────────────────────────────────────────
 const assetList         = document.getElementById('finplanAssetList');
+const testBench         = document.getElementById('testBench');
 const assetFormModal    = document.getElementById('assetFormModal');
 const assetViewModal    = document.getElementById('assetViewModal');
 const transferModal     = document.getElementById('transferModal');
@@ -225,10 +226,9 @@ const grSummary         = document.getElementById('guardrail-summary');
 const grSummaryText     = document.getElementById('guardrail-summary-text');
 const grEditor          = document.getElementById('guardrail-editor');
 
-// The Maximizer writes its optimizer output straight into these globals, so
-// they carry full float precision (4.387129...). Display to the nearest tenth
-// and drop a trailing zero, so the defaults still read "5%" not "5.0%".
-// Presentation only — the stored value keeps its precision.
+// A stored value can carry full float precision (4.387129...). Display to the
+// nearest tenth and drop a trailing zero, so the defaults still read "5%" not
+// "5.0%". Presentation only — the stored value keeps its precision.
 const grDisplay = (v) => parseFloat(Number(v).toFixed(1));
 
 function guardrailSummaryText() {
@@ -277,13 +277,6 @@ let _mcSyncTimer        = null;   // Monte Carlo only, after an MC-only setting
 const SIM_SYNC_DELAY_MS = 400;
 let _settingsNoteFor    = null;   // asset list the settings note describes
 let _visualizerDirty    = true;   // the plan changed while the Visualizer was collapsed
-
-// Maximizer fitness bias: 0 = maximize spending, 100 = maximize terminal value.
-// Lives here rather than inside <simulator-modal> because that element is
-// code-split and doesn't upgrade until the first Run — the bias has to be
-// selectable before then. Declared up here (not beside buildMaximizerBias)
-// because the init code below paints the strip during module evaluation.
-let maximizerBias = 100;
 
 // Code-split feature modules — loaded on first use. Declared here (before
 // the init code below calls calculate()) so the auto-run path can reach
@@ -669,32 +662,28 @@ document.getElementById('btn-run-mc').addEventListener('click', (ev) => {
     }
 });
 document.getElementById('btn-run-guardrails').addEventListener('click', () => doGuardrails());
-document.getElementById('btn-maximize').addEventListener('click', () => doMaximize());
-buildMaximizerBias();
 
-// Apply optimized transfers and guardrails from the Maximizer
-document.getElementById('simulator-inline').addEventListener('apply-optimized', (ev) => {
-    const { lifeEvents, guardrailParams } = ev.detail;
-
-    // Update phase transfers on existing life events (preserves triggerAge, closes, etc.)
-    if (lifeEvents) {
-        const optimized = lifeEvents.map(ModelLifeEvent.fromJSON);
-        for (let i = 0; i < appState.lifeEvents.length && i < optimized.length; i++) {
-            appState.lifeEvents[i].phaseTransfers = optimized[i].phaseTransfers;
-        }
-    }
-
-    // Update guardrail globals and sync to DOM inputs
-    if (guardrailParams) {
-        global_setGuardrailWithdrawalRate(guardrailParams.withdrawalRate);
-        global_setGuardrailPreservation(guardrailParams.preservation);
-        global_setGuardrailProsperity(guardrailParams.prosperity);
-        global_setGuardrailAdjustment(guardrailParams.adjustment);
-        syncGuardrailsToDOM();
-    }
-
-    // Re-runs both simulations with the optimized transfers and params.
-    calculate();
+// ── Test Bench ──────────────────────────────────────────────
+// The element runs the test and shows it. The plan is read when a test
+// starts, so it is always the plan on screen under the settings in force.
+testBench.planSource = () => {
+    if (!appState.portfolio?.firstDateInt) return null;
+    const retirement = global_getRetirementDateInt(displayConfig());
+    return {
+        modelAssets: appState.portfolio.modelAssets,
+        lifeEvents: appState.lifeEvents.map(e => e.toJSON()),
+        // Read, never written: the Guardrails section owns its settings.
+        guardrailParams: getGuardrailParams(),
+        retirementDateInt: retirement ? retirement.toInt() : null,
+    };
+};
+testBench.addEventListener('testbench-month', (ev) => {
+    store.setSelectedYearMonth(ev.detail.year, ev.detail.month);
+    scrollToSection('sec-month');
+});
+testBench.addEventListener('testbench-save', (ev) => {
+    _pendingSpendingFactor = ev.detail.factor;
+    openScenarioPopup('spending');
 });
 
 // ── Portfolio view toggle (Assets / Flows / Sankey) ──────
@@ -814,6 +803,8 @@ function connectGuardrailInput(input, setter) {
         saveLocalData();
         grSummaryText.textContent = guardrailSummaryText();
         doGuardrails();
+        // The Test Bench's "With guardrails" row was run under the old settings.
+        testBench.markStale();
         if (document.getElementById('mc-with-guardrails')?.checked) {
             scheduleMonteCarloSync();
         }
@@ -861,7 +852,8 @@ simModeToggle.addEventListener('click', (ev) => {
 updateSimDataModeUI();
 
 // ── Scenario UI events ─────────────────────────────────────
-let _scenarioPopupMode = 'create'; // 'create', 'edit', or 'save' (the unsaved plan)
+let _scenarioPopupMode = 'create'; // 'create', 'edit', 'save' (the unsaved plan) or 'spending' (a Test Bench result)
+let _pendingSpendingFactor = null;  // the solved spending level awaiting a scenario name
 
 function openScenarioPopup(mode) {
     _scenarioPopupMode = mode;
@@ -876,6 +868,13 @@ function openScenarioPopup(mode) {
         document.getElementById('scenario-popup-title').textContent = 'Save as Scenario';
         document.getElementById('scenario-title-input').value = unsaved?.title || '';
         document.getElementById('scenario-note-input').value = unsaved?.note || '';
+        document.getElementById('scenario-copy-label').style.display = 'none';
+    } else if (mode === 'spending') {
+        const meta = util_loadLocalScenarioMeta(appState.storyArc, appState.storyName);
+        const from = meta?.title || appState.storyName;
+        document.getElementById('scenario-popup-title').textContent = 'Save as Scenario';
+        document.getElementById('scenario-title-input').value = `${from}: spend the most`;
+        document.getElementById('scenario-note-input').value = 'From the Test Bench: every monthly expense at the most the plan can pay for.';
         document.getElementById('scenario-copy-label').style.display = 'none';
     } else {
         document.getElementById('scenario-popup-title').textContent = 'New Scenario';
@@ -917,6 +916,9 @@ document.getElementById('btn-scenario-create').addEventListener('click', () => {
         loadScenarioList();
     } else if (_scenarioPopupMode === 'save') {
         saveUnsavedAsScenario(title, note);
+    } else if (_scenarioPopupMode === 'spending') {
+        saveSpendingAsScenario(title, note, _pendingSpendingFactor);
+        _pendingSpendingFactor = null;
     } else {
         const copyData = document.getElementById('scenario-copy-check').checked;
         createScenario(title, note, copyData);
@@ -1428,18 +1430,14 @@ function calculate() {
     const hasAssets = modelAssets.length > 0;
     const mcBtn = document.getElementById('btn-run-mc');
     const grBtn = document.getElementById('btn-run-guardrails');
-    const maxBtn = document.getElementById('btn-maximize');
     mcBtn.disabled = !hasAssets;
     grBtn.disabled = !hasAssets;
-    maxBtn.disabled = !hasAssets;
     mcBtn.title = hasAssets ? '' : 'Add assets to run simulations';
     grBtn.title = hasAssets ? '' : 'Add assets to run simulations';
-    maxBtn.title = hasAssets ? '' : 'Add assets to run maximizer';
-    const biasStrip = document.getElementById('maximizer-bias');
-    if (biasStrip) {
-        biasStrip.style.opacity = hasAssets ? '' : '0.5';
-        biasStrip.style.pointerEvents = hasAssets ? '' : 'none';
-    }
+    // The Test Bench runs on request; a result on screen is now out of date.
+    testBench.ready = hasAssets;
+    testBench.canSave = !unsavedPlan();
+    testBench.markStale();
 
     // The simulations re-run for the plan just calculated, so their answers
     // never describe a previous version of it.
@@ -1581,60 +1579,6 @@ function refreshVisualizer() {
         ? DateInt.diffMonths(appState.portfolio.firstDateInt, DateInt.from(store.selectedYear, store.selectedMonth))
         : -1;
     hydraulicViz.update(idx, isRetiredPhase(), appState.metricName);
-}
-
-function buildMaximizerBias() {
-    const strip = document.getElementById('maximizer-bias');
-    if (!strip) return;
-
-    strip.replaceChildren(...Array.from({ length: 21 }, (_, i) => {
-        const v = i * 5;
-        const notch = document.createElement('button');
-        notch.className = 'sim-notch';
-        notch.type = 'button';
-        notch.dataset.value = String(v);
-        notch.title = `${100 - v}% Spending / ${v}% Terminal Value`;
-        notch.style.cssText = 'flex: 1; border: none; border-radius: 2px; cursor: pointer; transition: all 0.15s ease;';
-        notch.addEventListener('click', () => {
-            maximizerBias = v;
-            paintMaximizerBias();
-            // A run already on screen was optimizing for the old bias — redo it.
-            const sim = document.getElementById('simulator-inline');
-            if (sim?.open) doMaximize();
-        });
-        return notch;
-    }));
-
-    paintMaximizerBias();
-}
-
-function paintMaximizerBias() {
-    const strip = document.getElementById('maximizer-bias');
-    if (!strip) return;
-    for (const notch of strip.children) {
-        const selected = Number(notch.dataset.value) === maximizerBias;
-        notch.style.height = selected ? '18px' : '10px';
-        notch.style.background = selected ? '#333' : '#d1d5db';
-    }
-}
-
-async function doMaximize() {
-    // Code-split: defines the <simulator-modal> element on first use (the
-    // tag in index.html upgrades in place; the GA itself already runs in a
-    // separate module Worker).
-    await import('./components/simulator-modal.js');
-    const sim = document.getElementById('simulator-inline');
-    if (!sim) return;
-    sim.modelAssets = assetList.modelAssets || [];
-    sim.lifeEvents = appState.lifeEvents;
-    sim.guardrailParams = getGuardrailParams();
-    sim.backtestYear = global_backtestYear;
-    sim.fitnessBalance = maximizerBias;
-    if (sim.open) {
-        sim.restart();
-    } else {
-        sim.open = true;
-    }
 }
 
 function buildPhaseMarkersForCharts() {
@@ -2503,6 +2447,23 @@ function addScenarioForPlanOnScreen(title, note) {
     util_ensureStoryNames(appState.storyArc, storyName);
     util_saveLocalScenarioMeta(appState.storyArc, storyName, { title, note });
     appState.storyName = storyName;
+}
+
+/**
+ * Save a Test Bench result as a new scenario, and switch to it: the plan on
+ * screen, with its life events, guardrail parameters and settings, and every
+ * monthly expense at the solved level. The scenario it was solved from is
+ * saved first and left as it was.
+ */
+function saveSpendingAsScenario(title, note, factor) {
+    if (unsavedPlan() || !Number.isFinite(factor)) return;
+    saveLocalData();
+    const solved = solvedAssets(assetList.modelAssets || [], factor);
+    assetList.modelAssets = bindForEditing(membrane_rawDataToModelAssets(solved));
+    // The life events and settings on screen stay, and calculate() saves
+    // them with the new scenario.
+    addScenarioForPlanOnScreen(title, note);
+    calculate();
 }
 
 /** Save the unsaved plan on screen, edits and all, as a new scenario. */

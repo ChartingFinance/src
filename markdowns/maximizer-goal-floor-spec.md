@@ -1,6 +1,7 @@
 # Spec 15 — The Test Bench: how much can I spend, and what is left
 
-Status: **DECIDED 2026-11-12 (§14). Spec only, no code.** Phase 1 can start now.
+Status: **DECIDED 2026-11-12 (§14). Phase 1 is built** (the solver, the curve, the
+result, the rename). Phases 2 to 4 are not started.
 The section called Maximizer today is renamed Test Bench (decision §14.10).
 
 The Maximizer today asks the user to pick a point between "Spending" and
@@ -93,7 +94,8 @@ not spent, so the figure can rise again (Pre-Retirement ×1.4 → ×1.6). "Never
 runs out" is therefore tested first and always, and the curve stops there.
 
 **A run costs 32 ms.** A scan of 40 spending levels and a dozen refining runs
-take under two seconds, against three minutes.
+take one to three seconds (measured on the eight profiles once built), against
+three minutes.
 
 The largest factor that never runs out, and the largest that also leaves half
 of what the plan leaves today:
@@ -189,7 +191,7 @@ The dial is a factor on the plan's monthly expenses.
 4. **Refine.** Halve the gap between that sample and the failing one above it
    until it is narrower than $10 a month.
 
-About 55 runs, under two seconds. No random numbers.
+About 45 to 55 runs, one to three seconds. No random numbers.
 
 If the plan as entered already breaks a limit, the answer is below what was
 entered and the result says so: "This plan runs out in July 2030. Spending 7%
@@ -426,8 +428,11 @@ routing and the spending together or the routing alone.
   from serialized assets, mutates nothing it is given, reads no global.
 - It runs in the shared simulation worker (`mc-worker.js`, a new `kind`), which
   already hosts Guardrails. The payload carries `global_workerSnapshot()`.
-- Runs go through `withoutTracing`. Exhaustion detection does not need the
-  trace (checked: Mid Career ×1.04 reports September 2065 either way).
+- Runs are traced. Exhaustion detection does not need the trace (checked: Mid
+  Career ×1.04 reports September 2065 either way), but spending does: a draw
+  counts as spending when its causal chain roots in an obligation, the same
+  reading as `annual-expenditure.js`. This is why a solve takes one to three
+  seconds and not under two.
 - The page section becomes a small Lit element. `simulator-modal.js` and the
   strip in `index.html` and `finplan-app.js` go.
 - `simulator.js` stays and changes in Phase 2: the score (§8.1), the gene map
@@ -564,5 +569,5 @@ Found while recording decision 2, and built into the design:
 | **4. The MCP tool** | `max_spending`, README, SKILL | about 1 day |
 
 Phase 1 is worth shipping alone. It removes every defect in §1.1, answers in
-under two seconds, and takes less room than what it replaces. Phase 2 follows it directly:
+one to three seconds, and takes less room than what it replaces. Phase 2 follows it directly:
 for a plan like Mid Career, routing is where the spending is.

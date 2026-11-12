@@ -26,7 +26,10 @@ import assert from 'node:assert/strict';
 import './tools/localstorage-polyfill.js';
 import { planFromProfile, listProfiles, runPlan, simConfigFromPlanSpec } from '../js/mcp/run-plan.js';
 import { buildPlan } from '../js/mcp/build-plan.js';
-import { solveSpending, runAt, scaledAssets, SCAN_LEVELS } from '../js/spending-solver.js';
+import { solveSpending, runAt, scaledAssets, solvedAssets, SCAN_LEVELS } from '../js/spending-solver.js';
+import { whatStopsYou, riseNote, healthNote, resultRows } from '../js/spending-report.js';
+import { planOutcome } from '../js/outcome-summary.js';
+import { detectIssues } from '../js/portfolio-issues.js';
 import { Instrument } from '../js/instruments/instrument.js';
 import { expenditureOverWindow } from '../js/annual-expenditure.js';
 
@@ -82,10 +85,13 @@ console.log('spending-solver');
 // ── The first column is the plan ─────────────────────────────────────
 
 for (const { key, spec } of PROFILES) {
-    await check(`${key}: "as entered" is the plan's own run`, async () => {
-        const own = (await runPlan(spec)).portfolio.finishValue().amount;
+    await check(`${key}: "as entered" is the Outcome card's figure for the plan's own run`, async () => {
+        const own = (await runPlan(spec)).portfolio;
+        const card = planOutcome(own, detectIssues(own));
         const r = solve(key, spec);
-        assert.equal(Math.round(r.asEntered.endingNominal), Math.round(own));
+        assert.equal(r.asEntered.endingNominal, card.end);
+        assert.equal(r.asEntered.endingReal, card.endReal);
+        assert.equal(!!r.asEntered.runsOut, !!card.exhaustion);
         assert.equal(r.asEntered.factor, 1);
     });
 }
@@ -97,6 +103,7 @@ await check("what is left is in today's dollars, by the run's own price index", 
     const level = index[index.length - 1];
     assert.ok(level > 1.5, `price level ${level} at the plan's end`);
     assert.ok(Math.abs(run.endingReal - run.endingNominal / level) < 0.01);
+    assert.ok(run.endingNominal > 1_000_000, `ends with ${run.endingNominal}`);
 });
 
 await check("spending is what was withdrawn to spend, month by month, in today's dollars", () => {
@@ -310,6 +317,149 @@ await check('a plan with no health plan has neither the split nor the note', () 
     assert.equal(r.healthNote, false);
     assert.equal(r.asEntered.monthlySpendingBefore65, undefined);
     assert.equal(r.asEntered.premiumTaxCredit, undefined);
+});
+
+// ── The premium-credit cliff ─────────────────────────────────────────
+
+/**
+ * A retiree whose brokerage draws lift income over 400% of the poverty line
+ * part way up the scan, where the premium tax credit stops.
+ */
+const CLIFF = at('2026-10-15T12:00:00Z', () => buildPlan({
+    settingsOverrides: { startAge: 60, retirementAge: 60, finishAge: 85 },
+    income: [{ label: 'Pension', annual: 45000, kind: 'pension' }],
+    accounts: [{ label: 'Checking', startingBalance: 30000 },
+               { label: 'Brokerage', startingBalance: 1500000 }],
+    healthInsurance: [{ label: 'Marketplace Plan', premium: { monthly: 1000 },
+        benchmark: { monthly: 950 }, estimatedIncome: 40000 }],
+}).spec);
+
+/** The first level of the curve at which the plan's fifth year has no credit. */
+function cliffIn(result, plan) {
+    const fifthYear = (factor) => runAt(plan, factor).portfolio.taxYears[4]?.ptc ?? 0;
+    const funded = result.curve.filter((c) => !c.runsOut);
+    const at = funded.findIndex((c) => fifthYear(c.factor) === 0);
+    return at > 0 ? { below: funded[at - 1], above: funded[at], credit: fifthYear(funded[at - 1].factor) } : null;
+}
+
+await check('the scan crosses the premium-credit cliff: the credit stops part way up', () => {
+    const plan = planOf(CLIFF);
+    const cliff = cliffIn(solve('cliff', CLIFF), plan);
+    assert.ok(cliff, 'no level of the scan loses the credit');
+    assert.ok(cliff.credit > 3000, `the credit just below the cliff is ${cliff.credit}`);
+    assert.ok(cliff.below.factor > 1, 'the cliff lies below what was entered');
+});
+
+await check('and the answer is a limit on both sides of the cliff', () => {
+    const plan = planOf(CLIFF);
+    const cliff = cliffIn(solve('cliff', CLIFF), plan);
+    // One floor that stops the answer below the cliff, one that lets it past.
+    const sides = [
+        { floor: Math.ceil(cliff.below.endingReal + 150_000), below: true },
+        { floor: Math.floor(cliff.above.endingReal - 800_000), below: false },
+    ];
+    for (const { floor, below } of sides) {
+        const r = solve('cliff', CLIFF, floor);
+        assert.equal(r.boundBy.kind, 'floor');
+        assert.equal(r.best.factor < cliff.above.factor, below, `floor ${floor} answers x${r.best.factor}`);
+        assert.ok(keeps(r.best, floor));
+        assert.ok(!keeps(runAt(plan, above(r, 20)), floor), `floor ${floor}: $20 a month more still passes`);
+    }
+});
+
+await check('past the cliff the result shows less premium credit than before it', () => {
+    const cliff = cliffIn(solve('cliff', CLIFF), planOf(CLIFF));
+    const before = solve('cliff', CLIFF, Math.ceil(cliff.below.endingReal + 150_000));
+    const past = solve('cliff', CLIFF, Math.floor(cliff.above.endingReal - 800_000));
+    assert.ok(past.best.premiumTaxCredit < before.best.premiumTaxCredit - 5000,
+        `${past.best.premiumTaxCredit} past, ${before.best.premiumTaxCredit} before`);
+});
+
+// ── What is saved ────────────────────────────────────────────────────
+
+await check('the amounts saved are the solved ones, cut to the cent toward spending less', () => {
+    const { spec } = PROFILES.find((p) => p.key === 'midCareer');
+    const r = solve('midCareer', spec);
+    const saved = solvedAssets(spec.modelAssets, r.best.factor);
+    const exact = scaledAssets(spec.modelAssets, r.best.factor);
+    let expenses = 0;
+    saved.forEach((asset, i) => {
+        const was = spec.modelAssets[i].startCurrency.amount;
+        if (asset.instrument !== Instrument.MONTHLY_EXPENSE) {
+            assert.equal(asset.startCurrency.amount, was, `${asset.displayName} changed`);
+            return;
+        }
+        expenses++;
+        const cents = asset.startCurrency.amount * 100;
+        assert.ok(Math.abs(cents - Math.round(cents)) < 1e-6, `${asset.displayName} keeps a fraction of a cent`);
+        assert.ok(Math.abs(asset.startCurrency.amount) <= Math.abs(exact[i].startCurrency.amount));
+        assert.ok(Math.abs(asset.startCurrency.amount - exact[i].startCurrency.amount) < 0.01);
+    });
+    assert.ok(expenses >= 2);
+});
+
+await check('and the saved plan, run as entered, keeps the limits it was solved for', () => {
+    const { spec } = PROFILES.find((p) => p.key === 'midCareer');
+    const floor = 2_000_000;
+    const r = solve('midCareer', spec, floor);
+    const saved = runAt({ ...planOf(spec), modelAssets: solvedAssets(spec.modelAssets, r.best.factor) }, 1);
+    assert.ok(keeps(saved, floor), `the saved plan ends with ${saved.endingReal}`);
+    assert.ok(Math.abs(saved.monthlySpending - r.best.monthlySpending) < 1);
+});
+
+// ── The words ────────────────────────────────────────────────────────
+
+await check('"what stops it" names the month and the accounts left untouched', () => {
+    const { spec } = PROFILES.find((p) => p.key === 'midCareer');
+    const r = solve('midCareer', spec);
+    const stops = whatStopsYou(r);
+    assert.equal(stops.year, r.boundBy.year);
+    assert.equal(stops.month, r.boundBy.month);
+    assert.match(stops.text, new RegExp(`bills go unpaid from \\w+ ${r.boundBy.year}`));
+    assert.match(stops.text, /the 401K holds \$\d/);
+    assert.match(stops.text, /and the Roth IRA \$\d/);
+});
+
+await check('for a floor it names the floor, and gives no month', () => {
+    const { spec } = PROFILES.find((p) => p.key === 'midCareer');
+    const stops = whatStopsYou(solve('midCareer', spec, 2_000_000));
+    assert.match(stops.text, /end with less than \$2,000,000/);
+    assert.equal(stops.year, undefined);
+});
+
+await check('when no level passes it says so, with what the lowest leaves', () => {
+    const { spec } = PROFILES.find((p) => p.key === 'retired');
+    const r = solve('retired', spec, 1e12);
+    assert.equal(r.best, null);
+    assert.match(whatStopsYou(r).text, /^No spending level tested leaves \$1,000,000,000,000\. The lowest leaves \$\d/);
+});
+
+await check('the rising-curve note names the account, and is absent when the curve falls', () => {
+    assert.match(riseNote(solve('retiree', RETIREE)), /is left in Checking/);
+    const { spec } = PROFILES.find((p) => p.key === 'retired');
+    assert.equal(riseNote(solve('retired', spec)), null);
+});
+
+await check('the table splits spending at 65 for a health plan, and says "never" for a funded plan', () => {
+    const withCard = resultRows(solve('retiree', RETIREE));
+    assert.deepEqual(withCard.map((row) => row.label).slice(0, 3),
+        ['Monthly spending before 65', 'Monthly spending from 65', 'Premium tax credit, whole plan']);
+    assert.match(healthNote(solve('retiree', RETIREE)), /ends at 65/);
+
+    const { spec } = PROFILES.find((p) => p.key === 'retired');
+    const plain = resultRows(solve('retired', spec));
+    assert.equal(plain[0].label, 'Monthly spending');
+    assert.equal(plain.find((row) => row.label === 'Runs out').entered, 'never');
+    assert.equal(healthNote(solve('retired', spec)), null);
+});
+
+await check('a column with no answer shows a dash, and a plan that runs out shows the month', () => {
+    const { spec } = PROFILES.find((p) => p.key === 'retired');
+    const none = resultRows(solve('retired', spec, 1e12));
+    assert.ok(none.every((row) => row.best === '—'));
+    const early = PROFILES.find((p) => p.key === 'earlyCareer');
+    const rows = resultRows(solve('earlyCareer', early.spec));
+    assert.equal(rows.find((row) => row.label === 'Runs out').entered, 'July 2030');
 });
 
 console.log(`\n${passed} passed, ${failed} failed`);

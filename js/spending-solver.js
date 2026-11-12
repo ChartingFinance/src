@@ -41,6 +41,7 @@ import { ModelLifeEvent } from './life-event.js';
 import { Portfolio } from './portfolio.js';
 import { chronometer_run } from './chronometer.js';
 import { detectIssues, planExhaustion } from './portfolio-issues.js';
+import { planOutcome } from './outcome-summary.js';
 import { InstrumentType } from './instruments/instrument.js';
 import { PriceIndex } from './utils/price-index.js';
 import { bookedMonthIndex } from './trace.js';
@@ -78,6 +79,20 @@ export function scaledAssets(modelAssets, factor) {
 }
 
 /**
+ * The plan's assets at a solved level, as a scenario keeps them: each dial
+ * expense scaled by `factor` and cut to the cent, toward spending less, so the
+ * saved plan never spends more than the level that was tested.
+ */
+export function solvedAssets(modelAssets, factor) {
+    return scaledAssets(modelAssets, factor).map((plain) => {
+        if (isDialExpense(plain.instrument) && plain.startCurrency) {
+            plain.startCurrency.amount = Math.trunc(plain.startCurrency.amount * 100) / 100;
+        }
+        return plain;
+    });
+}
+
+/**
  * Run the plan with its expenses scaled by `factor`, and measure it.
  *
  * @returns {object} one measured run; see `measure`
@@ -92,11 +107,13 @@ export function runAt(plan, factor) {
 
 /** The figures the solver and the result table read from one finished run. */
 function measure(portfolio, factor) {
-    const index = portfolio.monthlyPriceIndex ?? [];
-    const lastMonth = index.length - 1;
-    const endingNominal = portfolio.finishValue().amount;
-    const endingReal = PriceIndex.deflateAt(endingNominal, index, lastMonth);
-    const exhaustion = planExhaustion(detectIssues(portfolio));
+    // The Outcome card's own reading of the run, so the first column of the
+    // result is the card's figure and the two cannot drift apart.
+    const issues = detectIssues(portfolio);
+    const outcome = planOutcome(portfolio, issues);
+    const endingNominal = outcome?.end ?? 0;
+    const endingReal = outcome?.endReal ?? endingNominal;
+    const exhaustion = planExhaustion(issues);
 
     const spendingByMonth = realSpendingByMonth(portfolio);
     const lifetimeSpending = spendingByMonth.reduce((sum, v) => sum + v, 0);

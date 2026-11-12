@@ -27,7 +27,7 @@ Settings            → global assumptions (full-width glass-card)
   Spreadsheet + Report → side-by-side, scrollable containers
 ─── Tools (full-width) ───
   Visualizer        → hydraulic flow animation (on-demand Run button)
-  Maximizer         → genetic algorithm optimizer (on-demand Run button)
+  Test Bench        → tests on the plan; first, "how much can this plan spend?" (on-demand Run button)
 Footer
 ```
 
@@ -35,7 +35,7 @@ Footer
 We explicitly rejected tabbed navigation and collapsible panels. Both force the user to hold mental state across hidden views. The vertical scroll model means the user's position on the page *is* their level of detail.
 
 ### On-demand execution
-Expensive operations (Monte Carlo, Guardrails, Visualizer, Maximizer) are triggered by explicit Run buttons rather than auto-running on every recalculation. This keeps the page responsive and gives the user control over when to spend computation.
+Expensive operations (Monte Carlo, Guardrails, Visualizer, Test Bench) are triggered by explicit Run buttons rather than auto-running on every recalculation. This keeps the page responsive and gives the user control over when to spend computation.
 
 ---
 
@@ -127,10 +127,18 @@ Section heading with faucet emoji.
 
 Glass-card with date display header, Run button, and dark container (`#1e1e2e`, 600px height, 12px border-radius) for the hydraulic SVG animation. On-demand via Run button. Uses `chronometer_run_animated()` to step through the simulation with 80ms animated ticks, rendering asset tanks, flow pipes, and value changes.
 
-### Maximizer (full-width)
-Section heading with crystal ball emoji.
+### Test Bench (full-width)
+Section heading with test tube emoji. Formerly the Maximizer (spec 15, `markdowns/maximizer-goal-floor-spec.md`).
 
-Glass-card with description text and Run button. Launches `<simulator-modal>` overlay — a genetic algorithm that optimizes fund transfer allocations and guardrail parameters. Population of 50, 200 generations, with live progress display.
+Glass-card holding `<test-bench>` (`js/components/test-bench.js`), the Spending test: "spend the most that never runs out and leaves at least $___", a Run button, and the result:
+
+- a headline with the answer;
+- a curve (inline SVG, about 200px) of monthly spending against what is left, each point an exact plan run. A click sets "leaves at least" to that point and runs again;
+- a table, the plan as entered beside the most it can spend, with a row for 300 simulated markets and a row under the Guardrails section's settings;
+- one sentence naming what stopped spending from rising, with a link to the month;
+- "Save as a scenario", which saves the solved expense amounts as a new scenario and leaves the plan on screen unchanged.
+
+The solver (`js/spending-solver.js`) runs in the shared simulation worker. A result on screen is dimmed after the plan changes. The genetic search for fund transfers (`js/simulator.js`) is off the page until it returns as the Routing test.
 
 ### Footer
 Simple footer with app name and version label.
@@ -250,7 +258,7 @@ Additionally, `#retirementDateInt` is set at init to determine phase boundaries.
 - [x] Report view (live data, scrollable container)
 - [x] Detail auto-scroll to selected month with coral highlight
 - [x] Visualizer (hydraulic animation with Run button)
-- [x] Maximizer (genetic algorithm optimizer with Run button)
+- [x] Test Bench (the Spending test, with Run button; formerly the Maximizer)
 - [x] Modern1 design system throughout
 - [x] Reactive state store (FinPlanStore)
 - [x] Footer
@@ -287,7 +295,7 @@ Same localStorage data, same simulation engine, same Lit components.
 - Projections (macro + micro) render on every recalculate
 - Simulations (Monte Carlo + Guardrails) are on-demand via Run buttons
 - Visualizer is on-demand, runs async with 80ms tick animation
-- Maximizer is on-demand, uses a Web Worker for the genetic algorithm
+- Test Bench is on-demand; the spending solver and its checks run in Web Workers
 - Detail scroll uses container-local scrolling (not page scroll)
 
 ---
@@ -304,6 +312,6 @@ Same localStorage data, same simulation engine, same Lit components.
 | **Explore date** | The date selected via the year/month dropdowns, distinct from "now" (the actual current date) |
 | **State badge** | A badge that shows qualitative status (e.g., "Above floor") rather than a numeric value (future) |
 | **Visualizer** | Hydraulic flow animation showing money movement through the portfolio |
-| **Maximizer** | Genetic algorithm optimizer for fund transfers and guardrail parameters |
+| **Test Bench** | Tests run on the plan without changing it. The Spending test finds the most the plan can spend within stated limits |
 | **Modern1** | The design system used by finplan.html — Poppins, white/gray palette, glass-card, coral badges |
 | **On-demand** | Execution pattern where expensive operations require an explicit Run button click |
