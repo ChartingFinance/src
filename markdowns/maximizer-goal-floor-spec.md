@@ -1,7 +1,9 @@
 # Spec 15 — The Test Bench: how much can I spend, and what is left
 
 Status: **DECIDED 2026-11-12 (§14). Phase 1 is built** (the solver, the curve, the
-result, the rename). Phases 2 to 4 are not started.
+result, the rename). **Phase 2's experiment is run (§8.7, 2026-11-13) and changes
+two decided items; §8.8 proposes the changes and §14 lists them as pending.**
+Phases 3 and 4 are not started.
 The section called Maximizer today is renamed Test Bench (decision §14.10).
 
 The Maximizer today asks the user to pick a point between "Spending" and
@@ -420,6 +422,145 @@ The changes are shown as a table on the page, by phase: from, to, now,
 proposed. Not markdown in a text box. Apply follows §5.2, and applies the
 routing and the spending together or the routing alone.
 
+### 8.7 The experiment, as run
+
+Run 2026-11-13 on main 05ca2ca, clock pinned to 2026-11-15, the eight
+quick-start profiles, on §8.2's percentages (6 to 30 per profile, fewer than
+the thirty §8.3 assumed). Every "can spend" figure is the spending solver's
+(§3) for the routed plan, in today's dollars a month, with a floor of $0.
+
+**1. The measure in §8.1 fails.** Ranked by what is left at the entered
+spending, a climb from the plan ("polish", §8.3) finds routings that leave
+more and can spend less:
+
+| Profile | Left as entered | Left, routed | Can spend as entered | Can spend, routed | |
+|---|---|---|---|---|---|
+| Early Career | $2.88M | $2.55M | $3,659 | $3,929 | +7.4% |
+| Mid Career | $0.92M | $0.97M | $5,316 | $5,181 | −2.5% |
+| Pre-Retirement | $3.37M | $3.41M | $5,638 | $4,485 | −20.4% |
+| Retired | $3.49M | $3.51M | $9,503 | $8,725 | −8.2% |
+| Young Couple | $12.03M | $12.11M | $7,627 | $5,839 | −23.4% |
+| Dual Income | $10.07M | $10.36M | $9,431 | $6,945 | −26.4% |
+| Couple Nearing Retirement | $7.10M | $7.13M | $10,109 | $9,301 | −8.0% |
+| Retired Couple | $5.43M | $5.46M | $14,061 | $13,027 | −7.4% |
+
+Seven of eight can spend less. The routing that leaves the most sends money
+into retirement accounts, where it is taxed least and where a bill cannot
+reach it, so the plan runs out sooner. (Early Career runs out as entered, so
+its first rank, fewer unpaid bills, did the work.) Ranking by unpaid bills at
+a spending level 20% past the entered routing's most was tried as well: six
+of eight still spend less. The genetic arms were not run to the end on this
+measure; the climb had already settled it.
+
+**2. Ranked by what the plan can spend, every profile gains.** A routing's
+rank is the highest spending level at which it never runs out and leaves the
+floor: the question §3 asks. Finding that level costs about ten runs, so a
+candidate is run once, just above the best so far, and its own level is found
+only when it pays every bill there.
+
+| Profile | Percentages | As entered | Polish from the plan | Genetic, random start (5 seeds) | Genetic, from the plan (5 seeds) | From the plan, then polish | Plan runs: polish / genetic |
+|---|---|---|---|---|---|---|---|
+| Early Career | 13 | $3,659 | $4,354 (+19.0%) | $4,353 to $4,354 | $4,353 to $4,354 | $4,353 to $4,354 | 181 / 9,834 |
+| Mid Career | 13 | $5,316 | $5,627 (+5.8%) | $5,636 to $5,648 | $5,636 to $5,644 | $5,631 to $5,643 | 315 / 10,029 |
+| Pre-Retirement | 11 | $5,638 | $6,648 (+17.9%) | $6,641 to $6,673 | $6,648 to $6,674 | $6,648 to $6,674 | 306 / 10,091 |
+| Retired | 6 | $9,503 | $9,782 (+2.9%) | $9,782 | $9,782 | $9,782 | 229 / 7,772 |
+| Young Couple | 30 | $7,627 | $8,470 (+11.1%) | $8,456 to $8,470 | $8,465 to $8,470 | $8,470 | 2,944 / 10,459 |
+| Dual Income | 25 | $9,431 | $10,332 (+9.6%) | $10,329 to $10,351 | $10,331 to $10,354 | $10,332 to $10,354 | 1,691 / 10,550 |
+| Couple Nearing Retirement | 30 | $10,109 | $11,219 (+11.0%) | $10,873 to $11,201 | $11,178 to $11,232 | $11,219 to $11,257 | 4,523 / 10,447 |
+| Retired Couple | 8 | $14,061 | $14,364 (+2.2%) | $14,364 to $14,367 | $14,364 to $14,367 | $14,364 | 337 / 9,524 |
+
+- **Polish alone, from the plan, is within 0.4% of the best any arm found**,
+  on every profile. The most a genetic arm added was $39 a month (Couple
+  Nearing Retirement); the solver itself answers to within $10.
+- **The genetic seeds agree** to within 0.5%, with one exception: from a random
+  start on Couple Nearing Retirement (30 percentages) the five seeds differ by
+  2.9% before polish. 10,000 runs did not finish that search.
+- **A stall rule of 30 generations is too short**: it would have stopped some
+  searches at 90% of the level they went on to reach. Last gains came as late
+  as generation 192 of 200.
+- **Prune works**: 3 to 15 changed percentages become 2 to 10, for at most $5 a
+  month.
+
+**3. There are valleys, away from the plan.** Polish from five other starting
+points:
+
+| Profile | From the plan | From near the plan | From random routings |
+|---|---|---|---|
+| Early Career | $4,354 | $4,353 to $4,354 | $4,355 |
+| Mid Career | $5,627 | $5,618 to $5,631 | $5,618 to $5,626 |
+| Pre-Retirement | $6,648 | $6,641 to $6,650 | $6,200 to $6,675 |
+| Retired | $9,782 | $9,782 | $9,782 to $9,788 |
+| Young Couple | $8,470 | $8,470 | $8,465 to $8,470 |
+| Dual Income | $10,332 | $10,327 to $10,333 | $10,187 to $10,352 |
+| Couple Nearing Retirement | $11,219 | $11,212 to $11,219 | $10,768 to $11,219 |
+| Retired Couple | $14,364 | $14,364 to $14,367 | $14,364 to $14,367 |
+
+"Near the plan" moves every percentage by up to 30 points. From there all five
+climbs land within 0.2% of the climb from the plan. From a random routing a
+climb can stick 1% to 7% lower (Pre-Retirement, Dual Income, Couple Nearing
+Retirement). So the concern behind §8.3 is real: a climb alone, from a bad
+start, does settle in a valley, and the genetic search from the same random
+starts mostly clears it. On these eight plans the user's own routing is a good
+start, and from it the climb needs no help.
+
+**Cost.** On an idle machine the climb from the plan takes 4 seconds (Retired),
+9 (Mid Career), 46 (Couple Nearing Retirement) and about 150 (Young Couple). A
+genetic search of 10,000 runs takes three to eight minutes for the same plans
+at the measured cost of a run (18 to 49 ms).
+
+The second and third parts can be run again with
+`node tests/tools/routing-experiment.mjs <src> <out.jsonl> [workers]`.
+
+**Which of §8.5's outcomes this is.** The first, for a start from the plan:
+the seeds agree and polish alone matches them. With one thing §8.5 did not
+foresee, the measure (finding 1), and one qualification, the valleys away from
+the plan (finding 3).
+
+Not measured: plans other than the eight quick-starts. A plan whose entered
+routing is poor is the case finding 3 warns about, and no fixture here is one.
+
+Two smaller findings:
+
+- **A phase that says nothing about a source leaves its rules in force.**
+  Writing one rule for it in a later phase replaces them all. The search reads
+  and writes the rules in force, so a proposal never drops an inherited rule
+  by accident. The experiment ran before this was fixed; it moved Young
+  Couple's entered figure by $33 of $12M and no result above.
+- **The engine enforces the annual 401(k) and IRA limits itself**, cutting a
+  contribution and paying the rest as take-home (§8.2 asked for this check).
+  The flat 25% cap is not needed.
+
+### 8.8 Proposed after the experiment (pending, §14)
+
+**The measure (replaces §8.1).** A routing is ranked by what the plan can
+spend under it: the highest level of §3's dial at which it never runs out and
+leaves the floor the user set. Nothing else is in the rank. The result reads
+"With this routing you could spend $X a month", which is what §8.1 promised
+and its measure did not deliver. What is left at the end is shown beside it,
+as it is for the other columns; with a floor of $0 it will usually be near $0,
+because that is what spending the most means.
+
+**The search (replaces §8.3 and §8.4).**
+
+- **The climb is the search.** From the plan as entered, step each percentage
+  and each pair within a group by 20, 10, 5, 2 and 1 points, keeping every
+  gain, until no one-point step helps. Seconds for most plans, two to three
+  minutes for the largest.
+- **Four more climbs, from near the plan**, with fixed seeds, side by side in
+  their own workers. They are the check that the first did not stop early, and
+  they carry the agreement line of §8.3 unchanged: "Five searches agree", or
+  the best with "The searches differed by 6%".
+- **Prune**, as §8.3.
+- **The genetic search is kept, behind "Search wider".** It is the tool for the
+  case the climbs cannot handle, a plan whose own routing is a poor start. It
+  runs five seeded searches of 10,000 runs from random routings, each followed
+  by a climb, and says whether it found more than the climbs did. On the eight
+  profiles it would add at most 0.4%, at three to eight minutes a search, so it
+  is not run by default. Its stall rule is dropped (finding 2).
+
+**Unchanged:** §8.2 (what may change), §8.6 (how it reads), the third column of
+§5's table, and Apply as §5.2.
+
 ## 9. Code
 
 - **`js/spending-solver.js`**, new, headless (inside the layer boundary):
@@ -552,6 +693,18 @@ second commit.
 10. **The section is renamed Test Bench** (§10).
 11. **The routing search's safeguards are as proposed** (§8.3): five restarts, a
     1% agreement band, and "the searches differed" shown on the page.
+
+**Pending after Phase 2's experiment (§8.7), 2026-11-13.** Two decided items
+are affected, and the changes in §8.8 wait for a decision:
+
+- **A. The routing measure.** §8.1 ranked a routing by what it leaves. That
+  lowers what the plan can spend on seven of eight profiles. Proposed: rank by
+  what the plan can spend.
+- **B. The genetic search's place (decisions 8 and 11).** From the plan, a
+  climb alone is within 0.4% of everything the genetic search found, in a
+  thirtieth of the runs. Proposed: five climbs by default, with the agreement
+  line kept, and the genetic search behind "Search wider" for a plan whose own
+  routing is a poor start.
 
 Found while recording decision 2, and built into the design:
 
