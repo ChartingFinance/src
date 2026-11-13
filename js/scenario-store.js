@@ -50,6 +50,11 @@ import {
     util_saveLocalScenarioSettings,
     util_loadLocalScenarioSettings,
     util_loadStoryNames,
+    util_ensureStoryNames,
+    util_buildStoryArcKey,
+    util_loadLocalAssetModels,
+    util_loadLocalLifeEvents,
+    util_loadLocalGuardrailParams,
 } from './ui/util.js';
 
 /** The unsaved plan on screen, `{ title, note }`; null while a scenario is. */
@@ -163,6 +168,43 @@ export function saveScenarioPreview(storyArc, storyName, preview) {
     if (unsaved) return false;
     util_saveLocalScenarioPreview(storyArc, storyName, preview);
     return true;
+}
+
+// ── Adding ──────────────────────────────────────────────────────────
+
+/**
+ * Add the scenario `storyName` to the list: a copy of the scenario `copyFrom`,
+ * or an empty one.
+ *
+ * A copy is the whole scenario: its assets, its life events (the phases and
+ * their transfer rules), its guardrail parameters and its settings. Assets
+ * alone are not the plan: without the life events the copy runs on a default
+ * timeline with no phase rules, and ends somewhere else.
+ *
+ * The source is named. util_ensureStoryNames copies the assets of the last
+ * scenario in the list, whichever one is on screen.
+ *
+ * @param {string|null} [options.copyFrom]  the scenario to copy, or null for
+ *   an empty one, which runs on the settings in force until it is saved
+ */
+export function addScenario(storyArc, storyName, { copyFrom = null } = {}) {
+    util_ensureStoryNames(storyArc, storyName);
+
+    const base = util_buildStoryArcKey(storyArc, storyName);
+    localStorage.removeItem(base);
+    localStorage.removeItem(`lifeEvents_${storyArc}_${storyName}`);
+    localStorage.removeItem(base + '+guardrails');
+    localStorage.removeItem(base + '+settings');
+    if (!copyFrom) return;
+
+    const copy = (load, save) => {
+        const value = load(storyArc, copyFrom);
+        if (value != null) save(storyArc, storyName, value);
+    };
+    copy(util_loadLocalAssetModels, util_saveLocalAssetModels);
+    copy(util_loadLocalLifeEvents, util_saveLocalLifeEvents);
+    copy(util_loadLocalGuardrailParams, util_saveLocalGuardrailParams);
+    copy(util_loadLocalScenarioSettings, util_saveLocalScenarioSettings);
 }
 
 // ── The unsaved plan ────────────────────────────────────────────────

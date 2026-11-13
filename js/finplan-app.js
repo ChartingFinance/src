@@ -19,6 +19,7 @@ import { readSharedPlan, applySharedSettings } from './shared-plan.js';
 import {
     saveScenario,
     saveScenarioPreview,
+    addScenario,
     restoreScenarioSettings,
     stampScenarioSettings,
     openUnsaved,
@@ -2229,24 +2230,15 @@ function switchScenario(storyName) {
 }
 
 function createScenario(title, note, copyData = true) {
-    // Save current scenario first. The new one starts on the same settings.
+    // Save current scenario first, so a copy is of the plan on screen.
     saveLocalData();
 
     // Generate a unique story name key from timestamp
     const newStoryName = util_YYYYmm() + '-' + Date.now().toString(36);
 
-    if (copyData) {
-        // ensureStoryNames copies previous slot data to new slot
-        util_ensureStoryNames(appState.storyArc, newStoryName);
-    } else {
-        // Just register the name without copying data — empty scenario
-        util_ensureStoryNames(appState.storyArc, newStoryName);
-        // Clear the copied data so it starts empty
-        const baseKey = appState.storyArc + '+' + newStoryName;
-        localStorage.removeItem(baseKey);
-        localStorage.removeItem(`lifeEvents_${appState.storyArc}_${newStoryName}`);
-        localStorage.removeItem(baseKey + '+guardrails');
-    }
+    // A copy is the whole active scenario, its phase rules included; an empty
+    // one starts on the settings in force.
+    addScenario(appState.storyArc, newStoryName, { copyFrom: copyData ? appState.storyName : null });
 
     util_saveLocalScenarioMeta(appState.storyArc, newStoryName, { title, note });
 
