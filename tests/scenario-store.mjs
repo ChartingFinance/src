@@ -368,6 +368,65 @@ check('deleting a scenario deletes its settings', () => {
   assert.ok(store['default+mine+settings'], 'the other scenario lost its settings');
 });
 
+// ── A new scenario ───────────────────────────────────────────────────
+console.log('\n── A copied scenario is the whole scenario ──\n');
+
+// 'other' is first in the list and 'mine' last, so copying 'other' shows a
+// copy taken from the end of the list instead.
+const OTHER_EVENTS = [
+  { type: 'accumulate', triggerAge: 45, phaseTransfers: { Salary: [{ toDisplayName: 'Brokerage', monthlyMoveValue: 80 }] } },
+  { type: 'retire', triggerAge: 62, phaseTransfers: { 'Social Security': [{ toDisplayName: 'Brokerage', monthlyMoveValue: 100 }] } },
+];
+function viewerOnOther() {
+  viewerWithTwoScenarios();
+  S.putSettingsInForce(OTHER.settings);
+  putGuardrailsInForce(OTHER.guardrails);
+  S.saveScenario(ARC, 'other', {
+    assets: [{ displayName: 'Salary' }, { displayName: 'Brokerage' }],
+    lifeEvents: OTHER_EVENTS,
+    guardrails: guardrailsInForce(),
+  });
+}
+const kept = (name) => ({
+  assets: U.util_loadLocalAssetModels(ARC, name),
+  lifeEvents: U.util_loadLocalLifeEvents(ARC, name),
+  guardrails: U.util_loadLocalGuardrailParams(ARC, name),
+  settings: U.util_loadLocalScenarioSettings(ARC, name),
+});
+
+check('a copy keeps the assets, life events, guardrail parameters and settings of the scenario copied', () => {
+  viewerOnOther();
+  S.addScenario(ARC, 'copy', { copyFrom: 'other' });
+  assert.deepEqual(U.util_loadStoryNames(ARC), ['other', 'mine', 'copy']);
+  assert.deepEqual(kept('copy'), kept('other'));
+  assert.deepEqual(kept('copy').lifeEvents, OTHER_EVENTS);
+  assert.deepEqual(kept('copy').settings, OTHER.settings);
+  assert.deepEqual(kept('copy').guardrails, OTHER.guardrails);
+});
+
+check('it is a copy of the scenario named, not of the last one in the list', () => {
+  viewerOnOther();
+  S.addScenario(ARC, 'copy', { copyFrom: 'other' });
+  assert.deepEqual(kept('copy').assets.map((asset) => asset.displayName), ['Salary', 'Brokerage']);
+  assert.notDeepEqual(kept('copy').assets, kept('mine').assets);
+});
+
+check('copying changes neither the scenario copied nor any other', () => {
+  viewerOnOther();
+  const before = storage();
+  S.addScenario(ARC, 'copy', { copyFrom: 'other' });
+  for (const key of Object.keys(store).filter((k) => k.includes('copy'))) delete store[key];
+  store['default+storyNames'] = JSON.stringify(['other', 'mine']);
+  assert.equal(storage(), before);
+});
+
+check('an empty scenario keeps nothing of another, and is in the list', () => {
+  viewerOnOther();
+  S.addScenario(ARC, 'empty');
+  assert.deepEqual(U.util_loadStoryNames(ARC), ['other', 'mine', 'empty']);
+  assert.deepEqual(kept('empty'), { assets: null, lifeEvents: null, guardrails: null, settings: null });
+});
+
 // ── The app ──────────────────────────────────────────────────────────
 console.log('\n── The app saves through this, and in this order ──\n');
 
@@ -412,6 +471,14 @@ check('a scenario switched to runs on its own settings, the one under an unsaved
     'picking the scenario an unsaved plan was opened over is skipped as the current one');
   assert.ok(/restoreScenarioSettings\(/.test(body('deleteScenario')),
     'deleting a scenario leaves its settings on the next one');
+});
+
+check('"New scenario" copies the scenario on screen, after saving it', () => {
+  const create = body('createScenario');
+  assert.ok(/copyFrom: copyData \? appState\.storyName : null/.test(create));
+  const saved = create.indexOf('saveLocalData()');
+  assert.ok(saved >= 0 && saved < create.indexOf('addScenario('), 'the copy is taken before the plan on screen is saved');
+  assert.ok(!/util_ensureStoryNames/.test(create), 'createScenario copies through util_ensureStoryNames again');
 });
 
 check('a guardrail edit is saved with its scenario', () => {
