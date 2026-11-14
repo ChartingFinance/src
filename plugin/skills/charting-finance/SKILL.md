@@ -43,6 +43,7 @@ are what the user actually meant.
 | `list_profiles` | the eight built-in starting points |
 | `quick_start_report` | run a built-in profile, optionally re-aged |
 | `run_plan` | run a profile-free or built plan (the app's Share format) |
+| `max_spending` | the most a plan can spend without running out, and what stops it |
 | `explain_month` | what happened to an asset in one month, and why |
 | `explain_issue` | the causal chain behind one flagged issue |
 | `share_link` | a link that opens the same plan in the web app, for charts |
@@ -56,6 +57,41 @@ is a real edit, not a relabeling.
 
 `run_plan` takes exactly what the Charting Finance app's Share link encodes, so a
 portfolio exported from the app can be passed straight in.
+
+### "How much can I spend?"
+
+`max_spending(plan)` takes a run handle, a share link or a payload, and answers
+with the most the plan can spend: every monthly expense turned up or down
+together, as far as the plan goes without ever leaving a bill unpaid. It is the
+Spending test of the app's Test Bench, so it gives the app's figure. It returns
+the monthly amount beside the plan as entered, the limit that stopped it, each
+expense at that level, and a **handle for the plan at that spending**, which
+works with `share_link`, `run_plan` and `diff_plans`. The plan given is not
+changed.
+
+Report it with its limits, because the figure means nothing without them:
+
+- **"What stops it" is half the answer.** A plan often runs out with money
+  left: the engine does not draw on retirement accounts to pay a bill unless a
+  transfer rule says so. When the report names accounts that still held money,
+  say so. The plan could spend more with different transfer rules, and the
+  figure is not a verdict on the household's wealth.
+- **It can be less than what was entered.** A plan that runs out as entered is
+  answered with the lower amount that does not. Say that plainly; do not
+  present it as a spending allowance.
+- **By default it is for one fixed path of returns.** At the most a plan can
+  spend on that path it has no margin. Say that when you give the figure, or
+  pass `simulatedMarketsPercent: 90`, which is what the app requires by
+  default: the answer is then the most that also lasts in 90% of 300 simulated
+  markets. That call takes one to two minutes; tell the user before making it.
+- **"Lasts in a market" is a weaker test than "never runs out".** A market
+  counts as lasting while net worth stays above $0, retirement accounts
+  included. Do not describe a 90% answer as "safe in 90% of markets".
+- `leaveAtLeast` is the least to end with, in today's dollars. The default, 0,
+  spends down to nothing; ask whether the user wants to leave something before
+  quoting a figure that leaves none.
+- Spending is what the plan pays out to live on, in today's dollars, averaged
+  over the whole plan. Taxes are not in it.
 
 ### Building a plan from a description
 

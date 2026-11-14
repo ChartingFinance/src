@@ -14,6 +14,9 @@
 // Messages out:
 //   { action: 'progress', completed, total }
 //   { action: 'progress', runs, gain }   a routing search, every 25 plan runs
+//   { action: 'progress', tested, completed, total }   the spending solver's
+//                                         simulated-markets limit: levels tested
+//                                         so far, and markets run at this one
 //   { action: 'interim', results }    partial snapshot (results.completed < total)
 //   { action: 'paused', completed }   pause took effect at this sim count
 //   { action: 'complete', results }   compute module output
@@ -28,6 +31,7 @@ import { computeMonteCarlo } from './mc-compute.js';
 import { computeGuardrails } from './gr-compute.js';
 import { solveSpending } from './spending-solver.js';
 import { searchRouting } from './routing-search.js';
+import { limitBySuccess, simulatedRate } from './success-limit.js';
 import { makeActiveTaxTable } from './globals.js';
 
 // Guard so Node-side tests can import this module without a Worker context.
@@ -69,12 +73,36 @@ if (isWorker) self.onmessage = async function (event) {
         if (payload.kind === 'spending') {
             // The solver builds its own portfolios from the serialized plan,
             // one per spending level, so it takes the payload as it arrived.
-            const results = solveSpending({
+            const plan = {
                 modelAssets: payload.modelAssets,
                 lifeEvents: payload.lifeEvents || [],
                 // After global_applyWorkerSnapshot, as below.
                 config: simConfigFromGlobals(),
-            }, payload.limits || {});
+            };
+            let results = solveSpending(plan, payload.limits || {});
+
+            // The third limit: turn the answer down until the plan lasts in
+            // enough simulated markets. Each level tested is one run of them.
+            const target = payload.limits?.success;
+            if (target > 0) {
+                let tested = 0;
+                const sim = {
+                    ...payload.sim,
+                    retirementDateInt: payload.retirementDateInt ?? null,
+                    onProgress: (completed, total) =>
+                        self.postMessage({ action: 'progress', tested, completed, total }),
+                };
+                results = await limitBySuccess(plan, results, {
+                    target,
+                    markets: sim.markets,
+                    known: payload.knownRates || [],
+                    rateAt: (factor) => {
+                        self.postMessage({ action: 'progress', tested, completed: 0, total: sim.markets });
+                        return simulatedRate(plan, factor, sim);
+                    },
+                    onStep: (step) => { tested = step.tested; },
+                });
+            }
             self.postMessage({ action: 'complete', results });
             return;
         }

@@ -892,7 +892,7 @@
             <h2 class="text-2xl font-bold tracking-tight">Test Bench</h2>
             <span class="text-xs text-gray-400 font-medium ml-1">The Spending and Routing Tests</span>
         </div>
-        <p class="text-gray-600 mb-6 leading-relaxed">The spending test answers &ldquo;how much can this plan spend?&rdquo; as a question with limits, not a score: <strong>spend the most that never runs out and leaves at least a stated amount</strong>. It uses no random numbers, so the same plan gives the same answer every time.</p>
+        <p class="text-gray-600 mb-6 leading-relaxed">The spending test answers &ldquo;how much can this plan spend?&rdquo; as a question with limits, not a score: <strong>spend the most that never runs out, leaves at least a stated amount and lasts in a stated share of simulated markets</strong>. The simulated markets are drawn from a fixed seed, so the same plan gives the same answer every time.</p>
 
         <div class="grid sm:grid-cols-2 gap-4 mb-6">
             <div class="p-4 rounded-xl bg-white/70">
@@ -933,15 +933,55 @@
             </div>
         </div>
 
+        <h3 class="text-lg font-bold tracking-tight mb-3">The simulated-markets limit</h3>
+        <div class="space-y-2 mb-6">
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
+                <span class="rule-chip">On by default</span>
+                <span class="text-sm text-gray-700">The answer must last in at least 90% of simulated markets. The rate can be changed from 50% to 99%, or the limit switched off.</span>
+            </div>
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
+                <span class="rule-chip">The rate</span>
+                <span class="text-sm text-gray-700">The share of 300 simulated markets in which net worth never reaches $0 from retirement on, without guardrails, in the data mode and era chosen in the Simulations section. Every level is run through the same markets (the same seed), so two rates differ only by the spending.</span>
+            </div>
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
+                <span class="rule-chip">The ceiling</span>
+                <span class="text-sm text-gray-700">The answer found on the plan&rsquo;s own path is the ceiling: no higher level keeps the other limits. If the plan lasts in enough markets there, the answer stands and a note gives the rate.</span>
+            </div>
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
+                <span class="rule-chip">Turning it down</span>
+                <span class="text-sm text-gray-700">Otherwise a level that does last is found (what was entered, when that is below the ceiling, or else the lowest level scanned) and the interval between it and the ceiling is halved, at most seven times, stopping under half a percent of the entered spending. Halving rests on the rate never rising with spending.</span>
+            </div>
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
+                <span class="rule-chip">Below what was entered</span>
+                <span class="text-sm text-gray-700">A plan that as entered lasts in fewer markets than the limit asks is answered with less than was entered. If no level tested lasts in enough markets, there is no answer and the result says so.</span>
+            </div>
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
+                <span class="rule-chip">The other limits still hold</span>
+                <span class="text-sm text-gray-700">The level found is run on the plan&rsquo;s own path and must still never run out and leave the stated amount.</span>
+            </div>
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
+                <span class="rule-chip">Rates are kept</span>
+                <span class="text-sm text-gray-700">A rate depends on the spending level, not on the amount to leave or the target. Rates measured for a plan are reused by later runs of the same plan: a level at or below one known to last is known to last.</span>
+            </div>
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
+                <span class="rule-chip">Confirmation</span>
+                <span class="text-sm text-gray-700">The answer is run once more across 1,000 simulated markets. The 300 chose the answer, so they are not also the check on it.</span>
+            </div>
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
+                <span class="rule-chip">What lasting means</span>
+                <span class="text-sm text-gray-700">Net worth above $0, retirement accounts included. The plan does not draw on retirement accounts to pay a bill unless a transfer rule says so, so a market can count as lasting while a bill went unpaid in it. Never runs out is the stricter test, and it is applied on the plan&rsquo;s own path only.</span>
+            </div>
+        </div>
+
         <h3 class="text-lg font-bold tracking-tight mb-3">What the result reports</h3>
         <div class="space-y-2 mb-6">
             <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
                 <span class="rule-chip">What stops it</span>
-                <span class="text-sm text-gray-700">The limit that the next level up would break. For an unpaid bill: the first month it happens and the balances of tax-deferred and tax-free accounts in that month, which the plan does not draw on to pay a bill.</span>
+                <span class="text-sm text-gray-700">The limit that the next level up would break. For the simulated-markets limit: the rate at the next level tested. For an unpaid bill: the first month it happens and the balances of tax-deferred and tax-free accounts in that month, which the plan does not draw on to pay a bill.</span>
             </div>
             <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
                 <span class="rule-chip">Simulated markets</span>
-                <span class="text-sm text-gray-700">The plan as entered and the solved plan are each run through 300 simulated markets with the same seed, without guardrails. The rate is the share of markets that never ran out from retirement on.</span>
+                <span class="text-sm text-gray-700">The plan as entered and the solved plan are each run through 300 simulated markets with the same seed, without guardrails. The rate is the share of markets that never ran out from retirement on. A rate the limit already measured is shown, not measured again.</span>
             </div>
             <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
                 <span class="rule-chip">Guardrails</span>
@@ -990,7 +1030,7 @@
             </div>
             <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
                 <span class="rule-chip">The list</span>
-                <span class="text-sm text-gray-700">Every search, best first by the spending solver&rsquo;s monthly figure for the routed plan. Searches that found the same routing share a row. The line under it counts the searches within 1% of the best; one answer is never shown as the best without saying how many reached it.</span>
+                <span class="text-sm text-gray-700">Every search, best first by the spending solver&rsquo;s monthly figure for the routed plan. Searches that found the same routing share a row. The line under it counts the searches within 1% of the best; one answer is never shown as the best without saying how many reached it. When several searches ran and no other came within 1% of the best, its row is marked as alone at the top.</span>
             </div>
             <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
                 <span class="rule-chip">The cost shown</span>
@@ -1003,8 +1043,8 @@
         </div>
 
         <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
-            <span class="rule-chip">Not yet here</span>
-            <span class="text-sm text-gray-700">A limit on the simulated-markets rate is planned. Until then both tests answer for one fixed path of returns: a plan at the most it can spend there leaves little margin, and its simulated-markets row shows how it fares when markets vary.</span>
+            <span class="rule-chip">Routing and markets</span>
+            <span class="text-sm text-gray-700">The routing test does not use the simulated-markets limit: routings are found and compared on the plan&rsquo;s own path of returns, so that the effect of a change can be seen. A routing at the most it can spend there leaves little margin, and its simulated-markets row shows how it fares when markets vary.</span>
         </div>
     </div>
 

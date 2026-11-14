@@ -40,14 +40,16 @@ Claude Code reports nothing — the plugin will simply have no tools. Check with
 | :--- | :--- |
 | `/simulate` | run a profile or a described plan |
 | `/explain` | ask why the engine produced a number, from recorded history |
-| 9 MCP tools | `plan_defaults`, `build_plan`, `list_profiles`, `quick_start_report`, `run_plan`, `explain_month`, `explain_issue`, `share_link`, `diff_plans` |
+| 10 MCP tools | `plan_defaults`, `build_plan`, `list_profiles`, `quick_start_report`, `run_plan`, `max_spending`, `explain_month`, `explain_issue`, `share_link`, `diff_plans` |
 
 Describe a situation in a sentence — *"I make $100K, if I save 10% what do I
 have in 10 years?"* — and `build_plan` compiles it into a plan the engine can
 run, or asks you the question that sentence left open. Portfolios built at
 [charting.finance](https://charting.finance/) can be passed to `run_plan`
 directly, and `share_link` sends one back the other way — a link that opens the
-plan in the web app for the charts a transcript cannot show.
+plan in the web app for the charts a transcript cannot show. `max_spending`
+answers *"how much could I spend?"* for any plan: the most it can pay for
+without ever leaving a bill unpaid, the same figure the app's Test Bench gives.
 
 That link keeps the promise above. The plan rides in the URL **fragment**, which
 browsers never transmit, so opening it sends nothing to the website's server;

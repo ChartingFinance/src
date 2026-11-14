@@ -35,6 +35,7 @@ globalThis.self = { postMessage: (message) => posted.push(message) };
 const { planFromProfile } = await import('../js/mcp/run-plan.js');
 const { solveSpending } = await import('../js/spending-solver.js');
 const { searchRouting } = await import('../js/routing-search.js');
+const { simulatedRate } = await import('../js/success-limit.js');
 const globals = await import('../js/globals.js');
 await import('../js/mc-worker.js');
 
@@ -115,6 +116,112 @@ await check('the floor in the payload is the floor that is solved for', async ()
     assert.equal(held[0].results.limits.floor, floor);
     assert.ok(held[0].results.best.factor < answer.best.factor);
     assert.ok(held[0].results.best.endingReal >= floor);
+});
+
+// ── The simulated-markets limit ──────────────────────────────────────
+
+// Mid Career: unlike the retired plan, it does not last in every market at the
+// most it can spend, so a rate here tells one set of markets from another.
+// Fewer markets than the app runs, to keep this quick. January 2048 is the
+// month it retires in under the pinned clock; markets vary from then.
+const mid = planFromProfile('midCareer');
+const SIM = { markets: 60, seed: 1, dataMode: 'calibrated', backtestFromYear: null };
+const RETIRES = 204801;
+const limited = (limits, extra = {}) => ({
+    kind: 'spending',
+    settings: snapshotFor(mid),
+    modelAssets: JSON.parse(JSON.stringify(mid.modelAssets)),
+    lifeEvents: mid.lifeEvents ?? [],
+    backtestYear: 'current',
+    limits, sim: SIM, retirementDateInt: RETIRES, ...extra,
+});
+const last = (messages) => messages[messages.length - 1];
+/** The plan as the handler left it: under the settings of the last payload. */
+const midPlan = () => ({ modelAssets: mid.modelAssets, lifeEvents: mid.lifeEvents ?? [], config: globals.simConfigFromGlobals() });
+let withLimit = null;
+let ceiling = null;
+
+await check('without a success limit the answer carries none, and no market is run', async () => {
+    assert.equal('success' in answer, false);
+    assert.equal('success' in answer.limits, false);
+    const messages = await send(limited({ floor: 0 }));
+    assert.equal(messages.length, 1);
+    assert.equal('success' in messages[0].results, false);
+    ceiling = messages[0].results.best.factor;
+});
+
+await check('with one, levels are run across the payload\'s markets and the answer comes down', async () => {
+    const messages = await send(limited({ floor: 0, success: 0.9 }));
+    assert.equal(last(messages).action, 'complete', last(messages).message);
+    withLimit = last(messages).results;
+    assert.equal(withLimit.limits.success, 0.9);
+    assert.equal(withLimit.success.markets, SIM.markets);
+    assert.equal(withLimit.boundBy.kind, 'success');
+    assert.equal(withLimit.fixedBest.factor, ceiling);
+    assert.ok(withLimit.best.factor < ceiling);
+    assert.ok(withLimit.success.bestRate >= 0.9);
+
+    // The rate at the ceiling, measured as the payload said.
+    const measured = withLimit.success.rates.find(([f]) => f === ceiling);
+    assert.ok(measured, 'the ceiling was not measured');
+    assert.equal(measured[1], await simulatedRate(midPlan(), ceiling, { ...SIM, retirementDateInt: RETIRES }));
+    assert.ok(measured[1] < 0.9);
+
+    // Progress names the level being tested and the markets run at it.
+    const progress = messages.slice(0, -1);
+    assert.ok(progress.length >= withLimit.success.tested);
+    for (const m of progress) {
+        assert.equal(m.action, 'progress');
+        assert.equal(m.total, SIM.markets);
+        assert.ok(m.tested >= 0 && m.tested < withLimit.success.tested);
+    }
+    assert.equal(Math.max(...progress.map((m) => m.tested)), withLimit.success.tested - 1);
+    assert.deepEqual(JSON.parse(JSON.stringify(withLimit)), withLimit);
+});
+
+await check('the markets in the payload are the markets run', async () => {
+    // A target every plan meets, so only the ceiling is measured.
+    const rateWith = async (extra) =>
+        last(await send(limited({ floor: 0, success: 0.01 }, extra))).results.success.rates.find(([f]) => f === ceiling)[1];
+    const base = withLimit.success.rates.find(([f]) => f === ceiling)[1];
+    assert.equal(await rateWith({}), base);
+
+    // Another seed, other data, another era, and markets that vary from the
+    // first month instead of from retirement: each is the rate of those markets.
+    const variants = [
+        { sim: { ...SIM, seed: 7 } },
+        { sim: { ...SIM, dataMode: 'historical' } },
+        { sim: { ...SIM, backtestFromYear: 1990 } },
+        { retirementDateInt: null },
+    ];
+    let differing = 0;
+    for (const extra of variants) {
+        const got = await rateWith(extra);
+        const sim = { ...SIM, retirementDateInt: RETIRES, ...extra.sim };
+        if ('retirementDateInt' in extra) sim.retirementDateInt = extra.retirementDateInt;
+        assert.equal(got, await simulatedRate(midPlan(), ceiling, sim), JSON.stringify(extra));
+        if (got !== base) differing++;
+    }
+    assert.equal(differing, variants.length, 'a variant gave the same rate as the base: it pins nothing');
+});
+
+await check('rates the payload already knows are used: nothing is run again, and they set the answer', async () => {
+    const again = await send(limited({ floor: 0, success: 0.9 }, { knownRates: withLimit.success.rates }));
+    assert.equal(again.length, 1, 'markets were run for rates the payload carried');
+    assert.equal(again[0].results.success.tested, 0);
+    assert.deepEqual(again[0].results.best, withLimit.best);
+
+    // Told the plan lasts at 0.6 and not at 0.7, the answer lies between them.
+    const told = last(await send(limited({ floor: 0, success: 0.9 }, { knownRates: [[0.6, 0.95], [0.7, 0.5]] }))).results;
+    assert.equal(told.boundBy.kind, 'success');
+    assert.ok(told.best.factor >= 0.6 && told.best.factor < 0.7, `answered ${told.best.factor}`);
+});
+
+await check('the target in the payload is the target', async () => {
+    // The same told rates, with a target the lower one no longer meets.
+    const told = last(await send(limited({ floor: 0, success: 0.97 }, { knownRates: [[0.6, 0.95], [0.7, 0.5]] }))).results;
+    assert.equal(told.limits.success, 0.97);
+    assert.ok(told.best === null || told.best.factor < 0.6, 'a 95% level met a 97% target');
 });
 
 // ── A routing search ─────────────────────────────────────────────────

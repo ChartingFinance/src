@@ -279,6 +279,11 @@ export function solveSpending(plan, limits = {}) {
     };
 }
 
+/** The result table's column for the plan at one spending level. */
+export function columnAt(plan, factor) {
+    return column(runAt(plan, factor), plan);
+}
+
 /** One column of the result table. */
 function column(run, plan) {
     const split = healthSplit(run.portfolio);

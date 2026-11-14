@@ -439,6 +439,14 @@
         .tb-floor-field input { width: 110px; padding: 4px 8px; border: 1px solid #d1d5db; border-radius: 8px;
             font: inherit; font-variant-numeric: tabular-nums; text-align: right; }
         .tb-floor-field input:focus-visible { outline: 2px solid #7e22ce; outline-offset: 1px; }
+        .tb-success-field { display: inline-flex; align-items: center; gap: 5px; }
+        .tb-success-field input[type="text"] { width: 44px; padding: 4px 6px; border: 1px solid #d1d5db; border-radius: 8px;
+            font: inherit; font-weight: 600; text-align: right; }
+        .tb-success-field input[type="text"]:disabled { color: #9ca3af; background: #f9fafb; }
+        .tb-success-field input:focus-visible { outline: 2px solid #7e22ce; outline-offset: 1px; }
+        .tb-solving { margin-bottom: 10px; }
+        .tb-mark.tb-mark-fixed { fill: #9ca3af; stroke: #9ca3af; }
+        .tb-key.tb-key-fixed { background: #9ca3af; border-color: #9ca3af; }
         .tb-run { margin-left: auto; padding: 6px 16px; white-space: nowrap; }
         .tb-sub { font-size: 12px; color: #6b7280; }
         td .tb-sub { display: block; font-weight: 400; }
@@ -491,6 +499,9 @@
         .tb-list tbody tr:hover { background: #faf5ff; }
         .tb-list tbody tr.is-selected { background: #f3e8ff; }
         .tb-list tbody tr.tb-list-pending { cursor: default; background: none; }
+        .tb-list tbody tr.is-lone { box-shadow: inset 3px 0 0 #d97706; }
+        .tb-lone { display: inline-block; margin-left: 8px; padding: 1px 8px; border-radius: 999px; font-size: 11px;
+            font-weight: 600; color: #92400e; background: #fef3c7; cursor: help; white-space: nowrap; }
         .tb-list td:last-child, .tb-changes td:last-child { font-weight: 600; }
         .tb-list td:nth-child(3) { font-weight: 600; color: #111827; }
         .tb-routing-headline { margin-top: 16px; }

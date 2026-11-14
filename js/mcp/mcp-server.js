@@ -31,6 +31,7 @@ import { generatePortfolioMarkdown, generateMonteCarloSectionMarkdown, REPORT_SE
 import { planExhaustion } from '../portfolio-issues.js';
 import { EventType } from '../sim-event.js';
 import { buildPlan, planDefaults, healthInsuranceDefaults, PlanRefusal } from './build-plan.js';
+import { maxSpending, maxSpendingMarkdown } from './max-spending.js';
 
 // ── Server ────────────────────────────────────────────────────────
 
@@ -406,6 +407,43 @@ server.tool(
       outcome: diffOutcomes(runA, runB),
     });
     return { content: [{ type: "text", text: md }] };
+  })
+);
+
+// ── max_spending ──────────────────────────────────────────────────
+//
+// The app's Test Bench Spending test (max-spending.js): the same solver, so the
+// same answer. The plan at the answer gets a handle of its own.
+
+server.tool(
+  "max_spending",
+  "Answers 'how much can this plan spend?': the most every monthly expense can be turned up (or "
+  + "must be turned down) together while the plan never leaves a bill unpaid and still ends with "
+  + "at least a stated amount. It is the Spending test of the Charting Finance app's Test Bench, "
+  + "so it gives the app's figure. Returns the monthly amount, the plan as entered beside it, the "
+  + "limit that stopped it from going higher, each expense at that level, and a run handle for "
+  + "the plan at that spending. The plan it is given is not changed. "
+  + "By default the answer is for the plan's own fixed path of returns, where the most a plan can "
+  + "spend leaves no margin; say so when you report it, or pass simulatedMarketsPercent.",
+  {
+    plan: z.string().describe("The plan to solve: a run handle from quick_start_report or run_plan, "
+        + "a share link, or a share payload."),
+    leaveAtLeast: z.number().min(0).default(0)
+        .describe("The least the plan must end with, in today's dollars. 0 spends down to nothing."),
+    simulatedMarketsPercent: z.number().int().min(50).max(99).optional()
+        .describe("Also require the plan to last in this share of 300 simulated markets, e.g. 90, "
+                + "which is what the app requires by default. Omit to leave this limit off. It "
+                + "lowers the answer when the plan would not last in that share, and it is slow: "
+                + "up to ten runs of the markets, one to two minutes."),
+  },
+  guard(async ({ plan, leaveAtLeast, simulatedMarketsPercent }) => {
+    const solved = await maxSpending(planFromReference(plan), { leaveAtLeast, simulatedMarketsPercent });
+    // The plan at the answer is run and registered, so its handle works with
+    // every other tool.
+    const handle = solved.solvedSpec
+      ? (await runPlanCached(solved.solvedSpec, { includeReconciliation: false })).handle
+      : null;
+    return { content: [{ type: "text", text: maxSpendingMarkdown(solved, { handle }) }] };
   })
 );
 
