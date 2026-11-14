@@ -3,7 +3,7 @@
  *
  * A batch simulation pays only for the simulation.
  *
- * Monte Carlo runs a plan a thousand times, the Maximizer thousands more. Two
+ * Monte Carlo runs a plan a thousand times, a routing search thousands more. Two
  * costs rode along that none of them uses:
  *
  *   TRACING        every step opened a causal-chain scope. Monte Carlo steps
@@ -111,10 +111,10 @@ await test('Guardrails keeps no trace scopes', async () => {
     assert.equal(traceScopes().length, 0);
 });
 
-await test('every Maximizer and Guardrails plan run is wrapped', () => {
-    // The Maximizer needs a worker context to construct, so its call sites are
-    // read: a bare chronometer_run there would trace thousands of runs.
-    for (const file of ['js/simulator.js', 'js/gr-compute.js']) {
+await test('every routing-search and Guardrails plan run is wrapped', () => {
+    // Call sites are read: a bare chronometer_run in the routing search would
+    // trace thousands of runs.
+    for (const file of ['js/routing-search.js', 'js/gr-compute.js']) {
         const src = readFileSync(file, 'utf8');
         const calls = src.match(/^.*\bchronometer_run\(.*$/gm).filter((l) => !/^\s*import\b/.test(l));
         assert.ok(calls.length > 0, `${file} no longer calls chronometer_run`);
