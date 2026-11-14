@@ -76,6 +76,19 @@ export function agreementLine(ranked) {
     return `${agreeing} of ${searches} searches came within 1% of the best.`;
 }
 
+/**
+ * True when the best result stands alone: several searches ran, and no other
+ * came within 1% of it. Such a result is either a real find or a search that
+ * got lucky, so the list marks its row.
+ */
+export function isLoneBest(ranked) {
+    return ranked.searches > 1 && ranked.agreeing <= 1 && ranked.rows.length > 0 && ranked.rows[0].monthly > 0;
+}
+
+/** What the mark on a lone best says when pointed at. */
+export const LONE_BEST_NOTE = 'No other search came within 1% of this result. It may be a real find or a lucky search:'
+    + ' a deeper test would show which.';
+
 const percent = (v) => `${Math.round(v * 10) / 10}%`;
 
 /**

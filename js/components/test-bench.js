@@ -3,9 +3,11 @@
  *
  * ── Spending: "how much can this plan spend?" ────────────────────────
  *
- * One question, asked as limits: spend the most that never runs out and leaves
- * at least a floor at the end. The spending solver answers it (spending-
- * solver.js, in the simulation worker), and the answer is shown three ways:
+ * One question, asked as limits: spend the most that never runs out, leaves
+ * at least a floor at the end and, unless switched off, lasts in at least a
+ * stated share of simulated markets. The spending solver answers it
+ * (spending-solver.js and success-limit.js, in the simulation worker), and
+ * the answer is shown three ways:
  *
  *   - a curve of monthly spending against what is left, every point an exact
  *     plan run. It is also the control: a click sets the floor to that point
@@ -44,11 +46,11 @@
 import { LitElement, html, svg, nothing } from 'lit';
 import { runTestBench, cancelTestBench, CHECK_SIMULATIONS,
          runRoutingTest, runRoutingChecks, cancelRouting, routingCost } from '../test-bench-run.js';
-import { whatStopsYou, riseNote, healthNote, resultRows } from '../spending-report.js';
+import { whatStopsYou, riseNote, healthNote, successNote, resultRows, spendingHeadline } from '../spending-report.js';
 import { DEPTHS, DEFAULT_DEPTH, rankSearches } from '../routing-search.js';
 import { startsLabel, costLine, agreementLine, changeRows, versusEntered, routingHeadline,
-         DEPTH_NOTES } from '../routing-report.js';
-import { formatCompactCurrency, formatCurrency, MINUS } from '../utils/html.js';
+         isLoneBest, LONE_BEST_NOTE, DEPTH_NOTES } from '../routing-report.js';
+import { formatCompactCurrency, formatCurrency } from '../utils/html.js';
 
 // The curve's drawing area, in viewBox units.
 const W = 480, H = 200;
@@ -66,6 +68,9 @@ class TestBench extends LitElement {
         _stale:    { state: true },
         _error:    { state: true },
         _hover:    { state: true },
+        _successOn:      { state: true },
+        _successPercent: { state: true },
+        _solving:        { state: true },   // { tested, completed, total } while the limit is tested
         _depth:     { state: true },
         _rStatus:   { state: true },   // 'idle' | 'running' | 'done' | 'error'
         _searches:  { state: true },   // [{ start, seed, state, progress, result }]
@@ -89,6 +94,9 @@ class TestBench extends LitElement {
         this._stale = false;
         this._error = '';
         this._hover = null;
+        this._successOn = true;
+        this._successPercent = 90;
+        this._solving = null;
         this._depth = DEFAULT_DEPTH;
         this._rStatus = 'idle';
         this._searches = null;
@@ -164,16 +172,20 @@ class TestBench extends LitElement {
         this._error = '';
         this._checks = {};
         this._progress = {};
+        this._solving = null;
         this._stale = false;
         const floor = this._floor;
+        const success = this._successOn ? this._successPercent / 100 : 0;
         // A routing is ranked against a floor: another floor, another test.
         if (this._searches && floor !== this._rFloor) this._routingOutdated();
         try {
-            await runTestBench(plan, { floor }, {
+            await runTestBench(plan, { floor, success }, {
+                solving: (tested, completed, total) => { this._solving = { tested, completed, total }; },
                 solved: (result) => {
                     this._cost = null;   // a plan run has been timed
                     this._result = result;
                     this._status = 'done';
+                    this._solving = null;
                     this._hover = null;
                 },
                 check: (column, check, value) => {
@@ -245,10 +257,16 @@ class TestBench extends LitElement {
         return row && row.result.best && row.result.changes.length ? row : null;
     }
 
-    /** The most the plan can spend as entered, when the spending test on screen is for this floor. */
+    /**
+     * The most the plan can spend as entered on its own path of returns, when
+     * the spending test on screen is for this floor. Routings are ranked on that
+     * path, so they are compared with the figure from it, not with the answer
+     * the simulated-markets limit lowered.
+     */
     _enteredMonthly() {
         const r = this._result;
-        return r?.best && !this._stale && r.limits.floor === this._rFloor ? r.best.monthlySpending : 0;
+        const most = r?.fixedBest ?? r?.best;
+        return most && !this._stale && r.limits.floor === this._rFloor ? most.monthlySpending : 0;
     }
 
     _select(key) {
@@ -283,6 +301,14 @@ class TestBench extends LitElement {
         if (rerun || this._result) this.run();
     }
 
+    _setSuccess(on, percent) {
+        const clamped = Math.max(50, Math.min(99, Math.round(Number(percent) || 90)));
+        if (on === this._successOn && clamped === this._successPercent) return;
+        this._successOn = on;
+        this._successPercent = clamped;
+        if (this._result) this.run();
+    }
+
     _onFloorInput(ev) {
         const digits = ev.target.value.replace(/[^0-9.]/g, '');
         this._setFloor(digits);
@@ -296,10 +322,12 @@ class TestBench extends LitElement {
         const funded = (this._result?.curve ?? []).filter((p) => !p.runsOut);
         // The answer is refined past the last sampled level that passed, so
         // it is a point of its own on the line.
-        const best = this._result?.best;
-        if (best && !funded.some((p) => p.factor === best.factor)) {
-            funded.push({ factor: best.factor, monthlySpending: best.monthlySpending, endingReal: best.endingReal });
-            funded.sort((a, b) => a.factor - b.factor);
+        // So is the plan's own-path answer, when the markets limit lowered it.
+        for (const best of [this._result?.best, this._result?.fixedBest]) {
+            if (best && !funded.some((p) => p.factor === best.factor)) {
+                funded.push({ factor: best.factor, monthlySpending: best.monthlySpending, endingReal: best.endingReal });
+                funded.sort((a, b) => a.factor - b.factor);
+            }
         }
         if (funded.length < 2) return null;
         const xs = funded.map((p) => p.monthlySpending);
@@ -367,6 +395,8 @@ class TestBench extends LitElement {
                         <line x1=${px(hover.monthlySpending)} y1=${PAD.top} x2=${px(hover.monthlySpending)} y2=${bottom} class="tb-guide"></line>
                         <circle cx=${px(hover.monthlySpending)} cy=${py(hover.endingReal)} r="3.5" class="tb-hover"></circle>` : nothing}
                     ${mark(r.asEntered, false)}
+                    ${r.fixedBest && r.best ? svg`<circle cx=${px(r.fixedBest.monthlySpending)} cy=${py(r.fixedBest.endingReal)}
+                        r="4" class="tb-mark tb-mark-fixed"></circle>` : nothing}
                     ${mark(r.best, true)}
                     <text x=${PAD.left - 6} y=${py(y1) + 4} text-anchor="end" class="tb-tick">${formatCompactCurrency(y1)}</text>
                     <text x=${PAD.left - 6} y=${py(0) + 4} text-anchor="end" class="tb-tick">$0</text>
@@ -377,6 +407,7 @@ class TestBench extends LitElement {
                 <div class="tb-legend">
                     <span><i class="tb-key"></i>${r.asEntered.runsOut ? 'As entered: runs out' : 'As entered'}</span>
                     ${r.best ? html`<span><i class="tb-key tb-key-best"></i>The most you can spend</span>` : nothing}
+                    ${r.fixedBest && r.best ? html`<span><i class="tb-key tb-key-fixed"></i>The most on the plan's own path</span>` : nothing}
                     ${r.limits.floor > 0 ? html`<span><i class="tb-key tb-key-floor"></i>Leaves at least ${formatCompactCurrency(r.limits.floor)}</span>` : nothing}
                 </div>
                 <div class="tb-readout">
@@ -437,22 +468,26 @@ class TestBench extends LitElement {
             <div class="tb-caption">Today's dollars. Spending is what the plan pays out to live on; taxes are not in it.</div>`;
     }
 
+    /** spendingHeadline()'s sentence, with the figure in bold. */
     _headline() {
-        const { asEntered, best } = this._result;
-        if (!best) return html`No spending level tested keeps these limits.`;
-        const change = best.monthlySpending - asEntered.monthlySpending;
-        const percent = asEntered.monthlySpending ? Math.round(change / asEntered.monthlySpending * 100) : 0;
-        const versus = Math.abs(change) < 1
-            ? 'the same as you entered'
-            : `${formatCurrency(Math.abs(change))} a month ${change > 0 ? 'more' : 'less'} than you entered`
-              + ` (${percent > 0 ? '+' : percent < 0 ? MINUS : ''}${Math.abs(percent)}%)`;
-        return html`The most this plan can spend is <strong>${formatCurrency(best.monthlySpending)} a month</strong>, ${versus}.`;
+        const best = this._result.best;
+        const text = spendingHeadline(this._result);
+        if (!best) return text;
+        const figure = `${formatCurrency(best.monthlySpending)} a month`;
+        const [before, after] = text.split(figure);
+        return html`${before}<strong>${figure}</strong>${after}`;
     }
 
     _renderResult() {
         const result = this._result;
         const stops = whatStopsYou(result);
-        const notes = [riseNote(result), healthNote(result)].filter(Boolean);
+        const confirm = this._checks['best.confirm'];
+        const confirmNote = !result.success || !result.best ? null
+            : !confirm ? `Running the answer across 1,000 simulated markets${this._progress.confirm
+                ? ` (${this._progress.confirm.completed} of ${this._progress.confirm.total})` : ''}…`
+            : confirm.failed ? null
+            : `Across 1,000 simulated markets the answer lasts in ${confirm.percent}%.`;
+        const notes = [successNote(result), confirmNote, riseNote(result), healthNote(result)].filter(Boolean);
         const saveTitle = !result.best ? 'No spending level kept the limits'
             : this._stale ? 'Run the test again first: the plan or its settings changed'
             : !this.canSave ? 'Save the plan on screen as a scenario first'
@@ -487,6 +522,8 @@ class TestBench extends LitElement {
     _renderRoutingList(ranked, selected) {
         const entered = this._enteredMonthly();
         const waiting = (this._searches ?? []).filter((s) => !s.result);
+        // Marked once every search is in: early in a test the first result is always alone.
+        const lone = this._rStatus === 'done' && isLoneBest(ranked);
         const pending = (s) => (s.state === 'failed' ? 'could not run'
             : s.state === 'waiting' || !s.progress?.runs ? (s.state === 'waiting' ? 'waiting for a free core' : 'starting…')
             : `${s.progress.runs.toLocaleString('en-US')} plan runs`
@@ -497,10 +534,12 @@ class TestBench extends LitElement {
                     <th>Against yours</th><th>Changes</th></tr></thead>
                 <tbody>
                     ${ranked.rows.map((row, i) => html`
-                        <tr class=${row === selected ? 'is-selected' : ''} @click=${() => this._select(row.key)}>
+                        <tr class="${row === selected ? 'is-selected' : ''} ${lone && i === 0 ? 'is-lone' : ''}"
+                            @click=${() => this._select(row.key)}>
                             <td><input type="radio" name="tb-routing" aria-label="Show routing ${i + 1}"
                                        .checked=${row === selected} @change=${() => this._select(row.key)}></td>
-                            <th>${startsLabel(row.starts)}</th>
+                            <th>${startsLabel(row.starts)}
+                                ${lone && i === 0 ? html`<span class="tb-lone" title=${LONE_BEST_NOTE}>Alone at the top</span>` : nothing}</th>
                             <td>${row.result.best ? `${formatCurrency(row.monthly)}/mo` : 'runs out'}</td>
                             <td>${versusEntered(row.monthly, entered) || '—'}</td>
                             <td>${row.result.changes.length || 'none'}</td>
@@ -531,7 +570,8 @@ class TestBench extends LitElement {
                         <td>${c.now}</td><td>${c.proposed}</td></tr>`)}</tbody>
                 </table>
                 <div class="tb-caption">The share of each income paid into an account, and of each expense paid from one.
-                    Draws on retirement accounts before 60 are left as you entered them.</div>
+                    Draws on retirement accounts before 60 are left as you entered them. Routings are found and compared on
+                    the plan's own path of returns; the simulated-markets limit is not applied to them.</div>
                 <div class="tb-actions">
                     <button type="button" class="btn-modern outline text-sm" title=${why} ?disabled=${blocked}
                             @click=${() => save(1)}>Save this routing as a scenario</button>
@@ -596,16 +636,32 @@ class TestBench extends LitElement {
                            .value=${this._floor.toLocaleString('en-US')}
                            @change=${this._onFloorInput}>
                 </label>
-                <span class="tb-ask-text">at the end, in today's dollars.</span>
+                <span class="tb-ask-text">at the end, in today's dollars,</span>
+                <label class="tb-success-field">
+                    <input type="checkbox" aria-label="Require the plan to last in a share of simulated markets"
+                           .checked=${this._successOn}
+                           @change=${(ev) => this._setSuccess(ev.target.checked, this._successPercent)}>
+                    and lasts in
+                    <input type="text" inputmode="numeric" aria-label="Share of simulated markets, percent"
+                           ?disabled=${!this._successOn} .value=${String(this._successPercent)}
+                           @change=${(ev) => { this._setSuccess(this._successOn, ev.target.value.replace(/[^0-9]/g, ''));
+                                               ev.target.value = String(this._successPercent); }}>%
+                    of simulated markets.
+                </label>
                 <button type="button" class="btn-modern primary text-sm tb-run" ?disabled=${!this.ready || running}
                         title=${this.ready ? '' : 'Add assets to run the test'}
                         @click=${() => this.run()}>${running ? 'Running…' : html`&#9654; Run`}</button>
             </div>
             ${this._status === 'error' ? html`<p class="tb-error">The test failed: ${this._error}</p>` : nothing}
+            ${running && this._solving ? html`<p class="tb-sub tb-solving">Testing spending level ${this._solving.tested + 1}
+                across ${this._solving.total} simulated markets (${this._solving.completed} of ${this._solving.total}).
+                Each level takes about ten seconds; at most ten are tested.</p>` : nothing}
             ${this._result ? this._renderResult()
-                : running ? html`<p class="tb-sub">Running the plan at 40 spending levels…</p>`
+                : running ? (this._solving ? nothing : html`<p class="tb-sub">Running the plan at 40 spending levels…</p>`)
                 : html`<p class="tb-sub">Turns every monthly expense up and down together, health plan included,
-                    and finds the highest level the plan can pay for. Nothing in your plan is changed.</p>`}
+                    and finds the highest level the plan can pay for. With the simulated-markets limit on, it then
+                    tests levels across 300 simulated markets, which takes from ten seconds to about two minutes.
+                    Nothing in your plan is changed.</p>`}
             ${this._renderRouting()}`;
     }
 }

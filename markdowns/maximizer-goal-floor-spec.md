@@ -3,7 +3,8 @@
 Status: **DECIDED 2026-11-12 (§14). Phase 1 is built** (the solver, the curve, the
 result, the rename). **Phase 2's experiment is run (§8.7, 2026-11-13) and changed
 two decided items; §8.8 is the design as decided after it (§14, decisions 12
-and 13).** Phases 3 and 4 are not started.
+and 13). **Phases 1 and 2 are merged. Phase 3 (§7) is built, with decisions 14
+to 16, and so is Phase 4, the MCP tool (§9).**
 The section called Maximizer today is renamed Test Bench (decision §14.10).
 
 The Maximizer today asks the user to pick a point between "Spending" and
@@ -163,7 +164,7 @@ and 1,000 take 28.9 s.
 |---|---|---|
 | **Never runs out** | always on | No month has an unpaid bill: `planExhaustion(detectIssues(portfolio))` is null. The definition the Outcome card and "What needs attention" already use. |
 | **Leaves at least $___** | $0 | Ending value in today's dollars, deflated by the run's own price index, as on the Timeline. |
-| **Holds up in ___% of simulated markets** | off | Monte Carlo success, as the Simulations panel defines it. Slower (§7). |
+| **Lasts in ___% of simulated markets** | on, 90% | Monte Carlo success, as the Simulations panel defines it. Slower (§7). Decision §14.15. |
 
 The limits are the "other ranges" the strip did not have. Each is a number the
 user types, in units they already see elsewhere on the page.
@@ -315,14 +316,57 @@ The button reads "Save as a scenario", asks for a name, and switches to it.
 ## 7. Monte Carlo
 
 - **As a check, always.** The "In simulated markets" row.
-- **As a limit, when switched on.** The search halves the interval on the
-  success rate instead of on ending value. Every step uses the same seed and
-  the same 300 runs (`runRandom(seed, runIndex)` already makes runs
-  repeatable), so steps differ only by spending and the result is the same
-  each time. Seven steps reach about 2% of spending in roughly 70 seconds, with
-  progress shown, then one 1,000-run confirmation.
+- **As a limit, on by default at 90%** (decision §14.15). The user can change
+  the rate or switch the limit off.
 - **Never as the score of a wide search.** 10,000 candidates times 300 runs is
-  more than a day.
+  more than a day. The routing test stays on the plan's own path of returns
+  (decision §14.14), and says so beside its result.
+
+### 7.1 The limit, as built
+
+The spending solver's answer (§3.2) is the ceiling: no level above it keeps
+the other limits. The limit then turns the answer down:
+
+1. Run the ceiling across 300 simulated markets. If the plan lasts in the
+   target share, nothing changes, and the note says the limit did not bind and
+   what the rate is.
+2. Otherwise find a level that does last: what was entered, when that is below
+   the ceiling, or else the bottom of the scan. If none does, the result has
+   no answer and says so.
+3. Halve the interval between the level that lasts and the one that does not,
+   at most seven times, stopping early under 0.5% of the entered spending.
+
+Every step uses the same seed and the same 300 markets (`runRandom(seed,
+runIndex)` makes runs repeatable), so steps differ only by spending and the
+result is the same each time. A step is about ten seconds. The most a solve
+costs is ten steps, with progress shown ("Testing spending level 3 across 300
+simulated markets").
+
+- **The rate is the Simulations section's:** the share of markets in which net
+  worth never reaches $0 from retirement on, without guardrails, in the data
+  mode and era chosen there. The same markets fill the check row, so a rate
+  the limit measured is not measured again.
+- **Halving assumes the rate never rises with spending.** A test pins that on
+  the quick-starts.
+- **Rates are kept for the plan.** They depend on the spending level and not
+  on the floor or the target, so a click on the curve, or another target,
+  reuses them: a level at or below one known to last is known to last.
+- **Below what was entered** (decision §14.16). Mid Career as entered lasts in
+  88% of markets, so at 90% the answer is 5% less than entered, and the result
+  says so in the same words as a plan that runs out as entered.
+- **What the limit cost.** When it binds, the result keeps the solver's own
+  answer beside it: a grey mark on the curve, and "On the plan's own path of
+  returns it could spend $5,316 a month. Lasting in 90% of simulated markets
+  costs $407 a month of that."
+- **A confirmation.** The answer is then run across 1,000 markets, as its own
+  job after the answer is shown: 300 markets chose it, so they cannot also be
+  the check on it.
+
+**A limit of the definition, stated on the page.** A market counts as lasting
+while net worth stays above $0, retirement accounts included. The backstop
+does not spend those accounts, so a plan can leave bills unpaid in a market
+that counts as lasting. "Never runs out" (§3) is the stricter test, and it is
+applied on the plan's own path only.
 
 ## 8. The routing search
 
@@ -573,6 +617,11 @@ selected; selecting another shows that routing instead.
 the best", or, when none did, "No other search came within 1% of the best. A
 deeper search may find more."
 
+**A lone best is marked** (John, 2026-11-13). When every search has finished
+and no other came within 1% of the best, the top row carries an amber mark,
+"Alone at the top". Of the highlights considered (a lone best, searches that
+fell well short, large moves in the changes table), this is the one built.
+
 **The selected routing** is shown as §8.6's table of changes and as a third
 column, "With this routing", in §5's table. Its figures are the spending
 solver's for the routed plan, and its simulated-markets and guardrails rows
@@ -603,7 +652,19 @@ routing and its spending.
   depth table (§8.8). Each search is a `kind: 'routing'` job in its own
   simulation worker. `simulator.js`, the old search, is deleted.
 - **MCP.** A `max_spending` tool over the same function is cheap and fits the
-  conversational plan ("how much more could I spend?"). Its own PR (§15).
+  conversational plan ("how much more could I spend?"). Built in Phase 4 as
+  `js/mcp/max-spending.js`:
+  - it takes a run handle, a share link or a payload, with `leaveAtLeast` and
+    an optional `simulatedMarketsPercent`;
+  - it returns the answer as Markdown (the plan as entered beside the most,
+    what stops it, each expense at that level) and a run handle for the plan
+    at the answer, which is the plan given with `solvedAssets` applied;
+  - **the simulated-markets limit is off unless asked for.** In the app it is
+    on at 90%. Here it costs one to two minutes, long for a tool call, so the
+    tool leaves it off, and the report then says the answer is for one fixed
+    path and how to ask for the other figure. With it on, the markets are the
+    app's (300, seed 1, from retirement, the plan's data mode), so the figure
+    is the Test Bench's.
 
 ## 10. Presentation surfaces, enumerated
 
@@ -668,8 +729,11 @@ rename.
 - `credit-cliff-is-found`: a fixture whose income crosses 400% of the poverty
   line inside the scan shows the step, and the answer respects the floor on
   both sides of it.
-- With the success limit: the same seed gives the same rate; the rate does not
-  rise with spending across the samples.
+- With the success limit: `rate-repeats` (the same seed gives the same rate);
+  `rate-never-rises` (across the samples); `limit-is-a-limit` (the answer
+  lasts in the target share and the next level tested does not);
+  `limit-keeps-the-floor`; `limit-off-changes-nothing`; `known-rates-are-used`
+  (a second solve of the same plan runs no market it does not need).
 - Routing: `routing-never-worse` (the result ranks at or above the plan as
   entered, for every profile); `routing-repeats` (same plan and search, same
   result); `depth-adds-searches` (each depth holds the one before it);
@@ -730,6 +794,16 @@ Recorded 2026-11-13 (John), after Phase 2's experiment (§8.7):
     first place, with a depth value chosen up front so the cost of a wider
     list (more searching, more time) is known before it starts. It all runs
     locally, so the cost is acceptable.
+
+Recorded 2026-11-13 (John), before Phase 3:
+
+14. **The routing test does not use simulated markets.** One consistent path
+    of returns is what lets the effect of a routing change be seen. The limit
+    of §7 applies to the Spending test only, and the page says the routings
+    are compared without it.
+15. **The simulated-markets limit is on by default, at 90%** (§7).
+16. **A plan already under the limit gets an answer below what was entered,**
+    said in the same way as a plan that runs out as entered (§7.1).
 
 Found while recording decision 2, and built into the design:
 

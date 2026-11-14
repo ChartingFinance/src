@@ -710,18 +710,22 @@
             <span class="text-2xl">&#x1F9EA;</span>
             <h2 class="text-2xl font-bold tracking-tight">Test Bench</h2>
         </div>
-        <p class="text-gray-600 mb-6 leading-relaxed">The Test Bench runs tests on your plan without changing it. Its first test, <strong>Spending</strong>, answers one question: how much can this plan spend? It turns every monthly expense up and down together, your health plan included, and finds the highest level at which the plan never runs out and still leaves what you ask for at the end. Its second test, <strong>Routing</strong>, asks whether your money could be routed better: it tries other ways to split each income across accounts and to pay each expense, and ranks them by what the plan could then spend. The Test Bench was called the Maximizer.</p>
+        <p class="text-gray-600 mb-6 leading-relaxed">The Test Bench runs tests on your plan without changing it. Its first test, <strong>Spending</strong>, answers one question: how much can this plan spend? It turns every monthly expense up and down together, your health plan included, and finds the highest level at which the plan never runs out, still leaves what you ask for at the end and lasts in the share of simulated markets you ask for. Its second test, <strong>Routing</strong>, asks whether your money could be routed better: it tries other ways to split each income across accounts and to pay each expense, and ranks them by what the plan could then spend. The Test Bench was called the Maximizer.</p>
 
         <!-- Elements -->
         <h3 class="text-lg font-bold mb-4">Elements</h3>
         <div class="grid sm:grid-cols-2 gap-4 mb-8">
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">The limits</div>
-                <div class="text-sm text-gray-500">The test spends the most that keeps two limits. <strong>Never runs out</strong> is always on: no month may have a bill the plan cannot pay, the same test as the Outcome card and &ldquo;What needs attention&rdquo;. <strong>Leaves at least</strong> is the least you want left at the end, in today&rsquo;s dollars. It starts at $0.</div>
+                <div class="text-sm text-gray-500">The test spends the most that keeps three limits. <strong>Never runs out</strong> is always on: no month may have a bill the plan cannot pay, the same test as the Outcome card and &ldquo;What needs attention&rdquo;. <strong>Leaves at least</strong> is the least you want left at the end, in today&rsquo;s dollars. It starts at $0. <strong>Lasts in &hellip;% of simulated markets</strong> starts on, at 90%; untick it to answer for your plan&rsquo;s own path of returns alone.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">Lasts in simulated markets</div>
+                <div class="text-sm text-gray-500">On its own path of returns, a plan at the most it can spend has no margin. This limit turns the answer down until the plan lasts in the share of 300 simulated markets you set. It tests one spending level at a time, about ten seconds each and at most ten, and shows which level it is on. When it lowers the answer, a grey mark on the curve shows where the plan&rsquo;s own path alone would have put it, and a note says what the limit cost. The answer is then run across 1,000 markets as a check. A market counts as lasting while your net worth stays above $0, retirement accounts included, as in the Simulations section.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">The curve</div>
-                <div class="text-sm text-gray-500">Monthly spending across, what is left at the end up, both in today&rsquo;s dollars. Every point is your plan run at that level of spending, so nothing on it is an estimate. The hollow mark is your plan as entered, the filled mark is the most it can spend, and the hatched area is where the plan runs out. Hover for the figures at a point; click to leave at least that much, and the test runs again.</div>
+                <div class="text-sm text-gray-500">Monthly spending across, what is left at the end up, both in today&rsquo;s dollars. Every point is your plan run at that level of spending, so nothing on it is an estimate. The hollow mark is your plan as entered, the filled mark is the most it can spend, a grey mark is the most on the plan&rsquo;s own path when the simulated-markets limit lowered the answer, and the hatched area is where the plan runs out. Hover for the figures at a point; click to leave at least that much, and the test runs again.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">The result table</div>
@@ -749,7 +753,7 @@
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Routing: the list</div>
-                <div class="text-sm text-gray-500">Every search, ranked by what the plan could spend under the routing it found, with the gain against the most your plan can spend as entered and how many percentages it changes. Searches that found the same routing share a row. Rows fill in as searches finish, and <strong>Stop</strong> keeps the ones that have. The line under the list says how many searches came within 1% of the best: when only one did, a deeper test may find more.</div>
+                <div class="text-sm text-gray-500">Every search, ranked by what the plan could spend under the routing it found, with the gain against the most your plan can spend as entered and how many percentages it changes. Searches that found the same routing share a row. Rows fill in as searches finish, and <strong>Stop</strong> keeps the ones that have. The line under the list says how many searches came within 1% of the best. When no other search did, the top row is marked <strong>Alone at the top</strong>: it may be a real find or a lucky search, and a deeper test would show which.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Routing: the changes</div>
@@ -781,7 +785,7 @@
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">2</span>
-                        <span class="text-sm text-gray-700">Click <strong>Run</strong>. The answer appears in a few seconds; the simulated-markets row follows shortly after.</span>
+                        <span class="text-sm text-gray-700">Click <strong>Run</strong>. With the simulated-markets limit on, the answer takes from ten seconds to about two minutes; with it off, a few seconds. The remaining rows follow shortly after.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">3</span>
@@ -789,7 +793,7 @@
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">4</span>
-                        <span class="text-sm text-gray-700">Click along the curve to see the trade: each click sets what to leave to that point and runs the test again.</span>
+                        <span class="text-sm text-gray-700">Click along the curve to see the trade: each click sets what to leave to that point and runs the test again. Rates already measured for the plan are kept, so these runs are quicker than the first.</span>
                     </div>
                 </div>
             </div>
@@ -807,7 +811,7 @@
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">3</span>
-                        <span class="text-sm text-gray-700">Read the top row&rsquo;s changes, and its column in the result table. A routing that spends the most on one fixed path leaves little at the end, so check its simulated-markets row before relying on it; set <strong>leaves at least</strong> above $0 and search again for a routing with a margin.</span>
+                        <span class="text-sm text-gray-700">Read the top row&rsquo;s changes, and its column in the result table. Routings are found and compared on the plan&rsquo;s own path of returns, without the simulated-markets limit, so that the effect of a change can be seen. A routing that spends the most on that path leaves little at the end, so check its simulated-markets row before relying on it; set <strong>leaves at least</strong> above $0 and search again for a routing with a margin.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">4</span>

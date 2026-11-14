@@ -10,7 +10,7 @@
  */
 
 import { DateInt, monthLabel } from './utils/date-int.js';
-import { formatCompactCurrency, formatCurrency } from './utils/html.js';
+import { formatCompactCurrency, formatCurrency, MINUS } from './utils/html.js';
 
 const DASH = '—';
 
@@ -21,6 +21,22 @@ function holdings(untouched = []) {
         `the ${u.displayName}${i === 0 ? ' holds' : ''} ${formatCompactCurrency(u.amount)}`);
     const last = parts.pop();
     return parts.length ? `${parts.join(', ')} and ${last}` : last;
+}
+
+/**
+ * The answer in one sentence: "The most this plan can spend is $5,316 a month,
+ * $131 a month more than you entered (+3%)."
+ */
+export function spendingHeadline(result) {
+    const { asEntered, best } = result;
+    if (!best) return 'No spending level tested keeps these limits.';
+    const change = best.monthlySpending - asEntered.monthlySpending;
+    const percent = asEntered.monthlySpending ? Math.round(change / asEntered.monthlySpending * 100) : 0;
+    const versus = Math.abs(change) < 1
+        ? 'the same as you entered'
+        : `${formatCurrency(Math.abs(change))} a month ${change > 0 ? 'more' : 'less'} than you entered`
+          + ` (${percent > 0 ? '+' : percent < 0 ? MINUS : ''}${Math.abs(percent)}%)`;
+    return `The most this plan can spend is ${formatCurrency(best.monthlySpending)} a month, ${versus}.`;
 }
 
 /**
@@ -52,6 +68,21 @@ export function whatStopsYou(result) {
         return { text: lead + tail, year: by.year, month: by.month };
     }
 
+    if (by.kind === 'success') {
+        const target = Math.round(by.target * 100);
+        const rate = by.rate == null ? null : Math.floor(by.rate * 100);
+        if (by.noLevelPasses) {
+            return {
+                text: `No spending level tested lasts in ${target}% of ${by.markets} simulated markets.`
+                    + (rate == null ? '' : ` The lowest lasts in ${rate}%.`),
+            };
+        }
+        return {
+            text: `Spend more and the plan lasts in fewer than ${target}% of ${by.markets} simulated markets`
+                + (rate == null ? '.' : ` (${rate}% at the next level tested).`),
+        };
+    }
+
     const floor = formatCurrency(by.floor);
     return {
         text: by.noLevelPasses
@@ -74,6 +105,27 @@ export function riseNote(result) {
     return `Over part of this range, spending more leaves more at the end (${formatCompactCurrency(rise.gain)} more).`
         + where
         + ' A transfer rule that moves that money would change the answer.';
+}
+
+/**
+ * The note for the simulated-markets limit: what it cost, or that it cost
+ * nothing. Null when the limit is off.
+ */
+export function successNote(result) {
+    const s = result.success;
+    if (!s) return null;
+    const target = Math.round(s.target * 100);
+    if (result.fixedBest && result.best) {
+        const cost = result.fixedBest.monthlySpending - result.best.monthlySpending;
+        return `On the plan's own path of returns it could spend ${formatCurrency(result.fixedBest.monthlySpending)} a month.`
+            + ` Lasting in ${target}% of simulated markets costs ${formatCurrency(cost)} a month of that.`;
+    }
+    if (result.best && s.bestRate != null) {
+        return `The ${target}% limit did not bind: at this spending the plan lasts in ${Math.floor(s.bestRate * 100)}% of`
+            + ` ${s.markets} simulated markets. A market counts as lasting while the plan's net worth stays above $0,`
+            + ' retirement accounts included.';
+    }
+    return null;
 }
 
 /** The note for a health plan with nothing after it. Null when it does not apply. */

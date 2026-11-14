@@ -130,10 +130,12 @@ Glass-card with date display header, Run button, and dark container (`#1e1e2e`, 
 ### Test Bench (full-width)
 Section heading with test tube emoji. Formerly the Maximizer (spec 15, `markdowns/maximizer-goal-floor-spec.md`).
 
-Glass-card holding `<test-bench>` (`js/components/test-bench.js`), the Spending test: "spend the most that never runs out and leaves at least $___", a Run button, and the result:
+Glass-card holding `<test-bench>` (`js/components/test-bench.js`), the Spending test: "spend the most that never runs out and leaves at least $___ at the end, and lasts in [x] ___% of simulated markets" (the last limit a checkbox and a percentage, on at 90% by default), a Run button, and the result:
 
 - a headline with the answer;
-- a curve (inline SVG, about 200px) of monthly spending against what is left, each point an exact plan run. A click sets "leaves at least" to that point and runs again;
+- a curve (inline SVG, about 200px) of monthly spending against what is left, each point an exact plan run. A click sets "leaves at least" to that point and runs again. When the simulated-markets limit lowered the answer, a grey mark shows the most on the plan's own path;
+- while the limit is being tested, a progress line: "Testing spending level 3 across 300 simulated markets (150 of 300)";
+- notes under the result: what the limit cost (or that it did not bind, with the rate), and the answer's rate across 1,000 markets;
 - a table, the plan as entered beside the most it can spend, with a row for 300 simulated markets and a row under the Guardrails section's settings;
 - one sentence naming what stopped spending from rising, with a link to the month;
 - "Save as a scenario", which saves the solved expense amounts as a new scenario and leaves the plan on screen unchanged.
@@ -142,7 +144,7 @@ Under it, in the same element, the Routing test: "is there a better way to route
 
 - a **Depth** select (1 to 4, default 3) with its cost beside it ("10 searches, about 30 seconds on this machine") and a Search button, which becomes Stop while searches run;
 - the ranked list of searches: where each started, what the plan could spend, the gain against the plan as entered, and the number of changes. Rows fill in as searches finish; searches that found the same routing share a row; a row is selected by a click;
-- one line saying how many searches came within 1% of the best;
+- one line saying how many searches came within 1% of the best. When no other search did, the top row carries an amber "Alone at the top" mark;
 - the selected routing's changes as a table by phase (from, to, now, proposed), and as a third column, "With this routing", in the Spending table;
 - "Save this routing as a scenario" and "Save it with its spending".
 

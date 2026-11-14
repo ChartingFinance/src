@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.3.40; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.3.41; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -30565,6 +30565,16 @@ var signed = (negative, body) => (negative && /[1-9]/.test(body) ? MINUS : "") +
 var WHOLE = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
 var CENTS = new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 var TENTHS = new Intl.NumberFormat("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+function formatCompactCurrency(amount) {
+  const num = toAmount(amount);
+  const abs = Math.abs(num);
+  let body;
+  if (Math.round(abs) < 1e3) body = String(Math.round(abs));
+  else if (Math.round(abs / 1e3) < 1e3) body = Math.round(abs / 1e3) + "K";
+  else if (Number((abs / 1e6).toFixed(1)) < 1e3) body = (abs / 1e6).toFixed(1) + "M";
+  else body = TENTHS.format(Number((abs / 1e9).toFixed(1))) + "B";
+  return signed(num < 0, body);
+}
 function formatCurrency(amount, { cents = false } = {}) {
   const num = toAmount(amount);
   const abs = Math.abs(num);
@@ -32647,6 +32657,12 @@ function explainEvent(event, modelAssets = [], scopes = null) {
 }
 function chainLabel(traceId, scopes, separator = " > ") {
   return chainFor(traceId, scopes).map((s) => s.label).join(separator);
+}
+function bookedMonthIndex(event, firstDateInt2, scopes) {
+  let root = scopeById(event.traceId, scopes);
+  for (let guard2 = 0; root?.parentId != null && guard2 < 64; guard2++) root = scopeById(root.parentId, scopes);
+  const d = root?.dateInt ?? event.dateInt;
+  return (d.year - firstDateInt2.year) * 12 + (d.month - firstDateInt2.month);
 }
 
 // js/fund-transfer.js
@@ -35773,18 +35789,18 @@ function povertyLine(table, householdSize) {
 function fplPercent(householdIncome, table, householdSize) {
   return Math.round(100 * householdIncome / povertyLine(table, householdSize));
 }
-function applicableFigure(table, percent) {
-  if (percent > table.cliff * 100) return null;
+function applicableFigure(table, percent2) {
+  if (percent2 > table.cliff * 100) return null;
   const hundredths = (rate) => Math.round(rate * 1e4);
   let lower = 0;
   for (let i = 0; i < table.bands.length; i++) {
     const band = table.bands[i];
     const upper = Math.round(band.upTo * 100);
     const isLast = i === table.bands.length - 1;
-    if (percent < upper || isLast && percent <= upper) {
+    if (percent2 < upper || isLast && percent2 <= upper) {
       const initial = hundredths(band.initial);
       const final = hundredths(band.final);
-      const position = Math.max(0, percent - lower) / (upper - lower);
+      const position = Math.max(0, percent2 - lower) / (upper - lower);
       const figure = initial + (final - initial) * position;
       return Math.floor(figure + 0.5) / 1e4;
     }
@@ -35800,9 +35816,9 @@ var PtcEligibility = Object.freeze({
 });
 function premiumTaxCredit({ table, householdSize, householdIncome, months, advanceIncome = null }) {
   const line = povertyLine(table, householdSize);
-  const percent = fplPercent(householdIncome, table, householdSize);
+  const percent2 = fplPercent(householdIncome, table, householdSize);
   const none = (eligibility2) => ({
-    percent,
+    percent: percent2,
     eligibility: eligibility2,
     applicable: null,
     annualContribution: 0,
@@ -35817,12 +35833,12 @@ function premiumTaxCredit({ table, householdSize, householdIncome, months, advan
     if (!advanced) return none(PtcEligibility.UNDER_FLOOR);
     eligibility = PtcEligibility.ADVANCE_EXCEPTION;
   }
-  const applicable = applicableFigure(table, Math.max(0, percent));
+  const applicable = applicableFigure(table, Math.max(0, percent2));
   const annualContribution = Math.round(Math.max(0, householdIncome) * applicable);
   const monthlyContribution = Math.round(annualContribution / 12);
   const monthly = months.map(({ benchmark, premium }) => Math.min(premium, Math.max(0, benchmark - monthlyContribution)));
   const total = monthly.reduce((sum, credit) => sum + credit, 0);
-  return { percent, eligibility, applicable, annualContribution, monthlyContribution, monthly, total };
+  return { percent: percent2, eligibility, applicable, annualContribution, monthlyContribution, monthly, total };
 }
 
 // js/engines/premium-credit-engine.js
@@ -35897,10 +35913,10 @@ var PremiumCreditEngine = class {
     if (estimate != null) {
       const line = povertyLine(table, size);
       if (estimate >= line && estimate <= table.cliff * line) {
-        const percent = fplPercent(estimate, table, size);
-        const applicable = applicableFigure(table, percent);
+        const percent2 = fplPercent(estimate, table, size);
+        const applicable = applicableFigure(table, percent2);
         const monthlyContribution = Math.round(Math.round(estimate * applicable) / 12);
-        advance = { percent, monthlyContribution };
+        advance = { percent: percent2, monthlyContribution };
       }
     }
     const record2 = { year, table, size, estimate, advance, months: [], advanced: 0 };
@@ -36709,8 +36725,8 @@ var Portfolio = class _Portfolio {
       logger.log(LogCategory.TRANSFER, () => 'Portfolio.applyAssetOpenFundTransfer: funding source "' + config2.sourceDisplayName + '" not found or closed');
       return;
     }
-    const percent = config2.downPaymentPercent ?? 100;
-    const amount = new Currency(modelAsset.startCurrency.amount * (percent / 100));
+    const percent2 = config2.downPaymentPercent ?? 100;
+    const amount = new Currency(modelAsset.startCurrency.amount * (percent2 / 100));
     const event = { type: EventType.TRANSFER, data: {
       from: source.displayName,
       to: modelAsset.displayName,
@@ -40881,8 +40897,45 @@ var TAX_LABEL = Object.freeze({
   [EventType.NIIT_ASSESSED]: "Net investment income tax",
   [EventType.PTC_RECONCILIATION]: "Premium tax credit repayment"
 });
+function obligationOf(event, scopes, memo = null) {
+  if (event.kind !== EventKind.CASH) return null;
+  if (event.amount.amount >= 0) return null;
+  const treatment = EXPENDITURE_TREATMENT[event.type];
+  if (!treatment) {
+    throw new Error(
+      `annual-expenditure: EventType "${event.type}" has no expenditure treatment. Add it to EXPENDITURE_TREATMENT \u2014 say whether a draw of this kind is spending, tax, decided by its causal scope, or excluded. Defaulting would leave money out of a total that claims to be complete.`
+    );
+  }
+  if (treatment === "tax") return { bucket: Expenditure.TAX, label: TAX_LABEL[event.type] };
+  if (treatment === "spending") return { bucket: Expenditure.SPENDING, label: "One-time purchases" };
+  if (treatment === "excluded") return null;
+  if (memo?.has(event.traceId)) return memo.get(event.traceId);
+  const chain = chainFor(event.traceId, scopes);
+  let obligation = null;
+  for (const s of chain) if (OBLIGATION_SCOPES.has(s.kind)) obligation = s;
+  const result = obligation ? { bucket: Expenditure.SPENDING, label: obligation.label.replace(/^Pay /, "") } : chain.some((s) => s.kind === TraceKind.TAX_TRUE_UP) ? { bucket: Expenditure.TAX, label: "Annual tax settlement" } : { bucket: Expenditure.INTERNAL, label: null };
+  memo?.set(event.traceId, result);
+  return result;
+}
 
 // js/month-summary.js
+function metricAtIndex(portfolio, metricName, idx) {
+  if (!portfolio || idx < 0) return 0;
+  let total = 0;
+  for (const asset of portfolio.modelAssets) {
+    const history = asset.getHistory(metricName);
+    if (history && idx < history.length) total += history[idx] ?? 0;
+  }
+  return total;
+}
+function lastHistoryIndex(portfolio) {
+  if (!portfolio) return 0;
+  for (const asset of portfolio.modelAssets) {
+    const h = asset.getHistory(Metric.VALUE);
+    if (h?.length > 0) return h.length - 1;
+  }
+  return 0;
+}
 var EXPENSE_PIECES = Object.freeze([...LEAF_EXPENSE_METRICS, Metric.MORTGAGE_PRINCIPAL]);
 var INCOME_LINE = Object.freeze({
   // A paycheck, a pension or a benefit is the account itself.
@@ -42339,6 +42392,594 @@ function pickDrawdownAccount(raw, accountLabels) {
   return candidates[0]?.displayName ?? null;
 }
 
+// js/outcome-summary.js
+function planOutcome(portfolio, issues = []) {
+  if (!portfolio?.firstDateInt) return null;
+  const last = lastHistoryIndex(portfolio);
+  const end = metricAtIndex(portfolio, Metric.VALUE, last);
+  const index = portfolio.monthlyPriceIndex;
+  const endReal = index?.length ? PriceIndex.deflateAt(end, index, last) : null;
+  const exhaustion = planExhaustion(issues)?.firstDateInt ?? null;
+  return {
+    end,
+    endReal,
+    exhaustion,
+    value: formatCompactCurrency(end),
+    detail: [
+      endReal != null ? `${formatCompactCurrency(endReal)} in today's $` : null,
+      exhaustion ? `runs out ${monthLabel(exhaustion)}` : "never runs out"
+    ].filter(Boolean).join(" \xB7 "),
+    tone: exhaustion ? "bad" : "good"
+  };
+}
+
+// js/spending-solver.js
+var SCAN_LEVELS = 40;
+var SCAN_FROM = 0.5;
+var FACTOR_CAP = 8;
+var FACTOR_FLOOR = 1 / 16;
+var REFINE_TO_DOLLARS = 10;
+var EDGE_STEPS = 6;
+var RISE_TOLERANCE = 1e-3;
+function isDialExpense(instrument) {
+  return InstrumentType.isMonthlyExpense(instrument);
+}
+function scaledAssets(modelAssets, factor) {
+  return modelAssets.map((asset) => {
+    const plain = JSON.parse(JSON.stringify(asset));
+    if (isDialExpense(plain.instrument) && plain.startCurrency) {
+      plain.startCurrency.amount *= factor;
+    }
+    return plain;
+  });
+}
+function solvedAssets(modelAssets, factor) {
+  return scaledAssets(modelAssets, factor).map((plain) => {
+    if (isDialExpense(plain.instrument) && plain.startCurrency) {
+      plain.startCurrency.amount = Math.trunc(plain.startCurrency.amount * 100) / 100;
+    }
+    return plain;
+  });
+}
+function runAt(plan, factor) {
+  const assets = scaledAssets(plan.modelAssets, factor).map((a) => ModelAsset.fromJSON(a));
+  const portfolio = new Portfolio(assets, false, plan.config);
+  portfolio.lifeEvents = (plan.lifeEvents ?? []).map((e) => ModelLifeEvent.fromJSON(e));
+  chronometer_run(portfolio);
+  return measure(portfolio, factor);
+}
+function measure(portfolio, factor) {
+  const issues = detectIssues(portfolio);
+  const outcome = planOutcome(portfolio, issues);
+  const endingNominal = outcome?.end ?? 0;
+  const endingReal = outcome?.endReal ?? endingNominal;
+  const exhaustion = planExhaustion(issues);
+  const spendingByMonth = realSpendingByMonth(portfolio);
+  const lifetimeSpending = spendingByMonth.reduce((sum, v) => sum + v, 0);
+  const balances = {};
+  for (const asset of portfolio.modelAssets) {
+    balances[asset.displayName] = asset.finishCurrency.amount;
+  }
+  return {
+    factor,
+    endingNominal,
+    endingReal,
+    runsOut: exhaustion ? {
+      year: exhaustion.firstDateInt.year,
+      month: exhaustion.firstDateInt.month,
+      headline: exhaustion.headline,
+      unpaid: exhaustion.amount
+    } : null,
+    lifetimeSpending,
+    monthlySpending: spendingByMonth.length ? lifetimeSpending / spendingByMonth.length : 0,
+    spendingByMonth,
+    balances,
+    portfolio
+  };
+}
+function realSpendingByMonth(portfolio) {
+  const first = portfolio.firstDateInt;
+  const index = portfolio.monthlyPriceIndex ?? [];
+  const months = new Array(index.length).fill(0);
+  if (!first) return months;
+  const scopes = portfolio.traceScopes ?? [];
+  const memo = /* @__PURE__ */ new Map();
+  for (const asset of portfolio.modelAssets) {
+    if (!InstrumentType.isFundable(asset.instrument)) continue;
+    for (const event of asset.events ?? []) {
+      if (!event.dateInt) continue;
+      const o = obligationOf(event, scopes, memo);
+      if (!o || o.bucket !== Expenditure.SPENDING) continue;
+      const when = bookedMonthIndex(event, first, scopes);
+      if (when < 0 || when >= months.length) continue;
+      months[when] += PriceIndex.deflateAt(-event.amount.amount, index, when);
+    }
+  }
+  return months;
+}
+function keeps(run, limits) {
+  return !run.runsOut && run.endingReal >= limits.floor;
+}
+function findEdge(asEntered, run) {
+  let funded, out;
+  if (!asEntered.runsOut) {
+    funded = 1;
+    out = 1;
+    while (out < FACTOR_CAP) {
+      out = Math.min(out * 2, FACTOR_CAP);
+      if (run(out).runsOut) break;
+      funded = out;
+    }
+    if (funded === FACTOR_CAP) return { factor: FACTOR_CAP, from: SCAN_FROM, capped: true };
+  } else {
+    out = 1;
+    funded = SCAN_FROM;
+    while (funded > FACTOR_FLOOR && run(funded).runsOut) {
+      out = funded;
+      funded /= 2;
+    }
+    if (run(funded).runsOut) return { factor: out, from: funded, capped: false };
+  }
+  for (let i = 0; i < EDGE_STEPS; i++) {
+    const mid = (funded + out) / 2;
+    if (run(mid).runsOut) out = mid;
+    else funded = mid;
+  }
+  return { factor: out, from: Math.min(SCAN_FROM, funded / 2), capped: false };
+}
+function solveSpending(plan, limits = {}) {
+  const want = { floor: Math.max(0, Number(limits.floor) || 0) };
+  const runs = /* @__PURE__ */ new Map();
+  const run = (factor) => {
+    if (!runs.has(factor)) runs.set(factor, runAt(plan, factor));
+    return runs.get(factor);
+  };
+  const asEntered = run(1);
+  const edge = findEdge(asEntered, run);
+  const from = edge.from;
+  const levels = [];
+  for (let i = 0; i < SCAN_LEVELS; i++) {
+    levels.push(from + (edge.factor - from) * i / (SCAN_LEVELS - 1));
+  }
+  const scan = levels.map(run);
+  let pick2 = -1;
+  for (let i = scan.length - 1; i >= 0; i--) {
+    if (keeps(scan[i], want)) {
+      pick2 = i;
+      break;
+    }
+  }
+  let best = null;
+  let failing = null;
+  if (pick2 >= 0) {
+    best = scan[pick2];
+    failing = scan[pick2 + 1] ?? null;
+    if (failing) {
+      const dollarsPerUnit = Math.max(asEntered.monthlySpending, 1);
+      let lo = best.factor, hi = failing.factor;
+      for (let i = 0; i < 24 && (hi - lo) * dollarsPerUnit > REFINE_TO_DOLLARS; i++) {
+        const mid = (lo + hi) / 2;
+        const r = run(mid);
+        if (keeps(r, want)) {
+          lo = mid;
+          best = r;
+        } else {
+          hi = mid;
+          failing = r;
+        }
+      }
+    }
+  } else {
+    failing = scan[0];
+  }
+  return {
+    limits: want,
+    asEntered: column(asEntered, plan),
+    best: best ? column(best, plan) : null,
+    boundBy: boundBy(best, failing, want, edge),
+    curve: scan.map((r) => ({
+      factor: r.factor,
+      monthlySpending: r.monthlySpending,
+      endingReal: r.endingReal,
+      runsOut: !!r.runsOut
+    })),
+    rise: findRise(scan),
+    healthNote: healthNote(asEntered.portfolio),
+    runs: runs.size
+  };
+}
+function columnAt(plan, factor) {
+  return column(runAt(plan, factor), plan);
+}
+function column(run, plan) {
+  const split = healthSplit(run.portfolio);
+  const out = {
+    factor: run.factor,
+    expenses: plan.modelAssets.filter((a) => isDialExpense(a.instrument)).map((a) => ({
+      displayName: a.displayName,
+      monthly: Math.abs(a.startCurrency?.amount ?? 0) * run.factor
+    })),
+    monthlySpending: run.monthlySpending,
+    lifetimeSpending: run.lifetimeSpending,
+    endingReal: run.endingReal,
+    endingNominal: run.endingNominal,
+    runsOut: run.runsOut
+  };
+  if (split != null) {
+    const before = run.spendingByMonth.slice(0, split);
+    const after = run.spendingByMonth.slice(split);
+    const mean = (xs) => xs.length ? xs.reduce((s, v) => s + v, 0) / xs.length : 0;
+    out.monthlySpendingBefore65 = mean(before);
+    out.monthlySpendingFrom65 = mean(after);
+    out.premiumTaxCredit = (run.portfolio.taxYears ?? []).reduce((sum, y) => sum + (y.ptc ?? 0), 0);
+  }
+  return out;
+}
+function healthSplit(portfolio) {
+  const card = portfolio.modelAssets.find((a) => InstrumentType.isHealthInsurance(a.instrument));
+  if (!card) return null;
+  const first = portfolio.firstDateInt;
+  const end = card.effectiveFinishDateInt;
+  const split = (end.year - first.year) * 12 + (end.month - first.month) + 1;
+  const total = (portfolio.monthlyPriceIndex ?? []).length;
+  return split > 0 && split < total ? split : null;
+}
+function healthNote(portfolio) {
+  if (healthSplit(portfolio) == null) return false;
+  const card = portfolio.modelAssets.find((a) => InstrumentType.isHealthInsurance(a.instrument));
+  const end = card.effectiveFinishDateInt;
+  const monthsAfter = (d) => (d.year - end.year) * 12 + (d.month - end.month);
+  return !portfolio.modelAssets.some((a) => a !== card && InstrumentType.isMonthlyExpense(a.instrument) && a.startDateInt && monthsAfter(a.startDateInt) >= 0 && monthsAfter(a.startDateInt) <= 12);
+}
+function boundBy(best, failing, limits, edge) {
+  if (!failing) {
+    return { kind: "cap", factor: edge.factor };
+  }
+  if (failing.runsOut) {
+    return {
+      kind: "runsOut",
+      year: failing.runsOut.year,
+      month: failing.runsOut.month,
+      headline: failing.runsOut.headline,
+      unpaid: failing.runsOut.unpaid,
+      untouched: untouchedAt(failing),
+      noLevelPasses: !best
+    };
+  }
+  return { kind: "floor", floor: limits.floor, endingReal: failing.endingReal, noLevelPasses: !best };
+}
+function untouchedAt(run) {
+  const p = run.portfolio;
+  const first = p.firstDateInt;
+  const at = (run.runsOut.year - first.year) * 12 + (run.runsOut.month - first.month);
+  const held = [];
+  for (const asset of p.modelAssets) {
+    const i = asset.instrument;
+    if (!InstrumentType.isTaxDeferred(i) && !InstrumentType.isTaxFree(i)) continue;
+    const history = asset.getHistory?.("value") ?? [];
+    const balance = history[Math.min(at, history.length - 1)];
+    const amount = balance?.amount ?? balance ?? 0;
+    if (amount > 0) held.push({ displayName: asset.displayName, amount });
+  }
+  return held.sort((a, b) => b.amount - a.amount);
+}
+function findRise(scan) {
+  let found = null;
+  for (let i = 0; i + 1 < scan.length; i++) {
+    const lower = scan[i], higher = scan[i + 1];
+    if (lower.runsOut || higher.runsOut) continue;
+    const gain = higher.endingReal - lower.endingReal;
+    if (gain <= Math.abs(lower.endingReal) * RISE_TOLERANCE) continue;
+    if (found && gain <= found.gain) continue;
+    let account = null;
+    for (const [name, amount] of Object.entries(lower.balances)) {
+      const excess = amount - (higher.balances[name] ?? 0);
+      if (excess > 0 && (!account || excess > account.amount)) {
+        account = { displayName: name, amount: excess, balance: amount };
+      }
+    }
+    found = { fromFactor: lower.factor, toFactor: higher.factor, gain, account };
+  }
+  return found;
+}
+
+// js/success-limit.js
+var SUCCESS_STEPS = 7;
+var SUCCESS_WITHIN = 5e-3;
+async function simulatedRate(plan, factor, sim) {
+  const results = await computeMonteCarlo(
+    scaledAssets(plan.modelAssets, factor).map((a) => ModelAsset.fromJSON(a)),
+    {
+      numSimulations: sim.markets,
+      guardrailParams: null,
+      retirementDateInt: sim.retirementDateInt ? new DateInt(sim.retirementDateInt) : null,
+      runFromStart: false,
+      lifeEvents: (plan.lifeEvents ?? []).map((e) => ModelLifeEvent.fromJSON(e)),
+      dataMode: sim.dataMode || "historical",
+      backtestFromYear: sim.backtestFromYear ?? null,
+      seed: sim.seed,
+      onProgress: sim.onProgress ?? null,
+      config: plan.config
+    }
+  );
+  return results ? results.successRate : 0;
+}
+async function limitBySuccess(plan, solved, { target, markets, rateAt, known = [], onStep = null }) {
+  const rates = new Map(known);
+  let tested = 0;
+  const lasts = async (factor) => {
+    for (const [f, rate2] of rates) {
+      if (f >= factor && rate2 >= target) return true;
+      if (f <= factor && rate2 < target) return false;
+    }
+    const rate = await rateAt(factor);
+    rates.set(factor, rate);
+    tested++;
+    onStep?.({ tested, factor, rate });
+    return rate >= target;
+  };
+  const done = (extra) => ({
+    ...solved,
+    limits: { ...solved.limits, success: target },
+    ...extra,
+    success: {
+      target,
+      markets,
+      tested,
+      rates: [...rates].sort((a, b) => a[0] - b[0]),
+      bestRate: extra?.best ? rates.get(extra.best.factor) ?? null : solved.best ? rates.get(solved.best.factor) ?? null : null
+    }
+  });
+  if (!solved.best) return done();
+  const ceiling = solved.best.factor;
+  if (await lasts(ceiling)) return done();
+  const bracket = () => {
+    let top = ceiling, low = null;
+    for (const [f, rate] of rates) if (rate < target && f < top) top = f;
+    for (const [f, rate] of rates) if (rate >= target && f < top && (low === null || f > low)) low = f;
+    return { top, low };
+  };
+  const bottom = solved.curve[0].factor;
+  let { top: hi, low: lo } = bracket();
+  if (lo === null && hi > 1 && bottom < 1) {
+    await lasts(1);
+    ({ top: hi, low: lo } = bracket());
+  }
+  if (lo === null) {
+    if (!await lasts(bottom)) {
+      return done({
+        best: null,
+        fixedBest: solved.best,
+        boundBy: { kind: "success", target, markets, rate: rates.get(bottom) ?? null, noLevelPasses: true }
+      });
+    }
+    lo = bottom;
+  }
+  const span = SUCCESS_WITHIN;
+  for (let i = 0; i < SUCCESS_STEPS && hi - lo > span; i++) {
+    const mid = (lo + hi) / 2;
+    if (await lasts(mid)) lo = mid;
+    else hi = mid;
+  }
+  const floor = solved.limits.floor;
+  const keeps2 = (c) => !c.runsOut && c.endingReal >= floor;
+  let best = columnAt(plan, lo);
+  if (!keeps2(best)) {
+    const below = solved.curve.filter((p) => p.factor <= lo && keeps2(p));
+    best = below.length ? columnAt(plan, below[below.length - 1].factor) : null;
+  }
+  return done({
+    best,
+    fixedBest: solved.best,
+    boundBy: {
+      kind: "success",
+      target,
+      markets,
+      // The rate at the lowest level known not to last: what "spend more" means here.
+      rate: rates.get(hi) ?? null,
+      noLevelPasses: !best
+    }
+  });
+}
+
+// js/spending-report.js
+var DASH = "\u2014";
+function holdings(untouched = []) {
+  if (!untouched.length) return "";
+  const parts = untouched.map((u, i) => `the ${u.displayName}${i === 0 ? " holds" : ""} ${formatCompactCurrency(u.amount)}`);
+  const last = parts.pop();
+  return parts.length ? `${parts.join(", ")} and ${last}` : last;
+}
+function spendingHeadline(result) {
+  const { asEntered, best } = result;
+  if (!best) return "No spending level tested keeps these limits.";
+  const change = best.monthlySpending - asEntered.monthlySpending;
+  const percent2 = asEntered.monthlySpending ? Math.round(change / asEntered.monthlySpending * 100) : 0;
+  const versus = Math.abs(change) < 1 ? "the same as you entered" : `${formatCurrency(Math.abs(change))} a month ${change > 0 ? "more" : "less"} than you entered (${percent2 > 0 ? "+" : percent2 < 0 ? MINUS : ""}${Math.abs(percent2)}%)`;
+  return `The most this plan can spend is ${formatCurrency(best.monthlySpending)} a month, ${versus}.`;
+}
+function whatStopsYou(result) {
+  const by = result.boundBy;
+  if (by.kind === "cap") {
+    return {
+      text: `Even at ${Math.round(by.factor)} times what you entered, the plan pays every bill and ends with more than ${formatCurrency(result.limits.floor)}. The test stops there.`
+    };
+  }
+  if (by.kind === "runsOut") {
+    const when = monthLabel(DateInt.from(by.year, by.month));
+    const held = holdings(by.untouched);
+    const tail = held ? `, while ${held}. The plan does not draw on retirement accounts to pay a bill.` : ".";
+    const lead = by.noLevelPasses ? `Even at the lowest spending tested, bills go unpaid from ${when}` : `Spend more and bills go unpaid from ${when}`;
+    return { text: lead + tail, year: by.year, month: by.month };
+  }
+  if (by.kind === "success") {
+    const target = Math.round(by.target * 100);
+    const rate = by.rate == null ? null : Math.floor(by.rate * 100);
+    if (by.noLevelPasses) {
+      return {
+        text: `No spending level tested lasts in ${target}% of ${by.markets} simulated markets.` + (rate == null ? "" : ` The lowest lasts in ${rate}%.`)
+      };
+    }
+    return {
+      text: `Spend more and the plan lasts in fewer than ${target}% of ${by.markets} simulated markets` + (rate == null ? "." : ` (${rate}% at the next level tested).`)
+    };
+  }
+  const floor = formatCurrency(by.floor);
+  return {
+    text: by.noLevelPasses ? `No spending level tested leaves ${floor}. The lowest leaves ${formatCompactCurrency(by.endingReal)}.` : `Spend more and the plan would end with less than ${floor}.`
+  };
+}
+function riseNote(result) {
+  const rise = result.rise;
+  if (!rise) return null;
+  const where = rise.account ? ` At the lower level ${formatCompactCurrency(rise.account.balance)} is left in ${rise.account.displayName}, where it grows more slowly.` : "";
+  return `Over part of this range, spending more leaves more at the end (${formatCompactCurrency(rise.gain)} more).` + where + " A transfer rule that moves that money would change the answer.";
+}
+function successNote(result) {
+  const s = result.success;
+  if (!s) return null;
+  const target = Math.round(s.target * 100);
+  if (result.fixedBest && result.best) {
+    const cost = result.fixedBest.monthlySpending - result.best.monthlySpending;
+    return `On the plan's own path of returns it could spend ${formatCurrency(result.fixedBest.monthlySpending)} a month. Lasting in ${target}% of simulated markets costs ${formatCurrency(cost)} a month of that.`;
+  }
+  if (result.best && s.bestRate != null) {
+    return `The ${target}% limit did not bind: at this spending the plan lasts in ${Math.floor(s.bestRate * 100)}% of ${s.markets} simulated markets. A market counts as lasting while the plan's net worth stays above $0, retirement accounts included.`;
+  }
+  return null;
+}
+function healthNote2(result) {
+  if (!result.healthNote) return null;
+  return "The health plan ends at 65 and this plan has no health expense after it, so spending steps down at 65. Medicare premiums are not charged unless you add them as an expense.";
+}
+function resultRows(result, routed = null) {
+  const a = result.asEntered;
+  const b = result.best;
+  const cell = (column2, read) => column2 ? read(column2) : DASH;
+  const row = (label, read) => ({
+    label,
+    entered: cell(a, read),
+    best: cell(b, read),
+    ...routed ? { routed: cell(routed, read) } : {}
+  });
+  const monthly = (v) => `${formatCurrency(v)}/mo`;
+  const runsOut = (c) => c.runsOut ? monthLabel(DateInt.from(c.runsOut.year, c.runsOut.month)) : "never";
+  const rows = [];
+  if (a.monthlySpendingBefore65 != null) {
+    rows.push(row("Monthly spending before 65", (c) => monthly(c.monthlySpendingBefore65)));
+    rows.push(row("Monthly spending from 65", (c) => monthly(c.monthlySpendingFrom65)));
+    rows.push(row("Premium tax credit, whole plan", (c) => formatCurrency(c.premiumTaxCredit)));
+  } else {
+    rows.push(row("Monthly spending", (c) => monthly(c.monthlySpending)));
+  }
+  rows.push(row("Lifetime spending", (c) => formatCompactCurrency(c.lifetimeSpending)));
+  rows.push(row("Left at the end", (c) => formatCompactCurrency(c.endingReal)));
+  rows.push(row("Runs out", runsOut));
+  return rows;
+}
+
+// js/mcp/max-spending.js
+var MARKETS = 300;
+var MARKETS_SEED = 1;
+async function maxSpending(spec, { leaveAtLeast = 0, simulatedMarketsPercent = null, markets = MARKETS } = {}) {
+  if (!spec?.modelAssets?.length) {
+    throw new Error("Plan spec has no modelAssets \u2014 nothing to solve.");
+  }
+  const plan = {
+    modelAssets: spec.modelAssets,
+    lifeEvents: spec.lifeEvents ?? [],
+    config: simConfigFromPlanSpec(spec)
+  };
+  let result = solveSpending(plan, { floor: leaveAtLeast });
+  if (simulatedMarketsPercent != null) {
+    const bound = new Portfolio(
+      plan.modelAssets.map((a) => ModelAsset.fromJSON(a)),
+      false,
+      simConfigFromPlanSpec(spec)
+    ).config;
+    const sim = {
+      markets,
+      seed: MARKETS_SEED,
+      dataMode: plan.config.simDataMode,
+      backtestFromYear: null,
+      retirementDateInt: ageToDateIntFor(bound, bound.retirementAge).toInt()
+    };
+    result = await limitBySuccess(plan, result, {
+      target: simulatedMarketsPercent / 100,
+      markets: sim.markets,
+      rateAt: (factor) => simulatedRate(plan, factor, sim)
+    });
+  }
+  const solvedSpec = result.best ? {
+    ...spec,
+    name: `${spec.name ?? "Plan"}: spend the most`,
+    modelAssets: solvedAssets(spec.modelAssets, result.best.factor)
+  } : null;
+  return { result, solvedSpec, plan };
+}
+var percent = (rate) => `${(Math.floor(rate * 1e3) / 10).toFixed(1)}%`;
+function maxSpendingMarkdown({ result, plan }, { handle = null } = {}) {
+  const c = plan.config;
+  const limits = [
+    "never runs out",
+    `leaves at least ${formatCurrency(result.limits.floor)} at the end`,
+    result.success ? `lasts in ${Math.round(result.success.target * 100)}% of ${result.success.markets} simulated markets` : null
+  ].filter(Boolean).join(" \xB7 ");
+  const lines = [
+    "# How much can this plan spend?",
+    "",
+    `**Plan:** ${c.filingAs} \xB7 ages ${c.startAge} \u2192 retires ${c.retirementAge} \u2192 ends ${c.finishAge} \xB7 inflation ${(c.inflationRate * 100).toFixed(1)}%`,
+    `**Limits:** ${limits}`,
+    "",
+    `**${spendingHeadline(result)}**`,
+    "",
+    "| | As entered | Spend the most |",
+    "| :--- | ---: | ---: |",
+    ...resultRows(result).map((row) => `| ${row.label} | ${row.entered} | ${row.best} |`),
+    "",
+    `**What stops it:** ${whatStopsYou(result).text}`
+  ];
+  if (result.success) {
+    const rateAt = (factor) => result.success.rates.find(([f]) => f === factor)?.[1];
+    const entered = rateAt(1);
+    const best = result.best ? rateAt(result.best.factor) : void 0;
+    const said = [
+      entered != null ? `as entered the plan lasts in ${percent(entered)}` : null,
+      best != null ? `at the answer in ${percent(best)}` : null
+    ].filter(Boolean);
+    if (said.length) lines.push("", `Across ${result.success.markets} simulated markets, ${said.join(", ")}.`);
+  }
+  for (const note of [successNote(result), riseNote(result), healthNote2(result)].filter(Boolean)) {
+    lines.push("", note);
+  }
+  if (result.best) {
+    const before = new Map(result.asEntered.expenses.map((e) => [e.displayName, e.monthly]));
+    lines.push(
+      "",
+      "## The expenses at that level",
+      "",
+      "| Expense | As entered | At the most |",
+      "| :--- | ---: | ---: |",
+      ...result.best.expenses.map((e) => `| ${e.displayName} | ${formatCurrency(before.get(e.displayName) ?? 0)}/mo | ${formatCurrency(e.monthly)}/mo |`),
+      "",
+      "Each is its starting monthly amount. Every monthly expense is turned by the same factor, a marketplace health plan included; nothing else in the plan is changed."
+    );
+  }
+  if (handle) {
+    lines.push("", `**The plan at this spending:** \`${handle}\`. Pass it to \`share_link\` to open it in the app, to \`run_plan\` (as \`shareUrl\`) for its full report, or to \`diff_plans\` against the plan it came from. The plan it came from is unchanged.`);
+  }
+  lines.push(
+    "",
+    "---",
+    "",
+    "Figures are in today's dollars. Spending is what the plan pays out to live on, averaged over the whole plan; taxes are not in it."
+  );
+  if (!result.success) {
+    lines.push("", "**This answer is for one fixed path of returns**, the plan's own. At the most a plan can spend on that path it has no margin, and it will not last in every market. The app's Test Bench also requires the plan to last in 90% of simulated markets by default; pass `simulatedMarketsPercent: 90` for that figure. It takes one to two minutes.");
+  }
+  return lines.join("\n");
+}
+
 // js/mcp/mcp-server.js
 var server = new McpServer({
   name: "ChartingFinance-Local",
@@ -42558,6 +43199,20 @@ server.tool(
       outcome: diffOutcomes(runA, runB)
     });
     return { content: [{ type: "text", text: md }] };
+  })
+);
+server.tool(
+  "max_spending",
+  "Answers 'how much can this plan spend?': the most every monthly expense can be turned up (or must be turned down) together while the plan never leaves a bill unpaid and still ends with at least a stated amount. It is the Spending test of the Charting Finance app's Test Bench, so it gives the app's figure. Returns the monthly amount, the plan as entered beside it, the limit that stopped it from going higher, each expense at that level, and a run handle for the plan at that spending. The plan it is given is not changed. By default the answer is for the plan's own fixed path of returns, where the most a plan can spend leaves no margin; say so when you report it, or pass simulatedMarketsPercent.",
+  {
+    plan: external_exports3.string().describe("The plan to solve: a run handle from quick_start_report or run_plan, a share link, or a share payload."),
+    leaveAtLeast: external_exports3.number().min(0).default(0).describe("The least the plan must end with, in today's dollars. 0 spends down to nothing."),
+    simulatedMarketsPercent: external_exports3.number().int().min(50).max(99).optional().describe("Also require the plan to last in this share of 300 simulated markets, e.g. 90, which is what the app requires by default. Omit to leave this limit off. It lowers the answer when the plan would not last in that share, and it is slow: up to ten runs of the markets, one to two minutes.")
+  },
+  guard(async ({ plan, leaveAtLeast, simulatedMarketsPercent }) => {
+    const solved = await maxSpending(planFromReference(plan), { leaveAtLeast, simulatedMarketsPercent });
+    const handle = solved.solvedSpec ? (await runPlanCached(solved.solvedSpec, { includeReconciliation: false })).handle : null;
+    return { content: [{ type: "text", text: maxSpendingMarkdown(solved, { handle }) }] };
   })
 );
 server.tool(

@@ -642,6 +642,23 @@ await check('the line under the list says how many searches reached the best', (
     assert.equal(Report.agreementLine(R.rankSearches([])), '');
 });
 
+await check('a best that stands alone is marked; one that others reached, or a single search, is not', () => {
+    const lone = (monthlies) => Report.isLoneBest(R.rankSearches(
+        monthlies.map((m, i) => found(i ? 'near' : 'plan', i, m, [i]))));
+    assert.equal(lone([5000, 4700, 4700, 4700, 4700]), true);
+    assert.equal(lone([5000, 4949]), true);
+    // Within 1% of the best is company.
+    assert.equal(lone([5000, 4951, 4000]), false);
+    assert.equal(lone([5000, 5000]), false);
+    // One search has nothing to stand apart from, and the line under the list says so.
+    assert.equal(lone([5000]), false);
+    assert.equal(lone([]), false);
+    // Nothing fundable anywhere is not a find.
+    assert.equal(Report.isLoneBest(R.rankSearches(
+        [{ ...found('plan', 0, 0, [1]), best: null }, { ...found('near', 1, 0, [2]), best: null }])), false);
+    assert.match(Report.LONE_BEST_NOTE, /No other search came within 1%/);
+});
+
 // ── The words ────────────────────────────────────────────────────────
 
 await check('a row names where its searches started', () => {
