@@ -62,9 +62,9 @@ if (!isMainThread) {
         if (job.arm === 'entered') {
             results.push(record('entered', ranker.entered));
         } else if (job.arm === 'polish') {
-            R.polishSpend(map, ranker);
+            R.climb(map, ranker);
             results.push(record('polish', ranker.values));
-            results.push(record('polish+prune', R.pruneSpend(map, ranker)));
+            results.push(record('polish+prune', R.prune(map, ranker)));
         } else if (job.arm === 'polish-random' || job.arm === 'polish-near') {
             // A restart: polish from somewhere else. Random, or the plan with every
             // percentage moved by up to 30 points.
@@ -73,20 +73,20 @@ if (!isMainThread) {
                 ? map.genes.map(() => random() * 100)
                 : ranker.entered.map((v) => v + (random() * 2 - 1) * 30));
             const startLevel = ranker.edge;
-            R.polishSpend(map, ranker);
+            R.climb(map, ranker);
             results.push({ ...record(job.arm, ranker.values), startLevel });
-            results.push(record(job.arm + '+prune', R.pruneSpend(map, ranker)));
+            results.push(record(job.arm + '+prune', R.prune(map, ranker)));
         } else {
             const gains = [];
             let last = ranker.edge;
-            const generations = R.geneticSearchSpend(map, ranker, {
+            const generations = R.geneticSearch(map, ranker, {
                 seed: job.seed, start: job.arm.startsWith('ga-random') ? 'random' : 'plan',
                 onGeneration: (g, rk) => { if (rk.edge !== last) { last = rk.edge; gains.push([g, rk.edge, rk.runs]); } },
             });
             results.push({ ...record(job.arm, ranker.values), generations, gains });
-            R.polishSpend(map, ranker);
+            R.climb(map, ranker);
             results.push(record(job.arm + '+polish', ranker.values));
-            results.push(record(job.arm + '+polish+prune', R.pruneSpend(map, ranker)));
+            results.push(record(job.arm + '+polish+prune', R.prune(map, ranker)));
         }
         parentPort.postMessage(results);
     });

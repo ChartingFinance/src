@@ -1,9 +1,10 @@
 // mc-worker.js — Web Worker entry for the simulation compute modules.
-// Dispatches on payload.kind: 'monteCarlo' (default), 'guardrails' or
-// 'spending' (the Test Bench's spending solver).
+// Dispatches on payload.kind: 'monteCarlo' (default), 'guardrails',
+// 'spending' (the Test Bench's spending solver) or 'routing' (one of the
+// Test Bench's routing searches).
 //
-// Mirrors the simulator.js worker pattern: rehydrate the payload, install a
-// fresh tax table, run the pure compute module, stream progress back.
+// Rehydrate the payload, install a fresh tax table, run the pure compute
+// module, stream progress back.
 //
 // Messages in:
 //   compute payload (kind, modelAssets, …)  starts a run
@@ -12,6 +13,7 @@
 //
 // Messages out:
 //   { action: 'progress', completed, total }
+//   { action: 'progress', runs, gain }   a routing search, every 25 plan runs
 //   { action: 'interim', results }    partial snapshot (results.completed < total)
 //   { action: 'paused', completed }   pause took effect at this sim count
 //   { action: 'complete', results }   compute module output
@@ -25,6 +27,7 @@ import { DateInt } from './utils/date-int.js';
 import { computeMonteCarlo } from './mc-compute.js';
 import { computeGuardrails } from './gr-compute.js';
 import { solveSpending } from './spending-solver.js';
+import { searchRouting } from './routing-search.js';
 import { makeActiveTaxTable } from './globals.js';
 
 // Guard so Node-side tests can import this module without a Worker context.
@@ -72,6 +75,23 @@ if (isWorker) self.onmessage = async function (event) {
                 // After global_applyWorkerSnapshot, as below.
                 config: simConfigFromGlobals(),
             }, payload.limits || {});
+            self.postMessage({ action: 'complete', results });
+            return;
+        }
+
+        if (payload.kind === 'routing') {
+            // One search of a routing test. Like the solver, it builds its own
+            // portfolios from the serialized plan.
+            const results = searchRouting({
+                modelAssets: payload.modelAssets,
+                lifeEvents: payload.lifeEvents || [],
+                config: simConfigFromGlobals(),
+            }, {
+                floor: payload.limits?.floor ?? 0,
+                start: payload.search.start,
+                seed: payload.search.seed,
+                onProgress: (progress) => self.postMessage({ action: 'progress', ...progress }),
+            });
             self.postMessage({ action: 'complete', results });
             return;
         }

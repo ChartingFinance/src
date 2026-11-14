@@ -86,13 +86,19 @@ export function healthNote(result) {
 /**
  * The rows of the result table.
  *
- * @returns {Array<{ label: string, entered: string, best: string }>}
+ * @param {object} result    solveSpending() output
+ * @param {object} [routed]  a third column: the most the plan can spend under
+ *                           a routing from the routing test, when one is selected
+ * @returns {Array<{ label: string, entered: string, best: string, routed?: string }>}
  */
-export function resultRows(result) {
+export function resultRows(result, routed = null) {
     const a = result.asEntered;
     const b = result.best;
     const cell = (column, read) => (column ? read(column) : DASH);
-    const row = (label, read) => ({ label, entered: cell(a, read), best: cell(b, read) });
+    const row = (label, read) => ({
+        label, entered: cell(a, read), best: cell(b, read),
+        ...(routed ? { routed: cell(routed, read) } : {}),
+    });
     const monthly = (v) => `${formatCurrency(v)}/mo`;
     const runsOut = (c) => (c.runsOut ? monthLabel(DateInt.from(c.runsOut.year, c.runsOut.month)) : 'never');
 

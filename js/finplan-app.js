@@ -684,6 +684,7 @@ testBench.addEventListener('testbench-month', (ev) => {
 });
 testBench.addEventListener('testbench-save', (ev) => {
     _pendingSpendingFactor = ev.detail.factor;
+    _pendingRouting = ev.detail.lifeEvents ?? null;
     openScenarioPopup('spending');
 });
 
@@ -855,6 +856,7 @@ updateSimDataModeUI();
 // ── Scenario UI events ─────────────────────────────────────
 let _scenarioPopupMode = 'create'; // 'create', 'edit', 'save' (the unsaved plan) or 'spending' (a Test Bench result)
 let _pendingSpendingFactor = null;  // the solved spending level awaiting a scenario name
+let _pendingRouting = null;         // and, from a routing test, the life events with the routing written in
 
 function openScenarioPopup(mode) {
     _scenarioPopupMode = mode;
@@ -874,8 +876,14 @@ function openScenarioPopup(mode) {
         const meta = util_loadLocalScenarioMeta(appState.storyArc, appState.storyName);
         const from = meta?.title || appState.storyName;
         document.getElementById('scenario-popup-title').textContent = 'Save as Scenario';
-        document.getElementById('scenario-title-input').value = `${from}: spend the most`;
-        document.getElementById('scenario-note-input').value = 'From the Test Bench: every monthly expense at the most the plan can pay for.';
+        const routed = !!_pendingRouting;
+        const spending = _pendingSpendingFactor !== 1;
+        document.getElementById('scenario-title-input').value = !routed ? `${from}: spend the most`
+            : spending ? `${from}: new routing, spend the most` : `${from}: new routing`;
+        document.getElementById('scenario-note-input').value = 'From the Test Bench: '
+            + (routed ? 'the transfer percentages of the routing selected there' : '')
+            + (routed && spending ? ', and ' : '')
+            + (spending ? 'every monthly expense at the most the plan can pay for' : '') + '.';
         document.getElementById('scenario-copy-label').style.display = 'none';
     } else {
         document.getElementById('scenario-popup-title').textContent = 'New Scenario';
@@ -918,8 +926,9 @@ document.getElementById('btn-scenario-create').addEventListener('click', () => {
     } else if (_scenarioPopupMode === 'save') {
         saveUnsavedAsScenario(title, note);
     } else if (_scenarioPopupMode === 'spending') {
-        saveSpendingAsScenario(title, note, _pendingSpendingFactor);
+        saveSpendingAsScenario(title, note, _pendingSpendingFactor, _pendingRouting);
         _pendingSpendingFactor = null;
+        _pendingRouting = null;
     } else {
         const copyData = document.getElementById('scenario-copy-check').checked;
         createScenario(title, note, copyData);
@@ -2444,13 +2453,17 @@ function addScenarioForPlanOnScreen(title, note) {
 /**
  * Save a Test Bench result as a new scenario, and switch to it: the plan on
  * screen, with its life events, guardrail parameters and settings, and every
- * monthly expense at the solved level. The scenario it was solved from is
- * saved first and left as it was.
+ * monthly expense at the solved level. A routing test's result also carries
+ * the life events with its routing written in, which replace the ones on
+ * screen: transfer percentages change, and no account or phase is added or
+ * removed. The scenario it was solved from is saved first and left as it was.
  */
-function saveSpendingAsScenario(title, note, factor) {
+function saveSpendingAsScenario(title, note, factor, routedLifeEvents = null) {
     if (unsavedPlan() || !Number.isFinite(factor)) return;
     saveLocalData();
     const solved = solvedAssets(assetList.modelAssets || [], factor);
+    // Before the assets: binding them for editing rebinds the life events.
+    if (routedLifeEvents) appState.lifeEvents = routedLifeEvents.map(ModelLifeEvent.fromJSON);
     assetList.modelAssets = bindForEditing(membrane_rawDataToModelAssets(solved));
     // The life events and settings on screen stay, and calculate() saves
     // them with the new scenario.

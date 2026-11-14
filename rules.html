@@ -890,7 +890,7 @@
         <div class="flex items-center gap-3 mb-4">
             <span class="text-2xl">&#x1F9EA;</span>
             <h2 class="text-2xl font-bold tracking-tight">Test Bench</h2>
-            <span class="text-xs text-gray-400 font-medium ml-1">The Spending Test</span>
+            <span class="text-xs text-gray-400 font-medium ml-1">The Spending and Routing Tests</span>
         </div>
         <p class="text-gray-600 mb-6 leading-relaxed">The spending test answers &ldquo;how much can this plan spend?&rdquo; as a question with limits, not a score: <strong>spend the most that never runs out and leaves at least a stated amount</strong>. It uses no random numbers, so the same plan gives the same answer every time.</p>
 
@@ -957,9 +957,54 @@
             </div>
         </div>
 
+        <h3 class="text-lg font-bold tracking-tight mb-3">The routing test</h3>
+        <p class="text-gray-600 mb-4 leading-relaxed">The routing test asks &ldquo;is there a better way to route this plan&rsquo;s money?&rdquo; A routing is the plan&rsquo;s transfer percentages: how each income is split across accounts, and which accounts pay each expense, phase by phase. Every random number comes from a fixed seed, so the same plan, floor and depth give the same list.</p>
+        <div class="space-y-2 mb-6">
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
+                <span class="rule-chip">The measure</span>
+                <span class="text-sm text-gray-700">A routing is ranked by what the plan can spend under it: the highest level of the spending test&rsquo;s dial at which it never runs out and leaves the floor. Nothing else is in the rank. Ranking by what is left at the end was measured and rejected: it sends money into retirement accounts, where a bill cannot reach it, and on seven of the eight quick-start plans the plan could then spend less.</span>
+            </div>
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
+                <span class="rule-chip">What may change</span>
+                <span class="text-sm text-gray-700">Whole percentages from 0 to 100, for each income into each account it can be paid into and for each monthly expense from each account that can pay it. The percentages of one income or expense never sum past 100.</span>
+            </div>
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
+                <span class="rule-chip">What may not</span>
+                <span class="text-sm text-gray-700">Home, mortgage and debt rules. Moves from one account to another. A draw on a tax-deferred or tax-free account in a phase that starts before age 60: the early-withdrawal penalty is not charged yet, so the search would find those draws free, and they stay at the entered value. A pension or Social Security paid into a retirement account. A phase that says nothing about an income or expense keeps the rules of the phase before it; a change there writes all of them.</span>
+            </div>
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
+                <span class="rule-chip">Contribution limits</span>
+                <span class="text-sm text-gray-700">Not the search&rsquo;s to keep: payroll cuts a 401(k) or IRA contribution at the annual limit and pays the rest as take-home, so a routing that asks for too much is run as the law would run it.</span>
+            </div>
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
+                <span class="rule-chip">Depth</span>
+                <span class="text-sm text-gray-700">The searches a test runs. Depth 1: one climb from the plan as entered. Depth 2 adds four climbs from near the plan, each percentage moved by up to 30 points. Depth 3 adds five climbs from random routings. Depth 4 adds ten genetic searches, five started from the plan and five from random routings, each of 50 routings over 200 generations and each followed by a climb.</span>
+            </div>
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
+                <span class="rule-chip">A climb</span>
+                <span class="text-sm text-gray-700">Move one percentage up or down, or shift points between two accounts of the same income or expense, and keep every move that lets the plan spend more. Steps of 20, 10, 5, 2 and then 1 point, each repeated until none helps, so no single one-point move improves the result.</span>
+            </div>
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
+                <span class="rule-chip">Prune</span>
+                <span class="text-sm text-gray-700">After each search, a changed percentage is put back to the entered value wherever the plan keeps its spending level, less a thousandth of the gain. What is left is the changes that carry the gain.</span>
+            </div>
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
+                <span class="rule-chip">The list</span>
+                <span class="text-sm text-gray-700">Every search, best first by the spending solver&rsquo;s monthly figure for the routed plan. Searches that found the same routing share a row. The line under it counts the searches within 1% of the best; one answer is never shown as the best without saying how many reached it.</span>
+            </div>
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
+                <span class="rule-chip">The cost shown</span>
+                <span class="text-sm text-gray-700">An estimate made before the test starts: about four plan runs per percentage squared for a climb (250 at the least), 10,000 more for a genetic search, at the speed of the last test run on this machine, with as many searches side by side as the processor has cores, less one. It is rough.</span>
+            </div>
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
+                <span class="rule-chip">Saving</span>
+                <span class="text-sm text-gray-700">Save this routing writes the proposed percentages into a new scenario; saving it with its spending also writes the solved expense amounts. The plan as entered is not changed, and no account or phase is added or removed.</span>
+            </div>
+        </div>
+
         <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
             <span class="rule-chip">Not yet here</span>
-            <span class="text-sm text-gray-700">The genetic search for fund transfer percentages, which this section ran as the Maximizer, is off the page while it is rebuilt. It returns as the Test Bench&rsquo;s second test, Routing. A limit on the simulated-markets rate is also planned.</span>
+            <span class="text-sm text-gray-700">A limit on the simulated-markets rate is planned. Until then both tests answer for one fixed path of returns: a plan at the most it can spend there leaves little margin, and its simulated-markets row shows how it fares when markets vary.</span>
         </div>
     </div>
 

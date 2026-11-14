@@ -55,8 +55,8 @@
  *
  * The clock is pinned (quick-start.js anchors plans to `new Date()`), globals
  * are reset per fixture, trace ids are a counter reset by chronometer_run, and
- * nothing on this path calls Math.random — that lives in simulator.js's GA and
- * mc-compute.js, neither of which is snapshotted here. Money is printed to six
+ * nothing on this path calls Math.random — that lives in mc-compute.js, which
+ * is not snapshotted here. Money is printed to six
  * decimals: fine enough that any real behaviour change shows, coarse enough
  * that last-bit float noise does not.
  */

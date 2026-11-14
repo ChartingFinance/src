@@ -710,7 +710,7 @@
             <span class="text-2xl">&#x1F9EA;</span>
             <h2 class="text-2xl font-bold tracking-tight">Test Bench</h2>
         </div>
-        <p class="text-gray-600 mb-6 leading-relaxed">The Test Bench runs tests on your plan without changing it. Its first test, <strong>Spending</strong>, answers one question: how much can this plan spend? It turns every monthly expense up and down together, your health plan included, and finds the highest level at which the plan never runs out and still leaves what you ask for at the end. The Test Bench was called the Maximizer; its genetic search for fund transfers returns here as a second test.</p>
+        <p class="text-gray-600 mb-6 leading-relaxed">The Test Bench runs tests on your plan without changing it. Its first test, <strong>Spending</strong>, answers one question: how much can this plan spend? It turns every monthly expense up and down together, your health plan included, and finds the highest level at which the plan never runs out and still leaves what you ask for at the end. Its second test, <strong>Routing</strong>, asks whether your money could be routed better: it tries other ways to split each income across accounts and to pay each expense, and ranks them by what the plan could then spend. The Test Bench was called the Maximizer.</p>
 
         <!-- Elements -->
         <h3 class="text-lg font-bold mb-4">Elements</h3>
@@ -744,6 +744,26 @@
                 <div class="text-sm text-gray-500">Saves the solved amounts as a new scenario and switches to it. Your plan as entered stays as it is, under its own name in the scenario menu. Only monthly expense amounts differ in the new scenario; no account is added, removed or rerouted.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">Routing: Depth</div>
+                <div class="text-sm text-gray-500">How wide the routing test looks, chosen before it starts. Depth 1 is one search, a climb from your plan. Depth 2 adds four climbs from near your plan, depth 3 five more from random routings, and depth 4 ten genetic searches of 10,000 plan runs each. A deeper test is more searches and more time; the line beside the control says how many, and about how long they will take on your machine. Everything runs in your browser, side by side on your processor&rsquo;s cores.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">Routing: the list</div>
+                <div class="text-sm text-gray-500">Every search, ranked by what the plan could spend under the routing it found, with the gain against the most your plan can spend as entered and how many percentages it changes. Searches that found the same routing share a row. Rows fill in as searches finish, and <strong>Stop</strong> keeps the ones that have. The line under the list says how many searches came within 1% of the best: when only one did, a deeper test may find more.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">Routing: the changes</div>
+                <div class="text-sm text-gray-500">The selected row&rsquo;s routing, phase by phase: the share of an income paid into an account, or of an expense paid from one, now and as proposed. The same routing appears as a third column, <strong>With this routing</strong>, in the result table, with its own simulated-markets and guardrails rows. Select another row to see that routing instead.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">Routing: what it leaves alone</div>
+                <div class="text-sm text-gray-500">Home, mortgage and debt rules; moves from one account to another; draws on retirement accounts in a phase that starts before age 60, which stay as you entered them because the early-withdrawal penalty is not charged yet; and a pension or Social Security paid into a retirement account. Contributions over the annual 401(k) and IRA limits are cut to the limit, as in every run.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">Routing: save</div>
+                <div class="text-sm text-gray-500"><strong>Save this routing as a scenario</strong> saves a new scenario with the proposed percentages and your spending as entered. <strong>Save it with its spending</strong> also sets every monthly expense to the most the routed plan can pay for. Either way your plan as entered stays as it is, and no account or phase is added or removed.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Notes under the result</div>
                 <div class="text-sm text-gray-500">Two notes appear when they apply. One says that over part of the range spending more leaves more, and names the account where the unspent money sat. The other says that your health plan ends at 65 and nothing in the plan pays for health cover after it: Medicare premiums are not charged unless you add them as an expense.</div>
             </div>
@@ -770,6 +790,28 @@
                     <div class="flex items-start gap-3">
                         <span class="step-number">4</span>
                         <span class="text-sm text-gray-700">Click along the curve to see the trade: each click sets what to leave to that point and runs the test again.</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-2">Look for a better routing</div>
+                <div class="space-y-2">
+                    <div class="flex items-start gap-3">
+                        <span class="step-number">1</span>
+                        <span class="text-sm text-gray-700">Pick a <strong>Depth</strong>. The line beside it says how many searches it runs and about how long they take. Start at the default; go deeper when the searches do not agree.</span>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <span class="step-number">2</span>
+                        <span class="text-sm text-gray-700">Click <strong>Search</strong>. The list fills in as searches finish, best first.</span>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <span class="step-number">3</span>
+                        <span class="text-sm text-gray-700">Read the top row&rsquo;s changes, and its column in the result table. A routing that spends the most on one fixed path leaves little at the end, so check its simulated-markets row before relying on it; set <strong>leaves at least</strong> above $0 and search again for a routing with a margin.</span>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <span class="step-number">4</span>
+                        <span class="text-sm text-gray-700">Save it as a scenario to keep it, with or without its spending.</span>
                     </div>
                 </div>
             </div>

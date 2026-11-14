@@ -85,7 +85,7 @@ const EXEMPT = new Map([
 
 /**
  * Browser and worker globals. `self.` and `postMessage` are here because
- * the Web Worker adapters (mc-worker.js, simulator.js) are host code, not
+ * the Web Worker adapter (mc-worker.js) is host code, not
  * engine code, and an engine file reaching for them is the same mistake
  * as reaching for `document`.
  */

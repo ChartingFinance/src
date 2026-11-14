@@ -221,7 +221,7 @@ async function runWithYearlyCapture(portfolio) {
   return snapshots;
 }
 
-// ── GA Constants (from simulator.js) ──────────────────────────────────
+// ── GA Constants (from the old js/simulator.js, since deleted) ──────────────────────────────────
 const THEORETICAL_MAX_CASHFLOW = 10_000_000;
 const THEORETICAL_MAX_PORTFOLIO = 50_000_000;
 
@@ -243,7 +243,7 @@ const GUARDRAIL_RANGES = {
   adjustment:     [2, 25],
 };
 
-// ── Inline Simulator (replicated from simulator.js, which does not export the class) ──
+// ── Inline Simulator (replicated from the old js/simulator.js, since deleted) ──
 
 class InlineSimulator {
   constructor(portfolio, guardrailParams, fitnessBalance) {

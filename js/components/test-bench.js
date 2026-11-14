@@ -1,5 +1,7 @@
 /**
- * <test-bench> — the Test Bench section: "how much can this plan spend?"
+ * <test-bench> — the Test Bench section. Two tests of the plan on screen.
+ *
+ * ── Spending: "how much can this plan spend?" ────────────────────────
  *
  * One question, asked as limits: spend the most that never runs out and leaves
  * at least a floor at the end. The spending solver answers it (spending-
@@ -13,8 +15,17 @@
  *     section's settings;
  *   - one sentence naming what stopped spending from rising.
  *
+ * ── Routing: "is there a better way to route this plan's money?" ─────
+ *
+ * The user picks a depth, with what it costs shown beside it, and runs it.
+ * Each depth is a list of searches (routing-search.js); the result is all of
+ * them, ranked by what the plan could spend under the routing each found.
+ * The selected one is shown as a table of its changes and as a third column
+ * of the spending table.
+ *
  * The element changes nothing. "Save as a scenario" asks the app to save the
- * solved amounts as a new scenario; the plan as entered stays as it is.
+ * solved amounts, the selected routing, or both as a new scenario; the plan
+ * as entered stays as it is.
  *
  * Properties:
  *   planSource  () => plan for runTestBench(), read when a test starts
@@ -25,13 +36,18 @@
  *   markStale()  the plan changed; the result on screen is from before it
  *
  * Dispatches:
- *   'testbench-save'   { detail: { factor } }
+ *   'testbench-save'   { detail: { factor, lifeEvents? } }  `lifeEvents` when a
+ *                      routing is saved: the plan's, with the routing written in
  *   'testbench-month'  { detail: { year, month } }
  */
 
 import { LitElement, html, svg, nothing } from 'lit';
-import { runTestBench, cancelTestBench, CHECK_SIMULATIONS } from '../test-bench-run.js';
+import { runTestBench, cancelTestBench, CHECK_SIMULATIONS,
+         runRoutingTest, runRoutingChecks, cancelRouting, routingCost } from '../test-bench-run.js';
 import { whatStopsYou, riseNote, healthNote, resultRows } from '../spending-report.js';
+import { DEPTHS, DEFAULT_DEPTH, rankSearches } from '../routing-search.js';
+import { startsLabel, costLine, agreementLine, changeRows, versusEntered, routingHeadline,
+         DEPTH_NOTES } from '../routing-report.js';
 import { formatCompactCurrency, formatCurrency, MINUS } from '../utils/html.js';
 
 // The curve's drawing area, in viewBox units.
@@ -50,6 +66,14 @@ class TestBench extends LitElement {
         _stale:    { state: true },
         _error:    { state: true },
         _hover:    { state: true },
+        _depth:     { state: true },
+        _rStatus:   { state: true },   // 'idle' | 'running' | 'done' | 'error'
+        _searches:  { state: true },   // [{ start, seed, state, progress, result }]
+        _selected:  { state: true },   // the selected row's key; null is the top row
+        _rChecks:   { state: true },
+        _rProgress: { state: true },
+        _rStale:    { state: true },
+        _rError:    { state: true },
     };
 
     constructor() {
@@ -65,6 +89,20 @@ class TestBench extends LitElement {
         this._stale = false;
         this._error = '';
         this._hover = null;
+        this._depth = DEFAULT_DEPTH;
+        this._rStatus = 'idle';
+        this._searches = null;
+        this._selected = null;
+        this._rChecks = {};
+        this._rProgress = null;
+        this._rStale = false;
+        this._rError = '';
+        this._rFloor = 0;          // the floor the routing test on screen was run with
+        this._rPlan = null;        // and the plan it was run on
+        this._rRun = null;         // identifies the routing test in flight
+        this._rAsked = 0;          // how many searches the test on screen set out to run
+        this._rCheckCache = new Map();
+        this._cost = null;         // routingCost() of the depth; null means work it out
     }
 
     createRenderRoot() { return this; }
@@ -72,6 +110,17 @@ class TestBench extends LitElement {
     disconnectedCallback() {
         super.disconnectedCallback();
         cancelTestBench();
+        cancelRouting();
+    }
+
+    willUpdate() {
+        if (this._cost !== null || !this.ready) return;
+        try {
+            const plan = this.planSource?.();
+            this._cost = plan ? routingCost(plan, this._depth) : undefined;
+        } catch {
+            this._cost = undefined;
+        }
     }
 
     /** The plan changed: what is on screen describes the plan before it. */
@@ -81,6 +130,31 @@ class TestBench extends LitElement {
             this._status = this._result ? 'done' : 'idle';
         }
         if (this._result) this._stale = true;
+        this._routingOutdated();
+        this._cost = null;
+    }
+
+    /** The routing test on screen no longer describes the plan or the floor. */
+    _routingOutdated() {
+        this._stopRouting();
+        if (this._searches) this._rStale = true;
+    }
+
+    /** Stop the routing test in flight, keeping the searches that finished. */
+    _stopRouting() {
+        cancelRouting();
+        this._rRun = null;
+        if (this._rStatus !== 'running') return;
+        const finished = (this._searches ?? []).filter((s) => s.result);
+        this._searches = finished.length ? finished : null;
+        this._rStatus = finished.length ? 'done' : 'idle';
+    }
+
+    /** The Stop button: the list so far stands, and its top routing is checked. */
+    _onStop() {
+        this._stopRouting();
+        this._cost = null;
+        if (this._rStatus === 'done') this._checkSelected();
     }
 
     async run() {
@@ -92,9 +166,12 @@ class TestBench extends LitElement {
         this._progress = {};
         this._stale = false;
         const floor = this._floor;
+        // A routing is ranked against a floor: another floor, another test.
+        if (this._searches && floor !== this._rFloor) this._routingOutdated();
         try {
             await runTestBench(plan, { floor }, {
                 solved: (result) => {
+                    this._cost = null;   // a plan run has been timed
                     this._result = result;
                     this._status = 'done';
                     this._hover = null;
@@ -110,6 +187,93 @@ class TestBench extends LitElement {
             this._status = 'error';
             this._error = err?.message || String(err);
         }
+    }
+
+    // ── The routing test ────────────────────────────────────────────
+
+    async runRouting() {
+        const plan = this.planSource?.();
+        if (!plan) return;
+        // The list is read against the spending test's columns, at this floor.
+        if (!this._result || this._stale || this._result.limits.floor !== this._floor) this.run();
+
+        const run = (this._rRun = {});
+        this._rStatus = 'running';
+        this._rError = '';
+        this._rStale = false;
+        this._rFloor = this._floor;
+        this._rPlan = plan;
+        this._searches = [];
+        this._selected = null;
+        this._rChecks = {};
+        this._rProgress = null;
+        this._rCheckCache = new Map();
+        const patch = (index, change) => {
+            if (this._rRun !== run) return;
+            this._searches = this._searches.map((s, i) => (i === index ? { ...s, ...change } : s));
+        };
+        try {
+            await runRoutingTest(plan, { floor: this._rFloor }, this._depth, {
+                started: (searches) => {
+                    this._rAsked = searches.length;
+                    this._searches = searches.map((s) => ({ ...s, state: 'waiting' }));
+                },
+                progress: (index, progress) => patch(index, { state: 'running', progress }),
+                found: (index, result) => patch(index, result ? { state: 'done', result } : { state: 'failed' }),
+            });
+            if (this._rRun !== run) return;
+            this._rStatus = 'done';
+            this._cost = null;   // a search has been timed: the estimate is better now
+            this._checkSelected();
+        } catch (err) {
+            if (this._rRun !== run) return;
+            this._rStatus = 'error';
+            this._rError = err?.message || String(err);
+        }
+    }
+
+    /** The finished searches, ranked, and the row on show. */
+    _ranked() {
+        const ranked = rankSearches((this._searches ?? []).filter((s) => s.result).map((s) => s.result));
+        const row = ranked.rows.find((r) => r.key === this._selected) ?? ranked.rows[0] ?? null;
+        return { ranked, row };
+    }
+
+    /** The selected routing as a column of the table, when it changes anything. */
+    _routedColumn() {
+        const { row } = this._ranked();
+        return row && row.result.best && row.result.changes.length ? row : null;
+    }
+
+    /** The most the plan can spend as entered, when the spending test on screen is for this floor. */
+    _enteredMonthly() {
+        const r = this._result;
+        return r?.best && !this._stale && r.limits.floor === this._rFloor ? r.best.monthlySpending : 0;
+    }
+
+    _select(key) {
+        this._selected = key;
+        if (this._rStatus === 'done') this._checkSelected();
+    }
+
+    /** Run the selected routing under guardrails and across simulated markets. */
+    _checkSelected() {
+        const row = this._routedColumn();
+        this._rProgress = null;
+        if (!row) { this._rChecks = {}; return; }
+        const cached = this._rCheckCache.get(row.key);
+        if (cached) { this._rChecks = cached; return; }
+        this._rChecks = {};
+        const run = this._rRun;
+        const mine = () => this._rRun === run && this._routedColumn()?.key === row.key;
+        runRoutingChecks(this._rPlan, row.result, {
+            check: (check, value) => {
+                if (!mine()) return;
+                this._rChecks = { ...this._rChecks, [check]: value ?? { failed: true } };
+                if (this._rChecks.guardrails && this._rChecks.simulations) this._rCheckCache.set(row.key, this._rChecks);
+            },
+            progress: (completed, total) => { if (mine()) this._rProgress = { completed, total }; },
+        });
     }
 
     _setFloor(value, { rerun = false } = {}) {
@@ -228,9 +392,12 @@ class TestBench extends LitElement {
 
     _checkCell(column, check) {
         if (column === 'best' && !this._result.best) return '—';
-        const value = this._checks[`${column}.${check}`];
+        const routed = column === 'routed';
+        const value = routed ? this._rChecks[check] : this._checks[`${column}.${check}`];
         if (!value) {
-            const p = check === 'simulations' ? this._progress[column] : null;
+            // The routing's checks start once every search has finished.
+            if (routed && this._rStatus === 'running') return html`<span class="tb-pending">after the searches</span>`;
+            const p = check !== 'simulations' ? null : routed ? this._rProgress : this._progress[column];
             return html`<span class="tb-pending">${p ? `${p.completed} of ${p.total}…` : '…'}</span>`;
         }
         if (value.failed) return html`<span class="tb-pending">could not run</span>`;
@@ -246,18 +413,25 @@ class TestBench extends LitElement {
     }
 
     _renderTable() {
-        const rows = resultRows(this._result);
+        // The routing's column belongs beside these only at the floor they share.
+        const routed = !this._rStale && this._result.limits.floor === this._rFloor ? this._routedColumn() : null;
+        const rows = resultRows(this._result, routed?.result.best);
+        const third = (cell) => (routed ? html`<td>${cell()}</td>` : nothing);
         return html`
             <table class="tb-table">
-                <thead><tr><th></th><th>As entered</th><th>Spend the most</th></tr></thead>
+                <thead><tr><th></th><th>As entered</th><th>Spend the most</th>
+                    ${routed ? html`<th>With this routing</th>` : nothing}</tr></thead>
                 <tbody>
-                    ${rows.map((row) => html`<tr><th>${row.label}</th><td>${row.entered}</td><td>${row.best}</td></tr>`)}
+                    ${rows.map((row) => html`<tr><th>${row.label}</th><td>${row.entered}</td><td>${row.best}</td>
+                        ${third(() => row.routed)}</tr>`)}
                     <tr><th>In ${CHECK_SIMULATIONS} simulated markets</th>
                         <td>${this._checkCell('entered', 'simulations')}</td>
-                        <td>${this._checkCell('best', 'simulations')}</td></tr>
+                        <td>${this._checkCell('best', 'simulations')}</td>
+                        ${third(() => this._checkCell('routed', 'simulations'))}</tr>
                     <tr><th title="Under the settings in the Guardrails section, from retirement">With guardrails</th>
                         <td>${this._checkCell('entered', 'guardrails')}</td>
-                        <td>${this._checkCell('best', 'guardrails')}</td></tr>
+                        <td>${this._checkCell('best', 'guardrails')}</td>
+                        ${third(() => this._checkCell('routed', 'guardrails'))}</tr>
                 </tbody>
             </table>
             <div class="tb-caption">Today's dollars. Spending is what the plan pays out to live on; taxes are not in it.</div>`;
@@ -308,6 +482,110 @@ class TestBench extends LitElement {
             </div>`;
     }
 
+    // ── The routing test, drawn ─────────────────────────────────────
+
+    _renderRoutingList(ranked, selected) {
+        const entered = this._enteredMonthly();
+        const waiting = (this._searches ?? []).filter((s) => !s.result);
+        const pending = (s) => (s.state === 'failed' ? 'could not run'
+            : s.state === 'waiting' || !s.progress?.runs ? (s.state === 'waiting' ? 'waiting for a free core' : 'starting…')
+            : `${s.progress.runs.toLocaleString('en-US')} plan runs`
+              + (s.progress.gain > 0.0005 ? `, +${(s.progress.gain * 100).toFixed(1)}% so far` : ''));
+        return html`
+            <table class="tb-table tb-list">
+                <thead><tr><th></th><th>Search started from</th><th>The plan could spend</th>
+                    <th>Against yours</th><th>Changes</th></tr></thead>
+                <tbody>
+                    ${ranked.rows.map((row, i) => html`
+                        <tr class=${row === selected ? 'is-selected' : ''} @click=${() => this._select(row.key)}>
+                            <td><input type="radio" name="tb-routing" aria-label="Show routing ${i + 1}"
+                                       .checked=${row === selected} @change=${() => this._select(row.key)}></td>
+                            <th>${startsLabel(row.starts)}</th>
+                            <td>${row.result.best ? `${formatCurrency(row.monthly)}/mo` : 'runs out'}</td>
+                            <td>${versusEntered(row.monthly, entered) || '—'}</td>
+                            <td>${row.result.changes.length || 'none'}</td>
+                        </tr>`)}
+                    ${waiting.map((s) => html`
+                        <tr class="tb-list-pending"><td></td><th>${startsLabel([s])}</th>
+                            <td colspan="3"><span class="tb-pending">${pending(s)}</span></td></tr>`)}
+                </tbody>
+            </table>`;
+    }
+
+    _renderChanges(row) {
+        const result = row.result;
+        const rows = changeRows(result.changes);
+        const blocked = this._rStale || this._rStatus !== 'done' || !this.canSave;
+        const why = this._rStale ? 'Run the routing test again first: the plan, its settings or the floor changed'
+            : this._rStatus !== 'done' ? 'The searches are still running'
+            : !this.canSave ? 'Save the plan on screen as a scenario first'
+            : 'Saves a new scenario. The plan on screen is not changed.';
+        const save = (factor) => this.dispatchEvent(new CustomEvent('testbench-save',
+            { detail: { factor, lifeEvents: result.lifeEvents }, bubbles: true }));
+        return html`
+            <p class="tb-headline tb-routing-headline">${routingHeadline(result, this._enteredMonthly())}</p>
+            ${rows.length ? html`
+                <table class="tb-table tb-changes">
+                    <thead><tr><th>Phase</th><th>From</th><th>To</th><th>Now</th><th>Proposed</th></tr></thead>
+                    <tbody>${rows.map((c) => html`<tr><th>${c.phase}</th><td>${c.from}</td><td>${c.to}</td>
+                        <td>${c.now}</td><td>${c.proposed}</td></tr>`)}</tbody>
+                </table>
+                <div class="tb-caption">The share of each income paid into an account, and of each expense paid from one.
+                    Draws on retirement accounts before 60 are left as you entered them.</div>
+                <div class="tb-actions">
+                    <button type="button" class="btn-modern outline text-sm" title=${why} ?disabled=${blocked}
+                            @click=${() => save(1)}>Save this routing as a scenario</button>
+                    ${result.best ? html`<button type="button" class="btn-modern outline text-sm" title=${why}
+                            ?disabled=${blocked} @click=${() => save(result.best.factor)}>Save it with its spending</button>` : nothing}
+                </div>` : nothing}`;
+    }
+
+    _renderRouting() {
+        const running = this._rStatus === 'running';
+        const cost = this._cost;
+        const nothingToRoute = cost && cost.genes === 0;
+        const { ranked, row } = this._ranked();
+        const total = this._searches?.length ?? 0;
+        return html`
+            <div class="tb-routing">
+                <div class="slot-heading tb-routing-heading">Routing: is there a better way to route this plan's money?</div>
+                <div class="tb-ask">
+                    <label class="tb-depth">Depth
+                        <select aria-label="How many searches to run" ?disabled=${running}
+                                @change=${(ev) => { this._depth = Number(ev.target.value); this._cost = null; }}>
+                            ${DEPTHS.map((d) => html`<option value=${d} ?selected=${d === this._depth}>${d}</option>`)}
+                        </select>
+                    </label>
+                    <span class="tb-ask-text">${nothingToRoute
+                        ? 'This plan has no income or expense the search could route differently.'
+                        : cost ? html`<strong>${costLine(cost)}.</strong> ${DEPTH_NOTES[this._depth]}` : DEPTH_NOTES[this._depth]}</span>
+                    ${running
+                        ? html`<button type="button" class="btn-modern outline text-sm tb-run"
+                                       @click=${() => this._onStop()}>Stop</button>`
+                        : html`<button type="button" class="btn-modern primary text-sm tb-run"
+                                       ?disabled=${!this.ready || nothingToRoute}
+                                       title=${this.ready ? '' : 'Add assets to run the test'}
+                                       @click=${() => this.runRouting()}>&#9654; Search</button>`}
+                </div>
+                ${this._rStatus === 'error' ? html`<p class="tb-error">The test failed: ${this._rError}</p>` : nothing}
+                ${this._searches ? html`
+                    <div class="tb-result ${this._rStale ? 'is-stale' : ''}" title=${this._rStale ? 'From before your latest change' : ''}>
+                        <div class="tb-routing-body">
+                            ${this._renderRoutingList(ranked, row)}
+                            <p class="tb-note">${running
+                                ? `${ranked.searches} of ${total} searches finished. The list is ranked as they come in.`
+                                : (total < this._rAsked ? `Stopped with ${total} of ${this._rAsked} searches finished. ` : '')
+                                  + agreementLine(ranked)}</p>
+                            ${row ? this._renderChanges(row) : nothing}
+                        </div>
+                        ${this._rStale ? html`<p class="tb-sub">The plan, its settings or the floor changed after this test. Search again.</p>` : nothing}
+                    </div>`
+                : html`<p class="tb-sub">Tries other ways to split each income across accounts and to pay each expense, and ranks
+                    them by what the plan could then spend. A deeper test runs more searches and takes longer; it all runs on this
+                    machine. Nothing in your plan is changed.</p>`}
+            </div>`;
+    }
+
     render() {
         const running = this._status === 'running';
         return html`
@@ -327,7 +605,8 @@ class TestBench extends LitElement {
             ${this._result ? this._renderResult()
                 : running ? html`<p class="tb-sub">Running the plan at 40 spending levels…</p>`
                 : html`<p class="tb-sub">Turns every monthly expense up and down together, health plan included,
-                    and finds the highest level the plan can pay for. Nothing in your plan is changed.</p>`}`;
+                    and finds the highest level the plan can pay for. Nothing in your plan is changed.</p>`}
+            ${this._renderRouting()}`;
     }
 }
 

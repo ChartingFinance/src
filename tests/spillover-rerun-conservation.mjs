@@ -224,7 +224,7 @@ const portfolioH = buildPortfolio([
     annualReturnRate: { rate: 0 },
   },
 ]);
-// Disable history exactly like Simulator._setTrackHistory does for fitness runs
+// Disable history, as a search that only ranks its runs would
 portfolioH.modelAssets.forEach(a => a.setTrackHistory(false));
 await chronometer_run(portfolioH);
 

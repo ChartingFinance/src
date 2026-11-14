@@ -25,10 +25,19 @@
  * annual limit and deposits the rest as take-home pay, so a routing that asks
  * for too much is run as the law would run it.
  *
- * ── How a routing is ranked (§8.1) ───────────────────────────────────
+ * ── How a routing is ranked (§8.8) ───────────────────────────────────
  *
- * First by the bills it leaves unpaid (less is better, none is best), then by
- * what is left at the end in today's dollars. No weights and no constants.
+ * By what the plan can spend under it: the highest level of the spending
+ * dial at which it never runs out and leaves the floor. No weights and no
+ * constants. Ranking by what is left at the end was measured and dropped: it
+ * moves money into retirement accounts, where a bill cannot reach it, and the
+ * plan can then spend less (§8.7).
+ *
+ * ── How wide it looks (§8.8) ─────────────────────────────────────────
+ *
+ * The user sets a depth. Each depth is a list of searches (`searchesAt`), each
+ * search is one call of `searchRouting`, and the result shown is all of them,
+ * ranked (`rankSearches`).
  *
  * ── What it does not touch ───────────────────────────────────────────
  *
@@ -47,7 +56,7 @@ import { InstrumentType } from './instruments/instrument.js';
 import { PriceIndex } from './utils/price-index.js';
 import { withoutTracing } from './trace.js';
 import { ageToDateIntFor, finishDateIntFor } from './plan-dates.js';
-import { scaledAssets } from './spending-solver.js';
+import { scaledAssets, solveSpending } from './spending-solver.js';
 
 /** A phase that starts before this age holds its retirement-account draws. */
 export const PENALTY_FREE_AGE = 60;
@@ -223,133 +232,8 @@ export function scoreRouting(plan, map, values, factor = 1) {
     };
 }
 
-/** Two scores closer than this, in dollars, rank the same. */
+/** Two amounts closer than this, in dollars, count as the same. */
 export const TIE = 1;
-
-/** True when score `a` ranks above score `b`, by more than a dollar. */
-export function ranksAbove(a, b) {
-    if (Math.abs(a.unpaid - b.unpaid) > TIE) return a.unpaid < b.unpaid;
-    return a.endingReal > b.endingReal + TIE;
-}
-
-/**
- * A scorer that remembers: a routing already run is not run again.
- * `runs` counts the plan runs actually made.
- */
-export function makeScorer(plan, map, factor = 1) {
-    const seen = new Map();
-    const scorer = (values) => {
-        const key = values.join(',');
-        let score = seen.get(key);
-        if (!score) {
-            score = scoreRouting(plan, map, values, factor);
-            seen.set(key, score);
-            scorer.runs++;
-        }
-        return score;
-    };
-    scorer.runs = 0;
-    return scorer;
-}
-
-// ── Polish ──────────────────────────────────────────────────────────
-
-/** Step sizes tried, largest first, in percentage points. */
-export const POLISH_STEPS = [20, 10, 5, 2, 1];
-
-/**
- * Climb from `start`: move one percentage up or down, or shift points from
- * one target of a group to another, and keep any move that ranks higher.
- * Repeats at each step size until no move at that size helps, ending at one
- * point, so no single one-point move improves the result.
- *
- * @returns {{ values: number[], score: object }}
- */
-export function polish(map, start, scorer, steps = POLISH_STEPS) {
-    let values = repair(map, start);
-    let score = scorer(values);
-
-    const sameGroup = new Map();
-    map.genes.forEach((gene, i) => {
-        if (!sameGroup.has(gene.group)) sameGroup.set(gene.group, []);
-        sameGroup.get(gene.group).push(i);
-    });
-
-    const attempt = (candidate) => {
-        const fixed = repair(map, candidate);
-        if (fixed.every((v, i) => v === values[i])) return false;
-        // A move the limits cut back is not the move that was asked for.
-        if (fixed.some((v, i) => v !== candidate[i])) return false;
-        const s = scorer(fixed);
-        if (!ranksAbove(s, score)) return false;
-        values = fixed;
-        score = s;
-        return true;
-    };
-
-    for (const step of steps) {
-        let improved = true;
-        while (improved) {
-            improved = false;
-            for (let i = 0; i < values.length; i++) {
-                for (const delta of [step, -step]) {
-                    const next = values.slice();
-                    next[i] += delta;
-                    if (next[i] < 0 || next[i] > 100) continue;
-                    if (attempt(next)) improved = true;
-                }
-                for (const j of sameGroup.get(map.genes[i].group)) {
-                    if (j === i || values[j] < step || values[i] + step > 100) continue;
-                    const next = values.slice();
-                    next[i] += step;
-                    next[j] -= step;
-                    if (attempt(next)) improved = true;
-                }
-            }
-        }
-    }
-    return { values, score };
-}
-
-// ── Prune ───────────────────────────────────────────────────────────
-
-/**
- * Put changed percentages back to what the user entered wherever that costs
- * less than `share` of the gain in what is left, and nothing in unpaid bills.
- * A group is put back whole first, then single percentages.
- */
-export function prune(map, values, scorer, share = 0.001) {
-    const entered = repair(map, map.entered);
-    const base = scorer(entered);
-    let kept = values.slice();
-    let score = scorer(kept);
-    const gain = score.endingReal - base.endingReal;
-    const allowance = Math.max(0, gain) * share;
-
-    const tryBack = (indexes) => {
-        if (indexes.every((i) => kept[i] === entered[i])) return;
-        const candidate = kept.slice();
-        for (const i of indexes) candidate[i] = entered[i];
-        const fixed = repair(map, candidate);
-        if (fixed.some((v, i) => v !== candidate[i])) return;
-        const s = scorer(fixed);
-        if (s.unpaid > score.unpaid) return;
-        if (s.endingReal < score.endingReal - allowance) return;
-        kept = fixed;
-        score = s;
-    };
-
-    const byGroup = new Map();
-    map.genes.forEach((gene, i) => {
-        if (!byGroup.has(gene.group)) byGroup.set(gene.group, []);
-        byGroup.get(gene.group).push(i);
-    });
-    for (const indexes of byGroup.values()) tryBack(indexes);
-    for (let i = 0; i < kept.length; i++) tryBack([i]);
-    return { values: kept, score };
-}
-
-// ── The genetic search ──────────────────────────────────────────────
 
 /** A seeded random source (mulberry32): the same seed gives the same stream. */
 export function seededRandom(seed) {
@@ -363,82 +247,13 @@ export function seededRandom(seed) {
     };
 }
 
-/**
- * One genetic search.
- *
- * @param {object} options
- * @param {number} options.seed
- * @param {'plan'|'random'} [options.start='plan']  a first population of the
- *   plan as entered and near copies of it, or an entirely random one
- * @param {number} [options.population=50]
- * @param {number} [options.generations=200]
- * @param {number} [options.mutationRate=0.15]
- * @param {number} [options.stall=Infinity]  stop after this many generations
- *   without a gain
- * @param {(generation: number, best: object) => void} [options.onGeneration]
- * @returns {{ values: number[], score: object, generations: number }}
- */
-export function geneticSearch(map, scorer, {
-    seed, start = 'plan', population = 50, generations = 200, mutationRate = 0.15,
-    stall = Infinity, onGeneration = null,
-} = {}) {
-    const random = seededRandom(seed);
-    const n = map.genes.length;
-    const entered = repair(map, map.entered);
-    const randomValues = () => repair(map, Array.from({ length: n }, () => random() * 100));
-    const nearEntered = () => repair(map, entered.map((v) =>
-        (random() < mutationRate ? v + (random() * 2 - 1) * 30 : v)));
-
-    let pool = start === 'plan'
-        ? [entered, ...Array.from({ length: population - 1 }, nearEntered)]
-        : Array.from({ length: population }, randomValues);
-
-    let best = null;
-    let sinceGain = 0;
-    let generation = 0;
-    for (; generation < generations && sinceGain < stall; generation++) {
-        // Fresh blood every 50 generations, keeping the five best.
-        if (generation > 0 && generation % 50 === 0) {
-            const ranked = pool.map((values) => ({ values, score: scorer(values) }))
-                .sort((a, b) => (ranksAbove(a.score, b.score) ? -1 : ranksAbove(b.score, a.score) ? 1 : 0));
-            pool = [...ranked.slice(0, 5).map((r) => r.values),
-                    ...Array.from({ length: population - 5 }, randomValues)];
-        }
-
-        const ranked = pool.map((values) => ({ values, score: scorer(values) }))
-            .sort((a, b) => (ranksAbove(a.score, b.score) ? -1 : ranksAbove(b.score, a.score) ? 1 : 0));
-        if (!best || ranksAbove(ranked[0].score, best.score)) {
-            best = ranked[0];
-            sinceGain = 0;
-        } else {
-            sinceGain++;
-        }
-        onGeneration?.(generation, best);
-
-        const parents = ranked.slice(0, Math.floor(population / 2)).map((r) => r.values);
-        const pick = () => parents[Math.floor(random() * parents.length)];
-        const next = [ranked[0].values];
-        while (next.length < population) {
-            const a = pick(), b = pick();
-            const cut = Math.floor(random() * n);
-            for (const child of [a.slice(0, cut).concat(b.slice(cut)), b.slice(0, cut).concat(a.slice(cut))]) {
-                next.push(repair(map, child.map((v) => (random() < mutationRate ? random() * 100 : v))));
-            }
-        }
-        pool = next.slice(0, population);
-    }
-    return { values: best.values, score: best.score, generations: generation };
-}
-
 // ═══════════════════════════════════════════════════════════════════
 // Ranked by what the plan can spend
 // ═══════════════════════════════════════════════════════════════════
 //
-// A routing that leaves more at the end is not one that lets the plan spend
-// more: the search for the first sends money into retirement accounts, which
-// a bill cannot reach, and the plan runs out sooner. So a routing is ranked
-// here by the question the Test Bench asks, "how much can this plan spend?":
-// the highest spending level at which it never runs out and leaves the floor.
+// A routing is ranked by the question the Test Bench asks, "how much can this
+// plan spend?": the highest spending level at which it never runs out and
+// leaves the floor.
 //
 // Finding that level takes about ten runs, too many for every candidate. The
 // ranker instead holds a level just above the best routing so far. A
@@ -455,8 +270,11 @@ const LEVEL_FLOOR = 1 / 16;
  * @param {number} [limits.floor=0]    least to leave at the end, today's dollars
  * @param {number} [limits.within=10]  two levels closer than this many dollars
  *                                     a month count as the same
+ * @param {(runs: number, level: number) => void} [limits.onRun]  after each plan run
+ * @param {Function} [limits.score]  what runs the plan: scoreRouting, unless a
+ *                                   test supplies a landscape of its own
  */
-export function makeRanker(plan, map, { floor = 0, within = 10 } = {}) {
+export function makeRanker(plan, map, { floor = 0, within = 10, onRun = null, score = scoreRouting } = {}) {
     const seen = new Map();
     const ranker = { runs: 0 };
 
@@ -465,17 +283,18 @@ export function makeRanker(plan, map, { floor = 0, within = 10 } = {}) {
         const key = factor + '|' + values.join(',');
         let short = seen.get(key);
         if (short === undefined) {
-            const s = scoreRouting(plan, map, values, factor);
+            const s = score(plan, map, values, factor);
             short = s.unpaid + Math.max(0, floor - s.endingReal);
             seen.set(key, short);
             ranker.runs++;
+            onRun?.(ranker.runs, ranker.edge ?? 0);
         }
         return short;
     };
     const keeps = (values, factor) => shortAt(values, factor) <= TIE;
 
     /** The highest level a routing keeps the limits at, searching up from `from`, which it keeps. */
-    const climb = (values, from, step) => {
+    const raise = (values, from, step) => {
         let lo = from, hi = from;
         for (let grow = 1.05; hi < LEVEL_CAP; grow *= grow) {
             hi = Math.min(lo * grow, LEVEL_CAP);
@@ -501,7 +320,7 @@ export function makeRanker(plan, map, { floor = 0, within = 10 } = {}) {
     const levelOf = (values) => {
         let start = 1;
         while (!keeps(values, start) && start > LEVEL_FLOOR) start *= 0.8;
-        return keeps(values, start) ? climb(values, start, step) : 0;
+        return keeps(values, start) ? raise(values, start, step) : 0;
     };
     ranker.enteredLevel = levelOf(entered);
 
@@ -525,7 +344,7 @@ export function makeRanker(plan, map, { floor = 0, within = 10 } = {}) {
         const at = level();
         const short = shortAt(values, at);
         if (short <= TIE) {
-            ranker.edge = climb(values, at, step);
+            ranker.edge = raise(values, at, step);
             ranker.values = values;
             return 'raised';
         }
@@ -548,12 +367,20 @@ export function makeRanker(plan, map, { floor = 0, within = 10 } = {}) {
     return ranker;
 }
 
+/** Step sizes a climb tries, largest first, in percentage points. */
+export const CLIMB_STEPS = [20, 10, 5, 2, 1];
+
+/** A genetic search's population and generations: 10,000 routings looked at. */
+export const GENETIC_POPULATION = 50;
+export const GENETIC_GENERATIONS = 200;
+
 /**
  * Climb from the ranker's best: move one percentage up or down, or shift
  * points between two targets of a group, keeping each move the ranker takes.
- * Repeats at each step size until no move at that size helps.
+ * Repeats at each step size until no move at that size helps, ending at one
+ * point, so no single one-point move improves the result.
  */
-export function polishSpend(map, ranker, steps = POLISH_STEPS) {
+export function climb(map, ranker, steps = CLIMB_STEPS) {
     const sameGroup = new Map();
     map.genes.forEach((gene, i) => {
         if (!sameGroup.has(gene.group)) sameGroup.set(gene.group, []);
@@ -590,13 +417,20 @@ export function polishSpend(map, ranker, steps = POLISH_STEPS) {
 
 /**
  * One genetic search, ranked by the ranker. The best so far is always in the
- * population, so a generation never loses it.
+ * population, so a generation never loses it. It runs every generation: a
+ * rule that stopped after 30 without a gain would have stopped some searches
+ * at 90% of the level they went on to reach (§8.7).
+ *
+ * @param {object} options
+ * @param {number} options.seed
+ * @param {'plan'|'random'} [options.start='plan']  a first population of the
+ *   ranker's best and near copies of it, or an entirely random one
  *
  * @returns {number} generations run
  */
-export function geneticSearchSpend(map, ranker, {
-    seed, start = 'plan', population = 50, generations = 200, mutationRate = 0.15,
-    stall = Infinity, onGeneration = null,
+export function geneticSearch(map, ranker, {
+    seed, start = 'plan', population = GENETIC_POPULATION, generations = GENETIC_GENERATIONS,
+    mutationRate = 0.15, onGeneration = null,
 } = {}) {
     const random = seededRandom(seed);
     const n = map.genes.length;
@@ -608,9 +442,8 @@ export function geneticSearchSpend(map, ranker, {
         ? [ranker.values, ...Array.from({ length: population - 1 }, () => near(ranker.values))]
         : Array.from({ length: population }, randomValues);
 
-    let sinceGain = 0;
     let generation = 0;
-    for (; generation < generations && sinceGain < stall; generation++) {
+    for (; generation < generations; generation++) {
         if (generation > 0 && generation % 50 === 0) {
             const ranked = pool.map((values) => ({ values, short: ranker.short(values) }))
                 .sort((a, b) => a.short - b.short);
@@ -632,7 +465,6 @@ export function geneticSearchSpend(map, ranker, {
             ranked = pool.map((values) => ({ values, short: ranker.short(values) }))
                 .sort((a, b) => a.short - b.short);
         }
-        sinceGain = gained ? 0 : sinceGain + 1;
         onGeneration?.(generation, ranker);
 
         const parents = ranked.slice(0, Math.floor(population / 2)).map((r) => r.values);
@@ -655,7 +487,7 @@ export function geneticSearchSpend(map, ranker, {
  * still keeps its level, less `share` of the gain. Groups first, then single
  * percentages.
  */
-export function pruneSpend(map, ranker, share = 0.001) {
+export function prune(map, ranker, share = 0.001) {
     const slack = Math.max(0, ranker.edge - ranker.enteredLevel) * share;
     let kept = ranker.values.slice();
     const tryBack = (indexes) => {
@@ -674,4 +506,148 @@ export function pruneSpend(map, ranker, share = 0.001) {
     for (const indexes of byGroup.values()) tryBack(indexes);
     for (let i = 0; i < kept.length; i++) tryBack([i]);
     return kept;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Depth: the searches a test runs
+// ═══════════════════════════════════════════════════════════════════
+
+/** The depths a user can pick, and the one the page starts on. */
+export const DEPTHS = [1, 2, 3, 4];
+export const DEFAULT_DEPTH = 3;
+
+/** How far "near the plan" moves each percentage, in points either way. */
+const NEAR = 30;
+
+/**
+ * The searches a depth runs. Each depth holds the one before it and adds to
+ * it, and every seed is fixed, so the same plan and depth give the same list.
+ *
+ *   1  a climb from the plan as entered
+ *   2  and four climbs from near the plan
+ *   3  and five climbs from random routings
+ *   4  and ten genetic searches, five from the plan and five from random
+ *      routings, each followed by a climb
+ *
+ * @returns {Array<{ start: string, seed: number }>}
+ */
+export function searchesAt(depth) {
+    const list = [{ start: 'plan', seed: 0 }];
+    const add = (start, count) => {
+        for (let seed = 1; seed <= count; seed++) list.push({ start, seed });
+    };
+    if (depth >= 2) add('near', 4);
+    if (depth >= 3) add('random', 5);
+    if (depth >= 4) { add('genetic-plan', 5); add('genetic-random', 5); }
+    return list;
+}
+
+/**
+ * About how many plan runs a search makes, for the page's estimate of the
+ * time a depth takes. Fitted to the eight quick-start plans (§8.7): a climb
+ * took 181 to 4,523 runs for 6 to 30 percentages. Rough by design.
+ */
+export function estimateRuns(genes, search) {
+    const oneClimb = Math.max(250, 4 * genes * genes);
+    return search.start.startsWith('genetic')
+        ? GENETIC_POPULATION * GENETIC_GENERATIONS + oneClimb
+        : oneClimb;
+}
+
+/**
+ * One search, start to finish: begin where `start` says, climb (after a
+ * genetic search, for the genetic starts), prune, and hand the routing to the
+ * spending solver for its figures.
+ *
+ * @param {object} plan  { modelAssets, lifeEvents, config }
+ * @param {object} [options]
+ * @param {number} [options.floor=0]  least to leave at the end, today's dollars
+ * @param {'plan'|'near'|'random'|'genetic-plan'|'genetic-random'} [options.start='plan']
+ * @param {number} [options.seed=0]
+ * @param {(progress: { runs: number, gain: number }) => void} [options.onProgress]
+ *   every 25 plan runs; `gain` is the best level so far over the entered one, less 1
+ * @returns {object}
+ *   start, seed   as given
+ *   genes         how many percentages the search could change
+ *   values        the routing found, one percentage per gene
+ *   changes       [{ phaseIdx, phase, source, kind, target, now, proposed }]
+ *   lifeEvents    the plan's life events with the routing written in
+ *   best          the spending solver's most-spending column for the routed
+ *                 plan, or null when no level keeps the limits
+ *   boundBy       what stops the routed plan from spending more
+ *   runs          plan runs the search made
+ */
+export function searchRouting(plan, { floor = 0, start = 'plan', seed = 0, onProgress = null } = {}) {
+    const map = routingGenes(plan);
+    // Runs are made while the ranker is being built, before there is a level
+    // to report against.
+    let ranker = null;
+    ranker = makeRanker(plan, map, {
+        floor,
+        onRun: onProgress && ((runs, level) => {
+            if (!ranker || runs % 25 !== 0) return;
+            onProgress({ runs, gain: ranker.enteredLevel > 0 ? level / ranker.enteredLevel - 1 : 0 });
+        }),
+    });
+
+    if (map.genes.length > 0) {
+        const random = seededRandom(seed);
+        if (start === 'near') {
+            ranker.startFrom(ranker.entered.map((v) => v + (random() * 2 - 1) * NEAR));
+        } else if (start === 'random') {
+            ranker.startFrom(map.genes.map(() => random() * 100));
+        } else if (start === 'genetic-plan' || start === 'genetic-random') {
+            geneticSearch(map, ranker, { seed, start: start === 'genetic-plan' ? 'plan' : 'random' });
+        }
+        climb(map, ranker);
+    }
+    const values = map.genes.length > 0 ? prune(map, ranker) : [];
+
+    const changes = [];
+    map.genes.forEach((gene, i) => {
+        if (values[i] === ranker.entered[i]) return;
+        const group = map.groups[gene.group];
+        changes.push({
+            phaseIdx: group.phaseIdx, phase: group.phase, source: group.source, kind: group.kind,
+            target: group.targets[gene.target].name, now: ranker.entered[i], proposed: values[i],
+        });
+    });
+
+    const lifeEvents = applyRouting(plan, map, values);
+    const solved = solveSpending({ ...plan, lifeEvents }, { floor });
+    return {
+        start, seed, genes: map.genes.length, values, changes, lifeEvents,
+        best: solved.best, boundBy: solved.boundBy, runs: ranker.runs + solved.runs,
+    };
+}
+
+/** Two results within this share of the best count as agreeing with it. */
+export const AGREEMENT = 0.01;
+
+/**
+ * The finished searches as the list the page shows: best first, searches that
+ * found the same routing sharing a row.
+ *
+ * @param {object[]} results  searchRouting() outputs, in any order
+ * @returns {{ rows: object[], searches: number, agreeing: number }}
+ *   rows      [{ result, monthly, starts: [{ start, seed }] }], best first
+ *   agreeing  how many searches came within 1% of the best, the best included
+ */
+export function rankSearches(results) {
+    const monthly = (r) => r.best?.monthlySpending ?? 0;
+    const order = searchesAt(DEPTHS[DEPTHS.length - 1]);
+    const place = (r) => order.findIndex((s) => s.start === r.start && s.seed === r.seed);
+
+    const rows = [];
+    // Ties go to the earlier search in the depth table, so the list is the
+    // same whatever order the workers finished in.
+    for (const result of results.slice().sort((a, b) => monthly(b) - monthly(a) || place(a) - place(b))) {
+        const key = result.values.join(',');
+        const row = rows.find((r) => r.key === key);
+        if (row) row.starts.push({ start: result.start, seed: result.seed });
+        else rows.push({ key, result, monthly: monthly(result), starts: [{ start: result.start, seed: result.seed }] });
+    }
+    const top = rows.length ? rows[0].monthly : 0;
+    const agreeing = results.filter((r) => top > 0 && monthly(r) >= top * (1 - AGREEMENT)).length;
+    return { rows, searches: results.length, agreeing };
 }

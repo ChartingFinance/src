@@ -1,9 +1,9 @@
 # Spec 15 — The Test Bench: how much can I spend, and what is left
 
 Status: **DECIDED 2026-11-12 (§14). Phase 1 is built** (the solver, the curve, the
-result, the rename). **Phase 2's experiment is run (§8.7, 2026-11-13) and changes
-two decided items; §8.8 proposes the changes and §14 lists them as pending.**
-Phases 3 and 4 are not started.
+result, the rename). **Phase 2's experiment is run (§8.7, 2026-11-13) and changed
+two decided items; §8.8 is the design as decided after it (§14, decisions 12
+and 13).** Phases 3 and 4 are not started.
 The section called Maximizer today is renamed Test Bench (decision §14.10).
 
 The Maximizer today asks the user to pick a point between "Spending" and
@@ -530,36 +530,58 @@ Two smaller findings:
   contribution and paying the rest as take-home (§8.2 asked for this check).
   The flat 25% cap is not needed.
 
-### 8.8 Proposed after the experiment (pending, §14)
+### 8.8 The routing test, as decided after the experiment
 
-**The measure (replaces §8.1).** A routing is ranked by what the plan can
-spend under it: the highest level of §3's dial at which it never runs out and
-leaves the floor the user set. Nothing else is in the rank. The result reads
-"With this routing you could spend $X a month", which is what §8.1 promised
-and its measure did not deliver. What is left at the end is shown beside it,
-as it is for the other columns; with a floor of $0 it will usually be near $0,
-because that is what spending the most means.
+Decided 2026-11-13 (§14, decisions 12 and 13). This section replaces §8.1,
+§8.3 and §8.4.
 
-**The search (replaces §8.3 and §8.4).**
+**The measure.** A routing is ranked by what the plan can spend under it: the
+highest level of §3's dial at which it never runs out and leaves the floor the
+user set. Nothing else is in the rank. What is left at the end is shown beside
+it, as it is for the other columns; with a floor of $0 it will usually be near
+$0, because that is what spending the most means.
 
-- **The climb is the search.** From the plan as entered, step each percentage
-  and each pair within a group by 20, 10, 5, 2 and 1 points, keeping every
-  gain, until no one-point step helps. Seconds for most plans, two to three
-  minutes for the largest.
-- **Four more climbs, from near the plan**, with fixed seeds, side by side in
-  their own workers. They are the check that the first did not stop early, and
-  they carry the agreement line of §8.3 unchanged: "Five searches agree", or
-  the best with "The searches differed by 6%".
-- **Prune**, as §8.3.
-- **The genetic search is kept, behind "Search wider".** It is the tool for the
-  case the climbs cannot handle, a plan whose own routing is a poor start. It
-  runs five seeded searches of 10,000 runs from random routings, each followed
-  by a climb, and says whether it found more than the climbs did. On the eight
-  profiles it would add at most 0.4%, at three to eight minutes a search, so it
-  is not run by default. Its stall rule is dropped (finding 2).
+**Depth.** The user picks a depth before the search starts. A deeper search is
+more searches, so more computing, and the page says so beside the control: how
+many searches the depth runs, and about how long they will take on this
+machine. Everything runs locally.
 
-**Unchanged:** §8.2 (what may change), §8.6 (how it reads), the third column of
-§5's table, and Apply as §5.2.
+| Depth | Searches | Adds |
+|---|---|---|
+| 1 | 1 | a climb from the plan as entered |
+| 2 | 5 | four climbs from near the plan (every percentage moved by up to 30 points) |
+| 3 | 10 | five climbs from random routings |
+| 4 | 20 | five genetic searches from the plan and five from random routings, 10,000 plan runs each, each followed by a climb |
+
+The default is 3. Seeds are fixed, so the same plan and depth give the same
+list. The genetic search has no stall rule (§8.7, finding 2).
+
+- **A climb** steps each percentage, and each pair within a group, by 20, 10,
+  5, 2 and 1 points, keeping every gain, until no one-point step helps.
+- **Prune** follows every search: a changed percentage goes back to the user's
+  value where that costs less than 0.1% of the gain.
+- **Side by side.** Each search is its own worker, up to the machine's cores
+  less one; the rest wait their turn.
+
+**The list.** The result is every search, ranked by what the plan can spend
+under the routing it found: where it started, the monthly figure, the gain on
+the plan as entered, and how many percentages it changes. Searches that found
+the same routing share a row. Rows fill in as searches finish. The top row is
+selected; selecting another shows that routing instead.
+
+**Whether they agree.** Under the list: "7 of 10 searches came within 1% of
+the best", or, when none did, "No other search came within 1% of the best. A
+deeper search may find more."
+
+**The selected routing** is shown as §8.6's table of changes and as a third
+column, "With this routing", in §5's table. Its figures are the spending
+solver's for the routed plan, and its simulated-markets and guardrails rows
+are run as for the other columns.
+
+**Apply** follows §5.2: a new scenario with the routing alone, or with the
+routing and its spending.
+
+**Unchanged:** §8.2 (what may change) and §8.6 (how it reads).
 
 ## 9. Code
 
@@ -576,9 +598,10 @@ because that is what spending the most means.
   seconds and not under two.
 - The page section becomes a small Lit element. `simulator-modal.js` and the
   strip in `index.html` and `finplan-app.js` go.
-- `simulator.js` stays and changes in Phase 2: the score (§8.1), the gene map
-  (§8.2), a seeded random source, the seeded first population, polish and prune
-  (§8.3). Each restart is its own worker.
+- Phase 2: `js/routing-search.js`, new and headless, holds the gene map
+  (§8.2), the ranker, the climb, prune, the seeded genetic search and the
+  depth table (§8.8). Each search is a `kind: 'routing'` job in its own
+  simulation worker. `simulator.js`, the old search, is deleted.
 - **MCP.** A `max_spending` tool over the same function is cheap and fits the
   conversational plan ("how much more could I spend?"). Its own PR (§15).
 
@@ -648,8 +671,9 @@ rename.
 - With the success limit: the same seed gives the same rate; the rate does not
   rise with spending across the samples.
 - Routing: `routing-never-worse` (the result ranks at or above the plan as
-  entered, for every profile); `routing-repeats` (same plan, same five
-  results); `routing-legal` (no result holds an account-to-account move, a
+  entered, for every profile); `routing-repeats` (same plan and search, same
+  result); `depth-adds-searches` (each depth holds the one before it);
+  `routing-legal` (no result holds an account-to-account move, a
   changed early retirement draw or a contribution over the limit);
   `polish-finishes` (no single one-point step improves the result);
   `prune-keeps-the-gain`; `disagreement-is-reported` (a fixture built to have
@@ -694,17 +718,18 @@ second commit.
 11. **The routing search's safeguards are as proposed** (§8.3): five restarts, a
     1% agreement band, and "the searches differed" shown on the page.
 
-**Pending after Phase 2's experiment (§8.7), 2026-11-13.** Two decided items
-are affected, and the changes in §8.8 wait for a decision:
+Recorded 2026-11-13 (John), after Phase 2's experiment (§8.7):
 
-- **A. The routing measure.** §8.1 ranked a routing by what it leaves. That
-  lowers what the plan can spend on seven of eight profiles. Proposed: rank by
-  what the plan can spend.
-- **B. The genetic search's place (decisions 8 and 11).** From the plan, a
-  climb alone is within 0.4% of everything the genetic search found, in a
-  thirtieth of the runs. Proposed: five climbs by default, with the agreement
-  line kept, and the genetic search behind "Search wider" for a plan whose own
-  routing is a poor start.
+12. **A routing is ranked by what the plan can spend** (§8.8). §8.1 ranked it
+    by what it leaves, which lowered what the plan can spend on seven of eight
+    profiles.
+13. **The user sets a Depth before the search, and the result is the ranked
+    list of every search** (§8.8). This replaces decision 11's fixed five
+    restarts. The proposal after the experiment put the genetic search behind
+    a "Search wider" button; John: the bench should list a wide array in the
+    first place, with a depth value chosen up front so the cost of a wider
+    list (more searching, more time) is known before it starts. It all runs
+    locally, so the cost is acceptable.
 
 Found while recording decision 2, and built into the design:
 
@@ -717,7 +742,7 @@ Found while recording decision 2, and built into the design:
 | Phase | Delivers | Effort |
 |---|---|---|
 | **1. The solver and the curve** | §3 with the first two limits, §4, §5 without the success limit, §5.1, Apply, Help, Rules, the UI spec. The strip, the bar chart and the genetic search leave the page. | about 3–4 days |
-| **2. The routing search** | §8: the experiment (§8.5) first, then the score, the genes, restarts, polish, prune, the agreement line, the third column | about 1–2 days for the experiment, then 4–6 |
+| **2. The routing search** | §8: the experiment (§8.5) first, then §8.8: the measure, the genes, Depth, the ranked list, prune, the agreement line, the third column | about 1–2 days for the experiment, then 4–6 |
 | **3. Simulated markets as a limit** | §7 | about 2 days |
 | **4. The MCP tool** | `max_spending`, README, SKILL | about 1 day |
 

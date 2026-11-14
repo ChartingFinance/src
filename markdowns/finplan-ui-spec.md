@@ -27,7 +27,7 @@ Settings            → global assumptions (full-width glass-card)
   Spreadsheet + Report → side-by-side, scrollable containers
 ─── Tools (full-width) ───
   Visualizer        → hydraulic flow animation (on-demand Run button)
-  Test Bench        → tests on the plan; first, "how much can this plan spend?" (on-demand Run button)
+  Test Bench        → tests on the plan: "how much can this plan spend?" and "is there a better routing?" (on-demand buttons)
 Footer
 ```
 
@@ -138,7 +138,15 @@ Glass-card holding `<test-bench>` (`js/components/test-bench.js`), the Spending 
 - one sentence naming what stopped spending from rising, with a link to the month;
 - "Save as a scenario", which saves the solved expense amounts as a new scenario and leaves the plan on screen unchanged.
 
-The solver (`js/spending-solver.js`) runs in the shared simulation worker. A result on screen is dimmed after the plan changes. The genetic search for fund transfers (`js/simulator.js`) is off the page until it returns as the Routing test.
+Under it, in the same element, the Routing test: "is there a better way to route this plan's money?"
+
+- a **Depth** select (1 to 4, default 3) with its cost beside it ("10 searches, about 30 seconds on this machine") and a Search button, which becomes Stop while searches run;
+- the ranked list of searches: where each started, what the plan could spend, the gain against the plan as entered, and the number of changes. Rows fill in as searches finish; searches that found the same routing share a row; a row is selected by a click;
+- one line saying how many searches came within 1% of the best;
+- the selected routing's changes as a table by phase (from, to, now, proposed), and as a third column, "With this routing", in the Spending table;
+- "Save this routing as a scenario" and "Save it with its spending".
+
+The solver (`js/spending-solver.js`) and each routing search (`js/routing-search.js`) run in the shared simulation worker, one worker per search, up to the machine's cores less one. A result on screen is dimmed after the plan changes; the routing list is also dimmed when the floor changes.
 
 ### Footer
 Simple footer with app name and version label.
@@ -258,7 +266,7 @@ Additionally, `#retirementDateInt` is set at init to determine phase boundaries.
 - [x] Report view (live data, scrollable container)
 - [x] Detail auto-scroll to selected month with coral highlight
 - [x] Visualizer (hydraulic animation with Run button)
-- [x] Test Bench (the Spending test, with Run button; formerly the Maximizer)
+- [x] Test Bench (the Spending test with Run button, the Routing test with Depth and Search; formerly the Maximizer)
 - [x] Modern1 design system throughout
 - [x] Reactive state store (FinPlanStore)
 - [x] Footer
@@ -295,7 +303,7 @@ Same localStorage data, same simulation engine, same Lit components.
 - Projections (macro + micro) render on every recalculate
 - Simulations (Monte Carlo + Guardrails) are on-demand via Run buttons
 - Visualizer is on-demand, runs async with 80ms tick animation
-- Test Bench is on-demand; the spending solver and its checks run in Web Workers
+- Test Bench is on-demand; the spending solver, its checks and the routing searches run in Web Workers
 - Detail scroll uses container-local scrolling (not page scroll)
 
 ---
@@ -312,6 +320,6 @@ Same localStorage data, same simulation engine, same Lit components.
 | **Explore date** | The date selected via the year/month dropdowns, distinct from "now" (the actual current date) |
 | **State badge** | A badge that shows qualitative status (e.g., "Above floor") rather than a numeric value (future) |
 | **Visualizer** | Hydraulic flow animation showing money movement through the portfolio |
-| **Test Bench** | Tests run on the plan without changing it. The Spending test finds the most the plan can spend within stated limits |
+| **Test Bench** | Tests run on the plan without changing it. The Spending test finds the most the plan can spend within stated limits; the Routing test ranks other transfer percentages by what the plan could then spend |
 | **Modern1** | The design system used by finplan.html — Poppins, white/gray palette, glass-card, coral badges |
 | **On-demand** | Execution pattern where expensive operations require an explicit Run button click |

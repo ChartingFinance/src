@@ -1,9 +1,10 @@
 /**
  * test-bench-worker.mjs
  *
- * The Test Bench's spending solver runs in the shared simulation worker
- * (js/mc-worker.js, kind 'spending'). This drives the worker's real message
- * handler, with a stand-in for the Worker context, and checks that:
+ * The Test Bench's spending solver and its routing searches run in the shared
+ * simulation worker (js/mc-worker.js, kinds 'spending' and 'routing'). This
+ * drives the worker's real message handler, with a stand-in for the Worker
+ * context, and checks, for each kind, that:
  *
  *   - the handler answers a 'spending' payload with the solver's result;
  *   - it solves under the settings the payload carries, not the worker's
@@ -33,6 +34,7 @@ globalThis.self = { postMessage: (message) => posted.push(message) };
 
 const { planFromProfile } = await import('../js/mcp/run-plan.js');
 const { solveSpending } = await import('../js/spending-solver.js');
+const { searchRouting } = await import('../js/routing-search.js');
 const globals = await import('../js/globals.js');
 await import('../js/mc-worker.js');
 
@@ -113,6 +115,53 @@ await check('the floor in the payload is the floor that is solved for', async ()
     assert.equal(held[0].results.limits.floor, floor);
     assert.ok(held[0].results.best.factor < answer.best.factor);
     assert.ok(held[0].results.best.endingReal >= floor);
+});
+
+// ── A routing search ─────────────────────────────────────────────────
+
+const routing = (settings, search = { start: 'near', seed: 2 }, limits = { floor: 0 }) => ({
+    ...payload(settings, limits), kind: 'routing', search,
+});
+let routed = null;
+
+await check("a 'routing' payload is answered with one search's result, after its progress", async () => {
+    const messages = await send(routing(snapshotFor(spec)));
+    const last = messages[messages.length - 1];
+    assert.equal(last.action, 'complete', last.message);
+    routed = last.results;
+    assert.equal(routed.start, 'near');
+    assert.equal(routed.seed, 2);
+    assert.ok(routed.best.monthlySpending > answer.best.monthlySpending);
+    assert.deepEqual(JSON.parse(JSON.stringify(routed)), routed);
+
+    const progress = messages.slice(0, -1);
+    assert.ok(progress.length >= 4);
+    progress.forEach((m, i) => {
+        assert.equal(m.action, 'progress');
+        assert.equal(m.runs, (i + 1) * 25);
+        assert.equal(typeof m.gain, 'number');
+    });
+});
+
+await check('it is the search the payload named, under the settings it carried', async () => {
+    const plan = { modelAssets: spec.modelAssets, lifeEvents: spec.lifeEvents ?? [], config: globals.simConfigFromGlobals() };
+    assert.deepEqual(searchRouting(plan, { start: 'near', seed: 2 }), routed);
+    // Another search of the same plan is another result.
+    const other = await send(routing(snapshotFor(spec), { start: 'random', seed: 3 }));
+    assert.notDeepEqual(other[other.length - 1].results.values, routed.values);
+});
+
+await check('other settings, or a floor, in a routing payload give another answer', async () => {
+    const longer = await send(routing(snapshotFor(spec, { userFinishAge: spec.settings.finishAge + 5 })));
+    const longerResult = longer[longer.length - 1].results;
+    assert.ok(longerResult.best.monthlySpending < routed.best.monthlySpending,
+        'five more years to pay for did not lower what the routed plan can spend');
+
+    const floor = 1_000_000;
+    const held = await send(routing(snapshotFor(spec), { start: 'near', seed: 2 }, { floor }));
+    const heldResult = held[held.length - 1].results;
+    assert.ok(heldResult.best.endingReal >= floor);
+    assert.ok(heldResult.best.monthlySpending < routed.best.monthlySpending);
 });
 
 console.log(`\n${passed} passed, ${failed} failed`);

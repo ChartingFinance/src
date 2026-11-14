@@ -432,7 +432,7 @@
         .stat-card.tone-good .stat-value { color: #16a34a; }
         .stat-card.tone-warn .stat-value { color: #d97706; }
         .stat-card.tone-bad  .stat-value { color: #dc2626; }
-        /* Test Bench: the spending test (js/components/test-bench.js) */
+        /* Test Bench: the spending test and the routing test (js/components/test-bench.js) */
         test-bench { display: block; }
         .tb-ask { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 14px; color: #374151; margin-bottom: 12px; }
         .tb-floor-field { display: inline-flex; align-items: center; gap: 2px; font-weight: 600; }
@@ -477,7 +477,26 @@
         .tb-link { font: inherit; font-size: 13px; color: #7e22ce; background: none; border: none; padding: 0; margin-left: 6px;
             cursor: pointer; text-decoration: underline; }
         .tb-note { font-size: 13px; color: #6b7280; margin-top: 6px; }
-        .tb-actions { display: flex; align-items: center; gap: 12px; margin-top: 14px; }
+        .tb-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 14px; }
+        /* Test Bench: the routing test */
+        .tb-routing { margin-top: 24px; padding-top: 20px; border-top: 1px solid #e5e7eb; }
+        .tb-routing-heading { margin-bottom: 10px; }
+        .tb-depth { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
+        .tb-depth select { padding: 4px 8px; border: 1px solid #d1d5db; border-radius: 8px; font: inherit; background: #fff; }
+        .tb-depth select:focus-visible { outline: 2px solid #7e22ce; outline-offset: 1px; }
+        .tb-result.is-stale .tb-routing-body { opacity: 0.45; }
+        .tb-list th:nth-child(2), .tb-list td:nth-child(1) { text-align: left; }
+        .tb-list td:first-child { width: 28px; }
+        .tb-list tbody tr { cursor: pointer; }
+        .tb-list tbody tr:hover { background: #faf5ff; }
+        .tb-list tbody tr.is-selected { background: #f3e8ff; }
+        .tb-list tbody tr.tb-list-pending { cursor: default; background: none; }
+        .tb-list td:last-child, .tb-changes td:last-child { font-weight: 600; }
+        .tb-list td:nth-child(3) { font-weight: 600; color: #111827; }
+        .tb-routing-headline { margin-top: 16px; }
+        .tb-changes { max-width: 720px; }
+        .tb-changes th, .tb-changes td { text-align: left; }
+        .tb-changes th:nth-child(n+4), .tb-changes td:nth-child(n+4) { text-align: right; }
         /* Outcome strip: the three answers on the first screen */
         outcome-strip { display: block; padding: 16px 20px; }
         outcome-strip[hidden] { display: none; }
@@ -1298,7 +1317,8 @@
     </div>
 
     <!-- ═══ Test Bench ═══ -->
-    <!-- "How much can this plan spend?" See js/components/test-bench.js. -->
+    <!-- "How much can this plan spend?" and "is there a better way to route its money?"
+         See js/components/test-bench.js. -->
     <div id="sec-testbench" class="mb-8">
         <h2 class="text-lg font-bold flex items-center gap-2 mb-4">🧪 Test Bench
             <a href="help.html#test-bench" class="ml-auto text-gray-300 hover:text-gray-500 transition" title="Help" style="font-size: 14px; font-weight: 500; text-decoration: none;">?</a>

@@ -149,9 +149,9 @@ describe('a copied portfolio, run again, ends where its source did', () => {
     };
     const source = await run(membrane_rawDataToModelAssets(spec.modelAssets));
 
-    // simulator.js posts `bestPortfolio.modelAssets` as JSON, and whatever shows
-    // the search's result rebuilds and runs them (simulator-modal.js did, until
-    // the Test Bench replaced it).
+    // The old Maximizer posted `bestPortfolio.modelAssets` as JSON, and its
+    // dialog rebuilt and ran them. Anything that sends a copied portfolio's
+    // assets to be run again depends on the same thing.
     const sent = JSON.parse(JSON.stringify(source.copy().modelAssets));
     const shown = await run(membrane_jsonObjectsToModelAssets(sent));
 
