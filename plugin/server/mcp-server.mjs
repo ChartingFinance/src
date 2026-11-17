@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.3.41; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.3.42; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -32254,6 +32254,7 @@ function ageToDateInt(triggerAge, env) {
 var ModelLifeEvent = class _ModelLifeEvent {
   /**
    * @param {Object} opts
+   * @param {string|null} [opts.id]       unique within its plan; plan-ids.js gives it out
    * @param {string}  opts.type           LifeEvent enum value
    * @param {string}  opts.displayName    User-facing name
    * @param {number}  opts.triggerAge     Age when event fires
@@ -32262,6 +32263,7 @@ var ModelLifeEvent = class _ModelLifeEvent {
    * @param {Object}          [opts.globalOverrides]    { inflationRate?: number, ... }
    */
   constructor({
+    id = null,
     type,
     displayName,
     triggerAge,
@@ -32269,6 +32271,7 @@ var ModelLifeEvent = class _ModelLifeEvent {
     phaseTransfers = {},
     globalOverrides = {}
   }) {
+    this.id = id;
     this.type = type;
     this.displayName = displayName;
     this.triggerAge = triggerAge;
@@ -32364,6 +32367,7 @@ var ModelLifeEvent = class _ModelLifeEvent {
   // ── Serialization ─────────────────────────────────────────────
   toJSON() {
     return {
+      id: this.id,
       type: this.type,
       displayName: this.displayName,
       triggerAge: this.triggerAge,
@@ -32374,6 +32378,7 @@ var ModelLifeEvent = class _ModelLifeEvent {
   }
   static fromJSON(obj) {
     return new _ModelLifeEvent({
+      id: obj.id ?? null,
       type: obj.type,
       displayName: obj.displayName,
       triggerAge: obj.triggerAge,
@@ -36084,6 +36089,30 @@ var PremiumCreditEngine = class {
   }
 };
 
+// js/plan-ids.js
+function assignPlanIds(modelAssets = [], lifeEvents = []) {
+  assignIds(modelAssets ?? [], "a");
+  assignIds(lifeEvents ?? [], "e");
+}
+function assignIds(items, prefix) {
+  const numbered = new RegExp(`^${prefix}([1-9]\\d*)$`);
+  const taken = /* @__PURE__ */ new Set();
+  const needIds = [];
+  let highest = 0;
+  for (const item of items) {
+    const id = item.id;
+    if (typeof id === "string" && id.length > 0 && !taken.has(id)) {
+      taken.add(id);
+      const match = numbered.exec(id);
+      if (match) highest = Math.max(highest, Number(match[1]));
+    } else {
+      needIds.push(item);
+    }
+  }
+  for (const item of needIds) item.id = `${prefix}${++highest}`;
+  return items;
+}
+
 // js/portfolio.js
 var EVENT_RECONCILIATION = Object.freeze({
   [EventType.FICA_WITHHOLDING]: "fica",
@@ -36158,6 +36187,7 @@ function conservationBucket(event, bucket) {
 }
 var Portfolio = class _Portfolio {
   constructor(modelAssets, reports, config2) {
+    assignPlanIds(modelAssets);
     this.modelAssets = this.sortModelAssets(modelAssets);
     this.reports = !!reports;
     if (!config2) {
@@ -36259,6 +36289,7 @@ var Portfolio = class _Portfolio {
     }
     this.config.taxTable.initializeChron();
     this.bindEnvironment();
+    assignPlanIds(this.modelAssets, this.lifeEvents);
     this.activeUser.setAge(this.startUserAge);
     this.activeUser.month = 0;
     this.monthly = new FinancialPackage();
@@ -37483,6 +37514,7 @@ var ModelAsset = class _ModelAsset {
   #metrics;
   /**
    * @param {Object} opts
+   * @param {string|null}   [opts.id]   unique within its plan; plan-ids.js gives it out
    * @param {string}        opts.instrument
    * @param {string}        opts.displayName
    * @param {DateInt}        opts.startDateInt
@@ -37494,6 +37526,7 @@ var ModelAsset = class _ModelAsset {
    * @param {FundTransfer[]} [opts.fundTransfers]
    */
   constructor({
+    id = null,
     instrument,
     displayName,
     startDateInt,
@@ -37519,6 +37552,7 @@ var ModelAsset = class _ModelAsset {
     estimatedAcaIncome = null,
     premiumTaxCreditEnabled = true
   }) {
+    this.id = id;
     this.instrument = instrument;
     this.displayName = displayName;
     this.startDateInt = startDateInt;
@@ -37624,6 +37658,7 @@ var ModelAsset = class _ModelAsset {
     };
     const instrument = INSTRUMENT_MIGRATION[obj.instrument] ?? obj.instrument;
     return new _ModelAsset({
+      id: obj.id ?? null,
       instrument,
       displayName: obj.displayName,
       startDateInt: new DateInt(obj.startDateInt.year * 100 + obj.startDateInt.month),
@@ -38540,6 +38575,7 @@ var ModelAsset = class _ModelAsset {
   // ── Copy ─────────────────────────────────────────────────────────
   copy() {
     const clone2 = new _ModelAsset({
+      id: this.id,
       instrument: this.instrument,
       displayName: this.displayName,
       startDateInt: this.startDateInt,
@@ -39728,11 +39764,10 @@ function buildQuickStart(profile, ageOverrides = null) {
     finishAge: ageOverrides?.finishAge ?? profile.finishAge
   };
   const d = dateAnchors(ages.startAge, ages.retirementAge, ages.finishAge);
-  return {
-    assets: profile.assets(d).map((raw) => ModelAsset.fromJSON(raw)),
-    lifeEvents: profile.lifeEvents(ages),
-    ages
-  };
+  const assets = profile.assets(d).map((raw) => ModelAsset.fromJSON(raw));
+  const lifeEvents = profile.lifeEvents(ages);
+  assignPlanIds(assets, lifeEvents);
+  return { assets, lifeEvents, ages };
 }
 
 // js/mc-compute.js
@@ -42339,6 +42374,7 @@ function buildPlan(intent = {}) {
   const settings = { inflationRate, filingAs, startAge, retirementAge, finishAge };
   ledger.assertComplete(settings, raw.map((a) => a.displayName));
   const assets = raw.map((r) => ModelAsset.fromJSON(r));
+  assignPlanIds(assets, lifeEvents);
   const spec = {
     name: intent.name ?? "Conversational plan",
     settings,

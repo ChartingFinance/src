@@ -105,6 +105,7 @@ export class ModelLifeEvent {
 
   /**
    * @param {Object} opts
+   * @param {string|null} [opts.id]       unique within its plan; plan-ids.js gives it out
    * @param {string}  opts.type           LifeEvent enum value
    * @param {string}  opts.displayName    User-facing name
    * @param {number}  opts.triggerAge     Age when event fires
@@ -113,6 +114,7 @@ export class ModelLifeEvent {
    * @param {Object}          [opts.globalOverrides]    { inflationRate?: number, ... }
    */
   constructor({
+    id = null,
     type,
     displayName,
     triggerAge,
@@ -120,6 +122,7 @@ export class ModelLifeEvent {
     phaseTransfers = {},
     globalOverrides   = {},
   }) {
+    this.id             = id;
     this.type           = type;
     this.displayName    = displayName;
     this.triggerAge      = triggerAge;
@@ -236,6 +239,7 @@ export class ModelLifeEvent {
 
   toJSON() {
     return {
+      id:                this.id,
       type:              this.type,
       displayName:       this.displayName,
       triggerAge:        this.triggerAge,
@@ -247,6 +251,7 @@ export class ModelLifeEvent {
 
   static fromJSON(obj) {
     return new ModelLifeEvent({
+      id:                obj.id ?? null,
       type:              obj.type,
       displayName:       obj.displayName,
       triggerAge:        obj.triggerAge,

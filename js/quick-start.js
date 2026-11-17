@@ -14,6 +14,7 @@
 
 import { ModelLifeEvent, LifeEvent } from './life-event.js';
 import { ModelAsset } from './model-asset.js';
+import { assignPlanIds } from './plan-ids.js';
 import { earliestSocialSecurityDateIntFor } from './plan-dates.js';
 
 // ── Date anchors (computed from explicit ages) ──────────────
@@ -609,11 +610,10 @@ export function buildQuickStart(profile, ageOverrides = null) {
         finishAge:     ageOverrides?.finishAge     ?? profile.finishAge,
     };
     const d = dateAnchors(ages.startAge, ages.retirementAge, ages.finishAge);
-    return {
-        assets: profile.assets(d).map(raw => ModelAsset.fromJSON(raw)),
-        lifeEvents: profile.lifeEvents(ages),
-        ages,
-    };
+    const assets = profile.assets(d).map(raw => ModelAsset.fromJSON(raw));
+    const lifeEvents = profile.lifeEvents(ages);
+    assignPlanIds(assets, lifeEvents);
+    return { assets, lifeEvents, ages };
 }
 
 // ── Legacy exports (default = Mid Career) ───────────────────

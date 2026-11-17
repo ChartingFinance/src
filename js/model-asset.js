@@ -67,6 +67,7 @@ export class ModelAsset {
 
   /**
    * @param {Object} opts
+   * @param {string|null}   [opts.id]   unique within its plan; plan-ids.js gives it out
    * @param {string}        opts.instrument
    * @param {string}        opts.displayName
    * @param {DateInt}        opts.startDateInt
@@ -78,6 +79,7 @@ export class ModelAsset {
    * @param {FundTransfer[]} [opts.fundTransfers]
    */
   constructor({
+    id = null,
     instrument,
     displayName,
     startDateInt,
@@ -103,6 +105,7 @@ export class ModelAsset {
     estimatedAcaIncome = null,
     premiumTaxCreditEnabled = true,
   }) {
+    this.id              = id;
     this.instrument      = instrument;
     this.displayName     = displayName;
     this.startDateInt    = startDateInt;
@@ -234,6 +237,7 @@ export class ModelAsset {
     };
     const instrument = INSTRUMENT_MIGRATION[obj.instrument] ?? obj.instrument;
     return new ModelAsset({
+      id:              obj.id ?? null,
       instrument,
       displayName:     obj.displayName,
       startDateInt:    new DateInt(obj.startDateInt.year * 100 + obj.startDateInt.month),
@@ -1150,6 +1154,7 @@ export class ModelAsset {
 
   copy() {
     const clone = new ModelAsset({
+      id:              this.id,
       instrument:      this.instrument,
       displayName:     this.displayName,
       startDateInt:    this.startDateInt,

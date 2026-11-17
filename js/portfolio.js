@@ -18,6 +18,7 @@ import { ExpenseEngine } from './engines/expense-engine.js';
 import { TaxEngine } from './engines/tax-engine.js';
 import { RebalanceEngine } from './engines/rebalance-engine.js';
 import { PremiumCreditEngine } from './engines/premium-credit-engine.js';
+import { assignPlanIds } from './plan-ids.js';
 
 export { FinancialPackage, FINANCIAL_FIELDS } from './financial-package.js';
 
@@ -153,6 +154,9 @@ function conservationBucket(event, bucket) {
 
 export class Portfolio {
     constructor(modelAssets, reports, config) {
+        // Before sorting, so a plan built straight from JSON without ids gets
+        // them in the order it was written, the same order every time.
+        assignPlanIds(modelAssets);
         this.modelAssets = this.sortModelAssets(modelAssets);
         this.reports = !!reports;
 
@@ -339,6 +343,10 @@ export class Portfolio {
 
         // Rebind, so assets and life events hold the config this run uses.
         this.bindEnvironment();
+
+        // Life events are assigned after the constructor, so their ids are
+        // checked here. A no-op for any plan that came in through a boundary.
+        assignPlanIds(this.modelAssets, this.lifeEvents);
 
         // Rewind the user to the starting age, or successive runs of one
         // Portfolio simulate different ages. Mutated in place: engines and

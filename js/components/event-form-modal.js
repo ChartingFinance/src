@@ -197,13 +197,16 @@ class EventFormModal extends LitElement {
         ev.preventDefault();
         const form = ev.target;
 
+        const editing = this.mode === 'edit' && this.lifeEvent;
         const lifeEvent = new ModelLifeEvent({
+            // An edit is the same phase under new settings, so it keeps its id.
+            id: editing ? this.lifeEvent.id : null,
             type: this._selectedType,
             displayName: form.querySelector('[name=displayName]').value.trim(),
             triggerAge: parseInt(form.querySelector('[name=triggerAge]').value, 10),
             closes: [...this._closes],
-            phaseTransfers: this.mode === 'edit' && this.lifeEvent ? this.lifeEvent.phaseTransfers : {},
-            globalOverrides: this.mode === 'edit' && this.lifeEvent ? this.lifeEvent.globalOverrides : {},
+            phaseTransfers: editing ? this.lifeEvent.phaseTransfers : {},
+            globalOverrides: editing ? this.lifeEvent.globalOverrides : {},
         });
 
         this.dispatchEvent(new CustomEvent('save-life-event', {
