@@ -19,7 +19,12 @@
  */
 
 import assert from 'node:assert/strict';
-import { assignPlanIds } from '../js/plan-ids.js';
+import './tools/localstorage-polyfill.js';
+import { assignPlanIds, planWithIds } from '../js/plan-ids.js';
+import { planFromProfile, runPlanCached, specForHandle } from '../js/mcp/run-plan.js';
+import { planFromReference } from '../js/mcp/plan-reference.js';
+import { maxSpending } from '../js/mcp/max-spending.js';
+import { shareUrlFromPlan } from '../js/share-link.js';
 import { ModelAsset } from '../js/model-asset.js';
 import { ModelLifeEvent, LifeEvent } from '../js/life-event.js';
 import { Portfolio } from '../js/portfolio.js';
@@ -190,6 +195,74 @@ await check('a run gives life events without ids theirs, and Portfolio.copy() ke
     const copy = portfolio.copy();
     assert.deepEqual(ids(copy.modelAssets), ids(portfolio.modelAssets));
     assert.deepEqual(ids(copy.lifeEvents), ids(portfolio.lifeEvents));
+});
+
+// ── 4. MCP: a spec without ids gets them once, as it comes in ───────────────
+//
+// Claude often writes a spec without ids. Each tool stamps them on as the spec
+// comes in (planWithIds), so every run built from it reads the same ids from
+// the data, rather than numbering again from the written order each time.
+
+/** A profile's spec with every id removed: what a hand-written spec looks like. */
+function idlessSpec() {
+    const spec = planFromProfile('midCareer');
+    const strip = ({ id, ...rest }) => rest;
+    return { ...spec, modelAssets: spec.modelAssets.map(strip), lifeEvents: spec.lifeEvents.map(strip) };
+}
+const hasNoIds = (spec) => [...spec.modelAssets, ...spec.lifeEvents].every((i) => !('id' in i));
+
+await check('planWithIds adds ids to a copy and leaves the caller\'s spec alone', () => {
+    const spec = idlessSpec();
+    const before = JSON.stringify(spec);
+    const out = planWithIds(spec);
+    assert.equal(JSON.stringify(spec), before, 'the caller\'s spec was changed');
+    assert.deepEqual(ids(out.modelAssets), out.modelAssets.map((_, i) => `a${i + 1}`));
+    assert.deepEqual(ids(out.lifeEvents), out.lifeEvents.map((_, i) => `e${i + 1}`));
+    assert.equal(JSON.stringify(planWithIds(out)), JSON.stringify(out), 'not idempotent');
+});
+
+await check('planWithIds keeps a missing list missing, and passes null through', () => {
+    const { lifeEvents, ...noEvents } = idlessSpec();
+    assert.ok(!('lifeEvents' in planWithIds(noEvents)));
+    assert.equal(planWithIds(null), null);
+});
+
+await check('an old share link without ids reads back with them, the same every time', () => {
+    const spec = idlessSpec();
+    const { url } = shareUrlFromPlan(spec);
+    const a = planFromReference(url), b = planFromReference(url);
+    assert.deepEqual(ids(a.modelAssets), spec.modelAssets.map((_, i) => `a${i + 1}`));
+    assert.deepEqual(ids(a.lifeEvents), ids(b.lifeEvents));
+    assert.ok(a.lifeEvents.every((e) => typeof e.id === 'string'));
+});
+
+await check('run_plan registers a spec without ids under one with them; one plan, one handle', async () => {
+    const spec = idlessSpec();
+    const first = await runPlanCached(spec);
+    assert.ok(hasNoIds(spec), 'the caller\'s spec was changed');
+    const registered = specForHandle(first.handle);
+    assert.deepEqual(ids(registered.modelAssets), spec.modelAssets.map((_, i) => `a${i + 1}`));
+    assert.ok(registered.lifeEvents.every((e) => typeof e.id === 'string'));
+    assert.equal((await runPlanCached(idlessSpec())).handle, first.handle, 'the same spec, a new handle');
+    assert.equal((await runPlanCached(planWithIds(spec))).handle, first.handle,
+        'the spec with its ids written in got a different handle');
+    assert.deepEqual(ids(planFromReference(first.handle).modelAssets), ids(registered.modelAssets));
+});
+
+await check('max_spending on a spec without ids: the solved plan carries the same ids', async () => {
+    const spec = idlessSpec();
+    const expected = planWithIds(spec);
+    const { solvedSpec, plan } = await maxSpending(spec);
+    assert.ok(hasNoIds(spec), 'the caller\'s spec was changed');
+    assert.ok(solvedSpec, 'no level kept the limits; this check needs a solved plan');
+    assert.deepEqual(ids(plan.modelAssets), ids(expected.modelAssets));
+    assert.deepEqual(ids(plan.lifeEvents), ids(expected.lifeEvents));
+    assert.deepEqual(ids(solvedSpec.modelAssets), ids(expected.modelAssets));
+    assert.deepEqual(ids(solvedSpec.lifeEvents), ids(expected.lifeEvents));
+    // And the solved plan's handle, which every other tool takes, keeps them.
+    const { handle } = await runPlanCached(solvedSpec);
+    assert.deepEqual(ids(specForHandle(handle).modelAssets), ids(expected.modelAssets));
+    assert.deepEqual(ids(specForHandle(handle).lifeEvents), ids(expected.lifeEvents));
 });
 
 console.log(`\n${passed} passed, ${failed} failed`);

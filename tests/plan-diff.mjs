@@ -154,16 +154,37 @@ await check('the same handle twice is answered plainly, not with an empty table'
   assert.ok(!md.includes('## What changed'), 'it walked through an empty comparison anyway');
 });
 
-await check('identical specs under different handles is called a bug, not a finding', () => {
-  // Cannot be produced by the engine — it would mean the content address is not
-  // a content address — so the renderer is exercised directly. If it ever does
-  // happen, the report must not read as a statement about someone's money.
+await check('ids are not compared: the same plan numbered differently is identical', () => {
+  // An id says which item it is and is unique only within its plan; the same
+  // plan from an old link and from the app can number its items differently.
+  const b = base();
+  b.modelAssets.forEach((a, i) => { a.id = `a${b.modelAssets.length - i}`; });
+  b.lifeEvents.forEach((e) => { e.id = `x-${e.id}`; });
+  const d = diffSpecs(base(), b);
+  assert.equal(d.identical, true, JSON.stringify(d));
+  assert.equal(d.lifeEvents.changed, false);
+});
+
+await check('a real change is still found when the ids also differ', () => {
+  const b = base();
+  b.modelAssets[0].id = 'a99';
+  b.modelAssets[0].startCurrency = { amount: b.modelAssets[0].startCurrency.amount + 1 };
+  const d = diffSpecs(base(), b);
+  assert.equal(d.assets.changed.length, 1);
+  assert.deepEqual(d.assets.changed[0].fields.map((f) => f.key), ['startCurrency']);
+});
+
+await check('identical specs under different handles: only ids or asset order differ', () => {
+  // The case above: two specs whose ids differ hash differently and compare
+  // identical. The report says what was left out of the comparison, and must
+  // not read as a statement about someone's money.
   const md = diffMarkdown({
     handleA: 'plan_aaaaaaaaaa', handleB: 'plan_bbbbbbbbbb',
     spec: diffSpecs(base(), base()),
     outcome: diffOutcomes(runA, runA),
   });
-  assert.match(md, /should not happen|bug in the handle/i);
+  assert.match(md, /only in what this comparison leaves out/i);
+  assert.match(md, /ids/i);
   assert.match(md, /not deterministic/i);
 });
 

@@ -25,6 +25,7 @@ import { z } from "zod";
 import { runPlanCached, getRun, specForHandle, planFromProfile, listProfiles, runMonteCarloFor } from './run-plan.js';
 import { shareUrlFromPlan, SHARE_URL_SOFT_LIMIT } from '../share-link.js';
 import { planFromReference } from './plan-reference.js';
+import { planWithIds } from '../plan-ids.js';
 import { diffSpecs, diffOutcomes, diffMarkdown } from './plan-diff.js';
 import { explainIssue, explainAt, explainIssueMarkdown, explainAtMarkdown } from './explain.js';
 import { generatePortfolioMarkdown, generateMonteCarloSectionMarkdown, REPORT_SECTIONS } from '../generators/finplan-ai.js';
@@ -270,7 +271,9 @@ server.tool(
                     + '`shareUrl` for a share link, payload or run handle.');
     }
 
-    const spec = plan ?? planFromReference(shareUrl);
+    // With ids here, so the Monte Carlo run below reads the same spec the handle
+    // is registered under (plan-ids.js).
+    const spec = planWithIds(plan ?? planFromReference(shareUrl));
     const { handle, portfolio, issues } = await runPlanCached(spec, { includeReconciliation });
     const mc = monteCarlo ? await runMonteCarloFor(spec, { numSimulations: monteCarlo }) : null;
     return { content: [{ type: "text", text: reportFor(handle, portfolio, issues, mc, sections) }] };

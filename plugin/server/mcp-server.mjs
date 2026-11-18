@@ -36094,6 +36094,18 @@ function assignPlanIds(modelAssets = [], lifeEvents = []) {
   assignIds(modelAssets ?? [], "a");
   assignIds(lifeEvents ?? [], "e");
 }
+function planWithIds(spec) {
+  if (!spec) return spec;
+  const copy = (list) => Array.isArray(list) ? list.map((item) => ({ ...item })) : list;
+  const out = { ...spec, modelAssets: copy(spec.modelAssets), lifeEvents: copy(spec.lifeEvents) };
+  if (!("lifeEvents" in spec)) delete out.lifeEvents;
+  if (!("modelAssets" in spec)) delete out.modelAssets;
+  assignPlanIds(
+    Array.isArray(out.modelAssets) ? out.modelAssets : [],
+    Array.isArray(out.lifeEvents) ? out.lifeEvents : []
+  );
+  return out;
+}
 function assignIds(items, prefix) {
   const numbered = new RegExp(`^${prefix}([1-9]\\d*)$`);
   const taken = /* @__PURE__ */ new Set();
@@ -40196,6 +40208,7 @@ async function getRun(handle) {
   return result;
 }
 async function runPlanCached(spec, opts = {}) {
+  spec = planWithIds(spec);
   const result = await runPlan(spec, opts);
   return { handle: cacheRun(spec, opts, result), ...result };
 }
@@ -40288,6 +40301,9 @@ function planFromShareUrl(url2) {
 
 // js/mcp/plan-reference.js
 function planFromReference(text) {
+  return planWithIds(specFromReference(text));
+}
+function specFromReference(text) {
   const { kind, value } = classifyPlanReference(text);
   switch (kind) {
     case "handle":
@@ -40329,6 +40345,7 @@ var fmtSetting = (key, v) => {
   return String(v);
 };
 var same = (a, b) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
+var withoutId = ({ id, ...rest }) => rest;
 function byName(assets) {
   const m = /* @__PURE__ */ new Map();
   for (const a of assets ?? []) m.set(a.displayName ?? "(unnamed)", a);
@@ -40355,6 +40372,7 @@ function diffSpecs(a, b) {
     if (!assetB) continue;
     const fields = [];
     for (const key of /* @__PURE__ */ new Set([...Object.keys(assetA), ...Object.keys(assetB)])) {
+      if (key === "id") continue;
       if (!same(assetA[key], assetB[key])) {
         fields.push({ key, from: assetA[key], to: assetB[key] });
       }
@@ -40362,7 +40380,11 @@ function diffSpecs(a, b) {
     if (fields.length) changed.push({ name, fields });
   }
   const la = a?.lifeEvents ?? [], lb = b?.lifeEvents ?? [];
-  const lifeEvents = { countFrom: la.length, countTo: lb.length, changed: !same(la, lb) };
+  const lifeEvents = {
+    countFrom: la.length,
+    countTo: lb.length,
+    changed: !same(la.map(withoutId), lb.map(withoutId))
+  };
   const identical = settings.length === 0 && !added.length && !removed.length && !changed.length && !lifeEvents.changed && same(a?.name, b?.name);
   return { settings, assets: { added, removed, changed }, lifeEvents, identical };
 }
@@ -40420,7 +40442,7 @@ function diffMarkdown({ handleA, handleB, spec, outcome }) {
 
 `;
   if (spec.identical) {
-    md += `Nothing. The two specs are field-for-field identical but hash differently, which should not happen \u2014 treat it as a bug in the handle, not a finding about the plans.
+    md += `Nothing the plan does. The two specs hash differently, but only in what this comparison leaves out: the ids that number their assets and life events, or the order the assets are listed in. If the outcomes below differ, that is a bug, not a finding about the plans.
 
 `;
   } else {
@@ -42921,6 +42943,7 @@ async function maxSpending(spec, { leaveAtLeast = 0, simulatedMarketsPercent = n
   if (!spec?.modelAssets?.length) {
     throw new Error("Plan spec has no modelAssets \u2014 nothing to solve.");
   }
+  spec = planWithIds(spec);
   const plan = {
     modelAssets: spec.modelAssets,
     lifeEvents: spec.lifeEvents ?? [],
@@ -43157,7 +43180,7 @@ server.tool(
     if (!plan && !shareUrl) {
       throw new Error("run_plan needs a plan: pass `plan` for a portfolio you have built, or `shareUrl` for a share link, payload or run handle.");
     }
-    const spec = plan ?? planFromReference(shareUrl);
+    const spec = planWithIds(plan ?? planFromReference(shareUrl));
     const { handle, portfolio, issues } = await runPlanCached(spec, { includeReconciliation });
     const mc = monteCarlo ? await runMonteCarloFor(spec, { numSimulations: monteCarlo }) : null;
     return { content: [{ type: "text", text: reportFor(handle, portfolio, issues, mc, sections) }] };
