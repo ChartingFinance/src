@@ -31,6 +31,7 @@
 
 import { ModelAsset } from '../model-asset.js';
 import { ModelLifeEvent, LifeEvent } from '../life-event.js';
+import { assignPlanIds } from '../plan-ids.js';
 import { Instrument, InstrumentMeta } from '../instruments/instrument.js';
 import { SIM_CONFIG_DEFAULTS } from '../sim-config.js';
 import { earliestSocialSecurityDateIntFor, SOCIAL_SECURITY_EARLIEST_AGE } from '../plan-dates.js';
@@ -1239,6 +1240,7 @@ export function buildPlan(intent = {}) {
     ledger.assertComplete(settings, raw.map(a => a.displayName));
 
     const assets = raw.map(r => ModelAsset.fromJSON(r));
+    assignPlanIds(assets, lifeEvents);
     const spec = {
         name: intent.name ?? 'Conversational plan',
         settings,

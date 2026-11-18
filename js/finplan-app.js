@@ -38,6 +38,7 @@ import { Portfolio } from './portfolio.js';
 
 // ── Data loading ────────────────────────────────────────────
 import { membrane_rawDataToModelAssets } from './membrane.js';
+import { assignPlanIds } from './plan-ids.js';
 import { quickStartAssets, quickStartLifeEvents, quickStartProfiles, buildQuickStart } from './quick-start.js';
 import { ModelLifeEvent, LifeEvent, LifeEventType } from './life-event.js';
 
@@ -1305,6 +1306,11 @@ function loadLocalData() {
 function calculate() {
     const modelAssets = assetList.modelAssets || [];
 
+    // Every way a plan reaches the screen (a saved scenario, a shared link, a
+    // quick start, a new asset or phase) passes through here, so this is where
+    // the ones without an id get one (plan-ids.js).
+    assignPlanIds(modelAssets, appState.lifeEvents);
+
     // Re-anchor the editor before anything reads a derived date. The plan and
     // the settings both reach here having changed — a new asset can become the
     // plan's earliest month, and the ages come straight off the settings form
@@ -2016,6 +2022,8 @@ function connectChartExpandButtons() {
  * shared one opened without saving (scenario-store.js).
  */
 function saveLocalData() {
+    // calculate() has normally done this; a save never writes a plan without ids.
+    assignPlanIds(assetList.modelAssets || [], appState.lifeEvents);
     saveScenario(appState.storyArc, appState.storyName, {
         assets: assetList.modelAssets || [],
         lifeEvents: appState.lifeEvents.map(e => e.toJSON()),

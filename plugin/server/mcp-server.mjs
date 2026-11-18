@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.3.41; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.3.42; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -32254,6 +32254,7 @@ function ageToDateInt(triggerAge, env) {
 var ModelLifeEvent = class _ModelLifeEvent {
   /**
    * @param {Object} opts
+   * @param {string|null} [opts.id]       unique within its plan; plan-ids.js gives it out
    * @param {string}  opts.type           LifeEvent enum value
    * @param {string}  opts.displayName    User-facing name
    * @param {number}  opts.triggerAge     Age when event fires
@@ -32262,6 +32263,7 @@ var ModelLifeEvent = class _ModelLifeEvent {
    * @param {Object}          [opts.globalOverrides]    { inflationRate?: number, ... }
    */
   constructor({
+    id = null,
     type,
     displayName,
     triggerAge,
@@ -32269,6 +32271,7 @@ var ModelLifeEvent = class _ModelLifeEvent {
     phaseTransfers = {},
     globalOverrides = {}
   }) {
+    this.id = id;
     this.type = type;
     this.displayName = displayName;
     this.triggerAge = triggerAge;
@@ -32364,6 +32367,7 @@ var ModelLifeEvent = class _ModelLifeEvent {
   // ── Serialization ─────────────────────────────────────────────
   toJSON() {
     return {
+      id: this.id,
       type: this.type,
       displayName: this.displayName,
       triggerAge: this.triggerAge,
@@ -32374,6 +32378,7 @@ var ModelLifeEvent = class _ModelLifeEvent {
   }
   static fromJSON(obj) {
     return new _ModelLifeEvent({
+      id: obj.id ?? null,
       type: obj.type,
       displayName: obj.displayName,
       triggerAge: obj.triggerAge,
@@ -36084,6 +36089,42 @@ var PremiumCreditEngine = class {
   }
 };
 
+// js/plan-ids.js
+function assignPlanIds(modelAssets = [], lifeEvents = []) {
+  assignIds(modelAssets ?? [], "a");
+  assignIds(lifeEvents ?? [], "e");
+}
+function planWithIds(spec) {
+  if (!spec) return spec;
+  const copy = (list) => Array.isArray(list) ? list.map((item) => ({ ...item })) : list;
+  const out = { ...spec, modelAssets: copy(spec.modelAssets), lifeEvents: copy(spec.lifeEvents) };
+  if (!("lifeEvents" in spec)) delete out.lifeEvents;
+  if (!("modelAssets" in spec)) delete out.modelAssets;
+  assignPlanIds(
+    Array.isArray(out.modelAssets) ? out.modelAssets : [],
+    Array.isArray(out.lifeEvents) ? out.lifeEvents : []
+  );
+  return out;
+}
+function assignIds(items, prefix) {
+  const numbered = new RegExp(`^${prefix}([1-9]\\d*)$`);
+  const taken = /* @__PURE__ */ new Set();
+  const needIds = [];
+  let highest = 0;
+  for (const item of items) {
+    const id = item.id;
+    if (typeof id === "string" && id.length > 0 && !taken.has(id)) {
+      taken.add(id);
+      const match = numbered.exec(id);
+      if (match) highest = Math.max(highest, Number(match[1]));
+    } else {
+      needIds.push(item);
+    }
+  }
+  for (const item of needIds) item.id = `${prefix}${++highest}`;
+  return items;
+}
+
 // js/portfolio.js
 var EVENT_RECONCILIATION = Object.freeze({
   [EventType.FICA_WITHHOLDING]: "fica",
@@ -36158,6 +36199,7 @@ function conservationBucket(event, bucket) {
 }
 var Portfolio = class _Portfolio {
   constructor(modelAssets, reports, config2) {
+    assignPlanIds(modelAssets);
     this.modelAssets = this.sortModelAssets(modelAssets);
     this.reports = !!reports;
     if (!config2) {
@@ -36259,6 +36301,7 @@ var Portfolio = class _Portfolio {
     }
     this.config.taxTable.initializeChron();
     this.bindEnvironment();
+    assignPlanIds(this.modelAssets, this.lifeEvents);
     this.activeUser.setAge(this.startUserAge);
     this.activeUser.month = 0;
     this.monthly = new FinancialPackage();
@@ -37483,6 +37526,7 @@ var ModelAsset = class _ModelAsset {
   #metrics;
   /**
    * @param {Object} opts
+   * @param {string|null}   [opts.id]   unique within its plan; plan-ids.js gives it out
    * @param {string}        opts.instrument
    * @param {string}        opts.displayName
    * @param {DateInt}        opts.startDateInt
@@ -37494,6 +37538,7 @@ var ModelAsset = class _ModelAsset {
    * @param {FundTransfer[]} [opts.fundTransfers]
    */
   constructor({
+    id = null,
     instrument,
     displayName,
     startDateInt,
@@ -37519,6 +37564,7 @@ var ModelAsset = class _ModelAsset {
     estimatedAcaIncome = null,
     premiumTaxCreditEnabled = true
   }) {
+    this.id = id;
     this.instrument = instrument;
     this.displayName = displayName;
     this.startDateInt = startDateInt;
@@ -37624,6 +37670,7 @@ var ModelAsset = class _ModelAsset {
     };
     const instrument = INSTRUMENT_MIGRATION[obj.instrument] ?? obj.instrument;
     return new _ModelAsset({
+      id: obj.id ?? null,
       instrument,
       displayName: obj.displayName,
       startDateInt: new DateInt(obj.startDateInt.year * 100 + obj.startDateInt.month),
@@ -38540,6 +38587,7 @@ var ModelAsset = class _ModelAsset {
   // ── Copy ─────────────────────────────────────────────────────────
   copy() {
     const clone2 = new _ModelAsset({
+      id: this.id,
       instrument: this.instrument,
       displayName: this.displayName,
       startDateInt: this.startDateInt,
@@ -39728,11 +39776,10 @@ function buildQuickStart(profile, ageOverrides = null) {
     finishAge: ageOverrides?.finishAge ?? profile.finishAge
   };
   const d = dateAnchors(ages.startAge, ages.retirementAge, ages.finishAge);
-  return {
-    assets: profile.assets(d).map((raw) => ModelAsset.fromJSON(raw)),
-    lifeEvents: profile.lifeEvents(ages),
-    ages
-  };
+  const assets = profile.assets(d).map((raw) => ModelAsset.fromJSON(raw));
+  const lifeEvents = profile.lifeEvents(ages);
+  assignPlanIds(assets, lifeEvents);
+  return { assets, lifeEvents, ages };
 }
 
 // js/mc-compute.js
@@ -40161,6 +40208,7 @@ async function getRun(handle) {
   return result;
 }
 async function runPlanCached(spec, opts = {}) {
+  spec = planWithIds(spec);
   const result = await runPlan(spec, opts);
   return { handle: cacheRun(spec, opts, result), ...result };
 }
@@ -40253,6 +40301,9 @@ function planFromShareUrl(url2) {
 
 // js/mcp/plan-reference.js
 function planFromReference(text) {
+  return planWithIds(specFromReference(text));
+}
+function specFromReference(text) {
   const { kind, value } = classifyPlanReference(text);
   switch (kind) {
     case "handle":
@@ -40294,6 +40345,7 @@ var fmtSetting = (key, v) => {
   return String(v);
 };
 var same = (a, b) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
+var withoutId = ({ id, ...rest }) => rest;
 function byName(assets) {
   const m = /* @__PURE__ */ new Map();
   for (const a of assets ?? []) m.set(a.displayName ?? "(unnamed)", a);
@@ -40320,6 +40372,7 @@ function diffSpecs(a, b) {
     if (!assetB) continue;
     const fields = [];
     for (const key of /* @__PURE__ */ new Set([...Object.keys(assetA), ...Object.keys(assetB)])) {
+      if (key === "id") continue;
       if (!same(assetA[key], assetB[key])) {
         fields.push({ key, from: assetA[key], to: assetB[key] });
       }
@@ -40327,7 +40380,11 @@ function diffSpecs(a, b) {
     if (fields.length) changed.push({ name, fields });
   }
   const la = a?.lifeEvents ?? [], lb = b?.lifeEvents ?? [];
-  const lifeEvents = { countFrom: la.length, countTo: lb.length, changed: !same(la, lb) };
+  const lifeEvents = {
+    countFrom: la.length,
+    countTo: lb.length,
+    changed: !same(la.map(withoutId), lb.map(withoutId))
+  };
   const identical = settings.length === 0 && !added.length && !removed.length && !changed.length && !lifeEvents.changed && same(a?.name, b?.name);
   return { settings, assets: { added, removed, changed }, lifeEvents, identical };
 }
@@ -40385,7 +40442,7 @@ function diffMarkdown({ handleA, handleB, spec, outcome }) {
 
 `;
   if (spec.identical) {
-    md += `Nothing. The two specs are field-for-field identical but hash differently, which should not happen \u2014 treat it as a bug in the handle, not a finding about the plans.
+    md += `Nothing the plan does. The two specs hash differently, but only in what this comparison leaves out: the ids that number their assets and life events, or the order the assets are listed in. If the outcomes below differ, that is a bug, not a finding about the plans.
 
 `;
   } else {
@@ -42339,6 +42396,7 @@ function buildPlan(intent = {}) {
   const settings = { inflationRate, filingAs, startAge, retirementAge, finishAge };
   ledger.assertComplete(settings, raw.map((a) => a.displayName));
   const assets = raw.map((r) => ModelAsset.fromJSON(r));
+  assignPlanIds(assets, lifeEvents);
   const spec = {
     name: intent.name ?? "Conversational plan",
     settings,
@@ -42885,6 +42943,7 @@ async function maxSpending(spec, { leaveAtLeast = 0, simulatedMarketsPercent = n
   if (!spec?.modelAssets?.length) {
     throw new Error("Plan spec has no modelAssets \u2014 nothing to solve.");
   }
+  spec = planWithIds(spec);
   const plan = {
     modelAssets: spec.modelAssets,
     lifeEvents: spec.lifeEvents ?? [],
@@ -43121,7 +43180,7 @@ server.tool(
     if (!plan && !shareUrl) {
       throw new Error("run_plan needs a plan: pass `plan` for a portfolio you have built, or `shareUrl` for a share link, payload or run handle.");
     }
-    const spec = plan ?? planFromReference(shareUrl);
+    const spec = planWithIds(plan ?? planFromReference(shareUrl));
     const { handle, portfolio, issues } = await runPlanCached(spec, { includeReconciliation });
     const mc = monteCarlo ? await runMonteCarloFor(spec, { numSimulations: monteCarlo }) : null;
     return { content: [{ type: "text", text: reportFor(handle, portfolio, issues, mc, sections) }] };

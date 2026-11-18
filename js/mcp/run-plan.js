@@ -46,6 +46,7 @@ import { buildQuickStart, quickStartProfiles } from '../quick-start.js';
 import { makeSimConfig, planSettingsFrom, SIM_CONFIG_DEFAULTS } from '../sim-config.js';
 import { computeMonteCarlo } from '../mc-compute.js';
 import { ageToDateIntFor } from '../plan-dates.js';
+import { planWithIds } from '../plan-ids.js';
 
 /**
  * Build a plan spec from a Quick Start profile key.
@@ -282,8 +283,15 @@ export async function getRun(handle) {
     return result;
 }
 
-/** Run a plan and register it. Returns the handle alongside the result. */
+/**
+ * Run a plan and register it. Returns the handle alongside the result.
+ *
+ * The spec is registered with ids on its assets and life events, so a handle
+ * (and a share link made from one) always carries them; the handle is the hash
+ * of that spec. A spec that already has them is registered as it is.
+ */
 export async function runPlanCached(spec, opts = {}) {
+    spec = planWithIds(spec);
     const result = await runPlan(spec, opts);
     return { handle: cacheRun(spec, opts, result), ...result };
 }

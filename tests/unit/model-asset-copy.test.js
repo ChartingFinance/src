@@ -41,6 +41,7 @@ const { membrane_jsonObjectsToModelAssets, membrane_rawDataToModelAssets } = awa
 
 /** Every constructor option, each with a value that is not its default. */
 const everyOption = () => ({
+  id: 'a7',
   instrument: Instrument.REAL_ESTATE,
   displayName: 'Home',
   startDateInt: DateInt.from(2027, 3),

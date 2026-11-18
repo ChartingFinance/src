@@ -30,6 +30,7 @@ import { whatStopsYou, riseNote, healthNote, successNote, resultRows, spendingHe
 import { ageToDateIntFor } from '../plan-dates.js';
 import { formatCurrency } from '../utils/html.js';
 import { simConfigFromPlanSpec } from './run-plan.js';
+import { planWithIds } from '../plan-ids.js';
 
 /** The app's simulated markets (test-bench-run.js): how many, and which. */
 export const MARKETS = 300;
@@ -51,6 +52,9 @@ export async function maxSpending(spec, { leaveAtLeast = 0, simulatedMarketsPerc
     if (!spec?.modelAssets?.length) {
         throw new Error('Plan spec has no modelAssets — nothing to solve.');
     }
+    // Every run below is built from this plan, and the solved spec is copied
+    // from it, so all of them carry the same ids.
+    spec = planWithIds(spec);
     const plan = {
         modelAssets: spec.modelAssets,
         lifeEvents: spec.lifeEvents ?? [],

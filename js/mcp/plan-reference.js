@@ -30,6 +30,7 @@
 import { classifyPlanReference, planFromShareUrl, decodeSharePayload, specFromPayload }
     from '../share-link.js';
 import { specForHandle } from './run-plan.js';
+import { planWithIds } from '../plan-ids.js';
 
 /**
  * Anything a user can paste, to a plan spec.
@@ -38,6 +39,12 @@ import { specForHandle } from './run-plan.js';
  * truncated link and a typo each need a different fix.
  */
 export function planFromReference(text) {
+    // Every reference comes back with ids on its assets and life events: an old
+    // link or payload may not carry them (plan-ids.js).
+    return planWithIds(specFromReference(text));
+}
+
+function specFromReference(text) {
     const { kind, value } = classifyPlanReference(text);
 
     switch (kind) {

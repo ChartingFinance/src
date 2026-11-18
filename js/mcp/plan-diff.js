@@ -18,7 +18,14 @@
  * ── Assets are keyed by displayName ──────────────────────────────────
  *
  * So renaming an asset reads as one deletion and one addition — this cannot
- * tell a rename from a swap. It improves when assets get stable ids.
+ * tell a rename from a swap.
+ *
+ * ── Ids are not compared ─────────────────────────────────────────────
+ *
+ * An asset's or life event's `id` (plan-ids.js) says which item it is, not
+ * what the plan does, and it is unique only within one plan: the same plan
+ * read from an old link and from the app can number its items differently.
+ * Comparing ids would report changes that change nothing.
  */
 
 import { formatCurrency } from '../utils/html.js';
@@ -38,6 +45,9 @@ const fmtSetting = (key, v) => {
 };
 
 const same = (a, b) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
+
+/** A life event as compared: everything but its id. See the header. */
+const withoutId = ({ id, ...rest }) => rest;
 
 /** Assets by display name. See the header: a rename reads as remove + add. */
 function byName(assets) {
@@ -76,6 +86,7 @@ export function diffSpecs(a, b) {
         if (!assetB) continue;
         const fields = [];
         for (const key of new Set([...Object.keys(assetA), ...Object.keys(assetB)])) {
+            if (key === 'id') continue;   // see the header
             if (!same(assetA[key], assetB[key])) {
                 fields.push({ key, from: assetA[key], to: assetB[key] });
             }
@@ -84,7 +95,8 @@ export function diffSpecs(a, b) {
     }
 
     const la = a?.lifeEvents ?? [], lb = b?.lifeEvents ?? [];
-    const lifeEvents = { countFrom: la.length, countTo: lb.length, changed: !same(la, lb) };
+    const lifeEvents = { countFrom: la.length, countTo: lb.length,
+                         changed: !same(la.map(withoutId), lb.map(withoutId)) };
 
     const identical = settings.length === 0 && !added.length && !removed.length
         && !changed.length && !lifeEvents.changed && same(a?.name, b?.name);
@@ -150,9 +162,10 @@ export function diffMarkdown({ handleA, handleB, spec, outcome }) {
 
     md += `## What changed in the plan\n\n`;
     if (spec.identical) {
-        md += `Nothing. The two specs are field-for-field identical but hash differently, `
-            + `which should not happen — treat it as a bug in the handle, not a finding `
-            + `about the plans.\n\n`;
+        md += `Nothing the plan does. The two specs hash differently, but only in what this `
+            + `comparison leaves out: the ids that number their assets and life events, or the `
+            + `order the assets are listed in. If the outcomes below differ, that is a bug, not `
+            + `a finding about the plans.\n\n`;
     } else {
         if (spec.settings.length) {
             md += `### Settings\n\n| | A | B |\n| :--- | ---: | ---: |\n`;
