@@ -30,7 +30,7 @@ import {
     formatCompactCurrency, formatCurrency,
 } from './utils/html.js';
 import { logger, LogCategory } from './utils/logger.js';
-import { findByName } from './portfolio.js';
+import { findById } from './portfolio.js';
 import { Metric } from './metric.js';
 import { LifeEvent, LifeEventMeta } from './life-event.js';
 import {
@@ -452,11 +452,12 @@ export function charting_buildFromPortfolio(portfolio, buildNewDataSet, metric1N
   }
 }
 
-export function charting_buildFromModelAsset(portfolio, modelDisplayName, metricName = Metric.CASH_FLOW) {
+/** The chart of one asset's metric; the asset is named by its id (plan-ids.js). */
+export function charting_buildFromModelAsset(portfolio, modelAssetId, metricName = Metric.CASH_FLOW) {
 
     if (!portfolio?.firstDateInt) return;
     setModelAssetColorIds(portfolio.modelAssets);
-    let modelAsset = findByName(portfolio.modelAssets, modelDisplayName);
+    let modelAsset = findById(portfolio.modelAssets, modelAssetId);
     if (!modelAsset) return;
 
     let config = JSON.parse(JSON.stringify(stackedBarChartConfig));

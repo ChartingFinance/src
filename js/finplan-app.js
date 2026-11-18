@@ -130,7 +130,7 @@ import {
     global_showEngineDiagnostics,
     simConfigFromGlobals,
 } from './globals.js';
-import { detectIssues, alertAssetNames } from './portfolio-issues.js';
+import { detectIssues, alertAssetIds } from './portfolio-issues.js';
 import { moveRetirement, describeRetirementMove } from './retirement-move.js';
 import { planOutcome, simulationOutcome, guardrailsOutcome } from './outcome-summary.js';
 import { logger, LogCategory } from './utils/logger.js';
@@ -1392,7 +1392,7 @@ function calculate() {
     assetList.expandedGroups = new Set(expandedGroups);
     assetList.activeLifeEvent = appState.lifeEvents[0] ?? null;
     assetList.portfolio = portfolio;
-    assetList.alertAssets = alertAssetNames(issues);
+    assetList.alertAssets = alertAssetIds(issues);
     syncAssetListToDate(store.selectedYear, store.selectedMonth);
 
     // Update flows/sankey views
@@ -1776,7 +1776,7 @@ function connectAssetListEvents() {
     });
 
     assetList.addEventListener('show-transfers', (ev) => {
-        showPopupTransfers(ev.detail.modelAsset.displayName);
+        showPopupTransfers(ev.detail.modelAsset.id);
     });
 
     assetList.addEventListener('show-one-times', (ev) => {
@@ -1803,7 +1803,7 @@ function connectAssetListEvents() {
 
     assetList.addEventListener('select-asset', (ev) => {
         // Toggle highlight (for future chart highlight support)
-        assetList.highlightName = ev.detail.modelAsset.displayName;
+        assetList.highlightId = ev.detail.modelAsset.id;
     });
 
     assetList.addEventListener('group-toggle', (ev) => {
@@ -1815,7 +1815,7 @@ function connectAssetListEvents() {
     });
 
     flowsView.addEventListener('edit-transfers', (ev) => {
-        showPopupTransfers(ev.detail.displayName, phaseSetting(ev.detail.phase, ev.detail.displayName));
+        showPopupTransfers(ev.detail.assetId, phaseSetting(ev.detail.phaseId, ev.detail.assetId));
     });
 }
 
@@ -1927,21 +1927,21 @@ let transferPhase = null;
  * The life event that set an asset's rules as they were in force in a phase:
  * that phase, or, when it lists no transfers for the asset, the latest earlier
  * one that does. A phase that leaves an asset out keeps its earlier rules.
- * Null when the phase is not found.
+ * The phase and the asset by their ids (plan-ids.js); the asset's rules are
+ * keyed by its id. Null when the phase is not found.
  */
-function phaseSetting(phaseName, displayName) {
-    let i = appState.lifeEvents.findIndex((e) => e.displayName === phaseName);
+function phaseSetting(phaseId, id) {
+    let i = appState.lifeEvents.findIndex((e) => e.id === phaseId);
     if (i < 0) return null;
-    // The Flows view names the asset; its rules are keyed by its id.
-    const id = (assetList.modelAssets || []).find((a) => a.displayName === displayName)?.id;
     while (i > 0 && !(id in (appState.lifeEvents[i].phaseTransfers ?? {}))) i--;
     return appState.lifeEvents[i];
 }
 
-function showPopupTransfers(currentDisplayName, phase = null) {
+/** Open the transfer modal for the asset with this id (plan-ids.js). */
+function showPopupTransfers(assetId, phase = null) {
     const activePhase = phase ?? appState.lifeEvents[appState.phaseIndex] ?? appState.lifeEvents[0];
     transferPhase = activePhase;
-    transferModal.currentDisplayName = currentDisplayName;
+    transferModal.currentAssetId = assetId;
     transferModal.modelAssets = assetList.modelAssets || [];
     transferModal.phaseTransfers = activePhase?.phaseTransfers ?? {};
     transferModal.portfolio = appState.portfolio;
@@ -1952,8 +1952,8 @@ function showPopupTransfers(currentDisplayName, phase = null) {
 
 function connectOneTimeModal() {
     oneTimeModal.addEventListener('save-one-times', (ev) => {
-        const { displayName, oneTimeEvents } = ev.detail;
-        const asset = (assetList.modelAssets || []).find(a => a.displayName === displayName);
+        const { assetId, oneTimeEvents } = ev.detail;
+        const asset = (assetList.modelAssets || []).find(a => a.id === assetId);
         if (asset) {
             asset.oneTimeEvents = oneTimeEvents;
         }

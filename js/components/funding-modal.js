@@ -38,7 +38,7 @@ class FundingModal extends LitElement {
         purchasePrice:  { type: Number },
         startDate:      { type: String },
         _purchaseType:  { state: true },
-        _selectedSource: { state: true },
+        _selectedSource: { state: true },   // the source asset's id (plan-ids.js)
         _downPaymentPercent: { state: true },
     };
 
@@ -180,13 +180,13 @@ class FundingModal extends LitElement {
         const meta = InstrumentMeta.get(ma.instrument);
         const emoji = meta ? meta.emoji : '';
         const label = meta ? meta.label : '';
-        const isSelected = this._selectedSource === ma.displayName;
+        const isSelected = this._selectedSource === ma.id;
 
         return html`
             <div class="glass-card p-4 cursor-pointer transition
                 ${isSelected ? 'ring-2 ring-blue-500 bg-blue-50' : 'hover:bg-gray-50'}"
                 style="border-left: 4px solid ${color}"
-                @click=${() => this._selectedSource = ma.displayName}>
+                @click=${() => this._selectedSource = ma.id}>
                 <div class="flex items-center gap-3">
                     <div class="text-2xl">${emoji}</div>
                     <div class="flex-1 min-w-0">
@@ -209,8 +209,8 @@ class FundingModal extends LitElement {
             detail: {
                 purchaseType: this._purchaseType,
                 // The id is what the purchase is funded from; the name is its label.
-                sourceId: this.modelAssets.find((ma) => ma.displayName === this._selectedSource)?.id ?? null,
-                sourceDisplayName: this._selectedSource,
+                sourceId: this._selectedSource,
+                sourceDisplayName: this.modelAssets.find((ma) => ma.id === this._selectedSource)?.displayName ?? null,
                 downPaymentPercent: isOutright ? 100 : this._downPaymentPercent,
             },
         }));

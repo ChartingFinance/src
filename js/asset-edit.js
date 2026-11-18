@@ -52,12 +52,12 @@ export function applyAssetFormEdit(target, edited) {
 /**
  * What is wrong with a name typed into the asset form, or null.
  *
- * A plan refers to an asset by its id (plan-ids.js), but a name still has to
- * pick out one asset. A plan written by name (an old scenario or share link,
- * an MCP spec) is resolved by name, and parts of the page still find an asset
- * by the name they show: the transfer, funding and one-time forms, the Flows
- * view, the asset list. Two assets with one name make each of those ambiguous,
- * and an asset with no name cannot be found at all, so the form takes neither.
+ * A plan refers to an asset by its id (plan-ids.js), and so does the page. A
+ * name still has to pick out one asset: a plan written by name (an old
+ * scenario or share link, an MCP spec) is resolved by name; the ledger, the
+ * reports and the MCP tools name assets as the user does; and a person cannot
+ * tell two assets apart by anything else. An asset with no name cannot be
+ * referred to at all, so the form takes neither.
  * Names differing only in case or outer spaces count as the same: nobody can
  * tell "Savings" from "savings " in a list.
  *

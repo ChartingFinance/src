@@ -21,7 +21,7 @@
  * The numbers come from money-flows.js, which is headless and tested; this file
  * only lays them out.
  *
- * Dispatches: edit-transfers { displayName, phase }
+ * Dispatches: edit-transfers { assetId, displayName, phaseId, phase }
  */
 
 import { LitElement, html, nothing } from 'lit';
@@ -306,7 +306,9 @@ export class FlowsView extends LitElement {
     _edit(rule) {
         this.dispatchEvent(new CustomEvent('edit-transfers', {
             bubbles: true, composed: true,
-            detail: { displayName: rule.owner, phase: rule.phases[rule.phases.length - 1] ?? null },
+            detail: { assetId: rule.ownerId, displayName: rule.owner,
+                      phaseId: rule.phaseIds?.[rule.phaseIds.length - 1] ?? null,
+                      phase: rule.phases[rule.phases.length - 1] ?? null },
         }));
     }
 }

@@ -564,7 +564,8 @@ export function settingText(owner, target, ft) {
  * @param {Portfolio} portfolio
  * @param {ReturnType<typeof moneyFlows>} flows
  * @returns {{phases: Array<{phase: string, fromIndex: number, inWindow: boolean}>,
- *            rules: Array<{key: string, owner: string, payer: string, payee: string, half: string,
+ *            rules: Array<{key: string, owner: string, ownerId: string, payer: string, payee: string, half: string,
+ *                          phaseIds: string[],
  *                          payerGroup: string, payeeGroup: string, kind: string,
  *                          setting: string, phases: string[], moved: number, partIds: string[]}>,
  *            automatic: Array<{key: string, label: string, amount: number, partIds: string[],
@@ -573,7 +574,10 @@ export function settingText(owner, target, ft) {
  *          moved money first.
  */
 export function rulesInForce(portfolio, flows) {
+    // Rows are keyed by name, as the ledger's parts are; the phase record and
+    // the rules in it refer to assets by id (plan-ids.js).
     const assets = new Map(portfolio.modelAssets.map((a) => [a.displayName, a]));
+    const byId = new Map(portfolio.modelAssets.map((a) => [a.id, a]));
     const groupOf = (name) => {
         const asset = assets.get(name);
         return asset ? classifyAssetGroup(asset.instrument) : AssetGroup.CAPITAL;
@@ -588,37 +592,42 @@ export function rulesInForce(portfolio, flows) {
     // A plan with no life events has no record: its assets' rules are the only ones.
     const ruleSets = records.length
         ? records.filter((r, i) => phases[i].inWindow)
-        : [{ phase: null, transfers: Object.fromEntries(portfolio.modelAssets.map((a) => [a.displayName, a.fundTransfers ?? []])) }];
+        : [{ phase: null, transfers: Object.fromEntries(portfolio.modelAssets.map((a) => [a.id, a.fundTransfers ?? []])) }];
 
     const rows = new Map();
     const rowFor = (key, init) => {
         if (!rows.has(key)) {
             rows.set(key, { key, ...init, payerGroup: groupOf(init.payer), payeeGroup: groupOf(init.payee),
-                            settings: [], phases: [], moved: 0, partIds: [], byKind: {} });
+                            settings: [], phases: [], phaseIds: [], moved: 0, partIds: [], byKind: {} });
         }
         return rows.get(key);
     };
-    const note = (row, text, phase) => {
+    // A row's phases by name, to show, and by id, to find the phase: in step.
+    const note = (row, text, phase, phaseId) => {
         if (!row.settings.includes(text)) row.settings.push(text);
-        if (phase && !row.phases.includes(phase)) row.phases.push(phase);
+        if (phase && !row.phases.includes(phase)) {
+            row.phases.push(phase);
+            row.phaseIds.push(phaseId ?? null);
+        }
     };
     for (const set of ruleSets) {
-        for (const [owner, transfers] of Object.entries(set.transfers)) {
-            const ownerAsset = assets.get(owner);
+        for (const [ownerId, transfers] of Object.entries(set.transfers)) {
+            const ownerAsset = byId.get(ownerId);
             if (!ownerAsset) continue;
+            const owner = ownerAsset.displayName;
             for (const ft of transfers) {
-                const target = ft.toDisplayName;
+                const target = byId.get(ft.toId)?.displayName ?? ft.toDisplayName;
                 if (ft.monthlyMoveValue > 0) {
                     const pays = paidInto(ownerAsset.instrument);
                     const row = rowFor(`monthly|${owner}|${target}`, {
-                        owner, half: 'monthly', pays,
+                        owner, ownerId, half: 'monthly', pays,
                         payer: pays ? target : owner, payee: pays ? owner : target });
-                    note(row, settingText(ownerAsset, assets.get(target), ft), set.phase);
+                    note(row, settingText(ownerAsset, assets.get(target), ft), set.phase, set.phaseId);
                 }
                 if (ft.closeMoveValue > 0) {
                     const row = rowFor(`close|${owner}|${target}`, {
-                        owner, half: 'close', pays: false, payer: owner, payee: target });
-                    note(row, `${percent(ft.closeMoveValue)} at close`, set.phase);
+                        owner, ownerId, half: 'close', pays: false, payer: owner, payee: target });
+                    note(row, `${percent(ft.closeMoveValue)} at close`, set.phase, set.phaseId);
                 }
             }
         }

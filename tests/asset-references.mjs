@@ -403,5 +403,76 @@ await check("a job that starts after retiring is not closed by Retire's template
         'the routing search treats the later job as closed at retirement');
 });
 
+// ── 7. What the page reads: the run's phase record, rule rows, issues ───────
+//
+// The page (asset list, Flows view, transfer and one-time forms) keys assets
+// by id. These are the run's outputs it reads them from.
+
+const { moneyFlows, rulesInForce } = await import('../js/money-flows.js');
+const { buildPipelines } = await import('../js/flow-pipelines.js');
+const { alertAssetIds, alertAssetNames } = await import('../js/portfolio-issues.js');
+
+await check("the run's phase record keys each asset's rules by id, and names its phase's id", async () => {
+    const spec = referenceHeavySpec();
+    const { portfolio } = await runPlan(spec);
+    const ids = new Set(spec.modelAssets.map((a) => a.id));
+    assert.ok(portfolio.phaseRules.length >= 2, 'no phases recorded');
+    for (const record of portfolio.phaseRules) {
+        assert.ok(Object.keys(record.transfers).every((k) => ids.has(k)), Object.keys(record.transfers).join());
+        const event = spec.lifeEvents.find((e) => e.displayName === record.phase);
+        assert.equal(record.phaseId, event.id, record.phase);
+    }
+});
+
+await check('rule rows carry the owner\'s id and each phase\'s id; a rename changes only the names', async () => {
+    const rows = async (spec) => {
+        const { portfolio } = await runPlan(spec);
+        const all = rulesInForce(portfolio, moneyFlows(portfolio, 0, portfolio.monthlyPriceIndex.length - 1)).rules;
+        return { portfolio, all };
+    };
+    const base = await rows(referenceHeavySpec());
+    const after = await rows(renamed(referenceHeavySpec()));
+    assert.ok(base.all.length > 0, 'no rules in force');
+    for (const row of base.all) {
+        assert.equal(base.portfolio.modelAssets.find((a) => a.id === row.ownerId)?.displayName, row.owner);
+        assert.equal(row.phaseIds.length, row.phases.length);
+        assert.ok(row.phaseIds.every((id) => base.portfolio.lifeEvents.some((e) => e.id === id)), row.phaseIds.join());
+    }
+    const shape = (r) => r.all.map((x) => `${x.ownerId}|${x.half}|${x.phaseIds.join(',')}|${x.moved.toFixed(2)}`).sort();
+    assert.deepEqual(shape(after), shape(base));
+    assert.ok(after.all.every((x) => x.owner.endsWith('(renamed)')), 'a row kept an old name');
+});
+
+await check('the Flows pipelines read each asset\'s rules from the phase record by id', async () => {
+    const { portfolio } = await runPlan(referenceHeavySpec());
+    const ruled = (p) => JSON.stringify(buildPipelines(p, 0)).length;
+    // Without the record, the pipelines fall back to the assets' last-phase
+    // rules; with it, the first month reads Accumulate's. A lookup by name would
+    // find nothing in the record and read the same as no rules at all.
+    const empty = Object.assign(Object.create(Object.getPrototypeOf(portfolio)), portfolio, {
+        phaseRules: portfolio.phaseRules.map((r) => ({ ...r, transfers: {} })) });
+    assert.notEqual(ruled(portfolio), ruled(empty), 'the phase record\'s rules changed nothing');
+});
+
+await check('an asset-scoped issue names its asset\'s id; the alert set by id matches the set by name', async () => {
+    // Rent with nothing to pay it: an unpayable obligation, an alert on Rent.
+    const spec = planWithIds({
+        settings: { startAge: 60, retirementAge: 65, finishAge: 62, filingAs: 'Single' },
+        modelAssets: [
+            { instrument: 'bank', displayName: 'Checking', startDateInt: { year: 2027, month: 1 }, startCurrency: { amount: 100 } },
+            { instrument: 'monthlyExpense', displayName: 'Rent', startDateInt: { year: 2027, month: 1 }, startCurrency: { amount: -2000 } },
+        ],
+        lifeEvents: [],
+    });
+    const { portfolio, issues } = await runPlan(spec);
+    const rent = portfolio.modelAssets.find((a) => a.displayName === 'Rent');
+    const forRent = issues.filter((i) => i.scope === 'asset' && i.assetName === 'Rent');
+    assert.ok(forRent.length > 0, 'no issue on the rent');
+    assert.ok(forRent.every((i) => i.assetId === rent.id), JSON.stringify(forRent.map((i) => i.assetId)));
+    assert.ok(alertAssetIds(issues).has(rent.id), 'the rent has no ⚠️');
+    const byName = [...alertAssetNames(issues)].map((n) => portfolio.modelAssets.find((a) => a.displayName === n).id);
+    assert.deepEqual([...alertAssetIds(issues)].sort(), byName.sort());
+});
+
 console.log(`\n${passed} passed, ${failed} failed`);
 if (failed) process.exit(1);

@@ -139,14 +139,14 @@ class AssetList extends LitElement {
     static properties = {
         modelAssets: { type: Array },
         readonly: { type: Boolean },
-        highlightName: { type: String, attribute: 'highlight-name' },
+        highlightId: { type: String, attribute: 'highlight-id' },  // the selected asset's id (plan-ids.js)
         expandedGroups: { type: Object },   // Set<AssetGroup key>
         activeLifeEvent: { type: Object },  // ModelLifeEvent — for contextual group labels
         portfolio: { type: Object },        // Portfolio — for Taxes group metrics
         atDateInt: { type: Object },        // DateInt — classify active/closed at this date
         metricName: { type: String },       // Metric key — look up history value at historyIndex
         historyIndex: { type: Number },     // Month offset into history[] for metric display
-        alertAssets: { type: Object },      // Set<displayName> — assets with an ALERT issue
+        alertAssets: { type: Object },      // Set<asset id> — assets with an ALERT issue
     };
 
     createRenderRoot() { return this; }
@@ -155,7 +155,7 @@ class AssetList extends LitElement {
         super();
         this.modelAssets = [];
         this.readonly = false;
-        this.highlightName = null;
+        this.highlightId = null;
         this.expandedGroups = null;
         this.activeLifeEvent = null;
         this.portfolio = null;
@@ -163,7 +163,7 @@ class AssetList extends LitElement {
         this.metricName = null;
         this.historyIndex = -1;
         this.alertAssets = new Set();
-        this._taxHighlightAssets = new Set(); // displayNames of assets to highlight
+        this._taxHighlightAssets = new Set(); // ids of assets to highlight
         this._taxHighlightGroups = new Set(); // group keys to highlight (when collapsed)
         this._expandedTaxNodes = new Set();   // tax tree node ids currently expanded
     }
@@ -179,12 +179,12 @@ class AssetList extends LitElement {
             return html`
                 ${repeat(
                     this.modelAssets,
-                    (ma) => ma.displayName,
+                    (ma) => ma.id,
                     (ma) => html`
                         <asset-card
                             .modelAsset=${ma}
                             ?readonly=${true}
-                            ?selected=${this.highlightName === ma.displayName}
+                            ?selected=${this.highlightId === ma.id}
                         ></asset-card>
                     `
                 )}
@@ -231,11 +231,11 @@ class AssetList extends LitElement {
                 <div class="asset-group-children ${isExpanded ? '' : 'collapsed'}">
                     ${repeat(
                         assets,
-                        (ma) => ma.displayName,
+                        (ma) => ma.id,
                         (ma) => {
                             const history = ma.getHistory?.('value') || [];
                             const flows = isExpanded ? computeAssetFlows(ma, this.historyIndex) : { inflow: 0, growth: 0, outflow: 0 };
-                            const taxHl = this._taxHighlightAssets.has(ma.displayName);
+                            const taxHl = this._taxHighlightAssets.has(ma.id);
                             return html`
                                 <asset-card
                                     .modelAsset=${ma}
@@ -249,8 +249,8 @@ class AssetList extends LitElement {
                                     ?ghost=${ma._isClosedAtDate}
                                     ?taxHighlight=${taxHl}
                                     .closedEmoji=${ma._isClosedAtDate ? '⛔'
-                                        : this.alertAssets?.has(ma.displayName) ? '⚠️' : ''}
-                                    ?selected=${this.highlightName === ma.displayName}
+                                        : this.alertAssets?.has(ma.id) ? '⚠️' : ''}
+                                    ?selected=${this.highlightId === ma.id}
                                 ></asset-card>
                             `;
                         }
@@ -437,26 +437,26 @@ class AssetList extends LitElement {
         };
 
         // Find contributing assets
-        const highlightNames = new Set();
+        const highlightIds = new Set();
         for (const a of assets) {
             const total = metrics.reduce((sum, m) => sum + Math.abs(atIdx(a, m)), 0);
-            if (total > 0) highlightNames.add(a.displayName);
+            if (total > 0) highlightIds.add(a.id);
         }
 
-        if (highlightNames.size === 0) return;
+        if (highlightIds.size === 0) return;
 
         // Determine which groups to highlight (for collapsed groups)
         const expanded = this.expandedGroups || new Set();
         const highlightGroups = new Set();
         for (const a of assets) {
-            if (!highlightNames.has(a.displayName)) continue;
+            if (!highlightIds.has(a.id)) continue;
             const group = classifyAssetGroup(a.instrument);
             if (!expanded.has(group)) {
                 highlightGroups.add(group);
             }
         }
 
-        this._taxHighlightAssets = highlightNames;
+        this._taxHighlightAssets = highlightIds;
         this._taxHighlightGroups = highlightGroups;
         this.requestUpdate();
 
