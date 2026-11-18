@@ -112,7 +112,7 @@ export function phaseRulesAt(portfolio, historyIndex) {
 /** An asset's transfer rules at a month, from the phase record when there is one. */
 function transfersAt(rules, asset) {
     if (!rules) return asset.fundTransfers ?? [];
-    return (rules.transfers[asset.displayName] ?? []).map(FundTransfer.fromJSON);
+    return (rules.transfers[asset.id] ?? []).map(FundTransfer.fromJSON);
 }
 
 // ── Build pipelines ─────────────────────────────────────────────────

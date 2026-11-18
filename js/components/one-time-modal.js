@@ -9,7 +9,7 @@
  *   modelAsset  - ModelAsset
  *
  * Dispatches:
- *   'save-one-times' { detail: { displayName, oneTimeEvents } }
+ *   'save-one-times' { detail: { assetId, displayName, oneTimeEvents } }
  *   'close'
  */
 
@@ -265,7 +265,7 @@ class OneTimeModal extends LitElement {
 
         this.dispatchEvent(new CustomEvent('save-one-times', {
             bubbles: true, composed: true,
-            detail: { displayName: this.modelAsset.displayName, oneTimeEvents: events },
+            detail: { assetId: this.modelAsset.id, displayName: this.modelAsset.displayName, oneTimeEvents: events },
         }));
         this._close();
     }

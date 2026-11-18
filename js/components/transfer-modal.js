@@ -6,7 +6,7 @@
  *
  * Properties:
  *   open             - boolean
- *   currentDisplayName - string (name of the asset to configure transfers for)
+ *   currentAssetId   - string (id of the asset to configure transfers for: plan-ids.js)
  *   modelAssets      - ModelAsset[] (all assets)
  *
  * Dispatches:
@@ -20,7 +20,7 @@ import { Chart } from 'chart.js';
 import { InstrumentType, InstrumentMeta } from '../instruments/instrument.js';
 import { FundTransfer } from '../fund-transfer.js';
 import { colorRange } from '../utils/html.js';
-import { findByName } from '../portfolio.js';
+import { findById } from '../portfolio.js';
 import { Metric } from '../metric.js';
 import {
     charting_buildFromModelAsset,
@@ -31,7 +31,7 @@ class TransferModal extends LitElement {
 
     static properties = {
         open:               { type: Boolean, reflect: true },
-        currentDisplayName: { type: String },
+        currentAssetId:     { type: String },
         modelAssets:        { type: Array },
         phaseTransfers:     { type: Object },
         portfolio:          { type: Object },   // pre-simulated Portfolio (avoids re-running simulation)
@@ -43,7 +43,7 @@ class TransferModal extends LitElement {
     constructor() {
         super();
         this.open = false;
-        this.currentDisplayName = '';
+        this.currentAssetId = '';
         this.modelAssets = [];
         this.phaseTransfers = {};
         this.portfolio = null;
@@ -54,7 +54,7 @@ class TransferModal extends LitElement {
     }
 
     render() {
-        if (!this.open || !this.currentDisplayName) return html``;
+        if (!this.open || !this.currentAssetId) return html``;
 
         const transferrableAssets = this._getTransferrableAssets();
 
@@ -67,7 +67,7 @@ class TransferModal extends LitElement {
                         @click=${this._close}>&times;</button>
                     <div class="flex flex-col md:flex-row gap-8 mt-4">
                         <div class="flex-1">
-                            <h3 class="text-lg font-bold mb-4">${this.currentDisplayName}</h3>
+                            <h3 class="text-lg font-bold mb-4">${this._currentAsset()?.displayName ?? ''}</h3>
                             ${this._tabs.length > 1 ? html`
                                 <div class="flex flex-wrap gap-2 mb-4 bg-gray-50 p-1 rounded-xl w-max">
                                     ${this._tabs.map((tab, i) => html`
@@ -130,13 +130,18 @@ class TransferModal extends LitElement {
         return [{ label: 'Growth', metric: Metric.CASH_FLOW }];
     }
 
+    /** The asset whose transfers this modal edits, in the run it shows. */
+    _currentAsset() {
+        return findById((this._portfolio ?? this.portfolio)?.modelAssets ?? [], this.currentAssetId);
+    }
+
     _getTransferrableAssets() {
         if (!this._portfolio) {
             this._portfolio = this.portfolio;
         }
         if (!this._portfolio) return { currentAsset: null, targets: [] };
 
-        const currentAsset = findByName(this._portfolio.modelAssets, this.currentDisplayName);
+        const currentAsset = this._currentAsset();
         if (!currentAsset) return [];
 
         this._tabs = this._getChartTabs(currentAsset);
@@ -148,7 +153,7 @@ class TransferModal extends LitElement {
 
         return this._portfolio.modelAssets.filter(ma => {
             if (!InstrumentType.isFundable(ma.instrument)) return false;
-            if (ma.displayName === this.currentDisplayName) return false;
+            if (ma.id === this.currentAssetId) return false;
             // IRS: retirement income (Social Security) cannot contribute to IRA, Roth IRA, or 401K
             if (isRetirement && (InstrumentType.isTaxDeferred(ma.instrument) || InstrumentType.isTaxFree(ma.instrument))) return false;
             return true;
@@ -214,7 +219,7 @@ class TransferModal extends LitElement {
         }
 
         const tab = this._tabs[this._activeTab];
-        charting_buildFromModelAsset(this._portfolio, this.currentDisplayName, tab.metric);
+        charting_buildFromModelAsset(this._portfolio, this.currentAssetId, tab.metric);
         if (charting_jsonMetricChartConfigIndividual != null) {
             this._chart = new Chart(canvas, charting_jsonMetricChartConfigIndividual);
         }
@@ -224,7 +229,7 @@ class TransferModal extends LitElement {
         this._portfolio = this.portfolio;
         if (!this._portfolio) return;
 
-        const currentAsset = findByName(this._portfolio.modelAssets, this.currentDisplayName);
+        const currentAsset = this._currentAsset();
         this._tabs = this._getChartTabs(currentAsset);
 
         this._renderActiveChart();
@@ -259,9 +264,8 @@ class TransferModal extends LitElement {
         this.dispatchEvent(new CustomEvent('save-transfers', {
             bubbles: true, composed: true,
             detail: {
-                assetId: findByName((this._portfolio ?? this.portfolio)?.modelAssets ?? [],
-                    this.currentDisplayName)?.id ?? null,
-                displayName: this.currentDisplayName,
+                assetId: this.currentAssetId,
+                displayName: this._currentAsset()?.displayName ?? null,
                 fundTransfers,
             },
         }));

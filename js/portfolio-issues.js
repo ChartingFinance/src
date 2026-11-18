@@ -398,6 +398,9 @@ export function detectIssues(portfolio, { includeReconciliation = false } = {}) 
                 amount: null,
                 reasons: [],
                 ...issue,
+                // Which asset, by id (plan-ids.js): what the app keys its cards
+                // by. The name is for reading; within one run it names one asset.
+                assetId: issue.assetId ?? (issue.assetName ? ctx.byName(issue.assetName)?.id ?? null : null),
                 detector: d,
             });
         }
@@ -427,7 +430,7 @@ export function planExhaustion(issues) {
     return issues.find(i => i.id === 'plan-exhaustion') ?? null;
 }
 
-/** Issues belonging to one asset — the View modal's list. */
+/** Issues belonging to one asset, by its name. */
 export function issuesForAsset(issues, displayName) {
     return issues.filter(i => i.scope === 'asset' && i.assetName === displayName);
 }
@@ -441,6 +444,14 @@ export function alertAssetNames(issues) {
     return new Set(
         issues.filter(i => i.scope === 'asset' && i.severity === 'alert' && i.assetName)
               .map(i => i.assetName)
+    );
+}
+
+/** The same assets as alertAssetNames, by id: what the asset list keys its cards by. */
+export function alertAssetIds(issues) {
+    return new Set(
+        issues.filter(i => i.scope === 'asset' && i.severity === 'alert' && i.assetId)
+              .map(i => i.assetId)
     );
 }
 

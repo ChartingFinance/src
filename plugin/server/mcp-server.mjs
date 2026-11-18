@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.3.43; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.3.44; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -36467,18 +36467,20 @@ var Portfolio = class _Portfolio {
    * @typedef {object} PhaseRules
    * @property {number} fromIndex  the first month (history index) it applies to
    * @property {string} phase      the life event's displayName
+   * @property {string|null} phaseId the life event's id (plan-ids.js)
    * @property {string} type       the life event's type
    * @property {Readonly<Record<string, ReadonlyArray<object>>>} transfers
-   *           every asset's fund transfers as JSON, by displayName
+   *           every asset's fund transfers as JSON, by asset id
    */
   #recordPhaseRules(event, fromIndex) {
     const transfers = {};
     for (const asset of this.modelAssets) {
-      transfers[asset.displayName] = Object.freeze((asset.fundTransfers ?? []).map((ft) => ft.toJSON()));
+      transfers[asset.id] = Object.freeze((asset.fundTransfers ?? []).map((ft) => ft.toJSON()));
     }
     const record2 = Object.freeze({
       fromIndex,
       phase: event.displayName,
+      phaseId: event.id ?? null,
       type: event.type,
       transfers: Object.freeze(transfers)
     });
@@ -39035,6 +39037,9 @@ function detectIssues(portfolio, { includeReconciliation = false } = {}) {
         amount: null,
         reasons: [],
         ...issue2,
+        // Which asset, by id (plan-ids.js): what the app keys its cards
+        // by. The name is for reading; within one run it names one asset.
+        assetId: issue2.assetId ?? (issue2.assetName ? ctx.byName(issue2.assetName)?.id ?? null : null),
         detector: d
       });
     }
