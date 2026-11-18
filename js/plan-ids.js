@@ -21,7 +21,9 @@
  *
  *   a fund transfer        `toId`, with `toDisplayName` as its label
  *   a phase's rules        `phaseTransfers`, keyed by the asset whose rules they are
- *   a phase's closes       `closes`, a list of the assets it closes
+ *   a phase's closes       `closes`, a list of the assets it closes; an entry can
+ *                          instead be a type of asset, `{ instrument }` (a template,
+ *                          life-event.js assetsClosedBy), which refers to no one asset
  *   a purchase's funding   `fundingConfig.sourceId`, with `sourceDisplayName` as its label
  *
  * A name is still taken wherever an id is, because plans arrive that were

@@ -48,7 +48,7 @@
  */
 
 import { ModelAsset } from './model-asset.js';
-import { ModelLifeEvent } from './life-event.js';
+import { ModelLifeEvent, isCloseTemplate } from './life-event.js';
 import { Portfolio } from './portfolio.js';
 import { chronometer_run } from './chronometer.js';
 import { detectIssues, planExhaustion } from './portfolio-issues.js';
@@ -113,8 +113,18 @@ export function routingGenes(plan) {
     const inForce = new Map();
     events.forEach((event, phaseIdx) => {
         for (const [id, rules] of Object.entries(event.phaseTransfers ?? {})) inForce.set(id, rules);
-        for (const id of (event.closes ?? [])) closed.add(id);
         const fromYear = ageToDateIntFor(config, event.triggerAge).year;
+        // What the phase closes: assets by id, and templates by type, each asset
+        // of it already running when the phase begins (life-event.js
+        // assetsClosedBy), here by the year, as everything in this search is.
+        for (const entry of (event.closes ?? [])) {
+            if (typeof entry === 'string') closed.add(entry);
+            else if (isCloseTemplate(entry)) {
+                for (const asset of assets) {
+                    if (asset.instrument === entry.instrument && years(asset).from <= fromYear) closed.add(asset.id);
+                }
+            }
+        }
         const next = events[phaseIdx + 1];
         const toYear = next ? ageToDateIntFor(config, next.triggerAge).year : lastYear;
         const alive = assets.filter((asset) => {

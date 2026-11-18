@@ -18,7 +18,8 @@
  */
 
 import { LitElement, html } from 'lit';
-import { LifeEvent, LifeEventMeta, ModelLifeEvent } from '../life-event.js';
+import { LifeEvent, LifeEventMeta, ModelLifeEvent, isCloseTemplate } from '../life-event.js';
+import { InstrumentMeta } from '../instruments/instrument.js';
 import { global_user_startAge, global_user_finishAge } from '../globals.js';
 
 class EventFormModal extends LitElement {
@@ -52,7 +53,7 @@ class EventFormModal extends LitElement {
         if (changed.has('open') && this.open) {
             if (this.mode === 'edit' && this.lifeEvent) {
                 this._selectedType = this.lifeEvent.type;
-                this._closes = [...this.lifeEvent.closes];
+                this._closes = structuredClone(this.lifeEvent.closes);
             } else {
                 this._selectedType = null;
                 this._closes = [];
@@ -151,18 +152,41 @@ class EventFormModal extends LitElement {
                 ${assets.length > 0 ? html`
                     <div class="mt-6 border-t border-gray-100 pt-6">
                         <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Close Assets on Event</label>
-                        <div class="flex flex-wrap gap-2">
-                            ${assets.map(a => html`
+                        <div class="flex flex-wrap gap-2 mb-2">
+                            ${this._closeTypes(assets).map(instrument => html`
                                 <label class="flex items-center gap-2 px-3 py-2 rounded-xl text-sm cursor-pointer transition
-                                    ${this._closes.includes(a.id)
+                                    ${this._closesType(instrument)
                                         ? 'bg-red-50 text-red-700 border border-red-200'
-                                        : 'bg-gray-50 text-gray-600 border border-gray-100 hover:bg-gray-100'}">
+                                        : 'bg-gray-50 text-gray-600 border border-gray-100 hover:bg-gray-100'}"
+                                    title="Every ${InstrumentMeta.get(instrument)?.label ?? instrument} asset already running when this event happens, whatever it is called">
                                     <input type="checkbox" class="rounded"
-                                        .checked=${this._closes.includes(a.id)}
+                                        .checked=${this._closesType(instrument)}
+                                        @change=${(e) => this._onCloseTypeToggle(instrument, e.target.checked)} />
+                                    Every ${InstrumentMeta.get(instrument)?.label ?? instrument}
+                                </label>
+                            `)}
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            ${assets.map(a => {
+                                // Covered by a template: closed when the event
+                                // happens if it is running then, without a tick of its own.
+                                const byType = this._closesType(a.instrument);
+                                const closed = byType || this._closes.includes(a.id);
+                                return html`
+                                <label class="flex items-center gap-2 px-3 py-2 rounded-xl text-sm transition
+                                    ${byType ? 'cursor-default' : 'cursor-pointer'}
+                                    ${closed
+                                        ? 'bg-red-50 text-red-700 border border-red-200'
+                                        : 'bg-gray-50 text-gray-600 border border-gray-100 hover:bg-gray-100'}"
+                                    title=${byType ? `Closed by "Every ${InstrumentMeta.get(a.instrument)?.label ?? a.instrument}", if it is running then` : ''}>
+                                    <input type="checkbox" class="rounded"
+                                        .checked=${closed}
+                                        ?disabled=${byType}
                                         @change=${(e) => this._onCloseToggle(a.id, e.target.checked)} />
                                     ${a.displayName}
                                 </label>
-                            `)}
+                            `;
+                            })}
                         </div>
                     </div>
                 ` : html``}
@@ -182,9 +206,32 @@ class EventFormModal extends LitElement {
     _onTypeSelect(type) {
         this._selectedType = type;
         const meta = LifeEventMeta.get(type);
-        // A type's defaults name assets; the form, like the phase, holds ids.
+        // The phase holds ids and templates; a default that names an asset is
+        // turned into its id. A template is copied, not shared with the meta.
         const idOf = (name) => (this.modelAssets || []).find((a) => a.displayName === name)?.id ?? name;
-        this._closes = (meta.defaultMutations.closes || []).map(idOf);
+        this._closes = (meta.defaultMutations.closes || [])
+            .map((entry) => (typeof entry === 'string' ? idOf(entry) : structuredClone(entry)));
+    }
+
+    /**
+     * The asset types offered as templates: each type among the plan's assets,
+     * in the usual order, and any type the phase already closes.
+     */
+    _closeTypes(assets) {
+        const types = new Set(assets.map((a) => a.instrument));
+        for (const entry of this._closes) if (isCloseTemplate(entry)) types.add(entry.instrument);
+        const order = (t) => InstrumentMeta.get(t)?.sortOrder ?? 99;
+        return [...types].sort((a, b) => order(a) - order(b));
+    }
+
+    /** True when the phase closes every asset of this type (a template). */
+    _closesType(instrument) {
+        return this._closes.some((entry) => isCloseTemplate(entry) && entry.instrument === instrument);
+    }
+
+    _onCloseTypeToggle(instrument, checked) {
+        const others = this._closes.filter((entry) => !(isCloseTemplate(entry) && entry.instrument === instrument));
+        this._closes = checked ? [...others, { instrument }] : others;
     }
 
     /** Closes are held by asset id (plan-ids.js). */

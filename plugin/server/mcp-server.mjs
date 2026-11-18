@@ -32196,6 +32196,19 @@ function earliestSocialSecurityDateIntFor(env) {
 function findById(assets, id) {
   return assets.find((a) => a.id === id);
 }
+function assetsClosedBy(entry, assets, dateInt) {
+  if (typeof entry === "string") {
+    const asset = findById(assets, entry);
+    return asset ? [asset] : [];
+  }
+  if (isCloseTemplate(entry)) {
+    return assets.filter((a) => a.instrument === entry.instrument && !(a.startDateInt && a.startDateInt.isAfter(dateInt)));
+  }
+  return [];
+}
+function isCloseTemplate(entry) {
+  return !!entry && typeof entry === "object" && typeof entry.instrument === "string";
+}
 var LifeEvent = Object.freeze({
   ACCUMULATE: "accumulate",
   RETIRE: "retire"
@@ -32221,7 +32234,10 @@ var LifeEventMeta = /* @__PURE__ */ new Map([
     projectionTabs: ["value", "guardrails", "monteCarlo", "spreadsheet"],
     assetGroupLabels: { distributions: "Distributions", capital: "Capital", expenses: "Expenses", taxes: "Taxes" },
     defaultMutations: {
-      closes: ["Salary"]
+      // Every working income still running at retirement, whatever it is
+      // called. It was ['Salary'], a name, which matched nothing in five of the
+      // eight quick-start profiles ("Salary A" and "Salary B" were paid on).
+      closes: [{ instrument: Instrument.WORKING_INCOME }]
     },
     advisoryChecks: [
       { instrument: "retirementIncome", message: "No retirement income found. Would you like to add one?" }
@@ -32258,7 +32274,8 @@ var ModelLifeEvent = class _ModelLifeEvent {
    * @param {string}  opts.type           LifeEvent enum value
    * @param {string}  opts.displayName    User-facing name
    * @param {number}  opts.triggerAge     Age when event fires
-   * @param {string[]}        [opts.closes]            Ids of the assets to close
+   * @param {Array<string|{instrument: string}>} [opts.closes]  What it closes: asset
+   *                                                    ids, or templates (assetsClosedBy)
    * @param {Object}          [opts.phaseTransfers]   { assetId: [FundTransfer JSON] }
    * @param {Object}          [opts.globalOverrides]    { inflationRate?: number, ... }
    */
@@ -32324,9 +32341,9 @@ var ModelLifeEvent = class _ModelLifeEvent {
       LogCategory.MONTHLY,
       () => `LifeEvent.apply: "${this.displayName}" (${this.type}) at ${currentDateInt}`
     );
-    for (const id of this.closes) {
-      const asset = findById(portfolio.modelAssets, id);
-      if (asset && !asset.isClosed) {
+    for (const entry of this.closes) {
+      for (const asset of assetsClosedBy(entry, portfolio.modelAssets, currentDateInt)) {
+        if (asset.isClosed) continue;
         logger.log(
           LogCategory.TRANSFER,
           () => `LifeEvent closing asset: ${asset.displayName}`
@@ -32349,7 +32366,8 @@ var ModelLifeEvent = class _ModelLifeEvent {
       type,
       displayName: meta3.label,
       triggerAge,
-      closes: [...meta3.defaultMutations.closes || []],
+      // Deep: a template is an object, and must not be shared with the meta.
+      closes: structuredClone(meta3.defaultMutations.closes || []),
       phaseTransfers: {},
       globalOverrides: {}
     });

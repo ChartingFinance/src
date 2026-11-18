@@ -33,6 +33,8 @@ import { quickStartProfiles, buildQuickStart } from '../js/quick-start.js';
 import { FundTransfer } from '../js/fund-transfer.js';
 import { ModelAsset } from '../js/model-asset.js';
 import { routingGenes, applyRouting } from '../js/routing-search.js';
+import { ModelLifeEvent, LifeEvent, LifeEventMeta, assetsClosedBy, isCloseTemplate } from '../js/life-event.js';
+import { DateInt } from '../js/utils/date-int.js';
 
 // planFromProfile reads the clock for the plan's first month; pinned so this
 // suite is the same test every month.
@@ -142,7 +144,10 @@ await check('a prepared profile refers to its assets only by id', () => {
                     `a transfer to ${ft.toDisplayName} was not resolved`);
             }
         }
-        for (const entry of event.closes) assert.ok(ids.has(entry), `closes ${entry}`);
+        // A close names an asset by id, or a type of asset (a template).
+        for (const entry of event.closes) {
+            assert.ok(ids.has(entry) || isCloseTemplate(entry), `closes ${JSON.stringify(entry)}`);
+        }
     }
     const cabin = spec.modelAssets.find((a) => a.displayName === 'Cabin');
     assert.equal(cabin.fundingConfig.sourceId, idOf(spec, 'Brokerage'));
@@ -319,6 +324,83 @@ await check('a ModelAsset\'s own transfers resolve when a Portfolio is built fro
     const portfolio = new Portfolio(assets, false, simConfigFromGlobals());
     const brokerage = portfolio.modelAssets.find((a) => a.displayName === 'Brokerage');
     assert.equal(assets[0].fundTransfers[0].toId, brokerage.id);
+});
+
+// ── 6. Closing a type of asset: templates ───────────────────────────────────
+
+await check('a template closes every asset of its type already running, and nothing else', () => {
+    const at = (y, m) => DateInt.from(y, m);
+    const assets = [
+        { id: 'a1', instrument: 'workingIncome', startDateInt: at(2030, 1) },
+        { id: 'a2', instrument: 'workingIncome', startDateInt: at(2040, 1) },   // starts the month it fires
+        { id: 'a3', instrument: 'workingIncome', startDateInt: at(2042, 6) },   // a job after retiring
+        { id: 'a4', instrument: 'retirementIncome', startDateInt: at(2030, 1) },
+    ];
+    const retire = at(2040, 1);
+    assert.deepEqual(assetsClosedBy({ instrument: 'workingIncome' }, assets, retire).map((a) => a.id), ['a1', 'a2']);
+    // By id, the asset is closed whenever it starts: the user chose it.
+    assert.deepEqual(assetsClosedBy('a3', assets, retire).map((a) => a.id), ['a3']);
+    assert.deepEqual(assetsClosedBy('Salary', assets, retire), [], 'an unresolved name closed something');
+    assert.deepEqual(assetsClosedBy({ instrument: 'pension' }, assets, retire), []);
+});
+
+await check("Retire's default closes every working income, as a template no phase shares", () => {
+    assert.deepEqual(LifeEventMeta.get(LifeEvent.RETIRE).defaultMutations.closes, [{ instrument: 'workingIncome' }]);
+    const a = ModelLifeEvent.createDefault(LifeEvent.RETIRE, 65);
+    a.closes[0].instrument = 'pension';
+    assert.equal(ModelLifeEvent.createDefault(LifeEvent.RETIRE, 65).closes[0].instrument, 'workingIncome',
+        "a phase's template is the meta's object");
+});
+
+await check('preparePlan leaves a template as it is', () => {
+    const events = [{ type: 'retire', phaseTransfers: {}, closes: [{ instrument: 'workingIncome' }, 'Salary'] }];
+    preparePlan([{ id: 'a1', displayName: 'Salary', instrument: 'workingIncome' }], events);
+    assert.deepEqual(events[0].closes, [{ instrument: 'workingIncome' }, 'a1']);
+});
+
+await check('Dual Income: Retire closes Salary A and Salary B, which the old name "Salary" never matched', async () => {
+    const spec = planFromProfile('dualIncome');
+    const { portfolio } = await runPlan(spec);
+    const retire = portfolio.lifeEvents.find((e) => e.type === 'retire').triggerDateInt;
+    for (const name of ['Salary A', 'Salary B']) {
+        const salary = portfolio.modelAssets.find((a) => a.displayName === name);
+        assert.ok(salary.isClosed, `${name} is open`);
+        assert.equal(salary.closedDateInt?.toInt(), retire.toInt(), `${name} closed in ${salary.closedDateInt}`);
+    }
+    // The old default, by name, closes neither: they ran on to their finish dates.
+    const old = clone(spec);
+    old.lifeEvents.find((e) => e.type === 'retire').closes = ['Salary'];
+    const before = (await runPlan(old)).portfolio;
+    for (const name of ['Salary A', 'Salary B']) {
+        const salary = before.modelAssets.find((a) => a.displayName === name);
+        assert.notEqual(salary.closedDateInt?.toInt(), retire.toInt(), `${name} was closed by the name`);
+    }
+});
+
+await check("a job that starts after retiring is not closed by Retire's template", async () => {
+    const spec = clone(planFromProfile('midCareer'));
+    const salary = spec.modelAssets.find((a) => a.displayName === 'Salary');
+    const retireYear = salary.finishDateInt.year;
+    spec.modelAssets.push({
+        instrument: 'workingIncome', displayName: 'Part-time',
+        startDateInt: { year: retireYear + 2, month: 1 }, finishDateInt: { year: retireYear + 4, month: 12 },
+        startCurrency: { amount: 1500 }, annualReturnRate: { rate: 0 },
+    });
+    const { portfolio } = await runPlan(planWithIds(spec));
+    const job = portfolio.modelAssets.find((a) => a.displayName === 'Part-time');
+    const retire = portfolio.lifeEvents.find((e) => e.type === 'retire').triggerDateInt;
+    assert.ok(retire.toInt() < job.startDateInt.toInt(), 'the fixture job starts before retiring');
+    assert.notEqual(job.closedDateInt?.toInt(), retire.toInt(), 'Retire closed the job before it began');
+    assert.ok(job.closedDateInt == null || job.closedDateInt.toInt() > job.startDateInt.toInt(), 'the job never ran');
+
+    // The routing search agrees: in the Retire phase the job is still routed.
+    const prepared = planWithIds(spec);
+    const map = routingGenes({ modelAssets: prepared.modelAssets, lifeEvents: prepared.lifeEvents,
+        config: simConfigFromPlanSpec(prepared) });
+    const retireIdx = prepared.lifeEvents.findIndex((e) => e.type === 'retire');
+    const jobId = prepared.modelAssets.find((a) => a.displayName === 'Part-time').id;
+    assert.ok(map.groups.some((g) => g.phaseIdx === retireIdx && g.sourceId === jobId),
+        'the routing search treats the later job as closed at retirement');
 });
 
 console.log(`\n${passed} passed, ${failed} failed`);

@@ -255,9 +255,12 @@ await check('a seed gives the same stream every time, and another seed another',
 
 await check('a source running on an earlier phase\'s rules keeps them all when one is changed', () => {
     // Young Couple, with one of the salary's rules also moving money when the
-    // salary closes: a part of a rule the search never touches.
+    // salary closes: a part of a rule the search never touches. Retire here
+    // closes nothing, so the salaries run on into it on Accumulate's rules (as
+    // for someone who keeps working); by default it closes every working income.
     const plan = JSON.parse(JSON.stringify({ ...PLANS.youngCouple, config: undefined }));
     plan.config = PLANS.youngCouple.config;
+    plan.lifeEvents.find((e) => e.type === 'retire').closes = [];
     const inherits = R.routingGenes(plan).groups.find((x) => x.inherited && x.rules.length > 1);
     const setIn = plan.lifeEvents.findLast((e, idx) => idx < inherits.phaseIdx && inherits.sourceId in (e.phaseTransfers ?? {}));
     setIn.phaseTransfers[inherits.sourceId][0].closeMoveValue = 50;

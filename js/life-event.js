@@ -11,7 +11,9 @@
  *
  * A ModelLifeEvent is a user decision that rewires the portfolio when it
  * fires: it closes assets (e.g. the salary at retirement) and installs this
- * phase's fund transfers. Both refer to assets by id (plan-ids.js). `globalOverrides` is stored and saved but not
+ * phase's fund transfers. Both refer to assets by id (plan-ids.js). A close can
+ * also name a type of asset, a template: Retire's default closes every working
+ * income (see assetsClosedBy). `globalOverrides` is stored and saved but not
  * applied (see markdowns/code-issues-from-comments.md).
  *
  * Portfolio.applyLifeEvents calls event.apply(portfolio) in the month
@@ -23,6 +25,41 @@ import { DateInt }        from './utils/date-int.js';
 function findById(assets, id) { return assets.find(a => a.id === id); }
 import { logger, LogCategory } from './utils/logger.js';
 import { ageToDateIntFor } from './plan-dates.js';
+import { Instrument } from './instruments/instrument.js';
+
+// ── What a phase closes ─────────────────────────────────────────
+
+/**
+ * The assets one entry of a phase's `closes` closes when the phase fires.
+ *
+ * An entry is either an asset id, which names that asset, or a template,
+ * `{ instrument }`, which names every asset of that type already running in
+ * the month the phase fires. "Already running" matters: a job that starts after
+ * retirement is a decision made for retirement, and Retire's "close every
+ * working income" must not close it before it begins. An asset named by id is
+ * closed whenever it starts: the user chose that asset.
+ *
+ * @param {string|{instrument: string}} entry
+ * @param {ModelAsset[]} assets
+ * @param {DateInt} dateInt  the month the phase fires
+ * @returns {ModelAsset[]}
+ */
+export function assetsClosedBy(entry, assets, dateInt) {
+  if (typeof entry === 'string') {
+    const asset = findById(assets, entry);
+    return asset ? [asset] : [];
+  }
+  if (isCloseTemplate(entry)) {
+    return assets.filter((a) => a.instrument === entry.instrument
+      && !(a.startDateInt && a.startDateInt.isAfter(dateInt)));
+  }
+  return [];
+}
+
+/** True for a `closes` entry that names a type of asset rather than one asset. */
+export function isCloseTemplate(entry) {
+  return !!entry && typeof entry === 'object' && typeof entry.instrument === 'string';
+}
 
 // ── Event type enum ─────────────────────────────────────────────
 
@@ -54,7 +91,10 @@ export const LifeEventMeta = new Map([
     projectionTabs: ['value', 'guardrails', 'monteCarlo', 'spreadsheet'],
     assetGroupLabels: { distributions: 'Distributions', capital: 'Capital', expenses: 'Expenses', taxes: 'Taxes' },
     defaultMutations: {
-      closes:  ['Salary'],
+      // Every working income still running at retirement, whatever it is
+      // called. It was ['Salary'], a name, which matched nothing in five of the
+      // eight quick-start profiles ("Salary A" and "Salary B" were paid on).
+      closes:  [{ instrument: Instrument.WORKING_INCOME }],
     },
     advisoryChecks: [
       { instrument: 'retirementIncome', message: 'No retirement income found. Would you like to add one?' },
@@ -109,7 +149,8 @@ export class ModelLifeEvent {
    * @param {string}  opts.type           LifeEvent enum value
    * @param {string}  opts.displayName    User-facing name
    * @param {number}  opts.triggerAge     Age when event fires
-   * @param {string[]}        [opts.closes]            Ids of the assets to close
+   * @param {Array<string|{instrument: string}>} [opts.closes]  What it closes: asset
+   *                                                    ids, or templates (assetsClosedBy)
    * @param {Object}          [opts.phaseTransfers]   { assetId: [FundTransfer JSON] }
    * @param {Object}          [opts.globalOverrides]    { inflationRate?: number, ... }
    */
@@ -187,11 +228,12 @@ export class ModelLifeEvent {
     logger.log(LogCategory.MONTHLY,
       () => `LifeEvent.apply: "${this.displayName}" (${this.type}) at ${currentDateInt}`);
 
-    // 1. Close the assets it names, by id. A name nothing resolved names no
-    //    asset, and closes nothing.
-    for (const id of this.closes) {
-      const asset = findById(portfolio.modelAssets, id);
-      if (asset && !asset.isClosed) {
+    // 1. Close what it names: assets by id, and templates by type
+    //    (assetsClosedBy). A name nothing resolved names no asset, and closes
+    //    nothing.
+    for (const entry of this.closes) {
+      for (const asset of assetsClosedBy(entry, portfolio.modelAssets, currentDateInt)) {
+        if (asset.isClosed) continue;
         logger.log(LogCategory.TRANSFER,
           () => `LifeEvent closing asset: ${asset.displayName}`);
         portfolio.closeAsset(asset, currentDateInt);
@@ -219,7 +261,8 @@ export class ModelLifeEvent {
       type,
       displayName:      meta.label,
       triggerAge,
-      closes:           [...(meta.defaultMutations.closes || [])],
+      // Deep: a template is an object, and must not be shared with the meta.
+      closes:           structuredClone(meta.defaultMutations.closes || []),
       phaseTransfers: {},
       globalOverrides:   {},
     });
