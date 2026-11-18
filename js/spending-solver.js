@@ -93,16 +93,25 @@ export function solvedAssets(modelAssets, factor) {
 }
 
 /**
+ * The plan run with its expenses scaled by `factor`: the finished portfolio.
+ * The solver measures it (runAt); the Test Bench's chart draws it
+ * (test-bench-chart.js), so the chart shows the run the solver reported.
+ */
+export function portfolioAt(plan, factor) {
+    const assets = scaledAssets(plan.modelAssets, factor).map((a) => ModelAsset.fromJSON(a));
+    const portfolio = new Portfolio(assets, false, plan.config);
+    portfolio.lifeEvents = (plan.lifeEvents ?? []).map((e) => ModelLifeEvent.fromJSON(e));
+    chronometer_run(portfolio);
+    return portfolio;
+}
+
+/**
  * Run the plan with its expenses scaled by `factor`, and measure it.
  *
  * @returns {object} one measured run; see `measure`
  */
 export function runAt(plan, factor) {
-    const assets = scaledAssets(plan.modelAssets, factor).map((a) => ModelAsset.fromJSON(a));
-    const portfolio = new Portfolio(assets, false, plan.config);
-    portfolio.lifeEvents = (plan.lifeEvents ?? []).map((e) => ModelLifeEvent.fromJSON(e));
-    chronometer_run(portfolio);
-    return measure(portfolio, factor);
+    return measure(portfolioAt(plan, factor), factor);
 }
 
 /** The figures the solver and the result table read from one finished run. */

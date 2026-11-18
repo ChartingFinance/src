@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.3.44; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.3.45; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -42613,12 +42613,15 @@ function solvedAssets(modelAssets, factor) {
     return plain;
   });
 }
-function runAt(plan, factor) {
+function portfolioAt(plan, factor) {
   const assets = scaledAssets(plan.modelAssets, factor).map((a) => ModelAsset.fromJSON(a));
   const portfolio = new Portfolio(assets, false, plan.config);
   portfolio.lifeEvents = (plan.lifeEvents ?? []).map((e) => ModelLifeEvent.fromJSON(e));
   chronometer_run(portfolio);
-  return measure(portfolio, factor);
+  return portfolio;
+}
+function runAt(plan, factor) {
+  return measure(portfolioAt(plan, factor), factor);
 }
 function measure(portfolio, factor) {
   const issues = detectIssues(portfolio);

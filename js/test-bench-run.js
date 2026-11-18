@@ -30,7 +30,8 @@
  * as a column is: under guardrails and across simulated markets.
  */
 
-import { global_workerSnapshot, global_backtestYear, global_simDataMode, simConfigFromGlobals } from './globals.js';
+import { global_workerSnapshot, global_backtestYear, global_simDataMode, simConfigFromGlobals,
+         global_user_startAge, global_user_retirementAge } from './globals.js';
 import { scaledAssets } from './spending-solver.js';
 import { routingGenes, searchesAt, estimateRuns } from './routing-search.js';
 import { guardrailsOutcome, simulationOutcome, successTone } from './outcome-summary.js';
@@ -111,6 +112,25 @@ function baseFor(plan) {
         lifeEvents: plan.lifeEvents ?? [],
         backtestYear: global_backtestYear,
         retirementDateInt: plan.retirementDateInt ?? null,
+    };
+}
+
+/**
+ * The plan as a test's workers run it, built here on the page: its assets and
+ * life events copied as they are now, and the settings in force, which are the
+ * ones every job of the test carries (baseFor). The Test Bench's chart runs it
+ * again at an answer (test-bench-chart.js). `ages` are for its phase markers.
+ *
+ * @param {object} plan  as runTestBench()
+ * @returns {{ modelAssets: object[], lifeEvents: object[], config: object,
+ *             ages: { startAge: number, retirementAge: number } }}
+ */
+export function benchPlan(plan) {
+    return {
+        modelAssets: JSON.parse(JSON.stringify(plan.modelAssets)),
+        lifeEvents: JSON.parse(JSON.stringify(plan.lifeEvents ?? [])),
+        config: simConfigFromGlobals(),
+        ages: { startAge: global_user_startAge, retirementAge: global_user_retirementAge },
     };
 }
 

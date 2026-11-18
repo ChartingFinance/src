@@ -148,6 +148,8 @@ Under it, in the same element, the Routing test: "is there a better way to route
 - the selected routing's changes as a table by phase (from, to, now, proposed), and as a third column, "With this routing", in the Spending table;
 - "Save this routing as a scenario" and "Save it with its spending".
 
+Under both, once the Spending test has an answer, a chart (Chart.js stacked bars, 320px; `js/test-bench-chart.js`): one column of the Spending table drawn as Macro Projection's bars, each top-level group's value in today's dollars at the END of each period, so the last bar's total is the column's "Left at the end". A segmented picker over the table's columns (As entered · Spend the most · With this routing) chooses which; it opens on the newest answer, and the routing column follows the selected row. Every column shares one y-axis. The tooltip lists each group and the total. The workers return no run, so the page runs each column once more, untraced (about 30 ms each).
+
 The solver (`js/spending-solver.js`) and each routing search (`js/routing-search.js`) run in the shared simulation worker, one worker per search, up to the machine's cores less one. A result on screen is dimmed after the plan changes; the routing list is also dimmed when the floor changes.
 
 ### Footer
