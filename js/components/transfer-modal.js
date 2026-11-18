@@ -10,7 +10,8 @@
  *   modelAssets      - ModelAsset[] (all assets)
  *
  * Dispatches:
- *   'save-transfers' { detail: { displayName, fundTransfers } }
+ *   'save-transfers' { detail: { assetId, displayName, fundTransfers } }
+ *     assetId is the key the phase's rules are saved under (plan-ids.js)
  *   'close'
  */
 
@@ -140,8 +141,8 @@ class TransferModal extends LitElement {
 
         this._tabs = this._getChartTabs(currentAsset);
 
-        // Look up existing transfers from the active phase
-        const existingTransfers = this.phaseTransfers[this.currentDisplayName] || [];
+        // Look up existing transfers from the active phase, keyed by asset id
+        const existingTransfers = this.phaseTransfers[currentAsset.id] || [];
 
         const isRetirement = InstrumentType.isRetirementIncome(currentAsset.instrument);
 
@@ -152,9 +153,7 @@ class TransferModal extends LitElement {
             if (isRetirement && (InstrumentType.isTaxDeferred(ma.instrument) || InstrumentType.isTaxFree(ma.instrument))) return false;
             return true;
         }).map(ma => {
-            const existing = existingTransfers.find(
-                ft => (ft.toDisplayName ?? ft.toDisplayName) === ma.displayName
-            );
+            const existing = existingTransfers.find(ft => ft.toId === ma.id);
             return {
                 modelAsset: ma,
                 monthlyMoveValue: existing ? existing.monthlyMoveValue : 0,
@@ -179,6 +178,7 @@ class TransferModal extends LitElement {
                     </div>
                     <div class="text-sm font-semibold text-gray-600 whitespace-nowrap">${ma.startCurrency.toString()}</div>
                 </div>
+                <input type="hidden" name="toId" .value=${ma.id} />
                 <input type="hidden" name="toDisplayName" .value=${ma.displayName} />
                 <div class="flex items-center gap-4 mb-2">
                     <div class="flex flex-col ml-auto">
@@ -244,6 +244,7 @@ class TransferModal extends LitElement {
         const fundTransfers = [];
 
         for (const form of forms) {
+            const toId = form.querySelector('[name="toId"]').value;
             const toDisplayName = form.querySelector('[name="toDisplayName"]').value;
             // parseFloat: the inputs step by 0.1, and parseInt saved 12.5% as 12
             // and dropped a 0.5% rule altogether.
@@ -251,13 +252,15 @@ class TransferModal extends LitElement {
             const closeMoveValue = parseFloat(form.querySelector('[name="closeMoveValue"]').value) || 0;
 
             if (monthlyMoveValue > 0 || closeMoveValue > 0) {
-                fundTransfers.push(new FundTransfer(toDisplayName, monthlyMoveValue, closeMoveValue));
+                fundTransfers.push(new FundTransfer(toDisplayName, monthlyMoveValue, closeMoveValue, toId));
             }
         }
 
         this.dispatchEvent(new CustomEvent('save-transfers', {
             bubbles: true, composed: true,
             detail: {
+                assetId: findByName((this._portfolio ?? this.portfolio)?.modelAssets ?? [],
+                    this.currentDisplayName)?.id ?? null,
                 displayName: this.currentDisplayName,
                 fundTransfers,
             },

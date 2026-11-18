@@ -52,6 +52,9 @@ const SUITE_CLOCK = '2026-11-15T12:00:00';
 pinClock(SUITE_CLOCK);
 
 let passed = 0, failed = 0;
+
+/** Rules are keyed by asset id (plan-ids.js); a spec's asset by its name. */
+const idOf = (spec, name) => spec.modelAssets.find(a => a.displayName === name)?.id;
 async function check(label, fn) {
     try { await fn(); passed++; console.log(`  ok   ${label}`); }
     catch (err) { failed++; console.log(`  FAIL ${label}\n       ${err.message}`); }
@@ -132,7 +135,7 @@ await check('§5.2 a horizon that reaches retirement emits TWO', () => {
 await check('§5.3 every dollar of income is routed — splits total exactly 100', () => {
     for (const intent of [TURN_ONE, TURN_TWO]) {
         const { spec } = buildPlan(intent);
-        const salary = spec.lifeEvents[0].phaseTransfers['Salary'];
+        const salary = spec.lifeEvents[0].phaseTransfers[idOf(spec, 'Salary')];
         const total = salary.reduce((n, t) => n + t.monthlyMoveValue, 0);
         assert.equal(total, 100, `Salary routes ${total}%`);
     }
@@ -535,7 +538,7 @@ await check('turn two also runs clean, and the horizon is unchanged', async () =
 await check('a plan crossing retirement funds its expenses from an account', async () => {
     const { spec } = buildPlan({ ...TURN_ONE, horizonYears: 30 });
     const retire = spec.lifeEvents.find(e => e.type === 'retire');
-    assert.ok(retire.phaseTransfers['Living Expenses'],
+    assert.ok(retire.phaseTransfers[idOf(spec, 'Living Expenses')],
         'work income stops and nothing was told to pay the bills');
     const { issues } = await runPlan(spec);
     // Expenses may outlive the money; what must not happen is an obligation
@@ -559,13 +562,13 @@ await check('every expense names its payer rather than leaving it to the backsto
             .map(a => a.displayName);
         assert.ok(expenses.length, 'no expense to check');
         for (const label of expenses) {
-            const legs = accum.phaseTransfers[label];
+            const legs = accum.phaseTransfers[idOf(spec, label)];
             assert.ok(legs?.length, `${label} has no payer in the accumulate phase`);
             const total = legs.reduce((n, t) => n + t.monthlyMoveValue, 0);
             assert.equal(total, 100, `${label} is only ${total}% funded`);
-            const accounts = new Set(spec.modelAssets.map(a => a.displayName));
+            const accounts = new Set(spec.modelAssets.map(a => a.id));
             for (const leg of legs) {
-                assert.ok(accounts.has(leg.toDisplayName),
+                assert.ok(accounts.has(leg.toId),
                     `${label} is paid by "${leg.toDisplayName}", which is not in the plan`);
             }
         }
@@ -604,7 +607,7 @@ await check('withholding estimate matches what the run books, to the cent', asyn
 
     // build_plan sized the residual expense at residual% of ITS estimate of
     // net, so the estimate is recoverable from the emitted spec.
-    const residualShare = spec.lifeEvents[0].phaseTransfers['Salary']
+    const residualShare = spec.lifeEvents[0].phaseTransfers[idOf(spec, 'Salary')]
         .reduce((n, t) => n + t.monthlyMoveValue, 0) === 100 ? 0.90 : null;
     assert.ok(residualShare, 'could not recover the residual share');
     const estimatedNet = Math.abs(le.startCurrency.amount) / residualShare;

@@ -59,7 +59,9 @@ const planOf = (spec) => ({
 });
 const PLANS = at('2026-11-15T12:00:00Z', () =>
     Object.fromEntries(listProfiles().map(({ key }) => [key, planOf(planFromProfile(key))])));
-const instrumentOf = (plan, name) => plan.modelAssets.find((a) => a.displayName === name).instrument;
+// By id or by name: rules are keyed by id; a target's label is its name.
+const instrumentOf = (plan, ref) => plan.modelAssets.find((a) => a.id === ref || a.displayName === ref).instrument;
+const idOf = (plan, name) => plan.modelAssets.find((a) => a.displayName === name).id;
 const isRetirement = (i) => InstrumentType.isTaxDeferred(i) || InstrumentType.isTaxFree(i);
 
 console.log('routing-search');
@@ -133,7 +135,9 @@ await check('before 60 no expense gene draws on a retirement account; from 60 it
 function withEarlyDraw() {
     const plan = JSON.parse(JSON.stringify({ ...PLANS.midCareer, config: undefined }));
     plan.config = PLANS.midCareer.config;
-    plan.lifeEvents[0].phaseTransfers.Rent = [
+    // Under Rent's id, which already holds its rules (rules under the old name
+    // would lose to them); the targets by name, as a hand-written rule names them.
+    plan.lifeEvents[0].phaseTransfers[idOf(plan, 'Rent')] = [
         { toDisplayName: 'Brokerage', monthlyMoveValue: 60, closeMoveValue: 0 },
         { toDisplayName: '401K', monthlyMoveValue: 40, closeMoveValue: 0 },
     ];
@@ -155,7 +159,8 @@ await check('an early draw the user entered is kept, locked, and counts toward t
     assert.equal(R.repair(map, values)[i], 60);
 
     const events = R.applyRouting(plan, map, R.repair(map, values));
-    assert.equal(events[0].phaseTransfers.Rent.find((r) => r.toDisplayName === '401K').monthlyMoveValue, 40);
+    // Written by name in the fixture, read back by id: the routing prepares the plan.
+    assert.equal(events[0].phaseTransfers[idOf(plan, 'Rent')].find((r) => r.toId === idOf(plan, '401K')).monthlyMoveValue, 40);
 });
 
 // ── Repair ───────────────────────────────────────────────────────────
@@ -211,11 +216,11 @@ await check('a new rule is added only when it carries something, and nothing giv
     const group = map.groups.findIndex((g) => g.kind === 'expense' && g.targets.some((t) => !t.locked && t.entered === 0));
     const target = map.groups[group].targets.findIndex((t) => !t.locked && t.entered === 0);
     const i = map.genes.findIndex((g) => g.group === group && g.target === target);
-    const { phaseIdx, source, targets } = map.groups[group];
+    const { phaseIdx, sourceId: source, targets } = map.groups[group];
 
     const same = R.applyRouting(plan, map, map.entered);
-    assert.equal(same[phaseIdx].phaseTransfers[source].some((r) => r.toDisplayName === targets[target].name
-        && !plan.lifeEvents[phaseIdx].phaseTransfers[source].some((p) => p.toDisplayName === r.toDisplayName)), false);
+    assert.equal(same[phaseIdx].phaseTransfers[source].some((r) => r.toId === targets[target].id
+        && !plan.lifeEvents[phaseIdx].phaseTransfers[source].some((p) => p.toId === r.toId)), false);
 
     const values = map.entered.slice();
     values[i] = 0;
@@ -223,7 +228,7 @@ await check('a new rule is added only when it carries something, and nothing giv
     values[others[0]] -= 7;
     values[i] = 7;
     const changed = R.applyRouting(plan, map, values);
-    assert.equal(changed[phaseIdx].phaseTransfers[source].find((r) => r.toDisplayName === targets[target].name).monthlyMoveValue, 7);
+    assert.equal(changed[phaseIdx].phaseTransfers[source].find((r) => r.toId === targets[target].id).monthlyMoveValue, 7);
     assert.equal(JSON.stringify(plan), before);
 });
 
@@ -232,7 +237,8 @@ await check('home and mortgage rules pass through untouched', () => {
     const map = R.routingGenes(plan);
     const events = R.applyRouting(plan, map, map.genes.map(() => 0));
     for (const name of ['Home', 'Mortgage']) {
-        assert.deepEqual(events[0].phaseTransfers[name], plan.lifeEvents[0].phaseTransfers[name]);
+        const id = idOf(plan, name);
+        assert.deepEqual(events[0].phaseTransfers[id], plan.lifeEvents[0].phaseTransfers[id]);
     }
 });
 
@@ -253,27 +259,27 @@ await check('a source running on an earlier phase\'s rules keeps them all when o
     const plan = JSON.parse(JSON.stringify({ ...PLANS.youngCouple, config: undefined }));
     plan.config = PLANS.youngCouple.config;
     const inherits = R.routingGenes(plan).groups.find((x) => x.inherited && x.rules.length > 1);
-    const setIn = plan.lifeEvents.findLast((e, idx) => idx < inherits.phaseIdx && inherits.source in (e.phaseTransfers ?? {}));
-    setIn.phaseTransfers[inherits.source][0].closeMoveValue = 50;
+    const setIn = plan.lifeEvents.findLast((e, idx) => idx < inherits.phaseIdx && inherits.sourceId in (e.phaseTransfers ?? {}));
+    setIn.phaseTransfers[inherits.sourceId][0].closeMoveValue = 50;
 
     const map = R.routingGenes(plan);
-    const g = map.groups.findIndex((x) => x.inherited && x.source === inherits.source);
+    const g = map.groups.findIndex((x) => x.inherited && x.sourceId === inherits.sourceId);
     const group = map.groups[g];
-    assert.ok(!(group.source in plan.lifeEvents[group.phaseIdx].phaseTransfers), 'the fixture no longer inherits');
+    assert.ok(!(group.sourceId in plan.lifeEvents[group.phaseIdx].phaseTransfers), 'the fixture no longer inherits');
 
     // Written back as entered, the phase still says nothing about the source.
     const same = R.applyRouting(plan, map, map.entered);
-    assert.ok(!(group.source in same[group.phaseIdx].phaseTransfers));
+    assert.ok(!(group.sourceId in same[group.phaseIdx].phaseTransfers));
 
     // One percentage changed: the phase now holds every rule that was in force.
     const i = map.genes.findIndex((gene) => gene.group === g && group.targets[gene.target].entered >= 1);
     const values = map.entered.slice();
     values[i] -= 1;
-    const written = R.applyRouting(plan, map, values)[group.phaseIdx].phaseTransfers[group.source];
-    const target = group.targets[map.genes[i].target].name;
+    const written = R.applyRouting(plan, map, values)[group.phaseIdx].phaseTransfers[group.sourceId];
+    const target = group.targets[map.genes[i].target].id;
     // Each rule whole, in order, with the one percentage moved.
-    assert.deepEqual(written, setIn.phaseTransfers[group.source].map((rule) =>
-        (rule.toDisplayName === target ? { ...rule, monthlyMoveValue: rule.monthlyMoveValue - 1 } : rule)));
+    assert.deepEqual(written, setIn.phaseTransfers[group.sourceId].map((rule) =>
+        (rule.toId === target ? { ...rule, monthlyMoveValue: rule.monthlyMoveValue - 1 } : rule)));
     assert.equal(written[0].closeMoveValue, 50);
 });
 
@@ -409,8 +415,8 @@ await check('the changes listed are the changes made, and no others', () => {
     const plan = PLANS.midCareer;
     const result = searched('midCareer');
     assert.ok(result.changes.length > 0);
-    const rule = (events, c) => events[c.phaseIdx].phaseTransfers[c.source]
-        ?.find((r) => r.toDisplayName === c.target)?.monthlyMoveValue ?? 0;
+    const rule = (events, c) => events[c.phaseIdx].phaseTransfers[c.sourceId]
+        ?.find((r) => r.toId === c.targetId)?.monthlyMoveValue ?? 0;
     for (const c of result.changes) {
         assert.equal(rule(plan.lifeEvents, c), c.now, `${c.phase} ${c.source} → ${c.target} now`);
         assert.equal(rule(result.lifeEvents, c), c.proposed);
@@ -419,7 +425,7 @@ await check('the changes listed are the changes made, and no others', () => {
     // Put each listed change back: the plan as entered, rule for rule.
     const back = JSON.parse(JSON.stringify(result.lifeEvents));
     for (const c of result.changes) {
-        back[c.phaseIdx].phaseTransfers[c.source].find((r) => r.toDisplayName === c.target).monthlyMoveValue = c.now;
+        back[c.phaseIdx].phaseTransfers[c.sourceId].find((r) => r.toId === c.targetId).monthlyMoveValue = c.now;
     }
     const live = (events) => events.map((e) => Object.fromEntries(Object.entries(e.phaseTransfers ?? {})
         .map(([name, rules]) => [name, rules.filter((r) => r.monthlyMoveValue > 0)

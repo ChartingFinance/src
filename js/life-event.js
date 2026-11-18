@@ -10,8 +10,8 @@
  *  4. ModelLifeEvent   — instance class with apply(), toJSON(), fromJSON()
  *
  * A ModelLifeEvent is a user decision that rewires the portfolio when it
- * fires: it closes named assets (e.g. the salary at retirement) and installs
- * this phase's fund transfers. `globalOverrides` is stored and saved but not
+ * fires: it closes assets (e.g. the salary at retirement) and installs this
+ * phase's fund transfers. Both refer to assets by id (plan-ids.js). `globalOverrides` is stored and saved but not
  * applied (see markdowns/code-issues-from-comments.md).
  *
  * Portfolio.applyLifeEvents calls event.apply(portfolio) in the month
@@ -20,7 +20,7 @@
 
 import { DateInt }        from './utils/date-int.js';
 /** Inline to avoid circular dep with portfolio.js */
-function findByName(assets, name) { return assets.find(a => a.displayName === name); }
+function findById(assets, id) { return assets.find(a => a.id === id); }
 import { logger, LogCategory } from './utils/logger.js';
 import { ageToDateIntFor } from './plan-dates.js';
 
@@ -109,8 +109,8 @@ export class ModelLifeEvent {
    * @param {string}  opts.type           LifeEvent enum value
    * @param {string}  opts.displayName    User-facing name
    * @param {number}  opts.triggerAge     Age when event fires
-   * @param {string[]}        [opts.closes]            Asset displayNames to close
-   * @param {Object}          [opts.phaseTransfers]   { assetDisplayName: [FundTransfer JSON] }
+   * @param {string[]}        [opts.closes]            Ids of the assets to close
+   * @param {Object}          [opts.phaseTransfers]   { assetId: [FundTransfer JSON] }
    * @param {Object}          [opts.globalOverrides]    { inflationRate?: number, ... }
    */
   constructor({
@@ -187,12 +187,13 @@ export class ModelLifeEvent {
     logger.log(LogCategory.MONTHLY,
       () => `LifeEvent.apply: "${this.displayName}" (${this.type}) at ${currentDateInt}`);
 
-    // 1. Close named assets
-    for (const name of this.closes) {
-      const asset = findByName(portfolio.modelAssets, name);
+    // 1. Close the assets it names, by id. A name nothing resolved names no
+    //    asset, and closes nothing.
+    for (const id of this.closes) {
+      const asset = findById(portfolio.modelAssets, id);
       if (asset && !asset.isClosed) {
         logger.log(LogCategory.TRANSFER,
-          () => `LifeEvent closing asset: ${name}`);
+          () => `LifeEvent closing asset: ${asset.displayName}`);
         portfolio.closeAsset(asset, currentDateInt);
       }
     }

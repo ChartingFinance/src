@@ -57,11 +57,15 @@ export class FundTransferOneSided {
 
 export class FundTransfer {
   /**
-   * @param {string} toDisplayName     Target asset's familiar name
+   * @param {string} toDisplayName     Target asset's familiar name: its label, and how
+   *                                   a plan written without ids names it
    * @param {number} monthlyMoveValue  Monthly percentage of source value (0-100)
    * @param {number} closeMoveValue    On-close percentage of source value (0-100)
+   * @param {string|null} [toId]       Target asset's id: what the transfer goes to
+   *                                   (plan-ids.js preparePlan fills it from the name)
    */
-  constructor(toDisplayName, monthlyMoveValue = 0, closeMoveValue = 0) {
+  constructor(toDisplayName, monthlyMoveValue = 0, closeMoveValue = 0, toId = null) {
+    this.toId             = toId;
     this.toDisplayName    = toDisplayName;
     this.monthlyMoveValue = monthlyMoveValue;
     this.closeMoveValue   = closeMoveValue;
@@ -81,18 +85,20 @@ export class FundTransfer {
     // Backward compat: old format had moveOnFinishDate (boolean) + single moveValue
     if (obj.moveOnFinishDate !== undefined) {
       return obj.moveOnFinishDate
-        ? new FundTransfer(obj.toDisplayName, 0, mv)
-        : new FundTransfer(obj.toDisplayName, mv, 0);
+        ? new FundTransfer(obj.toDisplayName, 0, mv, obj.toId ?? null)
+        : new FundTransfer(obj.toDisplayName, mv, 0, obj.toId ?? null);
     }
     return new FundTransfer(
       obj.toDisplayName,
       mv,
       obj.closeMoveValue ?? 0,
+      obj.toId ?? null,
     );
   }
 
   static fromHTML(formElement) {
     let toDisplayName = null;
+    let toId = null;
     let monthlyMoveValue = 0;
     let closeMoveValue = 0;
 
@@ -103,12 +109,13 @@ export class FundTransfer {
     for (const el of elements) {
       switch (el.name) {
         case 'toDisplayName':      toDisplayName = el.value; break;
+        case 'toId':               toId = el.value || null; break;
         case 'monthlyMoveValue':   monthlyMoveValue = parseInt(el.value, 10) || 0; break;
         case 'closeMoveValue':     closeMoveValue = parseInt(el.value, 10) || 0; break;
       }
     }
 
-    return new FundTransfer(toDisplayName, monthlyMoveValue, closeMoveValue);
+    return new FundTransfer(toDisplayName, monthlyMoveValue, closeMoveValue, toId);
   }
 
   // ── Activity helpers ───────────────────────────────────────────
@@ -134,7 +141,7 @@ export class FundTransfer {
    * @returns {FundTransfer}
    */
   static system(fromModel, toModel, amount, allModels = null) {
-    const ft = new FundTransfer(toModel.displayName, 0, 0);
+    const ft = new FundTransfer(toModel.displayName, 0, 0, toModel.id ?? null);
     ft.fromModel = fromModel;
     ft.toModel = toModel;
     ft.approvedAmount = amount.copy();
@@ -296,14 +303,18 @@ export class FundTransfer {
   // ── Binding ──────────────────────────────────────────────────────
 
   /**
-   * Resolve display-name references to actual ModelAsset instances.
+   * Resolve the target to its ModelAsset instance, by id. A transfer with no id
+   * is one nothing prepared (preparePlan gives every resolvable target one), so
+   * it is looked up by its name, as a plan written without ids names it.
    * @param {ModelAsset} fromModel
    * @param {ModelAsset[]} allModels
    */
   bind(fromModel, allModels) {
 
     this.fromModel = fromModel;
-    this.toModel = allModels.find(m => m.displayName === this.toDisplayName) ?? null;
+    this.toModel = (this.toId != null
+      ? allModels.find(m => m.id === this.toId)
+      : allModels.find(m => m.displayName === this.toDisplayName)) ?? null;
     this._allModels = allModels;
 
   }
@@ -367,7 +378,7 @@ export class FundTransfer {
     // One causal scope for the whole movement: both legs, any realized gain,
     // spillover and unfunded remainder are attributed to this transfer.
     return withTrace(TraceKind.TRANSFER,
-      `Transfer ${this.fromModel.displayName} → ${this.toDisplayName}`,
+      `Transfer ${this.fromModel.displayName} → ${this.toModel.displayName}`,
       this.fromModel.currentDateInt,
       () => this.#executeInScope({ useClosePercent }));
   }
@@ -379,7 +390,7 @@ export class FundTransfer {
       type: EventType.TRANSFER,
       data: {
         from: this.fromModel?.displayName ?? '?',
-        to: this.toDisplayName,
+        to: this.toModel.displayName,
         cadence: useClosePercent ? 'on close' : 'monthly',
         ...(this.system ? { system: true } : {}),
       },
@@ -461,11 +472,14 @@ export class FundTransfer {
   // ── Utilities ────────────────────────────────────────────────────
 
   copy() {
-    return new FundTransfer(this.toDisplayName, this.monthlyMoveValue, this.closeMoveValue);
+    return new FundTransfer(this.toDisplayName, this.monthlyMoveValue, this.closeMoveValue, this.toId);
   }
 
   toJSON() {
     return {
+      // Left out until the target is resolved, so a transfer that names no
+      // asset writes what it was written with.
+      ...(this.toId != null ? { toId: this.toId } : {}),
       toDisplayName:    this.toDisplayName,
       monthlyMoveValue: this.monthlyMoveValue,
       closeMoveValue:   this.closeMoveValue,

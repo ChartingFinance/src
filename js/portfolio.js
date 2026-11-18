@@ -18,7 +18,7 @@ import { ExpenseEngine } from './engines/expense-engine.js';
 import { TaxEngine } from './engines/tax-engine.js';
 import { RebalanceEngine } from './engines/rebalance-engine.js';
 import { PremiumCreditEngine } from './engines/premium-credit-engine.js';
-import { assignPlanIds } from './plan-ids.js';
+import { preparePlan } from './plan-ids.js';
 
 export { FinancialPackage, FINANCIAL_FIELDS } from './financial-package.js';
 
@@ -155,8 +155,10 @@ function conservationBucket(event, bucket) {
 export class Portfolio {
     constructor(modelAssets, reports, config) {
         // Before sorting, so a plan built straight from JSON without ids gets
-        // them in the order it was written, the same order every time.
-        assignPlanIds(modelAssets);
+        // them in the order it was written, the same order every time. Also
+        // resolves the assets' own transfers, which a plan with no life events
+        // runs on.
+        preparePlan(modelAssets);
         this.modelAssets = this.sortModelAssets(modelAssets);
         this.reports = !!reports;
 
@@ -344,9 +346,10 @@ export class Portfolio {
         // Rebind, so assets and life events hold the config this run uses.
         this.bindEnvironment();
 
-        // Life events are assigned after the constructor, so their ids are
-        // checked here. A no-op for any plan that came in through a boundary.
-        assignPlanIds(this.modelAssets, this.lifeEvents);
+        // Life events are assigned after the constructor, so they are prepared
+        // here: their ids, and their rules and closes by asset id. A no-op for
+        // any plan that came in through a boundary.
+        preparePlan(this.modelAssets, this.lifeEvents);
 
         // Rewind the user to the starting age, or successive runs of one
         // Portfolio simulate different ages. Mutated in place: engines and
@@ -444,13 +447,14 @@ export class Portfolio {
     }
 
     /**
-     * Populate asset.fundTransfers from a life event's phaseTransfers map.
+     * Populate asset.fundTransfers from a life event's phaseTransfers map, keyed
+     * by asset id (initializeChron prepared it: plan-ids.js).
      * Called by initializeChron() for phase 0, and by ModelLifeEvent.apply() for subsequent phases.
      */
     applyPhaseTransfers(phaseEvent) {
         if (!phaseEvent?.phaseTransfers) return;
-        for (const [assetName, transfersJSON] of Object.entries(phaseEvent.phaseTransfers)) {
-            const asset = findByName(this.modelAssets, assetName);
+        for (const [assetId, transfersJSON] of Object.entries(phaseEvent.phaseTransfers)) {
+            const asset = findById(this.modelAssets, assetId);
             if (!asset || asset.isClosed) continue;
             asset.fundTransfers = transfersJSON.map(FundTransfer.fromJSON);
         }
@@ -998,7 +1002,7 @@ export class Portfolio {
 
     applyAssetOpenFundTransfer(modelAsset) {
         const config = modelAsset.fundingConfig;
-        const source = findByName(this.modelAssets, config.sourceDisplayName);
+        const source = findById(this.modelAssets, config.sourceId);
         if (!source || source.isClosed) {
             logger.log(LogCategory.TRANSFER, () => 'Portfolio.applyAssetOpenFundTransfer: funding source "' + config.sourceDisplayName + '" not found or closed');
             return;
@@ -1285,6 +1289,12 @@ export function lastDateInt(assets) {
 
 export function findByName(assets, displayName) {
   return assets.find(a => a.displayName === displayName);
+}
+
+/** The asset with this id (plan-ids.js), or undefined. */
+export function findById(assets, id) {
+  if (id == null) return undefined;
+  return assets.find(a => a.id === id);
 }
 
 export function removeByName(assets, displayName) {

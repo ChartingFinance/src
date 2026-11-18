@@ -154,12 +154,12 @@ class EventFormModal extends LitElement {
                         <div class="flex flex-wrap gap-2">
                             ${assets.map(a => html`
                                 <label class="flex items-center gap-2 px-3 py-2 rounded-xl text-sm cursor-pointer transition
-                                    ${this._closes.includes(a.displayName)
+                                    ${this._closes.includes(a.id)
                                         ? 'bg-red-50 text-red-700 border border-red-200'
                                         : 'bg-gray-50 text-gray-600 border border-gray-100 hover:bg-gray-100'}">
                                     <input type="checkbox" class="rounded"
-                                        .checked=${this._closes.includes(a.displayName)}
-                                        @change=${(e) => this._onCloseToggle(a.displayName, e.target.checked)} />
+                                        .checked=${this._closes.includes(a.id)}
+                                        @change=${(e) => this._onCloseToggle(a.id, e.target.checked)} />
                                     ${a.displayName}
                                 </label>
                             `)}
@@ -182,14 +182,17 @@ class EventFormModal extends LitElement {
     _onTypeSelect(type) {
         this._selectedType = type;
         const meta = LifeEventMeta.get(type);
-        this._closes = [...(meta.defaultMutations.closes || [])];
+        // A type's defaults name assets; the form, like the phase, holds ids.
+        const idOf = (name) => (this.modelAssets || []).find((a) => a.displayName === name)?.id ?? name;
+        this._closes = (meta.defaultMutations.closes || []).map(idOf);
     }
 
-    _onCloseToggle(name, checked) {
+    /** Closes are held by asset id (plan-ids.js). */
+    _onCloseToggle(id, checked) {
         if (checked) {
-            this._closes = [...this._closes, name];
+            this._closes = [...this._closes, id];
         } else {
-            this._closes = this._closes.filter(n => n !== name);
+            this._closes = this._closes.filter(entry => entry !== id);
         }
     }
 

@@ -38,7 +38,7 @@ import { Portfolio } from './portfolio.js';
 
 // ── Data loading ────────────────────────────────────────────
 import { membrane_rawDataToModelAssets } from './membrane.js';
-import { assignPlanIds } from './plan-ids.js';
+import { preparePlan, pruneDanglingRules } from './plan-ids.js';
 import { quickStartAssets, quickStartLifeEvents, quickStartProfiles, buildQuickStart } from './quick-start.js';
 import { ModelLifeEvent, LifeEvent, LifeEventType } from './life-event.js';
 
@@ -1307,9 +1307,10 @@ function calculate() {
     const modelAssets = assetList.modelAssets || [];
 
     // Every way a plan reaches the screen (a saved scenario, a shared link, a
-    // quick start, a new asset or phase) passes through here, so this is where
-    // the ones without an id get one (plan-ids.js).
-    assignPlanIds(modelAssets, appState.lifeEvents);
+    // quick start, a new asset or phase, a rename) passes through here, so this
+    // is where the ones without an id get one, and where every reference to an
+    // asset is turned into its id and relabelled with its name (plan-ids.js).
+    preparePlan(modelAssets, appState.lifeEvents);
 
     // Re-anchor the editor before anything reads a derived date. The plan and
     // the settings both reach here having changed — a new asset can become the
@@ -1343,25 +1344,9 @@ function calculate() {
         }
     }
 
-    // Prune orphaned phase transfer entries that reference assets no longer in the portfolio
-    const assetNames = new Set(modelAssets.map(a => a.displayName));
-    for (const event of appState.lifeEvents) {
-        if (!event.phaseTransfers) continue;
-        // Remove source entries for assets that no longer exist
-        for (const name of Object.keys(event.phaseTransfers)) {
-            if (!assetNames.has(name)) {
-                delete event.phaseTransfers[name];
-            }
-        }
-        // Remove target entries pointing to assets that no longer exist
-        for (const transfers of Object.values(event.phaseTransfers)) {
-            for (let i = transfers.length - 1; i >= 0; i--) {
-                if (!assetNames.has(transfers[i].toDisplayName)) {
-                    transfers.splice(i, 1);
-                }
-            }
-        }
-    }
+    // Phase rules that refer to assets no longer in the plan go. By id: a
+    // renamed asset keeps its rules (by name, a rename used to delete them all).
+    pruneDanglingRules(modelAssets, appState.lifeEvents);
 
     const portfolio = new Portfolio(modelAssets, true, simConfigFromGlobals());
     portfolio.lifeEvents = appState.lifeEvents.map(e => e.copy());
@@ -1926,10 +1911,10 @@ function connectFundingModal() {
 
 function connectTransferModal() {
     transferModal.addEventListener('save-transfers', (ev) => {
-        const { displayName, fundTransfers } = ev.detail;
+        const { assetId, fundTransfers } = ev.detail;
         const activePhase = transferPhase ?? appState.lifeEvents[appState.phaseIndex] ?? appState.lifeEvents[0];
-        if (activePhase) {
-            activePhase.phaseTransfers[displayName] = fundTransfers.map(ft => ft.toJSON());
+        if (activePhase && assetId) {
+            activePhase.phaseTransfers[assetId] = fundTransfers.map(ft => ft.toJSON());
         }
         calculate();
     });
@@ -1947,7 +1932,9 @@ let transferPhase = null;
 function phaseSetting(phaseName, displayName) {
     let i = appState.lifeEvents.findIndex((e) => e.displayName === phaseName);
     if (i < 0) return null;
-    while (i > 0 && !(displayName in (appState.lifeEvents[i].phaseTransfers ?? {}))) i--;
+    // The Flows view names the asset; its rules are keyed by its id.
+    const id = (assetList.modelAssets || []).find((a) => a.displayName === displayName)?.id;
+    while (i > 0 && !(id in (appState.lifeEvents[i].phaseTransfers ?? {}))) i--;
     return appState.lifeEvents[i];
 }
 
@@ -2022,8 +2009,9 @@ function connectChartExpandButtons() {
  * shared one opened without saving (scenario-store.js).
  */
 function saveLocalData() {
-    // calculate() has normally done this; a save never writes a plan without ids.
-    assignPlanIds(assetList.modelAssets || [], appState.lifeEvents);
+    // calculate() has normally done this; a save never writes a plan that is not
+    // prepared.
+    preparePlan(assetList.modelAssets || [], appState.lifeEvents);
     saveScenario(appState.storyArc, appState.storyName, {
         assets: assetList.modelAssets || [],
         lifeEvents: appState.lifeEvents.map(e => e.toJSON()),

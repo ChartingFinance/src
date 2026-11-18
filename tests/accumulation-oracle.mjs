@@ -113,12 +113,14 @@ function requireShape() {
     { s: profile.startAge, r: profile.retirementAge, f: profile.finishAge },
     { s: 35, r: 67, f: 90 },
     'earlyCareer ages changed — update this oracle');
+  // Rules are keyed by asset id (plan-ids.js).
+  const idOf = (name) => qs.assets.find(a => a.displayName === name).id;
   const acc = qs.lifeEvents[0].phaseTransfers;
-  assert.deepEqual(acc['Salary'].map(x => [x.toDisplayName, x.monthlyMoveValue]),
+  assert.deepEqual(acc[idOf('Salary')].map(x => [x.toDisplayName, x.monthlyMoveValue]),
     [['401K', 8], ['Roth IRA', 4], ['Brokerage', 88]],
     'accumulate-phase salary routing changed — update this oracle');
   const ret = qs.lifeEvents[1].phaseTransfers;
-  assert.deepEqual(ret['Living Expenses'].map(x => [x.toDisplayName, x.monthlyMoveValue]),
+  assert.deepEqual(ret[idOf('Living Expenses')].map(x => [x.toDisplayName, x.monthlyMoveValue]),
     [['Brokerage', 60], ['401K', 40]],
     'retire-phase expense routing changed — update this oracle');
   return qs;
