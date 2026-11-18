@@ -25,6 +25,19 @@
  * The selected one is shown as a table of its changes and as a third column
  * of the spending table.
  *
+ * ── The chart: "what does the plan hold over the years?" ──────────────
+ *
+ * Under both tests, one column of the result table drawn as Macro
+ * Projection's bars: what each top-level group holds at the end of each
+ * period, in today's dollars, so the last bar's total is the column's "Left
+ * at the end" (test-bench-chart.js). A picker over the table's columns
+ * chooses which. It opens on the newest answer, and the routing column
+ * follows the row selected in the list. Every column shares one y-axis, so
+ * switching shows what changed.
+ *
+ * The workers report no run, only the recipe for one, so the chart runs each
+ * column again here, from the plan the test ran on (benchPlan), once each.
+ *
  * The element changes nothing. "Save as a scenario" asks the app to save the
  * solved amounts, the selected routing, or both as a new scenario; the plan
  * as entered stays as it is.
@@ -44,8 +57,11 @@
  */
 
 import { LitElement, html, svg, nothing } from 'lit';
+import { Chart } from 'chart.js';
 import { runTestBench, cancelTestBench, CHECK_SIMULATIONS,
-         runRoutingTest, runRoutingChecks, cancelRouting, routingCost } from '../test-bench-run.js';
+         runRoutingTest, runRoutingChecks, cancelRouting, routingCost, benchPlan } from '../test-bench-run.js';
+import { columnSeries, stackedRange, chartConfig, CHART_COLUMNS, periodWord } from '../test-bench-chart.js';
+import { DateInt, monthLabel } from '../utils/date-int.js';
 import { whatStopsYou, riseNote, healthNote, successNote, resultRows, spendingHeadline } from '../spending-report.js';
 import { DEPTHS, DEFAULT_DEPTH, rankSearches } from '../routing-search.js';
 import { startsLabel, costLine, agreementLine, changeRows, versusEntered, routingHeadline,
@@ -79,6 +95,7 @@ class TestBench extends LitElement {
         _rProgress: { state: true },
         _rStale:    { state: true },
         _rError:    { state: true },
+        _chartColumn: { state: true },   // the table column the chart shows: 'entered' | 'best' | 'routed'
     };
 
     constructor() {
@@ -111,6 +128,14 @@ class TestBench extends LitElement {
         this._rAsked = 0;          // how many searches the test on screen set out to run
         this._rCheckCache = new Map();
         this._cost = null;         // routingCost() of the depth; null means work it out
+        this._chartColumn = 'best';
+        this._chartPlan = null;    // benchPlan() of the spending test on screen
+        this._rChartPlan = null;   // and of the routing test on screen
+        this._series = new Map();  // columnSeries() of the spending test's columns, by key
+        this._rSeries = new Map(); // and of the routing test's
+        this._chart = null;        // the Chart.js chart
+        this._drawn = null;        // what it shows: { canvas, series, min, max }
+        this._chartTimer = null;   // the runs waiting for the next tick
     }
 
     createRenderRoot() { return this; }
@@ -119,6 +144,13 @@ class TestBench extends LitElement {
         super.disconnectedCallback();
         cancelTestBench();
         cancelRouting();
+        clearTimeout(this._chartTimer);
+        this._chartTimer = null;
+        this._dropChart();
+    }
+
+    updated() {
+        this._syncChart();
     }
 
     willUpdate() {
@@ -162,7 +194,10 @@ class TestBench extends LitElement {
     _onStop() {
         this._stopRouting();
         this._cost = null;
-        if (this._rStatus === 'done') this._checkSelected();
+        if (this._rStatus === 'done') {
+            this._checkSelected();
+            this._chartNewest();
+        }
     }
 
     async run() {
@@ -176,6 +211,9 @@ class TestBench extends LitElement {
         this._stale = false;
         const floor = this._floor;
         const success = this._successOn ? this._successPercent / 100 : 0;
+        // The plan as it is now: a test is cancelled if it changes, so the
+        // answer that comes back is for this one.
+        const chartPlan = benchPlan(plan);
         // A routing is ranked against a floor: another floor, another test.
         if (this._searches && floor !== this._rFloor) this._routingOutdated();
         try {
@@ -187,6 +225,9 @@ class TestBench extends LitElement {
                     this._status = 'done';
                     this._solving = null;
                     this._hover = null;
+                    this._chartPlan = chartPlan;
+                    this._series = new Map();
+                    this._chartColumn = result.best ? 'best' : 'entered';
                 },
                 check: (column, check, value) => {
                     this._checks = { ...this._checks, [`${column}.${check}`]: value ?? { failed: true } };
@@ -220,6 +261,8 @@ class TestBench extends LitElement {
         this._rChecks = {};
         this._rProgress = null;
         this._rCheckCache = new Map();
+        this._rChartPlan = benchPlan(plan);
+        this._rSeries = new Map();
         const patch = (index, change) => {
             if (this._rRun !== run) return;
             this._searches = this._searches.map((s, i) => (i === index ? { ...s, ...change } : s));
@@ -237,6 +280,7 @@ class TestBench extends LitElement {
             this._rStatus = 'done';
             this._cost = null;   // a search has been timed: the estimate is better now
             this._checkSelected();
+            this._chartNewest();
         } catch (err) {
             if (this._rRun !== run) return;
             this._rStatus = 'error';
@@ -255,6 +299,15 @@ class TestBench extends LitElement {
     _routedColumn() {
         const { row } = this._ranked();
         return row && row.result.best && row.result.changes.length ? row : null;
+    }
+
+    /**
+     * The routing column the result table shows. It belongs beside the
+     * spending test's columns only at the floor they share.
+     */
+    _tableRouted() {
+        const r = this._result;
+        return r && !this._rStale && r.limits.floor === this._rFloor ? this._routedColumn() : null;
     }
 
     /**
@@ -444,8 +497,7 @@ class TestBench extends LitElement {
     }
 
     _renderTable() {
-        // The routing's column belongs beside these only at the floor they share.
-        const routed = !this._rStale && this._result.limits.floor === this._rFloor ? this._routedColumn() : null;
+        const routed = this._tableRouted();
         const rows = resultRows(this._result, routed?.result.best);
         const third = (cell) => (routed ? html`<td>${cell()}</td>` : nothing);
         return html`
@@ -626,6 +678,134 @@ class TestBench extends LitElement {
             </div>`;
     }
 
+    // ── The chart ───────────────────────────────────────────────────
+
+    /** Show the routing, when a routing test has just finished with one in the table. */
+    _chartNewest() {
+        if (this._tableRouted()) this._chartColumn = 'routed';
+    }
+
+    /**
+     * The table's columns, each with the run that draws it: the plan its test
+     * ran on, its spending level and, for a routing, its life events. `key`
+     * names the run, so each is made once.
+     */
+    _chartColumns() {
+        const r = this._result;
+        if (!r || !this._chartPlan) return [];
+        const columns = [{ id: 'entered', key: 'entered', figures: r.asEntered, plan: this._chartPlan, factor: 1 }];
+        if (r.best) columns.push({ id: 'best', key: 'best', figures: r.best, plan: this._chartPlan, factor: r.best.factor });
+        const routed = this._tableRouted();
+        if (routed && this._rChartPlan) {
+            columns.push({
+                id: 'routed', key: `routed:${routed.key}`, figures: routed.result.best,
+                plan: this._rChartPlan, factor: routed.result.best.factor, lifeEvents: routed.result.lifeEvents,
+            });
+        }
+        for (const c of columns) c.label = CHART_COLUMNS.find((x) => x.id === c.id).label;
+        return columns;
+    }
+
+    _shownColumn(columns) {
+        return columns.find((c) => c.id === this._chartColumn) ?? columns.find((c) => c.id === 'best') ?? columns[0];
+    }
+
+    /** A column's series when it has been made, else undefined. */
+    _cached(column) {
+        return (column.id === 'routed' ? this._rSeries : this._series).get(column.key);
+    }
+
+    _makeSeries(column) {
+        const store = column.id === 'routed' ? this._rSeries : this._series;
+        if (store.has(column.key)) return;
+        try {
+            store.set(column.key, columnSeries(column.plan, column.factor,
+                { lifeEvents: column.lifeEvents ?? null, ages: column.plan.ages }));
+        } catch (err) {
+            store.set(column.key, { failed: err?.message || String(err) });
+        }
+    }
+
+    /**
+     * Draw the column on show, on an axis that holds every column on offer.
+     * A column not yet run is run on the next tick, so the table paints first;
+     * each run is about 30 ms.
+     */
+    _syncChart() {
+        const canvas = this.querySelector('.tb-chart canvas');
+        const columns = canvas ? this._chartColumns() : [];
+        if (!columns.length) { this._dropChart(); return; }
+        if (columns.some((c) => !this._cached(c))) {
+            this._chartTimer ??= setTimeout(() => {
+                this._chartTimer = null;
+                for (const c of this._chartColumns()) this._makeSeries(c);
+                this.requestUpdate();
+            }, 0);
+            return;
+        }
+        const all = columns.map((c) => this._cached(c));
+        if (all.some((s) => s.failed)) { this._dropChart(); return; }
+        const series = this._cached(this._shownColumn(columns));
+        const { min, max } = stackedRange(all);
+        const d = this._drawn;
+        if (this._chart && d.canvas === canvas && d.series === series && d.min === min && d.max === max) return;
+
+        const config = chartConfig(series, { min, max });
+        if (this._chart && d.canvas === canvas) {
+            // The same chart, another column: the bars move to their new heights.
+            this._chart.data = config.data;
+            this._chart.options = config.options;
+            this._chart.update();
+        } else {
+            this._dropChart();
+            this._chart = new Chart(canvas, config);
+        }
+        this._drawn = { canvas, series, min, max };
+    }
+
+    _dropChart() {
+        this._chart?.destroy();
+        this._chart = null;
+        this._drawn = null;
+    }
+
+    _renderChart() {
+        const columns = this._chartColumns();
+        if (!columns.length) return nothing;
+        const shown = this._shownColumn(columns);
+        const series = this._cached(shown);
+        const f = shown.figures;
+        const period = periodWord(series?.periodMonths ?? 12);
+        return html`
+            <div class="tb-chart">
+                <div class="slot-heading tb-routing-heading">Chart: what the plan holds over the years</div>
+                <div class="tb-ask">
+                    <div class="tb-columns" role="radiogroup" aria-label="Which column of the table to chart">
+                        ${columns.map((c) => html`
+                            <label class="tb-column ${c === shown ? 'is-on' : ''}">
+                                <input type="radio" name="tb-chart-column" .checked=${c === shown}
+                                       @change=${() => { this._chartColumn = c.id; }}>${c.label}</label>`)}
+                    </div>
+                    <span class="tb-ask-text">Left at the end <strong>${formatCompactCurrency(f.endingReal)}</strong>${f.runsOut
+                        ? html`, and runs out in ${monthLabel(DateInt.from(f.runsOut.year, f.runsOut.month))}` : nothing}</span>
+                </div>
+                <div class="tb-result ${this._stale ? 'is-stale' : ''}" title=${this._stale ? 'From before your latest change' : ''}>
+                    <div class="tb-chart-body">
+                        <div class="tb-chart-wrap">
+                            <canvas role="img"
+                                    aria-label=${`${shown.label}: what each part of the plan holds at the end of each ${period}, in today's dollars`}></canvas>
+                            ${!series ? html`<div class="tb-chart-status">Drawing…</div>`
+                                : series.failed ? html`<div class="tb-chart-status">The chart could not be drawn: ${series.failed}</div>`
+                                : nothing}
+                        </div>
+                    </div>
+                    <div class="tb-caption">Today's dollars. Each bar is the end of its ${period}, and the last is the plan's last
+                        month, so its total is the column's &ldquo;Left at the end&rdquo;. Every column is drawn on the same scale.
+                        As in Macro Projection, income and expenses count one month's amount.</div>
+                </div>
+            </div>`;
+    }
+
     render() {
         const running = this._status === 'running';
         return html`
@@ -662,7 +842,8 @@ class TestBench extends LitElement {
                     and finds the highest level the plan can pay for. With the simulated-markets limit on, it then
                     tests levels across 300 simulated markets, which takes from ten seconds to about two minutes.
                     Nothing in your plan is changed.</p>`}
-            ${this._renderRouting()}`;
+            ${this._renderRouting()}
+            ${this._renderChart()}`;
     }
 }
 

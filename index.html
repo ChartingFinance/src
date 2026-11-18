@@ -508,6 +508,17 @@
         .tb-changes { max-width: 720px; }
         .tb-changes th, .tb-changes td { text-align: left; }
         .tb-changes th:nth-child(n+4), .tb-changes td:nth-child(n+4) { text-align: right; }
+        .tb-chart { margin-top: 24px; padding-top: 20px; border-top: 1px solid #e5e7eb; }
+        .tb-columns { display: inline-flex; flex-wrap: wrap; max-width: 100%; border: 1px solid #d1d5db; border-radius: 8px; overflow: hidden; background: #fff; }
+        .tb-column { position: relative; padding: 4px 12px; font-size: 13px; color: #374151; cursor: pointer; white-space: nowrap; }
+        .tb-column + .tb-column { border-left: 1px solid #d1d5db; }
+        .tb-column input { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
+        .tb-column.is-on { background: #f3e8ff; color: #6b21a8; font-weight: 600; }
+        .tb-column:hover:not(.is-on) { background: #faf5ff; }
+        .tb-column:focus-within { outline: 2px solid #7e22ce; outline-offset: -2px; }
+        .tb-chart-wrap { position: relative; height: 320px; }
+        .tb-chart-status { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 13px; color: #9ca3af; }
+        .tb-result.is-stale .tb-chart-body { opacity: 0.45; }
         /* Outcome strip: the three answers on the first screen */
         outcome-strip { display: block; padding: 16px 20px; }
         outcome-strip[hidden] { display: none; }
