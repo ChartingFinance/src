@@ -48,7 +48,7 @@
  */
 
 import { ModelAsset } from './model-asset.js';
-import { ModelLifeEvent } from './life-event.js';
+import { ModelLifeEvent, isCloseTemplate } from './life-event.js';
 import { Portfolio } from './portfolio.js';
 import { chronometer_run } from './chronometer.js';
 import { detectIssues, planExhaustion } from './portfolio-issues.js';
@@ -56,6 +56,7 @@ import { InstrumentType } from './instruments/instrument.js';
 import { PriceIndex } from './utils/price-index.js';
 import { withoutTracing } from './trace.js';
 import { ageToDateIntFor, finishDateIntFor } from './plan-dates.js';
+import { planWithIds } from './plan-ids.js';
 import { scaledAssets, solveSpending } from './spending-solver.js';
 
 /** A phase that starts before this age holds its retirement-account draws. */
@@ -65,6 +66,18 @@ export const PENALTY_FREE_AGE = 60;
 
 const isRetirementAccount = (instrument) =>
     InstrumentType.isTaxDeferred(instrument) || InstrumentType.isTaxFree(instrument);
+
+/**
+ * The plan, prepared (plan-ids.js), as a copy: its rules and closes are read and
+ * written by asset id. Each public function here prepares what it is given.
+ * Preparing is idempotent and depends only on the plan, so a plan written with
+ * names gets the same ids in every one of them.
+ */
+function prepared(plan) {
+    const { modelAssets, lifeEvents } = planWithIds({
+        modelAssets: plan.modelAssets, lifeEvents: plan.lifeEvents ?? [] });
+    return { ...plan, modelAssets, lifeEvents };
+}
 
 /** The year an asset's own dates start and end in, as entered. */
 const years = (asset) => ({
@@ -85,6 +98,7 @@ const years = (asset) => ({
  *   the percentage the user entered for it (0 when there is no rule).
  */
 export function routingGenes(plan) {
+    plan = prepared(plan);
     const assets = plan.modelAssets;
     const events = plan.lifeEvents ?? [];
     // Ages become dates through the plan's birth year, which a Portfolio
@@ -98,13 +112,23 @@ export function routingGenes(plan) {
     // phase that did set them. `inForce` is what each source runs on.
     const inForce = new Map();
     events.forEach((event, phaseIdx) => {
-        for (const [name, rules] of Object.entries(event.phaseTransfers ?? {})) inForce.set(name, rules);
-        for (const name of (event.closes ?? [])) closed.add(name);
+        for (const [id, rules] of Object.entries(event.phaseTransfers ?? {})) inForce.set(id, rules);
         const fromYear = ageToDateIntFor(config, event.triggerAge).year;
+        // What the phase closes: assets by id, and templates by type, each asset
+        // of it already running when the phase begins (life-event.js
+        // assetsClosedBy), here by the year, as everything in this search is.
+        for (const entry of (event.closes ?? [])) {
+            if (typeof entry === 'string') closed.add(entry);
+            else if (isCloseTemplate(entry)) {
+                for (const asset of assets) {
+                    if (asset.instrument === entry.instrument && years(asset).from <= fromYear) closed.add(asset.id);
+                }
+            }
+        }
         const next = events[phaseIdx + 1];
         const toYear = next ? ageToDateIntFor(config, next.triggerAge).year : lastYear;
         const alive = assets.filter((asset) => {
-            if (closed.has(asset.displayName)) return false;
+            if (closed.has(asset.id)) return false;
             const y = years(asset);
             return y.from <= toYear && y.to >= fromYear;
         });
@@ -115,9 +139,9 @@ export function routingGenes(plan) {
             const expense = InstrumentType.isMonthlyExpense(source.instrument);
             if (!income && !expense) continue;
 
-            const rules = inForce.get(source.displayName) ?? [];
-            const inherited = !(source.displayName in (event.phaseTransfers ?? {}));
-            const enteredFor = (name) => rules.find((r) => r.toDisplayName === name)?.monthlyMoveValue ?? 0;
+            const rules = inForce.get(source.id) ?? [];
+            const inherited = !(source.id in (event.phaseTransfers ?? {}));
+            const enteredFor = (id) => rules.find((r) => r.toId === id)?.monthlyMoveValue ?? 0;
 
             const targets = [];
             for (const target of alive) {
@@ -132,17 +156,17 @@ export function routingGenes(plan) {
                     open = InstrumentType.isExpensable(t) && !(retirement && early);
                 }
                 if (open) {
-                    targets.push({ name: target.displayName, entered: enteredFor(target.displayName), locked: false });
+                    targets.push({ id: target.id, name: target.displayName, entered: enteredFor(target.id), locked: false });
                 }
             }
             // Rules the search may not change still count toward the group's 100.
             for (const rule of rules) {
-                if (targets.some((t) => t.name === rule.toDisplayName)) continue;
-                targets.push({ name: rule.toDisplayName, entered: rule.monthlyMoveValue ?? 0, locked: true });
+                if (targets.some((t) => t.id === rule.toId)) continue;
+                targets.push({ id: rule.toId, name: rule.toDisplayName, entered: rule.monthlyMoveValue ?? 0, locked: true });
             }
             if (targets.some((t) => !t.locked)) {
                 groups.push({
-                    phaseIdx, phase: event.displayName, source: source.displayName,
+                    phaseIdx, phase: event.displayName, source: source.displayName, sourceId: source.id,
                     kind: income ? 'income' : 'expense', targets,
                     // What the source runs on in this phase, and whether an
                     // earlier phase set it.
@@ -189,7 +213,7 @@ export function repair(map, values) {
 
 /** The plan's life events, as plain objects, with a routing written in. */
 export function applyRouting(plan, map, values) {
-    const events = JSON.parse(JSON.stringify(plan.lifeEvents ?? []));
+    const events = prepared(plan).lifeEvents;
     const changed = new Set();
     map.genes.forEach((gene, i) => { if (values[i] !== map.entered[i]) changed.add(gene.group); });
 
@@ -201,10 +225,12 @@ export function applyRouting(plan, map, values) {
         const target = group.targets[gene.target];
         const event = events[group.phaseIdx];
         event.phaseTransfers ??= {};
-        const rules = (event.phaseTransfers[group.source] ??= JSON.parse(JSON.stringify(group.rules)));
-        const rule = rules.find((r) => r.toDisplayName === target.name);
+        const rules = (event.phaseTransfers[group.sourceId] ??= JSON.parse(JSON.stringify(group.rules)));
+        const rule = rules.find((r) => r.toId === target.id);
         if (rule) rule.monthlyMoveValue = values[i];
-        else if (values[i] > 0) rules.push({ toDisplayName: target.name, monthlyMoveValue: values[i], closeMoveValue: 0 });
+        else if (values[i] > 0) {
+            rules.push({ toId: target.id, toDisplayName: target.name, monthlyMoveValue: values[i], closeMoveValue: 0 });
+        }
     });
     return events;
 }
@@ -218,6 +244,7 @@ export function applyRouting(plan, map, values) {
  * @returns {{ unpaid: number, endingReal: number }}
  */
 export function scoreRouting(plan, map, values, factor = 1) {
+    plan = prepared(plan);
     const assets = scaledAssets(plan.modelAssets, factor).map((a) => ModelAsset.fromJSON(a));
     const portfolio = new Portfolio(assets, false, plan.config);
     portfolio.lifeEvents = applyRouting(plan, map, values).map((e) => ModelLifeEvent.fromJSON(e));
@@ -570,7 +597,8 @@ export function estimateRuns(genes, search) {
  *   start, seed   as given
  *   genes         how many percentages the search could change
  *   values        the routing found, one percentage per gene
- *   changes       [{ phaseIdx, phase, source, kind, target, now, proposed }]
+ *   changes       [{ phaseIdx, phase, source, sourceId, kind, target, targetId, now, proposed }]
+ *                 source and target are names, to show; the ids find the rule
  *   lifeEvents    the plan's life events with the routing written in
  *   best          the spending solver's most-spending column for the routed
  *                 plan, or null when no level keeps the limits
@@ -578,6 +606,7 @@ export function estimateRuns(genes, search) {
  *   runs          plan runs the search made
  */
 export function searchRouting(plan, { floor = 0, start = 'plan', seed = 0, onProgress = null } = {}) {
+    plan = prepared(plan);
     const map = routingGenes(plan);
     // Runs are made while the ranker is being built, before there is a level
     // to report against.
@@ -608,8 +637,9 @@ export function searchRouting(plan, { floor = 0, start = 'plan', seed = 0, onPro
         if (values[i] === ranker.entered[i]) return;
         const group = map.groups[gene.group];
         changes.push({
-            phaseIdx: group.phaseIdx, phase: group.phase, source: group.source, kind: group.kind,
-            target: group.targets[gene.target].name, now: ranker.entered[i], proposed: values[i],
+            phaseIdx: group.phaseIdx, phase: group.phase, source: group.source, sourceId: group.sourceId,
+            kind: group.kind, target: group.targets[gene.target].name, targetId: group.targets[gene.target].id,
+            now: ranker.entered[i], proposed: values[i],
         });
     });
 

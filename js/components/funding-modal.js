@@ -11,7 +11,7 @@
  *   startDate    - string (the real estate start date as YYYY-MM)
  *
  * Dispatches:
- *   'funding-confirmed' { detail: { purchaseType, sourceDisplayName, downPaymentPercent } }
+ *   'funding-confirmed' { detail: { purchaseType, sourceId, sourceDisplayName, downPaymentPercent } }
  *   'funding-cancelled'
  *   'close'
  */
@@ -208,6 +208,8 @@ class FundingModal extends LitElement {
             bubbles: true, composed: true,
             detail: {
                 purchaseType: this._purchaseType,
+                // The id is what the purchase is funded from; the name is its label.
+                sourceId: this.modelAssets.find((ma) => ma.displayName === this._selectedSource)?.id ?? null,
                 sourceDisplayName: this._selectedSource,
                 downPaymentPercent: isOutright ? 100 : this._downPaymentPercent,
             },

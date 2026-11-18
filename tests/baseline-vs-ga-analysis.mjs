@@ -348,12 +348,19 @@ class InlineSimulator {
         ? bYear + nextEvent.triggerAge
         : (this.portfolio.lastDateInt?.year ?? 2070);
 
-      for (const name of event.closes) {
-        closedSoFar.add(name);
+      // Closes hold asset ids (plan-ids.js), or a template naming a type of
+      // asset: each one of it already running by the phase's year.
+      for (const entry of event.closes) {
+        if (typeof entry === 'string') closedSoFar.add(entry);
+        else if (entry?.instrument) {
+          for (const a of this.portfolio.modelAssets) {
+            if (a.instrument === entry.instrument && (a.startDateInt?.year ?? 0) <= phaseStartYear) closedSoFar.add(a.id);
+          }
+        }
       }
 
       const active = this.portfolio.modelAssets.filter(a => {
-        if (closedSoFar.has(a.displayName)) return false;
+        if (closedSoFar.has(a.id)) return false;
         const assetStart = a.startDateInt?.year ?? 0;
         const assetEnd = a.finishDateInt?.year ?? 9999;
         return assetStart < phaseEndYear && assetEnd >= phaseStartYear;
@@ -370,10 +377,12 @@ class InlineSimulator {
       if (!InstrumentType.isMonthlyIncome(anchor.instrument) &&
           !InstrumentType.isMonthlyExpense(anchor.instrument)) continue;
 
-      if (!event.phaseTransfers[anchor.displayName]) {
-        event.phaseTransfers[anchor.displayName] = [];
+      // By id: a run prepares the plan (plan-ids.js), so rules keyed by name
+      // would be rekeyed under the gene map, and lose to the id's own rules.
+      if (!event.phaseTransfers[anchor.id]) {
+        event.phaseTransfers[anchor.id] = [];
       }
-      const existing = event.phaseTransfers[anchor.displayName];
+      const existing = event.phaseTransfers[anchor.id];
 
       for (const target of aliveAssets) {
         if (anchor === target) continue;
@@ -381,8 +390,9 @@ class InlineSimulator {
           (InstrumentType.isMonthlyIncome(anchor.instrument) && InstrumentType.isFundable(target.instrument)) ||
           (InstrumentType.isMonthlyExpense(anchor.instrument) && InstrumentType.isExpensable(target.instrument));
 
-        if (shouldLink && !existing.some(t => t.toDisplayName === target.displayName)) {
+        if (shouldLink && !existing.some(t => t.toId === target.id)) {
           existing.push({
+            toId: target.id,
             toDisplayName: target.displayName,
             monthlyMoveValue: 0,
             closeMoveValue: 0,
@@ -395,8 +405,10 @@ class InlineSimulator {
   buildGeneMap() {
     this.geneMap = [];
     this._instrumentByName = new Map();
+    // Rules are keyed by id, and name their target by id with a name label.
     for (const a of this.portfolio.modelAssets) {
       this._instrumentByName.set(a.displayName, a.instrument);
+      this._instrumentByName.set(a.id, a.instrument);
     }
 
     for (let phaseIdx = 0; phaseIdx < this.portfolio.lifeEvents.length; phaseIdx++) {

@@ -367,7 +367,7 @@ class AssetFormModal extends LitElement {
             return;
         }
 
-        // The name is what transfers and phases refer to an asset by.
+        // Each asset needs a name of its own (assetNameProblem says why).
         const name = form.elements.displayName;
         name.value = name.value.trim();
         const problem = assetNameProblem(name.value, this.otherNames);

@@ -53,11 +53,32 @@ async function check(label, fn) {
 const ids = (items) => items.map((i) => i.id);
 const unique = (items) => new Set(ids(items)).size === items.length;
 
-/** A small plan as JSON, with no ids: what an old save or a test fixture holds. */
+/**
+ * A plan as it was written before ids: no ids, and every reference to an asset
+ * by its name. What an old save, an old link or a hand-written spec holds.
+ */
+function namesOnly(modelAssets, lifeEvents) {
+    const assets = JSON.parse(JSON.stringify(modelAssets));
+    const events = JSON.parse(JSON.stringify(lifeEvents));
+    const nameOf = new Map(assets.map((a) => [a.id, a.displayName]));
+    const unref = (ft) => { const { toId, ...rest } = ft; return rest; };
+    for (const a of assets) {
+        delete a.id;
+        if (a.fundingConfig) delete a.fundingConfig.sourceId;
+    }
+    for (const e of events) {
+        delete e.id;
+        e.phaseTransfers = Object.fromEntries(Object.entries(e.phaseTransfers ?? {})
+            .map(([key, rules]) => [nameOf.get(key) ?? key, rules.map(unref)]));
+        e.closes = (e.closes ?? []).map((c) => (typeof c === 'string' ? nameOf.get(c) ?? c : c));
+    }
+    return { modelAssets: assets, lifeEvents: events };
+}
+
+/** A small plan as JSON, written before ids (namesOnly). */
 function legacyPlanJSON() {
     const { assets, lifeEvents } = buildQuickStart(quickStartProfiles[1]);
-    const strip = (o) => { const { id, ...rest } = JSON.parse(JSON.stringify(o)); return rest; };
-    return { modelAssets: assets.map(strip), lifeEvents: lifeEvents.map((e) => strip(e.toJSON())) };
+    return namesOnly(assets, lifeEvents.map((e) => e.toJSON()));
 }
 
 console.log('plan-ids');
@@ -206,8 +227,7 @@ await check('a run gives life events without ids theirs, and Portfolio.copy() ke
 /** A profile's spec with every id removed: what a hand-written spec looks like. */
 function idlessSpec() {
     const spec = planFromProfile('midCareer');
-    const strip = ({ id, ...rest }) => rest;
-    return { ...spec, modelAssets: spec.modelAssets.map(strip), lifeEvents: spec.lifeEvents.map(strip) };
+    return { ...spec, ...namesOnly(spec.modelAssets, spec.lifeEvents) };
 }
 const hasNoIds = (spec) => [...spec.modelAssets, ...spec.lifeEvents].every((i) => !('id' in i));
 

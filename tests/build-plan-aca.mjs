@@ -43,6 +43,9 @@ import { MEDICARE_AGE } from '../js/plan-dates.js';
 import { ptcTableFor, fplPercent } from '../js/premium-tax-credit.js';
 
 let passed = 0, failed = 0;
+
+/** Rules are keyed by asset id (plan-ids.js); a spec's asset by its name. */
+const idOf = (spec, name) => spec.modelAssets.find(a => a.displayName === name)?.id;
 async function check(label, fn) {
     try { await fn(); passed++; console.log(`  ok   ${label}`); }
     catch (err) { failed++; console.log(`  FAIL ${label}\n       ${err.message}`); }
@@ -165,17 +168,17 @@ await check('the card names its payer in every phase rather than leaving it to t
     // The lesson of the expense version in build-plan.mjs: a payer left to the
     // backstop breaks no run-level assertion, and is a decision nobody recorded.
     const { spec } = build(EARLY_RETIREE);
-    const names = new Set(spec.modelAssets.map(a => a.displayName));
-    const payer = (type) => spec.lifeEvents.find(e => e.type === type).phaseTransfers['Marketplace Plan'];
+    const ids = new Set(spec.modelAssets.map(a => a.id));
+    const payer = (type) => spec.lifeEvents.find(e => e.type === type).phaseTransfers[idOf(spec, 'Marketplace Plan')];
     for (const type of ['accumulate', 'retire']) {
         const legs = payer(type);
         assert.ok(legs?.length, `the card has no payer in the ${type} phase`);
         assert.equal(legs.reduce((n, t) => n + t.monthlyMoveValue, 0), 100);
-        for (const leg of legs) assert.ok(names.has(leg.toDisplayName), `${leg.toDisplayName} is not in the plan`);
+        for (const leg of legs) assert.ok(ids.has(leg.toId), `${leg.toDisplayName} is not in the plan`);
     }
     // Coverage runs in retirement, so the account that pays the bills then pays it.
-    assert.equal(payer('retire')[0].toDisplayName,
-        spec.lifeEvents.find(e => e.type === 'retire').phaseTransfers['Living Expenses'][0].toDisplayName);
+    assert.equal(payer('retire')[0].toId,
+        spec.lifeEvents.find(e => e.type === 'retire').phaseTransfers[idOf(spec, 'Living Expenses')][0].toId);
 });
 
 await check('today\'s prices are carried to the year coverage starts, and the ledger says so', () => {

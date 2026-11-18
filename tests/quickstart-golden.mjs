@@ -181,13 +181,14 @@ function stage0(profile, built, rawAssets) {
   });
 
   check('stage 0: life events present and every transfer target resolves', () => {
-    const names = new Set(built.assets.map(a => a.displayName));
+    // Rules are keyed by asset id and name their target by id (plan-ids.js).
+    const ids = new Set(built.assets.map(a => a.id));
     const diffs = [];
     for (const event of built.lifeEvents) {
       for (const [source, transfers] of Object.entries(event.phaseTransfers ?? {})) {
-        if (!names.has(source)) diffs.push(`phase '${event.displayName}': source '${source}' is not an asset`);
+        if (!ids.has(source)) diffs.push(`phase '${event.displayName}': source '${source}' is not an asset`);
         for (const t of transfers) {
-          if (!names.has(t.toDisplayName)) diffs.push(`phase '${event.displayName}': target '${t.toDisplayName}' is not an asset`);
+          if (!ids.has(t.toId)) diffs.push(`phase '${event.displayName}': target '${t.toDisplayName}' is not an asset`);
         }
       }
     }

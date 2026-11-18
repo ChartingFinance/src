@@ -357,7 +357,9 @@ function addSystemTransfers(pipelineMap, assets, historyIndex, rules) {
 function resolveCarryingCostSource(fundTransfers, allAssets) {
     for (const ft of fundTransfers) {
         if (ft.monthlyMoveValue <= 0) continue;
-        const target = allAssets.find(a => a.displayName === ft.toDisplayName && !a.isClosed);
+        // By id, as FundTransfer.bind() resolves it.
+        const target = allAssets.find(a => (ft.toId != null ? a.id === ft.toId : a.displayName === ft.toDisplayName)
+            && !a.isClosed);
         if (target) return target;
     }
     return null;
