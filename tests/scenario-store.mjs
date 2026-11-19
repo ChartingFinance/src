@@ -427,6 +427,41 @@ check('an empty scenario keeps nothing of another, and is in the list', () => {
   assert.deepEqual(kept('empty'), { assets: null, lifeEvents: null, guardrails: null, settings: null });
 });
 
+// ── The plan format ──────────────────────────────────────────────────
+console.log('\n── A scenario keeps the plan format it was saved in (plan-ids.js PLAN_FORMAT) ──\n');
+
+const { PLAN_FORMAT } = await import('../js/plan-ids.js');
+
+check('saving records the plan format; a copy keeps it; an empty scenario has none', () => {
+  viewerOnOther();
+  assert.equal(U.util_loadLocalPlanFormat(ARC, 'other'), PLAN_FORMAT);
+  S.addScenario(ARC, 'copy', { copyFrom: 'other' });
+  assert.equal(U.util_loadLocalPlanFormat(ARC, 'copy'), PLAN_FORMAT);
+  S.addScenario(ARC, 'empty');
+  assert.equal(U.util_loadLocalPlanFormat(ARC, 'empty'), null);
+});
+
+check('a scenario saved in a newer format is never saved over', () => {
+  viewerOnOther();
+  U.util_saveLocalPlanFormat(ARC, 'other', PLAN_FORMAT + 1);
+  const before = storage();
+  assert.ok(S.scenarioIsNewer(ARC, 'other'));
+  const wrote = S.saveScenario(ARC, 'other', {
+    assets: [{ displayName: 'Overwritten' }], lifeEvents: [], guardrails: guardrailsInForce() });
+  assert.equal(wrote, false);
+  assert.equal(storage(), before);
+  // Control: its own format is saved over as always.
+  U.util_saveLocalPlanFormat(ARC, 'other', PLAN_FORMAT);
+  assert.equal(S.saveScenario(ARC, 'other', {
+    assets: [{ displayName: 'Overwritten' }], lifeEvents: [], guardrails: guardrailsInForce() }), true);
+});
+
+check('deleting a scenario removes its plan format', () => {
+  viewerOnOther();
+  U.util_deleteScenario(ARC, 'other');
+  assert.equal(U.util_loadLocalPlanFormat(ARC, 'other'), null);
+});
+
 // ── The app ──────────────────────────────────────────────────────────
 console.log('\n── The app saves through this, and in this order ──\n');
 

@@ -1004,14 +1004,20 @@ export class Portfolio {
 
     applyAssetOpenFundTransfer(modelAsset) {
         const config = modelAsset.fundingConfig;
-        const source = findById(this.modelAssets, config.sourceId);
-        if (!source || source.isClosed) {
-            logger.log(LogCategory.TRANSFER, () => 'Portfolio.applyAssetOpenFundTransfer: funding source "' + config.sourceDisplayName + '" not found or closed');
-            return;
-        }
-
         const percent = config.downPaymentPercent ?? 100;
         const amount = new Currency(modelAsset.startCurrency.amount * (percent / 100));
+
+        // A purchase whose account is gone (deleted, so its funding waits by
+        // name: plan-ids.js) or has closed is still owed. Reported unfunded, as
+        // a sale with nowhere to deposit is: the house must not arrive free.
+        const source = findById(this.modelAssets, config.sourceId);
+        if (!source || source.isClosed) {
+            const name = config.sourceDisplayName ?? 'its funding account';
+            const why = source ? `${name} has closed` : `${name} is not in the plan`;
+            logger.log(LogCategory.TRANSFER, () => `Portfolio.applyAssetOpenFundTransfer: ${modelAsset.displayName} unfunded, ${why}`);
+            FundTransfer.reportUnfunded(modelAsset, amount, `purchase (${why})`, ShortfallOrigin.STANDALONE);
+            return;
+        }
         const event = { type: EventType.TRANSFER, data: {
             from: source.displayName, to: modelAsset.displayName, cadence: 'funding' } };
 

@@ -49,6 +49,7 @@ const { planFromProfile, listProfiles, cacheRun, specForHandle, clearRuns, simCo
   await import('../js/mcp/run-plan.js');
 const { readSharedPlan, applySharedSettings } = await import('../js/shared-plan.js');
 const { SIM_CONFIG_DEFAULTS } = await import('../js/sim-config.js');
+const planFormatModule = await import('../js/plan-ids.js');
 const G = await import('../js/globals.js');
 
 let passed = 0, failed = 0;
@@ -91,9 +92,10 @@ for (const p of listProfiles()) {
     assert.equal(back.modelAssets.length, spec.modelAssets.length, 'asset count moved');
     assert.deepEqual(back.settings, spec.settings, 'settings moved');
     assert.equal(back.lifeEvents.length, (spec.lifeEvents ?? []).length, 'life event count moved');
-    // The five keys the importer reads, and nothing invented.
+    // The five keys the importer reads, the plan format beside them, and
+    // nothing invented.
     assert.deepEqual(Object.keys(back).sort(),
-      ['guardrailParams', 'lifeEvents', 'modelAssets', 'name', 'settings']);
+      ['guardrailParams', 'lifeEvents', 'modelAssets', 'name', 'planFormat', 'settings']);
   });
 }
 
@@ -231,11 +233,34 @@ check('a link omits the handle unless one is given', () => {
   const spec = planFromProfile('retired');
   const plain = planFromShareUrl(shareUrlFromPlan(spec).url);
   assert.ok(!('handle' in plain), 'a handle-less link carries a handle key anyway');
-  assert.deepEqual(Object.keys(plain).sort(), [...SPEC_KEYS].sort());
+  assert.deepEqual(Object.keys(plain).sort(), [...SPEC_KEYS, 'planFormat'].sort());
 
   const withRun = planFromShareUrl(shareUrlFromPlan(spec, { handle: 'plan_abc1234567' }).url);
   assert.equal(withRun.handle, 'plan_abc1234567');
   assert.ok(!('handle' in specFromPayload(withRun)), 'specFromPayload left the provenance in');
+});
+
+check('a link carries its plan format beside the plan; the spec read from it does not', () => {
+  const { PLAN_FORMAT } = planFormatModule;
+  const spec = planFromProfile('retired');
+  const payload = planFromShareUrl(shareUrlFromPlan(spec).url);
+  assert.equal(payload.planFormat, PLAN_FORMAT);
+  // The spec is what a run handle hashes: with or without the field, one spec.
+  const { planFormat, ...without } = payload;
+  assert.ok(!('planFormat' in specFromPayload(payload)), 'the format reached the spec');
+  assert.deepEqual(specFromPayload(payload), specFromPayload(without));
+});
+
+check('a link in a newer plan format is refused, by the app and by the MCP server', () => {
+  const { PLAN_FORMAT } = planFormatModule;
+  const payload = { ...planFromShareUrl(shareUrlFromPlan(planFromProfile('retired')).url), planFormat: PLAN_FORMAT + 1 };
+  assert.throws(() => readSharedPlan(payload), /newer version/);
+  assert.throws(() => specFromPayload(payload), /newer version/);
+  // Control: its own format, and none at all (an older link), both open.
+  assert.doesNotThrow(() => readSharedPlan({ ...payload, planFormat: PLAN_FORMAT }));
+  const { planFormat, ...older } = payload;
+  assert.doesNotThrow(() => readSharedPlan(older));
+  assert.doesNotThrow(() => specFromPayload(older));
 });
 
 check('the app shows which run an imported plan came from', () => {

@@ -6,12 +6,14 @@
  *
  * Properties:
  *   open         - boolean
+ *   mode         - 'create' (a new purchase) | 'edit' (change an existing one's source)
+ *   fundingConfig - the purchase's funding, for 'edit': only its source can change
  *   modelAssets  - ModelAsset[] (existing portfolio assets for source selection)
  *   purchasePrice - number (the real estate startValue)
  *   startDate    - string (the real estate start date as YYYY-MM)
  *
  * Dispatches:
- *   'funding-confirmed' { detail: { purchaseType, sourceId, sourceDisplayName, downPaymentPercent } }
+ *   'funding-confirmed' { detail: { mode, purchaseType, sourceId, sourceDisplayName, downPaymentPercent } }
  *   'funding-cancelled'
  *   'close'
  */
@@ -34,6 +36,8 @@ class FundingModal extends LitElement {
 
     static properties = {
         open:           { type: Boolean, reflect: true },
+        mode:           { type: String },
+        fundingConfig:  { type: Object },
         modelAssets:    { type: Array },
         purchasePrice:  { type: Number },
         startDate:      { type: String },
@@ -47,6 +51,8 @@ class FundingModal extends LitElement {
     constructor() {
         super();
         this.open = false;
+        this.mode = 'create';
+        this.fundingConfig = null;
         this.modelAssets = [];
         this.purchasePrice = 0;
         this.startDate = '';
@@ -57,10 +63,20 @@ class FundingModal extends LitElement {
 
     updated(changed) {
         if (changed.has('open') && this.open) {
-            this._purchaseType = 'downPayment';
-            this._selectedSource = null;
-            this._downPaymentPercent = 20;
+            const editing = this._editing();
+            this._purchaseType = editing ? (this.fundingConfig.purchaseType ?? 'downPayment') : 'downPayment';
+            // A source waiting by name (plan-ids.js) has no id, so none is selected.
+            this._selectedSource = editing ? (this.fundingConfig.sourceId ?? null) : null;
+            this._downPaymentPercent = editing ? (this.fundingConfig.downPaymentPercent ?? 20) : 20;
         }
+    }
+
+    /**
+     * Changing an existing purchase: only where it is paid from. Its type and
+     * down payment made its mortgage, which this dialog does not touch.
+     */
+    _editing() {
+        return this.mode === 'edit' && !!this.fundingConfig;
     }
 
     render() {
@@ -71,9 +87,11 @@ class FundingModal extends LitElement {
         const mortgageAmount = this.purchasePrice - downAmount;
         const isOutright = this._purchaseType === 'outright';
         const canConfirm = this._selectedSource != null;
+        const editing = this._editing();
+        const waiting = editing && this.fundingConfig.sourceId == null;
 
         return html`
-            <div class="popup fixed inset-0 z-50 flex items-center justify-center p-4"
+            <div class="popup fixed inset-0 ${editing ? 'z-[60]' : 'z-50'} flex items-center justify-center p-4"
                  @click=${this._onOverlayClick}>
                 <div class="popup-content glass-card p-8 w-full max-w-2xl relative"
                      @click=${(e) => e.stopPropagation()}>
@@ -82,14 +100,21 @@ class FundingModal extends LitElement {
 
                     <div class="mb-6">
                         <h2 class="text-2xl font-bold flex items-center gap-2">
-                            🏡 Purchase Funding
+                            🏡 ${editing ? 'Change Purchase Funding' : 'Purchase Funding'}
                         </h2>
                         <p class="text-gray-500 text-sm mt-1">
                             Purchase price: <strong>${formatCurrency(this.purchasePrice)}</strong>
                             ${this.startDate ? html` &middot; Starting: <strong>${this.startDate}</strong>` : ''}
                         </p>
+                        ${editing ? html`
+                            <p class="text-sm mt-2 text-gray-600">
+                                ${isOutright ? 'Bought outright' : `${this._downPaymentPercent}% down, the rest on its mortgage`}.
+                                ${waiting ? html`<span class="text-amber-700">It was paid from <strong>${this.fundingConfig.sourceDisplayName ?? 'an account'}</strong>, which is not in the plan.</span>` : ''}
+                            </p>
+                        ` : ''}
                     </div>
 
+                    ${editing ? '' : html`
                     <!-- Purchase type toggle -->
                     <div class="flex gap-3 mb-6">
                         <button type="button"
@@ -128,6 +153,7 @@ class FundingModal extends LitElement {
                             </div>
                         </div>
                     ` : ''}
+                    `}
 
                     <!-- Funding source selection -->
                     <div class="mb-6">
@@ -151,7 +177,7 @@ class FundingModal extends LitElement {
                         <button class="btn-modern primary cursor-pointer"
                             ?disabled=${!canConfirm}
                             @click=${this._onConfirm}>
-                            Confirm Funding
+                            ${editing ? 'Save Funding' : 'Confirm Funding'}
                         </button>
                     </div>
                 </div>
@@ -207,6 +233,7 @@ class FundingModal extends LitElement {
         this.dispatchEvent(new CustomEvent('funding-confirmed', {
             bubbles: true, composed: true,
             detail: {
+                mode: this._editing() ? 'edit' : 'create',
                 purchaseType: this._purchaseType,
                 // The id is what the purchase is funded from; the name is its label.
                 sourceId: this._selectedSource,

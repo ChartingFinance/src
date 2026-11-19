@@ -33,7 +33,7 @@ import { quickStartProfiles, buildQuickStart } from '../js/quick-start.js';
 import { FundTransfer } from '../js/fund-transfer.js';
 import { ModelAsset } from '../js/model-asset.js';
 import { routingGenes, applyRouting } from '../js/routing-search.js';
-import { ModelLifeEvent, LifeEvent, LifeEventMeta, assetsClosedBy, isCloseTemplate } from '../js/life-event.js';
+import { ModelLifeEvent, LifeEvent, LifeEventMeta, assetsClosedBy, isCloseTemplate, closeAssetId } from '../js/life-event.js';
 import { DateInt } from '../js/utils/date-int.js';
 
 // planFromProfile reads the clock for the plan's first month; pinned so this
@@ -146,7 +146,7 @@ await check('a prepared profile refers to its assets only by id', () => {
         }
         // A close names an asset by id, or a type of asset (a template).
         for (const entry of event.closes) {
-            assert.ok(ids.has(entry) || isCloseTemplate(entry), `closes ${JSON.stringify(entry)}`);
+            assert.ok(ids.has(closeAssetId(entry)) || isCloseTemplate(entry), `closes ${JSON.stringify(entry)}`);
         }
     }
     const cabin = spec.modelAssets.find((a) => a.displayName === 'Cabin');
@@ -185,7 +185,9 @@ await check('the references are live: the close, the rules and the funding each 
     const noClose = clone(spec); noClose.lifeEvents.forEach((e) => { e.closes = []; });
     const noRules = clone(spec); noRules.lifeEvents.forEach((e) => { e.phaseTransfers = {}; });
     const noFunding = clone(spec);
-    noFunding.modelAssets.find((a) => a.displayName === 'Cabin').fundingConfig.sourceId = 'a999';
+    // A dead id alone is not enough now: the name would find the brokerage.
+    Object.assign(noFunding.modelAssets.find((a) => a.displayName === 'Cabin').fundingConfig,
+        { sourceId: 'a999', sourceDisplayName: 'Nowhere' });
     for (const [label, variant] of [['close', noClose], ['rules', noRules], ['funding', noFunding]]) {
         assert.notEqual((await outcome(variant)).finish, baseline.finish, `without the ${label}, nothing changed`);
     }
@@ -206,24 +208,43 @@ await check('control: renamed with the references still holding the old names, t
 
 // ── 3. Deleting an asset ────────────────────────────────────────────────────
 
-await check('a deleted asset\'s id is not given to a new asset while a rule still holds it', () => {
+await check('a deleted asset\'s number can go to a new asset, and the transfers to it do not follow', () => {
     const spec = referenceHeavySpec();
     const number = (id) => Number(id.slice(1));
     const highest = spec.modelAssets.map((a) => number(a.id)).reduce((a, b) => Math.max(a, b));
     const target = `a${highest}`;
-    // A rule pays into the highest-numbered asset; delete that asset, and add a new one.
-    spec.lifeEvents[0].phaseTransfers[idOf(spec, 'Salary')].push(
-        { toId: target, toDisplayName: 'Doomed', monthlyMoveValue: 1, closeMoveValue: 0 });
+    // A rule pays into the highest-numbered asset; delete that asset, and add a
+    // new one in the same pass, so it is numbered into the freed id.
+    const salaryRules = spec.lifeEvents[0].phaseTransfers[idOf(spec, 'Salary')];
+    salaryRules.push({ toId: target, toDisplayName: 'Doomed', monthlyMoveValue: 1, closeMoveValue: 0 });
     spec.modelAssets = spec.modelAssets.filter((a) => a.id !== target);
     spec.modelAssets.push({ instrument: 'bank', displayName: 'New Savings',
         startDateInt: spec.modelAssets[0].startDateInt, startCurrency: { amount: 0 } });
     preparePlan(spec.modelAssets, spec.lifeEvents);
     const added = spec.modelAssets.at(-1);
-    assert.notEqual(added.id, target);
-    assert.equal(added.id, `a${highest + 1}`);
+    assert.equal(added.id, target, 'the freed number was not reused (the case this check is for)');
+    const doomed = salaryRules.find((ft) => ft.toDisplayName === 'Doomed');
+    assert.ok(doomed, 'the transfer to the deleted asset is gone');
+    assert.equal(doomed.toId, undefined, `the transfer followed the number to ${doomed.toId}`);
 });
 
-await check('the prune removes a deleted asset\'s rules and transfers to it, and keeps a renamed one\'s', () => {
+await check('a deleted asset\'s own rules hold its id until the app prunes them', () => {
+    const spec = referenceHeavySpec();
+    const salary = idOf(spec, 'Salary');
+    const highest = Math.max(...spec.modelAssets.map((a) => Number(a.id.slice(1))));
+    // Make the salary the highest-numbered asset, then delete it and add one.
+    spec.modelAssets.find((a) => a.id === salary).id = `a${highest + 5}`;
+    for (const e of spec.lifeEvents) {
+        if (e.phaseTransfers[salary]) { e.phaseTransfers[`a${highest + 5}`] = e.phaseTransfers[salary]; delete e.phaseTransfers[salary]; }
+    }
+    spec.modelAssets = spec.modelAssets.filter((a) => a.id !== `a${highest + 5}`);
+    spec.modelAssets.push({ instrument: 'bank', displayName: 'New Savings',
+        startDateInt: spec.modelAssets[0].startDateInt, startCurrency: { amount: 0 } });
+    preparePlan(spec.modelAssets, spec.lifeEvents);
+    assert.equal(spec.modelAssets.at(-1).id, `a${highest + 6}`, 'a new asset took a number its rules still key');
+});
+
+await check('the prune removes a deleted asset\'s own rules; transfers to it wait by name', () => {
     const spec = renamed(referenceHeavySpec());
     preparePlan(spec.modelAssets, spec.lifeEvents);
     const brokerage = idOf(spec, 'Brokerage (renamed)');
@@ -232,14 +253,21 @@ await check('the prune removes a deleted asset\'s rules and transfers to it, and
     pruneDanglingRules(spec.modelAssets, spec.lifeEvents);
     assert.equal(spec.lifeEvents[0].phaseTransfers[salary].length, before, 'a rename pruned rules');
 
+    // What calculate() does after a delete: prepare, then prune.
     spec.modelAssets = spec.modelAssets.filter((a) => a.id !== brokerage && a.id !== salary);
+    preparePlan(spec.modelAssets, spec.lifeEvents);
     pruneDanglingRules(spec.modelAssets, spec.lifeEvents);
+    let waiting = 0;
     for (const event of spec.lifeEvents) {
         assert.ok(!(salary in event.phaseTransfers), 'the deleted salary\'s rules stayed');
         for (const rules of Object.values(event.phaseTransfers)) {
-            assert.ok(rules.every((ft) => ft.toId !== brokerage), 'a transfer to the deleted brokerage stayed');
+            for (const ft of rules) {
+                assert.notEqual(ft.toId, brokerage, 'a transfer still holds the deleted brokerage\'s id');
+                if (ft.toDisplayName === 'Brokerage (renamed)') { assert.equal(ft.toId, undefined); waiting++; }
+            }
         }
     }
+    assert.ok(waiting > 0, 'no transfer to the deleted brokerage is waiting (the fixture routes none?)');
 });
 
 // ── 4. FundTransfer ─────────────────────────────────────────────────────────
@@ -352,10 +380,10 @@ await check("Retire's default closes every working income, as a template no phas
         "a phase's template is the meta's object");
 });
 
-await check('preparePlan leaves a template as it is', () => {
+await check('preparePlan leaves a template as it is, and gives an asset close its id and name', () => {
     const events = [{ type: 'retire', phaseTransfers: {}, closes: [{ instrument: 'workingIncome' }, 'Salary'] }];
     preparePlan([{ id: 'a1', displayName: 'Salary', instrument: 'workingIncome' }], events);
-    assert.deepEqual(events[0].closes, [{ instrument: 'workingIncome' }, 'a1']);
+    assert.deepEqual(events[0].closes, [{ instrument: 'workingIncome' }, { assetId: 'a1', displayName: 'Salary' }]);
 });
 
 await check('Dual Income: Retire closes Salary A and Salary B, which the old name "Salary" never matched', async () => {
@@ -367,10 +395,22 @@ await check('Dual Income: Retire closes Salary A and Salary B, which the old nam
         assert.ok(salary.isClosed, `${name} is open`);
         assert.equal(salary.closedDateInt?.toInt(), retire.toInt(), `${name} closed in ${salary.closedDateInt}`);
     }
-    // The old default, by name, closes neither: they ran on to their finish dates.
+    // A plan saved with the old default, the name "Salary", which names neither:
+    // preparing it turns that into the template, and both close.
     const old = clone(spec);
     old.lifeEvents.find((e) => e.type === 'retire').closes = ['Salary'];
-    const before = (await runPlan(old)).portfolio;
+    const migrated = (await runPlan(planWithIds(old))).portfolio;
+    for (const name of ['Salary A', 'Salary B']) {
+        const salary = migrated.modelAssets.find((a) => a.displayName === name);
+        assert.equal(salary.closedDateInt?.toInt(), retire.toInt(), `${name} closed in ${salary.closedDateInt}`);
+    }
+    // Control: "Salary" beside another close is a name like any other. It waits,
+    // and closes neither.
+    const named = clone(spec);
+    named.lifeEvents.find((e) => e.type === 'retire').closes = ['Salary', 'Home'];
+    const prepared = planWithIds(named);
+    assert.deepEqual(prepared.lifeEvents.find((e) => e.type === 'retire').closes[0], { displayName: 'Salary' });
+    const before = (await runPlan(prepared)).portfolio;
     for (const name of ['Salary A', 'Salary B']) {
         const salary = before.modelAssets.find((a) => a.displayName === name);
         assert.notEqual(salary.closedDateInt?.toInt(), retire.toInt(), `${name} was closed by the name`);
@@ -472,6 +512,250 @@ await check('an asset-scoped issue names its asset\'s id; the alert set by id ma
     assert.ok(alertAssetIds(issues).has(rent.id), 'the rent has no ⚠️');
     const byName = [...alertAssetNames(issues)].map((n) => portfolio.modelAssets.find((a) => a.displayName === n).id);
     assert.deepEqual([...alertAssetIds(issues)].sort(), byName.sort());
+});
+
+// ── 8. A reference to an asset the plan does not have waits by name ────────
+//
+// Deleting an asset leaves its transfers, closes and purchase funding waiting
+// by name (its own rules go); an asset given that name picks them up. An id
+// that names nothing falls back to the name. A spec whose id and name disagree
+// is refused at the MCP door. (plan-ids.js header)
+
+const { detectIssues } = await import('../js/portfolio-issues.js');
+const { EventType } = await import('../js/sim-event.js');
+await import('../js/components/transfer-modal.js');
+await import('../js/components/event-form-modal.js');
+
+/** referenceHeavySpec, with Retire closing the brokerage by id as well. */
+function closesBrokerageSpec() {
+    const spec = referenceHeavySpec();
+    const brokerage = spec.modelAssets.find((a) => a.displayName === 'Brokerage');
+    spec.lifeEvents.find((e) => e.type === 'retire').closes.push({ assetId: brokerage.id, displayName: 'Brokerage' });
+    return spec;
+}
+
+/** What calculate() does to the plan before a run: prepare, then prune. */
+function appPrepare(spec) {
+    preparePlan(spec.modelAssets, spec.lifeEvents);
+    pruneDanglingRules(spec.modelAssets, spec.lifeEvents);
+    return spec;
+}
+
+/** Every id a reference holds, anywhere in the plan. */
+function heldIds(spec) {
+    const out = [];
+    for (const a of spec.modelAssets) {
+        for (const ft of a.fundTransfers ?? []) if (ft.toId != null) out.push(ft.toId);
+        if (a.fundingConfig?.sourceId != null) out.push(a.fundingConfig.sourceId);
+    }
+    for (const e of spec.lifeEvents) {
+        out.push(...Object.keys(e.phaseTransfers ?? {}));
+        for (const list of Object.values(e.phaseTransfers ?? {})) for (const ft of list) if (ft.toId != null) out.push(ft.toId);
+        for (const c of e.closes ?? []) if (closeAssetId(c) != null) out.push(closeAssetId(c));
+    }
+    return out;
+}
+
+/** Finish values by asset name: ids change on a re-add, names do not. */
+async function outcomeByName(spec) {
+    const { portfolio } = await runPlan(spec);
+    return {
+        finish: portfolio.finishValue().amount,
+        byName: Object.fromEntries(portfolio.modelAssets.map((a) => [a.displayName, a.finishCurrency.amount])),
+        closed: portfolio.modelAssets.filter((a) => a.isClosed).map((a) => a.displayName).sort(),
+    };
+}
+
+await check('deleting an asset: its transfers, close and funding wait by its name, and no reference keeps its id', () => {
+    const spec = closesBrokerageSpec();
+    const brokerage = idOf(spec, 'Brokerage');
+    spec.modelAssets = spec.modelAssets.filter((a) => a.id !== brokerage);
+    appPrepare(spec);
+    assert.ok(!heldIds(spec).includes(brokerage), `still held: ${brokerage}`);
+    const waitingRules = spec.lifeEvents.flatMap((e) => Object.values(e.phaseTransfers).flat())
+        .filter((ft) => ft.toDisplayName === 'Brokerage');
+    assert.ok(waitingRules.length > 0, 'the transfers to the brokerage are gone');
+    assert.ok(waitingRules.every((ft) => ft.toId === undefined), JSON.stringify(waitingRules));
+    const cabin = spec.modelAssets.find((a) => a.displayName === 'Cabin');
+    assert.equal(cabin.fundingConfig.sourceId, undefined);
+    assert.equal(cabin.fundingConfig.sourceDisplayName, 'Brokerage');
+    assert.deepEqual(spec.lifeEvents.find((e) => e.type === 'retire').closes.at(-1), { displayName: 'Brokerage' });
+});
+
+await check('re-adding an asset of that name reconnects all of them, and the run is the original to the cent', async () => {
+    const spec = closesBrokerageSpec();
+    const before = await outcomeByName(spec);
+    const brokerage = spec.modelAssets.find((a) => a.displayName === 'Brokerage');
+    const again = clone(brokerage); delete again.id;
+    spec.modelAssets = spec.modelAssets.filter((a) => a !== brokerage);
+    appPrepare(spec);
+    spec.modelAssets.push(again);
+    appPrepare(spec);
+    const newId = idOf(spec, 'Brokerage');
+    assert.notEqual(newId, brokerage.id, 'the re-added asset kept the deleted one\'s id (not the case under test)');
+    assert.equal(spec.modelAssets.find((a) => a.displayName === 'Cabin').fundingConfig.sourceId, newId);
+    // Byte for byte, keys in order: a run handle is a hash of the plan's JSON.
+    assert.equal(JSON.stringify(spec.lifeEvents.find((e) => e.type === 'retire').closes.at(-1)),
+        JSON.stringify({ assetId: newId, displayName: 'Brokerage' }));
+    assert.deepEqual(await outcomeByName(spec), before);
+});
+
+await check('control: an asset of another name picks up nothing', () => {
+    const spec = closesBrokerageSpec();
+    const brokerage = idOf(spec, 'Brokerage');
+    spec.modelAssets = spec.modelAssets.filter((a) => a.id !== brokerage);
+    appPrepare(spec);
+    spec.modelAssets.push({ instrument: 'bank', displayName: 'Savings', startDateInt: spec.modelAssets[0].startDateInt,
+        startCurrency: { amount: 0 } });
+    appPrepare(spec);
+    const savings = idOf(spec, 'Savings');
+    assert.ok(!heldIds(spec).includes(savings), 'a reference attached itself to Savings');
+    assert.equal(spec.modelAssets.find((a) => a.displayName === 'Cabin').fundingConfig.sourceId, undefined);
+});
+
+await check('an id that names nothing falls back to the name: a number, a typo, a name in the id field', async () => {
+    const reference = await outcome(referenceHeavySpec());
+    for (const bad of [3, 'a99', 'Brokerage']) {
+        const spec = clone(referenceHeavySpec());
+        const salary = idOf(spec, 'Salary');
+        const brokerage = idOf(spec, 'Brokerage');
+        const rule = spec.lifeEvents[0].phaseTransfers[salary].find((ft) => ft.toId === brokerage);
+        rule.toId = bad;
+        spec.modelAssets.find((a) => a.displayName === 'Cabin').fundingConfig.sourceId = bad;
+        const prepared = planWithIds(spec);
+        assert.equal(prepared.lifeEvents[0].phaseTransfers[salary].find((ft) => ft.toDisplayName === 'Brokerage').toId,
+            brokerage, `toId ${JSON.stringify(bad)}`);
+        assert.equal(prepared.modelAssets.find((a) => a.displayName === 'Cabin').fundingConfig.sourceId, brokerage);
+        assert.equal((await outcome(prepared)).finish, reference.finish, `toId ${JSON.stringify(bad)}: the run changed`);
+    }
+});
+
+await check('a name that differs only in case or outer spaces resolves when one asset has it, and waits when two do', () => {
+    const one = [{ id: 'a1', displayName: 'Salary' }, { id: 'a2', displayName: 'Brokerage' }];
+    const events = [{ type: 'accumulate', closes: [],
+        phaseTransfers: { a1: [{ toDisplayName: '  brokerage ', monthlyMoveValue: 50, closeMoveValue: 0 }] } }];
+    preparePlan(one, events);
+    assert.equal(events[0].phaseTransfers.a1[0].toId, 'a2');
+    assert.equal(events[0].phaseTransfers.a1[0].toDisplayName, 'Brokerage');
+
+    const two = [{ id: 'a1', displayName: 'Salary' }, { id: 'a2', displayName: 'Brokerage' }, { id: 'a3', displayName: 'BROKERAGE' }];
+    const ambiguous = [{ type: 'accumulate', closes: [],
+        phaseTransfers: { a1: [{ toDisplayName: 'brokerage', monthlyMoveValue: 50, closeMoveValue: 0 }] } }];
+    preparePlan(two, ambiguous);
+    assert.equal(ambiguous[0].phaseTransfers.a1[0].toId, undefined, 'a guess between two assets');
+});
+
+await check('a spec whose id and name are two different assets is refused by planWithIds; preparePlan keeps the id', () => {
+    const spec = clone(referenceHeavySpec());
+    const salary = idOf(spec, 'Salary');
+    const brokerage = idOf(spec, 'Brokerage');
+    const rule = spec.lifeEvents[0].phaseTransfers[salary].find((ft) => ft.toId === brokerage);
+    rule.toDisplayName = 'Roth IRA';   // edited by hand, its id left
+    assert.throws(() => planWithIds(spec), /two different assets.*Roth IRA/s);
+    const app = clone(spec);
+    const { conflicts } = preparePlan(app.modelAssets, app.lifeEvents);
+    assert.equal(conflicts.length, 1, JSON.stringify(conflicts));
+    const kept = app.lifeEvents[0].phaseTransfers[salary].find((ft) => ft.toId === brokerage);
+    assert.equal(kept?.toDisplayName, 'Brokerage', 'the id did not win');
+    // Control: a label left by a rename names no asset, and is not a conflict.
+    const renamedLabel = clone(referenceHeavySpec());
+    renamedLabel.lifeEvents[0].phaseTransfers[salary].find((ft) => ft.toId === brokerage).toDisplayName = 'Old Brokerage';
+    assert.doesNotThrow(() => planWithIds(renamedLabel));
+});
+
+await check('closes: a bare id or name becomes { assetId, displayName }; a dead bare id goes; an unknown name waits', () => {
+    const assets = [{ id: 'a1', displayName: 'Salary' }, { id: 'a2', displayName: 'Home' }];
+    const events = [{ type: 'accumulate', phaseTransfers: {}, closes: ['a1', 'Home', 'a9', 'Cottage', { instrument: 'workingIncome' }] }];
+    preparePlan(assets, events);
+    assert.deepEqual(events[0].closes, [
+        { assetId: 'a1', displayName: 'Salary' }, { assetId: 'a2', displayName: 'Home' },
+        { displayName: 'Cottage' }, { instrument: 'workingIncome' }]);
+});
+
+await check('a Retire "Salary" that names a real asset stays that asset, not the template', () => {
+    const spec = clone(planFromProfile('midCareer'));
+    spec.lifeEvents.find((e) => e.type === 'retire').closes = ['Salary'];
+    const prepared = planWithIds(spec);
+    assert.deepEqual(prepared.lifeEvents.find((e) => e.type === 'retire').closes,
+        [{ assetId: idOf(prepared, 'Salary'), displayName: 'Salary' }]);
+});
+
+await check('"What needs attention": one notice per missing name, listing what waits for it; none on any profile', async () => {
+    const spec = closesBrokerageSpec();
+    spec.modelAssets = spec.modelAssets.filter((a) => a.displayName !== 'Brokerage');
+    appPrepare(spec);
+    const { issues } = await runPlan(spec);
+    const notices = issues.filter((i) => i.id === 'missing-asset-reference');
+    assert.equal(notices.length, 1, JSON.stringify(notices.map((n) => n.headline)));
+    const [n] = notices;
+    assert.equal(n.severity, 'notice');
+    assert.match(n.headline, /"Brokerage" is not in the plan/);
+    assert.deepEqual(n.reasons, [], 'the panel\'s "why" line repeats the detail');
+    assert.ok(n.detail.includes('Retire closes it'), n.detail);
+    assert.ok(n.detail.includes('the purchase of Cabin is paid for from it'), n.detail);
+    assert.ok(n.detail.includes('Salary sends 93% a month in Accumulate;'), n.detail);
+    assert.equal(n.occurrences, n.references.length);
+    assert.deepEqual([...new Set(n.references.map((r) => r.kind))].sort(), ['close', 'funding', 'transfer']);
+    // After a run an asset's own transfers are its last phase's rules: listed
+    // once, under that phase, not again without one.
+    const transfers = n.references.filter((r) => r.kind === 'transfer');
+    assert.ok(transfers.every((r) => r.phaseId != null), JSON.stringify(transfers));
+    for (const profile of quickStartProfiles) {
+        const { issues: clean } = await runPlan(planFromProfile(profile.key));
+        assert.ok(!clean.some((i) => i.id === 'missing-asset-reference'), `${profile.key} has a missing reference`);
+    }
+});
+
+await check('a purchase whose source is gone or closed is unfunded, with ⚠️; with its source, it is not', async () => {
+    const unfundedPurchase = (portfolio) => portfolio.modelAssets.find((a) => a.displayName === 'Cabin')
+        .events.filter((e) => e.type === EventType.UNFUNDED && /^purchase/.test(e.data?.cause ?? ''));
+    const funded = await runPlan(referenceHeavySpec());
+    assert.equal(unfundedPurchase(funded.portfolio).length, 0, 'a funded purchase was reported unfunded');
+
+    const gone = clone(referenceHeavySpec());
+    Object.assign(gone.modelAssets.find((a) => a.displayName === 'Cabin').fundingConfig, { sourceId: 'a999', sourceDisplayName: 'Nowhere' });
+    const g = await runPlan(planWithIds(gone));
+    const [event] = unfundedPurchase(g.portfolio);
+    assert.ok(event, 'no unfunded purchase');
+    assert.equal(Math.abs(event.amount.amount), 120000);
+    assert.match(event.data.cause, /Nowhere is not in the plan/);
+    assert.ok(detectIssues(g.portfolio).some((i) => i.id === 'unfunded-obligation' && i.assetName === 'Cabin'), 'no ⚠️ on the Cabin');
+
+    const closed = clone(referenceHeavySpec());
+    const cabin = closed.modelAssets.find((a) => a.displayName === 'Cabin');
+    const brokerage = closed.modelAssets.find((a) => a.displayName === 'Brokerage');
+    brokerage.finishDateInt = { year: cabin.startDateInt.year - 1, month: 6 };
+    const c = await runPlan(planWithIds(closed));
+    assert.match(unfundedPurchase(c.portfolio)[0]?.data?.cause ?? '', /Brokerage has closed/);
+});
+
+await check('the transfer modal keeps a waiting transfer on Save, and drops it once removed', () => {
+    const el = new (customElements.get('transfer-modal'))();
+    el.currentAssetId = 'a1';
+    el.phaseTransfers = { a1: [
+        { toId: 'a3', toDisplayName: '401K', monthlyMoveValue: 5, closeMoveValue: 0 },
+        { toDisplayName: 'Brokerage', monthlyMoveValue: 93, closeMoveValue: 0 }] };
+    el.querySelectorAll = () => [];   // the plan's assets' cards: none drawn here
+    let saved = null;
+    el.addEventListener('save-transfers', (e) => { saved = e.detail.fundTransfers.map((ft) => ft.toJSON()); });
+    el._onSave();
+    assert.deepEqual(saved, [{ toDisplayName: 'Brokerage', monthlyMoveValue: 93, closeMoveValue: 0 }]);
+    el._removedWaiting = new Set(['Brokerage']);
+    el._onSave();
+    assert.deepEqual(saved, []);
+});
+
+await check('the event form ticks an asset as { assetId, displayName } and lists a waiting close it can remove', () => {
+    const el = new (customElements.get('event-form-modal'))();
+    el._closes = [{ instrument: 'workingIncome' }, { displayName: 'Brokerage' }];
+    assert.deepEqual(el._waitingCloses(), ['Brokerage']);
+    el._onCloseToggle({ id: 'a2', displayName: 'Home' }, true);
+    assert.ok(el._closesAsset('a2'));
+    assert.deepEqual(el._closes.at(-1), { assetId: 'a2', displayName: 'Home' });
+    el._onCloseToggle({ id: 'a2', displayName: 'Home' }, false);
+    assert.ok(!el._closesAsset('a2'));
+    el._onWaitingCloseRemove('Brokerage');
+    assert.deepEqual(el._closes, [{ instrument: 'workingIncome' }]);
 });
 
 console.log(`\n${passed} passed, ${failed} failed`);

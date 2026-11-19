@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.3.45; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.3.46; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -32197,8 +32197,9 @@ function findById(assets, id) {
   return assets.find((a) => a.id === id);
 }
 function assetsClosedBy(entry, assets, dateInt) {
-  if (typeof entry === "string") {
-    const asset = findById(assets, entry);
+  const id = closeAssetId(entry);
+  if (id != null) {
+    const asset = findById(assets, id);
     return asset ? [asset] : [];
   }
   if (isCloseTemplate(entry)) {
@@ -32208,6 +32209,11 @@ function assetsClosedBy(entry, assets, dateInt) {
 }
 function isCloseTemplate(entry) {
   return !!entry && typeof entry === "object" && typeof entry.instrument === "string";
+}
+function closeAssetId(entry) {
+  if (typeof entry === "string") return entry;
+  if (entry && typeof entry === "object" && !isCloseTemplate(entry)) return entry.assetId ?? null;
+  return null;
 }
 var LifeEvent = Object.freeze({
   ACCUMULATE: "accumulate",
@@ -32274,8 +32280,8 @@ var ModelLifeEvent = class _ModelLifeEvent {
    * @param {string}  opts.type           LifeEvent enum value
    * @param {string}  opts.displayName    User-facing name
    * @param {number}  opts.triggerAge     Age when event fires
-   * @param {Array<string|{instrument: string}>} [opts.closes]  What it closes: asset
-   *                                                    ids, or templates (assetsClosedBy)
+   * @param {Array<{assetId?: string, displayName?: string}|{instrument: string}>} [opts.closes]
+   *     What it closes: assets, by id and name, or templates (assetsClosedBy)
    * @param {Object}          [opts.phaseTransfers]   { assetId: [FundTransfer JSON] }
    * @param {Object}          [opts.globalOverrides]    { inflationRate?: number, ... }
    */
@@ -36122,23 +36128,32 @@ var PremiumCreditEngine = class {
 };
 
 // js/plan-ids.js
+var PLAN_FORMAT = 2;
+function isNewerPlanFormat(format) {
+  return Number.isFinite(Number(format)) && Number(format) > PLAN_FORMAT;
+}
+var NEWER_PLAN_FORMAT_REASON = "It was saved by a newer version of Charting Finance. Reload the page to open it.";
 function preparePlan(modelAssets = [], lifeEvents = []) {
   modelAssets ??= [];
   lifeEvents ??= [];
+  forgetDeadIds(modelAssets, lifeEvents);
   assignIds(modelAssets, "a", referencedAssetIds(modelAssets, lifeEvents));
   assignIds(lifeEvents, "e");
-  resolveReferences(modelAssets, lifeEvents);
+  return resolveReferences(modelAssets, lifeEvents);
 }
-function planWithIds(spec) {
+function planWithIds(spec, { refuseConflicts = true } = {}) {
   if (!spec) return spec;
   const copy = (list) => Array.isArray(list) ? JSON.parse(JSON.stringify(list)) : list;
   const out = { ...spec, modelAssets: copy(spec.modelAssets), lifeEvents: copy(spec.lifeEvents) };
   if (!("lifeEvents" in spec)) delete out.lifeEvents;
   if (!("modelAssets" in spec)) delete out.modelAssets;
-  preparePlan(
+  const { conflicts } = preparePlan(
     Array.isArray(out.modelAssets) ? out.modelAssets : [],
     Array.isArray(out.lifeEvents) ? out.lifeEvents : []
   );
+  if (refuseConflicts && conflicts.length > 0) {
+    throw new Error(`This plan refers to two different assets in one place, one by id and one by name: ${conflicts.join("; ")}. Drop the id or the name from each, so the plan says which asset is meant.`);
+  }
   return out;
 }
 function assignIds(items, prefix, reserved = []) {
@@ -36166,56 +36181,99 @@ function assignIds(items, prefix, reserved = []) {
 var transfersOf = (asset) => Array.isArray(asset.fundTransfers) ? asset.fundTransfers : [];
 var rulesOf = (event) => event.phaseTransfers && typeof event.phaseTransfers === "object" ? event.phaseTransfers : {};
 var closesOf = (event) => Array.isArray(event.closes) ? event.closes : [];
-function referencedAssetIds(modelAssets, lifeEvents) {
-  const out = [];
+var fundingOf = (asset) => asset.fundingConfig && typeof asset.fundingConfig === "object" ? asset.fundingConfig : null;
+function isAssetClose(entry) {
+  return !!entry && typeof entry === "object" && !isCloseTemplate(entry) && (entry.assetId != null || typeof entry.displayName === "string");
+}
+var ASSET_ID = /^a[1-9]\d*$/;
+var nameKey = (name) => String(name ?? "").trim().toLowerCase();
+function forget(holder, key) {
+  if (Object.getPrototypeOf(holder) === Object.prototype) delete holder[key];
+  else holder[key] = null;
+}
+function forgetDeadIds(modelAssets, lifeEvents) {
+  const live = /* @__PURE__ */ new Set();
   for (const asset of modelAssets) {
-    for (const ft of transfersOf(asset)) out.push(ft?.toId);
-    out.push(asset.fundingConfig?.sourceId);
+    if (typeof asset.id === "string" && asset.id.length > 0) live.add(asset.id);
+  }
+  const unlessLive = (holder, key) => {
+    if (holder && typeof holder === "object" && holder[key] != null && !live.has(holder[key])) {
+      forget(holder, key);
+    }
+  };
+  for (const asset of modelAssets) {
+    transfersOf(asset).forEach((ft) => unlessLive(ft, "toId"));
+    unlessLive(fundingOf(asset), "sourceId");
   }
   for (const event of lifeEvents) {
-    for (const [owner, rules] of Object.entries(rulesOf(event))) {
-      out.push(owner);
-      if (Array.isArray(rules)) for (const ft of rules) out.push(ft?.toId);
+    for (const list of Object.values(rulesOf(event))) {
+      if (Array.isArray(list)) list.forEach((ft) => unlessLive(ft, "toId"));
     }
-    for (const entry of closesOf(event)) out.push(entry);
+    for (const entry of closesOf(event)) if (isAssetClose(entry)) unlessLive(entry, "assetId");
+  }
+}
+function referencedAssetIds(modelAssets, lifeEvents) {
+  const out = [];
+  for (const event of lifeEvents) {
+    out.push(...Object.keys(rulesOf(event)));
+    for (const entry of closesOf(event)) if (typeof entry === "string") out.push(entry);
   }
   return out;
 }
 function resolveReferences(modelAssets, lifeEvents) {
   const byId = /* @__PURE__ */ new Map();
-  const byName2 = /* @__PURE__ */ new Map();
+  const exact = /* @__PURE__ */ new Map();
+  const loose = /* @__PURE__ */ new Map();
   for (const asset of modelAssets) {
     byId.set(asset.id, asset);
-    if (typeof asset.displayName === "string" && !byName2.has(asset.displayName)) {
-      byName2.set(asset.displayName, asset);
-    }
+    if (typeof asset.displayName !== "string") continue;
+    if (!exact.has(asset.displayName)) exact.set(asset.displayName, asset);
+    const key = nameKey(asset.displayName);
+    if (key) loose.set(key, loose.has(key) ? null : asset);
   }
-  const idOrName = (ref) => typeof ref === "string" ? byId.get(ref) ?? byName2.get(ref) ?? null : null;
-  const resolveTransfer = (ft) => {
-    if (!ft || typeof ft !== "object") return;
-    const target = ft.toId != null ? byId.get(ft.toId) : byName2.get(ft.toDisplayName);
-    if (!target) return;
-    ft.toId = target.id;
-    ft.toDisplayName = target.displayName;
+  const byName2 = (name) => typeof name === "string" ? exact.get(name) ?? loose.get(nameKey(name)) ?? null : null;
+  const idOrName = (ref) => typeof ref === "string" ? byId.get(ref) ?? byName2(ref) : null;
+  const conflicts = [];
+  const resolve = (holder, idKey, labelKey, where) => {
+    if (!holder || typeof holder !== "object") return;
+    if (holder[idKey] != null) {
+      const asset2 = byId.get(holder[idKey]);
+      const named = byName2(holder[labelKey]);
+      if (named && named !== asset2) {
+        conflicts.push(`${where} has ${idKey} "${holder[idKey]}", which is "${asset2.displayName}", and ${labelKey} "${holder[labelKey]}", which is a different asset`);
+      }
+      holder[labelKey] = asset2.displayName;
+      return;
+    }
+    const asset = byName2(holder[labelKey]);
+    if (!asset) return;
+    holder[idKey] = asset.id;
+    holder[labelKey] = asset.displayName;
   };
   for (const asset of modelAssets) {
-    transfersOf(asset).forEach(resolveTransfer);
-    const funding = asset.fundingConfig;
-    if (funding && typeof funding === "object") {
-      const source = funding.sourceId != null ? byId.get(funding.sourceId) : byName2.get(funding.sourceDisplayName);
-      if (source) {
-        funding.sourceId = source.id;
-        funding.sourceDisplayName = source.displayName;
-      }
-    }
+    transfersOf(asset).forEach((ft) => resolve(
+      ft,
+      "toId",
+      "toDisplayName",
+      `${asset.displayName}'s transfer`
+    ));
+    resolve(fundingOf(asset), "sourceId", "sourceDisplayName", `${asset.displayName}'s funding`);
   }
   for (const event of lifeEvents) {
+    const phase = event.displayName ?? event.type ?? "a phase";
     const rules = rulesOf(event);
     const entries = Object.entries(rules);
     const rekeyed = [];
     for (const [key, list] of entries) {
-      if (Array.isArray(list)) list.forEach(resolveTransfer);
       const owner = idOrName(key);
+      if (Array.isArray(list)) {
+        list.forEach((ft) => resolve(
+          ft,
+          "toId",
+          "toDisplayName",
+          `${owner?.displayName ?? key}'s ${phase} rule`
+        ));
+      }
       const newKey = owner ? owner.id : key;
       const at = rekeyed.findIndex(([k]) => k === newKey);
       if (at < 0) rekeyed.push([newKey, list]);
@@ -36225,11 +36283,87 @@ function resolveReferences(modelAssets, lifeEvents) {
       for (const [key] of entries) delete rules[key];
       for (const [key, list] of rekeyed) rules[key] = list;
     }
-    const closes = closesOf(event);
-    closes.forEach((entry, i) => {
-      if (typeof entry === "string") closes[i] = idOrName(entry)?.id ?? entry;
-    });
+    resolveCloses(event, phase, { idOrName, resolve });
   }
+  return { conflicts };
+}
+function resolveCloses(event, phase, { idOrName, resolve }) {
+  const closes = closesOf(event);
+  if (event.type === LifeEvent.RETIRE && closes.length === 1 && closes[0] === "Salary" && !idOrName("Salary")) {
+    closes[0] = { instrument: Instrument.WORKING_INCOME };
+  }
+  for (let i = closes.length - 1; i >= 0; i--) {
+    const entry = closes[i];
+    if (typeof entry === "string") {
+      const asset = idOrName(entry);
+      if (asset) closes[i] = { assetId: asset.id, displayName: asset.displayName };
+      else if (ASSET_ID.test(entry)) closes.splice(i, 1);
+      else closes[i] = { displayName: entry };
+    } else if (isAssetClose(entry)) {
+      resolve(entry, "assetId", "displayName", `${phase}'s close`);
+      closes[i] = entry.assetId != null ? { assetId: entry.assetId, displayName: entry.displayName } : { displayName: entry.displayName };
+    }
+  }
+}
+function waitingReferences(modelAssets = [], lifeEvents = []) {
+  const ids = new Set((modelAssets ?? []).map((a) => a.id));
+  const nameOf = new Map((modelAssets ?? []).map((a) => [a.id, a.displayName]));
+  const groups = /* @__PURE__ */ new Map();
+  const add = (name, ref) => {
+    const label = typeof name === "string" && name.trim() ? name : "(unnamed)";
+    if (!groups.has(label)) groups.set(label, []);
+    groups.get(label).push(ref);
+  };
+  const waits = (ft) => ft && ft.toId == null;
+  const inPhases = /* @__PURE__ */ new Set();
+  for (const event of lifeEvents ?? []) {
+    const phaseName = event.displayName ?? event.type ?? null;
+    for (const [owner, list] of Object.entries(rulesOf(event))) {
+      if (!ids.has(owner)) {
+        if (!ASSET_ID.test(owner)) add(owner, { kind: "rules", phaseId: event.id ?? null, phaseName });
+        continue;
+      }
+      for (const ft of Array.isArray(list) ? list : []) {
+        if (waits(ft)) {
+          inPhases.add(`${owner}\0${ft.toDisplayName}`);
+          add(ft.toDisplayName, {
+            kind: "transfer",
+            ownerId: owner,
+            ownerName: nameOf.get(owner),
+            phaseId: event.id ?? null,
+            phaseName,
+            monthly: ft.monthlyMoveValue ?? 0,
+            onClose: ft.closeMoveValue ?? 0
+          });
+        }
+      }
+    }
+    for (const entry of closesOf(event)) {
+      if (isAssetClose(entry) && entry.assetId == null) {
+        add(entry.displayName, { kind: "close", phaseId: event.id ?? null, phaseName });
+      }
+    }
+  }
+  for (const asset of modelAssets ?? []) {
+    for (const ft of transfersOf(asset)) {
+      if (waits(ft) && !inPhases.has(`${asset.id}\0${ft.toDisplayName}`)) {
+        add(ft.toDisplayName, {
+          kind: "transfer",
+          ownerId: asset.id,
+          ownerName: asset.displayName,
+          phaseId: null,
+          phaseName: null,
+          monthly: ft.monthlyMoveValue ?? 0,
+          onClose: ft.closeMoveValue ?? 0
+        });
+      }
+    }
+    const funding = fundingOf(asset);
+    if (funding && funding.sourceId == null) {
+      add(funding.sourceDisplayName, { kind: "funding", ownerId: asset.id, ownerName: asset.displayName });
+    }
+  }
+  return [...groups].map(([name, refs]) => ({ name, refs }));
 }
 
 // js/portfolio.js
@@ -36873,13 +37007,16 @@ var Portfolio = class _Portfolio {
   }
   applyAssetOpenFundTransfer(modelAsset) {
     const config2 = modelAsset.fundingConfig;
-    const source = findById2(this.modelAssets, config2.sourceId);
-    if (!source || source.isClosed) {
-      logger.log(LogCategory.TRANSFER, () => 'Portfolio.applyAssetOpenFundTransfer: funding source "' + config2.sourceDisplayName + '" not found or closed');
-      return;
-    }
     const percent2 = config2.downPaymentPercent ?? 100;
     const amount = new Currency(modelAsset.startCurrency.amount * (percent2 / 100));
+    const source = findById2(this.modelAssets, config2.sourceId);
+    if (!source || source.isClosed) {
+      const name = config2.sourceDisplayName ?? "its funding account";
+      const why = source ? `${name} has closed` : `${name} is not in the plan`;
+      logger.log(LogCategory.TRANSFER, () => `Portfolio.applyAssetOpenFundTransfer: ${modelAsset.displayName} unfunded, ${why}`);
+      FundTransfer.reportUnfunded(modelAsset, amount, `purchase (${why})`, ShortfallOrigin.STANDALONE);
+      return;
+    }
     const event = { type: EventType.TRANSFER, data: {
       from: source.displayName,
       to: modelAsset.displayName,
@@ -38773,6 +38910,26 @@ function membrane_rawDataToModelAssets(rawModelAssets) {
 }
 
 // js/portfolio-issues.js
+function describeWaitingReference(ref) {
+  const pct3 = (v) => `${Number(v.toFixed(2))}%`;
+  switch (ref.kind) {
+    case "transfer": {
+      const parts = [];
+      if (ref.monthly) parts.push(`${pct3(ref.monthly)} a month`);
+      if (ref.onClose) parts.push(`${pct3(ref.onClose)} when it closes`);
+      const what = parts.length ? parts.join(" and ") : "a transfer";
+      return `${ref.ownerName ?? "an asset"} sends ${what}${ref.phaseName ? ` in ${ref.phaseName}` : ""}`;
+    }
+    case "close":
+      return `${ref.phaseName ?? "a phase"} closes it`;
+    case "funding":
+      return `the purchase of ${ref.ownerName ?? "an asset"} is paid for from it`;
+    case "rules":
+      return `${ref.phaseName ?? "a phase"} has transfer rules for it`;
+    default:
+      return "a reference";
+  }
+}
 var MEMO_PATTERNS = Object.freeze({
   // fund-transfer.js reportUnfunded: `Unfunded — ${what for}`
   unfunded: /^Unfunded\b/,
@@ -38983,6 +39140,33 @@ var DETECTORS = [
           detail: `Social Security can't be claimed before ${data.age}. This benefit is dated ${monthLabel(dated)}, so the plan starts it in ${monthLabel(starts)} instead, at the amount entered. Change its start date to ${monthLabel(starts)} or later to match.`
         };
       }));
+    }
+  },
+  {
+    // A transfer, close or purchase names an asset the plan does not have:
+    // it was deleted, or a spec named it wrongly. It waits by name and does
+    // nothing (plan-ids.js), and an asset given that name picks it up. Read
+    // from the plan's references, as no-funding-accounts reads its accounts:
+    // nothing ran, so there is no event to anchor on. One finding per name.
+    id: "missing-asset-reference",
+    scope: "plan",
+    category: "configuration",
+    severity: "notice",
+    detect(ctx) {
+      const groups = waitingReferences(ctx.modelAssets, ctx.portfolio?.lifeEvents ?? []);
+      return groups.map(({ name, refs }) => {
+        const said = refs.map(describeWaitingReference);
+        const count = refs.length === 1 ? "One thing in the plan refers" : `${refs.length} things in the plan refer`;
+        return {
+          occurrences: refs.length,
+          // Each waiting reference, as plan-ids.js waitingReferences
+          // gives it: for a caller that wants to point at them. The
+          // detail says them in words.
+          references: refs,
+          headline: `"${name}" is not in the plan`,
+          detail: `${count} to "${name}", and ${refs.length === 1 ? "it does" : "they do"} nothing until an asset has that name: ${said.join("; ")}. Add an asset called "${name}" to reconnect ${refs.length === 1 ? "it" : "them"}, or remove ${refs.length === 1 ? "it" : "them"}.`
+        };
+      });
     }
   },
   {
@@ -40359,13 +40543,17 @@ function sharePayloadFromPlan(spec, { name, handle } = {}) {
     settings: spec.settings ?? {},
     modelAssets: spec.modelAssets,
     lifeEvents: spec.lifeEvents ?? [],
-    guardrailParams: spec.guardrailParams ?? null
+    guardrailParams: spec.guardrailParams ?? null,
+    // Beside the plan, not in it (SPEC_KEYS): a reader refuses a newer
+    // format rather than misread it (plan-ids.js PLAN_FORMAT).
+    planFormat: PLAN_FORMAT
   };
   if (handle) payload.handle = handle;
   return payload;
 }
 function specFromPayload(payload) {
   if (!payload) return payload;
+  if (isNewerPlanFormat(payload.planFormat)) throw new Error(`This plan can't be read. ${NEWER_PLAN_FORMAT_REASON}`);
   const spec = {};
   for (const k of SPEC_KEYS) if (k in payload) spec[k] = payload[k];
   return spec;

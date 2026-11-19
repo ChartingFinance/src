@@ -616,7 +616,10 @@ export function rulesInForce(portfolio, flows) {
             if (!ownerAsset) continue;
             const owner = ownerAsset.displayName;
             for (const ft of transfers) {
-                const target = byId.get(ft.toId)?.displayName ?? ft.toDisplayName;
+                // A transfer with no id waits for an asset of its name (plan-ids.js):
+                // a rule that moves nothing, said so.
+                const target = byId.get(ft.toId)?.displayName
+                    ?? (ft.toId == null ? `${ft.toDisplayName} (not in the plan)` : ft.toDisplayName);
                 if (ft.monthlyMoveValue > 0) {
                     const pays = paidInto(ownerAsset.instrument);
                     const row = rowFor(`monthly|${owner}|${target}`, {

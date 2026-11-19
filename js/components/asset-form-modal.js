@@ -19,6 +19,7 @@
  *
  * Dispatches:
  *   'save-asset'  { detail: { modelAsset, mode } }
+ *   'open-funding' { detail: { modelAsset } }  change a purchase's funding source
  *   'close'
  */
 
@@ -162,6 +163,7 @@ class AssetFormModal extends LitElement {
                         ${this._renderInstrumentFields(selectedInstrument, ma)}
                         ${isEdit && InstrumentType.isOneTimeEligible(selectedInstrument)
                             ? this._renderOneTimeFields(ma) : ''}
+                        ${isEdit && ma?.fundingConfig ? this._renderFundingFields(ma) : ''}
                         <div class="mt-8 flex justify-end">
                             <input type="submit" class="btn-modern primary cursor-pointer"
                                 .value=${isEdit ? 'Save Changes ✨' : 'Add to Stack 🚀'} />
@@ -341,6 +343,35 @@ class AssetFormModal extends LitElement {
                 </button>
             </div>
         `;
+    }
+
+    /**
+     * Where a purchase is paid from, and a way to change it. A source with no id
+     * waits by name for an asset of that name (plan-ids.js): it was deleted.
+     */
+    _renderFundingFields(ma) {
+        const f = ma.fundingConfig;
+        const waiting = f.sourceId == null;
+        const how = f.purchaseType === 'outright' ? 'Bought outright' : `${f.downPaymentPercent ?? 20}% down`;
+        return html`
+            <div class="mt-6 border-t border-gray-100 pt-6">
+                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Purchase Funding</label>
+                <div class="flex items-center gap-3">
+                    <div class="flex-1 text-sm ${waiting ? 'text-amber-700' : 'text-gray-700'}">
+                        ${how}, paid from <strong>${f.sourceDisplayName ?? 'no account'}</strong>${waiting ? ', which is not in the plan' : ''}
+                    </div>
+                    <button type="button" class="btn-modern cursor-pointer" @click=${this._onOpenFunding}>Change</button>
+                </div>
+            </div>
+        `;
+    }
+
+    _onOpenFunding(ev) {
+        ev.preventDefault();
+        this.dispatchEvent(new CustomEvent('open-funding', {
+            bubbles: true, composed: true,
+            detail: { modelAsset: this.modelAsset },
+        }));
     }
 
     _onOpenOneTime(ev) {

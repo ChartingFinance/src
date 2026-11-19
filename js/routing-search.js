@@ -48,7 +48,7 @@
  */
 
 import { ModelAsset } from './model-asset.js';
-import { ModelLifeEvent, isCloseTemplate } from './life-event.js';
+import { ModelLifeEvent, isCloseTemplate, closeAssetId } from './life-event.js';
 import { Portfolio } from './portfolio.js';
 import { chronometer_run } from './chronometer.js';
 import { detectIssues, planExhaustion } from './portfolio-issues.js';
@@ -71,11 +71,13 @@ const isRetirementAccount = (instrument) =>
  * The plan, prepared (plan-ids.js), as a copy: its rules and closes are read and
  * written by asset id. Each public function here prepares what it is given.
  * Preparing is idempotent and depends only on the plan, so a plan written with
- * names gets the same ids in every one of them.
+ * names gets the same ids in every one of them. A reference whose id and name
+ * disagree goes by its id, as in the app: these are the app's plans, and the
+ * MCP tools refuse such a spec before it reaches here.
  */
 function prepared(plan) {
     const { modelAssets, lifeEvents } = planWithIds({
-        modelAssets: plan.modelAssets, lifeEvents: plan.lifeEvents ?? [] });
+        modelAssets: plan.modelAssets, lifeEvents: plan.lifeEvents ?? [] }, { refuseConflicts: false });
     return { ...plan, modelAssets, lifeEvents };
 }
 
@@ -118,7 +120,8 @@ export function routingGenes(plan) {
         // of it already running when the phase begins (life-event.js
         // assetsClosedBy), here by the year, as everything in this search is.
         for (const entry of (event.closes ?? [])) {
-            if (typeof entry === 'string') closed.add(entry);
+            const id = closeAssetId(entry);
+            if (id != null) closed.add(id);
             else if (isCloseTemplate(entry)) {
                 for (const asset of assets) {
                     if (asset.instrument === entry.instrument && years(asset).from <= fromYear) closed.add(asset.id);

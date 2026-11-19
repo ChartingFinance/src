@@ -11,9 +11,9 @@
  *
  * A ModelLifeEvent is a user decision that rewires the portfolio when it
  * fires: it closes assets (e.g. the salary at retirement) and installs this
- * phase's fund transfers. Both refer to assets by id (plan-ids.js). A close can
- * also name a type of asset, a template: Retire's default closes every working
- * income (see assetsClosedBy). `globalOverrides` is stored and saved but not
+ * phase's fund transfers. Both refer to assets by id, with the asset's name as a
+ * label (plan-ids.js). A close can also name a type of asset, a template:
+ * Retire's default closes every working income (see assetsClosedBy). `globalOverrides` is stored and saved but not
  * applied (see markdowns/code-issues-from-comments.md).
  *
  * Portfolio.applyLifeEvents calls event.apply(portfolio) in the month
@@ -32,21 +32,25 @@ import { Instrument } from './instruments/instrument.js';
 /**
  * The assets one entry of a phase's `closes` closes when the phase fires.
  *
- * An entry is either an asset id, which names that asset, or a template,
- * `{ instrument }`, which names every asset of that type already running in
- * the month the phase fires. "Already running" matters: a job that starts after
- * retirement is a decision made for retirement, and Retire's "close every
- * working income" must not close it before it begins. An asset named by id is
- * closed whenever it starts: the user chose that asset.
+ * An entry is either one asset, `{ assetId, displayName }` (plan-ids.js), or a
+ * template, `{ instrument }`, which names every asset of that type already
+ * running in the month the phase fires. "Already running" matters: a job that
+ * starts after retirement is a decision made for retirement, and Retire's
+ * "close every working income" must not close it before it begins. An asset
+ * named by id is closed whenever it starts: the user chose that asset.
  *
- * @param {string|{instrument: string}} entry
+ * An entry with no id waits for an asset of its name (plan-ids.js) and closes
+ * nothing. A bare string is an id, as a plan not yet prepared can hold one.
+ *
+ * @param {string|{assetId?: string, displayName?: string}|{instrument: string}} entry
  * @param {ModelAsset[]} assets
  * @param {DateInt} dateInt  the month the phase fires
  * @returns {ModelAsset[]}
  */
 export function assetsClosedBy(entry, assets, dateInt) {
-  if (typeof entry === 'string') {
-    const asset = findById(assets, entry);
+  const id = closeAssetId(entry);
+  if (id != null) {
+    const asset = findById(assets, id);
     return asset ? [asset] : [];
   }
   if (isCloseTemplate(entry)) {
@@ -59,6 +63,16 @@ export function assetsClosedBy(entry, assets, dateInt) {
 /** True for a `closes` entry that names a type of asset rather than one asset. */
 export function isCloseTemplate(entry) {
   return !!entry && typeof entry === 'object' && typeof entry.instrument === 'string';
+}
+
+/**
+ * The id of the one asset a `closes` entry names, or null: for a template, and
+ * for an entry waiting by name for an asset the plan does not have.
+ */
+export function closeAssetId(entry) {
+  if (typeof entry === 'string') return entry;
+  if (entry && typeof entry === 'object' && !isCloseTemplate(entry)) return entry.assetId ?? null;
+  return null;
 }
 
 // ── Event type enum ─────────────────────────────────────────────
@@ -149,8 +163,8 @@ export class ModelLifeEvent {
    * @param {string}  opts.type           LifeEvent enum value
    * @param {string}  opts.displayName    User-facing name
    * @param {number}  opts.triggerAge     Age when event fires
-   * @param {Array<string|{instrument: string}>} [opts.closes]  What it closes: asset
-   *                                                    ids, or templates (assetsClosedBy)
+   * @param {Array<{assetId?: string, displayName?: string}|{instrument: string}>} [opts.closes]
+   *     What it closes: assets, by id and name, or templates (assetsClosedBy)
    * @param {Object}          [opts.phaseTransfers]   { assetId: [FundTransfer JSON] }
    * @param {Object}          [opts.globalOverrides]    { inflationRate?: number, ... }
    */
@@ -229,8 +243,8 @@ export class ModelLifeEvent {
       () => `LifeEvent.apply: "${this.displayName}" (${this.type}) at ${currentDateInt}`);
 
     // 1. Close what it names: assets by id, and templates by type
-    //    (assetsClosedBy). A name nothing resolved names no asset, and closes
-    //    nothing.
+    //    (assetsClosedBy). An entry waiting by name for an asset the plan does
+    //    not have closes nothing.
     for (const entry of this.closes) {
       for (const asset of assetsClosedBy(entry, portfolio.modelAssets, currentDateInt)) {
         if (asset.isClosed) continue;

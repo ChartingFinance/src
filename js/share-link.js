@@ -21,6 +21,7 @@
  */
 
 import LZString from 'lz-string';
+import { PLAN_FORMAT, isNewerPlanFormat, NEWER_PLAN_FORMAT_REASON } from './plan-ids.js';
 
 /** The parameter name, in both the fragment and the legacy query. */
 export const SHARE_PARAM = 'portfolio';
@@ -68,7 +69,8 @@ export const SHARE_URL_SOFT_LIMIT = 16000;
  * A plan spec ALREADY has this shape — `planFromProfile` returns exactly these
  * five keys — so this is a normalisation, not a translation. Anything else on
  * the spec is dropped rather than shipped, because the importer would ignore it
- * and a link should not carry what it cannot deliver.
+ * and a link should not carry what it cannot deliver. Beside the five goes the
+ * plan format, which a reader checks before it reads anything (plan-ids.js).
  */
 /**
  * The five keys that ARE the plan.
@@ -89,6 +91,9 @@ export function sharePayloadFromPlan(spec, { name, handle } = {}) {
         modelAssets:     spec.modelAssets,
         lifeEvents:      spec.lifeEvents ?? [],
         guardrailParams: spec.guardrailParams ?? null,
+        // Beside the plan, not in it (SPEC_KEYS): a reader refuses a newer
+        // format rather than misread it (plan-ids.js PLAN_FORMAT).
+        planFormat:      PLAN_FORMAT,
     };
 
     // Provenance, not identity: the run this link was made from, so the app
@@ -107,6 +112,7 @@ export function sharePayloadFromPlan(spec, { name, handle } = {}) {
  */
 export function specFromPayload(payload) {
     if (!payload) return payload;
+    if (isNewerPlanFormat(payload.planFormat)) throw new Error(`This plan can't be read. ${NEWER_PLAN_FORMAT_REASON}`);
     const spec = {};
     for (const k of SPEC_KEYS) if (k in payload) spec[k] = payload[k];
     return spec;

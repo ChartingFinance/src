@@ -46,6 +46,25 @@ import { InstrumentType } from './instruments/instrument.js';
 import { DateInt, monthLabel } from './utils/date-int.js';
 import { formatCurrency } from './utils/html.js';
 import { EventType, PAY_LEFT_AFTER_TAXES } from './sim-event.js';
+import { waitingReferences } from './plan-ids.js';
+
+/** One waiting reference (plan-ids.js waitingReferences), in a few words. */
+function describeWaitingReference(ref) {
+    const pct = (v) => `${Number(v.toFixed(2))}%`;
+    switch (ref.kind) {
+        case 'transfer': {
+            const parts = [];
+            if (ref.monthly) parts.push(`${pct(ref.monthly)} a month`);
+            if (ref.onClose) parts.push(`${pct(ref.onClose)} when it closes`);
+            const what = parts.length ? parts.join(' and ') : 'a transfer';
+            return `${ref.ownerName ?? 'an asset'} sends ${what}${ref.phaseName ? ` in ${ref.phaseName}` : ''}`;
+        }
+        case 'close':   return `${ref.phaseName ?? 'a phase'} closes it`;
+        case 'funding': return `the purchase of ${ref.ownerName ?? 'an asset'} is paid for from it`;
+        case 'rules':   return `${ref.phaseName ?? 'a phase'} has transfer rules for it`;
+        default:        return 'a reference';
+    }
+}
 
 export { monthLabel };
 
@@ -327,6 +346,34 @@ export const DETECTORS = [
                         detail: `Social Security can't be claimed before ${data.age}. This benefit is dated ${monthLabel(dated)}, so the plan starts it in ${monthLabel(starts)} instead, at the amount entered. Change its start date to ${monthLabel(starts)} or later to match.`,
                     };
                 }));
+        },
+    },
+
+    {
+        // A transfer, close or purchase names an asset the plan does not have:
+        // it was deleted, or a spec named it wrongly. It waits by name and does
+        // nothing (plan-ids.js), and an asset given that name picks it up. Read
+        // from the plan's references, as no-funding-accounts reads its accounts:
+        // nothing ran, so there is no event to anchor on. One finding per name.
+        id: 'missing-asset-reference',
+        scope: 'plan',
+        category: 'configuration',
+        severity: 'notice',
+        detect(ctx) {
+            const groups = waitingReferences(ctx.modelAssets, ctx.portfolio?.lifeEvents ?? []);
+            return groups.map(({ name, refs }) => {
+                const said = refs.map(describeWaitingReference);
+                const count = refs.length === 1 ? 'One thing in the plan refers' : `${refs.length} things in the plan refer`;
+                return {
+                    occurrences: refs.length,
+                    // Each waiting reference, as plan-ids.js waitingReferences
+                    // gives it: for a caller that wants to point at them. The
+                    // detail says them in words.
+                    references: refs,
+                    headline: `"${name}" is not in the plan`,
+                    detail: `${count} to "${name}", and ${refs.length === 1 ? 'it does' : 'they do'} nothing until an asset has that name: ${said.join('; ')}. Add an asset called "${name}" to reconnect ${refs.length === 1 ? 'it' : 'them'}, or remove ${refs.length === 1 ? 'it' : 'them'}.`,
+                };
+            });
         },
     },
 

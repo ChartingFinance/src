@@ -348,10 +348,13 @@ class InlineSimulator {
         ? bYear + nextEvent.triggerAge
         : (this.portfolio.lastDateInt?.year ?? 2070);
 
-      // Closes hold asset ids (plan-ids.js), or a template naming a type of
-      // asset: each one of it already running by the phase's year.
+      // Closes hold assets as { assetId, displayName } (plan-ids.js; a bare id
+      // in an unprepared plan), or a template naming a type of asset: each one
+      // of it already running by the phase's year. A close waiting by name
+      // closes nothing.
       for (const entry of event.closes) {
         if (typeof entry === 'string') closedSoFar.add(entry);
+        else if (entry?.assetId != null) closedSoFar.add(entry.assetId);
         else if (entry?.instrument) {
           for (const a of this.portfolio.modelAssets) {
             if (a.instrument === entry.instrument && (a.startDateInt?.year ?? 0) <= phaseStartYear) closedSoFar.add(a.id);

@@ -25,7 +25,9 @@ import {
     openUnsaved,
     closeUnsaved,
     unsavedPlan,
+    scenarioIsNewer,
 } from './scenario-store.js';
+import { NEWER_PLAN_FORMAT_REASON } from './plan-ids.js';
 
 // ── Core types ──────────────────────────────────────────────
 import { Metric, MetricLabel, PINNED_METRICS, MACRO_METRICS, isTopLevelMetric } from './metric.js';
@@ -265,6 +267,7 @@ let macroChart          = null;
 let microChart          = null;
 let editingModelAsset   = null;
 let pendingFundingAsset = null;  // stashed real estate asset awaiting funding confirmation
+let editingFundingAsset = null;  // a purchase whose funding source the edit form is changing
 
 // Session-only UI (doesn't outlive a reload)
 let expandedGroups      = new Set([
@@ -1299,6 +1302,12 @@ function loadLocalData() {
     }
 
     calculate();
+
+    // Saved by newer code: shown as this code reads it, which may be wrong, and
+    // never saved over (scenario-store.js saveScenario refuses).
+    if (scenarioIsNewer(appState.storyArc, slotName)) {
+        showSettingsNote(`This scenario can't be edited here. ${NEWER_PLAN_FORMAT_REASON}`, assetList.modelAssets);
+    }
 }
 
 // ── Calculation ─────────────────────────────────────────────
@@ -1829,6 +1838,8 @@ function connectAssetFormModal() {
             if (InstrumentType.isRealEstate(newAsset.instrument)
                 && newAsset.startDateInt.isAfter(DateInt.today())) {
                 pendingFundingAsset = newAsset;
+                fundingModal.mode = 'create';
+                fundingModal.fundingConfig = null;
                 fundingModal.modelAssets = assetList.modelAssets || [];
                 fundingModal.purchasePrice = newAsset.startCurrency.amount;
                 fundingModal.startDate = newAsset.startDateInt.toHTML();
@@ -1885,12 +1896,30 @@ function openViewAssetModal(modelAsset) {
 
 function connectFundingModal() {
     fundingModal.addEventListener('funding-confirmed', (ev) => {
+        // A purchase's source changed from its edit form: the source only, by id
+        // with its name as a label (plan-ids.js). The purchase's type and down
+        // payment, and so its mortgage, stay as they were.
+        if (ev.detail.mode === 'edit' && editingFundingAsset) {
+            const asset = editingFundingAsset;
+            editingFundingAsset = null;
+            asset.fundingConfig = { ...asset.fundingConfig,
+                sourceId: ev.detail.sourceId, sourceDisplayName: ev.detail.sourceDisplayName };
+            // The open edit form shows its own object's funding; keep it in step.
+            if (assetFormModal.modelAsset && assetFormModal.modelAsset !== asset) {
+                assetFormModal.modelAsset.fundingConfig = asset.fundingConfig;
+            }
+            assetFormModal.requestUpdate();
+            calculate();
+            return;
+        }
         if (!pendingFundingAsset) return;
         const asset = pendingFundingAsset;
         pendingFundingAsset = null;
 
-        // Attach funding config and save the real estate asset
-        asset.fundingConfig = ev.detail;
+        // Attach funding config and save the real estate asset. `mode` says
+        // which dialog sent it, and is not part of the plan.
+        const { mode, ...fundingConfig } = ev.detail;
+        asset.fundingConfig = fundingConfig;
         assetList.modelAssets = bindForEditing([...(assetList.modelAssets || []), asset]);
 
         // Chain: if down payment, open pre-filled mortgage form for the remaining balance
@@ -1904,6 +1933,7 @@ function connectFundingModal() {
 
     fundingModal.addEventListener('funding-cancelled', () => {
         pendingFundingAsset = null;
+        editingFundingAsset = null;
     });
 }
 
@@ -1962,6 +1992,20 @@ function connectOneTimeModal() {
 
     assetFormModal.addEventListener('open-one-times', (ev) => {
         showOneTimeModal(ev.detail.modelAsset);
+    });
+
+    assetFormModal.addEventListener('open-funding', (ev) => {
+        // The plan's own asset, by id: the one a save writes back.
+        const shown = ev.detail.modelAsset;
+        const asset = (assetList.modelAssets || []).find((a) => a.id === shown?.id) ?? shown;
+        if (!asset?.fundingConfig) return;
+        editingFundingAsset = asset;
+        fundingModal.mode = 'edit';
+        fundingModal.fundingConfig = asset.fundingConfig;
+        fundingModal.modelAssets = (assetList.modelAssets || []).filter((a) => a.id !== asset.id);
+        fundingModal.purchasePrice = asset.startCurrency.amount;
+        fundingModal.startDate = asset.startDateInt.toHTML();
+        fundingModal.open = true;
     });
 }
 

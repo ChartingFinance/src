@@ -24,6 +24,7 @@ import { planSettingsFrom, SIM_CONFIG_DEFAULTS } from './sim-config.js';
 import { membrane_rawDataToModelAssets } from './membrane.js';
 import { ModelLifeEvent } from './life-event.js';
 import { putSettingsInForce } from './scenario-store.js';
+import { isNewerPlanFormat, NEWER_PLAN_FORMAT_REASON } from './plan-ids.js';
 import {
     global_setGuardrailWithdrawalRate,
     global_setGuardrailPreservation,
@@ -45,6 +46,9 @@ import {
  * @throws {Error} a sentence saying why the link cannot be opened
  */
 export function readSharedPlan(payload) {
+    // Before anything is read: a newer plan's references can read as names that
+    // match nothing (plan-ids.js PLAN_FORMAT).
+    if (isNewerPlanFormat(payload?.planFormat)) throw new Error(NEWER_PLAN_FORMAT_REASON);
     const settings = planSettingsFrom(payload);
 
     // The engine and the encoder both refuse a plan with no assets. Opening one

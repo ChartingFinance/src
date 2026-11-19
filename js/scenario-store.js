@@ -55,7 +55,18 @@ import {
     util_loadLocalAssetModels,
     util_loadLocalLifeEvents,
     util_loadLocalGuardrailParams,
+    util_saveLocalPlanFormat,
+    util_loadLocalPlanFormat,
 } from './ui/util.js';
+import { PLAN_FORMAT, isNewerPlanFormat } from './plan-ids.js';
+
+/**
+ * True when the scenario was saved in a plan format newer than this code reads
+ * (plan-ids.js PLAN_FORMAT): it is not saved over, and the page says so.
+ */
+export function scenarioIsNewer(storyArc, storyName) {
+    return isNewerPlanFormat(util_loadLocalPlanFormat(storyArc, storyName));
+}
 
 /** The unsaved plan on screen, `{ title, note }`; null while a scenario is. */
 let unsaved = null;
@@ -142,16 +153,20 @@ export function stampScenarioSettings(storyArc) {
  *
  * @param {{assets: Array, lifeEvents: Array, guardrails: object}} plan
  *   life events as JSON, assets as they serialise
- * @returns {boolean} false, with nothing written, while an unsaved plan is open
+ * @returns {boolean} false, with nothing written, while an unsaved plan is open,
+ *   or when the scenario was saved by newer code (scenarioIsNewer): this code
+ *   could misread it, and saving would write the misreading over it
  */
 export function saveScenario(storyArc, storyName, { assets, lifeEvents, guardrails }) {
     if (unsaved) return false;
+    if (scenarioIsNewer(storyArc, storyName)) return false;
 
     const settings = settingsInForce();
     util_saveLocalAssetModels(storyArc, storyName, assets);
     util_saveLocalLifeEvents(storyArc, storyName, lifeEvents);
     util_saveLocalGuardrailParams(storyArc, storyName, guardrails);
     util_saveLocalScenarioSettings(storyArc, storyName, settings);
+    util_saveLocalPlanFormat(storyArc, storyName, PLAN_FORMAT);
 
     // Monthly snapshot — always overwritten, so it holds the month's last state.
     localStorage.setItem(`${storyName}@${util_YYYYmm()}`,
@@ -195,6 +210,7 @@ export function addScenario(storyArc, storyName, { copyFrom = null } = {}) {
     localStorage.removeItem(`lifeEvents_${storyArc}_${storyName}`);
     localStorage.removeItem(base + '+guardrails');
     localStorage.removeItem(base + '+settings');
+    localStorage.removeItem(base + '+format');
     if (!copyFrom) return;
 
     const copy = (load, save) => {
@@ -205,6 +221,7 @@ export function addScenario(storyArc, storyName, { copyFrom = null } = {}) {
     copy(util_loadLocalLifeEvents, util_saveLocalLifeEvents);
     copy(util_loadLocalGuardrailParams, util_saveLocalGuardrailParams);
     copy(util_loadLocalScenarioSettings, util_saveLocalScenarioSettings);
+    copy(util_loadLocalPlanFormat, util_saveLocalPlanFormat);
 }
 
 // ── The unsaved plan ────────────────────────────────────────────────
