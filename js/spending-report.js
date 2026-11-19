@@ -26,10 +26,22 @@ function holdings(untouched = []) {
 /**
  * The answer in one sentence: "The most this plan can spend is $5,316 a month,
  * $131 a month more than you entered (+3%)."
+ *
+ * Spending is what a plan paid. When the plan as entered runs out, what it
+ * paid is less than its bills, and comparing the answer with it would call a
+ * cut a raise. The answer is then given as the dial's setting, a share of
+ * every expense as entered, cut to the whole percent so it never reads higher
+ * than the level tested.
  */
 export function spendingHeadline(result) {
     const { asEntered, best } = result;
     if (!best) return 'No spending level tested keeps these limits.';
+    if (asEntered.runsOut) {
+        const share = Math.floor(best.factor * 100);
+        return 'The expenses as entered cannot all be paid. The most this plan can spend is'
+            + ` ${formatCurrency(best.monthlySpending)} a month, with every expense cut to`
+            + ` ${share < 1 ? 'less than 1%' : `${share}%`} of what you entered.`;
+    }
     const change = best.monthlySpending - asEntered.monthlySpending;
     const percent = asEntered.monthlySpending ? Math.round(change / asEntered.monthlySpending * 100) : 0;
     const versus = Math.abs(change) < 1
@@ -138,6 +150,10 @@ export function healthNote(result) {
 /**
  * The rows of the result table.
  *
+ * A column whose plan runs out has its spending marked "paid": the bills it
+ * could pay, which is less than was entered, so that a reader does not take
+ * the As entered column's spending for the amount entered.
+ *
  * @param {object} result    solveSpending() output
  * @param {object} [routed]  a third column: the most the plan can spend under
  *                           a routing from the routing test, when one is selected
@@ -151,18 +167,19 @@ export function resultRows(result, routed = null) {
         label, entered: cell(a, read), best: cell(b, read),
         ...(routed ? { routed: cell(routed, read) } : {}),
     });
-    const monthly = (v) => `${formatCurrency(v)}/mo`;
+    const paid = (c, text) => (c.runsOut ? `${text} paid` : text);
+    const monthly = (c, v) => paid(c, `${formatCurrency(v)}/mo`);
     const runsOut = (c) => (c.runsOut ? monthLabel(DateInt.from(c.runsOut.year, c.runsOut.month)) : 'never');
 
     const rows = [];
     if (a.monthlySpendingBefore65 != null) {
-        rows.push(row('Monthly spending before 65', (c) => monthly(c.monthlySpendingBefore65)));
-        rows.push(row('Monthly spending from 65', (c) => monthly(c.monthlySpendingFrom65)));
+        rows.push(row('Monthly spending before 65', (c) => monthly(c, c.monthlySpendingBefore65)));
+        rows.push(row('Monthly spending from 65', (c) => monthly(c, c.monthlySpendingFrom65)));
         rows.push(row('Premium tax credit, whole plan', (c) => formatCurrency(c.premiumTaxCredit)));
     } else {
-        rows.push(row('Monthly spending', (c) => monthly(c.monthlySpending)));
+        rows.push(row('Monthly spending', (c) => monthly(c, c.monthlySpending)));
     }
-    rows.push(row('Lifetime spending', (c) => formatCompactCurrency(c.lifetimeSpending)));
+    rows.push(row('Lifetime spending', (c) => paid(c, formatCompactCurrency(c.lifetimeSpending))));
     rows.push(row('Left at the end', (c) => formatCompactCurrency(c.endingReal)));
     rows.push(row('Runs out', runsOut));
     return rows;

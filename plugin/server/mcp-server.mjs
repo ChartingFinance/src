@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.3.46; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.3.47; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -43156,6 +43156,10 @@ function holdings(untouched = []) {
 function spendingHeadline(result) {
   const { asEntered, best } = result;
   if (!best) return "No spending level tested keeps these limits.";
+  if (asEntered.runsOut) {
+    const share = Math.floor(best.factor * 100);
+    return `The expenses as entered cannot all be paid. The most this plan can spend is ${formatCurrency(best.monthlySpending)} a month, with every expense cut to ${share < 1 ? "less than 1%" : `${share}%`} of what you entered.`;
+  }
   const change = best.monthlySpending - asEntered.monthlySpending;
   const percent2 = asEntered.monthlySpending ? Math.round(change / asEntered.monthlySpending * 100) : 0;
   const versus = Math.abs(change) < 1 ? "the same as you entered" : `${formatCurrency(Math.abs(change))} a month ${change > 0 ? "more" : "less"} than you entered (${percent2 > 0 ? "+" : percent2 < 0 ? MINUS : ""}${Math.abs(percent2)}%)`;
@@ -43225,17 +43229,18 @@ function resultRows(result, routed = null) {
     best: cell(b, read),
     ...routed ? { routed: cell(routed, read) } : {}
   });
-  const monthly = (v) => `${formatCurrency(v)}/mo`;
+  const paid = (c, text) => c.runsOut ? `${text} paid` : text;
+  const monthly = (c, v) => paid(c, `${formatCurrency(v)}/mo`);
   const runsOut = (c) => c.runsOut ? monthLabel(DateInt.from(c.runsOut.year, c.runsOut.month)) : "never";
   const rows = [];
   if (a.monthlySpendingBefore65 != null) {
-    rows.push(row("Monthly spending before 65", (c) => monthly(c.monthlySpendingBefore65)));
-    rows.push(row("Monthly spending from 65", (c) => monthly(c.monthlySpendingFrom65)));
+    rows.push(row("Monthly spending before 65", (c) => monthly(c, c.monthlySpendingBefore65)));
+    rows.push(row("Monthly spending from 65", (c) => monthly(c, c.monthlySpendingFrom65)));
     rows.push(row("Premium tax credit, whole plan", (c) => formatCurrency(c.premiumTaxCredit)));
   } else {
-    rows.push(row("Monthly spending", (c) => monthly(c.monthlySpending)));
+    rows.push(row("Monthly spending", (c) => monthly(c, c.monthlySpending)));
   }
-  rows.push(row("Lifetime spending", (c) => formatCompactCurrency(c.lifetimeSpending)));
+  rows.push(row("Lifetime spending", (c) => paid(c, formatCompactCurrency(c.lifetimeSpending))));
   rows.push(row("Left at the end", (c) => formatCompactCurrency(c.endingReal)));
   rows.push(row("Runs out", runsOut));
   return rows;
