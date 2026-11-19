@@ -18,7 +18,8 @@
  */
 
 import { LitElement, html } from 'lit';
-import { LifeEvent, LifeEventMeta, ModelLifeEvent, isCloseTemplate } from '../life-event.js';
+import { LifeEvent, LifeEventMeta, ModelLifeEvent, isCloseTemplate, closeAssetId } from '../life-event.js';
+import { isAssetClose } from '../plan-ids.js';
 import { InstrumentMeta } from '../instruments/instrument.js';
 import { global_user_startAge, global_user_finishAge } from '../globals.js';
 
@@ -171,7 +172,7 @@ class EventFormModal extends LitElement {
                                 // Covered by a template: closed when the event
                                 // happens if it is running then, without a tick of its own.
                                 const byType = this._closesType(a.instrument);
-                                const closed = byType || this._closes.includes(a.id);
+                                const closed = byType || this._closesAsset(a.id);
                                 return html`
                                 <label class="flex items-center gap-2 px-3 py-2 rounded-xl text-sm transition
                                     ${byType ? 'cursor-default' : 'cursor-pointer'}
@@ -182,11 +183,19 @@ class EventFormModal extends LitElement {
                                     <input type="checkbox" class="rounded"
                                         .checked=${closed}
                                         ?disabled=${byType}
-                                        @change=${(e) => this._onCloseToggle(a.id, e.target.checked)} />
+                                        @change=${(e) => this._onCloseToggle(a, e.target.checked)} />
                                     ${a.displayName}
                                 </label>
                             `;
                             })}
+                            ${this._waitingCloses().map(name => html`
+                                <label class="flex items-center gap-2 px-3 py-2 rounded-xl text-sm cursor-pointer transition bg-amber-50 text-amber-800 border border-amber-200"
+                                    title="Not in the plan: closes an asset with this name if one is added. Untick to remove.">
+                                    <input type="checkbox" class="rounded" .checked=${true}
+                                        @change=${() => this._onWaitingCloseRemove(name)} />
+                                    ${name} <span class="text-xs">(not in the plan)</span>
+                                </label>
+                            `)}
                         </div>
                     </div>
                 ` : html``}
@@ -206,11 +215,32 @@ class EventFormModal extends LitElement {
     _onTypeSelect(type) {
         this._selectedType = type;
         const meta = LifeEventMeta.get(type);
-        // The phase holds ids and templates; a default that names an asset is
-        // turned into its id. A template is copied, not shared with the meta.
-        const idOf = (name) => (this.modelAssets || []).find((a) => a.displayName === name)?.id ?? name;
+        // The phase holds assets (by id and name) and templates; a default that
+        // names an asset is turned into that asset, or waits by its name. A
+        // template is copied, not shared with the meta.
+        const closeOf = (name) => {
+            const asset = (this.modelAssets || []).find((a) => a.displayName === name);
+            return asset ? { assetId: asset.id, displayName: asset.displayName } : { displayName: name };
+        };
         this._closes = (meta.defaultMutations.closes || [])
-            .map((entry) => (typeof entry === 'string' ? idOf(entry) : structuredClone(entry)));
+            .map((entry) => (typeof entry === 'string' ? closeOf(entry) : structuredClone(entry)));
+    }
+
+    /** True when the phase closes this asset by its id. */
+    _closesAsset(id) {
+        return this._closes.some((entry) => closeAssetId(entry) === id);
+    }
+
+    /** The names of the closes waiting for an asset the plan does not have (plan-ids.js). */
+    _waitingCloses() {
+        return this._closes
+            .filter((entry) => isAssetClose(entry) && entry.assetId == null)
+            .map((entry) => entry.displayName);
+    }
+
+    _onWaitingCloseRemove(name) {
+        this._closes = this._closes.filter((entry) =>
+            !(isAssetClose(entry) && entry.assetId == null && entry.displayName === name));
     }
 
     /**
@@ -234,13 +264,10 @@ class EventFormModal extends LitElement {
         this._closes = checked ? [...others, { instrument }] : others;
     }
 
-    /** Closes are held by asset id (plan-ids.js). */
-    _onCloseToggle(id, checked) {
-        if (checked) {
-            this._closes = [...this._closes, id];
-        } else {
-            this._closes = this._closes.filter(entry => entry !== id);
-        }
+    /** A close names its asset by id, with its name as a label (plan-ids.js). */
+    _onCloseToggle(asset, checked) {
+        const others = this._closes.filter((entry) => closeAssetId(entry) !== asset.id);
+        this._closes = checked ? [...others, { assetId: asset.id, displayName: asset.displayName }] : others;
     }
 
     _onSubmit(ev) {

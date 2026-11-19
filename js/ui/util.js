@@ -161,6 +161,20 @@ export function util_loadLocalScenarioSettings(storyArc, storyName) {
     return raw ? JSON.parse(raw) : null;
 }
 
+// The plan format a scenario was saved in (plan-ids.js PLAN_FORMAT); absent
+// for a scenario saved before formats were numbered.
+
+export function util_saveLocalPlanFormat(storyArc, storyName, format) {
+    const key = util_buildStoryArcKey(storyArc, storyName) + '+format';
+    localStorage.setItem(key, JSON.stringify(format));
+}
+
+export function util_loadLocalPlanFormat(storyArc, storyName) {
+    const key = util_buildStoryArcKey(storyArc, storyName) + '+format';
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : null;
+}
+
 export function util_loadStoryNames(storyArc) {
     const storyArcNamesKey = util_buildStoryArcKey(storyArc, storyNamesKey);
     const raw = localStorage.getItem(storyArcNamesKey);
@@ -179,6 +193,7 @@ export function util_deleteScenario(storyArc, storyName) {
     localStorage.removeItem(baseKey + '+meta');                 // scenario metadata
     localStorage.removeItem(baseKey + '+preview');              // cached preview curve
     localStorage.removeItem(baseKey + '+settings');             // settings row
+    localStorage.removeItem(baseKey + '+format');               // plan format
 }
 
 export function util_loadFromStorage(key) {

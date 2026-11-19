@@ -36,6 +36,7 @@ class TransferModal extends LitElement {
         phaseTransfers:     { type: Object },
         portfolio:          { type: Object },   // pre-simulated Portfolio (avoids re-running simulation)
         _activeTab:         { state: true },
+        _removedWaiting:    { state: true },    // names of waiting transfers removed before Save
     };
 
     createRenderRoot() { return this; }
@@ -48,6 +49,7 @@ class TransferModal extends LitElement {
         this.phaseTransfers = {};
         this.portfolio = null;
         this._activeTab = 0;
+        this._removedWaiting = new Set();
         this._chart = null;
         this._portfolio = null;
         this._tabs = [];
@@ -86,6 +88,7 @@ class TransferModal extends LitElement {
                             </h3>
                             <div class="scrollable-y overflow-y-auto max-h-[400px] pr-2 space-y-3">
                                 ${transferrableAssets.map(ta => this._renderTransferCard(ta))}
+                                ${this._keptWaiting().map(ft => this._renderWaitingCard(ft))}
                             </div>
                         </div>
                     </div>
@@ -100,6 +103,7 @@ class TransferModal extends LitElement {
     updated(changed) {
         if (changed.has('open') && this.open) {
             this._activeTab = 0;
+            this._removedWaiting = new Set();
             requestAnimationFrame(() => this._buildChart());
         }
         if (changed.has('open') && !this.open) {
@@ -203,6 +207,37 @@ class TransferModal extends LitElement {
         `;
     }
 
+    /**
+     * This asset's transfers in the phase to an asset the plan does not have:
+     * each waits by its name for an asset of that name (plan-ids.js). They have
+     * no card to type into, so they are listed, and kept on Save unless removed.
+     */
+    _keptWaiting() {
+        const rules = this.phaseTransfers?.[this.currentAssetId] ?? [];
+        return rules
+            .filter((ft) => ft && ft.toId == null && !this._removedWaiting.has(ft.toDisplayName))
+            .map((ft) => new FundTransfer(ft.toDisplayName, ft.monthlyMoveValue ?? 0, ft.closeMoveValue ?? 0, null));
+    }
+
+    _renderWaitingCard(ft) {
+        const parts = [];
+        if (ft.monthlyMoveValue) parts.push(`${ft.monthlyMoveValue}% monthly`);
+        if (ft.closeMoveValue) parts.push(`${ft.closeMoveValue}% on close`);
+        return html`
+            <div class="glass-card p-4 border border-amber-200 bg-amber-50/60">
+                <div class="flex items-center gap-3">
+                    <div class="flex-1 min-w-0">
+                        <div class="text-sm font-semibold text-gray-800 truncate">${ft.toDisplayName}</div>
+                        <div class="text-xs text-amber-700">Not in the plan: waits for an asset with this name</div>
+                    </div>
+                    <div class="text-sm text-gray-600 whitespace-nowrap">${parts.join(', ')}</div>
+                    <button type="button" class="text-xs font-semibold text-red-500 hover:text-red-700 cursor-pointer"
+                        @click=${() => { this._removedWaiting = new Set([...this._removedWaiting, ft.toDisplayName]); }}>Remove</button>
+                </div>
+            </div>
+        `;
+    }
+
     _switchTab(index) {
         if (index === this._activeTab) return;
         this._activeTab = index;
@@ -257,9 +292,12 @@ class TransferModal extends LitElement {
             const closeMoveValue = parseFloat(form.querySelector('[name="closeMoveValue"]').value) || 0;
 
             if (monthlyMoveValue > 0 || closeMoveValue > 0) {
-                fundTransfers.push(new FundTransfer(toDisplayName, monthlyMoveValue, closeMoveValue, toId));
+                fundTransfers.push(new FundTransfer(toDisplayName, monthlyMoveValue, closeMoveValue, toId || null));
             }
         }
+        // The forms are the plan's assets; a waiting transfer has none, and
+        // rebuilding the list from the forms alone would delete it.
+        fundTransfers.push(...this._keptWaiting());
 
         this.dispatchEvent(new CustomEvent('save-transfers', {
             bubbles: true, composed: true,
