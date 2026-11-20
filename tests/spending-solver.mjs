@@ -462,5 +462,29 @@ await check('a column with no answer shows a dash, and a plan that runs out show
     assert.equal(rows.find((row) => row.label === 'Runs out').entered, 'July 2030');
 });
 
+await check('spending in a column that runs out is marked paid, and in a funded column is not', () => {
+    // A plan that runs out paid less than its bills: its spending is not what was entered.
+    const early = PROFILES.find((p) => p.key === 'earlyCareer');
+    const r = solve('earlyCareer', early.spec);
+    const rows = resultRows(r);
+    const cell = (label) => rows.find((row) => row.label === label);
+    assert.equal(cell('Monthly spending').entered, `$${Math.round(r.asEntered.monthlySpending).toLocaleString('en-US')}/mo paid`);
+    assert.match(cell('Lifetime spending').entered, /^\$[\d.]+[KM] paid$/);
+    assert.ok(!cell('Monthly spending').best.includes('paid'));
+    assert.ok(!cell('Lifetime spending').best.includes('paid'));
+
+    // With a health plan, both halves of spending say so.
+    const out = { ...solve('retiree', RETIREE) };
+    out.asEntered = { ...out.asEntered, runsOut: { year: 2030, month: 7 } };
+    const split = resultRows(out);
+    assert.match(split[0].entered, /\/mo paid$/);
+    assert.match(split[1].entered, /\/mo paid$/);
+    assert.ok(!split[2].entered.includes('paid'), 'a tax credit is not spending');
+
+    // A plan that pays every bill shows its spending as it is.
+    const { spec } = PROFILES.find((p) => p.key === 'retired');
+    assert.ok(resultRows(solve('retired', spec)).every((row) => !row.entered.includes('paid') && !row.best.includes('paid')));
+});
+
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);

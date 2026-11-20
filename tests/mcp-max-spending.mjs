@@ -71,6 +71,14 @@ const SPECS = at('2026-11-15T12:00:00Z', () => ({
             benchmark: { monthly: 950 }, estimatedIncome: 40000 }],
     }).spec,
 }));
+// "I'm 50, make $120K, retire at 60": build_plan sizes Living Expenses to all
+// of take-home pay, so the plan runs out as entered, in its first months, and
+// what it paid averages far below the answer it can afford.
+const RUNS_OUT = at('2026-11-15T12:00:00Z', () => buildPlan({
+    settingsOverrides: { startAge: 50, retirementAge: 60 },
+    income: [{ label: 'Salary', annual: 120000 }],
+    accounts: [{ label: 'Brokerage', startingBalance: 0 }],
+}).spec);
 const planOf = (spec) => ({ modelAssets: spec.modelAssets, lifeEvents: spec.lifeEvents ?? [], config: simConfigFromPlanSpec(spec) });
 
 const SOLVED = {};
@@ -109,7 +117,44 @@ await check('a plan that runs out as entered is answered below what was entered'
     const { result } = await solved('earlyCareer');
     assert.ok(result.asEntered.runsOut);
     assert.ok(result.best.factor < 1);
-    assert.match(spendingHeadline(result), /a month less than you entered \(−\d+%\)\.$/);
+    assert.match(spendingHeadline(result),
+        /^The expenses as entered cannot all be paid\. .* with every expense cut to \d+% of what you entered\.$/);
+});
+
+await check('a plan that runs out as entered is told its expenses were cut, even when it can spend more than it paid', async () => {
+    const out = await maxSpending(RUNS_OUT);
+    const { result } = out;
+    // The case: as entered the plan paid less than the answer, while the
+    // answer cuts every expense.
+    assert.ok(result.asEntered.runsOut);
+    assert.ok(result.best.factor < 0.5, `factor ${result.best.factor}`);
+    assert.ok(result.best.monthlySpending > result.asEntered.monthlySpending + 1000);
+
+    const share = Math.floor(result.best.factor * 100);
+    const headline = spendingHeadline(result);
+    assert.equal(headline, 'The expenses as entered cannot all be paid. The most this plan can spend is '
+        + `$${Math.round(result.best.monthlySpending).toLocaleString('en-US')} a month, with every expense cut to `
+        + `${share}% of what you entered.`);
+    assert.ok(!/more than you entered/.test(headline));
+
+    // Each expense in the report is at that share of what was entered.
+    const md = maxSpendingMarkdown(out);
+    assert.ok(md.includes(`**${headline}**`));
+    const living = result.best.expenses.find((e) => e.displayName === 'Living Expenses');
+    const entered = result.asEntered.expenses.find((e) => e.displayName === 'Living Expenses');
+    assert.equal(Math.floor(living.monthly / entered.monthly * 100), share);
+
+    // The As entered column's spending is what it paid, and says so.
+    assert.match(md, /\| Monthly spending \| \$1,\d{3}\/mo paid \| \$3,\d{3}\/mo \|/);
+    assert.match(md, /\| Lifetime spending \| \$\d+K paid \| \$[\d.]+M \|/);
+});
+
+await check('a plan that pays every bill as entered is compared with what it entered', async () => {
+    const out = await solved('midCareer');
+    assert.equal(out.result.asEntered.runsOut, null);
+    assert.match(spendingHeadline(out.result),
+        /^The most this plan can spend is \$5,\d{3} a month, \$\d+ a month more than you entered \(\+\d+%\)\.$/);
+    assert.ok(!maxSpendingMarkdown(out).includes(' paid |'));
 });
 
 // ── The plan at the answer ───────────────────────────────────────────
@@ -258,7 +303,7 @@ await check('a plan with a marketplace health plan shows spending before and fro
     assert.match(md, /\| Marketplace Plan \| \$1,000\/mo \| \$[\d,]+\/mo \|/);
 });
 
-await check('the headline says more, less, the same, or that nothing keeps the limits', () => {
+await check('the headline says more, less, the same, a share for a plan that runs out, or that nothing keeps the limits', () => {
     const result = (entered, best) => ({ asEntered: { monthlySpending: entered }, best: best == null ? null : { monthlySpending: best } });
     assert.equal(spendingHeadline(result(5185, 5316)),
         'The most this plan can spend is $5,316 a month, $131 a month more than you entered (+3%).');
@@ -267,6 +312,19 @@ await check('the headline says more, less, the same, or that nothing keeps the l
     assert.equal(spendingHeadline(result(5185, 5185.4)),
         'The most this plan can spend is $5,185 a month, the same as you entered.');
     assert.equal(spendingHeadline(result(5185, null)), 'No spending level tested keeps these limits.');
+
+    // As entered the plan runs out: the answer is a share of what was
+    // entered, cut to the whole percent, whatever the plan happened to pay.
+    const out = (paid, best, factor) => ({ asEntered: { monthlySpending: paid, runsOut: { year: 2026, month: 12 } },
+        best: best == null ? null : { monthlySpending: best, factor } });
+    assert.equal(spendingHeadline(out(1891, 3369, 0.4347)),
+        'The expenses as entered cannot all be paid. The most this plan can spend is $3,369 a month,'
+        + ' with every expense cut to 43% of what you entered.');
+    assert.equal(spendingHeadline(out(4000, 3000, 0.996)),
+        'The expenses as entered cannot all be paid. The most this plan can spend is $3,000 a month,'
+        + ' with every expense cut to 99% of what you entered.');
+    assert.match(spendingHeadline(out(100, 20, 0.004)), /cut to less than 1% of what you entered\.$/);
+    assert.equal(spendingHeadline(out(1891, null)), 'No spending level tested keeps these limits.');
 });
 
 console.log(`\n${passed} passed, ${failed} failed`);
