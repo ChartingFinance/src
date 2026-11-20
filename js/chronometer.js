@@ -135,6 +135,8 @@ export async function chronometer_run(portfolio) {
         }
 
         if (currentDateInt.isNewYearsDay()) {
+            const isFinalYearEnd = currentDateInt.toInt() > lastDateInt.toInt();
+            const settleDateInt = isFinalYearEnd ? lastDateInt : currentDateInt;
             if (backtesting) {
                 applyBacktestForYear(portfolio, currentDateInt.year, backtestStartYear, simStartYear, savedRates);
             }
@@ -143,8 +145,10 @@ export async function chronometer_run(portfolio) {
                 inflationRateForYear(backtesting, backtestStartYear, simStartYear, currentDateInt.year, portfolio.config.inflationRate)
             );
 
+            // Settle Year Y's tax true-up, NIIT, and PTC BEFORE guardrails so
+            // getTotalInvestableAssets() reflects post-tax balances.
+            portfolio.applyYear(currentDateInt, settleDateInt);
             portfolio.applyGuardrails(currentDateInt);
-            portfolio.applyYear(currentDateInt);
             portfolio.config.taxTable.applyYear(portfolio.yearly, portfolio.activeUser);
 
             portfolio.yearlyChron(currentDateInt);
@@ -191,6 +195,13 @@ export async function chronometer_run(portfolio) {
     // the annual pass emitted has never been through a reconciliation scan.
     // Nothing below appends events, so this is the last point that can see them.
     portfolio.finalSanityCheck(currentDateInt);
+
+    // Fold the final year's applyYear() settlement into total, the last
+    // monthlyPackage, and each asset's final metric histories so nothing is
+    // orphaned after loop exit.
+    if (currentDateInt.isNewYearsDay()) {
+        portfolio.flushFinalSettlement();
+    }
 
     portfolio.finalizeChron();
     portfolio.config.taxTable.finalizeChron();

@@ -24,7 +24,7 @@
   lastDate = 2030-12
   startValue = 420000.000000
   finishValue = 502107.364830
-  accumulated = -138371.587555
+  accumulated = -137051.587555
   total.employedIncome = 720000.000000
   total.socialSecurityTax = -44640.000000
   total.assetAppreciation = 18370.860635
@@ -35,8 +35,8 @@
   total.mortgagePrincipal = -18370.860635
   total.propertyTaxes = -22500.000000
   total.longTermCapitalGains = 33333.333333
-  total.taxTrueUp = -2099.343327
-  total.value = 26097650.718563
+  total.taxTrueUp = -779.343327
+  total.value = 25638586.920761
 
 [assetOrder]
   0 Salary
@@ -228,7 +228,7 @@
   0086 2027-12 settlement                   -2528.272094 cash  -                      c3 {backstop=true from=Mortgage label=monthly to=Checking}
   0087 2027-12 grossUp                      -4241.040630 cash  -                      c2 {forAsset=Living overflow=false}
   0088 2027-12 interestIncome                   0.000000 cash  interestIncome         c-
-  0089 2027-12 taxTrueUp                    -4915.946000 cash  -                      c5 {direction=underpayment}
+  0089 2028-01 taxTrueUp                    -4915.946000 cash  -                      c5 {direction=underpayment}
   0090 2028-01 transfer                      9373.346158 cash  -                      c1 {cadence=monthly from=Salary system=true to=Checking}
   0091 2028-01 settlement                    -500.000000 cash  -                      c4 {backstop=true from=House label=property tax to=Checking}
   0092 2028-01 settlement                   -2528.272094 cash  -                      c3 {backstop=true from=Mortgage label=monthly to=Checking}
@@ -289,7 +289,7 @@
   0147 2028-12 settlement                   -2528.272094 cash  -                      c3 {backstop=true from=Mortgage label=monthly to=Checking}
   0148 2028-12 grossUp                      -4372.512890 cash  -                      c2 {forAsset=Living overflow=false}
   0149 2028-12 interestIncome                   0.000000 cash  interestIncome         c-
-  0150 2028-12 taxTrueUp                     1439.987962 cash  -                      c6 {direction=refund}
+  0150 2029-01 taxTrueUp                     1439.987962 cash  -                      c6 {direction=refund}
   0151 2029-01 transfer                      9387.570188 cash  -                      c1 {cadence=monthly from=Salary system=true to=Checking}
   0152 2029-01 settlement                    -500.000000 cash  -                      c4 {backstop=true from=House label=property tax to=Checking}
   0153 2029-01 settlement                   -2528.272094 cash  -                      c3 {backstop=true from=Mortgage label=monthly to=Checking}
@@ -350,7 +350,7 @@
   0208 2029-12 settlement                   -2528.272094 cash  -                      c3 {backstop=true from=Mortgage label=monthly to=Checking}
   0209 2029-12 grossUp                      -4508.060789 cash  -                      c2 {forAsset=Living overflow=false}
   0210 2029-12 interestIncome                   0.000000 cash  interestIncome         c-
-  0211 2029-12 taxTrueUp                     1376.614712 cash  -                      c7 {direction=refund}
+  0211 2030-01 taxTrueUp                     1376.614712 cash  -                      c7 {direction=refund}
   0212 2030-01 transfer                      9401.045384 cash  -                      c1 {cadence=monthly from=Salary system=true to=Checking}
   0213 2030-01 settlement                    -500.000000 cash  -                      c4 {backstop=true from=House label=property tax to=Checking}
   0214 2030-01 settlement                   -2528.272094 cash  -                      c3 {backstop=true from=Mortgage label=monthly to=Checking}
@@ -414,13 +414,13 @@
   0272 2030-12 taxTrueUp                     1320.000000 cash  -                      c8 {direction=refund}
 
 [history] Checking
-  value                        n=  60 first=    25140.830000 last=   182416.500000 min=    25140.830000 max=   182416.500000 sum=    7231459.160000 #5198aed3
-  estimatedIncomeTax           n=  60 first=        0.000000 last=        0.000000 min=    -4915.950000 max=     1439.990000 sum=      -2099.350000 #7af95cec
-  incomeTax                    n=  60 first=        0.000000 last=        0.000000 min=    -4915.950000 max=     1439.990000 sum=      -2099.350000 #7af95cec
-  federalTaxes                 n=  60 first=        0.000000 last=        0.000000 min=    -4915.950000 max=     1439.990000 sum=      -2099.350000 #7af95cec
-  taxes                        n=  60 first=        0.000000 last=        0.000000 min=    -4915.950000 max=     1439.990000 sum=      -2099.350000 #7af95cec
-  cashFlow                     n=  60 first=        0.000000 last=        0.000000 min=    -4915.950000 max=     1439.990000 sum=      -2099.350000 #7af95cec
-  cashFlowAccumulated          n=  60 first=        0.000000 last=    -2099.340000 min=    -4915.950000 max=        0.000000 sum=    -125895.000000 #6eaddd99
+  value                        n=  60 first=    25140.830000 last=   183736.500000 min=    25140.830000 max=   183736.500000 sum=    7232779.160000 #f7851645
+  estimatedIncomeTax           n=  60 first=        0.000000 last=     1320.000000 min=    -4915.950000 max=     1439.990000 sum=       -779.350000 #fde3e70e
+  incomeTax                    n=  60 first=        0.000000 last=     1320.000000 min=    -4915.950000 max=     1439.990000 sum=       -779.350000 #fde3e70e
+  federalTaxes                 n=  60 first=        0.000000 last=     1320.000000 min=    -4915.950000 max=     1439.990000 sum=       -779.350000 #fde3e70e
+  taxes                        n=  60 first=        0.000000 last=     1320.000000 min=    -4915.950000 max=     1439.990000 sum=       -779.350000 #fde3e70e
+  cashFlow                     n=  60 first=        0.000000 last=     1320.000000 min=    -4915.950000 max=     1439.990000 sum=       -779.350000 #fde3e70e
+  cashFlowAccumulated          n=  60 first=        0.000000 last=     -779.340000 min=    -4915.950000 max=        0.000000 sum=    -124575.000000 #e0d6914c
 
 [asset] House
   instrument = realEstate
@@ -820,7 +820,7 @@
   0033 2026-12 ficaWithholding               -918.000000 cash  socialSecurityTax      c10
   0034 2026-12 incomeTaxWithholding         -1941.166667 cash  withheldIncomeTax      c11
   0035 2026-12 transfer                     -9140.833333 cash  -                      c1 {cadence=monthly from=Salary system=true to=Checking}
-  0036 2026-12 incomeGrowth                     0.000000 cash  income                 c12
+  0036 2027-01 incomeGrowth                     0.000000 cash  income                 c12
   0037 2027-01 ficaWithholding               -918.000000 cash  socialSecurityTax      c10
   0038 2027-01 incomeTaxWithholding         -1912.062833 cash  withheldIncomeTax      c11
   0039 2027-01 transfer                     -9169.937167 cash  -                      c1 {cadence=monthly from=Salary system=true to=Checking}
@@ -857,7 +857,7 @@
   0070 2027-12 ficaWithholding               -918.000000 cash  socialSecurityTax      c10
   0071 2027-12 incomeTaxWithholding         -1727.877604 cash  withheldIncomeTax      c11
   0072 2027-12 transfer                     -9354.122396 cash  -                      c1 {cadence=monthly from=Salary system=true to=Checking}
-  0073 2027-12 incomeGrowth                     0.000000 cash  income                 c13
+  0073 2028-01 incomeGrowth                     0.000000 cash  income                 c13
   0074 2028-01 ficaWithholding               -918.000000 cash  socialSecurityTax      c10
   0075 2028-01 incomeTaxWithholding         -1708.653842 cash  withheldIncomeTax      c11
   0076 2028-01 transfer                     -9373.346158 cash  -                      c1 {cadence=monthly from=Salary system=true to=Checking}
@@ -894,7 +894,7 @@
   0107 2028-12 ficaWithholding               -918.000000 cash  socialSecurityTax      c10
   0108 2028-12 incomeTaxWithholding         -1714.231854 cash  withheldIncomeTax      c11
   0109 2028-12 transfer                     -9367.768146 cash  -                      c1 {cadence=monthly from=Salary system=true to=Checking}
-  0110 2028-12 incomeGrowth                     0.000000 cash  income                 c14
+  0110 2029-01 incomeGrowth                     0.000000 cash  income                 c14
   0111 2029-01 ficaWithholding               -918.000000 cash  socialSecurityTax      c10
   0112 2029-01 incomeTaxWithholding         -1694.429812 cash  withheldIncomeTax      c11
   0113 2029-01 transfer                     -9387.570188 cash  -                      c1 {cadence=monthly from=Salary system=true to=Checking}
@@ -931,7 +931,7 @@
   0144 2029-12 ficaWithholding               -918.000000 cash  socialSecurityTax      c10
   0145 2029-12 incomeTaxWithholding         -1700.381394 cash  withheldIncomeTax      c11
   0146 2029-12 transfer                     -9381.618606 cash  -                      c1 {cadence=monthly from=Salary system=true to=Checking}
-  0147 2029-12 incomeGrowth                     0.000000 cash  income                 c15
+  0147 2030-01 incomeGrowth                     0.000000 cash  income                 c15
   0148 2030-01 ficaWithholding               -918.000000 cash  socialSecurityTax      c10
   0149 2030-01 incomeTaxWithholding         -1680.954616 cash  withheldIncomeTax      c11
   0150 2030-01 transfer                     -9401.045384 cash  -                      c1 {cadence=monthly from=Salary system=true to=Checking}
@@ -986,66 +986,66 @@
   medicareTax                  n=  60 first=     -174.000000 last=     -174.000000 min=     -174.000000 max=     -174.000000 sum=     -10440.000000 #82853f75
 
 [packages]
-  0000 employedIncome=12000.000000 socialSecurityTax=-744.000000 expense=-4000.000000 medicareTax=-174.000000 incomeTax=-1941.166667 value=333130.643976
-  0001 employedIncome=12000.000000 socialSecurityTax=-744.000000 expense=-4010.189358 medicareTax=-174.000000 incomeTax=-1941.166667 value=338251.072638
-  0002 employedIncome=12000.000000 socialSecurityTax=-744.000000 expense=-4020.404671 medicareTax=-174.000000 incomeTax=-1941.166667 value=343361.259966
-  0003 employedIncome=12000.000000 socialSecurityTax=-744.000000 expense=-4030.646006 medicareTax=-174.000000 incomeTax=-1941.166667 value=348461.179869
-  0004 employedIncome=12000.000000 socialSecurityTax=-744.000000 expense=-4040.913429 medicareTax=-174.000000 incomeTax=-1941.166667 value=353550.806195
-  0005 employedIncome=12000.000000 socialSecurityTax=-744.000000 expense=-4051.207007 medicareTax=-174.000000 incomeTax=-1941.166667 value=358630.112722
-  0006 employedIncome=12000.000000 socialSecurityTax=-744.000000 expense=-4061.526807 medicareTax=-174.000000 incomeTax=-1941.166667 value=363699.073162
-  0007 employedIncome=12000.000000 socialSecurityTax=-744.000000 expense=-4071.872894 medicareTax=-174.000000 incomeTax=-1941.166667 value=368757.661159
-  0008 employedIncome=12000.000000 socialSecurityTax=-744.000000 expense=-4082.245336 medicareTax=-174.000000 incomeTax=-1941.166667 value=373805.850292
-  0009 employedIncome=12000.000000 socialSecurityTax=-744.000000 expense=-4092.644200 medicareTax=-174.000000 incomeTax=-1941.166667 value=378843.614072
-  0010 employedIncome=12000.000000 socialSecurityTax=-744.000000 expense=-4103.069554 medicareTax=-174.000000 incomeTax=-1941.166667 value=383870.925940
-  0011 employedIncome=12000.000000 socialSecurityTax=-744.000000 expense=-4113.521465 medicareTax=-174.000000 incomeTax=-1941.166667 value=388887.759274
-  0012 employedIncome=12000.000000 socialSecurityTax=-744.000000 expense=-4124.000000 medicareTax=-174.000000 incomeTax=-1912.062833 value=393923.191213
-  0013 employedIncome=12000.000000 socialSecurityTax=-744.000000 expense=-4134.505228 medicareTax=-174.000000 incomeTax=-1912.062833 value=398948.091164
-  0014 employedIncome=12000.000000 socialSecurityTax=-744.000000 expense=-4145.037216 medicareTax=-174.000000 incomeTax=-1912.062833 value=403962.432298
-  0015 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=361.605427 expense=-4155.596032 medicareTax=-174.000000 incomeTax=-1724.044833 mortgageInterest=-2166.666667 mortgagePrincipal=-361.605427 propertyTaxes=-500.000000 longTermCapitalGains=33333.333333 value=406987.539052
-  0016 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=363.564123 expense=-4166.181746 medicareTax=-174.000000 incomeTax=-1724.514920 mortgageInterest=-2164.707971 mortgagePrincipal=-363.564123 propertyTaxes=-500.000000 value=409503.521737
-  0017 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=365.533429 expense=-4176.794425 medicareTax=-174.000000 incomeTax=-1724.987554 mortgageInterest=-2162.738665 mortgagePrincipal=-365.533429 propertyTaxes=-500.000000 value=412010.361381
-  0018 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=367.513402 expense=-4187.434138 medicareTax=-174.000000 incomeTax=-1725.462747 mortgageInterest=-2160.758692 mortgagePrincipal=-367.513402 propertyTaxes=-500.000000 value=414508.038988
-  0019 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=369.504099 expense=-4198.100953 medicareTax=-174.000000 incomeTax=-1725.940515 mortgageInterest=-2158.767995 mortgagePrincipal=-369.504099 propertyTaxes=-500.000000 value=416996.535537
-  0020 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=371.505580 expense=-4208.794941 medicareTax=-174.000000 incomeTax=-1726.420870 mortgageInterest=-2156.766514 mortgagePrincipal=-371.505580 propertyTaxes=-500.000000 value=419475.831983
-  0021 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=373.517902 expense=-4219.516170 medicareTax=-174.000000 incomeTax=-1726.903827 mortgageInterest=-2154.754192 mortgagePrincipal=-373.517902 propertyTaxes=-500.000000 value=421945.909253
-  0022 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=375.541124 expense=-4230.264710 medicareTax=-174.000000 incomeTax=-1727.389400 mortgageInterest=-2152.730970 mortgagePrincipal=-375.541124 propertyTaxes=-500.000000 value=424406.748252
-  0023 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=377.575305 expense=-4241.040630 medicareTax=-174.000000 incomeTax=-1727.877604 mortgageInterest=-2150.696789 mortgagePrincipal=-377.575305 propertyTaxes=-500.000000 value=426858.329859
-  0024 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=379.620504 expense=-4251.844000 medicareTax=-174.000000 incomeTax=-1708.653842 mortgageInterest=-2148.651590 mortgagePrincipal=-379.620504 propertyTaxes=-500.000000 taxTrueUp=-4915.946000 value=424404.403538
-  0025 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=381.676782 expense=-4262.674890 medicareTax=-174.000000 incomeTax=-1709.147348 mortgageInterest=-2146.595312 mortgagePrincipal=-381.676782 propertyTaxes=-500.000000 value=426857.127509
-  0026 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=383.744198 expense=-4273.533369 medicareTax=-174.000000 incomeTax=-1709.643528 mortgageInterest=-2144.527896 mortgagePrincipal=-383.744198 propertyTaxes=-500.000000 value=429300.536575
-  0027 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=385.822812 expense=-4284.419509 medicareTax=-174.000000 incomeTax=-1710.142396 mortgageInterest=-2142.449282 mortgagePrincipal=-385.822812 propertyTaxes=-500.000000 value=431734.611519
-  0028 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=387.912686 expense=-4295.333380 medicareTax=-174.000000 incomeTax=-1710.643965 mortgageInterest=-2140.359408 mortgagePrincipal=-387.912686 propertyTaxes=-500.000000 value=434159.333094
-  0029 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=390.013880 expense=-4306.275052 medicareTax=-174.000000 incomeTax=-1711.148252 mortgageInterest=-2138.258214 mortgagePrincipal=-390.013880 propertyTaxes=-500.000000 value=436574.682032
-  0030 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=392.126455 expense=-4317.244596 medicareTax=-174.000000 incomeTax=-1711.655270 mortgageInterest=-2136.145639 mortgagePrincipal=-392.126455 propertyTaxes=-500.000000 value=438980.639040
-  0031 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=394.250473 expense=-4328.242083 medicareTax=-174.000000 incomeTax=-1712.165034 mortgageInterest=-2134.021621 mortgagePrincipal=-394.250473 propertyTaxes=-500.000000 value=441377.184801
-  0032 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=396.385997 expense=-4339.267585 medicareTax=-174.000000 incomeTax=-1712.677560 mortgageInterest=-2131.886097 mortgagePrincipal=-396.385997 propertyTaxes=-500.000000 value=443764.299972
-  0033 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=398.533087 expense=-4350.321172 medicareTax=-174.000000 incomeTax=-1713.192862 mortgageInterest=-2129.739007 mortgagePrincipal=-398.533087 propertyTaxes=-500.000000 value=446141.965187
-  0034 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=400.691808 expense=-4361.402916 medicareTax=-174.000000 incomeTax=-1713.710955 mortgageInterest=-2127.580286 mortgagePrincipal=-400.691808 propertyTaxes=-500.000000 value=448510.161057
-  0035 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=402.862222 expense=-4372.512890 medicareTax=-174.000000 incomeTax=-1714.231854 mortgageInterest=-2125.409872 mortgagePrincipal=-402.862222 propertyTaxes=-500.000000 value=450868.868168
-  0036 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=405.044393 expense=-4383.651164 medicareTax=-174.000000 incomeTax=-1694.429812 mortgageInterest=-2123.227701 mortgagePrincipal=-405.044393 propertyTaxes=-500.000000 taxTrueUp=1439.987962 value=454678.380805
-  0037 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=407.238383 expense=-4394.817811 medicareTax=-174.000000 incomeTax=-1694.956369 mortgageInterest=-2121.033711 mortgagePrincipal=-407.238383 propertyTaxes=-500.000000 value=457038.377821
-  0038 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=409.444258 expense=-4406.012904 medicareTax=-174.000000 incomeTax=-1695.485779 mortgageInterest=-2118.827836 mortgagePrincipal=-409.444258 propertyTaxes=-500.000000 value=459388.827691
-  0039 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=411.662081 expense=-4417.236514 medicareTax=-174.000000 incomeTax=-1696.018057 mortgageInterest=-2116.610013 mortgagePrincipal=-411.662081 propertyTaxes=-500.000000 value=461729.710906
-  0040 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=413.891917 expense=-4428.488715 medicareTax=-174.000000 incomeTax=-1696.553218 mortgageInterest=-2114.380177 mortgagePrincipal=-413.891917 propertyTaxes=-500.000000 value=464061.007934
-  0041 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=416.133832 expense=-4439.769578 medicareTax=-174.000000 incomeTax=-1697.091277 mortgageInterest=-2112.138262 mortgagePrincipal=-416.133832 propertyTaxes=-500.000000 value=466382.699216
-  0042 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=418.387890 expense=-4451.079178 medicareTax=-174.000000 incomeTax=-1697.632251 mortgageInterest=-2109.884204 mortgagePrincipal=-418.387890 propertyTaxes=-500.000000 value=468694.765173
-  0043 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=420.654158 expense=-4462.417588 medicareTax=-174.000000 incomeTax=-1698.176155 mortgageInterest=-2107.617936 mortgagePrincipal=-420.654158 propertyTaxes=-500.000000 value=470997.186202
-  0044 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=422.932701 expense=-4473.784880 medicareTax=-174.000000 incomeTax=-1698.723006 mortgageInterest=-2105.339393 mortgagePrincipal=-422.932701 propertyTaxes=-500.000000 value=473289.942675
-  0045 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=425.223586 expense=-4485.181128 medicareTax=-174.000000 incomeTax=-1699.272818 mortgageInterest=-2103.048508 mortgagePrincipal=-425.223586 propertyTaxes=-500.000000 value=475573.014942
-  0046 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=427.526881 expense=-4496.606407 medicareTax=-174.000000 incomeTax=-1699.825609 mortgageInterest=-2100.745213 mortgagePrincipal=-427.526881 propertyTaxes=-500.000000 value=477846.383331
-  0047 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=429.842651 expense=-4508.060789 medicareTax=-174.000000 incomeTax=-1700.381394 mortgageInterest=-2098.429443 mortgagePrincipal=-429.842651 propertyTaxes=-500.000000 value=480110.028144
-  0048 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=432.170966 expense=-4519.544350 medicareTax=-174.000000 incomeTax=-1680.954616 mortgageInterest=-2096.101128 mortgagePrincipal=-432.170966 propertyTaxes=-500.000000 taxTrueUp=1376.614712 value=483760.529949
-  0049 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=434.511892 expense=-4531.057163 medicareTax=-174.000000 incomeTax=-1681.469620 mortgageInterest=-2093.760202 mortgagePrincipal=-434.511892 propertyTaxes=-500.000000 value=486024.700823
-  0050 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=436.865498 expense=-4542.599304 medicareTax=-174.000000 incomeTax=-1681.987413 mortgageInterest=-2091.406596 mortgagePrincipal=-436.865498 propertyTaxes=-500.000000 value=488279.135968
-  0051 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=439.231853 expense=-4554.170846 medicareTax=-174.000000 incomeTax=-1682.508011 mortgageInterest=-2089.040241 mortgagePrincipal=-439.231853 propertyTaxes=-500.000000 value=490523.815851
-  0052 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=441.611025 expense=-4565.771865 medicareTax=-174.000000 incomeTax=-1683.031429 mortgageInterest=-2086.661069 mortgagePrincipal=-441.611025 propertyTaxes=-500.000000 value=492758.720918
-  0053 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=444.003085 expense=-4577.402435 medicareTax=-174.000000 incomeTax=-1683.557682 mortgageInterest=-2084.269009 mortgagePrincipal=-444.003085 propertyTaxes=-500.000000 value=494983.831594
-  0054 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=446.408102 expense=-4589.062633 medicareTax=-174.000000 incomeTax=-1684.086786 mortgageInterest=-2081.863992 mortgagePrincipal=-446.408102 propertyTaxes=-500.000000 value=497199.128283
-  0055 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=448.826146 expense=-4600.752533 medicareTax=-174.000000 incomeTax=-1684.618755 mortgageInterest=-2079.445948 mortgagePrincipal=-448.826146 propertyTaxes=-500.000000 value=499404.591369
-  0056 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=451.257287 expense=-4612.472211 medicareTax=-174.000000 incomeTax=-1685.153607 mortgageInterest=-2077.014807 mortgagePrincipal=-451.257287 propertyTaxes=-500.000000 value=501600.201212
-  0057 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=453.701597 expense=-4624.221743 medicareTax=-174.000000 incomeTax=-1685.691355 mortgageInterest=-2074.570496 mortgagePrincipal=-453.701597 propertyTaxes=-500.000000 value=503785.938156
-  0058 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=456.159148 expense=-4636.001205 medicareTax=-174.000000 incomeTax=-1686.232016 mortgageInterest=-2072.112946 mortgagePrincipal=-456.159148 propertyTaxes=-500.000000 value=505961.782520
-  0059 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=458.630010 expense=-4647.810674 medicareTax=-174.000000 incomeTax=-1686.775606 mortgageInterest=-2069.642084 mortgagePrincipal=-458.630010 propertyTaxes=-500.000000 value=508127.714605
+  0000 employedIncome=12000.000000 socialSecurityTax=-744.000000 expense=-4000.000000 medicareTax=-174.000000 incomeTax=-1941.166667 value=325140.833333
+  0001 employedIncome=12000.000000 socialSecurityTax=-744.000000 expense=-4010.189358 medicareTax=-174.000000 incomeTax=-1941.166667 value=330271.477309
+  0002 employedIncome=12000.000000 socialSecurityTax=-744.000000 expense=-4020.404671 medicareTax=-174.000000 incomeTax=-1941.166667 value=335391.905972
+  0003 employedIncome=12000.000000 socialSecurityTax=-744.000000 expense=-4030.646006 medicareTax=-174.000000 incomeTax=-1941.166667 value=340502.093299
+  0004 employedIncome=12000.000000 socialSecurityTax=-744.000000 expense=-4040.913429 medicareTax=-174.000000 incomeTax=-1941.166667 value=345602.013203
+  0005 employedIncome=12000.000000 socialSecurityTax=-744.000000 expense=-4051.207007 medicareTax=-174.000000 incomeTax=-1941.166667 value=350691.639529
+  0006 employedIncome=12000.000000 socialSecurityTax=-744.000000 expense=-4061.526807 medicareTax=-174.000000 incomeTax=-1941.166667 value=355770.946056
+  0007 employedIncome=12000.000000 socialSecurityTax=-744.000000 expense=-4071.872894 medicareTax=-174.000000 incomeTax=-1941.166667 value=360839.906495
+  0008 employedIncome=12000.000000 socialSecurityTax=-744.000000 expense=-4082.245336 medicareTax=-174.000000 incomeTax=-1941.166667 value=365898.494493
+  0009 employedIncome=12000.000000 socialSecurityTax=-744.000000 expense=-4092.644200 medicareTax=-174.000000 incomeTax=-1941.166667 value=370946.683626
+  0010 employedIncome=12000.000000 socialSecurityTax=-744.000000 expense=-4103.069554 medicareTax=-174.000000 incomeTax=-1941.166667 value=375984.447405
+  0011 employedIncome=12000.000000 socialSecurityTax=-744.000000 expense=-4113.521465 medicareTax=-174.000000 incomeTax=-1941.166667 value=381011.759274
+  0012 employedIncome=12000.000000 socialSecurityTax=-744.000000 expense=-4124.000000 medicareTax=-174.000000 incomeTax=-1912.062833 value=386057.696440
+  0013 employedIncome=12000.000000 socialSecurityTax=-744.000000 expense=-4134.505228 medicareTax=-174.000000 incomeTax=-1912.062833 value=391093.128379
+  0014 employedIncome=12000.000000 socialSecurityTax=-744.000000 expense=-4145.037216 medicareTax=-174.000000 incomeTax=-1912.062833 value=396118.028330
+  0015 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=361.605427 expense=-4155.596032 medicareTax=-174.000000 incomeTax=-1724.044833 mortgageInterest=-2166.666667 mortgagePrincipal=-361.605427 propertyTaxes=-500.000000 longTermCapitalGains=33333.333333 value=399153.720798
+  0016 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=363.564123 expense=-4166.181746 medicareTax=-174.000000 incomeTax=-1724.514920 mortgageInterest=-2164.707971 mortgagePrincipal=-363.564123 propertyTaxes=-500.000000 value=401680.316161
+  0017 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=365.533429 expense=-4176.794425 medicareTax=-174.000000 incomeTax=-1724.987554 mortgageInterest=-2162.738665 mortgagePrincipal=-365.533429 propertyTaxes=-500.000000 value=404197.795518
+  0018 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=367.513402 expense=-4187.434138 medicareTax=-174.000000 incomeTax=-1725.462747 mortgageInterest=-2160.758692 mortgagePrincipal=-367.513402 propertyTaxes=-500.000000 value=406706.139941
+  0019 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=369.504099 expense=-4198.100953 medicareTax=-174.000000 incomeTax=-1725.940515 mortgageInterest=-2158.767995 mortgagePrincipal=-369.504099 propertyTaxes=-500.000000 value=409205.330479
+  0020 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=371.505580 expense=-4208.794941 medicareTax=-174.000000 incomeTax=-1726.420870 mortgageInterest=-2156.766514 mortgagePrincipal=-371.505580 propertyTaxes=-500.000000 value=411695.348153
+  0021 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=373.517902 expense=-4219.516170 medicareTax=-174.000000 incomeTax=-1726.903827 mortgageInterest=-2154.754192 mortgagePrincipal=-373.517902 propertyTaxes=-500.000000 value=414176.173963
+  0022 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=375.541124 expense=-4230.264710 medicareTax=-174.000000 incomeTax=-1727.389400 mortgageInterest=-2152.730970 mortgagePrincipal=-375.541124 propertyTaxes=-500.000000 value=416647.788882
+  0023 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=377.575305 expense=-4241.040630 medicareTax=-174.000000 incomeTax=-1727.877604 mortgageInterest=-2150.696789 mortgagePrincipal=-377.575305 propertyTaxes=-500.000000 value=419110.173859
+  0024 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=379.620504 expense=-4251.844000 medicareTax=-174.000000 incomeTax=-1708.653842 mortgageInterest=-2148.651590 mortgagePrincipal=-379.620504 propertyTaxes=-500.000000 taxTrueUp=-4915.946000 value=416667.078428
+  0025 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=381.676782 expense=-4262.674890 medicareTax=-174.000000 incomeTax=-1709.147348 mortgageInterest=-2146.595312 mortgagePrincipal=-381.676782 propertyTaxes=-500.000000 value=419130.660878
+  0026 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=383.744198 expense=-4273.533369 medicareTax=-174.000000 incomeTax=-1709.643528 mortgageInterest=-2144.527896 mortgagePrincipal=-383.744198 propertyTaxes=-500.000000 value=421584.956085
+  0027 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=385.822812 expense=-4284.419509 medicareTax=-174.000000 incomeTax=-1710.142396 mortgageInterest=-2142.449282 mortgagePrincipal=-385.822812 propertyTaxes=-500.000000 value=424029.944898
+  0028 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=387.912686 expense=-4295.333380 medicareTax=-174.000000 incomeTax=-1710.643965 mortgageInterest=-2140.359408 mortgagePrincipal=-387.912686 propertyTaxes=-500.000000 value=426465.608145
+  0029 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=390.013880 expense=-4306.275052 medicareTax=-174.000000 incomeTax=-1711.148252 mortgageInterest=-2138.258214 mortgagePrincipal=-390.013880 propertyTaxes=-500.000000 value=428891.926628
+  0030 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=392.126455 expense=-4317.244596 medicareTax=-174.000000 incomeTax=-1711.655270 mortgageInterest=-2136.145639 mortgagePrincipal=-392.126455 propertyTaxes=-500.000000 value=431308.881123
+  0031 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=394.250473 expense=-4328.242083 medicareTax=-174.000000 incomeTax=-1712.165034 mortgageInterest=-2134.021621 mortgagePrincipal=-394.250473 propertyTaxes=-500.000000 value=433716.452385
+  0032 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=396.385997 expense=-4339.267585 medicareTax=-174.000000 incomeTax=-1712.677560 mortgageInterest=-2131.886097 mortgagePrincipal=-396.385997 propertyTaxes=-500.000000 value=436114.621143
+  0033 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=398.533087 expense=-4350.321172 medicareTax=-174.000000 incomeTax=-1713.192862 mortgageInterest=-2129.739007 mortgagePrincipal=-398.533087 propertyTaxes=-500.000000 value=438503.368104
+  0034 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=400.691808 expense=-4361.402916 medicareTax=-174.000000 incomeTax=-1713.710955 mortgageInterest=-2127.580286 mortgagePrincipal=-400.691808 propertyTaxes=-500.000000 value=440882.673947
+  0035 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=402.862222 expense=-4372.512890 medicareTax=-174.000000 incomeTax=-1714.231854 mortgageInterest=-2125.409872 mortgagePrincipal=-402.862222 propertyTaxes=-500.000000 value=443252.519332
+  0036 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=405.044393 expense=-4383.651164 medicareTax=-174.000000 incomeTax=-1694.429812 mortgageInterest=-2123.227701 mortgagePrincipal=-405.044393 propertyTaxes=-500.000000 taxTrueUp=1439.987962 value=447073.198616
+  0037 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=407.238383 expense=-4394.817811 medicareTax=-174.000000 incomeTax=-1694.956369 mortgageInterest=-2121.033711 mortgagePrincipal=-407.238383 propertyTaxes=-500.000000 value=449444.390725
+  0038 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=409.444258 expense=-4406.012904 medicareTax=-174.000000 incomeTax=-1695.485779 mortgageInterest=-2118.827836 mortgagePrincipal=-409.444258 propertyTaxes=-500.000000 value=451806.064205
+  0039 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=411.662081 expense=-4417.236514 medicareTax=-174.000000 incomeTax=-1696.018057 mortgageInterest=-2116.610013 mortgagePrincipal=-411.662081 propertyTaxes=-500.000000 value=454158.199621
+  0040 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=413.891917 expense=-4428.488715 medicareTax=-174.000000 incomeTax=-1696.553218 mortgageInterest=-2114.380177 mortgagePrincipal=-413.891917 propertyTaxes=-500.000000 value=456500.777512
+  0041 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=416.133832 expense=-4439.769578 medicareTax=-174.000000 incomeTax=-1697.091277 mortgageInterest=-2112.138262 mortgagePrincipal=-416.133832 propertyTaxes=-500.000000 value=458833.778394
+  0042 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=418.387890 expense=-4451.079178 medicareTax=-174.000000 incomeTax=-1697.632251 mortgageInterest=-2109.884204 mortgagePrincipal=-418.387890 propertyTaxes=-500.000000 value=461157.182761
+  0043 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=420.654158 expense=-4462.417588 medicareTax=-174.000000 incomeTax=-1698.176155 mortgageInterest=-2107.617936 mortgagePrincipal=-420.654158 propertyTaxes=-500.000000 value=463470.971081
+  0044 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=422.932701 expense=-4473.784880 medicareTax=-174.000000 incomeTax=-1698.723006 mortgageInterest=-2105.339393 mortgagePrincipal=-422.932701 propertyTaxes=-500.000000 value=465775.123803
+  0045 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=425.223586 expense=-4485.181128 medicareTax=-174.000000 incomeTax=-1699.272818 mortgageInterest=-2103.048508 mortgagePrincipal=-425.223586 propertyTaxes=-500.000000 value=468069.621349
+  0046 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=427.526881 expense=-4496.606407 medicareTax=-174.000000 incomeTax=-1699.825609 mortgageInterest=-2100.745213 mortgagePrincipal=-427.526881 propertyTaxes=-500.000000 value=470354.444120
+  0047 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=429.842651 expense=-4508.060789 medicareTax=-174.000000 incomeTax=-1700.381394 mortgageInterest=-2098.429443 mortgagePrincipal=-429.842651 propertyTaxes=-500.000000 value=472629.572494
+  0048 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=432.170966 expense=-4519.544350 medicareTax=-174.000000 incomeTax=-1680.954616 mortgageInterest=-2096.101128 mortgagePrincipal=-432.170966 propertyTaxes=-500.000000 taxTrueUp=1376.614712 value=476291.587112
+  0049 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=434.511892 expense=-4531.057163 medicareTax=-174.000000 incomeTax=-1681.469620 mortgageInterest=-2093.760202 mortgagePrincipal=-434.511892 propertyTaxes=-500.000000 value=478567.300127
+  0050 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=436.865498 expense=-4542.599304 medicareTax=-174.000000 incomeTax=-1681.987413 mortgageInterest=-2091.406596 mortgagePrincipal=-436.865498 propertyTaxes=-500.000000 value=480833.306814
+  0051 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=439.231853 expense=-4554.170846 medicareTax=-174.000000 incomeTax=-1682.508011 mortgageInterest=-2089.040241 mortgagePrincipal=-439.231853 propertyTaxes=-500.000000 value=483089.587716
+  0052 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=441.611025 expense=-4565.771865 medicareTax=-174.000000 incomeTax=-1683.031429 mortgageInterest=-2086.661069 mortgagePrincipal=-441.611025 propertyTaxes=-500.000000 value=485336.123353
+  0053 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=444.003085 expense=-4577.402435 medicareTax=-174.000000 incomeTax=-1683.557682 mortgageInterest=-2084.269009 mortgagePrincipal=-444.003085 propertyTaxes=-500.000000 value=487572.894227
+  0054 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=446.408102 expense=-4589.062633 medicareTax=-174.000000 incomeTax=-1684.086786 mortgageInterest=-2081.863992 mortgagePrincipal=-446.408102 propertyTaxes=-500.000000 value=489799.880816
+  0055 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=448.826146 expense=-4600.752533 medicareTax=-174.000000 incomeTax=-1684.618755 mortgageInterest=-2079.445948 mortgagePrincipal=-448.826146 propertyTaxes=-500.000000 value=492017.063580
+  0056 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=451.257287 expense=-4612.472211 medicareTax=-174.000000 incomeTax=-1685.153607 mortgageInterest=-2077.014807 mortgagePrincipal=-451.257287 propertyTaxes=-500.000000 value=494224.422955
+  0057 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=453.701597 expense=-4624.221743 medicareTax=-174.000000 incomeTax=-1685.691355 mortgageInterest=-2074.570496 mortgagePrincipal=-453.701597 propertyTaxes=-500.000000 value=496421.939361
+  0058 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=456.159148 expense=-4636.001205 medicareTax=-174.000000 incomeTax=-1686.232016 mortgageInterest=-2072.112946 mortgagePrincipal=-456.159148 propertyTaxes=-500.000000 value=498609.593194
+  0059 employedIncome=12000.000000 socialSecurityTax=-744.000000 assetAppreciation=458.630010 expense=-4647.810674 medicareTax=-174.000000 incomeTax=-1686.775606 mortgageInterest=-2069.642084 mortgagePrincipal=-458.630010 propertyTaxes=-500.000000 taxTrueUp=1320.000000 value=502107.364830
 
 [priceIndex]
   [0000]         1.002547         1.005101         1.007662         1.010228         1.012802         1.015382

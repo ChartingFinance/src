@@ -30,7 +30,7 @@
   total.incomeTax = -18745.759178
   total.tradIRADistribution = 176544.388326
   total.taxTrueUp = 78.642435
-  total.value = 55158030.564356
+  total.value = 55302550.817104
 
 [assetOrder]
   0 Social Security
@@ -505,7 +505,7 @@
   0165 2028-12 grossUp                      -5465.641112 cash  -                      c3 {forAsset=Living overflow=false}
   0166 2028-12 interestIncome                   0.000000 cash  interestIncome         c-
   0167 2028-12 transfer                      2650.881732 cash  -                      c0 {cadence=monthly from=IRA system=true to=Savings}
-  0168 2028-12 taxTrueUp                       78.642435 cash  -                      c5 {direction=refund}
+  0168 2029-01 taxTrueUp                       78.642435 cash  -                      c5 {direction=refund}
   0169 2029-01 transfer                      3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
   0170 2029-01 grossUp                      -5479.563955 cash  -                      c3 {forAsset=Living overflow=false}
   0171 2029-01 interestIncome                   0.000000 cash  interestIncome         c-
@@ -660,7 +660,7 @@
   0009 2026-10 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
   0010 2026-11 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
   0011 2026-12 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
-  0012 2026-12 incomeGrowth                     0.000000 cash  income                 c6
+  0012 2027-01 incomeGrowth                     0.000000 cash  income                 c6
   0013 2027-01 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
   0014 2027-02 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
   0015 2027-03 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
@@ -673,7 +673,7 @@
   0022 2027-10 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
   0023 2027-11 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
   0024 2027-12 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
-  0025 2027-12 incomeGrowth                     0.000000 cash  income                 c7
+  0025 2028-01 incomeGrowth                     0.000000 cash  income                 c7
   0026 2028-01 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
   0027 2028-02 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
   0028 2028-03 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
@@ -686,7 +686,7 @@
   0035 2028-10 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
   0036 2028-11 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
   0037 2028-12 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
-  0038 2028-12 incomeGrowth                     0.000000 cash  income                 c8
+  0038 2029-01 incomeGrowth                     0.000000 cash  income                 c8
   0039 2029-01 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
   0040 2029-02 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
   0041 2029-03 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
@@ -699,7 +699,7 @@
   0048 2029-10 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
   0049 2029-11 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
   0050 2029-12 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
-  0051 2029-12 incomeGrowth                     0.000000 cash  income                 c9
+  0051 2030-01 incomeGrowth                     0.000000 cash  income                 c9
   0052 2030-01 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
   0053 2030-02 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
   0054 2030-03 transfer                     -3000.000000 cash  -                      c2 {cadence=monthly from=Social Security to=Savings}
@@ -723,66 +723,66 @@
   socialSecurityIncome         n=  60 first=     3000.000000 last=     3000.000000 min=     3000.000000 max=     3000.000000 sum=     180000.000000 #65df15e5
 
 [packages]
-  0000 socialSecurityIncome=3000.000000 expense=-5000.000000 incomeTax=-312.600315 tradIRADistribution=2998.950367 value=995674.662988
-  0001 socialSecurityIncome=3000.000000 expense=-5012.736697 incomeTax=-310.104563 tradIRADistribution=2987.708240 value=993339.052587
-  0002 socialSecurityIncome=3000.000000 expense=-5025.505839 incomeTax=-310.104563 tradIRADistribution=2987.708240 value=990990.640517
-  0003 socialSecurityIncome=3000.000000 expense=-5038.307508 incomeTax=-310.104563 tradIRADistribution=2987.708240 value=988629.394168
-  0004 socialSecurityIncome=3000.000000 expense=-5051.141787 incomeTax=-310.104563 tradIRADistribution=2987.708240 value=986255.280846
-  0005 socialSecurityIncome=3000.000000 expense=-5064.008759 incomeTax=-310.104563 tradIRADistribution=2987.708240 value=983868.267775
-  0006 socialSecurityIncome=3000.000000 expense=-5076.908508 incomeTax=-310.104563 tradIRADistribution=2987.708240 value=981468.322096
-  0007 socialSecurityIncome=3000.000000 expense=-5089.841117 incomeTax=-310.104563 tradIRADistribution=2987.708240 value=979055.410863
-  0008 socialSecurityIncome=3000.000000 expense=-5102.806670 incomeTax=-310.104563 tradIRADistribution=2987.708240 value=976629.501050
-  0009 socialSecurityIncome=3000.000000 expense=-5115.805250 incomeTax=-310.104563 tradIRADistribution=2987.708240 value=974190.559545
-  0010 socialSecurityIncome=3000.000000 expense=-5128.836943 incomeTax=-310.104563 tradIRADistribution=2987.708240 value=971738.553152
-  0011 socialSecurityIncome=3000.000000 expense=-5141.901831 incomeTax=-310.104563 tradIRADistribution=2987.708240 value=969273.448589
-  0012 socialSecurityIncome=3000.000000 expense=-5155.000000 incomeTax=-300.534458 tradIRADistribution=2972.830143 value=966804.782596
-  0013 socialSecurityIncome=3000.000000 expense=-5168.131535 incomeTax=-300.534458 tradIRADistribution=2972.830143 value=964322.951618
-  0014 socialSecurityIncome=3000.000000 expense=-5181.296520 incomeTax=-300.534458 tradIRADistribution=2972.830143 value=961827.922120
-  0015 socialSecurityIncome=3000.000000 expense=-5194.495040 incomeTax=-300.534458 tradIRADistribution=2972.830143 value=959319.660479
-  0016 socialSecurityIncome=3000.000000 expense=-5207.727182 incomeTax=-300.534458 tradIRADistribution=2972.830143 value=956798.132990
-  0017 socialSecurityIncome=3000.000000 expense=-5220.993031 incomeTax=-300.534458 tradIRADistribution=2972.830143 value=954263.305859
-  0018 socialSecurityIncome=3000.000000 expense=-5234.292672 incomeTax=-300.534458 tradIRADistribution=2972.830143 value=951715.145209
-  0019 socialSecurityIncome=3000.000000 expense=-5247.626192 incomeTax=-300.534458 tradIRADistribution=2972.830143 value=949153.617074
-  0020 socialSecurityIncome=3000.000000 expense=-5260.993677 incomeTax=-300.534458 tradIRADistribution=2972.830143 value=946578.687403
-  0021 socialSecurityIncome=3000.000000 expense=-5274.395213 incomeTax=-300.534458 tradIRADistribution=2972.830143 value=943990.322056
-  0022 socialSecurityIncome=3000.000000 expense=-5287.830888 incomeTax=-300.534458 tradIRADistribution=2972.830143 value=941388.486810
-  0023 socialSecurityIncome=3000.000000 expense=-5301.300788 incomeTax=-300.534458 tradIRADistribution=2972.830143 value=938773.147352
-  0024 socialSecurityIncome=3000.000000 expense=-5314.805000 incomeTax=-294.542415 tradIRADistribution=2945.424147 value=936150.261325
-  0025 socialSecurityIncome=3000.000000 expense=-5328.343612 incomeTax=-294.542415 tradIRADistribution=2945.424147 value=933513.802199
-  0026 socialSecurityIncome=3000.000000 expense=-5341.916712 incomeTax=-294.542415 tradIRADistribution=2945.424147 value=930863.735397
-  0027 socialSecurityIncome=3000.000000 expense=-5355.524387 incomeTax=-294.542415 tradIRADistribution=2945.424147 value=928200.026258
-  0028 socialSecurityIncome=3000.000000 expense=-5369.166725 incomeTax=-294.542415 tradIRADistribution=2945.424147 value=925522.640029
-  0029 socialSecurityIncome=3000.000000 expense=-5382.843815 incomeTax=-294.542415 tradIRADistribution=2945.424147 value=922831.541869
-  0030 socialSecurityIncome=3000.000000 expense=-5396.555745 incomeTax=-294.542415 tradIRADistribution=2945.424147 value=920126.696851
-  0031 socialSecurityIncome=3000.000000 expense=-5410.302604 incomeTax=-294.542415 tradIRADistribution=2945.424147 value=917408.069955
-  0032 socialSecurityIncome=3000.000000 expense=-5424.084481 incomeTax=-294.542415 tradIRADistribution=2945.424147 value=914675.626076
-  0033 socialSecurityIncome=3000.000000 expense=-5437.901465 incomeTax=-294.542415 tradIRADistribution=2945.424147 value=911929.330016
-  0034 socialSecurityIncome=3000.000000 expense=-5451.753645 incomeTax=-294.542415 tradIRADistribution=2945.424147 value=909169.146489
-  0035 socialSecurityIncome=3000.000000 expense=-5465.641112 incomeTax=-294.542415 tradIRADistribution=2945.424147 value=906395.040120
-  0036 socialSecurityIncome=3000.000000 expense=-5479.563955 incomeTax=-335.052478 tradIRADistribution=2917.159975 taxTrueUp=78.642435 value=903645.107812
-  0037 socialSecurityIncome=3000.000000 expense=-5493.522264 incomeTax=-335.052478 tradIRADistribution=2917.159975 value=900802.539204
-  0038 socialSecurityIncome=3000.000000 expense=-5507.516130 incomeTax=-335.052478 tradIRADistribution=2917.159975 value=897945.941083
-  0039 socialSecurityIncome=3000.000000 expense=-5521.545643 incomeTax=-335.052478 tradIRADistribution=2917.159975 value=895075.277711
-  0040 socialSecurityIncome=3000.000000 expense=-5535.610893 incomeTax=-335.052478 tradIRADistribution=2917.159975 value=892190.513260
-  0041 socialSecurityIncome=3000.000000 expense=-5549.711973 incomeTax=-335.052478 tradIRADistribution=2917.159975 value=889291.611808
-  0042 socialSecurityIncome=3000.000000 expense=-5563.848973 incomeTax=-335.052478 tradIRADistribution=2917.159975 value=886378.537345
-  0043 socialSecurityIncome=3000.000000 expense=-5578.021984 incomeTax=-335.052478 tradIRADistribution=2917.159975 value=883451.253767
-  0044 socialSecurityIncome=3000.000000 expense=-5592.231100 incomeTax=-335.052478 tradIRADistribution=2917.159975 value=880509.724879
-  0045 socialSecurityIncome=3000.000000 expense=-5606.476410 incomeTax=-335.052478 tradIRADistribution=2917.159975 value=877553.914392
-  0046 socialSecurityIncome=3000.000000 expense=-5620.758008 incomeTax=-335.052478 tradIRADistribution=2917.159975 value=874583.785927
-  0047 socialSecurityIncome=3000.000000 expense=-5635.075987 incomeTax=-335.052478 tradIRADistribution=2917.159975 value=871599.303011
-  0048 socialSecurityIncome=3000.000000 expense=-5649.430438 incomeTax=-321.704705 tradIRADistribution=2887.973012 value=868613.776852
-  0049 socialSecurityIncome=3000.000000 expense=-5663.821454 incomeTax=-321.704705 tradIRADistribution=2887.973012 value=865613.823017
-  0050 socialSecurityIncome=3000.000000 expense=-5678.249130 incomeTax=-321.704705 tradIRADistribution=2887.973012 value=862599.404755
-  0051 socialSecurityIncome=3000.000000 expense=-5692.713557 incomeTax=-321.704705 tradIRADistribution=2887.973012 value=859570.485220
-  0052 socialSecurityIncome=3000.000000 expense=-5707.214831 incomeTax=-321.704705 tradIRADistribution=2887.973012 value=856527.027471
-  0053 socialSecurityIncome=3000.000000 expense=-5721.753044 incomeTax=-321.704705 tradIRADistribution=2887.973012 value=853468.994475
-  0054 socialSecurityIncome=3000.000000 expense=-5736.328291 incomeTax=-321.704705 tradIRADistribution=2887.973012 value=850396.349105
-  0055 socialSecurityIncome=3000.000000 expense=-5750.940666 incomeTax=-321.704705 tradIRADistribution=2887.973012 value=847309.054136
-  0056 socialSecurityIncome=3000.000000 expense=-5765.590264 incomeTax=-321.704705 tradIRADistribution=2887.973012 value=844207.072253
-  0057 socialSecurityIncome=3000.000000 expense=-5780.277179 incomeTax=-321.704705 tradIRADistribution=2887.973012 value=841090.366042
-  0058 socialSecurityIncome=3000.000000 expense=-5795.001507 incomeTax=-321.704705 tradIRADistribution=2887.973012 value=837958.897995
-  0059 socialSecurityIncome=3000.000000 expense=-5809.763342 incomeTax=-321.704705 tradIRADistribution=2887.973012 value=834812.630509
+  0000 socialSecurityIncome=3000.000000 expense=-5000.000000 incomeTax=-312.600315 tradIRADistribution=2998.950367 value=997687.399685
+  0001 socialSecurityIncome=3000.000000 expense=-5012.736697 incomeTax=-310.104563 tradIRADistribution=2987.708240 value=995364.558426
+  0002 socialSecurityIncome=3000.000000 expense=-5025.505839 incomeTax=-310.104563 tradIRADistribution=2987.708240 value=993028.948025
+  0003 socialSecurityIncome=3000.000000 expense=-5038.307508 incomeTax=-310.104563 tradIRADistribution=2987.708240 value=990680.535954
+  0004 socialSecurityIncome=3000.000000 expense=-5051.141787 incomeTax=-310.104563 tradIRADistribution=2987.708240 value=988319.289605
+  0005 socialSecurityIncome=3000.000000 expense=-5064.008759 incomeTax=-310.104563 tradIRADistribution=2987.708240 value=985945.176284
+  0006 socialSecurityIncome=3000.000000 expense=-5076.908508 incomeTax=-310.104563 tradIRADistribution=2987.708240 value=983558.163213
+  0007 socialSecurityIncome=3000.000000 expense=-5089.841117 incomeTax=-310.104563 tradIRADistribution=2987.708240 value=981158.217533
+  0008 socialSecurityIncome=3000.000000 expense=-5102.806670 incomeTax=-310.104563 tradIRADistribution=2987.708240 value=978745.306301
+  0009 socialSecurityIncome=3000.000000 expense=-5115.805250 incomeTax=-310.104563 tradIRADistribution=2987.708240 value=976319.396488
+  0010 socialSecurityIncome=3000.000000 expense=-5128.836943 incomeTax=-310.104563 tradIRADistribution=2987.708240 value=973880.454983
+  0011 socialSecurityIncome=3000.000000 expense=-5141.901831 incomeTax=-310.104563 tradIRADistribution=2987.708240 value=971428.448589
+  0012 socialSecurityIncome=3000.000000 expense=-5155.000000 incomeTax=-300.534458 tradIRADistribution=2972.830143 value=968972.914131
+  0013 socialSecurityIncome=3000.000000 expense=-5168.131535 incomeTax=-300.534458 tradIRADistribution=2972.830143 value=966504.248138
+  0014 socialSecurityIncome=3000.000000 expense=-5181.296520 incomeTax=-300.534458 tradIRADistribution=2972.830143 value=964022.417160
+  0015 socialSecurityIncome=3000.000000 expense=-5194.495040 incomeTax=-300.534458 tradIRADistribution=2972.830143 value=961527.387661
+  0016 socialSecurityIncome=3000.000000 expense=-5207.727182 incomeTax=-300.534458 tradIRADistribution=2972.830143 value=959019.126021
+  0017 socialSecurityIncome=3000.000000 expense=-5220.993031 incomeTax=-300.534458 tradIRADistribution=2972.830143 value=956497.598531
+  0018 socialSecurityIncome=3000.000000 expense=-5234.292672 incomeTax=-300.534458 tradIRADistribution=2972.830143 value=953962.771401
+  0019 socialSecurityIncome=3000.000000 expense=-5247.626192 incomeTax=-300.534458 tradIRADistribution=2972.830143 value=951414.610751
+  0020 socialSecurityIncome=3000.000000 expense=-5260.993677 incomeTax=-300.534458 tradIRADistribution=2972.830143 value=948853.082616
+  0021 socialSecurityIncome=3000.000000 expense=-5274.395213 incomeTax=-300.534458 tradIRADistribution=2972.830143 value=946278.152944
+  0022 socialSecurityIncome=3000.000000 expense=-5287.830888 incomeTax=-300.534458 tradIRADistribution=2972.830143 value=943689.787598
+  0023 socialSecurityIncome=3000.000000 expense=-5301.300788 incomeTax=-300.534458 tradIRADistribution=2972.830143 value=941087.952352
+  0024 socialSecurityIncome=3000.000000 expense=-5314.805000 incomeTax=-294.542415 tradIRADistribution=2945.424147 value=938478.604937
+  0025 socialSecurityIncome=3000.000000 expense=-5328.343612 incomeTax=-294.542415 tradIRADistribution=2945.424147 value=935855.718910
+  0026 socialSecurityIncome=3000.000000 expense=-5341.916712 incomeTax=-294.542415 tradIRADistribution=2945.424147 value=933219.259784
+  0027 socialSecurityIncome=3000.000000 expense=-5355.524387 incomeTax=-294.542415 tradIRADistribution=2945.424147 value=930569.192983
+  0028 socialSecurityIncome=3000.000000 expense=-5369.166725 incomeTax=-294.542415 tradIRADistribution=2945.424147 value=927905.483843
+  0029 socialSecurityIncome=3000.000000 expense=-5382.843815 incomeTax=-294.542415 tradIRADistribution=2945.424147 value=925228.097614
+  0030 socialSecurityIncome=3000.000000 expense=-5396.555745 incomeTax=-294.542415 tradIRADistribution=2945.424147 value=922536.999454
+  0031 socialSecurityIncome=3000.000000 expense=-5410.302604 incomeTax=-294.542415 tradIRADistribution=2945.424147 value=919832.154436
+  0032 socialSecurityIncome=3000.000000 expense=-5424.084481 incomeTax=-294.542415 tradIRADistribution=2945.424147 value=917113.527541
+  0033 socialSecurityIncome=3000.000000 expense=-5437.901465 incomeTax=-294.542415 tradIRADistribution=2945.424147 value=914381.083661
+  0034 socialSecurityIncome=3000.000000 expense=-5451.753645 incomeTax=-294.542415 tradIRADistribution=2945.424147 value=911634.787601
+  0035 socialSecurityIncome=3000.000000 expense=-5465.641112 incomeTax=-294.542415 tradIRADistribution=2945.424147 value=908874.604075
+  0036 socialSecurityIncome=3000.000000 expense=-5479.563955 incomeTax=-335.052478 tradIRADistribution=2917.159975 taxTrueUp=78.642435 value=906138.630076
+  0037 socialSecurityIncome=3000.000000 expense=-5493.522264 incomeTax=-335.052478 tradIRADistribution=2917.159975 value=903310.055333
+  0038 socialSecurityIncome=3000.000000 expense=-5507.516130 incomeTax=-335.052478 tradIRADistribution=2917.159975 value=900467.486725
+  0039 socialSecurityIncome=3000.000000 expense=-5521.545643 incomeTax=-335.052478 tradIRADistribution=2917.159975 value=897610.888604
+  0040 socialSecurityIncome=3000.000000 expense=-5535.610893 incomeTax=-335.052478 tradIRADistribution=2917.159975 value=894740.225233
+  0041 socialSecurityIncome=3000.000000 expense=-5549.711973 incomeTax=-335.052478 tradIRADistribution=2917.159975 value=891855.460781
+  0042 socialSecurityIncome=3000.000000 expense=-5563.848973 incomeTax=-335.052478 tradIRADistribution=2917.159975 value=888956.559330
+  0043 socialSecurityIncome=3000.000000 expense=-5578.021984 incomeTax=-335.052478 tradIRADistribution=2917.159975 value=886043.484867
+  0044 socialSecurityIncome=3000.000000 expense=-5592.231100 incomeTax=-335.052478 tradIRADistribution=2917.159975 value=883116.201289
+  0045 socialSecurityIncome=3000.000000 expense=-5606.476410 incomeTax=-335.052478 tradIRADistribution=2917.159975 value=880174.672400
+  0046 socialSecurityIncome=3000.000000 expense=-5620.758008 incomeTax=-335.052478 tradIRADistribution=2917.159975 value=877218.861913
+  0047 socialSecurityIncome=3000.000000 expense=-5635.075987 incomeTax=-335.052478 tradIRADistribution=2917.159975 value=874248.733448
+  0048 socialSecurityIncome=3000.000000 expense=-5649.430438 incomeTax=-321.704705 tradIRADistribution=2887.973012 value=871277.598306
+  0049 socialSecurityIncome=3000.000000 expense=-5663.821454 incomeTax=-321.704705 tradIRADistribution=2887.973012 value=868292.072147
+  0050 socialSecurityIncome=3000.000000 expense=-5678.249130 incomeTax=-321.704705 tradIRADistribution=2887.973012 value=865292.118313
+  0051 socialSecurityIncome=3000.000000 expense=-5692.713557 incomeTax=-321.704705 tradIRADistribution=2887.973012 value=862277.700051
+  0052 socialSecurityIncome=3000.000000 expense=-5707.214831 incomeTax=-321.704705 tradIRADistribution=2887.973012 value=859248.780515
+  0053 socialSecurityIncome=3000.000000 expense=-5721.753044 incomeTax=-321.704705 tradIRADistribution=2887.973012 value=856205.322766
+  0054 socialSecurityIncome=3000.000000 expense=-5736.328291 incomeTax=-321.704705 tradIRADistribution=2887.973012 value=853147.289771
+  0055 socialSecurityIncome=3000.000000 expense=-5750.940666 incomeTax=-321.704705 tradIRADistribution=2887.973012 value=850074.644400
+  0056 socialSecurityIncome=3000.000000 expense=-5765.590264 incomeTax=-321.704705 tradIRADistribution=2887.973012 value=846987.349432
+  0057 socialSecurityIncome=3000.000000 expense=-5780.277179 incomeTax=-321.704705 tradIRADistribution=2887.973012 value=843885.367548
+  0058 socialSecurityIncome=3000.000000 expense=-5795.001507 incomeTax=-321.704705 tradIRADistribution=2887.973012 value=840768.661337
+  0059 socialSecurityIncome=3000.000000 expense=-5809.763342 incomeTax=-321.704705 tradIRADistribution=2887.973012 value=837637.193290
 
 [priceIndex]
   [0000]         1.002547         1.005101         1.007662         1.010228         1.012802         1.015382

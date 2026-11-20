@@ -23,6 +23,7 @@ import assert from 'node:assert/strict';
 import { FinplanTimeline } from '../js/components/finplan-timeline.js';
 import { LifeEvent } from '../js/life-event.js';
 import { Metric } from '../js/metric.js';
+import { Instrument } from '../js/instruments/instrument.js';
 import { DateInt } from '../js/utils/date-int.js';
 
 let passed = 0, failed = 0;
@@ -43,7 +44,7 @@ function aTimeline(values, priceIndex = null) {
     const portfolio = {
         firstDateInt: FIRST,
         config: { birthYear: BIRTH_YEAR },
-        modelAssets: [{ getHistory: () => values }],
+        modelAssets: [{ instrument: Instrument.BANK, getHistory: () => values }],
         monthlyPriceIndex: priceIndex,
     };
     // Own data properties, not assignment: Lit's reactive accessors on the

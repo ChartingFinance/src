@@ -313,6 +313,7 @@
     transfer
   niit-from-a-deferred-draw:
     assetGrowth
+    capitalGainRecognized
     dividend
     expenseInflation
     grossUp
@@ -396,6 +397,7 @@
     transfer
   quickstart-retired:
     assetGrowth
+    capitalGainRecognized
     expenseInflation
     grossUp
     incomeGrowth
@@ -430,6 +432,7 @@
     transfer
   rebalance-drawdown-and-conversion:
     assetGrowth
+    capitalGainRecognized
     expenseInflation
     grossUp
     incomeGrowth

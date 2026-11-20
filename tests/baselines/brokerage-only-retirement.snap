@@ -46,16 +46,16 @@
   lastDate = 2030-12
   startValue = 3000000.000000
   finishValue = 2692607.973684
-  accumulated = -140034.409866
+  accumulated = -143628.627228
   total.pensionIncome = 480000.000000
   total.assetAppreciation = 699019.360779
   total.expense = -1294782.759867
   total.incomeTax = -56227.308567
   total.estimatedTaxes = -121514.193315
-  total.longTermCapitalGains = 825326.163088
-  total.niit = -8539.869722
-  total.taxTrueUp = -1753.038262
-  total.value = 171448097.038265
+  total.longTermCapitalGains = 828357.147779
+  total.niit = -11602.394197
+  total.taxTrueUp = -2284.731148
+  total.value = 172262583.831895
 
 [assetOrder]
   0 Pension
@@ -158,10 +158,10 @@
   0081 2026-12 assetGrowth                  12029.136816 cash  growth                 c-
   0082 2026-12 incomeTaxWithholding          -186.583333 cash  -                      c3
   0083 2026-12 capitalGainRecognized          151.043651 info  longTermCapitalGain    c3 {spillover=false}
-  0084 2026-12 taxTrueUp                     -270.425474 cash  -                      c4 {direction=underpayment}
-  0085 2026-12 capitalGainRecognized          218.915860 info  longTermCapitalGain    c4 {spillover=false}
-  0086 2026-12 niitAssessed                 -1574.087071 cash  -                      c5 {bound=magi magi=241423.343976 nii=145423.343976 taxedBase=41423.343976 threshold=200000}
-  0087 2026-12 capitalGainRecognized         1274.260962 info  longTermCapitalGain    c5 {spillover=false}
+  0084 2027-01 taxTrueUp                     -270.425474 cash  -                      c4 {direction=underpayment}
+  0085 2027-01 capitalGainRecognized          218.915860 info  longTermCapitalGain    c4 {spillover=false}
+  0086 2027-01 niitAssessed                 -1574.087071 cash  -                      c5 {bound=magi magi=241423.343976 nii=145423.343976 taxedBase=41423.343976 threshold=200000}
+  0087 2027-01 capitalGainRecognized         1274.260962 info  longTermCapitalGain    c5 {spillover=false}
   0088 2027-01 transfer                      7200.000000 cash  -                      c0 {cadence=monthly from=Pension system=true to=Brokerage}
   0089 2027-01 grossUp                     -22474.796748 cash  -                      c1 {forAsset=Living overflow=false}
   0090 2027-01 capitalGainRecognized        12365.311653 info  longTermCapitalGain    c1 {spillover=false}
@@ -246,10 +246,10 @@
   0169 2027-12 assetGrowth                  11833.769019 cash  growth                 c-
   0170 2027-12 incomeTaxWithholding          -162.607417 cash  -                      c3
   0171 2027-12 capitalGainRecognized          133.109473 info  longTermCapitalGain    c3 {spillover=false}
-  0172 2027-12 taxTrueUp                     -462.367502 cash  -                      c6 {direction=underpayment}
-  0173 2027-12 capitalGainRecognized          378.491312 info  longTermCapitalGain    c6 {spillover=false}
-  0174 2027-12 niitAssessed                 -1960.422622 cash  -                      c7 {bound=magi magi=251590.068990 nii=155590.068990 taxedBase=51590.068990 threshold=200000}
-  0175 2027-12 capitalGainRecognized         1604.790400 info  longTermCapitalGain    c7 {spillover=false}
+  0172 2028-01 taxTrueUp                     -462.367502 cash  -                      c6 {direction=underpayment}
+  0173 2028-01 capitalGainRecognized          378.491312 info  longTermCapitalGain    c6 {spillover=false}
+  0174 2028-01 niitAssessed                 -1960.422622 cash  -                      c7 {bound=magi magi=251590.068990 nii=155590.068990 taxedBase=51590.068990 threshold=200000}
+  0175 2028-01 capitalGainRecognized         1604.790400 info  longTermCapitalGain    c7 {spillover=false}
   0176 2028-01 transfer                      7200.000000 cash  -                      c0 {cadence=monthly from=Pension system=true to=Brokerage}
   0177 2028-01 grossUp                     -23227.183715 cash  -                      c1 {forAsset=Living overflow=false}
   0178 2028-01 capitalGainRecognized        13119.758097 info  longTermCapitalGain    c1 {spillover=false}
@@ -334,10 +334,10 @@
   0257 2028-12 assetGrowth                  11589.246594 cash  growth                 c-
   0258 2028-12 incomeTaxWithholding          -137.888247 cash  -                      c3
   0259 2028-12 capitalGainRecognized          114.065636 info  longTermCapitalGain    c3 {spillover=false}
-  0260 2028-12 taxTrueUp                     -501.836376 cash  -                      c8 {direction=underpayment}
-  0261 2028-12 capitalGainRecognized          415.135350 info  longTermCapitalGain    c8 {spillover=false}
-  0262 2028-12 niitAssessed                 -2319.867378 cash  -                      c9 {bound=magi magi=261049.141514 nii=165049.141514 taxedBase=61049.141514 threshold=200000}
-  0263 2028-12 capitalGainRecognized         1919.069645 info  longTermCapitalGain    c9 {spillover=false}
+  0260 2029-01 taxTrueUp                     -501.836376 cash  -                      c8 {direction=underpayment}
+  0261 2029-01 capitalGainRecognized          415.135350 info  longTermCapitalGain    c8 {spillover=false}
+  0262 2029-01 niitAssessed                 -2319.867378 cash  -                      c9 {bound=magi magi=261049.141514 nii=165049.141514 taxedBase=61049.141514 threshold=200000}
+  0263 2029-01 capitalGainRecognized         1919.069645 info  longTermCapitalGain    c9 {spillover=false}
   0264 2029-01 transfer                      7200.000000 cash  -                      c0 {cadence=monthly from=Pension system=true to=Brokerage}
   0265 2029-01 grossUp                     -24003.289897 cash  -                      c1 {forAsset=Living overflow=false}
   0266 2029-01 capitalGainRecognized        13900.227178 info  longTermCapitalGain    c1 {spillover=false}
@@ -422,10 +422,10 @@
   0345 2029-12 assetGrowth                  11292.712498 cash  growth                 c-
   0346 2029-12 incomeTaxWithholding          -112.402782 cash  -                      c3
   0347 2029-12 capitalGainRecognized           93.907973 info  longTermCapitalGain    c3 {spillover=false}
-  0348 2029-12 taxTrueUp                     -518.408910 cash  -                      c10 {direction=underpayment}
-  0349 2029-12 capitalGainRecognized          433.109651 info  longTermCapitalGain    c10 {spillover=false}
-  0350 2029-12 niitAssessed                 -2685.492652 cash  -                      c11 {bound=magi magi=270670.859255 nii=174670.859255 taxedBase=70670.859255 threshold=200000}
-  0351 2029-12 capitalGainRecognized         2243.620362 info  longTermCapitalGain    c11 {spillover=false}
+  0348 2030-01 taxTrueUp                     -518.408910 cash  -                      c10 {direction=underpayment}
+  0349 2030-01 capitalGainRecognized          433.109651 info  longTermCapitalGain    c10 {spillover=false}
+  0350 2030-01 niitAssessed                 -2685.492652 cash  -                      c11 {bound=magi magi=270670.859255 nii=174670.859255 taxedBase=70670.859255 threshold=200000}
+  0351 2030-01 capitalGainRecognized         2243.620362 info  longTermCapitalGain    c11 {spillover=false}
   0352 2030-01 transfer                      7200.000000 cash  -                      c0 {cadence=monthly from=Pension system=true to=Brokerage}
   0353 2030-01 grossUp                     -24803.812640 cash  -                      c1 {forAsset=Living overflow=false}
   0354 2030-01 capitalGainRecognized        14707.272595 info  longTermCapitalGain    c1 {spillover=false}
@@ -516,18 +516,18 @@
   0439 2030-12 capitalGainRecognized         2582.610863 info  longTermCapitalGain    c13 {spillover=false}
 
 [history] Brokerage
-  value                        n=  60 first=  2997431.070000 last=  2696202.190000 min=  2696202.190000 max=  2997431.070000 sum=  172266178.070000 #d06f0264
+  value                        n=  60 first=  2997431.070000 last=  2692607.970000 min=  2692607.970000 max=  2997431.070000 sum=  172262583.850000 #1421f505
   growth                       n=  60 first=    12163.110000 last=    10940.440000 min=    10940.440000 max=    12163.110000 sum=     699019.360000 #b4daf698
-  income                       n=  60 first=    11785.780000 last=    15543.540000 min=    11785.780000 max=    17456.020000 sum=     825326.170000 #1d7873cc
-  estimatedIncomeTax           n=  60 first=    -1932.040000 last=    -2406.760000 min=    -2810.630000 max=    -1932.040000 sum=    -131494.540000 #8a92a4b4
-  niit                         n=  60 first=        0.000000 last=        0.000000 min=    -2685.490000 max=        0.000000 sum=      -8539.870000 #9807fbef
-  incomeTax                    n=  60 first=    -1932.040000 last=    -2406.760000 min=    -2810.630000 max=    -1932.040000 sum=    -131494.540000 #8a92a4b4
-  federalTaxes                 n=  60 first=    -1932.040000 last=    -2406.760000 min=    -5496.120000 max=    -1932.040000 sum=    -140034.410000 #bd10eb4d
-  taxes                        n=  60 first=    -1932.040000 last=    -2406.760000 min=    -5496.120000 max=    -1932.040000 sum=    -140034.410000 #bd10eb4d
-  cashFlow                     n=  60 first=    -1932.040000 last=    -2406.760000 min=    -5496.120000 max=    -1932.040000 sum=    -140034.410000 #bd10eb4d
-  cashFlowAccumulated          n=  60 first=    -1932.040000 last=  -140034.410000 min=  -140034.410000 max=    -1932.040000 sum=   -4099818.490000 #428678b6
-  longTermCapitalGain          n=  60 first=    11785.780000 last=    15543.540000 min=    11785.780000 max=    17456.020000 sum=     825326.170000 #1d7873cc
-  capitalGain                  n=  60 first=    11785.780000 last=    15543.540000 min=    11785.780000 max=    17456.020000 sum=     825326.170000 #1d7873cc
+  income                       n=  60 first=    11785.780000 last=    18574.520000 min=    11785.780000 max=    18574.520000 sum=     828357.150000 #94093685
+  estimatedIncomeTax           n=  60 first=    -1932.040000 last=    -2938.450000 min=    -2938.450000 max=    -1932.040000 sum=    -132026.230000 #484eda28
+  niit                         n=  60 first=        0.000000 last=    -3062.520000 min=    -3062.520000 max=        0.000000 sum=     -11602.390000 #9c3066f6
+  incomeTax                    n=  60 first=    -1932.040000 last=    -2938.450000 min=    -2938.450000 max=    -1932.040000 sum=    -132026.230000 #484eda28
+  federalTaxes                 n=  60 first=    -1932.040000 last=    -6000.980000 min=    -6000.980000 max=    -1932.040000 sum=    -143628.630000 #a98ae4a3
+  taxes                        n=  60 first=    -1932.040000 last=    -6000.980000 min=    -6000.980000 max=    -1932.040000 sum=    -143628.630000 #a98ae4a3
+  cashFlow                     n=  60 first=    -1932.040000 last=    -6000.980000 min=    -6000.980000 max=    -1932.040000 sum=    -143628.630000 #a98ae4a3
+  cashFlowAccumulated          n=  60 first=    -1932.040000 last=  -143628.630000 min=  -143628.630000 max=    -1932.040000 sum=   -4103412.710000 #0f129586
+  longTermCapitalGain          n=  60 first=    11785.780000 last=    18574.520000 min=    11785.780000 max=    18574.520000 sum=     828357.150000 #94093685
+  capitalGain                  n=  60 first=    11785.780000 last=    18574.520000 min=    11785.780000 max=    18574.520000 sum=     828357.150000 #94093685
 
 [asset] Living
   instrument = monthlyExpense
@@ -645,7 +645,7 @@
   0021 2026-11 transfer                     -7200.000000 cash  -                      c0 {cadence=monthly from=Pension system=true to=Brokerage}
   0022 2026-12 incomeTaxWithholding          -800.000000 cash  withheldIncomeTax      c14
   0023 2026-12 transfer                     -7200.000000 cash  -                      c0 {cadence=monthly from=Pension system=true to=Brokerage}
-  0024 2026-12 incomeGrowth                     0.000000 cash  income                 c15
+  0024 2027-01 incomeGrowth                     0.000000 cash  income                 c15
   0025 2027-01 incomeTaxWithholding          -800.000000 cash  withheldIncomeTax      c14
   0026 2027-01 transfer                     -7200.000000 cash  -                      c0 {cadence=monthly from=Pension system=true to=Brokerage}
   0027 2027-02 incomeTaxWithholding          -800.000000 cash  withheldIncomeTax      c14
@@ -670,7 +670,7 @@
   0046 2027-11 transfer                     -7200.000000 cash  -                      c0 {cadence=monthly from=Pension system=true to=Brokerage}
   0047 2027-12 incomeTaxWithholding          -800.000000 cash  withheldIncomeTax      c14
   0048 2027-12 transfer                     -7200.000000 cash  -                      c0 {cadence=monthly from=Pension system=true to=Brokerage}
-  0049 2027-12 incomeGrowth                     0.000000 cash  income                 c16
+  0049 2028-01 incomeGrowth                     0.000000 cash  income                 c16
   0050 2028-01 incomeTaxWithholding          -800.000000 cash  withheldIncomeTax      c14
   0051 2028-01 transfer                     -7200.000000 cash  -                      c0 {cadence=monthly from=Pension system=true to=Brokerage}
   0052 2028-02 incomeTaxWithholding          -800.000000 cash  withheldIncomeTax      c14
@@ -695,7 +695,7 @@
   0071 2028-11 transfer                     -7200.000000 cash  -                      c0 {cadence=monthly from=Pension system=true to=Brokerage}
   0072 2028-12 incomeTaxWithholding          -800.000000 cash  withheldIncomeTax      c14
   0073 2028-12 transfer                     -7200.000000 cash  -                      c0 {cadence=monthly from=Pension system=true to=Brokerage}
-  0074 2028-12 incomeGrowth                     0.000000 cash  income                 c17
+  0074 2029-01 incomeGrowth                     0.000000 cash  income                 c17
   0075 2029-01 incomeTaxWithholding          -800.000000 cash  withheldIncomeTax      c14
   0076 2029-01 transfer                     -7200.000000 cash  -                      c0 {cadence=monthly from=Pension system=true to=Brokerage}
   0077 2029-02 incomeTaxWithholding          -800.000000 cash  withheldIncomeTax      c14
@@ -720,7 +720,7 @@
   0096 2029-11 transfer                     -7200.000000 cash  -                      c0 {cadence=monthly from=Pension system=true to=Brokerage}
   0097 2029-12 incomeTaxWithholding          -800.000000 cash  withheldIncomeTax      c14
   0098 2029-12 transfer                     -7200.000000 cash  -                      c0 {cadence=monthly from=Pension system=true to=Brokerage}
-  0099 2029-12 incomeGrowth                     0.000000 cash  income                 c18
+  0099 2030-01 incomeGrowth                     0.000000 cash  income                 c18
   0100 2030-01 incomeTaxWithholding          -800.000000 cash  withheldIncomeTax      c14
   0101 2030-01 transfer                     -7200.000000 cash  -                      c0 {cadence=monthly from=Pension system=true to=Brokerage}
   0102 2030-02 incomeTaxWithholding          -800.000000 cash  withheldIncomeTax      c14
@@ -760,66 +760,66 @@
   pensionIncome                n=  60 first=     8000.000000 last=     8000.000000 min=     8000.000000 max=     8000.000000 sum=     480000.000000 #bec5b9e5
 
 [packages]
-  0000 pensionIncome=8000.000000 assetAppreciation=12163.111369 expense=-20000.000000 incomeTax=-986.583333 estimatedTaxes=-1745.454545 longTermCapitalGains=11785.781719 value=2985380.126702
-  0001 pensionIncome=8000.000000 assetAppreciation=12152.401145 expense=-20050.946788 incomeTax=-986.583333 estimatedTaxes=-1754.422152 longTermCapitalGains=11845.716563 value=2982689.499008
-  0002 pensionIncome=8000.000000 assetAppreciation=12141.402554 expense=-20102.023354 incomeTax=-986.583333 estimatedTaxes=-1763.415843 longTermCapitalGains=11905.824692 value=2979927.672355
-  0003 pensionIncome=8000.000000 assetAppreciation=12130.113782 expense=-20153.230030 incomeTax=-986.583333 estimatedTaxes=-1772.435660 longTermCapitalGains=11966.106388 value=2977094.199997
-  0004 pensionIncome=8000.000000 assetAppreciation=12118.533011 expense=-20204.567147 incomeTax=-986.583333 estimatedTaxes=-1781.481646 longTermCapitalGains=12026.561935 value=2974188.632992
-  0005 pensionIncome=8000.000000 assetAppreciation=12106.658410 expense=-20256.035037 incomeTax=-986.583333 estimatedTaxes=-1790.553844 longTermCapitalGains=12087.191619 value=2971210.520192
-  0006 pensionIncome=8000.000000 assetAppreciation=12094.488141 expense=-20307.634033 incomeTax=-986.583333 estimatedTaxes=-1799.652295 longTermCapitalGains=12147.995727 value=2968159.408236
-  0007 pensionIncome=8000.000000 assetAppreciation=12082.020358 expense=-20359.364469 incomeTax=-986.583333 estimatedTaxes=-1808.777043 longTermCapitalGains=12208.974546 value=2965034.841539
-  0008 pensionIncome=8000.000000 assetAppreciation=12069.253204 expense=-20411.226680 incomeTax=-986.583333 estimatedTaxes=-1817.928130 longTermCapitalGains=12270.128367 value=2961836.362278
-  0009 pensionIncome=8000.000000 assetAppreciation=12056.184813 expense=-20463.221001 incomeTax=-986.583333 estimatedTaxes=-1827.105601 longTermCapitalGains=12331.457481 value=2958563.510387
-  0010 pensionIncome=8000.000000 assetAppreciation=12042.813312 expense=-20515.347770 incomeTax=-986.583333 estimatedTaxes=-1836.309498 longTermCapitalGains=12392.962180 value=2955215.823544
-  0011 pensionIncome=8000.000000 assetAppreciation=12029.136816 expense=-20567.607324 incomeTax=-986.583333 estimatedTaxes=-1845.539866 longTermCapitalGains=12454.642758 value=2951792.837160
-  0012 pensionIncome=8000.000000 assetAppreciation=12007.638659 expense=-20620.000000 incomeTax=-962.607417 estimatedTaxes=-1854.796748 longTermCapitalGains=13990.248726 niit=-1574.087071 taxTrueUp=-270.425474 value=2946466.032972
-  0013 pensionIncome=8000.000000 assetAppreciation=11993.413550 expense=-20672.526138 incomeTax=-962.607417 estimatedTaxes=-1864.080188 longTermCapitalGains=12559.086671 value=2942907.572838
-  0014 pensionIncome=8000.000000 assetAppreciation=11978.878013 expense=-20725.186078 incomeTax=-962.607417 estimatedTaxes=-1873.390231 longTermCapitalGains=12621.278281 value=2939272.473042
-  0015 pensionIncome=8000.000000 assetAppreciation=11964.030127 expense=-20777.980161 incomeTax=-962.607417 estimatedTaxes=-1882.726921 longTermCapitalGains=12683.647034 value=2935560.260103
-  0016 pensionIncome=8000.000000 assetAppreciation=11948.867965 expense=-20830.908728 incomeTax=-962.607417 estimatedTaxes=-1892.090304 longTermCapitalGains=12746.193230 value=2931770.458225
-  0017 pensionIncome=8000.000000 assetAppreciation=11933.389586 expense=-20883.972123 incomeTax=-962.607417 estimatedTaxes=-1901.480423 longTermCapitalGains=12808.917171 value=2927902.589284
-  0018 pensionIncome=8000.000000 assetAppreciation=11917.593044 expense=-20937.170688 incomeTax=-962.607417 estimatedTaxes=-1910.897324 longTermCapitalGains=12871.819160 value=2923956.172820
-  0019 pensionIncome=8000.000000 assetAppreciation=11901.476380 expense=-20990.504767 incomeTax=-962.607417 estimatedTaxes=-1920.341053 longTermCapitalGains=12934.899501 value=2919930.726024
-  0020 pensionIncome=8000.000000 assetAppreciation=11885.037627 expense=-21043.974707 incomeTax=-962.607417 estimatedTaxes=-1929.811655 longTermCapitalGains=12998.158502 value=2915825.763726
-  0021 pensionIncome=8000.000000 assetAppreciation=11868.274808 expense=-21097.580852 incomeTax=-962.607417 estimatedTaxes=-1939.309176 longTermCapitalGains=13061.596468 value=2911640.798390
-  0022 pensionIncome=8000.000000 assetAppreciation=11851.185938 expense=-21151.323551 incomeTax=-962.607417 estimatedTaxes=-1948.833662 longTermCapitalGains=13125.213710 value=2907375.340098
-  0023 pensionIncome=8000.000000 assetAppreciation=11833.769019 expense=-21205.203151 incomeTax=-962.607417 estimatedTaxes=-1958.385160 longTermCapitalGains=13189.010537 value=2903028.896540
-  0024 pensionIncome=8000.000000 assetAppreciation=11806.151298 expense=-21259.220000 incomeTax=-937.888247 estimatedTaxes=-1967.963715 longTermCapitalGains=15216.015810 niit=-1960.422622 taxTrueUp=-462.367502 value=2896193.031305
-  0025 pensionIncome=8000.000000 assetAppreciation=11788.132749 expense=-21313.374448 incomeTax=-937.888247 estimatedTaxes=-1977.569374 longTermCapitalGains=13296.872912 value=2891698.039587
-  0026 pensionIncome=8000.000000 assetAppreciation=11769.780352 expense=-21367.666847 incomeTax=-937.888247 estimatedTaxes=-1987.202185 longTermCapitalGains=13361.192323 value=2887120.631961
-  0027 pensionIncome=8000.000000 assetAppreciation=11751.092070 expense=-21422.097546 incomeTax=-937.888247 estimatedTaxes=-1996.862194 longTermCapitalGains=13425.692648 value=2882460.306692
-  0028 pensionIncome=8000.000000 assetAppreciation=11732.065861 expense=-21476.666899 incomeTax=-937.888247 estimatedTaxes=-2006.549448 longTermCapitalGains=13490.374204 value=2877716.559600
-  0029 pensionIncome=8000.000000 assetAppreciation=11712.699670 expense=-21531.375259 incomeTax=-937.888247 estimatedTaxes=-2016.263996 longTermCapitalGains=13555.237309 value=2872888.884048
-  0030 pensionIncome=8000.000000 assetAppreciation=11692.991432 expense=-21586.222979 incomeTax=-937.888247 estimatedTaxes=-2026.005885 longTermCapitalGains=13620.282283 value=2867976.770935
-  0031 pensionIncome=8000.000000 assetAppreciation=11672.939074 expense=-21641.210415 incomeTax=-937.888247 estimatedTaxes=-2035.775162 longTermCapitalGains=13685.509448 value=2862979.708677
-  0032 pensionIncome=8000.000000 assetAppreciation=11652.540511 expense=-21696.337923 incomeTax=-937.888247 estimatedTaxes=-2045.571877 longTermCapitalGains=13750.919126 value=2857897.183206
-  0033 pensionIncome=8000.000000 assetAppreciation=11631.793648 expense=-21751.605859 incomeTax=-937.888247 estimatedTaxes=-2055.396077 longTermCapitalGains=13816.511642 value=2852728.677949
-  0034 pensionIncome=8000.000000 assetAppreciation=11610.696381 expense=-21807.014581 incomeTax=-937.888247 estimatedTaxes=-2065.247811 longTermCapitalGains=13882.287321 value=2847473.673824
-  0035 pensionIncome=8000.000000 assetAppreciation=11589.246594 expense=-21862.564448 incomeTax=-937.888247 estimatedTaxes=-2075.127128 longTermCapitalGains=13948.246490 value=2842131.649224
-  0036 pensionIncome=8000.000000 assetAppreciation=11555.946192 expense=-21918.255820 incomeTax=-912.402782 estimatedTaxes=-2085.034077 longTermCapitalGains=16327.494202 niit=-2319.867378 taxTrueUp=-501.836376 value=2833894.365747
-  0037 pensionIncome=8000.000000 assetAppreciation=11533.841975 expense=-21974.089056 incomeTax=-912.402782 estimatedTaxes=-2094.968707 longTermCapitalGains=14059.598550 value=2828390.771714
-  0038 pensionIncome=8000.000000 assetAppreciation=11511.379064 expense=-22030.064519 incomeTax=-912.402782 estimatedTaxes=-2104.931067 longTermCapitalGains=14126.092444 value=2822798.634359
-  0039 pensionIncome=8000.000000 assetAppreciation=11488.555303 expense=-22086.182570 incomeTax=-912.402782 estimatedTaxes=-2114.921208 longTermCapitalGains=14192.771224 value=2817117.422099
-  0040 pensionIncome=8000.000000 assetAppreciation=11465.368526 expense=-22142.443573 incomeTax=-912.402782 estimatedTaxes=-2124.939178 longTermCapitalGains=14259.635221 value=2811346.600773
-  0041 pensionIncome=8000.000000 assetAppreciation=11441.816558 expense=-22198.847892 incomeTax=-912.402782 estimatedTaxes=-2134.985030 longTermCapitalGains=14326.684772 value=2805485.633628
-  0042 pensionIncome=8000.000000 assetAppreciation=11417.897210 expense=-22255.395891 incomeTax=-912.402782 estimatedTaxes=-2145.058811 longTermCapitalGains=14393.920214 value=2799533.981307
-  0043 pensionIncome=8000.000000 assetAppreciation=11393.608286 expense=-22312.087938 incomeTax=-912.402782 estimatedTaxes=-2155.160574 longTermCapitalGains=14461.341885 value=2793491.101839
-  0044 pensionIncome=8000.000000 assetAppreciation=11368.947577 expense=-22368.924398 incomeTax=-912.402782 estimatedTaxes=-2165.290369 longTermCapitalGains=14528.950124 value=2787356.450625
-  0045 pensionIncome=8000.000000 assetAppreciation=11343.912865 expense=-22425.905640 incomeTax=-912.402782 estimatedTaxes=-2175.448246 longTermCapitalGains=14596.745273 value=2781129.480428
-  0046 pensionIncome=8000.000000 assetAppreciation=11318.501918 expense=-22483.032033 incomeTax=-912.402782 estimatedTaxes=-2185.634258 longTermCapitalGains=14664.727674 value=2774809.641360
-  0047 pensionIncome=8000.000000 assetAppreciation=11292.712498 expense=-22540.303946 incomeTax=-912.402782 estimatedTaxes=-2195.848455 longTermCapitalGains=14732.897672 value=2768396.380870
-  0048 pensionIncome=8000.000000 assetAppreciation=11253.489260 expense=-22597.721750 incomeTax=-886.127268 estimatedTaxes=-2206.090889 longTermCapitalGains=17456.015954 niit=-2685.492652 taxTrueUp=-518.408910 value=2758698.464593
-  0049 pensionIncome=8000.000000 assetAppreciation=11226.989996 expense=-22655.285817 incomeTax=-886.127268 estimatedTaxes=-2216.361613 longTermCapitalGains=14847.814699 value=2752109.969189
-  0050 pensionIncome=8000.000000 assetAppreciation=11200.105690 expense=-22712.996519 incomeTax=-886.127268 estimatedTaxes=-2226.660677 longTermCapitalGains=14916.532165 value=2745426.432705
-  0051 pensionIncome=8000.000000 assetAppreciation=11172.834060 expense=-22770.854230 incomeTax=-886.127268 estimatedTaxes=-2236.988135 longTermCapitalGains=14985.438688 value=2738647.292038
-  0052 pensionIncome=8000.000000 assetAppreciation=11145.172811 expense=-22828.859324 incomeTax=-886.127268 estimatedTaxes=-2247.344039 longTermCapitalGains=15054.534621 value=2731771.981365
-  0053 pensionIncome=8000.000000 assetAppreciation=11117.119637 expense=-22887.012176 incomeTax=-886.127268 estimatedTaxes=-2257.728441 longTermCapitalGains=15123.820315 value=2724799.932129
-  0054 pensionIncome=8000.000000 assetAppreciation=11088.672221 expense=-22945.313164 incomeTax=-886.127268 estimatedTaxes=-2268.141395 longTermCapitalGains=15193.296125 value=2717730.573023
-  0055 pensionIncome=8000.000000 assetAppreciation=11059.828237 expense=-23003.762664 incomeTax=-886.127268 estimatedTaxes=-2278.582954 longTermCapitalGains=15262.962406 value=2710563.329983
-  0056 pensionIncome=8000.000000 assetAppreciation=11030.585345 expense=-23062.361055 incomeTax=-886.127268 estimatedTaxes=-2289.053171 longTermCapitalGains=15332.819515 value=2703297.626173
-  0057 pensionIncome=8000.000000 assetAppreciation=11000.941194 expense=-23121.108715 incomeTax=-886.127268 estimatedTaxes=-2299.552100 longTermCapitalGains=15402.867810 value=2695932.881972
-  0058 pensionIncome=8000.000000 assetAppreciation=10970.893424 expense=-23180.006026 incomeTax=-886.127268 estimatedTaxes=-2310.079795 longTermCapitalGains=15473.107652 value=2688468.514964
-  0059 pensionIncome=8000.000000 assetAppreciation=10940.439660 expense=-23239.053369 incomeTax=-886.127268 estimatedTaxes=-2320.636309 longTermCapitalGains=15543.539402 value=2680903.939921
+  0000 pensionIncome=8000.000000 assetAppreciation=12163.111369 expense=-20000.000000 incomeTax=-986.583333 estimatedTaxes=-1745.454545 longTermCapitalGains=11785.781719 value=2997431.073490
+  0001 pensionIncome=8000.000000 assetAppreciation=12152.401145 expense=-20050.946788 incomeTax=-986.583333 estimatedTaxes=-1754.422152 longTermCapitalGains=11845.716563 value=2994791.522362
+  0002 pensionIncome=8000.000000 assetAppreciation=12141.402554 expense=-20102.023354 incomeTax=-986.583333 estimatedTaxes=-1763.415843 longTermCapitalGains=11905.824692 value=2992080.902385
+  0003 pensionIncome=8000.000000 assetAppreciation=12130.113782 expense=-20153.230030 incomeTax=-986.583333 estimatedTaxes=-1772.435660 longTermCapitalGains=11966.106388 value=2989298.767144
+  0004 pensionIncome=8000.000000 assetAppreciation=12118.533011 expense=-20204.567147 incomeTax=-986.583333 estimatedTaxes=-1781.481646 longTermCapitalGains=12026.561935 value=2986444.668028
+  0005 pensionIncome=8000.000000 assetAppreciation=12106.658410 expense=-20256.035037 incomeTax=-986.583333 estimatedTaxes=-1790.553844 longTermCapitalGains=12087.191619 value=2983518.154224
+  0006 pensionIncome=8000.000000 assetAppreciation=12094.488141 expense=-20307.634033 incomeTax=-986.583333 estimatedTaxes=-1799.652295 longTermCapitalGains=12147.995727 value=2980518.772705
+  0007 pensionIncome=8000.000000 assetAppreciation=12082.020358 expense=-20359.364469 incomeTax=-986.583333 estimatedTaxes=-1808.777043 longTermCapitalGains=12208.974546 value=2977446.068219
+  0008 pensionIncome=8000.000000 assetAppreciation=12069.253204 expense=-20411.226680 incomeTax=-986.583333 estimatedTaxes=-1817.928130 longTermCapitalGains=12270.128367 value=2974299.583280
+  0009 pensionIncome=8000.000000 assetAppreciation=12056.184813 expense=-20463.221001 incomeTax=-986.583333 estimatedTaxes=-1827.105601 longTermCapitalGains=12331.457481 value=2971078.858157
+  0010 pensionIncome=8000.000000 assetAppreciation=12042.813312 expense=-20515.347770 incomeTax=-986.583333 estimatedTaxes=-1836.309498 longTermCapitalGains=12392.962180 value=2967783.430867
+  0011 pensionIncome=8000.000000 assetAppreciation=12029.136816 expense=-20567.607324 incomeTax=-986.583333 estimatedTaxes=-1845.539866 longTermCapitalGains=12454.642758 value=2964412.837160
+  0012 pensionIncome=8000.000000 assetAppreciation=12007.638659 expense=-20620.000000 incomeTax=-962.607417 estimatedTaxes=-1854.796748 longTermCapitalGains=13990.248726 niit=-1574.087071 taxTrueUp=-270.425474 value=2959138.559110
+  0013 pensionIncome=8000.000000 assetAppreciation=11993.413550 expense=-20672.526138 incomeTax=-962.607417 estimatedTaxes=-1864.080188 longTermCapitalGains=12559.086671 value=2955632.758917
+  0014 pensionIncome=8000.000000 assetAppreciation=11978.878013 expense=-20725.186078 incomeTax=-962.607417 estimatedTaxes=-1873.390231 longTermCapitalGains=12621.278281 value=2952050.453203
+  0015 pensionIncome=8000.000000 assetAppreciation=11964.030127 expense=-20777.980161 incomeTax=-962.607417 estimatedTaxes=-1882.726921 longTermCapitalGains=12683.647034 value=2948391.168832
+  0016 pensionIncome=8000.000000 assetAppreciation=11948.867965 expense=-20830.908728 incomeTax=-962.607417 estimatedTaxes=-1892.090304 longTermCapitalGains=12746.193230 value=2944654.430348
+  0017 pensionIncome=8000.000000 assetAppreciation=11933.389586 expense=-20883.972123 incomeTax=-962.607417 estimatedTaxes=-1901.480423 longTermCapitalGains=12808.917171 value=2940839.759972
+  0018 pensionIncome=8000.000000 assetAppreciation=11917.593044 expense=-20937.170688 incomeTax=-962.607417 estimatedTaxes=-1910.897324 longTermCapitalGains=12871.819160 value=2936946.677587
+  0019 pensionIncome=8000.000000 assetAppreciation=11901.476380 expense=-20990.504767 incomeTax=-962.607417 estimatedTaxes=-1920.341053 longTermCapitalGains=12934.899501 value=2932974.700730
+  0020 pensionIncome=8000.000000 assetAppreciation=11885.037627 expense=-21043.974707 incomeTax=-962.607417 estimatedTaxes=-1929.811655 longTermCapitalGains=12998.158502 value=2928923.344579
+  0021 pensionIncome=8000.000000 assetAppreciation=11868.274808 expense=-21097.580852 incomeTax=-962.607417 estimatedTaxes=-1939.309176 longTermCapitalGains=13061.596468 value=2924792.121942
+  0022 pensionIncome=8000.000000 assetAppreciation=11851.185938 expense=-21151.323551 incomeTax=-962.607417 estimatedTaxes=-1948.833662 longTermCapitalGains=13125.213710 value=2920580.543249
+  0023 pensionIncome=8000.000000 assetAppreciation=11833.769019 expense=-21205.203151 incomeTax=-962.607417 estimatedTaxes=-1958.385160 longTermCapitalGains=13189.010537 value=2916288.116540
+  0024 pensionIncome=8000.000000 assetAppreciation=11806.151298 expense=-21259.220000 incomeTax=-937.888247 estimatedTaxes=-1967.963715 longTermCapitalGains=15216.015810 niit=-1960.422622 taxTrueUp=-462.367502 value=2909506.405754
+  0025 pensionIncome=8000.000000 assetAppreciation=11788.132749 expense=-21313.374448 incomeTax=-937.888247 estimatedTaxes=-1977.569374 longTermCapitalGains=13296.872912 value=2905065.706434
+  0026 pensionIncome=8000.000000 assetAppreciation=11769.780352 expense=-21367.666847 incomeTax=-937.888247 estimatedTaxes=-1987.202185 longTermCapitalGains=13361.192323 value=2900542.729507
+  0027 pensionIncome=8000.000000 assetAppreciation=11751.092070 expense=-21422.097546 incomeTax=-937.888247 estimatedTaxes=-1996.862194 longTermCapitalGains=13425.692648 value=2895936.973591
+  0028 pensionIncome=8000.000000 assetAppreciation=11732.065861 expense=-21476.666899 incomeTax=-937.888247 estimatedTaxes=-2006.549448 longTermCapitalGains=13490.374204 value=2891247.934858
+  0029 pensionIncome=8000.000000 assetAppreciation=11712.699670 expense=-21531.375259 incomeTax=-937.888247 estimatedTaxes=-2016.263996 longTermCapitalGains=13555.237309 value=2886475.107027
+  0030 pensionIncome=8000.000000 assetAppreciation=11692.991432 expense=-21586.222979 incomeTax=-937.888247 estimatedTaxes=-2026.005885 longTermCapitalGains=13620.282283 value=2881617.981349
+  0031 pensionIncome=8000.000000 assetAppreciation=11672.939074 expense=-21641.210415 incomeTax=-937.888247 estimatedTaxes=-2035.775162 longTermCapitalGains=13685.509448 value=2876676.046600
+  0032 pensionIncome=8000.000000 assetAppreciation=11652.540511 expense=-21696.337923 incomeTax=-937.888247 estimatedTaxes=-2045.571877 longTermCapitalGains=13750.919126 value=2871648.789065
+  0033 pensionIncome=8000.000000 assetAppreciation=11631.793648 expense=-21751.605859 incomeTax=-937.888247 estimatedTaxes=-2055.396077 longTermCapitalGains=13816.511642 value=2866535.692531
+  0034 pensionIncome=8000.000000 assetAppreciation=11610.696381 expense=-21807.014581 incomeTax=-937.888247 estimatedTaxes=-2065.247811 longTermCapitalGains=13882.287321 value=2861336.238273
+  0035 pensionIncome=8000.000000 assetAppreciation=11589.246594 expense=-21862.564448 incomeTax=-937.888247 estimatedTaxes=-2075.127128 longTermCapitalGains=13948.246490 value=2856049.905044
+  0036 pensionIncome=8000.000000 assetAppreciation=11555.946192 expense=-21918.255820 incomeTax=-912.402782 estimatedTaxes=-2085.034077 longTermCapitalGains=16327.494202 niit=-2319.867378 taxTrueUp=-501.836376 value=2847868.454803
+  0037 pensionIncome=8000.000000 assetAppreciation=11533.841975 expense=-21974.089056 incomeTax=-912.402782 estimatedTaxes=-2094.968707 longTermCapitalGains=14059.598550 value=2842420.836233
+  0038 pensionIncome=8000.000000 assetAppreciation=11511.379064 expense=-22030.064519 incomeTax=-912.402782 estimatedTaxes=-2104.931067 longTermCapitalGains=14126.092444 value=2836884.816929
+  0039 pensionIncome=8000.000000 assetAppreciation=11488.555303 expense=-22086.182570 incomeTax=-912.402782 estimatedTaxes=-2114.921208 longTermCapitalGains=14192.771224 value=2831259.865672
+  0040 pensionIncome=8000.000000 assetAppreciation=11465.368526 expense=-22142.443573 incomeTax=-912.402782 estimatedTaxes=-2124.939178 longTermCapitalGains=14259.635221 value=2825545.448664
+  0041 pensionIncome=8000.000000 assetAppreciation=11441.816558 expense=-22198.847892 incomeTax=-912.402782 estimatedTaxes=-2134.985030 longTermCapitalGains=14326.684772 value=2819741.029519
+  0042 pensionIncome=8000.000000 assetAppreciation=11417.897210 expense=-22255.395891 incomeTax=-912.402782 estimatedTaxes=-2145.058811 longTermCapitalGains=14393.920214 value=2813846.069245
+  0043 pensionIncome=8000.000000 assetAppreciation=11393.608286 expense=-22312.087938 incomeTax=-912.402782 estimatedTaxes=-2155.160574 longTermCapitalGains=14461.341885 value=2807860.026237
+  0044 pensionIncome=8000.000000 assetAppreciation=11368.947577 expense=-22368.924398 incomeTax=-912.402782 estimatedTaxes=-2165.290369 longTermCapitalGains=14528.950124 value=2801782.356266
+  0045 pensionIncome=8000.000000 assetAppreciation=11343.912865 expense=-22425.905640 incomeTax=-912.402782 estimatedTaxes=-2175.448246 longTermCapitalGains=14596.745273 value=2795612.512461
+  0046 pensionIncome=8000.000000 assetAppreciation=11318.501918 expense=-22483.032033 incomeTax=-912.402782 estimatedTaxes=-2185.634258 longTermCapitalGains=14664.727674 value=2789349.945306
+  0047 pensionIncome=8000.000000 assetAppreciation=11292.712498 expense=-22540.303946 incomeTax=-912.402782 estimatedTaxes=-2195.848455 longTermCapitalGains=14732.897672 value=2782994.102620
+  0048 pensionIncome=8000.000000 assetAppreciation=11253.489260 expense=-22597.721750 incomeTax=-886.127268 estimatedTaxes=-2206.090889 longTermCapitalGains=17456.015954 niit=-2685.492652 taxTrueUp=-518.408910 value=2773353.750411
+  0049 pensionIncome=8000.000000 assetAppreciation=11226.989996 expense=-22655.285817 incomeTax=-886.127268 estimatedTaxes=-2216.361613 longTermCapitalGains=14847.814699 value=2766822.965708
+  0050 pensionIncome=8000.000000 assetAppreciation=11200.105690 expense=-22712.996519 incomeTax=-886.127268 estimatedTaxes=-2226.660677 longTermCapitalGains=14916.532165 value=2760197.286934
+  0051 pensionIncome=8000.000000 assetAppreciation=11172.834060 expense=-22770.854230 incomeTax=-886.127268 estimatedTaxes=-2236.988135 longTermCapitalGains=14985.438688 value=2753476.151361
+  0052 pensionIncome=8000.000000 assetAppreciation=11145.172811 expense=-22828.859324 incomeTax=-886.127268 estimatedTaxes=-2247.344039 longTermCapitalGains=15054.534621 value=2746658.993541
+  0053 pensionIncome=8000.000000 assetAppreciation=11117.119637 expense=-22887.012176 incomeTax=-886.127268 estimatedTaxes=-2257.728441 longTermCapitalGains=15123.820315 value=2739745.245292
+  0054 pensionIncome=8000.000000 assetAppreciation=11088.672221 expense=-22945.313164 incomeTax=-886.127268 estimatedTaxes=-2268.141395 longTermCapitalGains=15193.296125 value=2732734.335686
+  0055 pensionIncome=8000.000000 assetAppreciation=11059.828237 expense=-23003.762664 incomeTax=-886.127268 estimatedTaxes=-2278.582954 longTermCapitalGains=15262.962406 value=2725625.691037
+  0056 pensionIncome=8000.000000 assetAppreciation=11030.585345 expense=-23062.361055 incomeTax=-886.127268 estimatedTaxes=-2289.053171 longTermCapitalGains=15332.819515 value=2718418.734888
+  0057 pensionIncome=8000.000000 assetAppreciation=11000.941194 expense=-23121.108715 incomeTax=-886.127268 estimatedTaxes=-2299.552100 longTermCapitalGains=15402.867810 value=2711112.887998
+  0058 pensionIncome=8000.000000 assetAppreciation=10970.893424 expense=-23180.006026 incomeTax=-886.127268 estimatedTaxes=-2310.079795 longTermCapitalGains=15473.107652 value=2703707.568332
+  0059 pensionIncome=8000.000000 assetAppreciation=10940.439660 expense=-23239.053369 incomeTax=-886.127268 estimatedTaxes=-2320.636309 longTermCapitalGains=18574.524094 niit=-3062.524475 taxTrueUp=-531.692886 value=2692607.973684
 
 [priceIndex]
   [0000]         1.002547         1.005101         1.007662         1.010228         1.012802         1.015382

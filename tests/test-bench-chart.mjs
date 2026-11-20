@@ -33,6 +33,7 @@ import { charting_buildGroupedMetric, charting_buildPhaseMarkers } from '../js/c
 import { planOutcome } from '../js/outcome-summary.js';
 import { detectIssues } from '../js/portfolio-issues.js';
 import { Metric } from '../js/metric.js';
+import { InstrumentType } from '../js/instruments/instrument.js';
 import { DateInt } from '../js/utils/date-int.js';
 import { benchPlan } from '../js/test-bench-run.js';
 import { simConfigFromGlobals } from '../js/globals.js';
@@ -80,7 +81,7 @@ await check('every quick-start: the groups, labels, colours, order and periods a
         assert.deepEqual(
             mine.datasets.map((d) => [d.label, d.backgroundColor]),
             macro.data.datasets.map((d) => [d.label, d.backgroundColor]), `${key}: groups`);
-        assert.ok(mine.datasets.length >= 3, `${key}: only ${mine.datasets.length} groups`);
+        assert.ok(mine.datasets.length >= 2, `${key}: only ${mine.datasets.length} groups`);
         for (const d of mine.datasets) assert.equal(d.data.length, mine.labels.length, `${key}: ${d.label} bars`);
     }
 });
@@ -116,7 +117,9 @@ await check('a bar\'s segments sum to its total, and the total is every asset\'s
     const series = groupSeries(portfolio);
     const k = Math.floor(series.labels.length / 2);
     const m = series.months[k];
-    const nominal = portfolio.modelAssets.reduce((sum, a) => sum + (a.getHistory(Metric.VALUE)[m] ?? 0), 0);
+    const nominal = portfolio.modelAssets
+        .filter((a) => InstrumentType.isAsset(a.instrument))
+        .reduce((sum, a) => sum + (a.getHistory(Metric.VALUE)[m] ?? 0), 0);
     const real = nominal / portfolio.monthlyPriceIndex[m];
     sameCents(series.total[k], real, 'the middle bar');
     sameCents(series.datasets.reduce((s, d) => s + d.data[k], 0), series.total[k], 'its segments');
@@ -196,7 +199,12 @@ await check('the range holds every column stacked, and no more', () => {
     }
     assert.equal(range.max, top);
     assert.equal(range.min, bottom);
-    assert.ok(range.min < 0, 'Mid Career has a mortgage, so its bars go below $0');
+    // Negative groups (e.g. standalone debt or underwater real estate) stack below $0.
+    const withDebt = stackedRange([
+        { labels: ['2026', '2027'], datasets: [{ data: [100, 120] }, { data: [-40, -10] }, { data: [-25, 0] }] },
+    ]);
+    assert.equal(withDebt.min, -65);
+    assert.equal(withDebt.max, 120);
     // The bigger column sets the top, so the other's own range is inside it.
     for (const s of columns) {
         const own = stackedRange([s]);

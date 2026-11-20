@@ -130,19 +130,24 @@ for (const fixture of SNAPSHOT_FIXTURES) {
     });
   });
 
-  // The annual pass runs on January 1, before the assets step into the new
-  // month, so its events carry December of the year they settle.
+  // Annual-pass events carry the month they book into: January of Y+1 mid-run
+  // (settling year Y), and December of Y on the plan's final year (folded into
+  // that December).
+  const settledYearOf = (e) => (e.dateInt.month === 1 ? e.dateInt.year - 1 : e.dateInt.year);
   const events = p.modelAssets.flatMap((a) => a.events)
     .filter((e) => e.type === EventType.NIIT_ASSESSED);
-  const charged = new Set(events.map((e) => e.dateInt.year));
+  const charged = new Set(events.map(settledYearOf));
   recordsWithoutNIIT += p.taxYears.filter((t) => !charged.has(t.year)).length;
 
   if (events.length) {
     await check(`${fixture.name}: each NIIT charge measured the recorded MAGI and NII`, () => {
       for (const e of events) {
-        assert.equal(e.dateInt.month, 12, `a NIIT charge dated ${e.dateInt.toString()}`);
-        const t = p.taxYears.find((r) => r.year === e.dateInt.year);
-        assert.ok(t, `no record for ${e.dateInt.year}, which NIIT was charged on`);
+        const isMidRun = e.dateInt.month === 1;
+        const isFinalYear = e.dateInt.month === 12 && e.dateInt.year === p.lastDateInt.year;
+        assert.ok(isMidRun || isFinalYear, `a NIIT charge dated ${e.dateInt.toString()}`);
+        const sy = settledYearOf(e);
+        const t = p.taxYears.find((r) => r.year === sy);
+        assert.ok(t, `no record for ${sy}, which NIIT was charged on`);
         assert.equal(e.data.magi, t.magi[MagiPurpose.NIIT], `${t.year} MAGI`);
         assert.equal(e.data.nii, t.netInvestmentIncome, `${t.year} NII`);
         niitEvents++;
@@ -151,33 +156,37 @@ for (const fixture of SNAPSHOT_FIXTURES) {
     });
   }
 
-  // The settlement of year Y is booked in January of Y+1, so the package
-  // covering Y+1 shows it, and the package covering Y shows what Y withheld.
+  // The settlement of year Y is booked in January of Y+1 mid-run (so the
+  // package covering Y+1 shows it) and folded into December of Y on the
+  // plan's final year (so the final monthly package shows it).
   const packageOf = new Map(p.generatedReports
     .filter((r) => r.type === 'yearly').map((r) => [r.coversYear, r.pkg]));
 
   // What the annual pass for a year could not collect: its unfunded amounts,
-  // stamped December of that year like the rest of the pass.
+  // stamped with their booked month (Jan of Y+1 mid-run, Dec of Y at plan end).
   // The premium tax credit settles on the same return, but it is not part of
   // what the year's income owed, so a repayment nothing could pay is left out.
   const unpaidSettlement = (year) => p.modelAssets.flatMap((a) => a.events)
-    .filter((e) => e.type === EventType.UNFUNDED && e.dateInt.year === year && e.dateInt.month === 12
+    .filter((e) => e.type === EventType.UNFUNDED && settledYearOf(e) === year
       && chainFor(e.traceId, p.traceScopes).some((s) => s.kind === TraceKind.TAX_TRUE_UP)
       && !/premium tax credit/i.test(e.data?.cause ?? ''))
     .reduce((t, e) => t + Math.abs(e.amount.amount), 0);
 
-  await check(`${fixture.name}: each year owed what it withheld plus what January settled`, () => {
+  await check(`${fixture.name}: each year owed what it withheld plus what settled`, () => {
     for (const t of p.taxYears) {
       for (const v of [t.fica, t.incomeTax, t.capitalGainsTax, t.niit]) {
         assert.ok(Number.isFinite(v) && v >= 0, `${t.year} owes ${v}`);
       }
       near(t.federalTax, t.fica + t.incomeTax + t.capitalGainsTax + t.niit, `${t.year} federalTax`);
 
-      const own = packageOf.get(t.year), next = packageOf.get(t.year + 1);
+      const own = packageOf.get(t.year);
       near(t.fica, -own.fica().amount, `${t.year} FICA`, 0.01);
-      if (!next) continue;   // the last year's settlement is in no package
-      near(t.settledTrueUp, next.taxTrueUp.amount, `${t.year} true-up`, 0.01);
-      near(t.settledNIIT, next.niit.amount, `${t.year} NIIT settled`, 0.01);
+      const janIdx = (t.year + 1 - p.firstDateInt.year) * 12 + (1 - p.firstDateInt.month);
+      const settlePkg = (janIdx >= 0 && janIdx < p.monthlyPackages.length)
+        ? p.monthlyPackages[janIdx]
+        : p.monthlyPackages[p.monthlyPackages.length - 1];
+      near(t.settledTrueUp, settlePkg.taxTrueUp.amount, `${t.year} true-up`, 0.01);
+      near(t.settledNIIT, settlePkg.niit.amount, `${t.year} NIIT settled`, 0.01);
       near(t.niit, -t.settledNIIT, `${t.year} NIIT owed vs paid`, 0.01);
 
       // Owed is what was paid, and what could not be. The true-up ignores a
@@ -297,7 +306,7 @@ await check('the bill went unpaid, and the record still says what was owed', () 
     `income tax owed ${t.incomeTax.toFixed(2)}, withheld ${withheld.toFixed(2)}: no unpaid bill to test`);
   near(t.federalTax, t.fica + t.incomeTax + t.capitalGainsTax + t.niit, 'federalTax');
   const reported = unpaid.modelAssets.flatMap((a) => a.events).some((e) =>
-    e.type === EventType.UNFUNDED && e.dateInt.year === 2026 && /true-up/.test(e.data?.cause ?? ''));
+    e.type === EventType.UNFUNDED && e.dateInt.year === 2027 && e.dateInt.month === 1 && /true-up/.test(e.data?.cause ?? ''));
   assert.ok(reported, 'the unpaid bill was not reported as unfunded');
 });
 

@@ -46,7 +46,7 @@
   total.tradIRAContribution = 35400.000000
   total.four01KDistribution = 400000.000000
   total.taxTrueUp = 26110.494729
-  total.value = 44589639.245513
+  total.value = 44489255.447712
 
 [assetOrder]
   0 Salary
@@ -186,7 +186,7 @@
   0070 2027-12 transfer                      4480.298333 cash  -                      c1 {cadence=monthly from=Salary system=true to=Checking}
   0071 2027-12 grossUp                      -4241.040630 cash  -                      c2 {forAsset=Living overflow=false}
   0072 2027-12 interestIncome                   0.000000 cash  interestIncome         c-
-  0073 2027-12 taxTrueUp                    26110.494729 cash  -                      c4 {direction=refund}
+  0073 2028-01 taxTrueUp                    26110.494729 cash  -                      c4 {direction=refund}
   0074 2028-01 transfer                      4486.104582 cash  -                      c1 {cadence=monthly from=Salary system=true to=Checking}
   0075 2028-01 grossUp                      -4251.844000 cash  -                      c2 {forAsset=Living overflow=false}
   0076 2028-01 interestIncome                   0.000000 cash  interestIncome         c-
@@ -585,7 +585,7 @@
   0045 2026-12 transfer                      -600.000000 cash  -                      c5 {cadence=monthly from=Salary to=IRA}
   0046 2026-12 incomeTaxWithholding          -466.333333 cash  withheldIncomeTax      c7
   0047 2026-12 transfer                     -4474.666667 cash  -                      c1 {cadence=monthly from=Salary system=true to=Checking}
-  0048 2026-12 incomeGrowth                     0.000000 cash  income                 c8
+  0048 2027-01 incomeGrowth                     0.000000 cash  income                 c8
   0049 2027-01 ficaWithholding               -459.000000 cash  socialSecurityTax      c6
   0050 2027-01 transfer                      -600.000000 cash  -                      c5 {cadence=monthly from=Salary to=IRA}
   0051 2027-01 incomeTaxWithholding          -460.701667 cash  withheldIncomeTax      c7
@@ -633,7 +633,7 @@
   0093 2027-12 transfer                      -600.000000 cash  -                      c5 {cadence=monthly from=Salary to=IRA}
   0094 2027-12 incomeTaxWithholding          -460.701667 cash  withheldIncomeTax      c7
   0095 2027-12 transfer                     -4480.298333 cash  -                      c1 {cadence=monthly from=Salary system=true to=Checking}
-  0096 2027-12 incomeGrowth                     0.000000 cash  income                 c9
+  0096 2028-01 incomeGrowth                     0.000000 cash  income                 c9
   0097 2028-01 ficaWithholding               -459.000000 cash  socialSecurityTax      c6
   0098 2028-01 transfer                      -600.000000 cash  -                      c5 {cadence=monthly from=Salary to=IRA}
   0099 2028-01 incomeTaxWithholding          -454.895418 cash  withheldIncomeTax      c7
@@ -682,7 +682,7 @@
   0142 2028-12 transfer                      -600.000000 cash  -                      c5 {cadence=monthly from=Salary to=IRA}
   0143 2028-12 incomeTaxWithholding          -454.895418 cash  withheldIncomeTax      c7
   0144 2028-12 transfer                     -4486.104582 cash  -                      c1 {cadence=monthly from=Salary system=true to=Checking}
-  0145 2028-12 incomeGrowth                     0.000000 cash  income                 c10
+  0145 2029-01 incomeGrowth                     0.000000 cash  income                 c10
   0146 2029-01 ficaWithholding               -459.000000 cash  socialSecurityTax      c6
   0147 2029-01 transfer                      -600.000000 cash  -                      c5 {cadence=monthly from=Salary to=IRA}
   0148 2029-01 incomeTaxWithholding          -448.909176 cash  withheldIncomeTax      c7
@@ -731,7 +731,7 @@
   0191 2029-12 transfer                      -600.000000 cash  -                      c5 {cadence=monthly from=Salary to=IRA}
   0192 2029-12 incomeTaxWithholding          -448.909176 cash  withheldIncomeTax      c7
   0193 2029-12 transfer                     -4492.090824 cash  -                      c1 {cadence=monthly from=Salary system=true to=Checking}
-  0194 2029-12 incomeGrowth                     0.000000 cash  income                 c11
+  0194 2030-01 incomeGrowth                     0.000000 cash  income                 c11
   0195 2030-01 ficaWithholding               -459.000000 cash  socialSecurityTax      c6
   0196 2030-01 transfer                      -600.000000 cash  -                      c5 {cadence=monthly from=Salary to=IRA}
   0197 2030-01 incomeTaxWithholding          -442.737361 cash  withheldIncomeTax      c7
@@ -798,66 +798,66 @@
   medicareTax                  n=  60 first=      -87.000000 last=      -87.000000 min=      -87.000000 max=      -87.000000 sum=      -5220.000000 #07202895
 
 [packages]
-  0000 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4000.000000 medicareTax=-87.000000 incomeTax=-466.333333 tradIRAContribution=600.000000 value=804064.477309
-  0001 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4010.189358 medicareTax=-87.000000 incomeTax=-466.333333 tradIRAContribution=600.000000 value=805118.739305
-  0002 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4020.404671 medicareTax=-87.000000 incomeTax=-466.333333 tradIRAContribution=600.000000 value=806162.759966
-  0003 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4030.646006 medicareTax=-87.000000 incomeTax=-466.333333 tradIRAContribution=600.000000 value=807196.513203
-  0004 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4040.913429 medicareTax=-87.000000 incomeTax=-466.333333 tradIRAContribution=600.000000 value=808219.972862
-  0005 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4051.207007 medicareTax=-87.000000 incomeTax=-466.333333 tradIRAContribution=600.000000 value=809233.112722
-  0006 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4061.526807 medicareTax=-87.000000 incomeTax=-466.333333 tradIRAContribution=600.000000 value=810235.906495
-  0007 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4071.872894 medicareTax=-87.000000 incomeTax=-466.333333 tradIRAContribution=600.000000 value=811228.327826
-  0008 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4082.245336 medicareTax=-87.000000 incomeTax=-466.333333 tradIRAContribution=600.000000 value=812210.350292
-  0009 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4092.644200 medicareTax=-87.000000 incomeTax=-466.333333 tradIRAContribution=600.000000 value=813181.947405
-  0010 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4103.069554 medicareTax=-87.000000 incomeTax=-466.333333 tradIRAContribution=600.000000 value=814143.092607
-  0011 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4113.521465 medicareTax=-87.000000 incomeTax=-466.333333 tradIRAContribution=600.000000 value=815093.759274
-  0012 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4124.000000 medicareTax=-87.000000 incomeTax=-460.701667 tradIRAContribution=600.000000 value=816039.552379
-  0013 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4134.505228 medicareTax=-87.000000 incomeTax=-460.701667 tradIRAContribution=600.000000 value=816974.813497
-  0014 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4145.037216 medicareTax=-87.000000 incomeTax=-460.701667 tradIRAContribution=600.000000 value=817899.515798
-  0015 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4155.596032 medicareTax=-87.000000 incomeTax=-460.701667 tradIRAContribution=600.000000 value=818813.632386
-  0016 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4166.181746 medicareTax=-87.000000 incomeTax=-460.701667 tradIRAContribution=600.000000 value=819717.136294
-  0017 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4176.794425 medicareTax=-87.000000 incomeTax=-460.701667 tradIRAContribution=600.000000 value=820610.000490
-  0018 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4187.434138 medicareTax=-87.000000 incomeTax=-145924.188146 four01KDistribution=400000.000000 value=676028.711391
-  0019 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4198.100953 medicareTax=-87.000000 incomeTax=-460.701667 tradIRAContribution=600.000000 value=676900.214783
-  0020 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4208.794941 medicareTax=-87.000000 incomeTax=-460.701667 tradIRAContribution=600.000000 value=677760.996946
-  0021 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4219.516170 medicareTax=-87.000000 incomeTax=-460.701667 tradIRAContribution=600.000000 value=678611.030569
-  0022 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4230.264710 medicareTax=-87.000000 incomeTax=-460.701667 tradIRAContribution=600.000000 value=679450.288272
-  0023 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4241.040630 medicareTax=-87.000000 incomeTax=-460.701667 tradIRAContribution=600.000000 value=680278.742605
-  0024 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4251.844000 medicareTax=-87.000000 incomeTax=-454.895418 tradIRAContribution=600.000000 taxTrueUp=26110.494729 value=707212.667027
-  0025 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4262.674890 medicareTax=-87.000000 incomeTax=-454.895418 tradIRAContribution=600.000000 value=708025.238239
-  0026 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4273.533369 medicareTax=-87.000000 incomeTax=-454.895418 tradIRAContribution=600.000000 value=708826.923311
-  0027 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4284.419509 medicareTax=-87.000000 incomeTax=-454.895418 tradIRAContribution=600.000000 value=709617.694513
-  0028 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4295.333380 medicareTax=-87.000000 incomeTax=-454.895418 tradIRAContribution=600.000000 value=710397.524043
-  0029 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4306.275052 medicareTax=-87.000000 incomeTax=-454.895418 tradIRAContribution=600.000000 value=711166.384029
-  0030 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4317.244596 medicareTax=-87.000000 incomeTax=-454.895418 tradIRAContribution=600.000000 value=711924.246528
-  0031 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4328.242083 medicareTax=-87.000000 incomeTax=-454.895418 tradIRAContribution=600.000000 value=712671.083525
-  0032 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4339.267585 medicareTax=-87.000000 incomeTax=-454.895418 tradIRAContribution=600.000000 value=713406.866935
-  0033 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4350.321172 medicareTax=-87.000000 incomeTax=-454.895418 tradIRAContribution=600.000000 value=714131.568600
-  0034 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4361.402916 medicareTax=-87.000000 incomeTax=-454.895418 tradIRAContribution=600.000000 value=714845.160292
-  0035 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4372.512890 medicareTax=-87.000000 incomeTax=-454.895418 tradIRAContribution=600.000000 value=715547.613710
-  0036 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4383.651164 medicareTax=-87.000000 incomeTax=-448.909176 tradIRAContribution=600.000000 value=716244.886722
-  0037 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4394.817811 medicareTax=-87.000000 incomeTax=-448.909176 tradIRAContribution=600.000000 value=716930.964642
-  0038 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4406.012904 medicareTax=-87.000000 incomeTax=-448.909176 tradIRAContribution=600.000000 value=717605.818952
-  0039 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4417.236514 medicareTax=-87.000000 incomeTax=-448.909176 tradIRAContribution=600.000000 value=718269.421061
-  0040 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4428.488715 medicareTax=-87.000000 incomeTax=-448.909176 tradIRAContribution=600.000000 value=718921.742306
-  0041 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4439.769578 medicareTax=-87.000000 incomeTax=-448.909176 tradIRAContribution=600.000000 value=719562.753952
-  0042 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4451.079178 medicareTax=-87.000000 incomeTax=-448.909176 tradIRAContribution=600.000000 value=720192.427188
-  0043 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4462.417588 medicareTax=-87.000000 incomeTax=-448.909176 tradIRAContribution=600.000000 value=720810.733132
-  0044 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4473.784880 medicareTax=-87.000000 incomeTax=-448.909176 tradIRAContribution=600.000000 value=721417.642828
-  0045 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4485.181128 medicareTax=-87.000000 incomeTax=-448.909176 tradIRAContribution=600.000000 value=722013.127245
-  0046 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4496.606407 medicareTax=-87.000000 incomeTax=-448.909176 tradIRAContribution=600.000000 value=722597.157279
-  0047 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4508.060789 medicareTax=-87.000000 incomeTax=-448.909176 tradIRAContribution=600.000000 value=723169.703753
-  0048 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4519.544350 medicareTax=-87.000000 incomeTax=-442.737361 tradIRAContribution=600.000000 value=723736.909229
-  0049 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4531.057163 medicareTax=-87.000000 incomeTax=-442.737361 tradIRAContribution=600.000000 value=724292.572564
-  0050 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4542.599304 medicareTax=-87.000000 incomeTax=-442.737361 tradIRAContribution=600.000000 value=724836.664357
-  0051 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4554.170846 medicareTax=-87.000000 incomeTax=-442.737361 tradIRAContribution=600.000000 value=725369.155132
-  0052 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4565.771865 medicareTax=-87.000000 incomeTax=-442.737361 tradIRAContribution=600.000000 value=725890.015336
-  0053 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4577.402435 medicareTax=-87.000000 incomeTax=-442.737361 tradIRAContribution=600.000000 value=726399.215342
-  0054 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4589.062633 medicareTax=-87.000000 incomeTax=-442.737361 tradIRAContribution=600.000000 value=726896.725449
-  0055 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4600.752533 medicareTax=-87.000000 incomeTax=-442.737361 tradIRAContribution=600.000000 value=727382.515877
-  0056 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4612.472211 medicareTax=-87.000000 incomeTax=-442.737361 tradIRAContribution=600.000000 value=727856.556773
-  0057 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4624.221743 medicareTax=-87.000000 incomeTax=-442.737361 tradIRAContribution=600.000000 value=728318.818207
-  0058 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4636.001205 medicareTax=-87.000000 incomeTax=-442.737361 tradIRAContribution=600.000000 value=728769.270173
-  0059 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4647.810674 medicareTax=-87.000000 incomeTax=-442.737361 tradIRAContribution=600.000000 value=729207.882587
+  0000 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4000.000000 medicareTax=-87.000000 incomeTax=-466.333333 tradIRAContribution=600.000000 value=802074.666667
+  0001 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4010.189358 medicareTax=-87.000000 incomeTax=-466.333333 tradIRAContribution=600.000000 value=803139.143976
+  0002 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4020.404671 medicareTax=-87.000000 incomeTax=-466.333333 tradIRAContribution=600.000000 value=804193.405972
+  0003 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4030.646006 medicareTax=-87.000000 incomeTax=-466.333333 tradIRAContribution=600.000000 value=805237.426632
+  0004 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4040.913429 medicareTax=-87.000000 incomeTax=-466.333333 tradIRAContribution=600.000000 value=806271.179869
+  0005 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4051.207007 medicareTax=-87.000000 incomeTax=-466.333333 tradIRAContribution=600.000000 value=807294.639529
+  0006 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4061.526807 medicareTax=-87.000000 incomeTax=-466.333333 tradIRAContribution=600.000000 value=808307.779389
+  0007 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4071.872894 medicareTax=-87.000000 incomeTax=-466.333333 tradIRAContribution=600.000000 value=809310.573162
+  0008 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4082.245336 medicareTax=-87.000000 incomeTax=-466.333333 tradIRAContribution=600.000000 value=810302.994493
+  0009 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4092.644200 medicareTax=-87.000000 incomeTax=-466.333333 tradIRAContribution=600.000000 value=811285.016959
+  0010 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4103.069554 medicareTax=-87.000000 incomeTax=-466.333333 tradIRAContribution=600.000000 value=812256.614072
+  0011 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4113.521465 medicareTax=-87.000000 incomeTax=-466.333333 tradIRAContribution=600.000000 value=813217.759274
+  0012 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4124.000000 medicareTax=-87.000000 incomeTax=-460.701667 tradIRAContribution=600.000000 value=814174.057607
+  0013 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4134.505228 medicareTax=-87.000000 incomeTax=-460.701667 tradIRAContribution=600.000000 value=815119.850713
+  0014 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4145.037216 medicareTax=-87.000000 incomeTax=-460.701667 tradIRAContribution=600.000000 value=816055.111830
+  0015 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4155.596032 medicareTax=-87.000000 incomeTax=-460.701667 tradIRAContribution=600.000000 value=816979.814131
+  0016 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4166.181746 medicareTax=-87.000000 incomeTax=-460.701667 tradIRAContribution=600.000000 value=817893.930719
+  0017 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4176.794425 medicareTax=-87.000000 incomeTax=-460.701667 tradIRAContribution=600.000000 value=818797.434628
+  0018 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4187.434138 medicareTax=-87.000000 incomeTax=-145924.188146 four01KDistribution=400000.000000 value=674226.812344
+  0019 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4198.100953 medicareTax=-87.000000 incomeTax=-460.701667 tradIRAContribution=600.000000 value=675109.009724
+  0020 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4208.794941 medicareTax=-87.000000 incomeTax=-460.701667 tradIRAContribution=600.000000 value=675980.513116
+  0021 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4219.516170 medicareTax=-87.000000 incomeTax=-460.701667 tradIRAContribution=600.000000 value=676841.295279
+  0022 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4230.264710 medicareTax=-87.000000 incomeTax=-460.701667 tradIRAContribution=600.000000 value=677691.328902
+  0023 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4241.040630 medicareTax=-87.000000 incomeTax=-460.701667 tradIRAContribution=600.000000 value=678530.586605
+  0024 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4251.844000 medicareTax=-87.000000 incomeTax=-454.895418 tradIRAContribution=600.000000 taxTrueUp=26110.494729 value=705475.341916
+  0025 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4262.674890 medicareTax=-87.000000 incomeTax=-454.895418 tradIRAContribution=600.000000 value=706298.771608
+  0026 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4273.533369 medicareTax=-87.000000 incomeTax=-454.895418 tradIRAContribution=600.000000 value=707111.342821
+  0027 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4284.419509 medicareTax=-87.000000 incomeTax=-454.895418 tradIRAContribution=600.000000 value=707913.027893
+  0028 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4295.333380 medicareTax=-87.000000 incomeTax=-454.895418 tradIRAContribution=600.000000 value=708703.799095
+  0029 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4306.275052 medicareTax=-87.000000 incomeTax=-454.895418 tradIRAContribution=600.000000 value=709483.628625
+  0030 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4317.244596 medicareTax=-87.000000 incomeTax=-454.895418 tradIRAContribution=600.000000 value=710252.488611
+  0031 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4328.242083 medicareTax=-87.000000 incomeTax=-454.895418 tradIRAContribution=600.000000 value=711010.351109
+  0032 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4339.267585 medicareTax=-87.000000 incomeTax=-454.895418 tradIRAContribution=600.000000 value=711757.188107
+  0033 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4350.321172 medicareTax=-87.000000 incomeTax=-454.895418 tradIRAContribution=600.000000 value=712492.971516
+  0034 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4361.402916 medicareTax=-87.000000 incomeTax=-454.895418 tradIRAContribution=600.000000 value=713217.673182
+  0035 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4372.512890 medicareTax=-87.000000 incomeTax=-454.895418 tradIRAContribution=600.000000 value=713931.264874
+  0036 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4383.651164 medicareTax=-87.000000 incomeTax=-448.909176 tradIRAContribution=600.000000 value=714639.704534
+  0037 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4394.817811 medicareTax=-87.000000 incomeTax=-448.909176 tradIRAContribution=600.000000 value=715336.977546
+  0038 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4406.012904 medicareTax=-87.000000 incomeTax=-448.909176 tradIRAContribution=600.000000 value=716023.055466
+  0039 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4417.236514 medicareTax=-87.000000 incomeTax=-448.909176 tradIRAContribution=600.000000 value=716697.909776
+  0040 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4428.488715 medicareTax=-87.000000 incomeTax=-448.909176 tradIRAContribution=600.000000 value=717361.511885
+  0041 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4439.769578 medicareTax=-87.000000 incomeTax=-448.909176 tradIRAContribution=600.000000 value=718013.833130
+  0042 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4451.079178 medicareTax=-87.000000 incomeTax=-448.909176 tradIRAContribution=600.000000 value=718654.844776
+  0043 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4462.417588 medicareTax=-87.000000 incomeTax=-448.909176 tradIRAContribution=600.000000 value=719284.518012
+  0044 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4473.784880 medicareTax=-87.000000 incomeTax=-448.909176 tradIRAContribution=600.000000 value=719902.823956
+  0045 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4485.181128 medicareTax=-87.000000 incomeTax=-448.909176 tradIRAContribution=600.000000 value=720509.733651
+  0046 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4496.606407 medicareTax=-87.000000 incomeTax=-448.909176 tradIRAContribution=600.000000 value=721105.218068
+  0047 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4508.060789 medicareTax=-87.000000 incomeTax=-448.909176 tradIRAContribution=600.000000 value=721689.248103
+  0048 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4519.544350 medicareTax=-87.000000 incomeTax=-442.737361 tradIRAContribution=600.000000 value=722267.966392
+  0049 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4531.057163 medicareTax=-87.000000 incomeTax=-442.737361 tradIRAContribution=600.000000 value=722835.171868
+  0050 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4542.599304 medicareTax=-87.000000 incomeTax=-442.737361 tradIRAContribution=600.000000 value=723390.835203
+  0051 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4554.170846 medicareTax=-87.000000 incomeTax=-442.737361 tradIRAContribution=600.000000 value=723934.926996
+  0052 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4565.771865 medicareTax=-87.000000 incomeTax=-442.737361 tradIRAContribution=600.000000 value=724467.417771
+  0053 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4577.402435 medicareTax=-87.000000 incomeTax=-442.737361 tradIRAContribution=600.000000 value=724988.277975
+  0054 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4589.062633 medicareTax=-87.000000 incomeTax=-442.737361 tradIRAContribution=600.000000 value=725497.477981
+  0055 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4600.752533 medicareTax=-87.000000 incomeTax=-442.737361 tradIRAContribution=600.000000 value=725994.988088
+  0056 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4612.472211 medicareTax=-87.000000 incomeTax=-442.737361 tradIRAContribution=600.000000 value=726480.778516
+  0057 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4624.221743 medicareTax=-87.000000 incomeTax=-442.737361 tradIRAContribution=600.000000 value=726954.819412
+  0058 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4636.001205 medicareTax=-87.000000 incomeTax=-442.737361 tradIRAContribution=600.000000 value=727417.080846
+  0059 employedIncome=6000.000000 socialSecurityTax=-372.000000 expense=-4647.810674 medicareTax=-87.000000 incomeTax=-442.737361 tradIRAContribution=600.000000 value=727867.532812
 
 [priceIndex]
   [0000]         1.002547         1.005101         1.007662         1.010228         1.012802         1.015382

@@ -239,6 +239,7 @@ function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, p
 
             let total = 0;
             for (const asset of portfolio.modelAssets) {
+                if (!InstrumentType.isAsset(asset.instrument)) continue;
                 const history = asset.getHistory(Metric.VALUE);
                 if (history?.length > 0) {
                     total += history[history.length - 1] ?? 0;
@@ -249,6 +250,9 @@ function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, p
         }
 
         if (currentDateInt.isNewYearsDay()) {
+            const isFinalYearEnd = currentDateInt.toInt() > lastDateInt.toInt();
+            const settleDateInt = isFinalYearEnd ? lastDateInt : currentDateInt;
+
             // Activate randomization once we reach the withdrawal phase
             if (!withdrawalPhase && currentDateInt.toInt() >= retirementInt) {
                 withdrawalPhase = true;
@@ -258,11 +262,26 @@ function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, p
                                       portfolio.config.inflationRate, random, returnShift);
                 priceIndex.setAnnualRate(draw.inflationRate);
             }
+            portfolio.applyYear(currentDateInt, settleDateInt);
             portfolio.applyGuardrails(currentDateInt);
-            portfolio.applyYear(currentDateInt);
             portfolio.config.taxTable.applyYear(portfolio.yearly, portfolio.activeUser);
             portfolio.yearlyChron(currentDateInt);
             portfolio.config.taxTable.yearlyChron(portfolio.config.inflationRate);
+        }
+    }
+
+    if (currentDateInt.isNewYearsDay()) {
+        portfolio.flushFinalSettlement();
+        const lastIdx = monthlyTotals.length - 1;
+        if (lastIdx >= 0) {
+            let total = 0;
+            for (const asset of portfolio.modelAssets) {
+                if (!InstrumentType.isAsset(asset.instrument)) continue;
+                const history = asset.getHistory(Metric.VALUE);
+                if (history?.length > 0) total += history[history.length - 1] ?? 0;
+            }
+            monthlyTotals[lastIdx] = total;
+            monthlyReal[lastIdx] = total / priceIndex.level;
         }
     }
 
@@ -311,6 +330,7 @@ function computeBaseline(sourceAssets, guardrailParams, lifeEvents, config) {
 
             let total = 0;
             for (const asset of basePf.modelAssets) {
+                if (!InstrumentType.isAsset(asset.instrument)) continue;
                 const history = asset.getHistory(Metric.VALUE);
                 if (history?.length > 0) total += history[history.length - 1] ?? 0;
             }
@@ -318,11 +338,27 @@ function computeBaseline(sourceAssets, guardrailParams, lifeEvents, config) {
             baselineDataReal.push(total / priceIndex.stepAndRecord());
         }
         if (bd.isNewYearsDay()) {
+            const isFinalYearEnd = bd.toInt() > bLast.toInt();
+            const settleDateInt = isFinalYearEnd ? bLast : bd;
+            basePf.applyYear(bd, settleDateInt);
             basePf.applyGuardrails(bd);
-            basePf.applyYear(bd);
             basePf.config.taxTable.applyYear(basePf.yearly, basePf.activeUser);
             basePf.yearlyChron(bd);
             basePf.config.taxTable.yearlyChron(basePf.config.inflationRate);
+        }
+    }
+    if (bd.isNewYearsDay()) {
+        basePf.flushFinalSettlement();
+        const lastIdx = baselineData.length - 1;
+        if (lastIdx >= 0) {
+            let total = 0;
+            for (const asset of basePf.modelAssets) {
+                if (!InstrumentType.isAsset(asset.instrument)) continue;
+                const history = asset.getHistory(Metric.VALUE);
+                if (history?.length > 0) total += history[history.length - 1] ?? 0;
+            }
+            baselineData[lastIdx] = total;
+            baselineDataReal[lastIdx] = total / priceIndex.level;
         }
     }
     basePf.finalizeChron();

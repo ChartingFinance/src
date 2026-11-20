@@ -717,6 +717,40 @@ export class ModelAsset {
     // Snapshot all metrics (zero after, except 'accumulated')
     this.#metrics.snapshotAll(KEEP_ON_SNAPSHOT);
 
+    // Clear this month's fresh-deposit buffer at month-end rather than in
+    // applyFirstDayOfMonth so a Jan-1 tax refund or PTC credit deposited during
+    // applyYear() retains its zero-gain credit balance through January.
+    this.monthlyCreditBalance.zero();
+
+  }
+
+  /**
+   * Fold post-loop final-year applyYear() settlement deltas into the last
+   * recorded month's metric histories and zero the live accumulators.
+   */
+  foldFinalMonth() {
+    this.#metrics.get(Metric.CASH_FLOW_ACCUMULATED).add(this.cashFlowCurrency);
+
+    for (const [name, m] of this.#metrics.entries()) {
+      if (!m.trackHistory || m.history.length === 0) continue;
+      const last = m.history.length - 1;
+      if (name === Metric.VALUE) {
+        m.history[last] = this.finishCurrency.toCurrency();
+        m.zero();
+      } else if (name === Metric.CASH_FLOW_ACCUMULATED) {
+        m.history[last] = m.current.toCurrency();
+      } else if (KEEP_ON_SNAPSHOT.has(name)) {
+        // PROPERTY_TAX stays untouched: applyYear() never accrues property tax,
+        // and m.current still holds the final month's kept value.
+      } else {
+        if (m.current.amount !== 0) {
+          m.history[last] = new Currency(m.history[last] + m.current.amount).toCurrency();
+        }
+        m.zero();
+      }
+    }
+
+    this.monthlyCreditBalance.zero();
   }
 
   yearlyChron() { /* hook for subclasses */ }
@@ -739,8 +773,6 @@ export class ModelAsset {
   }
 
   applyFirstDayOfMonth(currentDateInt) {
-
-    this.monthlyCreditBalance.zero();
 
     if (this.beforeStartDate) {
 

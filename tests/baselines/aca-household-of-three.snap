@@ -26,17 +26,17 @@
   lastDate = 2030-12
   startValue = 530000.000000
   finishValue = 591385.433798
-  accumulated = 516.000000
+  accumulated = -288.000000
   total.employedIncome = 240000.000000
   total.socialSecurityTax = -14880.000000
   total.assetAppreciation = 133867.782671
   total.expense = -286963.975682
   total.medicareTax = -3480.000000
   total.incomeTax = -6870.373191
-  total.longTermCapitalGains = 20075.899005
+  total.longTermCapitalGains = 20501.925982
   total.premiumTaxCredit = 125201.660793
-  total.ptcReconciliation = 516.000000
-  total.value = 33585951.873572
+  total.ptcReconciliation = -288.000000
+  total.value = 33757973.160272
 
 [assetOrder]
   0 Part-time Work
@@ -205,8 +205,8 @@
   0145 2029-12 transfer                      -450.182558 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
   0146 2029-12 capitalGainRecognized          227.057424 info  longTermCapitalGain    c0 {spillover=false}
   0147 2029-12 assetGrowth                   2357.673775 cash  growth                 c-
-  0148 2029-12 ptcReconciliation             -132.000000 cash  -                      c2 {advanced=26160.097682 allowed=26028.097682 direction=repayment percent=177}
-  0149 2029-12 capitalGainRecognized           66.841964 info  longTermCapitalGain    c2 {spillover=false}
+  0148 2030-01 ptcReconciliation             -132.000000 cash  -                      c2 {advanced=26160.097682 allowed=26028.097682 direction=repayment percent=177}
+  0149 2030-01 capitalGainRecognized           66.841964 info  longTermCapitalGain    c2 {spillover=false}
   0150 2030-01 spillover                     -922.358250 cash  -                      c1 {depleted=Checking origin=paired}
   0151 2030-01 capitalGainRecognized          467.062401 info  longTermCapitalGain    c1 {spillover=true}
   0152 2030-01 transfer                      -456.977218 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
@@ -271,16 +271,16 @@
   0211 2030-12 capitalGainRecognized          426.026977 info  longTermCapitalGain    c3 {spillover=false}
 
 [history] Brokerage
-  value                        n=  60 first=   501521.970000 last=   592189.430000 min=   501521.970000 max=   592189.430000 sum=   32991922.610000 #f85a85a6
+  value                        n=  60 first=   501521.970000 last=   591385.430000 min=   501521.970000 max=   591385.430000 sum=   32991118.610000 #513a4fa7
   growth                       n=  60 first=     2034.970000 last=     2402.860000 min=     2034.970000 max=     2402.860000 sum=     133867.810000 #02db59fb
-  income                       n=  60 first=      205.200000 last=      795.970000 min=      197.230000 max=      795.970000 sum=      20075.940000 #fafe202a
-  ptcReconciliation            n=  60 first=        0.000000 last=        0.000000 min=     -132.000000 max=        0.000000 sum=       -132.000000 #2f62bc42
-  federalTaxes                 n=  60 first=        0.000000 last=        0.000000 min=     -132.000000 max=        0.000000 sum=       -132.000000 #2f62bc42
-  taxes                        n=  60 first=        0.000000 last=        0.000000 min=     -132.000000 max=        0.000000 sum=       -132.000000 #2f62bc42
-  cashFlow                     n=  60 first=        0.000000 last=        0.000000 min=     -132.000000 max=        0.000000 sum=       -132.000000 #2f62bc42
-  cashFlowAccumulated          n=  60 first=        0.000000 last=     -132.000000 min=     -132.000000 max=        0.000000 sum=      -1584.000000 #a951b365
-  longTermCapitalGain          n=  60 first=      205.200000 last=      795.970000 min=      197.230000 max=      795.970000 sum=      20075.940000 #fafe202a
-  capitalGain                  n=  60 first=      205.200000 last=      795.970000 min=      197.230000 max=      795.970000 sum=      20075.940000 #fafe202a
+  income                       n=  60 first=      205.200000 last=     1222.000000 min=      197.230000 max=     1222.000000 sum=      20501.970000 #640fe864
+  ptcReconciliation            n=  60 first=        0.000000 last=     -804.000000 min=     -804.000000 max=        0.000000 sum=       -936.000000 #3d3d7b03
+  federalTaxes                 n=  60 first=        0.000000 last=     -804.000000 min=     -804.000000 max=        0.000000 sum=       -936.000000 #3d3d7b03
+  taxes                        n=  60 first=        0.000000 last=     -804.000000 min=     -804.000000 max=        0.000000 sum=       -936.000000 #3d3d7b03
+  cashFlow                     n=  60 first=        0.000000 last=     -804.000000 min=     -804.000000 max=        0.000000 sum=       -936.000000 #3d3d7b03
+  cashFlowAccumulated          n=  60 first=        0.000000 last=     -936.000000 min=     -936.000000 max=        0.000000 sum=      -2388.000000 #9569d341
+  longTermCapitalGain          n=  60 first=      205.200000 last=     1222.000000 min=      197.230000 max=     1222.000000 sum=      20501.970000 #640fe864
+  capitalGain                  n=  60 first=      205.200000 last=     1222.000000 min=      197.230000 max=     1222.000000 sum=      20501.970000 #640fe864
 
 [asset] Checking
   instrument = bank
@@ -330,7 +330,7 @@
   0033 2026-12 transfer                      3562.333333 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
   0034 2026-12 transfer                     -4113.521465 cash  -                      c1 {cadence=monthly from=Living to=Checking}
   0035 2026-12 interestIncome                   0.000000 cash  interestIncome         c-
-  0036 2026-12 ptcReconciliation              660.000000 cash  -                      c5 {advanced=22644 allowed=23304 direction=credit percent=190}
+  0036 2027-01 ptcReconciliation              660.000000 cash  -                      c5 {advanced=22644 allowed=23304 direction=credit percent=190}
   0037 2027-01 transfer                      3570.651667 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
   0038 2027-01 transfer                     -4124.000000 cash  -                      c1 {cadence=monthly from=Living to=Checking}
   0039 2027-01 interestIncome                   0.000000 cash  interestIncome         c-
@@ -403,7 +403,7 @@
   0106 2028-12 transfer                      3579.227868 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
   0107 2028-12 transfer                     -4372.512890 cash  -                      c1 {cadence=monthly from=Living to=Checking}
   0108 2028-12 interestIncome                   0.000000 cash  interestIncome         c-
-  0109 2028-12 ptcReconciliation              -12.000000 cash  -                      c6 {advanced=25170.170400 allowed=25158.170400 direction=repayment percent=179}
+  0109 2029-01 ptcReconciliation              -12.000000 cash  -                      c6 {advanced=25170.170400 allowed=25158.170400 direction=repayment percent=179}
   0110 2029-01 transfer                      3588.069932 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
   0111 2029-01 transfer                     -4383.651164 cash  -                      c1 {cadence=monthly from=Living to=Checking}
   0112 2029-01 interestIncome                   0.000000 cash  interestIncome         c-
@@ -522,7 +522,7 @@
   0021 2026-11 premiumTaxCredit              1887.000000 info  premiumTaxCredit       c- {estimate=55000 percent=206 share=1}
   0022 2026-12 transfer                       513.000000 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
   0023 2026-12 premiumTaxCredit              1887.000000 info  premiumTaxCredit       c- {estimate=55000 percent=206 share=1}
-  0024 2026-12 expenseInflation               -74.400000 cash  -                      c7
+  0024 2027-01 expenseInflation               -74.400000 cash  -                      c7
   0025 2027-01 transfer                       460.200000 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
   0026 2027-01 premiumTaxCredit              2014.200000 info  premiumTaxCredit       c- {estimate=50543.724416 percent=185 share=1}
   0027 2027-02 transfer                       460.200000 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
@@ -547,7 +547,7 @@
   0046 2027-11 premiumTaxCredit              2014.200000 info  premiumTaxCredit       c- {estimate=50543.724416 percent=185 share=1}
   0047 2027-12 transfer                       460.200000 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
   0048 2027-12 premiumTaxCredit              2014.200000 info  premiumTaxCredit       c- {estimate=50543.724416 percent=185 share=1}
-  0049 2027-12 expenseInflation               -76.706400 cash  -                      c8
+  0049 2028-01 expenseInflation               -76.706400 cash  -                      c8
   0050 2028-01 transfer                       453.592200 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
   0051 2028-01 premiumTaxCredit              2097.514200 info  premiumTaxCredit       c- {estimate=50436.223032 percent=179 share=1}
   0052 2028-02 transfer                       453.592200 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
@@ -572,7 +572,7 @@
   0071 2028-11 premiumTaxCredit              2097.514200 info  premiumTaxCredit       c- {estimate=50436.223032 percent=179 share=1}
   0072 2028-12 transfer                       453.592200 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
   0073 2028-12 premiumTaxCredit              2097.514200 info  premiumTaxCredit       c- {estimate=50436.223032 percent=179 share=1}
-  0074 2028-12 expenseInflation               -79.084298 cash  -                      c9
+  0074 2029-01 expenseInflation               -79.084298 cash  -                      c9
   0075 2029-01 transfer                       450.182558 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
   0076 2029-01 premiumTaxCredit              2180.008140 info  premiumTaxCredit       c- {estimate=50546.093092 percent=174 share=1}
   0077 2029-02 transfer                       450.182558 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
@@ -597,7 +597,7 @@
   0096 2029-11 premiumTaxCredit              2180.008140 info  premiumTaxCredit       c- {estimate=50546.093092 percent=174 share=1}
   0097 2029-12 transfer                       450.182558 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
   0098 2029-12 premiumTaxCredit              2180.008140 info  premiumTaxCredit       c- {estimate=50546.093092 percent=174 share=1}
-  0099 2029-12 expenseInflation               -81.535912 cash  -                      c10
+  0099 2030-01 expenseInflation               -81.535912 cash  -                      c10
   0100 2030-01 transfer                       456.977218 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
   0101 2030-01 premiumTaxCredit              2254.749393 info  premiumTaxCredit       c- {estimate=51521.875575 percent=172 share=1}
   0102 2030-02 transfer                       456.977218 cash  -                      c0 {cadence=monthly from=Family Plan to=Brokerage}
@@ -819,7 +819,7 @@
   0033 2026-12 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
   0034 2026-12 incomeTaxWithholding          -131.666667 cash  withheldIncomeTax      c12
   0035 2026-12 transfer                     -3562.333333 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
-  0036 2026-12 incomeGrowth                     0.000000 cash  income                 c13
+  0036 2027-01 incomeGrowth                     0.000000 cash  income                 c13
   0037 2027-01 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
   0038 2027-01 incomeTaxWithholding          -123.348333 cash  withheldIncomeTax      c12
   0039 2027-01 transfer                     -3570.651667 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
@@ -856,7 +856,7 @@
   0070 2027-12 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
   0071 2027-12 incomeTaxWithholding          -123.348333 cash  withheldIncomeTax      c12
   0072 2027-12 transfer                     -3570.651667 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
-  0073 2027-12 incomeGrowth                     0.000000 cash  income                 c14
+  0073 2028-01 incomeGrowth                     0.000000 cash  income                 c14
   0074 2028-01 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
   0075 2028-01 incomeTaxWithholding          -114.772132 cash  withheldIncomeTax      c12
   0076 2028-01 transfer                     -3579.227868 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
@@ -893,7 +893,7 @@
   0107 2028-12 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
   0108 2028-12 incomeTaxWithholding          -114.772132 cash  withheldIncomeTax      c12
   0109 2028-12 transfer                     -3579.227868 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
-  0110 2028-12 incomeGrowth                     0.000000 cash  income                 c15
+  0110 2029-01 incomeGrowth                     0.000000 cash  income                 c15
   0111 2029-01 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
   0112 2029-01 incomeTaxWithholding          -105.930068 cash  withheldIncomeTax      c12
   0113 2029-01 transfer                     -3588.069932 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
@@ -930,7 +930,7 @@
   0144 2029-12 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
   0145 2029-12 incomeTaxWithholding          -105.930068 cash  withheldIncomeTax      c12
   0146 2029-12 transfer                     -3588.069932 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
-  0147 2029-12 incomeGrowth                     0.000000 cash  income                 c16
+  0147 2030-01 incomeGrowth                     0.000000 cash  income                 c16
   0148 2030-01 ficaWithholding               -306.000000 cash  socialSecurityTax      c11
   0149 2030-01 incomeTaxWithholding           -96.813900 cash  withheldIncomeTax      c12
   0150 2030-01 transfer                     -3597.186100 cash  -                      c4 {cadence=monthly from=Part-time Work to=Checking}
@@ -985,66 +985,66 @@
   medicareTax                  n=  60 first=      -58.000000 last=      -58.000000 min=      -58.000000 max=      -58.000000 sum=      -3480.000000 #f6f4e4cd
 
 [packages]
-  0000 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2034.971866 expense=-4513.000000 medicareTax=-58.000000 incomeTax=-131.666667 longTermCapitalGains=205.200000 premiumTaxCredit=1887.000000 value=528674.115842
-  0001 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2041.172568 expense=-4523.189358 medicareTax=-58.000000 incomeTax=-131.666667 longTermCapitalGains=206.448927 premiumTaxCredit=1887.000000 value=529744.217073
-  0002 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2047.398532 expense=-4533.404671 medicareTax=-58.000000 incomeTax=-131.666667 longTermCapitalGains=207.692786 premiumTaxCredit=1887.000000 value=530810.302932
-  0003 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2053.649862 expense=-4543.646006 medicareTax=-58.000000 incomeTax=-131.666667 longTermCapitalGains=208.931599 premiumTaxCredit=1887.000000 value=531872.372698
-  0004 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2059.926660 expense=-4553.913429 medicareTax=-58.000000 incomeTax=-131.666667 longTermCapitalGains=210.165384 premiumTaxCredit=1887.000000 value=532930.425684
-  0005 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2066.229031 expense=-4564.207007 medicareTax=-58.000000 incomeTax=-131.666667 longTermCapitalGains=211.394164 premiumTaxCredit=1887.000000 value=533984.461242
-  0006 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2072.557078 expense=-4574.526807 medicareTax=-58.000000 incomeTax=-131.666667 longTermCapitalGains=212.617958 premiumTaxCredit=1887.000000 value=535034.478760
-  0007 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2078.910907 expense=-4584.872894 medicareTax=-58.000000 incomeTax=-131.666667 longTermCapitalGains=213.836786 premiumTaxCredit=1887.000000 value=536080.477664
-  0008 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2085.290622 expense=-4595.245336 medicareTax=-58.000000 incomeTax=-131.666667 longTermCapitalGains=215.050668 premiumTaxCredit=1887.000000 value=537122.457418
-  0009 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2091.696328 expense=-4605.644200 medicareTax=-58.000000 incomeTax=-131.666667 longTermCapitalGains=216.259625 premiumTaxCredit=1887.000000 value=538160.417526
-  0010 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2098.128132 expense=-4616.069554 medicareTax=-58.000000 incomeTax=-131.666667 longTermCapitalGains=217.463677 premiumTaxCredit=1887.000000 value=539194.357527
-  0011 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2104.586141 expense=-4626.521465 medicareTax=-58.000000 incomeTax=-131.666667 longTermCapitalGains=218.662843 premiumTaxCredit=1887.000000 value=540224.277001
-  0012 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2111.285573 expense=-4584.200000 medicareTax=-58.000000 incomeTax=-123.348333 longTermCapitalGains=197.228571 premiumTaxCredit=2014.200000 ptcReconciliation=660.000000 value=541897.109013
-  0013 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2118.012300 expense=-4594.705228 medicareTax=-58.000000 incomeTax=-123.348333 longTermCapitalGains=198.295602 premiumTaxCredit=2014.200000 value=542980.535765
-  0014 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2124.766433 expense=-4605.237216 medicareTax=-58.000000 incomeTax=-123.348333 longTermCapitalGains=199.358304 premiumTaxCredit=2014.200000 value=544060.157832
-  0015 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2131.548083 expense=-4615.796032 medicareTax=-58.000000 incomeTax=-123.348333 longTermCapitalGains=200.416693 premiumTaxCredit=2014.200000 value=545135.975836
-  0016 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2138.357362 expense=-4626.381746 medicareTax=-58.000000 incomeTax=-123.348333 longTermCapitalGains=201.470788 premiumTaxCredit=2014.200000 value=546207.990439
-  0017 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2145.194382 expense=-4636.994425 medicareTax=-58.000000 incomeTax=-123.348333 longTermCapitalGains=202.520606 premiumTaxCredit=2014.200000 value=547276.202351
-  0018 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2152.059258 expense=-4647.634138 medicareTax=-58.000000 incomeTax=-123.348333 longTermCapitalGains=203.566164 premiumTaxCredit=2014.200000 value=548340.612322
-  0019 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2158.952102 expense=-4658.300953 medicareTax=-58.000000 incomeTax=-123.348333 longTermCapitalGains=204.607479 premiumTaxCredit=2014.200000 value=549401.221150
-  0020 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2165.873028 expense=-4668.994941 medicareTax=-58.000000 incomeTax=-123.348333 longTermCapitalGains=205.644570 premiumTaxCredit=2014.200000 value=550458.029674
-  0021 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2172.822152 expense=-4679.716170 medicareTax=-58.000000 incomeTax=-123.348333 longTermCapitalGains=206.677452 premiumTaxCredit=2014.200000 value=551511.038782
-  0022 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2179.799586 expense=-4690.464710 medicareTax=-58.000000 incomeTax=-123.348333 longTermCapitalGains=207.706143 premiumTaxCredit=2014.200000 value=552560.249405
-  0023 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2186.805448 expense=-4701.240630 medicareTax=-58.000000 incomeTax=-123.348333 longTermCapitalGains=208.730660 premiumTaxCredit=2014.200000 value=553605.662519
-  0024 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2193.866773 expense=-4705.436200 medicareTax=-58.000000 incomeTax=-114.772132 longTermCapitalGains=206.739302 premiumTaxCredit=2097.514200 value=554585.783671
-  0025 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2200.956867 expense=-4716.267090 medicareTax=-58.000000 incomeTax=-114.772132 longTermCapitalGains=207.740931 premiumTaxCredit=2097.514200 value=555638.842837
-  0026 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2208.075847 expense=-4727.125569 medicareTax=-58.000000 incomeTax=-114.772132 longTermCapitalGains=208.738495 premiumTaxCredit=2097.514200 value=556688.134843
-  0027 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2215.223831 expense=-4738.011709 medicareTax=-58.000000 incomeTax=-114.772132 longTermCapitalGains=209.732011 premiumTaxCredit=2097.514200 value=557733.660962
-  0028 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2222.400936 expense=-4748.925580 medicareTax=-58.000000 incomeTax=-114.772132 longTermCapitalGains=210.721497 premiumTaxCredit=2097.514200 value=558775.422515
-  0029 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2229.607282 expense=-4759.867252 medicareTax=-58.000000 incomeTax=-114.772132 longTermCapitalGains=211.706967 premiumTaxCredit=2097.514200 value=559813.420869
-  0030 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2236.842987 expense=-4770.836796 medicareTax=-58.000000 incomeTax=-114.772132 longTermCapitalGains=212.688439 premiumTaxCredit=2097.514200 value=560847.657441
-  0031 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2244.108171 expense=-4781.834283 medicareTax=-58.000000 incomeTax=-114.772132 longTermCapitalGains=213.665928 premiumTaxCredit=2097.514200 value=561878.133696
-  0032 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2251.402955 expense=-4792.859785 medicareTax=-58.000000 incomeTax=-114.772132 longTermCapitalGains=214.639451 premiumTaxCredit=2097.514200 value=562904.851148
-  0033 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2258.727459 expense=-4803.913372 medicareTax=-58.000000 incomeTax=-114.772132 longTermCapitalGains=215.609024 premiumTaxCredit=2097.514200 value=563927.811359
-  0034 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2266.081803 expense=-4814.995116 medicareTax=-58.000000 incomeTax=-114.772132 longTermCapitalGains=216.574663 premiumTaxCredit=2097.514200 value=564947.015940
-  0035 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2273.466110 expense=-4826.105090 medicareTax=-58.000000 incomeTax=-114.772132 longTermCapitalGains=217.536384 premiumTaxCredit=2097.514200 value=565962.466555
-  0036 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2280.894393 expense=-4833.833722 medicareTax=-58.000000 incomeTax=-105.930068 longTermCapitalGains=216.851786 premiumTaxCredit=2180.008140 ptcReconciliation=-12.000000 value=566895.346212
-  0037 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2288.352940 expense=-4845.000369 medicareTax=-58.000000 incomeTax=-105.930068 longTermCapitalGains=217.798547 premiumTaxCredit=2180.008140 value=567915.573622
-  0038 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2295.841873 expense=-4856.195462 medicareTax=-58.000000 incomeTax=-105.930068 longTermCapitalGains=218.741467 premiumTaxCredit=2180.008140 value=568932.066355
-  0039 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2303.361318 expense=-4867.419072 medicareTax=-58.000000 incomeTax=-105.930068 longTermCapitalGains=219.680561 premiumTaxCredit=2180.008140 value=569944.826333
-  0040 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2310.911397 expense=-4878.671273 medicareTax=-58.000000 incomeTax=-105.930068 longTermCapitalGains=220.615844 premiumTaxCredit=2180.008140 value=570953.855526
-  0041 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2318.492237 expense=-4889.952137 medicareTax=-58.000000 incomeTax=-105.930068 longTermCapitalGains=221.547332 premiumTaxCredit=2180.008140 value=571959.155959
-  0042 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2326.103962 expense=-4901.261736 medicareTax=-58.000000 incomeTax=-105.930068 longTermCapitalGains=222.475041 premiumTaxCredit=2180.008140 value=572960.729707
-  0043 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2333.746698 expense=-4912.600146 medicareTax=-58.000000 incomeTax=-105.930068 longTermCapitalGains=223.398985 premiumTaxCredit=2180.008140 value=573958.578900
-  0044 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2341.420571 expense=-4923.967438 medicareTax=-58.000000 incomeTax=-105.930068 longTermCapitalGains=224.319181 premiumTaxCredit=2180.008140 value=574952.705717
-  0045 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2349.125709 expense=-4935.363686 medicareTax=-58.000000 incomeTax=-105.930068 longTermCapitalGains=225.235642 premiumTaxCredit=2180.008140 value=575943.112394
-  0046 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2353.666901 expense=-4946.788965 medicareTax=-58.000000 incomeTax=-105.930068 longTermCapitalGains=620.140331 premiumTaxCredit=2180.008140 value=576926.605880
-  0047 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2357.673775 expense=-4958.243347 medicareTax=-58.000000 incomeTax=-105.930068 longTermCapitalGains=691.070858 premiumTaxCredit=2180.008140 value=577902.622679
-  0048 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2361.121862 expense=-4976.521568 medicareTax=-58.000000 incomeTax=-96.813900 longTermCapitalGains=765.307810 premiumTaxCredit=2254.749393 ptcReconciliation=-132.000000 value=578659.360349
-  0049 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2365.074877 expense=-4988.034381 medicareTax=-58.000000 incomeTax=-96.813900 longTermCapitalGains=707.081438 premiumTaxCredit=2254.749393 value=579622.044805
-  0050 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2368.996973 expense=-4999.576521 medicareTax=-58.000000 incomeTax=-96.813900 longTermCapitalGains=715.746719 premiumTaxCredit=2254.749393 value=580577.079814
-  0051 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2372.887904 expense=-5011.148063 medicareTax=-58.000000 incomeTax=-96.813900 longTermCapitalGains=724.461669 premiumTaxCredit=2254.749393 value=581524.404736
-  0052 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2376.747423 expense=-5022.749082 medicareTax=-58.000000 incomeTax=-96.813900 longTermCapitalGains=733.226266 premiumTaxCredit=2254.749393 value=582463.958606
-  0053 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2380.575281 expense=-5034.379653 medicareTax=-58.000000 incomeTax=-96.813900 longTermCapitalGains=742.040491 premiumTaxCredit=2254.749393 value=583395.680137
-  0054 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2384.371230 expense=-5046.039850 medicareTax=-58.000000 incomeTax=-96.813900 longTermCapitalGains=750.904325 premiumTaxCredit=2254.749393 value=584319.507717
-  0055 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2388.135018 expense=-5057.729750 medicareTax=-58.000000 incomeTax=-96.813900 longTermCapitalGains=759.817749 premiumTaxCredit=2254.749393 value=585235.379407
-  0056 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2391.866393 expense=-5069.449428 medicareTax=-58.000000 incomeTax=-96.813900 longTermCapitalGains=768.780746 premiumTaxCredit=2254.749393 value=586143.232939
-  0057 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2395.565100 expense=-5081.198961 medicareTax=-58.000000 incomeTax=-96.813900 longTermCapitalGains=777.793297 premiumTaxCredit=2254.749393 value=587043.005717
-  0058 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2399.230886 expense=-5092.978423 medicareTax=-58.000000 incomeTax=-96.813900 longTermCapitalGains=786.855385 premiumTaxCredit=2254.749393 value=587934.634812
-  0059 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2402.863493 expense=-5104.787891 medicareTax=-58.000000 incomeTax=-96.813900 longTermCapitalGains=795.966996 premiumTaxCredit=2254.749393 value=588818.056963
+  0000 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2034.971866 expense=-4513.000000 medicareTax=-58.000000 incomeTax=-131.666667 longTermCapitalGains=205.200000 premiumTaxCredit=1887.000000 value=531084.305200
+  0001 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2041.172568 expense=-4523.189358 medicareTax=-58.000000 incomeTax=-131.666667 longTermCapitalGains=206.448927 premiumTaxCredit=1887.000000 value=532164.621744
+  0002 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2047.398532 expense=-4533.404671 medicareTax=-58.000000 incomeTax=-131.666667 longTermCapitalGains=207.692786 premiumTaxCredit=1887.000000 value=533240.948938
+  0003 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2053.649862 expense=-4543.646006 medicareTax=-58.000000 incomeTax=-131.666667 longTermCapitalGains=208.931599 premiumTaxCredit=1887.000000 value=534313.286127
+  0004 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2059.926660 expense=-4553.913429 medicareTax=-58.000000 incomeTax=-131.666667 longTermCapitalGains=210.165384 premiumTaxCredit=1887.000000 value=535381.632692
+  0005 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2066.229031 expense=-4564.207007 medicareTax=-58.000000 incomeTax=-131.666667 longTermCapitalGains=211.394164 premiumTaxCredit=1887.000000 value=536445.988048
+  0006 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2072.557078 expense=-4574.526807 medicareTax=-58.000000 incomeTax=-131.666667 longTermCapitalGains=212.617958 premiumTaxCredit=1887.000000 value=537506.351653
+  0007 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2078.910907 expense=-4584.872894 medicareTax=-58.000000 incomeTax=-131.666667 longTermCapitalGains=213.836786 premiumTaxCredit=1887.000000 value=538562.723000
+  0008 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2085.290622 expense=-4595.245336 medicareTax=-58.000000 incomeTax=-131.666667 longTermCapitalGains=215.050668 premiumTaxCredit=1887.000000 value=539615.101619
+  0009 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2091.696328 expense=-4605.644200 medicareTax=-58.000000 incomeTax=-131.666667 longTermCapitalGains=216.259625 premiumTaxCredit=1887.000000 value=540663.487080
+  0010 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2098.128132 expense=-4616.069554 medicareTax=-58.000000 incomeTax=-131.666667 longTermCapitalGains=217.463677 premiumTaxCredit=1887.000000 value=541707.878992
+  0011 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2104.586141 expense=-4626.521465 medicareTax=-58.000000 incomeTax=-131.666667 longTermCapitalGains=218.662843 premiumTaxCredit=1887.000000 value=542748.277001
+  0012 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2111.285573 expense=-4584.200000 medicareTax=-58.000000 incomeTax=-123.348333 longTermCapitalGains=197.228571 premiumTaxCredit=2014.200000 ptcReconciliation=660.000000 value=544506.014241
+  0013 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2118.012300 expense=-4594.705228 medicareTax=-58.000000 incomeTax=-123.348333 longTermCapitalGains=198.295602 premiumTaxCredit=2014.200000 value=545599.972980
+  0014 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2124.766433 expense=-4605.237216 medicareTax=-58.000000 incomeTax=-123.348333 longTermCapitalGains=199.358304 premiumTaxCredit=2014.200000 value=546690.153864
+  0015 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2131.548083 expense=-4615.796032 medicareTax=-58.000000 incomeTax=-123.348333 longTermCapitalGains=200.416693 premiumTaxCredit=2014.200000 value=547776.557581
+  0016 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2138.357362 expense=-4626.381746 medicareTax=-58.000000 incomeTax=-123.348333 longTermCapitalGains=201.470788 premiumTaxCredit=2014.200000 value=548859.184864
+  0017 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2145.194382 expense=-4636.994425 medicareTax=-58.000000 incomeTax=-123.348333 longTermCapitalGains=202.520606 premiumTaxCredit=2014.200000 value=549938.036488
+  0018 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2152.059258 expense=-4647.634138 medicareTax=-58.000000 incomeTax=-123.348333 longTermCapitalGains=203.566164 premiumTaxCredit=2014.200000 value=551013.113276
+  0019 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2158.952102 expense=-4658.300953 medicareTax=-58.000000 incomeTax=-123.348333 longTermCapitalGains=204.607479 premiumTaxCredit=2014.200000 value=552084.416091
+  0020 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2165.873028 expense=-4668.994941 medicareTax=-58.000000 incomeTax=-123.348333 longTermCapitalGains=205.644570 premiumTaxCredit=2014.200000 value=553151.945845
+  0021 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2172.822152 expense=-4679.716170 medicareTax=-58.000000 incomeTax=-123.348333 longTermCapitalGains=206.677452 premiumTaxCredit=2014.200000 value=554215.703492
+  0022 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2179.799586 expense=-4690.464710 medicareTax=-58.000000 incomeTax=-123.348333 longTermCapitalGains=207.706143 premiumTaxCredit=2014.200000 value=555275.690035
+  0023 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2186.805448 expense=-4701.240630 medicareTax=-58.000000 incomeTax=-123.348333 longTermCapitalGains=208.730660 premiumTaxCredit=2014.200000 value=556331.906519
+  0024 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2193.866773 expense=-4705.436200 medicareTax=-58.000000 incomeTax=-114.772132 longTermCapitalGains=206.739302 premiumTaxCredit=2097.514200 value=557399.564961
+  0025 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2200.956867 expense=-4716.267090 medicareTax=-58.000000 incomeTax=-114.772132 longTermCapitalGains=207.740931 premiumTaxCredit=2097.514200 value=558463.482606
+  0026 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2208.075847 expense=-4727.125569 medicareTax=-58.000000 incomeTax=-114.772132 longTermCapitalGains=208.738495 premiumTaxCredit=2097.514200 value=559523.660752
+  0027 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2215.223831 expense=-4738.011709 medicareTax=-58.000000 incomeTax=-114.772132 longTermCapitalGains=209.732011 premiumTaxCredit=2097.514200 value=560580.100742
+  0028 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2222.400936 expense=-4748.925580 medicareTax=-58.000000 incomeTax=-114.772132 longTermCapitalGains=210.721497 premiumTaxCredit=2097.514200 value=561632.803966
+  0029 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2229.607282 expense=-4759.867252 medicareTax=-58.000000 incomeTax=-114.772132 longTermCapitalGains=211.706967 premiumTaxCredit=2097.514200 value=562681.771865
+  0030 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2236.842987 expense=-4770.836796 medicareTax=-58.000000 incomeTax=-114.772132 longTermCapitalGains=212.688439 premiumTaxCredit=2097.514200 value=563727.005924
+  0031 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2244.108171 expense=-4781.834283 medicareTax=-58.000000 incomeTax=-114.772132 longTermCapitalGains=213.665928 premiumTaxCredit=2097.514200 value=564768.507681
+  0032 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2251.402955 expense=-4792.859785 medicareTax=-58.000000 incomeTax=-114.772132 longTermCapitalGains=214.639451 premiumTaxCredit=2097.514200 value=565806.278720
+  0033 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2258.727459 expense=-4803.913372 medicareTax=-58.000000 incomeTax=-114.772132 longTermCapitalGains=215.609024 premiumTaxCredit=2097.514200 value=566840.320675
+  0034 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2266.081803 expense=-4814.995116 medicareTax=-58.000000 incomeTax=-114.772132 longTermCapitalGains=216.574663 premiumTaxCredit=2097.514200 value=567870.635230
+  0035 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2273.466110 expense=-4826.105090 medicareTax=-58.000000 incomeTax=-114.772132 longTermCapitalGains=217.536384 premiumTaxCredit=2097.514200 value=568897.224119
+  0036 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2280.894393 expense=-4833.833722 medicareTax=-58.000000 incomeTax=-105.930068 longTermCapitalGains=216.851786 premiumTaxCredit=2180.008140 ptcReconciliation=-12.000000 value=569920.354722
+  0037 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2288.352940 expense=-4845.000369 medicareTax=-58.000000 incomeTax=-105.930068 longTermCapitalGains=217.798547 premiumTaxCredit=2180.008140 value=570951.777224
+  0038 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2295.841873 expense=-4856.195462 medicareTax=-58.000000 incomeTax=-105.930068 longTermCapitalGains=218.741467 premiumTaxCredit=2180.008140 value=571979.493568
+  0039 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2303.361318 expense=-4867.419072 medicareTax=-58.000000 incomeTax=-105.930068 longTermCapitalGains=219.680561 premiumTaxCredit=2180.008140 value=573003.505746
+  0040 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2310.911397 expense=-4878.671273 medicareTax=-58.000000 incomeTax=-105.930068 longTermCapitalGains=220.615844 premiumTaxCredit=2180.008140 value=574023.815803
+  0041 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2318.492237 expense=-4889.952137 medicareTax=-58.000000 incomeTax=-105.930068 longTermCapitalGains=221.547332 premiumTaxCredit=2180.008140 value=575040.425835
+  0042 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2326.103962 expense=-4901.261736 medicareTax=-58.000000 incomeTax=-105.930068 longTermCapitalGains=222.475041 premiumTaxCredit=2180.008140 value=576053.337993
+  0043 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2333.746698 expense=-4912.600146 medicareTax=-58.000000 incomeTax=-105.930068 longTermCapitalGains=223.398985 premiumTaxCredit=2180.008140 value=577062.554478
+  0044 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2341.420571 expense=-4923.967438 medicareTax=-58.000000 incomeTax=-105.930068 longTermCapitalGains=224.319181 premiumTaxCredit=2180.008140 value=578068.077544
+  0045 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2349.125709 expense=-4935.363686 medicareTax=-58.000000 incomeTax=-105.930068 longTermCapitalGains=225.235642 premiumTaxCredit=2180.008140 value=579069.909499
+  0046 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2353.666901 expense=-4946.788965 medicareTax=-58.000000 incomeTax=-105.930068 longTermCapitalGains=620.140331 premiumTaxCredit=2180.008140 value=580064.857367
+  0047 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2357.673775 expense=-4958.243347 medicareTax=-58.000000 incomeTax=-105.930068 longTermCapitalGains=691.070858 premiumTaxCredit=2180.008140 value=581052.357727
+  0048 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2361.121862 expense=-4976.521568 medicareTax=-58.000000 incomeTax=-96.813900 longTermCapitalGains=765.307810 premiumTaxCredit=2254.749393 ptcReconciliation=-132.000000 value=581902.144122
+  0049 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2365.074877 expense=-4988.034381 medicareTax=-58.000000 incomeTax=-96.813900 longTermCapitalGains=707.081438 premiumTaxCredit=2254.749393 value=582876.370719
+  0050 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2368.996973 expense=-4999.576521 medicareTax=-58.000000 incomeTax=-96.813900 longTermCapitalGains=715.746719 premiumTaxCredit=2254.749393 value=583842.977270
+  0051 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2372.887904 expense=-5011.148063 medicareTax=-58.000000 incomeTax=-96.813900 longTermCapitalGains=724.461669 premiumTaxCredit=2254.749393 value=584801.903210
+  0052 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2376.747423 expense=-5022.749082 medicareTax=-58.000000 incomeTax=-96.813900 longTermCapitalGains=733.226266 premiumTaxCredit=2254.749393 value=585753.087651
+  0053 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2380.575281 expense=-5034.379653 medicareTax=-58.000000 incomeTax=-96.813900 longTermCapitalGains=742.040491 premiumTaxCredit=2254.749393 value=586696.469380
+  0054 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2384.371230 expense=-5046.039850 medicareTax=-58.000000 incomeTax=-96.813900 longTermCapitalGains=750.904325 premiumTaxCredit=2254.749393 value=587631.986860
+  0055 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2388.135018 expense=-5057.729750 medicareTax=-58.000000 incomeTax=-96.813900 longTermCapitalGains=759.817749 premiumTaxCredit=2254.749393 value=588559.578228
+  0056 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2391.866393 expense=-5069.449428 medicareTax=-58.000000 incomeTax=-96.813900 longTermCapitalGains=768.780746 premiumTaxCredit=2254.749393 value=589479.181292
+  0057 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2395.565100 expense=-5081.198961 medicareTax=-58.000000 incomeTax=-96.813900 longTermCapitalGains=777.793297 premiumTaxCredit=2254.749393 value=590390.733532
+  0058 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2399.230886 expense=-5092.978423 medicareTax=-58.000000 incomeTax=-96.813900 longTermCapitalGains=786.855385 premiumTaxCredit=2254.749393 value=591294.172095
+  0059 employedIncome=4000.000000 socialSecurityTax=-248.000000 assetAppreciation=2402.863493 expense=-5104.787891 medicareTax=-58.000000 incomeTax=-96.813900 longTermCapitalGains=1221.993973 premiumTaxCredit=2254.749393 ptcReconciliation=-804.000000 value=591385.433798
 
 [priceIndex]
   [0000]         1.002547         1.005101         1.007662         1.010228         1.012802         1.015382

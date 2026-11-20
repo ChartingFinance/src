@@ -30,13 +30,13 @@
   lastDate = 2030-12
   startValue = 80000.000000
   finishValue = 46597.399424
-  accumulated = 6245.696804
+  accumulated = 7814.813404
   total.socialSecurityIncome = 72000.000000
   total.pensionIncome = 90000.000000
   total.expense = -194217.413980
   total.incomeTax = -9000.000000
-  total.taxTrueUp = 6245.696804
-  total.value = 2984573.201995
+  total.taxTrueUp = 7814.813404
+  total.value = 3018854.470245
 
 [assetOrder]
   0 Social Security
@@ -104,7 +104,7 @@
   0045 2026-12 transfer                      1350.000000 cash  -                      c1 {cadence=monthly from=Pension to=Checking}
   0046 2026-12 grossUp                      -3085.141099 cash  -                      c2 {forAsset=Living overflow=false}
   0047 2026-12 interestIncome                   0.000000 cash  interestIncome         c-
-  0048 2026-12 taxTrueUp                     1610.000000 cash  -                      c3 {direction=refund}
+  0048 2027-01 taxTrueUp                     1610.000000 cash  -                      c3 {direction=refund}
   0049 2027-01 transfer                         0.000000 cash  -                      c0 {cadence=monthly from=Social Security to=Checking}
   0050 2027-01 transfer                      1350.000000 cash  -                      c1 {cadence=monthly from=Pension to=Checking}
   0051 2027-01 grossUp                      -3093.000000 cash  -                      c2 {forAsset=Living overflow=false}
@@ -153,7 +153,7 @@
   0094 2027-12 transfer                      1350.000000 cash  -                      c1 {cadence=monthly from=Pension to=Checking}
   0095 2027-12 grossUp                      -3180.780473 cash  -                      c2 {forAsset=Living overflow=false}
   0096 2027-12 interestIncome                   0.000000 cash  interestIncome         c-
-  0097 2027-12 taxTrueUp                     1659.910000 cash  -                      c4 {direction=refund}
+  0097 2028-01 taxTrueUp                     1659.910000 cash  -                      c4 {direction=refund}
   0098 2028-01 transfer                      2000.000000 cash  -                      c0 {cadence=monthly from=Social Security to=Checking}
   0099 2028-01 transfer                      1350.000000 cash  -                      c1 {cadence=monthly from=Pension to=Checking}
   0100 2028-01 grossUp                      -3188.883000 cash  -                      c2 {forAsset=Living overflow=false}
@@ -202,7 +202,7 @@
   0143 2028-12 transfer                      1350.000000 cash  -                      c1 {cadence=monthly from=Pension to=Checking}
   0144 2028-12 grossUp                      -3279.384667 cash  -                      c2 {forAsset=Living overflow=false}
   0145 2028-12 interestIncome                   0.000000 cash  interestIncome         c-
-  0146 2028-12 taxTrueUp                     1461.367210 cash  -                      c5 {direction=refund}
+  0146 2029-01 taxTrueUp                     1461.367210 cash  -                      c5 {direction=refund}
   0147 2029-01 transfer                      2000.000000 cash  -                      c0 {cadence=monthly from=Social Security to=Checking}
   0148 2029-01 transfer                      1350.000000 cash  -                      c1 {cadence=monthly from=Pension to=Checking}
   0149 2029-01 grossUp                      -3287.738373 cash  -                      c2 {forAsset=Living overflow=false}
@@ -251,7 +251,7 @@
   0192 2029-12 transfer                      1350.000000 cash  -                      c1 {cadence=monthly from=Pension to=Checking}
   0193 2029-12 grossUp                      -3381.045592 cash  -                      c2 {forAsset=Living overflow=false}
   0194 2029-12 interestIncome                   0.000000 cash  interestIncome         c-
-  0195 2029-12 taxTrueUp                     1514.419594 cash  -                      c6 {direction=refund}
+  0195 2030-01 taxTrueUp                     1514.419594 cash  -                      c6 {direction=refund}
   0196 2030-01 transfer                      2000.000000 cash  -                      c0 {cadence=monthly from=Social Security to=Checking}
   0197 2030-01 transfer                      1350.000000 cash  -                      c1 {cadence=monthly from=Pension to=Checking}
   0198 2030-01 grossUp                      -3389.658263 cash  -                      c2 {forAsset=Living overflow=false}
@@ -303,13 +303,13 @@
   0244 2030-12 taxTrueUp                     1569.116601 cash  -                      c7 {direction=refund}
 
 [history] Checking
-  value                        n=  60 first=    78350.000000 last=    45028.280000 min=    39860.870000 max=    78350.000000 sum=    3017285.330000 #a584cd18
-  estimatedIncomeTax           n=  60 first=        0.000000 last=        0.000000 min=        0.000000 max=     1659.910000 sum=       6245.700000 #261c332b
-  incomeTax                    n=  60 first=        0.000000 last=        0.000000 min=        0.000000 max=     1659.910000 sum=       6245.700000 #261c332b
-  federalTaxes                 n=  60 first=        0.000000 last=        0.000000 min=        0.000000 max=     1659.910000 sum=       6245.700000 #261c332b
-  taxes                        n=  60 first=        0.000000 last=        0.000000 min=        0.000000 max=     1659.910000 sum=       6245.700000 #261c332b
-  cashFlow                     n=  60 first=        0.000000 last=        0.000000 min=        0.000000 max=     1659.910000 sum=       6245.700000 #261c332b
-  cashFlowAccumulated          n=  60 first=        0.000000 last=     6245.700000 min=        0.000000 max=     6245.700000 sum=     190282.680000 #74d991d5
+  value                        n=  60 first=    78350.000000 last=    46597.400000 min=    39860.870000 max=    78350.000000 sum=    3018854.450000 #d28bc5c8
+  estimatedIncomeTax           n=  60 first=        0.000000 last=     1569.120000 min=        0.000000 max=     1659.910000 sum=       7814.820000 #70533c43
+  incomeTax                    n=  60 first=        0.000000 last=     1569.120000 min=        0.000000 max=     1659.910000 sum=       7814.820000 #70533c43
+  federalTaxes                 n=  60 first=        0.000000 last=     1569.120000 min=        0.000000 max=     1659.910000 sum=       7814.820000 #70533c43
+  taxes                        n=  60 first=        0.000000 last=     1569.120000 min=        0.000000 max=     1659.910000 sum=       7814.820000 #70533c43
+  cashFlow                     n=  60 first=        0.000000 last=     1569.120000 min=        0.000000 max=     1659.910000 sum=       7814.820000 #70533c43
+  cashFlowAccumulated          n=  60 first=        0.000000 last=     7814.810000 min=        0.000000 max=     7814.810000 sum=     191851.790000 #832741f0
 
 [asset] Living
   instrument = monthlyExpense
@@ -427,7 +427,7 @@
   0021 2026-11 transfer                     -1350.000000 cash  -                      c1 {cadence=monthly from=Pension to=Checking}
   0022 2026-12 incomeTaxWithholding          -150.000000 cash  withheldIncomeTax      c8
   0023 2026-12 transfer                     -1350.000000 cash  -                      c1 {cadence=monthly from=Pension to=Checking}
-  0024 2026-12 incomeGrowth                     0.000000 cash  income                 c9
+  0024 2027-01 incomeGrowth                     0.000000 cash  income                 c9
   0025 2027-01 incomeTaxWithholding          -150.000000 cash  withheldIncomeTax      c8
   0026 2027-01 transfer                     -1350.000000 cash  -                      c1 {cadence=monthly from=Pension to=Checking}
   0027 2027-02 incomeTaxWithholding          -150.000000 cash  withheldIncomeTax      c8
@@ -452,7 +452,7 @@
   0046 2027-11 transfer                     -1350.000000 cash  -                      c1 {cadence=monthly from=Pension to=Checking}
   0047 2027-12 incomeTaxWithholding          -150.000000 cash  withheldIncomeTax      c8
   0048 2027-12 transfer                     -1350.000000 cash  -                      c1 {cadence=monthly from=Pension to=Checking}
-  0049 2027-12 incomeGrowth                     0.000000 cash  income                 c10
+  0049 2028-01 incomeGrowth                     0.000000 cash  income                 c10
   0050 2028-01 incomeTaxWithholding          -150.000000 cash  withheldIncomeTax      c8
   0051 2028-01 transfer                     -1350.000000 cash  -                      c1 {cadence=monthly from=Pension to=Checking}
   0052 2028-02 incomeTaxWithholding          -150.000000 cash  withheldIncomeTax      c8
@@ -477,7 +477,7 @@
   0071 2028-11 transfer                     -1350.000000 cash  -                      c1 {cadence=monthly from=Pension to=Checking}
   0072 2028-12 incomeTaxWithholding          -150.000000 cash  withheldIncomeTax      c8
   0073 2028-12 transfer                     -1350.000000 cash  -                      c1 {cadence=monthly from=Pension to=Checking}
-  0074 2028-12 incomeGrowth                     0.000000 cash  income                 c11
+  0074 2029-01 incomeGrowth                     0.000000 cash  income                 c11
   0075 2029-01 incomeTaxWithholding          -150.000000 cash  withheldIncomeTax      c8
   0076 2029-01 transfer                     -1350.000000 cash  -                      c1 {cadence=monthly from=Pension to=Checking}
   0077 2029-02 incomeTaxWithholding          -150.000000 cash  withheldIncomeTax      c8
@@ -502,7 +502,7 @@
   0096 2029-11 transfer                     -1350.000000 cash  -                      c1 {cadence=monthly from=Pension to=Checking}
   0097 2029-12 incomeTaxWithholding          -150.000000 cash  withheldIncomeTax      c8
   0098 2029-12 transfer                     -1350.000000 cash  -                      c1 {cadence=monthly from=Pension to=Checking}
-  0099 2029-12 incomeGrowth                     0.000000 cash  income                 c12
+  0099 2030-01 incomeGrowth                     0.000000 cash  income                 c12
   0100 2030-01 incomeTaxWithholding          -150.000000 cash  withheldIncomeTax      c8
   0101 2030-01 transfer                     -1350.000000 cash  -                      c1 {cadence=monthly from=Pension to=Checking}
   0102 2030-02 incomeTaxWithholding          -150.000000 cash  withheldIncomeTax      c8
@@ -578,7 +578,7 @@
   0022 2027-10 transfer                         0.000000 cash  -                      c0 {cadence=monthly from=Social Security to=Checking}
   0023 2027-11 transfer                         0.000000 cash  -                      c0 {cadence=monthly from=Social Security to=Checking}
   0024 2027-12 transfer                         0.000000 cash  -                      c0 {cadence=monthly from=Social Security to=Checking}
-  0025 2027-12 incomeGrowth                     0.000000 cash  income                 c13
+  0025 2028-01 incomeGrowth                     0.000000 cash  income                 c13
   0026 2028-01 transfer                     -2000.000000 cash  -                      c0 {cadence=monthly from=Social Security to=Checking}
   0027 2028-02 transfer                     -2000.000000 cash  -                      c0 {cadence=monthly from=Social Security to=Checking}
   0028 2028-03 transfer                     -2000.000000 cash  -                      c0 {cadence=monthly from=Social Security to=Checking}
@@ -591,7 +591,7 @@
   0035 2028-10 transfer                     -2000.000000 cash  -                      c0 {cadence=monthly from=Social Security to=Checking}
   0036 2028-11 transfer                     -2000.000000 cash  -                      c0 {cadence=monthly from=Social Security to=Checking}
   0037 2028-12 transfer                     -2000.000000 cash  -                      c0 {cadence=monthly from=Social Security to=Checking}
-  0038 2028-12 incomeGrowth                     0.000000 cash  income                 c14
+  0038 2029-01 incomeGrowth                     0.000000 cash  income                 c14
   0039 2029-01 transfer                     -2000.000000 cash  -                      c0 {cadence=monthly from=Social Security to=Checking}
   0040 2029-02 transfer                     -2000.000000 cash  -                      c0 {cadence=monthly from=Social Security to=Checking}
   0041 2029-03 transfer                     -2000.000000 cash  -                      c0 {cadence=monthly from=Social Security to=Checking}
@@ -604,7 +604,7 @@
   0048 2029-10 transfer                     -2000.000000 cash  -                      c0 {cadence=monthly from=Social Security to=Checking}
   0049 2029-11 transfer                     -2000.000000 cash  -                      c0 {cadence=monthly from=Social Security to=Checking}
   0050 2029-12 transfer                     -2000.000000 cash  -                      c0 {cadence=monthly from=Social Security to=Checking}
-  0051 2029-12 incomeGrowth                     0.000000 cash  income                 c15
+  0051 2030-01 incomeGrowth                     0.000000 cash  income                 c15
   0052 2030-01 transfer                     -2000.000000 cash  -                      c0 {cadence=monthly from=Social Security to=Checking}
   0053 2030-02 transfer                     -2000.000000 cash  -                      c0 {cadence=monthly from=Social Security to=Checking}
   0054 2030-03 transfer                     -2000.000000 cash  -                      c0 {cadence=monthly from=Social Security to=Checking}
@@ -628,66 +628,66 @@
   socialSecurityIncome         n=  60 first=        0.000000 last=     2000.000000 min=        0.000000 max=     2000.000000 sum=      72000.000000 #978ec6a5
 
 [packages]
-  0000 pensionIncome=1500.000000 expense=-3000.000000 incomeTax=-150.000000 value=76842.357982
-  0001 pensionIncome=1500.000000 expense=-3007.642018 incomeTax=-150.000000 value=75177.054479
-  0002 pensionIncome=1500.000000 expense=-3015.303503 incomeTax=-150.000000 value=73504.069974
-  0003 pensionIncome=1500.000000 expense=-3022.984505 incomeTax=-150.000000 value=71823.384902
-  0004 pensionIncome=1500.000000 expense=-3030.685072 incomeTax=-150.000000 value=70134.979647
-  0005 pensionIncome=1500.000000 expense=-3038.405255 incomeTax=-150.000000 value=68438.834542
-  0006 pensionIncome=1500.000000 expense=-3046.145105 incomeTax=-150.000000 value=66734.929871
-  0007 pensionIncome=1500.000000 expense=-3053.904670 incomeTax=-150.000000 value=65023.245869
-  0008 pensionIncome=1500.000000 expense=-3061.684002 incomeTax=-150.000000 value=63303.762719
-  0009 pensionIncome=1500.000000 expense=-3069.483150 incomeTax=-150.000000 value=61576.460554
-  0010 pensionIncome=1500.000000 expense=-3077.302166 incomeTax=-150.000000 value=59841.319455
-  0011 pensionIncome=1500.000000 expense=-3085.141099 incomeTax=-150.000000 value=58098.319455
-  0012 pensionIncome=1500.000000 expense=-3093.000000 incomeTax=-150.000000 taxTrueUp=1610.000000 value=57957.440534
-  0013 pensionIncome=1500.000000 expense=-3100.878921 incomeTax=-150.000000 value=56198.662623
-  0014 pensionIncome=1500.000000 expense=-3108.777912 incomeTax=-150.000000 value=54431.965599
-  0015 pensionIncome=1500.000000 expense=-3116.697024 incomeTax=-150.000000 value=52657.329289
-  0016 pensionIncome=1500.000000 expense=-3124.636309 incomeTax=-150.000000 value=50874.733471
-  0017 pensionIncome=1500.000000 expense=-3132.595818 incomeTax=-150.000000 value=49084.157868
-  0018 pensionIncome=1500.000000 expense=-3140.575603 incomeTax=-150.000000 value=47285.582153
-  0019 pensionIncome=1500.000000 expense=-3148.575715 incomeTax=-150.000000 value=45478.985947
-  0020 pensionIncome=1500.000000 expense=-3156.596206 incomeTax=-150.000000 value=43664.348819
-  0021 pensionIncome=1500.000000 expense=-3164.637128 incomeTax=-150.000000 value=41841.650286
-  0022 pensionIncome=1500.000000 expense=-3172.698533 incomeTax=-150.000000 value=40010.869813
-  0023 pensionIncome=1500.000000 expense=-3180.780473 incomeTax=-150.000000 value=38171.986813
-  0024 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3188.883000 incomeTax=-150.000000 taxTrueUp=1659.910000 value=41984.890646
-  0025 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3197.006167 incomeTax=-150.000000 value=42129.740619
-  0026 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3205.150027 incomeTax=-150.000000 value=42266.425987
-  0027 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3213.314632 incomeTax=-150.000000 value=42394.925952
-  0028 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3221.500035 incomeTax=-150.000000 value=42515.219664
-  0029 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3229.706289 incomeTax=-150.000000 value=42627.286217
-  0030 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3237.933447 incomeTax=-150.000000 value=42731.104655
-  0031 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3246.181562 incomeTax=-150.000000 value=42826.653966
-  0032 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3254.450688 incomeTax=-150.000000 value=42913.913087
-  0033 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3262.740879 incomeTax=-150.000000 value=42992.860900
-  0034 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3271.052187 incomeTax=-150.000000 value=43063.476233
-  0035 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3279.384667 incomeTax=-150.000000 value=43125.737860
-  0036 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3287.738373 incomeTax=-150.000000 taxTrueUp=1461.367210 value=44640.991711
-  0037 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3296.113358 incomeTax=-150.000000 value=44686.482034
-  0038 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3304.509678 incomeTax=-150.000000 value=44723.554648
-  0039 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3312.927386 incomeTax=-150.000000 value=44752.188112
-  0040 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3321.366536 incomeTax=-150.000000 value=44772.360928
-  0041 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3329.827184 incomeTax=-150.000000 value=44784.051545
-  0042 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3338.309384 incomeTax=-150.000000 value=44787.238354
-  0043 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3346.813191 incomeTax=-150.000000 value=44781.899694
-  0044 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3355.338660 incomeTax=-150.000000 value=44768.013848
-  0045 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3363.885846 incomeTax=-150.000000 value=44745.559043
-  0046 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3372.454805 incomeTax=-150.000000 value=44714.513451
-  0047 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3381.045592 incomeTax=-150.000000 value=44674.855189
-  0048 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3389.658263 incomeTax=-150.000000 taxTrueUp=1514.419594 value=46140.981910
-  0049 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3398.292873 incomeTax=-150.000000 value=46084.032432
-  0050 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3406.949478 incomeTax=-150.000000 value=46018.404297
-  0051 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3415.628134 incomeTax=-150.000000 value=45944.075399
-  0052 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3424.328899 incomeTax=-150.000000 value=45861.023572
-  0053 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3433.051826 incomeTax=-150.000000 value=45769.226598
-  0054 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3441.796975 incomeTax=-150.000000 value=45668.662198
-  0055 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3450.564400 incomeTax=-150.000000 value=45559.308040
-  0056 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3459.354158 incomeTax=-150.000000 value=45441.141733
-  0057 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3468.166307 incomeTax=-150.000000 value=45314.140829
-  0058 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3477.000904 incomeTax=-150.000000 value=45178.282823
-  0059 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3485.858005 incomeTax=-150.000000 value=45033.545155
+  0000 pensionIncome=1500.000000 expense=-3000.000000 incomeTax=-150.000000 value=78350.000000
+  0001 pensionIncome=1500.000000 expense=-3007.642018 incomeTax=-150.000000 value=76692.357982
+  0002 pensionIncome=1500.000000 expense=-3015.303503 incomeTax=-150.000000 value=75027.054479
+  0003 pensionIncome=1500.000000 expense=-3022.984505 incomeTax=-150.000000 value=73354.069974
+  0004 pensionIncome=1500.000000 expense=-3030.685072 incomeTax=-150.000000 value=71673.384902
+  0005 pensionIncome=1500.000000 expense=-3038.405255 incomeTax=-150.000000 value=69984.979647
+  0006 pensionIncome=1500.000000 expense=-3046.145105 incomeTax=-150.000000 value=68288.834542
+  0007 pensionIncome=1500.000000 expense=-3053.904670 incomeTax=-150.000000 value=66584.929871
+  0008 pensionIncome=1500.000000 expense=-3061.684002 incomeTax=-150.000000 value=64873.245869
+  0009 pensionIncome=1500.000000 expense=-3069.483150 incomeTax=-150.000000 value=63153.762719
+  0010 pensionIncome=1500.000000 expense=-3077.302166 incomeTax=-150.000000 value=61426.460554
+  0011 pensionIncome=1500.000000 expense=-3085.141099 incomeTax=-150.000000 value=59691.319455
+  0012 pensionIncome=1500.000000 expense=-3093.000000 incomeTax=-150.000000 taxTrueUp=1610.000000 value=59558.319455
+  0013 pensionIncome=1500.000000 expense=-3100.878921 incomeTax=-150.000000 value=57807.440534
+  0014 pensionIncome=1500.000000 expense=-3108.777912 incomeTax=-150.000000 value=56048.662623
+  0015 pensionIncome=1500.000000 expense=-3116.697024 incomeTax=-150.000000 value=54281.965599
+  0016 pensionIncome=1500.000000 expense=-3124.636309 incomeTax=-150.000000 value=52507.329289
+  0017 pensionIncome=1500.000000 expense=-3132.595818 incomeTax=-150.000000 value=50724.733471
+  0018 pensionIncome=1500.000000 expense=-3140.575603 incomeTax=-150.000000 value=48934.157868
+  0019 pensionIncome=1500.000000 expense=-3148.575715 incomeTax=-150.000000 value=47135.582153
+  0020 pensionIncome=1500.000000 expense=-3156.596206 incomeTax=-150.000000 value=45328.985947
+  0021 pensionIncome=1500.000000 expense=-3164.637128 incomeTax=-150.000000 value=43514.348819
+  0022 pensionIncome=1500.000000 expense=-3172.698533 incomeTax=-150.000000 value=41691.650286
+  0023 pensionIncome=1500.000000 expense=-3180.780473 incomeTax=-150.000000 value=39860.869813
+  0024 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3188.883000 incomeTax=-150.000000 taxTrueUp=1659.910000 value=41681.896813
+  0025 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3197.006167 incomeTax=-150.000000 value=41834.890646
+  0026 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3205.150027 incomeTax=-150.000000 value=41979.740619
+  0027 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3213.314632 incomeTax=-150.000000 value=42116.425987
+  0028 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3221.500035 incomeTax=-150.000000 value=42244.925952
+  0029 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3229.706289 incomeTax=-150.000000 value=42365.219664
+  0030 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3237.933447 incomeTax=-150.000000 value=42477.286217
+  0031 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3246.181562 incomeTax=-150.000000 value=42581.104655
+  0032 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3254.450688 incomeTax=-150.000000 value=42676.653966
+  0033 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3262.740879 incomeTax=-150.000000 value=42763.913087
+  0034 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3271.052187 incomeTax=-150.000000 value=42842.860900
+  0035 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3279.384667 incomeTax=-150.000000 value=42913.476233
+  0036 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3287.738373 incomeTax=-150.000000 taxTrueUp=1461.367210 value=44437.105070
+  0037 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3296.113358 incomeTax=-150.000000 value=44490.991711
+  0038 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3304.509678 incomeTax=-150.000000 value=44536.482034
+  0039 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3312.927386 incomeTax=-150.000000 value=44573.554648
+  0040 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3321.366536 incomeTax=-150.000000 value=44602.188112
+  0041 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3329.827184 incomeTax=-150.000000 value=44622.360928
+  0042 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3338.309384 incomeTax=-150.000000 value=44634.051545
+  0043 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3346.813191 incomeTax=-150.000000 value=44637.238354
+  0044 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3355.338660 incomeTax=-150.000000 value=44631.899694
+  0045 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3363.885846 incomeTax=-150.000000 value=44618.013848
+  0046 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3372.454805 incomeTax=-150.000000 value=44595.559043
+  0047 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3381.045592 incomeTax=-150.000000 value=44564.513451
+  0048 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3389.658263 incomeTax=-150.000000 taxTrueUp=1514.419594 value=46039.274782
+  0049 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3398.292873 incomeTax=-150.000000 value=45990.981910
+  0050 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3406.949478 incomeTax=-150.000000 value=45934.032432
+  0051 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3415.628134 incomeTax=-150.000000 value=45868.404297
+  0052 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3424.328899 incomeTax=-150.000000 value=45794.075399
+  0053 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3433.051826 incomeTax=-150.000000 value=45711.023572
+  0054 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3441.796975 incomeTax=-150.000000 value=45619.226598
+  0055 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3450.564400 incomeTax=-150.000000 value=45518.662198
+  0056 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3459.354158 incomeTax=-150.000000 value=45409.308040
+  0057 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3468.166307 incomeTax=-150.000000 value=45291.141733
+  0058 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3477.000904 incomeTax=-150.000000 value=45164.140829
+  0059 socialSecurityIncome=2000.000000 pensionIncome=1500.000000 expense=-3485.858005 incomeTax=-150.000000 taxTrueUp=1569.116601 value=46597.399424
 
 [priceIndex]
   [0000]         1.002547         1.005101         1.007662         1.010228         1.012802         1.015382

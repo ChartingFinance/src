@@ -29,15 +29,15 @@
   lastDate = 2030-12
   startValue = 930000.000000
   finishValue = 913849.425553
-  accumulated = -12213.360726
+  accumulated = -11168.457803
   total.assetAppreciation = 215619.390889
   total.expense = -220601.507533
   total.incomeTax = -24511.278615
   total.tradIRADistribution = 245112.786148
-  total.taxTrueUp = 5241.917889
+  total.taxTrueUp = 6694.820812
   total.premiumTaxCredit = 38107.211520
-  total.ptcReconciliation = 7056.000000
-  total.value = 55152524.715139
+  total.ptcReconciliation = 6648.000000
+  total.value = 55412740.092273
 
 [assetOrder]
   0 Checking
@@ -69,8 +69,8 @@
   0009 2026-10 interestIncome                   0.000000 cash  interestIncome         c-
   0010 2026-11 interestIncome                   0.000000 cash  interestIncome         c-
   0011 2026-12 interestIncome                   0.000000 cash  interestIncome         c-
-  0012 2026-12 taxTrueUp                     1129.449589 cash  -                      c0 {direction=refund}
-  0013 2026-12 ptcReconciliation             6768.000000 cash  -                      c1 {advanced=0 allowed=6768 direction=credit percent=336}
+  0012 2027-01 taxTrueUp                     1129.449589 cash  -                      c0 {direction=refund}
+  0013 2027-01 ptcReconciliation             6768.000000 cash  -                      c1 {advanced=0 allowed=6768 direction=credit percent=336}
   0014 2027-01 interestIncome                   0.000000 cash  interestIncome         c-
   0015 2027-02 interestIncome                   0.000000 cash  interestIncome         c-
   0016 2027-03 interestIncome                   0.000000 cash  interestIncome         c-
@@ -83,8 +83,8 @@
   0023 2027-10 interestIncome                   0.000000 cash  interestIncome         c-
   0024 2027-11 interestIncome                   0.000000 cash  interestIncome         c-
   0025 2027-12 interestIncome                   0.000000 cash  interestIncome         c-
-  0026 2027-12 taxTrueUp                     1318.889193 cash  -                      c2 {direction=refund}
-  0027 2027-12 ptcReconciliation              744.000000 cash  -                      c3 {advanced=7596 allowed=8340 direction=credit percent=291}
+  0026 2028-01 taxTrueUp                     1318.889193 cash  -                      c2 {direction=refund}
+  0027 2028-01 ptcReconciliation              744.000000 cash  -                      c3 {advanced=7596 allowed=8340 direction=credit percent=291}
   0028 2028-01 interestIncome                   0.000000 cash  interestIncome         c-
   0029 2028-02 interestIncome                   0.000000 cash  interestIncome         c-
   0030 2028-03 interestIncome                   0.000000 cash  interestIncome         c-
@@ -97,8 +97,8 @@
   0037 2028-10 interestIncome                   0.000000 cash  interestIncome         c-
   0038 2028-11 interestIncome                   0.000000 cash  interestIncome         c-
   0039 2028-12 interestIncome                   0.000000 cash  interestIncome         c-
-  0040 2028-12 taxTrueUp                     1376.725424 cash  -                      c4 {direction=refund}
-  0041 2028-12 ptcReconciliation             -120.000000 cash  -                      c5 {advanced=9292.800000 allowed=9172.800000 direction=repayment percent=286}
+  0040 2029-01 taxTrueUp                     1376.725424 cash  -                      c4 {direction=refund}
+  0041 2029-01 ptcReconciliation             -120.000000 cash  -                      c5 {advanced=9292.800000 allowed=9172.800000 direction=repayment percent=286}
   0042 2029-01 interestIncome                   0.000000 cash  interestIncome         c-
   0043 2029-02 interestIncome                   0.000000 cash  interestIncome         c-
   0044 2029-03 interestIncome                   0.000000 cash  interestIncome         c-
@@ -111,8 +111,8 @@
   0051 2029-10 interestIncome                   0.000000 cash  interestIncome         c-
   0052 2029-11 interestIncome                   0.000000 cash  interestIncome         c-
   0053 2029-12 interestIncome                   0.000000 cash  interestIncome         c-
-  0054 2029-12 taxTrueUp                     1416.853683 cash  -                      c6 {direction=refund}
-  0055 2029-12 ptcReconciliation             -336.000000 cash  -                      c7 {advanced=10220.544000 allowed=9884.544000 direction=repayment percent=287}
+  0054 2030-01 taxTrueUp                     1416.853683 cash  -                      c6 {direction=refund}
+  0055 2030-01 ptcReconciliation             -336.000000 cash  -                      c7 {advanced=10220.544000 allowed=9884.544000 direction=repayment percent=287}
   0056 2030-01 interestIncome                   0.000000 cash  interestIncome         c-
   0057 2030-02 interestIncome                   0.000000 cash  interestIncome         c-
   0058 2030-03 interestIncome                   0.000000 cash  interestIncome         c-
@@ -129,14 +129,14 @@
   0069 2030-12 ptcReconciliation             -408.000000 cash  -                      c9 {advanced=10997.867520 allowed=10589.867520 direction=repayment percent=289}
 
 [history] Checking
-  value                        n=  60 first=    30000.000000 last=    42297.920000 min=    30000.000000 max=    42297.920000 sum=    2296473.240000 #4cb31fe5
-  estimatedIncomeTax           n=  60 first=        0.000000 last=        0.000000 min=        0.000000 max=     1416.850000 sum=       5241.920000 #00040cb5
-  ptcReconciliation            n=  60 first=        0.000000 last=        0.000000 min=     -336.000000 max=     6768.000000 sum=       7056.000000 #0c6c4534
-  incomeTax                    n=  60 first=        0.000000 last=        0.000000 min=        0.000000 max=     1416.850000 sum=       5241.920000 #00040cb5
-  federalTaxes                 n=  60 first=        0.000000 last=        0.000000 min=        0.000000 max=     7897.450000 sum=      12297.920000 #ec06396c
-  taxes                        n=  60 first=        0.000000 last=        0.000000 min=        0.000000 max=     7897.450000 sum=      12297.920000 #ec06396c
-  cashFlow                     n=  60 first=        0.000000 last=        0.000000 min=        0.000000 max=     7897.450000 sum=      12297.920000 #ec06396c
-  cashFlowAccumulated          n=  60 first=        0.000000 last=    12297.920000 min=        0.000000 max=    12297.920000 sum=     496473.240000 #ba15c325
+  value                        n=  60 first=    30000.000000 last=    43342.820000 min=    30000.000000 max=    43342.820000 sum=    2297518.140000 #9b66c292
+  estimatedIncomeTax           n=  60 first=        0.000000 last=     1452.900000 min=        0.000000 max=     1452.900000 sum=       6694.820000 #b9893702
+  ptcReconciliation            n=  60 first=        0.000000 last=     -408.000000 min=     -408.000000 max=     6768.000000 sum=       6648.000000 #095275f9
+  incomeTax                    n=  60 first=        0.000000 last=     1452.900000 min=        0.000000 max=     1452.900000 sum=       6694.820000 #b9893702
+  federalTaxes                 n=  60 first=        0.000000 last=     1044.900000 min=        0.000000 max=     7897.450000 sum=      13342.820000 #d25538de
+  taxes                        n=  60 first=        0.000000 last=     1044.900000 min=        0.000000 max=     7897.450000 sum=      13342.820000 #d25538de
+  cashFlow                     n=  60 first=        0.000000 last=     1044.900000 min=        0.000000 max=     7897.450000 sum=      13342.820000 #d25538de
+  cashFlowAccumulated          n=  60 first=        0.000000 last=    13342.820000 min=        0.000000 max=    13342.820000 sum=     497518.140000 #08c965d2
 
 [asset] IRA
   instrument = ira
@@ -570,7 +570,7 @@
   0009 2026-10 transfer                      1100.000000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
   0010 2026-11 transfer                      1100.000000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
   0011 2026-12 transfer                      1100.000000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
-  0012 2026-12 expenseInflation               -88.000000 cash  -                      c13
+  0012 2027-01 expenseInflation               -88.000000 cash  -                      c13
   0013 2027-01 transfer                       555.000000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
   0014 2027-01 premiumTaxCredit               633.000000 info  premiumTaxCredit       c- {estimate=52527.520565 percent=329 share=1}
   0015 2027-02 transfer                       555.000000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
@@ -595,7 +595,7 @@
   0034 2027-11 premiumTaxCredit               633.000000 info  premiumTaxCredit       c- {estimate=52527.520565 percent=329 share=1}
   0035 2027-12 transfer                       555.000000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
   0036 2027-12 premiumTaxCredit               633.000000 info  premiumTaxCredit       c- {estimate=52527.520565 percent=329 share=1}
-  0037 2027-12 expenseInflation               -95.040000 cash  -                      c14
+  0037 2028-01 expenseInflation               -95.040000 cash  -                      c14
   0038 2028-01 transfer                       508.640000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
   0039 2028-01 premiumTaxCredit               774.400000 info  premiumTaxCredit       c- {estimate=46434.540369 percent=282 share=1}
   0040 2028-02 transfer                       508.640000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
@@ -620,7 +620,7 @@
   0059 2028-11 premiumTaxCredit               774.400000 info  premiumTaxCredit       c- {estimate=46434.540369 percent=282 share=1}
   0060 2028-12 transfer                       508.640000 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
   0061 2028-12 premiumTaxCredit               774.400000 info  premiumTaxCredit       c- {estimate=46434.540369 percent=282 share=1}
-  0062 2028-12 expenseInflation              -102.643200 cash  -                      c15
+  0062 2029-01 expenseInflation              -102.643200 cash  -                      c15
   0063 2029-01 transfer                       533.971200 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
   0064 2029-01 premiumTaxCredit               851.712000 info  premiumTaxCredit       c- {estimate=47026.477787 percent=277 share=1}
   0065 2029-02 transfer                       533.971200 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
@@ -645,7 +645,7 @@
   0084 2029-11 premiumTaxCredit               851.712000 info  premiumTaxCredit       c- {estimate=47026.477787 percent=277 share=1}
   0085 2029-12 transfer                       533.971200 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
   0086 2029-12 premiumTaxCredit               851.712000 info  premiumTaxCredit       c- {estimate=47026.477787 percent=277 share=1}
-  0087 2029-12 expenseInflation              -110.854656 cash  -                      c16
+  0087 2030-01 expenseInflation              -110.854656 cash  -                      c16
   0088 2030-01 transfer                       580.048896 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
   0089 2030-01 premiumTaxCredit               916.488960 info  premiumTaxCredit       c- {estimate=48611.810065 percent=278 share=1}
   0090 2030-02 transfer                       580.048896 cash  -                      c11 {cadence=monthly from=Marketplace Plan to=IRA}
@@ -680,66 +680,66 @@
   premiumTaxCredit             n=  60 first=        0.000000 last=      916.490000 min=        0.000000 max=      916.490000 sum=      38107.200000 #df6530a1
 
 [packages]
-  0000 assetAppreciation=3650.822323 expense=-3900.000000 incomeTax=-433.333333 tradIRADistribution=4333.333333 value=925410.356439
-  0001 assetAppreciation=3648.012629 expense=-3907.132550 incomeTax=-434.125839 tradIRADistribution=4341.258389 value=924709.959960
-  0002 assetAppreciation=3645.159127 expense=-3914.283270 incomeTax=-434.920363 tradIRADistribution=4349.203633 value=923998.746519
-  0003 assetAppreciation=3642.261556 expense=-3921.452204 incomeTax=-435.716912 tradIRADistribution=4357.169116 value=923276.651763
-  0004 assetAppreciation=3639.319652 expense=-3928.639401 incomeTax=-436.515489 tradIRADistribution=4365.154890 value=922543.611021
-  0005 assetAppreciation=3636.333154 expense=-3935.844905 incomeTax=-437.316101 tradIRADistribution=4373.161006 value=921799.559310
-  0006 assetAppreciation=3633.301795 expense=-3943.068765 incomeTax=-438.118752 tradIRADistribution=4381.187516 value=921044.431327
-  0007 assetAppreciation=3630.225310 expense=-3950.311026 incomeTax=-438.923447 tradIRADistribution=4389.234473 value=920278.161455
-  0008 assetAppreciation=3627.103432 expense=-3957.571735 incomeTax=-439.730193 tradIRADistribution=4397.301928 value=919500.683754
-  0009 assetAppreciation=3623.935891 expense=-3964.850940 incomeTax=-440.538993 tradIRADistribution=4405.389934 value=918711.931964
-  0010 assetAppreciation=3620.722419 expense=-3972.148688 incomeTax=-441.349854 tradIRADistribution=4413.498542 value=917911.839503
-  0011 assetAppreciation=3617.462743 expense=-3979.465025 incomeTax=-442.162781 tradIRADistribution=4421.627806 value=917100.339465
-  0012 assetAppreciation=3616.376989 expense=-3441.800000 incomeTax=-382.422222 tradIRADistribution=3824.222222 taxTrueUp=1129.449589 premiumTaxCredit=633.000000 ptcReconciliation=6768.000000 value=924694.590162
-  0013 assetAppreciation=3615.500242 expense=-3449.153659 incomeTax=-383.239295 tradIRADistribution=3832.392955 premiumTaxCredit=633.000000 value=924470.325057
-  0014 assetAppreciation=3614.586558 expense=-3456.526051 incomeTax=-384.058450 tradIRADistribution=3840.584501 premiumTaxCredit=633.000000 value=924236.935943
-  0015 assetAppreciation=3613.635702 expense=-3463.917223 incomeTax=-384.879691 tradIRADistribution=3848.796914 premiumTaxCredit=633.000000 value=923994.364731
-  0016 assetAppreciation=3612.647437 expense=-3471.327222 incomeTax=-385.703025 tradIRADistribution=3857.030247 premiumTaxCredit=633.000000 value=923742.553047
-  0017 assetAppreciation=3611.621525 expense=-3478.756097 incomeTax=-386.528455 tradIRADistribution=3865.284552 premiumTaxCredit=633.000000 value=923481.442220
-  0018 assetAppreciation=3610.557727 expense=-3486.203896 incomeTax=-387.355988 tradIRADistribution=3873.559885 premiumTaxCredit=633.000000 value=923210.973291
-  0019 assetAppreciation=3609.455803 expense=-3493.670667 incomeTax=-388.185630 tradIRADistribution=3881.856297 premiumTaxCredit=633.000000 value=922931.087006
-  0020 assetAppreciation=3608.315512 expense=-3501.156459 incomeTax=-389.017384 tradIRADistribution=3890.173843 premiumTaxCredit=633.000000 value=922641.723814
-  0021 assetAppreciation=3607.136610 expense=-3508.661319 incomeTax=-389.851258 tradIRADistribution=3898.512577 premiumTaxCredit=633.000000 value=922342.823870
-  0022 assetAppreciation=3605.918855 expense=-3516.185297 incomeTax=-390.687255 tradIRADistribution=3906.872552 premiumTaxCredit=633.000000 value=922034.327028
-  0023 assetAppreciation=3604.662001 expense=-3523.728441 incomeTax=-391.525382 tradIRADistribution=3915.253823 premiumTaxCredit=633.000000 value=921716.172847
-  0024 assetAppreciation=3603.554678 expense=-3484.930800 incomeTax=-387.214533 tradIRADistribution=3872.145333 taxTrueUp=1318.889193 premiumTaxCredit=774.400000 ptcReconciliation=744.000000 value=923407.849761
-  0025 assetAppreciation=3602.429518 expense=-3492.512423 incomeTax=-388.056936 tradIRADistribution=3880.569359 premiumTaxCredit=774.400000 value=923122.108984
-  0026 assetAppreciation=3601.265374 expense=-3500.113359 incomeTax=-388.901484 tradIRADistribution=3889.014843 premiumTaxCredit=774.400000 value=922826.739217
-  0027 assetAppreciation=3600.062001 expense=-3507.733656 incomeTax=-389.748184 tradIRADistribution=3897.481841 premiumTaxCredit=774.400000 value=922521.679669
-  0028 assetAppreciation=3598.819151 expense=-3515.373366 incomeTax=-390.597041 tradIRADistribution=3905.970407 premiumTaxCredit=774.400000 value=922206.869243
-  0029 assetAppreciation=3597.536574 expense=-3523.032536 incomeTax=-391.448060 tradIRADistribution=3914.480596 premiumTaxCredit=774.400000 value=921882.246541
-  0030 assetAppreciation=3596.214021 expense=-3530.711217 incomeTax=-392.301246 tradIRADistribution=3923.012463 premiumTaxCredit=774.400000 value=921547.749857
-  0031 assetAppreciation=3594.851240 expense=-3538.409458 incomeTax=-393.156606 tradIRADistribution=3931.566065 premiumTaxCredit=774.400000 value=921203.317182
-  0032 assetAppreciation=3593.447979 expense=-3546.127309 incomeTax=-394.014145 tradIRADistribution=3940.141455 premiumTaxCredit=774.400000 value=920848.886195
-  0033 assetAppreciation=3592.003983 expense=-3553.864820 incomeTax=-394.873869 tradIRADistribution=3948.738689 premiumTaxCredit=774.400000 value=920484.394268
-  0034 assetAppreciation=3590.518998 expense=-3561.622041 incomeTax=-395.735782 tradIRADistribution=3957.357824 premiumTaxCredit=774.400000 value=920109.778461
-  0035 assetAppreciation=3588.992767 expense=-3569.399023 incomeTax=-396.599891 tradIRADistribution=3965.998914 premiumTaxCredit=774.400000 value=919724.975522
-  0036 assetAppreciation=3587.321830 expense=-3602.527015 incomeTax=-400.280779 tradIRADistribution=4002.807794 taxTrueUp=1376.725424 premiumTaxCredit=851.712000 ptcReconciliation=-120.000000 value=920455.755128
-  0037 assetAppreciation=3585.597242 expense=-3610.343668 incomeTax=-401.149296 tradIRADistribution=4011.492964 premiumTaxCredit=851.712000 value=920022.022841
-  0038 assetAppreciation=3583.830163 expense=-3618.180233 incomeTax=-402.020026 tradIRADistribution=4020.200259 premiumTaxCredit=851.712000 value=919577.796219
-  0039 assetAppreciation=3582.020329 expense=-3626.036760 incomeTax=-402.892973 tradIRADistribution=4028.929733 premiumTaxCredit=851.712000 value=919123.010274
-  0040 assetAppreciation=3580.167475 expense=-3633.913300 incomeTax=-403.768144 tradIRADistribution=4037.681445 premiumTaxCredit=851.712000 value=918657.599700
-  0041 assetAppreciation=3578.271335 expense=-3641.809905 incomeTax=-404.645545 tradIRADistribution=4046.455450 premiumTaxCredit=851.712000 value=918181.498865
-  0042 assetAppreciation=3576.331641 expense=-3649.726625 incomeTax=-405.525181 tradIRADistribution=4055.251805 premiumTaxCredit=851.712000 value=917694.641814
-  0043 assetAppreciation=3574.348125 expense=-3657.663511 incomeTax=-406.407057 tradIRADistribution=4064.070568 premiumTaxCredit=851.712000 value=917196.962266
-  0044 assetAppreciation=3572.320517 expense=-3665.620616 incomeTax=-407.291180 tradIRADistribution=4072.911795 premiumTaxCredit=851.712000 value=916688.393614
-  0045 assetAppreciation=3570.248545 expense=-3673.597990 incomeTax=-408.177554 tradIRADistribution=4081.775544 premiumTaxCredit=851.712000 value=916168.868920
-  0046 assetAppreciation=3568.131937 expense=-3681.595685 incomeTax=-409.066187 tradIRADistribution=4090.661872 premiumTaxCredit=851.712000 value=915638.320917
-  0047 assetAppreciation=3565.970419 expense=-3689.613752 incomeTax=-409.957084 tradIRADistribution=4099.570836 premiumTaxCredit=851.712000 value=915096.682008
-  0048 assetAppreciation=3563.575989 expense=-3743.729941 incomeTax=-415.969993 tradIRADistribution=4159.699935 taxTrueUp=1416.853683 premiumTaxCredit=916.488960 ptcReconciliation=-336.000000 value=915462.498120
-  0049 assetAppreciation=3561.114473 expense=-3751.788910 incomeTax=-416.865434 tradIRADistribution=4168.654345 premiumTaxCredit=916.488960 value=914846.878749
-  0050 assetAppreciation=3558.606363 expense=-3759.868409 incomeTax=-417.763157 tradIRADistribution=4177.631565 premiumTaxCredit=916.488960 value=914219.753468
-  0051 assetAppreciation=3556.051377 expense=-3767.968488 incomeTax=-418.663165 tradIRADistribution=4186.631654 premiumTaxCredit=916.488960 value=913581.052478
-  0052 assetAppreciation=3553.449230 expense=-3776.089201 incomeTax=-419.565467 tradIRADistribution=4195.654668 premiumTaxCredit=916.488960 value=912930.705641
-  0053 assetAppreciation=3550.799637 expense=-3784.230601 incomeTax=-420.470067 tradIRADistribution=4204.700667 premiumTaxCredit=916.488960 value=912268.642473
-  0054 assetAppreciation=3548.102310 expense=-3792.392739 incomeTax=-421.376971 tradIRADistribution=4213.769710 premiumTaxCredit=916.488960 value=911594.792142
-  0055 assetAppreciation=3545.356960 expense=-3800.575669 incomeTax=-422.286185 tradIRADistribution=4222.861854 premiumTaxCredit=916.488960 value=910909.083473
-  0056 assetAppreciation=3542.563298 expense=-3808.779444 incomeTax=-423.197716 tradIRADistribution=4231.977160 premiumTaxCredit=916.488960 value=910211.444939
-  0057 assetAppreciation=3539.721032 expense=-3817.004116 incomeTax=-424.111568 tradIRADistribution=4241.115685 premiumTaxCredit=916.488960 value=909501.804663
-  0058 assetAppreciation=3536.829870 expense=-3825.249740 incomeTax=-425.027749 tradIRADistribution=4250.277489 premiumTaxCredit=916.488960 value=908780.090416
-  0059 assetAppreciation=3533.889517 expense=-3833.516368 incomeTax=-425.946263 tradIRADistribution=4259.462631 premiumTaxCredit=916.488960 value=908046.229616
+  0000 assetAppreciation=3650.822323 expense=-3900.000000 incomeTax=-433.333333 tradIRADistribution=4333.333333 value=929317.488989
+  0001 assetAppreciation=3648.012629 expense=-3907.132550 incomeTax=-434.125839 tradIRADistribution=4341.258389 value=928624.243229
+  0002 assetAppreciation=3645.159127 expense=-3914.283270 incomeTax=-434.920363 tradIRADistribution=4349.203633 value=927920.198724
+  0003 assetAppreciation=3642.261556 expense=-3921.452204 incomeTax=-435.716912 tradIRADistribution=4357.169116 value=927205.291164
+  0004 assetAppreciation=3639.319652 expense=-3928.639401 incomeTax=-436.515489 tradIRADistribution=4365.154890 value=926479.455926
+  0005 assetAppreciation=3636.333154 expense=-3935.844905 incomeTax=-437.316101 tradIRADistribution=4373.161006 value=925742.628074
+  0006 assetAppreciation=3633.301795 expense=-3943.068765 incomeTax=-438.118752 tradIRADistribution=4381.187516 value=924994.742353
+  0007 assetAppreciation=3630.225310 expense=-3950.311026 incomeTax=-438.923447 tradIRADistribution=4389.234473 value=924235.733190
+  0008 assetAppreciation=3627.103432 expense=-3957.571735 incomeTax=-439.730193 tradIRADistribution=4397.301928 value=923465.534694
+  0009 assetAppreciation=3623.935891 expense=-3964.850940 incomeTax=-440.538993 tradIRADistribution=4405.389934 value=922684.080651
+  0010 assetAppreciation=3620.722419 expense=-3972.148688 incomeTax=-441.349854 tradIRADistribution=4413.498542 value=921891.304528
+  0011 assetAppreciation=3617.462743 expense=-3979.465025 incomeTax=-442.162781 tradIRADistribution=4421.627806 value=921087.139465
+  0012 assetAppreciation=3616.376989 expense=-3441.800000 incomeTax=-382.422222 tradIRADistribution=3824.222222 taxTrueUp=1129.449589 premiumTaxCredit=633.000000 ptcReconciliation=6768.000000 value=928776.743821
+  0013 assetAppreciation=3615.500242 expense=-3449.153659 incomeTax=-383.239295 tradIRADistribution=3832.392955 premiumTaxCredit=633.000000 value=928559.851108
+  0014 assetAppreciation=3614.586558 expense=-3456.526051 incomeTax=-384.058450 tradIRADistribution=3840.584501 premiumTaxCredit=633.000000 value=928333.853165
+  0015 assetAppreciation=3613.635702 expense=-3463.917223 incomeTax=-384.879691 tradIRADistribution=3848.796914 premiumTaxCredit=633.000000 value=928098.691953
+  0016 assetAppreciation=3612.647437 expense=-3471.327222 incomeTax=-385.703025 tradIRADistribution=3857.030247 premiumTaxCredit=633.000000 value=927854.309144
+  0017 assetAppreciation=3611.621525 expense=-3478.756097 incomeTax=-386.528455 tradIRADistribution=3865.284552 premiumTaxCredit=633.000000 value=927600.646116
+  0018 assetAppreciation=3610.557727 expense=-3486.203896 incomeTax=-387.355988 tradIRADistribution=3873.559885 premiumTaxCredit=633.000000 value=927337.643959
+  0019 assetAppreciation=3609.455803 expense=-3493.670667 incomeTax=-388.185630 tradIRADistribution=3881.856297 premiumTaxCredit=633.000000 value=927065.243465
+  0020 assetAppreciation=3608.315512 expense=-3501.156459 incomeTax=-389.017384 tradIRADistribution=3890.173843 premiumTaxCredit=633.000000 value=926783.385133
+  0021 assetAppreciation=3607.136610 expense=-3508.661319 incomeTax=-389.851258 tradIRADistribution=3898.512577 premiumTaxCredit=633.000000 value=926492.009167
+  0022 assetAppreciation=3605.918855 expense=-3516.185297 incomeTax=-390.687255 tradIRADistribution=3906.872552 premiumTaxCredit=633.000000 value=926191.055469
+  0023 assetAppreciation=3604.662001 expense=-3523.728441 incomeTax=-391.525382 tradIRADistribution=3915.253823 premiumTaxCredit=633.000000 value=925880.463647
+  0024 assetAppreciation=3603.554678 expense=-3484.930800 incomeTax=-387.214533 tradIRADistribution=3872.145333 taxTrueUp=1318.889193 premiumTaxCredit=774.400000 ptcReconciliation=744.000000 value=927674.762184
+  0025 assetAppreciation=3602.429518 expense=-3492.512423 incomeTax=-388.056936 tradIRADistribution=3880.569359 premiumTaxCredit=774.400000 value=927396.622343
+  0026 assetAppreciation=3601.265374 expense=-3500.113359 incomeTax=-388.901484 tradIRADistribution=3889.014843 premiumTaxCredit=774.400000 value=927108.872874
+  0027 assetAppreciation=3600.062001 expense=-3507.733656 incomeTax=-389.748184 tradIRADistribution=3897.481841 premiumTaxCredit=774.400000 value=926811.453035
+  0028 assetAppreciation=3598.819151 expense=-3515.373366 incomeTax=-390.597041 tradIRADistribution=3905.970407 premiumTaxCredit=774.400000 value=926504.301779
+  0029 assetAppreciation=3597.536574 expense=-3523.032536 incomeTax=-391.448060 tradIRADistribution=3914.480596 premiumTaxCredit=774.400000 value=926187.357758
+  0030 assetAppreciation=3596.214021 expense=-3530.711217 incomeTax=-392.301246 tradIRADistribution=3923.012463 premiumTaxCredit=774.400000 value=925860.559315
+  0031 assetAppreciation=3594.851240 expense=-3538.409458 incomeTax=-393.156606 tradIRADistribution=3931.566065 premiumTaxCredit=774.400000 value=925523.844491
+  0032 assetAppreciation=3593.447979 expense=-3546.127309 incomeTax=-394.014145 tradIRADistribution=3940.141455 premiumTaxCredit=774.400000 value=925177.151015
+  0033 assetAppreciation=3592.003983 expense=-3553.864820 incomeTax=-394.873869 tradIRADistribution=3948.738689 premiumTaxCredit=774.400000 value=924820.416309
+  0034 assetAppreciation=3590.518998 expense=-3561.622041 incomeTax=-395.735782 tradIRADistribution=3957.357824 premiumTaxCredit=774.400000 value=924453.577484
+  0035 assetAppreciation=3588.992767 expense=-3569.399023 incomeTax=-396.599891 tradIRADistribution=3965.998914 premiumTaxCredit=774.400000 value=924076.571336
+  0036 assetAppreciation=3587.321830 expense=-3602.527015 incomeTax=-400.280779 tradIRADistribution=4002.807794 taxTrueUp=1376.725424 premiumTaxCredit=851.712000 ptcReconciliation=-120.000000 value=924917.810796
+  0037 assetAppreciation=3585.597242 expense=-3610.343668 incomeTax=-401.149296 tradIRADistribution=4011.492964 premiumTaxCredit=851.712000 value=924491.915074
+  0038 assetAppreciation=3583.830163 expense=-3618.180233 incomeTax=-402.020026 tradIRADistribution=4020.200259 premiumTaxCredit=851.712000 value=924055.544979
+  0039 assetAppreciation=3582.020329 expense=-3626.036760 incomeTax=-402.892973 tradIRADistribution=4028.929733 premiumTaxCredit=851.712000 value=923608.635575
+  0040 assetAppreciation=3580.167475 expense=-3633.913300 incomeTax=-403.768144 tradIRADistribution=4037.681445 premiumTaxCredit=851.712000 value=923151.121605
+  0041 assetAppreciation=3578.271335 expense=-3641.809905 incomeTax=-404.645545 tradIRADistribution=4046.455450 premiumTaxCredit=851.712000 value=922682.937489
+  0042 assetAppreciation=3576.331641 expense=-3649.726625 incomeTax=-405.525181 tradIRADistribution=4055.251805 premiumTaxCredit=851.712000 value=922204.017325
+  0043 assetAppreciation=3574.348125 expense=-3657.663511 incomeTax=-406.407057 tradIRADistribution=4064.070568 premiumTaxCredit=851.712000 value=921714.294882
+  0044 assetAppreciation=3572.320517 expense=-3665.620616 incomeTax=-407.291180 tradIRADistribution=4072.911795 premiumTaxCredit=851.712000 value=921213.703603
+  0045 assetAppreciation=3570.248545 expense=-3673.597990 incomeTax=-408.177554 tradIRADistribution=4081.775544 premiumTaxCredit=851.712000 value=920702.176604
+  0046 assetAppreciation=3568.131937 expense=-3681.595685 incomeTax=-409.066187 tradIRADistribution=4090.661872 premiumTaxCredit=851.712000 value=920179.646670
+  0047 assetAppreciation=3565.970419 expense=-3689.613752 incomeTax=-409.957084 tradIRADistribution=4099.570836 premiumTaxCredit=851.712000 value=919646.046253
+  0048 assetAppreciation=3563.575989 expense=-3743.729941 incomeTax=-415.969993 tradIRADistribution=4159.699935 taxTrueUp=1416.853683 premiumTaxCredit=916.488960 ptcReconciliation=-336.000000 value=920130.775990
+  0049 assetAppreciation=3561.114473 expense=-3751.788910 incomeTax=-416.865434 tradIRADistribution=4168.654345 premiumTaxCredit=916.488960 value=919523.236118
+  0050 assetAppreciation=3558.606363 expense=-3759.868409 incomeTax=-417.763157 tradIRADistribution=4177.631565 premiumTaxCredit=916.488960 value=918904.210916
+  0051 assetAppreciation=3556.051377 expense=-3767.968488 incomeTax=-418.663165 tradIRADistribution=4186.631654 premiumTaxCredit=916.488960 value=918273.630640
+  0052 assetAppreciation=3553.449230 expense=-3776.089201 incomeTax=-419.565467 tradIRADistribution=4195.654668 premiumTaxCredit=916.488960 value=917631.425202
+  0053 assetAppreciation=3550.799637 expense=-3784.230601 incomeTax=-420.470067 tradIRADistribution=4204.700667 premiumTaxCredit=916.488960 value=916977.524172
+  0054 assetAppreciation=3548.102310 expense=-3792.392739 incomeTax=-421.376971 tradIRADistribution=4213.769710 premiumTaxCredit=916.488960 value=916311.856771
+  0055 assetAppreciation=3545.356960 expense=-3800.575669 incomeTax=-422.286185 tradIRADistribution=4222.861854 premiumTaxCredit=916.488960 value=915634.351877
+  0056 assetAppreciation=3542.563298 expense=-3808.779444 incomeTax=-423.197716 tradIRADistribution=4231.977160 premiumTaxCredit=916.488960 value=914944.938015
+  0057 assetAppreciation=3539.721032 expense=-3817.004116 incomeTax=-424.111568 tradIRADistribution=4241.115685 premiumTaxCredit=916.488960 value=914243.543363
+  0058 assetAppreciation=3536.829870 expense=-3825.249740 incomeTax=-425.027749 tradIRADistribution=4250.277489 premiumTaxCredit=916.488960 value=913530.095744
+  0059 assetAppreciation=3533.889517 expense=-3833.516368 incomeTax=-425.946263 tradIRADistribution=4259.462631 taxTrueUp=1452.902924 premiumTaxCredit=916.488960 ptcReconciliation=-408.000000 value=913849.425553
 
 [priceIndex]
   [0000]         1.002547         1.005101         1.007662         1.010228         1.012802         1.015382
