@@ -58,6 +58,7 @@ globalThis.window = globalThis;
 import assert from 'node:assert/strict';
 
 import { Portfolio } from '../js/portfolio.js';
+import { ModelAsset } from '../js/model-asset.js';
 import { chronometer_run } from '../js/chronometer.js';
 import { simConfigFromGlobals } from '../js/globals.js';
 import { quickStartProfiles, buildQuickStart } from '../js/quick-start.js';
@@ -248,13 +249,27 @@ const main = async () => {
 
     const early = await run('earlyCareer');
 
+    const depleted = new Portfolio([
+        ModelAsset.fromJSON({
+            instrument: 'bank', displayName: 'Checking',
+            startDateInt: { year: 2026, month: 1 }, finishDateInt: { year: 2026, month: 12 },
+            startCurrency: { amount: 20000 }, startBasisCurrency: { amount: 0 }, annualReturnRate: { rate: 0 },
+        }),
+        ModelAsset.fromJSON({
+            instrument: 'monthlyExpense', displayName: 'Living',
+            startDateInt: { year: 2026, month: 1 }, finishDateInt: { year: 2026, month: 12 },
+            startCurrency: { amount: 5000 }, startBasisCurrency: { amount: 0 }, annualReturnRate: { rate: 0 },
+        }),
+    ], false, simConfigFromGlobals());
+    await chronometer_run(depleted);
+
     test('a depleted plan: spending drawn + unfunded == the obligation accrued', () => {
-        const got = calendarYear(early, 2060);
-        const from = janIndex(early, 2060);
-        const living = -sumMetric(early, Metric.LIVING_EXPENSE, from, from + 11);
+        const got = calendarYear(depleted, 2026);
+        const from = janIndex(depleted, 2026);
+        const living = -sumMetric(depleted, Metric.LIVING_EXPENSE, from, from + 11);
 
         assert.ok(got.unfunded > 1000,
-            `2060 no longer goes unfunded (${got.unfunded.toFixed(0)}); this test is ` +
+            `2026 no longer goes unfunded (${got.unfunded.toFixed(0)}); this test is ` +
             `about the shortfall half of the identity and needs a plan that fails`);
         assert.ok(got.spending < living * 0.9,
             'the draw should fall well short of the accrual on a depleted plan');

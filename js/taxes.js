@@ -438,7 +438,7 @@ export class TaxTable {
 
     }
 
-    /** The running total of SS tax withheld from one earner this year. */
+    /** The running total of SS-covered earnings accumulated by one earner this year. */
     #socialSecurityAccumulator(owner) {
         let acc = this.yearlySocialSecurityByOwner.get(owner);
         if (!acc) {
@@ -448,9 +448,9 @@ export class TaxTable {
         return acc;
     }
 
-    addYearlySocialSecurity(amount, owner = TaxOwner.PRIMARY) {
+    addYearlySocialSecurity(earnings, owner = TaxOwner.PRIMARY) {
 
-        this.#socialSecurityAccumulator(owner).add(amount);
+        this.#socialSecurityAccumulator(owner).add(earnings);
 
     }
 
@@ -542,24 +542,19 @@ export class TaxTable {
 
     calculateSocialSecurityTax(isSelfEmployed, income, owner = TaxOwner.PRIMARY) {
 
-        let c = null;
-        let maxC = null;
-        if (isSelfEmployed) {
-            c = new Currency(income.amount * this.activeTaxTables.fica.ssFullRate);
-            maxC = new Currency(this.activeTaxTables.fica.maxSSEarnings * this.activeTaxTables.fica.ssFullRate);
-        }
-        else {
-            c = new Currency(income.amount * this.activeTaxTables.fica.ssHalfRate);
-            maxC = new Currency(this.activeTaxTables.fica.maxSSEarnings * this.activeTaxTables.fica.ssHalfRate);
-        }
-            
+        const rate = isSelfEmployed
+            ? this.activeTaxTables.fica.ssFullRate
+            : this.activeTaxTables.fica.ssHalfRate;
+
         const accumulated = this.#socialSecurityAccumulator(owner);
-        if (accumulated.amount + c.amount > maxC.amount) {
+        const remaining = Math.max(0, this.activeTaxTables.fica.maxSSEarnings - accumulated.amount);
+        const taxableEarnings = Math.min(Math.max(0, income.amount), remaining);
+
+        if (income.amount > remaining) {
             logger.log(LogCategory.TAX, 'at maximum social security tax');
-            c.amount = maxC.amount - accumulated.amount;
         }
 
-        return c;
+        return new Currency(taxableEarnings * rate);
 
     }
 

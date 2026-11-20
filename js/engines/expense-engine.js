@@ -275,7 +275,7 @@ export class ExpenseEngine {
 
             // Execute first, then book what actually moved: the target may be
             // missing, and a spilled portion came from another account.
-            const target = FundTransfer.resolveFunding(this.modelAssets);
+            const target = FundTransfer.resolveDeposit(this.modelAssets);
             if (!target) {
                 logger.log(LogCategory.SANITY,
                     () => `ExpenseEngine.ensureRMDs: no backstop account to receive ${modelAsset.displayName} RMD of ${remains.toString()}`);

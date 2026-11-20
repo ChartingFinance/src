@@ -1014,7 +1014,9 @@ export class Portfolio {
             if (hasExtra) {
                 logger.log(LogCategory.TRANSFER, () => 'Portfolio.applyAssetCloseFundTransfers: ' + modelAsset.displayName + ' funding ' + extraAmount.toString() + ' to the funding backstop');
 
-                const target = FundTransfer.resolveFunding(this.modelAssets);
+                const target = extraAmount.amount > 0
+                    ? FundTransfer.resolveDeposit(this.modelAssets)
+                    : FundTransfer.resolveFunding(this.modelAssets);
                 if (target) {
                     const ft = FundTransfer.system(modelAsset, target, extraAmount, this.modelAssets);
                     const result = ft.execute();
@@ -1030,7 +1032,9 @@ export class Portfolio {
 
             logger.log(LogCategory.TRANSFER, () => 'Portfolio.applyAssetCloseFundTransfers: ' + modelAsset.displayName + ' funding ' + modelAssetValue.toString() + ' to the funding backstop');
 
-            const target = FundTransfer.resolveFunding(this.modelAssets);
+            const target = modelAssetValue.amount > 0
+                ? FundTransfer.resolveDeposit(this.modelAssets)
+                : FundTransfer.resolveFunding(this.modelAssets);
             if (target) {
                 const ft = FundTransfer.system(modelAsset, target, modelAssetValue, this.modelAssets);
                 const result = ft.execute();

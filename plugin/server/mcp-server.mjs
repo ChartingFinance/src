@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.3.50; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.3.51; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -33438,7 +33438,7 @@ var TaxTable = class {
   }
   monthlyChron() {
   }
-  /** The running total of SS tax withheld from one earner this year. */
+  /** The running total of SS-covered earnings accumulated by one earner this year. */
   #socialSecurityAccumulator(owner) {
     let acc = this.yearlySocialSecurityByOwner.get(owner);
     if (!acc) {
@@ -33447,8 +33447,8 @@ var TaxTable = class {
     }
     return acc;
   }
-  addYearlySocialSecurity(amount, owner = TaxOwner.PRIMARY) {
-    this.#socialSecurityAccumulator(owner).add(amount);
+  addYearlySocialSecurity(earnings, owner = TaxOwner.PRIMARY) {
+    this.#socialSecurityAccumulator(owner).add(earnings);
   }
   yearlyChron(inflationOverride) {
     for (const acc of this.yearlySocialSecurityByOwner.values()) acc.zero();
@@ -33504,21 +33504,14 @@ var TaxTable = class {
     return result;
   }
   calculateSocialSecurityTax(isSelfEmployed, income, owner = TaxOwner.PRIMARY) {
-    let c = null;
-    let maxC = null;
-    if (isSelfEmployed) {
-      c = new Currency(income.amount * this.activeTaxTables.fica.ssFullRate);
-      maxC = new Currency(this.activeTaxTables.fica.maxSSEarnings * this.activeTaxTables.fica.ssFullRate);
-    } else {
-      c = new Currency(income.amount * this.activeTaxTables.fica.ssHalfRate);
-      maxC = new Currency(this.activeTaxTables.fica.maxSSEarnings * this.activeTaxTables.fica.ssHalfRate);
-    }
+    const rate = isSelfEmployed ? this.activeTaxTables.fica.ssFullRate : this.activeTaxTables.fica.ssHalfRate;
     const accumulated = this.#socialSecurityAccumulator(owner);
-    if (accumulated.amount + c.amount > maxC.amount) {
+    const remaining = Math.max(0, this.activeTaxTables.fica.maxSSEarnings - accumulated.amount);
+    const taxableEarnings = Math.min(Math.max(0, income.amount), remaining);
+    if (income.amount > remaining) {
       logger.log(LogCategory.TAX, "at maximum social security tax");
-      c.amount = maxC.amount - accumulated.amount;
     }
-    return c;
+    return new Currency(taxableEarnings * rate);
   }
   calculateMedicareTax(isSelfEmployed, income) {
     let c = new Currency();
@@ -34299,8 +34292,9 @@ var PayrollEngine = class {
     if (InstrumentType.isMonthlyIncome(modelAsset.instrument)) {
       if (InstrumentType.isWorkingIncome(modelAsset.instrument)) {
         const owner = TaxOwner.PRIMARY;
-        let withholding = this.config.taxTable.calculateFICATax(modelAsset.isSelfEmployed, modelAsset.incomeCurrency.copy(), owner);
-        this.config.taxTable.addYearlySocialSecurity(withholding.socialSecurityTax, owner);
+        const grossIncome = modelAsset.incomeCurrency.copy();
+        let withholding = this.config.taxTable.calculateFICATax(modelAsset.isSelfEmployed, grossIncome, owner);
+        this.config.taxTable.addYearlySocialSecurity(grossIncome, owner);
         this.taxEngine.recordFICAWithholding(modelAsset, withholding);
       }
     }
@@ -34633,7 +34627,7 @@ var PayrollEngine = class {
       }
       if (runningTransferAmount.amount < modelAsset.netIncomeCurrency.amount) {
         let delta = new Currency(modelAsset.netIncomeCurrency.amount - runningTransferAmount.amount);
-        const target = FundTransfer.resolveFunding(this.modelAssets);
+        const target = FundTransfer.resolveDeposit(this.modelAssets);
         if (target) {
           FundTransfer.system(modelAsset, target, delta).execute();
         } else {
@@ -34872,7 +34866,7 @@ var ExpenseEngine = class {
     }
     if (rmd.amount > distributions.amount) {
       let remains = new Currency(rmd.amount - distributions.amount);
-      const target = FundTransfer.resolveFunding(this.modelAssets);
+      const target = FundTransfer.resolveDeposit(this.modelAssets);
       if (!target) {
         logger.log(
           LogCategory.SANITY,
@@ -37026,7 +37020,7 @@ var Portfolio = class _Portfolio {
       const hasExtra = modelAssetValue.amount >= 0 ? extraAmount.amount > 5e-3 : extraAmount.amount < -5e-3;
       if (hasExtra) {
         logger.log(LogCategory.TRANSFER, () => "Portfolio.applyAssetCloseFundTransfers: " + modelAsset.displayName + " funding " + extraAmount.toString() + " to the funding backstop");
-        const target = FundTransfer.resolveFunding(this.modelAssets);
+        const target = extraAmount.amount > 0 ? FundTransfer.resolveDeposit(this.modelAssets) : FundTransfer.resolveFunding(this.modelAssets);
         if (target) {
           const ft = FundTransfer.system(modelAsset, target, extraAmount, this.modelAssets);
           const result = ft.execute();
@@ -37038,7 +37032,7 @@ var Portfolio = class _Portfolio {
       }
     } else {
       logger.log(LogCategory.TRANSFER, () => "Portfolio.applyAssetCloseFundTransfers: " + modelAsset.displayName + " funding " + modelAssetValue.toString() + " to the funding backstop");
-      const target = FundTransfer.resolveFunding(this.modelAssets);
+      const target = modelAssetValue.amount > 0 ? FundTransfer.resolveDeposit(this.modelAssets) : FundTransfer.resolveFunding(this.modelAssets);
       if (target) {
         const ft = FundTransfer.system(modelAsset, target, modelAssetValue, this.modelAssets);
         const result = ft.execute();
