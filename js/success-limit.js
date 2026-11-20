@@ -55,6 +55,8 @@ export const SUCCESS_WITHIN = 0.005;
  * @param {number|null} [sim.retirementDateInt]  as an int; markets vary from here
  * @param {string} [sim.dataMode]
  * @param {number|null} [sim.backtestFromYear]
+ * @param {number} [sim.returnShift]  the market outlook's shift for historical
+ *   draws (market-outlook.js); the plan's assets already carry it otherwise
  * @param {(completed: number, total: number) => void} [sim.onProgress]
  * @returns {Promise<number>} 0 to 1
  */
@@ -70,6 +72,7 @@ export async function simulatedRate(plan, factor, sim) {
             dataMode: sim.dataMode || 'historical',
             backtestFromYear: sim.backtestFromYear ?? null,
             seed: sim.seed,
+            returnShift: sim.returnShift ?? 0,
             onProgress: sim.onProgress ?? null,
             config: plan.config,
         });

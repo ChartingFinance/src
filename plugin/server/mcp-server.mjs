@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.3.47; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.3.48; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -40109,7 +40109,7 @@ function runRandom(seed, runIndex) {
     return ((t ^ t >>> 14) >>> 0) / 4294967296;
   };
 }
-function applyRandomRates(modelAssets, pool, dataMode = "historical", baseRates = null, inflationRate = null, random = Math.random) {
+function applyRandomRates(modelAssets, pool, dataMode = "historical", baseRates = null, inflationRate = null, random = Math.random, returnShift2 = 0) {
   const calibrationBase = dataMode === "calibrated" ? (() => {
     if (typeof inflationRate !== "number" || !Number.isFinite(inflationRate)) {
       throw new Error("applyRandomRates: calibrated mode needs the plan inflationRate; got " + JSON.stringify(inflationRate));
@@ -40126,10 +40126,10 @@ function applyRandomRates(modelAssets, pool, dataMode = "historical", baseRates 
     const base = baseRates?.get(asset) ?? 0;
     const dividendRate = asset.annualDividendRate?.rate ?? 0;
     if (InstrumentType.isTaxableAccount(asset.instrument) || InstrumentType.isIRA(asset.instrument) || InstrumentType.isRothIRA(asset.instrument) || InstrumentType.is401K(asset.instrument)) {
-      asset.annualReturnRate.rate = calibrated ? base + (sp500 - pool.means.sp500) : sp500 - dividendRate;
+      asset.annualReturnRate.rate = calibrated ? base + (sp500 - pool.means.sp500) : sp500 - dividendRate + returnShift2;
     }
     if (asset.instrument === Instrument.US_BOND) {
-      asset.annualReturnRate.rate = calibrated ? base + (treasury - pool.means.treasury) : treasury - dividendRate;
+      asset.annualReturnRate.rate = calibrated ? base + (treasury - pool.means.treasury) : treasury - dividendRate + returnShift2;
     }
     if (InstrumentType.isMonthlyExpense(asset.instrument)) {
       asset.annualReturnRate.rate = calibrated ? base + (cpi - pool.means.cpi) : cpi + (asset.premiumExcessOverInflation ?? 0);
@@ -40150,7 +40150,7 @@ function applyRandomRates(modelAssets, pool, dataMode = "historical", baseRates 
 function calibrationBaseRates(modelAssets) {
   return new Map(modelAssets.map((a) => [a, a.effectiveAnnualReturnRate.rate]));
 }
-function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, pool, dataMode, config2, random) {
+function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, pool, dataMode, config2, random, returnShift2 = 0) {
   const assets = ModelAsset.cloneArray(sourceAssets);
   const portfolio = new Portfolio(assets, false, config2);
   if (lifeEvents) portfolio.lifeEvents = lifeEvents.map((e) => e.copy());
@@ -40169,7 +40169,8 @@ function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, p
       dataMode,
       baseRates,
       portfolio.config.inflationRate,
-      random
+      random,
+      returnShift2
     );
     priceIndex.setAnnualRate(draw.inflationRate);
   }
@@ -40207,7 +40208,8 @@ function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, p
           dataMode,
           baseRates,
           portfolio.config.inflationRate,
-          random
+          random,
+          returnShift2
         );
         priceIndex.setAnnualRate(draw.inflationRate);
       }
@@ -40282,6 +40284,7 @@ async function computeMonteCarlo(sourceAssets, {
   dataMode = "historical",
   backtestFromYear = null,
   seed = null,
+  returnShift: returnShift2 = 0,
   // Supplied by the caller, as in gr-compute.
   config: config2
 } = {}) {
@@ -40370,7 +40373,8 @@ async function computeMonteCarlo(sourceAssets, {
       pool,
       dataMode,
       config2,
-      runRandom(seed, i)
+      runRandom(seed, i),
+      returnShift2
     ));
     allRuns.push(fit(nominal));
     allRunsReal.push(fit(real));
@@ -43061,6 +43065,7 @@ async function simulatedRate(plan, factor, sim) {
       dataMode: sim.dataMode || "historical",
       backtestFromYear: sim.backtestFromYear ?? null,
       seed: sim.seed,
+      returnShift: sim.returnShift ?? 0,
       onProgress: sim.onProgress ?? null,
       config: plan.config
     }
@@ -43145,6 +43150,61 @@ async function limitBySuccess(plan, solved, { target, markets, rateAt, known = [
   });
 }
 
+// js/market-outlook.js
+var MarketOutlook = Object.freeze({
+  PESSIMISTIC: "pessimistic",
+  MODERATE: "moderate",
+  OPTIMISTIC: "optimistic"
+});
+var OUTLOOKS = Object.freeze([MarketOutlook.PESSIMISTIC, MarketOutlook.MODERATE, MarketOutlook.OPTIMISTIC]);
+var SHIFTS = Object.freeze({ pessimistic: -0.01, moderate: 0, optimistic: 0.01 });
+var RENAMED = Object.freeze({
+  home: Instrument.REAL_ESTATE,
+  monthlySalary: Instrument.WORKING_INCOME,
+  monthlySocialSecurity: Instrument.RETIREMENT_INCOME,
+  monthlyPension: Instrument.RETIREMENT_INCOME
+});
+function isMarketOutlook(value) {
+  return Object.hasOwn(SHIFTS, value);
+}
+function returnShift(outlook = MarketOutlook.MODERATE) {
+  if (!isMarketOutlook(outlook)) {
+    throw new Error(`Unknown market outlook "${outlook}". Use one of: ${OUTLOOKS.join(", ")}.`);
+  }
+  return SHIFTS[outlook];
+}
+function isStockOrBond(instrument) {
+  return InstrumentType.isTaxableAccount(instrument) || InstrumentType.isIRA(instrument) || InstrumentType.isRothIRA(instrument) || InstrumentType.is401K(instrument) || instrument === Instrument.US_BOND || instrument === Instrument.CORP_BOND;
+}
+function outlookAssets(modelAssets, outlook) {
+  const shift = returnShift(outlook);
+  return modelAssets.map((asset) => {
+    const plain = JSON.parse(JSON.stringify(asset));
+    if (shift === 0) return plain;
+    const instrument = RENAMED[plain.instrument] ?? plain.instrument;
+    if (!isStockOrBond(instrument)) return plain;
+    const rate = plain.annualReturnRate?.annualReturnRate ?? plain.annualReturnRate?.rate ?? 0;
+    plain.annualReturnRate = { annualReturnRate: rate + shift };
+    return plain;
+  });
+}
+function outlookLabel(outlook) {
+  returnShift(outlook);
+  if (outlook === MarketOutlook.PESSIMISTIC) return `Pessimistic (${MINUS}1%)`;
+  if (outlook === MarketOutlook.OPTIMISTIC) return "Optimistic (+1%)";
+  return "Moderate";
+}
+function outlookClause(outlook) {
+  const shift = returnShift(outlook);
+  if (shift === 0) return null;
+  return `stock and bond returns 1% a year ${shift > 0 ? "higher" : "lower"} than you entered`;
+}
+function outlookNote(outlook) {
+  const clause = outlookClause(outlook);
+  if (!clause) return null;
+  return `Every figure assumes ${clause}. Inflation, wages and cash stay as entered.`;
+}
+
 // js/spending-report.js
 var DASH = "\u2014";
 function holdings(untouched = []) {
@@ -43155,15 +43215,17 @@ function holdings(untouched = []) {
 }
 function spendingHeadline(result) {
   const { asEntered, best } = result;
-  if (!best) return "No spending level tested keeps these limits.";
+  const clause = outlookClause(result.outlook);
+  const lead = clause ? `With ${clause}, the` : "The";
+  if (!best) return clause ? `With ${clause}, no spending level tested keeps these limits.` : "No spending level tested keeps these limits.";
   if (asEntered.runsOut) {
     const share = Math.floor(best.factor * 100);
-    return `The expenses as entered cannot all be paid. The most this plan can spend is ${formatCurrency(best.monthlySpending)} a month, with every expense cut to ${share < 1 ? "less than 1%" : `${share}%`} of what you entered.`;
+    return `${lead} expenses as entered cannot all be paid. The most this plan can spend is ${formatCurrency(best.monthlySpending)} a month, with every expense cut to ${share < 1 ? "less than 1%" : `${share}%`} of what you entered.`;
   }
   const change = best.monthlySpending - asEntered.monthlySpending;
   const percent2 = asEntered.monthlySpending ? Math.round(change / asEntered.monthlySpending * 100) : 0;
   const versus = Math.abs(change) < 1 ? "the same as you entered" : `${formatCurrency(Math.abs(change))} a month ${change > 0 ? "more" : "less"} than you entered (${percent2 > 0 ? "+" : percent2 < 0 ? MINUS : ""}${Math.abs(percent2)}%)`;
-  return `The most this plan can spend is ${formatCurrency(best.monthlySpending)} a month, ${versus}.`;
+  return `${lead} most this plan can spend is ${formatCurrency(best.monthlySpending)} a month, ${versus}.`;
 }
 function whatStopsYou(result) {
   const by = result.boundBy;
@@ -43208,7 +43270,9 @@ function successNote(result) {
   const target = Math.round(s.target * 100);
   if (result.fixedBest && result.best) {
     const cost = result.fixedBest.monthlySpending - result.best.monthlySpending;
-    return `On the plan's own path of returns it could spend ${formatCurrency(result.fixedBest.monthlySpending)} a month. Lasting in ${target}% of simulated markets costs ${formatCurrency(cost)} a month of that.`;
+    const shift = returnShift(result.outlook);
+    const path = shift ? `the plan's own path of returns, 1% a year ${shift > 0 ? "higher" : "lower"} than you entered,` : "the plan's own path of returns";
+    return `On ${path} it could spend ${formatCurrency(result.fixedBest.monthlySpending)} a month. Lasting in ${target}% of simulated markets costs ${formatCurrency(cost)} a month of that.`;
   }
   if (result.best && s.bestRate != null) {
     return `The ${target}% limit did not bind: at this spending the plan lasts in ${Math.floor(s.bestRate * 100)}% of ${s.markets} simulated markets. A market counts as lasting while the plan's net worth stays above $0, retirement accounts included.`;
@@ -43249,13 +43313,19 @@ function resultRows(result, routed = null) {
 // js/mcp/max-spending.js
 var MARKETS = 300;
 var MARKETS_SEED = 1;
-async function maxSpending(spec, { leaveAtLeast = 0, simulatedMarketsPercent = null, markets = MARKETS } = {}) {
+async function maxSpending(spec, {
+  leaveAtLeast = 0,
+  simulatedMarketsPercent = null,
+  marketOutlook = MarketOutlook.MODERATE,
+  markets = MARKETS
+} = {}) {
   if (!spec?.modelAssets?.length) {
     throw new Error("Plan spec has no modelAssets \u2014 nothing to solve.");
   }
+  const shift = returnShift(marketOutlook);
   spec = planWithIds(spec);
   const plan = {
-    modelAssets: spec.modelAssets,
+    modelAssets: outlookAssets(spec.modelAssets, marketOutlook),
     lifeEvents: spec.lifeEvents ?? [],
     config: simConfigFromPlanSpec(spec)
   };
@@ -43271,7 +43341,8 @@ async function maxSpending(spec, { leaveAtLeast = 0, simulatedMarketsPercent = n
       seed: MARKETS_SEED,
       dataMode: plan.config.simDataMode,
       backtestFromYear: null,
-      retirementDateInt: ageToDateIntFor(bound, bound.retirementAge).toInt()
+      retirementDateInt: ageToDateIntFor(bound, bound.retirementAge).toInt(),
+      returnShift: shift
     };
     result = await limitBySuccess(plan, result, {
       target: simulatedMarketsPercent / 100,
@@ -43279,6 +43350,7 @@ async function maxSpending(spec, { leaveAtLeast = 0, simulatedMarketsPercent = n
       rateAt: (factor) => simulatedRate(plan, factor, sim)
     });
   }
+  result = { ...result, outlook: marketOutlook };
   const solvedSpec = result.best ? {
     ...spec,
     name: `${spec.name ?? "Plan"}: spend the most`,
@@ -43299,6 +43371,7 @@ function maxSpendingMarkdown({ result, plan }, { handle = null } = {}) {
     "",
     `**Plan:** ${c.filingAs} \xB7 ages ${c.startAge} \u2192 retires ${c.retirementAge} \u2192 ends ${c.finishAge} \xB7 inflation ${(c.inflationRate * 100).toFixed(1)}%`,
     `**Limits:** ${limits}`,
+    ...outlookNote(result.outlook) ? [`**Market outlook:** ${outlookLabel(result.outlook)}. ${outlookNote(result.outlook)}`] : [],
     "",
     `**${spendingHeadline(result)}**`,
     "",
@@ -43335,7 +43408,7 @@ function maxSpendingMarkdown({ result, plan }, { handle = null } = {}) {
     );
   }
   if (handle) {
-    lines.push("", `**The plan at this spending:** \`${handle}\`. Pass it to \`share_link\` to open it in the app, to \`run_plan\` (as \`shareUrl\`) for its full report, or to \`diff_plans\` against the plan it came from. The plan it came from is unchanged.`);
+    lines.push("", `**The plan at this spending:** \`${handle}\`. Pass it to \`share_link\` to open it in the app, to \`run_plan\` (as \`shareUrl\`) for its full report, or to \`diff_plans\` against the plan it came from. The plan it came from is unchanged.` + (outlookClause(result.outlook) ? ` That plan has your own return rates, not the outlook's: this answer assumed ${outlookClause(result.outlook)}, so run as it stands it will not give this answer.` : ""));
   }
   lines.push(
     "",
@@ -43572,14 +43645,15 @@ server.tool(
 );
 server.tool(
   "max_spending",
-  "Answers 'how much can this plan spend?': the most every monthly expense can be turned up (or must be turned down) together while the plan never leaves a bill unpaid and still ends with at least a stated amount. It is the Spending test of the Charting Finance app's Test Bench, so it gives the app's figure. Returns the monthly amount, the plan as entered beside it, the limit that stopped it from going higher, each expense at that level, and a run handle for the plan at that spending. The plan it is given is not changed. By default the answer is for the plan's own fixed path of returns, where the most a plan can spend leaves no margin; say so when you report it, or pass simulatedMarketsPercent.",
+  "Answers 'how much can this plan spend?': the most every monthly expense can be turned up (or must be turned down) together while the plan never leaves a bill unpaid and still ends with at least a stated amount. It is the Spending test of the Charting Finance app's Test Bench, so it gives the app's figure. Returns the monthly amount, the plan as entered beside it, the limit that stopped it from going higher, each expense at that level, and a run handle for the plan at that spending. The plan it is given is not changed. By default the answer is for the plan's own fixed path of returns, where the most a plan can spend leaves no margin; say so when you report it, or pass simulatedMarketsPercent. marketOutlook stresses the return assumption, as the Test Bench's Market returns control does: every stock and bond return 1% a year lower (pessimistic) or higher (optimistic) than entered. It is not a forecast and not a probability; name it when you report the answer.",
   {
     plan: external_exports3.string().describe("The plan to solve: a run handle from quick_start_report or run_plan, a share link, or a share payload."),
     leaveAtLeast: external_exports3.number().min(0).default(0).describe("The least the plan must end with, in today's dollars. 0 spends down to nothing."),
-    simulatedMarketsPercent: external_exports3.number().int().min(50).max(99).optional().describe("Also require the plan to last in this share of 300 simulated markets, e.g. 90, which is what the app requires by default. Omit to leave this limit off. It lowers the answer when the plan would not last in that share, and it is slow: up to ten runs of the markets, one to two minutes.")
+    simulatedMarketsPercent: external_exports3.number().int().min(50).max(99).optional().describe("Also require the plan to last in this share of 300 simulated markets, e.g. 90, which is what the app requires by default. Omit to leave this limit off. It lowers the answer when the plan would not last in that share, and it is slow: up to ten runs of the markets, one to two minutes."),
+    marketOutlook: external_exports3.enum(["pessimistic", "moderate", "optimistic"]).default("moderate").describe("Stock and bond returns as entered (moderate), or 1% a year lower (pessimistic) or higher (optimistic), in the plan's own path and in the simulated markets. Inflation, wages and cash are not moved. The handle returned keeps the plan's own rates.")
   },
-  guard(async ({ plan, leaveAtLeast, simulatedMarketsPercent }) => {
-    const solved = await maxSpending(planFromReference(plan), { leaveAtLeast, simulatedMarketsPercent });
+  guard(async ({ plan, leaveAtLeast, simulatedMarketsPercent, marketOutlook }) => {
+    const solved = await maxSpending(planFromReference(plan), { leaveAtLeast, simulatedMarketsPercent, marketOutlook });
     const handle = solved.solvedSpec ? (await runPlanCached(solved.solvedSpec, { includeReconciliation: false })).handle : null;
     return { content: [{ type: "text", text: maxSpendingMarkdown(solved, { handle }) }] };
   })

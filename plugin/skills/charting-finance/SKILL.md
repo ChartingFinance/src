@@ -92,6 +92,16 @@ Report it with its limits, because the figure means nothing without them:
   quoting a figure that leaves none.
 - Spending is what the plan pays out to live on, in today's dollars, averaged
   over the whole plan. Taxes are not in it.
+- **`marketOutlook` stresses the return assumption**, as the app's Market
+  returns control does: `"pessimistic"` or `"optimistic"` solves with every
+  stock and bond return 1% a year lower or higher than entered (inflation,
+  wages and cash unchanged); `"moderate"`, the default, is the plan as entered.
+  It is not a forecast and not a probability: say "if stock and bond returns
+  were a point lower", never "in a bad market". Name the outlook with the
+  figure. The handle it returns keeps the plan's own rates, so that plan run
+  as it stands will not give the outlook's answer; say so if you hand it on.
+  When the answer barely moves between outlooks, returns are not what limits
+  the plan: "What stops it" names what does.
 
 ### Building a plan from a description
 

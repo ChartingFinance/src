@@ -321,6 +321,9 @@ The button reads "Save as a scenario", asks for a name, and switches to it.
 - **Never as the score of a wide search.** 10,000 candidates times 300 runs is
   more than a day. The routing test stays on the plan's own path of returns
   (decision §14.14), and says so beside its result.
+- **Under a market outlook** (spec 17, `markdowns/market-outlook-spec.md`): every
+  test can run with stock and bond returns 1% a year lower or higher than entered.
+  Moderate is this section as written.
 
 ### 7.1 The limit, as built
 

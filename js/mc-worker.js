@@ -151,6 +151,7 @@ if (isWorker) self.onmessage = async function (event) {
                 dataMode: payload.dataMode || 'historical',
                 backtestFromYear: payload.backtestFromYear ?? null,
                 seed: payload.seed ?? null,
+                returnShift: payload.returnShift ?? 0,
                 config: simConfigFromGlobals(),
                 checkpoint: async (completed) => {
                     // Macrotask yield: lets queued pause/resume messages run
