@@ -180,6 +180,14 @@ export function obligationOf(event, scopes, memo = null) {
     if (treatment === 'spending') return { bucket: Expenditure.SPENDING, label: 'One-time purchases' };
     if (treatment === 'excluded') return null;
 
+    // A spillover from a direct spending or tax draw (e.g. a negative ONE_TIME
+    // event or tax withholding) carries the original event's type in data.cause.
+    if (event.type === EventType.SPILLOVER && event.data?.cause) {
+        const causeTreatment = EXPENDITURE_TREATMENT[event.data.cause];
+        if (causeTreatment === 'spending') return { bucket: Expenditure.SPENDING, label: 'One-time purchases' };
+        if (causeTreatment === 'tax')      return { bucket: Expenditure.TAX, label: TAX_LABEL[event.data.cause] };
+    }
+
     // 'byScope'. The innermost obligation names it: a settlement inside
     // "Pay Living Expenses" paid Living Expenses.
     if (memo?.has(event.traceId)) return memo.get(event.traceId);

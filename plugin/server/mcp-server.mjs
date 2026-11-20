@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.3.49; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.3.50; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -33015,9 +33015,12 @@ var FundTransfer = class _FundTransfer {
       this.toModel.recordEvent(EventType.CAPITAL_GAIN_RECOGNIZED, toResult.realizedGain.copy(), { metric: Metric.LONG_TERM_CAPITAL_GAIN, data: { spillover: false } });
     }
     const spillSource = fromResult.spillover?.amount > 0 ? this.fromModel : toResult.spillover?.amount > 0 ? this.toModel : null;
+    const rawClamp = fromResult.spillover?.amount > 0 ? fromResult.spillover.amount : toResult.spillover?.amount > 0 ? toResult.spillover.amount : 0;
+    const supplied = new Currency(Math.max(0, Math.abs(amount.amount) - rawClamp));
     let spillover = Currency.zero();
     let spilloverGain = Currency.zero();
     let spilloverInstrument = null;
+    let unfunded = Currency.zero();
     if (spillSource && this._allModels) {
       const spillAmount = fromResult.spillover?.amount > 0 ? fromResult.spillover : toResult.spillover;
       const fallback = _FundTransfer.resolveFunding(this._allModels);
@@ -33029,19 +33032,24 @@ var FundTransfer = class _FundTransfer {
             data: { depleted: spillSource.displayName, origin: ShortfallOrigin.PAIRED }
           }
         );
-        spillover = spillAmount.copy();
+        const fallbackUnfunded = spillResult.spillover?.amount ?? 0;
+        spillover = new Currency(spillAmount.amount - fallbackUnfunded);
         spilloverGain = spillResult.realizedGain?.copy() ?? Currency.zero();
         spilloverInstrument = fallback.instrument;
         if (spilloverGain.amount > 0) {
           fallback.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, spilloverGain);
           fallback.recordEvent(EventType.CAPITAL_GAIN_RECOGNIZED, spilloverGain.copy(), { metric: Metric.LONG_TERM_CAPITAL_GAIN, data: { spillover: true } });
         }
-        if (spillResult.spillover?.amount > 0) {
+        if (fallbackUnfunded > 0) {
+          unfunded = spillResult.spillover.copy();
           _FundTransfer.reportUnfunded(spillSource, spillResult.spillover, `${memo} (account and backstop depleted)`, ShortfallOrigin.PAIRED);
         }
       } else {
+        unfunded = spillAmount.copy();
         _FundTransfer.reportUnfunded(spillSource, spillAmount, `${memo} (account depleted, no backstop)`, ShortfallOrigin.PAIRED);
       }
+    } else if (rawClamp > 0) {
+      unfunded = new Currency(rawClamp);
     }
     const combinedGain = fromResult.realizedGain.plus(toResult.realizedGain ?? Currency.zero());
     const result = new FundTransferResult(
@@ -33051,9 +33059,11 @@ var FundTransfer = class _FundTransfer {
       memo,
       combinedGain
     );
+    result.supplied = supplied;
     result.spillover = spillover;
     result.spilloverGain = spilloverGain;
     result.spilloverInstrument = spilloverInstrument;
+    result.unfunded = unfunded;
     return result;
   }
   // ── Utilities ────────────────────────────────────────────────────
@@ -34668,10 +34678,11 @@ var ExpenseEngine = class {
         if (!fundTransfer.toModel) continue;
         const expenseAmount = fundTransfer.calculate();
         const fundTransferResult = fundTransfer.execute();
-        const withdrawalAmount = fundTransferResult.toAssetChange.copy().flipSign();
-        withdrawalAmount.subtract(fundTransferResult.spillover);
-        this.monthly.recordTransfer(fundTransfer.toModel.instrument, withdrawalAmount, fundTransferResult.realizedGain);
-        fundTransfer.toModel.recordDistribution(withdrawalAmount);
+        const withdrawalAmount = fundTransferResult.supplied;
+        if (withdrawalAmount.amount > 0) {
+          this.monthly.recordTransfer(fundTransfer.toModel.instrument, withdrawalAmount, fundTransferResult.realizedGain);
+          fundTransfer.toModel.recordDistribution(withdrawalAmount);
+        }
         if (fundTransferResult.spillover.amount > 0 && fundTransferResult.spilloverInstrument) {
           this.monthly.recordTransfer(
             fundTransferResult.spilloverInstrument,
@@ -34870,7 +34881,7 @@ var ExpenseEngine = class {
         return;
       }
       const result = FundTransfer.system(modelAsset, target, remains, this.modelAssets).execute();
-      const actual = remains.minus(result.spillover);
+      const actual = result.supplied;
       if (actual.amount > 0) {
         if (InstrumentType.isIRA(modelAsset.instrument)) {
           modelAsset.addToMetric(Metric.TRAD_IRA_DISTRIBUTION, actual);
@@ -36873,7 +36884,14 @@ var Portfolio = class _Portfolio {
           if (event.amount.amount >= 0) {
             modelAsset.credit(event.amount.copy(), descriptor);
           } else {
-            modelAsset.debit(event.amount.copy().flipSign(), descriptor);
+            const oneSided = new FundTransferOneSided(null, event.amount.copy().flipSign());
+            oneSided.fromModel = modelAsset;
+            oneSided.toModel = modelAsset;
+            const settled = FundTransfer.settleOneSided(oneSided, descriptor, this.modelAssets);
+            this.monthly.recordTransfer(modelAsset.instrument, settled.supplied, settled.realizedGain);
+            if (settled.spillover.amount > 0 && settled.spilloverInstrument) {
+              this.monthly.recordTransfer(settled.spilloverInstrument, settled.spillover, settled.spilloverGain);
+            }
           }
         }
       }
@@ -36964,11 +36982,22 @@ var Portfolio = class _Portfolio {
     this.applyAssetCloseFundTransfers(modelAsset);
     modelAsset.close(currentDateInt);
   }
+  #bookCloseTransferResult(fundTransfer, result, amount) {
+    if (amount.amount < 0) {
+      if (result.supplied.amount > 0) {
+        this.monthly.recordTransfer(fundTransfer.toModel.instrument, result.supplied, result.realizedGain);
+        fundTransfer.toModel.recordDistribution(result.supplied);
+      }
+    }
+    if (result.spillover.amount > 0 && result.spilloverInstrument) {
+      this.monthly.recordTransfer(result.spilloverInstrument, result.spillover, result.spilloverGain);
+    }
+  }
   applyAssetCloseFundTransfers(modelAsset) {
     let modelAssetValue = modelAsset.finishCurrency.copy();
     const closeTransfers = (modelAsset.fundTransfers || []).filter((ft) => ft.hasClose);
     if (closeTransfers.length > 0) {
-      let runningTransferAmount = new Currency(0);
+      const planned = [];
       for (let fundTransfer of closeTransfers) {
         fundTransfer.bind(modelAsset, this.modelAssets);
         if (!fundTransfer.toModel) continue;
@@ -36976,8 +37005,16 @@ var Portfolio = class _Portfolio {
           logger.log(LogCategory.TRANSFER, () => "Portfolio.applyAssetCloseFundTransfers: cannot transfer to " + fundTransfer.toModel.displayName + " because not an expensable account");
           continue;
         }
-        let transferAmount = fundTransfer.calculate({ useClosePercent: true });
-        fundTransfer.execute({ useClosePercent: true });
+        delete fundTransfer.approvedAmount;
+        const transferAmount = fundTransfer.calculate({ useClosePercent: true });
+        planned.push({ fundTransfer, transferAmount });
+      }
+      let runningTransferAmount = new Currency(0);
+      for (const { fundTransfer, transferAmount } of planned) {
+        fundTransfer.approvedAmount = transferAmount.copy();
+        const result = fundTransfer.execute({ useClosePercent: true });
+        delete fundTransfer.approvedAmount;
+        this.#bookCloseTransferResult(fundTransfer, result, transferAmount);
         this.monthly.recordConversion(
           modelAsset.instrument,
           fundTransfer.toModel.instrument,
@@ -36986,22 +37023,29 @@ var Portfolio = class _Portfolio {
         runningTransferAmount.add(transferAmount);
       }
       let extraAmount = new Currency(modelAssetValue.amount - runningTransferAmount.amount);
-      if (extraAmount.amount > 0) {
+      const hasExtra = modelAssetValue.amount >= 0 ? extraAmount.amount > 5e-3 : extraAmount.amount < -5e-3;
+      if (hasExtra) {
         logger.log(LogCategory.TRANSFER, () => "Portfolio.applyAssetCloseFundTransfers: " + modelAsset.displayName + " funding " + extraAmount.toString() + " to the funding backstop");
         const target = FundTransfer.resolveFunding(this.modelAssets);
         if (target) {
-          FundTransfer.system(modelAsset, target, extraAmount, this.modelAssets).execute();
+          const ft = FundTransfer.system(modelAsset, target, extraAmount, this.modelAssets);
+          const result = ft.execute();
+          this.#bookCloseTransferResult(ft, result, extraAmount);
         } else {
-          FundTransfer.reportUnfunded(modelAsset, extraAmount, "sale proceeds (nowhere to deposit)", ShortfallOrigin.STANDALONE);
+          const unfunded = extraAmount.amount < 0 ? extraAmount.copy().flipSign() : extraAmount;
+          FundTransfer.reportUnfunded(modelAsset, unfunded, "sale proceeds (nowhere to deposit)", ShortfallOrigin.STANDALONE);
         }
       }
     } else {
       logger.log(LogCategory.TRANSFER, () => "Portfolio.applyAssetCloseFundTransfers: " + modelAsset.displayName + " funding " + modelAssetValue.toString() + " to the funding backstop");
       const target = FundTransfer.resolveFunding(this.modelAssets);
       if (target) {
-        FundTransfer.system(modelAsset, target, modelAssetValue, this.modelAssets).execute();
+        const ft = FundTransfer.system(modelAsset, target, modelAssetValue, this.modelAssets);
+        const result = ft.execute();
+        this.#bookCloseTransferResult(ft, result, modelAssetValue);
       } else {
-        FundTransfer.reportUnfunded(modelAsset, modelAssetValue, "sale proceeds (nowhere to deposit)", ShortfallOrigin.STANDALONE);
+        const unfunded = modelAssetValue.amount < 0 ? modelAssetValue.copy().flipSign() : modelAssetValue;
+        FundTransfer.reportUnfunded(modelAsset, unfunded, "sale proceeds (nowhere to deposit)", ShortfallOrigin.STANDALONE);
       }
     }
   }
@@ -37017,13 +37061,20 @@ var Portfolio = class _Portfolio {
       FundTransfer.reportUnfunded(modelAsset, amount, `purchase (${why})`, ShortfallOrigin.STANDALONE);
       return;
     }
-    const event = { type: EventType.TRANSFER, data: {
+    const event = { type: EventType.SETTLEMENT, data: {
       from: source.displayName,
       to: modelAsset.displayName,
-      cadence: "funding"
+      label: "funding"
     } };
     logger.log(LogCategory.TRANSFER, () => "Portfolio.applyAssetOpenFundTransfer: " + source.displayName + " funding " + amount.toString() + " for " + modelAsset.displayName);
-    source.debit(amount, event);
+    const oneSided = new FundTransferOneSided(null, amount);
+    oneSided.fromModel = modelAsset;
+    oneSided.toModel = source;
+    const settled = FundTransfer.settleOneSided(oneSided, event, this.modelAssets);
+    this.monthly.recordTransfer(source.instrument, settled.supplied, settled.realizedGain);
+    if (settled.spillover.amount > 0 && settled.spilloverInstrument) {
+      this.monthly.recordTransfer(settled.spilloverInstrument, settled.spillover, settled.spilloverGain);
+    }
   }
   applyYear(currentDateInt) {
     return withTrace(
@@ -41273,6 +41324,11 @@ function obligationOf(event, scopes, memo = null) {
   if (treatment === "tax") return { bucket: Expenditure.TAX, label: TAX_LABEL[event.type] };
   if (treatment === "spending") return { bucket: Expenditure.SPENDING, label: "One-time purchases" };
   if (treatment === "excluded") return null;
+  if (event.type === EventType.SPILLOVER && event.data?.cause) {
+    const causeTreatment = EXPENDITURE_TREATMENT[event.data.cause];
+    if (causeTreatment === "spending") return { bucket: Expenditure.SPENDING, label: "One-time purchases" };
+    if (causeTreatment === "tax") return { bucket: Expenditure.TAX, label: TAX_LABEL[event.data.cause] };
+  }
   if (memo?.has(event.traceId)) return memo.get(event.traceId);
   const chain = chainFor(event.traceId, scopes);
   let obligation = null;

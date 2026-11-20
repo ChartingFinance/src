@@ -180,6 +180,7 @@
     transfer
   home-bought-with-a-down-payment:
     assetGrowth
+    capitalGainRecognized
     expenseInflation
     ficaWithholding
     grossUp

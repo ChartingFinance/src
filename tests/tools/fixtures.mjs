@@ -941,8 +941,8 @@ const adversarialFixtures = [
     name: 'home-bought-with-a-down-payment',
     kind: 'adversarial',
     reaches:
-      'a home bought in April 2027, 20% down from the brokerage: the debit-only ' +
-      'funding TRANSFER (cadence "funding") no other fixture emits.',
+      'a home bought in April 2027, 20% down from the brokerage: the one-sided ' +
+      'funding SETTLEMENT (label "funding") no other fixture emits.',
     config: { startAge: 40, retirementAge: 65 },
     build: () => ({
       assets: [

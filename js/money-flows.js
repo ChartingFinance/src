@@ -243,7 +243,7 @@ export function moneyFlows(portfolio, from, to) {
             const amount = e.amount.amount;
             // A $0 draw still names what its scope was paying: an account
             // drained to nothing leaves one, and a spillover pays the rest.
-            if (amount === 0 && treatment !== 'move' && treatment !== 'tax') continue;
+            if (amount === 0 && treatment !== 'move' && treatment !== 'tax' && treatment !== 'oneTime') continue;
 
             // An event counts at most a month after its own date (see
             // bookedMonthIndex); the cheap test first.
@@ -298,9 +298,10 @@ export function moneyFlows(portfolio, from, to) {
                             { to: name, toGroup: groupOf(name), kind: FlowKind.ACCOUNTS,
                               via: FlowVia.ONE_TIME, detail: null }, amount);
                     } else {
-                        add(source(name, roleOf(asset), groupOf(name)),
-                            { to: d.note || 'One-time purchase', toGroup: AssetGroup.EXPENSES,
-                              kind: FlowKind.SPENT, via: FlowVia.ONE_TIME, detail: null }, -amount);
+                        const part = { to: d.note || 'One-time purchase', toGroup: AssetGroup.EXPENSES,
+                              kind: FlowKind.SPENT, via: FlowVia.ONE_TIME, detail: null };
+                        if (amount < 0) add(source(name, roleOf(asset), groupOf(name)), part, -amount);
+                        if (e.traceId != null) draws.set(e.traceId, part);
                     }
                     break;
                 case 'unpaid':
@@ -318,7 +319,8 @@ export function moneyFlows(portfolio, from, to) {
             throw new Error(`money-flows: a spillover from ${name} has no draw in its scope ` +
                 `to say what it paid (trace ${e.traceId}).`);
         }
-        add(source(name, roleOf(asset), groupOf(name)), { ...draw, via: FlowVia.SPILLOVER }, amount);
+        const via = draw.via === FlowVia.ONE_TIME ? FlowVia.ONE_TIME : FlowVia.SPILLOVER;
+        add(source(name, roleOf(asset), groupOf(name)), { ...draw, via }, amount);
     }
 
     const unpaid = new Map();         // label|kind → { label, kind, amount }
@@ -359,7 +361,10 @@ function moveTarget(e, payer, chain, assets, groupOf) {
 
     let via;
     if (e.type === EventType.GROSS_UP) via = FlowVia.BACKSTOP;
-    else if (e.type === EventType.SETTLEMENT) via = d.backstop ? FlowVia.BACKSTOP : FlowVia.SETTLEMENT;
+    else if (e.type === EventType.SETTLEMENT) {
+        via = d.label === 'funding' ? FlowVia.OPENING
+            : d.backstop ? FlowVia.BACKSTOP : FlowVia.SETTLEMENT;
+    }
     else if (d.system) {
         const payerAsset = assets.get(payer);
         via = chain.some((s) => s.kind === TraceKind.RMD) ? FlowVia.RMD
@@ -370,7 +375,7 @@ function moveTarget(e, payer, chain, assets, groupOf) {
     else if (d.cadence === 'on close') via = FlowVia.RULE_AT_CLOSE;
     else via = FlowVia.RULE;
 
-    const detail = e.type === EventType.SETTLEMENT && d.label && d.label !== 'monthly' ? d.label : null;
+    const detail = e.type === EventType.SETTLEMENT && d.label && d.label !== 'monthly' && d.label !== 'funding' ? d.label : null;
     return { to, toGroup: propertyTax ? AssetGroup.REAL_ESTATE : groupOf(to), kind, via, detail };
 }
 

@@ -6,7 +6,7 @@ import { logger, LogCategory } from './utils/logger.js';
 import { ModelLifeEvent } from './life-event.js';
 import { User } from './user.js';
 import { withSimConfig } from './sim-config.js';
-import { FundTransfer } from './fund-transfer.js';
+import { FundTransfer, FundTransferOneSided } from './fund-transfer.js';
 import { EventType, ShortfallOrigin } from './sim-event.js';
 import { withTrace, TraceKind } from './trace.js';
 import { monthLabel, DateInt } from './utils/date-int.js';
@@ -806,7 +806,14 @@ export class Portfolio {
                     if (event.amount.amount >= 0) {
                         modelAsset.credit(event.amount.copy(), descriptor);
                     } else {
-                        modelAsset.debit(event.amount.copy().flipSign(), descriptor);
+                        const oneSided = new FundTransferOneSided(null, event.amount.copy().flipSign());
+                        oneSided.fromModel = modelAsset;
+                        oneSided.toModel = modelAsset;
+                        const settled = FundTransfer.settleOneSided(oneSided, descriptor, this.modelAssets);
+                        this.monthly.recordTransfer(modelAsset.instrument, settled.supplied, settled.realizedGain);
+                        if (settled.spillover.amount > 0 && settled.spilloverInstrument) {
+                            this.monthly.recordTransfer(settled.spilloverInstrument, settled.spillover, settled.spilloverGain);
+                        }
                     }
                 }
             }
@@ -943,6 +950,21 @@ export class Portfolio {
 
     }
 
+    #bookCloseTransferResult(fundTransfer, result, amount) {
+        if (amount.amount < 0) {
+            // Paying off a closing liability (mortgage/debt): toModel is
+            // debited ("credit-as-withdrawal"), so tax consequences belong to
+            // toModel for what it actually supplied.
+            if (result.supplied.amount > 0) {
+                this.monthly.recordTransfer(fundTransfer.toModel.instrument, result.supplied, result.realizedGain);
+                fundTransfer.toModel.recordDistribution(result.supplied);
+            }
+        }
+        if (result.spillover.amount > 0 && result.spilloverInstrument) {
+            this.monthly.recordTransfer(result.spilloverInstrument, result.spillover, result.spilloverGain);
+        }
+    }
+
     applyAssetCloseFundTransfers(modelAsset) {
 
         let modelAssetValue = modelAsset.finishCurrency.copy();
@@ -952,7 +974,10 @@ export class Portfolio {
 
         if (closeTransfers.length > 0) {
 
-            let runningTransferAmount = new Currency(0.0);
+            // Pre-calculate every transfer against the pre-transfer balance
+            // before any debit mutates finishCurrency; otherwise a 50% + 50%
+            // split pays 50% and 25% (leaving 25% to sweep to the backstop).
+            const planned = [];
             for (let fundTransfer of closeTransfers) {
                 fundTransfer.bind(modelAsset, this.modelAssets);
                 if (!fundTransfer.toModel) continue;
@@ -963,8 +988,18 @@ export class Portfolio {
                     continue;
                 }
 
-                let transferAmount = fundTransfer.calculate({ useClosePercent: true });
-                fundTransfer.execute({ useClosePercent: true });
+                delete fundTransfer.approvedAmount;
+                const transferAmount = fundTransfer.calculate({ useClosePercent: true });
+                planned.push({ fundTransfer, transferAmount });
+            }
+
+            let runningTransferAmount = new Currency(0.0);
+            for (const { fundTransfer, transferAmount } of planned) {
+                fundTransfer.approvedAmount = transferAmount.copy();
+                const result = fundTransfer.execute({ useClosePercent: true });
+                delete fundTransfer.approvedAmount;
+
+                this.#bookCloseTransferResult(fundTransfer, result, transferAmount);
 
                 // A closing IRA or 401(k) was taxed in full by the close; what
                 // it sends to a Roth is a conversion.
@@ -975,14 +1010,18 @@ export class Portfolio {
             }
 
             let extraAmount = new Currency(modelAssetValue.amount - runningTransferAmount.amount);
-            if (extraAmount.amount > 0) {
+            const hasExtra = modelAssetValue.amount >= 0 ? extraAmount.amount > 0.005 : extraAmount.amount < -0.005;
+            if (hasExtra) {
                 logger.log(LogCategory.TRANSFER, () => 'Portfolio.applyAssetCloseFundTransfers: ' + modelAsset.displayName + ' funding ' + extraAmount.toString() + ' to the funding backstop');
 
                 const target = FundTransfer.resolveFunding(this.modelAssets);
                 if (target) {
-                    FundTransfer.system(modelAsset, target, extraAmount, this.modelAssets).execute();
+                    const ft = FundTransfer.system(modelAsset, target, extraAmount, this.modelAssets);
+                    const result = ft.execute();
+                    this.#bookCloseTransferResult(ft, result, extraAmount);
                 } else {
-                    FundTransfer.reportUnfunded(modelAsset, extraAmount, 'sale proceeds (nowhere to deposit)', ShortfallOrigin.STANDALONE);
+                    const unfunded = extraAmount.amount < 0 ? extraAmount.copy().flipSign() : extraAmount;
+                    FundTransfer.reportUnfunded(modelAsset, unfunded, 'sale proceeds (nowhere to deposit)', ShortfallOrigin.STANDALONE);
                 }
             }
 
@@ -993,9 +1032,12 @@ export class Portfolio {
 
             const target = FundTransfer.resolveFunding(this.modelAssets);
             if (target) {
-                FundTransfer.system(modelAsset, target, modelAssetValue, this.modelAssets).execute();
+                const ft = FundTransfer.system(modelAsset, target, modelAssetValue, this.modelAssets);
+                const result = ft.execute();
+                this.#bookCloseTransferResult(ft, result, modelAssetValue);
             } else {
-                FundTransfer.reportUnfunded(modelAsset, modelAssetValue, 'sale proceeds (nowhere to deposit)', ShortfallOrigin.STANDALONE);
+                const unfunded = modelAssetValue.amount < 0 ? modelAssetValue.copy().flipSign() : modelAssetValue;
+                FundTransfer.reportUnfunded(modelAsset, unfunded, 'sale proceeds (nowhere to deposit)', ShortfallOrigin.STANDALONE);
             }
 
         }
@@ -1018,14 +1060,24 @@ export class Portfolio {
             FundTransfer.reportUnfunded(modelAsset, amount, `purchase (${why})`, ShortfallOrigin.STANDALONE);
             return;
         }
-        const event = { type: EventType.TRANSFER, data: {
-            from: source.displayName, to: modelAsset.displayName, cadence: 'funding' } };
+        const event = { type: EventType.SETTLEMENT, data: {
+            from: source.displayName, to: modelAsset.displayName, label: 'funding' } };
 
         logger.log(LogCategory.TRANSFER, () => 'Portfolio.applyAssetOpenFundTransfer: ' + source.displayName + ' funding ' + amount.toString() + ' for ' + modelAsset.displayName);
 
-        // Debit-only: real estate already has its value via finishCurrency = startCurrency.
-        // A two-sided execute() would double-credit the real estate.
-        source.debit(amount, event);
+        // One-sided settlement: real estate already has its value via
+        // finishCurrency = startCurrency, so a two-sided execute() would
+        // double-credit it. settleOneSided clamps at $0, re-sources any
+        // shortfall, reports what nothing can cover, and books realized gains
+        // and retirement distributions.
+        const oneSided = new FundTransferOneSided(null, amount);
+        oneSided.fromModel = modelAsset;
+        oneSided.toModel = source;
+        const settled = FundTransfer.settleOneSided(oneSided, event, this.modelAssets);
+        this.monthly.recordTransfer(source.instrument, settled.supplied, settled.realizedGain);
+        if (settled.spillover.amount > 0 && settled.spilloverInstrument) {
+            this.monthly.recordTransfer(settled.spilloverInstrument, settled.spillover, settled.spilloverGain);
+        }
     }
 
     applyYear(currentDateInt) {

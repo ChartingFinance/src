@@ -58,13 +58,15 @@ export class ExpenseEngine {
                 const fundTransferResult = fundTransfer.execute();
 
                 // Book tax consequences against what each account actually
-                // supplied. toAssetChange is the requested withdrawal; if the
-                // funding account clamped at $0, execute() sourced the rest
-                // from a fallback and reports that leg separately.
-                const withdrawalAmount = fundTransferResult.toAssetChange.copy().flipSign();
-                withdrawalAmount.subtract(fundTransferResult.spillover);
-                this.monthly.recordTransfer(fundTransfer.toModel.instrument, withdrawalAmount, fundTransferResult.realizedGain);
-                fundTransfer.toModel.recordDistribution(withdrawalAmount);
+                // supplied. If the funding account clamped at $0, execute()
+                // reports what it actually supplied in `supplied`, what a
+                // fallback supplied in `spillover`, and any remaining shortfall
+                // in `unfunded`.
+                const withdrawalAmount = fundTransferResult.supplied;
+                if (withdrawalAmount.amount > 0) {
+                    this.monthly.recordTransfer(fundTransfer.toModel.instrument, withdrawalAmount, fundTransferResult.realizedGain);
+                    fundTransfer.toModel.recordDistribution(withdrawalAmount);
+                }
                 if (fundTransferResult.spillover.amount > 0 && fundTransferResult.spilloverInstrument) {
                     this.monthly.recordTransfer(fundTransferResult.spilloverInstrument,
                         fundTransferResult.spillover, fundTransferResult.spilloverGain);
@@ -285,7 +287,7 @@ export class ExpenseEngine {
             // Only the portion the IRA/401K itself supplied is a taxable
             // distribution; the spillover leg is a taxable-account withdrawal
             // whose consequence is its realized gain.
-            const actual = remains.minus(result.spillover);
+            const actual = result.supplied;
             if (actual.amount > 0) {
                 if (InstrumentType.isIRA(modelAsset.instrument)) {
                     modelAsset.addToMetric(Metric.TRAD_IRA_DISTRIBUTION, actual);
