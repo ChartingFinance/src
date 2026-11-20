@@ -38,6 +38,14 @@
  * The workers report no run, only the recipe for one, so the chart runs each
  * column again here, from the plan the test ran on (benchPlan), once each.
  *
+ * ── The market outlook ───────────────────────────────────────────────
+ *
+ * Pessimistic, Moderate or Optimistic: stock and bond returns 1% a year lower,
+ * as entered, or higher (market-outlook.js). A test reads the plan once, at its
+ * start, and puts it under the outlook then (outlookPlan), so both tests, their
+ * checks and the chart all run the same copy. The plan on screen is not
+ * changed, and a save sends only amounts and a routing, never the copy's rates.
+ *
  * The element changes nothing. "Save as a scenario" asks the app to save the
  * solved amounts, the selected routing, or both as a new scenario; the plan
  * as entered stays as it is.
@@ -51,8 +59,9 @@
  *   markStale()  the plan changed; the result on screen is from before it
  *
  * Dispatches:
- *   'testbench-save'   { detail: { factor, lifeEvents? } }  `lifeEvents` when a
- *                      routing is saved: the plan's, with the routing written in
+ *   'testbench-save'   { detail: { factor, lifeEvents?, outlook } }  `lifeEvents`
+ *                      when a routing is saved: the plan's, with the routing
+ *                      written in. `outlook` is the one the result was found under
  *   'testbench-month'  { detail: { year, month } }
  */
 
@@ -67,6 +76,21 @@ import { DEPTHS, DEFAULT_DEPTH, rankSearches } from '../routing-search.js';
 import { startsLabel, costLine, agreementLine, changeRows, versusEntered, routingHeadline,
          isLoneBest, LONE_BEST_NOTE, DEPTH_NOTES } from '../routing-report.js';
 import { formatCompactCurrency, formatCurrency } from '../utils/html.js';
+import { MarketOutlook, OUTLOOKS, outlookPlan, outlookLabel, outlookNote, returnShift } from '../market-outlook.js';
+
+/** The line under the outlook control. */
+function outlookLine(outlook) {
+    const shift = returnShift(outlook);
+    if (!shift) return 'Stock and bond returns as you entered them.';
+    return `Stock and bond returns 1% a year ${shift > 0 ? 'higher' : 'lower'} than you entered.`
+        + ' Inflation, wages and cash stay as entered.';
+}
+
+/** ", with stock and bond returns 1% a year higher than you entered", or '' at Moderate. */
+function routedTilt(outlook) {
+    const shift = returnShift(outlook);
+    return shift ? `, with stock and bond returns 1% a year ${shift > 0 ? 'higher' : 'lower'} than you entered` : '';
+}
 
 // The curve's drawing area, in viewBox units.
 const W = 480, H = 200;
@@ -86,6 +110,7 @@ class TestBench extends LitElement {
         _hover:    { state: true },
         _successOn:      { state: true },
         _successPercent: { state: true },
+        _outlook:        { state: true },   // the market outlook the next test runs under
         _solving:        { state: true },   // { tested, completed, total } while the limit is tested
         _depth:     { state: true },
         _rStatus:   { state: true },   // 'idle' | 'running' | 'done' | 'error'
@@ -113,6 +138,7 @@ class TestBench extends LitElement {
         this._hover = null;
         this._successOn = true;
         this._successPercent = 90;
+        this._outlook = MarketOutlook.MODERATE;
         this._solving = null;
         this._depth = DEFAULT_DEPTH;
         this._rStatus = 'idle';
@@ -123,6 +149,7 @@ class TestBench extends LitElement {
         this._rStale = false;
         this._rError = '';
         this._rFloor = 0;          // the floor the routing test on screen was run with
+        this._rOutlook = MarketOutlook.MODERATE;   // and the market outlook
         this._rPlan = null;        // and the plan it was run on
         this._rRun = null;         // identifies the routing test in flight
         this._rAsked = 0;          // how many searches the test on screen set out to run
@@ -174,7 +201,7 @@ class TestBench extends LitElement {
         this._cost = null;
     }
 
-    /** The routing test on screen no longer describes the plan or the floor. */
+    /** The routing test on screen no longer describes the plan, the floor or the outlook. */
     _routingOutdated() {
         this._stopRouting();
         if (this._searches) this._rStale = true;
@@ -201,8 +228,11 @@ class TestBench extends LitElement {
     }
 
     async run() {
-        const plan = this.planSource?.();
-        if (!plan) return;
+        const source = this.planSource?.();
+        if (!source) return;
+        // The plan under the outlook, once: every job and the chart run this copy.
+        const outlook = this._outlook;
+        const plan = outlookPlan(source, outlook);
         this._status = 'running';
         this._error = '';
         this._checks = {};
@@ -214,8 +244,8 @@ class TestBench extends LitElement {
         // The plan as it is now: a test is cancelled if it changes, so the
         // answer that comes back is for this one.
         const chartPlan = benchPlan(plan);
-        // A routing is ranked against a floor: another floor, another test.
-        if (this._searches && floor !== this._rFloor) this._routingOutdated();
+        // A routing is ranked against a floor and an outlook: another, another test.
+        if (this._searches && (floor !== this._rFloor || outlook !== this._rOutlook)) this._routingOutdated();
         try {
             await runTestBench(plan, { floor, success }, {
                 solving: (tested, completed, total) => { this._solving = { tested, completed, total }; },
@@ -245,16 +275,19 @@ class TestBench extends LitElement {
     // ── The routing test ────────────────────────────────────────────
 
     async runRouting() {
-        const plan = this.planSource?.();
-        if (!plan) return;
-        // The list is read against the spending test's columns, at this floor.
-        if (!this._result || this._stale || this._result.limits.floor !== this._floor) this.run();
+        const source = this.planSource?.();
+        if (!source) return;
+        const plan = outlookPlan(source, this._outlook);
+        // The list is read against the spending test's columns, at this floor and outlook.
+        if (!this._result || this._stale || this._result.limits.floor !== this._floor
+            || this._result.outlook !== this._outlook) this.run();
 
         const run = (this._rRun = {});
         this._rStatus = 'running';
         this._rError = '';
         this._rStale = false;
         this._rFloor = this._floor;
+        this._rOutlook = this._outlook;
         this._rPlan = plan;
         this._searches = [];
         this._selected = null;
@@ -303,11 +336,12 @@ class TestBench extends LitElement {
 
     /**
      * The routing column the result table shows. It belongs beside the
-     * spending test's columns only at the floor they share.
+     * spending test's columns only at the floor and outlook they share.
      */
     _tableRouted() {
         const r = this._result;
-        return r && !this._rStale && r.limits.floor === this._rFloor ? this._routedColumn() : null;
+        return r && !this._rStale && r.limits.floor === this._rFloor && r.outlook === this._rOutlook
+            ? this._routedColumn() : null;
     }
 
     /**
@@ -319,7 +353,8 @@ class TestBench extends LitElement {
     _enteredMonthly() {
         const r = this._result;
         const most = r?.fixedBest ?? r?.best;
-        return most && !this._stale && r.limits.floor === this._rFloor ? most.monthlySpending : 0;
+        return most && !this._stale && r.limits.floor === this._rFloor && r.outlook === this._rOutlook
+            ? most.monthlySpending : 0;
     }
 
     _select(key) {
@@ -352,6 +387,13 @@ class TestBench extends LitElement {
         if (floor === this._floor && !rerun) return;
         this._floor = floor;
         if (rerun || this._result) this.run();
+    }
+
+    _setOutlook(outlook) {
+        if (outlook === this._outlook) return;
+        this._outlook = outlook;
+        if (this._result) this.run();
+        else if (this._searches) this._routingOutdated();
     }
 
     _setSuccess(on, percent) {
@@ -517,7 +559,9 @@ class TestBench extends LitElement {
                         ${third(() => this._checkCell('routed', 'guardrails'))}</tr>
                 </tbody>
             </table>
-            <div class="tb-caption">Today's dollars. Spending is what the plan pays out to live on; taxes are not in it.</div>`;
+            <div class="tb-caption">Today's dollars. Spending is what the plan pays out to live on; taxes are not in it.</div>
+            ${outlookNote(this._result.outlook)
+                ? html`<div class="tb-caption tb-outlook-note">${outlookNote(this._result.outlook)}</div>` : nothing}`;
     }
 
     /** spendingHeadline()'s sentence, with the figure in bold. */
@@ -563,7 +607,7 @@ class TestBench extends LitElement {
                     <button type="button" class="btn-modern outline text-sm" title=${saveTitle}
                             ?disabled=${!result.best || this._stale || !this.canSave}
                             @click=${() => this.dispatchEvent(new CustomEvent('testbench-save',
-                                { detail: { factor: result.best.factor }, bubbles: true }))}>Save as a scenario</button>
+                                { detail: { factor: result.best.factor, outlook: result.outlook }, bubbles: true }))}>Save as a scenario</button>
                     ${this._stale ? html`<span class="tb-sub">The plan or its settings changed after this test. Run it again.</span>` : nothing}
                 </div>
             </div>`;
@@ -607,12 +651,12 @@ class TestBench extends LitElement {
         const result = row.result;
         const rows = changeRows(result.changes);
         const blocked = this._rStale || this._rStatus !== 'done' || !this.canSave;
-        const why = this._rStale ? 'Run the routing test again first: the plan, its settings or the floor changed'
+        const why = this._rStale ? 'Run the routing test again first: the plan, its settings, the floor or the market outlook changed'
             : this._rStatus !== 'done' ? 'The searches are still running'
             : !this.canSave ? 'Save the plan on screen as a scenario first'
             : 'Saves a new scenario. The plan on screen is not changed.';
         const save = (factor) => this.dispatchEvent(new CustomEvent('testbench-save',
-            { detail: { factor, lifeEvents: result.lifeEvents }, bubbles: true }));
+            { detail: { factor, lifeEvents: result.lifeEvents, outlook: this._rOutlook }, bubbles: true }));
         return html`
             <p class="tb-headline tb-routing-headline">${routingHeadline(result, this._enteredMonthly())}</p>
             ${rows.length ? html`
@@ -623,7 +667,7 @@ class TestBench extends LitElement {
                 </table>
                 <div class="tb-caption">The share of each income paid into an account, and of each expense paid from one.
                     Draws on retirement accounts before 60 are left as you entered them. Routings are found and compared on
-                    the plan's own path of returns; the simulated-markets limit is not applied to them.</div>
+                    the plan's own path of returns${routedTilt(this._rOutlook)}; the simulated-markets limit is not applied to them.</div>
                 <div class="tb-actions">
                     <button type="button" class="btn-modern outline text-sm" title=${why} ?disabled=${blocked}
                             @click=${() => save(1)}>Save this routing as a scenario</button>
@@ -670,7 +714,7 @@ class TestBench extends LitElement {
                                   + agreementLine(ranked)}</p>
                             ${row ? this._renderChanges(row) : nothing}
                         </div>
-                        ${this._rStale ? html`<p class="tb-sub">The plan, its settings or the floor changed after this test. Search again.</p>` : nothing}
+                        ${this._rStale ? html`<p class="tb-sub">The plan, its settings, the floor or the market outlook changed after this test. Search again.</p>` : nothing}
                     </div>`
                 : html`<p class="tb-sub">Tries other ways to split each income across accounts and to pay each expense, and ranks
                     them by what the plan could then spend. A deeper test runs more searches and takes longer; it all runs on this
@@ -801,7 +845,8 @@ class TestBench extends LitElement {
                     </div>
                     <div class="tb-caption">Today's dollars. Each bar is the end of its ${period}, and the last is the plan's last
                         month, so its total is the column's &ldquo;Left at the end&rdquo;. Every column is drawn on the same scale.
-                        As in Macro Projection, income and expenses count one month's amount.</div>
+                        As in Macro Projection, income and expenses count one month's amount.${outlookNote(this._result.outlook)
+                            ? ` ${outlookNote(this._result.outlook)}` : ''}</div>
                 </div>
             </div>`;
     }
@@ -831,6 +876,16 @@ class TestBench extends LitElement {
                 <button type="button" class="btn-modern primary text-sm tb-run" ?disabled=${!this.ready || running}
                         title=${this.ready ? '' : 'Add assets to run the test'}
                         @click=${() => this.run()}>${running ? 'Running…' : html`&#9654; Run`}</button>
+            </div>
+            <div class="tb-ask tb-outlook">
+                <span class="tb-ask-text">Market returns</span>
+                <div class="tb-columns" role="radiogroup" aria-label="Market outlook for the tests">
+                    ${OUTLOOKS.map((o) => html`
+                        <label class="tb-column ${o === this._outlook ? 'is-on' : ''}">
+                            <input type="radio" name="tb-outlook" .checked=${o === this._outlook}
+                                   @change=${() => this._setOutlook(o)}>${outlookLabel(o)}</label>`)}
+                </div>
+                <span class="tb-sub">${outlookLine(this._outlook)}</span>
             </div>
             ${this._status === 'error' ? html`<p class="tb-error">The test failed: ${this._error}</p>` : nothing}
             ${running && this._solving ? html`<p class="tb-sub tb-solving">Testing spending level ${this._solving.tested + 1}

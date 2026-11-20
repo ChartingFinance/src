@@ -92,9 +92,14 @@ export function runRandom(seed, runIndex) {
  * dataMode 'calibrated': the year's deviation from the pool's geometric mean,
  *   added to the asset's configured rate (baseRates) — the user's assumptions
  *   carrying history's turbulence and correlation.
+ *
+ * returnShift is the Test Bench's market outlook (market-outlook.js): added to
+ * the stock and bond rates drawn here, in historical mode only. A calibrated
+ * draw is added to the asset's own rate, which the outlook's copy of the plan
+ * has already moved, so adding it here too would count it twice.
  */
 export function applyRandomRates(modelAssets, pool, dataMode = 'historical', baseRates = null,
-                                 inflationRate = null, random = Math.random) {
+                                 inflationRate = null, random = Math.random, returnShift = 0) {
     // Calibrated mode re-centres the drawn CPI on the plan's inflation rate, so
     // it is required: `null + deviation` would silently be a number. Historical
     // mode does not use it.
@@ -130,12 +135,12 @@ export function applyRandomRates(modelAssets, pool, dataMode = 'historical', bas
             InstrumentType.is401K(asset.instrument)) {
             asset.annualReturnRate.rate = calibrated
                 ? base + (sp500 - pool.means.sp500)
-                : sp500 - dividendRate;
+                : sp500 - dividendRate + returnShift;
         }
         if (asset.instrument === Instrument.US_BOND) {
             asset.annualReturnRate.rate = calibrated
                 ? base + (treasury - pool.means.treasury)
-                : treasury - dividendRate;
+                : treasury - dividendRate + returnShift;
         }
         // Calibrated draws keep each expense's own rate as the base. A raw CPI
         // draw would drop a health-insurance premium's growth over plan
@@ -181,7 +186,8 @@ export function calibrationBaseRates(modelAssets) {
 
 // ── Single simulation run ────────────────────────────────────────
 
-function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, pool, dataMode, config, random) {
+function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, pool, dataMode, config, random,
+                 returnShift = 0) {
     const assets = ModelAsset.cloneArray(sourceAssets);
     const portfolio = new Portfolio(assets, false, config);
     if (lifeEvents) portfolio.lifeEvents = lifeEvents.map(e => e.copy());
@@ -211,7 +217,7 @@ function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, p
 
     if (withdrawalPhase) {
         const draw = applyRandomRates(portfolio.modelAssets, pool, dataMode, baseRates,
-                                      portfolio.config.inflationRate, random);
+                                      portfolio.config.inflationRate, random, returnShift);
         priceIndex.setAnnualRate(draw.inflationRate);
     }
 
@@ -249,7 +255,7 @@ function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, p
             }
             if (withdrawalPhase) {
                 const draw = applyRandomRates(portfolio.modelAssets, pool, dataMode, baseRates,
-                                      portfolio.config.inflationRate, random);
+                                      portfolio.config.inflationRate, random, returnShift);
                 priceIndex.setAnnualRate(draw.inflationRate);
             }
             portfolio.applyGuardrails(currentDateInt);
@@ -348,6 +354,8 @@ function computeBaseline(sourceAssets, guardrailParams, lifeEvents, config) {
  *   backtestFromYear  {number|null}  restrict the sampling pool to this year onward
  *   seed              {number|null}  seed the draws (see runRandom); null uses
  *                     Math.random, so two calls give different samples
+ *   returnShift       {number}  the market outlook's shift for historical draws
+ *                     (applyRandomRates); 0 is Moderate
  * @returns Promise of results object (JSON-serializable; DateInts carried as ints)
  */
 export async function computeMonteCarlo(sourceAssets, {
@@ -363,6 +371,7 @@ export async function computeMonteCarlo(sourceAssets, {
     dataMode = 'historical',
     backtestFromYear = null,
     seed = null,
+    returnShift = 0,
     // Supplied by the caller, as in gr-compute.
     config,
 } = {}) {
@@ -483,7 +492,8 @@ export async function computeMonteCarlo(sourceAssets, {
 
     for (let i = 0; i < numSimulations; i++) {
         const { nominal, real } = withoutTracing(() => runOnce(sourceAssets, grParams,
-            runFromStart ? null : retirementDateInt, lifeEvents, pool, dataMode, config, runRandom(seed, i)));
+            runFromStart ? null : retirementDateInt, lifeEvents, pool, dataMode, config, runRandom(seed, i),
+            returnShift));
         allRuns.push(fit(nominal));
         allRunsReal.push(fit(real));
         // An interim snapshot supersedes the plain progress ping at the same

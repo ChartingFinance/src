@@ -427,7 +427,10 @@ server.tool(
   + "limit that stopped it from going higher, each expense at that level, and a run handle for "
   + "the plan at that spending. The plan it is given is not changed. "
   + "By default the answer is for the plan's own fixed path of returns, where the most a plan can "
-  + "spend leaves no margin; say so when you report it, or pass simulatedMarketsPercent.",
+  + "spend leaves no margin; say so when you report it, or pass simulatedMarketsPercent. "
+  + "marketOutlook stresses the return assumption, as the Test Bench's Market returns control does: "
+  + "every stock and bond return 1% a year lower (pessimistic) or higher (optimistic) than entered. "
+  + "It is not a forecast and not a probability; name it when you report the answer.",
   {
     plan: z.string().describe("The plan to solve: a run handle from quick_start_report or run_plan, "
         + "a share link, or a share payload."),
@@ -438,9 +441,13 @@ server.tool(
                 + "which is what the app requires by default. Omit to leave this limit off. It "
                 + "lowers the answer when the plan would not last in that share, and it is slow: "
                 + "up to ten runs of the markets, one to two minutes."),
+    marketOutlook: z.enum(["pessimistic", "moderate", "optimistic"]).default("moderate")
+        .describe("Stock and bond returns as entered (moderate), or 1% a year lower (pessimistic) or "
+                + "higher (optimistic), in the plan's own path and in the simulated markets. Inflation, "
+                + "wages and cash are not moved. The handle returned keeps the plan's own rates."),
   },
-  guard(async ({ plan, leaveAtLeast, simulatedMarketsPercent }) => {
-    const solved = await maxSpending(planFromReference(plan), { leaveAtLeast, simulatedMarketsPercent });
+  guard(async ({ plan, leaveAtLeast, simulatedMarketsPercent, marketOutlook }) => {
+    const solved = await maxSpending(planFromReference(plan), { leaveAtLeast, simulatedMarketsPercent, marketOutlook });
     // The plan at the answer is run and registered, so its handle works with
     // every other tool.
     const handle = solved.solvedSpec

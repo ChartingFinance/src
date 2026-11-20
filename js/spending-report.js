@@ -11,6 +11,7 @@
 
 import { DateInt, monthLabel } from './utils/date-int.js';
 import { formatCompactCurrency, formatCurrency, MINUS } from './utils/html.js';
+import { outlookClause, returnShift } from './market-outlook.js';
 
 const DASH = '—';
 
@@ -32,13 +33,20 @@ function holdings(untouched = []) {
  * cut a raise. The answer is then given as the dial's setting, a share of
  * every expense as entered, cut to the whole percent so it never reads higher
  * than the level tested.
+ *
+ * Under a market outlook other than Moderate (`result.outlook`), the sentence
+ * opens with it: "With stock and bond returns 1% a year higher than you
+ * entered, the most this plan can spend is…".
  */
 export function spendingHeadline(result) {
     const { asEntered, best } = result;
-    if (!best) return 'No spending level tested keeps these limits.';
+    const clause = outlookClause(result.outlook);
+    const lead = clause ? `With ${clause}, the` : 'The';
+    if (!best) return clause ? `With ${clause}, no spending level tested keeps these limits.`
+        : 'No spending level tested keeps these limits.';
     if (asEntered.runsOut) {
         const share = Math.floor(best.factor * 100);
-        return 'The expenses as entered cannot all be paid. The most this plan can spend is'
+        return `${lead} expenses as entered cannot all be paid. The most this plan can spend is`
             + ` ${formatCurrency(best.monthlySpending)} a month, with every expense cut to`
             + ` ${share < 1 ? 'less than 1%' : `${share}%`} of what you entered.`;
     }
@@ -48,7 +56,7 @@ export function spendingHeadline(result) {
         ? 'the same as you entered'
         : `${formatCurrency(Math.abs(change))} a month ${change > 0 ? 'more' : 'less'} than you entered`
           + ` (${percent > 0 ? '+' : percent < 0 ? MINUS : ''}${Math.abs(percent)}%)`;
-    return `The most this plan can spend is ${formatCurrency(best.monthlySpending)} a month, ${versus}.`;
+    return `${lead} most this plan can spend is ${formatCurrency(best.monthlySpending)} a month, ${versus}.`;
 }
 
 /**
@@ -129,7 +137,10 @@ export function successNote(result) {
     const target = Math.round(s.target * 100);
     if (result.fixedBest && result.best) {
         const cost = result.fixedBest.monthlySpending - result.best.monthlySpending;
-        return `On the plan's own path of returns it could spend ${formatCurrency(result.fixedBest.monthlySpending)} a month.`
+        const shift = returnShift(result.outlook);
+        const path = shift ? `the plan's own path of returns, 1% a year ${shift > 0 ? 'higher' : 'lower'} than you entered,`
+            : "the plan's own path of returns";
+        return `On ${path} it could spend ${formatCurrency(result.fixedBest.monthlySpending)} a month.`
             + ` Lasting in ${target}% of simulated markets costs ${formatCurrency(cost)} a month of that.`;
     }
     if (result.best && s.bestRate != null) {

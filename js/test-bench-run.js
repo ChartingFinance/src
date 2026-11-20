@@ -28,6 +28,13 @@
  * by side as the machine has cores less one. Each reports its progress and
  * then its result. The routing the user selects from the list is then checked
  * as a column is: under guardrails and across simulated markets.
+ *
+ * ── The market outlook ───────────────────────────────────────────────
+ *
+ * The plan a test is given is already under its outlook (market-outlook.js,
+ * outlookPlan): stock and bond rates moved, the outlook named on it. Every job
+ * runs that copy. The outlook is also carried to the simulated markets, which
+ * add it back to historical draws, and it is part of the caches' key.
  */
 
 import { global_workerSnapshot, global_backtestYear, global_simDataMode, simConfigFromGlobals,
@@ -35,6 +42,7 @@ import { global_workerSnapshot, global_backtestYear, global_simDataMode, simConf
 import { scaledAssets } from './spending-solver.js';
 import { routingGenes, searchesAt, estimateRuns } from './routing-search.js';
 import { guardrailsOutcome, simulationOutcome, successTone } from './outcome-summary.js';
+import { MarketOutlook, returnShift } from './market-outlook.js';
 
 /** Simulated markets per column. Enough for a rate to the nearest few points. */
 export const CHECK_SIMULATIONS = 300;
@@ -137,21 +145,23 @@ export function benchPlan(plan) {
 /**
  * The simulated markets every rate on the Test Bench is measured in: the same
  * seed, data and era for the limit, the check rows and the confirmation, so
- * two rates differ only by the plan they are of.
+ * two rates differ only by the plan they are of. `returnShift` is the plan's
+ * market outlook, for historical draws.
  */
-function simFor() {
+function simFor(plan) {
     return {
         markets: CHECK_SIMULATIONS,
         seed: SEED,
         dataMode: global_simDataMode,
         backtestFromYear: global_backtestYear && global_backtestYear !== 'current'
             ? parseInt(global_backtestYear, 10) : null,
+        returnShift: returnShift(plan.outlook),
     };
 }
 
 /** The two checks of one column, as jobs to start. */
 function checkJobs(run, base, plan, modelAssets) {
-    const sim = simFor();
+    const sim = simFor(plan);
     return {
         guardrails: () => job(run, { ...base, kind: 'guardrails', modelAssets, params: plan.guardrailParams })
             .then(guardrailsCheck),
@@ -163,6 +173,7 @@ function checkJobs(run, base, plan, modelAssets) {
             dataMode: sim.dataMode,
             backtestFromYear: sim.backtestFromYear,
             seed: sim.seed,
+            returnShift: sim.returnShift,
         }, onProgress).then(simulationsCheck),
     };
 }
@@ -175,6 +186,8 @@ function checkJobs(run, base, plan, modelAssets) {
  * @param {Array}  plan.lifeEvents         life events as JSON
  * @param {object} plan.guardrailParams    the Guardrails section's settings
  * @param {number|null} plan.retirementDateInt  as an int, or null
+ * @param {string} [plan.outlook]          the market outlook the assets are under
+ *                                         (outlookPlan); absent is Moderate
  * @param {object} limits                  { floor, success? } `success` is the
  *                                         share of simulated markets the answer
  *                                         must last in (0.9), or absent
@@ -197,7 +210,8 @@ export async function runTestBench(plan, limits, on) {
     const entered = JSON.parse(JSON.stringify(plan.modelAssets));
     const base = baseFor(plan);
 
-    const key = JSON.stringify([base, entered, plan.guardrailParams, global_simDataMode]);
+    const outlook = plan.outlook ?? MarketOutlook.MODERATE;
+    const key = JSON.stringify([base, entered, plan.guardrailParams, global_simDataMode, outlook]);
     if (enteredCache.key !== key) enteredCache = { key, checks: {} };
     const cache = enteredCache;
     if (rateCache.key !== key) rateCache = { key, rates: [] };
@@ -207,7 +221,7 @@ export async function runTestBench(plan, limits, on) {
     let firstStep = null;
     const result = await job(run, {
         ...base, kind: 'spending', modelAssets: entered, limits,
-        sim: simFor(),
+        sim: simFor(plan),
         knownRates: rates.rates,
     }, (completed, total, progress) => {
         firstStep ??= Date.now();
@@ -217,6 +231,7 @@ export async function runTestBench(plan, limits, on) {
     // Traced runs, so slower than a search's: a first guess, until a search has run.
     if (result.runs && msPerRun == null) msPerRun = ((firstStep ?? Date.now()) - started) / result.runs;
     if (result.success) rates.rates = result.success.rates;
+    result.outlook = outlook;
     on.solved(result);
 
     const checksFor = (modelAssets) => checkJobs(run, base, plan, modelAssets);
@@ -263,7 +278,7 @@ export async function runTestBench(plan, limits, on) {
     if (limits.success > 0 && result.best) {
         const answer = scaledAssets(entered, result.best.factor);
         pending.push(job(run, { ...base, modelAssets: answer, guardrailParams: null, runFromStart: false,
-            ...simFor(), numSimulations: CONFIRM_SIMULATIONS },
+            ...simFor(plan), numSimulations: CONFIRM_SIMULATIONS },
             (completed, total) => { if (!run.cancelled) on.progress?.('confirm', completed, total); })
             .then((results) => { if (!run.cancelled) on.check('best', 'confirm', simulationsCheck(results)); },
                   () => { if (!run.cancelled) on.check('best', 'confirm', { failed: true }); }));

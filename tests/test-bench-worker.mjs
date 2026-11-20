@@ -271,5 +271,40 @@ await check('other settings, or a floor, in a routing payload give another answe
     assert.ok(heldResult.best.monthlySpending < routed.best.monthlySpending);
 });
 
+// ── The market outlook (spec 17) ─────────────────────────────────────
+
+// Historical markets: a draw replaces the rate, so the payload's returnShift is
+// the only way the outlook reaches them. The handler must pass it on, for a
+// market check and for the markets limit alike.
+const marketCheck = (returnShift) => ({
+    settings: snapshotFor(mid),
+    modelAssets: JSON.parse(JSON.stringify(mid.modelAssets)),
+    lifeEvents: mid.lifeEvents ?? [], backtestYear: 'current',
+    retirementDateInt: RETIRES, guardrailParams: null, runFromStart: false,
+    numSimulations: 24, dataMode: 'historical', seed: 1, returnShift,
+});
+const endMedian = (results) => results.bandData[2][results.bandData[2].length - 1];
+
+await check("a market check's returnShift reaches the historical draws", async () => {
+    const level = last(await send(marketCheck(0)));
+    const up = last(await send(marketCheck(0.01)));
+    assert.equal(level.action, 'complete', level.message);
+    assert.ok(endMedian(up.results) > endMedian(level.results),
+        `+1% must end higher: ${endMedian(up.results)} vs ${endMedian(level.results)}`);
+});
+
+await check("the markets limit's returnShift (sim.returnShift) reaches its markets", async () => {
+    const historical = { ...SIM, markets: 24, dataMode: 'historical' };
+    const level = last(await send(limited({ floor: 0, success: 0.9 }, { sim: { ...historical, returnShift: 0 } })));
+    const down = last(await send(limited({ floor: 0, success: 0.9 }, { sim: { ...historical, returnShift: -0.01 } })));
+    assert.equal(down.action, 'complete', down.message);
+    const rateAt = (r, factor) => r.success.rates.find(([f]) => f === factor)?.[1];
+    const factor = level.results.success.rates[0][0];
+    const downRate = rateAt(down.results, factor)
+        ?? await simulatedRate(midPlan(), factor, { ...historical, retirementDateInt: RETIRES, returnShift: -0.01 });
+    assert.ok(downRate < level.results.success.rates[0][1],
+        `−1% must last in fewer markets at the same level: ${downRate} vs ${level.results.success.rates[0][1]}`);
+});
+
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);

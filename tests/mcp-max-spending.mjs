@@ -39,6 +39,7 @@ import { CHECK_SIMULATIONS } from '../js/test-bench-run.js';
 import { ModelAsset } from '../js/model-asset.js';
 import { Portfolio } from '../js/portfolio.js';
 import { ageToDateIntFor } from '../js/plan-dates.js';
+import { outlookAssets } from '../js/market-outlook.js';
 
 let passed = 0, failed = 0;
 async function check(label, fn) {
@@ -325,6 +326,54 @@ await check('the headline says more, less, the same, a share for a plan that run
         + ' with every expense cut to 99% of what you entered.');
     assert.match(spendingHeadline(out(100, 20, 0.004)), /cut to less than 1% of what you entered\.$/);
     assert.equal(spendingHeadline(out(1891, null)), 'No spending level tested keeps these limits.');
+});
+
+// ── The market outlook (spec 17) ─────────────────────────────────────
+
+const rateOf = (asset) => asset.annualReturnRate?.annualReturnRate ?? asset.annualReturnRate?.rate;
+const OUTLOOK = {};
+const underOutlook = async (o) => (OUTLOOK[o] ??= await maxSpending(SPECS.midCareer, { marketOutlook: o }));
+
+await check("under an outlook the answer is the solver's on the moved copy, and moves with it", async () => {
+    for (const o of ['pessimistic', 'optimistic']) {
+        const spec = SPECS.midCareer;
+        const direct = solveSpending(planOf({ ...spec, modelAssets: outlookAssets(spec.modelAssets, o) }), { floor: 0 });
+        const { result } = await underOutlook(o);
+        assert.equal(result.best.monthlySpending, direct.best.monthlySpending, o);
+        assert.equal(result.outlook, o);
+    }
+    const moderate = (await solved('midCareer')).result;
+    assert.equal(moderate.outlook, 'moderate');
+    assert.ok((await underOutlook('pessimistic')).result.best.monthlySpending < moderate.best.monthlySpending);
+    assert.ok((await underOutlook('optimistic')).result.best.monthlySpending > moderate.best.monthlySpending);
+});
+
+await check("the plan handed back under an outlook keeps the plan's own return rates", async () => {
+    const { solvedSpec } = await underOutlook('optimistic');
+    SPECS.midCareer.modelAssets.forEach((asset, i) => {
+        assert.equal(rateOf(solvedSpec.modelAssets[i]), rateOf(asset), `${asset.displayName}: the rate entered`);
+    });
+});
+
+await check('the report names the outlook and says the handle keeps the plan\'s own rates; Moderate says neither', async () => {
+    const text = maxSpendingMarkdown(await underOutlook('pessimistic'), { handle: 'plan_abc' });
+    assert.match(text, /\*\*Market outlook:\*\* Pessimistic \(\u22121%\)\. Every figure assumes stock and bond returns 1% a year lower than you entered\./);
+    assert.match(text, /With stock and bond returns 1% a year lower than you entered/);
+    assert.match(text, /That plan has your own return rates, not the outlook's/);
+    const moderate = maxSpendingMarkdown(await solved('midCareer'), { handle: 'plan_abc' });
+    assert.doesNotMatch(moderate, /Market outlook|outlook's|1% a year/);
+});
+
+await check('an outlook that is not one of the three is refused, not run as Moderate', async () => {
+    await assert.rejects(() => maxSpending(SPECS.midCareer, { marketOutlook: 'rosy' }), /Unknown market outlook "rosy"/);
+});
+
+await check('with the markets limit on, the outlook reaches the markets too', async () => {
+    const lo = await maxSpending(SPECS.midCareer, { marketOutlook: 'pessimistic', simulatedMarketsPercent: 90, markets: 24 });
+    const mid = await maxSpending(SPECS.midCareer, { simulatedMarketsPercent: 90, markets: 24 });
+    assert.ok(lo.result.success && mid.result.success, 'the limit ran');
+    assert.ok(lo.result.best.monthlySpending <= mid.result.best.monthlySpending,
+        `${lo.result.best.monthlySpending} vs ${mid.result.best.monthlySpending}`);
 });
 
 console.log(`\n${passed} passed, ${failed} failed`);
