@@ -86,7 +86,7 @@ export class ExpenseEngine {
                         { type: EventType.GROSS_UP, data: { forAsset: modelAsset.displayName, overflow: true } });
 
                     this.#bookTaxProvision(targetAsset, modelAsset,
-                        grossWithdrawal.amount - netShortfall.amount);
+                        Math.max(0, settled.paid.amount - netShortfall.amount));
                 } else {
                     FundTransfer.reportUnfunded(modelAsset, netShortfall, 'expense overflow', ShortfallOrigin.STANDALONE);
                 }
@@ -105,7 +105,7 @@ export class ExpenseEngine {
                     { type: EventType.GROSS_UP, data: { forAsset: modelAsset.displayName, overflow: false } });
 
                 this.#bookTaxProvision(targetAsset, modelAsset,
-                    grossWithdrawal.amount - netShortfall.amount);
+                    Math.max(0, settled.paid.amount - netShortfall.amount));
             } else {
                 FundTransfer.reportUnfunded(modelAsset, netShortfall, 'expense', ShortfallOrigin.STANDALONE);
             }

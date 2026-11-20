@@ -29,7 +29,6 @@
   accumulated = -573181.652103
   total.assetAppreciation = 191128.889160
   total.propertyTaxes = -129480.472029
-  total.longTermCapitalGains = 1312.331349
   total.maintenance = -323701.180074
   total.insurance = -120000.000000
   total.value = 77688283.217690
@@ -48,76 +47,70 @@
   finishBasis = 0.000000
   isClosed = no  isDepleted = yes
   closedDate = -  closedValue = -
-  events = 62  reconciled = 62
+  events = 61  reconciled = 61
 
 [events] Brokerage
   0000 2026-01 assetGrowth                      0.000000 cash  growth                 c-
   0001 2026-01 spillover                    -2500.000000 cash  -                      c0 {cause=settlement depleted=Wallet origin=oneSided}
-  0002 2026-01 capitalGainRecognized         1312.331349 info  longTermCapitalGain    c0 {spillover=true}
-  0003 2026-02 assetGrowth                      0.000000 cash  growth                 c-
-  0004 2026-03 assetGrowth                      0.000000 cash  growth                 c-
-  0005 2026-04 assetGrowth                      0.000000 cash  growth                 c-
-  0006 2026-05 assetGrowth                      0.000000 cash  growth                 c-
-  0007 2026-06 assetGrowth                      0.000000 cash  growth                 c-
-  0008 2026-07 assetGrowth                      0.000000 cash  growth                 c-
-  0009 2026-08 assetGrowth                      0.000000 cash  growth                 c-
-  0010 2026-09 assetGrowth                      0.000000 cash  growth                 c-
-  0011 2026-10 assetGrowth                      0.000000 cash  growth                 c-
-  0012 2026-11 assetGrowth                      0.000000 cash  growth                 c-
-  0013 2026-12 assetGrowth                      0.000000 cash  growth                 c-
-  0014 2027-01 assetGrowth                      0.000000 cash  growth                 c-
-  0015 2027-02 assetGrowth                      0.000000 cash  growth                 c-
-  0016 2027-03 assetGrowth                      0.000000 cash  growth                 c-
-  0017 2027-04 assetGrowth                      0.000000 cash  growth                 c-
-  0018 2027-05 assetGrowth                      0.000000 cash  growth                 c-
-  0019 2027-06 assetGrowth                      0.000000 cash  growth                 c-
-  0020 2027-07 assetGrowth                      0.000000 cash  growth                 c-
-  0021 2027-08 assetGrowth                      0.000000 cash  growth                 c-
-  0022 2027-09 assetGrowth                      0.000000 cash  growth                 c-
-  0023 2027-10 assetGrowth                      0.000000 cash  growth                 c-
-  0024 2027-11 assetGrowth                      0.000000 cash  growth                 c-
-  0025 2027-12 assetGrowth                      0.000000 cash  growth                 c-
-  0026 2028-01 assetGrowth                      0.000000 cash  growth                 c-
-  0027 2028-02 assetGrowth                      0.000000 cash  growth                 c-
-  0028 2028-03 assetGrowth                      0.000000 cash  growth                 c-
-  0029 2028-04 assetGrowth                      0.000000 cash  growth                 c-
-  0030 2028-05 assetGrowth                      0.000000 cash  growth                 c-
-  0031 2028-06 assetGrowth                      0.000000 cash  growth                 c-
-  0032 2028-07 assetGrowth                      0.000000 cash  growth                 c-
-  0033 2028-08 assetGrowth                      0.000000 cash  growth                 c-
-  0034 2028-09 assetGrowth                      0.000000 cash  growth                 c-
-  0035 2028-10 assetGrowth                      0.000000 cash  growth                 c-
-  0036 2028-11 assetGrowth                      0.000000 cash  growth                 c-
-  0037 2028-12 assetGrowth                      0.000000 cash  growth                 c-
-  0038 2029-01 assetGrowth                      0.000000 cash  growth                 c-
-  0039 2029-02 assetGrowth                      0.000000 cash  growth                 c-
-  0040 2029-03 assetGrowth                      0.000000 cash  growth                 c-
-  0041 2029-04 assetGrowth                      0.000000 cash  growth                 c-
-  0042 2029-05 assetGrowth                      0.000000 cash  growth                 c-
-  0043 2029-06 assetGrowth                      0.000000 cash  growth                 c-
-  0044 2029-07 assetGrowth                      0.000000 cash  growth                 c-
-  0045 2029-08 assetGrowth                      0.000000 cash  growth                 c-
-  0046 2029-09 assetGrowth                      0.000000 cash  growth                 c-
-  0047 2029-10 assetGrowth                      0.000000 cash  growth                 c-
-  0048 2029-11 assetGrowth                      0.000000 cash  growth                 c-
-  0049 2029-12 assetGrowth                      0.000000 cash  growth                 c-
-  0050 2030-01 assetGrowth                      0.000000 cash  growth                 c-
-  0051 2030-02 assetGrowth                      0.000000 cash  growth                 c-
-  0052 2030-03 assetGrowth                      0.000000 cash  growth                 c-
-  0053 2030-04 assetGrowth                      0.000000 cash  growth                 c-
-  0054 2030-05 assetGrowth                      0.000000 cash  growth                 c-
-  0055 2030-06 assetGrowth                      0.000000 cash  growth                 c-
-  0056 2030-07 assetGrowth                      0.000000 cash  growth                 c-
-  0057 2030-08 assetGrowth                      0.000000 cash  growth                 c-
-  0058 2030-09 assetGrowth                      0.000000 cash  growth                 c-
-  0059 2030-10 assetGrowth                      0.000000 cash  growth                 c-
-  0060 2030-11 assetGrowth                      0.000000 cash  growth                 c-
-  0061 2030-12 assetGrowth                      0.000000 cash  growth                 c-
-
-[history] Brokerage
-  income                       n=  60 first=     1312.330000 last=        0.000000 min=        0.000000 max=     1312.330000 sum=       1312.330000 #142e19a0
-  longTermCapitalGain          n=  60 first=     1312.330000 last=        0.000000 min=        0.000000 max=     1312.330000 sum=       1312.330000 #142e19a0
-  capitalGain                  n=  60 first=     1312.330000 last=        0.000000 min=        0.000000 max=     1312.330000 sum=       1312.330000 #142e19a0
+  0002 2026-02 assetGrowth                      0.000000 cash  growth                 c-
+  0003 2026-03 assetGrowth                      0.000000 cash  growth                 c-
+  0004 2026-04 assetGrowth                      0.000000 cash  growth                 c-
+  0005 2026-05 assetGrowth                      0.000000 cash  growth                 c-
+  0006 2026-06 assetGrowth                      0.000000 cash  growth                 c-
+  0007 2026-07 assetGrowth                      0.000000 cash  growth                 c-
+  0008 2026-08 assetGrowth                      0.000000 cash  growth                 c-
+  0009 2026-09 assetGrowth                      0.000000 cash  growth                 c-
+  0010 2026-10 assetGrowth                      0.000000 cash  growth                 c-
+  0011 2026-11 assetGrowth                      0.000000 cash  growth                 c-
+  0012 2026-12 assetGrowth                      0.000000 cash  growth                 c-
+  0013 2027-01 assetGrowth                      0.000000 cash  growth                 c-
+  0014 2027-02 assetGrowth                      0.000000 cash  growth                 c-
+  0015 2027-03 assetGrowth                      0.000000 cash  growth                 c-
+  0016 2027-04 assetGrowth                      0.000000 cash  growth                 c-
+  0017 2027-05 assetGrowth                      0.000000 cash  growth                 c-
+  0018 2027-06 assetGrowth                      0.000000 cash  growth                 c-
+  0019 2027-07 assetGrowth                      0.000000 cash  growth                 c-
+  0020 2027-08 assetGrowth                      0.000000 cash  growth                 c-
+  0021 2027-09 assetGrowth                      0.000000 cash  growth                 c-
+  0022 2027-10 assetGrowth                      0.000000 cash  growth                 c-
+  0023 2027-11 assetGrowth                      0.000000 cash  growth                 c-
+  0024 2027-12 assetGrowth                      0.000000 cash  growth                 c-
+  0025 2028-01 assetGrowth                      0.000000 cash  growth                 c-
+  0026 2028-02 assetGrowth                      0.000000 cash  growth                 c-
+  0027 2028-03 assetGrowth                      0.000000 cash  growth                 c-
+  0028 2028-04 assetGrowth                      0.000000 cash  growth                 c-
+  0029 2028-05 assetGrowth                      0.000000 cash  growth                 c-
+  0030 2028-06 assetGrowth                      0.000000 cash  growth                 c-
+  0031 2028-07 assetGrowth                      0.000000 cash  growth                 c-
+  0032 2028-08 assetGrowth                      0.000000 cash  growth                 c-
+  0033 2028-09 assetGrowth                      0.000000 cash  growth                 c-
+  0034 2028-10 assetGrowth                      0.000000 cash  growth                 c-
+  0035 2028-11 assetGrowth                      0.000000 cash  growth                 c-
+  0036 2028-12 assetGrowth                      0.000000 cash  growth                 c-
+  0037 2029-01 assetGrowth                      0.000000 cash  growth                 c-
+  0038 2029-02 assetGrowth                      0.000000 cash  growth                 c-
+  0039 2029-03 assetGrowth                      0.000000 cash  growth                 c-
+  0040 2029-04 assetGrowth                      0.000000 cash  growth                 c-
+  0041 2029-05 assetGrowth                      0.000000 cash  growth                 c-
+  0042 2029-06 assetGrowth                      0.000000 cash  growth                 c-
+  0043 2029-07 assetGrowth                      0.000000 cash  growth                 c-
+  0044 2029-08 assetGrowth                      0.000000 cash  growth                 c-
+  0045 2029-09 assetGrowth                      0.000000 cash  growth                 c-
+  0046 2029-10 assetGrowth                      0.000000 cash  growth                 c-
+  0047 2029-11 assetGrowth                      0.000000 cash  growth                 c-
+  0048 2029-12 assetGrowth                      0.000000 cash  growth                 c-
+  0049 2030-01 assetGrowth                      0.000000 cash  growth                 c-
+  0050 2030-02 assetGrowth                      0.000000 cash  growth                 c-
+  0051 2030-03 assetGrowth                      0.000000 cash  growth                 c-
+  0052 2030-04 assetGrowth                      0.000000 cash  growth                 c-
+  0053 2030-05 assetGrowth                      0.000000 cash  growth                 c-
+  0054 2030-06 assetGrowth                      0.000000 cash  growth                 c-
+  0055 2030-07 assetGrowth                      0.000000 cash  growth                 c-
+  0056 2030-08 assetGrowth                      0.000000 cash  growth                 c-
+  0057 2030-09 assetGrowth                      0.000000 cash  growth                 c-
+  0058 2030-10 assetGrowth                      0.000000 cash  growth                 c-
+  0059 2030-11 assetGrowth                      0.000000 cash  growth                 c-
+  0060 2030-12 assetGrowth                      0.000000 cash  growth                 c-
 
 [asset] Home
   instrument = realEstate
@@ -638,7 +631,7 @@
   0000 2026-01 settlement                   -1200.000000 cash  -                      c0 {backstop=true from=Home label=maintenance to=Wallet}
 
 [packages]
-  0000 assetAppreciation=2959.523727 propertyTaxes=-2004.932540 longTermCapitalGains=1312.331349 maintenance=-5012.331349 insurance=-2000.000000 value=1202959.523727
+  0000 assetAppreciation=2959.523727 propertyTaxes=-2004.932540 maintenance=-5012.331349 insurance=-2000.000000 value=1202959.523727
   0001 assetAppreciation=2966.822711 propertyTaxes=-2009.877244 maintenance=-5024.693110 insurance=-2000.000000 value=1205926.346437
   0002 assetAppreciation=2974.139696 propertyTaxes=-2014.834144 maintenance=-5037.085359 insurance=-2000.000000 value=1208900.486133
   0003 assetAppreciation=2981.474727 propertyTaxes=-2019.803268 maintenance=-5049.508170 insurance=-2000.000000 value=1211881.960860
@@ -712,7 +705,7 @@
   [0054]         1.150188         1.153118         1.156055         1.159000         1.161953         1.164913
 
 [taxYears]
-  2026 months=12 age=50 agi=1312.331349 niit=1312.331349 seniorDeduction=1312.331349 irmaa=1312.331349 iraDeduction=1312.331349 rothContribution=1312.331349 aca=1312.331349 nii=1312.331349 taxableSS=0.000000 ordinaryTaxable=0.000000 capitalGains=0.000000 fica=0.000000 incomeTax=0.000000 capitalGainsTax=0.000000 niit=0.000000 federalTax=0.000000 settledTrueUp=0.000000 settledNIIT=0.000000
+  2026 months=12 age=50 agi=0.000000 niit=0.000000 seniorDeduction=0.000000 irmaa=0.000000 iraDeduction=0.000000 rothContribution=0.000000 aca=0.000000 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=0.000000 capitalGains=0.000000 fica=0.000000 incomeTax=0.000000 capitalGainsTax=0.000000 niit=0.000000 federalTax=0.000000 settledTrueUp=0.000000 settledNIIT=0.000000
   2027 months=12 age=51 agi=0.000000 niit=0.000000 seniorDeduction=0.000000 irmaa=0.000000 iraDeduction=0.000000 rothContribution=0.000000 aca=0.000000 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=0.000000 capitalGains=0.000000 fica=0.000000 incomeTax=0.000000 capitalGainsTax=0.000000 niit=0.000000 federalTax=0.000000 settledTrueUp=0.000000 settledNIIT=0.000000
   2028 months=12 age=52 agi=0.000000 niit=0.000000 seniorDeduction=0.000000 irmaa=0.000000 iraDeduction=0.000000 rothContribution=0.000000 aca=0.000000 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=0.000000 capitalGains=0.000000 fica=0.000000 incomeTax=0.000000 capitalGainsTax=0.000000 niit=0.000000 federalTax=0.000000 settledTrueUp=0.000000 settledNIIT=0.000000
   2029 months=12 age=53 agi=0.000000 niit=0.000000 seniorDeduction=0.000000 irmaa=0.000000 iraDeduction=0.000000 rothContribution=0.000000 aca=0.000000 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=0.000000 capitalGains=0.000000 fica=0.000000 incomeTax=0.000000 capitalGainsTax=0.000000 niit=0.000000 federalTax=0.000000 settledTrueUp=0.000000 settledNIIT=0.000000

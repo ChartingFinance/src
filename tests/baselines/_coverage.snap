@@ -462,7 +462,6 @@
     transfer
   settlement-exhausts-fallback:
     assetGrowth
-    capitalGainRecognized
     insurance
     maintenance
     propertyTax
@@ -526,7 +525,6 @@
     unfunded
   transfer-unfunded:
     assetGrowth
-    capitalGainRecognized
     expenseInflation
     transfer
     unfunded

@@ -1091,13 +1091,14 @@ export class ModelAsset {
     const realizesGain = fromVested > 0 && isTaxable && valueAfterCredit > 0;
     const fractionSold = realizesGain ? Math.min(fromVested / valueAfterCredit, 1.0) : 0;
     const basisWithdrawn = realizesGain ? basisAfterCredit * fractionSold : 0;
+    const vestedSold = Math.min(fromVested, valueAfterCredit);
 
     return {
       fromCredit:     new Currency(fromCredit),
       fromVested:     new Currency(fromVested),
       realizesGain,
       basisWithdrawn: new Currency(basisWithdrawn),
-      realizedGain:   new Currency(realizesGain ? fromVested - basisWithdrawn : 0),
+      realizedGain:   new Currency(realizesGain ? vestedSold - basisWithdrawn : 0),
     };
   }
 
