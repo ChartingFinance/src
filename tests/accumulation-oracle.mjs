@@ -304,7 +304,7 @@ const EXPECTED_ENGINE = {
   "socialSecurityIncome": 854014.60,
   "four01KContribution": 274574.57,
   "four01KDistribution": 3838752.41,
-  "longTermCapitalGains": 1775459.42,
+  "longTermCapitalGains": 1774246.21,
   "mortgageInterest": -287174.02,
   "propertyTaxes": -156340.65,
   "incomeTax": -645817.03,

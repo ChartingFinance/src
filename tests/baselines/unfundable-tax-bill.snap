@@ -41,7 +41,7 @@
   total.assetAppreciation = 5991.678269
   total.expense = -453173.965953
   total.incomeTax = -669.032054
-  total.longTermCapitalGains = 106512.918294
+  total.longTermCapitalGains = 105991.678269
   total.taxTrueUp = 279.222076
   total.value = 1561218.643644
 
@@ -239,7 +239,7 @@
   0173 2028-05 capitalGainRecognized           32.898169 info  longTermCapitalGain    c3 {spillover=false}
   0174 2028-06 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Brokerage}
   0175 2028-06 grossUp                      -7014.741315 cash  -                      c2 {forAsset=Living overflow=false}
-  0176 2028-06 capitalGainRecognized         3922.218697 info  longTermCapitalGain    c2 {spillover=false}
+  0176 2028-06 capitalGainRecognized         3400.978672 info  longTermCapitalGain    c2 {spillover=false}
   0177 2028-06 assetGrowth                      0.000000 cash  growth                 c-
   0178 2028-07 assetGrowth                      0.000000 cash  growth                 c-
   0179 2028-08 assetGrowth                      0.000000 cash  growth                 c-
@@ -275,15 +275,15 @@
 [history] Brokerage
   value                        n=  60 first=   118386.300000 last=        0.000000 min=        0.000000 max=   118386.300000 sum=    1835546.980000 #f449b4de
   growth                       n=  60 first=      386.300000 last=        0.000000 min=        0.000000 max=      386.300000 sum=       5991.680000 #162025c9
-  income                       n=  60 first=     1666.670000 last=        0.000000 min=        0.000000 max=     3922.220000 sum=     106512.890000 #65575102
+  income                       n=  60 first=     1666.670000 last=        0.000000 min=        0.000000 max=     3856.950000 sum=     105991.650000 #211ce722
   estimatedIncomeTax           n=  60 first=        0.000000 last=        0.000000 min=      -57.120000 max=      104.900000 sum=       -568.650000 #0d2980fd
   incomeTax                    n=  60 first=        0.000000 last=        0.000000 min=      -57.120000 max=      104.900000 sum=       -568.650000 #0d2980fd
   federalTaxes                 n=  60 first=        0.000000 last=        0.000000 min=      -57.120000 max=      104.900000 sum=       -568.650000 #0d2980fd
   taxes                        n=  60 first=        0.000000 last=        0.000000 min=      -57.120000 max=      104.900000 sum=       -568.650000 #0d2980fd
   cashFlow                     n=  60 first=        0.000000 last=        0.000000 min=      -57.120000 max=      104.900000 sum=       -568.650000 #0d2980fd
   cashFlowAccumulated          n=  60 first=        0.000000 last=     -568.640000 min=     -568.640000 max=        0.000000 sum=     -23324.190000 #71dead37
-  longTermCapitalGain          n=  60 first=     1666.670000 last=        0.000000 min=        0.000000 max=     3922.220000 sum=     106512.890000 #65575102
-  capitalGain                  n=  60 first=     1666.670000 last=        0.000000 min=        0.000000 max=     3922.220000 sum=     106512.890000 #65575102
+  longTermCapitalGain          n=  60 first=     1666.670000 last=        0.000000 min=        0.000000 max=     3856.950000 sum=     105991.650000 #211ce722
+  capitalGain                  n=  60 first=     1666.670000 last=        0.000000 min=        0.000000 max=     3856.950000 sum=     105991.650000 #211ce722
 
 [asset] Checking
   instrument = bank
@@ -598,7 +598,7 @@
   0026 socialSecurityIncome=3000.000000 assetAppreciation=42.743597 expense=-7478.683396 incomeTax=-35.309899 longTermCapitalGains=3817.124459 value=8566.203571
   0027 socialSecurityIncome=3000.000000 assetAppreciation=28.043521 expense=-7497.734141 incomeTax=-37.064229 longTermCapitalGains=3837.002856 value=4040.349449
   0028 socialSecurityIncome=3000.000000 assetAppreciation=13.227053 expense=-7516.833415 incomeTax=-38.835186 longTermCapitalGains=3856.949890 value=-521.240025
-  0029 socialSecurityIncome=3000.000000 expense=-7535.981341 longTermCapitalGains=3922.218697 value=-4555.178043
+  0029 socialSecurityIncome=3000.000000 expense=-7535.981341 longTermCapitalGains=3400.978672 value=-4555.178043
   0030 socialSecurityIncome=3000.000000 expense=-7555.178043 value=-4574.423645
   0031 socialSecurityIncome=3000.000000 expense=-7574.423645 value=-4593.718273
   0032 socialSecurityIncome=3000.000000 expense=-7593.718273 value=-4613.062051
@@ -645,7 +645,7 @@
 [taxYears]
   2026 months=12 age=68 agi=64174.467083 niit=64174.467083 seniorDeduction=64174.467083 irmaa=64174.467083 iraDeduction=64174.467083 rothContribution=64174.467083 aca=75607.820045 nii=39607.820045 taxableSS=24566.647038 ordinaryTaxable=416.647038 capitalGains=39607.820045 fica=0.000000 incomeTax=41.664704 capitalGainsTax=0.000000 niit=0.000000 federalTax=41.664704 settledTrueUp=123.646915 settledNIIT=0.000000
   2027 months=12 age=69 agi=72069.517729 niit=72069.517729 seniorDeduction=72069.517729 irmaa=72069.517729 iraDeduction=72069.517729 rothContribution=72069.517729 aca=79875.414989 nii=43875.414989 taxableSS=28194.102740 ordinaryTaxable=3481.452740 capitalGains=43875.414989 fica=0.000000 incomeTax=348.145274 capitalGainsTax=0.000000 niit=0.000000 federalTax=348.145274 settledTrueUp=-23.255703 settledNIIT=0.000000
-  2028 months=12 age=70 agi=33504.914032 niit=33504.914032 seniorDeduction=33504.914032 irmaa=33504.914032 iraDeduction=33504.914032 rothContribution=33504.914032 aca=59029.683260 nii=23029.683260 taxableSS=10475.230771 ordinaryTaxable=0.000000 capitalGains=8212.171882 fica=0.000000 incomeTax=0.000000 capitalGainsTax=0.000000 niit=0.000000 federalTax=0.000000 settledTrueUp=178.830865 settledNIIT=0.000000
+  2028 months=12 age=70 agi=32540.619985 niit=32540.619985 seniorDeduction=32540.619985 irmaa=32540.619985 iraDeduction=32540.619985 rothContribution=32540.619985 aca=58508.443235 nii=22508.443235 taxableSS=10032.176750 ordinaryTaxable=0.000000 capitalGains=7247.877835 fica=0.000000 incomeTax=0.000000 capitalGainsTax=0.000000 niit=0.000000 federalTax=0.000000 settledTrueUp=178.830865 settledNIIT=0.000000
   2029 months=12 age=71 agi=0.000000 niit=0.000000 seniorDeduction=0.000000 irmaa=0.000000 iraDeduction=0.000000 rothContribution=0.000000 aca=36000.000000 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=0.000000 capitalGains=0.000000 fica=0.000000 incomeTax=0.000000 capitalGainsTax=0.000000 niit=0.000000 federalTax=0.000000 settledTrueUp=0.000000 settledNIIT=0.000000
   2030 months=12 age=72 agi=0.000000 niit=0.000000 seniorDeduction=0.000000 irmaa=0.000000 iraDeduction=0.000000 rothContribution=0.000000 aca=36000.000000 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=0.000000 capitalGains=0.000000 fica=0.000000 incomeTax=0.000000 capitalGainsTax=0.000000 niit=0.000000 federalTax=0.000000 settledTrueUp=0.000000 settledNIIT=0.000000
 

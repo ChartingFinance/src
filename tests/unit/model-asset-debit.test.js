@@ -55,6 +55,60 @@ describe('ModelAsset.debit — taxable account', () => {
     expect(asset.finishCurrency.amount).toBe(0);
     expect(asset.finishBasisCurrency.amount).toBe(0);
   });
+
+  it('overdraft clamps realized gain to actual remaining gain, not overshoot (RED-1)', () => {
+    const asset = makeAsset(Instrument.TAXABLE_EQUITY, { value: 10000, basis: 6000 });
+    const plan = asset.planWithdrawal(new Currency(15000));
+    expect(plan.realizesGain).toBe(true);
+    expect(plan.basisWithdrawn.amount).toBeCloseTo(6000, 6);
+    expect(plan.realizedGain.amount).toBeCloseTo(4000, 6);
+
+    const result = asset.debit(new Currency(15000));
+    expect(result.realizedGain.amount).toBeCloseTo(4000, 6);
+    expect(result.spillover.amount).toBeCloseTo(5000, 6);
+    expect(asset.finishCurrency.amount).toBe(0);
+    expect(asset.finishBasisCurrency.amount).toBe(0);
+    expect(asset.isDepleted).toBe(true);
+  });
+
+  it('overdraft on zero-gain taxable account realizes zero gain (RED-1)', () => {
+    const asset = makeAsset(Instrument.TAXABLE_EQUITY, { value: 1000, basis: 1000 });
+    const plan = asset.planWithdrawal(new Currency(5000));
+    expect(plan.realizedGain.amount).toBeCloseTo(0, 6);
+
+    const result = asset.debit(new Currency(5000));
+    expect(result.realizedGain.amount).toBeCloseTo(0, 6);
+    expect(result.spillover.amount).toBeCloseTo(4000, 6);
+    expect(asset.finishCurrency.amount).toBe(0);
+    expect(asset.isDepleted).toBe(true);
+  });
+
+  it('overdraft after fresh deposit realizes only vested gain (RED-1)', () => {
+    const asset = makeAsset(Instrument.TAXABLE_EQUITY, { value: 10000, basis: 6000 });
+    asset.credit(new Currency(2000)); // balance 12000, basis 8000, monthlyCreditBalance 2000
+    const plan = asset.planWithdrawal(new Currency(20000));
+    expect(plan.fromCredit.amount).toBeCloseTo(2000, 6);
+    expect(plan.basisWithdrawn.amount).toBeCloseTo(6000, 6);
+    expect(plan.realizedGain.amount).toBeCloseTo(4000, 6);
+
+    const result = asset.debit(new Currency(20000));
+    expect(result.realizedGain.amount).toBeCloseTo(4000, 6);
+    expect(result.spillover.amount).toBeCloseTo(8000, 6);
+    expect(asset.finishCurrency.amount).toBe(0);
+    expect(asset.finishBasisCurrency.amount).toBe(0);
+    expect(asset.isDepleted).toBe(true);
+  });
+
+  it('overdraft on underwater taxable account does not turn loss into phantom gain (RED-1)', () => {
+    const asset = makeAsset(Instrument.TAXABLE_EQUITY, { value: 8000, basis: 10000 });
+    const plan = asset.planWithdrawal(new Currency(15000));
+    expect(plan.basisWithdrawn.amount).toBeCloseTo(10000, 6);
+    expect(plan.realizedGain.amount).toBeCloseTo(-2000, 6);
+
+    const result = asset.debit(new Currency(15000));
+    expect(result.realizedGain.amount).toBeCloseTo(-2000, 6);
+    expect(result.spillover.amount).toBeCloseTo(7000, 6);
+  });
 });
 
 describe('ModelAsset.debit — tax-deferred account', () => {

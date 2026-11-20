@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.3.48; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.3.49; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -34696,7 +34696,7 @@ var ExpenseEngine = class {
           this.#bookTaxProvision(
             targetAsset,
             modelAsset,
-            grossWithdrawal.amount - netShortfall.amount
+            Math.max(0, settled.paid.amount - netShortfall.amount)
           );
         } else {
           FundTransfer.reportUnfunded(modelAsset, netShortfall, "expense overflow", ShortfallOrigin.STANDALONE);
@@ -34717,7 +34717,7 @@ var ExpenseEngine = class {
         this.#bookTaxProvision(
           targetAsset,
           modelAsset,
-          grossWithdrawal.amount - netShortfall.amount
+          Math.max(0, settled.paid.amount - netShortfall.amount)
         );
       } else {
         FundTransfer.reportUnfunded(modelAsset, netShortfall, "expense", ShortfallOrigin.STANDALONE);
@@ -38795,12 +38795,13 @@ var ModelAsset = class _ModelAsset {
     const realizesGain = fromVested > 0 && isTaxable && valueAfterCredit > 0;
     const fractionSold = realizesGain ? Math.min(fromVested / valueAfterCredit, 1) : 0;
     const basisWithdrawn = realizesGain ? basisAfterCredit * fractionSold : 0;
+    const vestedSold = Math.min(fromVested, valueAfterCredit);
     return {
       fromCredit: new Currency(fromCredit),
       fromVested: new Currency(fromVested),
       realizesGain,
       basisWithdrawn: new Currency(basisWithdrawn),
-      realizedGain: new Currency(realizesGain ? fromVested - basisWithdrawn : 0)
+      realizedGain: new Currency(realizesGain ? vestedSold - basisWithdrawn : 0)
     };
   }
   /** Unrealized gain ratio of the account: 1 − (basis / currentValue). */
