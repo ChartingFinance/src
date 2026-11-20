@@ -39,6 +39,7 @@ import { lastHistoryIndex } from './month-summary.js';
 import { MonthsSpan } from './utils/months-span.js';
 import { PriceIndex } from './utils/price-index.js';
 import { Metric } from './metric.js';
+import { InstrumentType } from './instruments/instrument.js';
 import { formatCurrency } from './utils/html.js';
 
 /** The result table's columns, by the names the page shows. */
@@ -92,6 +93,7 @@ export function groupSeries(portfolio) {
 
     const groups = new Map();
     for (const asset of portfolio.modelAssets) {
+        if (!InstrumentType.isAsset(asset.instrument)) continue;
         const key = classifyAssetGroup(asset.instrument);
         if (!groups.has(key)) groups.set(key, []);
         groups.get(key).push(asset);

@@ -29,17 +29,22 @@
  */
 
 import { Metric, MetricLabel, LEAF_TAX_METRICS, LEAF_EXPENSE_METRICS } from './metric.js';
+import { InstrumentType } from './instruments/instrument.js';
 import { RECEIVED_INCOME_METRICS } from './instruments/instrument-behavior.js';
 import { expenditureOverWindow, Expenditure } from './annual-expenditure.js';
 import { MagiPurpose } from './tax-basis.js';
 import { PriceIndex } from './utils/price-index.js';
 import { DateInt, MONTH_NAMES } from './utils/date-int.js';
 
-/** Sum a metric across every asset at one history index. */
+const BALANCE_SHEET_METRICS = new Set([Metric.VALUE, Metric.NET_WORTH_CHANGE]);
+
+/** Sum a metric across every asset at one history index (balance-sheet assets only for VALUE / NET_WORTH_CHANGE). */
 export function metricAtIndex(portfolio, metricName, idx) {
     if (!portfolio || idx < 0) return 0;
+    const assetsOnly = BALANCE_SHEET_METRICS.has(metricName);
     let total = 0;
     for (const asset of portfolio.modelAssets) {
+        if (assetsOnly && !InstrumentType.isAsset(asset.instrument)) continue;
         const history = asset.getHistory(metricName);
         if (history && idx < history.length) total += history[idx] ?? 0;
     }

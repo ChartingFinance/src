@@ -26,6 +26,7 @@ import { metricAtIndex, lastHistoryIndex } from '../js/month-summary.js';
 import { planExhaustion, monthLabel } from '../js/portfolio-issues.js';
 import { computeMonteCarlo } from '../js/mc-compute.js';
 import { Metric } from '../js/metric.js';
+import { InstrumentType } from '../js/instruments/instrument.js';
 
 let passed = 0, failed = 0;
 async function test(name, fn) {
@@ -57,9 +58,12 @@ await test('the ending is the last month of net worth, summed as Month Details s
     const { portfolio, issues } = healthy;
     const out = planOutcome(portfolio, issues);
     const last = lastHistoryIndex(portfolio);
-    const byHand = portfolio.modelAssets.reduce((s, a) => s + (a.getHistory(Metric.VALUE)[last] ?? 0), 0);
+    const byHand = portfolio.modelAssets
+        .filter((a) => InstrumentType.isAsset(a.instrument))
+        .reduce((s, a) => s + (a.getHistory(Metric.VALUE)[last] ?? 0), 0);
     assert.equal(out.end, metricAtIndex(portfolio, Metric.VALUE, last));
     assert.ok(Math.abs(out.end - byHand) < 0.005, `${out.end} vs ${byHand}`);
+    assert.ok(Math.abs(out.end - portfolio.finishValue().amount) < 0.01, `${out.end} vs ${portfolio.finishValue().amount}`);
     assert.ok(out.end > 0);
 });
 

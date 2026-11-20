@@ -48,7 +48,7 @@
   lastDate = 2030-12
   startValue = 623000.000000
   finishValue = 466516.804941
-  accumulated = -22027.352217
+  accumulated = -28861.773204
   total.employedIncome = 480000.000000
   total.socialSecurityTax = -29760.000000
   total.assetAppreciation = 120679.686473
@@ -56,9 +56,9 @@
   total.medicareTax = -6960.000000
   total.incomeTax = -44189.728394
   total.four01KContribution = 172892.196052
-  total.longTermCapitalGains = 360240.067152
-  total.taxTrueUp = -22027.352217
-  total.value = 33293486.100087
+  total.longTermCapitalGains = 365951.008966
+  total.taxTrueUp = -28861.773204
+  total.value = 33455692.184596
 
 [assetOrder]
   0 Salary
@@ -345,8 +345,8 @@
   0041 2026-12 spillover                    -3919.970329 cash  -                      c2 {cause=grossUp depleted=Checking origin=oneSided}
   0042 2026-12 capitalGainRecognized         3163.662003 info  longTermCapitalGain    c2 {spillover=true}
   0043 2026-12 assetGrowth                   1455.913205 cash  growth                 c-
-  0044 2026-12 taxTrueUp                    -4363.578864 cash  -                      c5 {direction=underpayment}
-  0045 2026-12 capitalGainRecognized         3524.429083 info  longTermCapitalGain    c5 {spillover=false}
+  0044 2027-01 taxTrueUp                    -4363.578864 cash  -                      c5 {direction=underpayment}
+  0045 2027-01 capitalGainRecognized         3524.429083 info  longTermCapitalGain    c5 {spillover=false}
   0046 2027-01 grossUp                     -10310.000000 cash  -                      c4 {forAsset=Living overflow=false}
   0047 2027-01 capitalGainRecognized         8327.307692 info  longTermCapitalGain    c4 {spillover=false}
   0048 2027-01 assetGrowth                   1412.642007 cash  growth                 c-
@@ -383,8 +383,8 @@
   0079 2027-12 spillover                    -4215.957409 cash  -                      c2 {cause=grossUp depleted=Checking origin=oneSided}
   0080 2027-12 capitalGainRecognized         3433.827350 info  longTermCapitalGain    c2 {spillover=true}
   0081 2027-12 assetGrowth                   1233.126565 cash  growth                 c-
-  0082 2027-12 taxTrueUp                    -5483.836513 cash  -                      c6 {direction=underpayment}
-  0083 2027-12 capitalGainRecognized         4469.813489 info  longTermCapitalGain    c6 {spillover=false}
+  0082 2028-01 taxTrueUp                    -5483.836513 cash  -                      c6 {direction=underpayment}
+  0083 2028-01 capitalGainRecognized         4469.813489 info  longTermCapitalGain    c6 {spillover=false}
   0084 2028-01 grossUp                     -10629.610000 cash  -                      c4 {forAsset=Living overflow=false}
   0085 2028-01 capitalGainRecognized         8664.075607 info  longTermCapitalGain    c4 {spillover=false}
   0086 2028-01 assetGrowth                   1184.412270 cash  growth                 c-
@@ -429,8 +429,8 @@
   0125 2028-12 spillover                    -4521.120088 cash  -                      c2 {cause=grossUp depleted=Checking origin=oneSided}
   0126 2028-12 capitalGainRecognized         3714.636627 info  longTermCapitalGain    c2 {spillover=true}
   0127 2028-12 assetGrowth                    981.999247 cash  growth                 c-
-  0128 2028-12 taxTrueUp                    -5868.552137 cash  -                      c7 {direction=underpayment}
-  0129 2028-12 capitalGainRecognized         4825.127841 info  longTermCapitalGain    c7 {spillover=false}
+  0128 2029-01 taxTrueUp                    -5868.552137 cash  -                      c7 {direction=underpayment}
+  0129 2029-01 capitalGainRecognized         4825.127841 info  longTermCapitalGain    c7 {spillover=false}
   0130 2029-01 grossUp                     -10959.127910 cash  -                      c4 {forAsset=Living overflow=false}
   0131 2029-01 capitalGainRecognized         9010.602949 info  longTermCapitalGain    c4 {spillover=false}
   0132 2029-01 assetGrowth                    930.124611 cash  growth                 c-
@@ -477,8 +477,8 @@
   0173 2029-12 spillover                    -4835.742811 cash  -                      c2 {cause=grossUp depleted=Checking origin=oneSided}
   0174 2029-12 capitalGainRecognized         4006.313692 info  longTermCapitalGain    c2 {spillover=true}
   0175 2029-12 assetGrowth                    703.931716 cash  growth                 c-
-  0176 2029-12 taxTrueUp                    -6311.384704 cash  -                      c8 {direction=underpayment}
-  0177 2029-12 capitalGainRecognized         5232.385085 info  longTermCapitalGain    c8 {spillover=false}
+  0176 2030-01 taxTrueUp                    -6311.384704 cash  -                      c8 {direction=underpayment}
+  0177 2030-01 capitalGainRecognized         5232.385085 info  longTermCapitalGain    c8 {spillover=false}
   0178 2030-01 grossUp                     -11298.860875 cash  -                      c4 {forAsset=Living overflow=false}
   0179 2030-01 capitalGainRecognized         9367.198149 info  longTermCapitalGain    c4 {spillover=false}
   0180 2030-01 assetGrowth                    648.584843 cash  growth                 c-
@@ -523,17 +523,17 @@
   0219 2030-12 capitalGainRecognized         5710.941814 info  longTermCapitalGain    c9 {spillover=false}
 
 [history] Brokerage
-  value                        n=  60 first=   494613.950000 last=   121783.370000 min=   121783.370000 max=   494613.950000 sum=   19001819.190000 #ea2b7acc
+  value                        n=  60 first=   494613.950000 last=   114948.950000 min=   114948.950000 max=   494613.950000 sum=   18994984.770000 #8e86d4a3
   growth                       n=  60 first=     1613.950000 last=      397.390000 min=      397.390000 max=     1613.950000 sum=      62004.020000 #4df98b24
-  income                       n=  60 first=     5600.000000 last=     4309.090000 min=     3023.550000 max=    14599.580000 sum=     360240.070000 #78ac058f
-  estimatedIncomeTax           n=  60 first=        0.000000 last=        0.000000 min=    -6311.380000 max=        0.000000 sum=     -22027.350000 #85848405
-  incomeTax                    n=  60 first=        0.000000 last=        0.000000 min=    -6311.380000 max=        0.000000 sum=     -22027.350000 #85848405
-  federalTaxes                 n=  60 first=        0.000000 last=        0.000000 min=    -6311.380000 max=        0.000000 sum=     -22027.350000 #85848405
-  taxes                        n=  60 first=        0.000000 last=        0.000000 min=    -6311.380000 max=        0.000000 sum=     -22027.350000 #85848405
-  cashFlow                     n=  60 first=        0.000000 last=        0.000000 min=    -6311.380000 max=        0.000000 sum=     -22027.350000 #85848405
-  cashFlowAccumulated          n=  60 first=        0.000000 last=   -22027.350000 min=   -22027.350000 max=        0.000000 sum=    -623451.840000 #a1351b49
-  longTermCapitalGain          n=  60 first=     5600.000000 last=     4309.090000 min=     3023.550000 max=    14599.580000 sum=     360240.070000 #78ac058f
-  capitalGain                  n=  60 first=     5600.000000 last=     4309.090000 min=     3023.550000 max=    14599.580000 sum=     360240.070000 #78ac058f
+  income                       n=  60 first=     5600.000000 last=    10020.030000 min=     3023.550000 max=    14599.580000 sum=     365951.010000 #564b74f6
+  estimatedIncomeTax           n=  60 first=        0.000000 last=    -6834.420000 min=    -6834.420000 max=        0.000000 sum=     -28861.770000 #7d113845
+  incomeTax                    n=  60 first=        0.000000 last=    -6834.420000 min=    -6834.420000 max=        0.000000 sum=     -28861.770000 #7d113845
+  federalTaxes                 n=  60 first=        0.000000 last=    -6834.420000 min=    -6834.420000 max=        0.000000 sum=     -28861.770000 #7d113845
+  taxes                        n=  60 first=        0.000000 last=    -6834.420000 min=    -6834.420000 max=        0.000000 sum=     -28861.770000 #7d113845
+  cashFlow                     n=  60 first=        0.000000 last=    -6834.420000 min=    -6834.420000 max=        0.000000 sum=     -28861.770000 #7d113845
+  cashFlowAccumulated          n=  60 first=        0.000000 last=   -28861.770000 min=   -28861.770000 max=        0.000000 sum=    -630286.260000 #5ce9f73b
+  longTermCapitalGain          n=  60 first=     5600.000000 last=    10020.030000 min=     3023.550000 max=    14599.580000 sum=     365951.010000 #564b74f6
+  capitalGain                  n=  60 first=     5600.000000 last=    10020.030000 min=     3023.550000 max=    14599.580000 sum=     365951.010000 #564b74f6
 
 [asset] Checking
   instrument = bank
@@ -821,7 +821,7 @@
   0041 2026-12 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
   0042 2026-12 incomeTaxWithholding         -1024.166667 cash  withheldIncomeTax      c11
   0043 2026-12 transfer                     -6363.833333 cash  -                      c10 {cadence=monthly from=Salary system=true to=Checking}
-  0044 2026-12 incomeGrowth                     0.000000 cash  income                 c12
+  0044 2027-01 incomeGrowth                     0.000000 cash  income                 c12
   0045 2027-01 ficaWithholding               -612.000000 cash  socialSecurityTax      c0
   0046 2027-01 transfer                     -6950.373333 cash  -                      c1 {cadence=monthly from=Salary to=401K}
   0047 2027-01 incomeTaxWithholding          -437.626667 cash  withheldIncomeTax      c11
@@ -866,7 +866,7 @@
   0086 2027-12 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
   0087 2027-12 incomeTaxWithholding         -1001.355833 cash  withheldIncomeTax      c11
   0088 2027-12 transfer                     -6386.644167 cash  -                      c10 {cadence=monthly from=Salary system=true to=Checking}
-  0089 2027-12 incomeGrowth                     0.000000 cash  income                 c13
+  0089 2028-01 incomeGrowth                     0.000000 cash  income                 c13
   0090 2028-01 ficaWithholding               -612.000000 cash  socialSecurityTax      c0
   0091 2028-01 transfer                     -6966.566907 cash  -                      c1 {cadence=monthly from=Salary to=401K}
   0092 2028-01 incomeTaxWithholding          -421.433093 cash  withheldIncomeTax      c11
@@ -911,7 +911,7 @@
   0131 2028-12 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
   0132 2028-12 incomeTaxWithholding          -977.837864 cash  withheldIncomeTax      c11
   0133 2028-12 transfer                     -6410.162136 cash  -                      c10 {cadence=monthly from=Salary system=true to=Checking}
-  0134 2028-12 incomeGrowth                     0.000000 cash  income                 c14
+  0134 2029-01 incomeGrowth                     0.000000 cash  income                 c14
   0135 2029-01 ficaWithholding               -612.000000 cash  socialSecurityTax      c0
   0136 2029-01 transfer                     -6983.262481 cash  -                      c1 {cadence=monthly from=Salary to=401K}
   0137 2029-01 incomeTaxWithholding          -404.737519 cash  withheldIncomeTax      c11
@@ -955,7 +955,7 @@
   0175 2029-12 transfer                         0.000000 cash  -                      c1 {cadence=monthly from=Salary to=401K}
   0176 2029-12 incomeTaxWithholding          -953.590838 cash  withheldIncomeTax      c11
   0177 2029-12 transfer                     -6434.409162 cash  -                      c10 {cadence=monthly from=Salary system=true to=Checking}
-  0178 2029-12 incomeGrowth                     0.000000 cash  income                 c15
+  0178 2030-01 incomeGrowth                     0.000000 cash  income                 c15
   0179 2030-01 ficaWithholding               -612.000000 cash  socialSecurityTax      c0
   0180 2030-01 transfer                     -7000.475618 cash  -                      c1 {cadence=monthly from=Salary to=401K}
   0181 2030-01 incomeTaxWithholding          -387.524382 cash  withheldIncomeTax      c11
@@ -1017,66 +1017,66 @@
   medicareTax                  n=  60 first=     -116.000000 last=     -116.000000 min=     -116.000000 max=     -116.000000 sum=      -6960.000000 #820f915d
 
 [packages]
-  0000 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2131.101257 expense=-10000.000000 medicareTax=-116.000000 incomeTax=-453.333333 four01KContribution=6934.666667 longTermCapitalGains=5600.000000 value=620040.294530
-  0001 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2133.923744 expense=-10025.473394 medicareTax=-116.000000 incomeTax=-453.333333 four01KContribution=6934.666667 longTermCapitalGains=8026.921454 value=619057.873263
-  0002 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2136.696165 expense=-10051.011677 medicareTax=-116.000000 incomeTax=-453.333333 four01KContribution=6934.666667 longTermCapitalGains=8053.906749 value=618052.621079
-  0003 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2139.418241 expense=-10076.615015 medicareTax=-116.000000 incomeTax=-453.333333 four01KContribution=6934.666667 longTermCapitalGains=8080.956051 value=617024.422414
-  0004 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2140.350193 expense=-10102.283573 medicareTax=-116.000000 incomeTax=-453.333333 four01KContribution=4761.333333 longTermCapitalGains=6363.757199 value=615971.421755
-  0005 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2135.538806 expense=-10128.017518 medicareTax=-116.000000 incomeTax=-1024.166667 longTermCapitalGains=3023.550199 value=614316.976879
-  0006 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2130.629263 expense=-10153.817016 medicareTax=-116.000000 incomeTax=-1024.166667 longTermCapitalGains=3046.706731 value=612631.757240
-  0007 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2125.621035 expense=-10179.682234 medicareTax=-116.000000 incomeTax=-1024.166667 longTermCapitalGains=3069.941270 value=610915.598269
-  0008 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2120.513593 expense=-10205.613340 medicareTax=-116.000000 incomeTax=-1024.166667 longTermCapitalGains=3093.253941 value=609168.334694
-  0009 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2115.306403 expense=-10231.610501 medicareTax=-116.000000 incomeTax=-1024.166667 longTermCapitalGains=3116.644870 value=607389.800545
-  0010 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2109.998931 expense=-10257.673885 medicareTax=-116.000000 incomeTax=-1024.166667 longTermCapitalGains=3140.114182 value=605579.829148
-  0011 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2104.590640 expense=-10283.803662 medicareTax=-116.000000 incomeTax=-1024.166667 longTermCapitalGains=3163.662003 value=603738.253121
-  0012 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2092.278916 expense=-10310.000000 medicareTax=-116.000000 incomeTax=-437.626667 four01KContribution=6950.373333 longTermCapitalGains=11851.736775 taxTrueUp=-4363.578864 value=598081.063437
-  0013 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2094.150909 expense=-10336.263069 medicareTax=-116.000000 incomeTax=-437.626667 four01KContribution=6950.373333 longTermCapitalGains=8355.006290 value=596762.994640
-  0014 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2095.967713 expense=-10362.593039 medicareTax=-116.000000 incomeTax=-437.626667 four01KContribution=6950.373333 longTermCapitalGains=8382.770750 value=595420.345606
-  0015 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2097.729030 expense=-10388.990081 medicareTax=-116.000000 incomeTax=-437.626667 four01KContribution=6950.373333 longTermCapitalGains=8410.601242 value=594052.993604
-  0016 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2098.438588 expense=-10415.454364 medicareTax=-116.000000 incomeTax=-437.626667 four01KContribution=5706.006667 longTermCapitalGains=7430.324394 value=592659.819464
-  0017 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2092.672240 expense=-10441.986061 medicareTax=-116.000000 incomeTax=-1001.355833 longTermCapitalGains=3288.109546 value=590670.550527
-  0018 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2086.802543 expense=-10468.585344 medicareTax=-116.000000 incomeTax=-1001.355833 longTermCapitalGains=3312.196439 value=588648.744853
-  0019 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2080.828948 expense=-10495.252384 medicareTax=-116.000000 incomeTax=-1001.355833 longTermCapitalGains=3336.362920 value=586594.230614
-  0020 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2074.750902 expense=-10521.987353 medicareTax=-116.000000 incomeTax=-1001.355833 longTermCapitalGains=3360.609119 value=584506.835256
-  0021 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2068.567851 expense=-10548.790426 medicareTax=-116.000000 incomeTax=-1001.355833 longTermCapitalGains=3384.935169 value=582386.385499
-  0022 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2062.279240 expense=-10575.661776 medicareTax=-116.000000 incomeTax=-1001.355833 longTermCapitalGains=3409.341201 value=580232.707330
-  0023 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2055.884508 expense=-10602.601575 medicareTax=-116.000000 incomeTax=-1001.355833 longTermCapitalGains=3433.827350 value=578045.626004
-  0024 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2038.904886 expense=-10629.610000 medicareTax=-116.000000 incomeTax=-421.433093 four01KContribution=6966.566907 longTermCapitalGains=13133.889095 taxTrueUp=-5483.836513 value=570910.574060
-  0025 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2039.759087 expense=-10656.687224 medicareTax=-116.000000 incomeTax=-421.433093 four01KContribution=6966.566907 longTermCapitalGains=8692.575937 value=569233.066631
-  0026 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2040.552719 expense=-10683.833423 medicareTax=-116.000000 incomeTax=-421.433093 four01KContribution=6966.566907 longTermCapitalGains=8721.144212 value=567529.137484
-  0027 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2041.285460 expense=-10711.048773 medicareTax=-116.000000 incomeTax=-421.433093 four01KContribution=6966.566907 longTermCapitalGains=8749.780607 value=565798.656401
-  0028 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2041.727597 expense=-10738.333450 medicareTax=-116.000000 incomeTax=-421.433093 four01KContribution=6679.964873 longTermCapitalGains=8544.190869 value=564041.263275
-  0029 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2034.938451 expense=-10765.687629 medicareTax=-116.000000 incomeTax=-977.837864 longTermCapitalGains=3563.194485 value=561693.252372
-  0030 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2028.040501 expense=-10793.111489 medicareTax=-116.000000 incomeTax=-977.837864 longTermCapitalGains=3588.231262 value=559310.849802
-  0031 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2021.033176 expense=-10820.605207 medicareTax=-116.000000 incomeTax=-977.837864 longTermCapitalGains=3613.349286 value=556893.876153
-  0032 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2013.915901 expense=-10848.168961 medicareTax=-116.000000 incomeTax=-977.837864 longTermCapitalGains=3638.548696 value=554442.151261
-  0033 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2006.688100 expense=-10875.802929 medicareTax=-116.000000 incomeTax=-977.837864 longTermCapitalGains=3663.829629 value=551955.494206
-  0034 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=1999.349193 expense=-10903.507291 medicareTax=-116.000000 incomeTax=-977.837864 longTermCapitalGains=3689.192227 value=549433.723310
-  0035 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=1991.898598 expense=-10931.282224 medicareTax=-116.000000 incomeTax=-977.837864 longTermCapitalGains=3714.636627 value=546876.656134
-  0036 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=1972.589094 expense=-10959.127910 medicareTax=-116.000000 incomeTax=-404.737519 four01KContribution=6983.262481 longTermCapitalGains=13835.730789 taxTrueUp=-5868.552137 value=538976.911044
-  0037 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=1972.363160 expense=-10987.044528 medicareTax=-116.000000 incomeTax=-404.737519 four01KContribution=6983.262481 longTermCapitalGains=9039.930358 value=536917.504425
-  0038 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=1972.071033 expense=-11015.032259 medicareTax=-116.000000 incomeTax=-404.737519 four01KContribution=6983.262481 longTermCapitalGains=9069.327858 value=534829.746654
-  0039 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=1971.712369 expense=-11043.091285 medicareTax=-116.000000 incomeTax=-404.737519 four01KContribution=6983.262481 longTermCapitalGains=9098.795632 value=532713.499717
-  0040 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=1971.286823 expense=-11071.221786 medicareTax=-116.000000 incomeTax=-404.737519 four01KContribution=6983.262481 longTermCapitalGains=9128.333862 value=530568.625075
-  0041 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=1964.473678 expense=-11099.423946 medicareTax=-116.000000 incomeTax=-799.403111 four01KContribution=700.853304 longTermCapitalGains=4300.067329 value=527993.997696
-  0042 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=1956.486057 expense=-11127.697946 medicareTax=-116.000000 incomeTax=-953.590838 longTermCapitalGains=3875.030170 value=525228.848946
-  0043 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=1948.383344 expense=-11156.043969 medicareTax=-116.000000 incomeTax=-953.590838 longTermCapitalGains=3901.120313 value=522427.179253
-  0044 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=1940.164939 expense=-11184.462199 medicareTax=-116.000000 incomeTax=-953.590838 longTermCapitalGains=3927.293591 value=519588.800534
-  0045 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=1931.830243 expense=-11212.952820 medicareTax=-116.000000 incomeTax=-953.590838 longTermCapitalGains=3953.550149 value=516713.523923
-  0046 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=1923.378654 expense=-11241.516017 medicareTax=-116.000000 incomeTax=-953.590838 longTermCapitalGains=3979.890134 value=513801.159766
-  0047 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=1914.809566 expense=-11270.151973 medicareTax=-116.000000 incomeTax=-953.590838 longTermCapitalGains=4006.313692 value=510851.517619
-  0048 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=1892.916765 expense=-11298.860875 medicareTax=-116.000000 incomeTax=-387.524382 four01KContribution=7000.475618 longTermCapitalGains=14599.583234 taxTrueUp=-6311.384704 value=502105.882389
-  0049 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=1891.546674 expense=-11327.642909 medicareTax=-116.000000 incomeTax=-387.524382 four01KContribution=7000.475618 longTermCapitalGains=9397.378765 value=499641.406421
-  0050 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=1890.104518 expense=-11356.498260 medicareTax=-116.000000 incomeTax=-387.524382 four01KContribution=7000.475618 longTermCapitalGains=9427.631685 value=497146.559442
-  0051 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=1888.589930 expense=-11385.427115 medicareTax=-116.000000 incomeTax=-387.524382 four01KContribution=7000.475618 longTermCapitalGains=9457.957098 value=494621.195328
-  0052 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=1887.002542 expense=-11414.429662 medicareTax=-116.000000 incomeTax=-387.524382 four01KContribution=7000.475618 longTermCapitalGains=9488.355191 value=492065.167400
-  0053 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=1880.581401 expense=-11443.506088 medicareTax=-116.000000 incomeTax=-550.429808 four01KContribution=1718.919756 longTermCapitalGains=5261.080033 value=489310.662411
-  0054 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=1871.440110 expense=-11472.656582 medicareTax=-116.000000 incomeTax=-928.592154 longTermCapitalGains=4172.823235 value=486139.629035
-  0055 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=1862.177758 expense=-11501.881332 medicareTax=-116.000000 incomeTax=-928.592154 longTermCapitalGains=4199.907065 value=482930.034111
-  0056 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=1852.793724 expense=-11531.180527 medicareTax=-116.000000 incomeTax=-928.592154 longTermCapitalGains=4227.075862 value=479681.681323
-  0057 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=1843.287383 expense=-11560.554358 medicareTax=-116.000000 incomeTax=-928.592154 longTermCapitalGains=4254.329778 value=476394.373539
-  0058 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=1833.658109 expense=-11590.003013 medicareTax=-116.000000 incomeTax=-928.592154 longTermCapitalGains=4281.668968 value=473067.912810
-  0059 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=1823.905272 expense=-11619.526684 medicareTax=-116.000000 incomeTax=-928.592154 longTermCapitalGains=4309.093585 value=469702.100366
+  0000 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2131.101257 expense=-10000.000000 medicareTax=-116.000000 incomeTax=-453.333333 four01KContribution=6934.666667 longTermCapitalGains=5600.000000 value=622065.767924
+  0001 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2133.923744 expense=-10025.473394 medicareTax=-116.000000 incomeTax=-453.333333 four01KContribution=6934.666667 longTermCapitalGains=8026.921454 value=621108.884940
+  0002 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2136.696165 expense=-10051.011677 medicareTax=-116.000000 incomeTax=-453.333333 four01KContribution=6934.666667 longTermCapitalGains=8053.906749 value=620129.236095
+  0003 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2139.418241 expense=-10076.615015 medicareTax=-116.000000 incomeTax=-453.333333 four01KContribution=6934.666667 longTermCapitalGains=8080.956051 value=619126.705987
+  0004 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2140.350193 expense=-10102.283573 medicareTax=-116.000000 incomeTax=-453.333333 four01KContribution=4761.333333 longTermCapitalGains=6363.757199 value=618099.439274
+  0005 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2135.538806 expense=-10128.017518 medicareTax=-116.000000 incomeTax=-1024.166667 longTermCapitalGains=3023.550199 value=616470.793895
+  0006 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2130.629263 expense=-10153.817016 medicareTax=-116.000000 incomeTax=-1024.166667 longTermCapitalGains=3046.706731 value=614811.439475
+  0007 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2125.621035 expense=-10179.682234 medicareTax=-116.000000 incomeTax=-1024.166667 longTermCapitalGains=3069.941270 value=613121.211608
+  0008 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2120.513593 expense=-10205.613340 medicareTax=-116.000000 incomeTax=-1024.166667 longTermCapitalGains=3093.253941 value=611399.945195
+  0009 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2115.306403 expense=-10231.610501 medicareTax=-116.000000 incomeTax=-1024.166667 longTermCapitalGains=3116.644870 value=609647.474430
+  0010 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2109.998931 expense=-10257.673885 medicareTax=-116.000000 incomeTax=-1024.166667 longTermCapitalGains=3140.114182 value=607863.632809
+  0011 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2104.590640 expense=-10283.803662 medicareTax=-116.000000 incomeTax=-1024.166667 longTermCapitalGains=3163.662003 value=606048.253121
+  0012 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2092.278916 expense=-10310.000000 medicareTax=-116.000000 incomeTax=-437.626667 four01KContribution=6950.373333 longTermCapitalGains=11851.736775 taxTrueUp=-4363.578864 value=600417.326506
+  0013 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2094.150909 expense=-10336.263069 medicareTax=-116.000000 incomeTax=-437.626667 four01KContribution=6950.373333 longTermCapitalGains=8355.006290 value=599125.587679
+  0014 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2095.967713 expense=-10362.593039 medicareTax=-116.000000 incomeTax=-437.626667 four01KContribution=6950.373333 longTermCapitalGains=8382.770750 value=597809.335686
+  0015 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2097.729030 expense=-10388.990081 medicareTax=-116.000000 incomeTax=-437.626667 four01KContribution=6950.373333 longTermCapitalGains=8410.601242 value=596468.447969
+  0016 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2098.438588 expense=-10415.454364 medicareTax=-116.000000 incomeTax=-437.626667 four01KContribution=5706.006667 longTermCapitalGains=7430.324394 value=595101.805526
+  0017 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2092.672240 expense=-10441.986061 medicareTax=-116.000000 incomeTax=-1001.355833 longTermCapitalGains=3288.109546 value=593139.135871
+  0018 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2086.802543 expense=-10468.585344 medicareTax=-116.000000 incomeTax=-1001.355833 longTermCapitalGains=3312.196439 value=591143.997237
+  0019 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2080.828948 expense=-10495.252384 medicareTax=-116.000000 incomeTax=-1001.355833 longTermCapitalGains=3336.362920 value=589116.217968
+  0020 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2074.750902 expense=-10521.987353 medicareTax=-116.000000 incomeTax=-1001.355833 longTermCapitalGains=3360.609119 value=587055.625683
+  0021 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2068.567851 expense=-10548.790426 medicareTax=-116.000000 incomeTax=-1001.355833 longTermCapitalGains=3384.935169 value=584962.047274
+  0022 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2062.279240 expense=-10575.661776 medicareTax=-116.000000 incomeTax=-1001.355833 longTermCapitalGains=3409.341201 value=582835.308905
+  0023 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2055.884508 expense=-10602.601575 medicareTax=-116.000000 incomeTax=-1001.355833 longTermCapitalGains=3433.827350 value=580675.236004
+  0024 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2038.904886 expense=-10629.610000 medicareTax=-116.000000 incomeTax=-421.433093 four01KContribution=6966.566907 longTermCapitalGains=13133.889095 taxTrueUp=-5483.836513 value=573567.261284
+  0025 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2039.759087 expense=-10656.687224 medicareTax=-116.000000 incomeTax=-421.433093 four01KContribution=6966.566907 longTermCapitalGains=8692.575937 value=571916.900054
+  0026 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2040.552719 expense=-10683.833423 medicareTax=-116.000000 incomeTax=-421.433093 four01KContribution=6966.566907 longTermCapitalGains=8721.144212 value=570240.186257
+  0027 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2041.285460 expense=-10711.048773 medicareTax=-116.000000 incomeTax=-421.433093 four01KContribution=6966.566907 longTermCapitalGains=8749.780607 value=568536.989850
+  0028 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2041.727597 expense=-10738.333450 medicareTax=-116.000000 incomeTax=-421.433093 four01KContribution=6679.964873 longTermCapitalGains=8544.190869 value=566806.950904
+  0029 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2034.938451 expense=-10765.687629 medicareTax=-116.000000 incomeTax=-977.837864 longTermCapitalGains=3563.194485 value=564486.363862
+  0030 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2028.040501 expense=-10793.111489 medicareTax=-116.000000 incomeTax=-977.837864 longTermCapitalGains=3588.231262 value=562131.455010
+  0031 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2021.033176 expense=-10820.605207 medicareTax=-116.000000 incomeTax=-977.837864 longTermCapitalGains=3613.349286 value=559742.045114
+  0032 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2013.915901 expense=-10848.168961 medicareTax=-116.000000 incomeTax=-977.837864 longTermCapitalGains=3638.548696 value=557317.954190
+  0033 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=2006.688100 expense=-10875.802929 medicareTax=-116.000000 incomeTax=-977.837864 longTermCapitalGains=3663.829629 value=554859.001496
+  0034 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=1999.349193 expense=-10903.507291 medicareTax=-116.000000 incomeTax=-977.837864 longTermCapitalGains=3689.192227 value=552365.005534
+  0035 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=1991.898598 expense=-10931.282224 medicareTax=-116.000000 incomeTax=-977.837864 longTermCapitalGains=3714.636627 value=549835.784044
+  0036 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=1972.589094 expense=-10959.127910 medicareTax=-116.000000 incomeTax=-404.737519 four01KContribution=6983.262481 longTermCapitalGains=13835.730789 taxTrueUp=-5868.552137 value=541963.955572
+  0037 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=1972.363160 expense=-10987.044528 medicareTax=-116.000000 incomeTax=-404.737519 four01KContribution=6983.262481 longTermCapitalGains=9039.930358 value=539932.536685
+  0038 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=1972.071033 expense=-11015.032259 medicareTax=-116.000000 incomeTax=-404.737519 four01KContribution=6983.262481 longTermCapitalGains=9069.327858 value=537872.837939
+  0039 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=1971.712369 expense=-11043.091285 medicareTax=-116.000000 incomeTax=-404.737519 four01KContribution=6983.262481 longTermCapitalGains=9098.795632 value=535784.721503
+  0040 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=1971.286823 expense=-11071.221786 medicareTax=-116.000000 incomeTax=-404.737519 four01KContribution=6983.262481 longTermCapitalGains=9128.333862 value=533668.049021
+  0041 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=1964.473678 expense=-11099.423946 medicareTax=-116.000000 incomeTax=-799.403111 four01KContribution=700.853304 longTermCapitalGains=4300.067329 value=531121.695641
+  0042 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=1956.486057 expense=-11127.697946 medicareTax=-116.000000 incomeTax=-953.590838 longTermCapitalGains=3875.030170 value=528384.892915
+  0043 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=1948.383344 expense=-11156.043969 medicareTax=-116.000000 incomeTax=-953.590838 longTermCapitalGains=3901.120313 value=525611.641452
+  0044 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=1940.164939 expense=-11184.462199 medicareTax=-116.000000 incomeTax=-953.590838 longTermCapitalGains=3927.293591 value=522801.753354
+  0045 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=1931.830243 expense=-11212.952820 medicareTax=-116.000000 incomeTax=-953.590838 longTermCapitalGains=3953.550149 value=519955.039939
+  0046 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=1923.378654 expense=-11241.516017 medicareTax=-116.000000 incomeTax=-953.590838 longTermCapitalGains=3979.890134 value=517071.311739
+  0047 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=1914.809566 expense=-11270.151973 medicareTax=-116.000000 incomeTax=-953.590838 longTermCapitalGains=4006.313692 value=514150.378494
+  0048 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=1892.916765 expense=-11298.860875 medicareTax=-116.000000 incomeTax=-387.524382 four01KContribution=7000.475618 longTermCapitalGains=14599.583234 taxTrueUp=-6311.384704 value=505433.525297
+  0049 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=1891.546674 expense=-11327.642909 medicareTax=-116.000000 incomeTax=-387.524382 four01KContribution=7000.475618 longTermCapitalGains=9397.378765 value=502997.904681
+  0050 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=1890.104518 expense=-11356.498260 medicareTax=-116.000000 incomeTax=-387.524382 four01KContribution=7000.475618 longTermCapitalGains=9427.631685 value=500531.986557
+  0051 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=1888.589930 expense=-11385.427115 medicareTax=-116.000000 incomeTax=-387.524382 four01KContribution=7000.475618 longTermCapitalGains=9457.957098 value=498035.624990
+  0052 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=1887.002542 expense=-11414.429662 medicareTax=-116.000000 incomeTax=-387.524382 four01KContribution=7000.475618 longTermCapitalGains=9488.355191 value=495508.673488
+  0053 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=1880.581401 expense=-11443.506088 medicareTax=-116.000000 incomeTax=-550.429808 four01KContribution=1718.919756 longTermCapitalGains=5261.080033 value=492783.318993
+  0054 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=1871.440110 expense=-11472.656582 medicareTax=-116.000000 incomeTax=-928.592154 longTermCapitalGains=4172.823235 value=489641.510367
+  0055 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=1862.177758 expense=-11501.881332 medicareTax=-116.000000 incomeTax=-928.592154 longTermCapitalGains=4199.907065 value=486461.214639
+  0056 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=1852.793724 expense=-11531.180527 medicareTax=-116.000000 incomeTax=-928.592154 longTermCapitalGains=4227.075862 value=483242.235681
+  0057 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=1843.287383 expense=-11560.554358 medicareTax=-116.000000 incomeTax=-928.592154 longTermCapitalGains=4254.329778 value=479984.376552
+  0058 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=1833.658109 expense=-11590.003013 medicareTax=-116.000000 incomeTax=-928.592154 longTermCapitalGains=4281.668968 value=476687.439494
+  0059 employedIncome=8000.000000 socialSecurityTax=-496.000000 assetAppreciation=1823.905272 expense=-11619.526684 medicareTax=-116.000000 incomeTax=-928.592154 longTermCapitalGains=10020.035398 taxTrueUp=-6834.420987 value=466516.804941
 
 [priceIndex]
   [0000]         1.002547         1.005101         1.007662         1.010228         1.012802         1.015382

@@ -41,7 +41,7 @@
   total.medicareTax = -20880.000000
   total.incomeTax = -172165.040545
   total.four01KContribution = 230400.000000
-  total.value = 39426776.723194
+  total.value = 38506009.127591
 
 [assetOrder]
   0 Salary A
@@ -727,7 +727,7 @@
   0045 2026-12 transfer                     -1920.000000 cash  -                      c0 {cadence=monthly from=Salary A to=401K A}
   0046 2026-12 incomeTaxWithholding         -1481.766667 cash  withheldIncomeTax      c6
   0047 2026-12 transfer                     -8424.233333 cash  -                      c2 {cadence=monthly from=Salary A system=true to=Checking}
-  0048 2026-12 incomeGrowth                     0.000000 cash  income                 c7
+  0048 2027-01 incomeGrowth                     0.000000 cash  income                 c7
   0049 2027-01 ficaWithholding               -918.000000 cash  socialSecurityTax      c5
   0050 2027-01 transfer                     -1920.000000 cash  -                      c0 {cadence=monthly from=Salary A to=401K A}
   0051 2027-01 incomeTaxWithholding         -1458.955833 cash  withheldIncomeTax      c6
@@ -776,7 +776,7 @@
   0094 2027-12 transfer                     -1920.000000 cash  -                      c0 {cadence=monthly from=Salary A to=401K A}
   0095 2027-12 incomeTaxWithholding         -1458.955833 cash  withheldIncomeTax      c6
   0096 2027-12 transfer                     -8447.044167 cash  -                      c2 {cadence=monthly from=Salary A system=true to=Checking}
-  0097 2027-12 incomeGrowth                     0.000000 cash  income                 c8
+  0097 2028-01 incomeGrowth                     0.000000 cash  income                 c8
   0098 2028-01 ficaWithholding               -918.000000 cash  socialSecurityTax      c5
   0099 2028-01 transfer                     -1920.000000 cash  -                      c0 {cadence=monthly from=Salary A to=401K A}
   0100 2028-01 incomeTaxWithholding         -1435.437864 cash  withheldIncomeTax      c6
@@ -825,7 +825,7 @@
   0143 2028-12 transfer                     -1920.000000 cash  -                      c0 {cadence=monthly from=Salary A to=401K A}
   0144 2028-12 incomeTaxWithholding         -1435.437864 cash  withheldIncomeTax      c6
   0145 2028-12 transfer                     -8470.562136 cash  -                      c2 {cadence=monthly from=Salary A system=true to=Checking}
-  0146 2028-12 incomeGrowth                     0.000000 cash  income                 c9
+  0146 2029-01 incomeGrowth                     0.000000 cash  income                 c9
   0147 2029-01 ficaWithholding               -918.000000 cash  socialSecurityTax      c5
   0148 2029-01 transfer                     -1920.000000 cash  -                      c0 {cadence=monthly from=Salary A to=401K A}
   0149 2029-01 incomeTaxWithholding         -1411.190838 cash  withheldIncomeTax      c6
@@ -874,7 +874,7 @@
   0192 2029-12 transfer                     -1920.000000 cash  -                      c0 {cadence=monthly from=Salary A to=401K A}
   0193 2029-12 incomeTaxWithholding         -1411.190838 cash  withheldIncomeTax      c6
   0194 2029-12 transfer                     -8494.809162 cash  -                      c2 {cadence=monthly from=Salary A system=true to=Checking}
-  0195 2029-12 incomeGrowth                     0.000000 cash  income                 c10
+  0195 2030-01 incomeGrowth                     0.000000 cash  income                 c10
   0196 2030-01 ficaWithholding               -918.000000 cash  socialSecurityTax      c5
   0197 2030-01 transfer                     -1920.000000 cash  -                      c0 {cadence=monthly from=Salary A to=401K A}
   0198 2030-01 incomeTaxWithholding         -1386.192154 cash  withheldIncomeTax      c6
@@ -1000,7 +1000,7 @@
   0045 2026-12 transfer                     -1920.000000 cash  -                      c1 {cadence=monthly from=Salary B to=401K B}
   0046 2026-12 incomeTaxWithholding         -1481.766667 cash  withheldIncomeTax      c12
   0047 2026-12 transfer                     -8424.233333 cash  -                      c3 {cadence=monthly from=Salary B system=true to=Checking}
-  0048 2026-12 incomeGrowth                     0.000000 cash  income                 c13
+  0048 2027-01 incomeGrowth                     0.000000 cash  income                 c13
   0049 2027-01 ficaWithholding               -918.000000 cash  socialSecurityTax      c11
   0050 2027-01 transfer                     -1920.000000 cash  -                      c1 {cadence=monthly from=Salary B to=401K B}
   0051 2027-01 incomeTaxWithholding         -1458.955833 cash  withheldIncomeTax      c12
@@ -1049,7 +1049,7 @@
   0094 2027-12 transfer                     -1920.000000 cash  -                      c1 {cadence=monthly from=Salary B to=401K B}
   0095 2027-12 incomeTaxWithholding         -1458.955833 cash  withheldIncomeTax      c12
   0096 2027-12 transfer                     -8447.044167 cash  -                      c3 {cadence=monthly from=Salary B system=true to=Checking}
-  0097 2027-12 incomeGrowth                     0.000000 cash  income                 c14
+  0097 2028-01 incomeGrowth                     0.000000 cash  income                 c14
   0098 2028-01 ficaWithholding               -918.000000 cash  socialSecurityTax      c11
   0099 2028-01 transfer                     -1920.000000 cash  -                      c1 {cadence=monthly from=Salary B to=401K B}
   0100 2028-01 incomeTaxWithholding         -1435.437864 cash  withheldIncomeTax      c12
@@ -1098,7 +1098,7 @@
   0143 2028-12 transfer                     -1920.000000 cash  -                      c1 {cadence=monthly from=Salary B to=401K B}
   0144 2028-12 incomeTaxWithholding         -1435.437864 cash  withheldIncomeTax      c12
   0145 2028-12 transfer                     -8470.562136 cash  -                      c3 {cadence=monthly from=Salary B system=true to=Checking}
-  0146 2028-12 incomeGrowth                     0.000000 cash  income                 c15
+  0146 2029-01 incomeGrowth                     0.000000 cash  income                 c15
   0147 2029-01 ficaWithholding               -918.000000 cash  socialSecurityTax      c11
   0148 2029-01 transfer                     -1920.000000 cash  -                      c1 {cadence=monthly from=Salary B to=401K B}
   0149 2029-01 incomeTaxWithholding         -1411.190838 cash  withheldIncomeTax      c12
@@ -1147,7 +1147,7 @@
   0192 2029-12 transfer                     -1920.000000 cash  -                      c1 {cadence=monthly from=Salary B to=401K B}
   0193 2029-12 incomeTaxWithholding         -1411.190838 cash  withheldIncomeTax      c12
   0194 2029-12 transfer                     -8494.809162 cash  -                      c3 {cadence=monthly from=Salary B system=true to=Checking}
-  0195 2029-12 incomeGrowth                     0.000000 cash  income                 c16
+  0195 2030-01 incomeGrowth                     0.000000 cash  income                 c16
   0196 2030-01 ficaWithholding               -918.000000 cash  socialSecurityTax      c11
   0197 2030-01 transfer                     -1920.000000 cash  -                      c1 {cadence=monthly from=Salary B to=401K B}
   0198 2030-01 incomeTaxWithholding         -1386.192154 cash  withheldIncomeTax      c12
@@ -1214,66 +1214,66 @@
   medicareTax                  n=  60 first=     -174.000000 last=     -174.000000 min=     -174.000000 max=     -174.000000 sum=     -10440.000000 #82853f75
 
 [packages]
-  0000 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=993.434343 expense=-8000.000000 medicareTax=-348.000000 incomeTax=-2963.533333 four01KContribution=3840.000000 value=283173.522295
-  0001 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=1013.126353 expense=-8020.378715 medicareTax=-348.000000 incomeTax=-2963.533333 four01KContribution=3840.000000 value=295346.305973
-  0002 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=1032.898591 expense=-8040.809342 medicareTax=-348.000000 incomeTax=-2963.533333 four01KContribution=3840.000000 value=307518.379218
-  0003 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=1052.751383 expense=-8061.292012 medicareTax=-348.000000 incomeTax=-2963.533333 four01KContribution=3840.000000 value=319689.770409
-  0004 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=1072.685058 expense=-8081.826859 medicareTax=-348.000000 incomeTax=-2963.533333 four01KContribution=3840.000000 value=331860.508119
-  0005 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=1092.699945 expense=-8102.414015 medicareTax=-348.000000 incomeTax=-2963.533333 four01KContribution=3840.000000 value=344030.621117
-  0006 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=1112.796375 expense=-8123.053613 medicareTax=-348.000000 incomeTax=-2963.533333 four01KContribution=3840.000000 value=356200.138371
-  0007 employedIncome=24000.000000 socialSecurityTax=-1023.000000 assetAppreciation=1132.974680 expense=-8143.745787 medicareTax=-348.000000 incomeTax=-2963.533333 four01KContribution=3840.000000 value=368834.089046
-  0008 employedIncome=24000.000000 assetAppreciation=1153.235195 expense=-8164.490672 medicareTax=-348.000000 incomeTax=-2963.533333 four01KContribution=3840.000000 value=382490.502507
-  0009 employedIncome=24000.000000 assetAppreciation=1173.578253 expense=-8185.288401 medicareTax=-348.000000 incomeTax=-2963.533333 four01KContribution=3840.000000 value=396146.408318
-  0010 employedIncome=24000.000000 assetAppreciation=1194.004191 expense=-8206.139108 medicareTax=-348.000000 incomeTax=-2963.533333 four01KContribution=3840.000000 value=409801.836247
-  0011 employedIncome=24000.000000 assetAppreciation=1214.513348 expense=-8227.042929 medicareTax=-348.000000 incomeTax=-2963.533333 four01KContribution=3840.000000 value=423456.816261
-  0012 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=1235.106061 expense=-8248.000000 medicareTax=-348.000000 incomeTax=-2917.911667 four01KContribution=3840.000000 value=435669.000199
-  0013 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=1255.782671 expense=-8269.010455 medicareTax=-348.000000 incomeTax=-2917.911667 four01KContribution=3840.000000 value=447880.796772
-  0014 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=1276.543520 expense=-8290.074431 medicareTax=-348.000000 incomeTax=-2917.911667 four01KContribution=3840.000000 value=460092.236561
-  0015 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=1297.388952 expense=-8311.192064 medicareTax=-348.000000 incomeTax=-2917.911667 four01KContribution=3840.000000 value=472303.350355
-  0016 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=1318.319310 expense=-8332.363491 medicareTax=-348.000000 incomeTax=-2917.911667 four01KContribution=3840.000000 value=484514.169150
-  0017 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=1339.334942 expense=-8353.588849 medicareTax=-348.000000 incomeTax=-2917.911667 four01KContribution=3840.000000 value=496724.724150
-  0018 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=1360.436193 expense=-8374.868275 medicareTax=-348.000000 incomeTax=-2917.911667 four01KContribution=3840.000000 value=508935.046770
-  0019 employedIncome=24000.000000 socialSecurityTax=-1377.609000 assetAppreciation=1381.623414 expense=-8396.201907 medicareTax=-348.000000 incomeTax=-2917.911667 four01KContribution=3840.000000 value=521255.559635
-  0020 employedIncome=24000.000000 assetAppreciation=1402.896954 expense=-8417.589883 medicareTax=-348.000000 incomeTax=-2917.911667 four01KContribution=3840.000000 value=534953.512582
-  0021 employedIncome=24000.000000 assetAppreciation=1424.257166 expense=-8439.032341 medicareTax=-348.000000 incomeTax=-2917.911667 four01KContribution=3840.000000 value=548651.328660
-  0022 employedIncome=24000.000000 assetAppreciation=1445.704401 expense=-8460.529420 medicareTax=-348.000000 incomeTax=-2917.911667 four01KContribution=3840.000000 value=562349.040134
-  0023 employedIncome=24000.000000 assetAppreciation=1467.239015 expense=-8482.081260 medicareTax=-348.000000 incomeTax=-2917.911667 four01KContribution=3840.000000 value=576046.679482
-  0024 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=1488.861364 expense=-8503.688000 medicareTax=-348.000000 incomeTax=-2870.875728 four01KContribution=3840.000000 value=588303.315338
-  0025 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=1510.571804 expense=-8525.349779 medicareTax=-348.000000 incomeTax=-2870.875728 four01KContribution=3840.000000 value=600559.944676
-  0026 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=1532.370696 expense=-8547.066739 medicareTax=-348.000000 incomeTax=-2870.875728 four01KContribution=3840.000000 value=612816.600625
-  0027 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=1554.258399 expense=-8568.839018 medicareTax=-348.000000 incomeTax=-2870.875728 four01KContribution=3840.000000 value=625073.316537
-  0028 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=1576.235276 expense=-8590.666760 medicareTax=-348.000000 incomeTax=-2870.875728 four01KContribution=3840.000000 value=637330.125981
-  0029 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=1598.301689 expense=-8612.550103 medicareTax=-348.000000 incomeTax=-2870.875728 four01KContribution=3840.000000 value=649587.062750
-  0030 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=1620.458003 expense=-8634.489192 medicareTax=-348.000000 incomeTax=-2870.875728 four01KContribution=3840.000000 value=661844.160859
-  0031 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=1642.704585 expense=-8656.484166 medicareTax=-348.000000 incomeTax=-2870.875728 four01KContribution=3840.000000 value=674101.454546
-  0032 employedIncome=24000.000000 socialSecurityTax=-255.210879 assetAppreciation=1665.041802 expense=-8678.535169 medicareTax=-348.000000 incomeTax=-2870.875728 four01KContribution=3840.000000 value=687591.767397
-  0033 employedIncome=24000.000000 assetAppreciation=1687.470024 expense=-8700.642344 medicareTax=-348.000000 incomeTax=-2870.875728 four01KContribution=3840.000000 value=701337.555860
-  0034 employedIncome=24000.000000 assetAppreciation=1709.989621 expense=-8722.805832 medicareTax=-348.000000 incomeTax=-2870.875728 four01KContribution=3840.000000 value=715083.643974
-  0035 employedIncome=24000.000000 assetAppreciation=1732.600966 expense=-8745.025779 medicareTax=-348.000000 incomeTax=-2870.875728 four01KContribution=3840.000000 value=728830.066883
-  0036 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=1755.304432 expense=-8767.302328 medicareTax=-348.000000 incomeTax=-2822.381676 four01KContribution=3840.000000 value=741137.354016
-  0037 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=1778.100395 expense=-8789.635623 medicareTax=-348.000000 incomeTax=-2822.381676 four01KContribution=3840.000000 value=753445.046927
-  0038 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=1800.989231 expense=-8812.025808 medicareTax=-348.000000 incomeTax=-2822.381676 four01KContribution=3840.000000 value=765753.181455
-  0039 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=1823.971319 expense=-8834.473028 medicareTax=-348.000000 incomeTax=-2822.381676 four01KContribution=3840.000000 value=778061.793669
-  0040 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=1847.047040 expense=-8856.977429 medicareTax=-348.000000 incomeTax=-2822.381676 four01KContribution=3840.000000 value=790370.919876
-  0041 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=1870.216773 expense=-8879.539157 medicareTax=-348.000000 incomeTax=-2822.381676 four01KContribution=3840.000000 value=802680.596617
-  0042 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=1893.480903 expense=-8902.158356 medicareTax=-348.000000 incomeTax=-2822.381676 four01KContribution=3840.000000 value=814990.860669
-  0043 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=1916.839814 expense=-8924.835175 medicareTax=-348.000000 incomeTax=-2822.381676 four01KContribution=3840.000000 value=827301.749048
-  0044 employedIncome=24000.000000 socialSecurityTax=-632.146416 assetAppreciation=1940.293892 expense=-8947.569759 medicareTax=-348.000000 incomeTax=-2822.381676 four01KContribution=3840.000000 value=840469.152592
-  0045 employedIncome=24000.000000 assetAppreciation=1963.843525 expense=-8970.362256 medicareTax=-348.000000 incomeTax=-2822.381676 four01KContribution=3840.000000 value=854269.401628
-  0046 employedIncome=24000.000000 assetAppreciation=1987.489102 expense=-8993.212813 medicareTax=-348.000000 incomeTax=-2822.381676 four01KContribution=3840.000000 value=868070.387476
-  0047 employedIncome=24000.000000 assetAppreciation=2011.231014 expense=-9016.121579 medicareTax=-348.000000 incomeTax=-2822.381676 four01KContribution=3840.000000 value=881872.148114
-  0048 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=2035.069653 expense=-9039.088700 medicareTax=-348.000000 incomeTax=-2772.384308 four01KContribution=3840.000000 value=894236.719132
-  0049 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=2059.005414 expense=-9062.114327 medicareTax=-348.000000 incomeTax=-2772.384308 four01KContribution=3840.000000 value=906602.141631
-  0050 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=2083.038693 expense=-9085.198608 medicareTax=-348.000000 incomeTax=-2772.384308 four01KContribution=3840.000000 value=918968.454324
-  0051 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=2107.169885 expense=-9108.341692 medicareTax=-348.000000 incomeTax=-2772.384308 four01KContribution=3840.000000 value=931335.696172
-  0052 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=2131.399392 expense=-9131.543729 medicareTax=-348.000000 incomeTax=-2772.384308 four01KContribution=3840.000000 value=943703.906385
-  0053 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=2155.727612 expense=-9154.804870 medicareTax=-348.000000 incomeTax=-2772.384308 four01KContribution=3840.000000 value=956073.124424
-  0054 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=2180.154948 expense=-9178.125266 medicareTax=-348.000000 incomeTax=-2772.384308 four01KContribution=3840.000000 value=968443.389999
-  0055 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=2204.681805 expense=-9201.505066 medicareTax=-348.000000 incomeTax=-2772.384308 four01KContribution=3840.000000 value=980814.743074
-  0056 employedIncome=24000.000000 socialSecurityTax=-1020.766955 assetAppreciation=2229.308587 expense=-9224.944422 medicareTax=-348.000000 incomeTax=-2772.384308 four01KContribution=3840.000000 value=993654.456912
-  0057 employedIncome=24000.000000 assetAppreciation=2254.035701 expense=-9248.443486 medicareTax=-348.000000 incomeTax=-2772.384308 four01KContribution=3840.000000 value=1007516.105895
-  0058 employedIncome=24000.000000 assetAppreciation=2278.863557 expense=-9272.002411 medicareTax=-348.000000 incomeTax=-2772.384308 four01KContribution=3840.000000 value=1021378.963797
-  0059 employedIncome=24000.000000 assetAppreciation=2303.792565 expense=-9295.621347 medicareTax=-348.000000 incomeTax=-2772.384308 four01KContribution=3840.000000 value=1035243.071604
+  0000 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=993.434343 expense=-8000.000000 medicareTax=-348.000000 incomeTax=-2963.533333 four01KContribution=3840.000000 value=267193.901010
+  0001 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=1013.126353 expense=-8020.378715 medicareTax=-348.000000 incomeTax=-2963.533333 four01KContribution=3840.000000 value=279387.115315
+  0002 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=1032.898591 expense=-8040.809342 medicareTax=-348.000000 incomeTax=-2963.533333 four01KContribution=3840.000000 value=291579.671231
+  0003 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=1052.751383 expense=-8061.292012 medicareTax=-348.000000 incomeTax=-2963.533333 four01KContribution=3840.000000 value=303771.597268
+  0004 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=1072.685058 expense=-8081.826859 medicareTax=-348.000000 incomeTax=-2963.533333 four01KContribution=3840.000000 value=315962.922133
+  0005 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=1092.699945 expense=-8102.414015 medicareTax=-348.000000 incomeTax=-2963.533333 four01KContribution=3840.000000 value=328153.674730
+  0006 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=1112.796375 expense=-8123.053613 medicareTax=-348.000000 incomeTax=-2963.533333 four01KContribution=3840.000000 value=340343.884158
+  0007 employedIncome=24000.000000 socialSecurityTax=-1023.000000 assetAppreciation=1132.974680 expense=-8143.745787 medicareTax=-348.000000 incomeTax=-2963.533333 four01KContribution=3840.000000 value=352998.579718
+  0008 employedIncome=24000.000000 assetAppreciation=1153.235195 expense=-8164.490672 medicareTax=-348.000000 incomeTax=-2963.533333 four01KContribution=3840.000000 value=366675.790907
+  0009 employedIncome=24000.000000 assetAppreciation=1173.578253 expense=-8185.288401 medicareTax=-348.000000 incomeTax=-2963.533333 four01KContribution=3840.000000 value=380352.547426
+  0010 employedIncome=24000.000000 assetAppreciation=1194.004191 expense=-8206.139108 medicareTax=-348.000000 incomeTax=-2963.533333 four01KContribution=3840.000000 value=394028.879176
+  0011 employedIncome=24000.000000 assetAppreciation=1214.513348 expense=-8227.042929 medicareTax=-348.000000 incomeTax=-2963.533333 four01KContribution=3840.000000 value=407704.816261
+  0012 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=1235.106061 expense=-8248.000000 medicareTax=-348.000000 incomeTax=-2917.911667 four01KContribution=3840.000000 value=419938.010655
+  0013 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=1255.782671 expense=-8269.010455 medicareTax=-348.000000 incomeTax=-2917.911667 four01KContribution=3840.000000 value=432170.871204
+  0014 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=1276.543520 expense=-8290.074431 medicareTax=-348.000000 incomeTax=-2917.911667 four01KContribution=3840.000000 value=444403.428626
+  0015 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=1297.388952 expense=-8311.192064 medicareTax=-348.000000 incomeTax=-2917.911667 four01KContribution=3840.000000 value=456635.713847
+  0016 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=1318.319310 expense=-8332.363491 medicareTax=-348.000000 incomeTax=-2917.911667 four01KContribution=3840.000000 value=468867.757999
+  0017 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=1339.334942 expense=-8353.588849 medicareTax=-348.000000 incomeTax=-2917.911667 four01KContribution=3840.000000 value=481099.592425
+  0018 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=1360.436193 expense=-8374.868275 medicareTax=-348.000000 incomeTax=-2917.911667 four01KContribution=3840.000000 value=493331.248677
+  0019 employedIncome=24000.000000 socialSecurityTax=-1377.609000 assetAppreciation=1381.623414 expense=-8396.201907 medicareTax=-348.000000 incomeTax=-2917.911667 four01KContribution=3840.000000 value=505673.149518
+  0020 employedIncome=24000.000000 assetAppreciation=1402.896954 expense=-8417.589883 medicareTax=-348.000000 incomeTax=-2917.911667 four01KContribution=3840.000000 value=519392.544923
+  0021 employedIncome=24000.000000 assetAppreciation=1424.257166 expense=-8439.032341 medicareTax=-348.000000 incomeTax=-2917.911667 four01KContribution=3840.000000 value=533111.858081
+  0022 employedIncome=24000.000000 assetAppreciation=1445.704401 expense=-8460.529420 medicareTax=-348.000000 incomeTax=-2917.911667 four01KContribution=3840.000000 value=546831.121394
+  0023 employedIncome=24000.000000 assetAppreciation=1467.239015 expense=-8482.081260 medicareTax=-348.000000 incomeTax=-2917.911667 four01KContribution=3840.000000 value=560550.367482
+  0024 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=1488.861364 expense=-8503.688000 medicareTax=-348.000000 incomeTax=-2870.875728 four01KContribution=3840.000000 value=572828.665118
+  0025 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=1510.571804 expense=-8525.349779 medicareTax=-348.000000 incomeTax=-2870.875728 four01KContribution=3840.000000 value=585107.011414
+  0026 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=1532.370696 expense=-8547.066739 medicareTax=-348.000000 incomeTax=-2870.875728 four01KContribution=3840.000000 value=597385.439644
+  0027 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=1554.258399 expense=-8568.839018 medicareTax=-348.000000 incomeTax=-2870.875728 four01KContribution=3840.000000 value=609663.983296
+  0028 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=1576.235276 expense=-8590.666760 medicareTax=-348.000000 incomeTax=-2870.875728 four01KContribution=3840.000000 value=621942.676084
+  0029 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=1598.301689 expense=-8612.550103 medicareTax=-348.000000 incomeTax=-2870.875728 four01KContribution=3840.000000 value=634221.551941
+  0030 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=1620.458003 expense=-8634.489192 medicareTax=-348.000000 incomeTax=-2870.875728 four01KContribution=3840.000000 value=646500.645025
+  0031 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=1642.704585 expense=-8656.484166 medicareTax=-348.000000 incomeTax=-2870.875728 four01KContribution=3840.000000 value=658779.989715
+  0032 employedIncome=24000.000000 socialSecurityTax=-255.210879 assetAppreciation=1665.041802 expense=-8678.535169 medicareTax=-348.000000 incomeTax=-2870.875728 four01KContribution=3840.000000 value=672292.409741
+  0033 employedIncome=24000.000000 assetAppreciation=1687.470024 expense=-8700.642344 medicareTax=-348.000000 incomeTax=-2870.875728 four01KContribution=3840.000000 value=686060.361693
+  0034 employedIncome=24000.000000 assetAppreciation=1709.989621 expense=-8722.805832 medicareTax=-348.000000 incomeTax=-2870.875728 four01KContribution=3840.000000 value=699828.669753
+  0035 employedIncome=24000.000000 assetAppreciation=1732.600966 expense=-8745.025779 medicareTax=-348.000000 incomeTax=-2870.875728 four01KContribution=3840.000000 value=713597.369211
+  0036 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=1755.304432 expense=-8767.302328 medicareTax=-348.000000 incomeTax=-2822.381676 four01KContribution=3840.000000 value=725926.989639
+  0037 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=1778.100395 expense=-8789.635623 medicareTax=-348.000000 incomeTax=-2822.381676 four01KContribution=3840.000000 value=738257.072735
+  0038 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=1800.989231 expense=-8812.025808 medicareTax=-348.000000 incomeTax=-2822.381676 four01KContribution=3840.000000 value=750587.654483
+  0039 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=1823.971319 expense=-8834.473028 medicareTax=-348.000000 incomeTax=-2822.381676 four01KContribution=3840.000000 value=762918.771098
+  0040 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=1847.047040 expense=-8856.977429 medicareTax=-348.000000 incomeTax=-2822.381676 four01KContribution=3840.000000 value=775250.459033
+  0041 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=1870.216773 expense=-8879.539157 medicareTax=-348.000000 incomeTax=-2822.381676 four01KContribution=3840.000000 value=787582.754974
+  0042 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=1893.480903 expense=-8902.158356 medicareTax=-348.000000 incomeTax=-2822.381676 four01KContribution=3840.000000 value=799915.695845
+  0043 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=1916.839814 expense=-8924.835175 medicareTax=-348.000000 incomeTax=-2822.381676 four01KContribution=3840.000000 value=812249.318808
+  0044 employedIncome=24000.000000 socialSecurityTax=-632.146416 assetAppreciation=1940.293892 expense=-8947.569759 medicareTax=-348.000000 incomeTax=-2822.381676 four01KContribution=3840.000000 value=825439.514848
+  0045 employedIncome=24000.000000 assetAppreciation=1963.843525 expense=-8970.362256 medicareTax=-348.000000 incomeTax=-2822.381676 four01KContribution=3840.000000 value=839262.614441
+  0046 employedIncome=24000.000000 assetAppreciation=1987.489102 expense=-8993.212813 medicareTax=-348.000000 incomeTax=-2822.381676 four01KContribution=3840.000000 value=853086.509054
+  0047 employedIncome=24000.000000 assetAppreciation=2011.231014 expense=-9016.121579 medicareTax=-348.000000 incomeTax=-2822.381676 four01KContribution=3840.000000 value=866911.236814
+  0048 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=2035.069653 expense=-9039.088700 medicareTax=-348.000000 incomeTax=-2772.384308 four01KContribution=3840.000000 value=879298.833459
+  0049 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=2059.005414 expense=-9062.114327 medicareTax=-348.000000 incomeTax=-2772.384308 four01KContribution=3840.000000 value=891687.340239
+  0050 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=2083.038693 expense=-9085.198608 medicareTax=-348.000000 incomeTax=-2772.384308 four01KContribution=3840.000000 value=904076.796016
+  0051 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=2107.169885 expense=-9108.341692 medicareTax=-348.000000 incomeTax=-2772.384308 four01KContribution=3840.000000 value=916467.239902
+  0052 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=2131.399392 expense=-9131.543729 medicareTax=-348.000000 incomeTax=-2772.384308 four01KContribution=3840.000000 value=928858.711256
+  0053 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=2155.727612 expense=-9154.804870 medicareTax=-348.000000 incomeTax=-2772.384308 four01KContribution=3840.000000 value=941251.249690
+  0054 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=2180.154948 expense=-9178.125266 medicareTax=-348.000000 incomeTax=-2772.384308 four01KContribution=3840.000000 value=953644.895065
+  0055 employedIncome=24000.000000 socialSecurityTax=-1488.000000 assetAppreciation=2204.681805 expense=-9201.505066 medicareTax=-348.000000 incomeTax=-2772.384308 four01KContribution=3840.000000 value=966039.687496
+  0056 employedIncome=24000.000000 socialSecurityTax=-1020.766955 assetAppreciation=2229.308587 expense=-9224.944422 medicareTax=-348.000000 incomeTax=-2772.384308 four01KContribution=3840.000000 value=978902.900398
+  0057 employedIncome=24000.000000 assetAppreciation=2254.035701 expense=-9248.443486 medicareTax=-348.000000 incomeTax=-2772.384308 four01KContribution=3840.000000 value=992788.108305
+  0058 employedIncome=24000.000000 assetAppreciation=2278.863557 expense=-9272.002411 medicareTax=-348.000000 incomeTax=-2772.384308 four01KContribution=3840.000000 value=1006674.585144
+  0059 employedIncome=24000.000000 assetAppreciation=2303.792565 expense=-9295.621347 medicareTax=-348.000000 incomeTax=-2772.384308 four01KContribution=3840.000000 value=1020562.372053
 
 [priceIndex]
   [0000]         1.002547         1.005101         1.007662         1.010228         1.012802         1.015382

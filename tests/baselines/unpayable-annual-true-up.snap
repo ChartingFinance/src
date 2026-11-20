@@ -30,7 +30,7 @@
   total.expense = -776869.655920
   total.incomeTax = -86318.850658
   total.tradIRADistribution = 863188.506578
-  total.value = 63552274.706656
+  total.value = 64331123.313251
 
 [assetOrder]
   0 Checking
@@ -158,7 +158,7 @@
   0033 2026-12 transfer                    -12340.564394 cash  -                      c0 {cadence=monthly from=Living to=IRA}
   0034 2026-12 assetGrowth                      0.000000 cash  growth                 c-
   0035 2026-12 incomeTaxWithholding         -1371.173822 cash  -                      c1 {rate=0.100000 source=distribution}
-  0036 2026-12 unfunded                    -10775.067894 info  -                      c2 {cause=annual tax true-up origin=oneSided}
+  0036 2027-01 unfunded                    -10775.067894 info  -                      c2 {cause=annual tax true-up origin=oneSided}
   0037 2027-01 transfer                    -12372.000000 cash  -                      c0 {cadence=monthly from=Living to=IRA}
   0038 2027-01 assetGrowth                      0.000000 cash  growth                 c-
   0039 2027-01 incomeTaxWithholding         -1374.666667 cash  -                      c1 {rate=0.100000 source=distribution}
@@ -195,7 +195,7 @@
   0070 2027-12 transfer                    -12723.121890 cash  -                      c0 {cadence=monthly from=Living to=IRA}
   0071 2027-12 assetGrowth                      0.000000 cash  growth                 c-
   0072 2027-12 incomeTaxWithholding         -1413.680210 cash  -                      c1 {rate=0.100000 source=distribution}
-  0073 2027-12 unfunded                    -11187.214999 info  -                      c3 {cause=annual tax true-up origin=oneSided}
+  0073 2028-01 unfunded                    -11187.214999 info  -                      c3 {cause=annual tax true-up origin=oneSided}
   0074 2028-01 transfer                    -12755.532000 cash  -                      c0 {cadence=monthly from=Living to=IRA}
   0075 2028-01 assetGrowth                      0.000000 cash  growth                 c-
   0076 2028-01 incomeTaxWithholding         -1417.281333 cash  -                      c1 {rate=0.100000 source=distribution}
@@ -232,7 +232,7 @@
   0107 2028-12 transfer                    -13117.538669 cash  -                      c0 {cadence=monthly from=Living to=IRA}
   0108 2028-12 assetGrowth                      0.000000 cash  growth                 c-
   0109 2028-12 incomeTaxWithholding         -1457.504297 cash  -                      c1 {rate=0.100000 source=distribution}
-  0110 2028-12 unfunded                    -11612.138664 info  -                      c4 {cause=annual tax true-up origin=oneSided}
+  0110 2029-01 unfunded                    -11612.138664 info  -                      c4 {cause=annual tax true-up origin=oneSided}
   0111 2029-01 transfer                    -13150.953492 cash  -                      c0 {cadence=monthly from=Living to=IRA}
   0112 2029-01 assetGrowth                      0.000000 cash  growth                 c-
   0113 2029-01 incomeTaxWithholding         -1461.217055 cash  -                      c1 {rate=0.100000 source=distribution}
@@ -269,7 +269,7 @@
   0144 2029-12 transfer                    -13524.182368 cash  -                      c0 {cadence=monthly from=Living to=IRA}
   0145 2029-12 assetGrowth                      0.000000 cash  growth                 c-
   0146 2029-12 incomeTaxWithholding         -1502.686930 cash  -                      c1 {rate=0.100000 source=distribution}
-  0147 2029-12 unfunded                    -12009.573843 info  -                      c5 {cause=annual tax true-up origin=oneSided}
+  0147 2030-01 unfunded                    -12009.573843 info  -                      c5 {cause=annual tax true-up origin=oneSided}
   0148 2030-01 transfer                    -13558.633050 cash  -                      c0 {cadence=monthly from=Living to=IRA}
   0149 2030-01 assetGrowth                      0.000000 cash  growth                 c-
   0150 2030-01 incomeTaxWithholding         -1506.514783 cash  -                      c1 {rate=0.100000 source=distribution}
@@ -463,66 +463,66 @@
   livingExpense                n=  60 first=   -12000.000000 last=   -13943.430000 min=   -13943.430000 max=   -12000.000000 sum=    -776869.640000 #6e6b80b9
 
 [packages]
-  0000 expense=-12000.000000 incomeTax=-1333.333333 tradIRADistribution=13333.333333 value=1474636.098594
-  0001 expense=-12030.568073 incomeTax=-1336.729786 tradIRADistribution=13367.297859 value=1461238.154796
-  0002 expense=-12061.214013 incomeTax=-1340.134890 tradIRADistribution=13401.348903 value=1447806.081887
-  0003 expense=-12091.938018 incomeTax=-1343.548669 tradIRADistribution=13435.486687 value=1434339.792930
-  0004 expense=-12122.740288 incomeTax=-1346.971143 tradIRADistribution=13469.711431 value=1420839.200765
-  0005 expense=-12153.621022 incomeTax=-1350.402336 tradIRADistribution=13504.023358 value=1407304.218010
-  0006 expense=-12184.580420 incomeTax=-1353.842269 tradIRADistribution=13538.422688 value=1393734.757060
-  0007 expense=-12215.618681 incomeTax=-1357.290965 tradIRADistribution=13572.909646 value=1380130.730088
-  0008 expense=-12246.736008 incomeTax=-1360.748445 tradIRADistribution=13607.484453 value=1366492.049041
-  0009 expense=-12277.932601 incomeTax=-1364.214733 tradIRADistribution=13642.147334 value=1352818.625646
-  0010 expense=-12309.208662 incomeTax=-1367.689851 tradIRADistribution=13676.898514 value=1339110.371400
-  0011 expense=-12340.564394 incomeTax=-1371.173822 tradIRADistribution=13711.738216 value=1325367.197579
-  0012 expense=-12372.000000 incomeTax=-1374.666667 tradIRADistribution=13746.666667 value=1311589.015229
-  0013 expense=-12403.515683 incomeTax=-1378.168409 tradIRADistribution=13781.684092 value=1297775.735173
-  0014 expense=-12435.111647 incomeTax=-1381.679072 tradIRADistribution=13816.790719 value=1283927.268004
-  0015 expense=-12466.788097 incomeTax=-1385.198677 tradIRADistribution=13851.986774 value=1270043.524090
-  0016 expense=-12498.545237 incomeTax=-1388.727249 tradIRADistribution=13887.272486 value=1256124.413568
-  0017 expense=-12530.383274 incomeTax=-1392.264808 tradIRADistribution=13922.648082 value=1242169.846347
-  0018 expense=-12562.302413 incomeTax=-1395.811379 tradIRADistribution=13958.113792 value=1228179.732107
-  0019 expense=-12594.302860 incomeTax=-1399.366984 tradIRADistribution=13993.669845 value=1214153.980299
-  0020 expense=-12626.384824 incomeTax=-1402.931647 tradIRADistribution=14029.316471 value=1200092.500140
-  0021 expense=-12658.548511 incomeTax=-1406.505390 tradIRADistribution=14065.053902 value=1185995.200619
-  0022 expense=-12690.794131 incomeTax=-1410.088237 tradIRADistribution=14100.882367 value=1171861.990492
-  0023 expense=-12723.121890 incomeTax=-1413.680210 tradIRADistribution=14136.802101 value=1157692.778282
-  0024 expense=-12755.532000 incomeTax=-1417.281333 tradIRADistribution=14172.813333 value=1143487.472280
-  0025 expense=-12788.024669 incomeTax=-1420.891630 tradIRADistribution=14208.916299 value=1129245.980542
-  0026 expense=-12820.600108 incomeTax=-1424.511123 tradIRADistribution=14245.111231 value=1114968.210891
-  0027 expense=-12853.258528 incomeTax=-1428.139836 tradIRADistribution=14281.398364 value=1100654.070915
-  0028 expense=-12886.000139 incomeTax=-1431.777793 tradIRADistribution=14317.777933 value=1086303.467967
-  0029 expense=-12918.825155 incomeTax=-1435.425017 tradIRADistribution=14354.250172 value=1071916.309162
-  0030 expense=-12951.733787 incomeTax=-1439.081532 tradIRADistribution=14390.815319 value=1057492.501381
-  0031 expense=-12984.726249 incomeTax=-1442.747361 tradIRADistribution=14427.473610 value=1043031.951267
-  0032 expense=-13017.802754 incomeTax=-1446.422528 tradIRADistribution=14464.225282 value=1028534.565223
-  0033 expense=-13050.963515 incomeTax=-1450.107057 tradIRADistribution=14501.070573 value=1014000.249417
-  0034 expense=-13084.208749 incomeTax=-1453.800972 tradIRADistribution=14538.009721 value=999428.909776
-  0035 expense=-13117.538669 incomeTax=-1457.504297 tradIRADistribution=14575.042966 value=984820.451988
-  0036 expense=-13150.953492 incomeTax=-1461.217055 tradIRADistribution=14612.170547 value=970174.781499
-  0037 expense=-13184.453434 incomeTax=-1464.939270 tradIRADistribution=14649.392704 value=955491.803517
-  0038 expense=-13218.038711 incomeTax=-1468.670968 tradIRADistribution=14686.709679 value=940771.423007
-  0039 expense=-13251.709542 incomeTax=-1472.412171 tradIRADistribution=14724.121713 value=926013.544692
-  0040 expense=-13285.466144 incomeTax=-1476.162905 tradIRADistribution=14761.629049 value=911218.073052
-  0041 expense=-13319.308735 incomeTax=-1479.923193 tradIRADistribution=14799.231928 value=896384.912325
-  0042 expense=-13353.237535 incomeTax=-1483.693059 tradIRADistribution=14836.930594 value=881513.966503
-  0043 expense=-13387.252763 incomeTax=-1487.472529 tradIRADistribution=14874.725292 value=866605.139335
-  0044 expense=-13421.354639 incomeTax=-1491.261627 tradIRADistribution=14912.616266 value=851658.334324
-  0045 expense=-13455.543384 incomeTax=-1495.060376 tradIRADistribution=14950.603760 value=836673.454728
-  0046 expense=-13489.819220 incomeTax=-1498.868802 tradIRADistribution=14988.688022 value=821650.403558
-  0047 expense=-13524.182368 incomeTax=-1502.686930 tradIRADistribution=15026.869298 value=806589.083578
-  0048 expense=-13558.633050 incomeTax=-1506.514783 tradIRADistribution=15065.147834 value=791489.397304
-  0049 expense=-13593.171490 incomeTax=-1510.352388 tradIRADistribution=15103.523878 value=776351.247005
-  0050 expense=-13627.797911 incomeTax=-1514.199768 tradIRADistribution=15141.997679 value=761174.534699
-  0051 expense=-13662.512538 incomeTax=-1518.056949 tradIRADistribution=15180.569487 value=745959.162156
-  0052 expense=-13697.315594 incomeTax=-1521.923955 tradIRADistribution=15219.239549 value=730705.030896
-  0053 expense=-13732.207306 incomeTax=-1525.800812 tradIRADistribution=15258.008117 value=715412.042186
-  0054 expense=-13767.187898 incomeTax=-1529.687544 tradIRADistribution=15296.875443 value=700080.097043
-  0055 expense=-13802.257598 incomeTax=-1533.584178 tradIRADistribution=15335.841776 value=684709.096233
-  0056 expense=-13837.416633 incomeTax=-1537.490737 tradIRADistribution=15374.907370 value=669298.940266
-  0057 expense=-13872.665229 incomeTax=-1541.407248 tradIRADistribution=15414.072477 value=653849.529403
-  0058 expense=-13908.003616 incomeTax=-1545.333735 tradIRADistribution=15453.337351 value=638360.763647
-  0059 expense=-13943.432021 incomeTax=-1549.270225 tradIRADistribution=15492.702246 value=622832.542747
+  0000 expense=-12000.000000 incomeTax=-1333.333333 tradIRADistribution=13333.333333 value=1486666.666667
+  0001 expense=-12030.568073 incomeTax=-1336.729786 tradIRADistribution=13367.297859 value=1473299.368808
+  0002 expense=-12061.214013 incomeTax=-1340.134890 tradIRADistribution=13401.348903 value=1459898.019905
+  0003 expense=-12091.938018 incomeTax=-1343.548669 tradIRADistribution=13435.486687 value=1446462.533218
+  0004 expense=-12122.740288 incomeTax=-1346.971143 tradIRADistribution=13469.711431 value=1432992.821787
+  0005 expense=-12153.621022 incomeTax=-1350.402336 tradIRADistribution=13504.023358 value=1419488.798429
+  0006 expense=-12184.580420 incomeTax=-1353.842269 tradIRADistribution=13538.422688 value=1405950.375741
+  0007 expense=-12215.618681 incomeTax=-1357.290965 tradIRADistribution=13572.909646 value=1392377.466095
+  0008 expense=-12246.736008 incomeTax=-1360.748445 tradIRADistribution=13607.484453 value=1378769.981642
+  0009 expense=-12277.932601 incomeTax=-1364.214733 tradIRADistribution=13642.147334 value=1365127.834308
+  0010 expense=-12309.208662 incomeTax=-1367.689851 tradIRADistribution=13676.898514 value=1351450.935794
+  0011 expense=-12340.564394 incomeTax=-1371.173822 tradIRADistribution=13711.738216 value=1337739.197579
+  0012 expense=-12372.000000 incomeTax=-1374.666667 tradIRADistribution=13746.666667 value=1323992.530912
+  0013 expense=-12403.515683 incomeTax=-1378.168409 tradIRADistribution=13781.684092 value=1310210.846820
+  0014 expense=-12435.111647 incomeTax=-1381.679072 tradIRADistribution=13816.790719 value=1296394.056101
+  0015 expense=-12466.788097 incomeTax=-1385.198677 tradIRADistribution=13851.986774 value=1282542.069327
+  0016 expense=-12498.545237 incomeTax=-1388.727249 tradIRADistribution=13887.272486 value=1268654.796841
+  0017 expense=-12530.383274 incomeTax=-1392.264808 tradIRADistribution=13922.648082 value=1254732.148759
+  0018 expense=-12562.302413 incomeTax=-1395.811379 tradIRADistribution=13958.113792 value=1240774.034968
+  0019 expense=-12594.302860 incomeTax=-1399.366984 tradIRADistribution=13993.669845 value=1226780.365123
+  0020 expense=-12626.384824 incomeTax=-1402.931647 tradIRADistribution=14029.316471 value=1212751.048652
+  0021 expense=-12658.548511 incomeTax=-1406.505390 tradIRADistribution=14065.053902 value=1198685.994750
+  0022 expense=-12690.794131 incomeTax=-1410.088237 tradIRADistribution=14100.882367 value=1184585.112383
+  0023 expense=-12723.121890 incomeTax=-1413.680210 tradIRADistribution=14136.802101 value=1170448.310282
+  0024 expense=-12755.532000 incomeTax=-1417.281333 tradIRADistribution=14172.813333 value=1156275.496949
+  0025 expense=-12788.024669 incomeTax=-1420.891630 tradIRADistribution=14208.916299 value=1142066.580650
+  0026 expense=-12820.600108 incomeTax=-1424.511123 tradIRADistribution=14245.111231 value=1127821.469419
+  0027 expense=-12853.258528 incomeTax=-1428.139836 tradIRADistribution=14281.398364 value=1113540.071055
+  0028 expense=-12886.000139 incomeTax=-1431.777793 tradIRADistribution=14317.777933 value=1099222.293122
+  0029 expense=-12918.825155 incomeTax=-1435.425017 tradIRADistribution=14354.250172 value=1084868.042950
+  0030 expense=-12951.733787 incomeTax=-1439.081532 tradIRADistribution=14390.815319 value=1070477.227630
+  0031 expense=-12984.726249 incomeTax=-1442.747361 tradIRADistribution=14427.473610 value=1056049.754020
+  0032 expense=-13017.802754 incomeTax=-1446.422528 tradIRADistribution=14464.225282 value=1041585.528739
+  0033 expense=-13050.963515 incomeTax=-1450.107057 tradIRADistribution=14501.070573 value=1027084.458166
+  0034 expense=-13084.208749 incomeTax=-1453.800972 tradIRADistribution=14538.009721 value=1012546.448445
+  0035 expense=-13117.538669 incomeTax=-1457.504297 tradIRADistribution=14575.042966 value=997971.405480
+  0036 expense=-13150.953492 incomeTax=-1461.217055 tradIRADistribution=14612.170547 value=983359.234933
+  0037 expense=-13184.453434 incomeTax=-1464.939270 tradIRADistribution=14649.392704 value=968709.842229
+  0038 expense=-13218.038711 incomeTax=-1468.670968 tradIRADistribution=14686.709679 value=954023.132549
+  0039 expense=-13251.709542 incomeTax=-1472.412171 tradIRADistribution=14724.121713 value=939299.010836
+  0040 expense=-13285.466144 incomeTax=-1476.162905 tradIRADistribution=14761.629049 value=924537.381787
+  0041 expense=-13319.308735 incomeTax=-1479.923193 tradIRADistribution=14799.231928 value=909738.149860
+  0042 expense=-13353.237535 incomeTax=-1483.693059 tradIRADistribution=14836.930594 value=894901.219265
+  0043 expense=-13387.252763 incomeTax=-1487.472529 tradIRADistribution=14874.725292 value=880026.493974
+  0044 expense=-13421.354639 incomeTax=-1491.261627 tradIRADistribution=14912.616266 value=865113.877708
+  0045 expense=-13455.543384 incomeTax=-1495.060376 tradIRADistribution=14950.603760 value=850163.273948
+  0046 expense=-13489.819220 incomeTax=-1498.868802 tradIRADistribution=14988.688022 value=835174.585926
+  0047 expense=-13524.182368 incomeTax=-1502.686930 tradIRADistribution=15026.869298 value=820147.716628
+  0048 expense=-13558.633050 incomeTax=-1506.514783 tradIRADistribution=15065.147834 value=805082.568794
+  0049 expense=-13593.171490 incomeTax=-1510.352388 tradIRADistribution=15103.523878 value=789979.044916
+  0050 expense=-13627.797911 incomeTax=-1514.199768 tradIRADistribution=15141.997679 value=774837.047237
+  0051 expense=-13662.512538 incomeTax=-1518.056949 tradIRADistribution=15180.569487 value=759656.477750
+  0052 expense=-13697.315594 incomeTax=-1521.923955 tradIRADistribution=15219.239549 value=744437.238201
+  0053 expense=-13732.207306 incomeTax=-1525.800812 tradIRADistribution=15258.008117 value=729179.230084
+  0054 expense=-13767.187898 incomeTax=-1529.687544 tradIRADistribution=15296.875443 value=713882.354641
+  0055 expense=-13802.257598 incomeTax=-1533.584178 tradIRADistribution=15335.841776 value=698546.512865
+  0056 expense=-13837.416633 incomeTax=-1537.490737 tradIRADistribution=15374.907370 value=683171.605496
+  0057 expense=-13872.665229 incomeTax=-1541.407248 tradIRADistribution=15414.072477 value=667757.533019
+  0058 expense=-13908.003616 incomeTax=-1545.333735 tradIRADistribution=15453.337351 value=652304.195668
+  0059 expense=-13943.432021 incomeTax=-1549.270225 tradIRADistribution=15492.702246 value=636811.493422
 
 [priceIndex]
   [0000]         1.002547         1.005101         1.007662         1.010228         1.012802         1.015382

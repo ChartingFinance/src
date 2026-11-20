@@ -48,7 +48,7 @@
   total.longTermCapitalGainsTax = -360604.458874
   total.niit = -77613.177733
   total.taxTrueUp = -26493.446661
-  total.value = 145525667.752649
+  total.value = 144844900.157046
 
 [assetOrder]
   0 Salary
@@ -283,8 +283,8 @@
   0142 2029-12 transfer                     16922.818324 cash  -                      c1 {cadence=monthly from=Salary system=true to=Checking}
   0143 2029-12 grossUp                      -9016.121579 cash  -                      c2 {forAsset=Living overflow=false}
   0144 2029-12 interestIncome                   0.000000 cash  interestIncome         c-
-  0145 2029-12 taxTrueUp                   -26493.446661 cash  -                      c3 {direction=underpayment}
-  0146 2029-12 niitAssessed                -77613.177733 cash  -                      c4 {bound=magi magi=2292452.045600 nii=2052452.045600 taxedBase=2042452.045600 threshold=250000}
+  0145 2030-01 taxTrueUp                   -26493.446661 cash  -                      c3 {direction=underpayment}
+  0146 2030-01 niitAssessed                -77613.177733 cash  -                      c4 {bound=magi magi=2292452.045600 nii=2052452.045600 taxedBase=2042452.045600 threshold=250000}
   0147 2030-01 transfer                     15732.815692 cash  -                      c1 {cadence=monthly from=Salary system=true to=Checking}
   0148 2030-01 grossUp                      -9039.088700 cash  -                      c2 {forAsset=Living overflow=false}
   0149 2030-01 interestIncome                   0.000000 cash  interestIncome         c-
@@ -460,7 +460,7 @@
   0033 2026-12 ficaWithholding               -290.000000 cash  socialSecurityTax      c5
   0034 2026-12 incomeTaxWithholding         -2928.333333 cash  withheldIncomeTax      c6
   0035 2026-12 transfer                    -16781.666667 cash  -                      c1 {cadence=monthly from=Salary system=true to=Checking}
-  0036 2026-12 incomeGrowth                     0.000000 cash  income                 c7
+  0036 2027-01 incomeGrowth                     0.000000 cash  income                 c7
   0037 2027-01 ficaWithholding              -1530.000000 cash  socialSecurityTax      c5
   0038 2027-01 incomeTaxWithholding         -2882.711667 cash  withheldIncomeTax      c6
   0039 2027-01 transfer                    -15587.288333 cash  -                      c1 {cadence=monthly from=Salary system=true to=Checking}
@@ -497,7 +497,7 @@
   0070 2027-12 ficaWithholding               -290.000000 cash  socialSecurityTax      c5
   0071 2027-12 incomeTaxWithholding         -2882.711667 cash  withheldIncomeTax      c6
   0072 2027-12 transfer                    -16827.288333 cash  -                      c1 {cadence=monthly from=Salary system=true to=Checking}
-  0073 2027-12 incomeGrowth                     0.000000 cash  income                 c8
+  0073 2028-01 incomeGrowth                     0.000000 cash  income                 c8
   0074 2028-01 ficaWithholding              -1530.000000 cash  socialSecurityTax      c5
   0075 2028-01 incomeTaxWithholding         -2835.675728 cash  withheldIncomeTax      c6
   0076 2028-01 transfer                    -15634.324272 cash  -                      c1 {cadence=monthly from=Salary system=true to=Checking}
@@ -534,7 +534,7 @@
   0107 2028-12 ficaWithholding               -290.000000 cash  socialSecurityTax      c5
   0108 2028-12 incomeTaxWithholding         -2835.675728 cash  withheldIncomeTax      c6
   0109 2028-12 transfer                    -16874.324272 cash  -                      c1 {cadence=monthly from=Salary system=true to=Checking}
-  0110 2028-12 incomeGrowth                     0.000000 cash  income                 c9
+  0110 2029-01 incomeGrowth                     0.000000 cash  income                 c9
   0111 2029-01 ficaWithholding              -1530.000000 cash  socialSecurityTax      c5
   0112 2029-01 incomeTaxWithholding         -2787.181676 cash  withheldIncomeTax      c6
   0113 2029-01 transfer                    -15682.818324 cash  -                      c1 {cadence=monthly from=Salary system=true to=Checking}
@@ -571,7 +571,7 @@
   0144 2029-12 ficaWithholding               -290.000000 cash  socialSecurityTax      c5
   0145 2029-12 incomeTaxWithholding         -2787.181676 cash  withheldIncomeTax      c6
   0146 2029-12 transfer                    -16922.818324 cash  -                      c1 {cadence=monthly from=Salary system=true to=Checking}
-  0147 2029-12 incomeGrowth                     0.000000 cash  income                 c10
+  0147 2030-01 incomeGrowth                     0.000000 cash  income                 c10
   0148 2030-01 ficaWithholding              -1530.000000 cash  socialSecurityTax      c5
   0149 2030-01 incomeTaxWithholding         -2737.184308 cash  withheldIncomeTax      c6
   0150 2030-01 transfer                    -15732.815692 cash  -                      c1 {cadence=monthly from=Salary system=true to=Checking}
@@ -626,66 +626,66 @@
   medicareTax                  n=  60 first=     -290.000000 last=     -290.000000 min=     -290.000000 max=     -290.000000 sum=     -17400.000000 #2504f645
 
 [packages]
-  0000 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=9735.101131 expense=-8000.000000 medicareTax=-290.000000 incomeTax=-2928.333333 value=2054256.389082
-  0001 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=9782.487228 expense=-8020.378715 medicareTax=-290.000000 incomeTax=-2928.333333 value=2071539.733635
-  0002 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=9830.103979 expense=-8040.809342 medicareTax=-290.000000 incomeTax=-2928.333333 value=2088850.212268
-  0003 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=9877.952507 expense=-8061.292012 medicareTax=-290.000000 incomeTax=-2928.333333 value=2106188.004583
-  0004 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=9926.033940 expense=-8081.826859 medicareTax=-290.000000 incomeTax=-2928.333333 value=2123553.291176
-  0005 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=9974.349413 expense=-8102.414015 medicareTax=-290.000000 incomeTax=-2928.333333 value=2140946.253642
-  0006 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10022.900063 expense=-8123.053613 medicareTax=-290.000000 incomeTax=-2928.333333 value=2158367.074584
-  0007 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10071.687036 expense=-8143.745787 medicareTax=-290.000000 incomeTax=-2928.333333 value=2175815.937614
-  0008 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10120.711481 expense=-8164.490672 medicareTax=-290.000000 incomeTax=-2928.333333 value=2193293.027362
-  0009 employedIncome=20000.000000 socialSecurityTax=-279.000000 assetAppreciation=10169.974556 expense=-8185.288401 medicareTax=-290.000000 incomeTax=-2928.333333 value=2211759.529477
-  0010 employedIncome=20000.000000 assetAppreciation=10219.477422 expense=-8206.139108 medicareTax=-290.000000 incomeTax=-2928.333333 value=2230533.630636
-  0011 employedIncome=20000.000000 assetAppreciation=10269.221245 expense=-8227.042929 medicareTax=-290.000000 incomeTax=-2928.333333 value=2249336.518547
-  0012 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10319.207199 expense=-8248.000000 medicareTax=-290.000000 incomeTax=-2882.711667 value=2266974.003624
-  0013 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10369.436461 expense=-8269.010455 medicareTax=-290.000000 incomeTax=-2882.711667 value=2284640.653987
-  0014 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10419.910218 expense=-8290.074431 medicareTax=-290.000000 incomeTax=-2882.711667 value=2302336.660474
-  0015 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10470.629658 expense=-8311.192064 medicareTax=-290.000000 incomeTax=-2882.711667 value=2320062.214973
-  0016 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10521.595977 expense=-8332.363491 medicareTax=-290.000000 incomeTax=-2882.711667 value=2337817.510434
-  0017 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10572.810377 expense=-8353.588849 medicareTax=-290.000000 incomeTax=-2882.711667 value=2355602.740870
-  0018 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10624.274066 expense=-8374.868275 medicareTax=-290.000000 incomeTax=-2882.711667 value=2373418.101363
-  0019 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10675.988258 expense=-8396.201907 medicareTax=-290.000000 incomeTax=-2882.711667 value=2391263.788071
-  0020 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10727.954170 expense=-8417.589883 medicareTax=-290.000000 incomeTax=-2882.711667 value=2409139.998234
-  0021 employedIncome=20000.000000 socialSecurityTax=-633.609000 assetAppreciation=10780.173030 expense=-8439.032341 medicareTax=-290.000000 incomeTax=-2882.711667 value=2427653.321176
-  0022 employedIncome=20000.000000 assetAppreciation=10832.646067 expense=-8460.529420 medicareTax=-290.000000 incomeTax=-2882.711667 value=2446831.174316
-  0023 employedIncome=20000.000000 assetAppreciation=10885.374520 expense=-8482.081260 medicareTax=-290.000000 incomeTax=-2882.711667 value=2466040.149169
-  0024 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10938.359630 expense=-8503.688000 medicareTax=-290.000000 incomeTax=-2835.675728 value=2484087.483292
-  0025 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10991.602649 expense=-8525.349779 medicareTax=-290.000000 incomeTax=-2835.675728 value=2502166.343474
-  0026 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=11045.104831 expense=-8547.066739 medicareTax=-290.000000 incomeTax=-2835.675728 value=2520276.933558
-  0027 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=11098.867437 expense=-8568.839018 medicareTax=-290.000000 incomeTax=-2835.675728 value=2538419.458507
-  0028 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=11152.891735 expense=-8590.666760 medicareTax=-290.000000 incomeTax=-2835.675728 value=2556594.124411
-  0029 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=11207.179000 expense=-8612.550103 medicareTax=-290.000000 incomeTax=-2835.675728 value=2574801.138491
-  0030 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=11261.730510 expense=-8634.489192 medicareTax=-290.000000 incomeTax=-2835.675728 value=2593040.709107
-  0031 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=11316.547553 expense=-8656.484166 medicareTax=-290.000000 incomeTax=-2835.675728 value=2611313.045763
-  0032 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=11371.631421 expense=-8678.535169 medicareTax=-290.000000 incomeTax=-2835.675728 value=2629618.359111
-  0033 employedIncome=20000.000000 socialSecurityTax=-999.210879 assetAppreciation=11426.983412 expense=-8700.642344 medicareTax=-290.000000 incomeTax=-2835.675728 value=2648197.650083
-  0034 employedIncome=20000.000000 assetAppreciation=11482.604831 expense=-8722.805832 medicareTax=-290.000000 incomeTax=-2835.675728 value=2667809.553406
-  0035 employedIncome=20000.000000 assetAppreciation=11538.496991 expense=-8745.025779 medicareTax=-290.000000 incomeTax=-2835.675728 value=2687455.072341
-  0036 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=11594.661208 expense=-8767.302328 medicareTax=-290.000000 incomeTax=-2787.181676 value=2705942.916251
-  0037 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=11651.098808 expense=-8789.635623 medicareTax=-290.000000 incomeTax=-2787.181676 value=2724464.807575
-  0038 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=11707.811121 expense=-8812.025808 medicareTax=-290.000000 incomeTax=-2787.181676 value=2743020.963992
-  0039 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=11764.799483 expense=-8834.473028 medicareTax=-290.000000 incomeTax=-2787.181676 value=2761611.604370
-  0040 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=11822.065240 expense=-8856.977429 medicareTax=-290.000000 incomeTax=-2787.181676 value=2780236.948777
-  0041 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=11879.609740 expense=-8879.539157 medicareTax=-290.000000 incomeTax=-2787.181676 value=2798897.218484
-  0042 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-8902.158356 medicareTax=-290.000000 incomeTax=-2787.181676 longTermCapitalGains=2052452.045600 longTermCapitalGainsTax=-360604.458874 value=2445050.742760
-  0043 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-8924.835175 medicareTax=-290.000000 incomeTax=-2787.181676 value=2451785.991325
-  0044 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-8947.569759 medicareTax=-290.000000 incomeTax=-2787.181676 value=2458498.447392
-  0045 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-8970.362256 medicareTax=-290.000000 incomeTax=-2787.181676 value=2465188.052903
-  0046 employedIncome=20000.000000 socialSecurityTax=-136.146416 expense=-8993.212813 medicareTax=-290.000000 incomeTax=-2787.181676 value=2472958.603233
-  0047 employedIncome=20000.000000 expense=-9016.121579 medicareTax=-290.000000 incomeTax=-2787.181676 value=2480842.332856
-  0048 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9039.088700 medicareTax=-290.000000 incomeTax=-2737.184308 niit=-77613.177733 taxTrueUp=-26493.446661 value=2383406.409828
-  0049 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9062.114327 medicareTax=-290.000000 incomeTax=-2737.184308 value=2390054.026912
-  0050 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9085.198608 medicareTax=-290.000000 incomeTax=-2737.184308 value=2396678.500913
-  0051 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9108.341692 medicareTax=-290.000000 incomeTax=-2737.184308 value=2403279.772875
-  0052 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9131.543729 medicareTax=-290.000000 incomeTax=-2737.184308 value=2409857.783697
-  0053 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9154.804870 medicareTax=-290.000000 incomeTax=-2737.184308 value=2416412.474124
-  0054 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9178.125266 medicareTax=-290.000000 incomeTax=-2737.184308 value=2422943.784750
-  0055 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9201.505066 medicareTax=-290.000000 incomeTax=-2737.184308 value=2429451.656020
-  0056 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9224.944422 medicareTax=-290.000000 incomeTax=-2737.184308 value=2435936.028226
-  0057 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9248.443486 medicareTax=-290.000000 incomeTax=-2737.184308 value=2442396.841508
-  0058 employedIncome=20000.000000 socialSecurityTax=-524.766955 expense=-9272.002411 medicareTax=-290.000000 incomeTax=-2737.184308 value=2449549.268898
-  0059 employedIncome=20000.000000 expense=-9295.621347 medicareTax=-290.000000 incomeTax=-2737.184308 value=2457202.784140
+  0000 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=9735.101131 expense=-8000.000000 medicareTax=-290.000000 incomeTax=-2928.333333 value=2042276.767797
+  0001 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=9782.487228 expense=-8020.378715 medicareTax=-290.000000 incomeTax=-2928.333333 value=2059580.542977
+  0002 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=9830.103979 expense=-8040.809342 medicareTax=-290.000000 incomeTax=-2928.333333 value=2076911.504280
+  0003 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=9877.952507 expense=-8061.292012 medicareTax=-290.000000 incomeTax=-2928.333333 value=2094269.831442
+  0004 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=9926.033940 expense=-8081.826859 medicareTax=-290.000000 incomeTax=-2928.333333 value=2111655.705190
+  0005 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=9974.349413 expense=-8102.414015 medicareTax=-290.000000 incomeTax=-2928.333333 value=2129069.307255
+  0006 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10022.900063 expense=-8123.053613 medicareTax=-290.000000 incomeTax=-2928.333333 value=2146510.820371
+  0007 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10071.687036 expense=-8143.745787 medicareTax=-290.000000 incomeTax=-2928.333333 value=2163980.428286
+  0008 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10120.711481 expense=-8164.490672 medicareTax=-290.000000 incomeTax=-2928.333333 value=2181478.315762
+  0009 employedIncome=20000.000000 socialSecurityTax=-279.000000 assetAppreciation=10169.974556 expense=-8185.288401 medicareTax=-290.000000 incomeTax=-2928.333333 value=2199965.668585
+  0010 employedIncome=20000.000000 assetAppreciation=10219.477422 expense=-8206.139108 medicareTax=-290.000000 incomeTax=-2928.333333 value=2218760.673565
+  0011 employedIncome=20000.000000 assetAppreciation=10269.221245 expense=-8227.042929 medicareTax=-290.000000 incomeTax=-2928.333333 value=2237584.518547
+  0012 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10319.207199 expense=-8248.000000 medicareTax=-290.000000 incomeTax=-2882.711667 value=2255243.014079
+  0013 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10369.436461 expense=-8269.010455 medicareTax=-290.000000 incomeTax=-2882.711667 value=2272930.728418
+  0014 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10419.910218 expense=-8290.074431 medicareTax=-290.000000 incomeTax=-2882.711667 value=2290647.852538
+  0015 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10470.629658 expense=-8311.192064 medicareTax=-290.000000 incomeTax=-2882.711667 value=2308394.578465
+  0016 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10521.595977 expense=-8332.363491 medicareTax=-290.000000 incomeTax=-2882.711667 value=2326171.099283
+  0017 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10572.810377 expense=-8353.588849 medicareTax=-290.000000 incomeTax=-2882.711667 value=2343977.609145
+  0018 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10624.274066 expense=-8374.868275 medicareTax=-290.000000 incomeTax=-2882.711667 value=2361814.303270
+  0019 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10675.988258 expense=-8396.201907 medicareTax=-290.000000 incomeTax=-2882.711667 value=2379681.377954
+  0020 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10727.954170 expense=-8417.589883 medicareTax=-290.000000 incomeTax=-2882.711667 value=2397579.030575
+  0021 employedIncome=20000.000000 socialSecurityTax=-633.609000 assetAppreciation=10780.173030 expense=-8439.032341 medicareTax=-290.000000 incomeTax=-2882.711667 value=2416113.850597
+  0022 employedIncome=20000.000000 assetAppreciation=10832.646067 expense=-8460.529420 medicareTax=-290.000000 incomeTax=-2882.711667 value=2435313.255577
+  0023 employedIncome=20000.000000 assetAppreciation=10885.374520 expense=-8482.081260 medicareTax=-290.000000 incomeTax=-2882.711667 value=2454543.837169
+  0024 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10938.359630 expense=-8503.688000 medicareTax=-290.000000 incomeTax=-2835.675728 value=2472612.833071
+  0025 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=10991.602649 expense=-8525.349779 medicareTax=-290.000000 incomeTax=-2835.675728 value=2490713.410213
+  0026 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=11045.104831 expense=-8547.066739 medicareTax=-290.000000 incomeTax=-2835.675728 value=2508845.772576
+  0027 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=11098.867437 expense=-8568.839018 medicareTax=-290.000000 incomeTax=-2835.675728 value=2527010.125267
+  0028 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=11152.891735 expense=-8590.666760 medicareTax=-290.000000 incomeTax=-2835.675728 value=2545206.674514
+  0029 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=11207.179000 expense=-8612.550103 medicareTax=-290.000000 incomeTax=-2835.675728 value=2563435.627682
+  0030 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=11261.730510 expense=-8634.489192 medicareTax=-290.000000 incomeTax=-2835.675728 value=2581697.193273
+  0031 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=11316.547553 expense=-8656.484166 medicareTax=-290.000000 incomeTax=-2835.675728 value=2599991.580932
+  0032 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=11371.631421 expense=-8678.535169 medicareTax=-290.000000 incomeTax=-2835.675728 value=2618319.001455
+  0033 employedIncome=20000.000000 socialSecurityTax=-999.210879 assetAppreciation=11426.983412 expense=-8700.642344 medicareTax=-290.000000 incomeTax=-2835.675728 value=2636920.455915
+  0034 employedIncome=20000.000000 assetAppreciation=11482.604831 expense=-8722.805832 medicareTax=-290.000000 incomeTax=-2835.675728 value=2656554.579186
+  0035 employedIncome=20000.000000 assetAppreciation=11538.496991 expense=-8745.025779 medicareTax=-290.000000 incomeTax=-2835.675728 value=2676222.374669
+  0036 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=11594.661208 expense=-8767.302328 medicareTax=-290.000000 incomeTax=-2787.181676 value=2694732.551873
+  0037 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=11651.098808 expense=-8789.635623 medicareTax=-290.000000 incomeTax=-2787.181676 value=2713276.833383
+  0038 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=11707.811121 expense=-8812.025808 medicareTax=-290.000000 incomeTax=-2787.181676 value=2731855.437020
+  0039 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=11764.799483 expense=-8834.473028 medicareTax=-290.000000 incomeTax=-2787.181676 value=2750468.581799
+  0040 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=11822.065240 expense=-8856.977429 medicareTax=-290.000000 incomeTax=-2787.181676 value=2769116.487933
+  0041 employedIncome=20000.000000 socialSecurityTax=-1240.000000 assetAppreciation=11879.609740 expense=-8879.539157 medicareTax=-290.000000 incomeTax=-2787.181676 value=2787799.376841
+  0042 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-8902.158356 medicareTax=-290.000000 incomeTax=-2787.181676 longTermCapitalGains=2052452.045600 longTermCapitalGainsTax=-360604.458874 value=2433975.577935
+  0043 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-8924.835175 medicareTax=-290.000000 incomeTax=-2787.181676 value=2440733.561084
+  0044 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-8947.569759 medicareTax=-290.000000 incomeTax=-2787.181676 value=2447468.809649
+  0045 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-8970.362256 medicareTax=-290.000000 incomeTax=-2787.181676 value=2454181.265716
+  0046 employedIncome=20000.000000 socialSecurityTax=-136.146416 expense=-8993.212813 medicareTax=-290.000000 incomeTax=-2787.181676 value=2461974.724811
+  0047 employedIncome=20000.000000 expense=-9016.121579 medicareTax=-290.000000 incomeTax=-2787.181676 value=2469881.421557
+  0048 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9039.088700 medicareTax=-290.000000 incomeTax=-2737.184308 niit=-77613.177733 taxTrueUp=-26493.446661 value=2372468.524155
+  0049 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9062.114327 medicareTax=-290.000000 incomeTax=-2737.184308 value=2379139.225520
+  0050 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9085.198608 medicareTax=-290.000000 incomeTax=-2737.184308 value=2385786.842605
+  0051 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9108.341692 medicareTax=-290.000000 incomeTax=-2737.184308 value=2392411.316605
+  0052 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9131.543729 medicareTax=-290.000000 incomeTax=-2737.184308 value=2399012.588567
+  0053 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9154.804870 medicareTax=-290.000000 incomeTax=-2737.184308 value=2405590.599389
+  0054 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9178.125266 medicareTax=-290.000000 incomeTax=-2737.184308 value=2412145.289816
+  0055 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9201.505066 medicareTax=-290.000000 incomeTax=-2737.184308 value=2418676.600442
+  0056 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9224.944422 medicareTax=-290.000000 incomeTax=-2737.184308 value=2425184.471713
+  0057 employedIncome=20000.000000 socialSecurityTax=-1240.000000 expense=-9248.443486 medicareTax=-290.000000 incomeTax=-2737.184308 value=2431668.843919
+  0058 employedIncome=20000.000000 socialSecurityTax=-524.766955 expense=-9272.002411 medicareTax=-290.000000 incomeTax=-2737.184308 value=2438844.890245
+  0059 employedIncome=20000.000000 expense=-9295.621347 medicareTax=-290.000000 incomeTax=-2737.184308 value=2446522.084590
 
 [priceIndex]
   [0000]         1.002547         1.005101         1.007662         1.010228         1.012802         1.015382

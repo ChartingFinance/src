@@ -29,15 +29,15 @@
   lastDate = 2030-12
   startValue = 1102000.000000
   finishValue = 950528.164467
-  accumulated = -21595.861293
+  accumulated = -23209.971551
   total.socialSecurityIncome = 180000.000000
   total.assetAppreciation = 144912.101971
   total.expense = -453173.965953
   total.incomeTax = -19095.541111
   total.tradIRADistribution = 132408.291129
   total.longTermCapitalGains = 120405.429101
-  total.taxTrueUp = -2500.320183
-  total.value = 61688691.905222
+  total.taxTrueUp = -4114.430440
+  total.value = 61961406.148811
 
 [assetOrder]
   0 Social Security
@@ -318,7 +318,7 @@
   0057 2026-12 interestIncome                   0.000000 cash  interestIncome         c-
   0058 2026-12 transfer                      2016.703070 cash  -                      c2 {cadence=monthly from=IRA system=true to=Checking}
   0059 2026-12 incomeTaxWithholding           -86.640472 cash  -                      c3
-  0060 2026-12 taxTrueUp                     -129.612361 cash  -                      c4 {direction=underpayment}
+  0060 2027-01 taxTrueUp                     -129.612361 cash  -                      c4 {direction=underpayment}
   0061 2027-01 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Checking}
   0062 2027-01 grossUp                      -4800.450237 cash  -                      c0 {forAsset=Living overflow=false}
   0063 2027-01 interestIncome                   0.000000 cash  interestIncome         c-
@@ -379,7 +379,7 @@
   0118 2027-12 interestIncome                   0.000000 cash  interestIncome         c-
   0119 2027-12 transfer                      2006.660329 cash  -                      c2 {cadence=monthly from=IRA system=true to=Checking}
   0120 2027-12 incomeTaxWithholding           -84.741362 cash  -                      c3
-  0121 2027-12 taxTrueUp                     -416.963069 cash  -                      c5 {direction=underpayment}
+  0121 2028-01 taxTrueUp                     -416.963069 cash  -                      c5 {direction=underpayment}
   0122 2028-01 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Checking}
   0123 2028-01 grossUp                      -4504.955899 cash  -                      c0 {forAsset=Living overflow=false}
   0124 2028-01 interestIncome                   0.000000 cash  interestIncome         c-
@@ -440,7 +440,7 @@
   0179 2028-12 interestIncome                   0.000000 cash  interestIncome         c-
   0180 2028-12 transfer                      1988.161281 cash  -                      c2 {cadence=monthly from=IRA system=true to=Checking}
   0181 2028-12 incomeTaxWithholding           -79.301620 cash  -                      c3
-  0182 2028-12 taxTrueUp                     -497.007304 cash  -                      c6 {direction=underpayment}
+  0182 2029-01 taxTrueUp                     -497.007304 cash  -                      c6 {direction=underpayment}
   0183 2029-01 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Checking}
   0184 2029-01 grossUp                      -4411.852357 cash  -                      c0 {forAsset=Living overflow=false}
   0185 2029-01 interestIncome                   0.000000 cash  interestIncome         c-
@@ -501,7 +501,7 @@
   0240 2029-12 interestIncome                   0.000000 cash  interestIncome         c-
   0241 2029-12 transfer                      1969.082992 cash  -                      c2 {cadence=monthly from=IRA system=true to=Checking}
   0242 2029-12 incomeTaxWithholding          -128.200364 cash  -                      c3
-  0243 2029-12 taxTrueUp                    -1456.737448 cash  -                      c7 {direction=underpayment}
+  0243 2030-01 taxTrueUp                    -1456.737448 cash  -                      c7 {direction=underpayment}
   0244 2030-01 transfer                      3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Checking}
   0245 2030-01 grossUp                      -3384.145180 cash  -                      c0 {forAsset=Living overflow=false}
   0246 2030-01 interestIncome                   0.000000 cash  interestIncome         c-
@@ -565,13 +565,13 @@
   0304 2030-12 taxTrueUp                    -1614.110258 cash  -                      c8 {direction=underpayment}
 
 [history] Checking
-  value                        n=  60 first=     1960.250000 last=     1828.490000 min=     1828.490000 max=     1960.250000 sum=     113312.750000 #f7a00e1f
-  estimatedIncomeTax           n=  60 first=      -64.040000 last=     -120.890000 min=    -1577.630000 max=      -64.040000 sum=      -8354.970000 #d6747557
-  incomeTax                    n=  60 first=      -64.040000 last=     -120.890000 min=    -1577.630000 max=      -64.040000 sum=      -8354.970000 #d6747557
-  federalTaxes                 n=  60 first=      -64.040000 last=     -120.890000 min=    -1577.630000 max=      -64.040000 sum=      -8354.970000 #d6747557
-  taxes                        n=  60 first=      -64.040000 last=     -120.890000 min=    -1577.630000 max=      -64.040000 sum=      -8354.970000 #d6747557
-  cashFlow                     n=  60 first=      -64.040000 last=     -120.890000 min=    -1577.630000 max=      -64.040000 sum=      -8354.970000 #d6747557
-  cashFlowAccumulated          n=  60 first=      -64.040000 last=    -8355.030000 min=    -8355.030000 max=      -64.040000 sum=    -209606.160000 #9a7e2da5
+  value                        n=  60 first=     1960.250000 last=      214.380000 min=      214.380000 max=     1960.250000 sum=     111698.640000 #68c83d05
+  estimatedIncomeTax           n=  60 first=      -64.040000 last=    -1735.000000 min=    -1735.000000 max=      -64.040000 sum=      -9969.080000 #dcd1fb85
+  incomeTax                    n=  60 first=      -64.040000 last=    -1735.000000 min=    -1735.000000 max=      -64.040000 sum=      -9969.080000 #dcd1fb85
+  federalTaxes                 n=  60 first=      -64.040000 last=    -1735.000000 min=    -1735.000000 max=      -64.040000 sum=      -9969.080000 #dcd1fb85
+  taxes                        n=  60 first=      -64.040000 last=    -1735.000000 min=    -1735.000000 max=      -64.040000 sum=      -9969.080000 #dcd1fb85
+  cashFlow                     n=  60 first=      -64.040000 last=    -1735.000000 min=    -1735.000000 max=      -64.040000 sum=      -9969.080000 #dcd1fb85
+  cashFlowAccumulated          n=  60 first=      -64.040000 last=    -9969.140000 min=    -9969.140000 max=      -64.040000 sum=    -211220.270000 #bb231d49
 
 [asset] IRA
   instrument = ira
@@ -884,7 +884,7 @@
   0009 2026-10 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Checking}
   0010 2026-11 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Checking}
   0011 2026-12 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Checking}
-  0012 2026-12 incomeGrowth                     0.000000 cash  income                 c10
+  0012 2027-01 incomeGrowth                     0.000000 cash  income                 c10
   0013 2027-01 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Checking}
   0014 2027-02 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Checking}
   0015 2027-03 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Checking}
@@ -897,7 +897,7 @@
   0022 2027-10 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Checking}
   0023 2027-11 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Checking}
   0024 2027-12 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Checking}
-  0025 2027-12 incomeGrowth                     0.000000 cash  income                 c11
+  0025 2028-01 incomeGrowth                     0.000000 cash  income                 c11
   0026 2028-01 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Checking}
   0027 2028-02 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Checking}
   0028 2028-03 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Checking}
@@ -910,7 +910,7 @@
   0035 2028-10 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Checking}
   0036 2028-11 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Checking}
   0037 2028-12 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Checking}
-  0038 2028-12 incomeGrowth                     0.000000 cash  income                 c12
+  0038 2029-01 incomeGrowth                     0.000000 cash  income                 c12
   0039 2029-01 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Checking}
   0040 2029-02 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Checking}
   0041 2029-03 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Checking}
@@ -923,7 +923,7 @@
   0048 2029-10 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Checking}
   0049 2029-11 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Checking}
   0050 2029-12 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Checking}
-  0051 2029-12 incomeGrowth                     0.000000 cash  income                 c13
+  0051 2030-01 incomeGrowth                     0.000000 cash  income                 c13
   0052 2030-01 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Checking}
   0053 2030-02 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Checking}
   0054 2030-03 transfer                     -3000.000000 cash  -                      c1 {cadence=monthly from=Social Security system=true to=Checking}
@@ -947,66 +947,66 @@
   socialSecurityIncome         n=  60 first=     3000.000000 last=     3000.000000 min=     3000.000000 max=     3000.000000 sum=     180000.000000 #65df15e5
 
 [packages]
-  0000 socialSecurityIncome=3000.000000 assetAppreciation=2424.040182 expense=-7000.000000 incomeTax=-288.958570 tradIRADistribution=2249.212776 longTermCapitalGains=1400.000000 value=1096117.250236
-  0001 socialSecurityIncome=3000.000000 assetAppreciation=2425.823959 expense=-7017.831376 incomeTax=-291.502753 tradIRADistribution=2240.781189 longTermCapitalGains=1443.294073 value=1094215.863268
-  0002 socialSecurityIncome=3000.000000 assetAppreciation=2427.475977 expense=-7035.708174 incomeTax=-293.874867 tradIRADistribution=2240.781189 longTermCapitalGains=1466.550094 value=1092295.833868
-  0003 socialSecurityIncome=3000.000000 assetAppreciation=2429.037253 expense=-7053.630511 incomeTax=-295.639145 tradIRADistribution=2240.781189 longTermCapitalGains=1483.846937 value=1090357.633475
-  0004 socialSecurityIncome=3000.000000 assetAppreciation=2430.510080 expense=-7071.598501 incomeTax=-297.367398 tradIRADistribution=2240.781189 longTermCapitalGains=1500.790594 value=1088401.163894
-  0005 socialSecurityIncome=3000.000000 assetAppreciation=2431.893981 expense=-7089.612263 incomeTax=-299.100600 tradIRADistribution=2240.781189 longTermCapitalGains=1517.782773 value=1086426.285364
-  0006 socialSecurityIncome=3000.000000 assetAppreciation=2433.188276 expense=-7107.671911 incomeTax=-300.841692 tradIRADistribution=2240.781189 longTermCapitalGains=1534.852298 value=1084432.854384
-  0007 socialSecurityIncome=3000.000000 assetAppreciation=2434.392266 expense=-7125.777564 incomeTax=-302.650743 tradIRADistribution=2240.781189 longTermCapitalGains=1552.001216 value=1082420.666569
-  0008 socialSecurityIncome=3000.000000 assetAppreciation=2435.504955 expense=-7143.929338 incomeTax=-304.642438 tradIRADistribution=2240.781189 longTermCapitalGains=1569.272241 value=1080389.401736
-  0009 socialSecurityIncome=3000.000000 assetAppreciation=2436.524787 expense=-7162.127350 incomeTax=-306.657667 tradIRADistribution=2240.781189 longTermCapitalGains=1586.747350 value=1078338.897137
-  0010 socialSecurityIncome=3000.000000 assetAppreciation=2437.450968 expense=-7180.371720 incomeTax=-308.683408 tradIRADistribution=2240.781189 longTermCapitalGains=1604.313611 value=1076269.002133
-  0011 socialSecurityIncome=3000.000000 assetAppreciation=2438.282765 expense=-7198.662563 incomeTax=-310.718591 tradIRADistribution=2240.781189 longTermCapitalGains=1621.961745 value=1074179.566306
-  0012 socialSecurityIncome=3000.000000 assetAppreciation=2438.388551 expense=-7217.000000 incomeTax=-307.009028 tradIRADistribution=2229.622588 longTermCapitalGains=1732.620585 taxTrueUp=-129.612361 value=1071945.949320
-  0013 socialSecurityIncome=3000.000000 assetAppreciation=2439.000003 expense=-7235.384148 incomeTax=-306.371703 tradIRADistribution=2229.622588 longTermCapitalGains=1661.383534 value=1069824.762493
-  0014 socialSecurityIncome=3000.000000 assetAppreciation=2439.527820 expense=-7253.815127 incomeTax=-306.611045 tradIRADistribution=2229.622588 longTermCapitalGains=1677.345219 value=1067685.386211
-  0015 socialSecurityIncome=3000.000000 assetAppreciation=2439.967098 expense=-7272.293056 incomeTax=-306.731003 tradIRADistribution=2229.622588 longTermCapitalGains=1694.005932 value=1065527.804251
-  0016 socialSecurityIncome=3000.000000 assetAppreciation=2440.317760 expense=-7290.818055 incomeTax=-306.850837 tradIRADistribution=2229.622588 longTermCapitalGains=1710.649654 value=1063351.880931
-  0017 socialSecurityIncome=3000.000000 assetAppreciation=2440.579144 expense=-7309.390243 incomeTax=-306.971168 tradIRADistribution=2229.622588 longTermCapitalGains=1727.362205 value=1061157.479166
-  0018 socialSecurityIncome=3000.000000 assetAppreciation=2440.750583 expense=-7328.009741 incomeTax=-307.091997 tradIRADistribution=2229.622588 longTermCapitalGains=1744.144019 value=1058944.461083
-  0019 socialSecurityIncome=3000.000000 assetAppreciation=2440.831406 expense=-7346.676669 incomeTax=-307.213324 tradIRADistribution=2229.622588 longTermCapitalGains=1760.995089 value=1056712.688017
-  0020 socialSecurityIncome=3000.000000 assetAppreciation=2440.820938 expense=-7365.391147 incomeTax=-307.335151 tradIRADistribution=2229.622588 longTermCapitalGains=1777.915405 value=1054462.020507
-  0021 socialSecurityIncome=3000.000000 assetAppreciation=2440.718501 expense=-7384.153298 incomeTax=-307.457476 tradIRADistribution=2229.622588 longTermCapitalGains=1794.904958 value=1052192.318289
-  0022 socialSecurityIncome=3000.000000 assetAppreciation=2440.523412 expense=-7402.963243 incomeTax=-307.580299 tradIRADistribution=2229.622588 longTermCapitalGains=1811.963742 value=1049903.440299
-  0023 socialSecurityIncome=3000.000000 assetAppreciation=2440.234983 expense=-7421.821103 incomeTax=-307.703620 tradIRADistribution=2229.622588 longTermCapitalGains=1829.091751 value=1047595.244662
-  0024 socialSecurityIncome=3000.000000 assetAppreciation=2437.822936 expense=-7440.727000 incomeTax=-300.952027 tradIRADistribution=2209.068090 longTermCapitalGains=2151.923353 taxTrueUp=-416.963069 value=1044855.471445
-  0025 socialSecurityIncome=3000.000000 assetAppreciation=2437.269291 expense=-7459.681057 incomeTax=-298.948098 tradIRADistribution=2209.068090 longTermCapitalGains=1873.599895 value=1042515.109241
-  0026 socialSecurityIncome=3000.000000 assetAppreciation=2436.630210 expense=-7478.683396 incomeTax=-299.061770 tradIRADistribution=2209.068090 longTermCapitalGains=1889.387655 value=1040154.943539
-  0027 socialSecurityIncome=3000.000000 assetAppreciation=2435.894735 expense=-7497.734141 incomeTax=-299.187132 tradIRADistribution=2209.068090 longTermCapitalGains=1906.799100 value=1037774.817727
-  0028 socialSecurityIncome=3000.000000 assetAppreciation=2435.062102 expense=-7516.833415 incomeTax=-299.313052 tradIRADistribution=2209.068090 longTermCapitalGains=1924.287914 value=1035374.585437
-  0029 socialSecurityIncome=3000.000000 assetAppreciation=2434.131601 expense=-7535.981341 incomeTax=-299.439469 tradIRADistribution=2209.068090 longTermCapitalGains=1941.845907 value=1032954.099526
-  0030 socialSecurityIncome=3000.000000 assetAppreciation=2433.102514 expense=-7555.178043 incomeTax=-299.566385 tradIRADistribution=2209.068090 longTermCapitalGains=1959.473038 value=1030513.212010
-  0031 socialSecurityIncome=3000.000000 assetAppreciation=2431.974121 expense=-7574.423645 incomeTax=-299.693798 tradIRADistribution=2209.068090 longTermCapitalGains=1977.169307 value=1028051.774060
-  0032 socialSecurityIncome=3000.000000 assetAppreciation=2430.745698 expense=-7593.718273 incomeTax=-299.821709 tradIRADistribution=2209.068090 longTermCapitalGains=1994.934718 value=1025569.635999
-  0033 socialSecurityIncome=3000.000000 assetAppreciation=2429.416516 expense=-7613.062051 incomeTax=-299.950118 tradIRADistribution=2209.068090 longTermCapitalGains=2012.769274 value=1023066.647294
-  0034 socialSecurityIncome=3000.000000 assetAppreciation=2427.985843 expense=-7632.455103 incomeTax=-300.079024 tradIRADistribution=2209.068090 longTermCapitalGains=2030.672981 value=1020542.656556
-  0035 socialSecurityIncome=3000.000000 assetAppreciation=2426.452941 expense=-7651.897557 incomeTax=-300.208429 tradIRADistribution=2209.068090 longTermCapitalGains=2048.645844 value=1017997.511531
-  0036 socialSecurityIncome=3000.000000 assetAppreciation=2422.397861 expense=-7671.389537 incomeTax=-346.987363 tradIRADistribution=2187.869992 longTermCapitalGains=2438.506099 taxTrueUp=-497.007304 value=1014884.983555
-  0037 socialSecurityIncome=3000.000000 assetAppreciation=2420.316250 expense=-7690.931170 incomeTax=-346.987363 tradIRADistribution=2187.869992 longTermCapitalGains=2135.639251 value=1012247.789860
-  0038 socialSecurityIncome=3000.000000 assetAppreciation=2418.129144 expense=-7710.522582 incomeTax=-346.987363 tradIRADistribution=2187.869992 longTermCapitalGains=2153.804136 value=1009588.767742
-  0039 socialSecurityIncome=3000.000000 assetAppreciation=2415.835787 expense=-7730.163900 incomeTax=-346.987363 tradIRADistribution=2187.869992 longTermCapitalGains=2172.037121 value=1006907.760916
-  0040 socialSecurityIncome=3000.000000 assetAppreciation=2413.435419 expense=-7749.855251 incomeTax=-346.987363 tradIRADistribution=2187.869992 longTermCapitalGains=2190.338219 value=1004204.612209
-  0041 socialSecurityIncome=3000.000000 assetAppreciation=2410.927274 expense=-7769.596762 incomeTax=-346.987363 tradIRADistribution=2187.869992 longTermCapitalGains=2208.707444 value=1001479.163558
-  0042 socialSecurityIncome=3000.000000 assetAppreciation=2408.310582 expense=-7789.388562 incomeTax=-346.987363 tradIRADistribution=2187.869992 longTermCapitalGains=2227.144811 value=998731.255999
-  0043 socialSecurityIncome=3000.000000 assetAppreciation=2405.584571 expense=-7809.230778 incomeTax=-346.987363 tradIRADistribution=2187.869992 longTermCapitalGains=2245.650336 value=995960.729668
-  0044 socialSecurityIncome=3000.000000 assetAppreciation=2402.748462 expense=-7829.123539 incomeTax=-346.987363 tradIRADistribution=2187.869992 longTermCapitalGains=2264.224035 value=993167.423792
-  0045 socialSecurityIncome=3000.000000 assetAppreciation=2399.801472 expense=-7849.066974 incomeTax=-346.987363 tradIRADistribution=2187.869992 longTermCapitalGains=2282.865926 value=990351.176690
-  0046 socialSecurityIncome=3000.000000 assetAppreciation=2396.742815 expense=-7869.061212 incomeTax=-346.987363 tradIRADistribution=2187.869992 longTermCapitalGains=2301.576027 value=987511.825761
-  0047 socialSecurityIncome=3000.000000 assetAppreciation=2393.571698 expense=-7889.106381 incomeTax=-346.987363 tradIRADistribution=2187.869992 longTermCapitalGains=2320.354358 value=984649.207483
-  0048 socialSecurityIncome=3000.000000 assetAppreciation=2383.196584 expense=-7909.202613 incomeTax=-337.492268 tradIRADistribution=2165.979770 longTermCapitalGains=3449.776637 taxTrueUp=-1456.737448 value=980308.824314
-  0049 socialSecurityIncome=3000.000000 assetAppreciation=2379.703309 expense=-7929.350036 incomeTax=-337.492268 tradIRADistribution=2165.979770 longTermCapitalGains=2367.579756 value=977401.486573
-  0050 socialSecurityIncome=3000.000000 assetAppreciation=2376.094711 expense=-7949.548782 incomeTax=-337.492268 tradIRADistribution=2165.979770 longTermCapitalGains=2386.577101 value=974470.290035
-  0051 socialSecurityIncome=3000.000000 assetAppreciation=2372.369980 expense=-7969.798980 incomeTax=-337.492268 tradIRADistribution=2165.979770 longTermCapitalGains=2405.642694 value=971515.066983
-  0052 socialSecurityIncome=3000.000000 assetAppreciation=2368.528298 expense=-7990.100763 incomeTax=-337.492268 tradIRADistribution=2165.979770 longTermCapitalGains=2424.776560 value=968535.648752
-  0053 socialSecurityIncome=3000.000000 assetAppreciation=2364.568845 expense=-8010.454262 incomeTax=-337.492268 tradIRADistribution=2165.979770 longTermCapitalGains=2443.978723 value=965531.865721
-  0054 socialSecurityIncome=3000.000000 assetAppreciation=2360.490796 expense=-8030.859607 incomeTax=-337.492268 tradIRADistribution=2165.979770 longTermCapitalGains=2463.249211 value=962503.547316
-  0055 socialSecurityIncome=3000.000000 assetAppreciation=2356.293319 expense=-8051.316932 incomeTax=-337.492268 tradIRADistribution=2165.979770 longTermCapitalGains=2482.588049 value=959450.521997
-  0056 socialSecurityIncome=3000.000000 assetAppreciation=2351.975580 expense=-8071.826369 incomeTax=-337.492268 tradIRADistribution=2165.979770 longTermCapitalGains=2501.995266 value=956372.617258
-  0057 socialSecurityIncome=3000.000000 assetAppreciation=2347.536739 expense=-8092.388050 incomeTax=-337.492268 tradIRADistribution=2165.979770 longTermCapitalGains=2521.470891 value=953269.659620
-  0058 socialSecurityIncome=3000.000000 assetAppreciation=2342.975952 expense=-8113.002109 incomeTax=-337.492268 tradIRADistribution=2165.979770 longTermCapitalGains=2541.014954 value=950141.474624
-  0059 socialSecurityIncome=3000.000000 assetAppreciation=2338.292369 expense=-8133.668679 incomeTax=-337.492268 tradIRADistribution=2165.979770 longTermCapitalGains=2560.627486 value=946987.886831
+  0000 socialSecurityIncome=3000.000000 assetAppreciation=2424.040182 expense=-7000.000000 incomeTax=-288.958570 tradIRADistribution=2249.212776 longTermCapitalGains=1400.000000 value=1100135.081612
+  0001 socialSecurityIncome=3000.000000 assetAppreciation=2425.823959 expense=-7017.831376 incomeTax=-291.502753 tradIRADistribution=2240.781189 longTermCapitalGains=1443.294073 value=1098251.571442
+  0002 socialSecurityIncome=3000.000000 assetAppreciation=2427.475977 expense=-7035.708174 incomeTax=-293.874867 tradIRADistribution=2240.781189 longTermCapitalGains=1466.550094 value=1096349.464379
+  0003 socialSecurityIncome=3000.000000 assetAppreciation=2429.037253 expense=-7053.630511 incomeTax=-295.639145 tradIRADistribution=2240.781189 longTermCapitalGains=1483.846937 value=1094429.231976
+  0004 socialSecurityIncome=3000.000000 assetAppreciation=2430.510080 expense=-7071.598501 incomeTax=-297.367398 tradIRADistribution=2240.781189 longTermCapitalGains=1500.790594 value=1092490.776157
+  0005 socialSecurityIncome=3000.000000 assetAppreciation=2431.893981 expense=-7089.612263 incomeTax=-299.100600 tradIRADistribution=2240.781189 longTermCapitalGains=1517.782773 value=1090533.957275
+  0006 socialSecurityIncome=3000.000000 assetAppreciation=2433.188276 expense=-7107.671911 incomeTax=-300.841692 tradIRADistribution=2240.781189 longTermCapitalGains=1534.852298 value=1088558.631948
+  0007 socialSecurityIncome=3000.000000 assetAppreciation=2434.392266 expense=-7125.777564 incomeTax=-302.650743 tradIRADistribution=2240.781189 longTermCapitalGains=1552.001216 value=1086564.595907
+  0008 socialSecurityIncome=3000.000000 assetAppreciation=2435.504955 expense=-7143.929338 incomeTax=-304.642438 tradIRADistribution=2240.781189 longTermCapitalGains=1569.272241 value=1084551.529087
+  0009 socialSecurityIncome=3000.000000 assetAppreciation=2436.524787 expense=-7162.127350 incomeTax=-306.657667 tradIRADistribution=2240.781189 longTermCapitalGains=1586.747350 value=1082519.268856
+  0010 socialSecurityIncome=3000.000000 assetAppreciation=2437.450968 expense=-7180.371720 incomeTax=-308.683408 tradIRADistribution=2240.781189 longTermCapitalGains=1604.313611 value=1080467.664696
+  0011 socialSecurityIncome=3000.000000 assetAppreciation=2438.282765 expense=-7198.662563 incomeTax=-310.718591 tradIRADistribution=2240.781189 longTermCapitalGains=1621.961745 value=1078396.566306
+  0012 socialSecurityIncome=3000.000000 assetAppreciation=2438.388551 expense=-7217.000000 incomeTax=-307.009028 tradIRADistribution=2229.622588 longTermCapitalGains=1732.620585 taxTrueUp=-129.612361 value=1076181.333469
+  0013 socialSecurityIncome=3000.000000 assetAppreciation=2439.000003 expense=-7235.384148 incomeTax=-306.371703 tradIRADistribution=2229.622588 longTermCapitalGains=1661.383534 value=1074078.577620
+  0014 socialSecurityIncome=3000.000000 assetAppreciation=2439.527820 expense=-7253.815127 incomeTax=-306.611045 tradIRADistribution=2229.622588 longTermCapitalGains=1677.345219 value=1071957.679267
+  0015 socialSecurityIncome=3000.000000 assetAppreciation=2439.967098 expense=-7272.293056 incomeTax=-306.731003 tradIRADistribution=2229.622588 longTermCapitalGains=1694.005932 value=1069818.622306
+  0016 socialSecurityIncome=3000.000000 assetAppreciation=2440.317760 expense=-7290.818055 incomeTax=-306.850837 tradIRADistribution=2229.622588 longTermCapitalGains=1710.649654 value=1067661.271174
+  0017 socialSecurityIncome=3000.000000 assetAppreciation=2440.579144 expense=-7309.390243 incomeTax=-306.971168 tradIRADistribution=2229.622588 longTermCapitalGains=1727.362205 value=1065485.488906
+  0018 socialSecurityIncome=3000.000000 assetAppreciation=2440.750583 expense=-7328.009741 incomeTax=-307.091997 tradIRADistribution=2229.622588 longTermCapitalGains=1744.144019 value=1063291.137752
+  0019 socialSecurityIncome=3000.000000 assetAppreciation=2440.831406 expense=-7346.676669 incomeTax=-307.213324 tradIRADistribution=2229.622588 longTermCapitalGains=1760.995089 value=1061078.079165
+  0020 socialSecurityIncome=3000.000000 assetAppreciation=2440.820938 expense=-7365.391147 incomeTax=-307.335151 tradIRADistribution=2229.622588 longTermCapitalGains=1777.915405 value=1058846.173805
+  0021 socialSecurityIncome=3000.000000 assetAppreciation=2440.718501 expense=-7384.153298 incomeTax=-307.457476 tradIRADistribution=2229.622588 longTermCapitalGains=1794.904958 value=1056595.281532
+  0022 socialSecurityIncome=3000.000000 assetAppreciation=2440.523412 expense=-7402.963243 incomeTax=-307.580299 tradIRADistribution=2229.622588 longTermCapitalGains=1811.963742 value=1054325.261402
+  0023 socialSecurityIncome=3000.000000 assetAppreciation=2440.234983 expense=-7421.821103 incomeTax=-307.703620 tradIRADistribution=2229.622588 longTermCapitalGains=1829.091751 value=1052035.971662
+  0024 socialSecurityIncome=3000.000000 assetAppreciation=2437.822936 expense=-7440.727000 incomeTax=-300.952027 tradIRADistribution=2209.068090 longTermCapitalGains=2151.923353 taxTrueUp=-416.963069 value=1049315.152501
+  0025 socialSecurityIncome=3000.000000 assetAppreciation=2437.269291 expense=-7459.681057 incomeTax=-298.948098 tradIRADistribution=2209.068090 longTermCapitalGains=1873.599895 value=1046993.792637
+  0026 socialSecurityIncome=3000.000000 assetAppreciation=2436.630210 expense=-7478.683396 incomeTax=-299.061770 tradIRADistribution=2209.068090 longTermCapitalGains=1889.387655 value=1044652.677680
+  0027 socialSecurityIncome=3000.000000 assetAppreciation=2435.894735 expense=-7497.734141 incomeTax=-299.187132 tradIRADistribution=2209.068090 longTermCapitalGains=1906.799100 value=1042291.651141
+  0028 socialSecurityIncome=3000.000000 assetAppreciation=2435.062102 expense=-7516.833415 incomeTax=-299.313052 tradIRADistribution=2209.068090 longTermCapitalGains=1924.287914 value=1039910.566777
+  0029 socialSecurityIncome=3000.000000 assetAppreciation=2434.131601 expense=-7535.981341 incomeTax=-299.439469 tradIRADistribution=2209.068090 longTermCapitalGains=1941.845907 value=1037509.277568
+  0030 socialSecurityIncome=3000.000000 assetAppreciation=2433.102514 expense=-7555.178043 incomeTax=-299.566385 tradIRADistribution=2209.068090 longTermCapitalGains=1959.473038 value=1035087.635655
+  0031 socialSecurityIncome=3000.000000 assetAppreciation=2431.974121 expense=-7574.423645 incomeTax=-299.693798 tradIRADistribution=2209.068090 longTermCapitalGains=1977.169307 value=1032645.492333
+  0032 socialSecurityIncome=3000.000000 assetAppreciation=2430.745698 expense=-7593.718273 incomeTax=-299.821709 tradIRADistribution=2209.068090 longTermCapitalGains=1994.934718 value=1030182.698050
+  0033 socialSecurityIncome=3000.000000 assetAppreciation=2429.416516 expense=-7613.062051 incomeTax=-299.950118 tradIRADistribution=2209.068090 longTermCapitalGains=2012.769274 value=1027699.102398
+  0034 socialSecurityIncome=3000.000000 assetAppreciation=2427.985843 expense=-7632.455103 incomeTax=-300.079024 tradIRADistribution=2209.068090 longTermCapitalGains=2030.672981 value=1025194.554113
+  0035 socialSecurityIncome=3000.000000 assetAppreciation=2426.452941 expense=-7651.897557 incomeTax=-300.208429 tradIRADistribution=2209.068090 longTermCapitalGains=2048.645844 value=1022668.901068
+  0036 socialSecurityIncome=3000.000000 assetAppreciation=2422.397861 expense=-7671.389537 incomeTax=-346.987363 tradIRADistribution=2187.869992 longTermCapitalGains=2438.506099 taxTrueUp=-497.007304 value=1019575.914725
+  0037 socialSecurityIncome=3000.000000 assetAppreciation=2420.316250 expense=-7690.931170 incomeTax=-346.987363 tradIRADistribution=2187.869992 longTermCapitalGains=2135.639251 value=1016958.312442
+  0038 socialSecurityIncome=3000.000000 assetAppreciation=2418.129144 expense=-7710.522582 incomeTax=-346.987363 tradIRADistribution=2187.869992 longTermCapitalGains=2153.804136 value=1014318.931641
+  0039 socialSecurityIncome=3000.000000 assetAppreciation=2415.835787 expense=-7730.163900 incomeTax=-346.987363 tradIRADistribution=2187.869992 longTermCapitalGains=2172.037121 value=1011657.616166
+  0040 socialSecurityIncome=3000.000000 assetAppreciation=2413.435419 expense=-7749.855251 incomeTax=-346.987363 tradIRADistribution=2187.869992 longTermCapitalGains=2190.338219 value=1008974.208971
+  0041 socialSecurityIncome=3000.000000 assetAppreciation=2410.927274 expense=-7769.596762 incomeTax=-346.987363 tradIRADistribution=2187.869992 longTermCapitalGains=2208.707444 value=1006268.552120
+  0042 socialSecurityIncome=3000.000000 assetAppreciation=2408.310582 expense=-7789.388562 incomeTax=-346.987363 tradIRADistribution=2187.869992 longTermCapitalGains=2227.144811 value=1003540.486777
+  0043 socialSecurityIncome=3000.000000 assetAppreciation=2405.584571 expense=-7809.230778 incomeTax=-346.987363 tradIRADistribution=2187.869992 longTermCapitalGains=2245.650336 value=1000789.853207
+  0044 socialSecurityIncome=3000.000000 assetAppreciation=2402.748462 expense=-7829.123539 incomeTax=-346.987363 tradIRADistribution=2187.869992 longTermCapitalGains=2264.224035 value=998016.490767
+  0045 socialSecurityIncome=3000.000000 assetAppreciation=2399.801472 expense=-7849.066974 incomeTax=-346.987363 tradIRADistribution=2187.869992 longTermCapitalGains=2282.865926 value=995220.237902
+  0046 socialSecurityIncome=3000.000000 assetAppreciation=2396.742815 expense=-7869.061212 incomeTax=-346.987363 tradIRADistribution=2187.869992 longTermCapitalGains=2301.576027 value=992400.932142
+  0047 socialSecurityIncome=3000.000000 assetAppreciation=2393.571698 expense=-7889.106381 incomeTax=-346.987363 tradIRADistribution=2187.869992 longTermCapitalGains=2320.354358 value=989558.410096
+  0048 socialSecurityIncome=3000.000000 assetAppreciation=2383.196584 expense=-7909.202613 incomeTax=-337.492268 tradIRADistribution=2165.979770 longTermCapitalGains=3449.776637 taxTrueUp=-1456.737448 value=985238.174350
+  0049 socialSecurityIncome=3000.000000 assetAppreciation=2379.703309 expense=-7929.350036 incomeTax=-337.492268 tradIRADistribution=2165.979770 longTermCapitalGains=2367.579756 value=982351.035355
+  0050 socialSecurityIncome=3000.000000 assetAppreciation=2376.094711 expense=-7949.548782 incomeTax=-337.492268 tradIRADistribution=2165.979770 longTermCapitalGains=2386.577101 value=979440.089016
+  0051 socialSecurityIncome=3000.000000 assetAppreciation=2372.369980 expense=-7969.798980 incomeTax=-337.492268 tradIRADistribution=2165.979770 longTermCapitalGains=2405.642694 value=976505.167747
+  0052 socialSecurityIncome=3000.000000 assetAppreciation=2368.528298 expense=-7990.100763 incomeTax=-337.492268 tradIRADistribution=2165.979770 longTermCapitalGains=2424.776560 value=973546.103013
+  0053 socialSecurityIncome=3000.000000 assetAppreciation=2364.568845 expense=-8010.454262 incomeTax=-337.492268 tradIRADistribution=2165.979770 longTermCapitalGains=2443.978723 value=970562.725329
+  0054 socialSecurityIncome=3000.000000 assetAppreciation=2360.490796 expense=-8030.859607 incomeTax=-337.492268 tradIRADistribution=2165.979770 longTermCapitalGains=2463.249211 value=967554.864249
+  0055 socialSecurityIncome=3000.000000 assetAppreciation=2356.293319 expense=-8051.316932 incomeTax=-337.492268 tradIRADistribution=2165.979770 longTermCapitalGains=2482.588049 value=964522.348367
+  0056 socialSecurityIncome=3000.000000 assetAppreciation=2351.975580 expense=-8071.826369 incomeTax=-337.492268 tradIRADistribution=2165.979770 longTermCapitalGains=2501.995266 value=961465.005309
+  0057 socialSecurityIncome=3000.000000 assetAppreciation=2347.536739 expense=-8092.388050 incomeTax=-337.492268 tradIRADistribution=2165.979770 longTermCapitalGains=2521.470891 value=958382.661729
+  0058 socialSecurityIncome=3000.000000 assetAppreciation=2342.975952 expense=-8113.002109 incomeTax=-337.492268 tradIRADistribution=2165.979770 longTermCapitalGains=2541.014954 value=955275.143303
+  0059 socialSecurityIncome=3000.000000 assetAppreciation=2338.292369 expense=-8133.668679 incomeTax=-337.492268 tradIRADistribution=2165.979770 longTermCapitalGains=2560.627486 taxTrueUp=-1614.110258 value=950528.164467
 
 [priceIndex]
   [0000]         1.002547         1.005101         1.007662         1.010228         1.012802         1.015382

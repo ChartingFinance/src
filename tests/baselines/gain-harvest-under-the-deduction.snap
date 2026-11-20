@@ -37,7 +37,7 @@
   total.assetAppreciation = 290165.789975
   total.expense = -356065.258963
   total.longTermCapitalGains = 286776.586427
-  total.value = 71181780.512871
+  total.value = 71538752.790894
 
 [assetOrder]
   0 Checking
@@ -399,66 +399,66 @@
   livingExpense                n=  60 first=    -5500.000000 last=    -6390.740000 min=    -6390.740000 max=    -5500.000000 sum=    -356065.210000 #10b40415
 
 [packages]
-  0000 assetAppreciation=4888.948540 expense=-5500.000000 value=1213874.938174
-  0001 assetAppreciation=4908.866722 expense=-5514.010367 value=1213255.748473
-  0002 assetAppreciation=4928.866053 expense=-5528.056422 value=1212642.476267
-  0003 assetAppreciation=4940.455554 expense=-5542.138258 longTermCapitalGains=1741.048833 value=1212026.675856
-  0004 assetAppreciation=4937.946707 expense=-5556.255965 longTermCapitalGains=4645.152089 value=1211394.212927
-  0005 assetAppreciation=4935.369974 expense=-5570.409635 longTermCapitalGains=4660.691173 value=1210744.983542
-  0006 assetAppreciation=4932.724933 expense=-5584.599359 longTermCapitalGains=4676.264205 value=1210078.883247
-  0007 assetAppreciation=4930.011158 expense=-5598.825229 longTermCapitalGains=4691.871280 value=1209395.807068
-  0008 assetAppreciation=4927.228221 expense=-5613.087337 longTermCapitalGains=4707.512493 value=1208695.649514
-  0009 assetAppreciation=4924.375693 expense=-5627.385775 longTermCapitalGains=4723.187938 value=1207978.304570
-  0010 assetAppreciation=4921.453141 expense=-5641.720637 longTermCapitalGains=4738.897713 value=1207243.665697
-  0011 assetAppreciation=4918.460131 expense=-5656.092014 longTermCapitalGains=4754.641914 value=1206491.625828
-  0012 assetAppreciation=4915.396228 expense=-5670.500000 longTermCapitalGains=4770.420635 value=1205722.077368
-  0013 assetAppreciation=4912.260992 expense=-5684.944688 longTermCapitalGains=4786.233974 value=1204934.912188
-  0014 assetAppreciation=4909.053983 expense=-5699.426172 longTermCapitalGains=4802.082027 value=1204130.021627
-  0015 assetAppreciation=4905.774760 expense=-5713.944544 longTermCapitalGains=4817.964892 value=1203307.296487
-  0016 assetAppreciation=4902.422876 expense=-5728.499900 longTermCapitalGains=4833.882665 value=1202466.627029
-  0017 assetAppreciation=4898.997884 expense=-5743.092334 longTermCapitalGains=4849.835444 value=1201607.902974
-  0018 assetAppreciation=4895.499336 expense=-5757.721939 longTermCapitalGains=4865.823326 value=1200731.013499
-  0019 assetAppreciation=4891.926780 expense=-5772.388811 longTermCapitalGains=4881.846410 value=1199835.847234
-  0020 assetAppreciation=4888.279762 expense=-5787.093044 longTermCapitalGains=4897.904792 value=1198922.292262
-  0021 assetAppreciation=4884.557826 expense=-5801.834734 longTermCapitalGains=4913.998573 value=1197990.236111
-  0022 assetAppreciation=4880.760514 expense=-5816.613977 longTermCapitalGains=4930.127849 value=1197039.565758
-  0023 assetAppreciation=4876.887365 expense=-5831.430866 longTermCapitalGains=4946.292720 value=1196070.167623
-  0024 assetAppreciation=4872.937917 expense=-5846.285500 longTermCapitalGains=4962.493285 value=1195081.927566
-  0025 assetAppreciation=4868.911705 expense=-5861.177973 longTermCapitalGains=4978.729644 value=1194074.730888
-  0026 assetAppreciation=4864.808261 expense=-5876.108383 longTermCapitalGains=4995.001895 value=1193048.462323
-  0027 assetAppreciation=4860.627115 expense=-5891.076825 longTermCapitalGains=5011.310138 value=1192003.006041
-  0028 assetAppreciation=4856.367797 expense=-5906.083397 longTermCapitalGains=5027.654474 value=1190938.245642
-  0029 assetAppreciation=4852.029831 expense=-5921.128196 longTermCapitalGains=5044.035003 value=1189854.064155
-  0030 assetAppreciation=4847.612742 expense=-5936.211319 longTermCapitalGains=5060.451824 value=1188750.344032
-  0031 assetAppreciation=4843.116049 expense=-5951.332864 longTermCapitalGains=5076.905040 value=1187626.967153
-  0032 assetAppreciation=4838.539273 expense=-5966.492929 longTermCapitalGains=5093.394750 value=1186483.814815
-  0033 assetAppreciation=4833.881929 expense=-5981.691611 longTermCapitalGains=5109.921056 value=1185320.767734
-  0034 assetAppreciation=4829.143531 expense=-5996.929010 longTermCapitalGains=5126.484060 value=1184137.706042
-  0035 assetAppreciation=4824.323591 expense=-6012.205223 longTermCapitalGains=5143.083863 value=1182934.509282
-  0036 assetAppreciation=4819.421619 expense=-6027.520351 longTermCapitalGains=5159.720566 value=1181711.056411
-  0037 assetAppreciation=4814.437120 expense=-6042.874491 longTermCapitalGains=5176.394273 value=1180467.225788
-  0038 assetAppreciation=4809.369600 expense=-6058.267743 longTermCapitalGains=5193.105086 value=1179202.895182
-  0039 assetAppreciation=4804.218561 expense=-6073.700207 longTermCapitalGains=5209.853107 value=1177917.941760
-  0040 assetAppreciation=4798.983502 expense=-6089.171983 longTermCapitalGains=5226.638440 value=1176612.242092
-  0041 assetAppreciation=4793.663920 expense=-6104.683170 longTermCapitalGains=5243.461187 value=1175285.672141
-  0042 assetAppreciation=4788.259309 expense=-6120.233870 longTermCapitalGains=5260.321452 value=1173938.107268
-  0043 assetAppreciation=4782.769163 expense=-6135.824183 longTermCapitalGains=5277.219338 value=1172569.422222
-  0044 assetAppreciation=4777.192971 expense=-6151.454210 longTermCapitalGains=5294.154950 value=1171179.491142
-  0045 assetAppreciation=4771.530220 expense=-6167.124051 longTermCapitalGains=5311.128392 value=1169768.187552
-  0046 assetAppreciation=4765.780394 expense=-6182.833809 longTermCapitalGains=5328.139768 value=1168335.384361
-  0047 assetAppreciation=4759.942977 expense=-6198.583585 longTermCapitalGains=5345.189182 value=1166880.953857
-  0048 assetAppreciation=4754.017447 expense=-6214.373481 longTermCapitalGains=5362.276741 value=1165404.767704
-  0049 assetAppreciation=4748.003282 expense=-6230.203600 longTermCapitalGains=5379.402549 value=1163906.696943
-  0050 assetAppreciation=4741.899956 expense=-6246.074043 longTermCapitalGains=5396.566711 value=1162386.611986
-  0051 assetAppreciation=4735.706942 expense=-6261.984913 longTermCapitalGains=5413.769333 value=1160844.382613
-  0052 assetAppreciation=4729.423708 expense=-6277.936314 longTermCapitalGains=5431.010521 value=1159279.877973
-  0053 assetAppreciation=4723.049723 expense=-6293.928348 longTermCapitalGains=5448.290382 value=1157692.966576
-  0054 assetAppreciation=4716.584449 expense=-6309.961120 longTermCapitalGains=5465.609022 value=1156083.516293
-  0055 assetAppreciation=4710.027350 expense=-6326.034733 longTermCapitalGains=5482.966547 value=1154451.394352
-  0056 assetAppreciation=4703.377883 expense=-6342.149290 longTermCapitalGains=5500.363065 value=1152796.467338
-  0057 assetAppreciation=4696.635505 expense=-6358.304897 longTermCapitalGains=5517.798683 value=1151118.601186
-  0058 assetAppreciation=4689.799671 expense=-6374.501657 longTermCapitalGains=5535.273508 value=1149417.661181
-  0059 assetAppreciation=4682.869831 expense=-6390.739676 longTermCapitalGains=5552.787648 value=1147693.511952
+  0000 assetAppreciation=4888.948540 expense=-5500.000000 value=1219388.948540
+  0001 assetAppreciation=4908.866722 expense=-5514.010367 value=1218783.804896
+  0002 assetAppreciation=4928.866053 expense=-5528.056422 value=1218184.614526
+  0003 assetAppreciation=4940.455554 expense=-5542.138258 longTermCapitalGains=1741.048833 value=1217582.931821
+  0004 assetAppreciation=4937.946707 expense=-5556.255965 longTermCapitalGains=4645.152089 value=1216964.622562
+  0005 assetAppreciation=4935.369974 expense=-5570.409635 longTermCapitalGains=4660.691173 value=1216329.582901
+  0006 assetAppreciation=4932.724933 expense=-5584.599359 longTermCapitalGains=4676.264205 value=1215677.708476
+  0007 assetAppreciation=4930.011158 expense=-5598.825229 longTermCapitalGains=4691.871280 value=1215008.894405
+  0008 assetAppreciation=4927.228221 expense=-5613.087337 longTermCapitalGains=4707.512493 value=1214323.035290
+  0009 assetAppreciation=4924.375693 expense=-5627.385775 longTermCapitalGains=4723.187938 value=1213620.025207
+  0010 assetAppreciation=4921.453141 expense=-5641.720637 longTermCapitalGains=4738.897713 value=1212899.757711
+  0011 assetAppreciation=4918.460131 expense=-5656.092014 longTermCapitalGains=4754.641914 value=1212162.125828
+  0012 assetAppreciation=4915.396228 expense=-5670.500000 longTermCapitalGains=4770.420635 value=1211407.022056
+  0013 assetAppreciation=4912.260992 expense=-5684.944688 longTermCapitalGains=4786.233974 value=1210634.338360
+  0014 assetAppreciation=4909.053983 expense=-5699.426172 longTermCapitalGains=4802.082027 value=1209843.966172
+  0015 assetAppreciation=4905.774760 expense=-5713.944544 longTermCapitalGains=4817.964892 value=1209035.796387
+  0016 assetAppreciation=4902.422876 expense=-5728.499900 longTermCapitalGains=4833.882665 value=1208209.719362
+  0017 assetAppreciation=4898.997884 expense=-5743.092334 longTermCapitalGains=4849.835444 value=1207365.624913
+  0018 assetAppreciation=4895.499336 expense=-5757.721939 longTermCapitalGains=4865.823326 value=1206503.402310
+  0019 assetAppreciation=4891.926780 expense=-5772.388811 longTermCapitalGains=4881.846410 value=1205622.940279
+  0020 assetAppreciation=4888.279762 expense=-5787.093044 longTermCapitalGains=4897.904792 value=1204724.126996
+  0021 assetAppreciation=4884.557826 expense=-5801.834734 longTermCapitalGains=4913.998573 value=1203806.850087
+  0022 assetAppreciation=4880.760514 expense=-5816.613977 longTermCapitalGains=4930.127849 value=1202870.996624
+  0023 assetAppreciation=4876.887365 expense=-5831.430866 longTermCapitalGains=4946.292720 value=1201916.453123
+  0024 assetAppreciation=4872.937917 expense=-5846.285500 longTermCapitalGains=4962.493285 value=1200943.105540
+  0025 assetAppreciation=4868.911705 expense=-5861.177973 longTermCapitalGains=4978.729644 value=1199950.839271
+  0026 assetAppreciation=4864.808261 expense=-5876.108383 longTermCapitalGains=4995.001895 value=1198939.539148
+  0027 assetAppreciation=4860.627115 expense=-5891.076825 longTermCapitalGains=5011.310138 value=1197909.089439
+  0028 assetAppreciation=4856.367797 expense=-5906.083397 longTermCapitalGains=5027.654474 value=1196859.373838
+  0029 assetAppreciation=4852.029831 expense=-5921.128196 longTermCapitalGains=5044.035003 value=1195790.275474
+  0030 assetAppreciation=4847.612742 expense=-5936.211319 longTermCapitalGains=5060.451824 value=1194701.676896
+  0031 assetAppreciation=4843.116049 expense=-5951.332864 longTermCapitalGains=5076.905040 value=1193593.460082
+  0032 assetAppreciation=4838.539273 expense=-5966.492929 longTermCapitalGains=5093.394750 value=1192465.506426
+  0033 assetAppreciation=4833.881929 expense=-5981.691611 longTermCapitalGains=5109.921056 value=1191317.696744
+  0034 assetAppreciation=4829.143531 expense=-5996.929010 longTermCapitalGains=5126.484060 value=1190149.911265
+  0035 assetAppreciation=4824.323591 expense=-6012.205223 longTermCapitalGains=5143.083863 value=1188962.029633
+  0036 assetAppreciation=4819.421619 expense=-6027.520351 longTermCapitalGains=5159.720566 value=1187753.930901
+  0037 assetAppreciation=4814.437120 expense=-6042.874491 longTermCapitalGains=5176.394273 value=1186525.493531
+  0038 assetAppreciation=4809.369600 expense=-6058.267743 longTermCapitalGains=5193.105086 value=1185276.595389
+  0039 assetAppreciation=4804.218561 expense=-6073.700207 longTermCapitalGains=5209.853107 value=1184007.113743
+  0040 assetAppreciation=4798.983502 expense=-6089.171983 longTermCapitalGains=5226.638440 value=1182716.925262
+  0041 assetAppreciation=4793.663920 expense=-6104.683170 longTermCapitalGains=5243.461187 value=1181405.906012
+  0042 assetAppreciation=4788.259309 expense=-6120.233870 longTermCapitalGains=5260.321452 value=1180073.931451
+  0043 assetAppreciation=4782.769163 expense=-6135.824183 longTermCapitalGains=5277.219338 value=1178720.876431
+  0044 assetAppreciation=4777.192971 expense=-6151.454210 longTermCapitalGains=5294.154950 value=1177346.615193
+  0045 assetAppreciation=4771.530220 expense=-6167.124051 longTermCapitalGains=5311.128392 value=1175951.021362
+  0046 assetAppreciation=4765.780394 expense=-6182.833809 longTermCapitalGains=5328.139768 value=1174533.967947
+  0047 assetAppreciation=4759.942977 expense=-6198.583585 longTermCapitalGains=5345.189182 value=1173095.327338
+  0048 assetAppreciation=4754.017447 expense=-6214.373481 longTermCapitalGains=5362.276741 value=1171634.971304
+  0049 assetAppreciation=4748.003282 expense=-6230.203600 longTermCapitalGains=5379.402549 value=1170152.770986
+  0050 assetAppreciation=4741.899956 expense=-6246.074043 longTermCapitalGains=5396.566711 value=1168648.596899
+  0051 assetAppreciation=4735.706942 expense=-6261.984913 longTermCapitalGains=5413.769333 value=1167122.318927
+  0052 assetAppreciation=4729.423708 expense=-6277.936314 longTermCapitalGains=5431.010521 value=1165573.806322
+  0053 assetAppreciation=4723.049723 expense=-6293.928348 longTermCapitalGains=5448.290382 value=1164002.927696
+  0054 assetAppreciation=4716.584449 expense=-6309.961120 longTermCapitalGains=5465.609022 value=1162409.551025
+  0055 assetAppreciation=4710.027350 expense=-6326.034733 longTermCapitalGains=5482.966547 value=1160793.543642
+  0056 assetAppreciation=4703.377883 expense=-6342.149290 longTermCapitalGains=5500.363065 value=1159154.772235
+  0057 assetAppreciation=4696.635505 expense=-6358.304897 longTermCapitalGains=5517.798683 value=1157493.102843
+  0058 assetAppreciation=4689.799671 expense=-6374.501657 longTermCapitalGains=5535.273508 value=1155808.400857
+  0059 assetAppreciation=4682.869831 expense=-6390.739676 longTermCapitalGains=5552.787648 value=1154100.531012
 
 [priceIndex]
   [0000]         1.002547         1.005101         1.007662         1.010228         1.012802         1.015382

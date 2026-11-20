@@ -54,6 +54,7 @@ const { chronometer_run } = await import('../js/chronometer.js');
 const { quickStartProfiles, buildQuickStart } = await import('../js/quick-start.js');
 const metricModule = await import('../js/metric.js');
 const { Metric } = metricModule;
+const { InstrumentType } = await import('../js/instruments/instrument.js');
 const { DateInt } = await import('../js/utils/date-int.js');
 const { expenditureOverWindow } = await import('../js/annual-expenditure.js');
 const { formatCurrency } = await import('../js/utils/html.js');
@@ -105,8 +106,10 @@ async function runFixture(name) {
 
 /** Straight off the raw histories — deliberately not metricAtIndex. */
 function rawSum(p, metric, idx) {
+    const assetsOnly = metric === Metric.VALUE || metric === Metric.NET_WORTH_CHANGE;
     let t = 0;
     for (const a of p.modelAssets) {
+        if (assetsOnly && !InstrumentType.isAsset(a.instrument)) continue;
         const h = a.getHistory(metric);
         if (h && idx < h.length) t += h[idx] ?? 0;
     }

@@ -32,6 +32,7 @@ import {
 import { logger, LogCategory } from './utils/logger.js';
 import { findById } from './portfolio.js';
 import { Metric } from './metric.js';
+import { InstrumentType } from './instruments/instrument.js';
 import { LifeEvent, LifeEventMeta } from './life-event.js';
 import {
     AssetGroup, AssetGroupMeta,
@@ -370,9 +371,13 @@ export function charting_buildGroupedMetric(portfolio, metricName, expandedGroup
   if (!portfolio?.firstDateInt) return { type: 'bar', data: { labels: [], datasets: [] }, options: {} };
   const labels = charting_buildDisplayLabels(portfolio.firstDateInt, portfolio.lastDateInt);
 
-  // Classify by instrument (ignore isClosed) so charts show full history
+  // Classify by instrument (ignore isClosed) so charts show full history.
+  // Balance-sheet metrics exclude flow instruments (monthly income/expenses)
+  // whose VALUE history holds monthly flow rate rather than net worth.
+  const assetsOnly = metricName === Metric.VALUE || metricName === Metric.NET_WORTH_CHANGE;
   const groups = new Map();
   for (const asset of portfolio.modelAssets) {
+    if (assetsOnly && !InstrumentType.isAsset(asset.instrument)) continue;
     const groupKey = classifyAssetGroup(asset.instrument);
     if (!groups.has(groupKey)) groups.set(groupKey, []);
     groups.get(groupKey).push(asset);

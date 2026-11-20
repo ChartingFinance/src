@@ -360,6 +360,7 @@ export class Portfolio {
         this.monthly = new FinancialPackage();
         this.yearly = new FinancialPackage();
         this.total = new FinancialPackage();
+        this.priorYearSettlement = null;
         this.monthlyPackages = [];
         this.monthlyPriceIndex = [];
         this.taxYears = [];
@@ -564,19 +565,77 @@ export class Portfolio {
 
         this.computePerAssetCashFlow();
 
-        // Snapshot portfolio value — sum of all asset balances
+        // Snapshot portfolio net worth — balance-sheet assets only (excludes flow instruments)
         for (const modelAsset of this.modelAssets) {
-            this.monthly.value.add(modelAsset.finishCurrency);
+            if (InstrumentType.isAsset(modelAsset.instrument)) {
+                this.monthly.value.add(modelAsset.finishCurrency);
+            }
         }
 
         this.monthlyPackages.push(this.monthly.copy());
         this.yearly.add(this.monthly);
         this.total.add(this.monthly);
         this.monthly.zero();
+        this.priorYearSettlement = null;
 
         for (let modelAsset of this.modelAssets) {
             modelAsset.monthlyChron(currentDateInt);
         }
+    }
+
+    /**
+     * Fold the final year's post-loop applyYear() settlement into total, the
+     * last monthlyPackage, and each asset's final metric histories so nothing
+     * is orphaned when a December-ending plan terminates after applyYear().
+     */
+    flushFinalSettlement() {
+        const lastIdx = this.monthlyPackages.length - 1;
+        if (lastIdx < 0) return;
+
+        this.total.add(this.monthly);
+
+        const lastPkg = this.monthlyPackages[lastIdx];
+        const prevValue = lastPkg.value.amount;
+        lastPkg.add(this.monthly);
+        lastPkg.value.zero();
+        for (const modelAsset of this.modelAssets) {
+            if (InstrumentType.isAsset(modelAsset.instrument)) {
+                lastPkg.value.add(modelAsset.finishCurrency);
+            }
+        }
+        const deltaValue = lastPkg.value.amount - prevValue;
+        // Adjust total.value by the delta on the last month's ending net worth.
+        this.total.value.amount += deltaValue;
+
+        // Keep generatedReports aligned with monthlyPackages[last] and total
+        // when reports are enabled: fold the final settlement into the last
+        // monthly report and the final yearly report.
+        if (this.reports && this.generatedReports.length > 0) {
+            for (let i = this.generatedReports.length - 1; i >= 0; i--) {
+                const r = this.generatedReports[i];
+                if (r.type === 'monthly') {
+                    r.pkg.add(this.monthly);
+                    r.pkg.value.amount = lastPkg.value.amount;
+                    break;
+                }
+            }
+            for (let i = this.generatedReports.length - 1; i >= 0; i--) {
+                const r = this.generatedReports[i];
+                if (r.type === 'yearly') {
+                    r.pkg.add(this.monthly);
+                    r.pkg.value.amount += deltaValue;
+                    break;
+                }
+            }
+        }
+
+        this.computePerAssetCashFlow();
+        for (const modelAsset of this.modelAssets) {
+            modelAsset.foldFinalMonth();
+        }
+
+        this.monthly.zero();
+        this.priorYearSettlement = null;
     }
 
     computePerAssetCashFlow() {
@@ -831,7 +890,9 @@ export class Portfolio {
         // The household tax is computed once, then allocated by income share.
         // It comes before the deferral transfers because a paycheck pays its
         // taxes first, and each deferral gets only what its paycheck has left.
-        const { householdTax, totalWorkingIncome } = this.payroll.computeHouseholdIncomeTax();
+        // Exclude prior-year applyYear() settlement draws so January's ×12
+        // annualization is not distorted by paying last year's tax bill.
+        const { householdTax, totalWorkingIncome } = this.payroll.computeHouseholdIncomeTax(this.priorYearSettlement);
         for (let modelAsset of this.modelAssets) {
             if (!modelAsset.isClosed) {
                 this.payroll.capPreTaxContributionsToPay(modelAsset, householdTax, totalWorkingIncome);
@@ -1084,13 +1145,23 @@ export class Portfolio {
         }
     }
 
-    applyYear(currentDateInt) {
+    applyYear(currentDateInt, settleDateInt = currentDateInt) {
         // Its own causal root: the annual pass runs outside applyMonth.
-        return withTrace(TraceKind.YEAR, `${currentDateInt.year} annual pass`, currentDateInt,
-            () => this.#applyYearInScope(currentDateInt));
+        // Mid-run settles in January (settleDateInt = YYYY-01-01); the final
+        // year has no following January, so its settlement folds into the last
+        // month of the plan (settleDateInt = lastDateInt).
+        return withTrace(TraceKind.YEAR, `${currentDateInt.year} annual pass`, settleDateInt,
+            () => this.#applyYearInScope(currentDateInt, settleDateInt));
     }
 
-    #applyYearInScope(currentDateInt) {
+    #applyYearInScope(currentDateInt, settleDateInt) {
+
+        // Advance every asset's clock to the month this pass books into so
+        // TAX_TRUE_UP, NIIT_ASSESSED, PTC_RECONCILIATION, and INCOME_GROWTH
+        // events carry the same month as their metric histories and packages.
+        for (const modelAsset of this.modelAssets) {
+            modelAsset.handleCurrentDateInt(settleDateInt);
+        }
 
         for (let modelAsset of this.modelAssets) {
             if (modelAsset.inMonth(currentDateInt)) {
@@ -1099,7 +1170,7 @@ export class Portfolio {
                 if (InstrumentType.isMonthlyIncome(modelAsset.instrument)
                     || InstrumentType.isHealthInsurance(modelAsset.instrument))
                     withTrace(TraceKind.YEAR, `Annual growth: ${modelAsset.displayName}`,
-                        currentDateInt, () => modelAsset.applyYearly());
+                        settleDateInt, () => modelAsset.applyYearly());
             }
         }
 
@@ -1111,12 +1182,12 @@ export class Portfolio {
         // The year's tax basis, read from the package the passes below read.
         const basis = taxableBasis(this.yearly, this.activeUser, { taxTable: this.config.taxTable });
 
-        // The passes book the settlement into this January's package. Measured
+        // The passes book the settlement into this month's package. Measured
         // as a difference, so nothing else booked this month can pass for it.
         const trueUpBefore = this.monthly.taxTrueUp.amount;
         const niitBefore = this.monthly.niit.amount;
 
-        const liability = withTrace(TraceKind.TAX_TRUE_UP, `${currentDateInt.year} tax true-up`, currentDateInt,
+        const liability = withTrace(TraceKind.TAX_TRUE_UP, `${currentDateInt.year} tax true-up`, settleDateInt,
             () => this.taxes.applyAnnualTaxTrueUp(this.monthsInPlanYear(settledYear)));
 
         // NIIT is a separate pass after the true-up, not part of it:
@@ -1142,6 +1213,10 @@ export class Portfolio {
             settledNIIT: this.monthly.niit.amount - niitBefore,
             settledPTC: this.monthly.ptcReconciliation.amount - ptcBefore,
         });
+
+        // Snapshot what this annual pass booked into `this.monthly` so January's
+        // payroll ×12 annualization excludes last year's one-off settlement.
+        this.priorYearSettlement = this.monthly.copy();
 
     }
 

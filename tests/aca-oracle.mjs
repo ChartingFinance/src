@@ -367,14 +367,21 @@ for (const fixture of ACA) {
         .reduce((s, e) => s + e.amount.amount, 0);
       near(t.aptc, advanced, `${t.year} aptc`);
 
-      // Booked in the January after the year, in that month's package.
+      // Booked in the January after the year mid-run, or folded into the
+      // final December on the plan's last year.
       const jan = p.monthlyPackages[monthIndex(p, t.year + 1, 1)];
-      if (jan) near(jan.ptcReconciliation.amount, t.ptcReconciliation, `${t.year} settlement package`);
+      if (jan) {
+        near(jan.ptcReconciliation.amount, t.ptcReconciliation, `${t.year} settlement package`);
+      } else {
+        const lastPkg = p.monthlyPackages[p.monthlyPackages.length - 1];
+        near(lastPkg.ptcReconciliation.amount, t.ptcReconciliation, `${t.year} final settlement package`);
+      }
 
+      const settledYearOf = (e) => (e.dateInt.month === 1 ? e.dateInt.year - 1 : e.dateInt.year);
       const settledEvents = p.modelAssets.flatMap((a) => a.events)
-        .filter((e) => e.type === EventType.PTC_RECONCILIATION && e.dateInt.year === t.year);
+        .filter((e) => e.type === EventType.PTC_RECONCILIATION && settledYearOf(e) === t.year);
       const unfunded = p.modelAssets.flatMap((a) => a.events)
-        .filter((e) => e.type === EventType.UNFUNDED && e.dateInt.year === t.year
+        .filter((e) => e.type === EventType.UNFUNDED && settledYearOf(e) === t.year
           && /premium tax credit/i.test(e.data?.cause ?? ''))
         .reduce((s, e) => s + Math.abs(e.amount.amount), 0);
       if (unfunded > 0) reached.unfunded++;

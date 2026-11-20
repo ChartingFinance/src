@@ -114,8 +114,9 @@ export class PayrollEngine {
      *
      * @returns {{ householdTax: Currency, totalWorkingIncome: Currency }}
      */
-    computeHouseholdIncomeTax() {
-        const { ordinaryTaxable } = taxableBasis(this.monthly, this.activeUser, { annualise: true, taxTable: this.config.taxTable });
+    computeHouseholdIncomeTax(excludePkg = null) {
+        const basisPkg = excludePkg ? this.monthly.copy().subtract(excludePkg) : this.monthly;
+        const { ordinaryTaxable } = taxableBasis(basisPkg, this.activeUser, { annualise: true, taxTable: this.config.taxTable });
         let householdTax = this.config.taxTable.calculateYearlyIncomeTax(ordinaryTaxable).divide(12.0);
 
         // Sum working income across all active assets for proportional allocation

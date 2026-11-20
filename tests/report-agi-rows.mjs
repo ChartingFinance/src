@@ -165,24 +165,26 @@ async function checkPortfolio(name, p) {
     }
   });
 
-  // NIIT_ASSESSED is dated December of the year it settles, while the charge
-  // is booked on the January 1 after it.
-  const niitByYear = new Map();
+  // NIIT_ASSESSED is stamped with the month it books into: January of Y+1
+  // mid-run (covering year Y's settlement) and December of Y on the final
+  // year (folded into year Y's report). Its dateInt.year is therefore the
+  // yearly report's coversYear in both cases.
+  const niitByBookedYear = new Map();
   for (const e of p.modelAssets.flatMap((a) => a.events)) {
     if (e.type !== EventType.NIIT_ASSESSED) continue;
-    niitByYear.set(e.dateInt.year, (niitByYear.get(e.dateInt.year) ?? 0) + Math.abs(e.amount.amount));
+    niitByBookedYear.set(e.dateInt.year, (niitByBookedYear.get(e.dateInt.year) ?? 0) + Math.abs(e.amount.amount));
   }
 
-  await check(`${name}: a yearly report's settlement is the year before it`, () => {
+  await check(`${name}: a yearly report's settlement matches the NIIT booked into it`, () => {
     for (const r of yearly) {
       const shown = new Map(reportRows(r, p.taxYears));
       if (amountOf(shown.get(SETTLEMENT)) !== 0) settlementsShown++;
       const niit = -amountOf(shown.get('    Net Investment Income Tax'));
       if (niit === 0) continue;
       niitSettlementsShown++;
-      const assessed = niitByYear.get(r.coversYear - 1) ?? 0;
+      const assessed = niitByBookedYear.get(r.coversYear) ?? 0;
       assert.ok(Math.abs(niit - assessed) < 0.01,
-        `${r.coversYear} shows NIIT ${niit.toFixed(2)}; ${r.coversYear - 1} assessed ${assessed.toFixed(2)}`);
+        `${r.coversYear} shows NIIT ${niit.toFixed(2)}; booked events total ${assessed.toFixed(2)}`);
     }
   });
 }

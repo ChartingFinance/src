@@ -29,7 +29,7 @@
   lastDate = 2030-12
   startValue = 770000.000000
   finishValue = 656740.863458
-  accumulated = -26296.325375
+  accumulated = -15155.487282
   total.assetAppreciation = 145983.171408
   total.expense = -244086.820668
   total.incomeTax = -55418.293734
@@ -37,8 +37,8 @@
   total.longTermCapitalGains = 64357.630932
   total.taxTrueUp = 26661.968360
   total.premiumTaxCredit = 7584.000000
-  total.ptcReconciliation = 2460.000000
-  total.value = 42454313.851280
+  total.ptcReconciliation = 13600.838093
+  total.value = 42717620.247709
 
 [assetOrder]
   0 Checking
@@ -391,7 +391,7 @@
   0009 2026-10 interestIncome                   0.000000 cash  interestIncome         c-
   0010 2026-11 interestIncome                   0.000000 cash  interestIncome         c-
   0011 2026-12 interestIncome                   0.000000 cash  interestIncome         c-
-  0012 2026-12 ptcReconciliation             2460.000000 cash  -                      c2 {advanced=7584 allowed=10044 direction=credit percent=47}
+  0012 2027-01 ptcReconciliation             2460.000000 cash  -                      c2 {advanced=7584 allowed=10044 direction=credit percent=47}
   0013 2027-01 interestIncome                   0.000000 cash  interestIncome         c-
   0014 2027-02 interestIncome                   0.000000 cash  interestIncome         c-
   0015 2027-03 interestIncome                   0.000000 cash  interestIncome         c-
@@ -406,7 +406,7 @@
   0024 2027-10 interestIncome                   0.000000 cash  interestIncome         c-
   0025 2027-11 interestIncome                   0.000000 cash  interestIncome         c-
   0026 2027-12 interestIncome                   0.000000 cash  interestIncome         c-
-  0027 2027-12 taxTrueUp                    26661.968360 cash  -                      c5 {direction=refund}
+  0027 2028-01 taxTrueUp                    26661.968360 cash  -                      c5 {direction=refund}
   0028 2028-01 interestIncome                   0.000000 cash  interestIncome         c-
   0029 2028-02 interestIncome                   0.000000 cash  interestIncome         c-
   0030 2028-03 interestIncome                   0.000000 cash  interestIncome         c-
@@ -446,14 +446,14 @@
   0064 2030-12 ptcReconciliation            11140.838093 cash  -                      c6 {advanced=0 allowed=11140.838093 direction=credit percent=101}
 
 [history] Checking
-  value                        n=  60 first=    20000.000000 last=   155093.150000 min=    20000.000000 max=   155093.150000 sum=    6728700.480000 #895fdd25
+  value                        n=  60 first=    20000.000000 last=   166233.990000 min=    20000.000000 max=   166233.990000 sum=    6739841.320000 #bccc3b83
   estimatedIncomeTax           n=  60 first=        0.000000 last=        0.000000 min=   -24316.280000 max=    26661.970000 sum=       2345.690000 #de3d40a3
-  ptcReconciliation            n=  60 first=        0.000000 last=        0.000000 min=        0.000000 max=     2460.000000 sum=       2460.000000 #a1c7df9f
+  ptcReconciliation            n=  60 first=        0.000000 last=    11140.840000 min=        0.000000 max=    11140.840000 sum=      13600.840000 #40b36902
   incomeTax                    n=  60 first=        0.000000 last=        0.000000 min=   -24316.280000 max=    26661.970000 sum=       2345.690000 #de3d40a3
-  federalTaxes                 n=  60 first=        0.000000 last=        0.000000 min=   -24316.280000 max=    26661.970000 sum=       4805.690000 #9ec987cd
-  taxes                        n=  60 first=        0.000000 last=        0.000000 min=   -24316.280000 max=    26661.970000 sum=       4805.690000 #9ec987cd
-  cashFlow                     n=  60 first=        0.000000 last=        0.000000 min=   -24316.280000 max=    26661.970000 sum=       4805.690000 #9ec987cd
-  cashFlowAccumulated          n=  60 first=        0.000000 last=     4805.690000 min=   -21856.280000 max=     4805.690000 sum=      56627.160000 #4f2c2519
+  federalTaxes                 n=  60 first=        0.000000 last=    11140.840000 min=   -24316.280000 max=    26661.970000 sum=      15946.530000 #ef6b2ab8
+  taxes                        n=  60 first=        0.000000 last=    11140.840000 min=   -24316.280000 max=    26661.970000 sum=      15946.530000 #ef6b2ab8
+  cashFlow                     n=  60 first=        0.000000 last=    11140.840000 min=   -24316.280000 max=    26661.970000 sum=      15946.530000 #ef6b2ab8
+  cashFlowAccumulated          n=  60 first=        0.000000 last=    15946.520000 min=   -21856.280000 max=    15946.520000 sum=      67767.990000 #40de02e9
 
 [asset] IRA
   instrument = ira
@@ -679,7 +679,7 @@
   0021 2026-11 premiumTaxCredit               632.000000 info  premiumTaxCredit       c- {estimate=35000 percent=224 share=1}
   0022 2026-12 transfer                       268.000000 cash  -                      c1 {cadence=monthly from=Marketplace Plan to=Brokerage}
   0023 2026-12 premiumTaxCredit               632.000000 info  premiumTaxCredit       c- {estimate=35000 percent=224 share=1}
-  0024 2026-12 expenseInflation               -27.900000 cash  -                      c7
+  0024 2027-01 expenseInflation               -27.900000 cash  -                      c7
   0025 2027-01 transfer                       927.900000 cash  -                      c1 {cadence=monthly from=Marketplace Plan to=Brokerage}
   0026 2027-02 transfer                       927.900000 cash  -                      c1 {cadence=monthly from=Marketplace Plan to=Brokerage}
   0027 2027-03 transfer                       927.900000 cash  -                      c1 {cadence=monthly from=Marketplace Plan to=Brokerage}
@@ -692,7 +692,7 @@
   0034 2027-10 transfer                       927.900000 cash  -                      c1 {cadence=monthly from=Marketplace Plan to=Brokerage}
   0035 2027-11 transfer                       927.900000 cash  -                      c1 {cadence=monthly from=Marketplace Plan to=Brokerage}
   0036 2027-12 transfer                       927.900000 cash  -                      c1 {cadence=monthly from=Marketplace Plan to=Brokerage}
-  0037 2027-12 expenseInflation               -28.764900 cash  -                      c8
+  0037 2028-01 expenseInflation               -28.764900 cash  -                      c8
   0038 2028-01 transfer                       956.664900 cash  -                      c1 {cadence=monthly from=Marketplace Plan to=Brokerage}
   0039 2028-02 transfer                       956.664900 cash  -                      c1 {cadence=monthly from=Marketplace Plan to=Brokerage}
   0040 2028-03 transfer                       956.664900 cash  -                      c1 {cadence=monthly from=Marketplace Plan to=Brokerage}
@@ -705,7 +705,7 @@
   0047 2028-10 transfer                       956.664900 cash  -                      c1 {cadence=monthly from=Marketplace Plan to=Brokerage}
   0048 2028-11 transfer                       956.664900 cash  -                      c1 {cadence=monthly from=Marketplace Plan to=Brokerage}
   0049 2028-12 transfer                       956.664900 cash  -                      c1 {cadence=monthly from=Marketplace Plan to=Brokerage}
-  0050 2028-12 expenseInflation               -29.656612 cash  -                      c9
+  0050 2029-01 expenseInflation               -29.656612 cash  -                      c9
   0051 2029-01 transfer                       986.321512 cash  -                      c1 {cadence=monthly from=Marketplace Plan to=Brokerage}
   0052 2029-02 transfer                       986.321512 cash  -                      c1 {cadence=monthly from=Marketplace Plan to=Brokerage}
   0053 2029-03 transfer                       986.321512 cash  -                      c1 {cadence=monthly from=Marketplace Plan to=Brokerage}
@@ -718,7 +718,7 @@
   0060 2029-10 transfer                       986.321512 cash  -                      c1 {cadence=monthly from=Marketplace Plan to=Brokerage}
   0061 2029-11 transfer                       986.321512 cash  -                      c1 {cadence=monthly from=Marketplace Plan to=Brokerage}
   0062 2029-12 transfer                       986.321512 cash  -                      c1 {cadence=monthly from=Marketplace Plan to=Brokerage}
-  0063 2029-12 expenseInflation               -30.575967 cash  -                      c10
+  0063 2030-01 expenseInflation               -30.575967 cash  -                      c10
   0064 2030-01 transfer                      1016.897479 cash  -                      c1 {cadence=monthly from=Marketplace Plan to=Brokerage}
   0065 2030-02 transfer                      1016.897479 cash  -                      c1 {cadence=monthly from=Marketplace Plan to=Brokerage}
   0066 2030-03 transfer                      1016.897479 cash  -                      c1 {cadence=monthly from=Marketplace Plan to=Brokerage}
@@ -741,66 +741,66 @@
   premiumTaxCredit             n=  60 first=      632.000000 last=        0.000000 min=        0.000000 max=      632.000000 sum=       7584.000000 #7a0e9b01
 
 [packages]
-  0000 assetAppreciation=3042.278601 expense=-3268.000000 longTermCapitalGains=544.666667 premiumTaxCredit=632.000000 value=765866.636583
-  0001 assetAppreciation=3041.327850 expense=-3275.642018 longTermCapitalGains=557.016354 premiumTaxCredit=632.000000 value=765624.660930
-  0002 assetAppreciation=3040.342011 expense=-3283.303503 longTermCapitalGains=569.376050 premiumTaxCredit=632.000000 value=765374.018436
-  0003 assetAppreciation=3039.320862 expense=-3290.984505 longTermCapitalGains=581.745830 premiumTaxCredit=632.000000 value=765114.654227
-  0004 assetAppreciation=3038.264181 expense=-3298.685072 longTermCapitalGains=594.125765 premiumTaxCredit=632.000000 value=764846.513152
-  0005 assetAppreciation=3037.171741 expense=-3306.405255 longTermCapitalGains=606.515929 premiumTaxCredit=632.000000 value=764569.539787
-  0006 assetAppreciation=3036.043317 expense=-3314.145105 longTermCapitalGains=618.916397 premiumTaxCredit=632.000000 value=764283.678434
-  0007 assetAppreciation=3034.878682 expense=-3321.904670 longTermCapitalGains=631.327241 premiumTaxCredit=632.000000 value=763988.873114
-  0008 assetAppreciation=3033.677609 expense=-3329.684002 longTermCapitalGains=643.748535 premiumTaxCredit=632.000000 value=763685.067573
-  0009 assetAppreciation=3032.439868 expense=-3337.483150 longTermCapitalGains=656.180352 premiumTaxCredit=632.000000 value=763372.205275
-  0010 assetAppreciation=3031.165228 expense=-3345.302166 longTermCapitalGains=668.622767 premiumTaxCredit=632.000000 value=763050.229404
-  0011 assetAppreciation=3029.853458 expense=-3353.141099 longTermCapitalGains=681.075852 premiumTaxCredit=632.000000 value=762719.082863
-  0012 assetAppreciation=3025.815812 expense=-4020.900000 longTermCapitalGains=829.709524 ptcReconciliation=2460.000000 value=764148.219754
-  0013 assetAppreciation=3021.729616 expense=-4028.778921 longTermCapitalGains=844.309256 value=763133.271458
-  0014 assetAppreciation=3017.594591 expense=-4036.677912 longTermCapitalGains=858.911259 value=762106.269025
-  0015 assetAppreciation=3013.410456 expense=-4044.597024 longTermCapitalGains=873.515640 value=761067.143172
-  0016 assetAppreciation=3009.176929 expense=-4052.536309 longTermCapitalGains=888.122509 value=760015.824283
-  0017 assetAppreciation=3004.893725 expense=-4060.495818 longTermCapitalGains=902.731974 value=758952.242405
-  0018 assetAppreciation=2343.039865 expense=-4068.475603 incomeTax=-55418.293734 tradIRADistribution=161389.474564 longTermCapitalGains=917.344144 value=701800.512820
-  0019 assetAppreciation=2335.977632 expense=-4076.475715 longTermCapitalGains=931.959129 value=700051.994246
-  0020 assetAppreciation=2328.853951 expense=-4084.496206 longTermCapitalGains=946.577035 value=698288.311069
-  0021 assetAppreciation=2321.668488 expense=-4092.537128 longTermCapitalGains=961.197972 value=696509.381024
-  0022 assetAppreciation=2314.420906 expense=-4100.598533 longTermCapitalGains=975.822049 value=694715.121458
-  0023 assetAppreciation=2307.110871 expense=-4108.680473 longTermCapitalGains=990.449373 value=692905.449329
-  0024 assetAppreciation=2299.620851 expense=-4145.547900 longTermCapitalGains=1012.102775 taxTrueUp=26661.968360 value=717684.602572
-  0025 assetAppreciation=2292.067221 expense=-4153.671067 longTermCapitalGains=1026.825140 value=715814.854866
-  0026 assetAppreciation=2284.449637 expense=-4161.814927 longTermCapitalGains=1041.550718 value=713929.324971
-  0027 assetAppreciation=2276.767755 expense=-4169.979532 longTermCapitalGains=1056.279620 value=712027.927791
-  0028 assetAppreciation=2269.021227 expense=-4178.164935 longTermCapitalGains=1071.011956 value=710110.577830
-  0029 assetAppreciation=2261.209706 expense=-4186.371189 longTermCapitalGains=1085.747833 value=708177.189189
-  0030 assetAppreciation=2253.332842 expense=-4194.598347 longTermCapitalGains=1100.487362 value=706227.675569
-  0031 assetAppreciation=2245.390282 expense=-4202.846462 longTermCapitalGains=1115.230652 value=704261.950262
-  0032 assetAppreciation=2237.381674 expense=-4211.115588 longTermCapitalGains=1129.977812 value=702279.926157
-  0033 assetAppreciation=2229.306662 expense=-4219.405779 longTermCapitalGains=1144.728951 value=700281.515732
-  0034 assetAppreciation=2221.164891 expense=-4227.717087 longTermCapitalGains=1159.484178 value=698266.631055
-  0035 assetAppreciation=2212.956001 expense=-4236.049567 longTermCapitalGains=1174.243601 value=696235.183784
-  0036 assetAppreciation=2204.558809 expense=-4274.059885 longTermCapitalGains=1197.315196 value=694127.651110
-  0037 assetAppreciation=2196.093284 expense=-4282.434870 longTermCapitalGains=1212.169964 value=692032.913205
-  0038 assetAppreciation=2187.559063 expense=-4290.831190 longTermCapitalGains=1227.028905 value=689921.223370
-  0039 assetAppreciation=2178.955777 expense=-4299.248897 longTermCapitalGains=1241.892127 value=687792.491100
-  0040 assetAppreciation=2170.283058 expense=-4307.688048 longTermCapitalGains=1256.759742 value=685646.625462
-  0041 assetAppreciation=2161.540536 expense=-4316.148696 longTermCapitalGains=1271.631858 value=683483.535103
-  0042 assetAppreciation=2152.727838 expense=-4324.630896 longTermCapitalGains=1286.508586 value=681303.128239
-  0043 assetAppreciation=2143.844591 expense=-4333.134703 longTermCapitalGains=1301.390036 value=679105.312658
-  0044 assetAppreciation=2134.890418 expense=-4341.660172 longTermCapitalGains=1316.276317 value=676889.995718
-  0045 assetAppreciation=2125.864943 expense=-4350.207358 longTermCapitalGains=1331.167539 value=674657.084344
-  0046 assetAppreciation=2116.767785 expense=-4358.776317 longTermCapitalGains=1346.063812 value=672406.485025
-  0047 assetAppreciation=2107.598565 expense=-4367.367104 longTermCapitalGains=1360.965246 value=670138.103816
-  0048 assetAppreciation=2098.232329 expense=-4406.555741 longTermCapitalGains=1385.485480 value=667790.569827
-  0049 assetAppreciation=2088.792755 expense=-4415.190351 longTermCapitalGains=1400.482620 value=665455.515625
-  0050 assetAppreciation=2079.279455 expense=-4423.846957 longTermCapitalGains=1415.484904 value=663102.269468
-  0051 assetAppreciation=2069.692039 expense=-4432.525613 longTermCapitalGains=1430.492442 value=660730.735130
-  0052 assetAppreciation=2060.030115 expense=-4441.226377 longTermCapitalGains=1445.505345 value=658340.815939
-  0053 assetAppreciation=2050.293288 expense=-4449.949305 longTermCapitalGains=1460.523724 value=655932.414774
-  0054 assetAppreciation=2040.481164 expense=-4458.694453 longTermCapitalGains=1475.547690 value=653505.434059
-  0055 assetAppreciation=2030.593344 expense=-4467.461878 longTermCapitalGains=1490.577353 value=651059.775766
-  0056 assetAppreciation=2020.629429 expense=-4476.251637 longTermCapitalGains=1505.612823 value=648595.341409
-  0057 assetAppreciation=2010.589019 expense=-4485.063786 longTermCapitalGains=1520.654212 value=646112.032045
-  0058 assetAppreciation=2000.471709 expense=-4493.898383 longTermCapitalGains=1535.701628 value=643609.748270
-  0059 assetAppreciation=1990.277095 expense=-4502.755484 longTermCapitalGains=1550.755184 value=641088.390218
+  0000 assetAppreciation=3042.278601 expense=-3268.000000 longTermCapitalGains=544.666667 premiumTaxCredit=632.000000 value=769774.278601
+  0001 assetAppreciation=3041.327850 expense=-3275.642018 longTermCapitalGains=557.016354 premiumTaxCredit=632.000000 value=769539.964433
+  0002 assetAppreciation=3040.342011 expense=-3283.303503 longTermCapitalGains=569.376050 premiumTaxCredit=632.000000 value=769297.002941
+  0003 assetAppreciation=3039.320862 expense=-3290.984505 longTermCapitalGains=581.745830 premiumTaxCredit=632.000000 value=769045.339299
+  0004 assetAppreciation=3038.264181 expense=-3298.685072 longTermCapitalGains=594.125765 premiumTaxCredit=632.000000 value=768784.918407
+  0005 assetAppreciation=3037.171741 expense=-3306.405255 longTermCapitalGains=606.515929 premiumTaxCredit=632.000000 value=768515.684892
+  0006 assetAppreciation=3036.043317 expense=-3314.145105 longTermCapitalGains=618.916397 premiumTaxCredit=632.000000 value=768237.583104
+  0007 assetAppreciation=3034.878682 expense=-3321.904670 longTermCapitalGains=631.327241 premiumTaxCredit=632.000000 value=767950.557116
+  0008 assetAppreciation=3033.677609 expense=-3329.684002 longTermCapitalGains=643.748535 premiumTaxCredit=632.000000 value=767654.550723
+  0009 assetAppreciation=3032.439868 expense=-3337.483150 longTermCapitalGains=656.180352 premiumTaxCredit=632.000000 value=767349.507441
+  0010 assetAppreciation=3031.165228 expense=-3345.302166 longTermCapitalGains=668.622767 premiumTaxCredit=632.000000 value=767035.370503
+  0011 assetAppreciation=3029.853458 expense=-3353.141099 longTermCapitalGains=681.075852 premiumTaxCredit=632.000000 value=766712.082863
+  0012 assetAppreciation=3025.815812 expense=-4020.900000 longTermCapitalGains=829.709524 ptcReconciliation=2460.000000 value=768176.998675
+  0013 assetAppreciation=3021.729616 expense=-4028.778921 longTermCapitalGains=844.309256 value=767169.949370
+  0014 assetAppreciation=3017.594591 expense=-4036.677912 longTermCapitalGains=858.911259 value=766150.866049
+  0015 assetAppreciation=3013.410456 expense=-4044.597024 longTermCapitalGains=873.515640 value=765119.679481
+  0016 assetAppreciation=3009.176929 expense=-4052.536309 longTermCapitalGains=888.122509 value=764076.320101
+  0017 assetAppreciation=3004.893725 expense=-4060.495818 longTermCapitalGains=902.731974 value=763020.718008
+  0018 assetAppreciation=2343.039865 expense=-4068.475603 incomeTax=-55418.293734 tradIRADistribution=161389.474564 longTermCapitalGains=917.344144 value=705876.988535
+  0019 assetAppreciation=2335.977632 expense=-4076.475715 longTermCapitalGains=931.959129 value=704136.490452
+  0020 assetAppreciation=2328.853951 expense=-4084.496206 longTermCapitalGains=946.577035 value=702380.848197
+  0021 assetAppreciation=2321.668488 expense=-4092.537128 longTermCapitalGains=961.197972 value=700609.979557
+  0022 assetAppreciation=2314.420906 expense=-4100.598533 longTermCapitalGains=975.822049 value=698823.801931
+  0023 assetAppreciation=2307.110871 expense=-4108.680473 longTermCapitalGains=990.449373 value=697022.232329
+  0024 assetAppreciation=2299.620851 expense=-4145.547900 longTermCapitalGains=1012.102775 taxTrueUp=26661.968360 value=721838.273639
+  0025 assetAppreciation=2292.067221 expense=-4153.671067 longTermCapitalGains=1026.825140 value=719976.669793
+  0026 assetAppreciation=2284.449637 expense=-4161.814927 longTermCapitalGains=1041.550718 value=718099.304503
+  0027 assetAppreciation=2276.767755 expense=-4169.979532 longTermCapitalGains=1056.279620 value=716206.092726
+  0028 assetAppreciation=2269.021227 expense=-4178.164935 longTermCapitalGains=1071.011956 value=714296.949018
+  0029 assetAppreciation=2261.209706 expense=-4186.371189 longTermCapitalGains=1085.747833 value=712371.787536
+  0030 assetAppreciation=2253.332842 expense=-4194.598347 longTermCapitalGains=1100.487362 value=710430.522031
+  0031 assetAppreciation=2245.390282 expense=-4202.846462 longTermCapitalGains=1115.230652 value=708473.065851
+  0032 assetAppreciation=2237.381674 expense=-4211.115588 longTermCapitalGains=1129.977812 value=706499.331936
+  0033 assetAppreciation=2229.306662 expense=-4219.405779 longTermCapitalGains=1144.728951 value=704509.232819
+  0034 assetAppreciation=2221.164891 expense=-4227.717087 longTermCapitalGains=1159.484178 value=702502.680623
+  0035 assetAppreciation=2212.956001 expense=-4236.049567 longTermCapitalGains=1174.243601 value=700479.587057
+  0036 assetAppreciation=2204.558809 expense=-4274.059885 longTermCapitalGains=1197.315196 value=698410.085980
+  0037 assetAppreciation=2196.093284 expense=-4282.434870 longTermCapitalGains=1212.169964 value=696323.744395
+  0038 assetAppreciation=2187.559063 expense=-4290.831190 longTermCapitalGains=1227.028905 value=694220.472268
+  0039 assetAppreciation=2178.955777 expense=-4299.248897 longTermCapitalGains=1241.892127 value=692100.179147
+  0040 assetAppreciation=2170.283058 expense=-4307.688048 longTermCapitalGains=1256.759742 value=689962.774158
+  0041 assetAppreciation=2161.540536 expense=-4316.148696 longTermCapitalGains=1271.631858 value=687808.165999
+  0042 assetAppreciation=2152.727838 expense=-4324.630896 longTermCapitalGains=1286.508586 value=685636.262941
+  0043 assetAppreciation=2143.844591 expense=-4333.134703 longTermCapitalGains=1301.390036 value=683446.972830
+  0044 assetAppreciation=2134.890418 expense=-4341.660172 longTermCapitalGains=1316.276317 value=681240.203076
+  0045 assetAppreciation=2125.864943 expense=-4350.207358 longTermCapitalGains=1331.167539 value=679015.860661
+  0046 assetAppreciation=2116.767785 expense=-4358.776317 longTermCapitalGains=1346.063812 value=676773.852129
+  0047 assetAppreciation=2107.598565 expense=-4367.367104 longTermCapitalGains=1360.965246 value=674514.083591
+  0048 assetAppreciation=2098.232329 expense=-4406.555741 longTermCapitalGains=1385.485480 value=672205.760178
+  0049 assetAppreciation=2088.792755 expense=-4415.190351 longTermCapitalGains=1400.482620 value=669879.362582
+  0050 assetAppreciation=2079.279455 expense=-4423.846957 longTermCapitalGains=1415.484904 value=667534.795081
+  0051 assetAppreciation=2069.692039 expense=-4432.525613 longTermCapitalGains=1430.492442 value=665171.961507
+  0052 assetAppreciation=2060.030115 expense=-4441.226377 longTermCapitalGains=1445.505345 value=662790.765244
+  0053 assetAppreciation=2050.293288 expense=-4449.949305 longTermCapitalGains=1460.523724 value=660391.109227
+  0054 assetAppreciation=2040.481164 expense=-4458.694453 longTermCapitalGains=1475.547690 value=657972.895938
+  0055 assetAppreciation=2030.593344 expense=-4467.461878 longTermCapitalGains=1490.577353 value=655536.027403
+  0056 assetAppreciation=2020.629429 expense=-4476.251637 longTermCapitalGains=1505.612823 value=653080.405195
+  0057 assetAppreciation=2010.589019 expense=-4485.063786 longTermCapitalGains=1520.654212 value=650605.930428
+  0058 assetAppreciation=2000.471709 expense=-4493.898383 longTermCapitalGains=1535.701628 value=648112.503754
+  0059 assetAppreciation=1990.277095 expense=-4502.755484 longTermCapitalGains=1550.755184 ptcReconciliation=11140.838093 value=656740.863458
 
 [priceIndex]
   [0000]         1.002547         1.005101         1.007662         1.010228         1.012802         1.015382

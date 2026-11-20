@@ -181,7 +181,7 @@
 [events] Wallet
   0000 2026-07 incomeTaxWithholding         -1000.000000 cash  -                      c1
   0001 2026-07 unfunded                    -30064.104167 info  -                      c1 {cause=Income tax withholding origin=oneSided}
-  0002 2026-12 taxTrueUp                     8635.000000 cash  -                      c2 {basis=backstop direction=refund}
+  0002 2027-01 taxTrueUp                     8635.000000 cash  -                      c2 {basis=backstop direction=refund}
 
 [history] Wallet
   value                        n=  24 first=     1000.000000 last=     8635.000000 min=        0.000000 max=     8635.000000 sum=     109620.000000 #ce90d4cd

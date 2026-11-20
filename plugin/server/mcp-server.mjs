@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.3.51; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.3.52; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -34306,8 +34306,9 @@ var PayrollEngine = class {
    *
    * @returns {{ householdTax: Currency, totalWorkingIncome: Currency }}
    */
-  computeHouseholdIncomeTax() {
-    const { ordinaryTaxable } = taxableBasis(this.monthly, this.activeUser, { annualise: true, taxTable: this.config.taxTable });
+  computeHouseholdIncomeTax(excludePkg = null) {
+    const basisPkg = excludePkg ? this.monthly.copy().subtract(excludePkg) : this.monthly;
+    const { ordinaryTaxable } = taxableBasis(basisPkg, this.activeUser, { annualise: true, taxTable: this.config.taxTable });
     let householdTax = this.config.taxTable.calculateYearlyIncomeTax(ordinaryTaxable).divide(12);
     let totalWorkingIncome = Currency.zero();
     for (const asset of this.modelAssets) {
@@ -36553,6 +36554,7 @@ var Portfolio = class _Portfolio {
     this.monthly = new FinancialPackage();
     this.yearly = new FinancialPackage();
     this.total = new FinancialPackage();
+    this.priorYearSettlement = null;
     this.monthlyPackages = [];
     this.monthlyPriceIndex = [];
     this.taxYears = [];
@@ -36711,15 +36713,63 @@ var Portfolio = class _Portfolio {
     this.monthlySanityCheck(currentDateInt);
     this.computePerAssetCashFlow();
     for (const modelAsset of this.modelAssets) {
-      this.monthly.value.add(modelAsset.finishCurrency);
+      if (InstrumentType.isAsset(modelAsset.instrument)) {
+        this.monthly.value.add(modelAsset.finishCurrency);
+      }
     }
     this.monthlyPackages.push(this.monthly.copy());
     this.yearly.add(this.monthly);
     this.total.add(this.monthly);
     this.monthly.zero();
+    this.priorYearSettlement = null;
     for (let modelAsset of this.modelAssets) {
       modelAsset.monthlyChron(currentDateInt);
     }
+  }
+  /**
+   * Fold the final year's post-loop applyYear() settlement into total, the
+   * last monthlyPackage, and each asset's final metric histories so nothing
+   * is orphaned when a December-ending plan terminates after applyYear().
+   */
+  flushFinalSettlement() {
+    const lastIdx = this.monthlyPackages.length - 1;
+    if (lastIdx < 0) return;
+    this.total.add(this.monthly);
+    const lastPkg = this.monthlyPackages[lastIdx];
+    const prevValue = lastPkg.value.amount;
+    lastPkg.add(this.monthly);
+    lastPkg.value.zero();
+    for (const modelAsset of this.modelAssets) {
+      if (InstrumentType.isAsset(modelAsset.instrument)) {
+        lastPkg.value.add(modelAsset.finishCurrency);
+      }
+    }
+    const deltaValue = lastPkg.value.amount - prevValue;
+    this.total.value.amount += deltaValue;
+    if (this.reports && this.generatedReports.length > 0) {
+      for (let i = this.generatedReports.length - 1; i >= 0; i--) {
+        const r = this.generatedReports[i];
+        if (r.type === "monthly") {
+          r.pkg.add(this.monthly);
+          r.pkg.value.amount = lastPkg.value.amount;
+          break;
+        }
+      }
+      for (let i = this.generatedReports.length - 1; i >= 0; i--) {
+        const r = this.generatedReports[i];
+        if (r.type === "yearly") {
+          r.pkg.add(this.monthly);
+          r.pkg.value.amount += deltaValue;
+          break;
+        }
+      }
+    }
+    this.computePerAssetCashFlow();
+    for (const modelAsset of this.modelAssets) {
+      modelAsset.foldFinalMonth();
+    }
+    this.monthly.zero();
+    this.priorYearSettlement = null;
   }
   computePerAssetCashFlow() {
     for (let modelAsset of this.modelAssets) {
@@ -36895,7 +36945,7 @@ var Portfolio = class _Portfolio {
         this.payroll.applyPreTaxCalculations(modelAsset, currentDateInt);
       }
     }
-    const { householdTax, totalWorkingIncome } = this.payroll.computeHouseholdIncomeTax();
+    const { householdTax, totalWorkingIncome } = this.payroll.computeHouseholdIncomeTax(this.priorYearSettlement);
     for (let modelAsset of this.modelAssets) {
       if (!modelAsset.isClosed) {
         this.payroll.capPreTaxContributionsToPay(modelAsset, householdTax, totalWorkingIncome);
@@ -37070,22 +37120,25 @@ var Portfolio = class _Portfolio {
       this.monthly.recordTransfer(settled.spilloverInstrument, settled.spillover, settled.spilloverGain);
     }
   }
-  applyYear(currentDateInt) {
+  applyYear(currentDateInt, settleDateInt = currentDateInt) {
     return withTrace(
       TraceKind.YEAR,
       `${currentDateInt.year} annual pass`,
-      currentDateInt,
-      () => this.#applyYearInScope(currentDateInt)
+      settleDateInt,
+      () => this.#applyYearInScope(currentDateInt, settleDateInt)
     );
   }
-  #applyYearInScope(currentDateInt) {
+  #applyYearInScope(currentDateInt, settleDateInt) {
+    for (const modelAsset of this.modelAssets) {
+      modelAsset.handleCurrentDateInt(settleDateInt);
+    }
     for (let modelAsset of this.modelAssets) {
       if (modelAsset.inMonth(currentDateInt)) {
         if (InstrumentType.isMonthlyIncome(modelAsset.instrument) || InstrumentType.isHealthInsurance(modelAsset.instrument))
           withTrace(
             TraceKind.YEAR,
             `Annual growth: ${modelAsset.displayName}`,
-            currentDateInt,
+            settleDateInt,
             () => modelAsset.applyYearly()
           );
       }
@@ -37097,7 +37150,7 @@ var Portfolio = class _Portfolio {
     const liability = withTrace(
       TraceKind.TAX_TRUE_UP,
       `${currentDateInt.year} tax true-up`,
-      currentDateInt,
+      settleDateInt,
       () => this.taxes.applyAnnualTaxTrueUp(this.monthsInPlanYear(settledYear))
     );
     const niit = this.taxes.applyAnnualNIIT(this.monthsInPlanYear(settledYear));
@@ -37111,6 +37164,7 @@ var Portfolio = class _Portfolio {
       settledNIIT: this.monthly.niit.amount - niitBefore,
       settledPTC: this.monthly.ptcReconciliation.amount - ptcBefore
     });
+    this.priorYearSettlement = this.monthly.copy();
   }
   /**
    * Record the settled year: its tax basis (AGI, every MAGI, the bases the
@@ -37729,14 +37783,16 @@ async function chronometer_run(portfolio) {
       priceIndex.stepAndRecord();
     }
     if (currentDateInt.isNewYearsDay()) {
+      const isFinalYearEnd = currentDateInt.toInt() > lastDateInt2.toInt();
+      const settleDateInt = isFinalYearEnd ? lastDateInt2 : currentDateInt;
       if (backtesting) {
         applyBacktestForYear(portfolio, currentDateInt.year, backtestStartYear, simStartYear, savedRates);
       }
       priceIndex.setAnnualRate(
         inflationRateForYear(backtesting, backtestStartYear, simStartYear, currentDateInt.year, portfolio.config.inflationRate)
       );
+      portfolio.applyYear(currentDateInt, settleDateInt);
       portfolio.applyGuardrails(currentDateInt);
-      portfolio.applyYear(currentDateInt);
       portfolio.config.taxTable.applyYear(portfolio.yearly, portfolio.activeUser);
       portfolio.yearlyChron(currentDateInt);
       const cpiRate = backtesting ? global_cpi_annual_inflation[backtestStartYear + (currentDateInt.year - simStartYear)] : void 0;
@@ -37763,6 +37819,9 @@ async function chronometer_run(portfolio) {
     restoreOriginalRates(savedRates);
   }
   portfolio.finalSanityCheck(currentDateInt);
+  if (currentDateInt.isNewYearsDay()) {
+    portfolio.flushFinalSettlement();
+  }
   portfolio.finalizeChron();
   portfolio.config.taxTable.finalizeChron();
   portfolio.traceScopes = traceScopes();
@@ -38567,6 +38626,31 @@ var ModelAsset = class _ModelAsset {
     this.#metrics.get(Metric.CASH_FLOW_ACCUMULATED).add(this.cashFlowCurrency);
     this.#metrics.get(Metric.VALUE).add(this.finishCurrency);
     this.#metrics.snapshotAll(KEEP_ON_SNAPSHOT);
+    this.monthlyCreditBalance.zero();
+  }
+  /**
+   * Fold post-loop final-year applyYear() settlement deltas into the last
+   * recorded month's metric histories and zero the live accumulators.
+   */
+  foldFinalMonth() {
+    this.#metrics.get(Metric.CASH_FLOW_ACCUMULATED).add(this.cashFlowCurrency);
+    for (const [name, m] of this.#metrics.entries()) {
+      if (!m.trackHistory || m.history.length === 0) continue;
+      const last = m.history.length - 1;
+      if (name === Metric.VALUE) {
+        m.history[last] = this.finishCurrency.toCurrency();
+        m.zero();
+      } else if (name === Metric.CASH_FLOW_ACCUMULATED) {
+        m.history[last] = m.current.toCurrency();
+      } else if (KEEP_ON_SNAPSHOT.has(name)) {
+      } else {
+        if (m.current.amount !== 0) {
+          m.history[last] = new Currency(m.history[last] + m.current.amount).toCurrency();
+        }
+        m.zero();
+      }
+    }
+    this.monthlyCreditBalance.zero();
   }
   yearlyChron() {
   }
@@ -38582,7 +38666,6 @@ var ModelAsset = class _ModelAsset {
     this.monthlyTaxEscrow.zero();
   }
   applyFirstDayOfMonth(currentDateInt) {
-    this.monthlyCreditBalance.zero();
     if (this.beforeStartDate) {
       this.finishCurrency.zero();
       if (currentDateInt.toInt() === this.startDateInt.toInt() && this.activeFromDateInt.toInt() !== this.startDateInt.toInt()) {
@@ -40235,6 +40318,7 @@ function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, p
       portfolio.config.taxTable.monthlyChron(currentDateInt);
       let total = 0;
       for (const asset of portfolio.modelAssets) {
+        if (!InstrumentType.isAsset(asset.instrument)) continue;
         const history = asset.getHistory(Metric.VALUE);
         if (history?.length > 0) {
           total += history[history.length - 1] ?? 0;
@@ -40244,6 +40328,8 @@ function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, p
       monthlyReal.push(total / priceIndex.stepAndRecord());
     }
     if (currentDateInt.isNewYearsDay()) {
+      const isFinalYearEnd = currentDateInt.toInt() > lastDateInt2.toInt();
+      const settleDateInt = isFinalYearEnd ? lastDateInt2 : currentDateInt;
       if (!withdrawalPhase && currentDateInt.toInt() >= retirementInt) {
         withdrawalPhase = true;
       }
@@ -40259,11 +40345,25 @@ function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, p
         );
         priceIndex.setAnnualRate(draw.inflationRate);
       }
+      portfolio.applyYear(currentDateInt, settleDateInt);
       portfolio.applyGuardrails(currentDateInt);
-      portfolio.applyYear(currentDateInt);
       portfolio.config.taxTable.applyYear(portfolio.yearly, portfolio.activeUser);
       portfolio.yearlyChron(currentDateInt);
       portfolio.config.taxTable.yearlyChron(portfolio.config.inflationRate);
+    }
+  }
+  if (currentDateInt.isNewYearsDay()) {
+    portfolio.flushFinalSettlement();
+    const lastIdx = monthlyTotals.length - 1;
+    if (lastIdx >= 0) {
+      let total = 0;
+      for (const asset of portfolio.modelAssets) {
+        if (!InstrumentType.isAsset(asset.instrument)) continue;
+        const history = asset.getHistory(Metric.VALUE);
+        if (history?.length > 0) total += history[history.length - 1] ?? 0;
+      }
+      monthlyTotals[lastIdx] = total;
+      monthlyReal[lastIdx] = total / priceIndex.level;
     }
   }
   portfolio.finalizeChron();
@@ -40299,6 +40399,7 @@ function computeBaseline(sourceAssets, guardrailParams, lifeEvents, config2) {
       basePf.config.taxTable.monthlyChron(bd);
       let total = 0;
       for (const asset of basePf.modelAssets) {
+        if (!InstrumentType.isAsset(asset.instrument)) continue;
         const history = asset.getHistory(Metric.VALUE);
         if (history?.length > 0) total += history[history.length - 1] ?? 0;
       }
@@ -40306,11 +40407,27 @@ function computeBaseline(sourceAssets, guardrailParams, lifeEvents, config2) {
       baselineDataReal.push(total / priceIndex.stepAndRecord());
     }
     if (bd.isNewYearsDay()) {
+      const isFinalYearEnd = bd.toInt() > bLast.toInt();
+      const settleDateInt = isFinalYearEnd ? bLast : bd;
+      basePf.applyYear(bd, settleDateInt);
       basePf.applyGuardrails(bd);
-      basePf.applyYear(bd);
       basePf.config.taxTable.applyYear(basePf.yearly, basePf.activeUser);
       basePf.yearlyChron(bd);
       basePf.config.taxTable.yearlyChron(basePf.config.inflationRate);
+    }
+  }
+  if (bd.isNewYearsDay()) {
+    basePf.flushFinalSettlement();
+    const lastIdx = baselineData.length - 1;
+    if (lastIdx >= 0) {
+      let total = 0;
+      for (const asset of basePf.modelAssets) {
+        if (!InstrumentType.isAsset(asset.instrument)) continue;
+        const history = asset.getHistory(Metric.VALUE);
+        if (history?.length > 0) total += history[history.length - 1] ?? 0;
+      }
+      baselineData[lastIdx] = total;
+      baselineDataReal[lastIdx] = total / priceIndex.level;
     }
   }
   basePf.finalizeChron();
@@ -41333,10 +41450,13 @@ function obligationOf(event, scopes, memo = null) {
 }
 
 // js/month-summary.js
+var BALANCE_SHEET_METRICS = /* @__PURE__ */ new Set([Metric.VALUE, Metric.NET_WORTH_CHANGE]);
 function metricAtIndex(portfolio, metricName, idx) {
   if (!portfolio || idx < 0) return 0;
+  const assetsOnly = BALANCE_SHEET_METRICS.has(metricName);
   let total = 0;
   for (const asset of portfolio.modelAssets) {
+    if (assetsOnly && !InstrumentType.isAsset(asset.instrument)) continue;
     const history = asset.getHistory(metricName);
     if (history && idx < history.length) total += history[idx] ?? 0;
   }
