@@ -507,16 +507,31 @@ await check('a down payment moves money into the home as it opens', () => {
   assert.ok(groupOf(rulesInForce(p, f), 'opening').partIds.includes(down.id));
 });
 
-await check('unpaid amounts by what they were: tax, bills, and pay with nowhere to go', () => {
+await check('unpaid amounts by what they were: tax, bills, and pay with nowhere to go', async () => {
   const kinds = (f) => Object.fromEntries(f.unpaid.map((u) => [u.kind, u.amount]));
   // Withholding a drained wallet could not pay: tax, read from the draw it fell short of.
   assert.ok(kinds(month(run('trueup-draw-unfunded'), 2026, 7))[UnpaidKind.TAX] > 0);
   // Insurance no account could pay: a bill; property tax: tax.
   const settle = kinds(month(run('settlement-unfunded'), 2026, 3));
   assert.ok(settle[UnpaidKind.SPENT] > 0 && settle[UnpaidKind.TAX] > 0, JSON.stringify(settle));
+  // unfundable-tax-bill has an open Checking account, so SS deposits there and
+  // pays part of Living; the remainder of Living is still an unpaid bill.
   const unfundable = month(run('unfundable-tax-bill'), 2028, 7);
-  assert.equal(unfundable.totals.unplacedIncome, 3000);
+  assert.equal(unfundable.totals.unplacedIncome, 0);
   assert.ok(kinds(unfundable)[UnpaidKind.SPENT] > 0, 'the unpaid bill is missing');
+  // Income genuinely has nowhere to go when the plan holds no everyday account.
+  G.global_reset(); G.global_setUserStartAge(70); G.global_setUserRetirementAge(65); G.global_setUserFinishAge(71);
+  G.setActiveTaxTable(G.makeActiveTaxTable());
+  const noBank = new Portfolio([
+    ModelAsset.fromJSON({ instrument: 'retirementIncome', displayName: 'Social Security',
+      startDateInt: { year: 2026, month: 1 }, finishDateInt: { year: 2027, month: 12 },
+      startCurrency: { amount: 3000 }, startBasisCurrency: { amount: 0 }, annualReturnRate: { rate: 0 } }),
+    ModelAsset.fromJSON({ instrument: 'ira', displayName: 'IRA',
+      startDateInt: { year: 2026, month: 1 }, finishDateInt: { year: 2027, month: 12 },
+      startCurrency: { amount: 100000 }, startBasisCurrency: { amount: 0 }, annualReturnRate: { rate: 0 } }),
+  ], false, simConfigFromGlobals());
+  await chronometer_run(noBank);
+  assert.equal(month(noBank, 2026, 7).totals.unplacedIncome, 3000);
 });
 
 // ── The rules list ───────────────────────────────────────────────────

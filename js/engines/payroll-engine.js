@@ -96,8 +96,9 @@ export class PayrollEngine {
                 // Owner is explicit at both sites so the per-person spec adds a
                 // second identity rather than rewriting this call.
                 const owner = TaxOwner.PRIMARY;
-                let withholding = this.config.taxTable.calculateFICATax(modelAsset.isSelfEmployed, modelAsset.incomeCurrency.copy(), owner);
-                this.config.taxTable.addYearlySocialSecurity(withholding.socialSecurityTax, owner);
+                const grossIncome = modelAsset.incomeCurrency.copy();
+                let withholding = this.config.taxTable.calculateFICATax(modelAsset.isSelfEmployed, grossIncome, owner);
+                this.config.taxTable.addYearlySocialSecurity(grossIncome, owner);
 
                 this.taxEngine.recordFICAWithholding(modelAsset, withholding);
 
@@ -601,7 +602,7 @@ export class PayrollEngine {
 
             if (runningTransferAmount.amount < modelAsset.netIncomeCurrency.amount) {
                 let delta = new Currency(modelAsset.netIncomeCurrency.amount - runningTransferAmount.amount);
-                const target = FundTransfer.resolveFunding(this.modelAssets);
+                const target = FundTransfer.resolveDeposit(this.modelAssets);
                 if (target) {
                     FundTransfer.system(modelAsset, target, delta).execute();
                 } else {
