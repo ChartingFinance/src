@@ -424,9 +424,15 @@ export class FundTransfer {
     const spillSource = fromResult.spillover?.amount > 0 ? this.fromModel
                       : toResult.spillover?.amount > 0 ? this.toModel
                       : null;
+    const rawClamp = fromResult.spillover?.amount > 0 ? fromResult.spillover.amount
+                   : toResult.spillover?.amount > 0 ? toResult.spillover.amount
+                   : 0;
+    const supplied = new Currency(Math.max(0, Math.abs(amount.amount) - rawClamp));
+
     let spillover = Currency.zero();
     let spilloverGain = Currency.zero();
     let spilloverInstrument = null;
+    let unfunded = Currency.zero();
     if (spillSource && this._allModels) {
       const spillAmount = fromResult.spillover?.amount > 0 ? fromResult.spillover : toResult.spillover;
       const fallback = FundTransfer.resolveFunding(this._allModels);
@@ -434,22 +440,27 @@ export class FundTransfer {
         const spillResult = fallback.debit(spillAmount,
           { type: EventType.SPILLOVER,
             data: { depleted: spillSource.displayName, origin: ShortfallOrigin.PAIRED } });
-        spillover = spillAmount.copy();
+        const fallbackUnfunded = spillResult.spillover?.amount ?? 0;
+        spillover = new Currency(spillAmount.amount - fallbackUnfunded);
         spilloverGain = spillResult.realizedGain?.copy() ?? Currency.zero();
         spilloverInstrument = fallback.instrument;
         if (spilloverGain.amount > 0) {
           fallback.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, spilloverGain);
           fallback.recordEvent(EventType.CAPITAL_GAIN_RECOGNIZED, spilloverGain.copy(), { metric: Metric.LONG_TERM_CAPITAL_GAIN, data: { spillover: true } });
         }
-        if (spillResult.spillover?.amount > 0) {
+        if (fallbackUnfunded > 0) {
+          unfunded = spillResult.spillover.copy();
           FundTransfer.reportUnfunded(spillSource, spillResult.spillover, `${memo} (account and backstop depleted)`, ShortfallOrigin.PAIRED);
         }
       } else {
         // No backstop can cover the shortfall: report it as unfunded. The
         // target was still credited the full requested amount above, so that
         // part of its balance was paid by no one.
+        unfunded = spillAmount.copy();
         FundTransfer.reportUnfunded(spillSource, spillAmount, `${memo} (account depleted, no backstop)`, ShortfallOrigin.PAIRED);
       }
+    } else if (rawClamp > 0) {
+      unfunded = new Currency(rawClamp);
     }
 
     // Combine gains from both sides: debit may trigger gains on the source,
@@ -463,9 +474,11 @@ export class FundTransfer {
       memo,
       combinedGain
     );
+    result.supplied = supplied;
     result.spillover = spillover;
     result.spilloverGain = spilloverGain;
     result.spilloverInstrument = spilloverInstrument;
+    result.unfunded = unfunded;
     return result;
   }
 
