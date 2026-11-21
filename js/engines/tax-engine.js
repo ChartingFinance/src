@@ -148,35 +148,46 @@ export class TaxEngine {
             this.monthly.incomeTax.add(supplied.copy().flipSign());
         }
 
-        // A depleted account still owes the tax. Re-source from the backstop —
-        // that leg is NOT a deferred distribution (the cash came from a taxable
-        // account), so it books the tax but not the distribution metrics.
+        // A depleted account still owes the tax. Re-source across fallbacks in
+        // priority order — each fallback leg is NOT a deferred distribution, so
+        // it books tax (and any realized gain / Roth distribution) on the payer.
         if (result.spillover.amount > 0) {
-            const fallback = FundTransfer.resolveFunding(this.modelAssets);
-            if (fallback) {
+            let remaining = result.spillover.copy();
+            const tried = new Set();
+            while (remaining.amount > 0.000001) {
+                const fallback = FundTransfer.resolveFunding(this.modelAssets, this.activeUser);
+                if (!fallback || tried.has(fallback)) break;
+                tried.add(fallback);
+
                 // `cause` marks this spill as a tax payment, so reconciliation
                 // counts it as income tax rather than as an unpaid settlement.
-                const spillResult = fallback.debit(result.spillover,
+                const spillResult = fallback.debit(remaining,
                     { type: EventType.SPILLOVER,
                       data: { depleted: modelAsset.displayName,
                               origin: ShortfallOrigin.ONE_SIDED,
                               cause: 'withholding' } });
 
-                const spilled = result.spillover.minus(spillResult.spillover);
-                this.monthly.recordTransfer(fallback.instrument, spilled,
-                    spillResult.realizedGain ?? Currency.zero());
+                const shortfall = spillResult.spillover?.amount ?? 0;
+                const spilled = new Currency(Math.max(0, remaining.amount - shortfall));
+                if (spilled.amount > 0) {
+                    fallback.recordDistribution(spilled);
+                    this.monthly.recordTransfer(fallback.instrument, spilled,
+                        spillResult.realizedGain ?? Currency.zero());
 
-                if (spillResult.realizedGain?.amount > 0) {
-                    fallback.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, spillResult.realizedGain);
-                    fallback.recordEvent(EventType.CAPITAL_GAIN_RECOGNIZED,
-                        spillResult.realizedGain.copy(),
-                        { metric: Metric.LONG_TERM_CAPITAL_GAIN, data: { spillover: true } });
+                    if (spillResult.realizedGain?.amount > 0) {
+                        fallback.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, spillResult.realizedGain);
+                        fallback.recordEvent(EventType.CAPITAL_GAIN_RECOGNIZED,
+                            spillResult.realizedGain.copy(),
+                            { metric: Metric.LONG_TERM_CAPITAL_GAIN, data: { spillover: true } });
+                    }
+
+                    fallback.addToMetric(Metric.WITHHELD_INCOME_TAX, spilled.copy().flipSign());
+                    this.monthly.incomeTax.add(spilled.copy().flipSign());
                 }
-
-                fallback.addToMetric(Metric.WITHHELD_INCOME_TAX, spilled.copy().flipSign());
-                this.monthly.incomeTax.add(spilled.copy().flipSign());
-            } else {
-                FundTransfer.reportUnfunded(modelAsset, result.spillover,
+                remaining = new Currency(shortfall);
+            }
+            if (remaining.amount > 0.000001) {
+                FundTransfer.reportUnfunded(modelAsset, remaining,
                     'federal withholding', ShortfallOrigin.ONE_SIDED);
             }
         }
@@ -219,7 +230,7 @@ export class TaxEngine {
 
             // Only recurring transfers with a resolvable target pay escrow.
             if (!fundTransfer.hasRecurring) continue;
-            fundTransfer.bind(modelAsset, this.modelAssets);
+            fundTransfer.bind(modelAsset, this.modelAssets, this.activeUser);
             if (!fundTransfer.toModel) continue;
             if (remaining.amount == 0) break;
             
@@ -236,7 +247,7 @@ export class TaxEngine {
 
         // Backstop: whatever the user did not route explicitly
         if (remaining.amount > 0) {
-            let fundingSource = FundTransfer.resolveFunding(this.modelAssets);
+            let fundingSource = FundTransfer.resolveFunding(this.modelAssets, this.activeUser);
             if (fundingSource) {
                 let preFlight = new FundTransferOneSided(null, remaining);
                 preFlight.fromModel = modelAsset;
@@ -250,14 +261,15 @@ export class TaxEngine {
 
         // One-sided withdrawal: escrow already adjusted the home's balance.
         // Only debit the funding source (toModel).
+        const resolver = FundTransfer.fundingResolver(this.activeUser);
         for (const oneSided of preFlights) {
             const event = { type: EventType.SETTLEMENT, data: {
                 from: modelAsset.displayName, to: oneSided.toModel.displayName, label: 'property tax',
                 ...(oneSided.backstop ? { backstop: true } : {}) } };
-            const settled = FundTransfer.settleOneSided(oneSided, event, this.modelAssets);
+            const settled = FundTransfer.settleOneSided(oneSided, event, this.modelAssets, resolver);
             this.monthly.recordTransfer(oneSided.toModel.instrument, settled.supplied, settled.realizedGain);
-            if (settled.spillover.amount > 0 && settled.spilloverInstrument) {
-                this.monthly.recordTransfer(settled.spilloverInstrument, settled.spillover, settled.spilloverGain);
+            for (const leg of settled.spilloverLegs) {
+                this.monthly.recordTransfer(leg.instrument, leg.amount, leg.realizedGain);
             }
         }
     }
@@ -491,14 +503,14 @@ export class TaxEngine {
             return;
         }
 
-        const liquidAsset = FundTransfer.resolveFunding(this.modelAssets);
+        const liquidAsset = FundTransfer.resolveFunding(this.modelAssets, this.activeUser);
         if (!liquidAsset) {
             logger.log(LogCategory.TAX, () => `Monthly True-Up: no backstop account to pay ${additionalTax.toString()}; deferring to annual true-up`);
             return;
         }
 
         // settleOneSided, not a raw debit: it clamps the account at $0,
-        // re-sources the rest from the next backstop, and reports what nothing
+        // re-sources the rest across fallbacks, and reports what nothing
         // can cover. It also books the realized gain (paying tax from a
         // brokerage sells shares), so that is not repeated here.
         // recordTransfer is a no-op for cash and bank sources.
@@ -507,12 +519,14 @@ export class TaxEngine {
         // reportUnfunded names the account that could not pay.
         const oneSided = new FundTransferOneSided(null, payment);
         oneSided.toModel = liquidAsset;
-        const settled = FundTransfer.settleOneSided(oneSided, { type: EventType.INCOME_TAX_WITHHOLDING }, this.modelAssets);
+        const settled = FundTransfer.settleOneSided(
+            oneSided, { type: EventType.INCOME_TAX_WITHHOLDING }, this.modelAssets,
+            FundTransfer.fundingResolver(this.activeUser));
 
         // Book what the accounts paid, after the draw. A part reported
         // unfunded was not withheld, and booking it would have the annual
         // true-up count it as paid and refund it. The funding account carries
-        // the whole payment, including any part a fallback covered.
+        // the whole payment, including any part fallbacks covered.
         if (settled.paid.amount > 0) {
             const withheld = settled.paid.copy().flipSign();
             this.monthly.incomeTax.add(withheld);
@@ -520,8 +534,8 @@ export class TaxEngine {
         }
 
         this.monthly.recordTransfer(liquidAsset.instrument, settled.supplied, settled.realizedGain);
-        if (settled.spillover.amount > 0 && settled.spilloverInstrument) {
-            this.monthly.recordTransfer(settled.spilloverInstrument, settled.spillover, settled.spilloverGain);
+        for (const leg of settled.spilloverLegs) {
+            this.monthly.recordTransfer(leg.instrument, leg.amount, leg.realizedGain);
         }
 
     }
@@ -588,17 +602,16 @@ export class TaxEngine {
                 oneSided.toModel = modelAsset;
                 const settled = FundTransfer.settleOneSided(oneSided,
                     { type: eventType, data: { ...extraData, basis: 'proportional', share } },
-                    this.modelAssets);
+                    this.modelAssets, FundTransfer.fundingResolver(this.activeUser));
 
                 // Each payer carries its own share on its own ledger; the rule
                 // note reads it from there to say who paid.
                 modelAsset.addToMetric(metric, settled.supplied.copy().flipSign());
                 this.monthly.recordTransfer(modelAsset.instrument, settled.supplied, settled.realizedGain);
 
-                if (settled.spillover.amount > 0 && settled.spilloverInstrument) {
-                    this.monthly.recordTransfer(settled.spilloverInstrument, settled.spillover, settled.spilloverGain);
-                    const payer = FundTransfer.resolveFunding(this.modelAssets);
-                    if (payer) payer.addToMetric(metric, settled.spillover.copy().flipSign());
+                for (const sLeg of settled.spilloverLegs) {
+                    this.monthly.recordTransfer(sLeg.instrument, sLeg.amount, sLeg.realizedGain);
+                    sLeg.account.addToMetric(metric, sLeg.amount.copy().flipSign());
                 }
                 return settled;
             });
@@ -672,19 +685,18 @@ export class TaxEngine {
             logger.log(LogCategory.TAX,
                 () => `NIIT: allocating ${niit.toString()} across ${legs.length} account(s) by NII share.`);
             // Book what the accounts actually supplied, not what they were
-            // billed; the spilled part is counted through settled.spillover.
+            // billed; the spilled part is counted through settled.paid.
             const collected = Currency.zero();
             for (const leg of legs) {
                 const settled = this.#settleAllocatedLeg(
                     leg, EventType.NIIT_ASSESSED, Metric.NIIT, eventData);
-                collected.add(settled.supplied);
-                collected.add(settled.spillover);
+                collected.add(settled.paid);
             }
             if (collected.amount > 0) this.monthly.niit.add(collected.copy().flipSign());
             return;
         }
 
-        const liquidAsset = FundTransfer.resolveFunding(this.modelAssets);
+        const liquidAsset = FundTransfer.resolveFunding(this.modelAssets, this.activeUser);
         if (!liquidAsset) {
             // Never a silent skip — the same contract the true-up follows. A
             // household that cannot pay its NIIT must look different from one
@@ -700,22 +712,19 @@ export class TaxEngine {
         const oneSided = new FundTransferOneSided(null, niit.copy());
         oneSided.toModel = liquidAsset;
         const settled = FundTransfer.settleOneSided(oneSided,
-            { type: EventType.NIIT_ASSESSED, data: eventData }, this.modelAssets);
+            { type: EventType.NIIT_ASSESSED, data: eventData },
+            this.modelAssets, FundTransfer.fundingResolver(this.activeUser));
 
         liquidAsset.addToMetric(Metric.NIIT, settled.supplied.copy().flipSign());
         this.monthly.recordTransfer(liquidAsset.instrument, settled.supplied, settled.realizedGain);
 
-        const collected = settled.supplied.copy();
-
-        if (settled.spillover.amount > 0 && settled.spilloverInstrument) {
-            this.monthly.recordTransfer(settled.spilloverInstrument, settled.spillover, settled.spilloverGain);
-            const payer = FundTransfer.resolveFunding(this.modelAssets);
-            if (payer) payer.addToMetric(Metric.NIIT, settled.spillover.copy().flipSign());
-            collected.add(settled.spillover);
+        for (const leg of settled.spilloverLegs) {
+            this.monthly.recordTransfer(leg.instrument, leg.amount, leg.realizedGain);
+            leg.account.addToMetric(Metric.NIIT, leg.amount.copy().flipSign());
         }
 
         // The household ledger, so federalTaxes() and effectiveTaxRate() see it.
-        if (collected.amount > 0) this.monthly.niit.add(collected.flipSign());
+        if (settled.paid.amount > 0) this.monthly.niit.add(settled.paid.copy().flipSign());
 
     }
 
@@ -811,8 +820,6 @@ export class TaxEngine {
         const loIndex = hiIndex - (Math.max(1, settledYearMonths ?? 12) - 1);
         const yearBasis = (asset) => basisOverMonths(asset, loIndex, hiIndex);
 
-        const liquidAsset = FundTransfer.resolveFunding(this.modelAssets);
-
         if (taxDifference > 0) {
             const legs = this.#planTaxAllocation(new Currency(taxDifference), yearBasis);
             if (legs.length > 0) {
@@ -820,14 +827,43 @@ export class TaxEngine {
                 for (const leg of legs) {
                     const settled = this.#settleAllocatedLeg(leg, EventType.TAX_TRUE_UP,
                         Metric.ESTIMATED_INCOME_TAX, { direction: 'underpayment' });
-                    // Book what the account actually supplied, and the spilled
-                    // part only if a fallback account actually paid it.
-                    this.#bookTrueUp(settled.supplied, 'underpayment');
-                    if (settled.spilloverInstrument) {
-                        this.#bookTrueUp(settled.spillover, 'underpayment');
-                    }
+                    // Book only what was actually collected across primary + fallbacks.
+                    this.#bookTrueUp(settled.paid, 'underpayment');
                 }
                 return;
+            }
+
+            const liquidAsset = FundTransfer.resolveFunding(this.modelAssets, this.activeUser);
+            if (!liquidAsset) {
+                // No eligible account can pay. Report it rather than return
+                // silently, or a plan that cannot pay its April bill looks like one
+                // that owes nothing. This is the last line of defence: the monthly
+                // true-up defers to here.
+                FundTransfer.reportUnfunded(this.#unfundedTaxAnchor(),
+                    new Currency(taxDifference), 'annual tax true-up',
+                    ShortfallOrigin.ONE_SIDED);
+                return;
+            }
+
+            // Underpaid: collect the shortfall (the April bill) through
+            // settleOneSided, so a clamped account's shortfall is re-sourced or
+            // reported and the books claim only tax a balance actually paid.
+            const taxBill = new Currency(taxDifference);
+            logger.log(LogCategory.TAX, () => `Annual True-Up: Underpaid by ${formatCurrency(taxDifference)}. Debiting ${liquidAsset.displayName}.`);
+
+            const oneSided = new FundTransferOneSided(null, taxBill);
+            oneSided.toModel = liquidAsset;
+            const settled = FundTransfer.settleOneSided(oneSided,
+                { type: EventType.TAX_TRUE_UP, data: { direction: 'underpayment' } },
+                this.modelAssets, FundTransfer.fundingResolver(this.activeUser));
+
+            liquidAsset.addToMetric(Metric.ESTIMATED_INCOME_TAX, settled.supplied.copy().flipSign());
+            this.#bookTrueUp(settled.paid, 'underpayment');
+            this.monthly.recordTransfer(liquidAsset.instrument, settled.supplied, settled.realizedGain);
+
+            for (const leg of settled.spilloverLegs) {
+                this.monthly.recordTransfer(leg.instrument, leg.amount, leg.realizedGain);
+                leg.account.addToMetric(Metric.ESTIMATED_INCOME_TAX, leg.amount.copy().flipSign());
             }
         } else {
             const refund = new Currency(Math.abs(taxDifference));
@@ -849,26 +885,17 @@ export class TaxEngine {
                 }
                 return;
             }
-        }
 
-        if (!liquidAsset) {
-            // No everyday account can pay. Report it rather than return
-            // silently, or a plan that cannot pay its April bill looks like one
-            // that owes nothing. This is the last line of defence: the monthly
-            // true-up defers to here.
-            //
-            // "No everyday account" is not "no money". The engine never draws a
-            // 401(k) implicitly, so a household with a large deferred balance
-            // can land here; the user decides which account pays.
-            if (taxDifference > 0) {
-                FundTransfer.reportUnfunded(this.#unfundedTaxAnchor(),
-                    new Currency(taxDifference), 'annual tax true-up',
-                    ShortfallOrigin.ONE_SIDED);
+            // Overpaid: prefer an everyday account with a positive balance, else
+            // any open everyday account (resolveDeposit). Never deposit a tax
+            // refund into a Roth IRA or tax-deferred account.
+            const everydayPositive = FundTransfer.resolveFunding(this.modelAssets);
+            if (everydayPositive) {
+                logger.log(LogCategory.TAX, () => `Annual True-Up: Overpaid by ${formatCurrency(refund.amount)}. Refunding to ${everydayPositive.displayName}.`);
+                everydayPositive.credit(refund, { type: EventType.TAX_TRUE_UP, data: { direction: 'refund' } });
+                everydayPositive.addToMetric(Metric.ESTIMATED_INCOME_TAX, refund);
+                this.#bookTrueUp(refund, 'refund');
             } else {
-                // A refund owed to the household must not be dropped either.
-                // Empty accounts are a reason to receive a refund, not to refuse
-                // one, so resolveDeposit skips the positive-balance filter.
-                const refund = new Currency(Math.abs(taxDifference));
                 const target = FundTransfer.resolveDeposit(this.modelAssets);
                 if (target) {
                     target.credit(refund, {
@@ -886,43 +913,6 @@ export class TaxEngine {
                         + `credited — the plan has no everyday account at all`);
                 }
             }
-            return;
-        }
-
-        if (taxDifference > 0) {
-            // Underpaid: collect the shortfall (the April bill) through
-            // settleOneSided, so a clamped account's shortfall is re-sourced or
-            // reported and the books claim only tax a balance actually paid.
-            const taxBill = new Currency(taxDifference);
-            logger.log(LogCategory.TAX, () => `Annual True-Up: Underpaid by ${formatCurrency(taxDifference)}. Debiting ${liquidAsset.displayName}.`);
-
-            const oneSided = new FundTransferOneSided(null, taxBill);
-            oneSided.toModel = liquidAsset;
-            const settled = FundTransfer.settleOneSided(oneSided,
-                { type: EventType.TAX_TRUE_UP, data: { direction: 'underpayment' } },
-                this.modelAssets);
-
-            liquidAsset.addToMetric(Metric.ESTIMATED_INCOME_TAX, settled.supplied.copy().flipSign());
-            this.#bookTrueUp(settled.supplied, 'underpayment');
-            if (settled.spilloverInstrument) this.#bookTrueUp(settled.spillover, 'underpayment');
-            this.monthly.recordTransfer(liquidAsset.instrument, settled.supplied, settled.realizedGain);
-
-            if (settled.spillover.amount > 0 && settled.spilloverInstrument) {
-                this.monthly.recordTransfer(settled.spilloverInstrument, settled.spillover, settled.spilloverGain);
-                // Attribute the spilled leg's tax to the backstop account rather
-                // than to the depleted one. resolveFunding is asked again AFTER
-                // the draw, so if the draw emptied the fallback this names the
-                // next account instead.
-                const payer = FundTransfer.resolveFunding(this.modelAssets);
-                if (payer) payer.addToMetric(Metric.ESTIMATED_INCOME_TAX, settled.spillover.copy().flipSign());
-            }
-        } else {
-            // Overpaid — credit the refund
-            const taxRefund = new Currency(Math.abs(taxDifference));
-            logger.log(LogCategory.TAX, () => `Annual True-Up: Overpaid by ${formatCurrency(Math.abs(taxDifference))}. Refunding to ${liquidAsset.displayName}.`);
-            liquidAsset.credit(taxRefund, { type: EventType.TAX_TRUE_UP, data: { direction: 'refund' } });
-            liquidAsset.addToMetric(Metric.ESTIMATED_INCOME_TAX, taxRefund);
-            this.#bookTrueUp(taxRefund, 'refund');
         }
 
     }

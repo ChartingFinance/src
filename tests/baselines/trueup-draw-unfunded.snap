@@ -16,6 +16,8 @@
 # deposit lands where the true-up draws. Every rate is zero and nothing runs
 # after the close, so the year's refund is collected minus owed, by hand.
 # tests/trueup-withholding-conservation.mjs holds the conservation law.
+# startAge is 55 (under 60) so the Roth IRA stays protected from last-resort
+# failover and the shortfall genuinely goes unfunded.
 
 [config]
   allocateHouseholdTax = false
@@ -26,9 +28,9 @@
   propertyTaxDeductionMax = 40000
   simDataMode = calibrated
   socialSecurityWithholdingRate = 0
-  userFinishAge = 64
-  userRetirementAge = 60
-  userStartAge = 62
+  userFinishAge = 57
+  userRetirementAge = 55
+  userStartAge = 55
   homeSaleExclusion = 250000
   retirementWithholdingRate = 0.1
 
@@ -225,8 +227,8 @@
   [0018]         1.049525         1.052199         1.054879         1.057566         1.060260         1.062961
 
 [taxYears]
-  2026 months=12 age=62 agi=300000.000000 niit=300000.000000 seniorDeduction=300000.000000 irmaa=300000.000000 iraDeduction=300000.000000 rothContribution=73769.250000 aca=300000.000000 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=283900.000000 capitalGains=0.000000 fica=0.000000 incomeTax=68134.250000 capitalGainsTax=0.000000 niit=0.000000 federalTax=68134.250000 settledTrueUp=8635.000000 settledNIIT=0.000000
-  2027 months=12 age=63 agi=0.000000 niit=0.000000 seniorDeduction=0.000000 irmaa=0.000000 iraDeduction=0.000000 rothContribution=0.000000 aca=0.000000 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=0.000000 capitalGains=0.000000 fica=0.000000 incomeTax=0.000000 capitalGainsTax=0.000000 niit=0.000000 federalTax=0.000000 settledTrueUp=0.000000 settledNIIT=0.000000
+  2026 months=12 age=55 agi=300000.000000 niit=300000.000000 seniorDeduction=300000.000000 irmaa=300000.000000 iraDeduction=300000.000000 rothContribution=73769.250000 aca=300000.000000 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=283900.000000 capitalGains=0.000000 fica=0.000000 incomeTax=68134.250000 capitalGainsTax=0.000000 niit=0.000000 federalTax=68134.250000 settledTrueUp=8635.000000 settledNIIT=0.000000
+  2027 months=12 age=56 agi=0.000000 niit=0.000000 seniorDeduction=0.000000 irmaa=0.000000 iraDeduction=0.000000 rothContribution=0.000000 aca=0.000000 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=0.000000 capitalGains=0.000000 fica=0.000000 incomeTax=0.000000 capitalGainsTax=0.000000 niit=0.000000 federalTax=0.000000 settledTrueUp=0.000000 settledNIIT=0.000000
 
 [sanity]
   Unfunded: Wallet Income tax withholding $30,064.10 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)

@@ -52,25 +52,22 @@ export class ExpenseEngine {
 
             for (const fundTransfer of modelAsset.fundTransfers) {
                 if (!fundTransfer.hasRecurring) continue;
-                fundTransfer.bind(modelAsset, this.modelAssets);
+                fundTransfer.bind(modelAsset, this.modelAssets, this.activeUser);
                 if (!fundTransfer.toModel) continue;
                 const expenseAmount = fundTransfer.calculate();
                 const fundTransferResult = fundTransfer.execute();
 
                 // Book tax consequences against what each account actually
                 // supplied. If the funding account clamped at $0, execute()
-                // reports what it actually supplied in `supplied`, what a
-                // fallback supplied in `spillover`, and any remaining shortfall
+                // reports what it actually supplied in `supplied`, each
+                // fallback leg in `spilloverLegs`, and any remaining shortfall
                 // in `unfunded`.
                 const withdrawalAmount = fundTransferResult.supplied;
                 if (withdrawalAmount.amount > 0) {
                     this.monthly.recordTransfer(fundTransfer.toModel.instrument, withdrawalAmount, fundTransferResult.realizedGain);
                     fundTransfer.toModel.recordDistribution(withdrawalAmount);
                 }
-                if (fundTransferResult.spillover.amount > 0 && fundTransferResult.spilloverInstrument) {
-                    this.monthly.recordTransfer(fundTransferResult.spilloverInstrument,
-                        fundTransferResult.spillover, fundTransferResult.spilloverGain);
-                }
+                this.#recordSpilloverLegs(fundTransferResult.spilloverLegs);
                 runningExpenseAmount.add(expenseAmount);
             }
 
@@ -80,7 +77,7 @@ export class ExpenseEngine {
             if (netShortfall.amount > 0) {
                 logger.log(LogCategory.TRANSFER, () => `ExpenseEngine.applyExpenseTransfers: ${modelAsset.displayName} expensing ${netShortfall.toString()} from the funding backstop (Grossed Up)`);
 
-                const targetAsset = FundTransfer.resolveFunding(this.modelAssets);
+                const targetAsset = FundTransfer.resolveFunding(this.modelAssets, this.activeUser);
                 if (targetAsset) {
                     const grossWithdrawal = this.calculateGrossWithdrawal(netShortfall, targetAsset);
                     const settled = this.settleFromBackstop(
@@ -99,7 +96,7 @@ export class ExpenseEngine {
             const netShortfall = modelAssetExpense.copy().flipSign();
             logger.log(LogCategory.TRANSFER, () => `ExpenseEngine.applyExpenseTransfers: ${modelAsset.displayName} expensing ${netShortfall.toString()} from the funding backstop (Grossed Up)`);
 
-            const targetAsset = FundTransfer.resolveFunding(this.modelAssets);
+            const targetAsset = FundTransfer.resolveFunding(this.modelAssets, this.activeUser);
             if (targetAsset) {
                 const grossWithdrawal = this.calculateGrossWithdrawal(netShortfall, targetAsset);
                 const settled = this.settleFromBackstop(
@@ -135,7 +132,7 @@ export class ExpenseEngine {
 
                 // so we don't blow up
                 if (!fundTransfer.hasRecurring) continue;
-                fundTransfer.bind(modelAsset, this.modelAssets);
+                fundTransfer.bind(modelAsset, this.modelAssets, this.activeUser);
                 if (!fundTransfer.toModel) continue;
                 if (remaining.amount == 0) break;
                                     
@@ -154,7 +151,7 @@ export class ExpenseEngine {
 
         // Backstop: whatever the user did not route explicitly
         if (remaining.amount > 0) {
-            let fundingSource = FundTransfer.resolveFunding(this.modelAssets);
+            let fundingSource = FundTransfer.resolveFunding(this.modelAssets, this.activeUser);
             if (fundingSource) {
                 let preFlight = new FundTransferOneSided(null, remaining);
                 preFlight.fromModel = modelAsset;
@@ -168,15 +165,14 @@ export class ExpenseEngine {
 
         // One-sided withdrawal: MortgageBehavior already reduced the mortgage
         // balance (principal) and recorded interest. Only debit the funding source.
+        const resolver = FundTransfer.fundingResolver(this.activeUser);
         for (const oneSided of preFlights) {
             const event = { type: EventType.SETTLEMENT, data: {
                 from: modelAsset.displayName, to: oneSided.toModel.displayName, label: 'monthly',
                 ...(oneSided.backstop ? { backstop: true } : {}) } };
-            const settled = FundTransfer.settleOneSided(oneSided, event, this.modelAssets);
+            const settled = FundTransfer.settleOneSided(oneSided, event, this.modelAssets, resolver);
             this.monthly.recordTransfer(oneSided.toModel.instrument, settled.supplied, settled.realizedGain);
-            if (settled.spillover.amount > 0 && settled.spilloverInstrument) {
-                this.monthly.recordTransfer(settled.spilloverInstrument, settled.spillover, settled.spilloverGain);
-            }
+            this.#recordSpilloverLegs(settled.spilloverLegs);
         }
 
     }
@@ -203,7 +199,7 @@ export class ExpenseEngine {
         if (modelAsset.fundTransfers?.length) {
             for (const fundTransfer of modelAsset.fundTransfers) {
                 if (!fundTransfer.hasRecurring) continue;
-                fundTransfer.bind(modelAsset, this.modelAssets);
+                fundTransfer.bind(modelAsset, this.modelAssets, this.activeUser);
                 if (!fundTransfer.toModel) continue;
                 if (remaining.amount == 0) break;
 
@@ -218,7 +214,7 @@ export class ExpenseEngine {
         }
 
         if (remaining.amount > 0) {
-            let fundingSource = FundTransfer.resolveFunding(this.modelAssets);
+            let fundingSource = FundTransfer.resolveFunding(this.modelAssets, this.activeUser);
             if (fundingSource) {
                 let preFlight = new FundTransferOneSided(null, remaining);
                 preFlight.fromModel = modelAsset;
@@ -230,15 +226,14 @@ export class ExpenseEngine {
             }
         }
 
+        const resolver = FundTransfer.fundingResolver(this.activeUser);
         for (const oneSided of preFlights) {
             const event = { type: EventType.SETTLEMENT, data: {
                 from: modelAsset.displayName, to: oneSided.toModel.displayName, label,
                 ...(oneSided.backstop ? { backstop: true } : {}) } };
-            const settled = FundTransfer.settleOneSided(oneSided, event, this.modelAssets);
+            const settled = FundTransfer.settleOneSided(oneSided, event, this.modelAssets, resolver);
             this.monthly.recordTransfer(oneSided.toModel.instrument, settled.supplied, settled.realizedGain);
-            if (settled.spillover.amount > 0 && settled.spilloverInstrument) {
-                this.monthly.recordTransfer(settled.spilloverInstrument, settled.spillover, settled.spilloverGain);
-            }
+            this.#recordSpilloverLegs(settled.spilloverLegs);
         }
     }
 
@@ -282,11 +277,10 @@ export class ExpenseEngine {
                 return;
             }
 
-            const result = FundTransfer.system(modelAsset, target, remains, this.modelAssets).execute();
+            const result = FundTransfer.system(modelAsset, target, remains, this.modelAssets, this.activeUser).execute();
 
             // Only the portion the IRA/401K itself supplied is a taxable
-            // distribution; the spillover leg is a taxable-account withdrawal
-            // whose consequence is its realized gain.
+            // distribution; each spillover leg is booked against its payer.
             const actual = result.supplied;
             if (actual.amount > 0) {
                 if (InstrumentType.isIRA(modelAsset.instrument)) {
@@ -297,9 +291,7 @@ export class ExpenseEngine {
                     this.monthly.four01KDistribution.add(actual);
                 }
             }
-            if (result.spillover.amount > 0 && result.spilloverInstrument) {
-                this.monthly.recordTransfer(result.spilloverInstrument, result.spillover, result.spilloverGain);
-            }
+            this.#recordSpilloverLegs(result.spilloverLegs);
 
         }
 
@@ -326,13 +318,20 @@ export class ExpenseEngine {
 
     // ── Helpers ──────────────────────────────────────────────────────
 
+    #recordSpilloverLegs(legs) {
+        if (!legs?.length) return;
+        for (const leg of legs) {
+            this.monthly.recordTransfer(leg.instrument, leg.amount, leg.realizedGain);
+        }
+    }
+
     /**
      * Draw from a funding account through settleOneSided rather than a raw
      * debit.
      *
-     * settleOneSided clamps the account at $0, re-sources the shortfall, reports
-     * what nothing can cover, and books the realized gain itself — callers must
-     * not book it again.
+     * settleOneSided clamps the account at $0, re-sources the shortfall across
+     * fallbacks in priority order, reports what nothing can cover, and books
+     * the realized gain itself — callers must not book it again.
      *
      * @param {ModelAsset} owingAsset  the expense/obligation this pays for
      * @param {ModelAsset} fundingAsset the account being drawn
@@ -342,12 +341,11 @@ export class ExpenseEngine {
         oneSided.fromModel = owingAsset;
         oneSided.toModel = fundingAsset;
 
-        const settled = FundTransfer.settleOneSided(oneSided, event, this.modelAssets);
+        const settled = FundTransfer.settleOneSided(
+            oneSided, event, this.modelAssets, FundTransfer.fundingResolver(this.activeUser));
 
         this.monthly.recordTransfer(fundingAsset.instrument, settled.supplied, settled.realizedGain);
-        if (settled.spillover.amount > 0 && settled.spilloverInstrument) {
-            this.monthly.recordTransfer(settled.spilloverInstrument, settled.spillover, settled.spilloverGain);
-        }
+        this.#recordSpilloverLegs(settled.spilloverLegs);
         return settled;
     }
 

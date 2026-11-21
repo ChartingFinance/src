@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.3.52; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.3.53; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -32576,6 +32576,10 @@ function withSimConfig(config2, changes) {
   return makeSimConfig({ ...config2, ...changes });
 }
 
+// js/policy-constants.js
+var global_retirement_withholding_rate = 0.1;
+var global_deferred_allocation_age = 60;
+
 // js/trace.js
 var TraceKind = Object.freeze({
   MONTH: "month",
@@ -32705,6 +32709,7 @@ var FundTransferResult = class {
     this.spillover = Currency.zero();
     this.spilloverGain = Currency.zero();
     this.spilloverInstrument = null;
+    this.spilloverLegs = [];
   }
 };
 var FundTransferOneSided = class {
@@ -32736,6 +32741,7 @@ var FundTransfer = class _FundTransfer {
     this.usePropertyTax = false;
     this.toModel = null;
     this.approvedAmount = null;
+    this._activeUser = null;
   }
   // ── Parsing ──────────────────────────────────────────────────────
   static fromJSON(obj) {
@@ -32792,12 +32798,13 @@ var FundTransfer = class _FundTransfer {
    * @param {Currency}   amount     Fixed amount to transfer
    * @returns {FundTransfer}
    */
-  static system(fromModel, toModel, amount, allModels = null) {
+  static system(fromModel, toModel, amount, allModels = null, activeUser = null) {
     const ft = new _FundTransfer(toModel.displayName, 0, 0, toModel.id ?? null);
     ft.fromModel = fromModel;
     ft.toModel = toModel;
     ft.approvedAmount = amount.copy();
     ft._allModels = allModels;
+    ft._activeUser = activeUser;
     ft.system = true;
     return ft;
   }
@@ -32807,18 +32814,45 @@ var FundTransfer = class _FundTransfer {
    * list (cash → savings → brokerage → treasuries → corporate bonds) holding
    * a positive balance.
    *
-   * The one policy for every implicit money movement the engine makes for the
-   * user: an expense or mortgage no transfer covers, property-tax escrow,
-   * unallocated take-home pay, tax true-ups, sale proceeds, RMDs, and spillover.
-   * Retirement accounts are not eligible (see `FUNDING_BACKSTOP_PRIORITY` in
-   * instrument.js).
+   * When all everyday accounts are empty and `activeUser` is at least age 60
+   * (`global_deferred_allocation_age`, conservative whole-year rounding of
+   * 59½), falls back through retirement accounts in tax-efficient order:
+   * tax-deferred first (`IRA → 401K`), then `Roth IRA` strictly as last resort.
    *
    * Returns null when nothing qualifies; callers must then call
    * `reportUnfunded()`, never skip silently.
    */
-  static resolveFunding(modelAssets) {
+  static resolveFunding(modelAssets, activeUser = null) {
     for (const key of InstrumentType.fundingBackstopPriority) {
       const match = modelAssets.find((a) => a.instrument === key && !a.isClosed && a.finishCurrency.amount > 0);
+      if (match) return match;
+    }
+    if (activeUser && activeUser.age >= global_deferred_allocation_age) {
+      for (const key of [Instrument.IRA, Instrument.FOUR_01K, Instrument.ROTH_IRA]) {
+        const match = modelAssets.find((a) => a.instrument === key && !a.isClosed && a.finishCurrency.amount > 0);
+        if (match) return match;
+      }
+    }
+    return null;
+  }
+  /**
+   * Build a fallback resolver bound to `activeUser` for `settleOneSided`.
+   * @param {object|null} activeUser
+   * @returns {(modelAssets: ModelAsset[]) => ModelAsset|null}
+   */
+  static fundingResolver(activeUser) {
+    return (models) => _FundTransfer.resolveFunding(models, activeUser);
+  }
+  /**
+   * Where money coming in lands when no account was named: resolveFunding's
+   * everyday priority list without its positive-balance filter, since an empty
+   * account can still receive a deposit. Retirement accounts (including Roth
+   * IRA) stay out — deposits into retirement accounts are contributions with
+   * statutory rules attached.
+   */
+  static resolveDeposit(modelAssets) {
+    for (const key of InstrumentType.fundingBackstopPriority) {
+      const match = modelAssets.find((a) => a.instrument === key && !a.isClosed);
       if (match) return match;
     }
     return null;
@@ -32835,19 +32869,6 @@ var FundTransfer = class _FundTransfer {
    * @param {string}     memo        What the money was for
    * @param {string}     origin      ShortfallOrigin — which movement this is the remainder of
    */
-  /**
-   * Where money coming in lands when no account was named: resolveFunding's
-   * priority list without its positive-balance filter, since an empty account
-   * can still receive a deposit. Retirement accounts stay out — a deposit into
-   * a 401(k) is a contribution, with rules attached.
-   */
-  static resolveDeposit(modelAssets) {
-    for (const key of InstrumentType.fundingBackstopPriority) {
-      const match = modelAssets.find((a) => a.instrument === key && !a.isClosed);
-      if (match) return match;
-    }
-    return null;
-  }
   static reportUnfunded(modelAsset, amount, memo, origin) {
     if (!Object.values(ShortfallOrigin).includes(origin)) {
       throw new Error(`reportUnfunded: origin must be a ShortfallOrigin, got "${origin}"`);
@@ -32859,25 +32880,64 @@ var FundTransfer = class _FundTransfer {
     );
     modelAsset?.recordEvent(EventType.UNFUNDED, amount.copy().flipSign(), { data: { cause: memo, origin } });
   }
+  /**
+   * Drain a shortfall across eligible fallback accounts in priority order,
+   * looping whenever a fallback clamps at $0 until either the shortfall is
+   * covered or no eligible fallback remains.
+   */
+  static #drainFallbacks(spillAmount, spillSource, eventData, allModels, resolveFallback) {
+    const legs = [];
+    let remaining = spillAmount.copy();
+    const tried = /* @__PURE__ */ new Set();
+    while (remaining.amount > 1e-6) {
+      const fallback = resolveFallback(allModels);
+      if (!fallback || tried.has(fallback)) break;
+      tried.add(fallback);
+      const spillResult = fallback.debit(remaining, {
+        type: EventType.SPILLOVER,
+        data: { depleted: spillSource.displayName, ...eventData }
+      });
+      const fallbackShortfall = spillResult.spillover?.amount ?? 0;
+      const supplied = new Currency(Math.max(0, remaining.amount - fallbackShortfall));
+      const gain = spillResult.realizedGain?.copy() ?? Currency.zero();
+      if (supplied.amount > 0) {
+        fallback.recordDistribution(supplied);
+        if (gain.amount > 0) {
+          fallback.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, gain);
+          fallback.recordEvent(
+            EventType.CAPITAL_GAIN_RECOGNIZED,
+            gain.copy(),
+            { metric: Metric.LONG_TERM_CAPITAL_GAIN, data: { spillover: true } }
+          );
+        }
+        legs.push({ account: fallback, instrument: fallback.instrument, amount: supplied, realizedGain: gain });
+      }
+      remaining = new Currency(fallbackShortfall);
+    }
+    const totalSpillover = legs.reduce((acc, l) => acc.plus(l.amount), Currency.zero());
+    const totalGain = legs.reduce((acc, l) => acc.plus(l.realizedGain), Currency.zero());
+    const unfunded = remaining.amount > 1e-6 ? remaining : Currency.zero();
+    return { legs, totalSpillover, totalGain, unfunded };
+  }
   // ── One-Sided Settlement ───────────────────────────────────────
   /**
    * Settle a one-sided withdrawal (mortgage payment, property-tax escrow,
    * carrying cost, tax): debit the funding account and, if it clamps at $0,
-   * source the shortfall from a fallback, reporting what nothing can cover.
+   * source the shortfall across fallbacks in priority order, reporting what
+   * nothing can cover.
    *
-   * `supplied` is what the named account paid; `spillover` is what was asked
-   * of the fallback. Callers book each leg against the account that paid it.
-   * The fallback can clamp too, and what it could not pay is reported
-   * unfunded, so supplied + spillover can exceed what was paid. `paid` is the
-   * amount asked for less everything reported unfunded: the figure to book
-   * as collected.
+   * `supplied` is what the named account paid; `spilloverLegs` lists each
+   * fallback account and what it actually paid; `spillover` is the sum across
+   * all fallback legs. `paid` is the amount asked for less everything reported
+   * unfunded: the figure to book as collected.
    *
    * @param {FundTransferOneSided} oneSided
-   * @param {string}      memo
+   * @param {object}      event
    * @param {ModelAsset[]} allModels
    * @param {Function}    resolveFallback  Funding policy for the shortfall
    * @returns {{supplied: Currency, realizedGain: Currency, spillover: Currency,
    *            spilloverGain: Currency, spilloverInstrument: string|null,
+   *            spilloverLegs: Array<{account: ModelAsset, instrument: string, amount: Currency, realizedGain: Currency}>,
    *            paid: Currency}}
    */
   static settleOneSided(oneSided, event, allModels, resolveFallback = _FundTransfer.resolveFunding) {
@@ -32900,40 +32960,27 @@ var FundTransfer = class _FundTransfer {
     let spillover = Currency.zero();
     let spilloverGain = Currency.zero();
     let spilloverInstrument = null;
+    let spilloverLegs = [];
     let unfunded = Currency.zero();
     if (result.spillover.amount > 0) {
-      const fallback = resolveFallback(allModels);
-      if (fallback) {
-        const spillResult = fallback.debit(
-          result.spillover,
-          {
-            type: EventType.SPILLOVER,
-            data: {
-              depleted: oneSided.toModel.displayName,
-              origin: ShortfallOrigin.ONE_SIDED,
-              cause: event?.type ?? null
-            }
-          }
-        );
-        spillover = result.spillover.copy();
-        spilloverGain = spillResult.realizedGain?.copy() ?? Currency.zero();
-        spilloverInstrument = fallback.instrument;
-        fallback.recordDistribution(spillover.minus(spillResult.spillover));
-        if (spilloverGain.amount > 0) {
-          fallback.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, spilloverGain);
-          fallback.recordEvent(EventType.CAPITAL_GAIN_RECOGNIZED, spilloverGain.copy(), { metric: Metric.LONG_TERM_CAPITAL_GAIN, data: { spillover: true } });
-        }
-        if (spillResult.spillover?.amount > 0) {
-          unfunded = spillResult.spillover.copy();
-          _FundTransfer.reportUnfunded(oneSided.fromModel ?? oneSided.toModel, spillResult.spillover, memo, ShortfallOrigin.ONE_SIDED);
-        }
-      } else {
-        unfunded = result.spillover.copy();
-        _FundTransfer.reportUnfunded(oneSided.fromModel ?? oneSided.toModel, result.spillover, memo, ShortfallOrigin.ONE_SIDED);
+      const drained = _FundTransfer.#drainFallbacks(
+        result.spillover,
+        oneSided.toModel,
+        { origin: ShortfallOrigin.ONE_SIDED, cause: event?.type ?? null },
+        allModels,
+        resolveFallback
+      );
+      spillover = drained.totalSpillover;
+      spilloverGain = drained.totalGain;
+      spilloverInstrument = drained.legs[0]?.instrument ?? null;
+      spilloverLegs = drained.legs;
+      unfunded = drained.unfunded;
+      if (unfunded.amount > 0) {
+        _FundTransfer.reportUnfunded(oneSided.fromModel ?? oneSided.toModel, unfunded, memo, ShortfallOrigin.ONE_SIDED);
       }
     }
     const paid = oneSided.amount.minus(unfunded);
-    return { supplied, realizedGain: result.realizedGain, spillover, spilloverGain, spilloverInstrument, paid };
+    return { supplied, realizedGain: result.realizedGain, spillover, spilloverGain, spilloverInstrument, spilloverLegs, paid };
   }
   // ── Binding ──────────────────────────────────────────────────────
   /**
@@ -32942,11 +32989,13 @@ var FundTransfer = class _FundTransfer {
    * it is looked up by its name, as a plan written without ids names it.
    * @param {ModelAsset} fromModel
    * @param {ModelAsset[]} allModels
+   * @param {object|null} [activeUser]
    */
-  bind(fromModel, allModels) {
+  bind(fromModel, allModels, activeUser = null) {
     this.fromModel = fromModel;
     this.toModel = (this.toId != null ? allModels.find((m) => m.id === this.toId) : allModels.find((m) => m.displayName === this.toDisplayName)) ?? null;
     this._allModels = allModels;
+    this._activeUser = activeUser;
   }
   // ── Calculation ──────────────────────────────────────────────────
   /**
@@ -33020,33 +33069,25 @@ var FundTransfer = class _FundTransfer {
     let spillover = Currency.zero();
     let spilloverGain = Currency.zero();
     let spilloverInstrument = null;
+    let spilloverLegs = [];
     let unfunded = Currency.zero();
     if (spillSource && this._allModels) {
       const spillAmount = fromResult.spillover?.amount > 0 ? fromResult.spillover : toResult.spillover;
-      const fallback = _FundTransfer.resolveFunding(this._allModels);
-      if (fallback) {
-        const spillResult = fallback.debit(
-          spillAmount,
-          {
-            type: EventType.SPILLOVER,
-            data: { depleted: spillSource.displayName, origin: ShortfallOrigin.PAIRED }
-          }
-        );
-        const fallbackUnfunded = spillResult.spillover?.amount ?? 0;
-        spillover = new Currency(spillAmount.amount - fallbackUnfunded);
-        spilloverGain = spillResult.realizedGain?.copy() ?? Currency.zero();
-        spilloverInstrument = fallback.instrument;
-        if (spilloverGain.amount > 0) {
-          fallback.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, spilloverGain);
-          fallback.recordEvent(EventType.CAPITAL_GAIN_RECOGNIZED, spilloverGain.copy(), { metric: Metric.LONG_TERM_CAPITAL_GAIN, data: { spillover: true } });
-        }
-        if (fallbackUnfunded > 0) {
-          unfunded = spillResult.spillover.copy();
-          _FundTransfer.reportUnfunded(spillSource, spillResult.spillover, `${memo} (account and backstop depleted)`, ShortfallOrigin.PAIRED);
-        }
-      } else {
-        unfunded = spillAmount.copy();
-        _FundTransfer.reportUnfunded(spillSource, spillAmount, `${memo} (account depleted, no backstop)`, ShortfallOrigin.PAIRED);
+      const drained = _FundTransfer.#drainFallbacks(
+        spillAmount,
+        spillSource,
+        { origin: ShortfallOrigin.PAIRED },
+        this._allModels,
+        _FundTransfer.fundingResolver(this._activeUser)
+      );
+      spillover = drained.totalSpillover;
+      spilloverGain = drained.totalGain;
+      spilloverInstrument = drained.legs[0]?.instrument ?? null;
+      spilloverLegs = drained.legs;
+      unfunded = drained.unfunded;
+      if (unfunded.amount > 0) {
+        const suffix = drained.legs.length > 0 ? "(account and backstop depleted)" : "(account depleted, no backstop)";
+        _FundTransfer.reportUnfunded(spillSource, unfunded, `${memo} ${suffix}`, ShortfallOrigin.PAIRED);
       }
     } else if (rawClamp > 0) {
       unfunded = new Currency(rawClamp);
@@ -33063,6 +33104,7 @@ var FundTransfer = class _FundTransfer {
     result.spillover = spillover;
     result.spilloverGain = spilloverGain;
     result.spilloverInstrument = spilloverInstrument;
+    result.spilloverLegs = spilloverLegs;
     result.unfunded = unfunded;
     return result;
   }
@@ -34669,7 +34711,7 @@ var ExpenseEngine = class {
     if (modelAsset.fundTransfers?.length > 0) {
       for (const fundTransfer of modelAsset.fundTransfers) {
         if (!fundTransfer.hasRecurring) continue;
-        fundTransfer.bind(modelAsset, this.modelAssets);
+        fundTransfer.bind(modelAsset, this.modelAssets, this.activeUser);
         if (!fundTransfer.toModel) continue;
         const expenseAmount = fundTransfer.calculate();
         const fundTransferResult = fundTransfer.execute();
@@ -34678,19 +34720,13 @@ var ExpenseEngine = class {
           this.monthly.recordTransfer(fundTransfer.toModel.instrument, withdrawalAmount, fundTransferResult.realizedGain);
           fundTransfer.toModel.recordDistribution(withdrawalAmount);
         }
-        if (fundTransferResult.spillover.amount > 0 && fundTransferResult.spilloverInstrument) {
-          this.monthly.recordTransfer(
-            fundTransferResult.spilloverInstrument,
-            fundTransferResult.spillover,
-            fundTransferResult.spilloverGain
-          );
-        }
+        this.#recordSpilloverLegs(fundTransferResult.spilloverLegs);
         runningExpenseAmount.add(expenseAmount);
       }
       const netShortfall = new Currency(runningExpenseAmount.amount - modelAssetExpense.amount);
       if (netShortfall.amount > 0) {
         logger.log(LogCategory.TRANSFER, () => `ExpenseEngine.applyExpenseTransfers: ${modelAsset.displayName} expensing ${netShortfall.toString()} from the funding backstop (Grossed Up)`);
-        const targetAsset = FundTransfer.resolveFunding(this.modelAssets);
+        const targetAsset = FundTransfer.resolveFunding(this.modelAssets, this.activeUser);
         if (targetAsset) {
           const grossWithdrawal = this.calculateGrossWithdrawal(netShortfall, targetAsset);
           const settled = this.settleFromBackstop(
@@ -34711,7 +34747,7 @@ var ExpenseEngine = class {
     } else {
       const netShortfall = modelAssetExpense.copy().flipSign();
       logger.log(LogCategory.TRANSFER, () => `ExpenseEngine.applyExpenseTransfers: ${modelAsset.displayName} expensing ${netShortfall.toString()} from the funding backstop (Grossed Up)`);
-      const targetAsset = FundTransfer.resolveFunding(this.modelAssets);
+      const targetAsset = FundTransfer.resolveFunding(this.modelAssets, this.activeUser);
       if (targetAsset) {
         const grossWithdrawal = this.calculateGrossWithdrawal(netShortfall, targetAsset);
         const settled = this.settleFromBackstop(
@@ -34746,7 +34782,7 @@ var ExpenseEngine = class {
     if (modelAsset.fundTransfers?.length) {
       for (const fundTransfer of modelAsset.fundTransfers) {
         if (!fundTransfer.hasRecurring) continue;
-        fundTransfer.bind(modelAsset, this.modelAssets);
+        fundTransfer.bind(modelAsset, this.modelAssets, this.activeUser);
         if (!fundTransfer.toModel) continue;
         if (remaining.amount == 0) break;
         let preFlight = new FundTransferOneSided(fundTransfer, payment);
@@ -34759,7 +34795,7 @@ var ExpenseEngine = class {
       }
     }
     if (remaining.amount > 0) {
-      let fundingSource = FundTransfer.resolveFunding(this.modelAssets);
+      let fundingSource = FundTransfer.resolveFunding(this.modelAssets, this.activeUser);
       if (fundingSource) {
         let preFlight = new FundTransferOneSided(null, remaining);
         preFlight.fromModel = modelAsset;
@@ -34770,6 +34806,7 @@ var ExpenseEngine = class {
         FundTransfer.reportUnfunded(modelAsset, remaining, "mortgage payment", ShortfallOrigin.STANDALONE);
       }
     }
+    const resolver = FundTransfer.fundingResolver(this.activeUser);
     for (const oneSided of preFlights) {
       const event = { type: EventType.SETTLEMENT, data: {
         from: modelAsset.displayName,
@@ -34777,11 +34814,9 @@ var ExpenseEngine = class {
         label: "monthly",
         ...oneSided.backstop ? { backstop: true } : {}
       } };
-      const settled = FundTransfer.settleOneSided(oneSided, event, this.modelAssets);
+      const settled = FundTransfer.settleOneSided(oneSided, event, this.modelAssets, resolver);
       this.monthly.recordTransfer(oneSided.toModel.instrument, settled.supplied, settled.realizedGain);
-      if (settled.spillover.amount > 0 && settled.spilloverInstrument) {
-        this.monthly.recordTransfer(settled.spilloverInstrument, settled.spillover, settled.spilloverGain);
-      }
+      this.#recordSpilloverLegs(settled.spilloverLegs);
     }
   }
   // ── Day 30: Real Estate Carrying Costs (Maintenance + Insurance) ──
@@ -34805,7 +34840,7 @@ var ExpenseEngine = class {
     if (modelAsset.fundTransfers?.length) {
       for (const fundTransfer of modelAsset.fundTransfers) {
         if (!fundTransfer.hasRecurring) continue;
-        fundTransfer.bind(modelAsset, this.modelAssets);
+        fundTransfer.bind(modelAsset, this.modelAssets, this.activeUser);
         if (!fundTransfer.toModel) continue;
         if (remaining.amount == 0) break;
         let preFlight = new FundTransferOneSided(fundTransfer, cost);
@@ -34818,7 +34853,7 @@ var ExpenseEngine = class {
       }
     }
     if (remaining.amount > 0) {
-      let fundingSource = FundTransfer.resolveFunding(this.modelAssets);
+      let fundingSource = FundTransfer.resolveFunding(this.modelAssets, this.activeUser);
       if (fundingSource) {
         let preFlight = new FundTransferOneSided(null, remaining);
         preFlight.fromModel = modelAsset;
@@ -34829,6 +34864,7 @@ var ExpenseEngine = class {
         FundTransfer.reportUnfunded(modelAsset, remaining, label, ShortfallOrigin.STANDALONE);
       }
     }
+    const resolver = FundTransfer.fundingResolver(this.activeUser);
     for (const oneSided of preFlights) {
       const event = { type: EventType.SETTLEMENT, data: {
         from: modelAsset.displayName,
@@ -34836,11 +34872,9 @@ var ExpenseEngine = class {
         label,
         ...oneSided.backstop ? { backstop: true } : {}
       } };
-      const settled = FundTransfer.settleOneSided(oneSided, event, this.modelAssets);
+      const settled = FundTransfer.settleOneSided(oneSided, event, this.modelAssets, resolver);
       this.monthly.recordTransfer(oneSided.toModel.instrument, settled.supplied, settled.realizedGain);
-      if (settled.spillover.amount > 0 && settled.spilloverInstrument) {
-        this.monthly.recordTransfer(settled.spilloverInstrument, settled.spillover, settled.spilloverGain);
-      }
+      this.#recordSpilloverLegs(settled.spilloverLegs);
     }
   }
   // ── Day 30: RMDs ─────────────────────────────────────────────────
@@ -34875,7 +34909,7 @@ var ExpenseEngine = class {
         );
         return;
       }
-      const result = FundTransfer.system(modelAsset, target, remains, this.modelAssets).execute();
+      const result = FundTransfer.system(modelAsset, target, remains, this.modelAssets, this.activeUser).execute();
       const actual = result.supplied;
       if (actual.amount > 0) {
         if (InstrumentType.isIRA(modelAsset.instrument)) {
@@ -34886,9 +34920,7 @@ var ExpenseEngine = class {
           this.monthly.four01KDistribution.add(actual);
         }
       }
-      if (result.spillover.amount > 0 && result.spilloverInstrument) {
-        this.monthly.recordTransfer(result.spilloverInstrument, result.spillover, result.spilloverGain);
-      }
+      this.#recordSpilloverLegs(result.spilloverLegs);
     }
   }
   // ── Day 30: Asset Growth Recognition ─────────────────────────────
@@ -34904,13 +34936,19 @@ var ExpenseEngine = class {
     }
   }
   // ── Helpers ──────────────────────────────────────────────────────
+  #recordSpilloverLegs(legs) {
+    if (!legs?.length) return;
+    for (const leg of legs) {
+      this.monthly.recordTransfer(leg.instrument, leg.amount, leg.realizedGain);
+    }
+  }
   /**
    * Draw from a funding account through settleOneSided rather than a raw
    * debit.
    *
-   * settleOneSided clamps the account at $0, re-sources the shortfall, reports
-   * what nothing can cover, and books the realized gain itself — callers must
-   * not book it again.
+   * settleOneSided clamps the account at $0, re-sources the shortfall across
+   * fallbacks in priority order, reports what nothing can cover, and books
+   * the realized gain itself — callers must not book it again.
    *
    * @param {ModelAsset} owingAsset  the expense/obligation this pays for
    * @param {ModelAsset} fundingAsset the account being drawn
@@ -34919,11 +34957,14 @@ var ExpenseEngine = class {
     const oneSided = new FundTransferOneSided(null, amount);
     oneSided.fromModel = owingAsset;
     oneSided.toModel = fundingAsset;
-    const settled = FundTransfer.settleOneSided(oneSided, event, this.modelAssets);
+    const settled = FundTransfer.settleOneSided(
+      oneSided,
+      event,
+      this.modelAssets,
+      FundTransfer.fundingResolver(this.activeUser)
+    );
     this.monthly.recordTransfer(fundingAsset.instrument, settled.supplied, settled.realizedGain);
-    if (settled.spillover.amount > 0 && settled.spilloverInstrument) {
-      this.monthly.recordTransfer(settled.spilloverInstrument, settled.spillover, settled.spilloverGain);
-    }
+    this.#recordSpilloverLegs(settled.spilloverLegs);
     return settled;
   }
   /**
@@ -34960,10 +35001,6 @@ var ExpenseEngine = class {
     return new Currency(Math.max(grossed, netShortfall.amount));
   }
 };
-
-// js/policy-constants.js
-var global_retirement_withholding_rate = 0.1;
-var global_deferred_allocation_age = 60;
 
 // js/tax-allocation.js
 var BASIS_METRICS = Object.freeze([
@@ -35114,10 +35151,14 @@ var TaxEngine = class {
       this.monthly.incomeTax.add(supplied.copy().flipSign());
     }
     if (result.spillover.amount > 0) {
-      const fallback = FundTransfer.resolveFunding(this.modelAssets);
-      if (fallback) {
+      let remaining = result.spillover.copy();
+      const tried = /* @__PURE__ */ new Set();
+      while (remaining.amount > 1e-6) {
+        const fallback = FundTransfer.resolveFunding(this.modelAssets, this.activeUser);
+        if (!fallback || tried.has(fallback)) break;
+        tried.add(fallback);
         const spillResult = fallback.debit(
-          result.spillover,
+          remaining,
           {
             type: EventType.SPILLOVER,
             data: {
@@ -35127,26 +35168,32 @@ var TaxEngine = class {
             }
           }
         );
-        const spilled = result.spillover.minus(spillResult.spillover);
-        this.monthly.recordTransfer(
-          fallback.instrument,
-          spilled,
-          spillResult.realizedGain ?? Currency.zero()
-        );
-        if (spillResult.realizedGain?.amount > 0) {
-          fallback.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, spillResult.realizedGain);
-          fallback.recordEvent(
-            EventType.CAPITAL_GAIN_RECOGNIZED,
-            spillResult.realizedGain.copy(),
-            { metric: Metric.LONG_TERM_CAPITAL_GAIN, data: { spillover: true } }
+        const shortfall = spillResult.spillover?.amount ?? 0;
+        const spilled = new Currency(Math.max(0, remaining.amount - shortfall));
+        if (spilled.amount > 0) {
+          fallback.recordDistribution(spilled);
+          this.monthly.recordTransfer(
+            fallback.instrument,
+            spilled,
+            spillResult.realizedGain ?? Currency.zero()
           );
+          if (spillResult.realizedGain?.amount > 0) {
+            fallback.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, spillResult.realizedGain);
+            fallback.recordEvent(
+              EventType.CAPITAL_GAIN_RECOGNIZED,
+              spillResult.realizedGain.copy(),
+              { metric: Metric.LONG_TERM_CAPITAL_GAIN, data: { spillover: true } }
+            );
+          }
+          fallback.addToMetric(Metric.WITHHELD_INCOME_TAX, spilled.copy().flipSign());
+          this.monthly.incomeTax.add(spilled.copy().flipSign());
         }
-        fallback.addToMetric(Metric.WITHHELD_INCOME_TAX, spilled.copy().flipSign());
-        this.monthly.incomeTax.add(spilled.copy().flipSign());
-      } else {
+        remaining = new Currency(shortfall);
+      }
+      if (remaining.amount > 1e-6) {
         FundTransfer.reportUnfunded(
           modelAsset,
-          result.spillover,
+          remaining,
           "federal withholding",
           ShortfallOrigin.ONE_SIDED
         );
@@ -35176,7 +35223,7 @@ var TaxEngine = class {
     let remaining = payment.copy();
     for (const fundTransfer of modelAsset.fundTransfers) {
       if (!fundTransfer.hasRecurring) continue;
-      fundTransfer.bind(modelAsset, this.modelAssets);
+      fundTransfer.bind(modelAsset, this.modelAssets, this.activeUser);
       if (!fundTransfer.toModel) continue;
       if (remaining.amount == 0) break;
       let preFlight = new FundTransferOneSided(fundTransfer, payment);
@@ -35188,7 +35235,7 @@ var TaxEngine = class {
       preFlights.push(preFlight);
     }
     if (remaining.amount > 0) {
-      let fundingSource = FundTransfer.resolveFunding(this.modelAssets);
+      let fundingSource = FundTransfer.resolveFunding(this.modelAssets, this.activeUser);
       if (fundingSource) {
         let preFlight = new FundTransferOneSided(null, remaining);
         preFlight.fromModel = modelAsset;
@@ -35199,6 +35246,7 @@ var TaxEngine = class {
         FundTransfer.reportUnfunded(modelAsset, remaining, "property tax", ShortfallOrigin.STANDALONE);
       }
     }
+    const resolver = FundTransfer.fundingResolver(this.activeUser);
     for (const oneSided of preFlights) {
       const event = { type: EventType.SETTLEMENT, data: {
         from: modelAsset.displayName,
@@ -35206,10 +35254,10 @@ var TaxEngine = class {
         label: "property tax",
         ...oneSided.backstop ? { backstop: true } : {}
       } };
-      const settled = FundTransfer.settleOneSided(oneSided, event, this.modelAssets);
+      const settled = FundTransfer.settleOneSided(oneSided, event, this.modelAssets, resolver);
       this.monthly.recordTransfer(oneSided.toModel.instrument, settled.supplied, settled.realizedGain);
-      if (settled.spillover.amount > 0 && settled.spilloverInstrument) {
-        this.monthly.recordTransfer(settled.spilloverInstrument, settled.spillover, settled.spilloverGain);
+      for (const leg of settled.spilloverLegs) {
+        this.monthly.recordTransfer(leg.instrument, leg.amount, leg.realizedGain);
       }
     }
   }
@@ -35346,22 +35394,27 @@ var TaxEngine = class {
       if (collected.amount > 0) this.monthly.incomeTax.add(collected.copy().flipSign());
       return;
     }
-    const liquidAsset = FundTransfer.resolveFunding(this.modelAssets);
+    const liquidAsset = FundTransfer.resolveFunding(this.modelAssets, this.activeUser);
     if (!liquidAsset) {
       logger.log(LogCategory.TAX, () => `Monthly True-Up: no backstop account to pay ${additionalTax.toString()}; deferring to annual true-up`);
       return;
     }
     const oneSided = new FundTransferOneSided(null, payment);
     oneSided.toModel = liquidAsset;
-    const settled = FundTransfer.settleOneSided(oneSided, { type: EventType.INCOME_TAX_WITHHOLDING }, this.modelAssets);
+    const settled = FundTransfer.settleOneSided(
+      oneSided,
+      { type: EventType.INCOME_TAX_WITHHOLDING },
+      this.modelAssets,
+      FundTransfer.fundingResolver(this.activeUser)
+    );
     if (settled.paid.amount > 0) {
       const withheld = settled.paid.copy().flipSign();
       this.monthly.incomeTax.add(withheld);
       liquidAsset.addToMetric(Metric.ESTIMATED_INCOME_TAX, withheld);
     }
     this.monthly.recordTransfer(liquidAsset.instrument, settled.supplied, settled.realizedGain);
-    if (settled.spillover.amount > 0 && settled.spilloverInstrument) {
-      this.monthly.recordTransfer(settled.spilloverInstrument, settled.spillover, settled.spilloverGain);
+    for (const leg of settled.spilloverLegs) {
+      this.monthly.recordTransfer(leg.instrument, leg.amount, leg.realizedGain);
     }
   }
   // ── Tax allocation: billing tax to the income that caused it ──────
@@ -35423,14 +35476,14 @@ var TaxEngine = class {
         const settled = FundTransfer.settleOneSided(
           oneSided,
           { type: eventType, data: { ...extraData, basis: "proportional", share } },
-          this.modelAssets
+          this.modelAssets,
+          FundTransfer.fundingResolver(this.activeUser)
         );
         modelAsset.addToMetric(metric, settled.supplied.copy().flipSign());
         this.monthly.recordTransfer(modelAsset.instrument, settled.supplied, settled.realizedGain);
-        if (settled.spillover.amount > 0 && settled.spilloverInstrument) {
-          this.monthly.recordTransfer(settled.spilloverInstrument, settled.spillover, settled.spilloverGain);
-          const payer = FundTransfer.resolveFunding(this.modelAssets);
-          if (payer) payer.addToMetric(metric, settled.spillover.copy().flipSign());
+        for (const sLeg of settled.spilloverLegs) {
+          this.monthly.recordTransfer(sLeg.instrument, sLeg.amount, sLeg.realizedGain);
+          sLeg.account.addToMetric(metric, sLeg.amount.copy().flipSign());
         }
         return settled;
       }
@@ -35491,7 +35544,7 @@ var TaxEngine = class {
         LogCategory.TAX,
         () => `NIIT: allocating ${niit.toString()} across ${legs.length} account(s) by NII share.`
       );
-      const collected2 = Currency.zero();
+      const collected = Currency.zero();
       for (const leg of legs) {
         const settled2 = this.#settleAllocatedLeg(
           leg,
@@ -35499,13 +35552,12 @@ var TaxEngine = class {
           Metric.NIIT,
           eventData
         );
-        collected2.add(settled2.supplied);
-        collected2.add(settled2.spillover);
+        collected.add(settled2.paid);
       }
-      if (collected2.amount > 0) this.monthly.niit.add(collected2.copy().flipSign());
+      if (collected.amount > 0) this.monthly.niit.add(collected.copy().flipSign());
       return;
     }
-    const liquidAsset = FundTransfer.resolveFunding(this.modelAssets);
+    const liquidAsset = FundTransfer.resolveFunding(this.modelAssets, this.activeUser);
     if (!liquidAsset) {
       FundTransfer.reportUnfunded(
         this.#unfundedTaxAnchor(),
@@ -35520,18 +35572,16 @@ var TaxEngine = class {
     const settled = FundTransfer.settleOneSided(
       oneSided,
       { type: EventType.NIIT_ASSESSED, data: eventData },
-      this.modelAssets
+      this.modelAssets,
+      FundTransfer.fundingResolver(this.activeUser)
     );
     liquidAsset.addToMetric(Metric.NIIT, settled.supplied.copy().flipSign());
     this.monthly.recordTransfer(liquidAsset.instrument, settled.supplied, settled.realizedGain);
-    const collected = settled.supplied.copy();
-    if (settled.spillover.amount > 0 && settled.spilloverInstrument) {
-      this.monthly.recordTransfer(settled.spilloverInstrument, settled.spillover, settled.spilloverGain);
-      const payer = FundTransfer.resolveFunding(this.modelAssets);
-      if (payer) payer.addToMetric(Metric.NIIT, settled.spillover.copy().flipSign());
-      collected.add(settled.spillover);
+    for (const leg of settled.spilloverLegs) {
+      this.monthly.recordTransfer(leg.instrument, leg.amount, leg.realizedGain);
+      leg.account.addToMetric(Metric.NIIT, leg.amount.copy().flipSign());
     }
-    if (collected.amount > 0) this.monthly.niit.add(collected.flipSign());
+    if (settled.paid.amount > 0) this.monthly.niit.add(settled.paid.copy().flipSign());
   }
   // ── Year-End: Annual Tax True-Up ──────────────────────────────────
   // Compares the year's exact liability with what was withheld or
@@ -35589,24 +35639,47 @@ var TaxEngine = class {
     const hiIndex = referenceHistory.length - 1;
     const loIndex = hiIndex - (Math.max(1, settledYearMonths ?? 12) - 1);
     const yearBasis = (asset) => basisOverMonths(asset, loIndex, hiIndex);
-    const liquidAsset = FundTransfer.resolveFunding(this.modelAssets);
     if (taxDifference > 0) {
       const legs = this.#planTaxAllocation(new Currency(taxDifference), yearBasis);
       if (legs.length > 0) {
         logger.log(LogCategory.TAX, () => `Annual True-Up: Underpaid by ${formatCurrency(taxDifference)}. Allocating across ${legs.length} account(s) by income share.`);
         for (const leg of legs) {
-          const settled = this.#settleAllocatedLeg(
+          const settled2 = this.#settleAllocatedLeg(
             leg,
             EventType.TAX_TRUE_UP,
             Metric.ESTIMATED_INCOME_TAX,
             { direction: "underpayment" }
           );
-          this.#bookTrueUp(settled.supplied, "underpayment");
-          if (settled.spilloverInstrument) {
-            this.#bookTrueUp(settled.spillover, "underpayment");
-          }
+          this.#bookTrueUp(settled2.paid, "underpayment");
         }
         return;
+      }
+      const liquidAsset = FundTransfer.resolveFunding(this.modelAssets, this.activeUser);
+      if (!liquidAsset) {
+        FundTransfer.reportUnfunded(
+          this.#unfundedTaxAnchor(),
+          new Currency(taxDifference),
+          "annual tax true-up",
+          ShortfallOrigin.ONE_SIDED
+        );
+        return;
+      }
+      const taxBill = new Currency(taxDifference);
+      logger.log(LogCategory.TAX, () => `Annual True-Up: Underpaid by ${formatCurrency(taxDifference)}. Debiting ${liquidAsset.displayName}.`);
+      const oneSided = new FundTransferOneSided(null, taxBill);
+      oneSided.toModel = liquidAsset;
+      const settled = FundTransfer.settleOneSided(
+        oneSided,
+        { type: EventType.TAX_TRUE_UP, data: { direction: "underpayment" } },
+        this.modelAssets,
+        FundTransfer.fundingResolver(this.activeUser)
+      );
+      liquidAsset.addToMetric(Metric.ESTIMATED_INCOME_TAX, settled.supplied.copy().flipSign());
+      this.#bookTrueUp(settled.paid, "underpayment");
+      this.monthly.recordTransfer(liquidAsset.instrument, settled.supplied, settled.realizedGain);
+      for (const leg of settled.spilloverLegs) {
+        this.monthly.recordTransfer(leg.instrument, leg.amount, leg.realizedGain);
+        leg.account.addToMetric(Metric.ESTIMATED_INCOME_TAX, leg.amount.copy().flipSign());
       }
     } else {
       const refund = new Currency(Math.abs(taxDifference));
@@ -35624,17 +35697,13 @@ var TaxEngine = class {
         }
         return;
       }
-    }
-    if (!liquidAsset) {
-      if (taxDifference > 0) {
-        FundTransfer.reportUnfunded(
-          this.#unfundedTaxAnchor(),
-          new Currency(taxDifference),
-          "annual tax true-up",
-          ShortfallOrigin.ONE_SIDED
-        );
+      const everydayPositive = FundTransfer.resolveFunding(this.modelAssets);
+      if (everydayPositive) {
+        logger.log(LogCategory.TAX, () => `Annual True-Up: Overpaid by ${formatCurrency(refund.amount)}. Refunding to ${everydayPositive.displayName}.`);
+        everydayPositive.credit(refund, { type: EventType.TAX_TRUE_UP, data: { direction: "refund" } });
+        everydayPositive.addToMetric(Metric.ESTIMATED_INCOME_TAX, refund);
+        this.#bookTrueUp(refund, "refund");
       } else {
-        const refund = new Currency(Math.abs(taxDifference));
         const target = FundTransfer.resolveDeposit(this.modelAssets);
         if (target) {
           target.credit(refund, {
@@ -35654,33 +35723,6 @@ var TaxEngine = class {
           );
         }
       }
-      return;
-    }
-    if (taxDifference > 0) {
-      const taxBill = new Currency(taxDifference);
-      logger.log(LogCategory.TAX, () => `Annual True-Up: Underpaid by ${formatCurrency(taxDifference)}. Debiting ${liquidAsset.displayName}.`);
-      const oneSided = new FundTransferOneSided(null, taxBill);
-      oneSided.toModel = liquidAsset;
-      const settled = FundTransfer.settleOneSided(
-        oneSided,
-        { type: EventType.TAX_TRUE_UP, data: { direction: "underpayment" } },
-        this.modelAssets
-      );
-      liquidAsset.addToMetric(Metric.ESTIMATED_INCOME_TAX, settled.supplied.copy().flipSign());
-      this.#bookTrueUp(settled.supplied, "underpayment");
-      if (settled.spilloverInstrument) this.#bookTrueUp(settled.spillover, "underpayment");
-      this.monthly.recordTransfer(liquidAsset.instrument, settled.supplied, settled.realizedGain);
-      if (settled.spillover.amount > 0 && settled.spilloverInstrument) {
-        this.monthly.recordTransfer(settled.spilloverInstrument, settled.spillover, settled.spilloverGain);
-        const payer = FundTransfer.resolveFunding(this.modelAssets);
-        if (payer) payer.addToMetric(Metric.ESTIMATED_INCOME_TAX, settled.spillover.copy().flipSign());
-      }
-    } else {
-      const taxRefund = new Currency(Math.abs(taxDifference));
-      logger.log(LogCategory.TAX, () => `Annual True-Up: Overpaid by ${formatCurrency(Math.abs(taxDifference))}. Refunding to ${liquidAsset.displayName}.`);
-      liquidAsset.credit(taxRefund, { type: EventType.TAX_TRUE_UP, data: { direction: "refund" } });
-      liquidAsset.addToMetric(Metric.ESTIMATED_INCOME_TAX, taxRefund);
-      this.#bookTrueUp(taxRefund, "refund");
     }
   }
 };
@@ -35902,13 +35944,14 @@ var PremiumCreditEngine = class {
    * @param {number} plan.firstYear   the plan's first calendar year
    * @param {(year: number) => number} plan.monthsInPlanYear
    */
-  constructor(modelAssets, monthly, config2, { taxYears, firstYear, monthsInPlanYear }) {
+  constructor(modelAssets, monthly, config2, { taxYears, firstYear, monthsInPlanYear, activeUser = null }) {
     this.modelAssets = modelAssets;
     this.monthly = monthly;
     this.config = config2;
     this.taxYears = taxYears;
     this.firstYear = firstYear;
     this.monthsInPlanYear = monthsInPlanYear;
+    this.activeUser = activeUser;
     this.years = /* @__PURE__ */ new Map();
   }
   // ── Day 30: the advance ──────────────────────────────────────────
@@ -36086,7 +36129,7 @@ var PremiumCreditEngine = class {
       return;
     }
     const repayment = new Currency(-net);
-    const liquidAsset = FundTransfer.resolveFunding(this.modelAssets);
+    const liquidAsset = FundTransfer.resolveFunding(this.modelAssets, this.activeUser);
     if (!liquidAsset) {
       FundTransfer.reportUnfunded(
         anchor,
@@ -36101,17 +36144,14 @@ var PremiumCreditEngine = class {
     const settled = FundTransfer.settleOneSided(
       oneSided,
       { type: EventType.PTC_RECONCILIATION, data: { direction: "repayment", ...data } },
-      this.modelAssets
+      this.modelAssets,
+      FundTransfer.fundingResolver(this.activeUser)
     );
     liquidAsset.addToMetric(Metric.PTC_RECONCILIATION, settled.supplied.copy().flipSign());
     this.monthly.recordTransfer(liquidAsset.instrument, settled.supplied, settled.realizedGain);
-    if (settled.spillover.amount > 0 && settled.spilloverInstrument) {
-      this.monthly.recordTransfer(settled.spilloverInstrument, settled.spillover, settled.spilloverGain);
-      const fallbackPaid = settled.paid.minus(settled.supplied);
-      const payer = FundTransfer.resolveFunding(this.modelAssets);
-      if (payer && fallbackPaid.amount > 0) {
-        payer.addToMetric(Metric.PTC_RECONCILIATION, fallbackPaid.copy().flipSign());
-      }
+    for (const leg of settled.spilloverLegs) {
+      this.monthly.recordTransfer(leg.instrument, leg.amount, leg.realizedGain);
+      leg.account.addToMetric(Metric.PTC_RECONCILIATION, leg.amount.copy().flipSign());
     }
     if (settled.paid.amount > 0) this.monthly.ptcReconciliation.add(settled.paid.copy().flipSign());
     logger.log(
@@ -36576,7 +36616,8 @@ var Portfolio = class _Portfolio {
     this.premiumCredit = new PremiumCreditEngine(this.modelAssets, this.monthly, this.config, {
       taxYears: this.taxYears,
       firstYear: this.firstDateInt?.year,
-      monthsInPlanYear: (year) => this.monthsInPlanYear(year)
+      monthsInPlanYear: (year) => this.monthsInPlanYear(year),
+      activeUser: this.activeUser
     });
   }
   /**
@@ -36931,10 +36972,15 @@ var Portfolio = class _Portfolio {
             const oneSided = new FundTransferOneSided(null, event.amount.copy().flipSign());
             oneSided.fromModel = modelAsset;
             oneSided.toModel = modelAsset;
-            const settled = FundTransfer.settleOneSided(oneSided, descriptor, this.modelAssets);
+            const settled = FundTransfer.settleOneSided(
+              oneSided,
+              descriptor,
+              this.modelAssets,
+              FundTransfer.fundingResolver(this.activeUser)
+            );
             this.monthly.recordTransfer(modelAsset.instrument, settled.supplied, settled.realizedGain);
-            if (settled.spillover.amount > 0 && settled.spilloverInstrument) {
-              this.monthly.recordTransfer(settled.spilloverInstrument, settled.spillover, settled.spilloverGain);
+            for (const leg of settled.spilloverLegs) {
+              this.monthly.recordTransfer(leg.instrument, leg.amount, leg.realizedGain);
             }
           }
         }
@@ -37033,8 +37079,8 @@ var Portfolio = class _Portfolio {
         fundTransfer.toModel.recordDistribution(result.supplied);
       }
     }
-    if (result.spillover.amount > 0 && result.spilloverInstrument) {
-      this.monthly.recordTransfer(result.spilloverInstrument, result.spillover, result.spilloverGain);
+    for (const leg of result.spilloverLegs) {
+      this.monthly.recordTransfer(leg.instrument, leg.amount, leg.realizedGain);
     }
   }
   applyAssetCloseFundTransfers(modelAsset) {
@@ -37043,7 +37089,7 @@ var Portfolio = class _Portfolio {
     if (closeTransfers.length > 0) {
       const planned = [];
       for (let fundTransfer of closeTransfers) {
-        fundTransfer.bind(modelAsset, this.modelAssets);
+        fundTransfer.bind(modelAsset, this.modelAssets, this.activeUser);
         if (!fundTransfer.toModel) continue;
         if (!InstrumentType.isExpensable(fundTransfer.toModel.instrument)) {
           logger.log(LogCategory.TRANSFER, () => "Portfolio.applyAssetCloseFundTransfers: cannot transfer to " + fundTransfer.toModel.displayName + " because not an expensable account");
@@ -37070,9 +37116,9 @@ var Portfolio = class _Portfolio {
       const hasExtra = modelAssetValue.amount >= 0 ? extraAmount.amount > 5e-3 : extraAmount.amount < -5e-3;
       if (hasExtra) {
         logger.log(LogCategory.TRANSFER, () => "Portfolio.applyAssetCloseFundTransfers: " + modelAsset.displayName + " funding " + extraAmount.toString() + " to the funding backstop");
-        const target = extraAmount.amount > 0 ? FundTransfer.resolveDeposit(this.modelAssets) : FundTransfer.resolveFunding(this.modelAssets);
+        const target = extraAmount.amount > 0 ? FundTransfer.resolveDeposit(this.modelAssets) : FundTransfer.resolveFunding(this.modelAssets, this.activeUser);
         if (target) {
-          const ft = FundTransfer.system(modelAsset, target, extraAmount, this.modelAssets);
+          const ft = FundTransfer.system(modelAsset, target, extraAmount, this.modelAssets, this.activeUser);
           const result = ft.execute();
           this.#bookCloseTransferResult(ft, result, extraAmount);
         } else {
@@ -37082,9 +37128,9 @@ var Portfolio = class _Portfolio {
       }
     } else {
       logger.log(LogCategory.TRANSFER, () => "Portfolio.applyAssetCloseFundTransfers: " + modelAsset.displayName + " funding " + modelAssetValue.toString() + " to the funding backstop");
-      const target = modelAssetValue.amount > 0 ? FundTransfer.resolveDeposit(this.modelAssets) : FundTransfer.resolveFunding(this.modelAssets);
+      const target = modelAssetValue.amount > 0 ? FundTransfer.resolveDeposit(this.modelAssets) : FundTransfer.resolveFunding(this.modelAssets, this.activeUser);
       if (target) {
-        const ft = FundTransfer.system(modelAsset, target, modelAssetValue, this.modelAssets);
+        const ft = FundTransfer.system(modelAsset, target, modelAssetValue, this.modelAssets, this.activeUser);
         const result = ft.execute();
         this.#bookCloseTransferResult(ft, result, modelAssetValue);
       } else {
@@ -37114,10 +37160,15 @@ var Portfolio = class _Portfolio {
     const oneSided = new FundTransferOneSided(null, amount);
     oneSided.fromModel = modelAsset;
     oneSided.toModel = source;
-    const settled = FundTransfer.settleOneSided(oneSided, event, this.modelAssets);
+    const settled = FundTransfer.settleOneSided(
+      oneSided,
+      event,
+      this.modelAssets,
+      FundTransfer.fundingResolver(this.activeUser)
+    );
     this.monthly.recordTransfer(source.instrument, settled.supplied, settled.realizedGain);
-    if (settled.spillover.amount > 0 && settled.spilloverInstrument) {
-      this.monthly.recordTransfer(settled.spilloverInstrument, settled.spillover, settled.spilloverGain);
+    for (const leg of settled.spilloverLegs) {
+      this.monthly.recordTransfer(leg.instrument, leg.amount, leg.realizedGain);
     }
   }
   applyYear(currentDateInt, settleDateInt = currentDateInt) {
@@ -43408,7 +43459,7 @@ function whatStopsYou(result) {
   if (by.kind === "runsOut") {
     const when = monthLabel(DateInt.from(by.year, by.month));
     const held = holdings(by.untouched);
-    const tail = held ? `, while ${held}. The plan does not draw on retirement accounts to pay a bill.` : ".";
+    const tail = held ? `, while ${held}. The plan does not draw on retirement accounts before age 60.` : ".";
     const lead = by.noLevelPasses ? `Even at the lowest spending tested, bills go unpaid from ${when}` : `Spend more and bills go unpaid from ${when}`;
     return { text: lead + tail, year: by.year, month: by.month };
   }

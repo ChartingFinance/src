@@ -276,7 +276,7 @@ await check('the report states the plan, the limits, the answer, what stops it a
     assert.ok(md.includes('**Limits:** never runs out · leaves at least $0 at the end\n'));
     assert.ok(md.includes(`**${spendingHeadline(result)}**`));
     assert.match(md, /\| Monthly spending \| \$5,\d{3}\/mo \| \$5,\d{3}\/mo \|/);
-    assert.match(md, /\*\*What stops it:\*\* Spend more and bills go unpaid from \w+ 20\d\d, while the 401K holds/);
+    assert.match(md, /\*\*What stops it:\*\* Spend more and bills go unpaid from \w+ 20\d\d\./);
 
     // Each expense, as entered and at the answer, at its starting monthly amount.
     for (const asset of SPECS.midCareer.modelAssets.filter((a) => isDialExpense(a.instrument))) {

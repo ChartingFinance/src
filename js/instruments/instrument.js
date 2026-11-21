@@ -128,10 +128,11 @@ const EXPENSABLE = new Set([
 // fund transfer covers an obligation: cash, savings, brokerage, then bonds.
 // Ordered — first match with a positive balance wins.
 //
-// Retirement accounts are absent: spending them has consequences (tax,
-// penalties, Roth ordering) the engine should not choose for the user, so a
-// plan that spends retirement money says so with an explicit transfer. Real
-// estate is absent because it cannot pay a bill.
+// Retirement accounts are absent from the everyday tier: spending them before
+// age 60 carries early-withdrawal penalties, and deposits/refunds must never
+// land in them. At age >= 60 (global_deferred_allocation_age), FundTransfer.resolveFunding
+// appends retirement accounts as a secondary failover tier (IRA → 401K → Roth IRA).
+// Real estate is absent because it cannot pay a bill.
 const FUNDING_BACKSTOP_PRIORITY = [
   Instrument.CASH,
   Instrument.BANK,

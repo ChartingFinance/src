@@ -1,10 +1,10 @@
 # fixture: aca-repayment-unpayable  (adversarial)
 #
 # an excess advance the household cannot fully repay: every dollar is in an
-# IRA, which the backstop never draws, and Checking holds only what earlier
-# tax refunds left in it. The low estimate advances too much; Checking pays
-# what it can, and the rest of the repayment is reported unfunded instead of
-# vanishing.
+# IRA while the household is under 60 (so the backstop does not draw
+# retirement accounts), and Checking holds only what earlier tax refunds
+# left in it. The low estimate advances too much; Checking pays what it can,
+# and the rest of the repayment is reported unfunded instead of vanishing.
 
 [config]
   allocateHouseholdTax = false
@@ -16,8 +16,8 @@
   simDataMode = calibrated
   socialSecurityWithholdingRate = 0
   userFinishAge = 87
-  userRetirementAge = 60
-  userStartAge = 60
+  userRetirementAge = 54
+  userStartAge = 54
   homeSaleExclusion = 250000
   retirementWithholdingRate = 0.1
 
@@ -765,11 +765,11 @@
   [0054]         1.150188         1.153118         1.156055         1.159000         1.161953         1.164913
 
 [taxYears]
-  2026 months=12 age=60 agi=44829.547312 niit=44829.547312 seniorDeduction=44829.547312 irmaa=44829.547312 iraDeduction=44829.547312 rothContribution=44829.547312 aca=44829.547312 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=28729.547312 capitalGains=0.000000 fica=0.000000 incomeTax=3199.545677 capitalGainsTax=0.000000 niit=0.000000 federalTax=3199.545677 settledTrueUp=1283.409054 settledNIIT=0.000000 fplPercent=286 ptc=7128.000000 aptc=10596.000000 settledPTC=-1283.409054 onEstimate=no
-  2027 months=12 age=61 agi=50098.236612 niit=50098.236612 seniorDeduction=50098.236612 irmaa=50098.236612 iraDeduction=50098.236612 rothContribution=50098.236612 aca=50098.236612 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=33499.136612 capitalGains=0.000000 fica=0.000000 incomeTax=3764.208393 capitalGainsTax=0.000000 niit=0.000000 federalTax=3764.208393 settledTrueUp=1245.615268 settledNIIT=0.000000 fplPercent=314 ptc=6629.400000 aptc=7433.400000 settledPTC=-804.000000 onEstimate=no
-  2028 months=12 age=62 agi=52395.815281 niit=52395.815281 seniorDeduction=52395.815281 irmaa=52395.815281 iraDeduction=52395.815281 rothContribution=52395.815281 aca=52395.815281 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=35282.143181 capitalGains=0.000000 fica=0.000000 incomeTax=3970.242854 capitalGainsTax=0.000000 niit=0.000000 federalTax=3970.242854 settledTrueUp=1269.338674 settledNIIT=0.000000 fplPercent=318 ptc=6765.755400 aptc=6993.755400 settledPTC=-228.000000 onEstimate=no
-  2029 months=12 age=63 agi=54096.925554 niit=54096.925554 seniorDeduction=54096.925554 irmaa=54096.925554 iraDeduction=54096.925554 rothContribution=54096.925554 aca=54096.925554 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=36452.729619 capitalGains=0.000000 fica=0.000000 incomeTax=4102.541182 capitalGainsTax=0.000000 niit=0.000000 federalTax=4102.541182 settledTrueUp=1307.151373 settledNIIT=0.000000 fplPercent=319 ptc=6961.405817 aptc=7141.405817 settledPTC=-180.000000 onEstimate=no
-  2030 months=12 age=64 agi=55789.583580 niit=55789.583580 seniorDeduction=55789.583580 irmaa=55789.583580 iraDeduction=55789.583580 rothContribution=55789.583580 aca=55789.583580 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=37598.417571 capitalGains=0.000000 fica=0.000000 incomeTax=4231.598359 capitalGainsTax=0.000000 niit=0.000000 federalTax=4231.598359 settledTrueUp=1347.359999 settledNIIT=0.000000 fplPercent=319 ptc=7180.701398 aptc=7348.701398 settledPTC=-168.000000 onEstimate=no
+  2026 months=12 age=54 agi=44829.547312 niit=44829.547312 seniorDeduction=44829.547312 irmaa=44829.547312 iraDeduction=44829.547312 rothContribution=44829.547312 aca=44829.547312 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=28729.547312 capitalGains=0.000000 fica=0.000000 incomeTax=3199.545677 capitalGainsTax=0.000000 niit=0.000000 federalTax=3199.545677 settledTrueUp=1283.409054 settledNIIT=0.000000 fplPercent=286 ptc=7128.000000 aptc=10596.000000 settledPTC=-1283.409054 onEstimate=no
+  2027 months=12 age=55 agi=50098.236612 niit=50098.236612 seniorDeduction=50098.236612 irmaa=50098.236612 iraDeduction=50098.236612 rothContribution=50098.236612 aca=50098.236612 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=33499.136612 capitalGains=0.000000 fica=0.000000 incomeTax=3764.208393 capitalGainsTax=0.000000 niit=0.000000 federalTax=3764.208393 settledTrueUp=1245.615268 settledNIIT=0.000000 fplPercent=314 ptc=6629.400000 aptc=7433.400000 settledPTC=-804.000000 onEstimate=no
+  2028 months=12 age=56 agi=52395.815281 niit=52395.815281 seniorDeduction=52395.815281 irmaa=52395.815281 iraDeduction=52395.815281 rothContribution=52395.815281 aca=52395.815281 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=35282.143181 capitalGains=0.000000 fica=0.000000 incomeTax=3970.242854 capitalGainsTax=0.000000 niit=0.000000 federalTax=3970.242854 settledTrueUp=1269.338674 settledNIIT=0.000000 fplPercent=318 ptc=6765.755400 aptc=6993.755400 settledPTC=-228.000000 onEstimate=no
+  2029 months=12 age=57 agi=54096.925554 niit=54096.925554 seniorDeduction=54096.925554 irmaa=54096.925554 iraDeduction=54096.925554 rothContribution=54096.925554 aca=54096.925554 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=36452.729619 capitalGains=0.000000 fica=0.000000 incomeTax=4102.541182 capitalGainsTax=0.000000 niit=0.000000 federalTax=4102.541182 settledTrueUp=1307.151373 settledNIIT=0.000000 fplPercent=319 ptc=6961.405817 aptc=7141.405817 settledPTC=-180.000000 onEstimate=no
+  2030 months=12 age=58 agi=55789.583580 niit=55789.583580 seniorDeduction=55789.583580 irmaa=55789.583580 iraDeduction=55789.583580 rothContribution=55789.583580 aca=55789.583580 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=37598.417571 capitalGains=0.000000 fica=0.000000 incomeTax=4231.598359 capitalGainsTax=0.000000 niit=0.000000 federalTax=4231.598359 settledTrueUp=1347.359999 settledNIIT=0.000000 fplPercent=319 ptc=7180.701398 aptc=7348.701398 settledPTC=-168.000000 onEstimate=no
 
 [sanity]
   Unfunded: Checking Premium tax credit repaid (excess advance) $2,184.59 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)

@@ -639,8 +639,10 @@ const adversarialFixtures = [
       'not to Checking, so no deposit lands where the true-up draws. Every ' +
       'rate is zero and nothing runs after the close, so the year\'s refund ' +
       'is collected minus owed, by hand. ' +
-      'tests/trueup-withholding-conservation.mjs holds the conservation law.',
-    config: { startAge: 62, retirementAge: 60, finishAge: 64, filingAs: 'Single' },
+      'tests/trueup-withholding-conservation.mjs holds the conservation law. ' +
+      'startAge is 55 (under 60) so the Roth IRA stays protected from last-resort ' +
+      'failover and the shortfall genuinely goes unfunded.',
+    config: { startAge: 55, retirementAge: 55, finishAge: 57, filingAs: 'Single' },
     build: () => ({
       assets: [
         by({ year: 2026, month: 6 }, deferred('401K', '401K', 300000,
@@ -924,11 +926,12 @@ const adversarialFixtures = [
     name: 'unpayable-annual-true-up',
     kind: 'adversarial',
     reaches:
-      'an annual true-up nothing can pay: every dollar is in an IRA, which the ' +
-      'backstop never draws, and Checking is empty. The unpaid bill is an ' +
-      'annual-pass event, stamped December and booked in January, so a reader ' +
-      'dating events by their own month put it in the wrong year.',
-    config: { startAge: 70, retirementAge: 65, filingAs: 'Single' },
+      'an annual true-up nothing can pay: every dollar is in an IRA while the ' +
+      'household is under 60 (so the backstop does not draw retirement accounts), ' +
+      'and Checking is empty. The unpaid bill is an annual-pass event, stamped ' +
+      'December and booked in January, so a reader dating events by their own ' +
+      'month put it in the wrong year.',
+    config: { startAge: 54, retirementAge: 54, filingAs: 'Single' },
     build: () => ({
       assets: [
         deferred('ira', 'IRA', 1500000),
@@ -1100,11 +1103,12 @@ const adversarialFixtures = [
     kind: 'adversarial',
     reaches:
       'an excess advance the household cannot fully repay: every dollar is in an '
-      + 'IRA, which the backstop never draws, and Checking holds only what earlier '
-      + 'tax refunds left in it. The low estimate advances too much; Checking pays '
-      + 'what it can, and the rest of the repayment is reported unfunded instead '
-      + 'of vanishing.',
-    config: { startAge: 60, retirementAge: 60, filingAs: 'Single' },
+      + 'IRA while the household is under 60 (so the backstop does not draw '
+      + 'retirement accounts), and Checking holds only what earlier tax refunds '
+      + 'left in it. The low estimate advances too much; Checking pays what it '
+      + 'can, and the rest of the repayment is reported unfunded instead of '
+      + 'vanishing.',
+    config: { startAge: 54, retirementAge: 54, filingAs: 'Single' },
     build: () => ({
       assets: [
         deferred('ira', 'IRA', 800000, { annualReturnRate: { rate: 0.04 } }),

@@ -85,7 +85,9 @@ const everyday = (instrument, displayName, amount) => asset({
 function plan(accounts) {
   return {
     name: 'true-up',
-    settings: { filingAs: 'Single', startAge: 62, retirementAge: 60, finishAge: 64 },
+    // Age 55 (under 60) keeps the Roth IRA protected from last-resort failover
+    // so the plans without enough everyday cash genuinely leave tax unfunded.
+    settings: { filingAs: 'Single', startAge: 55, retirementAge: 55, finishAge: 57 },
     modelAssets: [
       asset({ instrument: '401K', displayName: '401K',
         startCurrency: { amount: 300000 }, startBasisCurrency: { amount: 0 },
