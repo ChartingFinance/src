@@ -390,6 +390,7 @@ export class Portfolio {
             taxYears: this.taxYears,
             firstYear: this.firstDateInt?.year,
             monthsInPlanYear: (year) => this.monthsInPlanYear(year),
+            activeUser: this.activeUser,
         });
     }
 
@@ -868,10 +869,11 @@ export class Portfolio {
                         const oneSided = new FundTransferOneSided(null, event.amount.copy().flipSign());
                         oneSided.fromModel = modelAsset;
                         oneSided.toModel = modelAsset;
-                        const settled = FundTransfer.settleOneSided(oneSided, descriptor, this.modelAssets);
+                        const settled = FundTransfer.settleOneSided(
+                            oneSided, descriptor, this.modelAssets, FundTransfer.fundingResolver(this.activeUser));
                         this.monthly.recordTransfer(modelAsset.instrument, settled.supplied, settled.realizedGain);
-                        if (settled.spillover.amount > 0 && settled.spilloverInstrument) {
-                            this.monthly.recordTransfer(settled.spilloverInstrument, settled.spillover, settled.spilloverGain);
+                        for (const leg of settled.spilloverLegs) {
+                            this.monthly.recordTransfer(leg.instrument, leg.amount, leg.realizedGain);
                         }
                     }
                 }
@@ -1021,8 +1023,8 @@ export class Portfolio {
                 fundTransfer.toModel.recordDistribution(result.supplied);
             }
         }
-        if (result.spillover.amount > 0 && result.spilloverInstrument) {
-            this.monthly.recordTransfer(result.spilloverInstrument, result.spillover, result.spilloverGain);
+        for (const leg of result.spilloverLegs) {
+            this.monthly.recordTransfer(leg.instrument, leg.amount, leg.realizedGain);
         }
     }
 
@@ -1040,7 +1042,7 @@ export class Portfolio {
             // split pays 50% and 25% (leaving 25% to sweep to the backstop).
             const planned = [];
             for (let fundTransfer of closeTransfers) {
-                fundTransfer.bind(modelAsset, this.modelAssets);
+                fundTransfer.bind(modelAsset, this.modelAssets, this.activeUser);
                 if (!fundTransfer.toModel) continue;
 
                 // can only send money to an expensable account
@@ -1077,9 +1079,9 @@ export class Portfolio {
 
                 const target = extraAmount.amount > 0
                     ? FundTransfer.resolveDeposit(this.modelAssets)
-                    : FundTransfer.resolveFunding(this.modelAssets);
+                    : FundTransfer.resolveFunding(this.modelAssets, this.activeUser);
                 if (target) {
-                    const ft = FundTransfer.system(modelAsset, target, extraAmount, this.modelAssets);
+                    const ft = FundTransfer.system(modelAsset, target, extraAmount, this.modelAssets, this.activeUser);
                     const result = ft.execute();
                     this.#bookCloseTransferResult(ft, result, extraAmount);
                 } else {
@@ -1095,9 +1097,9 @@ export class Portfolio {
 
             const target = modelAssetValue.amount > 0
                 ? FundTransfer.resolveDeposit(this.modelAssets)
-                : FundTransfer.resolveFunding(this.modelAssets);
+                : FundTransfer.resolveFunding(this.modelAssets, this.activeUser);
             if (target) {
-                const ft = FundTransfer.system(modelAsset, target, modelAssetValue, this.modelAssets);
+                const ft = FundTransfer.system(modelAsset, target, modelAssetValue, this.modelAssets, this.activeUser);
                 const result = ft.execute();
                 this.#bookCloseTransferResult(ft, result, modelAssetValue);
             } else {
@@ -1138,10 +1140,11 @@ export class Portfolio {
         const oneSided = new FundTransferOneSided(null, amount);
         oneSided.fromModel = modelAsset;
         oneSided.toModel = source;
-        const settled = FundTransfer.settleOneSided(oneSided, event, this.modelAssets);
+        const settled = FundTransfer.settleOneSided(
+            oneSided, event, this.modelAssets, FundTransfer.fundingResolver(this.activeUser));
         this.monthly.recordTransfer(source.instrument, settled.supplied, settled.realizedGain);
-        if (settled.spillover.amount > 0 && settled.spilloverInstrument) {
-            this.monthly.recordTransfer(settled.spilloverInstrument, settled.spillover, settled.spilloverGain);
+        for (const leg of settled.spilloverLegs) {
+            this.monthly.recordTransfer(leg.instrument, leg.amount, leg.realizedGain);
         }
     }
 

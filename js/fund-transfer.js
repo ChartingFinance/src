@@ -8,6 +8,7 @@
 
 import { Currency } from './utils/currency.js';
 import { Instrument, InstrumentType } from './instruments/instrument.js';
+import { global_deferred_allocation_age } from './policy-constants.js';
 import { logger, LogCategory } from './utils/logger.js';
 // ── Result Type ──────────────────────────────────────────────────────
 
@@ -19,15 +20,15 @@ export class FundTransferResult {
     this.toMemo = toMemo;
     this.realizedGain = realizedGain instanceof Currency ? realizedGain.copy() : new Currency(realizedGain);
 
-    // The spillover leg: when an account clamps at $0 mid-withdrawal, execute()
-    // sources the shortfall from a fallback and reports it here, so callers can
-    // book each leg against the account that paid. fromAssetChange/toAssetChange
-    // are the REQUESTED amounts; subtract `spillover` for what the named account
-    // supplied. spilloverGain is separate from realizedGain so neither is
-    // booked twice.
-    this.spillover = Currency.zero();           // amount supplied by the fallback
-    this.spilloverGain = Currency.zero();       // realized gain on the fallback debit
-    this.spilloverInstrument = null;            // fallback account's instrument
+    // The spillover legs: when an account clamps at $0 mid-withdrawal, execute()
+    // drains the shortfall across eligible fallbacks in priority order and
+    // reports each leg in `spilloverLegs` so callers book each leg against the
+    // account that paid. `spillover` / `spilloverGain` / `spilloverInstrument`
+    // hold the totals (and first leg's instrument) for backward compatibility.
+    this.spillover = Currency.zero();           // total amount supplied by fallbacks
+    this.spilloverGain = Currency.zero();       // total realized gain on fallback debits
+    this.spilloverInstrument = null;            // first fallback account's instrument
+    this.spilloverLegs = [];                    // Array<{ account, instrument, amount, realizedGain }>
   }
 }
 import { Metric } from './metric.js';
@@ -76,6 +77,7 @@ export class FundTransfer {
     this.usePropertyTax     = false;
     this.toModel            = null;
     this.approvedAmount     = null;
+    this._activeUser        = null;
   }
 
   // ── Parsing ──────────────────────────────────────────────────────
@@ -140,12 +142,13 @@ export class FundTransfer {
    * @param {Currency}   amount     Fixed amount to transfer
    * @returns {FundTransfer}
    */
-  static system(fromModel, toModel, amount, allModels = null) {
+  static system(fromModel, toModel, amount, allModels = null, activeUser = null) {
     const ft = new FundTransfer(toModel.displayName, 0, 0, toModel.id ?? null);
     ft.fromModel = fromModel;
     ft.toModel = toModel;
     ft.approvedAmount = amount.copy();
     ft._allModels = allModels;
+    ft._activeUser = activeUser;
     // Marked on its events, so a reader can tell a movement the engine chose
     // (leftover take-home, a required distribution, sale proceeds) from one a
     // rule made between the same two accounts.
@@ -160,18 +163,47 @@ export class FundTransfer {
    * list (cash → savings → brokerage → treasuries → corporate bonds) holding
    * a positive balance.
    *
-   * The one policy for every implicit money movement the engine makes for the
-   * user: an expense or mortgage no transfer covers, property-tax escrow,
-   * unallocated take-home pay, tax true-ups, sale proceeds, RMDs, and spillover.
-   * Retirement accounts are not eligible (see `FUNDING_BACKSTOP_PRIORITY` in
-   * instrument.js).
+   * When all everyday accounts are empty and `activeUser` is at least age 60
+   * (`global_deferred_allocation_age`, conservative whole-year rounding of
+   * 59½), falls back to an open Roth IRA with a positive balance as a last
+   * resort. Tax-deferred accounts (IRA, 401(k)) are never drawn implicitly.
    *
    * Returns null when nothing qualifies; callers must then call
    * `reportUnfunded()`, never skip silently.
    */
-  static resolveFunding(modelAssets) {
+  static resolveFunding(modelAssets, activeUser = null) {
     for (const key of InstrumentType.fundingBackstopPriority) {
       const match = modelAssets.find(a => a.instrument === key && !a.isClosed && a.finishCurrency.amount > 0);
+      if (match) return match;
+    }
+    if (activeUser && activeUser.age >= global_deferred_allocation_age) {
+      const roth = modelAssets.find(
+        a => a.instrument === Instrument.ROTH_IRA && !a.isClosed && a.finishCurrency.amount > 0
+      );
+      if (roth) return roth;
+    }
+    return null;
+  }
+
+  /**
+   * Build a fallback resolver bound to `activeUser` for `settleOneSided`.
+   * @param {object|null} activeUser
+   * @returns {(modelAssets: ModelAsset[]) => ModelAsset|null}
+   */
+  static fundingResolver(activeUser) {
+    return (models) => FundTransfer.resolveFunding(models, activeUser);
+  }
+
+  /**
+   * Where money coming in lands when no account was named: resolveFunding's
+   * everyday priority list without its positive-balance filter, since an empty
+   * account can still receive a deposit. Retirement accounts (including Roth
+   * IRA) stay out — deposits into retirement accounts are contributions with
+   * statutory rules attached.
+   */
+  static resolveDeposit(modelAssets) {
+    for (const key of InstrumentType.fundingBackstopPriority) {
+      const match = modelAssets.find(a => a.instrument === key && !a.isClosed);
       if (match) return match;
     }
     return null;
@@ -189,20 +221,6 @@ export class FundTransfer {
    * @param {string}     memo        What the money was for
    * @param {string}     origin      ShortfallOrigin — which movement this is the remainder of
    */
-  /**
-   * Where money coming in lands when no account was named: resolveFunding's
-   * priority list without its positive-balance filter, since an empty account
-   * can still receive a deposit. Retirement accounts stay out — a deposit into
-   * a 401(k) is a contribution, with rules attached.
-   */
-  static resolveDeposit(modelAssets) {
-    for (const key of InstrumentType.fundingBackstopPriority) {
-      const match = modelAssets.find(a => a.instrument === key && !a.isClosed);
-      if (match) return match;
-    }
-    return null;
-  }
-
   static reportUnfunded(modelAsset, amount, memo, origin) {
     if (!Object.values(ShortfallOrigin).includes(origin)) {
       throw new Error(`reportUnfunded: origin must be a ShortfallOrigin, got "${origin}"`);
@@ -214,26 +232,69 @@ export class FundTransfer {
     modelAsset?.recordEvent(EventType.UNFUNDED, amount.copy().flipSign(), { data: { cause: memo, origin } });
   }
 
+  /**
+   * Drain a shortfall across eligible fallback accounts in priority order,
+   * looping whenever a fallback clamps at $0 until either the shortfall is
+   * covered or no eligible fallback remains.
+   */
+  static #drainFallbacks(spillAmount, spillSource, eventData, allModels, resolveFallback) {
+    const legs = [];
+    let remaining = spillAmount.copy();
+    const tried = new Set();
+
+    while (remaining.amount > 0.000001) {
+      const fallback = resolveFallback(allModels);
+      if (!fallback || tried.has(fallback)) break;
+      tried.add(fallback);
+
+      const spillResult = fallback.debit(remaining, {
+        type: EventType.SPILLOVER,
+        data: { depleted: spillSource.displayName, ...eventData },
+      });
+      const fallbackShortfall = spillResult.spillover?.amount ?? 0;
+      const supplied = new Currency(Math.max(0, remaining.amount - fallbackShortfall));
+      const gain = spillResult.realizedGain?.copy() ?? Currency.zero();
+
+      if (supplied.amount > 0) {
+        fallback.recordDistribution(supplied);
+        if (gain.amount > 0) {
+          fallback.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, gain);
+          fallback.recordEvent(EventType.CAPITAL_GAIN_RECOGNIZED, gain.copy(),
+            { metric: Metric.LONG_TERM_CAPITAL_GAIN, data: { spillover: true } });
+        }
+        legs.push({ account: fallback, instrument: fallback.instrument, amount: supplied, realizedGain: gain });
+      }
+
+      remaining = new Currency(fallbackShortfall);
+    }
+
+    const totalSpillover = legs.reduce((acc, l) => acc.plus(l.amount), Currency.zero());
+    const totalGain = legs.reduce((acc, l) => acc.plus(l.realizedGain), Currency.zero());
+    const unfunded = remaining.amount > 0.000001 ? remaining : Currency.zero();
+
+    return { legs, totalSpillover, totalGain, unfunded };
+  }
+
   // ── One-Sided Settlement ───────────────────────────────────────
 
   /**
    * Settle a one-sided withdrawal (mortgage payment, property-tax escrow,
    * carrying cost, tax): debit the funding account and, if it clamps at $0,
-   * source the shortfall from a fallback, reporting what nothing can cover.
+   * source the shortfall across fallbacks in priority order, reporting what
+   * nothing can cover.
    *
-   * `supplied` is what the named account paid; `spillover` is what was asked
-   * of the fallback. Callers book each leg against the account that paid it.
-   * The fallback can clamp too, and what it could not pay is reported
-   * unfunded, so supplied + spillover can exceed what was paid. `paid` is the
-   * amount asked for less everything reported unfunded: the figure to book
-   * as collected.
+   * `supplied` is what the named account paid; `spilloverLegs` lists each
+   * fallback account and what it actually paid; `spillover` is the sum across
+   * all fallback legs. `paid` is the amount asked for less everything reported
+   * unfunded: the figure to book as collected.
    *
    * @param {FundTransferOneSided} oneSided
-   * @param {string}      memo
+   * @param {object}      event
    * @param {ModelAsset[]} allModels
    * @param {Function}    resolveFallback  Funding policy for the shortfall
    * @returns {{supplied: Currency, realizedGain: Currency, spillover: Currency,
    *            spilloverGain: Currency, spilloverInstrument: string|null,
+   *            spilloverLegs: Array<{account: ModelAsset, instrument: string, amount: Currency, realizedGain: Currency}>,
    *            paid: Currency}}
    */
   static settleOneSided(oneSided, event, allModels, resolveFallback = FundTransfer.resolveFunding) {
@@ -261,43 +322,35 @@ export class FundTransfer {
     let spillover = Currency.zero();
     let spilloverGain = Currency.zero();
     let spilloverInstrument = null;
+    let spilloverLegs = [];
     let unfunded = Currency.zero();
 
     if (result.spillover.amount > 0) {
-      const fallback = resolveFallback(allModels);
-      if (fallback) {
-        // `cause` records which obligation this spill settled, so a tax payment
-        // re-sourced from the backstop reconciles as tax.
-        const spillResult = fallback.debit(result.spillover,
-          { type: EventType.SPILLOVER,
-            data: { depleted: oneSided.toModel.displayName,
-                    origin: ShortfallOrigin.ONE_SIDED,
-                    cause: event?.type ?? null } });
-        spillover = result.spillover.copy();
-        spilloverGain = spillResult.realizedGain?.copy() ?? Currency.zero();
-        spilloverInstrument = fallback.instrument;
+      // `cause` records which obligation this spill settled, so a tax payment
+      // re-sourced from the backstop reconciles as tax.
+      const drained = FundTransfer.#drainFallbacks(
+        result.spillover,
+        oneSided.toModel,
+        { origin: ShortfallOrigin.ONE_SIDED, cause: event?.type ?? null },
+        allModels,
+        resolveFallback,
+      );
+      spillover = drained.totalSpillover;
+      spilloverGain = drained.totalGain;
+      spilloverInstrument = drained.legs[0]?.instrument ?? null;
+      spilloverLegs = drained.legs;
+      unfunded = drained.unfunded;
 
-        fallback.recordDistribution(spillover.minus(spillResult.spillover));
-        if (spilloverGain.amount > 0) {
-          fallback.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, spilloverGain);
-          fallback.recordEvent(EventType.CAPITAL_GAIN_RECOGNIZED, spilloverGain.copy(), { metric: Metric.LONG_TERM_CAPITAL_GAIN, data: { spillover: true } });
-        }
-        // The fallback itself clamped: nothing left at this layer to draw on.
-        if (spillResult.spillover?.amount > 0) {
-          unfunded = spillResult.spillover.copy();
-          FundTransfer.reportUnfunded(oneSided.fromModel ?? oneSided.toModel, spillResult.spillover, memo, ShortfallOrigin.ONE_SIDED);
-        }
-      } else {
-        unfunded = result.spillover.copy();
-        FundTransfer.reportUnfunded(oneSided.fromModel ?? oneSided.toModel, result.spillover, memo, ShortfallOrigin.ONE_SIDED);
+      if (unfunded.amount > 0) {
+        FundTransfer.reportUnfunded(oneSided.fromModel ?? oneSided.toModel, unfunded, memo, ShortfallOrigin.ONE_SIDED);
       }
     }
 
-    // Asked for less unfunded, rather than supplied + what the fallback paid,
+    // Asked for less unfunded, rather than supplied + what the fallbacks paid,
     // so that a settlement with nothing unfunded books exactly what it asked.
     const paid = oneSided.amount.minus(unfunded);
 
-    return { supplied, realizedGain: result.realizedGain, spillover, spilloverGain, spilloverInstrument, paid };
+    return { supplied, realizedGain: result.realizedGain, spillover, spilloverGain, spilloverInstrument, spilloverLegs, paid };
   }
 
   // ── Binding ──────────────────────────────────────────────────────
@@ -308,14 +361,16 @@ export class FundTransfer {
    * it is looked up by its name, as a plan written without ids names it.
    * @param {ModelAsset} fromModel
    * @param {ModelAsset[]} allModels
+   * @param {object|null} [activeUser]
    */
-  bind(fromModel, allModels) {
+  bind(fromModel, allModels, activeUser = null) {
 
     this.fromModel = fromModel;
     this.toModel = (this.toId != null
       ? allModels.find(m => m.id === this.toId)
       : allModels.find(m => m.displayName === this.toDisplayName)) ?? null;
     this._allModels = allModels;
+    this._activeUser = activeUser;
 
   }
 
@@ -411,16 +466,16 @@ export class FundTransfer {
       this.toModel.recordEvent(EventType.CAPITAL_GAIN_RECOGNIZED, toResult.realizedGain.copy(), { metric: Metric.LONG_TERM_CAPITAL_GAIN, data: { spillover: false } });
     }
 
-    // A clamped account: the shortfall comes from a fallback. The clamped
-    // withdrawal can be on either side:
+    // A clamped account: drain the shortfall across eligible fallbacks in
+    // priority order. The clamped withdrawal can be on either side:
     //   - debit(amount > 0) on fromModel (e.g. an RMD top-up from an IRA), or
     //   - credit(amount < 0) on toModel — "credit-as-withdrawal", how expense
     //     transfers pull from their funding account.
     // Opposite signs of `amount`, so at most one side spills.
     //
-    // The fallback can clamp too. What it could not supply is reported
-    // unfunded, as settleOneSided reports it: the target was credited the
-    // whole amount, and that part of it was paid by no one.
+    // Whatever no fallback can cover is reported unfunded, as settleOneSided
+    // reports it: the target was credited the whole amount, and that part of
+    // it was paid by no one.
     const spillSource = fromResult.spillover?.amount > 0 ? this.fromModel
                       : toResult.spillover?.amount > 0 ? this.toModel
                       : null;
@@ -432,32 +487,28 @@ export class FundTransfer {
     let spillover = Currency.zero();
     let spilloverGain = Currency.zero();
     let spilloverInstrument = null;
+    let spilloverLegs = [];
     let unfunded = Currency.zero();
     if (spillSource && this._allModels) {
       const spillAmount = fromResult.spillover?.amount > 0 ? fromResult.spillover : toResult.spillover;
-      const fallback = FundTransfer.resolveFunding(this._allModels);
-      if (fallback) {
-        const spillResult = fallback.debit(spillAmount,
-          { type: EventType.SPILLOVER,
-            data: { depleted: spillSource.displayName, origin: ShortfallOrigin.PAIRED } });
-        const fallbackUnfunded = spillResult.spillover?.amount ?? 0;
-        spillover = new Currency(spillAmount.amount - fallbackUnfunded);
-        spilloverGain = spillResult.realizedGain?.copy() ?? Currency.zero();
-        spilloverInstrument = fallback.instrument;
-        if (spilloverGain.amount > 0) {
-          fallback.addToMetric(Metric.LONG_TERM_CAPITAL_GAIN, spilloverGain);
-          fallback.recordEvent(EventType.CAPITAL_GAIN_RECOGNIZED, spilloverGain.copy(), { metric: Metric.LONG_TERM_CAPITAL_GAIN, data: { spillover: true } });
-        }
-        if (fallbackUnfunded > 0) {
-          unfunded = spillResult.spillover.copy();
-          FundTransfer.reportUnfunded(spillSource, spillResult.spillover, `${memo} (account and backstop depleted)`, ShortfallOrigin.PAIRED);
-        }
-      } else {
-        // No backstop can cover the shortfall: report it as unfunded. The
-        // target was still credited the full requested amount above, so that
-        // part of its balance was paid by no one.
-        unfunded = spillAmount.copy();
-        FundTransfer.reportUnfunded(spillSource, spillAmount, `${memo} (account depleted, no backstop)`, ShortfallOrigin.PAIRED);
+      const drained = FundTransfer.#drainFallbacks(
+        spillAmount,
+        spillSource,
+        { origin: ShortfallOrigin.PAIRED },
+        this._allModels,
+        FundTransfer.fundingResolver(this._activeUser),
+      );
+      spillover = drained.totalSpillover;
+      spilloverGain = drained.totalGain;
+      spilloverInstrument = drained.legs[0]?.instrument ?? null;
+      spilloverLegs = drained.legs;
+      unfunded = drained.unfunded;
+
+      if (unfunded.amount > 0) {
+        const suffix = drained.legs.length > 0
+          ? '(account and backstop depleted)'
+          : '(account depleted, no backstop)';
+        FundTransfer.reportUnfunded(spillSource, unfunded, `${memo} ${suffix}`, ShortfallOrigin.PAIRED);
       }
     } else if (rawClamp > 0) {
       unfunded = new Currency(rawClamp);
@@ -478,6 +529,7 @@ export class FundTransfer {
     result.spillover = spillover;
     result.spilloverGain = spilloverGain;
     result.spilloverInstrument = spilloverInstrument;
+    result.spilloverLegs = spilloverLegs;
     result.unfunded = unfunded;
     return result;
   }

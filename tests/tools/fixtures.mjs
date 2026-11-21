@@ -639,8 +639,10 @@ const adversarialFixtures = [
       'not to Checking, so no deposit lands where the true-up draws. Every ' +
       'rate is zero and nothing runs after the close, so the year\'s refund ' +
       'is collected minus owed, by hand. ' +
-      'tests/trueup-withholding-conservation.mjs holds the conservation law.',
-    config: { startAge: 62, retirementAge: 60, finishAge: 64, filingAs: 'Single' },
+      'tests/trueup-withholding-conservation.mjs holds the conservation law. ' +
+      'startAge is 55 (under 60) so the Roth IRA stays protected from last-resort ' +
+      'failover and the shortfall genuinely goes unfunded.',
+    config: { startAge: 55, retirementAge: 55, finishAge: 57, filingAs: 'Single' },
     build: () => ({
       assets: [
         by({ year: 2026, month: 6 }, deferred('401K', '401K', 300000,

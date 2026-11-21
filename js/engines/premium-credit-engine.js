@@ -65,13 +65,14 @@ export class PremiumCreditEngine {
      * @param {number} plan.firstYear   the plan's first calendar year
      * @param {(year: number) => number} plan.monthsInPlanYear
      */
-    constructor(modelAssets, monthly, config, { taxYears, firstYear, monthsInPlanYear }) {
+    constructor(modelAssets, monthly, config, { taxYears, firstYear, monthsInPlanYear, activeUser = null }) {
         this.modelAssets = modelAssets;
         this.monthly = monthly;
         this.config = config;
         this.taxYears = taxYears;
         this.firstYear = firstYear;
         this.monthsInPlanYear = monthsInPlanYear;
+        this.activeUser = activeUser;
 
         // Coverage year → { table, size, estimate, advance, months, advanced }.
         // `advance` is null when nothing is advanced that year.
@@ -276,7 +277,7 @@ export class PremiumCreditEngine {
 
         // Excess advance: repaid in full.
         const repayment = new Currency(-net);
-        const liquidAsset = FundTransfer.resolveFunding(this.modelAssets);
+        const liquidAsset = FundTransfer.resolveFunding(this.modelAssets, this.activeUser);
         if (!liquidAsset) {
             FundTransfer.reportUnfunded(anchor, repayment,
                 'premium tax credit repayment', ShortfallOrigin.ONE_SIDED);
@@ -287,20 +288,14 @@ export class PremiumCreditEngine {
         oneSided.toModel = liquidAsset;
         const settled = FundTransfer.settleOneSided(oneSided,
             { type: EventType.PTC_RECONCILIATION, data: { direction: 'repayment', ...data } },
-            this.modelAssets);
+            this.modelAssets, FundTransfer.fundingResolver(this.activeUser));
 
         liquidAsset.addToMetric(Metric.PTC_RECONCILIATION, settled.supplied.copy().flipSign());
         this.monthly.recordTransfer(liquidAsset.instrument, settled.supplied, settled.realizedGain);
 
-        if (settled.spillover.amount > 0 && settled.spilloverInstrument) {
-            this.monthly.recordTransfer(settled.spilloverInstrument, settled.spillover, settled.spilloverGain);
-            // What the fallback paid, on the account that paid it. Asked again
-            // after the draw, as the true-up does.
-            const fallbackPaid = settled.paid.minus(settled.supplied);
-            const payer = FundTransfer.resolveFunding(this.modelAssets);
-            if (payer && fallbackPaid.amount > 0) {
-                payer.addToMetric(Metric.PTC_RECONCILIATION, fallbackPaid.copy().flipSign());
-            }
+        for (const leg of settled.spilloverLegs) {
+            this.monthly.recordTransfer(leg.instrument, leg.amount, leg.realizedGain);
+            leg.account.addToMetric(Metric.PTC_RECONCILIATION, leg.amount.copy().flipSign());
         }
 
         // What the accounts paid, less anything reported unfunded.
