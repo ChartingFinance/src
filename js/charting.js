@@ -1,7 +1,18 @@
-// Only the Chart.js pieces the app uses (bar and line charts) are registered,
-// to keep the bundle small. A new chart type or option needs its controller,
-// scale or plugin registered here; a missing one fails at run time ("not a
-// registered controller"), not at build.
+/**
+ * charting.js
+ *
+ * Chart.js configuration and builders for portfolio projections:
+ *   - Registers the Chart.js controllers, scales, and plugins used by the app
+ *     along with shared currency formatting for axes and tooltips.
+ *   - Registers the `dateMarkers` plugin for vertical dashed phase, asset, and
+ *     timeline-cursor reference lines.
+ *   - Builds stacked bar chart configs (grouped by asset class or per-asset)
+ *     and time-bucketed x-axis labels from a simulated Portfolio.
+ */
+
+// Register only the Chart.js components the app uses (bar and line charts) to
+// keep the bundle small. Adding a new chart type or plugin requires registering
+// it here; missing registrations fail at runtime rather than build time.
 import {
   Chart,
   BarController, BarElement,
@@ -42,6 +53,11 @@ import {
 
 // ── Date marker plugin ────────────────────────────────────────────
 
+/**
+ * Chart.js plugin that draws vertical dashed reference lines (with optional top
+ * labels) at specified x-axis indices — used for life-event phases, asset
+ * start/end boundaries, and the active timeline cursor.
+ */
 const dateMarkerPlugin = {
     id: 'dateMarkers',
     afterDraw(chart) {
@@ -79,6 +95,10 @@ function dateIntToChartIndex(dateInt, firstDateInt, monthsSpan) {
     return Math.round(adjusted / monthsSpan.combineMonths);
 }
 
+/**
+ * Build reference markers for every asset's start/finish dates plus each
+ * subsequent life event (skipping the initial phase, which sits at index 0).
+ */
 export function charting_buildDateMarkers(portfolio) {
     if (!portfolio?.firstDateInt || !portfolio?.lastDateInt) return [];
     const monthsSpan = MonthsSpan.build(portfolio.firstDateInt, portfolio.lastDateInt);
@@ -153,6 +173,8 @@ export function charting_setHighlightDisplayName(value) {
     highlightDisplayName = value;
 }
 
+// ── Chart templates & module state ───────────────────────────────
+
 const stackedBarChartConfig = {
     type: 'bar',
     data: null,
@@ -223,6 +245,13 @@ export let charting_jsonMetricChartConfigIndividual = null; // for individual mo
 
 const chartMetricConfigCache = new Map();
 
+// ── X-axis labels & color assignment ─────────────────────────────
+
+/**
+ * Build time-bucketed x-axis labels spanning [firstDateInt, lastDateInt].
+ * Uses `MonthsSpan` to automatically choose monthly, quarterly (Q1–Q4),
+ * semi-annual (H1/H2), or annual labels based on the plan horizon.
+ */
 export function charting_buildDisplayLabels(firstDateInt, lastDateInt) {
   if (!firstDateInt || !lastDateInt) return [];
   let monthsSpan = MonthsSpan.build(firstDateInt, lastDateInt);
@@ -283,7 +312,10 @@ export function setModelAssetColorIds(modelAssets) {
     }
 }
 
-// The reduction keeps the modelAssets positionally in the array. This is so the colorId value is consistent across chart views.
+// ── Chart builders ───────────────────────────────────────────────
+
+// Returns a shallow copy of modelAssets in their original order so each
+// asset's positional colorId stays consistent across chart views.
 export function charting_reducedModelAssetsForMetric(modelAssets, metricName) {
   let results = [];
   for (const modelAsset of modelAssets) {
@@ -457,7 +489,7 @@ export function charting_buildFromPortfolio(portfolio, buildNewDataSet, metric1N
   }
 }
 
-/** The chart of one asset's metric; the asset is named by its id (plan-ids.js). */
+/** Builds a standalone stacked bar chart config for a single asset (looked up by ID). */
 export function charting_buildFromModelAsset(portfolio, modelAssetId, metricName = Metric.CASH_FLOW) {
 
     if (!portfolio?.firstDateInt) return;

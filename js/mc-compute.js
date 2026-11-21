@@ -270,6 +270,8 @@ function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, p
         }
     }
 
+    // When the plan ends in December, the final year-end settlement folds into
+    // that closing month; overwrite the last snapshot with the post-settlement total.
     if (currentDateInt.isNewYearsDay()) {
         portfolio.flushFinalSettlement();
         const lastIdx = monthlyTotals.length - 1;
@@ -347,6 +349,8 @@ function computeBaseline(sourceAssets, guardrailParams, lifeEvents, config) {
             basePf.config.taxTable.yearlyChron(basePf.config.inflationRate);
         }
     }
+    // When the plan ends in December, fold the final year-end settlement into
+    // that closing month and update the final baseline snapshot to match.
     if (bd.isNewYearsDay()) {
         basePf.flushFinalSettlement();
         const lastIdx = baselineData.length - 1;

@@ -88,7 +88,7 @@ export async function computeGuardrails(sourceAssets, {
         retirementDateInt,
     };
 
-    // Never explained, so no causal chain is recorded.
+    // Guardrails runs are never inspected via causal traces, so skip trace recording.
     await withoutTracing(() => chronometer_run(portfolio));
 
     // Collect monthly portfolio value from metric histories
@@ -131,7 +131,7 @@ export async function computeGuardrails(sourceAssets, {
         if (idx >= 0) retirementMonthIndex = idx;
     }
 
-    // Zero out withdrawal before retirement so the line only appears post-retirement
+    // Null out pre-retirement months so Chart.js only draws the withdrawal line from retirement onward
     if (retirementMonthIndex !== null) {
         for (let i = 0; i < retirementMonthIndex; i++) withdrawalSteps[i] = null;
     }

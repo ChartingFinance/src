@@ -45,22 +45,26 @@
  *                    income and no tax-exempt interest, so those add-backs are
  *                    always zero.
  *
- *     niit              agi. IRC §1411(d). An IRA distribution raises it
- *                       without being investment income, so it can push other
- *                       income into NIIT without being taxed by NIIT itself.
+ *     niit              agi. IRC §1411(d) (Net Investment Income Tax). An IRA
+ *                       distribution raises it without being investment income,
+ *                       so it can push other income into NIIT without being
+ *                       taxed by NIIT itself.
  *     seniorDeduction   agi. The OBBBA senior deduction phases out on it.
- *     irmaa             agi. 42 U.S.C. §1395r(i)(4). Medicare applies a
- *                       year's figure to the premiums two years later.
+ *     irmaa             agi. 42 U.S.C. §1395r(i)(4) (Medicare IRMAA surcharge).
+ *                       Medicare applies a year's figure to premiums two years
+ *                       later.
  *     iraDeduction      agi before the traditional-IRA deduction, with §86
- *                       recomputed without it. IRC §219(g)(3); the order of
- *                       Pub. 590-A appendix B.
+ *                       Social Security taxation recomputed without it.
+ *                       IRC §219(g)(3) (traditional IRA deductibility
+ *                       phase-out); follows IRS Pub. 590-A appendix B.
  *     rothContribution  the iraDeduction figure less Roth conversion income.
- *                       IRC §408A(c)(3)(B)(i). Pub. 590-A worksheet 2-1 adds
- *                       the IRA deduction back without recomputing §86, so the
- *                       two differ when a household with Social Security also
+ *                       IRC §408A(c)(3)(B)(i) (Roth IRA contribution
+ *                       eligibility). Pub. 590-A worksheet 2-1 adds the IRA
+ *                       deduction back without recomputing §86, so the two
+ *                       differ when a household with Social Security also
  *                       deducts an IRA contribution.
- *     aca               agi plus the benefits §86 leaves untaxed.
- *                       IRC §36B(d)(2)(B).
+ *     aca               agi plus the Social Security benefits §86 leaves
+ *                       untaxed. IRC §36B(d)(2)(B) (ACA premium tax credit).
  *
  *                    Every MAGI rule is annual, so magi is null when the
  *                    package is an annualised month. Portfolio.taxYears
@@ -80,8 +84,9 @@
  * ── For callers ──────────────────────────────────────────────────────
  *
  * Pass `annualise: true` for a monthly package. Annualising multiplies the month
- * by 12, so a one-off month is treated as if it recurred all year. That is a
- * known modelling gap, left as it is so that this module changes no numbers.
+ * by 12, so a one-off month is treated as if it recurred all year when
+ * estimating monthly withholding; the annual true-up settles the exact
+ * full-year liability.
  */
 
 import { Currency } from './utils/currency.js';
@@ -198,9 +203,9 @@ export function taxableBasis(pkg, activeUser, { annualise = false, taxTable = nu
     // AGI sits above every deduction, and the senior deduction phases out on a
     // MAGI built from it. `preTax` is the deductible contribution as this
     // engine books it (the 401(k) if there is one, otherwise the traditional
-    // IRA), so AGI and taxable income agree about it. Real AGI also subtracts a
-    // traditional-IRA contribution whenever §219(g) allows the deduction; see
-    // markdowns/code-issues-from-comments.md #7.
+    // IRA), so AGI and taxable income agree about it. Under IRC §219(g), a
+    // taxpayer with a workplace 401(k) can also deduct a traditional IRA below
+    // income phase-out limits; this engine deducts 401(k) or IRA, not both.
     const { preTax, iraDeduction } = table.deductionComponents(yearly);
     const socialSecurity = yearly.socialSecurityTaxation(table);
     const agi = new Currency(

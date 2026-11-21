@@ -88,7 +88,7 @@ export const FlowVia = Object.freeze({
     RULE:       'rule',        // a transfer a rule made each month
     RULE_AT_CLOSE: 'ruleAtClose', // a rule's close percentage, moving a closing account's balance
     SETTLEMENT: 'settlement',  // a mortgage payment or property cost, from the account its rule names
-    BACKSTOP:   'backstop',    // a bill no rule covers, drawn from the everyday accounts
+    BACKSTOP:   'backstop',    // a bill no rule covers, drawn from the funding backstop (everyday accounts first, then retirement accounts at age 60+)
     LEFTOVER:   'leftover',    // take-home pay no rule claimed
     RMD:        'rmd',
     CLOSE:      'close',       // a closing account's balance no rule claimed, or sale proceeds
@@ -607,7 +607,7 @@ export function rulesInForce(portfolio, flows) {
         }
         return rows.get(key);
     };
-    // A row's phases by name, to show, and by id, to find the phase: in step.
+    // Keep phase names (for display) and phase IDs (for lookups) in parallel.
     const note = (row, text, phase, phaseId) => {
         if (!row.settings.includes(text)) row.settings.push(text);
         if (phase && !row.phases.includes(phase)) {
@@ -621,8 +621,8 @@ export function rulesInForce(portfolio, flows) {
             if (!ownerAsset) continue;
             const owner = ownerAsset.displayName;
             for (const ft of transfers) {
-                // A transfer with no id waits for an asset of its name (plan-ids.js):
-                // a rule that moves nothing, said so.
+                // A transfer without a resolved asset ID waits for an asset with
+                // that name (see plan-ids.js) and moves nothing until one exists.
                 const target = byId.get(ft.toId)?.displayName
                     ?? (ft.toId == null ? `${ft.toDisplayName} (not in the plan)` : ft.toDisplayName);
                 if (ft.monthlyMoveValue > 0) {
@@ -641,10 +641,10 @@ export function rulesInForce(portfolio, flows) {
         }
     }
 
-    // Each part to the row that made it, or to an automatic group. A monthly
-    // row's money runs payer → payee, paying the owner's bill or moving into
-    // an account; a close row's runs either way, as the closing balance's sign
-    // has it.
+    // Match each bar part to the rule row that produced it, or to an automatic
+    // group. Monthly rules flow payer → payee (paying an obligation or moving
+    // money into an account); on-close rules can flow in either direction
+    // depending on whether the closing balance is positive or negative.
     const monthly = new Map(), close = new Map();
     const pairOf = (a, b) => [a, b].sort().join('|');
     for (const row of rows.values()) {
@@ -664,7 +664,8 @@ export function rulesInForce(portfolio, flows) {
                 row = monthly.get(`${src.name}→${part.to}|${part.kind !== FlowKind.ACCOUNTS}`);
             } else if (own && part.via === FlowVia.RULE_AT_CLOSE) {
                 row = close.get(pairOf(src.name, part.to));
-                // Drawn as the money ran: a closing mortgage is paid off INTO.
+                // Orient the row in the direction the money actually flowed
+                // (for example, a closing mortgage is paid off into the mortgage).
                 if (row && !row.moved) { row.payer = src.name; row.payee = part.to;
                     row.payerGroup = groupOf(src.name); row.payeeGroup = groupOf(part.to); }
             }

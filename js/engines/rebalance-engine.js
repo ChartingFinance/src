@@ -16,7 +16,7 @@
  * debit(); applyRebalanceTransfers books it into the FinancialPackage with
  * recordTransfer, classified by the SOURCE instrument (taxable → realized
  * gain, tax-deferred/Roth → distribution income). The tax true-ups then
- * collect against those FP totals.
+ * collect against those FinancialPackage totals.
  */
 
 import { Currency } from '../utils/currency.js';
@@ -29,7 +29,7 @@ export class RebalanceEngine {
 
     constructor(modelAssets, monthly, yearly, activeUser, config) {
         this.modelAssets = modelAssets;
-        this.config = config;   // Spec 9 step 2 — carries the run's tax table
+        this.config = config;   // carries the run's tax table
         this.monthly = monthly;
         this.yearly = yearly;
         this.activeUser = activeUser;
@@ -130,8 +130,8 @@ export class RebalanceEngine {
      * Track per-asset distribution METRICS when money leaves a tax-deferred
      * account. Asset metrics only — the FinancialPackage side is booked by
      * recordTransfer in applyRebalanceTransfers, which classifies by source
-     * instrument. Booking the FP here as well would double-count every
-     * distribution in the tax base.
+     * instrument. Booking the FinancialPackage here as well would double-count
+     * every distribution in the tax base.
      */
     _trackDistribution(sourceAsset, amount, targetAsset = null) {
         sourceAsset.recordDistribution(amount);

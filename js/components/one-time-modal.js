@@ -1,12 +1,15 @@
 /**
  * <one-time-modal>
  *
- * Lit component for managing one-time events (bonuses, gifts, weddings, tuition, etc.)
- * on an asset. Inline row editing — no third popup.
+ * Lit modal for managing one-time events (bonuses, gifts, weddings, tuition,
+ * etc.) on an asset, opened from <asset-form-modal> or the one-time events
+ * badge on an <asset-card>. Uses inline row editing so users never stack a
+ * third modal on top.
  *
  * Properties:
  *   open        - boolean
- *   modelAsset  - ModelAsset
+ *   modelAsset  - ModelAsset whose one-time events are being edited
+ *   defaultDate - optional 'YYYY-MM' string seeding newly added rows
  *
  * Dispatches:
  *   'save-one-times' { detail: { assetId, displayName, oneTimeEvents } }

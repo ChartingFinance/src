@@ -8,8 +8,9 @@
  * A note is generated from an event for display, and never parsed back.
  * `renderNote()` is the one place prose is produced; code decides things from
  * the event's type and data, so rewording a note cannot change a result.
- * (portfolio-issues.js and rule-notes.js still match some note text — see
- * markdowns/code-issues-from-comments.md.)
+ * Note: a few legacy consumers (portfolio-issues.js and rule-notes.js) still
+ * match specific note strings, so memo wording is locked by tests until they
+ * migrate to reading event types directly.
  *
  * ── Sensors and collectors ───────────────────────────────────────────
  *
@@ -70,7 +71,7 @@ export const EventType = Object.freeze({
     TAX_TRUE_UP:             'taxTrueUp',         // data.direction: 'underpayment' | 'refund'
     CAPITAL_GAIN_RECOGNIZED: 'capitalGainRecognized', // data.spillover: boolean
     CAPITAL_GAIN_EXCLUDED:   'capitalGainExcluded',   // IRC §121 primary-home exclusion
-    NIIT_ASSESSED:           'niitAssessed',      // IRC §1411; data: { nii, magi, threshold }
+    NIIT_ASSESSED:           'niitAssessed',      // Net Investment Income Tax (IRC §1411, 3.8% surtax); data: { nii, magi, threshold, bound }
     // IRC §36B. The advance credit the Treasury paid toward a month's premium,
     // on the health-insurance card; no household money moves. data:
     // { estimate, percent, share }
@@ -82,12 +83,13 @@ export const EventType = Object.freeze({
     // ── Movement ──
     TRANSFER:                'transfer',          // data: { from, to, cadence, system? }
     SETTLEMENT:              'settlement',        // one-sided draw; data: { from, to, label, backstop? }
-    SPILLOVER:               'spillover',         // data: { depleted }
+    SPILLOVER:               'spillover',         // data: { depleted, origin, cause? }
     GROSS_UP:                'grossUp',           // data: { forAsset, overflow: boolean }
 
-    // The part of a GROSS_UP withdrawn to cover capital-gains tax rather than
-    // the obligation. No cash moves for this event (it left under the
-    // GROSS_UP); it names that portion so it can be reported. data: { forAsset }
+    // The part of a GROSS_UP actually collected to cover capital-gains tax rather
+    // than the obligation itself. No extra cash moves for this event (those
+    // dollars left under GROSS_UP); it names the collected tax portion for
+    // reporting. data: { forAsset }
     TAX_PROVISION:           'taxProvision',
     ONE_TIME:                'oneTime',           // data: { note }
 
@@ -182,7 +184,8 @@ export class SimEvent {
  * The only place a credit-memo note is produced.
  *
  * The wording is locked by `tests/memo-vocabulary.mjs`, because some consumers
- * still match on it. Change wording in its own PR, once nothing parses it.
+ * still match on it. Keep this wording stable until all consumers read event
+ * types directly.
  *
  * @param {SimEvent} event
  * @returns {string}
@@ -211,9 +214,8 @@ export function renderNote(event) {
         case EventType.TAX_PROVISION:           return d.forAsset
             ? `Withheld for capital gains tax on the draw for ${d.forAsset}`
             : 'Withheld for capital gains tax on this draw';
-        // Says which side of the min bound: too much investment income, or
-        // too much total income. No currency helper — this module imports
-        // nothing.
+        // Names which side of the IRC §1411 min bound applied (net investment
+        // income vs. MAGI over the threshold).
         case EventType.NIIT_ASSESSED:           return d.bound === 'nii'
             ? 'Net investment income tax (3.8% of net investment income)'
             : 'Net investment income tax (3.8% of MAGI over the threshold)';

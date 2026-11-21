@@ -1,19 +1,24 @@
 /**
  * tax-allocation.js
  *
- * Who pays the residual household tax (markdowns/tax-allocation-spec.md).
- * Off by default (`allocateHouseholdTax`).
+ * Proportional household tax allocation: decides which accounts pay residual
+ * household tax. Off by default (`allocateHouseholdTax`).
  *
- * Without it, the true-ups bill the whole tax to the funding backstop, whatever
- * account earned the income. This module answers "whose income was it?" so the
- * tax engine can bill each account its share.
+ * Without it, the true-ups bill the whole residual tax to the funding
+ * backstop, regardless of which account earned the income. This module
+ * answers "whose income was it?" so the tax engine can bill each account its
+ * share.
  *
- * Pure: every answer is a function of already-booked metrics, so
- * tests/tax-allocation.mjs can check the arithmetic without a simulation.
+ * Pure: every answer is a function of already-booked metrics, so the
+ * allocation math can be verified independently of a full simulation.
  *
- * It does not widen FUNDING_BACKSTOP_PRIORITY: the engine still never draws a
- * retirement account implicitly to pay an expense, mortgage or property tax.
- * Allocation only decides who is billed for tax on income it generated.
+ * This is distinct from general funding backstop failover
+ * (`FundTransfer.resolveFunding`): allocation bills an account specifically
+ * for tax on income it generated (excluding tax-deferred accounts before age
+ * 60, `global_deferred_allocation_age`). General backstop failover likewise
+ * protects retirement accounts before age 60, and at age 60+ draws them as
+ * secondary failover (`IRA → 401K → Roth IRA`) only once everyday accounts
+ * are empty.
  */
 
 import { Metric } from './metric.js';

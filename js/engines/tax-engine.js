@@ -252,7 +252,7 @@ export class TaxEngine {
                 let preFlight = new FundTransferOneSided(null, remaining);
                 preFlight.fromModel = modelAsset;
                 preFlight.toModel = fundingSource;
-                preFlight.backstop = true;   // said on its settlement: no rule chose this account
+                preFlight.backstop = true;   // flagged on the settlement event so users see the backstop covered it
                 preFlights.push(preFlight);
             } else {
                 FundTransfer.reportUnfunded(modelAsset, remaining, 'property tax', ShortfallOrigin.STANDALONE);
@@ -440,9 +440,10 @@ export class TaxEngine {
      *
      * The bill belongs to the household, not to any one account, but an event
      * has to live somewhere and portfolio-issues groups by asset. The largest
-     * remaining balance is the most useful anchor: in the case that matters —
-     * money sitting in a 401(k) that the backstop policy will not touch — it
-     * puts the warning on exactly the account the user would have to draw from.
+     * remaining balance is the most useful anchor: when every eligible backstop
+     * account is empty — for example, money sitting in a retirement account
+     * protected before age 60, or an illiquid asset like real estate — this
+     * places the warning on the account the user would need to draw from.
      */
     #unfundedTaxAnchor() {
         let best = null;
@@ -459,7 +460,8 @@ export class TaxEngine {
 
     applyMonthlyTaxTrueUp() {
 
-        // Compute total tax liability across ALL income (salary + capital gains + dividends + interest)
+        // Compute monthly ordinary income tax across all ordinary income (wages, interest,
+        // non-qualified dividends, short-term gains, distributions, pensions, and taxable Social Security)
         const { ordinaryTaxable } = taxableBasis(this.monthly, this.activeUser, { annualise: true, taxTable: this.config.taxTable });
         let totalIncomeTax = this.config.taxTable.calculateYearlyIncomeTax(ordinaryTaxable).divide(12.0).flipSign();
 
@@ -490,8 +492,8 @@ export class TaxEngine {
         if (legs.length > 0) {
             // Book what the accounts actually supplied, not what they were
             // billed. A leg is sized by income share, so an account can be
-            // billed more than it holds; the unpaid part spills to the backstop
-            // and is counted through settled.spillover.
+            // billed more than it holds; any shortfall spills across fallback
+            // accounts in priority order and is counted through settled.spillover.
             let collected = Currency.zero();
             for (const leg of legs) {
                 const settled = this.#settleAllocatedLeg(leg, EventType.INCOME_TAX_WITHHOLDING,
@@ -588,7 +590,7 @@ export class TaxEngine {
      *
      * No gross-up on a tax-deferred leg: settleOneSided already books the draw
      * as a distribution, and the annual true-up taxes it. Grossing up here would
-     * tax it twice. See markdowns/tax-allocation-spec.md §3.2.1.
+     * tax it twice.
      */
     #settleAllocatedLeg(leg, eventType, metric, extraData = {}) {
         const { modelAsset, amount, share } = leg;

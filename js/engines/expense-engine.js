@@ -18,7 +18,7 @@ export class ExpenseEngine {
 
     constructor(modelAssets, monthly, activeUser, config) {
         this.modelAssets = modelAssets;
-        this.config = config;   // Spec 9 step 2 — carries the run's tax table
+        this.config = config;   // carries the run's tax table
         this.monthly = monthly;
         this.activeUser = activeUser;
     }
@@ -130,17 +130,16 @@ export class ExpenseEngine {
         if (modelAsset.fundTransfers?.length) {
             for (const fundTransfer of modelAsset.fundTransfers) {
 
-                // so we don't blow up
+                // Skip transfers without a recurring schedule or a valid target account
                 if (!fundTransfer.hasRecurring) continue;
                 fundTransfer.bind(modelAsset, this.modelAssets, this.activeUser);
                 if (!fundTransfer.toModel) continue;
                 if (remaining.amount == 0) break;
                                     
-                // passed the tests so load into the array
                 let preFlight = new FundTransferOneSided(fundTransfer, payment);
                 remaining.subtract(preFlight.amount);
                 if (remaining.amount < 0) {
-                    // last minute patch
+                    // Cap the final transfer so total debits never exceed the payment
                     preFlight.amount.add(remaining);
                     remaining.zero();
                 }                    
@@ -156,7 +155,7 @@ export class ExpenseEngine {
                 let preFlight = new FundTransferOneSided(null, remaining);
                 preFlight.fromModel = modelAsset;
                 preFlight.toModel = fundingSource;
-                preFlight.backstop = true;   // said on its settlement: no rule chose this account
+                preFlight.backstop = true;   // flagged on the settlement event so users see the backstop covered it
                 preFlights.push(preFlight);
             } else {
                 FundTransfer.reportUnfunded(modelAsset, remaining, 'mortgage payment', ShortfallOrigin.STANDALONE);
@@ -219,7 +218,7 @@ export class ExpenseEngine {
                 let preFlight = new FundTransferOneSided(null, remaining);
                 preFlight.fromModel = modelAsset;
                 preFlight.toModel = fundingSource;
-                preFlight.backstop = true;   // said on its settlement: no rule chose this account
+                preFlight.backstop = true;   // flagged on the settlement event so users see the backstop covered it
                 preFlights.push(preFlight);
             } else {
                 FundTransfer.reportUnfunded(modelAsset, remaining, label, ShortfallOrigin.STANDALONE);
@@ -305,7 +304,7 @@ export class ExpenseEngine {
             let result = modelAsset.applyMonthly();
             this.monthly.addResult(result);
 
-            // Real estate carrying costs → FP
+            // Record real estate carrying costs in the monthly package and debit funding accounts
             if (InstrumentType.isRealEstate(modelAsset.instrument)) {
                 this.monthly.maintenance.add(modelAsset.maintenanceCurrency);
                 this.monthly.insurance.add(modelAsset.insuranceCurrency);

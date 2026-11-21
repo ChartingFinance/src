@@ -83,9 +83,9 @@ const TAX_SET = new Set([
   Instrument.TAXABLE_EQUITY,       // capital gains tax, estimated income tax
   Instrument.FOUR_01K,             // tax on distributions
   Instrument.IRA,                  // tax on distributions
-  Instrument.BANK,                 // estimated income tax (monthly true-up)
-  Instrument.US_BOND,              // estimated income tax (monthly true-up)
-  Instrument.CORP_BOND,            // estimated income tax (monthly true-up)
+  Instrument.BANK,                 // estimated income tax and year-end true-up
+  Instrument.US_BOND,              // estimated income tax and year-end true-up
+  Instrument.CORP_BOND,            // estimated income tax and year-end true-up
 ]);
 
 const EXPENSE_SET = new Set([

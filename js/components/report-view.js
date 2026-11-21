@@ -1,14 +1,16 @@
 /**
  * <report-view>
  *
- * Lit component that renders accumulated reports (monthly & yearly)
- * as collapsible <details> sections with financial tables.
+ * Lit component for the Reports detail tab. Renders accumulated monthly and
+ * yearly financial summaries as collapsible <details> tables, including annual
+ * AGI/MAGI breakdowns and ACA Premium Tax Credit figures from TaxYear records.
  *
- * Usage:
- *   <report-view></report-view>
- *   const view = document.querySelector('report-view');
- *   view.taxYears = portfolio.taxYears;
- *   view.reports = portfolio.generatedReports;
+ * Properties:
+ *   reports  - generated monthly/yearly report objects (portfolio.generatedReports)
+ *   taxYears - annual TaxYear records (portfolio.taxYears) for yearly AGI/credit rows
+ *
+ * Methods:
+ *   scrollToDate(year, month) - opens, scrolls to, and briefly highlights that month's report
  */
 
 import { LitElement, html, css } from 'lit';

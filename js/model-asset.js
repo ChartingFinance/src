@@ -649,7 +649,7 @@ export class ModelAsset {
 
     this.#metrics.initializeAll();
 
-    // this is to track this.finishCurrency changes through the month with a check on the last day
+    // Tracks intra-month changes to finishCurrency.
     this.monthlyValueChange = Currency.zero();
 
     // The month's opening balance, overwritten by applyFirstDayOfMonth every
@@ -664,7 +664,7 @@ export class ModelAsset {
 
     this.currentDateInt = currentDateInt.copy();
 
-    // see if we are active or not
+    // Update active-window date flags for the current month.
     if (this.inMonth(currentDateInt)) {
 
       this.beforeStartDate = false;      
@@ -709,12 +709,12 @@ export class ModelAsset {
 
   monthlyChron() {   
 
-    // value and accumulated are special: add finishValue and cash flows, then snapshot WITHOUT zeroing
+    // Record ending balance and cumulative cash flow before snapshotting.
     this.#metrics.get(Metric.CASH_FLOW_ACCUMULATED).add(this.cashFlowCurrency);
 
     this.#metrics.get(Metric.VALUE).add(this.finishCurrency);
 
-    // Snapshot all metrics (zero after, except 'accumulated')
+    // Snapshot all metrics and zero them, except those in KEEP_ON_SNAPSHOT (property tax and accumulated cash flow).
     this.#metrics.snapshotAll(KEEP_ON_SNAPSHOT);
 
     // Clear this month's fresh-deposit buffer at month-end rather than in
@@ -796,9 +796,8 @@ export class ModelAsset {
     else if (this.afterFinishDate) {
 
       if (this.isClosed) {
-        //console.assert(this.finishCurrency.amount === 0, `Expected finishCurrency to be zero for closed asset ${this.displayName} but got ${this.finishCurrency.toCurrency()}`);
       }
-      // if not yet closed, preserve finishCurrency so closeAsset can transfer the balance
+      // If not yet closed, preserve finishCurrency so closeAsset can transfer the balance.
 
     }
 
@@ -855,8 +854,6 @@ export class ModelAsset {
       this.growthCurrency.add(growth);
       this.finishCurrency.add(growth);      
       this.recordEvent(EventType.INCOME_GROWTH, growth, { metric: Metric.INCOME });
-
-      // and don't forget our monthlyValueChange tracker
       this.monthlyValueChange.add(growth);
 
       return this.isSelfEmployed
@@ -960,9 +957,9 @@ export class ModelAsset {
         this.monthlyValueChange.subtract(fromVested);
       }
 
-      // Clamp at $0: an account a household spends from cannot go negative.
-      // The caller re-sources the overshoot (spillover); settleOneSided does.
-      // Debt, mortgage and real estate are not clamped.
+      // Clamp spendable accounts at $0 so they cannot go negative; callers
+      // (FundTransfer.execute and settleOneSided) re-source the spillover
+      // across fallback accounts. Debt, mortgages, and real estate are not clamped.
       if (this.finishCurrency.amount < 0 &&
           (InstrumentType.isTaxDeferred(this.instrument)
            || InstrumentType.isTaxFree(this.instrument)
@@ -1033,8 +1030,6 @@ export class ModelAsset {
       .map(ft => ft.describe(this.displayName))
       .join('\n');
   }
-
-  // ── Withholding ──────────────────────────────────────────────────
 
   // ── Queries ──────────────────────────────────────────────────────
 
@@ -1107,6 +1102,8 @@ export class ModelAsset {
    * at zero gain. Only the remainder is sold pro-rata from the older holdings,
    * at their gain ratio — not the account's overall ratio. An account that
    * receives income and pays expenses in the same month realizes almost nothing.
+   * When a withdrawal exceeds the vested balance (overdraft), `realizedGain` is
+   * clamped to the actual proceeds sold (`vestedSold`) rather than the requested amount.
    */
   planWithdrawal(amount) {
     const withdrawal = Math.abs(amount?.amount ?? amount ?? 0);
@@ -1147,11 +1144,11 @@ export class ModelAsset {
     // before fund transfers drain the asset
     this.finishCurrency.zero();
 
-    // since we are closing we won't be tracking value changes anymore
+    // Clear intra-month balance trackers on close.
     this.firstDayOfMonthValue.zero();
     this.monthlyValueChange.zero();
 
-    // Zero stale metric accumulators that use snapshotKeep (not auto-zeroed).
+    // Zero stale metric accumulators retained by KEEP_ON_SNAPSHOT.
     // Without this, property tax bleeds into cash flow calculations forever.
     this.propertyTaxCurrency.zero();
 

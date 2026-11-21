@@ -1,25 +1,40 @@
 /**
- * <finplan-timeline> — the timeline as a chart.
+ * <finplan-timeline> — the primary interactive timeline chart at the top of the
+ * plan workspace, synced with the shared viewing date in finplan-store.js.
  *
- * One SVG wealth arc:
- *  - Phase tint bands with the phase growth rate as the headline label
- *  - Total-metric value curve with per-phase area fills
+ * Renders one SVG wealth arc with:
+ *  - Phase tint bands with nominal (and inflation-adjusted) phase growth rates
+ *  - Total-metric value curve with per-phase area fills and optional "today's $" line
  *  - Asset milestones pinned to the curve (buy/sell, payoff, income starts)
- *  - Start/end values on the curve endpoints; checkpoint values at interior
+ *  - Opening/closing values above the arc and checkpoint values at interior
  *    phase boundaries (e.g. value at retirement)
  *  - Scrubbable "you are here" cursor (pointer drag + arrow keys) that drives
  *    the app-wide viewing date through the store
- *  - Year/month dropdown controls + play-through
- *  - Slim phase chips below the arc: name + age range + edit
+ *  - Year/month dropdown controls + play-through button
+ *  - Slim phase chips below the arc: name + age range + edit popover
  *
  * Phase visibility rules:
- *  - If currentAge < retirementAge → both Accumulate and Retire visible
- *  - If currentAge >= retirementAge → only Retire visible
+ *  - If startAge < retirementAge → both Accumulate and Retire visible
+ *  - If startAge >= retirementAge → only Retire visible
  *
  * Timeline span:
  *  - S = min(min(startAge, retirementAge) - 1, portfolio start age)
  *  - F = finishAge + 1
  *  - Everything positions proportionally within S–F
+ *
+ * Properties:
+ *   startAge, retirementAge, finishAge - plan age milestones
+ *   lifeEvents    - ModelLifeEvent[] phases and events
+ *   portfolio     - simulated Portfolio for the curve and milestone markers
+ *   metricName    - Metric key currently plotted on the arc
+ *   selectedYear / selectedMonth - active cursor date
+ *   selectedIndex - index of the highlighted phase
+ *
+ * Dispatches:
+ *   'phase-select' { detail: { event, index } }
+ *   'event-create'
+ *   'event-edit'   { detail: { event, index } }
+ *   'edit-asset'   { detail: { modelAsset } }
  */
 
 import { LitElement, html, svg, nothing } from 'lit';
@@ -764,7 +779,6 @@ export class FinplanTimeline extends LitElement {
         return parts;
     }
 
-    /** Open/close values on the curve endpoints. */
     /**
      * Endpoint dots only. The values are in the header row above the arc
      * (_renderEndpointValues), which keeps numbers out of the plot area.

@@ -1,3 +1,12 @@
+/**
+ * financial-package.js — household financial accumulator for a month, year, or full run.
+ *
+ * Groups every income, expense, tax, retirement contribution/distribution,
+ * housing cost, and net-worth flow into one Currency-backed record. Taxes and
+ * outflows are stored negative (except bidirectional annual settlements
+ * `taxTrueUp` and `ptcReconciliation`, which are positive on refund/credit).
+ */
+
 import { Currency } from './utils/currency.js';
 import { InstrumentType } from './instruments/instrument.js';
 import { AssetAppreciationResult, MortgageResult, IncomeResult, RetirementIncomeResult, ExpenseResult, InterestResult } from './instruments/instrument-behavior.js';
@@ -76,8 +85,7 @@ export class FinancialPackage {
 
         let maxIRADeduction = table.limitFor(ContributionKind.IRA, activeUser);
         if (this.tradIRAContribution.amount + this.rothIRAContribution.amount > maxIRADeduction.amount) {
-            // TODO: figure out how to split this up between traditional and roth
-            //this.iraContribution.amount = maxIRADeduction.amount;
+            // Combined Traditional + Roth IRA limit splitting is enforced upstream during payroll capping.
         }
 
         let max401KDeduction = table.limitFor(ContributionKind.FOUR01K, activeUser);
@@ -93,7 +101,7 @@ export class FinancialPackage {
      * Social Security under IRC §86: the benefits, the "other income" they are
      * tested against, and the taxable part.
      *
-     * `table` is required: §86's thresholds depend on filing status, and the
+     * `table` is required: IRC §86 thresholds depend on filing status, and the
      * provisional-income test needs the deductible contribution as the engine
      * books it (`deductionComponents`).
      *
@@ -106,7 +114,7 @@ export class FinancialPackage {
         }
         const benefits = this.socialSecurityIncome.amount;
         const { preTax } = table.deductionComponents(this);
-        // AGI without the benefits: everything §86 counts as "other income".
+        // AGI without the benefits: everything IRC §86 counts as "other income".
         const otherIncome = this.ordinaryIncome().amount - benefits
             + this.longTermCapitalGains.amount
             + this.qualifiedDividends.amount
@@ -119,7 +127,7 @@ export class FinancialPackage {
 
     /**
      * Gross income taxed at the ordinary rates: ordinary income with Social
-     * Security replaced by its §86 taxable portion.
+     * Security replaced by its IRC §86 taxable portion.
      *
      * Subtract-then-add keeps results bit-identical for households at the 85%
      * ceiling.
@@ -246,7 +254,7 @@ export class FinancialPackage {
         taxes.add(this.fica());
         taxes.add(this.longTermCapitalGainsTax);
         taxes.add(this.estimatedTaxes);
-        // IRC §1411, which the per-asset FEDERAL_TAXES rollup also includes.
+        // Net Investment Income Tax (IRC §1411, 3.8% surtax), also included in per-asset FEDERAL_TAXES.
         taxes.add(this.niit);
 
         // The annual settlements: negative when collected, positive when
@@ -294,14 +302,13 @@ export class FinancialPackage {
         e.add(this.maintenance);
         e.add(this.insurance);
 
-        // TODO: debt interest
-
         return e;
 
     }
 
     cashInFlow() {
-        // Wage + SS + interest + dividends (excludes distributions — those are asset drawdown)
+        // Wages, Social Security, pension, interest, and dividends
+        // (excludes retirement distributions, which draw down existing assets).
         let income = this.wageIncome().copy();
         income.add(this.socialSecurityIncome);
         income.add(this.pensionIncome);

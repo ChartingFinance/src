@@ -10,14 +10,14 @@
  *      across simulated markets (success-limit.js), about ten seconds each;
  *   2. the plan as entered, and the solved plan, each under the Guardrails
  *      section's settings;
- *   3. the same two plans across simulated markets.
- *
- *   4. with the limit on, the answer once more across 1,000 markets.
+ *   3. the same two plans across simulated markets;
+ *   4. with the simulated-markets limit on, the answer once more across 1,000
+ *      markets.
  *
  * The answer is reported as soon as the solver returns; the checks fill in as
  * they finish. A rate the solver measured is not measured again: it fills its
- * cell directly, and is kept for the next solve of the same plan. Guardrail settings are read and passed along, never
- * changed.
+ * cell directly, and is kept for the next solve of the same plan. Guardrail
+ * settings are read and passed along, never changed.
  *
  * Starting a test cancels the one before it, so only the latest ever reports.
  *
@@ -124,10 +124,10 @@ function baseFor(plan) {
 }
 
 /**
- * The plan as a test's workers run it, built here on the page: its assets and
- * life events copied as they are now, and the settings in force, which are the
- * ones every job of the test carries (baseFor). The Test Bench's chart runs it
- * again at an answer (test-bench-chart.js). `ages` are for its phase markers.
+ * Snapshot the plan as the test workers will run it: cloned assets and life
+ * events plus the current simulation settings (matching `baseFor`). The Test
+ * Bench chart re-runs this snapshot at a solved factor (`test-bench-chart.js`),
+ * using `ages` for its phase markers.
  *
  * @param {object} plan  as runTestBench()
  * @returns {{ modelAssets: object[], lifeEvents: object[], config: object,
@@ -228,7 +228,8 @@ export async function runTestBench(plan, limits, on) {
         if (!run.cancelled) on.solving?.(progress.tested, completed, total);
     });
     if (run.cancelled) return;
-    // Traced runs, so slower than a search's: a first guess, until a search has run.
+    // Spending-solver runs keep tracing on, so they are slower than routing
+    // searches; use this only as an initial timing guess until a search runs.
     if (result.runs && msPerRun == null) msPerRun = ((firstStep ?? Date.now()) - started) / result.runs;
     if (result.success) rates.rates = result.success.rates;
     result.outlook = outlook;
@@ -273,8 +274,9 @@ export async function runTestBench(plan, limits, on) {
             }));
         }
     }
-    // With the limit on, the answer once more across more markets: 300 markets
-    // chose it, so they cannot also be the check on it.
+    // When the success-rate limit is active, confirm the solved spending level
+    // across 1,000 simulated markets: the 300-market sample selected the answer,
+    // so it should not also serve as its own final check.
     if (limits.success > 0 && result.best) {
         const answer = scaledAssets(entered, result.best.factor);
         pending.push(job(run, { ...base, modelAssets: answer, guardrailParams: null, runFromStart: false,

@@ -21,6 +21,11 @@
  * file only lays them out. The section heading, date badge, jump links and AI
  * summary button are static HTML in index.html, wired by finplan-app.js, the
  * same as every other section.
+ *
+ * Properties:
+ *   portfolio     - simulated Portfolio
+ *   selectedYear  - calendar year of the active timeline cursor
+ *   selectedMonth - calendar month (1-12) of the active timeline cursor
  */
 
 import { LitElement, html, nothing } from 'lit';
@@ -289,7 +294,8 @@ function cell(label, value, cls = '', inTable = true) {
     </div>`;
 }
 
-// Whole dollars throughout: this is the detail view, and it has the room.
+// Round to whole dollars before picking a positive/negative color so near-zero
+// values match the whole-dollar figures shown in this detail view.
 
 function tone(amount) {
     const v = Math.round(Number(amount) || 0);

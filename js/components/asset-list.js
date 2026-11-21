@@ -1,14 +1,30 @@
 /**
  * <asset-list>
  *
- * Lit component that renders assets grouped by financial category in horizontal columns.
- * Groups: Income, Capital, Real Estate, Retirement, Expenses, Taxes.
- * Each column has a header with emoji, label, roll-up total, and chevron toggle.
- * Individual assets render as <asset-card> children stacked vertically within each column.
+ * Lit component for the Assets tab of Your Portfolio. Renders assets grouped
+ * by financial category in horizontal columns: Income, Capital, Real Estate,
+ * Retirement, Expenses, and Taxes. Each column has a collapsible header with
+ * emoji, label, and roll-up total; individual assets render as <asset-card>
+ * children stacked vertically inside each column, while the Taxes column shows
+ * an expandable annual tax breakdown tree that highlights contributing assets.
  *
- * Also supports `readonly` mode (for simulator popup) — renders flat list with legacy colors.
+ * Also supports `readonly` mode (used in the simulator popup), rendering a
+ * flat card list with legacy color assignments.
  *
- * Dispatches: group-toggle, quick-start (re-dispatches child card events)
+ * Properties:
+ *   modelAssets     - ModelAsset[] to display
+ *   readonly        - boolean; flat read-only view for simulator popups
+ *   highlightId     - id of the currently selected asset
+ *   expandedGroups  - Set<AssetGroup> of expanded category columns
+ *   activeLifeEvent - ModelLifeEvent used for contextual group labels
+ *   portfolio       - simulated Portfolio (drives the Taxes breakdown column)
+ *   atDateInt       - DateInt used to classify active vs. closed assets
+ *   metricName      - Metric key displayed on cards and group roll-ups
+ *   historyIndex    - active month offset into each asset's history array
+ *   alertAssets     - Set<assetId> of assets with an active alert badge
+ *
+ * Dispatches:
+ *   'group-toggle' { detail: { group } }  (plus bubbling events from child <asset-card>s)
  */
 
 import { LitElement, html, nothing } from 'lit';
@@ -88,11 +104,11 @@ export const TAX_TREE = [
         ],
     },
     {
-        // IRC §1411: a sibling of Income Tax and Capital Gains, not a child,
-        // because it is a separate levy — Metric.NIIT rolls straight to
-        // FEDERAL_TAXES. This tree is written by hand, so a new tax metric needs
-        // a row here; tests/unit/tax-tree-coverage.test.js checks it against the
-        // derived list of taxes.
+        // Net Investment Income Tax (3.8% surtax under IRC §1411): listed as a
+        // sibling of Income Tax and Capital Gains rather than a child because
+        // it is a separate levy — Metric.NIIT rolls straight to FEDERAL_TAXES.
+        // This tree is maintained by hand, so any new tax metric needs a row
+        // here (verified by tests/unit/tax-tree-coverage.test.js).
         id: 'niit',
         label: 'Net Investment Income',
         emoji: '📊',
@@ -105,8 +121,9 @@ export const TAX_TREE = [
                            'interestIncome', 'longTermCapitalGain', 'shortTermCapitalGain'],
     },
     {
-        // IRC §36B, settled on the return each January: excess advance credit
-        // repaid (negative) or credit still owed (positive). Annual, like NIIT.
+        // ACA Premium Tax Credit reconciliation (IRC §36B), settled on the
+        // tax return each January: excess advance credit repaid (negative) or
+        // additional credit owed back (positive). Annual cadence, like NIIT.
         id: 'ptcReconciliation',
         label: 'Premium Tax Credit',
         emoji: '🩺',

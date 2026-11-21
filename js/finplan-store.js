@@ -32,7 +32,7 @@ class FinPlanStore extends EventTarget {
         this.#retirementDateInt = null;
     }
 
-    // ── Configuration (call once at init) ──────────────────────
+    // ── Configuration ──────────────────────────────────────────
 
     /** Set the retirement DateInt so the store can determine phase. */
     setRetirementDate(dateInt) {

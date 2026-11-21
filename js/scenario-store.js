@@ -1,6 +1,5 @@
 /**
- * scenario-store.js — what a scenario keeps, and the plan on screen that keeps
- * nothing.
+ * scenario-store.js — persisted scenario storage and temporary unsaved plans.
  *
  * A scenario is a plan (its assets and life events) and what the plan runs on:
  * its guardrail parameters and its settings, the six in the settings row. Each
@@ -247,9 +246,10 @@ export function unsavedPlan() {
 }
 
 /**
- * Close the unsaved plan. Dropped, the default, its settings go and the
- * viewer's come back into force. Kept, its settings are stored as the ones in
- * force, for the caller to save the plan as a new scenario.
+ * Close the unsaved plan. By default (`keep = false`), its temporary settings
+ * are discarded and the viewer's saved settings come back into force. When
+ * `keep = true`, its settings are promoted to active settings so the caller
+ * can save the plan as a new scenario.
  */
 export function closeUnsaved({ keep = false } = {}) {
     if (!unsaved) return;

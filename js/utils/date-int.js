@@ -76,7 +76,8 @@ export class DateInt {
   // ── Arithmetic ───────────────────────────────────────────────────
 
   /**
-   * Absolute month count between two DateInts.
+   * Signed month difference between two DateInts (`finish - start`; negative
+   * when `finish` is earlier than `start`).
    */
   static diffMonths(start, finish) {
     if (!start || !finish) return 0;

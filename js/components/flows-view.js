@@ -21,6 +21,12 @@
  * The numbers come from money-flows.js, which is headless and tested; this file
  * only lays them out.
  *
+ * Properties:
+ *   portfolio     - simulated Portfolio
+ *   selectedYear  - calendar year of the active timeline cursor
+ *   selectedMonth - calendar month (1-12) of the active timeline cursor
+ *   period        - 'month' | 'year' display window
+ *
  * Dispatches: edit-transfers { assetId, displayName, phaseId, phase }
  */
 

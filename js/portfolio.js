@@ -1,3 +1,13 @@
+/**
+ * portfolio.js — central plan container and simulation orchestrator.
+ *
+ * Holds a plan's assets (`modelAssets`), life events, frozen `SimConfig`,
+ * monthly/yearly/total `FinancialPackage` accumulators, and sub-engines
+ * (payroll, expenses, taxes, rebalancing, premium tax credit). Coordinates
+ * day 1/15/30 ticks, annual settlement, Guyton-Klinger guardrails, asset
+ * opening/closing, and double-entry reconciliation.
+ */
+
 import { Currency } from './utils/currency.js';
 import { InstrumentType } from './instruments/instrument.js';
 import { computeCashFlow } from './instruments/instrument-behavior.js';
@@ -48,9 +58,9 @@ export const EVENT_RECONCILIATION = Object.freeze({
     [EventType.MORTGAGE_PRINCIPAL]:      'mortgagePrincipal',
     [EventType.PROPERTY_TAX]:            'propertyTax',
 
-    // §121 removes gain from the tax base without moving cash or changing the
-    // gain realised, so it stays out of the capitalGains bucket, which balances
-    // against the gross monthly.longTermCapitalGains.
+    // IRC §121 (primary-home exclusion) removes gain from the tax base without
+    // moving cash or changing the gain realized, so it stays out of the
+    // capitalGains bucket, which balances against gross monthly.longTermCapitalGains.
     [EventType.CAPITAL_GAIN_EXCLUDED]:   'excluded',
 
     [EventType.ASSET_GROWTH]:            'excluded',
@@ -230,7 +240,7 @@ export class Portfolio {
         this.yearly = new FinancialPackage();
         this.total = new FinancialPackage();
 
-        this.monthlyPackages = []; // FP copy per month — for double-entry testing
+        this.monthlyPackages = []; // FinancialPackage snapshot per month (reconciliation & reporting)
 
         // Cumulative price level per month, base 1.0 at the plan's first month.
         // Written by the simulation loop (chronometer_run / mc-compute runOnce);
@@ -538,7 +548,8 @@ export class Portfolio {
 
     /**
      * Reconcile the events the loop left behind. Called once, after the last
-     * iteration.
+     * iteration, right before `flushFinalSettlement()` folds the final year's
+     * settlement into the closing month.
      *
      * chronometer_run calls applyYear after monthlyChron, so the annual
      * true-up's events always fall after the scan. Mid-run the next month's pass
@@ -821,12 +832,12 @@ export class Portfolio {
 
     applyFirstDayOfMonth(currentDateInt) {
 
-        // new month so update the modelAsset temporals
+        // Advance each asset's date flags for the new month.
         for (let modelAsset of this.modelAssets) {
             modelAsset.handleCurrentDateInt(currentDateInt);
         }
 
-        // close assets that are now past their finish date
+        // Close assets that have passed their finish date.
         for (let modelAsset of this.modelAssets) {
             if (modelAsset.afterFinishDate && !modelAsset.isClosed) {
                 this.closeAsset(modelAsset, currentDateInt);
@@ -841,7 +852,7 @@ export class Portfolio {
             }
         }
 
-        // let the model assets know its the first day of the month.
+        // Initialize each active asset for the first day of the month.
         for (let modelAsset of this.modelAssets) {
 
             if (!modelAsset.isClosed) {
@@ -879,8 +890,6 @@ export class Portfolio {
                 }
             }
         }
-
-        // TODO: You can either make contributions or take distributions. Not both.
 
         // Day 1 payroll pipeline
         for (let modelAsset of this.modelAssets) {
@@ -949,7 +958,7 @@ export class Portfolio {
         // premium, so it is set before any bill is paid.
         this.premiumCredit.applyMonthlyAdvance(currentDateInt);
 
-        // apply expenses
+        // Pay monthly expenses.
         for (let modelAsset of this.modelAssets) {
             if (!modelAsset.isClosed) {
                 this.expenses.applyExpenseTransfers(modelAsset, currentDateInt);
@@ -1045,7 +1054,7 @@ export class Portfolio {
                 fundTransfer.bind(modelAsset, this.modelAssets, this.activeUser);
                 if (!fundTransfer.toModel) continue;
 
-                // can only send money to an expensable account
+                // On-close transfers may only target expensable accounts.
                 if (!InstrumentType.isExpensable(fundTransfer.toModel.instrument)) {
                     logger.log(LogCategory.TRANSFER, () => 'Portfolio.applyAssetCloseFundTransfers: cannot transfer to ' + fundTransfer.toModel.displayName + ' because not an expensable account');
                     continue;
@@ -1225,14 +1234,16 @@ export class Portfolio {
 
     /**
      * Record the settled year: its tax basis (AGI, every MAGI, the bases the
-     * annual passes charge on), what it owed, and how the January settlement
+     * annual passes charge on), what it owed, and how the annual settlement
      * paid it. Every settled year gets one, whether or not anything is charged.
      *
      * Owed and paid are different numbers. `federalTax` is what the year's
      * income owed, from the liability the true-up computed; the settlement
      * fields are what the passes actually booked, which is less when an account
-     * could not pay. A package shows the settlement in the following year, so
-     * a year's tax cannot be read from its own package (see report-view.js).
+     * could not pay. Mid-run packages show the settlement in the following
+     * January (on the plan's final December, `flushFinalSettlement()` folds it
+     * into that closing month), so a year's full tax cannot be read from its
+     * own monthly packages alone (see report-view.js).
      *
      * Household figures, so they live on the portfolio, not on an asset. Plain
      * numbers in a frozen record, so a record can be serialised and nothing can
@@ -1254,14 +1265,14 @@ export class Portfolio {
      * @property {number} capitalGainsTax  owed, positive: the true-up's liability
      * @property {number} niit             owed, positive; 0 under the $1 gate
      * @property {number} federalTax       the sum of the four above
-     * @property {number} settledTrueUp    booked in January: + refund, − bill
-     * @property {number} settledNIIT      booked in January: − paid
+     * @property {number} settledTrueUp    booked on settlement (following Jan, or closing Dec on final year): + refund, − bill
+     * @property {number} settledNIIT      booked on settlement (following Jan, or closing Dec on final year): − paid
      * @property {number} ptc              the premium tax credit the year allowed
      * @property {number} aptc             the advance credit paid during it
      * @property {?number} fplPercent      ACA MAGI as a whole % of the poverty
      *                                     line; null when no card covered the year
-     * @property {number} ptcReconciliation booked in January: + credit owed,
-     *                                     − excess advance repaid
+     * @property {number} ptcReconciliation booked on settlement (following Jan, or closing Dec on final year):
+     *                                     + credit owed, − excess advance repaid
      * @property {boolean} ptcOnEstimate   the plan's partial first year, settled
      *                                     against the card's estimate instead
      *                                     of a MAGI the plan only part-saw

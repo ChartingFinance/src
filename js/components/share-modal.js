@@ -1,9 +1,10 @@
 /**
  * <share-modal>
  *
- * Lit component for sharing a portfolio via email.
- * Compresses the full portfolio state into a URL using lz-string,
- * then opens a mailto: link with the share URL embedded.
+ * Lit modal for sharing a portfolio snapshot, opened from the top navigation
+ * bar. Encodes the full plan state into a self-contained URL via share-link.js,
+ * allowing the user to copy the link directly or open a pre-filled `mailto:`
+ * email to a CPA or advisor.
  *
  * Properties:
  *   open            - boolean

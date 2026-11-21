@@ -1,9 +1,10 @@
 /**
  * <asset-view-modal>
  *
- * Read-only view of a single asset (the edit form is <asset-form-modal>).
- * Every number is simulation output, read from metric history at the date the
- * user is exploring; nothing is written back to the ModelAsset.
+ * Read-only results modal for a single asset, opened from the View button on
+ * an <asset-card> (the edit form is <asset-form-modal>). Every number is
+ * simulation output read from metric history at the date the user is exploring;
+ * nothing is written back to the ModelAsset.
  *
  * Three nested windows over the same metric set, all ending at the month the
  * user is exploring:
@@ -12,12 +13,13 @@
  *   total  — plan start through the selected month
  *
  * Windows combine per metricKind() (metric.js): balances snapshot, flows sum,
- * running totals difference.  aggregateMetric() owns that rule so this
+ * running totals difference. aggregateMetric() owns that rule so this
  * component never decides it.
  *
  * Properties:
  *   open         - boolean
- *   modelAsset   - ModelAsset
+ *   modelAsset   - ModelAsset to inspect
+ *   modelAssets  - ModelAsset[] siblings, used by rule notes to name where taxes settled
  *   firstDateInt - DateInt of history index 0 (portfolio.firstDateInt)
  *   atDateInt    - DateInt the user is exploring
  *   historyIndex - month offset of atDateInt into history

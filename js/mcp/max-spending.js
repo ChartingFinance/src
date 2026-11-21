@@ -108,7 +108,7 @@ export async function maxSpending(spec, { leaveAtLeast = 0, simulatedMarketsPerc
     return { result, solvedSpec, plan };
 }
 
-/** To a tenth of a point, cut not rounded: 89.97% must not read as the 90% it missed. */
+/** Format to one decimal place, truncated rather than rounded so 89.97% never displays as the 90% threshold it missed. */
 const percent = (rate) => `${(Math.floor(rate * 1000) / 10).toFixed(1)}%`;
 
 /**
@@ -145,7 +145,7 @@ export function maxSpendingMarkdown({ result, plan }, { handle = null } = {}) {
         `**What stops it:** ${whatStopsYou(result).text}`,
     ];
 
-    // Rates the limit measured for the two columns, when it measured them.
+    // Append simulated success rates for the baseline and solved spending levels when measured.
     if (result.success) {
         const rateAt = (factor) => result.success.rates.find(([f]) => f === factor)?.[1];
         const entered = rateAt(1);

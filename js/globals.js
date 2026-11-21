@@ -1,9 +1,22 @@
+/**
+ * globals.js
+ *
+ * Browser-side settings store and defaults for Charting Finance. Settings
+ * persist in `localStorage` (with an in-memory hold mechanism when previewing
+ * shared plans) and are packaged into a `SimConfig` or Web Worker snapshot
+ * before entering the simulation engine.
+ *
+ * Immutable historical market data (`market-data.js`), fixed tax-policy
+ * constants (`policy-constants.js`), and the filing-status vocabulary
+ * (`filing-status.js`) are re-exported here for callers outside the engine.
+ */
+
 import { DateInt } from './utils/date-int.js';
 // logger.js imports nothing, so this cannot cycle back through globals.
 import { logger, LogCategory } from './utils/logger.js';
 import { FilingStatus, FILING_STATUSES, isFilingStatus, asFilingStatus } from './filing-status.js';
-// Moved to market-data.js (Spec 9 step 6): immutable historical series, not
-// settings. Re-exported so callers outside the engine are unaffected.
+// Re-exported from market-data.js (immutable historical series, not settings)
+// so callers outside the engine are unaffected.
 export {
     global_sp500_annual_returns, global_10yr_treasury_rates,
     global_wage_growth_annual, global_cpi_annual_inflation,
@@ -12,22 +25,9 @@ import { makeSimConfig, SIM_CONFIG_DEFAULTS } from './sim-config.js';
 // plan-dates.js imports only DateInt, so this cannot cycle back through globals.
 import { birthYearFor } from './plan-dates.js';
 import { TaxTable } from './taxes.js';
-// Moved to policy-constants.js (Spec 9 step 6): fixed tax policy, not settings.
+// Re-exported from policy-constants.js (fixed tax policy constants, not settings).
 export { global_retirement_withholding_rate, global_deferred_allocation_age }
     from './policy-constants.js';
-
-// S&P 500 annual total returns (price + dividends), 2000–2025
-// Source: https://www.slickcharts.com/sp500/returns
-
-// 10-Year U.S. Treasury yield (annual average %), 2000–2025
-// Source: https://www.multpl.com/10-year-treasury-rate/table/by-year
-
-// U.S. annual nominal wage growth (%), 1970–2025
-// Source: FRED CEU0500000008 — Avg Hourly Earnings, Production & Nonsupervisory, Total Private
-// Year-over-year % change in annual average hourly earnings
-
-// U.S. annual CPI inflation rate (%), 2000–2025
-// Source: https://www.minneapolisfed.org/about-us/monetary-policy/inflation-calculator/consumer-price-index-1913-
 
 export const global_default_inflationRate = SIM_CONFIG_DEFAULTS.inflationRate;
 
@@ -51,12 +51,10 @@ export const global_default_fica = 7.65;
 
 
 /**
- * Split the residual household tax across the accounts that generated the
- * income, instead of billing all of it to the funding backstop.
- *
- * Off until the baselines are re-blessed against the predictions in
- * markdowns/tax-allocation-spec.md §7.6. Off, the engine is event-for-event
- * identical to one without the feature (tests/tax-allocation.mjs asserts it).
+ * When enabled, splits residual household tax across the accounts that
+ * generated the taxable income instead of billing the whole amount to the
+ * funding backstop. Off by default; when off, the engine falls straight
+ * through to the single-backstop path.
  */
 export const global_default_allocate_household_tax = SIM_CONFIG_DEFAULTS.allocateHouseholdTax;
 export let global_allocate_household_tax = global_default_allocate_household_tax;
@@ -166,7 +164,7 @@ export function simConfigFromGlobals() {
         simDataMode: global_simDataMode,
 
         // A config from the app carries its own table exactly as one from a
-        // plan spec does, so Portfolio never reaches for a module-level table.
+        // plan configuration does, so Portfolio never reaches for a module-level table.
         taxTable: makeActiveTaxTable(),
     });
 }

@@ -1,4 +1,15 @@
-// js/components/sankey-diagram.js
+/**
+ * <sankey-diagram>
+ *
+ * Lit component that renders an interactive SVG Sankey diagram of monthly fund
+ * transfers across the portfolio. Hovering a node or link highlights its
+ * connected flows and dims unrelated paths. Layout geometry is computed by
+ * buildSankeyLayout() in utils/sankey-layout.js.
+ *
+ * Properties:
+ *   pipelines   - Array of active transfer pipeline definitions
+ *   modelAssets - ModelAsset[] used for node colors and asset metadata
+ */
 
 import { LitElement, html, svg } from 'lit';
 import { buildSankeyLayout } from '../utils/sankey-layout.js';

@@ -50,12 +50,6 @@ const SECTIONS = [
 export const REPORT_SECTIONS = ['portfolio', 'projections', 'creditmemos', 'reports', 'spreadsheet'];
 
 /**
- * @param {string} sectionKey
- * @param {Set<string>|null} included  the sections actually being emitted, or
- *        null when this section is being generated on its own (the app does
- *        this) — in which case the full-report wording is correct as written.
- */
-/**
  * A Month & Year Details list as a table, month beside year: a row per line,
  * each column adding up to its total as the section shows it. Rows are the
  * union of both columns, so a line that rounds to $0 in one still shows.
@@ -78,6 +72,15 @@ function listTable(heading, monthName, yearName, monthView, yearView, money) {
     return md;
 }
 
+/**
+ * Directional navigation notes pointing an AI reader to adjacent or omitted
+ * report sections.
+ *
+ * @param {string} sectionKey
+ * @param {Set<string>|null} included  the sections actually being emitted, or
+ *        null when this section is being generated on its own (the app does
+ *        this) — in which case the full-report wording is correct as written.
+ */
 function directionalNotes(sectionKey, included = null) {
     const idx = SECTIONS.findIndex(s => s.key === sectionKey);
     let md = '';
@@ -151,7 +154,7 @@ export function generateTimelineMarkdown(portfolio, lifeEvents) {
     return md;
 }
 
-// ── Portfolio ───────────────────────────────────────────────────
+// ── Month & Year Details ────────────────────────────────────────
 
 /**
  * The month selected on the timeline and its calendar year. App-only: it needs
@@ -278,6 +281,8 @@ export function generateMonthDetailsSectionMarkdown(portfolio, year, month, head
     md += GENERATOR_LINE;
     return md;
 }
+
+// ── Portfolio ───────────────────────────────────────────────────
 
 export function generatePortfolioSectionMarkdown(portfolio, included = null) {
     if (!portfolio) return `# Your Portfolio\n\nNo simulation has been run yet.\n` + GENERATOR_LINE;
@@ -621,17 +626,18 @@ export function generateSpreadsheetSectionMarkdown(portfolio, included = null) {
 // ── Combined report (for MCP server / external consumers) ───────
 
 /**
- * Generates a single self-contained markdown report combining all sections.
- * @param {Portfolio} portfolio - A portfolio that has been through chronometer_run()
- * @returns {string} Full markdown report
- */
-/**
- * The report, whole or in part.
+ * Generate a self-contained markdown report combining all or a subset of report
+ * sections.
  *
  * `sections` defaults to every section in canonical order (the output must be
- * deterministic; tests/mcp-stateless.mjs compares runs exactly). A subset keeps
- * the report short when a caller wants one figure. Unknown section names are
- * refused, not ignored.
+ * deterministic; `tests/mcp-stateless.mjs` compares runs byte-for-byte).
+ * Passing a subset keeps the report short when a caller wants one figure.
+ * Unknown section names are refused rather than silently ignored.
+ *
+ * @param {Portfolio} portfolio - A portfolio that has been through chronometer_run()
+ * @param {object} [options]
+ * @param {string|string[]} [options.sections] - Subset of REPORT_SECTIONS to include
+ * @returns {string} Markdown report
  */
 export function generatePortfolioMarkdown(portfolio, { sections } = {}) {
     let included;

@@ -34,11 +34,11 @@
  * The detectors find engine events by matching credit-memo text, so renaming
  * a memo would silently remove an alert (tests/memo-vocabulary.mjs guards the
  * wording). The patterns are kept here in one place; rule-notes.js has its own
- * copies of `Unfunded` and `Contribution capped`. Moving both to event types is
- * open (markdowns/code-issues-from-comments.md).
+ * copies of `Unfunded` and `Contribution capped`. Eventually both can switch
+ * to matching structured EventType values directly.
  *
- * The `reconciliation` category is empty: the engine's reconciliation findings
- * go to the logger (LogCategory.SANITY), not to events.
+ * The `reconciliation` category is currently empty: engine reconciliation
+ * findings go to the logger (LogCategory.SANITY) rather than asset events.
  */
 
 import { Metric, aggregateMetric } from './metric.js';
@@ -255,9 +255,10 @@ export const DETECTORS = [
     },
 
     {
-        // The leading indicator: an account clamped at $0 and the shortfall was
-        // re-sourced. The memo is on the account that covered it and names the
-        // one that ran dry; the issue is filed under the one that ran dry.
+        // The leading indicator: an account clamped at $0 and the shortfall
+        // spilled over to fallback account(s). The memo is recorded on each
+        // covering account and names the one that ran dry; we file the issue
+        // under the account that ran dry.
         id: 'funding-ran-dry',
         scope: 'asset',
         category: 'obligation',
@@ -324,9 +325,10 @@ export const DETECTORS = [
     },
 
     {
-        // Social Security dated before 62 starts at 62 instead (ModelAsset's
-        // activeFromDateInt). Said here, so a benefit that arrives later than
-        // entered is not a mystery. Read from the recorded event by type.
+        // Social Security dated before age 62 is deferred to start at 62
+        // (via ModelAsset.activeFromDateInt). Surfacing that here prevents a
+        // later-than-entered start date from looking like a bug. Read directly
+        // from the recorded event type.
         id: 'social-security-deferred',
         scope: 'asset',
         category: 'configuration',
@@ -350,11 +352,12 @@ export const DETECTORS = [
     },
 
     {
-        // A transfer, close or purchase names an asset the plan does not have:
-        // it was deleted, or a spec named it wrongly. It waits by name and does
-        // nothing (plan-ids.js), and an asset given that name picks it up. Read
-        // from the plan's references, as no-funding-accounts reads its accounts:
-        // nothing ran, so there is no event to anchor on. One finding per name.
+        // A transfer, close, or purchase names an asset the plan does not have
+        // (it was deleted, or a saved plan misspelled the name). It waits by
+        // name and does nothing (see plan-ids.js), reconnecting automatically
+        // if an asset is later given that name. Like no-funding-accounts, we
+        // inspect the plan's references directly because nothing ran to produce
+        // an event. One finding per missing name.
         id: 'missing-asset-reference',
         scope: 'plan',
         category: 'configuration',
@@ -378,8 +381,9 @@ export const DETECTORS = [
     },
 
     {
-        // The RMD was missed. The cause is not recorded (expense-engine.js gives
-        // up silently when no account can receive it), so none is guessed.
+        // The RMD was missed. The cause is not recorded on the asset
+        // (expense-engine.js skips silently when resolveDeposit() finds no open
+        // everyday account to receive it), so we do not guess at one.
         id: 'rmd-unsatisfied',
         scope: 'asset',
         category: 'configuration',
@@ -414,7 +418,8 @@ const SEVERITY_RANK = { alert: 0, notice: 1 };
  * @param {Portfolio} portfolio
  * @param {object}  [opts]
  * @param {boolean} [opts.includeReconciliation]  engine-internal doubt; off by
- *        default — see rule 4. Ships empty until the recording study lands.
+ *        default — see rule 4. Currently no detectors use this category because
+ *        reconciliation findings go to LogCategory.SANITY rather than events.
  * @returns {Issue[]} alerts first, then by date
  */
 export function detectIssues(portfolio, { includeReconciliation = false } = {}) {

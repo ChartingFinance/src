@@ -282,7 +282,8 @@ function ensurePipeline(map, key, sourceGroup, targetGroup) {
 }
 
 function addSystemTransfers(pipelineMap, assets, historyIndex, rules) {
-    // The funding backstop — same resolver the engines use at simulation time
+    // Everyday funding backstop (Cash → Savings → Brokerage → US Bond → Corp Bond).
+    // No activeUser is passed here, so post-59½ retirement failover does not apply.
     const backstop = FundTransfer.resolveFunding(assets);
 
     for (const asset of assets) {

@@ -1,16 +1,31 @@
-// js/utils/sankey-layout.js
+/**
+ * sankey-layout.js — layered Sankey diagram geometry for monthly cash flows.
+ *
+ * Takes active flow pipelines and computes node column placement, proportional
+ * bar heights, instrument colors, and link endpoint coordinates for rendering
+ * in the SVG Sankey diagram.
+ */
 
 import { getAssetChartColor } from '../asset-groups.js';
 
+/**
+ * Compute node rectangles and link endpoints for the monthly cash-flow Sankey.
+ *
+ * @param {Array<{routes: Array<{active: boolean, monthlyAmount: number, sourceName: string, targetName: string}>}>} pipelines
+ * @param {Array<{displayName: string, instrument: string}>} modelAssets
+ * @param {number} width   SVG viewport width in pixels
+ * @param {number} height  SVG viewport height in pixels
+ * @returns {{ nodes: Array<object>, links: Array<object>, maxLayer: number }}
+ */
 export function buildSankeyLayout(pipelines, modelAssets, width, height) {
-    // 1. Gather all active routes with a positive flow
+    // 1. Gather all active routes with a positive monthly flow.
     const activeRoutes = pipelines.flatMap(p => p.routes).filter(r => r.active && r.monthlyAmount > 0);
     
     if (activeRoutes.length === 0) {
         return { nodes: [], links: [], maxLayer: 0 };
     }
 
-    // 2. Build the Node Map and accumulate flows
+    // 2. Build the node map and accumulate total inflow and outflow per node.
     const nodeMap = new Map();
     const getOrCreateNode = (name) => {
         if (!nodeMap.has(name)) {
@@ -34,11 +49,12 @@ export function buildSankeyLayout(pipelines, modelAssets, width, height) {
 
     const nodes = Array.from(nodeMap.values());
     nodes.forEach(n => {
-        // The visual height requirement is based on the larger of inflow or outflow
+        // Node height reflects the larger of its total inflow or outflow.
         n.value = Math.max(n.inflow, n.outflow); 
     });
 
-    // 3. Topological Sort to assign Nodes to vertical Layers (Columns)
+    // 3. Assign nodes to vertical columns via iterative topological relaxation
+    //    (capped at 100 passes so cycles cannot loop forever).
     nodes.forEach(n => n.layer = 0);
     let changed = true;
     let iterations = 0;
@@ -59,12 +75,12 @@ export function buildSankeyLayout(pipelines, modelAssets, width, height) {
     const columns = Array.from({ length: maxLayer + 1 }, () => []);
     nodes.forEach(n => columns[n.layer].push(n));
 
-    // 4. Calculate Scaling and Position Nodes
+    // 4. Compute vertical scale and position nodes within each column.
     const padding = 20;
     const nodeWidth = 24;
     const availableHeight = height - padding * 2;
     
-    // Find the column that requires the most vertical space
+    // Find the column with the largest total flow volume.
     let maxColValue = 0;
     columns.forEach(col => {
         const colValue = col.reduce((sum, n) => sum + n.value, 0);
@@ -73,16 +89,16 @@ export function buildSankeyLayout(pipelines, modelAssets, width, height) {
 
     const maxNodesInCol = Math.max(...columns.map(col => col.length));
     
-    // Determine proportional scaling factor (ky)
+    // Dollars-to-pixels vertical scaling factor, floored so tiny flows stay visible.
     let ky = maxColValue > 0 ? (availableHeight - (maxNodesInCol - 1) * padding) / maxColValue : 1;
-    ky = Math.max(0.1, ky); // Ensure minimum scaling
+    ky = Math.max(0.1, ky); // Ensure a readable minimum scale
 
     columns.forEach((col, colIndex) => {
         let currentY = padding;
-        // Distribute columns evenly across the SVG width
+        // Distribute columns evenly across the SVG width.
         const x = padding + colIndex * ((width - 2 * padding - nodeWidth) / (maxLayer || 1));
         
-        // Sort nodes within the column descending by flow volume
+        // Sort nodes within each column from largest flow to smallest.
         col.sort((a, b) => b.value - a.value);
 
         col.forEach(node => {
@@ -92,13 +108,13 @@ export function buildSankeyLayout(pipelines, modelAssets, width, height) {
             node.h = Math.max(4, node.value * ky);
             currentY += node.h + padding;
 
-            // Resolve the visual color based on the asset instrument type
+            // Color each node by its asset's instrument category.
             const ma = modelAssets.find(a => a.displayName === node.name);
             node.color = ma ? getAssetChartColor(ma.instrument) : '#888888';
         });
     });
 
-    // 5. Compute Link Path Origins and Destinations
+    // 5. Compute link thickness and stacked y-anchors on source and target nodes.
     const links = [];
     nodes.forEach(n => {
         let sy = n.y; // Source y cursor

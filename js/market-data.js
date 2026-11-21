@@ -6,6 +6,8 @@
  * settings store; globals.js re-exports all four.
  */
 
+// S&P 500 annual total returns (price + dividends, %), 1970–2025
+// Source: https://www.slickcharts.com/sp500/returns
 export const global_sp500_annual_returns = Object.freeze({
     1970: 4.01,
     1971: 14.31,
@@ -65,6 +67,8 @@ export const global_sp500_annual_returns = Object.freeze({
     2025: 17.88,
 });
 
+// 10-Year U.S. Treasury yield (annual average %), 1970–2025
+// Source: https://www.multpl.com/10-year-treasury-rate/table/by-year
 export const global_10yr_treasury_rates = Object.freeze({
     1970: 7.79,
     1971: 6.24,
@@ -124,6 +128,8 @@ export const global_10yr_treasury_rates = Object.freeze({
     2025: 4.63,
 });
 
+// U.S. annual nominal wage growth (%), 1970–2025
+// Source: FRED CEU0500000008 — Avg Hourly Earnings, Production & Nonsupervisory, Total Private (YoY % change)
 export const global_wage_growth_annual = Object.freeze({
     1970: 5.9,
     1971: 6.5,
@@ -183,6 +189,8 @@ export const global_wage_growth_annual = Object.freeze({
     2025: 3.8,
 });
 
+// U.S. annual CPI inflation rate (%), 1970–2025
+// Source: https://www.minneapolisfed.org/about-us/monetary-policy/inflation-calculator/consumer-price-index-1913-
 export const global_cpi_annual_inflation = Object.freeze({
     1970: 5.8,
     1971: 4.3,

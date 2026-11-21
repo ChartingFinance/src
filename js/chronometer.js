@@ -1,3 +1,13 @@
+/**
+ * chronometer.js — main simulation clock and loop.
+ *
+ * Advances a Portfolio month by month from its earliest asset start date to
+ * its latest finish date (stepping days 1, 15, and 30). Coordinates life
+ * events, monthly/yearly portfolio passes, optional historical backtest rate
+ * overrides, the real-dollar price index, guardrails, and final year-end
+ * settlement folding.
+ */
+
 import { DateInt } from './utils/date-int.js';
 import { logger, LogCategory } from './utils/logger.js';
 import { resetTraces, traceScopes, assertNoOpenScopes } from './trace.js';
@@ -95,7 +105,7 @@ export async function chronometer_run(portfolio) {
     }
 
     let totalMonths = 0;
-    // The table is reset inside portfolio.initializeChron() as of step 5a.
+    // Reset portfolio state, assets, engines, and the run's tax table.
     portfolio.initializeChron();
 
     const backtesting = portfolio.config.backtestYear !== 'current';
@@ -135,6 +145,9 @@ export async function chronometer_run(portfolio) {
         }
 
         if (currentDateInt.isNewYearsDay()) {
+            // On a plan's final December rollover there is no following January,
+            // so stamp annual settlement events on lastDateInt; flushFinalSettlement()
+            // folds them into the closing month after loop exit.
             const isFinalYearEnd = currentDateInt.toInt() > lastDateInt.toInt();
             const settleDateInt = isFinalYearEnd ? lastDateInt : currentDateInt;
             if (backtesting) {

@@ -238,10 +238,11 @@ export function expenditureOverWindow(portfolio, fromIndex, toIndex) {
         const fundable = InstrumentType.isFundable(asset.instrument);
         for (const event of (asset.events ?? [])) {
             if (!event.dateInt) continue;
-            // Counted in the month its chain began, as the figures book it: the
-            // annual pass's events carry December's date and count in January.
-            // An event counts at most a month after its own date; the cheap
-            // test first.
+            // Counted in the month its chain began, as the figures book it:
+            // intermediate year-end settlements carry December's date and book
+            // in January, while a final-year settlement folds into the closing
+            // December. Either way an event counts at most one month after its
+            // own date, so we run the cheap date check first.
             const own = (event.dateInt.year - first.year) * 12 + (event.dateInt.month - first.month);
             if (own < from - 1 || own > to) continue;
             const when = bookedMonthIndex(event, first, scopes);

@@ -1,7 +1,10 @@
 /**
  * <issues-modal>
  *
- * Lit component for submitting a bug report / feature request via mailto.
+ * Lit modal for submitting a bug report or feature suggestion via a `mailto:`
+ * link, opened from the app's feedback / "Report an Issue" action.
+ * (Not to be confused with <plan-issues-panel>, which flags problems inside
+ * the user's financial plan.)
  *
  * Properties:
  *   open  - boolean

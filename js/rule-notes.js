@@ -100,7 +100,7 @@ export function makeRuleContext({ asset, modelAssets = [], firstDateInt = null, 
     return { asset, modelAssets, firstDateInt, from, to, total, memos, events };
 }
 
-/** Tax settlements on this asset that were allocated by income share (spec 4a). */
+/** Tax settlements on this asset that were allocated proportionally by income share. */
 function allocatedTaxLegs(ctx) {
     return ctx.events().filter(e =>
         e.data?.basis === 'proportional' && e.data?.direction !== 'refund');
@@ -139,8 +139,9 @@ export const RULES = [
     },
 
     {
-        // The exclusion needs 24 months of ownership (taxes.js). This note
-        // explains a missing tax only when the whole gain fell inside it.
+        // Primary home capital-gains exclusion (IRC §121) requires 24 months of
+        // ownership (see taxes.js). This note explains a $0 tax line only when
+        // the entire gain fell inside the exclusion.
         id: 'primary-home-exclusion',
         suppresses: ['tax-settled-elsewhere'],
         evaluate(ctx) {

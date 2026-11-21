@@ -24,7 +24,7 @@
  * would re-date the whole plan. Those dates are reported as skipped.
  *
  * Editing dates in response to the user's own setting is allowed; creating or
- * deleting assets is not (see the asset-ownership rule).
+ * deleting assets is not — the user owns which assets exist in the plan.
  */
 
 import { Instrument } from './instruments/instrument.js';
