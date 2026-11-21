@@ -47,13 +47,15 @@
 
     <!-- ═══ Intro ═══ -->
     <div class="glass-card p-8 sm:p-12 mb-8">
-        <p class="text-gray-600 leading-relaxed mb-6">Every asset in your plan follows a set of simulation rules. This page describes how each asset type behaves month by month, so you know what the engine will do with the numbers you give it.</p>
+        <p class="text-gray-600 leading-relaxed mb-6">Every asset in your plan follows a clear set of monthly simulation rules. This page explains how each account type grows, moves money, and gets taxed so you always know why the engine produced a number.</p>
         <div class="flex flex-wrap gap-2 text-sm">
+            <a href="#transfers" class="px-4 py-2 rounded-xl bg-gray-50 hover:bg-gray-100 transition text-gray-700 no-underline">Fund Transfers &amp; Failover</a>
             <a href="#taxes" class="px-4 py-2 rounded-xl bg-gray-50 hover:bg-gray-100 transition text-gray-700 no-underline">Tax Rates</a>
             <a href="#filing-status" class="px-4 py-2 rounded-xl bg-gray-50 hover:bg-gray-100 transition text-gray-700 no-underline">Filing Status</a>
             <a href="#aca" class="px-4 py-2 rounded-xl bg-gray-50 hover:bg-gray-100 transition text-gray-700 no-underline">ACA Health Insurance</a>
             <a href="#explanations" class="px-4 py-2 rounded-xl bg-gray-50 hover:bg-gray-100 transition text-gray-700 no-underline">Why It Did That</a>
             <a href="#limits" class="px-4 py-2 rounded-xl bg-gray-50 hover:bg-gray-100 transition text-gray-700 no-underline">What It Does Not Model</a>
+            <a href="#test-bench" class="px-4 py-2 rounded-xl bg-gray-50 hover:bg-gray-100 transition text-gray-700 no-underline">Test Bench</a>
         </div>
     </div>
 
@@ -66,23 +68,23 @@
                 <span class="text-2xl">🏡</span>
                 <h2 class="text-xl font-bold tracking-tight">Home</h2>
             </div>
-            <p class="text-gray-600 mb-4 leading-relaxed">The simulator tracks your home&rsquo;s market value month by month, growing it at the annual rate you set (or shrinking it, if the rate is negative). When you sell, it works out the tax on the gain.</p>
+            <p class="text-gray-600 mb-4 leading-relaxed">Tracks your home&rsquo;s market value month by month at the annual growth rate you set (or depreciates it if negative), charges ongoing ownership costs, and calculates capital gains tax if you sell.</p>
             <div class="space-y-2">
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 1</span>
-                    <span class="text-sm text-gray-700">Your home's value compounds monthly so that a <strong>full year appreciates by exactly the annual return rate</strong> &mdash; 3% means 3%, giving you a realistic appreciation curve over time.</span>
+                    <span class="text-sm text-gray-700">Your home&rsquo;s value compounds monthly so that a <strong>full year appreciates by exactly the annual rate</strong> &mdash; 3% means 3% over 12 months.</span>
                 </div>
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 2</span>
-                    <span class="text-sm text-gray-700">Property tax is calculated using the <strong>annual tax rate</strong> you set, deducted monthly, and tracked as a separate expense metric so you can see exactly where your money goes.</span>
+                    <span class="text-sm text-gray-700"><strong>Property tax</strong> accrues each month at 1/12 of the annual tax rate you set, is paid from your funding account the following month, and is tracked as its own tax line.</span>
                 </div>
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 3</span>
-                    <span class="text-sm text-gray-700"><strong>Carrying costs</strong> &mdash; maintenance (a percentage of the home&rsquo;s value) and insurance (a fixed annual cost) &mdash; are charged monthly to the funding account set in the home&rsquo;s fund transfers. If none is set, the funding backstop pays them (see <a href="#transfers" class="underline">Fund Transfers</a>).</span>
+                    <span class="text-sm text-gray-700"><strong>Carrying costs</strong> &mdash; maintenance (a percentage of the home&rsquo;s current value) and insurance (an annual dollar amount) &mdash; are charged monthly to the funding account named in the home&rsquo;s fund transfers. If none is set, the funding backstop covers them (see <a href="#transfers" class="underline">Fund Transfers</a>).</span>
                 </div>
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 4</span>
-                    <span class="text-sm text-gray-700">When you sell, the gain is measured against your cost basis, and the <strong>primary-residence exclusion</strong> is applied automatically if the home has been held <strong>more than 24 months</strong>. Those months count from the home&rsquo;s start date in the plan, so a home entered at the plan&rsquo;s first month is treated as newly bought (see <a href="#limits" class="underline">What This Engine Does Not Model</a>). The exclusion follows your filing status: <strong>$250,000 filing Single, $500,000 filing jointly</strong>. Unlike most figures in the tax tables it is <strong>never indexed for inflation</strong>: IRC &sect;121 has not changed it since 1997, so a long-held home is less sheltered the further out you project.</span>
+                    <span class="text-sm text-gray-700">When you sell, the gain is measured against your cost basis, and the <strong>primary-residence exclusion</strong> (IRC &sect;121) applies automatically if the home is marked as a primary home and held for <strong>more than 24 months</strong>. Holding time counts from the home&rsquo;s start date in the plan, so a home entered at the plan&rsquo;s first month is treated as newly bought (see <a href="#limits" class="underline">What This Engine Does Not Model</a>). The exclusion is <strong>$250,000 filing Single</strong> or <strong>$500,000 filing jointly</strong>, and unlike tax brackets it is <strong>never indexed for inflation</strong> &mdash; Congress has held it fixed since 1997.</span>
                 </div>
             </div>
         </div>
@@ -93,19 +95,19 @@
                 <span class="text-2xl">🏦</span>
                 <h2 class="text-xl font-bold tracking-tight">Mortgage</h2>
             </div>
-            <p class="text-gray-600 mb-4 leading-relaxed">A full amortization schedule. Enter your remaining balance, rate and months left (from your statement), and the simulator builds the payment plan to the penny.</p>
+            <p class="text-gray-600 mb-4 leading-relaxed">A full monthly amortization schedule. Enter your remaining balance, interest rate, and months left from your statement, and the engine splits every payment into principal and interest to the penny.</p>
             <div class="space-y-2">
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 1</span>
-                    <span class="text-sm text-gray-700">Monthly payments are calculated using the <strong>standard amortization formula</strong>, splitting each payment into principal and interest so you can watch your equity grow. The rate is an <strong>APR</strong>: each month charges 1/12 of it on the balance, exactly as your lender does.</span>
+                    <span class="text-sm text-gray-700">Monthly payments use the <strong>standard amortization formula</strong> at 1/12 of your annual rate (APR) per month, matching how lenders calculate principal and interest.</span>
                 </div>
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 2</span>
-                    <span class="text-sm text-gray-700">The simulator tracks your <strong>months remaining</strong> and automatically closes the mortgage when the balance reaches zero &mdash; no manual cleanup needed. This works even if no finish date is set; the mortgage closes implicitly when fully amortized.</span>
+                    <span class="text-sm text-gray-700">The engine counts down your <strong>months remaining</strong> and automatically closes the mortgage once the balance reaches $0, even if you leave the finish date blank.</span>
                 </div>
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 3</span>
-                    <span class="text-sm text-gray-700">Mortgage interest is tracked as a <strong>deductible expense</strong>, giving you visibility into one of your largest annual tax write-offs.</span>
+                    <span class="text-sm text-gray-700">Mortgage interest is tracked as a <strong>deductible expense</strong> and factored into whether itemizing beats your standard deduction.</span>
                 </div>
             </div>
         </div>
@@ -116,23 +118,23 @@
                 <span class="text-2xl">💰</span>
                 <h2 class="text-xl font-bold tracking-tight">Working Income</h2>
             </div>
-            <p class="text-gray-600 mb-4 leading-relaxed">Your salary drives the plan. It is credited on the first of the month with withholding taken out, so what reaches your accounts is your take-home pay.</p>
+            <p class="text-gray-600 mb-4 leading-relaxed">Your paycheck or self-employment income. Gross pay is credited on day 1 of each month, payroll taxes and pre-tax deferrals are taken out in order, and take-home pay flows to your accounts.</p>
             <div class="space-y-2">
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 1</span>
-                    <span class="text-sm text-gray-700">Your gross income is credited on <strong>day 1 of each month</strong>. At year-end the <strong>full annual return rate</strong> is applied once as a raise &mdash; unlike balances and expenses, which compound a little every month, a salary steps up once a year the way a real one does.</span>
+                    <span class="text-sm text-gray-700">Gross income is credited on <strong>day 1 of each month</strong>. At year-end, the <strong>full annual growth rate</strong> is applied once as a raise &mdash; unlike balances and expenses, which compound smoothly each month, salaries step up annually.</span>
                 </div>
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 2</span>
-                    <span class="text-sm text-gray-700"><strong>FICA and Medicare</strong> are withheld automatically from each paycheck, so fund transfers downstream reflect your actual net income &mdash; not your gross.</span>
+                    <span class="text-sm text-gray-700"><strong>Social Security (FICA) and Medicare</strong> taxes are withheld automatically from each paycheck (at employee or self-employed rates), so downstream transfers work from your real net pay.</span>
                 </div>
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 3</span>
-                    <span class="text-sm text-gray-700">Federal income tax withholding is estimated from your <strong>filing status and tax bracket</strong>, as a payroll department would.</span>
+                    <span class="text-sm text-gray-700">Federal income tax withholding is estimated from your <strong>filing status and tax bracket</strong>, just like a payroll department.</span>
                 </div>
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 4</span>
-                    <span class="text-sm text-gray-700">A paycheck pays out <strong>only what it earns</strong>, in payroll's order: FICA, then income tax withholding, then pre-tax 401(k) and IRA deferrals from what is left, then your take-home pay. In a month whose withholding estimate is larger than the paycheck &mdash; the month a 401(k) is cashed out, say &mdash; the paycheck withholds all it can and the monthly true-up collects the rest from your funding accounts. A deferral the paycheck cannot cover is cut, and the rest of the year's limit stays available to later paychecks.</span>
+                    <span class="text-sm text-gray-700">A paycheck never pays out more than it earns. Deductions run in real payroll order: <strong>FICA &rarr; federal income tax withholding &rarr; pre-tax 401(k) and IRA deferrals &rarr; take-home pay</strong>. If an unusual income spike makes a month&rsquo;s estimated withholding exceed the paycheck, the paycheck withholds all it can and the monthly true-up collects the rest from your funding accounts. If a pre-tax deferral exceeds what is left, it is trimmed for that month and the unused cap remains available to later paychecks.</span>
                 </div>
             </div>
         </div>
@@ -143,19 +145,19 @@
                 <span class="text-2xl">📉</span>
                 <h2 class="text-xl font-bold tracking-tight">Monthly Expense</h2>
             </div>
-            <p class="text-gray-600 mb-4 leading-relaxed">Bills don&rsquo;t stay flat. Expenses grow with inflation, so you can test whether your plan holds up over 10, 20 or 30 years.</p>
+            <p class="text-gray-600 mb-4 leading-relaxed">Recurring living costs that grow with inflation over time, letting you test whether your plan holds up over decades.</p>
             <div class="space-y-2">
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 1</span>
-                    <span class="text-sm text-gray-700">Expenses are debited at the <strong>end of each month</strong>, after all income and transfers have settled &mdash; mirroring how bills work in real life.</span>
+                    <span class="text-sm text-gray-700">Expenses are paid at the <strong>end of each month</strong> (day 30), after income and rebalance transfers have settled and <em>before</em> monthly investment growth is applied &mdash; so money spent on bills does not also earn that month&rsquo;s market return.</span>
                 </div>
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 2</span>
-                    <span class="text-sm text-gray-700">Starting from month two, inflation is applied at the beginning of each month, compounding so that a <strong>full year rises by exactly the annual rate</strong> &mdash; your $500 grocery bill today won't be $500 in a decade.</span>
+                    <span class="text-sm text-gray-700">Starting in month two, inflation compounds monthly so that a <strong>full year rises by exactly your annual inflation rate</strong> (or the expense&rsquo;s own growth rate, if you set one).</span>
                 </div>
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 3</span>
-                    <span class="text-sm text-gray-700">Salary rises once a year; expenses rise a little every month. Over a full year both reach their annual rate &mdash; the difference is only in when the increase arrives.</span>
+                    <span class="text-sm text-gray-700">Salaries step up once a year while expenses inflate a little each month. Over a full 12-month year, both reach their exact stated annual rate.</span>
                 </div>
             </div>
         </div>
@@ -170,27 +172,27 @@
                 <h2 class="text-xl font-bold tracking-tight">Retirement Accounts</h2>
                 <span class="text-xs text-gray-400 font-medium ml-1">401(k) &middot; IRA &middot; Roth</span>
             </div>
-            <p class="text-gray-600 mb-4 leading-relaxed">Whether you defer tax now, pay it later or never pay it, the simulator enforces the IRS contribution limits and withdrawal rules.</p>
+            <p class="text-gray-600 mb-4 leading-relaxed">Tax-deferred and tax-free retirement accounts, with IRS contribution caps, required minimum distributions, and source withholding built in.</p>
             <div class="space-y-2">
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 1</span>
-                    <span class="text-sm text-gray-700">Annual contribution limits are enforced against a <strong>household</strong> total. Filing Single: <strong>$24,500 for 401(k)</strong> ($32,500 if 50+) and <strong>$7,500 for IRA/Roth</strong> ($8,600 if 50+). Filing jointly, each figure is <strong>doubled</strong> &mdash; $49,000 and $65,000 for 401(k), $15,000 and $17,200 for IRA/Roth. Limits start from the 2026 figures and are indexed forward by your inflation rate each simulated year. Contributions are sourced from linked income via fund transfers; anything over the cap stays in the source account and is reported as a <em>Contribution capped</em> note.</span>
+                    <span class="text-sm text-gray-700">Annual contribution limits are enforced at the <strong>household</strong> level. In 2026, filing Single allows <strong>$24,500 for 401(k)</strong> ($32,500 at age 50+) and <strong>$7,500 combined for Traditional &amp; Roth IRA</strong> ($8,600 at 50+). Filing jointly doubles those allowances ($49,000 / $65,000 for 401(k) and $15,000 / $17,200 for IRA/Roth). Caps index forward each year with your inflation rate. Contributions must come from earned income via fund transfers; any excess stays in the paycheck and is noted as <em>Contribution capped</em>.</span>
                 </div>
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 2</span>
-                    <span class="text-sm text-gray-700"><strong>Required Minimum Distributions</strong> follow SECURE Act 2.0 rules: age 72 if born before 1951, age 73 if born 1951&ndash;1959, age 75 if born 1960 or later. The simulator uses the IRS Uniform Lifetime Table to calculate your annual RMD automatically.</span>
+                    <span class="text-sm text-gray-700"><strong>Required Minimum Distributions (RMDs)</strong> follow SECURE Act 2.0 rules based on your plan&rsquo;s birth year: age 72 if born before 1951, age 73 if born 1951&ndash;1959, and age 75 if born 1960 or later. Each year&rsquo;s RMD is calculated from the prior December 31 balance using the IRS Uniform Lifetime Table, and any monthly shortfall not met by your regular withdrawals is automatically distributed to your everyday deposit account.</span>
                 </div>
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 3</span>
-                    <span class="text-sm text-gray-700">Tax treatment follows real-world rules: <strong>401(k) and IRA withdrawals</strong> are taxed as ordinary income, while <strong>Roth distributions are tax-free</strong> &mdash; a powerful lever in your retirement planning.</span>
+                    <span class="text-sm text-gray-700"><strong>401(k) and Traditional IRA withdrawals</strong> are taxed as ordinary income, while <strong>Roth IRA distributions are completely tax-free</strong> and have no RMDs.</span>
                 </div>
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 4</span>
-                    <span class="text-sm text-gray-700"><strong>10% federal tax is withheld at the source</strong> of every traditional IRA or 401(k) distribution, mirroring the custodian default when no election is filed. The draw is grossed up, so a $1,000 transfer still delivers $1,000 and an extra $111 leaves the account as withholding. <strong>Roth is excluded</strong> &mdash; the test is whether the account is tax-deferred, not whether it is a retirement account. If the account is empty, the withholding is re-sourced from your funding accounts; it is never skipped.</span>
+                    <span class="text-sm text-gray-700"><strong>10% federal tax is withheld at the source</strong> on every Traditional IRA or 401(k) distribution (matching the Form W-4R custodian default). The withdrawal is grossed up so a $1,000 transfer still delivers $1,000 and an extra $111 leaves the account as withholding. <strong>Roth distributions and Roth conversions are excluded</strong> &mdash; conversions move the full requested amount into your Roth IRA and settle the resulting tax via true-up. If a tax-deferred account empties mid-draw, withholding spills over to your funding backstop accounts rather than being skipped.</span>
                 </div>
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 5</span>
-                    <span class="text-sm text-gray-700">Withholding governs <strong>where the cash comes from, not what you owe</strong>. The monthly and annual true-ups reconcile over- and under-withholding in both directions, so the household's total tax is the same either way &mdash; and a refund is credited back rather than dropped. Only tax an account actually paid counts as withheld: what your funding accounts cannot cover is flagged as unfunded, and the year is settled against what was paid.</span>
+                    <span class="text-sm text-gray-700">Withholding only determines <strong>when and from which account cash is collected</strong>, not your final tax bill. Monthly and annual true-ups reconcile over- and under-withholding in both directions, refunding any overpayment to your everyday deposit account. Only taxes actually paid count as withheld; any unpaid balance is flagged as <em>Unfunded</em>.</span>
                 </div>
             </div>
         </div>
@@ -201,19 +203,19 @@
                 <span class="text-2xl">📊</span>
                 <h2 class="text-xl font-bold tracking-tight">Taxable Account (Brokerage)</h2>
             </div>
-            <p class="text-gray-600 mb-4 leading-relaxed">Your taxable investment account. The simulator tracks your cost basis, so the gain on each withdrawal is measured and taxed correctly.</p>
+            <p class="text-gray-600 mb-4 leading-relaxed">Your taxable investment account. Cost basis is tracked alongside market value so capital gains on every sale are measured accurately.</p>
             <div class="space-y-2">
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 1</span>
-                    <span class="text-sm text-gray-700">Growth compounds monthly so that a <strong>full year earns exactly the annual return rate</strong> &mdash; the way a market return is measured, so 8.5% means 8.5%. Your cost basis is tracked separately, so gains are always measured against what you actually invested.</span>
+                    <span class="text-sm text-gray-700">Growth compounds monthly so that a <strong>full year earns exactly the annual return rate</strong>. Dividends (qualified and non-qualified) are taxed as earned and automatically step up your cost basis when reinvested so you are never taxed on them twice.</span>
                 </div>
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 2</span>
-                    <span class="text-sm text-gray-700">On withdrawal, basis is reduced <strong>proportionally</strong> &mdash; not dollar-for-dollar &mdash; so your realized gain reflects the correct share of appreciation.</span>
+                    <span class="text-sm text-gray-700">When you withdraw, any fresh deposits added in the <strong>same month</strong> come out first at $0 capital gain; remaining withdrawals reduce your cost basis <strong>proportionally</strong> so realized gains match your account&rsquo;s actual appreciation share.</span>
                 </div>
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 3</span>
-                    <span class="text-sm text-gray-700">Gains realized by withdrawals are taxed at <strong>long-term capital-gains rates</strong>. Short-term rates apply only when the whole account closes within 12 months of its start date (see <a href="#limits" class="underline">What This Engine Does Not Model</a>).</span>
+                    <span class="text-sm text-gray-700">Gains realized from withdrawals are taxed at <strong>long-term capital-gains rates</strong>. Short-term rates apply only if the entire account closes within 12 months of its start date (see <a href="#limits" class="underline">What This Engine Does Not Model</a>).</span>
                 </div>
             </div>
         </div>
@@ -224,19 +226,19 @@
                 <span class="text-2xl">💵</span>
                 <h2 class="text-xl font-bold tracking-tight">Cash</h2>
             </div>
-            <p class="text-gray-600 mb-4 leading-relaxed">In your wallet, your checking account, or under the mattress. Cash is king for liquidity &mdash; but unless you're in a deflationary spiral, it's your worst-performing asset class over time.</p>
+            <p class="text-gray-600 mb-4 leading-relaxed">Checking accounts or cash on hand &mdash; your most liquid bucket for everyday inflows and expenses.</p>
             <div class="space-y-2">
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 1</span>
-                    <span class="text-sm text-gray-700">If you assign an annual return rate, interest accrues <strong>monthly</strong> and is treated as <strong>ordinary income</strong> for tax purposes.</span>
+                    <span class="text-sm text-gray-700">If you set an annual return rate, interest accrues <strong>monthly</strong> and is taxed as <strong>ordinary income</strong>.</span>
                 </div>
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 2</span>
-                    <span class="text-sm text-gray-700">No cost basis is tracked &mdash; every dollar withdrawn is a dollar, making cash the simplest asset type in the simulator.</span>
+                    <span class="text-sm text-gray-700">No capital-gains basis is tracked &mdash; every dollar withdrawn is tax-free principal.</span>
                 </div>
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 3</span>
-                    <span class="text-sm text-gray-700">Cash is the <strong>first account the funding backstop draws on</strong>, and where leftover take-home pay and sale proceeds land when no fund transfer says otherwise.</span>
+                    <span class="text-sm text-gray-700">Cash is <strong>first in line for both automatic payouts and automatic deposits</strong> &mdash; leftover take-home pay, RMDs, sale proceeds, and tax refunds land here when no transfer rule specifies another account, even if the balance is $0.</span>
                 </div>
             </div>
         </div>
@@ -247,15 +249,15 @@
                 <span class="text-2xl">🐖</span>
                 <h2 class="text-xl font-bold tracking-tight">Savings</h2>
             </div>
-            <p class="text-gray-600 mb-4 leading-relaxed">High-yield savings accounts and certificates of deposit. A safe harbor for your emergency fund or short-term goals, with predictable returns and no market risk.</p>
+            <p class="text-gray-600 mb-4 leading-relaxed">High-yield savings accounts and certificates of deposit &mdash; a safe bucket for emergency reserves or near-term goals with predictable interest.</p>
             <div class="space-y-2">
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 1</span>
-                    <span class="text-sm text-gray-700">Interest accrues monthly so that a <strong>full year earns exactly the annual rate</strong>, like a savings APY, and is classified as <strong>ordinary income</strong>.</span>
+                    <span class="text-sm text-gray-700">Interest compounds monthly so that a <strong>full year earns exactly the annual rate</strong> (like a bank APY) and is taxed as <strong>ordinary income</strong>.</span>
                 </div>
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 2</span>
-                    <span class="text-sm text-gray-700">Behaves identically to cash in terms of tax treatment, but gives you a dedicated card to model <strong>different rates</strong> for different buckets of safe money.</span>
+                    <span class="text-sm text-gray-700">Taxed identically to Cash, but modeled as its own card so you can assign separate rates and transfer rules for checking vs. high-yield savings.</span>
                 </div>
             </div>
         </div>
@@ -266,19 +268,19 @@
                 <span class="text-2xl">💳</span>
                 <h2 class="text-xl font-bold tracking-tight">Debt</h2>
             </div>
-            <p class="text-gray-600 mb-4 leading-relaxed">Credit cards, auto loans, student debt &mdash; anything with a balance and a rate. You set the payoff timeline, and the simulator builds the amortization schedule around it.</p>
+            <p class="text-gray-600 mb-4 leading-relaxed">Credit cards, auto loans, or student debt. Enter your balance, interest rate, and payoff timeline, and the engine builds the monthly amortization schedule.</p>
             <div class="space-y-2">
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 1</span>
-                    <span class="text-sm text-gray-700">Uses the same <strong>amortization formula as a mortgage</strong>, splitting each payment into principal and interest based on your rate and payoff period.</span>
+                    <span class="text-sm text-gray-700">Uses the same <strong>standard amortization formula</strong> as a mortgage (1/12 of APR per month), splitting each payment into principal and interest.</span>
                 </div>
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 2</span>
-                    <span class="text-sm text-gray-700">You control the <strong>months-to-payoff</strong> &mdash; want to see what happens if you pay off that credit card in 12 months instead of 36? Change one number.</span>
+                    <span class="text-sm text-gray-700">You control the <strong>months to payoff</strong>, making it easy to compare faster vs. slower payoff timelines.</span>
                 </div>
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 3</span>
-                    <span class="text-sm text-gray-700">Once the balance reaches zero, <strong>interest stops accruing</strong> &mdash; the debt stays open (like a line of credit at $0) but doesn't generate reverse interest. Mortgages automatically close when fully amortized.</span>
+                    <span class="text-sm text-gray-700">Once the balance hits $0, <strong>interest stops accruing</strong>. Unlike mortgages (which close automatically when paid off), a debt card stays open at $0 like a paid-off line of credit.</span>
                 </div>
             </div>
         </div>
@@ -289,19 +291,19 @@
                 <span class="text-2xl">🇺🇸</span>
                 <h2 class="text-xl font-bold tracking-tight">US Treasury</h2>
             </div>
-            <p class="text-gray-600 mb-4 leading-relaxed">Bills, notes, and bonds backed by the full faith and credit of the United States government. The benchmark for risk-free returns &mdash; and a cornerstone of conservative portfolios.</p>
+            <p class="text-gray-600 mb-4 leading-relaxed">US government bills, notes, and bonds modeled for steady federal-taxable interest income.</p>
             <div class="space-y-2">
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 1</span>
-                    <span class="text-sm text-gray-700">Interest income accrues monthly via the annual return rate and is taxed as <strong>ordinary income at the federal level</strong>.</span>
+                    <span class="text-sm text-gray-700">Interest compounds monthly at the annual yield you set and is taxed as <strong>ordinary federal income</strong>.</span>
                 </div>
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 2</span>
-                    <span class="text-sm text-gray-700">The principal value stays flat &mdash; <strong>no price appreciation or depreciation</strong> is modeled, keeping the simulation focused on coupon income.</span>
+                    <span class="text-sm text-gray-700">Principal stays flat &mdash; <strong>no market price swings or capital gains</strong> are modeled, keeping the focus on coupon income.</span>
                 </div>
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 3</span>
-                    <span class="text-sm text-gray-700">Interest income flows into your <strong>annual tax computation</strong>, so you can see how treasuries affect your overall bracket and liability.</span>
+                    <span class="text-sm text-gray-700">Treasury interest counts toward your federal tax bracket, provisional income, and Net Investment Income Tax (NIIT).</span>
                 </div>
             </div>
         </div>
@@ -312,19 +314,19 @@
                 <span class="text-2xl">🏢</span>
                 <h2 class="text-xl font-bold tracking-tight">Corporate Bond</h2>
             </div>
-            <p class="text-gray-600 mb-4 leading-relaxed">Higher coupons, higher risk. Corporate bonds let you model the yield premium you earn for lending to companies instead of the government &mdash; and the simulator treats the income accordingly.</p>
+            <p class="text-gray-600 mb-4 leading-relaxed">Corporate fixed-income holdings modeled for predictable coupon yields, separate from US Treasuries.</p>
             <div class="space-y-2">
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 1</span>
-                    <span class="text-sm text-gray-700">Interest accrues monthly so that a <strong>full year earns exactly the annual rate</strong>, just like treasuries &mdash; but typically at a higher coupon to reflect credit risk.</span>
+                    <span class="text-sm text-gray-700">Interest compounds monthly so that a <strong>full year earns exactly the annual yield</strong>.</span>
                 </div>
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 2</span>
-                    <span class="text-sm text-gray-700">All coupon income is taxed as <strong>ordinary income</strong> &mdash; no preferential capital gains treatment here.</span>
+                    <span class="text-sm text-gray-700">All coupon income is taxed as <strong>ordinary income</strong> (and counts toward NIIT), with no preferential capital-gains rate.</span>
                 </div>
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 3</span>
-                    <span class="text-sm text-gray-700">Like treasuries, <strong>no price appreciation</strong> is modeled &mdash; the focus is on predictable income, not speculative gains.</span>
+                    <span class="text-sm text-gray-700">Like US Treasuries, <strong>no bond price appreciation or depreciation</strong> is modeled.</span>
                 </div>
             </div>
         </div>
@@ -333,32 +335,32 @@
 
     <!-- ═══ Fund Transfers ═══ -->
     <div id="transfers" class="glass-card p-8 sm:p-12 mb-8">
-        <h2 class="text-2xl font-bold tracking-tight mb-4">Fund Transfers</h2>
-        <p class="text-gray-600 mb-6 leading-relaxed">Fund transfers move a percentage of one asset&rsquo;s value into another on a schedule you control: salary into a 401(k), a brokerage account into cash, or a one-time sweep when an asset closes.</p>
+        <h2 class="text-2xl font-bold tracking-tight mb-4">Fund Transfers &amp; Automatic Failover</h2>
+        <p class="text-gray-600 mb-6 leading-relaxed">Fund transfers move a percentage of one asset into another on a schedule you control &mdash; such as sending salary into a 401(k), funding living expenses from an IRA, or sweeping an account when it closes.</p>
         <div class="grid sm:grid-cols-2 gap-4">
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Recurring Transfers</div>
-                <div class="text-sm text-gray-500">Set a monthly percentage of the source asset's value to move each month into the target account.</div>
+                <div class="text-sm text-gray-500">Move a fixed monthly percentage of a source asset into a target account. On a paycheck, 401(k) and Traditional IRA deferrals are percentages of gross pay, while savings, brokerage, and Roth transfers are percentages of take-home pay. On an expense, the percentage is the share of that bill drawn from the named account.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">On-Close Transfers</div>
-                <div class="text-sm text-gray-500">When an asset reaches its finish date, a separate close percentage sweeps the remaining value into the target account automatically.</div>
+                <div class="text-sm text-gray-500">When an asset reaches its finish date (or is closed by a life event), a separate close percentage sweeps its remaining balance into the target accounts automatically. Any unallocated proceeds land in your everyday deposit account.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">System Transfers</div>
-                <div class="text-sm text-gray-500">Mortgage payments, property tax, maintenance, insurance and tax settlements are automatically debited from your funding accounts. These implicit flows appear in the <strong>Flows</strong> view under <em>Moved automatically</em>, beside your configured transfers.</div>
+                <div class="text-sm text-gray-500">Mortgage payments, property taxes, home maintenance and insurance, RMDs, and tax settlements are handled automatically. They appear in the <strong>Flows</strong> view under <em>Moved automatically</em>, right beside your configured rules.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Funding Backstop</div>
-                <div class="text-sm text-gray-500">When no transfer you configured covers an obligation, the engine falls back to your everyday accounts in a fixed order &mdash; <strong>Cash &rarr; Savings &rarr; Taxable Account &rarr; US Treasury &rarr; Corporate Bond</strong> &mdash; and the first one holding a positive balance pays. <strong>Retirement accounts are never chosen automatically</strong> at any age: spending a 401(k), IRA or Roth has tax and penalty consequences the simulator will not decide for you. If nothing is eligible, the payment is recorded as <em>Unfunded</em> rather than quietly skipped.</div>
+                <div class="font-semibold text-sm mb-1">Funding Backstop &amp; Failover Order</div>
+                <div class="text-sm text-gray-500">When no transfer covers an obligation &mdash; or when a designated funding account runs dry mid-payment &mdash; the engine automatically steps through your open everyday accounts in order: <strong>Cash &rarr; Savings &rarr; Taxable Account &rarr; US Treasury &rarr; Corporate Bond</strong>, draining across multiple accounts in a single draw if needed.<br><br><strong>Before age 60</strong>, retirement accounts are never drawn automatically (protecting them from early-withdrawal rules). <strong>Starting at age 60</strong> (the whole-year equivalent of 59&frac12;), once every everyday account reaches $0, failover continues into retirement accounts in tax-efficient order: <strong>Traditional IRA &rarr; 401(k) &rarr; Roth IRA</strong> (with Roth strictly last resort). If no eligible account can cover the remainder, it is recorded as <em>Unfunded</em> rather than quietly skipped.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Where the Money Went</div>
-                <div class="text-sm text-gray-500">Switch to the <strong>Flows</strong> view in Your Portfolio to see what actually moved in a month or a year: one bar per source of money, its parts into your accounts, spent, or paid in tax. Under the bars, each rule in force sits beside what it moved, and the money no rule sent is listed as automatic.</div>
+                <div class="font-semibold text-sm mb-1">Automatic Deposits &amp; Refunds</div>
+                <div class="text-sm text-gray-500">Leftover take-home pay, RMDs, sale proceeds, tax refunds, and ACA credit payouts land in the first open everyday account in the same order (<strong>Cash &rarr; Savings &rarr; Taxable Account &rarr; US Treasury &rarr; Corporate Bond</strong>), even if its balance is $0. Automatic deposits <strong>never</strong> land in retirement accounts.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Rebalance Engine</div>
-                <div class="text-sm text-gray-500">Capital-to-capital, capital-to-retirement, and retirement-to-capital transfers run on <strong>day 1</strong> of each month <em>after</em> the payroll pipeline completes. This means salary deposits and 401(k) contributions are settled before rebalancing pulls from accounts. Roth conversions, early mortgage payoff, and savings&nbsp;&rarr;&nbsp;brokerage sweeps all route through here, with realized gains picked up automatically by the monthly tax true-up.</div>
+                <div class="text-sm text-gray-500">Account-to-account transfers &mdash; such as Roth conversions, savings-to-brokerage sweeps, or extra mortgage paydowns &mdash; run on <strong>day 1</strong> of each month right <em>after</em> payroll finishes, so new deposits settle before rebalancing draws from them. Any capital gains or conversion income are picked up automatically by the monthly tax true-up.</div>
             </div>
         </div>
     </div>
@@ -366,35 +368,36 @@
     <!-- ═══ Metrics ═══ -->
     <div class="glass-card p-8 sm:p-12 mb-8">
         <h2 class="text-2xl font-bold tracking-tight mb-4">Metrics</h2>
-        <p class="text-gray-600 mb-6 leading-relaxed">Every asset tracks a rich set of metrics each month &mdash; balances, flows, taxes, and returns. Four of them are <strong>pinned</strong> so they always appear first wherever you cycle metrics (timeline, projections, visualizer, asset cards).</p>
+        <p class="text-gray-600 mb-6 leading-relaxed">Every asset records monthly balances, cash flows, taxes, and returns. Four core metrics are <strong>pinned</strong> so they always appear first whenever you switch metrics across the timeline, charts, visualizer, or asset cards.</p>
         <div class="grid sm:grid-cols-2 gap-4">
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">&#x1F4B0; Net Worth</div>
-                <div class="text-sm text-gray-500">The balance at the end of the month. Added up across your assets it is your <strong>net worth</strong>, which is how it is labelled in the metric menus and badges.</div>
+                <div class="text-sm text-gray-500">Each asset&rsquo;s balance at the end of the month. Summed across all balance-sheet assets (minus mortgages and debt), this is your total <strong>Net Worth</strong>.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">&#x1F4CA; Net Worth Change <span class="text-xs text-gray-400 font-normal">(derived)</span></div>
-                <div class="text-sm text-gray-500">The change in Net Worth from one month to the next. It combines growth <em>and</em> cash flow in one number, so you can see when spending is outpacing growth.</div>
+                <div class="text-sm text-gray-500">The month-over-month change in Net Worth. Combining market growth and cash flow into one figure shows at a glance whether spending is outpacing returns.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">&#x1F4C8; Growth</div>
-                <div class="text-sm text-gray-500">Appreciation earned through the annual return rate, compounded monthly so that a full year earns exactly that rate. Does not include deposits or withdrawals &mdash; pure market return.</div>
+                <div class="text-sm text-gray-500">Pure market appreciation earned from the annual return rate, compounded monthly so a full year equals that exact rate. Excludes deposits and withdrawals.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">&#x1F4B8; Cash Flow</div>
-                <div class="text-sm text-gray-500">Income received from outside your accounts &mdash; wages, Social Security, pensions, interest and dividends &mdash; less expenses (living costs, the whole mortgage payment, maintenance and insurance) and every tax booked. A withdrawal from one of your own accounts, or a transfer between them, is not cash flow. Added up across your accounts it is the household&rsquo;s cash flow in Reports and in Month &amp; Year Details. In retirement it usually runs negative: that is what your savings covered.</div>
+                <div class="text-sm text-gray-500">External income &mdash; wages, Social Security, pensions, interest, and dividends &mdash; minus expenses (living costs, the full mortgage payment, maintenance, and insurance) and taxes paid. Moving money between your own accounts, or withdrawing from savings to spend, is not external income. In retirement, cash flow is normally negative because withdrawals cover the gap.</div>
             </div>
         </div>
         <div class="mt-6 p-4 rounded-xl bg-blue-50/60 border border-blue-100">
-            <div class="text-sm text-gray-700"><strong>Why track Net Worth Change?</strong> Growth alone is misleading during retirement &mdash; a portfolio can grow 6% while withdrawals drain 8%, leaving you poorer. Net Worth Change is the honest bottom line: did my wealth actually go up or down this month?</div>
+            <div class="text-sm text-gray-700"><strong>Why track Net Worth Change?</strong> Investment growth alone can be misleading in retirement &mdash; a portfolio might earn 6% while withdrawals drain 8%, leaving you with less overall. Net Worth Change gives you the bottom line: did your wealth grow or shrink this month?</div>
         </div>
     </div>
 
     <!-- ═══ Tax Rates ═══ -->
     <div id="taxes" class="glass-card p-8 sm:p-12 mb-8">
         <h2 class="text-2xl font-bold tracking-tight mb-4">Tax Rates</h2>
-        <p class="text-gray-600 mb-4 leading-relaxed">Every run starts from the <strong>2026 federal tables</strong> for your filing status: income brackets, capital-gains bands, the standard deduction, the Social Security wage base and the retirement contribution limits. From age 65 the standard deduction grows by the additional deduction for age 65 or older ($2,050 single, $1,650 per spouse in 2026), and for tax years 2025 through 2028 the senior deduction adds <strong>$6,000 per person</strong> on top, phasing out at 6% of income over $75,000 / $150,000. A household that itemizes keeps the senior deduction but not the additional standard deduction.</p>
-        <p class="text-gray-600 mb-6 leading-relaxed">From the second simulated year onward, all of those figures are <strong>indexed forward by your inflation rate</strong> &mdash; brackets widen, the deduction rises, the wage base climbs. That keeps a 30-year projection from quietly pushing you into the top bracket through inflation alone. Some figures are deliberately held fixed, because Congress never indexed them: the primary-home sale exclusion at $250,000&thinsp;/&thinsp;$500,000, the Net Investment Income Tax threshold at $200,000&thinsp;/&thinsp;$250,000, the Social Security provisional-income thresholds, and the senior deduction. The thresholds catch more households every year by standing still, and a simulator that quietly inflated them would model a tax that fades away. Here are the publications we reference:</p>
+        <p class="text-gray-600 mb-4 leading-relaxed">Simulations start from the <strong>2026 federal tax tables</strong> for your filing status: ordinary income brackets, long-term capital-gains brackets, the standard deduction, the Social Security wage base, and retirement contribution caps. Starting at age 65, the standard deduction adds the age-65+ amount ($2,050 single or $1,650 per spouse in 2026). For tax years 2025&ndash;2028, the temporary senior deduction adds <strong>$6,000 per person</strong> aged 65+, phasing out at 6% of income above $75,000 single / $150,000 joint (and available even if you itemize). Unused deductions left after zeroing ordinary income automatically shelter long-term capital gains and qualified dividends (IRC &sect;1(h)).</p>
+        <p class="text-gray-600 mb-4 leading-relaxed">From the second simulated year onward, brackets, standard deductions, the Social Security wage base, and retirement caps are <strong>indexed forward by your inflation rate</strong> so inflation alone doesn&rsquo;t push you into higher brackets over a 30-year plan. Thresholds that Congress never indexed stay fixed in nominal dollars: the primary-home sale exclusion ($250,000 / $500,000), the Net Investment Income Tax threshold ($200,000 / $250,000), Social Security provisional-income thresholds ($25,000&ndash;$34,000 / $32,000&ndash;$44,000), and the temporary senior deduction.</p>
+        <p class="text-gray-600 mb-6 leading-relaxed">Annual tax true-ups, NIIT, and ACA credit reconciliations settle after year-end: mid-plan settlements book in the following January, while on a plan ending in December the final year&rsquo;s settlement folds into that closing December. Reference publications used by the engine:</p>
 
         <div class="grid gap-3">
             <a href="https://www.irs.gov/filing/federal-income-tax-rates-and-brackets" target="_blank"
@@ -457,25 +460,25 @@
             <h2 class="text-2xl font-bold tracking-tight">Net Investment Income Tax</h2>
             <span class="text-xs text-gray-400 font-medium ml-1">IRC &sect;1411 &middot; 3.8%</span>
         </div>
-        <p class="text-gray-600 mb-4 leading-relaxed">An extra <strong>3.8%</strong> on investment income, charged once a year on top of ordinary and capital-gains tax. It applies to the <strong>lesser</strong> of two numbers, which is why a large gain does not automatically mean a large surcharge:</p>
+        <p class="text-gray-600 mb-4 leading-relaxed">An extra <strong>3.8%</strong> surtax on investment income, assessed once a year on top of regular income and capital-gains taxes. It applies to the <strong>smaller</strong> of two amounts, so a large investment gain does not automatically trigger a large surtax:</p>
 
         <div class="grid sm:grid-cols-2 gap-4 mb-6">
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Your net investment income</div>
-                <div class="text-sm text-gray-500">Interest, dividends of both kinds, and capital gains both short and long. Wages, Social Security, pensions and withdrawals from retirement accounts are <strong>not</strong> investment income and are never taxed by it.</div>
+                <div class="text-sm text-gray-500">Interest, qualified and non-qualified dividends, and taxable capital gains (both short- and long-term, net of any IRC &sect;121 home-sale exclusion). Wages, Social Security, pensions, and retirement-account withdrawals are <strong>not</strong> investment income and are never directly taxed by NIIT.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">How far you are over the threshold</div>
-                <div class="text-sm text-gray-500"><strong>$200,000</strong> filing single, <strong>$250,000</strong> filing jointly, measured against your adjusted gross income &mdash; before the standard deduction, not after. Under the threshold, nothing is due however much of your income is investment income.</div>
+                <div class="font-semibold text-sm mb-1">How far your MAGI exceeds the threshold</div>
+                <div class="text-sm text-gray-500"><strong>$200,000</strong> filing Single or <strong>$250,000</strong> filing jointly, measured against Modified Adjusted Gross Income (before the standard deduction). If your MAGI stays below the threshold, NIIT is $0 no matter how much investment income you earned.</div>
             </div>
         </div>
 
         <div class="p-4 rounded-xl bg-amber-50 border border-amber-200 mb-4">
-            <div class="font-semibold text-sm mb-1">&#9888;&#65039; The part worth planning around</div>
-            <div class="text-sm text-gray-600 leading-relaxed">A withdrawal or Roth conversion from an IRA or 401(k) can never be taxed by this surcharge &mdash; but it <em>does</em> raise your adjusted gross income, and by doing so it can drag your investment income over the threshold. So a large conversion can trigger 3.8% on gains and dividends you were not otherwise going to be surcharged on. Roth <em>distributions</em> raise neither number and are safe on both counts. If you are sizing a conversion, this is often the constraint that binds first.</div>
+            <div class="font-semibold text-sm mb-1">&#9888;&#65039; Worth planning around</div>
+            <div class="text-sm text-gray-600 leading-relaxed">A withdrawal or Roth conversion from a Traditional IRA or 401(k) is never directly taxed by NIIT, <em>but</em> it raises your AGI &mdash; which can push your brokerage gains and dividends over the $200,000 / $250,000 threshold and trigger 3.8% tax on them. Tax-free <strong>Roth distributions</strong> raise neither number and never trigger NIIT.</div>
         </div>
 
-        <p class="text-gray-600 leading-relaxed">The simulator charges it once a year, with the annual tax true-up; real life has no withholding for it either. You will find it in the Taxes column of Your Portfolio, in Reports and as its own line in the Spreadsheet. Because it is paid after the year ends, a yearly report shows it under <strong>Prior-Year Settlement</strong>, the year after the income it taxes; the adjusted gross income it was measured against is in the previous year&rsquo;s report.</p>
+        <p class="text-gray-600 leading-relaxed">Like real life, NIIT has no monthly withholding and is settled once a year with the annual tax true-up (skipped if under $1). It appears in the Taxes column of Your Portfolio, in Reports under <strong>Prior-Year Settlement</strong> (the year after the income was earned, or in December of the final plan year), and as its own column in the Spreadsheet.</p>
     </div>
 
     <!-- ═══ ACA Health Insurance ═══ -->
@@ -485,36 +488,36 @@
             <h2 class="text-2xl font-bold tracking-tight">ACA Health Insurance</h2>
             <span class="text-xs text-gray-400 font-medium ml-1">IRC &sect;36B &middot; Premium Tax Credit</span>
         </div>
-        <p class="text-gray-600 mb-4 leading-relaxed">An <strong>ACA Health Insurance</strong> card is a marketplace plan&rsquo;s premium, with the premium tax credit worked out the way Form 8962 does it. It answers <em>how much is the subsidy</em> under the transfers you already have; it never changes which accounts pay.</p>
+        <p class="text-gray-600 mb-4 leading-relaxed">An <strong>ACA Health Insurance</strong> card models a marketplace health plan together with its federal Premium Tax Credit (Form 8962). It calculates your subsidy from the income your plan actually produces without altering your transfer rules.</p>
 
         <div class="space-y-2 mb-6">
             <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                 <span class="rule-chip">Rule 1</span>
-                <span class="text-sm text-gray-700">Each month the credit is the <strong>benchmark premium</strong> (the second-lowest-cost silver plan for your household) less your expected contribution, never more than the premium itself. Your contribution is a percentage of your <strong>ACA MAGI</strong>: AGI plus the Social Security that is not taxed. The percentage rises with income, from 2.10% to 9.96% of it in 2026 and 2.15% to 10.22% in 2027.</span>
+                <span class="text-sm text-gray-700">Each month, the credit equals the <strong>benchmark premium</strong> (the second-lowest-cost silver plan for your household) minus your expected contribution, capped at the plan&rsquo;s actual premium. Your expected contribution is a sliding percentage of <strong>ACA MAGI</strong> (AGI plus any untaxed Social Security benefits) &mdash; ranging from 2.10% to 9.96% in 2026 and 2.15% to 10.22% in 2027.</span>
             </div>
             <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                 <span class="rule-chip">Rule 2</span>
-                <span class="text-sm text-gray-700">The credit needs household income from <strong>100% to 400% of the poverty line</strong> for your household&rsquo;s size, which comes from your filing status unless the card names one. <strong>One dollar over 400% loses all of it</strong>: the enhanced credits that removed the cliff expired after 2025. In 2027 the cliff is $63,840 for one person and $86,560 for two. Under 100% there is no credit, unless the advance was paid on an estimate of 100% or more.</span>
+                <span class="text-sm text-gray-700">Eligibility runs from <strong>100% to 400% of the Federal Poverty Level (FPL)</strong> for your household size (derived from filing status unless you set a custom size). <strong>Crossing 400% FPL by even $1 eliminates the entire credit</strong>, since the temporary enhanced subsidies expired after 2025 (in 2027 the 400% cliff is $63,840 for one person and $86,560 for two). Below 100% FPL there is no credit unless you received an advance based on an estimate of 100% FPL or higher.</span>
             </div>
             <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                 <span class="rule-chip">Rule 3</span>
-                <span class="text-sm text-gray-700">The credit is <strong>advanced each month</strong> on an estimate of the year&rsquo;s income: last year&rsquo;s ACA MAGI when you had the plan all of last year, otherwise the card&rsquo;s Estimated Income. With neither, nothing is advanced. <strong>Advance Credit %</strong> takes less in advance, as some early retirees do to lower the risk of repaying.</span>
+                <span class="text-sm text-gray-700">The credit is <strong>advanced monthly</strong> to lower what your accounts pay out of pocket, based on estimated annual income: prior-year ACA MAGI if you held marketplace coverage all of last year, or otherwise the card&rsquo;s <strong>Estimated Income</strong>. With neither, no advance is paid. You can lower <strong>Advance Credit %</strong> to take less upfront and reduce the chance of repaying at tax time.</span>
             </div>
             <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                 <span class="rule-chip">Rule 4</span>
-                <span class="text-sm text-gray-700">The year is <strong>settled on the return</strong>, booked the following January like the tax true-up: excess advance is repaid in full, with no cap from 2026, and credit still owed is paid to you. A plan that starts after January cannot see the year&rsquo;s earlier months, so its first year is settled against the card&rsquo;s estimate.</span>
+                <span class="text-sm text-gray-700">After year-end, the credit is <strong>reconciled on the return</strong> (booked the following January, or in December of a plan&rsquo;s final year): any excess advance is repaid in full with no cap from 2026 onward, and any remaining credit owed is refunded to your everyday deposit account. If a plan starts mid-year (after January), its partial first year reconciles against the card&rsquo;s estimate.</span>
             </div>
             <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                 <span class="rule-chip">Rule 5</span>
-                <span class="text-sm text-gray-700">Marketplace plans are priced by calendar year, so the premium and benchmark <strong>step once a year, in January</strong>, at the card&rsquo;s growth rate. It defaults to inflation and is usually well above it; in a backtest the card keeps that excess on top of the year&rsquo;s CPI. Past 2027 the poverty line is indexed like the tax tables, and the percentages move with the card&rsquo;s growth over inflation, as the law adjusts them for premiums rising faster than incomes.</span>
+                <span class="text-sm text-gray-700">Marketplace plans reprice by calendar year, so both the premium and benchmark <strong>step up once a year in January</strong> at the card&rsquo;s growth rate (defaulting to plan inflation, though you can set a higher healthcare rate). During historical backtests and Monte Carlo runs, any growth above plan inflation is preserved on top of each year&rsquo;s CPI. Beyond 2027, the poverty line indexes with inflation while expected-contribution percentages scale with excess premium growth.</span>
             </div>
             <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                 <span class="rule-chip">Rule 6</span>
-                <span class="text-sm text-gray-700">Coverage ends at <strong>Medicare</strong>: a card with no finish date ends the December before you turn 65.</span>
+                <span class="text-sm text-gray-700">Coverage ends at <strong>Medicare</strong>: if you leave the finish date blank, the card automatically ends in December before you turn 65. Because plan premiums are set by the marketplace, ACA cards are also exempt from Guyton-Klinger guardrail cuts and raises.</span>
             </div>
         </div>
 
-        <p class="text-gray-600 leading-relaxed">The premium and the advance are lines in the card&rsquo;s Expenses group in Month &amp; Year Details, and the tax-year strip shows the credit the year allowed. The January settlement is in the Taxes column, under <strong>Prior-Year Settlement</strong> in Reports, and in each yearly report&rsquo;s credit rows.</p>
+        <p class="text-gray-600 leading-relaxed">Monthly premiums and advances appear under Expenses in Month &amp; Year Details, the Tax Year strip summarizes the annual credit, and January reconciliations appear in the Taxes column and under <strong>Prior-Year Settlement</strong> in Reports.</p>
     </div>
 
     <!-- ═══ Filing Status ═══ -->
@@ -524,28 +527,28 @@
             <h2 class="text-2xl font-bold tracking-tight">Filing Status</h2>
             <span class="text-xs text-gray-400 font-medium ml-1">Single &middot; Married Filing Jointly</span>
         </div>
-        <p class="text-gray-600 mb-6 leading-relaxed">Set <strong>Filing As</strong> in the Settings Row at the top of the page and the whole tax model moves with it. Filing jointly is not a discount applied at the end &mdash; it selects a different table at every point where tax is computed.</p>
+        <p class="text-gray-600 mb-6 leading-relaxed">Choosing <strong>Filing As</strong> in the Settings Row switches the entire tax engine to the matching IRS tables &mdash; it is not an end-of-year discount.</p>
         <div class="grid sm:grid-cols-2 gap-4 mb-6">
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">What changes</div>
-                <div class="text-sm text-gray-500">Income brackets, capital gains bands, the standard deduction, the primary-home sale exclusion, and the 401(k) and IRA contribution allowances all switch to their joint figures.</div>
+                <div class="text-sm text-gray-500">Ordinary brackets, long-term capital-gains bands, standard and age-65+ deductions, NIIT and Social Security thresholds, the primary-home exclusion, and 401(k)/IRA contribution caps all switch to their joint tables.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Household, not per-person</div>
-                <div class="text-sm text-gray-500">The simulation models <strong>one household</strong>, not two individuals. Contribution limits are enforced against a household total, so a married plan gets two 401(k) allowances between all its income assets &mdash; not one each, tracked separately.</div>
+                <div class="font-semibold text-sm mb-1">Household totals</div>
+                <div class="text-sm text-gray-500">The engine models <strong>one household</strong> rather than two separate tax individuals. Married filers receive double the household 401(k) and IRA contribution allowances shared across their income streams.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Two incomes, one plan</div>
-                <div class="text-sm text-gray-500">Model a second earner by adding a second Working Income asset. The joint Quick Start profiles do exactly this &mdash; <strong>Salary A</strong> and <strong>Salary B</strong>, each with its own rate and retirement date.</div>
+                <div class="font-semibold text-sm mb-1">Modeling two earners</div>
+                <div class="text-sm text-gray-500">Add a second Working Income asset for a second spouse &mdash; just like the joint Quick Start profiles (<strong>Salary A</strong> and <strong>Salary B</strong>), each with its own growth rate and retirement date.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Quick Start follows your status</div>
-                <div class="text-sm text-gray-500">The welcome banner offers the four profiles that match your filing status &mdash; Early Career, Mid Career, Pre-Retirement and Retired for Single; Young Couple, Dual Income Couple, Couple Nearing Retirement and Retired Couple for joint filers.</div>
+                <div class="font-semibold text-sm mb-1">Matching Quick Start profiles</div>
+                <div class="text-sm text-gray-500">The welcome banner automatically shows four matching starter plans: Early Career, Mid Career, Pre-Retirement, and Retired for Single; or Young Couple, Dual Income Couple, Couple Nearing Retirement, and Retired Couple for Married Filing Jointly.</div>
             </div>
         </div>
         <div class="flex items-start gap-3 p-3 rounded-xl bg-amber-50/70 border border-amber-100">
             <span class="rule-chip">Known limit</span>
-            <span class="text-sm text-gray-700">The <strong>Social Security wage base is shared</strong> across a married household rather than granted per spouse. Two high earners who would each get their own cap therefore stop paying Social Security tax earlier than they really would, overstating take-home pay. This bites only when combined wages clear the cap; everything else about joint filing is modelled per the tables.</span>
+            <span class="text-sm text-gray-700">Married filers currently share a <strong>single Social Security wage base</strong> ($184,500 in 2026) across the household rather than one cap per spouse. If two spouses have combined wages above the cap, Social Security payroll tax stops slightly earlier than in real life.</span>
         </div>
     </div>
 
@@ -556,27 +559,27 @@
                 <h2 class="text-xl font-bold tracking-tight">Retirement Income</h2>
                 <span class="text-xs text-gray-400 font-medium ml-1">Social Security &middot; Annuities</span>
             </div>
-            <p class="text-gray-600 mb-4 leading-relaxed">The income that kicks in when the paychecks stop. Model Social Security benefits or any recurring income stream that starts at a future date &mdash; so your retirement projections don't pretend you're living on air.</p>
+            <p class="text-gray-600 mb-4 leading-relaxed">Recurring retirement benefits &mdash; primarily Social Security &mdash; that begin at your chosen claiming age and adjust with COLA over time.</p>
             <div class="space-y-2">
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 1</span>
-                    <span class="text-sm text-gray-700">Income is credited <strong>monthly starting on the asset's start date</strong> &mdash; perfect for modeling a Social Security benefit that begins at 62, 67, or 70. <strong>Social Security can&rsquo;t begin before 62</strong>, the earliest the law allows a claim: a benefit dated earlier starts in January of the year you turn 62, at the amount entered, and What needs attention says so. Quick Start, the Retirement Age setting and the asset form never date one earlier.</span>
+                    <span class="text-sm text-gray-700">Benefits begin monthly on the asset&rsquo;s start date (such as age 62, 67, or 70). <strong>Social Security cannot start before age 62</strong>, the earliest claiming age under law &mdash; a benefit dated earlier automatically defers to January of the year you turn 62 at the entered amount, and <em>What needs attention</em> notes the deferral.</span>
                 </div>
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 2</span>
-                    <span class="text-sm text-gray-700">An optional annual return rate applies <strong>cost-of-living adjustments (COLA)</strong> at year-end, so your benefit keeps pace with inflation over a 30-year retirement.</span>
+                    <span class="text-sm text-gray-700">An optional annual return rate applies annual <strong>cost-of-living adjustments (COLA)</strong> at year-end so your benefit keeps pace with inflation.</span>
                 </div>
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 3</span>
-                    <span class="text-sm text-gray-700">Retirement income is taxed as <strong>ordinary income</strong> but is <strong>exempt from FICA and Medicare</strong> &mdash; a benefit is not wages.</span>
+                    <span class="text-sm text-gray-700">Social Security benefits are <strong>exempt from FICA and Medicare payroll taxes</strong> and cannot be used to fund IRA or 401(k) contributions (which require earned income).</span>
                 </div>
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 4</span>
-                    <span class="text-sm text-gray-700"><strong>Social Security withholds nothing by default</strong>, and that is a modelling choice rather than an omission. Form W-4V is elective &mdash; most recipients never file one &mdash; so withholding by default would model a decision your household never made. The tax is still owed; it is settled from your funding accounts at the monthly and annual true-ups.</span>
+                    <span class="text-sm text-gray-700"><strong>Nothing is withheld from Social Security by default</strong>, matching real life where Form W-4V withholding is purely voluntary. Any federal tax owed on benefits is settled from your funding accounts through the monthly and annual true-ups.</span>
                 </div>
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 5</span>
-                    <span class="text-sm text-gray-700">Social Security is taxed by the IRS <strong>provisional-income test</strong>: your other income plus half your benefits. Below $25,000 single&thinsp;/&thinsp;$32,000 joint none of the benefit is taxable; up to $34,000&thinsp;/&thinsp;$44,000 at most half of it is; above that at most 85%. Capital gains count toward provisional income. The thresholds have never been indexed, so a growing share of benefits becomes taxable in later decades.</span>
+                    <span class="text-sm text-gray-700">Social Security taxation follows the IRS <strong>provisional-income test</strong> (IRC &sect;86): other income (including capital gains) plus half of your benefits. Below $25,000 single / $32,000 joint, 0% is taxable; up to $34,000 / $44,000, up to 50% is taxable; above that, up to 85% is taxable. Because Congress never indexed these thresholds, more of your benefit becomes taxable over long projections.</span>
                 </div>
             </div>
         </div>
@@ -588,23 +591,23 @@
                 <h2 class="text-xl font-bold tracking-tight">Pension</h2>
                 <span class="text-xs text-gray-400 font-medium ml-1">FERS &middot; CSRS &middot; Military &middot; State/Local</span>
             </div>
-            <p class="text-gray-600 mb-4 leading-relaxed">Model defined-benefit pension payments separately from Social Security. Pensions have their own COLA schedule, and they are taxed differently: a pension is fully taxable income, while only part of a Social Security benefit is (see Rule&nbsp;5).</p>
+            <p class="text-gray-600 mb-4 leading-relaxed">Defined-benefit pension payments modeled separately from Social Security, with their own COLA rate and full ordinary-income taxation.</p>
             <div class="space-y-2">
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 1</span>
-                    <span class="text-sm text-gray-700">Monthly pension income is credited <strong>starting on the asset's start date</strong>, just like Retirement Income.</span>
+                    <span class="text-sm text-gray-700">Monthly pension payments begin on the asset&rsquo;s start date and flow to your configured accounts (or your everyday deposit backstop).</span>
                 </div>
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 2</span>
-                    <span class="text-sm text-gray-700">The annual return rate applies <strong>COLA adjustments</strong> (e.g. FERS 2% cap) &mdash; separate from Social Security COLA.</span>
+                    <span class="text-sm text-gray-700">The annual return rate applies <strong>annual COLA increases</strong> (for example, a 2% FERS cap), independent of Social Security COLA.</span>
                 </div>
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 3</span>
-                    <span class="text-sm text-gray-700">Pension income is taxed as <strong>ordinary income</strong> but is <strong>exempt from FICA</strong>. No contributions or RMDs apply.</span>
+                    <span class="text-sm text-gray-700">Pension payments are <strong>100% taxable as ordinary income</strong>, exempt from FICA, and cannot fund IRA or 401(k) contributions. No RMDs apply.</span>
                 </div>
                 <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50">
                     <span class="rule-chip">Rule 4</span>
-                    <span class="text-sm text-gray-700"><strong>10% federal tax is withheld on arrival</strong>, standing in for the Form W-4P default of withholding on periodic payments unless you elect otherwise. A pension is a flow with no balance to debit, so the withholding reduces what it pays out &mdash; the deposits you see are net of tax. The year-end true-up refunds any excess.</span>
+                    <span class="text-sm text-gray-700"><strong>10% federal tax is withheld on arrival</strong> (reflecting the Form W-4P default for periodic payments), so the deposit reaching your account is net of withholding. Any over- or under-withholding is settled at year-end.</span>
                 </div>
             </div>
     </div>
@@ -615,41 +618,41 @@
             <span class="text-2xl">🔄</span>
             <h2 class="text-2xl font-bold tracking-tight">Life Events &amp; Phases</h2>
         </div>
-        <p class="text-gray-600 mb-6 leading-relaxed">Your financial life isn't one long straight line &mdash; it's a series of phases. During accumulation, your salary flows into 401(k)s and brokerage accounts. In retirement, the flow reverses: Social Security and retirement account drawdowns fund your living expenses. Life Events capture these transitions and automatically rewire your portfolio when each phase begins.</p>
+        <p class="text-gray-600 mb-6 leading-relaxed">Your financial life unfolds in chapters. During your working years, paychecks feed savings and retirement accounts; in retirement, the flow reverses so Social Security, pensions, and portfolio withdrawals cover living expenses. Life Events capture these milestones and rewire your transfer rules automatically.</p>
 
         <div class="grid sm:grid-cols-2 gap-4 mb-6">
             <div class="p-4 rounded-xl bg-white/70">
                 <div class="font-semibold text-sm mb-1" style="color: #1D9E75;">&#x1F7E2; Accumulate Phase</div>
-                <div class="text-sm text-gray-500">The earning years. Income flows into savings, investments, and retirement accounts. Fund transfers route your salary to 401(k), Roth IRA, and brokerage based on the percentages you set for this phase.</div>
+                <div class="text-sm text-gray-500">Your earning years. Paychecks flow into 401(k), IRA, Roth, savings, and brokerage accounts according to your accumulation transfer rules.</div>
             </div>
             <div class="p-4 rounded-xl bg-white/70">
                 <div class="font-semibold text-sm mb-1" style="color: #D85A30;">&#x1F7E0; Retire Phase</div>
-                <div class="text-sm text-gray-500">The drawdown years. Work income closes automatically. Social Security begins, or at 62 if you retire before then. Fund transfers flip: retirement accounts and brokerage now fund your living expenses &mdash; all configured independently from the accumulation phase.</div>
+                <div class="text-sm text-gray-500">Your drawdown years. Working income closes automatically, Social Security begins (at age 62 or later), and your retirement transfer rules take over to fund living expenses.</div>
             </div>
         </div>
 
         <div class="space-y-2 mb-6">
             <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
                 <span class="rule-chip">Phase Transfers</span>
-                <span class="text-sm text-gray-700">Each life event owns its own set of fund transfers. When you configure "Salary &rarr; 5% to 401(k)" in Accumulate and "401(k) &rarr; 40% to Living Expenses" in Retire, the simulator <strong>automatically switches between them</strong> at the transition age you set.</span>
+                <span class="text-sm text-gray-700">Each life event holds its own set of fund transfers. When you route &ldquo;Salary &rarr; 15% to 401(k)&rdquo; in Accumulate and &ldquo;IRA &rarr; 100% of Living Expenses&rdquo; in Retire, the engine <strong>switches seamlessly</strong> at your retirement age. Any asset without new rules in a later phase inherits its rules from the prior phase.</span>
             </div>
             <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
                 <span class="rule-chip">Asset Closing</span>
-                <span class="text-sm text-gray-700">Life events can close assets when a phase begins, named one by one or by type. When Retire triggers, <strong>every working income closes</strong>, whatever it is called &mdash; its on-close transfers fire, and the asset stops producing income. (A plan saved before this closed only an income named &ldquo;Salary&rdquo;; where no asset had that name, it now closes every working income too.) A job that starts after you retire is left alone. In the life event form, <strong>Every &hellip;</strong> closes all assets of a type; the assets below it can be closed one at a time. A close whose asset was deleted waits for an asset of that name, shown as &ldquo;(not in the plan)&rdquo;.</span>
+                <span class="text-sm text-gray-700">Life events can close individual assets or entire asset types when a phase begins, triggering their on-close transfers. By default, <strong>Retire closes every working income</strong> that is already active (leaving any post-retirement part-time job open). If a closed asset is later deleted, the rule waits by name &mdash; shown as <em>(not in the plan)</em> &mdash; and reconnects automatically if you add a matching asset back.</span>
             </div>
             <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
                 <span class="rule-chip">Color-Coded Timeline</span>
-                <span class="text-sm text-gray-700">The timeline shows each phase as a colored band &mdash; <strong style="color: #1D9E75;">green for Accumulate</strong>, <strong style="color: #D85A30;">coral for Retire</strong>. Click a phase&rsquo;s chip, or its dot on the axis, to edit it.</span>
+                <span class="text-sm text-gray-700">The timeline shades each phase &mdash; <strong style="color: #1D9E75;">green for Accumulate</strong> and <strong style="color: #D85A30;">coral for Retire</strong>. Click any phase chip (or its dot on the timeline axis) to edit it.</span>
             </div>
             <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
                 <span class="rule-chip">Age-Driven</span>
-                <span class="text-sm text-gray-700">Phases are triggered by age, not fixed dates. On a new plan they follow the <strong>Current Age, Retirement Age and Finish Age</strong> in the settings row. On a loaded plan, changing Retirement Age moves the Retire phase together with the salary end and benefit start dates tied to it, and Finish Age sets the plan&rsquo;s last year.</span>
+                <span class="text-sm text-gray-700">Phases trigger by age rather than hard-coded years. On a new plan, they follow <strong>Current Age, Retirement Age, and Finish Age</strong> in the settings row. On an existing plan, changing Retirement Age shifts the Retire phase together with any salaries ending and Social Security or pensions starting on the old retirement date (never moving Social Security before age 62).</span>
             </div>
         </div>
 
         <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
             <span class="rule-chip">Why it matters</span>
-            <span class="text-sm text-gray-700">Without phases, you'd need separate portfolios for "working" and "retired." Life Events let you model your <strong>entire financial arc</strong> &mdash; from first paycheck to last withdrawal &mdash; in a single simulation, with fund transfers that adapt to each chapter of your life.</span>
+            <span class="text-sm text-gray-700">Instead of maintaining separate &ldquo;working&rdquo; and &ldquo;retired&rdquo; spreadsheets, Life Events model your <strong>entire financial arc</strong> &mdash; from first paycheck to final withdrawal &mdash; in one continuous simulation.</span>
         </div>
     </div>
 
@@ -659,31 +662,31 @@
             <span class="text-2xl">🔍</span>
             <h2 class="text-2xl font-bold tracking-tight">Why It Did That</h2>
         </div>
-        <p class="text-gray-600 mb-6 leading-relaxed">A number you can't explain is a number you can't trust. Two surfaces report what the rules on this page actually <em>did</em> to your plan &mdash; one for the plan as a whole, one for a single asset. Both are derived from events the engine recorded while running, never recomputed afterwards, so what they say is what happened.</p>
+        <p class="text-gray-600 mb-6 leading-relaxed">A number you can&rsquo;t explain is a number you can&rsquo;t trust. Two views explain what the rules on this page actually did during your simulation &mdash; one for the plan as a whole and one for any individual asset. Both read directly from the events the engine recorded as it ran, never recomputed afterward.</p>
 
         <div class="grid sm:grid-cols-2 gap-4 mb-6">
             <div class="p-4 rounded-xl bg-white/70">
                 <div class="font-semibold text-sm mb-1">&#x26A0;&#xFE0F; What needs attention</div>
-                <div class="text-sm text-gray-500">A panel above your asset list, grouped into <strong>&#x1F4B8; Paying for the plan</strong> and <strong>&#x1F527; Needs setting up</strong>. It catches the month the plan runs out of money, obligations nothing could pay, accounts that ran dry and were covered by the next one down, contributions that hit the annual limit, and required distributions that were not met.</div>
+                <div class="text-sm text-gray-500">A collapsible bar above your asset list, grouped into <strong>&#x1F4B8; Paying for the plan</strong> and <strong>&#x1F527; Needs setting up</strong>. It highlights the first month the plan runs out of money, any unpaid obligations, accounts that ran dry and spilled over to a backup account, capped retirement contributions, deferred Social Security, and unmet RMDs.</div>
             </div>
             <div class="p-4 rounded-xl bg-white/70">
                 <div class="font-semibold text-sm mb-1">&#x1F4D6; Rule notes on an asset</div>
-                <div class="text-sm text-gray-500">Open any asset&rsquo;s <strong>&#x1F453;</strong> view to read its metrics over <strong>this month</strong>, <strong>this year</strong> and <strong>life to date</strong>, with plain-language notes on the rules that fired: why a Roth paid no tax, where the tax on untaxed income was settled, what was withheld from a pension, why a contribution was capped.</div>
+                <div class="text-sm text-gray-500">Click the <strong>&#x1F453;</strong> icon on any asset card to inspect its results over <strong>This month</strong>, <strong>This year</strong>, and <strong>Life to date</strong>, along with plain-English notes explaining the exact rules that fired &mdash; why a Roth draw owed no tax, where taxes on untaxed income were paid, what was withheld from a pension, or why a contribution was capped.</div>
             </div>
         </div>
 
         <div class="space-y-2">
             <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
                 <span class="rule-chip">Depletion is not an alarm</span>
-                <span class="text-sm text-gray-700">A retiree's accounts are <em>supposed</em> to draw down &mdash; that is the scenario being modelled, not a fault. Nothing fires on a zero balance alone. The &#x26A0;&#xFE0F; on a card means an <strong>obligation that could not be paid</strong>, which is a different and much rarer thing.</span>
+                <span class="text-sm text-gray-700">Retirement accounts are meant to be spent down, so hitting $0 never raises an alarm by itself. A <strong>&#x26A0;&#xFE0F;</strong> badge on an asset card specifically means an <strong>obligation went unpaid</strong> &mdash; a much rarer and more serious event.</span>
             </div>
             <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
                 <span class="rule-chip">Silence is the contract</span>
-                <span class="text-sm text-gray-700">A false &ldquo;you could not pay your mortgage&rdquo; is worse than saying nothing at all. Every check is built to stay quiet unless the engine actually recorded the failure it is describing.</span>
+                <span class="text-sm text-gray-700">A false &ldquo;you couldn&rsquo;t pay your mortgage&rdquo; warning is worse than saying nothing. Every check stays silent unless the engine actually logged the exact failure it describes.</span>
             </div>
             <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
                 <span class="rule-chip">Engine diagnostics</span>
-                <span class="text-sm text-gray-700">A third category, <strong>&#x1F9EA; Engine diagnostics</strong>, reports where the simulation's own bookkeeping does not reconcile. It is hidden unless you enable it in <a href="globals.html" class="underline hover:text-gray-900">Globals</a> &mdash; those are notes about the engine, not about your finances.</span>
+                <span class="text-sm text-gray-700">A third category, <strong>&#x1F9EA; Engine diagnostics</strong>, checks the simulator&rsquo;s own internal bookkeeping. It stays hidden unless you turn it on in <a href="globals.html" class="underline hover:text-gray-900">Globals</a> &mdash; those messages are about engine reconciliation, not your finances.</span>
             </div>
         </div>
     </div>
@@ -691,55 +694,55 @@
     <!-- ═══ What This Engine Does Not Model ═══ -->
     <div id="limits" class="glass-card p-8 sm:p-12 mb-8">
         <h2 class="text-2xl font-bold tracking-tight mb-4">What This Engine Does Not Model</h2>
-        <p class="text-gray-600 mb-6 leading-relaxed">Knowing where a model stops is part of reading it. These are deliberate, verified gaps &mdash; each one makes your projection optimistic or pessimistic in a specific, nameable direction.</p>
+        <p class="text-gray-600 mb-6 leading-relaxed">Knowing where a model stops is essential to trusting its results. Below are deliberate, verified simplifications &mdash; each noted with whether it tilts projections slightly optimistic or pessimistic.</p>
         <div class="grid sm:grid-cols-2 gap-4">
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">No early-withdrawal penalty</div>
-                <div class="text-sm text-gray-500">The 10% additional tax on distributions before age 59&frac12; is not charged, and the engine has no concept of that age. A plan that retires early and draws a 401(k) or IRA will look better than it would be. <span class="text-gray-400">Optimistic.</span></div>
+                <div class="text-sm text-gray-500">The engine uses age 60 (whole-year rounding of 59&frac12;) to protect retirement accounts from automatic failover, tax allocation, and routing-search draws. However, if you explicitly route a withdrawal from a 401(k) or IRA before age 59&frac12;, the 10% early-withdrawal penalty (IRC &sect;72(t)) is not charged. <span class="text-gray-400">Optimistic for explicit early draws.</span></div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">No state or local income tax</div>
-                <div class="text-sm text-gray-500">Federal only. Property tax is modelled; state income tax, local tax and state-specific retirement-income exemptions are not. <span class="text-gray-400">Optimistic in most states.</span></div>
+                <div class="text-sm text-gray-500">Federal taxes and property taxes are modeled; state and local income taxes (and state retirement-income exemptions) are not. <span class="text-gray-400">Optimistic in most states.</span></div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">A married household has one age</div>
-                <div class="text-sm text-gray-500">Age-based rules &mdash; the deductions from 65, catch-up contribution limits and RMDs &mdash; treat both spouses as the age you enter. A couple where only one is 65 or older gets both spouses&rsquo; age deductions here. <span class="text-gray-400">Optimistic for couples with an age gap.</span></div>
+                <div class="text-sm text-gray-500">Age-based milestones &mdash; age-50 catch-up limits, age-60 failover, age-65 deductions, and RMDs &mdash; use the single age entered for the household. A couple with an age gap receives both spouses&rsquo; age-based rules at the same time. <span class="text-gray-400">Optimistic for couples with an age gap.</span></div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">A home&rsquo;s holding period starts in the plan</div>
-                <div class="text-sm text-gray-500">The 24 months the primary-residence exclusion needs are counted from the home&rsquo;s start date in the plan, not from when you bought it. A home you have owned for years, entered at the plan&rsquo;s first month and sold within two years, is taxed without the exclusion. <span class="text-gray-400">Pessimistic.</span></div>
+                <div class="text-sm text-gray-500">The 24-month requirement for the primary-residence sale exclusion counts from the home&rsquo;s start date in the plan, not your original purchase date. A long-owned home sold within the first two simulated years will not receive the exclusion. <span class="text-gray-400">Pessimistic for near-term sales.</span></div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Withdrawals are always long-term</div>
-                <div class="text-sm text-gray-500">Gains realized by withdrawing from a taxable account are taxed at long-term rates however recently the money went in. Short-term rates apply only when an account closes within 12 months of its start. <span class="text-gray-400">Optimistic for recent purchases.</span></div>
+                <div class="font-semibold text-sm mb-1">Taxable withdrawals are always long-term</div>
+                <div class="text-sm text-gray-500">Gains realized by withdrawing from a brokerage account are taxed at long-term capital-gains rates regardless of how recently the money was deposited. Short-term rates apply only if an account closes within 12 months of its start date. <span class="text-gray-400">Optimistic for short-term trading.</span></div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">One Social Security wage base per household</div>
-                <div class="text-sm text-gray-500">Married filers share a single cap instead of one each, so two high earners stop paying Social Security tax earlier than they would. <span class="text-gray-400">Optimistic above the cap.</span></div>
+                <div class="text-sm text-gray-500">Married filers share a single Social Security wage cap rather than one cap per spouse, so two high earners stop paying Social Security payroll tax earlier than they would in real life. <span class="text-gray-400">Optimistic above the cap.</span></div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">No rental income</div>
-                <div class="text-sm text-gray-500">Rent is net investment income, and an income property is not a supported asset type yet &mdash; real estate here is a residence. A landlord's Net Investment Income Tax will be understated until that asset exists. <span class="text-gray-400">Optimistic for property investors.</span></div>
+                <div class="font-semibold text-sm mb-1">No rental property income</div>
+                <div class="text-sm text-gray-500">Real estate cards represent personal residences rather than rental properties, so rental income (which counts toward NIIT) is not modeled as its own asset class yet. <span class="text-gray-400">Optimistic for landlords.</span></div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Investment expenses are not deducted</div>
-                <div class="text-sm text-gray-500">Net investment income is counted gross. Advisory fees, investment interest and the state tax allocable to that income would all reduce it in a real return, and none is tracked here. <span class="text-gray-400">Slightly pessimistic.</span></div>
+                <div class="text-sm text-gray-500">Net investment income is measured gross &mdash; advisory fees, investment interest, and allocable state taxes are not deducted from the NIIT base. <span class="text-gray-400">Slightly pessimistic.</span></div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">No RMD penalty</div>
-                <div class="text-sm text-gray-500">A required minimum distribution that goes unmet is <em>reported</em> in &ldquo;What needs attention&rdquo;, but the excise tax a real shortfall would incur is not charged. <span class="text-gray-400">Optimistic.</span></div>
+                <div class="font-semibold text-sm mb-1">No RMD excise penalty</div>
+                <div class="text-sm text-gray-500">Any unmet Required Minimum Distribution is flagged in <em>What needs attention</em>, but the IRS excise tax on missed RMDs is not charged. <span class="text-gray-400">Optimistic.</span></div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">No Medicaid or state help with premiums</div>
-                <div class="text-sm text-gray-500">Under 100% of the poverty line a health-insurance card gets no premium tax credit, and Medicaid, which covers adults under 138% in most states, is not modelled; nor are state subsidies or the cost-sharing reductions that lower deductibles. <span class="text-gray-400">Pessimistic for low incomes.</span></div>
+                <div class="font-semibold text-sm mb-1">No Medicaid or state premium assistance</div>
+                <div class="text-sm text-gray-500">Below 100% of the Federal Poverty Level, marketplace cards receive no Premium Tax Credit (unless an advance was paid on a 100%+ estimate). Medicaid, state subsidies, and cost-sharing reductions are not modeled. <span class="text-gray-400">Pessimistic for low incomes.</span></div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Premiums are not age-rated</div>
-                <div class="text-sm text-gray-500">A marketplace premium rises at the card&rsquo;s one growth rate. Real premiums also rise with age, roughly tripling between 21 and 64, and the benchmark with them. <span class="text-gray-400">Optimistic unless the rate allows for it.</span></div>
+                <div class="font-semibold text-sm mb-1">Health premiums are not age-rated</div>
+                <div class="text-sm text-gray-500">Marketplace premiums grow at the card&rsquo;s single annual rate. Real-world ACA premiums also steepen with age (roughly tripling from age 21 to 64). <span class="text-gray-400">Optimistic unless your growth rate allows for it.</span></div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">No self-employed health insurance deduction</div>
-                <div class="text-sm text-gray-500">A self-employed household can deduct its premiums above the line, which lowers ACA MAGI and raises the credit. Neither the deduction nor its interplay with the credit is modelled. <span class="text-gray-400">Pessimistic for the self-employed.</span></div>
+                <div class="text-sm text-gray-500">Self-employed filers can normally deduct health premiums above the line (lowering ACA MAGI and raising credits). That deduction and its interaction with ACA credits are not modeled. <span class="text-gray-400">Pessimistic for the self-employed.</span></div>
             </div>
         </div>
     </div>
@@ -747,31 +750,31 @@
     <!-- ═══ Projections & Analysis ═══ -->
     <div class="glass-card p-8 sm:p-12 mb-8">
         <h2 class="text-2xl font-bold tracking-tight mb-4">Projections &amp; Analysis</h2>
-        <p class="text-gray-600 mb-6 leading-relaxed">A single projection is a starting point, not the whole story. The simulator offers several ways to test your plan, from the deterministic projection to Monte Carlo simulation and an optimizer.</p>
+        <p class="text-gray-600 mb-6 leading-relaxed">A single projection is only the starting point. Charting Finance gives you multiple lenses on the same plan &mdash; from deterministic stacked charts to 1,000-trial Monte Carlo simulations, spending guardrails, and the Test Bench.</p>
         <div class="grid sm:grid-cols-3 gap-4">
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">📈 Projections</div>
-                <div class="text-sm text-gray-500">Your deterministic projection: stacked bar charts of any metric, asset by asset, month by month, for the whole plan.</div>
+                <div class="text-sm text-gray-500">Deterministic stacked bar charts of any metric across your entire timeline, both grouped (Macro) and per-asset (Micro).</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">🎲 Monte Carlo</div>
-                <div class="text-sm text-gray-500">1,000 stochastic simulations with percentile bands. See below for the full story.</div>
+                <div class="text-sm text-gray-500">1,000 market simulations drawn from 1970&ndash;2025 history, summarized as percentile bands and a retirement survival rate.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">🛡️ Guardrails</div>
-                <div class="text-sm text-gray-500">Dynamic withdrawal rules that adapt spending to market reality. Details below.</div>
+                <div class="text-sm text-gray-500">Guyton-Klinger dynamic withdrawal rules that automatically trim spending in downturns and raise it in strong markets.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">📋 Spreadsheet</div>
-                <div class="text-sm text-gray-500">A detailed monthly data table across all metrics and assets &mdash; for when you want the raw numbers, not the chart.</div>
+                <div class="text-sm text-gray-500">A full monthly data table across every asset and metric, ready to inspect or export to Excel and Google Sheets.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">🧾 Credit Memos</div>
-                <div class="text-sm text-gray-500">A complete record of every transaction &mdash; every credit, debit and transfer, with its date and a note describing it.</div>
+                <div class="text-sm text-gray-500">A transaction-by-transaction ledger of every credit, debit, transfer, and tax entry recorded by the engine as it ran.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">📊 30+ Metrics</div>
-                <div class="text-sm text-gray-500">Track value, growth, income, dividends, capital gains, taxes, RMDs, contributions, distributions, cash flow, and more.</div>
+                <div class="text-sm text-gray-500">Track balances, growth, cash flow, income, dividends, capital gains, federal and property taxes, RMDs, contributions, and more.</div>
             </div>
         </div>
     </div>
@@ -782,34 +785,34 @@
             <span class="text-2xl">🎲</span>
             <h2 class="text-2xl font-bold tracking-tight">Monte Carlo Simulation</h2>
         </div>
-        <p class="text-gray-600 mb-6 leading-relaxed">Your financial plan doesn't live in a world of fixed returns &mdash; so why should your projections? Monte Carlo simulation runs your portfolio through <strong>1,000 randomized trials</strong>, each drawing from real historical market data, to show you the range of outcomes your plan might actually produce.</p>
+        <p class="text-gray-600 mb-6 leading-relaxed">Real markets don&rsquo;t deliver steady returns every year. Monte Carlo stress-tests your plan across <strong>1,000 randomized market paths</strong> sampled from real economic history, showing the full spread of outcomes from tough markets to strong ones.</p>
 
         <div class="grid sm:grid-cols-2 gap-4 mb-6">
             <div class="p-4 rounded-xl bg-white/70">
                 <div class="font-semibold text-sm mb-1">Correlated Year Sampling</div>
-                <div class="text-sm text-gray-500">Each trial picks a single historical year for all asset classes &mdash; S&amp;P 500, treasury yields, CPI, and wage growth move together, preserving the real-world correlations that matter.</div>
+                <div class="text-sm text-gray-500">Each simulated year draws a single calendar year across all four series at once &mdash; S&amp;P 500 returns, 10-year Treasury yields, CPI inflation, and wage growth &mdash; preserving real-world correlations like stagflation or recessions.</div>
             </div>
             <div class="p-4 rounded-xl bg-white/70">
-                <div class="font-semibold text-sm mb-1">Percentile Bands</div>
-                <div class="text-sm text-gray-500">Results are summarized as 10th, 25th, 50th, 75th, and 90th percentile envelopes, with your deterministic baseline overlaid &mdash; so you can see the best case, the worst case, and everything in between.</div>
+                <div class="font-semibold text-sm mb-1">Percentile Bands &amp; Survival Rate</div>
+                <div class="text-sm text-gray-500">Results display 10th, 25th, 50th (median), 75th, and 90th percentile envelopes alongside your baseline plan (real-dollar bands deflate each trial by its own sampled inflation path). The <strong>success rate</strong> is the share of trials where net worth stays above $0 every month from retirement onward.</div>
             </div>
             <div class="p-4 rounded-xl bg-white/70">
                 <div class="font-semibold text-sm mb-1">Optional Guardrails</div>
-                <div class="text-sm text-gray-500">Check &ldquo;With Guardrails&rdquo; to apply your guardrail rules in all 1,000 simulations and see how adaptive spending changes the range of outcomes.</div>
+                <div class="text-sm text-gray-500">Check <strong>With Guardrails</strong> to apply your Guyton-Klinger spending rules inside all 1,000 trials and see how adaptive spending improves survival and downside outcomes.</div>
             </div>
             <div class="p-4 rounded-xl bg-white/70">
-                <div class="font-semibold text-sm mb-1">Calibrated or Historical</div>
-                <div class="text-sm text-gray-500">Each trial draws years from FRED data for 1970&ndash;2025 (or from your backtest year on). <strong>Calibrated</strong>, the default, keeps your own return and inflation rates and adds each drawn year&rsquo;s swing around its long-run average. <strong>Historical</strong> uses the drawn years&rsquo; actual returns.</div>
+                <div class="font-semibold text-sm mb-1">Calibrated or Historical Mode</div>
+                <div class="text-sm text-gray-500">Trials draw from FRED data covering <strong>1970&ndash;2025</strong> (or from your chosen Backtest year forward). <strong>Calibrated</strong> (default) keeps your own configured return and inflation rates and applies each historical year&rsquo;s swing around its long-run mean. <strong>Historical</strong> uses the raw historical returns as they occurred.</div>
             </div>
             <div class="p-4 rounded-xl bg-white/70">
-                <div class="font-semibold text-sm mb-1">Always Current, Always Repeatable</div>
-                <div class="text-sm text-gray-500">The simulations re-run whenever the plan changes, and the draws are seeded, so the same plan always gives the same answer. When a result moves, it is because the plan did.</div>
+                <div class="font-semibold text-sm mb-1">Always Current &amp; Repeatable</div>
+                <div class="text-sm text-gray-500">Simulations re-run automatically whenever you edit your plan, using a fixed deterministic seed so the exact same plan always produces the exact same numbers &mdash; when a result moves, it is because your plan changed.</div>
             </div>
         </div>
 
         <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
             <span class="rule-chip">Why it matters</span>
-            <span class="text-sm text-gray-700">A single projection tells you what happens if everything goes exactly as planned. Monte Carlo tells you <strong>how likely that plan is to survive</strong> &mdash; and what to expect when it doesn't.</span>
+            <span class="text-sm text-gray-700">A deterministic projection shows what happens if markets deliver average returns every year. Monte Carlo shows <strong>how likely your plan is to survive real volatility</strong> &mdash; especially poor returns right around retirement.</span>
         </div>
     </div>
 
@@ -819,35 +822,35 @@
             <span class="text-2xl">🛡️</span>
             <h2 class="text-2xl font-bold tracking-tight">Guyton-Klinger Guardrails</h2>
         </div>
-        <p class="text-gray-600 mb-6 leading-relaxed">The 4% rule is a starting point, not a strategy. Guyton-Klinger guardrails adjust retirement spending as your portfolio moves: when your withdrawal rate drifts too high, spending is cut; when it drifts low, spending rises.</p>
+        <p class="text-gray-600 mb-6 leading-relaxed">Fixed withdrawal rates ignore what markets actually do. Guyton-Klinger guardrails adapt your retirement spending automatically: if your withdrawal rate climbs too high during a downturn, spending is trimmed; if strong markets push your withdrawal rate down, spending rises.</p>
 
         <div class="grid sm:grid-cols-2 gap-4 mb-6">
             <div class="p-4 rounded-xl bg-white/70">
                 <div class="font-semibold text-sm mb-1">Target Rate</div>
-                <div class="text-sm text-gray-500">Your starting withdrawal as a percentage of the portfolio. The guardrails adjust spending from here.</div>
+                <div class="text-sm text-gray-500">Your baseline annual withdrawal rate (annual spending divided by investable assets) during retirement. Guardrail triggers are measured relative to this target.</div>
             </div>
             <div class="p-4 rounded-xl bg-white/70">
                 <div class="font-semibold text-sm mb-1">Preservation Band</div>
-                <div class="text-sm text-gray-500">If your current withdrawal rate drifts <strong>above</strong> the initial rate by this margin, spending is cut &mdash; protecting your portfolio from depletion in down markets.</div>
+                <div class="text-sm text-gray-500">How far your actual withdrawal rate can rise <strong>above</strong> the target (as a relative percentage) before a spending cut fires &mdash; protecting your portfolio from depleting in down markets.</div>
             </div>
             <div class="p-4 rounded-xl bg-white/70">
                 <div class="font-semibold text-sm mb-1">Prosperity Band</div>
-                <div class="text-sm text-gray-500">If your current withdrawal rate drifts <strong>below</strong> the initial rate by this margin, spending increases &mdash; so you actually enjoy the upside when markets deliver.</div>
+                <div class="text-sm text-gray-500">How far your actual withdrawal rate can drop <strong>below</strong> the target before a spending raise fires &mdash; letting you enjoy strong market performance instead of underspending.</div>
             </div>
             <div class="p-4 rounded-xl bg-white/70">
                 <div class="font-semibold text-sm mb-1">Adjustment Amount</div>
-                <div class="text-sm text-gray-500">The percentage by which withdrawals are raised or lowered when a guardrail is triggered &mdash; controlling how aggressively the system responds.</div>
+                <div class="text-sm text-gray-500">The percentage by which open Monthly Expenses are cut or raised each time a guardrail triggers after retirement (ACA Health Insurance premiums are exempt because marketplace prices are fixed for the year).</div>
             </div>
         </div>
 
         <div class="space-y-3">
             <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
                 <span class="rule-chip">Dual-axis chart</span>
-                <span class="text-sm text-gray-700">The guardrails projection plots <strong>portfolio value and withdrawal amounts</strong> on separate axes, with event markers showing exactly when and why each adjustment fired.</span>
+                <span class="text-sm text-gray-700">The Guardrails chart plots <strong>portfolio value and annual withdrawals</strong> on separate axes, marking the exact year every preservation cut or prosperity raise fired.</span>
             </div>
             <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
                 <span class="rule-chip">Per-scenario</span>
-                <span class="text-sm text-gray-700">Guardrail parameters are <strong>saved per portfolio scenario</strong>, so you can compare conservative vs. aggressive withdrawal strategies side by side.</span>
+                <span class="text-sm text-gray-700">Guardrail settings are <strong>saved per scenario</strong>, so you can compare conservative and flexible withdrawal strategies side by side.</span>
             </div>
         </div>
     </div>
@@ -858,58 +861,58 @@
             <span class="text-2xl">🕰️</span>
             <h2 class="text-2xl font-bold tracking-tight">Historical Backtesting</h2>
         </div>
-        <p class="text-gray-600 mb-6 leading-relaxed">What if you could run your portfolio through actual market history? Backtesting replaces your user-provided rates with real historical data and advances year by year through the simulation &mdash; so you can see how your plan would have performed from any starting year between 1970 and 2025.</p>
+        <p class="text-gray-600 mb-6 leading-relaxed">Test your plan against actual market history by selecting any starting year from <strong>1970 to 2025</strong> in the Settings Row. The engine replays real historical returns and inflation year by year instead of fixed averages.</p>
 
         <div class="grid sm:grid-cols-2 gap-4 mb-6">
             <div class="p-4 rounded-xl bg-white/70">
                 <div class="font-semibold text-sm mb-1">S&amp;P 500 Annual Returns</div>
-                <div class="text-sm text-gray-500">Applied to equity accounts &mdash; Brokerage, 401(k), IRA, and Roth IRA &mdash; so your investments track actual market performance.</div>
+                <div class="text-sm text-gray-500">Applied to equity accounts &mdash; Brokerage, 401(k), Traditional IRA, and Roth IRA &mdash; while preserving your configured dividend yield inside the historical total return.</div>
             </div>
             <div class="p-4 rounded-xl bg-white/70">
                 <div class="font-semibold text-sm mb-1">10-Year Treasury Rates</div>
-                <div class="text-sm text-gray-500">Applied to US Treasury bonds, reflecting the real yield environment for each historical year.</div>
+                <div class="text-sm text-gray-500">Applied to US Treasury accounts. Savings, Corporate Bonds, and Real Estate stay on their own configured rates.</div>
             </div>
             <div class="p-4 rounded-xl bg-white/70">
                 <div class="font-semibold text-sm mb-1">CPI Inflation</div>
-                <div class="text-sm text-gray-500">Applied to monthly expenses, so your cost of living grows at the actual inflation rate &mdash; not a static estimate.</div>
+                <div class="text-sm text-gray-500">Applied to monthly expenses and real-dollar calculations (ACA Health Insurance cards preserve any excess growth above plan inflation on top of each year&rsquo;s CPI).</div>
             </div>
             <div class="p-4 rounded-xl bg-white/70">
                 <div class="font-semibold text-sm mb-1">Nominal Wage Growth</div>
-                <div class="text-sm text-gray-500">Applied to monthly income, so your salary tracks real historical wage growth year over year.</div>
+                <div class="text-sm text-gray-500">Applied to monthly income streams so income tracks real historical wage changes year by year.</div>
             </div>
         </div>
 
         <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
             <span class="rule-chip">Note</span>
-            <span class="text-sm text-gray-700">Historical data covers <strong>1970&ndash;2025</strong>, sourced from <strong>FRED</strong> (Federal Reserve Economic Data). Once the simulation advances past the available historical years, your user-provided rates automatically resume for the remainder of the projection.</span>
+            <span class="text-sm text-gray-700">Historical series span <strong>1970&ndash;2025</strong> from <strong>FRED</strong> (Federal Reserve Economic Data). Once a projection extends past 2025, your configured return and inflation rates automatically resume for the remaining years.</span>
         </div>
     </div>
 
     <!-- ═══ Test Bench ═══ -->
-    <div class="glass-card p-8 sm:p-12 mb-8" style="background: linear-gradient(135deg, #ecfdf5 0%, #eff6ff 100%);">
+    <div id="test-bench" class="glass-card p-8 sm:p-12 mb-8" style="background: linear-gradient(135deg, #ecfdf5 0%, #eff6ff 100%);">
         <div class="flex items-center gap-3 mb-4">
             <span class="text-2xl">&#x1F9EA;</span>
             <h2 class="text-2xl font-bold tracking-tight">Test Bench</h2>
-            <span class="text-xs text-gray-400 font-medium ml-1">The Spending and Routing Tests</span>
+            <span class="text-xs text-gray-400 font-medium ml-1">Spending &amp; Routing Tests</span>
         </div>
-        <p class="text-gray-600 mb-6 leading-relaxed">The spending test answers &ldquo;how much can this plan spend?&rdquo; as a question with limits, not a score: <strong>spend the most that never runs out, leaves at least a stated amount and lasts in a stated share of simulated markets</strong>. The simulated markets are drawn from a fixed seed, so the same plan gives the same answer every time.</p>
+        <p class="text-gray-600 mb-6 leading-relaxed">The spending test answers &ldquo;how much can this plan safely spend?&rdquo; using clear, concrete limits rather than an arbitrary score: <strong>find the highest monthly spending that never misses a bill, leaves at least your target balance at the end, and survives your chosen share of simulated markets</strong>. Every simulated market draw uses a fixed seed so the same plan always produces the same answer.</p>
 
         <div class="grid sm:grid-cols-2 gap-4 mb-6">
             <div class="p-4 rounded-xl bg-white/70">
-                <div class="font-semibold text-sm mb-1">One dial</div>
-                <div class="text-sm text-gray-500">Every monthly expense is multiplied by the same factor for the whole plan, a marketplace health plan included. Income, taxes, mortgage payments, transfer rules and account balances are left as entered. The health plan&rsquo;s benchmark premium is the market&rsquo;s figure, so it does not turn with the dial.</div>
+                <div class="font-semibold text-sm mb-1">One uniform dial</div>
+                <div class="text-sm text-gray-500">Every monthly expense is scaled by the same multiplier across the whole plan, including any ACA Health Insurance premium. Income, taxes, mortgage payments, transfer rules, and starting balances stay untouched. A health plan&rsquo;s marketplace benchmark premium stays fixed because it reflects market pricing, not your spending choice.</div>
             </div>
             <div class="p-4 rounded-xl bg-white/70">
                 <div class="font-semibold text-sm mb-1">Never runs out</div>
-                <div class="text-sm text-gray-500">A level fails when any month has a bill the plan could not pay. This is tested before anything else: once a bill goes unpaid, what is left at the end is no longer a guide, because money that was not paid out was not spent.</div>
+                <div class="text-sm text-gray-500">A spending level fails if any month has an unpaid bill. This check always runs first: once bills go unpaid, ending wealth is no longer meaningful because the plan stopped paying its expenses.</div>
             </div>
             <div class="p-4 rounded-xl bg-white/70">
                 <div class="font-semibold text-sm mb-1">Leaves at least</div>
-                <div class="text-sm text-gray-500">What is left is net worth in the plan&rsquo;s last month, in today&rsquo;s dollars, the Outcome card&rsquo;s own figure. A level fails when it leaves less than the amount you set.</div>
+                <div class="text-sm text-gray-500">Ending net worth in the plan&rsquo;s final month, measured in today&rsquo;s dollars (matching the Outcome card). Any spending level that ends below your chosen floor is rejected.</div>
             </div>
             <div class="p-4 rounded-xl bg-white/70">
                 <div class="font-semibold text-sm mb-1">Spending</div>
-                <div class="text-sm text-gray-500">Spending is what the plan pays out to live on, month by month, in today&rsquo;s dollars. Taxes are not counted as spending. The monthly figure is the average over the whole plan.</div>
+                <div class="text-sm text-gray-500">What the plan actually pays out to live on, month by month, in today&rsquo;s dollars (excluding taxes). The headline monthly number is the average across the whole plan.</div>
             </div>
         </div>
 
@@ -917,19 +920,19 @@
         <div class="space-y-2 mb-6">
             <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
                 <span class="rule-chip">Find the edge</span>
-                <span class="text-sm text-gray-700">Spending is doubled until the plan first runs out, to a ceiling of eight times what was entered, and the edge is then narrowed. A plan that already runs out as entered is turned down instead, until it is funded.</span>
+                <span class="text-sm text-gray-700">The solver doubles spending until the plan first runs out (up to a cap of 8&times; your entered spending) and narrows in on that boundary. If your plan already runs out as entered, it steps downward until the plan stays fully funded.</span>
             </div>
             <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
                 <span class="rule-chip">Scan</span>
-                <span class="text-sm text-gray-700">The plan is run at 40 levels from half of what was entered (lower when the plan needs it) up to the edge. These runs are the curve.</span>
+                <span class="text-sm text-gray-700">The engine runs 40 evenly spaced spending levels from well below your entered spending up to the edge. Those exact runs form the spending curve.</span>
             </div>
             <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
                 <span class="rule-chip">Pick the highest</span>
-                <span class="text-sm text-gray-700">The answer starts from the highest level that keeps every limit. The whole range is tested because what is left does not always fall as spending rises: at lower spending a surplus can sit in a slow-growing account, and a plan can end with less than it would have by spending more.</span>
+                <span class="text-sm text-gray-700">The solver scans the full curve and picks the highest level that satisfies every limit, then checks above it &mdash; ensuring it never gets trapped below a higher passing level if a plan&rsquo;s ending balance dips and rises along the curve.</span>
             </div>
             <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
                 <span class="rule-chip">Refine</span>
-                <span class="text-sm text-gray-700">The gap between that level and the failing one above it is halved until it is narrower than $10 a month.</span>
+                <span class="text-sm text-gray-700">It narrows the gap between the highest passing level and the first failing level above it until the bracket is tighter than $10 a month.</span>
             </div>
         </div>
 
@@ -937,63 +940,63 @@
         <div class="space-y-2 mb-6">
             <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
                 <span class="rule-chip">On by default</span>
-                <span class="text-sm text-gray-700">The answer must last in at least 90% of simulated markets. The rate can be changed from 50% to 99%, or the limit switched off.</span>
+                <span class="text-sm text-gray-700">By default, the answer must survive at least <strong>90%</strong> of simulated markets. You can adjust this target anywhere from 50% to 99%, or turn it off to solve strictly on your plan&rsquo;s fixed return assumptions.</span>
             </div>
             <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
-                <span class="rule-chip">The rate</span>
-                <span class="text-sm text-gray-700">The share of 300 simulated markets in which net worth never reaches $0 from retirement on, without guardrails, in the data mode and era chosen in the Simulations section. Every level is run through the same markets (the same seed), so two rates differ only by the spending.</span>
+                <span class="rule-chip">How survival is measured</span>
+                <span class="text-sm text-gray-700">Each candidate spending level is tested across <strong>300 simulated markets</strong> (without guardrails, using the data mode and era selected in Simulations) to measure the share of markets where net worth never drops to $0 from retirement onward. Every level uses the exact same 300 seeded markets so differences reflect spending alone.</span>
             </div>
             <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
-                <span class="rule-chip">The ceiling</span>
-                <span class="text-sm text-gray-700">The answer found on the plan&rsquo;s own path is the ceiling: no higher level keeps the other limits. If the plan lasts in enough markets there, the answer stands and a note gives the rate.</span>
+                <span class="rule-chip">Starting from the ceiling</span>
+                <span class="text-sm text-gray-700">The fixed-path answer is the upper ceiling because no higher spending satisfies the other limits. If that ceiling already meets your market survival target, it stands as the final answer.</span>
             </div>
             <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
-                <span class="rule-chip">Turning it down</span>
-                <span class="text-sm text-gray-700">Otherwise a level that does last is found (what was entered, when that is below the ceiling, or else the lowest level scanned) and the interval between it and the ceiling is halved, at most seven times, stopping under half a percent of the entered spending. Halving rests on the rate never rising with spending.</span>
+                <span class="rule-chip">Stepping down</span>
+                <span class="text-sm text-gray-700">Otherwise, the solver locates a lower level that does meet the survival target and bisects the gap (up to 7 steps, stopping within 0.5% of your entered spending).</span>
             </div>
             <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
-                <span class="rule-chip">Below what was entered</span>
-                <span class="text-sm text-gray-700">A plan that as entered lasts in fewer markets than the limit asks is answered with less than was entered. If no level tested lasts in enough markets, there is no answer and the result says so.</span>
+                <span class="rule-chip">Below entered spending</span>
+                <span class="text-sm text-gray-700">If your plan as entered survives fewer markets than requested, the answer will be lower than what you entered. If no tested level meets the target, the Test Bench reports that plainly.</span>
             </div>
             <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
-                <span class="rule-chip">The other limits still hold</span>
-                <span class="text-sm text-gray-700">The level found is run on the plan&rsquo;s own path and must still never run out and leave the stated amount.</span>
+                <span class="rule-chip">All limits still apply</span>
+                <span class="text-sm text-gray-700">The lowered level is re-checked on your fixed return path to confirm it still never runs out and still leaves at least your target ending balance.</span>
             </div>
             <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
-                <span class="rule-chip">Rates are kept</span>
-                <span class="text-sm text-gray-700">A rate depends on the spending level, not on the amount to leave or the target. Rates measured for a plan are reused by later runs of the same plan: a level at or below one known to last is known to last.</span>
+                <span class="rule-chip">Cached rates</span>
+                <span class="text-sm text-gray-700">Because survival rates depend only on spending (not your ending-balance floor or target percentage), measured rates are cached while you explore the same plan &mdash; making follow-up clicks along the curve much faster.</span>
             </div>
             <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
-                <span class="rule-chip">Confirmation</span>
-                <span class="text-sm text-gray-700">The answer is run once more across 1,000 simulated markets. The 300 chose the answer, so they are not also the check on it.</span>
+                <span class="rule-chip">Independent check</span>
+                <span class="text-sm text-gray-700">Once the answer is chosen from the 300-market search, it is verified one more time across <strong>1,000 simulated markets</strong> so you get an independent confirmation.</span>
             </div>
             <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
-                <span class="rule-chip">What lasting means</span>
-                <span class="text-sm text-gray-700">Net worth above $0, retirement accounts included. The plan does not draw on retirement accounts to pay a bill unless a transfer rule says so, so a market can count as lasting while a bill went unpaid in it. Never runs out is the stricter test, and it is applied on the plan&rsquo;s own path only.</span>
+                <span class="rule-chip">What &ldquo;lasting&rdquo; means</span>
+                <span class="text-sm text-gray-700">Staying above $0 total net worth from retirement onward (including retirement accounts). Because automatic failover protects retirement accounts before age 60, a plan that runs dry early can still hold positive net worth while missing a bill &mdash; which is why &ldquo;never runs out&rdquo; is checked separately on your plan&rsquo;s fixed path.</span>
             </div>
         </div>
 
-        <h3 class="text-lg font-bold tracking-tight mb-3">Market returns</h3>
+        <h3 class="text-lg font-bold tracking-tight mb-3">Market returns outlook</h3>
         <div class="space-y-2 mb-6">
             <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
-                <span class="rule-chip">What moves</span>
-                <span class="text-sm text-gray-700">Pessimistic and Optimistic add &minus;1% or +1% a year to the return rate of every stock and bond account: brokerage, IRA, Roth IRA, 401(k), US Treasury and corporate bond. Only the growth rate moves; a dividend rate is left as entered, so growth and dividends together move by exactly one point. Moderate is the plan as entered.</span>
+                <span class="rule-chip">What shifts</span>
+                <span class="text-sm text-gray-700"><strong>Pessimistic (&minus;1%)</strong> and <strong>Optimistic (+1%)</strong> shift the annual growth rate of every stock and bond account (Brokerage, Traditional IRA, Roth IRA, 401(k), US Treasury, and Corporate Bond) by &plusmn;1% per year. Dividend yields stay unchanged so total return moves by exactly one percentage point. <strong>Moderate</strong> uses your rates as entered.</span>
             </div>
             <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
-                <span class="rule-chip">What does not</span>
-                <span class="text-sm text-gray-700">Inflation (and so every expense), wages, savings and cash accounts, real estate, mortgages, debt, pensions and Social Security stay as entered. Because inflation does not move, the point is a point of real return too.</span>
+                <span class="rule-chip">What stays fixed</span>
+                <span class="text-sm text-gray-700">Inflation (and expenses), wages, Cash, Savings, real estate, mortgages, debt, pensions, and Social Security stay exactly as entered. Because inflation is unchanged, a 1% return shift is also a 1% shift in real return.</span>
             </div>
             <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
-                <span class="rule-chip">One copy per test</span>
-                <span class="text-sm text-gray-700">A test reads the plan once, when it starts, and moves the rates of a copy. The spending test, its simulated-markets limit and check rows, the guardrails row, the routing test and the chart all run that copy. The plan on screen is never changed, and a saved result keeps the rates you entered.</span>
+                <span class="rule-chip">Non-destructive copy</span>
+                <span class="text-sm text-gray-700">Every Test Bench run works on a temporary copy with shifted rates &mdash; applying them consistently across the spending solver, simulated markets, guardrails check, routing search, and holdings chart. Your saved plan keeps your original return rates.</span>
             </div>
             <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
                 <span class="rule-chip">In simulated markets</span>
-                <span class="text-sm text-gray-700">In the calibrated data mode a market adds each year&rsquo;s swing to the asset&rsquo;s own rate, which the copy has already moved. In the historical mode a market replaces the rate with the year&rsquo;s return, so the point is added to the drawn stock and Treasury returns instead. Corporate bonds are never drawn and keep their moved rate in every market. The point is counted once either way.</span>
+                <span class="text-sm text-gray-700">In Calibrated mode, each market swing builds on the shifted base rate. In Historical mode, &plusmn;1% is added directly to the drawn historical stock and Treasury returns (and Corporate Bonds keep their shifted rate). Either way, the 1% shift is applied exactly once.</span>
             </div>
             <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
-                <span class="rule-chip">The first column</span>
-                <span class="text-sm text-gray-700">At Moderate the &ldquo;As entered&rdquo; column is the Outcome card&rsquo;s figure. Under Pessimistic or Optimistic it is the plan as entered under that outlook, and a line under the table names it.</span>
+                <span class="rule-chip">The &ldquo;As entered&rdquo; column</span>
+                <span class="text-sm text-gray-700">Under Moderate returns, the first column matches the Outcome card exactly. Under Pessimistic or Optimistic returns, it shows how your entered plan performs under that shifted outlook, noted right below the table.</span>
             </div>
         </div>
 
@@ -1001,74 +1004,74 @@
         <div class="space-y-2 mb-6">
             <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
                 <span class="rule-chip">What stops it</span>
-                <span class="text-sm text-gray-700">The limit that the next level up would break. For the simulated-markets limit: the rate at the next level tested. For an unpaid bill: the first month it happens and the balances of tax-deferred and tax-free accounts in that month, which the plan does not draw on to pay a bill.</span>
+                <span class="text-sm text-gray-700">Explains which limit prevented spending from going higher &mdash; whether your market survival target, your ending-balance floor, or an unpaid bill. When an unpaid bill stops the plan before age 60, it also names any retirement accounts still holding funds because automatic failover protects them before 60.</span>
             </div>
             <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
-                <span class="rule-chip">Simulated markets</span>
-                <span class="text-sm text-gray-700">The plan as entered and the solved plan are each run through 300 simulated markets with the same seed, without guardrails. The rate is the share of markets that never ran out from retirement on. A rate the limit already measured is shown, not measured again.</span>
+                <span class="rule-chip">Simulated markets row</span>
+                <span class="text-sm text-gray-700">Runs both your entered plan and the solved plan across the same 300 seeded markets (without guardrails), reusing any survival rate already measured during the search.</span>
             </div>
             <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
-                <span class="rule-chip">Guardrails</span>
-                <span class="text-sm text-gray-700">Both plans are also run under the Guardrails section&rsquo;s settings, from retirement. Guardrails are not part of the search: on one fixed path a guardrail is only a second way to cut spending. The settings are read and never changed.</span>
+                <span class="rule-chip">Guardrails row</span>
+                <span class="text-sm text-gray-700">Evaluates both columns under your current Guardrails settings from retirement onward (read-only &mdash; never alters your guardrail inputs). Guardrails are not part of the spending search itself.</span>
             </div>
             <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
                 <span class="rule-chip">Health costs at 65</span>
-                <span class="text-sm text-gray-700">A marketplace health plan ends in the December before 65. Medicare premiums are not charged by the simulator, so a plan with no health expense after 65 spends less from then on. The result says so, and shows spending before and from 65 separately.</span>
+                <span class="text-sm text-gray-700">Because an ACA Health Insurance card ends in December before age 65 and Medicare premiums are not added automatically, the table splits monthly spending into <strong>before 65</strong> and <strong>from 65</strong> and notes if no post-65 health expense is in the plan.</span>
             </div>
             <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
-                <span class="rule-chip">Saving</span>
-                <span class="text-sm text-gray-700">Save as a scenario writes the solved monthly expense amounts, cut to the cent toward spending less, into a new scenario. The plan as entered is not changed.</span>
+                <span class="rule-chip">Saving a result</span>
+                <span class="text-sm text-gray-700"><strong>Save as a scenario</strong> creates a new scenario with the solved monthly expenses (truncated down to the cent so it never overshoots the tested level) while leaving your original scenario untouched.</span>
             </div>
         </div>
 
         <h3 class="text-lg font-bold tracking-tight mb-3">The routing test</h3>
-        <p class="text-gray-600 mb-4 leading-relaxed">The routing test asks &ldquo;is there a better way to route this plan&rsquo;s money?&rdquo; A routing is the plan&rsquo;s transfer percentages: how each income is split across accounts, and which accounts pay each expense, phase by phase. Every random number comes from a fixed seed, so the same plan, floor and depth give the same list.</p>
+        <p class="text-gray-600 mb-4 leading-relaxed">The routing test asks &ldquo;can this plan spend more simply by changing how money flows between accounts?&rdquo; It searches alternative transfer percentages &mdash; how paychecks split across accounts and which accounts fund expenses, phase by phase &mdash; using a fixed seed so the same plan, floor, and depth always yield the same results.</p>
         <div class="space-y-2 mb-6">
             <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
-                <span class="rule-chip">The measure</span>
-                <span class="text-sm text-gray-700">A routing is ranked by what the plan can spend under it: the highest level of the spending test&rsquo;s dial at which it never runs out and leaves the floor. Nothing else is in the rank. Ranking by what is left at the end was measured and rejected: it sends money into retirement accounts, where a bill cannot reach it, and on seven of the eight quick-start plans the plan could then spend less.</span>
+                <span class="rule-chip">How routings are ranked</span>
+                <span class="text-sm text-gray-700">Every candidate routing is ranked strictly by <strong>maximum sustainable monthly spending</strong> (keeping all bills paid and meeting your ending-balance floor) &mdash; never by raw ending net worth, which can reward locking money away in accounts where it isn&rsquo;t available when needed.</span>
             </div>
             <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
-                <span class="rule-chip">What may change</span>
-                <span class="text-sm text-gray-700">Whole percentages from 0 to 100, for each income into each account it can be paid into and for each monthly expense from each account that can pay it. The percentages of one income or expense never sum past 100.</span>
+                <span class="rule-chip">What it can change</span>
+                <span class="text-sm text-gray-700">Whole-number transfer percentages (0%&ndash;100%) for each income&rsquo;s deposit targets and each monthly expense&rsquo;s funding sources, keeping every asset&rsquo;s outgoing percentages at or below 100%.</span>
             </div>
             <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
-                <span class="rule-chip">What may not</span>
-                <span class="text-sm text-gray-700">Home, mortgage and debt rules. Moves from one account to another. A draw on a tax-deferred or tax-free account in a phase that starts before age 60: the early-withdrawal penalty is not charged yet, so the search would find those draws free, and they stay at the entered value. A pension or Social Security paid into a retirement account. A phase that says nothing about an income or expense keeps the rules of the phase before it; a change there writes all of them.</span>
+                <span class="rule-chip">What it leaves alone</span>
+                <span class="text-sm text-gray-700">Home, mortgage, and debt rules; account-to-account rebalance transfers; pensions or Social Security (which cannot fund retirement accounts); and any retirement-account withdrawal in a phase starting <strong>before age 60</strong> (locked at your entered value because the 10% early-withdrawal penalty is not charged).</span>
             </div>
             <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
                 <span class="rule-chip">Contribution limits</span>
-                <span class="text-sm text-gray-700">Not the search&rsquo;s to keep: payroll cuts a 401(k) or IRA contribution at the annual limit and pays the rest as take-home, so a routing that asks for too much is run as the law would run it.</span>
+                <span class="text-sm text-gray-700">Annual 401(k) and IRA caps are still enforced by payroll during every test run, so requesting a higher deferral percentage automatically caps at the legal limit and sends the remainder to take-home pay.</span>
             </div>
             <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
-                <span class="rule-chip">Depth</span>
-                <span class="text-sm text-gray-700">The searches a test runs. Depth 1: one climb from the plan as entered. Depth 2 adds four climbs from near the plan, each percentage moved by up to 30 points. Depth 3 adds five climbs from random routings. Depth 4 adds ten genetic searches, five started from the plan and five from random routings, each of 50 routings over 200 generations and each followed by a climb.</span>
+                <span class="rule-chip">Search depth</span>
+                <span class="text-sm text-gray-700">Choose how widely to search: <strong>Depth 1</strong> runs one hill-climb from your current plan; <strong>Depth 2</strong> adds 4 climbs starting near your plan (&plusmn;30 points); <strong>Depth 3</strong> adds 5 climbs from random routings; <strong>Depth 4</strong> adds 10 genetic searches (50 candidates &times; 200 generations each) polished by a final climb.</span>
             </div>
             <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
-                <span class="rule-chip">A climb</span>
-                <span class="text-sm text-gray-700">Move one percentage up or down, or shift points between two accounts of the same income or expense, and keep every move that lets the plan spend more. Steps of 20, 10, 5, 2 and then 1 point, each repeated until none helps, so no single one-point move improves the result.</span>
+                <span class="rule-chip">Hill-climbing</span>
+                <span class="text-sm text-gray-700">Adjusts individual percentages or shifts share between two accounts on the same income or expense in progressively finer steps (20, 10, 5, 2, then 1 point) until no single 1-point move improves spending.</span>
             </div>
             <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
-                <span class="rule-chip">Prune</span>
-                <span class="text-sm text-gray-700">After each search, a changed percentage is put back to the entered value wherever the plan keeps its spending level, less a thousandth of the gain. What is left is the changes that carry the gain.</span>
+                <span class="rule-chip">Pruning</span>
+                <span class="text-sm text-gray-700">After each search finishes, any tweaked percentage that doesn&rsquo;t meaningfully contribute to the gain (within 0.1% of the improvement) is reverted to your original value, leaving only changes that actually matter.</span>
             </div>
             <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
-                <span class="rule-chip">The list</span>
-                <span class="text-sm text-gray-700">Every search, best first by the spending solver&rsquo;s monthly figure for the routed plan. Searches that found the same routing share a row. The line under it counts the searches within 1% of the best; one answer is never shown as the best without saying how many reached it. When several searches ran and no other came within 1% of the best, its row is marked as alone at the top.</span>
+                <span class="rule-chip">Ranked list &amp; agreement</span>
+                <span class="text-sm text-gray-700">Results are sorted best-first, grouping searches that found the same routing into one row. A summary notes how many searches finished within 1% of the best; if only one search reached the top, it is marked <em>Alone at the top</em> so you know a deeper search may find more.</span>
             </div>
             <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
-                <span class="rule-chip">The cost shown</span>
-                <span class="text-sm text-gray-700">An estimate made before the test starts: about four plan runs per percentage squared for a climb (250 at the least), 10,000 more for a genetic search, at the speed of the last test run on this machine, with as many searches side by side as the processor has cores, less one. It is rough.</span>
+                <span class="rule-chip">Time estimate</span>
+                <span class="text-sm text-gray-700">Before starting, the Test Bench estimates total runs and wall-clock time based on your plan&rsquo;s parameter count, your processor&rsquo;s parallel worker count, and how fast recent runs executed on your machine.</span>
             </div>
             <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
-                <span class="rule-chip">Saving</span>
-                <span class="text-sm text-gray-700">Save this routing writes the proposed percentages into a new scenario; saving it with its spending also writes the solved expense amounts. The plan as entered is not changed, and no account or phase is added or removed.</span>
+                <span class="rule-chip">Saving a routing</span>
+                <span class="text-sm text-gray-700">Save the proposed transfer percentages as a new scenario &mdash; either keeping your current spending or paired with the solved maximum spending. Your original scenario is never overwritten, and no accounts or phases are added or removed.</span>
             </div>
         </div>
 
         <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
             <span class="rule-chip">Routing and markets</span>
-            <span class="text-sm text-gray-700">The routing test does not use the simulated-markets limit: routings are found and compared on the plan&rsquo;s own path of returns, so that the effect of a change can be seen. A routing at the most it can spend there leaves little margin, and its simulated-markets row shows how it fares when markets vary.</span>
+            <span class="text-sm text-gray-700">Routings are discovered on your plan&rsquo;s fixed return path so the impact of each transfer rule is clear. Because maximum spending on a fixed path leaves little cushion for bad markets, check the routing&rsquo;s simulated-markets row (or set an ending-balance floor above $0) before relying on it.</span>
         </div>
     </div>
 
@@ -1078,61 +1081,61 @@
             <span class="text-2xl">&#x26A1;</span>
             <h2 class="text-2xl font-bold tracking-tight">AI Summaries</h2>
         </div>
-        <p class="text-gray-600 mb-6 leading-relaxed">Every section of the simulator has a floating <strong>&#x26A1;</strong> button that generates a structured markdown summary of your portfolio's current state &mdash; ready to paste into a conversation with your financial advisor, an AI assistant, or your own notes. Each summary is tailored to its section and includes directional notes pointing to related insights elsewhere in the tool.</p>
+        <p class="text-gray-600 mb-6 leading-relaxed">Every major section includes a <strong>&#x26A1;</strong> button that generates a clean, structured Markdown summary of your plan &mdash; ready to copy with one click into Claude, ChatGPT, an email to a financial advisor, or your own notes.</p>
 
         <div class="grid sm:grid-cols-3 gap-4 mb-6">
             <div class="p-4 rounded-xl bg-white/70">
                 <div class="font-semibold text-sm mb-1">&#x1F4C5; Timeline Summary</div>
-                <div class="text-sm text-gray-500">Life event phases, trigger ages, fund transfer configurations per phase, and which assets close at each transition.</div>
+                <div class="text-sm text-gray-500">Life event phases, trigger ages, transfer rules per phase, and which assets close at each transition.</div>
             </div>
             <div class="p-4 rounded-xl bg-white/70">
                 <div class="font-semibold text-sm mb-1">&#x1F4BC; Portfolio Summary</div>
-                <div class="text-sm text-gray-500">Every asset with starting value, ending value, asset type, annual return rate, and fund transfer routing.</div>
+                <div class="text-sm text-gray-500">Every asset&rsquo;s type, starting and ending balance, return rate, and active transfer routing.</div>
             </div>
             <div class="p-4 rounded-xl bg-white/70">
                 <div class="font-semibold text-sm mb-1">&#x1F4C8; Projections Summary</div>
-                <div class="text-sm text-gray-500">Metric snapshots at key dates &mdash; start, retirement, and finish &mdash; with per-asset breakdowns and growth trends.</div>
+                <div class="text-sm text-gray-500">Metric snapshots at plan start, retirement, and finish, with per-asset breakdowns and growth trends.</div>
             </div>
             <div class="p-4 rounded-xl bg-white/70">
                 <div class="font-semibold text-sm mb-1">&#x1F3B2; Monte Carlo Summary</div>
-                <div class="text-sm text-gray-500">Percentile ending values (10th through 90th), baseline comparison, and 10th&ndash;90th spread with warnings if the downside is negative.</div>
+                <div class="text-sm text-gray-500">Ending percentile bands (10th through 90th), baseline comparison, survival rate, and downside spread.</div>
             </div>
             <div class="p-4 rounded-xl bg-white/70">
                 <div class="font-semibold text-sm mb-1">&#x1F6E1; Guardrails Summary</div>
-                <div class="text-sm text-gray-500">Current guardrail parameters and a table of every preservation cut or prosperity raise that fired during the simulation, with the year and adjusted rate.</div>
+                <div class="text-sm text-gray-500">Active guardrail parameters plus a table of every spending cut or raise that fired, with year and adjusted rate.</div>
             </div>
             <div class="p-4 rounded-xl bg-white/70">
                 <div class="font-semibold text-sm mb-1">&#x1F4CB; Details Summary</div>
-                <div class="text-sm text-gray-500">Credit memo audit totals per asset, lifetime tax summary (income, FICA, Medicare, capital gains, property), and annual cash flow table.</div>
+                <div class="text-sm text-gray-500">Ledger totals per asset, lifetime tax breakdown (income, FICA, Medicare, capital gains, NIIT, property), and annual cash-flow tables.</div>
             </div>
         </div>
 
         <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
             <span class="rule-chip">Why it matters</span>
-            <span class="text-sm text-gray-700">Financial data is only useful if you can <strong>communicate it</strong>. Each summary is structured markdown &mdash; tables, headers, and bullet points &mdash; designed to be pasted into ChatGPT, Claude, an email to your advisor, or a planning document. Copy with one click.</span>
+            <span class="text-sm text-gray-700">Numbers are most useful when you can discuss them clearly. Each summary formats your live simulation data as clean Markdown tables and notes with one-click copy.</span>
         </div>
     </div>
 
     <!-- ═══ Scenarios & Sharing ═══ -->
     <div class="glass-card p-8 sm:p-12 mb-8">
         <h2 class="text-2xl font-bold tracking-tight mb-4">Scenarios &amp; Sharing</h2>
-        <p class="text-gray-600 mb-6 leading-relaxed">One plan is never enough. The simulator lets you build multiple scenarios &mdash; different retirement dates, different allocation strategies, different assumptions &mdash; and compare them instantly. When you're ready, share your entire portfolio with a single link.</p>
+        <p class="text-gray-600 mb-6 leading-relaxed">Build and compare multiple independent scenarios &mdash; different retirement ages, savings rates, or return assumptions &mdash; and share any plan with a single private link.</p>
         <div class="grid sm:grid-cols-2 gap-4">
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Multiple Scenarios</div>
-                <div class="text-sm text-gray-500">Create scenarios with different assumptions &mdash; each with its own assets, fund transfers, life events, settings (ages, filing status, inflation, backtest year) and guardrail parameters &mdash; and switch between them from the scenario menu in the Timeline heading.</div>
+                <div class="text-sm text-gray-500">Each scenario stores its own assets, fund transfers, life events, settings (ages, filing status, inflation, backtest year), and guardrail parameters. Switch between them from the scenario chip in the Timeline heading.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Instant Sharing</div>
-                <div class="text-sm text-gray-500">Share your plan as a link, by email or by copying it. The recipient opens your exact scenario &mdash; assets, transfers, settings and guardrails. <strong>Open</strong> shows it without storing anything, so their own scenarios stay as they were; <strong>Open &amp; Save</strong> adds it as a new scenario, on its own settings.</div>
+                <div class="font-semibold text-sm mb-1">Private Link Sharing</div>
+                <div class="text-sm text-gray-500">Share links encode your scenario inside the URL fragment (<code>#portfolio=&hellip;</code>), which browsers never send to a server. Recipients can choose <strong>Open</strong> to view it in memory without touching their saved plans, or <strong>Open &amp; Save</strong> to store it as a new scenario.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Auto-Persistence</div>
-                <div class="text-sm text-gray-500">Every change is automatically saved to your browser's local storage. Close the tab, come back tomorrow &mdash; your portfolio is exactly where you left it.</div>
+                <div class="text-sm text-gray-500">Every edit saves automatically to your browser&rsquo;s local storage &mdash; your data stays on your device and picks up right where you left off.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Growth at a Glance</div>
-                <div class="text-sm text-gray-500">The timeline shows the plan&rsquo;s opening and closing values, in nominal and today&rsquo;s dollars, and each phase&rsquo;s annual growth rate, or a dash where the phase does not start and end above $0.</div>
+                <div class="text-sm text-gray-500">The timeline displays opening and ending balances in both nominal and today&rsquo;s dollars, plus each phase&rsquo;s annualized nominal and real growth rate (shown as a dash if a phase starts or ends at $0 or below).</div>
             </div>
         </div>
     </div>

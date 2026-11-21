@@ -48,7 +48,18 @@
 
     <!-- ═══ Intro ═══ -->
     <div class="glass-card p-8 sm:p-12 mb-8">
-        <p class="text-gray-600 leading-relaxed">A section-by-section guide to the simulator. The <strong style="font-size: 14px; color: #6b7280;">?</strong> in each section&rsquo;s heading links to its entry here.</p>
+        <p class="text-gray-600 leading-relaxed mb-6">A section-by-section guide to using the simulator. Click the <strong style="font-size: 14px; color: #6b7280;">?</strong> in any section&rsquo;s heading to jump straight to its guide here.</p>
+        <div class="flex flex-wrap gap-2 text-sm">
+            <a href="#outcome" class="px-4 py-2 rounded-xl bg-gray-50 hover:bg-gray-100 transition text-gray-700 no-underline">Top of Page</a>
+            <a href="#timeline" class="px-4 py-2 rounded-xl bg-gray-50 hover:bg-gray-100 transition text-gray-700 no-underline">Timeline &amp; Details</a>
+            <a href="#portfolio" class="px-4 py-2 rounded-xl bg-gray-50 hover:bg-gray-100 transition text-gray-700 no-underline">Your Portfolio</a>
+            <a href="#simulations" class="px-4 py-2 rounded-xl bg-gray-50 hover:bg-gray-100 transition text-gray-700 no-underline">Simulations</a>
+            <a href="#projections" class="px-4 py-2 rounded-xl bg-gray-50 hover:bg-gray-100 transition text-gray-700 no-underline">Projections</a>
+            <a href="#details" class="px-4 py-2 rounded-xl bg-gray-50 hover:bg-gray-100 transition text-gray-700 no-underline">Details</a>
+            <a href="#spreadsheet" class="px-4 py-2 rounded-xl bg-gray-50 hover:bg-gray-100 transition text-gray-700 no-underline">Spreadsheet</a>
+            <a href="#visualizer" class="px-4 py-2 rounded-xl bg-gray-50 hover:bg-gray-100 transition text-gray-700 no-underline">Visualizer</a>
+            <a href="#test-bench" class="px-4 py-2 rounded-xl bg-gray-50 hover:bg-gray-100 transition text-gray-700 no-underline">Test Bench</a>
+        </div>
     </div>
 
     <!-- ═══ The top of the page ═══ -->
@@ -57,25 +68,25 @@
             <span class="text-2xl">&#x1F9ED;</span>
             <h2 class="text-2xl font-bold tracking-tight">The Top of the Page</h2>
         </div>
-        <p class="text-gray-600 mb-6 leading-relaxed">The settings row holds the assumptions every section shares. Under it, the Outcome strip answers the question most people come with &mdash; will my money last? &mdash; and the section bar takes you anywhere on the page.</p>
+        <p class="text-gray-600 mb-6 leading-relaxed">The Settings Row sets the assumptions shared across the whole plan. Directly beneath it, the Outcome Strip answers the core question &mdash; will my money last? &mdash; and the sticky Section Bar lets you jump anywhere on the page.</p>
 
         <h3 class="text-lg font-bold mb-4">Elements</h3>
         <div class="grid sm:grid-cols-2 gap-4">
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Settings Row</div>
-                <div class="text-sm text-gray-500"><strong>Current Age</strong>, <strong>Retirement Age</strong>, <strong>Finish Age</strong>, <strong>Filing As</strong>, <strong>Inflation</strong> and <strong>Backtest from Year</strong>. On a loaded plan, changing Retirement Age moves the plan&rsquo;s retirement: the Retire phase, and any salary that ends or Social Security or pension that starts on the old retirement date. Social Security never moves before 62, the earliest it can be claimed. A note under the row says what moved, and changing the age back moves it all back. Each scenario keeps its own settings, so switching scenarios switches them too.</div>
+                <div class="text-sm text-gray-500"><strong>Current Age</strong>, <strong>Retirement Age</strong>, <strong>Finish Age</strong>, <strong>Filing As</strong>, <strong>Inflation</strong>, and <strong>Backtest from Year</strong>. On an existing plan, changing Retirement Age shifts the Retire phase along with any salaries ending and Social Security or pensions starting on the old retirement date (Social Security never moves before age 62). A one-line note shows what moved, and changing the age back restores it. Each scenario keeps its own settings.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Will My Money Last?</div>
-                <div class="text-sm text-gray-500">Three answers side by side, each labelled with what it assumes: <strong>Plan as entered</strong> (the ending net worth, in today&rsquo;s dollars too, and whether the plan ever runs out), <strong>In 1,000 simulated markets</strong> (the Monte Carlo success rate and median) and <strong>With spending guardrails</strong>. They should differ: the simulations vary the markets and the guardrails vary spending. Click a tile to jump to its section.</div>
+                <div class="text-sm text-gray-500">Three clickable summary tiles side by side, each labeled with its assumptions: <strong>Plan as entered</strong> (ending net worth in nominal and today&rsquo;s dollars, plus whether the plan ever runs out), <strong>In 1,000 simulated markets</strong> (Monte Carlo survival rate and median), and <strong>With spending guardrails</strong>. Tiles dim briefly while recalculating after an edit; click any tile to jump to its section.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Section Bar</div>
-                <div class="text-sm text-gray-500">The bar stays at the top of the window as you scroll and highlights the section you are reading. Click a name to jump there.</div>
+                <div class="text-sm text-gray-500">Stays pinned to the top of your screen as you scroll and highlights your current section. Click any label to jump straight there.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Collapsed Sections</div>
-                <div class="text-sm text-gray-500"><strong>Spreadsheet</strong> and <strong>Visualizer</strong> start collapsed, since they are for exploring rather than for the answer. <strong>Show</strong> in a section&rsquo;s heading opens it, and the page remembers your choice.</div>
+                <div class="text-sm text-gray-500"><strong>Spreadsheet</strong> and <strong>Visualizer</strong> start collapsed to keep the page focused. Click <strong>Show</strong> in either heading to open it; your open/collapsed preference is remembered across visits.</div>
             </div>
         </div>
     </div>
@@ -86,46 +97,46 @@
             <span class="text-2xl">&#x1F550;</span>
             <h2 class="text-2xl font-bold tracking-tight">Your Timeline</h2>
         </div>
-        <p class="text-gray-600 mb-6 leading-relaxed">The Timeline draws your money&rsquo;s path across your life phases on one chart, the wealth arc. It marks the milestones along the way, and its cursor sets the month every other section shows. The scenario menu in its heading switches between your saved plans.</p>
+        <p class="text-gray-600 mb-6 leading-relaxed">The Timeline plots your portfolio across every phase of your life on one interactive curve, marks major milestones, and controls the active month shown throughout the rest of the page. Use the scenario chip in its heading to switch between saved plans.</p>
 
         <!-- Elements -->
         <h3 class="text-lg font-bold mb-4">Elements</h3>
         <div class="grid sm:grid-cols-2 gap-4 mb-8">
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">The Wealth Arc</div>
-                <div class="text-sm text-gray-500">The curve plots the selected metric (Net Worth unless you choose another) for the whole plan. The starting value sits at the left end, the ending value in bold at the right, and a checkpoint marks the value at retirement. Ages run along the axis, with calendar years at each end.</div>
+                <div class="text-sm text-gray-500">Plots the active metric (Net Worth by default) across the entire simulation. Shows your starting value on the left, ending value in bold on the right, and a checkpoint at retirement, with ages along the axis and calendar years at both ends.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Phase Bands &amp; Growth Rates</div>
-                <div class="text-sm text-gray-500">Tinted bands mark your phases &mdash; <strong style="color: #1D9E75;">Accumulate</strong> in green, <strong style="color: #D85A30;">Retire</strong> in coral. Each band is labelled with that phase&rsquo;s annual growth rate, nominal and real (<em>7.2%/yr &middot; 4.0% real</em>). A rate needs the value above $0 at both the start and the end of the phase; where it isn&rsquo;t, for example when net worth falls below zero, the band shows a dash instead. A dashed line marks retirement.</div>
+                <div class="text-sm text-gray-500">Shaded bands mark each life phase &mdash; <strong style="color: #1D9E75;">Accumulate</strong> in green, <strong style="color: #D85A30;">Retire</strong> in coral &mdash; with a dashed line at retirement. Each band displays its annualized nominal and real growth rate (e.g., <em>7.2%/yr &middot; 4.0% real</em>), or a dash if the phase starts or ends at $0 or below.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Today's Dollars</div>
-                <div class="text-sm text-gray-500">A fainter curve follows the arc in <strong>today&rsquo;s dollars</strong>, and the start, end and cursor values each show a <em>today&rsquo;s&nbsp;$</em> figure beneath them. It appears only where that makes sense &mdash; for a balance, not a rate. Over a long plan it is the honest number: $4M in 2056 buys far less than $4M today.</div>
+                <div class="font-semibold text-sm mb-1">Today&rsquo;s Dollars</div>
+                <div class="text-sm text-gray-500">A lighter companion curve shows the arc adjusted for inflation in <strong>today&rsquo;s dollars</strong>, paired with <em>today&rsquo;s&nbsp;$</em> figures under the start, end, and cursor values whenever you are viewing a balance metric.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Milestone Pins</div>
-                <div class="text-sm text-gray-500">Pins on the curve mark asset milestones &mdash; buying or selling real estate, a mortgage opening or paid off, Social Security and pension starts. Pins stack when events fall at the same age. Click a pin to edit that asset.</div>
+                <div class="text-sm text-gray-500">Pins along the curve mark major asset milestones &mdash; buying or selling a home, opening or paying off a mortgage, and starting Social Security or a pension. Click any pin to edit that asset.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">"You are Here" Cursor</div>
-                <div class="text-sm text-gray-500">A vertical line with a chip showing the date, your age and the value at that moment. <strong>Drag anywhere on the arc</strong> to move through time, or focus the arc and use <strong>&larr; / &rarr;</strong> to step a month (<strong>Shift</strong> for a year). Every chart, badge and view on the page follows it.</div>
+                <div class="font-semibold text-sm mb-1">&ldquo;You are Here&rdquo; Cursor</div>
+                <div class="text-sm text-gray-500">A vertical marker displaying the selected date, your age, and value. <strong>Drag anywhere on the curve</strong> to scrub through time, or click the curve and press <strong>&larr; / &rarr;</strong> to step one month (hold <strong>Shift</strong> for a full year). Every chart, badge, and view updates together.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Month &amp; Year Details</div>
-                <div class="text-sm text-gray-500">The section directly under the timeline always shows the cursor&rsquo;s month and its calendar year, in two rows with the same columns: income received, expenses, taxes and cash flow first, then what was withdrawn from your accounts, asset growth and net worth. Under them, the year&rsquo;s taxes as a tax return would see them. <a href="#monthdetails" class="underline">More on reading it</a>.</div>
+                <div class="text-sm text-gray-500">Directly beneath the timeline, two matching rows show the selected month and its full calendar year: <strong>Income received</strong>, <strong>Expenses</strong>, <strong>Taxes</strong>, and <strong>Cash flow</strong>, followed by <strong>Withdrawn</strong>, <strong>Asset growth</strong>, and <strong>Net worth</strong> &mdash; plus a <strong>Tax year</strong> strip underneath. <a href="#monthdetails" class="underline">How to read it</a>.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Phase Chips &amp; Edit Popover</div>
-                <div class="text-sm text-gray-500">Below the arc, one chip per phase shows its name and age range. Click a chip, or its dot on the axis, and choose <strong>Edit</strong> to open the life event form. <strong>+ Life event</strong> adds a new one.</div>
+                <div class="text-sm text-gray-500">Chips below the arc list each phase and its age range. Click a chip (or its dot on the axis) and pick <strong>Edit</strong> to adjust the life event, or click <strong>+ Life event</strong> to add a new phase.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Scenario Menu</div>
-                <div class="text-sm text-gray-500">The chip in the section heading names the active scenario &mdash; a complete, independent plan with its own assets, fund transfers, life events, settings and guardrail parameters. Click it to open the menu: each row shows a preview curve of that scenario (green if it grew, red if it shrank), its note and its ending value. The active row can be renamed (&#x270F;&#xFE0F;) or deleted (&#x1F5D1;&#xFE0F;). A shared plan opened with <strong>Open</strong> shows in the chip as <em>not saved</em>: nothing of it is stored, and your scenarios are as you left them. Save it from the menu with <strong>＋ Save as scenario</strong>, or pick one of your scenarios, choose <strong>Close without saving</strong> or reload to go back.</div>
+                <div class="text-sm text-gray-500">Click the scenario chip in the Timeline heading (press <strong>Escape</strong> to close) to switch between complete, independent plans. Each row shows a sparkline preview, note, and ending value, with buttons on the active row to rename (&#x270F;&#xFE0F;) or delete (&#x1F5D1;&#xFE0F;). A shared plan opened with <strong>Open</strong> is labeled <em>not saved</em> and stays strictly in memory until you click <strong>＋ Save as scenario</strong>, switch plans, or choose <strong>Close without saving</strong>.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Date Controls &amp; &#x26A1; AI Summary</div>
-                <div class="text-sm text-gray-500">Year and month dropdowns in the card's upper right jump to an exact date, and the <strong>&#9654;</strong> play button auto-advances one month per second (scrub the arc or adjust a selector to pause). The <strong>&#x26A1;</strong> button in the section heading generates a markdown summary of your timeline and phases.</div>
+                <div class="text-sm text-gray-500">Use the Year and Month dropdowns in the upper right to jump to an exact date, or click <strong>&#9654;</strong> to play forward one month per second (scrub the arc or change a dropdown to pause). Click <strong>&#x26A1;</strong> in the heading for a copyable Markdown summary of your timeline and phases.</div>
             </div>
         </div>
 
@@ -137,15 +148,15 @@
                 <div class="space-y-2">
                     <div class="flex items-start gap-3">
                         <span class="step-number">1</span>
-                        <span class="text-sm text-gray-700">Set your <strong>Current Age</strong>, <strong>Retirement Age</strong> and <strong>Finish Age</strong> in the settings row at the top of the page. On a new plan the Accumulate and Retire phases follow these ages; on a loaded plan, Retirement Age moves the plan&rsquo;s retirement (see <a href="#outcome" class="underline">Settings Row</a>).</span>
+                        <span class="text-sm text-gray-700">Set your <strong>Current Age</strong>, <strong>Retirement Age</strong>, and <strong>Finish Age</strong> in the Settings Row. On a new plan, Accumulate and Retire follow these ages automatically; on a loaded plan, changing Retirement Age moves the retirement milestone (see <a href="#outcome" class="underline">Settings Row</a>).</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">2</span>
-                        <span class="text-sm text-gray-700">Click a <strong>phase chip</strong> below the arc (or the phase's dot on the arc's axis) to select it and open its popover; choose <strong>Edit</strong> to adjust the phase in the life event modal.</span>
+                        <span class="text-sm text-gray-700">Click any <strong>phase chip</strong> below the arc (or its dot on the axis) and choose <strong>Edit</strong> to open the life event dialog.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">3</span>
-                        <span class="text-sm text-gray-700">Open an asset&rsquo;s fund transfers (<strong>&#x21C4;</strong> on its card). The transfers shown belong to the selected phase, so Accumulate and Retire can route money differently.</span>
+                        <span class="text-sm text-gray-700">Click <strong>&#x21C4;</strong> on any asset card to configure its fund transfers for the currently selected phase &mdash; so Accumulate and Retire can route money differently.</span>
                     </div>
                 </div>
             </div>
@@ -155,41 +166,41 @@
                 <div class="space-y-2">
                     <div class="flex items-start gap-3">
                         <span class="step-number">1</span>
-                        <span class="text-sm text-gray-700">Use the <strong>Year</strong> and <strong>Month</strong> dropdowns to pick a date. All charts, the portfolio view, the visualizer, and every viewing badge update to reflect that month's data.</span>
+                        <span class="text-sm text-gray-700">Pick any date with the <strong>Year</strong> and <strong>Month</strong> dropdowns. Every chart, badge, portfolio card, and detail view updates immediately.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">2</span>
-                        <span class="text-sm text-gray-700">Alternatively, <strong>drag anywhere on the wealth arc</strong>. The cursor scrubs month by month as you drag &mdash; or focus the arc and step with the <strong>&larr; / &rarr;</strong> arrow keys (<strong>Shift</strong> jumps a year).</span>
+                        <span class="text-sm text-gray-700">Or <strong>drag anywhere on the wealth arc</strong> to scrub month by month &mdash; or focus the arc and press <strong>&larr; / &rarr;</strong> (<strong>Shift</strong> jumps a year).</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">3</span>
-                        <span class="text-sm text-gray-700">Click the <strong>&#9654; play</strong> button next to the month selector to auto-advance one month per second. Everything animates in sync &mdash; sparklines, flow arrows, the Flows bars, visualizer conduit, and wealth tank. Scrub the arc or adjust a selector to pause.</span>
+                        <span class="text-sm text-gray-700">Click <strong>&#9654;</strong> next to the month selector to animate forward one month per second across sparklines, Flows bars, and the Visualizer.</span>
                     </div>
                 </div>
             </div>
 
             <div id="monthdetails" class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-2">Inspect a month and its year &mdash; Month &amp; Year Details</div>
+                <div class="font-semibold text-sm mb-2">Read Month &amp; Year Details</div>
                 <div class="space-y-2">
                     <div class="flex items-start gap-3">
                         <span class="step-number">1</span>
-                        <span class="text-sm text-gray-700">Scrub the cursor to the month you're curious about. The <strong>Month &amp; Year Details</strong> section directly beneath the timeline always shows that month and the calendar year it falls in &mdash; there is nothing to open.</span>
+                        <span class="text-sm text-gray-700">Scrub the timeline cursor to any month. The <strong>Month &amp; Year Details</strong> panel beneath the timeline stays open and always shows that month alongside its full calendar year (partial first or last years note which months they cover).</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">2</span>
-                        <span class="text-sm text-gray-700">The two rows share their columns, and the year is its months added up, so <strong>Income received</strong>, <strong>Expenses</strong>, <strong>Taxes</strong> and <strong>Cash flow</strong> mean the same thing over one month and over twelve. <strong>Cash flow</strong> is income received less expenses and taxes, so the four always reconcile, and it is the same Cash Flow that Reports, Projections and the Spreadsheet show. Income received is money from outside your accounts &mdash; wages, Social Security, pensions, interest and dividends. A withdrawal from your own IRA, 401(k), Roth or brokerage is not income here; it is under <strong>Withdrawn</strong>. Expenses include the whole mortgage payment, principal as well as interest. In retirement, cash flow usually runs negative: that is what your savings had to cover. Click <strong>Income received</strong>, <strong>Expenses</strong> or <strong>Taxes</strong> for what each is made of: income and expenses by account, with a mortgage split into interest and principal; taxes by kind &mdash; income tax, FICA, capital gains, NIIT and property tax. Each list adds up to the figure you clicked. Taxes are what was paid in the period, so a January includes the previous year&rsquo;s year-end settlement, and the list says so. <strong>Net worth</strong> is a balance, not a sum: the year shows where it ended and how much it changed. A plan&rsquo;s first and last years can be short; the row says which months it covers.</span>
+                        <span class="text-sm text-gray-700">Both rows use identical columns so the year equals the sum of its months: <strong>Cash flow = Income received &minus; Expenses &minus; Taxes</strong>. <strong>Income received</strong> counts external money coming in (wages, Social Security, pensions, interest, and dividends) &mdash; not withdrawals from your own brokerage or retirement accounts. <strong>Expenses</strong> includes living expenses, home maintenance/insurance, and the full mortgage payment (principal plus interest). Click <strong>Income received</strong>, <strong>Expenses</strong>, or <strong>Taxes</strong> to open an itemized popover breakdown. <strong>Net worth</strong> is a balance rather than a sum, showing the ending figure and net change for the year.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">3</span>
-                        <span class="text-sm text-gray-700"><strong>Withdrawn</strong> is money that genuinely left an account to meet an obligation &mdash; living expenses, rent, the <em>full</em> mortgage payment including principal, property tax, maintenance, insurance, and tax paid from an account. That makes it larger than the <strong>Expenses</strong> column, an accounting figure that leaves mortgage principal and property tax out. Click the amount for the list of obligations it paid, each with its amount. While you are working, its tax is usually <strong>$0</strong>, and that is correct: withholding comes out of your paycheck and never passes through an account, and the list says so. If a pink <strong>unfunded</strong> amount appears, the plan owed more than any account could supply.</span>
+                        <span class="text-sm text-gray-700"><strong>Withdrawn</strong> shows the cash that actually left your accounts to cover obligations &mdash; living costs, the full mortgage payment, home carrying costs, property tax, and taxes drawn from accounts. Because it includes property tax and account-paid taxes, it is typically larger than the <strong>Expenses</strong> column. Click it for a full breakdown. While you are working, its tax line is often <strong>$0</strong> because payroll withholding comes straight out of your paycheck rather than an account. A pink <strong>unfunded</strong> badge means obligations exceeded what eligible accounts could pay.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">4</span>
-                        <span class="text-sm text-gray-700"><strong>Tax year</strong>, under the rows, is the year as a tax return sees it: <strong>Federal taxes owed</strong> on that year&rsquo;s income (FICA, income and capital-gains tax, and the Net Investment Income Tax), then <strong>AGI</strong>, <strong>MAGI</strong>, and the effective rate on income and on AGI. It differs from the <strong>Taxes</strong> column, which is what was <em>paid</em> during the year: the true-up and NIIT for a year are settled the following January, so a year&rsquo;s Taxes include the previous year&rsquo;s settlement. The line under the amount owed says what January settled. A year the plan ends before December was never settled and has no tax-year figures.</span>
+                        <span class="text-sm text-gray-700"><strong>Tax year</strong> beneath the rows summarizes the year like a tax return: <strong>Federal taxes owed</strong> (FICA, ordinary income tax, capital-gains tax, and NIIT), <strong>AGI</strong>, <strong>MAGI</strong>, effective tax rates, and any ACA Premium Tax Credit. Because mid-plan annual true-ups and NIIT settle the following January (while a plan ending in December folds its final settlement into that closing December), the <strong>Taxes</strong> column reflects cash paid during the calendar year while <strong>Tax year</strong> reflects what that year owed. A trailing partial year before December is left unsettled and has no tax-year row.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">5</span>
-                        <span class="text-sm text-gray-700">Use <strong>Spreadsheet &rarr;</strong> or <strong>Credit memos &rarr;</strong> in the section heading to jump to that month's row in the detail views &mdash; both are already positioned at the cursor date.</span>
+                        <span class="text-sm text-gray-700">Click <strong>Spreadsheet &rarr;</strong> or <strong>Credit memos &rarr;</strong> in the heading to jump straight to that exact month in the detail views (auto-expanding the Spreadsheet if collapsed).</span>
                     </div>
                 </div>
             </div>
@@ -199,15 +210,15 @@
                 <div class="space-y-2">
                     <div class="flex items-start gap-3">
                         <span class="step-number">1</span>
-                        <span class="text-sm text-gray-700">Click the <strong>scenario chip</strong> in the section heading and choose <strong>＋ New scenario</strong>. Pick a name and note, and choose whether to start blank or copy the current scenario. A copy is the whole scenario: its assets, its life events with their transfer rules, and its guardrail settings. Either way it starts on the current scenario's settings.</span>
+                        <span class="text-sm text-gray-700">Click the <strong>scenario chip</strong> in the Timeline heading and select <strong>＋ New scenario</strong>. Give it a name and optional note, and choose whether to start blank or duplicate your current scenario (including all assets, phase transfers, settings, and guardrails).</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">2</span>
-                        <span class="text-sm text-gray-700">Switch scenarios by clicking a row in the menu. Each row's <strong>preview curve</strong> and ending value show where that scenario lands. Scenarios are fully independent &mdash; assets, life events, fund transfers, settings and guardrail parameters are all scenario-specific.</span>
+                        <span class="text-sm text-gray-700">Click any scenario in the menu to switch immediately. Every scenario is fully independent.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">3</span>
-                        <span class="text-sm text-gray-700">On the active row, click <strong>&#x270F;&#xFE0F;</strong> to rename the scenario or edit its note, or <strong>&#x1F5D1;&#xFE0F;</strong> to delete it (hidden when only one scenario exists).</span>
+                        <span class="text-sm text-gray-700">On the active row, click <strong>&#x270F;&#xFE0F;</strong> to rename or edit its note, or <strong>&#x1F5D1;&#xFE0F;</strong> to delete it (available whenever you have more than one scenario).</span>
                     </div>
                 </div>
             </div>
@@ -217,15 +228,15 @@
                 <div class="space-y-2">
                     <div class="flex items-start gap-3">
                         <span class="step-number">1</span>
-                        <span class="text-sm text-gray-700">If you have no assets yet, the <strong>welcome banner</strong> offers four starting plans for different life stages, each with income, accounts, a home, expenses and fund transfers for both phases. Or choose <strong>Start from Scratch</strong>.</span>
+                        <span class="text-sm text-gray-700">On an empty plan, the <strong>welcome banner</strong> offers four starter templates &mdash; complete with income, accounts, housing, expenses, and transfer rules for both Accumulate and Retire &mdash; or choose <strong>Start from Scratch</strong>.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">2</span>
-                        <span class="text-sm text-gray-700">The four on offer <strong>follow your Filing As setting</strong>. Filing Single you get <strong>Early Career</strong>, <strong>Mid Career</strong>, <strong>Pre-Retirement</strong> and <strong>Retired</strong>; filing jointly you get <strong>Young Couple</strong>, <strong>Dual Income Couple</strong>, <strong>Couple Nearing Retirement</strong> and <strong>Retired Couple</strong> &mdash; the joint profiles carry two salaries and two Social Security benefits. Change Filing As in the Settings Row and the banner re-offers.</span>
+                        <span class="text-sm text-gray-700">The templates match your <strong>Filing As</strong> setting: <strong>Early Career</strong>, <strong>Mid Career</strong>, <strong>Pre-Retirement</strong>, and <strong>Retired</strong> for Single; or <strong>Young Couple</strong>, <strong>Dual Income Couple</strong>, <strong>Couple Nearing Retirement</strong>, and <strong>Retired Couple</strong> for Married Filing Jointly (with two salaries and two Social Security streams).</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">3</span>
-                        <span class="text-sm text-gray-700">A profile sets its own ages and filing status when you load it &mdash; Mid Career, for example, starts at 45 and retires at 67. Change Retirement Age afterwards to move its retirement.</span>
+                        <span class="text-sm text-gray-700">Loading a template sets its default ages and filing status (for example, Mid Career starts at 45 and retires at 67). You can adjust Retirement Age or any asset right afterward.</span>
                     </div>
                 </div>
             </div>
@@ -238,66 +249,66 @@
             <span class="text-2xl">&#x1F4BC;</span>
             <h2 class="text-2xl font-bold tracking-tight">Your Portfolio</h2>
         </div>
-        <p class="text-gray-600 mb-6 leading-relaxed">Your Portfolio shows every asset in the plan, grouped into columns. Two views: <strong>Assets</strong>, what you own, and <strong>Flows</strong>, where your money goes.</p>
+        <p class="text-gray-600 mb-6 leading-relaxed">Your Portfolio displays every asset in the active scenario across two views: <strong>Assets</strong> (grouped cards for everything you own, earn, and spend) and <strong>Flows</strong> (a visual breakdown of where every dollar moved and which rules sent it).</p>
 
         <!-- Elements -->
         <h3 class="text-lg font-bold mb-4">Elements</h3>
         <div class="grid sm:grid-cols-2 gap-4 mb-8">
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">&#x26A0;&#xFE0F; What Needs Attention</div>
-                <div class="text-sm text-gray-500">A panel above the asset list reporting what went wrong with the <strong>plan</strong> &mdash; not with the app. Findings are grouped into <strong>&#x1F4B8; Paying for the plan</strong> (an obligation nothing could pay, an account that ran dry and was covered by the next one down) and <strong>&#x1F527; Needs setting up</strong> (no funding account configured, contributions that hit the annual limit, a required distribution that was not met, Social Security dated before 62). If the plan runs out of money, that month leads as its own callout above the list.<br><br>The panel opens itself <strong>once</strong>, on the transition from clear to not-clear &mdash; after that the badge is the only nag, so it won't fight you while you type. Not to be confused with the <strong>Issues &#x1F41B;</strong> button in the page header, which is the form for reporting a bug in the tool itself.</div>
+                <div class="text-sm text-gray-500">A collapsible bar above your assets reporting issues in your <strong>plan</strong> (not app bugs). Findings are grouped into <strong>&#x1F4B8; Paying for the plan</strong> (unpaid obligations and accounts that ran dry and spilled over) and <strong>&#x1F527; Needs setting up</strong> (missing funding accounts, capped retirement contributions, unmet RMDs, or Social Security dated before 62). If the plan runs out of money, that month leads as a callout at the top.<br><br>The panel opens itself <strong>once</strong> when issues first appear; after that, the badge updates quietly so it won&rsquo;t interrupt you while editing. (For reporting a bug in the app itself, use <strong>Issues &#x1F41B;</strong> in the page header.)</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">&#x26A0;&#xFE0F; on an Asset Card</div>
-                <div class="text-sm text-gray-500">A warning marker on a card means <strong>an obligation this asset owed could not be paid</strong>. It does <em>not</em> mean the account is empty &mdash; a retirement account is supposed to draw down, and a zero balance alone never raises a flag. Open the card to see which months failed and why.</div>
+                <div class="text-sm text-gray-500">A warning badge on a card means <strong>an obligation tied to this asset went unpaid</strong>. It does <em>not</em> fire merely because a retirement account reached $0. Open the card&rsquo;s <strong>&#x1F453;</strong> view to see which months failed and why.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">&#x1F453; Asset View</div>
-                <div class="text-sm text-gray-500">Hover an asset card and click <strong>&#x1F453;</strong> (&ldquo;View results&rdquo;) to open a read-only view of what the simulation actually did to it, over three windows: <strong>This month</strong>, <strong>This year</strong> (January through the selected month) and <strong>Life to date</strong>. Below the numbers sit <strong>rule notes</strong> &mdash; plain-language explanations of the rules that fired, such as why a Roth withdrawal was untaxed, where the tax on untaxed income was settled instead, what was withheld from a pension before it paid out, or why a contribution was capped. Nothing here is editable; it is all simulation output.</div>
+                <div class="text-sm text-gray-500">Hover any asset card and click <strong>&#x1F453;</strong> to inspect read-only simulation results across <strong>This month</strong>, <strong>This year</strong> (year-to-date), and <strong>Life to date</strong>. Underneath the numbers, plain-English <strong>rule notes</strong> explain every rule that fired &mdash; such as why a Roth withdrawal owed no tax, where tax on untaxed income was paid, what was withheld from a pension, or why a contribution was capped.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Asset Columns</div>
-                <div class="text-sm text-gray-500">Assets sit in six columns: <strong>Income</strong>, <strong>Capital</strong>, <strong>Real Estate</strong>, <strong>Retirement</strong>, <strong>Expenses</strong> and <strong>Taxes</strong>, each headed by its total. All start expanded.</div>
+                <div class="text-sm text-gray-500">Assets are organized into six collapsible columns &mdash; <strong>Income</strong>, <strong>Capital</strong>, <strong>Real Estate</strong>, <strong>Retirement</strong>, <strong>Expenses</strong>, and <strong>Taxes</strong> &mdash; each showing its group total. Expanding or collapsing a column also controls which individual assets appear in the Micro Projection chart.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Asset Cards</div>
-                <div class="text-sm text-gray-500">Each asset card shows three layers: the asset's <strong>value</strong> at the selected date, a <strong>sparkline</strong> showing the full simulation trajectory with a "you are here" dot, and a <strong>flow row</strong> with colored arrows showing monthly inflows (green), growth (blue), and outflows (red). Hovering reveals four actions &mdash; <strong>&#x270E;</strong> edit, <strong>&#x21C4;</strong> transfers, <strong>&#x1F453;</strong> view results, <strong>&#x2715;</strong> remove. Clicking the card body instead <strong>selects</strong> it, highlighting that asset across the charts.</div>
+                <div class="text-sm text-gray-500">Each card displays the asset&rsquo;s <strong>value</strong> at the cursor date, a <strong>sparkline</strong> across the full plan with a &ldquo;you are here&rdquo; dot, and monthly <strong>inflow / growth / outflow</strong> arrows. Badges flag closed assets (<strong>&#x26D4;</strong>), unpaid obligations (<strong>&#x26A0;&#xFE0F;</strong>), and one-time events (<strong>&#x1F4B0;</strong>). Hover for quick actions &mdash; <strong>&#x270E;</strong> edit, <strong>&#x21C4;</strong> transfers, <strong>&#x1F453;</strong> view results, <strong>&#x2715;</strong> remove &mdash; or click the card body to highlight it across the charts.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Assets / Flows Toggle</div>
-                <div class="text-sm text-gray-500">Switch between the <strong>Assets</strong> view (grouped asset cards) and the <strong>Flows</strong> view (where the money went, and the transfer rules that sent it). Both views update as you navigate the timeline; Flows shows the transfer rules of the life-event phase in force at the selected month.</div>
+                <div class="text-sm text-gray-500">Switch between <strong>Assets</strong> (grouped cards) and <strong>Flows</strong> (where money moved and which transfer rules sent it). Both views follow the timeline cursor, and Flows always shows the transfer rules active in the cursor&rsquo;s life phase.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Viewing Badge</div>
-                <div class="text-sm text-gray-500">Shows the currently selected month and year. All values, sparkline dots, and flow amounts reflect the simulation state at this date.</div>
+                <div class="text-sm text-gray-500">Shows the selected month and active metric. Click any viewing badge on the page to cycle metrics everywhere at once.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Taxes Column</div>
-                <div class="text-sm text-gray-500">A virtual group that surfaces hidden taxes: FICA, income tax, capital gains, net investment income tax, the premium tax credit settled on the return, and property tax. Click any tax item to <strong>highlight the contributing assets</strong> with a pulse animation across all columns.<br><br>Most rows show the selected month annualized. <strong>Net Investment Income</strong> and <strong>Premium Tax Credit</strong> are the exceptions: each settles once a year, so its row shows the <strong>trailing twelve months</strong> instead &mdash; otherwise it would vanish for eleven months and read twelve times too high in the twelfth. Each appears only in years with something to settle.</div>
+                <div class="text-sm text-gray-500">A dedicated summary column breaking down FICA, ordinary income tax, capital-gains tax, Net Investment Income Tax (NIIT), ACA Premium Tax Credit settlement, and property tax. Click any tax row to <strong>pulse the contributing assets</strong> across all columns.<br><br>Most rows annualize the selected month; <strong>NIIT</strong> and <strong>Premium Tax Credit</strong> settle once per year and show their <strong>trailing 12-month</strong> total instead (appearing only when non-zero).</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">&#x1FA7A; ACA Health Insurance</div>
-                <div class="text-sm text-gray-500">An expense card for a marketplace plan, with the premium tax credit worked out on it. Enter this plan year&rsquo;s <strong>monthly premium</strong> before any credit and the <strong>benchmark premium</strong> (the second-lowest-cost silver plan for your household, which healthcare.gov shows). The <strong>Premium Growth %</strong> defaults to inflation; marketplace premiums usually rise faster, so set your own. <strong>Estimated Income</strong> is the ACA MAGI you tell the marketplace for a year you were not on it all of the year before; <strong>Advance Credit %</strong> takes less of the credit monthly; <strong>Household Size</strong> overrides the one your filing status implies. Leave the finish date empty and the card ends the December before you turn 65. See <a href="rules.html#aca" class="underline">Rules</a> for how the credit is worked out.</div>
+                <div class="text-sm text-gray-500">An expense card for marketplace coverage with federal Premium Tax Credits calculated automatically. Enter the full <strong>monthly premium</strong> before credit and your household&rsquo;s <strong>benchmark silver premium</strong> (from HealthCare.gov). Set <strong>Premium Growth %</strong> (defaults to plan inflation), <strong>Estimated Income</strong> (ACA MAGI for years without a prior full marketplace year), <strong>Advance Credit %</strong> (if taking less subsidy upfront), and optional <strong>Household Size</strong>. Leaving the finish date blank ends coverage automatically in December before age 65. See <a href="rules.html#aca" class="underline">Rules</a> for full credit details.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Where the Money Went</div>
-                <div class="text-sm text-gray-500">The top of the Flows view draws <strong>one bar per source of money</strong> over the selected month, or its year with the <strong>Month | Year</strong> toggle: each paycheck, pension or benefit, each account that paid for something or sent money on, and the dividends, interest, refunds and windfalls that came in. A bar's parts are where its money went, colored by what it did: <strong>into your accounts</strong> (purple), <strong>spent</strong> (red) or paid in <strong>tax</strong> (amber). Each part carries its destination's group icon, as on the Assets view.<br><br>The bars are what actually moved, read from the ledger, not your rules' percentages applied to a balance. The tiles above them add up: <strong>Came in</strong>, less <strong>Spent</strong> and <strong>Tax paid</strong>, is what went <strong>into your accounts</strong>. They are Income received, Expenses and Taxes from Month &amp; Year Details, to the dollar, less only what the bars leave out: income that had no account to go to, bills that could not be paid (both listed beside the bars), and property tax, which is drawn the month after it accrues while Taxes counts it when it accrues (the Tax paid tile says by how much). Each bar's parts add up to the bar. One-time windfalls and purchases are in the bars but not the tiles, as they are not in Month &amp; Year Details.</div>
+                <div class="text-sm text-gray-500">At the top of the Flows view, <strong>one bar per source of money</strong> shows where every dollar actually went during the selected month or calendar year (<strong>Month | Year</strong> toggle): <strong>into your accounts</strong> (purple), <strong>spent</strong> (red), or paid in <strong>tax</strong> (amber), tagged with destination group icons.<br><br>The summary tiles above reconcile directly: <strong>Came in &minus; Spent &minus; Tax paid = Into your accounts</strong>, matching Month &amp; Year Details aside from unplaced income, unpaid bills (listed beside the bars), one-time windfalls/purchases, and the one-month property-tax escrow lag (noted right on the Tax paid tile).</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Rules in Force</div>
-                <div class="text-sm text-gray-500">Under the bars, each transfer rule of the phase in force, with its setting beside what it moved. A setting says what its percentage is of: a 401(k) deferral is a percentage of <strong>gross pay</strong>, a Roth or brokerage deposit of <strong>take-home pay</strong>, an expense rule of <strong>the bill</strong>. A rule's close percentage is a row of its own, since a closing account's balance moves out of it: a home that pays its property costs from the brokerage sends its sale proceeds the other way. Rules that moved nothing in the period, such as those of a paycheck that has ended, are folded away.<br><br><strong>Moved automatically</strong> lists the money no rule sent: tax withheld from income or from withdrawals, estimated tax paid from your accounts, last year's tax settlement, required minimum distributions, take-home pay no rule claims, bills no rule covers (paid by the funding backstop), an account running short and the next one paying, and sale proceeds. Hover or tab to a bar part or a rule to light the other. Click a rule to edit its transfers, in the life-event phase that set it.</div>
+                <div class="text-sm text-gray-500">Lists every transfer rule active in the current phase beside what it actually moved &mdash; clarifying whether each percentage applies to <strong>gross pay</strong> (401(k)/Traditional IRA), <strong>take-home pay</strong> (Roth/brokerage/savings), or <strong>the bill</strong> (expenses), with on-close sweeps on their own rows. Inactive rules that moved $0 fold away cleanly.<br><br><strong>Moved automatically</strong> lists engine-managed flows: payroll and distribution withholding, estimated taxes, prior-year settlements, RMDs, leftover take-home pay, backstop payouts, account spillovers, and sale proceeds. Hover any bar segment or rule to highlight its counterpart, or click a rule to edit it in the phase where it was defined.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Fund Transfer Modal</div>
-                <div class="text-sm text-gray-500">Accessed by hovering over an asset card and clicking the <strong>&#x21C4;</strong> button, or by clicking a rule in the Flows view. Configure percentage-based transfers that are <strong>phase-specific</strong> (Accumulate and Retire phases have independent configurations).</div>
+                <div class="text-sm text-gray-500">Open by clicking <strong>&#x21C4;</strong> on an asset card or clicking a rule in Flows. Set monthly (0.1% steps) and on-close transfer percentages independently for each life phase (such as Accumulate vs. Retire).</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Funding Backstop</div>
-                <div class="text-sm text-gray-500">Bills, mortgage payments, property tax and taxes still have to be paid when no fund transfer covers them. The simulator falls back to your everyday accounts, in this order: <strong>Cash &rarr; Savings &rarr; Taxable Account &rarr; US Treasury &rarr; Corporate Bond</strong> &mdash; the first one holding a positive balance pays. Sale proceeds and leftover take-home pay land the same way.<br><br><strong>Retirement accounts are never used automatically.</strong> Spending a 401K, IRA or Roth has tax and penalty consequences the simulator will not choose for you, so if your plan means to fund expenses from retirement savings, set up an explicit fund transfer. When nothing is eligible, the obligation is marked <em>Unfunded</em> in that asset's Credit Memos rather than being quietly skipped.</div>
+                <div class="font-semibold text-sm mb-1">Funding Backstop &amp; Automatic Failover</div>
+                <div class="text-sm text-gray-500">When no transfer covers a bill, mortgage, property tax, or tax payment &mdash; or when a funding account hits $0 mid-payment &mdash; the engine automatically steps across your everyday accounts in order: <strong>Cash &rarr; Savings &rarr; Taxable Account &rarr; US Treasury &rarr; Corporate Bond</strong>, draining across multiple accounts in a single draw if needed.<br><br><strong>Before age 60</strong>, retirement accounts are never drawn automatically. <strong>At age 60 and older</strong> (the whole-year equivalent of 59&frac12;), once all everyday accounts are empty, failover continues into retirement accounts in tax-efficient order: <strong>Traditional IRA &rarr; 401(k) &rarr; Roth IRA</strong> (Roth strictly last resort). Leftover take-home pay, RMDs, sale proceeds, and tax refunds always deposit into your first open everyday account (even at $0) and never into retirement accounts. Anything no eligible account can cover is logged as <em>Unfunded</em>.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">&#x26A1; AI Summary &amp; + Add Asset</div>
-                <div class="text-sm text-gray-500">The &#x26A1; generates a markdown summary of your portfolio composition. The <strong>+</strong> button opens the asset creation dialog.</div>
+                <div class="text-sm text-gray-500">Click <strong>&#x26A1;</strong> for a structured Markdown summary of your portfolio, or click <strong>+</strong> at the bottom-right to add a new asset, income stream, expense, or debt.</div>
             </div>
         </div>
 
@@ -309,15 +320,15 @@
                 <div class="space-y-2">
                     <div class="flex items-start gap-3">
                         <span class="step-number">1</span>
-                        <span class="text-sm text-gray-700">Click the <strong>+</strong> button at the bottom-right of the portfolio card.</span>
+                        <span class="text-sm text-gray-700">Click the <strong>+</strong> button at the bottom-right of Your Portfolio.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">2</span>
-                        <span class="text-sm text-gray-700">Choose an <strong>asset type</strong> (for example Working Income, Taxable Account or Mortgage). The type decides how the asset behaves: how it grows, how it is taxed and which transfers it can take part in.</span>
+                        <span class="text-sm text-gray-700">Pick an <strong>asset type</strong> (such as Working Income, Taxable Account, Home, or ACA Health Insurance). The type sets how the asset grows, is taxed, and interacts with transfers.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">3</span>
-                        <span class="text-sm text-gray-700">Fill in the <strong>display name</strong>, <strong>start/end dates</strong>, <strong>starting value</strong>, and <strong>annual return rate</strong>. Click Save to add the asset to your portfolio.</span>
+                        <span class="text-sm text-gray-700">Enter a unique <strong>display name</strong>, <strong>start/end dates</strong>, <strong>starting value</strong>, and <strong>annual return rate</strong>, then click Save. Adding a future home purchase automatically opens the Purchase Funding dialog (for outright purchase or down payment + mortgage).</span>
                     </div>
                 </div>
             </div>
@@ -327,15 +338,15 @@
                 <div class="space-y-2">
                     <div class="flex items-start gap-3">
                         <span class="step-number">1</span>
-                        <span class="text-sm text-gray-700">Hover over an asset card and click the <strong>&#x21C4;</strong> button, or switch to the <strong>Flows</strong> view and click any rule under Rules in force to open the fund transfer modal.</span>
+                        <span class="text-sm text-gray-700">Click <strong>&#x21C4;</strong> on an asset card, or click any rule under <em>Rules in force</em> in the Flows view.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">2</span>
-                        <span class="text-sm text-gray-700">Set a <strong>percentage</strong> (0&ndash;100%) for each destination asset. For example, route 15% of your salary to a 401K and 10% to a brokerage account during Accumulate.</span>
+                        <span class="text-sm text-gray-700">Enter a <strong>percentage</strong> (0&ndash;100%) for each target account &mdash; for example, routing 15% of salary to a 401(k) and 10% to a brokerage account during Accumulate.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">3</span>
-                        <span class="text-sm text-gray-700">Switch to the <strong>Retire</strong> phase on the timeline and configure different transfers &mdash; e.g., draw from retirement accounts to cover expenses.</span>
+                        <span class="text-sm text-gray-700">Select the <strong>Retire</strong> phase on the timeline to configure separate retirement-phase withdrawal rules (such as drawing from IRA or brokerage first to control tax brackets).</span>
                     </div>
                 </div>
             </div>
@@ -345,15 +356,15 @@
                 <div class="space-y-2">
                     <div class="flex items-start gap-3">
                         <span class="step-number">1</span>
-                        <span class="text-sm text-gray-700">Hover over the asset card and click the <strong>pencil icon</strong> to edit, or the <strong>&#x2715;</strong> to remove it.</span>
+                        <span class="text-sm text-gray-700">Hover over any asset card and click <strong>&#x270E;</strong> to edit it, <strong>&#x1F4B0;</strong> to add one-time windfalls or purchases, or <strong>&#x2715;</strong> to delete it.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">2</span>
-                        <span class="text-sm text-gray-700">In the edit dialog, modify the asset's fields &mdash; name, dates, values, return rates. Click Save to apply changes.</span>
+                        <span class="text-sm text-gray-700">In the edit dialog, update names, dates, balances, rates, or purchase funding sources and click Save.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">3</span>
-                        <span class="text-sm text-gray-700">Removing an asset deletes it and its own fund transfers from the current scenario. What other assets and phases send to it, close, or pay a purchase from it is kept by its name and does nothing: &ldquo;What needs attention&rdquo; lists it, and a purchase it paid for shows &#x26A0;&#xFE0F; until you pick another source (<strong>Change</strong> under Purchase Funding in the purchase's edit dialog). Add an asset with the same name and they all reconnect; or remove them where they live: a transfer in its source's transfers, a close in its life event.</span>
+                        <span class="text-sm text-gray-700">Deleting an asset removes it and its own outgoing transfers from the current scenario. Any inbound transfers, life-event closes, or purchase-funding links pointing to it stay parked by name (flagged in <em>What needs attention</em>) and reconnect automatically if you later add an asset with the same name &mdash; or you can remove them directly in the source asset or life event.</span>
                     </div>
                 </div>
             </div>
@@ -363,19 +374,19 @@
                 <div class="space-y-2">
                     <div class="flex items-start gap-3">
                         <span class="step-number">1</span>
-                        <span class="text-sm text-gray-700">Start with the callout at the top if there is one &mdash; <strong>the month the plan runs out of money</strong>. That is the first month an obligation came due and no eligible account held a positive balance, so everything after it is downstream of the same failure.</span>
+                        <span class="text-sm text-gray-700">Start with the top callout if present &mdash; <strong>the month the plan runs out of money</strong>. That is the first month an obligation exceeded every eligible account, and later alerts usually stem from it.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">2</span>
-                        <span class="text-sm text-gray-700">Read <strong>&#x1F527; Needs setting up</strong> next. These are usually configuration, not arithmetic: no cash or savings account exists to pay from, a transfer is asking for more than the annual contribution limit allows, or a required minimum distribution has nowhere to land. They are often the cause of the row above.</span>
+                        <span class="text-sm text-gray-700">Check <strong>&#x1F527; Needs setting up</strong> next. These highlight setup issues like missing everyday accounts, contributions hitting IRS caps, deferred Social Security, or unmet RMDs.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">3</span>
-                        <span class="text-sm text-gray-700">Treat <strong>&ldquo;Ran dry&rdquo;</strong> notices as the early warning. The obligations were still met &mdash; the next account down covered them &mdash; but the plan is now leaning on its backstop. Scrub the timeline to that month and open the asset's <strong>&#x1F453;</strong> view to see what drained it.</span>
+                        <span class="text-sm text-gray-700">Use <strong>&ldquo;Ran dry&rdquo;</strong> notices as an early warning. Bills were still paid by the next account in your failover chain, so scrub the timeline to that month and click <strong>&#x1F453;</strong> to see what drained the account.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">4</span>
-                        <span class="text-sm text-gray-700">Remember that the simulator <strong>never spends a 401(k), IRA or Roth on its own</strong>. If a plan is meant to fund retirement from retirement savings, that has to be an explicit fund transfer &mdash; an unfunded obligation beside healthy retirement balances almost always means the transfer is missing.</span>
+                        <span class="text-sm text-gray-700">Keep the <strong>age-60 failover boundary</strong> in mind: before age 60, retirement accounts are never drawn automatically, so an unpaid bill before 60 alongside healthy 401(k)/IRA/Roth balances means your everyday accounts ran dry early. From age 60 onward, failover automatically draws <strong>IRA &rarr; 401(k) &rarr; Roth IRA</strong> once everyday accounts empty &mdash; and you can still add explicit transfers whenever you want a custom withdrawal order.</span>
                     </div>
                 </div>
             </div>
@@ -385,15 +396,15 @@
                 <div class="space-y-2">
                     <div class="flex items-start gap-3">
                         <span class="step-number">1</span>
-                        <span class="text-sm text-gray-700">Click <strong>Flows</strong> in the Assets/Flows toggle at the top of Your Portfolio.</span>
+                        <span class="text-sm text-gray-700">Click <strong>Flows</strong> in the Assets / Flows toggle at the top of Your Portfolio.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">2</span>
-                        <span class="text-sm text-gray-700">Read the bars: one per source of money, its parts colored by what the money did. Switch <strong>Month | Year</strong> to see the whole year.</span>
+                        <span class="text-sm text-gray-700">Inspect each source bar (colored by into accounts, spent, or tax) and toggle <strong>Month | Year</strong> for annual totals.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">3</span>
-                        <span class="text-sm text-gray-700">Hover a bar part to find the rule that made it under <strong>Rules in force</strong>, or the automatic flow it belongs to. Click a rule to open the fund transfer modal for its asset.</span>
+                        <span class="text-sm text-gray-700">Hover any bar segment to highlight its matching rule under <strong>Rules in force</strong> or <strong>Moved automatically</strong>, and click any rule to edit its transfer percentages directly.</span>
                     </div>
                 </div>
             </div>
@@ -406,34 +417,34 @@
             <span class="text-2xl">&#x1F3B2;</span>
             <h2 class="text-2xl font-bold tracking-tight">Simulations</h2>
         </div>
-        <p class="text-gray-600 mb-6 leading-relaxed">Two ways to stress-test the plan: <strong>Monte Carlo</strong>, which runs it through 1,000 simulated markets, and <strong>Guardrails</strong>, which adjusts spending as the portfolio rises and falls. Both re-run on their own whenever the plan changes; until a new result arrives, the previous one is dimmed.</p>
+        <p class="text-gray-600 mb-6 leading-relaxed">Two built-in stress tests: <strong>Monte Carlo</strong> (1,000 market simulations drawn from 1970&ndash;2025 economic history) and <strong>Guardrails</strong> (adaptive retirement spending). Both re-run automatically after every edit, dimming briefly until fresh results arrive.</p>
 
         <!-- Elements -->
         <h3 class="text-lg font-bold mb-4">Elements</h3>
         <div class="grid sm:grid-cols-2 gap-4 mb-8">
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Monte Carlo Chart</div>
-                <div class="text-sm text-gray-500">Runs <strong>1,000</strong> simulations with returns drawn from market history (1970&ndash;2025, or from your backtest year on), and shows the 10th, 25th, 50th, 75th and 90th percentile bands with your plan&rsquo;s own path overlaid. The draws are seeded, so the same plan always gives the same answer.</div>
+                <div class="text-sm text-gray-500">Runs <strong>1,000</strong> seeded simulations drawn from 1970&ndash;2025 history (or from your Backtest year forward) and plots 10th, 25th, 50th, 75th, and 90th percentile bands alongside your deterministic baseline. Use the action button to pause, resume, or restart a run.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Calibrated / Historical</div>
-                <div class="text-sm text-gray-500"><strong>Calibrated</strong>, the default, keeps your own return and inflation rates and adds each drawn year&rsquo;s swing around its long-run average. <strong>Historical</strong> uses the drawn years&rsquo; actual returns, as they happened.</div>
+                <div class="text-sm text-gray-500"><strong>Calibrated</strong> (default) keeps your configured return and inflation rates and applies each historical year&rsquo;s volatility around its average. <strong>Historical</strong> uses each drawn year&rsquo;s raw historical returns as they happened.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Summary Cards</div>
-                <div class="text-sm text-gray-500">Under Monte Carlo: the <strong>success rate</strong> (the share of runs that never fall to $0 after retirement), the median, the 10th and 90th percentile endings and the horizon. Under Guardrails: the ending value, the final year&rsquo;s withdrawal, and how many spending cuts and raises fired.</div>
+                <div class="text-sm text-gray-500">Under Monte Carlo: <strong>success rate</strong> (share of trials staying above $0 every month from retirement onward), median, 10th and 90th percentile endings, and plan horizon. Under Guardrails: ending portfolio value, final-year withdrawal, and total cuts and raises triggered.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">With Guardrails Checkbox</div>
-                <div class="text-sm text-gray-500">When checked, Monte Carlo simulations apply your guardrail parameters (withdrawal rate, preservation, prosperity, adjustment) to each trial. When unchecked, simulations use your raw fund transfer percentages without dynamic adjustments.</div>
+                <div class="text-sm text-gray-500">Applies your active guardrail rules inside all 1,000 Monte Carlo trials so you can see how flexible spending raises survival rates and cushions bad markets.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Guardrails Chart</div>
-                <div class="text-sm text-gray-500">Visualizes the guardrail withdrawal strategy applied to your portfolio. Shows how dynamic spending adjustments respond to market conditions &mdash; cutting withdrawals in down markets and increasing them in up markets.</div>
+                <div class="text-sm text-gray-500">Plots your portfolio balance and annual withdrawals on dual axes, marking every year a preservation cut or prosperity raise fired.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Guardrail Parameters</div>
-                <div class="text-sm text-gray-500">Four configurable inputs, defaulting to <strong>Target Rate 5%</strong>, <strong>Preservation 15%</strong>, <strong>Prosperity 15%</strong> and <strong>Adjustment 15%</strong>. The two bands are <em>relative drift</em> from the target rate, not absolute rates &mdash; at these defaults, spending is cut once your withdrawal rate exceeds 5.75% and raised once it falls below 4.25%. A reset button restores the defaults. Parameters are saved per scenario.</div>
+                <div class="text-sm text-gray-500">Click the inline summary line to adjust <strong>Target Rate</strong> (default 5%), <strong>Preservation</strong> (15%), <strong>Prosperity</strong> (15%), and <strong>Adjustment</strong> (15%). Bands are <em>relative drift</em> around the target &mdash; at the defaults, cuts fire above 5.75% and raises fire below 4.25%. Saved per scenario, with a one-click reset to defaults.</div>
             </div>
         </div>
 
@@ -445,37 +456,37 @@
                 <div class="space-y-2">
                     <div class="flex items-start gap-3">
                         <span class="step-number">1</span>
-                        <span class="text-sm text-gray-700">Monte Carlo runs on its own when a plan loads and after every change. Its button pauses and resumes a run in progress, or starts a fresh one.</span>
+                        <span class="text-sm text-gray-700">Monte Carlo runs automatically whenever your plan loads or changes. Click its button to pause, resume, or re-run.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">2</span>
-                        <span class="text-sm text-gray-700">Review the percentile fan chart. The median (50th percentile) shows the expected outcome; the 10th percentile shows a stress-test floor.</span>
+                        <span class="text-sm text-gray-700">Check the percentile fan chart &mdash; the 50th percentile shows a typical outcome while the 10th percentile shows a harsh market stress test.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">3</span>
-                        <span class="text-sm text-gray-700">Check <strong>With Guardrails</strong> to apply your guardrail rules in every run; the simulation re-runs on its own.</span>
+                        <span class="text-sm text-gray-700">Toggle <strong>With Guardrails</strong> to see how adaptive spending changes survival across all 1,000 trials.</span>
                     </div>
                 </div>
             </div>
 
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-2">Configure and run Guardrails</div>
+                <div class="font-semibold text-sm mb-2">Configure Guardrails</div>
                 <div class="space-y-2">
                     <div class="flex items-start gap-3">
                         <span class="step-number">1</span>
-                        <span class="text-sm text-gray-700">Set the <strong>Target Rate</strong> (e.g., 5%) &mdash; this is your baseline annual withdrawal percentage from the portfolio during retirement.</span>
+                        <span class="text-sm text-gray-700">Set your <strong>Target Rate</strong> (e.g., 5%) &mdash; your baseline annual withdrawal rate from investable assets in retirement.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">2</span>
-                        <span class="text-sm text-gray-700">Set the <strong>Preservation</strong> and <strong>Prosperity</strong> bands. Each year the simulator compares your <em>actual</em> withdrawal rate &mdash; annual expenses over investable assets &mdash; against the target. Drift above the target by more than the preservation band and spending is cut; drift below it by more than the prosperity band and spending rises. It is the <strong>rate</strong> that triggers the rule, not the portfolio balance, which is why a falling market and rising expenses both set it off.</span>
+                        <span class="text-sm text-gray-700">Set the <strong>Preservation</strong> and <strong>Prosperity</strong> bands. Each year after retirement, the engine compares your actual withdrawal rate (annual expenses divided by investable assets) against the target &mdash; cutting spending if it drifts too high and raising spending if it drifts low.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">3</span>
-                        <span class="text-sm text-gray-700">Set the <strong>Adjustment</strong> percentage &mdash; how much spending changes when a guardrail is triggered (15% means every open Monthly Expense is scaled by that much; an ACA Health Insurance premium is not, since its price is set by the plan year). Adjustments only apply <strong>after your retirement date</strong>; the accumulation years are left alone.</span>
+                        <span class="text-sm text-gray-700">Set the <strong>Adjustment</strong> percentage &mdash; how much open Monthly Expenses scale when a guardrail triggers (ACA Health Insurance premiums are exempt since marketplace prices are fixed for the year). Pre-retirement years are never adjusted.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">4</span>
-                        <span class="text-sm text-gray-700">The chart updates after each change, showing one run with the guardrails applied and marking each spending cut or raise.</span>
+                        <span class="text-sm text-gray-700">The Guardrails chart updates immediately after each change, marking every spending cut or raise on the timeline.</span>
                     </div>
                 </div>
             </div>
@@ -488,34 +499,34 @@
             <span class="text-2xl">&#x1F4CA;</span>
             <h2 class="text-2xl font-bold tracking-tight">Projections</h2>
         </div>
-        <p class="text-gray-600 mb-6 leading-relaxed">The Projections section displays two side-by-side charts that visualize your portfolio's trajectory over the full simulation period. The Macro chart shows the big picture; the Micro chart shows the detail for the currently selected date.</p>
+        <p class="text-gray-600 mb-6 leading-relaxed">Two side-by-side stacked bar charts showing your plan&rsquo;s trajectory across time: <strong>Macro</strong> displays grouped asset categories across the full plan, while <strong>Micro</strong> zooms into individual assets from whichever columns are expanded in Your Portfolio.</p>
 
         <!-- Elements -->
         <h3 class="text-lg font-bold mb-4">Elements</h3>
         <div class="grid sm:grid-cols-2 gap-4 mb-8">
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Macro Projection Chart</div>
-                <div class="text-sm text-gray-500">A stacked bar chart of every asset over the whole plan, colored by asset group, for the current metric (the one shown in every viewing badge).</div>
+                <div class="text-sm text-gray-500">Stacked bars grouped by asset category over the full timeline for the active metric (time buckets automatically adapt from monthly to quarterly, semi-annual, or annual depending on plan length).</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Micro Projection Chart</div>
-                <div class="text-sm text-gray-500">A companion chart showing the individual assets from the currently expanded portfolio groups. Updates as you expand or collapse groups in Your Portfolio.</div>
+                <div class="text-sm text-gray-500">Shows individual assets from the columns currently expanded in Your Portfolio, with a dedicated metric dropdown tailored to those asset groups.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Metric Selector</div>
-                <div class="text-sm text-gray-500">A dropdown on the Macro chart that switches the metric. Options include <strong>Net Worth</strong> (balances), <strong>Net Worth Change</strong> (month-over-month change), <strong>Growth</strong>, <strong>Cash Flow</strong>, <strong>Income</strong>, <strong>Expense</strong>, <strong>Taxes</strong> and more. Changing it updates every section of the page.</div>
+                <div class="text-sm text-gray-500">Switch between <strong>Net Worth</strong>, <strong>Net Worth Change</strong>, <strong>Growth</strong>, <strong>Cash Flow</strong>, <strong>Income</strong>, <strong>Expenses</strong>, <strong>Taxes</strong>, and more. Changing the Macro metric updates every section on the page.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Click-to-cycle Badges</div>
-                <div class="text-sm text-gray-500">Every <strong>Viewing: Oct 2026 &middot; Net Worth</strong> badge (Portfolio, Projections, Visualizer, Simulations, Details, Spreadsheet) is clickable: click one to step through the main metrics, and the dropdown, timeline, asset cards, charts and visualizer all follow.</div>
+                <div class="font-semibold text-sm mb-1">Click-to-Cycle Viewing Badges</div>
+                <div class="text-sm text-gray-500">Every <strong>Viewing: Month Year &middot; Metric</strong> badge across the page is clickable &mdash; click one to step through the main metrics and update the timeline, cards, charts, and Visualizer together.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Phase Date Markers</div>
-                <div class="text-sm text-gray-500">Vertical dashed lines on the Macro chart marking the boundaries between life event phases (e.g., the transition from Accumulate to Retire). Helps you see how your portfolio behaves across phases.</div>
+                <div class="font-semibold text-sm mb-1">Phase &amp; Cursor Markers</div>
+                <div class="text-sm text-gray-500">Vertical dashed lines mark life-event phase transitions (such as Accumulate &rarr; Retire), and a black <strong>&#x25BC;</strong> marker tracks your current timeline date across charts.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Fullscreen Button</div>
-                <div class="text-sm text-gray-500">Click the <strong>&#x26F6;</strong> in the upper-right of the Macro or Micro chart to expand it to fullscreen. Press Escape or click <strong>&times;</strong> to exit.</div>
+                <div class="font-semibold text-sm mb-1">Fullscreen View</div>
+                <div class="text-sm text-gray-500">Click <strong>&#x26F6;</strong> in the upper-right of either chart to expand it fullscreen; press <strong>Escape</strong> or click <strong>&times;</strong> to return.</div>
             </div>
         </div>
 
@@ -527,15 +538,15 @@
                 <div class="space-y-2">
                     <div class="flex items-start gap-3">
                         <span class="step-number">1</span>
-                        <span class="text-sm text-gray-700">Review the <strong>Macro Projection</strong> chart for the overall shape of your plan &mdash; steady growth during accumulation, drawdown during retirement.</span>
+                        <span class="text-sm text-gray-700">Use the <strong>Macro Projection</strong> chart to check the overall arc &mdash; growth during your working years and sustainable drawdown in retirement.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">2</span>
-                        <span class="text-sm text-gray-700">Step through metrics by clicking any <strong>viewing badge</strong>, or use the dropdown. <em>Net Worth</em> shows balances. <em>Net Worth Change</em> shows how fast wealth is changing month by month &mdash; when spending outpaces growth it turns negative even while you still have money. <em>Growth</em>, <em>Cash Flow</em>, <em>Income</em> and <em>Expense</em> isolate one contributor each.</span>
+                        <span class="text-sm text-gray-700">Click any <strong>viewing badge</strong> (or use the metric dropdown) to compare <em>Net Worth</em>, <em>Net Worth Change</em> (shows when withdrawals begin outpacing growth), <em>Growth</em>, <em>Cash Flow</em>, <em>Income</em>, <em>Expenses</em>, and <em>Taxes</em>.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">3</span>
-                        <span class="text-sm text-gray-700">Click on the timeline or use the date selectors to move the cursor. The <strong>Micro chart</strong>, asset cards, visualizer, and every reactive element update to show that specific month.</span>
+                        <span class="text-sm text-gray-700">Expand or collapse columns in Your Portfolio to focus the <strong>Micro chart</strong> on specific accounts, and scrub the timeline to inspect any date.</span>
                     </div>
                 </div>
             </div>
@@ -548,30 +559,30 @@
             <span class="text-2xl">&#x1F4CB;</span>
             <h2 class="text-2xl font-bold tracking-tight">Details</h2>
         </div>
-        <p class="text-gray-600 mb-6 leading-relaxed">The Details section provides two complementary views into the financial transactions that make up your simulation: Credit Memos for individual transaction records, and Reports for aggregated summaries.</p>
+        <p class="text-gray-600 mb-6 leading-relaxed">Two complementary views into the simulation&rsquo;s numbers: <strong>Credit Memos</strong> for every individual ledger entry, and <strong>Reports</strong> for monthly and annual financial statements.</p>
 
         <!-- Elements -->
         <h3 class="text-lg font-bold mb-4">Elements</h3>
         <div class="grid sm:grid-cols-2 gap-4 mb-8">
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Credit Memos</div>
-                <div class="text-sm text-gray-500">A ledger of every transaction in the selected month &mdash; income, transfers, expense payments, tax withholding, growth and more. Each row shows the date, the asset, the amount and a note describing it. The engine writes each line as it acts, so the ledger records what happened rather than a summary built afterwards.</div>
+                <div class="text-sm text-gray-500">A transaction-by-transaction ledger for the selected month &mdash; paychecks, transfers, expenses, tax withholding, growth, and settlements &mdash; recorded live by the engine as it ran. Informational, escrow, and tax-recognition entries are badged <strong>NON-CASH</strong> so you can separate them from cash flows at a glance.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Memos Worth Looking For</div>
-                <div class="text-sm text-gray-500"><strong>Unfunded &mdash;</strong> an obligation nothing could pay; the first one in the plan is the month you ran out of money. <strong>Spillover from depleted &hellip;</strong> &mdash; an account hit $0 mid-payment and another covered the rest. <strong>Contribution capped &mdash;</strong> a transfer asked for more than the annual limit allows, or than its paycheck had left after taxes. <strong>Social Security deferred to age 62</strong> &mdash; a benefit dated before it can be claimed, which starts at 62 instead. <strong>Income tax withholding</strong> &mdash; tax withheld from a paycheck, a retirement distribution or a pension payment. Each of these is also explained in plain language by &ldquo;What needs attention&rdquo; and by the asset&rsquo;s <strong>&#x1F453;</strong> view.</div>
+                <div class="font-semibold text-sm mb-1">Memos Worth Watching</div>
+                <div class="text-sm text-gray-500"><strong>Unfunded</strong> &mdash; an obligation no eligible account could pay (the first one marks when the plan runs out). <strong>Spillover from depleted &hellip;</strong> &mdash; an account hit $0 mid-payment and the failover chain covered the rest. <strong>Contribution capped</strong> &mdash; a transfer hit an annual IRS cap or ran out of paycheck headroom. <strong>Social Security deferred to age 62</strong> &mdash; a benefit dated before 62 held until 62. Each is also surfaced in plain language in <em>What needs attention</em> and in each asset&rsquo;s <strong>&#x1F453;</strong> view.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Reports</div>
-                <div class="text-sm text-gray-500">Monthly and yearly summaries for the selected date: income by type, deductions, contributions, debt paydown, cash flow, taxes and growth. A yearly report also shows the year&rsquo;s <strong>adjusted gross income</strong> and the <strong>modified AGI</strong> each tax rule measures against. The simulator uses three of them itself: for the Net Investment Income Tax, the senior deduction, and the premium tax credit on an ACA Health Insurance card. It does not model Medicare&rsquo;s IRMAA surcharge or the IRA deduction and Roth contribution limits; their figures are there so you can check them against those rules&rsquo; thresholds yourself. Taxes in a report are what was <strong>paid</strong> in that period. The previous year&rsquo;s true-up and Net Investment Income Tax are settled after it ends, so a yearly report shows them as its <strong>Prior-Year Settlement</strong>, not as part of the year above them.</div>
+                <div class="text-sm text-gray-500">Monthly and annual summaries for the cursor date: income by source, deductions, contributions, debt paydown, cash flow, taxes, and growth. Annual reports also show <strong>AGI</strong>, purpose-specific <strong>MAGI</strong> lines (for NIIT, senior deduction, ACA credit, plus reference figures for IRMAA, IRA deductions, and Roth limits), and ACA Premium Tax Credit totals. Taxes show cash <strong>paid</strong> in the calendar year, with any prior-year true-up or NIIT broken out under <strong>Prior-Year Settlement</strong>.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">&#x26A1; AI Summaries</div>
-                <div class="text-sm text-gray-500">Both Credit Memos and Reports have their own AI Summary buttons. Click &#x26A1; to generate a natural-language explanation of the transactions or financial statements for the current period.</div>
+                <div class="text-sm text-gray-500">Both Credit Memos and Reports have their own <strong>&#x26A1;</strong> buttons to copy clean Markdown summaries of the active period.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Date-Sensitive Display</div>
-                <div class="text-sm text-gray-500">Both panels update automatically when you navigate the timeline. Moving to a different month shows that month's specific transactions and reports, letting you inspect any point in your financial plan.</div>
+                <div class="font-semibold text-sm mb-1">Synced to the Timeline</div>
+                <div class="text-sm text-gray-500">Both panels scroll and update automatically whenever you move the timeline cursor.</div>
             </div>
         </div>
 
@@ -579,19 +590,19 @@
         <h3 class="text-lg font-bold mb-4">How To</h3>
         <div class="space-y-3">
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-2">Inspect a specific month's finances</div>
+                <div class="font-semibold text-sm mb-2">Inspect a specific month&rsquo;s finances</div>
                 <div class="space-y-2">
                     <div class="flex items-start gap-3">
                         <span class="step-number">1</span>
-                        <span class="text-sm text-gray-700">Navigate to the month you want to inspect using the <strong>timeline</strong> or <strong>date selectors</strong>.</span>
+                        <span class="text-sm text-gray-700">Move the <strong>timeline cursor</strong> or use the <strong>date dropdowns</strong> to pick the month you want to audit.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">2</span>
-                        <span class="text-sm text-gray-700">Scroll through <strong>Credit Memos</strong> to see every individual transaction &mdash; useful for verifying fund transfer routing, tax withholding, and expense payments.</span>
+                        <span class="text-sm text-gray-700">Check <strong>Credit Memos</strong> to verify individual transactions, transfer splits, failover draws, and tax withholding.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">3</span>
-                        <span class="text-sm text-gray-700">Check <strong>Reports</strong> for the big picture &mdash; total income, total expenses, net cash flow, and account balances as of that month.</span>
+                        <span class="text-sm text-gray-700">Check <strong>Reports</strong> for monthly and annual totals &mdash; income, expenses, taxes, AGI/MAGI, and ending balances.</span>
                     </div>
                 </div>
             </div>
@@ -604,18 +615,18 @@
             <span class="text-2xl">&#x1F4CA;</span>
             <h2 class="text-2xl font-bold tracking-tight">Spreadsheet</h2>
         </div>
-        <p class="text-gray-600 mb-6 leading-relaxed">The Spreadsheet is a table of the whole simulation &mdash; every asset, every month. It starts collapsed; <strong>Show</strong> in its heading opens it.</p>
+        <p class="text-gray-600 mb-6 leading-relaxed">A full monthly data table across every asset and metric for the entire simulation. Starts collapsed; click <strong>Show</strong> in its heading to open it.</p>
 
         <!-- Elements -->
         <h3 class="text-lg font-bold mb-4">Elements</h3>
         <div class="grid sm:grid-cols-2 gap-4 mb-8">
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Data Grid</div>
-                <div class="text-sm text-gray-500">A table with a row for each month and columns for each asset&rsquo;s metrics, with amounts to the cent. It covers the whole plan.</div>
+                <div class="text-sm text-gray-500">One row per simulated month with exact-to-the-cent columns for every active asset metric (including NIIT and ACA Premium Tax Credit columns). All-zero columns are omitted automatically to keep the table compact.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Copy &amp; Download</div>
-                <div class="text-sm text-gray-500">Two buttons in the section heading: <strong>Copy</strong> (&#x1F4CB;) puts the table on your clipboard for Excel or Google Sheets, and <strong>Download</strong> (&#x2B07;&#xFE0F;) saves it as a CSV file. Both write plain numbers, without $ signs, so a spreadsheet can calculate with them.</div>
+                <div class="text-sm text-gray-500">Click <strong>Copy</strong> (&#x1F4CB;) to copy the table for Excel or Google Sheets, or <strong>Download</strong> (&#x2B07;&#xFE0F;) to save it as a CSV file. Numbers export cleanly without <code>$</code> signs so formulas work immediately.</div>
             </div>
         </div>
 
@@ -627,15 +638,15 @@
                 <div class="space-y-2">
                     <div class="flex items-start gap-3">
                         <span class="step-number">1</span>
-                        <span class="text-sm text-gray-700">Scroll through the spreadsheet to review monthly values for each asset across the full simulation period.</span>
+                        <span class="text-sm text-gray-700">Click <strong>Show</strong> in the Spreadsheet heading to expand the monthly table.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">2</span>
-                        <span class="text-sm text-gray-700">Click the <strong>Copy</strong> button to copy the entire table to your clipboard. Paste into Excel, Google Sheets, or any spreadsheet application for further analysis.</span>
+                        <span class="text-sm text-gray-700">Click <strong>Copy</strong> to place the entire table on your clipboard for Excel or Google Sheets.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">3</span>
-                        <span class="text-sm text-gray-700">Click the <strong>Download</strong> button to save the data as a <strong>.csv</strong> file. This preserves all values and can be opened in any spreadsheet tool.</span>
+                        <span class="text-sm text-gray-700">Or click <strong>Download</strong> to save a standard <strong>.csv</strong> file to your computer.</span>
                     </div>
                 </div>
             </div>
@@ -648,34 +659,34 @@
             <span class="text-2xl">&#x1F6B0;</span>
             <h2 class="text-2xl font-bold tracking-tight">Visualizer</h2>
         </div>
-        <p class="text-gray-600 mb-6 leading-relaxed">The Visualizer draws your plan as plumbing: income feeds in from the left, capital and retirement accounts sit above a central pipe, expenses, housing and taxes drain below, and a tank on the right holds your net worth. It follows the timeline cursor and the selected metric. It starts collapsed; <strong>Show</strong> in its heading opens it.</p>
+        <p class="text-gray-600 mb-6 leading-relaxed">A live plumbing diagram of your money flow at the cursor date: income feeds in from the left, investment and retirement accounts sit above a central pipe, expenses, housing, and taxes drain below, and a Wealth Tank on the right tracks your portfolio level. Starts collapsed; click <strong>Show</strong> in its heading to open it.</p>
 
         <!-- Elements -->
         <h3 class="text-lg font-bold mb-4">Elements</h3>
         <div class="grid sm:grid-cols-2 gap-4 mb-8">
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Horizontal Conduit</div>
-                <div class="text-sm text-gray-500">The central pipe carrying money across the system. Its blend color reflects net flow at the cursor &mdash; green when inflows dominate, red when outflows dominate. Hover for a tooltip showing the net change since the prior month.</div>
+                <div class="text-sm text-gray-500">The central pipe connecting every stream. Its color shifts from green (net inflows) to red (net outflows). Hover over it for a tooltip showing month-over-month net worth change and total portfolio value.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Income Sources</div>
-                <div class="text-sm text-gray-500">On the left: salary, self-employment, pension, and Social Security. Line thickness is log-scaled to the flow amount, so both small and large streams remain visible side by side.</div>
+                <div class="font-semibold text-sm mb-1">Income Sources (Left)</div>
+                <div class="text-sm text-gray-500">Salary, self-employment, pensions, and Social Security feed in from the left. Line thickness uses logarithmic scaling so smaller and larger streams stay readable side by side.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Capital &amp; Retirement (Above)</div>
-                <div class="text-sm text-gray-500">Taxable accounts, IRAs, and 401(k)s sit above the conduit. Each asset shows dual lines: a green line for inflows (contributions, growth) and a red line for outflows (distributions, withdrawals).</div>
+                <div class="text-sm text-gray-500">Brokerage, savings, bonds, IRAs, and 401(k)s sit above the pipe. In Cash Flow mode, each asset displays green inflow lines (contributions, deposits) and red outflow lines (withdrawals, distributions); hover any line for itemized transfer routes.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Expenses, Housing &amp; Taxes (Below)</div>
-                <div class="text-sm text-gray-500">Outflows drain below the conduit: monthly expenses, mortgage/property, and taxes as a meta-flow aggregating every federal and local tax the plan pays &mdash; FICA, income tax, capital gains, net investment income tax, and property tax.</div>
+                <div class="text-sm text-gray-500">Living expenses, mortgages, home costs, and an aggregated Taxes drain (combining FICA, income tax, capital gains, NIIT, and property tax) flow below the pipe.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Wealth Tank</div>
-                <div class="text-sm text-gray-500">On the right: a vertical tank showing total portfolio value. Fill color signals health &mdash; <strong>red</strong> when under 15% of your peak, <strong>blue</strong> between 15&ndash;50%, and <strong>green</strong> above 50%.</div>
+                <div class="font-semibold text-sm mb-1">Wealth Tank (Right)</div>
+                <div class="text-sm text-gray-500">Fill height always scales to total portfolio value across the plan&rsquo;s range &mdash; <strong>red</strong> below 15% of peak, <strong>blue</strong> from 15&ndash;50%, and <strong>green</strong> above 50% &mdash; while its label shows the active metric total.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Metric-Driven View</div>
-                <div class="text-sm text-gray-500">The visualizer follows whichever metric is selected globally. <strong>Cash Flow</strong> shows pipeline routes for the month. <strong>Value</strong> shows each asset's share of the portfolio. Other metrics render from history. Closed assets appear with a &#x26D4; emoji in place of their line.</div>
+                <div class="font-semibold text-sm mb-1">Metric-Driven Modes</div>
+                <div class="text-sm text-gray-500">Follows whichever global metric is active: <strong>Cash Flow</strong> shows monthly inflow/outflow pipes, <strong>Net Worth</strong> shows each asset&rsquo;s balance share (blue positive, red negative), and <strong>Growth</strong> combines appreciation, interest, and dividends. Inactive or closed assets dim with a <strong>&#x26D4;</strong> badge.</div>
             </div>
         </div>
 
@@ -687,15 +698,15 @@
                 <div class="space-y-2">
                     <div class="flex items-start gap-3">
                         <span class="step-number">1</span>
-                        <span class="text-sm text-gray-700">Move the timeline cursor to any month. The visualizer re-renders automatically for that date &mdash; no Run button to click.</span>
+                        <span class="text-sm text-gray-700">Scrub the timeline cursor (or click Play) &mdash; the Visualizer updates live for every month.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">2</span>
-                        <span class="text-sm text-gray-700">Cycle the metric badge (Value &rarr; Net Worth Change &rarr; Growth &rarr; Cash Flow&hellip;) to change what the lines represent. The conduit, assets, and wealth tank all update together.</span>
+                        <span class="text-sm text-gray-700">Click any <strong>viewing badge</strong> to switch metrics (Net Worth &rarr; Net Worth Change &rarr; Growth &rarr; Cash Flow&hellip;) and watch the pipes and Wealth Tank shift accordingly.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">3</span>
-                        <span class="text-sm text-gray-700">Hover the conduit to see net change since the previous month. Compare Accumulate vs. Retire phases by scrubbing the cursor &mdash; watch the conduit blend shift from green to red as income sources close and expenses dominate.</span>
+                        <span class="text-sm text-gray-700">Hover the conduit or individual flow lines for exact dollar breakdowns, and scrub across retirement to watch the central pipe flip from green accumulation to red drawdown.</span>
                     </div>
                 </div>
             </div>
@@ -710,74 +721,74 @@
             <span class="text-2xl">&#x1F9EA;</span>
             <h2 class="text-2xl font-bold tracking-tight">Test Bench</h2>
         </div>
-        <p class="text-gray-600 mb-6 leading-relaxed">The Test Bench runs tests on your plan without changing it. Its first test, <strong>Spending</strong>, answers one question: how much can this plan spend? It turns every monthly expense up and down together, your health plan included, and finds the highest level at which the plan never runs out, still leaves what you ask for at the end and lasts in the share of simulated markets you ask for. Its second test, <strong>Routing</strong>, asks whether your money could be routed better: it tries other ways to split each income across accounts and to pay each expense, and ranks them by what the plan could then spend. The Test Bench was called the Maximizer.</p>
+        <p class="text-gray-600 mb-6 leading-relaxed">The Test Bench (formerly the Maximizer) stress-tests your plan without altering your saved scenario. Its <strong>Spending</strong> test finds the highest monthly spending your plan can sustain while staying funded, meeting your ending-balance target, and surviving your chosen share of simulated markets. Its <strong>Routing</strong> test searches for better income-split and expense-funding percentages to squeeze even more sustainable spending out of the same assets.</p>
 
         <!-- Elements -->
         <h3 class="text-lg font-bold mb-4">Elements</h3>
         <div class="grid sm:grid-cols-2 gap-4 mb-8">
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">The limits</div>
-                <div class="text-sm text-gray-500">The test spends the most that keeps three limits. <strong>Never runs out</strong> is always on: no month may have a bill the plan cannot pay, the same test as the Outcome card and &ldquo;What needs attention&rdquo;. <strong>Leaves at least</strong> is the least you want left at the end, in today&rsquo;s dollars. It starts at $0. <strong>Lasts in &hellip;% of simulated markets</strong> starts on, at 90%; untick it to answer for your plan&rsquo;s own path of returns alone.</div>
+                <div class="font-semibold text-sm mb-1">Spending Limits</div>
+                <div class="text-sm text-gray-500">The solver maximizes monthly spending subject to three limits: <strong>Never runs out</strong> (always on &mdash; zero unpaid bills in any month), <strong>Leaves at least</strong> (minimum ending net worth in today&rsquo;s dollars, defaulting to $0), and <strong>Lasts in &hellip;% of simulated markets</strong> (on by default at 90%; uncheck to solve strictly on your fixed return assumptions).</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Lasts in simulated markets</div>
-                <div class="text-sm text-gray-500">On its own path of returns, a plan at the most it can spend has no margin. This limit turns the answer down until the plan lasts in the share of 300 simulated markets you set. It tests one spending level at a time, about ten seconds each and at most ten, and shows which level it is on. When it lowers the answer, a grey mark on the curve shows where the plan&rsquo;s own path alone would have put it, and a note says what the limit cost. The answer is then run across 1,000 markets as a check. A market counts as lasting while your net worth stays above $0, retirement accounts included, as in the Simulations section.</div>
+                <div class="font-semibold text-sm mb-1">Simulated-Markets Limit</div>
+                <div class="text-sm text-gray-500">Maximum spending on a fixed return path leaves no buffer for bad markets. With this limit enabled, the solver lowers spending until your plan stays above $0 net worth from retirement onward in your target share of <strong>300 simulated markets</strong> (taking ~10 seconds per step, up to 10 steps), then confirms the answer across <strong>1,000 markets</strong>. When this limit lowers the answer, a grey dot on the curve shows the fixed-path ceiling and a note reports the monthly cost of that safety margin.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Market returns</div>
-                <div class="text-sm text-gray-500"><strong>Pessimistic (&minus;1%)</strong>, <strong>Moderate</strong> or <strong>Optimistic (+1%)</strong>: every stock and bond return one percentage point a year lower than you entered, as you entered it, or higher. That is your brokerage, IRA, Roth IRA, 401(k), Treasury and corporate bond accounts; inflation, wages, cash, real estate and debt stay as entered. It applies to everything the Test Bench runs: the plan&rsquo;s own path, the simulated markets, the guardrails row, the routing test and the chart. Changing it runs the spending test again, and a routing list from before says so. It is a stress of your return assumption, not a forecast, and it starts at Moderate each time the page opens. If changing it barely moves the answer, returns are not what limits this plan: <strong>What stops it</strong> names what does. Your plan keeps the rates you entered.</div>
+                <div class="font-semibold text-sm mb-1">Market Returns Outlook</div>
+                <div class="text-sm text-gray-500">Switch between <strong>Pessimistic (&minus;1%/yr)</strong>, <strong>Moderate</strong> (as entered), and <strong>Optimistic (+1%/yr)</strong> to stress-test your stock and bond return assumptions (Brokerage, IRA, Roth IRA, 401(k), Treasuries, and Corporate Bonds &mdash; leaving inflation, wages, cash, housing, and debt untouched). Applies across the whole Test Bench, resets to Moderate on reload, and never modifies your saved plan&rsquo;s return rates.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">The curve</div>
-                <div class="text-sm text-gray-500">Monthly spending across, what is left at the end up, both in today&rsquo;s dollars. Every point is your plan run at that level of spending, so nothing on it is an estimate. The hollow mark is your plan as entered, the filled mark is the most it can spend, a grey mark is the most on the plan&rsquo;s own path when the simulated-markets limit lowered the answer, and the hatched area is where the plan runs out. Hover for the figures at a point; click to leave at least that much, and the test runs again.</div>
+                <div class="font-semibold text-sm mb-1">The Spending Curve</div>
+                <div class="text-sm text-gray-500">Plots monthly spending (horizontal) against ending net worth (vertical), both in today&rsquo;s dollars. Every point is a real simulation run. The hollow dot is your plan as entered, the filled dot is the solved maximum, a grey dot (if shown) is the fixed-path ceiling, and the hatched region is where the plan runs out. Hover any point for details, or click anywhere on the curve to set that ending balance as your floor and re-solve.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">The result table</div>
-                <div class="text-sm text-gray-500">Your plan as entered beside the most it can spend: monthly and lifetime spending, what is left, and whether it runs out. At <strong>Moderate</strong> market returns the first column is the Outcome card&rsquo;s figure; under Pessimistic or Optimistic it is your plan as entered under that outlook, and a line under the table says so. Spending is what the plan pays out to live on; taxes are not in it. When your plan as entered runs out, its spending is marked <strong>paid</strong>: it is the bills the plan could pay, less than you entered. The sentence above the table then says your expenses cannot all be paid and gives the answer as a share of what you entered, not against what the plan paid. With a marketplace health plan the table shows spending before 65 and from 65 separately, and the premium tax credit over the whole plan.</div>
+                <div class="font-semibold text-sm mb-1">The Result Table</div>
+                <div class="text-sm text-gray-500">Compares <strong>As entered</strong> side by side with <strong>Spend the most</strong> (and <strong>With this routing</strong> when you run a routing search): monthly and lifetime spending (excluding taxes), ending net worth, and whether the plan runs out. If your entered plan runs out, its spending is labeled <strong>paid</strong> (what it could afford, not what was billed), and the headline gives the safe spending as a percentage of your entered expenses. Plans with an ACA Health Insurance card split spending into <em>before 65</em> and <em>from 65</em> and total the Premium Tax Credit.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">In simulated markets</div>
-                <div class="text-sm text-gray-500">Each column is then run through 300 simulated markets, the same ones for both, so the two rates differ only by the spending. This row fills in a few seconds after the answer. It is a smaller run than the Simulations section&rsquo;s 1,000, so its rate can differ from that one by a point or two.</div>
+                <div class="font-semibold text-sm mb-1">In Simulated Markets Row</div>
+                <div class="text-sm text-gray-500">Tests each table column across the exact same 300 seeded markets (without guardrails) and fills in a few seconds after the main answer. Because 300 trials is smaller than the Simulations section&rsquo;s 1,000, the rate can vary by a point or two.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">With guardrails</div>
-                <div class="text-sm text-gray-500">Each column under the settings in the Guardrails section, from retirement: what is left, and how many times spending was cut or raised. The Test Bench reads those settings and never changes them.</div>
+                <div class="font-semibold text-sm mb-1">With Guardrails Row</div>
+                <div class="text-sm text-gray-500">Evaluates each column under your current Guardrails settings from retirement onward (showing ending wealth plus total cuts and raises), without changing your guardrail inputs.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">What stops it</div>
-                <div class="text-sm text-gray-500">One sentence naming the limit that stopped spending from rising. When a bill would go unpaid, it names the month and any retirement accounts that still held money then: the plan does not draw on a retirement account to pay a bill unless a transfer rule says so, so a plan can run out with money left. <strong>Show that month</strong> moves the page to that month in your plan as entered.</div>
+                <div class="font-semibold text-sm mb-1">What Stops It</div>
+                <div class="text-sm text-gray-500">A plain-English sentence naming the exact limit blocking higher spending. When an unpaid bill stops the plan before age 60, it names the month and any retirement accounts still holding money (since automatic failover protects retirement accounts before 60). Click <strong>Show that month</strong> to jump straight to that month in Month &amp; Year Details.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Save as a scenario</div>
-                <div class="text-sm text-gray-500">Saves the solved amounts as a new scenario and switches to it. Your plan as entered stays as it is, under its own name in the scenario menu. Only monthly expense amounts differ in the new scenario; no account is added, removed or rerouted. A result found under Pessimistic or Optimistic market returns keeps your own return rates, and the scenario&rsquo;s note names the outlook it was found under.</div>
+                <div class="font-semibold text-sm mb-1">Save as a Scenario</div>
+                <div class="text-sm text-gray-500">Saves the solved monthly expenses into a new scenario and switches to it, leaving your original plan untouched. Only monthly expense amounts change; even if solved under Pessimistic or Optimistic returns, the new scenario preserves your original return rates and notes the outlook used.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Routing: Depth</div>
-                <div class="text-sm text-gray-500">How wide the routing test looks, chosen before it starts. Depth 1 is one search, a climb from your plan. Depth 2 adds four climbs from near your plan, depth 3 five more from random routings, and depth 4 ten genetic searches of 10,000 plan runs each. A deeper test is more searches and more time; the line beside the control says how many, and about how long they will take on your machine. Everything runs in your browser, side by side on your processor&rsquo;s cores.</div>
+                <div class="font-semibold text-sm mb-1">Routing: Search Depth</div>
+                <div class="text-sm text-gray-500">Controls how thoroughly the routing test explores transfer rules: <strong>Depth 1</strong> runs 1 climb from your current plan; <strong>Depth 2</strong> adds 4 nearby climbs; <strong>Depth 3</strong> adds 5 random climbs; <strong>Depth 4</strong> adds 10 genetic searches (10,000 runs each). Runs locally in parallel across your CPU cores, with an upfront time estimate shown beside the control.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Routing: the list</div>
-                <div class="text-sm text-gray-500">Every search, ranked by what the plan could spend under the routing it found, with the gain against the most your plan can spend as entered and how many percentages it changes. Searches that found the same routing share a row. Rows fill in as searches finish, and <strong>Stop</strong> keeps the ones that have. The line under the list says how many searches came within 1% of the best. When no other search did, the top row is marked <strong>Alone at the top</strong>: it may be a real find or a lucky search, and a deeper test would show which.</div>
+                <div class="font-semibold text-sm mb-1">Routing: Ranked Results</div>
+                <div class="text-sm text-gray-500">Lists discovered routings best-first by monthly spending, showing the monthly gain and how many transfer rules changed (grouping identical findings into one row). Click <strong>Stop</strong> at any time to keep results finished so far. A summary counts how many searches landed within 1% of the best; a lone winner is marked <strong>Alone at the top</strong> so you know whether a deeper search is worth trying.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Routing: the changes</div>
-                <div class="text-sm text-gray-500">The selected row&rsquo;s routing, phase by phase: the share of an income paid into an account, or of an expense paid from one, now and as proposed. The same routing appears as a third column, <strong>With this routing</strong>, in the result table, with its own simulated-markets and guardrails rows. Select another row to see that routing instead.</div>
+                <div class="font-semibold text-sm mb-1">Routing: Proposed Changes</div>
+                <div class="text-sm text-gray-500">Shows the selected routing&rsquo;s phase-by-phase transfer changes (current % &rarr; proposed %) and adds a third column (<strong>With this routing</strong>) to the result table with its own simulated-markets and guardrails rows. Click any row in the list to compare alternatives.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Routing: what it leaves alone</div>
-                <div class="text-sm text-gray-500">Home, mortgage and debt rules; moves from one account to another; draws on retirement accounts in a phase that starts before age 60, which stay as you entered them because the early-withdrawal penalty is not charged yet; and a pension or Social Security paid into a retirement account. Contributions over the annual 401(k) and IRA limits are cut to the limit, as in every run.</div>
+                <div class="font-semibold text-sm mb-1">Routing: What Stays Untouched</div>
+                <div class="text-sm text-gray-500">Never modifies home, mortgage, or debt rules; account-to-account transfers; pensions or Social Security into retirement accounts; or retirement withdrawals in phases starting <strong>before age 60</strong> (locked at your entered values since the early-withdrawal penalty is not charged). Annual 401(k) and IRA caps remain enforced.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Routing: save</div>
-                <div class="text-sm text-gray-500"><strong>Save this routing as a scenario</strong> saves a new scenario with the proposed percentages and your spending as entered. <strong>Save it with its spending</strong> also sets every monthly expense to the most the routed plan can pay for. Either way your plan as entered stays as it is, and no account or phase is added or removed.</div>
+                <div class="font-semibold text-sm mb-1">Routing: Saving</div>
+                <div class="text-sm text-gray-500">Choose <strong>Save this routing as a scenario</strong> (keeps your current spending) or <strong>Save it with its spending</strong> (updates monthly expenses to the solved maximum too). Your original scenario is never altered.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">The chart</div>
-                <div class="text-sm text-gray-500">One column of the result table, drawn as Macro Projection draws your plan: a bar for each year (each half-year or quarter on a shorter plan), split into Income, Real estate, Capital, Retirement and Expenses, in today&rsquo;s dollars. Each bar is the end of its year, so the last bar is your plan&rsquo;s last month and its total is the column&rsquo;s <strong>Left at the end</strong>. Choose <strong>As entered</strong>, <strong>Spend the most</strong> or <strong>With this routing</strong> above it. It opens on the newest answer, and the routing column follows the row you select in the list. Every column is drawn on the same scale, so switching shows what changed. As in Macro Projection, income and expenses count one month&rsquo;s amount, so they are thin beside your balances. Hover a bar for each group and the total.</div>
+                <div class="font-semibold text-sm mb-1">The Holdings Chart</div>
+                <div class="text-sm text-gray-500">Draws any column of the result table (<strong>As entered</strong>, <strong>Spend the most</strong>, or <strong>With this routing</strong>) as stacked bars in today&rsquo;s dollars on a shared vertical scale so switching columns immediately shows what changed. Each bar reflects the end of its period, so the final bar matches <strong>Left at the end</strong>. Hover any bar for per-group totals.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Notes under the result</div>
-                <div class="text-sm text-gray-500">Two notes appear when they apply. One says that over part of the range spending more leaves more, and names the account where the unspent money sat. The other says that your health plan ends at 65 and nothing in the plan pays for health cover after it: Medicare premiums are not charged unless you add them as an expense.</div>
+                <div class="font-semibold text-sm mb-1">Result Notes</div>
+                <div class="text-sm text-gray-500">Contextual notes appear under the table when relevant &mdash; for example, noting if your ACA health plan ends at age 65 with no post-65 health expense in the plan (since Medicare premiums aren&rsquo;t added automatically), or if a non-monotonic dip caused higher spending to leave more ending wealth.</div>
             </div>
         </div>
 
@@ -785,63 +796,63 @@
         <h3 class="text-lg font-bold mb-4">How To</h3>
         <div class="space-y-3">
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-2">Find how much the plan can spend</div>
+                <div class="font-semibold text-sm mb-2">Find how much your plan can spend</div>
                 <div class="space-y-2">
                     <div class="flex items-start gap-3">
                         <span class="step-number">1</span>
-                        <span class="text-sm text-gray-700">Leave <strong>leaves at least</strong> at $0 to spend down to nothing, or enter what you want left at the end, in today&rsquo;s dollars.</span>
+                        <span class="text-sm text-gray-700">Leave <strong>Leaves at least</strong> at $0 to spend down fully, or enter your desired ending balance in today&rsquo;s dollars.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">2</span>
-                        <span class="text-sm text-gray-700">Click <strong>Run</strong>. With the simulated-markets limit on, the answer takes from ten seconds to about two minutes; with it off, a few seconds. The remaining rows follow shortly after.</span>
+                        <span class="text-sm text-gray-700">Click <strong>Run</strong>. With the simulated-markets limit enabled, solving takes roughly 10 seconds to 2 minutes (or a few seconds with it off).</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">3</span>
-                        <span class="text-sm text-gray-700">Read the headline for the answer, and <strong>What stops it</strong> for the reason it is not higher.</span>
+                        <span class="text-sm text-gray-700">Read the headline for your safe monthly spending and <strong>What stops it</strong> to see which limit bound first.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">4</span>
-                        <span class="text-sm text-gray-700">Click along the curve to see the trade: each click sets what to leave to that point and runs the test again. Rates already measured for the plan are kept, so these runs are quicker than the first.</span>
+                        <span class="text-sm text-gray-700">Click anywhere along the curve to explore the trade-off between spending more today and leaving more at the end (cached survival rates make follow-up runs quick).</span>
                     </div>
                 </div>
             </div>
 
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-2">Look for a better routing</div>
+                <div class="font-semibold text-sm mb-2">Search for a better routing</div>
                 <div class="space-y-2">
                     <div class="flex items-start gap-3">
                         <span class="step-number">1</span>
-                        <span class="text-sm text-gray-700">Pick a <strong>Depth</strong>. The line beside it says how many searches it runs and about how long they take. Start at the default; go deeper when the searches do not agree.</span>
+                        <span class="text-sm text-gray-700">Pick a <strong>Depth</strong> (start with the default; go deeper if multiple searches don&rsquo;t agree) and review the estimated time beside it.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">2</span>
-                        <span class="text-sm text-gray-700">Click <strong>Search</strong>. The list fills in as searches finish, best first.</span>
+                        <span class="text-sm text-gray-700">Click <strong>Search</strong> &mdash; results stream into the ranked list as searches finish.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">3</span>
-                        <span class="text-sm text-gray-700">Read the top row&rsquo;s changes, and its column in the result table. Routings are found and compared on the plan&rsquo;s own path of returns, without the simulated-markets limit, so that the effect of a change can be seen. A routing that spends the most on that path leaves little at the end, so check its simulated-markets row before relying on it; set <strong>leaves at least</strong> above $0 and search again for a routing with a margin.</span>
+                        <span class="text-sm text-gray-700">Review the top routing&rsquo;s changes and its <strong>In simulated markets</strong> row. Because routing searches optimize on your fixed return path, set <strong>Leaves at least</strong> above $0 if you want extra market cushion.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">4</span>
-                        <span class="text-sm text-gray-700">Save it as a scenario to keep it, with or without its spending.</span>
+                        <span class="text-sm text-gray-700">Save the winning routing as a new scenario (with or without its solved spending).</span>
                     </div>
                 </div>
             </div>
 
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-2">Keep the result</div>
+                <div class="font-semibold text-sm mb-2">Keep a result</div>
                 <div class="space-y-2">
                     <div class="flex items-start gap-3">
                         <span class="step-number">1</span>
-                        <span class="text-sm text-gray-700">Click <strong>Save as a scenario</strong> and give it a name.</span>
+                        <span class="text-sm text-gray-700">Click <strong>Save as a scenario</strong> and enter a name.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">2</span>
-                        <span class="text-sm text-gray-700">The page switches to the new scenario, with every monthly expense at the solved amount. Switch back from the scenario menu at any time.</span>
+                        <span class="text-sm text-gray-700">The app switches to the new scenario automatically; your original scenario remains available in the scenario menu.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">3</span>
-                        <span class="text-sm text-gray-700">After you change the plan, the result on screen is dimmed: it describes the plan before the change. Run the test again.</span>
+                        <span class="text-sm text-gray-700">Whenever you edit your plan later, any previous Test Bench output dims to show it is out of date &mdash; click <strong>Run</strong> again to refresh.</span>
                     </div>
                 </div>
             </div>
