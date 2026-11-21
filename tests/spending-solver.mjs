@@ -177,17 +177,13 @@ await check('Early Career, which runs out as entered, solves below what was ente
     assert.equal(r.boundBy.kind, 'runsOut');
 });
 
-await check('Mid Career is stopped by an empty brokerage and Roth with its 401K untouched', () => {
+await check('Mid Career draws all spendable accounts (Brokerage, 401K, Roth) after 60 before running out', () => {
     const { spec } = PROFILES.find((p) => p.key === 'midCareer');
     const r = solve('midCareer', spec);
     assert.equal(r.boundBy.kind, 'runsOut');
-    assert.ok(r.best.factor > 1 && r.best.factor < 1.1, `factor ${r.best.factor}`);
-    // Tax-deferred 401K stays untouched (Roth IRA is drawn as last-resort
-    // failover after age 60, and the home is not spendable).
-    const names = r.boundBy.untouched.map((u) => u.displayName).sort();
-    assert.deepEqual(names, ['401K']);
-    const held = r.boundBy.untouched.reduce((sum, u) => sum + u.amount, 0);
-    assert.ok(held > 1_000_000, `only ${Math.round(held)} untouched`);
+    assert.ok(r.best.factor > 1 && r.best.factor < 1.15, `factor ${r.best.factor}`);
+    // At age >= 60, failover draws 401K and Roth IRA before bills go unpaid.
+    assert.deepEqual(r.boundBy.untouched, []);
 });
 
 await check('a floor above what any level leaves is reported, with no answer', () => {
@@ -410,13 +406,13 @@ await check('and the saved plan, run as entered, keeps the limits it was solved 
 // ── The words ────────────────────────────────────────────────────────
 
 await check('"what stops it" names the month and the accounts left untouched', () => {
-    const { spec } = PROFILES.find((p) => p.key === 'midCareer');
-    const r = solve('midCareer', spec);
+    const { spec } = PROFILES.find((p) => p.key === 'earlyCareer');
+    const r = solve('earlyCareer', spec);
     const stops = whatStopsYou(r);
     assert.equal(stops.year, r.boundBy.year);
     assert.equal(stops.month, r.boundBy.month);
     assert.match(stops.text, new RegExp(`bills go unpaid from \\w+ ${r.boundBy.year}`));
-    assert.match(stops.text, /the 401K holds \$\d/);
+    assert.match(stops.text, /the 401K holds \$\d+K and the Roth IRA \$\d+K/);
 });
 
 await check('for a floor it names the floor, and gives no month', () => {

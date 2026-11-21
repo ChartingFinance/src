@@ -80,7 +80,7 @@ export function whatStopsYou(result) {
         const when = monthLabel(DateInt.from(by.year, by.month));
         const held = holdings(by.untouched);
         const tail = held
-            ? `, while ${held}. The plan does not draw on retirement accounts to pay a bill.`
+            ? `, while ${held}. The plan does not draw on retirement accounts before age 60.`
             : '.';
         const lead = by.noLevelPasses
             ? `Even at the lowest spending tested, bills go unpaid from ${when}`

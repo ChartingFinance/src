@@ -1,8 +1,8 @@
 /**
  * backstop-failover.mjs
  *
- * Regression tests for multi-hop backstop spillover and last-resort post-59½
- * (age >= 60) Roth IRA failover:
+ * Regression tests for multi-hop backstop spillover and post-59½
+ * (age >= 60) retirement failover (IRA → 401K → Roth IRA last resort):
  *
  *   1. Multi-hop two-sided spillover (FundTransfer.execute): drains
  *      Cash → Savings → Brokerage → US Bond → Corp Bond in a single draw.
@@ -13,12 +13,13 @@
  *      with accurate per-leg LTCG and tax metric attribution.
  *   4. Multi-hop retirement withholding (#withholdInScope): withholding on a
  *      final IRA draw drains across Savings → Brokerage.
- *   5. Last-resort Roth IRA failover at age >= 60: only drawn AFTER all
- *      everyday backstop accounts reach $0; books ROTH_IRA_DISTRIBUTION, adds
- *      zero taxable income, and never implicitly draws 401K/IRA.
- *   6. Age < 60 protection: Roth IRA is NOT drawn by failover before age 60.
- *   7. Deposits / tax refunds NEVER land in Roth IRA (resolveDeposit stays
- *      strictly everyday accounts).
+ *   5. Post-59½ retirement failover at age >= 60: drains everyday accounts
+ *      first, then tax-deferred (IRA → 401K), then Roth IRA strictly as last
+ *      resort; books exact per-leg distribution metrics and conservation.
+ *   6. Age < 60 protection: IRA, 401K, and Roth IRA are NOT drawn by failover
+ *      before age 60.
+ *   7. Deposits / tax refunds NEVER land in retirement accounts (resolveDeposit
+ *      stays strictly everyday accounts).
  *
  * Usage:  node tests/backstop-failover.mjs   (from src/)
  */
@@ -231,60 +232,106 @@ console.log('\n── 4. Multi-hop withholding when IRA drains completely ──
     });
 }
 
-// ── 5. Post-59½ (age >= 60) Roth IRA last-resort failover ────────────
+// ── 5. Post-59½ (age >= 60) retirement failover: IRA → 401K → Roth ───
 
-console.log('\n── 5. Last-resort Roth IRA failover at age >= 60 ──\n');
+console.log('\n── 5. Post-59½ retirement failover (everyday → IRA → 401K → Roth last resort) ──\n');
 
 {
-    // Age 62: Savings ($2,000), Brokerage ($3,000), 401K ($500,000), Roth ($100,000).
-    // Living ($10,000 in Jan 2026) routed to empty IRA ($0):
-    //   - Drains Savings ($2,000) and Brokerage ($3,000) FIRST
-    //   - Then draws $5,000 from Roth IRA as last resort
-    //   - NEVER touches 401K!
+    // Age 62: Savings ($2,000), Brokerage ($3,000), IRA ($4,000), 401K ($5,000), Roth ($100,000).
+    // Living ($18,000 in Jan 2026) routed to empty Checking ($0):
+    //   1. Everyday accounts drain first: Savings ($2,000) + Brokerage ($3,000) = $5,000
+    //   2. Tax-deferred retirement next: IRA ($4,000) + 401K ($5,000) = $9,000
+    //   3. Roth IRA strictly last resort: $4,000 (+ $1,000 withholding on IRA+401K draws)
     const spec = {
-        name: 'roth-last-resort-age-62',
+        name: 'retirement-failover-order-age-62',
         settings: { filingAs: 'Single', startAge: 62, retirementAge: 62, finishAge: 63, inflationRate: 0 },
         lifeEvents: [],
         modelAssets: [
+            asset({ instrument: Instrument.BANK, displayName: 'Checking', startCurrency: { amount: 0 }, startBasisCurrency: { amount: 0 } }),
             asset({ instrument: Instrument.BANK, displayName: 'Savings', startCurrency: { amount: 2000 }, startBasisCurrency: { amount: 2000 } }),
             asset({ instrument: Instrument.TAXABLE_EQUITY, displayName: 'Brokerage', startCurrency: { amount: 3000 }, startBasisCurrency: { amount: 1500 } }),
-            asset({ instrument: Instrument.IRA, displayName: 'IRA', startCurrency: { amount: 0 }, startBasisCurrency: { amount: 0 } }),
-            asset({ instrument: Instrument.FOUR_01K, displayName: '401K', startCurrency: { amount: 500000 }, startBasisCurrency: { amount: 0 } }),
+            asset({ instrument: Instrument.IRA, displayName: 'IRA', startCurrency: { amount: 4000 }, startBasisCurrency: { amount: 0 } }),
+            asset({ instrument: Instrument.FOUR_01K, displayName: '401K', startCurrency: { amount: 5000 }, startBasisCurrency: { amount: 0 } }),
             asset({ instrument: Instrument.ROTH_IRA, displayName: 'Roth', startCurrency: { amount: 100000 }, startBasisCurrency: { amount: 100000 } }),
             asset({
                 instrument: Instrument.MONTHLY_EXPENSE, displayName: 'Living',
                 startDateInt: { year: 2026, month: 1 }, finishDateInt: { year: 2026, month: 1 },
-                startCurrency: { amount: -10000 }, startBasisCurrency: { amount: 0 },
-                fundTransfers: [{ toDisplayName: 'IRA', monthlyMoveValue: 100, closeMoveValue: 0 }],
+                startCurrency: { amount: -18000 }, startBasisCurrency: { amount: 0 },
+                fundTransfers: [{ toDisplayName: 'Checking', monthlyMoveValue: 100, closeMoveValue: 0 }],
             }),
         ],
     };
 
     const { portfolio: p, issues } = await runPlan(spec);
 
-    await check('at age 62, everyday accounts drain first, Roth covers remaining $5,000 tax-free, 401K untouched', () => {
-        assert.equal(planExhaustion(issues), null, 'Roth should cover shortfall with zero unfunded');
-        const bal = (n) => p.modelAssets.find((a) => a.displayName === n).finishCurrency.amount;
+    await check('at age 62, failover drains Savings → Brokerage → IRA → 401K before touching Roth last', () => {
+        assert.equal(planExhaustion(issues), null, 'retirement failover should cover shortfall with zero unfunded');
+        const assetBy = (n) => p.modelAssets.find((a) => a.displayName === n);
+        const bal = (n) => assetBy(n).finishCurrency.amount;
+        const pairedSpill = (n) => assetBy(n).events
+            .filter((e) => e.type === EventType.SPILLOVER && e.data?.origin === 'paired')
+            .reduce((s, e) => s + Math.abs(e.amount.amount), 0);
+        // Exact Jan 2026 expense spillover order: Savings ($2k) → Brokerage ($3k) → IRA ($4k) → 401K ($5k) → Roth ($4k)
+        near(pairedSpill('Savings'), 2000, 'Savings paired spillover');
+        near(pairedSpill('Brokerage'), 3000, 'Brokerage paired spillover');
+        near(pairedSpill('IRA'), 4000, 'IRA paired spillover');
+        near(pairedSpill('401K'), 5000, '401K paired spillover');
+        near(pairedSpill('Roth'), 4000, 'Roth paired spillover (last resort)');
         near(bal('Savings'), 0, 'Savings drained first');
         near(bal('Brokerage'), 0, 'Brokerage drained second');
-        near(bal('Roth'), 95000, 'Roth drew exactly $5,000 as last resort');
-        near(bal('401K'), 500000, '401K never implicitly drawn');
-        near(p.total.rothIRADistribution.amount, 5000, 'total.rothIRADistribution');
-        near(p.taxYears[0].federalTax, 0, 'Roth failover adds zero federal tax');
+        near(bal('IRA'), 0, 'IRA drained third');
+        near(bal('401K'), 0, '401K drained fourth');
+        // Roth also covered $1,000 withholding + Jan monthly true-up, which annual true-up
+        // refunded to Checking (never to Roth/IRA). Total wealth = $114,000 - $18,000 = $96,000.
+        near(bal('Checking') + bal('Roth'), 96000, 'exact dollar conservation ($114k - $18k)', 0.1);
+        assert.ok(bal('Checking') > 1000, `annual tax refund should land in Checking, got ${bal('Checking')}`);
+        near(p.total.tradIRADistribution.amount, 4000, 'total.tradIRADistribution');
+        near(p.total.four01KDistribution.amount, 5000, 'total.four01KDistribution');
+        assert.ok(p.total.rothIRADistribution.amount >= 5000, `expected Roth distribution >= $5k, got ${p.total.rothIRADistribution.amount}`);
+    });
+
+    // Separate check: when IRA alone can cover the shortfall, Roth is completely untouched.
+    const spec2 = {
+        name: 'ira-before-roth-age-62',
+        settings: { filingAs: 'Single', startAge: 62, retirementAge: 62, finishAge: 63, inflationRate: 0 },
+        lifeEvents: [],
+        modelAssets: [
+            asset({ instrument: Instrument.BANK, displayName: 'Savings', startCurrency: { amount: 1000 }, startBasisCurrency: { amount: 1000 } }),
+            asset({ instrument: Instrument.IRA, displayName: 'IRA', startCurrency: { amount: 50000 }, startBasisCurrency: { amount: 0 } }),
+            asset({ instrument: Instrument.ROTH_IRA, displayName: 'Roth', startCurrency: { amount: 100000 }, startBasisCurrency: { amount: 100000 } }),
+            asset({
+                instrument: Instrument.MONTHLY_EXPENSE, displayName: 'Living',
+                startDateInt: { year: 2026, month: 1 }, finishDateInt: { year: 2026, month: 1 },
+                startCurrency: { amount: -6000 }, startBasisCurrency: { amount: 0 },
+            }),
+        ],
+    };
+
+    const { portfolio: p2, issues: issues2 } = await runPlan(spec2);
+
+    await check('when IRA has funds after everyday accounts empty, IRA pays and Roth stays untouched', () => {
+        assert.equal(planExhaustion(issues2), null);
+        const bal = (n) => p2.modelAssets.find((a) => a.displayName === n).finishCurrency.amount;
+        // Jan 2026 drains Savings ($1k) + IRA ($5k + $555.56 withholding); Jan 2027 refunds $555.56 to Savings.
+        near(bal('Savings'), 5000 * 0.1 / 0.9, 'Savings drained in Jan 2026 and received annual tax refund', 0.1);
+        near(bal('IRA'), 50000 - 5000 / 0.9, 'IRA paid $5,000 expense + 10% withholding', 0.1);
+        near(bal('Roth'), 100000, 'Roth untouched while IRA has funds');
     });
 }
 
-// ── 6. Age < 60 protection: Roth IRA is NOT drawn before age 60 ──────
+// ── 6. Age < 60 protection: no retirement account drawn before age 60 ─
 
-console.log('\n── 6. Roth IRA is protected before age 60 ──\n');
+console.log('\n── 6. Retirement accounts (IRA, 401K, Roth) are protected before age 60 ──\n');
 
 {
     const spec = {
-        name: 'roth-protected-under-60',
+        name: 'retirement-protected-under-60',
         settings: { filingAs: 'Single', startAge: 55, retirementAge: 55, finishAge: 56, inflationRate: 0 },
         lifeEvents: [],
         modelAssets: [
             asset({ instrument: Instrument.BANK, displayName: 'Savings', startCurrency: { amount: 1000 }, startBasisCurrency: { amount: 1000 } }),
+            asset({ instrument: Instrument.IRA, displayName: 'IRA', startCurrency: { amount: 150000 }, startBasisCurrency: { amount: 0 } }),
+            asset({ instrument: Instrument.FOUR_01K, displayName: '401K', startCurrency: { amount: 150000 }, startBasisCurrency: { amount: 0 } }),
             asset({ instrument: Instrument.ROTH_IRA, displayName: 'Roth', startCurrency: { amount: 200000 }, startBasisCurrency: { amount: 200000 } }),
             asset({
                 instrument: Instrument.MONTHLY_EXPENSE, displayName: 'Living',
@@ -296,9 +343,11 @@ console.log('\n── 6. Roth IRA is protected before age 60 ──\n');
 
     const { portfolio: p, issues } = await runPlan(spec);
 
-    await check('at age 55, Roth is NOT used as failover and $4,000 shortfall is reported unfunded', () => {
+    await check('at age 55, IRA, 401K, and Roth are NOT used as failover and $4,000 shortfall is unfunded', () => {
         const exh = planExhaustion(issues);
         assert.ok(exh, 'expected exhaustion when everyday accounts empty under age 60');
+        near(p.modelAssets.find((a) => a.displayName === 'IRA').finishCurrency.amount, 150000, 'IRA untouched under 60');
+        near(p.modelAssets.find((a) => a.displayName === '401K').finishCurrency.amount, 150000, '401K untouched under 60');
         near(p.modelAssets.find((a) => a.displayName === 'Roth').finishCurrency.amount, 200000, 'Roth untouched under 60');
         near(exh.amount, 4000, 'unfunded amount');
     });

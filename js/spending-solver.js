@@ -375,8 +375,8 @@ function boundBy(best, failing, limits, edge) {
 
 /**
  * Retirement accounts that still held money in the month the plan ran out.
- * The backstop never spends them, so they explain a plan that runs out with
- * wealth left.
+ * Before age 60, the backstop does not draw on retirement accounts, so they
+ * explain a plan that runs out early with wealth left.
  */
 function untouchedAt(run) {
     const p = run.portfolio;

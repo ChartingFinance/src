@@ -32816,8 +32816,8 @@ var FundTransfer = class _FundTransfer {
    *
    * When all everyday accounts are empty and `activeUser` is at least age 60
    * (`global_deferred_allocation_age`, conservative whole-year rounding of
-   * 59½), falls back to an open Roth IRA with a positive balance as a last
-   * resort. Tax-deferred accounts (IRA, 401(k)) are never drawn implicitly.
+   * 59½), falls back through retirement accounts in tax-efficient order:
+   * tax-deferred first (`IRA → 401K`), then `Roth IRA` strictly as last resort.
    *
    * Returns null when nothing qualifies; callers must then call
    * `reportUnfunded()`, never skip silently.
@@ -32828,10 +32828,10 @@ var FundTransfer = class _FundTransfer {
       if (match) return match;
     }
     if (activeUser && activeUser.age >= global_deferred_allocation_age) {
-      const roth = modelAssets.find(
-        (a) => a.instrument === Instrument.ROTH_IRA && !a.isClosed && a.finishCurrency.amount > 0
-      );
-      if (roth) return roth;
+      for (const key of [Instrument.IRA, Instrument.FOUR_01K, Instrument.ROTH_IRA]) {
+        const match = modelAssets.find((a) => a.instrument === key && !a.isClosed && a.finishCurrency.amount > 0);
+        if (match) return match;
+      }
     }
     return null;
   }
@@ -43459,7 +43459,7 @@ function whatStopsYou(result) {
   if (by.kind === "runsOut") {
     const when = monthLabel(DateInt.from(by.year, by.month));
     const held = holdings(by.untouched);
-    const tail = held ? `, while ${held}. The plan does not draw on retirement accounts to pay a bill.` : ".";
+    const tail = held ? `, while ${held}. The plan does not draw on retirement accounts before age 60.` : ".";
     const lead = by.noLevelPasses ? `Even at the lowest spending tested, bills go unpaid from ${when}` : `Spend more and bills go unpaid from ${when}`;
     return { text: lead + tail, year: by.year, month: by.month };
   }

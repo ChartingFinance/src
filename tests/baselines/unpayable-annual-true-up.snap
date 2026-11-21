@@ -1,9 +1,10 @@
 # fixture: unpayable-annual-true-up  (adversarial)
 #
-# an annual true-up nothing can pay: every dollar is in an IRA, which the
-# backstop never draws, and Checking is empty. The unpaid bill is an
-# annual-pass event, stamped December and booked in January, so a reader
-# dating events by their own month put it in the wrong year.
+# an annual true-up nothing can pay: every dollar is in an IRA while the
+# household is under 60 (so the backstop does not draw retirement accounts),
+# and Checking is empty. The unpaid bill is an annual-pass event, stamped
+# December and booked in January, so a reader dating events by their own
+# month put it in the wrong year.
 
 [config]
   allocateHouseholdTax = false
@@ -15,8 +16,8 @@
   simDataMode = calibrated
   socialSecurityWithholdingRate = 0
   userFinishAge = 87
-  userRetirementAge = 65
-  userStartAge = 70
+  userRetirementAge = 54
+  userStartAge = 54
   homeSaleExclusion = 250000
   retirementWithholdingRate = 0.1
 
@@ -158,7 +159,7 @@
   0033 2026-12 transfer                    -12340.564394 cash  -                      c0 {cadence=monthly from=Living to=IRA}
   0034 2026-12 assetGrowth                      0.000000 cash  growth                 c-
   0035 2026-12 incomeTaxWithholding         -1371.173822 cash  -                      c1 {rate=0.100000 source=distribution}
-  0036 2027-01 unfunded                    -10775.067894 info  -                      c2 {cause=annual tax true-up origin=oneSided}
+  0036 2027-01 unfunded                    -11450.512339 info  -                      c2 {cause=annual tax true-up origin=oneSided}
   0037 2027-01 transfer                    -12372.000000 cash  -                      c0 {cadence=monthly from=Living to=IRA}
   0038 2027-01 assetGrowth                      0.000000 cash  growth                 c-
   0039 2027-01 incomeTaxWithholding         -1374.666667 cash  -                      c1 {rate=0.100000 source=distribution}
@@ -195,7 +196,7 @@
   0070 2027-12 transfer                    -12723.121890 cash  -                      c0 {cadence=monthly from=Living to=IRA}
   0071 2027-12 assetGrowth                      0.000000 cash  growth                 c-
   0072 2027-12 incomeTaxWithholding         -1413.680210 cash  -                      c1 {rate=0.100000 source=distribution}
-  0073 2028-01 unfunded                    -11187.214999 info  -                      c3 {cause=annual tax true-up origin=oneSided}
+  0073 2028-01 unfunded                    -11805.478222 info  -                      c3 {cause=annual tax true-up origin=oneSided}
   0074 2028-01 transfer                    -12755.532000 cash  -                      c0 {cadence=monthly from=Living to=IRA}
   0075 2028-01 assetGrowth                      0.000000 cash  growth                 c-
   0076 2028-01 incomeTaxWithholding         -1417.281333 cash  -                      c1 {rate=0.100000 source=distribution}
@@ -232,7 +233,7 @@
   0107 2028-12 transfer                    -13117.538669 cash  -                      c0 {cadence=monthly from=Living to=IRA}
   0108 2028-12 assetGrowth                      0.000000 cash  growth                 c-
   0109 2028-12 incomeTaxWithholding         -1457.504297 cash  -                      c1 {rate=0.100000 source=distribution}
-  0110 2029-01 unfunded                    -11612.138664 info  -                      c4 {cause=annual tax true-up origin=oneSided}
+  0110 2029-01 unfunded                    -12171.448046 info  -                      c4 {cause=annual tax true-up origin=oneSided}
   0111 2029-01 transfer                    -13150.953492 cash  -                      c0 {cadence=monthly from=Living to=IRA}
   0112 2029-01 assetGrowth                      0.000000 cash  growth                 c-
   0113 2029-01 incomeTaxWithholding         -1461.217055 cash  -                      c1 {rate=0.100000 source=distribution}
@@ -269,7 +270,7 @@
   0144 2029-12 transfer                    -13524.182368 cash  -                      c0 {cadence=monthly from=Living to=IRA}
   0145 2029-12 assetGrowth                      0.000000 cash  growth                 c-
   0146 2029-12 incomeTaxWithholding         -1502.686930 cash  -                      c1 {rate=0.100000 source=distribution}
-  0147 2030-01 unfunded                    -12009.573843 info  -                      c5 {cause=annual tax true-up origin=oneSided}
+  0147 2030-01 unfunded                    -12548.762936 info  -                      c5 {cause=annual tax true-up origin=oneSided}
   0148 2030-01 transfer                    -13558.633050 cash  -                      c0 {cadence=monthly from=Living to=IRA}
   0149 2030-01 assetGrowth                      0.000000 cash  growth                 c-
   0150 2030-01 incomeTaxWithholding         -1506.514783 cash  -                      c1 {rate=0.100000 source=distribution}
@@ -306,7 +307,7 @@
   0181 2030-12 transfer                    -13943.432021 cash  -                      c0 {cadence=monthly from=Living to=IRA}
   0182 2030-12 assetGrowth                      0.000000 cash  growth                 c-
   0183 2030-12 incomeTaxWithholding         -1549.270225 cash  -                      c1 {rate=0.100000 source=distribution}
-  0184 2030-12 unfunded                    -12381.870632 info  -                      c6 {cause=annual tax true-up origin=oneSided}
+  0184 2030-12 unfunded                    -12937.774587 info  -                      c6 {cause=annual tax true-up origin=oneSided}
 
 [history] IRA
   value                        n=  60 first=  1486666.670000 last=   636811.490000 min=   636811.490000 max=  1486666.670000 sum=   64331123.320000 #2ad82277
@@ -318,7 +319,6 @@
   taxes                        n=  60 first=    -1333.330000 last=    -1549.270000 min=    -1549.270000 max=    -1333.330000 sum=     -86318.820000 #203f3638
   cashFlow                     n=  60 first=    -1333.330000 last=    -1549.270000 min=    -1549.270000 max=    -1333.330000 sum=     -86318.820000 #203f3638
   cashFlowAccumulated          n=  60 first=    -1333.330000 last=   -86318.850000 min=   -86318.850000 max=    -1333.330000 sum=   -2566887.700000 #2bd36ccb
-  rmd                          n=  60 first=        0.000000 last=     2669.750000 min=        0.000000 max=     3138.270000 sum=      69696.240000 #87a68295
   taxableDistribution          n=  60 first=    13333.330000 last=    15492.700000 min=    13333.330000 max=    15492.700000 sum=     863188.510000 #9e5380df
   tradIRADistribution          n=  60 first=    13333.330000 last=    15492.700000 min=    13333.330000 max=    15492.700000 sum=     863188.510000 #9e5380df
 
@@ -537,18 +537,18 @@
   [0054]         1.150188         1.153118         1.156055         1.159000         1.161953         1.164913
 
 [taxYears]
-  2026 months=12 age=70 agi=162260.802421 niit=162260.802421 seniorDeduction=162260.802421 irmaa=162260.802421 iraDeduction=162260.802421 rothContribution=162260.802421 aca=162260.802421 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=143346.450567 capitalGains=0.000000 fica=0.000000 incomeTax=27001.148136 capitalGainsTax=0.000000 niit=0.000000 federalTax=27001.148136 settledTrueUp=0.000000 settledNIIT=0.000000
-  2027 months=12 age=71 agi=167290.887296 niit=167290.887296 seniorDeduction=167290.887296 irmaa=167290.887296 iraDeduction=167290.887296 rothContribution=167290.887296 aca=167290.887296 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=148115.690534 capitalGains=0.000000 fica=0.000000 incomeTax=27916.303728 capitalGainsTax=0.000000 niit=0.000000 federalTax=27916.303728 settledTrueUp=0.000000 settledNIIT=0.000000
-  2028 months=12 age=72 agi=172476.904803 niit=172476.904803 seniorDeduction=172476.904803 irmaa=172476.904803 iraDeduction=172476.904803 rothContribution=172476.904803 aca=172476.904803 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=153032.776941 capitalGains=0.000000 fica=0.000000 incomeTax=28859.829144 capitalGainsTax=0.000000 niit=0.000000 federalTax=28859.829144 settledTrueUp=0.000000 settledNIIT=0.000000
-  2029 months=12 age=73 agi=177823.688852 niit=177823.688852 seniorDeduction=177823.688852 irmaa=177823.688852 iraDeduction=177823.688852 rothContribution=177823.688852 aca=177823.688852 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=157932.871695 capitalGains=0.000000 fica=0.000000 incomeTax=29791.942728 capitalGainsTax=0.000000 niit=0.000000 federalTax=29791.942728 settledTrueUp=0.000000 settledNIIT=0.000000
-  2030 months=12 age=74 agi=183336.223206 niit=183336.223206 seniorDeduction=183336.223206 irmaa=183336.223206 iraDeduction=183336.223206 rothContribution=183336.223206 aca=183336.223206 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=162828.790717 capitalGains=0.000000 fica=0.000000 incomeTax=30715.492952 capitalGainsTax=0.000000 niit=0.000000 federalTax=30715.492952 settledTrueUp=0.000000 settledNIIT=0.000000
+  2026 months=12 age=54 agi=162260.802421 niit=162260.802421 seniorDeduction=162260.802421 irmaa=162260.802421 iraDeduction=162260.802421 rothContribution=162260.802421 aca=162260.802421 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=146160.802421 capitalGains=0.000000 fica=0.000000 incomeTax=27676.592581 capitalGainsTax=0.000000 niit=0.000000 federalTax=27676.592581 settledTrueUp=0.000000 settledNIIT=0.000000
+  2027 months=12 age=55 agi=167290.887296 niit=167290.887296 seniorDeduction=167290.887296 irmaa=167290.887296 iraDeduction=167290.887296 rothContribution=167290.887296 aca=167290.887296 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=150691.787296 capitalGains=0.000000 fica=0.000000 incomeTax=28534.566951 capitalGainsTax=0.000000 niit=0.000000 federalTax=28534.566951 settledTrueUp=0.000000 settledNIIT=0.000000
+  2028 months=12 age=56 agi=172476.904803 niit=172476.904803 seniorDeduction=172476.904803 irmaa=172476.904803 iraDeduction=172476.904803 rothContribution=172476.904803 aca=172476.904803 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=155363.232703 capitalGains=0.000000 fica=0.000000 incomeTax=29419.138527 capitalGainsTax=0.000000 niit=0.000000 federalTax=29419.138527 settledTrueUp=0.000000 settledNIIT=0.000000
+  2029 months=12 age=57 agi=177823.688852 niit=177823.688852 seniorDeduction=177823.688852 irmaa=177823.688852 iraDeduction=177823.688852 rothContribution=177823.688852 aca=177823.688852 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=160179.492916 capitalGains=0.000000 fica=0.000000 incomeTax=30331.131821 capitalGainsTax=0.000000 niit=0.000000 federalTax=30331.131821 settledTrueUp=0.000000 settledNIIT=0.000000
+  2030 months=12 age=58 agi=183336.223206 niit=183336.223206 seniorDeduction=183336.223206 irmaa=183336.223206 iraDeduction=183336.223206 rothContribution=183336.223206 aca=183336.223206 nii=0.000000 taxableSS=0.000000 ordinaryTaxable=165145.057197 capitalGains=0.000000 fica=0.000000 incomeTax=31271.396907 capitalGainsTax=0.000000 niit=0.000000 federalTax=31271.396907 settledTrueUp=0.000000 settledNIIT=0.000000
 
 [sanity]
-  Unfunded: IRA annual tax true-up $10,775.07 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
-  Unfunded: IRA annual tax true-up $11,187.21 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
-  Unfunded: IRA annual tax true-up $11,612.14 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
-  Unfunded: IRA annual tax true-up $12,009.57 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
-  Unfunded: IRA annual tax true-up $12,381.87 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: IRA annual tax true-up $11,450.51 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: IRA annual tax true-up $11,805.48 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: IRA annual tax true-up $12,171.45 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: IRA annual tax true-up $12,548.76 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
+  Unfunded: IRA annual tax true-up $12,937.77 — no eligible funding account (cash, savings, brokerage or bonds with a positive balance)
 
 [traces]
   scopes = 1270
