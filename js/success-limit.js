@@ -2,7 +2,7 @@
  * success-limit.js
  *
  * The Test Bench's third limit: "and lasts in at least ___% of simulated
- * markets" (spec 15 §7).
+ * markets".
  *
  * The spending solver answers for one fixed path of returns, and at the most
  * a plan can spend there it has no margin: measured on the quick-starts, such
@@ -21,9 +21,9 @@
  * Halving rests on one assumption, which a test pins on the quick-starts:
  * spending more never makes a plan last in more markets.
  *
- * A step costs about ten seconds, so every rate measured is handed back, and
- * a later solve of the same plan (another floor, another target) is given
- * them: a level at or below one known to last is known to last.
+ * A step costs about ten seconds, so every measured rate is handed back and
+ * reused by later solves of the same plan (with another floor or target): any
+ * level at or below one already known to pass is known to pass.
  *
  * ── What it does not touch ───────────────────────────────────────────
  *
@@ -144,8 +144,9 @@ export async function limitBySuccess(plan, solved, { target, markets, rateAt, kn
         return { top, low };
     };
 
-    // A level that lasts, below the ceiling: what was entered when that is
-    // lower, otherwise the bottom of the scan.
+    // Find a passing lower bound below the ceiling: try the entered spending
+    // level first if it sits below the ceiling, otherwise fall back to the
+    // bottom of the scan.
     const bottom = solved.curve[0].factor;
     let { top: hi, low: lo } = bracket();
     if (lo === null && hi > 1 && bottom < 1) {

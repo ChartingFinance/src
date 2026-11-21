@@ -13,8 +13,9 @@
  * fires: it closes assets (e.g. the salary at retirement) and installs this
  * phase's fund transfers. Both refer to assets by id, with the asset's name as a
  * label (plan-ids.js). A close can also name a type of asset, a template:
- * Retire's default closes every working income (see assetsClosedBy). `globalOverrides` is stored and saved but not
- * applied (see markdowns/code-issues-from-comments.md).
+ * Retire's default closes every working income (see assetsClosedBy).
+ * `globalOverrides` is preserved during serialization for future use, but is
+ * not currently applied during simulation.
  *
  * Portfolio.applyLifeEvents calls event.apply(portfolio) in the month
  * triggerDateInt falls in.
@@ -105,9 +106,8 @@ export const LifeEventMeta = new Map([
     projectionTabs: ['value', 'guardrails', 'monteCarlo', 'spreadsheet'],
     assetGroupLabels: { distributions: 'Distributions', capital: 'Capital', expenses: 'Expenses', taxes: 'Taxes' },
     defaultMutations: {
-      // Every working income still running at retirement, whatever it is
-      // called. It was ['Salary'], a name, which matched nothing in five of the
-      // eight quick-start profiles ("Salary A" and "Salary B" were paid on).
+      // Close every working income already running at retirement regardless of
+      // its display name (using an instrument template rather than a fixed name).
       closes:  [{ instrument: Instrument.WORKING_INCOME }],
     },
     advisoryChecks: [
@@ -204,7 +204,7 @@ export class ModelLifeEvent {
   }
 
   get triggerDateInt() {
-    // See the note on ModelAsset's #boundEnv: the fallback is gone on purpose.
+    // Fail loudly if unbound rather than silently falling back to global settings.
     if (!this.env) {
       throw new Error(
         `ModelLifeEvent "${this.displayName ?? this.type}" has no environment. `

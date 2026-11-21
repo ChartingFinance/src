@@ -28,7 +28,7 @@ export class PayrollEngine {
 
     constructor(modelAssets, monthly, yearly, activeUser, taxEngine, config) {
         this.modelAssets = modelAssets;
-        this.config = config;   // Spec 9 step 2 — carries the run's tax table
+        this.config = config;   // carries the run's tax table
         this.monthly = monthly;
         this.yearly = yearly;
         this.activeUser = activeUser;
@@ -61,11 +61,11 @@ export class PayrollEngine {
 
             if (!InstrumentType.isRetirementIncome(modelAsset.instrument)) {
 
-                // it's self-employed or w2-employed
+                // Working income (W-2 or self-employed): withhold FICA and plan pre-tax deferrals.
                 this.applyPreTaxWithholding(modelAsset);
 
-                // TODO: Can't do 401K on self income, but can do SEP (which is not an instrument right now)
-                // so just allow this but plan for SEP instrument soon
+                // Note: Self-employed income currently shares the 401(k)/IRA deferral path
+                // until a dedicated SEP-IRA instrument is modeled.
                 this.calculatePreTaxContributions(modelAsset);
 
             }
@@ -90,11 +90,10 @@ export class PayrollEngine {
 
         if (InstrumentType.isMonthlyIncome(modelAsset.instrument)) {
 
-            // TODO: make a test for selfEmployed or Employee
             if (InstrumentType.isWorkingIncome(modelAsset.instrument)) {
 
-                // Owner is explicit at both sites so the per-person spec adds a
-                // second identity rather than rewriting this call.
+                // Pass the earner identity explicitly so future per-spouse FICA
+                // tracking can add a second owner without changing call sites.
                 const owner = TaxOwner.PRIMARY;
                 const grossIncome = modelAsset.incomeCurrency.copy();
                 let withholding = this.config.taxTable.calculateFICATax(modelAsset.isSelfEmployed, grossIncome, owner);
@@ -406,7 +405,7 @@ export class PayrollEngine {
 
                     }
 
-                    // Set this because we know this is a tax deferred (pretax) approved amout. Don't want to approve an amount outside this lane!
+                    // Lock in the capped pre-tax deferral so applyPreTaxTransfers uses this exact amount.
                     fundTransfer.approvedAmount = contribution.copy();
 
                 }
@@ -557,12 +556,10 @@ export class PayrollEngine {
                         }
                     }
                 }
-
-                // preTaxContribution is now a rollup method on FP (derived from leaves)
             }
         }
 
-        // no reconcilation at this point since we are pre-tax
+        // Unallocated gross pay stays on the paycheck for post-tax withholding and take-home transfers.
     }
 
     applyPostTaxTransfers(modelAsset) {
@@ -578,7 +575,7 @@ export class PayrollEngine {
                     fundTransfer.bind(modelAsset, this.modelAssets);
                     if (!fundTransfer.toModel) continue;
 
-                    // This was handled by pre tax calculations and transfers
+                    // Pre-tax destinations were already handled by applyPreTaxTransfers
                     if (!InstrumentType.isTaxDeferred(fundTransfer.toModel.instrument)) {
 
                         // IRS: retirement income cannot contribute to Roth IRA (or any tax-advantaged account)
@@ -612,8 +609,6 @@ export class PayrollEngine {
             }
 
         }
-
-        // no reconcilation at this point since we are pre-tax
     }
 
 }

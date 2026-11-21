@@ -7,7 +7,7 @@
  * accounts, and which accounts pay each expense, phase by phase. This module
  * searches over those percentages and nothing else.
  *
- * ── What may change (spec 15 §8.2) ───────────────────────────────────
+ * ── What may change ──────────────────────────────────────────────────
  *
  *   - the split of each income across the accounts it can be paid into;
  *   - which accounts pay each monthly expense.
@@ -15,25 +15,26 @@
  * What may not:
  *
  *   - home, mortgage and debt rules, and moves from one account to another;
- *   - a draw on a retirement account in a phase that starts before 60. The
- *     early-withdrawal penalty is not charged yet (spec 13), so the search
- *     would find those draws free. They stay at the value the user entered;
+ *   - a draw on a retirement account in a phase that starts before age 60.
+ *     Because the engine does not charge the 10% early-withdrawal penalty
+ *     (IRC §72(t)), letting the search tap retirement accounts early would
+ *     treat those draws as penalty-free. They stay locked at the entered value;
  *   - retirement income (a pension, Social Security) paid into a retirement
  *     account, which the law does not allow.
  *
- * Contribution limits are the engine's: payroll cuts a contribution at the
- * annual limit and deposits the rest as take-home pay, so a routing that asks
- * for too much is run as the law would run it.
+ * Contribution limits are enforced by the engine: payroll caps contributions
+ * at the annual limit and deposits the rest as take-home pay, so a routing
+ * that asks for too much runs the same way the law would run it.
  *
- * ── How a routing is ranked (§8.8) ───────────────────────────────────
+ * ── How a routing is ranked ──────────────────────────────────────────
  *
  * By what the plan can spend under it: the highest level of the spending
  * dial at which it never runs out and leaves the floor. No weights and no
- * constants. Ranking by what is left at the end was measured and dropped: it
- * moves money into retirement accounts, where a bill cannot reach it, and the
- * plan can then spend less (§8.7).
+ * constants. Ranking by ending net worth was tested and dropped: it shifts
+ * money into retirement accounts where pre-60 bills cannot reach it, letting
+ * the plan spend less even as its ending balance grows.
  *
- * ── How wide it looks (§8.8) ─────────────────────────────────────────
+ * ── How wide it looks ────────────────────────────────────────────────
  *
  * The user sets a depth. Each depth is a list of searches (`searchesAt`), each
  * search is one call of `searchRouting`, and the result shown is all of them,
@@ -68,12 +69,11 @@ const isRetirementAccount = (instrument) =>
     InstrumentType.isTaxDeferred(instrument) || InstrumentType.isTaxFree(instrument);
 
 /**
- * The plan, prepared (plan-ids.js), as a copy: its rules and closes are read and
- * written by asset id. Each public function here prepares what it is given.
- * Preparing is idempotent and depends only on the plan, so a plan written with
- * names gets the same ids in every one of them. A reference whose id and name
- * disagree goes by its id, as in the app: these are the app's plans, and the
- * MCP tools refuse such a spec before it reaches here.
+ * Return a prepared copy of the plan (via plan-ids.js) with rules and closes
+ * normalized to asset IDs. Every public entry point here calls this;
+ * preparation is idempotent and deterministic, so plans written with names get
+ * identical IDs every time. If a reference's ID and name disagree, the ID wins
+ * (matching the app; external plan inputs with conflicts are rejected upstream).
  */
 function prepared(plan) {
     const { modelAssets, lifeEvents } = planWithIds({
@@ -116,9 +116,9 @@ export function routingGenes(plan) {
     events.forEach((event, phaseIdx) => {
         for (const [id, rules] of Object.entries(event.phaseTransfers ?? {})) inForce.set(id, rules);
         const fromYear = ageToDateIntFor(config, event.triggerAge).year;
-        // What the phase closes: assets by id, and templates by type, each asset
-        // of it already running when the phase begins (life-event.js
-        // assetsClosedBy), here by the year, as everything in this search is.
+        // Track assets closed by this phase: explicit asset IDs, plus any
+        // close-by-type templates matching assets already active when the phase
+        // begins (mirroring assetsClosedBy in life-event.js, at year granularity).
         for (const entry of (event.closes ?? [])) {
             const id = closeAssetId(entry);
             if (id != null) closed.add(id);
@@ -446,10 +446,11 @@ export function climb(map, ranker, steps = CLIMB_STEPS) {
 }
 
 /**
- * One genetic search, ranked by the ranker. The best so far is always in the
- * population, so a generation never loses it. It runs every generation: a
- * rule that stopped after 30 without a gain would have stopped some searches
- * at 90% of the level they went on to reach (§8.7).
+ * Run one genetic search scored by `ranker`. The best routing found so far is
+ * always kept in the population (elitism), so a generation never loses
+ * progress. All generations run to completion — early stopping after a flat
+ * stretch (e.g., 30 generations without a gain) was found to cut off searches
+ * that later climbed significantly higher.
  *
  * @param {object} options
  * @param {number} options.seed
@@ -573,9 +574,10 @@ export function searchesAt(depth) {
 }
 
 /**
- * About how many plan runs a search makes, for the page's estimate of the
- * time a depth takes. Fitted to the eight quick-start plans (§8.7): a climb
- * took 181 to 4,523 runs for 6 to 30 percentages. Rough by design.
+ * Rough estimate of how many simulation runs a search will make, used to show
+ * an expected duration before the user starts a routing test. Empirically
+ * fitted to the quick-start plans (where a single climb took ~180–4,500 runs
+ * across 6–30 adjustable percentages).
  */
 export function estimateRuns(genes, search) {
     const oneClimb = Math.max(250, 4 * genes * genes);

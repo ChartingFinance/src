@@ -1,3 +1,11 @@
+/**
+ * user.js — tracks the simulated household's age and RMD eligibility.
+ *
+ * Holds the user's current age, month-within-year, and anchored birth year,
+ * and computes the Required Minimum Distribution (RMD) starting age under
+ * SECURE 2.0 rules.
+ */
+
 export class User {
     constructor(age, birthYear) {
         this.age = age;
@@ -45,6 +53,7 @@ export class User {
         return this.age >= this.rmdAge();
     }
 
+    /** RMD starting age under SECURE 2.0: 72 (born < 1951), 73 (1951–1959), or 75 (1960+). */
     rmdAge() {
         if (this.birthYear < 1951) return 72;
         if (this.birthYear < 1960) return 73;

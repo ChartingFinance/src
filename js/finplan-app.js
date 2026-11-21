@@ -1,21 +1,21 @@
 /**
  * finplan-app.js
  *
- * Orchestrator for the single-page app (index.html):
- *   - Globals init + settings wiring
- *   - Load assets + life events from localStorage
- *   - Build portfolio, run chronometer
- *   - Wire timeline, charts, and sidebar
- *   - Sacred x-axis alignment via forced y-axis width on all Chart.js instances
+ * Main orchestrator for the single-page app (index.html):
+ *   - Initializes global settings, tax tables, and reactive state stores
+ *   - Loads and saves scenarios (and shared URL plans) via localStorage
+ *   - Runs the monthly portfolio simulation (chronometer) on every change
+ *   - Wires the timeline, sidebar, modals, projection charts, Monte Carlo /
+ *     Guardrails simulations, Test Bench, spreadsheet, reports, and visualizer
  */
 
 // ── Chart.js ────────────────────────────────────────────────
 import { Chart } from 'chart.js';
 
-// The share format, shared with <share-modal> and the MCP server.
+// Share-link encoding/decoding (also used by <share-modal> and the MCP server).
 import { sharePayloadParamFrom, decodeSharePayload } from './share-link.js';
 import { readSharedPlan, applySharedSettings } from './shared-plan.js';
-// What a scenario keeps, and the shared plan opened without saving.
+// Scenario persistence and temporary in-memory viewing of unsaved shared plans.
 import {
     saveScenario,
     saveScenarioPreview,
@@ -55,14 +55,14 @@ import {
 import { AssetGroup, classifyAssetGroup, GROUP_ORDER_ACCUMULATE, GROUP_ORDER_RETIRE, getAssetChartColor, getGroupMetrics } from './asset-groups.js';
 import { buildPipelines } from './flow-pipelines.js';
 import './components/flows-view.js';
-// sankey-diagram deliberately NOT imported: the Sankey view toggle is
-// disabled in index.html (its <sankey-diagram> tag stays an inert unknown
+// sankey-diagram is deliberately not imported: the Sankey view toggle is
+// disabled in index.html (its <sankey-diagram> tag stays an inert custom
 // element). Re-add the import when the feature ships.
 
 // ── Simulations ─────────────────────────────────────────────
-// monte-carlo.js and guardrails.js are code-split: dynamically imported on
-// the first Run click (see loadMonteCarlo/loadGuardrails below) so their
-// Chart.js-heavy code stays out of the initial bundle.
+// monte-carlo.js and guardrails.js are code-split and dynamically imported on
+// first run (see doMonteCarlo / doGuardrails below) so their worker and
+// Chart.js code stays out of the initial bundle.
 
 // ── Lit components ──────────────────────────────────────────
 import './components/asset-list.js';
@@ -487,8 +487,7 @@ document.getElementById('btn-share').addEventListener('click', () => {
     if (shareModal) {
         shareModal.modelAssets = appState.portfolio?.modelAssets || [];
         shareModal.lifeEvents = appState.lifeEvents;
-        // An unsaved plan is not the active scenario, which is still the
-        // viewer's own underneath it.
+        // Prefer the unsaved shared plan's title over the underlying active scenario's name.
         shareModal.portfolioName = unsavedPlan()?.title || appState.storyName || '';
         shareModal.globalSettings = {
             inflationRate: global_inflationRate,
@@ -518,10 +517,10 @@ function openAiSummary(title, content) {
     aiPopup.style.display = 'flex';
 }
 
-// The generator module loads on first FAB click (code-split). The simulation
-// sections read from whichever adapter has already been loaded by a Run click;
-// before that the modules are null and the sections render their "not yet run"
-// state, exactly as they did when the generator read the caches itself.
+// The AI summary generator loads on first button click (code-split). The
+// simulation sections pull results from whichever simulation module has already
+// run; if a module hasn't loaded yet, null is passed and the section renders
+// its "not yet run" state.
 const aiGenerators = (ai) => ({
     timeline:    () => ai.generateTimelineMarkdown(appState.portfolio, appState.lifeEvents),
     monthdetails: () => ai.generateMonthDetailsSectionMarkdown(appState.portfolio, store.selectedYear, store.selectedMonth, monthDetailsBadge?.textContent ?? ''),
@@ -806,8 +805,8 @@ function connectGuardrailInput(input, setter) {
             return;
         }
         setter(v);
-        // Saved with the scenario, whose own parameters are what loading it
-        // puts back. Stored only as the setting in force, a reload undoes it.
+        // Persist with the active scenario so reloading restores these
+        // parameters instead of overwriting them with older saved values.
         saveLocalData();
         grSummaryText.textContent = guardrailSummaryText();
         doGuardrails();
@@ -989,7 +988,7 @@ document.getElementById('btn-import-save').addEventListener('click', () => {
     }
 });
 
-// Macro metric dropdown — top-level nodes only
+// Macro metric dropdown — top-level metrics only
 metricSelect.innerHTML = MACRO_METRICS.map(m =>
     `<option value="${m}">${MetricLabel[m]}</option>`
 ).join('');
@@ -1004,7 +1003,7 @@ metricSelect.addEventListener('change', () => {
     rebuildProjectionCharts();
 });
 
-// Micro metric dropdown — filtered by expanded property group, drives Micro chart
+// Micro metric dropdown — filtered by expanded asset groups, drives the Micro chart
 microMetricSelect.addEventListener('change', () => {
     appState.microMetric = microMetricSelect.value;
     if (!appState.portfolio) return;
@@ -1158,7 +1157,7 @@ function syncGlobalsToSettings() {
 function connectSettings() {
     document.getElementById('setting-startAge').addEventListener('change', function() {
         let val = Math.max(18, Math.min(100, parseInt(this.value) || 30));
-        // Finish age must stay above the greater of current/retirement + 1
+        // Keep start age strictly below finish age
         if (val >= global_user_finishAge) val = global_user_finishAge - 1;
         this.value = val;
         global_setUserStartAge(val);
@@ -1167,7 +1166,7 @@ function connectSettings() {
     });
     document.getElementById('setting-retirementAge').addEventListener('change', function() {
         let val = Math.max(18, Math.min(100, parseInt(this.value) || 65));
-        // Finish age must stay above the greater of current/retirement + 1
+        // Keep retirement age strictly below finish age
         if (val >= global_user_finishAge) val = global_user_finishAge - 1;
         this.value = val;
         global_setUserRetirementAge(val);
@@ -1241,9 +1240,9 @@ window.addEventListener('hashchange', () => { loadSharedPortfolio(); });
 
 function initiateActiveData() {
     appState.load();
-    // A scenario saved before scenarios kept their own settings keeps the ones
-    // in force, which it has always run on. Done before a link is read, since
-    // Open & Save puts the link's settings in force.
+    // Backfill per-scenario settings for older saved scenarios using the
+    // current globals. Runs before checking a share link, since "Open & Save"
+    // replaces the active globals with the shared plan's settings.
     stampScenarioSettings(appState.storyArc);
 
     // Check for shared portfolio in URL first
@@ -1361,8 +1360,8 @@ function calculate() {
         }
     }
 
-    // Phase rules that refer to assets no longer in the plan go. By id: a
-    // renamed asset keeps its rules (by name, a rename used to delete them all).
+    // Remove phase transfer rules referencing deleted assets. Matching by
+    // asset ID ensures renaming an asset preserves its rules.
     pruneDanglingRules(modelAssets, appState.lifeEvents);
 
     const portfolio = new Portfolio(modelAssets, true, simConfigFromGlobals());
@@ -1730,8 +1729,8 @@ function buildSimulationMarkers(chart, fullLabels) {
         }
     }
 
-    // Retire line — already drawn by retirementLinePlugin, but we want consistent style
-    // Skip — let the existing plugin handle it to avoid double-drawing
+    // Retire line is already drawn by the simulation chart's
+    // retirementLinePlugin, so skip it here to avoid double-drawing.
 
     // Cursor
     const cursorLabel = `${MONTH_NAMES[store.selectedMonth - 1]} ${store.selectedYear}`;
@@ -1904,9 +1903,9 @@ function openViewAssetModal(modelAsset) {
 
 function connectFundingModal() {
     fundingModal.addEventListener('funding-confirmed', (ev) => {
-        // A purchase's source changed from its edit form: the source only, by id
-        // with its name as a label (plan-ids.js). The purchase's type and down
-        // payment, and so its mortgage, stay as they were.
+        // Updating a purchase's funding source from the edit form: only the
+        // source ID and display name change; purchase type, down payment, and
+        // any linked mortgage remain untouched.
         if (ev.detail.mode === 'edit' && editingFundingAsset) {
             const asset = editingFundingAsset;
             editingFundingAsset = null;
@@ -1962,11 +1961,10 @@ function connectTransferModal() {
 let transferPhase = null;
 
 /**
- * The life event that set an asset's rules as they were in force in a phase:
- * that phase, or, when it lists no transfers for the asset, the latest earlier
- * one that does. A phase that leaves an asset out keeps its earlier rules.
- * The phase and the asset by their ids (plan-ids.js); the asset's rules are
- * keyed by its id. Null when the phase is not found.
+ * Find the life event that governs an asset's transfer rules during `phaseId`.
+ * If that phase has no explicit entry for the asset, walk backward to the most
+ * recent earlier phase that does (phases inherit earlier rules when omitted).
+ * Both `phaseId` and `id` are plan IDs; returns null if `phaseId` is not found.
  */
 function phaseSetting(phaseId, id) {
     let i = appState.lifeEvents.findIndex((e) => e.id === phaseId);
@@ -2333,9 +2331,6 @@ function showSettingsInForce() {
     updateSimDataModeUI();
 }
 
-// Monthly snapshots are written by saveLocalData() on every calculate(), except
-// while an unsaved shared plan is on screen.
-
 /**
  * Read a shared portfolio out of the URL — fragment first, query second.
  *
@@ -2347,8 +2342,8 @@ function loadSharedPortfolio() {
     if (!compressed) return false;
 
     try {
-        // A link that does not decode is offered anyway, with the reason.
-        // Ignored, it would leave the previous plan on screen looking shared.
+        // Even if decoding fails, still open the import dialog with an error
+        // message rather than silently leaving the previous plan on screen.
         const decoded = decodeSharePayload(compressed);
         const data = decoded ?? {};
 
@@ -2444,19 +2439,20 @@ function showImportProblem(problem) {
 }
 
 /**
- * Open a plan `readSharedPlan` has read. Reading is where a link is refused.
+ * Apply a decoded shared plan returned by `readSharedPlan`.
  *
- * Open & Save makes it a new scenario, on its own settings. Open shows it
- * without making it one: until it is saved from the scenario menu or left,
- * nothing is written and its settings are held in memory (scenario-store.js).
+ * When `persist` is true ("Open & Save"), creates a new saved scenario with
+ * the shared plan's settings. When false ("Open"), shows the plan in memory
+ * without writing to localStorage until the user saves or closes it via the
+ * scenario menu (see scenario-store.js).
  */
 function applyImportedPortfolio(plan, persist) {
     setImportedRunBadge(plan.handle);
     const title = document.getElementById('import-title-input').value || 'Shared Portfolio';
     const note = document.getElementById('import-note-input').value || '';
 
-    // Before a setting moves, since one applied unheld is stored. A plan
-    // opened earlier and never saved goes either way.
+    // Enter or exit unsaved-plan mode before applying settings: when viewing
+    // without saving, settings stay in memory instead of overwriting localStorage.
     if (persist) closeUnsaved();
     else openUnsaved({ title, note });
 

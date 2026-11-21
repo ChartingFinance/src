@@ -76,7 +76,7 @@ if (isWorker) self.onmessage = async function (event) {
             const plan = {
                 modelAssets: payload.modelAssets,
                 lifeEvents: payload.lifeEvents || [],
-                // After global_applyWorkerSnapshot, as below.
+                // Built after global_applyWorkerSnapshot so it reflects the main thread's settings.
                 config: simConfigFromGlobals(),
             };
             let results = solveSpending(plan, payload.limits || {});

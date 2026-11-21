@@ -226,12 +226,11 @@ export function chainLabel(traceId, scopes, separator = ' > ') {
  * The month an event counts in, as an index where 0 is the plan's first month:
  * the month of its chain's root, the operation that caused it.
  *
- * Not the event's own date, which is the clock of the asset that recorded it.
- * The annual pass runs on New Year's Day, before the assets' clocks reach
- * January, so its events carry December's date, while the figures book them
- * in January. (Life events also fire before the clocks move, but move them
- * first; see Portfolio.applyLifeEvents.) An event recorded outside any scope
- * has only its own date.
+ * Reading the root scope's `dateInt` rather than the event's own date ensures
+ * every event in an operation maps to the exact month that operation booked
+ * into — including annual settlements (which book in January mid-run, or fold
+ * into the closing December on the plan's final year) and life events. An event
+ * recorded outside any scope falls back to its own date.
  *
  * @param {SimEvent} event
  * @param {DateInt}  firstDateInt  the plan's first month

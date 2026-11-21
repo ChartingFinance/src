@@ -31,8 +31,9 @@
  *
  * In the annual pass, after the true-up and NIIT, the credit is recomputed from
  * the settled year's ACA MAGI over the months covered. Excess advance is repaid
- * in full, with no cap from 2026 (P.L. 119-21), and credit still owed is paid
- * to the household. Both book in January, like the true-up.
+ * in full, with no repayment cap from 2026 onward (P.L. 119-21, which eliminated
+ * the statutory ACA repayment caps), and credit still owed is paid to the
+ * household. Both book in January, like the true-up.
  *
  * The plan's first year, when it starts after January, is reconciled against
  * the estimate instead: its record holds only the months inside the plan, and
@@ -64,6 +65,7 @@ export class PremiumCreditEngine {
      *                                  each year settles
      * @param {number} plan.firstYear   the plan's first calendar year
      * @param {(year: number) => number} plan.monthsInPlanYear
+     * @param {object|null} [plan.activeUser]  used for age-gated retirement backstop failover on repayments
      */
     constructor(modelAssets, monthly, config, { taxYears, firstYear, monthsInPlanYear, activeUser = null }) {
         this.modelAssets = modelAssets;

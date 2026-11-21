@@ -1,21 +1,25 @@
 #!/usr/bin/env node
 /**
- * mcp-server.js — MCP server for Claude Desktop integration
+ * mcp-server.js — Model Context Protocol (MCP) server for Charting Finance.
  *
- * Exposes the financial simulation engine as tools that AI clients
- * can invoke over the Model Context Protocol (stdio transport).
+ * Exposes the financial simulation engine as stdio tools for AI clients:
+ * running Quick Start or custom plans (`list_profiles`, `quick_start_report`,
+ * `run_plan`), building validated plans from plain intent (`plan_defaults`,
+ * `build_plan`), investigating events and findings (`explain_issue`,
+ * `explain_month`), comparing plans (`diff_plans`), solving sustainable
+ * spending (`max_spending`), and generating browser share links (`share_link`).
  *
  * Usage:  node js/mcp/mcp-server.js
  *
  * ── Thin by design ───────────────────────────────────────────────────
  *
- * Every tool goes through runPlan() in run-plan.js and formats the result;
- * nothing here builds a Portfolio, config or TaxTable. No localStorage is
- * needed: the engine takes its configuration as a value.
+ * Every tool delegates to `run-plan.js` and formats the result; nothing here
+ * builds a Portfolio, SimConfig, or TaxTable directly. No localStorage is
+ * needed because the engine accepts configuration as explicit values.
  *
- * Nothing may write to stdout: StdioServerTransport owns it for JSON-RPC, and a
- * stray console.log corrupts the protocol. logger.js writes to stderr under
- * Node for this reason.
+ * Nothing may write to stdout: `StdioServerTransport` owns stdout for JSON-RPC,
+ * and any stray `console.log` corrupts the protocol. `logger.js` writes to
+ * stderr under Node for this reason.
  */
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -99,16 +103,6 @@ function issuesMarkdown(issues) {
 }
 
 /**
- * The report, headed by the handle.
- *
- * The handle is stated first, because the result is the only place a client
- * learns it can ask follow-up questions. Findings carry ids for
- * `explain_issue`.
- *
- * The granularity line says the run also holds monthly packages and an event
- * log, so a caller knows it can ask about one month instead of a whole year.
- */
-/**
  * The plan in one line: who it is about, and under what assumptions.
  *
  * Ages are the most common way a plan turns out to be about someone other
@@ -121,6 +115,17 @@ function planLine(portfolio) {
        + `inflation ${(c.inflationRate * 100).toFixed(1)}%`;
 }
 
+/**
+ * The report, headed by the run handle.
+ *
+ * The handle is stated first, because the result is the only place a client
+ * learns it can ask follow-up questions. Findings carry ids for
+ * `explain_issue`.
+ *
+ * The granularity line notes that the run also holds monthly packages and an
+ * event log, so a caller knows it can ask about one month instead of a whole
+ * year.
+ */
 function reportFor(handle, portfolio, issues, mcResults = null, sections = null) {
   const ids = [...new Set(issues.map(i => i.id))];
   const hasReports = !sections || [].concat(sections).includes('reports');

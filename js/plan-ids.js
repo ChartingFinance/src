@@ -141,10 +141,10 @@ export function assignPlanIds(modelAssets = [], lifeEvents = []) {
  * assets and life events copied in full.
  *
  * The MCP tools call this as a spec comes in, so the ids are in the data from
- * then on. Without it, a spec written without ids (as Claude often writes one)
- * would be numbered again by every Portfolio built from it. The numbers would
- * agree, because each copy keeps the written order, but that is order standing
- * in for identity.
+ * then on. Without it, a spec written without ids (as an AI caller or
+ * hand-authored spec often omits them) would be numbered again by every
+ * Portfolio built from it. The numbers would agree, because each copy keeps the
+ * written order, but that is order standing in for identity.
  *
  * A spec in which one reference names two different assets, one by id and one
  * by name, is refused: it is a spec edited by hand (a name changed and its id
@@ -257,11 +257,11 @@ function forgetDeadIds(modelAssets, lifeEvents) {
 }
 
 /**
- * The strings held where an asset id can be and that step 1 does not forget: a
- * phase's rule keys and a close written as a bare string, each an id or a name
- * (a key has no separate name field to fall back on). Numbering steps over the
- * ids among them, so a deleted asset's rules are not given to a new asset before
- * the app prunes them.
+ * Collect raw string references that step 1 cannot safely clear because they
+ * lack a separate name fallback: phase transfer rule keys and legacy
+ * bare-string closes. Reserving any asset ids among them ensures newly
+ * assigned ids will not collide with rules left behind by a deleted asset
+ * before the app prunes them.
  */
 function referencedAssetIds(modelAssets, lifeEvents) {
     const out = [];
@@ -387,9 +387,9 @@ function resolveCloses(event, phase, { idOrName, resolve }) {
 }
 
 /**
- * The rules a phase keeps for an asset the plan no longer has go: the rules of
- * an asset that was deleted. By id, after preparePlan(): a renamed asset keeps
- * its id, so its rules stay.
+ * Remove phase transfer rules owned by assets that are no longer in the plan
+ * (for example, after an asset is deleted). Matches by id after `preparePlan()`,
+ * so a renamed asset keeps its id and keeps its rules.
  *
  * Transfers TO a deleted asset stay, waiting by name (see the header), and so
  * do closes and purchase funding: an asset given that name picks them up.

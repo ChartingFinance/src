@@ -166,7 +166,7 @@ const ONE_TIME_ELIGIBLE = new Set([
 ]);
 
 // ── Public classifier API ────────────────────────────────────────────
-// Drop-in replacements for the old isXxx() free functions.
+// O(1) instrument classifiers and display-metadata lookups.
 // Usage:  InstrumentType.isCapital(asset.instrument)
 
 export const InstrumentType = Object.freeze({

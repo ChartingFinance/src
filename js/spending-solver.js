@@ -375,8 +375,9 @@ function boundBy(best, failing, limits, edge) {
 
 /**
  * Retirement accounts that still held money in the month the plan ran out.
- * Before age 60, the backstop does not draw on retirement accounts, so they
- * explain a plan that runs out early with wealth left.
+ * All retirement accounts are protected from automatic backstop draws before
+ * age 60 (conservative whole-year rounding of 59½), so untouched balances here
+ * explain why a plan can run out early while still holding retirement wealth.
  */
 function untouchedAt(run) {
     const p = run.portfolio;

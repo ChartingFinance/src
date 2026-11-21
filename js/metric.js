@@ -370,9 +370,10 @@ export const PARENT_METRICS = new Set(
 export const LEAF_TAX_METRICS = leavesOf(Metric.TAXES);
 
 /**
- * Every expense as leaf metrics (living expense, mortgage interest,
- * maintenance, insurance), derived from the DAG for the same reason as
- * LEAF_TAX_METRICS. Mortgage principal is not here: it rolls up to nothing.
+ * Every expense as leaf metrics (living expense, health insurance premiums,
+ * advance premium tax credit, mortgage interest, maintenance, insurance),
+ * derived from the DAG for the same reason as LEAF_TAX_METRICS. Mortgage
+ * principal is not here: it rolls up to nothing.
  */
 export const LEAF_EXPENSE_METRICS = leavesOf(Metric.EXPENSE);
 

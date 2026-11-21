@@ -64,15 +64,6 @@ export const DEFAULT_ORIGIN = 'https://charting.finance/';
 export const SHARE_URL_SOFT_LIMIT = 16000;
 
 /**
- * The share payload: what the app's importer reads, key for key.
- *
- * A plan spec ALREADY has this shape — `planFromProfile` returns exactly these
- * five keys — so this is a normalisation, not a translation. Anything else on
- * the spec is dropped rather than shipped, because the importer would ignore it
- * and a link should not carry what it cannot deliver. Beside the five goes the
- * plan format, which a reader checks before it reads anything (plan-ids.js).
- */
-/**
  * The five keys that ARE the plan.
  *
  * A run handle is a hash of the spec, so anything else a link carries (such as
@@ -81,6 +72,15 @@ export const SHARE_URL_SOFT_LIMIT = 16000;
  */
 export const SPEC_KEYS = ['name', 'settings', 'modelAssets', 'lifeEvents', 'guardrailParams'];
 
+/**
+ * Build the share payload that the app's importer reads, key for key.
+ *
+ * A plan spec already has this shape (`planFromProfile` returns these exact
+ * five keys), so this is a normalization rather than a translation. Extra keys
+ * on the spec are dropped so a link never carries fields the importer would
+ * ignore. `planFormat` travels beside the five keys so a reader can refuse a
+ * newer format before reading anything (`plan-ids.js`).
+ */
 export function sharePayloadFromPlan(spec, { name, handle } = {}) {
     if (!spec?.modelAssets?.length) {
         throw new Error('Cannot build a share link for a plan with no assets.');

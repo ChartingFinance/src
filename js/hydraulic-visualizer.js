@@ -1,16 +1,25 @@
 /**
  * hydraulic-visualizer.js
  *
- * Renders a reactive SVG visualization of portfolio fund flows.
- * Layout: income (left) → horizontal conduit → capital/retirement (above) + expenses/housing/taxes (below).
- * Wealth tank (right) shows context based on active mode.
+ * Renders an interactive SVG schematic of portfolio flows and balances for the
+ * month selected on the timeline cursor.
  *
- * Three modes:
- *   cashflow — lines show monthly transfer amounts, wealth tank shows net monthly cash flow
- *   value    — lines show asset balance as share of portfolio, wealth tank shows total portfolio value
- *   growth   — lines show month-over-month value change, wealth tank shows net portfolio growth
+ * Layout:
+ *   - Left: income sources
+ *   - Center: horizontal conduit whose color blends red ↔ green by net flow
+ *   - Above conduit: capital and retirement accounts
+ *   - Below conduit: expenses, real estate/mortgages, and a virtual Taxes drain
+ *   - Right: Wealth tank whose fill level tracks total portfolio value across
+ *     the simulation range, while its label reflects the active metric
  *
- * Driven by the "you are here" timeline cursor.
+ * Display modes (controlled by the active macro metric):
+ *   - cashFlow: dual green (inflow) / red (outflow) transfer lines from
+ *     `buildPipelines()` plus a red Taxes drain; tank shows net monthly flow
+ *   - value: single line per asset (blue positive, red negative) sized by share
+ *     of total portfolio value; tank shows total portfolio value
+ *   - other metrics (growth, income, expenses, taxes, etc.): monthly per-asset
+ *     values (with `growth` aggregating growth, interest, and dividends) plus
+ *     the Taxes drain for growth/taxes; tank shows net monthly metric total
  */
 
 import { classifyAssetGroup, AssetGroup, AssetGroupMeta } from './asset-groups.js';
@@ -20,11 +29,13 @@ import { formatCompactCurrency, formatSignedCurrency } from './utils/html.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
+// Logarithmic stroke width so both small and large dollar flows stay legible.
 function flowWidth(amount, maxW = 18) {
     if (amount <= 0) return 0;
     return Math.min(maxW, Math.max(1.5, Math.log10(amount + 1) * 4));
 }
 
+// Maps a normalized [-1, 1] net-flow ratio to a red → yellow → green conduit color.
 function blendColor(ratio) {
     const r = ratio < 0 ? 1 : 1 - ratio;
     const g = ratio > 0 ? 1 : 1 + ratio;
@@ -178,8 +189,8 @@ export class HydraulicVisualizer {
             }
         }
 
-        // Compute taxes. LEAF_TAX_METRICS is derived from the rollup DAG, so a
-        // new tax is included without an edit here.
+        // Sum all leaf tax metrics (derived from the metric rollup definition,
+        // so new tax types are included automatically).
         let totalTaxes = 0;
         for (const a of this.portfolio.modelAssets) {
             for (const m of LEAF_TAX_METRICS) totalTaxes += Math.abs(atIdx(a, m, historyIndex));
@@ -645,7 +656,7 @@ export class HydraulicVisualizer {
         valText.textContent = asset._virtual ? '' : '$0';
         g.appendChild(valText);
 
-        // Closed emoji (hidden by default, shown when asset is closed)
+        // Inactive badge (⛔), shown when the cursor is before start, after finish, or after early closure
         const closedEmoji = document.createElementNS(SVG_NS, 'text');
         closedEmoji.setAttribute('x', cx); closedEmoji.setAttribute('y', cy - h / 2 - 6);
         closedEmoji.setAttribute('text-anchor', 'middle');

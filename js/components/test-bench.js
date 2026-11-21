@@ -244,7 +244,8 @@ class TestBench extends LitElement {
         // The plan as it is now: a test is cancelled if it changes, so the
         // answer that comes back is for this one.
         const chartPlan = benchPlan(plan);
-        // A routing is ranked against a floor and an outlook: another, another test.
+        // Routing results depend on the floor and market outlook, so changing
+        // either marks any routing results on screen as stale.
         if (this._searches && (floor !== this._rFloor || outlook !== this._rOutlook)) this._routingOutdated();
         try {
             await runTestBench(plan, { floor, success }, {

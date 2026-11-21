@@ -1,8 +1,16 @@
 /**
  * <spreadsheet-view>
  *
- * Lit component that renders the monthly financial spreadsheet table.
- * Receives a `portfolio` object as a property.
+ * Lit component for the Spreadsheet detail tab. Renders a month-by-month table
+ * with columns grouped by asset, automatically omitting metrics that stay zero
+ * across the entire plan. Also builds matching RFC 4180 CSV exports.
+ *
+ * Properties:
+ *   portfolio - simulated Portfolio containing monthly asset metric arrays
+ *
+ * Methods:
+ *   scrollToDate(year, month) - scrolls to and briefly highlights that month's row
+ *   toCSV()                   - returns the rendered table as a CSV string
  */
 
 import { LitElement, html } from 'lit';
@@ -200,9 +208,8 @@ class SpreadsheetView extends LitElement {
     }
 
     _getDateInt() {
-        // Import cached — DateInt is needed for date iteration
+        // Cache the DateInt constructor from portfolio.firstDateInt for month-by-month iteration.
         if (!this._dateIntModule) {
-            // We import synchronously since the module is already loaded
             this._dateIntModule = { DateInt: this.portfolio.firstDateInt.constructor };
         }
         return this._dateIntModule;

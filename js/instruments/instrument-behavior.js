@@ -43,9 +43,9 @@ export class IncomeResult {
   }
 }
 
-// Benefits are not wages: they carry no FICA and Social Security is taxed
-// at 85% inclusion, so they must reach the FinancialPackage through their
-// own fields — never selfIncome/employedIncome.
+// Benefits are not wages: they carry no FICA, and Social Security uses tiered
+// IRC §86 inclusion (0% to 85% based on provisional income), so they must
+// flow into FinancialPackage through their own fields — never wage fields.
 export class RetirementIncomeResult {
   constructor(socialSecurityIncome = Currency.zero(), pensionIncome = Currency.zero()) {
     this.socialSecurityIncome = socialSecurityIncome instanceof Currency ? socialSecurityIncome.copy() : new Currency(socialSecurityIncome);
@@ -143,8 +143,8 @@ const PensionBehavior = Object.freeze({
       ...COMMON_METRICS,
       M.INCOME, M.ORDINARY_INCOME, M.NET_INCOME, M.GROWTH,
       M.PENSION_INCOME,
-      // See RetirementIncomeBehavior above — a pension carried no tax metrics
-      // at all, so withholding booked here would have vanished into NULL_METRIC.
+      // Register tax metrics so withholding on pension arrival is tracked
+      // rather than dropped by NULL_METRIC.
       M.WITHHELD_INCOME_TAX, M.INCOME_TAX, M.FEDERAL_TAXES, M.TAXES,
     ];
   },
@@ -256,8 +256,6 @@ const MortgageBehavior = Object.freeze({
     asset.monthsRemainingDynamic--;
     asset.finishCurrency.subtract(principal);    
     asset.growthCurrency.subtract(principal);
-
-    // and don't forget our monthlyValueChange tracker
     asset.monthlyValueChange.subtract(principal);
 
     asset.recordEvent(EventType.MORTGAGE_PRINCIPAL, principal.copy().flipSign(), { metric: M.MORTGAGE_PRINCIPAL });
@@ -280,8 +278,8 @@ const CapitalBehavior = Object.freeze({
       // Federal withholding at the source of a deferred distribution books here.
       // Without it the tax is deducted from the account and never shown on it.
       M.WITHHELD_INCOME_TAX,
-      // IRC §1411 books here; unregistered, the NIIT line would land on
-      // NULL_METRIC and the tax would appear in no row by name.
+      // Net Investment Income Tax (IRC §1411, 3.8% surtax) books here so it
+      // appears by name rather than being dropped by NULL_METRIC.
       M.NIIT,
       // The premium tax credit's reconciliation is paid from, or credited to,
       // the backstop accounts; cash and brokerage are among them.
@@ -359,7 +357,8 @@ const RealEstateBehavior = Object.freeze({
       M.GROWTH, M.INCOME, M.ORDINARY_INCOME, M.EXPENSE,
       M.SHORT_TERM_CAPITAL_GAIN, M.LONG_TERM_CAPITAL_GAIN, M.CAPITAL_GAIN,
       M.SHORT_TERM_CAPITAL_GAIN_TAX, M.LONG_TERM_CAPITAL_GAIN_TAX,
-      // A home sale's gain is net investment income above the §121 exclusion.
+      // Home-sale gain above the IRC §121 primary-home exclusion counts as net
+      // investment income for NIIT (IRC §1411).
       M.NIIT,
       M.INCOME_TAX, M.FEDERAL_TAXES, M.SALT_TAXES, M.TAXES,
       M.PROPERTY_TAX, M.MAINTENANCE, M.INSURANCE,

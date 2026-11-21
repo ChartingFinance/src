@@ -1,9 +1,16 @@
 /**
  * <credit-memo-view>
  *
- * Lit component that renders credit memos across all assets,
- * sorted chronologically with date and asset columns.
- * Receives a `portfolio` object as a property.
+ * Lit component for the Ledger / Credit Memos detail tab. Renders all recorded
+ * credit memos across every asset in chronological order with Date, Asset,
+ * Amount, and Note columns, distinguishing informational NON-CASH entries from
+ * cash-moving transactions.
+ *
+ * Properties:
+ *   portfolio - simulated Portfolio containing assets with creditMemos[]
+ *
+ * Methods:
+ *   scrollToDate(year, month) - scrolls to and briefly highlights the first entry for that month
  */
 
 import { LitElement, html } from 'lit';
@@ -54,7 +61,7 @@ class CreditMemoView extends LitElement {
                             ? formatCurrency(val, { cents: true })
                             : '\u2014';
                         // Info memos (gain recognition, attributed costs, escrow
-                        // accruals) moved no cash on this asset \u2014 mute the amount
+                        // accruals) moved no cash on this asset — mute the amount
                         // and badge them so the ledger visibly reconciles.
                         const isInfo = row.kind === 'info';
                         return html`

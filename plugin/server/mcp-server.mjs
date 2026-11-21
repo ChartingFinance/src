@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.3.53; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.3.54; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -31295,7 +31295,7 @@ var EventType = Object.freeze({
   CAPITAL_GAIN_EXCLUDED: "capitalGainExcluded",
   // IRC §121 primary-home exclusion
   NIIT_ASSESSED: "niitAssessed",
-  // IRC §1411; data: { nii, magi, threshold }
+  // Net Investment Income Tax (IRC §1411, 3.8% surtax); data: { nii, magi, threshold, bound }
   // IRC §36B. The advance credit the Treasury paid toward a month's premium,
   // on the health-insurance card; no household money moves. data:
   // { estimate, percent, share }
@@ -31309,12 +31309,13 @@ var EventType = Object.freeze({
   SETTLEMENT: "settlement",
   // one-sided draw; data: { from, to, label, backstop? }
   SPILLOVER: "spillover",
-  // data: { depleted }
+  // data: { depleted, origin, cause? }
   GROSS_UP: "grossUp",
   // data: { forAsset, overflow: boolean }
-  // The part of a GROSS_UP withdrawn to cover capital-gains tax rather than
-  // the obligation. No cash moves for this event (it left under the
-  // GROSS_UP); it names that portion so it can be reported. data: { forAsset }
+  // The part of a GROSS_UP actually collected to cover capital-gains tax rather
+  // than the obligation itself. No extra cash moves for this event (those
+  // dollars left under GROSS_UP); it names the collected tax portion for
+  // reporting. data: { forAsset }
   TAX_PROVISION: "taxProvision",
   ONE_TIME: "oneTime",
   // data: { note }
@@ -31414,9 +31415,8 @@ function renderNote(event) {
       return `Annual tax true-up (${d.direction})`;
     case EventType.TAX_PROVISION:
       return d.forAsset ? `Withheld for capital gains tax on the draw for ${d.forAsset}` : "Withheld for capital gains tax on this draw";
-    // Says which side of the min bound: too much investment income, or
-    // too much total income. No currency helper — this module imports
-    // nothing.
+    // Names which side of the IRC §1411 min bound applied (net investment
+    // income vs. MAGI over the threshold).
     case EventType.NIIT_ASSESSED:
       return d.bound === "nii" ? "Net investment income tax (3.8% of net investment income)" : "Net investment income tax (3.8% of MAGI over the threshold)";
     case EventType.PREMIUM_TAX_CREDIT:
@@ -31567,8 +31567,8 @@ var PensionBehavior = Object.freeze({
       Metric.NET_INCOME,
       Metric.GROWTH,
       Metric.PENSION_INCOME,
-      // See RetirementIncomeBehavior above — a pension carried no tax metrics
-      // at all, so withholding booked here would have vanished into NULL_METRIC.
+      // Register tax metrics so withholding on pension arrival is tracked
+      // rather than dropped by NULL_METRIC.
       Metric.WITHHELD_INCOME_TAX,
       Metric.INCOME_TAX,
       Metric.FEDERAL_TAXES,
@@ -31673,8 +31673,8 @@ var CapitalBehavior = Object.freeze({
       // Federal withholding at the source of a deferred distribution books here.
       // Without it the tax is deducted from the account and never shown on it.
       Metric.WITHHELD_INCOME_TAX,
-      // IRC §1411 books here; unregistered, the NIIT line would land on
-      // NULL_METRIC and the tax would appear in no row by name.
+      // Net Investment Income Tax (IRC §1411, 3.8% surtax) books here so it
+      // appears by name rather than being dropped by NULL_METRIC.
       Metric.NIIT,
       // The premium tax credit's reconciliation is paid from, or credited to,
       // the backstop accounts; cash and brokerage are among them.
@@ -31742,7 +31742,8 @@ var RealEstateBehavior = Object.freeze({
       Metric.CAPITAL_GAIN,
       Metric.SHORT_TERM_CAPITAL_GAIN_TAX,
       Metric.LONG_TERM_CAPITAL_GAIN_TAX,
-      // A home sale's gain is net investment income above the §121 exclusion.
+      // Home-sale gain above the IRC §121 primary-home exclusion counts as net
+      // investment income for NIIT (IRC §1411).
       Metric.NIIT,
       Metric.INCOME_TAX,
       Metric.FEDERAL_TAXES,
@@ -31916,7 +31917,8 @@ var DateInt = class _DateInt {
   }
   // ── Arithmetic ───────────────────────────────────────────────────
   /**
-   * Absolute month count between two DateInts.
+   * Signed month difference between two DateInts (`finish - start`; negative
+   * when `finish` is earlier than `start`).
    */
   static diffMonths(start, finish) {
     if (!start || !finish) return 0;
@@ -32240,9 +32242,8 @@ var LifeEventMeta = /* @__PURE__ */ new Map([
     projectionTabs: ["value", "guardrails", "monteCarlo", "spreadsheet"],
     assetGroupLabels: { distributions: "Distributions", capital: "Capital", expenses: "Expenses", taxes: "Taxes" },
     defaultMutations: {
-      // Every working income still running at retirement, whatever it is
-      // called. It was ['Salary'], a name, which matched nothing in five of the
-      // eight quick-start profiles ("Salary A" and "Salary B" were paid on).
+      // Close every working income already running at retirement regardless of
+      // its display name (using an instrument template rather than a fixed name).
       closes: [{ instrument: Instrument.WORKING_INCOME }]
     },
     advisoryChecks: [
@@ -32458,6 +32459,7 @@ var User = class {
   rmdRequired() {
     return this.age >= this.rmdAge();
   }
+  /** RMD starting age under SECURE 2.0: 72 (born < 1951), 73 (1951–1959), or 75 (1960+). */
   rmdAge() {
     if (this.birthYear < 1951) return 72;
     if (this.birthYear < 1960) return 73;
@@ -33630,9 +33632,9 @@ var TaxTable = class {
    *
    *     0.038 × min( netInvestmentIncome , MAGI − threshold )
    *
-   * Both arguments matter. A household with large wages and no investment
-   * income owes nothing (fixture mfj-two-earners); so does one living on
-   * gains below the threshold (gain-harvest-under-the-deduction).
+   * Both arguments matter: a household with high wages and no investment
+   * income owes nothing, and an early retiree living on capital gains below
+   * the MAGI threshold owes nothing either.
    *
    * Floored at zero here, because `magi` is deliberately unfloored.
    *
@@ -33771,10 +33773,9 @@ var TaxTable = class {
     return taxableIncome;
   }
   /**
-   * Vestigial. Logs three self-checks and returns an empty Currency that
-   * nothing reads. The middle check compares post-deduction taxable income
-   * with gross wages, so it reports a failure on every run. Listed for
-   * deletion in markdowns/code-issues-from-comments.md.
+   * Legacy diagnostic check: logs three self-checks and returns an empty
+   * Currency that nothing reads. The middle check compares post-deduction
+   * taxable income with gross wages, so it always logs a mismatch.
    */
   reconcileYearlyTax(yearly, activeUser) {
     let yearlyFICA = this.calculateYearlyFICATax(yearly);
@@ -33916,7 +33917,7 @@ var FinancialPackage = class _FinancialPackage {
    * Social Security under IRC §86: the benefits, the "other income" they are
    * tested against, and the taxable part.
    *
-   * `table` is required: §86's thresholds depend on filing status, and the
+   * `table` is required: IRC §86 thresholds depend on filing status, and the
    * provisional-income test needs the deductible contribution as the engine
    * books it (`deductionComponents`).
    *
@@ -33938,7 +33939,7 @@ var FinancialPackage = class _FinancialPackage {
   }
   /**
    * Gross income taxed at the ordinary rates: ordinary income with Social
-   * Security replaced by its §86 taxable portion.
+   * Security replaced by its IRC §86 taxable portion.
    *
    * Subtract-then-add keeps results bit-identical for households at the 85%
    * ceiling.
@@ -35357,9 +35358,10 @@ var TaxEngine = class {
    *
    * The bill belongs to the household, not to any one account, but an event
    * has to live somewhere and portfolio-issues groups by asset. The largest
-   * remaining balance is the most useful anchor: in the case that matters —
-   * money sitting in a 401(k) that the backstop policy will not touch — it
-   * puts the warning on exactly the account the user would have to draw from.
+   * remaining balance is the most useful anchor: when every eligible backstop
+   * account is empty — for example, money sitting in a retirement account
+   * protected before age 60, or an illiquid asset like real estate — this
+   * places the warning on the account the user would need to draw from.
    */
   #unfundedTaxAnchor() {
     let best = null;
@@ -35461,7 +35463,7 @@ var TaxEngine = class {
    *
    * No gross-up on a tax-deferred leg: settleOneSided already books the draw
    * as a distribution, and the annual true-up taxes it. Grossing up here would
-   * tax it twice. See markdowns/tax-allocation-spec.md §3.2.1.
+   * tax it twice.
    */
   #settleAllocatedLeg(leg, eventType, metric, extraData = {}) {
     const { modelAsset, amount, share } = leg;
@@ -35799,8 +35801,8 @@ var RebalanceEngine = class {
    * Track per-asset distribution METRICS when money leaves a tax-deferred
    * account. Asset metrics only — the FinancialPackage side is booked by
    * recordTransfer in applyRebalanceTransfers, which classifies by source
-   * instrument. Booking the FP here as well would double-count every
-   * distribution in the tax base.
+   * instrument. Booking the FinancialPackage here as well would double-count
+   * every distribution in the tax base.
    */
   _trackDistribution(sourceAsset, amount, targetAsset = null) {
     sourceAsset.recordDistribution(amount);
@@ -35943,6 +35945,7 @@ var PremiumCreditEngine = class {
    *                                  each year settles
    * @param {number} plan.firstYear   the plan's first calendar year
    * @param {(year: number) => number} plan.monthsInPlanYear
+   * @param {object|null} [plan.activeUser]  used for age-gated retirement backstop failover on repayments
    */
   constructor(modelAssets, monthly, config2, { taxYears, firstYear, monthsInPlanYear, activeUser = null }) {
     this.modelAssets = modelAssets;
@@ -36421,9 +36424,9 @@ var EVENT_RECONCILIATION = Object.freeze({
   [EventType.MORTGAGE_INTEREST]: "mortgageInterest",
   [EventType.MORTGAGE_PRINCIPAL]: "mortgagePrincipal",
   [EventType.PROPERTY_TAX]: "propertyTax",
-  // §121 removes gain from the tax base without moving cash or changing the
-  // gain realised, so it stays out of the capitalGains bucket, which balances
-  // against the gross monthly.longTermCapitalGains.
+  // IRC §121 (primary-home exclusion) removes gain from the tax base without
+  // moving cash or changing the gain realized, so it stays out of the
+  // capitalGains bucket, which balances against gross monthly.longTermCapitalGains.
   [EventType.CAPITAL_GAIN_EXCLUDED]: "excluded",
   [EventType.ASSET_GROWTH]: "excluded",
   [EventType.EXPENSE_INFLATION]: "excluded",
@@ -36730,7 +36733,8 @@ var Portfolio = class _Portfolio {
   }
   /**
    * Reconcile the events the loop left behind. Called once, after the last
-   * iteration.
+   * iteration, right before `flushFinalSettlement()` folds the final year's
+   * settlement into the closing month.
    *
    * chronometer_run calls applyYear after monthlyChron, so the annual
    * true-up's events always fall after the scan. Mid-run the next month's pass
@@ -37219,14 +37223,16 @@ var Portfolio = class _Portfolio {
   }
   /**
    * Record the settled year: its tax basis (AGI, every MAGI, the bases the
-   * annual passes charge on), what it owed, and how the January settlement
+   * annual passes charge on), what it owed, and how the annual settlement
    * paid it. Every settled year gets one, whether or not anything is charged.
    *
    * Owed and paid are different numbers. `federalTax` is what the year's
    * income owed, from the liability the true-up computed; the settlement
    * fields are what the passes actually booked, which is less when an account
-   * could not pay. A package shows the settlement in the following year, so
-   * a year's tax cannot be read from its own package (see report-view.js).
+   * could not pay. Mid-run packages show the settlement in the following
+   * January (on the plan's final December, `flushFinalSettlement()` folds it
+   * into that closing month), so a year's full tax cannot be read from its
+   * own monthly packages alone (see report-view.js).
    *
    * Household figures, so they live on the portfolio, not on an asset. Plain
    * numbers in a frozen record, so a record can be serialised and nothing can
@@ -37248,14 +37254,14 @@ var Portfolio = class _Portfolio {
    * @property {number} capitalGainsTax  owed, positive: the true-up's liability
    * @property {number} niit             owed, positive; 0 under the $1 gate
    * @property {number} federalTax       the sum of the four above
-   * @property {number} settledTrueUp    booked in January: + refund, − bill
-   * @property {number} settledNIIT      booked in January: − paid
+   * @property {number} settledTrueUp    booked on settlement (following Jan, or closing Dec on final year): + refund, − bill
+   * @property {number} settledNIIT      booked on settlement (following Jan, or closing Dec on final year): − paid
    * @property {number} ptc              the premium tax credit the year allowed
    * @property {number} aptc             the advance credit paid during it
    * @property {?number} fplPercent      ACA MAGI as a whole % of the poverty
    *                                     line; null when no card covered the year
-   * @property {number} ptcReconciliation booked in January: + credit owed,
-   *                                     − excess advance repaid
+   * @property {number} ptcReconciliation booked on settlement (following Jan, or closing Dec on final year):
+   *                                     + credit owed, − excess advance repaid
    * @property {boolean} ptcOnEstimate   the plan's partial first year, settled
    *                                     against the card's estimate instead
    *                                     of a MAGI the plan only part-saw
@@ -38900,7 +38906,6 @@ var ModelAsset = class _ModelAsset {
   dnaFundTransfers() {
     return this.fundTransfers.map((ft) => ft.describe(this.displayName)).join("\n");
   }
-  // ── Withholding ──────────────────────────────────────────────────
   // ── Queries ──────────────────────────────────────────────────────
   inMonth(dateInt) {
     if (this.isClosed) {
@@ -38963,6 +38968,8 @@ var ModelAsset = class _ModelAsset {
    * at zero gain. Only the remainder is sold pro-rata from the older holdings,
    * at their gain ratio — not the account's overall ratio. An account that
    * receives income and pays expenses in the same month realizes almost nothing.
+   * When a withdrawal exceeds the vested balance (overdraft), `realizedGain` is
+   * clamped to the actual proceeds sold (`vestedSold`) rather than the requested amount.
    */
   planWithdrawal(amount) {
     const withdrawal = Math.abs(amount?.amount ?? amount ?? 0);
@@ -39241,9 +39248,10 @@ var DETECTORS = [
     }
   },
   {
-    // The leading indicator: an account clamped at $0 and the shortfall was
-    // re-sourced. The memo is on the account that covered it and names the
-    // one that ran dry; the issue is filed under the one that ran dry.
+    // The leading indicator: an account clamped at $0 and the shortfall
+    // spilled over to fallback account(s). The memo is recorded on each
+    // covering account and names the one that ran dry; we file the issue
+    // under the account that ran dry.
     id: "funding-ran-dry",
     scope: "asset",
     category: "obligation",
@@ -39300,9 +39308,10 @@ var DETECTORS = [
     }
   },
   {
-    // Social Security dated before 62 starts at 62 instead (ModelAsset's
-    // activeFromDateInt). Said here, so a benefit that arrives later than
-    // entered is not a mystery. Read from the recorded event by type.
+    // Social Security dated before age 62 is deferred to start at 62
+    // (via ModelAsset.activeFromDateInt). Surfacing that here prevents a
+    // later-than-entered start date from looking like a bug. Read directly
+    // from the recorded event type.
     id: "social-security-deferred",
     scope: "asset",
     category: "configuration",
@@ -39323,11 +39332,12 @@ var DETECTORS = [
     }
   },
   {
-    // A transfer, close or purchase names an asset the plan does not have:
-    // it was deleted, or a spec named it wrongly. It waits by name and does
-    // nothing (plan-ids.js), and an asset given that name picks it up. Read
-    // from the plan's references, as no-funding-accounts reads its accounts:
-    // nothing ran, so there is no event to anchor on. One finding per name.
+    // A transfer, close, or purchase names an asset the plan does not have
+    // (it was deleted, or a saved plan misspelled the name). It waits by
+    // name and does nothing (see plan-ids.js), reconnecting automatically
+    // if an asset is later given that name. Like no-funding-accounts, we
+    // inspect the plan's references directly because nothing ran to produce
+    // an event. One finding per missing name.
     id: "missing-asset-reference",
     scope: "plan",
     category: "configuration",
@@ -39350,8 +39360,9 @@ var DETECTORS = [
     }
   },
   {
-    // The RMD was missed. The cause is not recorded (expense-engine.js gives
-    // up silently when no account can receive it), so none is guessed.
+    // The RMD was missed. The cause is not recorded on the asset
+    // (expense-engine.js skips silently when resolveDeposit() finds no open
+    // everyday account to receive it), so we do not guess at one.
     id: "rmd-unsatisfied",
     scope: "asset",
     category: "configuration",
@@ -42165,8 +42176,9 @@ var Ledger = class {
     this.assets.push({ label, origin, note });
   }
   /**
-   * §6: a field with no declared provenance is a build error, not a blank —
-   * an agent handed a number without its source reports the number.
+   * Every settings field and emitted asset must declare its provenance or
+   * origin; an unattributed value is a build error rather than a silent blank,
+   * because an agent handed a bare number will present it as fact.
    */
   assertComplete(settings, assetLabels) {
     const declared = new Set(this.fields.map((f) => f.field));

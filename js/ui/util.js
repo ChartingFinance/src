@@ -1,8 +1,8 @@
 /**
- * util.js - ES6 Module
+ * ui/util.js
  *
- * Helpers for localStorage scenarios (story arcs), JSON encoding and dates.
- * The UUID and cookie helpers at the bottom are unused.
+ * Helpers for persisting scenarios ("story arcs") in localStorage under
+ * `<storyArc>+<storyName>` keys, plus date formatting and base64 JSON helpers.
  */
 
 import { logger, LogCategory } from '../utils/logger.js';
@@ -53,6 +53,11 @@ export function util_removeStoryName(storyArc, storyName) {
     }
 }
 
+/**
+ * Register `storyName` in the story arc's scenario list if not already present.
+ * When appending to a non-empty list, seeds the new slot with a copy of the
+ * previous scenario's saved asset array.
+ */
 export function util_ensureStoryNames(storyArc, storyName) {
     let storyArcNamesKey = util_buildStoryArcKey(storyArc, storyNamesKey);
     let asString = localStorage.getItem(storyArcNamesKey);
@@ -214,6 +219,7 @@ export function util_YYYYmm() {
 }
 
 export function util_YYYYmmToDisplay(YYYYmm) {
+    // Use day 02 so UTC midnight never shifts back into the previous month in western timezones.
     const date = new Date(YYYYmm + '-02');
     let options = { year: 'numeric', month: 'long' };
     return date.toLocaleDateString('en-US', options);
@@ -226,6 +232,7 @@ export function util_escapedJSONStringify(obj) {
         return null;
     }
 
+    // Strip runtime model references before serializing to avoid circular JSON errors.
     for (let ii = 0; ii < obj.length; ++ii) {
         if (obj[ii].fromModel)
             delete obj[ii].fromModel;
@@ -246,7 +253,7 @@ export function util_findModelAssetByDisplayName(modelAssets, displayName) {
     return findByName(modelAssets, displayName);
 }
 
-// ── UUID / Cookie Helpers ──────────────────────────────────────────────
+// ── UUID / Cookie Helpers (unused legacy helpers) ──────────────────────
 
 export function generateUUID() {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {

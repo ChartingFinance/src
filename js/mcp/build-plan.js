@@ -2,8 +2,7 @@
  * build-plan.js — turning a described situation into a plan the engine can run.
  *
  * `run_plan` is the runtime; this is the compiler in front of it, and its most
- * valuable output is a refusal or a question. Section numbers (§) refer to
- * markdowns/mcp-conversational-plan-spec.md.
+ * valuable output is a refusal or a question.
  *
  * ── Why a gate ───────────────────────────────────────────────────────
  *
@@ -19,8 +18,9 @@
  *
  * `run_plan` accepts any asset object, which suits passing through an exported
  * portfolio but gives an author no guidance on dates, Currency or ARR. So the
- * caller supplies meaning (§4), and this module supplies instrument keys,
- * dates, rates and phases.
+ * caller supplies plain intent (income, accounts, savings splits, expenses, and
+ * health coverage), and this module supplies instrument keys, dates, rates, and
+ * life-event phases.
  *
  * ── What it returns ──────────────────────────────────────────────────
  *
@@ -48,11 +48,11 @@ import { MEDICARE_AGE } from '../plan-dates.js';
 // ── Refusals ─────────────────────────────────────────────────────────
 
 /**
- * A sentence that does not determine a plan.
+ * A description that does not uniquely determine a plan.
  *
  * Carries structure rather than only a message, because the caller is an agent
  * that has to ask the user something specific. `options` turns a refusal into
- * the offer §8 asks for — *"Retirement (401K, IRA, Roth IRA) or capital
+ * a concrete choice — *"Retirement (401K, IRA, Roth IRA) or capital
  * (Taxable Account, Savings)?"* — rather than a dead end.
  */
 export class PlanRefusal extends Error {
@@ -66,12 +66,13 @@ export class PlanRefusal extends Error {
     }
 }
 
-// ── Step 1: the settings preamble (§7) ───────────────────────────────
+// ── Step 1: the settings preamble ────────────────────────────────────
 
 /**
- * The defaults, each with a note saying what it means (§7). Without this, "how
- * much will I have in 10 years" silently plans for a 50-year-old, the default
- * start age. Meant to be called once per conversation, not per plan.
+ * Default planning assumptions, each with a plain-English note explaining what
+ * it means. Without surfacing these up front, "how much will I have in 10 years"
+ * would silently plan for a 50-year-old (the default start age). Meant to be
+ * called once per conversation, not per plan.
  */
 export const PLAN_DEFAULT_GLOSS = Object.freeze([
     Object.freeze({ field: 'startAge', value: SIM_CONFIG_DEFAULTS.startAge,
@@ -125,11 +126,11 @@ export function healthInsuranceDefaults() {
     return HEALTH_INSURANCE_DEFAULT_GLOSS.map(d => ({ ...d }));
 }
 
-// ── Step 2: the intent vocabulary (§4) ───────────────────────────────
+// ── Step 2: the intent vocabulary ────────────────────────────────────
 
 /**
- * Wording → Instrument (§8). Longest match wins, so "roth ira" does not resolve
- * as "ira".
+ * Maps plain-English account wording to engine instruments. Longest match wins,
+ * so "roth ira" never resolves as "ira".
  *
  * Deliberately partial: when the wording does not determine an instrument, the
  * module offers categories (`ACCOUNT_CATEGORIES`) rather than guess a tax
@@ -158,7 +159,7 @@ const INCOME_INSTRUMENTS = Object.freeze([
     Instrument.WORKING_INCOME, Instrument.PENSION, Instrument.RETIREMENT_INCOME,
 ]);
 
-// "Savings" (§8.1) can mean the act of saving or the account labelled Savings.
+// "Savings" can mean either the act of saving or an account named Savings.
 // The caller resolves that before building the intent; here, two named accounts
 // stay two accounts, and each share is read against its source (see `claim()`).
 
@@ -205,13 +206,14 @@ const RESIDUAL_EXPENSE_LABEL = 'Living Expenses';
  * engine's own `taxableBasis()` and `calculateYearlyIncomeTax()`, given the same
  * one-month package payroll builds (wages, benefits, pre-tax deferrals), so every
  * tax rule applies exactly as in a run. This function contributes only the
- * order, which mirrors `payroll-engine.js`: FICA per earner, the household tax
- * allocated across earners by wages, and on-arrival withholding on a pension or
- * Social Security.
+ * order, which mirrors `engines/payroll-engine.js`: FICA per earner, the
+ * household tax allocated across earners by wages, and on-arrival withholding
+ * on a pension or Social Security.
  *
- * Take-home is gross less FICA, income tax and any pre-tax deferral. A 401(k)
- * leg takes gross; every other leg takes take-home. `tests/build-plan.mjs`
- * compares this estimate with what a real run books, to the cent.
+ * Take-home is gross less FICA, income tax, and any pre-tax deferral. Pre-tax
+ * deferral legs (401(k) and traditional IRA) take a share of gross pay; every
+ * other leg takes a share of take-home pay. `tests/build-plan.mjs` compares
+ * this estimate with what a real run books, to the cent.
  */
 function withholdingFor(incomeAssets, deferrals, { filingAs, propertyTaxDeductionMax,
     startAge, birthYear, pensionWithholdingRate, socialSecurityWithholdingRate }) {
@@ -255,7 +257,7 @@ function withholdingFor(incomeAssets, deferrals, { filingAs, propertyTaxDeductio
             const incomeTax = totalWorking > 0 ? householdMonthlyTax * gross / totalWorking : 0;
             takeHome = gross - fica.get(a.displayName) - incomeTax - deferred.get(a.displayName);
         } else {
-            // Benefits withhold on arrival at a flat rate (payroll-engine.js).
+            // Benefits withhold on arrival at a flat rate (engines/payroll-engine.js).
             const rate = a.instrument === Instrument.PENSION
                 ? pensionWithholdingRate : socialSecurityWithholdingRate;
             takeHome = gross * (1 - rate);
@@ -265,7 +267,7 @@ function withholdingFor(incomeAssets, deferrals, { filingAs, propertyTaxDeductio
     return { net, taxTable, householdMonthlyTax };
 }
 
-// ── The ledger (§6, §9.2) ────────────────────────────────────────────
+// ── Assumption & provenance ledger ───────────────────────────────────
 
 /** Where a FIELD's value came from. */
 export const Provenance = Object.freeze({
@@ -301,8 +303,9 @@ class Ledger {
     }
 
     /**
-     * §6: a field with no declared provenance is a build error, not a blank —
-     * an agent handed a number without its source reports the number.
+     * Every settings field and emitted asset must declare its provenance or
+     * origin; an unattributed value is a build error rather than a silent blank,
+     * because an agent handed a bare number will present it as fact.
      */
     assertComplete(settings, assetLabels) {
         const declared = new Set(this.fields.map(f => f.field));
@@ -410,7 +413,7 @@ function resolveAccountInstrument(account) {
     // what it pays each month: a $200,000 pot would pay $200,000 a month.
     if (hay.includes('pension')) throw incomeAsAccount(account.label);
 
-    // §8: when the wording does not determine an instrument, ask.
+    // When the wording does not determine an instrument, ask rather than guess.
     throw new PlanRefusal(
         `"${account.label}" does not name an account type I can resolve.`,
         {
@@ -435,7 +438,7 @@ function incomeAsAccount(label) {
         });
 }
 
-// ── Health insurance (IRC §36B) ──────────────────────────────────────
+// ── Marketplace health insurance (IRC §36B Premium Tax Credit) ───────
 
 const HEALTH_INSURANCE_LABEL = 'Health Insurance';
 
@@ -448,11 +451,12 @@ const pct = rate => `${(rate * 100).toFixed(1)}%`;
  * routing in `buildPlan`), and the engine works out the premium tax credit on
  * it. Three rules decide what can be built:
  *
- *   - Coverage starts no earlier than retirement. Before it, every dollar of
- *     income is routed, and the spending it leaves is sized from take-home pay
- *     with no room for a premium (§5.3): one paid while working would be spent
- *     on top of everything else. So a plan that starts in retirement may cover
- *     from its first month, and any other must say when coverage starts.
+ *   - Coverage starts no earlier than retirement. Before retirement, every
+ *     dollar of income is routed and residual spending is sized from take-home
+ *     pay with no room left for a separate premium: one paid while working
+ *     would be spent on top of everything else. So a plan that starts in
+ *     retirement may cover from its first month, and any other must say when
+ *     coverage starts.
  *   - Coverage ends before 65, when Medicare ends marketplace eligibility and
  *     the credit with it.
  *   - Prices are today's. Coverage that starts later is priced at its start,
@@ -707,7 +711,7 @@ function assertOneHousehold(cards) {
 /**
  * Compile intent into a plan spec.
  *
- * @param {object} intent  see §4 of the spec
+ * @param {object} intent  structured description of income, accounts, savings splits, expenses, health plans, and overrides
  * @returns {{spec: object, ledger: {fields: Array, assets: Array}, notes: string[]}}
  * @throws {PlanRefusal} when the intent does not determine a plan
  */
@@ -723,7 +727,7 @@ export function buildPlan(intent = {}) {
         });
     }
 
-    // ── Settings (§5.1, §7) ──────────────────────────────────────
+    // ── Settings ─────────────────────────────────────────────────
     const o = intent.settingsOverrides ?? {};
     const D = SIM_CONFIG_DEFAULTS;
 
@@ -754,8 +758,8 @@ export function buildPlan(intent = {}) {
     const startMonth = DateInt.from(now.getFullYear(), now.getMonth() + 1);
     const birthYear = now.getFullYear() - startAge;
 
-    // §5.1: "how much in 10 years" sets the finish age from the start age, so
-    // the derivation is declared in the ledger — it silently pins the age.
+    // A horizon like "how much in 10 years" derives finishAge from startAge,
+    // so the derivation is declared in the ledger — it silently pins the age.
     if (intent.horizonYears != null && o.finishAge != null) {
         throw new PlanRefusal(
             'The plan has both a horizon and a finish age, and they may disagree.',
@@ -793,7 +797,7 @@ export function buildPlan(intent = {}) {
     }
 
     // Refuse a plan that finishes exactly AT retirement. Finishing before it is
-    // fine (the §5.1 case: accumulation only). Finishing at it declares a
+    // fine (an accumulation-only projection). Finishing at it declares a
     // drawdown phase with no months in it, because `reachesRetirement` below is
     // `>=`. Checked on the derived finish age, since that is how it happens in
     // practice: ten years from 55 lands on a retirement age of 65.
@@ -815,8 +819,8 @@ export function buildPlan(intent = {}) {
         o.filingAs != null ? asFilingStatus(o.filingAs, D.filingAs) : D.filingAs,
         o.filingAs != null ? Provenance.STATED : Provenance.DEFAULT);
 
-    // §5.1: if the horizon crosses retirement, the plan includes a drawdown.
-    // Say so.
+    // If the horizon crosses retirement, the plan includes a drawdown phase —
+    // state that explicitly in the returned notes.
     const reachesRetirement = finishAge > retirementAge;   // equality refused above
     if (reachesRetirement) {
         notes.push(`This plan runs past your retirement age (${retirementAge}), `
@@ -997,7 +1001,7 @@ export function buildPlan(intent = {}) {
     }
     assertOneHousehold(cards);
 
-    // ── Routing (§5.3) ───────────────────────────────────────────
+    // ── Income routing ───────────────────────────────────────────
     //
     // Every income is routed 100%. "Save 10%" names one leg of a two-leg split;
     // the other 90% goes to spending, or it would vanish without a report.
@@ -1063,8 +1067,9 @@ export function buildPlan(intent = {}) {
     // A transfer INTO an expense does not pay it: an expense is funded by its
     // own outbound transfer naming the account that covers it (as in
     // quick-start). So the residual routes to a spending account, and the
-    // expense draws from that account. (§5.3's diagram, Salary -> Living
-    // Expenses 90%, is the right economics but not this engine's encoding.)
+    // expense draws from that account. (Conceptually, unsaved salary pays
+    // living expenses, but in this engine income routes to an account and
+    // expenses pull from it.)
     const spendingAccount = pickSpendingAccount(raw, accountLabels);
 
     const phaseTransfers = {};
@@ -1097,7 +1102,7 @@ export function buildPlan(intent = {}) {
                       options: ACCOUNT_CATEGORIES, field: 'accounts' });
             }
 
-            // A structural asset (§9.2): created by a construction rule, not by
+            // A structural asset: created by a construction rule rather than by
             // anything the user said, so the ledger records it as such.
             if (!residualExpense) {
                 // The residual once adopted whatever already had its name and
@@ -1154,7 +1159,8 @@ export function buildPlan(intent = {}) {
         outbound.length = 0;
         outbound.push(...merged);
 
-        // §5.3's invariant, checked on the emitted spec rather than trusted.
+        // Invariant: every dollar of income must be routed (100% total),
+        // verified on the emitted spec rather than trusted.
         const total = outbound.reduce((n, t) => n + t.monthlyMoveValue, 0);
         if (Math.abs(total - 100) > 1e-9) {
             throw new Error(`build_plan: ${label} routes ${total}%, not 100%. `
@@ -1193,15 +1199,15 @@ export function buildPlan(intent = {}) {
             + 'You never mentioned spending.');
     }
 
-    // §5.4. The turn-two split — 5% brokerage, 5% savings — is still 10% saved.
-    // A user who believes they doubled their saving rate has misread the plan.
+    // Clarify multi-leg splits: 5% to brokerage and 5% to savings is still 10%
+    // total saved, so users do not mistake two legs for a doubled savings rate.
     if (splits.length > 1) {
         notes.push('Percentages are shares of the income they come from, not of '
             + 'each other: 5% to one account and 5% to another is 10% saved, '
             + 'not 10% each.');
     }
 
-    // ── Life events (§5.2) ───────────────────────────────────────
+    // ── Life events ──────────────────────────────────────────────
     //
     // The accumulate phase triggers at startAge. A later trigger would leave
     // the first months with no transfers at all.
@@ -1280,9 +1286,9 @@ function isBasisBearing(instrument) {
 }
 
 /**
- * Which account income lands in and spending comes out of: a bank account,
- * else a brokerage. With neither, it falls back to the first account named —
- * even a 401(k) (see markdowns/code-issues-from-comments.md).
+ * Pick the account where unsaved income lands and expenses draw from: bank
+ * first, then brokerage. If neither exists, falls back to the first named
+ * account (even a 401(k)).
  */
 function pickSpendingAccount(raw, accountLabels) {
     const candidates = raw.filter(a => accountLabels.includes(a.displayName));
@@ -1294,10 +1300,11 @@ function pickSpendingAccount(raw, accountLabels) {
 }
 
 /**
- * Which account pays the bills once work income stops: brokerage, then bank,
- * 401(k), IRA, and a Roth IRA last — the largest balance within a type. Putting
- * the Roth last avoids choosing a withdrawal strategy for the user (§13), but
- * a plan whose only account is a Roth is drawn from it.
+ * Pick the account that pays expenses once work income stops: brokerage, then
+ * bank, 401(k), IRA, and Roth IRA last — choosing the largest balance within a
+ * type. Putting Roth last preserves tax-free compounding rather than
+ * implicitly spending it first, while a plan whose only account is a Roth still
+ * draws from it.
  */
 function pickDrawdownAccount(raw, accountLabels) {
     const candidates = raw.filter(a => accountLabels.includes(a.displayName));

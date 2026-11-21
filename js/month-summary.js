@@ -13,7 +13,9 @@
  *
  *   the tax year    what the year's income owed, AGI and MAGI, read from the
  *                   year's TaxYear record. The year's Taxes figure is what was
- *                   PAID in it, which includes the previous year's settlement.
+ *                   PAID in it, which includes the previous year's settlement
+ *                   (and, on a plan's final December, that final year's own
+ *                   settlement folded into the closing month).
  *
  * Cash flow is income received less expenses and taxes, so the four headline
  * figures always reconcile. Income received is money from outside the
@@ -153,8 +155,10 @@ function byAccount(portfolio, metrics, from, to) {
 }
 
 /**
- * The previous year's settlement paid inside a window. The annual pass books it
- * in January, so a window holds one only if it holds a January.
+ * The previous year's settlement paid inside a window. Intermediate year-end
+ * passes book the prior year's settlement in January, so this helper looks for
+ * a January in the window (on a plan ending in December, the final year's own
+ * settlement folds directly into that closing month).
  *
  * @returns {{year: number, parts: Array<{label: string, amount: number}>} | null}
  */
@@ -326,7 +330,9 @@ const TAX_LINE = Object.freeze({
  * tax, which is by property. Signed, like the row: a refund is positive.
  *
  * Taxes are what was paid in the window, so a January holds the previous
- * year's true-up and NIIT; `settlement` names them for a note.
+ * year's true-up and NIIT (on a plan's final December, that final year's
+ * settlement folds into the closing month instead); `settlement` names prior-year
+ * January settlements for a note.
  */
 export function taxesAsShown(summary) {
     const view = groupsAsShown(summary.taxItems, (it) => {
@@ -420,9 +426,10 @@ export function magiLines(taxYear) {
 }
 
 /**
- * What the January after a year settled, as positive amounts: a refund or a
- * bill from the true-up, NIIT, and the premium tax credit either way. Empty
- * when nothing was settled.
+ * What the annual tax pass settled for a tax year, as positive amounts: a
+ * refund or a bill from the true-up, NIIT, and the premium tax credit either
+ * way. Normally booked in the following January (or folded into the closing
+ * December on a plan's final month). Empty when nothing was settled.
  *
  * @returns {Array<{label: string, amount: number}>}
  */

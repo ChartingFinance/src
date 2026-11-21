@@ -1,16 +1,18 @@
 /**
  * <funding-modal>
  *
- * Lit component for configuring real estate purchase funding.
- * Guides the user through outright purchase vs. down payment + mortgage.
+ * Lit modal for configuring real estate purchase funding, opened when adding
+ * a new real estate asset or clicking "Change" under Purchase Funding in
+ * <asset-form-modal>. Guides the user through outright purchase vs. down
+ * payment + mortgage.
  *
  * Properties:
- *   open         - boolean
- *   mode         - 'create' (a new purchase) | 'edit' (change an existing one's source)
+ *   open          - boolean
+ *   mode          - 'create' (a new purchase) | 'edit' (change an existing one's source)
  *   fundingConfig - the purchase's funding, for 'edit': only its source can change
- *   modelAssets  - ModelAsset[] (existing portfolio assets for source selection)
+ *   modelAssets   - ModelAsset[] (existing portfolio assets for source selection)
  *   purchasePrice - number (the real estate startValue)
- *   startDate    - string (the real estate start date as YYYY-MM)
+ *   startDate     - string (the real estate start date as YYYY-MM)
  *
  * Dispatches:
  *   'funding-confirmed' { detail: { mode, purchaseType, sourceId, sourceDisplayName, downPaymentPercent } }
@@ -65,7 +67,7 @@ class FundingModal extends LitElement {
         if (changed.has('open') && this.open) {
             const editing = this._editing();
             this._purchaseType = editing ? (this.fundingConfig.purchaseType ?? 'downPayment') : 'downPayment';
-            // A source waiting by name (plan-ids.js) has no id, so none is selected.
+            // If the previous source asset was deleted (waiting to match by name), leave no card pre-selected.
             this._selectedSource = editing ? (this.fundingConfig.sourceId ?? null) : null;
             this._downPaymentPercent = editing ? (this.fundingConfig.downPaymentPercent ?? 20) : 20;
         }

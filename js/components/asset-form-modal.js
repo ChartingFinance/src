@@ -1,25 +1,26 @@
 /**
  * <asset-form-modal>
  *
- * Lit component for creating and editing financial assets.
+ * Lit modal for creating and editing financial assets, opened from the Assets
+ * view ("Add Asset"), an <asset-card> edit button, or a timeline milestone pin.
  * Handles both create and edit modes via the `mode` property.
  *
- * Plan config only: every field round-trips through
+ * Plan configuration only: every field round-trips through
  * membrane_htmlElementToAssetModel() on save. Simulation output (balances,
- * basis, countdowns) belongs in <asset-view-modal>: here a disabled input would
- * look like an unreachable field, and an as-of value could be saved back as
- * config.
+ * cost basis, countdowns) belongs in <asset-view-modal> so users never mistake
+ * read-only computed figures for editable plan settings.
  *
  * Properties:
  *   mode        - 'create' | 'edit'
  *   open        - boolean
  *   modelAsset  - ModelAsset (for edit mode pre-fill)
- *   birthYear   - the plan's, so Social Security can't be dated before 62
- *   otherNames  - the names of the plan's other assets, which this one can't take
+ *   birthYear   - the plan's birth year, so Social Security cannot be dated before 62
+ *   otherNames  - names of the plan's other assets (to keep asset names unique)
  *
  * Dispatches:
- *   'save-asset'  { detail: { modelAsset, mode } }
- *   'open-funding' { detail: { modelAsset } }  change a purchase's funding source
+ *   'save-asset'     { detail: { modelAsset, mode } }
+ *   'open-funding'   { detail: { modelAsset } }  change a real estate purchase's funding source
+ *   'open-one-times' { detail: { modelAsset } }  manage one-time events on this asset
  *   'close'
  */
 
@@ -59,8 +60,8 @@ class AssetFormModal extends LitElement {
             if (this.mode === 'edit' && this.modelAsset) {
                 this._instrument = this.modelAsset.instrument;
             } else {
-                // The first type is the one the select shows, so its fields
-                // are the ones to draw; null drew none until the type was re-picked.
+                // Default to the first instrument shown in the dropdown so its
+                // conditional fields render immediately without requiring a change.
                 this._instrument = this.preselectedInstrument || InstrumentType.all()[0]?.key || null;
                 this._startDate = this.preselectedStartDate || null;
                 this._startValue = this.preselectedStartValue || null;
@@ -346,8 +347,9 @@ class AssetFormModal extends LitElement {
     }
 
     /**
-     * Where a purchase is paid from, and a way to change it. A source with no id
-     * waits by name for an asset of that name (plan-ids.js): it was deleted.
+     * Shows how a real estate purchase is funded and lets the user change its
+     * funding source. If `sourceId` is missing, the original source asset was
+     * deleted and the funding waits to match a newly added asset by name.
      */
     _renderFundingFields(ma) {
         const f = ma.fundingConfig;

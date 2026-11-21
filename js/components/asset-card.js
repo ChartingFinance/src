@@ -1,10 +1,27 @@
 /**
  * <asset-card>
  *
- * Lit component that renders a single financial asset card.
- * Three-row design: identity (emoji + name + value), sparkline, flow row.
- * Receives a `modelAsset` object and optional `readonly` flag.
- * Dispatches: 'edit-asset', 'view-asset', 'remove-asset', 'show-transfers', 'select-asset'
+ * Lit component that renders a single financial asset card inside <asset-list>
+ * columns on the main Assets view (and in read-only mode inside simulator popups).
+ * Three-row design: identity (emoji + name + value), value sparkline, and a
+ * monthly flow summary (inflow, growth, outflow) at the active timeline cursor.
+ *
+ * Properties:
+ *   modelAsset    - ModelAsset to display
+ *   readonly      - boolean; hides action buttons, sparkline, and flow row
+ *   selected      - boolean; highlights the card border
+ *   groupColor    - optional hex accent color for the asset's category group
+ *   ghost / future - boolean visual states for closed or not-yet-started assets
+ *   metricValue   - optional override value at the active timeline cursor
+ *   closedEmoji   - status badge emoji (e.g. closed or unpaid-obligation warning)
+ *   valueHistory  - monthly value array used to draw the sparkline
+ *   historyIndex  - active month index for the sparkline "you are here" dot
+ *   inflow / growth / outflow - monthly flow figures at the cursor
+ *   taxHighlight  - boolean; pulses the card when a related tax row is clicked
+ *
+ * Dispatches:
+ *   'edit-asset', 'view-asset', 'remove-asset', 'show-transfers',
+ *   'show-one-times', 'select-asset'  { detail: { modelAsset } }
  */
 
 import { LitElement, html, svg, nothing } from 'lit';

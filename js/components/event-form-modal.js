@@ -1,15 +1,18 @@
 /**
  * <event-form-modal>
  *
- * Lit component for creating and editing life events on the timeline.
- * Handles create, edit, and delete modes.
+ * Lit modal for creating, editing, and deleting life events on the financial
+ * timeline, opened from <finplan-timeline> via "+ Life event" or a phase chip.
+ * Lets the user set the event name, trigger age, and which individual assets or
+ * asset types close when the event occurs.
  *
  * Properties:
  *   mode        - 'create' | 'edit'
  *   open        - boolean
  *   lifeEvent   - ModelLifeEvent (for edit mode pre-fill)
  *   editIndex   - number (index in appState.lifeEvents array)
- *   modelAssets - ModelAsset[] (for closes multi-select)
+ *   eventCount  - total number of life events (delete is hidden when only 1 remains)
+ *   modelAssets - ModelAsset[] (for the "Close Assets on Event" selection)
  *
  * Dispatches:
  *   'save-life-event'    { detail: { lifeEvent, index, mode } }
@@ -215,9 +218,9 @@ class EventFormModal extends LitElement {
     _onTypeSelect(type) {
         this._selectedType = type;
         const meta = LifeEventMeta.get(type);
-        // The phase holds assets (by id and name) and templates; a default that
-        // names an asset is turned into that asset, or waits by its name. A
-        // template is copied, not shared with the meta.
+        // Convert each default close entry into either a concrete asset
+        // reference (by id), a pending name-based close if the asset is not in
+        // the plan yet, or a cloned instrument-type template.
         const closeOf = (name) => {
             const asset = (this.modelAssets || []).find((a) => a.displayName === name);
             return asset ? { assetId: asset.id, displayName: asset.displayName } : { displayName: name };
@@ -231,7 +234,7 @@ class EventFormModal extends LitElement {
         return this._closes.some((entry) => closeAssetId(entry) === id);
     }
 
-    /** The names of the closes waiting for an asset the plan does not have (plan-ids.js). */
+    /** Names of pending close rules waiting for a matching asset to be added to the plan. */
     _waitingCloses() {
         return this._closes
             .filter((entry) => isAssetClose(entry) && entry.assetId == null)

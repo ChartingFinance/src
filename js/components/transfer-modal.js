@@ -1,13 +1,17 @@
 /**
  * <transfer-modal>
  *
- * Lit component for managing fund transfers between assets.
- * Shows tabbed charts for the selected asset and transferrable asset cards.
+ * Lit modal for configuring monthly and on-close fund transfer rules between
+ * assets for the active life phase, opened from an <asset-card> Transfers
+ * button or by clicking a rule in <flows-view>. Shows tabbed charts for the
+ * selected asset alongside editable cards for every eligible target account.
  *
  * Properties:
- *   open             - boolean
- *   currentAssetId   - string (id of the asset to configure transfers for: plan-ids.js)
- *   modelAssets      - ModelAsset[] (all assets)
+ *   open           - boolean
+ *   currentAssetId - id of the asset whose transfers are being edited (plan-ids.js)
+ *   modelAssets    - ModelAsset[] (all assets in the plan)
+ *   phaseTransfers - map of assetId -> FundTransfer[] for the active phase
+ *   portfolio      - pre-simulated Portfolio used to render the asset's charts
  *
  * Dispatches:
  *   'save-transfers' { detail: { assetId, displayName, fundTransfers } }
@@ -158,7 +162,8 @@ class TransferModal extends LitElement {
         return this._portfolio.modelAssets.filter(ma => {
             if (!InstrumentType.isFundable(ma.instrument)) return false;
             if (ma.id === this.currentAssetId) return false;
-            // IRS: retirement income (Social Security) cannot contribute to IRA, Roth IRA, or 401K
+            // IRS rules require earned income to contribute to an IRA, Roth IRA, or 401(k),
+            // so retirement income (such as Social Security) cannot fund them.
             if (isRetirement && (InstrumentType.isTaxDeferred(ma.instrument) || InstrumentType.isTaxFree(ma.instrument))) return false;
             return true;
         }).map(ma => {

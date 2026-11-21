@@ -1,5 +1,5 @@
 /**
- * market-outlook.js — the Test Bench's market outlook (spec 17).
+ * market-outlook.js — the Test Bench's market outlook presets.
  *
  * Pessimistic and Optimistic run a test with every stock and bond return one
  * percentage point a year lower or higher than entered. Moderate is the plan
@@ -82,9 +82,9 @@ export function isStockOrBond(instrument) {
  * copy is exact.
  *
  * Assets arrive live, plain, or plain with a live rate inside, and a rate is
- * written `{ annualReturnRate }` by the app and `{ rate }` in a spec. Each is
- * serialized first, read either way, and written back the app's way, which is
- * the one ModelAsset.fromJSON reads first.
+ * written `{ annualReturnRate }` by the app or `{ rate }` in compact plan
+ * JSON. Each asset is serialized first, read either way, and written back in
+ * the app's shape, which ModelAsset.fromJSON reads first.
  */
 export function outlookAssets(modelAssets, outlook) {
     const shift = returnShift(outlook);

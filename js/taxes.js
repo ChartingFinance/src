@@ -1,3 +1,17 @@
+/**
+ * taxes.js
+ *
+ * U.S. federal tax tables and pure tax arithmetic: ordinary income and
+ * long-term capital gains brackets, FICA rates and Social Security wage base,
+ * standard and age-65+ deductions (IRC §63(f) and OBBBA senior deduction),
+ * IRC §86 Social Security benefit taxation thresholds, IRC §1411 Net
+ * Investment Income Tax (NIIT), IRC §121 primary-home exclusion, IRS Uniform
+ * Lifetime Table for RMDs, and annual inflation indexing.
+ *
+ * TaxTable owns the pure math; TaxEngine (engines/tax-engine.js) schedules
+ * and moves the cash.
+ */
+
 import { Currency } from './utils/currency.js';
 import { InstrumentType } from './instruments/instrument.js';
 // ── Result Type ──────────────────────────────────────────────────────
@@ -318,20 +332,13 @@ const FILING_TYPE_KEY = Object.freeze({
 });
 
 /**
- * Annual contribution limits, by filing-table key.
- *
- * Household figures, not per person: every limit is enforced against a
- * household total (payroll compares against this.yearly.four01KContribution,
- * summed over all income). So a married limit is the per-person statutory
- * figure doubled — for the IRA and the 401(k) alike.
- */
-/**
  * Whose Social Security wage base is being consumed.
  *
- * One key today, because the household has a single User. The wage base is per
- * person, so a married couple currently shares one $184,500 base where each
- * spouse should have their own (visible in the mfj-two-earners fixture). Adding
- * SPOUSE and a second User fixes it; every call site already passes an owner.
+ * One key today, because the household has a single User. Because the IRS
+ * wage base is per person, a married couple currently shares one $184,500
+ * base where each spouse would have their own. Adding SPOUSE and a second
+ * User enables per-spouse tracking without changing call sites, since every
+ * caller already passes an owner.
  */
 export const TaxOwner = Object.freeze({
     PRIMARY: 'primary',
@@ -342,6 +349,14 @@ export const ContributionKind = Object.freeze({
     FOUR01K: '401k',
 });
 
+/**
+ * Annual contribution limits, by filing-table key.
+ *
+ * Household figures, not per person: every limit is enforced against a
+ * household total (payroll compares against this.yearly.four01KContribution,
+ * summed over all income). So a married limit is the per-person statutory
+ * figure doubled — for the IRA and the 401(k) alike.
+ */
 const CONTRIBUTION_LIMITS = Object.freeze({
     single:  { iraBelow50:  7500, ira50AndOver:  8600, four01KBelow50: 24500, four01K50AndOver: 32500 },
     married: { iraBelow50: 15000, ira50AndOver: 17200, four01KBelow50: 49000, four01K50AndOver: 65000 },
@@ -665,9 +680,9 @@ export class TaxTable {
      *
      *     0.038 × min( netInvestmentIncome , MAGI − threshold )
      *
-     * Both arguments matter. A household with large wages and no investment
-     * income owes nothing (fixture mfj-two-earners); so does one living on
-     * gains below the threshold (gain-harvest-under-the-deduction).
+     * Both arguments matter: a household with high wages and no investment
+     * income owes nothing, and an early retiree living on capital gains below
+     * the MAGI threshold owes nothing either.
      *
      * Floored at zero here, because `magi` is deliberately unfloored.
      *
@@ -849,10 +864,9 @@ export class TaxTable {
     }
 
     /**
-     * Vestigial. Logs three self-checks and returns an empty Currency that
-     * nothing reads. The middle check compares post-deduction taxable income
-     * with gross wages, so it reports a failure on every run. Listed for
-     * deletion in markdowns/code-issues-from-comments.md.
+     * Legacy diagnostic check: logs three self-checks and returns an empty
+     * Currency that nothing reads. The middle check compares post-deduction
+     * taxable income with gross wages, so it always logs a mismatch.
      */
     reconcileYearlyTax(yearly, activeUser) {
 
