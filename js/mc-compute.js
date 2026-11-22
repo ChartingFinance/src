@@ -204,9 +204,15 @@ function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, p
         ? calibrationBaseRates(portfolio.modelAssets)
         : null;
 
-    // Two-phase simulation: deterministic rates before retirement, randomized after
+    // Two phases: the plan's own rates before retirement, then a drawn year
+    // every January, from the first January on or after retirement. The loop
+    // draws as it crosses into a year, which a plan's first month never does,
+    // so a plan that starts on that January draws here. So does a plan with
+    // no retirement date: it is drawn from its first month, whatever the month.
     const retirementInt = retirementDateInt ? retirementDateInt.toInt() : 0;
-    let withdrawalPhase = !retirementDateInt; // no trigger = randomize from start
+    const startsOnDrawnJanuary = portfolio.firstDateInt.month === 1
+        && portfolio.firstDateInt.toInt() >= retirementInt;
+    let withdrawalPhase = !retirementDateInt || startsOnDrawnJanuary;
 
     // THIS run's own price path. Every run samples a different CPI sequence,
     // so every run has a different deflator — which is exactly why the bands
