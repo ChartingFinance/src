@@ -1,6 +1,6 @@
 # Spec 18 — The Test Bench's layout: conditions, tests, and what a result was found under
 
-Status: **DRAFT 2026-11-21, loss years revised 2026-11-22.** Spec only, no code. John revised loss years on 2026-11-22: 1, 2 or 3 years, each with a loss the user types. The open decisions are in §10; nothing is built until they are answered.
+Status: **DRAFT 2026-11-21, revised 2026-11-22.** Spec only, no code. On 2026-11-22 John revised loss years (1, 2 or 3 years, each with a loss the user types) and accepted pre-build refinements (Routing floor visibility, explicit Run in Phase 1, mid-year already-retired start year, loss-year input ergonomics, chart column switcher across tabs, and the simulated-markets non-stock draw note for Rules). The open decisions are in §10; nothing is built until they are answered.
 
 The Test Bench is about to get more levers. Spec 17 added Market returns, and the next asked for is starting retirement with up to three years of losses. Today's controls are written as one sentence, and they already had to break onto a second row for Market returns. This spec gives the levers a layout that takes more of them, and defines the first new one: **loss years at the start of retirement**.
 
@@ -65,7 +65,7 @@ Conditions and limits behave differently, so they should not sit in the same sen
 
 At the top of the Test Bench, above both tests:
 
-- **Title row:** "Conditions", with a line under it: "Apply to every test and the chart. Your plan is not changed." On the right, **Reset to as entered** puts every condition back to its neutral setting.
+- **Title row:** "Conditions", with a line under it: "Apply to every test and the chart. Your plan is not changed." On the right, **Reset to as entered** puts every condition back to its neutral setting, and is hidden or disabled when every condition is already neutral.
 - **One row per condition:** a label on the left, a segmented control, and one line under it saying what the setting on screen does. Market returns moves here from its row under the limits. Loss years is the second row (§4).
 - **The neutral setting is first or centred and named plainly:** Moderate, None.
 - **A row may carry inputs under its control.** Loss years carries one figure per year (§4.1).
@@ -76,7 +76,7 @@ At the top of the Test Bench, above both tests:
 Under the Conditions card, **Spending** and **Routing** become two tabs of one card (decision 1).
 
 - **Spending:** the limits as a short form, one control each, not a sentence: Never runs out (always on, stated) · Leaves at least $[0] · [✓] Lasts in [90]% of simulated markets. Then Run. Then the result: headline, curve, table, what stops it, notes and Save, as today.
-- **Routing:** Depth, the cost line, Search, and the list and changes, as today.
+- **Routing:** Depth, the cost line, Search, and the list and changes, as today. Because **Leaves at least** also ranks routing results (§2) while living on the Spending tab, when the floor is above $0 the Routing tab shows a compact indicator (for example, "Ranking with floor: $500,000", with a link to edit it in Spending).
 - Switching tabs keeps each tab's result. A routing result still adds its column to the spending table while the floor and conditions match, as today.
 
 ### 3.3 "Found under"
@@ -87,22 +87,22 @@ The first line of every result, above its headline: **Found under** followed by 
 
 - With every condition neutral and no markets figure, the line reads "Found under · your plan as entered".
 - It replaces the outlook's other four mentions (§1.2): the line under the table, the clause in the markets note, the routing caption's clause and the chart caption's sentence. The headline keeps no clause either; the chips sit directly above it.
-- The routing list carries its own Found under line: it was searched under the conditions at the time.
+- The routing list carries its own Found under line: it was searched under the conditions at the time, plus a floor chip when **Leaves at least** is above $0 (for example, "Floor $500,000").
 - **Save** writes the same chips into the scenario's note, as spec 17 does for the outlook.
 
 ### 3.4 The chart
 
-Below the tabs, outside them, so Chart.js always draws visibly. It follows the active tab's result, and shows that result's Found under line in its caption.
+Below the tabs, outside them, so Chart.js always draws visibly. When both a Spending result and a matching Routing result exist (same floor and conditions), the chart keeps its column switcher (**As entered · Spend the most · With this routing**) on one shared y-axis so the user can compare columns directly. Switching tabs switches the default selected column (**Spend the most** on Spending, **With this routing** on Routing), and the chart shows the active result's Found under line in its caption.
 
 ### 3.5 Run, and what dims
 
-One rule for every lever (decision 2):
+One rule for every lever, shipping in Phase 1 alongside the layout (decision 2):
 
 - **A changed condition or limit dims the results it affects**, with one line: "Conditions changed. Run again." or "Limits changed. Run again." Nothing re-runs by itself.
 - **Run** runs the spending test. **Search** runs the routing test. Each is explicit.
 - **A click on the curve** sets the floor and runs at once, as today: it is an explicit action on the result.
 
-This replaces spec 17's decision 5 (a changed outlook re-runs). With one condition that was fine. With two it means setting Pessimistic and then 2 loss years starts a run of up to two minutes on the first click and throws it away on the second.
+This replaces spec 17's decision 5 (a changed outlook re-runs) right away, rather than waiting for Phase 2. Moving it into Phase 1 avoids changing the interaction model twice across two releases, and lets a user adjust more than one lever (for example, Floor and Market returns, or later Pessimistic and 2 loss years) without kicking off a run of up to two minutes on the first click and throwing it away on the second.
 
 ### 3.6 On a phone
 
@@ -117,13 +117,13 @@ This replaces spec 17's decision 5 (a changed outlook re-runs). With one conditi
 
 ### 4.1 What it is
 
-A condition: **Loss years: None · 1 · 2 · 3**, and under it **one figure per year**: how far stock prices fall that year, as a percentage the user types (decision 6, John). The fields are labelled with their calendar years:
+A condition: **Loss years: None · 1 · 2 · 3**, and under it **one figure per year**: how far stock prices fall that year, as a percentage the user types (decision 6, John). The fields are labelled with their calendar years and carry a fixed `−` prefix outside the input so the direction is unmistakable:
 
 > Loss years: None · 1 · **2** · 3
-> 2031 [30]%  2032 [20]%
+> 2031 [ − | 30 ]%  2032 [ − | 20 ]%
 > Stock prices fall 30% in 2031 and 20% in 2032, 44% over the two years. For scale: since 1970 stocks have never lost more than 37.6% over one, two or three years in a row.
 
-- **Each figure is a whole percentage from 0 to 100.** 0 is a flat year, and 100 is stocks worth nothing (§4.3). A gain, a fraction or anything above 100 is refused under the field ("A loss is 0% to 100%"), and Run waits until it is fixed.
+- **Each figure is a whole percentage from 0 to 100.** 0 is a flat year, and 100 is stocks worth nothing (§4.3). Because people naturally type `-30` for a 30% drop, the page input silently strips a leading `-` (`−`); an explicit `+` (a gain), a fraction, or anything above 100 is refused under the field ("A loss is 0% to 100%"), and Run waits until it is fixed. (The MCP parameter `lossYearsPercent` still refuses negatives so programmatic callers do not mix sign conventions, §4.8.)
 - **A new year's field starts at 20%** (decision 7): one year at 20% is a bad but ordinary bear market (2002 −22.1%, 2022 −18.1%), and two at 20% (−36%) is about history's worst run.
 - **Changing the count keeps the figures** while the page is open: 3 → 1 → 3 brings back years 2 and 3 as they were typed.
 - **The line under the control** says what the figures do, with the combined fall, and gives the same scale line whatever is typed. History's worst runs, from the market data (1970–2025, dividends included):
@@ -151,12 +151,17 @@ So the line never calls a typed figure "realistic". It says how far history went
 
 ### 4.4 When
 
-**The first one, two or three calendar years starting with the first January on or after the retirement date**, the same rule the simulated markets use for their first draw. A plan that starts already retired takes them from the first January of the plan. If the plan ends before the last loss year, only the years inside it apply, and the line says so. A plan that retires after its last year has no loss years, and the line says that too.
+**The first one, two or three calendar years starting with the first January on or after both the retirement date and the plan's start date.** Every loss year therefore begins on January 1 and runs a full twelve months, so a typed 30% delivers a full 30% fall (§4.3) and matches `chronometer.js` and `mc-compute.js`'s New Year's Day hook. Specifically:
+
+- **A plan retiring mid-year** (for example, June 2031) starts its loss years in **2032**.
+- **A plan starting mid-year already retired** (for example, October 2026, like the `Retired` quick-start loaded mid-year) leaves the remaining months of 2026 unchanged and starts its loss years in **2027**.
+- **A plan starting in January already retired** (for example, January 2026) starts its loss years in **2026**.
+- If the plan ends before the last loss year, only the years inside it apply, and the line says so. A plan that retires after its last year has no loss years, and the line says that too.
 
 ### 4.5 Both paths
 
 - **The plan's own path:** the stock assets run at the typed figures in those years. Every other year, and every other asset, runs as entered (or under the outlook).
-- **Simulated markets:** each market still draws its years as today, so Treasury, inflation and wages still come from the draw. In a loss year only the stock assets take the typed figure instead. So "lasts in 90% of markets" under 2 loss years means 90% of markets that all began retirement with that crash. The Found under chip is what keeps that from reading as an ordinary 90%.
+- **Simulated markets:** each market still draws its years as today, so in a typed loss year only the stock assets take the typed figure — CPI inflation, wages and Treasury yields still come from that trial's random historical draw (a typed crash is not automatically paired with a recession year's inflation or Treasury yields, and `rules.html` says so plainly). "Lasts in 90% of markets" under 2 loss years means 90% of markets that all began retirement with that crash. The Found under chip is what keeps that from reading as an ordinary 90%.
 - **Routing** ranks routings on the own path with the loss years in it, so a routing can be found for a bad start.
 
 ### 4.6 With the market outlook
@@ -170,10 +175,10 @@ So the line never calls a typed figure "realistic". It says how far history went
 
 A new SimConfig field, `returnSchedule`: a list of `{ year, stocks }`, where `stocks` is that calendar year's price change for the stock assets (−0.30 for a 30% loss). The field is named for its asset kind so a `bonds` figure can join it later. It is absent by default, so every run and the snapshot are unchanged.
 
-- **`chronometer.js`:** on a scheduled year's New Year's Day, sets the stock assets' rate to `stocks`, and restores the configured rate the next January. With `backtestYear` also set, a scheduled year's stock rate replaces the backtest's.
-- **`mc-compute.js` `runOnce`:** in a scheduled year, draws as usual and then sets the stock assets to `stocks`. No base rate is added, and no `returnShift`.
+- **`chronometer.js`:** on a scheduled year's New Year's Day (and before the first month when the plan itself starts on January 1 of a scheduled year, mirroring `backtestStartYear`), sets the stock assets' rate to `stocks`, and restores the configured rate the next January. With `backtestYear` also set, a scheduled year's stock rate replaces the backtest's.
+- **`mc-compute.js` `runOnce`:** in a scheduled year (including before the first month when the plan starts on January 1 of a scheduled year), draws as usual and then sets the stock assets to `stocks`. No base rate is added, and no `returnShift`.
 - **`makeSimConfig`:** refuses unknown fields, so `returnSchedule` is added to its known list. It also refuses a rate below −1 or not finite, and a year listed twice. The engine accepts any rate from −1 up, so a gain could come later; it is the page and MCP that allow only losses.
-- **The Test Bench** builds the schedule from the plan's retirement date and the figures. A worker gets it in its payload, because a worker builds its config from the settings snapshot (trap 3).
+- **The Test Bench** builds the schedule from the plan's retirement date, the plan's start date, and the figures. A worker gets it in its payload, because a worker builds its config from the settings snapshot (trap 3).
 
 ### 4.8 MCP
 
@@ -205,7 +210,7 @@ The Found under line is those chips joined by " · ", plus the markets' data ("C
 - `js/finplan-app.js`: the save note from the conditions' clauses.
 - `js/mcp/max-spending.js`, `js/mcp/mcp-server.js`: `lossYearsPercent`, the Found under line.
 - `help.html` Test Bench section: the Conditions card, Loss years and their figures, Found under, Run.
-- `rules.html` Test Bench section: how a loss year is applied (stocks only, as a fall in price, the same in both data modes, untouched by the outlook), and when.
+- `rules.html` Test Bench section: how a loss year is applied (stocks only, as a fall in price, the same in both data modes, untouched by the outlook), when it starts, and that in simulated markets a typed loss year overrides stocks only while CPI inflation, wages and Treasury yields still come from that trial's random historical draw.
 - `plugin/README.md`, `plugin/skills/charting-finance/SKILL.md`: `lossYearsPercent`, and that a markets figure under loss years is conditional on that start.
 - `markdowns/market-outlook-spec.md` (spec 17): decision 5 superseded by §3.5; one line pointing here.
 
@@ -233,14 +238,14 @@ The static pages change in the same PR as the behaviour.
 - **The schedule:** in a scheduled year every stock asset's rate is exactly the typed figure. That holds in both data modes and under every outlook. Treasury, corporate bonds, bank, expenses and incomes keep their rate (own path) or their draw (markets). The rate is undone the next January, and an empty schedule changes nothing.
 - **Exact:** a stock account with no flows and no dividend ends a 30% loss year at exactly 70% of its start. With a dividend rate it ends higher by its dividends.
 - **100%:** a 100% year empties every stock account with no NaN anywhere in the run. Money paid in that year is lost, and the next January the account earns again.
-- **When:** the loss years are the first calendar years from the first January on or after retirement. Covered cases: a plan retiring mid-year, a plan starting retired, a plan ending before its third loss year (only the years inside it), and a plan retiring after its last year (none).
+- **When:** the loss years are the first calendar years starting with the first January on or after both the retirement date and the plan's start date. Covered cases: a plan retiring mid-year, a plan starting mid-year already retired (leaves the partial starting year unchanged and starts the next January), a plan starting in January already retired (starts that year), a plan ending before its third loss year (only the years inside it), and a plan retiring after its last year (none).
 - **Both paths:** in a market's loss years the stock assets take the typed figures and everything else takes the draw; the own path runs them; the routing test ranks with them.
 - **Order, as a sample, not a law:** on every quick-start profile, the own-path answer under 3 years at 20% is ≤ 1 year at 20%, which is ≤ None. Taxes can bend this, so a failure is a question to look at, not a bug by itself.
 - **With the outlook:** under Pessimistic and Optimistic, in both data modes, a scheduled year's stock rate is the typed figure, and the year after it is the copy's shifted rate.
-- **Entry:** the page and `lossYearsPercent` refuse a negative, a fraction, a figure above 100 and a fourth year. Changing the count keeps the figures typed.
+- **Entry:** the page strips a leading `-` (`−`) and refuses an explicit `+`/gain, a fraction, a figure above 100 and a fourth year; `lossYearsPercent` refuses a negative, a fraction, a figure above 100 and a fourth year. Changing the count keeps the figures typed.
 - **Every run gets it:** the stand-in Worker of `tests/market-outlook.mjs` checks the payload of each job, and the chart's plan carries the schedule.
 - **Saving and MCP:** a saved scenario and `max_spending`'s handed-back plan have no schedule and the user's own rates; the note and the report name the loss years.
-- **Layout:** Found under lists exactly the non-neutral conditions; a changed condition dims the results and starts nothing; Reset puts every condition back.
+- **Layout:** Found under lists exactly the non-neutral conditions (plus the active floor chip on the routing list when `Leaves at least > $0`); the Routing tab shows the floor indicator whenever `Leaves at least > $0`; a changed condition or limit dims affected results and starts nothing; Reset puts every condition back and is hidden or disabled when all conditions are neutral; the chart keeps its 3-column switcher when matching Spending and Routing results exist and defaults to the active tab's column.
 - **Mutations that must be caught:**
   - the schedule applied to bank, cash or a Treasury;
   - applied in the wrong year;
@@ -273,7 +278,7 @@ The static pages change in the same PR as the behaviour.
 Each has a recommendation; John decides.
 
 1. **Tabs for the two tests, or stacked with one collapsed.** Recommend **tabs**. The main page's objections to tabs (§1.5) do not apply here, and tabs halve what a phone scrolls through. The alternative keeps both stacked and collapses the one not in use.
-2. **Explicit Run for every lever.** Recommend **yes, in the same PR as loss years**, the second condition. It supersedes spec 17's decision 5 (a changed outlook re-runs). Until then, keep today's behaviour.
+2. **Explicit Run for every lever.** Recommend **yes, in Phase 1 alongside the layout** (rather than waiting for Phase 2). It supersedes spec 17's decision 5 (a changed outlook re-runs) right away so the interaction model changes once instead of twice, and adjusting multiple levers (such as Floor and Market returns) never triggers an unwanted two-minute run on the first click.
 3. **What a typed figure means.** Recommend **a fall in price**: the rate is the figure, and dividends keep paying (§4.3). It is exact, a 100% loss needs no special case, and it is how a crash is usually quoted ("stocks fell 30%"). The alternative is **the account's whole loss, dividends included**, the meaning of the market data's own figures. That needs the dividend taken out of the rate first, and a floor at −100% where loss and dividend together pass it. The quick starts carry no dividend rate, so for them the two agree.
 4. **Stocks only.** Recommend **yes**: one figure per year, and bonds keep their rate or their draw. The alternatives: one figure for stocks and bonds both, which would sink a Treasury account 30% when Treasuries gained in 2008; or a second figure per year for bonds, which doubles the fields.
 5. **Nothing moves a typed figure.** Recommend **yes**: neither the data mode nor the market outlook changes it, so 30% typed is 30% run. This reverses the draft's earlier recommendation, made when a loss year was a historical year; a typed figure is the user's own.
@@ -288,10 +293,10 @@ Each has a recommendation; John decides.
 
 ## 11. Phases and cost
 
-1. **Layout, no new condition.** The Conditions card with Market returns alone, the tabs, the limits form, Found under replacing the outlook's captions, the chart under the tabs, the phone collapse. Re-run on change stays (decision 2 waits for a second condition). The snapshot and every number are unchanged; the work is the page, its styles, Help and Rules. A browser check at 1024px and 375px on an isolated origin.
+1. **Layout and explicit Run, no new condition.** The Conditions card with Market returns alone (and Reset hidden/disabled when neutral), the tabs (with the Routing tab's floor indicator when `Leaves at least > $0`), the limits form, Found under replacing the outlook's captions (plus the floor chip on the routing list when `> $0`), the chart under the tabs keeping its 3-column switcher, explicit Run + dim-on-change for every lever (decision 2, superseding spec 17 decision 5), and the phone collapse. The snapshot and every number are unchanged; the work is the page, its styles, Help, Rules and spec 17's pointer. A browser check at 1024px and 375px on an isolated origin.
 2. **Loss years.**
    - **First, measure:** run the quick starts under 1, 2 and 3 years at 20%, on the own path and at 90% of markets. Run one profile with a brokerage at 100%, for NaN and for what the emptied account does with its basis and that year's contributions (trap 9). Write the results into §4 before the control ships.
-   - **Then build:** `returnSchedule` in SimConfig, `chronometer.js` and `runOnce`; the condition's row and its figures; explicit Run for every lever; `lossYearsPercent` on `max_spending`; Help, Rules and the plugin docs. Plugin bump.
+   - **Then build:** `returnSchedule` in SimConfig, `chronometer.js` and `runOnce`; the condition's row and its figures (with the fixed `−` prefix and leading-`-` stripping in the UI); `lossYearsPercent` on `max_spending`; Help, Rules and the plugin docs. Plugin bump.
 
 ---
 
