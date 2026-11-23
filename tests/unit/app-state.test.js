@@ -16,10 +16,34 @@ describe('AppState', () => {
   beforeEach(() => { mockLocalStorage(); });
 
   it('applies constructor defaults for ephemeral fields', () => {
-    const s = new AppState({ metricName: 'value', microMetric: 'growth', portfolioView: 'flows' });
+    const s = new AppState({
+      metricName: 'value',
+      microMetric: 'growth',
+      portfolioView: 'flows',
+      projView: 'funding',
+      projMetric: 'cashFlow',
+      projDrill: 'retirement',
+      projDollarMode: 'nominal',
+    });
     expect(s.metricName).toBe('value');
     expect(s.microMetric).toBe('growth');
     expect(s.portfolioView).toBe('flows');
+    expect(s.projView).toBe('funding');
+    expect(s.projMetric).toBe('cashFlow');
+    expect(s.projDrill).toBe('retirement');
+    expect(s.projDollarMode).toBe('nominal');
+  });
+
+  it('defaults projDollarMode to real so initial load stays in Today\'s $', () => {
+    const s = new AppState();
+    expect(s.projView).toBe('networth');
+    expect(s.projDrill).toBe('all');
+    expect(s.projDollarMode).toBe('real');
+    const seen = [];
+    s.on('projDollarMode', v => seen.push(v));
+    s.projDollarMode = 'nominal';
+    expect(s.projDollarMode).toBe('nominal');
+    expect(seen).toEqual(['nominal']);
   });
 
   it('load() hydrates persisted fields from localStorage', () => {

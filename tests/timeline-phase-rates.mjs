@@ -40,7 +40,7 @@ const RETIRE_IDX = 156, LAST_IDX = 540;
 
 const inflation = (months) => Array.from({ length: months + 1 }, (_, i) => 1.0025 ** i);
 
-function aTimeline(values, priceIndex = null) {
+function aTimeline(values, priceIndex = null, dollarMode = 'nominal') {
     const portfolio = {
         firstDateInt: FIRST,
         config: { birthYear: BIRTH_YEAR },
@@ -50,7 +50,7 @@ function aTimeline(values, priceIndex = null) {
     // Own data properties, not assignment: Lit's reactive accessors on the
     // prototype reach for update machinery a bare object does not have.
     const fields = {
-        portfolio, metricName: Metric.VALUE, selectedIndex: 0,
+        portfolio, metricName: Metric.VALUE, selectedIndex: 0, dollarMode,
         startAge: 45, retirementAge: 58, finishAge: 90,
         lifeEvents: [
             { type: LifeEvent.ACCUMULATE, displayName: 'Accumulate', triggerAge: 45 },
@@ -127,8 +127,8 @@ function textOf(part) {
 }
 
 /** The Accumulate and Retire bands' markup, rendered by the shipped code. */
-function bands(values) {
-    const el = aTimeline(values, inflation(LAST_IDX));
+function bands(values, dollarMode = 'nominal') {
+    const el = aTimeline(values, inflation(LAST_IDX), dollarMode);
     const text = textOf(el._svgPhaseBands(el._phaseSpans, el._buildSeries()));
     const [accumulate, retire] = text.split('RETIRE');
     return { text, accumulate, retire };
@@ -150,6 +150,11 @@ check('a plan that runs out in retirement: a rate, then a dash', () => {
     assert.ok(retire.includes('</title>—</text>'), 'Retire has no dash');
     assert.ok(retire.includes('above $0'), 'the dash does not say why');
     assert.ok(!retire.includes('%/yr'), 'Retire still shows a rate');
+
+    // In Today's $ mode the real rate leads, with nominal as subtitle.
+    const realBands = bands(values, 'real');
+    assert.ok(realBands.accumulate.includes('3.0%/yr<'), 'Today\'s $ mode should lead with real rate');
+    assert.ok(realBands.accumulate.includes('6.2%/yr nom.'), 'Today\'s $ mode should show nominal subtitle');
 });
 
 check('a plan that runs out before retiring: a dash in both bands', () => {
