@@ -1225,10 +1225,10 @@
         <a href="#sec-portfolio" data-nav="sec-portfolio">Portfolio</a>
         <a href="#sec-simulations" data-nav="sec-simulations">Simulations</a>
         <a href="#sec-projections" data-nav="sec-projections">Projections</a>
+        <a href="#sec-testbench" data-nav="sec-testbench">Test Bench</a>
         <a href="#sec-details" data-nav="sec-details">Details</a>
         <a href="#sec-spreadsheet" data-nav="sec-spreadsheet">Spreadsheet</a>
         <a href="#sec-visualizer" data-nav="sec-visualizer">Visualizer</a>
-        <a href="#sec-testbench" data-nav="sec-testbench">Test Bench</a>
     </nav>
 
     <!-- ═══ Outcome ═══ -->
@@ -1451,6 +1451,19 @@
         </div>
     </div>
 
+    <!-- ═══ Test Bench ═══ -->
+    <!-- "How much can this plan spend?" and "is there a better way to route its money?"
+         See js/components/test-bench.js. -->
+    <div id="sec-testbench" class="mb-8">
+        <h2 class="text-lg font-bold flex items-center gap-2 mb-4">🧪 Test Bench
+            <a href="help.html#test-bench" class="ml-auto text-gray-300 hover:text-gray-500 transition" title="Help" style="font-size: 14px; font-weight: 500; text-decoration: none;">?</a>
+        </h2>
+
+        <div class="glass-card p-6">
+            <test-bench id="testBench"></test-bench>
+        </div>
+    </div>
+
     <!-- ═══ Details ═══ -->
     <div id="sec-details" class="mb-8">
         <h2 class="text-lg font-bold flex items-center gap-2 mb-4">📋 Details
@@ -1519,19 +1532,6 @@
 
         <div id="visualizer-body" hidden class="glass-card p-6">
             <div id="finplan-hydraulic-container" style="width: 100%; height: 600px; background: #1e1e2e; border-radius: 12px; overflow: hidden;"></div>
-        </div>
-    </div>
-
-    <!-- ═══ Test Bench ═══ -->
-    <!-- "How much can this plan spend?" and "is there a better way to route its money?"
-         See js/components/test-bench.js. -->
-    <div id="sec-testbench" class="mb-8">
-        <h2 class="text-lg font-bold flex items-center gap-2 mb-4">🧪 Test Bench
-            <a href="help.html#test-bench" class="ml-auto text-gray-300 hover:text-gray-500 transition" title="Help" style="font-size: 14px; font-weight: 500; text-decoration: none;">?</a>
-        </h2>
-
-        <div class="glass-card p-6">
-            <test-bench id="testBench"></test-bench>
         </div>
     </div>
 
