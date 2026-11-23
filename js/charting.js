@@ -63,23 +63,34 @@ const dateMarkerPlugin = {
     afterDraw(chart) {
         const markers = chart.options?.plugins?.dateMarkers?.markers;
         if (!markers?.length) return;
-        const { ctx, chartArea: { top, bottom }, scales: { x } } = chart;
+        const { ctx, chartArea: { top, bottom, left, right }, scales: { x } } = chart;
         ctx.save();
+        ctx.font = 'bold 10px sans-serif';
+        const placedRows = [[], []]; // track [xMin, xMax] intervals on up to 2 label rows
         for (const marker of markers) {
             const xPos = x.getPixelForValue(marker.index);
+            if (!Number.isFinite(xPos) || xPos < left - 1 || xPos > right + 1) continue;
             ctx.beginPath();
-            ctx.setLineDash(marker.label ? [6, 4] : [4, 4]);
+            ctx.setLineDash(marker.isCursor ? [] : (marker.label ? [5, 4] : [4, 4]));
             ctx.strokeStyle = marker.color;
-            ctx.lineWidth = marker.label ? 2 : 1;
+            ctx.lineWidth = marker.isCursor ? 2 : (marker.label ? 1.5 : 1);
             ctx.moveTo(xPos, top);
             ctx.lineTo(xPos, bottom);
             ctx.stroke();
             if (marker.label) {
                 ctx.setLineDash([]);
                 ctx.fillStyle = marker.color;
-                ctx.font = 'bold 10px sans-serif';
                 ctx.textAlign = 'center';
-                ctx.fillText(marker.label, xPos, top - 5);
+                const halfW = ctx.measureText(marker.label).width / 2 + 4;
+                const clampedX = Math.max(left + halfW, Math.min(right - halfW, xPos));
+                let row = 0;
+                if (!marker.isCursor) {
+                    const collides = (r) => placedRows[r].some(([a, b]) => !(clampedX + halfW < a || clampedX - halfW > b));
+                    if (collides(0) && !collides(1)) row = 1;
+                    placedRows[row].push([clampedX - halfW, clampedX + halfW]);
+                }
+                const yText = marker.isCursor ? top - 3 : top - 5 - row * 12;
+                ctx.fillText(marker.label, clampedX, yText);
             }
         }
         ctx.restore();

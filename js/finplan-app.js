@@ -30,7 +30,7 @@ import {
 import { NEWER_PLAN_FORMAT_REASON } from './plan-ids.js';
 
 // ── Core types ──────────────────────────────────────────────
-import { Metric, MetricLabel, PINNED_METRICS, MACRO_METRICS, isTopLevelMetric } from './metric.js';
+import { Metric, MetricLabel, MACRO_METRICS } from './metric.js';
 import { DateInt, MONTH_NAMES } from './utils/date-int.js';
 
 // ── Simulation ──────────────────────────────────────────────
@@ -45,14 +45,13 @@ import { quickStartAssets, quickStartLifeEvents, quickStartProfiles, buildQuickS
 import { ModelLifeEvent, LifeEvent, LifeEventType } from './life-event.js';
 
 // ── Charting ────────────────────────────────────────────────
+import './charting.js';
 import {
-    charting_buildFromPortfolio,
-    charting_buildDisplayLabels,
-    charting_buildPhaseMarkers,
-    charting_jsonMetric1ChartData,
-} from './charting.js';
+    ProjectionView, DollarMode, MORE_PROJECTION_METRICS,
+    buildProjectionData, buildProjectionChartConfig, buildProjectionMarkers,
+} from './projections-view.js';
 
-import { AssetGroup, classifyAssetGroup, GROUP_ORDER_ACCUMULATE, GROUP_ORDER_RETIRE, getAssetChartColor, getGroupMetrics } from './asset-groups.js';
+import { AssetGroup, GROUP_ORDER_ACCUMULATE, GROUP_ORDER_RETIRE } from './asset-groups.js';
 import { buildPipelines } from './flow-pipelines.js';
 import './components/flows-view.js';
 // sankey-diagram is deliberately not imported: the Sankey view toggle is
@@ -206,15 +205,18 @@ const timeline          = document.getElementById('finplanTimeline');
 const outcomeStrip      = document.getElementById('outcomeStrip');
 const sectionNav        = document.getElementById('sectionNav');
 const viewingBadge      = document.getElementById('viewingBadge');
-const macroCanvas       = document.getElementById('finplan-macro-canvas');
-const microCanvas       = document.getElementById('finplan-micro-canvas');
+const projCanvas        = document.getElementById('finplan-proj-canvas');
+const projTabs          = document.getElementById('finplan-proj-tabs');
+const projMetricSelect  = document.getElementById('finplan-proj-metric-select');
+const projDollarToggle  = document.getElementById('finplan-proj-dollar-toggle');
+const projKpis          = document.getElementById('finplan-proj-kpis');
+const projDrillRow      = document.getElementById('finplan-proj-drill-row');
+const projDrillPills    = document.getElementById('finplan-proj-drill-pills');
 const mcContainer       = document.getElementById('finplan-mc-container');
 const guardrailsContainer = document.getElementById('finplan-guardrails-container');
 const spreadsheetView   = document.getElementById('finplanSpreadsheet');
 const reportView        = document.getElementById('finplanReport');
 const creditMemoView    = document.getElementById('finplanCreditMemos');
-const metricSelect      = document.getElementById('finplan-metric-select');
-const microMetricSelect = document.getElementById('finplan-micro-metric-select');
 const shareModal        = document.getElementById('shareModal');
 const issuesModal       = document.getElementById('issuesModal');
 const planIssuesPanel   = document.getElementById('planIssuesPanel');
@@ -257,15 +259,18 @@ Chart.defaults.animation = false;
 
 // ── App state ───────────────────────────────────────────────
 const appState = new AppState({
-    metricName:    Metric.VALUE,
-    microMetric:   Metric.VALUE,
-    portfolioView: 'assets',   // 'assets' | 'flows' | 'sankey'
+    metricName:     Metric.VALUE,
+    projView:       ProjectionView.NET_WORTH,
+    projMetric:     Metric.CASH_FLOW,
+    projDrill:      AssetGroup.ALL,
+    projDollarMode: DollarMode.REAL,
+    portfolioView:  'assets',   // 'assets' | 'flows' | 'sankey'
 });
 
 // Ephemeral UI handles — not state, just references
 let hydraulicViz        = null;
-let macroChart          = null;
-let microChart          = null;
+let projectionChart     = null;
+let projectionData      = null;
 let editingModelAsset   = null;
 let pendingFundingAsset = null;  // stashed real estate asset awaiting funding confirmation
 let editingFundingAsset = null;  // a purchase whose funding source the edit form is changing
@@ -525,7 +530,14 @@ const aiGenerators = (ai) => ({
     timeline:    () => ai.generateTimelineMarkdown(appState.portfolio, appState.lifeEvents),
     monthdetails: () => ai.generateMonthDetailsSectionMarkdown(appState.portfolio, store.selectedYear, store.selectedMonth, monthDetailsBadge?.textContent ?? ''),
     portfolio:   () => ai.generatePortfolioSectionMarkdown(appState.portfolio),
-    projections: () => ai.generateProjectionsSectionMarkdown(appState.portfolio, appState.metricName),
+    projections: () => {
+        const m = appState.projView === ProjectionView.TAXES
+            ? Metric.TAXES
+            : appState.projView === ProjectionView.NET_WORTH
+                ? Metric.VALUE
+                : appState.projMetric;
+        return ai.generateProjectionsSectionMarkdown(appState.portfolio, m);
+    },
     montecarlo:  () => ai.generateMonteCarloSectionMarkdown(appState.portfolio, mcModule?.getMonteCarloResults() ?? null),
     guardrails:  () => ai.generateGuardrailsSectionMarkdown(appState.portfolio, guardrailsModule?.getGuardrailsResults() ?? null),
     creditmemos: () => ai.generateCreditMemosSectionMarkdown(appState.portfolio),
@@ -988,55 +1000,52 @@ document.getElementById('btn-import-save').addEventListener('click', () => {
     }
 });
 
-// Macro metric dropdown — top-level metrics only
-metricSelect.innerHTML = MACRO_METRICS.map(m =>
+// ── Unified Projections controls (local state — decoupled from Timeline/Asset List) ──
+projMetricSelect.innerHTML = `<option value="">More metrics…</option>` + MORE_PROJECTION_METRICS.map(m =>
     `<option value="${m}">${MetricLabel[m]}</option>`
 ).join('');
-metricSelect.value = appState.metricName;
-metricSelect.addEventListener('change', () => {
-    appState.metricName = metricSelect.value;
-    if (timeline) timeline.metricName = appState.metricName;
-    assetList.metricName = appState.metricName;
-    updateViewingBadge(store.selectedYear, store.selectedMonth);
-    refreshVisualizer();
-    if (!appState.portfolio) return;
-    rebuildProjectionCharts();
-});
+projMetricSelect.value = '';
 
-// Micro metric dropdown — filtered by expanded asset groups, drives the Micro chart
-microMetricSelect.addEventListener('change', () => {
-    appState.microMetric = microMetricSelect.value;
-    if (!appState.portfolio) return;
-    rebuildMicroChart();
-});
-
-function updateMetricDropdown() {
-    // Micro dropdown: pinned first, then non-top-level metrics from expanded group
-    if (expandedGroups.size > 0) {
-        microMetricSelect.style.display = '';
-
-        // Collect all metrics for the expanded group(s)
-        const groupMetrics = new Set();
-        for (const groupKey of expandedGroups) {
-            getGroupMetrics(groupKey).forEach(m => groupMetrics.add(m));
-        }
-
-        // Pinned metrics always appear first; then non-top-level metrics from the group
-        const pinned = [...PINNED_METRICS];
-        const rest = [...groupMetrics].filter(m => !isTopLevelMetric(m) && !PINNED_METRICS.includes(m));
-        const ordered = [...pinned, ...rest];
-
-        microMetricSelect.innerHTML = ordered.map(m =>
-            `<option value="${m}">${MetricLabel[m]}</option>`
-        ).join('');
-        if (!ordered.includes(appState.microMetric)) {
-            appState.microMetric = ordered[0];
-        }
-        microMetricSelect.value = appState.microMetric;
-    } else {
-        microMetricSelect.style.display = 'none';
+function syncProjectionControls() {
+    for (const btn of projTabs.querySelectorAll('[data-proj-view]')) {
+        btn.classList.toggle('is-active', btn.dataset.projView === appState.projView);
+    }
+    const isMore = appState.projView === ProjectionView.METRIC;
+    projMetricSelect.classList.toggle('is-active', isMore);
+    projMetricSelect.value = isMore ? appState.projMetric : '';
+    for (const btn of projDollarToggle.querySelectorAll('[data-dollar-mode]')) {
+        btn.classList.toggle('is-active', btn.dataset.dollarMode === appState.projDollarMode);
     }
 }
+
+projTabs.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('[data-proj-view]');
+    if (!btn) return;
+    appState.projView = btn.dataset.projView;
+    appState.projDrill = AssetGroup.ALL;
+    syncProjectionControls();
+    if (appState.portfolio) rebuildProjectionCharts();
+});
+
+projMetricSelect.addEventListener('change', () => {
+    if (!projMetricSelect.value) {
+        appState.projView = ProjectionView.NET_WORTH;
+    } else {
+        appState.projView = ProjectionView.METRIC;
+        appState.projMetric = projMetricSelect.value;
+    }
+    appState.projDrill = AssetGroup.ALL;
+    syncProjectionControls();
+    if (appState.portfolio) rebuildProjectionCharts();
+});
+
+projDollarToggle.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('[data-dollar-mode]');
+    if (!btn || btn.dataset.dollarMode === appState.projDollarMode) return;
+    appState.projDollarMode = btn.dataset.dollarMode;
+    syncProjectionControls();
+    if (appState.portfolio) rebuildProjectionCharts();
+});
 
 // Wire store. Nothing is loaded yet, so this is the empty plan's anchor;
 // calculate() re-derives it against the real one after every mutation.
@@ -1086,12 +1095,10 @@ function updateViewingBadge(year, month) {
 function cycleMetric() {
     const idx = MACRO_METRICS.indexOf(appState.metricName);
     appState.metricName = MACRO_METRICS[(idx + 1) % MACRO_METRICS.length];
-    metricSelect.value = appState.metricName;
     if (timeline) timeline.metricName = appState.metricName;
     assetList.metricName = appState.metricName;
     updateViewingBadge(store.selectedYear, store.selectedMonth);
     refreshVisualizer();
-    if (appState.portfolio) rebuildProjectionCharts();
 }
 /** Sync asset-list to show metric values at the selected date */
 function syncAssetListToDate(year, month) {
@@ -1428,8 +1435,7 @@ function calculate() {
     // Build charting data
     portfolio.buildChartingDisplayData();
 
-    // Build and render projection charts
-    updateMetricDropdown();
+    // Build and render unified Projections chart
     rebuildProjectionCharts();
 
     // Update details
@@ -1598,119 +1604,79 @@ function refreshVisualizer() {
     hydraulicViz.update(idx, isRetiredPhase(), appState.metricName);
 }
 
-function buildPhaseMarkersForCharts() {
-    const cursorDateInt = DateInt.from(store.selectedYear, store.selectedMonth);
-    return charting_buildPhaseMarkers(
-        appState.portfolio, appState.lifeEvents,
-        global_user_startAge, global_user_retirementAge, cursorDateInt
-    );
+function renderProjectionKPIs(kpis) {
+    projKpis.replaceChildren();
+    projKpis.style.display = kpis.length ? '' : 'none';
+    for (const tile of kpis) {
+        const card = document.createElement('div');
+        card.className = 'proj-kpi';
+        const label = document.createElement('div');
+        label.className = 'proj-kpi-label';
+        label.textContent = tile.label;
+        const value = document.createElement('div');
+        value.className = 'proj-kpi-value';
+        value.textContent = tile.value;
+        const sub = document.createElement('div');
+        sub.className = 'proj-kpi-sub';
+        sub.textContent = tile.sub;
+        card.append(label, value, sub);
+        projKpis.appendChild(card);
+    }
+}
+
+function renderProjectionDrillPills(drillGroups, activeGroup) {
+    projDrillPills.replaceChildren();
+    const showPills = drillGroups.length > 1;
+    projDrillRow.style.display = showPills ? '' : 'none';
+    if (!showPills) return;
+    for (const group of drillGroups) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = group.key === activeGroup ? 'proj-pill is-active' : 'proj-pill';
+        if (group.color) {
+            const dot = document.createElement('span');
+            dot.className = 'proj-pill-dot';
+            dot.style.background = group.color;
+            btn.appendChild(dot);
+        }
+        btn.appendChild(document.createTextNode(group.label));
+        btn.addEventListener('click', () => {
+            if (appState.projDrill === group.key) return;
+            appState.projDrill = group.key;
+            rebuildProjectionCharts();
+        });
+        projDrillPills.appendChild(btn);
+    }
 }
 
 function rebuildProjectionCharts() {
     if (!appState.portfolio) return;
 
-    const markers = buildPhaseMarkersForCharts();
+    const cursorDateInt = DateInt.from(store.selectedYear, store.selectedMonth);
+    projectionData = buildProjectionData(appState.portfolio, {
+        view: appState.projView,
+        metricName: appState.projMetric,
+        drillGroup: appState.projDrill,
+        dollarMode: appState.projDollarMode,
+        lifeEvents: appState.lifeEvents,
+        startAge: global_user_startAge,
+        retirementAge: global_user_retirementAge,
+        cursorDateInt,
+    });
+    appState.projDrill = projectionData.drillGroup;
 
-    {
-        // Macro: always fully grouped (never expand into individual assets)
-        charting_buildFromPortfolio(appState.portfolio, true, appState.metricName, new Set());
+    syncProjectionControls();
+    renderProjectionKPIs(projectionData.kpis);
+    renderProjectionDrillPills(projectionData.drillGroups, projectionData.drillGroup);
 
-        if (macroChart) macroChart.destroy();
-        if (charting_jsonMetric1ChartData) {
-            charting_jsonMetric1ChartData.options.plugins.dateMarkers = { markers };
-            macroChart = new Chart(macroCanvas, charting_jsonMetric1ChartData);
-        } else {
-            // Empty state skeleton
-            macroChart = new Chart(macroCanvas, {
-                type: 'bar',
-                data: { labels: [], datasets: [] },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        title: { display: true, text: 'Add an asset to see data', color: '#9ca3af', font: { size: 13, weight: 'normal' } },
-                        dateMarkers: { markers },
-                    },
-                    scales: { x: { stacked: true }, y: { stacked: true } },
-                },
-            });
-        }
-    }
-
-    // Micro: individual assets from expanded groups only
-    rebuildMicroChart(markers);
-}
-
-function rebuildMicroChart(markers) {
-    if (!appState.portfolio) return;
-    if (!markers) markers = buildPhaseMarkersForCharts();
-
-    const labels = charting_buildDisplayLabels(appState.portfolio.firstDateInt, appState.portfolio.lastDateInt);
-
-    // Build datasets
-    const datasets = [];
-
-    if (expandedGroups.size > 0) {
-        const groups = new Map();
-        for (const asset of appState.portfolio.modelAssets) {
-            const groupKey = classifyAssetGroup(asset.instrument);
-            if (!groups.has(groupKey)) groups.set(groupKey, []);
-            groups.get(groupKey).push(asset);
-        }
-        // ALL group: every asset regardless of instrument group
-        if (expandedGroups.has(AssetGroup.ALL)) {
-            for (const asset of appState.portfolio.modelAssets) {
-                datasets.push({
-                    label: asset.displayName,
-                    data: asset.getDisplayHistory(appState.microMetric),
-                    backgroundColor: getAssetChartColor(asset.instrument),
-                });
-            }
-        }
-        for (const groupKey of getAssetDisplayOrder()) {
-            if (groupKey === AssetGroup.ALL) continue;
-            if (!expandedGroups.has(groupKey)) continue;
-            const assets = groups.get(groupKey);
-            if (!assets || assets.length === 0) continue;
-            for (const asset of assets) {
-                datasets.push({
-                    label: asset.displayName,
-                    data: asset.getDisplayHistory(appState.microMetric),
-                    backgroundColor: getAssetChartColor(asset.instrument),
-                });
-            }
-        }
-    }
-
-    // Determine title
-    const titlePlugin = expandedGroups.size === 0
-        ? { display: true, text: 'Expand a group to see data', color: '#9ca3af', font: { size: 13, weight: 'normal' } }
-        : datasets.length === 0
-            ? { display: true, text: 'No data for selected metric', color: '#9ca3af', font: { size: 13, weight: 'normal' } }
-            : { display: false };
-
-    // Reuse existing chart if labels haven't changed — just swap datasets
-    if (microChart && microChart.data.labels.length === labels.length) {
-        microChart.data.datasets = datasets;
-        microChart.options.plugins.title = titlePlugin;
-        microChart.options.plugins.dateMarkers = { markers };
-        microChart.update('none');
-        return;
-    }
-
-    // Full rebuild only when label count changes (new portfolio loaded)
-    if (microChart) microChart.destroy();
-    microChart = new Chart(microCanvas, {
-        type: 'bar',
-        data: { labels, datasets },
-        options: {
-            responsive: true,
-            plugins: {
-                title: titlePlugin,
-                dateMarkers: { markers },
-            },
-            scales: { x: { stacked: true }, y: { stacked: true } },
+    const cfg = buildProjectionChartConfig(projectionData, {
+        onBucketClick: (bucket) => {
+            store.setSelectedYearMonth(bucket.year, bucket.month);
         },
     });
+
+    if (projectionChart) projectionChart.destroy();
+    projectionChart = new Chart(projCanvas, cfg);
 }
 
 function buildSimulationMarkers(chart, fullLabels) {
@@ -1742,14 +1708,16 @@ function buildSimulationMarkers(chart, fullLabels) {
 
 function updateProjectionCursor() {
     if (!appState.portfolio) return;
-    const markers = buildPhaseMarkersForCharts();
-    if (macroChart) {
-        macroChart.options.plugins.dateMarkers = { markers };
-        macroChart.update('none');
-    }
-    if (microChart) {
-        microChart.options.plugins.dateMarkers = { markers };
-        microChart.update('none');
+    if (projectionChart && projectionData?.buckets?.length) {
+        const cursorDateInt = DateInt.from(store.selectedYear, store.selectedMonth);
+        const markers = buildProjectionMarkers(appState.portfolio, projectionData.buckets, {
+            lifeEvents: appState.lifeEvents,
+            startAge: global_user_startAge,
+            retirementAge: global_user_retirementAge,
+            cursorDateInt,
+        });
+        projectionChart.options.plugins.dateMarkers = { markers };
+        projectionChart.update('none');
     }
 
     // Simulation charts — null-safe through the lazy module refs: if a
@@ -1827,7 +1795,6 @@ function connectAssetListEvents() {
         if (expandedGroups.has(group)) expandedGroups.delete(group);
         else expandedGroups.add(group);
         assetList.expandedGroups = new Set(expandedGroups);
-        setTimeout(() => { updateMetricDropdown(); rebuildMicroChart(); }, 0);
     });
 
     flowsView.addEventListener('edit-transfers', (ev) => {
@@ -2025,8 +1992,7 @@ function showOneTimeModal(modelAsset) {
 
 function connectChartExpandButtons() {
     const slots = [
-        { btnId: 'btn-macro-expand', slotId: 'finplan-macro-slot' },
-        { btnId: 'btn-micro-expand', slotId: 'finplan-micro-slot' },
+        { btnId: 'btn-proj-expand', slotId: 'finplan-proj-slot' },
     ];
     for (const { btnId, slotId } of slots) {
         const btn = document.getElementById(btnId);
@@ -2036,6 +2002,7 @@ function connectChartExpandButtons() {
             const isFullscreen = slot.classList.toggle('chart-fullscreen');
             btn.textContent = isFullscreen ? '✕' : '⛶';
             btn.title = isFullscreen ? 'Exit fullscreen' : 'Fullscreen';
+            projectionChart?.resize();
         });
     }
     document.addEventListener('keydown', (ev) => {
@@ -2046,6 +2013,7 @@ function connectChartExpandButtons() {
                 slot.classList.remove('chart-fullscreen');
                 document.getElementById(btnId).textContent = '⛶';
                 document.getElementById(btnId).title = 'Fullscreen';
+                projectionChart?.resize();
             }
         }
     });
