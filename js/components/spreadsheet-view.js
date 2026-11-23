@@ -13,8 +13,11 @@
  *   toCSV()                   - returns the rendered table as a CSV string
  */
 
-import { LitElement, html } from 'lit';
+import { LitElement, html, nothing } from 'lit';
 import { formatCurrency } from '../utils/html.js';
+import { visibleWindow, rowScrollTop, DEFAULT_ROW_HEIGHT } from '../utils/virtual-window.js';
+
+const FALLBACK_VIEWPORT = 560;
 
 const metrics = [
     { key: 'monthlyValues',                label: 'Value' },
@@ -35,7 +38,7 @@ const metrics = [
     { key: 'monthlyIncomeTaxes',           label: 'Income Tax' },
     { key: 'monthlyMortgagePayments',      label: 'Mortgage Pmt' },
     { key: 'monthlyMortgageInterests',     label: 'Mortgage Int' },
-    { key: 'monthlyMortgagePrincipals',    label: 'Mortgage Prin' },    
+    { key: 'monthlyMortgagePrincipals',    label: 'Mortgage Prin' },
     { key: 'monthlyEstimatedTaxes',        label: 'Est Tax' },
     { key: 'monthlyTradIRAContributions',  label: 'IRA Contrib' },
     { key: 'monthlyRothIRAContributions',  label: 'Roth Contrib' },
@@ -65,7 +68,10 @@ export function csvCell(text) {
 class SpreadsheetView extends LitElement {
 
     static properties = {
-        portfolio: { type: Object },
+        portfolio:     { type: Object },
+        _winStart:     { state: true },
+        _winEnd:       { state: true },
+        _highlightIdx: { state: true },
     };
 
     createRenderRoot() { return this; }
@@ -73,26 +79,147 @@ class SpreadsheetView extends LitElement {
     constructor() {
         super();
         this.portfolio = null;
+        this._assetColumns = [];
+        this._dateLabels = [];
+        this._dateIndex = new Map();
+        this._scrollTop = 0;
+        this._rowHeight = DEFAULT_ROW_HEIGHT;
+        this._headerHeight = 0;
+        this._measured = false;
+        this._winStart = 0;
+        this._winEnd = 0;
+        this._highlightIdx = -1;
+        this._flashTimer = null;
+        this._rafId = 0;
+        this._scroller = null;
+        this._onScroll = () => this._scheduleScrollSync();
+    }
+
+    connectedCallback() {
+        super.connectedCallback();
+        this._attachScroller();
+    }
+
+    disconnectedCallback() {
+        super.disconnectedCallback();
+        this._detachScroller();
+        if (this._rafId) {
+            cancelAnimationFrame(this._rafId);
+            this._rafId = 0;
+        }
+        clearTimeout(this._flashTimer);
+        this._flashTimer = null;
+    }
+
+    willUpdate(changed) {
+        if (changed.has('portfolio')) {
+            this._rebuildCache();
+            this._measured = false;
+            this._highlightIdx = -1;
+            const win = this._computeWindow(this._scrollTop);
+            this._winStart = win.start;
+            this._winEnd = win.end;
+        }
+    }
+
+    updated() {
+        this._attachScroller();
+        if (!this._measured && this._dateLabels.length > 0) {
+            const thead = this.querySelector('thead');
+            const dataRow = this.querySelector('tbody tr[data-row]');
+            if (dataRow) {
+                const rh = dataRow.getBoundingClientRect().height;
+                const hh = thead ? thead.getBoundingClientRect().height : 0;
+                if (rh > 0) {
+                    this._measured = true;
+                    const changed = Math.abs(rh - this._rowHeight) > 0.5 || Math.abs(hh - this._headerHeight) > 0.5;
+                    this._rowHeight = rh;
+                    this._headerHeight = hh;
+                    if (changed) this._syncWindow();
+                }
+            }
+        }
+    }
+
+    _attachScroller() {
+        const next = this.closest?.('.overflow-auto') ?? null;
+        if (next === this._scroller) return;
+        this._detachScroller();
+        this._scroller = next;
+        if (this._scroller) {
+            this._scroller.addEventListener('scroll', this._onScroll, { passive: true });
+        }
+    }
+
+    _detachScroller() {
+        if (this._scroller) {
+            this._scroller.removeEventListener('scroll', this._onScroll);
+            this._scroller = null;
+        }
+    }
+
+    _scheduleScrollSync() {
+        if (this._rafId) return;
+        this._rafId = requestAnimationFrame(() => {
+            this._rafId = 0;
+            this._syncWindow();
+        });
+    }
+
+    _computeWindow(scrollTop) {
+        const viewH = this._scroller?.clientHeight || 0;
+        return visibleWindow(this._dateLabels.length, scrollTop, viewH, {
+            rowHeight: this._rowHeight,
+            headerHeight: this._headerHeight,
+            fallbackViewport: FALLBACK_VIEWPORT,
+        });
+    }
+
+    _syncWindow() {
+        this._scrollTop = this._scroller ? this._scroller.scrollTop : this._scrollTop;
+        const win = this._computeWindow(this._scrollTop);
+        if (win.start !== this._winStart || win.end !== this._winEnd) {
+            this._winStart = win.start;
+            this._winEnd = win.end;
+        }
     }
 
     render() {
         if (!this.portfolio) {
-            return html`<p style="padding: 24px; font-family: DM Sans, sans-serif;">
+            return html`<p class="vt-empty">
                 No spreadsheet data available. Run a calculation first.
             </p>`;
         }
 
-        const assetColumns = this._buildAssetColumns();
+        const assetColumns = this._assetColumns;
         if (assetColumns.length === 0) {
-            return html`<p style="padding: 24px; font-family: DM Sans, sans-serif;">
+            return html`<p class="vt-empty">
                 No spreadsheet data available. Run a calculation first.
             </p>`;
         }
 
-        const dateLabels = this._buildDateLabels();
+        const totalCols = 1 + assetColumns.reduce((sum, ac) => sum + ac.metrics.length, 0);
+        const { start, end, topPad, bottomPad } = this._computeWindow(this._scrollTop);
+        const visible = [];
+        for (let i = start; i < end; i++) {
+            const dateLabel = this._dateLabels[i];
+            visible.push(html`
+                <tr data-row="${i}" class="${i === this._highlightIdx ? 'vt-flash' : ''}">
+                    <td class="spreadsheet-date-col">${dateLabel}</td>
+                    ${assetColumns.map(ac => ac.metrics.map(m => {
+                        const arr = ac.asset[m.key];
+                        const val = (arr && i < arr.length) ? arr[i] : 0;
+                        const formatted = val !== 0
+                            ? formatCurrency(val, { cents: true })
+                            : '\u2014';
+                        return html`<td class="${val < 0 ? 'spreadsheet-negative' : ''}">${formatted}</td>`;
+                    }))}
+                </tr>
+            `);
+        }
 
         return html`
-            <table class="spreadsheet-table">
+            <table class="spreadsheet-table vt-table">
                 <thead>
                     <tr>
                         <th rowspan="2" class="spreadsheet-date-col">Date</th>
@@ -107,27 +234,27 @@ class SpreadsheetView extends LitElement {
                     </tr>
                 </thead>
                 <tbody>
-                    ${dateLabels.map((dateLabel, i) => html`
-                        <tr>
-                            <td class="spreadsheet-date-col">${dateLabel}</td>
-                            ${assetColumns.map(ac => ac.metrics.map(m => {
-                                const arr = ac.asset[m.key];
-                                const val = (arr && i < arr.length) ? arr[i] : 0;
-                                const formatted = val !== 0
-                                    ? formatCurrency(val, { cents: true })
-                                    : '\u2014';
-                                return html`<td class="${val < 0 ? 'spreadsheet-negative' : ''}">${formatted}</td>`;
-                            }))}
-                        </tr>
-                    `)}
+                    ${topPad > 0 ? html`<tr class="vt-spacer" aria-hidden="true"><td colspan="${totalCols}" style="height:${topPad}px"></td></tr>` : nothing}
+                    ${visible}
+                    ${bottomPad > 0 ? html`<tr class="vt-spacer" aria-hidden="true"><td colspan="${totalCols}" style="height:${bottomPad}px"></td></tr>` : nothing}
                 </tbody>
             </table>
         `;
     }
 
-    _buildAssetColumns() {
+    _rebuildCache() {
+        this._assetColumns = this._buildAssetColumns(this.portfolio);
+        this._dateLabels = this._buildDateLabels(this.portfolio);
+        this._dateIndex = new Map();
+        for (let i = 0; i < this._dateLabels.length; i++) {
+            this._dateIndex.set(this._dateLabels[i], i);
+        }
+    }
+
+    _buildAssetColumns(portfolio = this.portfolio) {
+        if (!portfolio) return [];
         const result = [];
-        for (const modelAsset of this.portfolio.modelAssets) {
+        for (const modelAsset of portfolio.modelAssets) {
             const cols = [];
             for (const metric of metrics) {
                 const arr = modelAsset[metric.key];
@@ -142,11 +269,12 @@ class SpreadsheetView extends LitElement {
         return result;
     }
 
-    _buildDateLabels() {
-        const { DateInt } = this._getDateInt();
+    _buildDateLabels(portfolio = this.portfolio) {
+        if (!portfolio?.firstDateInt || !portfolio?.lastDateInt) return [];
+        const DateInt = portfolio.firstDateInt.constructor;
         const labels = [];
-        const cursor = new DateInt(this.portfolio.firstDateInt.toInt());
-        while (cursor.toInt() <= this.portfolio.lastDateInt.toInt()) {
+        const cursor = new DateInt(portfolio.firstDateInt.toInt());
+        while (cursor.toInt() <= portfolio.lastDateInt.toInt()) {
             labels.push(cursor.toHTML());
             cursor.nextMonth();
         }
@@ -155,27 +283,30 @@ class SpreadsheetView extends LitElement {
 
     scrollToDate(year, month) {
         const target = `${year}-${String(month).padStart(2, '0')}`;
-        const container = this.closest('.overflow-auto');
-        const rows = this.querySelectorAll('tbody tr');
-        for (const row of rows) {
-            const cell = row.querySelector('.spreadsheet-date-col');
-            if (cell && cell.textContent.trim() === target) {
-                if (container) {
-                    container.scrollTop = row.offsetTop - container.offsetTop - container.clientHeight / 2;
-                }
-                row.style.background = '#FAECE7';
-                setTimeout(() => row.style.background = '', 1500);
-                return;
-            }
-        }
+        const idx = this._dateIndex.get(target);
+        if (idx === undefined) return;
+        const container = this._scroller ?? this.closest?.('.overflow-auto') ?? null;
+        const top = rowScrollTop(idx, container?.clientHeight || 0, {
+            rowHeight: this._rowHeight,
+            headerHeight: this._headerHeight,
+            fallbackViewport: FALLBACK_VIEWPORT,
+        });
+        this._scrollTop = top;
+        const win = this._computeWindow(top);
+        this._winStart = win.start;
+        this._winEnd = win.end;
+        this._highlightIdx = idx;
+        if (container) container.scrollTop = top;
+        clearTimeout(this._flashTimer);
+        this._flashTimer = setTimeout(() => { this._highlightIdx = -1; }, 1500);
     }
 
-    /** Build CSV string from the same data the table renders */
-    toCSV() {
-        if (!this.portfolio) return '';
-        const assetColumns = this._buildAssetColumns();
+    /** Build CSV string from the portfolio's full data (works even while collapsed). */
+    toCSV(portfolio = this.portfolio) {
+        if (!portfolio) return '';
+        const assetColumns = this._buildAssetColumns(portfolio);
         if (assetColumns.length === 0) return '';
-        const dateLabels = this._buildDateLabels();
+        const dateLabels = this._buildDateLabels(portfolio);
 
         // Header row 1: Date + asset names spanning their metric columns
         const h1 = ['Date'];
@@ -205,14 +336,6 @@ class SpreadsheetView extends LitElement {
         }
 
         return rows.join('\n');
-    }
-
-    _getDateInt() {
-        // Cache the DateInt constructor from portfolio.firstDateInt for month-by-month iteration.
-        if (!this._dateIntModule) {
-            this._dateIntModule = { DateInt: this.portfolio.firstDateInt.constructor };
-        }
-        return this._dateIntModule;
     }
 }
 

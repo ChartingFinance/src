@@ -986,6 +986,34 @@
         }
         .assets-container .asset:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
 
+        /* ─── Detail Views (Credit Memos, Reports, Spreadsheet) ─── */
+
+        .vt-empty { padding: 24px; font-family: 'DM Sans', sans-serif; }
+        .vt-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .vt-table th, .vt-table td { white-space: nowrap; padding: 3px 8px; }
+        .vt-table thead th { position: sticky; top: 0; background: #ffffff; z-index: 1; }
+        .vt-spacer td { padding: 0 !important; border: 0 !important; line-height: 0; }
+        .vt-flash { background: #FAECE7 !important; }
+        .cm-col-date { min-width: 78px; }
+        .cm-col-asset { min-width: 140px; }
+        .cm-col-amount { min-width: 105px; }
+        .cm-info { color: #9ca3af; font-style: italic; }
+        .cm-noncash {
+            font-size: 10px; font-weight: 600; letter-spacing: 0.05em;
+            color: #9ca3af; background: #f3f4f6; border-radius: 6px;
+            padding: 1px 6px; white-space: nowrap; vertical-align: 1px;
+        }
+        .rv-item { margin-bottom: 8px; border-bottom: 1px solid #f3f4f6; padding-bottom: 8px; }
+        .rv-summary { cursor: pointer; font-weight: 600; padding: 4px 0; }
+        .rv-badge { color: #fff; padding: 1px 8px; border-radius: 6px; font-size: 10px; font-weight: 600; margin-right: 6px; }
+        .rv-badge-yearly { background: #7c3aed; }
+        .rv-badge-monthly { background: #2563eb; }
+        .rv-table { margin-top: 4px; width: 100%; border-collapse: collapse; }
+        .rv-row-head { background: var(--parchment, #f9fafb); }
+        .rv-label { padding: 2px 6px; font-weight: 400; }
+        .rv-row-head .rv-label { font-weight: 600; }
+        .rv-val { padding: 2px 6px; text-align: right; font-family: monospace; }
+
         /* ─── Footer ─── */
 
         .finplan-footer {

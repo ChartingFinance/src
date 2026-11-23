@@ -287,6 +287,7 @@ let _mcSyncTimer        = null;   // Monte Carlo only, after an MC-only setting
 const SIM_SYNC_DELAY_MS = 400;
 let _settingsNoteFor    = null;   // asset list the settings note describes
 let _visualizerDirty    = true;   // the plan changed while the Visualizer was collapsed
+let _spreadsheetDirty   = true;   // the plan changed while the Spreadsheet was collapsed
 
 // Code-split feature modules — loaded on first use. Declared here (before
 // the init code below calls calculate()) so the auto-run path can reach
@@ -386,8 +387,14 @@ function setSectionExpanded(key, open) {
         localStorage.setItem('finplan.expandedSections', JSON.stringify([...saved]));
     } catch { /* storage unavailable: the section still opens */ }
     if (open && key === 'visualizer' && _visualizerDirty) initVisualizer();
-    if (open && key === 'spreadsheet' && spreadsheetView) {
-        requestAnimationFrame(() => spreadsheetView.scrollToDate(store.selectedYear, store.selectedMonth));
+    if (key === 'spreadsheet' && spreadsheetView) {
+        if (open) {
+            if (_spreadsheetDirty) syncSpreadsheet();
+            spreadsheetView.updateComplete.then(() =>
+                requestAnimationFrame(() => spreadsheetView.scrollToDate(store.selectedYear, store.selectedMonth)));
+        } else {
+            syncSpreadsheet();
+        }
     }
 }
 
@@ -573,7 +580,7 @@ aiPopup.addEventListener('click', (e) => { if (e.target === aiPopup) aiPopup.sty
 
 document.getElementById('btn-spreadsheet-copy').addEventListener('click', () => {
     if (!spreadsheetView) return;
-    const csv = spreadsheetView.toCSV();
+    const csv = spreadsheetView.toCSV(appState.portfolio);
     navigator.clipboard.writeText(csv).then(() => {
         const btn = document.getElementById('btn-spreadsheet-copy');
         btn.textContent = '✅';
@@ -582,7 +589,7 @@ document.getElementById('btn-spreadsheet-copy').addEventListener('click', () => 
 });
 document.getElementById('btn-spreadsheet-download').addEventListener('click', () => {
     if (!spreadsheetView) return;
-    const csv = spreadsheetView.toCSV();
+    const csv = spreadsheetView.toCSV(appState.portfolio);
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -1149,7 +1156,7 @@ store.addEventListener('date-change', (e) => {
     syncAssetListToDate(e.detail.year, e.detail.month);
     refreshFlows();
     refreshSankey();
-    if (spreadsheetView) spreadsheetView.scrollToDate(e.detail.year, e.detail.month);
+    if (spreadsheetView && isSectionExpanded('spreadsheet')) spreadsheetView.scrollToDate(e.detail.year, e.detail.month);
     if (reportView) reportView.scrollToDate(e.detail.year, e.detail.month);
     if (creditMemoView) creditMemoView.scrollToDate(e.detail.year, e.detail.month);
     refreshVisualizer();
@@ -1444,7 +1451,7 @@ function calculate() {
     rebuildProjectionCharts();
 
     // Update details
-    if (spreadsheetView) spreadsheetView.portfolio = portfolio;
+    syncSpreadsheet();
     if (reportView) {
         reportView.taxYears = portfolio.taxYears;
         reportView.reports = portfolio.generatedReports;
@@ -1588,6 +1595,18 @@ async function doGuardrails() {
         outcomeStrip.guardrails = gr;
         outcomeStrip.stale = { ...outcomeStrip.stale, guardrails: false };
     }
+}
+
+function syncSpreadsheet() {
+    if (!spreadsheetView) return;
+    // Collapsed by default: keep the table unmounted while hidden.
+    if (!isSectionExpanded('spreadsheet')) {
+        _spreadsheetDirty = true;
+        if (spreadsheetView.portfolio) spreadsheetView.portfolio = null;
+        return;
+    }
+    _spreadsheetDirty = false;
+    spreadsheetView.portfolio = appState.portfolio;
 }
 
 async function initVisualizer() {

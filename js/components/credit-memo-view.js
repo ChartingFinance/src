@@ -13,13 +13,19 @@
  *   scrollToDate(year, month) - scrolls to and briefly highlights the first entry for that month
  */
 
-import { LitElement, html } from 'lit';
+import { LitElement, html, nothing } from 'lit';
 import { formatCurrency } from '../utils/html.js';
+import { visibleWindow, rowScrollTop, DEFAULT_ROW_HEIGHT } from '../utils/virtual-window.js';
+
+const FALLBACK_VIEWPORT = 440;
 
 class CreditMemoView extends LitElement {
 
     static properties = {
-        portfolio: { type: Object },
+        portfolio:     { type: Object },
+        _winStart:     { state: true },
+        _winEnd:       { state: true },
+        _highlightIdx: { state: true },
     };
 
     createRenderRoot() { return this; }
@@ -27,57 +33,160 @@ class CreditMemoView extends LitElement {
     constructor() {
         super();
         this.portfolio = null;
+        this._rows = [];
+        this._dateIndex = new Map();
+        this._scrollTop = 0;
+        this._rowHeight = DEFAULT_ROW_HEIGHT;
+        this._headerHeight = 0;
+        this._measured = false;
+        this._winStart = 0;
+        this._winEnd = 0;
+        this._highlightIdx = -1;
+        this._flashTimer = null;
+        this._rafId = 0;
+        this._scroller = null;
+        this._onScroll = () => this._scheduleScrollSync();
+    }
+
+    connectedCallback() {
+        super.connectedCallback();
+        this._attachScroller();
+    }
+
+    disconnectedCallback() {
+        super.disconnectedCallback();
+        this._detachScroller();
+        if (this._rafId) {
+            cancelAnimationFrame(this._rafId);
+            this._rafId = 0;
+        }
+        clearTimeout(this._flashTimer);
+        this._flashTimer = null;
+    }
+
+    willUpdate(changed) {
+        if (changed.has('portfolio')) {
+            this._rebuildCache();
+            this._measured = false;
+            this._highlightIdx = -1;
+            const win = this._computeWindow(this._scrollTop);
+            this._winStart = win.start;
+            this._winEnd = win.end;
+        }
+    }
+
+    updated() {
+        this._attachScroller();
+        if (!this._measured && this._rows.length > 0) {
+            const thead = this.querySelector('thead');
+            const dataRow = this.querySelector('tbody tr[data-row]');
+            if (dataRow) {
+                const rh = dataRow.getBoundingClientRect().height;
+                const hh = thead ? thead.getBoundingClientRect().height : 0;
+                if (rh > 0) {
+                    this._measured = true;
+                    const changed = Math.abs(rh - this._rowHeight) > 0.5 || Math.abs(hh - this._headerHeight) > 0.5;
+                    this._rowHeight = rh;
+                    this._headerHeight = hh;
+                    if (changed) this._syncWindow();
+                }
+            }
+        }
+    }
+
+    _attachScroller() {
+        const next = this.closest?.('.overflow-auto') ?? null;
+        if (next === this._scroller) return;
+        this._detachScroller();
+        this._scroller = next;
+        if (this._scroller) {
+            this._scroller.addEventListener('scroll', this._onScroll, { passive: true });
+        }
+    }
+
+    _detachScroller() {
+        if (this._scroller) {
+            this._scroller.removeEventListener('scroll', this._onScroll);
+            this._scroller = null;
+        }
+    }
+
+    _scheduleScrollSync() {
+        if (this._rafId) return;
+        this._rafId = requestAnimationFrame(() => {
+            this._rafId = 0;
+            this._syncWindow();
+        });
+    }
+
+    _computeWindow(scrollTop) {
+        const viewH = this._scroller?.clientHeight || 0;
+        return visibleWindow(this._rows.length, scrollTop, viewH, {
+            rowHeight: this._rowHeight,
+            headerHeight: this._headerHeight,
+            fallbackViewport: FALLBACK_VIEWPORT,
+        });
+    }
+
+    _syncWindow() {
+        this._scrollTop = this._scroller ? this._scroller.scrollTop : this._scrollTop;
+        const win = this._computeWindow(this._scrollTop);
+        if (win.start !== this._winStart || win.end !== this._winEnd) {
+            this._winStart = win.start;
+            this._winEnd = win.end;
+        }
     }
 
     render() {
         if (!this.portfolio) {
-            return html`<p style="padding: 24px; font-family: DM Sans, sans-serif;">
+            return html`<p class="vt-empty">
                 No credit memos recorded. Run a calculation first.
             </p>`;
         }
 
-        const rows = this._collectRows();
-        if (rows.length === 0) {
-            return html`<p style="padding: 24px; font-family: DM Sans, sans-serif;">
+        if (this._rows.length === 0) {
+            return html`<p class="vt-empty">
                 No credit memos recorded. Run a calculation first.
             </p>`;
+        }
+
+        const { start, end, topPad, bottomPad } = this._computeWindow(this._scrollTop);
+        const visible = [];
+        for (let i = start; i < end; i++) {
+            const row = this._rows[i];
+            const dateStr = row.dateInt ? row.dateInt.toHTML() : '\u2014';
+            const val = row.amount ? row.amount.amount : 0;
+            const formatted = val !== 0 ? formatCurrency(val, { cents: true }) : '\u2014';
+            // Info memos (gain recognition, attributed costs, escrow
+            // accruals) moved no cash on this asset — mute the amount
+            // and badge them so the ledger visibly reconciles.
+            const isInfo = row.kind === 'info';
+            const amtClass = isInfo ? 'cm-info' : (val < 0 ? 'spreadsheet-negative' : '');
+            visible.push(html`
+                <tr data-row="${i}" class="${i === this._highlightIdx ? 'vt-flash' : ''}">
+                    <td class="spreadsheet-date-col">${dateStr}</td>
+                    <td>${row.asset}</td>
+                    <td class="${amtClass}">${formatted}</td>
+                    <td>${row.note || ''}${isInfo ? html` <span class="cm-noncash"
+                        title="Recognition or attribution entry \u2014 no cash moved on this asset. Excluded from cash reconciliation.">NON-CASH</span>` : nothing}</td>
+                </tr>
+            `);
         }
 
         return html`
-            <table class="spreadsheet-table">
+            <table class="spreadsheet-table vt-table cm-table">
                 <thead>
                     <tr>
-                        <th class="spreadsheet-date-col">Date</th>
-                        <th class="spreadsheet-asset-header">Asset</th>
-                        <th class="spreadsheet-metric-header">Amount</th>
+                        <th class="spreadsheet-date-col cm-col-date">Date</th>
+                        <th class="spreadsheet-asset-header cm-col-asset">Asset</th>
+                        <th class="spreadsheet-metric-header cm-col-amount">Amount</th>
                         <th class="spreadsheet-metric-header">Note</th>
                     </tr>
                 </thead>
                 <tbody>
-                    ${rows.map(row => {
-                        const dateStr = row.dateInt ? row.dateInt.toHTML() : '\u2014';
-                        const val = row.amount ? row.amount.amount : 0;
-                        const formatted = val !== 0
-                            ? formatCurrency(val, { cents: true })
-                            : '\u2014';
-                        // Info memos (gain recognition, attributed costs, escrow
-                        // accruals) moved no cash on this asset — mute the amount
-                        // and badge them so the ledger visibly reconciles.
-                        const isInfo = row.kind === 'info';
-                        return html`
-                            <tr>
-                                <td class="spreadsheet-date-col">${dateStr}</td>
-                                <td>${row.asset}</td>
-                                <td class="${val < 0 && !isInfo ? 'spreadsheet-negative' : ''}"
-                                    style="${isInfo ? 'color: #9ca3af; font-style: italic;' : ''}">${formatted}</td>
-                                <td>${row.note || ''}${isInfo ? html` <span
-                                    style="font-size: 10px; font-weight: 600; letter-spacing: 0.05em;
-                                           color: #9ca3af; background: #f3f4f6; border-radius: 6px;
-                                           padding: 1px 6px; white-space: nowrap; vertical-align: 1px;"
-                                    title="Recognition or attribution entry \u2014 no cash moved on this asset. Excluded from cash reconciliation.">NON-CASH</span>` : ''}</td>
-                            </tr>
-                        `;
-                    })}
+                    ${topPad > 0 ? html`<tr class="vt-spacer" aria-hidden="true"><td colspan="4" style="height:${topPad}px"></td></tr>` : nothing}
+                    ${visible}
+                    ${bottomPad > 0 ? html`<tr class="vt-spacer" aria-hidden="true"><td colspan="4" style="height:${bottomPad}px"></td></tr>` : nothing}
                 </tbody>
             </table>
         `;
@@ -85,22 +194,37 @@ class CreditMemoView extends LitElement {
 
     scrollToDate(year, month) {
         const target = `${year}-${String(month).padStart(2, '0')}`;
-        const container = this.closest('.overflow-auto');
-        const rows = this.querySelectorAll('tbody tr');
-        for (const row of rows) {
-            const cell = row.querySelector('.spreadsheet-date-col');
-            if (cell && cell.textContent.trim() === target) {
-                if (container) {
-                    container.scrollTop = row.offsetTop - container.offsetTop - container.clientHeight / 2;
-                }
-                row.style.background = '#FAECE7';
-                setTimeout(() => row.style.background = '', 1500);
-                return;
-            }
+        const idx = this._dateIndex.get(target);
+        if (idx === undefined) return;
+        const container = this._scroller ?? this.closest?.('.overflow-auto') ?? null;
+        const top = rowScrollTop(idx, container?.clientHeight || 0, {
+            rowHeight: this._rowHeight,
+            headerHeight: this._headerHeight,
+            fallbackViewport: FALLBACK_VIEWPORT,
+        });
+        this._scrollTop = top;
+        const win = this._computeWindow(top);
+        this._winStart = win.start;
+        this._winEnd = win.end;
+        this._highlightIdx = idx;
+        if (container) container.scrollTop = top;
+        clearTimeout(this._flashTimer);
+        this._flashTimer = setTimeout(() => { this._highlightIdx = -1; }, 1500);
+    }
+
+    _rebuildCache() {
+        this._rows = this._collectRows();
+        this._dateIndex = new Map();
+        for (let i = 0; i < this._rows.length; i++) {
+            const d = this._rows[i].dateInt;
+            if (!d) continue;
+            const key = d.toHTML();
+            if (!this._dateIndex.has(key)) this._dateIndex.set(key, i);
         }
     }
 
     _collectRows() {
+        if (!this.portfolio) return [];
         const rows = [];
         for (const modelAsset of this.portfolio.modelAssets) {
             if (!modelAsset.creditMemos || modelAsset.creditMemos.length === 0) continue;
