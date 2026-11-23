@@ -154,5 +154,32 @@ await test('no results, no tile', () => {
     assert.equal(guardrailsOutcome(null), null);
 });
 
+await test("dollarMode 'real' leads with today's dollars across plan, simulations, and guardrails", async () => {
+    const { portfolio, issues } = healthy;
+    const planReal = planOutcome(portfolio, issues, { dollarMode: 'real' });
+    const planNom = planOutcome(portfolio, issues, { dollarMode: 'nominal' });
+    assert.match(planReal.detail, /nominal · never runs out$/);
+    assert.notEqual(planReal.value, planNom.value);
+
+    const res = await computeMonteCarlo(portfolio.modelAssets.map((a) => a), {
+        config: portfolio.config, numSimulations: 15, seed: 1,
+        retirementDateInt: null, lifeEvents: portfolio.lifeEvents,
+    });
+    const last = res.labels.length - 1;
+    const simReal = simulationOutcome(res, { dollarMode: 'real' });
+    assert.equal(simReal.median, res.bandDataReal[2][last]);
+    assert.equal(simReal.p10, res.bandDataReal[0][last]);
+    assert.equal(simReal.p90, res.bandDataReal[4][last]);
+
+    const grReal = guardrailsOutcome({
+        portfolioValues: [100, 4_000_000], portfolioValuesReal: [100, 1_500_000],
+        withdrawalSteps: [0, 180_000], withdrawalStepsReal: [0, 72_000],
+        labels: ['Jan 2026', 'Jan 2050'], events: [{ type: 'preservation' }],
+    }, { dollarMode: 'real' });
+    assert.equal(grReal.end, 1_500_000);
+    assert.equal(grReal.finalWithdrawal, 72_000);
+    assert.equal(grReal.value, '$1.5M');
+});
+
 console.log(`\n${passed} passed, ${failed} failed\n`);
 process.exit(failed ? 1 : 0);

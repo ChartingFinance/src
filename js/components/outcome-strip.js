@@ -29,6 +29,7 @@ class OutcomeStrip extends LitElement {
         guardrails:  { type: Object },
         stale:       { type: Object },
         finishAge:   { type: Number },
+        dollarMode:  { type: String },
     };
 
     constructor() {
@@ -38,6 +39,7 @@ class OutcomeStrip extends LitElement {
         this.guardrails = null;
         this.stale = { simulations: false, guardrails: false };
         this.finishAge = null;
+        this.dollarMode = 'real';
     }
 
     createRenderRoot() { return this; }
@@ -62,10 +64,12 @@ class OutcomeStrip extends LitElement {
     render() {
         if (!this.plan) return nothing;
         const runs = this.simulations?.runs;
+        const basis = this.dollarMode === 'nominal' ? 'nominal $' : "today's $";
+        const meta = this.finishAge ? `to age ${this.finishAge} · ${basis}` : basis;
         return html`
             <div class="outcome-head">
                 <h2 class="outcome-question">Will my money last?</h2>
-                ${this.finishAge ? html`<span class="outcome-horizon">to age ${this.finishAge}</span>` : nothing}
+                <span class="outcome-horizon">${meta}</span>
             </div>
             <div class="outcome-tiles">
                 ${this._tile('Plan as entered', this.plan, 'timeline')}

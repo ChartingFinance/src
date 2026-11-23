@@ -46,12 +46,27 @@ function terminateWorker() {
 
 // ── Main entry point ─────────────────────────────────────────────
 
+let activeDollarMode = 'real';
+let activeContainer = null;
+let activeOnRender = null;
+
+/** Switch the rendered Guardrails chart between Today's $ and Nominal without re-running the worker. */
+export function setGuardrailsDollarMode(mode, onRender = activeOnRender) {
+    activeDollarMode = mode === 'nominal' ? 'nominal' : 'real';
+    if (!cachedResults || !activeContainer) return;
+    renderChart(ensureLayout(activeContainer).chartEl, cachedResults, activeDollarMode);
+    if (guardrailsChart && onRender) onRender(guardrailsChart);
+}
+
 /**
  * Resolves once the chart has rendered (or resolves null if there was
  * nothing to run). `onRender(chart)` fires after the paint so callers can
  * apply chart decorations without setTimeout guesswork.
  */
-export function runGuardrails(sourceAssets, container, params, retirementDateInt = null, lifeEvents = [], onRender = null) {
+export function runGuardrails(sourceAssets, container, params, retirementDateInt = null, lifeEvents = [], onRender = null, dollarMode = activeDollarMode) {
+    activeDollarMode = dollarMode === 'nominal' ? 'nominal' : 'real';
+    activeContainer = container;
+    activeOnRender = onRender;
     setStatus(container, 'Running guardrails simulation…');
 
     const render = (results) => {
@@ -68,7 +83,7 @@ export function runGuardrails(sourceAssets, container, params, retirementDateInt
             : 'your configured rates';
         setStatus(container, `Single deterministic run · ${rateSource}`
             + (results.retirementDateInt ? ' · guardrails active from retirement' : ''));
-        renderChart(ensureLayout(container).chartEl, results);
+        renderChart(ensureLayout(container).chartEl, results, activeDollarMode);
         if (guardrailsChart && onRender) onRender(guardrailsChart);
         return guardrailsChart;
     };
@@ -124,11 +139,14 @@ export function runGuardrails(sourceAssets, container, params, retirementDateInt
 
 // ── Chart rendering ──────────────────────────────────────────────
 
-function renderChart(chartEl, results) {
+function renderChart(chartEl, results, dollarMode = 'real') {
     const {
         labels, portfolioValues, withdrawalSteps, events, params, retirementMonthIndex,
         portfolioValuesReal, withdrawalStepsReal,
     } = results;
+    const useReal = dollarMode === 'real' && !!portfolioValuesReal?.length;
+    const activePortfolio = useReal ? portfolioValuesReal : portfolioValues;
+    const activeWithdrawal = (useReal && withdrawalStepsReal?.length) ? withdrawalStepsReal : withdrawalSteps;
     chartEl.innerHTML = '';
 
     const canvas = document.createElement('canvas');
@@ -178,10 +196,10 @@ function renderChart(chartEl, results) {
         const monthIdx = labels.indexOf(targetLabel);
         if (monthIdx >= 0 && monthIdx < labels.length) {
             if (evt.type === 'preservation') {
-                preservationData[monthIdx] = withdrawalSteps[monthIdx];
+                preservationData[monthIdx] = activeWithdrawal[monthIdx];
                 hasPreservation = true;
             } else {
-                prosperityData[monthIdx] = withdrawalSteps[monthIdx];
+                prosperityData[monthIdx] = activeWithdrawal[monthIdx];
                 hasProsperity = true;
             }
         }
@@ -195,8 +213,8 @@ function renderChart(chartEl, results) {
             datasets: [
                 // Portfolio value (left axis)
                 {
-                    label: 'Portfolio Value',
-                    data: portfolioValues,
+                    label: useReal ? "Portfolio Value (today's $)" : 'Portfolio Value',
+                    data: activePortfolio,
                     yAxisID: 'yValue',
                     fill: false,
                     borderColor: 'rgba(59, 130, 246, 0.8)',
@@ -206,9 +224,8 @@ function renderChart(chartEl, results) {
                     tension: 0.3,
                     order: 2,
                 },
-                // Portfolio value in today's dollars — same series, same axis,
-                // deflated by the run's own price index.
-                ...(portfolioValuesReal ? [{
+                // Portfolio value in today's dollars — companion line when viewing nominal.
+                ...(!useReal && portfolioValuesReal ? [{
                     label: 'Portfolio Value (today’s $)',
                     data: portfolioValuesReal,
                     yAxisID: 'yValue',
@@ -222,8 +239,8 @@ function renderChart(chartEl, results) {
                 }] : []),
                 // Annual withdrawal (right axis, step-line)
                 {
-                    label: 'Annual Withdrawal',
-                    data: withdrawalSteps,
+                    label: useReal ? "Annual Withdrawal (today's $)" : 'Annual Withdrawal',
+                    data: activeWithdrawal,
                     yAxisID: 'yWithdrawal',
                     fill: false,
                     borderColor: 'rgba(239, 68, 68, 0.7)',
@@ -233,10 +250,8 @@ function renderChart(chartEl, results) {
                     stepped: 'before',
                     order: 1,
                 },
-                // Withdrawal in today's dollars. The guardrail machinery raises
-                // spending in nominal terms year after year; this line shows
-                // how much of that is real and how much is just inflation.
-                ...(withdrawalStepsReal ? [{
+                // Withdrawal in today's dollars — companion line when viewing nominal.
+                ...(!useReal && withdrawalStepsReal ? [{
                     label: 'Annual Withdrawal (today’s $)',
                     data: withdrawalStepsReal,
                     yAxisID: 'yWithdrawal',
@@ -282,7 +297,7 @@ function renderChart(chartEl, results) {
             plugins: {
                 title: {
                     display: true,
-                    text: `Guyton-Klinger Guardrails · ${params.withdrawalRate}% target rate · ±${params.adjustment}% adjustment`,
+                    text: `Guyton-Klinger Guardrails · ${params.withdrawalRate}% target rate · ±${params.adjustment}% adjustment (${useReal ? "Today's $" : 'Nominal'})`,
                     font: { size: 14, weight: '600' },
                     padding: { bottom: 16 },
                 },

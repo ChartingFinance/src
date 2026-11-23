@@ -85,6 +85,36 @@ const MC_SEED = 1;
 // chart replaced by a contradicting one.
 const INTERIM_EVERY = 50;
 
+let activeDollarMode = 'real';
+let activeOnRender = null;
+
+function seriesForMode(results, mode) {
+    const useReal = mode === 'real' && results.bandDataReal?.length === 5 && results.baselineDataReal?.length;
+    return {
+        useReal,
+        bandData: useReal ? results.bandDataReal : results.bandData,
+        baselineData: useReal ? results.baselineDataReal : results.baselineData,
+    };
+}
+
+/** Switch the rendered Monte Carlo chart between Today's $ and Nominal without re-running simulations. */
+export function setMonteCarloDollarMode(mode, onRender = activeOnRender) {
+    activeDollarMode = mode === 'nominal' ? 'nominal' : 'real';
+    if (!cachedResults || !monteCarloChart) return;
+    const { useReal, bandData, baselineData } = seriesForMode(cachedResults, activeDollarMode);
+    const ds = monteCarloChart.data.datasets;
+    ds[0].data = bandData[4];
+    ds[1].data = bandData[3];
+    ds[2].data = bandData[2];
+    ds[3].data = bandData[1];
+    ds[4].data = bandData[0];
+    ds[5].data = baselineData;
+    monteCarloChart.options.plugins.title.text =
+        `Monte Carlo · Portfolio Value${cachedResults.withGuardrails ? ' · With Guardrails' : ''} (${useReal ? "Today's $" : 'Nominal'})`;
+    monteCarloChart.update('none');
+    if (onRender) onRender(monteCarloChart);
+}
+
 /**
  * Resolves once the final fan chart has rendered (or null if there was
  * nothing to run).
@@ -92,7 +122,9 @@ const INTERIM_EVERY = 50;
  * `onRender(chart)` fires after every paint so callers can apply chart
  * decorations without setTimeout guesswork.
  */
-export function runMonteCarlo(sourceAssets, container, numSimulations = 1000, guardrailParams = null, retirementDateInt = null, runFromStart = false, lifeEvents = [], onRender = null) {
+export function runMonteCarlo(sourceAssets, container, numSimulations = 1000, guardrailParams = null, retirementDateInt = null, runFromStart = false, lifeEvents = [], onRender = null, dollarMode = activeDollarMode) {
+    activeDollarMode = dollarMode === 'nominal' ? 'nominal' : 'real';
+    activeOnRender = onRender;
     showLoading(container, 0, numSimulations);
     activeContainer = container;
     activeTotal = numSimulations;
@@ -108,6 +140,7 @@ export function runMonteCarlo(sourceAssets, container, numSimulations = 1000, gu
             startDateInt: new DateInt(results.startDateInt),
             retirementDateInt: retirementDateInt ?? null,
         };
+        const { useReal, bandData, baselineData } = seriesForMode(results, activeDollarMode);
         const isInterim = results.completed < results.numSimulations;
         const era = `${results.poolFirstYear}–${results.poolLastYear}`;
         const modeNote = results.dataMode === 'calibrated'
@@ -122,16 +155,18 @@ export function runMonteCarlo(sourceAssets, container, numSimulations = 1000, gu
             // retirement marker are constant within a run, and skipping the
             // canvas rebuild keeps 20 repaints cheap and flicker-free.
             const ds = monteCarloChart.data.datasets;
-            ds[0].data = results.bandData[4];
-            ds[1].data = results.bandData[3];
-            ds[2].data = results.bandData[2];
-            ds[3].data = results.bandData[1];
-            ds[4].data = results.bandData[0];
-            ds[5].data = results.baselineData;
+            ds[0].data = bandData[4];
+            ds[1].data = bandData[3];
+            ds[2].data = bandData[2];
+            ds[3].data = bandData[1];
+            ds[4].data = bandData[0];
+            ds[5].data = baselineData;
+            monteCarloChart.options.plugins.title.text =
+                `Monte Carlo · Portfolio Value${results.withGuardrails ? ' · With Guardrails' : ''} (${useReal ? "Today's $" : 'Nominal'})`;
             monteCarloChart.update('none');
         } else {
-            renderFanChart(chartEl, results.labels, results.bands, results.bandData,
-                results.baselineData, results.withGuardrails, results.retirementMonthIndex);
+            renderFanChart(chartEl, results.labels, results.bands, bandData,
+                baselineData, results.withGuardrails, results.retirementMonthIndex, useReal);
         }
         firstPaint = false;
         if (monteCarloChart && onRender) onRender(monteCarloChart);
@@ -211,7 +246,7 @@ export function runMonteCarlo(sourceAssets, container, numSimulations = 1000, gu
 
 // ── Chart rendering ──────────────────────────────────────────────
 
-function renderFanChart(chartEl, labels, bands, bandData, baselineData, withGuardrails, retirementMonthIndex) {
+function renderFanChart(chartEl, labels, bands, bandData, baselineData, withGuardrails, retirementMonthIndex, useReal = true) {
     chartEl.innerHTML = '';
 
     const canvas = document.createElement('canvas');
@@ -334,7 +369,7 @@ function renderFanChart(chartEl, labels, bands, bandData, baselineData, withGuar
             plugins: {
                 title: {
                     display: true,
-                    text: `Monte Carlo · Portfolio Value${withGuardrails ? ' · With Guardrails' : ''}`,
+                    text: `Monte Carlo · Portfolio Value${withGuardrails ? ' · With Guardrails' : ''} (${useReal ? "Today's $" : 'Nominal'})`,
                     font: { size: 14, weight: '600' },
                     padding: { bottom: 16 },
                 },

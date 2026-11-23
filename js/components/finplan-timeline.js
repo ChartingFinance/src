@@ -73,6 +73,7 @@ export class FinplanTimeline extends LitElement {
         lifeEvents:     { type: Array },
         portfolio:      { type: Object },
         metricName:     { type: String },
+        dollarMode:     { type: String },
         selectedYear:   { type: Number },
         selectedMonth:  { type: Number },
         selectedIndex:  { type: Number },
@@ -90,6 +91,7 @@ export class FinplanTimeline extends LitElement {
         this.lifeEvents = [];
         this.portfolio = null;
         this.metricName = 'value';
+        this.dollarMode = 'real';
         this.selectedYear = new Date().getFullYear();
         this.selectedMonth = new Date().getMonth() + 1;
         this.selectedIndex = 0;
@@ -406,7 +408,20 @@ export class FinplanTimeline extends LitElement {
         let realVals = null;
         if (hasRealDollarLine(this.metricName) && priceIndex?.length) {
             realVals = PriceIndex.deflate(vals, priceIndex);
-            // The scale must contain BOTH curves or the real line clips.
+        }
+
+        const isReal = this.dollarMode === 'real' && !!realVals;
+        const plotVals = isReal ? realVals : vals;
+
+        min = Infinity;
+        max = -Infinity;
+        for (const v of plotVals) {
+            if (v < min) min = v;
+            if (v > max) max = v;
+        }
+        // In nominal mode the dashed today's-$ line sits under the nominal
+        // curve, so the scale must contain both.
+        if (!isReal && realVals) {
             for (const v of realVals) {
                 if (v < min) min = v;
                 if (v > max) max = v;
@@ -421,7 +436,7 @@ export class FinplanTimeline extends LitElement {
         if (max < 0) max = 0;
 
         if (max === min) max = min + 1;   // avoid a zero-height range
-        return { vals, realVals, min, max, lastIdx, priceIndex };
+        return { vals, realVals, plotVals, isReal, min, max, lastIdx, priceIndex };
     }
 
     /** Age (fractional) at a given history index. */
@@ -667,19 +682,26 @@ export class FinplanTimeline extends LitElement {
                         <text x=${rateX.toFixed(1)} y=${PAD_T + 16} font-size="16" font-weight="700"
                               fill="${accent}" text-anchor="middle"><title>No growth rate: a rate needs ${metricLabel} above $0 at both the start and the end of the phase.</title>—</text>
                     `);
+                } else if (series.isReal && realCagr !== null) {
+                    parts.push(svg`
+                        <text x=${rateX.toFixed(1)} y=${PAD_T + 16} font-size="16" font-weight="700"
+                              fill="${accent}" text-anchor="middle">${realCagr.toFixed(1)}%/yr</text>
+                        <text x=${rateX.toFixed(1)} y=${PAD_T + 34} font-size="9.5" font-weight="600"
+                              fill="${accent}" opacity="0.6" text-anchor="middle">${cagr.toFixed(1)}%/yr nom.</text>
+                    `);
                 } else {
                     parts.push(svg`
                         <text x=${rateX.toFixed(1)} y=${PAD_T + 16} font-size="16" font-weight="700"
                               fill="${accent}" text-anchor="middle">${cagr.toFixed(1)}%/yr</text>
                     `);
-                }
-                if (realCagr !== null) {
-                    // +34 clears the 16px nominal figure's descender; measured,
-                    // not guessed — at +28 the two glyph boxes overlapped by 3px.
-                    parts.push(svg`
-                        <text x=${rateX.toFixed(1)} y=${PAD_T + 34} font-size="9.5" font-weight="600"
-                              fill="${accent}" opacity="0.6" text-anchor="middle">${realCagr.toFixed(1)}%/yr real</text>
-                    `);
+                    if (realCagr !== null) {
+                        // +34 clears the 16px nominal figure's descender; measured,
+                        // not guessed — at +28 the two glyph boxes overlapped by 3px.
+                        parts.push(svg`
+                            <text x=${rateX.toFixed(1)} y=${PAD_T + 34} font-size="9.5" font-weight="600"
+                                  fill="${accent}" opacity="0.6" text-anchor="middle">${realCagr.toFixed(1)}%/yr real</text>
+                        `);
+                    }
                 }
             }
         }
@@ -688,10 +710,10 @@ export class FinplanTimeline extends LitElement {
 
     /** Per-phase area fills + the single value curve on top. */
     _svgAreasAndCurve(spans, series, Y) {
-        const { vals, lastIdx } = series;
-        const step = Math.max(1, Math.floor(vals.length / 240));
+        const { plotVals, lastIdx } = series;
+        const step = Math.max(1, Math.floor(plotVals.length / 240));
 
-        const pointAt = (i) => `${this._ageToX(this._ageAtIndex(i)).toFixed(1)},${Y(vals[i]).toFixed(1)}`;
+        const pointAt = (i) => `${this._ageToX(this._ageAtIndex(i)).toFixed(1)},${Y(plotVals[i]).toFixed(1)}`;
 
         const curveIdxs = [];
         for (let i = 0; i <= lastIdx; i += step) curveIdxs.push(i);
@@ -733,10 +755,10 @@ export class FinplanTimeline extends LitElement {
             `);
         }
 
-        // Inflation-adjusted curve, drawn UNDER the nominal one. Phase area
-        // fills stay keyed to nominal only — a second set of fills would muddy
-        // every band without adding information.
-        if (series.realVals) {
+        // In nominal mode, draw the inflation-adjusted companion curve underneath.
+        // In Today's $ mode, plotVals IS realVals — no nominal curve above it to
+        // squash the vertical scale.
+        if (!series.isReal && series.realVals) {
             const realPointAt = (i) =>
                 `${this._ageToX(this._ageAtIndex(i)).toFixed(1)},${Y(series.realVals[i]).toFixed(1)}`;
             parts.push(svg`
@@ -784,11 +806,11 @@ export class FinplanTimeline extends LitElement {
      * (_renderEndpointValues), which keeps numbers out of the plot area.
      */
     _svgEndpoints(series, Y) {
-        const { vals, lastIdx } = series;
+        const { plotVals, lastIdx } = series;
         const x0 = this._ageToX(this._ageAtIndex(0));
-        const y0 = Y(vals[0]);
+        const y0 = Y(plotVals[0]);
         const x1 = this._ageToX(this._ageAtIndex(lastIdx));
-        const y1 = Y(vals[lastIdx]);
+        const y1 = Y(plotVals[lastIdx]);
         return svg`
             <circle cx=${x0.toFixed(1)} cy=${y0.toFixed(1)} r="3.5" fill="#fff" stroke="#111827" stroke-width="1.5"></circle>
             <circle cx=${x1.toFixed(1)} cy=${y1.toFixed(1)} r="4" fill="#111827"></circle>
@@ -797,19 +819,25 @@ export class FinplanTimeline extends LitElement {
 
     /**
      * Opening and closing values, above the arc: start on the left, end on the
-     * right, nominal bold over the inflation-adjusted figure on both sides.
+     * right, primary basis bold over the companion figure on both sides.
      */
     _renderEndpointValues(series) {
         if (!series) return nothing;
-        const { vals, realVals, lastIdx } = series;
-        const pair = (nominal, real, align) => html`
-            <div style="display: flex; flex-direction: column; align-items: ${align}; line-height: 1.25;">
-                <span style="font-size: 13px; font-weight: 700; color: #111827;">${formatCompactCurrency(nominal)}</span>
-                ${real != null ? html`
-                    <span style="font-size: 10.5px; font-weight: 600; color: #9ca3af;">${formatCompactCurrency(real)} today’s $</span>
-                ` : nothing}
-            </div>
-        `;
+        const { vals, realVals, isReal, lastIdx } = series;
+        const pair = (nominal, real, align) => {
+            const primary = isReal ? real : nominal;
+            const sub = isReal
+                ? `${formatCompactCurrency(nominal)} nominal`
+                : (real != null ? `${formatCompactCurrency(real)} today’s $` : null);
+            return html`
+                <div style="display: flex; flex-direction: column; align-items: ${align}; line-height: 1.25;">
+                    <span style="font-size: 13px; font-weight: 700; color: #111827;">${formatCompactCurrency(primary)}</span>
+                    ${sub ? html`
+                        <span style="font-size: 10.5px; font-weight: 600; color: #9ca3af;">${sub}</span>
+                    ` : nothing}
+                </div>
+            `;
+        };
         return html`
             <div class="flex items-start justify-between px-1" style="margin-bottom: 2px;">
                 ${pair(vals[0], realVals ? realVals[0] : null, 'flex-start')}
@@ -826,11 +854,11 @@ export class FinplanTimeline extends LitElement {
             const accent = LifeEventType.colorAccent(span.event.type);
             const idx = this._indexForAgeFrac(span.startAge, series.lastIdx);
             const cx = this._ageToX(this._ageAtIndex(idx));
-            const cy = Y(series.vals[idx]);
+            const cy = Y(series.plotVals[idx]);
             parts.push(svg`
                 <circle cx=${cx.toFixed(1)} cy=${cy.toFixed(1)} r="3.5" fill="#fff" stroke="${accent}" stroke-width="1.5"></circle>
                 <text x=${(cx + 8).toFixed(1)} y=${(cy - 8).toFixed(1)} font-size="10.5" font-weight="600"
-                      fill="${accent}">${formatCompactCurrency(series.vals[idx])}</text>
+                      fill="${accent}">${formatCompactCurrency(series.plotVals[idx])}</text>
             `);
         }
         return parts;
@@ -865,7 +893,7 @@ export class FinplanTimeline extends LitElement {
             if (ann.age < sAge || ann.age > fAge) return nothing;
             const px = this._ageToX(ann.age);
             const idx = this._indexForAgeFrac(ann.age, series.lastIdx);
-            const curveY = Y(series.vals[idx]);
+            const curveY = Y(series.plotVals[idx]);
             const py = Math.max(PAD_T - 4, curveY - 22 - ann.stackIndex * 26);
             return svg`
                 <g class="timeline-pin"
@@ -887,7 +915,7 @@ export class FinplanTimeline extends LitElement {
         const age = Math.max(sAge, Math.min(fAge, this._selectedAge));
         const cx = this._ageToX(age);
         const dotY = series
-            ? Y(series.vals[this._indexForAgeFrac(age, series.lastIdx)])
+            ? Y(series.plotVals[this._indexForAgeFrac(age, series.lastIdx)])
             : BASE_Y;
         return svg`
             <line x1=${cx.toFixed(1)} y1=${PAD_T - 14} x2=${cx.toFixed(1)} y2=${BASE_Y}
@@ -906,13 +934,20 @@ export class FinplanTimeline extends LitElement {
         const pct = ((this._ageToX(age) / ARC_W) * 100).toFixed(2);
         const color = this._cursorColor();
         const accent = this._cursorColorAccent();
+        const nominal = this._computeCursorMetric();
+        const real = this._cursorRealMetric();
+        const useReal = this.dollarMode === 'real' && real != null;
+        const primary = useReal ? real : nominal;
+        const sub = useReal
+            ? `${formatCompactCurrency(nominal)} nominal`
+            : (real != null ? `${formatCompactCurrency(real)} today’s $` : null);
         return html`
             <div class="timeline-cursor-chip"
                  style="left: clamp(80px, ${pct}%, calc(100% - 80px)); background: #ffffff; border: 1px solid ${color}40; color: ${accent};">
                 ${MONTH_NAMES[this.selectedMonth - 1]} ${this.selectedYear} · Age ${Math.floor(this._selectedAge)}
-                — <strong>${formatCompactCurrency(this._computeCursorMetric())}</strong>
-                ${this._cursorRealMetric() != null ? html`
-                    <span style="font-size: 10.5px; font-weight: 600; color: #9ca3af;">${formatCompactCurrency(this._cursorRealMetric())} today’s $</span>
+                — <strong>${formatCompactCurrency(primary)}</strong>
+                ${sub ? html`
+                    <span style="font-size: 10.5px; font-weight: 600; color: #9ca3af;">${sub}</span>
                 ` : nothing}
             </div>
         `;
