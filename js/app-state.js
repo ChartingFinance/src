@@ -16,15 +16,19 @@ const STORAGE_KEY_STORY_ARC  = 'activeStoryArc';
 const STORAGE_KEY_STORY_NAME = 'activeStoryName';
 
 export class AppState {
-  #portfolio     = null;
-  #lifeEvents    = [];
-  #storyArc      = 'default';
-  #storyName     = null;
-  #phaseIndex    = 0;
-  #metricName    = null;
-  #microMetric   = null;
-  #portfolioView = 'assets';
-  #editingConfig = null;
+  #portfolio      = null;
+  #lifeEvents     = [];
+  #storyArc       = 'default';
+  #storyName      = null;
+  #phaseIndex     = 0;
+  #metricName     = null;
+  #microMetric    = null;
+  #portfolioView  = 'assets';
+  #projView       = 'networth';
+  #projMetric     = null;
+  #projDrill      = 'all';
+  #projDollarMode = 'real';
+  #editingConfig  = null;
 
   #listeners = new Map();
 
@@ -33,11 +37,19 @@ export class AppState {
    * @param {string} [defaults.metricName]
    * @param {string} [defaults.microMetric]
    * @param {string} [defaults.portfolioView]
+   * @param {string} [defaults.projView]
+   * @param {string} [defaults.projMetric]
+   * @param {string} [defaults.projDrill]
+   * @param {string} [defaults.projDollarMode]
    */
   constructor(defaults = {}) {
-    if (defaults.metricName    != null) this.#metricName    = defaults.metricName;
-    if (defaults.microMetric   != null) this.#microMetric   = defaults.microMetric;
-    if (defaults.portfolioView != null) this.#portfolioView = defaults.portfolioView;
+    if (defaults.metricName     != null) this.#metricName     = defaults.metricName;
+    if (defaults.microMetric    != null) this.#microMetric    = defaults.microMetric;
+    if (defaults.portfolioView  != null) this.#portfolioView  = defaults.portfolioView;
+    if (defaults.projView       != null) this.#projView       = defaults.projView;
+    if (defaults.projMetric     != null) this.#projMetric     = defaults.projMetric;
+    if (defaults.projDrill      != null) this.#projDrill      = defaults.projDrill;
+    if (defaults.projDollarMode != null) this.#projDollarMode = defaults.projDollarMode;
   }
 
   /** Hydrate persisted fields from localStorage. */
@@ -132,4 +144,16 @@ export class AppState {
 
   get portfolioView() { return this.#portfolioView; }
   set portfolioView(v) { this.#portfolioView = v; this.#emit('portfolioView', v); }
+
+  get projView() { return this.#projView; }
+  set projView(v) { this.#projView = v; this.#emit('projView', v); }
+
+  get projMetric() { return this.#projMetric; }
+  set projMetric(v) { this.#projMetric = v; this.#emit('projMetric', v); }
+
+  get projDrill() { return this.#projDrill; }
+  set projDrill(v) { this.#projDrill = v; this.#emit('projDrill', v); }
+
+  get projDollarMode() { return this.#projDollarMode; }
+  set projDollarMode(v) { this.#projDollarMode = v; this.#emit('projDollarMode', v); }
 }

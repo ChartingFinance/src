@@ -1822,6 +1822,7 @@ function updateTimeline() {
     timeline.lifeEvents = appState.lifeEvents;
     timeline.portfolio = appState.portfolio;
     timeline.metricName = appState.metricName;
+    timeline.dollarMode = appState.projDollarMode;
 }
 
 // ── Asset List Events ───────────────────────────────────────
