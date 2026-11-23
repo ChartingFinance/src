@@ -268,7 +268,7 @@
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Asset Columns</div>
-                <div class="text-sm text-gray-500">Assets are organized into six collapsible columns &mdash; <strong>Income</strong>, <strong>Capital</strong>, <strong>Real Estate</strong>, <strong>Retirement</strong>, <strong>Expenses</strong>, and <strong>Taxes</strong> &mdash; each showing its group total. Expanding or collapsing a column also controls which individual assets appear in the Micro Projection chart.</div>
+                <div class="text-sm text-gray-500">Assets are organized into six collapsible columns &mdash; <strong>Income</strong>, <strong>Capital</strong>, <strong>Real Estate</strong>, <strong>Retirement</strong>, <strong>Expenses</strong>, and <strong>Taxes</strong> &mdash; each showing its group total.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Asset Cards</div>
@@ -499,34 +499,34 @@
             <span class="text-2xl">&#x1F4CA;</span>
             <h2 class="text-2xl font-bold tracking-tight">Projections</h2>
         </div>
-        <p class="text-gray-600 mb-6 leading-relaxed">Two side-by-side stacked bar charts showing your plan&rsquo;s trajectory across time: <strong>Macro</strong> displays grouped asset categories across the full plan, while <strong>Micro</strong> zooms into individual assets from whichever columns are expanded in Your Portfolio.</p>
+        <p class="text-gray-600 mb-6 leading-relaxed">A full-width drill-down chart of your plan&rsquo;s trajectory across time. Inspect grouped <strong>Net Worth</strong> composition, annual <strong>Taxes</strong>, or any other metric in <strong>Today&rsquo;s $</strong> or <strong>Nominal</strong> dollars &mdash; and drill straight into individual accounts without leaving the chart.</p>
 
         <!-- Elements -->
         <h3 class="text-lg font-bold mb-4">Elements</h3>
         <div class="grid sm:grid-cols-2 gap-4 mb-8">
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Macro Projection Chart</div>
-                <div class="text-sm text-gray-500">Stacked bars grouped by asset category over the full timeline for the active metric (time buckets automatically adapt from monthly to quarterly, semi-annual, or annual depending on plan length).</div>
+                <div class="font-semibold text-sm mb-1">View Tabs &amp; More Metrics</div>
+                <div class="text-sm text-gray-500">Switch between <strong>Net Worth</strong> (stacked asset categories with a dark Net Worth overlay line across positive assets and negative mortgages), <strong>Taxes</strong> (Federal Income, FICA/Medicare, Capital Gains, NIIT, and Property Tax), or pick any other metric from <strong>More metrics&hellip;</strong>. Projections keeps its own view state without changing your Timeline or Portfolio cards.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Micro Projection Chart</div>
-                <div class="text-sm text-gray-500">Shows individual assets from the columns currently expanded in Your Portfolio, with a dedicated metric dropdown tailored to those asset groups.</div>
+                <div class="font-semibold text-sm mb-1">Today&rsquo;s $ &amp; Nominal Toggle</div>
+                <div class="text-sm text-gray-500">Defaults to <strong>Today&rsquo;s $</strong> (deflated by the simulation&rsquo;s own inflation path so values decades ahead stay comparable to today&rsquo;s purchasing power). Switching to <strong>Nominal</strong> adds a dashed <em>Today&rsquo;s $</em> companion line on Net Worth.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Metric Selector</div>
-                <div class="text-sm text-gray-500">Switch between <strong>Net Worth</strong>, <strong>Net Worth Change</strong>, <strong>Growth</strong>, <strong>Cash Flow</strong>, <strong>Income</strong>, <strong>Expenses</strong>, <strong>Taxes</strong>, and more. Changing the Macro metric updates every section on the page.</div>
+                <div class="font-semibold text-sm mb-1">4-Tile KPI Strip</div>
+                <div class="text-sm text-gray-500">Summarizes key milestones for the active view &mdash; such as Net Worth at retirement, Peak Net Worth (year and age), Ending balance, and your <strong>Retirement Tax Mix</strong> (Taxable &middot; Tax-Deferred &middot; Roth), or Lifetime Taxes and Effective Tax Rate under Taxes.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Click-to-Cycle Viewing Badges</div>
-                <div class="text-sm text-gray-500">Every <strong>Viewing: Month Year &middot; Metric</strong> badge across the page is clickable &mdash; click one to step through the main metrics and update the timeline, cards, charts, and Visualizer together.</div>
+                <div class="font-semibold text-sm mb-1">Inline Drill-Down Pills</div>
+                <div class="text-sm text-gray-500">Click any category pill (such as <strong>Real Estate</strong>, <strong>Capital</strong>, or <strong>Retirement</strong>) to break the chart down into its individual accounts; click <strong>All groups</strong> to return to the full overview.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Phase &amp; Cursor Markers</div>
-                <div class="text-sm text-gray-500">Vertical dashed lines mark life-event phase transitions (such as Accumulate &rarr; Retire), and a black <strong>&#x25BC;</strong> marker tracks your current timeline date across charts.</div>
+                <div class="font-semibold text-sm mb-1">Milestone Markers &amp; Click-to-Jump</div>
+                <div class="text-sm text-gray-500">Vertical dashed lines flag key inflection points (<strong>Retire</strong>, <strong>Medicare 65</strong>, <strong>SS</strong>, <strong>RMDs 73</strong>, and <strong>Runs out</strong> if applicable), while the solid <strong>&#x25BC;</strong> line tracks your active timeline date. Hover any bar for the full year breakdown and total; click any bar to jump the timeline cursor directly to that period.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Fullscreen View</div>
-                <div class="text-sm text-gray-500">Click <strong>&#x26F6;</strong> in the upper-right of either chart to expand it fullscreen; press <strong>Escape</strong> or click <strong>&times;</strong> to return.</div>
+                <div class="text-sm text-gray-500">Click <strong>&#x26F6;</strong> in the upper-right to expand the chart fullscreen; press <strong>Escape</strong> or click <strong>&times;</strong> to return.</div>
             </div>
         </div>
 
@@ -538,15 +538,15 @@
                 <div class="space-y-2">
                     <div class="flex items-start gap-3">
                         <span class="step-number">1</span>
-                        <span class="text-sm text-gray-700">Use the <strong>Macro Projection</strong> chart to check the overall arc &mdash; growth during your working years and sustainable drawdown in retirement.</span>
+                        <span class="text-sm text-gray-700">Start on <strong>Net Worth</strong> in <strong>Today&rsquo;s $</strong> to check your overall purchasing-power arc and your <strong>Retirement Tax Mix</strong> in the KPI strip.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">2</span>
-                        <span class="text-sm text-gray-700">Click any <strong>viewing badge</strong> (or use the metric dropdown) to compare <em>Net Worth</em>, <em>Net Worth Change</em> (shows when withdrawals begin outpacing growth), <em>Growth</em>, <em>Cash Flow</em>, <em>Income</em>, <em>Expenses</em>, and <em>Taxes</em>.</span>
+                        <span class="text-sm text-gray-700">Click a category pill (like <strong>Retirement</strong>) to see individual accounts (401(k), IRA, Roth IRA), or switch to <strong>Taxes</strong> to spot RMD or capital-gains spikes.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">3</span>
-                        <span class="text-sm text-gray-700">Expand or collapse columns in Your Portfolio to focus the <strong>Micro chart</strong> on specific accounts, and scrub the timeline to inspect any date.</span>
+                        <span class="text-sm text-gray-700">Click any interesting bar to jump the timeline cursor to that year and inspect the exact Month &amp; Year Details, Flows, and Credit Memos.</span>
                     </div>
                 </div>
             </div>
