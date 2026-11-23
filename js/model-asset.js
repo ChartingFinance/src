@@ -64,6 +64,7 @@ function ratioOrDefault(raw, fallback) {
 
 export class ModelAsset {
   #metrics;
+  #recordEvents = true;
 
   /**
    * @param {Object} opts
@@ -590,8 +591,13 @@ export class ModelAsset {
   get monthlyCredits()               { return this.#metrics.get(Metric.CREDIT).history; }
 
 
-  setTrackHistory(enabled) {
-    this.#metrics.setTrackHistory(enabled);
+  setTrackHistory(enabled, keepNames = null) {
+    this.#metrics.setTrackHistory(enabled, keepNames);
+  }
+
+  /** Toggle per-event and credit-memo recording (disabled in Monte Carlo batch runs). */
+  setRecordEvents(enabled) {
+    this.#recordEvents = !!enabled;
   }
 
   getHistoryCount() {
@@ -888,6 +894,7 @@ export class ModelAsset {
    * @param {object}   [opts.data]    type-specific payload
    */
   recordEvent(type, amount, { metric = null, data = null } = {}) {
+    if (!this.#recordEvents) return;
     const event = new SimEvent(type, amount, this.currentDateInt, {
       metric, data,
       seq: this.events.length,

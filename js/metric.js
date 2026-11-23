@@ -500,8 +500,10 @@ export class MetricSet {
     for (const m of this._map.values()) m.initialize();
   }
 
-  setTrackHistory(enabled) {
-    for (const m of this._map.values()) m.trackHistory = enabled;
+  setTrackHistory(enabled, keepNames = null) {
+    for (const [name, m] of this._map) {
+      m.trackHistory = enabled || !!keepNames?.has(name);
+    }
   }
 
   snapshotAll(keepNames) {
