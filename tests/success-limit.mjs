@@ -183,7 +183,10 @@ await check('the answer keeps the floor the solver was given', async () => {
 await check('if the level found breaks the floor, the highest scanned level below it that keeps it is the answer', async () => {
     // What is left does not always fall as spending rises (spec 15 §2.1). A
     // curve written to rise: only the two lowest scanned levels leave the floor.
-    const floor = SOLVED.best.endingReal * 100;
+    // Pick a floor above the highest real ending wealth on the curve (not a
+    // multiple of the ceiling's near-zero residual), so the level found at 0.9
+    // reliably breaks the floor and exercises the fallback scan.
+    const floor = Math.max(...SOLVED.curve.map((p) => p.endingReal)) * 10;
     const curve = SOLVED.curve.map((p, i) => ({ ...p, endingReal: i < 2 ? floor + 1 : p.endingReal }));
     const { result } = await limited(step(0.9), { solved: { ...SOLVED, limits: { floor }, curve } });
     assert.equal(result.best.factor, curve[1].factor);

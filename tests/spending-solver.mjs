@@ -58,7 +58,7 @@ const planOf = (spec) => ({
 const PROFILES = at('2026-11-15T12:00:00Z', () =>
     listProfiles().map(({ key }) => ({ key, spec: planFromProfile(key) })));
 
-/** A retiree whose lower spending leaves a surplus idle in Checking. */
+/** A retiree with a pre-65 marketplace health plan. */
 const RETIREE = at('2026-10-15T12:00:00Z', () => buildPlan({
     settingsOverrides: { startAge: 60, retirementAge: 60, finishAge: 85 },
     income: [{ label: 'Pension', annual: 30000, kind: 'pension' }],
@@ -69,14 +69,48 @@ const RETIREE = at('2026-10-15T12:00:00Z', () => buildPlan({
         benchmark: { monthly: 950 }, estimatedIncome: 40000 }],
 }).spec);
 
+/**
+ * A retiree whose lower spending leaves over-withheld pension tax refunds idle
+ * in low-yield Checking (2%). Just above entered spending, the pre-65 bills
+ * empty Checking before age 65, so subsequent annual refunds route to
+ * Brokerage (8.5%) and ending wealth jumps up despite higher spending.
+ */
+const RISING = (() => {
+    const spec = at('2026-10-15T12:00:00Z', () => buildPlan({
+        settingsOverrides: { startAge: 60, retirementAge: 60, finishAge: 85 },
+        income: [{ label: 'Pension', annual: 120000, kind: 'pension' }],
+        accounts: [{ label: 'Checking', startingBalance: 25000 },
+                   { label: 'Brokerage', startingBalance: 600000 }],
+        healthInsurance: [{ label: 'Marketplace Plan', premium: { monthly: 1400 },
+            benchmark: { monthly: 950 }, estimatedIncome: 40000 }],
+    }).spec);
+    const pension = spec.modelAssets.find((a) => a.displayName === 'Pension');
+    const brok = spec.modelAssets.find((a) => a.displayName === 'Brokerage');
+    const chk = spec.modelAssets.find((a) => a.displayName === 'Checking');
+    const living = spec.modelAssets.find((a) => a.displayName === 'Living Expenses');
+    const health = spec.modelAssets.find((a) => a.displayName === 'Marketplace Plan');
+    living.startCurrency.amount = -1100;
+    for (const ev of spec.lifeEvents) {
+        ev.phaseTransfers[pension.id] = [{ toDisplayName: 'Brokerage', toId: brok.id, monthlyMoveValue: 100, closeMoveValue: 0 }];
+        ev.phaseTransfers[living.id] = [{ toDisplayName: 'Checking', toId: chk.id, monthlyMoveValue: 100, closeMoveValue: 0 }];
+        ev.phaseTransfers[health.id] = [{ toDisplayName: 'Checking', toId: chk.id, monthlyMoveValue: 100, closeMoveValue: 0 }];
+    }
+    return {
+        modelAssets: spec.modelAssets,
+        lifeEvents: spec.lifeEvents ?? [],
+        config: { ...simConfigFromPlanSpec(spec), pensionWithholdingRate: 0.45 },
+    };
+})();
+
 const keeps = (run, floor) => !run.runsOut && run.endingReal >= floor;
 /** A factor `dollars` a month above `factor`, at the entered plan's spending. */
 const above = (result, dollars) => result.best.factor + dollars / result.asEntered.monthlySpending;
 
 const solved = new Map();
-const solve = (key, spec, floor = 0) => {
+const solve = (key, specOrPlan, floor = 0) => {
     const id = `${key}:${floor}`;
-    if (!solved.has(id)) solved.set(id, solveSpending(planOf(spec), { floor }));
+    const plan = specOrPlan.config ? specOrPlan : planOf(specOrPlan);
+    if (!solved.has(id)) solved.set(id, solveSpending(plan, { floor }));
     return solved.get(id);
 };
 
@@ -218,7 +252,7 @@ await check('on the quick-starts the funded curve does not rise (measured, not a
 // ── Where the steady fall fails ──────────────────────────────────────
 
 await check('the retiree ends with more at a higher level of spending', () => {
-    const r = solve('retiree', RETIREE);
+    const r = solve('rising', RISING);
     assert.ok(r.rise, 'no rise found');
     assert.ok(r.rise.gain > 50_000, `gain ${Math.round(r.rise.gain)}`);
     // Near what was entered: just under it Checking keeps a surplus, just over
@@ -228,15 +262,15 @@ await check('the retiree ends with more at a higher level of spending', () => {
 });
 
 await check('and the result names the account that held the idle money', () => {
-    const r = solve('retiree', RETIREE);
+    const r = solve('rising', RISING);
     assert.equal(r.rise.account.displayName, 'Checking');
     assert.ok(r.rise.account.amount > 500_000, `${Math.round(r.rise.account.amount)}`);
 });
 
 await check('the solver takes the highest passing level, above a failing one', () => {
-    const floor = 5_100_000;
-    const r = solve('retiree', RETIREE, floor);
-    assert.ok(runAt(planOf(RETIREE), 1).endingReal < floor, 'as entered now passes the floor');
+    const floor = 5_900_000;
+    const r = solve('rising', RISING, floor);
+    assert.ok(runAt(RISING, 1).endingReal < floor, 'as entered now passes the floor');
     assert.ok(r.best.factor > 1, `answered ${r.best.factor}, at or below what was entered`);
     assert.ok(keeps(r.best, floor));
     assert.equal(r.boundBy.kind, 'floor');
@@ -430,7 +464,7 @@ await check('when no level passes it says so, with what the lowest leaves', () =
 });
 
 await check('the rising-curve note names the account, and is absent when the curve falls', () => {
-    assert.match(riseNote(solve('retiree', RETIREE)), /is left in Checking/);
+    assert.match(riseNote(solve('rising', RISING)), /is left in Checking/);
     const { spec } = PROFILES.find((p) => p.key === 'retired');
     assert.equal(riseNote(solve('retired', spec)), null);
 });

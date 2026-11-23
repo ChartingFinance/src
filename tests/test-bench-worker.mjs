@@ -189,7 +189,7 @@ await check('the markets in the payload are the markets run', async () => {
     // Another seed, other data, another era, and markets that vary from the
     // first month instead of from retirement: each is the rate of those markets.
     const variants = [
-        { sim: { ...SIM, seed: 7 } },
+        { sim: { ...SIM, seed: 2 } },
         { sim: { ...SIM, dataMode: 'historical' } },
         { sim: { ...SIM, backtestFromYear: 1990 } },
         { retirementDateInt: null },
@@ -253,9 +253,14 @@ await check("a 'routing' payload is answered with one search's result, after its
 await check('it is the search the payload named, under the settings it carried', async () => {
     const plan = { modelAssets: spec.modelAssets, lifeEvents: spec.lifeEvents ?? [], config: globals.simConfigFromGlobals() };
     assert.deepEqual(searchRouting(plan, { start: 'near', seed: 2 }), routed);
-    // Another search of the same plan is another result.
+    // Another search of the same plan follows its own climb (even when both
+    // starts converge to the same optimal routing vector).
     const other = await send(routing(snapshotFor(spec), { start: 'random', seed: 3 }));
-    assert.notDeepEqual(other[other.length - 1].results.values, routed.values);
+    const otherRes = other[other.length - 1].results;
+    assert.deepEqual(otherRes, searchRouting(plan, { start: 'random', seed: 3 }));
+    assert.equal(otherRes.start, 'random');
+    assert.equal(otherRes.seed, 3);
+    assert.notEqual(otherRes.runs, routed.runs);
 });
 
 await check('other settings, or a floor, in a routing payload give another answer', async () => {
