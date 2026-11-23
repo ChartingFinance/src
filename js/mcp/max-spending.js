@@ -196,7 +196,7 @@ export function maxSpendingMarkdown({ result, plan }, { handle = null } = {}) {
                   + ' so run as it stands it will not give this answer.'
                 : '')
             + (result.lossYearsLine
-                ? ' It has no loss years in it either: they are a condition of this answer, not part of the plan.'
+                ? ` It has no loss years in it${outlookClause(result.outlook) ? ' either' : ''}: they are a condition of this answer, not part of the plan.`
                 : ''));
     }
 

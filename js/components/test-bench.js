@@ -263,6 +263,7 @@ class TestBench extends LitElement {
         this._routingOutdated();
         this._cost = null;
         this._dates = null;
+        this.requestUpdate();
     }
 
     /** The routing test on screen no longer describes the plan, the floor or the outlook. */
@@ -384,6 +385,7 @@ class TestBench extends LitElement {
     }
 
     async run() {
+        if (this._lossInvalid()) return;
         const source = this.planSource?.();
         if (!source) return;
         // The plan under the conditions, once: every job and the chart run this copy.
@@ -433,6 +435,7 @@ class TestBench extends LitElement {
     // ── The routing test ────────────────────────────────────────────
 
     async runRouting() {
+        if (this._lossInvalid()) return;
         const source = this.planSource?.();
         if (!source) return;
         const conditions = this._conditions();
@@ -562,6 +565,10 @@ class TestBench extends LitElement {
     _resetConditions() {
         this._setOutlook(NEUTRAL_CONDITIONS.outlook);
         this._setLossCount(0);
+        this._lossText = {
+            stocks: this._lossFigures.stocks.map(String),
+            bonds: this._lossFigures.bonds.map(String),
+        };
     }
 
     _setSuccess(on, percent) {
@@ -638,7 +645,7 @@ class TestBench extends LitElement {
                      @pointerleave=${() => { this._hover = null; }}
                      @click=${(ev) => {
                          const p = funded[this._nearest(ev, plot)];
-                         this._setFloor(Math.floor(Math.max(0, p.endingReal) / 1000) * 1000, { rerun: true });
+                         this._setFloor(Math.floor(Math.max(0, p.endingReal) / 1000) * 1000, { rerun: !this._lossInvalid() });
                      }}>
                     <defs>
                         <pattern id="tb-hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
@@ -876,7 +883,7 @@ class TestBench extends LitElement {
                                        @click=${() => this._onStop()}>Stop</button>`
                         : html`<button type="button" class="btn-modern primary text-sm tb-run"
                                        ?disabled=${!this.ready || nothingToRoute || this._lossInvalid()}
-                                       title=${this.ready ? '' : 'Add assets to run the test'}
+                                       title=${!this.ready ? 'Add assets to run the test' : this._lossInvalid() ? 'A loss year\'s figure must be 0% to 100%' : ''}
                                        @click=${() => this.runRouting()}>&#9654; Search</button>`}
                 </div>
                 ${!running && this._status !== 'running' && this.ready && !nothingToRoute && this._spendingNeededForRouting()
@@ -1030,7 +1037,7 @@ class TestBench extends LitElement {
                     </div>
                     <div class="tb-caption">Today's dollars. Each bar is the end of its ${period}, and the last is the plan's last
                         month, so its total is the column's &ldquo;Left at the end&rdquo;. Every column is drawn on the same scale.
-                        As in Macro Projection, income and expenses count one month's amount. ${found}.</div>
+                        As in Projections, income and expenses count one month's amount. ${found}.</div>
                 </div>
             </div>`;
     }

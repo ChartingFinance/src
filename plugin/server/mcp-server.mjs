@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.3.57; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.3.58; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -43861,7 +43861,7 @@ function maxSpendingMarkdown({ result, plan }, { handle = null } = {}) {
     );
   }
   if (handle) {
-    lines.push("", `**The plan at this spending:** \`${handle}\`. Pass it to \`share_link\` to open it in the app, to \`run_plan\` (as \`shareUrl\`) for its full report, or to \`diff_plans\` against the plan it came from. The plan it came from is unchanged.` + (outlookClause(result.outlook) ? ` That plan has your own return rates, not the outlook's: this answer assumed ${outlookClause(result.outlook)}, so run as it stands it will not give this answer.` : "") + (result.lossYearsLine ? " It has no loss years in it either: they are a condition of this answer, not part of the plan." : ""));
+    lines.push("", `**The plan at this spending:** \`${handle}\`. Pass it to \`share_link\` to open it in the app, to \`run_plan\` (as \`shareUrl\`) for its full report, or to \`diff_plans\` against the plan it came from. The plan it came from is unchanged.` + (outlookClause(result.outlook) ? ` That plan has your own return rates, not the outlook's: this answer assumed ${outlookClause(result.outlook)}, so run as it stands it will not give this answer.` : "") + (result.lossYearsLine ? ` It has no loss years in it${outlookClause(result.outlook) ? " either" : ""}: they are a condition of this answer, not part of the plan.` : ""));
   }
   lines.push(
     "",

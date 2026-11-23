@@ -221,7 +221,9 @@ await check('the report names them in a line and in the headline', () => {
 
 await check('the plan handed back has no loss years, and the report says so', () => {
     assert.equal(JSON.stringify(lossy.solvedSpec).includes('returnSchedule'), false);
-    assert.match(maxSpendingMarkdown(lossy, { handle: 'plan_x' }), /It has no loss years in it either/);
+    assert.match(maxSpendingMarkdown(lossy, { handle: 'plan_x' }), /It has no loss years in it: they are/);
+    assert.match(maxSpendingMarkdown({ ...lossy, result: { ...lossy.result, outlook: 'pessimistic' } }, { handle: 'plan_x' }),
+        /It has no loss years in it either: they are/);
 });
 
 await check('max_spending refuses what the page refuses', async () => {
