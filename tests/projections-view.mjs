@@ -17,11 +17,12 @@ import { detectIssues } from '../js/portfolio-issues.js';
 import { Metric } from '../js/metric.js';
 import { AssetGroup } from '../js/asset-groups.js';
 import { DateInt } from '../js/utils/date-int.js';
+import { moneyFlows } from '../js/money-flows.js';
 import {
     ProjectionView, DollarMode,
     buildProjectionBuckets, dateIntToBucketIndex, bucketIndexToDateInt,
     getAvailableDrillGroups, buildProjectionMarkers, computeInvestableTaxMix,
-    buildProjectionData, buildProjectionChartConfig,
+    aggregateFundingLedger, buildProjectionData, buildProjectionChartConfig,
 } from '../js/projections-view.js';
 
 let passed = 0, failed = 0;
@@ -260,6 +261,100 @@ await check('buildProjectionChartConfig wires index tooltip with total + today\'
     const emptyCfg = buildProjectionChartConfig(emptyData);
     assert.equal(emptyCfg.data.datasets.length, 0);
     assert.equal(emptyCfg.options.plugins.title.display, true);
+});
+
+// ── Phase 2: Where Spending Comes From (single-pass ledger view) ─────
+
+await check('Where Spending Comes From obeys exact conservation across all 8 quick-start profiles (Nominal & Today\'s $)', async () => {
+    for (const { key } of listProfiles()) {
+        const spec = at(PINNED, () => planFromProfile(key));
+        const { portfolio } = await runPlan(spec);
+
+        for (const mode of [DollarMode.NOMINAL, DollarMode.REAL]) {
+            const f = buildProjectionData(portfolio, { view: ProjectionView.FUNDING, dollarMode: mode });
+            assert.equal(f.drillGroups.length, 0, `${key}: no drill pills on Funding`);
+            assert.ok(f.overlayLine, `${key}: has Spending + Taxes overlay line`);
+            assert.equal(f.overlayLine.stack, 'overlay-obligations');
+            assert.equal(f.kpis.length, 4);
+
+            for (const bar of f.barDatasets) {
+                assert.equal(bar.stack, 'bars');
+            }
+            for (let i = 0; i < f.buckets.length; i++) {
+                const barSum = f.barDatasets.reduce((s, d) => s + d.data[i], 0);
+                const expectedPaid = f.obligations[i] - f.unpaid[i];
+                assert.ok(Math.abs(barSum - expectedPaid) < 0.05,
+                    `${key} (${mode}) bucket ${i}: bars ${barSum} vs paid ${expectedPaid}`);
+            }
+        }
+    }
+});
+
+await check('Where Spending Comes From reconciles with moneyFlows() and attributes working vs retirement sources accurately', () => {
+    const midNom = buildProjectionData(midRun.portfolio, {
+        view: ProjectionView.FUNDING,
+        dollarMode: DollarMode.NOMINAL,
+    });
+    // Reconcile working year (2027) and retirement year (2049) directly against moneyFlows()
+    for (const targetYear of [2027, 2049, 2070]) {
+        const b = midNom.buckets.find((x) => x.year === targetYear);
+        assert.ok(b, `missing bucket for ${targetYear}`);
+        const mf = moneyFlows(midRun.portfolio, b.fromMonth, b.toMonth);
+        const mfNetPaid = mf.totals.spent + mf.totals.taxes;
+        assert.ok(Math.abs(midNom.totals[b.index] - mfNetPaid) <= 2,
+            `${targetYear}: funding ${midNom.totals[b.index]} vs moneyFlows ${mfNetPaid}`);
+    }
+
+    // Working year (2027): Salary covers 100% of spending + taxes
+    const workIdx = midNom.buckets.find((x) => x.year === 2027).index;
+    const salaryBar = midNom.barDatasets.find((d) => d.label.includes('Salary'));
+    assert.ok(salaryBar, 'expected Salary funding series');
+    assert.ok(Math.abs(salaryBar.data[workIdx] - midNom.totals[workIdx]) < 1,
+        'Salary should fund 100% of spending + taxes in working year 2027');
+
+    // Retirement year (2049): Social Security + Brokerage + 401(k)/IRA + Roth all contribute
+    const retIdx = midNom.buckets.find((x) => x.year === 2049).index;
+    const activeIn2049 = midNom.barDatasets.filter((d) => d.data[retIdx] > 100).map((d) => d.label);
+    assert.ok(activeIn2049.some((l) => l.includes('Social Security')), `expected SS in ${activeIn2049}`);
+    assert.ok(activeIn2049.some((l) => l.includes('Brokerage')), `expected Brokerage in ${activeIn2049}`);
+    assert.ok(activeIn2049.some((l) => l.includes('401(k)')), `expected 401(k)/IRA in ${activeIn2049}`);
+
+    // Retired profile has positive Guaranteed Share and 100% Coverage
+    const retFund = buildProjectionData(retiredRun.portfolio, {
+        view: ProjectionView.FUNDING,
+        dollarMode: DollarMode.REAL,
+    });
+    const guaranteedVal = Number(retFund.kpis[1].value.replace('%', ''));
+    assert.ok(guaranteedVal > 50, `expected >50% guaranteed share on retired, got ${retFund.kpis[1].value}`);
+    assert.equal(retFund.kpis[3].value, '100%');
+});
+
+await check('Where Spending Comes From reveals Early Career\'s unpaid shortfall gap and tooltip warning', () => {
+    const earlyFund = buildProjectionData(earlyRun.portfolio, {
+        view: ProjectionView.FUNDING,
+        dollarMode: DollarMode.REAL,
+    });
+    const gapIdx = earlyFund.buckets.findIndex((b) => b.year === 2030);
+    assert.ok(gapIdx >= 0, 'missing 2030 bucket on Early Career');
+    assert.ok(earlyFund.unpaid[gapIdx] > 100, `expected unpaid shortfall in 2030, got ${earlyFund.unpaid[gapIdx]}`);
+    assert.ok(earlyFund.obligations[gapIdx] > earlyFund.totals[gapIdx] + 100,
+        'Spending + Taxes line should sit visibly above funded bars in 2030');
+    assert.notEqual(earlyFund.kpis[3].value, '100%', 'Early Career coverage should be below 100%');
+    assert.match(earlyFund.kpis[3].sub, /^shortfall from /);
+
+    const cfg = buildProjectionChartConfig(earlyFund);
+    const footer = cfg.options.plugins.tooltip.callbacks.footer([{ dataIndex: gapIdx }]);
+    assert.equal(footer.length, 3);
+    assert.match(footer[0], /^Funded: \$/);
+    assert.match(footer[1], /^Spending \+ Taxes: \$/);
+    assert.match(footer[2], /^Unpaid shortfall: \$/);
+});
+
+await check('aggregateFundingLedger memoizes per Portfolio instance in a single pass', () => {
+    const buckets = buildProjectionBuckets(midRun.portfolio);
+    const firstCall = aggregateFundingLedger(midRun.portfolio, buckets);
+    const secondCall = aggregateFundingLedger(midRun.portfolio, buckets);
+    assert.equal(firstCall, secondCall, 'expected WeakMap cache hit on repeated call');
 });
 
 console.log(`\n${passed} passed, ${failed} failed`);

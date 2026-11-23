@@ -535,7 +535,9 @@ const aiGenerators = (ai) => ({
             ? Metric.TAXES
             : appState.projView === ProjectionView.NET_WORTH
                 ? Metric.VALUE
-                : appState.projMetric;
+                : appState.projView === ProjectionView.FUNDING
+                    ? Metric.CASH_FLOW
+                    : appState.projMetric;
         return ai.generateProjectionsSectionMarkdown(appState.portfolio, m);
     },
     montecarlo:  () => ai.generateMonteCarloSectionMarkdown(appState.portfolio, mcModule?.getMonteCarloResults() ?? null),
