@@ -43,6 +43,7 @@ import { scaledAssets } from './spending-solver.js';
 import { routingGenes, searchesAt, estimateRuns } from './routing-search.js';
 import { guardrailsOutcome, simulationOutcome, successTone } from './outcome-summary.js';
 import { MarketOutlook, returnShift } from './market-outlook.js';
+import { buildYearPool } from './mc-compute.js';
 
 /** Simulated markets per column. Enough for a rate to the nearest few points. */
 export const CHECK_SIMULATIONS = 300;
@@ -157,6 +158,17 @@ function simFor(plan) {
             ? parseInt(global_backtestYear, 10) : null,
         returnShift: returnShift(plan.outlook),
     };
+}
+
+/**
+ * The data the simulated markets draw from, as a result's Found under line
+ * names it (test-bench-view.js): the data mode and the years of the pool.
+ */
+export function marketsData() {
+    const backtest = global_backtestYear && global_backtestYear !== 'current'
+        ? parseInt(global_backtestYear, 10) : null;
+    const pool = buildYearPool(backtest);
+    return { dataMode: global_simDataMode, firstYear: pool.firstYear, lastYear: pool.lastYear };
 }
 
 /** The two checks of one column, as jobs to start. */

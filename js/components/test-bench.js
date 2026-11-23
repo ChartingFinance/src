@@ -1,6 +1,25 @@
 /**
  * <test-bench> — the Test Bench section. Two tests of the plan on screen.
  *
+ * ── The layout (spec 18) ─────────────────────────────────────────────
+ *
+ * Three kinds of lever, three places (test-bench-view.js):
+ *
+ *   - CONDITIONS, about the world, sit in a card above both tests: the market
+ *     outlook today. A new condition is one more row of the card. On a phone
+ *     the card collapses to one line, with an Edit button;
+ *   - LIMITS belong to the spending test, as a short form on its tab;
+ *   - EFFORT (Depth) belongs to the routing test, on its tab.
+ *
+ * The two tests are tabs of one card. The chart sits under the tabs, never in
+ * one, because Chart.js draws at zero size in a hidden element.
+ *
+ * Nothing runs by itself. Run runs the spending test, Search the routing test,
+ * and a click on the curve sets the floor and runs at once. A changed lever
+ * dims every result it affects, with one line saying so, until it is run
+ * again. Every result opens with a "Found under" line naming the conditions
+ * it was found under; nothing else on the page restates them.
+ *
  * ── Spending: "how much can this plan spend?" ────────────────────────
  *
  * One question, asked as limits: spend the most that never runs out, leaves
@@ -45,6 +64,7 @@
  * start, and puts it under the outlook then (outlookPlan), so both tests, their
  * checks and the chart all run the same copy. The plan on screen is not
  * changed, and a save sends only amounts and a routing, never the copy's rates.
+ * Changing it starts nothing: the results found under another outlook dim.
  *
  * The element changes nothing. "Save as a scenario" asks the app to save the
  * solved amounts, the selected routing, or both as a new scenario; the plan
@@ -67,7 +87,7 @@
 
 import { LitElement, html, svg, nothing } from 'lit';
 import { Chart } from 'chart.js';
-import { runTestBench, cancelTestBench, CHECK_SIMULATIONS,
+import { runTestBench, cancelTestBench, CHECK_SIMULATIONS, marketsData,
          runRoutingTest, runRoutingChecks, cancelRouting, routingCost, benchPlan } from '../test-bench-run.js';
 import { columnSeries, stackedRange, chartConfig, CHART_COLUMNS, periodWord } from '../test-bench-chart.js';
 import { DateInt, monthLabel } from '../utils/date-int.js';
@@ -76,7 +96,9 @@ import { DEPTHS, DEFAULT_DEPTH, rankSearches } from '../routing-search.js';
 import { startsLabel, costLine, agreementLine, changeRows, versusEntered, routingHeadline,
          isLoneBest, LONE_BEST_NOTE, DEPTH_NOTES } from '../routing-report.js';
 import { formatCompactCurrency, formatCurrency } from '../utils/html.js';
-import { MarketOutlook, OUTLOOKS, outlookPlan, outlookLabel, outlookNote, returnShift } from '../market-outlook.js';
+import { MarketOutlook, OUTLOOKS, outlookPlan, outlookLabel, returnShift } from '../market-outlook.js';
+import { NEUTRAL_CONDITIONS, conditionsOf, isNeutral, conditionChips, foundUnderChips, foundUnderText,
+         spendingChanges, routingChanges, changedLine, tabColumn } from '../test-bench-view.js';
 
 /** The line under the outlook control. */
 function outlookLine(outlook) {
@@ -86,10 +108,15 @@ function outlookLine(outlook) {
         + ' Inflation, wages and cash stay as entered.';
 }
 
-/** ", with stock and bond returns 1% a year higher than you entered", or '' at Moderate. */
-function routedTilt(outlook) {
-    const shift = returnShift(outlook);
-    return shift ? `, with stock and bond returns 1% a year ${shift > 0 ? 'higher' : 'lower'} than you entered` : '';
+const TABS = Object.freeze([
+    { id: 'spending', label: 'Spending', title: 'How much can this plan spend?' },
+    { id: 'routing', label: 'Routing', title: "Is there a better way to route this plan's money?" },
+]);
+
+/** A Found under line, one chip each. */
+function foundUnderLine(chips) {
+    return html`<p class="tb-found"><span class="tb-found-label">Found under</span>${chips.map((c) =>
+        html`<span class="tb-chip">${c}</span>`)}</p>`;
 }
 
 // The curve's drawing area, in viewBox units.
@@ -121,6 +148,8 @@ class TestBench extends LitElement {
         _rStale:    { state: true },
         _rError:    { state: true },
         _chartColumn: { state: true },   // the table column the chart shows: 'entered' | 'best' | 'routed'
+        _tab:            { state: true },   // the test on show: 'spending' | 'routing'
+        _conditionsOpen: { state: true },   // on a phone, the Conditions card is open
     };
 
     constructor() {
@@ -156,6 +185,9 @@ class TestBench extends LitElement {
         this._rCheckCache = new Map();
         this._cost = null;         // routingCost() of the depth; null means work it out
         this._chartColumn = 'best';
+        this._tab = 'spending';
+        this._conditionsOpen = false;
+        this._under = null;        // the levers the spending result on screen was found under
         this._chartPlan = null;    // benchPlan() of the spending test on screen
         this._rChartPlan = null;   // and of the routing test on screen
         this._series = new Map();  // columnSeries() of the spending test's columns, by key
@@ -227,12 +259,81 @@ class TestBench extends LitElement {
         }
     }
 
+    // ── The levers ──────────────────────────────────────────────────
+
+    /** The conditions on screen. */
+    _conditions() {
+        return conditionsOf({ outlook: this._outlook });
+    }
+
+    /** The spending test's limits on screen. */
+    _limits() {
+        return { floor: this._floor, successOn: this._successOn, successPercent: this._successPercent };
+    }
+
+    /**
+     * The line over the spending result when it no longer describes the
+     * levers on screen, or null. A rerun in flight says so instead.
+     */
+    _spendingChanged() {
+        if (!this._result) return null;
+        if (this._stale) return 'The plan or its settings changed after this test. Run it again.';
+        const line = changedLine(spendingChanges(this._under,
+            { conditions: this._conditions(), limits: this._limits() }), 'Run');
+        return line && this._status === 'running' ? 'Running the test again…' : line;
+    }
+
+    /** The same, for the routing list on screen. */
+    _routingChanged() {
+        if (!this._searches) return null;
+        if (this._rStale) return 'The plan or its settings changed after this test. Search again.';
+        return changedLine(routingChanges({ conditions: { outlook: this._rOutlook }, floor: this._rFloor },
+            { conditions: this._conditions(), floor: this._floor }), 'Search');
+    }
+
+    /**
+     * Whether Search must run the spending test first: routings are compared
+     * with its answer, at the floor and conditions on screen.
+     */
+    _spendingNeededForRouting() {
+        const r = this._result;
+        return !r || this._stale || r.limits.floor !== this._floor || r.outlook !== this._outlook;
+    }
+
+    _setTab(tab) {
+        if (tab === this._tab) return;
+        this._tab = tab;
+        // Each tab opens the chart on its own column (spec 18, §3.4).
+        this._chartColumn = tabColumn(tab);
+    }
+
+    /** Arrow keys move between the tabs, as a tab list's do. */
+    _onTabKey(ev) {
+        const at = TABS.findIndex((t) => t.id === this._tab);
+        const to = ev.key === 'ArrowRight' ? (at + 1) % TABS.length
+            : ev.key === 'ArrowLeft' ? (at + TABS.length - 1) % TABS.length
+            : ev.key === 'Home' ? 0 : ev.key === 'End' ? TABS.length - 1 : -1;
+        if (to < 0) return;
+        ev.preventDefault();
+        this._setTab(TABS[to].id);
+        this.updateComplete.then(() => this.querySelector(`#tb-tab-${TABS[to].id}`)?.focus());
+    }
+
+    /** The Routing tab's link to the floor, which lives on the Spending tab. */
+    async _editFloor() {
+        this._setTab('spending');
+        await this.updateComplete;
+        this.querySelector('.tb-floor-field input')?.focus();
+    }
+
     async run() {
         const source = this.planSource?.();
         if (!source) return;
         // The plan under the outlook, once: every job and the chart run this copy.
         const outlook = this._outlook;
         const plan = outlookPlan(source, outlook);
+        // What the result will have been found under: the levers as Run was clicked.
+        const under = { conditions: this._conditions(), limits: this._limits(), data: marketsData() };
         this._status = 'running';
         this._error = '';
         this._checks = {};
@@ -244,21 +345,19 @@ class TestBench extends LitElement {
         // The plan as it is now: a test is cancelled if it changes, so the
         // answer that comes back is for this one.
         const chartPlan = benchPlan(plan);
-        // Routing results depend on the floor and market outlook, so changing
-        // either marks any routing results on screen as stale.
-        if (this._searches && (floor !== this._rFloor || outlook !== this._rOutlook)) this._routingOutdated();
         try {
             await runTestBench(plan, { floor, success }, {
                 solving: (tested, completed, total) => { this._solving = { tested, completed, total }; },
                 solved: (result) => {
                     this._cost = null;   // a plan run has been timed
                     this._result = result;
+                    this._under = under;
                     this._status = 'done';
                     this._solving = null;
                     this._hover = null;
                     this._chartPlan = chartPlan;
                     this._series = new Map();
-                    this._chartColumn = result.best ? 'best' : 'entered';
+                    this._chartColumn = tabColumn(this._tab);
                 },
                 check: (column, check, value) => {
                     this._checks = { ...this._checks, [`${column}.${check}`]: value ?? { failed: true } };
@@ -279,9 +378,9 @@ class TestBench extends LitElement {
         const source = this.planSource?.();
         if (!source) return;
         const plan = outlookPlan(source, this._outlook);
-        // The list is read against the spending test's columns, at this floor and outlook.
-        if (!this._result || this._stale || this._result.limits.floor !== this._floor
-            || this._result.outlook !== this._outlook) this.run();
+        // The list is read against the spending test's columns, at this floor
+        // and outlook, so Search runs that test too when its answer is not for them.
+        if (this._spendingNeededForRouting()) this.run();
 
         const run = (this._rRun = {});
         this._rStatus = 'running';
@@ -383,18 +482,24 @@ class TestBench extends LitElement {
         });
     }
 
+    // A changed lever starts nothing: the results it affects dim until they
+    // are run again (spec 18, §3.5). Only a click on the curve runs at once.
+
     _setFloor(value, { rerun = false } = {}) {
         const floor = Math.max(0, Math.round(Number(value) || 0));
         if (floor === this._floor && !rerun) return;
         this._floor = floor;
-        if (rerun || this._result) this.run();
+        if (rerun) this.run();
     }
 
     _setOutlook(outlook) {
         if (outlook === this._outlook) return;
         this._outlook = outlook;
-        if (this._result) this.run();
-        else if (this._searches) this._routingOutdated();
+    }
+
+    /** Reset to as entered: every condition at its neutral setting. */
+    _resetConditions() {
+        this._setOutlook(NEUTRAL_CONDITIONS.outlook);
     }
 
     _setSuccess(on, percent) {
@@ -402,7 +507,6 @@ class TestBench extends LitElement {
         if (on === this._successOn && clamped === this._successPercent) return;
         this._successOn = on;
         this._successPercent = clamped;
-        if (this._result) this.run();
     }
 
     _onFloorInput(ev) {
@@ -560,15 +664,13 @@ class TestBench extends LitElement {
                         ${third(() => this._checkCell('routed', 'guardrails'))}</tr>
                 </tbody>
             </table>
-            <div class="tb-caption">Today's dollars. Spending is what the plan pays out to live on; taxes are not in it.</div>
-            ${outlookNote(this._result.outlook)
-                ? html`<div class="tb-caption tb-outlook-note">${outlookNote(this._result.outlook)}</div>` : nothing}`;
+            <div class="tb-caption">Today's dollars. Spending is what the plan pays out to live on; taxes are not in it.</div>`;
     }
 
-    /** spendingHeadline()'s sentence, with the figure in bold. */
+    /** spendingHeadline()'s sentence, with the figure in bold. Found under names the conditions. */
     _headline() {
         const best = this._result.best;
-        const text = spendingHeadline(this._result);
+        const text = spendingHeadline(this._result, { withConditions: false });
         if (!best) return text;
         const figure = `${formatCurrency(best.monthlySpending)} a month`;
         const [before, after] = text.split(figure);
@@ -584,13 +686,19 @@ class TestBench extends LitElement {
                 ? ` (${this._progress.confirm.completed} of ${this._progress.confirm.total})` : ''}…`
             : confirm.failed ? null
             : `Across 1,000 simulated markets the answer lasts in ${confirm.percent}%.`;
-        const notes = [successNote(result), confirmNote, riseNote(result), healthNote(result)].filter(Boolean);
+        const notes = [successNote(result, { withConditions: false }), confirmNote, riseNote(result), healthNote(result)]
+            .filter(Boolean);
+        const changed = this._spendingChanged();
         const saveTitle = !result.best ? 'No spending level kept the limits'
-            : this._stale ? 'Run the test again first: the plan or its settings changed'
+            : changed ? changed
             : !this.canSave ? 'Save the plan on screen as a scenario first'
             : 'Saves these amounts as a new scenario. The plan on screen is not changed.';
+        // The table always holds a simulated-markets row, so the line names their data.
+        const chips = foundUnderChips({ conditions: this._under.conditions, data: this._under.data });
         return html`
-            <div class="tb-result ${this._stale ? 'is-stale' : ''}" title=${this._stale ? 'From before your latest change' : ''}>
+            <div class="tb-result ${changed ? 'is-stale' : ''}" title=${changed ? 'Found under other settings than the ones shown' : ''}>
+                ${changed ? html`<p class="tb-changed" role="status">${changed}</p>` : nothing}
+                ${foundUnderLine(chips)}
                 <p class="tb-headline">${this._headline()}</p>
                 <div class="tb-grid">
                     ${this._renderCurve()}
@@ -606,10 +714,9 @@ class TestBench extends LitElement {
                 ${notes.map((note) => html`<p class="tb-note">${note}</p>`)}
                 <div class="tb-actions">
                     <button type="button" class="btn-modern outline text-sm" title=${saveTitle}
-                            ?disabled=${!result.best || this._stale || !this.canSave}
+                            ?disabled=${!result.best || !!changed || !this.canSave}
                             @click=${() => this.dispatchEvent(new CustomEvent('testbench-save',
                                 { detail: { factor: result.best.factor, outlook: result.outlook }, bubbles: true }))}>Save as a scenario</button>
-                    ${this._stale ? html`<span class="tb-sub">The plan or its settings changed after this test. Run it again.</span>` : nothing}
                 </div>
             </div>`;
     }
@@ -651,8 +758,9 @@ class TestBench extends LitElement {
     _renderChanges(row) {
         const result = row.result;
         const rows = changeRows(result.changes);
-        const blocked = this._rStale || this._rStatus !== 'done' || !this.canSave;
-        const why = this._rStale ? 'Run the routing test again first: the plan, its settings, the floor or the market outlook changed'
+        const changed = this._routingChanged();
+        const blocked = !!changed || this._rStatus !== 'done' || !this.canSave;
+        const why = changed ? changed
             : this._rStatus !== 'done' ? 'The searches are still running'
             : !this.canSave ? 'Save the plan on screen as a scenario first'
             : 'Saves a new scenario. The plan on screen is not changed.';
@@ -668,7 +776,7 @@ class TestBench extends LitElement {
                 </table>
                 <div class="tb-caption">The share of each income paid into an account, and of each expense paid from one.
                     Draws on retirement accounts before 60 are left as you entered them. Routings are found and compared on
-                    the plan's own path of returns${routedTilt(this._rOutlook)}; the simulated-markets limit is not applied to them.</div>
+                    the plan's own path of returns; the simulated-markets limit is not applied to them.</div>
                 <div class="tb-actions">
                     <button type="button" class="btn-modern outline text-sm" title=${why} ?disabled=${blocked}
                             @click=${() => save(1)}>Save this routing as a scenario</button>
@@ -683,9 +791,14 @@ class TestBench extends LitElement {
         const nothingToRoute = cost && cost.genes === 0;
         const { ranked, row } = this._ranked();
         const total = this._searches?.length ?? 0;
+        const changed = this._routingChanged();
         return html`
             <div class="tb-routing">
-                <div class="slot-heading tb-routing-heading">Routing: is there a better way to route this plan's money?</div>
+                ${this._floor > 0 ? html`
+                    <p class="tb-floor-note">Routings are ranked by what each lets the plan spend while it leaves at least
+                        <strong>${formatCurrency(this._floor)}</strong> at the end.
+                        <button type="button" class="tb-link" @click=${() => this._editFloor()}>Change it on Spending</button></p>`
+                    : nothing}
                 <div class="tb-ask">
                     <label class="tb-depth">Depth
                         <select aria-label="How many searches to run" ?disabled=${running}
@@ -704,9 +817,14 @@ class TestBench extends LitElement {
                                        title=${this.ready ? '' : 'Add assets to run the test'}
                                        @click=${() => this.runRouting()}>&#9654; Search</button>`}
                 </div>
+                ${!running && this._status !== 'running' && this.ready && !nothingToRoute && this._spendingNeededForRouting()
+                    ? html`<p class="tb-sub tb-search-note">Search runs the Spending test too: routings are compared with its
+                        answer, at this floor and these conditions.</p>` : nothing}
                 ${this._rStatus === 'error' ? html`<p class="tb-error">The test failed: ${this._rError}</p>` : nothing}
                 ${this._searches ? html`
-                    <div class="tb-result ${this._rStale ? 'is-stale' : ''}" title=${this._rStale ? 'From before your latest change' : ''}>
+                    <div class="tb-result ${changed ? 'is-stale' : ''}" title=${changed ? 'Found under other settings than the ones shown' : ''}>
+                        ${changed ? html`<p class="tb-changed" role="status">${changed}</p>` : nothing}
+                        ${foundUnderLine(foundUnderChips({ conditions: { outlook: this._rOutlook }, floor: this._rFloor }))}
                         <div class="tb-routing-body">
                             ${this._renderRoutingList(ranked, row)}
                             <p class="tb-note">${running
@@ -715,7 +833,6 @@ class TestBench extends LitElement {
                                   + agreementLine(ranked)}</p>
                             ${row ? this._renderChanges(row) : nothing}
                         </div>
-                        ${this._rStale ? html`<p class="tb-sub">The plan, its settings, the floor or the market outlook changed after this test. Search again.</p>` : nothing}
                     </div>`
                 : html`<p class="tb-sub">Tries other ways to split each income across accounts and to pay each expense, and ranks
                     them by what the plan could then spend. A deeper test runs more searches and takes longer; it all runs on this
@@ -725,9 +842,9 @@ class TestBench extends LitElement {
 
     // ── The chart ───────────────────────────────────────────────────
 
-    /** Show the routing, when a routing test has just finished with one in the table. */
+    /** Show the routing, when a routing test has just finished on its tab with one in the table. */
     _chartNewest() {
-        if (this._tableRouted()) this._chartColumn = 'routed';
+        if (this._tab === 'routing' && this._tableRouted()) this._chartColumn = 'routed';
     }
 
     /**
@@ -821,6 +938,11 @@ class TestBench extends LitElement {
         const series = this._cached(shown);
         const f = shown.figures;
         const period = periodWord(series?.periodMonths ?? 12);
+        // The column's own result: what it was found under, and whether it is out of date.
+        const routed = shown.id === 'routed';
+        const changed = routed ? this._routingChanged() : this._spendingChanged();
+        const found = routed ? foundUnderText({ conditions: { outlook: this._rOutlook }, floor: this._rFloor })
+            : foundUnderText({ conditions: this._under.conditions });
         return html`
             <div class="tb-chart">
                 <div class="slot-heading tb-routing-heading">Chart: what the plan holds over the years</div>
@@ -834,7 +956,7 @@ class TestBench extends LitElement {
                     <span class="tb-ask-text">Left at the end <strong>${formatCompactCurrency(f.endingReal)}</strong>${f.runsOut
                         ? html`, and runs out in ${monthLabel(DateInt.from(f.runsOut.year, f.runsOut.month))}` : nothing}</span>
                 </div>
-                <div class="tb-result ${this._stale ? 'is-stale' : ''}" title=${this._stale ? 'From before your latest change' : ''}>
+                <div class="tb-result ${changed ? 'is-stale' : ''}" title=${changed ? 'Found under other settings than the ones shown' : ''}>
                     <div class="tb-chart-body">
                         <div class="tb-chart-wrap">
                             <canvas role="img"
@@ -846,48 +968,101 @@ class TestBench extends LitElement {
                     </div>
                     <div class="tb-caption">Today's dollars. Each bar is the end of its ${period}, and the last is the plan's last
                         month, so its total is the column's &ldquo;Left at the end&rdquo;. Every column is drawn on the same scale.
-                        As in Macro Projection, income and expenses count one month's amount.${outlookNote(this._result.outlook)
-                            ? ` ${outlookNote(this._result.outlook)}` : ''}</div>
+                        As in Macro Projection, income and expenses count one month's amount. ${found}.</div>
                 </div>
             </div>`;
     }
 
-    render() {
+    // ── The layout ──────────────────────────────────────────────────
+
+    /** The Conditions card: about the world, above both tests. */
+    _renderConditions() {
+        const now = this._conditions();
+        const neutral = isNeutral(now);
+        const open = this._conditionsOpen;
+        return html`
+            <section class="tb-conditions ${open ? 'is-open' : ''}" aria-labelledby="tb-conditions-title">
+                <div class="tb-conditions-head">
+                    <div class="tb-conditions-titles">
+                        <h3 id="tb-conditions-title" class="tb-conditions-title">Conditions</h3>
+                        <span class="tb-conditions-summary">${conditionChips(now).join(' · ') || 'As entered'}</span>
+                        <span class="tb-sub tb-conditions-sub">Apply to every test and the chart. Your plan is not changed.</span>
+                    </div>
+                    <button type="button" class="tb-link tb-reset" ?disabled=${neutral}
+                            title=${neutral ? 'Every condition is as entered' : 'Put every condition back as entered'}
+                            @click=${() => this._resetConditions()}>Reset to as entered</button>
+                    <button type="button" class="tb-link tb-conditions-edit" aria-expanded=${open ? 'true' : 'false'}
+                            aria-controls="tb-condition-rows"
+                            @click=${() => { this._conditionsOpen = !open; }}>${open ? 'Done' : 'Edit'}</button>
+                </div>
+                <div id="tb-condition-rows" class="tb-condition-rows">
+                    <div class="tb-condition">
+                        <span class="tb-condition-label" id="tb-outlook-label">Market returns</span>
+                        <div class="tb-condition-control">
+                            <div class="tb-columns" role="radiogroup" aria-labelledby="tb-outlook-label">
+                                ${OUTLOOKS.map((o) => html`
+                                    <label class="tb-column ${o === this._outlook ? 'is-on' : ''}">
+                                        <input type="radio" name="tb-outlook" .checked=${o === this._outlook}
+                                               @change=${() => this._setOutlook(o)}>${outlookLabel(o)}</label>`)}
+                            </div>
+                            <span class="tb-sub">${outlookLine(this._outlook)}</span>
+                        </div>
+                    </div>
+                </div>
+            </section>`;
+    }
+
+    /** The tab list: one tab per test, with a word while one runs. */
+    _renderTabs() {
+        const busy = { spending: this._status === 'running' ? 'running…' : '',
+                       routing: this._rStatus === 'running' ? 'searching…' : '' };
+        return html`
+            <div class="tb-tabs" role="tablist" aria-label="Tests" @keydown=${(ev) => this._onTabKey(ev)}>
+                ${TABS.map((t) => html`
+                    <button type="button" role="tab" id="tb-tab-${t.id}" class="tb-tab ${t.id === this._tab ? 'is-on' : ''}"
+                            aria-selected=${t.id === this._tab ? 'true' : 'false'} aria-controls="tb-panel-${t.id}"
+                            tabindex=${t.id === this._tab ? '0' : '-1'} title=${t.title}
+                            @click=${() => this._setTab(t.id)}>${t.label}${busy[t.id]
+                                ? html`<span class="tb-tab-busy">${busy[t.id]}</span>` : nothing}</button>`)}
+            </div>`;
+    }
+
+    /** The spending test's limits, one control each. */
+    _renderLimits() {
         const running = this._status === 'running';
         return html`
-            <div class="tb-ask">
-                <span class="tb-ask-text">Spend the most that <strong>never runs out</strong> and leaves at least</span>
-                <label class="tb-floor-field">$
-                    <input type="text" inputmode="numeric" aria-label="Least to leave at the end, in today's dollars"
+            <div class="tb-limits">
+                <div class="tb-limit">
+                    <span class="tb-limit-label">Never runs out</span>
+                    <span class="tb-limit-value" title="Every bill is paid, every month. This limit is always on.">Always on</span>
+                </div>
+                <div class="tb-limit">
+                    <label class="tb-limit-label" for="tb-floor">Leaves at least</label>
+                    <span class="tb-limit-value"><span class="tb-floor-field">$<input id="tb-floor" type="text"
+                           inputmode="numeric" aria-describedby="tb-floor-sub"
                            .value=${this._floor.toLocaleString('en-US')}
-                           @change=${this._onFloorInput}>
-                </label>
-                <span class="tb-ask-text">at the end, in today's dollars,</span>
-                <label class="tb-success-field">
-                    <input type="checkbox" aria-label="Require the plan to last in a share of simulated markets"
-                           .checked=${this._successOn}
-                           @change=${(ev) => this._setSuccess(ev.target.checked, this._successPercent)}>
-                    and lasts in
-                    <input type="text" inputmode="numeric" aria-label="Share of simulated markets, percent"
+                           @change=${this._onFloorInput}></span>
+                        <span class="tb-sub" id="tb-floor-sub">at the end<span class="tb-wide">, in today's dollars</span></span></span>
+                </div>
+                <div class="tb-limit tb-success-field">
+                    <label class="tb-limit-label"><input type="checkbox" .checked=${this._successOn}
+                           @change=${(ev) => this._setSuccess(ev.target.checked, this._successPercent)}>Lasts in</label>
+                    <span class="tb-limit-value"><input type="text" inputmode="numeric" aria-label="Share of simulated markets, percent"
                            ?disabled=${!this._successOn} .value=${String(this._successPercent)}
                            @change=${(ev) => { this._setSuccess(this._successOn, ev.target.value.replace(/[^0-9]/g, ''));
                                                ev.target.value = String(this._successPercent); }}>%
-                    of simulated markets.
-                </label>
+                        <span class="tb-sub">of simulated markets</span></span>
+                </div>
                 <button type="button" class="btn-modern primary text-sm tb-run" ?disabled=${!this.ready || running}
                         title=${this.ready ? '' : 'Add assets to run the test'}
                         @click=${() => this.run()}>${running ? 'Running…' : html`&#9654; Run`}</button>
-            </div>
-            <div class="tb-ask tb-outlook">
-                <span class="tb-ask-text">Market returns</span>
-                <div class="tb-columns" role="radiogroup" aria-label="Market outlook for the tests">
-                    ${OUTLOOKS.map((o) => html`
-                        <label class="tb-column ${o === this._outlook ? 'is-on' : ''}">
-                            <input type="radio" name="tb-outlook" .checked=${o === this._outlook}
-                                   @change=${() => this._setOutlook(o)}>${outlookLabel(o)}</label>`)}
-                </div>
-                <span class="tb-sub">${outlookLine(this._outlook)}</span>
-            </div>
+            </div>`;
+    }
+
+    _renderSpending() {
+        const running = this._status === 'running';
+        return html`
+            ${this._renderLimits()}
             ${this._status === 'error' ? html`<p class="tb-error">The test failed: ${this._error}</p>` : nothing}
             ${running && this._solving ? html`<p class="tb-sub tb-solving">Testing spending level ${this._solving.tested + 1}
                 across ${this._solving.total} simulated markets (${this._solving.completed} of ${this._solving.total}).
@@ -897,8 +1072,19 @@ class TestBench extends LitElement {
                 : html`<p class="tb-sub">Turns every monthly expense up and down together, health plan included,
                     and finds the highest level the plan can pay for. With the simulated-markets limit on, it then
                     tests levels across 300 simulated markets, which takes from ten seconds to about two minutes.
-                    Nothing in your plan is changed.</p>`}
-            ${this._renderRouting()}
+                    Nothing in your plan is changed.</p>`}`;
+    }
+
+    render() {
+        return html`
+            ${this._renderConditions()}
+            <div class="tb-tests">
+                ${this._renderTabs()}
+                <div id="tb-panel-spending" class="tb-panel" role="tabpanel" aria-labelledby="tb-tab-spending"
+                     ?hidden=${this._tab !== 'spending'}>${this._renderSpending()}</div>
+                <div id="tb-panel-routing" class="tb-panel" role="tabpanel" aria-labelledby="tb-tab-routing"
+                     ?hidden=${this._tab !== 'routing'}>${this._renderRouting()}</div>
+            </div>
             ${this._renderChart()}`;
     }
 }
