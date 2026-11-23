@@ -13,8 +13,7 @@
  *   scrollToDate(year, month) - opens, scrolls to, and briefly highlights that month's report
  */
 
-import { LitElement, html, css } from 'lit';
-import { unsafeHTML } from 'lit/directives/unsafe-html.js';
+import { LitElement, html, nothing } from 'lit';
 import { formatCurrency } from '../utils/html.js';
 import { MagiPurpose } from '../tax-basis.js';
 
@@ -164,8 +163,10 @@ function fmt(currency) {
 class ReportView extends LitElement {
 
     static properties = {
-        reports: { type: Array },
-        taxYears: { type: Array },
+        reports:   { type: Array },
+        taxYears:  { type: Array },
+        _open:     { state: true },
+        _flashIdx: { state: true },
     };
 
     // Opt out of Shadow DOM so parent page styles (Tailwind, etc.) apply
@@ -175,59 +176,112 @@ class ReportView extends LitElement {
         super();
         this.reports = [];
         this.taxYears = [];
+        this._open = new Set();
+        this._manualOpen = new Set();
+        this._autoOpenedIdx = null;
+        this._flashIdx = -1;
+        this._flashTimer = null;
+    }
+
+    disconnectedCallback() {
+        super.disconnectedCallback();
+        clearTimeout(this._flashTimer);
+        this._flashTimer = null;
+    }
+
+    willUpdate(changed) {
+        if (changed.has('reports')) {
+            this._open = new Set();
+            this._manualOpen = new Set();
+            this._autoOpenedIdx = null;
+            this._flashIdx = -1;
+        }
+    }
+
+    _onToggle(idx, isOpen) {
+        // Ignore the browser's toggle echo from our own programmatic open/close.
+        if (this._open.has(idx) === isOpen) return;
+        const next = new Set(this._open);
+        if (isOpen) {
+            next.add(idx);
+            this._manualOpen.add(idx);
+        } else {
+            next.delete(idx);
+            this._manualOpen.delete(idx);
+            if (this._autoOpenedIdx === idx) this._autoOpenedIdx = null;
+        }
+        this._open = next;
+    }
+
+    _renderTable(report) {
+        const rows = reportRows(report, this.taxYears);
+        return html`
+            <table class="spreadsheet-table rv-table">
+                ${rows.map(([label, value]) => {
+                    const isHeader = !label.startsWith(' ');
+                    // Only the indent is non-breaking: a long label
+                    // may wrap on a narrow screen.
+                    const displayLabel = label.replace(/^ +/, (indent) => '\u00a0'.repeat(indent.length));
+                    return html`
+                        <tr class="${isHeader ? 'rv-row-head' : ''}">
+                            <td class="rv-label">${displayLabel}</td>
+                            <td class="rv-val">${value}</td>
+                        </tr>`;
+                })}
+            </table>`;
     }
 
     render() {
         if (this.reports.length === 0) {
-            return html`<p style="padding: 24px; font-family: DM Sans, sans-serif;">
+            return html`<p class="vt-empty">
                 No reports recorded. Enable reports on an asset and run a calculation.
             </p>`;
         }
 
-        return html`${this.reports.map((report) => {
+        return html`${this.reports.map((report, idx) => {
             const { type } = report;
-            const badgeColor = type === 'yearly' ? '#7c3aed' : '#2563eb';
             const badgeLabel = type === 'yearly' ? 'YEARLY' : 'MONTHLY';
-
-            const rows = reportRows(report, this.taxYears);
+            const isOpen = this._open.has(idx);
 
             return html`
-                <details style="margin-bottom: 8px; border-bottom: 1px solid #f3f4f6; padding-bottom: 8px;">
-                    <summary style="cursor: pointer; font-weight: 600; padding: 4px 0;">
-                        <span style="background:${badgeColor};color:#fff;padding:1px 8px;border-radius:6px;font-size:10px;font-weight:600;margin-right:6px;">${badgeLabel}</span>
+                <details class="rv-item ${idx === this._flashIdx ? 'vt-flash' : ''}"
+                         ?open=${isOpen}
+                         @toggle=${(ev) => this._onToggle(idx, ev.currentTarget.open)}>
+                    <summary class="rv-summary">
+                        <span class="rv-badge rv-badge-${type}">${badgeLabel}</span>
                         ${coverLabel(report)}
                     </summary>
-                    <table class="spreadsheet-table" style="margin-top: 4px;">
-                        ${rows.map(([label, value]) => {
-                            const isHeader = !label.startsWith(' ');
-                            const bg = isHeader ? 'var(--parchment, #f9fafb)' : '';
-                            const weight = isHeader ? '600' : '400';
-                            // Only the indent is non-breaking: a long label
-                            // may wrap on a narrow screen.
-                            const displayLabel = label.replace(/^ +/, (indent) => ' '.repeat(indent.length));
-                            return html`
-                                <tr style="${bg ? `background:${bg}` : ''}">
-                                    <td style="padding:2px 6px;font-weight:${weight}">${displayLabel}</td>
-                                    <td style="padding:2px 6px;text-align:right;font-family:monospace">${value}</td>
-                                </tr>`;
-                        })}
-                    </table>
+                    ${isOpen ? this._renderTable(report) : nothing}
                 </details>`;
         })}`;
     }
 
     /** Open and centre the monthly report holding the selected month. */
     scrollToDate(year, month) {
-        // One <details> per report, in the same order.
-        const el = this.querySelectorAll('details')[monthlyReportIndex(this.reports, year, month)];
-        if (!el) return;
-        el.open = true;
-        const container = this.closest('.overflow-auto');
-        if (container) {
-            container.scrollTop = el.offsetTop - container.offsetTop - container.clientHeight / 2;
+        const idx = monthlyReportIndex(this.reports, year, month);
+        if (idx < 0) return;
+
+        // Close the previous auto-opened report (unless the user opened it
+        // themselves) so scrubbing across months keeps only one table mounted.
+        const next = new Set(this._open);
+        if (this._autoOpenedIdx !== null && this._autoOpenedIdx !== idx && !this._manualOpen.has(this._autoOpenedIdx)) {
+            next.delete(this._autoOpenedIdx);
         }
-        el.style.background = '#FAECE7';
-        setTimeout(() => el.style.background = '', 1500);
+        next.add(idx);
+        if (!this._manualOpen.has(idx)) this._autoOpenedIdx = idx;
+        this._open = next;
+        this._flashIdx = idx;
+        clearTimeout(this._flashTimer);
+        this._flashTimer = setTimeout(() => { this._flashIdx = -1; }, 1500);
+
+        this.updateComplete?.then(() => {
+            const el = this.querySelectorAll?.('details')?.[idx];
+            if (!el) return;
+            const container = this.closest?.('.overflow-auto');
+            if (container) {
+                container.scrollTop = el.offsetTop - container.offsetTop - container.clientHeight / 2;
+            }
+        });
     }
 }
 
