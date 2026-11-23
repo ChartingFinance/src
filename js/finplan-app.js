@@ -208,6 +208,7 @@ const projCanvas        = document.getElementById('finplan-proj-canvas');
 const projTabs          = document.getElementById('finplan-proj-tabs');
 const projMetricSelect  = document.getElementById('finplan-proj-metric-select');
 const projDollarToggle  = document.getElementById('finplan-proj-dollar-toggle');
+const navDollarToggle   = document.getElementById('nav-dollar-toggle');
 const projKpis          = document.getElementById('finplan-proj-kpis');
 const projDrillRow      = document.getElementById('finplan-proj-drill-row');
 const projDrillPills    = document.getElementById('finplan-proj-drill-pills');
@@ -257,12 +258,18 @@ function syncGuardrailsToDOM() {
 Chart.defaults.animation = false;
 
 // ── App state ───────────────────────────────────────────────
+let savedDollarMode = DollarMode.REAL;
+try {
+    const raw = localStorage.getItem('finplan.dollarMode');
+    if (raw === DollarMode.REAL || raw === DollarMode.NOMINAL) savedDollarMode = raw;
+} catch { /* storage unavailable */ }
+
 const appState = new AppState({
     metricName:     Metric.VALUE,
     projView:       ProjectionView.NET_WORTH,
     projMetric:     Metric.CASH_FLOW,
     projDrill:      AssetGroup.ALL,
-    projDollarMode: DollarMode.REAL,
+    projDollarMode: savedDollarMode,
     portfolioView:  'assets',   // 'assets' | 'flows' | 'sankey'
 });
 
@@ -288,6 +295,7 @@ const SIM_SYNC_DELAY_MS = 400;
 let _settingsNoteFor    = null;   // asset list the settings note describes
 let _visualizerDirty    = true;   // the plan changed while the Visualizer was collapsed
 let _spreadsheetDirty   = true;   // the plan changed while the Spreadsheet was collapsed
+let _lastIssues         = [];     // latest detectIssues() list, for dollar-mode refreshes
 
 // Code-split feature modules — loaded on first use. Declared here (before
 // the init code below calls calculate()) so the auto-run path can reach
@@ -1018,6 +1026,17 @@ projMetricSelect.innerHTML = `<option value="">More metrics…</option>` + MORE_
 ).join('');
 projMetricSelect.value = '';
 
+function syncDollarModeToggles() {
+    for (const group of [projDollarToggle, navDollarToggle]) {
+        if (!group) continue;
+        for (const btn of group.querySelectorAll('[data-dollar-mode]')) {
+            btn.classList.toggle('is-active', btn.dataset.dollarMode === appState.projDollarMode);
+        }
+    }
+    if (timeline) timeline.dollarMode = appState.projDollarMode;
+    if (outcomeStrip) outcomeStrip.dollarMode = appState.projDollarMode;
+}
+
 function syncProjectionControls() {
     for (const btn of projTabs.querySelectorAll('[data-proj-view]')) {
         btn.classList.toggle('is-active', btn.dataset.projView === appState.projView);
@@ -1025,10 +1044,34 @@ function syncProjectionControls() {
     const isMore = appState.projView === ProjectionView.METRIC;
     projMetricSelect.classList.toggle('is-active', isMore);
     projMetricSelect.value = isMore ? appState.projMetric : '';
-    for (const btn of projDollarToggle.querySelectorAll('[data-dollar-mode]')) {
-        btn.classList.toggle('is-active', btn.dataset.dollarMode === appState.projDollarMode);
+    syncDollarModeToggles();
+}
+
+function setDollarMode(mode) {
+    if (mode !== DollarMode.REAL && mode !== DollarMode.NOMINAL) return;
+    if (mode === appState.projDollarMode) return;
+    appState.projDollarMode = mode;
+    try { localStorage.setItem('finplan.dollarMode', mode); } catch { /* storage unavailable */ }
+    syncDollarModeToggles();
+    if (appState.portfolio) {
+        if (outcomeStrip) {
+            outcomeStrip.plan = appState.portfolio.modelAssets.length > 0
+                ? planOutcome(appState.portfolio, _lastIssues, { dollarMode: mode })
+                : null;
+        }
+        rebuildProjectionCharts();
+        if (mcModule) {
+            mcModule.setMonteCarloDollarMode(mode);
+            syncMonteCarloSummary(mcModule.getMonteCarloResults());
+        }
+        if (guardrailsModule) {
+            guardrailsModule.setGuardrailsDollarMode(mode);
+            syncGuardrailsSummary(guardrailsModule.getGuardrailsResults());
+        }
     }
 }
+
+syncDollarModeToggles();
 
 projTabs.addEventListener('click', (ev) => {
     const btn = ev.target.closest('[data-proj-view]');
@@ -1051,13 +1094,12 @@ projMetricSelect.addEventListener('change', () => {
     if (appState.portfolio) rebuildProjectionCharts();
 });
 
-projDollarToggle.addEventListener('click', (ev) => {
-    const btn = ev.target.closest('[data-dollar-mode]');
-    if (!btn || btn.dataset.dollarMode === appState.projDollarMode) return;
-    appState.projDollarMode = btn.dataset.dollarMode;
-    syncProjectionControls();
-    if (appState.portfolio) rebuildProjectionCharts();
-});
+for (const toggle of [projDollarToggle, navDollarToggle]) {
+    toggle?.addEventListener('click', (ev) => {
+        const btn = ev.target.closest('[data-dollar-mode]');
+        if (btn) setDollarMode(btn.dataset.dollarMode);
+    });
+}
 
 // Wire store. Nothing is loaded yet, so this is the empty plan's anchor;
 // calculate() re-derives it against the real one after every mutation.
@@ -1399,14 +1441,16 @@ function calculate() {
     // the ⚠️ on the cards and the View modal must never disagree about what is
     // wrong with the plan.
     const issues = detectIssues(portfolio, { includeReconciliation: global_showEngineDiagnostics });
+    _lastIssues = issues;
     if (planIssuesPanel) planIssuesPanel.issues = issues;
 
     // The answer on the first screen. The plan tile is this run's; the
     // simulation tiles are filled in when their runs finish.
     if (outcomeStrip) {
         const hasPlan = modelAssets.length > 0;
-        outcomeStrip.plan = hasPlan ? planOutcome(portfolio, issues) : null;
+        outcomeStrip.plan = hasPlan ? planOutcome(portfolio, issues, { dollarMode: appState.projDollarMode }) : null;
         outcomeStrip.finishAge = global_user_finishAge;
+        outcomeStrip.dollarMode = appState.projDollarMode;
         outcomeStrip.hidden = !hasPlan;
         if (sectionNav) sectionNav.hidden = !hasPlan;
         updateCurrentSection();
@@ -1515,6 +1559,46 @@ function renderStatCards(el, cards) {
     ).join('');
 }
 
+function syncMonteCarloSummary(res) {
+    const mcSummary = document.getElementById('mc-summary');
+    const sim = simulationOutcome(res, { dollarMode: appState.projDollarMode });
+    if (sim && mcSummary) {
+        renderStatCards(mcSummary, [
+            { label: 'Success', value: sim.value, tone: sim.tone,
+              title: 'Share of simulations that never dipped below $0 from retirement onward' },
+            { label: 'Median', value: formatCompactCurrency(sim.median) },
+            { label: 'P10', value: formatCompactCurrency(sim.p10) },
+            { label: 'P90', value: formatCompactCurrency(sim.p90) },
+            { label: 'Horizon', value: sim.horizon },
+        ]);
+    }
+    if (sim && outcomeStrip) {
+        outcomeStrip.simulations = sim;
+        outcomeStrip.stale = { ...outcomeStrip.stale, simulations: false };
+    }
+}
+
+function syncGuardrailsSummary(res) {
+    const gr = guardrailsOutcome(res, { dollarMode: appState.projDollarMode });
+    const grSummaryEl = document.getElementById('guardrails-summary');
+    if (gr && grSummaryEl) {
+        renderStatCards(grSummaryEl, [
+            { label: 'Ends', value: gr.value, tone: gr.tone },
+            ...(gr.finalWithdrawal ? [{ label: 'Withdrawal', value: `${formatCompactCurrency(gr.finalWithdrawal)}/yr`,
+              title: 'Annual withdrawal in the final simulated year' }] : []),
+            { label: 'Cuts', value: String(gr.cuts), tone: gr.cuts ? 'warn' : undefined,
+              title: 'Preservation events: spending reduced to protect the portfolio' },
+            { label: 'Raises', value: String(gr.raises), tone: gr.raises ? 'good' : undefined,
+              title: 'Prosperity events: spending increased when the plan ran ahead' },
+            { label: 'Horizon', value: gr.horizon },
+        ]);
+    }
+    if (gr && outcomeStrip) {
+        outcomeStrip.guardrails = gr;
+        outcomeStrip.stale = { ...outcomeStrip.stale, guardrails: false };
+    }
+}
+
 async function doMonteCarlo() {
     if (!appState.portfolio?.firstDateInt) return;
     mcModule ??= await import('./monte-carlo.js');
@@ -1535,30 +1619,14 @@ async function doMonteCarlo() {
         appState.portfolio.modelAssets, mcContainer, 1000,
         withGuardrails ? getGuardrailParams() : null,
         global_getRetirementDateInt(displayConfig()),
-        false, appState.lifeEvents, applyMarkers
+        false, appState.lifeEvents, applyMarkers, appState.projDollarMode
     ).catch(() => null);
     btn.dataset.simState = 'idle';
     btn.innerHTML = '&#9654; Run';
 
     // Plan summary in the section footer — only from a run that completed
     // (a failed run would otherwise show the previous run's cached numbers).
-    const res = chart ? mcModule.getMonteCarloResults() : null;
-    const mcSummary = document.getElementById('mc-summary');
-    const sim = simulationOutcome(res);
-    if (sim && mcSummary) {
-        renderStatCards(mcSummary, [
-            { label: 'Success', value: sim.value, tone: sim.tone,
-              title: 'Share of simulations that never dipped below $0 from retirement onward' },
-            { label: 'Median', value: formatCompactCurrency(sim.median) },
-            { label: 'P10', value: formatCompactCurrency(sim.p10) },
-            { label: 'P90', value: formatCompactCurrency(sim.p90) },
-            { label: 'Horizon', value: sim.horizon },
-        ]);
-    }
-    if (sim && outcomeStrip) {
-        outcomeStrip.simulations = sim;
-        outcomeStrip.stale = { ...outcomeStrip.stale, simulations: false };
-    }
+    syncMonteCarloSummary(chart ? mcModule.getMonteCarloResults() : null);
 }
 
 async function doGuardrails() {
@@ -1573,28 +1641,12 @@ async function doGuardrails() {
     };
     const chart = await guardrailsModule.runGuardrails(
         appState.portfolio.modelAssets, guardrailsContainer, getGuardrailParams(),
-        global_getRetirementDateInt(displayConfig()), appState.lifeEvents, applyMarkers
+        global_getRetirementDateInt(displayConfig()), appState.lifeEvents, applyMarkers,
+        appState.projDollarMode
     ).catch(() => null);
 
     // Plan summary in the section footer
-    const gr = guardrailsOutcome(chart ? guardrailsModule.getGuardrailsResults() : null);
-    const grSummaryEl = document.getElementById('guardrails-summary');
-    if (gr && grSummaryEl) {
-        renderStatCards(grSummaryEl, [
-            { label: 'Ends', value: gr.value, tone: gr.tone },
-            ...(gr.finalWithdrawal ? [{ label: 'Withdrawal', value: `${formatCompactCurrency(gr.finalWithdrawal)}/yr`,
-              title: 'Annual withdrawal in the final simulated year' }] : []),
-            { label: 'Cuts', value: String(gr.cuts), tone: gr.cuts ? 'warn' : undefined,
-              title: 'Preservation events: spending reduced to protect the portfolio' },
-            { label: 'Raises', value: String(gr.raises), tone: gr.raises ? 'good' : undefined,
-              title: 'Prosperity events: spending increased when the plan ran ahead' },
-            { label: 'Horizon', value: gr.horizon },
-        ]);
-    }
-    if (gr && outcomeStrip) {
-        outcomeStrip.guardrails = gr;
-        outcomeStrip.stale = { ...outcomeStrip.stale, guardrails: false };
-    }
+    syncGuardrailsSummary(chart ? guardrailsModule.getGuardrailsResults() : null);
 }
 
 function syncSpreadsheet() {

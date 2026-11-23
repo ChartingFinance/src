@@ -26,8 +26,9 @@
 import assert from 'node:assert/strict';
 
 import {
-    NEUTRAL_CONDITIONS, conditionsOf, isNeutral, sameConditions, sameLimits, conditionChips, dataChip,
-    floorChip, foundUnderChips, foundUnderText, spendingChanges, routingChanges, changedLine, tabColumn,
+    NEUTRAL_CONDITIONS, conditionsOf, isNeutral, sameConditions, sameLimits, conditionChips, conditionChipItems,
+    conditionsClause, dataChip, floorChip, foundUnderChips, foundUnderText, spendingChanges, routingChanges,
+    changedLine, tabColumn,
 } from '../js/test-bench-view.js';
 import { spendingHeadline, successNote } from '../js/spending-report.js';
 import { MINUS } from '../js/utils/html.js';
@@ -41,6 +42,9 @@ function check(label, fn) {
 const MODERATE = { outlook: 'moderate' };
 const OPTIMISTIC = { outlook: 'optimistic' };
 const PESSIMISTIC = { outlook: 'pessimistic' };
+const INFLATION_2 = { inflationShift: 2 };
+const ALL_THREE = { outlook: 'pessimistic', lossYears: { count: 1, stocks: [30], bonds: [0] }, inflationShift: 2 };
+const DATES = { retirement: { year: 2031, month: 1 }, first: { year: 2026, month: 1 }, last: { year: 2060, month: 12 } };
 const DATA = { dataMode: 'calibrated', firstYear: 1970, lastYear: 2025 };
 const LIMITS = { floor: 0, successOn: true, successPercent: 90 };
 
@@ -55,6 +59,13 @@ check('one chip for each condition not at its neutral setting, and only those', 
     assert.deepEqual(conditionChips(MODERATE), []);
     assert.deepEqual(conditionChips(OPTIMISTIC), ['Optimistic (+1%)']);
     assert.deepEqual(conditionChips(PESSIMISTIC), [`Pessimistic (${MINUS}1%)`]);
+    assert.deepEqual(conditionChips(INFLATION_2), ['Inflation +2%']);
+    assert.deepEqual(conditionChips(ALL_THREE), [`Pessimistic (${MINUS}1%)`, `1 loss year (${MINUS}30%)`, 'Inflation +2%']);
+    assert.deepEqual(conditionChipItems(ALL_THREE), [
+        { key: 'outlook', label: `Pessimistic (${MINUS}1%)` },
+        { key: 'lossYears', label: `1 loss year (${MINUS}30%)` },
+        { key: 'inflationShift', label: 'Inflation +2%' },
+    ]);
     assert.deepEqual(foundUnderChips({ conditions: OPTIMISTIC }), ['Optimistic (+1%)']);
 });
 
@@ -74,9 +85,18 @@ check('a floor chip only above $0', () => {
         [`Pessimistic (${MINUS}1%)`, 'Leaves at least $500,000']);
 });
 
-check('a name that is not an outlook throws, so a typo is never read as neutral', () => {
+check('a name that is not an outlook or an invalid inflation shift throws', () => {
     assert.throws(() => conditionChips({ outlook: 'optimstic' }), /Unknown market outlook/);
     assert.throws(() => conditionsOf({ outlook: 'Moderate' }), /Unknown market outlook/);
+    assert.throws(() => conditionsOf({ inflationShift: 3 }), /Unknown inflation shift/);
+    assert.throws(() => conditionsOf({ inflationShift: -1 }), /Unknown inflation shift/);
+});
+
+check('conditionsClause joins 1, 2, and 3 stacked conditions naturally', () => {
+    assert.equal(conditionsClause({}, DATES), null);
+    assert.equal(conditionsClause(INFLATION_2, DATES), 'with inflation 2% a year higher than you entered');
+    assert.equal(conditionsClause(ALL_THREE, DATES),
+        'with stock and bond returns 1% a year lower than you entered, stock prices falling 30% in 2031, and inflation 2% a year higher than you entered');
 });
 
 console.log('\n── What dims ──\n');
@@ -93,6 +113,8 @@ check('a changed condition dims the spending result: "Conditions changed. Run ag
     const changes = spendingChanges(at(MODERATE), at(OPTIMISTIC));
     assert.deepEqual(changes, { conditions: true, limits: false });
     assert.equal(changedLine(changes, 'Run'), 'Conditions changed. Run again.');
+    const inflChanges = spendingChanges(at(MODERATE), at(INFLATION_2));
+    assert.deepEqual(inflChanges, { conditions: true, limits: false });
 });
 
 check('each changed limit dims it: "Limits changed. Run again."', () => {
@@ -122,6 +144,8 @@ check('a routing list dims for a condition or the floor, never for the markets l
     const under = { conditions: MODERATE, floor: 0 };
     assert.equal(changedLine(routingChanges(under, { conditions: OPTIMISTIC, floor: 0 }), 'Search'),
         'Conditions changed. Search again.');
+    assert.equal(changedLine(routingChanges(under, { conditions: INFLATION_2, floor: 0 }), 'Search'),
+        'Conditions changed. Search again.');
     assert.equal(changedLine(routingChanges(under, { conditions: MODERATE, floor: 500 }), 'Search'),
         'Limits changed. Search again.');
     assert.equal(changedLine(routingChanges(under, { conditions: MODERATE, floor: 0 }), 'Search'), null);
@@ -129,13 +153,15 @@ check('a routing list dims for a condition or the floor, never for the markets l
 
 console.log('\n── Reset ──\n');
 
-check('the neutral conditions are Moderate and no loss years, and Reset is needed only away from them', () => {
-    assert.deepEqual(conditionsOf(NEUTRAL_CONDITIONS), { outlook: 'moderate', lossYears: { count: 0, stocks: [], bonds: [] } });
+check('the neutral conditions are Moderate, no loss years, and 0% inflation shift', () => {
+    assert.deepEqual(conditionsOf(NEUTRAL_CONDITIONS),
+        { outlook: 'moderate', lossYears: { count: 0, stocks: [], bonds: [] }, inflationShift: 0 });
     assert.ok(isNeutral(NEUTRAL_CONDITIONS));
     assert.ok(isNeutral({}));
     assert.ok(!isNeutral(OPTIMISTIC));
     assert.ok(!isNeutral(PESSIMISTIC));
     assert.ok(!isNeutral({ lossYears: { count: 1, stocks: [20], bonds: [0] } }));
+    assert.ok(!isNeutral({ inflationShift: 1 }));
     assert.ok(sameConditions({}, MODERATE));
 });
 
@@ -159,11 +185,14 @@ const RESULT = {
 check('for MCP the headline and the markets note name the outlook, as before', () => {
     assert.match(spendingHeadline(RESULT), /^With stock and bond returns 1% a year higher than you entered, the most/);
     assert.match(successNote(RESULT), /^On the plan's own path of returns, 1% a year higher than you entered, it could/);
+    assert.match(spendingHeadline({ ...RESULT, outlook: 'moderate', inflationShift: 2 }),
+        /^With inflation 2% a year higher than you entered, the most/);
 });
 
 check('on the page they leave it to Found under, and say what Moderate says', () => {
     const moderate = { ...RESULT, outlook: 'moderate' };
     assert.equal(spendingHeadline(RESULT, { withConditions: false }), spendingHeadline(moderate));
+    assert.equal(spendingHeadline({ ...RESULT, inflationShift: 2 }, { withConditions: false }), spendingHeadline(moderate));
     assert.equal(successNote(RESULT, { withConditions: false }), successNote(moderate));
     assert.equal(spendingHeadline({ ...RESULT, best: null }, { withConditions: false }),
         'No spending level tested keeps these limits.');

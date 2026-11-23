@@ -73,6 +73,7 @@ export async function simulatedRate(plan, factor, sim) {
             backtestFromYear: sim.backtestFromYear ?? null,
             seed: sim.seed,
             returnShift: sim.returnShift ?? 0,
+            inflationShift: sim.inflationShift ?? 0,
             onProgress: sim.onProgress ?? null,
             config: plan.config,
         });

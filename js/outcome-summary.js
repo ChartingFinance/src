@@ -31,18 +31,21 @@ const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
  *
  * @returns {null|{ end, endReal, exhaustion: DateInt|null, value, detail, tone }}
  */
-export function planOutcome(portfolio, issues = []) {
+export function planOutcome(portfolio, issues = [], { dollarMode = 'nominal' } = {}) {
     if (!portfolio?.firstDateInt) return null;
     const last = lastHistoryIndex(portfolio);
     const end = metricAtIndex(portfolio, Metric.VALUE, last);
     const index = portfolio.monthlyPriceIndex;
     const endReal = index?.length ? PriceIndex.deflateAt(end, index, last) : null;
     const exhaustion = planExhaustion(issues)?.firstDateInt ?? null;
+    const useReal = dollarMode === 'real' && endReal != null;
     return {
         end, endReal, exhaustion,
-        value: formatCompactCurrency(end),
+        value: formatCompactCurrency(useReal ? endReal : end),
         detail: [
-            endReal != null ? `${formatCompactCurrency(endReal)} in today's $` : null,
+            useReal
+                ? `${formatCompactCurrency(end)} nominal`
+                : (endReal != null ? `${formatCompactCurrency(endReal)} in today's $` : null),
             exhaustion ? `runs out ${monthLabel(exhaustion)}` : 'never runs out',
         ].filter(Boolean).join(' · '),
         tone: exhaustion ? 'bad' : 'good',
@@ -55,11 +58,13 @@ export function planOutcome(portfolio, issues = []) {
  *
  * @param {object|null} results  getMonteCarloResults()
  */
-export function simulationOutcome(results) {
+export function simulationOutcome(results, { dollarMode = 'nominal' } = {}) {
     if (!results?.labels?.length) return null;
     const last = results.labels.length - 1;
     const percent = Math.round(results.successRate * 100);
-    const [p10, , median, , p90] = results.bandData.map((band) => band[last]);
+    const useReal = dollarMode === 'real' && results.bandDataReal?.length === 5;
+    const source = useReal ? results.bandDataReal : results.bandData;
+    const [p10, , median, , p90] = source.map((band) => band[last]);
     return {
         percent, median, p10, p90,
         horizon: results.labels[last],
@@ -76,15 +81,19 @@ export function simulationOutcome(results) {
  *
  * @param {object|null} results  getGuardrailsResults()
  */
-export function guardrailsOutcome(results) {
+export function guardrailsOutcome(results, { dollarMode = 'nominal' } = {}) {
     if (!results?.portfolioValues?.length) return null;
     const last = results.portfolioValues.length - 1;
-    const end = results.portfolioValues[last];
+    const useReal = dollarMode === 'real' && results.portfolioValuesReal?.length > last;
+    const end = useReal ? results.portfolioValuesReal[last] : results.portfolioValues[last];
     const cuts = results.events.filter((e) => e.type === 'preservation').length;
     const raises = results.events.length - cuts;
+    const finalWithdrawal = (useReal && results.withdrawalStepsReal?.length > last)
+        ? results.withdrawalStepsReal[last]
+        : (results.withdrawalSteps?.[last] ?? null);
     return {
         end, cuts, raises,
-        finalWithdrawal: results.withdrawalSteps?.[last] ?? null,
+        finalWithdrawal,
         horizon: results.labels?.[last] ?? null,
         value: formatCompactCurrency(end),
         detail: `${plural(cuts, 'spending cut', 'spending cuts')} · ${plural(raises, 'raise', 'raises')}`,

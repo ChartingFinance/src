@@ -114,4 +114,36 @@ describe('<test-bench> loss years edge cases', () => {
         el.willUpdate();
         expect(el._dates.retirement.toInt()).toBe(203701);
     });
+
+    it('clears individual stacked conditions via _clearCondition() and resets inflationShift on _resetConditions()', () => {
+        el._setOutlook('pessimistic');
+        el._setLossCount(2);
+        el._setLossFigure('stocks', 0, '150');
+        el._setInflationShift(2);
+
+        expect(el._conditions()).toEqual({
+            outlook: 'pessimistic',
+            lossYears: { count: 2, stocks: [20, 20], bonds: [0, 0] },
+            inflationShift: 2,
+        });
+
+        el._clearCondition('inflationShift');
+        expect(el._inflationShift).toBe(0);
+        expect(el._outlook).toBe('pessimistic');
+        expect(el._lossCount).toBe(2);
+
+        el._clearCondition('lossYears');
+        expect(el._lossCount).toBe(0);
+        expect(el._lossInvalid()).toBe(false);
+        expect(el._outlook).toBe('pessimistic');
+
+        el._clearCondition('outlook');
+        expect(el._outlook).toBe('moderate');
+
+        el._setOutlook('optimistic');
+        el._setInflationShift(1);
+        el._resetConditions();
+        expect(el._outlook).toBe('moderate');
+        expect(el._inflationShift).toBe(0);
+    });
 });

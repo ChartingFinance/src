@@ -24,32 +24,49 @@
 
 import { MarketOutlook, outlookLabel, outlookClause, outlookPlan, returnShift } from './market-outlook.js';
 import { NO_LOSS_YEARS, lossYearsOf, lossYearsChip, lossYearsClause, lossYearsSchedule } from './loss-years.js';
+import { inflationShiftOf, inflationChip, inflationClause } from './inflation-condition.js';
 import { formatCurrency } from './utils/html.js';
 
 /** Every condition at its neutral setting: the plan as entered. */
-export const NEUTRAL_CONDITIONS = Object.freeze({ outlook: MarketOutlook.MODERATE, lossYears: NO_LOSS_YEARS });
+export const NEUTRAL_CONDITIONS = Object.freeze({
+    outlook: MarketOutlook.MODERATE,
+    lossYears: NO_LOSS_YEARS,
+    inflationShift: 0,
+});
 
 /**
  * The conditions as one record, loss years with only the figures in use.
  * Absent means neutral.
  */
-export function conditionsOf({ outlook = MarketOutlook.MODERATE, lossYears = NO_LOSS_YEARS } = {}) {
+export function conditionsOf({ outlook = MarketOutlook.MODERATE, lossYears = NO_LOSS_YEARS, inflationShift = 0 } = {}) {
     returnShift(outlook);   // throws on a name that is not an outlook
-    return { outlook, lossYears: lossYearsOf(lossYears) };
+    return { outlook, lossYears: lossYearsOf(lossYears), inflationShift: inflationShiftOf(inflationShift) };
 }
 
 /**
  * A plan under conditions: the outlook's copy (market-outlook.js), with the
- * loss years as the engine's `returnSchedule` for this plan's dates. Every
- * job of a test, and the chart, runs this one.
+ * loss years as the engine's `returnSchedule` for this plan's dates and the
+ * inflation shift (percentage points, 0–2). Every job of a test, and the
+ * chart, runs this one.
  *
  * @param {object} plan  as the Test Bench's planSource gives it
  * @param {object} conditions
  * @param {object} dates  { retirement, first, last }, each { year, month }
  */
 export function conditionedPlan(plan, conditions, dates) {
-    const { outlook, lossYears } = conditionsOf(conditions);
-    return { ...outlookPlan(plan, outlook), returnSchedule: lossYearsSchedule(lossYears, dates) };
+    const { outlook, lossYears, inflationShift } = conditionsOf(conditions);
+    return {
+        ...outlookPlan(plan, outlook),
+        returnSchedule: lossYearsSchedule(lossYears, dates),
+        inflationShift,
+    };
+}
+
+/** Join 1, 2, or 3+ condition clauses into readable English. */
+function joinClauses(clauses) {
+    if (clauses.length <= 1) return clauses[0] ?? '';
+    if (clauses.length === 2) return `${clauses[0]} and ${clauses[1]}`;
+    return `${clauses.slice(0, -1).join(', ')}, and ${clauses[clauses.length - 1]}`;
 }
 
 /**
@@ -58,9 +75,13 @@ export function conditionedPlan(plan, conditions, dates) {
  * 2031". Null when every condition is neutral, or none applies.
  */
 export function conditionsClause(conditions, dates) {
-    const { outlook, lossYears } = conditionsOf(conditions);
-    const clauses = [outlookClause(outlook), lossYearsClause(lossYears, dates)].filter(Boolean);
-    return clauses.length ? `with ${clauses.join(' and ')}` : null;
+    const { outlook, lossYears, inflationShift } = conditionsOf(conditions);
+    const clauses = [
+        outlookClause(outlook),
+        lossYearsClause(lossYears, dates),
+        inflationClause(inflationShift),
+    ].filter(Boolean);
+    return clauses.length ? `with ${joinClauses(clauses)}` : null;
 }
 
 /** Whether every condition is at its neutral setting. */
@@ -71,7 +92,9 @@ export function isNeutral(conditions) {
 /** Whether two sets of conditions are the same. */
 export function sameConditions(a, b) {
     const x = conditionsOf(a), y = conditionsOf(b);
-    return x.outlook === y.outlook && JSON.stringify(x.lossYears) === JSON.stringify(y.lossYears);
+    return x.outlook === y.outlook
+        && x.inflationShift === y.inflationShift
+        && JSON.stringify(x.lossYears) === JSON.stringify(y.lossYears);
 }
 
 /** Whether two sets of the spending test's limits are the same. */
@@ -80,11 +103,21 @@ export function sameLimits(a, b) {
         && (!a.successOn || a.successPercent === b.successPercent);
 }
 
+/** Removable chip descriptors for every non-neutral condition, in the card's order. */
+export function conditionChipItems(conditions) {
+    const { outlook, lossYears, inflationShift } = conditionsOf(conditions);
+    const lossLabel = lossYearsChip(lossYears);
+    const inflLabel = inflationChip(inflationShift);
+    return [
+        outlook === MarketOutlook.MODERATE ? null : { key: 'outlook', label: outlookLabel(outlook) },
+        lossLabel ? { key: 'lossYears', label: lossLabel } : null,
+        inflLabel ? { key: 'inflationShift', label: inflLabel } : null,
+    ].filter(Boolean);
+}
+
 /** One chip per condition not at its neutral setting, in the card's order. */
 export function conditionChips(conditions) {
-    const { outlook, lossYears } = conditionsOf(conditions);
-    return [outlook === MarketOutlook.MODERATE ? null : outlookLabel(outlook), lossYearsChip(lossYears)]
-        .filter(Boolean);
+    return conditionChipItems(conditions).map((c) => c.label);
 }
 
 /** "Calibrated 1970–2025": the data the simulated markets drew from. */

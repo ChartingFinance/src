@@ -41,6 +41,7 @@ import { simConfigFromPlanSpec } from './run-plan.js';
 import { planWithIds } from '../plan-ids.js';
 import { MarketOutlook, outlookAssets, outlookLabel, outlookClause, outlookNote, returnShift } from '../market-outlook.js';
 import { lossYearsFromPercent, lossYearsSchedule, lossYearsClause, lossYearsLine } from '../loss-years.js';
+import { inflationShiftOf, inflationRateShift, inflationLabel, inflationClause, inflationNote } from '../inflation-condition.js';
 import { withSimConfig } from '../sim-config.js';
 
 /** The app's simulated markets (test-bench-run.js): how many, and which. */
@@ -57,6 +58,7 @@ export const MARKETS_SEED = 1;
  * @param {string} [limits.marketOutlook='moderate']  'pessimistic', 'moderate' or 'optimistic'
  * @param {Array} [limits.lossYearsPercent=[]]  up to three loss years from the first January
  *   of retirement: each a whole percentage stock fall, or { stocks, bonds } (loss-years.js)
+ * @param {number} [limits.inflationShiftPercent=0]  0, 1, or 2 percentage points above entered inflation
  * @param {number} [limits.markets]  simulated markets to run; the app's 300 unless a test asks for fewer
  * @returns {Promise<{ result: object, solvedSpec: object|null, plan: object }>}
  *   `result` is solveSpending()'s, or limitBySuccess()'s with the limit on;
@@ -64,29 +66,36 @@ export const MARKETS_SEED = 1;
  */
 export async function maxSpending(spec, { leaveAtLeast = 0, simulatedMarketsPercent = null,
                                           marketOutlook = MarketOutlook.MODERATE, lossYearsPercent = [],
+                                          inflationShiftPercent = 0,
                                           markets = MARKETS } = {}) {
     if (!spec?.modelAssets?.length) {
         throw new Error('Plan spec has no modelAssets — nothing to solve.');
     }
     const shift = returnShift(marketOutlook);   // throws on a name that is not an outlook
     const lossYears = lossYearsFromPercent(lossYearsPercent);   // throws on a figure it refuses
+    const inflPercent = inflationShiftOf(inflationShiftPercent);   // throws outside 0, 1, 2
+    const inflShift = inflationRateShift(inflPercent);
     // Every run below is built from this plan, and the solved spec is copied
     // from it, so all of them carry the same ids.
     spec = planWithIds(spec);
     const modelAssets = outlookAssets(spec.modelAssets, marketOutlook);
+    const baseConfig = simConfigFromPlanSpec(spec);
     // The retirement date comes from the plan's birth year, which only a
     // Portfolio attaches to a config (as runMonteCarloFor does). The loss years
     // count from it and from the plan's own first and last months.
-    const placed = new Portfolio(modelAssets.map((a) => ModelAsset.fromJSON(a)), false, simConfigFromPlanSpec(spec));
+    const placed = new Portfolio(modelAssets.map((a) => ModelAsset.fromJSON(a)), false, baseConfig);
     const bound = placed.config;
     const retirementDateInt = ageToDateIntFor(bound, bound.retirementAge);
     const dates = { retirement: retirementDateInt, first: placed.firstDateInt, last: placed.lastDateInt };
-    // Solved under the outlook and the loss years. The spec itself keeps the
-    // user's rates and has no loss years; the plan at the answer is built from it.
+    // Solved under the outlook, loss years, and inflation stress. The spec itself
+    // keeps the user's rates and has no loss years; the plan at the answer is built from it.
     const plan = {
         modelAssets,
         lifeEvents: spec.lifeEvents ?? [],
-        config: withSimConfig(simConfigFromPlanSpec(spec), { returnSchedule: lossYearsSchedule(lossYears, dates) }),
+        config: withSimConfig(baseConfig, {
+            ...(inflShift ? { inflationRate: baseConfig.inflationRate + inflShift } : {}),
+            returnSchedule: lossYearsSchedule(lossYears, dates),
+        }),
     };
 
     let result = solveSpending(plan, { floor: leaveAtLeast });
@@ -99,6 +108,7 @@ export async function maxSpending(spec, { leaveAtLeast = 0, simulatedMarketsPerc
             backtestFromYear: null,
             retirementDateInt: retirementDateInt.toInt(),
             returnShift: shift,
+            inflationShift: inflShift,
         };
         result = await limitBySuccess(plan, result, {
             target: simulatedMarketsPercent / 100,
@@ -110,6 +120,7 @@ export async function maxSpending(spec, { leaveAtLeast = 0, simulatedMarketsPerc
     result = {
         ...result,
         outlook: marketOutlook,
+        inflationShift: inflPercent,
         lossYearsClause: lossYearsClause(lossYears, dates),
         lossYearsLine: lossYears.count ? lossYearsLine(lossYears, dates) : null,
     };
@@ -135,6 +146,11 @@ const percent = (rate) => `${(Math.floor(rate * 1000) / 10).toFixed(1)}%`;
  */
 export function maxSpendingMarkdown({ result, plan }, { handle = null } = {}) {
     const c = plan.config;
+    const inflPercent = result.inflationShift ?? 0;
+    const enteredInflation = c.inflationRate - inflationRateShift(inflPercent);
+    const inflationSummary = inflPercent
+        ? `inflation ${(enteredInflation * 100).toFixed(1)}% (+${inflPercent}% → ${(c.inflationRate * 100).toFixed(1)}%)`
+        : `inflation ${(c.inflationRate * 100).toFixed(1)}%`;
     const limits = [
         'never runs out',
         `leaves at least ${formatCurrency(result.limits.floor)} at the end`,
@@ -146,11 +162,11 @@ export function maxSpendingMarkdown({ result, plan }, { handle = null } = {}) {
     const lines = [
         '# How much can this plan spend?',
         '',
-        `**Plan:** ${c.filingAs} · ages ${c.startAge} → retires ${c.retirementAge} → ends ${c.finishAge} · `
-            + `inflation ${(c.inflationRate * 100).toFixed(1)}%`,
+        `**Plan:** ${c.filingAs} · ages ${c.startAge} → retires ${c.retirementAge} → ends ${c.finishAge} · ${inflationSummary}`,
         `**Limits:** ${limits}`,
         ...(outlookNote(result.outlook) ? [`**Market outlook:** ${outlookLabel(result.outlook)}. ${outlookNote(result.outlook)}`] : []),
         ...(result.lossYearsLine ? [`**Loss years:** ${result.lossYearsLine}`] : []),
+        ...(inflationNote(inflPercent) ? [`**Higher inflation:** ${inflationLabel(inflPercent)}. ${inflationNote(inflPercent)}`] : []),
         '',
         `**${spendingHeadline(result)}**`,
         '',
@@ -188,6 +204,7 @@ export function maxSpendingMarkdown({ result, plan }, { handle = null } = {}) {
     }
 
     if (handle) {
+        const hasOtherCondition = !!(outlookClause(result.outlook) || result.lossYearsLine);
         lines.push('', `**The plan at this spending:** \`${handle}\`. Pass it to \`share_link\` to open it in the app, `
             + 'to `run_plan` (as `shareUrl`) for its full report, or to `diff_plans` against the plan it came from. '
             + 'The plan it came from is unchanged.'
@@ -197,6 +214,9 @@ export function maxSpendingMarkdown({ result, plan }, { handle = null } = {}) {
                 : '')
             + (result.lossYearsLine
                 ? ` It has no loss years in it${outlookClause(result.outlook) ? ' either' : ''}: they are a condition of this answer, not part of the plan.`
+                : '')
+            + (inflationClause(inflPercent)
+                ? ` It keeps your entered inflation rate${hasOtherCondition ? ' too' : ''}: this answer assumed ${inflationClause(inflPercent)}.`
                 : ''));
     }
 

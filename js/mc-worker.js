@@ -42,7 +42,12 @@ import { withSimConfig } from './sim-config.js';
  * snapshot cannot bring it.
  */
 function configFor(payload) {
-    return withSimConfig(simConfigFromGlobals(), { returnSchedule: payload.returnSchedule ?? null });
+    const base = simConfigFromGlobals();
+    const shift = payload.inflationShift ?? 0;
+    return withSimConfig(base, {
+        ...(shift ? { inflationRate: base.inflationRate + shift } : {}),
+        returnSchedule: payload.returnSchedule ?? null,
+    });
 }
 
 // Guard so Node-side tests can import this module without a Worker context.
@@ -163,6 +168,7 @@ if (isWorker) self.onmessage = async function (event) {
                 backtestFromYear: payload.backtestFromYear ?? null,
                 seed: payload.seed ?? null,
                 returnShift: payload.returnShift ?? 0,
+                inflationShift: payload.inflationShift ?? 0,
                 config: configFor(payload),
                 checkpoint: async (completed) => {
                     // Macrotask yield: lets queued pause/resume messages run
