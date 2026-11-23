@@ -435,7 +435,10 @@ server.tool(
   + "spend leaves no margin; say so when you report it, or pass simulatedMarketsPercent. "
   + "marketOutlook stresses the return assumption, as the Test Bench's Market returns control does: "
   + "every stock and bond return 1% a year lower (pessimistic) or higher (optimistic) than entered. "
-  + "It is not a forecast and not a probability; name it when you report the answer.",
+  + "It is not a forecast and not a probability; name it when you report the answer. "
+  + "lossYearsPercent starts retirement with up to three bad years, as the Test Bench's Loss years "
+  + "control does: the figures the user typed, not history, so name them when you report the answer, "
+  + "and say a markets figure under them is for markets that all began with that fall.",
   {
     plan: z.string().describe("The plan to solve: a run handle from quick_start_report or run_plan, "
         + "a share link, or a share payload."),
@@ -450,9 +453,20 @@ server.tool(
         .describe("Stock and bond returns as entered (moderate), or 1% a year lower (pessimistic) or "
                 + "higher (optimistic), in the plan's own path and in the simulated markets. Inflation, "
                 + "wages and cash are not moved. The handle returned keeps the plan's own rates."),
+    lossYearsPercent: z.array(z.union([
+        z.number(),
+        z.object({ stocks: z.number(), bonds: z.number().optional() }).strict(),
+      ])).max(3).default([])
+        .describe("Up to three loss years, from the first January on or after both retirement and "
+                + "the plan's start: one entry per year, a whole percentage from 0 to 100. A number is "
+                + "how far stock prices fall that year (bonds unchanged); { stocks, bonds } also lets "
+                + "bond prices fall, while bonds keep paying interest. [30, 20] is a 30% stock fall then "
+                + "20%. Pass 30 for 30%, never 0.3; negatives are refused. The handle returned has no "
+                + "loss years in it."),
   },
-  guard(async ({ plan, leaveAtLeast, simulatedMarketsPercent, marketOutlook }) => {
-    const solved = await maxSpending(planFromReference(plan), { leaveAtLeast, simulatedMarketsPercent, marketOutlook });
+  guard(async ({ plan, leaveAtLeast, simulatedMarketsPercent, marketOutlook, lossYearsPercent }) => {
+    const solved = await maxSpending(planFromReference(plan),
+      { leaveAtLeast, simulatedMarketsPercent, marketOutlook, lossYearsPercent });
     // The plan at the answer is run and registered, so its handle works with
     // every other tool.
     const handle = solved.solvedSpec

@@ -728,7 +728,7 @@
         <div class="grid sm:grid-cols-2 gap-4 mb-8">
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Conditions</div>
-                <div class="text-sm text-gray-500">The card at the top holds the conditions about the world that every test and the chart run under: today, <strong>Market returns</strong>. <strong>Reset to as entered</strong> puts every condition back (it is greyed out when they already are). On a phone the card shrinks to one line naming the conditions in force; tap <strong>Edit</strong> to change them.</div>
+                <div class="text-sm text-gray-500">The card at the top holds the conditions about the world that every test and the chart run under: <strong>Market returns</strong> and <strong>Loss years</strong>. <strong>Reset to as entered</strong> puts every condition back (it is greyed out when they already are). On a phone the card shrinks to one line naming the conditions in force; tap <strong>Edit</strong> to change them.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Spending and Routing Tabs</div>
@@ -753,6 +753,10 @@
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Market Returns</div>
                 <div class="text-sm text-gray-500">A condition: switch between <strong>Pessimistic (&minus;1%/yr)</strong>, <strong>Moderate</strong> (as entered), and <strong>Optimistic (+1%/yr)</strong> to stress-test your stock and bond return assumptions (Brokerage, IRA, Roth IRA, 401(k), Treasuries, and Corporate Bonds &mdash; leaving inflation, wages, cash, housing, and debt untouched). Applies across the whole Test Bench, resets to Moderate on reload, and never modifies your saved plan&rsquo;s return rates.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">Loss Years</div>
+                <div class="text-sm text-gray-500">A condition: start retirement with <strong>None</strong>, <strong>1</strong>, <strong>2</strong> or <strong>3</strong> bad years, from the first January on or after both your retirement date and the plan&rsquo;s start. For each year you type how far <strong>stock</strong> prices fall (a new year starts at 20%) and how far <strong>bond</strong> prices fall (it starts at 0%), as whole percentages from 0 to 100; typing &ldquo;&minus;30&rdquo; is read as 30. Stocks are Brokerage, IRA, Roth IRA and 401(k); bonds are US Treasury and Corporate Bond accounts, which keep paying interest. The line under the fields gives the combined fall, and for scale: since 1970 stocks have never lost more than 37.6% over one, two or three years in a row. Nothing changes a typed figure, and loss years are not saved with the plan.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">The Spending Curve</div>
@@ -829,6 +833,24 @@
                     <div class="flex items-start gap-3">
                         <span class="step-number">4</span>
                         <span class="text-sm text-gray-700">Click anywhere along the curve to explore the trade-off between spending more today and leaving more at the end (cached survival rates make follow-up runs quick).</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-2">Test a bad start to retirement</div>
+                <div class="space-y-2">
+                    <div class="flex items-start gap-3">
+                        <span class="step-number">1</span>
+                        <span class="text-sm text-gray-700">In the Conditions card, pick how many <strong>Loss years</strong>, then type each year&rsquo;s stock fall (and a bond fall, if you want one). The fields are labelled with their years.</span>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <span class="step-number">2</span>
+                        <span class="text-sm text-gray-700">Click <strong>Run</strong>. The result&rsquo;s <strong>Found under</strong> line names the loss years, and the chart shows the plan with them.</span>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <span class="step-number">3</span>
+                        <span class="text-sm text-gray-700">Read the simulated-markets figures as conditional: under loss years, &ldquo;lasts in 90%&rdquo; means 90% of markets that all began retirement with that fall.</span>
                     </div>
                 </div>
             </div>

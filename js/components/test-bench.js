@@ -6,8 +6,8 @@
  * Three kinds of lever, three places (test-bench-view.js):
  *
  *   - CONDITIONS, about the world, sit in a card above both tests: the market
- *     outlook today. A new condition is one more row of the card. On a phone
- *     the card collapses to one line, with an Edit button;
+ *     outlook and loss years. A new condition is one more row of the card. On
+ *     a phone the card collapses to one line, with an Edit button;
  *   - LIMITS belong to the spending test, as a short form on its tab;
  *   - EFFORT (Depth) belongs to the routing test, on its tab.
  *
@@ -66,6 +66,14 @@
  * changed, and a save sends only amounts and a routing, never the copy's rates.
  * Changing it starts nothing: the results found under another outlook dim.
  *
+ * ── Loss years ───────────────────────────────────────────────────────
+ *
+ * None, 1, 2 or 3 years from the first January of retirement, each with a
+ * stock and a bond figure the user types (loss-years.js). The plan a test runs
+ * carries them as the engine's `returnSchedule` (conditionedPlan), so every
+ * job and the chart run them. Changing the count keeps the figures typed; a
+ * figure that is not 0–100 is refused under the fields, and Run waits.
+ *
  * The element changes nothing. "Save as a scenario" asks the app to save the
  * solved amounts, the selected routing, or both as a new scenario; the plan
  * as entered stays as it is.
@@ -79,9 +87,10 @@
  *   markStale()  the plan changed; the result on screen is from before it
  *
  * Dispatches:
- *   'testbench-save'   { detail: { factor, lifeEvents?, outlook } }  `lifeEvents`
+ *   'testbench-save'   { detail: { factor, lifeEvents?, clause } }  `lifeEvents`
  *                      when a routing is saved: the plan's, with the routing
- *                      written in. `outlook` is the one the result was found under
+ *                      written in. `clause` names the conditions the result was
+ *                      found under, or is null (conditionsClause)
  *   'testbench-month'  { detail: { year, month } }
  */
 
@@ -96,9 +105,10 @@ import { DEPTHS, DEFAULT_DEPTH, rankSearches } from '../routing-search.js';
 import { startsLabel, costLine, agreementLine, changeRows, versusEntered, routingHeadline,
          isLoneBest, LONE_BEST_NOTE, DEPTH_NOTES } from '../routing-report.js';
 import { formatCompactCurrency, formatCurrency } from '../utils/html.js';
-import { MarketOutlook, OUTLOOKS, outlookPlan, outlookLabel, returnShift } from '../market-outlook.js';
-import { NEUTRAL_CONDITIONS, conditionsOf, isNeutral, conditionChips, foundUnderChips, foundUnderText,
-         spendingChanges, routingChanges, changedLine, tabColumn } from '../test-bench-view.js';
+import { MarketOutlook, OUTLOOKS, outlookLabel, returnShift } from '../market-outlook.js';
+import { NEUTRAL_CONDITIONS, conditionsOf, isNeutral, sameConditions, conditionChips, foundUnderChips, foundUnderText,
+         spendingChanges, routingChanges, changedLine, tabColumn, conditionedPlan, conditionsClause } from '../test-bench-view.js';
+import { MAX_LOSS_YEARS, NO_LOSS_YEARS, parseLossFigure, lossYearsCalendar, lossYearsLine } from '../loss-years.js';
 
 /** The line under the outlook control. */
 function outlookLine(outlook) {
@@ -112,6 +122,15 @@ const TABS = Object.freeze([
     { id: 'spending', label: 'Spending', title: 'How much can this plan spend?' },
     { id: 'routing', label: 'Routing', title: "Is there a better way to route this plan's money?" },
 ]);
+
+/**
+ * The plan's dates the loss years count from: its retirement date, first and
+ * last months, each { year, month } (DateInt). Retirement may be null.
+ */
+function datesOf(plan) {
+    const at = (int) => (int ? new DateInt(int) : null);
+    return { retirement: at(plan.retirementDateInt), first: at(plan.firstDateInt), last: at(plan.lastDateInt) };
+}
 
 /** A Found under line, one chip each. */
 function foundUnderLine(chips) {
@@ -138,6 +157,9 @@ class TestBench extends LitElement {
         _successOn:      { state: true },
         _successPercent: { state: true },
         _outlook:        { state: true },   // the market outlook the next test runs under
+        _lossCount:      { state: true },   // loss years: 0 to 3
+        _lossFigures:    { state: true },   // { stocks: [n,n,n], bonds: [n,n,n] }, the last valid of each
+        _lossText:       { state: true },   // the same as typed, with errors kept: { stocks: [..], bonds: [..] }
         _solving:        { state: true },   // { tested, completed, total } while the limit is tested
         _depth:     { state: true },
         _rStatus:   { state: true },   // 'idle' | 'running' | 'done' | 'error'
@@ -168,6 +190,10 @@ class TestBench extends LitElement {
         this._successOn = true;
         this._successPercent = 90;
         this._outlook = MarketOutlook.MODERATE;
+        this._lossCount = 0;
+        this._lossFigures = { stocks: [...NO_LOSS_YEARS.stocks], bonds: [...NO_LOSS_YEARS.bonds] };
+        this._lossText = { stocks: NO_LOSS_YEARS.stocks.map(String), bonds: NO_LOSS_YEARS.bonds.map(String) };
+        this._dates = null;        // the plan's { retirement, first, last }; null means read them again
         this._solving = null;
         this._depth = DEFAULT_DEPTH;
         this._rStatus = 'idle';
@@ -178,7 +204,8 @@ class TestBench extends LitElement {
         this._rStale = false;
         this._rError = '';
         this._rFloor = 0;          // the floor the routing test on screen was run with
-        this._rOutlook = MarketOutlook.MODERATE;   // and the market outlook
+        this._rConditions = conditionsOf();   // and the conditions
+        this._rClause = null;      // and their clause, for a save
         this._rPlan = null;        // and the plan it was run on
         this._rRun = null;         // identifies the routing test in flight
         this._rAsked = 0;          // how many searches the test on screen set out to run
@@ -213,6 +240,10 @@ class TestBench extends LitElement {
     }
 
     willUpdate() {
+        if (this._dates === null && this.ready) {
+            const plan = this.planSource?.();
+            this._dates = plan ? datesOf(plan) : undefined;
+        }
         if (this._cost !== null || !this.ready) return;
         try {
             const plan = this.planSource?.();
@@ -231,6 +262,7 @@ class TestBench extends LitElement {
         if (this._result) this._stale = true;
         this._routingOutdated();
         this._cost = null;
+        this._dates = null;
     }
 
     /** The routing test on screen no longer describes the plan, the floor or the outlook. */
@@ -263,7 +295,32 @@ class TestBench extends LitElement {
 
     /** The conditions on screen. */
     _conditions() {
-        return conditionsOf({ outlook: this._outlook });
+        return conditionsOf({
+            outlook: this._outlook,
+            lossYears: { count: this._lossCount, stocks: this._lossFigures.stocks, bonds: this._lossFigures.bonds },
+        });
+    }
+
+    /** Whether a loss-year figure on show is one the page refused. Run waits for it. */
+    _lossInvalid() {
+        return ['stocks', 'bonds'].some((kind) =>
+            this._lossText[kind].slice(0, this._lossCount).some((text) => 'error' in parseLossFigure(text)));
+    }
+
+    _setLossCount(count) {
+        // The figures stay as typed: 3 → 1 → 3 brings years 2 and 3 back.
+        this._lossCount = count;
+    }
+
+    /** A typed figure: kept as typed, and taken as the figure when it is 0–100. */
+    _setLossFigure(kind, index, text) {
+        const parsed = parseLossFigure(text);
+        const shown = 'value' in parsed ? String(parsed.value) : text;
+        this._lossText = { ...this._lossText, [kind]: this._lossText[kind].map((t, i) => (i === index ? shown : t)) };
+        if ('value' in parsed) {
+            this._lossFigures = { ...this._lossFigures,
+                [kind]: this._lossFigures[kind].map((v, i) => (i === index ? parsed.value : v)) };
+        }
     }
 
     /** The spending test's limits on screen. */
@@ -287,7 +344,7 @@ class TestBench extends LitElement {
     _routingChanged() {
         if (!this._searches) return null;
         if (this._rStale) return 'The plan or its settings changed after this test. Search again.';
-        return changedLine(routingChanges({ conditions: { outlook: this._rOutlook }, floor: this._rFloor },
+        return changedLine(routingChanges({ conditions: this._rConditions, floor: this._rFloor },
             { conditions: this._conditions(), floor: this._floor }), 'Search');
     }
 
@@ -297,7 +354,7 @@ class TestBench extends LitElement {
      */
     _spendingNeededForRouting() {
         const r = this._result;
-        return !r || this._stale || r.limits.floor !== this._floor || r.outlook !== this._outlook;
+        return !r || this._stale || r.limits.floor !== this._floor || !sameConditions(this._under.conditions, this._conditions());
     }
 
     _setTab(tab) {
@@ -329,11 +386,12 @@ class TestBench extends LitElement {
     async run() {
         const source = this.planSource?.();
         if (!source) return;
-        // The plan under the outlook, once: every job and the chart run this copy.
-        const outlook = this._outlook;
-        const plan = outlookPlan(source, outlook);
+        // The plan under the conditions, once: every job and the chart run this copy.
+        const conditions = this._conditions();
+        const dates = datesOf(source);
+        const plan = conditionedPlan(source, conditions, dates);
         // What the result will have been found under: the levers as Run was clicked.
-        const under = { conditions: this._conditions(), limits: this._limits(), data: marketsData() };
+        const under = { conditions, limits: this._limits(), data: marketsData(), clause: conditionsClause(conditions, dates) };
         this._status = 'running';
         this._error = '';
         this._checks = {};
@@ -377,9 +435,11 @@ class TestBench extends LitElement {
     async runRouting() {
         const source = this.planSource?.();
         if (!source) return;
-        const plan = outlookPlan(source, this._outlook);
+        const conditions = this._conditions();
+        const dates = datesOf(source);
+        const plan = conditionedPlan(source, conditions, dates);
         // The list is read against the spending test's columns, at this floor
-        // and outlook, so Search runs that test too when its answer is not for them.
+        // and these conditions, so Search runs that test too when its answer is not for them.
         if (this._spendingNeededForRouting()) this.run();
 
         const run = (this._rRun = {});
@@ -387,7 +447,8 @@ class TestBench extends LitElement {
         this._rError = '';
         this._rStale = false;
         this._rFloor = this._floor;
-        this._rOutlook = this._outlook;
+        this._rConditions = conditions;
+        this._rClause = conditionsClause(conditions, dates);
         this._rPlan = plan;
         this._searches = [];
         this._selected = null;
@@ -440,7 +501,7 @@ class TestBench extends LitElement {
      */
     _tableRouted() {
         const r = this._result;
-        return r && !this._rStale && r.limits.floor === this._rFloor && r.outlook === this._rOutlook
+        return r && !this._rStale && r.limits.floor === this._rFloor && sameConditions(this._under.conditions, this._rConditions)
             ? this._routedColumn() : null;
     }
 
@@ -453,7 +514,7 @@ class TestBench extends LitElement {
     _enteredMonthly() {
         const r = this._result;
         const most = r?.fixedBest ?? r?.best;
-        return most && !this._stale && r.limits.floor === this._rFloor && r.outlook === this._rOutlook
+        return most && !this._stale && r.limits.floor === this._rFloor && sameConditions(this._under.conditions, this._rConditions)
             ? most.monthlySpending : 0;
     }
 
@@ -500,6 +561,7 @@ class TestBench extends LitElement {
     /** Reset to as entered: every condition at its neutral setting. */
     _resetConditions() {
         this._setOutlook(NEUTRAL_CONDITIONS.outlook);
+        this._setLossCount(0);
     }
 
     _setSuccess(on, percent) {
@@ -716,7 +778,7 @@ class TestBench extends LitElement {
                     <button type="button" class="btn-modern outline text-sm" title=${saveTitle}
                             ?disabled=${!result.best || !!changed || !this.canSave}
                             @click=${() => this.dispatchEvent(new CustomEvent('testbench-save',
-                                { detail: { factor: result.best.factor, outlook: result.outlook }, bubbles: true }))}>Save as a scenario</button>
+                                { detail: { factor: result.best.factor, clause: this._under.clause }, bubbles: true }))}>Save as a scenario</button>
                 </div>
             </div>`;
     }
@@ -765,7 +827,7 @@ class TestBench extends LitElement {
             : !this.canSave ? 'Save the plan on screen as a scenario first'
             : 'Saves a new scenario. The plan on screen is not changed.';
         const save = (factor) => this.dispatchEvent(new CustomEvent('testbench-save',
-            { detail: { factor, lifeEvents: result.lifeEvents, outlook: this._rOutlook }, bubbles: true }));
+            { detail: { factor, lifeEvents: result.lifeEvents, clause: this._rClause }, bubbles: true }));
         return html`
             <p class="tb-headline tb-routing-headline">${routingHeadline(result, this._enteredMonthly())}</p>
             ${rows.length ? html`
@@ -813,7 +875,7 @@ class TestBench extends LitElement {
                         ? html`<button type="button" class="btn-modern outline text-sm tb-run"
                                        @click=${() => this._onStop()}>Stop</button>`
                         : html`<button type="button" class="btn-modern primary text-sm tb-run"
-                                       ?disabled=${!this.ready || nothingToRoute}
+                                       ?disabled=${!this.ready || nothingToRoute || this._lossInvalid()}
                                        title=${this.ready ? '' : 'Add assets to run the test'}
                                        @click=${() => this.runRouting()}>&#9654; Search</button>`}
                 </div>
@@ -824,7 +886,7 @@ class TestBench extends LitElement {
                 ${this._searches ? html`
                     <div class="tb-result ${changed ? 'is-stale' : ''}" title=${changed ? 'Found under other settings than the ones shown' : ''}>
                         ${changed ? html`<p class="tb-changed" role="status">${changed}</p>` : nothing}
-                        ${foundUnderLine(foundUnderChips({ conditions: { outlook: this._rOutlook }, floor: this._rFloor }))}
+                        ${foundUnderLine(foundUnderChips({ conditions: this._rConditions, floor: this._rFloor }))}
                         <div class="tb-routing-body">
                             ${this._renderRoutingList(ranked, row)}
                             <p class="tb-note">${running
@@ -941,7 +1003,7 @@ class TestBench extends LitElement {
         // The column's own result: what it was found under, and whether it is out of date.
         const routed = shown.id === 'routed';
         const changed = routed ? this._routingChanged() : this._spendingChanged();
-        const found = routed ? foundUnderText({ conditions: { outlook: this._rOutlook }, floor: this._rFloor })
+        const found = routed ? foundUnderText({ conditions: this._rConditions, floor: this._rFloor })
             : foundUnderText({ conditions: this._under.conditions });
         return html`
             <div class="tb-chart">
@@ -1008,8 +1070,55 @@ class TestBench extends LitElement {
                             <span class="tb-sub">${outlookLine(this._outlook)}</span>
                         </div>
                     </div>
+                    ${this._renderLossYears()}
                 </div>
             </section>`;
+    }
+
+    /** The Loss years row: the count, a stock and a bond figure per year, and its line. */
+    _renderLossYears() {
+        const count = this._lossCount;
+        const record = this._conditions().lossYears;
+        const dates = this._dates || null;
+        const years = dates ? lossYearsCalendar(record, dates).years : null;
+        const yearLabel = (i) => (years ? String(years[i]) : `Year ${i + 1}`);
+        const field = (kind, i) => {
+            const text = this._lossText[kind][i];
+            const bad = 'error' in parseLossFigure(text);
+            const what = kind === 'stocks' ? 'Stock' : 'Bond';
+            return html`
+                <label class="tb-loss-field ${bad ? 'is-bad' : ''}">
+                    <span class="tb-loss-sign" aria-hidden="true">${'\u2212'}</span>
+                    <input type="text" inputmode="numeric" .value=${text} aria-invalid=${bad ? 'true' : 'false'}
+                           aria-label=${`${what} price fall in ${yearLabel(i)}, percent`}
+                           @change=${(ev) => { this._setLossFigure(kind, i, ev.target.value);
+                                               ev.target.value = this._lossText[kind][i]; }}>%</label>`;
+        };
+        const columns = Array.from({ length: count }, (_, i) => i);
+        return html`
+            <div class="tb-condition">
+                <span class="tb-condition-label" id="tb-loss-label">Loss years</span>
+                <div class="tb-condition-control">
+                    <div class="tb-columns" role="radiogroup" aria-labelledby="tb-loss-label">
+                        ${Array.from({ length: MAX_LOSS_YEARS + 1 }, (_, n) => html`
+                            <label class="tb-column ${n === count ? 'is-on' : ''}">
+                                <input type="radio" name="tb-loss-count" .checked=${n === count}
+                                       @change=${() => this._setLossCount(n)}>${n === 0 ? 'None' : n}</label>`)}
+                    </div>
+                    ${count ? html`
+                        <div class="tb-loss-grid" style=${`grid-template-columns: auto repeat(${count}, auto)`}>
+                            <span></span>
+                            ${columns.map((i) => html`<span class="tb-loss-year">${yearLabel(i)}</span>`)}
+                            <span class="tb-loss-kind">Stocks</span>
+                            ${columns.map((i) => field('stocks', i))}
+                            <span class="tb-loss-kind">Bonds</span>
+                            ${columns.map((i) => field('bonds', i))}
+                        </div>
+                        ${this._lossInvalid() ? html`<p class="tb-error tb-loss-error" role="alert">A loss is 0% to 100%.
+                            Run waits until each figure is a whole number from 0 to 100.</p>` : nothing}` : nothing}
+                    <span class="tb-sub tb-loss-line">${dates ? lossYearsLine(record, dates) : ''}</span>
+                </div>
+            </div>`;
     }
 
     /** The tab list: one tab per test, with a word while one runs. */
@@ -1053,8 +1162,8 @@ class TestBench extends LitElement {
                                                ev.target.value = String(this._successPercent); }}>%
                         <span class="tb-sub">of simulated markets</span></span>
                 </div>
-                <button type="button" class="btn-modern primary text-sm tb-run" ?disabled=${!this.ready || running}
-                        title=${this.ready ? '' : 'Add assets to run the test'}
+                <button type="button" class="btn-modern primary text-sm tb-run" ?disabled=${!this.ready || running || this._lossInvalid()}
+                        title=${!this.ready ? 'Add assets to run the test' : this._lossInvalid() ? 'A loss year\'s figure must be 0% to 100%' : ''}
                         @click=${() => this.run()}>${running ? 'Running…' : html`&#9654; Run`}</button>
             </div>`;
     }

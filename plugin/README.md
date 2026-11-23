@@ -50,7 +50,8 @@ directly, and `share_link` sends one back the other way — a link that opens th
 plan in the web app for the charts a transcript cannot show. `max_spending`
 answers *"how much could I spend?"* for any plan: the most it can pay for
 without ever leaving a bill unpaid, the same figure the app's Test Bench gives,
-with stock and bond returns as entered or a point lower or higher (`marketOutlook`).
+with stock and bond returns as entered or a point lower or higher (`marketOutlook`),
+and with up to three loss years at the start of retirement (`lossYearsPercent`).
 
 That link keeps the promise above. The plan rides in the URL **fragment**, which
 browsers never transmit, so opening it sends nothing to the website's server;

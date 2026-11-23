@@ -1,6 +1,6 @@
 # Spec 18 — The Test Bench's layout: conditions, tests, and what a result was found under
 
-Status: **DRAFT 2026-11-21, revised 2026-11-22.** Spec only, no code. On 2026-11-22 John revised loss years (1, 2 or 3 years, each with a loss the user types) and accepted pre-build refinements (Routing floor visibility, explicit Run in Phase 1, mid-year already-retired start year, loss-year input ergonomics, chart column switcher across tabs, and the simulated-markets non-stock draw note for Rules). On 2026-11-23 John took the recommendations for Phase 1 (decisions 1, 2, 10 and 11, and the two questions now answered in §3.2 and §3.4), and **Phase 1 is built** (§11). On 2026-11-23 John also decided Phase 2's: 3 a fall in price, 4 **a second figure per year for bonds**, 5 nothing moves a typed figure, 7 20%, 8 not saved, 9 MCP yes. Decision 4 changes §4: the engine has no bond price, so §4.3 gives bonds a price-change path of their own, and it raised four questions, decisions 12–15, which John answered the same day with the recommendations. Every decision is now made except whether §4.4 keeps its "retiring mid-year" example; Phase 2 starts with its measurements (§11).
+Status: **DRAFT 2026-11-21, revised 2026-11-22.** Spec only, no code. On 2026-11-22 John revised loss years (1, 2 or 3 years, each with a loss the user types) and accepted pre-build refinements (Routing floor visibility, explicit Run in Phase 1, mid-year already-retired start year, loss-year input ergonomics, chart column switcher across tabs, and the simulated-markets non-stock draw note for Rules). On 2026-11-23 John took the recommendations for Phase 1 (decisions 1, 2, 10 and 11, and the two questions now answered in §3.2 and §3.4), and **Phase 1 is built** (§11). On 2026-11-23 John also decided Phase 2's: 3 a fall in price, 4 **a second figure per year for bonds**, 5 nothing moves a typed figure, 7 20%, 8 not saved, 9 MCP yes. Decision 4 changes §4: the engine has no bond price, so §4.3 gives bonds a price-change path of their own, and it raised four questions, decisions 12–15, which John answered the same day with the recommendations. Every decision is now made except whether §4.4 keeps its "retiring mid-year" example. **Phase 2 is built** (§11), and its measurements are in §4.9.
 
 The Test Bench is about to get more levers. Spec 17 added Market returns, and the next asked for is starting retirement with up to three years of losses. Today's controls are written as one sentence, and they already had to break onto a second row for Market returns. This spec gives the levers a layout that takes more of them, and defines the first new one: **loss years at the start of retirement**.
 
@@ -203,11 +203,32 @@ A new SimConfig field, `returnSchedule`: a list of `{ year, stocks, bonds }`, wh
 - **The report** names the loss years and their calendar years in the Found under line and the headline.
 - **The plan handed back** has no loss years in it, because they are a condition, not part of the plan, and the report says so.
 
+### 4.9 Measured (2026-11-23, before the control shipped)
+
+On every quick start, built 15 November 2026, through `max_spending` (the Test Bench's solver): the most a plan can spend a month with no loss years and with 1, 2 or 3 years at 20% (bonds 0%), on the plan's own path and at 90% of 300 simulated markets.
+
+| Profile | Own path: none | 1 | 2 | 3 | 90% of markets: none | 1 | 2 | 3 |
+|---|---|---|---|---|---|---|---|---|
+| Early Career | $3,659 | $3,659 | $3,659 | $3,659 | $3,659 | $3,659 | $3,659 | $3,522 |
+| Mid Career | $5,618 | $5,236 | $4,847 | $4,443 | $4,781 | $4,431 | $4,005 | $3,740 |
+| Pre-Retirement | $6,648 | $5,946 | $5,318 | $4,755 | $5,215 | $4,693 | $4,156 | $3,834 |
+| Retired | $9,764 | $8,466 | $7,532 | $6,851 | $7,291 | $6,695 | $6,177 | $5,817 |
+| Young Couple | $7,627 | $7,627 | $7,627 | $7,189 | $7,584 | $7,174 | $6,636 | $6,301 |
+| Dual Income | $10,122 | $9,762 | $9,167 | $8,553 | $10,122 | $9,762 | $9,167 | $8,553 |
+| Couple Nearing Retirement | $11,191 | $10,026 | $8,970 | $8,049 | $8,784 | $7,969 | $7,065 | $6,547 |
+| Retired Couple | $14,328 | $12,554 | $11,195 | $10,152 | $10,808 | $9,937 | $9,160 | $8,655 |
+
+- **The order holds on all eight, on both paths**: 3 years ≤ 1 year ≤ none (§8 asks for it as a sample, not a law).
+- **Early Career's own path does not move:** it runs out before it retires, so its loss years (2058 on) never bind. Young Couple's binding month comes before its second loss year ends, so only the third year moves it.
+- **Dual Income's markets limit never binds**, so its two halves agree.
+- **Bonds,** on Retired with a $300,000 US Treasury (4%) and a $300,000 corporate bond (5%) added, one loss year with stocks at 0%: bonds at 0% $10,920, 10% $10,739, 100% $9,386 on the own path; at 90% of markets $9,161, $8,981 and $7,244.
+- **100% (trap 9),** on Retired and Mid Career: no value anywhere is NaN or infinite. Every stock account is $0 from the year's first month, and the money paid into one that year is lost with it (Retired's brokerage took in $62,073 over 25 deposits in 2027 and ended the year at $0). **An emptied brokerage keeps its basis** ($104,613 on Retired), and no capital loss is ever booked: later deposits share that basis, so their gains when sold are sheltered by it (Retired books its first gain again in 2046). Rules says so.
+
 ---
 
 ## 5. Words
 
-Each condition supplies three strings, all from one headless module (`js/market-outlook.js` today, renamed to `js/test-conditions.js` when the second condition lands):
+Each condition supplies three strings from its own headless module, `js/market-outlook.js` and `js/loss-years.js`, and `js/test-bench-view.js` puts them together (`conditionChips`, `conditionsClause`, `conditionedPlan`). The rename to one `js/test-conditions.js` was not done: two modules of one condition each kept the change small.
 
 - **its chip label** for the Found under line: "Optimistic (+1%)", "2 loss years (−30%, −20%)" when every bond figure is 0, else "2 loss years (stocks −30%, −20%; bonds −10%, 0%)". None at its neutral setting;
 - **the line under its control**, saying what the setting on screen does;
@@ -322,6 +343,7 @@ Each has a recommendation; John decides.
 1. **Layout and explicit Run, no new condition.** *Built 2026-11-23: `js/components/test-bench.js`, the headless rules in `js/test-bench-view.js`, `tests/test-bench-layout.mjs`.* The Conditions card with Market returns alone (and Reset hidden/disabled when neutral), the tabs (with the Routing tab's floor indicator when `Leaves at least > $0`), the limits form, Found under replacing the outlook's captions (plus the floor chip on the routing list when `> $0`), the chart under the tabs keeping its 3-column switcher, explicit Run + dim-on-change for every lever (decision 2, superseding spec 17 decision 5), and the phone collapse. The snapshot and every number are unchanged; the work is the page, its styles, Help, Rules and spec 17's pointer. A browser check at 1024px and 375px on an isolated origin.
 2. **Loss years.**
    - **First, measure:** run the quick starts under 1, 2 and 3 years at 20%, on the own path and at 90% of markets. Run one profile with a brokerage at 100%, for NaN and for what the emptied account does with its basis and that year's contributions (trap 9). No quick start holds a bond (trap 12), so measure bonds on a fixture with a US Treasury and a corporate bond, on the own path and in markets, at 0%, 10% and 100%, and check the ledger books the fall as growth and no interest as negative. Write the results into §4 before the control ships.
+   - *Built 2026-11-23: the engine in `js/return-schedule.js` (with `chronometer.js`, `mc-compute.js`'s `runOnce` and baseline, and `IncomeAccountBehavior`), the condition in `js/loss-years.js`, the page in `js/components/test-bench.js`, `lossYearsPercent` in `js/mcp/max-spending.js`; tests `tests/loss-years-engine.mjs` and `tests/loss-years.mjs`. Measured first: §4.9.*
    - **Then build:** `returnSchedule` in SimConfig, `chronometer.js`, `runOnce` and `IncomeAccountBehavior`'s bond price change; the condition's rows and their figures (with the fixed `−` prefix and leading-`-` stripping in the UI); `lossYearsPercent` on `max_spending`; Help, Rules and the plugin docs. Plugin bump.
 
 ---

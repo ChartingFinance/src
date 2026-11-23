@@ -24,6 +24,7 @@
  */
 
 import { FilingStatus, isFilingStatus, asFilingStatus } from './filing-status.js';
+import { normalizeReturnSchedule } from './return-schedule.js';
 
 /**
  * The engine's own defaults. The engine owns them; globals.js imports them to
@@ -95,6 +96,7 @@ const FIELDS = Object.freeze([
     'simDataMode',
     'taxTable',
     'birthYear',
+    'returnSchedule',
 ]);
 
 /**
@@ -107,8 +109,12 @@ const FIELDS = Object.freeze([
  * first month (`firstDateInt.year - startAge`) — never from the clock, so a
  * saved plan runs the same in any year. When absent, `birthYearFor()` throws
  * rather than invent one.
+ *
+ * `returnSchedule`: the Test Bench's loss years (return-schedule.js), a
+ * condition of one test, not a setting. Absent, null or empty is null, and
+ * nothing changes. `withSimConfig(config, { returnSchedule })` attaches one.
  */
-const ATTACHED = Object.freeze(['taxTable', 'birthYear']);
+const ATTACHED = Object.freeze(['taxTable', 'birthYear', 'returnSchedule']);
 
 const NUMERIC = Object.freeze([
     'inflationRate',
@@ -179,6 +185,7 @@ export function makeSimConfig(values) {
 
     const config = {};
     for (const f of FIELDS) config[f] = values[f] ?? null;
+    config.returnSchedule = normalizeReturnSchedule(values.returnSchedule);
     return Object.freeze(config);
 }
 

@@ -67,9 +67,11 @@ export class ExpenseResult {
   }
 }
 
+/** A month of interest; `growth` is a loss year's fall in a bond's price, zero otherwise. */
 export class InterestResult {
-  constructor(income = Currency.zero()) {
+  constructor(income = Currency.zero(), growth = Currency.zero()) {
     this.income = income instanceof Currency ? income.copy() : new Currency(income);
+    this.growth = growth instanceof Currency ? growth.copy() : new Currency(growth);
   }
 }
 import { Metric as M } from '../metric.js';
@@ -421,6 +423,21 @@ const IncomeAccountBehavior = Object.freeze({
 
   applyMonthly(asset) {
     asset.ensurePositiveStart();
+
+    // A loss year's fall in a bond's price (return-schedule.js): its twelfth
+    // root each month, before the month's interest, booked as growth. Never
+    // through the rate: a negative rate would book negative interest, which the
+    // tax engine would take off ordinary income. Untaxed: a bond has no basis,
+    // so the fall is never realized as a capital loss either.
+    let priceChange = Currency.zero();
+    if (asset.annualPriceChange && asset.finishCurrency.amount > 0) {
+      priceChange = new Currency(asset.finishCurrency.amount * (Math.pow(1 + asset.annualPriceChange, 1 / 12) - 1));
+      asset.growthCurrency.add(priceChange);
+      asset.finishCurrency.add(priceChange);
+      asset.monthlyValueChange.add(priceChange);
+      asset.recordEvent(EventType.ASSET_GROWTH, priceChange, { metric: M.GROWTH });
+    }
+
     // Interest never accrues on a deficit — see CapitalBehavior. A savings
     // account drawn below zero is not a loan against itself.
     const income = asset.finishCurrency.amount > 0
@@ -435,7 +452,7 @@ const IncomeAccountBehavior = Object.freeze({
 
     asset.recordEvent(EventType.INTEREST_INCOME, income, { metric: M.INTEREST_INCOME });
 
-    return new InterestResult(income);
+    return new InterestResult(income, priceChange);
   },
 });
 

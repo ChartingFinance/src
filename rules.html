@@ -1004,6 +1004,38 @@
             </div>
         </div>
 
+        <h3 class="text-lg font-bold tracking-tight mb-3">Loss years</h3>
+        <div class="space-y-2 mb-6">
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
+                <span class="rule-chip">When</span>
+                <span class="text-sm text-gray-700">The first one, two or three calendar years starting with the first January on or after both your retirement date and the plan&rsquo;s start. Each is a full year, January to December. A plan that starts mid-year already retired keeps its first months as entered. Years past the plan&rsquo;s end are not run.</span>
+            </div>
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
+                <span class="rule-chip">Stocks</span>
+                <span class="text-sm text-gray-700">In a loss year every Brokerage, IRA, Roth IRA and 401(k) return is the stock figure you typed, as a fall in price: an account with no money in or out and no dividends ends the year exactly that much lower. Dividends keep paying on the lower balance, so an account with a dividend yield falls a little less.</span>
+            </div>
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
+                <span class="rule-chip">Bonds</span>
+                <span class="text-sm text-gray-700">US Treasury and Corporate Bond accounts keep paying interest at their usual rate (or the simulated market&rsquo;s), and their price falls by the bond figure on top. The fall is not taxed and never realized: the simulator keeps no cost basis for bonds, so selling a bond afterward books no capital loss, where a real household could deduct one. Bank and cash accounts, wages and inflation are not changed.</span>
+            </div>
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
+                <span class="rule-chip">Nothing moves a figure</span>
+                <span class="text-sm text-gray-700">A typed figure runs as typed in both data modes. The market outlook&rsquo;s 1% is not added to it, Calibrated mode&rsquo;s swing is not added, and Historical mode&rsquo;s dividend adjustment is not made. The outlook still moves bonds&rsquo; interest, which is not a typed figure.</span>
+            </div>
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
+                <span class="rule-chip">In simulated markets</span>
+                <span class="text-sm text-gray-700">Each market still draws its years as usual, so in a loss year the stock and bond figures replace only those returns: inflation, wages and Treasury interest still come from that market&rsquo;s random historical year. A typed crash is not paired with a recession year&rsquo;s inflation. Under loss years, &ldquo;lasts in 90% of markets&rdquo; means 90% of markets that all began retirement with that fall.</span>
+            </div>
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
+                <span class="rule-chip">A 100% loss</span>
+                <span class="text-sm text-gray-700">Empties every stock (or bond) account in the year&rsquo;s first month, and money paid into one during that year is lost with it. An emptied Brokerage keeps its cost basis, which later deposits share; no capital loss is booked. The next January the accounts earn again.</span>
+            </div>
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">
+                <span class="rule-chip">Not saved</span>
+                <span class="text-sm text-gray-700">Loss years are a condition of the test. A scenario saved from the result keeps your own returns and has no loss years; its note says what the result assumed.</span>
+            </div>
+        </div>
+
         <h3 class="text-lg font-bold tracking-tight mb-3">What the result reports</h3>
         <div class="space-y-2 mb-6">
             <div class="flex items-start gap-3 p-3 rounded-xl bg-white/70">

@@ -40,6 +40,8 @@ import { formatCurrency } from '../utils/html.js';
 import { simConfigFromPlanSpec } from './run-plan.js';
 import { planWithIds } from '../plan-ids.js';
 import { MarketOutlook, outlookAssets, outlookLabel, outlookClause, outlookNote, returnShift } from '../market-outlook.js';
+import { lossYearsFromPercent, lossYearsSchedule, lossYearsClause, lossYearsLine } from '../loss-years.js';
+import { withSimConfig } from '../sim-config.js';
 
 /** The app's simulated markets (test-bench-run.js): how many, and which. */
 export const MARKETS = 300;
@@ -53,41 +55,49 @@ export const MARKETS_SEED = 1;
  * @param {number} [limits.leaveAtLeast=0]  least to leave at the end, today's dollars
  * @param {number|null} [limits.simulatedMarketsPercent]  50 to 99; null leaves the limit off
  * @param {string} [limits.marketOutlook='moderate']  'pessimistic', 'moderate' or 'optimistic'
+ * @param {Array} [limits.lossYearsPercent=[]]  up to three loss years from the first January
+ *   of retirement: each a whole percentage stock fall, or { stocks, bonds } (loss-years.js)
  * @param {number} [limits.markets]  simulated markets to run; the app's 300 unless a test asks for fewer
  * @returns {Promise<{ result: object, solvedSpec: object|null, plan: object }>}
  *   `result` is solveSpending()'s, or limitBySuccess()'s with the limit on;
  *   `solvedSpec` is the plan at the answer, or null when no level keeps the limits
  */
 export async function maxSpending(spec, { leaveAtLeast = 0, simulatedMarketsPercent = null,
-                                          marketOutlook = MarketOutlook.MODERATE, markets = MARKETS } = {}) {
+                                          marketOutlook = MarketOutlook.MODERATE, lossYearsPercent = [],
+                                          markets = MARKETS } = {}) {
     if (!spec?.modelAssets?.length) {
         throw new Error('Plan spec has no modelAssets — nothing to solve.');
     }
     const shift = returnShift(marketOutlook);   // throws on a name that is not an outlook
+    const lossYears = lossYearsFromPercent(lossYearsPercent);   // throws on a figure it refuses
     // Every run below is built from this plan, and the solved spec is copied
     // from it, so all of them carry the same ids.
     spec = planWithIds(spec);
-    // Solved under the outlook. The spec itself keeps the user's rates, and the
-    // plan at the answer is built from it.
+    const modelAssets = outlookAssets(spec.modelAssets, marketOutlook);
+    // The retirement date comes from the plan's birth year, which only a
+    // Portfolio attaches to a config (as runMonteCarloFor does). The loss years
+    // count from it and from the plan's own first and last months.
+    const placed = new Portfolio(modelAssets.map((a) => ModelAsset.fromJSON(a)), false, simConfigFromPlanSpec(spec));
+    const bound = placed.config;
+    const retirementDateInt = ageToDateIntFor(bound, bound.retirementAge);
+    const dates = { retirement: retirementDateInt, first: placed.firstDateInt, last: placed.lastDateInt };
+    // Solved under the outlook and the loss years. The spec itself keeps the
+    // user's rates and has no loss years; the plan at the answer is built from it.
     const plan = {
-        modelAssets: outlookAssets(spec.modelAssets, marketOutlook),
+        modelAssets,
         lifeEvents: spec.lifeEvents ?? [],
-        config: simConfigFromPlanSpec(spec),
+        config: withSimConfig(simConfigFromPlanSpec(spec), { returnSchedule: lossYearsSchedule(lossYears, dates) }),
     };
 
     let result = solveSpending(plan, { floor: leaveAtLeast });
 
     if (simulatedMarketsPercent != null) {
-        // The retirement date comes from the plan's birth year, which only a
-        // Portfolio attaches to a config (as runMonteCarloFor does).
-        const bound = new Portfolio(plan.modelAssets.map((a) => ModelAsset.fromJSON(a)), false,
-            simConfigFromPlanSpec(spec)).config;
         const sim = {
             markets,
             seed: MARKETS_SEED,
             dataMode: plan.config.simDataMode,
             backtestFromYear: null,
-            retirementDateInt: ageToDateIntFor(bound, bound.retirementAge).toInt(),
+            retirementDateInt: retirementDateInt.toInt(),
             returnShift: shift,
         };
         result = await limitBySuccess(plan, result, {
@@ -97,7 +107,12 @@ export async function maxSpending(spec, { leaveAtLeast = 0, simulatedMarketsPerc
         });
     }
 
-    result = { ...result, outlook: marketOutlook };
+    result = {
+        ...result,
+        outlook: marketOutlook,
+        lossYearsClause: lossYearsClause(lossYears, dates),
+        lossYearsLine: lossYears.count ? lossYearsLine(lossYears, dates) : null,
+    };
 
     const solvedSpec = result.best ? {
         ...spec,
@@ -135,6 +150,7 @@ export function maxSpendingMarkdown({ result, plan }, { handle = null } = {}) {
             + `inflation ${(c.inflationRate * 100).toFixed(1)}%`,
         `**Limits:** ${limits}`,
         ...(outlookNote(result.outlook) ? [`**Market outlook:** ${outlookLabel(result.outlook)}. ${outlookNote(result.outlook)}`] : []),
+        ...(result.lossYearsLine ? [`**Loss years:** ${result.lossYearsLine}`] : []),
         '',
         `**${spendingHeadline(result)}**`,
         '',
@@ -178,6 +194,9 @@ export function maxSpendingMarkdown({ result, plan }, { handle = null } = {}) {
             + (outlookClause(result.outlook)
                 ? ` That plan has your own return rates, not the outlook's: this answer assumed ${outlookClause(result.outlook)},`
                   + ' so run as it stands it will not give this answer.'
+                : '')
+            + (result.lossYearsLine
+                ? ' It has no loss years in it either: they are a condition of this answer, not part of the plan.'
                 : ''));
     }
 

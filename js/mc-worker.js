@@ -33,6 +33,17 @@ import { solveSpending } from './spending-solver.js';
 import { searchRouting } from './routing-search.js';
 import { limitBySuccess, simulatedRate } from './success-limit.js';
 import { makeActiveTaxTable } from './globals.js';
+import { withSimConfig } from './sim-config.js';
+
+/**
+ * The config a job runs on: the main thread's settings (installed from the
+ * snapshot first), with the Test Bench's loss years when the payload carries
+ * them. A schedule is a condition of one test, never a setting, so the
+ * snapshot cannot bring it.
+ */
+function configFor(payload) {
+    return withSimConfig(simConfigFromGlobals(), { returnSchedule: payload.returnSchedule ?? null });
+}
 
 // Guard so Node-side tests can import this module without a Worker context.
 const isWorker = typeof self !== 'undefined' && typeof self.postMessage === 'function';
@@ -77,7 +88,7 @@ if (isWorker) self.onmessage = async function (event) {
                 modelAssets: payload.modelAssets,
                 lifeEvents: payload.lifeEvents || [],
                 // Built after global_applyWorkerSnapshot so it reflects the main thread's settings.
-                config: simConfigFromGlobals(),
+                config: configFor(payload),
             };
             let results = solveSpending(plan, payload.limits || {});
 
@@ -113,7 +124,7 @@ if (isWorker) self.onmessage = async function (event) {
             const results = searchRouting({
                 modelAssets: payload.modelAssets,
                 lifeEvents: payload.lifeEvents || [],
-                config: simConfigFromGlobals(),
+                config: configFor(payload),
             }, {
                 floor: payload.limits?.floor ?? 0,
                 start: payload.search.start,
@@ -136,7 +147,7 @@ if (isWorker) self.onmessage = async function (event) {
                 lifeEvents,
                 // Built AFTER global_applyWorkerSnapshot above, so it captures
                 // the main thread's settings rather than the worker defaults.
-                config: simConfigFromGlobals(),
+                config: configFor(payload),
             });
         } else {
             results = await computeMonteCarlo(modelAssets, {
@@ -152,7 +163,7 @@ if (isWorker) self.onmessage = async function (event) {
                 backtestFromYear: payload.backtestFromYear ?? null,
                 seed: payload.seed ?? null,
                 returnShift: payload.returnShift ?? 0,
-                config: simConfigFromGlobals(),
+                config: configFor(payload),
                 checkpoint: async (completed) => {
                     // Macrotask yield: lets queued pause/resume messages run
                     await new Promise((resolve) => setTimeout(resolve, 0));

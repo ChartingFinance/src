@@ -4,8 +4,8 @@
  * Advances a Portfolio month by month from its earliest asset start date to
  * its latest finish date (stepping days 1, 15, and 30). Coordinates life
  * events, monthly/yearly portfolio passes, optional historical backtest rate
- * overrides, the real-dollar price index, guardrails, and final year-end
- * settlement folding.
+ * overrides, the Test Bench's loss years (return-schedule.js), the real-dollar
+ * price index, guardrails, and final year-end settlement folding.
  */
 
 import { DateInt } from './utils/date-int.js';
@@ -14,6 +14,7 @@ import { resetTraces, traceScopes, assertNoOpenScopes } from './trace.js';
 import { global_sp500_annual_returns, global_10yr_treasury_rates, global_cpi_annual_inflation, global_wage_growth_annual } from './market-data.js';
 import { Instrument, InstrumentType } from './instruments/instrument.js';
 import { PriceIndex } from './utils/price-index.js';
+import { scheduleStepper } from './return-schedule.js';
 
 // ── Backtest helpers ──────────────────────────────────────────
 
@@ -108,6 +109,10 @@ export async function chronometer_run(portfolio) {
     // Reset portfolio state, assets, engines, and the run's tax table.
     portfolio.initializeChron();
 
+    // Loss years. Made before any backtest rate is set, so it keeps each stock
+    // asset's configured rate to put back after a scheduled year.
+    const schedule = scheduleStepper(portfolio.modelAssets, portfolio.config.returnSchedule);
+
     const backtesting = portfolio.config.backtestYear !== 'current';
     const savedRates = backtesting ? saveOriginalRates(portfolio) : null;
     const backtestStartYear = backtesting ? parseInt(portfolio.config.backtestYear) : 0;
@@ -115,6 +120,9 @@ export async function chronometer_run(portfolio) {
     if (backtesting) {
         applyBacktestRates(portfolio, backtestStartYear);
     }
+    // The loop applies a scheduled year as it crosses into it, which a plan's
+    // first month never does; a plan that starts on a scheduled January has it here.
+    schedule.runStarts(portfolio.firstDateInt, { ratesSet: backtesting });
 
     const simStartYear = portfolio.firstDateInt.year;
 
@@ -153,6 +161,8 @@ export async function chronometer_run(portfolio) {
             if (backtesting) {
                 applyBacktestForYear(portfolio, currentDateInt.year, backtestStartYear, simStartYear, savedRates);
             }
+            // After the backtest: a scheduled year's stock rate replaces the backtest's.
+            schedule.yearStarts(currentDateInt.year, { ratesSet: backtesting });
             // Same data year the asset rates and tax tables just moved to.
             priceIndex.setAnnualRate(
                 inflationRateForYear(backtesting, backtestStartYear, simStartYear, currentDateInt.year, portfolio.config.inflationRate)
@@ -200,6 +210,7 @@ export async function chronometer_run(portfolio) {
         });
     }
 
+    schedule.runEnds();
     if (backtesting) {
         restoreOriginalRates(savedRates);
     }

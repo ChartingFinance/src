@@ -36,13 +36,15 @@ function holdings(untouched = []) {
  *
  * Under a market outlook other than Moderate (`result.outlook`), the sentence
  * opens with it: "With stock and bond returns 1% a year higher than you
- * entered, the most this plan can spend is…". The Test Bench passes
- * `withConditions: false`: its Found under line names the outlook, directly
- * above the sentence (test-bench-view.js).
+ * entered, the most this plan can spend is…". So do loss years
+ * (`result.lossYearsClause`, loss-years.js): "With stock prices falling 30% in
+ * 2031, the…". The Test Bench passes `withConditions: false`: its Found under
+ * line names the conditions, directly above the sentence (test-bench-view.js).
  */
 export function spendingHeadline(result, { withConditions = true } = {}) {
     const { asEntered, best } = result;
-    const clause = withConditions ? outlookClause(result.outlook) : null;
+    const clauses = withConditions ? [outlookClause(result.outlook), result.lossYearsClause].filter(Boolean) : [];
+    const clause = clauses.length ? clauses.join(' and ') : null;
     const lead = clause ? `With ${clause}, the` : 'The';
     if (!best) return clause ? `With ${clause}, no spending level tested keeps these limits.`
         : 'No spending level tested keeps these limits.';
