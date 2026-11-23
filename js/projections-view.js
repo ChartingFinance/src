@@ -19,13 +19,17 @@ import {
     classifyAssetGroup, getAssetChartColor,
     GROUP_ORDER_ACCUMULATE,
 } from './asset-groups.js';
-import { detectIssues, planExhaustion } from './portfolio-issues.js';
+import { detectIssues, planExhaustion, monthLabel } from './portfolio-issues.js';
+import { FLOW_TREATMENT, FlowKind } from './money-flows.js';
+import { EventKind } from './sim-event.js';
+import { TraceKind, chainFor, bookedMonthIndex } from './trace.js';
 
 /** SECURE 2.0 / IRS Uniform Lifetime Table RMD starting age (matches js/taxes.js). */
 const RMD_START_AGE = 73;
 
 export const ProjectionView = Object.freeze({
     NET_WORTH: 'networth',
+    FUNDING:   'funding',
     TAXES:     'taxes',
     METRIC:    'metric',
 });
@@ -47,6 +51,26 @@ const TAX_SERIES_COLORS = Object.freeze({
     niit:          '#0D9488',
     propertyTax:   '#64748B',
 });
+
+/**
+ * Ordered funding waterfall for "Where Spending Comes From" (Spec 19 §5).
+ * Income & external inflows cover Spending + Net Taxes first; remaining need is
+ * covered by net cash draws from household accounts in natural drawdown order.
+ */
+const FUNDING_SOURCES = Object.freeze([
+    { key: 'salary',    label: 'Salary & Self-Employment', color: '#1D9E75' },
+    { key: 'ss',        label: 'Social Security',          color: '#0EA5E9' },
+    { key: 'pension',   label: 'Pension',                  color: '#14B8A6' },
+    { key: 'yield',     label: 'Dividends & Interest',     color: '#6366F1' },
+    { key: 'windfall',  label: 'Windfalls & Other',        color: '#EC4899' },
+    { key: 'cash',      label: 'Bank & Cash',              color: '#94A3B8' },
+    { key: 'brokerage', label: 'Brokerage & Bonds',        color: '#3B82F6' },
+    { key: 'deferred',  label: '401(k) & IRA',             color: '#8B5CF6' },
+    { key: 'roth',      label: 'Roth IRA',                 color: '#A855F7' },
+    { key: 'other',     label: 'Home Sale & Other',        color: '#D97706' },
+]);
+
+const OBLIGATION_SCOPES = new Set([TraceKind.EXPENSE, TraceKind.MORTGAGE, TraceKind.CARRYING_COST]);
 
 const LIABILITY_COLOR = '#E24B4A';
 const NET_WORTH_LINE_COLOR = '#111827';
@@ -202,7 +226,7 @@ function hasNonZero(values) {
  * instruments (`Income`, `Expenses`) so flow rates never mix with net worth.
  */
 export function getAvailableDrillGroups(portfolio, view, metricName) {
-    if (!portfolio?.modelAssets?.length || view === ProjectionView.TAXES) return [];
+    if (!portfolio?.modelAssets?.length || view === ProjectionView.TAXES || view === ProjectionView.FUNDING) return [];
     const effectiveMetric = view === ProjectionView.NET_WORTH ? Metric.VALUE : metricName;
     const assetsOnly = effectiveMetric === Metric.VALUE || effectiveMetric === Metric.NET_WORTH_CHANGE;
 
@@ -224,6 +248,235 @@ export function getAvailableDrillGroups(portfolio, view, metricName) {
         });
     }
     return pills;
+}
+
+// ── Single-pass funding-sources ledger aggregator (Phase 2) ───────
+
+const _fundingCache = new WeakMap();
+
+function fundingCategoryOf(instrument) {
+    if (instrument === Instrument.WORKING_INCOME) return 'salary';
+    if (instrument === Instrument.RETIREMENT_INCOME) return 'ss';
+    if (instrument === Instrument.PENSION) return 'pension';
+    if (instrument === Instrument.BANK || instrument === Instrument.CASH) return 'cash';
+    if (instrument === Instrument.TAXABLE_EQUITY
+        || instrument === Instrument.US_BOND
+        || instrument === Instrument.CORP_BOND) return 'brokerage';
+    if (instrument === Instrument.FOUR_01K || instrument === Instrument.IRA) return 'deferred';
+    if (instrument === Instrument.ROTH_IRA) return 'roth';
+    return 'other';
+}
+
+function makeRawBucket() {
+    return {
+        cats: {
+            salary: 0, ss: 0, pension: 0, yield: 0, windfall: 0,
+            cash: 0, brokerage: 0, deferred: 0, roth: 0, other: 0,
+        },
+        spent: 0,
+        tax: 0,
+        refunds: 0,
+        unpaid: 0,
+    };
+}
+
+function finalizeFundingSlots(rawSlots) {
+    const n = rawSlots.length;
+    const bySource = Object.fromEntries(FUNDING_SOURCES.map((s) => [s.key, new Array(n).fill(0)]));
+    const paid = new Array(n).fill(0);
+    const unpaid = new Array(n).fill(0);
+    const obligations = new Array(n).fill(0);
+
+    for (let bi = 0; bi < n; bi++) {
+        const slot = rawSlots[bi];
+        // Net household cash outflow actually funded this period (gross spending + taxes - tax refunds).
+        const paidNet = Math.max(0, slot.spent + slot.tax - slot.refunds);
+        paid[bi] = paidNet;
+        unpaid[bi] = slot.unpaid;
+        obligations[bi] = paidNet + slot.unpaid;
+
+        // Income-first waterfall: allocate paidNet across positive net cash sources.
+        // Because internal account-to-account transfers cancel identically,
+        // sum(slot.cats) === slot.spent + slot.tax - slot.refunds, so positive
+        // contributors always cover paidNet to the exact cent.
+        let remaining = paidNet;
+        for (const { key } of FUNDING_SOURCES) {
+            if (remaining <= 0) break;
+            const avail = Math.max(0, slot.cats[key] ?? 0);
+            if (avail <= 0) continue;
+            const used = Math.min(avail, remaining);
+            bySource[key][bi] = used;
+            remaining -= used;
+        }
+    }
+
+    return { bySource, paid, unpaid, obligations };
+}
+
+/**
+ * Single-pass ledger scan computing both Nominal and Today's $ funding sources
+ * across all projection buckets, memoized per Portfolio via WeakMap.
+ *
+ * Uses `FLOW_TREATMENT` from `money-flows.js` (throwing on any unknown
+ * `EventType` so money can never quietly disappear).
+ */
+export function aggregateFundingLedger(portfolio, buckets) {
+    if (!portfolio?.firstDateInt || !buckets?.length) {
+        const empty = finalizeFundingSlots([]);
+        return { nominal: empty, real: empty };
+    }
+    const cached = _fundingCache.get(portfolio);
+    if (cached && cached.bucketCount === buckets.length) return cached;
+
+    const first = portfolio.firstDateInt;
+    const scopes = portfolio.traceScopes ?? [];
+    const priceIndex = portfolio.monthlyPriceIndex ?? [];
+    const lastMonth = buckets[buckets.length - 1].toMonth;
+    const monthToBucket = new Int32Array(lastMonth + 1);
+    for (const b of buckets) {
+        for (let m = b.fromMonth; m <= b.toMonth; m++) monthToBucket[m] = b.index;
+    }
+
+    const nomSlots = buckets.map(makeRawBucket);
+    const realSlots = buckets.map(makeRawBucket);
+    const draws = new Map(); // traceId → FlowKind
+    const spills = [];
+    const unpaids = [];
+
+    const addToBoth = (bi, m, fn) => {
+        fn(nomSlots[bi], 1);
+        const factor = priceIndex.length ? PriceIndex.deflateAt(1, priceIndex, m) : 1;
+        fn(realSlots[bi], factor);
+    };
+
+    for (const asset of portfolio.modelAssets) {
+        const cat = fundingCategoryOf(asset.instrument);
+        for (const e of (asset.events ?? [])) {
+            const treatment = FLOW_TREATMENT[e.type];
+            if (!treatment) {
+                throw new Error(
+                    `projections-view: EventType "${e.type}" has no flow treatment in FLOW_TREATMENT.`);
+            }
+            if (treatment === 'excluded') continue;
+            if (e.kind !== EventKind.CASH && treatment !== 'unpaid') continue;
+            const amt = e.amount.amount;
+            if (amt === 0 && treatment !== 'move' && treatment !== 'tax' && treatment !== 'oneTime') continue;
+
+            const m = bookedMonthIndex(e, first, scopes);
+            if (m < 0 || m > lastMonth) continue;
+            const bi = monthToBucket[m];
+            const chain = e.traceId != null ? chainFor(e.traceId, scopes) : [];
+            const d = e.data ?? {};
+
+            switch (treatment) {
+                case 'move': {
+                    let obligation = null;
+                    for (const s of chain) if (OBLIGATION_SCOPES.has(s.kind)) obligation = s;
+                    const propTax = d.label === 'property tax'
+                        || (obligation?.kind === TraceKind.CARRYING_COST && / property tax$/.test(obligation.label));
+                    const kind = propTax ? FlowKind.TAX : obligation ? FlowKind.SPENT : FlowKind.ACCOUNTS;
+                    if (e.traceId != null && amt <= 0) draws.set(e.traceId, kind);
+
+                    if (amt < 0) {
+                        const mag = -amt;
+                        addToBoth(bi, m, (slot, f) => {
+                            const v = mag * f;
+                            slot.cats[cat] += v;
+                            if (kind === FlowKind.SPENT) slot.spent += v;
+                            else if (kind === FlowKind.TAX) slot.tax += v;
+                        });
+                    } else if (amt > 0 && kind === FlowKind.ACCOUNTS) {
+                        // Internal move credit into a household account (cancels debit on sender).
+                        addToBoth(bi, m, (slot, f) => { slot.cats[cat] -= amt * f; });
+                    }
+                    break;
+                }
+                case 'spillover':
+                    if (amt < 0) spills.push({ bi, m, cat, traceId: e.traceId, amt: -amt });
+                    break;
+                case 'provision':
+                    // Reclassifies the capital-gains tax share of a gross-up from spent to tax.
+                    addToBoth(bi, m, (slot, f) => {
+                        slot.spent += amt * f; // amt is negative
+                        slot.tax += -amt * f;
+                    });
+                    break;
+                case 'tax':
+                    if (amt > 0) {
+                        // Tax refund credited to an account: offsets tax outflow and reduces net draw on that account.
+                        addToBoth(bi, m, (slot, f) => {
+                            const v = amt * f;
+                            slot.refunds += v;
+                            slot.cats[cat] -= v;
+                        });
+                    } else {
+                        if (e.traceId != null) draws.set(e.traceId, FlowKind.TAX);
+                        const mag = -amt;
+                        addToBoth(bi, m, (slot, f) => {
+                            const v = mag * f;
+                            slot.cats[cat] += v;
+                            slot.tax += v;
+                        });
+                    }
+                    break;
+                case 'yield':
+                    // External dividend/interest arriving into an account.
+                    addToBoth(bi, m, (slot, f) => {
+                        const v = amt * f;
+                        slot.cats.yield += v;
+                        slot.cats[cat] -= v;
+                    });
+                    break;
+                case 'oneTime':
+                    if (amt > 0) {
+                        addToBoth(bi, m, (slot, f) => {
+                            const v = amt * f;
+                            slot.cats.windfall += v;
+                            slot.cats[cat] -= v;
+                        });
+                    } else {
+                        if (e.traceId != null) draws.set(e.traceId, FlowKind.SPENT);
+                        const mag = -amt;
+                        addToBoth(bi, m, (slot, f) => {
+                            const v = mag * f;
+                            slot.cats[cat] += v;
+                            slot.spent += v;
+                        });
+                    }
+                    break;
+                case 'unpaid':
+                    unpaids.push({ bi, m, chain, traceId: e.traceId, amt: -amt });
+                    break;
+            }
+        }
+    }
+
+    for (const sp of spills) {
+        const kind = draws.get(sp.traceId);
+        addToBoth(sp.bi, sp.m, (slot, f) => {
+            const v = sp.amt * f;
+            slot.cats[sp.cat] += v;
+            if (kind === FlowKind.SPENT) slot.spent += v;
+            else if (kind === FlowKind.TAX) slot.tax += v;
+        });
+    }
+
+    for (const u of unpaids) {
+        const drawKind = draws.get(u.traceId);
+        const isObligation = u.chain.some((s) => s.kind === TraceKind.TAX_TRUE_UP || OBLIGATION_SCOPES.has(s.kind))
+            || drawKind === FlowKind.SPENT
+            || drawKind === FlowKind.TAX;
+        if (!isObligation) continue;
+        addToBoth(u.bi, u.m, (slot, f) => { slot.unpaid += u.amt * f; });
+    }
+
+    const result = {
+        bucketCount: buckets.length,
+        nominal: finalizeFundingSlots(nomSlots),
+        real: finalizeFundingSlots(realSlots),
+    };
+    _fundingCache.set(portfolio, result);
+    return result;
 }
 
 // ── Inflection-point markers ──────────────────────────────────────
@@ -383,6 +636,7 @@ function fmtBucketSub(b) {
 
 function computeKPIs(portfolio, buckets, {
     view, metricName, drillGroup, dollarMode, totals, lifeEvents, retirementAge,
+    fundingSlice = null, issues = null,
 }) {
     if (!buckets.length) return [];
     const modeTag = dollarMode === DollarMode.REAL ? "today's $" : 'nominal';
@@ -446,6 +700,56 @@ function computeKPIs(portfolio, buckets, {
         ];
     }
 
+    if (view === ProjectionView.FUNDING && fundingSlice) {
+        const { bySource, paid, unpaid, obligations } = fundingSlice;
+        const retBuckets = buckets.slice(retIdx);
+        const retMonths = retBuckets.reduce((s, b) => s + b.months, 0);
+        const retObl = obligations.slice(retIdx).reduce((s, v) => s + v, 0);
+        const avgRetOutflow = retMonths > 0 ? (retObl * 12) / retMonths : 0;
+
+        // Guaranteed income share in retirement (Social Security + Pension)
+        const retGuaranteed = bySource.ss.slice(retIdx).reduce((s, v) => s + v, 0)
+            + bySource.pension.slice(retIdx).reduce((s, v) => s + v, 0);
+        const guaranteedPct = retObl > 0 ? Math.round((retGuaranteed / retObl) * 100) : 0;
+
+        // First RMD / tax-deferred draw at RMD age (or Peak Outflow if no tax-deferred account)
+        const rmdBucketIdx = buckets.findIndex((b) => b.age != null && b.age >= RMD_START_AGE);
+        const hasDeferred = portfolio.modelAssets.some((a) => InstrumentType.isTaxDeferred(a.instrument));
+        const peakObl = peakOf(obligations, buckets);
+        const thirdTile = hasDeferred && rmdBucketIdx >= 0 && (bySource.deferred[rmdBucketIdx] ?? 0) > 0.5
+            ? {
+                label: `Age ${RMD_START_AGE} IRA/401(k)`,
+                value: formatCompactCurrency(bySource.deferred[rmdBucketIdx]),
+                sub: fmtBucketSub(buckets[rmdBucketIdx]),
+            }
+            : {
+                label: 'Peak Outflow',
+                value: formatCompactCurrency(peakObl.value),
+                sub: fmtBucketSub(peakObl.bucket),
+            };
+
+        const totalPaid = paid.reduce((s, v) => s + v, 0);
+        const totalUnpaid = unpaid.reduce((s, v) => s + v, 0);
+        const totalObl = totalPaid + totalUnpaid;
+        const coveragePct = totalObl > 0 ? Math.floor((totalPaid / totalObl) * 100) : 100;
+        const exhaustion = planExhaustion(issues ?? detectIssues(portfolio));
+        const firstUnpaidIdx = unpaid.findIndex((v) => v >= 1);
+        const coverageSub = totalUnpaid < 1
+            ? 'never runs out'
+            : exhaustion?.firstDateInt
+                ? `shortfall from ${monthLabel(exhaustion.firstDateInt)}`
+                : firstUnpaidIdx >= 0
+                    ? `shortfall from ${buckets[firstUnpaidIdx].year}`
+                    : 'has shortfall';
+
+        return [
+            { label: 'Avg Retire Outflow', value: `${formatCompactCurrency(avgRetOutflow)}/yr`, sub: modeTag },
+            { label: 'Guaranteed Share', value: `${guaranteedPct}%`, sub: 'SS & Pension in retire' },
+            thirdTile,
+            { label: 'Coverage', value: totalUnpaid < 1 ? '100%' : `${coveragePct}%`, sub: coverageSub },
+        ];
+    }
+
     // Generic metric view (More metrics)
     const kind = metricKind(metricName);
     const label = MetricLabel[metricName] ?? metricName;
@@ -495,6 +799,8 @@ export function buildProjectionData(portfolio, {
             datasets: [],
             totals: [],
             realTotals: null,
+            obligations: null,
+            unpaid: null,
             markers: [],
             kpis: [],
             drillGroups: [],
@@ -515,8 +821,39 @@ export function buildProjectionData(portfolio, {
     const barDatasets = [];
     let overlayLine = null;
     let companionLine = null;
+    let fundingSlice = null;
 
-    if (view === ProjectionView.TAXES) {
+    if (view === ProjectionView.FUNDING) {
+        const ledger = aggregateFundingLedger(portfolio, buckets);
+        fundingSlice = real ? ledger.real : ledger.nominal;
+        for (const src of FUNDING_SOURCES) {
+            const data = fundingSlice.bySource[src.key];
+            if (!hasNonZero(data)) continue;
+            barDatasets.push({
+                type: 'bar',
+                label: src.label,
+                data,
+                backgroundColor: src.color,
+                stack: 'bars',
+                order: 2,
+            });
+        }
+        overlayLine = {
+            type: 'line',
+            label: 'Spending + Taxes',
+            data: fundingSlice.obligations,
+            borderColor: NET_WORTH_LINE_COLOR,
+            backgroundColor: NET_WORTH_LINE_COLOR,
+            borderWidth: 2,
+            pointRadius: 0,
+            pointHoverRadius: 4,
+            tension: 0.15,
+            fill: false,
+            stack: 'overlay-obligations',
+            order: 0,
+            isOverlayLine: true,
+        };
+    } else if (view === ProjectionView.TAXES) {
         const pkgs = portfolio.monthlyPackages ?? [];
         const deflate = (val, m) => (real ? PriceIndex.deflateAt(val, priceIndex, m) : val);
         const defs = [
@@ -730,6 +1067,7 @@ export function buildProjectionData(portfolio, {
 
     const kpis = computeKPIs(portfolio, buckets, {
         view, metricName, drillGroup: validDrill, dollarMode, totals, lifeEvents, retirementAge,
+        fundingSlice, issues,
     });
 
     return {
@@ -742,6 +1080,8 @@ export function buildProjectionData(portfolio, {
         companionLine,
         totals,
         realTotals,
+        obligations: fundingSlice?.obligations ?? null,
+        unpaid: fundingSlice?.unpaid ?? null,
         markers,
         kpis,
         drillGroups,
@@ -780,10 +1120,12 @@ export function buildProjectionChartConfig(projData, { onBucketClick = null } = 
         };
     }
 
-    const { buckets, labels, datasets, totals, realTotals, markers, view, drillGroup, dollarMode } = projData;
+    const { buckets, labels, datasets, totals, realTotals, obligations, unpaid, markers, view, drillGroup, dollarMode } = projData;
     const totalLabel = view === ProjectionView.NET_WORTH
         ? (drillGroup === AssetGroup.REAL_ESTATE ? 'Home Equity' : 'Net Worth')
-        : 'Total';
+        : view === ProjectionView.FUNDING
+            ? 'Spending + Taxes'
+            : 'Total';
 
     return {
         type: 'bar',
@@ -832,6 +1174,17 @@ export function buildProjectionChartConfig(projData, { onBucketClick = null } = 
                         footer: (items) => {
                             const idx = items?.[0]?.dataIndex;
                             if (idx == null) return '';
+                            if (view === ProjectionView.FUNDING && unpaid && obligations) {
+                                const gap = unpaid[idx] ?? 0;
+                                if (gap >= 0.5) {
+                                    return [
+                                        `Funded: ${formatCurrency(totals[idx] ?? 0)}`,
+                                        `Spending + Taxes: ${formatCurrency(obligations[idx] ?? 0)}`,
+                                        `Unpaid shortfall: ${formatCurrency(gap)}`,
+                                    ];
+                                }
+                                return [`Spending + Taxes: ${formatCurrency(obligations[idx] ?? 0)}`];
+                            }
                             const lines = [`${totalLabel}: ${formatCurrency(totals[idx] ?? 0)}`];
                             if (view === ProjectionView.NET_WORTH && dollarMode === DollarMode.NOMINAL && realTotals) {
                                 lines.push(`In today's $: ${formatCurrency(realTotals[idx] ?? 0)}`);

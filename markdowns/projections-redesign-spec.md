@@ -1,6 +1,6 @@
 # Spec 19 — Projections: one full-width drill-down chart, real dollars, and where spending comes from
 
-Status: **APPROVED 2026-11-22 (Phase 1 implemented; Phase 2 planned).**
+Status: **IMPLEMENTED 2026-11-22 (Phases 1 & 2 complete).**
 
 Today `#sec-projections` gives equal half-width slots to **Macro Projection** and **Micro Projection**. On load, Micro is empty until the user scrolls back up to Portfolio and expands a group; Macro is nominal-only, shows one bar slice on hover, and cannot jump the timeline cursor. This spec merges them into **one full-width drill-down Projections card** that earns its real estate: local drill-down pills, `Today's $ | Nominal` toggle, a metric-aware 4-tile KPI strip, stacked index-mode tooltips with totals, inflection-point markers, click-to-jump cursor sync, and (in Phase 2) a **Where Spending Comes From** view built directly from the ledger.
 
