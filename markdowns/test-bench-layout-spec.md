@@ -1,6 +1,6 @@
 # Spec 18 — The Test Bench's layout: conditions, tests, and what a result was found under
 
-Status: **DRAFT 2026-11-21, revised 2026-11-22.** Spec only, no code. On 2026-11-22 John revised loss years (1, 2 or 3 years, each with a loss the user types) and accepted pre-build refinements (Routing floor visibility, explicit Run in Phase 1, mid-year already-retired start year, loss-year input ergonomics, chart column switcher across tabs, and the simulated-markets non-stock draw note for Rules). On 2026-11-23 John took the recommendations for Phase 1 (decisions 1, 2, 10 and 11, and the two questions now answered in §3.2 and §3.4), and **Phase 1 is built** (§11). Decisions 3–5 and 7–9 are Loss years' (Phase 2) and stay open.
+Status: **DRAFT 2026-11-21, revised 2026-11-22.** Spec only, no code. On 2026-11-22 John revised loss years (1, 2 or 3 years, each with a loss the user types) and accepted pre-build refinements (Routing floor visibility, explicit Run in Phase 1, mid-year already-retired start year, loss-year input ergonomics, chart column switcher across tabs, and the simulated-markets non-stock draw note for Rules). On 2026-11-23 John took the recommendations for Phase 1 (decisions 1, 2, 10 and 11, and the two questions now answered in §3.2 and §3.4), and **Phase 1 is built** (§11). On 2026-11-23 John also decided Phase 2's: 3 a fall in price, 4 **a second figure per year for bonds**, 5 nothing moves a typed figure, 7 20%, 8 not saved, 9 MCP yes. Decision 4 changes §4: the engine has no bond price, so §4.3 gives bonds a price-change path of their own, and it raises four questions, decisions 12–15.
 
 The Test Bench is about to get more levers. Spec 17 added Market returns, and the next asked for is starting retirement with up to three years of losses. Today's controls are written as one sentence, and they already had to break onto a second row for Market returns. This spec gives the levers a layout that takes more of them, and defines the first new one: **loss years at the start of retirement**.
 
@@ -107,7 +107,7 @@ This replaces spec 17's decision 5 (a changed outlook re-runs) right away, rathe
 
 ### 3.6 On a phone
 
-- **The Conditions card collapses to its Found under line**, with an Edit link. Tapping opens the rows, stacked, each segmented control at full width. Loss years' figures sit on one row under it (three fields of about 80px fit at 375px).
+- **The Conditions card collapses to its Found under line**, with an Edit link. Tapping opens the rows, stacked, each segmented control at full width. Loss years' figures sit under it as two rows, Stocks and Bonds, under the year headings (a short label and three fields of about 68px fit the card's 269px at 375px).
 - **Limits stack:** one per row, the label beside its control (above it would cost the 200px target below), and Run beside the first. "in today's dollars" drops from the floor's line; the table's caption keeps it.
 - **The tabs stay.** Each holds one test, so a phone scrolls through one test, not both.
 - Target: the controls above the first result under 200px when collapsed (314px today), and no wrapped segmented control at 375px.
@@ -118,14 +118,19 @@ This replaces spec 17's decision 5 (a changed outlook re-runs) right away, rathe
 
 ### 4.1 What it is
 
-A condition: **Loss years: None · 1 · 2 · 3**, and under it **one figure per year**: how far stock prices fall that year, as a percentage the user types (decision 6, John). The fields are labelled with their calendar years and carry a fixed `−` prefix outside the input so the direction is unmistakable:
+A condition: **Loss years: None · 1 · 2 · 3**, and under it **two figures per year**: how far stock prices fall that year, and how far bond prices fall, as percentages the user types (decision 6, John; the bond figure is decision 4, John). The columns are labelled with their calendar years, the rows Stocks and Bonds, and every field carries a fixed `−` prefix outside the input so the direction is unmistakable:
 
 > Loss years: None · 1 · **2** · 3
-> 2031 [ − | 30 ]%  2032 [ − | 20 ]%
-> Stock prices fall 30% in 2031 and 20% in 2032, 44% over the two years. For scale: since 1970 stocks have never lost more than 37.6% over one, two or three years in a row.
+>
+> |        | 2031           | 2032           |
+> |--------|----------------|----------------|
+> | Stocks | [ − \| 30 ]%  | [ − \| 20 ]%  |
+> | Bonds  | [ − \| 10 ]%  | [ − \| 0 ]%   |
+>
+> Stock prices fall 30% in 2031 and 20% in 2032, 44% over the two years. Bond prices fall 10% in 2031, and bonds keep paying interest. For scale: since 1970 stocks have never lost more than 37.6% over one, two or three years in a row.
 
-- **Each figure is a whole percentage from 0 to 100.** 0 is a flat year, and 100 is stocks worth nothing (§4.3). Because people naturally type `-30` for a 30% drop, the page input silently strips a leading `-` (`−`); an explicit `+` (a gain), a fraction, or anything above 100 is refused under the field ("A loss is 0% to 100%"), and Run waits until it is fixed. (The MCP parameter `lossYearsPercent` still refuses negatives so programmatic callers do not mix sign conventions, §4.8.)
-- **A new year's field starts at 20%** (decision 7): one year at 20% is a bad but ordinary bear market (2002 −22.1%, 2022 −18.1%), and two at 20% (−36%) is about history's worst run.
+- **Each figure is a whole percentage from 0 to 100**, stocks and bonds alike (decision 12). 0 is a flat year, and 100 is stocks, or bonds, worth nothing (§4.3). Because people naturally type `-30` for a 30% drop, the page input silently strips a leading `-` (`−`); an explicit `+` (a gain), a fraction, or anything above 100 is refused under the field ("A loss is 0% to 100%"), and Run waits until it is fixed. (The MCP parameter `lossYearsPercent` still refuses negatives so programmatic callers do not mix sign conventions, §4.8.)
+- **A new year's stock field starts at 20%** (decision 7): one year at 20% is a bad but ordinary bear market (2002 −22.1%, 2022 −18.1%), and two at 20% (−36%) is about history's worst run. **Its bond field starts at 0%** (decision 13): bonds keep their price and their interest, so a new year moves stocks only until a bond figure is typed.
 - **Changing the count keeps the figures** while the page is open: 3 → 1 → 3 brings back years 2 and 3 as they were typed.
 - **The line under the control** says what the figures do, with the combined fall, and gives the same scale line whatever is typed. History's worst runs, from the market data (1970–2025, dividends included):
 
@@ -135,11 +140,11 @@ A condition: **Loss years: None · 1 · 2 · 3**, and under it **one figure per 
 | 2 | 1973–1974 | 37.2% |
 | 3 | 2000–2002 | 37.6% |
 
-So the line never calls a typed figure "realistic". It says how far history went, and the user doomsdays from there.
+So the line never calls a typed figure "realistic". It says how far history went, and the user doomsdays from there. **Bonds get no scale line:** the market data holds Treasury yields, not bond prices, so it has no bond loss to compare with, and the line says nothing it cannot source.
 
 ### 4.2 What moves
 
-**Stocks only** (decision 4). A typed loss applies to the assets the simulated markets give stock returns: brokerage, IRA, Roth IRA and 401K. An IRA or 401K counts as stock even if it holds bonds, as it does in every simulated market. US Treasury and corporate bonds keep their own rate on the plan's own path, and take their draw in the simulated markets. Expenses and incomes do the same. A bond loss, if wanted, is one more figure per year, and the engine field leaves room for it (§4.7).
+**Stocks and bonds, each by its own figure** (decision 4, John). The stock figure applies to the assets the simulated markets give stock returns: brokerage, IRA, Roth IRA and 401K. An IRA or 401K counts as stock even if it holds bonds, as it does in every simulated market. The bond figure applies to US Treasury and corporate bond accounts, the bonds the market outlook moves (`isStockOrBond`). Bank and cash accounts, expenses and incomes keep their rate on the plan's own path and their draw in the simulated markets. A bond figure of 0% leaves bonds exactly as they run without loss years.
 
 ### 4.3 How a year is applied
 
@@ -148,7 +153,14 @@ So the line never calls a typed figure "realistic". It says how far history went
 - **Exact.** The engine compounds a market rate by the twelfth root, so a stock account with no money in or out and no dividend ends the year at exactly (1 − loss) of its start. The quick starts carry no dividend rate, so for them the typed figure is the account's whole loss.
 - **Dividends keep paying** at the asset's own rate on the lower balance, so an account that has a dividend rate falls a little less than the figure (about its yield).
 - **A 100% loss** empties every stock account in the year's first month, and money paid into one that year is lost with it. No rate goes below −100%, so nothing turns into NaN. The measurement phase checks what an emptied brokerage does with its basis (§11).
-- **Nothing else moves a typed figure** (decision 5). This holds in both data modes. Calibrated mode's distance from the pool average is not added, and historical mode's dividend subtraction is not made. The market outlook's 1% is not added either (§4.6). A user who types 30% sees 30%.
+- **Nothing else moves a typed figure** (decision 5, John). This holds in both data modes. Calibrated mode's distance from the pool average is not added, and historical mode's dividend subtraction is not made. The market outlook's 1% is not added either (§4.6). A user who types 30% sees 30%.
+
+**Bonds need a path of their own, because the engine has no bond price.** A US Treasury or corporate bond account is an income account (`IncomeAccountBehavior`, shared with bank accounts): each month its rate is paid as interest income, taxed as ordinary income and added to the balance. It has no basis and no growth. Setting a bond's rate to the typed figure would book *negative interest*, which the tax engine would subtract from ordinary income dollar for dollar, and from net investment income: a tax break no bond loss gets. So, read the way decision 3 reads stocks:
+
+- **The interest keeps paying** at the bond's own rate (as entered, under the outlook, or that market's draw), as stock dividends do.
+- **The price falls by the typed figure** over the year, by the twelfth root as a stock's does, and is booked as a change in value (`ASSET_GROWTH`, negative), never as interest. A bond account with no money in or out and a 0% rate ends a 10% year at exactly 90% of its start; with a rate, it also earns that year's interest on the falling balance.
+- **The fall is untaxed and never realized** (decision 14). The engine keeps no basis for bonds, so selling a bond after a loss year realizes no capital loss either, where a real household could deduct one. The rules page says so.
+- **A 100% bond figure** empties the bond accounts in the year's first month. No interest accrues at or below $0 (as today), and the next January the account earns again.
 
 ### 4.4 When
 
@@ -161,8 +173,8 @@ So the line never calls a typed figure "realistic". It says how far history went
 
 ### 4.5 Both paths
 
-- **The plan's own path:** the stock assets run at the typed figures in those years. Every other year, and every other asset, runs as entered (or under the outlook).
-- **Simulated markets:** each market still draws its years as today, so in a typed loss year only the stock assets take the typed figure — CPI inflation, wages and Treasury yields still come from that trial's random historical draw (a typed crash is not automatically paired with a recession year's inflation or Treasury yields, and `rules.html` says so plainly). "Lasts in 90% of markets" under 2 loss years means 90% of markets that all began retirement with that crash. The Found under chip is what keeps that from reading as an ordinary 90%.
+- **The plan's own path:** the stock assets run at the stock figures in those years, and the bond accounts take the bond figures as a price change on top of their interest. Every other year, and every other asset, runs as entered (or under the outlook).
+- **Simulated markets:** each market still draws its years as today. In a typed loss year the stock assets take the stock figure, and the bond accounts take the bond figure as a price change on top of their interest: a Treasury's interest is that trial's drawn yield, a corporate bond's its own rate. CPI inflation and wages still come from the draw (a typed crash is not automatically paired with a recession year's inflation, and `rules.html` says so plainly). "Lasts in 90% of markets" under 2 loss years means 90% of markets that all began retirement with that crash. The Found under chip is what keeps that from reading as an ordinary 90%.
 - **Routing** ranks routings on the own path with the loss years in it, so a routing can be found for a bad start.
 
 ### 4.6 With the market outlook
@@ -171,21 +183,23 @@ So the line never calls a typed figure "realistic". It says how far history went
 
 - **On the plan's own path,** a loss year replaces the outlook copy's shifted rate. The next January restores that shifted rate.
 - **In the simulated markets,** a loss year reads neither the copy's base rates (calibrated) nor `returnShift` (historical).
+- **Bonds:** the outlook moves a bond's interest in a loss year as in any other (it moves every bond rate), and the bond figure is applied on top, as typed. The typed figure is never moved; the interest is not a typed figure.
 
 ### 4.7 Where it lives in the engine
 
-A new SimConfig field, `returnSchedule`: a list of `{ year, stocks }`, where `stocks` is that calendar year's price change for the stock assets (−0.30 for a 30% loss). The field is named for its asset kind so a `bonds` figure can join it later. It is absent by default, so every run and the snapshot are unchanged.
+A new SimConfig field, `returnSchedule`: a list of `{ year, stocks, bonds }`, where `stocks` is that calendar year's price change for the stock assets (−0.30 for a 30% loss) and `bonds` the price change for the bond accounts (absent or 0: none). It is absent by default, so every run and the snapshot are unchanged.
 
-- **`chronometer.js`:** on a scheduled year's New Year's Day (and before the first month when the plan itself starts on January 1 of a scheduled year, mirroring `backtestStartYear`), sets the stock assets' rate to `stocks`, and restores the configured rate the next January. With `backtestYear` also set, a scheduled year's stock rate replaces the backtest's.
-- **`mc-compute.js` `runOnce`:** in a scheduled year (including before the first month when the plan starts on January 1 of a scheduled year), draws as usual and then sets the stock assets to `stocks`. No base rate is added, and no `returnShift`.
-- **`makeSimConfig`:** refuses unknown fields, so `returnSchedule` is added to its known list. It also refuses a rate below −1 or not finite, and a year listed twice. The engine accepts any rate from −1 up, so a gain could come later; it is the page and MCP that allow only losses.
+- **`chronometer.js`:** on a scheduled year's New Year's Day (and before the first month when the plan itself starts on January 1 of a scheduled year, mirroring `backtestStartYear`), sets the stock assets' rate to `stocks` and gives each bond account the year's price change `bonds`, and restores both the next January. With `backtestYear` also set, a scheduled year's stock rate replaces the backtest's, and the bond figure applies on top of the backtest's Treasury yield.
+- **`mc-compute.js` `runOnce`:** in a scheduled year (including before the first month when the plan starts on January 1 of a scheduled year), draws as usual, then sets the stock assets to `stocks` and gives the bond accounts the price change `bonds`. No base rate is added to the stock figure, and no `returnShift`.
+- **`IncomeAccountBehavior.applyMonthly`:** a bond account with a price change for the year moves its balance by the change's twelfth root before its interest, booked as `ASSET_GROWTH` with metric `M.GROWTH` (both already declared, and `M.GROWTH` is in its `relevantMetrics()`, so the event stream needs no new type). The price change lives in run state, not in the asset's configured rates, and is keyed to US Treasury and corporate bonds, never to a bank account.
+- **`makeSimConfig`:** refuses unknown fields, so `returnSchedule` is added to its known list. It also refuses a `stocks` or `bonds` below −1 or not finite, and a year listed twice. The engine accepts any rate from −1 up, so a gain could come later; it is the page and MCP that allow only losses.
 - **The Test Bench** builds the schedule from the plan's retirement date, the plan's start date, and the figures. A worker gets it in its payload, because a worker builds its config from the settings snapshot (trap 3).
 
 ### 4.8 MCP
 
-`max_spending` gains `lossYearsPercent`, under spec 16's one rule: a list of up to three whole numbers from 0 to 100, one per year. `[30, 20]` means 30% in the first loss year and 20% in the second. The default is `[]`, no loss years.
+`max_spending` gains `lossYearsPercent`, under spec 16's one rule (decision 9, John): a list of up to three entries, one per year (decision 15). An entry is a whole number from 0 to 100, the stock figure with bonds at 0, or `{ stocks, bonds }` with whole numbers from 0 to 100, a missing `bonds` being 0. `[30, 20]` means stocks fall 30% in the first loss year and 20% in the second; `[{ "stocks": 30, "bonds": 10 }, 20]` adds a 10% bond fall in the first. The default is `[]`, no loss years.
 
-- **Refused:** more than three entries; a negative; a figure above 100; a fraction. A fraction is refused so that 0.3, meant as 30%, does not run as 0.3%. The refusal message says to pass 30.
+- **Refused:** more than three entries; a negative; a figure above 100; a fraction; an object with a key other than `stocks` and `bonds`, or without `stocks`. A fraction is refused so that 0.3, meant as 30%, does not run as 0.3%. The refusal message says to pass 30.
 - **The report** names the loss years and their calendar years in the Found under line and the headline.
 - **The plan handed back** has no loss years in it, because they are a condition, not part of the plan, and the report says so.
 
@@ -195,9 +209,9 @@ A new SimConfig field, `returnSchedule`: a list of `{ year, stocks }`, where `st
 
 Each condition supplies three strings, all from one headless module (`js/market-outlook.js` today, renamed to `js/test-conditions.js` when the second condition lands):
 
-- **its chip label** for the Found under line: "Optimistic (+1%)", "2 loss years (−30%, −20%)". None at its neutral setting;
+- **its chip label** for the Found under line: "Optimistic (+1%)", "2 loss years (−30%, −20%)" when every bond figure is 0, else "2 loss years (stocks −30%, −20%; bonds −10%, 0%)". None at its neutral setting;
 - **the line under its control**, saying what the setting on screen does;
-- **the clause for the save note** and the MCP report: "with stock and bond returns 1% a year higher than you entered", "with stock prices falling 30% in 2031 and 20% in 2032".
+- **the clause for the save note** and the MCP report: "with stock and bond returns 1% a year higher than you entered", "with stock prices falling 30% in 2031 and 20% in 2032", and ", and bond prices 10% in 2031" when a bond figure is above 0.
 
 The Found under line is those chips joined by " · ", plus the markets' data ("Calibrated 1970–2025") when a markets figure is on screen. Nothing else on the page restates a condition.
 
@@ -230,14 +244,17 @@ The static pages change in the same PR as the behaviour.
 7. **Hidden content in tabs.** Nothing that measures itself (Chart.js) may sit in a hidden tab (§1.5).
 8. **The plugin install does not follow `main`.** Bump `plugin.json`, rebuild with `npm run build:plugin`, check the install separately.
 9. **An emptied account.** A 100% loss leaves a brokerage at $0 with its basis still on it, and contributions that year arrive and vanish. Nothing has run that way before; measure it before shipping (§11).
+10. **Negative interest.** A bond is an income account, and a negative rate books negative interest income, which lowers ordinary income and net investment income. The bond figure must never go through the rate (§4.3).
+11. **A bank shares the bond's behaviour.** `IncomeAccountBehavior` serves bank accounts too, so the price change is keyed to the bond instruments, not to the behaviour.
+12. **No quick start holds a bond.** Every bond check needs a fixture with a US Treasury and a corporate bond; a quick-start run proves nothing about bonds.
 
 ---
 
 ## 8. Fixtures and tests
 
 - **As entered is today:** with every condition neutral, the solver's result, the checks and the measured rates equal today's on every quick-start profile; the snapshot is unchanged.
-- **The schedule:** in a scheduled year every stock asset's rate is exactly the typed figure. That holds in both data modes and under every outlook. Treasury, corporate bonds, bank, expenses and incomes keep their rate (own path) or their draw (markets). The rate is undone the next January, and an empty schedule changes nothing.
-- **Exact:** a stock account with no flows and no dividend ends a 30% loss year at exactly 70% of its start. With a dividend rate it ends higher by its dividends.
+- **The schedule:** in a scheduled year every stock asset's rate is exactly the stock figure, and every Treasury and corporate bond's price falls by exactly the bond figure while its interest stays at its rate (own path) or its draw (markets). That holds in both data modes and under every outlook. Bank, cash, expenses and incomes keep their rate or their draw. Both are undone the next January, and an empty schedule changes nothing.
+- **Exact:** a stock account with no flows and no dividend ends a 30% loss year at exactly 70% of its start. With a dividend rate it ends higher by its dividends. A bond account with no flows at a 0% rate ends a 10% bond year at exactly 90%; at 4% its interest is booked as interest income and the fall as growth, and no month's interest income is negative.
 - **100%:** a 100% year empties every stock account with no NaN anywhere in the run. Money paid in that year is lost, and the next January the account earns again.
 - **When:** the loss years are the first calendar years starting with the first January on or after both the retirement date and the plan's start date. Covered cases: a plan retiring mid-year, a plan starting mid-year already retired (leaves the partial starting year unchanged and starts the next January), a plan starting in January already retired (starts that year), a plan ending before its third loss year (only the years inside it), and a plan retiring after its last year (none).
 - **Both paths:** in a market's loss years the stock assets take the typed figures and everything else takes the draw; the own path runs them; the routing test ranks with them.
@@ -248,7 +265,10 @@ The static pages change in the same PR as the behaviour.
 - **Saving and MCP:** a saved scenario and `max_spending`'s handed-back plan have no schedule and the user's own rates; the note and the report name the loss years.
 - **Layout:** Found under lists exactly the non-neutral conditions (plus the active floor chip on the routing list when `Leaves at least > $0`); the Routing tab shows the floor indicator whenever `Leaves at least > $0`; a changed condition or limit dims affected results and starts nothing; Reset puts every condition back and is hidden or disabled when all conditions are neutral; the chart keeps its 3-column switcher when matching Spending and Routing results exist and defaults to the active tab's column.
 - **Mutations that must be caught:**
-  - the schedule applied to bank, cash or a Treasury;
+  - the stock figure applied to bank, cash or a bond;
+  - the bond figure applied through the bond's rate (negative interest);
+  - the bond figure applied to a bank account;
+  - the bond figure taxed;
   - applied in the wrong year;
   - not undone the next January;
   - dropped from a worker payload;
@@ -268,7 +288,8 @@ The static pages change in the same PR as the behaviour.
 - **Compare conditions:** the same test under several conditions, as rows of one small table. The layout leaves room for it; it is its own spec.
 - **An inflation condition, a longevity condition.** Each would be one more row (§3.1).
 - **Loss years before retirement,** or anywhere other than its start.
-- **Gain years,** or a typed figure for bonds, inflation or wages. `returnSchedule` leaves room for a bond figure (§4.7); each is its own decision.
+- **Gain years,** for stocks or bonds, or a typed figure for inflation or wages. Each is its own decision; `returnSchedule` would take a gain as written (§4.7).
+- **A realized bond loss.** The engine keeps no bond basis (§4.3).
 - **More than three loss years.**
 - **The rest of the page's phone overflow** (UI review 2026-09-23, item 5).
 
@@ -280,15 +301,19 @@ Each has a recommendation; John decides.
 
 1. **Tabs for the two tests, or stacked with one collapsed.** **Decided (John, 2026-11-23): tabs.** Recommend **tabs**. The main page's objections to tabs (§1.5) do not apply here, and tabs halve what a phone scrolls through. The alternative keeps both stacked and collapses the one not in use.
 2. **Explicit Run for every lever.** **Decided (John, 2026-11-23): yes, in Phase 1.** Recommend **yes, in Phase 1 alongside the layout** (rather than waiting for Phase 2). It supersedes spec 17's decision 5 (a changed outlook re-runs) right away so the interaction model changes once instead of twice, and adjusting multiple levers (such as Floor and Market returns) never triggers an unwanted two-minute run on the first click.
-3. **What a typed figure means.** Recommend **a fall in price**: the rate is the figure, and dividends keep paying (§4.3). It is exact, a 100% loss needs no special case, and it is how a crash is usually quoted ("stocks fell 30%"). The alternative is **the account's whole loss, dividends included**, the meaning of the market data's own figures. That needs the dividend taken out of the rate first, and a floor at −100% where loss and dividend together pass it. The quick starts carry no dividend rate, so for them the two agree.
-4. **Stocks only.** Recommend **yes**: one figure per year, and bonds keep their rate or their draw. The alternatives: one figure for stocks and bonds both, which would sink a Treasury account 30% when Treasuries gained in 2008; or a second figure per year for bonds, which doubles the fields.
-5. **Nothing moves a typed figure.** Recommend **yes**: neither the data mode nor the market outlook changes it, so 30% typed is 30% run. This reverses the draft's earlier recommendation, made when a loss year was a historical year; a typed figure is the user's own.
+3. **What a typed figure means.** **Decided (John, 2026-11-23): a fall in price.** Recommend **a fall in price**: the rate is the figure, and dividends keep paying (§4.3). It is exact, a 100% loss needs no special case, and it is how a crash is usually quoted ("stocks fell 30%"). The alternative is **the account's whole loss, dividends included**, the meaning of the market data's own figures. That needs the dividend taken out of the rate first, and a floor at −100% where loss and dividend together pass it. The quick starts carry no dividend rate, so for them the two agree.
+4. **Stocks only.** **Decided (John, 2026-11-23): a second figure per year for bonds** (§4.1–§4.3). Recommend **yes**: one figure per year, and bonds keep their rate or their draw. The alternatives: one figure for stocks and bonds both, which would sink a Treasury account 30% when Treasuries gained in 2008; or a second figure per year for bonds, which doubles the fields.
+5. **Nothing moves a typed figure.** **Decided (John, 2026-11-23): yes.** Recommend **yes**: neither the data mode nor the market outlook changes it, so 30% typed is 30% run. This reverses the draft's earlier recommendation, made when a loss year was a historical year; a typed figure is the user's own.
 6. **How many loss years, and what each is.** **Decided (John, 2026-11-22):** None, 1, 2 or 3, each with its own loss as a percentage. Recommend **whole percentages from 0 to 100**: 100 lets a user empty every stock account, which is the doomsday John asked for.
-7. **The figure a new year starts at.** Recommend **20%** (§4.1). The alternatives: 30%, or 2008's 37%.
-8. **Conditions are not saved with the plan.** Recommend **not saved**, as spec 17 decided: every load starts with every condition neutral, and the typed figures are forgotten.
-9. **MCP `lossYearsPercent`.** Recommend **yes**, under spec 16's one rule, with the refusals of §4.8.
+7. **The figure a new year starts at.** **Decided (John, 2026-11-23): 20%** (for stocks; bonds are decision 13). Recommend **20%** (§4.1). The alternatives: 30%, or 2008's 37%.
+8. **Conditions are not saved with the plan.** **Decided (John, 2026-11-23): not saved.** Recommend **not saved**, as spec 17 decided: every load starts with every condition neutral, and the typed figures are forgotten.
+9. **MCP `lossYearsPercent`.** **Decided (John, 2026-11-23): yes** (its shape with bonds is decision 15). Recommend **yes**, under spec 16's one rule, with the refusals of §4.8.
 10. **The phone collapse of §3.6.** **Decided (John, 2026-11-23): yes.** Recommend **yes**.
 11. **The data chip in Found under.** **Decided (John, 2026-11-23): only with a markets figure.** The spending result's table always has its simulated-markets row, so its line always carries the chip; the routing list and the chart's caption never do. Recommend showing it **only when a markets figure is on screen**, since the plan's own path does not use the pool, and loss years do not use it either.
+12. **The bond figure is a loss, 0–100, like the stock figure.** Recommend **yes**: one rule for every field, the same `−` prefix and the same refusals. A bond gain (Treasuries rose in 2008) is a gain year, out of scope (§9).
+13. **A new year's bond field starts at 0%.** Recommend **yes**: 0% is bonds as they run without loss years, so adding a year moves stocks only, as it did before decision 4. The alternative, 20% like stocks, would sink every Treasury with every new year.
+14. **A bond's fall is untaxed and unrealized.** Recommend **yes** (§4.3): the engine keeps no basis for bonds, and inventing one for a condition would be a larger change than the condition. The rules page says a real household could realize and deduct the loss.
+15. **`lossYearsPercent` with bonds.** Recommend **a number or `{ stocks, bonds }` per year** (§4.8): `[30, 20]` keeps meaning what decision 9 approved, and a bond figure is opt-in. The alternative, a second list `bondLossYearsPercent`, lets two lists disagree in length.
 
 ---
 
@@ -296,8 +321,8 @@ Each has a recommendation; John decides.
 
 1. **Layout and explicit Run, no new condition.** *Built 2026-11-23: `js/components/test-bench.js`, the headless rules in `js/test-bench-view.js`, `tests/test-bench-layout.mjs`.* The Conditions card with Market returns alone (and Reset hidden/disabled when neutral), the tabs (with the Routing tab's floor indicator when `Leaves at least > $0`), the limits form, Found under replacing the outlook's captions (plus the floor chip on the routing list when `> $0`), the chart under the tabs keeping its 3-column switcher, explicit Run + dim-on-change for every lever (decision 2, superseding spec 17 decision 5), and the phone collapse. The snapshot and every number are unchanged; the work is the page, its styles, Help, Rules and spec 17's pointer. A browser check at 1024px and 375px on an isolated origin.
 2. **Loss years.**
-   - **First, measure:** run the quick starts under 1, 2 and 3 years at 20%, on the own path and at 90% of markets. Run one profile with a brokerage at 100%, for NaN and for what the emptied account does with its basis and that year's contributions (trap 9). Write the results into §4 before the control ships.
-   - **Then build:** `returnSchedule` in SimConfig, `chronometer.js` and `runOnce`; the condition's row and its figures (with the fixed `−` prefix and leading-`-` stripping in the UI); `lossYearsPercent` on `max_spending`; Help, Rules and the plugin docs. Plugin bump.
+   - **First, measure:** run the quick starts under 1, 2 and 3 years at 20%, on the own path and at 90% of markets. Run one profile with a brokerage at 100%, for NaN and for what the emptied account does with its basis and that year's contributions (trap 9). No quick start holds a bond (trap 12), so measure bonds on a fixture with a US Treasury and a corporate bond, on the own path and in markets, at 0%, 10% and 100%, and check the ledger books the fall as growth and no interest as negative. Write the results into §4 before the control ships.
+   - **Then build:** `returnSchedule` in SimConfig, `chronometer.js`, `runOnce` and `IncomeAccountBehavior`'s bond price change; the condition's rows and their figures (with the fixed `−` prefix and leading-`-` stripping in the UI); `lossYearsPercent` on `max_spending`; Help, Rules and the plugin docs. Plugin bump.
 
 ---
 
