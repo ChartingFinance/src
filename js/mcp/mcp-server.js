@@ -438,7 +438,9 @@ server.tool(
   + "It is not a forecast and not a probability; name it when you report the answer. "
   + "lossYearsPercent starts retirement with up to three bad years, as the Test Bench's Loss years "
   + "control does: the figures the user typed, not history, so name them when you report the answer, "
-  + "and say a markets figure under them is for markets that all began with that fall.",
+  + "and say a markets figure under them is for markets that all began with that fall. "
+  + "inflationShiftPercent raises inflation by 1% or 2% a year above entered, as the Test Bench's "
+  + "Inflation control does; it stacks with marketOutlook and lossYearsPercent.",
   {
     plan: z.string().describe("The plan to solve: a run handle from quick_start_report or run_plan, "
         + "a share link, or a share payload."),
@@ -463,10 +465,14 @@ server.tool(
                 + "bond prices fall, while bonds keep paying interest. [30, 20] is a 30% stock fall then "
                 + "20%. Pass 30 for 30%, never 0.3; negatives are refused. The handle returned has no "
                 + "loss years in it."),
+    inflationShiftPercent: z.number().int().min(0).max(2).default(0)
+        .describe("Higher inflation stress in whole percentage points above entered inflation: 0 (as entered), "
+                + "1 (+1%/yr), or 2 (+2%/yr) on expenses, tax indexing, and today's-dollar deflation in both "
+                + "the plan's own path and simulated markets. The handle returned keeps the plan's own inflation rate."),
   },
-  guard(async ({ plan, leaveAtLeast, simulatedMarketsPercent, marketOutlook, lossYearsPercent }) => {
+  guard(async ({ plan, leaveAtLeast, simulatedMarketsPercent, marketOutlook, lossYearsPercent, inflationShiftPercent }) => {
     const solved = await maxSpending(planFromReference(plan),
-      { leaveAtLeast, simulatedMarketsPercent, marketOutlook, lossYearsPercent });
+      { leaveAtLeast, simulatedMarketsPercent, marketOutlook, lossYearsPercent, inflationShiftPercent });
     // The plan at the answer is run and registered, so its handle works with
     // every other tool.
     const handle = solved.solvedSpec

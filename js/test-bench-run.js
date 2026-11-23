@@ -43,6 +43,7 @@ import { scaledAssets } from './spending-solver.js';
 import { routingGenes, searchesAt, estimateRuns } from './routing-search.js';
 import { guardrailsOutcome, simulationOutcome, successTone } from './outcome-summary.js';
 import { MarketOutlook, returnShift } from './market-outlook.js';
+import { inflationRateShift } from './inflation-condition.js';
 import { buildYearPool } from './mc-compute.js';
 import { withSimConfig } from './sim-config.js';
 
@@ -117,8 +118,9 @@ function simulationsCheck(results) {
 
 /**
  * What every job of a test carries: the settings in force and the plan's own,
- * with its loss years. A worker builds its config from the settings snapshot,
- * so the schedule has to travel in the payload (mc-worker.js, configFor).
+ * with its loss years and inflation shift. A worker builds its config from the
+ * settings snapshot, so these conditions travel in the payload (mc-worker.js,
+ * configFor).
  */
 function baseFor(plan) {
     return {
@@ -127,12 +129,18 @@ function baseFor(plan) {
         backtestYear: global_backtestYear,
         retirementDateInt: plan.retirementDateInt ?? null,
         returnSchedule: plan.returnSchedule ?? null,
+        inflationShift: inflationRateShift(plan.inflationShift ?? 0),
     };
 }
 
-/** The settings in force as a config, with the plan's loss years. */
+/** The settings in force as a config, with the plan's loss years and inflation shift. */
 function configFor(plan) {
-    return withSimConfig(simConfigFromGlobals(), { returnSchedule: plan.returnSchedule ?? null });
+    const base = simConfigFromGlobals();
+    const shift = inflationRateShift(plan.inflationShift ?? 0);
+    return withSimConfig(base, {
+        ...(shift ? { inflationRate: base.inflationRate + shift } : {}),
+        returnSchedule: plan.returnSchedule ?? null,
+    });
 }
 
 /**
@@ -149,8 +157,8 @@ export function benchPlan(plan) {
     return {
         modelAssets: JSON.parse(JSON.stringify(plan.modelAssets)),
         lifeEvents: JSON.parse(JSON.stringify(plan.lifeEvents ?? [])),
-        // With the loss years, or the chart would draw a plan without them
-        // under a table with them.
+        // With the loss years and inflation shift, or the chart would draw a
+        // plan without them under a table with them.
         config: configFor(plan),
         ages: { startAge: global_user_startAge, retirementAge: global_user_retirementAge },
     };
@@ -159,8 +167,8 @@ export function benchPlan(plan) {
 /**
  * The simulated markets every rate on the Test Bench is measured in: the same
  * seed, data and era for the limit, the check rows and the confirmation, so
- * two rates differ only by the plan they are of. `returnShift` is the plan's
- * market outlook, for historical draws.
+ * two rates differ only by the plan they are of. `returnShift` and
+ * `inflationShift` are the plan's conditions, for historical draws.
  */
 function simFor(plan) {
     return {
@@ -170,6 +178,7 @@ function simFor(plan) {
         backtestFromYear: global_backtestYear && global_backtestYear !== 'current'
             ? parseInt(global_backtestYear, 10) : null,
         returnShift: returnShift(plan.outlook),
+        inflationShift: inflationRateShift(plan.inflationShift ?? 0),
     };
 }
 
@@ -199,6 +208,7 @@ function checkJobs(run, base, plan, modelAssets) {
             backtestFromYear: sim.backtestFromYear,
             seed: sim.seed,
             returnShift: sim.returnShift,
+            inflationShift: sim.inflationShift,
         }, onProgress).then(simulationsCheck),
     };
 }
@@ -213,6 +223,7 @@ function checkJobs(run, base, plan, modelAssets) {
  * @param {number|null} plan.retirementDateInt  as an int, or null
  * @param {string} [plan.outlook]          the market outlook the assets are under
  *                                         (outlookPlan); absent is Moderate
+ * @param {number} [plan.inflationShift]   whole percentage points above entered inflation (0, 1, 2)
  * @param {object} limits                  { floor, success? } `success` is the
  *                                         share of simulated markets the answer
  *                                         must last in (0.9), or absent
@@ -258,6 +269,7 @@ export async function runTestBench(plan, limits, on) {
     if (result.runs && msPerRun == null) msPerRun = ((firstStep ?? Date.now()) - started) / result.runs;
     if (result.success) rates.rates = result.success.rates;
     result.outlook = outlook;
+    result.inflationShift = plan.inflationShift ?? 0;
     on.solved(result);
 
     const checksFor = (modelAssets) => checkJobs(run, base, plan, modelAssets);

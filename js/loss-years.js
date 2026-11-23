@@ -217,3 +217,33 @@ export function lossYearsLine(lossYears, dates) {
         : '';
     return `Stock prices fall ${figuresIn(stocks, inside)}${over}.${bondText}${cut}${scale}`;
 }
+
+/**
+ * Compact one-line readout for the Test Bench UI, with the historical scale
+ * sentence separated into a hover tooltip so the Conditions card stays scannable.
+ *
+ * @returns {{ text: string, scaleTip: string|null }}
+ */
+export function lossYearsSummary(lossYears, dates) {
+    const record = lossYearsOf(lossYears);
+    if (!record.count) return { text: '', scaleTip: null };
+    const { first, years, inside } = lossYearsCalendar(record, dates);
+    const scaleTip = 'For scale: since 1970 stocks have never lost more than 37.6% over one, two or three years in a row.';
+    if (!inside.length) {
+        return { text: `Plan ends before ${first} — no years affected`, scaleTip: null };
+    }
+    const idx = inside.map((y) => years.indexOf(y));
+    const stocks = idx.map((i) => record.stocks[i]);
+    const combined = Math.round((1 - stocks.reduce((p, s) => p * (1 - s / 100), 1)) * 100);
+    const span = inside.length === 1 ? String(inside[0]) : `${inside[0]}–${inside[inside.length - 1]}`;
+    const hasBonds = idx.some((i) => record.bonds[i] > 0);
+    const parts = [
+        span,
+        inside.length > 1 ? `Combined stock fall: ${MINUS}${combined}%` : `Stock fall: ${MINUS}${stocks[0]}%`,
+        hasBonds ? 'Bonds keep paying interest' : 'Bonds unchanged',
+    ];
+    if (inside.length < years.length) {
+        parts.push(`ends in ${dates.last.year}`);
+    }
+    return { text: parts.join(' · '), scaleTip };
+}

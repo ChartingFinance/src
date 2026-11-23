@@ -104,18 +104,18 @@ import { whatStopsYou, riseNote, healthNote, successNote, resultRows, spendingHe
 import { DEPTHS, DEFAULT_DEPTH, rankSearches } from '../routing-search.js';
 import { startsLabel, costLine, agreementLine, changeRows, versusEntered, routingHeadline,
          isLoneBest, LONE_BEST_NOTE, DEPTH_NOTES } from '../routing-report.js';
-import { formatCompactCurrency, formatCurrency } from '../utils/html.js';
+import { formatCompactCurrency, formatCurrency, MINUS } from '../utils/html.js';
 import { MarketOutlook, OUTLOOKS, outlookLabel, returnShift } from '../market-outlook.js';
-import { NEUTRAL_CONDITIONS, conditionsOf, isNeutral, sameConditions, conditionChips, foundUnderChips, foundUnderText,
+import { NEUTRAL_CONDITIONS, conditionsOf, isNeutral, sameConditions, conditionChipItems, foundUnderChips, foundUnderText,
          spendingChanges, routingChanges, changedLine, tabColumn, conditionedPlan, conditionsClause } from '../test-bench-view.js';
-import { MAX_LOSS_YEARS, NO_LOSS_YEARS, parseLossFigure, lossYearsCalendar, lossYearsLine } from '../loss-years.js';
+import { MAX_LOSS_YEARS, NO_LOSS_YEARS, parseLossFigure, lossYearsCalendar, lossYearsSummary } from '../loss-years.js';
+import { INFLATION_SHIFTS, inflationShiftOf, inflationLabel, inflationLine } from '../inflation-condition.js';
 
-/** The line under the outlook control. */
+/** The short readout beside the market-returns control. */
 function outlookLine(outlook) {
     const shift = returnShift(outlook);
-    if (!shift) return 'Stock and bond returns as you entered them.';
-    return `Stock and bond returns 1% a year ${shift > 0 ? 'higher' : 'lower'} than you entered.`
-        + ' Inflation, wages and cash stay as entered.';
+    if (!shift) return "Plan's own rates";
+    return `${shift > 0 ? '+' : MINUS}1%/yr on stocks & bonds`;
 }
 
 const TABS = Object.freeze([
@@ -160,6 +160,7 @@ class TestBench extends LitElement {
         _lossCount:      { state: true },   // loss years: 0 to 3
         _lossFigures:    { state: true },   // { stocks: [n,n,n], bonds: [n,n,n] }, the last valid of each
         _lossText:       { state: true },   // the same as typed, with errors kept: { stocks: [..], bonds: [..] }
+        _inflationShift: { state: true },   // higher inflation condition: 0, 1, or 2 percentage points
         _solving:        { state: true },   // { tested, completed, total } while the limit is tested
         _depth:     { state: true },
         _rStatus:   { state: true },   // 'idle' | 'running' | 'done' | 'error'
@@ -193,6 +194,7 @@ class TestBench extends LitElement {
         this._lossCount = 0;
         this._lossFigures = { stocks: [...NO_LOSS_YEARS.stocks], bonds: [...NO_LOSS_YEARS.bonds] };
         this._lossText = { stocks: NO_LOSS_YEARS.stocks.map(String), bonds: NO_LOSS_YEARS.bonds.map(String) };
+        this._inflationShift = 0;
         this._dates = null;        // the plan's { retirement, first, last }; null means read them again
         this._solving = null;
         this._depth = DEFAULT_DEPTH;
@@ -299,6 +301,7 @@ class TestBench extends LitElement {
         return conditionsOf({
             outlook: this._outlook,
             lossYears: { count: this._lossCount, stocks: this._lossFigures.stocks, bonds: this._lossFigures.bonds },
+            inflationShift: this._inflationShift,
         });
     }
 
@@ -561,6 +564,27 @@ class TestBench extends LitElement {
         this._outlook = outlook;
     }
 
+    _setInflationShift(percent) {
+        const p = inflationShiftOf(percent);
+        if (p === this._inflationShift) return;
+        this._inflationShift = p;
+    }
+
+    /** Clear one active condition from its header pill. */
+    _clearCondition(key) {
+        if (key === 'outlook') {
+            this._setOutlook(NEUTRAL_CONDITIONS.outlook);
+        } else if (key === 'lossYears') {
+            this._setLossCount(0);
+            this._lossText = {
+                stocks: this._lossFigures.stocks.map(String),
+                bonds: this._lossFigures.bonds.map(String),
+            };
+        } else if (key === 'inflationShift') {
+            this._setInflationShift(NEUTRAL_CONDITIONS.inflationShift);
+        }
+    }
+
     /** Reset to as entered: every condition at its neutral setting. */
     _resetConditions() {
         this._setOutlook(NEUTRAL_CONDITIONS.outlook);
@@ -569,6 +593,7 @@ class TestBench extends LitElement {
             stocks: this._lossFigures.stocks.map(String),
             bonds: this._lossFigures.bonds.map(String),
         };
+        this._setInflationShift(NEUTRAL_CONDITIONS.inflationShift);
     }
 
     _setSuccess(on, percent) {
@@ -1048,18 +1073,30 @@ class TestBench extends LitElement {
     _renderConditions() {
         const now = this._conditions();
         const neutral = isNeutral(now);
+        const items = conditionChipItems(now);
         const open = this._conditionsOpen;
         return html`
             <section class="tb-conditions ${open ? 'is-open' : ''}" aria-labelledby="tb-conditions-title">
                 <div class="tb-conditions-head">
                     <div class="tb-conditions-titles">
                         <h3 id="tb-conditions-title" class="tb-conditions-title">Conditions</h3>
-                        <span class="tb-conditions-summary">${conditionChips(now).join(' · ') || 'As entered'}</span>
-                        <span class="tb-sub tb-conditions-sub">Apply to every test and the chart. Your plan is not changed.</span>
+                        <span class="tb-conditions-stack" aria-label="Active conditions">
+                            ${items.length === 0
+                                ? html`<span class="tb-conditions-empty">As entered</span>`
+                                : items.map((item, i) => html`
+                                    ${i > 0 ? html`<span class="tb-stack-plus" aria-hidden="true">+</span>` : nothing}
+                                    <span class="tb-stack-chip">
+                                        <span>${item.label}</span>
+                                        <button type="button" class="tb-stack-x"
+                                                aria-label=${`Remove ${item.label}`}
+                                                title=${`Remove ${item.label}`}
+                                                @click=${() => this._clearCondition(item.key)}>&times;</button>
+                                    </span>`)}
+                        </span>
                     </div>
                     <button type="button" class="tb-link tb-reset" ?disabled=${neutral}
                             title=${neutral ? 'Every condition is as entered' : 'Put every condition back as entered'}
-                            @click=${() => this._resetConditions()}>Reset to as entered</button>
+                            @click=${() => this._resetConditions()}>Reset</button>
                     <button type="button" class="tb-link tb-conditions-edit" aria-expanded=${open ? 'true' : 'false'}
                             aria-controls="tb-condition-rows"
                             @click=${() => { this._conditionsOpen = !open; }}>${open ? 'Done' : 'Edit'}</button>
@@ -1078,17 +1115,19 @@ class TestBench extends LitElement {
                         </div>
                     </div>
                     ${this._renderLossYears()}
+                    ${this._renderInflation()}
                 </div>
             </section>`;
     }
 
-    /** The Loss years row: the count, a stock and a bond figure per year, and its line. */
+    /** The Loss years row: the count, a stock and a bond figure per year, and its compact summary. */
     _renderLossYears() {
         const count = this._lossCount;
         const record = this._conditions().lossYears;
         const dates = this._dates || null;
         const years = dates ? lossYearsCalendar(record, dates).years : null;
         const yearLabel = (i) => (years ? String(years[i]) : `Year ${i + 1}`);
+        const summary = dates ? lossYearsSummary(record, dates) : null;
         const field = (kind, i) => {
             const text = this._lossText[kind][i];
             const bad = 'error' in parseLossFigure(text);
@@ -1123,7 +1162,26 @@ class TestBench extends LitElement {
                         </div>
                         ${this._lossInvalid() ? html`<p class="tb-error tb-loss-error" role="alert">A loss is 0% to 100%.
                             Run waits until each figure is a whole number from 0 to 100.</p>` : nothing}` : nothing}
-                    <span class="tb-sub tb-loss-line">${dates ? lossYearsLine(record, dates) : ''}</span>
+                    ${summary?.text ? html`<span class="tb-sub ${count ? 'tb-loss-line' : ''}">${summary.text}${summary.scaleTip
+                        ? html`<span class="tb-scale-tip" tabindex="0" title=${summary.scaleTip}
+                                     aria-label=${summary.scaleTip}>?</span>` : nothing}</span>` : nothing}
+                </div>
+            </div>`;
+    }
+
+    /** The Higher inflation row: As entered, +1%, or +2% above entered inflation. */
+    _renderInflation() {
+        return html`
+            <div class="tb-condition">
+                <span class="tb-condition-label" id="tb-inflation-label">Inflation</span>
+                <div class="tb-condition-control">
+                    <div class="tb-columns" role="radiogroup" aria-labelledby="tb-inflation-label">
+                        ${INFLATION_SHIFTS.map((p) => html`
+                            <label class="tb-column ${p === this._inflationShift ? 'is-on' : ''}">
+                                <input type="radio" name="tb-inflation" .checked=${p === this._inflationShift}
+                                       @change=${() => this._setInflationShift(p)}>${inflationLabel(p)}</label>`)}
+                    </div>
+                    <span class="tb-sub">${inflationLine(this._inflationShift)}</span>
                 </div>
             </div>`;
     }
@@ -1148,10 +1206,6 @@ class TestBench extends LitElement {
         const running = this._status === 'running';
         return html`
             <div class="tb-limits">
-                <div class="tb-limit">
-                    <span class="tb-limit-label">Never runs out</span>
-                    <span class="tb-limit-value" title="Every bill is paid, every month. This limit is always on.">Always on</span>
-                </div>
                 <div class="tb-limit">
                     <label class="tb-limit-label" for="tb-floor">Leaves at least</label>
                     <span class="tb-limit-value"><span class="tb-floor-field">$<input id="tb-floor" type="text"
@@ -1185,10 +1239,7 @@ class TestBench extends LitElement {
                 Each level takes about ten seconds; at most ten are tested.</p>` : nothing}
             ${this._result ? this._renderResult()
                 : running ? (this._solving ? nothing : html`<p class="tb-sub">Running the plan at 40 spending levels…</p>`)
-                : html`<p class="tb-sub">Turns every monthly expense up and down together, health plan included,
-                    and finds the highest level the plan can pay for. With the simulated-markets limit on, it then
-                    tests levels across 300 simulated markets, which takes from ten seconds to about two minutes.
-                    Nothing in your plan is changed.</p>`}`;
+                : html`<p class="tb-sub">Finds the highest monthly spending your plan can sustain without running out — never modifying your plan.</p>`}`;
     }
 
     render() {

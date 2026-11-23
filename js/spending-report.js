@@ -12,8 +12,16 @@
 import { DateInt, monthLabel } from './utils/date-int.js';
 import { formatCompactCurrency, formatCurrency, MINUS } from './utils/html.js';
 import { outlookClause, returnShift } from './market-outlook.js';
+import { inflationClause } from './inflation-condition.js';
 
 const DASH = '—';
+
+/** Join 1, 2, or 3+ condition clauses into readable English. */
+function joinClauses(clauses) {
+    if (clauses.length <= 1) return clauses[0] ?? '';
+    if (clauses.length === 2) return `${clauses[0]} and ${clauses[1]}`;
+    return `${clauses.slice(0, -1).join(', ')}, and ${clauses[clauses.length - 1]}`;
+}
 
 /** "the 401K holds $1.9M and the Roth IRA $1.0M", or '' when nothing is held. */
 function holdings(untouched = []) {
@@ -37,14 +45,17 @@ function holdings(untouched = []) {
  * Under a market outlook other than Moderate (`result.outlook`), the sentence
  * opens with it: "With stock and bond returns 1% a year higher than you
  * entered, the most this plan can spend is…". So do loss years
- * (`result.lossYearsClause`, loss-years.js): "With stock prices falling 30% in
- * 2031, the…". The Test Bench passes `withConditions: false`: its Found under
- * line names the conditions, directly above the sentence (test-bench-view.js).
+ * (`result.lossYearsClause`, loss-years.js) and higher inflation
+ * (`result.inflationShift`, inflation-condition.js). The Test Bench passes
+ * `withConditions: false`: its Found under line names the conditions, directly
+ * above the sentence (test-bench-view.js).
  */
 export function spendingHeadline(result, { withConditions = true } = {}) {
     const { asEntered, best } = result;
-    const clauses = withConditions ? [outlookClause(result.outlook), result.lossYearsClause].filter(Boolean) : [];
-    const clause = clauses.length ? clauses.join(' and ') : null;
+    const clauses = withConditions
+        ? [outlookClause(result.outlook), result.lossYearsClause, inflationClause(result.inflationShift)].filter(Boolean)
+        : [];
+    const clause = clauses.length ? joinClauses(clauses) : null;
     const lead = clause ? `With ${clause}, the` : 'The';
     if (!best) return clause ? `With ${clause}, no spending level tested keeps these limits.`
         : 'No spending level tested keeps these limits.';

@@ -454,17 +454,31 @@
         .tb-result.is-stale .tb-found, .tb-result.is-stale .tb-note { opacity: 0.45; }
         /* Test Bench layout (spec 18): Conditions above both tests, the tests as tabs, the limits as a form */
         .tb-conditions { border: 1px solid #e5e7eb; border-radius: 14px; background: #fafafa; padding: 12px 16px; margin-bottom: 14px; }
-        .tb-conditions-head { display: flex; align-items: baseline; gap: 12px; }
-        .tb-conditions-titles { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; flex: 1; min-width: 0; }
+        .tb-conditions-head { display: flex; align-items: center; gap: 10px; }
+        .tb-conditions-titles { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; flex: 1; min-width: 0; }
         .tb-conditions-title { font-size: 14px; font-weight: 700; color: #111827; margin: 0; }
-        .tb-conditions-summary, .tb-conditions-edit { display: none; }
-        .tb-conditions-summary { font-size: 13px; color: #6b21a8; font-weight: 600; }
+        .tb-conditions-stack { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; min-width: 0; }
+        .tb-conditions-empty { font-size: 12.5px; color: #6b7280; }
+        .tb-stack-plus { font-size: 12px; font-weight: 700; color: #9ca3af; }
+        .tb-stack-chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 6px 2px 9px;
+            border-radius: 999px; background: #f3e8ff; color: #6b21a8; font-size: 12px; font-weight: 600;
+            white-space: nowrap; }
+        .tb-stack-x { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px;
+            padding: 0; border: none; border-radius: 50%; background: transparent; color: #7e22ce;
+            font-size: 14px; line-height: 1; cursor: pointer; }
+        .tb-stack-x:hover { background: rgba(126, 34, 206, 0.14); color: #581c87; }
+        .tb-stack-x:focus-visible { outline: 2px solid #7e22ce; outline-offset: 1px; }
+        .tb-conditions-edit { display: none; }
         .tb-reset { font-size: 12px; white-space: nowrap; }
         .tb-link:disabled { color: #9ca3af; text-decoration: none; cursor: default; }
-        .tb-condition-rows { margin-top: 10px; display: grid; gap: 10px; }
+        .tb-condition-rows { margin-top: 10px; display: grid; gap: 9px; }
         .tb-condition { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 4px 12px; align-items: start; }
         .tb-condition-label { font-size: 13px; font-weight: 600; color: #374151; padding-top: 5px; }
         .tb-condition-control { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; min-width: 0; }
+        .tb-scale-tip { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px;
+            margin-left: 5px; border-radius: 50%; border: 1px solid #d1d5db; background: #fff; color: #6b7280;
+            font-size: 10.5px; font-weight: 700; line-height: 1; cursor: help; vertical-align: 1px; }
+        .tb-scale-tip:hover, .tb-scale-tip:focus-visible { border-color: #7e22ce; color: #6b21a8; outline: none; }
         .tb-tabs { display: flex; gap: 4px; border-bottom: 1px solid #e5e7eb; margin-bottom: 14px; }
         .tb-tab { font: inherit; font-size: 14px; font-weight: 600; color: #6b7280; background: none; border: none;
             border-bottom: 2px solid transparent; margin-bottom: -1px; padding: 7px 14px; cursor: pointer; }
@@ -499,20 +513,16 @@
         .tb-loss-error, .tb-loss-line { width: 100%; margin: 0; }
         @media (max-width: 640px) {
             /* The Conditions card collapses to one line; Edit opens its rows */
-            .tb-conditions { padding: 6px 12px; margin-bottom: 8px; }
-            .tb-conditions:not(.is-open) .tb-conditions-titles { flex-wrap: nowrap; }
-            .tb-conditions-summary { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-            .tb-conditions:not(.is-open) .tb-conditions-sub,
+            .tb-conditions { padding: 8px 12px; margin-bottom: 8px; }
             .tb-conditions:not(.is-open) .tb-condition-rows,
             .tb-conditions:not(.is-open) .tb-reset { display: none; }
-            .tb-conditions:not(.is-open) .tb-conditions-summary { display: inline; }
             .tb-conditions-edit { display: inline; font-size: 13px; }
-            /* Open: Reset moves under the title, so the description keeps the card's width */
+            /* Open: Reset moves under the header, so the stack keeps the card's width */
             .tb-conditions-head { flex-wrap: wrap; }
             .tb-reset { order: 3; flex-basis: 100%; text-align: left; margin-left: 0; }
             .tb-condition { grid-template-columns: 1fr; }
             .tb-condition-label { padding-top: 0; }
-            /* Never wraps: three equal parts, a long label breaks inside its own */
+            /* Never wraps: equal parts, a long label breaks inside its own */
             .tb-condition .tb-columns { display: flex; flex-wrap: nowrap; width: 100%; }
             .tb-condition .tb-column { flex: 1 1 0; min-width: 0; text-align: center; padding: 5px 4px;
                 white-space: normal; line-height: 1.25; }
