@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.3.54; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.3.55; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -40351,7 +40351,8 @@ function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, p
   portfolio.initializeChron();
   const baseRates = dataMode === "calibrated" ? calibrationBaseRates(portfolio.modelAssets) : null;
   const retirementInt = retirementDateInt ? retirementDateInt.toInt() : 0;
-  let withdrawalPhase = !retirementDateInt;
+  const startsOnDrawnJanuary = portfolio.firstDateInt.month === 1 && portfolio.firstDateInt.toInt() >= retirementInt;
+  let withdrawalPhase = !retirementDateInt || startsOnDrawnJanuary;
   const priceIndex = new PriceIndex(portfolio.config.inflationRate);
   if (withdrawalPhase) {
     const draw = applyRandomRates(
