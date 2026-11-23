@@ -1,6 +1,6 @@
 # Spec 18 — The Test Bench's layout: conditions, tests, and what a result was found under
 
-Status: **DRAFT 2026-11-21, revised 2026-11-22.** Spec only, no code. On 2026-11-22 John revised loss years (1, 2 or 3 years, each with a loss the user types) and accepted pre-build refinements (Routing floor visibility, explicit Run in Phase 1, mid-year already-retired start year, loss-year input ergonomics, chart column switcher across tabs, and the simulated-markets non-stock draw note for Rules). The open decisions are in §10; nothing is built until they are answered.
+Status: **DRAFT 2026-11-21, revised 2026-11-22.** Spec only, no code. On 2026-11-22 John revised loss years (1, 2 or 3 years, each with a loss the user types) and accepted pre-build refinements (Routing floor visibility, explicit Run in Phase 1, mid-year already-retired start year, loss-year input ergonomics, chart column switcher across tabs, and the simulated-markets non-stock draw note for Rules). On 2026-11-23 John took the recommendations for Phase 1 (decisions 1, 2, 10 and 11, and the two questions now answered in §3.2 and §3.4), and **Phase 1 is built** (§11). Decisions 3–5 and 7–9 are Loss years' (Phase 2) and stay open.
 
 The Test Bench is about to get more levers. Spec 17 added Market returns, and the next asked for is starting retirement with up to three years of losses. Today's controls are written as one sentence, and they already had to break onto a second row for Market returns. This spec gives the levers a layout that takes more of them, and defines the first new one: **loss years at the start of retirement**.
 
@@ -65,7 +65,7 @@ Conditions and limits behave differently, so they should not sit in the same sen
 
 At the top of the Test Bench, above both tests:
 
-- **Title row:** "Conditions", with a line under it: "Apply to every test and the chart. Your plan is not changed." On the right, **Reset to as entered** puts every condition back to its neutral setting, and is hidden or disabled when every condition is already neutral.
+- **Title row:** "Conditions", with a line under it: "Apply to every test and the chart. Your plan is not changed." On the right, **Reset to as entered** puts every condition back to its neutral setting, and is disabled (not hidden, so it does not jump in and out) when every condition is already neutral.
 - **One row per condition:** a label on the left, a segmented control, and one line under it saying what the setting on screen does. Market returns moves here from its row under the limits. Loss years is the second row (§4).
 - **The neutral setting is first or centred and named plainly:** Moderate, None.
 - **A row may carry inputs under its control.** Loss years carries one figure per year (§4.1).
@@ -76,8 +76,9 @@ At the top of the Test Bench, above both tests:
 Under the Conditions card, **Spending** and **Routing** become two tabs of one card (decision 1).
 
 - **Spending:** the limits as a short form, one control each, not a sentence: Never runs out (always on, stated) · Leaves at least $[0] · [✓] Lasts in [90]% of simulated markets. Then Run. Then the result: headline, curve, table, what stops it, notes and Save, as today.
-- **Routing:** Depth, the cost line, Search, and the list and changes, as today. Because **Leaves at least** also ranks routing results (§2) while living on the Spending tab, when the floor is above $0 the Routing tab shows a compact indicator (for example, "Ranking with floor: $500,000", with a link to edit it in Spending).
+- **Routing:** Depth, the cost line, Search, and the list and changes, as today. Because **Leaves at least** also ranks routing results (§2) while living on the Spending tab, when the floor is above $0 the Routing tab shows a compact indicator: "Routings are ranked by what each lets the plan spend while it leaves at least $500,000 at the end. Change it on Spending", the last words a link to the field. The floor has one name everywhere: **Leaves at least**.
 - Switching tabs keeps each tab's result. A routing result still adds its column to the spending table while the floor and conditions match, as today.
+- **Search runs the Spending test too** when its answer is missing or was found under another floor or other conditions, as today, because routings are compared with it. The Routing tab says so under Search before it is clicked (answered 2026-11-23).
 
 ### 3.3 "Found under"
 
@@ -87,12 +88,12 @@ The first line of every result, above its headline: **Found under** followed by 
 
 - With every condition neutral and no markets figure, the line reads "Found under · your plan as entered".
 - It replaces the outlook's other four mentions (§1.2): the line under the table, the clause in the markets note, the routing caption's clause and the chart caption's sentence. The headline keeps no clause either; the chips sit directly above it.
-- The routing list carries its own Found under line: it was searched under the conditions at the time, plus a floor chip when **Leaves at least** is above $0 (for example, "Floor $500,000").
+- The routing list carries its own Found under line: it was searched under the conditions at the time, plus a floor chip when **Leaves at least** is above $0 ("Leaves at least $500,000").
 - **Save** writes the same chips into the scenario's note, as spec 17 does for the outlook.
 
 ### 3.4 The chart
 
-Below the tabs, outside them, so Chart.js always draws visibly. When both a Spending result and a matching Routing result exist (same floor and conditions), the chart keeps its column switcher (**As entered · Spend the most · With this routing**) on one shared y-axis so the user can compare columns directly. Switching tabs switches the default selected column (**Spend the most** on Spending, **With this routing** on Routing), and the chart shows the active result's Found under line in its caption.
+Below the tabs, outside them, so Chart.js always draws visibly. When both a Spending result and a matching Routing result exist (same floor and conditions), the chart keeps its column switcher (**As entered · Spend the most · With this routing**) on one shared y-axis so the user can compare columns directly. Switching tabs switches the selected column (**Spend the most** on Spending, **With this routing** on Routing), even one the user picked: the tab is the newer choice (answered 2026-11-23). The chart shows the Found under line of the column's own result in its caption, and dims with that result.
 
 ### 3.5 Run, and what dims
 
@@ -107,7 +108,7 @@ This replaces spec 17's decision 5 (a changed outlook re-runs) right away, rathe
 ### 3.6 On a phone
 
 - **The Conditions card collapses to its Found under line**, with an Edit link. Tapping opens the rows, stacked, each segmented control at full width. Loss years' figures sit on one row under it (three fields of about 80px fit at 375px).
-- **Limits stack:** label above control, one per row.
+- **Limits stack:** one per row, the label beside its control (above it would cost the 200px target below), and Run beside the first. "in today's dollars" drops from the floor's line; the table's caption keeps it.
 - **The tabs stay.** Each holds one test, so a phone scrolls through one test, not both.
 - Target: the controls above the first result under 200px when collapsed (314px today), and no wrapped segmented control at 375px.
 
@@ -277,8 +278,8 @@ The static pages change in the same PR as the behaviour.
 
 Each has a recommendation; John decides.
 
-1. **Tabs for the two tests, or stacked with one collapsed.** Recommend **tabs**. The main page's objections to tabs (§1.5) do not apply here, and tabs halve what a phone scrolls through. The alternative keeps both stacked and collapses the one not in use.
-2. **Explicit Run for every lever.** Recommend **yes, in Phase 1 alongside the layout** (rather than waiting for Phase 2). It supersedes spec 17's decision 5 (a changed outlook re-runs) right away so the interaction model changes once instead of twice, and adjusting multiple levers (such as Floor and Market returns) never triggers an unwanted two-minute run on the first click.
+1. **Tabs for the two tests, or stacked with one collapsed.** **Decided (John, 2026-11-23): tabs.** Recommend **tabs**. The main page's objections to tabs (§1.5) do not apply here, and tabs halve what a phone scrolls through. The alternative keeps both stacked and collapses the one not in use.
+2. **Explicit Run for every lever.** **Decided (John, 2026-11-23): yes, in Phase 1.** Recommend **yes, in Phase 1 alongside the layout** (rather than waiting for Phase 2). It supersedes spec 17's decision 5 (a changed outlook re-runs) right away so the interaction model changes once instead of twice, and adjusting multiple levers (such as Floor and Market returns) never triggers an unwanted two-minute run on the first click.
 3. **What a typed figure means.** Recommend **a fall in price**: the rate is the figure, and dividends keep paying (§4.3). It is exact, a 100% loss needs no special case, and it is how a crash is usually quoted ("stocks fell 30%"). The alternative is **the account's whole loss, dividends included**, the meaning of the market data's own figures. That needs the dividend taken out of the rate first, and a floor at −100% where loss and dividend together pass it. The quick starts carry no dividend rate, so for them the two agree.
 4. **Stocks only.** Recommend **yes**: one figure per year, and bonds keep their rate or their draw. The alternatives: one figure for stocks and bonds both, which would sink a Treasury account 30% when Treasuries gained in 2008; or a second figure per year for bonds, which doubles the fields.
 5. **Nothing moves a typed figure.** Recommend **yes**: neither the data mode nor the market outlook changes it, so 30% typed is 30% run. This reverses the draft's earlier recommendation, made when a loss year was a historical year; a typed figure is the user's own.
@@ -286,14 +287,14 @@ Each has a recommendation; John decides.
 7. **The figure a new year starts at.** Recommend **20%** (§4.1). The alternatives: 30%, or 2008's 37%.
 8. **Conditions are not saved with the plan.** Recommend **not saved**, as spec 17 decided: every load starts with every condition neutral, and the typed figures are forgotten.
 9. **MCP `lossYearsPercent`.** Recommend **yes**, under spec 16's one rule, with the refusals of §4.8.
-10. **The phone collapse of §3.6.** Recommend **yes**.
-11. **The data chip in Found under.** Recommend showing it **only when a markets figure is on screen**, since the plan's own path does not use the pool, and loss years do not use it either.
+10. **The phone collapse of §3.6.** **Decided (John, 2026-11-23): yes.** Recommend **yes**.
+11. **The data chip in Found under.** **Decided (John, 2026-11-23): only with a markets figure.** The spending result's table always has its simulated-markets row, so its line always carries the chip; the routing list and the chart's caption never do. Recommend showing it **only when a markets figure is on screen**, since the plan's own path does not use the pool, and loss years do not use it either.
 
 ---
 
 ## 11. Phases and cost
 
-1. **Layout and explicit Run, no new condition.** The Conditions card with Market returns alone (and Reset hidden/disabled when neutral), the tabs (with the Routing tab's floor indicator when `Leaves at least > $0`), the limits form, Found under replacing the outlook's captions (plus the floor chip on the routing list when `> $0`), the chart under the tabs keeping its 3-column switcher, explicit Run + dim-on-change for every lever (decision 2, superseding spec 17 decision 5), and the phone collapse. The snapshot and every number are unchanged; the work is the page, its styles, Help, Rules and spec 17's pointer. A browser check at 1024px and 375px on an isolated origin.
+1. **Layout and explicit Run, no new condition.** *Built 2026-11-23: `js/components/test-bench.js`, the headless rules in `js/test-bench-view.js`, `tests/test-bench-layout.mjs`.* The Conditions card with Market returns alone (and Reset hidden/disabled when neutral), the tabs (with the Routing tab's floor indicator when `Leaves at least > $0`), the limits form, Found under replacing the outlook's captions (plus the floor chip on the routing list when `> $0`), the chart under the tabs keeping its 3-column switcher, explicit Run + dim-on-change for every lever (decision 2, superseding spec 17 decision 5), and the phone collapse. The snapshot and every number are unchanged; the work is the page, its styles, Help, Rules and spec 17's pointer. A browser check at 1024px and 375px on an isolated origin.
 2. **Loss years.**
    - **First, measure:** run the quick starts under 1, 2 and 3 years at 20%, on the own path and at 90% of markets. Run one profile with a brokerage at 100%, for NaN and for what the emptied account does with its basis and that year's contributions (trap 9). Write the results into §4 before the control ships.
    - **Then build:** `returnSchedule` in SimConfig, `chronometer.js` and `runOnce`; the condition's row and its figures (with the fixed `−` prefix and leading-`-` stripping in the UI); `lossYearsPercent` on `max_spending`; Help, Rules and the plugin docs. Plugin bump.

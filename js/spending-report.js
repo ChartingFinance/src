@@ -36,11 +36,13 @@ function holdings(untouched = []) {
  *
  * Under a market outlook other than Moderate (`result.outlook`), the sentence
  * opens with it: "With stock and bond returns 1% a year higher than you
- * entered, the most this plan can spend is…".
+ * entered, the most this plan can spend is…". The Test Bench passes
+ * `withConditions: false`: its Found under line names the outlook, directly
+ * above the sentence (test-bench-view.js).
  */
-export function spendingHeadline(result) {
+export function spendingHeadline(result, { withConditions = true } = {}) {
     const { asEntered, best } = result;
-    const clause = outlookClause(result.outlook);
+    const clause = withConditions ? outlookClause(result.outlook) : null;
     const lead = clause ? `With ${clause}, the` : 'The';
     if (!best) return clause ? `With ${clause}, no spending level tested keeps these limits.`
         : 'No spending level tested keeps these limits.';
@@ -129,15 +131,17 @@ export function riseNote(result) {
 
 /**
  * The note for the simulated-markets limit: what it cost, or that it cost
- * nothing. Null when the limit is off.
+ * nothing. Null when the limit is off. Under an outlook other than Moderate
+ * the plan's own path is named with it, unless `withConditions` is false, as
+ * for spendingHeadline().
  */
-export function successNote(result) {
+export function successNote(result, { withConditions = true } = {}) {
     const s = result.success;
     if (!s) return null;
     const target = Math.round(s.target * 100);
     if (result.fixedBest && result.best) {
         const cost = result.fixedBest.monthlySpending - result.best.monthlySpending;
-        const shift = returnShift(result.outlook);
+        const shift = withConditions ? returnShift(result.outlook) : 0;
         const path = shift ? `the plan's own path of returns, 1% a year ${shift > 0 ? 'higher' : 'lower'} than you entered,`
             : "the plan's own path of returns";
         return `On ${path} it could spend ${formatCurrency(result.fixedBest.monthlySpending)} a month.`

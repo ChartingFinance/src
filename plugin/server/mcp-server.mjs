@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.3.55; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.3.56; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -43448,9 +43448,9 @@ function holdings(untouched = []) {
   const last = parts.pop();
   return parts.length ? `${parts.join(", ")} and ${last}` : last;
 }
-function spendingHeadline(result) {
+function spendingHeadline(result, { withConditions = true } = {}) {
   const { asEntered, best } = result;
-  const clause = outlookClause(result.outlook);
+  const clause = withConditions ? outlookClause(result.outlook) : null;
   const lead = clause ? `With ${clause}, the` : "The";
   if (!best) return clause ? `With ${clause}, no spending level tested keeps these limits.` : "No spending level tested keeps these limits.";
   if (asEntered.runsOut) {
@@ -43499,13 +43499,13 @@ function riseNote(result) {
   const where = rise.account ? ` At the lower level ${formatCompactCurrency(rise.account.balance)} is left in ${rise.account.displayName}, where it grows more slowly.` : "";
   return `Over part of this range, spending more leaves more at the end (${formatCompactCurrency(rise.gain)} more).` + where + " A transfer rule that moves that money would change the answer.";
 }
-function successNote(result) {
+function successNote(result, { withConditions = true } = {}) {
   const s = result.success;
   if (!s) return null;
   const target = Math.round(s.target * 100);
   if (result.fixedBest && result.best) {
     const cost = result.fixedBest.monthlySpending - result.best.monthlySpending;
-    const shift = returnShift(result.outlook);
+    const shift = withConditions ? returnShift(result.outlook) : 0;
     const path = shift ? `the plan's own path of returns, 1% a year ${shift > 0 ? "higher" : "lower"} than you entered,` : "the plan's own path of returns";
     return `On ${path} it could spend ${formatCurrency(result.fixedBest.monthlySpending)} a month. Lasting in ${target}% of simulated markets costs ${formatCurrency(cost)} a month of that.`;
   }

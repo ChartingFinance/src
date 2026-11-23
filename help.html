@@ -727,16 +727,32 @@
         <h3 class="text-lg font-bold mb-4">Elements</h3>
         <div class="grid sm:grid-cols-2 gap-4 mb-8">
             <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">Conditions</div>
+                <div class="text-sm text-gray-500">The card at the top holds the conditions about the world that every test and the chart run under: today, <strong>Market returns</strong>. <strong>Reset to as entered</strong> puts every condition back (it is greyed out when they already are). On a phone the card shrinks to one line naming the conditions in force; tap <strong>Edit</strong> to change them.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">Spending and Routing Tabs</div>
+                <div class="text-sm text-gray-500">The two tests sit on their own tabs, and each keeps its result while you look at the other. A tab shows <em>running&hellip;</em> or <em>searching&hellip;</em> while its test works. The holdings chart sits under both tabs and opens on the column that goes with the tab: <strong>Spend the most</strong> on Spending, <strong>With this routing</strong> on Routing.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">Run, and What Dims</div>
+                <div class="text-sm text-gray-500">Nothing runs by itself. Change as many conditions and limits as you like, then click <strong>Run</strong> (Spending) or <strong>Search</strong> (Routing). Until you do, a result found under other settings is dimmed, with one line saying what changed (&ldquo;Conditions changed. Run again.&rdquo;), and it cannot be saved. Put a setting back and the result is current again. A click on the curve is the one exception: it sets the floor and runs at once.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
+                <div class="font-semibold text-sm mb-1">Found Under</div>
+                <div class="text-sm text-gray-500">The first line of every result names what it was found under: each condition not at its as-entered setting (for example <strong>Optimistic (+1%)</strong>), or <strong>your plan as entered</strong>, then the data the simulated markets drew from (for example <strong>Calibrated 1970&ndash;2025</strong>). The routing list adds its floor when it is above $0, since the floor lives on the Spending tab. The chart&rsquo;s caption repeats the line for the column it shows.</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Spending Limits</div>
-                <div class="text-sm text-gray-500">The solver maximizes monthly spending subject to three limits: <strong>Never runs out</strong> (always on &mdash; zero unpaid bills in any month), <strong>Leaves at least</strong> (minimum ending net worth in today&rsquo;s dollars, defaulting to $0), and <strong>Lasts in &hellip;% of simulated markets</strong> (on by default at 90%; uncheck to solve strictly on your fixed return assumptions).</div>
+                <div class="text-sm text-gray-500">On the Spending tab, the solver maximizes monthly spending subject to three limits: <strong>Never runs out</strong> (always on &mdash; zero unpaid bills in any month), <strong>Leaves at least</strong> (minimum ending net worth in today&rsquo;s dollars, defaulting to $0), and <strong>Lasts in &hellip;% of simulated markets</strong> (on by default at 90%; uncheck to solve strictly on your fixed return assumptions).</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Simulated-Markets Limit</div>
                 <div class="text-sm text-gray-500">Maximum spending on a fixed return path leaves no buffer for bad markets. With this limit enabled, the solver lowers spending until your plan stays above $0 net worth from retirement onward in your target share of <strong>300 simulated markets</strong> (taking ~10 seconds per step, up to 10 steps), then confirms the answer across <strong>1,000 markets</strong>. When this limit lowers the answer, a grey dot on the curve shows the fixed-path ceiling and a note reports the monthly cost of that safety margin.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
-                <div class="font-semibold text-sm mb-1">Market Returns Outlook</div>
-                <div class="text-sm text-gray-500">Switch between <strong>Pessimistic (&minus;1%/yr)</strong>, <strong>Moderate</strong> (as entered), and <strong>Optimistic (+1%/yr)</strong> to stress-test your stock and bond return assumptions (Brokerage, IRA, Roth IRA, 401(k), Treasuries, and Corporate Bonds &mdash; leaving inflation, wages, cash, housing, and debt untouched). Applies across the whole Test Bench, resets to Moderate on reload, and never modifies your saved plan&rsquo;s return rates.</div>
+                <div class="font-semibold text-sm mb-1">Market Returns</div>
+                <div class="text-sm text-gray-500">A condition: switch between <strong>Pessimistic (&minus;1%/yr)</strong>, <strong>Moderate</strong> (as entered), and <strong>Optimistic (+1%/yr)</strong> to stress-test your stock and bond return assumptions (Brokerage, IRA, Roth IRA, 401(k), Treasuries, and Corporate Bonds &mdash; leaving inflation, wages, cash, housing, and debt untouched). Applies across the whole Test Bench, resets to Moderate on reload, and never modifies your saved plan&rsquo;s return rates.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">The Spending Curve</div>
@@ -764,7 +780,7 @@
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Routing: Search Depth</div>
-                <div class="text-sm text-gray-500">Controls how thoroughly the routing test explores transfer rules: <strong>Depth 1</strong> runs 1 climb from your current plan; <strong>Depth 2</strong> adds 4 nearby climbs; <strong>Depth 3</strong> adds 5 random climbs; <strong>Depth 4</strong> adds 10 genetic searches (10,000 runs each). Runs locally in parallel across your CPU cores, with an upfront time estimate shown beside the control.</div>
+                <div class="text-sm text-gray-500">On the Routing tab, controls how thoroughly the routing test explores transfer rules: <strong>Depth 1</strong> runs 1 climb from your current plan; <strong>Depth 2</strong> adds 4 nearby climbs; <strong>Depth 3</strong> adds 5 random climbs; <strong>Depth 4</strong> adds 10 genetic searches (10,000 runs each). Runs locally in parallel across your CPU cores, with an upfront time estimate shown beside the control. Routings are compared with the Spending test&rsquo;s answer, so <strong>Search</strong> runs that test too when its answer is missing or was found under another floor or other conditions; the tab says so before you click. When <strong>Leaves at least</strong> is above $0, the tab names it, since it ranks the routings.</div>
             </div>
             <div class="p-4 rounded-xl bg-gray-50">
                 <div class="font-semibold text-sm mb-1">Routing: Ranked Results</div>
@@ -800,7 +816,7 @@
                 <div class="space-y-2">
                     <div class="flex items-start gap-3">
                         <span class="step-number">1</span>
-                        <span class="text-sm text-gray-700">Leave <strong>Leaves at least</strong> at $0 to spend down fully, or enter your desired ending balance in today&rsquo;s dollars.</span>
+                        <span class="text-sm text-gray-700">On the <strong>Spending</strong> tab, leave <strong>Leaves at least</strong> at $0 to spend down fully, or enter your desired ending balance in today&rsquo;s dollars. Set any conditions in the card above first; nothing runs until you click Run.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">2</span>
@@ -822,7 +838,7 @@
                 <div class="space-y-2">
                     <div class="flex items-start gap-3">
                         <span class="step-number">1</span>
-                        <span class="text-sm text-gray-700">Pick a <strong>Depth</strong> (start with the default; go deeper if multiple searches don&rsquo;t agree) and review the estimated time beside it.</span>
+                        <span class="text-sm text-gray-700">Open the <strong>Routing</strong> tab, pick a <strong>Depth</strong> (start with the default; go deeper if multiple searches don&rsquo;t agree) and review the estimated time beside it.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">2</span>
@@ -852,7 +868,7 @@
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="step-number">3</span>
-                        <span class="text-sm text-gray-700">Whenever you edit your plan later, any previous Test Bench output dims to show it is out of date &mdash; click <strong>Run</strong> again to refresh.</span>
+                        <span class="text-sm text-gray-700">Whenever you edit your plan, a condition or a limit later, any Test Bench output it affects dims to show it is out of date &mdash; click <strong>Run</strong> or <strong>Search</strong> again to refresh.</span>
                     </div>
                 </div>
             </div>

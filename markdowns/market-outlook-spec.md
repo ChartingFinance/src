@@ -1,6 +1,6 @@
 # Spec 17 — Market outlook on the Test Bench: stock and bond returns 1% better or worse
 
-Status: **DECIDED 2026-11-19 (§10), and built** on branch `claude/market-outlook`. John chose ±1% over leaving years out and stocks and bonds only, then agreed to all seven recommendations in §10.
+Status: **DECIDED 2026-11-19 (§10), and built** on branch `claude/market-outlook`. John chose ±1% over leaving years out and stocks and bonds only, then agreed to all seven recommendations in §10. Decision 5 (a change re-runs the test) is superseded by spec 18 §3.5 (`markdowns/test-bench-layout-spec.md`, Phase 1, 2026-11-23): a change runs nothing, and the results it affects dim until Run or Search.
 
 The Test Bench answers "how much can this plan spend?" on the returns the user entered, and, with the simulated-markets limit on, across history's returns re-centred on them. This spec adds one control: **Market returns: Pessimistic (−1%), Moderate, Optimistic (+1%)**. Pessimistic and Optimistic run the whole test with every stock and bond return one percentage point a year lower or higher. Moderate is the Test Bench as it is today.
 
@@ -130,7 +130,7 @@ Three findings:
 - In the Test Bench's limits, beside the floor and the markets limit: **Market returns** with three choices, **Pessimistic (−1%)**, **Moderate** and **Optimistic (+1%)** (labels: decision §10.3).
 - A line under it: "Stock and bond returns 1% a year lower / higher than you entered. Inflation, wages and cash stay as entered."
 - It starts at Moderate. It is a setting of the Test Bench, like the floor, and is not saved with the plan (decision §10.4).
-- Changing it re-runs the spending test when a result is on screen, as the floor and the markets limit do (decision §10.5). It marks the routing list outdated: "The plan, its settings, the floor or the market outlook changed after this test. Search again."
+- *(Superseded by spec 18 §3.5: changing it runs nothing; results found under another outlook dim until Run or Search.)* Changing it re-runs the spending test when a result is on screen, as the floor and the markets limit do (decision §10.5). It marks the routing list outdated: "The plan, its settings, the floor or the market outlook changed after this test. Search again."
 
 ### 4.2 The result
 
@@ -225,7 +225,7 @@ Each was agreed as recommended.
 2. **Corporate bonds.** The simulated markets never draw `corpBond`; it keeps its own rate. Move it with the other bonds? Recommend **yes**: it is a bond, and since it is never drawn its moved rate holds in every market, in both modes.
 3. **Labels.** Recommend **Pessimistic (−1%) · Moderate · Optimistic (+1%)**, the size in the label, so nobody reads "Pessimistic" as a forecast of a bad decade.
 4. **Saved or not.** Recommend **not saved**: the control starts at Moderate on every load, as the floor starts at $0, so a plan never opens under a tilt nobody remembers choosing.
-5. **A change re-runs the test.** Recommend **yes**, as a change to the floor or the markets limit does; the routing list is marked outdated, not re-run, because a routing test takes minutes.
+5. **A change re-runs the test.** *Superseded by spec 18 §3.5 (2026-11-23).* Recommend **yes**, as a change to the floor or the markets limit does; the routing list is marked outdated, not re-run, because a routing test takes minutes.
 6. **MCP.** Add `marketOutlook` to `max_spending`, default Moderate. Recommend **yes**, under the one rule of spec 16 (the same tools in the app and over MCP).
 7. **The saved scenario's note names the outlook.** Recommend **yes**: a plan saved at Optimistic's spending will not last at its own returns, and the note is the only place that says why.
 8. **Where it lives.** Recommend **the Test Bench only**. The Simulations section, the Outcome card and the timeline keep the plan's own returns, so the page's headline numbers always describe the plan as entered.
