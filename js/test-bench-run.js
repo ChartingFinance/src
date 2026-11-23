@@ -44,6 +44,7 @@ import { routingGenes, searchesAt, estimateRuns } from './routing-search.js';
 import { guardrailsOutcome, simulationOutcome, successTone } from './outcome-summary.js';
 import { MarketOutlook, returnShift } from './market-outlook.js';
 import { buildYearPool } from './mc-compute.js';
+import { withSimConfig } from './sim-config.js';
 
 /** Simulated markets per column. Enough for a rate to the nearest few points. */
 export const CHECK_SIMULATIONS = 300;
@@ -114,14 +115,24 @@ function simulationsCheck(results) {
     return outcome ? { percent: outcome.percent, runs: outcome.runs, tone: outcome.tone } : null;
 }
 
-/** What every job of a test carries: the settings in force and the plan's own. */
+/**
+ * What every job of a test carries: the settings in force and the plan's own,
+ * with its loss years. A worker builds its config from the settings snapshot,
+ * so the schedule has to travel in the payload (mc-worker.js, configFor).
+ */
 function baseFor(plan) {
     return {
         settings: global_workerSnapshot(),
         lifeEvents: plan.lifeEvents ?? [],
         backtestYear: global_backtestYear,
         retirementDateInt: plan.retirementDateInt ?? null,
+        returnSchedule: plan.returnSchedule ?? null,
     };
+}
+
+/** The settings in force as a config, with the plan's loss years. */
+function configFor(plan) {
+    return withSimConfig(simConfigFromGlobals(), { returnSchedule: plan.returnSchedule ?? null });
 }
 
 /**
@@ -138,7 +149,9 @@ export function benchPlan(plan) {
     return {
         modelAssets: JSON.parse(JSON.stringify(plan.modelAssets)),
         lifeEvents: JSON.parse(JSON.stringify(plan.lifeEvents ?? [])),
-        config: simConfigFromGlobals(),
+        // With the loss years, or the chart would draw a plan without them
+        // under a table with them.
+        config: configFor(plan),
         ages: { startAge: global_user_startAge, retirementAge: global_user_retirementAge },
     };
 }

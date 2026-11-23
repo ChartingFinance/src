@@ -558,6 +558,9 @@ export class FinancialPackage {
 
     addInterestResult(interestResult) {
         this.interestIncome.add(interestResult.income);
+        // A loss year's fall in a bond's price is a change in value, as a
+        // stock's growth is, not interest (return-schedule.js).
+        this.assetAppreciation.add(interestResult.growth);
     }
 
     addWithholdingResult(withholdingResult) {

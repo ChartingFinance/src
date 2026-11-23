@@ -100,6 +100,18 @@ Report it with its limits, because the figure means nothing without them:
   were a point lower", never "in a bad market". Name the outlook with the
   figure. The handle it returns keeps the plan's own rates, so that plan run
   as it stands will not give the outlook's answer; say so if you hand it on.
+- **`lossYearsPercent` starts retirement with up to three bad years**, as the
+  app's Loss years control does: from the first January on or after both
+  retirement and the plan's start, one entry per year. A number is how far
+  stock prices fall that year (`[30, 20]`); `{ "stocks": 30, "bonds": 10 }`
+  also lets bond prices fall, while bonds keep paying interest. Pass whole
+  percentages (30, never 0.3); negatives are refused. These are figures the
+  user chose, not history and not a forecast: name them and their years with
+  the answer (the report's **Loss years** line gives both). Since 1970 stocks
+  never lost more than about 37.6% over one, two or three years in a row. A
+  markets figure under loss years is for markets that all began retirement
+  with that fall, so do not report it as an ordinary success rate. The handle
+  it returns has no loss years in it.
   When the answer barely moves between outlooks, returns are not what limits
   the plan: "What stops it" names what does.
 

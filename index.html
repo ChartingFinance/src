@@ -485,6 +485,18 @@
             border: 1px solid #fde68a; border-radius: 8px; padding: 3px 10px; margin-bottom: 10px; }
         .tb-floor-note { font-size: 13px; color: #4b5563; margin-bottom: 12px; }
         .tb-search-note { margin: -4px 0 12px; }
+        /* Loss years: a stock and a bond figure per year, each with a fixed minus sign */
+        .tb-loss-grid { display: grid; gap: 4px 8px; align-items: center; justify-content: start; width: 100%; }
+        .tb-loss-year { font-size: 12px; font-weight: 600; color: #6b7280; text-align: center; }
+        .tb-loss-kind { font-size: 12px; font-weight: 600; color: #6b7280; }
+        .tb-loss-field { display: inline-flex; align-items: center; font-size: 13px; font-weight: 600; color: #374151; }
+        .tb-loss-sign { padding: 3px 6px; border: 1px solid #d1d5db; border-right: none; border-radius: 8px 0 0 8px;
+            background: #f9fafb; color: #6b7280; line-height: 1.4; }
+        .tb-loss-field input { width: 44px; padding: 3px 6px; margin-right: 3px; border: 1px solid #d1d5db;
+            border-radius: 0 8px 8px 0; font: inherit; text-align: right; line-height: 1.4; }
+        .tb-loss-field input:focus-visible { outline: 2px solid #7e22ce; outline-offset: 1px; }
+        .tb-loss-field.is-bad input, .tb-loss-field.is-bad .tb-loss-sign { border-color: #dc2626; }
+        .tb-loss-error, .tb-loss-line { width: 100%; margin: 0; }
         @media (max-width: 640px) {
             /* The Conditions card collapses to one line; Edit opens its rows */
             .tb-conditions { padding: 6px 12px; margin-bottom: 8px; }
@@ -518,6 +530,9 @@
             .tb-success-field input[type="text"] { padding: 3px 6px; }
             .tb-run { grid-column: 2; grid-row: 1; margin-left: 0; padding: 5px 14px; }
             .tb-wide { display: none; }
+            .tb-loss-grid { gap: 4px; }
+            .tb-loss-sign { padding: 3px 4px; }
+            .tb-loss-field input { width: 34px; padding: 3px 4px; }
         }
         .tb-headline { font-size: 16px; color: #111827; margin-bottom: 12px; }
         .tb-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; align-items: start; }

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.3.56; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.3.57; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -31496,8 +31496,9 @@ var ExpenseResult = class {
   }
 };
 var InterestResult = class {
-  constructor(income = Currency.zero()) {
+  constructor(income = Currency.zero(), growth = Currency.zero()) {
     this.income = income instanceof Currency ? income.copy() : new Currency(income);
+    this.growth = growth instanceof Currency ? growth.copy() : new Currency(growth);
   }
 };
 var COMMON_METRICS = [Metric.VALUE, Metric.CASH_FLOW, Metric.CASH_FLOW_ACCUMULATED, Metric.CREDIT];
@@ -31800,13 +31801,21 @@ var IncomeAccountBehavior = Object.freeze({
   },
   applyMonthly(asset) {
     asset.ensurePositiveStart();
+    let priceChange = Currency.zero();
+    if (asset.annualPriceChange && asset.finishCurrency.amount > 0) {
+      priceChange = new Currency(asset.finishCurrency.amount * (Math.pow(1 + asset.annualPriceChange, 1 / 12) - 1));
+      asset.growthCurrency.add(priceChange);
+      asset.finishCurrency.add(priceChange);
+      asset.monthlyValueChange.add(priceChange);
+      asset.recordEvent(EventType.ASSET_GROWTH, priceChange, { metric: Metric.GROWTH });
+    }
     const income = asset.finishCurrency.amount > 0 ? new Currency(asset.finishCurrency.amount * asset.annualReturnRate.asMonthlyEffective()) : Currency.zero();
     asset.addToMetric(Metric.INTEREST_INCOME, income);
     asset.netIncomeCurrency.add(income);
     asset.finishCurrency.add(income);
     asset.monthlyValueChange.add(income);
     asset.recordEvent(EventType.INTEREST_INCOME, income, { metric: Metric.INTEREST_INCOME });
-    return new InterestResult(income);
+    return new InterestResult(income, priceChange);
   }
 });
 var RECEIVED_INCOME_METRICS = Object.freeze([
@@ -32487,6 +32496,78 @@ function asFilingStatus(value, fallback = FilingStatus.SINGLE) {
   return fallback;
 }
 
+// js/return-schedule.js
+function isScheduledStock(instrument) {
+  return InstrumentType.isTaxableAccount(instrument) || InstrumentType.isIRA(instrument) || InstrumentType.isRothIRA(instrument) || InstrumentType.is401K(instrument);
+}
+function isScheduledBond(instrument) {
+  return instrument === Instrument.US_BOND || instrument === Instrument.CORP_BOND;
+}
+var KEYS = Object.freeze(["year", "stocks", "bonds"]);
+function normalizeReturnSchedule(value) {
+  if (value === void 0 || value === null) return null;
+  const fail = (why) => {
+    throw new Error(`makeSimConfig: returnSchedule ${why}.`);
+  };
+  if (!Array.isArray(value)) fail(`must be a list of { year, stocks, bonds }, got ${JSON.stringify(value)}`);
+  if (!value.length) return null;
+  const years = /* @__PURE__ */ new Set();
+  const rate = (name, v, year) => {
+    if (typeof v !== "number" || !Number.isFinite(v) || v < -1) {
+      fail(`${year}: ${name} must be a finite rate of \u22121 or more, got ${String(v)}`);
+    }
+    return v;
+  };
+  return Object.freeze(value.map((entry) => {
+    if (!entry || typeof entry !== "object") fail(`entry ${JSON.stringify(entry)} is not an object`);
+    const unknown2 = Object.keys(entry).filter((k) => !KEYS.includes(k));
+    if (unknown2.length) fail(`entry has unknown field(s) ${unknown2.join(", ")}; known: ${KEYS.join(", ")}`);
+    if (!Number.isInteger(entry.year)) fail(`year must be an integer, got ${String(entry.year)}`);
+    if (years.has(entry.year)) fail(`lists ${entry.year} twice`);
+    years.add(entry.year);
+    return Object.freeze({
+      year: entry.year,
+      stocks: rate("stocks", entry.stocks, entry.year),
+      bonds: entry.bonds === void 0 || entry.bonds === null ? 0 : rate("bonds", entry.bonds, entry.year)
+    });
+  }));
+}
+var NO_SCHEDULE = Object.freeze({ runStarts() {
+}, yearStarts() {
+}, runEnds() {
+} });
+function scheduleStepper(modelAssets, schedule) {
+  if (!schedule) return NO_SCHEDULE;
+  const byYear = new Map(schedule.map((e) => [e.year, e]));
+  const stocks = modelAssets.filter((a) => isScheduledStock(a.instrument));
+  const bonds = modelAssets.filter((a) => isScheduledBond(a.instrument));
+  const configured = new Map(stocks.map((a) => [a, a.annualReturnRate.rate]));
+  let applied = false;
+  const restoreStocks = () => {
+    for (const a of stocks) a.annualReturnRate.rate = configured.get(a);
+  };
+  const yearStarts = (year, { ratesSet = false } = {}) => {
+    for (const b of bonds) b.annualPriceChange = 0;
+    if (applied && !ratesSet) restoreStocks();
+    const entry = byYear.get(year);
+    applied = !!entry;
+    if (!entry) return;
+    for (const a of stocks) a.annualReturnRate.rate = entry.stocks;
+    for (const b of bonds) b.annualPriceChange = entry.bonds;
+  };
+  return {
+    runStarts(firstDateInt2, opts) {
+      if (firstDateInt2.month === 1) yearStarts(firstDateInt2.year, opts);
+    },
+    yearStarts,
+    runEnds() {
+      if (applied) restoreStocks();
+      for (const b of bonds) b.annualPriceChange = 0;
+      applied = false;
+    }
+  };
+}
+
 // js/sim-config.js
 var SIM_CONFIG_DEFAULTS = Object.freeze({
   inflationRate: 0.031,
@@ -32532,9 +32613,10 @@ var FIELDS = Object.freeze([
   "backtestYear",
   "simDataMode",
   "taxTable",
-  "birthYear"
+  "birthYear",
+  "returnSchedule"
 ]);
-var ATTACHED = Object.freeze(["taxTable", "birthYear"]);
+var ATTACHED = Object.freeze(["taxTable", "birthYear", "returnSchedule"]);
 var NUMERIC = Object.freeze([
   "inflationRate",
   "startAge",
@@ -32572,6 +32654,7 @@ function makeSimConfig(values) {
   }
   const config2 = {};
   for (const f of FIELDS) config2[f] = values[f] ?? null;
+  config2.returnSchedule = normalizeReturnSchedule(values.returnSchedule);
   return Object.freeze(config2);
 }
 function withSimConfig(config2, changes) {
@@ -34288,6 +34371,7 @@ var FinancialPackage = class _FinancialPackage {
   }
   addInterestResult(interestResult) {
     this.interestIncome.add(interestResult.income);
+    this.assetAppreciation.add(interestResult.growth);
   }
   addWithholdingResult(withholdingResult) {
     this.medicareTax.add(withholdingResult.medicareTax);
@@ -37815,12 +37899,14 @@ async function chronometer_run(portfolio) {
   }
   let totalMonths = 0;
   portfolio.initializeChron();
+  const schedule = scheduleStepper(portfolio.modelAssets, portfolio.config.returnSchedule);
   const backtesting = portfolio.config.backtestYear !== "current";
   const savedRates = backtesting ? saveOriginalRates(portfolio) : null;
   const backtestStartYear = backtesting ? parseInt(portfolio.config.backtestYear) : 0;
   if (backtesting) {
     applyBacktestRates(portfolio, backtestStartYear);
   }
+  schedule.runStarts(portfolio.firstDateInt, { ratesSet: backtesting });
   const simStartYear = portfolio.firstDateInt.year;
   const priceIndex = new PriceIndex(
     inflationRateForYear(backtesting, backtestStartYear, simStartYear, simStartYear, portfolio.config.inflationRate)
@@ -37845,6 +37931,7 @@ async function chronometer_run(portfolio) {
       if (backtesting) {
         applyBacktestForYear(portfolio, currentDateInt.year, backtestStartYear, simStartYear, savedRates);
       }
+      schedule.yearStarts(currentDateInt.year, { ratesSet: backtesting });
       priceIndex.setAnnualRate(
         inflationRateForYear(backtesting, backtestStartYear, simStartYear, currentDateInt.year, portfolio.config.inflationRate)
       );
@@ -37872,6 +37959,7 @@ async function chronometer_run(portfolio) {
       withdrawalRate: investable > 0 && portfolio.monthsInPlanYear(finalYear) > 0 ? annualExpense * 12 / portfolio.monthsInPlanYear(finalYear) / investable : 0
     });
   }
+  schedule.runEnds();
   if (backtesting) {
     restoreOriginalRates(savedRates);
   }
@@ -38644,6 +38732,7 @@ var ModelAsset = class _ModelAsset {
     this.monthlyCreditBalance = Currency.zero();
     this.monthlyShelteredDistribution = Currency.zero();
     this.monthlyTaxEscrow = Currency.zero();
+    this.annualPriceChange = 0;
     this.monthlyAdvanceCredit = Currency.zero();
     this.monthlyAdvanceData = null;
     this.premiumExcessOverInflation = InstrumentType.isHealthInsurance(this.instrument) ? this.effectiveAnnualReturnRate.rate - this.#boundEnv.inflationRate : 0;
@@ -40350,6 +40439,7 @@ function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, p
   }
   portfolio.initializeChron();
   const baseRates = dataMode === "calibrated" ? calibrationBaseRates(portfolio.modelAssets) : null;
+  const schedule = scheduleStepper(portfolio.modelAssets, portfolio.config.returnSchedule);
   const retirementInt = retirementDateInt ? retirementDateInt.toInt() : 0;
   const startsOnDrawnJanuary = portfolio.firstDateInt.month === 1 && portfolio.firstDateInt.toInt() >= retirementInt;
   let withdrawalPhase = !retirementDateInt || startsOnDrawnJanuary;
@@ -40366,6 +40456,7 @@ function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, p
     );
     priceIndex.setAnnualRate(draw.inflationRate);
   }
+  schedule.runStarts(portfolio.firstDateInt, { ratesSet: withdrawalPhase });
   let currentDateInt = new DateInt(portfolio.firstDateInt.toInt());
   const lastDateInt2 = new DateInt(portfolio.lastDateInt.toInt());
   const monthlyTotals = [];
@@ -40408,6 +40499,7 @@ function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, p
         );
         priceIndex.setAnnualRate(draw.inflationRate);
       }
+      schedule.yearStarts(currentDateInt.year, { ratesSet: withdrawalPhase });
       portfolio.applyYear(currentDateInt, settleDateInt);
       portfolio.applyGuardrails(currentDateInt);
       portfolio.config.taxTable.applyYear(portfolio.yearly, portfolio.activeUser);
@@ -40429,6 +40521,7 @@ function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, p
       monthlyReal[lastIdx] = total / priceIndex.level;
     }
   }
+  schedule.runEnds();
   portfolio.finalizeChron();
   portfolio.config.taxTable.finalizeChron();
   return { nominal: monthlyTotals, real: monthlyReal };
@@ -40446,6 +40539,8 @@ function computeBaseline(sourceAssets, guardrailParams, lifeEvents, config2) {
   if (lifeEvents.length) basePf.lifeEvents = lifeEvents.map((e) => e.copy());
   if (guardrailParams) basePf.guardrailsParams = guardrailParams;
   basePf.initializeChron();
+  const schedule = scheduleStepper(basePf.modelAssets, basePf.config.returnSchedule);
+  schedule.runStarts(basePf.firstDateInt);
   let bd = new DateInt(basePf.firstDateInt.toInt());
   const bLast = new DateInt(basePf.lastDateInt.toInt());
   const baselineData = [];
@@ -40472,6 +40567,7 @@ function computeBaseline(sourceAssets, guardrailParams, lifeEvents, config2) {
     if (bd.isNewYearsDay()) {
       const isFinalYearEnd = bd.toInt() > bLast.toInt();
       const settleDateInt = isFinalYearEnd ? bLast : bd;
+      schedule.yearStarts(bd.year);
       basePf.applyYear(bd, settleDateInt);
       basePf.applyGuardrails(bd);
       basePf.config.taxTable.applyYear(basePf.yearly, basePf.activeUser);
@@ -40493,6 +40589,7 @@ function computeBaseline(sourceAssets, guardrailParams, lifeEvents, config2) {
       baselineDataReal[lastIdx] = total / priceIndex.level;
     }
   }
+  schedule.runEnds();
   basePf.finalizeChron();
   basePf.config.taxTable.finalizeChron();
   return { nominal: baselineData, real: baselineDataReal };
@@ -43450,7 +43547,8 @@ function holdings(untouched = []) {
 }
 function spendingHeadline(result, { withConditions = true } = {}) {
   const { asEntered, best } = result;
-  const clause = withConditions ? outlookClause(result.outlook) : null;
+  const clauses = withConditions ? [outlookClause(result.outlook), result.lossYearsClause].filter(Boolean) : [];
+  const clause = clauses.length ? clauses.join(" and ") : null;
   const lead = clause ? `With ${clause}, the` : "The";
   if (!best) return clause ? `With ${clause}, no spending level tested keeps these limits.` : "No spending level tested keeps these limits.";
   if (asEntered.runsOut) {
@@ -43545,6 +43643,118 @@ function resultRows(result, routed = null) {
   return rows;
 }
 
+// js/loss-years.js
+var MAX_LOSS_YEARS = 3;
+var NEW_STOCK_FIGURE = 20;
+var NEW_BOND_FIGURE = 0;
+var NO_LOSS_YEARS = Object.freeze({
+  count: 0,
+  stocks: Object.freeze(Array(MAX_LOSS_YEARS).fill(NEW_STOCK_FIGURE)),
+  bonds: Object.freeze(Array(MAX_LOSS_YEARS).fill(NEW_BOND_FIGURE))
+});
+function lossYearsOf(value = NO_LOSS_YEARS) {
+  const count = value?.count ?? 0;
+  if (!Number.isInteger(count) || count < 0 || count > MAX_LOSS_YEARS) {
+    throw new Error(`Loss years must be 0 to ${MAX_LOSS_YEARS}, got ${String(count)}.`);
+  }
+  const figures = (list, name) => {
+    const used = (list ?? []).slice(0, count);
+    if (used.length !== count || !used.every(isLossFigure)) {
+      throw new Error(`Each loss year's ${name} figure must be a whole percentage from 0 to 100.`);
+    }
+    return used;
+  };
+  return { count, stocks: figures(value.stocks, "stock"), bonds: figures(value.bonds, "bond") };
+}
+function isLossFigure(n) {
+  return Number.isInteger(n) && n >= 0 && n <= 100;
+}
+function firstJanuaryFrom(dateInt) {
+  return dateInt.month === 1 ? dateInt.year : dateInt.year + 1;
+}
+function lossYearsCalendar(lossYears, { retirement, first, last }) {
+  const { count } = lossYearsOf(lossYears);
+  const start = Math.max(firstJanuaryFrom(first), retirement ? firstJanuaryFrom(retirement) : -Infinity);
+  const years = Array.from({ length: count }, (_, i) => start + i);
+  return { first: start, years, inside: years.filter((y) => y <= last.year) };
+}
+function lossYearsSchedule(lossYears, dates) {
+  const record2 = lossYearsOf(lossYears);
+  const { years, inside } = lossYearsCalendar(record2, dates);
+  const schedule = years.map((year, i) => ({ year, stocks: -record2.stocks[i] / 100 || 0, bonds: -record2.bonds[i] / 100 || 0 })).filter((e) => inside.includes(e.year));
+  return schedule.length ? schedule : null;
+}
+var NUMBER_WORDS = ["no", "one", "two", "three"];
+function figuresIn(figures, years) {
+  const parts = figures.map((f, i) => `${f}% in ${years[i]}`);
+  return parts.length > 1 ? `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}` : parts[0];
+}
+function lossYearsClause(lossYears, dates) {
+  const record2 = lossYearsOf(lossYears);
+  const { years, inside } = lossYearsCalendar(record2, dates);
+  if (!inside.length) return null;
+  const idx = inside.map((y) => years.indexOf(y));
+  const stockText = figuresIn(idx.map((i) => record2.stocks[i]), inside);
+  const bonded = idx.filter((i) => record2.bonds[i] > 0);
+  const bondText = bonded.length ? `, and bond prices ${figuresIn(bonded.map((i) => record2.bonds[i]), bonded.map((i) => years[i]))}` : "";
+  return `stock prices falling ${stockText}${bondText}`;
+}
+function lossYearsFromPercent(list = []) {
+  if (!Array.isArray(list)) throw new Error("lossYearsPercent must be a list, for example [30, 20].");
+  if (list.length > MAX_LOSS_YEARS) {
+    throw new Error(`lossYearsPercent takes at most ${MAX_LOSS_YEARS} years, got ${list.length}.`);
+  }
+  const figure = (value, what, i) => {
+    const where = `lossYearsPercent year ${i + 1}: the ${what} figure ${String(value)}`;
+    if (typeof value !== "number" || !Number.isFinite(value)) throw new Error(`${where} is not a number.`);
+    if (!Number.isInteger(value)) throw new Error(`${where} is not a whole percentage. Pass 30 for a 30% fall, not 0.3.`);
+    if (value < 0) throw new Error(`${where} is negative. A loss is a positive percentage: pass 30 for a 30% fall.`);
+    if (value > 100) throw new Error(`${where} is above 100. A loss is at most 100%.`);
+    return value;
+  };
+  const stocks = [], bonds = [];
+  list.forEach((entry, i) => {
+    if (typeof entry === "number") {
+      stocks.push(figure(entry, "stock", i));
+      bonds.push(0);
+      return;
+    }
+    if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
+      throw new Error(`lossYearsPercent year ${i + 1} must be a number or { stocks, bonds }.`);
+    }
+    const unknown2 = Object.keys(entry).filter((k) => k !== "stocks" && k !== "bonds");
+    if (unknown2.length) {
+      throw new Error(`lossYearsPercent year ${i + 1} has unknown field(s) ${unknown2.join(", ")}; use stocks and bonds.`);
+    }
+    if (entry.stocks === void 0) throw new Error(`lossYearsPercent year ${i + 1} needs a stocks figure.`);
+    stocks.push(figure(entry.stocks, "stock", i));
+    bonds.push(entry.bonds === void 0 ? 0 : figure(entry.bonds, "bond", i));
+  });
+  return { count: list.length, stocks, bonds };
+}
+var WORST_STOCK_FALLS = Object.freeze([
+  Object.freeze({ years: 1, span: "2008", fall: 37 }),
+  Object.freeze({ years: 2, span: "1973\u20131974", fall: 37.2 }),
+  Object.freeze({ years: 3, span: "2000\u20132002", fall: 37.6 })
+]);
+function lossYearsLine(lossYears, dates) {
+  const record2 = lossYearsOf(lossYears);
+  if (!record2.count) return "Returns as entered in every year of retirement.";
+  const { first, years, inside } = lossYearsCalendar(record2, dates);
+  const scale = " For scale: since 1970 stocks have never lost more than 37.6% over one, two or three years in a row.";
+  if (!inside.length) {
+    return `This plan ends before its first loss year, ${first}, so no year is changed.`;
+  }
+  const idx = inside.map((y) => years.indexOf(y));
+  const stocks = idx.map((i) => record2.stocks[i]);
+  const combined = 1 - stocks.reduce((p, s) => p * (1 - s / 100), 1);
+  const over = inside.length > 1 ? `, ${Math.round(combined * 100)}% over the ${NUMBER_WORDS[inside.length]} years` : "";
+  const bonded = idx.filter((i) => record2.bonds[i] > 0);
+  const bondText = bonded.length ? ` Bond prices fall ${figuresIn(bonded.map((i) => record2.bonds[i]), bonded.map((i) => years[i]))}, and bonds keep paying interest.` : " Bonds keep their price.";
+  const cut = inside.length < years.length ? ` The plan ends in ${dates.last.year}, so ${years.length - inside.length === 1 ? `${years[years.length - 1]} is` : "the later years are"} not run.` : "";
+  return `Stock prices fall ${figuresIn(stocks, inside)}${over}.${bondText}${cut}${scale}`;
+}
+
 // js/mcp/max-spending.js
 var MARKETS = 300;
 var MARKETS_SEED = 1;
@@ -43552,31 +43762,33 @@ async function maxSpending(spec, {
   leaveAtLeast = 0,
   simulatedMarketsPercent = null,
   marketOutlook = MarketOutlook.MODERATE,
+  lossYearsPercent = [],
   markets = MARKETS
 } = {}) {
   if (!spec?.modelAssets?.length) {
     throw new Error("Plan spec has no modelAssets \u2014 nothing to solve.");
   }
   const shift = returnShift(marketOutlook);
+  const lossYears = lossYearsFromPercent(lossYearsPercent);
   spec = planWithIds(spec);
+  const modelAssets = outlookAssets(spec.modelAssets, marketOutlook);
+  const placed = new Portfolio(modelAssets.map((a) => ModelAsset.fromJSON(a)), false, simConfigFromPlanSpec(spec));
+  const bound = placed.config;
+  const retirementDateInt = ageToDateIntFor(bound, bound.retirementAge);
+  const dates = { retirement: retirementDateInt, first: placed.firstDateInt, last: placed.lastDateInt };
   const plan = {
-    modelAssets: outlookAssets(spec.modelAssets, marketOutlook),
+    modelAssets,
     lifeEvents: spec.lifeEvents ?? [],
-    config: simConfigFromPlanSpec(spec)
+    config: withSimConfig(simConfigFromPlanSpec(spec), { returnSchedule: lossYearsSchedule(lossYears, dates) })
   };
   let result = solveSpending(plan, { floor: leaveAtLeast });
   if (simulatedMarketsPercent != null) {
-    const bound = new Portfolio(
-      plan.modelAssets.map((a) => ModelAsset.fromJSON(a)),
-      false,
-      simConfigFromPlanSpec(spec)
-    ).config;
     const sim = {
       markets,
       seed: MARKETS_SEED,
       dataMode: plan.config.simDataMode,
       backtestFromYear: null,
-      retirementDateInt: ageToDateIntFor(bound, bound.retirementAge).toInt(),
+      retirementDateInt: retirementDateInt.toInt(),
       returnShift: shift
     };
     result = await limitBySuccess(plan, result, {
@@ -43585,7 +43797,12 @@ async function maxSpending(spec, {
       rateAt: (factor) => simulatedRate(plan, factor, sim)
     });
   }
-  result = { ...result, outlook: marketOutlook };
+  result = {
+    ...result,
+    outlook: marketOutlook,
+    lossYearsClause: lossYearsClause(lossYears, dates),
+    lossYearsLine: lossYears.count ? lossYearsLine(lossYears, dates) : null
+  };
   const solvedSpec = result.best ? {
     ...spec,
     name: `${spec.name ?? "Plan"}: spend the most`,
@@ -43607,6 +43824,7 @@ function maxSpendingMarkdown({ result, plan }, { handle = null } = {}) {
     `**Plan:** ${c.filingAs} \xB7 ages ${c.startAge} \u2192 retires ${c.retirementAge} \u2192 ends ${c.finishAge} \xB7 inflation ${(c.inflationRate * 100).toFixed(1)}%`,
     `**Limits:** ${limits}`,
     ...outlookNote(result.outlook) ? [`**Market outlook:** ${outlookLabel(result.outlook)}. ${outlookNote(result.outlook)}`] : [],
+    ...result.lossYearsLine ? [`**Loss years:** ${result.lossYearsLine}`] : [],
     "",
     `**${spendingHeadline(result)}**`,
     "",
@@ -43643,7 +43861,7 @@ function maxSpendingMarkdown({ result, plan }, { handle = null } = {}) {
     );
   }
   if (handle) {
-    lines.push("", `**The plan at this spending:** \`${handle}\`. Pass it to \`share_link\` to open it in the app, to \`run_plan\` (as \`shareUrl\`) for its full report, or to \`diff_plans\` against the plan it came from. The plan it came from is unchanged.` + (outlookClause(result.outlook) ? ` That plan has your own return rates, not the outlook's: this answer assumed ${outlookClause(result.outlook)}, so run as it stands it will not give this answer.` : ""));
+    lines.push("", `**The plan at this spending:** \`${handle}\`. Pass it to \`share_link\` to open it in the app, to \`run_plan\` (as \`shareUrl\`) for its full report, or to \`diff_plans\` against the plan it came from. The plan it came from is unchanged.` + (outlookClause(result.outlook) ? ` That plan has your own return rates, not the outlook's: this answer assumed ${outlookClause(result.outlook)}, so run as it stands it will not give this answer.` : "") + (result.lossYearsLine ? " It has no loss years in it either: they are a condition of this answer, not part of the plan." : ""));
   }
   lines.push(
     "",
@@ -43880,15 +44098,22 @@ server.tool(
 );
 server.tool(
   "max_spending",
-  "Answers 'how much can this plan spend?': the most every monthly expense can be turned up (or must be turned down) together while the plan never leaves a bill unpaid and still ends with at least a stated amount. It is the Spending test of the Charting Finance app's Test Bench, so it gives the app's figure. Returns the monthly amount, the plan as entered beside it, the limit that stopped it from going higher, each expense at that level, and a run handle for the plan at that spending. The plan it is given is not changed. By default the answer is for the plan's own fixed path of returns, where the most a plan can spend leaves no margin; say so when you report it, or pass simulatedMarketsPercent. marketOutlook stresses the return assumption, as the Test Bench's Market returns control does: every stock and bond return 1% a year lower (pessimistic) or higher (optimistic) than entered. It is not a forecast and not a probability; name it when you report the answer.",
+  "Answers 'how much can this plan spend?': the most every monthly expense can be turned up (or must be turned down) together while the plan never leaves a bill unpaid and still ends with at least a stated amount. It is the Spending test of the Charting Finance app's Test Bench, so it gives the app's figure. Returns the monthly amount, the plan as entered beside it, the limit that stopped it from going higher, each expense at that level, and a run handle for the plan at that spending. The plan it is given is not changed. By default the answer is for the plan's own fixed path of returns, where the most a plan can spend leaves no margin; say so when you report it, or pass simulatedMarketsPercent. marketOutlook stresses the return assumption, as the Test Bench's Market returns control does: every stock and bond return 1% a year lower (pessimistic) or higher (optimistic) than entered. It is not a forecast and not a probability; name it when you report the answer. lossYearsPercent starts retirement with up to three bad years, as the Test Bench's Loss years control does: the figures the user typed, not history, so name them when you report the answer, and say a markets figure under them is for markets that all began with that fall.",
   {
     plan: external_exports3.string().describe("The plan to solve: a run handle from quick_start_report or run_plan, a share link, or a share payload."),
     leaveAtLeast: external_exports3.number().min(0).default(0).describe("The least the plan must end with, in today's dollars. 0 spends down to nothing."),
     simulatedMarketsPercent: external_exports3.number().int().min(50).max(99).optional().describe("Also require the plan to last in this share of 300 simulated markets, e.g. 90, which is what the app requires by default. Omit to leave this limit off. It lowers the answer when the plan would not last in that share, and it is slow: up to ten runs of the markets, one to two minutes."),
-    marketOutlook: external_exports3.enum(["pessimistic", "moderate", "optimistic"]).default("moderate").describe("Stock and bond returns as entered (moderate), or 1% a year lower (pessimistic) or higher (optimistic), in the plan's own path and in the simulated markets. Inflation, wages and cash are not moved. The handle returned keeps the plan's own rates.")
+    marketOutlook: external_exports3.enum(["pessimistic", "moderate", "optimistic"]).default("moderate").describe("Stock and bond returns as entered (moderate), or 1% a year lower (pessimistic) or higher (optimistic), in the plan's own path and in the simulated markets. Inflation, wages and cash are not moved. The handle returned keeps the plan's own rates."),
+    lossYearsPercent: external_exports3.array(external_exports3.union([
+      external_exports3.number(),
+      external_exports3.object({ stocks: external_exports3.number(), bonds: external_exports3.number().optional() }).strict()
+    ])).max(3).default([]).describe("Up to three loss years, from the first January on or after both retirement and the plan's start: one entry per year, a whole percentage from 0 to 100. A number is how far stock prices fall that year (bonds unchanged); { stocks, bonds } also lets bond prices fall, while bonds keep paying interest. [30, 20] is a 30% stock fall then 20%. Pass 30 for 30%, never 0.3; negatives are refused. The handle returned has no loss years in it.")
   },
-  guard(async ({ plan, leaveAtLeast, simulatedMarketsPercent, marketOutlook }) => {
-    const solved = await maxSpending(planFromReference(plan), { leaveAtLeast, simulatedMarketsPercent, marketOutlook });
+  guard(async ({ plan, leaveAtLeast, simulatedMarketsPercent, marketOutlook, lossYearsPercent }) => {
+    const solved = await maxSpending(
+      planFromReference(plan),
+      { leaveAtLeast, simulatedMarketsPercent, marketOutlook, lossYearsPercent }
+    );
     const handle = solved.solvedSpec ? (await runPlanCached(solved.solvedSpec, { includeReconciliation: false })).handle : null;
     return { content: [{ type: "text", text: maxSpendingMarkdown(solved, { handle }) }] };
   })

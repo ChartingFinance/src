@@ -634,6 +634,12 @@ export class ModelAsset {
     this.monthlyShelteredDistribution = Currency.zero();
     this.monthlyTaxEscrow = Currency.zero();
 
+    // A loss year's fall in a bond account's price, as an annual rate (−0.10
+    // for a 10% fall). Set each New Year's Day by the run's return schedule
+    // (return-schedule.js) and zero otherwise. IncomeAccountBehavior books it
+    // as growth, never as interest, so the interest stays taxable as it is.
+    this.annualPriceChange = 0;
+
     // A health-insurance card's advance premium tax credit for the month, set
     // by PremiumCreditEngine before the month's bills are paid, with the
     // figures its event records. Zero in a month the card earns none.

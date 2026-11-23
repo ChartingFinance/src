@@ -89,7 +89,6 @@ import './components/plan-issues-panel.js';
 
 // ── Store ───────────────────────────────────────────────────
 import { solvedAssets } from './spending-solver.js';
-import { outlookClause } from './market-outlook.js';
 import { store } from './finplan-store.js';
 import { AppState } from './app-state.js';
 
@@ -692,6 +691,9 @@ testBench.planSource = () => {
         // Read, never written: the Guardrails section owns its settings.
         guardrailParams: getGuardrailParams(),
         retirementDateInt: retirement ? retirement.toInt() : null,
+        // The loss years count from these (loss-years.js).
+        firstDateInt: appState.portfolio.firstDateInt.toInt(),
+        lastDateInt: appState.portfolio.lastDateInt.toInt(),
     };
 };
 testBench.addEventListener('testbench-month', (ev) => {
@@ -701,7 +703,7 @@ testBench.addEventListener('testbench-month', (ev) => {
 testBench.addEventListener('testbench-save', (ev) => {
     _pendingSpendingFactor = ev.detail.factor;
     _pendingRouting = ev.detail.lifeEvents ?? null;
-    _pendingOutlook = ev.detail.outlook ?? null;
+    _pendingConditions = ev.detail.clause ?? null;
     openScenarioPopup('spending');
 });
 
@@ -874,7 +876,7 @@ updateSimDataModeUI();
 let _scenarioPopupMode = 'create'; // 'create', 'edit', 'save' (the unsaved plan) or 'spending' (a Test Bench result)
 let _pendingSpendingFactor = null;  // the solved spending level awaiting a scenario name
 let _pendingRouting = null;         // and, from a routing test, the life events with the routing written in
-let _pendingOutlook = null;         // and the market outlook it was found under (market-outlook.js)
+let _pendingConditions = null;      // and the conditions it was found under, as a clause (test-bench-view.js)
 
 function openScenarioPopup(mode) {
     _scenarioPopupMode = mode;
@@ -898,14 +900,15 @@ function openScenarioPopup(mode) {
         const spending = _pendingSpendingFactor !== 1;
         document.getElementById('scenario-title-input').value = !routed ? `${from}: spend the most`
             : spending ? `${from}: new routing, spend the most` : `${from}: new routing`;
-        // A result found under an outlook keeps the plan's own rates, so the
-        // note is the one place that says what it assumed.
-        const clause = _pendingOutlook ? outlookClause(_pendingOutlook) : null;
+        // A result found under conditions is saved without them (the plan's
+        // own rates, no loss years), so the note is the one place that says
+        // what it assumed.
+        const clause = _pendingConditions;
         document.getElementById('scenario-note-input').value = 'From the Test Bench: '
             + (routed ? 'the transfer percentages of the routing selected there' : '')
             + (routed && spending ? ', and ' : '')
             + (spending ? 'every monthly expense at the most the plan can pay for' : '')
-            + (clause ? `, with ${clause}. The saved plan keeps your own return rates.` : '.');
+            + (clause ? `, ${clause}. The saved plan keeps your own returns, without these conditions.` : '.');
         document.getElementById('scenario-copy-label').style.display = 'none';
     } else {
         document.getElementById('scenario-popup-title').textContent = 'New Scenario';
@@ -951,7 +954,7 @@ document.getElementById('btn-scenario-create').addEventListener('click', () => {
         saveSpendingAsScenario(title, note, _pendingSpendingFactor, _pendingRouting);
         _pendingSpendingFactor = null;
         _pendingRouting = null;
-        _pendingOutlook = null;
+        _pendingConditions = null;
     } else {
         const copyData = document.getElementById('scenario-copy-check').checked;
         createScenario(title, note, copyData);

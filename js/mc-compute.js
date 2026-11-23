@@ -22,6 +22,7 @@ import {
 } from './market-data.js';
 import { PriceIndex } from './utils/price-index.js';
 import { withoutTracing } from './trace.js';
+import { scheduleStepper } from './return-schedule.js';
 
 // ── Historical year pool (correlated sampling) ──────────────────
 
@@ -204,6 +205,12 @@ function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, p
         ? calibrationBaseRates(portfolio.modelAssets)
         : null;
 
+    // Loss years: in a scheduled year the draw happens as usual (CPI, wages and
+    // Treasury yields still come from it), then the stock assets take the
+    // typed figure and the bond accounts its price change. Made before the
+    // first draw, so it keeps the rates to put back if no draw replaces them.
+    const schedule = scheduleStepper(portfolio.modelAssets, portfolio.config.returnSchedule);
+
     // Two phases: the plan's own rates before retirement, then a drawn year
     // every January, from the first January on or after retirement. The loop
     // draws as it crosses into a year, which a plan's first month never does,
@@ -226,6 +233,7 @@ function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, p
                                       portfolio.config.inflationRate, random, returnShift);
         priceIndex.setAnnualRate(draw.inflationRate);
     }
+    schedule.runStarts(portfolio.firstDateInt, { ratesSet: withdrawalPhase });
 
     let currentDateInt = new DateInt(portfolio.firstDateInt.toInt());
     const lastDateInt = new DateInt(portfolio.lastDateInt.toInt());
@@ -268,6 +276,7 @@ function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, p
                                       portfolio.config.inflationRate, random, returnShift);
                 priceIndex.setAnnualRate(draw.inflationRate);
             }
+            schedule.yearStarts(currentDateInt.year, { ratesSet: withdrawalPhase });
             portfolio.applyYear(currentDateInt, settleDateInt);
             portfolio.applyGuardrails(currentDateInt);
             portfolio.config.taxTable.applyYear(portfolio.yearly, portfolio.activeUser);
@@ -293,6 +302,7 @@ function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, p
         }
     }
 
+    schedule.runEnds();
     portfolio.finalizeChron();
     portfolio.config.taxTable.finalizeChron();
 
@@ -317,6 +327,9 @@ function computeBaseline(sourceAssets, guardrailParams, lifeEvents, config) {
     if (lifeEvents.length) basePf.lifeEvents = lifeEvents.map(e => e.copy());
     if (guardrailParams) basePf.guardrailsParams = guardrailParams;
     basePf.initializeChron();
+    // The plan's own path, so its loss years too (return-schedule.js).
+    const schedule = scheduleStepper(basePf.modelAssets, basePf.config.returnSchedule);
+    schedule.runStarts(basePf.firstDateInt);
 
     let bd = new DateInt(basePf.firstDateInt.toInt());
     const bLast = new DateInt(basePf.lastDateInt.toInt());
@@ -348,6 +361,7 @@ function computeBaseline(sourceAssets, guardrailParams, lifeEvents, config) {
         if (bd.isNewYearsDay()) {
             const isFinalYearEnd = bd.toInt() > bLast.toInt();
             const settleDateInt = isFinalYearEnd ? bLast : bd;
+            schedule.yearStarts(bd.year);
             basePf.applyYear(bd, settleDateInt);
             basePf.applyGuardrails(bd);
             basePf.config.taxTable.applyYear(basePf.yearly, basePf.activeUser);
@@ -371,6 +385,7 @@ function computeBaseline(sourceAssets, guardrailParams, lifeEvents, config) {
             baselineDataReal[lastIdx] = total / priceIndex.level;
         }
     }
+    schedule.runEnds();
     basePf.finalizeChron();
     basePf.config.taxTable.finalizeChron();
 

@@ -129,12 +129,13 @@ check('a routing list dims for a condition or the floor, never for the markets l
 
 console.log('\n── Reset ──\n');
 
-check('the neutral conditions are Moderate, and Reset is needed only away from them', () => {
-    assert.deepEqual(NEUTRAL_CONDITIONS, { outlook: 'moderate' });
+check('the neutral conditions are Moderate and no loss years, and Reset is needed only away from them', () => {
+    assert.deepEqual(conditionsOf(NEUTRAL_CONDITIONS), { outlook: 'moderate', lossYears: { count: 0, stocks: [], bonds: [] } });
     assert.ok(isNeutral(NEUTRAL_CONDITIONS));
     assert.ok(isNeutral({}));
     assert.ok(!isNeutral(OPTIMISTIC));
     assert.ok(!isNeutral(PESSIMISTIC));
+    assert.ok(!isNeutral({ lossYears: { count: 1, stocks: [20], bonds: [0] } }));
     assert.ok(sameConditions({}, MODERATE));
 });
 
