@@ -165,6 +165,58 @@ await test("TaxTable.applyYear's log-only recalculation runs only with TAX loggi
     assert.ok(cap.lines.some((l) => /yearlyLongTermCapitalGainsAndQualifiedDividendsTax/.test(l.message)));
 });
 
+// ── Monte Carlo skips unused history and event/memo recording ─────────
+
+console.log('\n── Monte Carlo skips unused history and event recording ──\n');
+
+await test('Monte Carlo records no events/credit memos and tracks history only for tax-deferred RMDs', async () => {
+    const { Portfolio } = await import('../js/portfolio.js');
+    const { InstrumentType } = await import('../js/instruments/instrument.js');
+    const seen = [];
+    const origFinalize = Portfolio.prototype.finalizeChron;
+    Portfolio.prototype.finalizeChron = function (...args) {
+        seen.push(this);
+        return origFinalize.apply(this, args);
+    };
+    try {
+        await computeMonteCarlo(portfolio.modelAssets, mcOpts(3));
+    } finally {
+        Portfolio.prototype.finalizeChron = origFinalize;
+    }
+    assert.ok(seen.length >= 4, `expected baseline + 3 trials, saw ${seen.length}`);
+    for (const pf of seen) {
+        assert.equal(pf.recordEvents, false);
+        for (const a of pf.modelAssets) {
+            assert.equal(a.events.length, 0, `${a.displayName} recorded ${a.events.length} events in MC`);
+            assert.equal(a.creditMemos.length, 0, `${a.displayName} recorded ${a.creditMemos.length} memos in MC`);
+            if (!InstrumentType.isTaxDeferred(a.instrument)) {
+                assert.equal(a.getHistoryCount(), 0, `${a.displayName} kept ${a.getHistoryCount()} history entries in MC`);
+            }
+        }
+    }
+});
+
+await test('Monte Carlo baseline matches a full single run to the cent (including exact Dec-31 RMDs)', async () => {
+    const { InstrumentType } = await import('../js/instruments/instrument.js');
+    const { Metric } = await import('../js/metric.js');
+    const { portfolio: retiredPf } = await runPlan(frozenPlan('retired'));
+    const mc = await computeMonteCarlo(retiredPf.modelAssets, {
+        config: retiredPf.config, numSimulations: 2, seed: 1,
+        retirementDateInt: null, lifeEvents: retiredPf.lifeEvents,
+    });
+    const months = mc.baselineData.length;
+    assert.ok(months > 200, `expected full retired horizon, got ${months}`);
+    for (let i = 0; i < months; i++) {
+        let expected = 0;
+        for (const a of retiredPf.modelAssets) {
+            if (!InstrumentType.isAsset(a.instrument)) continue;
+            expected += a.getHistory(Metric.VALUE)[i] ?? 0;
+        }
+        assert.ok(Math.abs(mc.baselineData[i] - expected) < 1e-6,
+            `month ${i}: MC baseline ${mc.baselineData[i]} != single run ${expected}`);
+    }
+});
+
 // ── the rule, everywhere ─────────────────────────────────────────────
 
 console.log('\n── Every interpolated log message is lazy ──\n');

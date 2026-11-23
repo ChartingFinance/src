@@ -188,6 +188,7 @@ export class Portfolio {
         this.config = config;
 
         this.generatedReports = [];
+        this.recordEvents = true;
         // Bind first: `lastDateInt()` below reads each asset's derived
         // `effectiveFinishDateInt`, which throws on an unbound asset.
         this.bindEnvironment();
@@ -474,12 +475,21 @@ export class Portfolio {
         }
     }
 
+    /** Disable per-event / credit-memo recording and event reconciliation for batch runs. */
+    setRecordEvents(enabled) {
+        this.recordEvents = !!enabled;
+        for (const modelAsset of this.modelAssets) {
+            modelAsset.setRecordEvents(this.recordEvents);
+        }
+    }
+
     /**
      * @param {DateInt} currentDateInt the month this pass runs on
      * @param {DateInt} [settledOverride] the month the unscanned events actually
      *   belong to. Only the trailing pass needs it — see finalSanityCheck.
      */
     monthlySanityCheck(currentDateInt, settledOverride = null) {
+        if (!this.recordEvents) return;
         const buckets = {};
         for (const b of Object.values(EVENT_RECONCILIATION)) buckets[b] = 0;
 

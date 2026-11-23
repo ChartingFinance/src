@@ -113,6 +113,7 @@ export class Currency {
 
   /** Rounded to 2 decimal places — use for display / storage only */
   toFixed() {
+    if (this.amount === 0) return 0;
     return parseFloat(this.amount.toFixed(2));
   }
 

@@ -185,12 +185,26 @@ export function calibrationBaseRates(modelAssets) {
     return new Map(modelAssets.map((a) => [a, a.effectiveAnnualReturnRate.rate]));
 }
 
+const KEEP_VALUE_FOR_RMD = new Set([Metric.VALUE]);
+
+function disableBatchOverhead(portfolio) {
+    // Monte Carlo reads live finishCurrency each month and never inspects
+    // events, credit memos, or non-VALUE histories. Keep VALUE history only on
+    // tax-deferred accounts so calculateMonthlyRMD reads the exact prior Dec-31
+    // balance (js/taxes.js).
+    for (const a of portfolio.modelAssets) {
+        a.setTrackHistory(false, InstrumentType.isTaxDeferred(a.instrument) ? KEEP_VALUE_FOR_RMD : null);
+    }
+    portfolio.setRecordEvents(false);
+}
+
 // ── Single simulation run ────────────────────────────────────────
 
 function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, pool, dataMode, config, random,
                  returnShift = 0) {
     const assets = ModelAsset.cloneArray(sourceAssets);
     const portfolio = new Portfolio(assets, false, config);
+    disableBatchOverhead(portfolio);
     if (lifeEvents) portfolio.lifeEvents = lifeEvents.map(e => e.copy());
 
     if (guardrailParams) {
@@ -254,10 +268,7 @@ function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, p
             let total = 0;
             for (const asset of portfolio.modelAssets) {
                 if (!InstrumentType.isAsset(asset.instrument)) continue;
-                const history = asset.getHistory(Metric.VALUE);
-                if (history?.length > 0) {
-                    total += history[history.length - 1] ?? 0;
-                }
+                total += asset.finishCurrency.toCurrency();
             }
             monthlyTotals.push(total);
             monthlyReal.push(total / priceIndex.stepAndRecord());
@@ -294,8 +305,7 @@ function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, p
             let total = 0;
             for (const asset of portfolio.modelAssets) {
                 if (!InstrumentType.isAsset(asset.instrument)) continue;
-                const history = asset.getHistory(Metric.VALUE);
-                if (history?.length > 0) total += history[history.length - 1] ?? 0;
+                total += asset.finishCurrency.toCurrency();
             }
             monthlyTotals[lastIdx] = total;
             monthlyReal[lastIdx] = total / priceIndex.level;
@@ -324,6 +334,7 @@ function percentile(sortedArr, p) {
 function computeBaseline(sourceAssets, guardrailParams, lifeEvents, config) {
     const baseAssets = ModelAsset.cloneArray(sourceAssets);
     const basePf = new Portfolio(baseAssets, false, config);
+    disableBatchOverhead(basePf);
     if (lifeEvents.length) basePf.lifeEvents = lifeEvents.map(e => e.copy());
     if (guardrailParams) basePf.guardrailsParams = guardrailParams;
     basePf.initializeChron();
@@ -352,8 +363,7 @@ function computeBaseline(sourceAssets, guardrailParams, lifeEvents, config) {
             let total = 0;
             for (const asset of basePf.modelAssets) {
                 if (!InstrumentType.isAsset(asset.instrument)) continue;
-                const history = asset.getHistory(Metric.VALUE);
-                if (history?.length > 0) total += history[history.length - 1] ?? 0;
+                total += asset.finishCurrency.toCurrency();
             }
             baselineData.push(total);
             baselineDataReal.push(total / priceIndex.stepAndRecord());
@@ -378,8 +388,7 @@ function computeBaseline(sourceAssets, guardrailParams, lifeEvents, config) {
             let total = 0;
             for (const asset of basePf.modelAssets) {
                 if (!InstrumentType.isAsset(asset.instrument)) continue;
-                const history = asset.getHistory(Metric.VALUE);
-                if (history?.length > 0) total += history[history.length - 1] ?? 0;
+                total += asset.finishCurrency.toCurrency();
             }
             baselineData[lastIdx] = total;
             baselineDataReal[lastIdx] = total / priceIndex.level;

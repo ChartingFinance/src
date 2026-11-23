@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // GENERATED FILE — do not edit.
 // Built from ChartingFinance/src by tools/build-plugin.mjs.
-// Plugin version 0.3.58; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
+// Plugin version 0.3.59; engine deps @modelcontextprotocol/sdk ^1.27.1, zod ^4.3.6.
 // Rebuild with: npm run build:plugin
 var __cfNode = (process.versions && process.versions.node) || "0";
 if (!(parseInt(__cfNode.split(".")[0], 10) >= 20)) {
@@ -30672,6 +30672,7 @@ var Currency = class _Currency {
   }
   /** Rounded to 2 decimal places — use for display / storage only */
   toFixed() {
+    if (this.amount === 0) return 0;
     return parseFloat(this.amount.toFixed(2));
   }
   /** Backwards-compat alias used by monthlyChron push patterns */
@@ -31246,8 +31247,10 @@ var MetricSet = class {
   initializeAll() {
     for (const m of this._map.values()) m.initialize();
   }
-  setTrackHistory(enabled) {
-    for (const m of this._map.values()) m.trackHistory = enabled;
+  setTrackHistory(enabled, keepNames = null) {
+    for (const [name, m] of this._map) {
+      m.trackHistory = enabled || !!keepNames?.has(name);
+    }
   }
   snapshotAll(keepNames) {
     for (const [name, m] of this._map) {
@@ -36583,6 +36586,7 @@ var Portfolio = class _Portfolio {
     }
     this.config = config2;
     this.generatedReports = [];
+    this.recordEvents = true;
     this.bindEnvironment();
     this.firstDateInt = firstDateInt(this.modelAssets);
     const birthYear = this.firstDateInt ? this.firstDateInt.year - this.config.startAge : void 0;
@@ -36770,12 +36774,20 @@ var Portfolio = class _Portfolio {
       asset.fundTransfers = transfersJSON.map(FundTransfer.fromJSON);
     }
   }
+  /** Disable per-event / credit-memo recording and event reconciliation for batch runs. */
+  setRecordEvents(enabled) {
+    this.recordEvents = !!enabled;
+    for (const modelAsset of this.modelAssets) {
+      modelAsset.setRecordEvents(this.recordEvents);
+    }
+  }
   /**
    * @param {DateInt} currentDateInt the month this pass runs on
    * @param {DateInt} [settledOverride] the month the unscanned events actually
    *   belong to. Only the trailing pass needs it — see finalSanityCheck.
    */
   monthlySanityCheck(currentDateInt, settledOverride = null) {
+    if (!this.recordEvents) return;
     const buckets = {};
     for (const b of Object.values(EVENT_RECONCILIATION)) buckets[b] = 0;
     for (const modelAsset of this.modelAssets) {
@@ -38021,6 +38033,7 @@ function ratioOrDefault(raw, fallback) {
 }
 var ModelAsset = class _ModelAsset {
   #metrics;
+  #recordEvents = true;
   /**
    * @param {Object} opts
    * @param {string|null}   [opts.id]   unique within its plan; plan-ids.js gives it out
@@ -38702,8 +38715,12 @@ var ModelAsset = class _ModelAsset {
   get monthlyCredits() {
     return this.#metrics.get(Metric.CREDIT).history;
   }
-  setTrackHistory(enabled) {
-    this.#metrics.setTrackHistory(enabled);
+  setTrackHistory(enabled, keepNames = null) {
+    this.#metrics.setTrackHistory(enabled, keepNames);
+  }
+  /** Toggle per-event and credit-memo recording (disabled in Monte Carlo batch runs). */
+  setRecordEvents(enabled) {
+    this.#recordEvents = !!enabled;
   }
   getHistoryCount() {
     let total = 0;
@@ -38881,6 +38898,7 @@ var ModelAsset = class _ModelAsset {
    * @param {object}   [opts.data]    type-specific payload
    */
   recordEvent(type, amount, { metric = null, data = null } = {}) {
+    if (!this.#recordEvents) return;
     const event = new SimEvent(type, amount, this.currentDateInt, {
       metric,
       data,
@@ -40430,9 +40448,17 @@ function applyRandomRates(modelAssets, pool, dataMode = "historical", baseRates 
 function calibrationBaseRates(modelAssets) {
   return new Map(modelAssets.map((a) => [a, a.effectiveAnnualReturnRate.rate]));
 }
+var KEEP_VALUE_FOR_RMD = /* @__PURE__ */ new Set([Metric.VALUE]);
+function disableBatchOverhead(portfolio) {
+  for (const a of portfolio.modelAssets) {
+    a.setTrackHistory(false, InstrumentType.isTaxDeferred(a.instrument) ? KEEP_VALUE_FOR_RMD : null);
+  }
+  portfolio.setRecordEvents(false);
+}
 function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, pool, dataMode, config2, random, returnShift2 = 0) {
   const assets = ModelAsset.cloneArray(sourceAssets);
   const portfolio = new Portfolio(assets, false, config2);
+  disableBatchOverhead(portfolio);
   if (lifeEvents) portfolio.lifeEvents = lifeEvents.map((e) => e.copy());
   if (guardrailParams) {
     portfolio.guardrailsParams = guardrailParams;
@@ -40473,10 +40499,7 @@ function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, p
       let total = 0;
       for (const asset of portfolio.modelAssets) {
         if (!InstrumentType.isAsset(asset.instrument)) continue;
-        const history = asset.getHistory(Metric.VALUE);
-        if (history?.length > 0) {
-          total += history[history.length - 1] ?? 0;
-        }
+        total += asset.finishCurrency.toCurrency();
       }
       monthlyTotals.push(total);
       monthlyReal.push(total / priceIndex.stepAndRecord());
@@ -40514,8 +40537,7 @@ function runOnce(sourceAssets, guardrailParams, retirementDateInt, lifeEvents, p
       let total = 0;
       for (const asset of portfolio.modelAssets) {
         if (!InstrumentType.isAsset(asset.instrument)) continue;
-        const history = asset.getHistory(Metric.VALUE);
-        if (history?.length > 0) total += history[history.length - 1] ?? 0;
+        total += asset.finishCurrency.toCurrency();
       }
       monthlyTotals[lastIdx] = total;
       monthlyReal[lastIdx] = total / priceIndex.level;
@@ -40536,6 +40558,7 @@ function percentile(sortedArr, p) {
 function computeBaseline(sourceAssets, guardrailParams, lifeEvents, config2) {
   const baseAssets = ModelAsset.cloneArray(sourceAssets);
   const basePf = new Portfolio(baseAssets, false, config2);
+  disableBatchOverhead(basePf);
   if (lifeEvents.length) basePf.lifeEvents = lifeEvents.map((e) => e.copy());
   if (guardrailParams) basePf.guardrailsParams = guardrailParams;
   basePf.initializeChron();
@@ -40558,8 +40581,7 @@ function computeBaseline(sourceAssets, guardrailParams, lifeEvents, config2) {
       let total = 0;
       for (const asset of basePf.modelAssets) {
         if (!InstrumentType.isAsset(asset.instrument)) continue;
-        const history = asset.getHistory(Metric.VALUE);
-        if (history?.length > 0) total += history[history.length - 1] ?? 0;
+        total += asset.finishCurrency.toCurrency();
       }
       baselineData.push(total);
       baselineDataReal.push(total / priceIndex.stepAndRecord());
@@ -40582,8 +40604,7 @@ function computeBaseline(sourceAssets, guardrailParams, lifeEvents, config2) {
       let total = 0;
       for (const asset of basePf.modelAssets) {
         if (!InstrumentType.isAsset(asset.instrument)) continue;
-        const history = asset.getHistory(Metric.VALUE);
-        if (history?.length > 0) total += history[history.length - 1] ?? 0;
+        total += asset.finishCurrency.toCurrency();
       }
       baselineData[lastIdx] = total;
       baselineDataReal[lastIdx] = total / priceIndex.level;
